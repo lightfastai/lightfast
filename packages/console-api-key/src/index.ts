@@ -14,7 +14,7 @@
  * // Generate and hash a key
  * import { generateApiKey, hashApiKey, extractKeyPreview } from "@repo/console-api-key";
  * const key = generateApiKey();
- * const hash = await hashApiKey(key);
+ * const hash = hashApiKey(key);
  * const preview = extractKeyPreview(key);
  * ```
  */

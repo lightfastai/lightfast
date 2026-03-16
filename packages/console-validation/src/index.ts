@@ -46,6 +46,8 @@ export {
   validateWorkspaceName,
   WORKSPACE_NAME,
 } from "./constants/naming";
+export * from "./forms/auth-form";
+export * from "./forms/early-access-form";
 export * from "./forms/team-form";
 // Forms (direct to leaf modules)
 export * from "./forms/workspace-form";
@@ -54,20 +56,83 @@ export * from "./primitives/ids";
 export * from "./primitives/names";
 export * from "./primitives/slugs";
 export * from "./schemas/activities";
-export * from "./schemas/classification";
+export type {
+  EventBase,
+  RerankMode,
+  SearchFilters,
+  SourceReference,
+} from "./schemas/api/common";
+export {
+  EventBaseSchema,
+  RerankModeSchema,
+  SearchFiltersSchema,
+  SourceReferenceSchema,
+} from "./schemas/api/common";
+// Canonical API schemas (versioning-free) — import from @repo/console-validation/api for subpath
+export type {
+  ContentItem,
+  ContentsRequest,
+  ContentsResponse,
+} from "./schemas/api/contents";
+export {
+  ContentItemSchema,
+  ContentsRequestSchema,
+  ContentsResponseSchema,
+} from "./schemas/api/contents";
+export type {
+  FindSimilarRequest,
+  FindSimilarResponse,
+  FindSimilarResult,
+  FindSimilarSource,
+} from "./schemas/api/findsimilar";
+export {
+  FindSimilarRequestSchema,
+  FindSimilarResponseSchema,
+  FindSimilarResultSchema,
+  FindSimilarSourceSchema,
+} from "./schemas/api/findsimilar";
+export type {
+  RelatedEdge,
+  RelatedEvent,
+  RelatedNode,
+  RelatedRequest,
+  RelatedResponse,
+} from "./schemas/api/related";
+export {
+  RelatedEdgeSchema,
+  RelatedEventSchema,
+  RelatedNodeSchema,
+  RelatedRequestSchema,
+  RelatedResponseSchema,
+} from "./schemas/api/related";
+export type {
+  SearchContext,
+  SearchLatency,
+  SearchRequest,
+  SearchResponse,
+  SearchResult,
+} from "./schemas/api/search";
+export {
+  SearchContextSchema,
+  SearchLatencySchema,
+  SearchRequestSchema,
+  SearchResponseSchema,
+  SearchResultSchema,
+} from "./schemas/api/search";
+
 export * from "./schemas/entities";
 export * from "./schemas/ingestion";
 export * from "./schemas/job";
-export * from "./schemas/metrics";
+export * from "./schemas/neural";
 export * from "./schemas/org-api-key";
-export * from "./schemas/organization";
-export * from "./schemas/source-event";
 export * from "./schemas/source-metadata";
 export * from "./schemas/sources";
 export * from "./schemas/store";
 export * from "./schemas/workflow-io";
 // Schemas (direct to leaf modules - these are heavy runtime Zod objects)
 export * from "./schemas/workspace";
+// Workspace settings (JSON column schema — distinct from CRUD workspace schemas above)
+export * from "./schemas/workspace-settings";
 
 // Utils (direct to leaf module)
 export * from "./utils/workspace-names";

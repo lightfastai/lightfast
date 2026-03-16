@@ -41,6 +41,12 @@ function resolveSource(c: {
 export const lifecycle = createMiddleware<{
   Variables: LifecycleVariables;
 }>(async (c, next) => {
+  // Skip logging for Inngest sync polls (PUT) to avoid log bloat.
+  // POST (function invocations) and GET (introspection) are still logged.
+  if (c.req.path === "/api/inngest" && c.req.method === "PUT") {
+    return next();
+  }
+
   c.set("logFields", {});
   const start = Date.now();
 

@@ -303,16 +303,3 @@ export {
   createThrottledOctokit,
   getThrottledInstallationOctokit,
 } from "./throttled";
-// Export webhook types
-export type {
-  DiscussionEvent,
-  InstallationEvent,
-  InstallationRepositoriesEvent,
-  IssuesEvent,
-  // Neural observation event types
-  PullRequestEvent,
-  PushEvent,
-  ReleaseEvent,
-  RepositoryEvent,
-  WebhookEvent,
-} from "./webhook-types";

@@ -41,8 +41,5 @@
     "@types/node": "catalog:",
     "@types/react": "19.2.14",
     "typescript": "catalog:"
-  },
-  "eslintConfig": {
-    "extends": "@repo/eslint-config/base"
   }
 }

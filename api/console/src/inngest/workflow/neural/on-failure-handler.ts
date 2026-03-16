@@ -12,14 +12,14 @@
  * @example
  * ```ts
  * onFailure: createNeuralOnFailureHandler(
- *   "apps-console/neural/cluster.check-summary",
+ *   "apps-console/event.capture",
  *   {
- *     logMessage: "Neural cluster summary failed",
- *     logContext: ({ workspaceId, clusterId }) => ({ workspaceId, clusterId }),
- *     buildOutput: ({ data: { clusterId }, error }) => ({
- *       inngestFunctionId: "neural.cluster.summary",
+ *     logMessage: "Event capture failed",
+ *     logContext: ({ workspaceId, sourceEvent }) => ({ workspaceId, sourceId: sourceEvent.sourceId }),
+ *     buildOutput: ({ data: { sourceEvent }, error }) => ({
+ *       inngestFunctionId: "event.capture",
  *       status: "failure",
- *       clusterId,
+ *       sourceId: sourceEvent.sourceId,
  *       error,
  *     }),
  *   }
@@ -27,18 +27,13 @@
  * ```
  */
 
-import type { WorkflowOutput } from "@repo/console-validation";
+import type {
+  NeuralFailureOutput,
+  WorkflowOutput,
+} from "@repo/console-validation";
 import { log } from "@vendor/observability/log";
 import { completeJob, getJobByInngestRunId } from "../../../lib/jobs";
 import type { Events } from "../../client/client";
-
-/** Base shape all neural workflow failure outputs must satisfy */
-interface NeuralFailureOutput {
-  error: string;
-  inngestFunctionId: string;
-  status: "failure";
-  [key: string]: unknown;
-}
 
 /**
  * Creates a consistent onFailure handler for neural Inngest workflows.
@@ -87,9 +82,9 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
         await completeJob({
           jobId: job.id,
           status: "failed",
-          // `NeuralFailureOutput` is intentionally broad so the factory stays
-          // generic. Type safety is enforced per-workflow via `satisfies` in
-          // each `buildOutput` callback; the cast here is therefore safe.
+          // NeuralFailureOutput's .catchall(z.unknown()) index signature is
+          // structurally incompatible with Drizzle's WorkflowOutput column type.
+          // The cast is safe: each workflow's buildOutput validates via satisfies.
           output: config.buildOutput({
             data,
             error: error.message,

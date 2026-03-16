@@ -38,10 +38,11 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "remove-markdown": "^0.6.3",
-    "zod": "catalog:zod4"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@mixedbread/cli": "^2.3.0",
+    "@repo/console-openapi": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/mdx": "^2.0.13",

@@ -1,5 +1,11 @@
+import { computeHmac } from "@repo/console-providers";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { computeHmacSha1, computeHmacSha256 } from "../lib/crypto.js";
+
+// Convenience wrappers matching the old relay crypto API used throughout this test
+const computeHmacSha256 = (msg: string, secret: string) =>
+  computeHmac(msg, secret, "SHA-256");
+const computeHmacSha1 = (msg: string, secret: string) =>
+  computeHmac(msg, secret, "SHA-1");
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
@@ -16,7 +22,15 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
     return {
       mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
       mockRedisSet: vi.fn().mockResolvedValue("OK"),
-      mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
+      mockWorkflowTrigger: vi
+        .fn<
+          (args: {
+            url: string;
+            body: string;
+            headers?: Record<string, string>;
+          }) => Promise<{ workflowRunId: string }>
+        >()
+        .mockResolvedValue({ workflowRunId: "wf-1" }),
       mockEnv: env,
       dbOps: [] as {
         op: "insert" | "update";
@@ -29,7 +43,6 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
 
 vi.mock("../env", () => ({
   env: mockEnv,
-  getEnv: () => mockEnv,
 }));
 
 vi.mock("@vendor/qstash", () => ({
@@ -41,29 +54,33 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
 vi.mock("@db/console/client", () => ({
   db: {
     insert: (...args: unknown[]) => {
-      const idx = dbOps.length;
-      dbOps.push({ op: "insert" as const, table: args[0] });
+      const entry = {
+        op: "insert" as const,
+        table: args[0],
+      } as (typeof dbOps)[number];
+      dbOps.push(entry);
       return {
         values: (...valArgs: unknown[]) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          dbOps[idx]!.values = valArgs[0];
+          entry.values = valArgs[0];
           return { onConflictDoNothing: () => Promise.resolve() };
         },
       };
     },
     update: (...args: unknown[]) => {
-      const idx = dbOps.length;
-      dbOps.push({ op: "update" as const, table: args[0] });
+      const entry = {
+        op: "update" as const,
+        table: args[0],
+      } as (typeof dbOps)[number];
+      dbOps.push(entry);
       return {
         set: (...setArgs: unknown[]) => {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          dbOps[idx]!.set = setArgs[0];
+          entry.set = setArgs[0];
           return { where: () => Promise.resolve() };
         },
       };
@@ -72,17 +89,12 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwWebhookDeliveries: {},
-}));
-
-vi.mock("../lib/flags.js", () => ({
-  isConsoleFanOutEnabled: vi.fn().mockResolvedValue(true),
+  gatewayWebhookDeliveries: {},
 }));
 
 // ── Import app after mocks ──
 
 import { Hono } from "hono";
-import { isConsoleFanOutEnabled } from "../lib/flags.js";
 import { webhooks } from "./webhooks.js";
 
 const app = new Hono();
@@ -102,6 +114,18 @@ function request(
   const body =
     typeof init.body === "object" ? JSON.stringify(init.body) : init.body;
   return app.request(path, { method: "POST", headers, body });
+}
+
+/** Extract and parse the JSON body from the Nth workflow trigger call. */
+function getTriggerBody<T = Record<string, unknown>>(
+  mock: typeof mockWorkflowTrigger,
+  callIndex = 0
+): T {
+  const call = mock.mock.calls[callIndex];
+  if (!call) {
+    throw new Error(`No trigger call at index ${callIndex}`);
+  }
+  return JSON.parse(call[0].body) as T;
 }
 
 // ── Tests ──
@@ -129,7 +153,7 @@ describe("POST /webhooks/:provider", () => {
   describe("standard HMAC path", () => {
     it("accepts a valid GitHub webhook", async () => {
       const body = JSON.stringify({ repository: { id: 123 } });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -164,7 +188,7 @@ describe("POST /webhooks/:provider", () => {
 
     it("rejects invalid payload with 400", async () => {
       const body = '"just a string"';
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -190,7 +214,7 @@ describe("POST /webhooks/:provider", () => {
         head_commit: { id: "abc123" },
       };
       const body = JSON.stringify(fullPayload);
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -204,12 +228,14 @@ describe("POST /webhooks/:provider", () => {
       expect(res.status).toBe(200);
 
       // Verify the workflow receives the complete payload including extra fields
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      const triggeredPayload = triggerCall.body.payload;
+      const triggeredPayload = getTriggerBody<{
+        payload: Record<string, unknown>;
+      }>(mockWorkflowTrigger).payload;
       expect(triggeredPayload.sender).toEqual({ login: "octocat", id: 1 });
       expect(triggeredPayload.ref).toBe("refs/heads/main");
-      expect(triggeredPayload.commits[0].message).toBe("feat: 新しい機能 🎉");
+      expect(
+        (triggeredPayload.commits as { message: string }[])[0]?.message
+      ).toBe("feat: 新しい機能 🎉");
     });
 
     it("handles unicode body with correct HMAC verification", async () => {
@@ -217,7 +243,7 @@ describe("POST /webhooks/:provider", () => {
         repository: { id: 1 },
         head_commit: { message: "fix: 修正 バグ 🐛" },
       });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -234,21 +260,21 @@ describe("POST /webhooks/:provider", () => {
   });
 
   describe("wrong API key fallthrough", () => {
-    it("wrong API key falls through to HMAC path, rejected without signature", async () => {
-      // Misconfigured backfill sends wrong key. No HMAC headers → 401.
-      // This is a real misconfiguration scenario.
+    it("wrong API key falls through to HMAC path, rejected without required headers", async () => {
+      // Misconfigured backfill sends wrong key. No HMAC headers → 400.
+      // webhookHeaderGuard rejects before reading body or verifying signature.
       const res = await request("/webhooks/github", {
         body: '{"repository":{"id":123}}',
         headers: { "X-API-Key": "wrong-key" },
       });
 
-      expect(res.status).toBe(401);
-      expect(await res.json()).toEqual({ error: "invalid_signature" });
+      expect(res.status).toBe(400);
+      expect(await res.json()).toEqual({ error: "missing_required_headers" });
     });
 
     it("wrong API key with valid HMAC signature still succeeds via HMAC path", async () => {
       const body = '{"repository":{"id":123}}';
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -307,7 +333,7 @@ describe("POST /webhooks/:provider", () => {
     it("returns 500 when workflow trigger fails on HMAC path", async () => {
       mockWorkflowTrigger.mockRejectedValue(new Error("QStash unavailable"));
       const body = JSON.stringify({ repository: { id: 123 } });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       const res = await request("/webhooks/github", {
         body,
@@ -344,7 +370,7 @@ describe("POST /webhooks/:provider", () => {
 
       // Verify the exact WebhookEnvelope shape published to Console
       expect(mockPublishJSON).toHaveBeenCalledWith({
-        url: expect.stringContaining("/api/webhooks/ingress"),
+        url: expect.stringContaining("/api/gateway/ingress"),
         headers: { "X-Correlation-Id": undefined },
         body: {
           deliveryId: "del-100",
@@ -389,7 +415,9 @@ describe("POST /webhooks/:provider", () => {
       });
 
       expect(res.status).toBe(400);
-      expect(await res.json()).toEqual({ error: "missing_required_fields" });
+      const json = await res.json();
+      expect(json.error).toBe("invalid_body");
+      expect(json.details).toBeDefined();
     });
 
     it("rejects when payload fails provider parse", async () => {
@@ -441,15 +469,48 @@ describe("POST /webhooks/:provider", () => {
     });
   });
 
-  describe("service auth with fan-out disabled", () => {
-    it("persists webhook but skips QStash publish when flag is disabled", async () => {
-      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
-
+  describe("service auth with X-Backfill-Hold", () => {
+    it("persists webhook but skips delivery when X-Backfill-Hold is true", async () => {
       const res = await request("/webhooks/github", {
         body: {
           connectionId: "conn-1",
           orgId: "org-1",
-          deliveryId: "del-flag-off",
+          deliveryId: "del-hold",
+          eventType: "push",
+          payload: { repository: { id: 42 } },
+          receivedAt: 1_700_000_000,
+        },
+        headers: { "X-API-Key": "test-api-key", "X-Backfill-Hold": "true" },
+      });
+
+      expect(res.status).toBe(200);
+      const json = await res.json();
+      expect(json.status).toBe("accepted");
+      expect(json.held).toBe(true);
+      expect(json.deliveryId).toBe("del-hold");
+
+      // Webhook was persisted
+      expect(dbOps).toEqual([
+        {
+          op: "insert",
+          table: expect.anything(),
+          values: expect.objectContaining({
+            deliveryId: "del-hold",
+            status: "received",
+          }),
+        },
+      ]);
+
+      // QStash was NOT called — no delivery
+      expect(mockPublishJSON).not.toHaveBeenCalled();
+    });
+
+    it("delivers normally when X-Backfill-Hold is absent", async () => {
+      const res = await request("/webhooks/github", {
+        body: {
+          connectionId: "conn-1",
+          orgId: "org-1",
+          deliveryId: "del-no-hold",
           eventType: "push",
           payload: { repository: { id: 42 } },
           receivedAt: 1_700_000_000,
@@ -460,25 +521,10 @@ describe("POST /webhooks/:provider", () => {
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json.status).toBe("accepted");
-      expect(json.fanOut).toBe(false);
-      expect(mockPublishJSON).not.toHaveBeenCalled();
+      expect(json.held).toBeUndefined();
 
-      // Webhook was persisted even though fan-out is disabled — no status update to "enqueued"
-      expect(dbOps).toEqual([
-        {
-          op: "insert",
-          table: expect.anything(),
-          values: {
-            provider: "github",
-            deliveryId: "del-flag-off",
-            eventType: "push",
-            installationId: "conn-1",
-            status: "received",
-            payload: JSON.stringify({ repository: { id: 42 } }),
-            receivedAt: new Date(1_700_000_000_000).toISOString(),
-          },
-        },
-      ]);
+      // QStash WAS called — normal delivery
+      expect(mockPublishJSON).toHaveBeenCalledOnce();
     });
   });
 
@@ -492,7 +538,7 @@ describe("POST /webhooks/:provider", () => {
         type: "deployment.created",
         payload: { project: { id: "prj_1" } },
       });
-      const sig = await computeHmacSha1(body, "vc-secret");
+      const sig = computeHmacSha1(body, "vc-secret");
 
       const res = await request("/webhooks/vercel", {
         body,
@@ -513,7 +559,7 @@ describe("POST /webhooks/:provider", () => {
     it("Vercel webhook with wrong secret is rejected", async () => {
       // If the mapping used github's secret for vercel, this would fail differently
       const body = JSON.stringify({ type: "deployment.created" });
-      const sig = await computeHmacSha1(body, "wrong-secret");
+      const sig = computeHmacSha1(body, "wrong-secret");
 
       const res = await request("/webhooks/vercel", {
         body,
@@ -529,7 +575,7 @@ describe("POST /webhooks/:provider", () => {
         action: "create",
         organizationId: "lin-org-1",
       });
-      const sig = await computeHmacSha256(body, "ln-secret");
+      const sig = computeHmacSha256(body, "ln-secret");
 
       const res = await request("/webhooks/linear", {
         body,
@@ -545,7 +591,7 @@ describe("POST /webhooks/:provider", () => {
 
     it("Sentry webhook uses correct secret through full route", async () => {
       const body = JSON.stringify({ installation: { uuid: "sn-inst-1" } });
-      const sig = await computeHmacSha256(body, "sn-secret");
+      const sig = computeHmacSha256(body, "sn-secret");
 
       const res = await request("/webhooks/sentry", {
         body,
@@ -578,6 +624,52 @@ describe("POST /webhooks/:provider", () => {
     return state;
   }
 
+  describe("service-auth webhook — contract fuzzing", () => {
+    const VALID_BODY = {
+      connectionId: "conn-1",
+      orgId: "org-1",
+      deliveryId: "del-001",
+      eventType: "push",
+      payload: { repository: { id: 42 } },
+      receivedAt: 1_700_000_000,
+    };
+
+    it.each([
+      ["missing connectionId", { ...VALID_BODY, connectionId: undefined }],
+      ["missing orgId", { ...VALID_BODY, orgId: undefined }],
+      ["missing deliveryId", { ...VALID_BODY, deliveryId: undefined }],
+      ["missing eventType", { ...VALID_BODY, eventType: undefined }],
+      ["deliveryId is number", { ...VALID_BODY, deliveryId: 12_345 }],
+      ["receivedAt is string", { ...VALID_BODY, receivedAt: "not-a-number" }],
+      ["payload is string", { ...VALID_BODY, payload: "bad" }],
+    ])("returns 400 for: %s", async (_label, body) => {
+      const res = await request("/webhooks/github", {
+        body: body as Record<string, unknown>,
+        headers: { "X-API-Key": "test-api-key" },
+      });
+      expect(res.status).toBe(400);
+      // No DB side effects — validation rejected before handler runs
+      expect(dbOps).toHaveLength(0);
+      expect(mockPublishJSON).not.toHaveBeenCalled();
+    });
+
+    it("extra unknown fields are accepted (payload passthrough)", async () => {
+      const res = await request("/webhooks/github", {
+        body: { ...VALID_BODY, unknownField: "ignored" },
+        headers: { "X-API-Key": "test-api-key" },
+      });
+      expect(res.status).toBe(200);
+    });
+
+    it("malformed JSON body → 400, no crash", async () => {
+      const res = await request("/webhooks/github", {
+        body: "{ invalid json",
+        headers: { "X-API-Key": "test-api-key" },
+      });
+      expect(res.status).toBe(400);
+    });
+  });
+
   describe("service auth final DB state parity", () => {
     it("happy path final state matches workflow happy path", async () => {
       const res = await request("/webhooks/github", {
@@ -607,30 +699,6 @@ describe("POST /webhooks/:provider", () => {
         })
       );
     });
-
-    it("fan-out disabled: final state has installationId, status remains 'received'", async () => {
-      vi.mocked(isConsoleFanOutEnabled).mockResolvedValueOnce(false);
-
-      await request("/webhooks/github", {
-        body: {
-          connectionId: "conn-1",
-          orgId: "org-1",
-          deliveryId: "del-parity-off",
-          eventType: "push",
-          payload: { repository: { id: 42 } },
-          receivedAt: 1_700_000_000,
-        },
-        headers: { "X-API-Key": "test-api-key" },
-      });
-
-      const finalState = computeFinalDbState(dbOps);
-      expect(finalState).toEqual(
-        expect.objectContaining({
-          status: "received", // Never advanced
-          installationId: "conn-1",
-        })
-      );
-    });
   });
 
   describe("HMAC route → workflow payload contract", () => {
@@ -639,7 +707,7 @@ describe("POST /webhooks/:provider", () => {
         repository: { id: 42 },
         installation: { id: 101 },
       });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       await request("/webhooks/github", {
         body,
@@ -650,8 +718,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerPayload = mockWorkflowTrigger.mock.calls[0]![0].body;
+      const triggerPayload = getTriggerBody(mockWorkflowTrigger);
 
       // The workflow reads these fields from context.requestPayload.
       // If any are missing or renamed, the workflow silently breaks.
@@ -678,7 +745,7 @@ describe("POST /webhooks/:provider", () => {
         repository: { id: 789 },
         installation: { id: 101 },
       });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       await request("/webhooks/github", {
         body,
@@ -689,9 +756,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      expect(triggerCall.body).toEqual({
+      expect(getTriggerBody(mockWorkflowTrigger)).toEqual({
         provider: "github",
         deliveryId: "del-contract",
         eventType: "push",
@@ -704,7 +769,7 @@ describe("POST /webhooks/:provider", () => {
     it("passes resourceId as null when payload has no identifiable resource", async () => {
       // GitHub webhook with no repository or installation (e.g. org-level event)
       const body = JSON.stringify({ action: "member_added" });
-      const sig = await computeHmacSha256(body, "gh-secret");
+      const sig = computeHmacSha256(body, "gh-secret");
 
       await request("/webhooks/github", {
         body,
@@ -715,10 +780,9 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      expect(triggerCall.body.resourceId).toBeNull();
-      expect(triggerCall.body.eventType).toBe("organization");
+      const parsedBody = getTriggerBody(mockWorkflowTrigger);
+      expect(parsedBody.resourceId).toBeNull();
+      expect(parsedBody.eventType).toBe("organization");
     });
 
     it("Vercel route produces correct workflow payload shape", async () => {
@@ -727,7 +791,7 @@ describe("POST /webhooks/:provider", () => {
         type: "deployment.ready",
         payload: { project: { id: "prj_shape" }, team: { id: "team_shape" } },
       });
-      const sig = await computeHmacSha1(body, "vc-secret");
+      const sig = computeHmacSha1(body, "vc-secret");
 
       await request("/webhooks/vercel", {
         body,
@@ -737,9 +801,7 @@ describe("POST /webhooks/:provider", () => {
         },
       });
 
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      const triggerCall = mockWorkflowTrigger.mock.calls[0]![0];
-      expect(triggerCall.body).toEqual({
+      expect(getTriggerBody(mockWorkflowTrigger)).toEqual({
         provider: "vercel",
         deliveryId: "evt-shape",
         eventType: "deployment.ready",

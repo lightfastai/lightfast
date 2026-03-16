@@ -4,7 +4,6 @@ import { createAgent } from "@lightfastai/ai-sdk/agent";
 import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
 import { workspaceContentsTool } from "@repo/console-ai/workspace-contents";
 import { workspaceFindSimilarTool } from "@repo/console-ai/workspace-find-similar";
-import { workspaceGraphTool } from "@repo/console-ai/workspace-graph";
 import { workspaceRelatedTool } from "@repo/console-ai/workspace-related";
 import { workspaceSearchTool } from "@repo/console-ai/workspace-search";
 import type { AnswerAppRuntimeContext } from "@repo/console-ai-types";
@@ -17,24 +16,21 @@ import {
   HARDCODED_WORKSPACE_CONTEXT,
 } from "~/ai/prompts/system-prompt";
 import { AnswerRedisMemory } from "~/ai/runtime/memory";
-import { contentsLogic } from "~/lib/v1/contents";
-import { findsimilarLogic } from "~/lib/v1/findsimilar";
-import { graphLogic } from "~/lib/v1/graph";
-import { relatedLogic } from "~/lib/v1/related";
-import { searchLogic } from "~/lib/v1/search";
+import { contentsLogic } from "~/lib/contents";
+import { findSimilarLogic } from "~/lib/findsimilar";
+import { relatedLogic } from "~/lib/related";
+import { searchLogic } from "~/lib/search";
 import {
   createDualAuthErrorResponse,
   withDualAuth,
-} from "../../lib/with-dual-auth";
+} from "../../../lib/with-dual-auth";
 
 const MODEL_ID = "anthropic/claude-sonnet-4-5-20250929";
 
-// Tool factories
 const answerTools = {
   workspaceSearch: workspaceSearchTool(),
   workspaceContents: workspaceContentsTool(),
   workspaceFindSimilar: workspaceFindSimilarTool(),
-  workspaceGraph: workspaceGraphTool(),
   workspaceRelated: workspaceRelatedTool(),
 };
 
@@ -44,7 +40,6 @@ export async function POST(request: NextRequest) {
   log.info("Answer API request", { requestId });
 
   try {
-    // 1. Authenticate via withDualAuth (same as search APIs)
     const authResult = await withDualAuth(request, requestId);
 
     if (!authResult.success) {
@@ -53,14 +48,10 @@ export async function POST(request: NextRequest) {
 
     const authData = authResult.auth;
 
-    // 2. Get Clerk auth token for internal API calls
     const clerkAuth = await auth();
     const token = await clerkAuth.getToken();
     const authToken = token ?? undefined;
 
-    console.log("authToken", authToken);
-
-    // 3. Parse request body
     let body: { messages?: { role: string; content: string }[] };
     try {
       body = (await request.json()) as typeof body;
@@ -72,20 +63,23 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    // 4. Build system prompt with hardcoded workspace context
     const systemPrompt = buildAnswerSystemPrompt({
       workspace: HARDCODED_WORKSPACE_CONTEXT,
       modelId: MODEL_ID,
     });
 
-    // 5. Extract sessionId and resourceId from URL
     const url = new URL(request.url);
     const pathSegments = url.pathname.split("/");
-    // /v1/answer/answer-v1/session-id
     const agentId = pathSegments[3] ?? "answer-v1";
     const sessionId = pathSegments[4] ?? randomUUID();
 
-    // 6. Create agent
+    const authContext = {
+      workspaceId: authData.workspaceId,
+      userId: authData.userId,
+      authType: authData.authType,
+      apiKeyId: authData.apiKeyId,
+    } as const;
+
     const agent = createAgent<AnswerAppRuntimeContext, typeof answerTools>({
       name: agentId,
       system: systemPrompt,
@@ -96,83 +90,17 @@ export async function POST(request: NextRequest) {
         authToken,
         tools: {
           workspaceSearch: {
-            handler: async (input) =>
-              searchLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  query: input.query,
-                  mode: input.mode ?? "balanced",
-                  limit: input.limit ?? 10,
-                  offset: 0,
-                  filters: input.filters,
-                  includeContext: true,
-                  includeHighlights: true,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) => searchLogic(authContext, input, randomUUID()),
           },
           workspaceContents: {
-            handler: async (input) =>
-              contentsLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  ids: input.ids,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) => contentsLogic(authContext, input, randomUUID()),
           },
           workspaceFindSimilar: {
-            handler: async (input) =>
-              findsimilarLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  id: input.id,
-                  limit: input.limit ?? 5,
-                  threshold: input.threshold ?? 0.5,
-                  requestId: randomUUID(),
-                }
-              ),
-          },
-          workspaceGraph: {
-            handler: async (input) =>
-              graphLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  depth: input.depth ?? 1,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) =>
+              findSimilarLogic(authContext, input, randomUUID()),
           },
           workspaceRelated: {
-            handler: async (input) =>
-              relatedLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) => relatedLogic(authContext, input, randomUUID()),
           },
         },
       }),
@@ -181,10 +109,8 @@ export async function POST(request: NextRequest) {
       stopWhen: stepCountIs(8),
     });
 
-    // 6. Create ephemeral memory
     const memory = new AnswerRedisMemory();
 
-    // 7. Delegate to fetchRequestHandler
     return fetchRequestHandler({
       agent,
       sessionId,
@@ -223,7 +149,6 @@ export async function GET(request: NextRequest) {
   log.info("Answer API GET (resume) request", { requestId });
 
   try {
-    // Same auth
     const authResult = await withDualAuth(request, requestId);
 
     if (!authResult.success) {
@@ -232,25 +157,27 @@ export async function GET(request: NextRequest) {
 
     const authData = authResult.auth;
 
-    // Get Clerk auth token for internal API calls
     const clerkAuth = await auth();
     const token = await clerkAuth.getToken();
     const authToken = token ?? undefined;
 
-    // System prompt
     const systemPrompt = buildAnswerSystemPrompt({
       workspace: HARDCODED_WORKSPACE_CONTEXT,
       modelId: MODEL_ID,
     });
 
-    // Extract sessionId and resourceId from URL
     const url = new URL(request.url);
     const pathSegments = url.pathname.split("/");
-    // /v1/answer/answer-v1/session-id
     const agentId = pathSegments[3] ?? "answer-v1";
     const sessionId = pathSegments[4] ?? randomUUID();
 
-    // Create agent
+    const authContext = {
+      workspaceId: authData.workspaceId,
+      userId: authData.userId,
+      authType: authData.authType,
+      apiKeyId: authData.apiKeyId,
+    } as const;
+
     const agent = createAgent<AnswerAppRuntimeContext, typeof answerTools>({
       name: agentId,
       system: systemPrompt,
@@ -261,93 +188,25 @@ export async function GET(request: NextRequest) {
         authToken,
         tools: {
           workspaceSearch: {
-            handler: async (input) =>
-              searchLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  query: input.query,
-                  mode: input.mode ?? "balanced",
-                  limit: input.limit ?? 10,
-                  offset: 0,
-                  filters: input.filters,
-                  includeContext: true,
-                  includeHighlights: true,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) => searchLogic(authContext, input, randomUUID()),
           },
           workspaceContents: {
-            handler: async (input) =>
-              contentsLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  ids: input.ids,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) => contentsLogic(authContext, input, randomUUID()),
           },
           workspaceFindSimilar: {
-            handler: async (input) =>
-              findsimilarLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  id: input.id,
-                  limit: input.limit ?? 5,
-                  threshold: input.threshold ?? 0.5,
-                  requestId: randomUUID(),
-                }
-              ),
-          },
-          workspaceGraph: {
-            handler: async (input) =>
-              graphLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  depth: input.depth ?? 1,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) =>
+              findSimilarLogic(authContext, input, randomUUID()),
           },
           workspaceRelated: {
-            handler: async (input) =>
-              relatedLogic(
-                {
-                  workspaceId: authData.workspaceId,
-                  userId: authData.userId,
-                  authType: "session",
-                },
-                {
-                  observationId: input.id,
-                  requestId: randomUUID(),
-                }
-              ),
+            handler: (input) => relatedLogic(authContext, input, randomUUID()),
           },
         },
       }),
       model: gateway(MODEL_ID),
     });
 
-    // Create memory
     const memory = new AnswerRedisMemory();
 
-    // Delegate to fetchRequestHandler for resume
     return fetchRequestHandler({
       agent,
       sessionId,

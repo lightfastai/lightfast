@@ -10,27 +10,44 @@ const {
   mockWorkflowTrigger,
   mockFindFirst,
   mockSelectLimit,
+  mockSelectWhere,
   mockInsertReturning,
+  mockInsertOnConflict,
   mockUpdateWhere,
-  mockGetProvider,
+  mockWriteTokenRecord,
+  mockUpdateTokenRecord,
+  mockOAuth,
+  mockCreateConfig,
   mockProvider,
 } = vi.hoisted(() => {
-  const mockProvider = {
-    name: "github" as const,
-    requiresWebhookRegistration: false,
-    getAuthorizationUrl: vi
+  const mockOAuth = {
+    buildAuthUrl: vi
       .fn()
       .mockReturnValue("https://github.com/login/oauth/authorize?mock=1"),
-    handleCallback: vi.fn().mockResolvedValue({
-      status: "connected",
-      installationId: "inst-1",
-      provider: "github",
+    processCallback: vi.fn().mockResolvedValue({
+      status: "connected-no-token",
+      externalId: "install-123",
+      accountInfo: {
+        version: 1,
+        sourceType: "github",
+        events: [],
+        installedAt: "2026-01-01T00:00:00Z",
+        lastValidatedAt: "2026-01-01T00:00:00Z",
+        raw: {},
+      },
     }),
-    resolveToken: vi.fn().mockResolvedValue({
-      accessToken: "tok-123",
-      provider: "github",
-      expiresIn: 3600,
-    }),
+    usesStoredToken: false,
+    getActiveToken: vi.fn().mockResolvedValue("tok-123"),
+  };
+
+  const mockCreateConfig = vi
+    .fn()
+    .mockImplementation((_env: unknown, _runtime: unknown) => ({}));
+
+  const mockProvider = {
+    name: "github" as const,
+    createConfig: mockCreateConfig,
+    oauth: mockOAuth,
   };
 
   return {
@@ -41,9 +58,14 @@ const {
     mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
     mockFindFirst: vi.fn().mockResolvedValue(null),
     mockSelectLimit: vi.fn().mockResolvedValue([]),
-    mockInsertReturning: vi.fn().mockResolvedValue([]),
+    mockSelectWhere: vi.fn().mockResolvedValue([]),
+    mockInsertReturning: vi.fn().mockResolvedValue([{ id: "inst-1" }]),
+    mockInsertOnConflict: vi.fn().mockResolvedValue(undefined),
     mockUpdateWhere: vi.fn().mockResolvedValue(undefined),
-    mockGetProvider: vi.fn().mockReturnValue(mockProvider),
+    mockWriteTokenRecord: vi.fn().mockResolvedValue(undefined),
+    mockUpdateTokenRecord: vi.fn().mockResolvedValue(undefined),
+    mockOAuth,
+    mockCreateConfig,
     mockProvider,
   };
 });
@@ -57,8 +79,8 @@ vi.mock("drizzle-orm", () => ({
 vi.mock("../env", () => ({
   env: {
     GATEWAY_API_KEY: "test-api-key",
+    ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
   },
-  getEnv: () => ({ GATEWAY_API_KEY: "test-api-key" }),
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -103,7 +125,7 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
 // Chain-mock: ignores table/column/condition context so results are purely
@@ -111,25 +133,45 @@ vi.mock("@vendor/upstash-workflow/client", () => ({
 // may silently pass with wrong data. Full query correctness is covered by
 // PGlite-backed integration tests. If stronger unit-test guarantees are needed,
 // replace with table/condition-aware stubs.
+//
+// The `where()` and `onConflictDoUpdate()` returns are thenable (for queries
+// that end without `.limit()` or `.returning()`) AND chain-extensible.
 vi.mock("@db/console/client", () => ({
   db: {
     query: {
-      gwInstallations: {
+      gatewayInstallations: {
         findFirst: (...args: unknown[]) => mockFindFirst(...args),
       },
     },
-    select: () => ({
+    select: (..._args: unknown[]) => ({
       from: () => ({
-        where: () => ({
-          limit: () => mockSelectLimit(),
-        }),
+        where: () => {
+          const val = mockSelectWhere();
+          return {
+            // biome-ignore lint/suspicious/noThenProperty: mock drizzle chain
+            then: (res: (v: unknown) => void, rej: (e: unknown) => void) =>
+              Promise.resolve(val).then(res, rej),
+            catch: (rej: (e: unknown) => void) =>
+              Promise.resolve(val).catch(rej),
+            limit: () => mockSelectLimit(),
+          };
+        },
       }),
     }),
     insert: () => ({
       values: () => ({
-        onConflictDoUpdate: () => ({
-          returning: () => mockInsertReturning(),
-        }),
+        onConflictDoUpdate: () => {
+          const val = mockInsertOnConflict();
+          return {
+            // biome-ignore lint/suspicious/noThenProperty: mock drizzle chain
+            then: (res: (v: unknown) => void, rej: (e: unknown) => void) =>
+              Promise.resolve(val).then(res, rej),
+            catch: (rej: (e: unknown) => void) =>
+              Promise.resolve(val).catch(rej),
+            returning: () => mockInsertReturning(),
+          };
+        },
+        onConflictDoNothing: () => mockInsertOnConflict(),
       }),
     }),
     update: () => ({
@@ -141,31 +183,70 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwInstallations: { id: "id", provider: "provider", status: "status" },
-  gwResources: {
+  gatewayInstallations: { id: "id", provider: "provider", status: "status" },
+  gatewayResources: {
     id: "id",
     installationId: "installationId",
     providerResourceId: "providerResourceId",
     status: "status",
   },
+  gatewayBackfillRuns: {
+    installationId: "installationId",
+    entityType: "entityType",
+    since: "since",
+    depth: "depth",
+    status: "status",
+    pagesProcessed: "pagesProcessed",
+    eventsProduced: "eventsProduced",
+    eventsDispatched: "eventsDispatched",
+    completedAt: "completedAt",
+  },
+  gatewayTokens: {
+    id: "id",
+    installationId: "installationId",
+    accessToken: "accessToken",
+    refreshToken: "refreshToken",
+    expiresAt: "expiresAt",
+  },
 }));
 
-vi.mock("../providers", () => ({
-  getProvider: (...args: unknown[]) => mockGetProvider(...args),
-}));
+vi.mock("@repo/console-providers", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  return {
+    ...actual,
+    PROVIDERS: {
+      github: mockProvider,
+      vercel: { ...mockProvider, name: "vercel" },
+      linear: { ...mockProvider, name: "linear" },
+      sentry: { ...mockProvider, name: "sentry" },
+    },
+    PROVIDER_ENVS: () => [],
+    getProvider: (name: string) => {
+      const providers: Record<string, unknown> = {
+        github: mockProvider,
+        vercel: { ...mockProvider, name: "vercel" },
+        linear: { ...mockProvider, name: "linear" },
+        sentry: { ...mockProvider, name: "sentry" },
+      };
+      return providers[name];
+    },
+  };
+});
 
-vi.mock("../providers/types", () => ({}));
+vi.mock("../lib/token-store", () => ({
+  writeTokenRecord: (...args: unknown[]) => mockWriteTokenRecord(...args),
+  updateTokenRecord: (...args: unknown[]) => mockUpdateTokenRecord(...args),
+}));
 
 vi.mock("@repo/lib", () => ({
   nanoid: vi.fn().mockReturnValue("mock-nanoid"),
+  decrypt: vi.fn().mockResolvedValue("decrypted-token"),
 }));
 
 vi.mock("../lib/urls", () => ({
   gatewayBaseUrl: "https://gateway.test/services",
   consoleUrl: "https://console.test",
   relayBaseUrl: "https://relay.test/api",
-  backfillUrl: "https://backfill.test/api",
-  cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // ── Import app after mocks ──
@@ -198,7 +279,12 @@ function request(
 describe("GET /connections/:provider/authorize", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetProvider.mockReturnValue(mockProvider);
+    mockCreateConfig.mockImplementation(
+      (_env: unknown, _runtime: unknown) => ({})
+    );
+    mockOAuth.buildAuthUrl.mockReturnValue(
+      "https://github.com/login/oauth/authorize?mock=1"
+    );
   });
 
   it("returns 401 without X-API-Key", async () => {
@@ -237,9 +323,6 @@ describe("GET /connections/:provider/authorize", () => {
   });
 
   it("returns 400 for unknown provider", async () => {
-    mockGetProvider.mockImplementation(() => {
-      throw new Error("unknown");
-    });
     const res = await request("/connections/unknown/authorize", {
       headers: { "X-Org-Id": "org-1", "X-API-Key": "test-api-key" },
     });
@@ -359,13 +442,26 @@ describe("GET /connections/oauth/status", () => {
 describe("GET /connections/:provider/callback", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetProvider.mockReturnValue(mockProvider);
+    mockCreateConfig.mockImplementation(
+      (_env: unknown, _runtime: unknown) => ({})
+    );
+    mockOAuth.processCallback.mockResolvedValue({
+      status: "connected-no-token",
+      externalId: "install-123",
+      accountInfo: {
+        version: 1,
+        sourceType: "github",
+        events: [],
+        installedAt: "2026-01-01T00:00:00Z",
+        lastValidatedAt: "2026-01-01T00:00:00Z",
+        raw: {},
+      },
+    });
+    mockInsertReturning.mockResolvedValue([{ id: "inst-1" }]);
+    mockSelectLimit.mockResolvedValue([]);
   });
 
   it("returns 400 for unknown provider", async () => {
-    mockGetProvider.mockImplementation(() => {
-      throw new Error("unknown");
-    });
     const res = await request("/connections/unknown/callback?state=abc");
     expect(res.status).toBe(400);
     expect(await res.json()).toMatchObject({ error: "unknown_provider" });
@@ -389,7 +485,6 @@ describe("GET /connections/:provider/callback", () => {
   });
 
   it("returns 400 when provider mismatch in state", async () => {
-    mockGetProvider.mockReturnValue({ ...mockProvider, name: "vercel" });
     mockRedisHgetall.mockResolvedValue({
       provider: "linear",
       orgId: "org-1",
@@ -408,6 +503,8 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
+    mockSelectLimit.mockResolvedValue([]); // not reactivated
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123"
     );
@@ -415,7 +512,7 @@ describe("GET /connections/:provider/callback", () => {
     expect(res.headers.get("location")).toBe(
       "https://console.test/provider/github/connected"
     );
-    expect(mockProvider.handleCallback).toHaveBeenCalled();
+    expect(mockOAuth.processCallback).toHaveBeenCalled();
   });
 
   it("includes reactivated param in redirect when applicable", async () => {
@@ -424,12 +521,9 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockResolvedValueOnce({
-      status: "connected",
-      installationId: "inst-1",
-      provider: "github",
-      reactivated: true,
-    });
+    // Return existing installation → reactivated = true
+    mockSelectLimit.mockResolvedValueOnce([{ id: "existing-id" }]);
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123"
     );
@@ -444,12 +538,21 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockResolvedValueOnce({
-      status: "connected",
-      installationId: "inst-1",
-      provider: "github",
+    mockOAuth.processCallback.mockResolvedValueOnce({
+      status: "connected-redirect",
+      externalId: "install-123",
+      accountInfo: {
+        version: 1,
+        sourceType: "github",
+        events: [],
+        installedAt: "2026-01-01T00:00:00Z",
+        lastValidatedAt: "2026-01-01T00:00:00Z",
+        raw: {},
+      },
+      tokens: { accessToken: "tok-abc", raw: {} },
       nextUrl: "https://vercel.com/integrations/test/complete",
     });
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123"
     );
@@ -466,12 +569,21 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
       redirectTo: "http://localhost:4200/callback",
     });
-    mockProvider.handleCallback.mockResolvedValueOnce({
-      status: "connected",
-      installationId: "inst-1",
-      provider: "github",
+    mockOAuth.processCallback.mockResolvedValueOnce({
+      status: "connected-redirect",
+      externalId: "install-123",
+      accountInfo: {
+        version: 1,
+        sourceType: "github",
+        events: [],
+        installedAt: "2026-01-01T00:00:00Z",
+        lastValidatedAt: "2026-01-01T00:00:00Z",
+        raw: {},
+      },
+      tokens: { accessToken: "tok-abc", raw: {} },
       nextUrl: "https://vercel.com/integrations/test/complete",
     });
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123"
     );
@@ -487,11 +599,7 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockResolvedValueOnce({
-      status: "connected",
-      installationId: "inst-1",
-      provider: "github",
-    });
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123"
     );
@@ -507,10 +615,9 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockResolvedValueOnce({
-      status: "connected",
-      installationId: "inst-1",
-      provider: "github",
+    mockOAuth.processCallback.mockResolvedValueOnce({
+      status: "pending-setup",
+      externalId: "install-123",
       setupAction: "request",
     });
     const res = await request(
@@ -528,6 +635,7 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
       redirectTo: "inline",
     });
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123"
     );
@@ -544,6 +652,7 @@ describe("GET /connections/:provider/callback", () => {
       connectedBy: "user-1",
       redirectTo: "http://localhost:4200/callback",
     });
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     const res = await request(
       "/connections/github/callback?state=valid&installation_id=123"
     );
@@ -558,6 +667,7 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
+    mockInsertReturning.mockResolvedValueOnce([{ id: "inst-1" }]);
     await request(
       "/connections/github/callback?state=poll-state&installation_id=123"
     );
@@ -568,13 +678,13 @@ describe("GET /connections/:provider/callback", () => {
     );
   });
 
-  it("redirects with error when handleCallback throws", async () => {
+  it("redirects with error when processCallback throws", async () => {
     mockRedisHgetall.mockResolvedValue({
       provider: "github",
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockRejectedValueOnce(
+    mockOAuth.processCallback.mockRejectedValueOnce(
       new Error("missing installation_id")
     );
     const res = await request("/connections/github/callback?state=valid");
@@ -586,14 +696,14 @@ describe("GET /connections/:provider/callback", () => {
     expect(location).toContain("error=missing%20installation_id");
   });
 
-  it("returns inline error HTML when redirectTo=inline and handleCallback throws", async () => {
+  it("returns inline error HTML when redirectTo=inline and processCallback throws", async () => {
     mockRedisHgetall.mockResolvedValue({
       provider: "github",
       orgId: "org-1",
       connectedBy: "user-1",
       redirectTo: "inline",
     });
-    mockProvider.handleCallback.mockRejectedValueOnce(new Error("auth_failed"));
+    mockOAuth.processCallback.mockRejectedValueOnce(new Error("auth_failed"));
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(400);
     const body = await res.text();
@@ -601,15 +711,13 @@ describe("GET /connections/:provider/callback", () => {
     expect(body).toContain("auth_failed");
   });
 
-  it("stores failed result in Redis for polling when handleCallback throws", async () => {
+  it("stores failed result in Redis for polling when processCallback throws", async () => {
     mockRedisHgetall.mockResolvedValue({
       provider: "github",
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("network_error")
-    );
+    mockOAuth.processCallback.mockRejectedValueOnce(new Error("network_error"));
     await request("/connections/github/callback?state=poll-state");
     expect(mockRedisHset).toHaveBeenCalledWith(
       expect.stringContaining("gw:oauth:result:"),
@@ -617,19 +725,17 @@ describe("GET /connections/:provider/callback", () => {
     );
   });
 
-  it("redirects with error for insert_failed", async () => {
+  it("redirects with error when upsert fails", async () => {
     mockRedisHgetall.mockResolvedValue({
       provider: "github",
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("insert_failed")
-    );
+    mockInsertReturning.mockResolvedValueOnce([]); // upsert returns no rows
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
-    expect(location).toContain("error=insert_failed");
+    expect(location).toContain("error=upsert_failed");
   });
 
   it("redirects with error for unexpected errors", async () => {
@@ -638,9 +744,7 @@ describe("GET /connections/:provider/callback", () => {
       orgId: "org-1",
       connectedBy: "user-1",
     });
-    mockProvider.handleCallback.mockRejectedValueOnce(
-      new Error("network_error")
-    );
+    mockOAuth.processCallback.mockRejectedValueOnce(new Error("network_error"));
     const res = await request("/connections/github/callback?state=valid");
     expect(res.status).toBe(302);
     const location = res.headers.get("location")!;
@@ -676,7 +780,6 @@ describe("GET /connections/:id", () => {
       id: "conn-1",
       provider: "github",
       externalId: "12345",
-      accountLogin: "my-org",
       orgId: "org-1",
       status: "active",
       tokens: [],
@@ -702,7 +805,7 @@ describe("GET /connections/:id", () => {
 describe("GET /connections/:id/token", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockGetProvider.mockReturnValue(mockProvider);
+    mockOAuth.getActiveToken.mockResolvedValue("tok-123");
   });
 
   it("returns 401 without API key", async () => {
@@ -731,9 +834,9 @@ describe("GET /connections/:id/token", () => {
     });
   });
 
-  it("returns token when installation is active", async () => {
+  it("returns token when installation is active (github)", async () => {
     mockSelectLimit.mockResolvedValueOnce([
-      { id: "conn-1", provider: "github", status: "active" },
+      { id: "conn-1", provider: "github", status: "active", externalId: "123" },
     ]);
     const res = await request("/connections/conn-1/token", {
       headers: { "X-API-Key": "test-api-key" },
@@ -743,24 +846,22 @@ describe("GET /connections/:id/token", () => {
     expect(json.accessToken).toBe("tok-123");
   });
 
-  it("returns 404 when provider throws no_token_found", async () => {
+  it("returns 404 when getActiveToken throws no_token_found", async () => {
     mockSelectLimit.mockResolvedValueOnce([
-      { id: "conn-1", provider: "github", status: "active" },
+      { id: "conn-1", provider: "github", status: "active", externalId: "123" },
     ]);
-    mockProvider.resolveToken.mockRejectedValueOnce(
-      new Error("no_token_found")
-    );
+    mockOAuth.getActiveToken.mockRejectedValueOnce(new Error("no_token_found"));
     const res = await request("/connections/conn-1/token", {
       headers: { "X-API-Key": "test-api-key" },
     });
     expect(res.status).toBe(404);
   });
 
-  it("returns 401 when provider throws token_expired", async () => {
+  it("returns 401 when token_expired is thrown", async () => {
     mockSelectLimit.mockResolvedValueOnce([
-      { id: "conn-1", provider: "github", status: "active" },
+      { id: "conn-1", provider: "github", status: "active", externalId: "123" },
     ]);
-    mockProvider.resolveToken.mockRejectedValueOnce(new Error("token_expired"));
+    mockOAuth.getActiveToken.mockRejectedValueOnce(new Error("token_expired"));
     const res = await request("/connections/conn-1/token", {
       headers: { "X-API-Key": "test-api-key" },
     });
@@ -963,5 +1064,131 @@ describe("DELETE /connections/:id/resources/:resourceId", () => {
     expect(json.status).toBe("removed");
     expect(json.resourceId).toBe("res-1");
     expect(mockRedisDel).toHaveBeenCalled();
+  });
+});
+
+describe("GET /connections/:id/backfill-runs", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 401 without API key", async () => {
+    const res = await request("/connections/inst-1/backfill-runs");
+    expect(res.status).toBe(401);
+  });
+
+  it("returns empty array when no runs exist", async () => {
+    mockSelectWhere.mockResolvedValueOnce([]);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([]);
+  });
+
+  it("returns backfill runs for an installation", async () => {
+    const runs = [
+      {
+        entityType: "issue",
+        since: "2026-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+        pagesProcessed: 3,
+        eventsProduced: 50,
+        eventsDispatched: 50,
+        completedAt: "2026-01-02T00:00:00Z",
+      },
+    ];
+    mockSelectWhere.mockResolvedValueOnce(runs);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual(runs);
+  });
+
+  it("supports status filter query param", async () => {
+    mockSelectWhere.mockResolvedValueOnce([]);
+    const res = await request(
+      "/connections/inst-1/backfill-runs?status=completed",
+      {
+        headers: { "X-API-Key": "test-api-key" },
+      }
+    );
+    expect(res.status).toBe(200);
+    expect(await res.json()).toEqual([]);
+  });
+});
+
+describe("POST /connections/:id/backfill-runs", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns 401 without API key", async () => {
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: {
+        entityType: "issue",
+        since: "2026-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+      },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("returns 400 for malformed JSON body", async () => {
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: "not-json{",
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "invalid_json" });
+  });
+
+  it("returns 400 for invalid body", async () => {
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: { entityType: "" },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({ error: "invalid_body" });
+  });
+
+  it("upserts backfill run and returns ok", async () => {
+    mockInsertOnConflict.mockResolvedValueOnce(undefined);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: {
+        entityType: "issue",
+        since: "2026-01-01T00:00:00Z",
+        depth: 30,
+        status: "completed",
+        pagesProcessed: 3,
+        eventsProduced: 50,
+        eventsDispatched: 50,
+      },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ status: "ok" });
+    expect(mockInsertOnConflict).toHaveBeenCalled();
+  });
+
+  it("upserts failed run with error message", async () => {
+    mockInsertOnConflict.mockResolvedValueOnce(undefined);
+    const res = await request("/connections/inst-1/backfill-runs", {
+      method: "POST",
+      body: {
+        entityType: "pull_request",
+        since: "2026-01-01T00:00:00Z",
+        depth: 7,
+        status: "failed",
+        error: "token_expired",
+      },
+      headers: { "X-API-Key": "test-api-key" },
+    });
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ status: "ok" });
   });
 });

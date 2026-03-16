@@ -77,9 +77,9 @@ vi.mock("@gateway/providers", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/qstash", () => ({
@@ -97,7 +97,7 @@ vi.mock("@vendor/related-projects", () => ({
   withRelatedProject: ({ defaultHost }: { defaultHost: string }) => defaultHost,
 }));
 
-import { gwInstallations } from "@db/console/schema";
+import { gatewayInstallations } from "@db/console/schema";
 // ── Import app after mocks are registered ──
 import gatewayApp from "@gateway/app";
 import { oauthResultKey, oauthStateKey } from "@gateway/cache";
@@ -384,7 +384,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
 
     it("Callback with missing state falls back to externalId DB lookup", async () => {
       // Seed a pre-existing gwInstallation with matching externalId
-      await db.insert(gwInstallations).values({
+      await db.insert(gatewayInstallations).values({
         provider: "github",
         externalId: "55555",
         connectedBy: "user_original",
@@ -396,17 +396,7 @@ describe("Suite 10 — Browser OAuth Flow Routes", () => {
           events: ["push"],
           installedAt: "2026-01-01T00:00:00Z",
           lastValidatedAt: "2026-01-01T00:00:00Z",
-          raw: {
-            account: {
-              login: "test-org",
-              id: 67_890,
-              type: "Organization" as const,
-              avatar_url: "",
-            },
-            permissions: {},
-            events: ["push"],
-            created_at: "2026-01-01T00:00:00Z",
-          },
+          raw: {},
         },
       });
 

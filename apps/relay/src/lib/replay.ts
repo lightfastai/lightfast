@@ -1,12 +1,15 @@
 import { db } from "@db/console/client";
-import type { GwWebhookDelivery } from "@db/console/schema";
-import { gwWebhookDeliveries } from "@db/console/schema";
-import type { ProviderName, WebhookReceiptPayload } from "@repo/gateway-types";
+import type { GatewayWebhookDelivery } from "@db/console/schema";
+import { gatewayWebhookDeliveries } from "@db/console/schema";
+import type {
+  SourceType,
+  WebhookReceiptPayload,
+} from "@repo/console-providers";
+import { getProvider } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
 import { redis } from "@vendor/upstash";
-import { getWorkflowClient } from "@vendor/upstash-workflow/client";
-import { getProvider } from "../providers/index.js";
-import type { WebhookPayload } from "../providers/types.js";
+import { workflowClient } from "@vendor/upstash-workflow/client";
+import { log } from "../logger.js";
 import { webhookSeenKey } from "./cache.js";
 import { relayBaseUrl } from "./urls.js";
 
@@ -27,7 +30,7 @@ interface ReplayResult {
  * 4. Updates status to "received" (workflow will advance to delivered/dlq)
  */
 export async function replayDeliveries(
-  deliveries: GwWebhookDelivery[]
+  deliveries: GatewayWebhookDelivery[]
 ): Promise<ReplayResult> {
   const replayed: string[] = [];
   const skipped: string[] = [];
@@ -40,15 +43,16 @@ export async function replayDeliveries(
     }
 
     try {
-      const parsedPayload = JSON.parse(delivery.payload) as WebhookPayload;
+      const parsedPayload = JSON.parse(delivery.payload) as unknown;
 
-      const providerName = delivery.provider as ProviderName;
+      const providerName = delivery.provider as SourceType;
 
       // Re-extract resourceId from stored payload via provider
       let resourceId: string | null = null;
       try {
-        const providerInstance = getProvider(providerName);
-        resourceId = providerInstance.extractResourceId(parsedPayload);
+        const providerDef = getProvider(providerName);
+        resourceId =
+          providerDef?.webhook.extractResourceId(parsedPayload) ?? null;
       } catch {
         // If extraction fails, proceed with null — workflow handles it
       }
@@ -57,16 +61,17 @@ export async function replayDeliveries(
       await redis.del(webhookSeenKey(providerName, delivery.deliveryId));
 
       // Re-trigger the full workflow — it handles resolution, delivery, and status updates
-      await getWorkflowClient().trigger({
+      await workflowClient.trigger({
         url: `${relayBaseUrl}/workflows/webhook-delivery`,
-        body: {
+        body: JSON.stringify({
           provider: providerName,
           deliveryId: delivery.deliveryId,
           eventType: delivery.eventType,
           resourceId,
           payload: parsedPayload,
           receivedAt: new Date(delivery.receivedAt).getTime(),
-        } satisfies WebhookReceiptPayload,
+        } satisfies WebhookReceiptPayload),
+        headers: { "Content-Type": "application/json" },
       });
 
       // Trigger succeeded — mark as replayed regardless of DB update outcome
@@ -75,20 +80,19 @@ export async function replayDeliveries(
       // Reset status — workflow will advance to delivered or dlq
       try {
         await db
-          .update(gwWebhookDeliveries)
+          .update(gatewayWebhookDeliveries)
           .set({ status: "received" })
           .where(
             and(
-              eq(gwWebhookDeliveries.provider, delivery.provider),
-              eq(gwWebhookDeliveries.deliveryId, delivery.deliveryId)
+              eq(gatewayWebhookDeliveries.provider, delivery.provider),
+              eq(gatewayWebhookDeliveries.deliveryId, delivery.deliveryId)
             )
           );
       } catch (err) {
-        console.error(
-          "[replay] DB status update failed for",
-          delivery.deliveryId,
-          err
-        );
+        log.error("[replay] DB status update failed", {
+          deliveryId: delivery.deliveryId,
+          error: err,
+        });
       }
     } catch {
       failed.push(delivery.deliveryId);

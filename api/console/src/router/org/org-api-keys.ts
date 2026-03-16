@@ -68,7 +68,7 @@ export const orgApiKeysRouter = {
     .input(createOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const { key, prefix, suffix } = generateOrgApiKey();
-      const keyHash = await hashApiKey(key);
+      const keyHash = hashApiKey(key);
 
       const [created] = await db
         .insert(orgApiKeys)
@@ -206,7 +206,7 @@ export const orgApiKeysRouter = {
       }
 
       const { key, prefix, suffix } = generateOrgApiKey();
-      const keyHash = await hashApiKey(key);
+      const keyHash = hashApiKey(key);
 
       // Batch: revoke old, create new (atomic — neon-http doesn't support transactions)
       const [, insertResult] = await db.batch([

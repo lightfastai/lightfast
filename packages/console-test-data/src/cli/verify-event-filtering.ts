@@ -13,21 +13,17 @@ import { fileURLToPath } from "node:url";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-import {
-  ALL_GITHUB_EVENTS,
-  ALL_LINEAR_EVENTS,
-  ALL_SENTRY_EVENTS,
-  ALL_VERCEL_EVENTS,
-} from "@repo/console-types/integrations/events";
+import type { ProviderName } from "@repo/console-providers";
+import { PROVIDERS } from "@repo/console-providers";
 
 // Configuration from seed-integrations.ts
 // All sources use category-level keys with normalization in getBaseEventType()
-const ALLOWED_EVENTS = {
-  github: ALL_GITHUB_EVENTS, // Categories: push, pull_request, issues, release, discussion
-  vercel: ALL_VERCEL_EVENTS, // Categories: deployment.created, deployment.succeeded, etc.
-  sentry: ALL_SENTRY_EVENTS, // Categories: issue, error, event_alert, metric_alert
-  linear: ALL_LINEAR_EVENTS, // Categories: Issue, Comment, Project, Cycle, ProjectUpdate
-};
+const ALLOWED_EVENTS = Object.fromEntries(
+  (Object.keys(PROVIDERS) as ProviderName[]).map((key) => [
+    key,
+    Object.keys(PROVIDERS[key].categories),
+  ])
+) as Record<ProviderName, string[]>;
 
 interface WebhookPayload {
   eventType: string;
@@ -111,7 +107,7 @@ function verifyEventFiltering() {
 
       const allowedForSource =
         ALLOWED_EVENTS[source as keyof typeof ALLOWED_EVENTS];
-      if ((allowedForSource as string[]).includes(normalizedEventType)) {
+      if (allowedForSource.includes(normalizedEventType)) {
         allowedEvents++;
       } else {
         issues.push(

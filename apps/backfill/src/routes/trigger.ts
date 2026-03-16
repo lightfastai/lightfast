@@ -1,27 +1,21 @@
+import {
+  backfillTriggerPayload,
+  timingSafeStringEqual,
+} from "@repo/console-providers";
+import { createGatewayClient } from "@repo/gateway-service-clients";
 import { Hono } from "hono";
 import { z } from "zod";
 
-import { getEnv } from "../env.js";
+import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { timingSafeStringEqual } from "../lib/crypto.js";
+import { log } from "../logger.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
-
-const triggerSchema = z.object({
-  installationId: z.string().min(1),
-  provider: z.string().min(1),
-  orgId: z.string().min(1),
-  depth: z.union([z.literal(7), z.literal(30), z.literal(90)]).optional(),
-  entityTypes: z.array(z.string()).optional(),
-});
 
 const cancelSchema = z.object({
   installationId: z.string().min(1),
 });
 
-async function isValidApiKey(
-  key: string | undefined,
-  expected: string
-): Promise<boolean> {
+function isValidApiKey(key: string | undefined, expected: string): boolean {
   if (!key) {
     return false;
   }
@@ -37,8 +31,8 @@ const trigger = new Hono<{ Variables: LifecycleVariables }>();
  * Validates X-API-Key and sends an Inngest event to start the backfill.
  */
 trigger.post("/", async (c) => {
-  const { GATEWAY_API_KEY } = getEnv(c);
-  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  const { GATEWAY_API_KEY } = env;
+  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -49,10 +43,10 @@ trigger.post("/", async (c) => {
     return c.json({ error: "invalid_json" }, 400);
   }
 
-  const parsed = triggerSchema.safeParse(raw);
+  const parsed = backfillTriggerPayload.safeParse(raw);
   if (!parsed.success) {
     return c.json(
-      { error: "validation_error", details: parsed.error.flatten() },
+      { error: "validation_error", details: parsed.error.issues },
       400
     );
   }
@@ -65,13 +59,18 @@ trigger.post("/", async (c) => {
         installationId: body.installationId,
         provider: body.provider,
         orgId: body.orgId,
-        depth: body.depth ?? 30,
+        depth: body.depth,
         entityTypes: body.entityTypes,
-        correlationId: c.get("correlationId"),
+        holdForReplay: body.holdForReplay,
+        correlationId: body.correlationId ?? c.get("correlationId"),
       },
     });
   } catch (err) {
-    console.error("Failed to send backfill event to Inngest", err);
+    log.error("[backfill] failed to send backfill event to Inngest", {
+      installationId: body.installationId,
+      provider: body.provider,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue backfill" },
       502
@@ -88,8 +87,8 @@ trigger.post("/", async (c) => {
  * Cancels any running backfill for this installation.
  */
 trigger.post("/cancel", async (c) => {
-  const { GATEWAY_API_KEY } = getEnv(c);
-  if (!(await isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY))) {
+  const { GATEWAY_API_KEY } = env;
+  if (!isValidApiKey(c.req.header("X-API-Key"), GATEWAY_API_KEY)) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
@@ -103,11 +102,23 @@ trigger.post("/cancel", async (c) => {
   const parsed = cancelSchema.safeParse(raw);
   if (!parsed.success) {
     return c.json(
-      { error: "validation_error", details: parsed.error.flatten() },
+      { error: "validation_error", details: parsed.error.issues },
       400
     );
   }
   const body = parsed.data;
+
+  // Verify installation exists before emitting cancel event
+  const gw = createGatewayClient({
+    apiKey: GATEWAY_API_KEY,
+    requestSource: "backfill",
+  });
+  const connection = await gw
+    .getConnection(body.installationId)
+    .catch(() => null);
+  if (!connection) {
+    return c.json({ error: "connection_not_found" }, 404);
+  }
 
   try {
     await inngest.send({
@@ -118,7 +129,10 @@ trigger.post("/cancel", async (c) => {
       },
     });
   } catch (err) {
-    console.error("Failed to send cancel event to Inngest", err);
+    log.error("[backfill] failed to send cancel event to Inngest", {
+      installationId: body.installationId,
+      error: err instanceof Error ? err.message : String(err),
+    });
     return c.json(
       { error: "temporary_failure", message: "Failed to enqueue cancellation" },
       502

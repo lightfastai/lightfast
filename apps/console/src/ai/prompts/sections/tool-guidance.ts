@@ -14,7 +14,7 @@ const ANSWER_TOOL_GUIDANCE: Record<string, ToolGuidance> = {
     whenToUse:
       "Use as your primary discovery tool. Search when the user asks about past events, decisions, code changes, deployments, errors, or team activity. Start broad, then narrow.",
     howToUse:
-      "Extract key technical terms from the user's question. Use mode='hybrid' for most queries. Filter by source type (github, vercel, linear, sentry) when the question is source-specific. Use limit=5 for focused queries, limit=10 for broad surveys.",
+      "Extract key technical terms from the user's question. Use mode='balanced' for most queries. Filter by source type (github, vercel, linear, sentry) when the question is source-specific. Use limit=5 for focused queries, limit=10 for broad surveys.",
     resultHandling:
       "Cite results with source type, title, and relative date. Summarize patterns across results rather than listing each one. If multiple results tell a story, connect them narratively.",
     failureHandling:
@@ -42,26 +42,16 @@ const ANSWER_TOOL_GUIDANCE: Record<string, ToolGuidance> = {
     failureHandling:
       "If no similar items found, note the item appears unique in the workspace.",
   },
-  workspaceGraph: {
-    name: "workspaceGraph",
-    whenToUse:
-      "Use for causality and connection questions: 'what caused this?', 'what deployments included this fix?', 'what PRs are related to this issue?'. Traverses the relationship graph between events across sources.",
-    howToUse:
-      "Start from a specific observation ID. Use depth=1 for direct connections, depth=2 for transitive relationships. Limit results to avoid overwhelming output.",
-    resultHandling:
-      "Present connections as a narrative: 'Issue #42 was fixed by PR #87, which was deployed in deploy-abc on Feb 3.' Show the chain of events.",
-    failureHandling:
-      "If no graph connections exist, the item may not have cross-source links yet. Suggest using workspaceRelated or workspaceFindSimilar instead.",
-  },
   workspaceRelated: {
     name: "workspaceRelated",
     whenToUse:
-      "Use for direct relationships only (not transitive). Faster than workspaceGraph for simple 'what's related to X?' questions. Use when you need the immediate context around an event.",
-    howToUse: "Pass the observation ID. Default limit=5 is usually sufficient.",
+      "Use for finding related events and understanding causality. Handles both direct relationships and transitive traversals: 'what's related to this?', 'what caused this?', 'what deployments included this fix?'.",
+    howToUse:
+      "Pass the observation ID. Use depth=1 (default) for direct connections, depth=2 for transitive relationships, depth=3 for deep traversal. Use types filter to focus on specific relationship types.",
     resultHandling:
-      "List related items with their relationship type and source. Group by source type if there are many.",
+      "Present connections as a narrative: 'Issue #42 was fixed by PR #87, which was deployed in deploy-abc on Feb 3.' Show the chain of events. Group by source type if there are many.",
     failureHandling:
-      "If no related items, note that no direct relationships were found. Suggest workspaceGraph for deeper traversal or workspaceFindSimilar for semantic matches.",
+      "If no related items, note that no relationships were found. Suggest workspaceFindSimilar for semantic matches instead.",
   },
 };
 

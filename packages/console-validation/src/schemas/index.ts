@@ -6,16 +6,15 @@
  */
 
 export * from "./activities";
-export * from "./classification";
 export * from "./entities";
 export * from "./ingestion";
 export * from "./job";
-export * from "./metrics";
+export * from "./neural";
 export * from "./org-api-key";
-export * from "./organization";
-export * from "./source-event";
+export * from "./post-transform-event";
 export * from "./source-metadata";
 export * from "./sources";
 export * from "./store";
 export * from "./workflow-io";
 export * from "./workspace";
+export * from "./workspace-settings";

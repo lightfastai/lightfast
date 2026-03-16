@@ -3,8 +3,7 @@
 /**
  * Reset Demo Environment
  *
- * Cleans workspace observations, entities, clusters, relationships,
- * and Pinecone vectors, then optionally injects demo dataset.
+ * Cleans workspace events, entities, edges, and optionally injects demo dataset.
  *
  * Usage:
  *   pnpm --filter @repo/console-test-data reset-demo -- -w <workspaceId> [-i] [--dry-run]
@@ -14,15 +13,13 @@ import { parseArgs as nodeParseArgs } from "node:util";
 import { db } from "@db/console/client";
 import {
   orgWorkspaces,
-  workspaceNeuralEntities,
-  workspaceNeuralObservations,
-  workspaceObservationClusters,
-  workspaceObservationRelationships,
+  workspaceEntities,
+  workspaceEntityEdges,
+  workspaceEvents,
 } from "@db/console/schema";
-import { pineconeClient } from "@repo/console-pinecone";
 import { eq, sql } from "drizzle-orm";
 import { loadDataset } from "../loader/index.js";
-import { triggerObservationCapture } from "../trigger/trigger.js";
+import { triggerEventCapture } from "../trigger/trigger.js";
 
 interface ResetOptions {
   dryRun: boolean;
@@ -41,29 +38,23 @@ async function resetDemoEnvironment(options: ResetOptions) {
   // Step 1: Count existing data
   const [obsResult] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceNeuralObservations)
-    .where(eq(workspaceNeuralObservations.workspaceId, workspaceId));
+    .from(workspaceEvents)
+    .where(eq(workspaceEvents.workspaceId, workspaceId));
 
   const [entityResult] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceNeuralEntities)
-    .where(eq(workspaceNeuralEntities.workspaceId, workspaceId));
+    .from(workspaceEntities)
+    .where(eq(workspaceEntities.workspaceId, workspaceId));
 
-  const [clusterResult] = await db
+  const [edgeResult] = await db
     .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceObservationClusters)
-    .where(eq(workspaceObservationClusters.workspaceId, workspaceId));
-
-  const [relResult] = await db
-    .select({ count: sql<number>`count(*)::int` })
-    .from(workspaceObservationRelationships)
-    .where(eq(workspaceObservationRelationships.workspaceId, workspaceId));
+    .from(workspaceEntityEdges)
+    .where(eq(workspaceEntityEdges.workspaceId, workspaceId));
 
   console.log("📊 Found:");
   console.log(`   - ${obsResult?.count ?? 0} observations`);
   console.log(`   - ${entityResult?.count ?? 0} entities`);
-  console.log(`   - ${clusterResult?.count ?? 0} clusters`);
-  console.log(`   - ${relResult?.count ?? 0} relationships`);
+  console.log(`   - ${edgeResult?.count ?? 0} edges`);
 
   if (dryRun) {
     console.log(
@@ -72,7 +63,7 @@ async function resetDemoEnvironment(options: ResetOptions) {
     return;
   }
 
-  // Step 2: Get workspace settings for Pinecone
+  // Step 2: Verify workspace exists
   const workspace = await db.query.orgWorkspaces.findFirst({
     where: eq(orgWorkspaces.id, workspaceId),
   });
@@ -82,63 +73,36 @@ async function resetDemoEnvironment(options: ResetOptions) {
     process.exit(1);
   }
 
-  // Step 3: Delete Pinecone vectors
-  const settings = workspace.settings as {
-    embedding?: { indexName: string; namespaceName: string };
-  } | null;
-  if (settings?.embedding) {
-    console.log("\n🗑️  Clearing Pinecone vectors...");
-    const { indexName, namespaceName } = settings.embedding;
-    try {
-      await pineconeClient.deleteByMetadata(
-        indexName,
-        { layer: { $eq: "observations" } },
-        namespaceName
-      );
-      console.log(`   ✓ Cleared vectors from ${indexName}/${namespaceName}`);
-    } catch (error) {
-      console.log(
-        `   ⚠ Could not clear Pinecone: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
-  }
-
-  // Step 4: Delete database records (order matters for FKs)
+  // Step 3: Delete database records (order matters for FKs)
   console.log("\n🗑️  Clearing database records...");
 
-  // Delete relationships first (FK to observations)
+  // Delete entity edges first (FK to entities)
   await db
-    .delete(workspaceObservationRelationships)
-    .where(eq(workspaceObservationRelationships.workspaceId, workspaceId));
-  console.log("   ✓ Deleted relationships");
+    .delete(workspaceEntityEdges)
+    .where(eq(workspaceEntityEdges.workspaceId, workspaceId));
+  console.log("   ✓ Deleted edges");
 
   // Delete entities (FK to observations)
   await db
-    .delete(workspaceNeuralEntities)
-    .where(eq(workspaceNeuralEntities.workspaceId, workspaceId));
+    .delete(workspaceEntities)
+    .where(eq(workspaceEntities.workspaceId, workspaceId));
   console.log("   ✓ Deleted entities");
 
   // Delete observations
   await db
-    .delete(workspaceNeuralObservations)
-    .where(eq(workspaceNeuralObservations.workspaceId, workspaceId));
+    .delete(workspaceEvents)
+    .where(eq(workspaceEvents.workspaceId, workspaceId));
   console.log("   ✓ Deleted observations");
-
-  // Delete clusters
-  await db
-    .delete(workspaceObservationClusters)
-    .where(eq(workspaceObservationClusters.workspaceId, workspaceId));
-  console.log("   ✓ Deleted clusters");
 
   console.log("\n✅ Cleanup complete!");
 
-  // Step 5: Optionally inject demo data
+  // Step 4: Optionally inject demo data
   if (inject) {
     console.log("\n📥 Injecting sandbox-1 dataset...");
     const dataset = loadDataset("sandbox-1");
     console.log(`   Found ${dataset.events.length} events to inject`);
 
-    const result = await triggerObservationCapture(dataset.events, {
+    const result = await triggerEventCapture(dataset.events, {
       workspaceId,
       batchSize: 5,
       delayMs: 500,

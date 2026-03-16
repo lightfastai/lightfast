@@ -1,5 +1,8 @@
 import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
 import { Suspense } from "react";
+
+export const dynamic = "force-dynamic";
+
 import { ProfileDataDisplay } from "./_components/profile-data-display";
 import { ProfileDataLoading } from "./_components/profile-data-loading";
 

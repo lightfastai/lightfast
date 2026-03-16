@@ -14,6 +14,8 @@
     "tsBuildInfoFile": "${configDir}/.cache/tsbuildinfo.json",
     "strict": true,
     "noUncheckedIndexedAccess": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
     "checkJs": true,
     "module": "Preserve",
     "moduleResolution": "Bundler",

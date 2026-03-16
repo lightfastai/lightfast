@@ -1,7 +1,7 @@
 "use client";
 
 import { useTRPC } from "@repo/console-trpc/react";
-import type { RerankMode, V1SearchResponse } from "@repo/console-types";
+import type { RerankMode, SearchResponse } from "@repo/console-validation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";
@@ -18,7 +18,7 @@ async function executeSearch(
   body: Record<string, unknown>,
   storeId: string,
   signal: AbortSignal
-): Promise<V1SearchResponse> {
+): Promise<SearchResponse> {
   const response = await fetch("/v1/search", {
     method: "POST",
     headers: {
@@ -43,7 +43,7 @@ async function executeSearch(
     );
   }
 
-  return (await response.json()) as V1SearchResponse;
+  return (await response.json()) as SearchResponse;
 }
 
 interface WorkspaceSearchProps {
@@ -75,18 +75,12 @@ export function WorkspaceSearch({
     setSourceTypes,
     observationTypes,
     setObservationTypes,
-    actorNames,
-    setActorNames,
     expandedId,
     setExpandedId,
     limit,
     setLimit,
     offset,
     setOffset,
-    includeContext,
-    setIncludeContext,
-    includeHighlights,
-    setIncludeHighlights,
     agePreset,
     setAgePreset,
     activeTab,
@@ -95,7 +89,7 @@ export function WorkspaceSearch({
   } = useWorkspaceSearchParams(initialQuery);
 
   // Local state for search results and input
-  const [searchResults, setSearchResults] = useState<V1SearchResponse | null>(
+  const [searchResults, setSearchResults] = useState<SearchResponse | null>(
     null
   );
   const [isSearching, setIsSearching] = useState(false);
@@ -158,11 +152,8 @@ export function WorkspaceSearch({
       filters: {
         ...(sourceTypes.length > 0 && { sourceTypes }),
         ...(observationTypes.length > 0 && { observationTypes }),
-        ...(actorNames.length > 0 && { actorNames }),
         ...dateRangeFromPreset(agePreset),
       },
-      includeContext,
-      includeHighlights,
     };
 
     executeSearch(body, store.id, abortControllerRef.current.signal)
@@ -201,10 +192,11 @@ export function WorkspaceSearch({
   };
 
   return (
-    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: search landmark captures keyboard events for the search form
-    <search
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: search container handles keyboard navigation
+    <div
       className="flex h-full flex-col overflow-hidden"
       onKeyDown={handleKeyDown}
+      role="search"
     >
       {/* Split Layout */}
       <div className="flex flex-1 overflow-hidden">
@@ -221,7 +213,6 @@ export function WorkspaceSearch({
                 isClearDisabled={
                   sourceTypes.length === 0 &&
                   observationTypes.length === 0 &&
-                  actorNames.length === 0 &&
                   agePreset === "none"
                 }
                 isSubmitDisabled={isSearching || !inputValue.trim() || !store}
@@ -240,26 +231,18 @@ export function WorkspaceSearch({
 
               <div className="mt-12">
                 <SearchFilters
-                  actorNames={actorNames}
                   agePreset={agePreset}
-                  includeContext={includeContext}
-                  includeHighlights={includeHighlights}
                   limit={limit}
                   observationTypes={observationTypes}
                   offset={offset}
-                  onActorNamesChange={setActorNames}
                   onAgePresetChange={(v) =>
                     void setAgePreset(v as typeof agePreset)
                   }
-                  onIncludeContextChange={setIncludeContext}
-                  onIncludeHighlightsChange={setIncludeHighlights}
                   onLimitChange={setLimit}
                   onObservationTypesChange={setObservationTypes}
                   onOffsetChange={setOffset}
                   onSourceTypesChange={setSourceTypes}
-                  orgSlug={orgSlug}
                   sourceTypes={sourceTypes}
-                  workspaceName={workspaceName}
                 />
               </div>
 
@@ -287,7 +270,7 @@ export function WorkspaceSearch({
           />
         </div>
       </div>
-    </search>
+    </div>
   );
 }
 

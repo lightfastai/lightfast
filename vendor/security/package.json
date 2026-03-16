@@ -12,8 +12,7 @@
     "./env": "./env.ts",
     "./middleware": "./src/middleware.ts",
     "./clerk-nosecone": "./src/clerk-nosecone.ts",
-    "./csp": "./src/csp/index.ts",
-    "./requests/constants": "./src/requests/constants.ts"
+    "./csp": "./src/csp/index.ts"
   },
   "license": "MIT",
   "scripts": {
@@ -33,6 +32,6 @@
     "@nosecone/next": "1.1.0",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:^",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   }
 }

@@ -1,5 +1,8 @@
 import { db } from "@db/console/client";
-import { workspaceIntegrations } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  workspaceIntegrations,
+} from "@db/console/schema";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
@@ -29,12 +32,6 @@ const markGithubDeletedSchema = z.object({
 
 const updateGithubMetadataSchema = z.object({
   githubRepoId: z.string(),
-  metadata: z.object({
-    repoFullName: z.string().optional(),
-    defaultBranch: z.string().optional(),
-    isPrivate: z.boolean().optional(),
-    isArchived: z.boolean().optional(),
-  }),
 });
 
 const getSourceIdByGithubRepoIdSchema = z.object({
@@ -80,7 +77,7 @@ export const sourcesM2MRouter = {
       const source = result[0];
 
       // Verify it's actually a GitHub repository
-      if (source && source.sourceConfig.sourceType !== "github") {
+      if (source && source.provider !== "github") {
         return null;
       }
 
@@ -99,7 +96,10 @@ export const sourcesM2MRouter = {
     .input(getSourceIdByGithubRepoIdSchema)
     .query(async ({ input }) => {
       const result = await db
-        .select({ id: workspaceIntegrations.id })
+        .select({
+          id: workspaceIntegrations.id,
+          provider: workspaceIntegrations.provider,
+        })
         .from(workspaceIntegrations)
         .where(
           and(
@@ -113,14 +113,8 @@ export const sourcesM2MRouter = {
       const source = result[0];
 
       // Verify it's actually a GitHub repository
-      if (source) {
-        const fullSource = await db.query.workspaceIntegrations.findFirst({
-          where: eq(workspaceIntegrations.id, source.id),
-        });
-
-        if (fullSource?.sourceConfig.sourceType !== "github") {
-          return null;
-        }
+      if (source && source.provider !== "github") {
+        return null;
       }
 
       return source?.id ?? null;
@@ -167,7 +161,6 @@ export const sourcesM2MRouter = {
       sources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.disconnected",
           entityType: "integration",
@@ -196,18 +189,28 @@ export const sourcesM2MRouter = {
   markGithubInstallationInactive: webhookM2MProcedure
     .input(markGithubInstallationInactiveSchema)
     .mutation(async ({ input }) => {
-      // Find all sources for this installation
-      const sources = await db
-        .select()
+      // Find all active sources for this GitHub installation via FK path.
+      // Leverages the unique index on (provider, externalId) for an efficient
+      // lookup instead of scanning the entire table and filtering in memory.
+      const installationSources = await db
+        .select({
+          id: workspaceIntegrations.id,
+          workspaceId: workspaceIntegrations.workspaceId,
+          providerConfig: workspaceIntegrations.providerConfig,
+          providerResourceId: workspaceIntegrations.providerResourceId,
+        })
         .from(workspaceIntegrations)
-        .where(eq(workspaceIntegrations.isActive, true));
-
-      // Filter to GitHub sources with matching installationId
-      const installationSources = sources.filter(
-        (source) =>
-          source.sourceConfig.sourceType === "github" &&
-          source.sourceConfig.installationId === input.githubInstallationId
-      );
+        .innerJoin(
+          gatewayInstallations,
+          eq(workspaceIntegrations.installationId, gatewayInstallations.id)
+        )
+        .where(
+          and(
+            eq(gatewayInstallations.provider, "github"),
+            eq(gatewayInstallations.externalId, input.githubInstallationId),
+            eq(workspaceIntegrations.isActive, true)
+          )
+        );
 
       if (installationSources.length === 0) {
         return {
@@ -239,7 +242,6 @@ export const sourcesM2MRouter = {
       installationSources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.disconnected",
           entityType: "integration",
@@ -286,7 +288,7 @@ export const sourcesM2MRouter = {
       // Filter to GitHub sources and update
       const now = new Date().toISOString();
       const githubSources = sources.filter(
-        (source) => source.sourceConfig.sourceType === "github"
+        (source) => source.provider === "github"
       );
 
       if (githubSources.length === 0) {
@@ -294,16 +296,10 @@ export const sourcesM2MRouter = {
       }
 
       const updateQueries = githubSources.map((source) => {
-        const updatedConfig = {
-          ...source.sourceConfig,
-          isArchived: true,
-        };
-
         return db
           .update(workspaceIntegrations)
           .set({
             isActive: false,
-            sourceConfig: updatedConfig,
             lastSyncedAt: now,
             lastSyncStatus: "failed",
             lastSyncError: "Repository deleted on GitHub",
@@ -320,7 +316,6 @@ export const sourcesM2MRouter = {
       githubSources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.deleted",
           entityType: "integration",
@@ -340,18 +335,15 @@ export const sourcesM2MRouter = {
     }),
 
   /**
-   * Update GitHub repository metadata
+   * Touch GitHub repository integration timestamps.
    *
-   * Used by GitHub webhooks when repository metadata changes:
-   * - Repository renamed (full_name changed)
-   * - Default branch changed
-   * - Privacy settings changed
-   * - Archive status changed
+   * Called by GitHub webhooks when repository events occur.
+   * Display metadata (names, branches, privacy) is no longer stored in providerConfig —
+   * it will be resolved from a cache layer in a future iteration.
    */
   updateGithubMetadata: webhookM2MProcedure
     .input(updateGithubMetadataSchema)
     .mutation(async ({ input }) => {
-      // Find the source first
       const sources = await db
         .select()
         .from(workspaceIntegrations)
@@ -366,50 +358,21 @@ export const sourcesM2MRouter = {
         });
       }
 
-      // Filter to GitHub sources and update metadata
       const now = new Date().toISOString();
       const githubSources = sources.filter(
-        (source) => source.sourceConfig.sourceType === "github"
+        (source) => source.provider === "github"
       );
 
       if (githubSources.length === 0) {
         return { success: true, updated: 0 };
       }
 
-      const updateQueries = githubSources.map((source) => {
-        // Safe to cast: pre-filtered to github sourceType above
-        const sourceConfig = source.sourceConfig as Extract<
-          typeof source.sourceConfig,
-          { sourceType: "github" }
-        >;
-        const updatedConfig = {
-          ...sourceConfig,
-          ...(input.metadata.repoFullName && {
-            repoFullName: input.metadata.repoFullName,
-            repoName:
-              input.metadata.repoFullName.split("/")[1] ??
-              sourceConfig.repoName,
-          }),
-          ...(input.metadata.defaultBranch && {
-            defaultBranch: input.metadata.defaultBranch,
-          }),
-          ...(input.metadata.isPrivate !== undefined && {
-            isPrivate: input.metadata.isPrivate,
-          }),
-          ...(input.metadata.isArchived !== undefined && {
-            isArchived: input.metadata.isArchived,
-          }),
-        };
-
-        return db
+      const updateQueries = githubSources.map((source) =>
+        db
           .update(workspaceIntegrations)
-          .set({
-            sourceConfig: updatedConfig,
-            updatedAt: now,
-          })
-          .where(eq(workspaceIntegrations.id, source.id));
-      });
-      // Batch: update metadata atomically (neon-http doesn't support transactions)
+          .set({ updatedAt: now })
+          .where(eq(workspaceIntegrations.id, source.id))
+      );
       const updates = await db.batch(
         updateQueries as [(typeof updateQueries)[0], ...typeof updateQueries]
       );
@@ -418,14 +381,12 @@ export const sourcesM2MRouter = {
       githubSources.forEach((source) => {
         recordSystemActivity({
           workspaceId: source.workspaceId,
-          actorType: "webhook",
           category: "integration",
           action: "integration.metadata_updated",
           entityType: "integration",
           entityId: source.id,
           metadata: {
             provider: "github",
-            updates: input.metadata,
             githubRepoId: input.githubRepoId,
           },
         });

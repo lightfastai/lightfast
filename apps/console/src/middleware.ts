@@ -28,6 +28,7 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
+  "/api/gateway/ingress(.*)", // QStash-signed webhook delivery from Relay (auth via Upstash signature)
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
@@ -65,9 +66,17 @@ const isOrgScopedRoute = createRouteMatcher([
 // organizationSyncOptions activates org from URL, then auth.protect verifies access
 const isOrgPageRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 
-// v1 API routes - auth handled at route level (API key or session)
+// API routes - auth handled at route level (API key or session)
 // Must bypass Clerk middleware to allow API key authentication
-const isV1ApiRoute = createRouteMatcher(["/v1/(.*)"]);
+const isApiRoute = createRouteMatcher([
+  "/v1/(.*)", // keep for answer route
+  "/search(.*)", // new search
+  "/contents(.*)", // new contents
+  "/findsimilar(.*)", // new findsimilar
+  "/related(.*)", // new related
+  "/api/cli/(.*)",
+  "/api/events/(.*)",
+]);
 
 /**
  * Compose middleware with NEMO
@@ -138,9 +147,9 @@ export default clerkMiddleware(
       // Allow both pending and active users to proceed
       // Authorization happens at procedure level
     }
-    // v1 API routes: auth handled at route level via withDualAuth
+    // API routes: auth handled at route level via withDualAuth
     // Supports both API key (external clients) and session (console UI)
-    else if (isV1ApiRoute(req)) {
+    else if (isApiRoute(req)) {
       // Allow through without Clerk auth checks
       // Route handlers use withDualAuth() for authentication
     }

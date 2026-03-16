@@ -1,49 +1,54 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import type {
-  LightfastAnswerRuntimeContext,
-  SearchToolInput,
-  SearchToolOutput,
-} from "@repo/console-ai-types";
-import { V1SearchResponseSchema } from "@repo/console-types";
+import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
+import { SearchResponseSchema } from "@repo/console-validation";
 import { z } from "zod";
 
-const inputSchema: z.ZodType<SearchToolInput> = z.object({
-  query: z.string().describe("The search query text"),
+const inputSchema = z.object({
+  query: z.string().meta({ description: "The search query text" }),
   mode: z
     .enum(["fast", "balanced", "thorough"])
     .default("balanced")
-    .describe("Search quality mode"),
-  limit: z.number().int().min(1).max(20).default(10).describe("Max results"),
+    .meta({ description: "Search quality mode" }),
+  limit: z
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .default(10)
+    .meta({ description: "Max results (1-100)" }),
+  offset: z
+    .number()
+    .int()
+    .min(0)
+    .default(0)
+    .meta({ description: "Result offset for pagination" }),
   filters: z
     .object({
-      sourceTypes: z
-        .array(z.string())
+      sourceTypes: z.array(z.string()).optional().meta({
+        description: "Filter by source: github, linear, vercel, sentry",
+      }),
+      observationTypes: z.array(z.string()).optional().meta({
+        description: "Filter by type: commit, pull_request, issue, deployment",
+      }),
+      dateRange: z
+        .object({
+          start: z.string().optional(),
+          end: z.string().optional(),
+        })
         .optional()
-        .describe("Filter by source: github, linear, vercel, sentry"),
-      observationTypes: z
-        .array(z.string())
-        .optional()
-        .describe("Filter by type: commit, pull_request, issue, deployment"),
-      actorNames: z
-        .array(z.string())
-        .optional()
-        .describe("Filter by actor name"),
+        .meta({ description: "Filter by date range" }),
     })
     .optional(),
 });
 
-const outputSchema: z.ZodType<SearchToolOutput> = V1SearchResponseSchema;
+const outputSchema = SearchResponseSchema;
 
 export function workspaceSearchTool() {
-  return createTool<
-    LightfastAnswerRuntimeContext,
-    typeof inputSchema,
-    typeof outputSchema
-  >({
+  return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Search through workspace decisions and observations across connected tools. Use this to find commits, PRs, issues, deployments, and other development events. Returns ranked results with scores, snippets, source types, and extracted entities.",
-    inputSchema,
-    outputSchema,
+    inputSchema: inputSchema as any,
+    outputSchema: outputSchema as any,
     execute: async (input, context) => {
       const handler = context.tools?.workspaceSearch?.handler;
       if (!handler) {

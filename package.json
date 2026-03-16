@@ -4,9 +4,9 @@
   "private": true,
   "engines": {
     "node": ">=22.0.0",
-    "pnpm": "10.5.2"
+    "pnpm": "10.32.1"
   },
-  "packageManager": "pnpm@10.5.2",
+  "packageManager": "pnpm@10.32.1",
   "scripts": {
     "build": "turbo run build",
     "build:www": "turbo run build -F @lightfast/www",
@@ -20,6 +20,7 @@
     "build:gateway": "echo \"lightfast-gateway\" | vercel build --yes 2>&1",
     "build:backfill": "echo \"lightfast-backfill\" | vercel build --yes 2>&1",
     "dev:app": "turbo watch dev --concurrency=15 --filter=@lightfast/www --filter=@lightfast/auth --filter=@lightfast/console --filter=@lightfast/relay --filter=@lightfast/backfill --filter=@lightfast/gateway --continue",
+    "dev:log": "NO_COLOR=1 pnpm dev:app 2>&1 | tee /tmp/lightfast-dev.log",
     "dev:ngrok": "./scripts/ngrok 3024",
     "dev:www": "turbo watch dev -F @lightfast/www --continue",
     "dev:auth": "turbo watch dev -F @lightfast/auth --continue",
@@ -51,11 +52,13 @@
     "remotion:studio": "pnpm --filter @repo/console-remotion studio",
     "remotion:render": "pnpm --filter @repo/console-remotion render:gif",
     "db:generate": "pnpm --filter @db/console db:generate",
-    "db:migrate": "pnpm --filter @db/console db:migrate"
+    "db:migrate": "pnpm --filter @db/console db:migrate",
+    "knip": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.6",
     "@changesets/cli": "^2.30.0",
+    "knip": "^5.85.0",
     "turbo": "2.8.13",
     "turbo-ignore": "2.8.13",
     "typescript": "^5.9.2",

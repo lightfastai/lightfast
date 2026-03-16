@@ -8,11 +8,12 @@
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
+import type { SourceType } from "@repo/console-providers";
 
 export interface RawWebhook {
   eventType: string;
   payload: Record<string, unknown>;
-  source: "github" | "vercel" | "linear" | "sentry";
+  source: SourceType;
 }
 
 interface RawDataset {

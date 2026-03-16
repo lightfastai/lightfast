@@ -52,8 +52,8 @@ export const AnswerPromptInput = forwardRef<
   return (
     <PromptInput
       className={cn(
-        "w-full overflow-hidden rounded-sm border border-border/50 bg-input-bg transition-all dark:bg-input-bg dark:shadow-md",
-        "!divide-y-0 !shadow-sm",
+        "w-full overflow-hidden rounded-xl border border-border/50 bg-card/40 shadow-sm backdrop-blur-md transition-all",
+        "!divide-y-0",
         className
       )}
       onSubmit={onSubmit}
@@ -63,7 +63,7 @@ export const AnswerPromptInput = forwardRef<
         <PromptInputTextarea
           className={cn(
             "w-full resize-none whitespace-pre-wrap break-words rounded-none border-0 p-3 focus-visible:ring-0",
-            "!bg-input-bg focus:!bg-input-bg hover:!bg-input-bg disabled:!bg-input-bg dark:!bg-input-bg",
+            "!bg-transparent focus:!bg-transparent hover:!bg-transparent disabled:!bg-transparent dark:!bg-transparent",
             "min-h-0 min-h-[72px] outline-none"
           )}
           placeholder={placeholder}
@@ -77,7 +77,7 @@ export const AnswerPromptInput = forwardRef<
       >
         <PromptInputTools className="flex items-center gap-2">
           <PromptInputSubmit
-            className="h-8 w-8 rounded-full dark:border-border/50 dark:shadow-sm"
+            className="!rounded-full h-8 w-8 dark:border-border/50 dark:shadow-sm"
             disabled={isSubmitDisabled}
             size="icon"
             status={status}

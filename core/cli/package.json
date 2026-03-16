@@ -1,31 +1,65 @@
 {
   "name": "@lightfastai/cli",
   "version": "0.1.0",
-  "private": true,
+  "description": "Lightfast CLI - command-line tools for the Lightfast platform",
+  "publishConfig": {
+    "tag": "latest",
+    "access": "public"
+  },
+  "keywords": [
+    "lightfast",
+    "cli",
+    "ai",
+    "memory",
+    "developer-tools"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lightfastai/lightfast.git",
+    "directory": "core/cli"
+  },
+  "homepage": "https://lightfast.ai",
+  "bugs": "https://github.com/lightfastai/lightfast/issues",
+  "license": "MIT",
+  "author": "Lightfast <hello@lightfast.ai>",
   "type": "module",
   "bin": {
-    "lightfast": "./dist/bin.js"
+    "lightfast": "./dist/bin.mjs"
   },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "import": "./dist/index.mjs"
     }
   },
-  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "scripts": {
-    "build": "tsup src/index.ts src/bin.ts --format esm --dts",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsup src/index.ts src/bin.ts --format esm --watch",
+    "build": "tsup",
+    "clean": "rm -rf dist .cache .turbo node_modules",
+    "dev": "tsup --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "commander": "^13.1.0"
+    "@inquirer/select": "^4.0.0",
+    "@t3-oss/env-core": "catalog:",
+    "commander": "^13.1.0",
+    "eventsource-parser": "^3.0.0",
+    "open": "^10.1.0",
+    "ora": "^8.1.1",
+    "picocolors": "^1.1.0",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "tsup": "^8.5.1",
     "typescript": "catalog:"
+  },
+  "engines": {
+    "node": ">=22"
   }
 }

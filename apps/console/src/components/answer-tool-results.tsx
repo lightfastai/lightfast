@@ -1,10 +1,10 @@
 "use client";
 
 import type {
-  V1ContentsResponse,
-  V1FindSimilarResponse,
-  V1SearchResponse,
-} from "@repo/console-types";
+  ContentsResponse,
+  FindSimilarResponse,
+  SearchResponse,
+} from "@repo/console-validation";
 import {
   Accordion,
   AccordionContent,
@@ -26,7 +26,7 @@ const toHostname = (url: string): string => {
 /**
  * Render search tool results in an accordion with links
  */
-export function SearchToolResult({ data }: { data: V1SearchResponse }) {
+export function SearchToolResult({ data }: { data: SearchResponse }) {
   const results = data.data;
   const resultCount = results.length;
 
@@ -55,21 +55,29 @@ export function SearchToolResult({ data }: { data: V1SearchResponse }) {
           <AccordionContent className="px-4">
             <div className="pt-3">
               {results.slice(0, 10).map((result) => (
-                <div key={result.url}>
-                  <a
-                    className="group flex items-center gap-3 rounded-sm px-3 py-2 hover:bg-muted/50"
-                    href={result.url}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <h4 className="flex-1 overflow-hidden truncate text-ellipsis whitespace-nowrap font-medium text-foreground text-xs">
-                      {result.title || "Untitled"}
-                    </h4>
-                    <span className="shrink-0 text-muted-foreground/70 text-xs">
-                      {toHostname(result.url)}
-                    </span>
-                    <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
-                  </a>
+                <div key={result.id}>
+                  {result.url ? (
+                    <a
+                      className="group flex items-center gap-3 rounded-sm px-3 py-2 hover:bg-muted/50"
+                      href={result.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      <h4 className="flex-1 overflow-hidden truncate text-ellipsis whitespace-nowrap font-medium text-foreground text-xs">
+                        {result.title || "Untitled"}
+                      </h4>
+                      <span className="shrink-0 text-muted-foreground/70 text-xs">
+                        {toHostname(result.url)}
+                      </span>
+                      <ExternalLink className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                    </a>
+                  ) : (
+                    <div className="flex items-center gap-3 rounded-sm px-3 py-2">
+                      <h4 className="flex-1 overflow-hidden truncate text-ellipsis whitespace-nowrap font-medium text-foreground text-xs">
+                        {result.title || "Untitled"}
+                      </h4>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -83,8 +91,8 @@ export function SearchToolResult({ data }: { data: V1SearchResponse }) {
 /**
  * Render contents tool results
  */
-export function ContentsToolResult({ data }: { data: V1ContentsResponse }) {
-  const items = data.items;
+export function ContentsToolResult({ data }: { data: ContentsResponse }) {
+  const items = data.data.items;
   if (items.length === 0) {
     return (
       <div className="text-muted-foreground text-sm italic">
@@ -100,19 +108,16 @@ export function ContentsToolResult({ data }: { data: V1ContentsResponse }) {
           <CardContent className="space-y-2 overflow-hidden rounded-xs px-2 py-1">
             <div className="flex items-start justify-between gap-2">
               <h4 className="hidden font-medium text-sm">{item.id}</h4>
-              {item.metadata &&
-                typeof item.metadata === "object" &&
-                "url" in item.metadata &&
-                typeof item.metadata.url === "string" && (
-                  <a
-                    className="rounded p-1 hover:bg-muted"
-                    href={item.metadata.url}
-                    rel="noopener noreferrer"
-                    target="_blank"
-                  >
-                    <ExternalLink className="h-3 w-3 text-muted-foreground" />
-                  </a>
-                )}
+              {item.url && (
+                <a
+                  className="rounded p-1 hover:bg-muted"
+                  href={item.url}
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  <ExternalLink className="h-3 w-3 text-muted-foreground" />
+                </a>
+              )}
             </div>
             {item.content && (
               <pre className="scrollbar-thin max-h-[400px] overflow-x-auto overflow-y-auto whitespace-pre-wrap break-words rounded-sm bg-muted/30 p-2 text-xs">
@@ -129,12 +134,8 @@ export function ContentsToolResult({ data }: { data: V1ContentsResponse }) {
 /**
  * Render find similar results
  */
-export function FindSimilarToolResult({
-  data,
-}: {
-  data: V1FindSimilarResponse;
-}) {
-  const similar = data.similar;
+export function FindSimilarToolResult({ data }: { data: FindSimilarResponse }) {
+  const similar = data.data.similar;
   if (similar.length === 0) {
     return (
       <div className="text-muted-foreground text-sm italic">

@@ -1,21 +1,23 @@
 import type {
-  InsertGwInstallation,
-  InsertGwResource,
-  InsertGwToken,
+  InsertGatewayInstallation,
+  InsertGatewayResource,
+  InsertGatewayToken,
 } from "@db/console/schema";
 import { nanoid } from "@repo/lib";
 
 /** Fixture types: like Insert types but with id guaranteed. */
-export type InstallationFixture = InsertGwInstallation & { id: string };
-export type TokenFixture = InsertGwToken & { id: string };
-export type ResourceFixture = InsertGwResource & { id: string };
+export type InstallationFixture = InsertGatewayInstallation & { id: string };
+export type TokenFixture = InsertGatewayToken & { id: string };
+export type ResourceFixture = InsertGatewayResource & { id: string };
 
 export const fixtures = {
   /**
-   * Build a gwInstallations insert object with sensible defaults.
+   * Build a gatewayInstallations insert object with sensible defaults.
    * All fields can be overridden. The `id` field is always guaranteed to be a string.
    */
-  installation(overrides?: Partial<InsertGwInstallation>): InstallationFixture {
+  installation(
+    overrides?: Partial<InsertGatewayInstallation>
+  ): InstallationFixture {
     return {
       provider: "github",
       externalId: nanoid(),
@@ -28,10 +30,11 @@ export const fixtures = {
   },
 
   /**
-   * Build a gwTokens insert object. Requires installationId FK.
+   * Build a gatewayTokens insert object. Requires installationId FK.
    */
   token(
-    overrides: Pick<InsertGwToken, "installationId"> & Partial<InsertGwToken>
+    overrides: Pick<InsertGatewayToken, "installationId"> &
+      Partial<InsertGatewayToken>
   ): TokenFixture {
     return {
       accessToken: `ghu_${nanoid()}`,
@@ -41,11 +44,11 @@ export const fixtures = {
   },
 
   /**
-   * Build a gwResources insert object. Requires installationId FK.
+   * Build a gatewayResources insert object. Requires installationId FK.
    */
   resource(
-    overrides: Pick<InsertGwResource, "installationId"> &
-      Partial<InsertGwResource>
+    overrides: Pick<InsertGatewayResource, "installationId"> &
+      Partial<InsertGatewayResource>
   ): ResourceFixture {
     return {
       providerResourceId: nanoid(),

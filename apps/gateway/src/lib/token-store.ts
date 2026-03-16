@@ -1,9 +1,9 @@
 import { db } from "@db/console/client";
-import { gwTokens } from "@db/console/schema";
+import { gatewayTokens } from "@db/console/schema";
+import type { OAuthTokens } from "@repo/console-providers";
 import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
-import { env } from "../env.js";
-import type { OAuthTokens } from "../providers/types.js";
+import { getEncryptionKey } from "./encryption.js";
 
 /**
  * Write an encrypted token record for an installation.
@@ -15,10 +15,10 @@ export async function writeTokenRecord(
 ): Promise<void> {
   const encryptedAccess = await encrypt(
     oauthTokens.accessToken,
-    env.ENCRYPTION_KEY
+    getEncryptionKey()
   );
   const encryptedRefresh = oauthTokens.refreshToken
-    ? await encrypt(oauthTokens.refreshToken, env.ENCRYPTION_KEY)
+    ? await encrypt(oauthTokens.refreshToken, getEncryptionKey())
     : null;
 
   const expiresAt = oauthTokens.expiresIn
@@ -26,7 +26,7 @@ export async function writeTokenRecord(
     : null;
 
   await db
-    .insert(gwTokens)
+    .insert(gatewayTokens)
     .values({
       installationId,
       accessToken: encryptedAccess,
@@ -36,7 +36,7 @@ export async function writeTokenRecord(
       scope: oauthTokens.scope,
     })
     .onConflictDoUpdate({
-      target: gwTokens.installationId,
+      target: gatewayTokens.installationId,
       set: {
         accessToken: encryptedAccess,
         refreshToken: encryptedRefresh,
@@ -84,14 +84,14 @@ export async function updateTokenRecord(
 ): Promise<void> {
   const encryptedAccess = await encrypt(
     oauthTokens.accessToken,
-    env.ENCRYPTION_KEY
+    getEncryptionKey()
   );
 
   let newEncryptedRefresh: string | null;
   if (oauthTokens.refreshToken) {
     newEncryptedRefresh = await encrypt(
       oauthTokens.refreshToken,
-      env.ENCRYPTION_KEY
+      getEncryptionKey()
     );
   } else if (existingEncryptedRefreshToken) {
     assertEncryptedFormat(existingEncryptedRefreshToken);
@@ -105,12 +105,12 @@ export async function updateTokenRecord(
     : existingExpiresAt;
 
   await db
-    .update(gwTokens)
+    .update(gatewayTokens)
     .set({
       accessToken: encryptedAccess,
       refreshToken: newEncryptedRefresh,
       expiresAt: newExpiresAt,
       updatedAt: new Date().toISOString(),
     })
-    .where(eq(gwTokens.id, tokenId));
+    .where(eq(gatewayTokens.id, tokenId));
 }

@@ -5,7 +5,11 @@
  * External services (Redis, providers, workflow, env) are still mocked.
  */
 
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  gatewayResources,
+  gatewayTokens,
+} from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -33,22 +37,14 @@ const {
   mockRedisExpire,
   mockRedisDel,
   mockWorkflowTrigger,
-  mockGetProvider,
-  mockProvider,
+  mockGetInstallationToken,
+  mockWriteTokenRecord,
+  mockCreateConfig,
 } = vi.hoisted(() => {
-  const mockProvider = {
-    name: "github" as const,
-    requiresWebhookRegistration: false,
-    getAuthorizationUrl: vi
-      .fn()
-      .mockReturnValue("https://github.com/login/oauth/authorize?mock=1"),
-    handleCallback: vi.fn().mockResolvedValue({ status: "connected" }),
-    resolveToken: vi.fn().mockResolvedValue({
-      accessToken: "tok-123",
-      provider: "github",
-      expiresIn: 3600,
-    }),
-  };
+  const mockGetInstallationToken = vi.fn().mockResolvedValue("tok-123");
+  const mockCreateConfig = vi
+    .fn()
+    .mockImplementation((_env: unknown, _runtime: unknown) => ({}));
 
   return {
     mockRedisHset: vi.fn().mockResolvedValue("OK"),
@@ -56,8 +52,9 @@ const {
     mockRedisExpire: vi.fn().mockResolvedValue(1),
     mockRedisDel: vi.fn().mockResolvedValue(1),
     mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
-    mockGetProvider: vi.fn().mockReturnValue(mockProvider),
-    mockProvider,
+    mockGetInstallationToken,
+    mockWriteTokenRecord: vi.fn().mockResolvedValue(undefined),
+    mockCreateConfig,
   };
 });
 
@@ -71,8 +68,10 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("../env", () => ({
-  env: { GATEWAY_API_KEY: "test-api-key" },
-  getEnv: () => ({ GATEWAY_API_KEY: "test-api-key" }),
+  env: {
+    GATEWAY_API_KEY: "test-api-key",
+    ENCRYPTION_KEY: "test-encryption-key-32-chars-long!",
+  },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -85,21 +84,75 @@ vi.mock("@vendor/upstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: mockWorkflowTrigger }),
+  workflowClient: { trigger: mockWorkflowTrigger },
 }));
 
-vi.mock("../providers", () => ({
-  getProvider: (...args: unknown[]) => mockGetProvider(...args),
-}));
+vi.mock("@repo/console-providers", async (importOriginal) => {
+  const actual = await importOriginal<Record<string, unknown>>();
+  const providers = {
+    github: {
+      name: "github",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: false,
+        getActiveToken: (...args: unknown[]) =>
+          mockGetInstallationToken(...args),
+      },
+    },
+    vercel: {
+      name: "vercel",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: true,
+        getActiveToken: vi.fn(),
+      },
+    },
+    linear: {
+      name: "linear",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: true,
+        getActiveToken: vi.fn(),
+      },
+    },
+    sentry: {
+      name: "sentry",
+      createConfig: (...args: unknown[]) => mockCreateConfig(...args),
+      oauth: {
+        buildAuthUrl: vi.fn(),
+        processCallback: vi.fn(),
+        revokeToken: vi.fn(),
+        usesStoredToken: true,
+        getActiveToken: vi.fn(),
+      },
+    },
+  };
+  return {
+    ...actual,
+    PROVIDERS: providers,
+    PROVIDER_ENVS: () => [],
+    getProvider: (name: string) => providers[name as keyof typeof providers],
+  };
+});
 
-vi.mock("../providers/types", () => ({}));
+vi.mock("../lib/token-store", () => ({
+  writeTokenRecord: (...args: unknown[]) => mockWriteTokenRecord(...args),
+  updateTokenRecord: vi.fn().mockResolvedValue(undefined),
+}));
 
 vi.mock("../lib/urls", () => ({
   gatewayBaseUrl: "https://gateway.test/services",
   consoleUrl: "https://console.test",
   relayBaseUrl: "https://relay.test/api",
-  backfillUrl: "https://backfill.test/api",
-  cancelBackfillService: vi.fn().mockResolvedValue(undefined),
 }));
 
 // ── Import app after mocks ──
@@ -137,7 +190,10 @@ beforeAll(async () => {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockGetProvider.mockReturnValue(mockProvider);
+  mockCreateConfig.mockImplementation(
+    (_env: unknown, _runtime: unknown) => ({})
+  );
+  mockGetInstallationToken.mockResolvedValue("tok-123");
 });
 
 afterEach(async () => {
@@ -158,7 +214,7 @@ describe("GET /connections/:id (integration)", () => {
 
   it("returns installation with active resources only", async () => {
     const inst = fixtures.installation({ provider: "github", orgId: "org-1" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const activeRes = fixtures.resource({
       installationId: inst.id,
@@ -172,7 +228,7 @@ describe("GET /connections/:id (integration)", () => {
       resourceName: "removed-repo",
       status: "removed",
     });
-    await db.insert(gwResources).values([activeRes, removedRes]);
+    await db.insert(gatewayResources).values([activeRes, removedRes]);
 
     const res = await request(`/connections/${inst.id}`, { headers: API });
     expect(res.status).toBe(200);
@@ -192,7 +248,7 @@ describe("GET /connections/:id (integration)", () => {
 
   it("returns hasToken=false for non-github provider with no tokens", async () => {
     const inst = fixtures.installation({ provider: "vercel", orgId: "org-1" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}`, { headers: API });
     expect(res.status).toBe(200);
@@ -203,10 +259,10 @@ describe("GET /connections/:id (integration)", () => {
 
   it("returns hasToken=true for non-github provider with a token", async () => {
     const inst = fixtures.installation({ provider: "vercel", orgId: "org-1" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const token = fixtures.token({ installationId: inst.id });
-    await db.insert(gwTokens).values(token);
+    await db.insert(gatewayTokens).values(token);
 
     const res = await request(`/connections/${inst.id}`, { headers: API });
     expect(res.status).toBe(200);
@@ -228,7 +284,7 @@ describe("GET /connections/:id/token (integration)", () => {
 
   it("returns 400 when installation is not active", async () => {
     const inst = fixtures.installation({ status: "revoked" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/token`, {
       headers: API,
@@ -239,19 +295,19 @@ describe("GET /connections/:id/token (integration)", () => {
     });
   });
 
-  it("calls provider.resolveToken for an active installation", async () => {
+  it("calls oauth.getActiveToken for an active github installation", async () => {
     const inst = fixtures.installation({
       provider: "github",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/token`, {
       headers: API,
     });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ accessToken: "tok-123" });
-    expect(mockProvider.resolveToken).toHaveBeenCalledOnce();
+    expect(mockGetInstallationToken).toHaveBeenCalledOnce();
   });
 });
 
@@ -268,7 +324,7 @@ describe("DELETE /connections/:provider/:id (integration)", () => {
 
   it("returns 404 when provider does not match", async () => {
     const inst = fixtures.installation({ provider: "github" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     // Request with wrong provider
     const res = await request(`/connections/vercel/${inst.id}`, {
@@ -280,7 +336,7 @@ describe("DELETE /connections/:provider/:id (integration)", () => {
 
   it("triggers teardown when provider matches", async () => {
     const inst = fixtures.installation({ provider: "github", orgId: "org-1" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/github/${inst.id}`, {
       method: "DELETE",
@@ -306,7 +362,7 @@ describe("POST /connections/:id/resources (integration)", () => {
 
   it("returns 400 when installation is not active", async () => {
     const inst = fixtures.installation({ status: "revoked" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/resources`, {
       method: "POST",
@@ -321,7 +377,7 @@ describe("POST /connections/:id/resources (integration)", () => {
 
   it("returns 400 when providerResourceId is missing", async () => {
     const inst = fixtures.installation({ status: "active" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/resources`, {
       method: "POST",
@@ -340,7 +396,7 @@ describe("POST /connections/:id/resources (integration)", () => {
       status: "active",
       orgId: "org-1",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/resources`, {
       method: "POST",
@@ -373,7 +429,7 @@ describe("POST /connections/:id/resources (integration)", () => {
       provider: "github",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     // Pre-insert an active resource
     const existing = fixtures.resource({
@@ -381,7 +437,7 @@ describe("POST /connections/:id/resources (integration)", () => {
       providerResourceId: "my-org/my-repo",
       status: "active",
     });
-    await db.insert(gwResources).values(existing);
+    await db.insert(gatewayResources).values(existing);
 
     const res = await request(`/connections/${inst.id}/resources`, {
       method: "POST",
@@ -400,7 +456,7 @@ describe("POST /connections/:id/resources (integration)", () => {
       status: "active",
       orgId: "org-1",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     // Pre-insert a removed resource for the same providerResourceId
     const removed = fixtures.resource({
@@ -408,7 +464,7 @@ describe("POST /connections/:id/resources (integration)", () => {
       providerResourceId: "my-org/my-repo",
       status: "removed",
     });
-    await db.insert(gwResources).values(removed);
+    await db.insert(gatewayResources).values(removed);
 
     // Should succeed — the duplicate check only looks at status="active"
     const res = await request(`/connections/${inst.id}/resources`, {
@@ -426,7 +482,7 @@ describe("POST /connections/:id/resources (integration)", () => {
 describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
   it("returns 404 when resource does not exist", async () => {
     const inst = fixtures.installation();
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await request(`/connections/${inst.id}/resources/nonexistent`, {
       method: "DELETE",
@@ -438,10 +494,10 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
   it("returns 404 when resource belongs to a different installation", async () => {
     const inst1 = fixtures.installation();
     const inst2 = fixtures.installation();
-    await db.insert(gwInstallations).values([inst1, inst2]);
+    await db.insert(gatewayInstallations).values([inst1, inst2]);
 
     const resource = fixtures.resource({ installationId: inst2.id });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     // Try to delete via inst1 — should 404 because installationId doesn't match
     const res = await request(
@@ -456,13 +512,13 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
 
   it("returns 400 when resource is already removed", async () => {
     const inst = fixtures.installation();
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
       status: "removed",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const res = await request(
       `/connections/${inst.id}/resources/${resource.id}`,
@@ -477,14 +533,14 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
 
   it("soft-deletes resource and cleans up Redis cache", async () => {
     const inst = fixtures.installation({ provider: "github" });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
       providerResourceId: "my-org/my-repo",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const res = await request(
       `/connections/${inst.id}/resources/${resource.id}`,
@@ -502,8 +558,8 @@ describe("DELETE /connections/:id/resources/:resourceId (integration)", () => {
     // Verify the resource was actually updated in the DB
     const rows = await db
       .select()
-      .from(gwResources)
-      .where(eq(gwResources.id, resource.id));
+      .from(gatewayResources)
+      .where(eq(gatewayResources.id, resource.id));
     expect(rows[0]!.status).toBe("removed");
 
     // Verify Redis cache cleanup with correct key

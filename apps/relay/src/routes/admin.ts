@@ -1,16 +1,20 @@
 import { db } from "@db/console/client";
 import {
-  gwInstallations,
-  gwResources,
-  gwWebhookDeliveries,
+  gatewayBackfillRuns,
+  gatewayInstallations,
+  gatewayResources,
+  gatewayWebhookDeliveries,
 } from "@db/console/schema";
+import type { SourceType } from "@repo/console-providers";
 import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { Hono } from "hono";
+import { z } from "zod";
+import { env } from "../env.js";
 import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
+import { log } from "../logger.js";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
-import type { ProviderName } from "../providers/types.js";
 
 const admin = new Hono();
 
@@ -67,17 +71,17 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
   for (;;) {
     const batch = await db
       .select({
-        provider: gwInstallations.provider,
-        providerResourceId: gwResources.providerResourceId,
-        installationId: gwResources.installationId,
-        orgId: gwInstallations.orgId,
+        provider: gatewayInstallations.provider,
+        providerResourceId: gatewayResources.providerResourceId,
+        installationId: gatewayResources.installationId,
+        orgId: gatewayInstallations.orgId,
       })
-      .from(gwResources)
+      .from(gatewayResources)
       .innerJoin(
-        gwInstallations,
-        eq(gwResources.installationId, gwInstallations.id)
+        gatewayInstallations,
+        eq(gatewayResources.installationId, gatewayInstallations.id)
       )
-      .where(eq(gwResources.status, "active"))
+      .where(eq(gatewayResources.status, "active"))
       .limit(BATCH_SIZE)
       .offset(offset);
 
@@ -87,7 +91,7 @@ admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
 
     const pipeline = redis.pipeline();
     for (const r of batch) {
-      const key = resourceKey(r.provider as ProviderName, r.providerResourceId);
+      const key = resourceKey(r.provider as SourceType, r.providerResourceId);
       pipeline.hset(key, { connectionId: r.installationId, orgId: r.orgId });
       pipeline.expire(key, RESOURCE_CACHE_TTL);
     }
@@ -119,11 +123,11 @@ admin.get("/dlq", apiKeyAuth, async (c) => {
 
   const dlqItems = await db
     .select()
-    .from(gwWebhookDeliveries)
-    .where(eq(gwWebhookDeliveries.status, "dlq"))
+    .from(gatewayWebhookDeliveries)
+    .where(eq(gatewayWebhookDeliveries.status, "dlq"))
     .limit(limit)
     .offset(offset)
-    .orderBy(gwWebhookDeliveries.receivedAt);
+    .orderBy(gatewayWebhookDeliveries.receivedAt);
 
   return c.json({ items: dlqItems, limit, offset });
 });
@@ -148,16 +152,18 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
   // Build compound (provider, deliveryId) filter — prevents cross-provider collisions
   const pairConditions = body.deliveryIds.map((item) =>
     and(
-      eq(gwWebhookDeliveries.provider, item.provider),
-      eq(gwWebhookDeliveries.deliveryId, item.deliveryId)
+      eq(gatewayWebhookDeliveries.provider, item.provider),
+      eq(gatewayWebhookDeliveries.deliveryId, item.deliveryId)
     )
   );
 
   // Fetch only DLQ entries with stored payloads
   const deliveries = await db
     .select()
-    .from(gwWebhookDeliveries)
-    .where(and(or(...pairConditions), eq(gwWebhookDeliveries.status, "dlq")));
+    .from(gatewayWebhookDeliveries)
+    .where(
+      and(or(...pairConditions), eq(gatewayWebhookDeliveries.status, "dlq"))
+    );
 
   if (deliveries.length === 0) {
     return c.json(
@@ -170,6 +176,18 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
   return c.json({ status: "replayed", ...result });
 });
 
+const catchupSchema = z.object({
+  installationId: z.string().min(1),
+  batchSize: z
+    .number()
+    .int()
+    .transform((n) => Math.min(Math.max(n, 1), 200))
+    .default(50),
+  provider: z.string().optional(),
+  since: z.string().optional(),
+  until: z.string().optional(),
+});
+
 /**
  * POST /admin/replay/catchup
  *
@@ -180,40 +198,48 @@ admin.post("/dlq/replay", apiKeyAuth, async (c) => {
  * Requires X-API-Key authentication.
  */
 admin.post("/replay/catchup", apiKeyAuth, async (c) => {
-  let body: {
-    provider?: string;
-    batchSize?: number;
-    since?: string;
-    until?: string;
-  };
+  let raw: unknown;
   try {
-    body = await c.req.json();
+    raw = await c.req.json();
   } catch {
-    body = {};
+    return c.json({ error: "invalid_json" }, 400);
   }
 
-  const batchSize = Math.min(Math.max(body.batchSize ?? 50, 1), 200);
+  const parsed = catchupSchema.safeParse(raw);
+  if (!parsed.success) {
+    return c.json(
+      { error: "validation_error", details: parsed.error.issues },
+      400
+    );
+  }
+  const body = parsed.data;
+
+  const batchSize = body.batchSize;
 
   // Build query: status = "received" (persisted but never delivered)
   const conditions: Parameters<typeof and>[0][] = [
-    eq(gwWebhookDeliveries.status, "received"),
+    eq(gatewayWebhookDeliveries.status, "received"),
   ];
 
+  conditions.push(
+    eq(gatewayWebhookDeliveries.installationId, body.installationId)
+  );
+
   if (body.provider) {
-    conditions.push(eq(gwWebhookDeliveries.provider, body.provider));
+    conditions.push(eq(gatewayWebhookDeliveries.provider, body.provider));
   }
   if (body.since) {
-    conditions.push(gte(gwWebhookDeliveries.receivedAt, body.since));
+    conditions.push(gte(gatewayWebhookDeliveries.receivedAt, body.since));
   }
   if (body.until) {
-    conditions.push(lte(gwWebhookDeliveries.receivedAt, body.until));
+    conditions.push(lte(gatewayWebhookDeliveries.receivedAt, body.until));
   }
 
   const deliveries = await db
     .select()
-    .from(gwWebhookDeliveries)
+    .from(gatewayWebhookDeliveries)
     .where(and(...conditions))
-    .orderBy(gwWebhookDeliveries.receivedAt)
+    .orderBy(gatewayWebhookDeliveries.receivedAt)
     .limit(batchSize);
 
   if (deliveries.length === 0) {
@@ -229,8 +255,10 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
   const replayedIds = deliveries.map((d) => d.id);
   const [remaining] = await db
     .select({ count: sql<number>`count(*)` })
-    .from(gwWebhookDeliveries)
-    .where(and(...conditions, notInArray(gwWebhookDeliveries.id, replayedIds)));
+    .from(gatewayWebhookDeliveries)
+    .where(
+      and(...conditions, notInArray(gatewayWebhookDeliveries.id, replayedIds))
+    );
 
   return c.json({
     status: "replayed",
@@ -255,14 +283,14 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
   const { messageId, state, deliveryId } = body as Record<string, unknown>;
 
   if (typeof messageId !== "string" || typeof state !== "string") {
-    console.warn("[delivery-status] invalid payload", JSON.stringify(body));
+    log.warn("[delivery-status] invalid payload", { body });
     return c.json(
       { error: "missing_required_fields", required: ["messageId", "state"] },
       400
     );
   }
 
-  console.log("[delivery-status]", { messageId, state, deliveryId });
+  log.info("[delivery-status]", { messageId, state, deliveryId });
 
   // Update webhook delivery status based on QStash callback
   if (typeof deliveryId === "string") {
@@ -270,12 +298,12 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
       state === "delivered" ? "delivered" : state === "error" ? "dlq" : null;
     if (newStatus) {
       const provider = c.req.query("provider");
-      const conditions = [eq(gwWebhookDeliveries.deliveryId, deliveryId)];
+      const conditions = [eq(gatewayWebhookDeliveries.deliveryId, deliveryId)];
       if (provider) {
-        conditions.push(eq(gwWebhookDeliveries.provider, provider));
+        conditions.push(eq(gatewayWebhookDeliveries.provider, provider));
       }
       await db
-        .update(gwWebhookDeliveries)
+        .update(gatewayWebhookDeliveries)
         .set({ status: newStatus })
         .where(and(...conditions));
     }
@@ -283,5 +311,35 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
 
   return c.json({ status: "received" });
 });
+
+/**
+ * POST /admin/dev/flush-dedup
+ *
+ * Dev-only: delete all webhook dedup Redis keys (gw:webhook:seen:*).
+ * Allows re-testing backfill flows without waiting 24h for TTL expiry.
+ */
+if (env.NODE_ENV !== "production") {
+  admin.post("/dev/flush-dedup", apiKeyAuth, async (c) => {
+    const keys = await redis.keys("gw:webhook:seen:*");
+    if (keys.length > 0) {
+      await redis.del(...keys);
+    }
+    return c.json({ flushed: keys.length });
+  });
+
+  /**
+   * DELETE /admin/dev/backfill-runs/:installationId
+   *
+   * Dev-only: clear all backfill run history for an installation.
+   * Allows re-testing by bypassing the gap-aware filter in the orchestrator.
+   */
+  admin.delete("/dev/backfill-runs/:installationId", apiKeyAuth, async (c) => {
+    const installationId = c.req.param("installationId");
+    await db
+      .delete(gatewayBackfillRuns)
+      .where(eq(gatewayBackfillRuns.installationId, installationId));
+    return c.json({ cleared: true, installationId });
+  });
+}
 
 export { admin };

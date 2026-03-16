@@ -2,7 +2,7 @@
 
 Workflow-driven test data generation for neural memory E2E testing.
 
-**Key Design**: Test data uses **raw webhook payloads** (GitHub, Vercel, Sentry, Linear format) that flow through production transformers before being injected via the real Inngest workflow (`apps-console/neural/observation.capture`). This ensures tests exercise the full production pipeline including webhook transformation, significance scoring, entity extraction, multi-view embeddings, cluster assignment, and actor resolution.
+**Key Design**: Test data uses **raw webhook payloads** (GitHub, Vercel, Sentry, Linear format) that flow through production transformers before being injected via the real Inngest workflow (`apps-console/neural/event.capture`). This ensures tests exercise the full production pipeline including webhook transformation, significance scoring, entity extraction, multi-view embeddings, cluster assignment, and actor resolution.
 
 ## Prerequisites
 
@@ -54,7 +54,7 @@ import {
   listDatasets,
   balancedScenario,
   stressScenario,
-  triggerObservationCapture,
+  triggerEventCapture,
 } from '@repo/console-test-data';
 
 // 1. Load events from a dataset (webhooks are transformed to SourceEvents)
@@ -66,7 +66,7 @@ const balanced = balancedScenario(10);  // Shuffled mix from all datasets
 const stress = stressScenario(100);     // Repeated events for load testing
 
 // 2. Trigger workflow
-const triggerResult = await triggerObservationCapture(events, {
+const triggerResult = await triggerEventCapture(events, {
   workspaceId: 'xxx',
   onProgress: (current, total) => console.log(`${current}/${total}`),
 });
@@ -152,7 +152,7 @@ Create a JSON file following the schema in `datasets/webhook-schema.json`. Datas
 ## Architecture
 
 ```
-Raw Webhook  -->  transformWebhook()  -->  SourceEvent  -->  inngest.send()  -->  observation.capture
+Raw Webhook  -->  transformWebhook()  -->  SourceEvent  -->  inngest.send()  -->  event.capture
      |                  |
      |          ┌───────┴───────┐
      |          |               |
@@ -185,7 +185,7 @@ packages/console-test-data/
 │   │   ├── linear.ts          # Linear webhook → SourceEvent
 │   │   └── index.ts
 │   ├── trigger/               # Workflow triggering
-│   │   ├── trigger.ts         # triggerObservationCapture
+│   │   ├── trigger.ts         # triggerEventCapture
 │   │   └── index.ts
 │   ├── cli/
 │   │   ├── inject.ts          # CLI for injecting test data

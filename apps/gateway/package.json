@@ -10,7 +10,7 @@
     }
   },
   "scripts": {
-    "build": "tsup && pnpm with-env node dist/src/env.js",
+    "build": "tsc --noEmit && tsup && pnpm with-env node dist/src/env.js",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "NODE_ENV=development pnpm with-env srvx --prod --import tsx -p 4110 src/index.ts",
     "test": "vitest run",
@@ -19,11 +19,9 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
-    "@repo/console-linear": "workspace:*",
-    "@repo/console-octokit-github": "workspace:*",
-    "@repo/console-sentry": "workspace:*",
-    "@repo/console-vercel": "workspace:*",
-    "@repo/gateway-types": "workspace:*",
+    "@repo/console-providers": "workspace:*",
+    "@repo/console-validation": "workspace:*",
+    "@repo/gateway-service-clients": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
@@ -32,15 +30,16 @@
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
+    "drizzle-orm": "catalog:",
     "hono": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/console-test-db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "catalog:",
-    "drizzle-orm": "catalog:",
     "srvx": "^0.11.8",
     "tsup": "^8.5.1",
     "tsx": "^4.21.0",

@@ -1,4 +1,4 @@
-import type { WorkspaceSettings } from "@repo/console-types";
+import type { WorkspaceSettings } from "@repo/console-validation";
 import { EMBEDDING_DEFAULTS } from "@repo/console-validation/constants";
 import { db } from "../client";
 import { orgWorkspaces } from "../schema";

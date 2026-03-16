@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
+import sharedConfig from "@repo/vitest-config";
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../vitest.shared";
 
 const root = resolve(import.meta.dirname, "../..");
 
@@ -23,11 +23,16 @@ export default mergeConfig(
             "@vendor/related-projects",
             "@vendor/upstash-workflow",
             "@db/console",
-            "@repo/console-backfill",
             "@api/console",
             "@vercel/related-projects",
             "@repo/console-api-key",
             "@repo/console-octokit-github",
+            "@repo/console-pinecone",
+            "@repo/console-embed",
+            "@vendor/knock",
+            "@vendor/embed",
+            "@repo/console-providers",
+            "@repo/console-validation",
           ],
         },
       },
@@ -39,7 +44,7 @@ export default mergeConfig(
         "@relay/app": resolve(root, "apps/relay/src/app.ts"),
         "@gateway/urls": resolve(root, "apps/gateway/src/lib/urls.ts"),
         "@gateway/cache": resolve(root, "apps/gateway/src/lib/cache.ts"),
-        "@repo/lib": resolve(root, "packages/lib/src/index.ts"),
+        "@repo/lib": resolve(root, "packages/lib/src"),
         "@relay/cache": resolve(root, "apps/relay/src/lib/cache.ts"),
         "@relay/webhook-delivery": resolve(
           root,
@@ -61,6 +66,10 @@ export default mergeConfig(
           import.meta.dirname,
           "src/__stubs__/sentry-core.ts"
         ),
+        "@repo/gateway-service-clients": resolve(
+          import.meta.dirname,
+          "src/__stubs__/gateway-service-clients.ts"
+        ),
         "server-only": resolve(
           import.meta.dirname,
           "src/__stubs__/server-only.ts"
@@ -71,13 +80,17 @@ export default mergeConfig(
           root,
           "api/console/src/router/org/connections.ts"
         ),
+        "@console/neural": resolve(
+          root,
+          "api/console/src/inngest/workflow/neural/index.ts"
+        ),
+        "@console/inngest-client": resolve(
+          root,
+          "api/console/src/inngest/client/client.ts"
+        ),
         "@repo/console-octokit-github/env": resolve(
           root,
           "packages/console-octokit-github/src/env.ts"
-        ),
-        "@repo/console-octokit-github/oauth-env": resolve(
-          root,
-          "packages/console-octokit-github/src/oauth-env.ts"
         ),
         "@repo/console-octokit-github": resolve(
           root,

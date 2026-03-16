@@ -16,10 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { Switch } from "@repo/ui/components/ui/switch";
 import { ChevronDown } from "lucide-react";
 import { useState } from "react";
-import { ActorFilter } from "./actor-filter";
 import {
   AGE_PRESET_OPTIONS,
   OBSERVATION_TYPE_OPTIONS,
@@ -27,28 +25,18 @@ import {
 } from "./search-constants";
 
 interface SearchFiltersProps {
-  actorNames: string[];
   agePreset: string;
-  // Content toggles
-  includeContext: boolean;
-  includeHighlights: boolean;
   // Pagination
   limit: number;
   observationTypes: string[];
   offset: number;
-  onActorNamesChange: (names: string[]) => void;
   onAgePresetChange: (preset: string) => void;
-  onIncludeContextChange: (value: boolean) => void;
-  onIncludeHighlightsChange: (value: boolean) => void;
   onLimitChange: (limit: number) => void;
   onObservationTypesChange: (types: string[]) => void;
   onOffsetChange: (offset: number) => void;
   onSourceTypesChange: (types: string[]) => void;
-  // For ActorFilter
-  orgSlug: string;
   // Filters
   sourceTypes: string[];
-  workspaceName: string;
 }
 
 export function SearchFilters({
@@ -56,20 +44,12 @@ export function SearchFilters({
   onLimitChange,
   offset,
   onOffsetChange,
-  includeContext,
-  onIncludeContextChange,
-  includeHighlights,
-  onIncludeHighlightsChange,
   sourceTypes,
   onSourceTypesChange,
   observationTypes,
   onObservationTypesChange,
-  actorNames,
-  onActorNamesChange,
   agePreset,
   onAgePresetChange,
-  orgSlug,
-  workspaceName,
 }: SearchFiltersProps) {
   // Local display state for number inputs to allow empty field during editing
   const [displayLimit, setDisplayLimit] = useState(String(limit));
@@ -145,40 +125,6 @@ export function SearchFilters({
             type="number"
             value={displayOffset}
           />
-        </div>
-      </div>
-
-      {/* Content Toggles */}
-      <div>
-        <h3 className="mb-6 font-medium text-muted-foreground text-xs">
-          Contents
-        </h3>
-        <div className="grid grid-cols-[1fr_1fr] gap-x-8 gap-y-6">
-          <div>
-            <Label className="font-medium text-sm" htmlFor="include-context">
-              Include Context
-            </Label>
-          </div>
-          <div className="flex justify-end">
-            <Switch
-              checked={includeContext}
-              id="include-context"
-              onCheckedChange={onIncludeContextChange}
-            />
-          </div>
-
-          <div>
-            <Label className="font-medium text-sm" htmlFor="include-highlights">
-              Highlights
-            </Label>
-          </div>
-          <div className="flex justify-end">
-            <Switch
-              checked={includeHighlights}
-              id="include-highlights"
-              onCheckedChange={onIncludeHighlightsChange}
-            />
-          </div>
         </div>
       </div>
 
@@ -278,17 +224,6 @@ export function SearchFilters({
               </div>
             </PopoverContent>
           </Popover>
-
-          {/* Actor Filter */}
-          <div>
-            <Label className="font-medium text-sm">Actors</Label>
-          </div>
-          <ActorFilter
-            onSelectionChange={onActorNamesChange}
-            orgSlug={orgSlug}
-            selectedActors={actorNames}
-            workspaceName={workspaceName}
-          />
 
           {/* Max Content Age */}
           <div>

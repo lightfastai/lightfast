@@ -1,5 +1,4 @@
-import type { ExtractedEntity } from "@repo/console-types";
-import type { EntityCategory } from "@repo/console-validation";
+import type { EntityCategory, ExtractedEntity } from "@repo/console-validation";
 
 /**
  * Entity extraction pattern definition
@@ -39,15 +38,6 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     pattern: /\b([A-Z]{2,10}-\d{1,6})\b/g,
     confidence: 0.9,
     keyExtractor: (m) => m[1] ?? "",
-  },
-
-  // @mentions - GitHub/Slack style
-  {
-    category: "engineer",
-    pattern: /@([a-zA-Z0-9_-]{1,39})\b/g,
-    confidence: 0.9,
-    keyExtractor: (m) => `@${m[1]}`,
-    valueExtractor: (m) => m[1] ?? "",
   },
 
   // Environment Variables - UPPERCASE_WITH_UNDERSCORES
@@ -176,46 +166,54 @@ export function extractEntities(
 }
 
 /**
- * Extract entities specifically from source references
+ * Extract entities specifically from source relations
  * (Already-structured data from GitHub/Vercel events)
  */
-export function extractFromReferences(
-  references: { type: string; id: string; label?: string }[]
+export function extractFromRelations(
+  relations: {
+    entityType: string;
+    entityId: string;
+    relationshipType: string;
+  }[]
 ): ExtractedEntity[] {
   const entities: ExtractedEntity[] = [];
 
-  for (const ref of references) {
+  for (const rel of relations) {
     let category: EntityCategory;
     let key: string;
 
-    switch (ref.type) {
-      case "issue":
-      case "pr":
-        category = "project";
-        key = ref.id;
-        break;
+    switch (rel.entityType) {
       case "commit":
-      case "branch":
-        category = "reference";
-        key =
-          ref.type === "branch" ? `branch:${ref.id}` : ref.id.substring(0, 7);
+        category = "commit";
+        key = rel.entityId.substring(0, 7);
         break;
-      case "assignee":
-      case "reviewer":
-        category = "engineer";
-        key = `@${ref.id}`;
+      case "branch":
+        category = "branch";
+        key = rel.entityId;
+        break;
+      case "pr":
+        category = "pr";
+        key = rel.entityId;
+        break;
+      case "issue":
+        category = "issue";
+        key = rel.entityId;
+        break;
+      case "deployment":
+        category = "deployment";
+        key = rel.entityId;
         break;
       default:
         category = "reference";
-        key = ref.id;
+        key = rel.entityId;
     }
 
     entities.push({
       category,
       key,
-      value: ref.label,
+      value: rel.relationshipType,
       confidence: 0.98, // High confidence - from structured data
-      evidence: `Reference: ${ref.type}`,
+      evidence: `Relation: ${rel.entityType}`,
     });
   }
 

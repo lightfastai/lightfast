@@ -1,7 +1,4 @@
 import {
-  documentsIndexedTagsSchema,
-  errorTagsSchema,
-  jobDurationTagsSchema,
   jobTriggerSchema,
   workflowInputSchema,
   workflowOutputSchema,
@@ -12,7 +9,6 @@ import {
   completeJob,
   createJob,
   getJob,
-  recordJobMetric,
   updateJobStatus,
 } from "../../lib/jobs";
 import { inngestM2MProcedure } from "../../trpc";
@@ -110,52 +106,6 @@ export const jobsM2MRouter = {
       } else {
         throw new Error("Output is required for completed/failed jobs");
       }
-      return { success: true };
-    }),
-
-  /**
-   * Record metric (Inngest workflows)
-   *
-   * Used by workflows to record performance metrics.
-   * Uses discriminated union for type-safe metric recording.
-   */
-  recordMetric: inngestM2MProcedure
-    .input(
-      z.discriminatedUnion("type", [
-        // job_duration metric
-        z.object({
-          clerkOrgId: z.string(),
-          workspaceId: z.string(),
-          repositoryId: z.string().optional(),
-          type: z.literal("job_duration"),
-          value: z.number().int().positive(),
-          unit: z.literal("ms"),
-          tags: jobDurationTagsSchema,
-        }),
-        // documents_indexed metric
-        z.object({
-          clerkOrgId: z.string(),
-          workspaceId: z.string(),
-          repositoryId: z.string().optional(),
-          type: z.literal("documents_indexed"),
-          value: z.number().int().nonnegative(),
-          unit: z.literal("count"),
-          tags: documentsIndexedTagsSchema,
-        }),
-        // errors metric
-        z.object({
-          clerkOrgId: z.string(),
-          workspaceId: z.string(),
-          repositoryId: z.string().optional(),
-          type: z.literal("errors"),
-          value: z.literal(1),
-          unit: z.literal("count"),
-          tags: errorTagsSchema,
-        }),
-      ])
-    )
-    .mutation(async ({ input }) => {
-      await recordJobMetric(input);
       return { success: true };
     }),
 

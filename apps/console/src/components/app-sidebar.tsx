@@ -61,6 +61,10 @@ function getWorkspaceManageItems(
 ): NavItem[] {
   return [
     {
+      title: "Events",
+      href: `/${orgSlug}/${workspaceName}/events`,
+    },
+    {
       title: "Sources",
       href: `/${orgSlug}/${workspaceName}/sources`,
     },

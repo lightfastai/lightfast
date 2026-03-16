@@ -1,9 +1,8 @@
 "use client";
 
-import type { RerankMode } from "@repo/console-types";
+import type { RerankMode } from "@repo/console-validation";
 import {
   parseAsArrayOf,
-  parseAsBoolean,
   parseAsInteger,
   parseAsString,
   parseAsStringLiteral,
@@ -22,7 +21,6 @@ const viewTabs = ["list", "json"] as const;
  * - mode: Rerank mode (fast/balanced/thorough)
  * - sources: Source type filters
  * - types: Observation type filters
- * - actors: Actor name filters
  * - expanded: Currently expanded result ID
  */
 export function useWorkspaceSearchParams(initialQuery = "") {
@@ -32,12 +30,9 @@ export function useWorkspaceSearchParams(initialQuery = "") {
       mode: parseAsStringLiteral(rerankModes).withDefault("balanced"),
       sources: parseAsArrayOf(parseAsString).withDefault([]),
       types: parseAsArrayOf(parseAsString).withDefault([]),
-      actors: parseAsArrayOf(parseAsString).withDefault([]),
       expanded: parseAsString.withDefault(""),
       limit: parseAsInteger.withDefault(20),
       offset: parseAsInteger.withDefault(0),
-      ctx: parseAsBoolean.withDefault(true),
-      hl: parseAsBoolean.withDefault(true),
       age: parseAsStringLiteral(agePresets).withDefault("none"),
       view: parseAsStringLiteral(viewTabs).withDefault("list"),
     },
@@ -56,18 +51,12 @@ export function useWorkspaceSearchParams(initialQuery = "") {
     setSourceTypes: (sources: string[]) => setParams({ sources }),
     observationTypes: params.types,
     setObservationTypes: (types: string[]) => setParams({ types }),
-    actorNames: params.actors,
-    setActorNames: (actors: string[]) => setParams({ actors }),
     expandedId: params.expanded,
     setExpandedId: (id: string | null) => setParams({ expanded: id ?? "" }),
     limit: params.limit,
     setLimit: (v: number) => setParams({ limit: v }),
     offset: params.offset,
     setOffset: (v: number) => setParams({ offset: v }),
-    includeContext: params.ctx,
-    setIncludeContext: (v: boolean) => setParams({ ctx: v }),
-    includeHighlights: params.hl,
-    setIncludeHighlights: (v: boolean) => setParams({ hl: v }),
     agePreset: params.age as (typeof agePresets)[number],
     setAgePreset: (v: (typeof agePresets)[number]) => setParams({ age: v }),
     activeTab: params.view as (typeof viewTabs)[number],
@@ -77,7 +66,6 @@ export function useWorkspaceSearchParams(initialQuery = "") {
       setParams({
         sources: [],
         types: [],
-        actors: [],
         age: "none",
       }),
   };

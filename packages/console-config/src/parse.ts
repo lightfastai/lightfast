@@ -115,7 +115,7 @@ export function validateConfig(
 
   if (!parseResult.success) {
     const zodError = parseResult.error as ZodError;
-    const errorMessages = zodError.errors
+    const errorMessages = zodError.issues
       .map((e) => `${e.path.join(".")}: ${e.message}`)
       .join("; ");
 

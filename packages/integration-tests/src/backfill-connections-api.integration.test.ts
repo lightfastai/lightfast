@@ -9,7 +9,11 @@
  * router (localhost:4110 → gatewayApp), Inngest function capture.
  */
 
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  gatewayResources,
+  gatewayTokens,
+} from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -35,7 +39,6 @@ const {
   capturedHandlers,
   inngestSendMock,
   NonRetriableErrorRef,
-  mockGetConnector,
 } = await vi.hoisted(async () => {
   const { makeRedisMock, makeQStashMock } = await import("./harness.js");
   const redisStore = new Map<string, unknown>();
@@ -53,7 +56,6 @@ const {
     capturedHandlers,
     inngestSendMock: vi.fn().mockResolvedValue({ ids: ["evt-1"] }),
     NonRetriableErrorRef,
-    mockGetConnector: vi.fn(),
   };
 });
 
@@ -115,10 +117,6 @@ vi.mock("@vendor/inngest", () => {
   };
 });
 
-vi.mock("@repo/console-backfill", () => ({
-  getConnector: (...args: unknown[]): unknown => mockGetConnector(...args),
-}));
-
 vi.mock("@vendor/related-projects", () => ({
   withRelatedProject: ({
     defaultHost,
@@ -138,9 +136,9 @@ vi.mock("@vercel/related-projects", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-test" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/upstash-workflow/hono", () => ({
@@ -149,7 +147,6 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Import apps and orchestrator after mocks ──
 import gatewayApp from "@gateway/app";
-import relayApp from "@relay/app";
 
 // Force backfill workflows to load and register their createFunction handlers
 await import("@backfill/orchestrator");
@@ -191,13 +188,6 @@ beforeEach(() => {
   vi.clearAllMocks();
   inngestSendMock.mockResolvedValue({ ids: ["evt-1"] });
   redisStore.clear();
-
-  // Default connector — passes orchestrator validation, fetchPage never called by orchestrator
-  mockGetConnector.mockReturnValue({
-    defaultEntityTypes: ["pull_request"],
-    supportedEntityTypes: ["pull_request"],
-    fetchPage: vi.fn(),
-  });
 
   redisMock.hset.mockImplementation(
     (key: string, fields: Record<string, unknown>) => {
@@ -273,7 +263,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       orgId: "org-api-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
@@ -281,7 +271,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       resourceName: "repo-api",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const res = await connReq(`/services/gateway/${inst.id}`);
 
@@ -321,7 +311,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       provider: "github",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const activeResource = fixtures.resource({
       installationId: inst.id,
@@ -331,7 +321,7 @@ describe("Suite 3.1 — GET /connections/:id HTTP contract", () => {
       installationId: inst.id,
       status: "removed",
     });
-    await db.insert(gwResources).values([activeResource, removedResource]);
+    await db.insert(gatewayResources).values([activeResource, removedResource]);
 
     const res = await connReq(`/services/gateway/${inst.id}`);
     expect(res.status).toBe(200);
@@ -354,14 +344,14 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
       orgId: "org-orch-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
       providerResourceId: "owner/orch-repo",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
     if (!orchHandler) {
@@ -411,7 +401,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
       orgId: "org-orch-2",
       status: "revoked",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
     if (!orchHandler) {
@@ -461,7 +451,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
       orgId: "org-orch-3",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
     // No resources inserted
 
     const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
@@ -505,7 +495,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       orgId: "org-token-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     // Encrypt and store token in DB (as it would be stored by real OAuth flow)
     const encryptedToken = await encrypt(plainToken, ENCRYPTION_KEY);
@@ -513,7 +503,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       installationId: inst.id,
       accessToken: encryptedToken,
     });
-    await db.insert(gwTokens).values(token);
+    await db.insert(gatewayTokens).values(token);
 
     const res = await connReq(`/services/gateway/${inst.id}/token`);
 
@@ -534,7 +524,7 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       provider: "sentry",
       status: "revoked",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await connReq(`/services/gateway/${inst.id}/token`);
 
@@ -548,94 +538,11 @@ describe("Suite 3.3 — GET /connections/:id/token HTTP contract", () => {
       provider: "sentry",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
     // No token inserted
 
     const res = await connReq(`/services/gateway/${inst.id}/token`);
 
     expect(res.status).toBe(404);
-  });
-});
-
-describe("Suite 3.4 — Entity worker token refresh on 401 mid-pagination", () => {
-  it("fetches fresh token when connector throws 401 on first fetchPage call", async () => {
-    const ENCRYPTION_KEY = "a".repeat(64);
-
-    // Seed DB with an active installation + encrypted token.
-    // Use "sentry" not "github": GitHub generates JWTs on-demand (no stored token),
-    // which fails in tests. Sentry uses a standard stored OAuth token.
-    const inst = fixtures.installation({
-      provider: "sentry",
-      orgId: "org-retry-401",
-      status: "active",
-    });
-    await db.insert(gwInstallations).values(inst);
-
-    const encryptedToken = await encrypt(
-      "initial-access-token",
-      ENCRYPTION_KEY
-    );
-    const token = fixtures.token({
-      installationId: inst.id,
-      accessToken: encryptedToken,
-    });
-    await db.insert(gwTokens).values(token);
-
-    const entityHandler = capturedHandlers.get("apps-backfill/entity.worker");
-    if (!entityHandler) {
-      throw new Error("entity handler not registered");
-    }
-
-    // Connector: throws 401 on first fetchPage, returns one event on second
-    const err401 = Object.assign(new Error("Unauthorized"), { status: 401 });
-    const mockConnector = {
-      defaultEntityTypes: ["pull_request"],
-      supportedEntityTypes: ["pull_request"],
-      fetchPage: vi
-        .fn()
-        .mockRejectedValueOnce(err401)
-        .mockResolvedValueOnce({
-          events: [
-            {
-              deliveryId: "del-retry-1",
-              eventType: "pull_request",
-              payload: { number: 1 },
-            },
-          ],
-          nextCursor: null,
-          rawCount: 1,
-        }),
-    };
-    mockGetConnector.mockReturnValue(mockConnector);
-
-    // Service router: connections (port 4110) → token endpoint
-    //                 relay (port 4108) → accepts dispatched event
-    const restore = installServiceRouter({ gatewayApp, relayApp });
-    try {
-      const result = (await entityHandler({
-        event: {
-          data: {
-            installationId: inst.id,
-            provider: "sentry",
-            orgId: "org-retry-401",
-            entityType: "pull_request",
-            resource: {
-              providerResourceId: "owner/retry-repo",
-              resourceName: "retry-repo",
-            },
-            since: new Date().toISOString(),
-          },
-        },
-        step: makeStep(),
-      })) as { eventsDispatched: number; pagesProcessed: number };
-
-      // fetchPage was attempted twice: once with initial token (→ 401), once after refresh
-      expect(mockConnector.fetchPage).toHaveBeenCalledTimes(2);
-      // Entity worker completed successfully after the refresh
-      expect(result.eventsDispatched).toBe(1);
-      expect(result.pagesProcessed).toBe(1);
-    } finally {
-      restore();
-    }
   });
 });

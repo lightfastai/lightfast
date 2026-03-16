@@ -1,6 +1,6 @@
 "use client";
 
-import type { V1SearchResponse } from "@repo/console-types";
+import type { SearchResponse } from "@repo/console-validation";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { FileText } from "lucide-react";
 import { SearchResultCard } from "./search-result-card";
@@ -9,7 +9,7 @@ interface SearchResultsListProps {
   expandedId: string;
   offset: number;
   onExpandedIdChange: (id: string) => void;
-  searchResults: V1SearchResponse;
+  searchResults: SearchResponse;
   storeId: string;
 }
 
@@ -27,9 +27,9 @@ export function SearchResultsList({
         <p className="text-muted-foreground text-sm">
           {searchResults.data.length} results
           <span className="ml-1">
-            ({searchResults.latency.total}ms total,{" "}
-            {searchResults.latency.retrieval}ms retrieval
-            {searchResults.latency.rerank
+            ({searchResults.latency?.total ?? 0}ms total,{" "}
+            {searchResults.latency?.retrieval ?? 0}ms retrieval
+            {searchResults.latency?.rerank != null
               ? `, ${searchResults.latency.rerank}ms ${searchResults.meta.mode}`
               : ""}
             )
@@ -37,39 +37,6 @@ export function SearchResultsList({
         </p>
         <Badge variant="outline">{searchResults.meta.mode}</Badge>
       </div>
-
-      {/* Context clusters & actors */}
-      {/* Temporarily commented out - see thoughts/shared/research/2026-02-09-search-results-topics-linear-only.md */}
-      {/* {searchResults.context && (
-        <div className="flex flex-wrap gap-4 text-xs">
-          {searchResults.context.clusters &&
-            searchResults.context.clusters.length > 0 && (
-              <div>
-                <span className="text-muted-foreground">Topics: </span>
-                {searchResults.context.clusters.map((c, i) => (
-                  <Badge key={i} variant="secondary" className="mr-1 text-xs">
-                    {c.topic ?? "Uncategorized"}
-                    {c.keywords.length > 0 &&
-                      ` (${c.keywords.slice(0, 2).join(", ")})`}
-                  </Badge>
-                ))}
-              </div>
-            )}
-          {searchResults.context.relevantActors &&
-            searchResults.context.relevantActors.length > 0 && (
-              <div>
-                <span className="text-muted-foreground">Contributors: </span>
-                {searchResults.context.relevantActors.map((a, i) => (
-                  <Badge key={i} variant="secondary" className="mr-1 text-xs">
-                    {a.displayName}
-                    {a.expertiseDomains.length > 0 &&
-                      ` (${a.expertiseDomains[0]})`}
-                  </Badge>
-                ))}
-              </div>
-            )}
-        </div>
-      )} */}
 
       {/* Result cards */}
       {searchResults.data.length === 0 ? (

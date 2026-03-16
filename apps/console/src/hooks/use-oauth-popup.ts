@@ -1,5 +1,6 @@
 "use client";
 
+import type { ProviderSlug } from "@repo/console-providers/display";
 import { useTRPC } from "@repo/console-trpc/react";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQueryClient } from "@tanstack/react-query";
@@ -10,7 +11,7 @@ interface UseOAuthPopupOptions {
   messageType?: string;
   onSuccess?: () => void;
   popupWindowName?: string;
-  provider: "github" | "vercel" | "linear" | "sentry";
+  provider: ProviderSlug;
   queryKeysToInvalidate: readonly (readonly unknown[])[];
 }
 

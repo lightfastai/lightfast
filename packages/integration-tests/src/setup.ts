@@ -46,3 +46,7 @@ process.env.QSTASH_NEXT_SIGNING_KEY = "test-signing-key-next";
 process.env.DATABASE_HOST = "test-db-host";
 process.env.DATABASE_USERNAME = "test-db-user";
 process.env.DATABASE_PASSWORD = "test-db-pass";
+
+// Neural pipeline — Inngest client reads these at module load via @vendor/inngest/env
+process.env.INNGEST_EVENT_KEY = "test-inngest-event-key";
+process.env.INNGEST_SIGNING_KEY = "test-inngest-signing-key";

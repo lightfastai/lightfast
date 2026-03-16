@@ -5,16 +5,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 interface JournalEntry {
   name: string;
   returnValue: unknown;
-  type: "run" | "sendEvent" | "waitForEvent" | "sleep";
+  type: "run" | "sendEvent" | "invoke" | "sleep";
 }
 
 /**
  * Creates a step that executes callbacks normally AND records a journal
  * of (stepName, type, returnValue) entries. Used for the "first pass".
  */
-function createRecordingStep(
-  waitForEventResults: Record<string, unknown> = {}
-) {
+function createRecordingStep(invokeResults: Record<string, unknown> = {}) {
   const journal: JournalEntry[] = [];
 
   const step = {
@@ -26,9 +24,9 @@ function createRecordingStep(
     sendEvent: vi.fn(async (name: string, _data: unknown) => {
       journal.push({ name, type: "sendEvent", returnValue: undefined });
     }),
-    waitForEvent: vi.fn(async (name: string, _opts: unknown) => {
-      const returnValue = waitForEventResults[name] ?? null;
-      journal.push({ name, type: "waitForEvent", returnValue });
+    invoke: vi.fn(async (name: string, _opts: unknown) => {
+      const returnValue = invokeResults[name] ?? null;
+      journal.push({ name, type: "invoke", returnValue });
       return returnValue;
     }),
     sleep: vi.fn(async (name: string) => {
@@ -66,8 +64,8 @@ function createReplayStep(journal: JournalEntry[]) {
     sendEvent: vi.fn(async (name: string, _data: unknown) => {
       consume(name, "sendEvent");
     }),
-    waitForEvent: vi.fn(async (name: string, _opts: unknown) =>
-      consume(name, "waitForEvent")
+    invoke: vi.fn(async (name: string, _opts: unknown) =>
+      consume(name, "invoke")
     ),
     sleep: vi.fn(async (name: string, _duration: unknown) => {
       consume(name, "sleep");
@@ -75,8 +73,27 @@ function createReplayStep(journal: JournalEntry[]) {
   };
 }
 
+// ── Result interfaces (for typed assertions without as any) ──
+
+interface WorkerResult {
+  eventsDispatched: number;
+  eventsProduced: number;
+  pagesProcessed: number;
+}
+
+interface OrchestratorResult {
+  completed: number;
+  eventsDispatched: number;
+  eventsProduced: number;
+  failed: number;
+  success: boolean;
+}
+
 // ── Module mocks ──
 
+// SAFETY: Test infrastructure — captures Inngest createFunction handlers with
+// loose typing. The handler signature matches at runtime; full Inngest types
+// would require importing internal generics not exposed in the public API.
 const handlers: Record<
   string,
   (args: { event: any; step: any }) => Promise<unknown>
@@ -85,8 +102,11 @@ const handlers: Record<
 vi.mock("../inngest/client", () => ({
   inngest: {
     createFunction: (
-      config: { id: string; onFailure?: Function },
+      config: { id: string },
       _trigger: unknown,
+      // SAFETY: Test infrastructure — captures Inngest createFunction handlers with
+      // loose typing. The handler signature matches at runtime; full Inngest types
+      // would require importing internal generics not exposed in the public API.
       handler: (args: { event: any; step: any }) => Promise<unknown>
     ) => {
       handlers[config.id] = handler;
@@ -95,40 +115,87 @@ vi.mock("../inngest/client", () => ({
   },
 }));
 
-const mockFetch = vi.fn();
-vi.stubGlobal("fetch", mockFetch);
+const mockBuildRequest = vi.fn();
+const mockProcessResponse = vi.fn();
+const mockParseRateLimit = vi.fn();
 
-const mockGetConnector = vi.fn();
-vi.mock("@repo/console-backfill", () => ({
-  getConnector: (...args: unknown[]) => mockGetConnector(...args),
+const mockProvider = {
+  api: { parseRateLimit: mockParseRateLimit },
+  backfill: {
+    supportedEntityTypes: ["pull_request"],
+    defaultEntityTypes: ["pull_request"],
+    entityTypes: {
+      pull_request: {
+        endpointId: "list-pull-requests",
+        buildRequest: mockBuildRequest,
+        processResponse: mockProcessResponse,
+      },
+    },
+  },
+};
+
+const mockGetProvider = vi.fn();
+vi.mock("@repo/console-providers", () => ({
+  getProvider: (...args: unknown[]) => mockGetProvider(...args),
+}));
+
+const mockGatewayClient = {
+  getConnection: vi.fn(),
+  getToken: vi.fn(),
+  getBackfillRuns: vi.fn().mockResolvedValue([]),
+  upsertBackfillRun: vi.fn().mockResolvedValue(undefined),
+  executeApi: vi.fn(),
+};
+
+const mockRelayClient = {
+  dispatchWebhook: vi.fn().mockResolvedValue(undefined),
+  replayCatchup: vi.fn().mockResolvedValue({ remaining: 0 }),
+};
+vi.mock("@repo/gateway-service-clients", () => ({
+  createGatewayClient: () => mockGatewayClient,
+  createRelayClient: () => mockRelayClient,
 }));
 
 vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
 }));
 
-vi.mock("../lib/related-projects", () => ({
-  gatewayUrl: "https://gateway.test/services",
-  relayUrl: "https://relay.test/api",
-}));
-
 // Force module load to capture handlers
+// Entity worker must be loaded first so orchestrator's import finds it in cache
 await import("./entity-worker.js");
 await import("./backfill-orchestrator.js");
 
 // ── Shared fixtures ──
 
-const mockConnector = {
-  provider: "github" as const,
-  supportedEntityTypes: ["pull_request"],
-  defaultEntityTypes: ["pull_request"],
-  validateScopes: vi.fn(),
-  fetchPage: vi.fn(),
-};
-
 beforeEach(() => {
-  vi.clearAllMocks();
-  mockGetConnector.mockReturnValue(mockConnector);
+  vi.resetAllMocks();
+  mockGetProvider.mockReturnValue(mockProvider);
+  mockBuildRequest.mockReturnValue({});
+  mockProcessResponse.mockReturnValue({
+    events: [],
+    nextCursor: null,
+    rawCount: 0,
+  });
+  mockParseRateLimit.mockReturnValue(null);
+  mockGatewayClient.executeApi.mockResolvedValue({
+    status: 200,
+    data: [],
+    headers: {},
+  });
+  mockGatewayClient.getConnection.mockResolvedValue({
+    id: "inst-1",
+    provider: "github",
+    externalId: "12345",
+    orgId: "org-1",
+    status: "active",
+    resources: [
+      { id: "r1", providerResourceId: "100", resourceName: "owner/repo" },
+    ],
+  });
+  mockGatewayClient.getBackfillRuns.mockResolvedValue([]);
+  mockGatewayClient.upsertBackfillRun.mockResolvedValue(undefined);
+  mockRelayClient.dispatchWebhook.mockResolvedValue(undefined);
+  mockRelayClient.replayCatchup.mockResolvedValue({ remaining: 0 });
 });
 
 // ── Entity Worker: Step Memoization Replay ──
@@ -148,19 +215,14 @@ describe("entity-worker step memoization replay", () => {
   }
 
   function setupRecordingMocks() {
-    // Token fetch
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          accessToken: "tok-1",
-          provider: "github",
-          expiresIn: 3600,
-        }),
-        { status: 200 }
-      )
-    );
-    // fetchPage: 3 events, single page
-    mockConnector.fetchPage.mockResolvedValueOnce({
+    // executeApi: return raw response data
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 200,
+      data: ["d1", "d2", "d3"],
+      headers: {},
+    });
+    // processResponse: 3 events, single page
+    mockProcessResponse.mockReturnValueOnce({
       events: [
         { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
         { deliveryId: "d2", eventType: "pull_request", payload: { pr: 2 } },
@@ -169,10 +231,11 @@ describe("entity-worker step memoization replay", () => {
       nextCursor: null,
       rawCount: 3,
     });
-    // 3 dispatch responses
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    // 3 dispatch responses (via relay client)
+    mockRelayClient.dispatchWebhook
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
   }
 
   it("replay produces identical result to recording (single page)", async () => {
@@ -186,9 +249,9 @@ describe("entity-worker step memoization replay", () => {
       step: recordingStep,
     });
 
-    // ── Replay pass (only getConnector needed — it runs outside step callbacks) ──
+    // ── Replay pass (only getProvider needed — it runs outside step callbacks) ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeEntityEvent(),
@@ -198,45 +261,39 @@ describe("entity-worker step memoization replay", () => {
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
     // Sanity: the counts are non-zero
-    expect((recordResult as any).eventsDispatched).toBe(3);
-    expect((recordResult as any).eventsProduced).toBe(3);
+    const workerResult = recordResult as WorkerResult;
+    expect(workerResult.eventsDispatched).toBe(3);
+    expect(workerResult.eventsProduced).toBe(3);
   });
 
   it("replay produces identical result to recording (multi-page)", async () => {
     const handler = handlers["apps-backfill/entity.worker"]!;
 
     // ── Recording pass ──
-    // Token fetch
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          accessToken: "tok-1",
-          provider: "github",
-          expiresIn: 3600,
-        }),
-        { status: 200 }
-      )
-    );
     // Page 1: 2 events
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [
-        { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
-        { deliveryId: "d2", eventType: "pull_request", payload: { pr: 2 } },
-      ],
-      nextCursor: { page: 2 },
-      rawCount: 2,
-    });
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
-    // Page 2: 1 event
-    mockConnector.fetchPage.mockResolvedValueOnce({
-      events: [
-        { deliveryId: "d3", eventType: "pull_request", payload: { pr: 3 } },
-      ],
-      nextCursor: null,
-      rawCount: 1,
-    });
-    mockFetch.mockResolvedValueOnce(new Response("{}", { status: 200 }));
+    mockGatewayClient.executeApi
+      .mockResolvedValueOnce({ status: 200, data: ["d1", "d2"], headers: {} })
+      .mockResolvedValueOnce({ status: 200, data: ["d3"], headers: {} });
+    mockProcessResponse
+      .mockReturnValueOnce({
+        events: [
+          { deliveryId: "d1", eventType: "pull_request", payload: { pr: 1 } },
+          { deliveryId: "d2", eventType: "pull_request", payload: { pr: 2 } },
+        ],
+        nextCursor: { page: 2 },
+        rawCount: 2,
+      })
+      .mockReturnValueOnce({
+        events: [
+          { deliveryId: "d3", eventType: "pull_request", payload: { pr: 3 } },
+        ],
+        nextCursor: null,
+        rawCount: 1,
+      });
+    mockRelayClient.dispatchWebhook
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined)
+      .mockResolvedValueOnce(undefined);
 
     const { step: recordingStep, journal } = createRecordingStep();
     const recordResult = await handler({
@@ -246,7 +303,7 @@ describe("entity-worker step memoization replay", () => {
 
     // ── Replay pass ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeEntityEvent(),
@@ -255,8 +312,9 @@ describe("entity-worker step memoization replay", () => {
 
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
-    expect((recordResult as any).eventsDispatched).toBe(3);
-    expect((recordResult as any).pagesProcessed).toBe(2);
+    const workerResult = recordResult as WorkerResult;
+    expect(workerResult.eventsDispatched).toBe(3);
+    expect(workerResult.pagesProcessed).toBe(2);
   });
 });
 
@@ -278,53 +336,26 @@ describe("orchestrator step memoization replay", () => {
   it("replay produces identical result to recording", async () => {
     const handler = handlers["apps-backfill/run.orchestrator"]!;
 
-    // ── Recording pass ──
-    // Mock: connection fetch
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          id: "inst-1",
-          provider: "github",
-          externalId: "12345",
-          orgId: "org-1",
-          status: "active",
-          resources: [
-            {
-              id: "r1",
-              providerResourceId: "100",
-              resourceName: "owner/repo",
-            },
-          ],
-        }),
-        { status: 200 }
-      )
-    );
-
-    // Configure waitForEvent to return a successful completion
-    const waitResults = {
-      "wait-100-pull_request": {
-        data: {
-          installationId: "inst-1",
-          provider: "github",
-          entityType: "pull_request",
-          resourceId: "100",
-          success: true,
-          eventsProduced: 10,
-          eventsDispatched: 10,
-          pagesProcessed: 1,
-        },
+    // Configure invoke to return a successful completion
+    const invokeResults = {
+      "invoke-100-pull_request": {
+        entityType: "pull_request",
+        resource: "100",
+        eventsProduced: 10,
+        eventsDispatched: 10,
+        pagesProcessed: 1,
       },
     };
 
-    const { step: recordingStep, journal } = createRecordingStep(waitResults);
+    const { step: recordingStep, journal } = createRecordingStep(invokeResults);
     const recordResult = await handler({
       event: makeOrchestratorEvent(),
       step: recordingStep,
     });
 
-    // ── Replay pass (getConnector runs outside step callbacks) ──
+    // ── Replay pass (getProvider runs outside step callbacks) ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeOrchestratorEvent(),
@@ -334,69 +365,42 @@ describe("orchestrator step memoization replay", () => {
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
     // Sanity: the result reflects the completion data
-    expect((recordResult as any).success).toBe(true);
-    expect((recordResult as any).eventsProduced).toBe(10);
-    expect((recordResult as any).eventsDispatched).toBe(10);
+    const orchResult = recordResult as OrchestratorResult;
+    expect(orchResult.success).toBe(true);
+    expect(orchResult.eventsProduced).toBe(10);
+    expect(orchResult.eventsDispatched).toBe(10);
   });
 
   it("replay produces identical result with mixed success/failure", async () => {
     const handler = handlers["apps-backfill/run.orchestrator"]!;
 
-    // ── Recording pass ──
-    mockFetch.mockResolvedValueOnce(
-      new Response(
-        JSON.stringify({
-          id: "inst-1",
-          provider: "github",
-          externalId: "12345",
-          orgId: "org-1",
-          status: "active",
-          resources: [
-            {
-              id: "r1",
-              providerResourceId: "100",
-              resourceName: "owner/repo-a",
-            },
-            {
-              id: "r2",
-              providerResourceId: "200",
-              resourceName: "owner/repo-b",
-            },
-          ],
-        }),
-        { status: 200 }
-      )
-    );
+    // 2 resources — need 2 invoke results
+    mockGatewayClient.getConnection.mockResolvedValue({
+      id: "inst-1",
+      provider: "github",
+      externalId: "12345",
+      orgId: "org-1",
+      status: "active",
+      resources: [
+        { id: "r1", providerResourceId: "100", resourceName: "owner/repo-a" },
+        { id: "r2", providerResourceId: "200", resourceName: "owner/repo-b" },
+      ],
+    });
 
-    const waitResults = {
-      "wait-100-pull_request": {
-        data: {
-          installationId: "inst-1",
-          provider: "github",
-          entityType: "pull_request",
-          resourceId: "100",
-          success: true,
-          eventsProduced: 5,
-          eventsDispatched: 5,
-          pagesProcessed: 1,
-        },
+    // First invoke succeeds, second throws (to simulate failure path)
+    // In recording, invoke-200-pull_request will throw → returns null from our mock
+    const invokeResults = {
+      "invoke-100-pull_request": {
+        entityType: "pull_request",
+        resource: "100",
+        eventsProduced: 5,
+        eventsDispatched: 5,
+        pagesProcessed: 1,
       },
-      "wait-200-pull_request": {
-        data: {
-          installationId: "inst-1",
-          provider: "github",
-          entityType: "pull_request",
-          resourceId: "200",
-          success: false,
-          eventsProduced: 0,
-          eventsDispatched: 0,
-          pagesProcessed: 0,
-          error: "rate limited",
-        },
-      },
+      // invoke-200-pull_request not in results → returns null → caught as failure
     };
 
-    const { step: recordingStep, journal } = createRecordingStep(waitResults);
+    const { step: recordingStep, journal } = createRecordingStep(invokeResults);
     const recordResult = await handler({
       event: makeOrchestratorEvent(),
       step: recordingStep,
@@ -404,7 +408,19 @@ describe("orchestrator step memoization replay", () => {
 
     // ── Replay pass ──
     vi.clearAllMocks();
-    mockGetConnector.mockReturnValue(mockConnector);
+    mockGetProvider.mockReturnValue(mockProvider);
+    // Reset connection mock for replay
+    mockGatewayClient.getConnection.mockResolvedValue({
+      id: "inst-1",
+      provider: "github",
+      externalId: "12345",
+      orgId: "org-1",
+      status: "active",
+      resources: [
+        { id: "r1", providerResourceId: "100", resourceName: "owner/repo-a" },
+        { id: "r2", providerResourceId: "200", resourceName: "owner/repo-b" },
+      ],
+    });
     const replayStep = createReplayStep(journal);
     const replayResult = await handler({
       event: makeOrchestratorEvent(),
@@ -413,8 +429,9 @@ describe("orchestrator step memoization replay", () => {
 
     // ── Assert identical results ──
     expect(replayResult).toEqual(recordResult);
-    expect((recordResult as any).success).toBe(false);
-    expect((recordResult as any).failed).toBe(1);
-    expect((recordResult as any).completed).toBe(1);
+    const orchResult = recordResult as OrchestratorResult;
+    expect(orchResult.success).toBe(false);
+    expect(orchResult.failed).toBe(1);
+    expect(orchResult.completed).toBe(1);
   });
 });

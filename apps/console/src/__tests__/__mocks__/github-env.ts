@@ -7,5 +7,3 @@
 export const githubEnv = {
   NEXT_PUBLIC_GITHUB_APP_SLUG: "test-github-app",
 };
-
-export const githubOAuthEnv = {};

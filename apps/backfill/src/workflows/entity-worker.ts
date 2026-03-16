@@ -1,10 +1,15 @@
-import type { BackfillConfig } from "@repo/console-backfill";
-import { getConnector } from "@repo/console-backfill";
+import { type BackfillContext, getProvider } from "@repo/console-providers";
+import {
+  createGatewayClient,
+  createRelayClient,
+  HttpError,
+} from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { gatewayUrl, relayUrl } from "../lib/related-projects.js";
+import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../lib/constants.js";
+import { log } from "../logger.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
@@ -16,13 +21,11 @@ export const backfillEntityWorker = inngest.createFunction(
       // (one org with multiple connections shares this budget)
       { limit: 5, key: "event.data.orgId" },
       // Global: max 10 entity workers across all orgs
-      // (~20 concurrent steps for backfill, leaves ~80 for observation.capture + live webhooks)
+      // (~20 concurrent steps for backfill, leaves ~80 for event.capture + live webhooks)
       { limit: 10 },
     ],
-    // Conservative backstop: 4000 req/hr per installation token
-    // (GitHub limit is 5000 — leaves 1000 for webhook/realtime traffic)
     throttle: {
-      limit: 4000,
+      limit: GITHUB_RATE_LIMIT_BUDGET,
       period: "1h",
       key: "event.data.installationId",
     },
@@ -34,25 +37,6 @@ export const backfillEntityWorker = inngest.createFunction(
       },
     ],
     timeouts: { start: "5m", finish: "2h" },
-    // Emit failure completion so orchestrator's waitForEvent resolves immediately
-    // instead of waiting 4h for a timeout
-    onFailure: async ({ error, event, step }) => {
-      const originalData = event.data.event.data;
-      await step.sendEvent("notify-failure", {
-        name: "apps-backfill/entity.completed",
-        data: {
-          installationId: originalData.installationId,
-          provider: originalData.provider,
-          entityType: originalData.entityType,
-          resourceId: originalData.resource.providerResourceId,
-          success: false,
-          eventsProduced: 0,
-          eventsDispatched: 0,
-          pagesProcessed: 0,
-          error: error.message,
-        },
-      });
-    },
   },
   { event: "apps-backfill/entity.requested" },
   async ({ event, step }) => {
@@ -63,58 +47,52 @@ export const backfillEntityWorker = inngest.createFunction(
       entityType,
       resource,
       since,
+      holdForReplay,
       correlationId,
     } = event.data;
 
-    // ── Step 1: Self-fetch token (not passed via event — security + expiration) ──
-    const { accessToken: initialToken } = await step.run(
-      "get-token",
-      async () => {
-        const response = await fetch(
-          `${gatewayUrl}/gateway/${installationId}/token`,
-          {
-            headers: {
-              "X-API-Key": env.GATEWAY_API_KEY,
-              "X-Request-Source": "backfill",
-              ...(correlationId ? { "X-Correlation-Id": correlationId } : {}),
-            },
-            signal: AbortSignal.timeout(30_000),
-          }
-        );
-        if (!response.ok) {
-          throw new Error(
-            `Gateway getToken failed: ${response.status} for ${installationId}`
-          );
-        }
-        return response.json() as Promise<{
-          accessToken: string;
-          provider: string;
-          expiresIn: number | null;
-        }>;
-      }
-    );
+    log.info("[entity-worker] starting", {
+      installationId,
+      provider,
+      entityType,
+      resource: resource.providerResourceId,
+      since,
+      correlationId,
+    });
 
-    // ── Resolve connector ──
-    const connector = getConnector(
-      provider as Parameters<typeof getConnector>[0]
-    );
-    if (!connector) {
+    const gw = createGatewayClient({
+      apiKey: env.GATEWAY_API_KEY,
+      correlationId,
+      requestSource: "backfill",
+    });
+
+    // ── Resolve provider ──
+    const providerDef = getProvider(provider);
+    if (!providerDef) {
+      throw new NonRetriableError(`Unknown provider: ${provider}`);
+    }
+
+    const entityHandler = providerDef.backfill.entityTypes[entityType];
+    if (!entityHandler) {
       throw new NonRetriableError(
-        `No backfill connector for provider: ${provider}`
+        `Entity type "${entityType}" is not supported for ${provider} backfill`
       );
     }
 
-    // Build config with singular resource
-    const config: BackfillConfig = {
+    const ctx: BackfillContext = {
       installationId,
-      provider: provider as BackfillConfig["provider"],
-      since,
-      accessToken: initialToken,
       resource: {
         providerResourceId: resource.providerResourceId,
         resourceName: resource.resourceName,
       },
+      since,
     };
+
+    const relay = createRelayClient({
+      apiKey: env.GATEWAY_API_KEY,
+      correlationId,
+      requestSource: "backfill",
+    });
 
     // ── Pagination loop ──
     let cursor: unknown = null;
@@ -123,85 +101,64 @@ export const backfillEntityWorker = inngest.createFunction(
     let eventsDispatched = 0;
 
     while (true) {
-      // Fetch page — includes inline 401 token refresh
       const fetchResult = await step.run(
         `fetch-${entityType}-p${pageNum}`,
         async () => {
-          try {
-            const page = await connector.fetchPage(config, entityType, cursor);
-            return {
-              events: page.events,
-              nextCursor: page.nextCursor,
-              rawCount: page.rawCount,
-              refreshedToken: null as string | null,
-              rateLimit: page.rateLimit
-                ? {
-                    remaining: page.rateLimit.remaining,
-                    resetAt: page.rateLimit.resetAt.toISOString(),
-                    limit: page.rateLimit.limit,
-                  }
-                : null,
-            };
-          } catch (err: unknown) {
-            // Token expired — refresh and retry within the same step boundary
-            // This avoids memoization issues (the step either succeeds or throws)
-            const status =
-              err instanceof Error && "status" in err
-                ? (err as { status: number }).status
-                : undefined;
-            if (status === 401) {
-              const tokenResponse = await fetch(
-                `${gatewayUrl}/gateway/${installationId}/token`,
-                {
-                  headers: {
-                    "X-API-Key": env.GATEWAY_API_KEY,
-                    "X-Request-Source": "backfill",
-                    ...(correlationId
-                      ? { "X-Correlation-Id": correlationId }
-                      : {}),
-                  },
-                  signal: AbortSignal.timeout(30_000),
-                }
-              );
-              if (!tokenResponse.ok) {
-                throw err; // Can't refresh — rethrow original
-              }
-              const { accessToken: freshToken } =
-                (await tokenResponse.json()) as { accessToken: string };
+          const request = entityHandler.buildRequest(ctx, cursor);
+          const raw = await gw.executeApi(installationId, {
+            endpointId: entityHandler.endpointId,
+            ...request,
+          });
 
-              const refreshedConfig = { ...config, accessToken: freshToken };
-              const page = await connector.fetchPage(
-                refreshedConfig,
-                entityType,
-                cursor
-              );
-              return {
-                events: page.events,
-                nextCursor: page.nextCursor,
-                rawCount: page.rawCount,
-                refreshedToken: freshToken,
-                rateLimit: page.rateLimit
-                  ? {
-                      remaining: page.rateLimit.remaining,
-                      resetAt: page.rateLimit.resetAt.toISOString(),
-                      limit: page.rateLimit.limit,
-                    }
-                  : null,
-              };
-            }
-            throw err;
+          if (raw.status !== 200) {
+            throw new HttpError(
+              `Provider API returned ${raw.status}`,
+              raw.status
+            );
           }
+
+          const processed = entityHandler.processResponse(
+            raw.data,
+            ctx,
+            cursor,
+            raw.headers
+          );
+
+          // Parse rate limits client-side from raw headers
+          const rateLimit = providerDef.api.parseRateLimit(
+            new Headers(raw.headers)
+          );
+
+          return {
+            events: processed.events,
+            nextCursor: processed.nextCursor,
+            rawCount: processed.rawCount,
+            rateLimit: rateLimit
+              ? {
+                  remaining: rateLimit.remaining,
+                  resetAt: rateLimit.resetAt.toISOString(),
+                  limit: rateLimit.limit,
+                }
+              : null,
+          };
         }
       );
 
-      // Apply refreshed token outside step boundary so it survives memoized replay
-      if (fetchResult.refreshedToken) {
-        config.accessToken = fetchResult.refreshedToken;
-      }
+      log.info("[entity-worker] page fetched", {
+        installationId,
+        entityType,
+        resource: resource.providerResourceId,
+        page: pageNum,
+        events: fetchResult.events.length,
+        ...(fetchResult.rateLimit && {
+          rateLimitRemaining: fetchResult.rateLimit.remaining,
+        }),
+        correlationId,
+      });
 
-      eventsProduced += fetchResult.rawCount;
+      eventsProduced += fetchResult.events.length;
 
-      // Dispatch each event to Relay service auth endpoint
+      // Dispatch each event to Relay service
       // Return count from step so it survives memoized replay (callbacks are skipped on retry)
       const dispatched = await step.run(
         `dispatch-${entityType}-p${pageNum}`,
@@ -213,79 +170,84 @@ export const backfillEntityWorker = inngest.createFunction(
           for (let i = 0; i < events.length; i += BATCH_SIZE) {
             const batch = events.slice(i, i + BATCH_SIZE);
             await Promise.all(
-              batch.map(async (webhookEvent) => {
-                const response = await fetch(
-                  `${relayUrl}/webhooks/${provider}`,
+              batch.map((webhookEvent) =>
+                relay.dispatchWebhook(
+                  provider,
                   {
-                    method: "POST",
-                    headers: {
-                      "Content-Type": "application/json",
-                      "X-API-Key": env.GATEWAY_API_KEY,
-                      ...(correlationId
-                        ? { "X-Correlation-Id": correlationId }
-                        : {}),
-                    },
-                    body: JSON.stringify({
-                      connectionId: installationId,
-                      orgId,
-                      deliveryId: webhookEvent.deliveryId,
-                      eventType: webhookEvent.eventType,
-                      payload: webhookEvent.payload,
-                      receivedAt: Date.now(),
-                    }),
-                    signal: AbortSignal.timeout(30_000),
-                  }
-                );
-                if (!response.ok) {
-                  const text = await response.text().catch(() => "unknown");
-                  throw new Error(
-                    `Relay ingestWebhook failed: ${response.status} — ${text}`
-                  );
-                }
-              })
+                    connectionId: installationId,
+                    orgId,
+                    deliveryId: webhookEvent.deliveryId,
+                    eventType: webhookEvent.eventType,
+                    payload: webhookEvent.payload,
+                    receivedAt: Date.now(),
+                  },
+                  holdForReplay
+                )
+              )
             );
             count += batch.length;
           }
           return count;
         }
       );
+      log.info("[entity-worker] page dispatched", {
+        installationId,
+        entityType,
+        resource: resource.providerResourceId,
+        page: pageNum,
+        dispatched,
+        correlationId,
+      });
+
       eventsDispatched += dispatched;
 
       // Rate limit sleep if near threshold (dynamic, based on response headers)
-      if (
-        fetchResult.rateLimit &&
-        fetchResult.rateLimit.remaining < fetchResult.rateLimit.limit * 0.1
-      ) {
-        const resetAt = new Date(fetchResult.rateLimit.resetAt);
-        const sleepMs = Math.max(0, resetAt.getTime() - Date.now());
-        if (sleepMs > 0) {
-          await step.sleep(
-            `rate-limit-${entityType}-p${pageNum}`,
-            `${Math.ceil(sleepMs / 1000)}s`
-          );
+      if (fetchResult.rateLimit) {
+        const { remaining, resetAt, limit } = fetchResult.rateLimit;
+        if (remaining < limit * 0.1) {
+          const sleepMs = Math.max(0, new Date(resetAt).getTime() - Date.now());
+          if (sleepMs > 0) {
+            log.info("[entity-worker] rate limit sleep", {
+              installationId,
+              entityType,
+              resource: resource.providerResourceId,
+              sleepMs,
+              resetAt,
+              correlationId,
+            });
+            await step.sleep(
+              `rate-limit-${entityType}-p${pageNum}`,
+              `${Math.ceil(sleepMs / 1000)}s`
+            );
+          }
         }
       }
 
       if (!fetchResult.nextCursor) {
         break;
       }
+      if (pageNum >= MAX_PAGES) {
+        log.warn(`[backfill] entity-worker hit MAX_PAGES cap (${MAX_PAGES})`, {
+          installationId,
+          entityType,
+          resource: resource.providerResourceId,
+          correlationId,
+        });
+        break;
+      }
       cursor = fetchResult.nextCursor;
       pageNum++;
     }
 
-    // ── Emit completion event (always — orchestrator's waitForEvent depends on this) ──
-    await step.sendEvent("notify-completion", {
-      name: "apps-backfill/entity.completed",
-      data: {
-        installationId,
-        provider,
-        entityType,
-        resourceId: resource.providerResourceId,
-        success: true,
-        eventsProduced,
-        eventsDispatched,
-        pagesProcessed: pageNum,
-      },
+    log.info("[entity-worker] complete", {
+      installationId,
+      provider,
+      entityType,
+      resource: resource.providerResourceId,
+      eventsProduced,
+      eventsDispatched,
+      pagesProcessed: pageNum,
+      correlationId,
     });
 
     return {

@@ -1,5 +1,8 @@
+import { PROVIDER_SLUGS } from "@repo/console-providers";
 import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
+import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import Link from "next/link";
 import { Suspense } from "react";
 import { InstalledSources } from "./_components/installed-sources";
 import { LatestIntegrations } from "./_components/latest-integrations";
@@ -14,6 +17,13 @@ export default async function SourcesPage({
   const { slug, workspaceName } = await params;
   const { search = "", status = "all" } = await searchParams;
 
+  // Prefetch connection status for all providers (for resource name lookups)
+  for (const provider of PROVIDER_SLUGS) {
+    void prefetch(
+      orgTrpc.connections.generic.listInstallations.queryOptions({ provider })
+    );
+  }
+
   // Prefetch workspace sources - tRPC procedure will verify org access
   // No blocking access check here - let query handle verification
   prefetch(
@@ -27,11 +37,18 @@ export default async function SourcesPage({
     <HydrateClient>
       <div className="pb-6">
         {/* Header */}
-        <div className="mb-6">
-          <h1 className="font-semibold text-2xl tracking-tight">Sources</h1>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Manage integrations connected to this workspace
-          </p>
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="font-semibold text-2xl tracking-tight">Sources</h1>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Manage integrations connected to this workspace
+            </p>
+          </div>
+          <Button asChild size="sm">
+            <Link href={`/${slug}/${workspaceName}/sources/new`}>
+              Add New Source
+            </Link>
+          </Button>
         </div>
 
         {/* 12-column grid: 9 cols sources + 3 cols integrations */}

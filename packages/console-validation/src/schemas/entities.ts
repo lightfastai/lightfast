@@ -7,13 +7,20 @@ import { z } from "zod";
  * Used for semantic grouping and targeted search.
  */
 export const entityCategorySchema = z.enum([
+  // Structural types (from references — used for graph matching)
+  "commit",
+  "branch",
+  "pr",
+  "issue",
+  "deployment",
+  // Semantic types (from text extraction — used for search enrichment)
   "engineer", // Team members, contributors (@mentions, emails)
   "project", // Features, repos, tickets (#123, ENG-456)
   "endpoint", // API routes (POST /api/users)
   "config", // Environment variables (DATABASE_URL)
   "definition", // File paths, technical terms
   "service", // External services, dependencies
-  "reference", // Generic references (commits, branches)
+  "reference", // Generic references
 ]);
 
 export type EntityCategory = z.infer<typeof entityCategorySchema>;
@@ -64,3 +71,32 @@ export type LLMExtractedEntity = z.infer<typeof llmExtractedEntitySchema>;
 export type LLMEntityExtractionResponse = z.infer<
   typeof llmEntityExtractionResponseSchema
 >;
+
+/**
+ * Entity extracted from observation content
+ */
+export const extractedEntitySchema = z.object({
+  category: entityCategorySchema,
+  confidence: z.number(),
+  evidence: z.string(),
+  key: z.string(),
+  value: z.string().optional(),
+  state: z.string().optional(),
+  url: z.string().optional(),
+});
+export type ExtractedEntity = z.infer<typeof extractedEntitySchema>;
+
+/**
+ * Entity search result for hybrid retrieval
+ */
+export const entitySearchResultSchema = z.object({
+  confidence: z.number(),
+  entityCategory: entityCategorySchema,
+  entityId: z.string(),
+  entityKey: z.string(),
+  observationId: z.string(),
+  observationSnippet: z.string(),
+  observationTitle: z.string(),
+  occurrenceCount: z.number(),
+});
+export type EntitySearchResult = z.infer<typeof entitySearchResultSchema>;

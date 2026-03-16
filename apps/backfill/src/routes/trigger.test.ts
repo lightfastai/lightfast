@@ -6,11 +6,21 @@ const { mockInngestSend } = vi.hoisted(() => ({
 
 vi.mock("../env", () => ({
   env: { GATEWAY_API_KEY: "test-key" },
-  getEnv: () => ({ GATEWAY_API_KEY: "test-key" }),
+}));
+
+vi.mock("../logger", () => ({
+  log: { error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 
 vi.mock("../inngest/client", () => ({
   inngest: { send: mockInngestSend },
+}));
+
+const mockGatewayClient = {
+  getConnection: vi.fn(),
+};
+vi.mock("@repo/gateway-service-clients", () => ({
+  createGatewayClient: () => mockGatewayClient,
 }));
 
 import { Hono } from "hono";
@@ -46,6 +56,11 @@ const validBody = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  mockGatewayClient.getConnection.mockResolvedValue({
+    id: "inst-1",
+    orgId: "org-1",
+    status: "active",
+  });
 });
 
 describe("POST /trigger/", () => {
@@ -115,13 +130,13 @@ describe("POST /trigger/", () => {
     });
   });
 
-  it("depth defaults to 30 when not provided in body", async () => {
+  it("depth defaults to 1 when not provided in body", async () => {
     await request("/trigger", {
       body: validBody,
       headers: { "X-API-Key": "test-key" },
     });
     const call = mockInngestSend.mock.calls[0]![0];
-    expect(call.data.depth).toBe(30);
+    expect(call.data.depth).toBe(1);
   });
 
   it("custom depth: 90 passes through", async () => {
@@ -149,6 +164,34 @@ describe("POST /trigger/", () => {
       headers: { "X-API-Key": "test-key" },
     });
     expect(res.status).toBe(502);
+  });
+});
+
+describe("POST /trigger — contract fuzzing", () => {
+  const VALID_BODY = {
+    installationId: "inst-1",
+    provider: "github",
+    orgId: "org-1",
+    depth: 30,
+  };
+
+  it.each([
+    ["missing installationId", { ...VALID_BODY, installationId: undefined }],
+    ["missing provider", { ...VALID_BODY, provider: undefined }],
+    ["missing orgId", { ...VALID_BODY, orgId: undefined }],
+    ["invalid depth: 0", { ...VALID_BODY, depth: 0 }],
+    ["invalid depth: fractional (0.5)", { ...VALID_BODY, depth: 0.5 }],
+    ["invalid depth: negative (-1)", { ...VALID_BODY, depth: -1 }],
+    ["invalid depth: non-enum (15)", { ...VALID_BODY, depth: 15 }],
+    ["invalid provider: unknown", { ...VALID_BODY, provider: "notion" }],
+  ])("returns 400 for: %s", async (_label, body) => {
+    const res = await request("/trigger", {
+      body: body as Record<string, unknown>,
+      headers: { "X-API-Key": "test-key" },
+    });
+    expect(res.status).toBe(400);
+    // Inngest event must NOT have been sent
+    expect(mockInngestSend).not.toHaveBeenCalled();
   });
 });
 
@@ -199,6 +242,18 @@ describe("POST /trigger/cancel", () => {
     const call = mockInngestSend.mock.calls[0]![0];
     expect(call.name).toBe("apps-backfill/run.cancelled");
     expect(call.data).toEqual({ installationId: "inst-1" });
+  });
+
+  it("returns 404 when installationId is not found", async () => {
+    mockGatewayClient.getConnection.mockRejectedValue(new Error("not found"));
+
+    const res = await request("/trigger/cancel", {
+      body: { installationId: "nonexistent" },
+      headers: { "X-API-Key": "test-key" },
+    });
+    expect(res.status).toBe(404);
+    const json = (await res.json()) as { error: string };
+    expect(json.error).toBe("connection_not_found");
   });
 
   it("inngest.send rejection → 502 response", async () => {

@@ -1,6 +1,6 @@
 "use client";
 
-import type { V1SearchResponse } from "@repo/console-types";
+import type { SearchResponse } from "@repo/console-validation";
 import {
   CodeBlock,
   CodeBlockContent,
@@ -21,7 +21,7 @@ interface SearchResultsPanelProps {
   offset: number;
   onActiveTabChange: (tab: string) => void;
   onExpandedIdChange: (id: string) => void;
-  searchResults: V1SearchResponse | null;
+  searchResults: SearchResponse | null;
   storeId: string;
 }
 
@@ -78,7 +78,7 @@ export function SearchResultsPanel({
       >
         <SearchTabContent>
           {searchResults ? (
-            <CodeBlock className="scrollbar-thin h-full overflow-auto rounded-sm border">
+            <CodeBlock className="scrollbar-thin h-full overflow-auto rounded-md border border-border/50 bg-card/40 backdrop-blur-md">
               <CodeBlockContent
                 className="p-3"
                 code={JSON.stringify(searchResults, null, 2)}

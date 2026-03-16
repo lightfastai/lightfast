@@ -1,224 +1,186 @@
 import { db } from "@db/console/client";
-import { gwWebhookDeliveries } from "@db/console/schema";
+import { gatewayWebhookDeliveries } from "@db/console/schema";
 import type {
   WebhookEnvelope,
   WebhookReceiptPayload,
-} from "@repo/gateway-types";
+} from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
 import { getQStashClient } from "@vendor/qstash";
 import { redis } from "@vendor/upstash";
-import { getWorkflowClient } from "@vendor/upstash-workflow/client";
+import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
-import { getEnv } from "../env.js";
 import { webhookSeenKey } from "../lib/cache.js";
-import { timingSafeStringEqual } from "../lib/crypto.js";
-import { isConsoleFanOutEnabled } from "../lib/flags.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
-import type { LifecycleVariables } from "../middleware/lifecycle.js";
-import type { WebhookProvider } from "../providers/index.js";
-import { getProvider } from "../providers/index.js";
+import { log } from "../logger.js";
+import type { WebhookVariables } from "../middleware/webhook.js";
+import {
+  payloadParseAndExtract,
+  providerGuard,
+  rawBodyCapture,
+  serviceAuthBodyValidator,
+  serviceAuthDetect,
+  signatureVerify,
+  webhookHeaderGuard,
+} from "../middleware/webhook.js";
 
-const webhooks = new Hono<{ Variables: LifecycleVariables }>();
+const webhooks = new Hono<{ Variables: WebhookVariables }>();
 
 /**
  * POST /webhooks/:provider
  *
- * Thin verification layer. Validates provider webhook signature, extracts
- * identifiers, triggers the durable webhook-delivery workflow, returns fast 200.
+ * Middleware chain validates, verifies, and extracts webhook data before the handler runs:
+ *
+ *   providerGuard          → validate :provider param, attach providerDef
+ *   serviceAuthDetect      → check X-API-Key, set isServiceAuth flag
+ *   serviceAuthBodyValidator → (service auth only) validate JSON body with Zod
+ *   webhookHeaderGuard     → (standard only) validate required provider headers
+ *   rawBodyCapture         → (standard only) read raw body for HMAC
+ *   signatureVerify        → (standard only) HMAC verification
+ *   payloadParseAndExtract → parse payload via provider schema, extract metadata
+ *
+ * By the time the handler runs, all context variables are populated and validated.
  *
  * Target: < 20ms (1 sig verify + 1 workflow trigger)
- * Invalid webhooks are rejected immediately — no workflow overhead.
- *
- * Service auth bypass: When X-API-Key header is present and valid, the request
- * is from an internal service (e.g. backfill). Skips HMAC verification, dedup,
- * and connection resolution — publishes directly to Console via QStash.
+ * Invalid webhooks are rejected at the earliest possible middleware layer.
  */
-webhooks.post("/:provider", async (c) => {
-  const providerName = c.req.param("provider");
+webhooks.post(
+  "/:provider",
+  providerGuard,
+  serviceAuthDetect,
+  serviceAuthBodyValidator,
+  webhookHeaderGuard,
+  rawBodyCapture,
+  signatureVerify,
+  payloadParseAndExtract,
+  async (c) => {
+    const providerName = c.get("providerName");
+    const deliveryId = c.get("deliveryId");
+    const eventType = c.get("eventType");
+    const resourceId = c.get("resourceId");
+    const parsedPayload = c.get("parsedPayload");
+    const isServiceAuth = c.get("isServiceAuth");
 
-  let provider: WebhookProvider;
-  try {
-    provider = getProvider(providerName);
-  } catch {
-    return c.json({ error: "unknown_provider", provider: providerName }, 400);
-  }
+    // ── Service auth path (backfill / internal service) ──
+    if (isServiceAuth) {
+      const body = c.get("serviceAuthBody");
+      if (!body) {
+        return c.json({ error: "missing_body" }, 400);
+      }
 
-  const env = getEnv(c);
+      // Dedup — prevents duplicates from backfill retries and re-runs.
+      const dedupResult = await redis.set(
+        webhookSeenKey(providerName, deliveryId),
+        "1",
+        { nx: true, ex: 86_400 }
+      );
+      if (dedupResult === null) {
+        return c.json({ status: "duplicate", deliveryId });
+      }
 
-  // Service auth path — backfill or other internal service
-  // Pre-resolved connectionId/orgId provided in body; skip HMAC/dedup/resolution.
-  const apiKey = c.req.header("X-API-Key");
-  if (apiKey && (await timingSafeStringEqual(apiKey, env.GATEWAY_API_KEY))) {
-    let body: {
-      connectionId: string;
-      orgId: string;
-      deliveryId: string;
-      eventType: string;
-      payload: unknown;
-      receivedAt: number;
-    };
-    try {
-      body = await c.req.json();
-    } catch {
-      return c.json({ error: "invalid_json" }, 400);
-    }
-
-    if (
-      !(
-        body.connectionId &&
-        body.orgId &&
-        body.deliveryId &&
-        body.eventType &&
-        body.payload
-      )
-    ) {
-      return c.json({ error: "missing_required_fields" }, 400);
-    }
-
-    if (
-      typeof body.receivedAt !== "number" ||
-      !Number.isFinite(body.receivedAt)
-    ) {
-      return c.json({ error: "invalid_field", field: "receivedAt" }, 400);
-    }
-
-    // Parse payload through provider schema (validates structure, applies .passthrough())
-    let parsedPayload;
-    try {
-      parsedPayload = provider.parsePayload(body.payload);
-    } catch {
-      return c.json({ error: "invalid_payload" }, 400);
-    }
-
-    // Dedup — same Redis SET NX as the standard webhook path.
-    // Prevents duplicates from backfill retries and re-runs.
-    const dedupResult = await redis.set(
-      webhookSeenKey(provider.name, body.deliveryId),
-      "1",
-      { nx: true, ex: 86_400 }
-    );
-    if (dedupResult === null) {
-      return c.json({ status: "duplicate", deliveryId: body.deliveryId });
-    }
-
-    // Persist for long-term replayability
-    await db
-      .insert(gwWebhookDeliveries)
-      .values({
-        provider: provider.name,
-        deliveryId: body.deliveryId,
-        eventType: body.eventType,
-        installationId: body.connectionId,
-        status: "received",
-        payload: JSON.stringify(parsedPayload),
-        receivedAt: new Date(
-          body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt
-        ).toISOString(),
-      })
-      .onConflictDoNothing();
-
-    // Check feature flag — skip console delivery if disabled
-    if (!(await isConsoleFanOutEnabled(provider.name))) {
-      return c.json({
-        status: "accepted",
-        deliveryId: body.deliveryId,
-        fanOut: false,
+      log.info("[webhooks] new delivery, dedup passed", {
+        provider: providerName,
+        deliveryId,
+        eventType,
+        correlationId: c.get("correlationId"),
       });
+
+      // Persist for long-term replayability
+      await db
+        .insert(gatewayWebhookDeliveries)
+        .values({
+          provider: providerName,
+          deliveryId,
+          eventType,
+          installationId: body.connectionId,
+          status: "received",
+          payload: JSON.stringify(parsedPayload),
+          receivedAt: new Date(
+            body.receivedAt < 1e12 ? body.receivedAt * 1000 : body.receivedAt
+          ).toISOString(),
+        })
+        .onConflictDoNothing();
+
+      // Allow internal services to explicitly hold webhooks for batch replay.
+      const holdForReplay = c.req.header("X-Backfill-Hold") === "true";
+      if (holdForReplay) {
+        return c.json({ status: "accepted", deliveryId, held: true });
+      }
+
+      // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
+      const correlationId = c.get("correlationId");
+      await getQStashClient().publishJSON({
+        url: `${consoleUrl}/api/gateway/ingress`,
+        headers: { "X-Correlation-Id": correlationId },
+        body: {
+          deliveryId,
+          connectionId: body.connectionId,
+          orgId: body.orgId,
+          provider: providerName,
+          eventType,
+          payload: parsedPayload,
+          receivedAt: body.receivedAt,
+          correlationId,
+        } satisfies WebhookEnvelope,
+        retries: 5,
+      });
+
+      log.info("[webhooks] published to console ingress", {
+        provider: providerName,
+        deliveryId,
+        correlationId,
+      });
+
+      // Update persisted status — best-effort after QStash accepted
+      try {
+        await db
+          .update(gatewayWebhookDeliveries)
+          .set({ status: "enqueued" })
+          .where(
+            and(
+              eq(gatewayWebhookDeliveries.provider, providerName),
+              eq(gatewayWebhookDeliveries.deliveryId, deliveryId)
+            )
+          );
+      } catch (err) {
+        log.error("[webhooks] failed to update delivery status after enqueue", {
+          provider: providerName,
+          deliveryId,
+          error: err,
+        });
+      }
+
+      return c.json({ status: "accepted", deliveryId });
     }
 
-    // Publish directly to Console ingress — skip connection resolution (pre-resolved in body)
-    const correlationId = c.get("correlationId");
-    await getQStashClient().publishJSON({
-      url: `${consoleUrl}/api/webhooks/ingress`,
-      headers: { "X-Correlation-Id": correlationId },
-      body: {
-        deliveryId: body.deliveryId,
-        connectionId: body.connectionId,
-        orgId: body.orgId,
-        provider: provider.name,
-        eventType: body.eventType,
-        payload: parsedPayload,
-        receivedAt: body.receivedAt,
-        correlationId,
-      } satisfies WebhookEnvelope,
-      retries: 5,
+    // ── Standard webhook path (external provider) ──
+
+    // Trigger durable workflow — processing happens asynchronously with
+    // step-level retry semantics. Provider gets fast 200 ACK.
+    const workflowPayload: WebhookReceiptPayload = {
+      provider: providerName,
+      deliveryId,
+      eventType,
+      resourceId,
+      payload: parsedPayload,
+      receivedAt: Date.now(),
+      correlationId: c.get("correlationId"),
+    };
+
+    await workflowClient.trigger({
+      url: `${relayBaseUrl}/workflows/webhook-delivery`,
+      body: JSON.stringify(workflowPayload),
+      headers: { "Content-Type": "application/json" },
     });
 
-    // Update persisted status — QStash accepted, pending Console delivery
-    // Best-effort: don't fail the request if status update fails after QStash accepted
-    try {
-      await db
-        .update(gwWebhookDeliveries)
-        .set({ status: "enqueued" })
-        .where(
-          and(
-            eq(gwWebhookDeliveries.provider, provider.name),
-            eq(gwWebhookDeliveries.deliveryId, body.deliveryId)
-          )
-        );
-    } catch (err) {
-      console.error(
-        "[webhooks] failed to update delivery status after enqueue",
-        {
-          provider: provider.name,
-          deliveryId: body.deliveryId,
-          error: err,
-        }
-      );
-    }
+    log.info("[webhooks] workflow triggered", {
+      provider: providerName,
+      deliveryId,
+      eventType,
+      correlationId: c.get("correlationId"),
+    });
 
-    return c.json({ status: "accepted", deliveryId: body.deliveryId });
+    return c.json({ status: "accepted", deliveryId }, 200);
   }
-
-  // Read raw body for HMAC verification
-  const rawBody = await c.req.text();
-  const headers = c.req.raw.headers;
-
-  // Verify webhook signature — reject invalid webhooks immediately
-  // No workflow is triggered for invalid requests.
-  const secret = provider.getWebhookSecret(env);
-  const valid = await provider.verifyWebhook(rawBody, headers, secret);
-  if (!valid) {
-    return c.json({ error: "invalid_signature" }, 401);
-  }
-
-  // Parse + validate payload with provider-specific Zod schema
-  let payload;
-  try {
-    payload = provider.parsePayload(JSON.parse(rawBody));
-  } catch {
-    return c.json({ error: "invalid_payload" }, 400);
-  }
-
-  let deliveryId: string;
-  let eventType: string;
-  let resourceId: string | null;
-  try {
-    deliveryId = provider.extractDeliveryId(headers, payload);
-    eventType = provider.extractEventType(headers, payload);
-    resourceId = provider.extractResourceId(payload);
-  } catch {
-    return c.json({ error: "extraction_failed", provider: providerName }, 400);
-  }
-
-  // Trigger durable workflow — processing happens asynchronously with
-  // step-level retry semantics. Provider gets fast 200 ACK.
-  const workflowPayload: WebhookReceiptPayload = {
-    provider: provider.name,
-    deliveryId,
-    eventType,
-    resourceId,
-    payload,
-    receivedAt: Date.now(),
-    correlationId: c.get("correlationId"),
-  };
-
-  await getWorkflowClient().trigger({
-    url: `${relayBaseUrl}/workflows/webhook-delivery`,
-    body: workflowPayload,
-  });
-
-  return c.json({ status: "accepted", deliveryId }, 200);
-});
+);
 
 export { webhooks };

@@ -19,7 +19,7 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
-    "@repo/gateway-types": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
@@ -28,13 +28,12 @@
     "@vendor/related-projects": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-workflow": "workspace:*",
-    "@vendor/vercel-flags": "workspace:*",
     "hono": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "@repo/console-test-data": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "catalog:",
     "srvx": "^0.11.8",

@@ -29,6 +29,10 @@
     "./utils": {
       "types": "./dist/utils/index.d.ts",
       "default": "./dist/utils/index.js"
+    },
+    "./api": {
+      "types": "./dist/schemas/api/index.d.ts",
+      "default": "./dist/schemas/api/index.js"
     }
   },
   "scripts": {
@@ -38,9 +42,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/console-providers": "workspace:*",
     "@repo/console-reserved-names": "workspace:^",
     "@repo/lib": "workspace:*",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

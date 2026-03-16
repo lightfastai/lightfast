@@ -15,13 +15,10 @@
     "./integration-icons": "./src/components/integration-icons.tsx",
     "./framework-icons": "./src/components/framework-icons.tsx",
     "./lib/*": "./src/lib/*.ts",
-    "./tailwind.config": "./tailwind.config.ts",
     "./postcss.config": "./postcss.config.mjs",
     "./globals.css": "./src/globals.css",
     "./shiki.css": "./src/shiki.css",
-    "./mdx.css": "./src/mdx.css",
     "./hooks/*": "./src/hooks/*.tsx",
-    "./fonts/*": "./src/fonts/*.ts",
     "./types/*": "./src/types/*.ts"
   },
   "scripts": {
@@ -72,6 +69,7 @@
     "@radix-ui/react-tooltip": "^1.2.7",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
     "@tanstack/react-table": "^8.21.3",
+    "@tanstack/table-core": "^8.21.3",
     "@vendor/forms": "workspace:*",
     "ai": "catalog:",
     "class-variance-authority": "^0.7.1",
@@ -99,6 +97,6 @@
     "tw-animate-css": "^1.3.7",
     "use-stick-to-bottom": "1.1.3",
     "vaul": "^1.1.2",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   }
 }

@@ -12,14 +12,10 @@
 import { jobsM2MRouter } from "./router/m2m/jobs";
 import { sourcesM2MRouter } from "./router/m2m/sources";
 import { workspaceM2MRouter } from "./router/m2m/workspace";
-import { activitiesRouter } from "./router/org/activities";
-import { clerkRouter } from "./router/org/clerk";
 import { connectionsRouter } from "./router/org/connections";
-import { contentsRouter } from "./router/org/contents";
 import { jobsRouter } from "./router/org/jobs";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
 // Org-scoped routers (active org required)
-import { searchRouter } from "./router/org/search";
 import { workspaceRouter } from "./router/org/workspace";
 import { accountRouter } from "./router/user/account";
 // User-scoped routers (no org required)
@@ -50,25 +46,14 @@ export const userRouter = createTRPCRouter({
  *
  * Procedures:
  * - workspace.*: Workspace management (includes workspace.store.get for single store)
- * - connections.*: OAuth connections (GitHub, Vercel, etc.) via gwInstallations
+ * - connections.*: OAuth connections (GitHub, Vercel, etc.) via gatewayInstallations
  * - jobs.*: Background job management
- * - clerk.*: Clerk organization utilities
- * - search.*: Semantic search
- * - contents.*: Document retrieval
- * - activities.*: Activity logging
  * - orgApiKeys.*: Organization API key management
  */
 export const orgRouter = createTRPCRouter({
-  // Phase 1.3: Docs search
-  search: searchRouter,
-  contents: contentsRouter,
-
-  // Org-level routers
-  clerk: clerkRouter,
   workspace: workspaceRouter,
   connections: connectionsRouter,
   jobs: jobsRouter,
-  activities: activitiesRouter,
   orgApiKeys: orgApiKeysRouter,
 });
 

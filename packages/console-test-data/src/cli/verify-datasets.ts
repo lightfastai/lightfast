@@ -16,8 +16,8 @@
  *   npx tsx src/cli/verify-datasets.ts [dataset-name]
  */
 
-import type { SourceEvent } from "@repo/console-types";
-import { EVENT_REGISTRY } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
+import { EVENT_REGISTRY } from "@repo/console-providers";
 import { listDatasets, loadDataset } from "../loader/index.js";
 
 interface VerifyResult {
@@ -57,12 +57,12 @@ function verifyDataset(name: string): VerifyResult {
     const prefix = `event[${i}]`;
 
     // Cast to partial to validate fields that the type claims are required
-    const raw = e as Partial<SourceEvent>;
-    if (!raw.source) {
-      result.errors.push(`${prefix}: missing source`);
+    const raw = e as Partial<PostTransformEvent>;
+    if (!raw.provider) {
+      result.errors.push(`${prefix}: missing provider`);
     }
-    if (!raw.sourceType) {
-      result.errors.push(`${prefix}: missing sourceType`);
+    if (!raw.eventType) {
+      result.errors.push(`${prefix}: missing eventType`);
     }
     if (!raw.sourceId) {
       result.errors.push(`${prefix}: missing sourceId`);
@@ -80,12 +80,12 @@ function verifyDataset(name: string): VerifyResult {
         `${prefix}: sourceId missing :test: suffix (got: ${e.sourceId})`
       );
     }
-    if (!e.metadata.testData) {
-      result.errors.push(`${prefix}: missing testData: true in metadata`);
+    if (!e.attributes.testData) {
+      result.errors.push(`${prefix}: missing testData: true in attributes`);
     }
 
     // Track source distribution
-    result.sources[e.source] = (result.sources[e.source] ?? 0) + 1;
+    result.sources[e.provider] = (result.sources[e.provider] ?? 0) + 1;
   }
 
   // === Title format checks (derived from EVENT_REGISTRY labels) ===
@@ -114,14 +114,14 @@ function verifyDataset(name: string): VerifyResult {
       continue;
     }
     const prefix = `event[${i}]`;
-    const validPrefixes = getTitlePrefixes(e.source);
+    const validPrefixes = getTitlePrefixes(e.provider);
 
     if (
       validPrefixes.length > 0 &&
       !validPrefixes.some((p) => e.title.startsWith(p))
     ) {
       result.errors.push(
-        `${prefix}: ${e.source} title has unexpected format: "${e.title.slice(0, 50)}"`
+        `${prefix}: ${e.provider} title has unexpected format: "${e.title.slice(0, 50)}"`
       );
     }
   }
@@ -155,12 +155,12 @@ function verifyDataset(name: string): VerifyResult {
  * Extract identifiers mentioned across all events and verify consistency
  */
 function verifyCrossReferences(
-  events: SourceEvent[],
+  events: PostTransformEvent[],
   result: VerifyResult
 ): void {
   // Collect all identifiers mentioned in titles, bodies, and references
   const allText = events
-    .map((e) => `${e.title} ${e.body} ${JSON.stringify(e.references)}`)
+    .map((e) => `${e.title} ${e.body} ${JSON.stringify(e.relations)}`)
     .join(" ");
 
   // Extract SHA patterns (16+ hex chars that appear in multiple events)
@@ -181,8 +181,8 @@ function verifyCrossReferences(
         (e) =>
           e.title.includes(sha) ||
           e.body.includes(sha) ||
-          JSON.stringify(e.references).includes(sha) ||
-          JSON.stringify(e.metadata).includes(sha)
+          JSON.stringify(e.relations).includes(sha) ||
+          JSON.stringify(e.attributes).includes(sha)
       );
       if (eventsWithSha.length < 2) {
         result.warnings.push(
@@ -209,7 +209,7 @@ function verifyCrossReferences(
       (e) =>
         e.title.includes(`#${num}`) ||
         e.body.includes(`#${num}`) ||
-        JSON.stringify(e.metadata).includes(`"${num}"`)
+        JSON.stringify(e.attributes).includes(`"${num}"`)
     );
     if (eventsWithNum.length < 2) {
       result.warnings.push(
@@ -233,7 +233,7 @@ function verifyCrossReferences(
       (e) =>
         e.title.includes(id) ||
         e.body.includes(id) ||
-        JSON.stringify(e.references).includes(id)
+        JSON.stringify(e.relations).includes(id)
     );
     if (eventsWithId.length < 2) {
       result.warnings.push(
@@ -258,8 +258,8 @@ function verifyCrossReferences(
       (e) =>
         e.title.includes(id) ||
         e.body.includes(id) ||
-        JSON.stringify(e.references).includes(id) ||
-        JSON.stringify(e.metadata).includes(id)
+        JSON.stringify(e.relations).includes(id) ||
+        JSON.stringify(e.attributes).includes(id)
     );
     if (eventsWithId.length < 2) {
       result.warnings.push(

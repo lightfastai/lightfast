@@ -10,21 +10,9 @@ import type {
   InsertWorkspaceWorkflowRun,
   WorkspaceWorkflowRun,
 } from "@db/console/schema";
-import {
-  workspaceOperationsMetrics,
-  workspaceWorkflowRuns,
-} from "@db/console/schema";
+import { workspaceWorkflowRuns } from "@db/console/schema";
 import type {
-  ActorResolutionTags,
-  ClusterAffinityTags,
-  ClusterTags,
-  DocumentsIndexedTags,
-  EntityExtractionTags,
-  ErrorTags,
-  JobDurationTags,
   JobTrigger,
-  NeuralObservationTags,
-  ProfileUpdateTags,
   WorkflowInput,
   WorkflowOutput,
 } from "@repo/console-validation";
@@ -225,38 +213,6 @@ export async function completeJob(
       status: params.status,
       durationMs,
     });
-
-    // Record job duration metric if completed successfully
-    if (params.status === "completed" && durationMs) {
-      await recordJobMetric({
-        clerkOrgId: job.clerkOrgId,
-        workspaceId: job.workspaceId,
-        repositoryId: job.repositoryId ?? undefined,
-        type: "job_duration",
-        value: Number.parseInt(durationMs, 10),
-        unit: "ms",
-        tags: {
-          jobType: job.inngestFunctionId,
-          trigger: job.trigger,
-        },
-      });
-    }
-
-    // Record error metric if failed
-    if (params.status === "failed") {
-      await recordJobMetric({
-        clerkOrgId: job.clerkOrgId,
-        workspaceId: job.workspaceId,
-        repositoryId: job.repositoryId ?? undefined,
-        type: "errors",
-        value: 1,
-        unit: "count",
-        tags: {
-          jobType: job.inngestFunctionId,
-          errorType: "job_failure",
-        },
-      });
-    }
   } catch (error) {
     log.error("Failed to complete job", {
       error,
@@ -264,128 +220,6 @@ export async function completeJob(
       status: params.status,
     });
     throw error;
-  }
-}
-
-/**
- * Record a job performance metric
- *
- * Uses discriminated union for type-safe metric recording.
- * Each metric type has specific required/optional tags.
- *
- * @param params Metric parameters (discriminated by type)
- */
-export async function recordJobMetric(
-  params: (
-    | {
-        type: "job_duration";
-        value: number;
-        unit: "ms";
-        tags: JobDurationTags;
-      }
-    | {
-        type: "documents_indexed";
-        value: number;
-        unit: "count";
-        tags: DocumentsIndexedTags;
-      }
-    | {
-        type: "errors";
-        value: 1;
-        unit: "count";
-        tags: ErrorTags;
-      }
-    // Neural workflow metrics
-    | {
-        type: "observation_captured";
-        value: 1;
-        unit: "count";
-        tags: NeuralObservationTags;
-      }
-    | {
-        type: "observation_filtered";
-        value: 1;
-        unit: "count";
-        tags: NeuralObservationTags;
-      }
-    | {
-        type: "observation_duplicate";
-        value: 1;
-        unit: "count";
-        tags: NeuralObservationTags;
-      }
-    | {
-        type: "observation_below_threshold";
-        value: 1;
-        unit: "count";
-        tags: NeuralObservationTags;
-      }
-    | {
-        type: "entities_extracted";
-        value: number;
-        unit: "count";
-        tags: EntityExtractionTags;
-      }
-    | {
-        type: "cluster_assigned";
-        value: 1;
-        unit: "count";
-        tags: ClusterTags;
-      }
-    | {
-        type: "cluster_summary_generated";
-        value: 1;
-        unit: "count";
-        tags: ClusterTags;
-      }
-    | {
-        type: "profile_updated";
-        value: 1;
-        unit: "count";
-        tags: ProfileUpdateTags;
-      }
-    // Analytics metrics
-    | {
-        type: "actor_resolution";
-        value: 1;
-        unit: "count";
-        tags: ActorResolutionTags;
-      }
-    | {
-        type: "cluster_affinity";
-        value: 1;
-        unit: "count";
-        tags: ClusterAffinityTags;
-      }
-  ) & {
-    clerkOrgId: string;
-    workspaceId: string;
-    repositoryId?: string;
-  }
-): Promise<void> {
-  try {
-    await db.insert(workspaceOperationsMetrics).values({
-      clerkOrgId: params.clerkOrgId,
-      workspaceId: params.workspaceId,
-      repositoryId: params.repositoryId ?? null,
-      type: params.type,
-      value: params.value,
-      unit: params.unit,
-      tags: params.tags,
-    });
-
-    log.debug("Recorded job metric", {
-      type: params.type,
-      value: params.value,
-      tags: params.tags,
-    });
-  } catch (error) {
-    // Non-fatal - log error but don't throw
-    log.error("Failed to record job metric", {
-      error,
-      type: params.type,
-      value: params.value,
-    });
   }
 }
 

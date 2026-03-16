@@ -43,8 +43,8 @@ export type ToolFactorySet<TRuntimeContext = unknown> = Record<
  */
 export function createTool<
   TRuntimeContext = unknown,
-  TInputSchema extends z.ZodType = z.ZodType,
-  TOutputSchema extends z.ZodType = z.ZodType,
+  TInputSchema extends z.ZodType = z.ZodType<any>,
+  TOutputSchema extends z.ZodType = z.ZodType<any>,
 >(config: {
   description: string;
   inputSchema: TInputSchema;

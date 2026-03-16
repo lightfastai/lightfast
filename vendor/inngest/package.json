@@ -30,12 +30,13 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
     "typescript": "catalog:"
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
     "inngest": "catalog:",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "peerDependencies": {
     "hono": "catalog:"

@@ -21,6 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/console-providers": "workspace:*",
     "@repo/lib": "workspace:*"
   },
   "devDependencies": {

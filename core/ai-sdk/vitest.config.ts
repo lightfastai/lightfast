@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
+import sharedConfig from "@repo/vitest-config";
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../vitest.shared";
 
 export default mergeConfig(
   sharedConfig,

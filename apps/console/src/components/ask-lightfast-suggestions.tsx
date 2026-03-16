@@ -16,7 +16,7 @@ const categories: PromptCategory[] = [
   {
     id: "explore",
     label: "Explore",
-    icon: <Search className="h-4 w-4" />,
+    icon: <Search className="h-3 w-3" />,
     prompts: [
       "What are the main topics in this workspace?",
       "Summarize the most recent documents",
@@ -27,7 +27,7 @@ const categories: PromptCategory[] = [
   {
     id: "activity",
     label: "Activity",
-    icon: <Activity className="h-4 w-4" />,
+    icon: <Activity className="h-3 w-3" />,
     prompts: [
       "What changed in the last 24 hours?",
       "Show me recent pull requests and their status",
@@ -38,7 +38,7 @@ const categories: PromptCategory[] = [
   {
     id: "connections",
     label: "Connections",
-    icon: <GitBranch className="h-4 w-4" />,
+    icon: <GitBranch className="h-3 w-3" />,
     prompts: [
       "How are the recent changes connected?",
       "What dependencies exist between components?",
@@ -85,9 +85,9 @@ export function AskLightfastSuggestions({
   return (
     <div className="mx-auto w-full">
       {selectedCategory ? (
-        <div className="rounded-sm border border-border/50 bg-background p-2 shadow-sm backdrop-blur-2xl">
+        <div className="rounded-md border border-border/50 bg-card/40 p-2 shadow-sm backdrop-blur-md">
           <div className="flex items-center justify-between px-2 pb-2">
-            <div className="flex items-center gap-2 px-2 text-muted-foreground text-xs">
+            <div className="flex items-center gap-2 px-2 text-muted-foreground text-sm">
               {selectedCategoryData?.icon}
               <span>{selectedCategoryData?.label}</span>
             </div>
@@ -120,7 +120,7 @@ export function AskLightfastSuggestions({
                   onClick={() => handlePromptClick(prompt)}
                   variant="ghost"
                 >
-                  <span className="font-base text-xs">{prompt}</span>
+                  <span className="font-base text-sm">{prompt}</span>
                 </Button>
               </div>
             ))}
@@ -130,14 +130,14 @@ export function AskLightfastSuggestions({
         <div className="flex flex-wrap justify-center gap-3">
           {categories.map((category) => (
             <Button
-              className="rounded-sm hover:border-border/50 hover:bg-transparent active:bg-transparent dark:border-border/70 dark:bg-card dark:hover:bg-transparent"
+              className="rounded-md hover:border-border/50 hover:bg-transparent active:bg-transparent dark:border-border/50 dark:bg-card/40 dark:backdrop-blur-md dark:hover:bg-transparent"
               key={category.id}
               onClick={() => handleCategoryClick(category.id)}
               size="lg"
               variant="outline"
             >
               {category.icon}
-              <span>{category.label}</span>
+              <span className="text-sm">{category.label}</span>
             </Button>
           ))}
         </div>

@@ -9,7 +9,7 @@
  * QStash capture mock, Inngest send mock.
  */
 
-import { gwInstallations } from "@db/console/schema";
+import { gatewayInstallations } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -108,9 +108,9 @@ vi.mock("@vercel/related-projects", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-test" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/upstash-workflow/hono", () => ({
@@ -317,7 +317,7 @@ describe("Suite 2.4 — GitHub OAuth callback does not trigger backfill (moved t
       orgId: "org-reactivate",
       status: "revoked",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     // Pre-seed valid OAuth state in Redis
     redisStore.set("gw:oauth:state:reactivate-state-1", {

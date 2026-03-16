@@ -67,9 +67,9 @@ vi.mock("@vercel/related-projects", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({
+  workflowClient: {
     trigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-test" }),
-  }),
+  },
 }));
 
 vi.mock("@vendor/upstash-workflow/hono", () => ({
@@ -104,7 +104,7 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwWebhookDeliveries: {},
+  gatewayWebhookDeliveries: {},
 }));
 
 // ── Import relay app after mocks ──
@@ -222,7 +222,7 @@ describe("Suite 4.1 — Service auth path accepts and publishes webhook", () => 
       };
     };
 
-    // Verify the WebhookEnvelope shape matches @repo/gateway-types
+    // Verify the WebhookEnvelope shape matches @repo/console-types
     expect(call.body).toMatchObject({
       deliveryId: "del-dispatch-1",
       connectionId: "conn-dispatch-1",
@@ -333,7 +333,7 @@ describe("Suite 4.3 — Missing or invalid fields", () => {
     });
     expect(res.status).toBe(400);
     const json = (await res.json()) as { error: string };
-    expect(json.error).toBe("missing_required_fields");
+    expect(json.error).toBe("invalid_body");
   });
 
   it("returns 400 when receivedAt is not a number", async () => {

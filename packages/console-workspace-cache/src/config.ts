@@ -1,12 +1,8 @@
 import { db } from "@db/console/client";
-import {
-  orgWorkspaces,
-  workspaceActorProfiles,
-  workspaceObservationClusters,
-} from "@db/console/schema";
+import { orgWorkspaces } from "@db/console/schema";
 import { log } from "@vendor/observability/log";
 import { redis } from "@vendor/upstash";
-import { eq, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { getWorkspaceConfigCacheKey } from "./keys";
 import type { CachedWorkspaceConfig } from "./types";
 
@@ -75,44 +71,20 @@ export async function getCachedWorkspaceConfig(
 /**
  * Fetch workspace config directly from database.
  * Used on cache miss or as fallback on cache failure.
- *
- * Runs parallel queries for:
- * 1. Workspace settings (indexName, namespace, embedding config)
- * 2. Cluster count (capability detection)
- * 3. Actor count (capability detection)
  */
 async function fetchWorkspaceConfigFromDB(
   workspaceId: string
 ): Promise<CachedWorkspaceConfig | null> {
-  // Run all queries in parallel for efficiency
-  const [workspace, clusterCountResult, actorCountResult] = await Promise.all([
-    // 1. Workspace settings
-    db.query.orgWorkspaces.findFirst({
-      where: eq(orgWorkspaces.id, workspaceId),
-      columns: {
-        settings: true,
-      },
-    }),
-    // 2. Cluster count (just need to know if > 0)
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(workspaceObservationClusters)
-      .where(eq(workspaceObservationClusters.workspaceId, workspaceId))
-      .limit(1),
-    // 3. Actor count (just need to know if > 0)
-    db
-      .select({ count: sql<number>`count(*)::int` })
-      .from(workspaceActorProfiles)
-      .where(eq(workspaceActorProfiles.workspaceId, workspaceId))
-      .limit(1),
-  ]);
+  const workspace = await db.query.orgWorkspaces.findFirst({
+    where: eq(orgWorkspaces.id, workspaceId),
+    columns: {
+      settings: true,
+    },
+  });
 
   if (workspace?.settings.version !== 1) {
     return null;
   }
-
-  const clusterCount = clusterCountResult[0]?.count ?? 0;
-  const actorCount = actorCountResult[0]?.count ?? 0;
 
   const { embedding } = workspace.settings;
 
@@ -121,8 +93,6 @@ async function fetchWorkspaceConfigFromDB(
     namespaceName: embedding.namespaceName,
     embeddingModel: embedding.embeddingModel,
     embeddingDim: embedding.embeddingDim,
-    hasClusters: clusterCount > 0,
-    hasActors: actorCount > 0,
   };
 }
 

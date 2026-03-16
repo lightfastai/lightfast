@@ -20,14 +20,11 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:*",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:"
-  },
-  "eslintConfig": {
-    "extends": "@repo/eslint-config/base"
   }
 }

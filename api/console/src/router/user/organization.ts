@@ -45,69 +45,6 @@ export const organizationRouter = {
   }),
 
   /**
-   * Find organization by Clerk organization ID or slug
-   *
-   * Unified procedure that replaces findByClerkOrgId and findByClerkOrgSlug.
-   * Returns organization data from Clerk.
-   * Used by org layout and pages.
-   */
-  find: userScopedProcedure
-    .input(
-      z
-        .object({
-          clerkOrgId: z.string().optional(),
-          clerkOrgSlug: z.string().optional(),
-        })
-        .refine((data) => data.clerkOrgId ?? data.clerkOrgSlug, {
-          message: "Either clerkOrgId or clerkOrgSlug is required",
-        })
-    )
-    .query(async ({ ctx, input }) => {
-      // userScopedProcedure guarantees clerk-pending or clerk-active
-      const clerk = await clerkClient();
-
-      try {
-        // Get organization by ID or slug
-        if (!(input.clerkOrgId || input.clerkOrgSlug)) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Either clerkOrgId or clerkOrgSlug is required",
-          });
-        }
-
-        const clerkOrg = await clerk.organizations.getOrganization(
-          input.clerkOrgId
-            ? { organizationId: input.clerkOrgId }
-            : // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style -- avoid conflicting no-non-null-assertion rule
-              { slug: input.clerkOrgSlug as string }
-        );
-
-        // Verify user has access to this organization
-        const membership = await verifyOrgMembership({
-          clerkOrgId: clerkOrg.id,
-          userId: ctx.auth.userId,
-        });
-
-        return {
-          id: clerkOrg.id,
-          slug: clerkOrg.slug,
-          name: clerkOrg.name,
-          imageUrl: clerkOrg.imageUrl,
-          role: membership.role,
-        };
-      } catch (error) {
-        if (error instanceof TRPCError) {
-          throw error;
-        }
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to fetch organization",
-          cause: error,
-        });
-      }
-    }),
-
-  /**
    * Create organization
    * Creates a new Clerk organization with the user as admin
    *

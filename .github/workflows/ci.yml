@@ -36,15 +36,21 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint and type check affected packages
+      - name: Lint (biome)
+        run: pnpm check
+
+      - name: Type check affected packages
         env:
           SKIP_ENV_VALIDATION: "true"
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: pnpm turbo lint typecheck --affected --continue
+        run: pnpm turbo typecheck --affected --continue
 
       - name: Check boundaries
-        continue-on-error: true
         run: pnpm turbo boundaries
+
+      - name: Check dead code and unused dependencies
+        continue-on-error: true # Remove after initial cleanup sprint
+        run: pnpm knip
 
   # Summary job (required status check)
   ci-success:

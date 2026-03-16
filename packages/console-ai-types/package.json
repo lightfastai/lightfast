@@ -18,7 +18,7 @@
   },
   "dependencies": {
     "@lightfastai/ai-sdk": "workspace:*",
-    "@repo/console-types": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "ai": "catalog:"
   },
   "devDependencies": {

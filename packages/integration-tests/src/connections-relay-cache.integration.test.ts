@@ -9,7 +9,7 @@
  * Infrastructure: PGlite (real DB), in-memory Redis Map, no Inngest/QStash needed.
  */
 
-import { gwInstallations, gwResources } from "@db/console/schema";
+import { gatewayInstallations, gatewayResources } from "@db/console/schema";
 import type { TestDb } from "@repo/console-test-db";
 import { closeTestDb, createTestDb, resetTestDb } from "@repo/console-test-db";
 import { fixtures } from "@repo/console-test-db/fixtures";
@@ -64,7 +64,7 @@ vi.mock("@vendor/qstash", () => ({
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
-  getWorkflowClient: () => ({ trigger: workflowTriggerMock }),
+  workflowClient: { trigger: workflowTriggerMock },
 }));
 
 // Capture webhook-delivery workflow handler (used by Relay)
@@ -190,7 +190,7 @@ describe("Suite 1.1 — Resource link populates relay routing cache", () => {
       orgId: "org-1",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const res = await req(`/services/gateway/${inst.id}/resources`, {
       method: "POST",
@@ -242,14 +242,14 @@ describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
       provider: "github",
       status: "active",
     });
-    await db.insert(gwInstallations).values(inst);
+    await db.insert(gatewayInstallations).values(inst);
 
     const resource = fixtures.resource({
       installationId: inst.id,
       providerResourceId: "owner/to-unlink",
       status: "active",
     });
-    await db.insert(gwResources).values(resource);
+    await db.insert(gatewayResources).values(resource);
 
     // Pre-seed Redis (simulating an earlier resource link)
     redisStore.set("gw:resource:github:owner/to-unlink", {

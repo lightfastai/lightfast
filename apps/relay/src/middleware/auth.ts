@@ -1,7 +1,7 @@
+import { timingSafeStringEqual } from "@repo/console-providers";
 import { Receiver } from "@vendor/qstash";
 import type { MiddlewareHandler } from "hono";
-import { getEnv } from "../env.js";
-import { timingSafeStringEqual } from "../lib/crypto.js";
+import { env } from "../env.js";
 
 /**
  * X-API-Key authentication middleware for Console → Relay calls.
@@ -10,13 +10,13 @@ import { timingSafeStringEqual } from "../lib/crypto.js";
  */
 export const apiKeyAuth: MiddlewareHandler = async (c, next) => {
   const apiKey = c.req.header("X-API-Key");
-  const { GATEWAY_API_KEY } = getEnv(c);
+  const { GATEWAY_API_KEY } = env;
 
-  if (!(apiKey && (await timingSafeStringEqual(apiKey, GATEWAY_API_KEY)))) {
+  if (!(apiKey && timingSafeStringEqual(apiKey, GATEWAY_API_KEY))) {
     return c.json({ error: "unauthorized" }, 401);
   }
 
-  await next();
+  return await next();
 };
 
 const receiver = new Receiver();
@@ -42,5 +42,5 @@ export const qstashAuth: MiddlewareHandler = async (c, next) => {
     return c.json({ error: "invalid_signature" }, 401);
   }
 
-  await next();
+  return await next();
 };

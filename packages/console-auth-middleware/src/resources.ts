@@ -6,7 +6,7 @@
  */
 
 import {
-  gwInstallations,
+  gatewayInstallations,
   orgApiKeys,
   workspaceIntegrations,
 } from "@db/console/schema";
@@ -29,8 +29,8 @@ async function verifyInstallationAccess(
   db: ResourceOwnershipContext["db"]
 ): Promise<ResourceOwnershipResult> {
   try {
-    const installation = await db.query.gwInstallations.findFirst({
-      where: eq(gwInstallations.id, installationId),
+    const installation = await db.query.gatewayInstallations.findFirst({
+      where: eq(gatewayInstallations.id, installationId),
     });
 
     if (!installation) {
@@ -107,7 +107,7 @@ async function verifyApiKeyOwnership(
 /**
  * Verify user has access to a repository (via installation)
  *
- * Ownership is verified by: workspaceIntegrations → gwInstallations.connectedBy
+ * Ownership is verified by: workspaceIntegrations → gatewayInstallations.connectedBy
  */
 async function verifyRepositoryOwnership(
   userId: string,
@@ -138,8 +138,8 @@ async function verifyRepositoryOwnership(
     }
 
     // Verify via linked installation
-    const installation = await db.query.gwInstallations.findFirst({
-      where: eq(gwInstallations.id, source.installationId),
+    const installation = await db.query.gatewayInstallations.findFirst({
+      where: eq(gatewayInstallations.id, source.installationId),
     });
 
     if (!installation) {

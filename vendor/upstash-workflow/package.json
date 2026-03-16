@@ -41,7 +41,7 @@
     "@upstash/workflow": "^0.2.22",
     "hono": "catalog:",
     "next": "catalog:next16",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

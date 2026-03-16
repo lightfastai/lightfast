@@ -8,6 +8,7 @@ export default defineConfig({
     "forms/index": "src/forms/index.ts",
     "constants/index": "src/constants/index.ts",
     "utils/index": "src/utils/index.ts",
+    "schemas/api/index": "src/schemas/api/index.ts",
   },
   format: ["esm"],
   dts: false,

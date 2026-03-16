@@ -1,14 +1,14 @@
 /**
  * Neural Memory Workflows
  *
- * Observation pipeline:
- * 1. observationCapture - Main write path (sync)
- * 2. profileUpdate - Actor profile updates (async, fire-and-forget)
- * 3. clusterSummaryCheck - Cluster summary generation (async, fire-and-forget)
- * 4. llmEntityExtractionWorkflow - LLM entity extraction (async, fire-and-forget)
+ * Event pipeline (three-function fast path):
+ * 1. eventStore  - Fast path: store facts + entities + junctions (<2s)
+ *                  Emits: entity.upserted → entityGraph
+ * 2. entityGraph - Fast path: resolve entity↔entity edges via co-occurrence (<500ms)
+ *                  Emits: entity.graphed → entityEmbed
+ * 3. entityEmbed - Fast path: build narrative + embed to Pinecone layer="entities" (~2s, debounced 30s)
  */
 
-export { clusterSummaryCheck } from "./cluster-summary";
-export { llmEntityExtractionWorkflow } from "./llm-entity-extraction-workflow";
-export { observationCapture } from "./observation-capture";
-export { profileUpdate } from "./profile-update";
+export { entityEmbed } from "./entity-embed";
+export { entityGraph } from "./entity-graph";
+export { eventStore } from "./event-store";

@@ -88,6 +88,7 @@
     "LOGTAIL_SOURCE_TOKEN"
   ],
   "boundaries": {
+    "implicitDependencies": ["~"],
     "tags": {
       "vendor": {
         "dependencies": { "deny": ["packages", "data", "api", "app"] }

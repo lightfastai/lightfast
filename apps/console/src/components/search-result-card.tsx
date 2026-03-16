@@ -1,10 +1,10 @@
 "use client";
 
 import type {
-  V1ContentsResponse,
-  V1FindSimilarResponse,
-  V1SearchResult,
-} from "@repo/console-types";
+  ContentsResponse,
+  FindSimilarResponse,
+  SearchResult,
+} from "@repo/console-validation";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent } from "@repo/ui/components/ui/card";
@@ -26,7 +26,7 @@ export function SearchResultCard({
   onToggleExpand,
   storeId,
 }: {
-  result: V1SearchResult;
+  result: SearchResult;
   rank: number;
   isExpanded: boolean;
   onToggleExpand: () => void;
@@ -53,8 +53,8 @@ export function SearchResultCard({
       if (!res.ok) {
         throw new Error("Failed to fetch content");
       }
-      const data = (await res.json()) as V1ContentsResponse;
-      const item = data.items[0];
+      const data = (await res.json()) as ContentsResponse;
+      const item = data.data.items[0];
       if (!item) {
         return { content: null, metadata: null };
       }
@@ -75,7 +75,7 @@ export function SearchResultCard({
     isFetching: isLoadingSimilar,
     error: similarQueryError,
     refetch: refetchSimilar,
-  } = useQuery<V1FindSimilarResponse>({
+  } = useQuery<FindSimilarResponse>({
     queryKey: ["findSimilar", storeId, result.id],
     queryFn: async () => {
       const res = await fetch("/v1/findsimilar", {
@@ -89,7 +89,7 @@ export function SearchResultCard({
       if (!res.ok) {
         throw new Error("Failed to fetch similar items");
       }
-      return (await res.json()) as V1FindSimilarResponse;
+      return (await res.json()) as FindSimilarResponse;
     },
     enabled: false,
     staleTime: Number.POSITIVE_INFINITY,
@@ -112,7 +112,7 @@ export function SearchResultCard({
 
   return (
     <Collapsible onOpenChange={onToggleExpand} open={isExpanded}>
-      <Card className="rounded-sm border-border/50 py-4 transition-colors hover:border-border">
+      <Card className="rounded-md border-border/50 bg-card/40 py-4 backdrop-blur-md transition-colors hover:border-border">
         <CardContent className="px-4">
           <div className="flex items-start gap-4">
             {/* Content */}
@@ -265,7 +265,7 @@ export function SearchResultCard({
                       <Sparkles className="h-3 w-3" />
                     )}
                     Find Similar
-                    {similarData && ` (${similarData.similar.length})`}
+                    {similarData && ` (${similarData.data.similar.length})`}
                   </Button>
 
                   {showSimilar && (
@@ -279,25 +279,11 @@ export function SearchResultCard({
                           <Skeleton className="h-12 w-full" />
                           <Skeleton className="h-12 w-full" />
                         </div>
-                      ) : similarData && similarData.similar.length > 0 ? (
+                      ) : similarData && similarData.data.similar.length > 0 ? (
                         <>
-                          {/* Source cluster info */}
-                          {similarData.source.cluster && (
-                            <div className="flex items-center gap-1 text-muted-foreground text-xs">
-                              <span>Cluster:</span>
-                              <Badge className="text-xs" variant="secondary">
-                                {similarData.source.cluster.topic ??
-                                  "Uncategorized"}
-                              </Badge>
-                              <span>
-                                ({similarData.source.cluster.memberCount} items)
-                              </span>
-                            </div>
-                          )}
-
                           {/* Similar items list */}
                           <div className="space-y-1">
-                            {similarData.similar.map((item) => (
+                            {similarData.data.similar.map((item) => (
                               <div
                                 className="flex items-start gap-2 rounded border bg-muted/30 p-2 transition-colors hover:bg-muted/50"
                                 key={item.id}
@@ -314,14 +300,6 @@ export function SearchResultCard({
                                       >
                                         {Math.round(item.score * 100)}%
                                       </Badge>
-                                      {item.sameCluster && (
-                                        <Badge
-                                          className="text-[10px]"
-                                          variant="secondary"
-                                        >
-                                          Same Cluster
-                                        </Badge>
-                                      )}
                                     </div>
                                   </div>
                                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground">

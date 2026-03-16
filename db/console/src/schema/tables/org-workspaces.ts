@@ -1,5 +1,4 @@
-import type { WorkspaceSettings } from "@repo/console-types";
-import type { ClerkOrgId } from "@repo/console-validation";
+import type { ClerkOrgId, WorkspaceSettings } from "@repo/console-validation";
 import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {

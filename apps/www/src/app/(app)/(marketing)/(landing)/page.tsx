@@ -9,9 +9,9 @@ import type {
   WebSite,
 } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Activity, Blocks, Brain, Plug, Shield, Wand2 } from "lucide-react";
 import type { Metadata } from "next";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import Image from "next/image";
 import { ChangelogPreview } from "~/components/changelog-preview";
 import { FAQSection, faqs } from "~/components/faq-section";

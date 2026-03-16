@@ -1,8 +1,5 @@
-import type {
-  ClerkUserId,
-  SourceIdentifier,
-  SyncStatus,
-} from "@repo/console-validation";
+import type { ProviderConfig, SourceType } from "@repo/console-providers";
+import type { SourceIdentifier, SyncStatus } from "@repo/console-validation";
 import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
@@ -15,7 +12,7 @@ import {
   timestamp,
   varchar,
 } from "drizzle-orm/pg-core";
-import { gwInstallations } from "./gw-installations";
+import { gatewayInstallations } from "./gateway-installations";
 import { orgWorkspaces } from "./org-workspaces";
 
 /**
@@ -46,126 +43,22 @@ export const workspaceIntegrations = pgTable(
       .references(() => orgWorkspaces.id, { onDelete: "cascade" }),
 
     // Gateway installation FK (org-scoped)
-    // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() with
-    // onDelete: "cascade" after existing rows are backfilled with gw_installations refs.
-    installationId: varchar("installation_id", { length: 191 }).references(
-      () => gwInstallations.id,
-      { onDelete: "set null" }
-    ),
-
-    // Denormalized provider for fast filtering (replaces sourceConfig.sourceType join)
-    // TODO(NOT-NULL): Nullable during phased migration. Will become .notNull() after
-    // existing rows are backfilled with provider values from gw_installations.
-    provider: varchar("provider", { length: 50 }),
-
-    // Who connected this source to the workspace
-    connectedBy: varchar("connected_by", { length: 191 })
+    installationId: varchar("installation_id", { length: 191 })
       .notNull()
-      .$type<ClerkUserId>(),
+      .references(() => gatewayInstallations.id, { onDelete: "cascade" }),
+
+    // Denormalized provider for fast filtering (replaces providerConfig.sourceType join)
+    provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
 
     /**
-     * Unified source configuration containing all source-specific data and sync settings.
-     * This replaces the previous separate resourceData + syncConfig fields.
+     * Provider-specific type and sync settings (JSONB).
      *
-     * Examples:
+     * Schema: providerConfigSchema from @repo/console-providers
+     * Fields: provider, type, sync (events + autoSync), status (GitHub only)
      *
-     * GitHub Repository:
-     * {
-     *   sourceType: "github",
-     *   type: "repository",
-     *   installationId: "12345678",
-     *   repoId: "567890123",
-     *   repoName: "frontend",
-     *   repoFullName: "acme/frontend",
-     *   defaultBranch: "main",
-     *   isPrivate: true,
-     *   isArchived: false,
-     *   sync: {
-     *     branches: ["main", "develop"],
-     *     paths: ["**\/*"],
-     *     events: ["push", "pull_request"],
-     *     autoSync: true
-     *   }
-     * }
-     *
-     * Vercel Project:
-     * {
-     *   sourceType: "vercel",
-     *   type: "project",
-     *   projectId: "prj_123456",
-     *   projectName: "my-nextjs-app",
-     *   configurationId: "icfg_789",
-     *   sync: {
-     *     events: ["deployment.created", "deployment.ready"],
-     *     autoSync: true
-     *   }
-     * }
+     * Resource IDs live in providerResourceId (indexed column), not here.
      */
-    sourceConfig: jsonb("source_config")
-      .$type<
-        | {
-            version: 1;
-            sourceType: "github";
-            type: "repository";
-            installationId: string; // GitHub App installation ID
-            repoId: string; // GitHub repo ID
-            repoName: string; // "frontend"
-            repoFullName: string; // "acme/frontend"
-            defaultBranch: string; // "main"
-            isPrivate: boolean;
-            isArchived: boolean;
-            sync: {
-              branches?: string[]; // ["main", "develop"]
-              paths?: string[]; // ["**/*"]
-              events?: string[]; // ["push", "pull_request"]
-              autoSync: boolean; // Auto-sync on changes
-            };
-            status?: {
-              // NEW: Optional status tracking
-              configStatus?: "configured" | "awaiting_config";
-              configPath?: string;
-              lastConfigCheck?: string;
-            };
-          }
-        | {
-            version: 1;
-            sourceType: "vercel";
-            type: "project";
-            projectId: string; // Vercel project ID
-            projectName: string; // "my-nextjs-app"
-            teamId?: string; // Vercel team ID (null for personal accounts)
-            teamSlug?: string; // Team slug for display
-            configurationId: string; // Integration configuration ID (from OAuth)
-            sync: {
-              events?: string[]; // ["deployment.created", "deployment.ready", ...]
-              autoSync: boolean; // Track deployments automatically
-            };
-          }
-        | {
-            version: 1;
-            sourceType: "sentry";
-            type: "project";
-            projectSlug: string;
-            projectId: string;
-            sync: {
-              events?: string[];
-              autoSync: boolean;
-            };
-          }
-        | {
-            version: 1;
-            sourceType: "linear";
-            type: "team";
-            teamId: string;
-            teamKey: string;
-            teamName: string;
-            sync: {
-              events?: string[];
-              autoSync: boolean;
-            };
-          }
-      >()
-      .notNull(),
+    providerConfig: jsonb("provider_config").$type<ProviderConfig>().notNull(),
 
     /**
      * Fast lookup field for provider-specific resource IDs.
@@ -215,9 +108,6 @@ export const workspaceIntegrations = pgTable(
     ),
     installationIdIdx: index("workspace_source_installation_id_idx").on(
       table.installationId
-    ),
-    connectedByIdx: index("workspace_source_connected_by_idx").on(
-      table.connectedBy
     ),
     isActiveIdx: index("workspace_source_is_active_idx").on(table.isActive),
     // Index for fast provider resource lookups (e.g., "find all sources for this repo")

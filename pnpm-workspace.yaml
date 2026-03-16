@@ -1,87 +1,95 @@
 packages:
-- api/*
-- apps/*
-- core/*
-- db/*
-- packages/*
-- internal/*
-- vendor/*
+  - api/*
+  - apps/*
+  - core/*
+  - db/*
+  - packages/*
+  - internal/*
+  - vendor/*
+
 catalog:
-  '@tanstack/react-query': ^5.90.21
-  '@trpc/client': ^11.12.0
-  '@trpc/tanstack-react-query': ^11.12.0
-  '@trpc/server': ^11.12.0
-  lucide-react: ^0.577.0
-  superjson: ^2.2.6
-  '@types/node': ^20.16.11
-  typescript: ^5.8.2
   '@ai-sdk/gateway': 1.0.7
   '@ai-sdk/react': 2.0.15
-  ai: 5.0.52
-  '@upstash/redis': ^1.36.3
-  '@vercel/related-projects': ^1.0.1
-  braintrust: ^0.2.1
-  '@t3-oss/env-core': ^0.13.10
-  '@t3-oss/env-nextjs': ^0.13.10
   '@clerk/backend': 3.0.1
   '@clerk/nextjs': 7.0.1
   '@clerk/shared': 4.0.0
-  zustand: ^5.0.11
-  geist: ^1.7.0
-  neverthrow: ^8.2.0
-  clsx: ^2.1.1
-  tailwind-merge: ^3.5.0
-  inngest: ^3.52.6
+  '@electric-sql/pglite': ^0.3.15
+  '@hookform/resolvers': ^3.10.0
   '@inngest/middleware-sentry': ^0.1.2
+  '@neondatabase/serverless': ^1.0.2
+  '@noble/hashes': ^2.0.1
   '@sentry/core': ^10.42.0
   '@sentry/nextjs': ^10.42.0
-  nanoid: ^5.1.5
-  '@electric-sql/pglite': ^0.3.15
-  drizzle-orm: ^0.45.1
-  '@neondatabase/serverless': ^1.0.2
-  hono: ^4.12.5
-  drizzle-zod: ^0.8.3
-  react-hook-form: ^7.71.2
-  '@hookform/resolvers': ^3.10.0
-  import-in-the-middle: ^1.8.1
-  require-in-the-middle: ^7.1.1
-  babel-plugin-react-compiler: ^1.0.0
-  vitest: ^4.0.18
+  '@t3-oss/env-core': ^0.13.10
+  '@t3-oss/env-nextjs': ^0.13.10
+  '@tanstack/react-query': ^5.90.21
+  '@trpc/client': ^11.12.0
+  '@trpc/server': ^11.12.0
+  '@trpc/tanstack-react-query': ^11.12.0
+  '@types/node': ^20.16.11
+  '@upstash/redis': ^1.36.3
+  '@vercel/related-projects': ^1.0.1
   '@vitest/coverage-v8': ^4.0.18
   '@vitest/expect': ^4.0.18
+  ai: 5.0.52
+  babel-plugin-react-compiler: ^1.0.0
+  braintrust: ^0.2.1
+  clsx: ^2.1.1
   dotenv-cli: ^8.0.0
+  drizzle-orm: ^0.45.1
+  drizzle-zod: ^0.8.3
+  fast-check: ^3.23.2
+  geist: ^1.7.0
+  hono: ^4.12.5
+  import-in-the-middle: ^1.8.1
+  inngest: ^3.52.6
+  jose: ^6.1.2
+  lucide-react: ^0.577.0
+  nanoid: ^5.1.5
+  neverthrow: ^8.2.0
+  postgres: ^3.4.5
+  react-hook-form: ^7.71.2
+  redis: ^5.6.0
+  require-in-the-middle: ^7.1.1
+  superjson: ^2.2.6
+  tailwind-merge: ^3.5.0
+  typescript: ^5.8.2
+  vitest: ^4.0.18
+  zod: ^4.0.0
+  zustand: ^5.0.11
+
 catalogs:
+  next16:
+    next: ^16.1.6
   tailwind4:
     tailwindcss: 4.2.1
     postcss: 8.5.8
     '@tailwindcss/postcss': 4.2.1
     '@tailwindcss/typography': ^0.5.16
-  zod3:
-    zod: ^3.25.76
-  zod4:
-    zod: ^4.0.0
-  next16:
-    next: ^16.1.6
-onlyBuiltDependencies:
-- '@clerk/shared'
-- '@lightfastai/dual'
-- '@sentry/cli'
-- '@tailwindcss/oxide'
-- '@vercel/speed-insights'
-- bufferutil
-- core-js
-- core-js-pure
-- esbuild
-- protobufjs
-- sharp
+
 ignoredBuiltDependencies:
-- bufferutil
-- core-js
-- core-js-pure
-- esbuild
-- protobufjs
-- sharp
+  - bufferutil
+  - core-js
+  - core-js-pure
+  - esbuild
+  - protobufjs
+  - sharp
+
 linkWorkspacePackages: true
+
+onlyBuiltDependencies:
+  - '@clerk/shared'
+  - '@lightfastai/dual'
+  - '@sentry/cli'
+  - '@tailwindcss/oxide'
+  - '@vercel/speed-insights'
+  - bufferutil
+  - core-js
+  - core-js-pure
+  - esbuild
+  - protobufjs
+  - sharp
+
 publicHoistPattern:
-- '*import-in-the-middle*'
-- '*require-in-the-middle*'
+  - '*import-in-the-middle*'
+  - '*require-in-the-middle*'

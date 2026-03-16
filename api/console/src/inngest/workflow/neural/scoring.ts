@@ -1,19 +1,12 @@
-import type { SourceEvent } from "@repo/console-types";
-import { getEventWeight } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
+import { EVENT_REGISTRY } from "@repo/console-providers";
+import type { SignificanceResult } from "@repo/console-validation";
 
-/**
- * Minimum significance score for observation capture.
- * Events below this threshold are logged but not stored.
- *
- * Scoring scale (0-100):
- * - 60-100: High significance (releases, incidents, major features)
- * - 40-59: Medium significance (PRs, issues, deployments)
- * - 20-39: Low significance (routine commits, minor updates)
- * - 0-19: Noise (dependency bumps, typo fixes, WIP)
- *
- * TODO (Future): Make configurable per workspace
- */
-export const SIGNIFICANCE_THRESHOLD = 40;
+// Type-safe event weight lookup — avoids `as EventKey` cast
+const EVENT_WEIGHT_MAP = new Map<string, number>(
+  Object.entries(EVENT_REGISTRY).map(([k, v]) => [k, v.weight])
+);
+const DEFAULT_EVENT_WEIGHT = 50;
 
 /**
  * Significance scoring for neural observations.
@@ -39,11 +32,6 @@ export const SIGNIFICANCE_THRESHOLD = 40;
  * });
  * ```
  */
-
-interface SignificanceResult {
-  factors: string[];
-  score: number;
-}
 
 /**
  * Content signals that increase significance.
@@ -100,14 +88,14 @@ const SIGNIFICANCE_SIGNALS: {
  * 5. Clamp to 0-100 range
  */
 export function scoreSignificance(
-  sourceEvent: SourceEvent
+  sourceEvent: PostTransformEvent
 ): SignificanceResult {
   const factors: string[] = [];
 
-  // 1. Event type base weight (from centralized INTERNAL_EVENT_TYPES)
-  const eventType = sourceEvent.sourceType;
-  let score = getEventWeight(eventType);
-  factors.push(`base:${eventType}`);
+  // 1. Event type base weight (from EVENT_REGISTRY)
+  const eventKey = `${sourceEvent.provider}:${sourceEvent.eventType}`;
+  let score = EVENT_WEIGHT_MAP.get(eventKey) ?? DEFAULT_EVENT_WEIGHT;
+  factors.push(`base:${sourceEvent.provider}:${sourceEvent.eventType}`);
 
   // 2. Content signal matching
   const textToAnalyze =
@@ -121,7 +109,7 @@ export function scoreSignificance(
   }
 
   // 3. Reference density bonus (linked issues, PRs)
-  const refCount = sourceEvent.references.length;
+  const refCount = sourceEvent.relations.length;
   if (refCount > 0) {
     const refBonus = Math.min(refCount * 3, 15); // Max 15 points for references
     score += refBonus;

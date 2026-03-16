@@ -1,6 +1,6 @@
 import { db } from "@db/console/client";
 import {
-  gwInstallations,
+  gatewayInstallations,
   orgWorkspaces,
   workspaceIntegrations,
 } from "@db/console/schema";
@@ -100,12 +100,12 @@ export const workspaceAccessRouter = {
    */
   create: userScopedProcedure
     .input(
-      workspaceCreateInputSchema.extend({
+      z.object({
+        ...workspaceCreateInputSchema.shape,
         // Optional: Connect GitHub repository during workspace creation
         githubRepository: z
           .object({
             gwInstallationId: z.string(),
-            installationId: z.string(), // GitHub App installation external ID
             repoId: z.string(),
             repoName: z.string(),
             repoFullName: z.string(),
@@ -167,8 +167,6 @@ export const workspaceAccessRouter = {
         // Record activity (Tier 2: Queue-based)
         await recordActivity({
           workspaceId,
-          actorType: "user",
-          actorUserId: ctx.auth.userId,
           category: "workspace",
           action: "workspace.created",
           entityType: "workspace",
@@ -187,11 +185,11 @@ export const workspaceAccessRouter = {
           // Verify the installation belongs to this org
           const installationResult = await ctx.db
             .select()
-            .from(gwInstallations)
+            .from(gatewayInstallations)
             .where(
               and(
-                eq(gwInstallations.id, repo.gwInstallationId),
-                eq(gwInstallations.orgId, input.clerkOrgId)
+                eq(gatewayInstallations.id, repo.gwInstallationId),
+                eq(gatewayInstallations.orgId, input.clerkOrgId)
               )
             )
             .limit(1);
@@ -214,21 +212,21 @@ export const workspaceAccessRouter = {
               )
             );
 
-          const existing = existingResult.find((ws) => {
-            const data = ws.sourceConfig;
-            return data.sourceType === "github" && data.repoId === repo.repoId;
-          });
+          const existing = existingResult.find(
+            (ws) =>
+              ws.provider === "github" && ws.providerResourceId === repo.repoId
+          );
 
           let workspaceSourceId: string;
 
           if (existing) {
             // Update existing connection (idempotent)
-            const currentConfig = existing.sourceConfig;
-            if (currentConfig.sourceType === "github") {
+            const currentConfig = existing.providerConfig;
+            if (currentConfig.provider === "github") {
               await ctx.db
                 .update(workspaceIntegrations)
                 .set({
-                  sourceConfig: {
+                  providerConfig: {
                     ...currentConfig,
                     sync: repo.syncConfig,
                   },
@@ -246,18 +244,9 @@ export const workspaceAccessRouter = {
               workspaceId,
               installationId: repo.gwInstallationId,
               provider: "github",
-              connectedBy: ctx.auth.userId,
-              sourceConfig: {
-                version: 1 as const,
-                sourceType: "github" as const,
+              providerConfig: {
+                provider: "github" as const,
                 type: "repository" as const,
-                installationId: repo.installationId,
-                repoId: repo.repoId,
-                repoName: repo.repoName,
-                repoFullName: repo.repoFullName,
-                defaultBranch: repo.defaultBranch,
-                isPrivate: repo.isPrivate,
-                isArchived: repo.isArchived,
                 sync: repo.syncConfig,
               },
               providerResourceId: repo.repoId,
@@ -268,8 +257,6 @@ export const workspaceAccessRouter = {
           // Record integration activity
           await recordActivity({
             workspaceId,
-            actorType: "user",
-            actorUserId: ctx.auth.userId,
             category: "integration",
             action: "integration.connected",
             entityType: "integration",

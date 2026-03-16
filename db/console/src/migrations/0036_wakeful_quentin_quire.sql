@@ -1,0 +1,1 @@
+ALTER TABLE "lightfast_workspace_integrations" ALTER COLUMN "provider" SET NOT NULL;

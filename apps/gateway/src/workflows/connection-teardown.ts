@@ -1,20 +1,27 @@
 import { db } from "@db/console/client";
-import { gwInstallations, gwResources, gwTokens } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  gatewayResources,
+  gatewayTokens,
+} from "@db/console/schema";
+import type { RuntimeConfig, SourceType } from "@repo/console-providers";
+import { getProvider } from "@repo/console-providers";
+import { backfillUrl } from "@repo/gateway-service-clients";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
+import { getQStashClient } from "@vendor/qstash";
 import { redis } from "@vendor/upstash";
+import type { WorkflowContext } from "@vendor/upstash-workflow";
 import { serve } from "@vendor/upstash-workflow/hono";
-import type { WorkflowContext } from "@vendor/upstash-workflow/types";
 import { env } from "../env.js";
 import { resourceKey } from "../lib/cache.js";
-import { cancelBackfillService } from "../lib/urls.js";
-import { getProvider } from "../providers/index.js";
-import type { ProviderName } from "../providers/types.js";
+import { getEncryptionKey } from "../lib/encryption.js";
+import { gatewayBaseUrl } from "../lib/urls.js";
 
 interface TeardownPayload {
   installationId: string;
   orgId: string;
-  provider: ProviderName;
+  provider: SourceType;
 }
 
 /**
@@ -23,9 +30,8 @@ interface TeardownPayload {
  * Durable connection teardown with step-level retries:
  * - Step 1: Cancel any running backfill (best-effort)
  * - Step 2: Revoke token at provider (best-effort)
- * - Step 3: Deregister webhook if applicable (best-effort)
- * - Step 4: Clean up Redis cache for linked resources
- * - Step 5: Soft-delete installation and resources in DB
+ * - Step 3: Clean up Redis cache for linked resources
+ * - Step 4: Soft-delete installation and resources in DB
  *
  * Each step runs independently with automatic retries.
  */
@@ -36,7 +42,16 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
     // Step 1: Cancel any running backfill (best-effort, before revoking token)
     await context.run("cancel-backfill", async () => {
       try {
-        await cancelBackfillService({ installationId });
+        const qstash = getQStashClient();
+        await qstash.publishJSON({
+          url: `${backfillUrl}/trigger/cancel`,
+          headers: {
+            "X-API-Key": env.GATEWAY_API_KEY!,
+          },
+          body: { installationId },
+          retries: 3,
+          deduplicationId: `backfill-cancel:${installationId}`,
+        });
       } catch {
         // Best-effort — swallow errors so teardown proceeds
       }
@@ -48,11 +63,20 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
         return;
       } // GitHub uses on-demand JWTs, no stored token
 
-      const provider = getProvider(providerName);
+      const providerDef = getProvider(providerName);
+
+      const teardownRuntime: RuntimeConfig = {
+        callbackBaseUrl: gatewayBaseUrl,
+      };
+      const config = providerDef.createConfig(
+        env as unknown as Record<string, string>,
+        teardownRuntime
+      );
+
       const tokenRows = await db
         .select()
-        .from(gwTokens)
-        .where(eq(gwTokens.installationId, installationId))
+        .from(gatewayTokens)
+        .where(eq(gatewayTokens.installationId, installationId))
         .limit(1);
 
       const tokenRow = tokenRows[0];
@@ -63,53 +87,23 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       try {
         const decryptedToken = await decrypt(
           tokenRow.accessToken,
-          env.ENCRYPTION_KEY
+          getEncryptionKey()
         );
-        await provider.revokeToken(decryptedToken);
+        await providerDef.oauth.revokeToken(config as never, decryptedToken);
       } catch {
         // Best-effort — swallow errors
       }
     });
 
-    // Step 3: Deregister webhook if applicable (best-effort)
-    await context.run("deregister-webhook", async () => {
-      const provider = getProvider(providerName);
-      if (!provider.requiresWebhookRegistration) {
-        return;
-      }
-
-      const installationRows = await db
-        .select()
-        .from(gwInstallations)
-        .where(eq(gwInstallations.id, installationId))
-        .limit(1);
-
-      const installation = installationRows[0];
-      if (!installation) {
-        return;
-      }
-
-      const meta = installation.metadata as Record<string, unknown> | null;
-      const webhookId = meta?.webhookId as string | undefined;
-
-      if (webhookId) {
-        try {
-          await provider.deregisterWebhook(installationId, webhookId);
-        } catch {
-          // Best-effort — swallow errors
-        }
-      }
-    });
-
-    // Step 4: Clean up Redis cache for linked resources
+    // Step 3: Clean up Redis cache for linked resources
     await context.run("cleanup-cache", async () => {
       const linkedResources = await db
-        .select({ providerResourceId: gwResources.providerResourceId })
-        .from(gwResources)
+        .select({ providerResourceId: gatewayResources.providerResourceId })
+        .from(gatewayResources)
         .where(
           and(
-            eq(gwResources.installationId, installationId),
-            eq(gwResources.status, "active")
+            eq(gatewayResources.installationId, installationId),
+            eq(gatewayResources.status, "active")
           )
         );
 
@@ -121,18 +115,18 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       }
     });
 
-    // Step 5: Soft-delete installation and resources in DB
+    // Step 4: Soft-delete installation and resources in DB
     await context.run("soft-delete", async () => {
       // Batch: atomic soft-delete (neon-http doesn't support transactions)
       await db.batch([
         db
-          .update(gwInstallations)
+          .update(gatewayInstallations)
           .set({ status: "revoked", updatedAt: new Date().toISOString() })
-          .where(eq(gwInstallations.id, installationId)),
+          .where(eq(gatewayInstallations.id, installationId)),
         db
-          .update(gwResources)
+          .update(gatewayResources)
           .set({ status: "removed", updatedAt: new Date().toISOString() })
-          .where(eq(gwResources.installationId, installationId)),
+          .where(eq(gatewayResources.installationId, installationId)),
       ] as const);
     });
   },

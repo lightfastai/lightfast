@@ -1,30 +1,22 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import type {
-  ContentsToolInput,
-  ContentsToolOutput,
-  LightfastAnswerRuntimeContext,
-} from "@repo/console-ai-types";
-import { V1ContentsResponseSchema } from "@repo/console-types";
+import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
+import { ContentsResponseSchema } from "@repo/console-validation";
 import { z } from "zod";
 
-const inputSchema: z.ZodType<ContentsToolInput> = z.object({
+const inputSchema = z.object({
   ids: z
     .array(z.string())
-    .describe("Array of observation IDs to fetch content for"),
+    .meta({ description: "Array of observation IDs to fetch content for" }),
 });
 
-const outputSchema: z.ZodType<ContentsToolOutput> = V1ContentsResponseSchema;
+const outputSchema = ContentsResponseSchema;
 
 export function workspaceContentsTool() {
-  return createTool<
-    LightfastAnswerRuntimeContext,
-    typeof inputSchema,
-    typeof outputSchema
-  >({
+  return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Fetch full content for specific observations by ID. Use this to get the complete details of a document after finding it via search or related queries.",
-    inputSchema,
-    outputSchema,
+    inputSchema: inputSchema as any,
+    outputSchema: outputSchema as any,
     execute: async (input, context) => {
       const handler = context.tools?.workspaceContents?.handler;
       if (!handler) {

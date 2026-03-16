@@ -17,8 +17,8 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
 
 // ── Mock externals ──
 
-const mockCancelBackfill = vi.fn().mockResolvedValue(undefined);
-const mockGetProvider = vi.fn();
+const mockPublishJSON = vi.fn().mockResolvedValue(undefined);
+const mockRevokeToken = vi.fn().mockResolvedValue(undefined);
 const mockDecrypt = vi.fn().mockResolvedValue("decrypted-token");
 const mockRedisDel = vi.fn().mockResolvedValue(1);
 const mockDbQuery = vi.fn().mockResolvedValue([]);
@@ -34,7 +34,23 @@ vi.mock("drizzle-orm", () => ({
 }));
 
 vi.mock("../env", () => ({
-  env: { ENCRYPTION_KEY: "a".repeat(64) },
+  env: {
+    ENCRYPTION_KEY: "a".repeat(64),
+    GATEWAY_API_KEY: "test-key",
+    VERCEL_INTEGRATION_SLUG: "test-slug",
+    VERCEL_CLIENT_SECRET_ID: "test-id",
+    VERCEL_CLIENT_INTEGRATION_SECRET: "test-secret",
+    LINEAR_CLIENT_ID: "lin-id",
+    LINEAR_CLIENT_SECRET: "lin-secret",
+    LINEAR_WEBHOOK_SIGNING_SECRET: "lin-webhook-secret",
+    SENTRY_APP_SLUG: "sen-slug",
+    SENTRY_CLIENT_ID: "sen-id",
+    SENTRY_CLIENT_SECRET: "sen-secret",
+  },
+}));
+
+vi.mock("../lib/urls", () => ({
+  gatewayBaseUrl: "https://gateway.test/services",
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -69,13 +85,16 @@ vi.mock("@db/console/client", () => ({
 }));
 
 vi.mock("@db/console/schema", () => ({
-  gwInstallations: { id: "id", status: "status" },
-  gwResources: {
+  gatewayInstallations: { id: "id", status: "status" },
+  gatewayResources: {
     installationId: "installationId",
     providerResourceId: "providerResourceId",
     status: "status",
   },
-  gwTokens: { installationId: "installationId", accessToken: "accessToken" },
+  gatewayTokens: {
+    installationId: "installationId",
+    accessToken: "accessToken",
+  },
 }));
 
 vi.mock("@repo/lib", () => ({
@@ -89,15 +108,47 @@ vi.mock("../lib/cache", () => ({
     `gw:resource:${provider}:${resourceId}`,
 }));
 
-vi.mock("../lib/urls", () => ({
-  cancelBackfillService: (...args: unknown[]) => mockCancelBackfill(...args),
+vi.mock("@repo/gateway-service-clients", () => ({
+  backfillUrl: "https://backfill.test/api",
 }));
 
-vi.mock("../providers", () => ({
-  getProvider: (...args: unknown[]) => mockGetProvider(...args),
+vi.mock("@vendor/qstash", () => ({
+  getQStashClient: () => ({
+    publishJSON: (...args: unknown[]) => mockPublishJSON(...args),
+  }),
 }));
 
-vi.mock("../providers/types", () => ({}));
+vi.mock("@repo/console-providers", () => ({
+  PROVIDERS: {
+    github: {
+      createConfig: vi.fn().mockReturnValue({}),
+      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+    },
+    vercel: {
+      createConfig: vi.fn().mockReturnValue({}),
+      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+    },
+    linear: {
+      createConfig: vi.fn().mockReturnValue({}),
+      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+    },
+    sentry: {
+      createConfig: vi.fn().mockReturnValue({}),
+      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+    },
+  },
+  PROVIDER_ENVS: () => [],
+  getProvider: (name: string) => {
+    const known = ["github", "vercel", "linear", "sentry"];
+    if (!known.includes(name)) {
+      return undefined;
+    }
+    return {
+      createConfig: vi.fn().mockReturnValue({}),
+      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+    };
+  },
+}));
 
 // Force module load to trigger serve() and capture the handler
 await import("./connection-teardown.js");
@@ -115,23 +166,6 @@ function makeContext(payload: {
   };
 }
 
-function makeProvider(
-  overrides: Partial<{
-    name: string;
-    requiresWebhookRegistration: boolean;
-    revokeToken: ReturnType<typeof vi.fn>;
-    deregisterWebhook: ReturnType<typeof vi.fn>;
-  }> = {}
-) {
-  return {
-    name: overrides.name ?? "github",
-    requiresWebhookRegistration: overrides.requiresWebhookRegistration ?? false,
-    revokeToken: overrides.revokeToken ?? vi.fn().mockResolvedValue(undefined),
-    deregisterWebhook:
-      overrides.deregisterWebhook ?? vi.fn().mockResolvedValue(undefined),
-  };
-}
-
 // ── Tests ──
 
 describe("connection-teardown workflow", () => {
@@ -140,25 +174,16 @@ describe("connection-teardown workflow", () => {
     mockDbQuery.mockResolvedValue([]);
     mockDbUpdate.mockResolvedValue(undefined);
     mockTxSet.mockClear();
-    mockCancelBackfill.mockResolvedValue(undefined);
+    mockPublishJSON.mockResolvedValue(undefined);
     mockDecrypt.mockResolvedValue("decrypted-token");
     mockRedisDel.mockResolvedValue(1);
+    mockRevokeToken.mockResolvedValue(undefined);
   });
 
-  it("runs all 5 steps for a full teardown", async () => {
-    const provider = makeProvider({
-      name: "linear",
-      requiresWebhookRegistration: true,
-    });
-    mockGetProvider.mockReturnValue(provider);
-
-    // Step 2: token row
+  it("runs all 4 steps for a full teardown", async () => {
+    // Step 2: token row (for non-github)
     mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
-    // Step 3: installation with webhookId
-    mockDbQuery.mockResolvedValueOnce([
-      { id: "inst-1", metadata: { webhookId: "wh-1" } },
-    ]);
-    // Step 4: active resources
+    // Step 3: active resources
     mockDbQuery.mockResolvedValueOnce([
       { providerResourceId: "res-1" },
       { providerResourceId: "res-2" },
@@ -171,13 +196,18 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    expect(ctx.run).toHaveBeenCalledTimes(5);
-    expect(mockCancelBackfill).toHaveBeenCalledWith({
-      installationId: "inst-1",
-    });
+    expect(ctx.run).toHaveBeenCalledTimes(4);
+    expect(mockPublishJSON).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://backfill.test/api/trigger/cancel",
+        body: { installationId: "inst-1" },
+      })
+    );
     expect(mockDecrypt).toHaveBeenCalled();
-    expect(provider.revokeToken).toHaveBeenCalledWith("decrypted-token");
-    expect(provider.deregisterWebhook).toHaveBeenCalledWith("inst-1", "wh-1");
+    expect(mockRevokeToken).toHaveBeenCalledWith(
+      expect.anything(),
+      "decrypted-token"
+    );
     expect(mockRedisDel).toHaveBeenCalledTimes(1);
     expect(mockRedisDel).toHaveBeenCalledWith(
       "gw:resource:linear:res-1",
@@ -186,9 +216,7 @@ describe("connection-teardown workflow", () => {
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
   });
 
-  it("calls cancelBackfillService in step 1", async () => {
-    mockGetProvider.mockReturnValue(makeProvider());
-
+  it("publishes backfill cancel via QStash in step 1", async () => {
     const ctx = makeContext({
       installationId: "inst-1",
       provider: "github",
@@ -196,15 +224,17 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    expect(mockCancelBackfill).toHaveBeenCalledWith({
-      installationId: "inst-1",
-    });
+    expect(mockPublishJSON).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://backfill.test/api/trigger/cancel",
+        body: { installationId: "inst-1" },
+        retries: 3,
+        deduplicationId: "backfill-cancel:inst-1",
+      })
+    );
   });
 
   it("skips token revocation for github provider", async () => {
-    const provider = makeProvider({ name: "github" });
-    mockGetProvider.mockReturnValue(provider);
-
     const ctx = makeContext({
       installationId: "inst-1",
       provider: "github",
@@ -213,13 +243,10 @@ describe("connection-teardown workflow", () => {
     await capturedHandler(ctx);
 
     expect(mockDecrypt).not.toHaveBeenCalled();
-    expect(provider.revokeToken).not.toHaveBeenCalled();
+    expect(mockRevokeToken).not.toHaveBeenCalled();
   });
 
   it("revokes token for non-github provider when token exists", async () => {
-    const provider = makeProvider({ name: "vercel" });
-    mockGetProvider.mockReturnValue(provider);
-
     // Step 2: token row
     mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
 
@@ -231,13 +258,13 @@ describe("connection-teardown workflow", () => {
     await capturedHandler(ctx);
 
     expect(mockDecrypt).toHaveBeenCalled();
-    expect(provider.revokeToken).toHaveBeenCalledWith("decrypted-token");
+    expect(mockRevokeToken).toHaveBeenCalledWith(
+      expect.anything(),
+      "decrypted-token"
+    );
   });
 
   it("skips revocation when no token row found", async () => {
-    const provider = makeProvider({ name: "vercel" });
-    mockGetProvider.mockReturnValue(provider);
-
     // Step 2: no token rows
     mockDbQuery.mockResolvedValueOnce([]);
 
@@ -248,15 +275,11 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    expect(provider.revokeToken).not.toHaveBeenCalled();
+    expect(mockRevokeToken).not.toHaveBeenCalled();
   });
 
   it("swallows revokeToken errors (best-effort)", async () => {
-    const provider = makeProvider({
-      name: "sentry",
-      revokeToken: vi.fn().mockRejectedValue(new Error("revoke failed")),
-    });
-    mockGetProvider.mockReturnValue(provider);
+    mockRevokeToken.mockRejectedValueOnce(new Error("revoke failed"));
 
     // Step 2: token row
     mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
@@ -269,82 +292,11 @@ describe("connection-teardown workflow", () => {
 
     // Should not throw
     await expect(capturedHandler(ctx)).resolves.toBeUndefined();
-    expect(provider.revokeToken).toHaveBeenCalled();
-  });
-
-  it("skips webhook deregistration for providers that don't require it", async () => {
-    const provider = makeProvider({
-      name: "vercel",
-      requiresWebhookRegistration: false,
-    });
-    mockGetProvider.mockReturnValue(provider);
-
-    // Step 2: token row
-    mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
-
-    const ctx = makeContext({
-      installationId: "inst-1",
-      provider: "vercel",
-      orgId: "org-1",
-    });
-    await capturedHandler(ctx);
-
-    expect(provider.deregisterWebhook).not.toHaveBeenCalled();
-  });
-
-  it("skips webhook deregistration when no webhookId in metadata", async () => {
-    const provider = makeProvider({
-      name: "linear",
-      requiresWebhookRegistration: true,
-    });
-    mockGetProvider.mockReturnValue(provider);
-
-    // Step 2: no token
-    mockDbQuery.mockResolvedValueOnce([]);
-    // Step 3: installation with null metadata
-    mockDbQuery.mockResolvedValueOnce([{ id: "inst-1", metadata: null }]);
-
-    const ctx = makeContext({
-      installationId: "inst-1",
-      provider: "linear",
-      orgId: "org-1",
-    });
-    await capturedHandler(ctx);
-
-    expect(provider.deregisterWebhook).not.toHaveBeenCalled();
-  });
-
-  it("swallows deregisterWebhook errors (best-effort)", async () => {
-    const provider = makeProvider({
-      name: "sentry",
-      requiresWebhookRegistration: true,
-      deregisterWebhook: vi
-        .fn()
-        .mockRejectedValue(new Error("deregister failed")),
-    });
-    mockGetProvider.mockReturnValue(provider);
-
-    // Step 2: no token
-    mockDbQuery.mockResolvedValueOnce([]);
-    // Step 3: installation with webhookId
-    mockDbQuery.mockResolvedValueOnce([
-      { id: "inst-1", metadata: { webhookId: "wh-1" } },
-    ]);
-
-    const ctx = makeContext({
-      installationId: "inst-1",
-      provider: "sentry",
-      orgId: "org-1",
-    });
-
-    await expect(capturedHandler(ctx)).resolves.toBeUndefined();
-    expect(provider.deregisterWebhook).toHaveBeenCalled();
+    expect(mockRevokeToken).toHaveBeenCalled();
   });
 
   it("cleans up Redis cache for all active resources", async () => {
-    mockGetProvider.mockReturnValue(makeProvider({ name: "github" }));
-
-    // Step 4: 3 active resources (github skips steps 2 & 3 DB calls)
+    // Step 3: 3 active resources (github skips step 2 DB call)
     mockDbQuery.mockResolvedValueOnce([
       { providerResourceId: "repo-a" },
       { providerResourceId: "repo-b" },
@@ -367,9 +319,7 @@ describe("connection-teardown workflow", () => {
   });
 
   it("handles zero active resources gracefully", async () => {
-    mockGetProvider.mockReturnValue(makeProvider({ name: "github" }));
-
-    // Step 4: no resources
+    // Step 3: no resources
     mockDbQuery.mockResolvedValueOnce([]);
 
     const ctx = makeContext({
@@ -383,8 +333,6 @@ describe("connection-teardown workflow", () => {
   });
 
   it("soft-deletes installation and resources in DB", async () => {
-    mockGetProvider.mockReturnValue(makeProvider({ name: "github" }));
-
     const ctx = makeContext({
       installationId: "inst-1",
       provider: "github",

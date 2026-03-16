@@ -1,5 +1,10 @@
 "use client";
 
+import type { SourceType } from "@repo/console-providers";
+import {
+  PROVIDER_DISPLAY,
+  PROVIDER_SLUGS,
+} from "@repo/console-providers/display";
 import { useTRPC } from "@repo/console-trpc/react";
 import {
   Accordion,
@@ -21,69 +26,30 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
-import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { cn } from "@repo/ui/lib/utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ChevronDown,
   ChevronRight,
   Circle,
+  Plus,
   Search,
 } from "lucide-react";
+import Link from "next/link";
 import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
-import type { ComponentType, SVGProps } from "react";
 import { useState } from "react";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
-import { EventSettings } from "./event-settings";
+import { ProviderIcon } from "~/lib/provider-icon";
+
+import type { Source } from "~/types";
+import { SourceSettingsForm } from "./source-settings-form";
 
 interface InstalledSourcesProps {
   clerkOrgSlug: string;
   initialSearch?: string;
   initialStatus?: "all" | "active" | "inactive";
   workspaceName: string;
-}
-
-const providerOrder = ["github", "vercel", "linear", "sentry"] as const;
-
-const providerIcons: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
-  github: IntegrationLogoIcons.github,
-  vercel: IntegrationLogoIcons.vercel,
-  linear: IntegrationLogoIcons.linear,
-  sentry: IntegrationLogoIcons.sentry,
-};
-
-const providerNames: Record<string, string> = {
-  github: "GitHub",
-  vercel: "Vercel",
-  linear: "Linear",
-  sentry: "Sentry",
-};
-
-// Metadata shapes per provider (from sourceConfig in workspace_integrations)
-// GitHub: { repoFullName, isPrivate, documentCount, status.configStatus, sync.events }
-// Vercel: { projectName, projectId, sync.events }
-// Linear: { teamName, teamKey, teamId, sync.events }
-// Sentry: { projectSlug, projectId, sync.events }
-interface IntegrationMetadata {
-  documentCount?: number;
-  isPrivate?: boolean;
-  // Vercel
-  projectName?: string;
-  // Sentry
-  projectSlug?: string;
-  // GitHub
-  repoFullName?: string;
-  status?: {
-    configStatus?: "configured" | "awaiting_config";
-  };
-  // Shared
-  sync?: {
-    events?: string[];
-  };
-  teamKey?: string;
-  // Linear
-  teamName?: string;
 }
 
 export function InstalledSources({
@@ -121,67 +87,32 @@ export function InstalledSources({
   const integrations = sourcesData.list;
 
   // Filter integrations
+  const searchLower = filters.search.toLowerCase();
   const filteredIntegrations = integrations.filter((integration) => {
-    const metadata = integration.metadata as
-      | IntegrationMetadata
-      | null
-      | undefined;
-    const integrationType = integration.type ?? "unknown";
-    const providerLabel = providerNames[integrationType] ?? integrationType;
+    const { metadata } = integration;
+    const providerLabel = PROVIDER_DISPLAY[metadata.provider].displayName;
+    const resourceLabel = integration.displayName;
+    const searchTarget = `${providerLabel}/${resourceLabel}`.toLowerCase();
 
-    let searchableName: string;
-    if (integrationType === "github") {
-      const repoName = metadata?.repoFullName ?? "";
-      searchableName = repoName
-        ? `${providerLabel.toLowerCase()}/${repoName}`
-        : providerLabel;
-    } else if (integrationType === "vercel") {
-      const projectName = metadata?.projectName ?? "";
-      searchableName = projectName
-        ? `${providerLabel.toLowerCase()}/${projectName}`
-        : providerLabel;
-    } else if (integrationType === "linear") {
-      const teamName = metadata?.teamName ?? "";
-      searchableName = teamName
-        ? `${providerLabel.toLowerCase()}/${teamName}`
-        : providerLabel;
-    } else if (integrationType === "sentry") {
-      const projectSlug = metadata?.projectSlug ?? "";
-      searchableName = projectSlug
-        ? `${providerLabel.toLowerCase()}/${projectSlug}`
-        : providerLabel;
-    } else {
-      searchableName = providerLabel;
-    }
-
-    const matchesSearch =
-      searchableName.toLowerCase().includes(filters.search.toLowerCase()) ||
-      integrationType.toLowerCase().includes(filters.search.toLowerCase());
-
+    const matchesSearch = !searchLower || searchTarget.includes(searchLower);
     const matchesStatus =
       filters.status === "all" || filters.status === "active";
 
     return matchesSearch && matchesStatus;
   });
 
-  // Group by provider
-  const grouped = new Map<string, typeof integrations>();
+  // Group by provider — sourceType is always a known SourceType, no "unknown" handling needed
+  const grouped = new Map<SourceType, Source[]>();
   for (const integration of filteredIntegrations) {
-    const type = integration.type ?? "unknown";
+    const type = integration.metadata.provider;
     const list = grouped.get(type) ?? [];
     list.push(integration);
     grouped.set(type, list);
   }
 
-  // Sort by defined order, then append any extras
-  const sortedGroups = [
-    ...providerOrder
-      .filter((p) => grouped.has(p))
-      .map((p) => ({ provider: p as string, resources: grouped.get(p) ?? [] })),
-    ...[...grouped.entries()]
-      .filter(([p]) => !(providerOrder as readonly string[]).includes(p))
-      .map(([provider, resources]) => ({ provider, resources })),
-  ];
+  const sortedGroups = PROVIDER_SLUGS.filter((p) => grouped.has(p)).map(
+    (p) => ({ provider: p, resources: grouped.get(p) ?? [] })
+  );
 
   return (
     <div className="space-y-4">
@@ -231,23 +162,29 @@ export function InstalledSources({
               ? `No integrations found matching "${filters.search}"`
               : "No integrations installed yet"}
           </p>
+          {!filters.search && (
+            <Button asChild className="mt-4" size="sm" variant="outline">
+              <Link href={`/${clerkOrgSlug}/${workspaceName}/sources/new`}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Source
+              </Link>
+            </Button>
+          )}
         </div>
       ) : (
         <Accordion className="w-full rounded-lg border" type="multiple">
           {sortedGroups.map(({ provider, resources }) => {
-            const IconComponent = providerIcons[provider];
-            const label = providerNames[provider] ?? provider;
+            const display = PROVIDER_DISPLAY[provider];
 
             return (
               <AccordionItem key={provider} value={provider}>
                 <AccordionTrigger className="px-4 hover:no-underline">
                   <div className="flex flex-1 items-center gap-3">
-                    {IconComponent ? (
-                      <IconComponent className="h-5 w-5 shrink-0" />
-                    ) : (
-                      <span className="text-sm">🔗</span>
-                    )}
-                    <span className="font-medium">{label}</span>
+                    <ProviderIcon
+                      className="h-5 w-5 shrink-0"
+                      icon={display.icon}
+                    />
+                    <span className="font-medium">{display.displayName}</span>
                     <Badge className="text-xs" variant="secondary">
                       {resources.length} connected
                     </Badge>
@@ -256,13 +193,7 @@ export function InstalledSources({
                 <AccordionContent className="px-0 pb-0">
                   <div className="divide-y border-t">
                     {resources.map((resource) => (
-                      <ResourceRow
-                        clerkOrgSlug={clerkOrgSlug}
-                        integration={resource}
-                        key={resource.id}
-                        provider={provider}
-                        workspaceName={workspaceName}
-                      />
+                      <ResourceRow integration={resource} key={resource.id} />
                     ))}
                   </div>
                 </AccordionContent>
@@ -275,52 +206,35 @@ export function InstalledSources({
   );
 }
 
-function ResourceRow({
-  integration,
-  provider,
-  clerkOrgSlug,
-  workspaceName,
-}: {
-  integration: {
-    id: string;
-    type: string | null;
-    documentCount?: number | null;
-    metadata: unknown;
-  };
-  provider: string;
-  clerkOrgSlug: string;
-  workspaceName: string;
-}) {
+function ResourceRow({ integration }: { integration: Source }) {
   const [isOpen, setIsOpen] = useState(false);
-  const metadata = integration.metadata as
-    | IntegrationMetadata
-    | null
-    | undefined;
+  const trpc = useTRPC();
+  const { metadata } = integration;
 
-  const isAwaitingConfig = metadata?.status?.configStatus === "awaiting_config";
-  const documentCount = integration.documentCount ?? metadata?.documentCount;
-  const isPrivate = metadata?.isPrivate;
-  const subscribedEvents = metadata?.sync?.events ?? [];
+  const rawResourceId = integration.displayName;
+
+  const { data: resourcesData } = useQuery({
+    ...trpc.connections.generic.listResources.queryOptions({
+      provider: metadata.provider,
+      installationId: integration.installationId,
+    }),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: false,
+  });
+
+  const resourceName =
+    resourcesData?.resources.find((r) => r.id === rawResourceId)?.name ??
+    rawResourceId;
+
+  const isAwaitingConfig =
+    metadata.provider === "github" &&
+    metadata.status?.configStatus === "awaiting_config";
+  const subscribedEvents = metadata.sync.events ?? [];
   const eventLabel =
     subscribedEvents.length === 0
       ? "All events"
       : `${subscribedEvents.length} events`;
-
-  // Resource name without provider prefix (already grouped)
-  const integrationType = integration.type ?? "unknown";
-  let resourceName: string;
-
-  if (integrationType === "github") {
-    resourceName = metadata?.repoFullName ?? "Unknown repo";
-  } else if (integrationType === "vercel") {
-    resourceName = metadata?.projectName ?? "Unknown project";
-  } else if (integrationType === "linear") {
-    resourceName = metadata?.teamName ?? "Unknown team";
-  } else if (integrationType === "sentry") {
-    resourceName = metadata?.projectSlug ?? "Unknown project";
-  } else {
-    resourceName = "Unknown resource";
-  }
 
   return (
     <Collapsible onOpenChange={setIsOpen} open={isOpen}>
@@ -337,21 +251,11 @@ function ResourceRow({
               )}
             />
             <span className="truncate font-medium text-sm">{resourceName}</span>
-            {isPrivate && (
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-muted-foreground text-xs">
-                Private
-              </span>
-            )}
-            {integrationType === "linear" && metadata?.teamKey && (
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-muted-foreground text-xs">
-                {metadata.teamKey}
-              </span>
-            )}
           </div>
           <div className="ml-3 flex shrink-0 items-center gap-3">
-            {documentCount != null && documentCount > 0 && (
+            {integration.documentCount > 0 && (
               <span className="text-muted-foreground text-xs">
-                {documentCount.toLocaleString()} docs
+                {integration.documentCount.toLocaleString()} docs
               </span>
             )}
             <span className="text-muted-foreground text-xs">{eventLabel}</span>
@@ -390,12 +294,12 @@ function ResourceRow({
             </div>
           </div>
         )}
-        <EventSettings
-          clerkOrgSlug={clerkOrgSlug}
+        <SourceSettingsForm
+          backfillConfig={integration.backfillConfig ?? null}
           currentEvents={subscribedEvents}
+          installationId={integration.installationId}
           integrationId={integration.id}
-          provider={provider as "github" | "vercel" | "linear" | "sentry"}
-          workspaceName={workspaceName}
+          provider={metadata.provider}
         />
       </CollapsibleContent>
     </Collapsible>

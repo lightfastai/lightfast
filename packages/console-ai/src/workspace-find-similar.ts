@@ -1,42 +1,54 @@
 import { createTool } from "@lightfastai/ai-sdk/tool";
-import type {
-  FindSimilarToolInput,
-  FindSimilarToolOutput,
-  LightfastAnswerRuntimeContext,
-} from "@repo/console-ai-types";
-import { V1FindSimilarResponseSchema } from "@repo/console-types";
+import type { LightfastAnswerRuntimeContext } from "@repo/console-ai-types";
+import { FindSimilarResponseSchema } from "@repo/console-validation";
 import { z } from "zod";
 
-const inputSchema: z.ZodType<FindSimilarToolInput> = z.object({
-  id: z.string().describe("The observation ID to find similar items for"),
+const inputSchema = z.object({
+  id: z
+    .string()
+    .optional()
+    .meta({ description: "The observation ID to find similar items for" }),
+  url: z.string().optional().meta({
+    description: "URL to find similar content for (alternative to id)",
+  }),
   limit: z
     .number()
     .int()
     .min(1)
-    .max(20)
+    .max(50)
     .default(5)
-    .describe("Max similar items to return"),
+    .meta({ description: "Max similar items to return" }),
   threshold: z
     .number()
     .min(0)
     .max(1)
     .default(0.5)
-    .describe("Similarity threshold (0-1)"),
+    .meta({ description: "Similarity threshold (0-1)" }),
+  sameSourceOnly: z
+    .boolean()
+    .default(false)
+    .meta({ description: "Only return results from the same source type" }),
+  excludeIds: z
+    .array(z.string())
+    .optional()
+    .meta({ description: "IDs to exclude from results" }),
+  filters: z
+    .object({
+      sourceTypes: z.array(z.string()).optional(),
+      observationTypes: z.array(z.string()).optional(),
+    })
+    .optional()
+    .meta({ description: "Optional filters to scope results" }),
 });
 
-const outputSchema: z.ZodType<FindSimilarToolOutput> =
-  V1FindSimilarResponseSchema;
+const outputSchema = FindSimilarResponseSchema;
 
 export function workspaceFindSimilarTool() {
-  return createTool<
-    LightfastAnswerRuntimeContext,
-    typeof inputSchema,
-    typeof outputSchema
-  >({
+  return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Find semantically similar content to a given document. Use this to discover related observations, expand search results, or find alternatives to a specific document.",
-    inputSchema,
-    outputSchema,
+    inputSchema: inputSchema as any,
+    outputSchema: outputSchema as any,
     execute: async (input, context) => {
       const handler = context.tools?.workspaceFindSimilar?.handler;
       if (!handler) {

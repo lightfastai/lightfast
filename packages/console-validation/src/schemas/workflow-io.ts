@@ -1,46 +1,16 @@
+import { sourceTypeSchema } from "@repo/console-providers";
 import { z } from "zod";
-import { sourceTypeSchema } from "./sources";
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - INPUT
+// EVENT CAPTURE - INPUT
 // =============================================================================
 
-const neuralObservationCaptureInputSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureInputSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   sourceId: z.string(),
   source: z.string(), // github, vercel
   sourceType: z.string(), // push, pull_request, deployment.succeeded
   title: z.string(),
-});
-
-// =============================================================================
-// NEURAL PROFILE UPDATE - INPUT
-// =============================================================================
-
-const neuralProfileUpdateInputSchema = z.object({
-  inngestFunctionId: z.literal("neural.profile.update"),
-  actorId: z.string(),
-  observationId: z.string(),
-});
-
-// =============================================================================
-// NEURAL CLUSTER SUMMARY - INPUT
-// =============================================================================
-
-const neuralClusterSummaryInputSchema = z.object({
-  inngestFunctionId: z.literal("neural.cluster.summary"),
-  clusterId: z.string(),
-  observationCount: z.number().int().nonnegative(),
-});
-
-// =============================================================================
-// NEURAL LLM ENTITY EXTRACTION - INPUT
-// =============================================================================
-
-const neuralLLMEntityExtractionInputSchema = z.object({
-  inngestFunctionId: z.literal("neural.llm-entity-extraction"),
-  observationId: z.string(),
-  contentLength: z.number().int().nonnegative(),
 });
 
 // =============================================================================
@@ -60,162 +30,49 @@ const backfillOrchestratorInputSchema = z.object({
 // =============================================================================
 
 export const workflowInputSchema = z.discriminatedUnion("inngestFunctionId", [
-  // Neural workflows
-  neuralObservationCaptureInputSchema,
-  neuralProfileUpdateInputSchema,
-  neuralClusterSummaryInputSchema,
-  neuralLLMEntityExtractionInputSchema,
+  // Event pipeline
+  eventCaptureInputSchema,
   // Backfill workflows
   backfillOrchestratorInputSchema,
 ]);
 
 export type WorkflowInput = z.infer<typeof workflowInputSchema>;
-export type NeuralObservationCaptureInput = z.infer<
-  typeof neuralObservationCaptureInputSchema
->;
-export type NeuralProfileUpdateInput = z.infer<
-  typeof neuralProfileUpdateInputSchema
->;
-export type NeuralClusterSummaryInput = z.infer<
-  typeof neuralClusterSummaryInputSchema
->;
-export type NeuralLLMEntityExtractionInput = z.infer<
-  typeof neuralLLMEntityExtractionInputSchema
->;
+export type EventCaptureInput = z.infer<typeof eventCaptureInputSchema>;
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - OUTPUT (SUCCESS)
+// EVENT CAPTURE - OUTPUT (SUCCESS)
 // =============================================================================
 
-const neuralObservationCaptureOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureOutputSuccessSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   status: z.literal("success"),
   observationId: z.string(), // externalId (nanoid)
   observationType: z.string(),
   significanceScore: z.number(),
   entitiesExtracted: z.number().int().nonnegative(),
-  clusterId: z.string(),
-  clusterIsNew: z.boolean(),
 });
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - OUTPUT (FILTERED/SKIPPED)
+// EVENT CAPTURE - OUTPUT (FILTERED/SKIPPED)
 // =============================================================================
 
-const neuralObservationCaptureOutputFilteredSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureOutputFilteredSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   status: z.literal("filtered"),
-  reason: z.enum(["duplicate", "event_not_allowed", "below_threshold"]),
+  reason: z.enum(["duplicate", "event_not_allowed"]),
   sourceId: z.string(),
-  significanceScore: z.number().optional(),
 });
 
 // =============================================================================
-// NEURAL OBSERVATION CAPTURE - OUTPUT (FAILURE)
+// EVENT CAPTURE - OUTPUT (FAILURE)
 // =============================================================================
 
-const neuralObservationCaptureOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("neural.observation.capture"),
+const eventCaptureOutputFailureSchema = z.object({
+  inngestFunctionId: z.literal("event.capture"),
   status: z.literal("failure"),
   sourceId: z.string(),
   error: z.string(),
   step: z.string().optional(), // Which step failed
-});
-
-// =============================================================================
-// NEURAL PROFILE UPDATE - OUTPUT (SUCCESS)
-// =============================================================================
-
-const neuralProfileUpdateOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("neural.profile.update"),
-  status: z.literal("success"),
-  actorId: z.string(),
-  observationCount: z.number().int().nonnegative(),
-  isNewProfile: z.boolean(),
-});
-
-// =============================================================================
-// NEURAL PROFILE UPDATE - OUTPUT (FAILURE)
-// =============================================================================
-
-const neuralProfileUpdateOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("neural.profile.update"),
-  status: z.literal("failure"),
-  actorId: z.string(),
-  error: z.string(),
-});
-
-// =============================================================================
-// NEURAL CLUSTER SUMMARY - OUTPUT (SUCCESS)
-// =============================================================================
-
-const neuralClusterSummaryOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("neural.cluster.summary"),
-  status: z.literal("success"),
-  clusterId: z.string(),
-  summaryGenerated: z.boolean(),
-  keyTopics: z.array(z.string()).optional(),
-});
-
-// =============================================================================
-// NEURAL CLUSTER SUMMARY - OUTPUT (SKIPPED)
-// =============================================================================
-
-const neuralClusterSummaryOutputSkippedSchema = z.object({
-  inngestFunctionId: z.literal("neural.cluster.summary"),
-  status: z.literal("skipped"),
-  clusterId: z.string(),
-  reason: z.enum([
-    "below_threshold",
-    "summary_recent",
-    "cluster_not_found",
-    "no_observations",
-  ]),
-});
-
-// =============================================================================
-// NEURAL CLUSTER SUMMARY - OUTPUT (FAILURE)
-// =============================================================================
-
-const neuralClusterSummaryOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("neural.cluster.summary"),
-  status: z.literal("failure"),
-  clusterId: z.string(),
-  error: z.string(),
-});
-
-// =============================================================================
-// NEURAL LLM ENTITY EXTRACTION - OUTPUT (SUCCESS)
-// =============================================================================
-
-const neuralLLMEntityExtractionOutputSuccessSchema = z.object({
-  inngestFunctionId: z.literal("neural.llm-entity-extraction"),
-  status: z.literal("success"),
-  observationId: z.string(),
-  entitiesExtracted: z.number().int().nonnegative(),
-  entitiesStored: z.number().int().nonnegative(),
-});
-
-// =============================================================================
-// NEURAL LLM ENTITY EXTRACTION - OUTPUT (SKIPPED)
-// =============================================================================
-
-const neuralLLMEntityExtractionOutputSkippedSchema = z.object({
-  inngestFunctionId: z.literal("neural.llm-entity-extraction"),
-  status: z.literal("skipped"),
-  observationId: z.string().optional(),
-  reason: z.enum(["observation_not_found", "content_too_short"]),
-});
-
-// =============================================================================
-// NEURAL LLM ENTITY EXTRACTION - OUTPUT (FAILURE)
-// =============================================================================
-
-const neuralLLMEntityExtractionOutputFailureSchema = z.object({
-  inngestFunctionId: z.literal("neural.llm-entity-extraction"),
-  status: z.literal("failure"),
-  observationId: z.string(),
-  error: z.string(),
 });
 
 // =============================================================================
@@ -253,18 +110,10 @@ const backfillOrchestratorOutputFailureSchema = z.object({
 // have duplicate values across schemas. Instead, use a regular union.
 // TypeScript will still narrow properly when you check both fields.
 export const workflowOutputSchema = z.union([
-  // Neural workflows
-  neuralObservationCaptureOutputSuccessSchema,
-  neuralObservationCaptureOutputFilteredSchema,
-  neuralObservationCaptureOutputFailureSchema,
-  neuralProfileUpdateOutputSuccessSchema,
-  neuralProfileUpdateOutputFailureSchema,
-  neuralClusterSummaryOutputSuccessSchema,
-  neuralClusterSummaryOutputSkippedSchema,
-  neuralClusterSummaryOutputFailureSchema,
-  neuralLLMEntityExtractionOutputSuccessSchema,
-  neuralLLMEntityExtractionOutputSkippedSchema,
-  neuralLLMEntityExtractionOutputFailureSchema,
+  // Event pipeline
+  eventCaptureOutputSuccessSchema,
+  eventCaptureOutputFilteredSchema,
+  eventCaptureOutputFailureSchema,
   // Backfill workflows
   backfillOrchestratorOutputSuccessSchema,
   backfillOrchestratorOutputFailureSchema,
@@ -272,39 +121,15 @@ export const workflowOutputSchema = z.union([
 
 export type WorkflowOutput = z.infer<typeof workflowOutputSchema>;
 
-// Neural workflow output type exports
-export type NeuralObservationCaptureOutputSuccess = z.infer<
-  typeof neuralObservationCaptureOutputSuccessSchema
+// Event pipeline output type exports
+export type EventCaptureOutputSuccess = z.infer<
+  typeof eventCaptureOutputSuccessSchema
 >;
-export type NeuralObservationCaptureOutputFiltered = z.infer<
-  typeof neuralObservationCaptureOutputFilteredSchema
+export type EventCaptureOutputFiltered = z.infer<
+  typeof eventCaptureOutputFilteredSchema
 >;
-export type NeuralObservationCaptureOutputFailure = z.infer<
-  typeof neuralObservationCaptureOutputFailureSchema
->;
-export type NeuralProfileUpdateOutputSuccess = z.infer<
-  typeof neuralProfileUpdateOutputSuccessSchema
->;
-export type NeuralProfileUpdateOutputFailure = z.infer<
-  typeof neuralProfileUpdateOutputFailureSchema
->;
-export type NeuralClusterSummaryOutputSuccess = z.infer<
-  typeof neuralClusterSummaryOutputSuccessSchema
->;
-export type NeuralClusterSummaryOutputSkipped = z.infer<
-  typeof neuralClusterSummaryOutputSkippedSchema
->;
-export type NeuralClusterSummaryOutputFailure = z.infer<
-  typeof neuralClusterSummaryOutputFailureSchema
->;
-export type NeuralLLMEntityExtractionOutputSuccess = z.infer<
-  typeof neuralLLMEntityExtractionOutputSuccessSchema
->;
-export type NeuralLLMEntityExtractionOutputSkipped = z.infer<
-  typeof neuralLLMEntityExtractionOutputSkippedSchema
->;
-export type NeuralLLMEntityExtractionOutputFailure = z.infer<
-  typeof neuralLLMEntityExtractionOutputFailureSchema
+export type EventCaptureOutputFailure = z.infer<
+  typeof eventCaptureOutputFailureSchema
 >;
 
 // Backfill workflow type exports

@@ -1,6 +1,6 @@
 import { resolve } from "node:path";
+import sharedConfig from "@repo/vitest-config";
 import { defineConfig, mergeConfig } from "vitest/config";
-import sharedConfig from "../../vitest.shared";
 
 export default mergeConfig(
   sharedConfig,
@@ -13,6 +13,7 @@ export default mergeConfig(
       environment: "happy-dom",
       setupFiles: ["./src/__tests__/setup.ts"],
       include: ["src/**/*.{test,spec}.{ts,tsx}"],
+      passWithNoTests: true,
       server: {
         deps: {
           inline: [

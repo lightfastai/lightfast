@@ -14,7 +14,7 @@ import {
   loadDataset,
   stressScenario,
 } from "../loader";
-import { triggerObservationCapture } from "../trigger/trigger";
+import { triggerEventCapture } from "../trigger/trigger";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -103,7 +103,7 @@ async function main() {
 
   console.log(`Triggering ${events.length} events via Inngest workflow...\n`);
 
-  const triggerResult = await triggerObservationCapture(events, {
+  const triggerResult = await triggerEventCapture(events, {
     workspaceId,
     onProgress: (current, total) => {
       process.stdout.write(`\rTriggered: ${current}/${total}`);

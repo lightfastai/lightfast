@@ -13,9 +13,6 @@
     "./workspace-find-similar": {
       "default": "./src/workspace-find-similar.ts"
     },
-    "./workspace-graph": {
-      "default": "./src/workspace-graph.ts"
-    },
     "./workspace-related": {
       "default": "./src/workspace-related.ts"
     }
@@ -30,8 +27,8 @@
   "dependencies": {
     "@lightfastai/ai-sdk": "workspace:*",
     "@repo/console-ai-types": "workspace:*",
-    "@repo/console-types": "workspace:*",
-    "zod": "catalog:zod3"
+    "@repo/console-validation": "workspace:*",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

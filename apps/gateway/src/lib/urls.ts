@@ -1,6 +1,9 @@
+import { backfillUrl as _backfillUrl } from "@repo/gateway-service-clients";
 import { getQStashClient } from "@vendor/qstash";
 import { withRelatedProject } from "@vendor/related-projects";
 import { env } from "../env.js";
+
+export { backfillUrl } from "@repo/gateway-service-clients";
 
 /**
  * Gateway service base URL (self).
@@ -37,14 +40,6 @@ export const consoleUrl = withRelatedProject({
   defaultHost: isDevelopment ? "http://localhost:3024" : "https://lightfast.ai",
 });
 
-// Get the backfill service URL dynamically based on environment
-export const backfillUrl = `${withRelatedProject({
-  projectName: "lightfast-backfill",
-  defaultHost: isDevelopment
-    ? "http://localhost:4109"
-    : "https://backfill.lightfast.ai",
-})}/api`;
-
 let _qstash: ReturnType<typeof getQStashClient> | undefined;
 function getClient() {
   return (_qstash ??= getQStashClient());
@@ -61,7 +56,7 @@ export async function cancelBackfillService(params: {
 }): Promise<void> {
   try {
     await getClient().publishJSON({
-      url: `${backfillUrl}/trigger/cancel`,
+      url: `${_backfillUrl}/trigger/cancel`,
       headers: {
         "X-API-Key": env.GATEWAY_API_KEY,
         ...(params.correlationId
@@ -75,7 +70,7 @@ export async function cancelBackfillService(params: {
   } catch (err) {
     console.error("[connection-teardown] Failed to cancel backfill", {
       installationId: params.installationId,
-      backfillUrl,
+      backfillUrl: _backfillUrl,
       err,
     });
   }

@@ -13,10 +13,6 @@
     "./env": {
       "types": "./dist/env.d.ts",
       "default": "./src/env.ts"
-    },
-    "./oauth-env": {
-      "types": "./dist/oauth-env.d.ts",
-      "default": "./src/oauth-env.ts"
     }
   },
   "scripts": {
@@ -29,10 +25,9 @@
     "@octokit/openapi-types": "^26.0.0",
     "@octokit/plugin-retry": "^8.0.3",
     "@octokit/plugin-throttling": "^11.0.3",
-    "@octokit/webhooks-types": "^7.6.1",
     "@t3-oss/env-nextjs": "catalog:",
     "octokit": "^5.0.5",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

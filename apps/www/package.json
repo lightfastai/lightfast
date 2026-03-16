@@ -42,10 +42,11 @@
     "next": "catalog:next16",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@tailwindcss/typography": "catalog:tailwind4",
     "@types/node": "catalog:",

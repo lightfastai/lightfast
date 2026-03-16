@@ -29,6 +29,6 @@
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
     "@vercel/flags-core": "^1.1.0",
-    "zod": "catalog:zod3"
+    "zod": "catalog:"
   }
 }

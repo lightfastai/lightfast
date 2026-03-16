@@ -1,19 +1,19 @@
 /**
  * Webhook Dataset Loader
  *
- * Loads raw webhook datasets and transforms them to SourceEvents
+ * Loads raw webhook datasets and transforms them to PostTransformEvents
  * using production transformers.
  */
 
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
-import type { SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
 import type { WebhookPayload } from "./transform.js";
 import { transformWebhook } from "./transform.js";
 
 export interface Dataset {
   description?: string;
-  events: SourceEvent[];
+  events: PostTransformEvent[];
   name: string;
 }
 
@@ -29,7 +29,7 @@ const getDatasetsDir = (): string => {
 
 /**
  * Load a dataset by name or file path
- * Transforms raw webhooks to SourceEvents using production transformers
+ * Transforms raw webhooks to PostTransformEvents using production transformers
  */
 export const loadDataset = (nameOrPath: string): Dataset => {
   const datasetsDir = getDatasetsDir();
@@ -51,7 +51,7 @@ export const loadDataset = (nameOrPath: string): Dataset => {
     throw new Error("Dataset must have at least one webhook");
   }
 
-  // Transform webhooks to SourceEvents using production transformers
+  // Transform webhooks to PostTransformEvents using production transformers
   const events = raw.webhooks.map((webhook, index) =>
     transformWebhook(webhook, index)
   );
@@ -80,9 +80,9 @@ export const listDatasets = (): string[] => {
 /**
  * Load all datasets and return combined events
  */
-export const loadAllDatasets = (): SourceEvent[] => {
+export const loadAllDatasets = (): PostTransformEvent[] => {
   const names = listDatasets();
-  const events: SourceEvent[] = [];
+  const events: PostTransformEvent[] = [];
   for (const name of names) {
     events.push(...loadDataset(name).events);
   }
@@ -92,7 +92,7 @@ export const loadAllDatasets = (): SourceEvent[] => {
 /**
  * Generate balanced scenario: shuffle all events, slice to count
  */
-export const balancedScenario = (count: number): SourceEvent[] => {
+export const balancedScenario = (count: number): PostTransformEvent[] => {
   const all = loadAllDatasets();
   const shuffled = all.sort(() => Math.random() - 0.5);
   return shuffled.slice(0, Math.min(count, shuffled.length));
@@ -101,9 +101,9 @@ export const balancedScenario = (count: number): SourceEvent[] => {
 /**
  * Generate stress scenario: repeat events to reach count
  */
-export const stressScenario = (count: number): SourceEvent[] => {
+export const stressScenario = (count: number): PostTransformEvent[] => {
   const base = loadAllDatasets();
-  const events: SourceEvent[] = [];
+  const events: PostTransformEvent[] = [];
   let stressIndex = 0;
 
   while (events.length < count) {
@@ -121,17 +121,5 @@ export const stressScenario = (count: number): SourceEvent[] => {
   return events;
 };
 
-export type { VercelWebhookEventType } from "@repo/console-webhooks";
-
-// Re-export canonical event types from console-webhooks
-export type {
-  GitHubWebhookEventType,
-  LinearWebhookEventType,
-  SentryWebhookEventType,
-} from "@repo/console-webhooks/transformers";
 // Re-export transform types
-export type {
-  LinearWebhookPayload,
-  SentryWebhookPayload,
-  WebhookPayload,
-} from "./transform.js";
+export type { WebhookPayload } from "./transform.js";

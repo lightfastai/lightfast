@@ -8,20 +8,6 @@
 import { z } from "zod";
 
 /**
- * Actor Type Enum
- *
- * Defines who or what triggered the activity.
- *
- * - user: Human user action (via UI or API)
- * - system: Automated system action (cron, job completion)
- * - webhook: External webhook trigger (GitHub, Linear, etc.)
- * - api: API client or integration (using API key)
- */
-export const actorTypeSchema = z.enum(["user", "system", "webhook", "api"]);
-
-export type ActorType = z.infer<typeof actorTypeSchema>;
-
-/**
  * Activity Category Enum
  *
  * High-level grouping of activity types for filtering and reporting.
@@ -155,7 +141,7 @@ export const integrationConnectedMetadataSchema = z
     repoFullName: z.string(),
     repoId: z.string(),
     isPrivate: z.boolean(),
-    syncConfig: z.record(z.unknown()),
+    syncConfig: z.record(z.string(), z.unknown()),
   })
   .passthrough();
 
@@ -185,12 +171,16 @@ export const integrationConfigUpdatedMetadataSchema = z
 
 /**
  * Metadata for integration.disconnected action
+ *
+ * Disconnection can happen at repo level (githubRepoId) or
+ * installation level (githubInstallationId), so both are optional.
  */
 export const integrationDisconnectedMetadataSchema = z
   .object({
     provider: z.string(),
     reason: z.string(),
-    githubInstallationId: z.string(),
+    githubRepoId: z.string().optional(),
+    githubInstallationId: z.string().optional(),
   })
   .passthrough();
 
@@ -207,11 +197,13 @@ export const integrationDeletedMetadataSchema = z
 
 /**
  * Metadata for integration.metadata_updated action
+ *
+ * After stripping mutable display fields from providerConfig,
+ * this action only records that a touch/timestamp update occurred.
  */
 export const integrationMetadataUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
-    updates: z.record(z.unknown()),
     githubRepoId: z.string(),
   })
   .passthrough();
@@ -623,16 +615,6 @@ export type SearchContentsMetadata = z.infer<
  */
 export const insertActivitySchema = z.object({
   workspaceId: z.string(),
-
-  // Actor information
-  actorType: actorTypeSchema,
-  actorUserId: z.string().optional(),
-  actorEmail: z.string().email().optional(),
-  actorIp: z
-    .string()
-    .ip({ version: "v4" })
-    .or(z.string().ip({ version: "v6" }))
-    .optional(),
 
   // Activity classification
   category: activityCategorySchema,

@@ -1,5 +1,9 @@
 {
   "extends": ["//"],
   "tags": ["core"],
-  "tasks": {}
+  "tasks": {
+    "build": {
+      "env": ["LIGHTFAST_API_URL", "LIGHTFAST_API_KEY"]
+    }
+  }
 }

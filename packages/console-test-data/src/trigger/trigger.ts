@@ -6,7 +6,7 @@
 
 import { randomUUID } from "node:crypto";
 import { inngest } from "@api/console/inngest/client";
-import type { SourceEvent } from "@repo/console-types";
+import type { PostTransformEvent } from "@repo/console-providers";
 
 export interface TriggerOptions {
   batchSize?: number; // Number of events to send in parallel per batch
@@ -33,11 +33,11 @@ const chunk = <T>(arr: T[], size: number): T[][] => {
 };
 
 /**
- * Trigger observation capture events for a batch of SourceEvents
+ * Trigger event capture for a batch of PostTransformEvents
  * Uses Promise.all with batching for better performance
  */
-export const triggerObservationCapture = async (
-  events: SourceEvent[],
+export const triggerEventCapture = async (
+  events: PostTransformEvent[],
   options: TriggerOptions
 ): Promise<TriggerResult> => {
   const startTime = Date.now();
@@ -64,7 +64,7 @@ export const triggerObservationCapture = async (
         const eventId = `${runId}:${event.sourceId}`;
 
         await inngest.send({
-          name: "apps-console/neural/observation.capture",
+          name: "apps-console/event.capture",
           id: eventId,
           data: {
             workspaceId: options.workspaceId,

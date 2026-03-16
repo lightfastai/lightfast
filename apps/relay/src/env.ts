@@ -3,9 +3,7 @@ import { vercel } from "@t3-oss/env-core/presets-zod";
 import { dbEnv } from "@vendor/db/env";
 import { qstashEnv } from "@vendor/qstash/env";
 import { upstashEnv } from "@vendor/upstash/env";
-import type { Context } from "hono";
-import { env as honoEnv } from "hono/adapter";
-import { z } from "zod";
+import { z } from "zod/v3";
 
 const server = {
   // Service auth
@@ -21,31 +19,7 @@ const server = {
   LOGTAIL_SOURCE_TOKEN: z.string().min(1).optional(),
 };
 
-const _createEnv = (c: Context) =>
-  createEnv({
-    clientPrefix: "" as const,
-    client: {},
-    server,
-    runtimeEnv: honoEnv<Record<keyof typeof server, string | undefined>>(c),
-    emptyStringAsUndefined: true,
-  });
-
-export type RelayEnv = ReturnType<typeof _createEnv>;
-
-const envCache = new WeakMap<object, RelayEnv>();
-
-/** Validated env from the Hono request context — cached per request. */
-export const getEnv = (c: Context): RelayEnv => {
-  const cached = envCache.get(c);
-  if (cached) {
-    return cached;
-  }
-  const validated = _createEnv(c);
-  envCache.set(c, validated);
-  return validated;
-};
-
-/** Module-level validated env for non-Hono contexts (workflows, utilities, module-level init). */
+/** Module-level validated env — single source of truth for all relay env vars. */
 export const env = createEnv({
   clientPrefix: "" as const,
   client: {},
@@ -54,10 +28,12 @@ export const env = createEnv({
     NODE_ENV: z
       .enum(["development", "production", "test"])
       .default("development"),
+    PORT: z.coerce.number().default(4108),
   },
   server,
   runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
     GATEWAY_API_KEY: process.env.GATEWAY_API_KEY,
     GATEWAY_WEBHOOK_SECRET: process.env.GATEWAY_WEBHOOK_SECRET,
     GITHUB_WEBHOOK_SECRET: process.env.GITHUB_WEBHOOK_SECRET,

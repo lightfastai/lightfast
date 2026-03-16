@@ -1,7 +1,8 @@
 import { createServiceLogger } from "@vendor/observability/service-log";
+import { env } from "./env.js";
 
 export const log = createServiceLogger({
-  token: process.env.LOGTAIL_SOURCE_TOKEN,
+  token: env.LOGTAIL_SOURCE_TOKEN,
   service: "relay",
-  environment: process.env.VERCEL_ENV,
+  environment: env.VERCEL_ENV,
 });
