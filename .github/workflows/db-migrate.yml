@@ -37,6 +37,9 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Build @vendor/db
+        run: pnpm --filter @vendor/db build
+
       - name: Show pending migrations
         working-directory: db/console
         env:
