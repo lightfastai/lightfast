@@ -5,21 +5,54 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    "./sentry-env": "./src/env/sentry-env.ts",
-    "./sentry": "./src/sentry.ts",
-    "./betterstack-env": "./src/env/betterstack-env.ts",
-    "./log": {
-      "types": "./dist/src/log.d.ts",
-      "default": "./src/log.ts"
+    "./sentry-env": {
+      "types": "./dist/env/sentry-env.d.ts",
+      "default": "./dist/env/sentry-env.js"
     },
-    "./client-log": "./src/client-log.ts",
-    "./types": "./src/types.ts",
-    "./error": "./src/error.ts",
-    "./async-executor": "./src/async-executor.ts",
-    "./error-formatter": "./src/error-formatter.ts",
-    "./use-logger": "./src/use-logger.ts",
-    "./service-log": "./src/service-log.ts",
-    "./print-routes": "./src/print-routes.ts"
+    "./sentry": {
+      "types": "./dist/sentry.d.ts",
+      "default": "./dist/sentry.js"
+    },
+    "./betterstack-env": {
+      "types": "./dist/env/betterstack-env.d.ts",
+      "default": "./dist/env/betterstack-env.js"
+    },
+    "./log": {
+      "types": "./dist/log.d.ts",
+      "default": "./dist/log.js"
+    },
+    "./client-log": {
+      "types": "./dist/client-log.d.ts",
+      "default": "./dist/client-log.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
+    },
+    "./error": {
+      "types": "./dist/error.d.ts",
+      "default": "./dist/error.js"
+    },
+    "./async-executor": {
+      "types": "./dist/async-executor.d.ts",
+      "default": "./dist/async-executor.js"
+    },
+    "./error-formatter": {
+      "types": "./dist/error-formatter.d.ts",
+      "default": "./dist/error-formatter.js"
+    },
+    "./use-logger": {
+      "types": "./dist/use-logger.d.ts",
+      "default": "./dist/use-logger.js"
+    },
+    "./service-log": {
+      "types": "./dist/service-log.d.ts",
+      "default": "./dist/service-log.js"
+    },
+    "./print-routes": {
+      "types": "./dist/print-routes.d.ts",
+      "default": "./dist/print-routes.js"
+    }
   },
   "license": "MIT",
   "scripts": {
