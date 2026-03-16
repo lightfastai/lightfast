@@ -16,6 +16,7 @@
     "@repo/console-providers": "workspace:*",
     "@repo/console-test-db": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "@vendor/inngest": "workspace:*",
     "@vendor/knock": "workspace:*",

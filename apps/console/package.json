@@ -82,6 +82,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@testing-library/jest-dom": "^6.6.3",
     "@types/node": "catalog:",

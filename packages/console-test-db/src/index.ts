@@ -1,12 +1,59 @@
 import * as schema from "@db/console/schema";
 import { PGlite } from "@electric-sql/pglite";
 import { drizzle } from "drizzle-orm/pglite";
-import { migrate } from "drizzle-orm/pglite/migrator";
+import { readMigrationFiles } from "drizzle-orm/migrator";
 import { getMigrationsPath } from "./migrations";
 
 export type TestDb = ReturnType<typeof drizzle<typeof schema>>;
 
 let instance: { client: PGlite; db: TestDb } | null = null;
+
+/**
+ * Applies Drizzle migrations using PGlite's `exec()` instead of prepared
+ * statements. PGlite cannot execute multiple SQL commands in a single
+ * prepared statement, but some Drizzle-generated migration files contain
+ * multi-statement segments (missing `--> statement-breakpoint` separators).
+ * Using `exec()` handles this transparently.
+ */
+async function migrateWithExec(client: PGlite, migrationsFolder: string) {
+  const migrations = readMigrationFiles({ migrationsFolder });
+
+  await client.exec(`
+    CREATE SCHEMA IF NOT EXISTS "drizzle";
+    CREATE TABLE IF NOT EXISTS "drizzle"."__drizzle_migrations" (
+      id SERIAL PRIMARY KEY,
+      hash text NOT NULL,
+      created_at bigint
+    );
+  `);
+
+  const dbMigrations = await client.query<{
+    id: number;
+    hash: string;
+    created_at: string;
+  }>(
+    "SELECT id, hash, created_at FROM drizzle.__drizzle_migrations ORDER BY created_at DESC LIMIT 1"
+  );
+  const lastDbMigration = dbMigrations.rows[0];
+
+  for (const migration of migrations) {
+    if (
+      !lastDbMigration ||
+      Number(lastDbMigration.created_at) < migration.folderMillis
+    ) {
+      for (const stmt of migration.sql) {
+        const trimmed = stmt.trim();
+        if (trimmed) {
+          await client.exec(trimmed);
+        }
+      }
+      await client.query(
+        "INSERT INTO drizzle.__drizzle_migrations (hash, created_at) VALUES ($1, $2)",
+        [migration.hash, migration.folderMillis]
+      );
+    }
+  }
+}
 
 /**
  * Creates an in-memory PGlite database with all Drizzle migrations applied.
@@ -20,7 +67,7 @@ export async function createTestDb(): Promise<TestDb> {
   const client = new PGlite();
   const db = drizzle(client, { schema });
 
-  await migrate(db, { migrationsFolder: getMigrationsPath() });
+  await migrateWithExec(client, getMigrationsPath());
 
   instance = { client, db };
   return db;

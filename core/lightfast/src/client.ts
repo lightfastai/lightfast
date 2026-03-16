@@ -178,9 +178,7 @@ export class Lightfast {
    * ```
    */
   async related(request: RelatedInput): Promise<RelatedResponse> {
-    return this.request<RelatedResponse>("/v1/related", {
-      id: request.id,
-    });
+    return this.request<RelatedResponse>("/v1/related", request);
   }
 
   /**

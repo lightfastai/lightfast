@@ -259,13 +259,13 @@ describe("LightfastMemory", () => {
       });
 
       const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
-      const result = await memory.related({ id: "obs_123" });
+      const result = await memory.related({ id: "obs_123", depth: 1 });
 
       expect(mockFetch).toHaveBeenCalledWith(
         "https://lightfast.ai/v1/related",
         expect.objectContaining({
           method: "POST",
-          body: JSON.stringify({ id: "obs_123" }),
+          body: JSON.stringify({ id: "obs_123", depth: 1 }),
         })
       );
 

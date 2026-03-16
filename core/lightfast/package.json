@@ -60,6 +60,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@types/node": "^24.3.0",
     "@vitest/coverage-v8": "^4.0.18",
     "tsup": "^8.5.1",
