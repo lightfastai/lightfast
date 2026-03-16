@@ -7,12 +7,12 @@ export type { IconDef } from "./define";
 // The type import above is erased at compile time — zero runtime imports.
 
 interface ProviderDisplayEntry {
+  /** When true, the provider is not yet available and will be shown as "Coming soon" in the UI */
+  readonly comingSoon?: true;
   readonly description: string;
   readonly displayName: string;
   readonly icon: IconDef;
   readonly name: string;
-  /** When true, the provider is not yet available and will be shown as "Coming soon" in the UI */
-  readonly comingSoon?: true;
 }
 
 export const PROVIDER_DISPLAY = {

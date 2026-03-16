@@ -23,7 +23,7 @@ export function SourcesSection() {
                 <TooltipTrigger asChild>
                   <div className="flex cursor-not-allowed items-center gap-3 px-4 py-4 opacity-50">
                     <Icon className="h-5 w-5 shrink-0" />
-                    <span className="text-sm font-medium">
+                    <span className="font-medium text-sm">
                       {display.displayName}
                     </span>
                   </div>

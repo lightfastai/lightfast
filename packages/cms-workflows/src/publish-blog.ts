@@ -20,8 +20,8 @@ import { blog } from "@vendor/cms";
 import { basehubEnv } from "@vendor/cms/env";
 import { basehub } from "basehub";
 import matter from "gray-matter";
-import type { AIGeneratedPost, ContentType } from "./mutations/blog.js";
-import { createBlogPostFromAI } from "./mutations/blog.js";
+import type { AIGeneratedPost, ContentType } from "./mutations/blog";
+import { createBlogPostFromAI } from "./mutations/blog";
 
 // Category slug to ID mapping (populated dynamically)
 const categoryIdCache: Record<string, string> = {};

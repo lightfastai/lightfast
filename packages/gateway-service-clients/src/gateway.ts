@@ -13,10 +13,10 @@ import {
 } from "@repo/console-providers";
 import { z } from "zod";
 
-import { HttpError } from "./errors.js";
-import type { ServiceClientConfig } from "./headers.js";
-import { buildServiceHeaders } from "./headers.js";
-import { gatewayUrl } from "./urls.js";
+import { HttpError } from "./errors";
+import type { ServiceClientConfig } from "./headers";
+import { buildServiceHeaders } from "./headers";
+import { gatewayUrl } from "./urls";
 
 /**
  * Create a typed HTTP client for the gateway service.

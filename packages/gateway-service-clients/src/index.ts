@@ -1,10 +1,10 @@
-export { type BackfillClient, createBackfillClient } from "./backfill.js";
-export { HttpError } from "./errors.js";
-export { createGatewayClient, type GatewayClient } from "./gateway.js";
-export { buildServiceHeaders, type ServiceClientConfig } from "./headers.js";
+export { type BackfillClient, createBackfillClient } from "./backfill";
+export { HttpError } from "./errors";
+export { createGatewayClient, type GatewayClient } from "./gateway";
+export { buildServiceHeaders, type ServiceClientConfig } from "./headers";
 export {
   createRelayClient,
   type DispatchPayload,
   type RelayClient,
-} from "./relay.js";
-export { backfillUrl, consoleUrl, gatewayUrl, relayUrl } from "./urls.js";
+} from "./relay";
+export { backfillUrl, consoleUrl, gatewayUrl, relayUrl } from "./urls";

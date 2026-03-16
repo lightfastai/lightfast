@@ -17,8 +17,8 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { changelog } from "@vendor/cms";
 import matter from "gray-matter";
-import type { ChangelogEntryInput } from "./mutations/changelog.js";
-import { createChangelogEntry } from "./mutations/changelog.js";
+import type { ChangelogEntryInput } from "./mutations/changelog";
+import { createChangelogEntry } from "./mutations/changelog";
 
 interface InternalFields {
   fact_checked_files?: string[];

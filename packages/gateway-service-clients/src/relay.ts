@@ -1,6 +1,6 @@
-import type { ServiceClientConfig } from "./headers.js";
-import { buildServiceHeaders } from "./headers.js";
-import { relayUrl } from "./urls.js";
+import type { ServiceClientConfig } from "./headers";
+import { buildServiceHeaders } from "./headers";
+import { relayUrl } from "./urls";
 
 export interface DispatchPayload {
   connectionId: string;

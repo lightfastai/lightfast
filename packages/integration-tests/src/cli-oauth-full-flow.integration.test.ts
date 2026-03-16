@@ -122,7 +122,7 @@ import {
   installServiceRouter,
   makeApiKeyFixture,
   TEST_WORKSPACE_SETTINGS,
-} from "./harness.js";
+} from "./harness";
 
 // Use crypto.randomUUID() for unique IDs — avoids importing @repo/lib
 function uid() {

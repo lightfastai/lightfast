@@ -8,8 +8,8 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { PostTransformEvent } from "@repo/console-providers";
-import type { WebhookPayload } from "./transform.js";
-import { transformWebhook } from "./transform.js";
+import type { WebhookPayload } from "./transform";
+import { transformWebhook } from "./transform";
 
 export interface Dataset {
   description?: string;
@@ -122,4 +122,4 @@ export const stressScenario = (count: number): PostTransformEvent[] => {
 };
 
 // Re-export transform types
-export type { WebhookPayload } from "./transform.js";
+export type { WebhookPayload } from "./transform";

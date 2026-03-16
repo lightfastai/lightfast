@@ -22,6 +22,6 @@
  */
 
 // Default export
-export { default } from "./main.js";
-export { default as organization } from "./organization.js";
-export { default as workspace } from "./workspace.js";
+export { default } from "./main";
+export { default as organization } from "./organization";
+export { default as workspace } from "./workspace";
