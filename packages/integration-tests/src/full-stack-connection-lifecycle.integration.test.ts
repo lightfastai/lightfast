@@ -166,7 +166,7 @@ await import("@backfill/orchestrator");
 
 import { cancelBackfillService } from "@gateway/urls";
 // ── Utilities ──
-import { installServiceRouter, makeStep } from "./harness.js";
+import { installServiceRouter, makeStep } from "./harness";
 
 // ── Lifecycle ──
 

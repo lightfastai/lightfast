@@ -208,7 +208,7 @@ await import("@backfill/orchestrator");
 
 import { cancelBackfillService } from "@gateway/urls";
 // ── Utilities ──
-import { makeStep, withEventPermutations } from "./harness.js";
+import { makeStep, withEventPermutations } from "./harness";
 
 const API_KEY = "0".repeat(64);
 

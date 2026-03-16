@@ -33,7 +33,7 @@ import {
   it,
   vi,
 } from "vitest";
-import { makeStep } from "./harness.js";
+import { makeStep } from "./harness";
 
 // ── Step 1: vi.hoisted — allocate shared state ──
 // These must be created before any mock factories run.

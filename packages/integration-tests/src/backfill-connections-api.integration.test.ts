@@ -154,7 +154,7 @@ await import("@backfill/entity-worker");
 
 import { encrypt } from "@repo/lib";
 // ── Utilities ──
-import { installServiceRouter, makeStep } from "./harness.js";
+import { installServiceRouter, makeStep } from "./harness";
 
 // ── Request helper (connections) ──
 const API_KEY = "0".repeat(64);

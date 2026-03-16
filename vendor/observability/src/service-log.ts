@@ -1,5 +1,5 @@
 import { Logtail } from "@logtail/edge";
-import type { Logger } from "./types.js";
+import type { Logger } from "./types";
 
 export interface ServiceLogger extends Logger {
   /** Flush pending logs. MUST be called before serverless function completes. */

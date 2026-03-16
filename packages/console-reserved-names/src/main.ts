@@ -2,8 +2,8 @@
  * Main export combining workspace and organization reserved names
  */
 
-import organization from "./organization.js";
-import workspace from "./workspace.js";
+import organization from "./organization";
+import workspace from "./workspace";
 
 export default {
   workspace,

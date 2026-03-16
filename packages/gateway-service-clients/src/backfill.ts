@@ -3,9 +3,9 @@ import type {
   BackfillTriggerPayload,
 } from "@repo/console-providers";
 
-import type { ServiceClientConfig } from "./headers.js";
-import { buildServiceHeaders } from "./headers.js";
-import { backfillUrl } from "./urls.js";
+import type { ServiceClientConfig } from "./headers";
+import { buildServiceHeaders } from "./headers";
+import { backfillUrl } from "./urls";
 
 /**
  * Create a typed HTTP client for the backfill service.
