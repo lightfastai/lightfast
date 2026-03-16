@@ -106,8 +106,6 @@ describe("LightfastMemory", () => {
         limit: 10,
         offset: 0,
         mode: "balanced",
-        includeContext: true,
-        includeHighlights: true,
       });
     });
   });
