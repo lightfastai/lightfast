@@ -190,6 +190,13 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       return;
     }
 
+    log.info("[webhook-delivery] about to publish to console", {
+      provider: data.provider,
+      deliveryId: data.deliveryId,
+      correlationId: data.correlationId,
+      route,
+    });
+
     // Step 5: Publish to Console ingress via QStash.
     // QStash guarantees at-least-once delivery with 5 retries.
     await context.run("publish-to-console", async () => {
