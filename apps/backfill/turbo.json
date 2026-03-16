@@ -10,6 +10,8 @@
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
         "INNGEST_SIGNING_KEY",
+        "BETTERSTACK_SOURCE_TOKEN",
+        "BETTERSTACK_INGESTING_HOST",
         "SENTRY_DSN"
       ],
       "outputs": ["dist/**"]

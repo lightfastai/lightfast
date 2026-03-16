@@ -32,6 +32,8 @@
         "SENTRY_APP_SLUG",
         "SENTRY_CLIENT_ID",
         "SENTRY_CLIENT_SECRET",
+        "BETTERSTACK_SOURCE_TOKEN",
+        "BETTERSTACK_INGESTING_HOST",
         "SENTRY_DSN"
       ],
       "outputs": ["dist/**"]
