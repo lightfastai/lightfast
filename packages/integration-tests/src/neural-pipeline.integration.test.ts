@@ -242,13 +242,10 @@ async function seedNeuralFixtures(testDb: TestDb) {
     workspaceId: "ws_test001",
     installationId: "inst_test001",
     provider: "github",
-    connectedBy: "user_test001",
     providerResourceId: "567890123",
     providerConfig: {
-      version: 1,
-      sourceType: "github",
+      provider: "github",
       type: "repository",
-      repoId: "567890123",
       sync: { autoSync: true },
     },
   });

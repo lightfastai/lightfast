@@ -359,10 +359,6 @@ export interface ProviderDefinition<
   readonly backfill: BackfillDef;
   /** Build the providerConfig JSONB blob for a new workspace integration record. */
   readonly buildProviderConfig: (params: {
-    resourceId: string;
-    resourceName: string;
-    installationExternalId: string;
-    providerAccountInfo: BaseProviderAccountInfo | null;
     defaultSyncEvents: readonly string[];
   }) => z.infer<TProviderConfigSchema>;
   readonly categories: TCategories;

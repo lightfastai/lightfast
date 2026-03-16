@@ -212,17 +212,17 @@ export const workspaceAccessRouter = {
               )
             );
 
-          const existing = existingResult.find((ws) => {
-            const data = ws.providerConfig;
-            return data.sourceType === "github" && data.repoId === repo.repoId;
-          });
+          const existing = existingResult.find(
+            (ws) =>
+              ws.provider === "github" && ws.providerResourceId === repo.repoId
+          );
 
           let workspaceSourceId: string;
 
           if (existing) {
             // Update existing connection (idempotent)
             const currentConfig = existing.providerConfig;
-            if (currentConfig.sourceType === "github") {
+            if (currentConfig.provider === "github") {
               await ctx.db
                 .update(workspaceIntegrations)
                 .set({
@@ -244,12 +244,9 @@ export const workspaceAccessRouter = {
               workspaceId,
               installationId: repo.gwInstallationId,
               provider: "github",
-              connectedBy: ctx.auth.userId,
               providerConfig: {
-                version: 1 as const,
-                sourceType: "github" as const,
+                provider: "github" as const,
                 type: "repository" as const,
-                repoId: repo.repoId,
                 sync: repo.syncConfig,
               },
               providerResourceId: repo.repoId,

@@ -77,7 +77,7 @@ export const sourcesM2MRouter = {
       const source = result[0];
 
       // Verify it's actually a GitHub repository
-      if (source && source.providerConfig.sourceType !== "github") {
+      if (source && source.provider !== "github") {
         return null;
       }
 
@@ -96,7 +96,10 @@ export const sourcesM2MRouter = {
     .input(getSourceIdByGithubRepoIdSchema)
     .query(async ({ input }) => {
       const result = await db
-        .select({ id: workspaceIntegrations.id })
+        .select({
+          id: workspaceIntegrations.id,
+          provider: workspaceIntegrations.provider,
+        })
         .from(workspaceIntegrations)
         .where(
           and(
@@ -110,14 +113,8 @@ export const sourcesM2MRouter = {
       const source = result[0];
 
       // Verify it's actually a GitHub repository
-      if (source) {
-        const fullSource = await db.query.workspaceIntegrations.findFirst({
-          where: eq(workspaceIntegrations.id, source.id),
-        });
-
-        if (fullSource?.providerConfig.sourceType !== "github") {
-          return null;
-        }
+      if (source && source.provider !== "github") {
+        return null;
       }
 
       return source?.id ?? null;
@@ -291,7 +288,7 @@ export const sourcesM2MRouter = {
       // Filter to GitHub sources and update
       const now = new Date().toISOString();
       const githubSources = sources.filter(
-        (source) => source.providerConfig.sourceType === "github"
+        (source) => source.provider === "github"
       );
 
       if (githubSources.length === 0) {
@@ -363,7 +360,7 @@ export const sourcesM2MRouter = {
 
       const now = new Date().toISOString();
       const githubSources = sources.filter(
-        (source) => source.providerConfig.sourceType === "github"
+        (source) => source.provider === "github"
       );
 
       if (githubSources.length === 0) {

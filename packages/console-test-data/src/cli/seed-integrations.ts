@@ -39,10 +39,8 @@ interface DemoSource {
 const DEMO_SOURCES: DemoSource[] = [
   {
     providerConfig: {
-      version: 1,
-      sourceType: "github",
+      provider: "github",
       type: "repository",
-      repoId: "901234567",
       sync: {
         events: ["push", "pull_request", "issues", "release", "discussion"],
         autoSync: true,
@@ -54,12 +52,8 @@ const DEMO_SOURCES: DemoSource[] = [
   },
   {
     providerConfig: {
-      version: 1,
-      sourceType: "vercel",
+      provider: "vercel",
       type: "project",
-      projectId: "prj_lightfast_console",
-      teamId: "team_lightfastai",
-      configurationId: "icfg_demo_001",
       sync: {
         events: [
           "deployment.created",
@@ -78,10 +72,8 @@ const DEMO_SOURCES: DemoSource[] = [
   },
   {
     providerConfig: {
-      version: 1,
-      sourceType: "sentry",
+      provider: "sentry",
       type: "project",
-      projectId: "4508288486826115",
       sync: {
         events: ["issue", "error", "event_alert", "metric_alert"],
         autoSync: true,
@@ -93,10 +85,8 @@ const DEMO_SOURCES: DemoSource[] = [
   },
   {
     providerConfig: {
-      version: 1,
-      sourceType: "linear",
+      provider: "linear",
       type: "team",
-      teamId: "team_lightfast_eng",
       sync: {
         events: ["Issue", "Comment", "Project", "Cycle", "ProjectUpdate"],
         autoSync: true,
@@ -126,7 +116,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
   const orgId = workspace.clerkOrgId;
 
   for (const source of DEMO_SOURCES) {
-    const provider = source.providerConfig.sourceType;
+    const provider = source.providerConfig.provider;
 
     // Find or create gwInstallation for this provider
     let installation = await db.query.gatewayInstallations.findFirst({
@@ -184,7 +174,6 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       id: `wi-${provider}-${nanoid(8)}`,
       workspaceId,
       installationId: installation.id,
-      connectedBy: userId,
       provider,
       providerConfig: source.providerConfig,
       providerResourceId: source.providerResourceId,

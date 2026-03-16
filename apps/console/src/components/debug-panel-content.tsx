@@ -8,7 +8,6 @@ import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, ChevronRight, Loader2, X } from "lucide-react";
 import { useState } from "react";
 import { ProviderIcon } from "~/lib/provider-icon";
-import { getResourceLabel } from "~/lib/resource-label";
 
 interface InjectionResult {
   eventKey: string;
@@ -196,7 +195,7 @@ export function DebugPanelContent({
                 <div className="border-white/5 border-t">
                   {/* Integration list */}
                   {providerIntegrations.map((integration) => {
-                    const label = getResourceLabel(integration.metadata);
+                    const label = integration.displayName;
                     const isSelected = selectedIntegrationId === integration.id;
 
                     return (

@@ -256,11 +256,9 @@ export const github = defineProvider({
 
   defaultSyncEvents: ["pull_request", "issues"],
 
-  buildProviderConfig: ({ resourceId, defaultSyncEvents }) => ({
-    version: 1 as const,
-    sourceType: "github" as const,
+  buildProviderConfig: ({ defaultSyncEvents }) => ({
+    provider: "github" as const,
     type: "repository" as const,
-    repoId: resourceId,
     sync: {
       events: [...defaultSyncEvents],
       autoSync: true,

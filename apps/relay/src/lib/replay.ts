@@ -9,6 +9,7 @@ import { getProvider } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
+import { log } from "../logger.js";
 import { webhookSeenKey } from "./cache.js";
 import { relayBaseUrl } from "./urls.js";
 
@@ -88,11 +89,10 @@ export async function replayDeliveries(
             )
           );
       } catch (err) {
-        console.error(
-          "[replay] DB status update failed for",
-          delivery.deliveryId,
-          err
-        );
+        log.error("[replay] DB status update failed", {
+          deliveryId: delivery.deliveryId,
+          error: err,
+        });
       }
     } catch {
       failed.push(delivery.deliveryId);

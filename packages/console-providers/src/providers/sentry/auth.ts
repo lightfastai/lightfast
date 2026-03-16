@@ -77,10 +77,8 @@ export function decodeSentryToken(raw: string): SentryInstallationToken {
 
 /** @see githubProviderConfigSchema for design invariants */
 export const sentryProviderConfigSchema = z.object({
-  version: z.literal(1),
-  sourceType: z.literal("sentry"),
+  provider: z.literal("sentry"),
   type: z.literal("project"),
-  projectId: z.string(),
   sync: syncSchema,
 });
 

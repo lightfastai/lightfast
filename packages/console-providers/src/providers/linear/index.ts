@@ -259,11 +259,9 @@ export const linear = defineProvider({
 
   defaultSyncEvents: ["Issue", "Comment", "IssueLabel", "Project", "Cycle"],
 
-  buildProviderConfig: ({ resourceId, defaultSyncEvents }) => ({
-    version: 1 as const,
-    sourceType: "linear" as const,
+  buildProviderConfig: ({ defaultSyncEvents }) => ({
+    provider: "linear" as const,
     type: "team" as const,
-    teamId: resourceId,
     sync: {
       events: [...defaultSyncEvents],
       autoSync: true,

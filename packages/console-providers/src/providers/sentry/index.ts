@@ -164,11 +164,9 @@ export const sentry = defineProvider({
 
   defaultSyncEvents: ["issue", "error", "comment"],
 
-  buildProviderConfig: ({ resourceId, defaultSyncEvents }) => ({
-    version: 1 as const,
-    sourceType: "sentry" as const,
+  buildProviderConfig: ({ defaultSyncEvents }) => ({
+    provider: "sentry" as const,
     type: "project" as const,
-    projectId: resourceId,
     sync: {
       events: [...defaultSyncEvents],
       autoSync: true,

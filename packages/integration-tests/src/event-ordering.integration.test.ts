@@ -950,13 +950,10 @@ describe("Suite 6.7 — Neural entity co-occurrence edges converge under 3! orde
         workspaceId: "ws_graph001",
         installationId: "inst_graph001",
         provider: "github",
-        connectedBy: "user_graph001",
         providerResourceId: RESOURCE_ID,
         providerConfig: {
-          version: 1,
-          sourceType: "github",
+          provider: "github",
           type: "repository",
-          repoId: RESOURCE_ID,
           sync: { autoSync: true },
         },
       });

@@ -3,7 +3,7 @@ import { computeHmac, timingSafeEqual } from "../../crypto";
 import { actionEvent, defineProvider } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { vercelApi } from "./api";
-import type { VercelAccountInfo, VercelConfig, VercelOAuthRaw } from "./auth";
+import type { VercelAccountInfo, VercelConfig } from "./auth";
 import {
   vercelAccountInfoSchema,
   vercelConfigSchema,
@@ -137,28 +137,14 @@ export const vercel = defineProvider({
     "deployment.canceled",
   ],
 
-  buildProviderConfig: ({
-    resourceId,
-    providerAccountInfo,
-    defaultSyncEvents,
-  }) => {
-    if (providerAccountInfo?.sourceType !== "vercel") {
-      throw new Error("Invalid provider account info for vercel");
-    }
-    const raw = providerAccountInfo.raw as VercelOAuthRaw;
-    return {
-      version: 1 as const,
-      sourceType: "vercel" as const,
-      type: "project" as const,
-      projectId: resourceId,
-      teamId: raw.team_id ?? undefined,
-      configurationId: raw.installation_id,
-      sync: {
-        events: [...defaultSyncEvents],
-        autoSync: true,
-      },
-    };
-  },
+  buildProviderConfig: ({ defaultSyncEvents }) => ({
+    provider: "vercel" as const,
+    type: "project" as const,
+    sync: {
+      events: [...defaultSyncEvents],
+      autoSync: true,
+    },
+  }),
 
   // Wire eventType "deployment.created" → dispatch category "deployment"
   resolveCategory: (eventType) => eventType.split(".")[0] ?? eventType,

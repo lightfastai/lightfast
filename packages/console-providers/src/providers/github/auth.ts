@@ -68,10 +68,8 @@ export const githubOAuthResponseSchema = z.union([
  * Resolve display data from a cache layer keyed on the stable IDs stored here.
  */
 export const githubProviderConfigSchema = z.object({
-  version: z.literal(1),
-  sourceType: z.literal("github"),
+  provider: z.literal("github"),
   type: z.literal("repository"),
-  repoId: z.string(),
   sync: syncSchema,
   status: z
     .object({

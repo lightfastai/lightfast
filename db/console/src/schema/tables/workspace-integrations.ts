@@ -1,9 +1,5 @@
 import type { ProviderConfig, SourceType } from "@repo/console-providers";
-import type {
-  ClerkUserId,
-  SourceIdentifier,
-  SyncStatus,
-} from "@repo/console-validation";
+import type { SourceIdentifier, SyncStatus } from "@repo/console-validation";
 import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
@@ -54,24 +50,13 @@ export const workspaceIntegrations = pgTable(
     // Denormalized provider for fast filtering (replaces providerConfig.sourceType join)
     provider: varchar("provider", { length: 50 }).notNull().$type<SourceType>(),
 
-    // Who connected this source to the workspace
-    connectedBy: varchar("connected_by", { length: 191 })
-      .notNull()
-      .$type<ClerkUserId>(),
-
     /**
-     * Provider-specific stable IDs and sync settings (JSONB).
+     * Provider-specific type and sync settings (JSONB).
      *
      * Schema: providerConfigSchema from @repo/console-providers
+     * Fields: provider, type, sync (events + autoSync), status (GitHub only)
      *
-     * RULES:
-     * - Only stable provider-issued IDs (never display names that can change)
-     * - repoId OK  |  repoName NO (fetch from cache keyed on repoId)
-     * - projectId OK  |  projectName NO
-     * - teamId OK  |  teamName NO
-     *
-     * Adding a new field? Ask: "Can this value change without our involvement?"
-     * If yes -> it belongs in cache, not here.
+     * Resource IDs live in providerResourceId (indexed column), not here.
      */
     providerConfig: jsonb("provider_config").$type<ProviderConfig>().notNull(),
 
@@ -123,9 +108,6 @@ export const workspaceIntegrations = pgTable(
     ),
     installationIdIdx: index("workspace_source_installation_id_idx").on(
       table.installationId
-    ),
-    connectedByIdx: index("workspace_source_connected_by_idx").on(
-      table.connectedBy
     ),
     isActiveIdx: index("workspace_source_is_active_idx").on(table.isActive),
     // Index for fast provider resource lookups (e.g., "find all sources for this repo")

@@ -41,7 +41,7 @@ import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 import { useState } from "react";
 import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { ProviderIcon } from "~/lib/provider-icon";
-import { getResourceLabel } from "~/lib/resource-label";
+
 import type { Source } from "~/types";
 import { SourceSettingsForm } from "./source-settings-form";
 
@@ -90,8 +90,8 @@ export function InstalledSources({
   const searchLower = filters.search.toLowerCase();
   const filteredIntegrations = integrations.filter((integration) => {
     const { metadata } = integration;
-    const providerLabel = PROVIDER_DISPLAY[metadata.sourceType].displayName;
-    const resourceLabel = getResourceLabel(metadata);
+    const providerLabel = PROVIDER_DISPLAY[metadata.provider].displayName;
+    const resourceLabel = integration.displayName;
     const searchTarget = `${providerLabel}/${resourceLabel}`.toLowerCase();
 
     const matchesSearch = !searchLower || searchTarget.includes(searchLower);
@@ -104,7 +104,7 @@ export function InstalledSources({
   // Group by provider — sourceType is always a known SourceType, no "unknown" handling needed
   const grouped = new Map<SourceType, Source[]>();
   for (const integration of filteredIntegrations) {
-    const type = integration.metadata.sourceType;
+    const type = integration.metadata.provider;
     const list = grouped.get(type) ?? [];
     list.push(integration);
     grouped.set(type, list);
@@ -211,11 +211,11 @@ function ResourceRow({ integration }: { integration: Source }) {
   const trpc = useTRPC();
   const { metadata } = integration;
 
-  const rawResourceId = getResourceLabel(metadata);
+  const rawResourceId = integration.displayName;
 
   const { data: resourcesData } = useQuery({
     ...trpc.connections.generic.listResources.queryOptions({
-      provider: metadata.sourceType,
+      provider: metadata.provider,
       installationId: integration.installationId,
     }),
     refetchOnMount: false,
@@ -228,7 +228,7 @@ function ResourceRow({ integration }: { integration: Source }) {
     rawResourceId;
 
   const isAwaitingConfig =
-    metadata.sourceType === "github" &&
+    metadata.provider === "github" &&
     metadata.status?.configStatus === "awaiting_config";
   const subscribedEvents = metadata.sync.events ?? [];
   const eventLabel =
@@ -299,7 +299,7 @@ function ResourceRow({ integration }: { integration: Source }) {
           currentEvents={subscribedEvents}
           installationId={integration.installationId}
           integrationId={integration.id}
-          provider={metadata.sourceType}
+          provider={metadata.provider}
         />
       </CollapsibleContent>
     </Collapsible>

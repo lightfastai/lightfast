@@ -55,12 +55,8 @@ export const vercelOAuthResponseSchema = z.object({
 
 /** @see githubProviderConfigSchema for design invariants */
 export const vercelProviderConfigSchema = z.object({
-  version: z.literal(1),
-  sourceType: z.literal("vercel"),
+  provider: z.literal("vercel"),
   type: z.literal("project"),
-  projectId: z.string(),
-  teamId: z.string().optional(),
-  configurationId: z.string(),
   sync: syncSchema,
 });
 

@@ -141,7 +141,7 @@ export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
 // ── Provider Config Schema ────────────────────────────────────────────────────
 
 // Adding a provider = add entry to ProviderConfigMap above + PROVIDERS + this tuple.
-export const providerConfigSchema = z.discriminatedUnion("sourceType", [
+export const providerConfigSchema = z.discriminatedUnion("provider", [
   PROVIDERS.github.providerConfigSchema,
   PROVIDERS.vercel.providerConfigSchema,
   PROVIDERS.linear.providerConfigSchema,

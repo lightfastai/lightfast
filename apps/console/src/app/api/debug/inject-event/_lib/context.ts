@@ -11,7 +11,6 @@ export function buildContext(
   context?: string
 ): string {
   const provider = integration.provider;
-  const cfg = integration.providerConfig;
   const contextLine = context ? `\nUser context: ${context}` : "";
   const afterColon = eventKey.split(":")[1] ?? "";
   const dotIdx = afterColon.indexOf(".");
@@ -19,30 +18,29 @@ export function buildContext(
 
   switch (provider) {
     case "github": {
-      const c = cfg.sourceType === "github" ? cfg : null;
       return `Generate a realistic GitHub webhook payload.
-Repo ID: ${c?.repoId ?? "567890123"}
+Repo ID: ${integration.providerResourceId}
 Account: ${installation.externalId ?? "acme"}
 ${action ? `Action: ${action}` : ""}${contextLine}`;
     }
     case "vercel": {
-      const c = cfg.sourceType === "vercel" ? cfg : null;
+      const raw = installation.providerAccountInfo?.raw as
+        | { team_id?: string }
+        | undefined;
       return `Generate a realistic Vercel deployment webhook payload.
-Project ID: ${c?.projectId ?? "prj_example"}
-Team ID: ${c?.teamId ?? "team_example"}
+Project ID: ${integration.providerResourceId}
+Team ID: ${raw?.team_id ?? "team_example"}
 Event type: ${afterColon}${contextLine}`;
     }
     case "linear": {
-      const c = cfg.sourceType === "linear" ? cfg : null;
       return `Generate a realistic Linear webhook payload.
-Team ID: ${c?.teamId ?? "team_example"}
+Team ID: ${integration.providerResourceId}
 Organization: ${installation.externalId}
 ${action ? `Action: ${action}` : ""}${contextLine}`;
     }
     case "sentry": {
-      const c = cfg.sourceType === "sentry" ? cfg : null;
       return `Generate a realistic Sentry webhook payload.
-Project ID: ${c?.projectId ?? "123456"}
+Project ID: ${integration.providerResourceId}
 Installation: ${installation.externalId}
 ${action ? `Action: ${action}` : ""}${contextLine}`;
     }

@@ -55,10 +55,8 @@ export const linearOAuthResponseSchema = z.object({
 
 /** @see githubProviderConfigSchema for design invariants */
 export const linearProviderConfigSchema = z.object({
-  version: z.literal(1),
-  sourceType: z.literal("linear"),
+  provider: z.literal("linear"),
   type: z.literal("team"),
-  teamId: z.string(),
   sync: syncSchema,
 });
 
