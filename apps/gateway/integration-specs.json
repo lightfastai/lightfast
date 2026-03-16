@@ -22,7 +22,9 @@
     },
     "webhooks": {
       "active": true,
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/github",
+      "$comment_url": "Webhooks must go DIRECTLY to the relay — not through the console proxy (lightfast.ai/services/relay/...). The Next.js proxy re-streams the body, breaking GitHub's HMAC signature. Dev: run ngrok on port 4108 and use /api/webhooks/github. Prod: use the relay Vercel URL directly.",
+      "url_dev": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/github",
+      "url_prod": "https://lightfast-relay.vercel.app/api/webhooks/github",
       "events": [
         "installation",
         "meta",
@@ -69,7 +71,8 @@
       "configuration_url": "http://localhost:3024/settings/integrations/vercel"
     },
     "webhooks": {
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/vercel",
+      "url_dev": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/vercel",
+      "url_prod": "https://lightfast-relay.vercel.app/api/webhooks/vercel",
       "events": [
         "deployment.created",
         "deployment.succeeded",
@@ -113,7 +116,8 @@
     "client_credentials": "$comment: Copy CLIENT_ID and CLIENT_SECRET after creation (secret shown only once)",
     "webhooks": {
       "enabled": true,
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/linear",
+      "url_dev": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/linear",
+      "url_prod": "https://lightfast-relay.vercel.app/api/webhooks/linear",
       "resource_types": ["Issue", "Comment", "IssueLabel", "Project", "Cycle"]
     },
     "env_keys": [
@@ -138,7 +142,8 @@
       "authorized_javascript_origins": []
     },
     "webhooks": {
-      "url": "https://<ngrok-subdomain>.ngrok-free.dev/services/relay/webhooks/sentry",
+      "url_dev": "https://<ngrok-subdomain>.ngrok-free.dev/api/webhooks/sentry",
+      "url_prod": "https://lightfast-relay.vercel.app/api/webhooks/sentry",
       "resources": ["issue", "event_alert", "seer", "comment"]
     },
     "permissions": {
