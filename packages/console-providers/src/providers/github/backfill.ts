@@ -27,7 +27,27 @@ export function adaptGitHubPRForTransformer(
   const merged = pr.merged ?? pr.merged_at != null;
   return {
     action,
-    pull_request: { ...pr, merged },
+    number: pr.number,
+    pull_request: {
+      id: pr.id,
+      number: pr.number,
+      title: pr.title,
+      body: pr.body,
+      html_url: pr.html_url,
+      user: pr.user,
+      head: { ref: pr.head.ref, sha: pr.head.sha },
+      base: { ref: pr.base.ref, sha: pr.base.sha },
+      state: pr.state,
+      merged,
+      merge_commit_sha: pr.merge_commit_sha,
+      draft: pr.draft,
+      // List API omits these — default to 0
+      additions: pr.additions ?? 0,
+      deletions: pr.deletions ?? 0,
+      changed_files: pr.changed_files ?? 0,
+      created_at: pr.created_at,
+      updated_at: pr.updated_at,
+    },
     repository: repo,
     sender: pr.user,
   } as unknown as PreTransformGitHubPullRequestEvent;
@@ -40,7 +60,19 @@ export function adaptGitHubIssueForTransformer(
   const action = issue.state === "open" ? "opened" : "closed";
   return {
     action,
-    issue,
+    issue: {
+      id: issue.id,
+      number: issue.number,
+      title: issue.title,
+      body: issue.body,
+      html_url: issue.html_url,
+      user: issue.user,
+      state: issue.state,
+      state_reason: issue.state_reason,
+      created_at: issue.created_at,
+      updated_at: issue.updated_at,
+      closed_at: issue.closed_at,
+    },
     repository: repo,
     sender: issue.user,
   } as unknown as PreTransformGitHubIssuesEvent;
@@ -51,10 +83,15 @@ export function adaptGitHubIssueForTransformer(
 function buildRepoData(ctx: BackfillContext): Record<string, unknown> {
   const repoFullName = ctx.resource.resourceName;
   const repoId = Number(ctx.resource.providerResourceId);
+  const [owner = "", name = ""] = repoFullName.split("/");
   return {
+    id: repoId,
+    name,
     full_name: repoFullName,
     html_url: `https://github.com/${repoFullName}`,
-    id: repoId,
+    private: false,
+    owner: { login: owner },
+    default_branch: "main",
   };
 }
 

@@ -78,12 +78,15 @@ export const preTransformGitHubIssuesEventSchema = z.object({
 
 export const githubWebhookPayloadSchema = z
   .object({
-    repository: z.object({ id: z.union([z.string(), z.number()]) }).optional(),
+    repository: z
+      .object({ id: z.union([z.string(), z.number()]) })
+      .loose()
+      .optional(),
     installation: z
       .object({ id: z.union([z.string(), z.number()]) })
       .optional(),
   })
-  .passthrough();
+  .loose();
 
 // ─── Inferred types ──────────────────────────────────────────────────────────
 
