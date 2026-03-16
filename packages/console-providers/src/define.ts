@@ -386,6 +386,8 @@ export interface ProviderDefinition<
   readonly getBaseEventType: (sourceType: string) => string;
   readonly name: string;
   readonly oauth: OAuthDef<TConfig, TAccountInfo>;
+  /** When true, all env vars are optional — the provider is disabled and its env preset is excluded from PROVIDER_ENVS(). */
+  readonly optional?: true;
   /** Zod schema for the provider_config JSONB blob stored in workspace_integrations. */
   readonly providerConfigSchema: TProviderConfigSchema;
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */

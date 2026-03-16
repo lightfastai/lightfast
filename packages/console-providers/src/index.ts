@@ -172,6 +172,7 @@ export { transformWebhookPayload } from "./dispatch";
 export type { ProviderSlug } from "./display";
 // ── Display Metadata (re-exported for server consumers) ─────────────────────
 export {
+  ACTIVE_PROVIDER_SLUGS,
   PROVIDER_DISPLAY,
   PROVIDER_SLUGS,
   SOURCE_TYPE_OPTIONS,
