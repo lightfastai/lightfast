@@ -24,7 +24,8 @@
     "data"
   ],
   "scripts": {
-    "build": "tsc",
+    "build": "tsup && tsc --incremental false",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -36,6 +37,7 @@
   ],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "tsup": "^8.5.1",
     "typescript": "catalog:"
   }
 }
