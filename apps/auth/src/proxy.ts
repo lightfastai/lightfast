@@ -77,10 +77,10 @@ const composedMiddleware = createNEMO(
 );
 
 // =============================================================================
-// Main Middleware
+// Main Proxy (Next.js 16)
 // =============================================================================
 
-export default clerkMiddleware(
+export const proxy = clerkMiddleware(
   async (auth, req: NextRequest, event: NextFetchEvent) => {
     const { userId, orgId, orgSlug } = await auth({
       treatPendingAsSignedOut: false,
