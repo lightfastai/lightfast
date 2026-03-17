@@ -81,7 +81,7 @@ export function TeamNameInput() {
       name="teamName"
       render={({ field, fieldState }) => (
         <FormItem>
-          <FormLabel className="font-medium text-muted-foreground text-xs">
+          <FormLabel className="font-medium text-muted-foreground text-sm">
             Your Team Name
           </FormLabel>
           <FormControl>
@@ -108,7 +108,7 @@ export function TeamNameInput() {
           {fieldState.error ? (
             <FormMessage />
           ) : (
-            <FormDescription className="text-xs">
+            <FormDescription className="text-sm">
               Great team names are short and memorable
             </FormDescription>
           )}

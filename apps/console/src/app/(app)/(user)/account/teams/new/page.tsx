@@ -15,7 +15,7 @@ export default async function CreateTeamPage({
   const initialTeamName = params.teamName ?? "";
 
   return (
-    <div className="flex flex-1 items-center justify-center p-4">
+    <div className="flex flex-1 items-center justify-center px-4 pb-32">
       <div className="w-full max-w-md space-y-4">
         {/* Logo */}
         <div className="w-fit rounded-sm bg-card p-3">

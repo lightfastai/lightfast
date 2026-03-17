@@ -8,7 +8,7 @@ export default function UserLayout({
   return (
     <div className="relative flex flex-1 flex-col bg-background">
       <UserPageHeader />
-      <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+      <div className="min-h-0 flex-1 flex flex-col overflow-y-auto">{children}</div>
     </div>
   );
 }

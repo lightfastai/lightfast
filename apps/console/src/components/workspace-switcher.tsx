@@ -1,7 +1,6 @@
 "use client";
 
 import { useTRPC } from "@repo/console-trpc/react";
-import { TeamSwitcherLink } from "@repo/ui/components/app-header/team-switcher-link";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -14,6 +13,7 @@ import { useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
 interface WorkspaceSwitcherProps {
@@ -28,6 +28,7 @@ export function WorkspaceSwitcher({
   const trpc = useTRPC();
   const [open, setOpen] = useState(false);
   const { setActive } = useOrganizationList();
+  const router = useRouter();
 
   // Fetch organizations to get current org
   const { data: organizations = [] } = useSuspenseQuery({
@@ -70,19 +71,23 @@ export function WorkspaceSwitcher({
       <div className="flex items-center gap-1">
         {/* Clickable area - navigates to workspace (no styling) */}
         {currentWorkspace ? (
-          <TeamSwitcherLink
+          <Link
             className="flex min-w-0 items-center"
             href={`/${currentOrg.slug}/${currentWorkspace.name}`}
-            onNavigate={async () => {
+            onClick={async (e) => {
+              if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
               if (setActive) {
                 await setActive({ organization: currentOrg.id });
               }
+              router.push(`/${currentOrg.slug}/${currentWorkspace.name}`);
             }}
+            prefetch={true}
           >
             <span className="truncate font-medium text-sm">
               {currentWorkspace.name}
             </span>
-          </TeamSwitcherLink>
+          </Link>
         ) : (
           <div className="flex min-w-0 items-center">
             <span className="truncate font-medium text-sm">
@@ -112,18 +117,22 @@ export function WorkspaceSwitcher({
 
           return (
             <DropdownMenuItem asChild className="p-0" key={workspace.id}>
-              <TeamSwitcherLink
+              <Link
                 className={cn(
                   "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent focus:bg-accent",
                   isSelected && "bg-muted/50"
                 )}
                 href={`/${currentOrg.slug}/${workspace.name}`}
-                onClick={() => setOpen(false)}
-                onNavigate={async () => {
+                onClick={async (e) => {
+                  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  setOpen(false);
                   if (setActive) {
                     await setActive({ organization: currentOrg.id });
                   }
+                  router.push(`/${currentOrg.slug}/${workspace.name}`);
                 }}
+                prefetch={true}
               >
                 <span className="flex-1 truncate text-left">
                   {workspace.name}
@@ -131,7 +140,7 @@ export function WorkspaceSwitcher({
                 {isSelected && (
                   <Check className="h-4 w-4 shrink-0 text-foreground" />
                 )}
-              </TeamSwitcherLink>
+              </Link>
             </DropdownMenuItem>
           );
         })}
