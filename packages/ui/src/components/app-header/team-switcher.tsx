@@ -88,7 +88,9 @@ export function TeamSwitcher({
             className="flex min-w-0 items-center gap-2"
             href={`/${currentOrg.slug}`}
             onClick={async (e) => {
-              if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+              if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+                return;
+              }
               e.preventDefault();
               await onOrgSelect(currentOrg.id, currentOrg.slug ?? "");
               router.push(`/${currentOrg.slug}`);
@@ -132,11 +134,13 @@ export function TeamSwitcher({
               <Link
                 className={cn(
                   "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent focus:bg-accent",
-                  isSelected && "bg-muted/50",
+                  isSelected && "bg-muted/50"
                 )}
                 href={`/${org.slug}`}
                 onClick={async (e) => {
-                  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+                  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+                    return;
+                  }
                   e.preventDefault();
                   setOpen(false);
                   await onOrgSelect(org.id, org.slug ?? "");

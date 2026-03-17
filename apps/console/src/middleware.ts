@@ -42,12 +42,10 @@ const isPublicRoute = createRouteMatcher([
   "/services/backfill/(.*)", // Backfill service proxy — auth handled by Hono (X-API-Key)
 ]);
 
-// Team creation routes - accessible to pending users (authenticated but no org claimed)
-// Includes both page routes and API routes used during team/workspace creation
+// Pending-allowed routes - accessible to pending users (authenticated but no org claimed)
+// Includes all account routes and API routes used during team/workspace creation
 const isTeamCreationRoute = createRouteMatcher([
-  "/account/teams/new", // Team/org creation flow
-  "/account/welcome", // Post-login relay — redirects to org or team creation
-  "/new(.*)", // Workspace creation flow
+  "/account(.*)", // All account routes — pending users can access settings, team creation, welcome
   "/provider/vercel/connected", // Vercel OAuth success page (used by gateway service redirect)
   "/provider/github/connected", // GitHub OAuth success page (used by gateway service redirect)
   "/provider/sentry/connected", // Sentry OAuth success page (used by gateway service redirect)
@@ -57,7 +55,7 @@ const isTeamCreationRoute = createRouteMatcher([
 // User-scoped tRPC endpoint - accessible to pending users
 const isUserScopedRoute = createRouteMatcher([
   "/api/trpc/user(.*)", // All procedures under /api/trpc/user/*
-  "/cli/auth", // CLI authentication page - captures Clerk JWT for CLI onboarding
+  // /cli/auth moved to (pending-not-allowed) — requires active org
 ]);
 
 // Org-scoped tRPC endpoint - requires active org
@@ -97,12 +95,13 @@ const composedMiddleware = createNEMO(
  * Authentication & Authorization Flow:
  *
  * 1. Public routes (health, webhooks) → allowed without auth
- * 2. Team creation routes (/account/teams/new, /new) → pending users allowed
+ * 2. Pending-allowed routes (/account/*) → pending users allowed (see (pending-allowed)/ route group)
  * 3. User-scoped tRPC (/api/trpc/user/*) → pending + active users allowed
  * 4. Org-scoped tRPC (/api/trpc/org/*) → active org required (auth.protect)
  * 5. Org page routes (/:slug, /:slug/*) → active org required (auth.protect)
  *    - organizationSyncOptions activates org from URL BEFORE auth.protect runs
- * 6. All other routes → protected or redirect pending users to team creation
+ * 6. All other routes → protected or redirect pending users to /account/teams/new
+ *    (includes (pending-not-allowed)/ routes: /cli/auth, /new/*)
  *
  * Key: organizationSyncOptions handles syncing org from /:slug pattern in URL.
  * auth.protect() then verifies the user has access to that activated org.

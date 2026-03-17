@@ -4,15 +4,21 @@ import { useTRPC } from "@repo/console-trpc/react";
 import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useClerk, useOrganizationList, useUser } from "@vendor/clerk/client";
+import { useClerk, useOrganizationList } from "@vendor/clerk/client";
 import { NotificationsTrigger } from "@vendor/knock/components/trigger";
 import { authUrl } from "~/lib/related-projects";
 
 export function UserPageHeader() {
   const trpc = useTRPC();
   const { signOut } = useClerk();
-  const { user, isLoaded } = useUser();
   const { setActive } = useOrganizationList();
+
+  const { data: profile } = useSuspenseQuery({
+    ...trpc.account.get.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: organizations = [] } = useSuspenseQuery({
     ...trpc.organization.listUserOrganizations.queryOptions(),
@@ -27,17 +33,18 @@ export function UserPageHeader() {
     }
   };
 
-  const email =
-    user?.primaryEmailAddress?.emailAddress ??
-    user?.emailAddresses[0]?.emailAddress ??
-    user?.username ??
-    "";
+  const email = profile.primaryEmailAddress ?? profile.username ?? "";
 
   const initials = (() => {
-    if (!user) {
-      return "LF";
+    const { firstName, lastName, fullName, username } = profile;
+    if (fullName) {
+      return fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
     }
-    const { firstName, lastName, username } = user;
     if (firstName && lastName) {
       return `${firstName[0]}${lastName[0]}`.toUpperCase();
     }
@@ -63,16 +70,12 @@ export function UserPageHeader() {
       />
       <div className="ml-auto flex items-center gap-3">
         <NotificationsTrigger />
-        {isLoaded && user && (
-          <UserMenu
-            email={email}
-            initials={initials}
-            onSignOut={() =>
-              void signOut({ redirectUrl: `${authUrl}/sign-in` })
-            }
-            settingsHref="/account/settings/general"
-          />
-        )}
+        <UserMenu
+          email={email}
+          initials={initials}
+          onSignOut={() => void signOut({ redirectUrl: `${authUrl}/sign-in` })}
+          settingsHref="/account/settings/general"
+        />
       </div>
     </div>
   );
