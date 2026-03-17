@@ -45,6 +45,12 @@ export default async function EarlyAccessPage({
     success,
   } = await loadEarlyAccessSearchParams(searchParams);
 
+  const fieldErrors = [emailError, companySizeError, sourcesError].filter(
+    Boolean
+  ) as string[];
+  const bannerMessage = error ?? fieldErrors.join(" ");
+  const showBanner = !!error || fieldErrors.length > 0;
+
   return (
     <div className="w-full max-w-md space-y-4">
       <div className="w-fit rounded-sm bg-card p-3">
@@ -80,17 +86,18 @@ export default async function EarlyAccessPage({
             Join the Early Access waitlist
           </h1>
 
-          {error && (
-            <EarlyAccessErrorBanner isRateLimit={isRateLimit} message={error} />
+          {showBanner && (
+            <EarlyAccessErrorBanner
+              isRateLimit={isRateLimit}
+              message={bannerMessage}
+            />
           )}
 
           <EarlyAccessFormServer
-            companySizeError={companySizeError}
             emailError={emailError}
             initialCompanySize={companySize}
             initialEmail={email}
             initialSources={sources ? sources.split(",").filter(Boolean) : []}
-            sourcesError={sourcesError}
           />
         </>
       )}

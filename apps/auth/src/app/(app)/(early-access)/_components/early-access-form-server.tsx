@@ -6,12 +6,10 @@ import { SourcesIsland } from "./sources-island";
 import { SubmitButton } from "./submit-button";
 
 interface EarlyAccessFormServerProps {
-  companySizeError?: string | null;
   emailError?: string | null;
   initialCompanySize: string;
   initialEmail: string;
   initialSources: string[];
-  sourcesError?: string | null;
 }
 
 export function EarlyAccessFormServer({
@@ -19,40 +17,49 @@ export function EarlyAccessFormServer({
   initialCompanySize,
   initialSources,
   emailError,
-  companySizeError,
-  sourcesError,
 }: EarlyAccessFormServerProps) {
   return (
     <div className="w-full">
-      <form action={joinEarlyAccessAction} className="space-y-4">
+      <form action={joinEarlyAccessAction} className="flex flex-col space-y-4">
         {/* Email — pure server-rendered input */}
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           <label
-            className="font-medium text-muted-foreground text-xs"
+            className="font-medium text-muted-foreground text-sm"
             htmlFor="email"
           >
             Email address
           </label>
           <Input
+            aria-invalid={!!emailError}
             defaultValue={initialEmail}
             id="email"
             name="email"
             placeholder="name@company.com"
             type="email"
           />
-          {emailError && (
-            <p className="text-destructive text-sm">{emailError}</p>
-          )}
         </div>
 
         {/* Company Size — client island (shadcn Select needs JS) */}
-        <CompanySizeIsland
-          defaultValue={initialCompanySize}
-          error={companySizeError}
-        />
+        <div className="flex flex-col gap-2">
+          <label
+            className="font-medium text-muted-foreground text-sm"
+            htmlFor="companySize"
+          >
+            Company size
+          </label>
+          <CompanySizeIsland defaultValue={initialCompanySize} />
+        </div>
 
         {/* Sources — client island (Popover+Command combobox) */}
-        <SourcesIsland defaultSources={initialSources} error={sourcesError} />
+        <div className="flex flex-col gap-2">
+          <label
+            className="font-medium text-muted-foreground text-sm"
+            htmlFor="sources"
+          >
+            Tools your team uses
+          </label>
+          <SourcesIsland defaultSources={initialSources} />
+        </div>
 
         {/* Submit + Terms */}
         <div className="space-y-3">

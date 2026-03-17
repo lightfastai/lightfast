@@ -36,21 +36,14 @@ const DATA_SOURCES_MAP = new Map(DATA_SOURCES.map((s) => [s.value, s]));
 
 interface SourcesIslandProps {
   defaultSources: string[];
-  error?: string | null;
 }
 
-export function SourcesIsland({ defaultSources, error }: SourcesIslandProps) {
+export function SourcesIsland({ defaultSources }: SourcesIslandProps) {
   const [selected, setSelected] = useState<string[]>(() => defaultSources);
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="space-y-2">
-      <label
-        className="font-medium text-muted-foreground text-xs"
-        htmlFor="sources"
-      >
-        Tools your team uses
-      </label>
+    <>
       <input
         id="sources"
         name="sources"
@@ -149,7 +142,6 @@ export function SourcesIsland({ defaultSources, error }: SourcesIslandProps) {
           </Command>
         </PopoverContent>
       </Popover>
-      {error && <p className="text-destructive text-sm">{error}</p>}
-    </div>
+    </>
   );
 }

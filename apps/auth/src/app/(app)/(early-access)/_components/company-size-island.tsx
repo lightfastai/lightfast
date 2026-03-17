@@ -20,23 +20,13 @@ const COMPANY_SIZES = [
 
 interface CompanySizeIslandProps {
   defaultValue: string;
-  error?: string | null;
 }
 
-export function CompanySizeIsland({
-  defaultValue,
-  error,
-}: CompanySizeIslandProps) {
+export function CompanySizeIsland({ defaultValue }: CompanySizeIslandProps) {
   const inputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <div className="space-y-2">
-      <label
-        className="font-medium text-muted-foreground text-xs"
-        htmlFor="companySize"
-      >
-        Company size
-      </label>
+    <>
       <input
         defaultValue={defaultValue}
         id="companySize"
@@ -63,7 +53,6 @@ export function CompanySizeIsland({
           ))}
         </SelectContent>
       </Select>
-      {error && <p className="text-destructive text-sm">{error}</p>}
-    </div>
+    </>
   );
 }
