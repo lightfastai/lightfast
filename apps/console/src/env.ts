@@ -6,7 +6,7 @@ import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { basehubEnv } from "@vendor/cms/env";
 import { env as knockEnv } from "@vendor/knock/env";
-import { betterstackEnv } from "@vendor/observability/log/next";
+import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
