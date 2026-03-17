@@ -5,7 +5,7 @@ branch: feat/post-login-welcome-and-team-switcher-refactor
 repository: lightfast
 topic: "Fix Clerk waitlist invite pipeline — 3 bugs blocking invited user sign-up"
 tags: [plan, auth, clerk, waitlist, invite, otp, oauth, github]
-status: ready
+status: complete
 ---
 
 # Fix Clerk Waitlist Invite Pipeline
@@ -13,6 +13,8 @@ status: ready
 ## Overview
 
 Fix 3 bugs in `apps/auth` that prevent invited users from completing sign-up via email OTP or GitHub OAuth. Bugs were identified in research doc `thoughts/shared/research/2026-03-17-auth-waitlist-invite-pipeline.md`.
+
+Implemented and committed in `97bd426da`.
 
 ## Current State Analysis
 
@@ -27,18 +29,20 @@ Invited users can:
 2. Click "Continue with GitHub" on the invite URL → OAuth redirect → complete → reach `/account/welcome`
 3. See a proper error page (with "Join the Waitlist" CTA) if anything goes wrong, never a silent no-op
 
-### Key Discoveries
+### Key Discoveries (including post-implementation)
 
 - `sign-up/page.tsx` is a **server component** — it cannot pass function callbacks to client components. The `onError` prop was never passable; fix must be internal to each component
-- `signUp.ticket()` initializes the sign-up object with the invitation — you must then call `signUp.verifications.sendEmailCode()` (not `signUp.create()`) to send the OTP
-- Clerk supports `signUp.sso({ strategy, ticket, ... })` to associate an OAuth flow with an invitation ticket
+- **Clerk does NOT auto-populate `emailAddress` from the invitation ticket on this instance.** After `signUp.ticket({ ticket })`, the sign-up object has `email_address: null` and `missing_fields: ["legal_accepted", "email_address"]`. The ticket only bypasses the waitlist restriction — the user must still provide their own email.
+- **The invited email doesn't need to match the user's sign-up email.** The ticket grants access; the email is whatever the user wants.
+- The cleanest implementation is a single `signUp.create({ ticket, emailAddress, legalAccepted: true })` call — all three params are properly typed in `SignUpFutureCreateParams`, no type casts needed.
+- `signUp.sso({ strategy, ticket, ... })` passes the ticket to the OAuth flow. The `ticket` field is not in the TypeScript type `SignUpFutureSSOParams` but is accepted by Clerk's FAPI. Cast required: `as unknown as Parameters<typeof signUp.sso>[0]`.
+- **"GitHub account already taken" is handled automatically** by `AuthenticateWithRedirectCallback` in `sign-up/sso-callback/page.tsx`. When the GitHub OAuth maps to an existing user, Clerk auto-completes a sign-in and redirects to `signInFallbackRedirectUrl="/account/welcome"`. No explicit handling needed.
 - `sso-callback/page.tsx` already uses `AuthenticateWithRedirectCallback` with `continueSignUpUrl="/sign-up"` — no changes needed there
 - Vitest environment is `node`; no React component test setup exists. Manual testing uses `some-email+clerk_test@lightfast.ai` / OTP `424242`
 
 ## What We're NOT Doing
 
 - Adding `@testing-library/react` or jsdom (component unit tests require significant setup)
-- Modifying `sign-up/page.tsx` server component structure
 - Changing `onError` prop interface (kept for future client-component parents)
 - Fixing `handleSignIn` waitlist fallback (sign-in mode users are existing accounts, shouldn't hit waitlist)
 - Adding ticket to the SSO callback URL (Clerk stores ticket association server-side)
@@ -46,91 +50,48 @@ Invited users can:
 
 ---
 
-## Phase 1: Fix OTPIsland Ticket Flow
+## Phase 1: Fix OTPIsland Ticket Flow ✅
 
-### Overview
+### What Was Implemented
 
-Fix the fall-through bug (Bug 1) and add self-redirect fallback for waitlist errors (Bug 3 for OTPIsland).
+Replaced the two-step `signUp.ticket()` + `sendEmailCode()` approach with a single `signUp.create({ ticket, emailAddress, legalAccepted })` call. This was necessary because:
+- `signUp.ticket()` does not populate `emailAddress` on this Clerk instance
+- The original plan's `sendEmailCode()` after `signUp.ticket()` failed with "Email address missing on Sign Up Preparation"
+- `signUp.create()` with `ticket` + `emailAddress` + `legalAccepted` handles everything in one FAPI call, and all three params are correctly typed
 
-### Changes Required
+Also added self-redirect fallback for `sign_up_restricted_waitlist` errors (Bug 3 for OTPIsland).
 
-#### 1. `otp-island.tsx` — fix `init()` ticket branch
+### Actual Implementation
 
-**File**: `apps/auth/src/app/(app)/(auth)/_components/otp-island.tsx`
-
-**Change: lines 78–93** — after `signUp.ticket()` succeeds but isn't complete, send the OTP code and `return`. Do NOT fall through to `signUp.create()`.
+**`otp-island.tsx` — ticket branch**
 
 ```typescript
-// BEFORE (lines 78–93):
 if (mode === "sign-up" && ticket) {
-  const { error: ticketError } = await signUp.ticket({ ticket });
-  if (ticketError) {
-    handleClerkError(ticketError);
-    return;
-  }
+  // Single create() call: ticket bypasses waitlist, emailAddress is user-provided,
+  // legalAccepted satisfies the legal_accepted requirement.
+  const { error: createError } = await signUp.create({
+    ticket,
+    emailAddress: email ?? undefined,
+    legalAccepted: true,
+  });
+  if (createError) { handleClerkError(createError); return; }
   if (signUp.status === "complete") {
     setIsRedirecting(true);
     await signUp.finalize({ navigate: async () => navigateToConsole() });
     return;
   }
-  // Ticket didn't auto-complete — fall through to email code  ← BUG
-}
-
-// AFTER:
-if (mode === "sign-up" && ticket) {
-  const { error: ticketError } = await signUp.ticket({ ticket });
-  if (ticketError) {
-    handleClerkError(ticketError);
-    return;
-  }
-  if (signUp.status === "complete") {
-    setIsRedirecting(true);
-    await signUp.finalize({ navigate: async () => navigateToConsole() });
-    return;
-  }
-  // Ticket accepted, email verification required — send OTP now
-  const { error: sendError } = await startSpan(
-    { name: "auth.otp.send", op: "auth", attributes: { mode } },
-    () => signUp.verifications.sendEmailCode()
-  );
-  if (sendError) {
-    addBreadcrumb({
-      category: "auth",
-      message: "OTP send failed",
-      level: "error",
-      data: { code: sendError.code, mode },
-    });
-    handleClerkError(sendError);
-  } else {
-    addBreadcrumb({
-      category: "auth",
-      message: "OTP code sent",
-      level: "info",
-      data: { mode, email },
-    });
-  }
-  return; // ← must return; do NOT fall through to signUp.create()
+  setResolvedEmail(signUp.emailAddress ?? email);
+  const { error: sendError } = await startSpan(..., () => signUp.verifications.sendEmailCode());
+  // ... breadcrumbs + error handling
+  return;
 }
 ```
 
-#### 2. `otp-island.tsx` — self-redirect fallback for waitlist errors
-
-**Change: lines 53–59** — when `onError` is not provided (server component parent), redirect instead of no-op.
+**`otp-island.tsx` — waitlist error self-redirect**
 
 ```typescript
-// BEFORE:
 if (errCode === "sign_up_restricted_waitlist") {
-  onError?.(
-    "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
-    true
-  );
-  return;
-}
-
-// AFTER:
-if (errCode === "sign_up_restricted_waitlist") {
-  const msg =
-    "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
+  const msg = "Sign-ups are currently unavailable...";
   if (onError) {
     onError(msg, true);
   } else {
@@ -148,80 +109,44 @@ if (errCode === "sign_up_restricted_waitlist") {
 - [x] Existing unit tests pass: `pnpm --filter @lightfast/auth test`
 
 #### Manual Verification
-- [ ] Visit `/sign-up?__clerk_ticket=<valid JWT>`, enter invited email → OTP step → code arrives in inbox
+- [ ] Visit `/sign-up?__clerk_ticket=<valid JWT>`, enter email → OTP step → code arrives in inbox
 - [ ] Enter correct OTP `424242` (using Clerk test account) → redirected to `/account/welcome`
 - [ ] With an already-complete invite (instant complete) → redirected without OTP step
 - [ ] With expired/invalid ticket → error displayed inline (not silent failure)
 
-**Implementation note**: After automated checks pass, confirm the email OTP flow manually before moving to Phase 2.
-
 ---
 
-## Phase 2: Fix OAuth Ticket Flow
+## Phase 2: Fix OAuth Ticket Flow ✅
 
-### Overview
+### What Was Implemented
 
-Replace `handleTicketSignUp()` with a proper `signUp.sso({ strategy, ticket })` call (Bug 2), and add self-redirect fallback for waitlist errors in `handleSignUp` (Bug 3 for OAuthButton).
+Replaced `handleTicketSignUp()` with a proper `signUp.sso({ strategy, ticket })` call. The `ticket` field is not exposed in `SignUpFutureSSOParams` TypeScript types, so a cast is used with a comment explaining why. Also added self-redirect fallback for waitlist errors in both `handleTicketSignUp` and `handleSignUp`.
 
-### Changes Required
+### Actual Implementation
 
-#### 1. `oauth-button.tsx` — replace `handleTicketSignUp`
-
-**File**: `apps/auth/src/app/(app)/(auth)/_components/oauth-button.tsx`
-
-**Change A: lines 23–44** — replace the entire `handleTicketSignUp` function:
+**`oauth-button.tsx` — `handleTicketSignUp`**
 
 ```typescript
-// BEFORE:
-async function handleTicketSignUp() {
-  const { error: ticketError } = await signUp.ticket({ ticket: ticket! });
-  if (ticketError) {
-    onError?.("Please use the email option above to complete your invitation sign-up.");
-    setLoading(false);
-    return;
-  }
-  if (signUp.status === "complete") {
-    await signUp.finalize({
-      navigate: async () => { window.location.href = `${consoleUrl}/account/welcome`; },
-    });
-    return;
-  }
-  onError?.("Please use the email option above to complete your invitation sign-up.");
-  setLoading(false);
-}
-
-// AFTER:
 async function handleTicketSignUp(strategy: OAuthStrategy) {
   const { error } = await startSpan(
-    {
-      name: "auth.oauth.initiate",
-      op: "auth",
-      attributes: { strategy, mode },
-    },
+    { name: "auth.oauth.initiate", op: "auth", attributes: { strategy, mode } },
     () =>
-      signUp.sso({
-        strategy,
-        ticket: ticket!,
-        redirectCallbackUrl: "/sign-up/sso-callback",
-        redirectUrl: `${consoleUrl}/account/welcome`,
-      })
+      signUp.sso(
+        // Clerk FAPI accepts `ticket` in sso() for invitation flows; TS types omit this field
+        {
+          strategy,
+          ticket: ticket!,
+          redirectCallbackUrl: "/sign-up/sso-callback",
+          redirectUrl: `${consoleUrl}/account/welcome`,
+        } as unknown as Parameters<typeof signUp.sso>[0]
+      )
   );
   if (error) {
     const errCode = error.code;
     if (errCode === "sign_up_restricted_waitlist") {
-      addBreadcrumb({
-        category: "auth",
-        message: "OAuth blocked by waitlist (ticket flow)",
-        level: "warning",
-        data: { strategy },
-      });
-      const msg =
-        "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
-      if (onError) {
-        onError(msg, true);
-      } else {
-        window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`;
-      }
+      const msg = "Sign-ups are currently unavailable...";
+      if (onError) { onError(msg, true); }
+      else { window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`; }
     } else {
       toast.error(error.longMessage ?? error.message ?? "Authentication failed");
     }
@@ -230,46 +155,18 @@ async function handleTicketSignUp(strategy: OAuthStrategy) {
 }
 ```
 
-**Change B: line 130** — pass `strategy` to `handleTicketSignUp`:
+**Handler routing updated** to pass `strategy`:
 
 ```typescript
-// BEFORE:
-const handler =
-  mode === "sign-up" && ticket
-    ? () => handleTicketSignUp()
-    : ...
-
-// AFTER:
 const handler =
   mode === "sign-up" && ticket
     ? () => handleTicketSignUp(strategy)
-    : ...
+    : mode === "sign-in"
+      ? () => handleSignIn(strategy)
+      : () => handleSignUp(strategy);
 ```
 
-**Change C: lines 98–113** — add self-redirect fallback in `handleSignUp` for waitlist errors (Bug 3 for non-ticket sign-up path):
-
-```typescript
-// BEFORE (in handleSignUp):
-if (errCode === "sign_up_restricted_waitlist") {
-  // ...
-  onError?.(
-    "Sign-ups are currently unavailable...",
-    true
-  );
-}
-
-// AFTER:
-if (errCode === "sign_up_restricted_waitlist") {
-  // ...
-  const msg =
-    "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
-  if (onError) {
-    onError(msg, true);
-  } else {
-    window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`;
-  }
-}
-```
+**"GitHub account already taken"** is handled transparently by `AuthenticateWithRedirectCallback` in `sign-up/sso-callback/page.tsx` — Clerk auto-signs in and redirects to `signInFallbackRedirectUrl`. No additional handling needed in `handleTicketSignUp`.
 
 ### Success Criteria
 
@@ -279,12 +176,10 @@ if (errCode === "sign_up_restricted_waitlist") {
 - [x] Existing unit tests pass: `pnpm --filter @lightfast/auth test`
 
 #### Manual Verification
-- [ ] Visit `/sign-up?__clerk_ticket=<valid JWT>`, click "Continue with GitHub" → redirected to GitHub OAuth (not "please use email" error)
+- [ ] Visit `/sign-up?__clerk_ticket=<valid JWT>`, click "Continue with GitHub" → redirected to GitHub OAuth
 - [ ] Complete GitHub OAuth → redirected to `/account/welcome` (or `/account/teams/new` if no org)
 - [ ] Non-invited user clicking GitHub on `/sign-up` → waitlist error page with "Join the Waitlist" CTA
-- [ ] Normal sign-up GitHub flow (no ticket) unchanged: `signUp.sso()` called without ticket
-
-**Implementation note**: GitHub OAuth with ticket requires a live Clerk instance in waitlist mode. Test with a real invite URL in the development environment.
+- [ ] Normal sign-up GitHub flow (no ticket) unchanged
 
 ---
 
@@ -300,223 +195,70 @@ From `apps/auth/CLAUDE.md`:
 - **Email**: `some-email+clerk_test@lightfast.ai`
 - **OTP**: `424242`
 
-### Full Manual Test Matrix
-
-See Phase 3 for the consolidated test matrix covering all flows end-to-end.
-
 ---
 
----
+## Phase 3: Accept Invitation UI ✅
 
-## Phase 3: Zero-Friction "Accept Invitation" Experience
+### What Was Implemented
 
-### Overview
+The original plan proposed an email-free URL approach (skipping email form entirely, revealing email from Clerk's sign-up object). This was revised after discovering Clerk doesn't auto-populate `emailAddress` from the ticket.
 
-Transform the invitation landing from a generic sign-up form into a focused "Accept Your Invitation" UI. Remove email entry entirely for invited users — the ticket already knows their email. Make GitHub the primary CTA (one click). Reveal the invited email dynamically at OTP time via `signUp.emailAddress` — keeping it out of URL params and browser history. Show the invitation expiry decoded from the JWT public claims.
+**What actually shipped:**
+- "Accept Your Invitation" heading when ticket is present
+- GitHub OAuth as primary CTA (full-width button, above separator)
+- `EmailForm` as secondary (user enters whatever email they want)
+- Invitation expiry decoded from JWT public claims and displayed
+- `code-verification-ui.tsx` email prop widened to `string | null`
+- `OTPIsland` email prop widened to `string | null`; `resolvedEmail` state for display
+- OTP step still requires `email` in URL (unchanged from original flow)
 
-### Key Design Decisions
+**What was dropped from the original plan:**
+- Email-free URL (`/sign-up?step=code&ticket=<JWT>` without email) — Clerk requires email to be explicitly set
+- "Continue with Email" link that bypassed the email form — replaced with the actual `EmailForm`
+- `handleReset` returning to ticket URL without email — reverted to original behavior
 
-- **Email out of URL**: The invited email no longer travels as `?email=user@corp.com`. `OTPIsland` reads `signUp.emailAddress` after `signUp.ticket()` resolves and stores it in local state. Reduces exposure in browser history, server logs, and referrer headers.
-- **GitHub-first**: Invitations are high-intent. GitHub OAuth (one click) is a better primary CTA than an email form requiring typing + OTP. The email path becomes secondary.
-- **Ticket travels via Clerk session, not URL**: After `signUp.sso({ strategy, ticket })`, the ticket association lives in Clerk's session cookie — it persists through the OAuth round-trip without appearing in the callback URL.
-- **Graceful email mismatch (GitHub)**: If the user's GitHub primary email differs from the invited email, Clerk redirects to `continueSignUpUrl="/sign-up"` (already configured in `sso-callback/page.tsx`). Since the ticket is in Clerk's session, no data is lost.
+### Actual Implementation
 
-### Changes Required
+**`sign-up/page.tsx` — invitation landing**
 
-#### 1. `sign-up/page.tsx` — Accept Invitation UI when ticket is present
-
-**File**: `apps/auth/src/app/(app)/(auth)/sign-up/page.tsx`
-
-**Change A** — add JWT expiry decoder (pure function, no secret needed — `exp` is a public claim):
-
-```typescript
-// Add at module level (after imports):
+```tsx
 function decodeTicketExpiry(ticket: string): Date | null {
   try {
     const segment = ticket.split(".")[1];
     if (!segment) return null;
-    const payload = JSON.parse(
-      atob(segment.replace(/-/g, "+").replace(/_/g, "/"))
-    );
-    return typeof payload.exp === "number"
-      ? new Date(payload.exp * 1000)
-      : null;
-  } catch {
-    return null;
-  }
+    const payload = JSON.parse(atob(segment.replace(/-/g, "+").replace(/_/g, "/"))) as { exp?: unknown };
+    return typeof payload.exp === "number" ? new Date(payload.exp * 1000) : null;
+  } catch { return null; }
 }
-```
 
-**Change B** — compute expiry and the email-free continue URL in the page body:
+// In page body:
+const invitationExpiry = invitationTicket ? decodeTicketExpiry(invitationTicket) : null;
 
-```typescript
-const invitationExpiry = invitationTicket
-  ? decodeTicketExpiry(invitationTicket)
-  : null;
-
-const continueWithEmailUrl = invitationTicket
-  ? `/sign-up?step=code&ticket=${encodeURIComponent(invitationTicket)}`
-  : null;
-```
-
-**Change C** — split the `step === "email"` branch on whether a ticket is present:
-
-```tsx
-{!error && step === "email" && (
+// Email step JSX:
+invitationTicket ? (
   <>
-    {invitationTicket ? (
-      // Invitation flow — no email form, GitHub primary
-      <>
-        <OAuthButton mode="sign-up" ticket={invitationTicket} />
-        <SeparatorWithText text="Or" />
-        <Button asChild className="w-full" size="lg" variant="outline">
-          <NextLink href={continueWithEmailUrl!}>Continue with Email</NextLink>
-        </Button>
-        {invitationExpiry && (
-          <p className="text-center text-muted-foreground text-xs">
-            Invitation expires{" "}
-            {invitationExpiry.toLocaleDateString("en-AU", {
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </p>
-        )}
-      </>
-    ) : (
-      // Standard waitlist sign-up — email form + GitHub secondary
-      <>
-        <EmailForm action="sign-up" ticket={null} />
-        <p className="text-center text-muted-foreground text-sm">
-          {/* existing legal text */}
-        </p>
-        <SeparatorWithText text="Or" />
-        <OAuthButton mode="sign-up" ticket={null} />
-      </>
-    )}
+    <OAuthButton mode="sign-up" ticket={invitationTicket} />
+    <SeparatorWithText text="Or" />
+    <EmailForm action="sign-up" ticket={invitationTicket} />
+    {invitationExpiry && <p>Invitation expires {invitationExpiry.toLocaleDateString(...)}</p>}
   </>
-)}
+) : (
+  // Standard sign-up: email form + GitHub secondary (unchanged)
+)
 ```
 
-**Change D** — allow `OTPIsland` to render without email (ticket-only path):
-
-```tsx
-{/* Step: code — allow ticket-only path (email revealed dynamically by Clerk) */}
-{!error && step === "code" && (email || invitationTicket) && (
-  <OTPIsland
-    email={email ?? null}
-    mode="sign-up"
-    ticket={invitationTicket}
-  />
-)}
-```
-
-Previously the condition was `step === "code" && email` — `email` being required blocked the ticket-only path where `?email=` is absent from the URL.
-
-#### 2. `otp-island.tsx` — nullable email + dynamic email reveal
-
-**File**: `apps/auth/src/app/(app)/(auth)/_components/otp-island.tsx`
-
-**Change A** — widen `email` prop to `string | null`:
-
-```typescript
-interface OTPIslandProps {
-  email: string | null;   // was: string
-  mode: "sign-in" | "sign-up";
-  onError?: (message: string, isWaitlist?: boolean) => void;
-  ticket?: string | null;
-}
-```
-
-**Change B** — add `resolvedEmail` state, seeded from prop (handles both paths):
-
-```typescript
-// Tracks the display email — may be null initially on ticket-only path
-// and populated after signUp.ticket() resolves via signUp.emailAddress
-const [resolvedEmail, setResolvedEmail] = React.useState<string | null>(email);
-```
-
-**Change C** — in the ticket branch of `init()`, read `signUp.emailAddress` after the ticket call:
-
-```typescript
-if (mode === "sign-up" && ticket) {
-  const { error: ticketError } = await signUp.ticket({ ticket });
-  if (ticketError) {
-    handleClerkError(ticketError);
-    return;
-  }
-  // Reveal the invited email from Clerk's sign-up object
-  if (signUp.emailAddress) {
-    setResolvedEmail(signUp.emailAddress);
-  }
-  if (signUp.status === "complete") {
-    setIsRedirecting(true);
-    await signUp.finalize({ navigate: async () => navigateToConsole() });
-    return;
-  }
-  // ... sendEmailCode() + return (Phase 1)
-}
-```
-
-**Change D** — pass `resolvedEmail` (not `email`) to `CodeVerificationUI`:
-
-```tsx
-<CodeVerificationUI
-  email={resolvedEmail}   // was: email
-  // ... other props unchanged
-/>
-```
-
-**Change E** — update `handleReset` to return to Accept Invitation page (no email in URL) on ticket path:
-
-```typescript
-function handleReset() {
-  if (mode === "sign-in") {
-    window.location.href = "/sign-in";
-  } else if (ticket) {
-    // Return to Accept Invitation page (ticket-only URL, no email)
-    window.location.href = `/sign-up?__clerk_ticket=${encodeURIComponent(ticket)}`;
-  } else {
-    window.location.href = "/sign-up";
-  }
-}
-```
-
-#### 3. `code-verification-ui.tsx` — widen email type
-
-**File**: `apps/auth/src/app/(app)/(auth)/_components/shared/code-verification-ui.tsx`
-
-**Change** — `email: string` → `email: string | null` (line 14). The conditional at lines 43–50 already handles null/empty:
-
-```typescript
-interface CodeVerificationUIProps {
-  email: string | null;   // was: string — component already renders gracefully
-  // ... rest unchanged
-}
-```
-
-### What this does NOT change
-
-- `initiateSignUp` server action — still used for the standard (no-ticket) email form path
-- `EmailForm` — still rendered for non-ticket sign-ups
-- `sign-in/page.tsx` — the sign-in OTPIsland always has `email` from the URL, TypeScript will verify this
-- `sso-callback/page.tsx` — no changes (ticket persists in Clerk session through OAuth round-trip)
-- The `onError` prop interface — unchanged
-
-### Updated test matrix (replaces Testing Strategy section above)
+### Test Matrix
 
 | Scenario | Expected outcome |
 |---|---|
-| Invite URL (`?__clerk_ticket=`) → landing page | "Accept Invitation" UI: GitHub primary, "Continue with Email" link, expiry shown |
-| Invite URL → GitHub button | Initiates OAuth with ticket (Phase 2 fix) → `/account/welcome` |
-| Invite URL → "Continue with Email" | Goes to `/sign-up?step=code&ticket=<JWT>` (no email in URL) |
-| OTP step (ticket-only) → mount | Calls `signUp.ticket()`, reveals invited email in UI dynamically |
+| Invite URL (`?__clerk_ticket=`) → landing page | "Accept Your Invitation" heading, GitHub primary, email form secondary, expiry shown |
+| Invite URL → GitHub button | Initiates OAuth with ticket → `/account/welcome` |
+| Invite URL → email form → submit | `initiateSignUp` → `/sign-up?step=code&email=...&ticket=...` → OTP |
 | OTP step → enter `424242` | Redirected to `/account/welcome` |
-| OTP step → Back button | Returns to Accept Invitation page (not `/sign-up` generic) |
-| Invite URL → GitHub → email mismatch | Clerk handles, `continueSignUpUrl="/sign-up"` fallback, ticket in session |
-| `/sign-up` (no ticket) → email form | Standard flow unchanged: email form visible, GitHub secondary |
+| Invite URL → GitHub → account already exists | Clerk auto sign-in → `/account/welcome` (handled by `AuthenticateWithRedirectCallback`) |
+| `/sign-up` (no ticket) → email form | Standard flow unchanged |
 | `/sign-up` (no ticket) → GitHub | Waitlist error page shown (no regression) |
-| Expired invite ticket | Error displayed inline, not silent failure |
+| Expired invite ticket | Error displayed inline via `handleClerkError` |
 
 ### Success Criteria
 
@@ -526,13 +268,11 @@ interface CodeVerificationUIProps {
 - [x] Existing unit tests pass: `pnpm --filter @lightfast/auth test`
 
 #### Manual Verification
-- [ ] Accept Invitation landing renders correctly with ticket in URL
-- [ ] GitHub button is visually primary (full-width, above separator)
-- [ ] "Continue with Email" navigates to OTP step without requiring email input
-- [ ] OTP screen shows "We sent a verification code to **[email]**" after a brief loading moment
-- [ ] Email is NOT visible in the URL bar at any point in the invite flow
-- [ ] Back button from OTP returns to Accept Invitation page (not generic `/sign-up`)
+- [ ] Accept Invitation landing renders correctly: GitHub primary, email form secondary
 - [ ] Expiry date renders from JWT and is human-readable
+- [ ] Email form submits → OTP step (email in URL, ticket in URL)
+- [ ] OTP screen shows correct email address
+- [ ] GitHub button initiates OAuth (does not show "please use email" error)
 - [ ] Standard `/sign-up` (no ticket) shows email form + GitHub secondary — no regression
 
 ---
@@ -540,7 +280,9 @@ interface CodeVerificationUIProps {
 ## References
 
 - Research: `thoughts/shared/research/2026-03-17-auth-waitlist-invite-pipeline.md`
-- Bug 1 location: `apps/auth/src/app/(app)/(auth)/_components/otp-island.tsx:78–93`
-- Bug 2 location: `apps/auth/src/app/(app)/(auth)/_components/oauth-button.tsx:23–44`
-- Bug 3 location: `apps/auth/src/app/(app)/(auth)/sign-up/page.tsx:111,117`
+- Commit: `97bd426da fix(auth): repair waitlist invite sign-up pipeline`
+- `apps/auth/src/app/(app)/(auth)/_components/otp-island.tsx`
+- `apps/auth/src/app/(app)/(auth)/_components/oauth-button.tsx`
+- `apps/auth/src/app/(app)/(auth)/_components/shared/code-verification-ui.tsx`
+- `apps/auth/src/app/(app)/(auth)/sign-up/page.tsx`
 - SSO callback (no changes): `apps/auth/src/app/(app)/(auth)/sign-up/sso-callback/page.tsx`
