@@ -2,14 +2,18 @@ import { Button } from "@repo/ui/components/ui/button";
 import { createMetadata } from "@vendor/seo/metadata";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import type { SearchParams } from "nuqs/server";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
-import { OTPIsland } from "../_components/otp-island";
 import { SeparatorWithText } from "../_components/separator-with-text";
 import { loadSignUpSearchParams } from "../_lib/search-params";
+
+const OTPIsland = dynamic(() =>
+  import("../_components/otp-island").then((m) => m.OTPIsland)
+);
 
 function decodeTicketExpiry(ticket: string): Date | null {
   try {

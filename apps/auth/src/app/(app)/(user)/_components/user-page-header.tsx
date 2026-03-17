@@ -3,6 +3,7 @@
 import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useClerk, useOrganizationList, useUser } from "@vendor/clerk/client";
+import { useCallback } from "react";
 
 export function UserPageHeader() {
   const { signOut } = useClerk();
@@ -17,11 +18,14 @@ export function UserPageHeader() {
     name: m.organization.name,
   }));
 
-  const handleOrgSelect = async (orgId: string) => {
-    if (setActive) {
-      await setActive({ organization: orgId });
-    }
-  };
+  const handleOrgSelect = useCallback(
+    async (orgId: string) => {
+      if (setActive) {
+        await setActive({ organization: orgId });
+      }
+    },
+    [setActive]
+  );
 
   const email =
     user?.primaryEmailAddress?.emailAddress ??
