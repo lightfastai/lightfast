@@ -29,13 +29,13 @@ Lightfast's documentation, blog, and changelog answer questions about: semantic 
 - https://lightfast.ai/docs/get-started/overview — Getting started overview
 - https://lightfast.ai/docs/get-started/quickstart — Get started in 5 minutes
 - https://lightfast.ai/docs/get-started/config — Configuration guide
-- https://lightfast.ai/docs/features — Feature documentation
-- https://lightfast.ai/docs/features/search — Semantic search capabilities
-- https://lightfast.ai/docs/features/memory — Memory system architecture
-- https://lightfast.ai/docs/features/citations — Source citation system
-- https://lightfast.ai/docs/features/quality — Quality measurement & improvement
-- https://lightfast.ai/docs/features/relationships — Entity relationships & graph
-- https://lightfast.ai/docs/features/security — Security & privacy
+- https://lightfast.ai/docs/api-reference/getting-started/overview — API reference overview
+- https://lightfast.ai/docs/api-reference/getting-started/authentication — Authentication guide
+- https://lightfast.ai/docs/api-reference/getting-started/errors — Error reference
+- https://lightfast.ai/docs/connectors/github — GitHub connector
+- https://lightfast.ai/docs/connectors/linear — Linear connector
+- https://lightfast.ai/docs/connectors/sentry — Sentry connector
+- https://lightfast.ai/docs/connectors/vercel — Vercel connector
 
 ## Legal
 - https://lightfast.ai/legal/privacy — Privacy policy
