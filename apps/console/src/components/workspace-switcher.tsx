@@ -75,7 +75,9 @@ export function WorkspaceSwitcher({
             className="flex min-w-0 items-center"
             href={`/${currentOrg.slug}/${currentWorkspace.name}`}
             onClick={async (e) => {
-              if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+              if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+                return;
+              }
               e.preventDefault();
               if (setActive) {
                 await setActive({ organization: currentOrg.id });
@@ -124,7 +126,9 @@ export function WorkspaceSwitcher({
                 )}
                 href={`/${currentOrg.slug}/${workspace.name}`}
                 onClick={async (e) => {
-                  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+                  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) {
+                    return;
+                  }
                   e.preventDefault();
                   setOpen(false);
                   if (setActive) {
