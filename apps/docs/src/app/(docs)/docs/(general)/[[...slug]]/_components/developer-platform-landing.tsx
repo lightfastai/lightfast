@@ -178,25 +178,6 @@ export function DeveloperPlatformLanding() {
               </div>
             </div>
           </Link>
-
-          {/* Features Overview */}
-          <Link className="group" href="/docs/features">
-            <div className="relative h-72 overflow-hidden rounded-md border border-border transition-all duration-200 hover:border-muted-foreground/40 hover:bg-muted/10">
-              <div className="absolute inset-0 flex flex-col justify-between p-8">
-                <div>
-                  <p className="font-medium text-foreground/60 text-xs uppercase tracking-wide">
-                    Learn more
-                  </p>
-                  <h3 className="mt-3 font-medium text-2xl text-foreground leading-tight">
-                    Features Overview
-                  </h3>
-                </div>
-                <span className="flex items-center gap-1 text-muted-foreground text-sm">
-                  Explore features <ArrowRight className="h-3.5 w-3.5" />
-                </span>
-              </div>
-            </div>
-          </Link>
         </div>
       </section>
 

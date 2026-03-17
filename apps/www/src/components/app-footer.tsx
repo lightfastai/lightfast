@@ -65,7 +65,7 @@ export function AppFooter() {
                 </MicrofrontendLink>
                 <NextLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
-                  href="/docs/api-reference/overview"
+                  href="/docs/api-reference/getting-started/overview"
                 >
                   API Reference
                 </NextLink>
