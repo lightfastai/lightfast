@@ -1,13 +1,19 @@
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
+import dynamic from "next/dynamic";
 import type { SearchParams } from "nuqs/server";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
-import { OTPIsland } from "../_components/otp-island";
 import { SeparatorWithText } from "../_components/separator-with-text";
-import { SessionActivator } from "../_components/session-activator";
 import { loadSignInSearchParams } from "../_lib/search-params";
+
+const OTPIsland = dynamic(() =>
+  import("../_components/otp-island").then((m) => m.OTPIsland)
+);
+const SessionActivator = dynamic(() =>
+  import("../_components/session-activator").then((m) => m.SessionActivator)
+);
 
 export const metadata: Metadata = createMetadata({
   title: "Sign In - Lightfast Auth",
