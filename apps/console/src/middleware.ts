@@ -46,6 +46,7 @@ const isPublicRoute = createRouteMatcher([
 // Includes both page routes and API routes used during team/workspace creation
 const isTeamCreationRoute = createRouteMatcher([
   "/account/teams/new", // Team/org creation flow
+  "/account/welcome", // Post-login relay — redirects to org or team creation
   "/new(.*)", // Workspace creation flow
   "/provider/vercel/connected", // Vercel OAuth success page (used by gateway service redirect)
   "/provider/github/connected", // GitHub OAuth success page (used by gateway service redirect)
@@ -195,8 +196,8 @@ export default clerkMiddleware(
     signInUrl: `${authUrl}/sign-in`,
     signUpUrl: `${authUrl}/sign-up`,
     // Post-authentication redirects - always to team creation which handles org creation
-    afterSignInUrl: "/account/teams/new",
-    afterSignUpUrl: "/account/teams/new",
+    afterSignInUrl: "/account/welcome",
+    afterSignUpUrl: "/account/welcome",
     // Sync Clerk organization state for /:slug routes
     organizationSyncOptions: {
       organizationPatterns: ["/:slug", "/:slug/(.*)"],

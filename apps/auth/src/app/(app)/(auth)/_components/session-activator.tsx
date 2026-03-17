@@ -38,7 +38,7 @@ export function SessionActivator({ token }: SessionActivatorProps) {
         });
         await signIn.finalize({
           navigate: async () => {
-            window.location.href = `${consoleUrl}/account/teams/new`;
+            window.location.href = `${consoleUrl}/account/welcome`;
           },
         });
       } else {

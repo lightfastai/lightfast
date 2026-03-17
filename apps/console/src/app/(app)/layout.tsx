@@ -15,9 +15,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <ClerkProvider
       publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-      signInFallbackRedirectUrl="/account/teams/new"
+      signInFallbackRedirectUrl="/account/welcome"
       signInUrl={`${authUrl}/sign-in`}
-      signUpFallbackRedirectUrl="/account/teams/new"
+      signUpFallbackRedirectUrl="/account/welcome"
       signUpUrl={`${authUrl}/sign-up`}
       taskUrls={{
         "choose-organization": "/account/teams/new",

@@ -9,13 +9,13 @@ export default function Page() {
   //
   // Clerk's task system handles redirection:
   // - Pending users (no org) → taskUrls["choose-organization"] → /account/teams/new
-  // - Active users (with org) → signUpFallbackRedirectUrl → console
+  // - Active users (with org) → signUpFallbackRedirectUrl → /account/welcome → /:orgSlug
 
   return (
     <AuthenticateWithRedirectCallback
       continueSignUpUrl="/sign-up"
-      signInFallbackRedirectUrl="/account/teams/new"
-      signUpFallbackRedirectUrl="/account/teams/new"
+      signInFallbackRedirectUrl="/account/welcome"
+      signUpFallbackRedirectUrl="/account/welcome"
     />
   );
 }

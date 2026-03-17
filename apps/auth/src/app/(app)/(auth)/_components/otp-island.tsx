@@ -26,7 +26,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
   const [isInitializing, setIsInitializing] = React.useState(true);
 
   const navigateToConsole = React.useCallback(() => {
-    window.location.href = `${consoleUrl}/account/teams/new`;
+    window.location.href = `${consoleUrl}/account/welcome`;
   }, []);
 
   const handleClerkError = React.useCallback(

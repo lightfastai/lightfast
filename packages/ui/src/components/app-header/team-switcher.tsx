@@ -2,7 +2,7 @@
 
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { cn } from "../../lib/utils";
 import { Avatar, AvatarFallback } from "../ui/avatar";
@@ -13,7 +13,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import { TeamSwitcherLink } from "./team-switcher-link";
 
 type TeamSwitcherMode = "organization" | "account";
 
@@ -48,6 +47,7 @@ export function TeamSwitcher({
 }: TeamSwitcherProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
 
   // Extract org slug from pathname (e.g., /someteam/... -> someteam)
   const currentOrgSlug = (() => {
@@ -84,10 +84,16 @@ export function TeamSwitcher({
     <DropdownMenu onOpenChange={setOpen} open={open}>
       <div className="flex items-center gap-1">
         {mode === "organization" && currentOrg ? (
-          <TeamSwitcherLink
+          <Link
             className="flex min-w-0 items-center gap-2"
             href={`/${currentOrg.slug}`}
-            onNavigate={() => onOrgSelect(currentOrg.id, currentOrg.slug ?? "")}
+            onClick={async (e) => {
+              if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+              e.preventDefault();
+              await onOrgSelect(currentOrg.id, currentOrg.slug ?? "");
+              router.push(`/${currentOrg.slug}`);
+            }}
+            prefetch={true}
           >
             <Avatar className="size-6">
               <AvatarFallback className="bg-foreground text-[10px] text-background">
@@ -95,7 +101,7 @@ export function TeamSwitcher({
               </AvatarFallback>
             </Avatar>
             <span className="truncate font-medium text-sm">{displayText}</span>
-          </TeamSwitcherLink>
+          </Link>
         ) : (
           <div className="flex min-w-0 items-center gap-2">
             <Avatar className="size-6">
@@ -108,7 +114,7 @@ export function TeamSwitcher({
         )}
 
         <DropdownMenuTrigger asChild>
-          <Button className="h-8 w-8 p-0" size="sm" variant="ghost">
+          <Button className="w-3" size="sm" variant="ghost">
             <ChevronsUpDown className="h-4 w-4 opacity-50" />
           </Button>
         </DropdownMenuTrigger>
@@ -123,14 +129,20 @@ export function TeamSwitcher({
 
           return (
             <DropdownMenuItem asChild className="p-0" key={org.id}>
-              <TeamSwitcherLink
+              <Link
                 className={cn(
                   "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent focus:bg-accent",
-                  isSelected && "bg-muted/50"
+                  isSelected && "bg-muted/50",
                 )}
                 href={`/${org.slug}`}
-                onClick={() => setOpen(false)}
-                onNavigate={() => onOrgSelect(org.id, org.slug ?? "")}
+                onClick={async (e) => {
+                  if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+                  e.preventDefault();
+                  setOpen(false);
+                  await onOrgSelect(org.id, org.slug ?? "");
+                  router.push(`/${org.slug}`);
+                }}
+                prefetch={true}
               >
                 <Avatar className="h-5 w-5 shrink-0">
                   <AvatarFallback className="bg-foreground text-[10px] text-background">
@@ -141,7 +153,7 @@ export function TeamSwitcher({
                 {isSelected && (
                   <Check className="h-4 w-4 shrink-0 text-foreground" />
                 )}
-              </TeamSwitcherLink>
+              </Link>
             </DropdownMenuItem>
           );
         })}
