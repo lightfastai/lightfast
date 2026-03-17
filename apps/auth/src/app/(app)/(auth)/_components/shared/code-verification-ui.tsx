@@ -11,7 +11,7 @@ import { AlertCircle, ArrowLeft } from "lucide-react";
 
 interface CodeVerificationUIProps {
   code: string;
-  email: string;
+  email: string | null;
   inlineError: string | null;
   isRedirecting: boolean;
   isResending: boolean;

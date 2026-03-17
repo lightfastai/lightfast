@@ -62,7 +62,7 @@ export function UserPageHeader() {
           <UserMenu
             email={email}
             initials={initials}
-            onSignOut={() => void signOut()}
+            onSignOut={() => void signOut({ redirectUrl: "/sign-in" })}
             settingsHref="/account/settings/general"
           />
         )}

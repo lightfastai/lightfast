@@ -8,7 +8,7 @@ import { consoleUrl } from "~/lib/related-projects";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
 
 interface OTPIslandProps {
-  email: string;
+  email: string | null;
   mode: "sign-in" | "sign-up";
   onError?: (message: string, isWaitlist?: boolean) => void;
   ticket?: string | null;
@@ -24,6 +24,10 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
   const [isRedirecting, setIsRedirecting] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
   const [isInitializing, setIsInitializing] = React.useState(true);
+  // Tracks the display email — seeded from prop, populated from Clerk on ticket-only path
+  const [resolvedEmail, setResolvedEmail] = React.useState<string | null>(
+    email
+  );
 
   const navigateToConsole = React.useCallback(() => {
     window.location.href = `${consoleUrl}/account/welcome`;
@@ -51,10 +55,13 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
         return;
       }
       if (errCode === "sign_up_restricted_waitlist") {
-        onError?.(
-          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
-          true
-        );
+        const msg =
+          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
+        if (onError) {
+          onError(msg, true);
+        } else {
+          window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`;
+        }
         return;
       }
       setError(
@@ -76,10 +83,16 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
 
     async function init() {
       if (mode === "sign-up" && ticket) {
-        // Invitation ticket flow — may auto-complete
-        const { error: ticketError } = await signUp.ticket({ ticket });
-        if (ticketError) {
-          handleClerkError(ticketError);
+        // Invitation ticket flow: create sign-up with ticket + email + legal in one call.
+        // ticket bypasses waitlist; emailAddress is whatever the user wants (not required to
+        // match the invited address); legalAccepted satisfies the legal_accepted requirement.
+        const { error: createError } = await signUp.create({
+          ticket,
+          emailAddress: email ?? undefined,
+          legalAccepted: true,
+        });
+        if (createError) {
+          handleClerkError(createError);
           return;
         }
         if (signUp.status === "complete") {
@@ -89,13 +102,35 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
           });
           return;
         }
-        // Ticket didn't auto-complete — fall through to email code
+        setResolvedEmail(signUp.emailAddress ?? email);
+        // Email verification required — send OTP now
+        const { error: sendError } = await startSpan(
+          { name: "auth.otp.send", op: "auth", attributes: { mode } },
+          () => signUp.verifications.sendEmailCode()
+        );
+        if (sendError) {
+          addBreadcrumb({
+            category: "auth",
+            message: "OTP send failed",
+            level: "error",
+            data: { code: sendError.code, mode },
+          });
+          handleClerkError(sendError);
+        } else {
+          addBreadcrumb({
+            category: "auth",
+            message: "OTP code sent",
+            level: "info",
+            data: { mode, email },
+          });
+        }
+        return;
       }
 
       if (mode === "sign-in") {
         const { error: sendError } = await startSpan(
           { name: "auth.otp.send", op: "auth", attributes: { mode } },
-          () => signIn.emailCode.sendCode({ emailAddress: email })
+          () => signIn.emailCode.sendCode({ emailAddress: email ?? undefined })
         );
         if (sendError) {
           addBreadcrumb({
@@ -116,7 +151,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
       } else {
         // Sign-up: create the account then send verification code
         const { error: createError } = await signUp.create({
-          emailAddress: email,
+          emailAddress: email ?? undefined,
           legalAccepted: true,
         });
         if (createError) {
@@ -271,7 +306,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
     try {
       if (mode === "sign-in") {
         const { error: sendError } = await signIn.emailCode.sendCode({
-          emailAddress: email,
+          emailAddress: email ?? undefined,
         });
         if (sendError) {
           handleClerkError(sendError);
@@ -316,7 +351,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
   return (
     <CodeVerificationUI
       code={code}
-      email={email}
+      email={resolvedEmail}
       inlineError={error}
       isRedirecting={isRedirecting}
       isResending={isResending}

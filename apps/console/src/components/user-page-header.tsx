@@ -6,6 +6,7 @@ import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useClerk, useOrganizationList, useUser } from "@vendor/clerk/client";
 import { NotificationsTrigger } from "@vendor/knock/components/trigger";
+import { authUrl } from "~/lib/related-projects";
 
 export function UserPageHeader() {
   const trpc = useTRPC();
@@ -66,7 +67,9 @@ export function UserPageHeader() {
           <UserMenu
             email={email}
             initials={initials}
-            onSignOut={() => void signOut()}
+            onSignOut={() =>
+              void signOut({ redirectUrl: `${authUrl}/sign-in` })
+            }
             settingsHref="/account/settings/general"
           />
         )}
