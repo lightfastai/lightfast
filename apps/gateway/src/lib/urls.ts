@@ -1,6 +1,6 @@
 import { backfillUrl as _backfillUrl } from "@repo/gateway-service-clients";
-import { getQStashClient } from "@vendor/qstash";
 import { log } from "@vendor/observability/log/edge";
+import { getQStashClient } from "@vendor/qstash";
 import { withRelatedProject } from "@vercel/related-projects";
 import { env } from "../env.js";
 

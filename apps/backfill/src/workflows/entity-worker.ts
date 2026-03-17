@@ -5,11 +5,10 @@ import {
   HttpError,
 } from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
-
+import { log } from "@vendor/observability/log/edge";
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
 import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../lib/constants.js";
-import { log } from "@vendor/observability/log/edge";
 
 export const backfillEntityWorker = inngest.createFunction(
   {

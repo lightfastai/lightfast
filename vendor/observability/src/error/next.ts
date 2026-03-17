@@ -1,6 +1,5 @@
 import "server-only";
 
-// biome-ignore lint/performance/noNamespaceImport: Sentry SDK convention
 import * as Sentry from "@sentry/nextjs";
 import { log } from "../log/next";
 

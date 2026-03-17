@@ -7,9 +7,9 @@ import type {
 } from "@repo/console-providers";
 import { getProvider } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/edge";
 import { redis } from "@vendor/upstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
-import { log } from "@vendor/observability/log/edge";
 import { webhookSeenKey } from "./cache.js";
 import { relayBaseUrl } from "./urls.js";
 

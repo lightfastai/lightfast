@@ -18,6 +18,7 @@ import {
 } from "@repo/console-providers";
 import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
+import { log } from "@vendor/observability/log/edge";
 import { redis } from "@vendor/upstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
@@ -27,7 +28,6 @@ import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
 import { getEncryptionKey } from "../lib/encryption.js";
 import { updateTokenRecord, writeTokenRecord } from "../lib/token-store.js";
 import { consoleUrl, gatewayBaseUrl } from "../lib/urls.js";
-import { log } from "@vendor/observability/log/edge";
 import { apiKeyAuth } from "../middleware/auth.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import type { TenantVariables } from "../middleware/tenant.js";
@@ -56,7 +56,9 @@ const providerConfigs: Record<string, unknown> = Object.fromEntries(
     .filter(([, config]) => config !== null)
 );
 
-const connections = new Hono<{ Variables: TenantVariables & LifecycleVariables }>();
+const connections = new Hono<{
+  Variables: TenantVariables & LifecycleVariables;
+}>();
 
 // ── OAuth ──
 
@@ -413,8 +415,15 @@ connections.get("/:provider/callback", async (c) => {
     return c.redirect(redirectUrl.toString());
   } catch (err) {
     const message = err instanceof Error ? err.message : "unknown";
-    c.set("logFields", { ...c.get("logFields"), provider: providerName, callbackError: message });
-    log.error("[connections] oauth callback failed", { provider: providerName, error: message });
+    c.set("logFields", {
+      ...c.get("logFields"),
+      provider: providerName,
+      callbackError: message,
+    });
+    log.error("[connections] oauth callback failed", {
+      provider: providerName,
+      error: message,
+    });
 
     // Store error result for CLI polling
     await redis
@@ -775,7 +784,11 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
   });
 
   if (!installation) {
-    c.set("logFields", { ...c.get("logFields"), connectionId: id, connectionError: "not_found" });
+    c.set("logFields", {
+      ...c.get("logFields"),
+      connectionId: id,
+      connectionError: "not_found",
+    });
     return c.json({ error: "not_found" }, 404);
   }
 
@@ -851,7 +864,11 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
       provider: providerName,
       connectionError: "token_error",
     });
-    log.error("[connections] proxy token error", { provider: providerName, connectionId: id, error: message });
+    log.error("[connections] proxy token error", {
+      provider: providerName,
+      connectionId: id,
+      error: message,
+    });
     return c.json({ error: "token_error", message }, 502);
   }
 
