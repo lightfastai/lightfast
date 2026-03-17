@@ -38,7 +38,7 @@ interface NavItem {
  */
 function getWorkspacePrimaryItems(
   orgSlug: string,
-  workspaceName: string
+  workspaceName: string,
 ): NavItem[] {
   return [
     {
@@ -57,7 +57,7 @@ function getWorkspacePrimaryItems(
  */
 function getWorkspaceManageItems(
   orgSlug: string,
-  workspaceName: string
+  workspaceName: string,
 ): NavItem[] {
   return [
     {
@@ -148,7 +148,7 @@ export function AppSidebar() {
   // Determine the current context
   const isInOrgSettings = pathname.startsWith(`/${orgSlug}/settings`);
   const _isInWorkspaceSettings = pathname.startsWith(
-    `/${orgSlug}/${workspaceName}/settings`
+    `/${orgSlug}/${workspaceName}/settings`,
   );
   const isInWorkspace =
     workspaceName && workspaceName !== "settings" && !isInOrgSettings;
@@ -247,7 +247,7 @@ export function AppSidebar() {
                 variant="ghost"
               >
                 <Link
-                  href="https://lightfast.ai/docs"
+                  href="https://lightfast.ai/docs/get-started/overview"
                   rel="noopener noreferrer"
                   target="_blank"
                 >

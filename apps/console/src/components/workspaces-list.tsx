@@ -29,7 +29,7 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
 
   // Filter workspaces by search query (search by name)
   const filteredWorkspaces = workspaces.filter((workspace) =>
-    workspace.name.toLowerCase().includes(searchQuery.toLowerCase())
+    workspace.name.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   return (
@@ -76,6 +76,7 @@ export function WorkspacesList({ orgSlug }: WorkspacesListProps) {
             {filteredWorkspaces.map((workspace) => {
               return (
                 <Link
+                  prefetch
                   className="group"
                   href={`/${orgSlug}/${workspace.name}`}
                   key={workspace.id}
