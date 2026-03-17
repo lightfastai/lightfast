@@ -32,7 +32,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
     if (signUp.status === "complete") {
       await signUp.finalize({
         navigate: async () => {
-          window.location.href = `${consoleUrl}/account/teams/new`;
+          window.location.href = `${consoleUrl}/account/welcome`;
         },
       });
       return;
@@ -54,7 +54,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
         signIn.sso({
           strategy,
           redirectCallbackUrl: "/sign-in/sso-callback",
-          redirectUrl: `${consoleUrl}/account/teams/new`,
+          redirectUrl: `${consoleUrl}/account/welcome`,
         })
     );
     if (error) {
@@ -90,7 +90,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
         signUp.sso({
           strategy,
           redirectCallbackUrl: "/sign-up/sso-callback",
-          redirectUrl: `${consoleUrl}/account/teams/new`,
+          redirectUrl: `${consoleUrl}/account/welcome`,
         })
     );
     if (error) {
