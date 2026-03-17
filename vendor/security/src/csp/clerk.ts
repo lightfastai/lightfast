@@ -34,10 +34,11 @@ export function createClerkCspDirectives(): PartialCspDirectives {
       "https://challenges.cloudflare.com",
     ],
 
-    // Connections: Clerk API for authentication
+    // Connections: Clerk API for authentication + telemetry
     connectSrc: [
       clerkFrontendApi as Source,
       "https://clerk.lightfast.ai", // Satellite domain for cross-domain sessions
+      "https://clerk-telemetry.com", // Clerk telemetry
     ],
 
     // Images: Clerk CDN for user avatars and assets

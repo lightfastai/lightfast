@@ -1,6 +1,7 @@
 "use client";
 
 import { Icons } from "@repo/ui/components/icons";
+import { addBreadcrumb, startSpan } from "@sentry/nextjs";
 import { useSignIn } from "@vendor/clerk/client";
 import Link from "next/link";
 import * as React from "react";
@@ -16,12 +17,25 @@ export function SessionActivator({ token }: SessionActivatorProps) {
 
   React.useEffect(() => {
     async function activate() {
-      const { error: ticketError } = await signIn.ticket({ ticket: token });
+      addBreadcrumb({
+        category: "auth",
+        message: "Session activation via ticket",
+        level: "info",
+      });
+      const { error: ticketError } = await startSpan(
+        { name: "auth.session.activate", op: "auth" },
+        () => signIn.ticket({ ticket: token })
+      );
       if (ticketError) {
         setError("Sign-in failed. Please try again.");
         return;
       }
       if (signIn.status === "complete") {
+        addBreadcrumb({
+          category: "auth",
+          message: "Session activated",
+          level: "info",
+        });
         await signIn.finalize({
           navigate: async () => {
             window.location.href = `${consoleUrl}/account/teams/new`;

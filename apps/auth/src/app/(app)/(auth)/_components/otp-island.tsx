@@ -1,6 +1,7 @@
 "use client";
 
 import { toast } from "@repo/ui/components/ui/sonner";
+import { addBreadcrumb, startSpan } from "@sentry/nextjs";
 import { useSignIn, useSignUp } from "@vendor/clerk/client";
 import * as React from "react";
 import { consoleUrl } from "~/lib/related-projects";
@@ -92,11 +93,25 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
       }
 
       if (mode === "sign-in") {
-        const { error: sendError } = await signIn.emailCode.sendCode({
-          emailAddress: email,
-        });
+        const { error: sendError } = await startSpan(
+          { name: "auth.otp.send", op: "auth", attributes: { mode } },
+          () => signIn.emailCode.sendCode({ emailAddress: email })
+        );
         if (sendError) {
+          addBreadcrumb({
+            category: "auth",
+            message: "OTP send failed",
+            level: "error",
+            data: { code: sendError.code, mode },
+          });
           handleClerkError(sendError);
+        } else {
+          addBreadcrumb({
+            category: "auth",
+            message: "OTP code sent",
+            level: "info",
+            data: { mode, email },
+          });
         }
       } else {
         // Sign-up: create the account then send verification code
@@ -108,9 +123,25 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
           handleClerkError(createError);
           return;
         }
-        const { error: sendError } = await signUp.verifications.sendEmailCode();
+        const { error: sendError } = await startSpan(
+          { name: "auth.otp.send", op: "auth", attributes: { mode } },
+          () => signUp.verifications.sendEmailCode()
+        );
         if (sendError) {
+          addBreadcrumb({
+            category: "auth",
+            message: "OTP send failed",
+            level: "error",
+            data: { code: sendError.code, mode },
+          });
           handleClerkError(sendError);
+        } else {
+          addBreadcrumb({
+            category: "auth",
+            message: "OTP code sent",
+            level: "info",
+            data: { mode, email },
+          });
         }
       }
     }
@@ -142,18 +173,37 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
     verifyingCodeRef.current = code;
 
     async function verify() {
+      addBreadcrumb({
+        category: "auth",
+        message: "OTP verification attempt",
+        level: "info",
+        data: { mode },
+      });
       setIsVerifying(true);
       try {
         if (mode === "sign-in") {
-          const { error: verifyError } = await signIn.emailCode.verifyCode({
-            code,
-          });
+          const { error: verifyError } = await startSpan(
+            { name: "auth.otp.verify", op: "auth", attributes: { mode } },
+            () => signIn.emailCode.verifyCode({ code })
+          );
           if (verifyError) {
+            addBreadcrumb({
+              category: "auth",
+              message: "OTP verification failed",
+              level: "warning",
+              data: { code: verifyError.code, mode },
+            });
             handleClerkError(verifyError);
             setIsVerifying(false);
             return;
           }
           if (signIn.status === "complete") {
+            addBreadcrumb({
+              category: "auth",
+              message: "OTP verified",
+              level: "info",
+              data: { mode },
+            });
             setIsRedirecting(true);
             await signIn.finalize({
               navigate: async () => navigateToConsole(),
@@ -165,14 +215,28 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
             setIsVerifying(false);
           }
         } else {
-          const { error: verifyError } =
-            await signUp.verifications.verifyEmailCode({ code });
+          const { error: verifyError } = await startSpan(
+            { name: "auth.otp.verify", op: "auth", attributes: { mode } },
+            () => signUp.verifications.verifyEmailCode({ code })
+          );
           if (verifyError) {
+            addBreadcrumb({
+              category: "auth",
+              message: "OTP verification failed",
+              level: "warning",
+              data: { code: verifyError.code, mode },
+            });
             handleClerkError(verifyError);
             setIsVerifying(false);
             return;
           }
           if (signUp.status === "complete") {
+            addBreadcrumb({
+              category: "auth",
+              message: "OTP verified",
+              level: "info",
+              data: { mode },
+            });
             setIsRedirecting(true);
             await signUp.finalize({
               navigate: async () => navigateToConsole(),

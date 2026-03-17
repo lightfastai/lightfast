@@ -1,10 +1,11 @@
 import {
+  captureConsoleIntegration,
   captureRouterTransitionStart,
+  extraErrorDataIntegration,
   httpClientIntegration,
   init as initSentry,
   replayIntegration,
   reportingObserverIntegration,
-  spotlightBrowserIntegration,
 } from "@sentry/nextjs";
 
 import { env } from "~/env";
@@ -19,6 +20,15 @@ initSentry({
   replaysSessionSampleRate:
     env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
   replaysOnErrorSampleRate: 1.0,
+  beforeBreadcrumb(breadcrumb) {
+    if (breadcrumb.type === "navigation" && breadcrumb.data?.to) {
+      breadcrumb.data.to = breadcrumb.data.to
+        .replace(/token=[^&]+/, "token=REDACTED")
+        .replace(/__clerk_ticket=[^&]+/, "__clerk_ticket=REDACTED")
+        .replace(/ticket=[^&]+/, "ticket=REDACTED");
+    }
+    return breadcrumb;
+  },
   integrations: [
     replayIntegration({
       maskAllText: true,
@@ -30,9 +40,8 @@ initSentry({
     reportingObserverIntegration({
       types: ["crash", "deprecation", "intervention"],
     }),
-    ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
-      ? [spotlightBrowserIntegration()]
-      : []),
+    captureConsoleIntegration({ levels: ["error", "warn"] }),
+    extraErrorDataIntegration({ depth: 3 }),
   ],
 });
 

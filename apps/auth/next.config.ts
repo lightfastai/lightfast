@@ -10,9 +10,7 @@ import {
   withSentry,
 } from "@vendor/next/next-config-builder";
 
-import { env } from "~/env";
-
-let config: NextConfig = withBetterStack(
+const baseConfig: NextConfig = withBetterStack(
   mergeNextConfig(vendorConfig, {
     transpilePackages: [
       "@repo/ui",
@@ -25,8 +23,4 @@ let config: NextConfig = withBetterStack(
   })
 );
 
-if (env.VERCEL) {
-  config = withSentry(config);
-}
-
-export default withMicrofrontends(config, { debug: true });
+export default withMicrofrontends(withSentry(baseConfig), { debug: true });
