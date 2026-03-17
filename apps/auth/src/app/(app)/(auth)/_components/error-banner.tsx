@@ -1,22 +1,24 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
+import { AUTH_ERROR_MESSAGES, type AuthErrorCode } from "../_lib/search-params";
 
 interface ErrorBannerProps {
   backUrl: string;
-  isWaitlist: boolean;
-  message: string;
+  errorCode?: AuthErrorCode | null;
+  message?: string | null;
 }
 
-export function ErrorBanner({
-  message,
-  isWaitlist,
-  backUrl,
-}: ErrorBannerProps) {
-  if (isWaitlist) {
+export function ErrorBanner({ message, errorCode, backUrl }: ErrorBannerProps) {
+  const displayMessage =
+    message ??
+    (errorCode ? AUTH_ERROR_MESSAGES[errorCode] : null) ??
+    "An error occurred.";
+
+  if (errorCode === "waitlist") {
     return (
       <div className="space-y-4">
         <div className="rounded-lg border border-border bg-destructive/30 p-3">
-          <p className="text-foreground text-sm">{message}</p>
+          <p className="text-foreground text-sm">{displayMessage}</p>
         </div>
         <Button asChild className="w-full" size="lg">
           <MicrofrontendLink href="/early-access">
@@ -30,10 +32,26 @@ export function ErrorBanner({
     );
   }
 
+  if (errorCode === "account_not_found") {
+    return (
+      <div className="space-y-4">
+        <div className="rounded-lg border border-border bg-destructive/30 p-3">
+          <p className="text-foreground text-sm">{displayMessage}</p>
+        </div>
+        <Button asChild className="w-full" size="lg">
+          <a href="/sign-up">Sign Up</a>
+        </Button>
+        <Button asChild className="w-full" size="lg" variant="outline">
+          <a href={backUrl}>Try again</a>
+        </Button>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-red-200 bg-red-50 p-3">
-        <p className="text-red-800 text-sm">{message}</p>
+      <div className="rounded-lg border border-border bg-destructive/30 p-3">
+        <p className="text-foreground text-sm">{displayMessage}</p>
       </div>
       <Button asChild className="w-full" size="lg" variant="outline">
         <a href={backUrl}>Try again</a>

@@ -44,13 +44,15 @@ interface PageProps {
 }
 
 export default async function SignInPage({ searchParams }: PageProps) {
-  const { step, email, error, token, waitlist } =
+  const { step, email, error, token, errorCode } =
     await loadSignInSearchParams(searchParams);
+
+  const hasError = !!(error ?? errorCode);
 
   return (
     <div className="w-full space-y-8">
       {/* Header — only on email step */}
-      {step === "email" && !error && (
+      {step === "email" && !hasError && (
         <div className="text-center">
           <h1 className="font-medium font-pp text-3xl text-foreground">
             Log in to Lightfast
@@ -60,16 +62,16 @@ export default async function SignInPage({ searchParams }: PageProps) {
 
       <div className="space-y-4">
         {/* Error display */}
-        {error && (
+        {(error ?? errorCode) && (
           <ErrorBanner
             backUrl="/sign-in"
-            isWaitlist={waitlist === "true"}
+            errorCode={errorCode}
             message={error}
           />
         )}
 
         {/* Step: email — server component form + client OAuth island */}
-        {!error && step === "email" && (
+        {!hasError && step === "email" && (
           <>
             <EmailForm action="sign-in" />
             <SeparatorWithText text="Or" />
@@ -78,7 +80,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
         )}
 
         {/* Step: code — client island (irreducible: OTP + Clerk FAPI) */}
-        {!error && step === "code" && email && (
+        {!hasError && step === "code" && email && (
           <OTPIsland email={email} mode="sign-in" />
         )}
 

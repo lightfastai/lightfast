@@ -8,10 +8,11 @@ import { useSignIn, useSignUp } from "@vendor/clerk/client";
 import type { OAuthStrategy } from "@vendor/clerk/types";
 import * as React from "react";
 import { consoleUrl } from "~/lib/related-projects";
+import type { AuthErrorCode } from "../_lib/search-params";
 
 interface OAuthButtonProps {
   mode: "sign-in" | "sign-up";
-  onError?: (message: string, isWaitlist?: boolean) => void;
+  onError?: (errorCode: AuthErrorCode) => void;
   ticket?: string | null;
 }
 
@@ -21,6 +22,51 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   const [loading, setLoading] = React.useState(false);
 
   async function handleTicketSignUp(strategy: OAuthStrategy) {
+    // Step 1: Apply the ticket to the sign-up resource.
+    // signUp.sso() silently drops the `ticket` param — confirmed by clerk-js@5.125.3
+    // source inspection. The only path that sends ticket to FAPI is signUp.create().
+    const { error: createError } = await startSpan(
+      {
+        name: "auth.ticket.create",
+        op: "auth",
+        attributes: { strategy, mode },
+      },
+      () =>
+        signUp.create({
+          ticket: ticket!,
+        })
+    );
+    if (createError) {
+      const errCode = createError.code;
+      if (errCode === "sign_up_restricted_waitlist") {
+        addBreadcrumb({
+          category: "auth",
+          message: "OAuth blocked by waitlist (ticket create step)",
+          level: "warning",
+          data: { strategy },
+        });
+        if (onError) {
+          onError("waitlist");
+        } else {
+          window.location.href = "/sign-up?errorCode=waitlist";
+        }
+      } else {
+        toast.error(
+          createError.longMessage ??
+            createError.message ??
+            "Authentication failed"
+        );
+      }
+      setLoading(false);
+      return;
+    }
+
+    // Step 2: Initiate OAuth. FAPI uses the session cookie to identify the
+    // existing sign-up (with ticket attached) rather than creating a fresh one.
+    // legalAccepted is passed directly to sso() — SignUpFutureSSOParams extends
+    // SignUpFutureAdditionalParams which includes legalAccepted. This sends it
+    // in the same FAPI request that initiates the OAuth redirect.
+    // InviteOAuthCompleter handles it as a fallback if FAPI resets it post-callback.
     const { error } = await startSpan(
       {
         name: "auth.oauth.initiate",
@@ -28,15 +74,12 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
         attributes: { strategy, mode },
       },
       () =>
-        signUp.sso(
-          // Clerk FAPI accepts `ticket` in sso() for invitation flows; TS types omit this field
-          {
-            strategy,
-            ticket: ticket!,
-            redirectCallbackUrl: "/sign-up/sso-callback",
-            redirectUrl: `${consoleUrl}/account/welcome`,
-          } as unknown as Parameters<typeof signUp.sso>[0]
-        )
+        signUp.sso({
+          strategy,
+          redirectCallbackUrl: `/sign-up/sso-callback?__clerk_ticket=${encodeURIComponent(ticket!)}`,
+          redirectUrl: `${consoleUrl}/account/welcome`,
+          legalAccepted: true,
+        })
     );
     if (error) {
       const errCode = error.code;
@@ -47,12 +90,10 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
           level: "warning",
           data: { strategy },
         });
-        const msg =
-          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
         if (onError) {
-          onError(msg, true);
+          onError("waitlist");
         } else {
-          window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`;
+          window.location.href = "/sign-up?errorCode=waitlist";
         }
       } else {
         toast.error(
@@ -86,10 +127,11 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
           level: "warning",
           data: { strategy: "oauth_github" },
         });
-        onError?.(
-          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
-          true
-        );
+        if (onError) {
+          onError("waitlist");
+        } else {
+          window.location.href = "/sign-in?errorCode=waitlist";
+        }
       } else {
         toast.error(
           error.longMessage ?? error.message ?? "Authentication failed"
@@ -122,12 +164,10 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
           level: "warning",
           data: { strategy: "oauth_github" },
         });
-        const msg =
-          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
         if (onError) {
-          onError(msg, true);
+          onError("waitlist");
         } else {
-          window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`;
+          window.location.href = "/sign-up?errorCode=waitlist";
         }
       } else {
         toast.error(

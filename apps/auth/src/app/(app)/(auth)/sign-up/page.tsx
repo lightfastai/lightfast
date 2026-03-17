@@ -61,7 +61,7 @@ interface PageProps {
 }
 
 export default async function SignUpPage({ searchParams }: PageProps) {
-  const { step, email, error, ticket, __clerk_ticket, waitlist } =
+  const { step, email, error, ticket, __clerk_ticket, errorCode } =
     await loadSignUpSearchParams(searchParams);
 
   // Support both ?ticket= (nuqs) and ?__clerk_ticket= (Clerk invitation URL)
@@ -75,10 +75,12 @@ export default async function SignUpPage({ searchParams }: PageProps) {
     ? decodeTicketExpiry(invitationTicket)
     : null;
 
+  const hasError = !!(error ?? errorCode);
+
   return (
     <div className="w-full max-w-md space-y-8">
       {/* Header — only on email step */}
-      {step === "email" && !error && (
+      {step === "email" && !hasError && (
         <div className="text-center">
           <h1 className="font-medium font-pp text-3xl text-foreground">
             {invitationTicket
@@ -90,16 +92,16 @@ export default async function SignUpPage({ searchParams }: PageProps) {
 
       <div className="space-y-4">
         {/* Error display */}
-        {error && (
+        {hasError && (
           <ErrorBanner
             backUrl={signUpBaseUrl}
-            isWaitlist={waitlist === "true"}
+            errorCode={errorCode}
             message={error}
           />
         )}
 
         {/* Step: email */}
-        {!error &&
+        {!hasError &&
           step === "email" &&
           (invitationTicket ? (
             // Invitation flow — GitHub primary, email form secondary
@@ -151,13 +153,13 @@ export default async function SignUpPage({ searchParams }: PageProps) {
           ))}
 
         {/* Step: code */}
-        {!error && step === "code" && email && (
+        {!hasError && step === "code" && email && (
           <OTPIsland email={email} mode="sign-up" ticket={invitationTicket} />
         )}
       </div>
 
       {/* Sign In Link — only on email step */}
-      {step === "email" && !error && (
+      {step === "email" && !hasError && (
         <div className="text-center text-sm">
           <span className="text-muted-foreground">
             Already have an account?{" "}
