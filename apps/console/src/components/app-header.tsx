@@ -4,6 +4,7 @@ import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useClerk, useUser } from "@vendor/clerk/client";
 import { NotificationsTrigger } from "@vendor/knock/components/trigger";
 import { useParams } from "next/navigation";
+import { authUrl } from "~/lib/related-projects";
 import { WorkspaceSwitcher } from "./workspace-switcher";
 
 /**
@@ -60,7 +61,9 @@ export function AppHeader() {
           <UserMenu
             email={email}
             initials={initials}
-            onSignOut={() => void signOut()}
+            onSignOut={() =>
+              void signOut({ redirectUrl: `${authUrl}/sign-in` })
+            }
             settingsHref="/account/settings/general"
           />
         )}

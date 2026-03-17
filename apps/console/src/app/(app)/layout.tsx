@@ -14,6 +14,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <ClerkProvider
+      afterSignOutUrl={`${authUrl}/sign-in`}
       publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInFallbackRedirectUrl="/account/welcome"
       signInUrl={`${authUrl}/sign-in`}
