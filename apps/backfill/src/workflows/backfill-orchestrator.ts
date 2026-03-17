@@ -4,10 +4,9 @@ import {
   createRelayClient,
 } from "@repo/gateway-service-clients";
 import { NonRetriableError } from "@vendor/inngest";
-
+import { log } from "@vendor/observability/log/edge";
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { log } from "@vendor/observability/log/edge";
 import { backfillEntityWorker } from "./entity-worker.js";
 
 export const backfillOrchestrator = inngest.createFunction(

@@ -12,6 +12,7 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { env } from "~/env";
 import { ppNeueMontreal } from "~/lib/fonts";
 import { consoleUrl } from "~/lib/related-projects";
+import { SentryUserIdentification } from "./_components/sentry-user-identification";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast Auth",
@@ -88,6 +89,7 @@ export default function RootLayout({
           }}
           waitlistUrl="/early-access"
         >
+          <SentryUserIdentification />
           <NuqsAdapter>{children}</NuqsAdapter>
           <Toaster position="bottom-right" />
           <VercelAnalytics />

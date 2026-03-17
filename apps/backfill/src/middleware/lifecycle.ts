@@ -1,7 +1,7 @@
+import { log } from "@vendor/observability/log/edge";
 import { addBreadcrumb } from "@vendor/observability/sentry";
 import { createMiddleware } from "hono/factory";
 import { env } from "../env.js";
-import { log } from "@vendor/observability/log/edge";
 import type { RequestIdVariables } from "./request-id.js";
 
 const isDev = env.NODE_ENV !== "production";

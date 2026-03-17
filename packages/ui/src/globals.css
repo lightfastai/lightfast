@@ -252,7 +252,7 @@
     font-family:
       var(--font-geist-sans), var(--font-sans), ui-sans-serif, system-ui,
       sans-serif;
-    letter-spacing: -0.03em; /* Geist-specific letter spacing */
+    /* letter-spacing: -0.03em; /* Geist-specific letter spacing */
     @apply bg-background text-foreground; /* Geist-specific letter spacing */
   }
   code,

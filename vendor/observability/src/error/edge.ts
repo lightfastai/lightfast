@@ -1,4 +1,3 @@
-// biome-ignore lint/performance/noNamespaceImport: Sentry SDK convention
 import * as Sentry from "@sentry/core";
 import { log } from "../log/edge";
 

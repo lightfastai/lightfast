@@ -3,12 +3,11 @@ import {
   timingSafeStringEqual,
 } from "@repo/console-providers";
 import { createGatewayClient } from "@repo/gateway-service-clients";
+import { log } from "@vendor/observability/log/edge";
 import { Hono } from "hono";
 import { z } from "zod";
-
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
-import { log } from "@vendor/observability/log/edge";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const cancelSchema = z.object({

@@ -6,6 +6,7 @@ import {
 } from "@db/console/schema";
 import type { WebhookReceiptPayload } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/edge";
 import { getQStashClient } from "@vendor/qstash";
 import { redis } from "@vendor/upstash";
 import type { WorkflowContext } from "@vendor/upstash-workflow";
@@ -17,7 +18,6 @@ import {
   webhookSeenKey,
 } from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
-import { log } from "@vendor/observability/log/edge";
 
 const qstash = getQStashClient();
 

@@ -3,6 +3,8 @@
 import { captureException } from "@sentry/nextjs";
 import { isClerkAPIResponseError } from "@vendor/clerk";
 import { clerkClient } from "@vendor/clerk/server";
+import { parseError } from "@vendor/observability/error/next";
+import { log } from "@vendor/observability/log/next";
 import {
   ARCJET_KEY,
   arcjet,
@@ -19,6 +21,7 @@ import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { z } from "zod";
 import { env } from "~/env";
+import { getAuthTraceContext } from "~/lib/observability";
 import { serializeEarlyAccessParams } from "../_lib/search-params";
 
 const earlyAccessSchema = z.object({
@@ -87,6 +90,10 @@ export async function joinEarlyAccessAction(
     // Redirect with field errors if validation fails
     if (!validatedFields.success) {
       const fieldErrors = validatedFields.error.flatten().fieldErrors;
+      log.warn("Early access form validation failed", {
+        errors: fieldErrors,
+        ...getAuthTraceContext(),
+      });
       redirect(
         serializeEarlyAccessParams("/early-access", {
           email: rawEmail,
@@ -110,6 +117,10 @@ export async function joinEarlyAccessAction(
     // Handle denied requests from Arcjet
     if (decision.isDenied()) {
       const reason = decision.reason;
+      log.warn("Early access blocked by Arcjet", {
+        reason: reason.type,
+        ...getAuthTraceContext(),
+      });
 
       if (reason.isRateLimit()) {
         redirect(
@@ -158,6 +169,9 @@ export async function joinEarlyAccessAction(
       );
       if (emailExists) {
         // Already registered — show success state (they're already on the list)
+        log.info("Early access duplicate email", {
+          ...getAuthTraceContext(),
+        });
         redirect(
           serializeEarlyAccessParams("/early-access", {
             success: true,
@@ -169,7 +183,10 @@ export async function joinEarlyAccessAction(
       if (isRedirectError(redisError)) {
         throw redisError;
       }
-      console.error("Redis error checking early access:", redisError);
+      log.error("Redis early-access check failed", {
+        error: String(redisError),
+        ...getAuthTraceContext(),
+      });
       captureException(redisError, {
         tags: { action: "joinEarlyAccess:redis-check", email },
       });
@@ -178,13 +195,19 @@ export async function joinEarlyAccessAction(
     // Add to Clerk waitlist via SDK
     const clerk = await clerkClient();
     await clerk.waitlistEntries.create({ emailAddress: email });
+    log.info("Early access waitlist entry created", {
+      ...getAuthTraceContext(),
+    });
 
     // Track in Redis after response is sent (non-blocking)
     after(async () => {
       try {
         await redis.sadd(EARLY_ACCESS_EMAILS_SET_KEY, email);
       } catch (redisError) {
-        console.error("Failed to add email to Redis tracking:", redisError);
+        log.error("Redis early-access tracking failed", {
+          error: String(redisError),
+          ...getAuthTraceContext(),
+        });
         captureException(redisError, {
           tags: { action: "joinEarlyAccess:redis-add", email },
         });
@@ -256,6 +279,11 @@ export async function joinEarlyAccessAction(
       captureException(error, {
         tags: { action: "joinEarlyAccess:clerk" },
       });
+      log.error("Clerk waitlist error", {
+        code: error.errors[0]?.code,
+        message: error.errors[0]?.longMessage,
+        ...getAuthTraceContext(),
+      });
       redirect(
         serializeEarlyAccessParams("/early-access", {
           error:
@@ -269,10 +297,7 @@ export async function joinEarlyAccessAction(
     }
 
     // Non-Clerk errors
-    console.error("Error in early access action:", error);
-    captureException(error, {
-      tags: { action: "joinEarlyAccess:unexpected" },
-    });
+    parseError(error);
     redirect(
       serializeEarlyAccessParams("/early-access", {
         error: "An error occurred. Please try again.",

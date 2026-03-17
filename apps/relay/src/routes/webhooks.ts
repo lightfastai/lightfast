@@ -5,13 +5,13 @@ import type {
   WebhookReceiptPayload,
 } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/edge";
 import { getQStashClient } from "@vendor/qstash";
 import { redis } from "@vendor/upstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
 import { webhookSeenKey } from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
-import { log } from "@vendor/observability/log/edge";
 import type { WebhookVariables } from "../middleware/webhook.js";
 import {
   payloadParseAndExtract,

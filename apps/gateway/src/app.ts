@@ -1,7 +1,7 @@
 import "./sentry-init.js";
+import { log } from "@vendor/observability/log/edge";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
-import { log } from "@vendor/observability/log/edge";
 import { errorSanitizer } from "./middleware/error-sanitizer.js";
 import type { LifecycleVariables } from "./middleware/lifecycle.js";
 import { lifecycle } from "./middleware/lifecycle.js";

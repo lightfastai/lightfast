@@ -13,8 +13,8 @@ import { z } from "zod";
 import { env } from "../env.js";
 import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
-import type { LifecycleVariables } from "../middleware/lifecycle.js";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
+import type { LifecycleVariables } from "../middleware/lifecycle.js";
 
 const admin = new Hono<{ Variables: LifecycleVariables }>();
 

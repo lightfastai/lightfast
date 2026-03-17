@@ -3,7 +3,6 @@ import {
   captureRequestError,
   extraErrorDataIntegration,
   init,
-  spotlightIntegration,
 } from "@sentry/nextjs";
 
 import { env } from "~/env";
@@ -24,12 +23,7 @@ const register = () => {
       debug: false,
       enableLogs: true,
       includeLocalVariables: true,
-      integrations: [
-        ...sharedIntegrations(),
-        ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
-          ? [spotlightIntegration()]
-          : []),
-      ],
+      integrations: sharedIntegrations(),
     });
   }
 

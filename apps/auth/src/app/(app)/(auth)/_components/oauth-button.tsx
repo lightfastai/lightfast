@@ -3,6 +3,7 @@
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { addBreadcrumb, startSpan } from "@sentry/nextjs";
 import { useSignIn, useSignUp } from "@vendor/clerk/client";
 import type { OAuthStrategy } from "@vendor/clerk/types";
 import * as React from "react";
@@ -43,14 +44,28 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   }
 
   async function handleSignIn(strategy: OAuthStrategy) {
-    const { error } = await signIn.sso({
-      strategy,
-      redirectCallbackUrl: "/sign-in/sso-callback",
-      redirectUrl: `${consoleUrl}/account/teams/new`,
-    });
+    const { error } = await startSpan(
+      {
+        name: "auth.oauth.initiate",
+        op: "auth",
+        attributes: { strategy, mode },
+      },
+      () =>
+        signIn.sso({
+          strategy,
+          redirectCallbackUrl: "/sign-in/sso-callback",
+          redirectUrl: `${consoleUrl}/account/teams/new`,
+        })
+    );
     if (error) {
       const errCode = error.code;
       if (errCode === "sign_up_restricted_waitlist") {
+        addBreadcrumb({
+          category: "auth",
+          message: "OAuth blocked by waitlist",
+          level: "warning",
+          data: { strategy: "oauth_github" },
+        });
         onError?.(
           "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
           true
@@ -65,14 +80,28 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   }
 
   async function handleSignUp(strategy: OAuthStrategy) {
-    const { error } = await signUp.sso({
-      strategy,
-      redirectCallbackUrl: "/sign-up/sso-callback",
-      redirectUrl: `${consoleUrl}/account/teams/new`,
-    });
+    const { error } = await startSpan(
+      {
+        name: "auth.oauth.initiate",
+        op: "auth",
+        attributes: { strategy, mode },
+      },
+      () =>
+        signUp.sso({
+          strategy,
+          redirectCallbackUrl: "/sign-up/sso-callback",
+          redirectUrl: `${consoleUrl}/account/teams/new`,
+        })
+    );
     if (error) {
       const errCode = error.code;
       if (errCode === "sign_up_restricted_waitlist") {
+        addBreadcrumb({
+          category: "auth",
+          message: "OAuth blocked by waitlist",
+          level: "warning",
+          data: { strategy: "oauth_github" },
+        });
         onError?.(
           "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
           true
@@ -88,6 +117,12 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
 
   async function handleOAuth(strategy: OAuthStrategy) {
     setLoading(true);
+    addBreadcrumb({
+      category: "auth",
+      message: "OAuth sign-in initiated",
+      level: "info",
+      data: { strategy: "oauth_github", mode },
+    });
 
     // Determine handler BEFORE entering try/catch (no conditionals inside try)
     const handler =

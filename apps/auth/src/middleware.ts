@@ -16,12 +16,16 @@ import { consoleUrl } from "~/lib/related-projects";
 // Security Headers
 // =============================================================================
 
+const isDev = process.env.VERCEL_ENV !== "production";
+
 const securityHeaders = securityMiddleware(
   composeCspOptions(
     createNextjsCspDirectives(),
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
-    createSentryCspDirectives()
+    createSentryCspDirectives(),
+    // Spotlight dev tool (Sentry) connects to localhost:8969 in development
+    ...(isDev ? [{ connectSrc: ["http://localhost:8969" as const] }] : [])
   )
 );
 
