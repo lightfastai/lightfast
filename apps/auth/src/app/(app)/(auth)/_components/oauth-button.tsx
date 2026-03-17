@@ -20,27 +20,47 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   const { signUp } = useSignUp();
   const [loading, setLoading] = React.useState(false);
 
-  async function handleTicketSignUp() {
-    const { error: ticketError } = await signUp.ticket({ ticket: ticket! });
-    if (ticketError) {
-      onError?.(
-        "Please use the email option above to complete your invitation sign-up."
-      );
-      setLoading(false);
-      return;
-    }
-    if (signUp.status === "complete") {
-      await signUp.finalize({
-        navigate: async () => {
-          window.location.href = `${consoleUrl}/account/welcome`;
-        },
-      });
-      return;
-    }
-    onError?.(
-      "Please use the email option above to complete your invitation sign-up."
+  async function handleTicketSignUp(strategy: OAuthStrategy) {
+    const { error } = await startSpan(
+      {
+        name: "auth.oauth.initiate",
+        op: "auth",
+        attributes: { strategy, mode },
+      },
+      () =>
+        signUp.sso(
+          // Clerk FAPI accepts `ticket` in sso() for invitation flows; TS types omit this field
+          {
+            strategy,
+            ticket: ticket!,
+            redirectCallbackUrl: "/sign-up/sso-callback",
+            redirectUrl: `${consoleUrl}/account/welcome`,
+          } as unknown as Parameters<typeof signUp.sso>[0]
+        )
     );
-    setLoading(false);
+    if (error) {
+      const errCode = error.code;
+      if (errCode === "sign_up_restricted_waitlist") {
+        addBreadcrumb({
+          category: "auth",
+          message: "OAuth blocked by waitlist (ticket flow)",
+          level: "warning",
+          data: { strategy },
+        });
+        const msg =
+          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
+        if (onError) {
+          onError(msg, true);
+        } else {
+          window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`;
+        }
+      } else {
+        toast.error(
+          error.longMessage ?? error.message ?? "Authentication failed"
+        );
+      }
+      setLoading(false);
+    }
   }
 
   async function handleSignIn(strategy: OAuthStrategy) {
@@ -102,10 +122,13 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
           level: "warning",
           data: { strategy: "oauth_github" },
         });
-        onError?.(
-          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
-          true
-        );
+        const msg =
+          "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.";
+        if (onError) {
+          onError(msg, true);
+        } else {
+          window.location.href = `/sign-up?error=${encodeURIComponent(msg)}&waitlist=true`;
+        }
       } else {
         toast.error(
           error.longMessage ?? error.message ?? "Authentication failed"
@@ -127,7 +150,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
     // Determine handler BEFORE entering try/catch (no conditionals inside try)
     const handler =
       mode === "sign-up" && ticket
-        ? () => handleTicketSignUp()
+        ? () => handleTicketSignUp(strategy)
         : mode === "sign-in"
           ? () => handleSignIn(strategy)
           : () => handleSignUp(strategy);

@@ -11,6 +11,23 @@ import { OTPIsland } from "../_components/otp-island";
 import { SeparatorWithText } from "../_components/separator-with-text";
 import { loadSignUpSearchParams } from "../_lib/search-params";
 
+function decodeTicketExpiry(ticket: string): Date | null {
+  try {
+    const segment = ticket.split(".")[1];
+    if (!segment) {
+      return null;
+    }
+    const payload = JSON.parse(
+      atob(segment.replace(/-/g, "+").replace(/_/g, "/"))
+    ) as { exp?: unknown };
+    return typeof payload.exp === "number"
+      ? new Date(payload.exp * 1000)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
 export const metadata: Metadata = createMetadata({
   title: "Sign Up - Lightfast Auth",
   description:
@@ -50,23 +67,20 @@ export default async function SignUpPage({ searchParams }: PageProps) {
     ? `/sign-up?__clerk_ticket=${encodeURIComponent(invitationTicket)}`
     : "/sign-up";
 
+  const invitationExpiry = invitationTicket
+    ? decodeTicketExpiry(invitationTicket)
+    : null;
+
   return (
     <div className="w-full max-w-md space-y-8">
       {/* Header — only on email step */}
       {step === "email" && !error && (
         <div className="text-center">
           <h1 className="font-medium font-pp text-3xl text-foreground">
-            Sign up for Lightfast
+            {invitationTicket
+              ? "Accept Your Invitation"
+              : "Sign up for Lightfast"}
           </h1>
-        </div>
-      )}
-
-      {/* Invitation info */}
-      {invitationTicket && step === "email" && !error && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-          <p className="text-blue-800 text-sm">
-            You've been invited to join Lightfast. Complete sign-up below.
-          </p>
         </div>
       )}
 
@@ -80,39 +94,59 @@ export default async function SignUpPage({ searchParams }: PageProps) {
           />
         )}
 
-        {/* Step: email — server component form + OAuth */}
-        {!error && step === "email" && (
-          <>
-            <EmailForm action="sign-up" ticket={invitationTicket} />
+        {/* Step: email */}
+        {!error &&
+          step === "email" &&
+          (invitationTicket ? (
+            // Invitation flow — GitHub primary, email form secondary
+            <>
+              <OAuthButton mode="sign-up" ticket={invitationTicket} />
+              <SeparatorWithText text="Or" />
+              <EmailForm action="sign-up" ticket={invitationTicket} />
+              {invitationExpiry && (
+                <p className="text-center text-muted-foreground text-xs">
+                  Invitation expires{" "}
+                  {invitationExpiry.toLocaleDateString("en-AU", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </p>
+              )}
+            </>
+          ) : (
+            // Standard waitlist sign-up — email form + GitHub secondary
+            <>
+              <EmailForm action="sign-up" ticket={null} />
 
-            {/* Legal compliance */}
-            <p className="text-center text-muted-foreground text-sm">
-              By joining, you agree to our{" "}
-              <MicrofrontendLink
-                className="text-foreground underline hover:text-foreground/80"
-                href="/legal/terms"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Terms of Service
-              </MicrofrontendLink>{" "}
-              and{" "}
-              <MicrofrontendLink
-                className="text-foreground underline hover:text-foreground/80"
-                href="/legal/privacy"
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                Privacy Policy
-              </MicrofrontendLink>
-            </p>
+              {/* Legal compliance */}
+              <p className="text-center text-muted-foreground text-sm">
+                By joining, you agree to our{" "}
+                <MicrofrontendLink
+                  className="text-foreground underline hover:text-foreground/80"
+                  href="/legal/terms"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Terms of Service
+                </MicrofrontendLink>{" "}
+                and{" "}
+                <MicrofrontendLink
+                  className="text-foreground underline hover:text-foreground/80"
+                  href="/legal/privacy"
+                  rel="noopener noreferrer"
+                  target="_blank"
+                >
+                  Privacy Policy
+                </MicrofrontendLink>
+              </p>
 
-            <SeparatorWithText text="Or" />
-            <OAuthButton mode="sign-up" ticket={invitationTicket} />
-          </>
-        )}
+              <SeparatorWithText text="Or" />
+              <OAuthButton mode="sign-up" ticket={null} />
+            </>
+          ))}
 
-        {/* Step: code — client island (irreducible: OTP + Clerk FAPI) */}
+        {/* Step: code */}
         {!error && step === "code" && email && (
           <OTPIsland email={email} mode="sign-up" ticket={invitationTicket} />
         )}
