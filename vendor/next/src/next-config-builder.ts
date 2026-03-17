@@ -142,7 +142,7 @@ export const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
 };
 
 export const withSentry: (sourceConfig: NextConfig) => NextConfig = (
-  sourceConfig: NextConfig
+  sourceConfig: NextConfig,
 ) => withSentryConfig(sourceConfig, sentryConfig);
 
 /**
@@ -154,7 +154,7 @@ export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
   withBundleAnalyzer()(
     sourceConfig as unknown as Parameters<
       ReturnType<typeof withBundleAnalyzer>
-    >[0]
+    >[0],
   );
 
 /**
@@ -162,6 +162,6 @@ export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
  * @returns {import("next").NextConfig}
  */
 export const withBetterStack: (sourceConfig: NextConfig) => NextConfig = (
-  sourceConfig: NextConfig
+  sourceConfig: NextConfig,
   // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- withBetterStackNext types are loosely typed
 ) => withBetterStackNext(sourceConfig);
