@@ -72,31 +72,31 @@ const viewerWithoutOrgResponse = {
 
 describe("oauth.buildAuthUrl", () => {
   it("builds Linear OAuth authorization URL", () => {
-    const url = linear.oauth.buildAuthUrl(testConfig, "state-xyz");
+    const url = linear.auth.buildAuthUrl(testConfig, "state-xyz");
     expect(url).toContain("https://linear.app/oauth/authorize");
   });
 
   it("includes client_id, response_type, and state", () => {
-    const url = linear.oauth.buildAuthUrl(testConfig, "my-state");
+    const url = linear.auth.buildAuthUrl(testConfig, "my-state");
     expect(url).toContain("client_id=lin_client_id");
     expect(url).toContain("response_type=code");
     expect(url).toContain("state=my-state");
   });
 
   it("includes redirect_uri using callbackBaseUrl", () => {
-    const url = linear.oauth.buildAuthUrl(testConfig, "s");
+    const url = linear.auth.buildAuthUrl(testConfig, "s");
     expect(url).toContain(
       encodeURIComponent("https://app.lightfast.ai/gateway/linear/callback")
     );
   });
 
   it("uses default scopes read,write when not specified", () => {
-    const url = linear.oauth.buildAuthUrl(testConfig, "s");
+    const url = linear.auth.buildAuthUrl(testConfig, "s");
     expect(url).toContain("scope=read%2Cwrite");
   });
 
   it("uses custom scopes from options", () => {
-    const url = linear.oauth.buildAuthUrl(testConfig, "s", {
+    const url = linear.auth.buildAuthUrl(testConfig, "s", {
       scopes: ["read", "issues:write"],
     });
     expect(url).toContain("scope=read%2Cissues%3Awrite");
@@ -112,7 +112,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(tokenResponse),
     });
 
-    const tokens = await linear.oauth.exchangeCode(
+    const tokens = await linear.auth.exchangeCode(
       testConfig,
       "auth-code-123",
       "https://app.lightfast.ai/gateway/linear/callback"
@@ -131,7 +131,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(tokenResponse),
     });
 
-    await linear.oauth.exchangeCode(
+    await linear.auth.exchangeCode(
       testConfig,
       "code",
       "https://redirect.example.com"
@@ -149,7 +149,7 @@ describe("oauth.exchangeCode", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
     await expect(
-      linear.oauth.exchangeCode(
+      linear.auth.exchangeCode(
         testConfig,
         "bad-code",
         "https://redirect.example.com"
@@ -172,7 +172,7 @@ describe("oauth.refreshToken", () => {
       json: () => Promise.resolve(refreshed),
     });
 
-    const tokens = await linear.oauth.refreshToken(
+    const tokens = await linear.auth.refreshToken(
       testConfig,
       "lin_refresh_token456"
     );
@@ -186,7 +186,7 @@ describe("oauth.refreshToken", () => {
       json: () => Promise.resolve(tokenResponse),
     });
 
-    await linear.oauth.refreshToken(testConfig, "refresh-token");
+    await linear.auth.refreshToken(testConfig, "refresh-token");
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(init.body).toContain("grant_type=refresh_token");
@@ -197,7 +197,7 @@ describe("oauth.refreshToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
 
     await expect(
-      linear.oauth.refreshToken(testConfig, "expired-token")
+      linear.auth.refreshToken(testConfig, "expired-token")
     ).rejects.toThrow("Linear token refresh failed: 401");
   });
 });
@@ -209,14 +209,14 @@ describe("oauth.revokeToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     await expect(
-      linear.oauth.revokeToken(testConfig, "lin_api_token")
+      linear.auth.revokeToken(testConfig, "lin_api_token")
     ).resolves.toBeUndefined();
   });
 
   it("sends Bearer authorization header with the access token", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await linear.oauth.revokeToken(testConfig, "my-access-token");
+    await linear.auth.revokeToken(testConfig, "my-access-token");
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.linear.app/oauth/revoke");
@@ -227,7 +227,7 @@ describe("oauth.revokeToken", () => {
   it("throws on HTTP error", async () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
-    await expect(linear.oauth.revokeToken(testConfig, "token")).rejects.toThrow(
+    await expect(linear.auth.revokeToken(testConfig, "token")).rejects.toThrow(
       "Linear token revocation failed: 500"
     );
   });
@@ -237,7 +237,7 @@ describe("oauth.revokeToken", () => {
 
 describe("oauth.processCallback", () => {
   it("throws when code is missing", async () => {
-    await expect(linear.oauth.processCallback(testConfig, {})).rejects.toThrow(
+    await expect(linear.auth.processCallback(testConfig, {})).rejects.toThrow(
       "missing code"
     );
   });
@@ -253,7 +253,7 @@ describe("oauth.processCallback", () => {
         json: () => Promise.resolve(viewerWithOrgResponse),
       });
 
-    const result = await linear.oauth.processCallback(testConfig, {
+    const result = await linear.auth.processCallback(testConfig, {
       code: "lin-code-123",
     });
 
@@ -276,7 +276,7 @@ describe("oauth.processCallback", () => {
         json: () => Promise.resolve(viewerWithOrgResponse),
       });
 
-    const result = await linear.oauth.processCallback(testConfig, {
+    const result = await linear.auth.processCallback(testConfig, {
       code: "lin-code",
     });
 
@@ -302,7 +302,7 @@ describe("oauth.processCallback", () => {
         json: () => Promise.resolve(viewerWithoutOrgResponse),
       });
 
-    const result = await linear.oauth.processCallback(testConfig, {
+    const result = await linear.auth.processCallback(testConfig, {
       code: "lin-code",
     });
 
@@ -325,7 +325,7 @@ describe("oauth.processCallback", () => {
       });
 
     await expect(
-      linear.oauth.processCallback(testConfig, { code: "lin-code" })
+      linear.auth.processCallback(testConfig, { code: "lin-code" })
     ).rejects.toThrow("Linear API did not return a viewer or organization ID");
   });
 
@@ -340,7 +340,7 @@ describe("oauth.processCallback", () => {
         json: () => Promise.resolve(viewerWithOrgResponse),
       });
 
-    const result = await linear.oauth.processCallback(testConfig, {
+    const result = await linear.auth.processCallback(testConfig, {
       code: "lin-code",
     });
     if (result.status === "connected") {
@@ -352,7 +352,7 @@ describe("oauth.processCallback", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
     await expect(
-      linear.oauth.processCallback(testConfig, { code: "bad-code" })
+      linear.auth.processCallback(testConfig, { code: "bad-code" })
     ).rejects.toThrow("Linear token exchange failed: 400");
   });
 
@@ -367,7 +367,7 @@ describe("oauth.processCallback", () => {
         json: () => Promise.resolve(viewerWithOrgResponse),
       });
 
-    await linear.oauth.processCallback(testConfig, { code: "lin-code" });
+    await linear.auth.processCallback(testConfig, { code: "lin-code" });
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(init.body).toContain(

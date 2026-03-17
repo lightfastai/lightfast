@@ -3,14 +3,20 @@ export type {
   ActionDef,
   ActionEventDef,
   ApiEndpoint,
+  ApiKeyDef,
+  ApiProvider,
+  AuthDef,
   BackfillContext,
   BackfillDef,
   BackfillEntityHandler,
   BackfillWebhookEvent,
   CategoryDef,
+  EventClassifier,
   EventDefinition,
   IconDef,
   InstallationMode,
+  LifecycleDef,
+  LifecycleReason,
   NormalizedInstallation,
   NormalizedResource,
   OAuthDef,
@@ -22,6 +28,7 @@ export type {
   RuntimeConfig,
   SimpleEventDef,
   WebhookDef,
+  WebhookProvider,
 } from "./define";
 export {
   actionDefSchema,
@@ -29,8 +36,11 @@ export {
   backfillContextSchema,
   backfillWebhookEventSchema,
   categoryDefSchema,
-  defineProvider,
+  defineApiProvider,
+  defineWebhookProvider,
   iconDefSchema,
+  isApiProvider,
+  isWebhookProvider,
   rateLimitSchema,
   runtimeConfigSchema,
   simpleEvent,
@@ -215,6 +225,19 @@ export {
   webhookReceiptPayloadSchema,
 } from "./gateway";
 export { createRS256JWT } from "./jwt";
+// ── Provider Definitions ──────────────────────────────────────────────────────
+export type {
+  ApolloAccountInfo,
+  ApolloConfig,
+  ApolloProviderConfig,
+} from "./providers/apollo/auth";
+// ── Apollo ────────────────────────────────────────────────────────────────────
+export {
+  apolloAccountInfoSchema,
+  apolloConfigSchema,
+  apolloProviderConfigSchema,
+} from "./providers/apollo/auth";
+export { apollo } from "./providers/apollo/index";
 export type {
   GitHubAccountInfo,
   GitHubConfig,
@@ -229,7 +252,6 @@ export {
   githubOAuthResponseSchema,
   githubProviderConfigSchema,
 } from "./providers/github/auth";
-// ── Provider Definitions ──────────────────────────────────────────────────────
 export { github } from "./providers/github/index";
 export type {
   LinearAccountInfo,

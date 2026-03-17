@@ -64,19 +64,19 @@ const tokenResponseUser = {
 
 describe("oauth.buildAuthUrl", () => {
   it("builds Vercel integration install URL with integrationSlug", () => {
-    const url = vercel.oauth.buildAuthUrl(testConfig, "state-abc");
+    const url = vercel.auth.buildAuthUrl(testConfig, "state-abc");
     expect(url).toContain(
       "https://vercel.com/integrations/my-vercel-integration/new"
     );
   });
 
   it("includes state query parameter", () => {
-    const url = vercel.oauth.buildAuthUrl(testConfig, "my-state");
+    const url = vercel.auth.buildAuthUrl(testConfig, "my-state");
     expect(url).toContain("state=my-state");
   });
 
   it("returns a string", () => {
-    expect(typeof vercel.oauth.buildAuthUrl(testConfig, "s")).toBe("string");
+    expect(typeof vercel.auth.buildAuthUrl(testConfig, "s")).toBe("string");
   });
 });
 
@@ -89,7 +89,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const tokens = await vercel.oauth.exchangeCode(
+    const tokens = await vercel.auth.exchangeCode(
       testConfig,
       "vercel-code-123",
       "https://app.lightfast.ai/gateway/vercel/callback"
@@ -106,7 +106,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    await vercel.oauth.exchangeCode(
+    await vercel.auth.exchangeCode(
       testConfig,
       "code",
       "https://redirect.example.com"
@@ -126,7 +126,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    await vercel.oauth.exchangeCode(
+    await vercel.auth.exchangeCode(
       testConfig,
       "my-code",
       "https://redirect.example.com"
@@ -143,7 +143,7 @@ describe("oauth.exchangeCode", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 400 });
 
     await expect(
-      vercel.oauth.exchangeCode(
+      vercel.auth.exchangeCode(
         testConfig,
         "bad-code",
         "https://redirect.example.com"
@@ -157,12 +157,12 @@ describe("oauth.exchangeCode", () => {
 describe("oauth.refreshToken", () => {
   it("always rejects — Vercel tokens do not support refresh", async () => {
     await expect(
-      vercel.oauth.refreshToken(testConfig, "any-token")
+      vercel.auth.refreshToken(testConfig, "any-token")
     ).rejects.toThrow("do not support refresh");
   });
 
   it("does not call fetch", async () => {
-    await vercel.oauth.refreshToken(testConfig, "t").catch(vi.fn());
+    await vercel.auth.refreshToken(testConfig, "t").catch(vi.fn());
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -174,14 +174,14 @@ describe("oauth.revokeToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     await expect(
-      vercel.oauth.revokeToken(testConfig, "vercel-access-token")
+      vercel.auth.revokeToken(testConfig, "vercel-access-token")
     ).resolves.toBeUndefined();
   });
 
   it("sends POST to Vercel revoke endpoint with Bearer auth", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await vercel.oauth.revokeToken(testConfig, "vercel-access-token-abc");
+    await vercel.auth.revokeToken(testConfig, "vercel-access-token-abc");
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toBe("https://api.vercel.com/v2/oauth/tokens/revoke");
@@ -194,7 +194,7 @@ describe("oauth.revokeToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 422 });
 
     await expect(
-      vercel.oauth.revokeToken(testConfig, "bad-token")
+      vercel.auth.revokeToken(testConfig, "bad-token")
     ).rejects.toThrow("Vercel token revocation failed: 422");
   });
 });
@@ -204,7 +204,7 @@ describe("oauth.revokeToken", () => {
 describe("oauth.processCallback", () => {
   it("throws when code is missing", async () => {
     await expect(
-      vercel.oauth.processCallback(testConfig, {
+      vercel.auth.processCallback(testConfig, {
         configurationId: "icfg-abc123",
       })
     ).rejects.toThrow("missing code");
@@ -212,7 +212,7 @@ describe("oauth.processCallback", () => {
 
   it("throws when configurationId is missing", async () => {
     await expect(
-      vercel.oauth.processCallback(testConfig, { code: "vercel-code" })
+      vercel.auth.processCallback(testConfig, { code: "vercel-code" })
     ).rejects.toThrow("missing configurationId");
   });
 
@@ -223,7 +223,7 @@ describe("oauth.processCallback", () => {
     });
 
     await expect(
-      vercel.oauth.processCallback(testConfig, {
+      vercel.auth.processCallback(testConfig, {
         code: "vercel-code",
         configurationId: "icfg-DIFFERENT",
       })
@@ -236,7 +236,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
@@ -250,7 +250,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseUser),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
@@ -264,7 +264,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
@@ -284,7 +284,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
@@ -306,7 +306,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
       next: "https://vercel.com/dashboard",
@@ -324,7 +324,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
@@ -338,7 +338,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });
@@ -354,7 +354,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(tokenResponseTeam),
     });
 
-    const result = await vercel.oauth.processCallback(testConfig, {
+    const result = await vercel.auth.processCallback(testConfig, {
       code: "vercel-code",
       configurationId: "icfg-abc123",
     });

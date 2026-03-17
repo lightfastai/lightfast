@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineProvider, simpleEvent } from "../../define";
+import { actionEvent, defineWebhookProvider, simpleEvent } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { sentryApi } from "./api";
 import type { SentryAccountInfo, SentryConfig } from "./auth";
@@ -79,7 +79,7 @@ async function exchangeSentryCode(
 
 // ── Provider Definition ──
 
-export const sentry = defineProvider({
+export const sentry = defineWebhookProvider({
   optional: true,
   envSchema: {
     SENTRY_APP_SLUG: z.string().min(1).optional(),
@@ -264,7 +264,36 @@ export const sentry = defineProvider({
     parsePayload: (raw) => sentryWebhookPayloadSchema.parse(raw),
   },
 
-  oauth: {
+  classifier: {
+    classify(eventType: string): "lifecycle" | "data" | "unknown" {
+      // Sentry installation events are lifecycle; content events are data
+      if (["installation"].includes(eventType)) {
+        return "lifecycle";
+      }
+      if (
+        ["issue", "error", "comment", "event_alert", "metric_alert"].includes(
+          eventType
+        )
+      ) {
+        return "data";
+      }
+      return "unknown";
+    },
+  },
+
+  lifecycle: {
+    events: {
+      installation: (action) => {
+        if (action === "deleted") {
+          return { reason: "provider_revoked" as const };
+        }
+        return null;
+      },
+    },
+  },
+
+  auth: {
+    kind: "oauth" as const,
     buildAuthUrl: (config, state) => {
       const url = new URL(
         `https://sentry.io/sentry-apps/${config.appSlug}/external-install/`

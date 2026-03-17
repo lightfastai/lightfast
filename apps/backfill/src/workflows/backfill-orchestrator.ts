@@ -99,6 +99,11 @@ export const backfillOrchestrator = inngest.createFunction(
         `No backfill provider for provider: ${provider}`
       );
     }
+    if (!providerDef.backfill) {
+      throw new NonRetriableError(
+        `Provider "${provider}" does not support backfill`
+      );
+    }
 
     const resolvedEntityTypes =
       entityTypes && entityTypes.length > 0

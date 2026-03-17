@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineProvider } from "../../define";
+import { actionEvent, defineWebhookProvider } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { linearApi } from "./api";
 import type { LinearAccountInfo, LinearConfig } from "./auth";
@@ -146,7 +146,7 @@ async function exchangeLinearCode(
 
 // ── Provider Definition ──
 
-export const linear = defineProvider({
+export const linear = defineWebhookProvider({
   optional: true,
   envSchema: {
     LINEAR_CLIENT_ID: z.string().min(1).optional(),
@@ -393,7 +393,32 @@ export const linear = defineProvider({
     parsePayload: (raw) => linearWebhookPayloadSchema.parse(raw),
   },
 
-  oauth: {
+  classifier: {
+    classify(eventType: string): "lifecycle" | "data" | "unknown" {
+      // Linear doesn't have lifecycle events via webhook (OAuth app model)
+      // All webhook events are data events
+      if (
+        [
+          "Issue",
+          "Comment",
+          "IssueLabel",
+          "Project",
+          "Cycle",
+          "ProjectUpdate",
+        ].includes(eventType.split(":")[0] ?? eventType)
+      ) {
+        return "data";
+      }
+      return "unknown";
+    },
+  },
+
+  lifecycle: {
+    events: {}, // Linear webhooks are all data events; no lifecycle events via webhook
+  },
+
+  auth: {
+    kind: "oauth" as const,
     buildAuthUrl: (config, state, options) => {
       const url = new URL("https://linear.app/oauth/authorize");
       url.searchParams.set("client_id", config.clientId);

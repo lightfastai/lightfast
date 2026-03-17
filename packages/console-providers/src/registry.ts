@@ -4,6 +4,8 @@ import type {
   EventDefinition,
   ProviderDefinition,
 } from "./define";
+import type { ApolloConfig } from "./providers/apollo/auth";
+import { apollo } from "./providers/apollo/index";
 import type { GitHubConfig } from "./providers/github/auth";
 import { github } from "./providers/github/index";
 import type { LinearConfig } from "./providers/linear/auth";
@@ -18,6 +20,7 @@ import { vercel } from "./providers/vercel/index";
 // Maps each provider to its concrete config type — enables type-safe satisfies without `any`.
 // Adding a provider = add entry here + add to PROVIDERS below.
 interface ProviderConfigMap {
+  readonly apollo: ApolloConfig;
   readonly github: GitHubConfig;
   readonly linear: LinearConfig;
   readonly sentry: SentryConfig;
@@ -25,6 +28,7 @@ interface ProviderConfigMap {
 }
 
 export const PROVIDERS = {
+  apollo,
   github,
   vercel,
   linear,
@@ -130,6 +134,7 @@ export function getProvider(name: string) {
 
 // Adding a provider = add entry to ProviderConfigMap above + PROVIDERS + this tuple.
 export const providerAccountInfoSchema = z.discriminatedUnion("sourceType", [
+  PROVIDERS.apollo.accountInfoSchema,
   PROVIDERS.github.accountInfoSchema,
   PROVIDERS.vercel.accountInfoSchema,
   PROVIDERS.linear.accountInfoSchema,
@@ -142,6 +147,7 @@ export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
 
 // Adding a provider = add entry to ProviderConfigMap above + PROVIDERS + this tuple.
 export const providerConfigSchema = z.discriminatedUnion("provider", [
+  PROVIDERS.apollo.providerConfigSchema,
   PROVIDERS.github.providerConfigSchema,
   PROVIDERS.vercel.providerConfigSchema,
   PROVIDERS.linear.providerConfigSchema,

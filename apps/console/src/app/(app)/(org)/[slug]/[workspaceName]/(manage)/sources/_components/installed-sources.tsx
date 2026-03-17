@@ -230,7 +230,7 @@ function ResourceRow({ integration }: { integration: Source }) {
   const isAwaitingConfig =
     metadata.provider === "github" &&
     metadata.status?.configStatus === "awaiting_config";
-  const subscribedEvents = metadata.sync.events ?? [];
+  const subscribedEvents = metadata.sync?.events ?? [];
   const eventLabel =
     subscribedEvents.length === 0
       ? "All events"

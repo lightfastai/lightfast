@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineProvider } from "../../define";
+import { actionEvent, defineWebhookProvider } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { vercelApi } from "./api";
 import type { VercelAccountInfo, VercelConfig } from "./auth";
@@ -54,7 +54,7 @@ async function exchangeVercelCode(
 
 // ── Provider Definition ──
 
-export const vercel = defineProvider({
+export const vercel = defineWebhookProvider({
   optional: true,
   envSchema: {
     VERCEL_INTEGRATION_SLUG: z.string().min(1).optional(),
@@ -279,7 +279,40 @@ export const vercel = defineProvider({
     parsePayload: (raw) => vercelWebhookPayloadSchema.parse(raw),
   },
 
-  oauth: {
+  classifier: {
+    classify(eventType: string): "lifecycle" | "data" | "unknown" {
+      if (
+        ["integration-configuration.removed", "project.removed"].includes(
+          eventType
+        )
+      ) {
+        return "lifecycle";
+      }
+      if (eventType.startsWith("deployment.")) {
+        return "data";
+      }
+      return "unknown";
+    },
+  },
+
+  lifecycle: {
+    events: {
+      "integration-configuration.removed": () => ({
+        reason: "provider_revoked" as const,
+      }),
+      "project.removed": (_action, payload) => {
+        const p = payload as { payload?: { projectId?: string } };
+        const id = p.payload?.projectId;
+        return {
+          reason: "provider_repo_deleted" as const,
+          resourceIds: id ? [id] : [],
+        };
+      },
+    },
+  },
+
+  auth: {
+    kind: "oauth" as const,
     buildAuthUrl: (config, state) => {
       const url = new URL(
         `https://vercel.com/integrations/${config.integrationSlug}/new`

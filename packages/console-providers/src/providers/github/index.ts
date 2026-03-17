@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineProvider } from "../../define";
+import { actionEvent, defineWebhookProvider } from "../../define";
 import { createRS256JWT } from "../../jwt";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { githubApi } from "./api";
@@ -69,7 +69,7 @@ async function getInstallationToken(
 
 // ── Provider Definition ──
 
-export const github = defineProvider({
+export const github = defineWebhookProvider({
   name: "github",
   displayName: "GitHub",
   description: "Connect your GitHub repositories",
@@ -152,7 +152,8 @@ export const github = defineProvider({
     parsePayload: (raw) => githubWebhookPayloadSchema.parse(raw),
   },
 
-  oauth: {
+  auth: {
+    kind: "oauth" as const,
     buildAuthUrl: (config, state) => {
       const url = new URL(
         `https://github.com/apps/${config.appSlug}/installations/new`
@@ -251,6 +252,59 @@ export const github = defineProvider({
           raw: {},
         },
       } satisfies CallbackResult<GitHubAccountInfo>);
+    },
+  },
+
+  classifier: {
+    classify(eventType: string): "lifecycle" | "data" | "unknown" {
+      if (
+        ["installation", "installation_repositories", "repository"].includes(
+          eventType
+        )
+      ) {
+        return "lifecycle";
+      }
+      if (
+        ["pull_request", "issues", "push", "create", "delete"].includes(
+          eventType
+        )
+      ) {
+        return "data";
+      }
+      return "unknown";
+    },
+  },
+
+  lifecycle: {
+    events: {
+      installation: (action) => {
+        if (action === "deleted") {
+          return { reason: "provider_revoked" as const };
+        }
+        if (action === "suspend") {
+          return { reason: "provider_suspended" as const };
+        }
+        if (action === "unsuspend") {
+          return { reason: "provider_unsuspended" as const };
+        }
+        return null;
+      },
+      installation_repositories: (action, payload) => {
+        if (action !== "removed") {
+          return null;
+        }
+        const p = payload as {
+          repositories_removed?: Array<{ id: number }>;
+        };
+        const ids = (p.repositories_removed ?? []).map((r) => String(r.id));
+        return { reason: "provider_repo_removed" as const, resourceIds: ids };
+      },
+      repository: (action) => {
+        if (action === "deleted") {
+          return { reason: "provider_repo_deleted" as const };
+        }
+        return null;
+      },
     },
   },
 

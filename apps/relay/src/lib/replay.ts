@@ -5,7 +5,7 @@ import type {
   SourceType,
   WebhookReceiptPayload,
 } from "@repo/console-providers";
-import { getProvider } from "@repo/console-providers";
+import { getProvider, isWebhookProvider } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
 import { workflowClient } from "@vendor/upstash-workflow/client";
@@ -48,8 +48,10 @@ export async function replayDeliveries(
       let resourceId: string | null = null;
       try {
         const providerDef = getProvider(providerName);
-        resourceId =
-          providerDef?.webhook.extractResourceId(parsedPayload) ?? null;
+        if (providerDef && isWebhookProvider(providerDef)) {
+          resourceId =
+            providerDef.webhook.extractResourceId(parsedPayload) ?? null;
+        }
       } catch {
         // If extraction fails, proceed with null — workflow handles it
       }

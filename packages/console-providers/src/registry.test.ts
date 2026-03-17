@@ -19,7 +19,7 @@ import { EVENT_REGISTRY, getProvider } from "./registry";
 describe("ProviderName", () => {
   it("matches PROVIDERS keys exactly", () => {
     expectTypeOf<ProviderName>().toEqualTypeOf<
-      "github" | "vercel" | "linear" | "sentry"
+      "apollo" | "github" | "vercel" | "linear" | "sentry"
     >();
   });
 });
@@ -175,7 +175,7 @@ describe("ProviderDefinition contract", () => {
   });
 
   it("each provider has all required oauth methods", () => {
-    type OAuthKeys = keyof typeof PROVIDERS.github.oauth;
+    type OAuthKeys = keyof typeof PROVIDERS.github.auth;
     expectTypeOf<"buildAuthUrl">().toMatchTypeOf<OAuthKeys>();
     expectTypeOf<"exchangeCode">().toMatchTypeOf<OAuthKeys>();
     expectTypeOf<"processCallback">().toMatchTypeOf<OAuthKeys>();

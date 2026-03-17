@@ -1,11 +1,12 @@
 import type {
-  ProviderDefinition,
   ProviderName,
   ServiceAuthWebhookBody,
+  WebhookProvider,
 } from "@repo/console-providers";
 import {
   computeHmac,
   getProvider,
+  isWebhookProvider,
   serviceAuthWebhookBodySchema,
   timingSafeStringEqual,
 } from "@repo/console-providers";
@@ -33,7 +34,7 @@ export interface WebhookVariables extends LifecycleVariables {
   isServiceAuth: boolean;
   /** Parsed + schema-validated webhook payload (both paths). Set by payloadParseAndExtract. */
   parsedPayload: unknown;
-  providerDef: ProviderDefinition;
+  providerDef: WebhookProvider;
   providerName: ProviderName;
   /** Present only on standard webhook path — raw body string for HMAC. */
   rawBody: string | undefined;
@@ -49,7 +50,7 @@ export interface WebhookVariables extends LifecycleVariables {
  * since the variables are now non-optional.
  */
 export interface WebhookContext {
-  get(key: "providerDef"): ProviderDefinition;
+  get(key: "providerDef"): WebhookProvider;
   get(key: "providerName"): ProviderName;
   get(key: "isServiceAuth"): boolean;
   get(key: "serviceAuthBody"): ServiceAuthWebhookBody | undefined;
@@ -61,20 +62,23 @@ export interface WebhookContext {
 
 // ── Map provider names to their webhook secret env vars ──────────────────────
 
-const webhookSecretEnvKey: Record<
-  ProviderName,
-  keyof Pick<
-    typeof env,
-    | "GITHUB_WEBHOOK_SECRET"
-    | "VERCEL_CLIENT_INTEGRATION_SECRET"
-    | "LINEAR_WEBHOOK_SIGNING_SECRET"
-    | "SENTRY_CLIENT_SECRET"
+const webhookSecretEnvKey: Partial<
+  Record<
+    ProviderName,
+    keyof Pick<
+      typeof env,
+      | "GITHUB_WEBHOOK_SECRET"
+      | "VERCEL_CLIENT_INTEGRATION_SECRET"
+      | "LINEAR_WEBHOOK_SIGNING_SECRET"
+      | "SENTRY_CLIENT_SECRET"
+    >
   >
 > = {
   github: "GITHUB_WEBHOOK_SECRET",
   vercel: "VERCEL_CLIENT_INTEGRATION_SECRET",
   linear: "LINEAR_WEBHOOK_SIGNING_SECRET",
   sentry: "SENTRY_CLIENT_SECRET",
+  // apollo: no webhook secret — API-only provider, rejected by isWebhookProvider guard
 };
 
 // ── 1. Provider Guard ────────────────────────────────────────────────────────
@@ -90,10 +94,15 @@ export const providerGuard = createMiddleware<{
     return c.json({ error: "unknown_provider", provider: rawProvider }, 400);
   }
 
-  // Cast needed: getProvider returns a union of concrete ProviderDefinition<GitHubConfig|...>
-  // but WebhookVariables stores ProviderDefinition (TConfig=unknown). The middleware only
+  // API-only providers (kind: "api") never send inbound webhooks — reject early.
+  if (!isWebhookProvider(providerDef)) {
+    return c.json({ error: "unknown_provider", provider: rawProvider }, 400);
+  }
+
+  // Cast needed: getProvider returns a union of concrete WebhookProvider<GitHubConfig|...>
+  // but WebhookVariables stores WebhookProvider (TConfig=unknown). The middleware only
   // uses config-independent methods (verifySignature, parsePayload, etc.) so this is safe.
-  c.set("providerDef", providerDef as ProviderDefinition);
+  c.set("providerDef", providerDef as WebhookProvider);
   c.set("providerName", providerDef.name as ProviderName);
   return await next();
 });
@@ -217,7 +226,14 @@ export const signatureVerify = createMiddleware<{
     return c.json({ error: "missing_body" }, 400);
   }
 
-  const secret = env[webhookSecretEnvKey[providerName]];
+  const secretEnvKey = webhookSecretEnvKey[providerName];
+  if (!secretEnvKey) {
+    log.warn("[webhook] missing webhook secret env key", {
+      provider: providerName,
+    });
+    return c.json({ error: "unknown_provider", provider: providerName }, 400);
+  }
+  const secret = env[secretEnvKey];
   if (!secret) {
     log.warn("[webhook] missing webhook secret", { provider: providerName });
     return c.json({ error: "unknown_provider", provider: providerName }, 400);

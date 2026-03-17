@@ -90,11 +90,14 @@ export const connectionTeardownWorkflow = serve<TeardownPayload>(
       }
 
       try {
-        const decryptedToken = await decrypt(
-          tokenRow.accessToken,
-          getEncryptionKey()
-        );
-        await providerDef.oauth.revokeToken(config as never, decryptedToken);
+        const auth = providerDef.auth;
+        if (auth.kind === "oauth" && auth.revokeToken) {
+          const decryptedToken = await decrypt(
+            tokenRow.accessToken,
+            getEncryptionKey()
+          );
+          await auth.revokeToken(config as never, decryptedToken);
+        }
       } catch {
         // Best-effort — swallow errors
       }

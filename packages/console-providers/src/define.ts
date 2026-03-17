@@ -120,6 +120,7 @@ export interface OAuthDef<
     storedExternalId: string,
     storedAccessToken: string | null
   ) => Promise<string>;
+  readonly kind: "oauth";
   /** Extract params from callback query string, call provider APIs, return result. No DB, no Hono. */
   processCallback: (
     config: TConfig,
@@ -129,6 +130,85 @@ export interface OAuthDef<
   revokeToken: (config: TConfig, accessToken: string) => Promise<void>;
   /** Whether the provider stores OAuth tokens in the DB. False for providers that generate tokens on-demand (e.g., GitHub App JWT). */
   readonly usesStoredToken: boolean;
+}
+
+/** API-key auth — user pastes key, stored encrypted in token vault as accessToken */
+export interface ApiKeyDef<
+  TConfig,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+> {
+  /** Build the Authorization header value from the stored key */
+  readonly buildAuthHeader: (apiKey: string) => string;
+  /** Get the active credential — for API-key providers, returns storedAccessToken (the key itself) */
+  readonly getActiveToken: (
+    config: TConfig,
+    storedExternalId: string,
+    storedAccessToken: string | null
+  ) => Promise<string>;
+  readonly kind: "api-key";
+  /**
+   * Process connection setup: receive key from UI, validate, return CallbackResult to store.
+   * Analogous to processCallback for OAuth providers.
+   */
+  readonly processSetup: (
+    config: TConfig,
+    params: { apiKey: string }
+  ) => Promise<CallbackResult<TAccountInfo>>;
+  /** API keys don't refresh */
+  readonly refreshToken?: never;
+  readonly revokeToken?: (config: TConfig, apiKey: string) => Promise<void>;
+  /** API keys are always stored */
+  readonly usesStoredToken: true;
+  /** Optional: validate key against provider API on connection setup */
+  readonly validateKey?: (config: TConfig, apiKey: string) => Promise<boolean>;
+}
+
+/** Discriminated union of all auth strategies */
+export type AuthDef<
+  TConfig,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+> = OAuthDef<TConfig, TAccountInfo> | ApiKeyDef<TConfig, TAccountInfo>;
+
+// ── Event Classifier ────────────────────────────────────────────────────────
+
+/**
+ * Classifies a raw wire event into a routing decision.
+ * Lives on WebhookProvider — enables the platform to route lifecycle vs data events.
+ */
+export interface EventClassifier {
+  /**
+   * Classify a raw wire event type + optional action into a routing decision.
+   * - "lifecycle": installation/connection management events → connectionLifecycleWorkflow
+   * - "data":      content events (PRs, issues, deployments) → QStash → console ingest
+   * - "unknown":   unrecognized events → DLQ
+   */
+  classify(
+    eventType: string,
+    action?: string
+  ): "lifecycle" | "data" | "unknown";
+}
+
+// ── Lifecycle Def ───────────────────────────────────────────────────────────
+
+export type LifecycleReason =
+  | "provider_revoked" // installation.deleted
+  | "provider_suspended" // installation.suspend
+  | "provider_unsuspended" // installation.unsuspend
+  | "provider_repo_removed" // installation_repositories.removed
+  | "provider_repo_deleted"; // repository.deleted, project.removed
+
+/**
+ * Maps wire lifecycle events to structured reasons + optional resource IDs.
+ * Lives on WebhookProvider — consumed by connectionLifecycleWorkflow.
+ */
+export interface LifecycleDef {
+  readonly events: Record<
+    string, // wire eventType (e.g. "installation", "repository")
+    (
+      action: string | undefined,
+      payload: unknown
+    ) => { reason: LifecycleReason; resourceIds?: string[] } | null
+  >;
 }
 
 /** Runtime values not sourced from env (e.g. callbackBaseUrl) */
@@ -343,20 +423,19 @@ export interface ResourcePickerDef {
   readonly resourceLabel: string;
 }
 
-export interface ProviderDefinition<
-  TConfig = unknown,
-  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
-  TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
-  TEvents extends Record<string, EventDefinition> = Record<
-    string,
-    EventDefinition
-  >,
-  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
-  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+// ── Shared base fields (common to all provider tiers) ───────────────────────
+
+interface BaseProviderFields<
+  TConfig,
+  // biome-ignore lint/correctness/noUnusedVariables: used by WebhookProvider.auth and ApiProvider.auth
+  TAccountInfo extends BaseProviderAccountInfo,
+  TCategories extends Record<string, CategoryDef>,
+  TEvents extends Record<string, EventDefinition>,
+  TAccountInfoSchema extends z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject,
 > {
   readonly accountInfoSchema: TAccountInfoSchema;
   readonly api: ProviderApi;
-  readonly backfill: BackfillDef;
   /** Build the providerConfig JSONB blob for a new workspace integration record. */
   readonly buildProviderConfig: (params: {
     defaultSyncEvents: readonly string[];
@@ -386,7 +465,6 @@ export interface ProviderDefinition<
   /** Map detailed internal sourceType to base config sync event key for filtering. */
   readonly getBaseEventType: (sourceType: string) => string;
   readonly name: string;
-  readonly oauth: OAuthDef<TConfig, TAccountInfo>;
   /** When true, all env vars are optional — the provider is disabled and its env preset is excluded from PROVIDER_ENVS(). */
   readonly optional?: true;
   /** Zod schema for the provider_config JSONB blob stored in workspace_integrations. */
@@ -395,18 +473,150 @@ export interface ProviderDefinition<
   readonly resolveCategory: (eventType: string) => string;
   /** UI resource picker configuration for sources/new — installation enrichment + resource listing */
   readonly resourcePicker: ResourcePickerDef;
+}
+
+// ── Tier 1: WebhookProvider ─────────────────────────────────────────────────
+
+/**
+ * Webhook + OAuth provider (GitHub, Linear, Sentry, Vercel).
+ * Receives events via HMAC-signed webhook POST. Authenticates via OAuth2.
+ */
+export interface WebhookProvider<
+  TConfig = unknown,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
+  TEvents extends Record<string, EventDefinition> = Record<
+    string,
+    EventDefinition
+  >,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+> extends BaseProviderFields<
+    TConfig,
+    TAccountInfo,
+    TCategories,
+    TEvents,
+    TAccountInfoSchema,
+    TProviderConfigSchema
+  > {
+  /** Auth strategy — always OAuth for webhook providers */
+  readonly auth: OAuthDef<TConfig, TAccountInfo>;
+  /** Historical data import */
+  readonly backfill: BackfillDef;
+  /** Classifies incoming events as lifecycle | data | unknown */
+  readonly classifier: EventClassifier;
+  /** Discriminant — injected by defineWebhookProvider() */
+  readonly kind: "webhook";
+  /** Maps lifecycle wire events to structured reasons + resource IDs */
+  readonly lifecycle: LifecycleDef;
+  /** HMAC verification + event extraction */
   readonly webhook: WebhookDef<TConfig>;
 }
 
+// ── Tier 2: ApiProvider ─────────────────────────────────────────────────────
+
 /**
- * Create a type-safe provider definition.
- * Uses const generics to preserve literal keys for categories/events,
- * enabling type-level derivation of EVENT_REGISTRY and EventKey.
+ * API-only provider (Apollo, HubSpot, Salesforce, etc.).
+ * Never receives inbound webhooks. Auth via OAuth or API key.
+ */
+export interface ApiProvider<
+  TConfig = unknown,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
+  TEvents extends Record<string, EventDefinition> = Record<
+    string,
+    EventDefinition
+  >,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+> extends BaseProviderFields<
+    TConfig,
+    TAccountInfo,
+    TCategories,
+    TEvents,
+    TAccountInfoSchema,
+    TProviderConfigSchema
+  > {
+  /** Auth strategy — OAuth or API key */
+  readonly auth: AuthDef<TConfig, TAccountInfo>;
+  /** Optional: historical data import */
+  readonly backfill?: BackfillDef;
+  /** Discriminant — injected by defineApiProvider() */
+  readonly kind: "api";
+  // No webhook, classifier, or lifecycle — API providers never receive inbound events
+}
+
+// ── Discriminated Union ─────────────────────────────────────────────────────
+
+/** All provider definitions — discriminated by `kind` */
+export type ProviderDefinition<
+  TConfig = unknown,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
+  TEvents extends Record<string, EventDefinition> = Record<
+    string,
+    EventDefinition
+  >,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+> =
+  | WebhookProvider<
+      TConfig,
+      TAccountInfo,
+      TCategories,
+      TEvents,
+      TAccountInfoSchema,
+      TProviderConfigSchema
+    >
+  | ApiProvider<
+      TConfig,
+      TAccountInfo,
+      TCategories,
+      TEvents,
+      TAccountInfoSchema,
+      TProviderConfigSchema
+    >;
+
+// ── Type Guards ─────────────────────────────────────────────────────────────
+
+export function isWebhookProvider(p: { kind: string }): p is WebhookProvider {
+  return p.kind === "webhook";
+}
+
+export function isApiProvider(p: { kind: string }): p is ApiProvider {
+  return p.kind === "api";
+}
+
+// ── Shared env-getter factory helper ────────────────────────────────────────
+
+function buildEnvGetter(
+  envSchema: Record<string, z.ZodType>
+): Record<string, string> {
+  return createEnv({
+    clientPrefix: "" as const,
+    client: {},
+    // SAFETY: envSchema values are always z.string() variants (env vars are strings).
+    server: envSchema as Record<string, z.ZodType<string>>,
+    runtimeEnv: Object.fromEntries(
+      Object.keys(envSchema).map((k) => [k, process.env[k]])
+    ),
+    skipValidation:
+      !!process.env.SKIP_ENV_VALIDATION ||
+      process.env.npm_lifecycle_event === "lint",
+    emptyStringAsUndefined: true,
+  });
+}
+
+// ── Factories ───────────────────────────────────────────────────────────────
+
+/**
+ * Create a type-safe webhook + OAuth provider definition.
+ * Injects `kind: "webhook"` and the lazy `env` getter automatically.
  *
- * Do NOT pass explicit type arguments — let TypeScript infer all three
+ * Do NOT pass explicit type arguments — let TypeScript infer all generics
  * to preserve the narrow literal types for categories and events.
  */
-export function defineProvider<
+export function defineWebhookProvider<
   TConfig,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
   const TCategories extends Record<string, CategoryDef> = Record<
@@ -421,7 +631,7 @@ export function defineProvider<
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
 >(
   def: Omit<
-    ProviderDefinition<
+    WebhookProvider<
       TConfig,
       TAccountInfo,
       TCategories,
@@ -429,9 +639,9 @@ export function defineProvider<
       TAccountInfoSchema,
       TProviderConfigSchema
     >,
-    "env"
+    "env" | "kind"
   > & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] }
-): ProviderDefinition<
+): WebhookProvider<
   TConfig,
   TAccountInfo,
   TCategories,
@@ -442,29 +652,13 @@ export function defineProvider<
   let _env: Record<string, string> | undefined;
   const result = {
     ...def,
+    kind: "webhook" as const,
     get env(): Record<string, string> {
-      _env ??= createEnv({
-        clientPrefix: "" as const,
-        client: {},
-        // SAFETY: envSchema values are always z.string() variants (env vars are strings).
-        // @t3-oss/env-core requires ZodType<string> but ProviderDefinition uses ZodType
-        // to avoid coupling the interface to env-core's constraints.
-        server: def.envSchema as Record<string, z.ZodType<string>>,
-        runtimeEnv: Object.fromEntries(
-          Object.keys(def.envSchema).map((k) => [k, process.env[k]])
-        ),
-        skipValidation:
-          !!process.env.SKIP_ENV_VALIDATION ||
-          process.env.npm_lifecycle_event === "lint",
-        emptyStringAsUndefined: true,
-      });
+      _env ??= buildEnvGetter(def.envSchema);
       return _env;
     },
   };
-  // SAFETY: Object.freeze() returns Readonly<T> which is structurally identical
-  // to ProviderDefinition (all fields are already readonly). The cast is needed
-  // because the computed `get env()` accessor confuses TypeScript's freeze inference.
-  return Object.freeze(result) as ProviderDefinition<
+  return Object.freeze(result) as WebhookProvider<
     TConfig,
     TAccountInfo,
     TCategories,
@@ -473,6 +667,63 @@ export function defineProvider<
     TProviderConfigSchema
   >;
 }
+
+/**
+ * Create a type-safe API-only provider definition.
+ * Injects `kind: "api"` and the lazy `env` getter automatically.
+ */
+export function defineApiProvider<
+  TConfig,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  const TCategories extends Record<string, CategoryDef> = Record<
+    string,
+    CategoryDef
+  >,
+  const TEvents extends Record<string, EventDefinition> = Record<
+    string,
+    EventDefinition
+  >,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+>(
+  def: Omit<
+    ApiProvider<
+      TConfig,
+      TAccountInfo,
+      TCategories,
+      TEvents,
+      TAccountInfoSchema,
+      TProviderConfigSchema
+    >,
+    "env" | "kind"
+  > & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] }
+): ApiProvider<
+  TConfig,
+  TAccountInfo,
+  TCategories,
+  TEvents,
+  TAccountInfoSchema,
+  TProviderConfigSchema
+> {
+  let _env: Record<string, string> | undefined;
+  const result = {
+    ...def,
+    kind: "api" as const,
+    get env(): Record<string, string> {
+      _env ??= buildEnvGetter(def.envSchema);
+      return _env;
+    },
+  };
+  return Object.freeze(result) as ApiProvider<
+    TConfig,
+    TAccountInfo,
+    TCategories,
+    TEvents,
+    TAccountInfoSchema,
+    TProviderConfigSchema
+  >;
+}
+
 
 // ── Display-Layer Types ──────────────────────────────────────────────────────
 

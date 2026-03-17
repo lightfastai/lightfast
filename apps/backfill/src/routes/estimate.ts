@@ -61,11 +61,15 @@ estimate.post("/", async (c) => {
   if (!providerDef) {
     return c.json({ error: "unknown_provider", provider }, 400);
   }
+  const backfill = providerDef.backfill;
+  if (!backfill) {
+    return c.json({ error: "provider_backfill_not_supported", provider }, 400);
+  }
 
   const resolvedEntityTypes =
     entityTypes && entityTypes.length > 0
       ? entityTypes
-      : [...providerDef.backfill.defaultEntityTypes];
+      : [...backfill.defaultEntityTypes];
 
   const since = new Date(
     Date.now() - depth * 24 * 60 * 60 * 1000
@@ -75,7 +79,7 @@ estimate.post("/", async (c) => {
   const probeJobs = resolvedEntityTypes.flatMap((entityType) =>
     connection.resources.map(
       async (resource): Promise<{ entityType: string; sample: Sample }> => {
-        const entityHandler = providerDef.backfill.entityTypes[entityType];
+        const entityHandler = backfill.entityTypes[entityType];
         if (!entityHandler) {
           return {
             entityType,

@@ -70,6 +70,11 @@ export const backfillEntityWorker = inngest.createFunction(
     if (!providerDef) {
       throw new NonRetriableError(`Unknown provider: ${provider}`);
     }
+    if (!providerDef.backfill) {
+      throw new NonRetriableError(
+        `Provider "${provider}" does not support backfill`
+      );
+    }
 
     const entityHandler = providerDef.backfill.entityTypes[entityType];
     if (!entityHandler) {

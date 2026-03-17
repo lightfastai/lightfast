@@ -113,19 +113,19 @@ describe("decodeSentryToken", () => {
 
 describe("oauth.buildAuthUrl", () => {
   it("builds external install URL with appSlug", () => {
-    const url = sentry.oauth.buildAuthUrl(testConfig, "state-123");
+    const url = sentry.auth.buildAuthUrl(testConfig, "state-123");
     expect(url).toContain(
       "https://sentry.io/sentry-apps/my-sentry-app/external-install/"
     );
   });
 
   it("includes state query parameter", () => {
-    const url = sentry.oauth.buildAuthUrl(testConfig, "my-state");
+    const url = sentry.auth.buildAuthUrl(testConfig, "my-state");
     expect(url).toContain("state=my-state");
   });
 
   it("returns a string", () => {
-    expect(typeof sentry.oauth.buildAuthUrl(testConfig, "s")).toBe("string");
+    expect(typeof sentry.auth.buildAuthUrl(testConfig, "s")).toBe("string");
   });
 });
 
@@ -138,7 +138,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(sentryTokenResponse),
     });
 
-    const tokens = await sentry.oauth.exchangeCode(
+    const tokens = await sentry.auth.exchangeCode(
       testConfig,
       compositeCode,
       ""
@@ -152,7 +152,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(sentryTokenResponse),
     });
 
-    const tokens = await sentry.oauth.exchangeCode(
+    const tokens = await sentry.auth.exchangeCode(
       testConfig,
       compositeCode,
       ""
@@ -172,7 +172,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve({ ...sentryTokenResponse, expiresAt }),
     });
 
-    const tokens = await sentry.oauth.exchangeCode(
+    const tokens = await sentry.auth.exchangeCode(
       testConfig,
       compositeCode,
       ""
@@ -195,7 +195,7 @@ describe("oauth.exchangeCode", () => {
         }),
     });
 
-    const tokens = await sentry.oauth.exchangeCode(
+    const tokens = await sentry.auth.exchangeCode(
       testConfig,
       compositeCode,
       ""
@@ -209,7 +209,7 @@ describe("oauth.exchangeCode", () => {
       json: () => Promise.resolve(sentryTokenResponse),
     });
 
-    await sentry.oauth.exchangeCode(testConfig, compositeCode, "");
+    await sentry.auth.exchangeCode(testConfig, compositeCode, "");
 
     const [url] = mockFetch.mock.calls[0] as [string];
     expect(url).toContain(
@@ -225,13 +225,13 @@ describe("oauth.exchangeCode", () => {
     });
 
     await expect(
-      sentry.oauth.exchangeCode(testConfig, compositeCode, "")
+      sentry.auth.exchangeCode(testConfig, compositeCode, "")
     ).rejects.toThrow("Sentry token exchange failed: 401");
   });
 
   it("throws when composite code has no ':' separator", async () => {
     await expect(
-      sentry.oauth.exchangeCode(testConfig, "no-colon", "")
+      sentry.auth.exchangeCode(testConfig, "no-colon", "")
     ).rejects.toThrow("Invalid Sentry token");
   });
 });
@@ -254,10 +254,7 @@ describe("oauth.refreshToken", () => {
       installationId,
       token: "old-refresh",
     });
-    const tokens = await sentry.oauth.refreshToken(
-      testConfig,
-      refreshComposite
-    );
+    const tokens = await sentry.auth.refreshToken(testConfig, refreshComposite);
     expect(tokens.accessToken).toBe("new-sentry-token");
   });
 
@@ -271,7 +268,7 @@ describe("oauth.refreshToken", () => {
       installationId,
       token: "old-refresh",
     });
-    await sentry.oauth.refreshToken(testConfig, refreshComposite);
+    await sentry.auth.refreshToken(testConfig, refreshComposite);
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(url).toContain(
@@ -290,7 +287,7 @@ describe("oauth.refreshToken", () => {
       token: "old-refresh",
     });
     await expect(
-      sentry.oauth.refreshToken(testConfig, refreshComposite)
+      sentry.auth.refreshToken(testConfig, refreshComposite)
     ).rejects.toThrow("Sentry token refresh failed: 400");
   });
 
@@ -308,10 +305,7 @@ describe("oauth.refreshToken", () => {
       installationId,
       token: "old-refresh",
     });
-    const tokens = await sentry.oauth.refreshToken(
-      testConfig,
-      refreshComposite
-    );
+    const tokens = await sentry.auth.refreshToken(testConfig, refreshComposite);
     const refreshToken = tokens.refreshToken ?? "";
     expect(refreshToken).toBeDefined();
     const decoded = decodeSentryToken(refreshToken);
@@ -325,7 +319,7 @@ describe("oauth.refreshToken", () => {
 describe("oauth.revokeToken", () => {
   it("returns without fetching when accessToken has no ':' (not a composite token)", async () => {
     await expect(
-      sentry.oauth.revokeToken(testConfig, "plain-no-colon")
+      sentry.auth.revokeToken(testConfig, "plain-no-colon")
     ).resolves.toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -333,7 +327,7 @@ describe("oauth.revokeToken", () => {
   it("returns without fetching when installationId is empty after decode", async () => {
     // Token starts with ':' → installationId = ""
     await expect(
-      sentry.oauth.revokeToken(testConfig, ":some-token")
+      sentry.auth.revokeToken(testConfig, ":some-token")
     ).resolves.toBeUndefined();
     expect(mockFetch).not.toHaveBeenCalled();
   });
@@ -346,7 +340,7 @@ describe("oauth.revokeToken", () => {
       token: "tok",
     });
     await expect(
-      sentry.oauth.revokeToken(testConfig, composite)
+      sentry.auth.revokeToken(testConfig, composite)
     ).resolves.toBeUndefined();
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -361,7 +355,7 @@ describe("oauth.revokeToken", () => {
       installationId: "inst-abc",
       token: "tok",
     });
-    await sentry.oauth.revokeToken(testConfig, composite);
+    await sentry.auth.revokeToken(testConfig, composite);
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const auth = (init.headers as Record<string, string>).Authorization;
@@ -376,7 +370,7 @@ describe("oauth.revokeToken", () => {
       token: "tok",
     });
     await expect(
-      sentry.oauth.revokeToken(testConfig, composite)
+      sentry.auth.revokeToken(testConfig, composite)
     ).rejects.toThrow("Sentry token revocation failed: 404");
   });
 });
@@ -386,13 +380,13 @@ describe("oauth.revokeToken", () => {
 describe("oauth.processCallback", () => {
   it("throws when code is missing", async () => {
     await expect(
-      sentry.oauth.processCallback(testConfig, { installationId })
+      sentry.auth.processCallback(testConfig, { installationId })
     ).rejects.toThrow("missing code");
   });
 
   it("throws when installationId query param is missing", async () => {
     await expect(
-      sentry.oauth.processCallback(testConfig, { code: authCode })
+      sentry.auth.processCallback(testConfig, { code: authCode })
     ).rejects.toThrow("missing installationId query param");
   });
 
@@ -402,7 +396,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(sentryTokenResponse),
     });
 
-    const result = await sentry.oauth.processCallback(testConfig, {
+    const result = await sentry.auth.processCallback(testConfig, {
       code: authCode,
       installationId,
     });
@@ -421,7 +415,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(sentryTokenResponse),
     });
 
-    const result = await sentry.oauth.processCallback(testConfig, {
+    const result = await sentry.auth.processCallback(testConfig, {
       code: authCode,
       installationId,
     });
@@ -438,7 +432,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(sentryTokenResponse),
     });
 
-    const result = await sentry.oauth.processCallback(testConfig, {
+    const result = await sentry.auth.processCallback(testConfig, {
       code: authCode,
       installationId,
     });
@@ -455,7 +449,7 @@ describe("oauth.processCallback", () => {
       json: () => Promise.resolve(sentryTokenResponse),
     });
 
-    const result = await sentry.oauth.processCallback(testConfig, {
+    const result = await sentry.auth.processCallback(testConfig, {
       code: authCode,
       installationId,
     });

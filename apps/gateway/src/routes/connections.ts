@@ -117,10 +117,15 @@ connections.get(
       .expire(key, 600)
       .exec();
 
+    const auth = providerDef.auth;
+    if (auth.kind !== "oauth") {
+      return c.json({ error: "provider_does_not_support_oauth" }, 400);
+    }
+
     // SAFETY: config is providerConfigs[providerName], created by the same provider's
     // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
     // statically because it serves all providers from a single Record<string, unknown>.
-    const url = providerDef.oauth.buildAuthUrl(config as never, state);
+    const url = auth.buildAuthUrl(config as never, state);
 
     return c.json({ url, state });
   }
@@ -253,14 +258,16 @@ connections.get("/:provider/callback", async (c) => {
       query[k] = v;
     }
 
+    const auth = providerDef.auth;
+    if (auth.kind !== "oauth") {
+      return c.json({ error: "provider_does_not_support_oauth" }, 400);
+    }
+
     // Pure provider logic — no DB, no Hono coupling
     // SAFETY: config is providerConfigs[providerName], created by the same provider's
     // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
     // statically because it serves all providers from a single Record<string, unknown>.
-    const result = await providerDef.oauth.processCallback(
-      config as never,
-      query
-    );
+    const result = await auth.processCallback(config as never, query);
 
     // Handle pending-setup: provider needs additional configuration (e.g., GitHub App request flow).
     // No installation to upsert — just store the setup action and redirect.
@@ -513,7 +520,7 @@ connections.get("/:id", apiKeyAuth, async (c) => {
     orgId: installation.orgId,
     status: installation.status,
     hasToken:
-      !getProvider(installation.provider).oauth.usesStoredToken ||
+      !getProvider(installation.provider).auth.usesStoredToken ||
       installation.tokens.length > 0,
     tokenExpiresAt: installation.tokens[0]?.expiresAt ?? null,
     resources: installation.resources.map(
@@ -559,7 +566,11 @@ async function getActiveTokenForInstallation(
     // SAFETY: config is providerConfigs[providerName], created by the same provider's
     // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
     // statically because it serves all providers from a single Record<string, unknown>.
-    const refreshed = await providerDef.oauth.refreshToken(
+    const auth = providerDef.auth;
+    if (auth.kind !== "oauth") {
+      throw new Error("token_expired:provider_does_not_support_token_refresh");
+    }
+    const refreshed = await auth.refreshToken(
       config as never,
       decryptedRefresh
     );
@@ -579,7 +590,7 @@ async function getActiveTokenForInstallation(
   // SAFETY: config is providerConfigs[providerName], created by the same provider's
   // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
   // statically because it serves all providers from a single Record<string, unknown>.
-  const token = await providerDef.oauth.getActiveToken(
+  const token = await providerDef.auth.getActiveToken(
     config as never,
     installation.externalId,
     decryptedAccessToken
@@ -613,7 +624,11 @@ async function forceRefreshToken(
       // SAFETY: config is providerConfigs[providerName], created by the same provider's
       // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
       // statically because it serves all providers from a single Record<string, unknown>.
-      const refreshed = await providerDef.oauth.refreshToken(
+      const auth = providerDef.auth;
+      if (auth.kind !== "oauth") {
+        return null; // API key providers don't refresh tokens
+      }
+      const refreshed = await auth.refreshToken(
         config as never,
         decryptedRefresh
       );
@@ -633,7 +648,7 @@ async function forceRefreshToken(
     // SAFETY: config is providerConfigs[providerName], created by the same provider's
     // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
     // statically because it serves all providers from a single Record<string, unknown>.
-    return await providerDef.oauth.getActiveToken(
+    return await providerDef.auth.getActiveToken(
       config as never,
       installation.externalId,
       null

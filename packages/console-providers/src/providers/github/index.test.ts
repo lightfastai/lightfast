@@ -65,19 +65,19 @@ beforeAll(() => {
 describe("oauth.buildAuthUrl", () => {
   it("builds correct GitHub App installation URL with appSlug", () => {
     const config: GitHubConfig = { ...testConfig, appSlug: "my-github-app" };
-    const url = github.oauth.buildAuthUrl(config, "state-abc");
+    const url = github.auth.buildAuthUrl(config, "state-abc");
     expect(url).toContain(
       "https://github.com/apps/my-github-app/installations/new"
     );
   });
 
   it("embeds state as a query parameter", () => {
-    const url = github.oauth.buildAuthUrl(testConfig, "my-state-value");
+    const url = github.auth.buildAuthUrl(testConfig, "my-state-value");
     expect(url).toContain("state=my-state-value");
   });
 
   it("returns a string", () => {
-    expect(typeof github.oauth.buildAuthUrl(testConfig, "s")).toBe("string");
+    expect(typeof github.auth.buildAuthUrl(testConfig, "s")).toBe("string");
   });
 });
 
@@ -95,7 +95,7 @@ describe("oauth.exchangeCode", () => {
         }),
     });
 
-    const tokens = await github.oauth.exchangeCode(
+    const tokens = await github.auth.exchangeCode(
       testConfig,
       "code123",
       "https://app.example.com/callback"
@@ -118,7 +118,7 @@ describe("oauth.exchangeCode", () => {
     });
 
     await expect(
-      github.oauth.exchangeCode(
+      github.auth.exchangeCode(
         testConfig,
         "bad-code",
         "https://app.example.com/callback"
@@ -130,7 +130,7 @@ describe("oauth.exchangeCode", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
 
     await expect(
-      github.oauth.exchangeCode(
+      github.auth.exchangeCode(
         testConfig,
         "code",
         "https://app.example.com/callback"
@@ -149,7 +149,7 @@ describe("oauth.exchangeCode", () => {
         }),
     });
 
-    await github.oauth.exchangeCode(
+    await github.auth.exchangeCode(
       testConfig,
       "code",
       "https://app.example.com/cb"
@@ -169,12 +169,12 @@ describe("oauth.exchangeCode", () => {
 describe("oauth.refreshToken", () => {
   it("always rejects — GitHub user tokens do not support refresh", async () => {
     await expect(
-      github.oauth.refreshToken(testConfig, "any-refresh-token")
+      github.auth.refreshToken(testConfig, "any-refresh-token")
     ).rejects.toThrow("do not support refresh");
   });
 
   it("does not call fetch", async () => {
-    await github.oauth.refreshToken(testConfig, "t").catch(vi.fn());
+    await github.auth.refreshToken(testConfig, "t").catch(vi.fn());
     expect(mockFetch).not.toHaveBeenCalled();
   });
 });
@@ -186,7 +186,7 @@ describe("oauth.revokeToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
     await expect(
-      github.oauth.revokeToken(testConfig, "ghu_token123")
+      github.auth.revokeToken(testConfig, "ghu_token123")
     ).resolves.toBeUndefined();
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
@@ -197,7 +197,7 @@ describe("oauth.revokeToken", () => {
   it("uses Basic auth with clientId:clientSecret", async () => {
     mockFetch.mockResolvedValueOnce({ ok: true });
 
-    await github.oauth.revokeToken(testConfig, "ghu_token");
+    await github.auth.revokeToken(testConfig, "ghu_token");
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const authHeader =
@@ -211,7 +211,7 @@ describe("oauth.revokeToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 422 });
 
     await expect(
-      github.oauth.revokeToken(testConfig, "bad-token")
+      github.auth.revokeToken(testConfig, "bad-token")
     ).rejects.toThrow("GitHub token revocation failed: 422");
   });
 });
@@ -221,7 +221,7 @@ describe("oauth.revokeToken", () => {
 describe("oauth.processCallback", () => {
   it("throws for setup_action=request — not yet implemented", async () => {
     await expect(
-      github.oauth.processCallback(testConfig, {
+      github.auth.processCallback(testConfig, {
         installation_id: "12345",
         setup_action: "request",
       })
@@ -230,7 +230,7 @@ describe("oauth.processCallback", () => {
 
   it("throws for setup_action=update — not yet implemented", async () => {
     await expect(
-      github.oauth.processCallback(testConfig, {
+      github.auth.processCallback(testConfig, {
         installation_id: "12345",
         setup_action: "update",
       })
@@ -238,13 +238,13 @@ describe("oauth.processCallback", () => {
   });
 
   it("throws when installation_id is missing", async () => {
-    await expect(github.oauth.processCallback(testConfig, {})).rejects.toThrow(
+    await expect(github.auth.processCallback(testConfig, {})).rejects.toThrow(
       "missing installation_id"
     );
   });
 
   it("returns valid CallbackResult with connected-no-token status on happy path", async () => {
-    const result = await github.oauth.processCallback(testConfig, {
+    const result = await github.auth.processCallback(testConfig, {
       installation_id: "12345",
     });
 
@@ -257,7 +257,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("accountInfo has hardcoded events and empty raw (display data resolved live)", async () => {
-    const result = await github.oauth.processCallback(testConfig, {
+    const result = await github.auth.processCallback(testConfig, {
       installation_id: "12345",
     });
     if (result.status === "connected-no-token") {
@@ -270,7 +270,7 @@ describe("oauth.processCallback", () => {
   });
 
   it("returns connected-no-token even with setup_action=install", async () => {
-    const result = await github.oauth.processCallback(testConfig, {
+    const result = await github.auth.processCallback(testConfig, {
       installation_id: "12345",
       setup_action: "install",
     });
@@ -390,7 +390,7 @@ describe("webhook.extractResourceId", () => {
 describe("oauth.getActiveToken", () => {
   it("throws for non-numeric installationId", async () => {
     await expect(
-      github.oauth.getActiveToken(testConfig, "not-a-number", null)
+      github.auth.getActiveToken(testConfig, "not-a-number", null)
     ).rejects.toThrow("Invalid GitHub installation ID: must be numeric");
   });
 
@@ -400,7 +400,7 @@ describe("oauth.getActiveToken", () => {
       json: () => Promise.resolve({ token: "ghs_installation_token_abc" }),
     });
 
-    const token = await github.oauth.getActiveToken(testConfig, "12345", null);
+    const token = await github.auth.getActiveToken(testConfig, "12345", null);
     expect(token).toBe("ghs_installation_token_abc");
   });
 
@@ -408,7 +408,7 @@ describe("oauth.getActiveToken", () => {
     mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
 
     await expect(
-      github.oauth.getActiveToken(testConfig, "12345", null)
+      github.auth.getActiveToken(testConfig, "12345", null)
     ).rejects.toThrow("GitHub installation token request failed: 404");
   });
 
@@ -419,7 +419,7 @@ describe("oauth.getActiveToken", () => {
     });
 
     await expect(
-      github.oauth.getActiveToken(testConfig, "12345", null)
+      github.auth.getActiveToken(testConfig, "12345", null)
     ).rejects.toThrow("GitHub installation token response missing valid token");
   });
 
@@ -429,7 +429,7 @@ describe("oauth.getActiveToken", () => {
       json: () => Promise.resolve({ token: "ghs_x" }),
     });
 
-    await github.oauth.getActiveToken(testConfig, "99999", null);
+    await github.auth.getActiveToken(testConfig, "99999", null);
 
     const [url] = mockFetch.mock.calls[0] as [string];
     expect(url).toContain(

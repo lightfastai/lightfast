@@ -16,6 +16,16 @@ interface ProviderDisplayEntry {
 }
 
 export const PROVIDER_DISPLAY = {
+  apollo: {
+    name: "apollo",
+    displayName: "Apollo",
+    description: "Connect your Apollo GTM workspace",
+    comingSoon: true,
+    icon: {
+      viewBox: "0 0 24 24",
+      d: "M12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm0 2.4c5.302 0 9.6 4.298 9.6 9.6s-4.298 9.6-9.6 9.6S2.4 17.302 2.4 12 6.698 2.4 12 2.4zm0 2.4a7.2 7.2 0 1 0 0 14.4A7.2 7.2 0 0 0 12 4.8zm0 2.4a4.8 4.8 0 1 1 0 9.6 4.8 4.8 0 0 1 0-9.6z",
+    },
+  },
   github: {
     name: "github",
     displayName: "GitHub",
