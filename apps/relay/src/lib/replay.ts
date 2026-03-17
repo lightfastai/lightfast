@@ -8,9 +8,7 @@ import type {
 import { getProvider } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
-import { redis } from "@vendor/upstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
-import { webhookSeenKey } from "./cache.js";
 import { relayBaseUrl } from "./urls.js";
 
 interface ReplayResult {
@@ -25,9 +23,8 @@ interface ReplayResult {
  *
  * For each delivery:
  * 1. Parses stored payload, extracts resourceId via provider
- * 2. Clears Redis dedup key so workflow can re-process
- * 3. Triggers webhook-delivery workflow
- * 4. Updates status to "received" (workflow will advance to delivered/dlq)
+ * 2. Triggers webhook-delivery workflow
+ * 3. Updates status to "received" (workflow will advance to delivered/dlq)
  */
 export async function replayDeliveries(
   deliveries: GatewayWebhookDelivery[]
@@ -56,9 +53,6 @@ export async function replayDeliveries(
       } catch {
         // If extraction fails, proceed with null — workflow handles it
       }
-
-      // Clear Redis dedup key so workflow's Step 1 doesn't reject as duplicate
-      await redis.del(webhookSeenKey(providerName, delivery.deliveryId));
 
       // Re-trigger the full workflow — it handles resolution, delivery, and status updates
       await workflowClient.trigger({

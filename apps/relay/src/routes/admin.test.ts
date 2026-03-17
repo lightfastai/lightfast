@@ -5,7 +5,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 function resetAllMocks() {
   vi.clearAllMocks();
   mockDbSelect.reset();
-  mockRedisPing.mockResolvedValue("PONG");
   mockDbExecute.mockResolvedValue(undefined);
   mockQStashVerify.mockResolvedValue(true);
   mockReplayDeliveries.mockResolvedValue({
@@ -28,8 +27,6 @@ const {
   mockDbSelect,
   mockDbUpdate,
   mockQStashVerify,
-  mockRedisPipeline,
-  mockRedisPing,
   mockDbExecute,
 } = vi.hoisted(() => {
   const env = {
@@ -94,26 +91,12 @@ const {
       }),
     })),
     mockQStashVerify: vi.fn().mockResolvedValue(true),
-    mockRedisPipeline: {
-      hset: vi.fn().mockReturnThis(),
-      expire: vi.fn().mockReturnThis(),
-      exec: vi.fn().mockResolvedValue([]),
-    },
-    mockRedisPing: vi.fn().mockResolvedValue("PONG"),
     mockDbExecute: vi.fn().mockResolvedValue(undefined),
   };
 });
 
 vi.mock("../env", () => ({
   env: mockEnv,
-}));
-
-vi.mock("@vendor/upstash", () => ({
-  redis: {
-    ping: mockRedisPing,
-    pipeline: () => mockRedisPipeline,
-    del: vi.fn(),
-  },
 }));
 
 vi.mock("@vendor/db", () => ({
@@ -170,12 +153,6 @@ vi.mock("../lib/replay", () => ({
   replayDeliveries: mockReplayDeliveries,
 }));
 
-vi.mock("../lib/cache", () => ({
-  resourceKey: (provider: string, resourceId: string) =>
-    `gw:resource:${provider}:${resourceId}`,
-  RESOURCE_CACHE_TTL: 86_400,
-}));
-
 // ── Import after mocks ──
 
 import { Hono } from "hono";
@@ -211,7 +188,6 @@ describe("POST /api/admin/replay/catchup", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbSelect.reset();
-    mockRedisPing.mockResolvedValue("PONG");
     mockDbExecute.mockResolvedValue(undefined);
     mockQStashVerify.mockResolvedValue(true);
     mockReplayDeliveries.mockResolvedValue({
@@ -423,27 +399,15 @@ describe("POST /api/admin/replay/catchup", () => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 describe("GET /api/admin/health", () => {
-  it("returns 200 with status=ok when Redis and DB are healthy", async () => {
+  it("returns 200 with status=ok when DB is healthy", async () => {
     const res = await request("/api/admin/health", { method: "GET" });
     expect(res.status).toBe(200);
     const json = (await res.json()) as Record<string, unknown>;
     expect(json).toMatchObject({
       status: "ok",
-      redis: "connected",
       database: "connected",
     });
     expect(typeof json.uptime_ms).toBe("number");
-  });
-
-  it("returns 503 with status=degraded when Redis ping fails", async () => {
-    mockRedisPing.mockRejectedValueOnce(new Error("Redis unavailable"));
-    const res = await request("/api/admin/health", { method: "GET" });
-    expect(res.status).toBe(503);
-    expect(await res.json()).toMatchObject({
-      status: "degraded",
-      redis: "error",
-      database: "connected",
-    });
   });
 
   it("returns 503 with status=degraded when DB execute fails", async () => {
@@ -452,119 +416,15 @@ describe("GET /api/admin/health", () => {
     expect(res.status).toBe(503);
     expect(await res.json()).toMatchObject({
       status: "degraded",
-      redis: "connected",
       database: "error",
     });
   });
 
-  it("returns 503 when both Redis and DB fail", async () => {
-    mockRedisPing.mockRejectedValueOnce(new Error("Redis down"));
-    mockDbExecute.mockRejectedValueOnce(new Error("DB down"));
-    const res = await request("/api/admin/health", { method: "GET" });
-    expect(res.status).toBe(503);
-    expect(await res.json()).toMatchObject({
-      status: "degraded",
-      redis: "error",
-      database: "error",
-    });
-  });
-
-  it("response always includes redis, database, and uptime_ms fields", async () => {
+  it("response always includes database and uptime_ms fields", async () => {
     const res = await request("/api/admin/health", { method: "GET" });
     const json = await res.json();
-    expect(json).toHaveProperty("redis");
     expect(json).toHaveProperty("database");
     expect(json).toHaveProperty("uptime_ms");
-  });
-});
-
-// ══════════════════════════════════════════════════════════════════════════════
-// POST /api/admin/cache/rebuild
-// ══════════════════════════════════════════════════════════════════════════════
-
-describe("POST /api/admin/cache/rebuild", () => {
-  it("returns 401 without X-API-Key", async () => {
-    const res = await request("/api/admin/cache/rebuild");
-    expect(res.status).toBe(401);
-  });
-
-  it("returns { status: 'rebuilt', count: 0 } when no active resources", async () => {
-    mockDbSelect.setResults([[]]);
-    const res = await request("/api/admin/cache/rebuild", {
-      headers: { "X-API-Key": "test-api-key" },
-    });
-    expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ status: "rebuilt", count: 0 });
-    expect(mockRedisPipeline.exec).not.toHaveBeenCalled();
-  });
-
-  it("processes one batch and returns correct count", async () => {
-    const resources = [
-      {
-        provider: "github",
-        providerResourceId: "owner/repo-1",
-        installationId: "inst-1",
-        orgId: "org-1",
-      },
-      {
-        provider: "github",
-        providerResourceId: "owner/repo-2",
-        installationId: "inst-1",
-        orgId: "org-1",
-      },
-    ];
-    mockDbSelect.setResults([resources]);
-    const res = await request("/api/admin/cache/rebuild", {
-      headers: { "X-API-Key": "test-api-key" },
-    });
-    expect(res.status).toBe(200);
-    expect(await res.json()).toMatchObject({ status: "rebuilt", count: 2 });
-  });
-
-  it("calls pipeline.hset with correct key format per resource", async () => {
-    const resources = [
-      {
-        provider: "github",
-        providerResourceId: "owner/repo",
-        installationId: "inst-1",
-        orgId: "org-1",
-      },
-    ];
-    mockDbSelect.setResults([resources]);
-
-    await request("/api/admin/cache/rebuild", {
-      headers: { "X-API-Key": "test-api-key" },
-    });
-
-    expect(mockRedisPipeline.hset).toHaveBeenCalledWith(
-      "gw:resource:github:owner/repo",
-      { connectionId: "inst-1", orgId: "org-1" }
-    );
-  });
-
-  it("calls pipeline.expire per resource and pipeline.exec once per batch", async () => {
-    const resources = [
-      {
-        provider: "github",
-        providerResourceId: "r1",
-        installationId: "inst-1",
-        orgId: "org-1",
-      },
-      {
-        provider: "github",
-        providerResourceId: "r2",
-        installationId: "inst-1",
-        orgId: "org-1",
-      },
-    ];
-    mockDbSelect.setResults([resources]);
-
-    await request("/api/admin/cache/rebuild", {
-      headers: { "X-API-Key": "test-api-key" },
-    });
-
-    expect(mockRedisPipeline.expire).toHaveBeenCalledTimes(2);
-    expect(mockRedisPipeline.exec).toHaveBeenCalledTimes(1);
   });
 });
 

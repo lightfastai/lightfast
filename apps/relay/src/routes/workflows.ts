@@ -8,15 +8,9 @@ import type { WebhookReceiptPayload } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
 import { getQStashClient } from "@vendor/qstash";
-import { redis } from "@vendor/upstash";
 import type { WorkflowContext } from "@vendor/upstash-workflow";
 import { serve } from "@vendor/upstash-workflow/hono";
 import { Hono } from "hono";
-import {
-  RESOURCE_CACHE_TTL,
-  resourceKey,
-  webhookSeenKey,
-} from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
 
 const qstash = getQStashClient();
@@ -30,12 +24,11 @@ interface ConnectionInfo {
  * Durable webhook delivery workflow.
  *
  * Processes verified webhook payloads with step-level durability:
- * - Step 1: Dedup — skip duplicate deliveries (idempotent, NX set)
- * - Step 2: Persist — store webhook record for long-term replayability
- * - Step 3: Resolve connection from resource ID (Redis → DB fallthrough)
- * - Step 4: Route — update DB and decide console vs DLQ path
- * - Step 5: Publish to Console ingress via QStash (console path only)
- * - Step 6: Mark as enqueued
+ * - Step 1: Persist — store webhook record for long-term replayability
+ * - Step 2: Resolve connection from resource ID (direct DB query)
+ * - Step 3: Route — update DB and decide console vs DLQ path
+ * - Step 4: Publish to Console ingress via QStash (console path only)
+ * - Step 5: Mark as enqueued
  *
  * If a step fails, only that step retries — all prior steps are cached.
  * External calls (QStash, DB) inside context.run() are wrapped with
@@ -46,29 +39,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
   async (context: WorkflowContext<WebhookReceiptPayload>) => {
     const data = context.requestPayload;
 
-    // Step 1: Deduplication — SET NX (only if not exists), TTL 24h
-    // Returns true if this is a duplicate (key already existed).
-    const isDuplicate = await context.run("dedup", async () => {
-      const result = await redis.set(
-        webhookSeenKey(data.provider, data.deliveryId),
-        "1",
-        { nx: true, ex: 86_400 }
-      );
-      return result === null; // null = key already existed = duplicate
-    });
-
-    if (isDuplicate) {
-      // Workflow ends gracefully — duplicate delivery, no further action.
-      return;
-    }
-
-    log.info("[webhook-delivery] dedup passed", {
-      provider: data.provider,
-      deliveryId: data.deliveryId,
-      correlationId: data.correlationId,
-    });
-
-    // Step 2: Persist — store webhook for long-term replayability
+    // Step 1: Persist — store webhook for long-term replayability
     await context.run("persist-delivery", async () => {
       await db
         .insert(gatewayWebhookDeliveries)
@@ -85,7 +56,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
         .onConflictDoNothing();
     });
 
-    // Step 3: Resolve connection from resource ID (Redis cache → PlanetScale fallthrough)
+    // Step 2: Resolve connection from resource ID (direct DB query)
     const connectionInfo = await context.run<ConnectionInfo | null>(
       "resolve-connection",
       async () => {
@@ -93,15 +64,6 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           return null;
         }
 
-        // Try Redis cache first
-        const cached = await redis.hgetall<Record<string, string>>(
-          resourceKey(data.provider, data.resourceId)
-        );
-        if (cached?.connectionId && cached.orgId) {
-          return { connectionId: cached.connectionId, orgId: cached.orgId };
-        }
-
-        // Fallthrough to PlanetScale
         const rows = await db
           .select({
             installationId: gatewayResources.installationId,
@@ -125,21 +87,11 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
           return null;
         }
 
-        // Populate Redis cache for next time (with TTL to prevent stale mappings)
-        const key = resourceKey(data.provider, data.resourceId);
-        const pipeline = redis.pipeline();
-        pipeline.hset(key, {
-          connectionId: row.installationId,
-          orgId: row.orgId,
-        });
-        pipeline.expire(key, RESOURCE_CACHE_TTL);
-        await pipeline.exec();
-
         return { connectionId: row.installationId, orgId: row.orgId };
       }
     );
 
-    // Step 4: Route — update DB record and decide console vs DLQ path.
+    // Step 3: Route — update DB record and decide console vs DLQ path.
     // All branching logic is inside this single step so the workflow always
     // sees a flat, unconditional step sequence after this point.
     const route = await context.run<"console" | "dlq">("route", async () => {
@@ -204,7 +156,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       return;
     }
 
-    // Step 5: Publish to Console ingress via QStash.
+    // Step 4: Publish to Console ingress via QStash.
     // QStash guarantees at-least-once delivery with 5 retries.
     await context.run("publish-to-console", async () => {
       try {
@@ -244,7 +196,7 @@ const webhookDeliveryWorkflow = serve<WebhookReceiptPayload>(
       correlationId: data.correlationId,
     });
 
-    // Step 6: Mark webhook as enqueued (QStash accepted, pending Console delivery)
+    // Step 5: Mark webhook as enqueued (QStash accepted, pending Console delivery)
     await context.run("update-status-enqueued", async () => {
       await db
         .update(gatewayWebhookDeliveries)

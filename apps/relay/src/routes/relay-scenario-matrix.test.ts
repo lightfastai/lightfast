@@ -5,30 +5,25 @@
  * product, and runs every combination against universal invariants.
  * Catches edge cases that hand-crafted tests miss.
  *
- * Scenarios: 72 (4 × 3 × 3 × 2)
+ * Scenarios: 16 (4 × 2 × 2)
  * - provider: github | linear | sentry | vercel
- * - resolutionPath: cache-hit | db-hit | not-found
- * - deduplication: new-delivery | duplicate | redis-unavailable
+ * - resolutionPath: db-hit | not-found
  * - qstashResult: success | failure
  *
- * Invariants per scenario (7 total):
- *   I.   duplicate → exactly 1 step, no side effects
- *   II.  new-delivery → exactly 1 DB insert (persist-delivery)
- *   III. new-delivery && not-found → DLQ publish, status="dlq"
- *   IV.  new-delivery && found && success → Console publish with correct shape
- *   V.   new-delivery && db-hit → Redis cache populated
- *   VI.  new-delivery && found && failure → error propagates
- *   VII. redis-unavailable → throws, no side effects (never silently drops)
+ * Invariants per scenario (4 total):
+ *   I.   new-delivery → exactly 1 DB insert (persist-delivery)
+ *   II.  not-found → DLQ publish, status="dlq"
+ *   III. found && success → Console publish with correct shape
+ *   IV.  found && failure → error propagates
  */
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // ── Types ──
 
 interface RelayScenario {
-  deduplication: "new-delivery" | "duplicate" | "redis-unavailable";
   provider: string;
   qstashResult: "success" | "failure";
-  resolutionPath: "cache-hit" | "db-hit" | "not-found";
+  resolutionPath: "db-hit" | "not-found";
 }
 
 // ── Cartesian product engine ──
@@ -71,16 +66,11 @@ function cartesian<T extends Record<string, readonly unknown[]>>(
 }
 
 function scenarioLabel(s: RelayScenario): string {
-  return `provider=${s.provider} path=${s.resolutionPath} dedup=${s.deduplication} qstash=${s.qstashResult}`;
+  return `provider=${s.provider} path=${s.resolutionPath} qstash=${s.qstashResult}`;
 }
 
 // ── Mock declarations ──
 
-const mockRedisSet = vi.fn();
-const mockRedisHgetall = vi.fn();
-const mockRedisHset = vi.fn();
-const mockRedisExpire = vi.fn();
-const mockPipelineExec = vi.fn();
 const mockPublishJSON = vi.fn();
 const mockPublishToTopic = vi.fn();
 const mockDbInsert = vi.fn();
@@ -97,27 +87,6 @@ vi.mock("@vendor/upstash-workflow/hono", () => ({
   serve: (handler: (ctx: unknown) => Promise<void>) => {
     capturedHandler = handler;
     return () => new Response("ok");
-  },
-}));
-
-vi.mock("@vendor/upstash", () => ({
-  redis: {
-    set: (...args: unknown[]) => mockRedisSet(...args),
-    hgetall: (...args: unknown[]) => mockRedisHgetall(...args),
-    pipeline: () => {
-      const pipe = {
-        hset: (...args: unknown[]) => {
-          mockRedisHset(...args);
-          return pipe;
-        },
-        expire: (...args: unknown[]) => {
-          mockRedisExpire(...args);
-          return pipe;
-        },
-        exec: () => mockPipelineExec(),
-      };
-      return pipe;
-    },
   },
 }));
 
@@ -189,64 +158,43 @@ function makeContext(payload: ReturnType<typeof makePayload>) {
 }
 
 function configureMocks(s: RelayScenario) {
-  if (s.deduplication === "redis-unavailable") {
-    // Redis is down — SET NX throws
-    mockRedisSet.mockRejectedValue(new Error("Redis connection refused"));
-    return;
-  }
-
-  // Dedup: SET NX returns null = duplicate (key existed), "OK" = new
-  mockRedisSet.mockResolvedValue(s.deduplication === "duplicate" ? null : "OK");
-
-  if (s.deduplication === "new-delivery") {
-    // Resolution path
-    if (s.resolutionPath === "cache-hit") {
-      mockRedisHgetall.mockResolvedValue({
-        connectionId: `conn-${s.provider}`,
+  // Resolution path — direct DB query
+  if (s.resolutionPath === "db-hit") {
+    mockDbRows = [
+      {
+        installationId: `conn-${s.provider}`,
         orgId: `org-${s.provider}`,
-      });
-      mockDbRows = []; // DB should NOT be called
-    } else if (s.resolutionPath === "db-hit") {
-      mockRedisHgetall.mockResolvedValue(null); // cache miss
-      mockDbRows = [
-        {
-          installationId: `conn-${s.provider}`,
-          orgId: `org-${s.provider}`,
-        },
-      ];
-      mockPipelineExec.mockResolvedValue([]);
-    } else {
-      // not-found
-      mockRedisHgetall.mockResolvedValue(null); // cache miss
-      mockDbRows = []; // DB also miss
-    }
-
-    // QStash outcome
-    if (s.qstashResult === "success") {
-      mockPublishJSON.mockResolvedValue({ messageId: "msg-ok" });
-      mockPublishToTopic.mockResolvedValue([{ messageId: "msg-dlq-ok" }]);
-    } else if (s.resolutionPath === "not-found") {
-      // failure — only affects the relevant publish call
-      mockPublishToTopic.mockRejectedValue(new Error("QStash DLQ error"));
-    } else {
-      mockPublishJSON.mockRejectedValue(new Error("QStash Console error"));
-    }
-
-    mockOnConflictDoNothing.mockResolvedValue(undefined);
-    mockDbWhere.mockResolvedValue(undefined);
+      },
+    ];
+  } else {
+    // not-found
+    mockDbRows = [];
   }
+
+  // QStash outcome
+  if (s.qstashResult === "success") {
+    mockPublishJSON.mockResolvedValue({ messageId: "msg-ok" });
+    mockPublishToTopic.mockResolvedValue([{ messageId: "msg-dlq-ok" }]);
+  } else if (s.resolutionPath === "not-found") {
+    // failure — only affects the relevant publish call
+    mockPublishToTopic.mockRejectedValue(new Error("QStash DLQ error"));
+  } else {
+    mockPublishJSON.mockRejectedValue(new Error("QStash Console error"));
+  }
+
+  mockOnConflictDoNothing.mockResolvedValue(undefined);
+  mockDbWhere.mockResolvedValue(undefined);
 }
 
 // ── Scenario dimensions ──
 
 const dims = {
   provider: ["github", "linear", "sentry", "vercel"] as const,
-  resolutionPath: ["cache-hit", "db-hit", "not-found"] as const,
-  deduplication: ["new-delivery", "duplicate", "redis-unavailable"] as const,
+  resolutionPath: ["db-hit", "not-found"] as const,
   qstashResult: ["success", "failure"] as const,
 };
 
-// 4 × 3 × 3 × 2 = 72 scenarios
+// 4 × 2 × 2 = 16 scenarios
 const scenarios = cartesian(dims) as RelayScenario[];
 
 // ── Matrix tests ──
@@ -255,7 +203,6 @@ describe("relay workflow invariant matrix", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockDbRows = [];
-    mockPipelineExec.mockResolvedValue([]);
   });
 
   it.each(
@@ -267,48 +214,20 @@ describe("relay workflow invariant matrix", () => {
 
     // ── Execute ──
 
-    let error: Error | null = null;
-
-    if (scenario.deduplication === "redis-unavailable") {
-      // Invariant VII: Redis down → throws, no side effects (never silently drops)
+    if (scenario.qstashResult === "failure") {
       await expect(capturedHandler(ctx)).rejects.toThrow();
-      expect(mockDbInsert).not.toHaveBeenCalled();
-      expect(mockPublishJSON).not.toHaveBeenCalled();
-      expect(mockPublishToTopic).not.toHaveBeenCalled();
-      return;
+      return; // Invariant IV: error propagates — no further checks needed
     }
 
-    if (
-      scenario.qstashResult === "failure" &&
-      scenario.deduplication === "new-delivery"
-    ) {
-      await expect(capturedHandler(ctx)).rejects.toThrow();
-      return; // Invariant VI: error propagates — no further checks needed
-    }
-    try {
-      await capturedHandler(ctx);
-    } catch (e) {
-      error = e as Error;
-    }
+    await capturedHandler(ctx);
 
     // ── Invariants ──
 
-    if (scenario.deduplication === "duplicate") {
-      // Invariant I: duplicate → 1 step, no side effects
-      expect(ctx.run).toHaveBeenCalledTimes(1);
-      expect(mockDbInsert).not.toHaveBeenCalled();
-      expect(mockPublishJSON).not.toHaveBeenCalled();
-      expect(mockPublishToTopic).not.toHaveBeenCalled();
-      expect(error).toBeNull();
-      return;
-    }
-
-    // Invariant II: new-delivery → always 1 DB insert
+    // Invariant I: always 1 DB insert
     expect(mockDbInsert).toHaveBeenCalledTimes(1);
-    expect(error).toBeNull();
 
     if (scenario.resolutionPath === "not-found") {
-      // Invariant III: not-found → DLQ publish
+      // Invariant II: not-found → DLQ publish
       expect(mockPublishToTopic).toHaveBeenCalledWith(
         expect.objectContaining({ topic: "webhook-dlq" })
       );
@@ -316,14 +235,14 @@ describe("relay workflow invariant matrix", () => {
       // status update to "dlq" — 1 update
       expect(mockDbUpdate).toHaveBeenCalledTimes(1);
     } else {
-      // connection found (cache-hit or db-hit)
+      // connection found (db-hit)
 
-      // Invariant IV: Console publish with correct shape
+      // Invariant III: Console publish with correct shape
       expect(mockPublishJSON).toHaveBeenCalledWith(
         expect.objectContaining({
           url: "https://console.test/api/gateway/ingress",
           retries: 5,
-          deduplicationId: `${scenario.provider}:del-001`,
+          deduplicationId: `${scenario.provider}_del-001`,
           callback: expect.stringContaining(
             `/admin/delivery-status?provider=${scenario.provider}`
           ),
@@ -336,22 +255,6 @@ describe("relay workflow invariant matrix", () => {
         })
       );
       expect(mockPublishToTopic).not.toHaveBeenCalled();
-
-      // Invariant V: db-hit path populates Redis cache
-      if (scenario.resolutionPath === "db-hit") {
-        expect(mockRedisHset).toHaveBeenCalledWith(
-          expect.stringContaining(`gw:resource:${scenario.provider}:`),
-          expect.objectContaining({
-            connectionId: `conn-${scenario.provider}`,
-            orgId: `org-${scenario.provider}`,
-          })
-        );
-      }
-
-      // cache-hit path must NOT populate cache (no extra write)
-      if (scenario.resolutionPath === "cache-hit") {
-        expect(mockRedisHset).not.toHaveBeenCalled();
-      }
 
       // 2 updates: installationId + status="enqueued"
       expect(mockDbUpdate).toHaveBeenCalledTimes(2);

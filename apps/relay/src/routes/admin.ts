@@ -1,17 +1,12 @@
 import { db } from "@db/console/client";
 import {
   gatewayBackfillRuns,
-  gatewayInstallations,
-  gatewayResources,
   gatewayWebhookDeliveries,
 } from "@db/console/schema";
-import type { SourceType } from "@repo/console-providers";
 import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
-import { redis } from "@vendor/upstash";
 import { Hono } from "hono";
 import { z } from "zod";
 import { env } from "../env.js";
-import { RESOURCE_CACHE_TTL, resourceKey } from "../lib/cache.js";
 import { replayDeliveries } from "../lib/replay.js";
 import { apiKeyAuth, qstashAuth } from "../middleware/auth.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
@@ -23,18 +18,10 @@ const startTime = Date.now();
 /**
  * GET /admin/health
  *
- * Health check endpoint. Checks Redis and PlanetScale connectivity.
+ * Health check endpoint. Checks DB connectivity.
  */
 admin.get("/health", async (c) => {
-  let redisStatus = "unknown";
   let databaseStatus = "unknown";
-
-  try {
-    await redis.ping();
-    redisStatus = "connected";
-  } catch {
-    redisStatus = "error";
-  }
 
   try {
     await db.execute(sql`SELECT 1`);
@@ -43,68 +30,16 @@ admin.get("/health", async (c) => {
     databaseStatus = "error";
   }
 
-  const allHealthy =
-    redisStatus === "connected" && databaseStatus === "connected";
+  const allHealthy = databaseStatus === "connected";
 
   return c.json(
     {
       status: allHealthy ? "ok" : "degraded",
-      redis: redisStatus,
       database: databaseStatus,
       uptime_ms: Date.now() - startTime,
     },
     allHealthy ? 200 : 503
   );
-});
-
-/**
- * POST /admin/cache/rebuild
- *
- * Rebuild Redis cache from PlanetScale (source of truth).
- * Requires X-API-Key authentication.
- */
-admin.post("/cache/rebuild", apiKeyAuth, async (c) => {
-  const BATCH_SIZE = 500;
-  let offset = 0;
-  let rebuilt = 0;
-
-  for (;;) {
-    const batch = await db
-      .select({
-        provider: gatewayInstallations.provider,
-        providerResourceId: gatewayResources.providerResourceId,
-        installationId: gatewayResources.installationId,
-        orgId: gatewayInstallations.orgId,
-      })
-      .from(gatewayResources)
-      .innerJoin(
-        gatewayInstallations,
-        eq(gatewayResources.installationId, gatewayInstallations.id)
-      )
-      .where(eq(gatewayResources.status, "active"))
-      .limit(BATCH_SIZE)
-      .offset(offset);
-
-    if (batch.length === 0) {
-      break;
-    }
-
-    const pipeline = redis.pipeline();
-    for (const r of batch) {
-      const key = resourceKey(r.provider as SourceType, r.providerResourceId);
-      pipeline.hset(key, { connectionId: r.installationId, orgId: r.orgId });
-      pipeline.expire(key, RESOURCE_CACHE_TTL);
-    }
-    await pipeline.exec();
-
-    rebuilt += batch.length;
-    if (batch.length < BATCH_SIZE) {
-      break;
-    }
-    offset += BATCH_SIZE;
-  }
-
-  return c.json({ status: "rebuilt", count: rebuilt });
 });
 
 /**
@@ -315,21 +250,7 @@ admin.post("/delivery-status", qstashAuth, async (c) => {
   return c.json({ status: "received" });
 });
 
-/**
- * POST /admin/dev/flush-dedup
- *
- * Dev-only: delete all webhook dedup Redis keys (gw:webhook:seen:*).
- * Allows re-testing backfill flows without waiting 24h for TTL expiry.
- */
 if (env.NODE_ENV !== "production") {
-  admin.post("/dev/flush-dedup", apiKeyAuth, async (c) => {
-    const keys = await redis.keys("gw:webhook:seen:*");
-    if (keys.length > 0) {
-      await redis.del(...keys);
-    }
-    return c.json({ flushed: keys.length });
-  });
-
   /**
    * DELETE /admin/dev/backfill-runs/:installationId
    *

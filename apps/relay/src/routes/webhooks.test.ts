@@ -9,8 +9,8 @@ const computeHmacSha1 = (msg: string, secret: string) =>
 
 // ── Mock externals (vi.hoisted runs before vi.mock hoisting) ──
 
-const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
-  vi.hoisted(() => {
+const { mockPublishJSON, mockWorkflowTrigger, mockEnv, dbOps } = vi.hoisted(
+  () => {
     const env = {
       GATEWAY_API_KEY: "test-api-key",
       GATEWAY_WEBHOOK_SECRET: "test-webhook-secret",
@@ -21,7 +21,6 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
     };
     return {
       mockPublishJSON: vi.fn().mockResolvedValue({ messageId: "msg-1" }),
-      mockRedisSet: vi.fn().mockResolvedValue("OK"),
       mockWorkflowTrigger: vi
         .fn<
           (args: {
@@ -39,7 +38,8 @@ const { mockPublishJSON, mockRedisSet, mockWorkflowTrigger, mockEnv, dbOps } =
         set?: unknown;
       }[],
     };
-  });
+  }
+);
 
 vi.mock("../env", () => ({
   env: mockEnv,
@@ -47,10 +47,6 @@ vi.mock("../env", () => ({
 
 vi.mock("@vendor/qstash", () => ({
   getQStashClient: () => ({ publishJSON: mockPublishJSON }),
-}));
-
-vi.mock("@vendor/upstash", () => ({
-  redis: { set: mockRedisSet },
 }));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
@@ -134,7 +130,6 @@ describe("POST /webhooks/:provider", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     dbOps.length = 0;
-    mockRedisSet.mockResolvedValue("OK");
     mockPublishJSON.mockResolvedValue({ messageId: "msg-1" });
     mockWorkflowTrigger.mockResolvedValue({ workflowRunId: "wf-1" });
   });
@@ -294,24 +289,6 @@ describe("POST /webhooks/:provider", () => {
   });
 
   describe("external service failures", () => {
-    it("returns 500 when Redis throws during service auth dedup", async () => {
-      mockRedisSet.mockRejectedValue(new Error("Redis connection refused"));
-
-      const res = await request("/webhooks/github", {
-        body: {
-          connectionId: "conn-1",
-          orgId: "org-1",
-          deliveryId: "del-redis-fail",
-          eventType: "push",
-          payload: { repository: { id: 42 } },
-          receivedAt: 1_700_000_000,
-        },
-        headers: { "X-API-Key": "test-api-key" },
-      });
-
-      expect(res.status).toBe(500);
-    });
-
     it("returns 500 when QStash throws during service auth publish", async () => {
       mockPublishJSON.mockRejectedValue(new Error("QStash rate limited"));
 
@@ -435,27 +412,6 @@ describe("POST /webhooks/:provider", () => {
 
       expect(res.status).toBe(400);
       expect(await res.json()).toEqual({ error: "invalid_payload" });
-    });
-
-    it("returns duplicate when Redis dedup rejects", async () => {
-      mockRedisSet.mockResolvedValue(null);
-
-      const res = await request("/webhooks/github", {
-        body: {
-          connectionId: "conn-1",
-          orgId: "org-1",
-          deliveryId: "del-dup",
-          eventType: "push",
-          payload: { repository: { id: 42 } },
-          receivedAt: 1_700_000_000,
-        },
-        headers: { "X-API-Key": "test-api-key" },
-      });
-
-      expect(res.status).toBe(200);
-      const json = await res.json();
-      expect(json.status).toBe("duplicate");
-      expect(mockPublishJSON).not.toHaveBeenCalled();
     });
 
     it("returns 400 when body is malformed JSON", async () => {

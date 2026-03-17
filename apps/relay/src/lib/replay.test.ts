@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // ── Hoisted mocks ──
 
 const {
-  mockRedisDel,
   mockWorkflowTrigger,
   mockDbUpdate,
   mockGetProvider,
@@ -12,7 +11,6 @@ const {
   const mockExtractResourceId = vi.fn().mockReturnValue("owner/repo");
 
   return {
-    mockRedisDel: vi.fn().mockResolvedValue(1),
     mockWorkflowTrigger: vi.fn().mockResolvedValue({ workflowRunId: "wf-1" }),
     mockDbUpdate: vi.fn().mockImplementation(() => ({
       set: vi.fn().mockReturnValue({
@@ -25,10 +23,6 @@ const {
     mockExtractResourceId,
   };
 });
-
-vi.mock("@vendor/upstash", () => ({
-  redis: { del: mockRedisDel },
-}));
 
 vi.mock("@vendor/upstash-workflow/client", () => ({
   workflowClient: { trigger: mockWorkflowTrigger },
@@ -53,11 +47,6 @@ vi.mock("@vendor/db", () => ({
 
 vi.mock("@repo/console-providers", () => ({
   getProvider: (...args: unknown[]) => mockGetProvider(...args),
-}));
-
-vi.mock("./cache", () => ({
-  webhookSeenKey: (provider: string, deliveryId: string) =>
-    `gw:webhook:seen:${provider}:${deliveryId}`,
 }));
 
 vi.mock("./urls", () => ({
@@ -101,7 +90,6 @@ function makeDelivery(
 
 beforeEach(() => {
   vi.clearAllMocks();
-  mockRedisDel.mockResolvedValue(1);
   mockWorkflowTrigger.mockResolvedValue({ workflowRunId: "wf-1" });
   mockExtractResourceId.mockReturnValue("owner/repo");
   mockGetProvider.mockReturnValue({
@@ -124,12 +112,11 @@ describe("replayDeliveries", () => {
       expect(result.replayed).toEqual([]);
       expect(result.failed).toEqual([]);
       expect(mockWorkflowTrigger).not.toHaveBeenCalled();
-      expect(mockRedisDel).not.toHaveBeenCalled();
     });
   });
 
   describe("success path", () => {
-    it("clears Redis dedup key, triggers workflow, resets status to 'received'", async () => {
+    it("triggers workflow and resets status to 'received'", async () => {
       const delivery = makeDelivery();
       const result = await replayDeliveries([delivery]);
 
@@ -137,7 +124,6 @@ describe("replayDeliveries", () => {
       expect(result.skipped).toEqual([]);
       expect(result.failed).toEqual([]);
 
-      expect(mockRedisDel).toHaveBeenCalledWith("gw:webhook:seen:github:del-1");
       expect(mockWorkflowTrigger).toHaveBeenCalledOnce();
       expect(mockDbUpdate).toHaveBeenCalledOnce();
     });
@@ -180,20 +166,6 @@ describe("replayDeliveries", () => {
           ?.body as string
       );
       expect(body.resourceId).toBeNull();
-    });
-  });
-
-  describe("dedup key format", () => {
-    it("clears key in format gw:webhook:seen:<provider>:<deliveryId>", async () => {
-      const delivery = makeDelivery({
-        provider: "linear",
-        deliveryId: "lin-99",
-      });
-      await replayDeliveries([delivery]);
-
-      expect(mockRedisDel).toHaveBeenCalledWith(
-        "gw:webhook:seen:linear:lin-99"
-      );
     });
   });
 

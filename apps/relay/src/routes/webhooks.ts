@@ -7,10 +7,8 @@ import type {
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
 import { getQStashClient } from "@vendor/qstash";
-import { redis } from "@vendor/upstash";
 import { workflowClient } from "@vendor/upstash-workflow/client";
 import { Hono } from "hono";
-import { webhookSeenKey } from "../lib/cache.js";
 import { consoleUrl, relayBaseUrl } from "../lib/urls.js";
 import type { WebhookVariables } from "../middleware/webhook.js";
 import {
@@ -74,17 +72,6 @@ webhooks.post(
       const body = c.get("serviceAuthBody");
       if (!body) {
         return c.json({ error: "missing_body" }, 400);
-      }
-
-      // Dedup — prevents duplicates from backfill retries and re-runs.
-      const dedupResult = await redis.set(
-        webhookSeenKey(providerName, deliveryId),
-        "1",
-        { nx: true, ex: 86_400 }
-      );
-      if (dedupResult === null) {
-        c.set("logFields", { ...c.get("logFields"), duplicate: true });
-        return c.json({ status: "duplicate", deliveryId });
       }
 
       // Persist for long-term replayability
