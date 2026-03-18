@@ -15,13 +15,13 @@ import { resolveEdges } from "./edge-resolver";
 
 export const entityGraph = inngest.createFunction(
   {
-    id: "apps-console/entity.graph",
+    id: "console/entity.graph",
     name: "Entity Graph",
     description: "Resolves entity edges after upsert (fast, pure SQL)",
     retries: 3,
     timeouts: { finish: "2m" },
   },
-  { event: "apps-console/entity.upserted" },
+  { event: "console/entity.upserted" },
   async ({ event, step }) => {
     const {
       workspaceId,
@@ -45,7 +45,7 @@ export const entityGraph = inngest.createFunction(
     });
 
     await step.sendEvent("emit-entity-graphed", {
-      name: "apps-console/entity.graphed" as const,
+      name: "console/entity.graphed" as const,
       data: {
         workspaceId,
         entityExternalId: event.data.entityExternalId,

@@ -258,7 +258,7 @@ describe("entity-worker invariant matrix", () => {
   )("%s", async (_label, scenario) => {
     configureEntityWorkerMocks(scenario);
     const step = makeEntityWorkerStep();
-    const handler = handlers["apps-backfill/entity.worker"]!;
+    const handler = handlers["backfill/entity.worker"]!;
 
     const shouldFail =
       scenario.fetchFailsOnPage !== null &&
@@ -414,7 +414,7 @@ describe("orchestrator invariant matrix", () => {
   )("%s", async (_label, scenario) => {
     configureOrchestratorMocks(scenario);
     const { step, runCalls } = makeOrchestratorStep(scenario);
-    const handler = handlers["apps-backfill/run.orchestrator"]!;
+    const handler = handlers["backfill/run.orchestrator"]!;
 
     const result = (await handler({
       event: makeOrchestratorEvent(scenario),

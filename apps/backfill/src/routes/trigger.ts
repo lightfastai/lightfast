@@ -51,7 +51,7 @@ trigger.post("/", async (c) => {
 
   try {
     await inngest.send({
-      name: "apps-backfill/run.requested",
+      name: "backfill/run.requested",
       data: {
         installationId: body.installationId,
         provider: body.provider,
@@ -119,7 +119,7 @@ trigger.post("/cancel", async (c) => {
 
   try {
     await inngest.send({
-      name: "apps-backfill/run.cancelled",
+      name: "backfill/run.cancelled",
       data: {
         installationId: body.installationId,
         correlationId: c.get("correlationId"),

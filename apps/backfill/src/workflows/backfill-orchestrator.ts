@@ -3,7 +3,7 @@ import {
   createGatewayClient,
   createRelayClient,
 } from "@repo/gateway-service-clients";
-import { NonRetriableError } from "@vendor/inngest";
+import { NonRetriableError } from "@repo/inngest";
 import { log } from "@vendor/observability/log/edge";
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
@@ -11,7 +11,7 @@ import { backfillEntityWorker } from "./entity-worker.js";
 
 export const backfillOrchestrator = inngest.createFunction(
   {
-    id: "apps-backfill/run.orchestrator",
+    id: "backfill/run.orchestrator",
     name: "Backfill Orchestrator",
     retries: 3,
     concurrency: [
@@ -22,7 +22,7 @@ export const backfillOrchestrator = inngest.createFunction(
     ],
     cancelOn: [
       {
-        event: "apps-backfill/run.cancelled",
+        event: "backfill/run.cancelled",
         match: "data.installationId",
       },
     ],
@@ -31,7 +31,7 @@ export const backfillOrchestrator = inngest.createFunction(
     // = 15/5 * 2hr = 6hr total. Set to 8hr for safety.
     timeouts: { start: "2m", finish: "8h" },
   },
-  { event: "apps-backfill/run.requested" },
+  { event: "backfill/run.requested" },
   async ({ event, step }) => {
     const {
       installationId,

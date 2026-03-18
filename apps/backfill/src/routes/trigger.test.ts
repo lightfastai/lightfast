@@ -115,14 +115,14 @@ describe("POST /trigger/", () => {
     expect(res.status).toBe(400);
   });
 
-  it('calls inngest.send with name "apps-backfill/run.requested"', async () => {
+  it('calls inngest.send with name "backfill/run.requested"', async () => {
     await request("/trigger", {
       body: validBody,
       headers: { "X-API-Key": "test-key" },
     });
     expect(mockInngestSend).toHaveBeenCalledOnce();
     const call = mockInngestSend.mock.calls[0]![0];
-    expect(call.name).toBe("apps-backfill/run.requested");
+    expect(call.name).toBe("backfill/run.requested");
     expect(call.data).toMatchObject({
       installationId: "inst-1",
       provider: "github",
@@ -233,14 +233,14 @@ describe("POST /trigger/cancel", () => {
     expect(res.status).toBe(400);
   });
 
-  it('calls inngest.send with name "apps-backfill/run.cancelled"', async () => {
+  it('calls inngest.send with name "backfill/run.cancelled"', async () => {
     await request("/trigger/cancel", {
       body: { installationId: "inst-1" },
       headers: { "X-API-Key": "test-key" },
     });
     expect(mockInngestSend).toHaveBeenCalledOnce();
     const call = mockInngestSend.mock.calls[0]![0];
-    expect(call.name).toBe("apps-backfill/run.cancelled");
+    expect(call.name).toBe("backfill/run.cancelled");
     expect(call.data).toEqual({ installationId: "inst-1" });
   });
 

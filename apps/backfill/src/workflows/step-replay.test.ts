@@ -239,7 +239,7 @@ describe("entity-worker step memoization replay", () => {
   }
 
   it("replay produces identical result to recording (single page)", async () => {
-    const handler = handlers["apps-backfill/entity.worker"]!;
+    const handler = handlers["backfill/entity.worker"]!;
 
     // ── Recording pass ──
     setupRecordingMocks();
@@ -267,7 +267,7 @@ describe("entity-worker step memoization replay", () => {
   });
 
   it("replay produces identical result to recording (multi-page)", async () => {
-    const handler = handlers["apps-backfill/entity.worker"]!;
+    const handler = handlers["backfill/entity.worker"]!;
 
     // ── Recording pass ──
     // Page 1: 2 events
@@ -334,7 +334,7 @@ describe("orchestrator step memoization replay", () => {
   }
 
   it("replay produces identical result to recording", async () => {
-    const handler = handlers["apps-backfill/run.orchestrator"]!;
+    const handler = handlers["backfill/run.orchestrator"]!;
 
     // Configure invoke to return a successful completion
     const invokeResults = {
@@ -372,7 +372,7 @@ describe("orchestrator step memoization replay", () => {
   });
 
   it("replay produces identical result with mixed success/failure", async () => {
-    const handler = handlers["apps-backfill/run.orchestrator"]!;
+    const handler = handlers["backfill/run.orchestrator"]!;
 
     // 2 resources — need 2 invoke results
     mockGatewayClient.getConnection.mockResolvedValue({

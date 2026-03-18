@@ -19,7 +19,7 @@ export async function publishInngestNotification(
   correlationId?: string
 ): Promise<void> {
   await inngest.send({
-    name: "apps-console/event.capture",
+    name: "console/event.capture",
     data: {
       workspaceId: workspace.workspaceId,
       clerkOrgId: workspace.clerkOrgId,

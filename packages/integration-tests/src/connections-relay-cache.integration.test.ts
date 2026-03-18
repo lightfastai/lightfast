@@ -93,6 +93,7 @@ vi.mock("@vercel/related-projects", () => ({
 
 // Import full Hono apps via vitest path aliases (see vitest.config.ts)
 import gatewayApp from "@gateway/app";
+
 // Force relay webhook-delivery module to load and capture its serve() handler
 await import("@relay/webhook-delivery");
 
@@ -207,9 +208,7 @@ describe("Suite 1.1 — Resource link populates relay routing cache", () => {
     expect(cached.connectionId).toBe(inst.id);
     expect(cached.orgId).toBe("org-1");
   });
-
 });
-
 
 describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
   it("DELETE /services/gateway/:id/resources/:rid removes the Redis key", async () => {

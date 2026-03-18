@@ -395,9 +395,7 @@ describe("Suite 6.1 — Teardown effects are order-independent", () => {
 
         // Backfill cancel event fired
         expect(
-          inngestEventsSent.some(
-            (e) => e.name === "apps-backfill/run.cancelled"
-          )
+          inngestEventsSent.some((e) => e.name === "backfill/run.cancelled")
         ).toBe(true);
       },
 
@@ -528,9 +526,7 @@ describe("Suite 6.3 — Backfill notify + relay dispatch are order-independent",
       invariant: () => {
         // Backfill was notified (Inngest run.requested fired)
         expect(
-          inngestEventsSent.some(
-            (e) => e.name === "apps-backfill/run.requested"
-          )
+          inngestEventsSent.some((e) => e.name === "backfill/run.requested")
         ).toBe(true);
 
         // Relay webhook was published to QStash
@@ -950,11 +946,9 @@ describe("Suite 6.7 — Neural entity co-occurrence edges converge under 3! orde
       });
     }
 
-    const eventStoreHandler = neuralCapturedHandlers.get(
-      "apps-console/event.store"
-    );
+    const eventStoreHandler = neuralCapturedHandlers.get("console/event.store");
     const entityGraphHandler = neuralCapturedHandlers.get(
-      "apps-console/entity.graph"
+      "console/entity.graph"
     );
     expect(eventStoreHandler).toBeDefined();
     expect(entityGraphHandler).toBeDefined();
@@ -991,7 +985,7 @@ describe("Suite 6.7 — Neural entity co-occurrence edges converge under 3! orde
             StepSendEventData,
           ][];
           const upsertedCall = sendCalls.find(
-            ([, e]) => e.name === "apps-console/entity.upserted"
+            ([, e]) => e.name === "console/entity.upserted"
           );
           if (!upsertedCall) {
             return;

@@ -232,7 +232,7 @@ export async function recordActivity(
     }
 
     await inngest.send({
-      name: "apps-console/activity.record",
+      name: "console/activity.record",
       data: {
         workspaceId: data.workspaceId,
         category: data.category,
@@ -322,7 +322,7 @@ export function recordSystemActivity(data: ActivityData): void {
   // Fire-and-forget: don't await, don't block
   inngest
     .send({
-      name: "apps-console/activity.record",
+      name: "console/activity.record",
       data: {
         workspaceId: data.workspaceId,
         category: data.category,

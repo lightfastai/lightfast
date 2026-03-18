@@ -293,7 +293,7 @@ describe("Suite 2.3 — cancelBackfillService publishes cancel body", () => {
     expect(inngestSendMock).toHaveBeenCalledOnce();
     // toMatchObject does recursive partial matching — extra fields like correlationId are ignored
     expect(inngestSendMock.mock.calls[0]?.[0]).toMatchObject({
-      name: "apps-backfill/run.cancelled",
+      name: "backfill/run.cancelled",
       data: { installationId: "inst-cancel-e2e" },
     });
   });

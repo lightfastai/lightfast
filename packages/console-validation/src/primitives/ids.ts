@@ -121,7 +121,7 @@ export const inngestRunIdSchema = z
  *
  * @example
  * ```typescript
- * inngestFunctionIdSchema.parse("apps-console/docs.push"); // ✅ Valid
+ * inngestFunctionIdSchema.parse("console/docs.push"); // ✅ Valid
  * inngestFunctionIdSchema.parse("invalid space"); // ❌ Invalid characters
  * ```
  */

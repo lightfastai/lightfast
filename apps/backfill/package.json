@@ -21,6 +21,7 @@
     "@repo/console-providers": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/gateway-service-clients": "workspace:*",
+    "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/inngest": "workspace:*",

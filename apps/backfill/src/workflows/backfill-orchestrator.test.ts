@@ -13,7 +13,7 @@ vi.mock("../inngest/client", () => ({
       handler: typeof capturedHandler
     ) => {
       // Only capture the orchestrator handler (entity worker is mocked out)
-      if (config.id === "apps-backfill/run.orchestrator") {
+      if (config.id === "backfill/run.orchestrator") {
         capturedHandler = handler;
       }
       return { id: config.id };

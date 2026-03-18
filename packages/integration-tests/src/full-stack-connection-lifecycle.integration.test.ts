@@ -272,7 +272,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     // Inngest run.requested event should have fired
     expect(inngestEventsSent).toContainEqual(
       expect.objectContaining({
-        name: "apps-backfill/run.requested",
+        name: "backfill/run.requested",
         data: expect.objectContaining({
           installationId: "inst-lifecycle-happy",
           provider: "github",
@@ -298,7 +298,7 @@ describe("Suite 5.1 — Happy path: notify → trigger → orchestrator → conn
     });
     await db.insert(gatewayResources).values(resource);
 
-    const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
+    const orchHandler = capturedHandlers.get("backfill/run.orchestrator");
     if (!orchHandler) {
       throw new Error("orchestrator handler not registered");
     }
@@ -420,11 +420,11 @@ describe("Suite 5.2 — Teardown path: cancel → trigger/cancel → Inngest run
     // 3. Inngest run.cancelled event should have fired
     // toMatchObject does recursive partial matching — extra fields like correlationId are ignored
     const cancelEvent = inngestEventsSent.find(
-      (e) => e.name === "apps-backfill/run.cancelled"
+      (e) => e.name === "backfill/run.cancelled"
     );
     expect(cancelEvent).toBeDefined();
     expect(cancelEvent).toMatchObject({
-      name: "apps-backfill/run.cancelled",
+      name: "backfill/run.cancelled",
       data: { installationId: "inst-lifecycle-cancel" },
     });
   });
@@ -568,11 +568,11 @@ describe("Suite 5.3 — Full teardown path", () => {
     );
 
     const cancelEvent = inngestEventsSent.find(
-      (e) => e.name === "apps-backfill/run.cancelled"
+      (e) => e.name === "backfill/run.cancelled"
     );
     expect(cancelEvent).toBeDefined();
     expect(cancelEvent).toMatchObject({
-      name: "apps-backfill/run.cancelled",
+      name: "backfill/run.cancelled",
       data: { installationId: inst.id },
     });
 

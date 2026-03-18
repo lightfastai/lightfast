@@ -248,6 +248,7 @@ async function seedNeuralFixtures(testDb: TestDb) {
       type: "repository",
       sync: { autoSync: true },
     },
+    status: "active",
   });
 }
 
@@ -278,7 +279,7 @@ function extractSendEvent(
 // ── Handler accessors ──
 
 function getEventStoreHandler() {
-  const h = capturedHandlers.get("apps-console/event.store");
+  const h = capturedHandlers.get("console/event.store");
   if (!h) {
     throw new Error("eventStore handler not registered");
   }
@@ -296,7 +297,7 @@ function getEventStoreHandler() {
 }
 
 function getEntityGraphHandler() {
-  const h = capturedHandlers.get("apps-console/entity.graph");
+  const h = capturedHandlers.get("console/entity.graph");
   if (!h) {
     throw new Error("entityGraph handler not registered");
   }
@@ -307,7 +308,7 @@ function getEntityGraphHandler() {
 }
 
 function getEntityEmbedHandler() {
-  const h = capturedHandlers.get("apps-console/entity.embed");
+  const h = capturedHandlers.get("console/entity.embed");
   if (!h) {
     throw new Error("entityEmbed handler not registered");
   }
@@ -364,10 +365,39 @@ describe("Suite 1 — eventStore happy path", () => {
     expect(junctions.length).toBeGreaterThanOrEqual(1);
 
     // Downstream events emitted via step.sendEvent
-    const upsertedEvt = extractSendEvent(step, "apps-console/entity.upserted");
+    const upsertedEvt = extractSendEvent(step, "console/entity.upserted");
     expect(upsertedEvt).toBeDefined();
-    const storedEvt = extractSendEvent(step, "apps-console/event.stored");
+    const storedEvt = extractSendEvent(step, "console/event.stored");
     expect(storedEvt).toBeDefined();
+  });
+});
+
+describe("Suite 1b — eventStore Gate 2 (inactive integration)", () => {
+  it("rejects event with reason inactive_connection when integration status != active", async () => {
+    // Override the seeded integration to be disconnected
+    const client = getRawClient(db);
+    await client.exec(
+      `UPDATE lightfast_workspace_integrations SET status = 'disconnected', status_reason = 'user_disconnected' WHERE provider_resource_id = '567890123'`
+    );
+
+    const step = makeStep();
+    const result = await getEventStoreHandler()({
+      event: makeCaptureEvent(BASE_EVENT),
+      step,
+    });
+
+    expect(result.status).toBe("filtered");
+    expect(result.reason).toBe("Integration is not active");
+
+    // No event stored
+    const events = await db.select().from(workspaceEvents);
+    expect(events).toHaveLength(0);
+
+    // Job completed with inactive_connection reason
+    const jobs = await db.select().from(workspaceWorkflowRuns);
+    expect(jobs).toHaveLength(1);
+    const output = jobs[0]?.output as { reason?: string } | null;
+    expect(output?.reason).toBe("inactive_connection");
   });
 });
 
@@ -434,7 +464,7 @@ describe("Suite 4 — eventStore → entityGraph chain", () => {
     expect(storeResult.status).toBe("stored");
 
     // Step 2: Extract entity.upserted event
-    const upsertedEvt = extractSendEvent(step1, "apps-console/entity.upserted");
+    const upsertedEvt = extractSendEvent(step1, "console/entity.upserted");
     expect(upsertedEvt).toBeDefined();
 
     // Step 3: Run entityGraph
@@ -448,7 +478,7 @@ describe("Suite 4 — eventStore → entityGraph chain", () => {
     expect(typeof graphResult.edgeCount).toBe("number");
 
     // entity.graphed emitted
-    const graphedEvt = extractSendEvent(step2, "apps-console/entity.graphed");
+    const graphedEvt = extractSendEvent(step2, "console/entity.graphed");
     expect(graphedEvt).toBeDefined();
     expect(graphedEvt!.data.entityExternalId).toBe(
       upsertedEvt!.data.entityExternalId
@@ -464,7 +494,7 @@ describe("Suite 5 — eventStore → entityGraph → entityEmbed full chain", ()
       event: makeCaptureEvent(BASE_EVENT),
       step: step1,
     });
-    const upsertedEvt = extractSendEvent(step1, "apps-console/entity.upserted");
+    const upsertedEvt = extractSendEvent(step1, "console/entity.upserted");
     expect(upsertedEvt).toBeDefined();
 
     // Step 2: entityGraph
@@ -473,7 +503,7 @@ describe("Suite 5 — eventStore → entityGraph → entityEmbed full chain", ()
       event: { data: upsertedEvt!.data },
       step: step2,
     });
-    const graphedEvt = extractSendEvent(step2, "apps-console/entity.graphed");
+    const graphedEvt = extractSendEvent(step2, "console/entity.graphed");
     expect(graphedEvt).toBeDefined();
 
     // Step 3: entityEmbed

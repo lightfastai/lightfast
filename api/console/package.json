@@ -47,6 +47,7 @@
     "@repo/console-clerk-cache": "workspace:*",
     "@repo/console-clerk-m2m": "workspace:*",
     "@repo/console-config": "workspace:*",
+    "@repo/inngest": "workspace:*",
     "@repo/console-embed": "workspace:*",
     "@repo/console-octokit-github": "workspace:*",
     "@repo/console-pinecone": "workspace:*",

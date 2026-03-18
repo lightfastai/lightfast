@@ -344,7 +344,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
     });
     await db.insert(gatewayResources).values(resource);
 
-    const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
+    const orchHandler = capturedHandlers.get("backfill/run.orchestrator");
     if (!orchHandler) {
       throw new Error("orchestrator handler not registered");
     }
@@ -394,7 +394,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
     });
     await db.insert(gatewayInstallations).values(inst);
 
-    const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
+    const orchHandler = capturedHandlers.get("backfill/run.orchestrator");
     if (!orchHandler) {
       throw new Error("orchestrator handler not registered");
     }
@@ -445,7 +445,7 @@ describe("Suite 3.2 — Orchestrator get-connection step via service router", ()
     await db.insert(gatewayInstallations).values(inst);
     // No resources inserted
 
-    const orchHandler = capturedHandlers.get("apps-backfill/run.orchestrator");
+    const orchHandler = capturedHandlers.get("backfill/run.orchestrator");
     if (!orchHandler) {
       throw new Error("orchestrator handler not registered");
     }

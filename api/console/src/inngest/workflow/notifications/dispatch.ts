@@ -7,13 +7,13 @@ const OBSERVATION_WORKFLOW_KEY = "observation-captured";
 
 export const notificationDispatch = inngest.createFunction(
   {
-    id: "apps-console/notification.dispatch",
+    id: "console/notification.dispatch",
     name: "Notification Dispatch",
     description: "Dispatches high-significance event notifications via Knock",
     retries: 2,
     timeouts: { finish: "1m" },
   },
-  { event: "apps-console/event.stored" },
+  { event: "console/event.stored" },
   async ({ event, step }) => {
     const {
       workspaceId,
