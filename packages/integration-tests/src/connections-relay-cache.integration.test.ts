@@ -1,10 +1,13 @@
 /**
- * Suite 1: Connections ↔ Relay Redis Cache Contract
+ * Suite 1: Connections → Redis Cache Contract
  *
- * Verifies that the shared `gw:resource:{provider}:{id}` Redis key namespace
- * is consistent between:
- *   - Connections (writes on POST /connections/:id/resources, deletes on DELETE)
- *   - Relay (reads in webhook-delivery `resolve-connection` step)
+ * Verifies that the Gateway Connections API correctly maintains the
+ * `gw:resource:{provider}:{id}` Redis key namespace on resource link/unlink.
+ *
+ * Note: Relay no longer reads from this Redis cache — connection resolution
+ * was moved to direct DB queries (gatewayResources JOIN gatewayInstallations)
+ * in commit 9ba84fd92. Deduplication is now handled by DB onConflictDoNothing
+ * and QStash deduplicationId.
  *
  * Infrastructure: PGlite (real DB), in-memory Redis Map, no Inngest/QStash needed.
  */
@@ -90,8 +93,6 @@ vi.mock("@vercel/related-projects", () => ({
 
 // Import full Hono apps via vitest path aliases (see vitest.config.ts)
 import gatewayApp from "@gateway/app";
-import { resourceKey as relayResourceKey, webhookSeenKey } from "@relay/cache";
-
 // Force relay webhook-delivery module to load and capture its serve() handler
 await import("@relay/webhook-delivery");
 
@@ -207,25 +208,8 @@ describe("Suite 1.1 — Resource link populates relay routing cache", () => {
     expect(cached.orgId).toBe("org-1");
   });
 
-  it("Relay resolve-connection step reads the Connections-written Redis cache", async () => {
-    // Simulate what Connections writes after a resource link
-    const connectionId = "conn-redis-1";
-    const orgId = "org-redis-1";
-    redisStore.set("gw:resource:github:cached-repo", { connectionId, orgId });
-
-    // Relay's resolve-connection step reads via redis.hgetall
-    const cached = (await redisMock.hgetall(
-      "gw:resource:github:cached-repo"
-    )) as { connectionId: string; orgId: string } | null;
-
-    expect(cached).not.toBeNull();
-    if (!cached) {
-      throw new Error("cached should not be null");
-    }
-    expect(cached.connectionId).toBe(connectionId);
-    expect(cached.orgId).toBe(orgId);
-  });
 });
+
 
 describe("Suite 1.2 — Resource unlink removes relay routing cache", () => {
   it("DELETE /services/gateway/:id/resources/:rid removes the Redis key", async () => {
@@ -294,8 +278,8 @@ describe("Suite 1.3 — Teardown clears all resource cache keys", () => {
   });
 });
 
-describe("Suite 1.4 — Key format parity between Connections and Relay", () => {
-  it("connections.resourceKey() matches relay.resourceKey() for the same inputs", async () => {
+describe("Suite 1.4 — Resource key format", () => {
+  it("connections.resourceKey() uses gw:resource:{provider}:{id} format", async () => {
     const { resourceKey: connectionsKey } = await import("@gateway/cache");
 
     const testCases: [string, string][] = [
@@ -308,42 +292,7 @@ describe("Suite 1.4 — Key format parity between Connections and Relay", () => 
 
     for (const [provider, resourceId] of testCases) {
       const connKey = connectionsKey(provider as never, resourceId);
-      const gwKey = relayResourceKey(provider as never, resourceId);
-      expect(connKey).toBe(gwKey);
       expect(connKey).toBe(`gw:resource:${provider}:${resourceId}`);
     }
-  });
-
-  it("webhookSeenKey uses gw:webhook:seen:{provider}:{deliveryId} format", () => {
-    expect(webhookSeenKey("github" as never, "del-abc123")).toBe(
-      "gw:webhook:seen:github:del-abc123"
-    );
-    expect(webhookSeenKey("vercel" as never, "del-vc-001")).toBe(
-      "gw:webhook:seen:vercel:del-vc-001"
-    );
-  });
-});
-
-describe("Suite 1.5 — Relay deduplication via webhookSeenKey", () => {
-  it("first delivery succeeds (SET NX returns OK), second is duplicate (returns null)", async () => {
-    const key = webhookSeenKey("github" as never, "del-dedup-test");
-
-    const first = await redisMock.set(key, "1", { nx: true });
-    expect(first).toBe("OK");
-    expect(redisStore.has(key)).toBe(true);
-
-    // Same deliveryId → SET NX returns null (key already exists)
-    const second = await redisMock.set(key, "1", { nx: true });
-    expect(second).toBeNull();
-  });
-
-  it("different deliveryIds each get their own dedup key", async () => {
-    const key1 = webhookSeenKey("github" as never, "del-1");
-    const key2 = webhookSeenKey("github" as never, "del-2");
-
-    await redisMock.set(key1, "1", { nx: true });
-    const result = await redisMock.set(key2, "1", { nx: true });
-
-    expect(result).toBe("OK"); // Different key → not a duplicate
   });
 });
