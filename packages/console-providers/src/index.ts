@@ -22,6 +22,8 @@ export type {
   HmacScheme,
   IconDef,
   InstallationMode,
+  ManagedProvider,
+  ManagedWebhookDef,
   NormalizedInstallation,
   NormalizedResource,
   OAuthDef,
@@ -38,6 +40,8 @@ export type {
   SimpleEventDef,
   WebhookDef,
   WebhookProvider,
+  WebhookSetupDef,
+  WebhookSetupState,
 } from "./define";
 export {
   actionDefSchema,
@@ -50,12 +54,15 @@ export {
   categoryDefSchema,
   connectionStatusSchema,
   defineApiProvider,
+  defineManagedProvider,
   defineWebhookProvider,
   deriveVerifySignature,
+  hasInboundWebhooks,
   hmac,
   iconDefSchema,
   isApiProvider,
   isAppTokenAuth,
+  isManagedProvider,
   isWebhookProvider,
   providerKindSchema,
   proxyExecuteRequestSchema,
@@ -65,6 +72,7 @@ export {
   signatureSchemeSchema,
   simpleEvent,
   typedEntityHandler,
+  webhookSetupStateSchema,
 } from "./define";
 export type {
   EntityRef,

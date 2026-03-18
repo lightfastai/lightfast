@@ -15,7 +15,7 @@ import type {
 // Factories use `satisfies z.infer<typeof providerKindSchema>` so adding or
 // removing a kind from this enum causes a compile-time error in the factory.
 
-export const providerKindSchema = z.enum(["webhook", "api"]);
+export const providerKindSchema = z.enum(["webhook", "managed", "api"]);
 export type ProviderKind = z.infer<typeof providerKindSchema>;
 
 export const authKindSchema = z.enum(["oauth", "api-key", "app-token"]);
@@ -176,6 +176,49 @@ export interface WebhookDef<TConfig> {
     headers: Headers,
     secret: string
   ) => boolean;
+}
+
+// ── Managed Webhook Types ────────────────────────────────────────────────────
+
+export const webhookSetupStateSchema = z.object({
+  endpointId: z.string(),
+  signingSecret: z.string(),
+});
+export type WebhookSetupState = z.infer<typeof webhookSetupStateSchema>;
+
+/**
+ * Programmatic webhook lifecycle management for managed providers (HubSpot, Stripe).
+ * `register` creates the webhook endpoint on the provider; `unregister` removes it.
+ * Returns `TState` (at minimum `endpointId` + `signingSecret`) to store in the DB.
+ */
+export interface WebhookSetupDef<
+  TConfig,
+  TState extends WebhookSetupState = WebhookSetupState,
+> {
+  readonly defaultEvents: readonly string[];
+  readonly register: (
+    config: TConfig,
+    token: string,
+    webhookUrl: string,
+    events: readonly string[]
+  ) => Promise<TState>;
+  readonly unregister: (
+    config: TConfig,
+    token: string,
+    state: TState
+  ) => Promise<void>;
+}
+
+/**
+ * Combined inbound webhook definition for managed providers.
+ * `webhook` handles verification and extraction; `setup` handles registration.
+ */
+export interface ManagedWebhookDef<
+  TConfig,
+  TState extends WebhookSetupState = WebhookSetupState,
+> {
+  readonly setup: WebhookSetupDef<TConfig, TState>;
+  readonly webhook: WebhookDef<TConfig>;
 }
 
 /** OAuth functions — pure fetch, no env/DB/framework */
@@ -662,7 +705,47 @@ export interface WebhookProvider<
   readonly webhook: WebhookDef<TConfig>;
 }
 
-// ── Tier 2: ApiProvider ─────────────────────────────────────────────────────
+// ── Tier 2: ManagedProvider ──────────────────────────────────────────────────
+
+/**
+ * Managed webhook provider (HubSpot, Stripe, etc.).
+ * Programmatically registers/unregisters webhooks with the provider on connection
+ * setup/teardown. Auth via OAuth or API key. Inbound events arrive via signed POST.
+ *
+ * Runtime wiring (DB migration for webhookSetupState, relay guard migration,
+ * gateway managed-provider setup flow) is deferred until a concrete managed provider
+ * is added. This phase establishes the complete type architecture.
+ */
+export interface ManagedProvider<
+  TConfig = unknown,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
+  TEvents extends Record<string, EventDefinition> = Record<
+    string,
+    EventDefinition
+  >,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+  TApi extends ProviderApi = ProviderApi,
+> extends BaseProviderFields<
+    TConfig,
+    TCategories,
+    TEvents,
+    TAccountInfoSchema,
+    TProviderConfigSchema,
+    TApi
+  > {
+  /** Auth strategy — OAuth or API key */
+  readonly auth: AuthDef<TConfig, TAccountInfo>;
+  /** Optional: historical data import */
+  readonly backfill?: BackfillDef;
+  /** Programmatic webhook lifecycle + inbound event handling */
+  readonly inbound: ManagedWebhookDef<TConfig>;
+  /** Discriminant — injected by defineManagedProvider() */
+  readonly kind: "managed";
+}
+
+// ── Tier 3: ApiProvider ─────────────────────────────────────────────────────
 
 /**
  * API-only provider (Apollo, HubSpot, Salesforce, etc.).
@@ -721,6 +804,15 @@ export type ProviderDefinition<
       TProviderConfigSchema,
       TApi
     >
+  | ManagedProvider<
+      TConfig,
+      TAccountInfo,
+      TCategories,
+      TEvents,
+      TAccountInfoSchema,
+      TProviderConfigSchema,
+      TApi
+    >
   | ApiProvider<
       TConfig,
       TAccountInfo,
@@ -737,8 +829,23 @@ export function isWebhookProvider(p: { kind: string }): p is WebhookProvider {
   return p.kind === "webhook";
 }
 
+export function isManagedProvider(p: { kind: string }): p is ManagedProvider {
+  return p.kind === "managed";
+}
+
 export function isApiProvider(p: { kind: string }): p is ApiProvider {
   return p.kind === "api";
+}
+
+/**
+ * True for providers that receive inbound webhooks — either natively (WebhookProvider)
+ * or via programmatic registration (ManagedProvider).
+ * Used by relay middleware to gate webhook handling.
+ */
+export function hasInboundWebhooks(p: {
+  kind: string;
+}): p is WebhookProvider | ManagedProvider {
+  return p.kind === "webhook" || p.kind === "managed";
 }
 
 // ── Shared env-getter factory helper ────────────────────────────────────────
@@ -884,6 +991,69 @@ export function defineApiProvider<
     },
   };
   return Object.freeze(result) as ApiProvider<
+    TConfig,
+    TAccountInfo,
+    TCategories,
+    TEvents,
+    TAccountInfoSchema,
+    TProviderConfigSchema,
+    TApi
+  >;
+}
+
+/**
+ * Create a type-safe managed webhook provider definition.
+ * Injects `kind: "managed"` and the lazy `env` getter automatically.
+ *
+ * Do NOT pass explicit type arguments — let TypeScript infer all generics
+ * to preserve the narrow literal types for categories and events.
+ */
+export function defineManagedProvider<
+  TConfig,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  const TCategories extends Record<string, CategoryDef> = Record<
+    string,
+    CategoryDef
+  >,
+  const TEvents extends Record<string, EventDefinition> = Record<
+    string,
+    EventDefinition
+  >,
+  TAccountInfoSchema extends z.ZodObject = z.ZodObject,
+  TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+  const TApi extends ProviderApi = ProviderApi,
+>(
+  def: Omit<
+    ManagedProvider<
+      TConfig,
+      TAccountInfo,
+      TCategories,
+      TEvents,
+      TAccountInfoSchema,
+      TProviderConfigSchema,
+      TApi
+    >,
+    "env" | "kind"
+  > & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] }
+): ManagedProvider<
+  TConfig,
+  TAccountInfo,
+  TCategories,
+  TEvents,
+  TAccountInfoSchema,
+  TProviderConfigSchema,
+  TApi
+> {
+  let _env: Record<string, string> | undefined;
+  const result = {
+    ...def,
+    kind: "managed" as const satisfies z.infer<typeof providerKindSchema>,
+    get env(): Record<string, string> {
+      _env ??= buildEnvGetter(def.envSchema);
+      return _env;
+    },
+  };
+  return Object.freeze(result) as ManagedProvider<
     TConfig,
     TAccountInfo,
     TCategories,

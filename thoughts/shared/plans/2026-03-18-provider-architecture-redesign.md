@@ -57,7 +57,8 @@ pnpm --filter @repo/console-providers test   # all tests pass
 - **Relay auto-registration factory** — `createWebhookRouter(PROVIDERS)` (deferred)
 - **Provider telemetry schema** — structured `TelemetryEvent` (deferred)
 - **`StreamingDef`** — Salesforce CDC, Kafka-style providers (future primitive)
-- **Database schema changes beyond `webhookSetupState`** — no other schema changes needed
+- **ManagedProvider runtime wiring** — DB migration (`webhookSetupState` column), relay `providerGuard` → `hasInboundWebhooks`, gateway callback managed provider setup flow — deferred until first concrete managed provider (HubSpot, Stripe) is added; type architecture is complete in Phase 9
+- **Database schema changes** — no schema changes in this plan; `webhookSetupState` column deferred with ManagedProvider runtime wiring
 - **Changing `BackfillDef`, `ResourcePickerDef`, or `ProviderApi` structures** — already correct
 - ~~**Ed25519 signature scheme**~~ — moved to Phase 10; exercises the union-first `SignatureScheme` architecture from Phase 3
 - **Classifier-based event routing** — `EventClassifier` ("lifecycle" | "data" | "unknown") was dead code and is deleted in Phase 2; future DLQ/routing logic can be re-introduced when the relay actually needs it
@@ -68,7 +69,7 @@ pnpm --filter @repo/console-providers test   # all tests pass
 
 ## Implementation Approach
 
-Changes are ordered by dependency. Phases 1-3 are sequential (each builds on the previous). **Phase 4 absorbs the original Phases 5 and 8** — all three address the registry architecture and have no external dependencies beyond Phase 3. Phases 4 and 6 are independent and can be done in any order after Phase 3. Phase 7 requires both Phase 3 (relay uses `deriveVerifySignature`) **and** Phase 9's `hasInboundWebhooks` type guard before the relay guard is correct. Phase 9 depends on Phase 3. Phase 10 depends on Phases 3 and 9 (extends `SignatureScheme` and updates `hasInboundWebhooks`).
+Changes are ordered by dependency. Phases 1-3 are sequential (each builds on the previous). **Phase 4 absorbs the original Phases 5 and 8** — all three address the registry architecture and have no external dependencies beyond Phase 3. Phases 4 and 6 are independent and can be done in any order after Phase 3. Phase 7 requires Phase 3 (relay uses `deriveVerifySignature`). Phase 9 is type-architecture-only (interfaces, guards, factory, exports) with no consumer changes — depends on Phase 3. Phase 10 depends on Phases 3 and 9 (extends `SignatureScheme` and updates `hasInboundWebhooks`). The relay guard migration (`isWebhookProvider` → `hasInboundWebhooks`) is deferred until the first concrete managed provider is added.
 
 **Type-safety principle**: Test type-level assertions inside `console-providers` at each phase boundary before touching any consumer (relay, gateway, backfill, console). The provider package must surface the correct narrow types so consumers never need type casts.
 
@@ -1539,10 +1540,10 @@ A build error points to a missed client import. All server components and API co
 
 ---
 
-## Phase 9: ManagedProvider Tier
+## Phase 9: ManagedProvider Type Architecture
 
 ### Overview
-Add `ManagedProvider` as a third provider tier for providers where we programmatically register our webhook URL during installation. Add `WebhookSetupDef`, `ManagedWebhookDef`, and `defineManagedProvider` factory. Update `ProviderDefinition` union. Add DB migration.
+Add the complete type architecture for `ManagedProvider` as a third provider tier — interfaces, type guards, factory, schema updates, and exports — **without** any runtime wiring (no DB migration, no relay changes, no gateway changes). This establishes all the type scaffolding so that when a concrete managed provider (HubSpot, Stripe) is added, the runtime wiring is a focused follow-up with zero type-level design decisions remaining.
 
 ### Changes Required:
 
@@ -1606,7 +1607,19 @@ export interface ManagedProvider<
 }
 ```
 
-#### 3. Update `ProviderDefinition` union
+#### 3. Update `providerKindSchema`
+**File**: `packages/console-providers/src/define.ts`
+**Changes**: Add `"managed"` to the enum at line 18:
+
+```typescript
+// Before:
+export const providerKindSchema = z.enum(["webhook", "api"]);
+
+// After:
+export const providerKindSchema = z.enum(["webhook", "managed", "api"]);
+```
+
+#### 4. Update `ProviderDefinition` union
 **File**: `packages/console-providers/src/define.ts`
 **Changes**: Add `ManagedProvider` to the union:
 
@@ -1617,7 +1630,7 @@ export type ProviderDefinition<...> =
   | ApiProvider<...>;
 ```
 
-#### 4. Add type guards
+#### 5. Add type guards
 **File**: `packages/console-providers/src/define.ts`
 **Changes**:
 
@@ -1633,9 +1646,9 @@ export function hasInboundWebhooks(
 }
 ```
 
-#### 5. Add `defineManagedProvider` factory
+#### 6. Add `defineManagedProvider` factory
 **File**: `packages/console-providers/src/define.ts`
-**Changes**: Add after `defineApiProvider`:
+**Changes**: Add after `defineApiProvider`. Constrain the injected `kind` via `satisfies` (same pattern as `defineWebhookProvider` and `defineApiProvider`):
 
 ```typescript
 export function defineManagedProvider<
@@ -1654,7 +1667,7 @@ export function defineManagedProvider<
   let _env: Record<string, string> | undefined;
   return Object.freeze({
     ...def,
-    kind: "managed" as const,
+    kind: ("managed" as const) satisfies z.infer<typeof providerKindSchema>,
     get env(): Record<string, string> {
       _env ??= buildEnvGetter(def.envSchema);
       return _env;
@@ -1663,41 +1676,27 @@ export function defineManagedProvider<
 }
 ```
 
-#### 6. Add DB migration
-**File**: `db/console/` (generated via drizzle)
-**Changes**: Add `webhookSetupState jsonb` column (nullable) to `gw_installations` table.
-
-```bash
-cd db/console && pnpm db:generate && pnpm db:migrate
-```
-
-#### 7. Update relay `providerGuard`
-**File**: `apps/relay/src/middleware/webhook.ts`
-**Changes**: Update from `isWebhookProvider(p)` to `hasInboundWebhooks(p)`. For managed providers, the signing secret comes from `connection.webhookSetupState.signingSecret`.
-
-#### 8. Update gateway callback
-**File**: `apps/gateway/src/routes/connections.ts`
-**Changes**: After `processCallback` for a managed provider, call `setup.register()` and persist the returned state to `gw_installations.webhookSetupState`.
-
-#### 9. Update exports
+#### 7. Update exports
 **File**: `packages/console-providers/src/index.ts`
 **Changes**: Export `ManagedProvider`, `ManagedWebhookDef`, `WebhookSetupDef`, `WebhookSetupState`, `webhookSetupStateSchema`, `defineManagedProvider`, `isManagedProvider`, `hasInboundWebhooks`.
 
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] DB migration applies cleanly: `pnpm db:generate && pnpm db:migrate`
-- [ ] `ProviderDefinition` union includes 3 members (WebhookProvider, ManagedProvider, ApiProvider)
+- [x] Type checking passes: `pnpm typecheck` (pre-existing errors in connections.ts only)
+- [x] Lint passes: `pnpm check` (pre-existing errors in apps/console only; console-providers clean)
+- [x] All tests pass: `pnpm --filter @repo/console-providers test` (356 passed)
+- [x] `ProviderDefinition` union includes 3 members (WebhookProvider, ManagedProvider, ApiProvider)
+- [x] `providerKindSchema.parse("managed")` succeeds at runtime
+- [x] Type assertion: `isManagedProvider({ kind: "managed" })` returns `true`
+- [x] Type assertion: `hasInboundWebhooks({ kind: "webhook" })` and `hasInboundWebhooks({ kind: "managed" })` both return `true`
+- [x] Type assertion: `hasInboundWebhooks({ kind: "api" })` returns `false`
+- [x] Existing 5 providers in `PROVIDERS` still typecheck and function unchanged (no managed providers exist yet — this is type architecture only)
 
 #### Manual Verification:
-- [ ] Existing webhook providers continue to work unchanged
-- [ ] Relay correctly distinguishes webhook vs managed providers
-- [ ] Gateway callback handles managed provider setup flow
+- [ ] Existing webhook providers continue to work unchanged (zero runtime changes in this phase)
 
-**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation.
+**Implementation Note**: This phase is purely type-level — zero runtime changes, zero DB changes, zero consumer changes (relay, gateway remain untouched). The relay still uses `isWebhookProvider` as its guard; migrating to `hasInboundWebhooks` is deferred to when the first managed provider is added. After all automated verification passes, proceed to Phase 10.
 
 ---
 
@@ -1906,7 +1905,7 @@ export type { Ed25519Scheme, InboundWebhookDef } from "./define";
 ### Integration Tests:
 - Relay — Webhook signature verification with real provider signature headers
 - Gateway — OAuth/App-Token callback flow end-to-end
-- Gateway — Managed provider setup.register() + teardown
+- Gateway — Managed provider setup.register() + teardown (deferred — no managed providers exist yet)
 
 ### Type-Level Tests:
 ```typescript
@@ -2053,3 +2052,12 @@ type _7 = Assert<InboundWebhookDef<unknown> | undefined, ApiProvider["inbound"]>
   - **Performance section** — Added 3 new notes: `ProviderShape`/utility types are pure-type (zero runtime), `eventKeySchema` built once at module load, narrow `getProvider` overload has zero runtime overhead.
 - **Core invariant established**: compile-time `EventKey` type and runtime `eventKeySchema` are derived from the same source. They cannot diverge. `EventKey` is no longer hand-maintained.
 - **Impact on remaining work**: Phase 4 grows by one step (now 8 sub-steps). Phase 4 implementation order updated: `registry.ts` changes now include Step 8 before `index.ts`. All other phases unchanged. Consumers (relay, gateway, backfill) gain narrow types without any changes to their own code — they just add `import type { AuthDefFor }` where currently they type-cast.
+
+### 2026-03-18 — Phase 9: Defer runtime wiring, type architecture only
+
+- **Trigger**: Decision to defer `ManagedProvider` runtime wiring until a concrete managed provider (HubSpot, Stripe) is ready to be added. The type architecture should be in place so that adding the first managed provider is a focused runtime-only task.
+- **Changes**:
+  - **Phase 9** — Rewritten from "ManagedProvider Tier" (full runtime wiring) to "ManagedProvider Type Architecture" (types only). Removed: DB migration (`webhookSetupState` column), relay `providerGuard` → `hasInboundWebhooks` update, gateway callback managed provider setup flow. Added: `providerKindSchema` update to include `"managed"`, `satisfies` constraint on factory `kind` injection. Phase is now purely `define.ts` + `index.ts` changes — zero consumer changes.
+  - **"What We're NOT Doing"** — Added: ManagedProvider runtime wiring (DB migration, relay guard, gateway callback) deferred until first concrete managed provider.
+  - **Implementation Approach** — Updated: Phase 7 no longer depends on Phase 9's `hasInboundWebhooks`; relay guard migration deferred.
+- **Impact on remaining work**: Phase 9 is smaller and has zero runtime risk. Phase 10 is unchanged (depends on Phase 9 for `hasInboundWebhooks` type guard, which is still defined in Phase 9). When the first managed provider is added, a follow-up plan covers: DB migration, relay guard update, gateway callback flow.
