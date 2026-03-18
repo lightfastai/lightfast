@@ -12,6 +12,7 @@ export type {
 export {
   type GatewayBackfillRun,
   type GatewayInstallation,
+  type GatewayLifecycleLog,
   type GatewayResource,
   type GatewayToken,
   type GatewayWebhookDelivery,
@@ -20,6 +21,8 @@ export {
   gatewayInstallations,
   // Relations
   gatewayInstallationsRelations,
+  gatewayLifecycleLogs,
+  gatewayLifecycleLogsRelations,
   gatewayResources,
   gatewayResourcesRelations,
   gatewayTokens,
@@ -27,6 +30,7 @@ export {
   gatewayWebhookDeliveries,
   type InsertGatewayBackfillRun,
   type InsertGatewayInstallation,
+  type InsertGatewayLifecycleLog,
   type InsertGatewayResource,
   type InsertGatewayToken,
   type InsertGatewayWebhookDelivery,

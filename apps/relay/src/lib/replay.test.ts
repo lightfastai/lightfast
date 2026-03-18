@@ -67,6 +67,7 @@ function makeDelivery(
     installationId: string;
     eventType: string;
     status: string;
+    failReason: string | null;
     payload: string | null;
     receivedAt: string;
   }> = {}
@@ -78,6 +79,7 @@ function makeDelivery(
     installationId: "inst-1",
     eventType: "push",
     status: "dlq",
+    failReason: null,
     payload: JSON.stringify({ action: "opened" }),
     receivedAt: "2026-01-01T00:00:00.000Z",
     createdAt: "2026-01-01T00:00:00.000Z",

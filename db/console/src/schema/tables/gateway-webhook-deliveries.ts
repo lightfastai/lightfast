@@ -1,4 +1,5 @@
 import { nanoid } from "@repo/lib";
+import { sql } from "drizzle-orm";
 import {
   index,
   pgTable,
@@ -23,6 +24,8 @@ export const gatewayWebhookDeliveries = pgTable(
 
     status: varchar("status", { length: 50 }).notNull(), // received|enqueued|delivered|dlq
 
+    failReason: varchar("fail_reason", { length: 100 }),
+
     // For DLQ replay — store raw payload on failed deliveries
     payload: text("payload"),
 
@@ -37,6 +40,9 @@ export const gatewayWebhookDeliveries = pgTable(
       table.deliveryId
     ),
     statusIdx: index("gateway_wd_status_idx").on(table.status),
+    recoveryIdx: index("gateway_wd_recovery_idx")
+      .on(table.status, table.receivedAt)
+      .where(sql`${table.status} = 'received'`),
   })
 );
 

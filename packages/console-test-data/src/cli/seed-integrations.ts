@@ -177,7 +177,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       provider,
       providerConfig: source.providerConfig,
       providerResourceId: source.providerResourceId,
-      isActive: true,
+      status: "active",
       lastSyncStatus: "success",
       documentCount: source.documentCount,
     });

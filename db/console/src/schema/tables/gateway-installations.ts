@@ -5,6 +5,7 @@ import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
   index,
+  integer,
   jsonb,
   pgTable,
   text,
@@ -54,6 +55,19 @@ export const gatewayInstallations = pgTable(
     /** Optional backfill configuration for this installation. */
     backfillConfig:
       jsonb("backfill_config").$type<GwInstallationBackfillConfig>(),
+
+    // Health monitoring columns
+    healthStatus: varchar("health_status", { length: 50 })
+      .notNull()
+      .default("unknown"),
+    lastHealthCheckAt: timestamp("last_health_check_at", {
+      mode: "string",
+      withTimezone: true,
+    }),
+    healthCheckFailures: integer("health_check_failures").notNull().default(0),
+    configStatus: varchar("config_status", { length: 50 })
+      .notNull()
+      .default("unknown"),
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
       .notNull()

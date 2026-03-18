@@ -3,6 +3,7 @@
 // Relations for type-safe queries
 export {
   gatewayInstallationsRelations,
+  gatewayLifecycleLogsRelations,
   gatewayResourcesRelations,
   gatewayTokensRelations,
   orgWorkspacesRelations,
@@ -22,17 +23,20 @@ export type {
 export {
   type GatewayBackfillRun,
   type GatewayInstallation,
+  type GatewayLifecycleLog,
   type GatewayResource,
   type GatewayToken,
   type GatewayWebhookDelivery,
   gatewayBackfillRuns,
   // Gateway-owned tables
   gatewayInstallations,
+  gatewayLifecycleLogs,
   gatewayResources,
   gatewayTokens,
   gatewayWebhookDeliveries,
   type InsertGatewayBackfillRun,
   type InsertGatewayInstallation,
+  type InsertGatewayLifecycleLog,
   type InsertGatewayResource,
   type InsertGatewayToken,
   type InsertGatewayWebhookDelivery,

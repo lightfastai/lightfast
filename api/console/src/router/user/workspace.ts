@@ -230,7 +230,7 @@ export const workspaceAccessRouter = {
                     ...currentConfig,
                     sync: repo.syncConfig,
                   },
-                  isActive: true,
+                  status: "active",
                 })
                 .where(eq(workspaceIntegrations.id, existing.id));
             }
@@ -250,7 +250,7 @@ export const workspaceAccessRouter = {
                 sync: repo.syncConfig,
               },
               providerResourceId: repo.repoId,
-              isActive: true,
+              status: "active",
             });
           }
 

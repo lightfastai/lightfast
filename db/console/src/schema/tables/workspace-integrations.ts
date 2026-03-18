@@ -3,7 +3,6 @@ import type { SourceIdentifier, SyncStatus } from "@repo/console-validation";
 import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
-  boolean,
   index,
   integer,
   jsonb,
@@ -73,7 +72,8 @@ export const workspaceIntegrations = pgTable(
       .$type<SourceIdentifier>(),
 
     // Status
-    isActive: boolean("is_active").notNull().default(true),
+    status: varchar("status", { length: 50 }).notNull().default("active"),
+    statusReason: varchar("status_reason", { length: 100 }),
 
     // Sync tracking
     lastSyncedAt: timestamp("last_synced_at", {
@@ -109,7 +109,7 @@ export const workspaceIntegrations = pgTable(
     installationIdIdx: index("workspace_source_installation_id_idx").on(
       table.installationId
     ),
-    isActiveIdx: index("workspace_source_is_active_idx").on(table.isActive),
+    statusIdx: index("workspace_source_status_idx").on(table.status),
     // Index for fast provider resource lookups (e.g., "find all sources for this repo")
     providerResourceIdIdx: index(
       "workspace_source_provider_resource_id_idx"

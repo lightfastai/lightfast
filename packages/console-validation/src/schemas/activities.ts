@@ -151,7 +151,7 @@ export const integrationConnectedMetadataSchema = z
 export const integrationStatusUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
-    isActive: z.boolean(),
+    status: z.string(),
     reason: z.string().optional(),
     githubRepoId: z.string(),
   })

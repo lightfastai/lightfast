@@ -414,6 +414,13 @@
       "when": 1773616812583,
       "tag": "0058_wet_deathstrike",
       "breakpoints": true
+    },
+    {
+      "idx": 59,
+      "version": "7",
+      "when": 1773829908447,
+      "tag": "0059_minor_princess_powerful",
+      "breakpoints": true
     }
   ]
 }

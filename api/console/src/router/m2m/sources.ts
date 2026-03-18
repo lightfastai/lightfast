@@ -69,7 +69,7 @@ export const sourcesM2MRouter = {
         .where(
           and(
             eq(workspaceIntegrations.providerResourceId, input.githubRepoId),
-            eq(workspaceIntegrations.isActive, true)
+            eq(workspaceIntegrations.status, "active")
           )
         )
         .limit(1);
@@ -105,7 +105,7 @@ export const sourcesM2MRouter = {
           and(
             eq(workspaceIntegrations.workspaceId, input.workspaceId),
             eq(workspaceIntegrations.providerResourceId, input.githubRepoId),
-            eq(workspaceIntegrations.isActive, true)
+            eq(workspaceIntegrations.status, "active")
           )
         )
         .limit(1);
@@ -134,7 +134,7 @@ export const sourcesM2MRouter = {
         .where(
           and(
             eq(workspaceIntegrations.providerResourceId, input.githubRepoId),
-            eq(workspaceIntegrations.isActive, true)
+            eq(workspaceIntegrations.status, "active")
           )
         );
 
@@ -147,7 +147,7 @@ export const sourcesM2MRouter = {
         db
           .update(workspaceIntegrations)
           .set({
-            isActive: false,
+            status: "inactive",
             updatedAt: now,
           })
           .where(eq(workspaceIntegrations.id, source.id))
@@ -208,7 +208,7 @@ export const sourcesM2MRouter = {
           and(
             eq(gatewayInstallations.provider, "github"),
             eq(gatewayInstallations.externalId, input.githubInstallationId),
-            eq(workspaceIntegrations.isActive, true)
+            eq(workspaceIntegrations.status, "active")
           )
         );
 
@@ -225,7 +225,7 @@ export const sourcesM2MRouter = {
         db
           .update(workspaceIntegrations)
           .set({
-            isActive: false,
+            status: "inactive",
             lastSyncedAt: now,
             lastSyncStatus: "failed",
             lastSyncError: "GitHub installation removed or suspended",
@@ -299,7 +299,7 @@ export const sourcesM2MRouter = {
         return db
           .update(workspaceIntegrations)
           .set({
-            isActive: false,
+            status: "inactive",
             lastSyncedAt: now,
             lastSyncStatus: "failed",
             lastSyncError: "Repository deleted on GitHub",

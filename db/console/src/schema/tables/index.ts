@@ -11,6 +11,11 @@ export {
   type InsertGatewayInstallation,
 } from "./gateway-installations";
 export {
+  type GatewayLifecycleLog,
+  gatewayLifecycleLogs,
+  type InsertGatewayLifecycleLog,
+} from "./gateway-lifecycle-log";
+export {
   type GatewayResource,
   gatewayResources,
   type InsertGatewayResource,

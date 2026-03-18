@@ -347,7 +347,7 @@ export const workspaceRouter = {
             id: workspaceIntegrations.id,
             installationId: workspaceIntegrations.installationId,
             sourceType: workspaceIntegrations.provider,
-            isActive: workspaceIntegrations.isActive,
+            status: workspaceIntegrations.status,
             connectedAt: workspaceIntegrations.connectedAt,
             lastSyncedAt: workspaceIntegrations.lastSyncedAt,
             lastSyncStatus: workspaceIntegrations.lastSyncStatus,
@@ -364,7 +364,7 @@ export const workspaceRouter = {
           .where(
             and(
               eq(workspaceIntegrations.workspaceId, workspaceId),
-              eq(workspaceIntegrations.isActive, true)
+              eq(workspaceIntegrations.status, "active")
             )
           )
           .orderBy(desc(workspaceIntegrations.connectedAt));
@@ -387,7 +387,7 @@ export const workspaceRouter = {
             sourceType: s.sourceType, // Canonical name
             displayName: s.providerResourceId,
             documentCount: s.documentCount,
-            isActive: s.isActive, // For UI compatibility
+            isActive: s.status === "active", // For UI compatibility
             connectedAt: s.connectedAt, // For UI compatibility
             lastSyncedAt: s.lastSyncedAt,
             lastIngestedAt: s.lastSyncedAt,
@@ -480,7 +480,7 @@ export const workspaceRouter = {
 
         await ctx.db
           .update(workspaceIntegrations)
-          .set({ isActive: false, updatedAt: new Date().toISOString() })
+          .set({ status: "inactive", updatedAt: new Date().toISOString() })
           .where(eq(workspaceIntegrations.id, input.integrationId));
 
         return { success: true };
@@ -550,10 +550,10 @@ export const workspaceRouter = {
 
         if (existing) {
           // Reactivate if inactive
-          if (!existing.isActive) {
+          if (existing.status !== "active") {
             await ctx.db
               .update(workspaceIntegrations)
-              .set({ isActive: true, updatedAt: new Date().toISOString() })
+              .set({ status: "active", updatedAt: new Date().toISOString() })
               .where(eq(workspaceIntegrations.id, existing.id));
             await createGatewayClient({ apiKey: env.GATEWAY_API_KEY })
               .registerResource(installationId, {
@@ -597,7 +597,7 @@ export const workspaceRouter = {
               },
             },
             providerResourceId: projectId,
-            isActive: true,
+            status: "active",
             connectedAt: now,
           })
           .returning({ id: workspaceIntegrations.id });
@@ -655,7 +655,7 @@ export const workspaceRouter = {
 
         await ctx.db
           .update(workspaceIntegrations)
-          .set({ isActive: false, updatedAt: new Date().toISOString() })
+          .set({ status: "inactive", updatedAt: new Date().toISOString() })
           .where(eq(workspaceIntegrations.id, input.integrationId));
 
         return { success: true };
@@ -802,7 +802,7 @@ export const workspaceRouter = {
           const existingIntegration = existingMap.get(resource.resourceId);
           if (!existingIntegration) {
             toCreate.push(resource);
-          } else if (existingIntegration.isActive) {
+          } else if (existingIntegration.status === "active") {
             alreadyActive.push(resource.resourceId);
           } else {
             toReactivate.push({
@@ -830,7 +830,7 @@ export const workspaceRouter = {
         if (toReactivate.length > 0) {
           await ctx.db
             .update(workspaceIntegrations)
-            .set({ isActive: true, updatedAt: now })
+            .set({ status: "active", updatedAt: now })
             .where(
               inArray(
                 workspaceIntegrations.id,
@@ -879,7 +879,7 @@ export const workspaceRouter = {
             providerConfig: PROVIDERS[typedProvider].buildProviderConfig({
               defaultSyncEvents,
             }),
-            isActive: true,
+            status: "active",
             connectedAt: now,
           }));
 
