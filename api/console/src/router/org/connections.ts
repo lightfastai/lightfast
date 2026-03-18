@@ -1,4 +1,7 @@
-import { gatewayInstallations } from "@db/console/schema";
+import {
+  gatewayInstallations,
+  workspaceIntegrations,
+} from "@db/console/schema";
 import {
   getProvider,
   gwInstallationBackfillConfigSchema,
@@ -114,7 +117,10 @@ export const connectionsRouter = {
   }),
 
   /**
-   * Disconnect an integration
+   * Disconnect an integration.
+   *
+   * Delegates to the gateway DELETE endpoint which triggers the durable
+   * connection-teardown workflow (gate-first: closes ingress immediately).
    */
   disconnect: orgScopedProcedure
     .input(
@@ -123,23 +129,50 @@ export const connectionsRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      const result = await ctx.db
-        .update(gatewayInstallations)
-        .set({ status: "revoked" })
+      // Fetch installation to get provider (required for gateway DELETE path)
+      // and enforce org scoping before calling the gateway
+      const rows = await ctx.db
+        .select({
+          id: gatewayInstallations.id,
+          provider: gatewayInstallations.provider,
+        })
+        .from(gatewayInstallations)
         .where(
           and(
             eq(gatewayInstallations.id, input.integrationId),
             eq(gatewayInstallations.orgId, ctx.auth.orgId)
           )
         )
-        .returning({ id: gatewayInstallations.id });
+        .limit(1);
 
-      if (!result[0]) {
+      const installation = rows[0];
+      if (!installation) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Integration not found or access denied",
         });
       }
+
+      const gw = createGatewayClient({
+        apiKey: env.GATEWAY_API_KEY,
+        requestSource: "console-trpc",
+        correlationId: crypto.randomUUID(),
+      });
+      await gw.deleteConnection(installation.provider, installation.id);
+
+      // Cascade: mark all workspace integrations for this installation as disconnected.
+      // This covers all providers (Vercel, Linear, Sentry, Apollo, GitHub).
+      // GitHub is also handled by the m2m router on webhook events — the cascade here
+      // ensures the gate closes immediately on user-triggered disconnect.
+      const now = new Date().toISOString();
+      await ctx.db
+        .update(workspaceIntegrations)
+        .set({
+          status: "disconnected",
+          statusReason: "installation_revoked",
+          updatedAt: now,
+        })
+        .where(eq(workspaceIntegrations.installationId, input.integrationId));
 
       return { success: true };
     }),
@@ -448,26 +481,38 @@ export const connectionsRouter = {
    */
   vercel: {
     /**
-     * Disconnect Vercel integration
+     * Disconnect Vercel integration.
+     *
+     * Delegates to the gateway DELETE endpoint which triggers the durable
+     * connection-teardown workflow (gate-first: closes ingress immediately).
      */
     disconnect: orgScopedProcedure.mutation(async ({ ctx }) => {
-      const result = await ctx.db
-        .update(gatewayInstallations)
-        .set({ status: "revoked" })
+      // Fetch Vercel installation to get id; enforce org scoping
+      const rows = await ctx.db
+        .select({ id: gatewayInstallations.id })
+        .from(gatewayInstallations)
         .where(
           and(
             eq(gatewayInstallations.orgId, ctx.auth.orgId),
             eq(gatewayInstallations.provider, "vercel")
           )
         )
-        .returning({ id: gatewayInstallations.id });
+        .limit(1);
 
-      if (!result[0]) {
+      const installation = rows[0];
+      if (!installation) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "Vercel integration not found",
         });
       }
+
+      const gw = createGatewayClient({
+        apiKey: env.GATEWAY_API_KEY,
+        requestSource: "console-trpc",
+        correlationId: crypto.randomUUID(),
+      });
+      await gw.deleteConnection("vercel", installation.id);
 
       return { success: true };
     }),

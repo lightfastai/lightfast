@@ -3,7 +3,11 @@ import { PROVIDER_DISPLAY } from "../../client/display";
 import { defineWebhookProvider } from "../../factory/index";
 import { actionEvent, hmac, simpleEvent } from "../../provider/index";
 import type { CallbackResult, OAuthTokens } from "../../provider/primitives";
-import { sentryApi } from "./api";
+import {
+  sentryApi,
+  sentryOrganizationSchema,
+  sentryProjectSchema,
+} from "./api";
 import type { SentryAccountInfo, SentryConfig } from "./auth";
 import {
   decodeSentryToken,
@@ -191,6 +195,28 @@ export const sentry = defineWebhookProvider({
   api: sentryApi,
   backfill: sentryBackfill,
 
+  healthCheck: {
+    check: async (config, externalId, _accessToken) => {
+      const response = await fetch(
+        `https://sentry.io/api/0/sentry-app-installations/${externalId}/`,
+        {
+          method: "GET",
+          signal: AbortSignal.timeout(10_000),
+          headers: {
+            Authorization: `Bearer ${config.clientSecret}`,
+          },
+        }
+      );
+      if (response.status === 200) {
+        return "healthy";
+      }
+      if (response.status === 404 || response.status === 403) {
+        return "revoked";
+      }
+      throw new Error(`Sentry health check failed: ${response.status}`);
+    },
+  },
+
   resourcePicker: {
     installationMode: "single",
     resourceLabel: "projects",
@@ -198,7 +224,7 @@ export const sentry = defineWebhookProvider({
     enrichInstallation: async (executeApi, inst) => {
       try {
         const res = await executeApi({ endpointId: "list-organizations" });
-        const orgs = res.data as Array<{ name?: string; slug?: string }>;
+        const orgs = z.array(sentryOrganizationSchema).parse(res.data);
         const org = orgs[0];
         return {
           id: inst.id,
@@ -212,13 +238,7 @@ export const sentry = defineWebhookProvider({
 
     listResources: async (executeApi) => {
       const res = await executeApi({ endpointId: "list-projects" });
-      const projects = res.data as Array<{
-        id: string;
-        name: string;
-        slug: string;
-        platform?: string | null;
-        organization?: { slug?: string };
-      }>;
+      const projects = z.array(sentryProjectSchema).parse(res.data);
       return projects.map((p) => ({
         id: p.id,
         name: p.name,

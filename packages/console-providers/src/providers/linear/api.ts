@@ -36,6 +36,47 @@ export const graphqlResponseSchema = z.object({
     .optional(),
 });
 
+/** Response shape for `{ viewer { organization { name urlKey } } }` */
+export const graphqlViewerOrgResponseSchema = z.object({
+  data: z
+    .object({
+      viewer: z
+        .object({
+          organization: z
+            .object({
+              name: z.string().optional(),
+              urlKey: z.string().optional(),
+            })
+            .optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+
+/** Response shape for `{ teams { nodes { id name key description color } } }` */
+export const graphqlTeamsResponseSchema = z.object({
+  data: z
+    .object({
+      teams: z
+        .object({
+          nodes: z
+            .array(
+              z.object({
+                id: z.string(),
+                name: z.string(),
+                key: z.string(),
+                description: z.string().nullable().optional(),
+                color: z.string().nullable().optional(),
+              })
+            )
+            .optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+
 // ── API Definition ──────────────────────────────────────────────────────────────
 
 export const linearApi = {

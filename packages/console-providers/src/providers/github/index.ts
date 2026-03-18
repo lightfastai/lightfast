@@ -4,7 +4,11 @@ import { defineWebhookProvider } from "../../factory/index";
 import { actionEvent, hmac } from "../../provider/index";
 import type { CallbackResult } from "../../provider/primitives";
 import { createRS256JWT } from "../../runtime/jwt";
-import { githubApi } from "./api";
+import {
+  githubApi,
+  githubAppInstallationSchema,
+  githubInstallationReposSchema,
+} from "./api";
 import type { GitHubAccountInfo, GitHubConfig } from "./auth";
 import {
   githubAccountInfoSchema,
@@ -248,6 +252,32 @@ export const github = defineWebhookProvider({
   api: githubApi,
   backfill: githubBackfill,
 
+  healthCheck: {
+    check: async (config, externalId, _accessToken) => {
+      const jwt = await createGitHubAppJWT(config);
+      const response = await fetch(
+        `https://api.github.com/app/installations/${externalId}`,
+        {
+          method: "GET",
+          signal: AbortSignal.timeout(10_000),
+          headers: {
+            Authorization: `Bearer ${jwt}`,
+            Accept: "application/vnd.github+json",
+            "User-Agent": "lightfast-gateway",
+            "X-GitHub-Api-Version": "2022-11-28",
+          },
+        }
+      );
+      if (response.status === 200) {
+        return "healthy";
+      }
+      if (response.status === 404) {
+        return "revoked";
+      }
+      throw new Error(`GitHub health check failed: ${response.status}`);
+    },
+  },
+
   resourcePicker: {
     installationMode: "multi",
     resourceLabel: "repositories",
@@ -258,9 +288,7 @@ export const github = defineWebhookProvider({
           endpointId: "get-app-installation",
           pathParams: { installation_id: inst.externalId },
         });
-        const data = res.data as {
-          account?: { login?: string; type?: string; avatar_url?: string };
-        };
+        const data = githubAppInstallationSchema.parse(res.data);
         return {
           id: inst.id,
           externalId: inst.externalId,
@@ -282,15 +310,7 @@ export const github = defineWebhookProvider({
         endpointId: "list-installation-repos",
         queryParams: { per_page: "100" },
       });
-      const data = res.data as {
-        repositories: Array<{
-          id: number;
-          name: string;
-          full_name: string;
-          description?: string | null;
-          private?: boolean;
-        }>;
-      };
+      const data = githubInstallationReposSchema.parse(res.data);
       return (data.repositories ?? []).map((r) => ({
         id: String(r.id),
         name: r.full_name ?? r.name,

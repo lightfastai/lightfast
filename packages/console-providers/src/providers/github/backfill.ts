@@ -20,11 +20,20 @@ type GitHubIssue = z.infer<typeof githubIssueSchema>;
 
 export function adaptGitHubPRForTransformer(
   pr: GitHubPR,
-  repo: Record<string, unknown>
+  ctx: BackfillContext
 ): PreTransformGitHubPullRequestEvent {
   const action = pr.state === "open" ? "opened" : "closed";
   // List API may omit `merged` or return null — derive from merged_at instead
   const merged = pr.merged ?? pr.merged_at != null;
+  const repoData = buildRepoData(ctx);
+  // githubUserSchema has avatar_url optional; ghUserSchema requires it — normalise here
+  const user = pr.user
+    ? {
+        login: pr.user.login,
+        id: pr.user.id,
+        avatar_url: pr.user.avatar_url ?? "",
+      }
+    : null;
   return {
     action,
     number: pr.number,
@@ -34,7 +43,7 @@ export function adaptGitHubPRForTransformer(
       title: pr.title,
       body: pr.body,
       html_url: pr.html_url,
-      user: pr.user,
+      user,
       head: { ref: pr.head.ref, sha: pr.head.sha },
       base: { ref: pr.base.ref, sha: pr.base.sha },
       state: pr.state,
@@ -48,16 +57,25 @@ export function adaptGitHubPRForTransformer(
       created_at: pr.created_at,
       updated_at: pr.updated_at,
     },
-    repository: repo,
-    sender: pr.user,
-  } as unknown as PreTransformGitHubPullRequestEvent;
+    repository: repoData,
+    sender: user ?? { login: "unknown", id: 0, avatar_url: "" },
+  };
 }
 
 export function adaptGitHubIssueForTransformer(
   issue: GitHubIssue,
-  repo: Record<string, unknown>
+  ctx: BackfillContext
 ): PreTransformGitHubIssuesEvent {
   const action = issue.state === "open" ? "opened" : "closed";
+  const repoData = buildRepoData(ctx);
+  // githubUserSchema has avatar_url optional; ghUserSchema requires it — normalise here
+  const user = issue.user
+    ? {
+        login: issue.user.login,
+        id: issue.user.id,
+        avatar_url: issue.user.avatar_url ?? "",
+      }
+    : null;
   return {
     action,
     issue: {
@@ -66,21 +84,21 @@ export function adaptGitHubIssueForTransformer(
       title: issue.title,
       body: issue.body,
       html_url: issue.html_url,
-      user: issue.user,
+      user,
       state: issue.state,
       state_reason: issue.state_reason,
       created_at: issue.created_at,
       updated_at: issue.updated_at,
       closed_at: issue.closed_at,
     },
-    repository: repo,
-    sender: issue.user,
-  } as unknown as PreTransformGitHubIssuesEvent;
+    repository: repoData,
+    sender: user ?? { login: "unknown", id: 0, avatar_url: "" },
+  };
 }
 
 // ── Helper ────────────────────────────────────────────────────────────────────────
 
-function buildRepoData(ctx: BackfillContext): Record<string, unknown> {
+function buildRepoData(ctx: BackfillContext) {
   const repoFullName = ctx.resource.resourceName;
   const repoId = Number(ctx.resource.providerResourceId);
   const [owner = "", name = ""] = repoFullName.split("/");
@@ -123,7 +141,6 @@ export const githubBackfill: BackfillDef = {
         ctx: BackfillContext,
         cursor: { page: number } | null
       ) {
-        const repoData = buildRepoData(ctx);
         const items = z.array(githubPullRequestSchema).parse(data);
         const sinceDate = new Date(ctx.since);
         const filtered = items.filter(
@@ -136,7 +153,7 @@ export const githubBackfill: BackfillDef = {
         const events: BackfillWebhookEvent[] = filtered.map((pr) => ({
           deliveryId: `backfill-${ctx.installationId}-${ctx.resource.providerResourceId}-pr-${pr.number}`,
           eventType: "pull_request",
-          payload: adaptGitHubPRForTransformer(pr, repoData),
+          payload: adaptGitHubPRForTransformer(pr, ctx),
         }));
         const page = cursor?.page ?? 1;
         const hasMore =
@@ -171,7 +188,6 @@ export const githubBackfill: BackfillDef = {
         ctx: BackfillContext,
         cursor: { page: number } | null
       ) {
-        const repoData = buildRepoData(ctx);
         const items = z.array(githubIssueSchema).parse(data);
         const issuesOnly = items.filter(
           (item) =>
@@ -182,7 +198,7 @@ export const githubBackfill: BackfillDef = {
         const events: BackfillWebhookEvent[] = issuesOnly.map((issue) => ({
           deliveryId: `backfill-${ctx.installationId}-${ctx.resource.providerResourceId}-issue-${issue.number}`,
           eventType: "issues",
-          payload: adaptGitHubIssueForTransformer(issue, repoData),
+          payload: adaptGitHubIssueForTransformer(issue, ctx),
         }));
         const page = cursor?.page ?? 1;
         const hasMore = items.length === 100;

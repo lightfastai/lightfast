@@ -30,7 +30,7 @@ export interface NormalizedResource {
 
 export type InstallationMode = "multi" | "merged" | "single";
 
-export interface ResourcePickerDef {
+export interface ResourcePickerDef<TAccountInfo = unknown> {
   /** Enrich a gateway installation with display data from the provider API.
    *  Called once per installation. Should handle errors internally and return fallback data. */
   readonly enrichInstallation: (
@@ -38,7 +38,7 @@ export interface ResourcePickerDef {
     installation: {
       id: string;
       externalId: string;
-      providerAccountInfo: unknown;
+      providerAccountInfo: TAccountInfo;
     }
   ) => Promise<NormalizedInstallation>;
   /** How installations are displayed: multi=select dropdown, merged=all fetched, single=static label */
@@ -53,7 +53,7 @@ export interface ResourcePickerDef {
     installation: {
       readonly id: string;
       readonly externalId: string;
-      readonly providerAccountInfo: unknown;
+      readonly providerAccountInfo: TAccountInfo;
     }
   ) => Promise<NormalizedResource[]>;
   /** Human label for resources, e.g. "repositories", "projects", "teams" */

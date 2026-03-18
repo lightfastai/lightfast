@@ -3,7 +3,12 @@ import { PROVIDER_DISPLAY } from "../../client/display";
 import { defineWebhookProvider } from "../../factory/index";
 import { actionEvent, hmac } from "../../provider/index";
 import type { CallbackResult, OAuthTokens } from "../../provider/primitives";
-import { vercelApi } from "./api";
+import {
+  vercelApi,
+  vercelProjectsListSchema,
+  vercelTeamResponseSchema,
+  vercelUserResponseSchema,
+} from "./api";
 import type { VercelAccountInfo, VercelConfig } from "./auth";
 import {
   vercelAccountInfoSchema,
@@ -163,21 +168,41 @@ export const vercel = defineWebhookProvider({
   api: vercelApi,
   backfill: vercelBackfill,
 
+  healthCheck: {
+    check: async (_config, _externalId, accessToken) => {
+      if (!accessToken) {
+        return "revoked";
+      }
+      const response = await fetch("https://api.vercel.com/v2/user", {
+        method: "GET",
+        signal: AbortSignal.timeout(10_000),
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      });
+      if (response.status === 200) {
+        return "healthy";
+      }
+      if (response.status === 401 || response.status === 403) {
+        return "revoked";
+      }
+      throw new Error(`Vercel health check failed: ${response.status}`);
+    },
+  },
+
   resourcePicker: {
     installationMode: "multi",
     resourceLabel: "projects",
 
     enrichInstallation: async (executeApi, inst) => {
-      const info = inst.providerAccountInfo as {
-        raw?: { team_id?: string; user_id?: string; configuration_id?: string };
-      } | null;
+      const info = inst.providerAccountInfo;
       try {
         if (info?.raw?.team_id) {
           const res = await executeApi({
             endpointId: "get-team",
             pathParams: { team_id: info.raw.team_id },
           });
-          const data = res.data as { slug?: string };
+          const data = vercelTeamResponseSchema.parse(res.data);
           return {
             id: inst.id,
             externalId: inst.externalId,
@@ -185,7 +210,7 @@ export const vercel = defineWebhookProvider({
           };
         }
         const res = await executeApi({ endpointId: "get-user" });
-        const data = res.data as { user?: { username?: string } };
+        const data = vercelUserResponseSchema.parse(res.data);
         return {
           id: inst.id,
           externalId: inst.externalId,
@@ -203,9 +228,7 @@ export const vercel = defineWebhookProvider({
     },
 
     listResources: async (executeApi, installation) => {
-      const info = installation.providerAccountInfo as {
-        raw?: { team_id?: string };
-      } | null;
+      const info = installation.providerAccountInfo;
       const queryParams: Record<string, string> = { limit: "100" };
       if (info?.raw?.team_id) {
         queryParams.teamId = info.raw.team_id;
@@ -215,13 +238,7 @@ export const vercel = defineWebhookProvider({
         endpointId: "list-projects",
         queryParams,
       });
-      const data = res.data as {
-        projects: Array<{
-          id: string;
-          name: string;
-          framework?: string | null;
-        }>;
-      };
+      const data = vercelProjectsListSchema.parse(res.data);
       return data.projects.map((p) => ({
         id: String(p.id),
         name: p.name,

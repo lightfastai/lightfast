@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { z } from "zod";
+import type { BackfillContext } from "../../provider/backfill";
 import {
   type githubIssueSchema,
   type githubPullRequestSchema,
@@ -10,6 +11,16 @@ import {
   adaptGitHubPRForTransformer,
 } from "./backfill";
 
+const ctx: BackfillContext = {
+  installationId: "install-123",
+  resource: {
+    providerResourceId: "12345",
+    resourceName: "owner/repo",
+  },
+  since: "2023-01-01T00:00:00Z",
+};
+
+// Partial shape used for toMatchObject assertions on repository
 const repo = {
   full_name: "owner/repo",
   html_url: "https://github.com/owner/repo",
@@ -50,26 +61,26 @@ const baseIssue: z.infer<typeof githubIssueSchema> = {
 describe("adaptGitHubPRForTransformer", () => {
   it("maps open PR to action: opened", () => {
     const pr = { ...basePR, state: "open", number: 1 };
-    const result = adaptGitHubPRForTransformer(pr, repo);
+    const result = adaptGitHubPRForTransformer(pr, ctx);
     expect(result.action).toBe("opened");
   });
 
   it("maps closed PR to action: closed", () => {
     const pr = { ...basePR, state: "closed", number: 2, merged: false };
-    const result = adaptGitHubPRForTransformer(pr, repo);
+    const result = adaptGitHubPRForTransformer(pr, ctx);
     expect(result.action).toBe("closed");
   });
 
   it("maps merged PR (state: closed, merged: true) to action: closed", () => {
     // Transformer handles merge detection separately via pr.merged
     const pr = { ...basePR, state: "closed", number: 3, merged: true };
-    const result = adaptGitHubPRForTransformer(pr, repo);
+    const result = adaptGitHubPRForTransformer(pr, ctx);
     expect(result.action).toBe("closed");
   });
 
   it("output has pull_request, repository, sender fields", () => {
     const pr = { ...basePR, state: "open", number: 4 };
-    const result = adaptGitHubPRForTransformer(pr, repo);
+    const result = adaptGitHubPRForTransformer(pr, ctx);
     expect(result).toMatchObject({
       action: "opened",
       pull_request: {
@@ -85,22 +96,25 @@ describe("adaptGitHubPRForTransformer", () => {
     });
   });
 
-  it("sender equals pr.user", () => {
+  it("sender is derived from pr.user login/id", () => {
     const user = { login: "bob", id: 99 };
     const pr = { ...basePR, number: 5, user };
-    const result = adaptGitHubPRForTransformer(pr, repo);
-    expect(result.sender).toBe(user);
+    const result = adaptGitHubPRForTransformer(pr, ctx);
+    expect(result.sender).toMatchObject({ login: "bob", id: 99 });
   });
 
-  it("repository is passed through from repo parameter", () => {
-    const customRepo = {
+  it("repository is derived from ctx.resource", () => {
+    const customCtx: BackfillContext = {
+      ...ctx,
+      resource: { providerResourceId: "99", resourceName: "other/repo" },
+    };
+    const pr = { ...basePR, number: 6 };
+    const result = adaptGitHubPRForTransformer(pr, customCtx);
+    expect(result.repository).toMatchObject({
       full_name: "other/repo",
       html_url: "https://github.com/other/repo",
       id: 99,
-    };
-    const pr = { ...basePR, number: 6 };
-    const result = adaptGitHubPRForTransformer(pr, customRepo);
-    expect(result.repository).toBe(customRepo);
+    });
   });
 
   it("derives merged=true from merged_at when merged field is absent", () => {
@@ -110,13 +124,13 @@ describe("adaptGitHubPRForTransformer", () => {
       number: 7,
       merged_at: "2024-01-01T00:00:00Z",
     };
-    const result = adaptGitHubPRForTransformer(pr, repo);
+    const result = adaptGitHubPRForTransformer(pr, ctx);
     expect((result.pull_request as Record<string, unknown>).merged).toBe(true);
   });
 
   it("derives merged=false when merged_at is null and merged is absent", () => {
     const pr = { ...basePR, state: "closed", number: 8, merged_at: null };
-    const result = adaptGitHubPRForTransformer(pr, repo);
+    const result = adaptGitHubPRForTransformer(pr, ctx);
     expect((result.pull_request as Record<string, unknown>).merged).toBe(false);
   });
 });
@@ -124,19 +138,19 @@ describe("adaptGitHubPRForTransformer", () => {
 describe("adaptGitHubIssueForTransformer", () => {
   it("maps open issue to action: opened", () => {
     const issue = { ...baseIssue, state: "open", number: 10 };
-    const result = adaptGitHubIssueForTransformer(issue, repo);
+    const result = adaptGitHubIssueForTransformer(issue, ctx);
     expect(result.action).toBe("opened");
   });
 
   it("maps closed issue to action: closed", () => {
     const issue = { ...baseIssue, state: "closed", number: 11 };
-    const result = adaptGitHubIssueForTransformer(issue, repo);
+    const result = adaptGitHubIssueForTransformer(issue, ctx);
     expect(result.action).toBe("closed");
   });
 
   it("output has issue, repository, sender fields", () => {
     const issue = { ...baseIssue, number: 12 };
-    const result = adaptGitHubIssueForTransformer(issue, repo);
+    const result = adaptGitHubIssueForTransformer(issue, ctx);
     expect(result).toMatchObject({
       action: "opened",
       issue: {
@@ -151,11 +165,11 @@ describe("adaptGitHubIssueForTransformer", () => {
     });
   });
 
-  it("sender equals issue.user", () => {
+  it("sender is derived from issue.user login/id", () => {
     const user = { login: "carol", id: 77 };
     const issue = { ...baseIssue, number: 13, user };
-    const result = adaptGitHubIssueForTransformer(issue, repo);
-    expect(result.sender).toBe(user);
+    const result = adaptGitHubIssueForTransformer(issue, ctx);
+    expect(result.sender).toMatchObject({ login: "carol", id: 77 });
   });
 });
 

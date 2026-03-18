@@ -202,7 +202,7 @@ describe("entity-worker: fetch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
@@ -210,7 +210,36 @@ describe("entity-worker: fetch step faults", () => {
     expect(mockRelayClient.dispatchWebhook).not.toHaveBeenCalled();
   });
 
-  it("executeApi returns 403 Forbidden", async () => {
+  it("executeApi returns 401 Unauthorized → NonRetriableError + health-check event", async () => {
+    mockGatewayClient.executeApi.mockResolvedValue({
+      status: 401,
+      data: null,
+      headers: {},
+    });
+    const step = makeStep();
+
+    await expect(
+      handlers["backfill/entity.worker"]!({
+        event: makeEntityEvent(),
+        step,
+      })
+    ).rejects.toThrow("Provider API returned 401");
+
+    expect(step.sendEvent).toHaveBeenCalledOnce();
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "signal-connection-health-check",
+      expect.objectContaining({
+        name: "backfill/connection.health.check.requested",
+        data: expect.objectContaining({
+          installationId: "inst-1",
+          provider: "github",
+          reason: "401_unauthorized",
+        }),
+      })
+    );
+  });
+
+  it("executeApi returns 403 Forbidden → NonRetriableError, no health-check event", async () => {
     mockGatewayClient.executeApi.mockResolvedValue({
       status: 403,
       data: null,
@@ -219,11 +248,13 @@ describe("entity-worker: fetch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
     ).rejects.toThrow("Provider API returned 403");
+
+    expect(step.sendEvent).not.toHaveBeenCalled();
   });
 
   it("executeApi returns 429 Rate Limited", async () => {
@@ -235,7 +266,7 @@ describe("entity-worker: fetch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
@@ -262,7 +293,7 @@ describe("entity-worker: fetch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
@@ -283,7 +314,7 @@ describe("entity-worker: fetch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
@@ -308,7 +339,7 @@ describe("entity-worker: dispatch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
@@ -336,7 +367,7 @@ describe("entity-worker: dispatch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
@@ -353,7 +384,7 @@ describe("entity-worker: dispatch step faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/entity.worker"]!({
+      handlers["backfill/entity.worker"]!({
         event: makeEntityEvent(),
         step,
       })
@@ -375,7 +406,7 @@ describe("entity-worker: rate limit edge cases", () => {
     });
     const step = makeStep();
 
-    await handlers["apps-backfill/entity.worker"]!({
+    await handlers["backfill/entity.worker"]!({
       event: makeEntityEvent(),
       step,
     });
@@ -391,7 +422,7 @@ describe("entity-worker: rate limit edge cases", () => {
     });
     const step = makeStep();
 
-    await handlers["apps-backfill/entity.worker"]!({
+    await handlers["backfill/entity.worker"]!({
       event: makeEntityEvent(),
       step,
     });
@@ -408,7 +439,7 @@ describe("entity-worker: rate limit edge cases", () => {
     });
     const step = makeStep();
 
-    await handlers["apps-backfill/entity.worker"]!({
+    await handlers["backfill/entity.worker"]!({
       event: makeEntityEvent(),
       step,
     });
@@ -433,7 +464,7 @@ describe("orchestrator: get-connection faults", () => {
     const step = makeStep();
 
     await expect(
-      handlers["apps-backfill/run.orchestrator"]!({
+      handlers["backfill/run.orchestrator"]!({
         event: makeOrchestratorEvent(),
         step,
       })
@@ -450,7 +481,7 @@ describe("orchestrator: worker result edge cases", () => {
       sleep: vi.fn().mockResolvedValue(undefined),
     });
 
-    const result = (await handlers["apps-backfill/run.orchestrator"]!({
+    const result = (await handlers["backfill/run.orchestrator"]!({
       event: makeOrchestratorEvent(),
       step,
     })) as Record<string, unknown>;
@@ -475,7 +506,7 @@ describe("orchestrator: persist-run-records resilience", () => {
     // and if it throws, the step fails.
     // This test verifies the behavior when the step itself throws.
     try {
-      const result = (await handlers["apps-backfill/run.orchestrator"]!({
+      const result = (await handlers["backfill/run.orchestrator"]!({
         event: makeOrchestratorEvent(),
         step,
       })) as Record<string, unknown>;
@@ -507,7 +538,7 @@ describe("orchestrator: replay-held-webhooks faults", () => {
       sleep: vi.fn().mockResolvedValue(undefined),
     });
 
-    const result = (await handlers["apps-backfill/run.orchestrator"]!({
+    const result = (await handlers["backfill/run.orchestrator"]!({
       event: makeOrchestratorEvent({ holdForReplay: true }),
       step,
     })) as Record<string, unknown>;
@@ -534,7 +565,7 @@ describe("orchestrator: replay-held-webhooks faults", () => {
       sleep: vi.fn().mockResolvedValue(undefined),
     });
 
-    await handlers["apps-backfill/run.orchestrator"]!({
+    await handlers["backfill/run.orchestrator"]!({
       event: makeOrchestratorEvent({ holdForReplay: true }),
       step,
     });
@@ -558,7 +589,7 @@ describe("orchestrator: replay-held-webhooks faults", () => {
       sleep: vi.fn().mockResolvedValue(undefined),
     });
 
-    const result = (await handlers["apps-backfill/run.orchestrator"]!({
+    const result = (await handlers["backfill/run.orchestrator"]!({
       event: makeOrchestratorEvent({ holdForReplay: true }),
       step,
     })) as Record<string, unknown>;

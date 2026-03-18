@@ -3,7 +3,11 @@ import { PROVIDER_DISPLAY } from "../../client/display";
 import { defineWebhookProvider } from "../../factory/index";
 import { actionEvent, hmac } from "../../provider/index";
 import type { CallbackResult, OAuthTokens } from "../../provider/primitives";
-import { linearApi } from "./api";
+import {
+  graphqlTeamsResponseSchema,
+  graphqlViewerOrgResponseSchema,
+  linearApi,
+} from "./api";
 import type { LinearAccountInfo, LinearConfig } from "./auth";
 import {
   linearAccountInfoSchema,
@@ -295,6 +299,34 @@ export const linear = defineWebhookProvider({
   api: linearApi,
   backfill: linearBackfill,
 
+  healthCheck: {
+    check: async (_config, _externalId, accessToken) => {
+      if (!accessToken) {
+        return "revoked";
+      }
+      const response = await fetch("https://api.linear.app/graphql", {
+        method: "POST",
+        signal: AbortSignal.timeout(10_000),
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ query: "{ viewer { id } }" }),
+      });
+      if (!response.ok) {
+        return "revoked";
+      }
+      const result = (await response.json()) as {
+        data?: { viewer?: { id?: string } };
+        errors?: Array<{ message: string; extensions?: { type?: string } }>;
+      };
+      if (result.data?.viewer?.id) {
+        return "healthy";
+      }
+      return "revoked";
+    },
+  },
+
   resourcePicker: {
     installationMode: "merged",
     resourceLabel: "teams",
@@ -305,9 +337,7 @@ export const linear = defineWebhookProvider({
           endpointId: "graphql",
           body: { query: "{ viewer { organization { name urlKey } } }" },
         });
-        const data = res.data as {
-          data?: { viewer?: { organization?: { name?: string } } };
-        };
+        const data = graphqlViewerOrgResponseSchema.parse(res.data);
         return {
           id: inst.id,
           externalId: inst.externalId,
@@ -325,19 +355,7 @@ export const linear = defineWebhookProvider({
           query: "{ teams { nodes { id name key description color } } }",
         },
       });
-      const data = res.data as {
-        data?: {
-          teams?: {
-            nodes?: Array<{
-              id: string;
-              name: string;
-              key: string;
-              description?: string | null;
-              color?: string | null;
-            }>;
-          };
-        };
-      };
+      const data = graphqlTeamsResponseSchema.parse(res.data);
       const teams = data.data?.teams?.nodes ?? [];
       return teams.map((t) => ({
         id: t.id,

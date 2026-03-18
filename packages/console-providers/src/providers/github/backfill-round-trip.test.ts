@@ -9,6 +9,7 @@
  * silently dropping backfilled events in production.
  */
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import type { BackfillContext } from "../../provider/backfill";
 
 // Skip env validation for transitive @db/console imports
 vi.hoisted(() => {
@@ -86,10 +87,13 @@ const githubListIssue = {
   labels: [{ name: "feature-request" }],
 };
 
-const repoData = {
-  full_name: "owner/repo",
-  html_url: "https://github.com/owner/repo",
-  id: 12_345,
+const backfillCtx: BackfillContext = {
+  installationId: "install-test",
+  resource: {
+    providerResourceId: "12345",
+    resourceName: "owner/repo",
+  },
+  since: "2026-01-01T00:00:00Z",
 };
 
 const vercelListDeployment = {
@@ -118,7 +122,7 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
       githubListPR as unknown as Parameters<
         typeof adaptGitHubPRForTransformer
       >[0],
-      repoData as Record<string, unknown>
+      backfillCtx
     );
   });
 
@@ -167,7 +171,7 @@ describe("GitHub PR: adapter → transformer round-trip", () => {
         state: "open",
         merged: false,
       } as unknown as Parameters<typeof adaptGitHubPRForTransformer>[0],
-      repoData as Record<string, unknown>
+      backfillCtx
     );
     const event = transformGitHubPullRequest(openPR, context, "");
     expect(event.eventType).toContain("opened");
@@ -182,7 +186,7 @@ describe("GitHub Issue: adapter → transformer round-trip", () => {
       githubListIssue as unknown as Parameters<
         typeof adaptGitHubIssueForTransformer
       >[0],
-      repoData as Record<string, unknown>
+      backfillCtx
     );
   });
 

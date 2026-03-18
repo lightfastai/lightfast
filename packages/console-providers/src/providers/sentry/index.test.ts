@@ -598,3 +598,64 @@ describe("webhook.parsePayload", () => {
     ).not.toThrow();
   });
 });
+
+// ── healthCheck.check ─────────────────────────────────────────────────────────
+
+describe("healthCheck.check", () => {
+  it("returns 'healthy' when Sentry returns 200", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const result = await sentry.healthCheck!.check(
+      testConfig,
+      installationId,
+      "sentry-access-token"
+    );
+    expect(result).toBe("healthy");
+  });
+
+  it("returns 'revoked' when Sentry returns 404 (installation removed)", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+
+    const result = await sentry.healthCheck!.check(
+      testConfig,
+      installationId,
+      "sentry-access-token"
+    );
+    expect(result).toBe("revoked");
+  });
+
+  it("returns 'revoked' when Sentry returns 403", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 403 });
+
+    const result = await sentry.healthCheck!.check(
+      testConfig,
+      installationId,
+      "sentry-access-token"
+    );
+    expect(result).toBe("revoked");
+  });
+
+  it("throws on unexpected HTTP status", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await expect(
+      sentry.healthCheck!.check(testConfig, installationId, "token")
+    ).rejects.toThrow("Sentry health check failed: 500");
+  });
+
+  it("uses config.clientSecret for auth — NOT the accessToken param", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    await sentry.healthCheck!.check(
+      testConfig,
+      installationId,
+      "user-access-token-should-be-ignored"
+    );
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toContain(`sentry-app-installations/${installationId}/`);
+    expect(init.method).toBe("GET");
+    const auth = (init.headers as Record<string, string>).Authorization;
+    expect(auth).toBe(`Bearer ${testConfig.clientSecret}`);
+  });
+});

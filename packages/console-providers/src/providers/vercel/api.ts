@@ -60,6 +60,24 @@ export const vercelProjectsListSchema = z.object({
   }),
 });
 
+export const vercelTeamResponseSchema = z
+  .object({
+    slug: z.string().optional(),
+    name: z.string().optional(),
+  })
+  .loose();
+
+export const vercelUserResponseSchema = z
+  .object({
+    user: z
+      .object({
+        username: z.string().optional(),
+      })
+      .loose()
+      .optional(),
+  })
+  .loose();
+
 // ── Rate Limit Parser ───────────────────────────────────────────────────────────
 
 export function parseVercelRateLimit(headers: Headers): RateLimit | null {
@@ -88,15 +106,13 @@ export const vercelApi = {
       method: "GET",
       path: "/v2/teams/{team_id}",
       description: "Get Vercel team details by team ID",
-      responseSchema: z.record(z.string(), z.unknown()),
+      responseSchema: vercelTeamResponseSchema,
     },
     "get-user": {
       method: "GET",
       path: "/v2/user",
       description: "Get the authenticated Vercel user",
-      responseSchema: z
-        .object({ user: z.record(z.string(), z.unknown()).optional() })
-        .loose(),
+      responseSchema: vercelUserResponseSchema,
     },
     "list-projects": {
       method: "GET",

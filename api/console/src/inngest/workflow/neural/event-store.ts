@@ -36,9 +36,9 @@ import type {
   EventCaptureOutputSuccess,
   ExtractedEntity,
 } from "@repo/console-validation";
+import { NonRetriableError } from "@repo/inngest";
 import { log } from "@vendor/observability/log/next";
 import { and, eq, sql } from "drizzle-orm";
-import { NonRetriableError } from "inngest";
 import { nanoid } from "nanoid";
 import { completeJob, createJob, updateJobStatus } from "../../../lib/jobs";
 import { inngest } from "../../client/client";
@@ -108,7 +108,7 @@ async function resolveClerkOrgId(
  */
 export const eventStore = inngest.createFunction(
   {
-    id: "apps-console/event.store",
+    id: "console/event.store",
     name: "Event Store",
     description: "Stores engineering events (fast path)",
     retries: 3,
@@ -129,7 +129,7 @@ export const eventStore = inngest.createFunction(
     },
 
     // Handle failures gracefully - complete job as failed
-    onFailure: createNeuralOnFailureHandler("apps-console/event.capture", {
+    onFailure: createNeuralOnFailureHandler("console/event.capture", {
       logMessage: "Neural observation store failed",
       logContext: ({ workspaceId, sourceEvent }) => ({
         workspaceId,
@@ -144,7 +144,7 @@ export const eventStore = inngest.createFunction(
         }) satisfies EventCaptureOutputFailure,
     }),
   },
-  { event: "apps-console/event.capture" },
+  { event: "console/event.capture" },
   async ({ event, step }) => {
     const {
       workspaceId,
@@ -244,7 +244,7 @@ export const eventStore = inngest.createFunction(
     }
 
     // Step 2: Check if event is allowed by source config
-    const eventAllowed = await step.run("check-event-allowed", async () => {
+    const gateResult = await step.run("check-event-allowed", async () => {
       const attributes = sourceEvent.attributes;
 
       let resourceId: string | undefined;
@@ -278,7 +278,10 @@ export const eventStore = inngest.createFunction(
           provider: sourceEvent.provider,
           eventType: sourceEvent.eventType,
         });
-        return false;
+        return {
+          allowed: false as const,
+          reason: "event_not_allowed" as const,
+        };
       }
 
       const integration = await db.query.workspaceIntegrations.findFirst({
@@ -294,7 +297,25 @@ export const eventStore = inngest.createFunction(
           resourceId,
           provider: sourceEvent.provider,
         });
-        return false;
+        return {
+          allowed: false as const,
+          reason: "event_not_allowed" as const,
+        };
+      }
+
+      // Gate 2: check integration is active
+      if (integration.status !== "active") {
+        log.info("Integration is not active, rejecting event (Gate 2)", {
+          workspaceId,
+          resourceId,
+          provider: sourceEvent.provider,
+          integrationStatus: integration.status,
+          statusReason: integration.statusReason,
+        });
+        return {
+          allowed: false as const,
+          reason: "inactive_connection" as const,
+        };
       }
 
       const baseEventType = getBaseEventType(
@@ -313,10 +334,18 @@ export const eventStore = inngest.createFunction(
         });
       }
 
-      return allowed;
+      return {
+        allowed,
+        reason: allowed ? ("allowed" as const) : ("event_not_allowed" as const),
+      };
     });
 
-    if (!eventAllowed) {
+    if (!gateResult.allowed) {
+      const filteredReason =
+        gateResult.reason === "inactive_connection"
+          ? ("inactive_connection" as const)
+          : ("event_not_allowed" as const);
+
       await step.run("complete-job-filtered", async () => {
         await completeJob({
           jobId,
@@ -324,7 +353,7 @@ export const eventStore = inngest.createFunction(
           output: {
             inngestFunctionId: "event.capture",
             status: "filtered",
-            reason: "event_not_allowed",
+            reason: filteredReason,
             sourceId: sourceEvent.sourceId,
           } satisfies EventCaptureOutputFiltered,
         });
@@ -332,7 +361,10 @@ export const eventStore = inngest.createFunction(
 
       return {
         status: "filtered",
-        reason: "Event type not enabled in source config",
+        reason:
+          filteredReason === "inactive_connection"
+            ? "Integration is not active"
+            : "Event type not enabled in source config",
         duration: Date.now() - startTime,
       };
     }
@@ -531,7 +563,7 @@ export const eventStore = inngest.createFunction(
     // Step 7: Emit entity.upserted (triggers entity-graph → entity-embed chain)
     if (entityUpsertResult.primaryEntityExternalId) {
       await step.sendEvent("emit-downstream-events", {
-        name: "apps-console/entity.upserted" as const,
+        name: "console/entity.upserted" as const,
         data: {
           workspaceId,
           entityExternalId: entityUpsertResult.primaryEntityExternalId,
@@ -547,7 +579,7 @@ export const eventStore = inngest.createFunction(
 
     // Step 7b: Emit event.stored (triggers notification dispatch)
     await step.sendEvent("emit-event-stored", {
-      name: "apps-console/event.stored" as const,
+      name: "console/event.stored" as const,
       data: {
         workspaceId,
         clerkOrgId,

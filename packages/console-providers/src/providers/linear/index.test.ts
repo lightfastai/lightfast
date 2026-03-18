@@ -539,3 +539,79 @@ describe("webhook.parsePayload", () => {
     expect(() => linear.webhook.parsePayload(raw)).not.toThrow();
   });
 });
+
+// ── healthCheck.check ─────────────────────────────────────────────────────────
+
+describe("healthCheck.check", () => {
+  it("returns 'healthy' when viewer query succeeds", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({ data: { viewer: { id: "viewer-id-abc" } } }),
+    });
+
+    const result = await linear.healthCheck!.check(
+      testConfig,
+      "org-id",
+      "lin_api_token123"
+    );
+    expect(result).toBe("healthy");
+  });
+
+  it("returns 'revoked' when accessToken is null", async () => {
+    const result = await linear.healthCheck!.check(testConfig, "org-id", null);
+    expect(result).toBe("revoked");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("returns 'revoked' when HTTP response is not ok", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+
+    const result = await linear.healthCheck!.check(
+      testConfig,
+      "org-id",
+      "bad-token"
+    );
+    expect(result).toBe("revoked");
+  });
+
+  it("returns 'revoked' when viewer is null (GraphQL auth error wrapped in 200)", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () =>
+        Promise.resolve({
+          data: null,
+          errors: [
+            {
+              message: "Authentication required",
+              extensions: { type: "AUTHENTICATION_ERROR" },
+            },
+          ],
+        }),
+    });
+
+    const result = await linear.healthCheck!.check(
+      testConfig,
+      "org-id",
+      "revoked-token"
+    );
+    expect(result).toBe("revoked");
+  });
+
+  it("sends POST /graphql with viewer query and Bearer auth", async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({ data: { viewer: { id: "viewer-id" } } }),
+    });
+
+    await linear.healthCheck!.check(testConfig, "org-id", "my-token");
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.linear.app/graphql");
+    expect(init.method).toBe("POST");
+    const auth = (init.headers as Record<string, string>).Authorization;
+    expect(auth).toBe("Bearer my-token");
+    const body = JSON.parse(init.body as string) as { query: string };
+    expect(body.query).toBe("{ viewer { id } }");
+  });
+});

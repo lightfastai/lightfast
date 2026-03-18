@@ -545,3 +545,70 @@ describe("webhook.parsePayload", () => {
     ).not.toThrow();
   });
 });
+
+// ── healthCheck.check ─────────────────────────────────────────────────────────
+
+describe("healthCheck.check", () => {
+  it("returns 'healthy' when Vercel returns 200", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const result = await vercel.healthCheck!.check(
+      testConfig,
+      "team-456",
+      "vercel-access-token-abc"
+    );
+    expect(result).toBe("healthy");
+  });
+
+  it("returns 'revoked' when accessToken is null", async () => {
+    const result = await vercel.healthCheck!.check(
+      testConfig,
+      "team-456",
+      null
+    );
+    expect(result).toBe("revoked");
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it("returns 'revoked' when Vercel returns 403", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 403 });
+
+    const result = await vercel.healthCheck!.check(
+      testConfig,
+      "team-456",
+      "bad-token"
+    );
+    expect(result).toBe("revoked");
+  });
+
+  it("returns 'revoked' when Vercel returns 401", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
+
+    const result = await vercel.healthCheck!.check(
+      testConfig,
+      "team-456",
+      "expired-token"
+    );
+    expect(result).toBe("revoked");
+  });
+
+  it("throws on unexpected HTTP status", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await expect(
+      vercel.healthCheck!.check(testConfig, "team-456", "token")
+    ).rejects.toThrow("Vercel health check failed: 500");
+  });
+
+  it("calls GET /v2/user with Bearer auth", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    await vercel.healthCheck!.check(testConfig, "team-456", "my-vercel-token");
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.vercel.com/v2/user");
+    expect(init.method).toBe("GET");
+    const auth = (init.headers as Record<string, string>).Authorization;
+    expect(auth).toBe("Bearer my-vercel-token");
+  });
+});

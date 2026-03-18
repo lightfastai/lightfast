@@ -4,7 +4,7 @@ import {
   createRelayClient,
   HttpError,
 } from "@repo/gateway-service-clients";
-import { NonRetriableError } from "@vendor/inngest";
+import { NonRetriableError } from "@repo/inngest";
 import { log } from "@vendor/observability/log/edge";
 import { env } from "../env.js";
 import { inngest } from "../inngest/client.js";
@@ -12,7 +12,7 @@ import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../lib/constants.js";
 
 export const backfillEntityWorker = inngest.createFunction(
   {
-    id: "apps-backfill/entity.worker",
+    id: "backfill/entity.worker",
     name: "Backfill Entity Worker",
     retries: 3,
     concurrency: [
@@ -31,13 +31,13 @@ export const backfillEntityWorker = inngest.createFunction(
     // Workers must declare their own cancelOn — it does NOT propagate from parent
     cancelOn: [
       {
-        event: "apps-backfill/run.cancelled",
+        event: "backfill/run.cancelled",
         match: "data.installationId",
       },
     ],
     timeouts: { start: "5m", finish: "2h" },
   },
-  { event: "apps-backfill/entity.requested" },
+  { event: "backfill/entity.requested" },
   async ({ event, step }) => {
     const {
       installationId,
@@ -114,7 +114,34 @@ export const backfillEntityWorker = inngest.createFunction(
             ...request,
           });
 
+          if (raw.status === 401) {
+            // Token is definitively revoked — gateway already attempted forceRefreshToken()
+            // and failed before returning 401 to us. Fire health-check signal so the
+            // platform can detect and surface the revocation, then stop immediately.
+            await step.sendEvent("signal-connection-health-check", {
+              name: "backfill/connection.health.check.requested",
+              data: {
+                installationId,
+                provider,
+                reason: "401_unauthorized" as const,
+                correlationId,
+              },
+            });
+            throw new NonRetriableError(
+              `Provider API returned 401 — token revoked for installation ${installationId}. Health check signal sent.`
+            );
+          }
+
+          if (raw.status === 403) {
+            // Token valid but insufficient scope — not a revocation signal.
+            // No health check needed; the connection is still valid for other resources.
+            throw new NonRetriableError(
+              `Provider API returned 403 — insufficient scope for installation ${installationId}`
+            );
+          }
+
           if (raw.status !== 200) {
+            // All other non-200 codes (404, 429, 5xx) remain retriable.
             throw new HttpError(
               `Provider API returned ${raw.status}`,
               raw.status

@@ -20,9 +20,9 @@ import {
 import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
 import { consolePineconeClient } from "@repo/console-pinecone";
 import type { EntityVectorMetadata } from "@repo/console-validation";
+import { NonRetriableError } from "@repo/inngest";
 import { log } from "@vendor/observability/log/next";
 import { asc, desc, eq, sql } from "drizzle-orm";
-import { NonRetriableError } from "inngest";
 import { inngest } from "../../client/client";
 import { buildEntityNarrative, narrativeHash } from "./narrative-builder";
 
@@ -46,7 +46,7 @@ const NARRATIVE_CHAR_CAP = 1800;
 
 export const entityEmbed = inngest.createFunction(
   {
-    id: "apps-console/entity.embed",
+    id: "console/entity.embed",
     name: "Entity Embed",
     description:
       "Builds entity narrative and upserts to Pinecone (layer=entities)",
@@ -58,7 +58,7 @@ export const entityEmbed = inngest.createFunction(
     retries: 3,
     timeouts: { finish: "2m" },
   },
-  { event: "apps-console/entity.graphed" },
+  { event: "console/entity.graphed" },
   async ({ event, step }) => {
     const { workspaceId, entityExternalId, provider, correlationId } =
       event.data;

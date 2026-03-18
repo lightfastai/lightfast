@@ -258,7 +258,48 @@ describe("executeApi error handling", () => {
     );
   });
 
-  it("throws when executeApi returns non-200 status", async () => {
+  it("throws when executeApi returns non-200 status (retriable)", async () => {
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 500,
+      data: null,
+      headers: {},
+    });
+    const step = makeStep();
+
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Provider API returned 500"
+    );
+    expect(step.sendEvent).not.toHaveBeenCalled();
+  });
+});
+
+describe("executeApi auth error handling", () => {
+  it("401 → throws NonRetriableError and fires health-check event", async () => {
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 401,
+      data: null,
+      headers: {},
+    });
+    const step = makeStep();
+
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Provider API returned 401"
+    );
+    expect(step.sendEvent).toHaveBeenCalledOnce();
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "signal-connection-health-check",
+      expect.objectContaining({
+        name: "backfill/connection.health.check.requested",
+        data: expect.objectContaining({
+          installationId: "inst-1",
+          provider: "github",
+          reason: "401_unauthorized",
+        }),
+      })
+    );
+  });
+
+  it("403 → throws NonRetriableError and does NOT fire health-check event", async () => {
     mockGatewayClient.executeApi.mockResolvedValueOnce({
       status: 403,
       data: null,
@@ -269,6 +310,21 @@ describe("executeApi error handling", () => {
     await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
       "Provider API returned 403"
     );
+    expect(step.sendEvent).not.toHaveBeenCalled();
+  });
+
+  it("500 → throws HttpError (retriable, not NonRetriableError)", async () => {
+    mockGatewayClient.executeApi.mockResolvedValueOnce({
+      status: 500,
+      data: null,
+      headers: {},
+    });
+    const step = makeStep();
+
+    await expect(capturedHandler({ event: makeEvent(), step })).rejects.toThrow(
+      "Provider API returned 500"
+    );
+    expect(step.sendEvent).not.toHaveBeenCalled();
   });
 });
 

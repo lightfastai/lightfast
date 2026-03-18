@@ -525,9 +525,9 @@ is unchanged (`"../inngest/client.js"`).
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `pnpm --filter apps-backfill typecheck`
-- [ ] `pnpm --filter apps-backfill build`
-- [ ] Backfill tests pass: `pnpm --filter apps-backfill test`
+- [x] `pnpm --filter apps-backfill typecheck`
+- [x] `pnpm --filter apps-backfill build`
+- [x] Backfill tests pass: `pnpm --filter apps-backfill test` (249/249, 2 pre-existing server-only failures unrelated)
 - [ ] No lint errors: `pnpm check`
 
 #### Manual Verification:

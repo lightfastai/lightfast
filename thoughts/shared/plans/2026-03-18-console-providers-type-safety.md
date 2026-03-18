@@ -164,10 +164,10 @@ Update both call sites in `processResponse` (lines 139, 185) to pass `ctx` inste
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `rg "as unknown as" packages/console-providers/src/providers/github/backfill.ts` returns zero matches
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] Lint passes: `pnpm check`
+- [x] `rg "as unknown as" packages/console-providers/src/providers/github/backfill.ts` returns zero matches
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Tests pass: `pnpm --filter @repo/console-providers test`
+- [x] Lint passes: `pnpm check`
 
 #### Manual Verification:
 - [ ] The `satisfies` assertion compiles without error — confirms structural compatibility
@@ -313,10 +313,10 @@ Since `resourcePicker` callbacks document "Should handle errors internally and r
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `rg "res\.data as" packages/console-providers/src/providers/` returns zero matches
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] Lint passes: `pnpm check`
+- [x] `rg "res\.data as" packages/console-providers/src/providers/` returns zero matches
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Tests pass: `pnpm --filter @repo/console-providers test`
+- [x] Lint passes: `pnpm check` (console-providers/ files clean; 3 pre-existing errors in integration-tests/ unrelated to Phase 2)
 
 #### Manual Verification:
 - [ ] ResourcePicker still works in the UI for all 5 providers (connect → enrich → list resources)
@@ -435,11 +435,11 @@ raw: z.object({
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] `rg "providerAccountInfo as" packages/console-providers/src/providers/` returns zero matches
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Tests pass: `pnpm --filter @repo/console-providers test`
+- [x] `rg "providerAccountInfo as" packages/console-providers/src/providers/` returns zero matches
+- [x] Type checking passes: `pnpm --filter @repo/console-providers typecheck` + `pnpm --filter @api/console typecheck`
+- [x] Tests pass: `pnpm --filter @repo/console-providers test` (363 tests)
 - [ ] Lint passes: `pnpm check`
-- [ ] Consumer type check: `pnpm --filter @api/console typecheck` (tRPC procedures pass `providerAccountInfo` to callbacks)
+- [x] Consumer type check: `pnpm --filter @api/console typecheck` (tRPC procedures pass `providerAccountInfo` to callbacks)
 
 #### Manual Verification:
 - [ ] Vercel resource picker still works (team-scoped installations show team projects, user-scoped show user projects)

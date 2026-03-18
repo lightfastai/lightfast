@@ -407,3 +407,50 @@ describe("webhook.extractSecret", () => {
     expect(github.webhook.extractSecret(testConfig)).toBe("webhook-secret");
   });
 });
+
+// ── healthCheck.check ─────────────────────────────────────────────────────────
+
+describe("healthCheck.check", () => {
+  it("returns 'healthy' when GitHub returns 200", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    const result = await github.healthCheck!.check(testConfig, "12345", null);
+    expect(result).toBe("healthy");
+  });
+
+  it("returns 'revoked' when GitHub returns 404 (installation uninstalled)", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
+
+    const result = await github.healthCheck!.check(testConfig, "12345", null);
+    expect(result).toBe("revoked");
+  });
+
+  it("throws on unexpected HTTP status", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await expect(
+      github.healthCheck!.check(testConfig, "12345", null)
+    ).rejects.toThrow("GitHub health check failed: 500");
+  });
+
+  it("calls GET /app/installations/{externalId} with App JWT auth", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    await github.healthCheck!.check(testConfig, "99999", null);
+
+    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.github.com/app/installations/99999");
+    expect(init.method).toBe("GET");
+    const authHeader =
+      (init.headers as Record<string, string>).Authorization ?? "";
+    expect(authHeader).toMatch(/^Bearer /);
+  });
+
+  it("ignores accessToken param — uses App JWT", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 200 });
+
+    // accessToken is null for GitHub app-token providers
+    const result = await github.healthCheck!.check(testConfig, "12345", null);
+    expect(result).toBe("healthy");
+  });
+});

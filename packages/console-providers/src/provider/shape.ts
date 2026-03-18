@@ -60,7 +60,7 @@ interface BaseProviderFields<
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */
   readonly resolveCategory: (eventType: string) => string;
   /** UI resource picker configuration for sources/new — installation enrichment + resource listing */
-  readonly resourcePicker: ResourcePickerDef;
+  readonly resourcePicker: ResourcePickerDef<z.infer<TAccountInfoSchema> | null>;
 }
 
 // ── Tier 1: WebhookProvider ─────────────────────────────────────────────────
