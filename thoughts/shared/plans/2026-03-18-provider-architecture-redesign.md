@@ -1710,7 +1710,7 @@ Exercise every extension point built in Phases 1-9 by completing the remaining r
 ### Changes Required:
 
 #### 1. Widen `WebhookProvider.auth` to `AuthDef`
-**File**: `packages/console-providers/src/define.ts`
+**Files**: `packages/console-providers/src/provider/shape.ts` (WebhookProvider interface), `packages/console-providers/src/factory/webhook.ts` (factory generic)
 **Changes**: Change the `TAuth` constraint on `WebhookProvider` from `OAuthDef | AppTokenDef` to `AuthDef` (includes `ApiKeyDef`). Same change on `defineWebhookProvider` factory's `TAuth` generic.
 
 ```typescript
@@ -1740,7 +1740,7 @@ This is a widening — existing providers (all `OAuthDef` or `AppTokenDef`) cont
 **Unlocks**: Stripe (API key + HMAC webhook).
 
 #### 2. Add `InboundWebhookDef` and optional `inbound` on `ApiProvider`
-**File**: `packages/console-providers/src/define.ts`
+**Files**: `packages/console-providers/src/provider/webhook.ts` (`InboundWebhookDef` interface), `packages/console-providers/src/provider/shape.ts` (`ApiProvider.inbound` field)
 **Changes**: Add `InboundWebhookDef` interface after `WebhookDef`. Add optional `inbound` field to `ApiProvider`.
 
 ```typescript
@@ -1767,7 +1767,7 @@ export interface ApiProvider<...> extends BaseProviderFields<...> {
 ```
 
 #### 3. Update `hasInboundWebhooks` type guard
-**File**: `packages/console-providers/src/define.ts`
+**File**: `packages/console-providers/src/provider/shape.ts`
 **Changes**: Extend the guard (defined in Phase 9) to also match `ApiProvider` with `inbound`:
 
 ```typescript
@@ -1790,7 +1790,7 @@ The relay's `providerGuard` (updated in Phase 9 to use `hasInboundWebhooks`) aut
 **Unlocks**: Clerk (API key + Ed25519 webhook), Datadog (API key + HMAC webhook alerts).
 
 #### 4. Add Ed25519 to `SignatureScheme`
-**File**: `packages/console-providers/src/define.ts`
+**Files**: `packages/console-providers/src/provider/webhook.ts` (schema + `ed25519` factory), `packages/console-providers/src/runtime/verify/ed25519.ts` (implementation), `packages/console-providers/src/runtime/verify/index.ts` (dispatch)
 **Changes**: Add `ed25519SchemeSchema` as a second variant in the `signatureSchemeSchema` discriminated union. Add `case "ed25519"` to `deriveVerifySignature`. Add `@noble/ed25519` dependency.
 
 ```typescript
@@ -1857,7 +1857,7 @@ function _deriveEd25519Verify(scheme: Ed25519Scheme): VerifyFn {
 **Unlocks**: Clerk/Svix (`ed25519({ signatureHeader: "svix-signature", timestampHeader: "svix-timestamp", multiSignature: true })`), Discord.
 
 #### 5. Update `defineApiProvider` factory
-**File**: `packages/console-providers/src/define.ts`
+**File**: `packages/console-providers/src/factory/api.ts`
 **Changes**: The factory's `Omit<ApiProvider<...>, "env" | "kind">` already accepts optional fields naturally. No explicit change needed — `inbound?` flows through the spread. Verify the factory's return type includes `inbound`.
 
 #### 6. Update exports
@@ -1871,17 +1871,17 @@ export type { Ed25519Scheme, InboundWebhookDef } from "./define";
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] Type assertion: `WebhookProvider` accepts `ApiKeyDef` in `auth` position (compile-time test)
-- [ ] Type assertion: existing providers still infer narrow auth types (GitHub → `AppTokenDef`, Linear → `OAuthDef`)
-- [ ] Type assertion: `ApiProvider` with `inbound: InboundWebhookDef` passes `hasInboundWebhooks` guard
-- [ ] Type assertion: `ApiProvider` without `inbound` does NOT pass `hasInboundWebhooks` guard
-- [ ] Runtime validation: `signatureSchemeSchema.parse({ kind: "ed25519", signatureHeader: "svix-signature" })` succeeds
-- [ ] Runtime validation: `signatureSchemeSchema.parse({ kind: "hmac", algorithm: "sha256", signatureHeader: "x-hub-signature-256" })` still succeeds (no regression)
-- [ ] Exhaustiveness: `deriveVerifySignature` switch covers both `"hmac"` and `"ed25519"` — no TypeScript error
-- [ ] Exhaustiveness: temporarily adding a third `kind` to the union causes a TypeScript error in `deriveVerifySignature` (validates extension protocol)
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Lint passes: `pnpm check`
+- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] Type assertion: `WebhookProvider` accepts `ApiKeyDef` in `auth` position (compile-time test)
+- [x] Type assertion: existing providers still infer narrow auth types (GitHub → `AppTokenDef`, Linear → `OAuthDef`)
+- [x] Type assertion: `ApiProvider` with `inbound: InboundWebhookDef` passes `hasInboundWebhooks` guard
+- [x] Type assertion: `ApiProvider` without `inbound` does NOT pass `hasInboundWebhooks` guard
+- [x] Runtime validation: `signatureSchemeSchema.parse({ kind: "ed25519", signatureHeader: "svix-signature" })` succeeds
+- [x] Runtime validation: `signatureSchemeSchema.parse({ kind: "hmac", algorithm: "sha256", signatureHeader: "x-hub-signature-256" })` still succeeds (no regression)
+- [x] Exhaustiveness: `deriveVerifySignature` switch covers both `"hmac"` and `"ed25519"` — no TypeScript error
+- [x] Exhaustiveness: temporarily adding a third `kind` to the union causes a TypeScript error in `deriveVerifySignature` (validates extension protocol)
 
 #### Manual Verification:
 - [ ] Existing 4 webhook providers still verify signatures correctly (HMAC path unchanged)
@@ -2052,6 +2052,17 @@ type _7 = Assert<InboundWebhookDef<unknown> | undefined, ApiProvider["inbound"]>
   - **Performance section** — Added 3 new notes: `ProviderShape`/utility types are pure-type (zero runtime), `eventKeySchema` built once at module load, narrow `getProvider` overload has zero runtime overhead.
 - **Core invariant established**: compile-time `EventKey` type and runtime `eventKeySchema` are derived from the same source. They cannot diverge. `EventKey` is no longer hand-maintained.
 - **Impact on remaining work**: Phase 4 grows by one step (now 8 sub-steps). Phase 4 implementation order updated: `registry.ts` changes now include Step 8 before `index.ts`. All other phases unchanged. Consumers (relay, gateway, backfill) gain narrow types without any changes to their own code — they just add `import type { AuthDefFor }` where currently they type-cast.
+
+### 2026-03-18 — Phases 1–10 complete: file reference update
+
+- **Trigger**: All 10 phases implemented. During implementation the `define.ts` monolith was split into a proper directory structure (`provider/`, `factory/`, `runtime/`, `contracts/`, `client/`). Phase 10 file references in the plan still pointed to the old monolith paths.
+- **Changes**:
+  - **Phase 10, Step 1** — File updated from `define.ts` → `provider/shape.ts` (WebhookProvider), `factory/webhook.ts` (factory generic)
+  - **Phase 10, Step 2** — Files updated from `define.ts` → `provider/webhook.ts` (InboundWebhookDef), `provider/shape.ts` (ApiProvider.inbound)
+  - **Phase 10, Step 3** — File updated from `define.ts` → `provider/shape.ts`
+  - **Phase 10, Step 4** — Files updated from `define.ts` → `provider/webhook.ts` (schema + factory), `runtime/verify/ed25519.ts` (implementation), `runtime/verify/index.ts` (dispatch)
+  - **Phase 10, Step 5** — File updated from `define.ts` → `factory/api.ts`
+- **Impact**: Plan is now accurate to the implemented file structure. All phases complete.
 
 ### 2026-03-18 — Phase 9: Defer runtime wiring, type architecture only
 
