@@ -1,5 +1,6 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
+import { computeHmac, timingSafeEqual } from "./crypto";
 import type { ProxyExecuteResponse } from "./gateway";
 import type { PostTransformEvent } from "./post-transform-event";
 import type {
@@ -75,6 +76,74 @@ export function actionEvent<
   return { kind: "with-actions", ...def };
 }
 
+// ── Signature Schemes (ZOD-FIRST — pure data, no functions) ─────────────────
+// hmacSchemeSchema is the only variant today. It is unexported (internal) because
+// consumers depend on SignatureScheme (the union), never on a specific variant.
+// Adding sha512: add to algorithm enum + update HMAC_ALGO_MAP.
+// Adding base64: add encoding field with .default("hex") + update _deriveHmacVerify.
+// Adding ed25519: new ed25519SchemeSchema + add to union array + new case below.
+// In all cases: WebhookDef, ProviderDefinition, and relay middleware are untouched.
+
+const hmacSchemeSchema = z.object({
+  kind: z.literal("hmac"),
+  algorithm: z.enum(["sha256", "sha1"]),
+  signatureHeader: z.string(),
+  prefix: z.string().optional(),
+});
+
+// PUBLIC interface — WebhookDef uses SignatureScheme, never the variant schemas.
+// New variants extend this array only.
+export const signatureSchemeSchema = z.discriminatedUnion("kind", [
+  hmacSchemeSchema,
+]);
+
+export type HmacScheme = z.infer<typeof hmacSchemeSchema>;
+export type SignatureScheme = z.infer<typeof signatureSchemeSchema>;
+
+// Literal-type-preserving factory: PROVIDERS.github.webhook.signatureScheme.algorithm
+// narrows to "sha256" (not the full "sha256" | "sha1" union) — enables precise
+// type-level tests without narrowing ceremony at call sites.
+export const hmac = <const T extends Omit<HmacScheme, "kind">>(
+  opts: T
+): { readonly kind: "hmac" } & T => ({ kind: "hmac", ...opts });
+
+type VerifyFn = (rawBody: string, headers: Headers, secret: string) => boolean;
+
+// Exhaustive algorithm map. `satisfies Record<HmacScheme["algorithm"], ...>` causes
+// a TypeScript error when a new algorithm is added to the enum but not yet added
+// here — no silent fallthrough to a wrong algorithm.
+const HMAC_ALGO_MAP = {
+  sha256: "SHA-256",
+  sha1: "SHA-1",
+} as const satisfies Record<HmacScheme["algorithm"], "SHA-256" | "SHA-1">;
+
+function _deriveHmacVerify(scheme: HmacScheme): VerifyFn {
+  return (rawBody, headers, secret) => {
+    const rawSig = headers.get(scheme.signatureHeader);
+    if (!rawSig) {
+      return false;
+    }
+    const received = scheme.prefix
+      ? rawSig.slice(scheme.prefix.length)
+      : rawSig;
+    const expected = computeHmac(
+      rawBody,
+      secret,
+      HMAC_ALGO_MAP[scheme.algorithm]
+    );
+    return timingSafeEqual(received, expected);
+  };
+}
+
+// Exhaustive switch — TypeScript errors if a new `kind` is added to
+// signatureSchemeSchema without a corresponding case here.
+export function deriveVerifySignature(scheme: SignatureScheme): VerifyFn {
+  switch (scheme.kind) {
+    case "hmac":
+      return _deriveHmacVerify(scheme);
+  }
+}
+
 /** Webhook extraction functions — pure, no env/DB/framework */
 export interface WebhookDef<TConfig> {
   extractDeliveryId: (headers: Headers, payload: unknown) => string;
@@ -88,7 +157,11 @@ export interface WebhookDef<TConfig> {
     Record<string, z.ZodType<string | undefined>>
   >;
   parsePayload: (raw: unknown) => unknown;
-  verifySignature: (
+  /** Zod-first signature scheme — relay derives verifySignature from this automatically. */
+  readonly signatureScheme: SignatureScheme;
+  /** Optional override — only needed when scheme is non-standard.
+   *  When absent, relay derives from signatureScheme via deriveVerifySignature(). */
+  readonly verifySignature?: (
     rawBody: string,
     headers: Headers,
     secret: string

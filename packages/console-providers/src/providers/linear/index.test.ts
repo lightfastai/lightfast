@@ -15,6 +15,7 @@ import {
   vi,
 } from "vitest";
 import { computeHmac } from "../../crypto";
+import { deriveVerifySignature } from "../../define";
 import type { LinearConfig } from "./auth";
 import { linear } from "./index";
 
@@ -384,35 +385,52 @@ describe("oauth.processCallback", () => {
   });
 });
 
-// ── webhook.verifySignature ───────────────────────────────────────────────────
+// ── webhook.signatureScheme + deriveVerifySignature ───────────────────────────
 
-describe("webhook.verifySignature", () => {
+describe("webhook.signatureScheme", () => {
+  it("has signatureScheme with hmac kind", () => {
+    expect(linear.webhook.signatureScheme.kind).toBe("hmac");
+  });
+
+  it("uses sha256 algorithm", () => {
+    expect(linear.webhook.signatureScheme.algorithm).toBe("sha256");
+  });
+
+  it("uses linear-signature header", () => {
+    expect(linear.webhook.signatureScheme.signatureHeader).toBe(
+      "linear-signature"
+    );
+  });
+
+  it("has no prefix", () => {
+    expect(linear.webhook.signatureScheme.prefix).toBeUndefined();
+  });
+});
+
+describe("deriveVerifySignature(linear.webhook.signatureScheme)", () => {
   const secret = "lin_signing_secret";
   const body = '{"type":"Issue","action":"created","data":{"id":"issue-1"}}';
+  const verify = deriveVerifySignature(linear.webhook.signatureScheme);
 
   it("returns false when linear-signature header is absent", () => {
-    const result = linear.webhook.verifySignature(body, new Headers(), secret);
-    expect(result).toBe(false);
+    expect(verify(body, new Headers(), secret)).toBe(false);
   });
 
   it("returns false for an incorrect signature", () => {
     const headers = new Headers({ "linear-signature": "badhex" });
-    const result = linear.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(false);
+    expect(verify(body, headers, secret)).toBe(false);
   });
 
   it("returns true for a valid HMAC-SHA256 signature", () => {
     const expected = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "linear-signature": expected });
-    const result = linear.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(true);
+    expect(verify(body, headers, secret)).toBe(true);
   });
 
   it("returns false for correct signature with wrong secret", () => {
     const sig = computeHmac(body, "wrong-secret", "SHA-256");
     const headers = new Headers({ "linear-signature": sig });
-    const result = linear.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(false);
+    expect(verify(body, headers, secret)).toBe(false);
   });
 });
 

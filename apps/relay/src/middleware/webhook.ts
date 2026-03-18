@@ -5,6 +5,7 @@ import type {
 } from "@repo/console-providers";
 import {
   computeHmac,
+  deriveVerifySignature,
   getProvider,
   isWebhookProvider,
   serviceAuthWebhookBodySchema,
@@ -239,11 +240,10 @@ export const signatureVerify = createMiddleware<{
     return c.json({ error: "unknown_provider", provider: providerName }, 400);
   }
 
-  const valid = providerDef.webhook.verifySignature(
-    rawBody,
-    c.req.raw.headers,
-    secret
-  );
+  const verify =
+    providerDef.webhook.verifySignature ??
+    deriveVerifySignature(providerDef.webhook.signatureScheme);
+  const valid = verify(rawBody, c.req.raw.headers, secret);
   if (!valid) {
     const sigReceived = c.req.header("x-hub-signature-256") ?? "";
     const sigExpected = `sha256=${computeHmac(rawBody, secret, "SHA-256")}`;

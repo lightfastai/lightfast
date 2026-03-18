@@ -1,6 +1,10 @@
 import { z } from "zod";
-import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineWebhookProvider, simpleEvent } from "../../define";
+import {
+  actionEvent,
+  defineWebhookProvider,
+  hmac,
+  simpleEvent,
+} from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { sentryApi } from "./api";
 import type { SentryAccountInfo, SentryConfig } from "./auth";
@@ -239,14 +243,10 @@ export const sentry = defineWebhookProvider({
       "sentry-hook-timestamp": z.string().optional(),
     }),
     extractSecret: (config) => config.clientSecret,
-    verifySignature: (rawBody, headers, secret) => {
-      const signature = headers.get("sentry-hook-signature");
-      if (!signature) {
-        return false;
-      }
-      const expected = computeHmac(rawBody, secret, "SHA-256");
-      return timingSafeEqual(signature, expected);
-    },
+    signatureScheme: hmac({
+      algorithm: "sha256",
+      signatureHeader: "sentry-hook-signature",
+    }),
     extractEventType: (headers) =>
       headers.get("sentry-hook-resource") ?? "unknown",
     extractDeliveryId: (headers) => {

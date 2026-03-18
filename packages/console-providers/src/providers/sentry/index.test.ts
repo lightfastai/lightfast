@@ -15,6 +15,7 @@ import {
   vi,
 } from "vitest";
 import { computeHmac } from "../../crypto";
+import { deriveVerifySignature } from "../../define";
 import type { SentryConfig } from "./auth";
 import { decodeSentryToken, encodeSentryToken } from "./auth";
 import { sentry } from "./index";
@@ -460,28 +461,46 @@ describe("oauth.processCallback", () => {
   });
 });
 
-// ── webhook.verifySignature ───────────────────────────────────────────────────
+// ── webhook.signatureScheme + deriveVerifySignature ───────────────────────────
 
-describe("webhook.verifySignature", () => {
+describe("webhook.signatureScheme", () => {
+  it("has signatureScheme with hmac kind", () => {
+    expect(sentry.webhook.signatureScheme.kind).toBe("hmac");
+  });
+
+  it("uses sha256 algorithm", () => {
+    expect(sentry.webhook.signatureScheme.algorithm).toBe("sha256");
+  });
+
+  it("uses sentry-hook-signature header", () => {
+    expect(sentry.webhook.signatureScheme.signatureHeader).toBe(
+      "sentry-hook-signature"
+    );
+  });
+
+  it("has no prefix", () => {
+    expect(sentry.webhook.signatureScheme.prefix).toBeUndefined();
+  });
+});
+
+describe("deriveVerifySignature(sentry.webhook.signatureScheme)", () => {
   const secret = "sentry-hook-secret";
   const body = '{"action":"created","data":{"issue":{"id":"sentry-issue-1"}}}';
+  const verify = deriveVerifySignature(sentry.webhook.signatureScheme);
 
   it("returns false when sentry-hook-signature header is absent", () => {
-    const result = sentry.webhook.verifySignature(body, new Headers(), secret);
-    expect(result).toBe(false);
+    expect(verify(body, new Headers(), secret)).toBe(false);
   });
 
   it("returns false for incorrect signature", () => {
     const headers = new Headers({ "sentry-hook-signature": "wronghex" });
-    const result = sentry.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(false);
+    expect(verify(body, headers, secret)).toBe(false);
   });
 
   it("returns true for valid HMAC-SHA256 signature", () => {
     const expected = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "sentry-hook-signature": expected });
-    const result = sentry.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(true);
+    expect(verify(body, headers, secret)).toBe(true);
   });
 
   it("uses clientSecret as the webhook secret", () => {

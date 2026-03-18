@@ -19,6 +19,7 @@ import {
   vi,
 } from "vitest";
 import { computeHmac } from "../../crypto";
+import { deriveVerifySignature } from "../../define";
 import type { GitHubConfig } from "./auth";
 import { github } from "./index";
 
@@ -96,7 +97,9 @@ describe("auth.buildInstallUrl", () => {
   });
 
   it("returns a string", () => {
-    expect(typeof appTokenAuth!.buildInstallUrl(testConfig, "s")).toBe("string");
+    expect(typeof appTokenAuth!.buildInstallUrl(testConfig, "s")).toBe(
+      "string"
+    );
   });
 });
 
@@ -207,21 +210,40 @@ describe("oauth.processCallback", () => {
   });
 });
 
-// ── webhook.verifySignature ───────────────────────────────────────────────────
+// ── webhook.signatureScheme + deriveVerifySignature ───────────────────────────
 
-describe("webhook.verifySignature", () => {
+describe("webhook.signatureScheme", () => {
+  it("has signatureScheme with hmac kind", () => {
+    expect(github.webhook.signatureScheme.kind).toBe("hmac");
+  });
+
+  it("uses sha256 algorithm", () => {
+    expect(github.webhook.signatureScheme.algorithm).toBe("sha256");
+  });
+
+  it("uses x-hub-signature-256 header", () => {
+    expect(github.webhook.signatureScheme.signatureHeader).toBe(
+      "x-hub-signature-256"
+    );
+  });
+
+  it("has sha256= prefix", () => {
+    expect(github.webhook.signatureScheme.prefix).toBe("sha256=");
+  });
+});
+
+describe("deriveVerifySignature(github.webhook.signatureScheme)", () => {
   const secret = "webhook-secret";
   const body = '{"action":"push","ref":"refs/heads/main"}';
+  const verify = deriveVerifySignature(github.webhook.signatureScheme);
 
   it("returns false when x-hub-signature-256 header is absent", () => {
-    const result = github.webhook.verifySignature(body, new Headers(), secret);
-    expect(result).toBe(false);
+    expect(verify(body, new Headers(), secret)).toBe(false);
   });
 
   it("returns false for an incorrect signature", () => {
     const headers = new Headers({ "x-hub-signature-256": "sha256=000000" });
-    const result = github.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(false);
+    expect(verify(body, headers, secret)).toBe(false);
   });
 
   it("returns true for a valid signature with sha256= prefix", () => {
@@ -229,15 +251,13 @@ describe("webhook.verifySignature", () => {
     const headers = new Headers({
       "x-hub-signature-256": `sha256=${expected}`,
     });
-    const result = github.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(true);
+    expect(verify(body, headers, secret)).toBe(true);
   });
 
-  it("returns true for a valid signature without sha256= prefix", () => {
+  it("returns false for a valid signature without sha256= prefix (prefix required)", () => {
     const expected = computeHmac(body, secret, "SHA-256");
     const headers = new Headers({ "x-hub-signature-256": expected });
-    const result = github.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(true);
+    expect(verify(body, headers, secret)).toBe(false);
   });
 
   it("returns false for signature computed with wrong secret", () => {
@@ -245,8 +265,7 @@ describe("webhook.verifySignature", () => {
     const headers = new Headers({
       "x-hub-signature-256": `sha256=${wrongSig}`,
     });
-    const result = github.webhook.verifySignature(body, headers, secret);
-    expect(result).toBe(false);
+    expect(verify(body, headers, secret)).toBe(false);
   });
 });
 

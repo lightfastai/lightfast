@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineWebhookProvider } from "../../define";
+import { actionEvent, defineWebhookProvider, hmac } from "../../define";
 import { createRS256JWT } from "../../jwt";
 import type { CallbackResult } from "../../types";
 import { githubApi } from "./api";
@@ -123,15 +122,11 @@ export const github = defineWebhookProvider({
       "x-github-delivery": z.string(),
     }),
     extractSecret: (config) => config.webhookSecret,
-    verifySignature: (rawBody, headers, secret) => {
-      const sig = headers.get("x-hub-signature-256");
-      if (!sig) {
-        return false;
-      }
-      const received = sig.startsWith("sha256=") ? sig.slice(7) : sig;
-      const expected = computeHmac(rawBody, secret, "SHA-256");
-      return timingSafeEqual(received, expected);
-    },
+    signatureScheme: hmac({
+      algorithm: "sha256",
+      signatureHeader: "x-hub-signature-256",
+      prefix: "sha256=",
+    }),
     extractEventType: (headers) => headers.get("x-github-event") ?? "unknown",
     extractDeliveryId: (headers) =>
       headers.get("x-github-delivery") ?? crypto.randomUUID(),

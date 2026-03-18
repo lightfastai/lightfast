@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement 9 targeted changes to the `console-providers` package that achieve tRPC-level type safety, Zod-first signature verification, a 3-tier provider model (`WebhookProvider | ManagedProvider | ApiProvider`), universal connection health monitoring, and 1-touch provider addition. Based on the synthesis at `thoughts/shared/research/2026-03-18-provider-architecture-synthesis.md`.
+Implement 10 targeted changes to the `console-providers` package that achieve tRPC-level type safety, Zod-first signature verification, a 3-tier provider model (`WebhookProvider | ManagedProvider | ApiProvider`), universal connection health monitoring, complete provider type coverage (every research-identified provider has a home), and 1-touch provider addition. Based on the synthesis at `thoughts/shared/research/2026-03-18-provider-architecture-synthesis.md`.
 
 ## Current State Analysis
 
@@ -23,16 +23,20 @@ The provider system (`packages/console-providers/src/`) has a 2-tier discriminat
 
 ## Desired End State
 
-After all 9 changes:
+After all 10 changes:
 - Adding a provider is a **1-touch operation** (add to `PROVIDERS` only)
 - `PROVIDERS.github.auth` has type `AppTokenDef`, not `OAuthDef`
 - `LifecycleDef`, `EventClassifier`, and `LifecycleReason` are deleted — replaced by universal `HealthCheckDef`
 - `HealthCheckDef` on `BaseProviderFields` (optional) enables 401-poll connection health monitoring across all provider tiers
 - Signature schemes are pure Zod data — relay derives secrets from provider definitions
-- `ManagedProvider` tier exists for programmatic webhook registration (Clerk, PostHog, Stripe)
+- `ManagedProvider` tier exists for programmatic webhook registration (HubSpot, Stripe)
+- `ApiProvider` can optionally receive inbound webhooks via `inbound?: InboundWebhookDef` (Clerk, Datadog)
+- `WebhookProvider.auth` accepts full `AuthDef` — webhook providers can use API key auth (Stripe)
+- Ed25519 signature verification is supported — Clerk/Svix/Discord webhooks are typeable
 - Display metadata lives on provider definitions — no separate `display.ts` to maintain
 - `gateway.ts` is split into single-consumer contract files
 - `ClientShape<P>` enforces bundle safety at the type level
+- **Every provider in the research taxonomy has a typed home** — no architectural decisions needed when new providers arrive
 
 ### Verification:
 ```bash
@@ -44,7 +48,7 @@ pnpm --filter @repo/console-providers test   # all tests pass
 ## What We're NOT Doing
 
 - **`PollingDef`** — continuous scheduled pull for PostHog/Amplitude (requires polling worker service)
-- **`WebhookCapability` on `ApiProvider`** — webhook reception for API-key providers without programmatic registration
+- ~~**`WebhookCapability` on `ApiProvider`**~~ — moved to Phase 10 as `InboundWebhookDef` on `ApiProvider`
 - **Category ↔ BackfillEntityType unification** — deferred to future research
 - **Typed payload pipeline** — `payload: z.unknown()` → typed end-to-end (high-impact but requires typed `WebhookEnvelope` variants)
 - **Relay auto-registration factory** — `createWebhookRouter(PROVIDERS)` (deferred)
@@ -52,14 +56,14 @@ pnpm --filter @repo/console-providers test   # all tests pass
 - **`StreamingDef`** — Salesforce CDC, Kafka-style providers (future primitive)
 - **Database schema changes beyond `webhookSetupState`** — no other schema changes needed
 - **Changing `BackfillDef`, `ResourcePickerDef`, or `ProviderApi` structures** — already correct
-- **Ed25519 signature scheme** — no current provider uses ed25519; requires `@noble/ed25519` and a real `deriveVerifySignature` implementation; deferred until a concrete provider (e.g., Svix-based) needs it
+- ~~**Ed25519 signature scheme**~~ — moved to Phase 10; exercises the union-first `SignatureScheme` architecture from Phase 3
 - **Classifier-based event routing** — `EventClassifier` ("lifecycle" | "data" | "unknown") was dead code and is deleted in Phase 2; future DLQ/routing logic can be re-introduced when the relay actually needs it
 - **HealthCheck implementations** — Phase 2 defines the `HealthCheckDef` interface only; per-provider implementations (API calls, 401 detection) are a follow-up task
 - **Webhook-based lifecycle detection** — the old model (GitHub `installation.deleted`, Vercel `integration-configuration.removed`) is replaced by simple 401-poll health checks; providers that send lifecycle-type webhooks still receive them as data events
 
 ## Implementation Approach
 
-Changes are ordered by dependency. Phases 1-3 are sequential (each builds on the previous). Phases 4-6 and 8 are largely independent and can be done in any order after Phase 3. Phase 7 requires both Phase 3 (relay uses `deriveVerifySignature`) **and** Phase 9's `hasInboundWebhooks` type guard before the relay guard is correct. Phase 9 depends on Phase 3.
+Changes are ordered by dependency. Phases 1-3 are sequential (each builds on the previous). Phases 4-6 and 8 are largely independent and can be done in any order after Phase 3. Phase 7 requires both Phase 3 (relay uses `deriveVerifySignature`) **and** Phase 9's `hasInboundWebhooks` type guard before the relay guard is correct. Phase 9 depends on Phase 3. Phase 10 depends on Phases 3 and 9 (extends `SignatureScheme` and updates `hasInboundWebhooks`).
 
 **Type-safety principle**: Test type-level assertions inside `console-providers` at each phase boundary before touching any consumer (relay, gateway, backfill, console). The provider package must surface the correct narrow types so consumers never need type casts.
 
@@ -318,40 +322,58 @@ readonly healthCheck?: HealthCheckDef<TConfig>;
 ## Phase 3: SignatureScheme — Zod-First Innovation
 
 ### Overview
-Add `SignatureScheme` as a pure Zod data declaration on `WebhookDef`. Implement `deriveVerifySignature` to auto-generate verification from the scheme. Add `signatureScheme` to all 4 webhook providers and remove their manual `verifySignature` implementations (except where non-standard).
+Add `SignatureScheme` as a pure Zod data declaration on `WebhookDef`. Establish a discriminated union (`signatureSchemeSchema = z.discriminatedUnion("kind", [hmacSchemeSchema])`) with a single HMAC member today. Future scheme variants (ed25519, base64 HMAC, sha512) extend the union array only — `WebhookDef` and all consumers remain untouched. Implement `deriveVerifySignature` as an exhaustive `switch` dispatcher with a `satisfies`-guarded algorithm map. Add `signatureScheme` to all 4 webhook providers and remove their manual `verifySignature` implementations.
+
+### Extension Protocol (no `WebhookDef` changes required)
+
+| Want | Do | Don't touch |
+|------|-----|-------------|
+| Add sha512 | Add to `hmacSchemeSchema.algorithm` enum + update `HMAC_ALGO_MAP` + extend `computeHmac` | `WebhookDef`, `ProviderDefinition`, relay |
+| Add base64 encoding | Add `encoding` field to `hmacSchemeSchema` with `.default("hex")` + update `_deriveHmacVerify` | Existing providers (back-compat default), `WebhookDef` |
+| Add ed25519 | New `ed25519SchemeSchema` + add to union array + new `case` in `deriveVerifySignature` | `WebhookDef`, `ProviderDefinition`, relay |
 
 ### Changes Required:
 
 #### 1. Add Zod signature scheme schemas
 **File**: `packages/console-providers/src/define.ts`
-**Changes**: Add after the existing imports/schemas (before `WebhookDef`). HMAC only — ed25519 is deferred (see "What We're NOT Doing"):
+**Changes**: Add after the existing imports/schemas (before `WebhookDef`):
 
 ```typescript
 // ── Signature Schemes (ZOD-FIRST — pure data, no functions) ─────────────────
-// Only HMAC is implemented. Ed25519 is deferred until a concrete provider needs it.
+// hmacSchemeSchema is the only variant today. It is unexported (internal) because
+// consumers depend on SignatureScheme (the union), never on a specific variant.
+// Adding sha512: add to algorithm enum + update HMAC_ALGO_MAP.
+// Adding base64: add encoding field with .default("hex") + update _deriveHmacVerify.
+// Adding ed25519: new ed25519SchemeSchema + add to union array + new case below.
+// In all cases: WebhookDef, ProviderDefinition, and relay middleware are untouched.
 
-export const hmacSchemeSchema = z.object({
+const hmacSchemeSchema = z.object({
   kind: z.literal("hmac"),
-  algorithm: z.enum(["sha256", "sha1", "sha512"]),
-  encoding: z.enum(["hex", "base64"]),
+  algorithm: z.enum(["sha256", "sha1"]),
   signatureHeader: z.string(),
   prefix: z.string().optional(),
 });
 
-export const signatureSchemeSchema = hmacSchemeSchema;
+// PUBLIC interface — WebhookDef uses SignatureScheme, never the variant schemas.
+// New variants extend this array only.
+export const signatureSchemeSchema = z.discriminatedUnion("kind", [
+  hmacSchemeSchema,
+]);
 
+export type HmacScheme = z.infer<typeof hmacSchemeSchema>;
 export type SignatureScheme = z.infer<typeof signatureSchemeSchema>;
-export type HmacScheme = SignatureScheme;
 
-export const hmac = (opts: Omit<HmacScheme, "kind">): HmacScheme => ({
-  kind: "hmac",
-  ...opts,
-});
+// Literal-type-preserving factory: PROVIDERS.github.webhook.signatureScheme.algorithm
+// narrows to "sha256" (not the full "sha256" | "sha1" union) — enables precise
+// type-level tests without narrowing ceremony at call sites.
+export const hmac = <const T extends Omit<HmacScheme, "kind">>(
+  opts: T
+): { readonly kind: "hmac" } & T => ({ kind: "hmac", ...opts });
 ```
 
 #### 2. Add `signatureScheme` to `WebhookDef`
 **File**: `packages/console-providers/src/define.ts`
-**Changes**: Add `signatureScheme` field to `WebhookDef` interface (lines 79-96). Make `verifySignature` optional (providers can override the derived default).
+**Changes**: Add `signatureScheme` field to `WebhookDef` interface. Make `verifySignature` optional — relay falls back to `deriveVerifySignature`. A provider may supply a custom override only if its scheme is non-HMAC or non-standard.
 
 ```typescript
 export interface WebhookDef<TConfig> {
@@ -367,24 +389,35 @@ export interface WebhookDef<TConfig> {
 
 #### 3. Add `deriveVerifySignature` utility
 **File**: `packages/console-providers/src/define.ts`
-**Changes**: Add after the `WebhookDef` interface:
+**Changes**: Add after `signatureSchemeSchema`. The exhaustive `switch` and `satisfies`-guarded map enforce that new variants/algorithms can never be silently skipped:
 
 ```typescript
-export function deriveVerifySignature(
-  scheme: SignatureScheme
-): (rawBody: string, headers: Headers, secret: string) => boolean {
-  // SignatureScheme is HMAC-only. The exhaustive branch below satisfies TypeScript
-  // without a fallthrough `return false` that would silently pass unimplemented schemes.
+type VerifyFn = (rawBody: string, headers: Headers, secret: string) => boolean;
+
+// Exhaustive algorithm map. `satisfies Record<HmacScheme["algorithm"], ...>` causes
+// a TypeScript error when sha512 (or any new algorithm) is added to the enum but
+// not yet added here — no silent fallthrough to a wrong algorithm.
+const HMAC_ALGO_MAP = {
+  sha256: "SHA-256",
+  sha1:   "SHA-1",
+} as const satisfies Record<HmacScheme["algorithm"], "SHA-256" | "SHA-1">;
+
+function _deriveHmacVerify(scheme: HmacScheme): VerifyFn {
   return (rawBody, headers, secret) => {
     const rawSig = headers.get(scheme.signatureHeader);
     if (!rawSig) return false;
     const received = scheme.prefix ? rawSig.slice(scheme.prefix.length) : rawSig;
-    const algo = scheme.algorithm === "sha256" ? "SHA-256"
-      : scheme.algorithm === "sha1"   ? "SHA-1"
-      : "SHA-512";
-    const expected = computeHmac(rawBody, secret, algo);
+    const expected = computeHmac(rawBody, secret, HMAC_ALGO_MAP[scheme.algorithm]);
     return timingSafeEqual(received, expected);
   };
+}
+
+// Exhaustive switch — TypeScript errors if a new `kind` is added to
+// signatureSchemeSchema without a corresponding case here.
+export function deriveVerifySignature(scheme: SignatureScheme): VerifyFn {
+  switch (scheme.kind) {
+    case "hmac": return _deriveHmacVerify(scheme);
+  }
 }
 ```
 
@@ -394,7 +427,6 @@ export function deriveVerifySignature(
 ```typescript
 signatureScheme: hmac({
   algorithm: "sha256",
-  encoding: "hex",
   signatureHeader: "x-hub-signature-256",
   prefix: "sha256=",
 }),
@@ -405,7 +437,6 @@ signatureScheme: hmac({
 ```typescript
 signatureScheme: hmac({
   algorithm: "sha256",
-  encoding: "hex",
   signatureHeader: "linear-signature",
 }),
 // DELETE verifySignature
@@ -415,7 +446,6 @@ signatureScheme: hmac({
 ```typescript
 signatureScheme: hmac({
   algorithm: "sha256",
-  encoding: "hex",
   signatureHeader: "sentry-hook-signature",
 }),
 // DELETE verifySignature
@@ -425,7 +455,6 @@ signatureScheme: hmac({
 ```typescript
 signatureScheme: hmac({
   algorithm: "sha1",
-  encoding: "hex",
   signatureHeader: "x-vercel-signature",
 }),
 // DELETE verifySignature
@@ -433,7 +462,7 @@ signatureScheme: hmac({
 
 #### 5. Update relay signature verification
 **File**: `apps/relay/src/middleware/webhook.ts`
-**Changes**: In the `signatureVerify` middleware (~line 242), use the derived or provided implementation:
+**Changes**: In the `signatureVerify` middleware (~line 242), replace the direct call with the fallback pattern. Import `deriveVerifySignature` from `@repo/console-providers`.
 
 ```typescript
 // Before:
@@ -445,17 +474,27 @@ const verify = providerDef.webhook.verifySignature
 const verified = verify(rawBody, c.req.raw.headers, secret);
 ```
 
-Import `deriveVerifySignature` from `@repo/console-providers`.
+Note: The relay's mismatch diagnostic logging (line 248) still hardcodes `"x-hub-signature-256"`. Updating it to read `signatureScheme.signatureHeader` is scoped to Phase 7, which rewrites the relay's secret resolution.
+
+#### 6. Update exports
+**File**: `packages/console-providers/src/index.ts`
+**Changes**: Add:
+```typescript
+export { deriveVerifySignature, hmac, signatureSchemeSchema } from "./define";
+export type { HmacScheme, SignatureScheme } from "./define";
+```
 
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] Runtime validation: `signatureSchemeSchema.parse(PROVIDERS.github.webhook.signatureScheme)` succeeds
-- [ ] Runtime validation: `signatureSchemeSchema.parse(PROVIDERS.vercel.webhook.signatureScheme)` succeeds
-- [ ] Runtime validation: all 4 webhook providers' `signatureScheme` fields parse cleanly
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Lint passes: `pnpm check`
+- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] Runtime validation: `signatureSchemeSchema.parse(PROVIDERS.github.webhook.signatureScheme)` succeeds
+- [x] Runtime validation: all 4 webhook providers' `signatureScheme` fields parse cleanly
+- [x] Type assertion: `PROVIDERS.github.webhook.signatureScheme.algorithm` resolves to literal `"sha256"`, not the full union
+- [x] Type assertion: `PROVIDERS.vercel.webhook.signatureScheme.algorithm` resolves to literal `"sha1"`
+- [ ] Exhaustiveness check: adding a new `kind` to `signatureSchemeSchema` without a `case` in `deriveVerifySignature` causes a TypeScript error (verified by temporarily adding a dummy variant)
 
 #### Manual Verification:
 - [ ] GitHub webhook signature verification still works (send test webhook via ngrok)
@@ -986,6 +1025,197 @@ cd db/console && pnpm db:generate && pnpm db:migrate
 
 ---
 
+## Phase 10: Complete Provider Type Coverage
+
+### Overview
+Exercise every extension point built in Phases 1-9 by completing the remaining research schemas. Three schema extensions — no provider implementations, no runtime infrastructure, no DB migrations. After this phase, every provider identified in the research taxonomy (`thoughts/shared/research/2026-03-17-provider-architecture-redesign.md`) has a typed home in the `ProviderDefinition` union. Future providers are fill-in-the-blank against stable interfaces.
+
+**Depends on**: Phase 3 (extends `SignatureScheme` union), Phase 9 (`hasInboundWebhooks` guard gets updated).
+
+### Changes Required:
+
+#### 1. Widen `WebhookProvider.auth` to `AuthDef`
+**File**: `packages/console-providers/src/define.ts`
+**Changes**: Change the `TAuth` constraint on `WebhookProvider` from `OAuthDef | AppTokenDef` to `AuthDef` (includes `ApiKeyDef`). Same change on `defineWebhookProvider` factory's `TAuth` generic.
+
+```typescript
+// Before (Phase 1):
+export interface WebhookProvider<
+  TConfig = unknown,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TAuth extends
+    | OAuthDef<TConfig, TAccountInfo>
+    | AppTokenDef<TConfig, TAccountInfo> =
+    | OAuthDef<TConfig, TAccountInfo>
+    | AppTokenDef<TConfig, TAccountInfo>,
+  ...
+>
+
+// After:
+export interface WebhookProvider<
+  TConfig = unknown,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TAuth extends AuthDef<TConfig, TAccountInfo> = AuthDef<TConfig, TAccountInfo>,
+  ...
+>
+```
+
+This is a widening — existing providers (all `OAuthDef` or `AppTokenDef`) continue to infer their narrow types. The factory's `const` inference preserves literal types. No consumer changes needed.
+
+**Unlocks**: Stripe (API key + HMAC webhook).
+
+#### 2. Add `InboundWebhookDef` and optional `inbound` on `ApiProvider`
+**File**: `packages/console-providers/src/define.ts`
+**Changes**: Add `InboundWebhookDef` interface after `WebhookDef`. Add optional `inbound` field to `ApiProvider`.
+
+```typescript
+/**
+ * Inbound webhook reception for API providers.
+ * For providers that use API-key auth but also receive webhooks
+ * configured manually by the customer (Clerk via Svix, Datadog alerts).
+ * No programmatic registration — that's ManagedProvider's job.
+ */
+export interface InboundWebhookDef<TConfig> {
+  readonly webhook: WebhookDef<TConfig>;
+}
+```
+
+Add to `ApiProvider`:
+```typescript
+export interface ApiProvider<...> extends BaseProviderFields<...> {
+  readonly auth: AuthDef<TConfig, TAccountInfo>;
+  readonly backfill?: BackfillDef;
+  /** Optional inbound webhook reception — for API-key providers with manual webhook setup */
+  readonly inbound?: InboundWebhookDef<TConfig>;
+  readonly kind: "api";
+}
+```
+
+#### 3. Update `hasInboundWebhooks` type guard
+**File**: `packages/console-providers/src/define.ts`
+**Changes**: Extend the guard (defined in Phase 9) to also match `ApiProvider` with `inbound`:
+
+```typescript
+type ProviderWithInboundWebhooks =
+  | WebhookProvider
+  | ManagedProvider
+  | (ApiProvider & { readonly inbound: InboundWebhookDef<unknown> });
+
+export function hasInboundWebhooks(
+  p: ProviderDefinition
+): p is ProviderWithInboundWebhooks {
+  if (p.kind === "webhook" || p.kind === "managed") return true;
+  if (p.kind === "api" && p.inbound != null) return true;
+  return false;
+}
+```
+
+The relay's `providerGuard` (updated in Phase 9 to use `hasInboundWebhooks`) automatically gains `ApiProvider`-with-inbound support — no relay changes needed.
+
+**Unlocks**: Clerk (API key + Ed25519 webhook), Datadog (API key + HMAC webhook alerts).
+
+#### 4. Add Ed25519 to `SignatureScheme`
+**File**: `packages/console-providers/src/define.ts`
+**Changes**: Add `ed25519SchemeSchema` as a second variant in the `signatureSchemeSchema` discriminated union. Add `case "ed25519"` to `deriveVerifySignature`. Add `@noble/ed25519` dependency.
+
+```typescript
+const ed25519SchemeSchema = z.object({
+  kind: z.literal("ed25519"),
+  signatureHeader: z.string(),
+  timestampHeader: z.string().optional(),
+  /** Svix-style: multiple space-separated base64 signatures, any must match */
+  multiSignature: z.boolean().optional(),
+});
+
+export const signatureSchemeSchema = z.discriminatedUnion("kind", [
+  hmacSchemeSchema,
+  ed25519SchemeSchema,  // NEW
+]);
+
+export type Ed25519Scheme = z.infer<typeof ed25519SchemeSchema>;
+// SignatureScheme and HmacScheme types auto-update via inference
+```
+
+Add Ed25519 factory:
+```typescript
+export const ed25519 = <const T extends Omit<Ed25519Scheme, "kind">>(
+  opts: T
+): { readonly kind: "ed25519" } & T => ({ kind: "ed25519", ...opts });
+```
+
+Add case to `deriveVerifySignature`:
+```typescript
+export function deriveVerifySignature(scheme: SignatureScheme): VerifyFn {
+  switch (scheme.kind) {
+    case "hmac": return _deriveHmacVerify(scheme);
+    case "ed25519": return _deriveEd25519Verify(scheme);
+  }
+}
+
+function _deriveEd25519Verify(scheme: Ed25519Scheme): VerifyFn {
+  return async (rawBody, headers, secret) => {
+    const rawSig = headers.get(scheme.signatureHeader);
+    if (!rawSig) return false;
+    // Svix sends space-separated base64 signatures; any must match
+    const signatures = scheme.multiSignature
+      ? rawSig.split(" ")
+      : [rawSig];
+    const secretBytes = base64ToUint8Array(secret);
+    const messageBytes = scheme.timestampHeader
+      ? new TextEncoder().encode(
+          `${headers.get(scheme.timestampHeader)}.${rawBody}`
+        )
+      : new TextEncoder().encode(rawBody);
+    for (const sig of signatures) {
+      const sigBytes = base64ToUint8Array(sig);
+      if (await ed25519.verify(sigBytes, messageBytes, secretBytes)) {
+        return true;
+      }
+    }
+    return false;
+  };
+}
+```
+
+**Note**: `deriveVerifySignature` return type widens from `(rawBody, headers, secret) => boolean` to `(rawBody, headers, secret) => boolean | Promise<boolean>`. The `VerifyFn` type alias and relay signature verification must be updated to `await` the result. This is a small but important change — verify relay compatibility.
+
+**Unlocks**: Clerk/Svix (`ed25519({ signatureHeader: "svix-signature", timestampHeader: "svix-timestamp", multiSignature: true })`), Discord.
+
+#### 5. Update `defineApiProvider` factory
+**File**: `packages/console-providers/src/define.ts`
+**Changes**: The factory's `Omit<ApiProvider<...>, "env" | "kind">` already accepts optional fields naturally. No explicit change needed — `inbound?` flows through the spread. Verify the factory's return type includes `inbound`.
+
+#### 6. Update exports
+**File**: `packages/console-providers/src/index.ts`
+**Changes**: Add:
+```typescript
+export { ed25519 } from "./define";
+export type { Ed25519Scheme, InboundWebhookDef } from "./define";
+```
+
+### Success Criteria:
+
+#### Automated Verification:
+- [ ] Type checking passes: `pnpm typecheck`
+- [ ] Lint passes: `pnpm check`
+- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] Type assertion: `WebhookProvider` accepts `ApiKeyDef` in `auth` position (compile-time test)
+- [ ] Type assertion: existing providers still infer narrow auth types (GitHub → `AppTokenDef`, Linear → `OAuthDef`)
+- [ ] Type assertion: `ApiProvider` with `inbound: InboundWebhookDef` passes `hasInboundWebhooks` guard
+- [ ] Type assertion: `ApiProvider` without `inbound` does NOT pass `hasInboundWebhooks` guard
+- [ ] Runtime validation: `signatureSchemeSchema.parse({ kind: "ed25519", signatureHeader: "svix-signature" })` succeeds
+- [ ] Runtime validation: `signatureSchemeSchema.parse({ kind: "hmac", algorithm: "sha256", signatureHeader: "x-hub-signature-256" })` still succeeds (no regression)
+- [ ] Exhaustiveness: `deriveVerifySignature` switch covers both `"hmac"` and `"ed25519"` — no TypeScript error
+- [ ] Exhaustiveness: temporarily adding a third `kind` to the union causes a TypeScript error in `deriveVerifySignature` (validates extension protocol)
+
+#### Manual Verification:
+- [ ] Existing 4 webhook providers still verify signatures correctly (HMAC path unchanged)
+- [ ] No bundle size regression in client-side code (Ed25519 dependency is server-only)
+
+**Implementation Note**: No provider implementations in this phase — only interface and schema definitions. The schemas are validated by type-level and runtime-validation tests, not by wiring real providers. After completing this phase and all automated verification passes, every provider in the research taxonomy can be typed without architecture changes.
+
+---
+
 ## Testing Strategy
 
 ### Unit Tests:
@@ -995,6 +1225,8 @@ cd db/console && pnpm db:generate && pnpm db:migrate
 - `registry.ts` — Test auto-derived `providerConfigSchema` validates all 5 provider configs
 - Each provider — Test `signatureScheme` round-trips through `signatureSchemeSchema.parse()`
 - `define.ts` — Test `connectionStatusSchema.parse()` for all 3 statuses
+- `define.ts` — Test `deriveVerifySignature` with Ed25519 scheme (Phase 10)
+- `define.ts` — Test `signatureSchemeSchema.parse()` for both HMAC and Ed25519 variants (Phase 10)
 
 ### Integration Tests:
 - Relay — Webhook signature verification with real provider signature headers
@@ -1010,6 +1242,9 @@ type _3 = Assert<(typeof PROVIDERS)["apollo"]["auth"]["kind"], "api-key">;
 // After Phase 2: no lifecycle or classifier fields exist on any provider
 type _4 = Assert<"lifecycle" extends keyof (typeof PROVIDERS)["github"], false>;
 type _5 = Assert<"classifier" extends keyof (typeof PROVIDERS)["github"], false>;
+// After Phase 10: WebhookProvider accepts ApiKeyDef; ApiProvider can have inbound webhooks
+type _6 = Assert<ApiKeyDef<unknown> extends WebhookProvider["auth"], true>;
+type _7 = Assert<InboundWebhookDef<unknown> | undefined, ApiProvider["inbound"]>;
 ```
 
 ## Performance Considerations
@@ -1029,13 +1264,15 @@ type _5 = Assert<"classifier" extends keyof (typeof PROVIDERS)["github"], false>
 - The `webhookSecretEnvKey` map deletion in relay is a runtime change — verify all 4 providers' secrets resolve correctly via `extractSecret(providerConfig)`
 - `LifecycleDef`, `LifecycleReason`, and `EventClassifier` are deleted — any external code importing these types must be updated (no known external consumers exist)
 - `classifier` and `lifecycle` fields are removed from `WebhookProvider` — any code accessing `provider.classifier` or `provider.lifecycle` will get a compile error (confirmed: no runtime consumer exists)
+- `WebhookProvider.auth` widened from `OAuthDef | AppTokenDef` to `AuthDef` — existing providers still infer narrow types via factory generics; no consumer impact
+- `ApiProvider` gains optional `inbound?: InboundWebhookDef` — non-breaking addition; `hasInboundWebhooks` guard updated to match
+- `SignatureScheme` union gains Ed25519 — `deriveVerifySignature` return type changes from sync to `boolean | Promise<boolean>`; relay verification must `await` the result
+- `@noble/ed25519` added as dependency to `console-providers`
 
 ## References
 
 - Synthesis: `thoughts/shared/research/2026-03-18-provider-architecture-synthesis.md`
-- Lifecycle runtime plan: `thoughts/shared/plans/2026-03-17-lifecycle-v1-polling-passive.md` *(partially superseded — HealthCheckDef interface now in Phase 2; runtime cron infrastructure remains relevant)*
 - Future innovations: `thoughts/shared/research/2026-03-18-provider-architecture-future.md`
-- Extensibility plan: `thoughts/shared/plans/2026-03-17-provider-architecture-extensibility.md` *(superseded by this plan)*
 - Provider redesign research: `thoughts/shared/research/2026-03-17-provider-architecture-redesign.md`
 
 ---
@@ -1064,3 +1301,32 @@ type _5 = Assert<"classifier" extends keyof (typeof PROVIDERS)["github"], false>
   - **Testing Strategy** — Updated type-level tests to assert lifecycle/classifier fields are absent.
   - **Implementation Approach** — Added type-safety principle: verify types in console-providers before touching consumers.
 - **Impact on remaining work**: Plan reduced from 10 to 9 phases. Phases 3-9 are unchanged in substance (Phase 9's `ManagedWebhookDef` is 2 fields lighter). No new phase dependencies introduced.
+
+### 2026-03-18 — Phase 3 type hardening: union-first SignatureScheme
+
+- **Trigger**: Pre-implementation review found the original Phase 3 design had `signatureSchemeSchema = hmacSchemeSchema` (a flat alias, not a union). This means `SignatureScheme = HmacScheme` — adding ed25519 would require changing the `SignatureScheme` type itself, cascading to `WebhookDef` and every consumer. The `encoding` field was dead code (`computeHmac`/`timingSafeEqual` are hex-only; `deriveVerifySignature` never read it). `sha512` was in the enum but `computeHmac` doesn't support it, creating an untested runtime path. The `hmac()` factory widened literal types. The ternary algorithm mapping had a silent non-exhaustive fallthrough.
+- **Changes**:
+  - **Phase 3** — `signatureSchemeSchema` is now `z.discriminatedUnion("kind", [hmacSchemeSchema])`. Union structure established with one member today. New variants (ed25519, base64, sha512) extend the union array only — `WebhookDef`, `ProviderDefinition`, and relay are untouched in all extension scenarios.
+  - **Phase 3** — `hmacSchemeSchema` is unexported (internal variant). Public interface is `SignatureScheme` (the union) and `HmacScheme` (the inferred variant type).
+  - **Phase 3** — Removed `encoding` from `hmacSchemeSchema`. Added back when `computeHmac` supports base64, with `.default("hex")` for back-compat. No `WebhookDef` change needed.
+  - **Phase 3** — Removed `sha512` from algorithm enum. Added back when `computeHmac` supports it. No `WebhookDef` change needed.
+  - **Phase 3** — `hmac()` factory is now generic (`<const T extends Omit<HmacScheme, "kind">>`): literal algorithm types preserved on `PROVIDERS.*` (e.g., `"sha256"` not `"sha256" | "sha1"`).
+  - **Phase 3** — `deriveVerifySignature` uses an exhaustive `switch (scheme.kind)` dispatcher + `_deriveHmacVerify` variant function. TypeScript errors when a new `kind` is added without a case.
+  - **Phase 3** — `HMAC_ALGO_MAP` uses `as const satisfies Record<HmacScheme["algorithm"], ...>`: TypeScript errors when a new algorithm is added to the enum without updating the map.
+  - **Phase 3** — Relay mismatch diagnostic logging hardcoding scoped to Phase 7 (fits naturally with secret resolution rewrite).
+  - **Phase 3** — Added `VerifyFn` type alias for the verification function signature (DRY).
+  - **Phase 7** — Gains one additional item: update relay mismatch diagnostic logging to use `signatureScheme.signatureHeader`.
+- **Impact on remaining work**: Phase 3 implementation is more code (union setup, split functions) but the structure is future-proof. Phases 4-9 unchanged. Phase 7 gains one small logging update.
+
+### 2026-03-18 — Phase 10: Complete provider type coverage
+
+- **Trigger**: Gap analysis between plan and research (`thoughts/shared/research/2026-03-17-provider-architecture-redesign.md`) identified 3 schema-level gaps after Phase 9: (A) `WebhookProvider.auth` still restricted to `OAuthDef | AppTokenDef` — Stripe untypeable, (B) `ApiProvider` cannot receive webhooks — Clerk/Datadog untypeable, (C) Ed25519 not in `SignatureScheme` — Clerk/Svix/Discord signatures unverifiable. Decision: complete all research schemas now (interfaces only, no provider implementations) to prove the architecture and make future providers fill-in-the-blank.
+- **Changes**:
+  - **Phase 10** (new) — Three schema extensions: (1) Widen `WebhookProvider.auth` to `AuthDef`, (2) Add `InboundWebhookDef` + optional `inbound` on `ApiProvider` + update `hasInboundWebhooks` guard, (3) Add Ed25519 to `SignatureScheme` union with `@noble/ed25519` dependency.
+  - **"What We're NOT Doing"** — `WebhookCapability on ApiProvider` and `Ed25519 signature scheme` moved to in-scope (Phase 10). Both struck through with references.
+  - **Desired End State** — Updated to reflect full provider type coverage.
+  - **Implementation Approach** — Phase 10 depends on Phases 3 and 9.
+  - **Testing Strategy** — Added Ed25519 unit tests and Phase 10 type-level assertions.
+  - **Migration Notes** — Added `VerifyFn` async widening, `@noble/ed25519` dependency.
+  - **PollingDef remains deferred** — requires runtime infrastructure (polling worker service) and no concrete polling-only provider exists yet.
+- **Impact on remaining work**: Plan grows from 9 to 10 phases. Phase 10 is schema-only with zero runtime risk. After Phase 10, every provider in the research taxonomy has a typed home.

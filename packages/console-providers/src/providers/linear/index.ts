@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineWebhookProvider } from "../../define";
+import { actionEvent, defineWebhookProvider, hmac } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { linearApi } from "./api";
 import type { LinearAccountInfo, LinearConfig } from "./auth";
@@ -368,14 +367,10 @@ export const linear = defineWebhookProvider({
       "linear-delivery": z.string().optional(),
     }),
     extractSecret: (config) => config.webhookSigningSecret,
-    verifySignature: (rawBody, headers, secret) => {
-      const signature = headers.get("linear-signature");
-      if (!signature) {
-        return false;
-      }
-      const expected = computeHmac(rawBody, secret, "SHA-256");
-      return timingSafeEqual(signature, expected);
-    },
+    signatureScheme: hmac({
+      algorithm: "sha256",
+      signatureHeader: "linear-signature",
+    }),
     extractEventType: (_headers, payload) => {
       const p = payload as { type?: string; action?: string };
       if (p.type && p.action) {

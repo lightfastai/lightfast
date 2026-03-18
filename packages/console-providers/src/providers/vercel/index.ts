@@ -1,6 +1,5 @@
 import { z } from "zod";
-import { computeHmac, timingSafeEqual } from "../../crypto";
-import { actionEvent, defineWebhookProvider } from "../../define";
+import { actionEvent, defineWebhookProvider, hmac } from "../../define";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { vercelApi } from "./api";
 import type { VercelAccountInfo, VercelConfig } from "./auth";
@@ -240,14 +239,10 @@ export const vercel = defineWebhookProvider({
     }),
     // Vercel webhooks use HMAC-SHA1 (imposed by Vercel's webhook infrastructure)
     extractSecret: (config) => config.clientIntegrationSecret,
-    verifySignature: (rawBody, headers, secret) => {
-      const signature = headers.get("x-vercel-signature");
-      if (!signature) {
-        return false;
-      }
-      const expected = computeHmac(rawBody, secret, "SHA-1");
-      return timingSafeEqual(signature, expected);
-    },
+    signatureScheme: hmac({
+      algorithm: "sha1",
+      signatureHeader: "x-vercel-signature",
+    }),
     extractEventType: (_headers, payload) => {
       const p = payload as { type?: string };
       return p.type ?? "unknown";
