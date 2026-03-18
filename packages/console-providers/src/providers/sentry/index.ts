@@ -1,12 +1,8 @@
 import { z } from "zod";
-import {
-  actionEvent,
-  defineWebhookProvider,
-  hmac,
-  simpleEvent,
-} from "../../define";
-import { PROVIDER_DISPLAY } from "../../display";
-import type { CallbackResult, OAuthTokens } from "../../types";
+import { PROVIDER_DISPLAY } from "../../client/display";
+import { defineWebhookProvider } from "../../factory/index";
+import { actionEvent, hmac, simpleEvent } from "../../provider/index";
+import type { CallbackResult, OAuthTokens } from "../../provider/primitives";
 import { sentryApi } from "./api";
 import type { SentryAccountInfo, SentryConfig } from "./auth";
 import {

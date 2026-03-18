@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { syncSchema } from "../../types";
+import { syncSchema } from "../../provider/primitives";
 
 // ── Config Schema ──
 

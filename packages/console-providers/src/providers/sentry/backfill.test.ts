@@ -11,7 +11,7 @@ vi.hoisted(() => {
   process.env.SKIP_ENV_VALIDATION = "1";
 });
 
-import type { BackfillContext } from "../../define";
+import type { BackfillContext } from "../../provider/backfill";
 import {
   adaptSentryErrorForTransformer,
   adaptSentryIssueForTransformer,

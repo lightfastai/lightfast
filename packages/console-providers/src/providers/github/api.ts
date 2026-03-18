@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { ProviderApi, RateLimit } from "../../define";
-import { createRS256JWT } from "../../jwt";
+import type { ProviderApi, RateLimit } from "../../provider/api";
+import { createRS256JWT } from "../../runtime/jwt";
 import type { GitHubConfig } from "./auth";
 
 // ── Response Schemas ────────────────────────────────────────────────────────────

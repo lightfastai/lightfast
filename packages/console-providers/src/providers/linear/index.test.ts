@@ -14,8 +14,9 @@ import {
   it,
   vi,
 } from "vitest";
-import { computeHmac } from "../../crypto";
-import { deriveVerifySignature } from "../../define";
+import type { HmacScheme } from "../../provider/webhook";
+import { computeHmac } from "../../runtime/crypto";
+import { deriveVerifySignature } from "../../runtime/verify/index";
 import type { LinearConfig } from "./auth";
 import { linear } from "./index";
 
@@ -393,7 +394,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("uses sha256 algorithm", () => {
-    expect(linear.webhook.signatureScheme.algorithm).toBe("sha256");
+    expect((linear.webhook.signatureScheme as HmacScheme).algorithm).toBe(
+      "sha256"
+    );
   });
 
   it("uses linear-signature header", () => {
@@ -403,7 +406,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("has no prefix", () => {
-    expect(linear.webhook.signatureScheme.prefix).toBeUndefined();
+    expect(
+      (linear.webhook.signatureScheme as HmacScheme).prefix
+    ).toBeUndefined();
   });
 });
 

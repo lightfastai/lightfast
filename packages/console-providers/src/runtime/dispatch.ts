@@ -1,8 +1,8 @@
-import type { EventDefinition } from "./define";
-import type { PostTransformEvent } from "./post-transform-event";
-import type { SourceType } from "./registry";
-import { PROVIDERS } from "./registry";
-import type { TransformContext } from "./types";
+import type { PostTransformEvent } from "../contracts/event";
+import type { EventDefinition } from "../provider/index";
+import type { TransformContext } from "../provider/primitives";
+import type { SourceType } from "../registry";
+import { PROVIDERS } from "../registry";
 
 /**
  * Central webhook payload transformer.

@@ -3,8 +3,8 @@ import type {
   BackfillContext,
   BackfillDef,
   BackfillWebhookEvent,
-} from "../../define";
-import { typedEntityHandler } from "../../define";
+} from "../../provider/backfill";
+import { typedEntityHandler } from "../../provider/backfill";
 import {
   type vercelDeploymentSchema,
   vercelDeploymentsResponseSchema,

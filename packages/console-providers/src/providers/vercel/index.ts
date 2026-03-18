@@ -1,7 +1,8 @@
 import { z } from "zod";
-import { actionEvent, defineWebhookProvider, hmac } from "../../define";
-import { PROVIDER_DISPLAY } from "../../display";
-import type { CallbackResult, OAuthTokens } from "../../types";
+import { PROVIDER_DISPLAY } from "../../client/display";
+import { defineWebhookProvider } from "../../factory/index";
+import { actionEvent, hmac } from "../../provider/index";
+import type { CallbackResult, OAuthTokens } from "../../provider/primitives";
 import { vercelApi } from "./api";
 import type { VercelAccountInfo, VercelConfig } from "./auth";
 import {

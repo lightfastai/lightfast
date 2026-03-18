@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { ProviderApi, RateLimit } from "../../define";
+import type { ProviderApi, RateLimit } from "../../provider/api";
 
 // ── Response Schemas ────────────────────────────────────────────────────────────
 

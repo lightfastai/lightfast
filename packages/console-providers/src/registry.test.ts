@@ -1,5 +1,5 @@
 import { describe, expectTypeOf, it } from "vitest";
-import type { ProviderDefinition } from "./define";
+import type { ProviderDefinition } from "./provider/index";
 import type { GitHubConfig } from "./providers/github/auth";
 import type { LinearConfig } from "./providers/linear/auth";
 import type { SentryConfig } from "./providers/sentry/auth";

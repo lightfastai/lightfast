@@ -1,5 +1,5 @@
-import type { PostTransformEvent } from "./post-transform-event";
-import { postTransformEventSchema } from "./post-transform-event";
+import type { PostTransformEvent } from "../contracts/event";
+import { postTransformEventSchema } from "../contracts/event";
 
 interface ValidationResult<T> {
   data?: T;

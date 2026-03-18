@@ -1,8 +1,9 @@
 import { z } from "zod";
-import { actionEvent, defineWebhookProvider, hmac } from "../../define";
-import { PROVIDER_DISPLAY } from "../../display";
-import { createRS256JWT } from "../../jwt";
-import type { CallbackResult } from "../../types";
+import { PROVIDER_DISPLAY } from "../../client/display";
+import { defineWebhookProvider } from "../../factory/index";
+import { actionEvent, hmac } from "../../provider/index";
+import type { CallbackResult } from "../../provider/primitives";
+import { createRS256JWT } from "../../runtime/jwt";
 import { githubApi } from "./api";
 import type { GitHubAccountInfo, GitHubConfig } from "./auth";
 import {

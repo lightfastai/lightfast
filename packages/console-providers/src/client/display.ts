@@ -1,7 +1,7 @@
 import { z } from "zod";
-import type { IconDef } from "./icon";
+import type { IconDef } from "../icon";
 
-export type { IconDef } from "./icon";
+export type { IconDef } from "../icon";
 
 // ── Provider Display Schema ────────────────────────────────────────────────────
 // Zod schema is the source of truth; ProviderDisplayEntry type is inferred.

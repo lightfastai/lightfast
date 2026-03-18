@@ -1,5 +1,5 @@
-import { defineApiProvider } from "../../define";
-import { PROVIDER_DISPLAY } from "../../display";
+import { PROVIDER_DISPLAY } from "../../client/display";
+import { defineApiProvider } from "../../factory/index";
 import { apolloApi } from "./api";
 import type { ApolloAccountInfo, ApolloConfig } from "./auth";
 import {

@@ -1,6 +1,24 @@
 import "server-only";
 
-// ── Core Types & Helpers ──────────────────────────────────────────────────────
+// ── Display Metadata (re-exported for server consumers) ─────────────────────
+export type { ProviderDisplayEntry, ProviderSlug } from "./client/display";
+export {
+  PROVIDER_DISPLAY,
+  providerDisplayEntrySchema,
+  providerSlugSchema,
+} from "./client/display";
+// ── Contracts (cross-service Zod schemas) ─────────────────────────────────────
+export * from "./contracts/backfill";
+export * from "./contracts/event";
+export * from "./contracts/gateway";
+export * from "./contracts/wire";
+// ── Factory Functions ─────────────────────────────────────────────────────────
+export {
+  defineApiProvider,
+  defineManagedProvider,
+  defineWebhookProvider,
+} from "./factory/index";
+// ── Provider Type System ──────────────────────────────────────────────────────
 export type {
   ActionDef,
   ActionEventDef,
@@ -17,10 +35,12 @@ export type {
   BackfillWebhookEvent,
   CategoryDef,
   ConnectionStatus,
+  Ed25519Scheme,
   EventDefinition,
   HealthCheckDef,
   HmacScheme,
   IconDef,
+  InboundWebhookDef,
   InstallationMode,
   ManagedProvider,
   ManagedWebhookDef,
@@ -38,11 +58,12 @@ export type {
   RuntimeConfig,
   SignatureScheme,
   SimpleEventDef,
+  VerifyFn,
   WebhookDef,
   WebhookProvider,
   WebhookSetupDef,
   WebhookSetupState,
-} from "./define";
+} from "./provider/index";
 export {
   actionDefSchema,
   actionEvent,
@@ -53,10 +74,7 @@ export {
   backfillWebhookEventSchema,
   categoryDefSchema,
   connectionStatusSchema,
-  defineApiProvider,
-  defineManagedProvider,
-  defineWebhookProvider,
-  deriveVerifySignature,
+  ed25519,
   hasInboundWebhooks,
   hmac,
   iconDefSchema,
@@ -73,19 +91,34 @@ export {
   simpleEvent,
   typedEntityHandler,
   webhookSetupStateSchema,
-} from "./define";
+} from "./provider/index";
+// ── Shared OAuth & Callback Contracts ─────────────────────────────────────────
 export type {
-  EntityRef,
-  EntityRelation,
-  PostTransformEvent,
-} from "./post-transform-event";
-// ── Post-Transform Event (canonical source of truth) ─────────────────────────
+  BaseProviderAccountInfo,
+  CallbackResult,
+  EdgeRule,
+  OAuthTokens,
+  TransformContext,
+} from "./provider/primitives";
 export {
-  entityRefSchema,
-  entityRelationSchema,
-  postTransformEventSchema,
-} from "./post-transform-event";
-// GitHub API
+  baseProviderAccountInfoSchema,
+  callbackResultSchema,
+  oAuthTokensSchema,
+  transformContextSchema,
+} from "./provider/primitives";
+// ── Apollo ────────────────────────────────────────────────────────────────────
+export type {
+  ApolloAccountInfo,
+  ApolloConfig,
+  ApolloProviderConfig,
+} from "./providers/apollo/auth";
+export {
+  apolloAccountInfoSchema,
+  apolloConfigSchema,
+  apolloProviderConfigSchema,
+} from "./providers/apollo/auth";
+export { apollo } from "./providers/apollo/index";
+// ── GitHub ────────────────────────────────────────────────────────────────────
 export {
   githubIssueSchema,
   githubPullRequestSchema,
@@ -93,28 +126,54 @@ export {
   parseGitHubRateLimit,
 } from "./providers/github/api";
 export type {
+  GitHubAccountInfo,
+  GitHubConfig,
+  GitHubInstallationRaw,
+  GithubProviderConfig,
+} from "./providers/github/auth";
+export {
+  githubAccountInfoSchema,
+  githubConfigSchema,
+  githubInstallationRawSchema,
+  githubOAuthResponseSchema,
+  githubProviderConfigSchema,
+} from "./providers/github/auth";
+export { github } from "./providers/github/index";
+export type {
   GitHubWebhookEventType,
   GitHubWebhookPayload,
   PreTransformGitHubIssuesEvent,
   PreTransformGitHubPullRequestEvent,
 } from "./providers/github/schemas";
-// ── Pre-Transform Schemas & Types ─────────────────────────────────────────────
 export {
   githubWebhookEventTypeSchema,
   githubWebhookPayloadSchema,
   preTransformGitHubIssuesEventSchema,
   preTransformGitHubPullRequestEventSchema,
 } from "./providers/github/schemas";
-// ── Transformer Functions ─────────────────────────────────────────────────────
 export {
   transformGitHubIssue,
   transformGitHubPullRequest,
 } from "./providers/github/transformers";
-// Linear API
+// ── Linear ────────────────────────────────────────────────────────────────────
 export {
   graphqlResponseSchema,
   parseLinearRateLimit,
 } from "./providers/linear/api";
+export type {
+  LinearAccountInfo,
+  LinearConfig,
+  LinearOAuthRaw,
+  LinearProviderConfig,
+} from "./providers/linear/auth";
+export {
+  linearAccountInfoSchema,
+  linearConfigSchema,
+  linearOAuthRawSchema,
+  linearOAuthResponseSchema,
+  linearProviderConfigSchema,
+} from "./providers/linear/auth";
+export { linear } from "./providers/linear/index";
 export type {
   LinearAttachment,
   LinearComment,
@@ -149,8 +208,26 @@ export {
   transformLinearProject,
   transformLinearProjectUpdate,
 } from "./providers/linear/transformers";
-// Sentry API
+// ── Sentry ────────────────────────────────────────────────────────────────────
 export { parseSentryRateLimit } from "./providers/sentry/api";
+export type {
+  SentryAccountInfo,
+  SentryConfig,
+  SentryInstallationToken,
+  SentryOAuthRaw,
+  SentryProviderConfig,
+} from "./providers/sentry/auth";
+export {
+  decodeSentryToken,
+  encodeSentryToken,
+  sentryAccountInfoSchema,
+  sentryConfigSchema,
+  sentryInstallationTokenSchema,
+  sentryOAuthRawSchema,
+  sentryOAuthResponseSchema,
+  sentryProviderConfigSchema,
+} from "./providers/sentry/auth";
+export { sentry } from "./providers/sentry/index";
 export type {
   PreTransformSentryErrorWebhook,
   PreTransformSentryEventAlertWebhook,
@@ -175,12 +252,26 @@ export {
   transformSentryIssue,
   transformSentryMetricAlert,
 } from "./providers/sentry/transformers";
-// Vercel API
+// ── Vercel ────────────────────────────────────────────────────────────────────
 export {
   parseVercelRateLimit,
   vercelDeploymentSchema,
   vercelDeploymentsResponseSchema,
 } from "./providers/vercel/api";
+export type {
+  VercelAccountInfo,
+  VercelConfig,
+  VercelOAuthRaw,
+  VercelProviderConfig,
+} from "./providers/vercel/auth";
+export {
+  vercelAccountInfoSchema,
+  vercelConfigSchema,
+  vercelOAuthRawSchema,
+  vercelOAuthResponseSchema,
+  vercelProviderConfigSchema,
+} from "./providers/vercel/auth";
+export { vercel } from "./providers/vercel/index";
 export type {
   PreTransformVercelWebhookPayload,
   VercelWebhookEventType,
@@ -192,136 +283,7 @@ export {
   vercelWebhookPayloadSchema,
 } from "./providers/vercel/schemas";
 export { transformVercelDeployment } from "./providers/vercel/transformers";
-export type { EdgeRule } from "./types";
-
-// ── Event Registry (derived from provider definitions) ───────────────────────
-// EVENT_REGISTRY, EventKey, and ALL_*_EVENTS are now derived from PROVIDERS
-// in registry.ts — no hand-maintained event-registry.ts needed.
-
-// ── Backfill Orchestration Contracts ──────────────────────────────────────────
-export type {
-  BackfillEstimatePayload,
-  BackfillRunReadRecord,
-  BackfillRunRecord,
-  BackfillTriggerPayload,
-  GwInstallationBackfillConfig,
-} from "./backfill-contracts";
-export {
-  BACKFILL_TERMINAL_STATUSES,
-  backfillEstimatePayload,
-  backfillRunReadRecord,
-  backfillRunRecord,
-  backfillTerminalStatusSchema,
-  backfillTriggerPayload,
-  gwInstallationBackfillConfigSchema,
-} from "./backfill-contracts";
-// ── Crypto & JWT ──────────────────────────────────────────────────────────────
-export {
-  computeHmac,
-  sha256Hex,
-  timingSafeEqual,
-  timingSafeStringEqual,
-} from "./crypto";
-// ── Dispatch ──────────────────────────────────────────────────────────────────
-export { transformWebhookPayload } from "./dispatch";
-export type { ProviderDisplayEntry, ProviderSlug } from "./display";
-// ── Display Metadata (re-exported for server consumers) ─────────────────────
-export {
-  PROVIDER_DISPLAY,
-  providerDisplayEntrySchema,
-  providerSlugSchema,
-} from "./display";
-// ── Event Normalization ───────────────────────────────────────────────────────
-export { deriveObservationType, getBaseEventType } from "./event-normalization";
-// ── Gateway API Response Shapes ───────────────────────────────────────────────
-export type {
-  GatewayConnection,
-  GatewayTokenResult,
-  ProxyEndpointsResponse,
-} from "./gateway";
-export {
-  gatewayConnectionSchema,
-  gatewayTokenResultSchema,
-  proxyEndpointsResponseSchema,
-} from "./gateway";
-export { createRS256JWT } from "./jwt";
-// ── Provider Definitions ──────────────────────────────────────────────────────
-export type {
-  ApolloAccountInfo,
-  ApolloConfig,
-  ApolloProviderConfig,
-} from "./providers/apollo/auth";
-// ── Apollo ────────────────────────────────────────────────────────────────────
-export {
-  apolloAccountInfoSchema,
-  apolloConfigSchema,
-  apolloProviderConfigSchema,
-} from "./providers/apollo/auth";
-export { apollo } from "./providers/apollo/index";
-export type {
-  GitHubAccountInfo,
-  GitHubConfig,
-  GitHubInstallationRaw,
-  GithubProviderConfig,
-} from "./providers/github/auth";
-// ── GitHub ────────────────────────────────────────────────────────────────────
-export {
-  githubAccountInfoSchema,
-  githubConfigSchema,
-  githubInstallationRawSchema,
-  githubOAuthResponseSchema,
-  githubProviderConfigSchema,
-} from "./providers/github/auth";
-export { github } from "./providers/github/index";
-export type {
-  LinearAccountInfo,
-  LinearConfig,
-  LinearOAuthRaw,
-  LinearProviderConfig,
-} from "./providers/linear/auth";
-// ── Linear ────────────────────────────────────────────────────────────────────
-export {
-  linearAccountInfoSchema,
-  linearConfigSchema,
-  linearOAuthRawSchema,
-  linearOAuthResponseSchema,
-  linearProviderConfigSchema,
-} from "./providers/linear/auth";
-export { linear } from "./providers/linear/index";
-export type {
-  SentryAccountInfo,
-  SentryConfig,
-  SentryInstallationToken,
-  SentryOAuthRaw,
-  SentryProviderConfig,
-} from "./providers/sentry/auth";
-// ── Sentry ────────────────────────────────────────────────────────────────────
-export {
-  decodeSentryToken,
-  encodeSentryToken,
-  sentryAccountInfoSchema,
-  sentryConfigSchema,
-  sentryInstallationTokenSchema,
-  sentryOAuthRawSchema,
-  sentryOAuthResponseSchema,
-  sentryProviderConfigSchema,
-} from "./providers/sentry/auth";
-export { sentry } from "./providers/sentry/index";
-export type {
-  VercelAccountInfo,
-  VercelConfig,
-  VercelOAuthRaw,
-  VercelProviderConfig,
-} from "./providers/vercel/auth";
-// ── Vercel ────────────────────────────────────────────────────────────────────
-export {
-  vercelAccountInfoSchema,
-  vercelConfigSchema,
-  vercelOAuthRawSchema,
-  vercelOAuthResponseSchema,
-  vercelProviderConfigSchema,
-} from "./providers/vercel/auth";
-export { vercel } from "./providers/vercel/index";
+// ── Registry ─────────────────────────────────────────────────────────────────
 export type {
   AccountInfoFor,
   AnyEndpointKey,
@@ -342,8 +304,6 @@ export type {
   SourceType,
   TypedProxyRequest,
 } from "./registry";
-// ── Registry ─────────────────────────────────────────────────────────────────
-// ── Provider Config (JSONB shapes for workspace_integrations.provider_config) ─
 export {
   EVENT_REGISTRY,
   eventKeySchema,
@@ -356,40 +316,26 @@ export {
   providerConfigSchema,
   sourceTypeSchema,
 } from "./registry";
-// ── Content Utilities ─────────────────────────────────────────────────────────
+export {
+  computeHmac,
+  sha256Hex,
+  timingSafeEqual,
+  timingSafeStringEqual,
+} from "./runtime/crypto";
+export { transformWebhookPayload } from "./runtime/dispatch";
+export { deriveObservationType, getBaseEventType } from "./runtime/event-norm";
+export { createRS256JWT } from "./runtime/jwt";
 export {
   encodeHtmlEntities,
   sanitizeBody,
   sanitizeContent,
   sanitizeTitle,
   truncateWithEllipsis,
-} from "./sanitize";
-export type {
-  BaseProviderAccountInfo,
-  CallbackResult,
-  OAuthTokens,
-  TransformContext,
-} from "./types";
-// ── Shared OAuth & Callback Contracts ─────────────────────────────────────────
-export {
-  baseProviderAccountInfoSchema,
-  callbackResultSchema,
-  oAuthTokensSchema,
-  transformContextSchema,
-} from "./types";
+} from "./runtime/sanitize";
 export {
   logValidationErrors,
   sanitizePostTransformEvent,
   validatePostTransformEvent,
-} from "./validation";
-// ── Relay ↔ Console Webhook Pipeline Wire Contracts ───────────────────────────
-export type {
-  ServiceAuthWebhookBody,
-  WebhookEnvelope,
-  WebhookReceiptPayload,
-} from "./wire";
-export {
-  serviceAuthWebhookBodySchema,
-  webhookEnvelopeSchema,
-  webhookReceiptPayloadSchema,
-} from "./wire";
+} from "./runtime/validation";
+// ── Runtime Utilities ─────────────────────────────────────────────────────────
+export { deriveVerifySignature } from "./runtime/verify/index";

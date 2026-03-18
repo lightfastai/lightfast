@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { sha256Hex, timingSafeStringEqual } from "./crypto";
+import { sha256Hex, timingSafeStringEqual } from "./runtime/crypto";
 
 describe("timingSafeStringEqual", () => {
   it("returns true for identical strings", () => {

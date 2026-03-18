@@ -10,9 +10,13 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./display": {
-      "types": "./dist/display.d.ts",
-      "default": "./dist/display.js"
+    "./client": {
+      "types": "./dist/client.d.ts",
+      "default": "./dist/client.js"
+    },
+    "./contracts": {
+      "types": "./dist/contracts.d.ts",
+      "default": "./dist/contracts.js"
     }
   },
   "scripts": {
@@ -23,6 +27,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@noble/ed25519": "catalog:",
     "@noble/hashes": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "jose": "catalog:",

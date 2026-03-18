@@ -1,6 +1,6 @@
 import { z } from "zod";
-import type { BackfillContext, BackfillDef } from "../../define";
-import { typedEntityHandler } from "../../define";
+import type { BackfillContext, BackfillDef } from "../../provider/backfill";
+import { typedEntityHandler } from "../../provider/backfill";
 import type {
   PreTransformLinearCommentWebhook,
   PreTransformLinearIssueWebhook,

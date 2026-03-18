@@ -18,8 +18,9 @@ import {
   it,
   vi,
 } from "vitest";
-import { computeHmac } from "../../crypto";
-import { deriveVerifySignature } from "../../define";
+import type { HmacScheme } from "../../provider/webhook";
+import { computeHmac } from "../../runtime/crypto";
+import { deriveVerifySignature } from "../../runtime/verify/index";
 import type { GitHubConfig } from "./auth";
 import { github } from "./index";
 
@@ -218,7 +219,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("uses sha256 algorithm", () => {
-    expect(github.webhook.signatureScheme.algorithm).toBe("sha256");
+    expect((github.webhook.signatureScheme as HmacScheme).algorithm).toBe(
+      "sha256"
+    );
   });
 
   it("uses x-hub-signature-256 header", () => {
@@ -228,7 +231,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("has sha256= prefix", () => {
-    expect(github.webhook.signatureScheme.prefix).toBe("sha256=");
+    expect((github.webhook.signatureScheme as HmacScheme).prefix).toBe(
+      "sha256="
+    );
   });
 });
 

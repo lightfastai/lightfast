@@ -14,8 +14,9 @@ import {
   it,
   vi,
 } from "vitest";
-import { computeHmac } from "../../crypto";
-import { deriveVerifySignature } from "../../define";
+import type { HmacScheme } from "../../provider/webhook";
+import { computeHmac } from "../../runtime/crypto";
+import { deriveVerifySignature } from "../../runtime/verify/index";
 import type { SentryConfig } from "./auth";
 import { decodeSentryToken, encodeSentryToken } from "./auth";
 import { sentry } from "./index";
@@ -469,7 +470,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("uses sha256 algorithm", () => {
-    expect(sentry.webhook.signatureScheme.algorithm).toBe("sha256");
+    expect((sentry.webhook.signatureScheme as HmacScheme).algorithm).toBe(
+      "sha256"
+    );
   });
 
   it("uses sentry-hook-signature header", () => {
@@ -479,7 +482,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("has no prefix", () => {
-    expect(sentry.webhook.signatureScheme.prefix).toBeUndefined();
+    expect(
+      (sentry.webhook.signatureScheme as HmacScheme).prefix
+    ).toBeUndefined();
   });
 });
 

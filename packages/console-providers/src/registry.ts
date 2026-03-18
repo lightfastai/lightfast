@@ -1,12 +1,12 @@
 import { z } from "zod";
+import type { PROVIDER_DISPLAY, ProviderSlug } from "./client/display";
+import { providerSlugSchema } from "./client/display";
 import type {
   ActionEventDef,
   EventDefinition,
   ProviderDefinition,
   ProxyExecuteRequest,
-} from "./define";
-import type { PROVIDER_DISPLAY, ProviderSlug } from "./display";
-import { providerSlugSchema } from "./display";
+} from "./provider/index";
 import { apollo } from "./providers/apollo/index";
 import { github } from "./providers/github/index";
 import { linear } from "./providers/linear/index";
@@ -27,9 +27,9 @@ export const PROVIDERS = {
 
 // ── SourceType / ProviderName — aliases of ProviderSlug ──────────────────────
 
-export type { ProviderSlug } from "./display";
+export type { ProviderSlug } from "./client/display";
 // sourceTypeSchema IS providerSlugSchema — single canonical source.
-export { providerSlugSchema as sourceTypeSchema } from "./display";
+export { providerSlugSchema as sourceTypeSchema } from "./client/display";
 
 // Semantic aliases — structurally identical to ProviderSlug.
 export type ProviderName = ProviderSlug;

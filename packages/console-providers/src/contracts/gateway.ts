@@ -1,13 +1,64 @@
 /**
- * Backfill Orchestration Contracts
+ * Gateway API Response Schemas + Backfill Run Schemas
  *
- * Cross-service schemas for the Console → Relay → Backfill orchestration pipeline.
- * These define the wire formats between the console API, relay, and backfill services.
+ * Response shapes for the gateway service HTTP API and backfill run tracking.
+ * Consumed by gateway service, gateway-service-clients, and the db schema.
  */
 
 import { z } from "zod";
-import { backfillDepthSchema } from "./define";
-import { sourceTypeSchema } from "./registry";
+import { backfillDepthSchema } from "../client/options";
+
+/**
+ * Gateway connection response shape.
+ * Returned by GET /gateway/:id
+ */
+export const gatewayConnectionSchema = z.object({
+  id: z.string(),
+  provider: z.string(),
+  externalId: z.string(),
+  orgId: z.string(),
+  status: z.string(),
+  resources: z.array(
+    z.object({
+      id: z.string(),
+      providerResourceId: z.string(),
+      resourceName: z.string().nullable(),
+    })
+  ),
+});
+export type GatewayConnection = z.infer<typeof gatewayConnectionSchema>;
+
+/**
+ * Gateway token response shape.
+ * Returned by GET /gateway/:id/token
+ */
+export const gatewayTokenResultSchema = z.object({
+  accessToken: z.string(),
+  provider: z.string(),
+  expiresIn: z.number().nullable(),
+});
+export type GatewayTokenResult = z.infer<typeof gatewayTokenResultSchema>;
+
+/**
+ * Gateway proxy endpoints response shape.
+ * Returned by GET /gateway/:id/proxy/endpoints
+ */
+export const proxyEndpointsResponseSchema = z.object({
+  provider: z.string(),
+  baseUrl: z.string(),
+  endpoints: z.record(
+    z.string(),
+    z.object({
+      method: z.enum(["GET", "POST"]),
+      path: z.string(),
+      description: z.string(),
+      timeout: z.number().optional(),
+    })
+  ),
+});
+export type ProxyEndpointsResponse = z.infer<
+  typeof proxyEndpointsResponseSchema
+>;
 
 // ── Installation-level Backfill Config (gatewayInstallations.backfillConfig) ──
 
@@ -19,7 +70,7 @@ export type GwInstallationBackfillConfig = z.infer<
   typeof gwInstallationBackfillConfigSchema
 >;
 
-// ── Backfill Run Statuses (internal) ──
+// ── Backfill Run Statuses ──
 
 const backfillRunStatusSchema = z.enum([
   "pending",
@@ -36,27 +87,6 @@ export const backfillTerminalStatusSchema = z.enum([
   "cancelled",
 ]);
 export const BACKFILL_TERMINAL_STATUSES = backfillTerminalStatusSchema.options;
-
-// ── Trigger payload (Console → Relay → Backfill) ──
-
-export const backfillTriggerPayload = z.object({
-  installationId: z.string().min(1),
-  provider: sourceTypeSchema,
-  orgId: z.string().min(1),
-  depth: backfillDepthSchema.default(1),
-  entityTypes: z.array(z.string()).optional(),
-  holdForReplay: z.boolean().optional(),
-  /** Cross-service correlation ID for distributed tracing */
-  correlationId: z.string().optional(),
-});
-export type BackfillTriggerPayload = z.infer<typeof backfillTriggerPayload>;
-
-// ── Estimate payload (Console → Backfill, omits holdForReplay) ──
-
-export const backfillEstimatePayload = backfillTriggerPayload.omit({
-  holdForReplay: true,
-});
-export type BackfillEstimatePayload = z.infer<typeof backfillEstimatePayload>;
 
 // ── Run record (Entity Worker → Gateway) ──
 

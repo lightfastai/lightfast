@@ -16,8 +16,9 @@ import {
   it,
   vi,
 } from "vitest";
-import { computeHmac } from "../../crypto";
-import { deriveVerifySignature } from "../../define";
+import type { HmacScheme } from "../../provider/webhook";
+import { computeHmac } from "../../runtime/crypto";
+import { deriveVerifySignature } from "../../runtime/verify/index";
 import type { VercelConfig } from "./auth";
 import { vercel } from "./index";
 
@@ -380,7 +381,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("uses sha1 algorithm", () => {
-    expect(vercel.webhook.signatureScheme.algorithm).toBe("sha1");
+    expect((vercel.webhook.signatureScheme as HmacScheme).algorithm).toBe(
+      "sha1"
+    );
   });
 
   it("uses x-vercel-signature header", () => {
@@ -390,7 +393,9 @@ describe("webhook.signatureScheme", () => {
   });
 
   it("has no prefix", () => {
-    expect(vercel.webhook.signatureScheme.prefix).toBeUndefined();
+    expect(
+      (vercel.webhook.signatureScheme as HmacScheme).prefix
+    ).toBeUndefined();
   });
 });
 

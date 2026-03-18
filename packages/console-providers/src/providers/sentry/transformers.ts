@@ -1,10 +1,10 @@
-import type { PostTransformEvent } from "../../post-transform-event";
-import { sanitizeBody, sanitizeTitle } from "../../sanitize";
-import type { TransformContext } from "../../types";
+import type { PostTransformEvent } from "../../contracts/event";
+import type { TransformContext } from "../../provider/primitives";
+import { sanitizeBody, sanitizeTitle } from "../../runtime/sanitize";
 import {
   logValidationErrors,
   validatePostTransformEvent,
-} from "../../validation";
+} from "../../runtime/validation";
 import type {
   PreTransformSentryErrorWebhook,
   PreTransformSentryEventAlertWebhook,

@@ -6,7 +6,7 @@
  */
 
 import { z } from "zod";
-import { sourceTypeSchema } from "./registry";
+import { providerSlugSchema } from "../client/display";
 
 /**
  * Service auth webhook body — sent by internal services (backfill) with X-API-Key.
@@ -30,7 +30,7 @@ export type ServiceAuthWebhookBody = z.infer<
  * Contains all data extracted after signature verification and JSON parsing.
  */
 export const webhookReceiptPayloadSchema = z.object({
-  provider: sourceTypeSchema,
+  provider: providerSlugSchema,
   deliveryId: z.string(),
   eventType: z.string(),
   resourceId: z.string().nullable(),
@@ -53,7 +53,7 @@ export const webhookEnvelopeSchema = z.object({
   /** Clerk organization ID */
   orgId: z.string(),
   /** Provider name */
-  provider: sourceTypeSchema,
+  provider: providerSlugSchema,
   /** Provider-specific event type */
   eventType: z.string(),
   /** Raw provider webhook payload */

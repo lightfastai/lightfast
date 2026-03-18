@@ -48,8 +48,6 @@ export type BaseProviderAccountInfo = z.infer<
   typeof baseProviderAccountInfoSchema
 >;
 
-// ── Callback Result Schema ──
-
 // ── Edge Rules ──
 
 /**
