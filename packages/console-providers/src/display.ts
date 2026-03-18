@@ -1,19 +1,42 @@
-import type { IconDef } from "./define";
+import { z } from "zod";
+import type { IconDef } from "./icon";
 
-export type { IconDef } from "./define";
+export type { IconDef } from "./icon";
 
-// ── Provider Display Data ────────────────────────────────────────────────────
-// Single source of truth for client-safe provider display metadata.
-// The type import above is erased at compile time — zero runtime imports.
+// ── Provider Display Schema ────────────────────────────────────────────────────
+// Zod schema is the source of truth; ProviderDisplayEntry type is inferred.
+// Zero runtime imports from server modules — only zod and icon.ts (no server deps).
 
-interface ProviderDisplayEntry {
-  /** When true, the provider is not yet available and will be shown as "Coming soon" in the UI */
-  readonly comingSoon?: true;
-  readonly description: string;
-  readonly displayName: string;
-  readonly icon: IconDef;
-  readonly name: string;
-}
+// ── Canonical Slug Source ─────────────────────────────────────────────────────
+// Defined first so PROVIDER_DISPLAY can be constrained by Record<ProviderSlug, ...>.
+// Adding a slug here without a PROVIDER_DISPLAY entry → compile error (missing key).
+// Adding a PROVIDER_DISPLAY entry without a slug here → compile error (unknown key).
+
+export const providerSlugSchema = z.enum([
+  "apollo",
+  "github",
+  "vercel",
+  "linear",
+  "sentry",
+]);
+
+export type ProviderSlug = z.infer<typeof providerSlugSchema>;
+
+// ── Provider Display Schema ────────────────────────────────────────────────────
+// Zod schema is the source of truth; ProviderDisplayEntry type is inferred.
+// Zero runtime imports from server modules — only zod and icon.ts (no server deps).
+
+export const providerDisplayEntrySchema = z.object({
+  name: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  // z.custom<IconDef>() avoids importing iconDefSchema (server-only).
+  // Full runtime validation of icon shape stays in define.ts.
+  icon: z.custom<IconDef>(),
+  comingSoon: z.literal(true).optional(),
+});
+
+export type ProviderDisplayEntry = z.infer<typeof providerDisplayEntrySchema>;
 
 export const PROVIDER_DISPLAY = {
   apollo: {
@@ -65,24 +88,4 @@ export const PROVIDER_DISPLAY = {
       d: "M13.91 2.505c-.873-1.448-2.972-1.448-3.844 0L6.904 7.92a15.478 15.478 0 0 1 8.53 12.811h-2.221A13.301 13.301 0 0 0 5.784 9.814l-2.926 5.06a7.65 7.65 0 0 1 4.435 5.848H2.194a.365.365 0 0 1-.298-.534l1.413-2.402a5.16 5.16 0 0 0-1.614-.913L.296 19.275a2.182 2.182 0 0 0 .812 2.999 2.24 2.24 0 0 0 1.086.288h6.983a9.322 9.322 0 0 0-3.845-8.318l1.11-1.922a11.47 11.47 0 0 1 4.95 10.24h5.915a17.242 17.242 0 0 0-7.885-15.28l2.244-3.845a.37.37 0 0 1 .504-.13c.255.14 9.75 16.708 9.928 16.9a.365.365 0 0 1-.327.543h-2.287c.029.612.029 1.223 0 1.831h2.297a2.206 2.206 0 0 0 1.922-3.31z",
     },
   },
-} as const satisfies Record<string, ProviderDisplayEntry>;
-
-// ── Derived Types ────────────────────────────────────────────────────────────
-
-export type ProviderSlug = keyof typeof PROVIDER_DISPLAY;
-
-// ── Derived Data ─────────────────────────────────────────────────────────────
-
-/** Ordered list of provider slugs — order matches PROVIDER_DISPLAY definition order */
-export const PROVIDER_SLUGS = Object.keys(PROVIDER_DISPLAY) as ProviderSlug[];
-
-/** Provider slugs that are currently active (not coming soon) */
-export const ACTIVE_PROVIDER_SLUGS = PROVIDER_SLUGS.filter(
-  (slug) => !(PROVIDER_DISPLAY[slug] as ProviderDisplayEntry).comingSoon
-);
-
-/** Value/label pairs for search filter dropdowns */
-export const SOURCE_TYPE_OPTIONS = PROVIDER_SLUGS.map((key) => ({
-  value: key,
-  label: PROVIDER_DISPLAY[key].displayName,
-}));
+} as const satisfies Record<ProviderSlug, ProviderDisplayEntry>;

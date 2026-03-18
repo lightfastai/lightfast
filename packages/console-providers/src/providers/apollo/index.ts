@@ -1,4 +1,5 @@
 import { defineApiProvider } from "../../define";
+import { PROVIDER_DISPLAY } from "../../display";
 import { apolloApi } from "./api";
 import type { ApolloAccountInfo, ApolloConfig } from "./auth";
 import {
@@ -8,13 +9,11 @@ import {
 } from "./auth";
 
 export const apollo = defineApiProvider({
+  ...PROVIDER_DISPLAY.apollo,
   optional: true,
   envSchema: {}, // No server-side secrets — API key is stored per-installation in token vault
   createConfig: (_env): ApolloConfig => ({}),
   configSchema: apolloConfigSchema,
-  name: "apollo",
-  displayName: "Apollo",
-  description: "Connect your Apollo GTM workspace",
   accountInfoSchema: apolloAccountInfoSchema,
   providerConfigSchema: apolloProviderConfigSchema,
 

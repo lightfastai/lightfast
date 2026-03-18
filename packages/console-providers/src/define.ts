@@ -2,6 +2,7 @@ import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "./crypto";
 import type { ProxyExecuteResponse } from "./gateway";
+import type { IconDef } from "./icon";
 import type { PostTransformEvent } from "./post-transform-event";
 import type {
   BaseProviderAccountInfo,
@@ -10,6 +11,16 @@ import type {
   OAuthTokens,
   TransformContext,
 } from "./types";
+
+// ── Provider Kind + Auth Kind (Zod enums — anchor discriminant literals) ─────
+// Factories use `satisfies z.infer<typeof providerKindSchema>` so adding or
+// removing a kind from this enum causes a compile-time error in the factory.
+
+export const providerKindSchema = z.enum(["webhook", "api"]);
+export type ProviderKind = z.infer<typeof providerKindSchema>;
+
+export const authKindSchema = z.enum(["oauth", "api-key", "app-token"]);
+export type AuthKind = z.infer<typeof authKindSchema>;
 
 export const categoryDefSchema = z.object({
   description: z.string(),
@@ -541,6 +552,7 @@ interface BaseProviderFields<
     defaultSyncEvents: readonly string[];
   }) => z.infer<TProviderConfigSchema>;
   readonly categories: TCategories;
+  readonly comingSoon?: true;
   readonly configSchema: z.ZodType<TConfig>;
   /** Build runtime config from validated env + runtime values.
    *  Returns null for optional providers when their env vars are absent. */
@@ -566,6 +578,8 @@ interface BaseProviderFields<
   readonly getBaseEventType: (sourceType: string) => string;
   /** Optional connection health probe — enables 401-poll cron for revocation detection */
   readonly healthCheck?: HealthCheckDef<TConfig>;
+  /** SVG icon data — sourced from display.ts spread, never server-only */
+  readonly icon: IconDef;
   readonly name: string;
   /** When true, all env vars are optional — the provider is disabled and its env preset is excluded from PROVIDER_ENVS(). */
   readonly optional?: true;
@@ -767,7 +781,7 @@ export function defineWebhookProvider<
   let _env: Record<string, string> | undefined;
   const result = {
     ...def,
-    kind: "webhook" as const,
+    kind: "webhook" as const satisfies z.infer<typeof providerKindSchema>,
     get env(): Record<string, string> {
       _env ??= buildEnvGetter(def.envSchema);
       return _env;
@@ -824,7 +838,7 @@ export function defineApiProvider<
   let _env: Record<string, string> | undefined;
   const result = {
     ...def,
-    kind: "api" as const,
+    kind: "api" as const satisfies z.infer<typeof providerKindSchema>,
     get env(): Record<string, string> {
       _env ??= buildEnvGetter(def.envSchema);
       return _env;
@@ -841,10 +855,5 @@ export function defineApiProvider<
 }
 
 // ── Display-Layer Types ──────────────────────────────────────────────────────
-
-/** Framework-agnostic SVG icon data — renderable by any UI layer */
-export const iconDefSchema = z.object({
-  d: z.string(),
-  viewBox: z.string(),
-});
-export type IconDef = z.infer<typeof iconDefSchema>;
+// IconDef and iconDefSchema live in icon.ts — re-exported for consumers.
+export { type IconDef, iconDefSchema } from "./icon";

@@ -5,6 +5,7 @@ import {
   hmac,
   simpleEvent,
 } from "../../define";
+import { PROVIDER_DISPLAY } from "../../display";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { sentryApi } from "./api";
 import type { SentryAccountInfo, SentryConfig } from "./auth";
@@ -99,9 +100,7 @@ export const sentry = defineWebhookProvider({
     }
     return sentryConfigSchema.parse({ appSlug, clientId, clientSecret });
   },
-  name: "sentry",
-  displayName: "Sentry",
-  description: "Connect your Sentry projects",
+  ...PROVIDER_DISPLAY.sentry,
   configSchema: sentryConfigSchema,
   accountInfoSchema: sentryAccountInfoSchema,
   providerConfigSchema: sentryProviderConfigSchema,

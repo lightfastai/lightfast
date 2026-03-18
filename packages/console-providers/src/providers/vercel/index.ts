@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { actionEvent, defineWebhookProvider, hmac } from "../../define";
+import { PROVIDER_DISPLAY } from "../../display";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { vercelApi } from "./api";
 import type { VercelAccountInfo, VercelConfig } from "./auth";
@@ -74,9 +75,7 @@ export const vercel = defineWebhookProvider({
       callbackBaseUrl: runtime.callbackBaseUrl,
     });
   },
-  name: "vercel",
-  displayName: "Vercel",
-  description: "Connect your Vercel projects",
+  ...PROVIDER_DISPLAY.vercel,
   configSchema: vercelConfigSchema,
   accountInfoSchema: vercelAccountInfoSchema,
   providerConfigSchema: vercelProviderConfigSchema,

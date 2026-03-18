@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { actionEvent, defineWebhookProvider, hmac } from "../../define";
+import { PROVIDER_DISPLAY } from "../../display";
 import { createRS256JWT } from "../../jwt";
 import type { CallbackResult } from "../../types";
 import { githubApi } from "./api";
@@ -68,9 +69,7 @@ async function getInstallationToken(
 // ── Provider Definition ──
 
 export const github = defineWebhookProvider({
-  name: "github",
-  displayName: "GitHub",
-  description: "Connect your GitHub repositories",
+  ...PROVIDER_DISPLAY.github,
   configSchema: githubConfigSchema,
   accountInfoSchema: githubAccountInfoSchema,
   providerConfigSchema: githubProviderConfigSchema,

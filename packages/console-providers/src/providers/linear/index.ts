@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { actionEvent, defineWebhookProvider, hmac } from "../../define";
+import { PROVIDER_DISPLAY } from "../../display";
 import type { CallbackResult, OAuthTokens } from "../../types";
 import { linearApi } from "./api";
 import type { LinearAccountInfo, LinearConfig } from "./auth";
@@ -166,9 +167,7 @@ export const linear = defineWebhookProvider({
       callbackBaseUrl: runtime.callbackBaseUrl,
     });
   },
-  name: "linear",
-  displayName: "Linear",
-  description: "Connect your Linear workspace",
+  ...PROVIDER_DISPLAY.linear,
   configSchema: linearConfigSchema,
   accountInfoSchema: linearAccountInfoSchema,
   providerConfigSchema: linearProviderConfigSchema,

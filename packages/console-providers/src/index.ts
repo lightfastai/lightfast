@@ -1,3 +1,5 @@
+import "server-only";
+
 // ── Core Types & Helpers ──────────────────────────────────────────────────────
 export type {
   ActionDef,
@@ -7,6 +9,7 @@ export type {
   ApiProvider,
   AppTokenDef,
   AuthDef,
+  AuthKind,
   BackfillContext,
   BackfillDef,
   BackfillEntityHandler,
@@ -23,6 +26,7 @@ export type {
   OAuthDef,
   ProviderApi,
   ProviderDefinition,
+  ProviderKind,
   RateLimit,
   ResourcePickerDef,
   ResourcePickerExecuteApiFn,
@@ -35,6 +39,7 @@ export type {
 export {
   actionDefSchema,
   actionEvent,
+  authKindSchema,
   backfillContextSchema,
   backfillWebhookEventSchema,
   categoryDefSchema,
@@ -47,6 +52,7 @@ export {
   isApiProvider,
   isAppTokenAuth,
   isWebhookProvider,
+  providerKindSchema,
   rateLimitSchema,
   runtimeConfigSchema,
   signatureSchemeSchema,
@@ -186,13 +192,12 @@ export {
 } from "./crypto";
 // ── Dispatch ──────────────────────────────────────────────────────────────────
 export { transformWebhookPayload } from "./dispatch";
-export type { ProviderSlug } from "./display";
+export type { ProviderDisplayEntry, ProviderSlug } from "./display";
 // ── Display Metadata (re-exported for server consumers) ─────────────────────
 export {
-  ACTIVE_PROVIDER_SLUGS,
   PROVIDER_DISPLAY,
-  PROVIDER_SLUGS,
-  SOURCE_TYPE_OPTIONS,
+  providerDisplayEntrySchema,
+  providerSlugSchema,
 } from "./display";
 // ── Event Normalization ───────────────────────────────────────────────────────
 export { deriveObservationType, getBaseEventType } from "./event-normalization";
@@ -310,17 +315,22 @@ export {
 } from "./providers/vercel/auth";
 export { vercel } from "./providers/vercel/index";
 export type {
+  AccountInfoFor,
+  AuthDefFor,
   EventKey,
+  EventKeysFor,
   EventRegistryEntry,
   ProviderAccountInfo,
   ProviderConfig,
   ProviderName,
+  ProviderShape,
   SourceType,
 } from "./registry";
 // ── Registry ─────────────────────────────────────────────────────────────────
 // ── Provider Config (JSONB shapes for workspace_integrations.provider_config) ─
 export {
   EVENT_REGISTRY,
+  eventKeySchema,
   eventRegistryEntrySchema,
   getDefaultSyncEvents,
   getProvider,

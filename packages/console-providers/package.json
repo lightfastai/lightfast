@@ -26,6 +26,7 @@
     "@noble/hashes": "catalog:",
     "@t3-oss/env-core": "catalog:",
     "jose": "catalog:",
+    "server-only": "^0.0.1",
     "zod": "catalog:"
   },
   "devDependencies": {
