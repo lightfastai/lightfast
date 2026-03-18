@@ -1,10 +1,9 @@
 "use client";
 
-import type { SourceType } from "@repo/console-providers";
 import {
   PROVIDER_DISPLAY,
-  PROVIDER_SLUGS,
-} from "@repo/console-providers/display";
+  type ProviderSlug,
+} from "@repo/console-providers/client";
 import { useTRPC } from "@repo/console-trpc/react";
 import {
   Accordion,
@@ -101,8 +100,8 @@ export function InstalledSources({
     return matchesSearch && matchesStatus;
   });
 
-  // Group by provider — sourceType is always a known SourceType, no "unknown" handling needed
-  const grouped = new Map<SourceType, Source[]>();
+  // Group by provider — sourceType is always a known ProviderSlug, no "unknown" handling needed
+  const grouped = new Map<ProviderSlug, Source[]>();
   for (const integration of filteredIntegrations) {
     const type = integration.metadata.provider;
     const list = grouped.get(type) ?? [];
@@ -110,9 +109,9 @@ export function InstalledSources({
     grouped.set(type, list);
   }
 
-  const sortedGroups = PROVIDER_SLUGS.filter((p) => grouped.has(p)).map(
-    (p) => ({ provider: p, resources: grouped.get(p) ?? [] })
-  );
+  const sortedGroups = (Object.keys(PROVIDER_DISPLAY) as ProviderSlug[])
+    .filter((p) => grouped.has(p))
+    .map((p) => ({ provider: p, resources: grouped.get(p) ?? [] }));
 
   return (
     <div className="space-y-4">

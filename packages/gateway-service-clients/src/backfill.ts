@@ -1,7 +1,7 @@
 import type {
   BackfillEstimatePayload,
   BackfillTriggerPayload,
-} from "@repo/console-providers";
+} from "@repo/console-providers/contracts";
 
 import type { ServiceClientConfig } from "./headers";
 import { buildServiceHeaders } from "./headers";

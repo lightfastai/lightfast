@@ -6,16 +6,20 @@ import {
   gatewayTokens,
 } from "@db/console/schema";
 import type {
+  ProviderApi,
   ProviderDefinition,
   RuntimeConfig,
   SourceType,
 } from "@repo/console-providers";
 import {
-  BACKFILL_TERMINAL_STATUSES,
-  backfillRunRecord,
   getProvider,
   PROVIDERS,
+  providerAccountInfoSchema,
 } from "@repo/console-providers";
+import {
+  BACKFILL_TERMINAL_STATUSES,
+  backfillRunRecord,
+} from "@repo/console-providers/contracts";
 import { decrypt, nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
@@ -332,6 +336,11 @@ connections.get("/:provider/callback", async (c) => {
 
     const reactivated = existingRows.length > 0;
 
+    // Parse through schema to validate and narrow to ProviderAccountInfo
+    // (processCallback returns BaseProviderAccountInfo at the type level when
+    // called through the union — schema parse gives us the concrete discriminated type)
+    const accountInfo = providerAccountInfoSchema.parse(result.accountInfo);
+
     // Upsert installation — idempotent on (provider, externalId)
     const rows = await db
       .insert(gatewayInstallations)
@@ -341,7 +350,7 @@ connections.get("/:provider/callback", async (c) => {
         connectedBy,
         orgId,
         status: "active",
-        providerAccountInfo: result.accountInfo,
+        providerAccountInfo: accountInfo,
       })
       .onConflictDoUpdate({
         target: [
@@ -352,7 +361,7 @@ connections.get("/:provider/callback", async (c) => {
           status: "active",
           connectedBy,
           orgId,
-          providerAccountInfo: result.accountInfo,
+          providerAccountInfo: accountInfo,
           updatedAt: new Date().toISOString(),
         },
       })
@@ -838,8 +847,12 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
 
   const config = providerConfigs[providerName];
 
+  // Widen to base ProviderApi for runtime-dynamic endpoint/header access.
+  // Each provider's TApi satisfies ProviderApi — structural widening, not a cast.
+  const api: ProviderApi = providerDef.api;
+
   // Validate endpoint exists in catalog
-  const endpoint = providerDef.api.endpoints[body.endpointId];
+  const endpoint = api.endpoints[body.endpointId];
   if (!endpoint) {
     c.set("logFields", {
       ...c.get("logFields"),
@@ -852,7 +865,7 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
       {
         error: "unknown_endpoint",
         endpointId: body.endpointId,
-        available: Object.keys(providerDef.api.endpoints),
+        available: Object.keys(api.endpoints),
       },
       400
     );
@@ -899,19 +912,19 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
     }
   }
 
-  let url = `${providerDef.api.baseUrl}${path}`;
+  let url = `${api.baseUrl}${path}`;
   if (body.queryParams && Object.keys(body.queryParams).length > 0) {
     url += `?${new URLSearchParams(body.queryParams).toString()}`;
   }
 
   // Build headers
-  const authHeader = providerDef.api.buildAuthHeader
-    ? providerDef.api.buildAuthHeader(token)
+  const authHeader = api.buildAuthHeader
+    ? api.buildAuthHeader(token)
     : `Bearer ${token}`;
 
   const headers: Record<string, string> = {
     Authorization: authHeader,
-    ...(providerDef.api.defaultHeaders ?? {}),
+    ...(api.defaultHeaders ?? {}),
   };
 
   // Build fetch options
@@ -948,8 +961,8 @@ connections.post("/:id/proxy/execute", apiKeyAuth, async (c) => {
       );
     }
     if (freshToken && freshToken !== token) {
-      headers.Authorization = providerDef.api.buildAuthHeader
-        ? providerDef.api.buildAuthHeader(freshToken)
+      headers.Authorization = api.buildAuthHeader
+        ? api.buildAuthHeader(freshToken)
         : `Bearer ${freshToken}`;
       response = await fetch(url, { ...fetchOptions, headers });
     }

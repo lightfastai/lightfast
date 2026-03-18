@@ -1,4 +1,8 @@
-import { ACTIVE_PROVIDER_SLUGS } from "@repo/console-providers";
+import {
+  PROVIDER_DISPLAY,
+  type ProviderDisplayEntry,
+  type ProviderSlug,
+} from "@repo/console-providers";
 import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Suspense } from "react";
 import { LinkSourcesButton } from "./_components/link-sources-button";
@@ -14,9 +18,15 @@ export default async function AddSourcesPage({
   const { slug, workspaceName } = await params;
 
   // Prefetch connection status for active providers only
-  for (const provider of ACTIVE_PROVIDER_SLUGS) {
+  for (const slug of Object.keys(PROVIDER_DISPLAY) as ProviderSlug[]) {
+    const entry: ProviderDisplayEntry = PROVIDER_DISPLAY[slug];
+    if (entry.comingSoon) {
+      continue;
+    }
     void prefetch(
-      orgTrpc.connections.generic.listInstallations.queryOptions({ provider })
+      orgTrpc.connections.generic.listInstallations.queryOptions({
+        provider: slug,
+      })
     );
   }
 

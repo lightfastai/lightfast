@@ -1,8 +1,7 @@
 "use client";
 
-import type { PostTransformEvent } from "@repo/console-providers";
-import { EVENT_REGISTRY } from "@repo/console-providers";
-import { PROVIDER_DISPLAY } from "@repo/console-providers/display";
+import { EVENT_LABELS, PROVIDER_DISPLAY } from "@repo/console-providers/client";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
   Collapsible,
@@ -40,9 +39,8 @@ export function EventRow({ event }: EventRowProps) {
   )[event.source];
   const registryKey = `${event.source}:${event.sourceType}`;
   const eventLabel =
-    (EVENT_REGISTRY as Record<string, { label: string } | undefined>)[
-      registryKey
-    ]?.label ?? event.sourceType;
+    (EVENT_LABELS as Record<string, string | undefined>)[registryKey] ??
+    event.sourceType;
 
   return (
     <Collapsible asChild onOpenChange={setIsOpen} open={isOpen}>

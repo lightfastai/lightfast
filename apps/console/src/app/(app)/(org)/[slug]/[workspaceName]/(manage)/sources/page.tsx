@@ -1,4 +1,7 @@
-import { PROVIDER_SLUGS } from "@repo/console-providers";
+import {
+  PROVIDER_DISPLAY,
+  type ProviderSlug,
+} from "@repo/console-providers/client";
 import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
@@ -18,7 +21,7 @@ export default async function SourcesPage({
   const { search = "", status = "all" } = await searchParams;
 
   // Prefetch connection status for all providers (for resource name lookups)
-  for (const provider of PROVIDER_SLUGS) {
+  for (const provider of Object.keys(PROVIDER_DISPLAY) as ProviderSlug[]) {
     void prefetch(
       orgTrpc.connections.generic.listInstallations.queryOptions({ provider })
     );

@@ -3,8 +3,8 @@
 
 import {
   PROVIDER_DISPLAY,
-  PROVIDER_SLUGS,
-} from "@repo/console-providers/display";
+  type ProviderSlug,
+} from "@repo/console-providers/client";
 import { useTRPC } from "@repo/console-trpc/react";
 import {
   Accordion,
@@ -25,7 +25,7 @@ import { useOAuthPopup } from "~/hooks/use-oauth-popup";
 import { ProviderIcon } from "~/lib/provider-icon";
 import { showErrorToast } from "~/lib/trpc-errors";
 
-type Provider = (typeof PROVIDER_SLUGS)[number];
+type Provider = ProviderSlug;
 
 function SourceItem({ provider }: { provider: Provider }) {
   const trpc = useTRPC();
@@ -135,7 +135,7 @@ function SourceItem({ provider }: { provider: Provider }) {
 export function SourcesList() {
   return (
     <Accordion className="w-full rounded-lg border" type="multiple">
-      {PROVIDER_SLUGS.map((provider) => (
+      {(Object.keys(PROVIDER_DISPLAY) as ProviderSlug[]).map((provider) => (
         <SourceItem key={provider} provider={provider} />
       ))}
     </Accordion>

@@ -4,7 +4,7 @@ import {
   gatewayResources,
   gatewayWebhookDeliveries,
 } from "@db/console/schema";
-import type { WebhookReceiptPayload } from "@repo/console-providers";
+import type { WebhookReceiptPayload } from "@repo/console-providers/contracts";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
 import { getQStashClient } from "@vendor/qstash";

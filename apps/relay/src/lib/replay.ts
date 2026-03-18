@@ -1,11 +1,9 @@
 import { db } from "@db/console/client";
 import type { GatewayWebhookDelivery } from "@db/console/schema";
 import { gatewayWebhookDeliveries } from "@db/console/schema";
-import type {
-  SourceType,
-  WebhookReceiptPayload,
-} from "@repo/console-providers";
+import type { SourceType } from "@repo/console-providers";
 import { getProvider, isWebhookProvider } from "@repo/console-providers";
+import type { WebhookReceiptPayload } from "@repo/console-providers/contracts";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
 import { workflowClient } from "@vendor/upstash-workflow/client";

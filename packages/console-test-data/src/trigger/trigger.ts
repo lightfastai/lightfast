@@ -6,7 +6,7 @@
 
 import { randomUUID } from "node:crypto";
 import { inngest } from "@api/console/inngest/client";
-import type { PostTransformEvent } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 
 export interface TriggerOptions {
   batchSize?: number; // Number of events to send in parallel per batch

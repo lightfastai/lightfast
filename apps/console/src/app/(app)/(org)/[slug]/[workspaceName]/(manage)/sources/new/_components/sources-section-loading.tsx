@@ -1,9 +1,9 @@
-import { PROVIDER_SLUGS } from "@repo/console-providers";
+import { PROVIDER_DISPLAY } from "@repo/console-providers/client";
 
 export function SourcesSectionLoading() {
   return (
     <div className="w-full divide-y rounded-lg border">
-      {PROVIDER_SLUGS.map((slug) => (
+      {Object.keys(PROVIDER_DISPLAY).map((slug) => (
         <div className="flex items-center justify-between px-4 py-4" key={slug}>
           <div className="flex items-center gap-3">
             <div className="h-5 w-5 animate-pulse rounded bg-muted" />

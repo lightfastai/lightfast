@@ -1,4 +1,4 @@
-import type { IconDef } from "@repo/console-providers/display";
+import type { IconDef } from "@repo/console-providers/client";
 import type { SVGProps } from "react";
 
 export function ProviderIcon({

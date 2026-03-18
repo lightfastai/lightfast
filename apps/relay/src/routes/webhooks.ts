@@ -3,7 +3,7 @@ import { gatewayWebhookDeliveries } from "@db/console/schema";
 import type {
   WebhookEnvelope,
   WebhookReceiptPayload,
-} from "@repo/console-providers";
+} from "@repo/console-providers/contracts";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
 import { getQStashClient } from "@vendor/qstash";

@@ -1,10 +1,10 @@
 "use client";
 
-import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { providerSlugSchema } from "@repo/console-providers/client";
 import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 import { AGE_PRESET_OPTIONS } from "~/components/search-constants";
 
-const SOURCE_OPTIONS = ["all", ...PROVIDER_SLUGS] as const;
+const SOURCE_OPTIONS = ["all", ...providerSlugSchema.options] as const;
 const AGE_OPTIONS = AGE_PRESET_OPTIONS.map((o) => o.value);
 
 export type EventSource = (typeof SOURCE_OPTIONS)[number];

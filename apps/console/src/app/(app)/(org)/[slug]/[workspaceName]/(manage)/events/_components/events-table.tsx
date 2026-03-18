@@ -1,9 +1,8 @@
 "use client";
 
 import { useOrganization } from "@clerk/nextjs";
-import type { PostTransformEvent } from "@repo/console-providers";
-import type { ProviderSlug } from "@repo/console-providers/display";
-import { SOURCE_TYPE_OPTIONS } from "@repo/console-providers/display";
+import type { ProviderSlug } from "@repo/console-providers/client";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 import { useTRPC } from "@repo/console-trpc/react";
 import type { EventNotification } from "@repo/console-upstash-realtime";
 import { useRealtime } from "@repo/console-upstash-realtime/client";
@@ -29,6 +28,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AGE_PRESET_OPTIONS,
   dateRangeFromPreset,
+  SOURCE_TYPE_OPTIONS,
 } from "~/components/search-constants";
 import { EventRow } from "./event-row";
 import { useEventFilters } from "./use-event-filters";

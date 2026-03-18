@@ -1,5 +1,5 @@
 import { sentryMiddleware } from "@inngest/middleware-sentry";
-import { postTransformEventSchema } from "@repo/console-providers";
+import { postTransformEventSchema } from "@repo/console-providers/contracts";
 import { ingestionSourceSchema } from "@repo/console-validation";
 import { env } from "@vendor/inngest/env";
 import type { GetEvents } from "inngest";

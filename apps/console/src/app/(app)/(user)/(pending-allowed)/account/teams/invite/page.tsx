@@ -1,6 +1,6 @@
 import { Icons } from "@repo/ui/components/icons";
-import type { SearchParams } from "nuqs/server";
 import { redirect } from "next/navigation";
+import type { SearchParams } from "nuqs/server";
 import { ErrorBanner } from "../_components/error-banner";
 import { InviteForm } from "./_components/invite-form";
 import { loadInviteSearchParams } from "./_lib/search-params";

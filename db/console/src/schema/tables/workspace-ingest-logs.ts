@@ -1,4 +1,4 @@
-import type { PostTransformEvent } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 import { sql } from "drizzle-orm";
 import {
   bigint,

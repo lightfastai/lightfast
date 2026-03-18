@@ -1,7 +1,10 @@
 "use client";
 
-import type { CategoryDef, SourceType } from "@repo/console-providers";
-import { BACKFILL_DEPTH_OPTIONS, PROVIDERS } from "@repo/console-providers";
+import type { CategoryDef, ProviderSlug } from "@repo/console-providers/client";
+import {
+  BACKFILL_DEPTH_OPTIONS,
+  PROVIDER_CATEGORIES,
+} from "@repo/console-providers/client";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -24,7 +27,7 @@ interface SourceSettingsFormProps {
   currentEvents: string[];
   installationId: string;
   integrationId: string;
-  provider: SourceType;
+  provider: ProviderSlug;
 }
 
 export function SourceSettingsForm({
@@ -37,7 +40,7 @@ export function SourceSettingsForm({
   const trpc = useTRPC();
   const queryClient = useQueryClient();
 
-  const eventConfig = PROVIDERS[provider].categories;
+  const eventConfig = PROVIDER_CATEGORIES[provider] ?? {};
   const allEventKeys = Object.keys(eventConfig);
 
   // Backwards compat: empty array = all events

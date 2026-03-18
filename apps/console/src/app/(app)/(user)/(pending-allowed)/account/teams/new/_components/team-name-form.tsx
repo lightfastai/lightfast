@@ -3,8 +3,8 @@
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { useOrganizationList } from "@vendor/clerk/client";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useOrganizationList } from "@vendor/clerk/client";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -32,19 +32,22 @@ export function TeamNameForm() {
           await setActive({ organization: data.organizationId });
         }
         void queryClient.invalidateQueries({
-          queryKey: trpc.organization.listUserOrganizations.queryOptions().queryKey,
+          queryKey:
+            trpc.organization.listUserOrganizations.queryOptions().queryKey,
         });
         router.push(`/account/teams/invite?teamSlug=${data.slug}`);
       },
       onError: (err) => {
         setError(err.message ?? "Failed to create team. Please try again.");
       },
-    }),
+    })
   );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!slug) return;
+    if (!slug) {
+      return;
+    }
     setError(undefined);
     mutation.mutate({ slug });
   };

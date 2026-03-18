@@ -16,8 +16,8 @@
  *   npx tsx src/cli/verify-datasets.ts [dataset-name]
  */
 
-import type { PostTransformEvent } from "@repo/console-providers";
 import { EVENT_REGISTRY } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 import { listDatasets, loadDataset } from "../loader/index.js";
 
 interface VerifyResult {

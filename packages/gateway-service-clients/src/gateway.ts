@@ -1,20 +1,22 @@
 import {
-  type BackfillRunReadRecord,
-  type BackfillRunRecord,
-  backfillRunReadRecord,
   type EndpointKey,
-  type GatewayConnection,
-  type GatewayTokenResult,
-  gatewayConnectionSchema,
-  gatewayTokenResultSchema,
   type ProviderKey,
-  type ProxyEndpointsResponse,
   type ProxyExecuteResponse,
-  proxyEndpointsResponseSchema,
   proxyExecuteResponseSchema,
   type ResponseDataFor,
   type TypedProxyRequest,
 } from "@repo/console-providers";
+import {
+  type BackfillRunReadRecord,
+  type BackfillRunRecord,
+  backfillRunReadRecord,
+  type GatewayConnection,
+  type GatewayTokenResult,
+  gatewayConnectionSchema,
+  gatewayTokenResultSchema,
+  type ProxyEndpointsResponse,
+  proxyEndpointsResponseSchema,
+} from "@repo/console-providers/contracts";
 import { z } from "zod";
 
 import { HttpError } from "./errors";

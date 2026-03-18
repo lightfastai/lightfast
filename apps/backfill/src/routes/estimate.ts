@@ -1,9 +1,9 @@
 import {
   type BackfillContext,
-  backfillEstimatePayload,
   getProvider,
   timingSafeStringEqual,
 } from "@repo/console-providers";
+import { backfillEstimatePayload } from "@repo/console-providers/contracts";
 import { createGatewayClient } from "@repo/gateway-service-clients";
 import { Hono } from "hono";
 

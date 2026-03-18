@@ -1,5 +1,5 @@
-import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
 import Link from "next/link";
 import { SubmitButton } from "../../_components/submit-button";
 import { inviteTeammates } from "../_actions/invite-teammates";
@@ -20,16 +20,8 @@ export function InviteForm({ teamSlug }: InviteFormProps) {
           placeholder="teammate@company.com"
           type="email"
         />
-        <Input
-          name="email2"
-          placeholder="teammate@company.com"
-          type="email"
-        />
-        <Input
-          name="email3"
-          placeholder="teammate@company.com"
-          type="email"
-        />
+        <Input name="email2" placeholder="teammate@company.com" type="email" />
+        <Input name="email3" placeholder="teammate@company.com" type="email" />
       </div>
 
       <SubmitButton label="Send Invites" pendingLabel="Sending..." />

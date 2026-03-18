@@ -1,8 +1,10 @@
-import { SOURCE_TYPE_OPTIONS } from "@repo/console-providers/display";
+import { PROVIDER_DISPLAY } from "@repo/console-providers/client";
 import type { LucideIcon } from "lucide-react";
 import { Brain, Scale, Zap } from "lucide-react";
 
-export { SOURCE_TYPE_OPTIONS };
+export const SOURCE_TYPE_OPTIONS = Object.entries(PROVIDER_DISPLAY).map(
+  ([value, entry]) => ({ value, label: entry.displayName })
+);
 
 export const OBSERVATION_TYPE_OPTIONS = [
   // GitHub

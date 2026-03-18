@@ -1,16 +1,13 @@
-import type {
-  ProviderName,
-  ServiceAuthWebhookBody,
-  WebhookProvider,
-} from "@repo/console-providers";
+import type { ProviderName, WebhookProvider } from "@repo/console-providers";
 import {
   computeHmac,
   deriveVerifySignature,
   getProvider,
   isWebhookProvider,
-  serviceAuthWebhookBodySchema,
   timingSafeStringEqual,
 } from "@repo/console-providers";
+import type { ServiceAuthWebhookBody } from "@repo/console-providers/contracts";
+import { serviceAuthWebhookBodySchema } from "@repo/console-providers/contracts";
 import { log } from "@vendor/observability/log/edge";
 import { createMiddleware } from "hono/factory";
 import { env } from "../env.js";
@@ -223,7 +220,9 @@ export const signatureVerify = createMiddleware<{
   const verify =
     providerDef.webhook.verifySignature ??
     deriveVerifySignature(providerDef.webhook.signatureScheme);
-  const valid = verify(rawBody, c.req.raw.headers, secret);
+  const valid = await Promise.resolve(
+    verify(rawBody, c.req.raw.headers, secret)
+  );
   if (!valid) {
     const scheme = providerDef.webhook.signatureScheme;
     const sigReceived = c.req.header(scheme.signatureHeader) ?? "";

@@ -1,6 +1,9 @@
 "use client";
 
-import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers";
+import {
+  PROVIDER_DISPLAY,
+  type ProviderSlug,
+} from "@repo/console-providers/client";
 import { Accordion, AccordionItem } from "@repo/ui/components/ui/accordion";
 import {
   Tooltip,
@@ -13,7 +16,7 @@ import { ProviderSourceItem } from "./provider-source-item";
 export function SourcesSection() {
   return (
     <Accordion className="w-full rounded-lg border" type="multiple">
-      {PROVIDER_SLUGS.map((slug) => {
+      {(Object.keys(PROVIDER_DISPLAY) as ProviderSlug[]).map((slug) => {
         const display = PROVIDER_DISPLAY[slug];
         if ((display as { comingSoon?: true }).comingSoon) {
           const Icon = IntegrationLogoIcons[slug];

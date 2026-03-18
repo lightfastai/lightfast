@@ -1,7 +1,5 @@
-import {
-  backfillTriggerPayload,
-  timingSafeStringEqual,
-} from "@repo/console-providers";
+import { timingSafeStringEqual } from "@repo/console-providers";
+import { backfillTriggerPayload } from "@repo/console-providers/contracts";
 import { createGatewayClient } from "@repo/gateway-service-clients";
 import { log } from "@vendor/observability/log/edge";
 import { Hono } from "hono";

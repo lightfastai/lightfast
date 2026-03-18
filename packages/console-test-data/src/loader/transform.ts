@@ -4,8 +4,9 @@
  * Routes raw webhook payloads through the production dispatch.
  */
 
-import type { PostTransformEvent, SourceType } from "@repo/console-providers";
+import type { SourceType } from "@repo/console-providers";
 import { transformWebhookPayload } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 
 export interface WebhookPayload {
   eventType: string;

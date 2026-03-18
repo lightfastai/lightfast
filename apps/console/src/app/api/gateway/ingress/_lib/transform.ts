@@ -1,8 +1,8 @@
+import { transformWebhookPayload } from "@repo/console-providers";
 import type {
   PostTransformEvent,
   WebhookEnvelope,
-} from "@repo/console-providers";
-import { transformWebhookPayload } from "@repo/console-providers";
+} from "@repo/console-providers/contracts";
 
 /**
  * Transform a webhook envelope into a PostTransformEvent.

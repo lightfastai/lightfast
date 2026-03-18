@@ -1,6 +1,9 @@
 "use client";
 
-import { AuthenticateWithRedirectCallback, useSignUp } from "@vendor/clerk/client";
+import {
+  AuthenticateWithRedirectCallback,
+  useSignUp,
+} from "@vendor/clerk/client";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { consoleUrl } from "~/lib/related-projects";
@@ -15,8 +18,12 @@ function SSOCallback() {
   // if only legal_accepted is missing (expected for invite + GitHub flow), apply it
   // inline without navigating away. continueSignUpUrl={null} keeps this page mounted.
   React.useEffect(() => {
-    if (!clerkTicket || !signUp || updateStarted.current) return;
-    if (signUp.status !== "missing_requirements") return;
+    if (!(clerkTicket && signUp) || updateStarted.current) {
+      return;
+    }
+    if (signUp.status !== "missing_requirements") {
+      return;
+    }
 
     const missing = signUp.missingFields ?? [];
     if (
@@ -36,7 +43,9 @@ function SSOCallback() {
   // Effect 2: Finalize once the sign-up reaches "complete" after our update.
   // Runs in a separate cycle so it reads the fresh reactive signUp from Core 3 Signals.
   React.useEffect(() => {
-    if (!updateStarted.current || !signUp || signUp.status !== "complete") return;
+    if (!(updateStarted.current && signUp) || signUp.status !== "complete") {
+      return;
+    }
 
     signUp
       .finalize({

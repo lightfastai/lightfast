@@ -1,5 +1,5 @@
-import type { PostTransformEvent } from "@repo/console-providers";
 import { EVENT_REGISTRY } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 import type { SignificanceResult } from "@repo/console-validation";
 
 // Type-safe event weight lookup — avoids `as EventKey` cast

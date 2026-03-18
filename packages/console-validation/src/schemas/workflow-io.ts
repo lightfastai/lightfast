@@ -1,4 +1,4 @@
-import { sourceTypeSchema } from "@repo/console-providers";
+import { providerSlugSchema as sourceTypeSchema } from "@repo/console-providers/client";
 import { z } from "zod";
 
 // =============================================================================

@@ -1,5 +1,5 @@
 import { inngest } from "@api/console/inngest";
-import type { PostTransformEvent } from "@repo/console-providers";
+import type { PostTransformEvent } from "@repo/console-providers/contracts";
 import type { EventNotification } from "@repo/console-upstash-realtime";
 import { realtime } from "@repo/console-upstash-realtime";
 

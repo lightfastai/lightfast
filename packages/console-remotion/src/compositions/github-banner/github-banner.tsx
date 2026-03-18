@@ -46,7 +46,8 @@ export const GitHubBanner: React.FC = () => {
     >
       <div
         style={{
-          fontFamily: '"PP Neue Montreal", ui-sans-serif, system-ui, sans-serif',
+          fontFamily:
+            '"PP Neue Montreal", ui-sans-serif, system-ui, sans-serif',
           fontWeight: 400,
           fontSize: 48,
           color: "#ffffff",

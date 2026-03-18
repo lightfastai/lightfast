@@ -1,5 +1,7 @@
-import type { ProviderSlug } from "@repo/console-providers/display";
-import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+import {
+  PROVIDER_DISPLAY,
+  type ProviderSlug,
+} from "@repo/console-providers/client";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Suspense } from "react";
 import { EventsTable } from "./_components/events-table";
@@ -16,7 +18,7 @@ export default async function EventsPage({
 
   const initialSource =
     typeof search.source === "string" &&
-    (PROVIDER_SLUGS as readonly string[]).includes(search.source)
+    Object.keys(PROVIDER_DISPLAY).includes(search.source)
       ? (search.source as ProviderSlug)
       : undefined;
 

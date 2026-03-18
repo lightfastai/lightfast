@@ -1,4 +1,4 @@
-import type { EntityRelation } from "@repo/console-providers";
+import type { EntityRelation } from "@repo/console-providers/contracts";
 import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {

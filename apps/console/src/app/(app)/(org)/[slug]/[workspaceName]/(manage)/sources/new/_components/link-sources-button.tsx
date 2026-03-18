@@ -1,6 +1,9 @@
 "use client";
 
-import { PROVIDER_SLUGS } from "@repo/console-providers";
+import {
+  PROVIDER_DISPLAY,
+  type ProviderSlug,
+} from "@repo/console-providers/client";
 import { useTRPC } from "@repo/console-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
@@ -51,25 +54,27 @@ export function LinkSourcesButton({
   );
 
   const handleLinkSources = async () => {
-    const mutations = PROVIDER_SLUGS.map((providerKey) => {
-      const state = getState(providerKey);
-      if (state.selectedResources.length === 0) {
-        return null;
-      }
-      const installation = state.selectedInstallation;
-      if (!installation) {
-        return null;
-      }
-      return linkMutation.mutateAsync({
-        provider: providerKey,
-        workspaceId,
-        gwInstallationId: installation.id,
-        resources: state.selectedResources.map((r) => ({
-          resourceId: r.id,
-          resourceName: r.linkName ?? r.name,
-        })),
-      });
-    }).filter(Boolean);
+    const mutations = (Object.keys(PROVIDER_DISPLAY) as ProviderSlug[])
+      .map((providerKey) => {
+        const state = getState(providerKey);
+        if (state.selectedResources.length === 0) {
+          return null;
+        }
+        const installation = state.selectedInstallation;
+        if (!installation) {
+          return null;
+        }
+        return linkMutation.mutateAsync({
+          provider: providerKey,
+          workspaceId,
+          gwInstallationId: installation.id,
+          resources: state.selectedResources.map((r) => ({
+            resourceId: r.id,
+            resourceName: r.linkName ?? r.name,
+          })),
+        });
+      })
+      .filter(Boolean);
 
     const results = await Promise.allSettled(mutations);
 

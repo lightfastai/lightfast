@@ -1,7 +1,5 @@
-import {
-  backfillDepthSchema,
-  backfillTriggerPayload,
-} from "@repo/console-providers";
+import { backfillDepthSchema } from "@repo/console-providers/client";
+import { backfillTriggerPayload } from "@repo/console-providers/contracts";
 import { EventSchemas, Inngest } from "@vendor/inngest";
 import { z } from "zod";
 

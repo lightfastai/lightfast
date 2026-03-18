@@ -1,8 +1,11 @@
 "use client";
 
-import type { SourceType } from "@repo/console-providers";
-import { EVENT_REGISTRY, PROVIDERS } from "@repo/console-providers";
-import { PROVIDER_DISPLAY } from "@repo/console-providers/display";
+import type { CategoryDef, ProviderSlug } from "@repo/console-providers/client";
+import {
+  EVENT_LABELS,
+  PROVIDER_CATEGORIES,
+  PROVIDER_DISPLAY,
+} from "@repo/console-providers/client";
 import { useTRPC } from "@repo/console-trpc/react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, ChevronRight, Loader2, X } from "lucide-react";
@@ -21,23 +24,26 @@ interface EventItem {
 }
 
 // Get events grouped by category for a given source type
-function getEventsForSource(sourceType: SourceType): {
-  categories: Record<string, { label: string }>;
+function getEventsForSource(sourceType: ProviderSlug): {
+  categories: Record<string, CategoryDef>;
   eventsByCategory: Record<string, EventItem[]>;
 } {
-  const categories = PROVIDERS[sourceType].categories as Record<
-    string,
-    { label: string }
-  >;
+  const categories = PROVIDER_CATEGORIES[sourceType] ?? {};
   const eventsByCategory: Record<string, EventItem[]> = {};
+  const prefix = `${sourceType}:`;
 
-  for (const [eventKey, eventDef] of Object.entries(EVENT_REGISTRY)) {
-    if (eventDef.source !== sourceType) {
+  for (const [fullKey, label] of Object.entries(EVENT_LABELS)) {
+    if (!fullKey.startsWith(prefix)) {
       continue;
     }
-    const cat = eventDef.category;
-    eventsByCategory[cat] ??= [];
-    eventsByCategory[cat].push({ key: eventKey, label: eventDef.label });
+    const eventKey = fullKey.slice(prefix.length);
+    for (const catKey of Object.keys(categories)) {
+      if (eventKey === catKey || eventKey.startsWith(`${catKey}.`)) {
+        eventsByCategory[catKey] ??= [];
+        eventsByCategory[catKey].push({ key: fullKey, label });
+        break;
+      }
+    }
   }
 
   return { categories, eventsByCategory };
@@ -51,7 +57,7 @@ export function DebugPanelContent({
   workspaceName: string;
 }) {
   const trpc = useTRPC();
-  const [expandedProvider, setExpandedProvider] = useState<SourceType | null>(
+  const [expandedProvider, setExpandedProvider] = useState<ProviderSlug | null>(
     null
   );
   const [selectedIntegrationId, setSelectedIntegrationId] = useState<
@@ -136,11 +142,13 @@ export function DebugPanelContent({
     );
   }
 
-  const selectedSourceType = selectedIntegration?.sourceType;
+  const selectedSourceType = selectedIntegration?.sourceType as
+    | ProviderSlug
+    | undefined;
   const { categories, eventsByCategory } = selectedSourceType
     ? getEventsForSource(selectedSourceType)
     : {
-        categories: {} as Record<string, { label: string }>,
+        categories: {} as Record<string, CategoryDef>,
         eventsByCategory: {} as Record<string, EventItem[]>,
       };
 
@@ -159,7 +167,7 @@ export function DebugPanelContent({
 
       {/* Provider list */}
       <div className="divide-y divide-white/5">
-        {(Object.keys(byProvider) as SourceType[]).map((providerKey) => {
+        {(Object.keys(byProvider) as ProviderSlug[]).map((providerKey) => {
           const providerIntegrations = byProvider[providerKey] ?? [];
           const display = PROVIDER_DISPLAY[providerKey];
           const isExpanded = expandedProvider === providerKey;

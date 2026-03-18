@@ -1,4 +1,4 @@
-import { postTransformEventSchema } from "@repo/console-providers";
+import { postTransformEventSchema } from "@repo/console-providers/contracts";
 import { redis } from "@vendor/upstash";
 import type { InferRealtimeEvents } from "@vendor/upstash-realtime";
 import { Realtime } from "@vendor/upstash-realtime";
