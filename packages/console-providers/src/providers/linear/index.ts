@@ -393,30 +393,6 @@ export const linear = defineWebhookProvider({
     parsePayload: (raw) => linearWebhookPayloadSchema.parse(raw),
   },
 
-  classifier: {
-    classify(eventType: string): "lifecycle" | "data" | "unknown" {
-      // Linear doesn't have lifecycle events via webhook (OAuth app model)
-      // All webhook events are data events
-      if (
-        [
-          "Issue",
-          "Comment",
-          "IssueLabel",
-          "Project",
-          "Cycle",
-          "ProjectUpdate",
-        ].includes(eventType.split(":")[0] ?? eventType)
-      ) {
-        return "data";
-      }
-      return "unknown";
-    },
-  },
-
-  lifecycle: {
-    events: {}, // Linear webhooks are all data events; no lifecycle events via webhook
-  },
-
   auth: {
     kind: "oauth" as const,
     buildAuthUrl: (config, state, options?) => {

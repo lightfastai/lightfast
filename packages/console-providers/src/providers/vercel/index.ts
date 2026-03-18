@@ -279,38 +279,6 @@ export const vercel = defineWebhookProvider({
     parsePayload: (raw) => vercelWebhookPayloadSchema.parse(raw),
   },
 
-  classifier: {
-    classify(eventType: string): "lifecycle" | "data" | "unknown" {
-      if (
-        ["integration-configuration.removed", "project.removed"].includes(
-          eventType
-        )
-      ) {
-        return "lifecycle";
-      }
-      if (eventType.startsWith("deployment.")) {
-        return "data";
-      }
-      return "unknown";
-    },
-  },
-
-  lifecycle: {
-    events: {
-      "integration-configuration.removed": () => ({
-        reason: "provider_revoked" as const,
-      }),
-      "project.removed": (_action, payload) => {
-        const p = payload as { payload?: { projectId?: string } };
-        const id = p.payload?.projectId;
-        return {
-          reason: "provider_repo_deleted" as const,
-          resourceIds: id ? [id] : [],
-        };
-      },
-    },
-  },
-
   auth: {
     kind: "oauth" as const,
     buildAuthUrl: (config, state) => {

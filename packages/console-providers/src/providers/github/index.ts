@@ -185,7 +185,9 @@ export const github = defineWebhookProvider({
       );
       // 204 = success, 404 = already uninstalled — both are fine
       if (!response.ok && response.status !== 404) {
-        throw new Error(`GitHub installation revocation failed: ${response.status}`);
+        throw new Error(
+          `GitHub installation revocation failed: ${response.status}`
+        );
       }
     },
     processCallback: (_config, query) => {
@@ -219,59 +221,6 @@ export const github = defineWebhookProvider({
           raw: {},
         },
       } satisfies CallbackResult<GitHubAccountInfo>);
-    },
-  },
-
-  classifier: {
-    classify(eventType: string): "lifecycle" | "data" | "unknown" {
-      if (
-        ["installation", "installation_repositories", "repository"].includes(
-          eventType
-        )
-      ) {
-        return "lifecycle";
-      }
-      if (
-        ["pull_request", "issues", "push", "create", "delete"].includes(
-          eventType
-        )
-      ) {
-        return "data";
-      }
-      return "unknown";
-    },
-  },
-
-  lifecycle: {
-    events: {
-      installation: (action) => {
-        if (action === "deleted") {
-          return { reason: "provider_revoked" as const };
-        }
-        if (action === "suspend") {
-          return { reason: "provider_suspended" as const };
-        }
-        if (action === "unsuspend") {
-          return { reason: "provider_unsuspended" as const };
-        }
-        return null;
-      },
-      installation_repositories: (action, payload) => {
-        if (action !== "removed") {
-          return null;
-        }
-        const p = payload as {
-          repositories_removed?: Array<{ id: number }>;
-        };
-        const ids = (p.repositories_removed ?? []).map((r) => String(r.id));
-        return { reason: "provider_repo_removed" as const, resourceIds: ids };
-      },
-      repository: (action) => {
-        if (action === "deleted") {
-          return { reason: "provider_repo_deleted" as const };
-        }
-        return null;
-      },
     },
   },
 

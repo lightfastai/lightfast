@@ -264,34 +264,6 @@ export const sentry = defineWebhookProvider({
     parsePayload: (raw) => sentryWebhookPayloadSchema.parse(raw),
   },
 
-  classifier: {
-    classify(eventType: string): "lifecycle" | "data" | "unknown" {
-      // Sentry installation events are lifecycle; content events are data
-      if (["installation"].includes(eventType)) {
-        return "lifecycle";
-      }
-      if (
-        ["issue", "error", "comment", "event_alert", "metric_alert"].includes(
-          eventType
-        )
-      ) {
-        return "data";
-      }
-      return "unknown";
-    },
-  },
-
-  lifecycle: {
-    events: {
-      installation: (action) => {
-        if (action === "deleted") {
-          return { reason: "provider_revoked" as const };
-        }
-        return null;
-      },
-    },
-  },
-
   auth: {
     kind: "oauth" as const,
     buildAuthUrl: (config, state) => {

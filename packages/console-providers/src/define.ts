@@ -122,7 +122,10 @@ export interface OAuthDef<
     config: TConfig,
     query: Record<string, string>
   ) => Promise<CallbackResult<TAccountInfo>>;
-  readonly refreshToken: (config: TConfig, refreshToken: string) => Promise<OAuthTokens>;
+  readonly refreshToken: (
+    config: TConfig,
+    refreshToken: string
+  ) => Promise<OAuthTokens>;
   readonly revokeToken: (config: TConfig, accessToken: string) => Promise<void>;
   /** OAuth tokens are always persisted — the stored token IS the active credential. */
   readonly usesStoredToken: true;
@@ -168,16 +171,12 @@ export interface AppTokenDef<
   TConfig,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
 > {
-  readonly kind: "app-token";
+  readonly buildAuthHeader?: (token: string) => string;
   readonly buildInstallUrl: (
     config: TConfig,
     state: string,
     options?: Record<string, unknown>
   ) => string;
-  readonly processCallback: (
-    config: TConfig,
-    query: Record<string, string>
-  ) => Promise<CallbackResult<TAccountInfo>>;
   /** Generate a per-installation access token on demand (never reads storedAccessToken). */
   readonly getActiveToken: (
     config: TConfig,
@@ -186,8 +185,15 @@ export interface AppTokenDef<
   ) => Promise<string>;
   /** Generate an app-level JWT (e.g. GitHub RS256 JWT for app-level API calls). */
   readonly getAppToken?: (config: TConfig) => Promise<string>;
-  readonly buildAuthHeader?: (token: string) => string;
-  readonly revokeAccess?: (config: TConfig, externalId: string) => Promise<void>;
+  readonly kind: "app-token";
+  readonly processCallback: (
+    config: TConfig,
+    query: Record<string, string>
+  ) => Promise<CallbackResult<TAccountInfo>>;
+  readonly revokeAccess?: (
+    config: TConfig,
+    externalId: string
+  ) => Promise<void>;
   /** App-token providers never store tokens — installations use on-demand generation. */
   readonly usesStoredToken: false;
 }
@@ -207,46 +213,29 @@ export type AuthDef<
   | ApiKeyDef<TConfig, TAccountInfo>
   | AppTokenDef<TConfig, TAccountInfo>;
 
-// ── Event Classifier ────────────────────────────────────────────────────────
+// ── Connection Health ────────────────────────────────────────────────────────
+
+export const connectionStatusSchema = z.enum([
+  "healthy",
+  "revoked",
+  "suspended",
+]);
+export type ConnectionStatus = z.infer<typeof connectionStatusSchema>;
 
 /**
- * Classifies a raw wire event into a routing decision.
- * Lives on WebhookProvider — enables the platform to route lifecycle vs data events.
+ * Universal connection health probe — lives on BaseProviderFields (optional).
+ * Called by a cron job to detect 401/revoked/suspended connections.
+ * Returns "healthy" when the connection is working, or the failure reason.
+ *
+ * Providers without a meaningful liveness endpoint (e.g., Apollo API keys that
+ * don't expire) omit this field — the polling cron skips them.
  */
-export interface EventClassifier {
-  /**
-   * Classify a raw wire event type + optional action into a routing decision.
-   * - "lifecycle": installation/connection management events → connectionLifecycleWorkflow
-   * - "data":      content events (PRs, issues, deployments) → QStash → console ingest
-   * - "unknown":   unrecognized events → DLQ
-   */
-  classify(
-    eventType: string,
-    action?: string
-  ): "lifecycle" | "data" | "unknown";
-}
-
-// ── Lifecycle Def ───────────────────────────────────────────────────────────
-
-export type LifecycleReason =
-  | "provider_revoked" // installation.deleted
-  | "provider_suspended" // installation.suspend
-  | "provider_unsuspended" // installation.unsuspend
-  | "provider_repo_removed" // installation_repositories.removed
-  | "provider_repo_deleted"; // repository.deleted, project.removed
-
-/**
- * Maps wire lifecycle events to structured reasons + optional resource IDs.
- * Lives on WebhookProvider — consumed by connectionLifecycleWorkflow.
- */
-export interface LifecycleDef {
-  readonly events: Record<
-    string, // wire eventType (e.g. "installation", "repository")
-    (
-      action: string | undefined,
-      payload: unknown
-    ) => { reason: LifecycleReason; resourceIds?: string[] } | null
-  >;
+export interface HealthCheckDef<TConfig> {
+  readonly check: (
+    config: TConfig,
+    externalId: string,
+    accessToken: string | null
+  ) => Promise<ConnectionStatus>;
 }
 
 /** Runtime values not sourced from env (e.g. callbackBaseUrl) */
@@ -502,6 +491,8 @@ interface BaseProviderFields<
   readonly events: TEvents;
   /** Map detailed internal sourceType to base config sync event key for filtering. */
   readonly getBaseEventType: (sourceType: string) => string;
+  /** Optional connection health probe — enables 401-poll cron for revocation detection */
+  readonly healthCheck?: HealthCheckDef<TConfig>;
   readonly name: string;
   /** When true, all env vars are optional — the provider is disabled and its env preset is excluded from PROVIDER_ENVS(). */
   readonly optional?: true;
@@ -550,12 +541,8 @@ export interface WebhookProvider<
   readonly auth: TAuth;
   /** Historical data import */
   readonly backfill: BackfillDef;
-  /** Classifies incoming events as lifecycle | data | unknown */
-  readonly classifier: EventClassifier;
   /** Discriminant — injected by defineWebhookProvider() */
   readonly kind: "webhook";
-  /** Maps lifecycle wire events to structured reasons + resource IDs */
-  readonly lifecycle: LifecycleDef;
   /** HMAC verification + event extraction */
   readonly webhook: WebhookDef<TConfig>;
 }
@@ -779,7 +766,6 @@ export function defineApiProvider<
     TProviderConfigSchema
   >;
 }
-
 
 // ── Display-Layer Types ──────────────────────────────────────────────────────
 
