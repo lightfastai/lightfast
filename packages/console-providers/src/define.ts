@@ -576,9 +576,10 @@ interface BaseProviderFields<
   TEvents extends Record<string, EventDefinition>,
   TAccountInfoSchema extends z.ZodObject,
   TProviderConfigSchema extends z.ZodObject,
+  TApi extends ProviderApi = ProviderApi,
 > extends Readonly<ProviderDisplayEntry> {
   readonly accountInfoSchema: TAccountInfoSchema;
-  readonly api: ProviderApi;
+  readonly api: TApi;
   /** Build the providerConfig JSONB blob for a new workspace integration record. */
   readonly buildProviderConfig: (params: {
     defaultSyncEvents: readonly string[];
@@ -642,12 +643,14 @@ export interface WebhookProvider<
   >,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+  TApi extends ProviderApi = ProviderApi,
 > extends BaseProviderFields<
     TConfig,
     TCategories,
     TEvents,
     TAccountInfoSchema,
-    TProviderConfigSchema
+    TProviderConfigSchema,
+    TApi
   > {
   /** Auth strategy — inferred as the specific concrete auth type for this provider */
   readonly auth: TAuth;
@@ -675,12 +678,14 @@ export interface ApiProvider<
   >,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+  TApi extends ProviderApi = ProviderApi,
 > extends BaseProviderFields<
     TConfig,
     TCategories,
     TEvents,
     TAccountInfoSchema,
-    TProviderConfigSchema
+    TProviderConfigSchema,
+    TApi
   > {
   /** Auth strategy — OAuth or API key */
   readonly auth: AuthDef<TConfig, TAccountInfo>;
@@ -704,6 +709,7 @@ export type ProviderDefinition<
   >,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+  TApi extends ProviderApi = ProviderApi,
 > =
   | WebhookProvider<
       TConfig,
@@ -712,7 +718,8 @@ export type ProviderDefinition<
       TCategories,
       TEvents,
       TAccountInfoSchema,
-      TProviderConfigSchema
+      TProviderConfigSchema,
+      TApi
     >
   | ApiProvider<
       TConfig,
@@ -720,7 +727,8 @@ export type ProviderDefinition<
       TCategories,
       TEvents,
       TAccountInfoSchema,
-      TProviderConfigSchema
+      TProviderConfigSchema,
+      TApi
     >;
 
 // ── Type Guards ─────────────────────────────────────────────────────────────
@@ -780,6 +788,7 @@ export function defineWebhookProvider<
   >,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+  const TApi extends ProviderApi = ProviderApi,
 >(
   def: Omit<
     WebhookProvider<
@@ -789,7 +798,8 @@ export function defineWebhookProvider<
       TCategories,
       TEvents,
       TAccountInfoSchema,
-      TProviderConfigSchema
+      TProviderConfigSchema,
+      TApi
     >,
     "env" | "kind"
   > & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] }
@@ -800,7 +810,8 @@ export function defineWebhookProvider<
   TCategories,
   TEvents,
   TAccountInfoSchema,
-  TProviderConfigSchema
+  TProviderConfigSchema,
+  TApi
 > {
   let _env: Record<string, string> | undefined;
   const result = {
@@ -818,7 +829,8 @@ export function defineWebhookProvider<
     TCategories,
     TEvents,
     TAccountInfoSchema,
-    TProviderConfigSchema
+    TProviderConfigSchema,
+    TApi
   >;
 }
 
@@ -839,6 +851,7 @@ export function defineApiProvider<
   >,
   TAccountInfoSchema extends z.ZodObject = z.ZodObject,
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
+  const TApi extends ProviderApi = ProviderApi,
 >(
   def: Omit<
     ApiProvider<
@@ -847,7 +860,8 @@ export function defineApiProvider<
       TCategories,
       TEvents,
       TAccountInfoSchema,
-      TProviderConfigSchema
+      TProviderConfigSchema,
+      TApi
     >,
     "env" | "kind"
   > & { readonly defaultSyncEvents: readonly (keyof TCategories & string)[] }
@@ -857,7 +871,8 @@ export function defineApiProvider<
   TCategories,
   TEvents,
   TAccountInfoSchema,
-  TProviderConfigSchema
+  TProviderConfigSchema,
+  TApi
 > {
   let _env: Record<string, string> | undefined;
   const result = {
@@ -874,7 +889,8 @@ export function defineApiProvider<
     TCategories,
     TEvents,
     TAccountInfoSchema,
-    TProviderConfigSchema
+    TProviderConfigSchema,
+    TApi
   >;
 }
 

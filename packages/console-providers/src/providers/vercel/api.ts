@@ -80,7 +80,7 @@ export function parseVercelRateLimit(headers: Headers): RateLimit | null {
 
 // ── API Definition ──────────────────────────────────────────────────────────────
 
-export const vercelApi: ProviderApi = {
+export const vercelApi = {
   baseUrl: "https://api.vercel.com",
   parseRateLimit: parseVercelRateLimit,
   endpoints: {
@@ -111,4 +111,4 @@ export const vercelApi: ProviderApi = {
       responseSchema: vercelDeploymentsResponseSchema,
     },
   },
-} as const;
+} as const satisfies ProviderApi;

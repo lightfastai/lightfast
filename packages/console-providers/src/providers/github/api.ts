@@ -125,7 +125,7 @@ export const githubInstallationReposSchema = z
 
 // ── API Definition ──────────────────────────────────────────────────────────────
 
-export const githubApi: ProviderApi = {
+export const githubApi = {
   baseUrl: "https://api.github.com",
   defaultHeaders: { Accept: "application/vnd.github.v3+json" },
   parseRateLimit: parseGitHubRateLimit,
@@ -181,4 +181,4 @@ export const githubApi: ProviderApi = {
       responseSchema: z.array(githubIssueSchema),
     },
   },
-} as const;
+} as const satisfies ProviderApi;

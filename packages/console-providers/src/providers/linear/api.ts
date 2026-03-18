@@ -38,7 +38,7 @@ export const graphqlResponseSchema = z.object({
 
 // ── API Definition ──────────────────────────────────────────────────────────────
 
-export const linearApi: ProviderApi = {
+export const linearApi = {
   baseUrl: "https://api.linear.app",
   defaultHeaders: { "Content-Type": "application/json" },
   parseRateLimit: parseLinearRateLimit,
@@ -50,4 +50,4 @@ export const linearApi: ProviderApi = {
       responseSchema: graphqlResponseSchema,
     },
   },
-} as const;
+} as const satisfies ProviderApi;

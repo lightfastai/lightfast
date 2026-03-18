@@ -229,7 +229,10 @@ export const connectionsRouter = {
         });
 
         // Validate that the installation still exists on GitHub (App JWT auth via proxy)
-        const result = await gwValidate.executeApi(installation.id, {
+        const result = await gwValidate.executeApi<
+          "github",
+          "get-app-installation"
+        >(installation.id, {
           endpointId: "get-app-installation",
           pathParams: { installation_id: installation.externalId },
         });
@@ -331,18 +334,20 @@ export const connectionsRouter = {
 
           let ref = input.ref;
           if (!ref) {
-            const repoResult = await gw.executeApi(input.integrationId, {
-              endpointId: "get-repo",
-              pathParams: { owner, repo },
-            });
+            const repoResult = await gw.executeApi<"github", "get-repo">(
+              input.integrationId,
+              {
+                endpointId: "get-repo",
+                pathParams: { owner, repo },
+              }
+            );
             if (repoResult.status !== 200) {
               throw new TRPCError({
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Failed to fetch repository info from GitHub",
               });
             }
-            const repoData = repoResult.data as { default_branch: string };
-            ref = repoData.default_branch;
+            ref = repoResult.data.default_branch;
           }
 
           if (ref && !/^[a-zA-Z0-9._/-]+$/.test(ref)) {
@@ -365,7 +370,10 @@ export const connectionsRouter = {
             if (ref) {
               queryParams.ref = ref;
             }
-            const fileResult = await gw.executeApi(input.integrationId, {
+            const fileResult = await gw.executeApi<
+              "github",
+              "get-file-contents"
+            >(input.integrationId, {
               endpointId: "get-file-contents",
               pathParams: { owner, repo, path },
               queryParams,
@@ -382,14 +390,13 @@ export const connectionsRouter = {
               });
             }
 
-            const data = fileResult.data as {
-              type?: string;
-              content?: string;
-              sha?: string;
-              size?: number;
-            };
+            const data = fileResult.data;
 
-            if (data.content !== undefined && data.type !== undefined) {
+            if (
+              !Array.isArray(data) &&
+              data.content !== undefined &&
+              data.type !== undefined
+            ) {
               const maxSize = 50 * 1024;
               if (typeof data.size === "number" && data.size > maxSize) {
                 throw new TRPCError({

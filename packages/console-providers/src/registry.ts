@@ -197,9 +197,28 @@ export type EventKeysFor<K extends keyof typeof PROVIDERS> =
 /** All provider slugs — type alias for `keyof typeof PROVIDERS`. */
 export type ProviderKey = keyof typeof PROVIDERS;
 
+/**
+ * Direct mapping of provider slug → specific api object type.
+ *
+ * Going through `(typeof PROVIDERS)[P]["api"]` with a generic P confuses
+ * TypeScript when TApi is a generic parameter on BaseProviderFields — it
+ * resolves the whole PROVIDERS object instead of the string path.
+ * Using a concrete mapped type here forces TypeScript to evaluate each
+ * provider's api type independently via conditional type distribution.
+ */
+interface ProviderApiCatalog {
+  apollo: (typeof PROVIDERS)["apollo"]["api"];
+  github: (typeof PROVIDERS)["github"]["api"];
+  linear: (typeof PROVIDERS)["linear"]["api"];
+  sentry: (typeof PROVIDERS)["sentry"]["api"];
+  vercel: (typeof PROVIDERS)["vercel"]["api"];
+}
+
 /** Union of endpoint IDs for a provider by slug. */
 export type EndpointKey<P extends keyof typeof PROVIDERS> =
-  keyof (typeof PROVIDERS)[P]["api"]["endpoints"] & string;
+  P extends keyof ProviderApiCatalog
+    ? keyof ProviderApiCatalog[P]["endpoints"] & string
+    : never;
 
 /** Wide union of all endpoint keys across all providers. */
 export type AnyEndpointKey = {
@@ -208,6 +227,44 @@ export type AnyEndpointKey = {
 
 /** Union of endpoint keys available for a provider by slug. */
 export type EndpointKeysFor<K extends keyof typeof PROVIDERS> = EndpointKey<K>;
+
+// ── Endpoint lookup helper (avoids generic indexed access on union types) ──────
+
+/** Shorthand for the endpoints map of a specific provider, accessed by literal key. */
+type _EPs<P extends keyof ProviderApiCatalog> =
+  ProviderApiCatalog[P]["endpoints"];
+
+/**
+ * Resolves the endpoint type for a (P, E) pair using explicit provider dispatch.
+ *
+ * Each `P extends "slug"` branch uses a LITERAL key to access the endpoint map,
+ * avoiding TypeScript's "cannot index a union type with a generic key" error
+ * that arises when P is generic and each provider has different endpoint names.
+ */
+type _GetEndpoint<
+  P extends keyof ProviderApiCatalog,
+  E extends string,
+> = P extends "apollo"
+  ? E extends keyof _EPs<"apollo">
+    ? _EPs<"apollo">[E]
+    : never
+  : P extends "github"
+    ? E extends keyof _EPs<"github">
+      ? _EPs<"github">[E]
+      : never
+    : P extends "linear"
+      ? E extends keyof _EPs<"linear">
+        ? _EPs<"linear">[E]
+        : never
+      : P extends "sentry"
+        ? E extends keyof _EPs<"sentry">
+          ? _EPs<"sentry">[E]
+          : never
+        : P extends "vercel"
+          ? E extends keyof _EPs<"vercel">
+            ? _EPs<"vercel">[E]
+            : never
+          : never;
 
 // ── Path param extraction ──────────────────────────────────────────────────────
 
@@ -224,14 +281,11 @@ export type PathParamsFor<
   P extends keyof typeof PROVIDERS,
   E extends EndpointKey<P>,
 > =
-  ExtractPathParams<
-    (typeof PROVIDERS)[P]["api"]["endpoints"][E]["path"]
-  > extends never
-    ? undefined
-    : Record<
-        ExtractPathParams<(typeof PROVIDERS)[P]["api"]["endpoints"][E]["path"]>,
-        string
-      >;
+  _GetEndpoint<P, E> extends { path: infer Path extends string }
+    ? ExtractPathParams<Path> extends never
+      ? undefined
+      : Record<ExtractPathParams<Path>, string>
+    : undefined;
 
 /**
  * Typed proxy request for a known provider + endpoint at compile time.
@@ -253,7 +307,10 @@ export type TypedProxyRequest<
 export type ResponseDataFor<
   P extends keyof typeof PROVIDERS,
   E extends EndpointKey<P>,
-> = z.infer<(typeof PROVIDERS)[P]["api"]["endpoints"][E]["responseSchema"]>;
+> =
+  _GetEndpoint<P, E> extends { responseSchema: infer S extends z.ZodType }
+    ? z.infer<S>
+    : unknown;
 
 // ── HasBuildAuth — auth mode as type-level discriminant ───────────────────────
 
@@ -269,11 +326,10 @@ export type ResponseDataFor<
 export type HasBuildAuth<
   P extends keyof typeof PROVIDERS,
   E extends EndpointKey<P>,
-> = (typeof PROVIDERS)[P]["api"]["endpoints"][E] extends {
-  buildAuth: (...args: any[]) => any;
-}
-  ? true
-  : false;
+> =
+  _GetEndpoint<P, E> extends { buildAuth: (...args: any[]) => any }
+    ? true
+    : false;
 
 // ── Provider Lookup ───────────────────────────────────────────────────────────
 

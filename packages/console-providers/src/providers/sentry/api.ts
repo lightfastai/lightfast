@@ -146,9 +146,9 @@ export const sentryOrganizationSchema = z
   })
   .loose();
 
-export const sentryApi: ProviderApi = {
+export const sentryApi = {
   baseUrl: "https://sentry.io",
-  buildAuthHeader: (token) => `Bearer ${token}`,
+  buildAuthHeader: (token: string) => `Bearer ${token}`,
   parseRateLimit: parseSentryRateLimit,
   endpoints: {
     "list-projects": {
@@ -177,4 +177,4 @@ export const sentryApi: ProviderApi = {
       responseSchema: z.array(sentryErrorEventSchema),
     },
   },
-} as const;
+} as const satisfies ProviderApi;

@@ -17,9 +17,9 @@ function parseApolloRateLimit(headers: Headers): RateLimit | null {
   return { remaining: r, resetAt: new Date(s), limit: l };
 }
 
-export const apolloApi: ProviderApi = {
+export const apolloApi = {
   baseUrl: "https://api.apollo.io/api/v1",
-  buildAuthHeader: (apiKey) => `Api-Key ${apiKey}`,
+  buildAuthHeader: (apiKey: string) => `Api-Key ${apiKey}`,
   defaultHeaders: {
     "Content-Type": "application/json",
     "Cache-Control": "no-cache",
@@ -48,4 +48,4 @@ export const apolloApi: ProviderApi = {
       timeout: 15_000,
     },
   },
-};
+} as const satisfies ProviderApi;
