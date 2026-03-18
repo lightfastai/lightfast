@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { bundle } from "@remotion/bundler";
 import { renderStill, selectComposition } from "@remotion/renderer";
+import { GITHUB_BANNER_CONFIG } from "./compositions/github-banner";
 import { LOGO_VARIANTS } from "./compositions/logo";
 import { TWITTER_BANNER_CONFIG } from "./compositions/twitter-banner";
 import { enableCssLoaders } from "./webpack-override";
@@ -92,6 +93,23 @@ async function main() {
     imageFormat: "png",
   });
   console.log(`  → ${TWITTER_BANNER_CONFIG.filename}`);
+
+  // ── Render GitHub banner ──────────────────────────────────
+  console.log(
+    `Rendering ${GITHUB_BANNER_CONFIG.id} (${GITHUB_BANNER_CONFIG.width}×${GITHUB_BANNER_CONFIG.height})...`
+  );
+  const githubComp = await selectComposition({
+    serveUrl: bundled,
+    id: GITHUB_BANNER_CONFIG.id,
+  });
+  await renderStill({
+    composition: githubComp,
+    serveUrl: bundled,
+    output: path.join(outputDir, GITHUB_BANNER_CONFIG.filename),
+    imageFormat: "png",
+    scale: 2,
+  });
+  console.log(`  → ${GITHUB_BANNER_CONFIG.filename}`);
 
   // ── Build favicon.ico (16 + 32 + 48 bundled) ───────────
   const icoSizes = [

@@ -1,5 +1,9 @@
 // biome-ignore lint/style/useFilenamingConvention: Remotion requires PascalCase entry point
 import { Composition, Still } from "remotion";
+import {
+  GITHUB_BANNER_CONFIG,
+  GitHubBanner,
+} from "./compositions/github-banner";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { LOGO_VARIANTS, Logo } from "./compositions/logo";
 import {
@@ -33,6 +37,12 @@ export const RemotionRoot = () => {
         height={TWITTER_BANNER_CONFIG.height}
         id={TWITTER_BANNER_CONFIG.id}
         width={TWITTER_BANNER_CONFIG.width}
+      />
+      <Still
+        component={GitHubBanner}
+        height={GITHUB_BANNER_CONFIG.height}
+        id={GITHUB_BANNER_CONFIG.id}
+        width={GITHUB_BANNER_CONFIG.width}
       />
     </>
   );
