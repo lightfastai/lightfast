@@ -731,13 +731,22 @@ sequenceDiagram
 |-----------|---------|
 | `@repo/inngest` | Shared typed client + event schemas |
 | `ingestDelivery` | Resolve → forward or DLQ (no classification) |
-| `connectionLifecycle` | Gate-first teardown (triggered by health check + user) |
+| `connectionLifecycle` | Gate-first teardown (triggered by health check + user); step ❺b deregisters ManagedProvider webhooks |
 | `healthCheck` | PRIMARY lifecycle trigger + config drift detection |
 | `tokenRefresh` | Proactive refresh |
 | `deliveryRecovery` | Self-healing for stuck deliveries |
+| `providerPolling` | Continuous cursor-driven polling for ApiProvider with PollingDef |
 | `gatewayLifecycleLog` | Immutable audit trail |
+| `gatewayProviderCatalogVersion` | Tracks indexed endpoints per provider for diff-based re-embedding |
+| `embedProviderEndpoints` | Idempotent Inngest fn: embed new/changed endpoints into Pinecone global catalog |
 | Console double-gate | WI.status check in processWebhook |
+| `POST /proxy/:provider/:endpointId` | Service-auth proxy (internal consumers: backfill, console tRPC) |
+| `POST /proxy/search` | Semantic endpoint discovery — org-scoped, Pinecone similarity search |
+| `POST /proxy/execute` | Authenticated proxy forwarding — org-scoped, Gate 1 + token resolution |
+| Edge Config health cache | 30s TTL connection health cache for sub-1ms Gate 1 checks |
 | Admin trace/replay | Per-delivery debugging |
+| SDK proxy client | `proxy.search()` + `proxy.execute()` for org workspace consumers |
+| MCP proxy tools | `proxy_search` + `proxy_execute` for AI agent consumption via Claude Code / Cursor |
 
 ---
 
@@ -787,14 +796,43 @@ sequenceDiagram
 - [ ] `POST /admin/lifecycle/replay`
 - [ ] `GET /admin/lifecycle-log/:id`
 
+### Phase 4.5: PollingDef Cron (ApiProvider)
+- [ ] `providerPolling` Inngest function per polling provider
+- [ ] Cursor persistence in `gatewayInstallations.providerAccountInfo`
+- [ ] Route polling results through `console/webhook.delivered`
+
 ### Phase 8: Decommission
 - [ ] Remove `apps/relay/` + `apps/gateway/`
 - [ ] Remove `@vendor/upstash-workflow` + `@vendor/qstash`
 - [ ] Update `CLAUDE.md`
 
+### Phase 9: Proxy API (Internal)
+- [ ] `ProxyEndpointDef` type in `packages/console-providers/src/define.ts`
+- [ ] Migrate `ProviderApi.endpoints` from `ApiEndpoint` → `ProxyEndpointDef` (add `description`, `requiresActiveConnection`)
+- [ ] `POST /proxy/:provider/:endpointId` (service-auth) in `apps/platform`
+- [ ] Gate 1 with Edge Config health cache (30s TTL)
+- [ ] Token resolution + `buildAuthHeader` forwarding
+- [ ] Structured error responses (all 5 error classes)
+- [ ] 401 → trigger `platform/health.check.requested` Inngest event
+- [ ] `tokenRefresh` retry on 401 when `auth.refreshToken` defined
+- [ ] `connectionLifecycle ❶` deletes Edge Config cache key
+- [ ] `connectionLifecycle ❺b` webhook deregistration for ManagedProvider
+- [ ] ManagedProvider webhook registration in OAuth callback
+- [ ] Migrate `backfill` entity workers to use proxy route
+
+### Phase 10: Vector Endpoint Catalog + MCP/SDK Exposure
+- [ ] `gatewayProviderCatalogVersion` table + migration
+- [ ] `embedProviderEndpoints` Inngest function (triggered on startup/deploy)
+- [ ] Pinecone index setup (`proxy-endpoints` namespace)
+- [ ] `POST /proxy/search` (org-scoped) — active providers fetch + similarity search + health enrich
+- [ ] `POST /proxy/execute` (org-scoped) — identical to service-auth path + org JWT auth
+- [ ] SDK client (`proxy.search()`, `proxy.execute()`)
+- [ ] MCP tool definitions (`proxy_search`, `proxy_execute`)
+- [ ] End-to-end test: Claude Code → MCP → proxy_search → proxy_execute → GitHub API
+
 ---
 
-<!-- SECTION: not-doing | last_updated: 2026-03-18T02 -->
+<!-- SECTION: not-doing | last_updated: 2026-03-18T03 -->
 ## What We're NOT Doing
 
 - **Classify-first ingest** — dropped. Lifecycle webhooks DLQ naturally. Health check cron is the lifecycle trigger. Simpler architecture, 5-minute detection latency is acceptable.
@@ -805,7 +843,9 @@ sequenceDiagram
 - **Per-event ordering guarantees** — idempotent pipeline. Strict ordering too expensive.
 - **Multi-region** — single Neon + single Inngest app.
 - **Event sourcing** — mutable status + audit log. Not derived from event history.
-- **ManagedProvider diagrams** — deferred to when provider plan Phase 9 lands.
+- **Per-org vector records** — global endpoint catalog only. Org access resolved at query time via active connection filter. No per-org Pinecone records.
+- **Proxy response caching** — proxy is a transparent forwarder. Provider responses are not cached (providers own their freshness semantics).
+- **Automatic re-consent on drift** — drift detected by health check, banner shown in UI. User manually reconnects.
 
 ---
 
@@ -824,13 +864,531 @@ sequenceDiagram
 | WI schema migration scope? | Folded into Phase 0. |
 | Lifecycle audit log? | Yes — `gatewayLifecycleLog` table. Append-only. |
 | Config drift scope? | Included — detected at platform level in healthCheck cron. |
-| ManagedProvider in this plan? | Deferred to provider plan Phase 9. |
+| ManagedProvider in this plan? | Now addressed: webhook registration in OAuth callback, deregistration in lifecycle step ❺b. |
 | GitHub org re-install on different Lightfast org? | New installation_id → new row. Old revoked by health check (404). Clean separation. |
+| Proxy global vs per-org endpoint catalog? | Global (one record per endpoint per provider). Org access filtered at query time via active connections. Zero per-org work when new endpoints are added. |
+| Gate 1 latency (DB vs cache)? | Edge Config cache (30s TTL, sub-1ms). DB fallback on miss (~10ms). `connectionLifecycle ❶` deletes cache immediately on gate close. |
+| Provider 401 during proxy execute — what fires? | `platform/health.check.requested` Inngest event. Health check re-probes and closes gate if revoked. Structured error returned to caller. |
+| Re-indexing when new endpoint added to provider? | `platform/provider.catalog.updated` on startup → `embedProviderEndpoints` diffs via `gatewayProviderCatalogVersion` → single upsert. No per-org work. |
+| PollingDef cron covered? | Yes — Phase 4.5. Cursor persisted in `providerAccountInfo`. Results routed through `console/webhook.delivered`. |
 
 ---
 
-<!-- SECTION: update-log | last_updated: 2026-03-18T02 -->
+<!-- SECTION: provider-arch-coverage | last_updated: 2026-03-18T03 -->
+## Provider Architecture Coverage Analysis
+
+### Already Covered ✅
+
+| Provider Research Element | Covered In This Plan |
+|--------------------------|----------------------|
+| `SignatureScheme` + `deriveVerifySignature()` | § Signature Verification, § Ingest route |
+| `hasInboundWebhooks()` guard | § Provider Tier Ingest Routing |
+| `HealthCheckDef.check() → ConnectionStatus` | § Health Check → Lifecycle Trigger |
+| 3-tier ingest (WebhookProvider | ManagedProvider | ApiProvider+inbound) | § Provider Tier Ingest Routing |
+| Config drift detection | § Health Check → Lifecycle Trigger |
+| `EventClassifier` / `LifecycleDef` dropped | § What We're Dropping |
+| `WebhookProvider.auth` widened to `AuthDef` | Implicit in `createConfig(env)` usage |
+
+### Gaps Now Addressed (This Update)
+
+#### Gap 1 — ManagedProvider Webhook Teardown
+
+`connectionLifecycle` step ❺ (revoke-token) runs for all providers but doesn't call `providerDef.inbound.webhook.registration.deregister()` for `ManagedProvider` (e.g., Vercel's `DELETE /v1/webhooks/{id}`). New step ❺b inserted:
+
+```ts
+// connectionLifecycle — after step ❺a revoke-token:
+if (providerDef.kind === "managed" && providerDef.inbound?.webhook?.registration) {
+  const webhookId = installation.webhookSetupState?.webhookId;
+  if (webhookId) {
+    await step.run("deregister-webhook", async () => {
+      await providerDef.inbound.webhook.registration.deregister(config, webhookId);
+    }).catch(() => { /* best effort — provider may already be down */ });
+  }
+}
+```
+
+Updated lifecycle steps: ❶ CLOSE GATE → ❷ cancel-backfill → ❸ update WI → ❹ audit log → ❺a revoke-token → **❺b deregister-webhook (ManagedProvider)** → ❻ cleanup-cache → ❼ soft-delete-resources.
+
+#### Gap 2 — ManagedProvider Webhook Registration in OAuth Callback
+
+The OAuth callback handler must call `registration.register()` for `ManagedProvider` and persist the returned `webhookId` + `signingSecret`:
+
+```ts
+// After UPSERT gatewayInstallations (status=active):
+if (providerDef.kind === "managed" && providerDef.inbound?.webhook?.registration) {
+  const { webhookId, signingSecret } = await providerDef.inbound.webhook.registration.register(
+    config,
+    `${env.PLATFORM_BASE_URL}/ingest/${provider}`,
+    installation.id,
+    providerDef.defaultSyncEvents,
+  );
+  await db.update(gatewayInstallations)
+    .set({ webhookSetupState: { webhookId, signingSecret } })
+    .where(eq(gatewayInstallations.id, installation.id));
+}
+```
+
+The `signingSecret` is stored in `webhookSetupState` (JSONB) and used by `providerDef.inbound.webhook.extractSecret(config, installation.webhookSetupState)` instead of the global app config secret.
+
+#### Gap 3 — `PollingDef` Cron (ApiProvider with `polling`)
+
+For `ApiProvider` with `polling?: PollingDef`, a per-provider polling Inngest cron is needed alongside the health check cron. Each run:
+1. Fetches all active connections for the provider
+2. Calls `pollingDef.pollEntity(config, entityType, cursor, since)` per entity type
+3. Sends results through `console/webhook.delivered` (same path as live webhooks)
+4. Persists cursor in `gatewayInstallations.providerAccountInfo` for next poll
+
+This is a **Phase 4.5** addition — between health check (Phase 4) and console double-gate (Phase 5).
+
+---
+
+<!-- SECTION: proxy-api-architecture | last_updated: 2026-03-18T03 -->
+## Proxy API Architecture
+
+### Core Concept
+
+The proxy is a **universal authenticated forwarding layer** for all post-connection provider API calls. Every internal service (backfill entity workers, console tRPC, health check probes) routes provider API calls through the proxy instead of implementing their own token resolution and rate limit tracking.
+
+**Pre-connection exception**: OAuth endpoints (`exchange_code`, `get_installation_info` during GitHub App setup) cannot be proxied — no connection exists yet. These are `requiresActiveConnection: false` in `ProxyEndpointDef`.
+
+**The accretion insight**: The same proxy routes exposed to internal services (via service-auth) are exposed to the SDK + MCP (via org-scoped auth) without duplication. Every API we add for internal use is automatically available to external consumers.
+
+### `ProxyEndpointDef` — Extension of `ProviderApi.endpoints`
+
+```ts
+export interface ProxyEndpointDef {
+  /** Stable kebab-case ID. Becomes vector record key: "github:list-org-members" */
+  readonly id: string;
+  readonly method: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
+  /** Path template with {param} placeholders. E.g. "/orgs/{org}/members" */
+  readonly pathTemplate: string;
+  readonly pathParams?: Record<string, { description: string; required: boolean }>;
+  readonly queryParams?: Record<string, { description: string; required: boolean }>;
+  readonly bodySchema?: z.ZodSchema;
+  /** Embedded into Pinecone. Must clearly describe what the endpoint does + returns. */
+  readonly description: string;
+  /** false = callable during OAuth setup before connection exists. Default: true. */
+  readonly requiresActiveConnection: boolean;
+  /** OAuth scopes required. Compared against providerAccountInfo.grantedScopes at search time
+   *  to determine scopeStatus: "sufficient" | "insufficient". */
+  readonly requiredScope?: readonly string[];
+  /** gatewayResources.resourceType values this endpoint operates on.
+   *  Used at search time to populate availableResources in the result.
+   *  Empty = connection-level endpoint (no specific resource target).
+   *  E.g. ["repo"] for github:list-repo-commits — agent sees which repos are accessible. */
+  readonly resourceTypes?: readonly string[];
+}
+```
+
+### Route Layout in `apps/platform`
+
+| Route | Auth | Purpose |
+|-------|------|---------|
+| `POST /proxy/search` | org-scoped JWT / SDK key | Semantic endpoint discovery |
+| `POST /proxy/execute` | org-scoped JWT / SDK key | Authenticated forwarding for SDK/MCP |
+| `POST /proxy/:provider/:endpointId` | `X-API-Key` (service-auth) | Internal service shortcut (backfill, console) |
+
+Service-auth path skips Gate 1's Edge Config lookup and goes directly to DB (already trusted caller). Org-scoped path always hits Gate 1.
+
+### Proxy Execution — Gate-First with Token Resolution
+
+```
+proxy_execute(provider, endpointId, params, orgId):
+  ① Gate 1 — connection health (Edge Config cache, 30s TTL):
+       status = 'active' AND healthStatus ≠ 'revoked' AND ≠ 'unreachable'
+       → else: 409 { error: "connection_inactive", reason, reconnect_url }
+
+  ② Resolve token — connectionId → decrypted accessToken (DB)
+
+  ③ Build request:
+       baseUrl = providerDef.api.baseUrl
+       path    = renderPathTemplate(endpointDef.pathTemplate, params.path)
+       headers = providerDef.api.buildAuthHeader(token) + defaultHeaders
+       body    = params.body (validated against endpointDef.bodySchema)
+
+  ④ Forward to provider API
+
+  ⑤ Handle response:
+       200       → return { data }
+       401       → trigger health check → return { error: "connection_auth_failure" }
+       401 + refreshToken exists → attempt token refresh → retry once → then same as 401
+       403       → return { error: "insufficient_scope", missingScopes? }  ← NOT a health trigger
+       404       → return { error: "resource_not_found" }                  ← resource removed
+       429       → return { error: "rate_limited", retry_after, provider }
+       5xx/timeout → return { error: "provider_unavailable" }
+```
+
+### Proxy Architecture Overview
+
+```mermaid
+flowchart TD
+    subgraph internal["Internal Services (service-auth X-API-Key)"]
+        BACKFILL["backfill entity worker"]
+        CONSOLE_API["console tRPC mutations"]
+        HEALTH_PROBE["healthCheck cron\n(probe calls go through proxy)"]
+    end
+
+    subgraph external["External Consumers (org-scoped auth)"]
+        MCP_CLIENT["MCP Client\n(Claude Code, Cursor)"]
+        SDK_CLIENT["Lightfast SDK\nproxy.search() / proxy.execute()"]
+    end
+
+    subgraph platform["apps/platform — Proxy Layer"]
+        direction TB
+        SEARCH_ROUTE["POST /proxy/search\n① active installations (provider, health, grantedScopes)\n② Pinecone filter by active providers (Layer 1)\n③ scope check vs grantedScopes (Layer 2)\n④ resource context from gatewayResources (Layer 3)\n⑤ re-rank + return enriched results"]
+
+        EXEC_ROUTE["POST /proxy/execute\nPOST /proxy/:provider/:endpointId\n① Gate 1 (Edge Config, 30s TTL)\n② resolve token (DB)\n③ build + forward request\n④ structured error handling"]
+    end
+
+    EDGE["Upstash Edge Config\nconnection health cache\n(30s TTL, invalidated by lifecycle)"]
+    VAULT["gatewayTokens\n(AES-GCM encrypted)"]
+    PROV["Provider API\n(GitHub · Linear · Vercel · Sentry)"]
+    INN["Inngest Cloud\n(health check trigger on 401)"]
+
+    internal -->|"service-auth"| EXEC_ROUTE
+    external --> SEARCH_ROUTE & EXEC_ROUTE
+    EXEC_ROUTE --> EDGE
+    EDGE -->|"miss"| VAULT
+    VAULT --> PROV
+    PROV -->|"401/403"| INN
+    INN -.->|"connectionLifecycle\n→ invalidate Edge Config cache"| EDGE
+
+    style SEARCH_ROUTE fill:#1a1a2e,stroke:#533483,stroke-width:2px
+    style EXEC_ROUTE fill:#1a1a2e,stroke:#16213e,stroke-width:2px
+```
+
+---
+
+<!-- SECTION: vector-endpoint-catalog | last_updated: 2026-03-18T04 -->
+## Vector Endpoint Catalog (Global + Org-Filtered)
+
+### Key Design Decision: Global Catalog, Per-Org Access Filter
+
+The Pinecone index is **global per provider** — not per org. An endpoint like `github:list-org-members` has one vector record. Every org that has an active GitHub connection can use it. All per-org intelligence (which providers are connected, which scopes were granted, which resources exist) lives in Postgres and is joined at query time.
+
+**This solves the re-indexing problem entirely**: adding a new endpoint to `github` requires upserting exactly one Pinecone record. No per-org work on provider update, connection change, or resource change.
+
+### Three-Layer Per-Org Filtering (at `proxy_search` time)
+
+Each layer is a DB join against the org's live state. Pinecone never holds org-specific data.
+
+| Layer | Source | What it gates |
+|-------|--------|---------------|
+| **1 — Provider filter** | `gatewayInstallations WHERE orgId AND status='active'` | Which providers are connected |
+| **2 — Scope filter** | `installation.providerAccountInfo.grantedScopes` vs `endpointDef.requiredScope` | Which endpoints the granted OAuth scopes permit |
+| **3 — Resource context** | `gatewayResources WHERE installationId AND resourceType IN endpointDef.resourceTypes` | Which specific resources (repos, teams, projects) are valid path params |
+
+Layer 1 is a Pinecone filter (fast, server-side). Layers 2 and 3 are applied in-process after the vector results return.
+
+### `proxy_search` Algorithm
+
+```
+proxy_search(query, orgId):
+  ① Fetch active installations for orgId (single DB query):
+     → [{ provider, installationId, healthStatus,
+          providerAccountInfo: { grantedScopes } }]
+
+  ② Pinecone similarity_search (Layer 1):
+     vector: embed(query)
+     filter: { provider: { $in: activeProviders } }
+     topK: 20  ← over-fetch; layers 2+3 may reduce count
+
+  ③ For each result, enrich in parallel (Layers 2 + 3):
+     a. scopeStatus:
+          required = endpointDef.requiredScope ?? []
+          granted  = installation.grantedScopes ?? []
+          → "sufficient" | "insufficient"
+
+     b. availableResources (only if endpointDef.resourceTypes is non-empty):
+          SELECT resourceType, providerResourceId, label
+          FROM gatewayResources
+          WHERE installationId = $installationId
+            AND resourceType IN (endpointDef.resourceTypes)
+            AND status = 'active'
+
+  ④ Re-rank:
+     healthy + sufficient scope  → top of results
+     degraded + sufficient scope → middle
+     any + insufficient scope   → bottom (but still returned — agent can surface reconnect)
+
+  ⑤ Return top 10 after enrichment
+```
+
+### Enriched Search Result Type
+
+```ts
+interface ProxySearchResult {
+  endpointId: string;          // "list-org-members"
+  provider: string;            // "github"
+  description: string;
+  method: string;              // "GET"
+  pathTemplate: string;        // "/orgs/{org}/members"
+  score: number;               // Pinecone similarity score
+
+  // Per-org enrichment (from DB, not Pinecone)
+  connectionHealth: "healthy" | "degraded" | "unknown" | "revoked";
+  scopeStatus: "sufficient" | "insufficient";
+  /** Only present when endpointDef.resourceTypes is non-empty.
+   *  Tells the agent exactly which values are valid for resource path params. */
+  availableResources?: Array<{
+    type: string;               // "repo"
+    id: string;                 // "lightfast/lightfast"
+    label: string;              // "lightfast/lightfast"
+  }>;
+  /** Only present when scopeStatus === "insufficient" — what's missing */
+  missingScopes?: string[];
+}
+```
+
+**Why `availableResources` matters**: without it, an agent calling `github:list-repo-commits` must guess `{owner}/{repo}`. With it, the agent sees `[{ type: "repo", id: "lightfast/lightfast" }]` and can pass the right value directly. Zero extra round-trips, zero hallucinated repo names.
+
+### Index Structure (unchanged — global only)
+
+```
+namespace: proxy-endpoints
+
+Record:
+  id:        "github:list-org-members"
+  vector:    embedding of (provider + id + description + pathTemplate + paramNames)
+  metadata:
+    provider:           "github"
+    endpointId:         "list-org-members"
+    method:             "GET"
+    pathTemplate:       "/orgs/{org}/members"
+    requiresConnection: true
+    resourceTypes:      []           ← connection-level; no specific resource
+```
+
+```
+Record:
+  id:        "github:list-repo-commits"
+  metadata:
+    resourceTypes: ["repo"]          ← agent gets availableResources from gatewayResources
+```
+
+No orgId, no grantedScopes, no resourceId in Pinecone. Only structural metadata.
+
+### Catalog Bootstrap & Update Flow
+
+```mermaid
+flowchart TD
+    subgraph trigger["Trigger: new endpoint added to ProviderApi"]
+        DEF["provider definition updated:\nendpoints: { 'list-org-members': ProxyEndpointDef }"]
+        DEPLOY["Platform deploy\nstartup hook fires:\nplatform/provider.catalog.updated\n{ provider, addedEndpoints, removedEndpoints }"]
+    end
+
+    subgraph inngest_fn["embedProviderEndpoints (Inngest — idempotent)"]
+        FETCH["Read providerDef.api.endpoints"]
+        DIFF["Diff vs last-indexed version\n(stored in gatewayProviderCatalogVersion table)"]
+        EMBED["For each added endpoint:\ngenerateEmbedding(description + pathTemplate)"]
+        UPSERT["Pinecone.upsert:\nid: provider:endpointId\nmetadata: { resourceTypes }\n(global — no orgId)"]
+        DELETE["For each removed endpoint:\nPinecone.delete(id)"]
+        VERSION["Update catalogVersion"]
+    end
+
+    subgraph access["At proxy_search time — 3-layer org filtering"]
+        L1["Layer 1 (Pinecone filter):\nprovider IN org_active_providers"]
+        L2["Layer 2 (in-process):\nrequiredScope vs grantedScopes\n→ scopeStatus"]
+        L3["Layer 3 (DB join):\ngatewayResources WHERE resourceType\nIN endpointDef.resourceTypes\n→ availableResources"]
+        RANK["Re-rank: healthy+sufficient first\nReturn top 10"]
+    end
+
+    NOTE["Adding new endpoint to any provider:\n1 Pinecone upsert\n0 per-org work\nAll orgs reflect it at next search"]
+
+    DEF --> DEPLOY --> inngest_fn
+    FETCH --> DIFF --> EMBED --> UPSERT --> VERSION
+    DIFF --> DELETE --> VERSION
+    inngest_fn -.->|"catalog updated"| access
+    L1 --> L2 --> L3 --> RANK
+    inngest_fn -.-> NOTE
+
+    style UPSERT fill:#1a1a2e,stroke:#533483,stroke-width:2px
+    style NOTE fill:#1a2e1a,stroke:#16e080,stroke-width:1px
+```
+
+### Catalog Version Table (new)
+
+```ts
+export const gatewayProviderCatalogVersion = pgTable(
+  "lightfast_gateway_provider_catalog_version",
+  {
+    provider: varchar("provider", { length: 50 }).notNull().primaryKey(),
+    indexedEndpoints: jsonb("indexed_endpoints").notNull(), // string[] of endpointIds
+    lastIndexedAt: timestamp("last_indexed_at", { mode: "string", withTimezone: true })
+      .notNull().defaultNow(),
+    embeddingModel: varchar("embedding_model", { length: 100 }).notNull(),
+  },
+);
+```
+
+Used to diff on re-deploy — only embed/delete changed endpoints, not the entire catalog.
+
+### MCP + SDK Proxy Search → Execute Flow (with 3-layer enrichment)
+
+```mermaid
+sequenceDiagram
+    participant AGENT as AI Agent (Claude Code via MCP)
+    participant PLAT as apps/platform
+    participant EDGE as Edge Config (health cache 30s TTL)
+    participant DB as Neon Postgres
+    participant PIN as Pinecone (global catalog)
+    participant PROV as Provider API
+
+    Note over AGENT,PROV: Happy Path — search with full enrichment then execute
+
+    AGENT->>PLAT: POST /proxy/search { query: "list repo commits", orgId }
+
+    PLAT->>DB: SELECT provider, installationId, healthStatus, providerAccountInfo<br/>FROM gatewayInstallations WHERE orgId AND status='active'
+    Note over DB: returns: [{ provider: github, grantedScopes: [repo, read:org], health: healthy }]
+
+    PLAT->>PIN: similarity_search(embed(query),<br/>filter: { provider: { $in: [github] } }, topK: 20)
+    PIN-->>PLAT: [{ id: "github:list-repo-commits", score: 0.97, resourceTypes: ["repo"] }]
+
+    Note over PLAT: Layer 2: requiredScope ["repo"] ⊆ grantedScopes ["repo","read:org"] → sufficient
+    PLAT->>DB: SELECT resourceType, providerResourceId, label<br/>FROM gatewayResources WHERE installationId AND resourceType='repo'
+    DB-->>PLAT: [{ type: repo, id: lightfast/lightfast }, { type: repo, id: lightfast/docs }]
+
+    PLAT-->>AGENT: [{ endpointId: "list-repo-commits", provider: "github",<br/>score: 0.97, connectionHealth: "healthy", scopeStatus: "sufficient",<br/>availableResources: [{ type: "repo", id: "lightfast/lightfast" }, ...] }]
+
+    Note over AGENT: Agent knows exactly what to call and with what params — no guessing
+
+    AGENT->>PLAT: POST /proxy/execute { provider: "github",<br/>endpointId: "list-repo-commits",<br/>params: { owner: "lightfast", repo: "lightfast" }, orgId }
+    PLAT->>EDGE: GET proxy:health:orgId:github → { status: "active" }  ← Gate 1 PASS
+    PLAT->>DB: SELECT token WHERE connectionId
+    PLAT->>PROV: GET /repos/lightfast/lightfast/commits + Authorization: Bearer ...
+    PROV-->>PLAT: 200 [{ sha: "abc", message: "feat: ..." }]
+    PLAT-->>AGENT: { data: [...] }
+
+    Note over AGENT,PROV: Scope-insufficient path
+
+    AGENT->>PLAT: POST /proxy/search { query: "delete github repo", orgId }
+    PLAT->>PIN: similarity_search → [{ id: "github:delete-repo", requiredScope: ["delete_repo"] }]
+    Note over PLAT: Layer 2: "delete_repo" ∉ grantedScopes → insufficient
+    PLAT-->>AGENT: [{ endpointId: "delete-repo", scopeStatus: "insufficient",<br/>missingScopes: ["delete_repo"],<br/>connectionHealth: "healthy" }]
+    Note over AGENT: Agent surfaces: "Your GitHub connection doesn't have delete_repo scope.<br/>Reconnect GitHub with expanded permissions."
+```
+
+---
+
+<!-- SECTION: proxy-race-conditions | last_updated: 2026-03-18T03 -->
+## Proxy Race Condition Resolution Matrix
+
+### Full Race Matrix (execute path)
+
+| # | Scenario | Detection | Resolution |
+|---|----------|-----------|------------|
+| 1 | **connection active → proxy executes normally** | Gate 1 PASS | Happy path. Data returned. |
+| 2 | **connection revoked BEFORE proxy_execute** | Gate 1 FAIL (Edge Config invalidated by lifecycle ❶) | 409 `connection_inactive` + `reconnect_url`. Client prompts user. |
+| 3 | **connection revoked BETWEEN Gate 1 and provider response** (narrow window) | Provider returns 401/403 | Trigger health check. Return `connection_auth_failure`. Future requests caught at Gate 2. |
+| 4 | **token expired (not revoked)** — OAuth refreshable | Provider returns 401, `auth.refreshToken` defined | Attempt token refresh → retry once. On retry 401 → treat as race 3. |
+| 5 | **provider rate limited** | Provider returns 429 + Retry-After | Return `rate_limited { retry_after, provider }`. No gate change. |
+| 6 | **provider transient outage (5xx/timeout)** | Provider returns 5xx or times out | Return `provider_unavailable`. No gate change. Health check monitors separately. |
+| 7 | **proxy_search returns endpoint → provider outage starts → execute runs** | Provider 5xx caught in execute | Return `provider_unavailable`. `connectionHealth: degraded` visible in next search. |
+| 8 | **proxy_search returns endpoint → org disconnects → execute runs** | Gate 1 FAIL (Edge Config invalidated) | 409 `connection_inactive`. |
+| 9 | **concurrent execute calls exhaust provider rate limit** | First 429 from provider | Rate limit headers forwarded. All concurrent callers get `rate_limited`. Inngest backpressure via `throttle` on backfill workers. |
+| 10 | **proxy execute during connectionLifecycle teardown** (step ❶ in-flight) | Race between `SET status=revoked` write and execute DB read | Gate 1 eventually catches. If execute reads 'active' before write: provider may 401 → treated as race 3. |
+| 11 | **new endpoint added to provider (catalog update) while search in-flight** | Pinecone upsert eventually consistent | Acceptable: new endpoint appears in next search. No data loss, no incorrect result. |
+| 12 | **embed fails during catalog update** | Inngest step failure | Inngest retries. `catalogVersion` not updated until upsert succeeds. No stale state. |
+| 13 | **Edge Config key missing (cold start / cache miss)** | Edge Config returns null | Fall through to DB for connection status. Sub-10ms degraded mode. |
+| 14 | **scope-insufficient endpoint returned in search → agent tries execute → provider 403** | Provider 403 (not 401) | 403 treated separately from 401: return `insufficient_scope { missingScopes }`, no health check triggered. Token is valid; scope is the constraint. |
+| 15 | **org revokes a resource (repo removed from GitHub App installation) → search returns stale `availableResources`** | Search enrichment reads `gatewayResources` at query time | `gatewayResources` reflects current state (updated by health check / resource sync). At worst a `sync_lag` window. Execute with removed resource → provider 404 → return `resource_not_found`. |
+| 16 | **org upgrades OAuth scopes (reconnects) → search still shows `scopeStatus: insufficient`** | `providerAccountInfo.grantedScopes` stale in DB until OAuth callback completes | After reconnect, OAuth callback updates `grantedScopes`. Next `proxy_search` reflects updated scopes. No cache for scope state — always live from DB. |
+
+### Race Condition Sequence (the critical case: revoke during execute)
+
+```mermaid
+sequenceDiagram
+    participant AGENT as AI Agent (MCP)
+    participant PROXY as proxy/execute
+    participant EDGE as Edge Config (30s TTL)
+    participant DB as Neon Postgres
+    participant HC as healthCheck cron
+    participant FN as connectionLifecycle 🔒
+    participant PROV as Provider API
+    participant INN as Inngest Cloud
+
+    Note over AGENT,INN: Scenario: revoke happens AFTER Gate 1 passes (narrow window)
+
+    HC->>INN: connection.lifecycle { reason: health_check_revoked }
+    INN->>FN: ❶ SET installations.status = 'revoked'
+    FN->>EDGE: DELETE proxy:health:orgId:github  ← cache invalidated
+
+    AGENT->>PROXY: proxy_execute(github, list-org-members)
+
+    Note over PROXY,EDGE: Gate 1 — Edge Config miss (just invalidated)
+    PROXY->>EDGE: GET proxy:health:orgId:github → MISS
+    PROXY->>DB: SELECT status WHERE orgId+github
+    DB-->>PROXY: status='revoked'  ← lifecycle already wrote
+    PROXY-->>AGENT: 409 { error: "connection_inactive", reason: "revoked" }
+    Note over AGENT: Client receives structured error before any provider call
+
+    Note over AGENT,INN: Scenario: revoke races with in-flight request (sub-millisecond window)
+
+    PROXY->>EDGE: GET proxy:health:orgId:github → { status: "active" }  ← stale (pre-invalidation)
+    Note over PROXY: Gate 1 PASSES on stale data
+    PROXY->>DB: SELECT token
+    PROXY->>PROV: GET /orgs/lightfast/members
+    Note over FN: connectionLifecycle completes ❶ CLOSE GATE concurrently
+    PROV-->>PROXY: 401 (token now invalid)
+    PROXY->>INN: send("platform/health.check.requested", { installationId })
+    PROXY-->>AGENT: 502 { error: "connection_auth_failure",<br/>message: "Provider rejected auth. Health check initiated." }
+    INN->>FN: (idempotent — already revoked) audit log only
+    Note over AGENT: Client surfaces reconnect prompt. No retry burn.
+```
+
+### Edge Config Health Cache Strategy
+
+The 30s TTL cache is the key performance optimization. Cache key: `proxy:health:{orgId}:{provider}`.
+
+Cache writes:
+- **On healthCheck success**: SET `{ status, healthStatus: "healthy" }` TTL 30s
+- **On connectionLifecycle ❶ (close gate)**: DELETE key immediately (not expiry)
+
+Cache reads:
+- `proxy/execute` reads before every execution
+- On miss → DB fallback (adds ~10ms)
+- On stale hit → provider 401 fallback (adds provider round-trip latency, ~200ms)
+
+The correctness guarantee: **Gate 1 catches revocations within max(30s cache TTL, provider request latency)**. For the 30s window, the provider 401 fallback triggers health check and returns a structured error. No silent data corruption or infinite retry loops.
+
+---
+
+<!-- SECTION: update-log | last_updated: 2026-03-18T03 -->
 ## Update Log
+
+### 2026-03-18T04 — Three-Layer Per-Org Endpoint Filtering
+
+- **Trigger**: Observation that the global catalog doesn't account for per-org OAuth scope grants or per-org resource sets (repos, teams, projects). Two orgs connecting GitHub can have different scopes and different resources — the search results must reflect this.
+- **Three-layer filtering model**:
+  - **Layer 1** (Pinecone server-side): provider filter — endpoints for unconnected providers never returned
+  - **Layer 2** (in-process): scope check — `endpointDef.requiredScope` vs `installation.grantedScopes` from `providerAccountInfo` → `scopeStatus: "sufficient" | "insufficient"`
+  - **Layer 3** (DB join): resource context — `gatewayResources WHERE resourceType IN endpointDef.resourceTypes` → `availableResources[]`
+- **`ProxyEndpointDef` updated**: added `resourceTypes?: readonly string[]` — tells the search layer which resource types to pull from `gatewayResources` for path param guidance.
+- **`ProxySearchResult` type added**: `scopeStatus`, `availableResources`, `missingScopes` — agent has everything needed to call `proxy_execute` correctly with zero extra round-trips.
+- **`proxy_execute` error handling updated**: `403` → `insufficient_scope` (NOT a health check trigger — token is valid, scope is the constraint). `404` → `resource_not_found` (resource removed from installation). `401` remains the health check trigger.
+- **Race conditions 14–16 added**: scope-insufficient execute, stale resource after removal, scope upgrade after reconnect.
+- **Diagrams updated**: catalog flow shows `resourceTypes` in metadata; MCP sequence shows scope-insufficient path end-to-end.
+
+### 2026-03-18T03 — Proxy API + Provider Architecture Coverage
+
+- **Trigger**: Coverage analysis against provider architecture research (`2026-03-17-provider-architecture-redesign.md`). Three provider gaps identified (ManagedProvider teardown, ManagedProvider webhook registration, PollingDef cron). Added Proxy API as a major new architectural layer.
+- **Provider architecture gaps addressed**:
+  - **ManagedProvider webhook teardown** — `connectionLifecycle` step ❺b deregisters webhook for `ManagedProvider` via `registration.deregister()`. Best-effort, won't block teardown.
+  - **ManagedProvider webhook registration** — OAuth callback now calls `registration.register()` and persists `webhookId` + `signingSecret` to `webhookSetupState` JSONB column.
+  - **PollingDef cron** — New Phase 4.5 Inngest function for ApiProvider polling. Cursor-persisted incremental pull → `console/webhook.delivered` same as live webhooks.
+- **Proxy API (new major section)**:
+  - **Universal authenticated proxy** — all post-connection provider API calls route through proxy. Single token resolution point, unified rate limit tracking, universal observability.
+  - **`ProxyEndpointDef`** — extends `ProviderApi.endpoints` with semantic metadata (`description`, `requiresActiveConnection`, `requiredScope`).
+  - **Service-auth + org-scoped paths** — internal services use `X-API-Key` shortcut; SDK/MCP uses org-scoped JWT with Gate 1 check.
+  - **Edge Config health cache** — 30s TTL sub-1ms Gate 1 check. `connectionLifecycle ❶` deletes cache entry immediately on gate close.
+- **Vector Endpoint Catalog (new)**:
+  - **Global catalog, org-filtered at query time** — one Pinecone record per endpoint per provider. Zero per-org re-indexing when new endpoints are added.
+  - **`gatewayProviderCatalogVersion` table** — diffs on deploy, only embeds changed endpoints.
+  - **`embedProviderEndpoints` Inngest function** — idempotent upsert/delete triggered by `platform/provider.catalog.updated` on startup.
+- **Proxy race conditions** — 13 races enumerated with resolution for each. Key insight: provider 401 fallback IS the self-healing trigger (fires health check, returns structured error, future requests caught at Gate 1).
+- **New diagrams**: Proxy architecture overview, MCP proxy flow (happy path + race), global catalog flow, lifecycle-race sequence.
+- **Phase 9 + 10 added** to Implementation Phases.
+- **Updated "What Changes"** table with proxy additions.
 
 ### 2026-03-18T02 — Align with provider architecture redesign
 
