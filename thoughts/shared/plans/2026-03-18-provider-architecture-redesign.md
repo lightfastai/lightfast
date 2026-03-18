@@ -1433,10 +1433,10 @@ const verified = verify(rawBody, c.req.raw.headers, secret);
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] `webhookSecretEnvKey` map no longer exists in the codebase
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Lint passes: `pnpm check`
+- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] `webhookSecretEnvKey` map no longer exists in the codebase
 
 #### Manual Verification:
 - [ ] All 4 webhook providers' signatures verify correctly via relay (test with ngrok + real webhooks)

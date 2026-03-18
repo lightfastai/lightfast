@@ -61,27 +61,6 @@ export interface WebhookContext {
   get(key: "resourceId"): string | null;
 }
 
-// ── Map provider names to their webhook secret env vars ──────────────────────
-
-const webhookSecretEnvKey: Partial<
-  Record<
-    ProviderName,
-    keyof Pick<
-      typeof env,
-      | "GITHUB_WEBHOOK_SECRET"
-      | "VERCEL_CLIENT_INTEGRATION_SECRET"
-      | "LINEAR_WEBHOOK_SIGNING_SECRET"
-      | "SENTRY_CLIENT_SECRET"
-    >
-  >
-> = {
-  github: "GITHUB_WEBHOOK_SECRET",
-  vercel: "VERCEL_CLIENT_INTEGRATION_SECRET",
-  linear: "LINEAR_WEBHOOK_SIGNING_SECRET",
-  sentry: "SENTRY_CLIENT_SECRET",
-  // apollo: no webhook secret — API-only provider, rejected by isWebhookProvider guard
-};
-
 // ── 1. Provider Guard ────────────────────────────────────────────────────────
 // Validates :provider param, attaches providerDef + providerName to context.
 
@@ -227,26 +206,31 @@ export const signatureVerify = createMiddleware<{
     return c.json({ error: "missing_body" }, 400);
   }
 
-  const secretEnvKey = webhookSecretEnvKey[providerName];
-  if (!secretEnvKey) {
-    log.warn("[webhook] missing webhook secret env key", {
+  // Resolve provider config on demand — no manual secret map needed.
+  // createConfig returns null for optional providers when their env vars are absent.
+  const providerConfig = providerDef.createConfig(
+    env as unknown as Record<string, string>,
+    { callbackBaseUrl: "" }
+  );
+  if (providerConfig == null) {
+    log.warn("[webhook] provider not configured (missing env vars)", {
       provider: providerName,
     });
-    return c.json({ error: "unknown_provider", provider: providerName }, 400);
+    return c.json({ error: "provider_not_configured" }, 500);
   }
-  const secret = env[secretEnvKey];
-  if (!secret) {
-    log.warn("[webhook] missing webhook secret", { provider: providerName });
-    return c.json({ error: "unknown_provider", provider: providerName }, 400);
-  }
+  const secret = providerDef.webhook.extractSecret(providerConfig);
 
   const verify =
     providerDef.webhook.verifySignature ??
     deriveVerifySignature(providerDef.webhook.signatureScheme);
   const valid = verify(rawBody, c.req.raw.headers, secret);
   if (!valid) {
-    const sigReceived = c.req.header("x-hub-signature-256") ?? "";
-    const sigExpected = `sha256=${computeHmac(rawBody, secret, "SHA-256")}`;
+    const scheme = providerDef.webhook.signatureScheme;
+    const sigReceived = c.req.header(scheme.signatureHeader) ?? "";
+    const sigExpected =
+      scheme.kind === "hmac"
+        ? `${scheme.prefix ?? ""}${computeHmac(rawBody, secret, scheme.algorithm === "sha256" ? "SHA-256" : "SHA-1")}`
+        : "(non-hmac scheme)";
     log.warn("[webhook] signature mismatch", {
       provider: providerName,
       body_length: rawBody.length,
