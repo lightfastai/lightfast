@@ -68,6 +68,14 @@ const viewerWithoutOrgResponse = {
   },
 };
 
+// ── auth kind ─────────────────────────────────────────────────────────────────
+
+describe("auth.kind", () => {
+  it("is 'oauth' — Linear uses per-user OAuth tokens", () => {
+    expect(linear.auth.kind).toBe("oauth");
+  });
+});
+
 // ── oauth.buildAuthUrl ─────────────────────────────────────────────────────────
 
 describe("oauth.buildAuthUrl", () => {

@@ -419,7 +419,7 @@ export const linear = defineWebhookProvider({
 
   auth: {
     kind: "oauth" as const,
-    buildAuthUrl: (config, state, options) => {
+    buildAuthUrl: (config, state, options?) => {
       const url = new URL("https://linear.app/oauth/authorize");
       url.searchParams.set("client_id", config.clientId);
       url.searchParams.set(

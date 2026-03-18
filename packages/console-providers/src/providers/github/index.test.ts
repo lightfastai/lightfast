@@ -60,159 +60,88 @@ beforeAll(() => {
 
 // ── Fixtures ───────────────────────────────────────────────────────────────────
 
-// ── oauth.buildAuthUrl ─────────────────────────────────────────────────────────
+// ── auth kind ─────────────────────────────────────────────────────────────────
 
-describe("oauth.buildAuthUrl", () => {
+describe("auth.kind", () => {
+  it("is 'app-token' — GitHub uses app-level credentials, not per-user OAuth", () => {
+    expect(github.auth.kind).toBe("app-token");
+  });
+
+  it("usesStoredToken is false — tokens are generated on demand", () => {
+    expect(github.auth.usesStoredToken).toBe(false);
+  });
+});
+
+// ── auth.buildInstallUrl ───────────────────────────────────────────────────────
+
+describe("auth.buildInstallUrl", () => {
+  // Narrow via kind to access app-token-specific method
+  const appTokenAuth = github.auth.kind === "app-token" ? github.auth : null;
+
+  it("is an app-token provider", () => {
+    expect(appTokenAuth).not.toBeNull();
+  });
+
   it("builds correct GitHub App installation URL with appSlug", () => {
     const config: GitHubConfig = { ...testConfig, appSlug: "my-github-app" };
-    const url = github.auth.buildAuthUrl(config, "state-abc");
+    const url = appTokenAuth!.buildInstallUrl(config, "state-abc");
     expect(url).toContain(
       "https://github.com/apps/my-github-app/installations/new"
     );
   });
 
   it("embeds state as a query parameter", () => {
-    const url = github.auth.buildAuthUrl(testConfig, "my-state-value");
+    const url = appTokenAuth!.buildInstallUrl(testConfig, "my-state-value");
     expect(url).toContain("state=my-state-value");
   });
 
   it("returns a string", () => {
-    expect(typeof github.auth.buildAuthUrl(testConfig, "s")).toBe("string");
+    expect(typeof appTokenAuth!.buildInstallUrl(testConfig, "s")).toBe("string");
   });
 });
 
-// ── oauth.exchangeCode ────────────────────────────────────────────────────────
+// ── auth.revokeAccess ─────────────────────────────────────────────────────────
 
-describe("oauth.exchangeCode", () => {
-  it("returns OAuthTokens with accessToken, tokenType, and scope on success", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          access_token: "ghu_token123",
-          token_type: "bearer",
-          scope: "repo,user",
-        }),
-    });
+describe("auth.revokeAccess", () => {
+  const appTokenAuth = github.auth.kind === "app-token" ? github.auth : null;
 
-    const tokens = await github.auth.exchangeCode(
-      testConfig,
-      "code123",
-      "https://app.example.com/callback"
-    );
-    expect(tokens.accessToken).toBe("ghu_token123");
-    expect(tokens.tokenType).toBe("bearer");
-    expect(tokens.scope).toBe("repo,user");
-    expect(tokens.raw).toBeDefined();
-  });
-
-  it("throws when GitHub returns an OAuth error object", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          error: "bad_verification_code",
-          error_description: "The code passed is incorrect or expired.",
-          error_uri: "https://docs.github.com/",
-        }),
-    });
+  it("calls DELETE to the GitHub app installations endpoint", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 204 });
 
     await expect(
-      github.auth.exchangeCode(
-        testConfig,
-        "bad-code",
-        "https://app.example.com/callback"
-      )
-    ).rejects.toThrow("GitHub OAuth error");
-  });
-
-  it("throws on HTTP error status", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
-
-    await expect(
-      github.auth.exchangeCode(
-        testConfig,
-        "code",
-        "https://app.example.com/callback"
-      )
-    ).rejects.toThrow("GitHub token exchange failed: 401");
-  });
-
-  it("sends POST with correct content-type and accept headers", async () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: () =>
-        Promise.resolve({
-          access_token: "ghu_x",
-          token_type: "bearer",
-          scope: "",
-        }),
-    });
-
-    await github.auth.exchangeCode(
-      testConfig,
-      "code",
-      "https://app.example.com/cb"
-    );
-
-    const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("https://github.com/login/oauth/access_token");
-    expect((init.headers as Record<string, string>).Accept).toBe(
-      "application/json"
-    );
-    expect(init.method).toBe("POST");
-  });
-});
-
-// ── oauth.refreshToken ────────────────────────────────────────────────────────
-
-describe("oauth.refreshToken", () => {
-  it("always rejects — GitHub user tokens do not support refresh", async () => {
-    await expect(
-      github.auth.refreshToken(testConfig, "any-refresh-token")
-    ).rejects.toThrow("do not support refresh");
-  });
-
-  it("does not call fetch", async () => {
-    await github.auth.refreshToken(testConfig, "t").catch(vi.fn());
-    expect(mockFetch).not.toHaveBeenCalled();
-  });
-});
-
-// ── oauth.revokeToken ─────────────────────────────────────────────────────────
-
-describe("oauth.revokeToken", () => {
-  it("calls DELETE to the GitHub token endpoint", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true });
-
-    await expect(
-      github.auth.revokeToken(testConfig, "ghu_token123")
+      appTokenAuth?.revokeAccess?.(testConfig, "12345")
     ).resolves.toBeUndefined();
 
     const [url, init] = mockFetch.mock.calls[0] as [string, RequestInit];
-    expect(url).toContain(testConfig.clientId);
+    expect(url).toContain("https://api.github.com/app/installations/12345");
     expect(init.method).toBe("DELETE");
   });
 
-  it("uses Basic auth with clientId:clientSecret", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: true });
+  it("accepts 404 as success — installation already uninstalled", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 404 });
 
-    await github.auth.revokeToken(testConfig, "ghu_token");
+    await expect(
+      appTokenAuth?.revokeAccess?.(testConfig, "12345")
+    ).resolves.toBeUndefined();
+  });
+
+  it("throws on other HTTP errors", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+    await expect(
+      appTokenAuth?.revokeAccess?.(testConfig, "12345")
+    ).rejects.toThrow("GitHub installation revocation failed: 500");
+  });
+
+  it("uses Bearer JWT auth header", async () => {
+    mockFetch.mockResolvedValueOnce({ ok: true, status: 204 });
+
+    await appTokenAuth?.revokeAccess?.(testConfig, "12345");
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     const authHeader =
       (init.headers as Record<string, string>).Authorization ?? "";
-    expect(authHeader).toMatch(/^Basic /);
-    const decoded = atob(authHeader.replace("Basic ", ""));
-    expect(decoded).toBe(`${testConfig.clientId}:${testConfig.clientSecret}`);
-  });
-
-  it("throws on HTTP error", async () => {
-    mockFetch.mockResolvedValueOnce({ ok: false, status: 422 });
-
-    await expect(
-      github.auth.revokeToken(testConfig, "bad-token")
-    ).rejects.toThrow("GitHub token revocation failed: 422");
+    expect(authHeader).toMatch(/^Bearer /);
   });
 });
 

@@ -321,7 +321,7 @@ export const vercel = defineWebhookProvider({
       return url.toString();
     },
     exchangeCode: exchangeVercelCode,
-    refreshToken: (): Promise<OAuthTokens> => {
+    refreshToken: (_config, _refreshToken): Promise<OAuthTokens> => {
       return Promise.reject(new Error("Vercel tokens do not support refresh"));
     },
     revokeToken: async (_config, accessToken) => {

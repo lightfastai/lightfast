@@ -2,13 +2,12 @@ import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "../../crypto";
 import { actionEvent, defineWebhookProvider } from "../../define";
 import { createRS256JWT } from "../../jwt";
-import type { CallbackResult, OAuthTokens } from "../../types";
+import type { CallbackResult } from "../../types";
 import { githubApi } from "./api";
 import type { GitHubAccountInfo, GitHubConfig } from "./auth";
 import {
   githubAccountInfoSchema,
   githubConfigSchema,
-  githubOAuthResponseSchema,
   githubProviderConfigSchema,
 } from "./auth";
 import { githubBackfill } from "./backfill";
@@ -153,73 +152,41 @@ export const github = defineWebhookProvider({
   },
 
   auth: {
-    kind: "oauth" as const,
-    buildAuthUrl: (config, state) => {
+    kind: "app-token" as const,
+    buildInstallUrl: (config, state) => {
       const url = new URL(
         `https://github.com/apps/${config.appSlug}/installations/new`
       );
       url.searchParams.set("state", state);
       return url.toString();
     },
-    exchangeCode: async (config, code, redirectUri) => {
-      const response = await fetch(
-        "https://github.com/login/oauth/access_token",
-        {
-          method: "POST",
-          signal: AbortSignal.timeout(15_000),
-          headers: {
-            "Content-Type": "application/json",
-            Accept: "application/json",
-          },
-          body: JSON.stringify({
-            client_id: config.clientId,
-            client_secret: config.clientSecret,
-            code,
-            redirect_uri: redirectUri,
-          }),
-        }
-      );
-      if (!response.ok) {
-        throw new Error(`GitHub token exchange failed: ${response.status}`);
-      }
-      const data = githubOAuthResponseSchema.parse(await response.json());
-      if ("error" in data) {
-        throw new Error(`GitHub OAuth error: ${data.error_description}`);
-      }
-      return {
-        accessToken: data.access_token,
-        scope: data.scope,
-        tokenType: data.token_type,
-        raw: data as Record<string, unknown>,
-      } satisfies OAuthTokens;
+    usesStoredToken: false as const,
+    getActiveToken: async (config, storedExternalId, _storedAccessToken) => {
+      return getInstallationToken(config, storedExternalId);
     },
-    refreshToken: (): Promise<OAuthTokens> => {
-      return Promise.reject(
-        new Error("GitHub user tokens do not support refresh")
-      );
-    },
-    revokeToken: async (config, accessToken) => {
-      const credentials = btoa(`${config.clientId}:${config.clientSecret}`);
+    getAppToken: async (config) => createGitHubAppJWT(config),
+    revokeAccess: async (config, _externalId) => {
+      // GitHub App installations are revoked via the GitHub UI or GitHub API.
+      // Installation tokens expire automatically; no explicit revocation call needed.
+      // The app can be uninstalled via DELETE /app/installations/:installation_id.
+      const jwt = await createGitHubAppJWT(config);
       const response = await fetch(
-        `https://api.github.com/applications/${config.clientId}/token`,
+        `https://api.github.com/app/installations/${_externalId}`,
         {
           method: "DELETE",
           signal: AbortSignal.timeout(15_000),
           headers: {
-            Authorization: `Basic ${credentials}`,
-            "Content-Type": "application/json",
-            Accept: "application/vnd.github.v3+json",
+            Authorization: `Bearer ${jwt}`,
+            Accept: "application/vnd.github+json",
+            "User-Agent": "lightfast-gateway",
+            "X-GitHub-Api-Version": "2022-11-28",
           },
-          body: JSON.stringify({ access_token: accessToken }),
         }
       );
-      if (!response.ok) {
-        throw new Error(`GitHub token revocation failed: ${response.status}`);
+      // 204 = success, 404 = already uninstalled — both are fine
+      if (!response.ok && response.status !== 404) {
+        throw new Error(`GitHub installation revocation failed: ${response.status}`);
       }
-    },
-    usesStoredToken: false,
-    getActiveToken: async (config, storedExternalId, _storedAccessToken) => {
-      return getInstallationToken(config, storedExternalId);
     },
     processCallback: (_config, query) => {
       const installationId = query.installation_id;

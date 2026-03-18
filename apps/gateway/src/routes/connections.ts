@@ -118,14 +118,17 @@ connections.get(
       .exec();
 
     const auth = providerDef.auth;
-    if (auth.kind !== "oauth") {
+    let url: string;
+    if (auth.kind === "oauth") {
+      // SAFETY: config is providerConfigs[providerName], created by the same provider's
+      // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
+      // statically because it serves all providers from a single Record<string, unknown>.
+      url = auth.buildAuthUrl(config as never, state);
+    } else if (auth.kind === "app-token") {
+      url = auth.buildInstallUrl(config as never, state);
+    } else {
       return c.json({ error: "provider_does_not_support_oauth" }, 400);
     }
-
-    // SAFETY: config is providerConfigs[providerName], created by the same provider's
-    // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
-    // statically because it serves all providers from a single Record<string, unknown>.
-    const url = auth.buildAuthUrl(config as never, state);
 
     return c.json({ url, state });
   }
@@ -259,11 +262,12 @@ connections.get("/:provider/callback", async (c) => {
     }
 
     const auth = providerDef.auth;
-    if (auth.kind !== "oauth") {
+    if (auth.kind !== "oauth" && auth.kind !== "app-token") {
       return c.json({ error: "provider_does_not_support_oauth" }, 400);
     }
 
-    // Pure provider logic — no DB, no Hono coupling
+    // Pure provider logic — no DB, no Hono coupling.
+    // Both OAuthDef and AppTokenDef have processCallback — TypeScript narrows here.
     // SAFETY: config is providerConfigs[providerName], created by the same provider's
     // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
     // statically because it serves all providers from a single Record<string, unknown>.

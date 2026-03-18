@@ -100,36 +100,32 @@ export interface OAuthDef<
   TConfig,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
 > {
-  buildAuthUrl: (
+  readonly buildAuthUrl: (
     config: TConfig,
     state: string,
     options?: Record<string, unknown>
   ) => string;
-  exchangeCode: (
+  readonly exchangeCode: (
     config: TConfig,
     code: string,
     redirectUri: string
   ) => Promise<OAuthTokens>;
-  /**
-   * Get a usable bearer token for API calls.
-   * Standard OAuth providers return storedAccessToken directly.
-   * GitHub App generates a JWT-based installation token on-demand.
-   */
-  getActiveToken: (
+  /** Get a usable bearer token — returns the stored access token directly. */
+  readonly getActiveToken: (
     config: TConfig,
     storedExternalId: string,
     storedAccessToken: string | null
   ) => Promise<string>;
   readonly kind: "oauth";
   /** Extract params from callback query string, call provider APIs, return result. No DB, no Hono. */
-  processCallback: (
+  readonly processCallback: (
     config: TConfig,
     query: Record<string, string>
   ) => Promise<CallbackResult<TAccountInfo>>;
-  refreshToken: (config: TConfig, refreshToken: string) => Promise<OAuthTokens>;
-  revokeToken: (config: TConfig, accessToken: string) => Promise<void>;
-  /** Whether the provider stores OAuth tokens in the DB. False for providers that generate tokens on-demand (e.g., GitHub App JWT). */
-  readonly usesStoredToken: boolean;
+  readonly refreshToken: (config: TConfig, refreshToken: string) => Promise<OAuthTokens>;
+  readonly revokeToken: (config: TConfig, accessToken: string) => Promise<void>;
+  /** OAuth tokens are always persisted — the stored token IS the active credential. */
+  readonly usesStoredToken: true;
 }
 
 /** API-key auth — user pastes key, stored encrypted in token vault as accessToken */
@@ -163,11 +159,53 @@ export interface ApiKeyDef<
   readonly validateKey?: (config: TConfig, apiKey: string) => Promise<boolean>;
 }
 
+/**
+ * App-token auth — provider uses app-level credentials (private key, app ID)
+ * to generate per-installation tokens on demand. No token is stored.
+ * Examples: GitHub App (RS256 JWT → installation access token).
+ */
+export interface AppTokenDef<
+  TConfig,
+  TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+> {
+  readonly kind: "app-token";
+  readonly buildInstallUrl: (
+    config: TConfig,
+    state: string,
+    options?: Record<string, unknown>
+  ) => string;
+  readonly processCallback: (
+    config: TConfig,
+    query: Record<string, string>
+  ) => Promise<CallbackResult<TAccountInfo>>;
+  /** Generate a per-installation access token on demand (never reads storedAccessToken). */
+  readonly getActiveToken: (
+    config: TConfig,
+    storedExternalId: string,
+    storedAccessToken: string | null
+  ) => Promise<string>;
+  /** Generate an app-level JWT (e.g. GitHub RS256 JWT for app-level API calls). */
+  readonly getAppToken?: (config: TConfig) => Promise<string>;
+  readonly buildAuthHeader?: (token: string) => string;
+  readonly revokeAccess?: (config: TConfig, externalId: string) => Promise<void>;
+  /** App-token providers never store tokens — installations use on-demand generation. */
+  readonly usesStoredToken: false;
+}
+
+export function isAppTokenAuth<TConfig>(
+  auth: AuthDef<TConfig>
+): auth is AppTokenDef<TConfig> {
+  return auth.kind === "app-token";
+}
+
 /** Discriminated union of all auth strategies */
 export type AuthDef<
   TConfig,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
-> = OAuthDef<TConfig, TAccountInfo> | ApiKeyDef<TConfig, TAccountInfo>;
+> =
+  | OAuthDef<TConfig, TAccountInfo>
+  | ApiKeyDef<TConfig, TAccountInfo>
+  | AppTokenDef<TConfig, TAccountInfo>;
 
 // ── Event Classifier ────────────────────────────────────────────────────────
 
@@ -479,11 +517,20 @@ interface BaseProviderFields<
 
 /**
  * Webhook + OAuth provider (GitHub, Linear, Sentry, Vercel).
- * Receives events via HMAC-signed webhook POST. Authenticates via OAuth2.
+ * Receives events via HMAC-signed webhook POST. Authenticates via OAuth2 or App-token.
+ *
+ * TAuth is inferred from the `auth` block passed to `defineWebhookProvider`, giving
+ * each concrete provider its exact auth type (e.g. `OAuthDef<LinearConfig>` for Linear,
+ * `AppTokenDef<GitHubConfig>` for GitHub) — no narrowing ceremony at call sites.
  */
 export interface WebhookProvider<
   TConfig = unknown,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TAuth extends
+    | OAuthDef<TConfig, TAccountInfo>
+    | AppTokenDef<TConfig, TAccountInfo> =
+    | OAuthDef<TConfig, TAccountInfo>
+    | AppTokenDef<TConfig, TAccountInfo>,
   TCategories extends Record<string, CategoryDef> = Record<string, CategoryDef>,
   TEvents extends Record<string, EventDefinition> = Record<
     string,
@@ -499,8 +546,8 @@ export interface WebhookProvider<
     TAccountInfoSchema,
     TProviderConfigSchema
   > {
-  /** Auth strategy — always OAuth for webhook providers */
-  readonly auth: OAuthDef<TConfig, TAccountInfo>;
+  /** Auth strategy — inferred as the specific concrete auth type for this provider */
+  readonly auth: TAuth;
   /** Historical data import */
   readonly backfill: BackfillDef;
   /** Classifies incoming events as lifecycle | data | unknown */
@@ -563,6 +610,7 @@ export type ProviderDefinition<
   | WebhookProvider<
       TConfig,
       TAccountInfo,
+      OAuthDef<TConfig, TAccountInfo> | AppTokenDef<TConfig, TAccountInfo>,
       TCategories,
       TEvents,
       TAccountInfoSchema,
@@ -619,6 +667,11 @@ function buildEnvGetter(
 export function defineWebhookProvider<
   TConfig,
   TAccountInfo extends BaseProviderAccountInfo = BaseProviderAccountInfo,
+  TAuth extends
+    | OAuthDef<TConfig, TAccountInfo>
+    | AppTokenDef<TConfig, TAccountInfo> =
+    | OAuthDef<TConfig, TAccountInfo>
+    | AppTokenDef<TConfig, TAccountInfo>,
   const TCategories extends Record<string, CategoryDef> = Record<
     string,
     CategoryDef
@@ -634,6 +687,7 @@ export function defineWebhookProvider<
     WebhookProvider<
       TConfig,
       TAccountInfo,
+      TAuth,
       TCategories,
       TEvents,
       TAccountInfoSchema,
@@ -644,6 +698,7 @@ export function defineWebhookProvider<
 ): WebhookProvider<
   TConfig,
   TAccountInfo,
+  TAuth,
   TCategories,
   TEvents,
   TAccountInfoSchema,
@@ -661,6 +716,7 @@ export function defineWebhookProvider<
   return Object.freeze(result) as WebhookProvider<
     TConfig,
     TAccountInfo,
+    TAuth,
     TCategories,
     TEvents,
     TAccountInfoSchema,

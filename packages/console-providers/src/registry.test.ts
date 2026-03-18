@@ -174,11 +174,13 @@ describe("ProviderDefinition contract", () => {
     expectTypeOf<"parsePayload">().toMatchTypeOf<WebhookKeys>();
   });
 
-  it("each provider has all required oauth methods", () => {
-    type OAuthKeys = keyof typeof PROVIDERS.github.auth;
-    expectTypeOf<"buildAuthUrl">().toMatchTypeOf<OAuthKeys>();
-    expectTypeOf<"exchangeCode">().toMatchTypeOf<OAuthKeys>();
-    expectTypeOf<"processCallback">().toMatchTypeOf<OAuthKeys>();
-    expectTypeOf<"getActiveToken">().toMatchTypeOf<OAuthKeys>();
+  it("each provider auth has shared contract methods (kind, processCallback, getActiveToken)", () => {
+    // GitHub uses app-token auth — only shared methods are guaranteed on the union type.
+    // OAuth-specific methods (buildAuthUrl, exchangeCode, etc.) are tested per provider.
+    type GHAuthKeys = keyof typeof PROVIDERS.github.auth;
+    expectTypeOf<"kind">().toMatchTypeOf<GHAuthKeys>();
+    expectTypeOf<"processCallback">().toMatchTypeOf<GHAuthKeys>();
+    expectTypeOf<"getActiveToken">().toMatchTypeOf<GHAuthKeys>();
+    expectTypeOf<"usesStoredToken">().toMatchTypeOf<GHAuthKeys>();
   });
 });
