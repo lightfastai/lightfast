@@ -316,15 +316,23 @@ export {
 export { vercel } from "./providers/vercel/index";
 export type {
   AccountInfoFor,
+  AnyEndpointKey,
   AuthDefFor,
+  EndpointKey,
+  EndpointKeysFor,
   EventKey,
   EventKeysFor,
   EventRegistryEntry,
+  HasBuildAuth,
+  PathParamsFor,
   ProviderAccountInfo,
   ProviderConfig,
+  ProviderKey,
   ProviderName,
   ProviderShape,
+  ResponseDataFor,
   SourceType,
+  TypedProxyRequest,
 } from "./registry";
 // ── Registry ─────────────────────────────────────────────────────────────────
 // ── Provider Config (JSONB shapes for workspace_integrations.provider_config) ─

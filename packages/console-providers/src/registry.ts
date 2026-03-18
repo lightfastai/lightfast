@@ -3,6 +3,7 @@ import type {
   ActionEventDef,
   EventDefinition,
   ProviderDefinition,
+  ProxyExecuteRequest,
 } from "./define";
 import type { PROVIDER_DISPLAY, ProviderSlug } from "./display";
 import { providerSlugSchema } from "./display";
@@ -188,6 +189,91 @@ export type EventKeysFor<K extends keyof typeof PROVIDERS> =
   ProviderShape<K> extends { events: Record<infer E extends string, unknown> }
     ? E
     : never;
+
+// ── EndpointKey — compile-time mapped type ────────────────────────────────────
+// Mirrors EventKey derivation from the Phantom Provider Graph pattern.
+// Auto-updates when endpoints change.
+
+/** All provider slugs — type alias for `keyof typeof PROVIDERS`. */
+export type ProviderKey = keyof typeof PROVIDERS;
+
+/** Union of endpoint IDs for a provider by slug. */
+export type EndpointKey<P extends keyof typeof PROVIDERS> =
+  keyof (typeof PROVIDERS)[P]["api"]["endpoints"] & string;
+
+/** Wide union of all endpoint keys across all providers. */
+export type AnyEndpointKey = {
+  [P in keyof typeof PROVIDERS]: EndpointKey<P>;
+}[keyof typeof PROVIDERS];
+
+/** Union of endpoint keys available for a provider by slug. */
+export type EndpointKeysFor<K extends keyof typeof PROVIDERS> = EndpointKey<K>;
+
+// ── Path param extraction ──────────────────────────────────────────────────────
+
+type ExtractPathParams<Path extends string> =
+  Path extends `${string}{${infer Param}}${infer Rest}`
+    ? Param | ExtractPathParams<Rest>
+    : never;
+
+/**
+ * Required pathParams keys for a given provider + endpoint.
+ * `undefined` if the path has no `{param}` placeholders.
+ */
+export type PathParamsFor<
+  P extends keyof typeof PROVIDERS,
+  E extends EndpointKey<P>,
+> =
+  ExtractPathParams<
+    (typeof PROVIDERS)[P]["api"]["endpoints"][E]["path"]
+  > extends never
+    ? undefined
+    : Record<
+        ExtractPathParams<(typeof PROVIDERS)[P]["api"]["endpoints"][E]["path"]>,
+        string
+      >;
+
+/**
+ * Typed proxy request for a known provider + endpoint at compile time.
+ * Use when the caller knows the provider slug and endpoint key statically.
+ *
+ * For runtime-dynamic calls (slug from DB): use the base ProxyExecuteRequest.
+ */
+export type TypedProxyRequest<
+  P extends keyof typeof PROVIDERS,
+  E extends EndpointKey<P>,
+> = Omit<ProxyExecuteRequest, "endpointId" | "pathParams"> & {
+  readonly endpointId: E;
+  readonly pathParams: PathParamsFor<P, E>;
+};
+
+// ── ResponseDataFor — thread responseSchema to call sites ─────────────────────
+
+/** Inferred response data type for a provider + endpoint. */
+export type ResponseDataFor<
+  P extends keyof typeof PROVIDERS,
+  E extends EndpointKey<P>,
+> = z.infer<(typeof PROVIDERS)[P]["api"]["endpoints"][E]["responseSchema"]>;
+
+// ── HasBuildAuth — auth mode as type-level discriminant ───────────────────────
+
+/**
+ * True when endpoint[E] for provider[P] defines buildAuth (bypasses token vault).
+ * False when it uses the default getActiveToken → token vault flow.
+ *
+ * Examples:
+ *   HasBuildAuth<"github", "get-app-installation"> → true  (RS256 JWT)
+ *   HasBuildAuth<"github", "get-repo">             → false (installation token)
+ *   HasBuildAuth<"linear", "graphql">              → false (OAuth token)
+ */
+export type HasBuildAuth<
+  P extends keyof typeof PROVIDERS,
+  E extends EndpointKey<P>,
+> = (typeof PROVIDERS)[P]["api"]["endpoints"][E] extends {
+  buildAuth: (...args: any[]) => any;
+}
+  ? true
+  : false;
 
 // ── Provider Lookup ───────────────────────────────────────────────────────────
 

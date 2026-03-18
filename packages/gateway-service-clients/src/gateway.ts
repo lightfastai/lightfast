@@ -2,14 +2,18 @@ import {
   type BackfillRunReadRecord,
   type BackfillRunRecord,
   backfillRunReadRecord,
+  type EndpointKey,
   type GatewayConnection,
   type GatewayTokenResult,
   gatewayConnectionSchema,
   gatewayTokenResultSchema,
+  type ProviderKey,
   type ProxyEndpointsResponse,
   type ProxyExecuteResponse,
   proxyEndpointsResponseSchema,
   proxyExecuteResponseSchema,
+  type ResponseDataFor,
+  type TypedProxyRequest,
 } from "@repo/console-providers";
 import { z } from "zod";
 
@@ -17,6 +21,33 @@ import { HttpError } from "./errors";
 import type { ServiceClientConfig } from "./headers";
 import { buildServiceHeaders } from "./headers";
 import { gatewayUrl } from "./urls";
+
+// ── Typed executeApi overloads ────────────────────────────────────────────────
+// Object literal methods don't support TypeScript overload declarations, so we
+// describe the two call signatures via a call-signature object type and cast.
+// The narrow overload's data type is a compile-time assertion — the runtime
+// still validates through proxyExecuteResponseSchema (data: unknown).
+interface ExecuteApiFn {
+  /** Narrow overload: statically known provider + endpoint → typed data. */
+  <P extends ProviderKey, E extends EndpointKey<P>>(
+    installationId: string,
+    request: TypedProxyRequest<P, E>
+  ): Promise<{
+    status: number;
+    data: ResponseDataFor<P, E>;
+    headers: Record<string, string>;
+  }>;
+  /** Wide overload: runtime-dynamic → data: unknown (existing behaviour). */
+  (
+    installationId: string,
+    request: {
+      endpointId: string;
+      pathParams?: Record<string, string>;
+      queryParams?: Record<string, string>;
+      body?: unknown;
+    }
+  ): Promise<ProxyExecuteResponse>;
+}
 
 /**
  * Create a typed HTTP client for the gateway service.
@@ -91,7 +122,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
       });
     },
 
-    async executeApi(
+    executeApi: (async (
       installationId: string,
       request: {
         endpointId: string;
@@ -99,7 +130,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
         queryParams?: Record<string, string>;
         body?: unknown;
       }
-    ): Promise<ProxyExecuteResponse> {
+    ): Promise<ProxyExecuteResponse> => {
       const response = await fetch(
         `${gatewayUrl}/${installationId}/proxy/execute`,
         {
@@ -121,7 +152,7 @@ export function createGatewayClient(config: ServiceClientConfig) {
       }
       const data = await response.json();
       return proxyExecuteResponseSchema.parse(data);
-    },
+    }) as unknown as ExecuteApiFn,
 
     async getApiEndpoints(
       installationId: string
