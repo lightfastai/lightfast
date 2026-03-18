@@ -12,6 +12,7 @@ export type {
   AuthKind,
   BackfillContext,
   BackfillDef,
+  BackfillDepth,
   BackfillEntityHandler,
   BackfillWebhookEvent,
   CategoryDef,
@@ -27,6 +28,8 @@ export type {
   ProviderApi,
   ProviderDefinition,
   ProviderKind,
+  ProxyExecuteRequest,
+  ProxyExecuteResponse,
   RateLimit,
   ResourcePickerDef,
   ResourcePickerExecuteApiFn,
@@ -40,7 +43,9 @@ export {
   actionDefSchema,
   actionEvent,
   authKindSchema,
+  BACKFILL_DEPTH_OPTIONS,
   backfillContextSchema,
+  backfillDepthSchema,
   backfillWebhookEventSchema,
   categoryDefSchema,
   connectionStatusSchema,
@@ -53,6 +58,8 @@ export {
   isAppTokenAuth,
   isWebhookProvider,
   providerKindSchema,
+  proxyExecuteRequestSchema,
+  proxyExecuteResponseSchema,
   rateLimitSchema,
   runtimeConfigSchema,
   signatureSchemeSchema,
@@ -183,6 +190,23 @@ export type { EdgeRule } from "./types";
 // EVENT_REGISTRY, EventKey, and ALL_*_EVENTS are now derived from PROVIDERS
 // in registry.ts — no hand-maintained event-registry.ts needed.
 
+// ── Backfill Orchestration Contracts ──────────────────────────────────────────
+export type {
+  BackfillEstimatePayload,
+  BackfillRunReadRecord,
+  BackfillRunRecord,
+  BackfillTriggerPayload,
+  GwInstallationBackfillConfig,
+} from "./backfill-contracts";
+export {
+  BACKFILL_TERMINAL_STATUSES,
+  backfillEstimatePayload,
+  backfillRunReadRecord,
+  backfillRunRecord,
+  backfillTerminalStatusSchema,
+  backfillTriggerPayload,
+  gwInstallationBackfillConfigSchema,
+} from "./backfill-contracts";
 // ── Crypto & JWT ──────────────────────────────────────────────────────────────
 export {
   computeHmac,
@@ -201,40 +225,16 @@ export {
 } from "./display";
 // ── Event Normalization ───────────────────────────────────────────────────────
 export { deriveObservationType, getBaseEventType } from "./event-normalization";
+// ── Gateway API Response Shapes ───────────────────────────────────────────────
 export type {
-  BackfillEstimatePayload,
-  BackfillRunReadRecord,
-  BackfillRunRecord,
-  BackfillTriggerPayload,
   GatewayConnection,
   GatewayTokenResult,
-  GwInstallationBackfillConfig,
   ProxyEndpointsResponse,
-  ProxyExecuteRequest,
-  ProxyExecuteResponse,
-  ServiceAuthWebhookBody,
-  WebhookEnvelope,
-  WebhookReceiptPayload,
 } from "./gateway";
-// ── Gateway Service Contracts ─────────────────────────────────────────────────
 export {
-  BACKFILL_DEPTH_OPTIONS,
-  BACKFILL_TERMINAL_STATUSES,
-  backfillDepthSchema,
-  backfillEstimatePayload,
-  backfillRunReadRecord,
-  backfillRunRecord,
-  backfillTerminalStatusSchema,
-  backfillTriggerPayload,
   gatewayConnectionSchema,
   gatewayTokenResultSchema,
-  gwInstallationBackfillConfigSchema,
   proxyEndpointsResponseSchema,
-  proxyExecuteRequestSchema,
-  proxyExecuteResponseSchema,
-  serviceAuthWebhookBodySchema,
-  webhookEnvelopeSchema,
-  webhookReceiptPayloadSchema,
 } from "./gateway";
 export { createRS256JWT } from "./jwt";
 // ── Provider Definitions ──────────────────────────────────────────────────────
@@ -366,3 +366,14 @@ export {
   sanitizePostTransformEvent,
   validatePostTransformEvent,
 } from "./validation";
+// ── Relay ↔ Console Webhook Pipeline Wire Contracts ───────────────────────────
+export type {
+  ServiceAuthWebhookBody,
+  WebhookEnvelope,
+  WebhookReceiptPayload,
+} from "./wire";
+export {
+  serviceAuthWebhookBodySchema,
+  webhookEnvelopeSchema,
+  webhookReceiptPayloadSchema,
+} from "./wire";

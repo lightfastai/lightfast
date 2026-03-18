@@ -13,7 +13,9 @@ The provider system (`packages/console-providers/src/`) has a 2-tier discriminat
 - `define.ts:554-558` — `WebhookProvider.classifier` and `WebhookProvider.lifecycle` are required but **never consumed** at runtime — dead code across all apps (relay, gateway, backfill); `connectionLifecycleWorkflow` referenced in comments does not exist
 - `registry.ts:22-28` — `ProviderConfigMap` must be manually updated alongside `PROVIDERS`
 - `registry.ts:136-155` — Two manual `z.discriminatedUnion` tuples must be updated per provider
-- `display.ts:18-67` — 89-line static object, separate from provider definitions, must be kept in sync
+- `display.ts:18-67` — 89-line static object duplicating `name`, `displayName`, `description` from provider definitions; sync enforced only by `display-sync.test.ts` at test-run time, not compile time
+- 19 client-side consumers of `display.ts` across `apps/console` (13 `'use client'` components, 6 server components); all icon rendering flows through a single `ProviderIcon` component in `apps/console/src/lib/provider-icon.tsx`
+- `@repo/console-providers` has two tsup entry points: `"."` (server, full registry) and `"./display"` (client-safe, zero runtime imports); the client/server split is a **convention** — no `server-only` enforcement exists to prevent barrel imports in client code
 - `relay/src/middleware/webhook.ts:65-82` — `webhookSecretEnvKey` manual map, separate from provider definitions
 - `gateway.ts` — 222 lines mixing 4 distinct cross-service contracts
 - No `signatureScheme` field exists — each provider implements `verifySignature` independently
@@ -33,9 +35,10 @@ After all 10 changes:
 - `ApiProvider` can optionally receive inbound webhooks via `inbound?: InboundWebhookDef` (Clerk, Datadog)
 - `WebhookProvider.auth` accepts full `AuthDef` — webhook providers can use API key auth (Stripe)
 - Ed25519 signature verification is supported — Clerk/Svix/Discord webhooks are typeable
-- Display metadata lives on provider definitions — no separate `display.ts` to maintain
+- **`display.ts` is the canonical source of truth for all display metadata** — providers spread from it; no duplication between display and provider definitions
+- Adding a provider to `display.ts` without `comingSoon: true` is a **compile-time error** until a matching implementation exists in `PROVIDERS` (type-level enforcement, zero runtime overhead)
+- `import "server-only"` on `index.ts` makes it a **build-time error** for any client component to import from the barrel — hard boundary, not convention
 - `gateway.ts` is split into single-consumer contract files
-- `ClientShape<P>` enforces bundle safety at the type level
 - **Every provider in the research taxonomy has a typed home** — no architectural decisions needed when new providers arrive
 
 ### Verification:
@@ -60,10 +63,12 @@ pnpm --filter @repo/console-providers test   # all tests pass
 - **Classifier-based event routing** — `EventClassifier` ("lifecycle" | "data" | "unknown") was dead code and is deleted in Phase 2; future DLQ/routing logic can be re-introduced when the relay actually needs it
 - **HealthCheck implementations** — Phase 2 defines the `HealthCheckDef` interface only; per-provider implementations (API calls, 401 detection) are a follow-up task
 - **Webhook-based lifecycle detection** — the old model (GitHub `installation.deleted`, Vercel `integration-configuration.removed`) is replaced by simple 401-poll health checks; providers that send lifecycle-type webhooks still receive them as data events
+- **`ClientShape<P>` / `extractClientShape` / `client-registry.ts` / `PROVIDER_CLIENT_REGISTRY`** — superseded by display-first architecture; `display.ts` is already the client registry; no build-time extraction needed
+- **Moving display data to `index.ts` barrel** — `display.ts` stays a separate zero-import entry point; providers import FROM it (not the other way around)
 
 ## Implementation Approach
 
-Changes are ordered by dependency. Phases 1-3 are sequential (each builds on the previous). Phases 4-6 and 8 are largely independent and can be done in any order after Phase 3. Phase 7 requires both Phase 3 (relay uses `deriveVerifySignature`) **and** Phase 9's `hasInboundWebhooks` type guard before the relay guard is correct. Phase 9 depends on Phase 3. Phase 10 depends on Phases 3 and 9 (extends `SignatureScheme` and updates `hasInboundWebhooks`).
+Changes are ordered by dependency. Phases 1-3 are sequential (each builds on the previous). **Phase 4 absorbs the original Phases 5 and 8** — all three address the registry architecture and have no external dependencies beyond Phase 3. Phases 4 and 6 are independent and can be done in any order after Phase 3. Phase 7 requires both Phase 3 (relay uses `deriveVerifySignature`) **and** Phase 9's `hasInboundWebhooks` type guard before the relay guard is correct. Phase 9 depends on Phase 3. Phase 10 depends on Phases 3 and 9 (extends `SignatureScheme` and updates `hasInboundWebhooks`).
 
 **Type-safety principle**: Test type-level assertions inside `console-providers` at each phase boundary before touching any consumer (relay, gateway, backfill, console). The provider package must surface the correct narrow types so consumers never need type casts.
 
@@ -506,45 +511,647 @@ export type { HmacScheme, SignatureScheme } from "./define";
 
 ---
 
-## Phase 4: Display Consolidation + Icon Field
+## Phase 4: Zod-First Registry Unification
+
+> **Absorbs original Phases 5 and 8** — all three address the registry architecture with no external dependencies beyond Phase 3.
 
 ### Overview
-Move `icon` and `comingSoon` into `BaseProviderFields`. Add icon data to each provider definition. **Do not rewrite `display.ts` here** — Phase 8's `PROVIDER_CLIENT_REGISTRY` supersedes it and will handle the `display.ts` rewrite. This phase's only job is making provider definitions the single source of truth for icon data.
 
-### Changes Required:
+A comprehensive rework that unifies the display and server registries under a Zod-first architecture with a hard client/server boundary. After this phase:
 
-#### 1. Add `icon` and `comingSoon` to `BaseProviderFields`
-**File**: `packages/console-providers/src/define.ts`
-**Changes**: Add two fields to `BaseProviderFields` (~line 428-476):
+- `display.ts` is the canonical slug source — `providerSlugSchema` (Zod enum) is the single definition; `ProviderName` and `SourceType` are aliases
+- `ProviderDisplayEntry` is a Zod-inferred type, not a hand-written TypeScript interface
+- Provider definitions spread from `PROVIDER_DISPLAY` — zero duplication, single source
+- `ProviderConfigMap` is deleted — `PROVIDERS` is `as const` without the manual satisfies shim
+- Discriminated unions are auto-derived from `Object.values(PROVIDERS)`
+- `providerKindSchema` and `authKindSchema` are Zod enums that anchor the discriminant literals in factories and interfaces
+- `import "server-only"` on the barrel makes it a build-time error for client components to import runtime values
+- `display-sync.test.ts` deleted — the type system enforces everything it tested, bidirectionally
+
+### Architecture
+
+```
+display.ts (CLIENT-SAFE — zero imports, leaf node)
+  providerDisplayEntrySchema   ← Zod schema; ProviderDisplayEntry = z.infer<…>
+  PROVIDER_DISPLAY             ← as const satisfies Record<string, ProviderDisplayEntry>
+  providerSlugSchema           ← z.enum(keys) with .meta() — THE canonical slug source
+  type ProviderSlug            ← z.infer<typeof providerSlugSchema>
+  PROVIDER_SLUGS, ACTIVE_PROVIDER_SLUGS, SOURCE_TYPE_OPTIONS  ← unchanged, derived
+
+define.ts (SERVER-ONLY)
+  providerKindSchema           ← z.enum(["webhook", "api"])  — anchors factory discriminant
+  authKindSchema               ← z.enum(["oauth", "api-key", "app-token"]) — anchors auth kind
+  BaseProviderFields           ← gains icon: IconDef, comingSoon?: true
+  Factories                    ← inject kind constrained via satisfies z.infer<providerKindSchema>
+
+registry.ts (SERVER-ONLY)
+  PROVIDERS                    ← as const  (NO ProviderConfigMap)
+  sourceTypeSchema             ← re-export of providerSlugSchema
+  type ProviderName            ← = ProviderSlug (alias)
+  type SourceType              ← = ProviderSlug (alias)
+  providerAccountInfoSchema    ← auto-derived, Zod 4 discriminated union
+  providerConfigSchema         ← auto-derived, Zod 4 discriminated union
+  _AssertDisplayComplete       ← compile-time completeness enforcement
+
+index.ts
+  import "server-only"         ← hard build-time boundary (first line)
+```
+
+### Why behavioral interfaces stay as TypeScript
+
+`AuthDef` (`OAuthDef | ApiKeyDef | AppTokenDef`), `WebhookDef<TConfig>`, `BackfillDef`, `ResourcePickerDef`, `HealthCheckDef<TConfig>`, and `ProviderApi` all contain generic functions parameterized by `TConfig`. Converting these to Zod schemas via `z.function()` erases generics — inference degrades to `(...args: unknown[]) => unknown`. The current TypeScript interfaces are strictly more type-safe. These **must** remain TypeScript interfaces.
+
+What CAN and SHOULD be Zod schemas: display metadata, slug enum, provider kind enum, auth kind enum, and all data-only fields that already are (categories, actions, signature schemes, connection status, etc.).
+
+### Why `z.registry()` is not the right tool here
+
+Zod 4's `z.registry()` maps schemas → metadata via WeakMap. It shines for dynamic/unknown schema sets (form builders, plugin systems). Our provider registry is static — 5 entries known at compile time. A WeakMap lookup over a static object adds indirection without value. More critically: `z.registry()` requires server-side access to schema objects, so it cannot solve the client/server split. The display-first spread pattern is simpler and faster.
+
+**Exception**: `.meta()` on public-facing schemas (`providerSlugSchema`, `sourceTypeSchema`, `providerKindSchema`, `authKindSchema`) provides title/description/examples metadata that flows automatically into `zod-openapi` / JSON Schema generation in `packages/console-openapi`. This is cheap and additive.
+
+---
+
+### Changes Required
+
+#### 1. `display.ts` — Zod schema + canonical slug enum
+
+**File**: `packages/console-providers/src/display.ts`
+
+**Changes**: Convert the unexported TypeScript `ProviderDisplayEntry` interface to a Zod schema. Export it and derive `ProviderDisplayEntry` type via `z.infer`. Add `providerSlugSchema` as a Zod enum derived from `PROVIDER_DISPLAY` keys, with `.meta()`. Export `providerSlugSchema` and `ProviderSlug`.
 
 ```typescript
+import { z } from "zod";
+// type-only import — erased at compile time, zero runtime cost
+import type { IconDef } from "./define";
+
+export type { IconDef } from "./define";
+
+// ── Provider Display Schema ────────────────────────────────────────────────────
+// Zod schema is the source of truth; ProviderDisplayEntry type is inferred.
+// Zero runtime imports — this file is the client-safe leaf node.
+
+export const providerDisplayEntrySchema = z.object({
+  name: z.string(),
+  displayName: z.string(),
+  description: z.string(),
+  icon: z.custom<IconDef>(),   // IconDef is { viewBox: string; d: string } — validated by iconDefSchema on server
+  comingSoon: z.literal(true).optional(),
+});
+
+export type ProviderDisplayEntry = z.infer<typeof providerDisplayEntrySchema>;
+
+export const PROVIDER_DISPLAY = {
+  apollo: { ... },
+  github: { ... },
+  // ... unchanged data
+} as const satisfies Record<string, ProviderDisplayEntry>;
+
+// ── Canonical Slug Source ─────────────────────────────────────────────────────
+// ALL slug-based types (ProviderName, SourceType) are aliases of ProviderSlug.
+// providerSlugSchema is the single Zod source; sourceTypeSchema re-exports it.
+
+export const providerSlugSchema = z
+  .enum(
+    Object.keys(PROVIDER_DISPLAY) as [
+      keyof typeof PROVIDER_DISPLAY,
+      ...(keyof typeof PROVIDER_DISPLAY)[],
+    ]
+  )
+  .meta({
+    id: "ProviderSlug",
+    title: "Provider Slug",
+    description: "Unique identifier for a data source provider",
+    examples: ["github"],
+  });
+
+export type ProviderSlug = z.infer<typeof providerSlugSchema>;
+
+// ── Derived collections (unchanged behavior) ─────────────────────────────────
+export const PROVIDER_SLUGS = Object.keys(PROVIDER_DISPLAY) as ProviderSlug[];
+export const ACTIVE_PROVIDER_SLUGS = PROVIDER_SLUGS.filter(
+  (slug) => !(PROVIDER_DISPLAY[slug] as ProviderDisplayEntry).comingSoon
+);
+export const SOURCE_TYPE_OPTIONS = PROVIDER_SLUGS.map((key) => ({
+  value: key,
+  label: PROVIDER_DISPLAY[key].displayName,
+}));
+```
+
+**Note on `z.custom<IconDef>()`**: `IconDef` = `{ viewBox: string; d: string }`. Using `z.custom<IconDef>()` in display.ts avoids importing `iconDefSchema` from `define.ts` (which would pull in server dependencies). The full runtime validation of `IconDef` continues to happen in `define.ts` via `iconDefSchema`. Display.ts only needs the type.
+
+---
+
+#### 2. `define.ts` — Zod discriminant enums + BaseProviderFields update
+
+**File**: `packages/console-providers/src/define.ts`
+
+**Changes A — Add `providerKindSchema` and `authKindSchema`**: Add after the existing imports, before `BaseProviderFields`.
+
+```typescript
+// ── Provider Kind + Auth Kind (Zod enums — anchor discriminant literals) ─────
+// Phase 9 adds "managed" to providerKindSchema.
+
+export const providerKindSchema = z
+  .enum(["webhook", "api"])
+  .meta({
+    id: "ProviderKind",
+    title: "Provider Kind",
+    description: "Discriminant for the provider tier",
+  });
+export type ProviderKind = z.infer<typeof providerKindSchema>;
+
+export const authKindSchema = z
+  .enum(["oauth", "api-key", "app-token"])
+  .meta({
+    id: "AuthKind",
+    title: "Auth Kind",
+    description: "Authentication strategy used by the provider",
+  });
+export type AuthKind = z.infer<typeof authKindSchema>;
+```
+
+**Changes B — Add `icon` and `comingSoon` to `BaseProviderFields`**: Add after the `optional` field.
+
+```typescript
+/** SVG icon data — sourced from display.ts spread, never server-only */
 readonly icon: IconDef;
+/** When true, provider is visible in UI as "coming soon" but not yet selectable */
 readonly comingSoon?: true;
 ```
 
-#### 2. Add icon data to each provider
-**Files**: All 5 provider `index.ts` files.
-**Changes**: Copy SVG path data from `display.ts` into each provider's definition object. Add `comingSoon: true as const` for apollo, vercel, linear, sentry.
+**Changes C — Constrain factory `kind` injection via `satisfies`**: In `defineWebhookProvider` and `defineApiProvider`, change the injected `kind` literal to use a `satisfies` constraint against the Zod-inferred type. This creates a compile-time link: if "webhook" is ever removed from `providerKindSchema`, the factory fails to compile.
 
-Note: `display.ts` continues to exist unchanged after this phase. It is not updated here — Phase 8 will replace it entirely with a derived layer from `PROVIDER_CLIENT_REGISTRY`. The SVG data will be duplicated in both places until Phase 8 completes.
+```typescript
+// defineWebhookProvider (line ~770):
+// Before:
+kind: "webhook" as const,
 
-### Success Criteria:
+// After:
+kind: ("webhook" as const) satisfies z.infer<typeof providerKindSchema>,
+
+// defineApiProvider (line ~827) — same pattern:
+kind: ("api" as const) satisfies z.infer<typeof providerKindSchema>,
+```
+
+---
+
+#### 3. All 5 providers — spread from `display.ts`
+
+**Files**: `providers/apollo/index.ts`, `providers/github/index.ts`, `providers/linear/index.ts`, `providers/sentry/index.ts`, `providers/vercel/index.ts`
+
+**Changes**: Import `PROVIDER_DISPLAY` from `../../display`. Replace the manual `name`, `displayName`, `description` fields with a spread. The spread also provides `icon` (new required field on `BaseProviderFields`) and `comingSoon` (satisfies the optional field for apollo, vercel, linear, sentry).
+
+```typescript
+// Before (github/index.ts):
+export const github = defineWebhookProvider({
+  name: "github",
+  displayName: "GitHub",
+  description: "Connect your GitHub repositories",
+  // ... server-only fields ...
+});
+
+// After:
+import { PROVIDER_DISPLAY } from "../../display";
+
+export const github = defineWebhookProvider({
+  ...PROVIDER_DISPLAY.github,       // name, displayName, description, icon
+  // server-only fields below — unchanged:
+  configSchema: githubConfigSchema,
+  auth: { kind: ("app-token" as const) satisfies AuthKind, ... },
+  webhook: { ... },
+  // ...
+});
+```
+
+TypeScript errors at the spread site if a key doesn't exist in `PROVIDER_DISPLAY` — you cannot implement without display data first. The `comingSoon` field flows through the spread automatically; no explicit `comingSoon: true` in provider definitions.
+
+**Auth kind `satisfies` constraint** (optional, recommended): At each provider's `auth` block, add the `satisfies` annotation to the `kind` literal. This links the auth strategy kind to `authKindSchema`.
+
+```typescript
+// GitHub:
+kind: ("app-token" as const) satisfies AuthKind,
+
+// Linear, Sentry, Vercel (OAuth):
+kind: ("oauth" as const) satisfies AuthKind,
+
+// Apollo (API key):
+kind: ("api-key" as const) satisfies AuthKind,
+```
+
+---
+
+#### 4. `registry.ts` — Delete ProviderConfigMap + auto-derive unions + completeness assertion
+
+**File**: `packages/console-providers/src/registry.ts`
+
+**Changes A — Delete `ProviderConfigMap` and config type imports**: Delete the `ProviderConfigMap` interface (lines 22-28) and the config type imports (lines 7-16: `ApolloConfig`, `GitHubConfig`, `LinearConfig`, `SentryConfig`, `VercelConfig`). These are only used by `ProviderConfigMap`. The factory functions already enforce type correctness at each provider's call site — the `satisfies` shim is unnecessary.
+
+```typescript
+// Before:
+import type { ApolloConfig } from "./providers/apollo/auth";
+// ... 4 more config imports ...
+
+interface ProviderConfigMap {
+  readonly apollo: ApolloConfig;
+  // ...
+}
+
+export const PROVIDERS = { ... } as const satisfies {
+  readonly [K in keyof ProviderConfigMap]: ProviderDefinition<ProviderConfigMap[K]>;
+};
+
+// After:
+export const PROVIDERS = {
+  apollo, github, vercel, linear, sentry,
+} as const;
+```
+
+**Changes B — Import `providerSlugSchema` + re-export as `sourceTypeSchema`**: Import from `./display` and re-export as the canonical sourceType schema. Unify `ProviderName` and `SourceType` as aliases of `ProviderSlug`.
+
+```typescript
+import { providerSlugSchema } from "./display";
+import type { ProviderSlug } from "./display";
+
+// sourceTypeSchema IS providerSlugSchema — single canonical source
+export { providerSlugSchema as sourceTypeSchema } from "./display";
+export type { ProviderSlug } from "./display";
+
+// Semantic aliases — structurally identical to ProviderSlug
+export type ProviderName = ProviderSlug;
+export type SourceType = ProviderSlug;
+```
+
+**Changes C — Auto-derive discriminated unions (Zod 4 auto-detect)**:
+
+```typescript
+// ── Account Info Schema ───────────────────────────────────────────────────────
+// Adding a provider = add to PROVIDERS only. No manual tuple maintenance.
+
+const _accountInfoSchemas = Object.values(PROVIDERS).map(
+  (p) => p.accountInfoSchema
+) as [
+  (typeof PROVIDERS)[keyof typeof PROVIDERS]["accountInfoSchema"],
+  ...(typeof PROVIDERS)[keyof typeof PROVIDERS]["accountInfoSchema"][],
+];
+// Zod 4: discriminant key auto-detected ("sourceType" — common literal field across all schemas)
+export const providerAccountInfoSchema = z.discriminatedUnion(
+  "sourceType",
+  _accountInfoSchemas
+);
+export type ProviderAccountInfo = z.infer<typeof providerAccountInfoSchema>;
+
+// ── Provider Config Schema ────────────────────────────────────────────────────
+const _configSchemas = Object.values(PROVIDERS).map(
+  (p) => p.providerConfigSchema
+) as [
+  (typeof PROVIDERS)[keyof typeof PROVIDERS]["providerConfigSchema"],
+  ...(typeof PROVIDERS)[keyof typeof PROVIDERS]["providerConfigSchema"][],
+];
+// Zod 4: discriminant key auto-detected ("provider" — common literal field)
+export const providerConfigSchema = z.discriminatedUnion(
+  "provider",
+  _configSchemas
+);
+export type ProviderConfig = z.infer<typeof providerConfigSchema>;
+```
+
+**Changes D — Add `_AssertDisplayComplete` compile-time completeness enforcement**: Place after `PROVIDERS` declaration. This assertion ensures every live display entry has a corresponding `PROVIDERS` implementation.
+
+```typescript
+import type { PROVIDER_DISPLAY } from "./display";
+
+// ── Compile-time display completeness enforcement ────────────────────────────
+// Derive "live" display keys — entries without comingSoon: true.
+type _LiveDisplayKeys = {
+  [K in keyof typeof PROVIDER_DISPLAY]:
+    (typeof PROVIDER_DISPLAY)[K] extends { comingSoon: true } ? never : K;
+}[keyof typeof PROVIDER_DISPLAY];
+
+// _MissingProviders = live display entries with no PROVIDERS implementation.
+// Non-empty → the declared type cannot be 'true' → TypeScript error names the slug(s).
+type _MissingProviders = Exclude<_LiveDisplayKeys, keyof typeof PROVIDERS>;
+type _AssertDisplayComplete = [_MissingProviders] extends [never]
+  ? true
+  : {
+      "ERROR — add to PROVIDERS or mark comingSoon: true in display.ts": _MissingProviders;
+    };
+// Zero runtime overhead — declare const is type-checked only.
+declare const _assertDisplayComplete: _AssertDisplayComplete;
+```
+
+**What this enforces (bidirectional)**:
+- Add `stripe` to `display.ts` as live (no `comingSoon`) + omit from `PROVIDERS` → compile error naming `"stripe"`
+- Add `stripe` to `display.ts` with `comingSoon: true` + omit from `PROVIDERS` → no error (gated)
+- Add `stripe` to `PROVIDERS` without `display.ts` entry → compile error at the `...PROVIDER_DISPLAY.stripe` spread site in the provider definition file
+
+**Changes E — Remove deprecated `sourceTypeSchema` definition**: The existing `sourceTypeSchema` (line ~50) that calls `z.enum(Object.keys(PROVIDERS) as ...)` is replaced by the re-export of `providerSlugSchema` in Change B. Delete the old definition.
+
+---
+
+#### 5. `index.ts` — `server-only` boundary + updated exports
+
+**File**: `packages/console-providers/src/index.ts`
+
+**Changes A — Add `server-only` dependency and import**:
+
+```bash
+pnpm --filter @repo/console-providers add server-only
+```
+
+Add as the very first line of `index.ts`:
+
+```typescript
+import "server-only";
+```
+
+This makes it a Next.js/bundler build-time error for any `'use client'` component to import runtime values from `@repo/console-providers`. Type-only imports (`import type { ... }`) are erased before the bundler runs — `NormalizedInstallation`, `ProviderDefinition`, etc. used as types in client files are unaffected.
+
+**Changes B — Add new exports**:
+
+```typescript
+// New exports from define.ts
+export { authKindSchema, providerKindSchema } from "./define";
+export type { AuthKind, ProviderKind } from "./define";
+
+// Updated display exports — ProviderDisplayEntry is now Zod-inferred
+export { providerDisplayEntrySchema } from "./display";
+export type { ProviderDisplayEntry } from "./display";
+```
+
+**Changes C — Remove stale re-exports**: `ProviderName`, `SourceType`, and `sourceTypeSchema` in the registry re-export block now resolve through the canonical `providerSlugSchema` chain — verify no duplicate exports remain.
+
+---
+
+#### 6. Update client components to use `./display` subpath
+
+The following `'use client'` components currently import runtime display values from the barrel (`@repo/console-providers`). After adding `server-only`, these become build errors. Update each to use `@repo/console-providers/display`:
+
+**`sources/new/_components/link-sources-button.tsx`**:
+```typescript
+// Before: import { PROVIDER_SLUGS } from "@repo/console-providers";
+import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+```
+
+**`sources/new/_components/provider-source-item.tsx`**:
+```typescript
+// Before: import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers";
+import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers/display";
+```
+
+**`sources/new/_components/sources-section.tsx`**:
+```typescript
+// Before: import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers/display";
+```
+
+**`sources/new/_components/sources-section-loading.tsx`**:
+```typescript
+// Before: import { PROVIDER_SLUGS } from "@repo/console-providers";
+import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+```
+
+After these 4 updates, build both packages to confirm no missed client imports:
+```bash
+pnpm --filter @repo/console-providers build
+pnpm build:console
+```
+
+---
+
+#### 7. Delete `display-sync.test.ts`
+
+**File**: `packages/console-providers/src/__tests__/display-sync.test.ts`
+
+Delete entirely. The two assertions it made are now enforced at the type level:
+1. `PROVIDER_DISPLAY` keys match `PROVIDERS` keys → structurally guaranteed: providers spread from `PROVIDER_DISPLAY` (spread site fails if key missing) + `_AssertDisplayComplete` assertion (PROVIDERS missing entry → compile error)
+2. `name`, `displayName`, `description` match between the two → impossible to diverge (single source via spread)
+
+---
+
+### Success Criteria
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] TypeScript error if any provider definition is missing `icon` field
-- [ ] `PROVIDERS.github.icon` resolves to an `IconDef` at the type level
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Lint passes: `pnpm check`
+- [x] All tests pass: `pnpm --filter @repo/console-providers test` (`display-sync.test.ts` deleted)
+- [ ] Console app builds without error: `pnpm build:console`
+- [x] `providerSlugSchema` is importable from `@repo/console-providers/display` at runtime
+- [x] `z.infer<typeof providerSlugSchema>` equals `"apollo" | "github" | "linear" | "sentry" | "vercel"`
+- [x] `ProviderName`, `SourceType`, `ProviderSlug` are structurally identical at the type level
+- [x] `PROVIDERS.github.icon` resolves to `IconDef` at the type level
+- [x] `PROVIDERS.sentry.comingSoon` resolves to `true` at the type level
+- [x] `ProviderAccountInfo` inferred type still includes all 5 provider account info variants
+- [x] `ProviderConfig` inferred type still includes all 5 provider config variants
+- [x] Runtime: `providerSlugSchema.parse("github")` succeeds; `providerSlugSchema.parse("unknown")` throws
+- [x] Runtime: `providerDisplayEntrySchema.parse(PROVIDER_DISPLAY.github)` succeeds
+- [x] Completeness: adding a dummy live entry to `PROVIDER_DISPLAY` (no `comingSoon`) without a `PROVIDERS` entry causes a TypeScript error naming the missing slug
+- [x] Completeness: spreading `...PROVIDER_DISPLAY.nonExistent` in a provider definition causes a TypeScript error
+- [x] Boundary: adding `import { PROVIDERS } from "@repo/console-providers"` to any `'use client'` file causes a build error (verify temporarily)
+- [x] `providerKindSchema.parse("webhook")` succeeds; `providerKindSchema.parse("managed")` throws (Phase 9 adds it)
+- [x] `authKindSchema.parse("app-token")` succeeds; `authKindSchema.parse("unknown")` throws
 
 #### Manual Verification:
-- [ ] Console UI provider list still renders correctly (display.ts unchanged, no regression)
+- [ ] Console UI provider list still renders correctly — `display.ts` data is unchanged, only the sync mechanism changed
+- [ ] No regression in sources/new flow, events filter, or debug panel
+- [ ] Server components importing from the barrel still compile and render correctly
 
-**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation.
+**Implementation Note**: Phase 4 is the largest phase in the plan. Implement in this order to minimize compilation noise: (1) `display.ts` changes, (2) `define.ts` changes, (3) provider spreads, (4) `registry.ts` changes (including Step 8 below), (5) `index.ts` server-only + exports, (6) client component fixes, (7) delete `display-sync.test.ts`. After all automated verification passes, pause for manual confirmation before proceeding.
+
+---
+
+#### 8. Phantom Provider Graph — Type-Level Consumer Contracts
+
+**Files**: `packages/console-providers/src/display.ts`, `packages/console-providers/src/registry.ts`, `packages/console-providers/src/index.ts`
+
+This step adds four interlocking mechanisms that close the type loop across package boundaries. The collective property: **every consumer gets narrow provider types with zero runtime coupling to `PROVIDERS`**.
+
+---
+
+**Step 8A — Brand `providerSlugSchema`**
+
+`ProviderSlug` becomes a nominal type. Raw `"github"` strings cannot be passed where `ProviderSlug` is required — they must be validated through the schema first. The brand propagates through all derived types (`ProviderName`, `SourceType`, `EventKey`).
+
+**File**: `packages/console-providers/src/display.ts`
+
+```typescript
+// Append .brand<"ProviderSlug">() to the existing providerSlugSchema declaration
+export const providerSlugSchema = z.enum(
+  Object.keys(PROVIDER_DISPLAY) as [keyof typeof PROVIDER_DISPLAY, ...]
+).brand<"ProviderSlug">()
+  .meta({ id: "ProviderSlug", description: "Canonical provider slug — validated nominal type" });
+
+export type ProviderSlug = z.infer<typeof providerSlugSchema>;
+// → ("apollo" | "github" | "linear" | "sentry" | "vercel") & { readonly [Symbol]: "ProviderSlug" }
+```
+
+---
+
+**Step 8B — Mapped `EventKey` type + `eventKeySchema` Zod enum**
+
+`EventKey` is currently a string union maintained by hand (or derived runtime-only). This replaces it with a **compile-time mapped type** derived directly from `PROVIDERS[K]["events"]` keys — and a **Zod enum** derived from the same source at module load. The two stay structurally identical by construction.
+
+**File**: `packages/console-providers/src/registry.ts`
+
+```typescript
+// ── EventKey — compile-time mapped type ──────────────────────────────────────
+// Auto-derived from PROVIDERS.*.events keys. Zero manual maintenance.
+// Updating PROVIDERS automatically updates EventKey and eventKeySchema.
+export type EventKey = {
+  [K in keyof typeof PROVIDERS & string]:
+    (typeof PROVIDERS)[K] extends { events: Record<infer E extends string, unknown> }
+      ? `${K}.${E}`
+      : never;
+}[keyof typeof PROVIDERS & string];
+// → "github.pull_request" | "github.issues" | "linear.issue" | "linear.comment" | ...
+
+// ── eventKeySchema — runtime twin of EventKey ─────────────────────────────────
+// Same derivation path, so compile-time and runtime representations are always in sync.
+const _eventKeys = Object.entries(PROVIDERS).flatMap(([slug, p]) =>
+  "events" in p && p.events
+    ? Object.keys(p.events).map((e) => `${slug}.${e}`)
+    : []
+) as [EventKey, ...EventKey[]];
+
+export const eventKeySchema = z.enum(_eventKeys);
+// eventKeySchema.parse("github.pull_request") → EventKey ✓
+// eventKeySchema.parse("github.fake")         → ZodError ✗
+
+export type EventKey = z.infer<typeof eventKeySchema>; // alias — same type
+```
+
+> **Note**: Replace the existing `EventKey` string-union derivation with this mapped type. The `EVENT_REGISTRY` keys type is updated to use `EventKey` from here — no other registry changes needed.
+
+---
+
+**Step 8C — `ProviderShape<K>` + derived utility types**
+
+Type utilities that let consumer packages (relay, gateway, backfill) reference exact per-provider types **without importing the runtime `PROVIDERS` object**. Type-only imports are erased before bundling — zero dependency graph pollution.
+
+**File**: `packages/console-providers/src/registry.ts`
+
+```typescript
+// ── Phantom Provider Graph — type utilities for zero-runtime consumer coupling ──
+//
+// Usage in any consumer:
+//   import type { ProviderShape, AuthDefFor } from "@repo/console-providers";
+//   type GitHubAuth = AuthDefFor<"github">; // → AppTokenDef
+//   (type-only import — erased before bundling, zero runtime cost)
+
+/** Exact type of a provider by slug — narrows to the specific provider object shape. */
+export type ProviderShape<K extends keyof typeof PROVIDERS> = (typeof PROVIDERS)[K];
+
+/** Exact auth definition for a provider by slug. */
+export type AuthDefFor<K extends keyof typeof PROVIDERS> =
+  ProviderShape<K> extends { readonly auth: infer A } ? A : never;
+
+/** Inferred account info type for a provider by slug. */
+export type AccountInfoFor<K extends keyof typeof PROVIDERS> =
+  ProviderShape<K> extends { accountInfoSchema: z.ZodType<infer A> } ? A : never;
+
+/** Union of event key suffixes available for a provider by slug. */
+export type EventKeysFor<K extends keyof typeof PROVIDERS> =
+  ProviderShape<K> extends { events: Record<infer E extends string, unknown> } ? E : never;
+```
+
+Consumer example (gateway, zero runtime import):
+```typescript
+// apps/gateway/src/handlers/github.ts
+import type { AuthDefFor, AccountInfoFor } from "@repo/console-providers";
+// ↑ TYPE IMPORT ONLY — erased before bundling
+
+type GitHubAuth    = AuthDefFor<"github">;     // → AppTokenDef (narrow, exact)
+type GitHubInfo    = AccountInfoFor<"github">; // → GitHubAccountInfo
+type GitHubEvents  = EventKeysFor<"github">;   // → "pull_request" | "issues"
+```
+
+---
+
+**Step 8D — Narrow `getProvider<K>` overload**
+
+A single overload addition to `getProvider` — callers with a literal slug argument receive the exact provider type, not the wide `ProviderDefinition`. No casts, no assertions required anywhere in the codebase.
+
+**File**: `packages/console-providers/src/registry.ts`
+
+```typescript
+/** Narrow overload: literal slug → exact provider shape. */
+export function getProvider<K extends keyof typeof PROVIDERS>(slug: K): ProviderShape<K>;
+/** Wide overload: runtime ProviderSlug → union ProviderDefinition. */
+export function getProvider(slug: ProviderSlug): ProviderDefinition;
+export function getProvider(slug: string): ProviderDefinition {
+  const p = PROVIDERS[slug as keyof typeof PROVIDERS];
+  if (!p) throw new Error(`Unknown provider: ${slug}`);
+  return p;
+}
+
+// Call-site behaviour:
+// getProvider("github").auth.kind         → "app-token"  (narrow, no cast)
+// getProvider("github").auth.getAppToken  → function     (exists on AppTokenDef only)
+// getProvider("linear").auth.kind         → "oauth"      (narrow)
+// getProvider(runtimeSlug).auth.kind      → "oauth" | "api-key" | "app-token" (correctly wide)
+```
+
+---
+
+**Step 8E — Export from `index.ts`**
+
+```typescript
+// Add to index.ts exports:
+export { eventKeySchema } from "./registry";
+export type {
+  AccountInfoFor,
+  AuthDefFor,
+  EventKeysFor,
+  ProviderShape,
+} from "./registry";
+```
+
+---
+
+### The Closed Type Loop
+
+```
+providerSlugSchema.brand<"ProviderSlug">()  ← nominal slug — only from schema.parse()
+  ↓
+PROVIDERS[K]                                ← constrained via as const + _AssertDisplayComplete
+  ↓
+EventKey mapped from PROVIDERS[K]["events"] ← compile-time, auto-updates with PROVIDERS
+eventKeySchema derived from same source     ← runtime twin, structurally identical
+  ↓
+ProviderShape<K>, AuthDefFor<K>,            ← zero-runtime consumer contracts
+AccountInfoFor<K>, EventKeysFor<K>          ← type-only imports, erased before bundling
+  ↓
+getProvider<K>                              ← propagates narrow types at runtime
+  ↓
+Adding a provider touches ONE file.         ← entire graph updates automatically.
+```
+
+**The key invariant**: compile-time types and runtime validators are derived from the same source (`PROVIDERS`). They cannot diverge. TypeScript errors on invalid event keys at the call site. Zod throws on invalid event keys at ingestion time. Both enforce the same set.
+
+### Additional Success Criteria (Step 8):
+
+#### Automated Verification:
+- [ ] `type T = AuthDefFor<"github">` resolves to `AppTokenDef` (not `OAuthDef | ApiKeyDef | AppTokenDef`)
+- [ ] `type T = AuthDefFor<"linear">` resolves to `OAuthDef`
+- [ ] `type T = EventKeysFor<"github">` resolves to `"pull_request" | "issues"`
+- [ ] `getProvider("github").auth.kind` resolves to `"app-token"` at the type level (no cast needed)
+- [ ] `getProvider("github").auth.getAppToken` type-checks as a function (AppTokenDef field)
+- [ ] `eventKeySchema.parse("github.pull_request")` succeeds at runtime
+- [ ] `eventKeySchema.parse("github.nonexistent")` throws at runtime
+- [ ] `type T = EventKey` equals the union of all `"${slug}.${event}"` combinations across PROVIDERS
+- [ ] `import type { ProviderShape } from "@repo/console-providers"` in a `'use client'` file does NOT cause a build error (type-only import is erased before server-only check)
+- [ ] `import { getProvider } from "@repo/console-providers"` in a `'use client'` file DOES cause a build error
+- [ ] Adding a new event key to a provider's `events` map automatically adds `"${slug}.${newEvent}"` to `EventKey` and `eventKeySchema` — verified by `pnpm typecheck`
+- [ ] `providerSlugSchema.parse("github")` returns a branded `ProviderSlug`, not a plain string
+- [ ] Passing `"github"` (unbranded) directly to a function typed `(slug: ProviderSlug) => void` causes a TypeScript error
+
+#### Manual Verification:
+- [ ] Gateway auth handlers reference `AuthDefFor<"github">` instead of manual type casts — confirm with `grep -r "as AppTokenDef\|as OAuthDef" apps/gateway/`
 
 ---
 
 ## Phase 5: Registry 1-Touch — Remove ProviderConfigMap + Auto-Derive Unions
+
+> **ABSORBED into Phase 4** — The `ProviderConfigMap` removal, auto-derived discriminated unions, and 1-touch provider registration are all implemented as part of the Zod-First Registry Unification in Phase 4. This phase has no remaining work.
 
 ### Overview
 Remove the manual `ProviderConfigMap` interface. Auto-derive `providerAccountInfoSchema` and `providerConfigSchema` from `PROVIDERS`. Adding a provider becomes a 1-touch operation.
@@ -625,26 +1232,101 @@ export const providerConfigSchema = makeDiscriminatedUnion(
 
 ---
 
-## Phase 6: Gateway.ts Split — One Contract Per File
+## Phase 6: Gateway.ts Split + define.ts Absorption
 
 ### Overview
-Split the 222-line `gateway.ts` into 3 focused files, each with a single consumer. Re-export from `index.ts` for zero breaking changes.
+
+Split `gateway.ts` (222 lines, 4 mixed concerns) into focused files **and** absorb the proxy wire types and backfill depth primitive into `define.ts` where they conceptually belong. The decisive signal: `define.ts:4` already imports `ProxyExecuteResponse` from `gateway.ts` — the cross-file import is the type system pointing to the correct home.
+
+**End state**: `gateway.ts` shrinks to ~50 lines (3 gateway API response schemas). `define.ts` gains 6 exports. Two new focused files (`wire.ts`, `backfill-contracts.ts`). Zero breaking changes via barrel.
+
+> Research basis: `thoughts/shared/research/2026-03-18-gateway-ts-unification-into-define-ts.md`
+
+### Schema Mapping
+
+```
+gateway.ts (222 lines)
+  │
+  ├── proxyExecuteRequestSchema + ProxyExecuteRequest     → define.ts
+  ├── proxyExecuteResponseSchema + ProxyExecuteResponse   → define.ts  (define.ts already imports it)
+  ├── backfillDepthSchema + BACKFILL_DEPTH_OPTIONS        → define.ts  (primitive of BackfillDef)
+  │
+  ├── serviceAuthWebhookBodySchema + ServiceAuthWebhookBody   → wire.ts (relay-only)
+  ├── webhookReceiptPayloadSchema + WebhookReceiptPayload     → wire.ts (relay-only)
+  ├── webhookEnvelopeSchema + WebhookEnvelope                 → wire.ts (relay-only)
+  │
+  ├── gwInstallationBackfillConfigSchema + GwInstallationBackfillConfig → backfill-contracts.ts
+  ├── backfillRunStatusSchema (internal)                              → backfill-contracts.ts
+  ├── backfillTerminalStatusSchema + BACKFILL_TERMINAL_STATUSES       → backfill-contracts.ts
+  ├── backfillTriggerPayload + BackfillTriggerPayload                 → backfill-contracts.ts
+  ├── backfillEstimatePayload + BackfillEstimatePayload               → backfill-contracts.ts
+  ├── backfillRunRecord + BackfillRunRecord                           → backfill-contracts.ts
+  ├── backfillRunReadRecord + BackfillRunReadRecord                   → backfill-contracts.ts
+  │
+  └── gatewayConnectionSchema + GatewayConnection         → gateway.ts (kept)
+      gatewayTokenResultSchema + GatewayTokenResult        → gateway.ts (kept)
+      proxyEndpointsResponseSchema + ProxyEndpointsResponse→ gateway.ts (kept)
+```
 
 ### Changes Required:
 
-#### 1. Create `wire.ts`
+#### 1. Absorb proxy types + depth into `define.ts`
+**File**: `packages/console-providers/src/define.ts`
+**Changes**:
+- Delete `import type { ProxyExecuteResponse } from "./gateway"` (line 4) — no longer needed
+- Add after `rateLimitSchema` (before the Backfill schemas section):
+
+```typescript
+// ── Proxy Wire Types ─────────────────────────────────────────────────────────
+
+export const proxyExecuteRequestSchema = z.object({
+  endpointId: z.string(),
+  pathParams: z.record(z.string(), z.string()).optional(),
+  queryParams: z.record(z.string(), z.string()).optional(),
+  body: z.unknown().optional(),
+});
+export type ProxyExecuteRequest = z.infer<typeof proxyExecuteRequestSchema>;
+
+export const proxyExecuteResponseSchema = z.object({
+  status: z.number(),
+  data: z.unknown(),
+  headers: z.record(z.string(), z.string()),
+});
+export type ProxyExecuteResponse = z.infer<typeof proxyExecuteResponseSchema>;
+```
+
+- Add before `backfillWebhookEventSchema` (in the Backfill schemas section):
+
+```typescript
+export const backfillDepthSchema = z.union([
+  z.literal(1),
+  z.literal(7),
+  z.literal(30),
+  z.literal(90),
+]);
+export type BackfillDepth = z.infer<typeof backfillDepthSchema>;
+
+/** Ordered options for UI depth selectors. */
+export const BACKFILL_DEPTH_OPTIONS = [1, 7, 30, 90] as const satisfies readonly z.infer<typeof backfillDepthSchema>[];
+```
+
+#### 2. Create `wire.ts`
 **File**: `packages/console-providers/src/wire.ts` (new)
-**Contents**: Move from `gateway.ts`:
+**Contents**: Move from `gateway.ts` + add `sourceTypeSchema` import:
 - `serviceAuthWebhookBodySchema` + `ServiceAuthWebhookBody`
 - `webhookReceiptPayloadSchema` + `WebhookReceiptPayload`
 - `webhookEnvelopeSchema` + `WebhookEnvelope`
 
-#### 2. Create `backfill-contracts.ts`
+```typescript
+import { z } from "zod";
+import { sourceTypeSchema } from "./registry";
+// ... moved schemas
+```
+
+#### 3. Create `backfill-contracts.ts`
 **File**: `packages/console-providers/src/backfill-contracts.ts` (new)
-**Contents**: Move from `gateway.ts`:
-- `backfillDepthSchema`
+**Contents**: Move from `gateway.ts` + import `backfillDepthSchema` from `define.ts`:
 - `gwInstallationBackfillConfigSchema` + `GwInstallationBackfillConfig`
-- `BACKFILL_DEPTH_OPTIONS`
 - `backfillRunStatusSchema` (internal)
 - `backfillTerminalStatusSchema` + `BACKFILL_TERMINAL_STATUSES`
 - `backfillTriggerPayload` + `BackfillTriggerPayload`
@@ -652,41 +1334,54 @@ Split the 222-line `gateway.ts` into 3 focused files, each with a single consume
 - `backfillRunRecord` + `BackfillRunRecord`
 - `backfillRunReadRecord` + `BackfillRunReadRecord`
 
-#### 3. Trim `gateway.ts`
+```typescript
+import { z } from "zod";
+import { backfillDepthSchema } from "./define";  // depth now lives in define
+import { sourceTypeSchema } from "./registry";
+// ... moved schemas
+```
+
+#### 4. Trim `gateway.ts`
 **File**: `packages/console-providers/src/gateway.ts`
-**Contents**: Keep only:
+**Contents**: Keep only (~50 lines):
 - `gatewayConnectionSchema` + `GatewayConnection`
 - `gatewayTokenResultSchema` + `GatewayTokenResult`
-- `proxyExecuteRequestSchema` + `ProxyExecuteRequest`
-- `proxyExecuteResponseSchema` + `ProxyExecuteResponse`
 - `proxyEndpointsResponseSchema` + `ProxyEndpointsResponse`
 
-#### 4. Update `index.ts` barrel
-**File**: `packages/console-providers/src/index.ts`
-**Changes**: Add re-exports from `wire.ts` and `backfill-contracts.ts`. Keep existing `gateway.ts` re-exports. Zero breaking changes for external consumers.
+Remove `import { sourceTypeSchema } from "./registry"` (no longer needed after trim).
 
-#### 5. Update internal imports
-**Files**: Update imports in consuming apps to use the specific file when possible:
-- `apps/relay/src/middleware/webhook.ts` — import from `wire.ts` instead of `gateway.ts`
-- `apps/backfill/src/routes/trigger.ts` — import from `backfill-contracts.ts`
-- `apps/backfill/src/routes/estimate.ts` — import from `backfill-contracts.ts`
-- `apps/backfill/src/inngest/client.ts` — import from `backfill-contracts.ts`
-- `apps/gateway/src/routes/connections.ts` — import from `gateway.ts` (already correct) and `backfill-contracts.ts`
-- `api/console/src/router/org/connections.ts` — import from `backfill-contracts.ts`
-- `packages/gateway-service-clients/src/gateway.ts` — import from `gateway.ts` (already correct)
+#### 5. Update `index.ts` barrel
+**File**: `packages/console-providers/src/index.ts`
+**Changes**:
+- Add `wire.ts` re-export block (after `gateway.ts` block)
+- Add `backfill-contracts.ts` re-export block
+- Move `backfillDepthSchema`, `BACKFILL_DEPTH_OPTIONS`, `proxyExecuteRequestSchema`, `proxyExecuteResponseSchema`, `ProxyExecuteRequest`, `ProxyExecuteResponse` to the `./define` re-export block
+- Remove those same names from the `./gateway` re-export block
+
+Zero breaking changes — all names remain accessible via `@repo/console-providers`.
+
+#### 6. Update consuming app imports (optional — barrel covers all)
+
+Apps import via `@repo/console-providers` barrel so no import changes are strictly required. However, for direct internal imports within `console-providers`:
+- `packages/gateway-service-clients/src/gateway.ts` — update to import from `@repo/console-providers` (or directly from `gateway.ts`, `define.ts` as needed)
+- Any `console-providers`-internal files importing `backfillDepthSchema` from `gateway.ts` → update to `define.ts`
 
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] All tests pass across all apps: `pnpm --filter @repo/console-providers test`
-- [ ] No import of `gateway.ts` that should point to `wire.ts` or `backfill-contracts.ts`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Lint passes: `pnpm check`
+- [x] All tests pass across all apps: `pnpm --filter @repo/console-providers test` (356 passed, 11 files)
+- [x] `gateway.ts` contains only `gatewayConnectionSchema`, `gatewayTokenResultSchema`, `proxyEndpointsResponseSchema`
+- [x] `define.ts` no longer imports from `./gateway` (line 4 deleted)
+- [x] `proxyExecuteResponseSchema.parse(...)` accessible via `@repo/console-providers`
+- [x] `backfillDepthSchema.parse(1)` accessible via `@repo/console-providers`
 
 #### Manual Verification:
 - [ ] Relay still processes webhooks correctly
 - [ ] Backfill triggers still work
 - [ ] Gateway connections API still responds correctly
+- [ ] Resource picker (sources/new) still loads installation data
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for confirmation.
 
@@ -751,100 +1446,81 @@ const verified = verify(rawBody, c.req.raw.headers, secret);
 
 ---
 
-## Phase 8: ClientShape + PROVIDER_CLIENT_REGISTRY
+## Phase 8: Server-Only Boundary Enforcement
+
+> **ABSORBED into Phase 4** — The `import "server-only"` hard boundary on `index.ts` and migration of client components to `./display` subpath imports are part of the Zod-First Registry Unification in Phase 4. This phase has no remaining work.
 
 ### Overview
-Create a `ClientShape<P>` utility type that extracts only pure-data fields from a provider definition. Build `PROVIDER_CLIENT_REGISTRY` as the UI layer's import target, enforcing bundle safety at the type level.
+With `display.ts` already the client-safe registry (Phase 4), this phase installs a hard build-time boundary. Add `import "server-only"` to `index.ts` — any client component importing runtime values from the barrel `@repo/console-providers` now fails at build time, not silently at runtime. Update the 4 client components that currently import runtime values from the barrel to use the `./display` subpath instead. Drop the original `ClientShape`/`PROVIDER_CLIENT_REGISTRY` scope — not needed.
+
+**Why `server-only` and not export conditions**: Export conditions (`react-server`/`default`) would silently change what client code sees. `server-only` fails loudly at build time with a clear "you imported a server module" error, which is the right DX for this boundary.
+
+**What `server-only` does NOT block**: `import type { ... }` — type-only imports are erased before the bundler sees them. `NormalizedInstallation`, `NormalizedResource`, and `ProviderDefinition` used as types in client files continue to work. Only runtime value imports (`PROVIDER_DISPLAY`, `PROVIDER_SLUGS`, `PROVIDERS`, etc.) from the barrel trigger the error.
 
 ### Changes Required:
 
-#### 1. Add `ClientShape` type and `extractClientShape` function
-**File**: `packages/console-providers/src/define.ts`
-**Changes**: Add near the end of the file:
-
-```typescript
-export type ClientShape<P extends ProviderDefinition> = {
-  readonly name: P["name"];
-  readonly displayName: P["displayName"];
-  readonly description: P["description"];
-  readonly icon: P["icon"];
-  readonly comingSoon: P["comingSoon"];
-  readonly categories: P["categories"];
-  readonly eventMeta: {
-    [E in keyof P["events"]]: {
-      readonly label: P["events"][E]["label"];
-      readonly weight: P["events"][E]["weight"];
-      readonly kind: P["events"][E]["kind"];
-    };
-  };
-};
-
-export function extractClientShape<P extends ProviderDefinition>(p: P): ClientShape<P> {
-  return {
-    name: p.name,
-    displayName: p.displayName,
-    description: p.description,
-    icon: p.icon,
-    comingSoon: p.comingSoon,
-    categories: p.categories,
-    eventMeta: Object.fromEntries(
-      Object.entries(p.events).map(([k, e]) => [
-        k,
-        { label: e.label, weight: e.weight, kind: e.kind },
-      ])
-    ) as ClientShape<P>["eventMeta"],
-  };
-}
+#### 1. Add `server-only` dependency
+**File**: `packages/console-providers/package.json`
+**Changes**:
+```bash
+pnpm --filter @repo/console-providers add server-only
 ```
 
-#### 2. Create `client-registry.ts`
-**File**: `packages/console-providers/src/client-registry.ts` (new)
-**Contents**:
-
-```typescript
-import { PROVIDERS } from "./registry";
-import type { ProviderName } from "./registry";
-import { extractClientShape, type ClientShape } from "./define";
-import type { ProviderDefinition } from "./define";
-
-export const PROVIDER_CLIENT_REGISTRY = Object.fromEntries(
-  Object.entries(PROVIDERS).map(([key, p]) => [key, extractClientShape(p)])
-) as { readonly [K in ProviderName]: ClientShape<(typeof PROVIDERS)[K]> };
-
-export type ProviderClientShape = (typeof PROVIDER_CLIENT_REGISTRY)[ProviderName];
-```
-
-#### 3. Update `display.ts` as backward-compat shim
-**File**: `packages/console-providers/src/display.ts`
-**Changes**: After Phase 4 rewrote `display.ts` as derived, this phase further simplifies it to re-export from `client-registry.ts`:
-
-```typescript
-// Backward-compat shim — prefer importing from client-registry.ts directly
-export { PROVIDER_CLIENT_REGISTRY as PROVIDER_DISPLAY } from "./client-registry";
-export type { ProviderClientShape as ProviderDisplayEntry } from "./client-registry";
-
-// Keep derived exports that are used widely:
-import { PROVIDER_CLIENT_REGISTRY } from "./client-registry";
-import type { ProviderName } from "./registry";
-
-export type ProviderSlug = ProviderName;
-export const PROVIDER_SLUGS = Object.keys(PROVIDER_CLIENT_REGISTRY) as ProviderSlug[];
-export const ACTIVE_PROVIDER_SLUGS = PROVIDER_SLUGS.filter(
-  (slug) => !PROVIDER_CLIENT_REGISTRY[slug].comingSoon
-);
-export const SOURCE_TYPE_OPTIONS = PROVIDER_SLUGS.map((key) => ({
-  value: key,
-  label: PROVIDER_CLIENT_REGISTRY[key].displayName,
-}));
-```
-
-#### 4. Update `index.ts` barrel
+#### 2. Add `import "server-only"` to `index.ts`
 **File**: `packages/console-providers/src/index.ts`
-**Changes**: Add exports from `client-registry.ts`:
+**Changes**: Add as the very first line:
+
 ```typescript
-export { PROVIDER_CLIENT_REGISTRY, type ProviderClientShape } from "./client-registry";
-export { type ClientShape, extractClientShape } from "./define";
+import "server-only";
+// ... rest of barrel unchanged
 ```
+
+This makes it a Next.js build-time error for any client component to import runtime values from `@repo/console-providers`.
+
+#### 3. Update 4 client components importing runtime values from the barrel
+The following `'use client'` components import runtime display values (`PROVIDER_DISPLAY`, `PROVIDER_SLUGS`) from `@repo/console-providers` (barrel) instead of `@repo/console-providers/display`. These must change:
+
+**`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/link-sources-button.tsx`**:
+```typescript
+// Before:
+import { PROVIDER_SLUGS } from "@repo/console-providers";
+// After:
+import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+```
+
+**`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/provider-source-item.tsx`**:
+```typescript
+// Before:
+import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers";
+// After:
+import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers/display";
+```
+
+**`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/sources-section.tsx`**:
+```typescript
+// Before:
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers";
+// After:
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers/display";
+```
+
+**`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/sources-section-loading.tsx`**:
+```typescript
+// Before:
+import { PROVIDER_SLUGS } from "@repo/console-providers";
+// After:
+import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+```
+
+**Note**: `source-selection-provider.tsx` imports `import type { NormalizedInstallation, NormalizedResource, ProviderSlug }` — type-only imports are erased, no change needed.
+
+#### 4. Verify no other client component imports runtime values from the barrel
+After the 4 updates above, run:
+```bash
+pnpm --filter @repo/console-providers build
+pnpm --filter @repo/console build
+```
+A build error points to a missed client import. All server components and API code importing from the barrel remain unchanged.
 
 ### Success Criteria:
 
@@ -852,12 +1528,12 @@ export { type ClientShape, extractClientShape } from "./define";
 - [ ] Type checking passes: `pnpm typecheck`
 - [ ] Lint passes: `pnpm check`
 - [ ] All tests pass: `pnpm --filter @repo/console-providers test`
-- [ ] `ClientShape` type has no function fields (verified by type-level test)
-- [ ] `PROVIDER_CLIENT_REGISTRY` contains all 5 providers with correct metadata
+- [ ] Console app builds without error: `pnpm build:console`
+- [ ] Type assertion: adding `import { PROVIDER_DISPLAY } from "@repo/console-providers"` to any `'use client'` file causes a build error (verify by temporarily adding to a test client component)
 
 #### Manual Verification:
-- [ ] UI components that import `PROVIDER_DISPLAY` still work correctly
-- [ ] No server-only code (crypto, JWT, env access) is pulled into client bundles
+- [ ] Console UI still renders provider icons, names, and slugs correctly (display data unchanged)
+- [ ] No regression in sources/new flow, events filter, or debug panel
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for confirmation.
 
@@ -1220,7 +1896,6 @@ export type { Ed25519Scheme, InboundWebhookDef } from "./define";
 
 ### Unit Tests:
 - `define.ts` — Test `deriveVerifySignature` with all HMAC variants (SHA-256, SHA-1, SHA-512) and with/without prefix
-- `define.ts` — Test `extractClientShape` returns only data fields, no functions
 - `registry.ts` — Test auto-derived `providerAccountInfoSchema` validates all 5 provider account infos
 - `registry.ts` — Test auto-derived `providerConfigSchema` validates all 5 provider configs
 - Each provider — Test `signatureScheme` round-trips through `signatureSchemeSchema.parse()`
@@ -1250,9 +1925,12 @@ type _7 = Assert<InboundWebhookDef<unknown> | undefined, ApiProvider["inbound"]>
 ## Performance Considerations
 
 - `deriveVerifySignature` is called per webhook — negligible overhead (one function creation, cached via closure)
-- `PROVIDER_CLIENT_REGISTRY` is built once at module load — no runtime cost
 - Auto-derived discriminated unions use `Object.values()` once at module load
+- `_AssertDisplayComplete` is `declare const` — zero runtime overhead, type-checked only
 - `healthCheck.check()` (when implemented) makes one API call per connection per poll interval — negligible
+- `ProviderShape<K>`, `AuthDefFor<K>`, `AccountInfoFor<K>`, `EventKeysFor<K>` are pure types — erased before bundling, zero runtime overhead
+- `eventKeySchema` enum is built once at module load from `Object.entries(PROVIDERS)` — O(n) where n = provider count (5), negligible
+- `getProvider<K>` narrow overload has zero runtime overhead — same body as the wide overload, TypeScript dispatches the overload at compile time only
 
 ## Migration Notes
 
@@ -1330,3 +2008,48 @@ type _7 = Assert<InboundWebhookDef<unknown> | undefined, ApiProvider["inbound"]>
   - **Migration Notes** — Added `VerifyFn` async widening, `@noble/ed25519` dependency.
   - **PollingDef remains deferred** — requires runtime infrastructure (polling worker service) and no concrete polling-only provider exists yet.
 - **Impact on remaining work**: Plan grows from 9 to 10 phases. Phase 10 is schema-only with zero runtime risk. After Phase 10, every provider in the research taxonomy has a typed home.
+
+### 2026-03-18 — Phase 4 & 8: Display-first architecture + server-only boundary
+
+- **Trigger**: Pre-implementation review of Phase 4 identified a fundamental client/server boundary problem. `define.ts` imports `@t3-oss/env-core` and calls `process.env` via `buildEnvGetter()`. Any module that imports `PROVIDERS` at runtime (including Phase 8's planned `PROVIDER_CLIENT_REGISTRY`) pulls the entire server dependency graph into client bundles. There is no runtime-safe way to extract icon data from provider definitions into a client-safe file without codegen or conditional exports — both over-engineered.
+- **Changes**:
+  - **Phase 4** — Completely rewritten: "Display Consolidation + Icon Field" → "Display-First Architecture + Compile-Time Completeness Enforcement". Direction inverted: providers **spread from** `display.ts` (not the other way around). `display.ts` stays a zero-import leaf node. Added `icon: IconDef` and `comingSoon?: true` to `BaseProviderFields`. Added `_AssertDisplayComplete` type assertion in `registry.ts`: adding a live display entry without a `PROVIDERS` implementation is a **compile-time error** naming the missing slug (using `declare const`, zero runtime overhead). Added `ProviderDisplayEntry` as a public export from `display.ts`. Deleted `display-sync.test.ts` — type system enforces what the runtime test did, bidirectionally.
+  - **Phase 8** — Completely rewritten: "ClientShape + PROVIDER_CLIENT_REGISTRY" → "Server-Only Boundary Enforcement". Dropped `ClientShape`, `extractClientShape`, `client-registry.ts`, `PROVIDER_CLIENT_REGISTRY` — superseded by display-first architecture. Added `import "server-only"` to `index.ts` (hard build-time error for client barrel imports). Updated 4 client components importing runtime values from barrel to use `@repo/console-providers/display` subpath.
+  - **Current State Analysis** — Added: duplication between `display.ts` and provider definitions; 19 client consumers identified; client/server split is convention-only (no `server-only` enforcement).
+  - **Desired End State** — Updated: "display.ts is canonical source" replaces "display metadata lives on providers"; `server-only` enforcement replaces `ClientShape`.
+  - **"What We're NOT Doing"** — Added: `ClientShape`/`extractClientShape`/`PROVIDER_CLIENT_REGISTRY` (superseded); moving display data to `index.ts` barrel.
+  - **Testing Strategy** — Removed `extractClientShape` test; kept all other tests unchanged.
+  - **Performance** — Updated: removed `PROVIDER_CLIENT_REGISTRY` note, added `_AssertDisplayComplete` note.
+- **Impact on remaining work**: Phase 4 and 8 are both complete rewrites but same phase count (10). All other phases unchanged. Phase 5's `ProviderConfigMap` removal must preserve the `_AssertDisplayComplete` declarations added in Phase 4.
+
+### 2026-03-18 — Phase 4 complete rewrite: Zod-First Registry Unification (absorbs Phases 5 + 8)
+
+- **Trigger**: User requirement to strictly upgrade to Zod 4 across the package, limit standalone TypeScript `type`/`interface` declarations in favour of `z.infer<>`, enforce discriminated unions with proper propagation, and evaluate Zod 4's `z.registry()` WeakMap pattern for innovative type-system solutions.
+- **Changes**:
+  - **Phase 4** — Completely rewritten a second time: "Display-First Architecture + Compile-Time Completeness Enforcement" → **"Zod-First Registry Unification"**. Absorbs original Phases 5 and 8 (same file scope, no external dependencies beyond Phase 3). New scope:
+    1. `display.ts` — Add `providerDisplayEntrySchema` (Zod object); `ProviderDisplayEntry = z.infer<typeof providerDisplayEntrySchema>` replaces the TypeScript interface; add `providerSlugSchema = z.enum(Object.keys(PROVIDER_DISPLAY))` with `.meta()` as THE canonical slug/name/sourceType source.
+    2. `define.ts` — Add `providerKindSchema = z.enum(["webhook", "api"])` and `authKindSchema = z.enum(["oauth", "api-key", "app-token"])`; factory `kind` literals now use `satisfies z.infer<typeof providerKindSchema>` to anchor to the enum.
+    3. `registry.ts` — Remove `ProviderConfigMap`; auto-derive `providerAccountInfoSchema` and `providerConfigSchema` as `z.discriminatedUnion` from `PROVIDERS`; `sourceTypeSchema` becomes a re-export of `providerSlugSchema`; `_AssertDisplayComplete` type assertion enforces compile-time completeness; `ProviderName` and `SourceType` become `z.infer<typeof providerSlugSchema>` aliases.
+    4. `index.ts` — Add `import "server-only"` hard boundary; migrate 4 client barrel importers to `./display` subpath.
+    5. Delete `__tests__/display-sync.test.ts` — type system replaces runtime enforcement.
+  - **`z.registry()` evaluated and rejected** — Zod 4's `z.registry()` uses a WeakMap and is designed for dynamic/unknown schema sets (OpenAPI generators, form builders). For a statically known 5-provider registry, it adds indirection without value and cannot solve the client/server split (WeakMap lookup still requires server-side schema objects). Rejected for core pattern.
+  - **`.meta()` adopted** — `z.schema.meta({ id, description, ... })` is accepted as sugar for `z.globalRegistry` metadata; applied to `providerSlugSchema` and `signatureSchemeSchema` for OpenAPI documentation flow.
+  - **`z.function()` evaluated and rejected** — Loses `TConfig` generic → `(...args: unknown[]) => unknown`. Behavioral interfaces (`OAuthDef`, `AppTokenDef`, `ApiKeyDef`, `HealthCheckDef`, `BackfillDef`, `ResourcePickerDef`) must remain TypeScript interfaces — they contain generic function members that Zod cannot express without losing type information.
+  - **Phase 5 absorbed** — `ProviderConfigMap` removal and auto-derived unions are now Phase 4 scope.
+  - **Phase 8 absorbed** — `server-only` boundary and client component migration are now Phase 4 scope.
+  - **Plan count** — Phases 5 and 8 now carry `> ABSORBED into Phase 4` notices; total scope is unchanged (10 phases), but Phase 4 is larger and Phases 5 + 8 are no-ops.
+- **Impact on remaining work**: Phase 4 is now the largest phase (5 sub-tasks, two file-creation operations). Phases 5 and 8 require no implementation. All other phases (1-3, 6-7, 9-10) are unchanged. Phase 6 (gateway split), Phase 7 (relay secret threading), and Phase 9 (ManagedProvider) have no dependency on the registry changes in Phase 4.
+
+### 2026-03-18 — Phase 4 Step 8: Phantom Provider Graph
+
+- **Trigger**: Identified a remaining architectural gap — consumers (relay, gateway, backfill) still operate with wide `ProviderDefinition` types despite the Zod-first refactor. `getProvider("github")` returns `ProviderDefinition`, not `AppTokenDef`-auth-holding narrowed type. `EventKey` is a string union with no runtime validation counterpart. No mechanism for consumer packages to reference per-provider types without importing the runtime `PROVIDERS` object.
+- **Changes**:
+  - **Phase 4, Step 8** (new) — "Phantom Provider Graph": four interlocking additions that close the type loop:
+    - **8A — Brand `providerSlugSchema`**: `.brand<"ProviderSlug">()` makes `ProviderSlug` nominal. Raw strings cannot be passed where `ProviderSlug` is required.
+    - **8B — Mapped `EventKey` + `eventKeySchema`**: Compile-time `EventKey` mapped type derived from `PROVIDERS[K]["events"]` keys — auto-updates when providers change. Runtime `eventKeySchema = z.enum([...])` derived from the same source — structurally identical by construction, so compile-time and runtime representations cannot diverge.
+    - **8C — `ProviderShape<K>` + utility types**: `AuthDefFor<K>`, `AccountInfoFor<K>`, `EventKeysFor<K>` — pure type utilities. Consumer packages use `import type { AuthDefFor }` (erased before bundling) to get `AuthDefFor<"github"> → AppTokenDef` with zero runtime coupling to `PROVIDERS`.
+    - **8D — Narrow `getProvider<K>`**: Overload that returns `ProviderShape<K>` for literal slug arguments. `getProvider("github").auth.kind` resolves to `"app-token"` at the type level — no casts, no assertions.
+    - **8E — Updated exports**: `eventKeySchema`, `ProviderShape`, `AuthDefFor`, `AccountInfoFor`, `EventKeysFor` exported from `index.ts`.
+  - **Performance section** — Added 3 new notes: `ProviderShape`/utility types are pure-type (zero runtime), `eventKeySchema` built once at module load, narrow `getProvider` overload has zero runtime overhead.
+- **Core invariant established**: compile-time `EventKey` type and runtime `eventKeySchema` are derived from the same source. They cannot diverge. `EventKey` is no longer hand-maintained.
+- **Impact on remaining work**: Phase 4 grows by one step (now 8 sub-steps). Phase 4 implementation order updated: `registry.ts` changes now include Step 8 before `index.ts`. All other phases unchanged. Consumers (relay, gateway, backfill) gain narrow types without any changes to their own code — they just add `import type { AuthDefFor }` where currently they type-cast.

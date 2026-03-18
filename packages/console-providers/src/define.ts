@@ -1,8 +1,7 @@
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
 import { computeHmac, timingSafeEqual } from "./crypto";
-import type { ProxyExecuteResponse } from "./gateway";
-import type { IconDef } from "./icon";
+import type { ProviderDisplayEntry } from "./display";
 import type { PostTransformEvent } from "./post-transform-event";
 import type {
   BaseProviderAccountInfo,
@@ -338,7 +337,42 @@ export const rateLimitSchema = z.object({
 
 export type RateLimit = z.infer<typeof rateLimitSchema>;
 
+// ── Proxy Wire Types ──────────────────────────────────────────────────────────
+// Colocated here because ResourcePickerExecuteApiFn (below) uses ProxyExecuteResponse
+// as its return type — the call-site types are provider-level concerns.
+
+export const proxyExecuteRequestSchema = z.object({
+  endpointId: z.string(),
+  pathParams: z.record(z.string(), z.string()).optional(),
+  queryParams: z.record(z.string(), z.string()).optional(),
+  body: z.unknown().optional(),
+});
+export type ProxyExecuteRequest = z.infer<typeof proxyExecuteRequestSchema>;
+
+export const proxyExecuteResponseSchema = z.object({
+  status: z.number(),
+  data: z.unknown(),
+  headers: z.record(z.string(), z.string()),
+});
+export type ProxyExecuteResponse = z.infer<typeof proxyExecuteResponseSchema>;
+
 // ── Backfill schemas ────────────────────────────────────────────────────────────
+
+// ── Backfill Depth ────────────────────────────────────────────────────────────
+// Primitive of BackfillDef — defines how many days back a provider can backfill.
+
+export const backfillDepthSchema = z.union([
+  z.literal(1),
+  z.literal(7),
+  z.literal(30),
+  z.literal(90),
+]);
+export type BackfillDepth = z.infer<typeof backfillDepthSchema>;
+
+/** Ordered options for UI depth selectors. */
+export const BACKFILL_DEPTH_OPTIONS = [
+  1, 7, 30, 90,
+] as const satisfies readonly z.infer<typeof backfillDepthSchema>[];
 
 export const backfillWebhookEventSchema = z.object({
   /** Unique per event: "backfill-{installationId}-{entityType}-{itemId}" */
@@ -538,13 +572,11 @@ export interface ResourcePickerDef {
 
 interface BaseProviderFields<
   TConfig,
-  // biome-ignore lint/correctness/noUnusedVariables: used by WebhookProvider.auth and ApiProvider.auth
-  TAccountInfo extends BaseProviderAccountInfo,
   TCategories extends Record<string, CategoryDef>,
   TEvents extends Record<string, EventDefinition>,
   TAccountInfoSchema extends z.ZodObject,
   TProviderConfigSchema extends z.ZodObject,
-> {
+> extends Readonly<ProviderDisplayEntry> {
   readonly accountInfoSchema: TAccountInfoSchema;
   readonly api: ProviderApi;
   /** Build the providerConfig JSONB blob for a new workspace integration record. */
@@ -552,7 +584,6 @@ interface BaseProviderFields<
     defaultSyncEvents: readonly string[];
   }) => z.infer<TProviderConfigSchema>;
   readonly categories: TCategories;
-  readonly comingSoon?: true;
   readonly configSchema: z.ZodType<TConfig>;
   /** Build runtime config from validated env + runtime values.
    *  Returns null for optional providers when their env vars are absent. */
@@ -564,8 +595,6 @@ interface BaseProviderFields<
   readonly defaultSyncEvents: readonly string[];
   /** Map sourceType to observation type string for storage. */
   readonly deriveObservationType: (sourceType: string) => string;
-  readonly description: string;
-  readonly displayName: string;
   /** Declarative edge rules for entity-mediated relationship detection */
   readonly edgeRules?: EdgeRule[];
   /** Pre-built createEnv() preset — for use in @t3-oss/env-core `extends` arrays.
@@ -578,9 +607,6 @@ interface BaseProviderFields<
   readonly getBaseEventType: (sourceType: string) => string;
   /** Optional connection health probe — enables 401-poll cron for revocation detection */
   readonly healthCheck?: HealthCheckDef<TConfig>;
-  /** SVG icon data — sourced from display.ts spread, never server-only */
-  readonly icon: IconDef;
-  readonly name: string;
   /** When true, all env vars are optional — the provider is disabled and its env preset is excluded from PROVIDER_ENVS(). */
   readonly optional?: true;
   /** Zod schema for the provider_config JSONB blob stored in workspace_integrations. */
@@ -618,7 +644,6 @@ export interface WebhookProvider<
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
 > extends BaseProviderFields<
     TConfig,
-    TAccountInfo,
     TCategories,
     TEvents,
     TAccountInfoSchema,
@@ -652,7 +677,6 @@ export interface ApiProvider<
   TProviderConfigSchema extends z.ZodObject = z.ZodObject,
 > extends BaseProviderFields<
     TConfig,
-    TAccountInfo,
     TCategories,
     TEvents,
     TAccountInfoSchema,
