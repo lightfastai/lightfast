@@ -1,27 +1,32 @@
 ---
 date: 2026-03-18
-topic: "apps/platform architecture redesign: Inngest-only, classify-first, zero-race"
-tags: [plan, architecture, platform, inngest, redesign, mermaid]
+topic: "apps/platform architecture redesign: gate-first, health-aware, zero-race, full DB rework"
+tags: [plan, architecture, platform, inngest, redesign, mermaid, health-check, config-drift, audit-log]
 status: draft
-iteration: 1
 ---
 
 # apps/platform Architecture Redesign
 
+<!-- SECTION: executive-summary | last_updated: 2026-03-18T01 -->
 ## Executive Summary
 
 Radical redesign of the platform service that:
 - **Drops Upstash Workflow + QStash entirely** — Inngest as the sole durable execution engine
-- **Eliminates race conditions** via Inngest concurrency serialization (1 per installation)
+- **Gate-first lifecycle** — `gatewayInstallations.status` changes FIRST, closing the ingress gate within one Inngest step (~100ms) of lifecycle detection
 - **Classify-first ingest** — webhook type determines routing BEFORE connection resolution
-- **Self-healing** — write-ahead log + cron recovery for missed events
-- **Provider-adaptive rate limiting** — per-provider throttle configs via Inngest
+- **Health-aware connections** — periodic cron probes detect revoked tokens (Linear), stale installations, and configuration drift
+- **Configuration drift detection** — detects when Lightfast updates app config and existing installations need re-consent
+- **Lifecycle audit log** — immutable append-only table for every status transition
+- **Console double-gate** — DLQ with reason code for events that leak through during lifecycle transitions
+- **Self-healing** — write-ahead log + recovery crons for deliveries and lifecycle events
+- **Full DB rework** — `workspaceIntegrations.isActive → status`, new tables, new columns
 - **Single event bus** — platform and console share one Inngest app via `@repo/inngest`
 
 Designed for a 1-2 person team: one durable execution system, one dashboard, one mental model.
 
 ---
 
+<!-- SECTION: dropping | last_updated: 2026-03-18T01 -->
 ## What We're Dropping
 
 | Dropped | Replacement | Why |
@@ -30,65 +35,122 @@ Designed for a 1-2 person team: one durable execution system, one dashboard, one
 | QStash (internal routing) | Inngest events | Typed events > HTTP publishes; no service discovery needed |
 | QStash delivery callbacks | Inngest observability | Native step-level visibility replaces callback tracking |
 | QStash deduplication | Inngest idempotency | `idempotency: "event.data.deliveryId"` |
-| Redis resource routing cache | DB-only routing | `gw:resource:*` was never read for routing (confirmed in codebase) |
-| 4 delivery statuses | 3 statuses | `received → routed → failed` (Inngest dashboard for execution detail) |
+| Redis resource routing cache | DB-only routing | `gw:resource:*` was never read for routing (confirmed: relay JOINs DB directly) |
+| 4 delivery statuses | 3 statuses + failReason | `received → routed → failed` + `failReason` column for DLQ granularity |
 
 **Kept:** Redis for OAuth state (atomic MULTI HGETALL+DEL consume pattern — hard to replicate atomically in Postgres).
 
 ---
 
-## Key Innovations
+<!-- SECTION: design-principles | last_updated: 2026-03-18T01 -->
+## Design Principles
 
-### 1. Inngest Concurrency as Distributed Lock
+### 1. Gate-First
 
-```
-connectionLifecycle: concurrency: { limit: 1, key: installationId }
-connectionRestore:   concurrency: { limit: 1, key: installationId }
-```
+Every lifecycle operation changes `gatewayInstallations.status` as its **first step**. This immediately closes the ingress gate (the `ingestDelivery` function JOINs on `i.status = 'active'`). All subsequent cleanup steps (cancel backfill, revoke token, update WI, soft-delete resources) are downstream of the gate close.
 
-All lifecycle operations for a given installation are **naturally serialized by Inngest's queue**. No distributed locks. No optimistic locking needed. If a resource-add webhook arrives while a teardown is running, Inngest queues it. If two lifecycle webhooks arrive simultaneously, one waits.
+### 2. Double-Gate
 
-### 2. Classify-First Ingest
+Two independent gates prevent stale events from reaching the console pipeline:
+- **Gate 1 (Platform)**: `ingestDelivery` resolves connection via `gatewayResources JOIN gatewayInstallations WHERE i.status = 'active' AND r.status = 'active'`
+- **Gate 2 (Console)**: `processWebhook` checks `workspaceIntegrations.status = 'active'` before processing. Events that leaked through Gate 1 (already in Inngest queue when gate closed) are caught here and DLQ'd with `failReason: 'inactive_connection'`.
 
-The original system routes THEN handles lifecycle (separate services, race window). The redesign classifies FIRST:
+### 3. Health-Aware
 
-```
-webhook → classify(provider, eventType) → lifecycle | data | unknown
-```
+Connections are not assumed healthy just because no lifecycle webhook arrived. A periodic health check cron probes each active connection, detects auth failures (especially for Linear which has no lifecycle webhooks), and triggers lifecycle transitions when connectivity is permanently lost.
 
-Lifecycle events never enter the data pipeline. Data events never trigger lifecycle. The classification happens in-process inside the `ingestDelivery` Inngest function, using `@repo/connection-core`.
+### 4. Idempotent Everything
 
-### 3. Write-Ahead + Cron Recovery
-
-```
-Route handler: persist(received) → inngest.send() → return 200
-Cron (every 1m): scan(status=received AND age > 2min) → re-fire events
-```
-
-Even if `inngest.send()` fails silently, the cron catches it. The system is self-healing.
-
-### 4. Proactive Token Refresh
-
-```
-tokenRefresh (cron every 5m): scan tokens where expiresAt < now + 10m → refresh
-```
-
-Proxy calls never encounter expired tokens. Eliminates the 401→retry→refresh cascade.
-
-### 5. Single Event Bus
-
-`@repo/inngest` exports one typed client. Both `apps/platform` and `apps/console` register serve endpoints. Events cross service boundaries natively.
-
-```
-platform fires: console/webhook.delivered → console's processWebhook picks it up
-platform fires: backfill/run.cancelled → console's backfillWorker cancelOn picks it up
-```
-
-No QStash. No HTTP. Just typed events.
+Every Inngest function, every DB write, every state transition is safe to re-execute. Inngest's `idempotency` key prevents duplicate processing. DB upserts use `onConflictDoNothing` or `onConflictDoUpdate`. Lifecycle operations check current status before transitioning.
 
 ---
 
-## Diagram 1: apps/platform Master Architecture
+<!-- SECTION: db-schema | last_updated: 2026-03-18T01 -->
+## DB Schema Rework
+
+### Modified: `gatewayInstallations` — add 4 columns
+
+```sql
+ALTER TABLE lightfast_gateway_installations
+  ADD COLUMN health_status varchar(50) NOT NULL DEFAULT 'unknown',
+  ADD COLUMN last_health_check_at timestamptz,
+  ADD COLUMN health_check_failures integer NOT NULL DEFAULT 0,
+  ADD COLUMN config_status varchar(50) NOT NULL DEFAULT 'unknown';
+```
+
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `healthStatus` | `varchar(50)` | `'unknown'` | `healthy \| degraded \| unreachable \| unknown` |
+| `lastHealthCheckAt` | `timestamp` | null | When the last health check probe ran |
+| `healthCheckFailures` | `integer` | `0` | Consecutive probe failures (reset on success) |
+| `configStatus` | `varchar(50)` | `'unknown'` | `current \| drift \| unknown` |
+
+Status values expanded: `active | pending | error | revoked | suspended | disconnected`
+
+### Modified: `workspaceIntegrations` — migrate `isActive` to `status`
+
+```sql
+ALTER TABLE lightfast_workspace_integrations
+  ADD COLUMN status varchar(50) NOT NULL DEFAULT 'active',
+  ADD COLUMN status_reason varchar(100);
+UPDATE lightfast_workspace_integrations
+  SET status = CASE WHEN is_active THEN 'active' ELSE 'disconnected' END;
+ALTER TABLE lightfast_workspace_integrations DROP COLUMN is_active;
+```
+
+| Column | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `status` | `varchar(50)` | `'active'` | `active \| disconnected \| revoked \| suspended \| removed \| deleted \| error` |
+| `statusReason` | `varchar(100)` | null | Reason for current status (e.g., `provider_revoked`, `health_check_auth_failure`) |
+
+### Modified: `gatewayWebhookDeliveries` — add `failReason`, `classifiedAs`, index
+
+```sql
+ALTER TABLE lightfast_gateway_webhook_deliveries
+  ADD COLUMN fail_reason varchar(100),
+  ADD COLUMN classified_as varchar(20);
+CREATE INDEX gateway_wd_recovery_idx
+  ON lightfast_gateway_webhook_deliveries (status, received_at)
+  WHERE status = 'received';
+```
+
+| Column | Type | Purpose |
+|--------|------|---------|
+| `failReason` | `varchar(100)` | `no_connection \| unknown_event \| inactive_connection \| classification_error` |
+| `classifiedAs` | `varchar(20)` | `lifecycle \| data \| unknown` — for debugging |
+
+### New: `gatewayLifecycleLog` — immutable audit trail
+
+```ts
+export const gatewayLifecycleLog = pgTable(
+  "lightfast_gateway_lifecycle_log",
+  {
+    id: varchar("id", { length: 191 }).notNull().primaryKey().$defaultFn(() => nanoid()),
+    installationId: varchar("installation_id", { length: 191 }).notNull(),
+    provider: varchar("provider", { length: 50 }).notNull(),
+    reason: varchar("reason", { length: 100 }).notNull(),
+    previousStatus: varchar("previous_status", { length: 50 }).notNull(),
+    newStatus: varchar("new_status", { length: 50 }).notNull(),
+    triggeredBy: varchar("triggered_by", { length: 50 }).notNull(),
+    // "webhook" | "health_check" | "user" | "system" | "config_drift"
+    resourceIds: jsonb("resource_ids"),  // string[] for scoped transitions
+    metadata: jsonb("metadata"),         // deliveryId, correlationId, error details
+    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
+      .notNull().defaultNow(),
+  },
+  (table) => ({
+    installationIdx: index("gateway_ll_installation_idx").on(table.installationId),
+    createdAtIdx: index("gateway_ll_created_at_idx").on(table.createdAt),
+  })
+);
+```
+
+Append-only. Every status transition gets a row. Primary debugging tool: "why did this connection go inactive?"
+
+---
+
+<!-- SECTION: architecture-diagram | last_updated: 2026-03-18T01 -->
+## Master Architecture
 
 ```mermaid
 flowchart TD
@@ -103,581 +165,638 @@ flowchart TD
             MW1["requestId\n(nanoid)"] --> MW2["sentry\n(captureException)"] --> MW3["lifecycle\n(structured logs)"] --> MW4["errorSanitizer\n(5xx → generic)"]
         end
 
-        subgraph routes["HTTP Routes — fast path (all < 500ms, no durable logic)"]
-            R_INGEST["POST /ingest/:provider\n─────────────────────\nproviderGuard\nHMAC verify OR X-API-Key\nrawBodyCapture\npayloadParseAndExtract\n─────────────────────\n① INSERT delivery (received)\n② inngest.send(webhook.received)\n③ return 200 {accepted}"]
+        subgraph routes["HTTP Routes — fast path (all < 500ms)"]
+            R_INGEST["POST /ingest/:provider\n─────────────────────\n① INSERT delivery (received)\n② inngest.send(webhook.received)\n③ return 200 {accepted}"]
 
-            R_OAUTH["GET /connect/:p/authorize\n─────────────────────\napiKeyAuth + tenantMiddleware\nBuild OAuth URL\nRedis SET state TTL 600s\nReturn {url, state}\n─────────────────────\nGET /connect/:p/callback\n─────────────────────\nRedis MULTI get+del state\nExchange code for tokens\nUPSERT installation\nEncrypt + store tokens\nRedis SET result TTL 300s\n─────────────────────\nGET /connect/oauth/poll\n─────────────────────\nRedis GET result\nReturn {pending|completed}"]
+            R_OAUTH["OAuth routes\nGET /connect/:p/authorize\nGET /connect/:p/callback\nGET /connect/oauth/poll"]
 
-            R_CONNECT["GET /connect/:id\nConnection details + resources\n─────────────────────\nDELETE /connect/:id\ninngest.send(connection.lifecycle)\nReturn {teardown_initiated}\n─────────────────────\nGET /token/:id\nDecrypt + refresh-if-expired\nReturn {accessToken, expiresIn}\n─────────────────────\nPOST /proxy/:id\nAcquire token → proxy fetch\n401 retry with force-refresh"]
+            R_CONNECT["Connection routes\nGET /connect/:id\nDELETE /connect/:id\nGET /token/:id\nPOST /proxy/:id"]
 
-            R_RES["POST /connect/:id/resources\nUPSERT resource row\n─────────────────────\nDELETE /connect/:id/resources/:r\nSoft-delete resource\n─────────────────────\nGET /connect/:id/runs\nBackfill history\n─────────────────────\nPOST /connect/:id/runs\nRecord backfill run result"]
+            R_RES["Resource routes\nPOST /connect/:id/resources\nDELETE /connect/:id/resources/:r"]
 
-            R_ADMIN["GET /admin/health\nDB probe\n─────────────────────\nGET /admin/dlq\nPaginated failed deliveries\n─────────────────────\nPOST /admin/dlq/replay\nRe-fire events for deliveryIds[]\n─────────────────────\nPOST /admin/replay/catchup\nRe-fire received deliveries\nfor an installationId"]
+            R_ADMIN["Admin routes\nGET /admin/health\nGET /admin/dlq\nPOST /admin/dlq/replay\nGET /admin/delivery/:id/trace\nPOST /admin/lifecycle/replay\nGET /admin/lifecycle-log/:id"]
         end
 
-        R_SERVE["GET|POST /inngest  (Inngest serve endpoint)"]
+        R_SERVE["GET|POST /inngest"]
 
-        subgraph fns["Inngest Functions — durable, retriable, observable"]
-            F_INGEST["⚡ ingestDelivery\ntrigger: platform/webhook.received\n═══════════════════════════\n❶ classify\n  → connection-core.classifyEvent()\n  → lifecycle | data | unknown\n\n❷ route\n  [data]  resolve connection via DB join\n          → send(console/webhook.delivered)\n  [lifecycle] extract reason\n          → send(platform/connection.lifecycle)\n          OR send(platform/connection.restore)\n  [unknown] mark DLQ\n\n❸ update delivery status\n  → routed | lifecycle | failed\n═══════════════════════════\nidempotency: deliveryId\nconcurrency: 50 global · 20/provider\nretries: 3"]
+        subgraph fns["Inngest Functions"]
+            F_INGEST["⚡ ingestDelivery\nclassify → route → update status\nidempotency: deliveryId\nconcurrency: 50 global · 20/provider"]
 
-            F_LIFECYCLE["🔒 connectionLifecycle\ntrigger: platform/connection.lifecycle\n═══════════════════════════\n❶ cancel-backfill\n  → sendEvent(backfill/run.cancelled)\n  best-effort\n\n❷ revoke-token\n  → skip if GitHub (on-demand JWTs)\n  → decrypt + POST revoke endpoint\n  best-effort\n\n❸ cleanup-oauth-cache\n  → Redis DEL gw:oauth:* for installation\n\n❹ update-ingress-gate\n  → connection-core.targetStatus(reason)\n  → UPDATE workspaceIntegrations.status\n  partial: only affected resourceIds\n  full: all resources for installation\n\n❺ soft-delete\n  → UPDATE gatewayInstallations.status\n  → UPDATE gatewayResources.status\n  full: all resources → removed\n  partial: specific resources only\n═══════════════════════════\n🔒 concurrency: 1/installationId\n← serializes ALL lifecycle ops\nretries: 5 · timeout: 5m"]
+            F_LIFECYCLE["🔒 connectionLifecycle\n❶ CLOSE GATE (installations.status)\n❷ cancel-backfill\n❸ update WI.status\n❹ log-lifecycle (audit)\n❺ revoke-token\n❻ cleanup-cache\n❼ soft-delete-resources\nconcurrency: 1/installationId"]
 
-            F_RESTORE["🔓 connectionRestore\ntrigger: platform/connection.restore\n═══════════════════════════\n❶ restore-installation\n  → UPDATE gatewayInstallations\n    SET status=active\n\n❷ restore-integrations\n  → UPDATE workspaceIntegrations\n    SET status=active\n    WHERE status=suspended\n═══════════════════════════\n🔒 concurrency: 1/installationId\nretries: 3"]
+            F_RESTORE["🔓 connectionRestore\nrestore installation + WI + audit log\nconcurrency: 1/installationId"]
 
-            F_TOKEN["🔄 tokenRefresh\ntrigger: cron schedule 5m\n═══════════════════════════\nScan: gatewayTokens\n  WHERE expiresAt < now + 10min\n  AND installation.status = active\n\nFor each: decrypt refresh token\n  → POST provider refresh endpoint\n  → encrypt + update stored token\n\nSkips: GitHub (on-demand JWTs)\n       Vercel (non-expiring tokens)\n═══════════════════════════\nPrevents proxy-call token failures"]
+            F_HEALTH["🏥 healthCheck (cron 5m)\nprobe provider endpoints\ndetect config drift\n401 → lifecycle event"]
 
-            F_RECOVERY["🩹 deliveryRecovery\ntrigger: cron schedule 1m\n═══════════════════════════\nScan: gatewayWebhookDeliveries\n  WHERE status=received\n  AND receivedAt < now - 2min\n  LIMIT 100\n\nFor each: re-fire\n  inngest.send(webhook.received)\n  with same payload\n═══════════════════════════\nSelf-healing for missed events\nidempotency prevents double-processing"]
+            F_TOKEN["🔄 tokenRefresh (cron 5m)\nproactive refresh before expiry"]
+
+            F_RECOVERY["🩹 deliveryRecovery (cron 1m)\nre-fire stuck received events"]
+
+            F_LIFECYCLE_RECOVERY["🩹 lifecycleRecovery (cron 5m)\nre-fire stuck lifecycle events"]
         end
     end
 
-    DB[("@db/console\nNeon Postgres\n(shared with console)")]
-    REDIS[("Upstash Redis\nOAuth state only\ngw:oauth:state:*\ngw:oauth:result:*")]
-    INNGEST_CLOUD["Inngest Cloud\nEvent bus + durable execution\nSingle app shared with console"]
-    CORE["@repo/connection-core\nclassifier · state-machine\nprovider definitions · HMAC configs"]
-    CONSOLE["apps/console\n(Inngest serve endpoint)"]
+    DB[("Neon Postgres")]
+    REDIS[("Upstash Redis\nOAuth state only")]
+    INNGEST_CLOUD["Inngest Cloud"]
+    CORE["@repo/connection-core"]
+    CONSOLE["apps/console\nDouble-gate: WI.status check"]
 
-    EXT -->|"POST /ingest/:provider\nwebhook payloads"| R_INGEST
-    CLI -->|"OAuth + API calls"| R_OAUTH
-    CLI -->|"Connection management"| R_CONNECT
+    EXT -->|"POST /ingest/:provider"| R_INGEST
+    CLI --> R_OAUTH & R_CONNECT
 
-    R_INGEST -->|"① persist"| DB
-    R_INGEST -->|"② fire event"| INNGEST_CLOUD
-    R_CONNECT -->|"fire lifecycle event"| INNGEST_CLOUD
-    R_OAUTH -->|"state + result"| REDIS
-    R_OAUTH -->|"installations + tokens"| DB
-    R_CONNECT --> DB
+    R_INGEST -->|"persist"| DB
+    R_INGEST -->|"fire event"| INNGEST_CLOUD
+    R_OAUTH --> REDIS & DB
+    R_CONNECT --> DB & INNGEST_CLOUD
     R_RES --> DB
     R_ADMIN --> DB
 
-    INNGEST_CLOUD <-->|"invoke platform functions"| R_SERVE
+    INNGEST_CLOUD <--> R_SERVE
 
-    F_INGEST -->|"classify"| CORE
-    F_LIFECYCLE -->|"targetStatus(reason)"| CORE
+    F_INGEST --> CORE
+    F_LIFECYCLE --> CORE
+    F_HEALTH --> CORE
     fns --> DB
 
-    F_INGEST -.->|"send: console/webhook.delivered"| INNGEST_CLOUD
-    F_INGEST -.->|"send: platform/connection.lifecycle"| INNGEST_CLOUD
-    F_INGEST -.->|"send: platform/connection.restore"| INNGEST_CLOUD
-    F_LIFECYCLE -.->|"send: backfill/run.cancelled"| INNGEST_CLOUD
-    INNGEST_CLOUD -.->|"deliver console events"| CONSOLE
+    F_INGEST -.-> INNGEST_CLOUD
+    F_HEALTH -.-> INNGEST_CLOUD
+    F_LIFECYCLE -.-> INNGEST_CLOUD
+    INNGEST_CLOUD -.-> CONSOLE
 
     style F_LIFECYCLE fill:#1a1a2e,stroke:#e94560,stroke-width:2px
     style F_RESTORE fill:#1a1a2e,stroke:#0f3460,stroke-width:2px
     style F_INGEST fill:#1a1a2e,stroke:#16213e,stroke-width:2px
+    style F_HEALTH fill:#1a1a2e,stroke:#533483,stroke-width:2px
 ```
 
 ---
 
-## Diagram 2: Ingest-Delivery Pipeline (The Critical Path)
-
-The most important flow in the system. Shows the classify-first innovation and how lifecycle events are handled inline.
+<!-- SECTION: ingest-pipeline | last_updated: 2026-03-18T01 -->
+## Ingest-Delivery Pipeline
 
 ```mermaid
 sequenceDiagram
     participant EXT as External Provider
-    participant ROUTE as POST /ingest/:provider<br/>(HTTP route handler)
+    participant ROUTE as POST /ingest/:provider
     participant DB as Neon Postgres
     participant INN as Inngest Cloud
-    participant FN as ingestDelivery<br/>(Inngest function)
+    participant FN as ingestDelivery
     participant CORE as connection-core
-    participant CONSOLE as apps/console<br/>(via Inngest event)
+    participant CONSOLE as apps/console
 
-    Note over EXT,CONSOLE: PHASE 1: Fast acknowledgment (< 500ms)
+    Note over EXT,CONSOLE: PHASE 1: Fast ack (< 500ms)
 
-    EXT->>ROUTE: POST /ingest/github<br/>Headers: X-Hub-Signature-256, X-GitHub-Event<br/>Body: webhook payload
-    ROUTE->>ROUTE: providerGuard → validate provider exists
-    ROUTE->>ROUTE: webhookHeaderGuard → required headers present
-    ROUTE->>ROUTE: rawBodyCapture → buffer for HMAC
-    ROUTE->>ROUTE: signatureVerify → HMAC-SHA256 check
-    ROUTE->>ROUTE: payloadParseAndExtract<br/>→ {deliveryId, eventType, resourceId, action}
+    EXT->>ROUTE: POST /ingest/github + HMAC + payload
+    ROUTE->>ROUTE: providerGuard → signatureVerify → payloadParseAndExtract
+    ROUTE->>DB: INSERT delivery (status: received) ON CONFLICT DO NOTHING
+    ROUTE->>INN: inngest.send("platform/webhook.received")
+    ROUTE-->>EXT: 200 {accepted, deliveryId}
 
-    ROUTE->>DB: INSERT gatewayWebhookDeliveries<br/>(status: received, deliveryId, provider, eventType)<br/>ON CONFLICT DO NOTHING (idempotent)
+    Note over INN,CONSOLE: PHASE 2: Durable processing
 
-    ROUTE->>INN: inngest.send("platform/webhook.received")<br/>{provider, deliveryId, eventType, action,<br/>resourceId, payload, receivedAt}
+    INN->>FN: invoke (idempotency: deliveryId)
 
-    ROUTE-->>EXT: 200 {status: accepted, deliveryId}
+    FN->>CORE: classifyEvent(provider, eventType)
+    CORE-->>FN: "lifecycle" | "data" | "unknown"
 
-    Note over INN,CONSOLE: PHASE 2: Durable processing (Inngest function)
-
-    INN->>FN: invoke ingestDelivery<br/>(idempotency: deliveryId)
-
-    Note over FN: Step 1: classify
-    FN->>CORE: classifyEvent(github, "installation", "deleted")
-    CORE-->>FN: "lifecycle"
-
-    alt lifecycle event
-        Note over FN: Step 2: handle lifecycle
-        FN->>FN: extractLifecycleReason(provider, eventType, action, payload)<br/>→ {reason: provider_revoked, installationExternalId, resourceIds?}
-        FN->>DB: SELECT gatewayInstallations<br/>WHERE provider=github AND externalId=:installationId
-        DB-->>FN: {id, orgId, status}
-
-        FN->>INN: inngest.send("platform/connection.lifecycle")<br/>{reason, installationId, orgId, provider, resourceIds?}
-
-        Note over FN: Step 3: update status
-        FN->>DB: UPDATE gatewayWebhookDeliveries<br/>SET status=lifecycle
-
-    else data event (e.g., push, pull_request)
-        Note over FN: Step 2: resolve connection
-        FN->>DB: SELECT gatewayResources r<br/>JOIN gatewayInstallations i<br/>ON r.installationId = i.id<br/>WHERE r.providerResourceId = :resourceId<br/>AND r.status = active AND i.status = active
-        DB-->>FN: {connectionId, orgId} | null
-
-        alt connection resolved
-            Note over FN: Step 3: deliver to console
-            FN->>INN: inngest.send("console/webhook.delivered")<br/>{deliveryId, connectionId, orgId, provider,<br/>eventType, payload, receivedAt}
-
-            Note over FN: Step 4: update status
-            FN->>DB: UPDATE gatewayWebhookDeliveries<br/>SET status=routed, installationId=:connectionId
-
-            INN->>CONSOLE: trigger processWebhook function
-
-        else no connection found
-            Note over FN: Step 3: DLQ
-            FN->>DB: UPDATE gatewayWebhookDeliveries<br/>SET status=failed, failReason='no_connection'
+    alt lifecycle
+        FN->>DB: resolve installation by externalId
+        FN->>INN: send("platform/connection.lifecycle")
+        FN->>DB: SET status='lifecycle'
+    else data
+        FN->>DB: SELECT resources JOIN installations WHERE active
+        alt resolved (GATE 1)
+            FN->>INN: send("console/webhook.delivered")
+            FN->>DB: SET status='routed'
+            INN->>CONSOLE: processWebhook (GATE 2: WI.status check)
+        else no connection
+            FN->>DB: SET status='failed', failReason='no_connection'
         end
-
-    else unknown event type
-        FN->>DB: UPDATE gatewayWebhookDeliveries<br/>SET status=failed, failReason='unknown_event'
+    else unknown
+        FN->>DB: SET status='failed', failReason='unknown_event'
     end
 ```
 
 ---
 
-## Diagram 3: Connection Lifecycle with Serialization
+<!-- SECTION: lifecycle-workflow | last_updated: 2026-03-18T01 -->
+## Connection Lifecycle (Gate-First)
 
-Shows how `concurrency: 1/installationId` eliminates race conditions for concurrent operations.
+**Critical ordering**: `gatewayInstallations.status` changes FIRST (step ❶). This is the actual ingress gate — the `ingestDelivery` JOIN checks it. All cleanup is downstream.
 
 ```mermaid
 sequenceDiagram
-    participant T1 as Trigger 1<br/>DELETE /connect/:id<br/>(user disconnect)
-    participant T2 as Trigger 2<br/>POST /ingest/:provider<br/>(installation.deleted webhook)
-    participant INN as Inngest Cloud<br/>concurrency queue
-    participant FN as connectionLifecycle<br/>🔒 concurrency: 1/installationId
-    participant CORE as connection-core
+    participant T1 as DELETE /connect/:id
+    participant T2 as installation.deleted webhook
+    participant INN as Inngest (concurrency queue)
+    participant FN as connectionLifecycle 🔒 1/installationId
     participant DB as Neon Postgres
-    participant REDIS as Upstash Redis
-    participant CONSOLE as apps/console<br/>(backfill cancelOn)
+    participant LOG as gatewayLifecycleLog
 
-    Note over T1,CONSOLE: Two lifecycle triggers arrive simultaneously for the same installation
+    T1->>INN: {reason: user_disconnect}
+    T2->>INN: {reason: provider_revoked}
 
-    T1->>INN: send("platform/connection.lifecycle")<br/>{reason: user_disconnect, installationId: abc}
-    T2->>INN: send("platform/connection.lifecycle")<br/>{reason: provider_revoked, installationId: abc}
+    Note over INN: concurrency: 1/installationId — serial
 
-    Note over INN: Inngest queues both events.<br/>concurrency: 1/installationId = abc<br/>Only ONE runs at a time.
+    INN->>FN: ▶ Event 1 (user_disconnect)
 
-    INN->>FN: ▶ Execute event 1 (user_disconnect)
+    Note over FN: ❶ CLOSE INGRESS GATE
+    FN->>DB: UPDATE installations SET status='disconnected' WHERE status='active'
+    Note over FN: ⚡ Gate closed — new events immediately DLQ
 
-    Note over FN: Step 1: cancel-backfill
-    FN->>INN: send("backfill/run.cancelled")<br/>{installationId: abc}
-    INN-->>CONSOLE: cancelOn triggers on running workers
-    Note over FN: best-effort, errors swallowed
+    Note over FN: ❷ cancel-backfill
+    FN->>INN: send("backfill/run.cancelled")
 
-    Note over FN: Step 2: revoke-token
-    FN->>DB: SELECT gatewayTokens WHERE installationId=abc
-    alt provider has revoke endpoint (not GitHub)
-        FN->>FN: decrypt token → POST provider /oauth/revoke
-    end
-    Note over FN: best-effort, errors swallowed
+    Note over FN: ❸ update WI
+    FN->>DB: UPDATE workspaceIntegrations SET status='disconnected', statusReason='user_disconnect'
 
-    Note over FN: Step 3: cleanup-oauth-cache
-    FN->>REDIS: DEL gw:oauth:state:* gw:oauth:result:*<br/>for this installation (if any)
+    Note over FN: ❹ audit log
+    FN->>LOG: INSERT {reason, previousStatus, newStatus, triggeredBy}
 
-    Note over FN: Step 4: update-ingress-gate
-    FN->>CORE: targetStatus("user_disconnect")
-    CORE-->>FN: "disconnected"
-    FN->>DB: UPDATE workspaceIntegrations<br/>SET status=disconnected<br/>WHERE installationId=abc
-    Note over FN: INGRESS GATE CLOSED<br/>Console will DROP any in-flight webhooks
-
-    Note over FN: Step 5: soft-delete
-    FN->>DB: UPDATE gatewayInstallations<br/>SET status=disconnected WHERE id=abc
-    FN->>DB: UPDATE gatewayResources<br/>SET status=removed WHERE installationId=abc
+    Note over FN: ❺ revoke-token (best effort)
+    Note over FN: ❻ cleanup-cache
+    Note over FN: ❼ soft-delete-resources
 
     FN-->>INN: ✅ Complete
 
-    Note over INN: Event 2 (provider_revoked) now dequeued
-
-    INN->>FN: ▶ Execute event 2 (provider_revoked)
-
-    Note over FN: Step 1: cancel-backfill
-    FN->>DB: SELECT gatewayInstallations WHERE id=abc
-    DB-->>FN: {status: disconnected}
-    Note over FN: Already disconnected — status check<br/>can short-circuit or run idempotently
-
-    Note over FN: Steps 2-5 run idempotently<br/>(revoke already done, cache cleared,<br/>gate already closed, already soft-deleted)
-
-    FN-->>INN: ✅ Complete (idempotent)
+    INN->>FN: ▶ Event 2 (provider_revoked)
+    Note over FN: Already disconnected — idempotent. Audit logged.
+    FN-->>INN: ✅ Complete
 ```
+
+### Lifecycle Reason → Target Status Map
+
+| Reason | Source | `installations.status` | `WI.status` | Scope | Revoke? | Cancel backfill? |
+|--------|--------|----------------------|-------------|-------|---------|-----------------|
+| `user_disconnect` | tRPC | `disconnected` | `disconnected` | full | yes | yes |
+| `provider_revoked` | webhook | `revoked` | `revoked` | full | yes | yes |
+| `provider_suspended` | webhook | `suspended` | `suspended` | full | no | yes |
+| `provider_unsuspended` | webhook | `active` (restore) | `active` | full | — | — |
+| `provider_repo_removed` | webhook | unchanged | `removed` | scoped | no | no |
+| `provider_repo_deleted` | webhook | unchanged | `deleted` | scoped | no | no |
+| `health_check_auth_failure` | cron | `revoked` | `revoked` | full | no | yes |
+| `health_check_unreachable` | cron | `revoked` | `error` | full | no | yes |
 
 ---
 
-## Diagram 4: Race Condition Resolution — Resource Add During Lifecycle
-
-The most dangerous race: a user adds a resource while a lifecycle teardown is running.
-
-```mermaid
-sequenceDiagram
-    participant USER as Console UI
-    participant TRPC as tRPC<br/>org.connections.linkResource
-    participant PLAT_HTTP as POST /connect/:id/resources<br/>(HTTP route)
-    participant INN as Inngest Cloud<br/>concurrency queue
-    participant LIFECYCLE as connectionLifecycle<br/>🔒 running for installationId=abc
-    participant DB as Neon Postgres
-
-    Note over LIFECYCLE: Currently executing Step 3 (cleanup-cache)<br/>for installation abc (reason: provider_suspended)
-
-    USER->>TRPC: Link new repository
-    TRPC->>PLAT_HTTP: POST /connect/abc/resources<br/>{providerResourceId: "repo-456"}
-
-    Note over PLAT_HTTP: HTTP route runs immediately (no Inngest queue)<br/>But first: CHECK installation status
-
-    PLAT_HTTP->>DB: SELECT gatewayInstallations WHERE id=abc
-    DB-->>PLAT_HTTP: {status: active}
-    Note over PLAT_HTTP: Status is still "active" because<br/>lifecycle Step 5 (soft-delete) hasn't run yet
-
-    PLAT_HTTP->>DB: UPSERT gatewayResources<br/>(installationId=abc, providerResourceId=repo-456, status=active)
-    PLAT_HTTP-->>TRPC: {status: linked, resource}
-
-    Note over LIFECYCLE: Step 4: update-ingress-gate
-    LIFECYCLE->>DB: UPDATE workspaceIntegrations<br/>SET status=suspended<br/>WHERE installationId=abc
-    Note over LIFECYCLE: This also covers the newly-added resource<br/>because it's scoped by installationId
-
-    Note over LIFECYCLE: Step 5: soft-delete
-    LIFECYCLE->>DB: UPDATE gatewayInstallations<br/>SET status=suspended WHERE id=abc
-    LIFECYCLE->>DB: UPDATE gatewayResources<br/>SET status=removed WHERE installationId=abc
-    Note over LIFECYCLE: ⚡ The newly-added resource (repo-456)<br/>is caught by the WHERE clause<br/>and removed along with all others
-
-    Note over USER,DB: Result: The resource add "succeeded" momentarily<br/>but the lifecycle teardown cleaned it up.<br/>The user will see the connection as suspended.
-    Note over USER,DB: When the connection is restored (unsuspend),<br/>the user re-links the resource — clean state.
-```
-
----
-
-## Diagram 5: Connection State Machine
-
-```mermaid
-stateDiagram-v2
-    [*] --> active : OAuth callback<br/>or reinstall
-
-    active --> disconnected : user_disconnect<br/>(DELETE /connect/:id)
-    active --> revoked : provider_revoked<br/>(installation.deleted<br/>integration-configuration.removed<br/>sentry installation.deleted)
-    active --> suspended : provider_suspended<br/>(GitHub installation.suspend)
-    active --> removed : provider_repo_removed<br/>(GitHub installation_repositories.removed)
-    active --> deleted : provider_repo_deleted<br/>(GitHub repository.deleted<br/>Vercel project.removed)
-
-    suspended --> active : provider_unsuspended<br/>(GitHub installation.unsuspend)<br/>→ connectionRestore
-
-    disconnected --> active : reinstall<br/>(new OAuth callback)
-    revoked --> active : reinstall<br/>(new OAuth callback)
-    removed --> active : re-add resource<br/>(POST /connect/:id/resources)
-
-    deleted --> [*] : terminal<br/>(no transitions out)
-
-    note right of suspended
-        Ingress gate CLOSED
-        Backfill cancelled
-        Token NOT revoked
-        Resources preserved
-        → reversible
-    end note
-
-    note right of revoked
-        Ingress gate CLOSED
-        Token revoked
-        Resources removed
-        → requires full reinstall
-    end note
-
-    note right of removed
-        Per-RESOURCE state
-        (partial teardown)
-        Other resources unaffected
-        Installation stays active
-    end note
-
-    note right of deleted
-        Per-RESOURCE state
-        (partial teardown)
-        Terminal — provider
-        destroyed the resource
-    end note
-```
-
----
-
-## Diagram 6: Provider-Aware Rate Limiting (Backfill)
-
-Shows how each provider gets appropriate rate limiting through the Inngest throttle + dynamic sleep dual-layer.
+<!-- SECTION: health-check | last_updated: 2026-03-18T01 -->
+## Health Check & Configuration Drift
 
 ```mermaid
 flowchart TD
-    subgraph orchestrator["backfillOrchestrator (Inngest, console)"]
-        O1["Trigger: backfill/run.requested"]
-        O2["step.invoke backfillEntityWorker × N"]
-        O1 --> O2
+    subgraph cron["healthCheck (Inngest cron, every 5m)"]
+        SCAN["Scan: active installations\nWHERE lastHealthCheckAt < now - 5min"]
+
+        subgraph probe["Per-installation probe"]
+            CALL["Call provider.healthCheck.probe()"]
+            RESULT{Response?}
+
+            subgraph ok["✅ Success"]
+                RESET["Reset failures, set healthy"]
+                DRIFT{Config drift?}
+                DRIFT_YES["configStatus = 'drift'\nNotify admins"]
+                DRIFT_NO["configStatus = 'current'"]
+            end
+
+            subgraph auth["❌ 401/403"]
+                FIRE["fire lifecycle\nreason: health_check_auth_failure"]
+            end
+
+            subgraph transient["⚠️ 500/timeout"]
+                INC["failures += 1"]
+                C3{≥ 3?}
+                DEG["healthStatus = 'degraded'"]
+                C6{≥ 6?}
+                UNREACH["fire lifecycle\nreason: health_check_unreachable"]
+            end
+
+            CALL --> RESULT
+            RESULT -->|"200"| RESET --> DRIFT
+            DRIFT -->|"mismatch"| DRIFT_YES
+            DRIFT -->|"match"| DRIFT_NO
+            RESULT -->|"401/403"| FIRE
+            RESULT -->|"500/timeout"| INC --> C3 --> DEG --> C6
+            C6 -->|"yes"| UNREACH
+        end
+        SCAN --> probe
     end
 
-    subgraph worker["backfillEntityWorker (Inngest, console)"]
-        direction TB
-
-        subgraph layer1["Layer 1: Inngest Throttle (pre-flight gate)"]
-            T1["throttle:\n  limit: provider-budget/hr\n  period: 1h\n  key: provider + installationId\n\nGitHub:  4000/hr  (5000 - 1000 reserved)\nLinear:  2000/hr  (400/min budget)\nVercel:  3000/hr  (120/s budget)\nSentry:  1500/hr  (40/s budget)"]
-        end
-
-        subgraph layer2["Layer 2: Inngest Concurrency (parallelism cap)"]
-            C1["concurrency:\n  {limit: 5, key: orgId}\n  {limit: 10, global}\n\nMax 5 workers per org\nMax 10 workers total\n← prevents quota stampede"]
-        end
-
-        subgraph layer3["Layer 3: Response-Header Sleep (reactive)"]
-            direction TB
-            FETCH["step.run: fetch-page-N\nPOST /proxy/:id\n→ provider API call"]
-            CHECK{"remaining < 10%\nof limit?"}
-            SLEEP["step.sleep:\nrate-limit-page-N\nduration: until resetAt\n← durable sleep,\nno execution slot held"]
-            NEXT["Next page"]
-
-            FETCH --> CHECK
-            CHECK -->|yes| SLEEP
-            SLEEP --> NEXT
-            CHECK -->|no| NEXT
-        end
-
-        subgraph layer4["Layer 4: cancelOn (safety valve)"]
-            CANCEL["cancelOn: backfill/run.cancelled\n  match: installationId\n\n← lifecycle teardown fires this\n← worker stops immediately"]
-        end
-    end
-
-    subgraph headers["Provider Rate Limit Headers"]
-        H1["GitHub\nx-ratelimit-remaining\nx-ratelimit-limit\nx-ratelimit-reset (epoch seconds)\n5000 req/hr per installation"]
-        H2["Linear\nx-ratelimit-requests-remaining\nx-ratelimit-requests-limit\nx-ratelimit-requests-reset (epoch ms)\n400 req/min (request-based)"]
-        H3["Vercel\nx-ratelimit-remaining\nx-ratelimit-limit\nx-ratelimit-reset (epoch seconds)\n120 req/s per token"]
-        H4["Sentry\nx-sentry-rate-limit-remaining\nx-sentry-rate-limit-limit\nx-sentry-rate-limit-reset (epoch s, float)\n40 req/s org-wide"]
-    end
-
-    FETCH -.->|"reads"| headers
-
-    style layer1 fill:#1a1a2e,stroke:#e94560
-    style layer2 fill:#1a1a2e,stroke:#0f3460
-    style layer3 fill:#1a1a2e,stroke:#16213e
-    style layer4 fill:#1a1a2e,stroke:#533483
+    style auth fill:#1a1a2e,stroke:#e94560
+    style ok fill:#1a1a2e,stroke:#0f3460
+    style transient fill:#1a1a2e,stroke:#533483
 ```
+
+### Provider Health Check Endpoints
+
+| Provider | Probe | Drift detection |
+|----------|-------|-----------------|
+| GitHub | `GET /app/installations/{id}` | Compare `providerAccountInfo.events` vs `defaultSyncEvents` |
+| Linear | `POST /graphql { viewer { id } }` | N/A (events set on app, not per-installation) |
+| Sentry | `GET /api/0/sentry-app-installations/{id}/` | Compare `providerAccountInfo.raw.scopes` vs expected |
+| Vercel | `GET /v2/user` | Compare events list vs expected |
+
+### `HealthCheckDef` on Provider Definitions
+
+```ts
+interface HealthCheckDef<TConfig> {
+  readonly probe: (
+    config: TConfig,
+    externalId: string,
+    token: string | null
+  ) => Promise<HealthCheckResult>
+
+  readonly detectDrift?: (
+    expected: readonly string[],
+    actual: readonly string[]
+  ) => ConfigDriftResult | null
+}
+
+type HealthCheckResult =
+  | { healthy: true }
+  | { healthy: false; code: 'auth_failure' | 'not_found' | 'transient'; message: string }
+
+type ConfigDriftResult = {
+  drifted: true
+  missingEvents: readonly string[]
+  extraEvents: readonly string[]
+}
+```
+
+### Config Drift Resolution Flow
+
+1. Health check detects `configStatus = 'drift'`
+2. Console UI shows banner: "Your GitHub App needs to be updated — [Reconfigure]"
+3. User re-authorizes (visits app settings, accepts new permissions)
+4. OAuth callback updates `providerAccountInfo.events` → drift clears
 
 ---
 
-## Diagram 7: Inngest Event Schema (Shared via @repo/inngest)
+<!-- SECTION: state-machine | last_updated: 2026-03-18T01 -->
+## Connection State Machine
 
 ```mermaid
-flowchart LR
-    subgraph pkg["@repo/inngest  (new shared package)"]
-        direction TB
-        CLIENT["export const inngest = new Inngest({\n  id: 'lightfast',\n  schemas: new EventSchemas()\n    .fromZod(platformEvents)\n    .fromZod(consoleEvents)\n    .fromZod(backfillEvents)\n})"]
+stateDiagram-v2
+    [*] --> active : OAuth callback / reinstall
 
-        subgraph events["Typed Event Registry"]
-            direction TB
-            E1["platform/webhook.received\n{provider, deliveryId, eventType, action,\nresourceId, payload, receivedAt}"]
-            E2["platform/connection.lifecycle\n{reason, installationId, orgId, provider,\nresourceIds?, installationExternalId}"]
-            E3["platform/connection.restore\n{installationId, provider}"]
-            E4["console/webhook.delivered\n{deliveryId, connectionId, orgId, provider,\neventType, payload, receivedAt}"]
-            E5["console/event.capture\n{workspaceId, clerkOrgId, sourceEvent,\ningestLogId, ingestionSource, correlationId}"]
-            E6["backfill/run.requested\n{installationId, provider, orgId,\ndepth, entityTypes?, correlationId}"]
-            E7["backfill/run.cancelled\n{installationId, correlationId}"]
-        end
-    end
+    active --> disconnected : user_disconnect
+    active --> revoked : provider_revoked OR health_check_auth_failure
+    active --> suspended : provider_suspended
+    active --> removed : provider_repo_removed (scoped)
+    active --> deleted : provider_repo_deleted (scoped, terminal)
 
-    subgraph platform_serve["apps/platform  /inngest"]
-        PF1["ingestDelivery\nconnectionLifecycle\nconnectionRestore\ntokenRefresh\ndeliveryRecovery"]
-    end
+    suspended --> active : provider_unsuspended → connectionRestore
+    disconnected --> active : reinstall (new OAuth)
+    revoked --> active : reinstall (new OAuth)
+    removed --> active : re-add resource
 
-    subgraph console_serve["apps/console  /api/inngest"]
-        CF1["processWebhook\neventStore\nentityGraph\nentityEmbed\nnotificationDispatch\nbackfillOrchestrator\nbackfillEntityWorker\nrecordActivity"]
-    end
+    deleted --> [*] : terminal
 
-    pkg --> platform_serve
-    pkg --> console_serve
+    note right of active : Ingress OPEN · Health checks running · Config drift monitored
+    note right of suspended : Ingress CLOSED · Token preserved · Reversible
+    note right of revoked : Ingress CLOSED · Token revoked · Requires reinstall
+    note right of disconnected : Ingress CLOSED · User-initiated · Requires reinstall
 ```
 
 ---
 
-## Diagram 8: Service-Auth Path (Backfill → Platform → Console)
+<!-- SECTION: race-conditions | last_updated: 2026-03-18T01 -->
+## Race Condition Resolution Matrix
 
-The backfill entity worker dispatches synthetic webhooks. These bypass HMAC verification and classification.
+| # | Race Condition | Resolution |
+|---|---------------|------------|
+| 1 | **Connection revoked after event enters pipeline** | **Double-gate**: Gate 1 (ingestDelivery JOIN) + Gate 2 (console WI.status). DLQ'd with `inactive_connection`. |
+| 2 | **Backfill running, then connection revoked** | **cancelOn** on both orchestrator + entity worker. **401 → NonRetriableError** (no retry burn). |
+| 3 | **Resource added during lifecycle teardown** | Gate-first: step ❶ closes gate. Step ❼ `WHERE installationId` catches newly-added resource. |
+| 4 | **Duplicate lifecycle webhooks** | **concurrency: 1/installationId** — serial. Second runs idempotently. Both audit-logged. |
+| 5 | **Token refresh during teardown** | Harmless: refresh cron checks `status='active'`. After step ❶, cron skips. |
+| 6 | **inngest.send() fails in route handler** | **WAL + deliveryRecovery cron**: re-fires after 2min. Provider gets 200 (delivery persisted). |
+| 7 | **Stale data event after partial resource teardown** | Gate 1 fails if resource soft-deleted. Gate 2 catches if WI updated. Few leaked events acceptable. |
+| 8 | **Linear token revoked — no webhook** | **healthCheck cron**: probes every 5m. 401 → lifecycle event. Detected within 5m. |
+| 9 | **Lifecycle function fails all retries** | **lifecycleRecovery cron**: scans stuck lifecycle deliveries > 10min. Re-fires if installation still active. |
+| 10 | **Proxy 401 during backfill** | Entity worker: 401/403 → `NonRetriableError`. Optionally fires passive lifecycle event. |
+| 11 | **Concurrent entity-graph writes** | `entityGraph`: add `concurrency: { limit: 1, key: entityExternalId }`. |
+| 12 | **Config drift after app update** | healthCheck drift detection. Console banner for re-consent. |
+
+---
+
+<!-- SECTION: event-schema | last_updated: 2026-03-18T01 -->
+## Inngest Event Schema (`@repo/inngest`)
+
+```ts
+const platformEvents = {
+  "platform/webhook.received": z.object({
+    provider: z.string(),
+    deliveryId: z.string(),
+    eventType: z.string(),
+    action: z.string().optional(),
+    resourceId: z.string().nullable(),
+    payload: z.unknown(),
+    receivedAt: z.number(),
+    correlationId: z.string().optional(),
+  }),
+  "platform/connection.lifecycle": z.object({
+    reason: z.string(),
+    installationId: z.string(),
+    orgId: z.string(),
+    provider: z.string(),
+    resourceIds: z.array(z.string()).optional(),
+    triggeredBy: z.enum(["webhook", "health_check", "user", "system"]),
+    correlationId: z.string().optional(),
+  }),
+  "platform/connection.restore": z.object({
+    installationId: z.string(),
+    provider: z.string(),
+    reason: z.string(),
+    triggeredBy: z.enum(["webhook", "health_check"]),
+    correlationId: z.string().optional(),
+  }),
+};
+
+const consoleEvents = {
+  "console/webhook.delivered": z.object({
+    deliveryId: z.string(),
+    connectionId: z.string(),
+    orgId: z.string(),
+    provider: z.string(),
+    eventType: z.string(),
+    payload: z.unknown(),
+    receivedAt: z.number(),
+    correlationId: z.string().optional(),
+  }),
+  // + existing: event.capture, event.stored, entity.upserted, entity.graphed
+};
+
+const backfillEvents = {
+  "backfill/run.requested": backfillTriggerPayload,
+  "backfill/run.cancelled": z.object({
+    installationId: z.string(),
+    correlationId: z.string().optional(),
+  }),
+};
+
+export const inngest = new Inngest({
+  id: "lightfast",
+  schemas: new EventSchemas()
+    .fromZod(platformEvents)
+    .fromZod(consoleEvents)
+    .fromZod(backfillEvents),
+});
+```
+
+---
+
+<!-- SECTION: debugging | last_updated: 2026-03-18T01 -->
+## Debugging & Replay
+
+### Admin Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /admin/health` | DB probe + uptime |
+| `GET /admin/dlq` | Paginated failed/DLQ deliveries |
+| `POST /admin/dlq/replay` | Replay specific DLQ entries |
+| `POST /admin/replay/catchup` | Replay all undelivered for an installationId |
+| `GET /admin/delivery/:deliveryId/trace` | Full trace: status, classification, routing, console processing |
+| `POST /admin/lifecycle/replay` | Re-trigger lifecycle for stuck installations |
+| `GET /admin/lifecycle-log/:installationId` | Lifecycle audit trail |
+
+### correlationId Flow
+
+Every event carries `correlationId?: string`. Flows through:
+1. HTTP header (`X-Correlation-Id`) → WAL entry → Inngest event → downstream events → console pipeline → structured logs
+
+Search BetterStack for `correlationId=xxx` for end-to-end trace.
+
+---
+
+<!-- SECTION: provider-scoping | last_updated: 2026-03-18T00 -->
+## Provider Scoping Model
+
+```mermaid
+flowchart TD
+    subgraph github["GitHub  (org+repo)"]
+        GH_I["gatewayInstallation\nexternalId: installation_id\nauth: app-token\ninstallationMode: multi"] --> GH_R1["resource: repo.id"] & GH_R2["resource: repo.id"]
+        GH_L["Lifecycle:\ninstallation.deleted → full\ninstallation.suspend → suspend\ninstallation_repos.removed → partial\nrepository.deleted → partial"]
+    end
+    subgraph linear["Linear  (flat workspace)"]
+        LI_I["gatewayInstallation\nexternalId: org.id\nauth: oauth\ninstallationMode: merged"] --> LI_R1["resource: team.id"] & LI_R2["resource: team.id"]
+        LI_L["Lifecycle: none via webhook\nDetected by healthCheck cron"]
+    end
+    subgraph vercel["Vercel  (team+project)"]
+        VC_I["gatewayInstallation\nexternalId: team_id\nauth: oauth (non-expiring)\ninstallationMode: multi"] --> VC_R1["resource: project.id"]
+        VC_L["Lifecycle:\nconfig.removed → full\nproject.removed → partial"]
+    end
+    subgraph sentry["Sentry  (installation-scoped)"]
+        SE_I["gatewayInstallation\nexternalId: installation.uuid\nauth: oauth (composite)\ninstallationMode: single"] --> SE_R1["resource: project.slug"]
+        SE_L["Lifecycle:\ninstallation.deleted → full"]
+    end
+```
+
+---
+
+<!-- SECTION: service-auth | last_updated: 2026-03-18T00 -->
+## Service-Auth Path (Backfill → Platform → Console)
 
 ```mermaid
 sequenceDiagram
-    participant WORKER as backfillEntityWorker<br/>(Inngest, console)
-    participant PLAT as POST /ingest/:provider<br/>(platform HTTP)
+    participant WORKER as backfillEntityWorker
+    participant PLAT as POST /ingest/:provider
     participant DB as Neon Postgres
     participant INN as Inngest Cloud
-    participant CONSOLE as processWebhook<br/>(Inngest, console)
+    participant CONSOLE as processWebhook
 
-    WORKER->>PLAT: POST /ingest/github<br/>Headers: X-API-Key: {service-key}<br/>Body: {connectionId, orgId, deliveryId,<br/>eventType, payload, receivedAt}
+    WORKER->>PLAT: POST /ingest/github + X-API-Key + pre-resolved body
+    Note over PLAT: serviceAuth=true → skip HMAC, connectionId pre-resolved
+    PLAT->>DB: INSERT delivery (received, source: backfill)
+    PLAT->>INN: send("webhook.received", {serviceAuth: true, preResolved: {connectionId, orgId}})
+    PLAT-->>WORKER: 200 {accepted}
 
-    Note over PLAT: serviceAuthDetect → isServiceAuth=true<br/>Skip HMAC (trusted internal call)<br/>connectionId + orgId pre-resolved
-
-    PLAT->>DB: INSERT gatewayWebhookDeliveries<br/>(status: received, source: backfill)
-
-    PLAT->>INN: inngest.send("platform/webhook.received")<br/>{...payload, serviceAuth: true,<br/>preResolved: {connectionId, orgId}}
-
-    PLAT-->>WORKER: 200 {accepted, deliveryId}
-
-    INN->>INN: ingestDelivery picks up event
-
-    Note over INN: Step 1: classify → data (always, for service-auth)
-    Note over INN: Step 2: SKIP resolution (pre-resolved)<br/>→ send("console/webhook.delivered")<br/>with connectionId + orgId from payload
-    Note over INN: Step 3: UPDATE status = routed
-
-    INN->>CONSOLE: trigger processWebhook
+    INN->>INN: ingestDelivery: classify=data, SKIP resolution, send("console/webhook.delivered")
+    INN->>CONSOLE: processWebhook
 ```
 
 ---
 
-## Diagram 9: OAuth Flow (Platform)
+<!-- SECTION: oauth-flow | last_updated: 2026-03-18T00 -->
+## OAuth Flow
 
 ```mermaid
 sequenceDiagram
     participant UI as Console UI / CLI
-    participant TRPC as tRPC<br/>connections.getAuthorizeUrl
     participant PLAT as apps/platform
     participant REDIS as Upstash Redis
-    participant PROV as Provider OAuth Server<br/>(GitHub / Linear / Vercel / Sentry)
+    participant PROV as Provider OAuth
     participant DB as Neon Postgres
 
-    UI->>TRPC: getAuthorizeUrl(provider)
-    TRPC->>PLAT: GET /connect/:provider/authorize<br/>X-API-Key, X-Org-Id, X-User-Id
-
-    PLAT->>PLAT: connection-core.buildAuthUrl(config, state)
-
-    PLAT->>REDIS: PIPELINE<br/>HSET gw:oauth:state:{state}<br/>  {provider, orgId, connectedBy, createdAt}<br/>EXPIRE gw:oauth:state:{state} 600
-
-    PLAT-->>TRPC: {url, state}
-    TRPC-->>UI: {url, state}
-
-    UI->>PROV: Redirect to provider OAuth URL
-
+    UI->>PLAT: GET /connect/:provider/authorize
+    PLAT->>REDIS: HSET state {provider, orgId, connectedBy} TTL 600s
+    PLAT-->>UI: {url, state}
+    UI->>PROV: Redirect
     PROV-->>PLAT: GET /connect/:provider/callback?code=&state=
-
-    PLAT->>REDIS: MULTI<br/>  HGETALL gw:oauth:state:{state}<br/>  DEL gw:oauth:state:{state}<br/>EXEC
-    Note over PLAT,REDIS: Atomic consume — prevents replay attacks
-
-    PLAT->>PROV: POST /oauth/token (code exchange)
-    PROV-->>PLAT: {accessToken, refreshToken?, expiresIn?}
-
-    PLAT->>DB: UPSERT gatewayInstallations<br/>ON CONFLICT (provider, externalId)<br/>DO UPDATE SET status=active
-
-    alt stored-token provider (Linear, Vercel, Sentry)
-        PLAT->>DB: UPSERT gatewayTokens<br/>encrypt(accessToken), encrypt(refreshToken)
-    end
-
-    PLAT->>REDIS: HSET gw:oauth:result:{state}<br/>{status: completed, provider}<br/>EXPIRE 300
-
+    PLAT->>REDIS: MULTI HGETALL+DEL state (atomic consume)
+    PLAT->>PROV: POST /oauth/token
+    PLAT->>DB: UPSERT installation (status=active)
+    PLAT->>DB: UPSERT tokens (encrypted)
+    PLAT->>REDIS: HSET result TTL 300s
     PLAT-->>UI: Redirect to console
 
-    Note over UI,REDIS: CLI polling flow (optional)
-    UI->>PLAT: GET /connect/oauth/poll?state=
-    PLAT->>REDIS: HGETALL gw:oauth:result:{state}
-    PLAT-->>UI: {pending | completed}
+    Note over UI,REDIS: CLI polling: GET /connect/oauth/poll?state=
 ```
 
 ---
 
-## Provider Scoping Model
+<!-- SECTION: rate-limiting | last_updated: 2026-03-18T00 -->
+## Provider-Aware Rate Limiting (Backfill)
 
-How the connection model handles different provider hierarchies:
+4-layer defense:
 
-```mermaid
-flowchart TD
-    subgraph github["GitHub  (org+repo hierarchy)"]
-        direction TB
-        GH_INSTALL["gatewayInstallation\nexternalId: installation_id (numeric)\nscope: org or user account\nauth: app-token (on-demand JWT)\ninstallationMode: multi"]
-        GH_RES1["gatewayResource\nproviderResourceId: repo.id\nresourceName: owner/repo"]
-        GH_RES2["gatewayResource\nproviderResourceId: repo.id\nresourceName: owner/repo2"]
-        GH_INSTALL --> GH_RES1
-        GH_INSTALL --> GH_RES2
-
-        GH_LIFE["Lifecycle events:\ninstallation.deleted → full teardown\ninstallation.suspend → suspend all\ninstallation_repos.removed → partial teardown\nrepository.deleted → partial teardown"]
-    end
-
-    subgraph linear["Linear  (flat workspace)"]
-        direction TB
-        LI_INSTALL["gatewayInstallation\nexternalId: organization.id (UUID)\nscope: entire workspace\nauth: oauth (stored token)\ninstallationMode: merged"]
-        LI_RES1["gatewayResource\nproviderResourceId: team.id\nresourceName: team name"]
-        LI_RES2["gatewayResource\nproviderResourceId: team.id\nresourceName: team name2"]
-        LI_INSTALL --> LI_RES1
-        LI_INSTALL --> LI_RES2
-
-        LI_LIFE["Lifecycle events:\n(none via webhook)\nOnly user-initiated disconnect"]
-    end
-
-    subgraph vercel["Vercel  (team+project hierarchy)"]
-        direction TB
-        VC_INSTALL["gatewayInstallation\nexternalId: team_id or user_id\nscope: Vercel team/personal\nauth: oauth (non-expiring token)\ninstallationMode: multi"]
-        VC_RES1["gatewayResource\nproviderResourceId: project.id\nresourceName: project name"]
-        VC_INSTALL --> VC_RES1
-
-        VC_LIFE["Lifecycle events:\nintegration-configuration.removed → full teardown\nproject.removed → partial teardown"]
-    end
-
-    subgraph sentry["Sentry  (installation-scoped)"]
-        direction TB
-        SE_INSTALL["gatewayInstallation\nexternalId: installation.uuid\nscope: Sentry org\nauth: oauth (composite token)\ninstallationMode: single"]
-        SE_RES1["gatewayResource\nproviderResourceId: project.slug\nresourceName: org/project"]
-        SE_INSTALL --> SE_RES1
-
-        SE_LIFE["Lifecycle events:\ninstallation.deleted → full teardown\n(no partial teardown)"]
-    end
-
-    subgraph routing["Webhook Routing Strategy"]
-        direction TB
-        RT1["extractResourceId(provider, payload):\nGitHub: payload.repository.id ?? payload.installation.id\nLinear: payload.organizationId\nVercel: payload.payload.project.id ?? payload.payload.team.id\nSentry: payload.installation.uuid"]
-        RT2["DB resolve:\nSELECT FROM gatewayResources r\nJOIN gatewayInstallations i\nWHERE r.providerResourceId = :resourceId\nAND r.status = active\nAND i.status = active"]
-    end
-```
+| Layer | Mechanism | Config |
+|-------|-----------|--------|
+| 1. Inngest Throttle | Pre-flight gate | GitHub 4000/hr, Linear 2000/hr, Vercel 3000/hr, Sentry 1500/hr per installationId |
+| 2. Inngest Concurrency | Parallelism cap | 5/orgId, 10 global |
+| 3. Response-Header Sleep | Reactive | `step.sleep` when `remaining < 10% of limit` until `resetAt` |
+| 4. cancelOn | Safety valve | `backfill/run.cancelled` match installationId — lifecycle fires this |
 
 ---
 
-## What This Removes
+<!-- SECTION: what-changes | last_updated: 2026-03-18T01 -->
+## What This Removes / Adds
 
-| Component | Lines of Code | Vendor Deps Removed |
-|-----------|--------------|---------------------|
-| `@vendor/upstash-workflow` | ~200 | `@upstash/workflow` |
-| `@vendor/qstash` | ~150 | `@upstash/qstash` |
-| QStash delivery callbacks | ~100 | — |
-| QStash dedup config | ~50 | — |
-| Redis resource cache (`gw:resource:*`) writes | ~80 | — |
-| Webhook delivery workflow (Upstash) | ~225 | — |
-| Connection teardown workflow (Upstash) | ~150 | — |
-| Console ingress workflow (Upstash) | ~136 | — |
-| **Total** | **~1,091** | **2 vendor deps** |
+### Removes (~1,091 LOC, 2 vendor deps)
 
-## What This Adds
+| Component | LOC |
+|-----------|-----|
+| `@vendor/upstash-workflow` | ~200 |
+| `@vendor/qstash` | ~150 |
+| QStash callbacks + dedup | ~150 |
+| Redis resource cache writes | ~80 |
+| Webhook delivery workflow | ~225 |
+| Connection teardown workflow | ~150 |
+| Console ingress workflow | ~136 |
+
+### Adds
 
 | Component | Purpose |
 |-----------|---------|
-| `@repo/inngest` shared package | Typed Inngest client + event schemas |
-| `ingestDelivery` Inngest function | Replaces webhook-delivery workflow |
-| `connectionLifecycle` Inngest function | Replaces connection-teardown workflow |
-| `connectionRestore` Inngest function | New: handles unsuspend |
-| `tokenRefresh` Inngest cron | New: proactive token refresh |
-| `deliveryRecovery` Inngest cron | New: self-healing for missed events |
-| Platform Inngest serve endpoint | `GET\|POST /inngest` route |
+| `@repo/inngest` | Shared typed client + event schemas |
+| `ingestDelivery` | Classify-first webhook routing |
+| `connectionLifecycle` | Gate-first teardown |
+| `connectionRestore` | Unsuspend/restore |
+| `healthCheck` | Provider probes + config drift |
+| `tokenRefresh` | Proactive refresh |
+| `deliveryRecovery` | Self-healing for stuck deliveries |
+| `lifecycleRecovery` | Self-healing for stuck lifecycles |
+| `gatewayLifecycleLog` | Immutable audit trail |
+| `HealthCheckDef` | Per-provider health probe |
+| Console double-gate | WI.status check in processWebhook |
+| Admin trace/replay | Per-delivery debugging |
 
 ---
 
-## Open Questions for Iteration
+<!-- SECTION: phases | last_updated: 2026-03-18T01 -->
+## Implementation Phases
 
-1. **Should `POST /connect/:id/resources` also go through Inngest?** Currently it's a synchronous HTTP route. Making it an Inngest function would serialize it against lifecycle operations. But it adds latency to a user-facing operation.
+### Phase 0: DB Schema Migration
+- [ ] Add `healthStatus`, `lastHealthCheckAt`, `healthCheckFailures`, `configStatus` to `gatewayInstallations`
+- [ ] Migrate `workspaceIntegrations.isActive` → `status` + `statusReason`
+- [ ] Add `failReason`, `classifiedAs` to `gatewayWebhookDeliveries` + recovery index
+- [ ] Create `gatewayLifecycleLog` table
+- [ ] `pnpm db:generate && pnpm db:migrate`
 
-2. **Should we keep `gatewayWebhookDeliveries` at all?** If Inngest provides full observability, the delivery table becomes redundant. But it's useful for DLQ replay and debugging.
+### Phase 1: `@repo/inngest` Shared Package
+- [ ] Create `packages/inngest/` with typed client + all event schemas
+- [ ] Migrate `apps/backfill` + `api/console` clients to shared package
 
-3. **Token refresh for Sentry's composite tokens** — The cron function needs to decode composite tokens to get the installationId for the refresh URL. Is this complexity worth proactive refresh, or should Sentry stay reactive-only?
+### Phase 2: `apps/platform` Service Shell
+- [ ] Create `apps/platform/` (Hono + srvx)
+- [ ] Port middleware + routes from relay + gateway
+- [ ] Inngest serve endpoint + dev server wiring
 
-4. **Single vs dual Inngest app ID** — Using one app ID means one event namespace, one dashboard. But it means platform deployment failures affect console's Inngest serve endpoint visibility. Two app IDs add isolation but require cross-app event routing.
+### Phase 3: Core Inngest Functions
+- [ ] `ingestDelivery` — classify-first, gate-check
+- [ ] `connectionLifecycle` — gate-first, audit log
+- [ ] `connectionRestore` — unsuspend
+- [ ] `deliveryRecovery` + `lifecycleRecovery` crons
+- [ ] `tokenRefresh` cron
+- [ ] `targetStatus()` state machine in `@repo/connection-core`
 
-5. **Redis retention** — With resource routing cache dropped and only OAuth state remaining, is Redis still justified? OAuth state could use short-lived DB rows cleaned by cron. But the atomic MULTI pattern is cleaner in Redis.
+### Phase 4: Health Check & Config Drift
+- [ ] `healthCheck` cron
+- [ ] Per-provider `probe()` (GitHub, Linear, Sentry, Vercel)
+- [ ] Config drift detection
+- [ ] Console UI drift banner
+
+### Phase 5: Console Double-Gate
+- [ ] `processWebhook` checks `WI.status = 'active'`
+- [ ] DLQ with `failReason: 'inactive_connection'`
+
+### Phase 6: Entity Worker Hardening
+- [ ] 401/403 → `NonRetriableError`
+- [ ] Optional passive lifecycle event on 401
+- [ ] Connection status check per page
+
+### Phase 7: Admin & Debugging
+- [ ] `GET /admin/delivery/:id/trace`
+- [ ] `POST /admin/lifecycle/replay`
+- [ ] `GET /admin/lifecycle-log/:id`
+
+### Phase 8: Decommission
+- [ ] Remove `apps/relay/` + `apps/gateway/`
+- [ ] Remove `@vendor/upstash-workflow` + `@vendor/qstash`
+- [ ] Update `CLAUDE.md`
 
 ---
 
-## Next Steps
+<!-- SECTION: not-doing | last_updated: 2026-03-18T01 -->
+## What We're NOT Doing
 
-After iterating on apps/platform diagrams:
-1. Design apps/console diagram (processWebhook, event pipeline, backfill absorption)
-2. Design @repo/connection-core diagram (provider registry, classifier, state machine)
-3. Design @repo/inngest diagram (shared client, event schemas, type safety)
-4. Phase migration plan (which pieces to build first)
+- **Real-time status push** — DB storage, UI polls. No WebSocket/SSE.
+- **Automatic re-authorization** — drift shows banner. User manually re-consents.
+- **Per-event ordering guarantees** — idempotent pipeline. Strict ordering too expensive.
+- **Multi-region** — single Neon + single Inngest app.
+- **Event sourcing** — mutable status + audit log. Not derived from event history.
+
+---
+
+<!-- SECTION: resolved-questions | last_updated: 2026-03-18T01 -->
+## Resolved Questions
+
+| Question | Resolution |
+|----------|-----------|
+| `POST /connect/:id/resources` through Inngest? | No — synchronous. Gate-first + `WHERE installationId` catches races. |
+| Keep `gatewayWebhookDeliveries`? | Yes — WAL for replay + recovery crons. Enhanced with `failReason` + `classifiedAs`. |
+| Sentry composite token refresh? | Health check cron detects. Token refresh cron refreshes. Composite tokens decoded per existing pattern. |
+| Single vs dual Inngest app? | Single. Serve endpoints separate. Deployment isolation not needed for 1-2 person team. |
+| Redis retention? | Keep for OAuth state only. Resource routing cache dropped. |
+| Passive vs active lifecycle detection? | Active: health check cron (5m). Probes provider endpoints. |
+| Console ingress gate behavior? | DLQ with reason code (`inactive_connection`). Replayable if restored. |
+| WI schema migration scope? | Folded into Phase 0 of this plan. |
+| Lifecycle audit log? | Yes — `gatewayLifecycleLog` table. Append-only. |
+| Config drift scope? | Included — detected by healthCheck cron, resolved by user re-consent. |
+
+---
+
+<!-- SECTION: update-log | last_updated: 2026-03-18T01 -->
+## Update Log
+
+### 2026-03-18T01 — Comprehensive rework from stress analysis
+
+- **Trigger**: Deep codebase analysis (6 parallel research agents across relay, gateway, backfill, Inngest, DB schema, QStash) revealed 12 race conditions, 4 critical architectural gaps.
+- **Critical fixes**:
+  - **Gate-first lifecycle ordering** — `gatewayInstallations.status` changes FIRST (was step 5)
+  - **Console double-gate** — WI.status check with DLQ + reason code
+  - **Health check cron** — periodic probes for all providers (especially Linear: no lifecycle webhooks)
+  - **Configuration drift detection** — detects app config changes requiring user re-consent
+- **New infrastructure**:
+  - `gatewayLifecycleLog` audit table
+  - `lifecycleRecovery` cron for stuck lifecycle events
+  - Entity worker: 401 → NonRetriableError
+  - Admin trace + lifecycle replay endpoints
+- **DB rework**: `workspaceIntegrations.isActive → status`, new columns on installations + deliveries
+- **All v1 open questions resolved**
+
+### 2026-03-18T00 — Initial design
+
+- Core architecture: Inngest-only, classify-first, write-ahead + cron recovery
+- Diagrams: master architecture, ingest pipeline, lifecycle serialization, rate limiting, event schema, OAuth, provider scoping
