@@ -8,6 +8,7 @@ import { lifecycle } from "./middleware/lifecycle.js";
 import { requestId } from "./middleware/request-id.js";
 import { sentry } from "./middleware/sentry.js";
 import { connections } from "./routes/connections.js";
+import { inngestRoute } from "./routes/inngest.js";
 import { workflows } from "./routes/workflows.js";
 
 const app = new Hono<{ Variables: LifecycleVariables }>();
@@ -47,5 +48,6 @@ app.get("/", (c) => c.json({ service: "gateway", status: "ok" }));
 // API routes
 app.route("/services/gateway", connections);
 app.route("/services/gateway/workflows", workflows);
+app.route("/inngest", inngestRoute);
 
 export default app;

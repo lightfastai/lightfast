@@ -2,8 +2,8 @@ import { db } from "@db/console/client";
 import {
   gatewayBackfillRuns,
   gatewayInstallations,
+  gatewayLifecycleLogs,
   gatewayResources,
-  gatewayTokens,
 } from "@db/console/schema";
 import type {
   ProviderApi,
@@ -20,7 +20,7 @@ import {
   BACKFILL_TERMINAL_STATUSES,
   backfillRunRecord,
 } from "@repo/console-providers/contracts";
-import { decrypt, nanoid } from "@repo/lib";
+import { nanoid } from "@repo/lib";
 import { and, eq, sql } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
 import { redis } from "@vendor/upstash";
@@ -29,8 +29,11 @@ import { Hono } from "hono";
 import { html, raw } from "hono/html";
 import { env } from "../env.js";
 import { oauthResultKey, oauthStateKey, resourceKey } from "../lib/cache.js";
-import { getEncryptionKey } from "../lib/encryption.js";
-import { updateTokenRecord, writeTokenRecord } from "../lib/token-store.js";
+import {
+  forceRefreshToken,
+  getActiveTokenForInstallation,
+} from "../lib/token-helpers.js";
+import { writeTokenRecord } from "../lib/token-store.js";
 import { consoleUrl, gatewayBaseUrl } from "../lib/urls.js";
 import { apiKeyAuth } from "../middleware/auth.js";
 import type { LifecycleVariables } from "../middleware/lifecycle.js";
@@ -548,129 +551,6 @@ connections.get("/:id", apiKeyAuth, async (c) => {
   });
 });
 
-// ── Token Helpers ──
-
-/**
- * Get the active token for an installation, handling expiry and on-demand refresh.
- * Shared by GET /:id/token and POST /:id/proxy/execute.
- */
-async function getActiveTokenForInstallation(
-  installation: { id: string; externalId: string; provider: string },
-  config: unknown,
-  providerDef: ProviderDefinition
-): Promise<{ token: string; expiresAt: string | null }> {
-  const tokenRows = await db
-    .select()
-    .from(gatewayTokens)
-    .where(eq(gatewayTokens.installationId, installation.id))
-    .limit(1);
-
-  const tokenRow = tokenRows[0];
-
-  // Handle refresh if expired
-  if (tokenRow?.expiresAt && new Date(tokenRow.expiresAt) < new Date()) {
-    if (!tokenRow.refreshToken) {
-      throw new Error("token_expired:no_refresh_token");
-    }
-    const decryptedRefresh = await decrypt(
-      tokenRow.refreshToken,
-      getEncryptionKey()
-    );
-    // SAFETY: config is providerConfigs[providerName], created by the same provider's
-    // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
-    // statically because it serves all providers from a single Record<string, unknown>.
-    const auth = providerDef.auth;
-    if (auth.kind !== "oauth") {
-      throw new Error("token_expired:provider_does_not_support_token_refresh");
-    }
-    const refreshed = await auth.refreshToken(
-      config as never,
-      decryptedRefresh
-    );
-    await updateTokenRecord(
-      tokenRow.id,
-      refreshed,
-      tokenRow.refreshToken,
-      tokenRow.expiresAt
-    );
-    return { token: refreshed.accessToken, expiresAt: tokenRow.expiresAt };
-  }
-
-  const decryptedAccessToken = tokenRow
-    ? await decrypt(tokenRow.accessToken, getEncryptionKey())
-    : null;
-
-  // SAFETY: config is providerConfigs[providerName], created by the same provider's
-  // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
-  // statically because it serves all providers from a single Record<string, unknown>.
-  const token = await providerDef.auth.getActiveToken(
-    config as never,
-    installation.externalId,
-    decryptedAccessToken
-  );
-
-  return { token, expiresAt: tokenRow?.expiresAt ?? null };
-}
-
-/**
- * Force-refresh the token — used for 401 retry in POST /:id/proxy/execute.
- * Returns null if all refresh attempts fail.
- */
-async function forceRefreshToken(
-  installation: { id: string; externalId: string; provider: string },
-  config: unknown,
-  providerDef: ProviderDefinition
-): Promise<string | null> {
-  const tokenRows = await db
-    .select()
-    .from(gatewayTokens)
-    .where(eq(gatewayTokens.installationId, installation.id))
-    .limit(1);
-  const row = tokenRows[0];
-
-  if (row?.refreshToken) {
-    try {
-      const decryptedRefresh = await decrypt(
-        row.refreshToken,
-        getEncryptionKey()
-      );
-      // SAFETY: config is providerConfigs[providerName], created by the same provider's
-      // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
-      // statically because it serves all providers from a single Record<string, unknown>.
-      const auth = providerDef.auth;
-      if (auth.kind !== "oauth") {
-        return null; // API key providers don't refresh tokens
-      }
-      const refreshed = await auth.refreshToken(
-        config as never,
-        decryptedRefresh
-      );
-      await updateTokenRecord(
-        row.id,
-        refreshed,
-        row.refreshToken,
-        row.expiresAt
-      );
-      return refreshed.accessToken;
-    } catch {
-      // Refresh failed — fall through to getActiveToken
-    }
-  }
-
-  try {
-    // SAFETY: config is providerConfigs[providerName], created by the same provider's
-    // createConfig(). Runtime type matches TConfig; the gateway cannot know TConfig
-    // statically because it serves all providers from a single Record<string, unknown>.
-    return await providerDef.auth.getActiveToken(
-      config as never,
-      installation.externalId,
-      null
-    );
-  } catch {
-    return null;
-  }
-}
-
 /**
  * GET /connections/:id/token
  *
@@ -1018,6 +898,16 @@ connections.delete("/:provider/:id", apiKeyAuth, async (c) => {
     return c.json({ error: "not_found" }, 404);
   }
 
+  // Audit log: capture user-initiated disconnect intent before workflow starts
+  await db.insert(gatewayLifecycleLogs).values({
+    installationId: id,
+    event: "user_disconnect",
+    fromStatus: installation.status,
+    toStatus: "revoked",
+    reason: "User-initiated disconnect via gateway DELETE handler",
+    metadata: { source: "gateway_delete_handler", triggeredBy: "user" },
+  });
+
   // Trigger durable teardown workflow
   await workflowClient.trigger({
     url: `${gatewayBaseUrl}/gateway/workflows/connection-teardown`,
@@ -1277,6 +1167,32 @@ connections.post("/:id/backfill-runs", apiKeyAuth, async (c) => {
     });
 
   return c.json({ status: "ok" });
+});
+
+// ── List Installations ──
+
+/**
+ * GET /connections
+ *
+ * List installations, optionally filtered by status.
+ * Internal-only, requires X-API-Key authentication.
+ * Callers: admin tooling, cross-service health queries.
+ */
+connections.get("/", apiKeyAuth, async (c) => {
+  const status = c.req.query("status");
+
+  const rows = await db
+    .select({
+      id: gatewayInstallations.id,
+      provider: gatewayInstallations.provider,
+      externalId: gatewayInstallations.externalId,
+      orgId: gatewayInstallations.orgId,
+      status: gatewayInstallations.status,
+    })
+    .from(gatewayInstallations)
+    .where(status ? eq(gatewayInstallations.status, status) : undefined);
+
+  return c.json(rows);
 });
 
 export { connections };

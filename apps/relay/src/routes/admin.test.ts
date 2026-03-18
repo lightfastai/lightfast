@@ -103,6 +103,7 @@ vi.mock("@vendor/db", () => ({
   and: (...args: unknown[]) => ({ _and: args }),
   eq: (a: unknown, b: unknown) => ({ _eq: [a, b] }),
   gte: (a: unknown, b: unknown) => ({ _gte: [a, b] }),
+  lt: (a: unknown, b: unknown) => ({ _lt: [a, b] }),
   lte: (a: unknown, b: unknown) => ({ _lte: [a, b] }),
   notInArray: (a: unknown, b: unknown) => ({ _notInArray: [a, b] }),
   or: (...args: unknown[]) => ({ _or: args }),
@@ -742,5 +743,131 @@ describe("POST /api/admin/delivery-status", () => {
     });
     expect(res.status).toBe(200);
     expect(await res.json()).toMatchObject({ status: "received" });
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════
+// POST /api/admin/recovery/cron
+// ══════════════════════════════════════════════════════════════════════════════
+
+describe("POST /api/admin/recovery/cron", () => {
+  it("returns 401 without QStash signature", async () => {
+    const res = await request("/api/admin/recovery/cron", {
+      body: {},
+    });
+    expect(res.status).toBe(401);
+    expect(await res.json()).toMatchObject({ error: "missing_signature" });
+  });
+
+  it("returns ok with empty arrays when no stuck deliveries", async () => {
+    mockDbSelect.setResults([[]]);
+
+    const res = await request("/api/admin/recovery/cron", {
+      headers: { "Upstash-Signature": "valid-sig" },
+      body: {},
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual({
+      status: "ok",
+      replayed: [],
+      skipped: [],
+      failed: [],
+    });
+    expect(mockReplayDeliveries).not.toHaveBeenCalled();
+  });
+
+  it("replays stuck delivery older than 5 minutes", async () => {
+    const staleDelivery = {
+      id: "d-stale",
+      provider: "github",
+      deliveryId: "test-delivery-123",
+      eventType: "push",
+      installationId: "inst-1",
+      status: "received",
+      payload: JSON.stringify({
+        ref: "refs/heads/main",
+        repository: { id: 12_345 },
+      }),
+      receivedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+    };
+
+    mockDbSelect.setResults([[staleDelivery]]);
+    mockReplayDeliveries.mockResolvedValueOnce({
+      replayed: ["test-delivery-123"],
+      skipped: [],
+      failed: [],
+    });
+
+    const res = await request("/api/admin/recovery/cron", {
+      headers: { "Upstash-Signature": "valid-sig" },
+      body: {},
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toMatchObject({
+      status: "ok",
+      replayed: ["test-delivery-123"],
+      failed: [],
+    });
+    expect(mockReplayDeliveries).toHaveBeenCalledWith([staleDelivery]);
+  });
+
+  it("does not replay deliveries received within the last 5 minutes", async () => {
+    // The DB query uses lt(receivedAt, staleBeforeIso). With no rows matching
+    // the staleness threshold, the query returns empty — fresh rows are never
+    // passed to replayDeliveries.
+    mockDbSelect.setResults([[]]);
+
+    const res = await request("/api/admin/recovery/cron", {
+      headers: { "Upstash-Signature": "valid-sig" },
+      body: {},
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toEqual({
+      status: "ok",
+      replayed: [],
+      skipped: [],
+      failed: [],
+    });
+    expect(mockReplayDeliveries).not.toHaveBeenCalled();
+  });
+
+  it("skips deliveries with null payload", async () => {
+    const nullPayloadDelivery = {
+      id: "d-null",
+      provider: "github",
+      deliveryId: "null-payload-789",
+      eventType: "push",
+      installationId: "inst-1",
+      status: "received",
+      payload: null,
+      receivedAt: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
+    };
+
+    mockDbSelect.setResults([[nullPayloadDelivery]]);
+    mockReplayDeliveries.mockResolvedValueOnce({
+      replayed: [],
+      skipped: ["null-payload-789"],
+      failed: [],
+    });
+
+    const res = await request("/api/admin/recovery/cron", {
+      headers: { "Upstash-Signature": "valid-sig" },
+      body: {},
+    });
+
+    expect(res.status).toBe(200);
+    const json = await res.json();
+    expect(json).toMatchObject({
+      status: "ok",
+      skipped: ["null-payload-789"],
+    });
+    expect(json).toMatchObject({ failed: [] });
+    expect(mockReplayDeliveries).toHaveBeenCalledWith([nullPayloadDelivery]);
   });
 });

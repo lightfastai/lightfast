@@ -11,8 +11,10 @@ import {
   type BackfillRunRecord,
   backfillRunReadRecord,
   type GatewayConnection,
+  type GatewayInstallationSummary,
   type GatewayTokenResult,
   gatewayConnectionSchema,
+  gatewayInstallationSummarySchema,
   gatewayTokenResultSchema,
   type ProxyEndpointsResponse,
   proxyEndpointsResponseSchema,
@@ -74,6 +76,23 @@ export function createGatewayClient(config: ServiceClientConfig) {
       }
       const data = await response.json();
       return gatewayConnectionSchema.parse(data);
+    },
+
+    async listInstallations(
+      status?: string
+    ): Promise<GatewayInstallationSummary[]> {
+      const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+      const response = await fetch(`${gatewayUrl}${qs}`, {
+        headers: h,
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!response.ok) {
+        throw new Error(
+          `Gateway listInstallations failed: ${response.status}`
+        );
+      }
+      const data = await response.json();
+      return z.array(gatewayInstallationSummarySchema).parse(data);
     },
 
     async getToken(installationId: string): Promise<GatewayTokenResult> {
@@ -214,6 +233,37 @@ export function createGatewayClient(config: ServiceClientConfig) {
       }
       const data = await response.json();
       return z.object({ url: z.string(), state: z.string() }).parse(data);
+    },
+
+    /**
+     * Delete (teardown) a connection via the gateway durable workflow.
+     *
+     * Triggers the connection-teardown workflow and returns immediately.
+     * The gate-first workflow closes the ingress gate as its first step.
+     */
+    async deleteConnection(
+      provider: string,
+      installationId: string
+    ): Promise<{ status: string; installationId: string }> {
+      const response = await fetch(
+        `${gatewayUrl}/${provider}/${installationId}`,
+        {
+          method: "DELETE",
+          headers: h,
+          signal: AbortSignal.timeout(10_000),
+        }
+      );
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => "");
+        throw new HttpError(
+          `Gateway deleteConnection failed: ${response.status} for ${provider}/${installationId}${errBody ? ` — ${errBody}` : ""}`,
+          response.status
+        );
+      }
+      const data = await response.json();
+      return z
+        .object({ status: z.string(), installationId: z.string() })
+        .parse(data);
     },
   };
 }

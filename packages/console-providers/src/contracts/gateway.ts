@@ -29,6 +29,21 @@ export const gatewayConnectionSchema = z.object({
 export type GatewayConnection = z.infer<typeof gatewayConnectionSchema>;
 
 /**
+ * Lightweight installation summary for list endpoints.
+ * Returned by GET /gateway?status=active
+ */
+export const gatewayInstallationSummarySchema = z.object({
+  id: z.string(),
+  provider: z.string(),
+  externalId: z.string(),
+  orgId: z.string(),
+  status: z.string(),
+});
+export type GatewayInstallationSummary = z.infer<
+  typeof gatewayInstallationSummarySchema
+>;
+
+/**
  * Gateway token response shape.
  * Returned by GET /gateway/:id/token
  */

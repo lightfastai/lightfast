@@ -2,6 +2,7 @@ import { PROVIDER_ENVS } from "@repo/console-providers";
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { dbEnv } from "@vendor/db/env";
+import { env as inngestEnv } from "@vendor/inngest/env";
 import { betterstackEdgeEnv } from "@vendor/observability/log/edge";
 import { qstashEnv } from "@vendor/qstash/env";
 import { upstashEnv } from "@vendor/upstash/env";
@@ -23,6 +24,7 @@ export const env = createEnv({
     upstashEnv,
     qstashEnv,
     dbEnv,
+    inngestEnv,
     ...PROVIDER_ENVS(),
   ],
   shared: {

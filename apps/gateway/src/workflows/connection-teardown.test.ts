@@ -23,6 +23,8 @@ const mockDecrypt = vi.fn().mockResolvedValue("decrypted-token");
 const mockRedisDel = vi.fn().mockResolvedValue(1);
 const mockDbQuery = vi.fn().mockResolvedValue([]);
 const mockDbUpdate = vi.fn().mockResolvedValue(undefined);
+const mockDbInsert = vi.fn().mockResolvedValue(undefined);
+const mockDbInsertValues = vi.fn();
 const mockTxSet = vi.fn();
 
 // eq/and are intentionally no-op — these tests validate workflow step
@@ -80,12 +82,19 @@ vi.mock("@db/console/client", () => ({
         return { where: () => mockDbUpdate() };
       },
     }),
+    insert: () => ({
+      values: (...args: unknown[]) => {
+        mockDbInsertValues(...args);
+        return mockDbInsert();
+      },
+    }),
     batch: (queries: unknown[]) => Promise.all(queries as Promise<unknown>[]),
   },
 }));
 
 vi.mock("@db/console/schema", () => ({
   gatewayInstallations: { id: "id", status: "status" },
+  gatewayLifecycleLogs: {},
   gatewayResources: {
     installationId: "installationId",
     providerResourceId: "providerResourceId",
@@ -122,19 +131,31 @@ vi.mock("@repo/console-providers", () => ({
   PROVIDERS: {
     github: {
       createConfig: vi.fn().mockReturnValue({}),
-      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+      auth: {
+        kind: "oauth",
+        revokeToken: (...args: unknown[]) => mockRevokeToken(...args),
+      },
     },
     vercel: {
       createConfig: vi.fn().mockReturnValue({}),
-      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+      auth: {
+        kind: "oauth",
+        revokeToken: (...args: unknown[]) => mockRevokeToken(...args),
+      },
     },
     linear: {
       createConfig: vi.fn().mockReturnValue({}),
-      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+      auth: {
+        kind: "oauth",
+        revokeToken: (...args: unknown[]) => mockRevokeToken(...args),
+      },
     },
     sentry: {
       createConfig: vi.fn().mockReturnValue({}),
-      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+      auth: {
+        kind: "oauth",
+        revokeToken: (...args: unknown[]) => mockRevokeToken(...args),
+      },
     },
   },
   PROVIDER_ENVS: () => [],
@@ -145,7 +166,10 @@ vi.mock("@repo/console-providers", () => ({
     }
     return {
       createConfig: vi.fn().mockReturnValue({}),
-      oauth: { revokeToken: (...args: unknown[]) => mockRevokeToken(...args) },
+      auth: {
+        kind: "oauth",
+        revokeToken: (...args: unknown[]) => mockRevokeToken(...args),
+      },
     };
   },
 }));
@@ -173,6 +197,8 @@ describe("connection-teardown workflow", () => {
     vi.clearAllMocks();
     mockDbQuery.mockResolvedValue([]);
     mockDbUpdate.mockResolvedValue(undefined);
+    mockDbInsert.mockResolvedValue(undefined);
+    mockDbInsertValues.mockClear();
     mockTxSet.mockClear();
     mockPublishJSON.mockResolvedValue(undefined);
     mockDecrypt.mockResolvedValue("decrypted-token");
@@ -180,14 +206,17 @@ describe("connection-teardown workflow", () => {
     mockRevokeToken.mockResolvedValue(undefined);
   });
 
-  it("runs all 4 steps for a full teardown", async () => {
-    // Step 2: token row (for non-github)
-    mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
-    // Step 3: active resources
-    mockDbQuery.mockResolvedValueOnce([
+  it("runs all 5 steps for a full teardown", async () => {
+    const resources = [
       { providerResourceId: "res-1" },
       { providerResourceId: "res-2" },
-    ]);
+    ];
+    // Step 3: token row (for non-github)
+    mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
+    // Step 4: active resources (cleanup-cache)
+    mockDbQuery.mockResolvedValueOnce(resources);
+    // Step 5: active resources (remove-resources audit log query)
+    mockDbQuery.mockResolvedValueOnce(resources);
 
     const ctx = makeContext({
       installationId: "inst-1",
@@ -196,7 +225,7 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    expect(ctx.run).toHaveBeenCalledTimes(4);
+    expect(ctx.run).toHaveBeenCalledTimes(5);
     expect(mockPublishJSON).toHaveBeenCalledWith(
       expect.objectContaining({
         url: "https://backfill.test/api/trigger/cancel",
@@ -213,10 +242,25 @@ describe("connection-teardown workflow", () => {
       "gw:resource:linear:res-1",
       "gw:resource:linear:res-2"
     );
+    // 2 db.update calls: close-gate (installation) + remove-resources (resources)
     expect(mockDbUpdate).toHaveBeenCalledTimes(2);
+    // 2 db.insert calls: close-gate audit log + remove-resources audit log
+    expect(mockDbInsert).toHaveBeenCalledTimes(2);
   });
 
-  it("publishes backfill cancel via QStash in step 1", async () => {
+  it("close-gate runs before cancel-backfill", async () => {
+    const ctx = makeContext({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+    await capturedHandler(ctx);
+
+    expect(ctx.run.mock.calls[0]![0]).toBe("close-gate");
+    expect(ctx.run.mock.calls[1]![0]).toBe("cancel-backfill");
+  });
+
+  it("publishes backfill cancel via QStash in step 2", async () => {
     const ctx = makeContext({
       installationId: "inst-1",
       provider: "github",
@@ -247,7 +291,7 @@ describe("connection-teardown workflow", () => {
   });
 
   it("revokes token for non-github provider when token exists", async () => {
-    // Step 2: token row
+    // Step 3: token row
     mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
 
     const ctx = makeContext({
@@ -265,7 +309,7 @@ describe("connection-teardown workflow", () => {
   });
 
   it("skips revocation when no token row found", async () => {
-    // Step 2: no token rows
+    // Step 3: no token rows
     mockDbQuery.mockResolvedValueOnce([]);
 
     const ctx = makeContext({
@@ -281,7 +325,7 @@ describe("connection-teardown workflow", () => {
   it("swallows revokeToken errors (best-effort)", async () => {
     mockRevokeToken.mockRejectedValueOnce(new Error("revoke failed"));
 
-    // Step 2: token row
+    // Step 3: token row
     mockDbQuery.mockResolvedValueOnce([{ accessToken: "enc-tok" }]);
 
     const ctx = makeContext({
@@ -296,12 +340,15 @@ describe("connection-teardown workflow", () => {
   });
 
   it("cleans up Redis cache for all active resources", async () => {
-    // Step 3: 3 active resources (github skips step 2 DB call)
-    mockDbQuery.mockResolvedValueOnce([
+    const resources = [
       { providerResourceId: "repo-a" },
       { providerResourceId: "repo-b" },
       { providerResourceId: "repo-c" },
-    ]);
+    ];
+    // Step 4: 3 active resources (github skips step 3 DB call)
+    mockDbQuery.mockResolvedValueOnce(resources);
+    // Step 5: same resources for remove-resources audit log query
+    mockDbQuery.mockResolvedValueOnce(resources);
 
     const ctx = makeContext({
       installationId: "inst-1",
@@ -319,7 +366,9 @@ describe("connection-teardown workflow", () => {
   });
 
   it("handles zero active resources gracefully", async () => {
-    // Step 3: no resources
+    // Step 4: no resources (cleanup-cache)
+    mockDbQuery.mockResolvedValueOnce([]);
+    // Step 5: no resources (remove-resources audit log query)
     mockDbQuery.mockResolvedValueOnce([]);
 
     const ctx = makeContext({
@@ -332,7 +381,7 @@ describe("connection-teardown workflow", () => {
     expect(mockRedisDel).not.toHaveBeenCalled();
   });
 
-  it("soft-deletes installation and resources in DB", async () => {
+  it("close-gate sets installation status to revoked", async () => {
     const ctx = makeContext({
       installationId: "inst-1",
       provider: "github",
@@ -340,13 +389,128 @@ describe("connection-teardown workflow", () => {
     });
     await capturedHandler(ctx);
 
-    expect(mockDbUpdate).toHaveBeenCalledTimes(2);
-    expect(mockTxSet).toHaveBeenCalledTimes(2);
+    // close-gate is the first db.update call
     expect(mockTxSet).toHaveBeenCalledWith(
       expect.objectContaining({ status: "revoked" })
     );
+  });
+
+  it("remove-resources sets resources status to removed", async () => {
+    const ctx = makeContext({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+    await capturedHandler(ctx);
+
+    // remove-resources is the second db.update call
     expect(mockTxSet).toHaveBeenCalledWith(
       expect.objectContaining({ status: "removed" })
     );
+  });
+
+  it("uses separate db.update calls instead of db.batch", async () => {
+    const ctx = makeContext({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+    await capturedHandler(ctx);
+
+    // 2 individual db.update calls: close-gate + remove-resources
+    expect(mockDbUpdate).toHaveBeenCalledTimes(2);
+    expect(mockTxSet).toHaveBeenCalledTimes(2);
+  });
+
+  // ── Audit log tests ──
+
+  it("close-gate step inserts audit log with event gate_closed", async () => {
+    const ctx = makeContext({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+    await capturedHandler(ctx);
+
+    // First db.insert call is from close-gate step
+    expect(mockDbInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        installationId: "inst-1",
+        event: "gate_closed",
+        fromStatus: "active",
+        toStatus: "revoked",
+        metadata: expect.objectContaining({
+          step: "close-gate",
+          triggeredBy: "system",
+        }),
+      })
+    );
+  });
+
+  it("remove-resources step inserts audit log with event resources_removed", async () => {
+    const resources = [
+      { providerResourceId: "repo-a" },
+      { providerResourceId: "repo-b" },
+    ];
+    // Step 4: active resources (cleanup-cache)
+    mockDbQuery.mockResolvedValueOnce(resources);
+    // Step 5: active resources (remove-resources audit log query)
+    mockDbQuery.mockResolvedValueOnce(resources);
+
+    const ctx = makeContext({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+    await capturedHandler(ctx);
+
+    expect(mockDbInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        installationId: "inst-1",
+        event: "resources_removed",
+        fromStatus: "revoked",
+        toStatus: "revoked",
+        resourceIds: { "repo-a": "removed", "repo-b": "removed" },
+        metadata: expect.objectContaining({
+          step: "remove-resources",
+          triggeredBy: "system",
+        }),
+      })
+    );
+  });
+
+  it("remove-resources audit log includes empty resourceIds when no resources", async () => {
+    // Step 4: no resources (cleanup-cache)
+    mockDbQuery.mockResolvedValueOnce([]);
+    // Step 5: no resources (remove-resources audit log query)
+    mockDbQuery.mockResolvedValueOnce([]);
+
+    const ctx = makeContext({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+    await capturedHandler(ctx);
+
+    expect(mockDbInsertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: "resources_removed",
+        resourceIds: {},
+        reason: "Removed 0 linked resource(s) during teardown",
+      })
+    );
+  });
+
+  it("inserts exactly 2 audit log rows per teardown", async () => {
+    const ctx = makeContext({
+      installationId: "inst-1",
+      provider: "github",
+      orgId: "org-1",
+    });
+    await capturedHandler(ctx);
+
+    // close-gate + remove-resources
+    expect(mockDbInsert).toHaveBeenCalledTimes(2);
+    expect(mockDbInsertValues).toHaveBeenCalledTimes(2);
   });
 });

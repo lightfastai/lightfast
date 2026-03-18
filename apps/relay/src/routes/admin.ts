@@ -3,7 +3,7 @@ import {
   gatewayBackfillRuns,
   gatewayWebhookDeliveries,
 } from "@db/console/schema";
-import { and, eq, gte, lte, notInArray, or, sql } from "@vendor/db";
+import { and, eq, gte, lt, lte, notInArray, or, sql } from "@vendor/db";
 import { Hono } from "hono";
 import { z } from "zod";
 import { env } from "../env.js";
@@ -200,6 +200,52 @@ admin.post("/replay/catchup", apiKeyAuth, async (c) => {
     ...result,
     remaining: remaining?.count ?? 0,
   });
+});
+
+/**
+ * POST /admin/recovery/cron
+ *
+ * Automated delivery recovery. Called by QStash on a schedule (every 5 minutes).
+ * Sweeps all deliveries stuck in status='received' for more than 5 minutes
+ * across all providers and installations, then re-triggers the webhook delivery
+ * workflow for each one.
+ *
+ * Auth: QStash Upstash-Signature (qstashAuth middleware).
+ * Idempotent: safe to call multiple times — downstream dedup via
+ * onConflictDoNothing (DB) and deduplicationId (QStash).
+ *
+ * QStash Schedule Setup -- one-time, via Upstash dashboard or CLI:
+ *   URL:    https://RELAY_PRODUCTION_URL/api/admin/recovery/cron
+ *   Cron:   every 5 minutes
+ *   Method: POST
+ *   Body:   empty JSON object -- route ignores body
+ *   QStash adds Upstash-Signature automatically; no extra headers needed.
+ */
+admin.post("/recovery/cron", qstashAuth, async (c) => {
+  const BATCH_SIZE = 100;
+  const STALE_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
+  const staleBeforeMs = Date.now() - STALE_THRESHOLD_MS;
+  const staleBeforeIso = new Date(staleBeforeMs).toISOString();
+
+  const deliveries = await db
+    .select()
+    .from(gatewayWebhookDeliveries)
+    .where(
+      and(
+        eq(gatewayWebhookDeliveries.status, "received"),
+        lt(gatewayWebhookDeliveries.receivedAt, staleBeforeIso)
+      )
+    )
+    .orderBy(gatewayWebhookDeliveries.receivedAt)
+    .limit(BATCH_SIZE);
+
+  if (deliveries.length === 0) {
+    return c.json({ status: "ok", replayed: [], skipped: [], failed: [] });
+  }
+
+  const result = await replayDeliveries(deliveries);
+
+  return c.json({ status: "ok", ...result });
 });
 
 /**
