@@ -117,6 +117,7 @@ export const backfillRouter = {
     .input(
       z.object({
         installationId: z.string().min(1),
+        correlationId: z.string().max(128).optional(),
       })
     )
     .mutation(async ({ input }) => {
@@ -139,6 +140,7 @@ export const backfillRouter = {
           name: "memory/backfill.run.cancelled",
           data: {
             installationId: input.installationId,
+            correlationId: input.correlationId,
           },
         });
       } catch (err) {
