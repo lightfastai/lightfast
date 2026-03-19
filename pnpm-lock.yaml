@@ -351,9 +351,18 @@ importers:
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
+      '@repo/console-embed':
+        specifier: workspace:*
+        version: link:../../packages/console-embed
+      '@repo/console-pinecone':
+        specifier: workspace:*
+        version: link:../../packages/console-pinecone
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../../packages/console-providers
+      '@repo/console-upstash-realtime':
+        specifier: workspace:*
+        version: link:../../packages/console-upstash-realtime
       '@repo/console-validation':
         specifier: workspace:*
         version: link:../../packages/console-validation
@@ -378,6 +387,9 @@ importers:
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
+      '@vendor/knock':
+        specifier: workspace:*
+        version: link:../../vendor/knock
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability

@@ -32,7 +32,10 @@
   },
   "dependencies": {
     "@db/console": "workspace:*",
+    "@repo/console-embed": "workspace:*",
+    "@repo/console-pinecone": "workspace:*",
     "@repo/console-providers": "workspace:*",
+    "@repo/console-upstash-realtime": "workspace:*",
     "@repo/console-validation": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:^",
@@ -41,6 +44,7 @@
     "@trpc/server": "catalog:",
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:*",
+    "@vendor/knock": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "drizzle-orm": "catalog:",

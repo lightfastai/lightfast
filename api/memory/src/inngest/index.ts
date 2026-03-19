@@ -1,28 +1,44 @@
 /**
  * Inngest exports for memory application
  *
- * Functions will be added as they are ported from:
- * - api/console/src/inngest/workflow/neural/ (event-store, entity-graph, entity-embed)
- * - api/console/src/inngest/workflow/notifications/ (dispatch)
- * - apps/backfill/src/workflows/ (orchestrator, entity-worker)
- * - apps/gateway/src/functions/ (health-check, token-refresh)
+ * Registered functions:
+ * 1. ingestDelivery - Webhook delivery -> transform -> emit event.capture
+ * 2. memoryEventStore - Event pipeline fast path (store facts + entities)
+ * 3. memoryEntityGraph - Entity edge resolution via co-occurrence
+ * 4. memoryEntityEmbed - Entity narrative embed to Pinecone layer="entities"
+ * 5. memoryNotificationDispatch - High-significance event notifications via Knock
  */
 
 import { serve } from "inngest/next";
 import { inngest } from "./client";
+import { ingestDelivery } from "./functions/ingest-delivery";
+import { memoryEntityEmbed } from "./functions/memory-entity-embed";
+import { memoryEntityGraph } from "./functions/memory-entity-graph";
+import { memoryEventStore } from "./functions/memory-event-store";
+import { memoryNotificationDispatch } from "./functions/memory-notification-dispatch";
 
 export { inngest };
+export {
+  ingestDelivery,
+  memoryEventStore,
+  memoryEntityGraph,
+  memoryEntityEmbed,
+  memoryNotificationDispatch,
+};
 
 /**
  * Create the Inngest route handler for Next.js
- *
- * Initially serves zero functions. As functions are ported,
- * they are added to the functions array here.
  */
 export function createInngestRouteContext() {
   return serve({
     client: inngest,
-    functions: [],
+    functions: [
+      ingestDelivery,
+      memoryEventStore,
+      memoryEntityGraph,
+      memoryEntityEmbed,
+      memoryNotificationDispatch,
+    ],
     servePath: "/api/inngest",
   });
 }
