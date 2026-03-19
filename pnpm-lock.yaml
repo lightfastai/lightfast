@@ -346,6 +346,64 @@ importers:
         specifier: 'catalog:'
         version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
 
+  api/memory:
+    dependencies:
+      '@db/console':
+        specifier: workspace:*
+        version: link:../../db/console
+      '@repo/console-providers':
+        specifier: workspace:*
+        version: link:../../packages/console-providers
+      '@repo/inngest':
+        specifier: workspace:*
+        version: link:../../packages/inngest
+      '@repo/lib':
+        specifier: workspace:^
+        version: link:../../packages/lib
+      '@sentry/core':
+        specifier: 'catalog:'
+        version: 10.42.0
+      '@t3-oss/env-nextjs':
+        specifier: ^0.12.0
+        version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.12.0(typescript@5.9.3)
+      '@vendor/inngest':
+        specifier: workspace:*
+        version: link:../../vendor/inngest
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
+      inngest:
+        specifier: 'catalog:'
+        version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@4.3.6)
+      jose:
+        specifier: 'catalog:'
+        version: 6.1.3
+      superjson:
+        specifier: 'catalog:'
+        version: 2.2.6
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
   apps/auth:
     dependencies:
       '@repo/ui':
@@ -968,6 +1026,73 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  apps/memory:
+    dependencies:
+      '@api/memory':
+        specifier: workspace:*
+        version: link:../../api/memory
+      '@db/console':
+        specifier: workspace:*
+        version: link:../../db/console
+      '@repo/inngest':
+        specifier: workspace:*
+        version: link:../../packages/inngest
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
+      '@sentry/nextjs':
+        specifier: 'catalog:'
+        version: 10.42.0(@opentelemetry/context-async-hooks@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))(encoding@0.1.13)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)(webpack@5.105.4)
+      '@t3-oss/env-nextjs':
+        specifier: ^0.12.0
+        version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.12.0(typescript@5.9.3)
+      '@vendor/inngest':
+        specifier: workspace:*
+        version: link:../../vendor/inngest
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
+      '@vendor/upstash':
+        specifier: workspace:*
+        version: link:../../vendor/upstash
+      next:
+        specifier: catalog:next16
+        version: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      react-dom:
+        specifier: ^19.2.4
+        version: 19.2.4(react@19.2.4)
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.3
+        version: 19.2.3(@types/react@19.2.14)
+      dotenv-cli:
+        specifier: ^8.0.0
+        version: 8.0.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   apps/relay:
     dependencies:
@@ -2190,6 +2315,46 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.0.18(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.0)(@types/node@20.19.22)(@vitest/ui@4.0.18)(happy-dom@20.8.3(bufferutil@4.1.0))(jiti@2.6.1)(jsdom@27.0.1(bufferutil@4.1.0)(postcss@8.5.8))(lightningcss@1.31.1)(terser@5.46.0)(tsx@4.21.0)(yaml@2.8.2)
+
+  packages/memory-trpc:
+    dependencies:
+      '@api/memory':
+        specifier: workspace:*
+        version: link:../../api/memory
+      '@tanstack/react-query':
+        specifier: 'catalog:'
+        version: 5.90.21(react@19.2.4)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.12.0(@trpc/server@11.12.0(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.12.0(typescript@5.9.3)
+      '@trpc/tanstack-react-query':
+        specifier: 'catalog:'
+        version: 11.12.0(@tanstack/react-query@5.90.21(react@19.2.4))(@trpc/client@11.12.0(@trpc/server@11.12.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.12.0(typescript@5.9.3))(react@19.2.4)(typescript@5.9.3)
+      next:
+        specifier: catalog:next16
+        version: 16.1.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      react:
+        specifier: ^19.2.4
+        version: 19.2.4
+      superjson:
+        specifier: 'catalog:'
+        version: 2.2.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
+      '@types/react':
+        specifier: ^19.2.14
+        version: 19.2.14
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/og:
     dependencies:

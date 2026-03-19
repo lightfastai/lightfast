@@ -1,0 +1,40 @@
+{
+  "name": "@lightfast/memory",
+  "license": "FSL-1.1-Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "pnpm with-env next build --turbopack",
+    "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
+    "dev": "pnpm with-env next dev --port 4112 --turbo",
+    "start": "pnpm with-env next start -p 4112",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --"
+  },
+  "dependencies": {
+    "@api/memory": "workspace:*",
+    "@db/console": "workspace:*",
+    "@repo/inngest": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@sentry/nextjs": "catalog:",
+    "@t3-oss/env-nextjs": "^0.12.0",
+    "@trpc/server": "catalog:",
+    "@vendor/inngest": "workspace:*",
+    "@vendor/observability": "workspace:*",
+    "@vendor/upstash": "workspace:*",
+    "next": "catalog:next16",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:react19",
+    "@types/react-dom": "catalog:react19",
+    "dotenv-cli": "^8.0.0",
+    "typescript": "catalog:"
+  }
+}

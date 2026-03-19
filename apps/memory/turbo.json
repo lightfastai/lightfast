@@ -1,0 +1,54 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_VERCEL_ENV"
+      ],
+      "passThroughEnv": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "DATABASE_HOST",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD",
+        "BETTERSTACK_SOURCE_TOKEN",
+        "BETTERSTACK_INGESTING_HOST",
+        "ENCRYPTION_KEY",
+        "SERVICE_JWT_SECRET",
+        "MEMORY_API_KEY",
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+        "PINECONE_API_KEY",
+        "COHERE_API_KEY",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN",
+        "GITHUB_APP_ID",
+        "GITHUB_APP_PRIVATE_KEY",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "GITHUB_WEBHOOK_SECRET",
+        "VERCEL_CLIENT_SECRET_ID",
+        "VERCEL_CLIENT_INTEGRATION_SECRET",
+        "VERCEL_REDIRECT_URI",
+        "LINEAR_WEBHOOK_SIGNING_SECRET",
+        "SENTRY_CLIENT_SECRET",
+        "PORT"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "next-env.d.ts"
+      ]
+    },
+    "dev": {
+      "persistent": true
+    }
+  }
+}
