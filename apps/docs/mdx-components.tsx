@@ -28,7 +28,7 @@ import {
   ValidationErrorList,
   ValidationExample,
 } from "@/src/components/validation-error";
-import { authUrl, wwwUrl } from "@/src/lib/related-projects";
+import { consoleUrl, wwwUrl } from "@/src/lib/related-projects";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -554,7 +554,7 @@ export const mdxComponents = {
     className?: string;
     external?: boolean;
   }) {
-    const href = `${authUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const href = `${consoleUrl}${path.startsWith("/") ? path : `/${path}`}`;
     return (
       <Link
         className={cn(

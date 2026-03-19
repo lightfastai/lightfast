@@ -3,7 +3,7 @@ import { EventSchemas, Inngest, type InngestMiddleware } from "@vendor/inngest";
 import { allEvents } from "./index.js";
 
 export interface CreateInngestClientOptions {
-  /** Service app name, e.g. "lightfast-console" or "lightfast-backfill" */
+  /** Service app name, e.g. "lightfast-console" or "lightfast-memory" */
   appName: string;
   eventKey?: string;
   /** Additional middleware beyond Sentry */
@@ -13,7 +13,7 @@ export interface CreateInngestClientOptions {
 }
 
 /**
- * Creates a fully-typed Inngest client with all platform, console, and backfill
+ * Creates a fully-typed Inngest client with all platform, console, and memory
  * event schemas registered. Call once per service entry point.
  */
 export function createInngestClient(options: CreateInngestClientOptions) {

@@ -1,8 +1,8 @@
 /**
  * Gateway API Response Schemas + Backfill Run Schemas
  *
- * Response shapes for the gateway service HTTP API and backfill run tracking.
- * Consumed by gateway service, gateway-service-clients, and the db schema.
+ * Response shapes for connection API and backfill run tracking.
+ * Consumed by @api/memory, @db/console, and console UI.
  */
 
 import { z } from "zod";

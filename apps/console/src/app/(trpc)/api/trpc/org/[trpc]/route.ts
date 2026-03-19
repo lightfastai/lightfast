@@ -36,7 +36,6 @@ const getAllowedOrigins = (): Set<string> => {
     origins.add("http://localhost:4107"); // Console app (local dev)
     origins.add("http://localhost:3024"); // Microfrontends proxy
     origins.add("http://localhost:4101"); // WWW app
-    origins.add("http://localhost:4104"); // Auth app
   }
 
   return origins;

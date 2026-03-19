@@ -53,7 +53,7 @@ async function getInstallationToken(
       headers: {
         Authorization: `Bearer ${jwt}`,
         Accept: "application/vnd.github+json",
-        "User-Agent": "lightfast-gateway",
+        "User-Agent": "lightfast-memory",
         "X-GitHub-Api-Version": "2022-11-28",
       },
     }
@@ -177,7 +177,7 @@ export const github = defineWebhookProvider({
           headers: {
             Authorization: `Bearer ${jwt}`,
             Accept: "application/vnd.github+json",
-            "User-Agent": "lightfast-gateway",
+            "User-Agent": "lightfast-memory",
             "X-GitHub-Api-Version": "2022-11-28",
           },
         }
@@ -263,7 +263,7 @@ export const github = defineWebhookProvider({
           headers: {
             Authorization: `Bearer ${jwt}`,
             Accept: "application/vnd.github+json",
-            "User-Agent": "lightfast-gateway",
+            "User-Agent": "lightfast-memory",
             "X-GitHub-Api-Version": "2022-11-28",
           },
         }

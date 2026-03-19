@@ -7,11 +7,11 @@ import { DocsMobileNav } from "@/src/components/docs-mobile-nav";
 import { DocsSidebar } from "@/src/components/docs-sidebar";
 import { Search } from "@/src/components/search";
 import { buildApiPageTree } from "@/src/lib/build-api-tree";
-import { authUrl } from "@/src/lib/related-projects";
+import { consoleUrl } from "@/src/lib/related-projects";
 import { pageTree } from "@/src/lib/source";
 
 export default function ApiDocsLayout({ children }: { children: ReactNode }) {
-  const signInUrl = `${authUrl}/sign-in`;
+  const signInUrl = `${consoleUrl}/sign-in`;
 
   // Build custom tree that includes OpenAPI virtual pages
   const apiTree = buildApiPageTree();

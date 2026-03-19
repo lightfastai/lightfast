@@ -46,7 +46,9 @@
   "paths": {
     "/v1/search": {
       "post": {
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "operationId": "search",
         "summary": "Search",
         "description": "Search across your team's knowledge with semantic understanding and multi-path retrieval.",
@@ -89,7 +91,9 @@
     },
     "/v1/contents": {
       "post": {
-        "tags": ["Contents"],
+        "tags": [
+          "Contents"
+        ],
         "operationId": "get-contents",
         "summary": "Get Contents",
         "description": "Fetch full content for specific documents or observations by their IDs. Batch endpoint supporting up to 50 IDs per request.",
@@ -132,7 +136,9 @@
     },
     "/v1/findsimilar": {
       "post": {
-        "tags": ["Find Similar"],
+        "tags": [
+          "Find Similar"
+        ],
         "operationId": "find-similar",
         "summary": "Find Similar",
         "description": "Find content similar to a given document or URL using vector similarity, entity overlap, and cluster analysis.",
@@ -175,7 +181,9 @@
     },
     "/v1/related": {
       "post": {
-        "tags": ["Related"],
+        "tags": [
+          "Related"
+        ],
         "operationId": "find-related",
         "summary": "Find Related Events",
         "description": "Find events related to a specific observation, grouped by source and relationship type.",
@@ -245,7 +253,11 @@
             "default": "balanced",
             "description": "Search quality mode: 'fast' (speed), 'balanced' (default), 'thorough' (quality)",
             "type": "string",
-            "enum": ["fast", "balanced", "thorough"]
+            "enum": [
+              "fast",
+              "balanced",
+              "thorough"
+            ]
           },
           "filters": {
             "description": "Optional filters to scope results by source type, observation type, or date range",
@@ -293,7 +305,9 @@
             }
           }
         },
-        "required": ["query"]
+        "required": [
+          "query"
+        ]
       },
       "ContentsRequest": {
         "type": "object",
@@ -308,7 +322,9 @@
             "description": "Array of document or observation IDs to fetch (1-50 IDs)"
           }
         },
-        "required": ["ids"]
+        "required": [
+          "ids"
+        ]
       },
       "FindSimilarRequest": {
         "type": "object",
@@ -414,7 +430,9 @@
             }
           }
         },
-        "required": ["id"]
+        "required": [
+          "id"
+        ]
       },
       "SearchResponse": {
         "type": "object",
@@ -485,7 +503,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["key", "category"],
+                    "required": [
+                      "key",
+                      "category"
+                    ],
                     "additionalProperties": false
                   }
                 },
@@ -507,7 +528,10 @@
                         "type": "string"
                       }
                     },
-                    "required": ["type", "id"],
+                    "required": [
+                      "type",
+                      "id"
+                    ],
                     "additionalProperties": false
                   }
                 }
@@ -560,7 +584,11 @@
                       }
                     }
                   },
-                  "required": ["topic", "summary", "keywords"],
+                  "required": [
+                    "topic",
+                    "summary",
+                    "keywords"
+                  ],
                   "additionalProperties": false
                 }
               }
@@ -586,7 +614,11 @@
               },
               "mode": {
                 "type": "string",
-                "enum": ["fast", "balanced", "thorough"]
+                "enum": [
+                  "fast",
+                  "balanced",
+                  "thorough"
+                ]
               },
               "paths": {
                 "type": "object",
@@ -601,11 +633,22 @@
                     "type": "boolean"
                   }
                 },
-                "required": ["vector", "entity", "cluster"],
+                "required": [
+                  "vector",
+                  "entity",
+                  "cluster"
+                ],
                 "additionalProperties": false
               }
             },
-            "required": ["total", "limit", "offset", "took", "mode", "paths"],
+            "required": [
+              "total",
+              "limit",
+              "offset",
+              "took",
+              "mode",
+              "paths"
+            ],
             "additionalProperties": false
           },
           "latency": {
@@ -656,14 +699,22 @@
                 "minimum": 0
               }
             },
-            "required": ["total", "retrieval", "rerank"],
+            "required": [
+              "total",
+              "retrieval",
+              "rerank"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       },
       "ContentsResponse": {
@@ -744,7 +795,10 @@
                 }
               }
             },
-            "required": ["items", "missing"],
+            "required": [
+              "items",
+              "missing"
+            ],
             "additionalProperties": false
           },
           "meta": {
@@ -754,14 +808,20 @@
                 "type": "number"
               }
             },
-            "required": ["total"],
+            "required": [
+              "total"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       },
       "FindSimilarResponse": {
@@ -783,7 +843,11 @@
                     "type": "string"
                   }
                 },
-                "required": ["id", "title", "type"],
+                "required": [
+                  "id",
+                  "title",
+                  "type"
+                ],
                 "additionalProperties": false
               },
               "similar": {
@@ -852,7 +916,10 @@
                 }
               }
             },
-            "required": ["source", "similar"],
+            "required": [
+              "source",
+              "similar"
+            ],
             "additionalProperties": false
           },
           "meta": {
@@ -865,14 +932,21 @@
                 "type": "number"
               }
             },
-            "required": ["total", "took"],
+            "required": [
+              "total",
+              "took"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       },
       "RelatedResponse": {
@@ -1022,7 +1096,11 @@
                 }
               }
             },
-            "required": ["root", "nodes", "edges"],
+            "required": [
+              "root",
+              "nodes",
+              "edges"
+            ],
             "additionalProperties": false
           },
           "meta": {
@@ -1041,14 +1119,23 @@
                 "type": "number"
               }
             },
-            "required": ["depth", "nodeCount", "edgeCount", "took"],
+            "required": [
+              "depth",
+              "nodeCount",
+              "edgeCount",
+              "took"
+            ],
             "additionalProperties": false
           },
           "requestId": {
             "type": "string"
           }
         },
-        "required": ["data", "meta", "requestId"],
+        "required": [
+          "data",
+          "meta",
+          "requestId"
+        ],
         "additionalProperties": false
       }
     },

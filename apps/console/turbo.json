@@ -47,11 +47,7 @@
         "BASEHUB_TOKEN",
         "BASEHUB_ADMIN_TOKEN",
         "HEALTH_CHECK_AUTH_TOKEN",
-        "QSTASH_TOKEN",
-        "QSTASH_CURRENT_SIGNING_KEY",
-        "QSTASH_NEXT_SIGNING_KEY",
         "ENCRYPTION_KEY",
-        "GATEWAY_API_KEY",
         "PINECONE_API_KEY",
         "COHERE_API_KEY",
         "INNGEST_APP_NAME",
@@ -70,7 +66,6 @@
       "persistent": true,
       "with": [
         "@lightfast/console#dev:inngest",
-        "@lightfast/console#dev:qstash",
         "//#dev:ngrok",
         "@db/console#dev:studio"
       ]

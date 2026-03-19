@@ -9,8 +9,8 @@ export const wwwUrl = isDevelopment
   ? "http://localhost:4101"
   : "https://lightfast.ai";
 
-// Get the auth URL dynamically based on environment
-// Auth is served from lightfast.ai via microfrontends (not a separate subdomain)
-export const authUrl = isDevelopment
-  ? "http://localhost:4104"
+// Get the console URL dynamically based on environment
+// Auth routes (/sign-in, /sign-up) are served by the console app
+export const consoleUrl = isDevelopment
+  ? "http://localhost:4107"
   : "https://lightfast.ai";

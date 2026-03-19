@@ -88,7 +88,7 @@ function getMostRecentDate(
  * this sitemap includes all routes from:
  * - Marketing pages (from @lightfast/www microfrontend)
  * - Documentation (served at /docs)
- * - Authentication pages (from @lightfast/auth microfrontend)
+ * - Authentication pages (/sign-in, /sign-up, /early-access)
  * - Dynamic content from CMS (blog, changelog, legal)
  *
  * @returns {MetadataRoute.Sitemap} Next.js compatible sitemap configuration
