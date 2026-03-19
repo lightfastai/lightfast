@@ -4,7 +4,8 @@
     "baseUrl": ".",
     "types": ["node"],
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@api/memory/*": ["../../api/memory/src/*"]
     }
   },
   "include": [".", ".next/types/**/*.ts"],

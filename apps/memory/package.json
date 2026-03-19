@@ -15,6 +15,7 @@
   "dependencies": {
     "@api/memory": "workspace:*",
     "@db/console": "workspace:*",
+    "@repo/console-providers": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:*",
     "@sentry/nextjs": "catalog:",

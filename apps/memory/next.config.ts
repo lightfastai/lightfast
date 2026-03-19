@@ -10,6 +10,7 @@ const config: NextConfig = {
     // @db packages
     "@db/console",
     // @repo packages
+    "@repo/console-providers",
     "@repo/inngest",
     "@repo/lib",
     // @vendor packages

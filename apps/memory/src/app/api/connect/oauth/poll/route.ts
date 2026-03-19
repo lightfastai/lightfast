@@ -1,21 +1,30 @@
 /**
  * GET /api/connect/oauth/poll
  *
- * Poll for OAuth completion. Port from gateway connections.ts
+ * Poll for OAuth completion. Ported from gateway connections.ts (lines 180-196).
  *
  * NOT tRPC — CLI polling with state token as auth.
+ * The state token itself is the secret (cryptographically random nanoid,
+ * known only to the initiator).
  */
 import type { NextRequest } from "next/server";
 
+import { getOAuthResult } from "@api/memory/lib/oauth/state";
+
 export const runtime = "nodejs";
 
-export async function GET(_req: NextRequest) {
-  // TODO: Port from gateway connections.ts
-  return Response.json(
-    {
-      status: "not_implemented",
-      message: "OAuth poll not yet ported from gateway service",
-    },
-    { status: 501 }
-  );
+export async function GET(req: NextRequest) {
+  const state = req.nextUrl.searchParams.get("state");
+
+  if (!state) {
+    return Response.json({ error: "missing_state" }, { status: 400 });
+  }
+
+  const result = await getOAuthResult(state);
+
+  if (!result) {
+    return Response.json({ status: "pending" });
+  }
+
+  return Response.json(result);
 }
