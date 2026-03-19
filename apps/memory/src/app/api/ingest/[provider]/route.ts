@@ -150,6 +150,7 @@ async function handleServiceAuth(
   // Dispatch Inngest event (unless held for replay)
   if (!holdForReplay) {
     await inngest.send({
+      id: `wh-${providerSlug}-${deliveryId}`,
       name: "memory/webhook.received",
       data: {
         provider: providerSlug,
@@ -247,7 +248,19 @@ async function handleStandardWebhook(
     return Response.json({ error: "invalid_json" }, { status: 400 });
   }
 
-  const parsedPayload = webhookDef.parsePayload(jsonPayload);
+  let parsedPayload: unknown;
+  try {
+    parsedPayload = webhookDef.parsePayload(jsonPayload);
+  } catch (parseError) {
+    log.warn("[ingest] payload schema validation failed", {
+      provider: providerSlug,
+      error: parseError instanceof Error ? parseError.message : String(parseError),
+    });
+    return Response.json(
+      { error: "payload_validation_failed", provider: providerSlug },
+      { status: 400 }
+    );
+  }
   const deliveryId = webhookDef.extractDeliveryId(req.headers, parsedPayload);
   const eventType = webhookDef.extractEventType(req.headers, parsedPayload);
   const resourceId = webhookDef.extractResourceId(parsedPayload);
@@ -268,6 +281,7 @@ async function handleStandardWebhook(
 
   // Dispatch Inngest event
   await inngest.send({
+    id: `wh-${providerSlug}-${deliveryId}`,
     name: "memory/webhook.received",
     data: {
       provider: providerSlug,

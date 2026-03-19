@@ -22,30 +22,51 @@ describe("LightfastMemory", () => {
 
   describe("constructor", () => {
     it("should throw if apiKey is missing", () => {
-      expect(() => new LightfastMemory({ apiKey: "" })).toThrow(
-        "API key is required"
-      );
+      expect(
+        () => new LightfastMemory({ apiKey: "", workspaceId: "ws_test123" })
+      ).toThrow("API key is required");
     });
 
     it("should throw if apiKey has invalid format", () => {
-      expect(() => new LightfastMemory({ apiKey: "invalid_key" })).toThrow(
-        "Invalid API key format"
-      );
+      expect(
+        () =>
+          new LightfastMemory({
+            apiKey: "invalid_key",
+            workspaceId: "ws_test123",
+          })
+      ).toThrow("Invalid API key format");
+    });
+
+    it("should throw if workspaceId is empty", () => {
+      expect(
+        () =>
+          new LightfastMemory({
+            apiKey: "sk-lf-test123abc",
+            workspaceId: "",
+          })
+      ).toThrow("Workspace ID is required");
     });
 
     it("should accept valid apiKey", () => {
-      const memory = new LightfastMemory({ apiKey: "sk-lf-live123test" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-live123test",
+        workspaceId: "ws_test123",
+      });
       expect(memory).toBeInstanceOf(LightfastMemory);
     });
 
     it("should use default baseUrl", () => {
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       expect(memory).toBeInstanceOf(LightfastMemory);
     });
 
     it("should accept custom baseUrl", () => {
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
         baseUrl: "https://custom.api.com",
       });
       expect(memory).toBeInstanceOf(LightfastMemory);
@@ -73,7 +94,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       const result = await memory.search({ query: "test query" });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -83,6 +107,7 @@ describe("LightfastMemory", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer sk-lf-test123abc",
             "Content-Type": "application/json",
+            "X-Workspace-ID": "ws_test123",
           }),
           body: expect.stringContaining('"query":"test query"'),
         })
@@ -97,7 +122,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve({ data: [] }),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await memory.search({ query: "test" });
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -123,7 +151,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       const result = await memory.contents({ ids: ["doc_123", "obs_456"] });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -156,15 +187,54 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       const result = await memory.findSimilar({ id: "doc_123" });
 
       expect(result).toEqual(mockResponse);
     });
 
-    it("should throw ValidationError if neither id nor url provided", async () => {
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+    it("should call /v1/findsimilar with text anchor", async () => {
+      const mockResponse = {
+        source: null,
+        similar: [],
+        meta: {
+          total: 0,
+          took: 80,
+          inputEmbedding: { found: false, generated: true },
+        },
+        requestId: "req_456",
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
+      const result = await memory.findSimilar({
+        text: "authentication best practices",
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body.text).toBe("authentication best practices");
+      expect(result).toEqual(mockResponse);
+    });
+
+    it("should throw ValidationError if neither id, url, nor text provided", async () => {
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await expect(memory.findSimilar({})).rejects.toThrow(ValidationError);
+      await expect(memory.findSimilar({})).rejects.toThrow(
+        "Either 'id', 'url', or 'text' must be provided"
+      );
     });
   });
 
@@ -190,7 +260,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       const result = await memory.graph({ id: "obs_123" });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -211,7 +284,10 @@ describe("LightfastMemory", () => {
           Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await memory.graph({ id: "obs_123" });
 
       const body = JSON.parse(mockFetch.mock.calls[0][1].body);
@@ -225,7 +301,10 @@ describe("LightfastMemory", () => {
           Promise.resolve({ data: { root: {}, nodes: [], edges: [] } }),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await memory.graph({
         id: "obs_123",
         depth: 3,
@@ -258,7 +337,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve(mockResponse),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       const result = await memory.related({ id: "obs_123", depth: 1 });
 
       expect(mockFetch).toHaveBeenCalledWith(
@@ -281,7 +363,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve({ error: "Invalid API key" }),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         AuthenticationError
       );
@@ -294,7 +379,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve({ error: "Invalid query" }),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         ValidationError
       );
@@ -307,7 +395,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve({ error: "Rate limit exceeded" }),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         RateLimitError
       );
@@ -320,7 +411,10 @@ describe("LightfastMemory", () => {
         json: () => Promise.resolve({ error: "Internal server error" }),
       });
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         ServerError
       );
@@ -329,7 +423,10 @@ describe("LightfastMemory", () => {
     it("should throw NetworkError on fetch failure", async () => {
       mockFetch.mockRejectedValueOnce(new Error("Network failure"));
 
-      const memory = new LightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         NetworkError
       );
@@ -338,8 +435,98 @@ describe("LightfastMemory", () => {
 
   describe("factory function", () => {
     it("should create LightfastMemory instance", () => {
-      const memory = createLightfastMemory({ apiKey: "sk-lf-test123abc" });
+      const memory = createLightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
       expect(memory).toBeInstanceOf(LightfastMemory);
+    });
+  });
+
+  describe("proxySearch", () => {
+    it("should call /v1/proxy/search", async () => {
+      const mockResponse = {
+        connections: [
+          {
+            installationId: "inst_123",
+            provider: "github",
+            status: "active",
+            baseUrl: "https://api.github.com",
+            endpoints: [
+              {
+                endpointId: "list-repos",
+                method: "GET",
+                path: "/user/repos",
+                description: "List repositories",
+              },
+            ],
+          },
+        ],
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
+      const result = await memory.proxySearch();
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://lightfast.ai/v1/proxy/search",
+        expect.objectContaining({
+          method: "POST",
+          headers: expect.objectContaining({
+            "X-Workspace-ID": "ws_test123",
+          }),
+        })
+      );
+
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe("proxyExecute", () => {
+    it("should call /v1/proxy/execute with correct parameters", async () => {
+      const mockResponse = {
+        status: 200,
+        data: [{ id: 1, name: "my-repo" }],
+        headers: { "content-type": "application/json" },
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve(mockResponse),
+      });
+
+      const memory = new LightfastMemory({
+        apiKey: "sk-lf-test123abc",
+        workspaceId: "ws_test123",
+      });
+      const result = await memory.proxyExecute({
+        installationId: "inst_123",
+        endpointId: "list-repos",
+        queryParams: { per_page: "10" },
+      });
+
+      const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+      expect(body).toEqual({
+        installationId: "inst_123",
+        endpointId: "list-repos",
+        queryParams: { per_page: "10" },
+      });
+
+      expect(mockFetch).toHaveBeenCalledWith(
+        "https://lightfast.ai/v1/proxy/execute",
+        expect.objectContaining({
+          method: "POST",
+        })
+      );
+
+      expect(result).toEqual(mockResponse);
     });
   });
 });

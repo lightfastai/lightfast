@@ -43,7 +43,7 @@ import type { Events } from "./client";
  */
 export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
   _eventName: TEventName,
-  config: {
+  config?: {
     logMessage: string;
     /** Returns loggable fields derived from the original event's data */
     logContext: (data: Events[TEventName]["data"]) => Record<string, unknown>;
@@ -71,12 +71,12 @@ export function createNeuralOnFailureHandler<TEventName extends keyof Events>(
     const data = originalEvent.data;
     const eventId = originalEvent.id;
 
-    log.error(config.logMessage, {
-      ...config.logContext(data),
+    log.error(config?.logMessage ?? `${String(_eventName)} failed`, {
+      ...(config?.logContext(data) ?? {}),
       error: error.message,
     });
 
-    if (eventId) {
+    if (config && eventId) {
       const job = await getJobByInngestRunId(eventId);
       if (job) {
         await completeJob({

@@ -11,6 +11,7 @@
 
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../client";
+import { createNeuralOnFailureHandler } from "../on-failure-handler";
 import { resolveEdges } from "../../lib/edge-resolver";
 
 export const memoryEntityGraph = inngest.createFunction(
@@ -20,6 +21,7 @@ export const memoryEntityGraph = inngest.createFunction(
     description: "Resolves entity edges after upsert (fast, pure SQL)",
     retries: 3,
     timeouts: { finish: "2m" },
+    onFailure: createNeuralOnFailureHandler("memory/entity.upserted"),
   },
   { event: "memory/entity.upserted" },
   async ({ event, step }) => {

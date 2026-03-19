@@ -47,6 +47,11 @@ export type {
   LightfastConfig,
   // Deprecated alias
   LightfastMemoryConfig,
+  ProxyConnection,
+  ProxyEndpoint,
+  ProxyExecuteInput,
+  ProxyExecuteResponse,
+  ProxySearchResponse,
   RelatedEvent,
   RelatedInput,
   RelatedRequest,

@@ -16,6 +16,7 @@ import { db } from "@db/console/client";
 import {
   gatewayInstallations,
   gatewayResources,
+  gatewayWebhookDeliveries,
   orgWorkspaces,
   workspaceIngestLogs,
 } from "@db/console/schema";
@@ -173,6 +174,12 @@ export const ingestDelivery = inngest.createFunction(
 
     // Unsupported event type — return early, no downstream events
     if (result.status === "unsupported") {
+      await step.run("mark-delivery-skipped", async () => {
+        await db
+          .update(gatewayWebhookDeliveries)
+          .set({ status: "skipped" })
+          .where(eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId));
+      });
       return { status: "unsupported", provider: data.provider, eventType: data.eventType };
     }
 
@@ -205,6 +212,14 @@ export const ingestDelivery = inngest.createFunction(
         ingestLogId: result.ingestLogId,
         correlationId: data.correlationId,
       });
+    });
+
+    // Step 6: Mark delivery as processed
+    await step.run("mark-delivery-processed", async () => {
+      await db
+        .update(gatewayWebhookDeliveries)
+        .set({ status: "processed" })
+        .where(eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId));
     });
 
     return {

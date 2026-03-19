@@ -22,6 +22,7 @@ import { NonRetriableError } from "@repo/inngest";
 import { log } from "@vendor/observability/log/next";
 import { asc, desc, eq, sql } from "drizzle-orm";
 import { inngest } from "../client";
+import { createNeuralOnFailureHandler } from "../on-failure-handler";
 import { buildEntityNarrative, narrativeHash } from "../../lib/narrative-builder";
 
 /**
@@ -55,6 +56,7 @@ export const memoryEntityEmbed = inngest.createFunction(
     },
     retries: 3,
     timeouts: { finish: "2m" },
+    onFailure: createNeuralOnFailureHandler("memory/entity.graphed"),
   },
   { event: "memory/entity.graphed" },
   async ({ event, step }) => {

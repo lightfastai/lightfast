@@ -487,10 +487,10 @@ export const memoryEventStore = inngest.createFunction(
                   workspaceEntities.key,
                 ],
                 set: {
-                  lastSeenAt: new Date().toISOString(),
+                  lastSeenAt: sql`GREATEST(${workspaceEntities.lastSeenAt}, EXCLUDED.${workspaceEntities.lastSeenAt})`,
                   occurrenceCount: sql`${workspaceEntities.occurrenceCount} + 1`,
                   updatedAt: new Date().toISOString(),
-                  state: sql`EXCLUDED.state`,
+                  state: sql`CASE WHEN EXCLUDED.${workspaceEntities.lastSeenAt} > ${workspaceEntities.lastSeenAt} THEN EXCLUDED.${workspaceEntities.state} ELSE ${workspaceEntities.state} END`,
                   url: sql`COALESCE(EXCLUDED.url, ${workspaceEntities.url})`,
                 },
               })
