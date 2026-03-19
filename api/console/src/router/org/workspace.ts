@@ -7,7 +7,6 @@ import {
 } from "@db/console/schema";
 import { createCustomWorkspace, getWorkspaceKey } from "@db/console/utils";
 import type {
-  BackfillTriggerPayload,
   ProviderName,
   SourceType,
 } from "@repo/console-providers";
@@ -24,10 +23,7 @@ import {
   workspaceUpdateNameInputSchema,
 } from "@repo/console-validation/schemas";
 import { invalidateWorkspaceConfig } from "@repo/console-workspace-cache";
-import {
-  createBackfillClient,
-  createGatewayClient,
-} from "@repo/gateway-service-clients";
+import { createMemoryCaller } from "@repo/memory-trpc/caller";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
@@ -35,7 +31,6 @@ import { log } from "@vendor/observability/log/next";
 import { and, desc, eq, gte, inArray, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
 import { z } from "zod";
-import { env } from "../../env";
 import { recordActivity } from "../../lib/activity";
 import { orgScopedProcedure, resolveWorkspaceByName } from "../../trpc";
 
@@ -555,14 +550,16 @@ export const workspaceRouter = {
               .update(workspaceIntegrations)
               .set({ status: "active", updatedAt: new Date().toISOString() })
               .where(eq(workspaceIntegrations.id, existing.id));
-            await createGatewayClient({ apiKey: env.GATEWAY_API_KEY })
-              .registerResource(installationId, {
+            const memoryCaller = await createMemoryCaller();
+            await memoryCaller.connections
+              .registerResource({
+                installationId,
                 providerResourceId: projectId,
                 resourceName: input.projectName,
               })
               .catch((err: unknown) =>
                 log.error(
-                  "[linkVercelProject] gateway registerResource failed",
+                  "[linkVercelProject] memory registerResource failed",
                   {
                     installationId,
                     projectId,
@@ -609,13 +606,15 @@ export const workspaceRouter = {
             message: "Failed to create Vercel integration",
           });
         }
-        await createGatewayClient({ apiKey: env.GATEWAY_API_KEY })
-          .registerResource(installationId, {
+        const memoryCaller2 = await createMemoryCaller();
+        await memoryCaller2.connections
+          .registerResource({
+            installationId,
             providerResourceId: projectId,
             resourceName: input.projectName,
           })
           .catch((err: unknown) =>
-            log.error("[linkVercelProject] gateway registerResource failed", {
+            log.error("[linkVercelProject] memory registerResource failed", {
               installationId,
               projectId,
               err,
@@ -824,7 +823,7 @@ export const workspaceRouter = {
         const now = new Date().toISOString();
         const typedProvider = provider as ProviderName;
         const defaultSyncEvents = getDefaultSyncEvents(typedProvider);
-        const gw = createGatewayClient({ apiKey: env.GATEWAY_API_KEY });
+        const memory = await createMemoryCaller();
 
         // 5. Reactivate inactive integrations
         if (toReactivate.length > 0) {
@@ -838,17 +837,18 @@ export const workspaceRouter = {
               )
             );
 
-          // Register reactivated resources in gateway (best-effort)
+          // Register reactivated resources in memory service (best-effort)
           await Promise.allSettled(
             toReactivate.map((r) =>
-              gw
-                .registerResource(gwInstallationId, {
+              memory.connections
+                .registerResource({
+                  installationId: gwInstallationId,
                   providerResourceId: r.providerResourceId,
                   resourceName: r.resourceName,
                 })
                 .catch((err: unknown) =>
                   log.error(
-                    "[bulkLinkResources] gateway registerResource failed (reactivate)",
+                    "[bulkLinkResources] memory registerResource failed (reactivate)",
                     {
                       installationId: gwInstallationId,
                       providerResourceId: r.providerResourceId,
@@ -888,17 +888,18 @@ export const workspaceRouter = {
             .values(integrations)
             .returning({ id: workspaceIntegrations.id });
 
-          // Register new resources in gateway (best-effort)
+          // Register new resources in memory service (best-effort)
           await Promise.allSettled(
             toCreate.map((resource) =>
-              gw
-                .registerResource(gwInstallationId, {
+              memory.connections
+                .registerResource({
+                  installationId: gwInstallationId,
                   providerResourceId: resource.resourceId,
                   resourceName: resource.resourceName,
                 })
                 .catch((err: unknown) =>
                   log.error(
-                    "[bulkLinkResources] gateway registerResource failed (create)",
+                    "[bulkLinkResources] memory registerResource failed (create)",
                     {
                       installationId: gwInstallationId,
                       providerResourceId: resource.resourceId,
@@ -1017,7 +1018,7 @@ export const workspaceRouter = {
 } satisfies TRPCRouterRecord;
 
 /**
- * Notify the backfill service to trigger a historical backfill for a connection.
+ * Notify the memory service to trigger a historical backfill for a connection.
  * Best-effort — errors are logged but never thrown.
  *
  * If depth or entityTypes are omitted, they are loaded from gatewayInstallations.backfillConfig.
@@ -1078,23 +1079,39 @@ export async function notifyBackfill(params: {
     }
   }
 
-  const payload: BackfillTriggerPayload = {
+  log.info("[notifyBackfill] triggering backfill", {
     installationId: params.installationId,
     provider: params.provider,
     orgId: params.orgId,
     depth: resolvedDepth ?? 1,
-    entityTypes: resolvedEntityTypes,
-    holdForReplay: params.holdForReplay,
-  };
-
-  log.info("[notifyBackfill] triggering backfill", {
-    ...payload,
     correlationId: params.correlationId,
   });
 
   try {
-    const client = createBackfillClient({ apiKey: env.GATEWAY_API_KEY });
-    await client.trigger(payload);
+    // The backfill sub-router exists at runtime but TypeScript can't infer it
+    // due to deep type resolution across package boundaries. The memory router
+    // has connections, proxy, and backfill — but tRPC's type inference hits
+    // the depth limit on the backfill router's complex estimate procedure.
+    const memory = await createMemoryCaller() as Awaited<ReturnType<typeof createMemoryCaller>> & {
+      backfill: { trigger: (input: {
+        installationId: string;
+        provider: string;
+        orgId: string;
+        depth: number;
+        entityTypes?: string[];
+        holdForReplay?: boolean;
+        correlationId?: string;
+      }) => Promise<{ status: string; installationId: string }> };
+    };
+    await memory.backfill.trigger({
+      installationId: params.installationId,
+      provider: params.provider,
+      orgId: params.orgId,
+      depth: resolvedDepth ?? 1,
+      entityTypes: resolvedEntityTypes,
+      holdForReplay: params.holdForReplay,
+      correlationId: params.correlationId,
+    });
     log.info("[notifyBackfill] backfill triggered successfully", {
       installationId: params.installationId,
       provider: params.provider,

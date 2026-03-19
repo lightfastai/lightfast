@@ -6,8 +6,11 @@ const { mockTrigger, mockFindFirst } = vi.hoisted(() => ({
   mockFindFirst: vi.fn(),
 }));
 
-vi.mock("@repo/gateway-service-clients", () => ({
-  createBackfillClient: () => ({ trigger: mockTrigger }),
+vi.mock("@repo/memory-trpc/caller", () => ({
+  createMemoryCaller: () =>
+    Promise.resolve({
+      backfill: { trigger: mockTrigger },
+    }),
 }));
 
 vi.mock("@db/console/client", () => ({
@@ -69,10 +72,6 @@ vi.mock("../../../lib/activity", () => ({
   recordActivity: vi.fn(),
 }));
 
-vi.mock("../../../env", () => ({
-  env: { GATEWAY_API_KEY: "test-gw-key" },
-}));
-
 // ── Import after mocks ─────────────────────────────────────────────────────────
 import { notifyBackfill } from "../workspace";
 
@@ -83,8 +82,11 @@ describe("notifyBackfill", () => {
     vi.clearAllMocks();
   });
 
-  it("calls createBackfillClient.trigger with correct payload when depth and entityTypes provided", async () => {
-    mockTrigger.mockResolvedValue({ status: "ok", installationId: "inst-1" });
+  it("calls memory.backfill.trigger with correct payload when depth and entityTypes provided", async () => {
+    mockTrigger.mockResolvedValue({
+      status: "accepted",
+      installationId: "inst-1",
+    });
 
     await notifyBackfill({
       installationId: "inst-1",
@@ -101,12 +103,16 @@ describe("notifyBackfill", () => {
       depth: 30,
       entityTypes: ["pull_request"],
       holdForReplay: undefined,
+      correlationId: undefined,
     });
     expect(mockFindFirst).not.toHaveBeenCalled();
   });
 
   it("loads depth and entityTypes from DB when omitted", async () => {
-    mockTrigger.mockResolvedValue({ status: "ok", installationId: "inst-1" });
+    mockTrigger.mockResolvedValue({
+      status: "accepted",
+      installationId: "inst-1",
+    });
     mockFindFirst.mockResolvedValue({
       backfillConfig: { depth: 90, entityTypes: ["issue"] },
     });
@@ -124,7 +130,10 @@ describe("notifyBackfill", () => {
   });
 
   it("falls back to depth 1 when DB has no backfillConfig", async () => {
-    mockTrigger.mockResolvedValue({ status: "ok", installationId: "inst-1" });
+    mockTrigger.mockResolvedValue({
+      status: "accepted",
+      installationId: "inst-1",
+    });
     mockFindFirst.mockResolvedValue(null);
 
     await notifyBackfill({
@@ -152,7 +161,10 @@ describe("notifyBackfill", () => {
   });
 
   it("forwards holdForReplay when provided", async () => {
-    mockTrigger.mockResolvedValue({ status: "ok", installationId: "inst-1" });
+    mockTrigger.mockResolvedValue({
+      status: "accepted",
+      installationId: "inst-1",
+    });
     mockFindFirst.mockResolvedValue(null);
 
     await notifyBackfill({

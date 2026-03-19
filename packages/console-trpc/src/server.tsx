@@ -2,11 +2,9 @@ import type { OrgRouter, UserRouter } from "@api/console";
 import {
   createOrgTRPCContext,
   createUserTRPCContext,
-  m2mRouter,
   orgRouter,
   userRouter,
 } from "@api/console";
-import { createM2MToken } from "@repo/console-clerk-m2m";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type {
   TRPCOptionsProxy,
@@ -44,38 +42,6 @@ const createOrgContext = cache(async () => {
   });
 });
 
-/**
- * Create context for webhook M2M calls (org-scoped)
- * Creates token on-demand following Clerk's recommended pattern
- */
-const createWebhookContext = cache(async () => {
-  const { token } = await createM2MToken("webhook");
-
-  const heads = new Headers();
-  heads.set("x-trpc-source", "webhook-service");
-  heads.set("authorization", `Bearer ${token}`);
-
-  return createOrgTRPCContext({
-    headers: heads,
-  });
-});
-
-/**
- * Create context for Inngest M2M calls (org-scoped)
- * Creates token on-demand following Clerk's recommended pattern
- */
-const createInngestContext = cache(async () => {
-  const { token } = await createM2MToken("inngest");
-
-  const heads = new Headers();
-  heads.set("x-trpc-source", "inngest-workflow");
-  heads.set("authorization", `Bearer ${token}`);
-
-  return createOrgTRPCContext({
-    headers: heads,
-  });
-});
-
 export const getQueryClient = cache(createQueryClient);
 
 /**
@@ -98,39 +64,6 @@ export const orgTrpc: TRPCOptionsProxy<OrgRouter> = createTRPCOptionsProxy({
   router: orgRouter,
   ctx: createOrgContext,
   queryClient: getQueryClient,
-});
-
-/**
- * Create a server-side org-scoped caller for webhook handlers
- * This caller is authenticated with webhook M2M token
- * Should only be used by verified webhook handlers (after signature verification)
- *
- * NOTE: Returns orgRouter for backward compatibility with WorkspacesService.
- * For M2M-specific operations, use createM2MCaller() instead.
- */
-export const createCaller = cache(async () => {
-  const ctx = await createWebhookContext();
-  return orgRouter.createCaller(ctx);
-});
-
-/**
- * Create a server-side M2M caller for webhook handlers
- * This caller is authenticated with webhook M2M token and provides access to M2M procedures only
- * Should only be used by verified webhook handlers that need M2M-specific operations
- */
-export const createM2MCaller = cache(async () => {
-  const ctx = await createWebhookContext();
-  return m2mRouter.createCaller(ctx);
-});
-
-/**
- * Create a server-side org-scoped caller for Inngest workflows
- * This caller is authenticated with Inngest M2M token
- * Should only be used by Inngest background workflows
- */
-export const createInngestCaller = cache(async () => {
-  const ctx = await createInngestContext();
-  return orgRouter.createCaller(ctx);
 });
 
 export function HydrateClient(props: { children: React.ReactNode }) {

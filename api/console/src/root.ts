@@ -2,16 +2,11 @@
  * Console application root router
  * This is the main router that combines all console-specific routers
  *
- * Split into three routers for authentication boundary:
+ * Split into two routers for authentication boundary:
  * - userRouter: Procedures that allow pending users (no org required)
  * - orgRouter: Procedures that require active org membership
- * - m2mRouter: Machine-to-machine procedures for internal services (Inngest, webhooks)
  */
 
-// M2M routers (internal services only)
-import { jobsM2MRouter } from "./router/m2m/jobs";
-import { sourcesM2MRouter } from "./router/m2m/sources";
-import { workspaceM2MRouter } from "./router/m2m/workspace";
 import { connectionsRouter } from "./router/org/connections";
 import { jobsRouter } from "./router/org/jobs";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
@@ -57,27 +52,6 @@ export const orgRouter = createTRPCRouter({
   orgApiKeys: orgApiKeysRouter,
 });
 
-/**
- * M2M router
- * Machine-to-machine procedures for internal services only
- * Accessible via /api/trpc/m2m/*
- *
- * Security:
- * - Inngest procedures: Require Inngest M2M token (CLERK_M2M_INNGEST_CLIENT_ID)
- * - Webhook procedures: Require webhook M2M token (CLERK_M2M_WEBHOOK_CLIENT_ID)
- *
- * Procedures:
- * - jobs.*: Job lifecycle management for Inngest workflows
- * - sources.*: Source management for GitHub webhooks
- * - workspace.*: Workspace queries for Inngest workflows
- */
-export const m2mRouter = createTRPCRouter({
-  jobs: jobsM2MRouter,
-  sources: sourcesM2MRouter,
-  workspace: workspaceM2MRouter,
-});
-
 // Export types for client usage
 export type UserRouter = typeof userRouter;
 export type OrgRouter = typeof orgRouter;
-export type M2MRouter = typeof m2mRouter;

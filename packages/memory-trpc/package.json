@@ -6,6 +6,9 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
+    "./caller": {
+      "default": "./src/caller.ts"
+    },
     "./client": {
       "default": "./src/client.ts"
     },

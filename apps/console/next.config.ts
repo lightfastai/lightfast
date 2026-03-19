@@ -157,21 +157,6 @@ const config: NextConfig = withSentry(
             ? "https://lightfast-docs.vercel.app"
             : "http://localhost:4105";
 
-        const isProd =
-          vercelEnv === "production" ||
-          vercelEnv === "preview" ||
-          process.env.NODE_ENV === "production";
-
-        const gatewayUrl = isProd
-          ? "https://lightfast-gateway.vercel.app"
-          : "http://localhost:4110";
-        const relayUrl = isProd
-          ? "https://lightfast-relay.vercel.app"
-          : "http://localhost:4108";
-        const backfillUrl = isProd
-          ? "https://lightfast-backfill.vercel.app"
-          : "http://localhost:4109";
-
         return [
           {
             source: "/docs",
@@ -180,18 +165,6 @@ const config: NextConfig = withSentry(
           {
             source: "/docs/:path*",
             destination: `${docsUrl}/docs/:path*`,
-          },
-          {
-            source: "/services/gateway/:path*",
-            destination: `${gatewayUrl}/services/gateway/:path*`,
-          },
-          {
-            source: "/services/relay/:path*",
-            destination: `${relayUrl}/api/:path*`,
-          },
-          {
-            source: "/services/backfill/:path*",
-            destination: `${backfillUrl}/api/:path*`,
           },
         ];
       },

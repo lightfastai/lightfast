@@ -27,7 +27,6 @@
   },
   "dependencies": {
     "@api/console": "workspace:*",
-    "@repo/console-clerk-m2m": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",

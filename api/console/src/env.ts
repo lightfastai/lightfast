@@ -1,4 +1,3 @@
-import { consoleM2MEnv } from "@repo/console-clerk-m2m/env";
 import { githubEnv } from "@repo/console-octokit-github/env";
 import { vercelEnv } from "@repo/console-vercel/env";
 import { createEnv } from "@t3-oss/env-nextjs";
@@ -13,27 +12,10 @@ export const env = createEnv({
     clerkEnvBase,
     sentryEnv,
     githubEnv,
-    consoleM2MEnv,
     vercelEnv,
   ],
   shared: {},
   server: {
-    /**
-     * API key for authenticating service-to-service calls to the gateway service.
-     * Shared secret between api/console (tRPC proxy) and apps/gateway.
-     *
-     * This env var already exists in Vercel project settings for apps/gateway,
-     * apps/relay, and apps/backfill. It must also be linked to the api/console project.
-     */
-    GATEWAY_API_KEY: z.string().min(1),
-
-    /**
-     * Feature flag: enable backfill notifications to relay service.
-     * Defaults to false — set to "true" when backfill is production-ready.
-     */
-    // TODO(BACKFILL): remove flag once backfill is production-ready
-    ENABLE_BACKFILL: z.coerce.boolean().default(false),
-
     /**
      * Encryption key for decrypting OAuth tokens from database
      * Must match the key used by apps/console to encrypt tokens

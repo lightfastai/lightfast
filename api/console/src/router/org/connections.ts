@@ -9,13 +9,12 @@ import {
   type ResourcePickerExecuteApiFn,
   sourceTypeSchema,
 } from "@repo/console-providers";
-import { createGatewayClient } from "@repo/gateway-service-clients";
+import { createMemoryCaller } from "@repo/memory-trpc/caller";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import yaml from "yaml";
 import { z } from "zod";
-import { env } from "../../env";
 import { apiKeyProcedure, orgScopedProcedure } from "../../trpc";
 
 /**
@@ -24,15 +23,17 @@ import { apiKeyProcedure, orgScopedProcedure } from "../../trpc";
  * Manages org-level OAuth connections (GitHub, Vercel, Linear, etc.)
  * Queries gw_installations directly (org-scoped).
  *
+ * Proxies to memory service tRPC for token vault, OAuth, and API operations.
+ *
  * Table: gatewayInstallations (lightfast_gateway_installations)
  * Scope: Org-scoped (active org required)
  */
 
 export const connectionsRouter = {
   /**
-   * Get OAuth authorize URL from the gateway service.
+   * Get OAuth authorize URL from the memory service.
    *
-   * Proxies the gateway service authorize endpoint since browsers
+   * Proxies the memory service authorize endpoint since browsers
    * can't set custom headers (X-Org-Id) during popup navigation.
    */
   getAuthorizeUrl: orgScopedProcedure
@@ -42,21 +43,18 @@ export const connectionsRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
-      const gw = createGatewayClient({
-        apiKey: env.GATEWAY_API_KEY,
-        requestSource: "console-trpc",
-        correlationId: crypto.randomUUID(),
-      });
-      return gw.getAuthorizeUrl(input.provider, {
+      const memory = await createMemoryCaller();
+      return memory.connections.getAuthorizeUrl({
+        provider: input.provider,
         orgId: ctx.auth.orgId,
-        userId: ctx.auth.userId,
+        connectedBy: ctx.auth.userId,
       });
     }),
 
   /**
    * CLI: Get OAuth authorize URL using API key auth.
    *
-   * Uses orgId from API key auth context, proxies to connections service
+   * Uses orgId from API key auth context, proxies to memory service
    * with redirect_to=inline for CLI mode.
    */
   cliAuthorize: apiKeyProcedure
@@ -66,14 +64,11 @@ export const connectionsRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
-      const gw = createGatewayClient({
-        apiKey: env.GATEWAY_API_KEY,
-        requestSource: "console-trpc-cli",
-        correlationId: crypto.randomUUID(),
-      });
-      return gw.getAuthorizeUrl(input.provider, {
+      const memory = await createMemoryCaller();
+      return memory.connections.getAuthorizeUrl({
+        provider: input.provider,
         orgId: ctx.auth.orgId,
-        userId: ctx.auth.userId,
+        connectedBy: ctx.auth.userId,
         redirectTo: "inline",
       });
     }),
@@ -119,7 +114,7 @@ export const connectionsRouter = {
   /**
    * Disconnect an integration.
    *
-   * Delegates to the gateway DELETE endpoint which triggers the durable
+   * Delegates to the memory service which triggers the durable
    * connection-teardown workflow (gate-first: closes ingress immediately).
    */
   disconnect: orgScopedProcedure
@@ -129,8 +124,8 @@ export const connectionsRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // Fetch installation to get provider (required for gateway DELETE path)
-      // and enforce org scoping before calling the gateway
+      // Fetch installation to get provider (required for disconnect)
+      // and enforce org scoping before calling the memory service
       const rows = await ctx.db
         .select({
           id: gatewayInstallations.id,
@@ -153,17 +148,15 @@ export const connectionsRouter = {
         });
       }
 
-      const gw = createGatewayClient({
-        apiKey: env.GATEWAY_API_KEY,
-        requestSource: "console-trpc",
-        correlationId: crypto.randomUUID(),
+      const memory = await createMemoryCaller();
+      await memory.connections.disconnect({
+        id: installation.id,
+        provider: installation.provider,
       });
-      await gw.deleteConnection(installation.provider, installation.id);
 
       // Cascade: mark all workspace integrations for this installation as disconnected.
       // This covers all providers (Vercel, Linear, Sentry, Apollo, GitHub).
-      // GitHub is also handled by the m2m router on webhook events — the cascade here
-      // ensures the gate closes immediately on user-triggered disconnect.
+      // The cascade here ensures the gate closes immediately on user-triggered disconnect.
       const now = new Date().toISOString();
       await ctx.db
         .update(workspaceIntegrations)
@@ -255,17 +248,11 @@ export const connectionsRouter = {
       }
 
       try {
-        const gwValidate = createGatewayClient({
-          apiKey: env.GATEWAY_API_KEY,
-          requestSource: "console-trpc",
-          correlationId: crypto.randomUUID(),
-        });
+        const memory = await createMemoryCaller();
 
         // Validate that the installation still exists on GitHub (App JWT auth via proxy)
-        const result = await gwValidate.executeApi<
-          "github",
-          "get-app-installation"
-        >(installation.id, {
+        const result = await memory.proxy.execute({
+          installationId: installation.id,
           endpointId: "get-app-installation",
           pathParams: { installation_id: installation.externalId },
         });
@@ -359,28 +346,23 @@ export const connectionsRouter = {
         }
 
         try {
-          const gw = createGatewayClient({
-            apiKey: env.GATEWAY_API_KEY,
-            requestSource: "console-trpc",
-            correlationId: crypto.randomUUID(),
-          });
+          const memory = await createMemoryCaller();
 
           let ref = input.ref;
           if (!ref) {
-            const repoResult = await gw.executeApi<"github", "get-repo">(
-              input.integrationId,
-              {
-                endpointId: "get-repo",
-                pathParams: { owner, repo },
-              }
-            );
+            const repoResult = await memory.proxy.execute({
+              installationId: input.integrationId,
+              endpointId: "get-repo",
+              pathParams: { owner, repo },
+            });
             if (repoResult.status !== 200) {
               throw new TRPCError({
                 code: "INTERNAL_SERVER_ERROR",
                 message: "Failed to fetch repository info from GitHub",
               });
             }
-            ref = repoResult.data.default_branch;
+            ref = (repoResult.data as { default_branch: string })
+              .default_branch;
           }
 
           if (ref && !/^[a-zA-Z0-9._/-]+$/.test(ref)) {
@@ -403,10 +385,8 @@ export const connectionsRouter = {
             if (ref) {
               queryParams.ref = ref;
             }
-            const fileResult = await gw.executeApi<
-              "github",
-              "get-file-contents"
-            >(input.integrationId, {
+            const fileResult = await memory.proxy.execute({
+              installationId: input.integrationId,
               endpointId: "get-file-contents",
               pathParams: { owner, repo, path },
               queryParams,
@@ -423,7 +403,12 @@ export const connectionsRouter = {
               });
             }
 
-            const data = fileResult.data;
+            const data = fileResult.data as {
+              content?: string;
+              type?: string;
+              size?: number;
+              sha?: string;
+            };
 
             if (
               !Array.isArray(data) &&
@@ -483,7 +468,7 @@ export const connectionsRouter = {
     /**
      * Disconnect Vercel integration.
      *
-     * Delegates to the gateway DELETE endpoint which triggers the durable
+     * Delegates to the memory service which triggers the durable
      * connection-teardown workflow (gate-first: closes ingress immediately).
      */
     disconnect: orgScopedProcedure.mutation(async ({ ctx }) => {
@@ -507,12 +492,11 @@ export const connectionsRouter = {
         });
       }
 
-      const gw = createGatewayClient({
-        apiKey: env.GATEWAY_API_KEY,
-        requestSource: "console-trpc",
-        correlationId: crypto.randomUUID(),
+      const memory = await createMemoryCaller();
+      await memory.connections.disconnect({
+        id: installation.id,
+        provider: "vercel",
       });
-      await gw.deleteConnection("vercel", installation.id);
 
       return { success: true };
     }),
@@ -551,21 +535,23 @@ export const connectionsRouter = {
           };
         }
 
-        const gw = createGatewayClient({
-          apiKey: env.GATEWAY_API_KEY,
-          correlationId: crypto.randomUUID(),
-          requestSource: "console:generic-list-installations",
-        });
+        const memory = await createMemoryCaller();
 
         const enriched = await Promise.all(
           installations.map(async (inst) => {
             const executeApi: ResourcePickerExecuteApiFn = (request) =>
-              gw.executeApi(inst.id, request);
+              memory.proxy.execute({
+                installationId: inst.id,
+                ...request,
+              });
 
             return providerDef.resourcePicker.enrichInstallation(executeApi, {
               id: inst.id,
               externalId: inst.externalId,
-              providerAccountInfo: inst.providerAccountInfo,
+              // Wide overload loses TAccountInfo generic (resolves to never | null = null).
+              // Runtime value is always the correct type for this provider.
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              providerAccountInfo: inst.providerAccountInfo as any,
             });
           })
         );
@@ -615,14 +601,13 @@ export const connectionsRouter = {
           });
         }
 
-        const gw = createGatewayClient({
-          apiKey: env.GATEWAY_API_KEY,
-          correlationId: crypto.randomUUID(),
-          requestSource: "console:generic-list-resources",
-        });
+        const memory = await createMemoryCaller();
 
         const executeApi: ResourcePickerExecuteApiFn = async (request) => {
-          const result = await gw.executeApi(installation.id, request);
+          const result = await memory.proxy.execute({
+            installationId: installation.id,
+            ...request,
+          });
           if (result.status === 401) {
             await ctx.db
               .update(gatewayInstallations)
@@ -641,7 +626,10 @@ export const connectionsRouter = {
           {
             id: installation.id,
             externalId: installation.externalId,
-            providerAccountInfo: installation.providerAccountInfo,
+            // Wide overload loses TAccountInfo generic (resolves to never | null = null).
+            // Runtime value is always the correct type for this provider.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            providerAccountInfo: installation.providerAccountInfo as any,
           }
         );
 
