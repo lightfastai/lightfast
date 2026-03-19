@@ -5,19 +5,23 @@
  * - memoryRouter: Service-accessible procedures (store, retrieve, search)
  * - adminRouter: Admin-only procedures (reindex, purge, diagnostics)
  */
+import { connectionsRouter } from "./router/memory/connections";
+import { proxyRouter } from "./router/memory/proxy";
 import { createTRPCRouter } from "./trpc";
 
 /**
  * Memory router -- service-accessible procedures.
  * Accessible via /api/trpc/memory/*
  *
- * Sub-routers will be added as features are implemented:
+ * Sub-routers:
  * - connections.*: Connection lifecycle operations
- * - ingest.*: Webhook ingestion operations
- * - pipeline.*: Neural pipeline operations
+ * - proxy.*: Authenticated API proxy operations
+ * - ingest.*: Webhook ingestion operations (future)
+ * - pipeline.*: Neural pipeline operations (future)
  */
 export const memoryRouter = createTRPCRouter({
-  // Empty initially -- sub-routers added in later phases
+  connections: connectionsRouter,
+  proxy: proxyRouter,
 });
 
 /**
