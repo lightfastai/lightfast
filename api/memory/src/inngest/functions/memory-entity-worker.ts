@@ -16,7 +16,7 @@
 import { type BackfillContext, getProvider } from "@repo/console-providers";
 import type { ProviderApi, ProviderDefinition } from "@repo/console-providers";
 import { db } from "@db/console/client";
-import { gatewayInstallations } from "@db/console/schema";
+import { gatewayInstallations, gatewayWebhookDeliveries } from "@db/console/schema";
 import { NonRetriableError } from "@repo/inngest";
 import { eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
@@ -304,7 +304,7 @@ export const memoryEntityWorker = inngest.createFunction(
 
       eventsProduced += fetchResult.events.length;
 
-      // Dispatch each event as memory/webhook.received via step.sendEvent
+      // Dispatch each event: hold for replay (DB insert) or send immediately (Inngest)
       const dispatched = await step.run(
         `dispatch-${entityType}-p${pageNum}`,
         async () => {
@@ -314,8 +314,26 @@ export const memoryEntityWorker = inngest.createFunction(
 
           for (let i = 0; i < events.length; i += BATCH_SIZE) {
             const batch = events.slice(i, i + BATCH_SIZE);
-            // Send events to Inngest instead of relay HTTP dispatch
-            if (batch.length > 0) {
+            if (batch.length === 0) continue;
+
+            if (holdForReplay) {
+              // Persist to DB with status "held" — orchestrator replays after all workers finish
+              await db
+                .insert(gatewayWebhookDeliveries)
+                .values(
+                  batch.map((webhookEvent) => ({
+                    provider,
+                    deliveryId: webhookEvent.deliveryId,
+                    eventType: webhookEvent.eventType,
+                    installationId,
+                    status: "held" as const,
+                    payload: JSON.stringify(webhookEvent.payload),
+                    receivedAt: new Date().toISOString(),
+                  }))
+                )
+                .onConflictDoNothing();
+            } else {
+              // Send events to Inngest immediately
               await inngest.send(
                 batch.map((webhookEvent) => ({
                   name: "memory/webhook.received" as const,

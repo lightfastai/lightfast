@@ -25,7 +25,7 @@ import {
   BACKFILL_TERMINAL_STATUSES,
 } from "@repo/console-providers/contracts";
 import { NonRetriableError } from "@repo/inngest";
-import { and, eq, notInArray } from "@vendor/db";
+import { and, eq, inArray, notInArray } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../client";
 import { memoryEntityWorker } from "./memory-entity-worker";
@@ -347,7 +347,7 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
           // Query un-delivered webhooks for this installation
           const conditions = [
             eq(gatewayWebhookDeliveries.installationId, installationId),
-            eq(gatewayWebhookDeliveries.status, "received"),
+            eq(gatewayWebhookDeliveries.status, "held"),
           ];
           if (processedIds.length > 0) {
             conditions.push(
@@ -388,6 +388,20 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
 
           if (events.length > 0) {
             await inngest.send(events);
+          }
+
+          // Mark replayed deliveries so they aren't re-sent on retry (held -> enqueued)
+          const replayedIds = deliveries.map((d) => d.id);
+          if (replayedIds.length > 0) {
+            await db
+              .update(gatewayWebhookDeliveries)
+              .set({ status: "enqueued" })
+              .where(
+                and(
+                  eq(gatewayWebhookDeliveries.installationId, installationId),
+                  inArray(gatewayWebhookDeliveries.id, replayedIds)
+                )
+              );
           }
 
           // Track processed IDs to exclude from next batch

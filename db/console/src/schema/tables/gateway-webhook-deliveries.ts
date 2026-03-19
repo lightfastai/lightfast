@@ -22,7 +22,7 @@ export const gatewayWebhookDeliveries = pgTable(
     eventType: varchar("event_type", { length: 191 }).notNull(),
     installationId: varchar("installation_id", { length: 191 }),
 
-    status: varchar("status", { length: 50 }).notNull(), // received|enqueued|delivered|dlq
+    status: varchar("status", { length: 50 }).notNull(), // held|received|enqueued|delivered|dlq
 
     failReason: varchar("fail_reason", { length: 100 }),
 
