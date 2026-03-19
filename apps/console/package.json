@@ -11,7 +11,7 @@
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
     "dev": "pnpm with-env next dev --port 4107 --turbo",
     "proxy": "microfrontends proxy --port 3024",
-    "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:3024/api/inngest -u http://localhost:4109/api/inngest -u http://localhost:4112/api/inngest",
+    "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:3024/api/inngest -u http://localhost:4112/api/inngest",
     "dev:qstash": "npx @upstash/qstash-cli dev",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "test": "vitest run",

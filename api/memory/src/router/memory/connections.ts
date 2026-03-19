@@ -1,12 +1,11 @@
 /**
  * Connections tRPC sub-router.
  *
- * Ported from apps/gateway/src/routes/connections.ts.
  * All procedures use serviceProcedure (JWT auth required).
  * orgId comes as an input parameter (no tenant middleware in tRPC).
  *
- * KEY CHANGE vs gateway: `disconnect` fires an Inngest event
- * ("platform/connection.lifecycle") instead of Upstash Workflow trigger.
+ * `disconnect` fires the "memory/connection.lifecycle" Inngest event
+ * to trigger the connection teardown workflow.
  */
 import { db } from "@db/console/client";
 import {
@@ -207,10 +206,8 @@ export const connectionsRouter = {
 
   /**
    * Disconnect (teardown) a connection.
-   * Source: DELETE /connections/:provider/:id
    *
-   * KEY CHANGE: fires inngest.send("platform/connection.lifecycle")
-   * instead of workflowClient.trigger() (Upstash Workflow).
+   * Fires "memory/connection.lifecycle" Inngest event to initiate teardown.
    */
   disconnect: serviceProcedure
     .input(
@@ -250,9 +247,9 @@ export const connectionsRouter = {
         metadata: { source: "memory_disconnect_handler", triggeredBy: "user" },
       });
 
-      // Fire Inngest event instead of Upstash Workflow trigger
+      // Fire Inngest event to trigger connection teardown workflow
       await inngest.send({
-        name: "platform/connection.lifecycle",
+        name: "memory/connection.lifecycle",
         data: {
           reason: "user_disconnect",
           installationId: input.id,

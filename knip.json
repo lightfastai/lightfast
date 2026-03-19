@@ -28,19 +28,6 @@
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "apps/relay": {
-      "entry": ["src/routes-table.ts"],
-      "project": ["src/**/*.ts"]
-    },
-    "apps/gateway": {
-      "entry": ["src/routes-table.ts"],
-      "project": ["src/**/*.ts"],
-      "ignoreDependencies": ["drizzle-orm"]
-    },
-    "apps/backfill": {
-      "entry": ["src/routes-table.ts"],
-      "project": ["src/**/*.ts"]
-    },
     "api/*": {
       "project": ["src/**/*.ts"]
     },
@@ -75,22 +62,6 @@
     },
     "packages/console-vercel": {
       "project": ["src/**/*.ts"]
-    },
-    "packages/integration-tests": {
-      "entry": [
-        "src/**/*.test.ts",
-        "src/**/*.integration.test.ts",
-        "src/__stubs__/*.ts"
-      ],
-      "project": ["src/**/*.ts"],
-      "ignoreDependencies": [
-        "@repo/lib",
-        "@relay/webhook-delivery",
-        "@vendor/inngest",
-        "@vendor/qstash",
-        "@vendor/upstash",
-        "@vendor/upstash-workflow"
-      ]
     },
     "packages/og": {
       "project": ["src/**/*.{ts,tsx}"],
@@ -128,11 +99,6 @@
       "drizzle": false,
       "ignoreDependencies": ["webpack"]
     },
-    "vendor/upstash-workflow": {
-      "project": ["src/**/*.ts"],
-      "drizzle": false,
-      "ignoreDependencies": ["hono", "next"]
-    },
     "internal/typescript": {
       "entry": ["base.json"],
       "ignoreDependencies": ["hono", "next"]
@@ -153,7 +119,6 @@
     "autoprefixer",
     "import-in-the-middle",
     "require-in-the-middle",
-    "srvx",
     "tsx",
     "@vitest/coverage-v8"
   ]
