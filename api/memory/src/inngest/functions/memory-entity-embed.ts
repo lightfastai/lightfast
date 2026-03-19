@@ -17,8 +17,6 @@ import {
   workspaceEventEntities,
   workspaceEvents,
 } from "@db/console/schema";
-import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import { consolePineconeClient } from "@repo/console-pinecone";
 import type { EntityVectorMetadata } from "@repo/console-validation";
 import { NonRetriableError } from "@repo/inngest";
 import { log } from "@vendor/observability/log/next";
@@ -202,6 +200,9 @@ export const memoryEntityEmbed = inngest.createFunction(
 
     // Step 2: Embed the narrative
     const embedding = await step.run("embed-narrative", async () => {
+      const { createEmbeddingProviderForWorkspace } = await import(
+        "@repo/console-embed"
+      );
       const embeddingProvider = createEmbeddingProviderForWorkspace(
         {
           id: workspace.id,
@@ -221,6 +222,7 @@ export const memoryEntityEmbed = inngest.createFunction(
 
     // Step 3: UPSERT single entity vector to Pinecone
     await step.run("upsert-entity-vector", async () => {
+      const { consolePineconeClient } = await import("@repo/console-pinecone");
       const { indexName, namespaceName } = workspace.settings.embedding;
 
       const metadata: EntityVectorMetadata = {

@@ -23,7 +23,6 @@ import type { ProviderSlug } from "@repo/console-providers";
 import { sanitizePostTransformEvent } from "@repo/console-providers";
 import { NonRetriableError } from "@repo/inngest";
 import type { EventNotification } from "@repo/console-upstash-realtime";
-import { realtime } from "@repo/console-upstash-realtime";
 import { log } from "@vendor/observability/log/next";
 import { and, eq } from "drizzle-orm";
 import { inngest } from "../client";
@@ -192,6 +191,7 @@ export const ingestDelivery = inngest.createFunction(
 
     // Step 5: Publish to Upstash Realtime for console SSE
     await step.run("publish-realtime", async () => {
+      const { realtime } = await import("@repo/console-upstash-realtime");
       const channel = realtime.channel(`org-${connectionInfo.orgId}`);
       await channel.emit("workspace.event", {
         eventId: result.ingestLogId,

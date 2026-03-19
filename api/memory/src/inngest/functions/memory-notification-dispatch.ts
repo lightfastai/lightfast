@@ -1,4 +1,3 @@
-import { notifications } from "@vendor/knock";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../client";
 
@@ -35,13 +34,18 @@ export const memoryNotificationDispatch = inngest.createFunction(
       };
     }
 
-    const notificationsClient = notifications;
-    if (!notificationsClient) {
-      return { status: "skipped", reason: "knock_not_configured" };
-    }
-
     await step.run("trigger-knock-workflow", async () => {
-      await notificationsClient.workflows.trigger(OBSERVATION_WORKFLOW_KEY, {
+      const { notifications } = await import("@vendor/knock");
+
+      if (!notifications) {
+        log.info("Knock not configured, skipping notification", {
+          workspaceId,
+          eventExternalId,
+        });
+        return;
+      }
+
+      await notifications.workflows.trigger(OBSERVATION_WORKFLOW_KEY, {
         recipients: [{ id: clerkOrgId }],
         tenant: clerkOrgId,
         data: {
