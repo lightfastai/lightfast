@@ -46,25 +46,6 @@
           ]
         }
       ]
-    },
-    "lightfast-auth": {
-      "packageName": "@lightfast/auth",
-      "development": {
-        "local": 4104
-      },
-      "routing": [
-        {
-          "group": "auth",
-          "paths": [
-            "/early-access",
-            "/sign-in",
-            "/sign-in/:path*",
-            "/sign-up",
-            "/sign-up/opengraph-image-:hash",
-            "/test-page"
-          ]
-        }
-      ]
     }
   }
 }

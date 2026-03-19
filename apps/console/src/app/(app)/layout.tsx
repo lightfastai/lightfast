@@ -6,7 +6,6 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { PageErrorBoundary } from "~/components/errors/page-error-boundary";
 import { ConsoleNotificationsProvider } from "~/components/notifications-provider";
 import { env } from "~/env";
-import { authUrl } from "~/lib/related-projects";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Prefetch user's organizations for the org switcher (shared across all authenticated pages)
@@ -14,15 +13,16 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <ClerkProvider
-      afterSignOutUrl={`${authUrl}/sign-in`}
+      afterSignOutUrl="/sign-in"
       publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
       signInFallbackRedirectUrl="/account/welcome"
-      signInUrl={`${authUrl}/sign-in`}
+      signInUrl="/sign-in"
       signUpFallbackRedirectUrl="/account/welcome"
-      signUpUrl={`${authUrl}/sign-up`}
+      signUpUrl="/sign-up"
       taskUrls={{
         "choose-organization": "/account/teams/new",
       }}
+      waitlistUrl="/early-access"
     >
       <NuqsAdapter>
         <TRPCReactProvider>

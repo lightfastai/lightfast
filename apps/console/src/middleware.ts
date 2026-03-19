@@ -11,7 +11,6 @@ import {
 import { securityMiddleware } from "@vendor/security/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { authUrl } from "~/lib/related-projects";
 
 // Security headers with composable CSP configuration
 const securityHeaders = securityMiddleware(
@@ -28,7 +27,6 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
-  "/api/gateway/ingress(.*)", // QStash-signed webhook delivery from Relay (auth via Upstash signature)
   "/robots.txt",
   "/sitemap(.*)",
   "/llms.txt", // AI crawler guidance file
@@ -37,10 +35,16 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring", // Sentry error reporting tunnel (tunnelRoute in vendor/next config)
   "/ingest(.*)", // PostHog analytics proxy (rewrites to us.i.posthog.com)
   "/manifest.json", // Web app manifest (requested by iOS/social crawlers)
-  "/services/gateway/(.*)", // Gateway service proxy — auth handled by Hono (X-API-Key, OAuth state)
-  "/services/relay/(.*)", // Relay service proxy — auth handled by Hono (HMAC signature)
-  "/services/backfill/(.*)", // Backfill service proxy — auth handled by Hono (X-API-Key)
+  // Auth routes (migrated from apps/auth)
+  "/sign-in",
+  "/sign-in/sso-callback",
+  "/sign-up",
+  "/sign-up/sso-callback",
+  "/early-access",
 ]);
+
+// Auth page routes — redirect authenticated users away
+const isAuthRoute = createRouteMatcher(["/sign-in", "/sign-up"]);
 
 // Pending-allowed routes - accessible to pending users (authenticated but no org claimed)
 // Includes all account routes and API routes used during team/workspace creation
@@ -94,13 +98,14 @@ const composedMiddleware = createNEMO(
 /**
  * Authentication & Authorization Flow:
  *
- * 1. Public routes (health, webhooks) → allowed without auth
- * 2. Pending-allowed routes (/account/*) → pending users allowed (see (pending-allowed)/ route group)
- * 3. User-scoped tRPC (/api/trpc/user/*) → pending + active users allowed
- * 4. Org-scoped tRPC (/api/trpc/org/*) → active org required (auth.protect)
- * 5. Org page routes (/:slug, /:slug/*) → active org required (auth.protect)
+ * 1. Auth pages (/sign-in, /sign-up) → redirect authenticated users away
+ * 2. Public routes (health, webhooks, early-access) → allowed without auth
+ * 3. Pending-allowed routes (/account/*) → pending users allowed (see (pending-allowed)/ route group)
+ * 4. User-scoped tRPC (/api/trpc/user/*) → pending + active users allowed
+ * 5. Org-scoped tRPC (/api/trpc/org/*) → active org required (auth.protect)
+ * 6. Org page routes (/:slug, /:slug/*) → active org required (auth.protect)
  *    - organizationSyncOptions activates org from URL BEFORE auth.protect runs
- * 6. All other routes → protected or redirect pending users to /account/teams/new
+ * 7. All other routes → protected or redirect pending users to /account/teams/new
  *    (includes (pending-not-allowed)/ routes: /cli/auth, /new/*)
  *
  * Key: organizationSyncOptions handles syncing org from /:slug pattern in URL.
@@ -109,15 +114,13 @@ const composedMiddleware = createNEMO(
 export default clerkMiddleware(
   async (auth, req: NextRequest, event) => {
     // Single auth check - detect both pending and active users
-    const { userId, orgId } = await auth({ treatPendingAsSignedOut: false });
+    const { userId, orgId, orgSlug } = await auth({
+      treatPendingAsSignedOut: false,
+    });
     const isPending = Boolean(userId && !orgId);
 
     // Helper to apply headers and return redirect
     const createRedirectResponse = async (url: URL) => {
-      console.log(
-        "[Middleware] Creating redirect response to:",
-        url.toString()
-      );
       const redirectResponse = NextResponse.redirect(url);
       const headersResponse = await securityHeaders();
 
@@ -128,6 +131,20 @@ export default clerkMiddleware(
 
       return redirectResponse;
     };
+
+    // Redirect authenticated users away from auth pages
+    if (isAuthRoute(req) && userId) {
+      if (isPending) {
+        return await createRedirectResponse(
+          new URL("/account/teams/new", req.url)
+        );
+      }
+      if (orgSlug) {
+        return await createRedirectResponse(
+          new URL(`/${orgSlug}`, req.url)
+        );
+      }
+    }
 
     // Public routes - no auth required
     if (isPublicRoute(req)) {
@@ -191,9 +208,9 @@ export default clerkMiddleware(
     return finalResponse;
   },
   {
-    // Redirect to auth app for sign-in/sign-up
-    signInUrl: `${authUrl}/sign-in`,
-    signUpUrl: `${authUrl}/sign-up`,
+    // Auth routes are now self-hosted (migrated from apps/auth)
+    signInUrl: "/sign-in",
+    signUpUrl: "/sign-up",
     // Post-authentication redirects - always to team creation which handles org creation
     afterSignInUrl: "/account/welcome",
     afterSignUpUrl: "/account/welcome",

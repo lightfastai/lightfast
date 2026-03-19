@@ -72,6 +72,7 @@
     "next": "catalog:next16",
     "nuqs": "^2.8.9",
     "react": "19.2.4",
+    "react-confetti": "^6.4.0",
     "react-dom": "19.2.4",
     "react-hook-form": "catalog:",
     "server-only": "^0.0.1",
