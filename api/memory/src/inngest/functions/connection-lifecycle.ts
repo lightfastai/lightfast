@@ -25,9 +25,9 @@ import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
 import { redis } from "@vendor/upstash";
 import { inngest } from "../client";
-import { resourceKey } from "../../lib/cache.js";
-import { getEncryptionKey } from "../../lib/encryption.js";
-import { providerConfigs } from "../../lib/provider-configs.js";
+import { resourceKey } from "../../lib/cache";
+import { getEncryptionKey } from "../../lib/encryption";
+import { providerConfigs } from "../../lib/provider-configs";
 
 export const connectionLifecycle = inngest.createFunction(
   {

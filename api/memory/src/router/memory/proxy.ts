@@ -16,12 +16,12 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { eq } from "@vendor/db";
 import { z } from "zod";
 
-import { providerConfigs } from "../../lib/provider-configs.js";
+import { providerConfigs } from "../../lib/provider-configs";
 import {
   forceRefreshToken,
   getActiveTokenForInstallation,
-} from "../../lib/token-helpers.js";
-import { serviceProcedure } from "../../trpc.js";
+} from "../../lib/token-helpers";
+import { serviceProcedure } from "../../trpc";
 
 // ── Proxy Router ────────────────────────────────────────────────────────────
 

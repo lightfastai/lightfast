@@ -3,8 +3,8 @@ import { gatewayTokens } from "@db/console/schema";
 import type { ProviderDefinition } from "@repo/console-providers";
 import { decrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
-import { getEncryptionKey } from "./encryption.js";
-import { updateTokenRecord } from "./token-store.js";
+import { getEncryptionKey } from "./encryption";
+import { updateTokenRecord } from "./token-store";
 
 /**
  * Get the active token for an installation, handling expiry and on-demand refresh.

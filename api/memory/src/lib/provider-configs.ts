@@ -1,12 +1,15 @@
 /**
- * Module-level provider configs — built once at startup from validated env vars.
+ * Lazy-initialized provider configs — built on first access from validated env vars.
  *
  * Ported from apps/gateway/src/routes/connections.ts (lines 44–64).
  * Uses the memory app's base URL for OAuth callbacks instead of the gateway.
+ *
+ * IMPORTANT: Lazy initialization prevents build-time crashes when env vars
+ * are not yet available during `next build` static analysis.
  */
 import type { RuntimeConfig } from "@repo/console-providers";
 import { PROVIDERS } from "@repo/console-providers";
-import { env } from "../env.js";
+import { env } from "../env";
 
 /**
  * Memory service base URL (self).
@@ -15,7 +18,7 @@ import { env } from "../env.js";
  * Here we resolve to the memory app's base URL so that OAuth callback URLs
  * point to the memory service's route handlers.
  */
-const memoryBaseUrl = (() => {
+function getMemoryBaseUrl(): string {
   const vercelUrl = process.env.VERCEL_URL;
   const vercelEnv = process.env.VERCEL_ENV;
   const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
@@ -29,27 +32,63 @@ const memoryBaseUrl = (() => {
   }
 
   return "http://localhost:4112";
-})();
+}
 
-const runtime: RuntimeConfig = { callbackBaseUrl: memoryBaseUrl };
+let _providerConfigs: Record<string, unknown> | null = null;
 
 /**
- * Configs keyed by provider name.
+ * Configs keyed by provider name — built on first access.
  *
- * SAFETY: env is validated by @t3-oss/env-nextjs at startup; the memory API's combined
- * env object is structurally compatible with Record<string, string> (all env vars
- * are strings). The intersection type from createEnv() cannot be expressed generically.
  * Optional providers return null from createConfig when their env vars are absent —
- * they are excluded here and will return "unknown_provider" on any request.
+ * they are excluded and will return "unknown_provider" on any request.
  */
-export const providerConfigs: Record<string, unknown> = Object.fromEntries(
-  Object.entries(PROVIDERS)
-    .map(
-      ([name, p]) =>
-        [
-          name,
-          p.createConfig(env as unknown as Record<string, string>, runtime),
-        ] as const
-    )
-    .filter(([, config]) => config !== null)
+export function getProviderConfigs(): Record<string, unknown> {
+  if (!_providerConfigs) {
+    const runtime: RuntimeConfig = { callbackBaseUrl: getMemoryBaseUrl() };
+    _providerConfigs = Object.fromEntries(
+      Object.entries(PROVIDERS)
+        .map(
+          ([name, p]) =>
+            [
+              name,
+              p.createConfig(
+                env as unknown as Record<string, string>,
+                runtime
+              ),
+            ] as const
+        )
+        .filter(([, config]) => config !== null)
+    );
+  }
+  return _providerConfigs;
+}
+
+/**
+ * @deprecated Use getProviderConfigs() instead. This is a compatibility alias
+ * that lazily initializes on first property access.
+ */
+export const providerConfigs: Record<string, unknown> = new Proxy(
+  {} as Record<string, unknown>,
+  {
+    get(_target, prop) {
+      return getProviderConfigs()[prop as string];
+    },
+    has(_target, prop) {
+      return prop in getProviderConfigs();
+    },
+    ownKeys() {
+      return Object.keys(getProviderConfigs());
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+      const configs = getProviderConfigs();
+      if (prop in configs) {
+        return {
+          configurable: true,
+          enumerable: true,
+          value: configs[prop as string],
+        };
+      }
+      return undefined;
+    },
+  }
 );

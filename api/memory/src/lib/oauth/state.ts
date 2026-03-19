@@ -5,7 +5,7 @@
  * Functions return data structures — no HTTP responses.
  */
 import { redis } from "@vendor/upstash";
-import { oauthResultKey, oauthStateKey } from "../cache.js";
+import { oauthResultKey, oauthStateKey } from "../cache";
 
 // ── Store OAuth State ──
 

@@ -3,7 +3,7 @@ import { gatewayTokens } from "@db/console/schema";
 import type { OAuthTokens } from "@repo/console-providers";
 import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
-import { getEncryptionKey } from "./encryption.js";
+import { getEncryptionKey } from "./encryption";
 
 /**
  * Write an encrypted token record for an installation.

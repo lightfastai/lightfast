@@ -21,12 +21,12 @@ import { NonRetriableError } from "@repo/inngest";
 import { eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../client";
-import { providerConfigs } from "../../lib/provider-configs.js";
+import { providerConfigs } from "../../lib/provider-configs";
 import {
   forceRefreshToken,
   getActiveTokenForInstallation,
-} from "../../lib/token-helpers.js";
-import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../../lib/constants.js";
+} from "../../lib/token-helpers";
+import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../../lib/constants";
 
 export const memoryEntityWorker = inngest.createFunction(
   {

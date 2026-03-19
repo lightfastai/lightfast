@@ -26,14 +26,14 @@ import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { z } from "zod";
 
-import { inngest } from "../../inngest/client.js";
-import { resourceKey } from "../../lib/cache.js";
-import { buildAuthorizeUrl } from "../../lib/oauth/authorize.js";
-import { providerConfigs } from "../../lib/provider-configs.js";
+import { inngest } from "../../inngest/client";
+import { resourceKey } from "../../lib/cache";
+import { buildAuthorizeUrl } from "../../lib/oauth/authorize";
+import { providerConfigs } from "../../lib/provider-configs";
 import {
   getActiveTokenForInstallation,
-} from "../../lib/token-helpers.js";
-import { serviceProcedure } from "../../trpc.js";
+} from "../../lib/token-helpers";
+import { serviceProcedure } from "../../trpc";
 
 // ── Connections Router ──────────────────────────────────────────────────────
 

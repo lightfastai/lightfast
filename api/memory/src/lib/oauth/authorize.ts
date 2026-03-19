@@ -7,8 +7,8 @@
 import type { SourceType } from "@repo/console-providers";
 import { getProvider } from "@repo/console-providers";
 import { nanoid } from "@repo/lib";
-import { providerConfigs } from "../provider-configs.js";
-import { storeOAuthState } from "./state.js";
+import { providerConfigs } from "../provider-configs";
+import { storeOAuthState } from "./state";
 
 // ── Console URL ──
 

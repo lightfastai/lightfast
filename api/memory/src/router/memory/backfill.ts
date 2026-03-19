@@ -31,12 +31,12 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { and, eq } from "@vendor/db";
 import { z } from "zod";
 
-import { inngest } from "../../inngest/client.js";
-import { providerConfigs } from "../../lib/provider-configs.js";
+import { inngest } from "../../inngest/client";
+import { providerConfigs } from "../../lib/provider-configs";
 import {
   getActiveTokenForInstallation,
-} from "../../lib/token-helpers.js";
-import { serviceProcedure } from "../../trpc.js";
+} from "../../lib/token-helpers";
+import { serviceProcedure } from "../../trpc";
 
 // ── Backfill Router ──────────────────────────────────────────────────────
 

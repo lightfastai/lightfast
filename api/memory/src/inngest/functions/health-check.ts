@@ -23,8 +23,8 @@ import { nanoid } from "@repo/lib";
 import { eq, sql } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../client";
-import { providerConfigs } from "../../lib/provider-configs.js";
-import { getActiveTokenForInstallation } from "../../lib/token-helpers.js";
+import { providerConfigs } from "../../lib/provider-configs";
+import { getActiveTokenForInstallation } from "../../lib/token-helpers";
 
 const FAILURE_THRESHOLD_DEGRADED = 3; // mark healthStatus='degraded'
 const FAILURE_THRESHOLD_LIFECYCLE = 6; // fire lifecycle event (~30 min)

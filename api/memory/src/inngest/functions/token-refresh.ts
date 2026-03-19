@@ -16,9 +16,9 @@ import { decrypt } from "@repo/lib";
 import { and, eq, isNotNull, lt } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../client";
-import { getEncryptionKey } from "../../lib/encryption.js";
-import { providerConfigs } from "../../lib/provider-configs.js";
-import { updateTokenRecord } from "../../lib/token-store.js";
+import { getEncryptionKey } from "../../lib/encryption";
+import { providerConfigs } from "../../lib/provider-configs";
+import { updateTokenRecord } from "../../lib/token-store";
 
 /** Refresh tokens expiring within this window. */
 const REFRESH_WINDOW_MS = 10 * 60 * 1000; // 10 minutes

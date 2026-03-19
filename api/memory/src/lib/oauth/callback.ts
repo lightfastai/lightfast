@@ -14,9 +14,9 @@ import {
 } from "@repo/console-providers";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
-import { providerConfigs } from "../provider-configs.js";
-import { writeTokenRecord } from "../token-store.js";
-import { consumeOAuthState, storeOAuthResult } from "./state.js";
+import { providerConfigs } from "../provider-configs";
+import { writeTokenRecord } from "../token-store";
+import { consumeOAuthState, storeOAuthResult } from "./state";
 
 // ── Console URL ──
 
