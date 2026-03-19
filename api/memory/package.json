@@ -33,6 +33,7 @@
   "dependencies": {
     "@db/console": "workspace:*",
     "@repo/console-providers": "workspace:*",
+    "@repo/console-validation": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:^",
     "@sentry/core": "catalog:",
@@ -42,8 +43,10 @@
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "drizzle-orm": "catalog:",
     "inngest": "catalog:",
     "jose": "catalog:",
+    "nanoid": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

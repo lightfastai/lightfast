@@ -354,6 +354,9 @@ importers:
       '@repo/console-providers':
         specifier: workspace:*
         version: link:../../packages/console-providers
+      '@repo/console-validation':
+        specifier: workspace:*
+        version: link:../../packages/console-validation
       '@repo/inngest':
         specifier: workspace:*
         version: link:../../packages/inngest
@@ -381,12 +384,18 @@ importers:
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       inngest:
         specifier: 'catalog:'
         version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.1.6(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@4.3.6)
       jose:
         specifier: 'catalog:'
         version: 6.1.3
+      nanoid:
+        specifier: 'catalog:'
+        version: 5.1.6
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
@@ -1041,6 +1050,9 @@ importers:
       '@db/console':
         specifier: workspace:*
         version: link:../../db/console
+      '@repo/console-providers':
+        specifier: workspace:*
+        version: link:../../packages/console-providers
       '@repo/inngest':
         specifier: workspace:*
         version: link:../../packages/inngest
