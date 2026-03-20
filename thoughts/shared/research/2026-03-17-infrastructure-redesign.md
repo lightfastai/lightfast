@@ -17,7 +17,7 @@ last_updated: 2026-03-17
 The relay/gateway/backfill split is organized around deployment units, not conceptual layers.
 
 **relay + gateway are the same thing:**
-- Identical package.json deps (both: @db/console, @repo/console-providers, @vendor/upstash,
+- Identical package.json deps (both: @db/app, @repo/app-providers, @vendor/upstash,
   @vendor/upstash-workflow, @vendor/qstash, @vendor/observability)
 - Same Hono + srvx stack, same middleware pattern
 - Same DB access (both write to gatewayInstallations, gatewayResources)
@@ -379,7 +379,7 @@ Adding a new provider = update connection-core. Nothing else changes.
                     ┌──────────────────────▼──────────────────────────────────┐
                     │  Shared Infrastructure                                  │
                     │                                                          │
-                    │  @db/console  (Drizzle)                                 │
+                    │  @db/app  (Drizzle)                                 │
                     │    gatewayInstallations    status: active|suspended|    │
                     │                                    error|revoked        │
                     │    gatewayResources        status: active|removed       │
@@ -487,7 +487,7 @@ is essentially zero for any event that was not already in the QStash queue befor
 
 **Phase 3: @repo/connection-core**
 - Extract provider classifier, state machine, event registry
-- Remove @repo/console-providers lifecycle-specific code (move to connection-core)
+- Remove @repo/app-providers lifecycle-specific code (move to connection-core)
 - Both platform + console import from connection-core
 - Risk: LOW (refactor, no behavior change)
 

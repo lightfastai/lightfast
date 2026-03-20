@@ -40,7 +40,7 @@ apps/memory/src/app/api/inngest/route.ts
 **Crash chain**:
 ```
 memory-entity-embed.ts
-  → import { consolePineconeClient } from "@repo/console-pinecone"
+  → import { consolePineconeClient } from "@repo/app-pinecone"
     → packages/console-pinecone/src/client.ts:201
       → export const consolePineconeClient = new ConsolePineconeClient()
         → constructor calls: new VendorPineconeClient()
@@ -50,19 +50,19 @@ memory-entity-embed.ts
 
 **Current problematic top-level imports** (lines 20-21):
 ```ts
-import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import { consolePineconeClient } from "@repo/console-pinecone";
+import { createEmbeddingProviderForWorkspace } from "@repo/app-embed";
+import { consolePineconeClient } from "@repo/app-pinecone";
 ```
 
 **Change**: Remove both top-level imports. Move `consolePineconeClient` into the `step.run("upsert-entity-vector")` closure via dynamic `import()`. Move `createEmbeddingProviderForWorkspace` into the `step.run("embed-narrative")` closure via dynamic `import()`.
 
-The `@repo/console-embed` import is not itself a crash source (it uses `@t3-oss/env-core` with `skipValidation`), but moving it inside `step.run` is zero-cost defense-in-depth that keeps all SDK-touching code fully deferred to runtime.
+The `@repo/app-embed` import is not itself a crash source (it uses `@t3-oss/env-core` with `skipValidation`), but moving it inside `step.run` is zero-cost defense-in-depth that keeps all SDK-touching code fully deferred to runtime.
 
 **After** — `step.run("embed-narrative")` closure (currently line 204):
 ```ts
 const embedding = await step.run("embed-narrative", async () => {
   const { createEmbeddingProviderForWorkspace } = await import(
-    "@repo/console-embed"
+    "@repo/app-embed"
   );
 
   const embeddingProvider = createEmbeddingProviderForWorkspace(
@@ -86,7 +86,7 @@ const embedding = await step.run("embed-narrative", async () => {
 **After** — `step.run("upsert-entity-vector")` closure (currently line 223):
 ```ts
 await step.run("upsert-entity-vector", async () => {
-  const { consolePineconeClient } = await import("@repo/console-pinecone");
+  const { consolePineconeClient } = await import("@repo/app-pinecone");
 
   const { indexName, namespaceName } = workspace.settings.embedding;
 
@@ -121,7 +121,7 @@ await step.run("upsert-entity-vector", async () => {
 **Crash chain**:
 ```
 ingest-delivery.ts
-  → import { realtime } from "@repo/console-upstash-realtime"
+  → import { realtime } from "@repo/app-upstash-realtime"
     → packages/console-upstash-realtime/src/index.ts:19
       → new Realtime({ schema, redis: redis as never })
         → import { redis } from "@vendor/upstash"
@@ -132,22 +132,22 @@ ingest-delivery.ts
 
 **Current problematic top-level imports** (lines 25-26):
 ```ts
-import type { EventNotification } from "@repo/console-upstash-realtime";
-import { realtime } from "@repo/console-upstash-realtime";
+import type { EventNotification } from "@repo/app-upstash-realtime";
+import { realtime } from "@repo/app-upstash-realtime";
 ```
 
 **Change**: Remove the value import of `realtime`. The `import type { EventNotification }` stays (type-only, erased at compile time). Move `realtime` inside the `step.run("publish-realtime")` closure via dynamic `import()`.
 
 **After** — top-level imports become:
 ```ts
-import type { EventNotification } from "@repo/console-upstash-realtime";
+import type { EventNotification } from "@repo/app-upstash-realtime";
 // `realtime` removed from top level
 ```
 
 **After** — `step.run("publish-realtime")` closure (currently line 194):
 ```ts
 await step.run("publish-realtime", async () => {
-  const { realtime } = await import("@repo/console-upstash-realtime");
+  const { realtime } = await import("@repo/app-upstash-realtime");
 
   const channel = realtime.channel(`org-${connectionInfo.orgId}`);
   await channel.emit("workspace.event", {
@@ -268,9 +268,9 @@ export const memoryNotificationDispatch = inngest.createFunction(
 
 | File | Top-level import removed | Moved into which `step.run` |
 |---|---|---|
-| `memory-entity-embed.ts` | `consolePineconeClient` from `@repo/console-pinecone` | `"upsert-entity-vector"` |
-| `memory-entity-embed.ts` | `createEmbeddingProviderForWorkspace` from `@repo/console-embed` | `"embed-narrative"` |
-| `ingest-delivery.ts` | `realtime` from `@repo/console-upstash-realtime` | `"publish-realtime"` |
+| `memory-entity-embed.ts` | `consolePineconeClient` from `@repo/app-pinecone` | `"upsert-entity-vector"` |
+| `memory-entity-embed.ts` | `createEmbeddingProviderForWorkspace` from `@repo/app-embed` | `"embed-narrative"` |
+| `ingest-delivery.ts` | `realtime` from `@repo/app-upstash-realtime` | `"publish-realtime"` |
 | `memory-notification-dispatch.ts` | `notifications` from `@vendor/knock` | `"trigger-knock-workflow"` |
 
 Type-only imports (`import type`) are NOT moved — they are erased at compile time and never cause module evaluation.

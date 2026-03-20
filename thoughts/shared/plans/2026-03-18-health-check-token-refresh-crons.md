@@ -328,9 +328,9 @@ Move the body of `getActiveTokenForInstallation` and `forceRefreshToken` from
 `connections.ts` into this file. The signature is unchanged:
 
 ```ts
-import { db } from "@db/console/client";
-import { gatewayTokens } from "@db/console/schema";
-import type { ProviderDefinition } from "@repo/console-providers";
+import { db } from "@db/app/client";
+import { gatewayTokens } from "@db/app/schema";
+import type { ProviderDefinition } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
 import { getEncryptionKey } from "./encryption.js";
@@ -387,13 +387,13 @@ events on auth failure.
 **New file**: `apps/gateway/src/functions/health-check.ts`
 
 ```ts
-import { db } from "@db/console/client";
+import { db } from "@db/app/client";
 import {
   gatewayInstallations,
   gatewayLifecycleLog,
-} from "@db/console/schema";
-import type { RuntimeConfig, SourceType } from "@repo/console-providers";
-import { getProvider, PROVIDERS } from "@repo/console-providers";
+} from "@db/app/schema";
+import type { RuntimeConfig, SourceType } from "@repo/app-providers";
+import { getProvider, PROVIDERS } from "@repo/app-providers";
 import { nanoid } from "@repo/lib";
 import { eq, and, lt, sql } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
@@ -646,13 +646,13 @@ the gateway before they expire.
 **New file**: `apps/gateway/src/functions/token-refresh.ts`
 
 ```ts
-import { db } from "@db/console/client";
+import { db } from "@db/app/client";
 import {
   gatewayInstallations,
   gatewayTokens,
-} from "@db/console/schema";
-import type { RuntimeConfig, SourceType } from "@repo/console-providers";
-import { getProvider, PROVIDERS } from "@repo/console-providers";
+} from "@db/app/schema";
+import type { RuntimeConfig, SourceType } from "@repo/app-providers";
+import { getProvider, PROVIDERS } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { and, eq, isNotNull, lt, sql } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
@@ -820,7 +820,7 @@ Test scenarios:
 | `healthCheckFailures` reaches 3 | `healthStatus` set to `'degraded'` |
 | Provider config returns null (not configured) | Installation skipped — logged as warn, no DB update |
 
-Pattern for mocking — use `vi.mock` on `@db/console/client`, `@vendor/inngest`,
+Pattern for mocking — use `vi.mock` on `@db/app/client`, `@vendor/inngest`,
 and individual provider modules. Follow the pattern in
 `apps/gateway/src/routes/connections.test.ts`.
 
@@ -893,7 +893,7 @@ connections.get("/", apiKeyAuth, async (c) => {
 });
 ```
 
-### 6.2 — Add response schema to `@repo/console-providers/contracts`
+### 6.2 — Add response schema to `@repo/app-providers/contracts`
 
 **File**: `packages/console-providers/src/contracts/gateway.ts`
 (or wherever `GatewayConnection` / `gatewayConnectionSchema` live)
@@ -1010,8 +1010,8 @@ independent of 3/4/5 and can be done any time after Phase 1.
 
 Both test files live in `apps/gateway/src/functions/`. Use `vi.mock` to stub:
 
-- `@db/console/client` — return controlled rows
-- `@repo/console-providers` — return mock `providerDef` with/without `healthCheck`
+- `@db/app/client` — return controlled rows
+- `@repo/app-providers` — return mock `providerDef` with/without `healthCheck`
 - `@vendor/inngest` — spy on `inngest.send()`
 - `../lib/token-helpers.js` — spy on `getActiveTokenForInstallation`
 - `../lib/token-store.js` — spy on `updateTokenRecord`

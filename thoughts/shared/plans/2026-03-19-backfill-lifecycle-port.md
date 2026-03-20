@@ -84,7 +84,7 @@ Current event names in `platform.ts`:
 ### What Does NOT Exist Yet
 
 - `api/memory/` directory (no shell exists)
-- `@api/memory` package
+- `@api/platform` package
 - Memory Inngest client
 - Memory tRPC router
 
@@ -169,7 +169,7 @@ Create `api/memory/` with a package.json following the `api/console` pattern:
 
 ```json
 {
-  "name": "@api/memory",
+  "name": "@api/platform",
   "private": true,
   "type": "module",
   "exports": {
@@ -177,8 +177,8 @@ Create `api/memory/` with a package.json following the `api/console` pattern:
     "./inngest": "./src/inngest/index.ts"
   },
   "dependencies": {
-    "@db/console": "workspace:*",
-    "@repo/console-providers": "workspace:*",
+    "@db/app": "workspace:*",
+    "@repo/app-providers": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:*",
     "@vendor/db": "workspace:*",
@@ -230,7 +230,7 @@ export const memoryFunctions = [
 Memory needs the superset of backfill + gateway env vars (ENCRYPTION_KEY, provider envs, DB, Redis, Inngest):
 
 ```typescript
-import { PROVIDER_ENVS } from "@repo/console-providers";
+import { PROVIDER_ENVS } from "@repo/app-providers";
 import { createEnv } from "@t3-oss/env-core";
 import { vercel } from "@t3-oss/env-core/presets-zod";
 import { dbEnv } from "@vendor/db/env";
@@ -276,8 +276,8 @@ export const env = createEnv({
 ### Success Criteria
 
 - [ ] `pnpm install` resolves all workspace deps
-- [ ] `pnpm typecheck` passes for `@api/memory`
-- [ ] Inngest client can be imported from `@api/memory/inngest`
+- [ ] `pnpm typecheck` passes for `@api/platform`
+- [ ] Inngest client can be imported from `@api/platform/inngest`
 
 ---
 
@@ -320,8 +320,8 @@ Direct copy of `apps/gateway/src/lib/token-helpers.ts` with import paths adjuste
 Port the module-level provider config initialization from `apps/gateway/src/routes/connections.ts` (lines 43-64):
 
 ```typescript
-import type { RuntimeConfig } from "@repo/console-providers";
-import { PROVIDERS } from "@repo/console-providers";
+import type { RuntimeConfig } from "@repo/app-providers";
+import { PROVIDERS } from "@repo/app-providers";
 import { env } from "../env.js";
 
 // Memory does not serve OAuth callbacks, but providers need a callbackBaseUrl
@@ -373,14 +373,14 @@ Port `backfillOrchestrator` from `apps/backfill/src/workflows/backfill-orchestra
 #### 1. `api/memory/src/inngest/functions/memory-backfill-orchestrator.ts`
 
 ```typescript
-import { db } from "@db/console/client";
+import { db } from "@db/app/client";
 import {
   gatewayBackfillRuns,
   gatewayInstallations,
   gatewayResources,
-} from "@db/console/schema";
-import { getProvider } from "@repo/console-providers";
-import { BACKFILL_TERMINAL_STATUSES } from "@repo/console-providers/contracts";
+} from "@db/app/schema";
+import { getProvider } from "@repo/app-providers";
+import { BACKFILL_TERMINAL_STATUSES } from "@repo/app-providers/contracts";
 import { NonRetriableError } from "@repo/inngest";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/edge";
@@ -787,7 +787,7 @@ Port the three backfill Hono routes into tRPC procedures on the memory router.
 ```typescript
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
-import { backfillTriggerPayload, backfillEstimatePayload } from "@repo/console-providers/contracts";
+import { backfillTriggerPayload, backfillEstimatePayload } from "@repo/app-providers/contracts";
 import { inngest } from "../../inngest/client.js";
 // ... DB imports
 
@@ -867,8 +867,8 @@ Add `memory/` prefixed event schemas to `@repo/inngest` so the memory Inngest cl
 #### 1. New schema file — `packages/inngest/src/schemas/memory.ts`
 
 ```typescript
-import { backfillDepthSchema } from "@repo/console-providers/client";
-import { backfillTriggerPayload } from "@repo/console-providers/contracts";
+import { backfillDepthSchema } from "@repo/app-providers/client";
+import { backfillTriggerPayload } from "@repo/app-providers/contracts";
 import { z } from "zod";
 
 export const memoryEvents = {

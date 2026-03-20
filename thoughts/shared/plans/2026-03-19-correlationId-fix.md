@@ -9,7 +9,7 @@ estimated_effort: trivial
 
 ## Objective
 
-The `backfill.cancel` procedure omits `correlationId` from its input schema and event data. The `trigger` procedure already forwards `correlationId` (sourced from `backfillTriggerPayload` in `@repo/console-providers/contracts`), but `cancel` uses a hand-rolled inline schema that was never updated. This breaks trace correlation for cancel operations.
+The `backfill.cancel` procedure omits `correlationId` from its input schema and event data. The `trigger` procedure already forwards `correlationId` (sourced from `backfillTriggerPayload` in `@repo/app-providers/contracts`), but `cancel` uses a hand-rolled inline schema that was never updated. This breaks trace correlation for cancel operations.
 
 ## Implementation
 
@@ -60,4 +60,4 @@ The `.max(128)` constraint matches the convention used for correlation IDs elsew
 
 ## Verification
 
-- `pnpm --filter @api/memory typecheck`
+- `pnpm --filter @api/platform typecheck`

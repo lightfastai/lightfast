@@ -7,7 +7,7 @@ Two-part refactoring to reduce console scope and simplify deployment:
 - **Part A** — Strip M2M routers, neural pipeline, webhook ingress, gateway-proxy procedures, and backfill triggers from console. Console becomes purely UI + org/user tRPC.
 - **Part B** — Merge `apps/auth` into `apps/console`, removing a Vercel project and one microfrontend entry.
 
-**Dependency**: Part A step 4 (repoint gateway-proxy) and step 5 (repoint backfill triggers) require `@api/memory` + `@repo/memory-trpc` to exist first. All other steps are independent.
+**Dependency**: Part A step 4 (repoint gateway-proxy) and step 5 (repoint backfill triggers) require `@api/platform` + `@repo/platform-trpc` to exist first. All other steps are independent.
 
 ---
 
@@ -73,7 +73,7 @@ File: `api/console/src/index.ts`
 File: `api/console/src/trpc.ts`
 
 ```diff
-- import { verifyM2MToken } from "@repo/console-clerk-m2m";
+- import { verifyM2MToken } from "@repo/app-clerk-m2m";
   ...
 ```
 
@@ -95,20 +95,20 @@ Delete the two procedure exports:
 - export const inngestM2MProcedure = sentrifiedProcedure...
 ```
 
-Remove `@repo/console-clerk-m2m` from `api/console/package.json` dependencies.
+Remove `@repo/app-clerk-m2m` from `api/console/package.json` dependencies.
 
 #### Step 5: Drop M2M callers from console-trpc/server.tsx
 
 File: `packages/console-trpc/src/server.tsx`
 
 ```diff
-- import { createM2MToken } from "@repo/console-clerk-m2m";
+- import { createM2MToken } from "@repo/app-clerk-m2m";
   ...
 - import {
 -   ...
 -   m2mRouter,
 -   ...
-- } from "@api/console";
+- } from "@api/app";
   ...
 - const createWebhookContext = cache(async () => { ... });
 - const createInngestContext = cache(async () => { ... });
@@ -118,7 +118,7 @@ File: `packages/console-trpc/src/server.tsx`
 - export const createInngestCaller = cache(async () => { ... });
 ```
 
-Remove `@repo/console-clerk-m2m` from `packages/console-trpc/package.json` dependencies.
+Remove `@repo/app-clerk-m2m` from `packages/console-trpc/package.json` dependencies.
 
 **Verification**: `pnpm typecheck` should pass. Grep for `createM2MCaller`, `createInngestCaller`, `createCaller` (from console-trpc) to confirm zero remaining imports.
 
@@ -187,16 +187,16 @@ File: `api/console/src/inngest/index.ts`
 
 Remove unused dependencies from `api/console/package.json`:
 - `@vendor/knock` (only used by notification dispatch)
-- `@repo/console-embed` (only used by entity-embed)
-- `@repo/console-pinecone` (only used by entity-embed)
-- `@repo/console-octokit-github` (verify — may still be used by connections)
+- `@repo/app-embed` (only used by entity-embed)
+- `@repo/app-pinecone` (only used by entity-embed)
+- `@repo/app-octokit-github` (verify — may still be used by connections)
 - `ai` (only used by neural pipeline)
 - `@ai-sdk/gateway` (only used by neural pipeline)
 - `braintrust` (only used by neural pipeline)
 
 **Caveat**: Verify each dependency isn't imported elsewhere in `api/console/src/` before removing. Use grep.
 
-#### Step 9: Remove `@api/console/inngest` export path (if neural pipeline was the primary consumer)
+#### Step 9: Remove `@api/app/inngest` export path (if neural pipeline was the primary consumer)
 
 Actually, `createInngestRouteContext` is still needed by `apps/console/src/app/api/inngest/route.ts`. The `inngest/client` export is still needed for sending `console/activity.record` events. Keep both — just reduce registered functions.
 
@@ -281,7 +281,7 @@ Remove the gateway/relay/backfill URL variables and rewrite rules:
 
 ---
 
-### Phase A5: Repoint Gateway-Proxy and Backfill Triggers (DEPENDS on @api/memory)
+### Phase A5: Repoint Gateway-Proxy and Backfill Triggers (DEPENDS on @api/platform)
 
 **Why**: Console's `org/connections.ts` calls `createGatewayClient()` for OAuth URLs, disconnect, config detection, etc. Console's `org/workspace.ts` calls `createBackfillClient()` for backfill triggers. These move to memory tRPC calls.
 
@@ -295,7 +295,7 @@ import { createGatewayClient } from "@repo/gateway-service-clients";
 ```
 With:
 ```ts
-import { memoryTrpc } from "@repo/memory-trpc/server";
+import { memoryTrpc } from "@repo/platform-trpc/server";
 ```
 
 Procedure-by-procedure migration:
@@ -317,7 +317,7 @@ Also in `workspace.ts`:
 | `integrations.linkVercelProject` | `createGatewayClient().registerResource(...)` | `memoryTrpc.connections.registerResource(...)` |
 | `integrations.bulkLinkResources` | `createGatewayClient().registerResource(...)` | `memoryTrpc.connections.registerResource(...)` |
 
-Add `@repo/memory-trpc: workspace:*` to `api/console/package.json`.
+Add `@repo/platform-trpc: workspace:*` to `api/console/package.json`.
 
 #### Step 14: Repoint backfill triggers in org/workspace.ts
 
@@ -329,7 +329,7 @@ import { createBackfillClient } from "@repo/gateway-service-clients";
 ```
 With:
 ```ts
-import { memoryTrpc } from "@repo/memory-trpc/server";
+import { memoryTrpc } from "@repo/platform-trpc/server";
 ```
 
 Replace the `notifyBackfill` helper function (lines 1025-1111) with a thin wrapper around memory tRPC:
@@ -601,7 +601,7 @@ Phase A3: Remove Webhook Ingress (Steps 10-11)   — INDEPENDENT of A1/A2
     ↓
 Phase A4: Remove Service Rewrites (Step 12)      — AFTER A5 (or defer)
     ↓
-Phase A5: Repoint to memory-trpc (Steps 13-15)   — BLOCKED on @api/memory existing
+Phase A5: Repoint to memory-trpc (Steps 13-15)   — BLOCKED on @api/platform existing
     ↓
 Phase B1: Research (already done above)
     ↓

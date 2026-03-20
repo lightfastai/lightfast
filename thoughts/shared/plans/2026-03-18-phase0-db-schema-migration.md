@@ -508,7 +508,7 @@ Phase 0 (this plan)
   └── Phase 4: Config Drift Detection (reads/writes configStatus)
 ```
 
-All downstream phases import from `@db/console/schema` — once Phase 0 lands, the types are available to all consumers.
+All downstream phases import from `@db/app/schema` — once Phase 0 lands, the types are available to all consumers.
 
 ## References
 

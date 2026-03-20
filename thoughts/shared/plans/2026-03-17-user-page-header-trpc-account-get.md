@@ -58,7 +58,7 @@ export default function UserLayout({ children }: { children: React.ReactNode }) 
 
 **After:**
 ```tsx
-import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { UserPageHeader } from "~/components/user-page-header";
 
@@ -109,7 +109,7 @@ Swap the Clerk client SDK `useUser` hook for `useSuspenseQuery` on `trpc.account
 ```tsx
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
+import { useTRPC } from "@repo/app-trpc/react";
 import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useSuspenseQuery } from "@tanstack/react-query";

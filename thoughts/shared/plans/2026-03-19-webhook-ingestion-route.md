@@ -28,14 +28,14 @@ This is the critical entry point for all external provider webhooks (GitHub, Lin
 
 | Symbol | Import Path |
 |--------|------------|
-| `getProvider` | `@repo/console-providers` |
-| `isWebhookProvider`, `hasInboundWebhooks` | `@repo/console-providers` |
-| `deriveVerifySignature` | `@repo/console-providers` |
-| `timingSafeStringEqual` | `@repo/console-providers` |
-| `serviceAuthWebhookBodySchema` | `@repo/console-providers` (re-exported from `contracts/wire.ts`) |
-| `providerSlugSchema` | `@repo/console-providers` |
-| `db` | `@db/console/client` |
-| `gatewayWebhookDeliveries` | `@db/console/schema` |
+| `getProvider` | `@repo/app-providers` |
+| `isWebhookProvider`, `hasInboundWebhooks` | `@repo/app-providers` |
+| `deriveVerifySignature` | `@repo/app-providers` |
+| `timingSafeStringEqual` | `@repo/app-providers` |
+| `serviceAuthWebhookBodySchema` | `@repo/app-providers` (re-exported from `contracts/wire.ts`) |
+| `providerSlugSchema` | `@repo/app-providers` |
+| `db` | `@db/app/client` |
+| `gatewayWebhookDeliveries` | `@db/app/schema` |
 | `inngest` | `../../../inngest/client` (relative — `api/memory/src/inngest/client.ts`) |
 | `getProviderConfigs` | `../../../lib/provider-configs` (relative — `api/memory/src/lib/provider-configs.ts`) |
 | `env` | `../../../env` (relative — `apps/memory/src/env.ts`) |
@@ -53,8 +53,8 @@ This is the critical entry point for all external provider webhooks (GitHub, Lin
 ### Step 1: Import Setup
 
 ```typescript
-import { db } from "@db/console/client";
-import { gatewayWebhookDeliveries } from "@db/console/schema";
+import { db } from "@db/app/client";
+import { gatewayWebhookDeliveries } from "@db/app/schema";
 import {
   deriveVerifySignature,
   getProvider,
@@ -62,8 +62,8 @@ import {
   isWebhookProvider,
   serviceAuthWebhookBodySchema,
   timingSafeStringEqual,
-} from "@repo/console-providers";
-import type { WebhookDef } from "@repo/console-providers";
+} from "@repo/app-providers";
+import type { WebhookDef } from "@repo/app-providers";
 import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 import { env } from "../../../../env";

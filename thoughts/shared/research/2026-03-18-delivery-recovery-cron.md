@@ -263,7 +263,7 @@ For a QStash-triggered cron, `qstashAuth` is the right middleware (already handl
 
 ### 13. The `WebhookReceiptPayload` Contract
 
-**Import**: `@repo/console-providers/contracts`
+**Import**: `@repo/app-providers/contracts`
 
 Used as the `workflowClient.trigger()` body type in both `webhooks.ts` and `replay.ts`. Fields:
 ```typescript

@@ -186,8 +186,8 @@ The chain is:
 4. Add export to: `db/console/src/index.ts` (re-exports from `./schema`)
 
 The `db/console` package has two export paths used by consumers:
-- `@db/console` — main entry, exports `db` (client) + all schemas + relations
-- `@db/console/schema` — schema-only entry
+- `@db/app` — main entry, exports `db` (client) + all schemas + relations
+- `@db/app/schema` — schema-only entry
 
 Relations are defined separately in `db/console/src/schema/relations.ts`. If `gatewayLifecycleLog` has a FK to `gatewayInstallations`, a new relation entry (`gatewayLifecycleLogRelations`) would be added to `relations.ts` and exported from `schema/index.ts`.
 

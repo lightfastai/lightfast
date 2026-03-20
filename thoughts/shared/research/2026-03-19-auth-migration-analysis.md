@@ -677,7 +677,7 @@ The early access action uses Redis key `"early-access:emails"` (a set). This key
 
 ### Console `next.config.ts`:
 - Has `images.remotePatterns` for GitHub avatars
-- Much longer `transpilePackages` list (all `@api/console`, `@db/console`, `@repo/console-*`, `@vendor/*`)
+- Much longer `transpilePackages` list (all `@api/app`, `@db/app`, `@repo/console-*`, `@vendor/*`)
 - `experimental.optimizePackageImports` list
 - `experimental.turbopackScopeHoisting: false`
 - `experimental.serverActions.bodySizeLimit: "2mb"` with `allowedOrigins`

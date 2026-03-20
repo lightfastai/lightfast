@@ -766,7 +766,7 @@ import { webhooks } from "./routes/webhooks.js";
 app.route("/api/webhooks", webhooks);
 
 // AFTER:
-import { createWebhookRouter } from "@repo/console-providers/relay-factory";
+import { createWebhookRouter } from "@repo/app-providers/relay-factory";
 const providerConfigs = buildProviderConfigs(env); // mirrors gateway pattern
 const webhookRouter = createWebhookRouter(PROVIDERS, providerConfigs);
 app.route("/api/webhooks", webhookRouter);

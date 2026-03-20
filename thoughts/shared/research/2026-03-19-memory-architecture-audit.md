@@ -397,3 +397,13 @@ graph TB
 23. **Webhook payload size limit** — Explicit check before processing
 24. **Token operation audit logging** — Log reads/decrypts to lifecycle log
 25. **Notification idempotency** — Add dedup key to Knock trigger
+
+---
+
+## References
+
+This audit evaluated the implementation against the original provider architecture redesign research:
+
+| Document | Relationship |
+|----------|-------------|
+| `2026-03-17-provider-architecture-redesign.md` | **Primary reference** — 7 innovations, 30-provider matrix, layered type system. This audit's Innovation Scorecard evaluates implementation status of all 7 innovations against this design. |

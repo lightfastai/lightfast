@@ -70,7 +70,7 @@ flowchart TD
         C1 --> C2
     end
 
-    DB[("@db/console\nNeon Postgres\n14 tables")]
+    DB[("@db/app\nNeon Postgres\n14 tables")]
     REDIS[("@vendor/upstash\nUpstash Redis\ngw:oauth:* gw:resource:*")]
     QSTASH["QStash\ntopics + direct URLs"]
     INNGEST["Inngest\ncloud orchestration"]
@@ -137,7 +137,7 @@ flowchart TD
         C_INGEST -->|"inngest.send"| C_JOBS
     end
 
-    DB[("@db/console\nNeon Postgres")]
+    DB[("@db/app\nNeon Postgres")]
     REDIS[("Upstash Redis\ngw:oauth:* gw:resource:*")]
     QSTASH["QStash\ntopics + direct URLs"]
     PINECONE["Pinecone\nvector DB"]
@@ -237,7 +237,7 @@ sequenceDiagram
     participant PLAT as apps/platform
     participant WF as ingest-delivery WF (Upstash)
     participant CCLS as connection-core classifier
-    participant DB as @db/console
+    participant DB as @db/app
     participant REDIS as Upstash Redis
     participant QSTASH as QStash
     participant CONSOLE as apps/console /api/ingest
@@ -296,7 +296,7 @@ sequenceDiagram
     participant WF as connectionLifecycleWorkflow
     participant CORE as connection-core state-machine
     participant INNGEST as Inngest Cloud
-    participant DB as @db/console
+    participant DB as @db/app
     participant REDIS as Upstash Redis
     participant PROV as Provider OAuth API
 
@@ -361,7 +361,7 @@ sequenceDiagram
     participant REDIS as Upstash Redis
     participant PROV as Provider OAuth Server
     participant PLAT_CB as apps/platform\n/connect/:p/callback
-    participant DB as @db/console
+    participant DB as @db/app
 
     CONSOLE_UI->>TRPC: org.connections.getAuthorizeUrl(provider)
     TRPC->>PLAT: GET /connect/:provider/authorize\nHeaders: X-Org-Id, X-User-Id, X-API-Key
@@ -440,7 +440,7 @@ sequenceDiagram
     participant QSTASH as QStash
     participant INGEST as /api/ingest\n(Upstash WF, console)
     participant CORE as @repo/connection-core
-    participant DB as @db/console
+    participant DB as @db/app
     participant INNGEST as Inngest Cloud
     participant REALTIME as Upstash Realtime
 
@@ -592,13 +592,13 @@ flowchart TD
 
 ## @repo/connection-core — Internal Design
 
-New package extracted from `@repo/console-providers`. Currently `classifier.classify()` is on each `WebhookProvider` in `packages/console-providers/src/providers/*/index.ts`. The state machine is implicit in gateway teardown workflow step 4. This formalises both into a shared package that both `apps/platform` and `apps/console` import.
+New package extracted from `@repo/app-providers`. Currently `classifier.classify()` is on each `WebhookProvider` in `packages/console-providers/src/providers/*/index.ts`. The state machine is implicit in gateway teardown workflow step 4. This formalises both into a shared package that both `apps/platform` and `apps/console` import.
 
 ```mermaid
 flowchart TD
     subgraph core["packages/connection-core/src/"]
         subgraph registry["registry.ts"]
-            R1["PROVIDERS map\n{github, vercel, linear, sentry}\n(same as current @repo/console-providers PROVIDERS\nbut without backfill/API definitions)"]
+            R1["PROVIDERS map\n{github, vercel, linear, sentry}\n(same as current @repo/app-providers PROVIDERS\nbut without backfill/API definitions)"]
             R2["getProvider(name): ProviderDefinition"]
         end
 
@@ -903,8 +903,8 @@ flowchart TD
     end
 
     subgraph phase3["Phase 3: Extract @repo/connection-core  (LOW RISK)"]
-        P3A["Create packages/connection-core\nExtract from @repo/console-providers:\n  classifier per-provider (is lifecycle/data/unknown)\n  state-machine (targetStatus, validTransitions)\n  provider OAuth configs\n  HMAC configs per provider"]
-        P3B["Update apps/platform + apps/console imports\nto use @repo/connection-core instead of\nper-provider files in @repo/console-providers"]
+        P3A["Create packages/connection-core\nExtract from @repo/app-providers:\n  classifier per-provider (is lifecycle/data/unknown)\n  state-machine (targetStatus, validTransitions)\n  provider OAuth configs\n  HMAC configs per provider"]
+        P3B["Update apps/platform + apps/console imports\nto use @repo/connection-core instead of\nper-provider files in @repo/app-providers"]
     end
 
     subgraph phase4["Phase 4: workspaceIntegrations.status migration  (MEDIUM RISK)"]

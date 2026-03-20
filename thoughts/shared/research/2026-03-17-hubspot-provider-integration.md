@@ -4,14 +4,14 @@ researcher: claude
 git_commit: 2cebd819fc9ca00e174fbdca08c116c8bbe46c35
 branch: main
 repository: lightfast
-topic: "HubSpot integration into @repo/console-providers"
+topic: "HubSpot integration into @repo/app-providers"
 tags: [research, codebase, console-providers, hubspot, providers, oauth, webhooks, backfill]
 status: complete
 last_updated: 2026-03-17
 last_updated_note: "Added design decisions: verifySignature URL (Option B), batch webhook expansion (expandBatch on WebhookDef)"
 ---
 
-# Research: HubSpot Integration into `@repo/console-providers`
+# Research: HubSpot Integration into `@repo/app-providers`
 
 **Date**: 2026-03-17
 **Git Commit**: 2cebd819fc9ca00e174fbdca08c116c8bbe46c35
@@ -25,7 +25,7 @@ What does it take to add HubSpot as a new provider in `packages/console-provider
 
 ## Summary
 
-The `@repo/console-providers` package has a well-defined provider framework: each provider is a directory of 6 files (`auth.ts`, `api.ts`, `schemas.ts`, `transformers.ts`, `backfill.ts`, `index.ts`) that implement a `ProviderDefinition` interface. Adding HubSpot requires creating those files plus touching 5 existing files in the monorepo. The registry, dispatch, and event normalization layers are all data-driven and need no structural changes.
+The `@repo/app-providers` package has a well-defined provider framework: each provider is a directory of 6 files (`auth.ts`, `api.ts`, `schemas.ts`, `transformers.ts`, `backfill.ts`, `index.ts`) that implement a `ProviderDefinition` interface. Adding HubSpot requires creating those files plus touching 5 existing files in the monorepo. The registry, dispatch, and event normalization layers are all data-driven and need no structural changes.
 
 HubSpot's integration is largely standard OAuth 2.0 and CRM v3 REST, with **three significant architectural differences** from existing providers:
 

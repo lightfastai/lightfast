@@ -223,13 +223,13 @@ When the schemas move, these files need updated imports:
 | File | Before | After |
 |------|--------|-------|
 | `define.ts` | `import type { ProxyExecuteResponse } from "./gateway"` | removed (now defined here) |
-| `apps/relay/src/middleware/webhook.ts` | `from "@repo/console-providers"` | stays — barrel re-exports |
-| `apps/relay/src/routes/webhooks.ts` | `from "@repo/console-providers"` | stays — barrel re-exports |
-| `apps/backfill/src/inngest/client.ts` | `from "@repo/console-providers"` | stays — barrel re-exports |
-| `apps/gateway/src/routes/connections.ts` | `from "@repo/console-providers"` | stays — barrel re-exports |
+| `apps/relay/src/middleware/webhook.ts` | `from "@repo/app-providers"` | stays — barrel re-exports |
+| `apps/relay/src/routes/webhooks.ts` | `from "@repo/app-providers"` | stays — barrel re-exports |
+| `apps/backfill/src/inngest/client.ts` | `from "@repo/app-providers"` | stays — barrel re-exports |
+| `apps/gateway/src/routes/connections.ts` | `from "@repo/app-providers"` | stays — barrel re-exports |
 | Internal provider files using `backfillDepthSchema` | N/A | import directly from `../../define` |
 
-All external consumers import via `@repo/console-providers` barrel — zero import path changes required for apps.
+All external consumers import via `@repo/app-providers` barrel — zero import path changes required for apps.
 
 ---
 

@@ -38,7 +38,7 @@ After all phases:
 ```bash
 pnpm typecheck                                      # zero errors across all apps
 pnpm check                                          # zero lint errors
-pnpm --filter @repo/console-providers test           # all tests pass
+pnpm --filter @repo/app-providers test           # all tests pass
 # Grep for remaining casts:
 rg "as unknown as|res\.data as|payload as \{|rawData as" packages/console-providers/src/providers/
 # Should return zero matches
@@ -166,7 +166,7 @@ Update both call sites in `processResponse` (lines 139, 185) to pass `ctx` inste
 #### Automated Verification:
 - [x] `rg "as unknown as" packages/console-providers/src/providers/github/backfill.ts` returns zero matches
 - [x] Type checking passes: `pnpm typecheck`
-- [x] Tests pass: `pnpm --filter @repo/console-providers test`
+- [x] Tests pass: `pnpm --filter @repo/app-providers test`
 - [x] Lint passes: `pnpm check`
 
 #### Manual Verification:
@@ -315,7 +315,7 @@ Since `resourcePicker` callbacks document "Should handle errors internally and r
 #### Automated Verification:
 - [x] `rg "res\.data as" packages/console-providers/src/providers/` returns zero matches
 - [x] Type checking passes: `pnpm typecheck`
-- [x] Tests pass: `pnpm --filter @repo/console-providers test`
+- [x] Tests pass: `pnpm --filter @repo/app-providers test`
 - [x] Lint passes: `pnpm check` (console-providers/ files clean; 3 pre-existing errors in integration-tests/ unrelated to Phase 2)
 
 #### Manual Verification:
@@ -436,10 +436,10 @@ raw: z.object({
 
 #### Automated Verification:
 - [x] `rg "providerAccountInfo as" packages/console-providers/src/providers/` returns zero matches
-- [x] Type checking passes: `pnpm --filter @repo/console-providers typecheck` + `pnpm --filter @api/console typecheck`
-- [x] Tests pass: `pnpm --filter @repo/console-providers test` (363 tests)
+- [x] Type checking passes: `pnpm --filter @repo/app-providers typecheck` + `pnpm --filter @api/app typecheck`
+- [x] Tests pass: `pnpm --filter @repo/app-providers test` (363 tests)
 - [ ] Lint passes: `pnpm check`
-- [x] Consumer type check: `pnpm --filter @api/console typecheck` (tRPC procedures pass `providerAccountInfo` to callbacks)
+- [x] Consumer type check: `pnpm --filter @api/app typecheck` (tRPC procedures pass `providerAccountInfo` to callbacks)
 
 #### Manual Verification:
 - [ ] Vercel resource picker still works (team-scoped installations show team projects, user-scoped show user projects)
@@ -509,7 +509,7 @@ The relay middleware should ensure `parsePayload()` result is handled as `Record
 #### Automated Verification:
 - [ ] `rg "payload as \{" packages/console-providers/src/providers/` returns zero matches
 - [ ] Type checking passes: `pnpm typecheck`
-- [ ] Tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] Tests pass: `pnpm --filter @repo/app-providers test`
 - [ ] Relay still compiles: `pnpm --filter relay typecheck`
 
 ---
@@ -554,7 +554,7 @@ The simplest approach: since `OAuthTokens.raw` exists to capture the full provid
 #### Automated Verification:
 - [ ] `rg "rawData as" packages/console-providers/src/providers/` returns zero matches
 - [ ] Type checking passes: `pnpm typecheck`
-- [ ] Tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] Tests pass: `pnpm --filter @repo/app-providers test`
 
 ---
 
@@ -571,7 +571,7 @@ The simplest approach: since `OAuthTokens.raw` exists to capture the full provid
 - After Phase 3, `pnpm typecheck` confirms the generic `TAccountInfo` threads through correctly
 
 ### Regression Strategy:
-- Run `pnpm --filter @repo/console-providers test` after each phase
+- Run `pnpm --filter @repo/app-providers test` after each phase
 - Run `pnpm typecheck` (full monorepo) after each phase to catch consumer breakage
 - The Zod `.parse()` calls in Phase 2 are **strictly more correct** than casts — they add runtime validation that didn't exist before
 

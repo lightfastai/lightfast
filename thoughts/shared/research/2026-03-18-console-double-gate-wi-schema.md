@@ -319,7 +319,7 @@ The existing `gatewayWebhookDeliveries` table's `status = 'dlq'` represents Gate
 
 ### `filteredReason` in EventCaptureOutputFiltered
 
-The filtered output type (`EventCaptureOutputFiltered` from `@repo/console-validation`) accepts `reason: string`. The `event-store` uses `reason: "duplicate"` and `reason: "event_not_allowed"`. A Gate 2 rejection would use a new reason like `"inactive_connection"`.
+The filtered output type (`EventCaptureOutputFiltered` from `@repo/app-validation`) accepts `reason: string`. The `event-store` uses `reason: "duplicate"` and `reason: "event_not_allowed"`. A Gate 2 rejection would use a new reason like `"inactive_connection"`.
 
 ### `providerConfig` Reactivation Check
 
@@ -337,7 +337,7 @@ No existing research documents in `thoughts/shared/` were found that cover this 
 
 1. **`failReason` column destination**: The research brief mentions `gatewayWebhookDeliveries.failReason = 'inactive_connection'`. Currently that table has no such column. Adding it would require a schema migration for `gatewayWebhookDeliveries` as well. Alternatively, the Gate 2 rejection could simply be logged (Inngest job completed with `reason: 'inactive_connection'`) without a back-write to `gatewayWebhookDeliveries`.
 
-2. **Back-write architecture**: Writing from Inngest back to `gatewayWebhookDeliveries` is possible (direct DB access via `@db/console/client`) but introduces coupling between the fast-path Inngest worker and the relay's tracking table. The step would need the `deliveryId` — it is present in `sourceEvent.sourceId`? No, `deliveryId` is not directly in the Inngest event data. Looking at the `publishInngestNotification` signature: it passes `sourceEvent, workspace, ingestLogId`. The `deliveryId` is on `workspaceIngestLogs.deliveryId` and would need to be fetched by `ingestLogId` if a back-write is desired.
+2. **Back-write architecture**: Writing from Inngest back to `gatewayWebhookDeliveries` is possible (direct DB access via `@db/app/client`) but introduces coupling between the fast-path Inngest worker and the relay's tracking table. The step would need the `deliveryId` — it is present in `sourceEvent.sourceId`? No, `deliveryId` is not directly in the Inngest event data. Looking at the `publishInngestNotification` signature: it passes `sourceEvent, workspace, ingestLogId`. The `deliveryId` is on `workspaceIngestLogs.deliveryId` and would need to be fetched by `ingestLogId` if a back-write is desired.
 
 3. **`statusReason` length**: The proposed `varchar(100)` for `statusReason` is sufficient for values like `"GitHub installation removed or suspended"` (42 chars) and `"Repository deleted on GitHub"` (27 chars).
 

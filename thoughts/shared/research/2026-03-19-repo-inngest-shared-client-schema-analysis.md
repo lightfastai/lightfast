@@ -95,15 +95,15 @@ export function createInngestClient(options: CreateInngestClientOptions) {
 ```json
 "dependencies": {
   "@inngest/middleware-sentry": "catalog:",
-  "@repo/console-providers": "workspace:*",   // needed for consoleEvents + backfillEvents schemas
-  "@repo/console-validation": "workspace:*",  // needed for consoleEvents schemas
+  "@repo/app-providers": "workspace:*",   // needed for consoleEvents + backfillEvents schemas
+  "@repo/app-validation": "workspace:*",  // needed for consoleEvents schemas
   "@vendor/inngest": "workspace:*",
   "inngest": "catalog:",
   "zod": "catalog:"
 }
 ```
 
-`@repo/console-providers` and `@repo/console-validation` are pulled into the package
+`@repo/app-providers` and `@repo/app-validation` are pulled into the package
 dependency graph to satisfy the `consoleEvents` and `backfillEvents` Zod schemas.
 
 ---
@@ -306,7 +306,7 @@ regardless of whether the app sends or handles those events:
 - `packages/inngest/src/schemas/platform.ts:3` — `platformEvents` (2 events)
 - `packages/inngest/src/schemas/console.ts:5` — `consoleEvents` (5 events)
 - `packages/inngest/src/schemas/backfill.ts:5` — `backfillEvents` (4 events)
-- `packages/inngest/package.json:24-31` — package dependencies (includes `@repo/console-providers`, `@repo/console-validation`)
+- `packages/inngest/package.json:24-31` — package dependencies (includes `@repo/app-providers`, `@repo/app-validation`)
 - `api/console/src/inngest/client/client.ts:9-13` — console client instantiation
 - `api/console/src/inngest/index.ts:26-38` — console function list + serve
 - `apps/console/src/app/(inngest)/api/inngest/route.ts:12` — Next.js route handler

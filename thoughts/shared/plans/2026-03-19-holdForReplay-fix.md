@@ -68,9 +68,9 @@ const dispatched = await step.run(
 
 **Change**:
 
-1. Add import for `gatewayWebhookDeliveries` from `@db/console/schema` (line 19):
+1. Add import for `gatewayWebhookDeliveries` from `@db/app/schema` (line 19):
 ```ts
-import { gatewayInstallations, gatewayWebhookDeliveries } from "@db/console/schema";
+import { gatewayInstallations, gatewayWebhookDeliveries } from "@db/app/schema";
 ```
 
 2. Replace the dispatch step body (lines 308-342) with a branch on `holdForReplay`:
@@ -210,7 +210,7 @@ and(
 
 | File | Add to imports |
 |------|----------------|
-| `memory-entity-worker.ts` | `gatewayWebhookDeliveries` from `@db/console/schema` |
+| `memory-entity-worker.ts` | `gatewayWebhookDeliveries` from `@db/app/schema` |
 | `memory-backfill-orchestrator.ts` | `inArray` from `@vendor/db` |
 
 ## Risks

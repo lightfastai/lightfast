@@ -1,22 +1,22 @@
 ---
 date: 2026-03-19
-topic: "@api/memory + packages/memory-trpc foundation layer"
+topic: "@api/platform + packages/memory-trpc foundation layer"
 tags: [plan, memory, trpc, foundation, jwt, service-auth]
 status: ready
 depends_on: []
 blocks: [apps/memory, memory inngest workflows, memory DB schema]
 ---
 
-# Implementation Plan: @api/memory + packages/memory-trpc Foundation
+# Implementation Plan: @api/platform + packages/memory-trpc Foundation
 
 ## Overview
 
 Create the foundational tRPC layer for the memory service. This is the first package that must exist before `apps/memory` (the Next.js app), any Inngest workflows, or any DB schema work can proceed. Two packages:
 
-1. **`api/memory/`** (`@api/memory`) -- Server-side tRPC routers with JWT-based service auth
-2. **`packages/memory-trpc/`** (`@repo/memory-trpc`) -- Client adapter (RSC proxy, React provider, types)
+1. **`api/memory/`** (`@api/platform`) -- Server-side tRPC routers with JWT-based service auth
+2. **`packages/memory-trpc/`** (`@repo/platform-trpc`) -- Client adapter (RSC proxy, React provider, types)
 
-Both follow the exact patterns established by `@api/console` and `@repo/console-trpc`.
+Both follow the exact patterns established by `@api/app` and `@repo/app-trpc`.
 
 ---
 
@@ -26,9 +26,9 @@ Both follow the exact patterns established by `@api/console` and `@repo/console-
 
 Console uses Clerk M2M tokens for inter-service auth. Memory uses **self-signed JWTs** via `jose`:
 
-| Property | Console (`@api/console`) | Memory (`@api/memory`) |
+| Property | Console (`@api/app`) | Memory (`@api/platform`) |
 |----------|-------------------------|----------------------|
-| Auth lib | `@vendor/clerk` + `@repo/console-clerk-m2m` | `jose` (already in catalog) |
+| Auth lib | `@vendor/clerk` + `@repo/app-clerk-m2m` | `jose` (already in catalog) |
 | Token type | Clerk M2M machine tokens | Self-signed HS256 JWT |
 | Shared secret | Clerk machine credentials | `SERVICE_JWT_SECRET` env var |
 | Token lifetime | Clerk-managed | 60 seconds (short-lived) |
@@ -73,7 +73,7 @@ Console's `react.tsx` uses `splitLink` to route user vs org procedures to differ
 
 ```jsonc
 {
-  "name": "@api/memory",
+  "name": "@api/platform",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -116,7 +116,7 @@ Console's `react.tsx` uses `splitLink` to route user vs org procedures to differ
 ```
 
 **Notes**:
-- Follows `@api/console` exactly: `tsc`-only build, two-tier exports (`types` -> `dist`, `default` -> `src`)
+- Follows `@api/app` exactly: `tsc`-only build, two-tier exports (`types` -> `dist`, `default` -> `src`)
 - No `@db/*` dependency yet -- added when memory DB schema is created
 - No `@vendor/clerk` -- uses jose directly
 - `@vendor/observability` for Sentry middleware (same as console)
@@ -263,7 +263,7 @@ export async function verifyServiceJWT(
 ```
 
 **Notes**:
-- Uses `jose` (already in pnpm catalog at `^6.1.2`, used by `@repo/console-providers`)
+- Uses `jose` (already in pnpm catalog at `^6.1.2`, used by `@repo/app-providers`)
 - HS256 (HMAC-SHA256) -- symmetric key, no PKI needed
 - 60-second expiry prevents replay attacks
 - `aud: "lightfast-memory"` prevents tokens meant for other services from being accepted
@@ -458,7 +458,7 @@ export const adminProcedure = sentrifiedProcedure
   });
 ```
 
-**Pattern alignment with `@api/console`**:
+**Pattern alignment with `@api/app`**:
 - Same `initTRPC.context<typeof createContext>().create()` pattern
 - Same `errorFormatter` with production sanitization and Zod flattening
 - Same `sentryMiddleware` + `timingMiddleware` chain
@@ -542,7 +542,7 @@ export type { VerifiedServiceJWT } from "./lib/jwt";
 
 **Notes**:
 - Exports `signServiceJWT` so consumers (console, platform) can sign tokens when calling memory
-- Follows the same pattern as `@api/console/src/index.ts`: routers, types, context creators, caller factory
+- Follows the same pattern as `@api/app/src/index.ts`: routers, types, context creators, caller factory
 
 ---
 
@@ -552,7 +552,7 @@ export type { VerifiedServiceJWT } from "./lib/jwt";
 
 ```jsonc
 {
-  "name": "@repo/memory-trpc",
+  "name": "@repo/platform-trpc",
   "license": "FSL-1.1-Apache-2.0",
   "version": "0.1.0",
   "private": true,
@@ -579,7 +579,7 @@ export type { VerifiedServiceJWT } from "./lib/jwt";
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@api/memory": "workspace:*",
+    "@api/platform": "workspace:*",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
@@ -598,11 +598,11 @@ export type { VerifiedServiceJWT } from "./lib/jwt";
 ```
 
 **Notes**:
-- Exact same structure as `@repo/console-trpc`
+- Exact same structure as `@repo/app-trpc`
 - Four exports: `./client`, `./server`, `./react`, `./types`
 - No `types` field in exports (raw `.ts` source, `declaration: false`)
-- Depends on `@api/memory` (not `@api/console`)
-- No `@repo/console-clerk-m2m` dependency -- uses `signServiceJWT` from `@api/memory` instead
+- Depends on `@api/platform` (not `@api/app`)
+- No `@repo/app-clerk-m2m` dependency -- uses `signServiceJWT` from `@api/platform` instead
 
 ### 2.2 Create `packages/memory-trpc/tsconfig.json`
 
@@ -665,12 +665,12 @@ Identical to `console-trpc/src/client.ts`. Could potentially be extracted to a s
 ### 2.4 Create `packages/memory-trpc/src/server.tsx`
 
 ```tsx
-import type { MemoryRouter } from "@api/memory";
+import type { MemoryRouter } from "@api/platform";
 import {
   createMemoryTRPCContext,
   memoryRouter,
   signServiceJWT,
-} from "@api/memory";
+} from "@api/platform";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type {
   TRPCOptionsProxy,
@@ -766,7 +766,7 @@ export function prefetch(
 ```tsx
 "use client";
 
-import type { MemoryRouter } from "@api/memory";
+import type { MemoryRouter } from "@api/platform";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -870,7 +870,7 @@ export function MemoryTRPCReactProvider({
 /**
  * Type utilities for memory tRPC client.
  */
-import type { MemoryRouter } from "@api/memory";
+import type { MemoryRouter } from "@api/platform";
 import type { inferRouterInputs, inferRouterOutputs } from "@trpc/server";
 
 export type RouterOutputs = inferRouterOutputs<MemoryRouter>;
@@ -893,13 +893,13 @@ The workspace protocol (`workspace:*`) handles resolution automatically.
 ### 3.2 Verify Build
 
 ```bash
-# Build @api/memory
-pnpm --filter @api/memory build
-pnpm --filter @api/memory typecheck
+# Build @api/platform
+pnpm --filter @api/platform build
+pnpm --filter @api/platform typecheck
 
-# Build @repo/memory-trpc
-pnpm --filter @repo/memory-trpc build
-pnpm --filter @repo/memory-trpc typecheck
+# Build @repo/platform-trpc
+pnpm --filter @repo/platform-trpc build
+pnpm --filter @repo/platform-trpc typecheck
 ```
 
 ### 3.3 Verify JWT Round-Trip (unit test)
@@ -957,21 +957,21 @@ describe("service JWT", () => {
 
 | File | Package | Purpose |
 |------|---------|---------|
-| `api/memory/package.json` | `@api/memory` | Package manifest |
-| `api/memory/tsconfig.json` | `@api/memory` | TypeScript config |
-| `api/memory/turbo.json` | `@api/memory` | Turbo tags |
-| `api/memory/src/env.ts` | `@api/memory` | Environment validation |
-| `api/memory/src/lib/jwt.ts` | `@api/memory` | JWT sign/verify utilities |
-| `api/memory/src/lib/jwt.test.ts` | `@api/memory` | JWT unit tests |
-| `api/memory/src/trpc.ts` | `@api/memory` | tRPC init, context, procedures |
-| `api/memory/src/root.ts` | `@api/memory` | Root router composition |
-| `api/memory/src/index.ts` | `@api/memory` | Public API surface |
-| `packages/memory-trpc/package.json` | `@repo/memory-trpc` | Package manifest |
-| `packages/memory-trpc/tsconfig.json` | `@repo/memory-trpc` | TypeScript config |
-| `packages/memory-trpc/src/client.ts` | `@repo/memory-trpc` | QueryClient factory |
-| `packages/memory-trpc/src/server.tsx` | `@repo/memory-trpc` | RSC proxy + callers |
-| `packages/memory-trpc/src/react.tsx` | `@repo/memory-trpc` | React provider |
-| `packages/memory-trpc/src/types.ts` | `@repo/memory-trpc` | Inferred I/O types |
+| `api/memory/package.json` | `@api/platform` | Package manifest |
+| `api/memory/tsconfig.json` | `@api/platform` | TypeScript config |
+| `api/memory/turbo.json` | `@api/platform` | Turbo tags |
+| `api/memory/src/env.ts` | `@api/platform` | Environment validation |
+| `api/memory/src/lib/jwt.ts` | `@api/platform` | JWT sign/verify utilities |
+| `api/memory/src/lib/jwt.test.ts` | `@api/platform` | JWT unit tests |
+| `api/memory/src/trpc.ts` | `@api/platform` | tRPC init, context, procedures |
+| `api/memory/src/root.ts` | `@api/platform` | Root router composition |
+| `api/memory/src/index.ts` | `@api/platform` | Public API surface |
+| `packages/memory-trpc/package.json` | `@repo/platform-trpc` | Package manifest |
+| `packages/memory-trpc/tsconfig.json` | `@repo/platform-trpc` | TypeScript config |
+| `packages/memory-trpc/src/client.ts` | `@repo/platform-trpc` | QueryClient factory |
+| `packages/memory-trpc/src/server.tsx` | `@repo/platform-trpc` | RSC proxy + callers |
+| `packages/memory-trpc/src/react.tsx` | `@repo/platform-trpc` | React provider |
+| `packages/memory-trpc/src/types.ts` | `@repo/platform-trpc` | Inferred I/O types |
 
 ### Modified Files
 
@@ -981,11 +981,11 @@ None. This is a pure addition -- no existing files are modified.
 
 ## Validation Checklist
 
-- [ ] `pnpm --filter @api/memory build` succeeds
-- [ ] `pnpm --filter @api/memory typecheck` succeeds
-- [ ] `pnpm --filter @api/memory test` passes (JWT round-trip)
-- [ ] `pnpm --filter @repo/memory-trpc build` succeeds
-- [ ] `pnpm --filter @repo/memory-trpc typecheck` succeeds
+- [ ] `pnpm --filter @api/platform build` succeeds
+- [ ] `pnpm --filter @api/platform typecheck` succeeds
+- [ ] `pnpm --filter @api/platform test` passes (JWT round-trip)
+- [ ] `pnpm --filter @repo/platform-trpc build` succeeds
+- [ ] `pnpm --filter @repo/platform-trpc typecheck` succeeds
 - [ ] `pnpm install` resolves all workspace:* dependencies
 - [ ] `signServiceJWT("console")` produces a valid JWT
 - [ ] `verifyServiceJWT(token)` returns `{ caller: "console" }`
@@ -999,6 +999,6 @@ None. This is a pure addition -- no existing files are modified.
 Once this foundation is in place, the following can proceed in parallel:
 
 1. **`apps/memory/`** -- Next.js app with tRPC route handlers that mount `memoryRouter` and `adminRouter`
-2. **Memory DB schema** -- `@db/memory` package with Drizzle schema, added as dependency to `@api/memory`
+2. **Memory DB schema** -- `@db/memory` package with Drizzle schema, added as dependency to `@api/platform`
 3. **Inngest workflows** -- Memory-specific Inngest functions (e.g., embed, index) served from `apps/memory`
-4. **Console integration** -- Console can call memory via `createMemoryCaller()` from `@repo/memory-trpc/server`
+4. **Console integration** -- Console can call memory via `createMemoryCaller()` from `@repo/platform-trpc/server`

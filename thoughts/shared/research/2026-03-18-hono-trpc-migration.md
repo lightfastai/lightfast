@@ -158,7 +158,7 @@ inngest.ts:10-16 — GET/POST/PUT /api/inngest
 
 #### Current State: `@repo/gateway-service-clients`
 
-The package (`packages/gateway-service-clients/src/`) has three factory functions. Types flow through Zod schemas from `@repo/console-providers/contracts`, but with several gaps:
+The package (`packages/gateway-service-clients/src/`) has three factory functions. Types flow through Zod schemas from `@repo/app-providers/contracts`, but with several gaps:
 
 **Fully Zod-validated responses (strong today):**
 
@@ -328,7 +328,7 @@ tRPC procedure (console)
       → TypeScript type visible to caller
 ```
 
-The contracts layer (`@repo/console-providers/contracts`) provides Zod schemas that both the server (validates input/output in route handlers) and client (validates response in gateway-service-clients) use. This creates a bidirectional contract but requires duplication — schemas are defined once but validation runs twice (server produces, client re-validates).
+The contracts layer (`@repo/app-providers/contracts`) provides Zod schemas that both the server (validates input/output in route handlers) and client (validates response in gateway-service-clients) use. This creates a bidirectional contract but requires duplication — schemas are defined once but validation runs twice (server produces, client re-validates).
 
 ### With tRPC
 
@@ -360,6 +360,6 @@ The OAuth callback (`GET /:provider/callback`) must remain plain Hono because it
 
 3. **`executeApi` proxy procedure typing**: The `POST /:id/proxy/execute` route currently uses the `ResponseDataFor<P, E>` generic trick for narrow typing. With tRPC, this would need a different approach since tRPC procedures have fixed return types — either the proxy execute remains as a plain Hono route, or the narrow types are pushed into provider-specific sub-procedures.
 
-4. **Input validation duplication**: Currently, input Zod schemas live in `@repo/console-providers/contracts` (e.g., `backfillTriggerPayload`) and are used both in the route handler (server-side validation) and typed at the call site. With tRPC, the procedure's `input()` schema becomes the single source of truth — contracts schemas may be reused as tRPC `input()` schemas directly.
+4. **Input validation duplication**: Currently, input Zod schemas live in `@repo/app-providers/contracts` (e.g., `backfillTriggerPayload`) and are used both in the route handler (server-side validation) and typed at the call site. With tRPC, the procedure's `input()` schema becomes the single source of truth — contracts schemas may be reused as tRPC `input()` schemas directly.
 
 5. **Test migration**: Relay and gateway have integration tests that use Hono's `testClient()` or direct `app.request()`. These would need to be adapted for tRPC procedures (either using `createCallerFactory` for unit tests or `createTRPCProxyClient` for integration tests).

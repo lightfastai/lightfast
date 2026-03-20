@@ -44,7 +44,7 @@ After all phases:
 ```bash
 pnpm typecheck                                    # zero errors
 pnpm check                                        # zero lint errors
-pnpm --filter @repo/console-providers test         # all tests pass
+pnpm --filter @repo/app-providers test         # all tests pass
 pnpm --filter gateway build                        # gateway builds clean
 ```
 
@@ -312,7 +312,7 @@ export { bindAuth, createProviderHandles } from "./bound";
 #### Automated Verification:
 - [ ] Type checking passes: `pnpm typecheck`
 - [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] All tests pass: `pnpm --filter @repo/app-providers test`
 - [ ] New file `bound.ts` exists with BoundOAuth, BoundAppToken, BoundApiKey, BoundAuth, ProviderHandle, bindAuth, createProviderHandles
 
 #### Manual Verification:
@@ -342,7 +342,7 @@ const providerConfigs: Record<string, unknown> = Object.fromEntries(
 );
 
 // After:
-import { createProviderHandles, type ProviderHandle } from "@repo/console-providers";
+import { createProviderHandles, type ProviderHandle } from "@repo/app-providers";
 
 const providerHandles = createProviderHandles(PROVIDERS, env, runtime);
 ```
@@ -768,7 +768,7 @@ This moves from 1 unsafe cast (`handler as BackfillEntityHandler` — casts the 
 #### Automated Verification:
 - [ ] Type checking passes: `pnpm typecheck`
 - [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] All tests pass: `pnpm --filter @repo/app-providers test`
 - [ ] `define.ts` contains zero `as Record<string, z.ZodType<string>>` casts
 - [ ] `define.ts` factory functions contain no return casts (or documented exception)
 - [ ] `typedEntityHandler` uses adapter pattern, not `handler as BackfillEntityHandler`
@@ -840,7 +840,7 @@ return registry as Record<EventKey, EventRegistryEntry>;
 #### Automated Verification:
 - [ ] Type checking passes: `pnpm typecheck`
 - [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] All tests pass: `pnpm --filter @repo/app-providers test`
 - [ ] `getProvider` implementation contains no `as` cast
 
 #### Manual Verification:
@@ -883,7 +883,7 @@ TypeScript narrows `github.auth` to `AppTokenDef<GitHubConfig>` after the guard 
 #### Automated Verification:
 - [ ] Type checking passes: `pnpm typecheck`
 - [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] All tests pass: `pnpm --filter @repo/app-providers test`
 - [ ] `github/index.test.ts` contains zero `as unknown as AppTokenDef` casts
 
 ---
@@ -891,7 +891,7 @@ TypeScript narrows `github.auth` to `AppTokenDef<GitHubConfig>` after the guard 
 ## Testing Strategy
 
 ### Unit Tests:
-- Existing `@repo/console-providers` tests cover auth methods, webhook verification, and event classification
+- Existing `@repo/app-providers` tests cover auth methods, webhook verification, and event classification
 - After Phase 5, the GitHub test uses type guards instead of casts — same coverage, better type safety
 - No new unit tests needed — existing tests validate the runtime behavior
 

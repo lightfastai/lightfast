@@ -15,7 +15,7 @@ The provider system (`packages/console-providers/src/`) has a 2-tier discriminat
 - `registry.ts:136-155` — Two manual `z.discriminatedUnion` tuples must be updated per provider
 - `display.ts:18-67` — 89-line static object duplicating `name`, `displayName`, `description` from provider definitions; sync enforced only by `display-sync.test.ts` at test-run time, not compile time
 - 19 client-side consumers of `display.ts` across `apps/console` (13 `'use client'` components, 6 server components); all icon rendering flows through a single `ProviderIcon` component in `apps/console/src/lib/provider-icon.tsx`
-- `@repo/console-providers` has two tsup entry points: `"."` (server, full registry) and `"./display"` (client-safe, zero runtime imports); the client/server split is a **convention** — no `server-only` enforcement exists to prevent barrel imports in client code
+- `@repo/app-providers` has two tsup entry points: `"."` (server, full registry) and `"./display"` (client-safe, zero runtime imports); the client/server split is a **convention** — no `server-only` enforcement exists to prevent barrel imports in client code
 - `relay/src/middleware/webhook.ts:65-82` — `webhookSecretEnvKey` manual map, separate from provider definitions
 - `gateway.ts` — 222 lines mixing 4 distinct cross-service contracts
 - No `signatureScheme` field exists — each provider implements `verifySignature` independently
@@ -45,7 +45,7 @@ After all 10 changes:
 ```bash
 pnpm typecheck         # zero errors across all apps
 pnpm check             # zero lint errors
-pnpm --filter @repo/console-providers test   # all tests pass
+pnpm --filter @repo/app-providers test   # all tests pass
 ```
 
 ## What We're NOT Doing
@@ -207,7 +207,7 @@ Also update the token helper functions at lines ~570 and ~628 where `auth.kind !
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck`
 - [x] Lint passes: `pnpm check`
-- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] All tests pass: `pnpm --filter @repo/app-providers test`
 - [x] Type assertion: `(typeof PROVIDERS)["github"]["auth"]["kind"]` resolves to `"app-token"`
 - [x] Type assertion: `(typeof PROVIDERS)["github"]["auth"]["usesStoredToken"]` resolves to `false`
 
@@ -307,7 +307,7 @@ readonly healthCheck?: HealthCheckDef<TConfig>;
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck`
 - [x] Lint passes: `pnpm check`
-- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] All tests pass: `pnpm --filter @repo/app-providers test`
 - [x] Type assertion: `WebhookProvider` no longer has `classifier` or `lifecycle` fields
 - [x] Type assertion: `"lifecycle" in PROVIDERS.github` is `false`
 - [x] Type assertion: `"classifier" in PROVIDERS.github` is `false`
@@ -468,7 +468,7 @@ signatureScheme: hmac({
 
 #### 5. Update relay signature verification
 **File**: `apps/relay/src/middleware/webhook.ts`
-**Changes**: In the `signatureVerify` middleware (~line 242), replace the direct call with the fallback pattern. Import `deriveVerifySignature` from `@repo/console-providers`.
+**Changes**: In the `signatureVerify` middleware (~line 242), replace the direct call with the fallback pattern. Import `deriveVerifySignature` from `@repo/app-providers`.
 
 ```typescript
 // Before:
@@ -495,7 +495,7 @@ export type { HmacScheme, SignatureScheme } from "./define";
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck`
 - [x] Lint passes: `pnpm check`
-- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] All tests pass: `pnpm --filter @repo/app-providers test`
 - [x] Runtime validation: `signatureSchemeSchema.parse(PROVIDERS.github.webhook.signatureScheme)` succeeds
 - [x] Runtime validation: all 4 webhook providers' `signatureScheme` fields parse cleanly
 - [x] Type assertion: `PROVIDERS.github.webhook.signatureScheme.algorithm` resolves to literal `"sha256"`, not the full union
@@ -856,7 +856,7 @@ declare const _assertDisplayComplete: _AssertDisplayComplete;
 **Changes A — Add `server-only` dependency and import**:
 
 ```bash
-pnpm --filter @repo/console-providers add server-only
+pnpm --filter @repo/app-providers add server-only
 ```
 
 Add as the very first line of `index.ts`:
@@ -865,7 +865,7 @@ Add as the very first line of `index.ts`:
 import "server-only";
 ```
 
-This makes it a Next.js/bundler build-time error for any `'use client'` component to import runtime values from `@repo/console-providers`. Type-only imports (`import type { ... }`) are erased before the bundler runs — `NormalizedInstallation`, `ProviderDefinition`, etc. used as types in client files are unaffected.
+This makes it a Next.js/bundler build-time error for any `'use client'` component to import runtime values from `@repo/app-providers`. Type-only imports (`import type { ... }`) are erased before the bundler runs — `NormalizedInstallation`, `ProviderDefinition`, etc. used as types in client files are unaffected.
 
 **Changes B — Add new exports**:
 
@@ -885,35 +885,35 @@ export type { ProviderDisplayEntry } from "./display";
 
 #### 6. Update client components to use `./display` subpath
 
-The following `'use client'` components currently import runtime display values from the barrel (`@repo/console-providers`). After adding `server-only`, these become build errors. Update each to use `@repo/console-providers/display`:
+The following `'use client'` components currently import runtime display values from the barrel (`@repo/app-providers`). After adding `server-only`, these become build errors. Update each to use `@repo/app-providers/display`:
 
 **`sources/new/_components/link-sources-button.tsx`**:
 ```typescript
-// Before: import { PROVIDER_SLUGS } from "@repo/console-providers";
-import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+// Before: import { PROVIDER_SLUGS } from "@repo/app-providers";
+import { PROVIDER_SLUGS } from "@repo/app-providers/display";
 ```
 
 **`sources/new/_components/provider-source-item.tsx`**:
 ```typescript
-// Before: import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers";
-import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers/display";
+// Before: import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/app-providers";
+import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/app-providers/display";
 ```
 
 **`sources/new/_components/sources-section.tsx`**:
 ```typescript
-// Before: import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers";
-import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers/display";
+// Before: import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/app-providers";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/app-providers/display";
 ```
 
 **`sources/new/_components/sources-section-loading.tsx`**:
 ```typescript
-// Before: import { PROVIDER_SLUGS } from "@repo/console-providers";
-import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+// Before: import { PROVIDER_SLUGS } from "@repo/app-providers";
+import { PROVIDER_SLUGS } from "@repo/app-providers/display";
 ```
 
 After these 4 updates, build both packages to confirm no missed client imports:
 ```bash
-pnpm --filter @repo/console-providers build
+pnpm --filter @repo/app-providers build
 pnpm build:console
 ```
 
@@ -934,9 +934,9 @@ Delete entirely. The two assertions it made are now enforced at the type level:
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck`
 - [x] Lint passes: `pnpm check`
-- [x] All tests pass: `pnpm --filter @repo/console-providers test` (`display-sync.test.ts` deleted)
+- [x] All tests pass: `pnpm --filter @repo/app-providers test` (`display-sync.test.ts` deleted)
 - [ ] Console app builds without error: `pnpm build:console`
-- [x] `providerSlugSchema` is importable from `@repo/console-providers/display` at runtime
+- [x] `providerSlugSchema` is importable from `@repo/app-providers/display` at runtime
 - [x] `z.infer<typeof providerSlugSchema>` equals `"apollo" | "github" | "linear" | "sentry" | "vercel"`
 - [x] `ProviderName`, `SourceType`, `ProviderSlug` are structurally identical at the type level
 - [x] `PROVIDERS.github.icon` resolves to `IconDef` at the type level
@@ -947,7 +947,7 @@ Delete entirely. The two assertions it made are now enforced at the type level:
 - [x] Runtime: `providerDisplayEntrySchema.parse(PROVIDER_DISPLAY.github)` succeeds
 - [x] Completeness: adding a dummy live entry to `PROVIDER_DISPLAY` (no `comingSoon`) without a `PROVIDERS` entry causes a TypeScript error naming the missing slug
 - [x] Completeness: spreading `...PROVIDER_DISPLAY.nonExistent` in a provider definition causes a TypeScript error
-- [x] Boundary: adding `import { PROVIDERS } from "@repo/console-providers"` to any `'use client'` file causes a build error (verify temporarily)
+- [x] Boundary: adding `import { PROVIDERS } from "@repo/app-providers"` to any `'use client'` file causes a build error (verify temporarily)
 - [x] `providerKindSchema.parse("webhook")` succeeds; `providerKindSchema.parse("managed")` throws (Phase 9 adds it)
 - [x] `authKindSchema.parse("app-token")` succeeds; `authKindSchema.parse("unknown")` throws
 
@@ -1034,7 +1034,7 @@ Type utilities that let consumer packages (relay, gateway, backfill) reference e
 // ── Phantom Provider Graph — type utilities for zero-runtime consumer coupling ──
 //
 // Usage in any consumer:
-//   import type { ProviderShape, AuthDefFor } from "@repo/console-providers";
+//   import type { ProviderShape, AuthDefFor } from "@repo/app-providers";
 //   type GitHubAuth = AuthDefFor<"github">; // → AppTokenDef
 //   (type-only import — erased before bundling, zero runtime cost)
 
@@ -1057,7 +1057,7 @@ export type EventKeysFor<K extends keyof typeof PROVIDERS> =
 Consumer example (gateway, zero runtime import):
 ```typescript
 // apps/gateway/src/handlers/github.ts
-import type { AuthDefFor, AccountInfoFor } from "@repo/console-providers";
+import type { AuthDefFor, AccountInfoFor } from "@repo/app-providers";
 // ↑ TYPE IMPORT ONLY — erased before bundling
 
 type GitHubAuth    = AuthDefFor<"github">;     // → AppTokenDef (narrow, exact)
@@ -1139,8 +1139,8 @@ Adding a provider touches ONE file.         ← entire graph updates automatical
 - [ ] `eventKeySchema.parse("github.pull_request")` succeeds at runtime
 - [ ] `eventKeySchema.parse("github.nonexistent")` throws at runtime
 - [ ] `type T = EventKey` equals the union of all `"${slug}.${event}"` combinations across PROVIDERS
-- [ ] `import type { ProviderShape } from "@repo/console-providers"` in a `'use client'` file does NOT cause a build error (type-only import is erased before server-only check)
-- [ ] `import { getProvider } from "@repo/console-providers"` in a `'use client'` file DOES cause a build error
+- [ ] `import type { ProviderShape } from "@repo/app-providers"` in a `'use client'` file does NOT cause a build error (type-only import is erased before server-only check)
+- [ ] `import { getProvider } from "@repo/app-providers"` in a `'use client'` file DOES cause a build error
 - [ ] Adding a new event key to a provider's `events` map automatically adds `"${slug}.${newEvent}"` to `EventKey` and `eventKeySchema` — verified by `pnpm typecheck`
 - [ ] `providerSlugSchema.parse("github")` returns a branded `ProviderSlug`, not a plain string
 - [ ] Passing `"github"` (unbranded) directly to a function typed `(slug: ProviderSlug) => void` causes a TypeScript error
@@ -1222,7 +1222,7 @@ export const providerConfigSchema = makeDiscriminatedUnion(
 #### Automated Verification:
 - [ ] Type checking passes: `pnpm typecheck`
 - [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] All tests pass: `pnpm --filter @repo/app-providers test`
 - [ ] `ProviderAccountInfo` inferred type still includes all 5 provider account info variants
 - [ ] `ProviderConfig` inferred type still includes all 5 provider config variants
 
@@ -1359,12 +1359,12 @@ Remove `import { sourceTypeSchema } from "./registry"` (no longer needed after t
 - Move `backfillDepthSchema`, `BACKFILL_DEPTH_OPTIONS`, `proxyExecuteRequestSchema`, `proxyExecuteResponseSchema`, `ProxyExecuteRequest`, `ProxyExecuteResponse` to the `./define` re-export block
 - Remove those same names from the `./gateway` re-export block
 
-Zero breaking changes — all names remain accessible via `@repo/console-providers`.
+Zero breaking changes — all names remain accessible via `@repo/app-providers`.
 
 #### 6. Update consuming app imports (optional — barrel covers all)
 
-Apps import via `@repo/console-providers` barrel so no import changes are strictly required. However, for direct internal imports within `console-providers`:
-- `packages/gateway-service-clients/src/gateway.ts` — update to import from `@repo/console-providers` (or directly from `gateway.ts`, `define.ts` as needed)
+Apps import via `@repo/app-providers` barrel so no import changes are strictly required. However, for direct internal imports within `console-providers`:
+- `packages/gateway-service-clients/src/gateway.ts` — update to import from `@repo/app-providers` (or directly from `gateway.ts`, `define.ts` as needed)
 - Any `console-providers`-internal files importing `backfillDepthSchema` from `gateway.ts` → update to `define.ts`
 
 ### Success Criteria:
@@ -1372,11 +1372,11 @@ Apps import via `@repo/console-providers` barrel so no import changes are strict
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck`
 - [x] Lint passes: `pnpm check`
-- [x] All tests pass across all apps: `pnpm --filter @repo/console-providers test` (356 passed, 11 files)
+- [x] All tests pass across all apps: `pnpm --filter @repo/app-providers test` (356 passed, 11 files)
 - [x] `gateway.ts` contains only `gatewayConnectionSchema`, `gatewayTokenResultSchema`, `proxyEndpointsResponseSchema`
 - [x] `define.ts` no longer imports from `./gateway` (line 4 deleted)
-- [x] `proxyExecuteResponseSchema.parse(...)` accessible via `@repo/console-providers`
-- [x] `backfillDepthSchema.parse(1)` accessible via `@repo/console-providers`
+- [x] `proxyExecuteResponseSchema.parse(...)` accessible via `@repo/app-providers`
+- [x] `backfillDepthSchema.parse(1)` accessible via `@repo/app-providers`
 
 #### Manual Verification:
 - [ ] Relay still processes webhooks correctly
@@ -1436,7 +1436,7 @@ const verified = verify(rawBody, c.req.raw.headers, secret);
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck`
 - [x] Lint passes: `pnpm check`
-- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] All tests pass: `pnpm --filter @repo/app-providers test`
 - [x] `webhookSecretEnvKey` map no longer exists in the codebase
 
 #### Manual Verification:
@@ -1452,7 +1452,7 @@ const verified = verify(rawBody, c.req.raw.headers, secret);
 > **ABSORBED into Phase 4** — The `import "server-only"` hard boundary on `index.ts` and migration of client components to `./display` subpath imports are part of the Zod-First Registry Unification in Phase 4. This phase has no remaining work.
 
 ### Overview
-With `display.ts` already the client-safe registry (Phase 4), this phase installs a hard build-time boundary. Add `import "server-only"` to `index.ts` — any client component importing runtime values from the barrel `@repo/console-providers` now fails at build time, not silently at runtime. Update the 4 client components that currently import runtime values from the barrel to use the `./display` subpath instead. Drop the original `ClientShape`/`PROVIDER_CLIENT_REGISTRY` scope — not needed.
+With `display.ts` already the client-safe registry (Phase 4), this phase installs a hard build-time boundary. Add `import "server-only"` to `index.ts` — any client component importing runtime values from the barrel `@repo/app-providers` now fails at build time, not silently at runtime. Update the 4 client components that currently import runtime values from the barrel to use the `./display` subpath instead. Drop the original `ClientShape`/`PROVIDER_CLIENT_REGISTRY` scope — not needed.
 
 **Why `server-only` and not export conditions**: Export conditions (`react-server`/`default`) would silently change what client code sees. `server-only` fails loudly at build time with a clear "you imported a server module" error, which is the right DX for this boundary.
 
@@ -1464,7 +1464,7 @@ With `display.ts` already the client-safe registry (Phase 4), this phase install
 **File**: `packages/console-providers/package.json`
 **Changes**:
 ```bash
-pnpm --filter @repo/console-providers add server-only
+pnpm --filter @repo/app-providers add server-only
 ```
 
 #### 2. Add `import "server-only"` to `index.ts`
@@ -1476,41 +1476,41 @@ import "server-only";
 // ... rest of barrel unchanged
 ```
 
-This makes it a Next.js build-time error for any client component to import runtime values from `@repo/console-providers`.
+This makes it a Next.js build-time error for any client component to import runtime values from `@repo/app-providers`.
 
 #### 3. Update 4 client components importing runtime values from the barrel
-The following `'use client'` components import runtime display values (`PROVIDER_DISPLAY`, `PROVIDER_SLUGS`) from `@repo/console-providers` (barrel) instead of `@repo/console-providers/display`. These must change:
+The following `'use client'` components import runtime display values (`PROVIDER_DISPLAY`, `PROVIDER_SLUGS`) from `@repo/app-providers` (barrel) instead of `@repo/app-providers/display`. These must change:
 
 **`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/link-sources-button.tsx`**:
 ```typescript
 // Before:
-import { PROVIDER_SLUGS } from "@repo/console-providers";
+import { PROVIDER_SLUGS } from "@repo/app-providers";
 // After:
-import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { PROVIDER_SLUGS } from "@repo/app-providers/display";
 ```
 
 **`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/provider-source-item.tsx`**:
 ```typescript
 // Before:
-import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers";
+import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/app-providers";
 // After:
-import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/console-providers/display";
+import { PROVIDER_DISPLAY, type ProviderSlug } from "@repo/app-providers/display";
 ```
 
 **`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/sources-section.tsx`**:
 ```typescript
 // Before:
-import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/app-providers";
 // After:
-import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { PROVIDER_DISPLAY, PROVIDER_SLUGS } from "@repo/app-providers/display";
 ```
 
 **`apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/sources/new/_components/sources-section-loading.tsx`**:
 ```typescript
 // Before:
-import { PROVIDER_SLUGS } from "@repo/console-providers";
+import { PROVIDER_SLUGS } from "@repo/app-providers";
 // After:
-import { PROVIDER_SLUGS } from "@repo/console-providers/display";
+import { PROVIDER_SLUGS } from "@repo/app-providers/display";
 ```
 
 **Note**: `source-selection-provider.tsx` imports `import type { NormalizedInstallation, NormalizedResource, ProviderSlug }` — type-only imports are erased, no change needed.
@@ -1518,7 +1518,7 @@ import { PROVIDER_SLUGS } from "@repo/console-providers/display";
 #### 4. Verify no other client component imports runtime values from the barrel
 After the 4 updates above, run:
 ```bash
-pnpm --filter @repo/console-providers build
+pnpm --filter @repo/app-providers build
 pnpm --filter @repo/console build
 ```
 A build error points to a missed client import. All server components and API code importing from the barrel remain unchanged.
@@ -1528,9 +1528,9 @@ A build error points to a missed client import. All server components and API co
 #### Automated Verification:
 - [ ] Type checking passes: `pnpm typecheck`
 - [ ] Lint passes: `pnpm check`
-- [ ] All tests pass: `pnpm --filter @repo/console-providers test`
+- [ ] All tests pass: `pnpm --filter @repo/app-providers test`
 - [ ] Console app builds without error: `pnpm build:console`
-- [ ] Type assertion: adding `import { PROVIDER_DISPLAY } from "@repo/console-providers"` to any `'use client'` file causes a build error (verify by temporarily adding to a test client component)
+- [ ] Type assertion: adding `import { PROVIDER_DISPLAY } from "@repo/app-providers"` to any `'use client'` file causes a build error (verify by temporarily adding to a test client component)
 
 #### Manual Verification:
 - [ ] Console UI still renders provider icons, names, and slugs correctly (display data unchanged)
@@ -1685,7 +1685,7 @@ export function defineManagedProvider<
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck` (pre-existing errors in connections.ts only)
 - [x] Lint passes: `pnpm check` (pre-existing errors in apps/console only; console-providers clean)
-- [x] All tests pass: `pnpm --filter @repo/console-providers test` (356 passed)
+- [x] All tests pass: `pnpm --filter @repo/app-providers test` (356 passed)
 - [x] `ProviderDefinition` union includes 3 members (WebhookProvider, ManagedProvider, ApiProvider)
 - [x] `providerKindSchema.parse("managed")` succeeds at runtime
 - [x] Type assertion: `isManagedProvider({ kind: "managed" })` returns `true`
@@ -1873,7 +1873,7 @@ export type { Ed25519Scheme, InboundWebhookDef } from "./define";
 #### Automated Verification:
 - [x] Type checking passes: `pnpm typecheck`
 - [x] Lint passes: `pnpm check`
-- [x] All tests pass: `pnpm --filter @repo/console-providers test`
+- [x] All tests pass: `pnpm --filter @repo/app-providers test`
 - [x] Type assertion: `WebhookProvider` accepts `ApiKeyDef` in `auth` position (compile-time test)
 - [x] Type assertion: existing providers still infer narrow auth types (GitHub → `AppTokenDef`, Linear → `OAuthDef`)
 - [x] Type assertion: `ApiProvider` with `inbound: InboundWebhookDef` passes `hasInboundWebhooks` guard
@@ -2013,7 +2013,7 @@ type _7 = Assert<InboundWebhookDef<unknown> | undefined, ApiProvider["inbound"]>
 - **Trigger**: Pre-implementation review of Phase 4 identified a fundamental client/server boundary problem. `define.ts` imports `@t3-oss/env-core` and calls `process.env` via `buildEnvGetter()`. Any module that imports `PROVIDERS` at runtime (including Phase 8's planned `PROVIDER_CLIENT_REGISTRY`) pulls the entire server dependency graph into client bundles. There is no runtime-safe way to extract icon data from provider definitions into a client-safe file without codegen or conditional exports — both over-engineered.
 - **Changes**:
   - **Phase 4** — Completely rewritten: "Display Consolidation + Icon Field" → "Display-First Architecture + Compile-Time Completeness Enforcement". Direction inverted: providers **spread from** `display.ts` (not the other way around). `display.ts` stays a zero-import leaf node. Added `icon: IconDef` and `comingSoon?: true` to `BaseProviderFields`. Added `_AssertDisplayComplete` type assertion in `registry.ts`: adding a live display entry without a `PROVIDERS` implementation is a **compile-time error** naming the missing slug (using `declare const`, zero runtime overhead). Added `ProviderDisplayEntry` as a public export from `display.ts`. Deleted `display-sync.test.ts` — type system enforces what the runtime test did, bidirectionally.
-  - **Phase 8** — Completely rewritten: "ClientShape + PROVIDER_CLIENT_REGISTRY" → "Server-Only Boundary Enforcement". Dropped `ClientShape`, `extractClientShape`, `client-registry.ts`, `PROVIDER_CLIENT_REGISTRY` — superseded by display-first architecture. Added `import "server-only"` to `index.ts` (hard build-time error for client barrel imports). Updated 4 client components importing runtime values from barrel to use `@repo/console-providers/display` subpath.
+  - **Phase 8** — Completely rewritten: "ClientShape + PROVIDER_CLIENT_REGISTRY" → "Server-Only Boundary Enforcement". Dropped `ClientShape`, `extractClientShape`, `client-registry.ts`, `PROVIDER_CLIENT_REGISTRY` — superseded by display-first architecture. Added `import "server-only"` to `index.ts` (hard build-time error for client barrel imports). Updated 4 client components importing runtime values from barrel to use `@repo/app-providers/display` subpath.
   - **Current State Analysis** — Added: duplication between `display.ts` and provider definitions; 19 client consumers identified; client/server split is convention-only (no `server-only` enforcement).
   - **Desired End State** — Updated: "display.ts is canonical source" replaces "display metadata lives on providers"; `server-only` enforcement replaces `ClientShape`.
   - **"What We're NOT Doing"** — Added: `ClientShape`/`extractClientShape`/`PROVIDER_CLIENT_REGISTRY` (superseded); moving display data to `index.ts` barrel.

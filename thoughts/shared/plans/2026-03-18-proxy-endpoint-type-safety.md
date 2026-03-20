@@ -224,7 +224,7 @@ import type {
   TypedProxyRequest,
   ResponseDataFor,
   EndpointKey,
-} from "@repo/console-providers";
+} from "@repo/app-providers";
 
 // Narrow overload: known provider + endpoint → typed response data
 async executeApi<P extends keyof typeof PROVIDERS, E extends EndpointKey<P>>(
@@ -343,7 +343,7 @@ All phases are purely additive — no breaking changes. All existing call sites 
 ```bash
 pnpm typecheck         # zero errors across all apps
 pnpm check             # zero lint errors
-pnpm --filter @repo/console-providers test   # all tests pass
+pnpm --filter @repo/app-providers test   # all tests pass
 ```
 
 ---

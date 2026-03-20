@@ -49,8 +49,8 @@ After this plan is complete:
 ### Verification
 
 ```bash
-pnpm --filter @repo/console-providers test
-pnpm --filter @repo/console-providers typecheck
+pnpm --filter @repo/app-providers test
+pnpm --filter @repo/app-providers typecheck
 ```
 
 ## What We're NOT Doing
@@ -511,9 +511,9 @@ describe("healthCheck.check", () => {
 ### Success Criteria
 
 #### Automated Verification
-- [ ] All existing tests still pass: `pnpm --filter @repo/console-providers test`
+- [ ] All existing tests still pass: `pnpm --filter @repo/app-providers test`
 - [ ] New health check tests pass (20 new tests across 4 providers)
-- [ ] Type checking passes: `pnpm --filter @repo/console-providers typecheck`
+- [ ] Type checking passes: `pnpm --filter @repo/app-providers typecheck`
 - [ ] Linting passes: `pnpm check`
 - [ ] `github.healthCheck` is defined (not `undefined`)
 - [ ] `linear.healthCheck` is defined (not `undefined`)

@@ -49,7 +49,7 @@ After this plan:
 1. `apps/memory/` exists as a buildable, deployable Next.js app
 2. `pnpm dev:memory` starts the app on port 4112
 3. All route handlers exist with placeholder/stub implementations
-4. `@api/memory` package exists with a stub `memoryRouter` and context creators
+4. `@api/platform` package exists with a stub `memoryRouter` and context creators
 5. Inngest serve endpoint is wired up with an empty functions array
 6. Env validation covers all required vars from gateway + relay + backfill + Inngest + providers
 
@@ -69,17 +69,17 @@ curl http://localhost:4112/api/health  # Returns { "status": "ok" }
 - **No `packages/memory-trpc` client package** — that comes when consumers need to call memory
 - **No Clerk middleware** — memory has no user sessions
 - **No UI components** — API-only app, minimal root layout
-- **No database migrations** — memory uses the existing `@db/console` schema
+- **No database migrations** — memory uses the existing `@db/app` schema
 - **No microfrontends config** — memory.lightfast.ai is a separate Vercel project
 - **No `@vendor/next/next-config-builder`** — that includes Sentry browser SDK, BetterStack RUM, and other UI-oriented plugins; memory needs none of that
 
 ---
 
-## Phase 1: `@api/memory` Package — tRPC Routers and Context
+## Phase 1: `@api/platform` Package — tRPC Routers and Context
 
 ### Overview
 
-Create the `api/memory/` package following the `@api/console` pattern. This contains the tRPC router definitions, context creators, and Inngest client/function registrations. Built with `tsc` only, raw TS source consumed by the Next.js app.
+Create the `api/memory/` package following the `@api/app` pattern. This contains the tRPC router definitions, context creators, and Inngest client/function registrations. Built with `tsc` only, raw TS source consumed by the Next.js app.
 
 ### Changes Required
 
@@ -87,7 +87,7 @@ Create the `api/memory/` package following the `@api/console` pattern. This cont
 
 ```json
 {
-  "name": "@api/memory",
+  "name": "@api/platform",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -114,8 +114,8 @@ Create the `api/memory/` package following the `@api/console` pattern. This cont
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "dependencies": {
-    "@db/console": "workspace:*",
-    "@repo/console-providers": "workspace:*",
+    "@db/app": "workspace:*",
+    "@repo/app-providers": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:^",
     "@trpc/server": "catalog:",
@@ -305,8 +305,8 @@ export function createInngestRouteContext() {
 ### Success Criteria
 
 - [ ] `pnpm install` resolves all dependencies
-- [ ] `pnpm --filter @api/memory typecheck` passes
-- [ ] `pnpm --filter @api/memory build` produces `dist/` with declaration files
+- [ ] `pnpm --filter @api/platform typecheck` passes
+- [ ] `pnpm --filter @api/platform build` produces `dist/` with declaration files
 
 ---
 
@@ -336,9 +336,9 @@ Create the Next.js application that serves the memory service. Minimal configura
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@api/memory": "workspace:*",
-    "@db/console": "workspace:*",
-    "@repo/console-providers": "workspace:*",
+    "@api/platform": "workspace:*",
+    "@db/app": "workspace:*",
+    "@repo/app-providers": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
@@ -413,9 +413,9 @@ const config: NextConfig = {
   reactStrictMode: true,
 
   transpilePackages: [
-    "@api/memory",
-    "@db/console",
-    "@repo/console-providers",
+    "@api/platform",
+    "@db/app",
+    "@repo/app-providers",
     "@repo/inngest",
     "@repo/lib",
     "@vendor/inngest",
@@ -435,7 +435,7 @@ export default config;
 Combines env vars from gateway, relay, backfill, Inngest, and provider packages. This is the superset of all services being consolidated.
 
 ```typescript
-import { PROVIDER_ENVS } from "@repo/console-providers";
+import { PROVIDER_ENVS } from "@repo/app-providers";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
@@ -562,7 +562,7 @@ export async function GET() {
 #### 2. `apps/memory/src/app/api/trpc/[trpc]/route.ts` — tRPC Handler
 
 ```typescript
-import { createMemoryContext, memoryRouter } from "@api/memory";
+import { createMemoryContext, memoryRouter } from "@api/platform";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
@@ -640,11 +640,11 @@ export { handler as GET, handler as POST };
 /**
  * Inngest API route handler for memory service
  *
- * Serves Inngest functions registered in @api/memory/inngest.
+ * Serves Inngest functions registered in @api/platform/inngest.
  * Initially empty — functions are added as they are ported from
  * console, gateway, and backfill services.
  */
-import { createInngestRouteContext } from "@api/memory/inngest";
+import { createInngestRouteContext } from "@api/platform/inngest";
 import type { NextRequest } from "next/server";
 
 const handlers = createInngestRouteContext();
@@ -968,7 +968,7 @@ apps/memory/
 - Console app patterns: `apps/console/package.json`, `apps/console/src/env.ts`, `apps/console/next.config.ts`
 - Console tRPC handlers: `apps/console/src/app/(trpc)/api/trpc/user/[trpc]/route.ts`
 - Console Inngest handler: `apps/console/src/app/(inngest)/api/inngest/route.ts`
-- `@api/console` package: `api/console/package.json`, `api/console/src/index.ts`, `api/console/src/trpc.ts`
+- `@api/app` package: `api/console/package.json`, `api/console/src/index.ts`, `api/console/src/trpc.ts`
 - Gateway OAuth routes: `apps/gateway/src/routes/connections.ts`
 - Relay webhook routes: `apps/relay/src/routes/webhooks.ts`
 - Gateway env (superset pattern): `apps/gateway/src/env.ts`

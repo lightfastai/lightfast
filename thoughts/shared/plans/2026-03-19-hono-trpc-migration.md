@@ -24,7 +24,7 @@ Three methods in `@repo/gateway-service-clients` use `as` casts with **no runtim
 | `BackfillClient.trigger` | `response.json() as Promise<{ status: string; installationId: string }>` | `packages/gateway-service-clients/src/backfill.ts:57` |
 | `RelayClient.replayCatchup` | `response.json() as Promise<{ remaining: number }>` | `packages/gateway-service-clients/src/relay.ts:61` |
 
-The gateway client methods already use Zod validation from `@repo/console-providers/contracts`. After migration, backfill and relay methods get the same treatment.
+The gateway client methods already use Zod validation from `@repo/app-providers/contracts`. After migration, backfill and relay methods get the same treatment.
 
 ### Key Discovery: URL Routing
 
@@ -47,7 +47,7 @@ Client tRPC base URLs (appended to existing URL constants):
 
 `apps/gateway` imports `backfillUrl` from `@repo/gateway-service-clients`. `apps/backfill` imports `createGatewayClient` and `createRelayClient` from `@repo/gateway-service-clients`. This means the client package **cannot** import router types from the service apps (would create build cycles Turborepo would reject).
 
-**Decision**: `@repo/gateway-service-clients` uses the existing Zod schemas from `@repo/console-providers/contracts` for response typing (same pattern as gateway methods today), not imported `AppRouter` types. This preserves the current architecture while fixing the `as` casts.
+**Decision**: `@repo/gateway-service-clients` uses the existing Zod schemas from `@repo/app-providers/contracts` for response typing (same pattern as gateway methods today), not imported `AppRouter` types. This preserves the current architecture while fixing the `as` casts.
 
 ### Key Discovery: `executeApi` Excluded
 
@@ -104,7 +104,7 @@ Each phase is independently deployable. Phases 2-4 add tRPC routers while existi
 
 ### Overview
 
-Install `@hono/trpc-server` in each service workspace. Add missing response schemas to `@repo/console-providers/contracts` for the backfill and relay methods that currently use `as` casts. Add `@trpc/client` to the client package.
+Install `@hono/trpc-server` in each service workspace. Add missing response schemas to `@repo/app-providers/contracts` for the backfill and relay methods that currently use `as` casts. Add `@trpc/client` to the client package.
 
 ### Changes Required
 
@@ -129,7 +129,7 @@ Add to `dependencies`:
 "@trpc/client": "catalog:"
 ```
 
-#### 3. Add response schemas to `@repo/console-providers/contracts`
+#### 3. Add response schemas to `@repo/app-providers/contracts`
 
 **File**: `packages/console-providers/src/contracts/responses.ts` (new file)
 
@@ -183,8 +183,8 @@ export * from "./contracts/responses";
 ### Success Criteria
 
 #### Automated Verification
-- [ ] `pnpm typecheck` passes for `@repo/console-providers`
-- [ ] `pnpm --filter @repo/console-providers build` succeeds
+- [ ] `pnpm typecheck` passes for `@repo/app-providers`
+- [ ] `pnpm --filter @repo/app-providers build` succeeds
 - [ ] All three Hono service workspaces resolve `@hono/trpc-server` without errors
 
 ---
@@ -203,7 +203,7 @@ tRPC initialization with service context and `protectedProcedure`:
 
 ```typescript
 import { initTRPC, TRPCError } from "@trpc/server";
-import { timingSafeStringEqual } from "@repo/console-providers";
+import { timingSafeStringEqual } from "@repo/app-providers";
 import { env } from "./env.js";
 
 export interface ServiceContext {
@@ -230,7 +230,7 @@ export const protectedProcedure = t.procedure.use(({ ctx, next }) => {
 
 Define all 10 procedures as a `TRPCRouterRecord`. Each procedure re-implements the corresponding Hono handler logic:
 
-**Procedures** (input schemas use Zod inline or from `@repo/console-providers/contracts`):
+**Procedures** (input schemas use Zod inline or from `@repo/app-providers/contracts`):
 
 | Procedure | Type | Input | Output type |
 |-----------|------|-------|-------------|
@@ -262,7 +262,7 @@ import {
   BackfillRunReadRecord,
   GatewayConnection,
   // ...
-} from "@repo/console-providers/contracts";
+} from "@repo/app-providers/contracts";
 
 export const connectionsRouter = {
   get: protectedProcedure
@@ -342,7 +342,7 @@ Same structure as gateway's `trpc.ts` but using `env.GATEWAY_API_KEY` from relay
 
 ```typescript
 import { initTRPC, TRPCError } from "@trpc/server";
-import { timingSafeStringEqual } from "@repo/console-providers";
+import { timingSafeStringEqual } from "@repo/app-providers";
 import { env } from "./env.js";
 
 export interface ServiceContext {
@@ -627,7 +627,7 @@ import { createServiceTRPCClient } from "./trpc.js";
 import {
   backfillTriggerResponseSchema,
   backfillEstimateResponseSchema,
-} from "@repo/console-providers/contracts";
+} from "@repo/app-providers/contracts";
 
 // In createBackfillClient:
 const trpc = createServiceTRPCClient<any>(`${backfillUrl}/trpc`, config);
@@ -651,7 +651,7 @@ Replace `replayCatchup` `as` cast with Zod validation:
 
 ```typescript
 import { createServiceTRPCClient } from "./trpc.js";
-import { replayCatchupResponseSchema } from "@repo/console-providers/contracts";
+import { replayCatchupResponseSchema } from "@repo/app-providers/contracts";
 
 // In createRelayClient:
 const trpc = createServiceTRPCClient<any>(`${relayUrl}/trpc`, config);
@@ -671,7 +671,7 @@ async replayCatchup(installationId: string, batchSize: number) {
 #### Automated Verification
 - [ ] `pnpm --filter @repo/gateway-service-clients typecheck` passes
 - [ ] `pnpm --filter @repo/gateway-service-clients build` succeeds
-- [ ] `pnpm --filter @api/console typecheck` passes (primary consumer)
+- [ ] `pnpm --filter @api/app typecheck` passes (primary consumer)
 - [ ] `pnpm build:console` succeeds
 
 #### Manual Verification

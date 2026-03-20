@@ -14,11 +14,11 @@ status: complete
 ## Crash Chains
 
 ### Chain 1: Pinecone (fatal)
-`route.ts` → `inngest/index.ts` → `memory-entity-embed.ts` → `@repo/console-pinecone` → `vendor/pinecone/src/client.ts:366`
+`route.ts` → `inngest/index.ts` → `memory-entity-embed.ts` → `@repo/app-pinecone` → `vendor/pinecone/src/client.ts:366`
 **Root cause**: `export const pineconeClient = new PineconeClient()` at module scope
 
 ### Chain 2: Redis + Realtime
-`inngest/index.ts` → `ingest-delivery.ts` → `@repo/console-upstash-realtime` → `vendor/upstash/src/index.ts:5`
+`inngest/index.ts` → `ingest-delivery.ts` → `@repo/app-upstash-realtime` → `vendor/upstash/src/index.ts:5`
 **Root cause**: `export const redis = new Redis({...})` at module scope
 
 ### Chain 3: Knock (env validation)
@@ -46,7 +46,7 @@ Move SDK imports inside `step.run()` closures using dynamic `import()`:
 ```ts
 async function embedStep() {
   "use step";
-  const { consolePineconeClient } = await import("@repo/console-pinecone");
+  const { consolePineconeClient } = await import("@repo/app-pinecone");
   // use consolePineconeClient
 }
 ```
@@ -59,7 +59,7 @@ Make the inngest route handler use dynamic imports:
 ```ts
 // apps/memory/src/app/api/inngest/route.ts
 export async function POST(req) {
-  const { createInngestRouteContext } = await import("@api/memory/inngest");
+  const { createInngestRouteContext } = await import("@api/platform/inngest");
   const handlers = createInngestRouteContext();
   return handlers.POST(req);
 }
@@ -70,6 +70,6 @@ This defers ALL function imports to runtime. But Inngest needs to discover funct
 ## Recommendation
 
 **Option B** is the safest — it's targeted, doesn't change shared package APIs, and follows the Next.js guidance of keeping SDK initialization inside runtime-only code paths. The 3 files that need changes:
-1. `memory-entity-embed.ts` — dynamic import `@repo/console-pinecone` and `@repo/console-embed`
-2. `ingest-delivery.ts` — dynamic import `@repo/console-upstash-realtime`
+1. `memory-entity-embed.ts` — dynamic import `@repo/app-pinecone` and `@repo/app-embed`
+2. `ingest-delivery.ts` — dynamic import `@repo/app-upstash-realtime`
 3. `memory-notification-dispatch.ts` — dynamic import `@vendor/knock`

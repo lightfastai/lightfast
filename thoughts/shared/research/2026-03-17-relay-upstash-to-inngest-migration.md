@@ -56,7 +56,7 @@ DELETE /admin/dev/backfill-runs/:id         — dev only (admin.ts)
 | `@vendor/qstash` | `getQStashClient()` for console ingress + DLQ | **Kept** |
 | `@vendor/upstash` | Redis for dedup + resource cache | **Kept** |
 | `@vendor/db` | PlanetScale via Drizzle | **Kept** |
-| `@db/console` | Schema + client | **Kept** |
+| `@db/app` | Schema + client | **Kept** |
 
 ---
 
@@ -242,7 +242,7 @@ Mirrors backfill exactly. Event name and schema need defining:
 
 ```typescript
 import { EventSchemas, Inngest } from "@vendor/inngest";
-import type { WebhookReceiptPayload } from "@repo/console-providers";
+import type { WebhookReceiptPayload } from "@repo/app-providers";
 import { z } from "zod";
 
 const eventsMap = {

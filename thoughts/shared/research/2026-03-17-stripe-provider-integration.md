@@ -4,13 +4,13 @@ researcher: claude
 git_commit: 2cebd819fc9ca00e174fbdca08c116c8bbe46c35
 branch: main
 repository: lightfast
-topic: "Stripe Connect integration into @repo/console-providers"
+topic: "Stripe Connect integration into @repo/app-providers"
 tags: [research, codebase, console-providers, stripe, providers, oauth, webhooks, backfill, payments]
 status: complete
 last_updated: 2026-03-17
 ---
 
-# Research: Stripe Connect Integration into `@repo/console-providers`
+# Research: Stripe Connect Integration into `@repo/app-providers`
 
 **Date**: 2026-03-17
 **Git Commit**: `2cebd819fc9ca00e174fbdca08c116c8bbe46c35`

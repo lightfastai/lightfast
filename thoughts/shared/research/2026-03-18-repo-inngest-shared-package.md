@@ -9,7 +9,7 @@
 
 The Inngest client is instantiated twice — once in `apps/backfill/src/inngest/client.ts` and once in `api/console/src/inngest/client/client.ts`. Each client carries its own `eventsMap`, meaning the event schemas are siloed by service. The `@vendor/inngest` package already abstracts the raw `inngest` npm package, but neither service's event schemas nor typed client instance are shared.
 
-The two event namespaces (`apps-console/*` and `apps-backfill/*`) are currently unknown to each other at the type level. Cross-service event sends (e.g. `console-test-data` sending to `apps-console/event.capture` via the console client) only work because the consumer happens to import directly from `@api/console/inngest/client`.
+The two event namespaces (`apps-console/*` and `apps-backfill/*`) are currently unknown to each other at the type level. Cross-service event sends (e.g. `console-test-data` sending to `apps-console/event.capture` via the console client) only work because the consumer happens to import directly from `@api/app/inngest/client`.
 
 ---
 
@@ -35,7 +35,7 @@ No `middleware` array. No named `Events` type export.
 
 | Event name | Shape |
 |---|---|
-| `apps-backfill/run.requested` | `backfillTriggerPayload` (imported from `@repo/console-providers/contracts`) |
+| `apps-backfill/run.requested` | `backfillTriggerPayload` (imported from `@repo/app-providers/contracts`) |
 | `apps-backfill/run.cancelled` | `{ installationId: z.string(), correlationId: z.string().max(128).optional() }` |
 | `apps-backfill/entity.requested` | `{ installationId, provider, orgId, entityType, resource: { providerResourceId, resourceName }, since (datetime), depth (backfillDepthSchema), holdForReplay?: boolean, correlationId? }` |
 
@@ -144,18 +144,18 @@ The `@vendor/inngest` package uses `tsc` for its build (not `tsup`). It has no `
 
 | File | Import |
 |---|---|
-| `apps/console/src/app/(inngest)/api/inngest/route.ts:8` | `import { createInngestRouteContext } from "@api/console/inngest"` |
-| `apps/console/src/app/api/gateway/ingress/_lib/notify.ts:1` | `import { inngest } from "@api/console/inngest"` |
+| `apps/console/src/app/(inngest)/api/inngest/route.ts:8` | `import { createInngestRouteContext } from "@api/app/inngest"` |
+| `apps/console/src/app/api/gateway/ingress/_lib/notify.ts:1` | `import { inngest } from "@api/app/inngest"` |
 
 ### Test data package (`packages/console-test-data`)
 
 | File | Import |
 |---|---|
-| `packages/console-test-data/src/trigger/trigger.ts:8` | `import { inngest } from "@api/console/inngest/client"` |
+| `packages/console-test-data/src/trigger/trigger.ts:8` | `import { inngest } from "@api/app/inngest/client"` |
 
 ---
 
-## `@api/console` Export Map (inngest-relevant entries)
+## `@api/app` Export Map (inngest-relevant entries)
 
 From `api/console/package.json`:
 
@@ -170,13 +170,13 @@ From `api/console/package.json`:
 }
 ```
 
-The `@api/console/inngest` export re-exports `inngest`, `createInngestRouteContext`, and all workflow functions. The `@api/console/inngest/client` export is a direct path to the raw client instance (used by `console-test-data`).
+The `@api/app/inngest` export re-exports `inngest`, `createInngestRouteContext`, and all workflow functions. The `@api/app/inngest/client` export is a direct path to the raw client instance (used by `console-test-data`).
 
 ---
 
 ## Package Structure Templates
 
-### `@repo/console-providers` pattern (tsup-based, multi-entry)
+### `@repo/app-providers` pattern (tsup-based, multi-entry)
 
 `packages/console-providers/tsup.config.ts`:
 ```typescript
@@ -197,7 +197,7 @@ export default defineConfig({
 - `"typecheck": "tsc --noEmit"`
 - exports map with per-entry `types`/`default` pairs
 
-### `@repo/console-validation` pattern (tsup, deeper directory entries)
+### `@repo/app-validation` pattern (tsup, deeper directory entries)
 
 Same tsup+tsc build pattern. Multiple sub-path entries like `./primitives`, `./schemas`, `./forms`.
 
@@ -229,7 +229,7 @@ The existing `"build": { "dependsOn": ["^build"] }` rule covers all packages. No
 
 The `boundaries.tags` rules in `turbo.json` are relevant:
 - `packages` tag: can depend on `vendor` packages (allowed)
-- `app` tag: cannot be depended on by `vendor`/`packages`/etc. (so `@repo/inngest` cannot import from `@api/console` or `@lightfast/*` apps — which it doesn't need to)
+- `app` tag: cannot be depended on by `vendor`/`packages`/etc. (so `@repo/inngest` cannot import from `@api/app` or `@lightfast/*` apps — which it doesn't need to)
 
 ---
 
@@ -239,7 +239,7 @@ Based on the patterns above, the new package would live at `packages/inngest/` w
 
 ### Key design decisions from the research
 
-1. **Build toolchain**: tsup + tsc (matching `@repo/console-providers`), since the package needs clean ESM output and type declarations separate from JS emit.
+1. **Build toolchain**: tsup + tsc (matching `@repo/app-providers`), since the package needs clean ESM output and type declarations separate from JS emit.
 
 2. **Entry points needed**:
    - `./schemas` — exports both `eventsMap` objects (or a merged map) as Zod schemas
@@ -250,8 +250,8 @@ Based on the patterns above, the new package would live at `packages/inngest/` w
 3. **Dependencies**:
    - `@vendor/inngest: workspace:*` — for `EventSchemas`, `Inngest`, env
    - `@inngest/middleware-sentry: catalog:` — currently only used by console client
-   - `@repo/console-providers: workspace:*` — for `backfillTriggerPayload`, `backfillDepthSchema`, `postTransformEventSchema`
-   - `@repo/console-validation: workspace:*` — for `ingestionSourceSchema`
+   - `@repo/app-providers: workspace:*` — for `backfillTriggerPayload`, `backfillDepthSchema`, `postTransformEventSchema`
+   - `@repo/app-validation: workspace:*` — for `ingestionSourceSchema`
    - `zod: catalog:`
 
 4. **The middleware asymmetry**: The backfill client has no middleware; the console client has `sentryMiddleware()`. If a shared factory is used, middleware injection needs to be parameterized.
@@ -274,9 +274,9 @@ If `@repo/inngest` centralizes schemas and/or the client factory, the following 
 
 **`api/console/src/inngest/workflow/neural/event-store.ts`** and **`entity-embed.ts`** — `NonRetriableError` from bare `"inngest"`; should be normalised to `@vendor/inngest` or `@repo/inngest`
 
-All other consumer files (`routes/trigger.ts`, `routes/inngest.ts`, `apps/console/src/app/(inngest)/...`, etc.) import from the local client or from `@api/console/inngest`, so they are unaffected if the internal wiring of `api/console` is updated in place.
+All other consumer files (`routes/trigger.ts`, `routes/inngest.ts`, `apps/console/src/app/(inngest)/...`, etc.) import from the local client or from `@api/app/inngest`, so they are unaffected if the internal wiring of `api/console` is updated in place.
 
-The one cross-package consumer is `packages/console-test-data/src/trigger/trigger.ts` which imports directly from `@api/console/inngest/client`. If the console client is refactored to delegate to `@repo/inngest`, this import path remains valid (it still resolves through `@api/console`).
+The one cross-package consumer is `packages/console-test-data/src/trigger/trigger.ts` which imports directly from `@api/app/inngest/client`. If the console client is refactored to delegate to `@repo/inngest`, this import path remains valid (it still resolves through `@api/app`).
 
 ---
 
@@ -290,5 +290,5 @@ The one cross-package consumer is `packages/console-test-data/src/trigger/trigge
 | Middleware | none | `sentryMiddleware()` |
 | Event prefix | `apps-backfill/` | `apps-console/` |
 | Events type export | no | `export type Events` |
-| Consumers of client | 4 files (all relative) | 3 files (2 relative, 1 via `@api/console`) |
+| Consumers of client | 4 files (all relative) | 3 files (2 relative, 1 via `@api/app`) |
 | Build tool | tsup | tsc |

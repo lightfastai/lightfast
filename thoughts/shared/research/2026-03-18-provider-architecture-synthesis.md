@@ -1092,7 +1092,7 @@ Change 10 (HealthCheckDef + polling + passive detection)   ← parallel with 5, 
 # After all 10 changes:
 pnpm typecheck         # zero errors across all apps
 pnpm check             # zero lint errors
-pnpm --filter @repo/console-providers test   # all tests pass
+pnpm --filter @repo/app-providers test   # all tests pass
 pnpm db:generate       # generates migration for webhookSetupState column
 pnpm db:migrate        # applies cleanly
 

@@ -35,12 +35,12 @@ hardening, gate-first lifecycle, health-check cron). It has no blocking dependen
 | App id | `env.INNGEST_APP_NAME` (e.g. `lightfast-backfill`) | `env.INNGEST_APP_NAME` (e.g. `lightfast-console`) |
 
 The two `Inngest` instances are opaque to each other's event types. `console-test-data` reaches
-into `@api/console/inngest/client` for the typed client, cementing the cross-package coupling.
+into `@api/app/inngest/client` for the typed client, cementing the cross-package coupling.
 
 ### Event namespaces
 
 **Backfill events** (`apps/backfill/src/inngest/client.ts`):
-- `apps-backfill/run.requested` — `backfillTriggerPayload` from `@repo/console-providers/contracts`
+- `apps-backfill/run.requested` — `backfillTriggerPayload` from `@repo/app-providers/contracts`
 - `apps-backfill/run.cancelled` — `{ installationId, correlationId? }`
 - `apps-backfill/entity.requested` — `{ installationId, provider, orgId, entityType, resource, since, depth, holdForReplay?, correlationId? }`
 
@@ -71,12 +71,12 @@ into `@api/console/inngest/client` for the typed client, cementing the cross-pac
 - `src/inngest/workflow/neural/event-store.ts` — `NonRetriableError` from bare `"inngest"`
 - `src/inngest/workflow/neural/entity-embed.ts` — `NonRetriableError` from bare `"inngest"`
 
-**`apps/console`** (no client import, uses `@api/console/inngest` — unaffected):
-- `src/app/(inngest)/api/inngest/route.ts` — `createInngestRouteContext` from `@api/console/inngest`
-- `src/app/api/gateway/ingress/_lib/notify.ts` — `inngest` from `@api/console/inngest`
+**`apps/console`** (no client import, uses `@api/app/inngest` — unaffected):
+- `src/app/(inngest)/api/inngest/route.ts` — `createInngestRouteContext` from `@api/app/inngest`
+- `src/app/api/gateway/ingress/_lib/notify.ts` — `inngest` from `@api/app/inngest`
 
 **`packages/console-test-data`** (cross-package client import):
-- `src/trigger/trigger.ts` — `inngest` from `@api/console/inngest/client`
+- `src/trigger/trigger.ts` — `inngest` from `@api/app/inngest/client`
 
 ---
 
@@ -97,8 +97,8 @@ into `@api/console/inngest/client` for the typed client, cementing the cross-pac
 pnpm --filter @repo/inngest build    # package builds cleanly
 pnpm --filter @repo/inngest typecheck
 pnpm --filter apps-backfill typecheck
-pnpm --filter @api/console typecheck
-pnpm --filter @api/console build
+pnpm --filter @api/app typecheck
+pnpm --filter @api/app build
 pnpm --filter apps-backfill build
 pnpm check
 ```
@@ -111,7 +111,7 @@ pnpm check
 - Not moving workflow function definitions out of `api/console` or `apps/backfill`
 - Not changing the `@vendor/inngest` package (it remains the raw re-export layer)
 - Not adding any runtime logic to `@repo/inngest` — schemas and factory only
-- Not removing the `@api/console/inngest/client` export path (used by `console-test-data`; that migration is separate)
+- Not removing the `@api/app/inngest/client` export path (used by `console-test-data`; that migration is separate)
 - Not changing `INNGEST_APP_NAME` env var usage in either service's `env.ts` — they keep their per-service values and pass them into the factory
 
 ---
@@ -170,8 +170,8 @@ this phase is pure addition.
   },
   "dependencies": {
     "@inngest/middleware-sentry": "catalog:",
-    "@repo/console-providers": "workspace:*",
-    "@repo/console-validation": "workspace:*",
+    "@repo/app-providers": "workspace:*",
+    "@repo/app-validation": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "zod": "catalog:"
   },
@@ -272,8 +272,8 @@ Lifted verbatim from `api/console/src/inngest/client/client.ts` eventsMap, with 
 from `apps-console/` to `console/`:
 
 ```typescript
-import { postTransformEventSchema } from "@repo/console-providers/contracts";
-import { ingestionSourceSchema } from "@repo/console-validation";
+import { postTransformEventSchema } from "@repo/app-providers/contracts";
+import { ingestionSourceSchema } from "@repo/app-validation";
 import { z } from "zod";
 
 export const consoleEvents = {
@@ -346,8 +346,8 @@ Lifted from `apps/backfill/src/inngest/client.ts` eventsMap, prefix renamed from
 to `backfill/`:
 
 ```typescript
-import { backfillDepthSchema } from "@repo/console-providers/client";
-import { backfillTriggerPayload } from "@repo/console-providers/contracts";
+import { backfillDepthSchema } from "@repo/app-providers/client";
+import { backfillTriggerPayload } from "@repo/app-providers/contracts";
 import { z } from "zod";
 
 export const backfillEvents = {
@@ -633,15 +633,15 @@ the direct `inngest` catalog import. Leave it unless it causes a lint error.
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] `pnpm --filter @api/console typecheck`
-- [ ] `pnpm --filter @api/console build`
+- [ ] `pnpm --filter @api/app typecheck`
+- [ ] `pnpm --filter @api/app build`
 - [ ] `pnpm check`
 
 #### Manual Verification:
 - [ ] Console dev server starts: `pnpm dev:console`
 - [ ] Inngest dev dashboard shows all 5 console functions registered
 - [ ] Activity recording works (test via a login action)
-- [ ] `console-test-data` trigger still works (imports via `@api/console/inngest/client` which now delegates to `@repo/inngest`)
+- [ ] `console-test-data` trigger still works (imports via `@api/app/inngest/client` which now delegates to `@repo/inngest`)
 
 **Implementation Note**: Pause here after manual verification before declaring the migration done.
 
@@ -662,12 +662,12 @@ Delete any orphaned import lines.
 
 #### 2. Verify `console-test-data` still compiles
 
-`packages/console-test-data/src/trigger/trigger.ts` imports from `@api/console/inngest/client`.
+`packages/console-test-data/src/trigger/trigger.ts` imports from `@api/app/inngest/client`.
 That export path still resolves to the rewritten `client.ts` which now delegates to `@repo/inngest`.
 No change needed, but verify:
 
 ```bash
-pnpm --filter @repo/console-test-data typecheck
+pnpm --filter @repo/app-test-data typecheck
 ```
 
 #### 3. Full monorepo type check and build
@@ -682,7 +682,7 @@ pnpm build:backfill
 
 #### Automated Verification:
 - [ ] `pnpm typecheck` passes across all packages
-- [ ] `pnpm --filter @repo/console-test-data typecheck`
+- [ ] `pnpm --filter @repo/app-test-data typecheck`
 - [ ] `pnpm build:console`
 - [ ] `pnpm build:backfill`
 - [ ] `pnpm check` (lint)

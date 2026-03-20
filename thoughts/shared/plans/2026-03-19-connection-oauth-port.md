@@ -2,13 +2,13 @@
 
 ## Overview
 
-Port all gateway connection management, token vault operations, OAuth flow logic, and the authenticated API proxy into `@api/memory` tRPC procedures and `apps/memory` Route Handlers. This eliminates the `apps/gateway` Hono service entirely for connection CRUD, replacing it with:
+Port all gateway connection management, token vault operations, OAuth flow logic, and the authenticated API proxy into `@api/platform` tRPC procedures and `apps/memory` Route Handlers. This eliminates the `apps/gateway` Hono service entirely for connection CRUD, replacing it with:
 
 - **tRPC procedures** (`api/memory/src/router/memory/connections.ts`, `proxy.ts`) for all service-to-service and console-to-platform calls
 - **Route Handlers** (`apps/memory/src/app/api/connect/`) for browser-facing OAuth flows (authorize redirect, callback, CLI polling)
 - **Shared lib modules** (`api/memory/src/lib/`) for token vault, encryption, and Redis helpers
 
-The `@api/memory` package follows the identical patterns established by `@api/console`: `satisfies TRPCRouterRecord`, discriminated union auth context, `tsc`-only build, raw TS source exports.
+The `@api/platform` package follows the identical patterns established by `@api/app`: `satisfies TRPCRouterRecord`, discriminated union auth context, `tsc`-only build, raw TS source exports.
 
 ---
 
@@ -56,7 +56,7 @@ const providerConfigs: Record<string, unknown> = Object.fromEntries(
 );
 ```
 
-This pattern moves into `api/memory/src/lib/provider-configs.ts` — a module-level singleton initialized from `@api/memory`'s env. The `RuntimeConfig.callbackBaseUrl` changes from `gatewayBaseUrl` to the memory app's OAuth callback base URL.
+This pattern moves into `api/memory/src/lib/provider-configs.ts` — a module-level singleton initialized from `@api/platform`'s env. The `RuntimeConfig.callbackBaseUrl` changes from `gatewayBaseUrl` to the memory app's OAuth callback base URL.
 
 ### Gateway Teardown Workflow (to convert)
 
@@ -76,7 +76,7 @@ This pattern moves into `api/memory/src/lib/provider-configs.ts` — a module-le
 - `deleteConnection` (triggers teardown workflow)
 - `executeApi` (GitHub validate, detectConfig, resource picker)
 
-Post-migration: Console calls `@api/memory` tRPC procedures directly via in-process callers (same as `createM2MCaller` pattern) or via `packages/memory-trpc` HTTP client.
+Post-migration: Console calls `@api/platform` tRPC procedures directly via in-process callers (same as `createM2MCaller` pattern) or via `packages/memory-trpc` HTTP client.
 
 ---
 
@@ -180,7 +180,7 @@ Both use `serviceProcedure`.
 ```bash
 pnpm typecheck                    # All packages pass
 pnpm check                        # No lint errors
-pnpm --filter @api/memory build   # tsc succeeds
+pnpm --filter @api/platform build   # tsc succeeds
 pnpm build:console                # Console still builds (consumer updated)
 ```
 
@@ -205,21 +205,21 @@ Six phases, each independently verifiable. Phases 1-3 build the foundation. Phas
 
 ---
 
-## Phase 1: `@api/memory` Package Scaffold
+## Phase 1: `@api/platform` Package Scaffold
 
 ### Overview
 
-Create the `api/memory/` package following `@api/console` conventions. Set up tRPC initialization, env validation, and the empty router structure.
+Create the `api/memory/` package following `@api/app` conventions. Set up tRPC initialization, env validation, and the empty router structure.
 
 ### Changes Required
 
 #### 1. Create `api/memory/package.json`
 
 Follow `api/console/package.json` pattern:
-- `name: "@api/memory"`, `private: true`, `type: "module"`, `sideEffects: false`
+- `name: "@api/platform"`, `private: true`, `type: "module"`, `sideEffects: false`
 - Build: `tsc` (no tsup)
 - Exports: `"."` → `./src/index.ts` (default), `./dist/index.d.ts` (types)
-- Dependencies: `@db/console`, `@repo/console-providers`, `@repo/lib`, `@vendor/db`, `@vendor/upstash`, `@vendor/inngest`, `@vendor/observability`, `@t3-oss/env-core`, `@trpc/server`, `zod`
+- Dependencies: `@db/app`, `@repo/app-providers`, `@repo/lib`, `@vendor/db`, `@vendor/upstash`, `@vendor/inngest`, `@vendor/observability`, `@t3-oss/env-core`, `@trpc/server`, `zod`
 
 #### 2. Create `api/memory/tsconfig.json`
 
@@ -250,7 +250,7 @@ tRPC initialization with `ServiceContext`:
 
 ```ts
 import { initTRPC, TRPCError } from "@trpc/server";
-import { timingSafeStringEqual } from "@repo/console-providers";
+import { timingSafeStringEqual } from "@repo/app-providers";
 import { env } from "./env.js";
 
 export interface ServiceContext {
@@ -300,8 +300,8 @@ export type { ServiceContext } from "./trpc.js";
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/memory typecheck` passes
-- [ ] `pnpm --filter @api/memory build` produces `dist/` with `.d.ts` files
+- [ ] `pnpm --filter @api/platform typecheck` passes
+- [ ] `pnpm --filter @api/platform build` produces `dist/` with `.d.ts` files
 - [ ] No circular dependency warnings in Turborepo
 
 ---
@@ -341,7 +341,7 @@ Direct copy from `apps/gateway/src/lib/cache.ts`. All functions are pure (no env
 Copy from `apps/gateway/src/lib/token-store.ts`. Update import:
 - `../lib/encryption.js` → `./encryption.js`
 
-No other changes — uses `@db/console/client`, `@db/console/schema`, `@repo/lib`, `@vendor/db`.
+No other changes — uses `@db/app/client`, `@db/app/schema`, `@repo/lib`, `@vendor/db`.
 
 Contains: `writeTokenRecord()`, `updateTokenRecord()`, `assertEncryptedFormat()`.
 
@@ -358,8 +358,8 @@ Contains: `getActiveTokenForInstallation()`, `forceRefreshToken()`.
 Extract the module-level initialization from `apps/gateway/src/routes/connections.ts:44-64`:
 
 ```ts
-import type { RuntimeConfig } from "@repo/console-providers";
-import { PROVIDERS } from "@repo/console-providers";
+import type { RuntimeConfig } from "@repo/app-providers";
+import { PROVIDERS } from "@repo/app-providers";
 import { env } from "../env.js";
 
 // callbackBaseUrl points to the memory app's OAuth callback path
@@ -388,7 +388,7 @@ The `callbackBaseUrl` changes from `/services` (gateway path) to the memory app'
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/memory typecheck` passes
+- [ ] `pnpm --filter @api/platform typecheck` passes
 - [ ] All 4 lib modules resolve their imports without error
 - [ ] `getEncryptionKey()`, `writeTokenRecord()`, `getActiveTokenForInstallation()` type signatures match gateway originals
 
@@ -444,8 +444,8 @@ Extracted from `connections.ts:79-141`:
 
 ```ts
 import { nanoid } from "@repo/lib";
-import { getProvider } from "@repo/console-providers";
-import type { SourceType } from "@repo/console-providers";
+import { getProvider } from "@repo/app-providers";
+import type { SourceType } from "@repo/app-providers";
 import { providerConfigs } from "../provider-configs.js";
 import { storeOAuthState } from "./state.js";
 
@@ -494,10 +494,10 @@ export async function buildAuthorizeUrl(params: AuthorizeParams): Promise<{ url:
 Extracted from `connections.ts:208-489` — the heavyweight callback processing:
 
 ```ts
-import { db } from "@db/console/client";
-import { gatewayInstallations } from "@db/console/schema";
-import { getProvider, providerAccountInfoSchema } from "@repo/console-providers";
-import type { SourceType } from "@repo/console-providers";
+import { db } from "@db/app/client";
+import { gatewayInstallations } from "@db/app/schema";
+import { getProvider, providerAccountInfoSchema } from "@repo/app-providers";
+import type { SourceType } from "@repo/app-providers";
 import { and, eq } from "@vendor/db";
 import { providerConfigs } from "../provider-configs.js";
 import { writeTokenRecord } from "../token-store.js";
@@ -529,7 +529,7 @@ This function does NOT return HTTP responses — it returns a structured `Callba
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/memory typecheck` passes
+- [ ] `pnpm --filter @api/platform typecheck` passes
 - [ ] `storeOAuthState` / `consumeOAuthState` match existing Redis pipeline behavior
 - [ ] `buildAuthorizeUrl` returns `{ url, state }` matching current gateway response shape
 
@@ -719,7 +719,7 @@ await inngest.send({
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/memory typecheck` passes
+- [ ] `pnpm --filter @api/platform typecheck` passes
 - [ ] All 11 procedures have input schemas matching the gateway route inputs
 - [ ] All procedures use `serviceProcedure` (no unprotected endpoints)
 - [ ] `disconnect` fires `platform/connection.lifecycle` Inngest event
@@ -741,7 +741,7 @@ GET handler — OAuth callback. Consumes state, calls `processOAuthCallback()` f
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
-import { processOAuthCallback } from "@api/memory/lib/oauth/callback";
+import { processOAuthCallback } from "@api/platform/lib/oauth/callback";
 
 export async function GET(
   request: NextRequest,
@@ -781,7 +781,7 @@ GET handler — CLI polling for OAuth result:
 
 ```ts
 import { NextRequest, NextResponse } from "next/server";
-import { getOAuthResult } from "@api/memory/lib/oauth/state";
+import { getOAuthResult } from "@api/platform/lib/oauth/state";
 
 export async function GET(request: NextRequest) {
   const state = request.nextUrl.searchParams.get("state");
@@ -830,7 +830,7 @@ This logic lives in `processOAuthCallback()` so both the Route Handler and any f
 
 ### Overview
 
-Update `@repo/gateway-service-clients` and `api/console/src/router/org/connections.ts` to call `@api/memory` tRPC procedures instead of gateway HTTP routes. This is the final cut-over.
+Update `@repo/gateway-service-clients` and `api/console/src/router/org/connections.ts` to call `@api/platform` tRPC procedures instead of gateway HTTP routes. This is the final cut-over.
 
 ### Changes Required
 
@@ -838,11 +838,11 @@ Update `@repo/gateway-service-clients` and `api/console/src/router/org/connectio
 
 Replace each `fetch(gatewayUrl/...)` call with a tRPC proxy client call. Two approaches:
 
-**Option A: tRPC proxy client** (if `@api/memory` router types are safe to import without build cycles)
+**Option A: tRPC proxy client** (if `@api/platform` router types are safe to import without build cycles)
 
 ```ts
 import { createTRPCClient, httpLink } from "@trpc/client";
-import type { MemoryRouter } from "@api/memory";
+import type { MemoryRouter } from "@api/platform";
 
 const trpc = createTRPCClient<MemoryRouter>({
   links: [httpLink({ url: `${memoryUrl}/api/trpc`, headers: () => buildServiceHeaders(config) })],
@@ -863,7 +863,7 @@ Update `gatewayUrl` to point at the memory app's tRPC endpoint. Keep existing Zo
 
 The console connections router currently creates a `GatewayClient` for each call. Post-migration, it can either:
 
-**A**: Import `createCallerFactory` from `@api/memory` and call procedures directly (in-process, if running in the same Next.js app via microfrontends).
+**A**: Import `createCallerFactory` from `@api/platform` and call procedures directly (in-process, if running in the same Next.js app via microfrontends).
 
 **B**: Keep using `createGatewayClient()` which now internally routes to memory tRPC.
 
@@ -891,8 +891,8 @@ Current rewrites route `/services/gateway/*` to the gateway Hono service. Post-m
 For each procedure, use `createCallerFactory` to test without HTTP:
 
 ```ts
-import { createCallerFactory } from "@api/memory";
-import { memoryRouter } from "@api/memory";
+import { createCallerFactory } from "@api/platform";
+import { memoryRouter } from "@api/platform";
 
 const createCaller = createCallerFactory(memoryRouter);
 const caller = createCaller({ apiKey: "test-key" });
@@ -921,7 +921,7 @@ Port the existing gateway integration tests from `apps/gateway/src/routes/connec
 ## Migration Notes
 
 - **Dual-path period**: Gateway Hono routes remain active during Phases 1-5. Consumer migration (Phase 6) is the atomic switch. Rollback = revert `@repo/gateway-service-clients` URL change.
-- **Deploy order**: Deploy `@api/memory` + `apps/memory` Route Handlers before updating consumers. The memory app must be serving tRPC before clients start calling it.
+- **Deploy order**: Deploy `@api/platform` + `apps/memory` Route Handlers before updating consumers. The memory app must be serving tRPC before clients start calling it.
 - **Env vars**: Memory app needs `GATEWAY_API_KEY`, `ENCRYPTION_KEY`, and all `PROVIDER_ENVS()` — same as gateway. These must be configured in the memory app's Vercel environment.
 - **Redis namespace**: OAuth keys use `gw:oauth:*` namespace. The memory app shares the same Upstash Redis instance — no namespace collision since the keys are identical.
 
@@ -929,7 +929,7 @@ Port the existing gateway integration tests from `apps/gateway/src/routes/connec
 
 ## Dependencies
 
-- **@api/memory foundation must exist first** — Phase 1 creates the package scaffold
+- **@api/platform foundation must exist first** — Phase 1 creates the package scaffold
 - **`@repo/inngest` must export `platform/connection.lifecycle` event** — already exists in `packages/inngest/src/schemas/platform.ts`
 - **`apps/memory` must exist as a Next.js app** — for Route Handlers (Phase 5). If the app scaffold doesn't exist yet, Phase 5 is blocked.
 - **Connection teardown Inngest function** must exist for `disconnect` to work end-to-end. The function that listens on `platform/connection.lifecycle` is a separate implementation plan.

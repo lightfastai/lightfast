@@ -321,7 +321,7 @@ await db.insert(gatewayLifecycleLog).values({
 });
 ```
 
-Import `gatewayLifecycleLog` from `@db/console/schema`.
+Import `gatewayLifecycleLog` from `@db/app/schema`.
 
 #### Location 2: `apps/gateway/src/workflows/connection-teardown.ts` — `close-gate` step (step 1)
 
@@ -379,7 +379,7 @@ Phase 0 adds the export. Phase 3 only consumes it.
 
 Add import:
 ```ts
-import { gatewayInstallations, gatewayLifecycleLog, gatewayResources, ... } from "@db/console/schema";
+import { gatewayInstallations, gatewayLifecycleLog, gatewayResources, ... } from "@db/app/schema";
 ```
 
 Add insert before `workflowClient.trigger(...)` in the DELETE handler.
@@ -388,7 +388,7 @@ Add insert before `workflowClient.trigger(...)` in the DELETE handler.
 
 Add import:
 ```ts
-import { gatewayInstallations, gatewayLifecycleLog, gatewayResources, gatewayTokens } from "@db/console/schema";
+import { gatewayInstallations, gatewayLifecycleLog, gatewayResources, gatewayTokens } from "@db/app/schema";
 ```
 
 Add inserts in `close-gate` and `remove-resources` steps.

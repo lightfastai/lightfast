@@ -746,7 +746,7 @@ The new `define.ts` directly enables the architecture from the research doc:
 // apps/platform/src/workflows/ingest-delivery.ts
 // step 3: classify event
 
-import { isWebhookProvider } from "@repo/console-providers"
+import { isWebhookProvider } from "@repo/app-providers"
 
 const provider = getProvider(providerName)
 if (!isWebhookProvider(provider)) {

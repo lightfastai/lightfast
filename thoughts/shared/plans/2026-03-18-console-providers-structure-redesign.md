@@ -2,7 +2,7 @@
 
 ## Overview
 
-Reorganize `@repo/console-providers` from a two-entry flat-file package into a folder-structured, audience-named package. Replace the opaque `./display` / `"."` split with **`./client`** (browser-safe), **`./contracts`** (cross-service Zod schemas), and **`"."** (server runtime). Decompose the 1,129-line `define.ts` monolith into purpose-named files organized by the provider-author vocabulary. All existing functionality is preserved; no type-system semantics change.
+Reorganize `@repo/app-providers` from a two-entry flat-file package into a folder-structured, audience-named package. Replace the opaque `./display` / `"."` split with **`./client`** (browser-safe), **`./contracts`** (cross-service Zod schemas), and **`"."** (server runtime). Decompose the 1,129-line `define.ts` monolith into purpose-named files organized by the provider-author vocabulary. All existing functionality is preserved; no type-system semantics change.
 
 Builds on the Phase 9 state of `thoughts/shared/plans/2026-03-18-provider-architecture-redesign.md`.
 
@@ -50,9 +50,9 @@ packages/console-providers/src/
 ```
 packages/console-providers/src/
 │
-├── client.ts               ← entry: @repo/console-providers/client
-├── contracts.ts            ← entry: @repo/console-providers/contracts
-├── index.ts                ← entry: @repo/console-providers (server-only)
+├── client.ts               ← entry: @repo/app-providers/client
+├── contracts.ts            ← entry: @repo/app-providers/contracts
+├── index.ts                ← entry: @repo/app-providers (server-only)
 │
 ├── client/                 ← browser-safe static data
 │   ├── display.ts          ← PROVIDER_DISPLAY, ProviderSlug, providerSlugSchema
@@ -130,17 +130,17 @@ registry.ts  ← providers/*, client/display.ts
 
 | Was | Becomes |
 |-----|---------|
-| `@repo/console-providers/display` | `@repo/console-providers/client` |
-| `@repo/console-providers` (for `PostTransformEvent`, `WebhookEnvelope`, `GatewayConnection`, etc.) | `@repo/console-providers/contracts` |
-| `@repo/console-providers` (for `PROVIDERS`, `getProvider`, `deriveVerifySignature`, etc.) | `@repo/console-providers` (unchanged) |
+| `@repo/app-providers/display` | `@repo/app-providers/client` |
+| `@repo/app-providers` (for `PostTransformEvent`, `WebhookEnvelope`, `GatewayConnection`, etc.) | `@repo/app-providers/contracts` |
+| `@repo/app-providers` (for `PROVIDERS`, `getProvider`, `deriveVerifySignature`, etc.) | `@repo/app-providers` (unchanged) |
 
 ### Verification
 
 ```bash
 pnpm typecheck
 pnpm check
-pnpm --filter @repo/console-providers test
-pnpm --filter @repo/console-providers build
+pnpm --filter @repo/app-providers test
+pnpm --filter @repo/app-providers build
 ```
 
 ---
@@ -307,7 +307,7 @@ Update every file that `import ... from "./define"` or `import ... from "../../d
 #### 12. Delete `src/types.ts`
 After all imports from `./types` within the package are updated to `./provider/primitives`.
 
-External consumers (relay, gateway, console) that import `EdgeRule` from `@repo/console-providers` continue to work unchanged — `index.ts` re-exports `EdgeRule` from `./provider/primitives` just as it previously did from `./types`.
+External consumers (relay, gateway, console) that import `EdgeRule` from `@repo/app-providers` continue to work unchanged — `index.ts` re-exports `EdgeRule` from `./provider/primitives` just as it previously did from `./types`.
 
 #### 13. Update `src/index.ts` re-exports
 Replace `export * from "./define"` with `export * from "./provider/index"`.
@@ -319,9 +319,9 @@ Replace `export ... from "./types"` with re-exports from `./provider/primitives`
 
 #### Automated Verification
 - [x] `pnpm typecheck` — zero errors across full monorepo
-- [x] `pnpm --filter @repo/console-providers test` — all tests pass
+- [x] `pnpm --filter @repo/app-providers test` — all tests pass
 - [x] `pnpm check` — zero lint errors
-- [x] `pnpm --filter @repo/console-providers build` — builds both entry points cleanly
+- [x] `pnpm --filter @repo/app-providers build` — builds both entry points cleanly
 - [x] No `import.*from.*define` remaining in `src/`: `grep -r "from.*[\"'].*define[\"']" packages/console-providers/src/ --include="*.ts"` → empty
 
 #### Manual Verification
@@ -424,8 +424,8 @@ Point all re-exports at new paths:
 
 #### Automated Verification
 - [x] `pnpm typecheck` — zero errors
-- [x] `pnpm --filter @repo/console-providers test` — all pass
-- [x] `pnpm --filter @repo/console-providers build` — clean
+- [x] `pnpm --filter @repo/app-providers test` — all pass
+- [x] `pnpm --filter @repo/app-providers build` — clean
 - [x] No top-level `.ts` files remain in `src/` except: `client.ts` (not yet created), `contracts.ts` (not yet created), `index.ts`, `registry.ts`, `icon.ts`, `post-transform-event.ts`, `wire.ts`, `backfill-contracts.ts`, `gateway.ts`, `display.ts` (last five will move in Phases 3–4)
 
 ---
@@ -613,7 +613,7 @@ Add `"src/client.ts"` to the `entry` array.
 
 Update every `"use client"` component and browser-facing file:
 
-**`@repo/console-providers/display` → `@repo/console-providers/client`:**
+**`@repo/app-providers/display` → `@repo/app-providers/client`:**
 - `apps/console/src/hooks/use-oauth-popup.ts`
 - `apps/console/src/app/(app)/(org)/[slug]/(manage)/settings/sources/_components/sources-list.tsx`
 - `apps/console/src/app/(app)/(org)/[slug]/[workspaceName]/(manage)/events/_components/use-event-filters.ts`
@@ -652,13 +652,13 @@ The content has moved to `src/client/display.ts`. The `./display` package export
 
 #### Automated Verification
 - [x] `pnpm typecheck` — zero errors
-- [x] `pnpm --filter @repo/console-providers test` — all pass (including new sync tests)
+- [x] `pnpm --filter @repo/app-providers test` — all pass (including new sync tests)
 - [x] `pnpm check` — zero lint errors
-- [x] `pnpm --filter @repo/console-providers build` — 3 entry points built (`dist/index.js`, `dist/client.js`, `dist/display.js` → same as `dist/client.js`)
-- [x] `grep -r "from.*[\"']@repo/console-providers[\"']" apps/console/src --include="*.tsx" --include="*.ts" -l` — no `"use client"` files in results (confirm with `grep -l '"use client"'`)
+- [x] `pnpm --filter @repo/app-providers build` — 3 entry points built (`dist/index.js`, `dist/client.js`, `dist/display.js` → same as `dist/client.js`)
+- [x] `grep -r "from.*[\"']@repo/app-providers[\"']" apps/console/src --include="*.tsx" --include="*.ts" -l` — no `"use client"` files in results (confirm with `grep -l '"use client"'`)
 
 #### Manual Verification
-- [ ] `debug-panel-content.tsx` uses only `@repo/console-providers/client` — no main barrel
+- [ ] `debug-panel-content.tsx` uses only `@repo/app-providers/client` — no main barrel
 - [ ] `src/display.ts` does not exist at root of `src/`
 - [ ] Category display and event labels render correctly in the UI
 
@@ -766,51 +766,51 @@ Server consumers using the main barrel continue to get these exports unchanged.
 #### 10. Migrate service consumers to `./contracts`
 
 **relay** (`apps/relay/src/`):
-- `routes/webhooks.ts` — `WebhookEnvelope`, `WebhookReceiptPayload` → `@repo/console-providers/contracts`
-- `routes/workflows.ts` — `WebhookReceiptPayload` → `@repo/console-providers/contracts`
-- `middleware/webhook.ts` — `ServiceAuthWebhookBody`, `serviceAuthWebhookBodySchema` → `@repo/console-providers/contracts`
-- `lib/replay.ts` — `WebhookReceiptPayload` → `@repo/console-providers/contracts`
+- `routes/webhooks.ts` — `WebhookEnvelope`, `WebhookReceiptPayload` → `@repo/app-providers/contracts`
+- `routes/workflows.ts` — `WebhookReceiptPayload` → `@repo/app-providers/contracts`
+- `middleware/webhook.ts` — `ServiceAuthWebhookBody`, `serviceAuthWebhookBodySchema` → `@repo/app-providers/contracts`
+- `lib/replay.ts` — `WebhookReceiptPayload` → `@repo/app-providers/contracts`
 
 **gateway** (`apps/gateway/src/`):
-- `routes/connections.ts` — `GwInstallationBackfillConfig`, `backfillRunRecord`, `BACKFILL_TERMINAL_STATUSES` → `@repo/console-providers/contracts`
+- `routes/connections.ts` — `GwInstallationBackfillConfig`, `backfillRunRecord`, `BACKFILL_TERMINAL_STATUSES` → `@repo/app-providers/contracts`
 
 **packages/gateway-service-clients** (`packages/gateway-service-clients/src/`):
-- `gateway.ts` — `GatewayConnection`, `GatewayTokenResult`, `ProxyEndpointsResponse`, `BackfillRunRecord`, `BackfillRunReadRecord`, `TypedProxyRequest`, `ResponseDataFor` → split: contract types from `@repo/console-providers/contracts`, proxy types from `@repo/console-providers`
-- `backfill.ts` — `BackfillEstimatePayload`, `BackfillTriggerPayload` → `@repo/console-providers/contracts`
+- `gateway.ts` — `GatewayConnection`, `GatewayTokenResult`, `ProxyEndpointsResponse`, `BackfillRunRecord`, `BackfillRunReadRecord`, `TypedProxyRequest`, `ResponseDataFor` → split: contract types from `@repo/app-providers/contracts`, proxy types from `@repo/app-providers`
+- `backfill.ts` — `BackfillEstimatePayload`, `BackfillTriggerPayload` → `@repo/app-providers/contracts`
 
 **console API** (`api/console/src/`):
-- `inngest/client/client.ts` — `postTransformEventSchema` → `@repo/console-providers/contracts`
-- `inngest/workflow/neural/event-store.ts` — `PostTransformEvent` type → `@repo/console-providers/contracts`
-- `inngest/workflow/neural/scoring.ts` — `PostTransformEvent` type → `@repo/console-providers/contracts`
+- `inngest/client/client.ts` — `postTransformEventSchema` → `@repo/app-providers/contracts`
+- `inngest/workflow/neural/event-store.ts` — `PostTransformEvent` type → `@repo/app-providers/contracts`
+- `inngest/workflow/neural/scoring.ts` — `PostTransformEvent` type → `@repo/app-providers/contracts`
 
 **apps/console** (`apps/console/src/`):
-- `app/api/gateway/ingress/route.ts` — `WebhookEnvelope` → `@repo/console-providers/contracts`
-- `app/api/gateway/ingress/_lib/transform.ts` — `PostTransformEvent`, `WebhookEnvelope` → `@repo/console-providers/contracts`
-- `app/api/gateway/ingress/_lib/notify.ts` — `PostTransformEvent` → `@repo/console-providers/contracts`
-- `app/(app)/(org)/[slug]/[workspaceName]/(manage)/events/_components/event-detail.tsx` — `PostTransformEvent` type → `@repo/console-providers/contracts`
-- `app/(app)/(org)/[slug]/[workspaceName]/(manage)/events/_components/events-table.tsx` — `PostTransformEvent` type → `@repo/console-providers/contracts`
-- `app/(app)/(org)/[slug]/[workspaceName]/(manage)/events/_components/event-row.tsx` — `PostTransformEvent` type → `@repo/console-providers/contracts`
+- `app/api/gateway/ingress/route.ts` — `WebhookEnvelope` → `@repo/app-providers/contracts`
+- `app/api/gateway/ingress/_lib/transform.ts` — `PostTransformEvent`, `WebhookEnvelope` → `@repo/app-providers/contracts`
+- `app/api/gateway/ingress/_lib/notify.ts` — `PostTransformEvent` → `@repo/app-providers/contracts`
+- `app/(app)/(org)/[slug]/[workspaceName]/(manage)/events/_components/event-detail.tsx` — `PostTransformEvent` type → `@repo/app-providers/contracts`
+- `app/(app)/(org)/[slug]/[workspaceName]/(manage)/events/_components/events-table.tsx` — `PostTransformEvent` type → `@repo/app-providers/contracts`
+- `app/(app)/(org)/[slug]/[workspaceName]/(manage)/events/_components/event-row.tsx` — `PostTransformEvent` type → `@repo/app-providers/contracts`
 
 **db** (`db/console/src/`):
-- `schema/tables/workspace-events.ts` — `EntityRelation` → `@repo/console-providers/contracts`
-- `schema/tables/workspace-ingest-logs.ts` — `PostTransformEvent` → `@repo/console-providers/contracts`
-- `schema/tables/gateway-installations.ts` — `GwInstallationBackfillConfig` → `@repo/console-providers/contracts`
+- `schema/tables/workspace-events.ts` — `EntityRelation` → `@repo/app-providers/contracts`
+- `schema/tables/workspace-ingest-logs.ts` — `PostTransformEvent` → `@repo/app-providers/contracts`
+- `schema/tables/gateway-installations.ts` — `GwInstallationBackfillConfig` → `@repo/app-providers/contracts`
 
 **packages/console-upstash-realtime**:
-- `src/index.ts` — `postTransformEventSchema` → `@repo/console-providers/contracts`
+- `src/index.ts` — `postTransformEventSchema` → `@repo/app-providers/contracts`
 
 **packages/console-test-data**:
-- `src/loader/index.ts` — `PostTransformEvent` → `@repo/console-providers/contracts`
-- `src/loader/transform.ts` — `PostTransformEvent` → `@repo/console-providers/contracts`
-- `src/cli/verify-datasets.ts` — `PostTransformEvent` → `@repo/console-providers/contracts`
+- `src/loader/index.ts` — `PostTransformEvent` → `@repo/app-providers/contracts`
+- `src/loader/transform.ts` — `PostTransformEvent` → `@repo/app-providers/contracts`
+- `src/cli/verify-datasets.ts` — `PostTransformEvent` → `@repo/app-providers/contracts`
 
 **backfill** (`apps/backfill/src/`):
 - `routes/estimate.ts` — `BackfillContext` from main barrel (this is a provider type, keep on main)
-- `routes/trigger.ts` — `backfillTriggerPayload` → `@repo/console-providers/contracts`
-- `inngest/client.ts` — `backfillDepthSchema`, `backfillTriggerPayload` → `@repo/console-providers/contracts` for payload; `backfillDepthSchema` from `@repo/console-providers/client`
+- `routes/trigger.ts` — `backfillTriggerPayload` → `@repo/app-providers/contracts`
+- `inngest/client.ts` — `backfillDepthSchema`, `backfillTriggerPayload` → `@repo/app-providers/contracts` for payload; `backfillDepthSchema` from `@repo/app-providers/client`
 
 **packages/console-validation**:
-- `src/schemas/workflow-io.ts` — `sourceTypeSchema` → `@repo/console-providers/client` (it's `providerSlugSchema`)
+- `src/schemas/workflow-io.ts` — `sourceTypeSchema` → `@repo/app-providers/client` (it's `providerSlugSchema`)
 
 **Note on `BackfillContext`**: This type lives in `src/provider/backfill.ts` (server-only). Backfill service imports it from main barrel. This is correct — it's a server-side runtime type, not a contract schema. Leave it on the main barrel.
 
@@ -818,11 +818,11 @@ Server consumers using the main barrel continue to get these exports unchanged.
 
 #### Automated Verification
 - [x] `pnpm typecheck` — zero errors
-- [x] `pnpm --filter @repo/console-providers test` — all pass
+- [x] `pnpm --filter @repo/app-providers test` — all pass
 - [x] `pnpm check` — zero lint errors
-- [x] `pnpm --filter @repo/console-providers build` — 4 entry points built cleanly
-- [x] Verify no transitive server deps in contracts: `node -e "import('@repo/console-providers/contracts')"` from a non-server environment (or check that the compiled `dist/contracts.js` has no `server-only` imports)
-- [x] `grep -r "from.*[\"']@repo/console-providers[\"']" apps/relay/src packages/gateway-service-clients/src --include="*.ts"` → only `getProvider`, `isWebhookProvider`, `PROVIDERS`, crypto utils remain on main barrel
+- [x] `pnpm --filter @repo/app-providers build` — 4 entry points built cleanly
+- [x] Verify no transitive server deps in contracts: `node -e "import('@repo/app-providers/contracts')"` from a non-server environment (or check that the compiled `dist/contracts.js` has no `server-only` imports)
+- [x] `grep -r "from.*[\"']@repo/app-providers[\"']" apps/relay/src packages/gateway-service-clients/src --include="*.ts"` → only `getProvider`, `isWebhookProvider`, `PROVIDERS`, crypto utils remain on main barrel
 
 #### Manual Verification
 - [ ] `src/post-transform-event.ts`, `src/gateway.ts`, `src/wire.ts`, `src/backfill-contracts.ts` do not exist at `src/` root
@@ -858,13 +858,13 @@ export { sanitizePostTransformEvent } from "./runtime/sanitize";  // (if exists)
 export { transformWebhookPayload } from "./runtime/dispatch";
 export { deriveObservationType, getBaseEventType } from "./runtime/event-norm";
 
-// ── Cross-service contracts (also available via @repo/console-providers/contracts) ──
+// ── Cross-service contracts (also available via @repo/app-providers/contracts) ──
 export * from "./contracts/event";
 export * from "./contracts/wire";
 export * from "./contracts/gateway";
 export * from "./contracts/backfill";
 
-// ── Client-safe data (also available via @repo/console-providers/client) ──────
+// ── Client-safe data (also available via @repo/app-providers/client) ──────
 export { PROVIDER_DISPLAY, providerSlugSchema } from "./client/display";
 export type { ProviderSlug, ProviderDisplayEntry } from "./client/display";
 
@@ -894,7 +894,7 @@ After all consumers are migrated to `./client` in Phase 3, the backward compat s
 
 #### 3. Remove `src/client.ts` and `src/contracts.ts` type duplication from barrel
 
-The root barrel re-exports contracts and client-safe data to maintain backward compatibility for server consumers that currently import everything from `"@repo/console-providers"`. This is intentional. Server components that import `PostTransformEvent` from `@repo/console-providers` continue to work.
+The root barrel re-exports contracts and client-safe data to maintain backward compatibility for server consumers that currently import everything from `"@repo/app-providers"`. This is intentional. Server components that import `PostTransformEvent` from `@repo/app-providers` continue to work.
 
 #### 4. Add `src/provider/categories-sync.test.ts`
 
@@ -940,8 +940,8 @@ describe("EVENT_LABELS sync", () => {
 #### Automated Verification
 - [x] `pnpm typecheck` — zero errors across full monorepo
 - [x] `pnpm check` — zero lint errors
-- [x] `pnpm --filter @repo/console-providers test` — all pass including sync tests
-- [x] `pnpm --filter @repo/console-providers build` — exactly 3 outputs: `dist/index.js`, `dist/client.js`, `dist/contracts.js`
+- [x] `pnpm --filter @repo/app-providers test` — all pass including sync tests
+- [x] `pnpm --filter @repo/app-providers build` — exactly 3 outputs: `dist/index.js`, `dist/client.js`, `dist/contracts.js`
 - [x] `grep -r "console-providers/display" . --include="*.ts" --include="*.tsx" -r` → zero results (all consumers on `./client`)
 - [x] No `.ts` files remain at `src/` root except: `index.ts`, `registry.ts`, `icon.ts`, `client.ts`, `contracts.ts`
 
@@ -971,7 +971,7 @@ describe("EVENT_LABELS sync", () => {
 ## Migration Notes
 
 - The `./display` entry point remains active (as a forward alias to `./client`) through Phase 5. No consumer breaks during Phases 3–4.
-- The main barrel (`.`) continues to re-export all contract types and client-safe data. Server consumers that import `PostTransformEvent` from `@repo/console-providers` do not need to change unless they want to.
+- The main barrel (`.`) continues to re-export all contract types and client-safe data. Server consumers that import `PostTransformEvent` from `@repo/app-providers` do not need to change unless they want to.
 - The only breaking change is the removal of `./display` in Phase 5, which is only reached after all consumers are migrated.
 
 ---

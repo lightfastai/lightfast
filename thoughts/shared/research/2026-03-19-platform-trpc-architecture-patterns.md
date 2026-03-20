@@ -345,7 +345,7 @@ Backfill path:
 | `@vendor/*` | Third-party wrappers | `tsup + tsc` or `tsc` | `./dist/*.js` |
 | `@db/*` | Drizzle schema + client | `tsup + tsc` | `./dist/*.js` |
 
-#### `@api/console` Package Pattern (template for `@api/platform`)
+#### `@api/app` Package Pattern (template for `@api/platform`)
 
 `api/console/package.json`:
 - `private: true`, `type: "module"`, `sideEffects: false`
@@ -484,6 +484,6 @@ All crons (health check, token refresh, delivery recovery) → Platform Inngest 
 
 1. **Platform auth model**: What auth context types does platform need? Service-to-service (X-API-Key), M2M tokens, and potentially direct Clerk auth for future admin UI?
 2. **Event name migration**: Console neural pipeline functions currently use `console/*` event names. Do they keep these names in platform, or rename to `platform/*`?
-3. **DB client sharing**: Platform and console both need `@db/console` — the singleton pattern works when they're in the same process, but if platform is a separate Vercel project, they're separate processes with separate connection pools.
+3. **DB client sharing**: Platform and console both need `@db/app` — the singleton pattern works when they're in the same process, but if platform is a separate Vercel project, they're separate processes with separate connection pools.
 4. **Inngest app identity**: Currently 3 separate Inngest apps (console, backfill, gateway). Platform would unify into 1. How does Inngest handle function migration between app IDs?
 5. **Console dependency on platform**: Console tRPC procedures (connections, workspace) currently call gateway via HTTP client. Post-migration, they'd call platform tRPC procedures. If platform is a separate Vercel project, this is HTTP tRPC; if same project (microfrontend), it could be in-process callers.

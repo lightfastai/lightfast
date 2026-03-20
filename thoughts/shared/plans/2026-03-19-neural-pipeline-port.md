@@ -4,7 +4,7 @@ topic: "Neural Pipeline Port to Memory — move event processing pipeline from c
 tags: [plan, memory, inngest, neural-pipeline, port, event-processing, entity-graph, entity-embed, notifications]
 status: draft
 dependencies:
-  - "apps/memory shell + @api/memory foundation"
+  - "apps/memory shell + @api/platform foundation"
   - "@repo/inngest shared package (cross-app event bus)"
 ---
 
@@ -123,13 +123,13 @@ Each ported function imports from these packages. All are available to `api/memo
 
 | Package | Used By |
 |---------|---------|
-| `@db/console/client` | All functions (DB queries) |
-| `@db/console/schema` | All functions (table references) |
-| `@repo/console-providers` | eventStore (deriveObservationType, getBaseEventType), transform |
-| `@repo/console-providers/contracts` | transform (WebhookEnvelope, PostTransformEvent) |
-| `@repo/console-validation` | eventStore, on-failure-handler (type definitions) |
-| `@repo/console-embed` | entityEmbed (embedding provider) |
-| `@repo/console-pinecone` | entityEmbed (vector upsert) |
+| `@db/app/client` | All functions (DB queries) |
+| `@db/app/schema` | All functions (table references) |
+| `@repo/app-providers` | eventStore (deriveObservationType, getBaseEventType), transform |
+| `@repo/app-providers/contracts` | transform (WebhookEnvelope, PostTransformEvent) |
+| `@repo/app-validation` | eventStore, on-failure-handler (type definitions) |
+| `@repo/app-embed` | entityEmbed (embedding provider) |
+| `@repo/app-pinecone` | entityEmbed (vector upsert) |
 | `@repo/inngest` | All functions (NonRetriableError, event schemas) |
 | `@vendor/observability/log/next` | All functions (structured logging) |
 | `@vendor/knock` | notificationDispatch (Knock client) |
@@ -149,8 +149,8 @@ Add `memory/*` events to the shared Inngest schema package. Keep `console/*` neu
 New file defining all memory event schemas:
 
 ```typescript
-import { postTransformEventSchema } from "@repo/console-providers/contracts";
-import { ingestionSourceSchema } from "@repo/console-validation";
+import { postTransformEventSchema } from "@repo/app-providers/contracts";
+import { ingestionSourceSchema } from "@repo/app-validation";
 import { z } from "zod";
 
 export const memoryEvents = {
@@ -264,17 +264,17 @@ export const consoleEvents = {
 
 ### Overview
 
-Scaffold the `api/memory` package following the `@api/console` pattern. Create the Inngest client instance.
+Scaffold the `api/memory` package following the `@api/app` pattern. Create the Inngest client instance.
 
 ### Changes Required
 
 #### 1. Create `api/memory/package.json`
 
-Follow the `@api/console` pattern:
+Follow the `@api/app` pattern:
 
 ```json
 {
-  "name": "@api/memory",
+  "name": "@api/platform",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -288,11 +288,11 @@ Follow the `@api/console` pattern:
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@db/console": "workspace:*",
-    "@repo/console-embed": "workspace:*",
-    "@repo/console-pinecone": "workspace:*",
-    "@repo/console-providers": "workspace:*",
-    "@repo/console-validation": "workspace:*",
+    "@db/app": "workspace:*",
+    "@repo/app-embed": "workspace:*",
+    "@repo/app-pinecone": "workspace:*",
+    "@repo/app-providers": "workspace:*",
+    "@repo/app-validation": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/knock": "workspace:*",
@@ -353,7 +353,7 @@ export { inngest };
 ### Success Criteria
 
 - [ ] `pnpm install` resolves all workspace dependencies
-- [ ] `pnpm --filter @api/memory typecheck` passes
+- [ ] `pnpm --filter @api/platform typecheck` passes
 - [ ] Inngest client creates successfully with all events typed
 
 ---
@@ -368,15 +368,15 @@ Copy the pure-logic libraries that the Inngest functions depend on. These have n
 
 #### 1. `api/memory/src/lib/scoring.ts`
 
-Copy from `api/console/src/inngest/workflow/neural/scoring.ts`. No changes needed -- it imports from `@repo/console-providers` and `@repo/console-validation`, both available to `@api/memory`.
+Copy from `api/console/src/inngest/workflow/neural/scoring.ts`. No changes needed -- it imports from `@repo/app-providers` and `@repo/app-validation`, both available to `@api/platform`.
 
 #### 2. `api/memory/src/lib/entity-extraction-patterns.ts`
 
-Copy from `api/console/src/inngest/workflow/neural/entity-extraction-patterns.ts`. No changes needed -- imports only from `@repo/console-validation`.
+Copy from `api/console/src/inngest/workflow/neural/entity-extraction-patterns.ts`. No changes needed -- imports only from `@repo/app-validation`.
 
 #### 3. `api/memory/src/lib/edge-resolver.ts`
 
-Copy from `api/console/src/inngest/workflow/neural/edge-resolver.ts`. No changes needed -- imports from `@db/console`, `@repo/console-providers`, `@vendor/observability`, `drizzle-orm`, `nanoid`.
+Copy from `api/console/src/inngest/workflow/neural/edge-resolver.ts`. No changes needed -- imports from `@db/app`, `@repo/app-providers`, `@vendor/observability`, `drizzle-orm`, `nanoid`.
 
 #### 4. `api/memory/src/lib/narrative-builder.ts`
 
@@ -384,11 +384,11 @@ Copy from `api/console/src/inngest/workflow/neural/narrative-builder.ts`. No cha
 
 #### 5. `api/memory/src/lib/jobs.ts`
 
-Copy from `api/console/src/lib/jobs.ts`. No changes needed -- imports from `@db/console`, `@repo/console-validation`, `@vendor/observability`, `drizzle-orm`.
+Copy from `api/console/src/lib/jobs.ts`. No changes needed -- imports from `@db/app`, `@repo/app-validation`, `@vendor/observability`, `drizzle-orm`.
 
 #### 6. `api/memory/src/lib/transform.ts`
 
-Copy from `apps/console/src/app/api/gateway/ingress/_lib/transform.ts`. No changes needed -- imports from `@repo/console-providers` and `@repo/console-providers/contracts`.
+Copy from `apps/console/src/app/api/gateway/ingress/_lib/transform.ts`. No changes needed -- imports from `@repo/app-providers` and `@repo/app-providers/contracts`.
 
 #### 7. `api/memory/src/inngest/on-failure-handler.ts`
 
@@ -398,7 +398,7 @@ Copy from `api/console/src/inngest/workflow/neural/on-failure-handler.ts`. Updat
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/memory typecheck` passes for all lib files
+- [ ] `pnpm --filter @api/platform typecheck` passes for all lib files
 - [ ] No import resolution errors
 
 ---
@@ -448,7 +448,7 @@ Changes:
 2. **Trigger event**: `"console/entity.graphed"` -> `"memory/entity.graphed"`
 3. **Import paths**: `inngest` from `../client`, `buildEntityNarrative`/`narrativeHash` from `../../lib/narrative-builder`
 
-Note: entityEmbed has a 30s debounce per `entityExternalId` and uses `@repo/console-embed` + `@repo/console-pinecone`. Both packages are already workspace dependencies.
+Note: entityEmbed has a 30s debounce per `entityExternalId` and uses `@repo/app-embed` + `@repo/app-pinecone`. Both packages are already workspace dependencies.
 
 ### 4.4: `memory-notification-dispatch.ts`
 
@@ -464,7 +464,7 @@ Note: Significance threshold is 70 (score >= 70 triggers Knock workflow). Uses `
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/memory typecheck` passes for all 4 functions
+- [ ] `pnpm --filter @api/platform typecheck` passes for all 4 functions
 - [ ] All function IDs use `memory/` prefix
 - [ ] All trigger events use `memory/` prefix
 - [ ] All emitted events use `memory/` prefix
@@ -632,7 +632,7 @@ The relay currently sends unresolvable webhooks to a QStash DLQ topic. In the ne
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/memory typecheck` passes
+- [ ] `pnpm --filter @api/platform typecheck` passes
 - [ ] Function handles both standard path (resourceId-based resolution) and service auth path (preResolved)
 - [ ] Unsupported event types return early without sending downstream events
 - [ ] Realtime SSE notification fires for console UI
@@ -697,7 +697,7 @@ export { createInngestRouteContext, inngest } from "./inngest";
 #### 3. Create `apps/memory/src/app/api/inngest/route.ts`
 
 ```typescript
-import { createInngestRouteContext } from "@api/memory/inngest";
+import { createInngestRouteContext } from "@api/platform/inngest";
 
 const context = createInngestRouteContext();
 
@@ -898,7 +898,7 @@ If `jobs.ts` is ONLY used by neural pipeline functions and `recordActivity` does
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/console typecheck` passes
+- [ ] `pnpm --filter @api/app typecheck` passes
 - [ ] `pnpm build:console` succeeds
 - [ ] Console Inngest dashboard shows only `recordActivity`
 - [ ] No 404s from console ingress route (relay no longer calls it)
@@ -930,7 +930,7 @@ pnpm typecheck             # All packages
 pnpm check                 # No lint errors
 pnpm build:console         # Console builds without neural pipeline
 pnpm build:relay           # Relay builds without Upstash Workflow
-pnpm --filter @api/memory typecheck  # Memory package types
+pnpm --filter @api/platform typecheck  # Memory package types
 ```
 
 ### Inngest Dashboard Verification
@@ -961,7 +961,7 @@ Renaming function IDs from `console/*` to `memory/*` means Inngest sees them as 
 
 The `publishEventNotification` SSE notification must continue working for console UI. It is moved into `ingestDelivery` step 5.
 
-**Mitigation**: `@repo/console-upstash-realtime` is added as a dependency of `@api/memory`. The `realtime.channel().emit()` call is identical.
+**Mitigation**: `@repo/app-upstash-realtime` is added as a dependency of `@api/platform`. The `realtime.channel().emit()` call is identical.
 
 ---
 

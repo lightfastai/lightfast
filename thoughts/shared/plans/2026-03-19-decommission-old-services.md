@@ -50,7 +50,7 @@ Before deleting anything, confirm zero traffic is hitting the old services. This
 #### 1.4 Verify console no longer calls gateway-service-clients
 
 - Search production console logs for `gateway-service-clients` or `createGatewayClient` error patterns
-- Verify `@api/console` router files (`connections.ts`, `workspace.ts`) no longer import from `@repo/gateway-service-clients`
+- Verify `@api/app` router files (`connections.ts`, `workspace.ts`) no longer import from `@repo/gateway-service-clients`
 - Confirm `apps/console/src/app/api/debug/inject-event/route.ts` no longer uses `createRelayClient`
 
 ### Success Criteria
@@ -137,11 +137,11 @@ Remove the `"@repo/gateway-service-clients": "workspace:*"` dependency.
 
 ---
 
-## Phase 3: Remove `@api/console` Dependencies on Old Services
+## Phase 3: Remove `@api/app` Dependencies on Old Services
 
 ### Overview
 
-The `@api/console` package (tRPC server-side business logic) currently imports `createGatewayClient` and `createBackfillClient` from `@repo/gateway-service-clients`. These must have been replaced by platform tRPC callers before this phase runs.
+The `@api/app` package (tRPC server-side business logic) currently imports `createGatewayClient` and `createBackfillClient` from `@repo/gateway-service-clients`. These must have been replaced by platform tRPC callers before this phase runs.
 
 ### Pre-Check
 
@@ -154,7 +154,7 @@ If any of these still import from the old package, the prerequisite migration is
 
 ### Changes
 
-#### 3.1 Remove dependency from `@api/console`
+#### 3.1 Remove dependency from `@api/app`
 
 **File**: `api/console/package.json`
 
@@ -162,8 +162,8 @@ Remove `"@repo/gateway-service-clients": "workspace:*"` from dependencies.
 
 ### Success Criteria
 
-- [ ] `pnpm --filter @api/console typecheck` passes
-- [ ] `pnpm --filter @api/console build` succeeds
+- [ ] `pnpm --filter @api/app typecheck` passes
+- [ ] `pnpm --filter @api/app build` succeeds
 - [ ] `grep -r "gateway-service-clients" api/console/` returns zero results
 
 ---
@@ -592,13 +592,13 @@ Remove the "Hono Services" section from the architecture diagram. Update to show
 │  Next.js Apps                                                                   │
 │  ┌──────────────────┐  ┌────────────┐  ┌────────────┐  ┌─────────┐            │
 │  │ console (4107)   │  │ www (4101) │  │ auth (4104)│  │docs(4105│            │
-│  │ @api/console     │  │ marketing  │  │ Clerk      │  │Fumadocs │            │
+│  │ @api/app     │  │ marketing  │  │ Clerk      │  │Fumadocs │            │
 │  │ tRPC + Inngest   │  │ CMS        │  │ OAuth      │  │MDX      │            │
 │  └───────┬──────────┘  └────────────┘  └────────────┘  └─────────┘            │
 │          │                                                                      │
 │  [Platform/Memory service — consolidated from relay+gateway+backfill]           │
 │                                                                                 │
-│          @db/console (Drizzle)                                                  │
+│          @db/app (Drizzle)                                                  │
 │          @vendor/upstash (Redis)                                                │
 └─────────────────────────────────────────────────────────────────────────────────┘
 ```
@@ -771,7 +771,7 @@ For providers where webhook URLs are per-installation (not per-app):
 ```
 Phase 1:  Verify zero traffic (monitoring only, no code changes)
 Phase 2:  Remove console service rewrites and references
-Phase 3:  Remove @api/console dependencies on old services
+Phase 3:  Remove @api/app dependencies on old services
 Phase 4:  Delete service app directories (point of no return)
 Phase 5:  Delete gateway-service-clients package
 Phase 6:  Delete/update integration tests

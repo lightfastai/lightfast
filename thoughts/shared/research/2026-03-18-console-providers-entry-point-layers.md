@@ -10,7 +10,7 @@ status: complete
 last_updated: 2026-03-18
 ---
 
-# Research: `@repo/console-providers` Entry-Point Layers
+# Research: `@repo/app-providers` Entry-Point Layers
 
 **Date**: 2026-03-18
 **Git Commit**: `a3a9f2d67c9535c5fc01fe2a9be59e52bcba647e`
@@ -24,7 +24,7 @@ The package currently has two export entry points — a server-only main barrel 
 
 ## Summary
 
-`@repo/console-providers` exports exactly two compiled entry points: `.` (server-only) and `./display` (client-safe). The `import "server-only"` guard on `index.ts` makes any client bundle import a **build-time error**. However, three values that live deep inside the server barrel — `BACKFILL_DEPTH_OPTIONS`, `PROVIDERS[p].categories`, and `EVENT_REGISTRY` — contain only pure static data with zero server runtime dependencies. They are in server files because the files they share with server-only machinery (`@noble/ed25519`, `@t3-oss/env-core`, provider index.ts factories).
+`@repo/app-providers` exports exactly two compiled entry points: `.` (server-only) and `./display` (client-safe). The `import "server-only"` guard on `index.ts` makes any client bundle import a **build-time error**. However, three values that live deep inside the server barrel — `BACKFILL_DEPTH_OPTIONS`, `PROVIDERS[p].categories`, and `EVENT_REGISTRY` — contain only pure static data with zero server runtime dependencies. They are in server files because the files they share with server-only machinery (`@noble/ed25519`, `@t3-oss/env-core`, provider index.ts factories).
 
 Separately, `wire.ts`, `backfill-contracts.ts`, `gateway.ts`, `types.ts`, and `post-transform-event.ts` are all cross-service Zod schemas used by relay, backfill, and gateway services. Of these, `gateway.ts`, `types.ts`, and `post-transform-event.ts` have **zero server dependencies** (only `zod`). `wire.ts` and `backfill-contracts.ts` have **avoidable transitive server deps** — they import through `registry.ts` purely to reach `providerSlugSchema` and `backfillDepthSchema`, both of which originate in `display.ts` or could.
 
@@ -137,10 +137,10 @@ Used by: `event-row.tsx` (lines 42-45), `debug-panel-content.tsx` (lines 34-41).
 
 | File | What it imports | From | Status |
 |---|---|---|---|
-| `sources-section-loading.tsx` | `PROVIDER_DISPLAY` | `"@repo/console-providers"` (main) | Wrong path — data already in `display.ts` |
-| `source-settings-form.tsx` | `BACKFILL_DEPTH_OPTIONS`, `PROVIDERS[p].categories`, `CategoryDef`, `SourceType` | `"@repo/console-providers"` (main) | Needs client-safe equivalents |
-| `event-row.tsx` | `EVENT_REGISTRY` (label only), `PostTransformEvent` type | `"@repo/console-providers"` (main) + `"@repo/console-providers/display"` | Needs client-safe label map |
-| `debug-panel-content.tsx` | `PROVIDERS[p].categories`, `EVENT_REGISTRY`, `SourceType` | `"@repo/console-providers"` (main) + `"@repo/console-providers/display"` | Needs client-safe equivalents |
+| `sources-section-loading.tsx` | `PROVIDER_DISPLAY` | `"@repo/app-providers"` (main) | Wrong path — data already in `display.ts` |
+| `source-settings-form.tsx` | `BACKFILL_DEPTH_OPTIONS`, `PROVIDERS[p].categories`, `CategoryDef`, `SourceType` | `"@repo/app-providers"` (main) | Needs client-safe equivalents |
+| `event-row.tsx` | `EVENT_REGISTRY` (label only), `PostTransformEvent` type | `"@repo/app-providers"` (main) + `"@repo/app-providers/display"` | Needs client-safe label map |
+| `debug-panel-content.tsx` | `PROVIDERS[p].categories`, `EVENT_REGISTRY`, `SourceType` | `"@repo/app-providers"` (main) + `"@repo/app-providers/display"` | Needs client-safe equivalents |
 
 All four client-side consumers follow the same pattern: they need display/label data that is conceptually client-safe but physically co-located with server machinery.
 
@@ -284,12 +284,12 @@ Derived from provider event definitions (for a hypothetical `EVENT_LABELS: Recor
 ### Current Two-Layer Model
 
 ```
-@repo/console-providers           → dist/index.js    (import "server-only")
+@repo/app-providers           → dist/index.js    (import "server-only")
   └─ re-exports: define.ts, registry.ts, wire.ts, gateway.ts, types.ts,
      backfill-contracts.ts, post-transform-event.ts, providers/*, crypto.ts,
      jwt.ts, sanitize.ts, event-normalization.ts, dispatch.ts, validation.ts
 
-@repo/console-providers/display   → dist/display.js  (no guard — client-safe)
+@repo/app-providers/display   → dist/display.js  (no guard — client-safe)
   └─ re-exports: display.ts only
 ```
 
@@ -323,7 +323,7 @@ These are conceptually "wire/contract" files, not "provider runtime" files. They
 
 1. **New export entry point or expanded `display.ts`?** — Should `BACKFILL_DEPTH_OPTIONS`, `PROVIDER_CATEGORIES`, and `EVENT_LABELS` be added directly to `display.ts` (growing the single client-safe entry), or should there be a second client-safe entry point (e.g., `./client`) that imports from `display.ts` and adds these derived constants?
 
-2. **`./schemas` third entry point** — Should `wire.ts`, `gateway.ts`, `types.ts`, `backfill-contracts.ts`, and `post-transform-event.ts` form a third export entry point `@repo/console-providers/schemas` (or `/contracts`) that is neither server-only nor display-only — usable in both environments? This requires fixing the transitive deps in `wire.ts` and `backfill-contracts.ts` to import `providerSlugSchema` from `./display` directly rather than through `./registry`.
+2. **`./schemas` third entry point** — Should `wire.ts`, `gateway.ts`, `types.ts`, `backfill-contracts.ts`, and `post-transform-event.ts` form a third export entry point `@repo/app-providers/schemas` (or `/contracts`) that is neither server-only nor display-only — usable in both environments? This requires fixing the transitive deps in `wire.ts` and `backfill-contracts.ts` to import `providerSlugSchema` from `./display` directly rather than through `./registry`.
 
 3. **`src/types/` or `src/schemas/` folder** — Should the five pure-Zod cross-env files be reorganised into a `src/schemas/` subfolder with their own index? This is a structural change to how files are laid out (not just what gets exported).
 
