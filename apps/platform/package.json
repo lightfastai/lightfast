@@ -1,5 +1,5 @@
 {
-  "name": "@lightfast/memory",
+  "name": "@lightfast/platform",
   "license": "FSL-1.1-Apache-2.0",
   "version": "0.1.0",
   "private": true,
@@ -13,9 +13,9 @@
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
-    "@api/memory": "workspace:*",
-    "@db/console": "workspace:*",
-    "@repo/console-providers": "workspace:*",
+    "@api/platform": "workspace:*",
+    "@db/app": "workspace:*",
+    "@repo/app-providers": "workspace:*",
     "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:*",
     "@sentry/nextjs": "catalog:",
@@ -23,7 +23,9 @@
     "@trpc/server": "catalog:",
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vendor/security": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "@vercel/related-projects": "catalog:",
     "next": "catalog:next16",
     "react": "19.2.4",
     "react-dom": "19.2.4",
