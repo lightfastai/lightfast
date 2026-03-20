@@ -38,7 +38,7 @@ export function SettingsSidebar({ basePath, items }: SettingsSidebarProps) {
               size="sm"
               variant="ghost"
             >
-              <Link href={href} prefetch={true}>
+              <Link href={{ pathname: href }} prefetch={true}>
                 {item.name}
               </Link>
             </Button>

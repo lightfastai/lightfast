@@ -53,7 +53,7 @@ export function UserMenu({
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link className="cursor-pointer" href={settingsHref} prefetch={true}>
+          <Link className="cursor-pointer" href={{ pathname: settingsHref }} prefetch={true}>
             <Settings className="mr-2 h-3 w-3" />
             Settings
           </Link>

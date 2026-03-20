@@ -109,7 +109,7 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
     return (
       <SidebarMenuItem key={item.title}>
         <SidebarMenuButton asChild isActive={isActive} size="sm">
-          <Link href={item.href} prefetch={true}>
+          <Link href={{ pathname: item.href }} prefetch={true}>
             <span>{item.title}</span>
           </Link>
         </SidebarMenuButton>
