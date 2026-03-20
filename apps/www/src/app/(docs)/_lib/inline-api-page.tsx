@@ -1,5 +1,5 @@
 import { createAPIPage } from "fumadocs-openapi/ui";
-import { openapi } from "@/src/lib/docs/openapi";
+import { openapi } from "./openapi";
 
 /**
  * Minimal API page component for embedding operations inline in MDX.

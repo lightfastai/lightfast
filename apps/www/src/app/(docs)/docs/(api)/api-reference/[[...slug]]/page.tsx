@@ -10,11 +10,84 @@ import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { mdxComponents } from "@/mdx-components";
-import { AlphaBanner } from "@/src/components/docs/alpha-banner";
-import { DocsLayout } from "@/src/components/docs/docs-layout";
-import { APIPage } from "@/src/lib/docs/api-page";
-import type { ApiPageType } from "@/src/lib/docs/source";
-import { getApiPage, getApiPages } from "@/src/lib/docs/source";
+import { AlphaBanner } from "@/src/app/(docs)/_components/alpha-banner";
+import { DocsLayout } from "@/src/app/(docs)/_components/docs-layout";
+import { APIPage } from "@/src/app/(docs)/_lib/api-page";
+import type { ApiPageType } from "@/src/app/(docs)/_lib/source";
+import {
+  getApiPage,
+  getApiPages,
+  isOpenAPIPage,
+} from "@/src/app/(docs)/_lib/source";
+
+// ---------------------------------------------------------------------------
+// Shared structured-data entities — identical across all API reference pages
+// ---------------------------------------------------------------------------
+
+const ORG_ENTITY: Organization = {
+  "@type": "Organization",
+  "@id": "https://lightfast.ai/#organization",
+  name: "Lightfast",
+  url: "https://lightfast.ai",
+  logo: {
+    "@type": "ImageObject",
+    url: "https://lightfast.ai/android-chrome-512x512.png",
+  },
+  sameAs: [
+    "https://twitter.com/lightfastai",
+    "https://github.com/lightfastai",
+    "https://www.linkedin.com/company/lightfastai",
+  ],
+  description:
+    "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+};
+
+const WEBSITE_ENTITY: WebSite = {
+  "@type": "WebSite",
+  "@id": "https://lightfast.ai/docs#website",
+  url: "https://lightfast.ai/docs",
+  name: "Lightfast API Reference",
+  description:
+    "API Reference for Lightfast — REST API and MCP tools documentation",
+  publisher: { "@id": "https://lightfast.ai/#organization" },
+};
+
+function buildApiRefBreadcrumb(slug: string[]): BreadcrumbList {
+  const fullPath = ["api-reference", ...slug];
+  return {
+    "@type": "BreadcrumbList",
+    "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#breadcrumb`,
+    itemListElement: fullPath.map((segment, index) => ({
+      "@type": "ListItem" as const,
+      position: index + 1,
+      name: segment
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" "),
+      item: `https://lightfast.ai/docs/${fullPath.slice(0, index + 1).join("/")}`,
+    })),
+  };
+}
+
+function buildApiRefArticle(
+  slug: string[],
+  title: string,
+  description: string | undefined
+): Article {
+  return {
+    "@type": "Article",
+    "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#article`,
+    headline: title,
+    description: description ?? "API documentation for Lightfast",
+    url: `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
+    author: { "@id": "https://lightfast.ai/#organization" },
+    publisher: { "@id": "https://lightfast.ai/#organization" },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
+    },
+  };
+}
 
 export default async function Page({
   params,
@@ -36,97 +109,18 @@ export default async function Page({
     return notFound();
   }
 
-  // Check if this is an OpenAPI-generated virtual page
-  // OpenAPI pages have a getAPIPageProps method from openapiPlugin
-  // Note: OpenAPI pages bypass our Zod schema, so ?? fallbacks are needed here
-  if (
-    "getAPIPageProps" in page.data &&
-    typeof page.data.getAPIPageProps === "function"
-  ) {
+  // OpenAPI virtual page — has getAPIPageProps() from openapiPlugin
+  // Note: OpenAPI pages bypass our Zod schema, so ?? fallbacks are needed
+  if (isOpenAPIPage(page)) {
     const props = page.data.getAPIPageProps();
     const title = page.data.title ?? "API Reference";
-    const description = page.data.description;
-
-    // Build structured data for OpenAPI endpoint pages
-    const organizationEntity: Organization = {
-      "@type": "Organization",
-      "@id": "https://lightfast.ai/#organization",
-      name: "Lightfast",
-      url: "https://lightfast.ai",
-      logo: {
-        "@type": "ImageObject",
-        url: "https://lightfast.ai/android-chrome-512x512.png",
-      },
-      sameAs: [
-        "https://twitter.com/lightfastai",
-        "https://github.com/lightfastai",
-        "https://www.linkedin.com/company/lightfastai",
-      ],
-      description:
-        "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
-    };
-
-    const websiteEntity: WebSite = {
-      "@type": "WebSite",
-      "@id": "https://lightfast.ai/docs#website",
-      url: "https://lightfast.ai/docs",
-      name: "Lightfast API Reference",
-      description:
-        "API Reference for Lightfast — REST API and MCP tools documentation",
-      publisher: {
-        "@id": "https://lightfast.ai/#organization",
-      },
-    };
-
-    // Build breadcrumb list
-    const fullPath = ["api-reference", ...slug];
-    const breadcrumbItems = fullPath.map((segment, index) => {
-      const url = `/docs/${fullPath.slice(0, index + 1).join("/")}`;
-      const name = segment
-        .split("-")
-        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-        .join(" ");
-
-      return {
-        "@type": "ListItem" as const,
-        position: index + 1,
-        name,
-        item: `https://lightfast.ai${url}`,
-      };
-    });
-
-    const breadcrumbList: BreadcrumbList = {
-      "@type": "BreadcrumbList",
-      "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#breadcrumb`,
-      itemListElement: breadcrumbItems,
-    };
-
-    // Build article entity
-    const articleEntity: Article = {
-      "@type": "Article",
-      "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#article`,
-      headline: title,
-      description: description ?? "API documentation for Lightfast",
-      url: `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
-      author: {
-        "@id": "https://lightfast.ai/#organization",
-      },
-      publisher: {
-        "@id": "https://lightfast.ai/#organization",
-      },
-      mainEntityOfPage: {
-        "@type": "WebPage",
-        "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
-      },
-    };
-
     const structuredData: GraphContext = {
       "@context": "https://schema.org",
       "@graph": [
-        organizationEntity,
-        websiteEntity,
-        breadcrumbList,
-        articleEntity,
+        ORG_ENTITY,
+        WEBSITE_ENTITY,
+        buildApiRefBreadcrumb(slug),
+        buildApiRefArticle(slug, title, page.data.description),
       ],
     };
 
@@ -151,86 +145,13 @@ export default async function Page({
   const title = pageData.title;
   const description = pageData.description;
 
-  // Build structured data for manual MDX pages
-  const organizationEntity: Organization = {
-    "@type": "Organization",
-    "@id": "https://lightfast.ai/#organization",
-    name: "Lightfast",
-    url: "https://lightfast.ai",
-    logo: {
-      "@type": "ImageObject",
-      url: "https://lightfast.ai/android-chrome-512x512.png",
-    },
-    sameAs: [
-      "https://twitter.com/lightfastai",
-      "https://github.com/lightfastai",
-      "https://www.linkedin.com/company/lightfastai",
-    ],
-    description:
-      "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
-  };
-
-  const websiteEntity: WebSite = {
-    "@type": "WebSite",
-    "@id": "https://lightfast.ai/docs#website",
-    url: "https://lightfast.ai/docs",
-    name: "Lightfast API Reference",
-    description:
-      "API Reference for Lightfast — REST API and MCP tools documentation",
-    publisher: {
-      "@id": "https://lightfast.ai/#organization",
-    },
-  };
-
-  // Build breadcrumb list
-  const fullPath = ["api-reference", ...slug];
-  const breadcrumbItems = fullPath.map((segment, index) => {
-    const url = `/docs/${fullPath.slice(0, index + 1).join("/")}`;
-    const name = segment
-      .split("-")
-      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(" ");
-
-    return {
-      "@type": "ListItem" as const,
-      position: index + 1,
-      name,
-      item: `https://lightfast.ai${url}`,
-    };
-  });
-
-  const breadcrumbList: BreadcrumbList = {
-    "@type": "BreadcrumbList",
-    "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#breadcrumb`,
-    itemListElement: breadcrumbItems,
-  };
-
-  // Build article entity (MDX pages — title/description guaranteed by docsSchema)
-  const articleEntity: Article = {
-    "@type": "Article",
-    "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}#article`,
-    headline: title,
-    description,
-    url: `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
-    author: {
-      "@id": "https://lightfast.ai/#organization",
-    },
-    publisher: {
-      "@id": "https://lightfast.ai/#organization",
-    },
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `https://lightfast.ai/docs/api-reference/${slug.join("/")}`,
-    },
-  };
-
   const structuredData: GraphContext = {
     "@context": "https://schema.org",
     "@graph": [
-      organizationEntity,
-      websiteEntity,
-      breadcrumbList,
-      articleEntity,
+      ORG_ENTITY,
+      WEBSITE_ENTITY,
+      buildApiRefBreadcrumb(slug),
+      buildApiRefArticle(slug, title, description),
     ],
   };
 

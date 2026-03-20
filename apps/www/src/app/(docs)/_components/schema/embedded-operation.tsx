@@ -1,5 +1,5 @@
-import { InlineAPIPage } from "@/src/lib/docs/inline-api-page";
-import { getApiPages } from "@/src/lib/docs/source";
+import { InlineAPIPage } from "@/src/app/(docs)/_lib/inline-api-page";
+import { getApiPages, isOpenAPIPage } from "@/src/app/(docs)/_lib/source";
 
 interface EmbeddedOperationProps {
   /** The operationId from the OpenAPI spec (e.g., "search", "get-contents") */
@@ -24,7 +24,7 @@ export function EmbeddedOperation({ operationId }: EmbeddedOperationProps) {
     (p) => p.slugs.length === 1 && p.slugs[0] === operationId
   );
 
-  if (!(page && "getAPIPageProps" in page.data)) {
+  if (!(page && isOpenAPIPage(page))) {
     console.warn(
       `EmbeddedOperation: No OpenAPI page found for operationId "${operationId}"`
     );

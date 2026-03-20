@@ -10,31 +10,10 @@ import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import { mdxComponents } from "@/mdx-components";
-import { DocsLayout } from "@/src/components/docs/docs-layout";
-import { getPage, getPages } from "@/src/lib/docs/source";
+import { DocsLayout } from "@/src/app/(docs)/_components/docs-layout";
+import type { DocsFrontmatter } from "@/src/app/(docs)/_lib/source";
+import { getPage, getPages } from "@/src/app/(docs)/_lib/source";
 import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
-
-/**
- * Extended frontmatter SEO fields.
- * These match the schema defined in source.config.ts
- */
-interface ExtendedFrontmatter {
-  author: string;
-  // Optional overrides (have good auto-generated defaults)
-  canonical?: string;
-  description: string;
-  keywords: string;
-  nofollow?: boolean;
-  noindex?: boolean;
-  ogDescription?: string;
-  ogImage?: string;
-  ogTitle?: string;
-  proficiencyLevel?: "Beginner" | "Intermediate" | "Advanced" | "Expert";
-  publishedAt: string;
-  // Required fields (enforced by docsSchema in source.config.ts)
-  title: string;
-  updatedAt: string;
-}
 
 export default async function Page({
   params,
@@ -284,8 +263,7 @@ export async function generateMetadata({
     });
   }
 
-  // Cast page.data to include extended frontmatter fields
-  const frontmatter = page.data as unknown as ExtendedFrontmatter;
+  const frontmatter = page.data as DocsFrontmatter;
 
   // Build canonical URL for SEO
   const pageUrl = `/docs/${slug.join("/")}`;

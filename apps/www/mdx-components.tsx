@@ -13,22 +13,22 @@ import Image from "next/image";
 import Link from "next/link";
 import type React from "react";
 import { Children, isValidElement } from "react";
-import { AlphaBanner } from "@/src/components/docs/alpha-banner";
-import { ApiEndpoint } from "@/src/components/docs/api-endpoint";
-import { ApiMethod } from "@/src/components/docs/api-method";
+import { consoleUrl } from "~/lib/related-projects";
+import { AlphaBanner } from "@/src/app/(docs)/_components/alpha-banner";
+import { ApiEndpoint } from "@/src/app/(docs)/_components/api-endpoint";
+import { ApiMethod } from "@/src/app/(docs)/_components/api-method";
 import {
   ApiReferenceCard,
   ApiReferenceGrid,
-} from "@/src/components/docs/api-reference-card";
-import { FeatureList } from "@/src/components/docs/feature-list";
-import { NextSteps } from "@/src/components/docs/next-steps";
-import { EmbeddedOperation } from "@/src/components/docs/schema/embedded-operation";
+} from "@/src/app/(docs)/_components/api-reference-card";
+import { FeatureList } from "@/src/app/(docs)/_components/feature-list";
+import { NextSteps } from "@/src/app/(docs)/_components/next-steps";
+import { EmbeddedOperation } from "@/src/app/(docs)/_components/schema/embedded-operation";
 import {
   ValidationError,
   ValidationErrorList,
   ValidationExample,
-} from "@/src/components/docs/validation-error";
-import { consoleUrl, wwwUrl } from "@/src/lib/docs/related-projects";
+} from "@/src/app/(docs)/_components/validation-error";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -594,7 +594,7 @@ export const mdxComponents = {
     className?: string;
     external?: boolean;
   }) {
-    const href = `${wwwUrl}${path.startsWith("/") ? path : `/${path}`}`;
+    const href = path.startsWith("/") ? path : `/${path}`;
     return (
       <Link
         className={cn(

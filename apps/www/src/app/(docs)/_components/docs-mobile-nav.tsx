@@ -14,7 +14,6 @@ import { Menu, Search as SearchIcon, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { wwwUrl } from "../../lib/docs/related-projects";
 
 interface DocsMobileNavProps {
   activePath?: "docs" | "api";
@@ -81,7 +80,7 @@ export function DocsMobileNav({
 
             {/* Header */}
             <div className="flex h-[4.25rem] shrink-0 items-center justify-between border-border/40 border-b px-4">
-              <Link href={wwwUrl} onClick={() => setOpen(false)}>
+              <Link href="/" onClick={() => setOpen(false)}>
                 <Icons.logoShort className="h-4 w-4 text-foreground" />
               </Link>
               <SheetPrimitive.Close className="p-1 text-foreground/60 transition-colors hover:text-foreground">

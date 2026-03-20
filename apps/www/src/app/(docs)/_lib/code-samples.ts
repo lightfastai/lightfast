@@ -7,7 +7,14 @@ interface CodeSample {
   source: string;
 }
 
-const sdkSamples: Record<string, string> = {
+/**
+ * Union of operationIds defined in packages/app-openapi/src/registry.ts.
+ * Must stay in sync with the OpenAPI spec — add/remove entries here when
+ * endpoints are added/removed from the registry.
+ */
+type OperationId = "search" | "get-contents" | "find-similar" | "find-related";
+
+const sdkSamples: Record<OperationId, string> = {
   search: `import { Lightfast } from "lightfast";
 
 const client = new Lightfast({ apiKey: "sk-lf-..." });
@@ -48,19 +55,6 @@ const similar = await client.findSimilar({
 console.log(similar.similar);
 console.log(similar.source);`,
 
-  graph: `import { Lightfast } from "lightfast";
-
-const client = new Lightfast({ apiKey: "sk-lf-..." });
-
-const graph = await client.graph({
-  id: "obs_abc123",
-  depth: 2,
-});
-
-console.log(graph.data.nodes);
-console.log(graph.data.edges);
-console.log(graph.meta.nodeCount);`,
-
   "find-related": `import { Lightfast } from "lightfast";
 
 const client = new Lightfast({ apiKey: "sk-lf-..." });
@@ -74,7 +68,7 @@ console.log(related.data.bySource);
 console.log(related.meta.total);`,
 };
 
-const mcpSamples: Record<string, string> = {
+const mcpSamples: Record<OperationId, string> = {
   search: `{
   "name": "lightfast_search",
   "arguments": {
@@ -103,14 +97,6 @@ const mcpSamples: Record<string, string> = {
   }
 }`,
 
-  graph: `{
-  "name": "lightfast_graph",
-  "arguments": {
-    "id": "obs_abc123",
-    "depth": 2
-  }
-}`,
-
   "find-related": `{
   "name": "lightfast_related",
   "arguments": {
@@ -119,9 +105,13 @@ const mcpSamples: Record<string, string> = {
 }`,
 };
 
+function isOperationId(id: string): id is OperationId {
+  return id in sdkSamples;
+}
+
 export function getCodeSamples(endpoint: MethodInformation): CodeSample[] {
   const operationId = endpoint.operationId;
-  if (!operationId) {
+  if (!operationId || !isOperationId(operationId)) {
     return [];
   }
 

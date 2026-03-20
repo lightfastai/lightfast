@@ -14,7 +14,6 @@ import {
 import type * as PageTree from "fumadocs-core/page-tree";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { wwwUrl } from "../../lib/docs/related-projects";
 import { DocsSidebarScrollArea } from "./docs-sidebar-scroll-area";
 
 interface DocsSidebarProps {
@@ -53,7 +52,7 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
       <SidebarHeader className="!p-0 gap-0">
         {/* Logo - aligned with main header */}
         <div className="page-gutter -ml-2 flex h-[4.25rem] flex-row items-center gap-2">
-          <Link href={wwwUrl}>
+          <Link href="/">
             <Icons.logoShort className="h-4 w-4 text-foreground transition-colors group-hover:text-foreground" />
           </Link>
         </div>
