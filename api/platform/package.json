@@ -32,6 +32,7 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
+    "@inngest/middleware-sentry": "catalog:",
     "@repo/app-embed": "workspace:*",
     "@repo/app-pinecone": "workspace:*",
     "@repo/app-providers": "workspace:*",
