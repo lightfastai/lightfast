@@ -14,6 +14,7 @@
   },
   "dependencies": {
     "@api/platform": "workspace:*",
+    "@vendor/next": "workspace:*",
     "@db/app": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "@repo/lib": "workspace:*",

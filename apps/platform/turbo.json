@@ -5,10 +5,7 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": [
-        "NEXT_PUBLIC_SENTRY_DSN",
-        "NEXT_PUBLIC_VERCEL_ENV"
-      ],
+      "env": ["NEXT_PUBLIC_SENTRY_DSN", "NEXT_PUBLIC_VERCEL_ENV"],
       "passThroughEnv": [
         "SENTRY_AUTH_TOKEN",
         "SENTRY_ORG",
@@ -48,7 +45,9 @@
       ]
     },
     "dev": {
-      "persistent": true
-    }
+      "persistent": true,
+      "with": ["@lightfast/app#dev:inngest"]
+    },
+    "transit": {}
   }
 }

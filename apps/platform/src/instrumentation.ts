@@ -3,9 +3,15 @@ import {
   captureRequestError,
   extraErrorDataIntegration,
   init,
+  spotlightIntegration,
 } from "@sentry/nextjs";
 
 import { env } from "~/env";
+
+const sharedIntegrations = () => [
+  captureConsoleIntegration({ levels: ["error", "warn"] }),
+  extraErrorDataIntegration({ depth: 3 }),
+];
 
 const register = () => {
   // eslint-disable-next-line turbo/no-undeclared-env-vars
@@ -19,8 +25,10 @@ const register = () => {
       enableLogs: true,
       includeLocalVariables: true,
       integrations: [
-        captureConsoleIntegration({ levels: ["error", "warn"] }),
-        extraErrorDataIntegration({ depth: 3 }),
+        ...sharedIntegrations(),
+        ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
+          ? [spotlightIntegration()]
+          : []),
       ],
     });
   }
@@ -34,10 +42,7 @@ const register = () => {
       tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.2 : 1.0,
       debug: false,
       enableLogs: true,
-      integrations: [
-        captureConsoleIntegration({ levels: ["error", "warn"] }),
-        extraErrorDataIntegration({ depth: 3 }),
-      ],
+      integrations: sharedIntegrations(),
     });
   }
 };

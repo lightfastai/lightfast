@@ -1,39 +1,30 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import { mergeNextConfig } from "@vendor/next/merge-config";
+import {
+  config as vendorConfig,
+  withBetterStack,
+  withSentry,
+} from "@vendor/next/next-config-builder";
 import type { NextConfig } from "next";
 
-const config: NextConfig = {
-  reactStrictMode: true,
+const config: NextConfig = withSentry(
+  withBetterStack(
+    mergeNextConfig(vendorConfig, {
+      transpilePackages: [
+        "@api/platform",
+        "@db/app",
+        "@repo/app-providers",
+        "@repo/lib",
+        "@vendor/inngest",
+        "@vendor/next",
+        "@vendor/observability",
+        "@vendor/security",
+        "@vendor/upstash",
+      ],
+      experimental: {
+        optimizePackageImports: ["@repo/lib", "@vendor/observability"],
+      },
+    })
+  )
+);
 
-  transpilePackages: [
-    // @api packages
-    "@api/platform",
-    // @db packages
-    "@db/app",
-    // @repo packages
-    "@repo/app-providers",
-    "@repo/lib",
-    // @vendor packages
-    "@vendor/inngest",
-    "@vendor/observability",
-    "@vendor/upstash",
-  ],
-
-  experimental: {
-    optimizePackageImports: ["@repo/lib", "@vendor/observability"],
-  },
-};
-
-const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
-  org: process.env.SENTRY_ORG,
-  project: process.env.SENTRY_PROJECT,
-  authToken: process.env.SENTRY_AUTH_TOKEN,
-  silent: !process.env.CI,
-  widenClientFileUpload: false,
-  disableLogger: true,
-  bundleSizeOptimizations: {
-    excludeDebugStatements: true,
-  },
-  automaticVercelMonitors: true,
-};
-
-export default withSentryConfig(config, sentryConfig);
+export default config;
