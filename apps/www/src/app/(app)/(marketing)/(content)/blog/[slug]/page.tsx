@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SocialShare } from "~/components/blog-social-share";
+import { SocialShare } from "~/app/(app)/_components/blog-social-share";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;

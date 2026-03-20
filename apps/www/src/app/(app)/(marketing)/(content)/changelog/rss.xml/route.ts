@@ -1,4 +1,4 @@
-import { generateChangelogFeed } from "~/lib/feeds/generate-changelog-feed";
+import { generateChangelogFeed } from "~/app/(app)/_lib/feeds/generate-changelog-feed";
 
 export const revalidate = 3600; // Revalidate every hour
 

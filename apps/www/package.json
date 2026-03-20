@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@mixedbread/sdk": "^0.46.0",
+    "@vercel/related-projects": "catalog:",
     "@radix-ui/react-popover": "^1.1.14",
     "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
