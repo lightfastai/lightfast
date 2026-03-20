@@ -12,5 +12,5 @@ export const wwwUrl = isDevelopment
 // Get the console URL dynamically based on environment
 // Auth routes (/sign-in, /sign-up) are served by the console app
 export const consoleUrl = isDevelopment
-  ? "http://localhost:4107"
+  ? "http://localhost:3024"
   : "https://lightfast.ai";

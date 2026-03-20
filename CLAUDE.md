@@ -14,36 +14,36 @@ See `SPEC.md` for business goals and product vision.
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  Next.js Apps                                                                   │
 │  ┌──────────────────┐  ┌────────────┐  ┌─────────┐                            │
-│  │ console (4107)   │  │ www (4101) │  │docs(4105│                            │
-│  │ @api/console     │  │ marketing  │  │Fumadocs │                            │
+│  │ app (4107)       │  │ www (4101) │  │docs(4105│                            │
+│  │ @api/app     │  │ marketing  │  │Fumadocs │                            │
 │  │ tRPC + Inngest   │  │ CMS        │  │MDX      │                            │
 │  │ + auth routes    │  │            │  │         │                            │
 │  └───────┬──────────┘  └────────────┘  └─────────┘                            │
 │          │                                                                      │
 │  ┌──────────────────┐                                                          │
-│  │ memory (4112)    │                                                          │
-│  │ @api/memory      │  Connections, webhooks, backfill, neural pipeline        │
+│  │ platform (4112)  │                                                          │
+│  │ @api/platform      │  Connections, webhooks, backfill, neural pipeline        │
 │  │ tRPC + Inngest   │  OAuth flows, token vault, event ingestion               │
 │  └──────────────────┘                                                          │
-│                          @db/console (Drizzle)                                  │
+│                          @db/app (Drizzle)                                  │
 │                          @vendor/upstash (Redis)                                │
 └─────────────────────────────────────────────────────────────────────────────────┘
 
-Packages: @repo/* (ui, lib, ai)  |  @repo/console-* (23)  |  @vendor/* (18)
+Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 ```
 
 ### Vercel Microfrontends (lightfast.ai)
 
-2 apps (console, www) served through single domain via `apps/console/microfrontends.json`.
-Console is default app (catch-all routes, sitemap.xml, robots.txt, auth routes).
-Auth routes (/sign-in, /sign-up, /early-access) are served directly by console (migrated from former apps/auth).
-Docs proxied via console rewrites (`next.config.ts`), not in microfrontends config.
+2 apps (app, www) served through single domain via `apps/app/microfrontends.json`.
+App is default app (catch-all routes, sitemap.xml, robots.txt, auth routes).
+Auth routes (/sign-in, /sign-up, /early-access) are served directly by app (migrated from former apps/auth).
+Docs proxied via app rewrites (`next.config.ts`), not in microfrontends config.
 
-### Memory Service
+### Platform Service
 
-Standalone Next.js app (`apps/memory`, port 4112) that consolidates the former relay, gateway, and backfill Hono microservices into a single tRPC + Inngest service.
+Standalone Next.js app (`apps/platform`, port 4112) that consolidates the former relay, gateway, and backfill Hono microservices into a single tRPC + Inngest service.
 Handles: OAuth flows, token vault, connection lifecycle, webhook ingestion, backfill orchestration, and neural pipeline (event capture → entity upsert → graph).
-Domain: `memory.lightfast.ai`.
+Domain: `platform.lightfast.ai`.
 
 ### tRPC Auth Boundaries
 - **userRouter**: No org required (account, apiKeys, sources)
@@ -53,26 +53,26 @@ Domain: `memory.lightfast.ai`.
 
 ```bash
 # Dev servers (NEVER use global pnpm build)
-pnpm dev:app          # Full stack: console + www + memory (port 3024 via microfrontends)
-pnpm dev:console      # Console only (4107)
+pnpm dev:full         # Full stack: app + www + platform (port 3024 via microfrontends)
+pnpm dev:app          # App only (4107)
 pnpm dev:www          # Marketing site (4101)
 pnpm dev:docs         # Docs site (4105)
-pnpm dev:memory       # Memory service (4112)
+pnpm dev:platform     # Platform service (4112)
 
 # Run dev server in background (for Claude Code sessions)
-pnpm dev:console > /tmp/console-dev.log 2>&1 &
+pnpm dev:app > /tmp/console-dev.log 2>&1 &
 tail -f /tmp/console-dev.log  # Follow logs
 pkill -f "next dev"           # Kill all dev servers
 
 # Environment variables (MUST run from apps/<app>/ directory)
-cd apps/console && pnpm with-env <command>
+cd apps/app && pnpm with-env <command>
 
 # Build & Quality
-pnpm build:console                        # Next.js build
-pnpm build:memory                         # Memory service build
+pnpm build:app                            # Next.js build
+pnpm build:platform                       # Platform service build
 pnpm check && pnpm typecheck
 
-# Database (run from db/console/)
+# Database (run from db/app/)
 pnpm db:generate      # NEVER write manual .sql files
 pnpm db:migrate
 pnpm db:studio
@@ -85,7 +85,7 @@ Note: ngrok and inngest automatically runs with `pnpm dev:app`. You can test ngr
 1. **Vendor abstractions**: Standalone re-exports of third-party SDKs. Never import `@planetscale/*` directly → use `@vendor/db`
 2. **Workspace protocol**: Use `workspace:*` for internal deps, `catalog:` for shared externals
 3. **tRPC pattern**: `prefetch()` BEFORE `<HydrateClient>` to avoid UNAUTHORIZED errors
-4. **Background jobs**: Inngest workflows in `api/console/src/inngest/workflow/` and `api/memory/src/inngest/`
+4. **Background jobs**: Inngest workflows in `api/app/src/inngest/workflow/` and `api/platform/src/inngest/`
 
 ## Environment
 
@@ -102,5 +102,5 @@ Note: ngrok and inngest automatically runs with `pnpm dev:app`. You can test ngr
 ```bash
 pkill -f "next dev"                    # Port in use
 pnpm clean:workspaces && pnpm install  # Module not found
-pnpm --filter @api/console build       # tRPC type errors
+pnpm --filter @api/app build       # tRPC type errors (api layer stays @api/app)
 ```

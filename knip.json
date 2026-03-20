@@ -5,11 +5,11 @@
       "entry": ["scripts/*.{js,ts,sh}"],
       "ignoreDependencies": ["turbo-ignore", "@biomejs/biome"]
     },
-    "apps/console": {
+    "apps/app": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": [
-        "@repo/console-auth-middleware",
+        "@repo/app-auth-middleware",
         "@repo/lib",
         "@vitest/expect",
         "zustand"
@@ -45,25 +45,25 @@
       "entry": ["src/publish-blog.ts", "src/publish-changelog.ts"],
       "project": ["src/**/*.ts"]
     },
-    "packages/console-ai": {
+    "packages/app-ai": {
       "entry": ["src/workspace-*.ts"],
       "project": ["src/**/*.ts"]
     },
-    "packages/console-test-data": {
+    "packages/app-test-data": {
       "entry": ["src/cli/**/*.ts"],
       "project": ["src/**/*.ts"]
     },
-    "packages/console-trpc": {
+    "packages/app-trpc": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/console-vercel": {
+    "packages/app-vercel": {
       "project": ["src/**/*.ts"]
     },
     "packages/og": {
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["react", "@types/react"]
     },
-    "packages/console-upstash-realtime": {
+    "packages/app-upstash-realtime": {
       "ignoreDependencies": ["@types/react"]
     },
     "packages/ui": {
@@ -103,10 +103,10 @@
   "ignore": [
     ".agents/**",
     ".claude/**",
-    "apps/console/src/lib/base-url.ts",
+    "apps/app/src/lib/base-url.ts",
     "apps/www/src/lib/base-url.ts"
   ],
-  "ignoreWorkspaces": ["packages/console-remotion"],
+  "ignoreWorkspaces": ["packages/app-remotion"],
   "ignoreDependencies": [
     "tailwindcss",
     "@tailwindcss/postcss",

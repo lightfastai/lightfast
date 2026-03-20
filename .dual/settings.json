@@ -3,8 +3,8 @@
   "extra_commands": [],
   "anonymous_volumes": ["node_modules"],
   "shared": [
-    "apps/auth/.vercel",
-    "apps/console/.vercel",
+    "apps/app/.vercel",
+    "apps/platform/.vercel",
     "apps/docs/.vercel",
     "apps/www/.vercel"
   ]

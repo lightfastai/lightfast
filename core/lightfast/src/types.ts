@@ -18,20 +18,20 @@ export type {
   SearchRequest,
   SearchResponse,
   SearchResult,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 
 import type {
   ContentsRequest,
   FindSimilarRequest,
   RelatedRequest,
   SearchRequest,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 
 /**
  * SDK Input Type Pattern
  * =====================
  *
- * The canonical API schemas in @repo/console-validation use Zod .default() for fields with
+ * The canonical API schemas in @repo/app-validation use Zod .default() for fields with
  * server-side defaults. However, z.infer<> treats these fields as REQUIRED in the TypeScript
  * type, even though Zod applies defaults at runtime.
  *

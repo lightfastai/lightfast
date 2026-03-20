@@ -9,7 +9,7 @@
     "build:dev": "pnpm with-env next build --turbopack",
     "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/console/microfrontends.json && pnpm with-env next dev --port $(microfrontends port) --turbopack",
+    "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/app/microfrontends.json && pnpm with-env next dev --port $(microfrontends port) --turbopack",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_WWW_PORT:-4101}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

@@ -8,23 +8,23 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "default": "./src/index.ts"
     },
     "./client": {
       "types": "./dist/client.d.ts",
-      "default": "./dist/client.js"
+      "default": "./src/client.ts"
     }
   },
   "scripts": {
-    "build": "tsup && tsc --incremental false",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@inngest/middleware-sentry": "catalog:",
-    "@repo/console-providers": "workspace:*",
-    "@repo/console-validation": "workspace:*",
+    "@repo/app-providers": "workspace:*",
+    "@repo/app-validation": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "inngest": "catalog:",
     "zod": "catalog:"
@@ -32,7 +32,6 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "tsup": "^8.5.1",
     "typescript": "catalog:"
   }
 }

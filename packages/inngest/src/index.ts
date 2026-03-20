@@ -1,7 +1,7 @@
 export { NonRetriableError, RetryAfterError } from "@vendor/inngest";
 
-import { consoleEvents } from "./schemas/console.js";
-import { memoryEvents } from "./schemas/memory.js";
+import { consoleEvents } from "./schemas/console";
+import { memoryEvents } from "./schemas/memory";
 
 export { consoleEvents, memoryEvents };
 

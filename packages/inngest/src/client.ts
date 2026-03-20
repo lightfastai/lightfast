@@ -1,9 +1,9 @@
 import { sentryMiddleware } from "@inngest/middleware-sentry";
 import { EventSchemas, Inngest, type InngestMiddleware } from "@vendor/inngest";
-import { allEvents } from "./index.js";
+import { allEvents } from "./index";
 
 export interface CreateInngestClientOptions {
-  /** Service app name, e.g. "lightfast-console" or "lightfast-memory" */
+  /** Service app name, e.g. "lightfast-app" or "lightfast-platform" */
   appName: string;
   eventKey?: string;
   /** Additional middleware beyond Sentry */

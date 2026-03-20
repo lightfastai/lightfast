@@ -6,7 +6,7 @@ export {
   FindSimilarRequestSchema,
   RelatedRequestSchema,
   SearchRequestSchema,
-} from "@repo/console-validation/api";
+} from "@repo/app-validation/api";
 export {
   createLightfast,
   createLightfastMemory,

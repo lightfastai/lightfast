@@ -1,7 +1,7 @@
-import { backfillDepthSchema } from "@repo/console-providers/client";
-import { backfillTriggerPayload } from "@repo/console-providers/contracts";
-import { postTransformEventSchema } from "@repo/console-providers/contracts";
-import { ingestionSourceSchema } from "@repo/console-validation";
+import { backfillDepthSchema } from "@repo/app-providers/client";
+import { backfillTriggerPayload } from "@repo/app-providers/contracts";
+import { postTransformEventSchema } from "@repo/app-providers/contracts";
+import { ingestionSourceSchema } from "@repo/app-validation";
 import { z } from "zod";
 
 export const memoryEvents = {

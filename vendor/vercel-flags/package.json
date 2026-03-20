@@ -6,16 +6,16 @@
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
+      "default": "./src/index.ts"
     },
     "./env": {
       "types": "./dist/env.d.ts",
-      "default": "./dist/env.js"
+      "default": "./env.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup && tsc --incremental false",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
@@ -23,7 +23,6 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "tsup": "^8.5.1",
     "typescript": "catalog:"
   },
   "dependencies": {

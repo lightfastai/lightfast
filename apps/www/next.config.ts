@@ -54,7 +54,7 @@ const wwwConfig: NextConfig = {
   },
 
   // Note: /docs routing is handled by @vercel/microfrontends via
-  // apps/console/microfrontends.json. No manual rewrites needed.
+  // apps/app/microfrontends.json. No manual rewrites needed.
 };
 
 // Build config using vendor utilities (cast at Next.js 15/16 boundary)
