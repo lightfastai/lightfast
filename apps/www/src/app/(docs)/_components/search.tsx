@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useDocsSearch } from "~/hooks/use-docs-search";
+import { useDocsSearch } from "../_hooks/use-docs-search";
 
 type SearchAction =
   | { type: "OPEN" }
