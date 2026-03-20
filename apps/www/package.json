@@ -24,7 +24,6 @@
   },
   "dependencies": {
     "@mixedbread/sdk": "^0.46.0",
-    "@vercel/related-projects": "catalog:",
     "@radix-ui/react-popover": "^1.1.14",
     "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
@@ -40,6 +39,7 @@
     "@vendor/security": "workspace:*",
     "@vendor/seo": "workspace:*",
     "@vercel/microfrontends": "^2.3.0",
+    "@vercel/related-projects": "catalog:",
     "feed": "^5.2.0",
     "framer-motion": "^11.18.2",
     "fumadocs-core": "16.6.10",
