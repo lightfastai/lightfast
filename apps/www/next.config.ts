@@ -27,6 +27,52 @@ const wwwConfig: NextConfig = {
     qualities: [10, 75, 100],
   },
 
+  async redirects() {
+    return [
+      {
+        source: "/docs",
+        destination: "/docs/get-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/api",
+        destination: "/docs/api-reference/getting-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/api-reference",
+        destination: "/docs/api-reference/getting-started/overview",
+        permanent: true,
+      },
+      // Section roots — redirect to first page since no index.mdx exists
+      {
+        source: "/docs/get-started",
+        destination: "/docs/get-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/connectors",
+        destination: "/docs/connectors/github",
+        permanent: true,
+      },
+      {
+        source: "/docs/integrate",
+        destination: "/docs/integrate/sdk",
+        permanent: true,
+      },
+      {
+        source: "/docs/api-reference/getting-started",
+        destination: "/docs/api-reference/getting-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/api-reference/sdks-tools",
+        destination: "/docs/api-reference/sdks-tools/typescript-sdk",
+        permanent: true,
+      },
+    ];
+  },
+
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@repo/og",
