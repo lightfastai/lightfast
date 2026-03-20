@@ -1,6 +1,6 @@
 "use client";
 
-import { providerSlugSchema } from "@repo/console-providers/client";
+import { providerSlugSchema } from "@repo/app-providers/client";
 import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
 import { AGE_PRESET_OPTIONS } from "~/components/search-constants";
 

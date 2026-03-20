@@ -1,6 +1,6 @@
 "use client";
 
-import type { WorkspaceFormValues } from "@repo/console-validation/forms";
+import type { WorkspaceFormValues } from "@repo/app-validation/forms";
 import {
   FormControl,
   FormDescription,

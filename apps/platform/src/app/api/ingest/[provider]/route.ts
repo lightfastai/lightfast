@@ -6,8 +6,8 @@
  *
  * NOT tRPC — external providers send raw HTTP with HMAC signatures.
  */
-import { db } from "@db/console/client";
-import { gatewayWebhookDeliveries } from "@db/console/schema";
+import { db } from "@db/app/client";
+import { gatewayWebhookDeliveries } from "@db/app/schema";
 import {
   deriveVerifySignature,
   getProvider,
@@ -15,12 +15,12 @@ import {
   isWebhookProvider,
   serviceAuthWebhookBodySchema,
   timingSafeStringEqual,
-} from "@repo/console-providers";
-import type { WebhookDef } from "@repo/console-providers";
+} from "@repo/app-providers";
+import type { WebhookDef } from "@repo/app-providers";
 import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
-import { inngest } from "@api/memory/inngest/client";
-import { getProviderConfigs } from "@api/memory/lib/provider-configs";
+import { inngest } from "@api/platform/inngest/client";
+import { getProviderConfigs } from "@api/platform/lib/provider-configs";
 import { env } from "~/env";
 
 export const runtime = "nodejs";

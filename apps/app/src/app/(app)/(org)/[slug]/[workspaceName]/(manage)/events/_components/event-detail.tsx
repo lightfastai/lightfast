@@ -1,6 +1,6 @@
 "use client";
 
-import type { PostTransformEvent } from "@repo/console-providers/contracts";
+import type { PostTransformEvent } from "@repo/app-providers/contracts";
 import { formatDistanceToNow } from "date-fns";
 
 interface EventDetailProps {

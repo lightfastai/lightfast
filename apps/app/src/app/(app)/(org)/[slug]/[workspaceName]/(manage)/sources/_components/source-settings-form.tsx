@@ -1,11 +1,11 @@
 "use client";
 
-import type { CategoryDef, ProviderSlug } from "@repo/console-providers/client";
+import type { CategoryDef, ProviderSlug } from "@repo/app-providers/client";
 import {
   BACKFILL_DEPTH_OPTIONS,
   PROVIDER_CATEGORIES,
-} from "@repo/console-providers/client";
-import { useTRPC } from "@repo/console-trpc/react";
+} from "@repo/app-providers/client";
+import { useTRPC } from "@repo/app-trpc/react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";

@@ -6,13 +6,13 @@
  * NOT tRPC — OAuth provider redirects here directly (browser).
  * Maps CallbackProcessResult from the lib layer to HTTP responses.
  */
-import type { SourceType } from "@repo/console-providers";
+import type { SourceType } from "@repo/app-providers";
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
   processOAuthCallback,
   type CallbackProcessResult,
-} from "@api/memory/lib/oauth/callback";
+} from "@api/platform/lib/oauth/callback";
 
 export const runtime = "nodejs";
 

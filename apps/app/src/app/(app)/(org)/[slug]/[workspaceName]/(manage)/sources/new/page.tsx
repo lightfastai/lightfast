@@ -2,8 +2,8 @@ import {
   PROVIDER_DISPLAY,
   type ProviderDisplayEntry,
   type ProviderSlug,
-} from "@repo/console-providers";
-import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
+} from "@repo/app-providers";
+import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { LinkSourcesButton } from "./_components/link-sources-button";
 import { SourceSelectionProvider } from "./_components/source-selection-provider";

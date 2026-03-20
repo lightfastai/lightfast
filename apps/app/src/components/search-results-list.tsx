@@ -1,6 +1,6 @@
 "use client";
 
-import type { SearchResponse } from "@repo/console-validation";
+import type { SearchResponse } from "@repo/app-validation";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { FileText } from "lucide-react";
 import { SearchResultCard } from "./search-result-card";

@@ -1,5 +1,5 @@
-import { TRPCReactProvider } from "@repo/console-trpc/react";
-import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
+import { TRPCReactProvider } from "@repo/app-trpc/react";
+import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { ClerkProvider } from "@vendor/clerk/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";

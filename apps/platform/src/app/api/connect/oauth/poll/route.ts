@@ -9,7 +9,7 @@
  */
 import type { NextRequest } from "next/server";
 
-import { getOAuthResult } from "@api/memory/lib/oauth/state";
+import { getOAuthResult } from "@api/platform/lib/oauth/state";
 
 export const runtime = "nodejs";
 

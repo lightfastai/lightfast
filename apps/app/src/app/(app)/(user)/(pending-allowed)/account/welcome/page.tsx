@@ -1,4 +1,4 @@
-import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
+import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
 import { auth } from "@vendor/clerk/server";
 import { redirect } from "next/navigation";
 

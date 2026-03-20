@@ -1,6 +1,6 @@
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
+import { useTRPC } from "@repo/app-trpc/react";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import type { ReactNode } from "react";
 import { WorkspaceFormProvider } from "./workspace-form-provider";

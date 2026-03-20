@@ -4,7 +4,7 @@ import type {
   NormalizedInstallation,
   NormalizedResource,
   ProviderSlug,
-} from "@repo/console-providers";
+} from "@repo/app-providers";
 import type { ReactNode } from "react";
 import { createContext, useCallback, useContext, useState } from "react";
 

@@ -3,8 +3,8 @@
 import {
   PROVIDER_DISPLAY,
   type ProviderSlug,
-} from "@repo/console-providers/client";
-import { useTRPC } from "@repo/console-trpc/react";
+} from "@repo/app-providers/client";
+import { useTRPC } from "@repo/app-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import {

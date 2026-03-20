@@ -1,8 +1,8 @@
 "use client";
 
 import { useOrganizationList } from "@clerk/nextjs";
-import { useTRPC } from "@repo/console-trpc/react";
-import type { WorkspaceFormValues } from "@repo/console-validation/forms";
+import { useTRPC } from "@repo/app-trpc/react";
+import type { WorkspaceFormValues } from "@repo/app-validation/forms";
 import { Button } from "@repo/ui/components/ui/button";
 import { useFormContext, useFormState } from "@repo/ui/components/ui/form";
 import { toast } from "@repo/ui/components/ui/sonner";

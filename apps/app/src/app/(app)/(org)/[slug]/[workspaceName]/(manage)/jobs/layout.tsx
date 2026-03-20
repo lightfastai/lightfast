@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
+import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
 
 type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 

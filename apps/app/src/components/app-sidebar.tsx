@@ -1,6 +1,6 @@
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
+import { useTRPC } from "@repo/app-trpc/react";
 import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { Button } from "@repo/ui/components/ui/button";
 import {

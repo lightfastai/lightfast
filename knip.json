@@ -102,9 +102,7 @@
   },
   "ignore": [
     ".agents/**",
-    ".claude/**",
-    "apps/app/src/lib/base-url.ts",
-    "apps/www/src/lib/base-url.ts"
+    ".claude/**"
   ],
   "ignoreWorkspaces": ["packages/app-remotion"],
   "ignoreDependencies": [

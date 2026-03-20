@@ -1,7 +1,7 @@
-import { db } from "@db/console/client";
-import { orgWorkspaces, workspaceIngestLogs } from "@db/console/schema";
-import type { EventNotification } from "@repo/console-upstash-realtime";
-import { realtime } from "@repo/console-upstash-realtime";
+import { db } from "@db/app/client";
+import { orgWorkspaces, workspaceIngestLogs } from "@db/app/schema";
+import type { EventNotification } from "@repo/app-upstash-realtime";
+import { realtime } from "@repo/app-upstash-realtime";
 import { and, eq, gt } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import {

@@ -1,8 +1,8 @@
 import {
   PROVIDER_DISPLAY,
   type ProviderSlug,
-} from "@repo/console-providers/client";
-import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
+} from "@repo/app-providers/client";
+import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import Link from "next/link";

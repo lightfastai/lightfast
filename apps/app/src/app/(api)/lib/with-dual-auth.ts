@@ -6,9 +6,9 @@
  * - Session: Validates workspace access via org membership
  */
 
-import { db } from "@db/console/client";
-import { orgWorkspaces } from "@db/console/schema";
-import { LIGHTFAST_API_KEY_PREFIX } from "@repo/console-api-key";
+import { db } from "@db/app/client";
+import { orgWorkspaces } from "@db/app/schema";
+import { LIGHTFAST_API_KEY_PREFIX } from "@repo/app-api-key";
 import { auth } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 import { eq } from "drizzle-orm";
@@ -238,7 +238,7 @@ async function validateWorkspaceAccess(
 
     // 2. Verify user is member of the org (cached lookup)
     const { getCachedUserOrgMemberships } = await import(
-      "@repo/console-clerk-cache"
+      "@repo/app-clerk-cache"
     );
     const userMemberships = await getCachedUserOrgMemberships(userId);
 

@@ -1,10 +1,10 @@
 /**
  * Centralized type definitions for Console app
  *
- * All types extracted from tRPC RouterOutputs - never import from @db/console/schema directly!
+ * All types extracted from tRPC RouterOutputs - never import from @db/app/schema directly!
  */
 
-import type { RouterInputs, RouterOutputs } from "@repo/console-trpc/types";
+import type { RouterInputs, RouterOutputs } from "@repo/app-trpc/types";
 
 // ============================================================================
 // Jobs

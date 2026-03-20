@@ -1,4 +1,4 @@
-import { handle, realtime } from "@repo/console-upstash-realtime";
+import { handle, realtime } from "@repo/app-upstash-realtime";
 import { auth } from "@vendor/clerk/server";
 
 export const runtime = "nodejs";

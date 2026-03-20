@@ -1,6 +1,6 @@
 "use client";
 
-import type { RerankMode } from "@repo/console-validation";
+import type { RerankMode } from "@repo/app-validation";
 import {
   parseAsArrayOf,
   parseAsInteger,

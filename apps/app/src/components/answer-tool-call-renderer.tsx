@@ -4,7 +4,7 @@ import type {
   ContentsToolUIPart,
   FindSimilarToolUIPart,
   SearchToolUIPart,
-} from "@repo/console-ai-types";
+} from "@repo/app-ai-types";
 import {
   Accordion,
   AccordionContent,

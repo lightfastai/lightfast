@@ -1,6 +1,6 @@
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
+import { useTRPC } from "@repo/app-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { AnswerInterface } from "./answer-interface";

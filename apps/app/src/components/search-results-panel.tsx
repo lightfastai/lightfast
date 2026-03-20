@@ -1,6 +1,6 @@
 "use client";
 
-import type { SearchResponse } from "@repo/console-validation";
+import type { SearchResponse } from "@repo/app-validation";
 import {
   CodeBlock,
   CodeBlockContent,

@@ -1,6 +1,6 @@
-import { env as dbEnv } from "@db/console/env";
-import { githubEnv } from "@repo/console-octokit-github/env";
-import { vercelEnv } from "@repo/console-vercel/env";
+import { env as dbEnv } from "@db/app/env";
+import { githubEnv } from "@repo/app-octokit-github/env";
+import { vercelEnv } from "@repo/app-vercel/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { clerkEnvBase } from "@vendor/clerk/env";

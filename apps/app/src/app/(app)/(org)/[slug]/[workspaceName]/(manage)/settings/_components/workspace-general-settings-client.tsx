@@ -1,9 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTRPC } from "@repo/console-trpc/react";
-import type { WorkspaceSettingsFormValues } from "@repo/console-validation/forms";
-import { workspaceSettingsFormSchema } from "@repo/console-validation/forms";
+import { useTRPC } from "@repo/app-trpc/react";
+import type { WorkspaceSettingsFormValues } from "@repo/app-validation/forms";
+import { workspaceSettingsFormSchema } from "@repo/app-validation/forms";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Form,

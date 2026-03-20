@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { ContentsRequestSchema } from "@repo/console-validation";
+import { ContentsRequestSchema } from "@repo/app-validation";
 import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";

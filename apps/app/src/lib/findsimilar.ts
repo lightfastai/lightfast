@@ -1,7 +1,7 @@
 import type {
   FindSimilarRequest,
   FindSimilarResponse,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 import type { AuthContext } from "./types";
 
 export async function findSimilarLogic(

@@ -1,7 +1,7 @@
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
-import type { WorkspaceFormValues } from "@repo/console-validation/forms";
+import { useTRPC } from "@repo/app-trpc/react";
+import type { WorkspaceFormValues } from "@repo/app-validation/forms";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import {
   FormControl,

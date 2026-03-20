@@ -1,5 +1,5 @@
 /**
- * Stub for @repo/console-octokit-github/env.
+ * Stub for @repo/app-octokit-github/env.
  *
  * Provides the client-side env var used by GitHubSourceItem
  * without triggering @t3-oss/env-nextjs validation.

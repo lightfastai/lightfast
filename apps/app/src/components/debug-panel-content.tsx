@@ -1,12 +1,12 @@
 "use client";
 
-import type { CategoryDef, ProviderSlug } from "@repo/console-providers/client";
+import type { CategoryDef, ProviderSlug } from "@repo/app-providers/client";
 import {
   EVENT_LABELS,
   PROVIDER_CATEGORIES,
   PROVIDER_DISPLAY,
-} from "@repo/console-providers/client";
-import { useTRPC } from "@repo/console-trpc/react";
+} from "@repo/app-providers/client";
+import { useTRPC } from "@repo/app-trpc/react";
 import { useQuery } from "@tanstack/react-query";
 import { Check, ChevronDown, ChevronRight, Loader2, X } from "lucide-react";
 import { useState } from "react";

@@ -1,7 +1,7 @@
 "use client";
 
-import { EVENT_LABELS, PROVIDER_DISPLAY } from "@repo/console-providers/client";
-import type { PostTransformEvent } from "@repo/console-providers/contracts";
+import { EVENT_LABELS, PROVIDER_DISPLAY } from "@repo/app-providers/client";
+import type { PostTransformEvent } from "@repo/app-providers/contracts";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
   Collapsible,

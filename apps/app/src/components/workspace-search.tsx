@@ -1,7 +1,7 @@
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
-import type { RerankMode, SearchResponse } from "@repo/console-validation";
+import { useTRPC } from "@repo/app-trpc/react";
+import type { RerankMode, SearchResponse } from "@repo/app-validation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";

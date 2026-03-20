@@ -1,7 +1,7 @@
 "use client";
 
-import type { ProviderSlug } from "@repo/console-providers/client";
-import { useTRPC } from "@repo/console-trpc/react";
+import type { ProviderSlug } from "@repo/app-providers/client";
+import { useTRPC } from "@repo/app-trpc/react";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";

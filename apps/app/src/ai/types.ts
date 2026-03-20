@@ -1,4 +1,4 @@
-import type { LightfastAnswerUIMessage } from "@repo/console-ai-types";
+import type { LightfastAnswerUIMessage } from "@repo/app-ai-types";
 
 /** Context passed through memory operations */
 export interface AnswerMemoryContext {

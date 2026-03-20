@@ -4,7 +4,7 @@ import type {
   ContentsResponse,
   FindSimilarResponse,
   SearchResult,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardContent } from "@repo/ui/components/ui/card";

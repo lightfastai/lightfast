@@ -1,11 +1,11 @@
 {
   "$schema": "https://openapi.vercel.sh/microfrontends.json",
   "applications": {
-    "lightfast-console": {
-      "packageName": "@lightfast/console",
+    "lightfast-app": {
+      "packageName": "@lightfast/app",
       "development": {
         "local": 4107,
-        "fallback": "lightfast-console.vercel.app"
+        "fallback": "lightfast-app.vercel.app"
       }
     },
     "lightfast-www": {

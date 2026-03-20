@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/console-trpc/server";
+import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { SourcesHeader } from "./_components/sources-header";
 import { SourcesList } from "./_components/sources-list";

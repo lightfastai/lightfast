@@ -1,6 +1,6 @@
 "use client";
 
-import { useTRPC } from "@repo/console-trpc/react";
+import { useTRPC } from "@repo/app-trpc/react";
 import {
   Avatar,
   AvatarFallback,

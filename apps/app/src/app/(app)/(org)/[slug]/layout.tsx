@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";

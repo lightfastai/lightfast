@@ -4,7 +4,7 @@ import type {
   ContentsResponse,
   FindSimilarResponse,
   SearchResponse,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 import {
   Accordion,
   AccordionContent,

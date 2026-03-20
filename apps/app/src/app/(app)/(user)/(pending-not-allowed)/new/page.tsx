@@ -1,4 +1,4 @@
-import { HydrateClient } from "@repo/console-trpc/server";
+import { HydrateClient } from "@repo/app-trpc/server";
 
 export const dynamic = "force-dynamic";
 

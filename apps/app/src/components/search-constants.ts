@@ -1,4 +1,4 @@
-import { PROVIDER_DISPLAY } from "@repo/console-providers/client";
+import { PROVIDER_DISPLAY } from "@repo/app-providers/client";
 import type { LucideIcon } from "lucide-react";
 import { Brain, Scale, Zap } from "lucide-react";
 

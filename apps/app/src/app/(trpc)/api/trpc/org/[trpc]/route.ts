@@ -1,60 +1,25 @@
-import { createOrgTRPCContext, orgRouter } from "@api/console";
+import { createOrgTRPCContext, orgRouter } from "@api/app";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
+import { wwwUrl } from "~/lib/related-projects";
 
 // Use Node.js runtime instead of Edge for GitHub App crypto operations
 // Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)
 export const runtime = "nodejs";
 
-/**
- * Configure CORS headers with strict origin control
- *
- * Security: Never use wildcard origins to prevent CSRF attacks
- * - Production: Only allow lightfast.ai (all microfrontends served from main domain)
- * - Preview: Only allow the specific Vercel preview URL
- * - Development: Only allow known local dev ports
- *
- * Note: Console app is a microfrontend served from lightfast.ai
- * See: apps/console/microfrontends.json
- */
-const getAllowedOrigins = (): Set<string> => {
-  const origins = new Set<string>();
-
-  // Production origins (all microfrontends served from lightfast.ai)
-  if (env.VERCEL_ENV === "production") {
-    origins.add("https://lightfast.ai");
-  }
-
-  // Preview deployment origins (Vercel preview URLs)
-  if (env.VERCEL_ENV === "preview" && env.VERCEL_URL) {
-    origins.add(`https://${env.VERCEL_URL}`);
-  }
-
-  // Development origins (known local ports from microfrontends.json)
-  if (env.NODE_ENV === "development") {
-    origins.add("http://localhost:4107"); // Console app (local dev)
-    origins.add("http://localhost:3024"); // Microfrontends proxy
-    origins.add("http://localhost:4101"); // WWW app
-  }
-
-  return origins;
-};
+// Allowed request origins per environment — derived from related projects
+// wwwUrl resolves to the correct origin per environment via VERCEL_RELATED_PROJECTS
+const allowedOrigins = new Set<string>([
+  wwwUrl,
+  ...(env.NODE_ENV === "development" ? ["http://localhost:3024"] : []),
+]);
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
-  const originHeader = req.headers.get("origin");
-  const allowedOrigins = getAllowedOrigins();
+  const origin = req.headers.get("origin");
+  if (!origin || !allowedOrigins.has(origin)) return res;
 
-  // Check if origin is in allowed list
-  const allowOrigin =
-    originHeader && allowedOrigins.has(originHeader) ? originHeader : null;
-
-  // Reject requests from unauthorized origins
-  if (!allowOrigin) {
-    return res;
-  }
-
-  res.headers.set("Access-Control-Allow-Origin", allowOrigin);
+  res.headers.set("Access-Control-Allow-Origin", origin);
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.headers.set(
     "Access-Control-Allow-Headers",

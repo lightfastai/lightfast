@@ -6,12 +6,11 @@ const config: NextConfig = {
 
   transpilePackages: [
     // @api packages
-    "@api/memory",
+    "@api/platform",
     // @db packages
-    "@db/console",
+    "@db/app",
     // @repo packages
-    "@repo/console-providers",
-    "@repo/inngest",
+    "@repo/app-providers",
     "@repo/lib",
     // @vendor packages
     "@vendor/inngest",
@@ -21,7 +20,6 @@ const config: NextConfig = {
 
   experimental: {
     optimizePackageImports: [
-      "@repo/inngest",
       "@repo/lib",
       "@vendor/observability",
     ],

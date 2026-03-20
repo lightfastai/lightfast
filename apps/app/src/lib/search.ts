@@ -1,12 +1,12 @@
-import { db } from "@db/console/client";
-import { orgWorkspaces } from "@db/console/schema";
-import { createEmbeddingProviderForWorkspace } from "@repo/console-embed";
-import { consolePineconeClient } from "@repo/console-pinecone";
+import { db } from "@db/app/client";
+import { orgWorkspaces } from "@db/app/schema";
+import { createEmbeddingProviderForWorkspace } from "@repo/app-embed";
+import { consolePineconeClient } from "@repo/app-pinecone";
 import type {
   EntityVectorMetadata,
   SearchRequest,
   SearchResponse,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 import { log } from "@vendor/observability/log/next";
 import { eq } from "drizzle-orm";
 import type { AuthContext } from "./types";

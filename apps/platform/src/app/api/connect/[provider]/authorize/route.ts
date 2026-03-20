@@ -7,10 +7,10 @@
  * The main flow uses tRPC `connections.getAuthorizeUrl` instead;
  * this route supports direct browser navigation as a fallback.
  */
-import type { SourceType } from "@repo/console-providers";
+import type { SourceType } from "@repo/app-providers";
 import type { NextRequest } from "next/server";
 
-import { buildAuthorizeUrl } from "@api/memory/lib/oauth/authorize";
+import { buildAuthorizeUrl } from "@api/platform/lib/oauth/authorize";
 
 export const runtime = "nodejs";
 

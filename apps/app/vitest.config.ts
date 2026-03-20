@@ -18,9 +18,9 @@ export default mergeConfig(
         deps: {
           inline: [
             "@repo/ui",
-            "@repo/console-trpc",
-            "@repo/console-octokit-github",
-            "@repo/console-validation",
+            "@repo/app-trpc",
+            "@repo/app-octokit-github",
+            "@repo/app-validation",
           ],
         },
       },
@@ -32,7 +32,7 @@ export default mergeConfig(
           import.meta.dirname,
           "src/__tests__/__mocks__/next-image.tsx"
         ),
-        "@repo/console-octokit-github/env": resolve(
+        "@repo/app-octokit-github/env": resolve(
           import.meta.dirname,
           "src/__tests__/__mocks__/github-env.ts"
         ),

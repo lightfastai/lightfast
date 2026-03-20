@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, userTrpc } from "@repo/console-trpc/server";
+import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { UserPageHeader } from "~/components/user-page-header";
 

@@ -1,5 +1,5 @@
 import "server-only";
-import { getCachedUserOrgMemberships } from "@repo/console-clerk-cache";
+import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
 import { auth, clerkClient } from "@vendor/clerk/server";
 
 /**

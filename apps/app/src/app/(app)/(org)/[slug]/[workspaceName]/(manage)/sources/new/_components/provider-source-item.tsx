@@ -1,11 +1,11 @@
 "use client";
 
-import type { NormalizedResource } from "@repo/console-providers";
+import type { NormalizedResource } from "@repo/app-providers";
 import {
   PROVIDER_DISPLAY,
   type ProviderSlug,
-} from "@repo/console-providers/client";
-import { useTRPC } from "@repo/console-trpc/react";
+} from "@repo/app-providers/client";
+import { useTRPC } from "@repo/app-trpc/react";
 import {
   AccordionContent,
   AccordionItem,

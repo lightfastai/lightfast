@@ -1,10 +1,10 @@
-import type { OrgRouter, UserRouter } from "@api/console";
+import type { OrgRouter, UserRouter } from "@api/app";
 import { toast } from "@repo/ui/components/ui/sonner";
 import type { TRPCClientError } from "@trpc/client";
 
 /**
  * Combined router type for error handling
- * Matches client-side router union used in @repo/console-trpc
+ * Matches client-side router union used in @repo/app-trpc
  */
 type ConsoleRouters = UserRouter & OrgRouter;
 

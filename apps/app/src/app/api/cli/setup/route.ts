@@ -5,9 +5,9 @@
 // Response: { apiKey, orgId, orgSlug, orgName }
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { db } from "@db/console/client";
-import { orgApiKeys } from "@db/console/schema";
-import { generateOrgApiKey, hashApiKey } from "@repo/console-api-key";
+import { db } from "@db/app/client";
+import { orgApiKeys } from "@db/app/schema";
+import { generateOrgApiKey, hashApiKey } from "@repo/app-api-key";
 import { verifyCliJwt } from "../lib/verify-jwt";
 
 export async function POST(req: Request) {

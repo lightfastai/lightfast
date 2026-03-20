@@ -1,4 +1,4 @@
-import { PROVIDER_DISPLAY } from "@repo/console-providers/client";
+import { PROVIDER_DISPLAY } from "@repo/app-providers/client";
 
 export function SourcesSectionLoading() {
   return (

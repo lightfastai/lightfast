@@ -1,11 +1,11 @@
 "use client";
 
 import { useOrganization } from "@clerk/nextjs";
-import type { ProviderSlug } from "@repo/console-providers/client";
-import type { PostTransformEvent } from "@repo/console-providers/contracts";
-import { useTRPC } from "@repo/console-trpc/react";
-import type { EventNotification } from "@repo/console-upstash-realtime";
-import { useRealtime } from "@repo/console-upstash-realtime/client";
+import type { ProviderSlug } from "@repo/app-providers/client";
+import type { PostTransformEvent } from "@repo/app-providers/contracts";
+import { useTRPC } from "@repo/app-trpc/react";
+import type { EventNotification } from "@repo/app-upstash-realtime";
+import { useRealtime } from "@repo/app-upstash-realtime/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {

@@ -5,9 +5,9 @@
  * Keys authenticate the org and can access all workspaces within it.
  */
 
-import { db } from "@db/console/client";
-import { orgApiKeys } from "@db/console/schema";
-import { hashApiKey, isValidApiKeyFormat } from "@repo/console-api-key";
+import { db } from "@db/app/client";
+import { orgApiKeys } from "@db/app/schema";
+import { hashApiKey, isValidApiKeyFormat } from "@repo/app-api-key";
 import { log } from "@vendor/observability/log/next";
 import { and, eq, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";

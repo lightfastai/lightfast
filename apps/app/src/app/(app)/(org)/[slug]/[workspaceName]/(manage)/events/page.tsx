@@ -1,7 +1,7 @@
 import {
   PROVIDER_DISPLAY,
   type ProviderSlug,
-} from "@repo/console-providers/client";
+} from "@repo/app-providers/client";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { Suspense } from "react";
 import { EventsTable } from "./_components/events-table";
