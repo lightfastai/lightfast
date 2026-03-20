@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { UserPageHeader } from "~/components/user-page-header";
 
@@ -7,7 +7,7 @@ export default function UserLayout({
 }: {
   children: React.ReactNode;
 }) {
-  prefetch(userTrpc.account.get.queryOptions());
+  prefetch(trpc.account.get.queryOptions());
 
   return (
     <HydrateClient>

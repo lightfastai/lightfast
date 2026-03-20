@@ -1,7 +1,4 @@
-import {
-  gatewayInstallations,
-  workspaceIntegrations,
-} from "@db/app/schema";
+import { gatewayInstallations, workspaceIntegrations } from "@db/app/schema";
 import {
   getProvider,
   gwInstallationBackfillConfigSchema,
@@ -15,7 +12,7 @@ import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import yaml from "yaml";
 import { z } from "zod";
-import { apiKeyProcedure, orgScopedProcedure } from "../../trpc";
+import { orgScopedProcedure } from "../../trpc";
 
 /**
  * Connections Router
@@ -48,28 +45,6 @@ export const connectionsRouter = {
         provider: input.provider,
         orgId: ctx.auth.orgId,
         connectedBy: ctx.auth.userId,
-      });
-    }),
-
-  /**
-   * CLI: Get OAuth authorize URL using API key auth.
-   *
-   * Uses orgId from API key auth context, proxies to memory service
-   * with redirect_to=inline for CLI mode.
-   */
-  cliAuthorize: apiKeyProcedure
-    .input(
-      z.object({
-        provider: sourceTypeSchema,
-      })
-    )
-    .query(async ({ ctx, input }) => {
-      const memory = await createMemoryCaller();
-      return memory.connections.getAuthorizeUrl({
-        provider: input.provider,
-        orgId: ctx.auth.orgId,
-        connectedBy: ctx.auth.userId,
-        redirectTo: "inline",
       });
     }),
 

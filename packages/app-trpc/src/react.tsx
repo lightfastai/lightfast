@@ -1,13 +1,12 @@
 "use client";
 
-import type { OrgRouter, UserRouter } from "@api/app";
+import type { AppRouter } from "@api/app";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
   createTRPCClient,
   httpBatchStreamLink,
   loggerLink,
-  splitLink,
 } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
@@ -19,13 +18,7 @@ export interface CreateTRPCReactProviderOptions {
   getAuthHeaders?: () => Record<string, string>;
 }
 
-/**
- * Combined router type for client-side usage
- * Merges user-scoped and org-scoped routers
- */
-type ConsoleRouters = UserRouter & OrgRouter;
-
-const trpcContext = createTRPCContext<ConsoleRouters>();
+const trpcContext = createTRPCContext<AppRouter>();
 
 export const useTRPC = trpcContext.useTRPC;
 export const TRPCProvider = trpcContext.TRPCProvider;
@@ -62,54 +55,26 @@ export function TRPCReactProvider({
   const [trpcClient] = useState(() => {
     const baseUrl = options?.baseUrl ?? defaultGetBaseUrl();
 
-    return createTRPCClient<ConsoleRouters>({
+    return createTRPCClient<AppRouter>({
       links: [
         loggerLink({
           enabled: (op) =>
             process.env.NODE_ENV === "development" ||
             (op.direction === "down" && op.result instanceof Error),
         }),
-        // Split link routes calls to correct endpoint based on procedure
-        splitLink({
-          condition: (op) => {
-            // User-scoped procedures: organization.*, account.*, workspaceAccess.*
-            const path = op.path;
-            return (
-              path.startsWith("organization.") ||
-              path.startsWith("account.") ||
-              path.startsWith("workspaceAccess.")
-            );
+        httpBatchStreamLink({
+          transformer: SuperJSON,
+          url: `${baseUrl}/api/trpc`,
+          headers: () => ({
+            "x-trpc-source": "client",
+            ...(options?.getAuthHeaders?.() ?? {}),
+          }),
+          fetch(url, init) {
+            return fetch(url, {
+              ...init,
+              credentials: "include",
+            } as RequestInit);
           },
-          // True branch: user-scoped endpoint
-          true: httpBatchStreamLink({
-            transformer: SuperJSON,
-            url: `${baseUrl}/api/trpc/user`,
-            headers: () => ({
-              "x-trpc-source": "client",
-              ...(options?.getAuthHeaders?.() ?? {}),
-            }),
-            fetch(url, init) {
-              return fetch(url, {
-                ...init,
-                credentials: "include",
-              } as RequestInit);
-            },
-          }),
-          // False branch: org-scoped endpoint
-          false: httpBatchStreamLink({
-            transformer: SuperJSON,
-            url: `${baseUrl}/api/trpc/org`,
-            headers: () => ({
-              "x-trpc-source": "client",
-              ...(options?.getAuthHeaders?.() ?? {}),
-            }),
-            fetch(url, init) {
-              return fetch(url, {
-                ...init,
-                credentials: "include",
-              } as RequestInit);
-            },
-          }),
         }),
       ],
     });

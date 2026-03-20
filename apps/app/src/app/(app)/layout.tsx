@@ -1,5 +1,5 @@
 import { TRPCReactProvider } from "@repo/app-trpc/react";
-import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { ClerkProvider } from "@vendor/clerk/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -9,7 +9,7 @@ import { env } from "~/env";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Prefetch user's organizations for the org switcher (shared across all authenticated pages)
-  prefetch(userTrpc.organization.listUserOrganizations.queryOptions());
+  prefetch(trpc.organization.listUserOrganizations.queryOptions());
 
   return (
     <ClerkProvider

@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { OrgApiKeyList } from "./_components/org-api-key-list";
 import { OrgApiKeyListLoading } from "./_components/org-api-key-list-loading";
@@ -16,7 +16,7 @@ import { SecurityNotice } from "./_components/security-notice";
  * - Suspense boundary: Wraps only the data-fetching component
  */
 export default function OrgApiKeysPage() {
-  prefetch(orgTrpc.orgApiKeys.list.queryOptions());
+  prefetch(trpc.orgApiKeys.list.queryOptions());
 
   return (
     <div className="space-y-6">

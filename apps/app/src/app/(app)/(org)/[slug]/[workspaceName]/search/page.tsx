@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import {
   WorkspaceSearch,
@@ -17,7 +17,7 @@ export default async function WorkspaceSearchPage({
 
   // Prefetch workspace's single store (1:1 relationship)
   prefetch(
-    orgTrpc.workspace.store.get.queryOptions({
+    trpc.workspace.store.get.queryOptions({
       clerkOrgSlug: slug,
       workspaceName,
     })

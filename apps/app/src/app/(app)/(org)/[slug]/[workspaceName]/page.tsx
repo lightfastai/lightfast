@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { AskLightfast, AskLightfastSkeleton } from "~/components/ask-lightfast";
 
@@ -11,7 +11,7 @@ export default async function AskLightfastPage({
 
   // Prefetch workspace's single store (1:1 relationship)
   prefetch(
-    orgTrpc.workspace.store.get.queryOptions({
+    trpc.workspace.store.get.queryOptions({
       clerkOrgSlug: slug,
       workspaceName,
     })

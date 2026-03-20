@@ -8,14 +8,11 @@
  */
 
 import { db } from "@db/app/client";
-import { orgApiKeys } from "@db/app/schema";
-import { hashApiKey } from "@repo/app-api-key";
 import { resolveWorkspaceByName as resolveWorkspace } from "@repo/app-auth-middleware";
 import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
 import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { auth } from "@vendor/clerk/server";
-import { and, eq, sql } from "drizzle-orm";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -28,7 +25,7 @@ type AuthContext =
       type: "clerk-pending";
       userId: string;
       // Authenticated but hasn't claimed an organization yet
-      // Only allowed for onboarding procedures in PENDING_USER_ALLOWED_PROCEDURES
+      // Only allowed for onboarding procedures
     }
   | {
       type: "clerk-active";
@@ -36,12 +33,6 @@ type AuthContext =
       orgId: string;
       // Authenticated and has claimed an organization
       // Can access all org-scoped resources
-    }
-  | {
-      type: "apiKey";
-      orgId: string;
-      userId: string;
-      apiKeyId: string;
     }
   | {
       type: "unauthenticated";
@@ -61,29 +52,19 @@ type AuthContext =
  */
 
 /**
- * Create context for user-scoped procedures
+ * Unified tRPC context factory (Clerk auth only)
  *
- * Used by /api/trpc/user/* endpoint
- * Allows both pending users (no org) and active users (has org)
- *
- * Procedures accessible:
- * - organization.* (create, list, update)
- * - account.* (profile, API keys, personal integrations)
+ * API key auth is handled by the REST layer (withApiKeyAuth, withDualAuth),
+ * not tRPC. The CLI uses REST endpoints, not tRPC procedures.
  */
-export const createUserTRPCContext = async (opts: { headers: Headers }) => {
+export const createTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
-  // Authenticate via Clerk - ALWAYS allow pending users for user-scoped endpoint
-  const clerkSession = await auth({
-    treatPendingAsSignedOut: false, // Allow pending users
-  });
+  const clerkSession = await auth({ treatPendingAsSignedOut: false });
 
   if (clerkSession.userId) {
     if (clerkSession.orgId) {
-      console.info(
-        `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-active)`
-      );
-
+      console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-active)`);
       return {
         auth: {
           type: "clerk-active" as const,
@@ -94,11 +75,7 @@ export const createUserTRPCContext = async (opts: { headers: Headers }) => {
         headers: opts.headers,
       };
     }
-
-    console.info(
-      `>>> tRPC User Request from ${source} by ${clerkSession.userId} (clerk-pending)`
-    );
-
+    console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-pending)`);
     return {
       auth: {
         type: "clerk-pending" as const,
@@ -109,57 +86,7 @@ export const createUserTRPCContext = async (opts: { headers: Headers }) => {
     };
   }
 
-  // No authentication
-  console.info(`>>> tRPC User Request from ${source} - unauthenticated`);
-  return {
-    auth: { type: "unauthenticated" as const },
-    db,
-    headers: opts.headers,
-  };
-};
-
-/**
- * Create context for org-scoped procedures
- *
- * Used by /api/trpc/org/* endpoint
- * Only allows active users (authenticated + has org)
- * Pending users are treated as unauthenticated
- *
- * Procedures accessible:
- * - workspace.* (management, jobs, stats)
- * - integration.* (GitHub, connections)
- * - stores.* (vector stores)
- * - jobs.* (background jobs)
- * - sources.* (data sources)
- * - clerk.* (org utilities)
- * - search.*, contents.* (semantic search)
- */
-export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
-  const source = opts.headers.get("x-trpc-source") ?? "unknown";
-
-  // Authenticate via Clerk - REQUIRE active org for org-scoped endpoint
-  const clerkSession = await auth({
-    treatPendingAsSignedOut: true, // Pending users blocked
-  });
-
-  if (clerkSession.userId && clerkSession.orgId) {
-    console.info(
-      `>>> tRPC Org Request from ${source} by ${clerkSession.userId} (clerk-active)`
-    );
-
-    return {
-      auth: {
-        type: "clerk-active" as const,
-        userId: clerkSession.userId,
-        orgId: clerkSession.orgId,
-      },
-      db,
-      headers: opts.headers,
-    };
-  }
-
-  // No authentication or pending user
-  console.info(`>>> tRPC Org Request from ${source} - unauthenticated`);
+  console.info(`>>> tRPC Request from ${source} - unauthenticated`);
   return {
     auth: { type: "unauthenticated" as const },
     db,
@@ -173,13 +100,11 @@ export const createOrgTRPCContext = async (opts: { headers: Headers }) => {
  * This is where the trpc api is initialized, connecting the context and
  * transformer
  *
- * Note: Using createUserTRPCContext as the type reference since both
- * createUserTRPCContext and createOrgTRPCContext return the same context shape.
- * They only differ in auth validation (user-scoped vs org-scoped).
+ * Uses the unified createTRPCContext factory (Clerk auth only).
  */
 const isProduction = process.env.NODE_ENV === "production";
 
-const t = initTRPC.context<typeof createUserTRPCContext>().create({
+const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => {
     // In production, sanitize INTERNAL_SERVER_ERROR messages to prevent credential leaks.
@@ -352,53 +277,6 @@ export const orgScopedProcedure = sentrifiedProcedure
     });
   });
 
-/**
- * API Key Protected procedure
- *
- * If you want a query or mutation to ONLY be accessible via API key authentication, use this.
- * This is used by public API endpoints (search, contents) that need workspace-scoped access.
- *
- * Verifies that a valid API key is provided and guarantees `ctx.auth` is of type "apiKey".
- *
- * Security:
- * - Extracts Bearer token from Authorization header
- * - Extracts workspace ID from X-Workspace-ID header
- * - Verifies key hash against database
- * - Checks expiration and active status
- * - Provides workspace context for tenant isolation
- *
- * @see https://trpc.io/docs/procedures
- */
-export const apiKeyProcedure = sentrifiedProcedure
-  .use(timingMiddleware)
-  .use(async ({ ctx, next }) => {
-    // Extract API key from Authorization header
-    const authHeader = ctx.headers.get("authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message:
-          "API key required. Provide 'Authorization: Bearer <api-key>' header.",
-      });
-    }
-
-    const apiKey = authHeader.replace("Bearer ", "");
-
-    // Verify API key and get org context
-    const { orgId, userId, apiKeyId } = await verifyApiKey(apiKey);
-
-    return next({
-      ctx: {
-        ...ctx,
-        auth: {
-          type: "apiKey" as const,
-          orgId,
-          userId,
-          apiKeyId,
-        },
-      },
-    });
-  });
 
 /**
  * Helper: Resolve workspace by name within an org (user-facing)
@@ -510,72 +388,3 @@ export async function verifyOrgMembership(params: {
   };
 }
 
-/**
- * Helper: Verify API key and load workspace context
- *
- * This centralizes the pattern of:
- * 1. Extracting workspace ID from header
- * 2. Verifying key hash in database
- * 3. Checking expiration and active status
- * 4. Updating last used timestamp
- *
- * Use this in apiKeyProcedure middleware
- *
- * @throws {TRPCError} UNAUTHORIZED if key is invalid, expired, or inactive
- * @throws {TRPCError} BAD_REQUEST if workspace ID header is missing
- */
-async function verifyApiKey(key: string): Promise<{
-  orgId: string;
-  userId: string;
-  apiKeyId: string;
-}> {
-  // Hash the provided key to compare with stored hash
-  const keyHash = hashApiKey(key);
-
-  // Find API key in database (org-scoped)
-  const [apiKey] = await db
-    .select({
-      id: orgApiKeys.publicId,
-      internalId: orgApiKeys.id,
-      clerkOrgId: orgApiKeys.clerkOrgId,
-      createdByUserId: orgApiKeys.createdByUserId,
-      isActive: orgApiKeys.isActive,
-      expiresAt: orgApiKeys.expiresAt,
-    })
-    .from(orgApiKeys)
-    .where(and(eq(orgApiKeys.keyHash, keyHash), eq(orgApiKeys.isActive, true)))
-    .limit(1);
-
-  if (!apiKey) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Invalid API key",
-    });
-  }
-
-  // Check expiration
-  if (apiKey.expiresAt && new Date(apiKey.expiresAt) < new Date()) {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "API key expired",
-    });
-  }
-
-  // Update last used timestamp (non-blocking)
-  void db
-    .update(orgApiKeys)
-    .set({ lastUsedAt: sql`CURRENT_TIMESTAMP` })
-    .where(eq(orgApiKeys.id, apiKey.internalId))
-    .catch((error: unknown) => {
-      console.error("Failed to update API key lastUsedAt", {
-        error,
-        apiKeyId: apiKey.id,
-      });
-    });
-
-  return {
-    orgId: apiKey.clerkOrgId,
-    userId: apiKey.createdByUserId,
-    apiKeyId: apiKey.id,
-  };
-}

@@ -3,7 +3,7 @@ import {
   type ProviderDisplayEntry,
   type ProviderSlug,
 } from "@repo/app-providers";
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { LinkSourcesButton } from "./_components/link-sources-button";
 import { SourceSelectionProvider } from "./_components/source-selection-provider";
@@ -24,7 +24,7 @@ export default async function AddSourcesPage({
       continue;
     }
     void prefetch(
-      orgTrpc.connections.generic.listInstallations.queryOptions({
+      trpc.connections.generic.listInstallations.queryOptions({
         provider: slug,
       })
     );
@@ -32,7 +32,7 @@ export default async function AddSourcesPage({
 
   // Prefetch workspace sources
   prefetch(
-    orgTrpc.workspace.sources.list.queryOptions({
+    trpc.workspace.sources.list.queryOptions({
       clerkOrgSlug: slug,
       workspaceName,
     })

@@ -1,12 +1,6 @@
-import type { OrgRouter, UserRouter } from "@api/app";
+import type { AppRouter } from "@api/app";
 import { toast } from "@repo/ui/components/ui/sonner";
 import type { TRPCClientError } from "@trpc/client";
-
-/**
- * Combined router type for error handling
- * Matches client-side router union used in @repo/app-trpc
- */
-type ConsoleRouters = UserRouter & OrgRouter;
 
 /**
  * TRPC error codes - matches server-side codes
@@ -41,7 +35,7 @@ const SAFE_MESSAGE_CODES: ReadonlySet<TRPCErrorCode> = new Set([
  */
 export function isTRPCClientError(
   error: unknown
-): error is TRPCClientError<ConsoleRouters> {
+): error is TRPCClientError<AppRouter> {
   return error instanceof Error && error.name === "TRPCClientError";
 }
 

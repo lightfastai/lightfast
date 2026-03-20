@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { RealtimeProviderWrapper } from "@repo/app-upstash-realtime/client";
 
 interface EventsLayoutProps {
@@ -16,7 +16,7 @@ export default async function EventsLayout({
 
   for (const source of SOURCES) {
     prefetch(
-      orgTrpc.workspace.events.list.queryOptions({
+      trpc.workspace.events.list.queryOptions({
         clerkOrgSlug: slug,
         workspaceName,
         source,

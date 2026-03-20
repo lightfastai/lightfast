@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { auth } from "@vendor/clerk/server";
 import { notFound } from "next/navigation";
@@ -21,7 +21,7 @@ export default async function WorkspaceSettingsPage({
   // Prefetch workspace details for instant loading
   // CRITICAL: This must happen BEFORE HydrateClient wrapping
   prefetch(
-    orgTrpc.workspace.getByName.queryOptions({
+    trpc.workspace.getByName.queryOptions({
       clerkOrgSlug: slug,
       workspaceName,
     })

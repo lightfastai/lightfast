@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -66,7 +66,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   // Prefetch workspace list - uses user-scoped endpoint that allows pending users
   // The procedure manually verifies the user has access to this org
   prefetch(
-    userTrpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
+    trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
       clerkOrgSlug: slug,
     })
   );

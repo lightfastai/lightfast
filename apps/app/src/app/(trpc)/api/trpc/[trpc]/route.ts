@@ -1,4 +1,4 @@
-import { createOrgTRPCContext, orgRouter } from "@api/app";
+import { appRouter, createTRPCContext } from "@api/app";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
@@ -17,7 +17,9 @@ const allowedOrigins = new Set<string>([
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
   const origin = req.headers.get("origin");
-  if (!origin || !allowedOrigins.has(origin)) return res;
+  if (!(origin && allowedOrigins.has(origin))) {
+    return res;
+  }
 
   res.headers.set("Access-Control-Allow-Origin", origin);
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
@@ -32,28 +34,18 @@ const setCorsHeaders = (req: NextRequest, res: Response) => {
 };
 
 export const OPTIONS = (req: NextRequest) => {
-  const response = new Response(null, {
-    status: 204,
-  });
+  const response = new Response(null, { status: 204 });
   return setCorsHeaders(req, response);
 };
 
-/**
- * Org-scoped tRPC endpoint
- * Handles procedures that require active org membership
- * Examples: workspace.create, integration.github.list, jobs.list
- */
 const handler = async (req: NextRequest) => {
   const response = await fetchRequestHandler({
-    endpoint: "/api/trpc/org",
-    router: orgRouter,
+    endpoint: "/api/trpc",
+    router: appRouter,
     req,
-    createContext: () =>
-      createOrgTRPCContext({
-        headers: req.headers,
-      }),
+    createContext: () => createTRPCContext({ headers: req.headers }),
     onError({ error, path }) {
-      console.error(`>>> tRPC Error on 'org.${path}'`, error);
+      console.error(`>>> tRPC Error on '${path}'`, error);
     },
   });
 

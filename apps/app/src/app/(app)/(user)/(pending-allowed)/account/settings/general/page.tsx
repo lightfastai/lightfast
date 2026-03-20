@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, userTrpc } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 
 export const dynamic = "force-dynamic";
@@ -26,7 +26,7 @@ import { ProfileDataLoading } from "./_components/profile-data-loading";
  */
 export default function GeneralSettingsPage() {
   // CRITICAL: Prefetch BEFORE HydrateClient wrapping
-  prefetch(userTrpc.account.get.queryOptions());
+  prefetch(trpc.account.get.queryOptions());
 
   return (
     <HydrateClient>

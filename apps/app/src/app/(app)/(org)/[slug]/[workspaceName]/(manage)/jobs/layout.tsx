@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 
 type JobStatus = "queued" | "running" | "completed" | "failed" | "cancelled";
 
@@ -22,7 +22,7 @@ export default async function JobsLayout({
 
   for (const status of statusFilters) {
     prefetch(
-      orgTrpc.jobs.list.queryOptions({
+      trpc.jobs.list.queryOptions({
         clerkOrgSlug: slug,
         workspaceName,
         status,

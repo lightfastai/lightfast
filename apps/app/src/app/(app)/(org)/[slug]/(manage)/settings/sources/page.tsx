@@ -1,4 +1,4 @@
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { SourcesHeader } from "./_components/sources-header";
 import { SourcesList } from "./_components/sources-list";
@@ -27,7 +27,7 @@ import { SourcesListLoading } from "./_components/sources-list-loading";
 export default function SourcesSettingsPage() {
   // Prefetch org-level connections
   // CRITICAL: This must happen BEFORE HydrateClient wrapping
-  prefetch(orgTrpc.connections.list.queryOptions());
+  prefetch(trpc.connections.list.queryOptions());
 
   return (
     <div className="space-y-6">

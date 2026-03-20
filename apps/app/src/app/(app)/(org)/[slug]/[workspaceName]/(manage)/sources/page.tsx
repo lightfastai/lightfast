@@ -2,7 +2,7 @@ import {
   PROVIDER_DISPLAY,
   type ProviderSlug,
 } from "@repo/app-providers/client";
-import { HydrateClient, orgTrpc, prefetch } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Button } from "@repo/ui/components/ui/button";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import Link from "next/link";
@@ -23,14 +23,14 @@ export default async function SourcesPage({
   // Prefetch connection status for all providers (for resource name lookups)
   for (const provider of Object.keys(PROVIDER_DISPLAY) as ProviderSlug[]) {
     void prefetch(
-      orgTrpc.connections.generic.listInstallations.queryOptions({ provider })
+      trpc.connections.generic.listInstallations.queryOptions({ provider })
     );
   }
 
   // Prefetch workspace sources - tRPC procedure will verify org access
   // No blocking access check here - let query handle verification
   prefetch(
-    orgTrpc.workspace.sources.list.queryOptions({
+    trpc.workspace.sources.list.queryOptions({
       clerkOrgSlug: slug,
       workspaceName,
     })
