@@ -1,4 +1,5 @@
 import { appRouter, createTRPCContext } from "@api/app";
+import { captureException } from "@sentry/nextjs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
@@ -46,6 +47,9 @@ const handler = async (req: NextRequest) => {
     createContext: () => createTRPCContext({ headers: req.headers }),
     onError({ error, path }) {
       console.error(`>>> tRPC Error on '${path}'`, error);
+      if (error.code === "INTERNAL_SERVER_ERROR") {
+        captureException(error);
+      }
     },
   });
 
