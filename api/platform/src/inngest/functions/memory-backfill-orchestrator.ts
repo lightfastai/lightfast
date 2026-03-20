@@ -20,12 +20,8 @@ import {
   gatewayWebhookDeliveries,
 } from "@db/app/schema";
 import { getProvider } from "@repo/app-providers";
-import type { ProviderSlug } from "@repo/app-providers";
-import {
-  BACKFILL_TERMINAL_STATUSES,
-} from "@repo/app-providers/contracts";
-import { NonRetriableError } from "@repo/inngest";
 import { and, eq, inArray, notInArray } from "@vendor/db";
+import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../client";
 import { memoryEntityWorker } from "./memory-entity-worker";
@@ -88,9 +84,7 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
 
       const conn = installationRows[0];
       if (!conn) {
-        throw new NonRetriableError(
-          `Connection not found: ${installationId}`
-        );
+        throw new NonRetriableError(`Connection not found: ${installationId}`);
       }
       if (conn.status !== "active") {
         throw new NonRetriableError(
@@ -339,7 +333,7 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
         const BATCH_SIZE = 200;
         const MAX_ITERATIONS = 500; // Safety cap: 500 * 200 = 100k webhooks max
         let iterations = 0;
-        let processedIds: string[] = [];
+        const processedIds: string[] = [];
 
         while (iterations < MAX_ITERATIONS) {
           iterations++;

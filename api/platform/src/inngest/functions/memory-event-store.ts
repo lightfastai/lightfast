@@ -24,10 +24,7 @@ import {
   workspaceIntegrations,
 } from "@db/app/schema";
 import type { ProviderConfig } from "@repo/app-providers";
-import {
-  deriveObservationType,
-  getBaseEventType,
-} from "@repo/app-providers";
+import { deriveObservationType, getBaseEventType } from "@repo/app-providers";
 import type {
   EntityCategory,
   EventCaptureInput,
@@ -36,18 +33,18 @@ import type {
   EventCaptureOutputSuccess,
   ExtractedEntity,
 } from "@repo/app-validation";
-import { NonRetriableError } from "@repo/inngest";
+import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
 import { and, eq, sql } from "drizzle-orm";
 import { nanoid } from "nanoid";
-import { completeJob, createJob, updateJobStatus } from "../../lib/jobs";
-import { inngest } from "../client";
 import {
   extractEntities,
   extractFromRelations,
 } from "../../lib/entity-extraction-patterns";
-import { createNeuralOnFailureHandler } from "../on-failure-handler";
+import { completeJob, createJob, updateJobStatus } from "../../lib/jobs";
 import { scoreSignificance } from "../../lib/scoring";
+import { inngest } from "../client";
+import { createNeuralOnFailureHandler } from "../on-failure-handler";
 
 const STRUCTURAL_TYPES = new Set([
   "commit",

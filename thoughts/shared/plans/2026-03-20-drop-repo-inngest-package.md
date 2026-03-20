@@ -201,7 +201,7 @@ export const memoryEvents = {
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] Both new schema files exist and TypeScript can parse them: `pnpm typecheck`
+- [x] Both new schema files exist and TypeScript can parse them: `pnpm typecheck`
 
 ---
 
@@ -254,8 +254,8 @@ export { inngest };
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] No remaining imports from `@repo/inngest/client`: `grep -r "@repo/inngest/client" api/`
-- [ ] Type checking passes: `pnpm typecheck`
+- [x] No remaining imports from `@repo/inngest/client`: `grep -r "@repo/inngest/client" api/`
+- [x] Type checking passes: `pnpm typecheck`
 
 ---
 
@@ -284,8 +284,8 @@ import { NonRetriableError } from "@vendor/inngest";
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] No remaining imports from `@repo/inngest` (root entry): `grep -r "from \"@repo/inngest\"" api/`
-- [ ] Type checking passes: `pnpm typecheck`
+- [x] No remaining imports from `@repo/inngest` (root entry): `grep -r "from \"@repo/inngest\"" api/`
+- [x] Type checking passes: `pnpm typecheck`
 
 ---
 
@@ -316,13 +316,13 @@ pnpm install
 ### Success Criteria
 
 #### Automated Verification:
-- [ ] No references to `@repo/inngest` anywhere: `grep -r "@repo/inngest" --include="*.ts" --include="*.json" .`
-- [ ] `packages/inngest/` does not exist
-- [ ] `pnpm install` completes without errors
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
-- [ ] App build succeeds: `pnpm build:app`
-- [ ] Platform build succeeds: `pnpm build:platform`
+- [x] No references to `@repo/inngest` anywhere: `grep -r "@repo/inngest" --include="*.ts" --include="*.json" .`
+- [x] `packages/inngest/` does not exist
+- [x] `pnpm install` completes without errors
+- [x] Type checking passes: `pnpm typecheck` (all 3 affected packages pass; pre-existing failures in @lightfastai/mcp unrelated)
+- [ ] Linting passes: `pnpm check` (pre-existing failures; our files pass biome check individually)
+- [ ] App build succeeds: `pnpm build:app` (fails on env vars, pre-existing)
+- [ ] Platform build succeeds: `pnpm build:platform` (fails on env vars, pre-existing)
 
 #### Manual Verification:
 - [ ] `pnpm dev:platform` starts without errors

@@ -22,12 +22,12 @@ import {
 } from "@db/app/schema";
 import type { ProviderSlug } from "@repo/app-providers";
 import { sanitizePostTransformEvent } from "@repo/app-providers";
-import { NonRetriableError } from "@repo/inngest";
 import type { EventNotification } from "@repo/app-upstash-realtime";
+import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
 import { and, eq } from "drizzle-orm";
-import { inngest } from "../client";
 import { transformEnvelope } from "../../lib/transform";
+import { inngest } from "../client";
 
 export const ingestDelivery = inngest.createFunction(
   {
@@ -180,7 +180,11 @@ export const ingestDelivery = inngest.createFunction(
           .set({ status: "skipped" })
           .where(eq(gatewayWebhookDeliveries.deliveryId, data.deliveryId));
       });
-      return { status: "unsupported", provider: data.provider, eventType: data.eventType };
+      return {
+        status: "unsupported",
+        provider: data.provider,
+        eventType: data.eventType,
+      };
     }
 
     // Step 4: Emit memory/event.capture to trigger the neural pipeline

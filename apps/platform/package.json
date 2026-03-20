@@ -16,7 +16,6 @@
     "@api/platform": "workspace:*",
     "@db/app": "workspace:*",
     "@repo/app-providers": "workspace:*",
-    "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:*",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",

@@ -18,12 +18,15 @@ import {
   workspaceEvents,
 } from "@db/app/schema";
 import type { EntityVectorMetadata } from "@repo/app-validation";
-import { NonRetriableError } from "@repo/inngest";
+import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
 import { asc, desc, eq, sql } from "drizzle-orm";
+import {
+  buildEntityNarrative,
+  narrativeHash,
+} from "../../lib/narrative-builder";
 import { inngest } from "../client";
 import { createNeuralOnFailureHandler } from "../on-failure-handler";
-import { buildEntityNarrative, narrativeHash } from "../../lib/narrative-builder";
 
 /**
  * Hard character cap applied to the narrative before embedding.

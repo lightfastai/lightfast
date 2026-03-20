@@ -1,14 +1,11 @@
-import type { GetEvents } from "@repo/inngest/client";
-import { createInngestClient } from "@repo/inngest/client";
+import { EventSchemas, Inngest } from "@vendor/inngest";
+import type { GetEvents } from "inngest";
 
-/**
- * Memory service Inngest client.
- *
- * App ID is "lightfast-memory". Uses the shared @repo/inngest client factory
- * which registers all event schemas.
- */
-const inngest = createInngestClient({
-  appName: "lightfast-memory",
+import { memoryEvents } from "./schemas/memory";
+
+const inngest = new Inngest({
+  id: "lightfast-memory",
+  schemas: new EventSchemas().fromSchema(memoryEvents),
 });
 
 export type Events = GetEvents<typeof inngest>;

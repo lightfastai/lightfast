@@ -50,7 +50,6 @@
     "@repo/app-validation": "workspace:^",
     "@repo/app-vercel": "workspace:^",
     "@repo/app-workspace-cache": "workspace:*",
-    "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:^",
     "@repo/platform-trpc": "workspace:*",
     "@sentry/core": "catalog:",

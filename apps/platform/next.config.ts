@@ -19,10 +19,7 @@ const config: NextConfig = {
   ],
 
   experimental: {
-    optimizePackageImports: [
-      "@repo/lib",
-      "@vendor/observability",
-    ],
+    optimizePackageImports: ["@repo/lib", "@vendor/observability"],
   },
 };
 

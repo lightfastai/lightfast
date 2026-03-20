@@ -13,20 +13,20 @@
  * - 401 health check signal uses memory/health.check.requested
  */
 
-import { type BackfillContext, getProvider } from "@repo/app-providers";
-import type { ProviderApi, ProviderDefinition } from "@repo/app-providers";
 import { db } from "@db/app/client";
 import { gatewayInstallations, gatewayWebhookDeliveries } from "@db/app/schema";
-import { NonRetriableError } from "@repo/inngest";
+import type { ProviderApi, ProviderDefinition } from "@repo/app-providers";
+import { type BackfillContext, getProvider } from "@repo/app-providers";
 import { eq } from "@vendor/db";
+import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
-import { inngest } from "../client";
+import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../../lib/constants";
 import { providerConfigs } from "../../lib/provider-configs";
 import {
   forceRefreshToken,
   getActiveTokenForInstallation,
 } from "../../lib/token-helpers";
-import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../../lib/constants";
+import { inngest } from "../client";
 
 export const memoryEntityWorker = inngest.createFunction(
   {
@@ -234,9 +234,7 @@ export const memoryEntityWorker = inngest.createFunction(
           }
 
           if (response.status !== 200) {
-            throw new Error(
-              `Provider API returned ${response.status}`
-            );
+            throw new Error(`Provider API returned ${response.status}`);
           }
 
           const data = await response.json();
@@ -314,7 +312,9 @@ export const memoryEntityWorker = inngest.createFunction(
 
           for (let i = 0; i < events.length; i += BATCH_SIZE) {
             const batch = events.slice(i, i + BATCH_SIZE);
-            if (batch.length === 0) continue;
+            if (batch.length === 0) {
+              continue;
+            }
 
             if (holdForReplay) {
               // Persist to DB with status "held" — orchestrator replays after all workers finish

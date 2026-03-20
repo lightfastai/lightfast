@@ -37,7 +37,6 @@
     "@repo/app-providers": "workspace:*",
     "@repo/app-upstash-realtime": "workspace:*",
     "@repo/app-validation": "workspace:*",
-    "@repo/inngest": "workspace:*",
     "@repo/lib": "workspace:^",
     "@sentry/core": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
