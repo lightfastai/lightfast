@@ -82,16 +82,16 @@ Parse markdown body and check:
 ### Link Mapping Rules
 
 The docs use Fumadocs with this structure:
-- `apps/docs/src/content/docs/` - Main docs
-- `apps/docs/src/content/api/` - API reference (mapped to `/docs/api-reference/`)
+- `apps/www/src/content/docs/` - Main docs
+- `apps/www/src/content/api/` - API reference (mapped to `/docs/api-reference/`)
 
 | Link Pattern | File Location |
 |--------------|---------------|
-| `/docs` | `apps/docs/src/content/docs/index.mdx` |
-| `/docs/X` | `apps/docs/src/content/docs/X.mdx` OR `apps/docs/src/content/docs/X/index.mdx` |
-| `/docs/X/Y` | `apps/docs/src/content/docs/X/Y.mdx` |
-| `/docs/api-reference` | `apps/docs/src/content/api/overview.mdx` |
-| `/docs/api-reference/X` | `apps/docs/src/content/api/X.mdx` |
+| `/docs` | `apps/www/src/content/docs/index.mdx` |
+| `/docs/X` | `apps/www/src/content/docs/X.mdx` OR `apps/www/src/content/docs/X/index.mdx` |
+| `/docs/X/Y` | `apps/www/src/content/docs/X/Y.mdx` |
+| `/docs/api-reference` | `apps/www/src/content/api/overview.mdx` |
+| `/docs/api-reference/X` | `apps/www/src/content/api/X.mdx` |
 
 ### Current Valid Documentation Paths
 

@@ -5,7 +5,6 @@
   "shared": [
     "apps/app/.vercel",
     "apps/platform/.vercel",
-    "apps/docs/.vercel",
     "apps/www/.vercel"
   ]
 }

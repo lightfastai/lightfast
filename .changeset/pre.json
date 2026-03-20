@@ -4,7 +4,6 @@
   "initialVersions": {
     "@api/app": "0.1.0",
     "@lightfast/app": "0.1.0",
-    "@lightfast/docs": "1.0.0",
     "@lightfast/www": "0.1.0",
     "@lightfastai/ai-sdk": "0.2.1",
     "@lightfastai/cli": "0.1.0",

@@ -13,12 +13,12 @@ See `SPEC.md` for business goals and product vision.
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────┐
 │  Next.js Apps                                                                   │
-│  ┌──────────────────┐  ┌────────────┐  ┌─────────┐                            │
-│  │ app (4107)       │  │ www (4101) │  │docs(4105│                            │
-│  │ @api/app     │  │ marketing  │  │Fumadocs │                            │
-│  │ tRPC + Inngest   │  │ CMS        │  │MDX      │                            │
-│  │ + auth routes    │  │            │  │         │                            │
-│  └───────┬──────────┘  └────────────┘  └─────────┘                            │
+│  ┌──────────────────┐  ┌────────────────────────────────────┐                  │
+│  │ app (4107)       │  │ www (4101)                         │                  │
+│  │ @api/app     │  │ marketing + docs (fumadocs MDX)    │                  │
+│  │ tRPC + Inngest   │  │ CMS                                │                  │
+│  │ + auth routes    │  │                                    │                  │
+│  └───────┬──────────┘  └────────────────────────────────────┘                  │
 │          │                                                                      │
 │  ┌──────────────────┐                                                          │
 │  │ platform (4112)  │                                                          │
@@ -37,7 +37,7 @@ Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 2 apps (app, www) served through single domain via `apps/app/microfrontends.json`.
 App is default app (catch-all routes, sitemap.xml, robots.txt, auth routes).
 Auth routes (/sign-in, /sign-up, /early-access) are served directly by app (migrated from former apps/auth).
-Docs proxied via app rewrites (`next.config.ts`), not in microfrontends config.
+Docs served via microfrontends mesh through `lightfast-www` (`/docs`, `/docs/:path*` routes in `apps/app/microfrontends.json`).
 
 ### Platform Service
 
@@ -55,8 +55,7 @@ Domain: `platform.lightfast.ai`.
 # Dev servers (NEVER use global pnpm build)
 pnpm dev:full         # Full stack: app + www + platform (port 3024 via microfrontends)
 pnpm dev:app          # App only (4107)
-pnpm dev:www          # Marketing site (4101)
-pnpm dev:docs         # Docs site (4105)
+pnpm dev:www          # Marketing + docs site (4101)
 pnpm dev:platform     # Platform service (4112)
 
 # Run dev server in background (for Claude Code sessions)

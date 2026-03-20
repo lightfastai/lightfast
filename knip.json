@@ -20,10 +20,6 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["jiti"]
     },
-    "apps/docs": {
-      "entry": ["src/app/**/*.{ts,tsx}"],
-      "project": ["src/**/*.{ts,tsx}"]
-    },
     "api/*": {
       "project": ["src/**/*.ts"]
     },
@@ -100,10 +96,7 @@
       "ignoreDependencies": ["hono", "next"]
     }
   },
-  "ignore": [
-    ".agents/**",
-    ".claude/**"
-  ],
+  "ignore": [".agents/**", ".claude/**"],
   "ignoreWorkspaces": ["packages/app-remotion"],
   "ignoreDependencies": [
     "tailwindcss",
