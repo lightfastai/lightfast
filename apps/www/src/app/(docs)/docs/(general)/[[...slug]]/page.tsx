@@ -9,7 +9,7 @@ import { JsonLd } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { mdxComponents } from "@/mdx-components";
+import { mdxComponents } from "@/src/app/(docs)/_lib/mdx-components";
 import { DocsLayout } from "@/src/app/(docs)/_components/docs-layout";
 import type { DocsFrontmatter } from "@/src/app/(docs)/_lib/source";
 import { getPage, getPages } from "@/src/app/(docs)/_lib/source";
