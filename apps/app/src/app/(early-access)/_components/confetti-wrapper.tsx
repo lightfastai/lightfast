@@ -8,7 +8,6 @@ const Confetti = dynamic(() => import("react-confetti"), {
   ssr: false,
 });
 
-// eslint-disable-next-line @typescript-eslint/no-empty-function
 const subscribe = () => () => {};
 const getSnapshot = () => true;
 const getServerSnapshot = () => false;

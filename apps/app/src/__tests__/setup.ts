@@ -24,7 +24,6 @@ expect.extend(jestDomMatchers);
 // @vitest/expect) returns @vitest/expect.Assertion<T> directly, and the augmentation on
 // the re-exporting `vitest` module does not propagate. We must also augment @vitest/expect.
 declare module "@vitest/expect" {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- T must match original Assertion<T> generic for module augmentation
   interface Assertion<T> {
     toAppearAfter(element: HTMLElement | SVGElement): void;
     toAppearBefore(element: HTMLElement | SVGElement): void;

@@ -140,7 +140,6 @@ export class AnswerRedisMemory
     // Handle both string and already-parsed data
     let sessionData: SessionData;
     if (typeof data === "string") {
-      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
       sessionData = JSON.parse(data);
     } else {
       sessionData = data as SessionData;

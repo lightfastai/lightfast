@@ -26,6 +26,7 @@ import { useQueries, useQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { Loader2, Search } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import { env } from "~/env";
 import { useOAuthPopup } from "~/hooks/use-oauth-popup";
 import { useSourceSelection } from "./source-selection-provider";
 
@@ -79,7 +80,7 @@ export function ProviderSourceItem({ provider }: Props) {
   const customConnectUrl =
     provider === "github"
       ? (data: { url: string; state: string }) =>
-          `https://github.com/apps/${process.env.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`
+          `https://github.com/apps/${env.NEXT_PUBLIC_GITHUB_APP_SLUG}/installations/select_target?state=${data.state}`
       : undefined;
 
   const handleAdjustPermissions =

@@ -6,25 +6,16 @@ import {
   spotlightBrowserIntegration,
 } from "@sentry/nextjs";
 
-// Use process.env directly rather than importing ~/env here.
-// ~/env pulls in @t3-oss/env-nextjs + zod for schema validation, which adds
-// ~150KB to the client bundle just to read two NEXT_PUBLIC_ variables.
-// NEXT_PUBLIC_ vars are statically inlined by the Next.js compiler so
-// process.env access is safe and equivalent at runtime.
-const dsn = process.env.NEXT_PUBLIC_SENTRY_DSN;
-const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV as
-  | "development"
-  | "preview"
-  | "production"
-  | undefined;
+import { env } from "~/env";
 
 initSentry({
-  dsn,
-  environment: vercelEnv,
-  tracesSampleRate: vercelEnv === "production" ? 0.1 : 1.0,
+  dsn: env.NEXT_PUBLIC_SENTRY_DSN,
+  environment: env.NEXT_PUBLIC_VERCEL_ENV,
+  tracesSampleRate: env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
   debug: false,
   enableLogs: true,
-  replaysSessionSampleRate: vercelEnv === "production" ? 0.05 : 1.0,
+  replaysSessionSampleRate:
+    env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.05 : 1.0,
   replaysOnErrorSampleRate: 1.0,
   integrations: [
     replayIntegration({
@@ -34,7 +25,9 @@ initSentry({
     reportingObserverIntegration({
       types: ["crash", "deprecation", "intervention"],
     }),
-    ...(vercelEnv === "development" ? [spotlightBrowserIntegration()] : []),
+    ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
+      ? [spotlightBrowserIntegration()]
+      : []),
   ],
 });
 

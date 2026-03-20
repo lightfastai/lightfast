@@ -1,7 +1,7 @@
 import { DebugPanelLoader } from "~/components/debug-panel-loader";
+import { env } from "~/env";
 
-const isDev =
-  !process.env.VERCEL_ENV || process.env.VERCEL_ENV === "development";
+const isDev = env.NEXT_PUBLIC_VERCEL_ENV === "development";
 
 export default async function ManageLayout({
   children,
