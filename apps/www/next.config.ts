@@ -1,4 +1,5 @@
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
+import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 
 import "~/env";
@@ -76,4 +77,6 @@ if (process.env.ANALYZE === "true") {
   ) as NextConfig;
 }
 
-export default withMicrofrontends(config, { debug: true });
+const withMDX = createMDX();
+
+export default withMicrofrontends(withMDX(config), { debug: true });

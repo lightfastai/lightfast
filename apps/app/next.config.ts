@@ -143,28 +143,6 @@ const config: NextConfig = withSentry(
           },
         ];
       },
-      async rewrites() {
-        // Proxy /docs to the docs app
-        // Keep /docs prefix since docs app folder structure has app/docs/
-        const vercelEnv = process.env.NEXT_PUBLIC_VERCEL_ENV;
-        const docsUrl =
-          vercelEnv === "production" ||
-          vercelEnv === "preview" ||
-          process.env.NODE_ENV === "production"
-            ? "https://lightfast-docs.vercel.app"
-            : "http://localhost:4105";
-
-        return [
-          {
-            source: "/docs",
-            destination: `${docsUrl}/docs`,
-          },
-          {
-            source: "/docs/:path*",
-            destination: `${docsUrl}/docs/:path*`,
-          },
-        ];
-      },
     })
   )
 );

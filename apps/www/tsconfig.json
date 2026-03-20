@@ -5,7 +5,8 @@
     "paths": {
       "~/*": ["./src/*"],
       "@/*": ["./*"],
-      "@vendor/cms/*": ["../../vendor/cms/*"]
+      "@vendor/cms/*": ["../../vendor/cms/*"],
+      "fumadocs-mdx:collections/*": [".source/*"]
     }
   },
   "include": [".", ".next/types/**/*.ts", ".source/**/*"],

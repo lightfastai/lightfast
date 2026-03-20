@@ -1,16 +1,11 @@
-import type { Metadata, Viewport } from "next";
-
-import "~/styles/globals.css";
-
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
 import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
-import { ApolloTracker } from "~/components/apollo-tracker";
+import type { Metadata, Viewport } from "next";
 import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefetch-provider";
-import { env } from "~/env";
 import {
   exposurePlus,
   geistMono,
@@ -161,10 +156,9 @@ export default function RootLayout({
         <JsonLd code={organizationSchema} />
         <JsonLd code={websiteSchema} />
       </head>
-      <body className={cn("min-h-screen bg-background font-sans")}>
+      <body>
         <StablePrefetchCrossZoneLinksProvider>
           {children}
-          {env.NEXT_PUBLIC_VERCEL_ENV === "production" && <ApolloTracker />}
           <VercelAnalytics />
           <SpeedInsights />
           <PrefetchCrossZoneLinks />

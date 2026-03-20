@@ -1,0 +1,244 @@
+---
+title: TypeScript SDK
+description: TypeScript SDK API reference for the Lightfast search API
+keywords: TypeScript SDK, API reference, npm package, type-safe client, search API
+author: Lightfast Team
+publishedAt: "2024-12-01"
+updatedAt: "2026-02-18"
+---
+
+# TypeScript SDK Reference
+
+The `lightfast` npm package provides a type-safe client for the Lightfast API.
+
+## Installation
+
+```bash
+npm install lightfast
+```
+
+## Client Configuration
+
+```typescript
+import { Lightfast } from "lightfast";
+
+const client = new Lightfast(config: LightfastConfig);
+```
+
+### LightfastConfig
+
+| Property | Type | Required | Default | Description |
+|----------|------|----------|---------|-------------|
+| `apiKey` | `string` | Yes | - | API key (starts with `sk-lf-`) |
+| `baseUrl` | `string` | No | `https://lightfast.ai` | API base URL |
+| `timeout` | `number` | No | `30000` | Request timeout in milliseconds |
+
+---
+
+## Methods
+
+### search()
+
+Search through workspace memory for relevant documents and observations.
+
+```typescript
+const response = await client.search(input: SearchInput): Promise<V1SearchResponse>
+```
+
+#### SearchInput & Response
+
+<EmbeddedOperation operationId="search" />
+
+#### SearchFilters
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `sourceTypes` | `string[]` | Source types to include (e.g., `["github", "linear"]`) |
+| `observationTypes` | `string[]` | Observation types to include (e.g., `["commit", "issue"]`) |
+| `actorNames` | `string[]` | Actor names to filter by (e.g., `["@sarah", "@mike"]`) |
+| `dateRange` | `{ start?: string; end?: string }` | Date range filter with ISO datetime strings |
+
+#### Example
+
+```typescript
+const results = await client.search({
+  query: "authentication implementation",
+  limit: 10,
+  mode: "balanced",
+  filters: {
+    sourceTypes: ["github"],
+    dateRange: {
+      start: "2024-01-01T00:00:00Z",
+      end: "2024-12-31T23:59:59Z",
+    },
+  },
+});
+
+console.log(results.data); // Array of search results
+console.log(results.meta.total); // Total matching documents
+```
+
+---
+
+### contents()
+
+Fetch full content for documents by their IDs.
+
+```typescript
+const response = await client.contents(input: ContentsInput): Promise<V1ContentsResponse>
+```
+
+#### ContentsInput & Response
+
+<EmbeddedOperation operationId="get-contents" />
+
+#### Example
+
+```typescript
+const contents = await client.contents({
+  ids: ["obs_abc123", "doc_def456"],
+});
+
+console.log(contents.items); // Found content items
+console.log(contents.missing); // IDs that were not found
+```
+
+---
+
+### findSimilar()
+
+Find content semantically similar to a given document or URL.
+
+```typescript
+const response = await client.findSimilar(input: FindSimilarInput): Promise<V1FindSimilarResponse>
+```
+
+#### FindSimilarInput & Response
+
+<EmbeddedOperation operationId="find-similar" />
+
+#### Example
+
+```typescript
+const similar = await client.findSimilar({
+  url: "https://github.com/org/repo/pull/123",
+  limit: 5,
+  threshold: 0.7,
+});
+
+console.log(similar.similar); // Array of similar items
+console.log(similar.source); // Source document info
+```
+
+---
+
+### graph()
+
+Traverse the relationship graph from a starting observation. Returns connected observations with relationship edges.
+
+```typescript
+const response = await client.graph(input: GraphInput): Promise<GraphResponse>
+```
+
+#### GraphInput & Response
+
+<EmbeddedOperation operationId="graph" />
+
+#### Example
+
+```typescript
+const graph = await client.graph({
+  id: "obs_abc123",
+  depth: 2,
+});
+
+console.log(graph.data.nodes); // All connected nodes
+console.log(graph.data.edges); // Relationship edges
+console.log(graph.meta.nodeCount); // Total nodes traversed
+```
+
+---
+
+### related()
+
+Find observations directly connected to a given observation via relationships. Returns related events grouped by source system.
+
+```typescript
+const response = await client.related(input: RelatedInput): Promise<RelatedResponse>
+```
+
+#### RelatedInput & Response
+
+<EmbeddedOperation operationId="find-related" />
+
+#### Example
+
+```typescript
+const related = await client.related({
+  id: "obs_abc123",
+});
+
+console.log(related.data.related); // All related events
+console.log(related.data.bySource); // Events grouped by source
+console.log(related.meta.total); // Total related events found
+```
+
+---
+
+## Error Classes
+
+The SDK exports typed error classes for handling specific error conditions.
+
+```typescript
+import {
+  AuthenticationError,
+  ValidationError,
+  NotFoundError,
+  RateLimitError,
+  NetworkError,
+  ServerError,
+} from "lightfast";
+```
+
+| Error Class | HTTP Status | Description |
+|-------------|-------------|-------------|
+| `AuthenticationError` | 401 | Invalid or expired API key |
+| `ValidationError` | 400 | Invalid request parameters. Access `error.details` for field-specific errors |
+| `NotFoundError` | 404 | Resource not found |
+| `RateLimitError` | 429 | Too many requests. Access `error.retryAfter` for retry delay in seconds |
+| `ServerError` | 500, 502, 503, 504 | Internal server error or service unavailable |
+| `NetworkError` | - | Connection or timeout error |
+
+---
+
+## Type Exports
+
+All request and response types are exported:
+
+```typescript
+import type {
+  LightfastConfig,
+  SearchInput,
+  SearchFilters,
+  V1SearchResponse,
+  V1SearchResult,
+  ContentsInput,
+  V1ContentsResponse,
+  V1ContentItem,
+  FindSimilarInput,
+  V1FindSimilarResponse,
+  V1SimilarResult,
+  GraphInput,
+  GraphResponse,
+  RelatedInput,
+  RelatedResponse,
+} from "lightfast";
+```
+
+---
+
+## Related
+
+- [TypeScript SDK Tutorial](/docs/integrate/sdk) - Getting started guide with examples
+- [POST /v1/search](/docs/api-reference/endpoints/search) - REST API endpoint reference
+- [GitHub Repository](https://github.com/lightfastai/lightfast/tree/main/core/lightfast) - SDK source code
