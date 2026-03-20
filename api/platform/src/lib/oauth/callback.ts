@@ -8,10 +8,7 @@
 import { db } from "@db/app/client";
 import { gatewayInstallations } from "@db/app/schema";
 import type { SourceType } from "@repo/app-providers";
-import {
-  getProvider,
-  providerAccountInfoSchema,
-} from "@repo/app-providers";
+import { getProvider, providerAccountInfoSchema } from "@repo/app-providers";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../provider-configs";
@@ -147,10 +144,10 @@ function buildRedirectForError(
 
 export interface ProcessCallbackParams {
   provider: SourceType;
-  /** The state token from the callback query string */
-  state: string;
   /** All query params from the callback URL */
   query: Record<string, string>;
+  /** The state token from the callback query string */
+  state: string;
 }
 
 /**

@@ -1,7 +1,4 @@
-import type {
-  ContentsRequest,
-  ContentsResponse,
-} from "@repo/app-validation";
+import type { ContentsRequest, ContentsResponse } from "@repo/app-validation";
 import type { AuthContext } from "./types";
 
 export async function contentsLogic(

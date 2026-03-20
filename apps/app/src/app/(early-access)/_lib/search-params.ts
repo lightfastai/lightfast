@@ -4,6 +4,7 @@ import {
   parseAsBoolean,
   parseAsString,
 } from "nuqs/server";
+import type { Route } from "next";
 
 export const earlyAccessSearchParams = {
   // Form field values (preserved across validation errors)
@@ -26,6 +27,8 @@ export const loadEarlyAccessSearchParams = createLoader(
   earlyAccessSearchParams
 );
 
-export const serializeEarlyAccessParams = createSerializer(
-  earlyAccessSearchParams
-);
+export const serializeEarlyAccessParams = createSerializer<
+  typeof earlyAccessSearchParams,
+  Route<string>,
+  Route<string>
+>(earlyAccessSearchParams);

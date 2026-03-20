@@ -18,16 +18,15 @@ import {
   gatewayResources,
   gatewayTokens,
 } from "@db/app/schema";
-import type { RuntimeConfig, SourceType } from "@repo/app-providers";
+import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
-import { log } from "@vendor/observability/log/next";
 import { redis } from "@vendor/upstash";
-import { inngest } from "../client";
 import { resourceKey } from "../../lib/cache";
 import { getEncryptionKey } from "../../lib/encryption";
 import { providerConfigs } from "../../lib/provider-configs";
+import { inngest } from "../client";
 
 export const connectionLifecycle = inngest.createFunction(
   {

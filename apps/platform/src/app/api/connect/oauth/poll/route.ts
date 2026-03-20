@@ -7,9 +7,9 @@
  * The state token itself is the secret (cryptographically random nanoid,
  * known only to the initiator).
  */
-import type { NextRequest } from "next/server";
 
 import { getOAuthResult } from "@api/platform/lib/oauth/state";
+import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 

@@ -147,7 +147,7 @@ export function CreateWorkspaceButton() {
           (org) => org.id === selectedOrgId
         );
         if (!selectedOrg?.slug) {
-          router.push("/");
+          window.location.href = "/";
           return;
         }
         router.push(

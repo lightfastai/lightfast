@@ -7,13 +7,7 @@ import { sentryEnv } from "@vendor/observability/sentry-env";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [
-    vercel(),
-    clerkEnvBase,
-    sentryEnv,
-    githubEnv,
-    vercelEnv,
-  ],
+  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv, vercelEnv],
   shared: {},
   server: {
     /**

@@ -20,8 +20,8 @@ import {
   BACKFILL_TERMINAL_STATUSES,
   backfillRunRecord,
 } from "@repo/app-providers/contracts";
-import { TRPCError } from "@trpc/server";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "@vendor/db";
 import { redis } from "@vendor/upstash";
 import { z } from "zod";
@@ -30,9 +30,7 @@ import { inngest } from "../../inngest/client";
 import { resourceKey } from "../../lib/cache";
 import { buildAuthorizeUrl } from "../../lib/oauth/authorize";
 import { providerConfigs } from "../../lib/provider-configs";
-import {
-  getActiveTokenForInstallation,
-} from "../../lib/token-helpers";
+import { getActiveTokenForInstallation } from "../../lib/token-helpers";
 import { serviceProcedure } from "../../trpc";
 
 // ── Connections Router ──────────────────────────────────────────────────────

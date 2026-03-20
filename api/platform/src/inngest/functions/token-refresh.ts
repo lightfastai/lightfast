@@ -15,10 +15,10 @@ import { getProvider } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { and, eq, isNotNull, lt } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
-import { inngest } from "../client";
 import { getEncryptionKey } from "../../lib/encryption";
 import { providerConfigs } from "../../lib/provider-configs";
 import { updateTokenRecord } from "../../lib/token-store";
+import { inngest } from "../client";
 
 /** Refresh tokens expiring within this window. */
 const REFRESH_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
@@ -33,36 +33,33 @@ export const tokenRefresh = inngest.createFunction(
   { cron: "*/5 * * * *" },
   async ({ step }) => {
     // -- Step 1: Find installations with expiring tokens --------------------
-    const expiringSoon = await step.run(
-      "list-expiring-tokens",
-      async () => {
-        const cutoff = new Date(Date.now() + REFRESH_WINDOW_MS).toISOString();
+    const expiringSoon = await step.run("list-expiring-tokens", async () => {
+      const cutoff = new Date(Date.now() + REFRESH_WINDOW_MS).toISOString();
 
-        return db
-          .select({
-            installationId: gatewayTokens.installationId,
-            tokenId: gatewayTokens.id,
-            encryptedRefreshToken: gatewayTokens.refreshToken,
-            expiresAt: gatewayTokens.expiresAt,
-            provider: gatewayInstallations.provider,
-            externalId: gatewayInstallations.externalId,
-            orgId: gatewayInstallations.orgId,
-          })
-          .from(gatewayTokens)
-          .innerJoin(
-            gatewayInstallations,
-            eq(gatewayTokens.installationId, gatewayInstallations.id)
+      return db
+        .select({
+          installationId: gatewayTokens.installationId,
+          tokenId: gatewayTokens.id,
+          encryptedRefreshToken: gatewayTokens.refreshToken,
+          expiresAt: gatewayTokens.expiresAt,
+          provider: gatewayInstallations.provider,
+          externalId: gatewayInstallations.externalId,
+          orgId: gatewayInstallations.orgId,
+        })
+        .from(gatewayTokens)
+        .innerJoin(
+          gatewayInstallations,
+          eq(gatewayTokens.installationId, gatewayInstallations.id)
+        )
+        .where(
+          and(
+            eq(gatewayInstallations.status, "active"),
+            isNotNull(gatewayTokens.refreshToken),
+            isNotNull(gatewayTokens.expiresAt),
+            lt(gatewayTokens.expiresAt, cutoff)
           )
-          .where(
-            and(
-              eq(gatewayInstallations.status, "active"),
-              isNotNull(gatewayTokens.refreshToken),
-              isNotNull(gatewayTokens.expiresAt),
-              lt(gatewayTokens.expiresAt, cutoff)
-            )
-          );
-      }
-    );
+        );
+    });
 
     log.info("[token-refresh] tokens expiring soon", {
       count: expiringSoon.length,

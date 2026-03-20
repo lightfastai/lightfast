@@ -4,6 +4,7 @@ import {
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
+import type { Route } from "next";
 
 const signInSteps = ["email", "code", "activate"] as const;
 const signUpSteps = ["email", "code"] as const;
@@ -41,5 +42,13 @@ export const signUpSearchParams = {
 export const loadSignInSearchParams = createLoader(signInSearchParams);
 export const loadSignUpSearchParams = createLoader(signUpSearchParams);
 
-export const serializeSignInParams = createSerializer(signInSearchParams);
-export const serializeSignUpParams = createSerializer(signUpSearchParams);
+export const serializeSignInParams = createSerializer<
+  typeof signInSearchParams,
+  Route<string>,
+  Route<string>
+>(signInSearchParams);
+export const serializeSignUpParams = createSerializer<
+  typeof signUpSearchParams,
+  Route<string>,
+  Route<string>
+>(signUpSearchParams);

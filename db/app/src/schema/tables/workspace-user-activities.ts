@@ -14,10 +14,7 @@
  * - Privacy-aware (anonymizable for GDPR)
  */
 
-import type {
-  ActivityCategory,
-  ActivityMetadata,
-} from "@repo/app-validation";
+import type { ActivityCategory, ActivityMetadata } from "@repo/app-validation";
 import { sql } from "drizzle-orm";
 import {
   bigint,

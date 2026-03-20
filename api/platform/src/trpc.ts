@@ -169,7 +169,8 @@ export const adminProcedure = sentrifiedProcedure
     if (ctx.auth.caller !== "admin") {
       throw new TRPCError({
         code: "FORBIDDEN",
-        message: "Admin access required. This endpoint is restricted to admin callers.",
+        message:
+          "Admin access required. This endpoint is restricted to admin callers.",
       });
     }
 

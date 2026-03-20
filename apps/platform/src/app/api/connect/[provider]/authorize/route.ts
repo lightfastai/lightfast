@@ -7,10 +7,10 @@
  * The main flow uses tRPC `connections.getAuthorizeUrl` instead;
  * this route supports direct browser navigation as a fallback.
  */
-import type { SourceType } from "@repo/app-providers";
-import type { NextRequest } from "next/server";
 
 import { buildAuthorizeUrl } from "@api/platform/lib/oauth/authorize";
+import type { SourceType } from "@repo/app-providers";
+import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
@@ -26,8 +26,7 @@ export async function GET(
     req.nextUrl.searchParams.get("connected_by") ??
     req.headers.get("X-User-Id") ??
     "unknown";
-  const redirectTo =
-    req.nextUrl.searchParams.get("redirect_to") ?? undefined;
+  const redirectTo = req.nextUrl.searchParams.get("redirect_to") ?? undefined;
 
   if (!orgId) {
     return Response.json({ error: "missing_org_id" }, { status: 400 });

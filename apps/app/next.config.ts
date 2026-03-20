@@ -11,6 +11,7 @@ import { env } from "./src/env";
 const config: NextConfig = withSentry(
   withBetterStack(
     mergeNextConfig(vendorConfig, {
+      typedRoutes: true,
       images: {
         remotePatterns: [
           {

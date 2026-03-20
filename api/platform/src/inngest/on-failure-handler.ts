@@ -27,10 +27,7 @@
  * ```
  */
 
-import type {
-  NeuralFailureOutput,
-  WorkflowOutput,
-} from "@repo/app-validation";
+import type { NeuralFailureOutput, WorkflowOutput } from "@repo/app-validation";
 import { log } from "@vendor/observability/log/next";
 import { completeJob, getJobByInngestRunId } from "../lib/jobs";
 import type { Events } from "./client";

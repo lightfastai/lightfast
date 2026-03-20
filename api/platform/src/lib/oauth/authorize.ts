@@ -35,9 +35,9 @@ const consoleUrl = (() => {
 // ── Types ──
 
 export interface AuthorizeParams {
-  provider: SourceType;
-  orgId: string;
   connectedBy: string;
+  orgId: string;
+  provider: SourceType;
   redirectTo?: string;
 }
 
@@ -70,10 +70,7 @@ export async function buildAuthorizeUrl(
   if (redirectTo && redirectTo !== "inline") {
     try {
       const url = new URL(redirectTo);
-      if (
-        url.hostname !== "localhost" &&
-        !redirectTo.startsWith(consoleUrl)
-      ) {
+      if (url.hostname !== "localhost" && !redirectTo.startsWith(consoleUrl)) {
         return { ok: false, error: "invalid_redirect_to" };
       }
     } catch {

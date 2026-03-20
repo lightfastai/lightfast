@@ -71,7 +71,9 @@ export type FindSimilarInput = Omit<
   FindSimilarRequest,
   "limit" | "threshold" | "sameSourceOnly"
 > &
-  Partial<Pick<FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">> & {
+  Partial<
+    Pick<FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">
+  > & {
     /** Anchor by arbitrary text for semantic similarity search */
     text?: string;
   };
@@ -99,12 +101,6 @@ export interface LightfastConfig {
   apiKey: string;
 
   /**
-   * Workspace ID to scope API requests.
-   * Required for all query operations.
-   */
-  workspaceId: string;
-
-  /**
    * Base URL for the Lightfast API
    * @default "https://lightfast.ai"
    */
@@ -115,26 +111,32 @@ export interface LightfastConfig {
    * @default 30000
    */
   timeout?: number;
+
+  /**
+   * Workspace ID to scope API requests.
+   * Required for all query operations.
+   */
+  workspaceId: string;
 }
 
 /**
  * Response from proxySearch — all available provider API endpoints for the workspace
  */
 export interface ProxyEndpoint {
+  description: string;
   endpointId: string;
   method: "GET" | "POST";
   path: string;
-  description: string;
   pathParams?: string[];
   timeout?: number;
 }
 
 export interface ProxyConnection {
+  baseUrl: string;
+  endpoints: ProxyEndpoint[];
   installationId: string;
   provider: string;
   status: string;
-  baseUrl: string;
-  endpoints: ProxyEndpoint[];
 }
 
 export interface ProxySearchResponse {
@@ -145,17 +147,17 @@ export interface ProxySearchResponse {
  * Input for proxyExecute — execute a provider API call through the Lightfast proxy
  */
 export interface ProxyExecuteInput {
-  installationId: string;
+  body?: unknown;
   endpointId: string;
+  installationId: string;
   pathParams?: Record<string, string>;
   queryParams?: Record<string, string>;
-  body?: unknown;
 }
 
 export interface ProxyExecuteResponse {
-  status: number;
   data: unknown;
   headers: Record<string, string>;
+  status: number;
 }
 
 /**

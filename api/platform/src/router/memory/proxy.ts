@@ -11,8 +11,8 @@ import { db } from "@db/app/client";
 import { gatewayInstallations } from "@db/app/schema";
 import type { ProviderApi, ProviderDefinition } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
-import { TRPCError } from "@trpc/server";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import { eq } from "@vendor/db";
 import { z } from "zod";
 

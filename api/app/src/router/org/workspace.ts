@@ -6,10 +6,7 @@ import {
   workspaceIntegrations,
 } from "@db/app/schema";
 import { createCustomWorkspace, getWorkspaceKey } from "@db/app/utils";
-import type {
-  ProviderName,
-  SourceType,
-} from "@repo/app-providers";
+import type { ProviderName, SourceType } from "@repo/app-providers";
 import {
   getDefaultSyncEvents,
   PROVIDERS,
@@ -1092,16 +1089,20 @@ export async function notifyBackfill(params: {
     // due to deep type resolution across package boundaries. The memory router
     // has connections, proxy, and backfill — but tRPC's type inference hits
     // the depth limit on the backfill router's complex estimate procedure.
-    const memory = await createMemoryCaller() as Awaited<ReturnType<typeof createMemoryCaller>> & {
-      backfill: { trigger: (input: {
-        installationId: string;
-        provider: string;
-        orgId: string;
-        depth: number;
-        entityTypes?: string[];
-        holdForReplay?: boolean;
-        correlationId?: string;
-      }) => Promise<{ status: string; installationId: string }> };
+    const memory = (await createMemoryCaller()) as Awaited<
+      ReturnType<typeof createMemoryCaller>
+    > & {
+      backfill: {
+        trigger: (input: {
+          installationId: string;
+          provider: string;
+          orgId: string;
+          depth: number;
+          entityTypes?: string[];
+          holdForReplay?: boolean;
+          correlationId?: string;
+        }) => Promise<{ status: string; installationId: string }>;
+      };
     };
     await memory.backfill.trigger({
       installationId: params.installationId,

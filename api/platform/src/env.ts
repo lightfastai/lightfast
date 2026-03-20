@@ -5,7 +5,9 @@ export const env = createEnv({
   server: {
     SERVICE_JWT_SECRET: z.string().min(32),
     ENCRYPTION_KEY: z.string().min(32),
-    NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+    NODE_ENV: z
+      .enum(["development", "test", "production"])
+      .default("development"),
   },
   experimental__runtimeEnv: process.env,
   skipValidation:

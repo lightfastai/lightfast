@@ -21,9 +21,7 @@ export function ErrorBanner({ message, errorCode, backUrl }: ErrorBannerProps) {
           <p className="text-foreground text-sm">{displayMessage}</p>
         </div>
         <Button asChild className="w-full" size="lg">
-          <Link href="/early-access">
-            Join the Waitlist
-          </Link>
+          <Link href="/early-access">Join the Waitlist</Link>
         </Button>
         <Button asChild className="w-full" size="lg" variant="outline">
           <a href={backUrl}>Back</a>

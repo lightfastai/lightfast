@@ -18,9 +18,7 @@ export { recordActivity };
 export function createInngestRouteContext() {
   return serve({
     client: inngest,
-    functions: [
-      recordActivity,
-    ],
+    functions: [recordActivity],
     servePath: "/api/inngest",
   });
 }

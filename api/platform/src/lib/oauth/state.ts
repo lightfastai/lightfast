@@ -10,11 +10,11 @@ import { oauthResultKey, oauthStateKey } from "../cache";
 // ── Store OAuth State ──
 
 export interface OAuthStateData {
-  provider: string;
-  orgId: string;
   connectedBy: string;
-  redirectTo?: string;
   createdAt: string;
+  orgId: string;
+  provider: string;
+  redirectTo?: string;
 }
 
 /**
@@ -65,11 +65,11 @@ export async function consumeOAuthState(
 // ── Store OAuth Result ──
 
 export interface OAuthResultData {
-  status: "completed" | "failed";
+  error?: string;
   provider?: string;
   reactivated?: string;
   setupAction?: string;
-  error?: string;
+  status: "completed" | "failed";
 }
 
 /**
@@ -82,10 +82,18 @@ export async function storeOAuthResult(
   const key = oauthResultKey(state);
   const fields: Record<string, string> = { status: data.status };
 
-  if (data.provider) fields.provider = data.provider;
-  if (data.reactivated) fields.reactivated = data.reactivated;
-  if (data.setupAction) fields.setupAction = data.setupAction;
-  if (data.error) fields.error = data.error;
+  if (data.provider) {
+    fields.provider = data.provider;
+  }
+  if (data.reactivated) {
+    fields.reactivated = data.reactivated;
+  }
+  if (data.setupAction) {
+    fields.setupAction = data.setupAction;
+  }
+  if (data.error) {
+    fields.error = data.error;
+  }
 
   await redis.pipeline().hset(key, fields).expire(key, 300).exec();
 }

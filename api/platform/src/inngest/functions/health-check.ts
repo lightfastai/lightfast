@@ -10,21 +10,15 @@
  */
 
 import { db } from "@db/app/client";
-import {
-  gatewayInstallations,
-  gatewayLifecycleLogs,
-} from "@db/app/schema";
-import type {
-  ProviderDefinition,
-  SourceType,
-} from "@repo/app-providers";
-import { getProvider, PROVIDERS } from "@repo/app-providers";
+import { gatewayInstallations, gatewayLifecycleLogs } from "@db/app/schema";
+import type { ProviderDefinition, SourceType } from "@repo/app-providers";
+import { getProvider } from "@repo/app-providers";
 import { nanoid } from "@repo/lib";
 import { eq, sql } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
-import { inngest } from "../client";
 import { providerConfigs } from "../../lib/provider-configs";
 import { getActiveTokenForInstallation } from "../../lib/token-helpers";
+import { inngest } from "../client";
 
 const FAILURE_THRESHOLD_DEGRADED = 3; // mark healthStatus='degraded'
 const FAILURE_THRESHOLD_LIFECYCLE = 6; // fire lifecycle event (~30 min)

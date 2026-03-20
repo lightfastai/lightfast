@@ -11,14 +11,14 @@ import { env } from "../env";
 
 /** Standard JWT claims for service-to-service auth */
 interface ServiceJWTPayload {
-  /** Issuer -- identity of the calling service (e.g., "console", "platform", "admin") */
-  iss: string;
   /** Audience -- always "lightfast-memory" */
   aud: string;
-  /** Issued at -- Unix timestamp */
-  iat: number;
   /** Expiration -- Unix timestamp (iss + 60s) */
   exp: number;
+  /** Issued at -- Unix timestamp */
+  iat: number;
+  /** Issuer -- identity of the calling service (e.g., "console", "platform", "admin") */
+  iss: string;
 }
 
 /** Verified JWT result returned to callers */

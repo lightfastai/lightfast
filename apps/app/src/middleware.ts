@@ -140,9 +140,7 @@ export default clerkMiddleware(
         );
       }
       if (orgSlug) {
-        return await createRedirectResponse(
-          new URL(`/${orgSlug}`, req.url)
-        );
+        return await createRedirectResponse(new URL(`/${orgSlug}`, req.url));
       }
     }
 

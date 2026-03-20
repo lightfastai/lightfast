@@ -135,7 +135,9 @@ export class Lightfast {
    */
   async findSimilar(request: FindSimilarInput): Promise<FindSimilarResponse> {
     if (!(request.id || request.url || request.text)) {
-      throw new ValidationError("Either 'id', 'url', or 'text' must be provided");
+      throw new ValidationError(
+        "Either 'id', 'url', or 'text' must be provided"
+      );
     }
 
     return this.request<FindSimilarResponse>("/v1/findsimilar", {
@@ -207,7 +209,9 @@ export class Lightfast {
    * @param request - Provider, endpoint, and parameters
    * @returns Raw provider API response
    */
-  async proxyExecute(request: ProxyExecuteInput): Promise<ProxyExecuteResponse> {
+  async proxyExecute(
+    request: ProxyExecuteInput
+  ): Promise<ProxyExecuteResponse> {
     return this.request<ProxyExecuteResponse>("/v1/proxy/execute", {
       installationId: request.installationId,
       endpointId: request.endpointId,

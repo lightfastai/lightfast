@@ -10,9 +10,9 @@
  */
 
 import { log } from "@vendor/observability/log/next";
+import { resolveEdges } from "../../lib/edge-resolver";
 import { inngest } from "../client";
 import { createNeuralOnFailureHandler } from "../on-failure-handler";
-import { resolveEdges } from "../../lib/edge-resolver";
 
 export const memoryEntityGraph = inngest.createFunction(
   {

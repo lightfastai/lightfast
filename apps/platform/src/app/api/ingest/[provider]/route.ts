@@ -6,8 +6,12 @@
  *
  * NOT tRPC — external providers send raw HTTP with HMAC signatures.
  */
+
+import { inngest } from "@api/platform/inngest/client";
+import { getProviderConfigs } from "@api/platform/lib/provider-configs";
 import { db } from "@db/app/client";
 import { gatewayWebhookDeliveries } from "@db/app/schema";
+import type { WebhookDef } from "@repo/app-providers";
 import {
   deriveVerifySignature,
   getProvider,
@@ -16,11 +20,8 @@ import {
   serviceAuthWebhookBodySchema,
   timingSafeStringEqual,
 } from "@repo/app-providers";
-import type { WebhookDef } from "@repo/app-providers";
 import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
-import { inngest } from "@api/platform/inngest/client";
-import { getProviderConfigs } from "@api/platform/lib/provider-configs";
 import { env } from "~/env";
 
 export const runtime = "nodejs";
@@ -254,7 +255,8 @@ async function handleStandardWebhook(
   } catch (parseError) {
     log.warn("[ingest] payload schema validation failed", {
       provider: providerSlug,
-      error: parseError instanceof Error ? parseError.message : String(parseError),
+      error:
+        parseError instanceof Error ? parseError.message : String(parseError),
     });
     return Response.json(
       { error: "payload_validation_failed", provider: providerSlug },

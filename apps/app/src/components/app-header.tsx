@@ -60,9 +60,7 @@ export function AppHeader() {
           <UserMenu
             email={email}
             initials={initials}
-            onSignOut={() =>
-              void signOut({ redirectUrl: "/sign-in" })
-            }
+            onSignOut={() => void signOut({ redirectUrl: "/sign-in" })}
             settingsHref="/account/settings/general"
           />
         )}

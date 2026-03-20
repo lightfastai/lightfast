@@ -51,10 +51,7 @@ export function getProviderConfigs(): Record<string, unknown> {
           ([name, p]) =>
             [
               name,
-              p.createConfig(
-                env as unknown as Record<string, string>,
-                runtime
-              ),
+              p.createConfig(env as unknown as Record<string, string>, runtime),
             ] as const
         )
         .filter(([, config]) => config !== null)

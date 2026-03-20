@@ -10,11 +10,7 @@
  */
 
 import { db } from "@db/app/client";
-import {
-  gatewayInstallations,
-  gatewayResources,
-  gatewayWebhookDeliveries,
-} from "@db/app/schema";
+import { gatewayInstallations, gatewayWebhookDeliveries } from "@db/app/schema";
 import type { SourceType } from "@repo/app-providers";
 import { getProvider, isWebhookProvider } from "@repo/app-providers";
 import { and, eq, lt } from "@vendor/db";
@@ -89,9 +85,7 @@ export const deliveryRecovery = inngest.createFunction(
           }
 
           // Resolve connection info for preResolved if installationId is available
-          let preResolved:
-            | { connectionId: string; orgId: string }
-            | undefined;
+          let preResolved: { connectionId: string; orgId: string } | undefined;
           if (delivery.installationId) {
             preResolved = {
               connectionId: delivery.installationId,
@@ -134,10 +128,7 @@ export const deliveryRecovery = inngest.createFunction(
               .where(
                 and(
                   eq(gatewayWebhookDeliveries.provider, delivery.provider),
-                  eq(
-                    gatewayWebhookDeliveries.deliveryId,
-                    delivery.deliveryId
-                  )
+                  eq(gatewayWebhookDeliveries.deliveryId, delivery.deliveryId)
                 )
               );
           } catch (err) {
