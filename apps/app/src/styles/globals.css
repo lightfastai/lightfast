@@ -13,8 +13,4 @@
   .font-pp {
     font-family: var(--font-pp-neue-montreal);
   }
-
-  .font-exposure {
-    font-family: var(--font-exposure-plus);
-  }
 }

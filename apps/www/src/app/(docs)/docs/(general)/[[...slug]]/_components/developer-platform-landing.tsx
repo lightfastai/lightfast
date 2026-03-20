@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { AlphaBanner } from "@/src/components/docs/alpha-banner";
+import { AlphaBanner } from "@/src/app/(docs)/_components/alpha-banner";
 
 interface NavCard {
   action: string;
@@ -136,7 +136,7 @@ export function DeveloperPlatformLanding() {
       {/* Header + Banner */}
       <div className="space-y-4">
         <div className="mx-auto flex max-w-2xl flex-col items-center text-center">
-          <h1 className="text-balance font-[family-name:var(--font-exposure-plus)] font-light text-2xl leading-[1.1] tracking-[-0.02em] sm:text-3xl md:text-4xl">
+          <h1 className="text-balance font-pp font-light text-2xl leading-[1.1] tracking-[-0.02em] sm:text-3xl md:text-4xl">
             Lightfast
           </h1>
           <p className="mt-3 text-base text-muted-foreground">

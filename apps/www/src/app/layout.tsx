@@ -6,13 +6,7 @@ import { createMetadata } from "@vendor/seo/metadata";
 import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
 import type { Metadata, Viewport } from "next";
 import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefetch-provider";
-import {
-  exposurePlus,
-  geistMono,
-  geistSans,
-  ppNeueMontreal,
-  ppSupplySans,
-} from "~/lib/fonts";
+import { geistMono, geistSans, ppNeueMontreal } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – The Operating Layer for Agents and Apps",
@@ -145,8 +139,6 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         ppNeueMontreal.variable,
-        exposurePlus.variable,
-        ppSupplySans.variable,
         "dark scrollbar-thin touch-manipulation font-sans antialiased"
       )}
       lang="en"

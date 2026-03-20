@@ -6,7 +6,7 @@ import { fonts as geistFonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
-import { exposurePlus, ppNeueMontreal, ppSupplySans } from "~/lib/fonts";
+import { ppNeueMontreal } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
   title: "Console",
@@ -53,12 +53,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      className={cn(
-        geistFonts,
-        ppNeueMontreal.variable,
-        exposurePlus.variable,
-        ppSupplySans.variable
-      )}
+      className={cn(geistFonts, ppNeueMontreal.variable)}
       lang="en"
       suppressHydrationWarning
     >
