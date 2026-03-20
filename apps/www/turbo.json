@@ -34,7 +34,9 @@
         "BASEHUB_ADMIN_TOKEN",
         "BASEHUB_CHANGELOG_TOKEN",
         "HEALTH_CHECK_AUTH_TOKEN",
-        "PORT"
+        "PORT",
+        "MXBAI_API_KEY",
+        "MXBAI_STORE_ID"
       ],
       "outputs": [
         ".next/**",
