@@ -53,6 +53,7 @@
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
         "INNGEST_SIGNING_KEY",
+        "SERVICE_JWT_SECRET",
         "PORT"
       ],
       "outputs": [
