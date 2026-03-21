@@ -19,21 +19,18 @@
           "paths": [
             "/",
             "/opengraph-image-:hash",
-            "/api/og/search-demo",
             "/pricing",
-            "/pricing/opengraph-image-:hash",
             "/changelog",
             "/changelog/:path*",
             "/blog",
             "/blog/:path*",
-            "/use-cases",
-            "/use-cases/:path",
-            "/use-cases/:path/opengraph-image-:hash",
+            "/use-cases/agent-builders",
+            "/use-cases/engineering-leaders",
+            "/use-cases/platform-engineers",
+            "/use-cases/technical-founders",
             "/legal/:path*",
             "/search",
-            "/preview",
             "/pitch-deck",
-            "/unicorn-test",
             "/api/health",
             "/images/:path*",
             "/fonts/:path*",
@@ -49,8 +46,7 @@
             "/sitemap.xml",
             "/robots.txt",
             "/manifest.json",
-            "/llms.txt",
-            "/llms-full.txt"
+            "/llms.txt"
           ]
         }
       ]

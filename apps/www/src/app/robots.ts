@@ -27,7 +27,6 @@ export default function robots(): MetadataRoute.Robots {
         allow: [
           "/",
           "/llms.txt", // AI crawler guidance file (standard for LLMs to understand site)
-          "/llms-full.txt", // Full page content in markdown for AI crawlers
           "/api/og/*", // Public OG image generation endpoints
         ],
         disallow: [
@@ -47,8 +46,6 @@ export default function robots(): MetadataRoute.Robots {
 
           // Internal/preview/test content (www app)
           "/pitch-deck", // Internal pitch deck
-          "/preview", // Preview mode
-          "/unicorn-test", // Test route
 
           // OAuth and sensitive flows
           "/oauth/", // OAuth callback routes (GitHub, Vercel)
