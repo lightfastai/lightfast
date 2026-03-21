@@ -9,7 +9,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import type { ChangelogEntryQueryResponse } from "@vendor/cms";
 import { changelog } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import type { JsonLdData } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { ChevronLeft, ChevronRight } from "lucide-react";
@@ -18,11 +18,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
+export const dynamic = "force-static";
+
 interface ChangelogPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export const revalidate = 300;
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   try {
@@ -115,7 +116,7 @@ export default async function ChangelogEntryPage({
   const { slug } = await params;
 
   return (
-    <Feed draft={isDraft} queries={[changelog.entryBySlugQuery(slug)]}>
+    <Feed queries={[changelog.entryBySlugQuery(slug)]}>
       {async ([data]) => {
         "use server";
 

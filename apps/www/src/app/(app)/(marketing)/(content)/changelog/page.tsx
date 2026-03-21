@@ -3,10 +3,12 @@ import { Button } from "@repo/ui/components/ui/button";
 import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
 import { changelog } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+
+export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "Lightfast Changelog",
@@ -40,11 +42,10 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 300;
 
 export default function ChangelogPage() {
   return (
-    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
+    <Feed queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 

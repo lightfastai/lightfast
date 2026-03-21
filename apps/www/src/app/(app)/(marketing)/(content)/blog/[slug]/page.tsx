@@ -2,7 +2,7 @@ import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import type { BlogPostQueryResponse } from "@vendor/cms";
 import { blog } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import type { JsonLdData } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
@@ -11,11 +11,11 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SocialShare } from "~/app/(app)/_components/blog-social-share";
 
+export const dynamic = "force-static";
+
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
 }
-
-export const revalidate = 300;
 
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   try {
@@ -83,7 +83,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
 
   return (
-    <Feed draft={isDraft} queries={[blog.postQuery(slug)]}>
+    <Feed queries={[blog.postQuery(slug)]}>
       {async ([data]) => {
         "use server";
 

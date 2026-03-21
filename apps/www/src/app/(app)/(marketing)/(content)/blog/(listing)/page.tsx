@@ -5,6 +5,8 @@ import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import Link from "next/link";
 
+export const dynamic = "force-static";
+
 export const metadata: Metadata = {
   title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
   description:
@@ -48,8 +50,6 @@ export const metadata: Metadata = {
     },
   },
 };
-
-export const revalidate = 300;
 
 export default async function BlogPage() {
   let posts: PostMeta[] = [];

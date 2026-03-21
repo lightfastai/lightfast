@@ -1,11 +1,11 @@
 import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
 import { changelog } from "@vendor/cms";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import Link from "next/link";
 
 export function ChangelogPreview() {
   return (
-    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
+    <Feed queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 
