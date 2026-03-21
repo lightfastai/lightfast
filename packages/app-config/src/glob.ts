@@ -130,10 +130,16 @@ export function matchesGlobs(filePath: string, globs: string[]): boolean {
         // Use fast-glob's internal matcher
         const pattern = new RegExp(
           glob
-            .replace(/\*\*/g, ".*")
-            .replace(/\*/g, "[^/]*")
-            .replace(/\?/g, "[^/]")
-            .replace(/\./g, "\\.")
+            // 1. Mark glob wildcards with placeholders
+            .replace(/\*\*/g, "\0GLOBSTAR\0")
+            .replace(/\*/g, "\0STAR\0")
+            .replace(/\?/g, "\0QUESTION\0")
+            // 2. Escape all regex-special characters in the remaining literal text
+            .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+            // 3. Restore glob wildcards as regex equivalents
+            .replace(/\0GLOBSTAR\0/g, ".*")
+            .replace(/\0STAR\0/g, "[^/]*")
+            .replace(/\0QUESTION\0/g, "[^/]")
         );
         if (pattern.test(filePath)) {
           return true;
