@@ -732,6 +732,9 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
+      '@vendor/aeo':
+        specifier: workspace:*
+        version: link:../../vendor/aeo
       '@vendor/analytics':
         specifier: workspace:*
         version: link:../../vendor/analytics
@@ -2033,6 +2036,18 @@ importers:
       tailwindcss:
         specifier: catalog:tailwind4
         version: 4.2.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  vendor/aeo:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
