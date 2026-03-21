@@ -281,11 +281,13 @@ export function Search() {
                             {result.snippet}
                           </div>
                         )}
-                        {result.type === "page" && !result.snippet && result.source && (
-                          <div className="mt-0.5 text-muted-foreground/60 text-xs">
-                            {result.source}
-                          </div>
-                        )}
+                        {result.type === "page" &&
+                          !result.snippet &&
+                          result.source && (
+                            <div className="mt-0.5 text-muted-foreground/60 text-xs">
+                              {result.source}
+                            </div>
+                          )}
                       </div>
                     </Link>
                   ))}

@@ -2,8 +2,8 @@ import Mixedbread from "@mixedbread/sdk";
 import GithubSlugger from "github-slugger";
 import type { NextRequest } from "next/server";
 import removeMd from "remove-markdown";
-import { env } from "~/env";
 import type { SortedResult } from "~/app/(docs)/_types/search";
+import { env } from "~/env";
 
 export const runtime = "edge";
 
@@ -79,13 +79,19 @@ function buildSource(filePath: string): string {
 const SNIPPET_MAX_CHARS = 120;
 
 function buildSnippet(text: string | undefined): string | undefined {
-  if (!text) return undefined;
+  if (!text) {
+    return undefined;
+  }
   const lines = text.trim().split("\n");
   const bodyLines = lines[0]?.startsWith("#") ? lines.slice(1) : lines;
   const body = bodyLines.join(" ").trim();
-  if (!body) return undefined;
+  if (!body) {
+    return undefined;
+  }
   const stripped = removeMd(body, { useImgAltText: false }).trim();
-  if (!stripped) return undefined;
+  if (!stripped) {
+    return undefined;
+  }
   return stripped.length > SNIPPET_MAX_CHARS
     ? `${stripped.slice(0, SNIPPET_MAX_CHARS)}…`
     : stripped;

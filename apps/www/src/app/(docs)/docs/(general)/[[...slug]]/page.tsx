@@ -273,16 +273,14 @@ export async function generateMetadata({
   const pageKeywords = frontmatter.keywords
     .split(",")
     .map((k: string) => k.trim());
-  const canonical =
-    frontmatter.canonical ?? `https://lightfast.ai${pageUrl}`;
+  const canonical = frontmatter.canonical ?? `https://lightfast.ai${pageUrl}`;
   const noindex = frontmatter.noindex ?? false;
   const nofollow = frontmatter.nofollow ?? false;
 
   // Use ogTitle/ogDescription/ogImage overrides if provided, otherwise use defaults
   const ogTitle = frontmatter.ogTitle ?? title;
   const ogDescription = frontmatter.ogDescription ?? description;
-  const ogImage =
-    frontmatter.ogImage ?? `https://lightfast.ai${pageUrl}/og`;
+  const ogImage = frontmatter.ogImage ?? `https://lightfast.ai${pageUrl}/og`;
 
   // Enhance the metadata with comprehensive SEO properties
   return createMetadata({
