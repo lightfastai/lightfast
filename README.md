@@ -6,54 +6,40 @@
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 
-**An operating infrastructure between your agents and apps.**
+**Superintelligence layer for founders.**
 
 [Website](https://lightfast.ai) · [Documentation](https://lightfast.ai/docs/get-started/overview) · [Discord](https://discord.gg/YqPDfcar2C)
 
-## Why Lightfast?
+Lightfast is the operating system that runs your startup. Your tools, your agents, your entire operation — orchestrated in one place. Strategy, ops, execution. Lightfast runs all of it.
 
-Your team's work happens across dozens of tools. Your agents need to understand and act across all of them. Lightfast is the layer in between — it observes what's happening, remembers what happened, and gives agents and people a single system to operate through.
+## Memory
 
-- **Observe** — Ingest every event across your tools, automatically and continuously
-- **Remember** — Search by meaning across everything that happened, always citing sources
-- **Act** — Agents express intent, the system resolves what to do and where
+Your tools don't share memory. Something breaks in production and you're switching between Sentry, GitHub, Vercel, and Linear — manually connecting dots that the system should already know. Lightfast builds the memory layer your stack never had.
 
-## Rollout
+Every event across every connected tool flows into a living graph that understands causality, ownership, and relationships — not just stores them. The PR that caused the incident. The engineer who owns the system. The Linear ticket tracking the fix. The deployment that shipped it. Ask one question, get the full picture with cited sources. The longer Lightfast runs, the more it understands about your team, your patterns, and your stage.
 
-Lightfast ships in three phases. Each builds on the last.
+## Operating Layer
 
-### Events — Available now
+The operating layer is what acts on that memory. Agents don't call twelve different APIs — they express intent to Lightfast, and Lightfast resolves it: right tool, right context, every time. Define a rule — "every production release needs an approved review and a closed ticket" — and the OS enforces it continuously, not on a schedule.
 
-A unified event system across your tools. Connect your sources, receive structured events in real time. No waitlist.
+As the number of agents in your company grows, you don't want twelve agents calling twelve tools independently. You want one system they all operate through — with shared memory, shared context, and your rules enforced at the kernel level. That's where Lightfast is going.
 
-**Supported sources:**
-- **GitHub** — Push, pull requests, issues, code reviews
-- **Vercel** — Deployments, project activity
-- **Sentry** — Errors, issues, alerts
-- **Linear** — Issues, comments, projects, cycles
+## Supported Sources
+
+**Available now:**
+
+| Source | Events |
+|--------|--------|
+| **GitHub** | Push, pull requests, issues, code reviews |
+| **Vercel** | Deployments, project activity |
+| **Sentry** | Errors, issues, alerts |
+| **Linear** | Issues, comments, projects, cycles |
 
 **Coming soon:**
-- Slack, Notion, Confluence, PagerDuty
+
+- Dev & ops: Slack, Notion, Confluence, PagerDuty
+- Business: Stripe, HubSpot, Apollo
 - [Request an integration →](https://github.com/lightfastai/lightfast/issues)
-
-### Memory — Coming soon
-
-Semantic search and cited answers across your entire tool stack. Everything from the event system gets indexed, connected, and made searchable by meaning. Powered by the same event pipeline — no additional setup.
-
-```typescript
-// "What broke in last week's deployment?"
-await lightfast.search({ query: "production incident deployment", filters: { dateRange: "7d" } });
-
-// "Who has context on the auth system?"
-await lightfast.search({ query: "authentication ownership context" });
-
-// "Find things related to this PR"
-await lightfast.findSimilar({ url: "https://github.com/org/repo/pull/123" });
-```
-
-### Operating Layer — [Join the waitlist →](https://lightfast.ai/early-access)
-
-The full operating infrastructure. Agents express what they want in natural language — Lightfast resolves it to the right tool, enforces your team's rules, and tracks everything that happens. Processes that run for seconds or months. Invariants that span tools. Intent resolution that learns from your team.
 
 ## Integrate in 2 Ways
 
@@ -191,7 +177,7 @@ LIGHTFAST_API_KEY = "sk-lf-..."
 
 ## Documentation
 
-- [API Reference](https://lightfast.ai/docs/api) — Full endpoint documentation
+- [API Reference](https://lightfast.ai/docs/api-reference/getting-started/overview) — Full endpoint documentation
 - [SDK Guide](https://lightfast.ai/docs/integrate/sdk) — TypeScript SDK usage
 - [MCP Setup](https://lightfast.ai/docs/integrate/mcp) — Configure AI assistants
 - [Changelog](https://lightfast.ai/changelog) — Latest updates and releases

@@ -1,0 +1,16 @@
+/* Import the base UI globals */
+@import "@repo/ui/globals.css";
+
+/*
+ * Custom Font Variables
+ * Fonts are loaded via next/font/local in ~/lib/fonts.ts
+ * Use explicitly when needed (e.g., font-[family-name:var(--font-pp-neue-montreal)])
+ * Default font-sans remains Geist from @repo/ui
+ */
+
+/* Additional custom styles specific to the console app */
+@layer utilities {
+  .font-pp {
+    font-family: var(--font-pp-neue-montreal);
+  }
+}

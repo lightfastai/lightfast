@@ -54,7 +54,7 @@ export function CustomTitleSlide({
                 : "text-3xl sm:text-4xl md:text-5xl lg:text-6xl"
             )}
             style={{
-              fontFamily: "var(--font-pp-supply-sans)",
+              fontFamily: "var(--font-pp-neue-montreal)",
               letterSpacing: "0.05em",
               lineHeight: 1,
               transform: "translateY(0.06em)",

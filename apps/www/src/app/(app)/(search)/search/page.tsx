@@ -1,7 +1,7 @@
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
-import { SearchInterface } from "~/components/search-interface";
-import { SearchNavbar } from "~/components/search-navbar";
+import { SearchInterface } from "~/app/(app)/_components/search-interface";
+import { SearchNavbar } from "~/app/(app)/_components/search-navbar";
 
 export const metadata: Metadata = createMetadata({
   title: "Search – Lightfast",
@@ -19,7 +19,6 @@ export const metadata: Metadata = createMetadata({
     title: "Search – Lightfast",
     description:
       "Search across Lightfast documentation, guides, and resources.",
-    images: ["https://lightfast.ai/og.jpg"],
   },
   alternates: {
     canonical: "https://lightfast.ai/search",

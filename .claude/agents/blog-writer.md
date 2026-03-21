@@ -233,7 +233,7 @@ Based on category and target platform, adjust content emphasis:
 - Use brief's suggested links
 - Common paths:
   - `/docs/get-started/overview`
-  - `/docs/api/[endpoint]`
+  - `/docs/api-reference/getting-started/overview`
   - `/pricing`, `/demo`
 
 ## Structured Data Generation

@@ -1,0 +1,32 @@
+{
+  "name": "@repo/app-openapi",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./openapi.json": "./openapi.json"
+  },
+  "license": "FSL-1.1-Apache-2.0",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "generate:openapi": "tsx scripts/generate.ts"
+  },
+  "dependencies": {
+    "@repo/app-validation": "workspace:*",
+    "zod": "catalog:",
+    "zod-openapi": "^5.4.6"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
+  }
+}

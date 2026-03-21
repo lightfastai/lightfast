@@ -1,0 +1,110 @@
+"use client";
+
+import type { WorkspaceFormValues } from "@repo/app-validation/forms";
+import {
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+  useFormContext,
+} from "@repo/ui/components/ui/form";
+import { Input } from "@repo/ui/components/ui/input";
+import { useEffect, useRef } from "react";
+import { useWorkspaceSearchParams } from "./use-workspace-search-params";
+
+/**
+ * Workspace Name Input
+ * Client island for workspace name input field with URL persistence and validation
+ *
+ * Features:
+ * - Reads initial value from URL on mount
+ * - Debounces URL updates (500ms) while typing
+ * - Updates URL immediately on blur
+ * - Persists across page refreshes
+ * - Real-time validation with Zod schema
+ * - Inline error messages
+ */
+export function WorkspaceNameInput() {
+  const form = useFormContext<WorkspaceFormValues>();
+  const {
+    workspaceName: urlWorkspaceName,
+    setWorkspaceName: setUrlWorkspaceName,
+  } = useWorkspaceSearchParams();
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Initialize from URL on mount
+  useEffect(() => {
+    const currentName = form.getValues("workspaceName");
+    if (urlWorkspaceName && !currentName) {
+      form.setValue("workspaceName", urlWorkspaceName, {
+        shouldValidate: true,
+      });
+    }
+  }, [urlWorkspaceName, form]);
+
+  // Handle debounced URL update
+  const syncToUrl = (value: string) => {
+    // Clear existing timer
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+
+    // Debounce URL update (500ms)
+    debounceTimerRef.current = setTimeout(() => {
+      void setUrlWorkspaceName(value || null);
+    }, 500);
+  };
+
+  // Handle blur - update URL immediately
+  const handleBlur = () => {
+    // Clear any pending debounced update
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+
+    // Update URL immediately
+    void setUrlWorkspaceName(form.getValues("workspaceName") || null);
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
+  }, []);
+
+  return (
+    <FormField
+      control={form.control}
+      name="workspaceName"
+      render={({ field }) => (
+        <FormItem>
+          <FormLabel>Workspace name</FormLabel>
+          <FormControl>
+            <Input
+              {...field}
+              onBlur={() => {
+                field.onBlur();
+                handleBlur();
+              }}
+              onChange={(e) => {
+                field.onChange(e);
+                syncToUrl(e.target.value);
+              }}
+              placeholder="My-Awesome-Workspace"
+            />
+          </FormControl>
+          <FormDescription>
+            Use letters, numbers, and hyphens. No spaces or special characters.
+          </FormDescription>
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}

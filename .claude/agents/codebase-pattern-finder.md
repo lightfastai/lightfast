@@ -177,7 +177,7 @@ export const jobsM2MRouter = {
 **Key aspects**:
 - Uses `inngestM2MProcedure` for internal services only
 - No user context - trusts internal caller
-- Reuses validation schemas from `@repo/console-validation`
+- Reuses validation schemas from `@repo/app-validation`
 
 ### Pattern Usage in Codebase
 - **userRouter** (`router/user/*`): No org required - account, apiKeys, sources
@@ -186,8 +186,8 @@ export const jobsM2MRouter = {
 
 ### Related Utilities
 - `api/console/src/trpc.ts` - Procedure definitions
-- `@repo/console-validation` - Shared Zod schemas
-- `@db/console/client` - Database client
+- `@repo/app-validation` - Shared Zod schemas
+- `@db/app/client` - Database client
 ```
 
 ## Pattern Categories to Search

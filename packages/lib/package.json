@@ -7,32 +7,32 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "default": "./dist/index.js"
+      "default": "./src/index.ts"
     },
     "./pretty-project-name": {
       "types": "./dist/pretty-project-name.d.ts",
-      "default": "./dist/pretty-project-name.js"
+      "default": "./src/pretty-project-name.ts"
     },
     "./datetime": {
       "types": "./dist/datetime/index.d.ts",
-      "default": "./dist/datetime/index.js"
+      "default": "./src/datetime/index.ts"
     },
     "./uuid": {
       "types": "./dist/uuid.d.ts",
-      "default": "./dist/uuid.js"
+      "default": "./src/uuid.ts"
     },
     "./nanoid": {
       "types": "./dist/nanoid.d.ts",
-      "default": "./dist/nanoid.js"
+      "default": "./src/nanoid.ts"
     },
     "./friendly-words": {
       "types": "./dist/friendly-words.d.ts",
-      "default": "./dist/friendly-words.js"
+      "default": "./src/friendly-words.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup && tsc --incremental false",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "test": "vitest run",
@@ -48,7 +48,6 @@
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "@types/uuid": "^10.0.0",
-    "tsup": "^8.5.1",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

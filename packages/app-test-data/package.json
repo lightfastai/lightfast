@@ -1,0 +1,51 @@
+{
+  "name": "@repo/app-test-data",
+  "license": "FSL-1.1-Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./trigger": {
+      "types": "./dist/trigger/index.d.ts",
+      "default": "./src/trigger/index.ts"
+    },
+    "./loader": {
+      "types": "./dist/loader/index.d.ts",
+      "default": "./src/loader/index.ts"
+    },
+    "./raw": {
+      "types": "./dist/raw.d.ts",
+      "default": "./src/raw.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --",
+    "inject": "pnpm with-env tsx src/cli/inject.ts",
+    "inject:prod": "dotenv -e ../../apps/app/.vercel/.env.production.local -- tsx src/cli/inject.ts",
+    "seed-integrations:prod": "dotenv -e ../../apps/app/.vercel/.env.production.local -- tsx src/cli/seed-integrations.ts",
+    "reset-demo": "pnpm with-env tsx src/cli/reset-demo.ts",
+    "verify": "tsx src/cli/generate-schema.ts && tsx src/cli/verify-datasets.ts",
+    "generate-schema": "tsx src/cli/generate-schema.ts"
+  },
+  "dependencies": {
+    "@api/app": "workspace:*",
+    "@db/app": "workspace:*",
+    "@repo/app-pinecone": "workspace:*",
+    "@repo/app-providers": "workspace:*",
+    "@repo/lib": "workspace:*",
+    "@vendor/db": "workspace:*",
+    "drizzle-orm": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
+  }
+}

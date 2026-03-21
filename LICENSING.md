@@ -29,18 +29,18 @@ The following components are licensed under **Functional Source License 1.1, Apa
 - `deus` - Advanced AI orchestration and automation framework
 
 #### Applications
-- `apps/console` - Console application
+- `apps/app` - Console application
 - `apps/www` - Marketing website
 - `apps/docs` - Documentation site
 - `apps/auth` - Authentication service
 
 #### Console Packages
-- `packages/console-*` - All console-specific packages (ai, billing, chunking, config, embed, openapi, pinecone, rerank, reserved-names, types)
+- `packages/app-*` - All console-specific packages (ai, billing, chunking, config, embed, openapi, pinecone, rerank, reserved-names, types)
 
 #### Internal Services
-- `api/console` - Console API
+- `api/app` - Console API
 - `api/chat` - Chat API
-- `db/console` - Console database
+- `db/app` - Console database
 - `db/chat` - Chat database
 - `internal/typescript` - Internal TypeScript config
 
@@ -106,7 +106,7 @@ We may ask you to sign a Contributor License Agreement (CLA) for significant con
 /LICENSE                           # FSL-1.1-ALv2 (repository default, recognized by GitHub)
 /LICENSING.md                      # This file
 
-apps/console/LICENSE               # FSL-1.1-ALv2
+apps/app/LICENSE                   # FSL-1.1-ALv2
 apps/www/LICENSE                   # FSL-1.1-ALv2
 apps/docs/LICENSE                  # FSL-1.1-ALv2
 apps/auth/LICENSE                  # FSL-1.1-ALv2

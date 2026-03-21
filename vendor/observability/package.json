@@ -7,48 +7,48 @@
   "exports": {
     "./sentry-env": {
       "types": "./dist/env/sentry-env.d.ts",
-      "default": "./dist/env/sentry-env.js"
+      "default": "./src/env/sentry-env.ts"
     },
     "./sentry": {
       "types": "./dist/sentry.d.ts",
-      "default": "./dist/sentry.js"
+      "default": "./src/sentry.ts"
     },
     "./betterstack-env": {
       "types": "./dist/env/betterstack.d.ts",
-      "default": "./dist/env/betterstack.js"
+      "default": "./src/env/betterstack.ts"
     },
     "./betterstack-edge-env": {
       "types": "./dist/env/betterstack-edge.d.ts",
-      "default": "./dist/env/betterstack-edge.js"
+      "default": "./src/env/betterstack-edge.ts"
     },
     "./log/next": {
       "types": "./dist/log/next.d.ts",
-      "default": "./dist/log/next.js"
+      "default": "./src/log/next.ts"
     },
     "./log/edge": {
       "types": "./dist/log/edge.d.ts",
-      "default": "./dist/log/edge.js"
+      "default": "./src/log/edge.ts"
     },
     "./log/types": {
       "types": "./dist/log/types.d.ts",
-      "default": "./dist/log/types.js"
+      "default": "./src/log/types.ts"
     },
     "./error/next": {
       "types": "./dist/error/next.d.ts",
-      "default": "./dist/error/next.js"
+      "default": "./src/error/next.ts"
     },
     "./error/edge": {
       "types": "./dist/error/edge.d.ts",
-      "default": "./dist/error/edge.js"
+      "default": "./src/error/edge.ts"
     },
     "./print-routes": {
       "types": "./dist/print-routes.d.ts",
-      "default": "./dist/print-routes.js"
+      "default": "./src/print-routes.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup && tsc --incremental false",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
@@ -56,7 +56,6 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/react": "catalog:",
-    "tsup": "^8.5.1",
     "typescript": "catalog:"
   },
   "dependencies": {

@@ -1,5 +1,5 @@
-import { AppFooter } from "~/components/app-footer";
-import { AppNavbar } from "~/components/app-navbar";
+import { AppFooter } from "~/app/(app)/_components/app-footer";
+import { AppNavbar } from "~/app/(app)/_components/app-navbar";
 
 export default function MarketingLayout({
   children,

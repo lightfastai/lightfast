@@ -11,11 +11,11 @@
  * 📝 NOTE ON DUPLICATION:
  * This constant is intentionally defined in two places:
  * 1. Here (lightfast SDK) - source of truth for public consumers and MCP server
- * 2. @repo/console-api-key - source of truth for backend services
+ * 2. @repo/app-api-key - source of truth for backend services
  *
  * Why not import from one place?
  * - The SDK is a published npm package with zero workspace dependencies
- * - @repo/console-api-key has heavy deps (@db/console, @trpc/server, drizzle-orm)
+ * - @repo/app-api-key has heavy deps (@db/app, @trpc/server, drizzle-orm)
  * - Importing between them would create circular deps or force publishing internal packages
  * - Using devDep + re-export pattern risks bundler issues with runtime values
  *

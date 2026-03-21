@@ -1,36 +1,28 @@
 import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
-import type { Post } from "@vendor/cms";
+import type { BlogPostQueryResponse } from "@vendor/cms";
 import { blog } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import type { JsonLdData } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { SocialShare } from "~/components/blog-social-share";
+import { SocialShare } from "~/app/(app)/_components/blog-social-share";
+
+export const dynamic = "force-static";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
 }
 
-interface BlogPostQueryResponse {
-  blog?: {
-    post?: {
-      item?: Post | null;
-    } | null;
-  } | null;
-}
-
-export const revalidate = 300;
-
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   try {
     const posts = await blog.getPosts();
     return posts
-      .filter((post) => !!(post.slug ?? post._slug))
-      .map((post) => ({ slug: post.slug ?? post._slug ?? "" }));
+      .filter((post) => post.slug.length > 0)
+      .map((post) => ({ slug: post.slug }));
   } catch {
     return [];
   }
@@ -52,17 +44,14 @@ export async function generateMetadata({
     return {};
   }
 
-  const description =
-    post.description ??
-    post.body?.plainText?.slice(0, 160) ??
-    `${post._title} - Lightfast blog`;
+  const description = post.description;
 
   const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
   return {
-    title: post._title ?? undefined,
+    title: post._title,
     description,
-    authors: post.authors?.map((author) => ({
-      name: author._title ?? undefined,
+    authors: post.authors.map((author) => ({
+      name: author._title,
     })),
     alternates: {
       canonical: canonicalUrl,
@@ -73,19 +62,17 @@ export async function generateMetadata({
       },
     },
     openGraph: {
-      title: post._title ?? "Blog Post",
+      title: post._title,
       description,
       type: "article",
       url: canonicalUrl,
       siteName: "Lightfast",
       publishedTime: post.publishedAt ?? undefined,
-      authors: post.authors
-        ?.map((author) => author._title ?? "")
-        .filter(Boolean),
+      authors: post.authors.map((author) => author._title),
     },
     twitter: {
       card: "summary_large_image",
-      title: post._title ?? "Blog Post",
+      title: post._title,
       description,
       creator: "@lightfastai",
     },
@@ -96,12 +83,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const { slug } = await params;
 
   return (
-    <Feed draft={isDraft} queries={[blog.postQuery(slug)]}>
+    <Feed queries={[blog.postQuery(slug)]}>
       {async ([data]) => {
         "use server";
 
         const response = data as BlogPostQueryResponse;
-        const post = response.blog?.post?.item;
+        const post = response.blog.post.item;
         if (!post) {
           notFound();
         }
@@ -119,7 +106,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         // Get category names for schema generation
         const categoryNames = post.categories
-          ?.map((c) => c._title?.toLowerCase())
+          .map((c) => c._title?.toLowerCase())
           .filter(Boolean) as string[];
 
         // Helper function to get additional schema types based on categories
@@ -128,7 +115,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           const schemas: Record<string, unknown>[] = [];
 
           // Add FAQ schema from CMS data
-          if (post.seo?.faq?.items && post.seo.faq.items.length > 0) {
+          if (post.seo.faq.items.length > 0) {
             const faqItems = post.seo.faq.items
               .filter((item) => item.question && item.answer)
               .map((item) => ({
@@ -152,29 +139,24 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           if (categoryNames.includes("data")) {
             schemas.push({
               "@type": "HowTo",
-              name: post._title ?? "",
-              description: post.description ?? "",
+              name: post._title,
+              description: post.description,
               step: [
                 {
                   "@type": "HowToStep",
                   name: "Methodology",
-                  text:
-                    post.description ??
-                    post.body?.plainText?.slice(0, 200) ??
-                    "",
+                  text: post.description,
                 },
               ],
             });
           }
 
-          // Add SoftwareSourceCode schema for Technology posts
+          // Add TechArticle schema for Technology posts
           if (categoryNames.includes("technology")) {
             schemas.push({
-              "@type": "SoftwareSourceCode",
-              name: post._title ?? "",
-              description: post.description ?? "",
-              programmingLanguage: "TypeScript",
-              codeRepository: "https://github.com/lightfastai",
+              "@type": "TechArticle",
+              name: post._title,
+              description: post.description,
             });
           }
 
@@ -185,9 +167,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         const baseStructuredData = {
           "@context": "https://schema.org" as const,
           "@type": "BlogPosting" as const,
-          headline: post._title ?? "",
-          description:
-            post.description ?? post.body?.plainText?.slice(0, 160) ?? "",
+          headline: post._title,
+          description: post.description,
           ...(publishedDate
             ? { datePublished: publishedDate.toISOString() }
             : {}),
@@ -196,7 +177,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             ? {
                 author: post.authors.map((author) => ({
                   "@type": "Person" as const,
-                  name: author._title ?? "",
+                  name: author._title,
                   ...(author.xUrl ? { url: author.xUrl } : {}),
                 })),
               }
@@ -271,13 +252,13 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 {/* Author info and metadata */}
                 <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
                   {/* Authors */}
-                  {post.authors && post.authors.length > 0 && (
+                  {post.authors.length > 0 && (
                     <div className="flex items-center gap-3">
                       <div className="flex -space-x-2">
                         {post.authors.map((author, authorIdx) => (
                           <div
                             className="relative"
-                            key={`${author._title ?? "author"}-${authorIdx}`}
+                            key={`${author._title}-${authorIdx}`}
                           >
                             {author.avatar?.url ? (
                               <Image
@@ -312,8 +293,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                             ) : (
                               author._title
                             )}
-                            {authorIdx < (post.authors?.length ?? 0) - 1 &&
-                              ", "}
+                            {authorIdx < post.authors.length - 1 && ", "}
                           </span>
                         ))}
                       </div>
@@ -340,8 +320,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 {/* Social sharing */}
                 <div className="border-t pt-4">
                   <SocialShare
-                    description={post.description ?? undefined}
-                    title={post._title ?? ""}
+                    description={post.description}
+                    title={post._title}
                     url={`https://lightfast.ai/blog/${slug}`}
                   />
                 </div>
@@ -363,12 +343,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
               {post.featuredImage?.url && (
                 <div className="relative mt-8 mb-12 aspect-video overflow-hidden rounded-lg">
                   <Image
-                    alt={post.featuredImage.alt ?? post._title ?? ""}
+                    alt={post.featuredImage.alt ?? post._title}
                     className="h-full w-full object-cover"
-                    height={post.featuredImage.height ?? 630}
+                    height={post.featuredImage.height}
                     priority
                     src={post.featuredImage.url}
-                    width={post.featuredImage.width ?? 1200}
+                    width={post.featuredImage.width}
                   />
                 </div>
               )}
@@ -392,14 +372,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   Share it with your team to spread the knowledge.
                 </p>
                 <SocialShare
-                  description={post.description ?? undefined}
-                  title={post._title ?? ""}
+                  description={post.description}
+                  title={post._title}
                   url={`https://lightfast.ai/blog/${slug}`}
                 />
               </div>
 
               {/* Author Bios */}
-              {post.authors && post.authors.length > 0 && (
+              {post.authors.length > 0 && (
                 <div className="mt-16 border-t pt-8">
                   <h3 className="mb-6 font-semibold text-muted-foreground text-sm uppercase tracking-wide">
                     About the {post.authors.length > 1 ? "Authors" : "Author"}
@@ -408,7 +388,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     {post.authors.map((author, authorIdx) => (
                       <div
                         className="flex gap-4"
-                        key={`${author._title ?? "author-bio"}-${authorIdx}`}
+                        key={`${author._title}-${authorIdx}`}
                       >
                         {author.avatar?.url && (
                           <Image

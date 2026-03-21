@@ -251,6 +251,6 @@ A: [Technical answer]
 ## Get Started
 
 - [Quick Start](/docs/get-started/quickstart)
-- [Feature Docs](/docs/features/feature-name)
+- [Documentation](/docs/get-started/overview)
 - [Pricing](/pricing)
 ```

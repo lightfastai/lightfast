@@ -1,4 +1,5 @@
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
+import { createMDX } from "fumadocs-mdx/next";
 import type { NextConfig } from "next";
 
 import "~/env";
@@ -24,6 +25,52 @@ const wwwConfig: NextConfig = {
   // Next.js 16 requires explicit quality values
   images: {
     qualities: [10, 75, 100],
+  },
+
+  async redirects() {
+    return [
+      {
+        source: "/docs",
+        destination: "/docs/get-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/api",
+        destination: "/docs/api-reference/getting-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/api-reference",
+        destination: "/docs/api-reference/getting-started/overview",
+        permanent: true,
+      },
+      // Section roots — redirect to first page since no index.mdx exists
+      {
+        source: "/docs/get-started",
+        destination: "/docs/get-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/connectors",
+        destination: "/docs/connectors/github",
+        permanent: true,
+      },
+      {
+        source: "/docs/integrate",
+        destination: "/docs/integrate/sdk",
+        permanent: true,
+      },
+      {
+        source: "/docs/api-reference/getting-started",
+        destination: "/docs/api-reference/getting-started/overview",
+        permanent: true,
+      },
+      {
+        source: "/docs/api-reference/sdks-tools",
+        destination: "/docs/api-reference/sdks-tools/typescript-sdk",
+        permanent: true,
+      },
+    ];
   },
 
   /** Enables hot reloading for local packages without a build step */
@@ -54,7 +101,7 @@ const wwwConfig: NextConfig = {
   },
 
   // Note: /docs routing is handled by @vercel/microfrontends via
-  // apps/console/microfrontends.json. No manual rewrites needed.
+  // apps/app/microfrontends.json. No manual rewrites needed.
 };
 
 // Build config using vendor utilities (cast at Next.js 15/16 boundary)
@@ -76,4 +123,6 @@ if (process.env.ANALYZE === "true") {
   ) as NextConfig;
 }
 
-export default withMicrofrontends(config, { debug: true });
+const withMDX = createMDX();
+
+export default withMicrofrontends(withMDX(config), { debug: true });

@@ -1,4 +1,4 @@
-import type { UseCaseItem } from "~/components/use-case-grid";
+import type { UseCaseItem } from "~/app/(app)/_components/use-case-grid";
 
 export const engineeringLeadersUseCases: UseCaseItem[] = [
   {

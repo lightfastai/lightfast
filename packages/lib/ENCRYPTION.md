@@ -147,7 +147,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
 ### Environment Schema
 
-Both `apps/console` and `api/console` validate the encryption key:
+Both `apps/app` and `api/app` validate the encryption key:
 
 ```typescript
 import { createEnv } from "@t3-oss/env-nextjs";
@@ -182,7 +182,7 @@ export const env = createEnv({
 
 ### OAuth Token Flow
 
-**1. User completes GitHub OAuth** (`apps/console/src/app/(github)/api/github/callback/route.ts`):
+**1. User completes GitHub OAuth** (`apps/app/src/app/(github)/api/github/callback/route.ts`):
 
 ```typescript
 import { encrypt } from "@repo/lib";
@@ -206,7 +206,7 @@ await db.insert(integrations).values({
 });
 ```
 
-**2. API uses token** (`api/console/src/router/integration.ts`):
+**2. API uses token** (`api/app/src/router/integration.ts`):
 
 ```typescript
 import { decrypt } from "@repo/lib";

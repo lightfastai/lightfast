@@ -37,7 +37,7 @@ export class PineconeClient {
    * Create a new Pinecone index (serverless)
    *
    * All parameters are required - caller must provide explicit configuration.
-   * Use application-level wrapper (@repo/console-pinecone) for defaults.
+   * Use application-level wrapper (@repo/app-pinecone) for defaults.
    *
    * @param indexName - Name of the index to create
    * @param dimension - Embedding dimension

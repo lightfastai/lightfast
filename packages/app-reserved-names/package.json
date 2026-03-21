@@ -1,0 +1,42 @@
+{
+  "name": "@repo/app-reserved-names",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Reserved workspace names for Lightfast Console to prevent URL routing conflicts",
+  "license": "FSL-1.1-Apache-2.0",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./workspace": {
+      "types": "./dist/workspace.d.ts",
+      "default": "./src/workspace.ts"
+    },
+    "./organization": {
+      "types": "./dist/organization.d.ts",
+      "default": "./src/organization.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "data"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "typecheck": "tsc --noEmit"
+  },
+  "keywords": [
+    "lightfast",
+    "reserved",
+    "workspace",
+    "organization",
+    "validation"
+  ],
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

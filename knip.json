@@ -5,11 +5,11 @@
       "entry": ["scripts/*.{js,ts,sh}"],
       "ignoreDependencies": ["turbo-ignore", "@biomejs/biome"]
     },
-    "apps/console": {
+    "apps/app": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": [
-        "@repo/console-auth-middleware",
+        "@repo/app-auth-middleware",
         "@repo/lib",
         "@vitest/expect",
         "zustand"
@@ -19,27 +19,6 @@
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["jiti"]
-    },
-    "apps/auth": {
-      "entry": ["src/app/**/*.{ts,tsx}", "e2e/**/*.ts"],
-      "project": ["src/**/*.{ts,tsx}", "e2e/**/*.ts"]
-    },
-    "apps/docs": {
-      "entry": ["src/app/**/*.{ts,tsx}"],
-      "project": ["src/**/*.{ts,tsx}"]
-    },
-    "apps/relay": {
-      "entry": ["src/routes-table.ts"],
-      "project": ["src/**/*.ts"]
-    },
-    "apps/gateway": {
-      "entry": ["src/routes-table.ts"],
-      "project": ["src/**/*.ts"],
-      "ignoreDependencies": ["drizzle-orm"]
-    },
-    "apps/backfill": {
-      "entry": ["src/routes-table.ts"],
-      "project": ["src/**/*.ts"]
     },
     "api/*": {
       "project": ["src/**/*.ts"]
@@ -62,41 +41,25 @@
       "entry": ["src/publish-blog.ts", "src/publish-changelog.ts"],
       "project": ["src/**/*.ts"]
     },
-    "packages/console-ai": {
+    "packages/app-ai": {
       "entry": ["src/workspace-*.ts"],
       "project": ["src/**/*.ts"]
     },
-    "packages/console-test-data": {
+    "packages/app-test-data": {
       "entry": ["src/cli/**/*.ts"],
       "project": ["src/**/*.ts"]
     },
-    "packages/console-trpc": {
+    "packages/app-trpc": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/console-vercel": {
+    "packages/app-vercel": {
       "project": ["src/**/*.ts"]
-    },
-    "packages/integration-tests": {
-      "entry": [
-        "src/**/*.test.ts",
-        "src/**/*.integration.test.ts",
-        "src/__stubs__/*.ts"
-      ],
-      "project": ["src/**/*.ts"],
-      "ignoreDependencies": [
-        "@repo/lib",
-        "@relay/webhook-delivery",
-        "@vendor/inngest",
-        "@vendor/qstash",
-        "@vendor/upstash",
-        "@vendor/upstash-workflow"
-      ]
     },
     "packages/og": {
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["react", "@types/react"]
     },
-    "packages/console-upstash-realtime": {
+    "packages/app-upstash-realtime": {
       "ignoreDependencies": ["@types/react"]
     },
     "packages/ui": {
@@ -128,23 +91,13 @@
       "drizzle": false,
       "ignoreDependencies": ["webpack"]
     },
-    "vendor/upstash-workflow": {
-      "project": ["src/**/*.ts"],
-      "drizzle": false,
-      "ignoreDependencies": ["hono", "next"]
-    },
     "internal/typescript": {
       "entry": ["base.json"],
       "ignoreDependencies": ["hono", "next"]
     }
   },
-  "ignore": [
-    ".agents/**",
-    ".claude/**",
-    "apps/console/src/lib/base-url.ts",
-    "apps/www/src/lib/base-url.ts"
-  ],
-  "ignoreWorkspaces": ["packages/console-remotion"],
+  "ignore": [".agents/**", ".claude/**"],
+  "ignoreWorkspaces": ["packages/app-remotion"],
   "ignoreDependencies": [
     "tailwindcss",
     "@tailwindcss/postcss",
@@ -153,7 +106,6 @@
     "autoprefixer",
     "import-in-the-middle",
     "require-in-the-middle",
-    "srvx",
     "tsx",
     "@vitest/coverage-v8"
   ]

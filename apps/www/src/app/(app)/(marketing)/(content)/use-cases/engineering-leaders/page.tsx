@@ -3,8 +3,7 @@ import { createMetadata } from "@vendor/seo/metadata";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
-import { UseCaseGrid } from "~/components/use-case-grid";
-import { exposureTrial } from "~/lib/fonts";
+import { UseCaseGrid } from "~/app/(app)/_components/use-case-grid";
 import { engineeringLeadersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
@@ -31,9 +30,7 @@ export default function EngineeringLeadersPage() {
         <div className="col-span-12 md:col-span-10 md:col-start-2 lg:col-span-10 lg:col-start-2">
           <section className="flex w-full flex-col items-center text-center">
             {/* Heading */}
-            <h1
-              className={`text-balance px-4 font-light text-2xl leading-[1.1] tracking-[-0.02em] sm:text-3xl md:text-4xl ${exposureTrial.className}`}
-            >
+            <h1 className="text-balance px-4 font-light font-pp text-2xl leading-[1.1] tracking-[-0.02em] sm:text-3xl md:text-4xl">
               Engineering Leaders
             </h1>
 

@@ -1,0 +1,72 @@
+"use client";
+
+import type { RerankMode } from "@repo/app-validation";
+import {
+  parseAsArrayOf,
+  parseAsInteger,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryStates,
+} from "nuqs";
+
+const rerankModes = ["fast", "balanced", "thorough"] as const;
+const agePresets = ["1h", "6h", "24h", "72h", "7d", "30d", "none"] as const;
+const viewTabs = ["list", "json"] as const;
+
+/**
+ * Workspace search URL state hook
+ *
+ * Manages URL query parameters for the workspace search:
+ * - q: Search query text
+ * - mode: Rerank mode (fast/balanced/thorough)
+ * - sources: Source type filters
+ * - types: Observation type filters
+ * - expanded: Currently expanded result ID
+ */
+export function useWorkspaceSearchParams(initialQuery = "") {
+  const [params, setParams] = useQueryStates(
+    {
+      q: parseAsString.withDefault(initialQuery),
+      mode: parseAsStringLiteral(rerankModes).withDefault("balanced"),
+      sources: parseAsArrayOf(parseAsString).withDefault([]),
+      types: parseAsArrayOf(parseAsString).withDefault([]),
+      expanded: parseAsString.withDefault(""),
+      limit: parseAsInteger.withDefault(20),
+      offset: parseAsInteger.withDefault(0),
+      age: parseAsStringLiteral(agePresets).withDefault("none"),
+      view: parseAsStringLiteral(viewTabs).withDefault("list"),
+    },
+    {
+      history: "replace",
+      shallow: true,
+    }
+  );
+
+  return {
+    query: params.q,
+    setQuery: (q: string) => setParams({ q }),
+    mode: params.mode as RerankMode,
+    setMode: (mode: RerankMode) => setParams({ mode }),
+    sourceTypes: params.sources,
+    setSourceTypes: (sources: string[]) => setParams({ sources }),
+    observationTypes: params.types,
+    setObservationTypes: (types: string[]) => setParams({ types }),
+    expandedId: params.expanded,
+    setExpandedId: (id: string | null) => setParams({ expanded: id ?? "" }),
+    limit: params.limit,
+    setLimit: (v: number) => setParams({ limit: v }),
+    offset: params.offset,
+    setOffset: (v: number) => setParams({ offset: v }),
+    agePreset: params.age as (typeof agePresets)[number],
+    setAgePreset: (v: (typeof agePresets)[number]) => setParams({ age: v }),
+    activeTab: params.view as (typeof viewTabs)[number],
+    setActiveTab: (v: (typeof viewTabs)[number]) => setParams({ view: v }),
+    // Helper for clearing all filters
+    clearFilters: () =>
+      setParams({
+        sources: [],
+        types: [],
+        age: "none",
+      }),
+  };
+}

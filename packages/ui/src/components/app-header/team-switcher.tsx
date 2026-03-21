@@ -165,7 +165,7 @@ export function TeamSwitcher({
         <DropdownMenuItem asChild className="p-0">
           <Link
             className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:bg-accent"
-            href={createTeamHref}
+            href={{ pathname: createTeamHref }}
             prefetch={true}
           >
             <div className="flex h-5 w-5 items-center justify-center rounded-full border border-muted-foreground/50 border-dashed">
