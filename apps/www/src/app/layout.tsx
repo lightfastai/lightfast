@@ -35,9 +35,6 @@ export const metadata: Metadata = createMetadata({
       "max-snippet": -1,
     },
   },
-  verification: {
-    google: "PLACEHOLDER_VERIFICATION_CODE",
-  },
   openGraph: {
     type: "website",
     locale: "en_US",

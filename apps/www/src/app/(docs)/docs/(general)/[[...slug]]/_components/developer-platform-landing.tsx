@@ -73,7 +73,7 @@ const guideCards: NavCard[] = [
     action: "Read guide",
   },
   {
-    href: "/docs/integrate/github",
+    href: "/docs/connectors/github",
     icon: Github,
     title: "Connect GitHub",
     description:

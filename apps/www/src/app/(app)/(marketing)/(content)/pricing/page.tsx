@@ -283,20 +283,20 @@ export default function PricingPage() {
       {
         "@type": "Offer",
         name: "Team",
-        price: "12",
+        price: "20",
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "$12 per user/month. 1,500 searches per user, 5 sources, semantic search, decision surfacing included",
+          "$20 per user/month. 1,500 searches per user, 5 sources, semantic search, decision surfacing included",
       },
       {
         "@type": "Offer",
         name: "Business",
-        price: "Contact Sales",
+        price: undefined,
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "Custom pricing. Unlimited searches and sources, advanced decision surfacing, SSO",
+          "Contact us for enterprise pricing. Unlimited searches and sources, advanced decision surfacing, SSO",
       },
     ],
     isAccessibleForFree: true,

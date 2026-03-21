@@ -167,14 +167,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             });
           }
 
-          // Add SoftwareSourceCode schema for Technology posts
+          // Add TechArticle schema for Technology posts
           if (categoryNames.includes("technology")) {
             schemas.push({
-              "@type": "SoftwareSourceCode",
+              "@type": "TechArticle",
               name: post._title ?? "",
               description: post.description ?? "",
-              programmingLanguage: "TypeScript",
-              codeRepository: "https://github.com/lightfastai",
             });
           }
 

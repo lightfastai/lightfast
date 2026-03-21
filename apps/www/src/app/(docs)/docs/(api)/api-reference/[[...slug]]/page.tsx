@@ -187,7 +187,7 @@ export async function generateMetadata({
       title: "API Reference – Lightfast",
       description:
         "Complete API reference for Lightfast. REST endpoints and MCP tools for surfacing decisions across your tools.",
-      metadataBase: new URL("https://lightfast.ai/docs"),
+      metadataBase: new URL("https://lightfast.ai"),
       keywords: [
         "API reference",
         "REST API",
@@ -228,13 +228,13 @@ export async function generateMetadata({
         },
       },
       alternates: {
-        canonical: "https://lightfast.ai/docs/docs/api-reference",
+        canonical: "https://lightfast.ai/docs/api-reference",
       },
       openGraph: {
         title: "API Reference – Lightfast",
         description:
           "Complete API reference for Lightfast. REST endpoints and MCP tools for surfacing decisions across your tools.",
-        url: "https://lightfast.ai/docs/docs/api-reference",
+        url: "https://lightfast.ai/docs/api-reference",
         siteName: "Lightfast Documentation",
         type: "website",
         locale: "en_US",
@@ -260,7 +260,7 @@ export async function generateMetadata({
     return createMetadata({
       title: "Page Not Found – Lightfast API Reference",
       description: "The requested API documentation page could not be found",
-      metadataBase: new URL("https://lightfast.ai/docs"),
+      metadataBase: new URL("https://lightfast.ai"),
       robots: {
         index: false,
         follow: false,
@@ -279,7 +279,7 @@ export async function generateMetadata({
   return createMetadata({
     title,
     description,
-    metadataBase: new URL("https://lightfast.ai/docs"),
+    metadataBase: new URL("https://lightfast.ai"),
     keywords: [
       "API reference",
       "REST API",
@@ -319,12 +319,12 @@ export async function generateMetadata({
       },
     },
     alternates: {
-      canonical: `https://lightfast.ai/docs${pageUrl}`,
+      canonical: `https://lightfast.ai${pageUrl}`,
     },
     openGraph: {
       title,
       description,
-      url: `https://lightfast.ai/docs${pageUrl}`,
+      url: `https://lightfast.ai${pageUrl}`,
       siteName: "Lightfast API Reference",
       type: "article",
       locale: "en_US",

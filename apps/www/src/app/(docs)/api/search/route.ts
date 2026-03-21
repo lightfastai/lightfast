@@ -70,7 +70,7 @@ function buildUrl(filePath: string, filename: string): string {
     }
     if (filePath.includes("content/api/")) {
       const pathPart = filePath.split("content/api/")[1] ?? "";
-      return `/docs/api/${pathPart.replace(/\.mdx?$/, "").replace(/\/index$/, "")}`;
+      return `/docs/api-reference/${pathPart.replace(/\.mdx?$/, "").replace(/\/index$/, "")}`;
     }
   }
   if (filename) {
