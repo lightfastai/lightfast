@@ -42,20 +42,20 @@ export async function generateBlogFeed(): Promise<Feed> {
       })
       .slice(0, 50) // Limit to 50 most recent posts
       .forEach((post) => {
-        const url = `${baseUrl}/blog/${post.slug ?? post._slug}`;
+        const url = `${baseUrl}/blog/${post.slug}`;
         const date = post.publishedAt ? new Date(post.publishedAt) : buildDate;
 
         feed.addItem({
-          title: post._title ?? "Untitled",
+          title: post._title,
           id: url,
           link: url,
-          description: post.description ?? "Read more on the Lightfast blog",
+          description: post.description,
           date,
-          category: (post.categories ?? []).map((cat) => ({
-            name: cat._title ?? "Uncategorized",
+          category: post.categories.map((cat) => ({
+            name: cat._title,
           })),
-          author: (post.authors ?? []).map((author) => ({
-            name: author._title ?? "Lightfast Team",
+          author: post.authors.map((author) => ({
+            name: author._title,
             link: author.xUrl ?? undefined,
           })),
           image: post.featuredImage?.url ?? undefined,

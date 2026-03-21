@@ -10,7 +10,7 @@ export function ChangelogPreview() {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelog?.post?.items ?? [];
+        const entries = response.changelog.post.items;
 
         // Get the latest 4 entries
         const latestEntries = entries.slice(0, 4);
@@ -34,8 +34,7 @@ export function ChangelogPreview() {
             {/* Changelog Cards Grid */}
             <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
               {latestEntries.map((item) => {
-                // Use publishedAt if available, fall back to createdAt
-                const publishedTime = item.publishedAt ?? item._sys?.createdAt;
+                const publishedTime = item.publishedAt;
                 const dateStr = publishedTime
                   ? new Date(publishedTime).toLocaleDateString("en-US", {
                       year: "numeric",
@@ -48,7 +47,7 @@ export function ChangelogPreview() {
                   <Link
                     className="group"
                     href={`/changelog/${item.slug}`}
-                    key={item._slug ?? item._title}
+                    key={item._slug}
                   >
                     <div className="h-full rounded-md border border-border p-4 transition-colors hover:bg-card/60">
                       {/* Version Badge and Date on same line */}

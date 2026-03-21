@@ -52,17 +52,17 @@ export async function generateMetadata({
   }
 
   // Use SEO fields with fallbacks
-  const title = entry.seo?.metaTitle ?? entry._title ?? "Changelog";
+  const title = entry.seo.metaTitle ?? entry._title;
   const description =
-    entry.seo?.metaDescription ??
+    entry.seo.metaDescription ??
     entry.excerpt ??
     entry.tldr ??
     entry.body?.plainText?.slice(0, 160) ??
-    `${entry._title} - Lightfast changelog update`;
+    entry._title;
 
   const canonicalUrl =
-    entry.seo?.canonicalUrl ?? `https://lightfast.ai/changelog/${slug}`;
-  const publishedTime = entry.publishedAt ?? entry._sys?.createdAt;
+    entry.seo.canonicalUrl ?? `https://lightfast.ai/changelog/${slug}`;
+  const publishedTime = entry.publishedAt;
 
   return {
     title,
@@ -92,7 +92,7 @@ export async function generateMetadata({
       description,
       creator: "@lightfastai",
     },
-    ...(entry.seo?.noIndex ? { robots: { index: false } } : {}),
+    ...(entry.seo.noIndex ? { robots: { index: false } } : {}),
   } satisfies Metadata;
 }
 
@@ -120,7 +120,7 @@ export default async function ChangelogEntryPage({
         "use server";
 
         const response = data as ChangelogEntryQueryResponse;
-        const entry = response.changelog?.post?.item;
+        const entry = response.changelog.post.item;
         if (!entry) {
           notFound();
         }
@@ -130,8 +130,7 @@ export default async function ChangelogEntryPage({
           .getAdjacentEntries(slug)
           .catch(() => ({ previous: null, next: null }));
 
-        // Use publishedAt if available, fall back to createdAt
-        const publishedTime = entry.publishedAt ?? entry._sys?.createdAt;
+        const publishedTime = entry.publishedAt;
         const publishedDate = publishedTime ? new Date(publishedTime) : null;
         const dateStr = publishedDate
           ? publishedDate.toLocaleDateString(undefined, {
@@ -153,12 +152,11 @@ export default async function ChangelogEntryPage({
             : {}),
           ...(entry.prefix ? { softwareVersion: entry.prefix } : {}),
           description:
-            entry.seo?.metaDescription ??
+            entry.seo.metaDescription ??
             entry.excerpt ??
             entry.tldr ??
             entry.body?.plainText?.slice(0, 160) ??
-            entry._title ??
-            "Lightfast changelog entry",
+            entry._title,
           ...(entry.featuredImage?.url
             ? {
                 image: {
@@ -181,7 +179,7 @@ export default async function ChangelogEntryPage({
         };
 
         // Generate FAQ schema if FAQ items exist
-        const faqItems = entry.seo?.faq?.items?.filter(
+        const faqItems = entry.seo.faq.items.filter(
           (item) => item.question && item.answer
         );
         const faqSchema =

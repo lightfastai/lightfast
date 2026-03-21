@@ -1,4 +1,4 @@
-import type { Post } from "@vendor/cms";
+import type { PostMeta } from "@vendor/cms";
 import { blog } from "@vendor/cms";
 import type { BlogPosting, GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
@@ -52,7 +52,7 @@ export const metadata: Metadata = {
 export const revalidate = 300;
 
 export default async function BlogPage() {
-  let posts: Post[] = [];
+  let posts: PostMeta[] = [];
   try {
     posts = await blog.getPosts();
   } catch {
@@ -99,8 +99,8 @@ export default async function BlogPage() {
         blogPost: posts.slice(0, 10).map((post) => {
           const blogPosting: BlogPosting = {
             "@type": "BlogPosting",
-            "@id": `https://lightfast.ai/blog/${post.slug ?? post._slug}`,
-            url: `https://lightfast.ai/blog/${post.slug ?? post._slug}`,
+            "@id": `https://lightfast.ai/blog/${post.slug}`,
+            url: `https://lightfast.ai/blog/${post.slug}`,
           };
 
           // Only add properties if they have values
@@ -149,17 +149,14 @@ export default async function BlogPage() {
               : "";
 
             // Get primary category
-            const primaryCategory = post.categories?.[0]?._title;
+            const primaryCategory = post.categories[0]?._title;
 
             return (
               <article
                 className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
-                key={post._slug ?? post._title}
+                key={post._slug}
               >
-                <Link
-                  className="group block"
-                  href={`/blog/${post.slug ?? post._slug}`}
-                >
+                <Link className="group block" href={`/blog/${post.slug}`}>
                   <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
                     {post._title}
                   </h2>

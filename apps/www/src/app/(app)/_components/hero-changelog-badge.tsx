@@ -10,15 +10,14 @@ export function HeroChangelogBadge() {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelog?.post?.items ?? [];
+        const entries = response.changelog.post.items;
         const latest = entries[0];
 
         if (!latest) {
           return null;
         }
 
-        // Format date
-        const publishedTime = latest.publishedAt ?? latest._sys?.createdAt;
+        const publishedTime = latest.publishedAt;
         const dateStr = publishedTime
           ? new Date(publishedTime).toLocaleDateString(undefined, {
               month: "short",

@@ -49,7 +49,7 @@ export default function ChangelogPage() {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelog?.post?.items ?? [];
+        const entries = response.changelog.post.items;
 
         return (
           <div className="space-y-12 text-foreground">
@@ -63,7 +63,7 @@ export default function ChangelogPage() {
               </div>
             ) : (
               entries.map((item) => {
-                const publishedTime = item.publishedAt ?? item._sys?.createdAt;
+                const publishedTime = item.publishedAt;
                 const publishedDate = publishedTime
                   ? new Date(publishedTime)
                   : null;
@@ -76,7 +76,7 @@ export default function ChangelogPage() {
                   : "";
 
                 return (
-                  <div className="relative" key={item._slug ?? item._title}>
+                  <div className="relative" key={item._slug}>
                     <article className="space-y-3">
                       <p className="text-muted-foreground text-sm">
                         Changelog

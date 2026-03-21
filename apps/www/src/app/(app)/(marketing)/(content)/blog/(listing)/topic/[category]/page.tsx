@@ -59,17 +59,6 @@ interface Props {
   }>;
 }
 
-export async function generateStaticParams() {
-  try {
-    const allCategories = await categoriesAPI.getCategories();
-    return allCategories.map((category) => ({
-      category: category._slug ?? "",
-    }));
-  } catch {
-    return [];
-  }
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
   const seo = categorySEO[category];
@@ -78,7 +67,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const allCategories = await categoriesAPI.getCategories();
     currentCategory = allCategories.find(
-      (cat) => cat._slug?.toLowerCase() === category.toLowerCase()
+      (cat) => cat._slug.toLowerCase() === category.toLowerCase()
     );
   } catch {
     return { title: seo?.metaTitle ?? "Blog" };
