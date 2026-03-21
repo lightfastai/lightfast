@@ -3,9 +3,8 @@ import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
-import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
+import { PrefetchCrossZoneLinks, PrefetchCrossZoneLinksProvider } from "@vercel/microfrontends/next/client";
 import type { Metadata, Viewport } from "next";
-import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefetch-provider";
 import { geistMono, geistSans, ppNeueMontreal } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
@@ -146,12 +145,12 @@ export default function RootLayout({
         <JsonLd code={websiteSchema} />
       </head>
       <body>
-        <StablePrefetchCrossZoneLinksProvider>
+        <PrefetchCrossZoneLinksProvider>
           {children}
           <VercelAnalytics />
           <SpeedInsights />
           <PrefetchCrossZoneLinks />
-        </StablePrefetchCrossZoneLinksProvider>
+        </PrefetchCrossZoneLinksProvider>
       </body>
     </html>
   );

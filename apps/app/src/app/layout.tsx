@@ -6,6 +6,10 @@ import { fonts as geistFonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import { createMetadata } from "@vendor/seo/metadata";
+import {
+  PrefetchCrossZoneLinks,
+  PrefetchCrossZoneLinksProvider,
+} from "@vercel/microfrontends/next/client";
 import { ppNeueMontreal } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
@@ -59,9 +63,12 @@ export default function RootLayout({
     >
       <head />
       <body className="dark min-h-screen bg-background antialiased">
-        {children}
-        <VercelAnalytics />
-        <SpeedInsights />
+        <PrefetchCrossZoneLinksProvider>
+          {children}
+          <VercelAnalytics />
+          <SpeedInsights />
+          <PrefetchCrossZoneLinks />
+        </PrefetchCrossZoneLinksProvider>
       </body>
     </html>
   );

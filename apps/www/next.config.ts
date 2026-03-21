@@ -125,4 +125,6 @@ if (process.env.ANALYZE === "true") {
 
 const withMDX = createMDX();
 
-export default withMicrofrontends(withMDX(config), { debug: true });
+export default withMicrofrontends(withMDX(config), {
+  debug: env.VERCEL_ENV !== "production",
+});
