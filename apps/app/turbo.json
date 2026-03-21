@@ -48,6 +48,7 @@
         "BASEHUB_ADMIN_TOKEN",
         "HEALTH_CHECK_AUTH_TOKEN",
         "ENCRYPTION_KEY",
+        "ARCJET_KEY",
         "PINECONE_API_KEY",
         "COHERE_API_KEY",
         "INNGEST_APP_NAME",
