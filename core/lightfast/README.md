@@ -560,12 +560,12 @@ const lightfast = new Lightfast({
 
 ## API Reference
 
-Full API documentation: [lightfast.ai/docs/api](https://lightfast.ai/docs/api)
+Full API documentation: [lightfast.ai/docs/api-reference/getting-started/overview](https://lightfast.ai/docs/api-reference/getting-started/overview)
 
 ## Links
 
 - **Website**: [lightfast.ai](https://lightfast.ai)
-- **Documentation**: [lightfast.ai/docs](https://lightfast.ai/docs)
+- **Documentation**: [lightfast.ai/docs/get-started/overview](https://lightfast.ai/docs/get-started/overview)
 - **GitHub**: [github.com/lightfastai/lightfast](https://github.com/lightfastai/lightfast)
 - **npm**: [npmjs.com/package/lightfast](https://www.npmjs.com/package/lightfast)
 - **Issues**: [github.com/lightfastai/lightfast/issues](https://github.com/lightfastai/lightfast/issues)

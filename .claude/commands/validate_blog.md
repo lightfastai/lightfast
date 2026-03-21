@@ -101,7 +101,8 @@ Based on `category` field, validate:
 ### Internal Links
 Extract `/docs/*` links and verify:
 - `/docs/get-started/overview`
-- `/docs/features/*`
+- `/docs/integrate/*`
+- `/docs/connectors/*`
 - `/docs/api-reference/*`
 
 Map to actual files in `apps/www/src/content/`.
@@ -153,7 +154,7 @@ Count external links (should be 3-10 depending on category).
 
 ### Link Validation
 [checkmark] /docs/get-started/quickstart -> EXISTS
-[checkmark] /docs/features/search -> EXISTS
+[checkmark] /docs/integrate/sdk -> EXISTS
 [X] /docs/api/vector-search -> NOT FOUND
   Suggestion: /docs/api-reference/search
 
