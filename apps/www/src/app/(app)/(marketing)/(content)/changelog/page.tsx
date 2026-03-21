@@ -3,10 +3,12 @@ import { Button } from "@repo/ui/components/ui/button";
 import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
 import { changelog } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
+
+export const dynamic = "force-static";
 
 export const metadata: Metadata = {
   title: "Lightfast Changelog",
@@ -40,16 +42,15 @@ export const metadata: Metadata = {
   },
 };
 
-export const revalidate = 300;
 
 export default function ChangelogPage() {
   return (
-    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
+    <Feed queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelog?.post?.items ?? [];
+        const entries = response.changelog.post.items;
 
         return (
           <div className="space-y-12 text-foreground">
@@ -63,7 +64,7 @@ export default function ChangelogPage() {
               </div>
             ) : (
               entries.map((item) => {
-                const publishedTime = item.publishedAt ?? item._sys?.createdAt;
+                const publishedTime = item.publishedAt;
                 const publishedDate = publishedTime
                   ? new Date(publishedTime)
                   : null;
@@ -76,7 +77,7 @@ export default function ChangelogPage() {
                   : "";
 
                 return (
-                  <div className="relative" key={item._slug ?? item._title}>
+                  <div className="relative" key={item._slug}>
                     <article className="space-y-3">
                       <p className="text-muted-foreground text-sm">
                         Changelog

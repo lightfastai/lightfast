@@ -39,12 +39,7 @@ export async function generateChangelogFeed(): Promise<Feed> {
     entries.slice(0, 50).forEach((entry) => {
       const url = `${baseUrl}/changelog/${entry.slug ?? entry._slug}`;
 
-      // Use publishedAt if available, fall back to createdAt
-      const publishedDate = entry.publishedAt
-        ? new Date(entry.publishedAt)
-        : entry._sys?.createdAt
-          ? new Date(entry._sys.createdAt)
-          : buildDate;
+      const publishedDate = new Date(entry.publishedAt);
 
       // Use AEO fields for enhanced descriptions
       const description =
@@ -54,7 +49,7 @@ export async function generateChangelogFeed(): Promise<Feed> {
         "View the latest updates from Lightfast";
 
       feed.addItem({
-        title: entry._title ?? "Untitled",
+        title: entry._title,
         id: url,
         link: url,
         description,

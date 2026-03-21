@@ -3,15 +3,15 @@ import type { LegalPostQueryResponse } from "@vendor/cms";
 
 import { legal } from "@vendor/cms";
 import { Body } from "@vendor/cms/components/body";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+
+export const dynamic = "force-static";
 
 interface LegalPageProps {
   params: Promise<{ slug: string }>;
 }
-
-export const revalidate = 300;
 
 export async function generateMetadata({
   params,
@@ -36,7 +36,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
   const { slug } = await params;
 
   return (
-    <Feed draft={isDraft} queries={[legal.postQuery(slug)]}>
+    <Feed queries={[legal.postQuery(slug)]}>
       {async ([data]) => {
         "use server";
 

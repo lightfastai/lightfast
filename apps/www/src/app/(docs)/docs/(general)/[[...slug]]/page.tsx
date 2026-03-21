@@ -186,7 +186,7 @@ export async function generateMetadata({
       title: "Documentation – Lightfast",
       description:
         "Comprehensive documentation for Lightfast — surface decisions across your tools",
-      metadataBase: new URL("https://lightfast.ai/docs"),
+      metadataBase: new URL("https://lightfast.ai"),
       keywords: [
         "Lightfast documentation",
         "decision search",
@@ -223,13 +223,13 @@ export async function generateMetadata({
         },
       },
       alternates: {
-        canonical: "https://lightfast.ai/docs/docs",
+        canonical: "https://lightfast.ai/docs",
       },
       openGraph: {
         title: "Documentation – Lightfast",
         description:
           "Comprehensive documentation for Lightfast — surface decisions across your tools",
-        url: "https://lightfast.ai/docs/docs",
+        url: "https://lightfast.ai/docs",
         siteName: "Lightfast Documentation",
         type: "website",
         locale: "en_US",
@@ -255,7 +255,7 @@ export async function generateMetadata({
     return createMetadata({
       title: "Page Not Found – Lightfast Docs",
       description: "The requested documentation page could not be found",
-      metadataBase: new URL("https://lightfast.ai/docs"),
+      metadataBase: new URL("https://lightfast.ai"),
       robots: {
         index: false,
         follow: false,
@@ -273,22 +273,20 @@ export async function generateMetadata({
   const pageKeywords = frontmatter.keywords
     .split(",")
     .map((k: string) => k.trim());
-  const canonical =
-    frontmatter.canonical ?? `https://lightfast.ai/docs${pageUrl}`;
+  const canonical = frontmatter.canonical ?? `https://lightfast.ai${pageUrl}`;
   const noindex = frontmatter.noindex ?? false;
   const nofollow = frontmatter.nofollow ?? false;
 
   // Use ogTitle/ogDescription/ogImage overrides if provided, otherwise use defaults
   const ogTitle = frontmatter.ogTitle ?? title;
   const ogDescription = frontmatter.ogDescription ?? description;
-  const ogImage =
-    frontmatter.ogImage ?? `https://lightfast.ai/docs${pageUrl}/og`;
+  const ogImage = frontmatter.ogImage ?? `https://lightfast.ai${pageUrl}/og`;
 
   // Enhance the metadata with comprehensive SEO properties
   return createMetadata({
     title,
     description,
-    metadataBase: new URL("https://lightfast.ai/docs"),
+    metadataBase: new URL("https://lightfast.ai"),
     // Merge per-page keywords with default docs keywords
     keywords: [
       ...pageKeywords,
@@ -330,7 +328,7 @@ export async function generateMetadata({
     openGraph: {
       title: ogTitle,
       description: ogDescription,
-      url: `https://lightfast.ai/docs${pageUrl}`,
+      url: `https://lightfast.ai${pageUrl}`,
       siteName: "Lightfast Documentation",
       type: "article",
       locale: "en_US",

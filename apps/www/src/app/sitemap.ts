@@ -175,14 +175,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Individual blog posts from CMS
     // Uses lastModifiedAt for accurate freshness signals (AEO/GEO optimization)
     ...blogPosts
-      .filter((post) => !!post.slug || !!post._slug)
+      .filter((post) => post.slug.length > 0)
       .map((post) => {
-        const slug = post.slug ?? post._slug ?? "";
-        const lastModified = post._sys?.lastModifiedAt
-          ? new Date(post._sys.lastModifiedAt)
-          : post.publishedAt
-            ? new Date(post.publishedAt)
-            : undefined;
+        const slug = post.slug;
+        const lastModified = new Date(post._sys.lastModifiedAt);
 
         return {
           url: `${base}/blog/${slug}`,
@@ -206,13 +202,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...changelogEntries
       .filter((entry) => !!entry.slug)
       .map((entry) => {
-        const lastModified = entry._sys?.lastModifiedAt
-          ? new Date(entry._sys.lastModifiedAt)
-          : entry.publishedAt
-            ? new Date(entry.publishedAt)
-            : entry._sys?.createdAt
-              ? new Date(entry._sys.createdAt)
-              : undefined;
+        const lastModified = new Date(entry._sys.lastModifiedAt);
 
         return {
           url: `${base}/changelog/${entry.slug}`,

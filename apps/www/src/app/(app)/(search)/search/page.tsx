@@ -19,7 +19,6 @@ export const metadata: Metadata = createMetadata({
     title: "Search – Lightfast",
     description:
       "Search across Lightfast documentation, guides, and resources.",
-    images: ["https://lightfast.ai/og.jpg"],
   },
   alternates: {
     canonical: "https://lightfast.ai/search",

@@ -45,7 +45,12 @@
             "/favicon-32x32.png",
             "/docs",
             "/docs/:path*",
-            "/api/search"
+            "/api/search",
+            "/sitemap.xml",
+            "/robots.txt",
+            "/manifest.json",
+            "/llms.txt",
+            "/llms-full.txt"
           ]
         }
       ]

@@ -1,5 +1,7 @@
 import {
+  captureConsoleIntegration,
   captureRouterTransitionStart,
+  extraErrorDataIntegration,
   init as initSentry,
   replayIntegration,
   reportingObserverIntegration,
@@ -22,6 +24,8 @@ initSentry({
       maskAllText: true,
       blockAllMedia: true,
     }),
+    captureConsoleIntegration({ levels: ["error", "warn"] }),
+    extraErrorDataIntegration({ depth: 3 }),
     reportingObserverIntegration({
       types: ["crash", "deprecation", "intervention"],
     }),

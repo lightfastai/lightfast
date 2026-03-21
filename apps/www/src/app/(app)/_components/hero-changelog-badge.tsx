@@ -1,24 +1,23 @@
 import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
 import { changelog } from "@vendor/cms";
-import { Feed, isDraft } from "@vendor/cms/components/feed";
+import { Feed } from "@vendor/cms/components/feed";
 import Link from "next/link";
 
 export function HeroChangelogBadge() {
   return (
-    <Feed draft={isDraft} queries={[changelog.entriesQuery]}>
+    <Feed queries={[changelog.entriesQuery]}>
       {async ([data]) => {
         "use server";
 
         const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelog?.post?.items ?? [];
+        const entries = response.changelog.post.items;
         const latest = entries[0];
 
         if (!latest) {
           return null;
         }
 
-        // Format date
-        const publishedTime = latest.publishedAt ?? latest._sys?.createdAt;
+        const publishedTime = latest.publishedAt;
         const dateStr = publishedTime
           ? new Date(publishedTime).toLocaleDateString(undefined, {
               month: "short",

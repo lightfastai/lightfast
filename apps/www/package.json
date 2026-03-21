@@ -30,6 +30,7 @@
     "@rescale/nemo": "^2.1.1",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
+    "@vendor/aeo": "workspace:*",
     "@vendor/analytics": "workspace:*",
     "@vendor/cms": "workspace:*",
     "@vendor/email": "workspace:*",
@@ -55,6 +56,7 @@
     "react": "19.2.4",
     "react-dom": "19.2.4",
     "remove-markdown": "^0.6.3",
+    "swr": "^2.4.1",
     "zod": "catalog:"
   },
   "devDependencies": {
