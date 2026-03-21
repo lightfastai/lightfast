@@ -13,11 +13,11 @@ import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Activity, Blocks, Brain, Plug, Shield, Wand2 } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
-import { ChangelogPreview } from "~/components/changelog-preview";
-import { FAQSection, faqs } from "~/components/faq-section";
-import { HeroChangelogBadge } from "~/components/hero-changelog-badge";
-import { IntegrationShowcase } from "~/components/integration-showcase";
-import { WaitlistCTA } from "~/components/waitlist-cta";
+import { ChangelogPreview } from "~/app/(app)/_components/changelog-preview";
+import { FAQSection, faqs } from "~/app/(app)/_components/faq-section";
+import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
+import { IntegrationShowcase } from "~/app/(app)/_components/integration-showcase";
+import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
 
 const benefits = [
   {

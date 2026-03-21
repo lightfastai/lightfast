@@ -82,29 +82,20 @@ Parse markdown body and check:
 ### Link Mapping Rules
 
 The docs use Fumadocs with this structure:
-- `apps/docs/src/content/docs/` - Main docs
-- `apps/docs/src/content/api/` - API reference (mapped to `/docs/api-reference/`)
+- `apps/www/src/content/docs/` - Main docs
+- `apps/www/src/content/api/` - API reference (mapped to `/docs/api-reference/`)
 
 | Link Pattern | File Location |
 |--------------|---------------|
-| `/docs` | `apps/docs/src/content/docs/index.mdx` |
-| `/docs/X` | `apps/docs/src/content/docs/X.mdx` OR `apps/docs/src/content/docs/X/index.mdx` |
-| `/docs/X/Y` | `apps/docs/src/content/docs/X/Y.mdx` |
-| `/docs/api-reference` | `apps/docs/src/content/api/overview.mdx` |
-| `/docs/api-reference/X` | `apps/docs/src/content/api/X.mdx` |
+| `/docs` | `apps/www/src/content/docs/index.mdx` |
+| `/docs/X` | `apps/www/src/content/docs/X.mdx` OR `apps/www/src/content/docs/X/index.mdx` |
+| `/docs/X/Y` | `apps/www/src/content/docs/X/Y.mdx` |
+| `/docs/api-reference` | `apps/www/src/content/api/overview.mdx` |
+| `/docs/api-reference/X` | `apps/www/src/content/api/X.mdx` |
 
 ### Current Valid Documentation Paths
 
 Based on actual docs structure (21 .mdx files):
-
-**Features:**
-- `/docs/features` → features/index.mdx
-- `/docs/features/search` → features/search.mdx
-- `/docs/features/citations` → features/citations.mdx
-- `/docs/features/relationships` → features/relationships.mdx
-- `/docs/features/security` → features/security.mdx
-- `/docs/features/memory` → features/memory.mdx
-- `/docs/features/quality` → features/quality.mdx
 
 **Get Started:**
 - `/docs/get-started/overview` → get-started/overview.mdx
@@ -117,13 +108,11 @@ Based on actual docs structure (21 .mdx files):
 - `/docs/integrate/mcp` → integrate/mcp.mdx
 
 **API Reference:**
-- `/docs/api-reference` → api/overview.mdx
-- `/docs/api-reference/authentication` → api/authentication.mdx
-- `/docs/api-reference/sdks` → api/sdks.mdx
-- `/docs/api-reference/search` → api/search.mdx
-- `/docs/api-reference/findsimilar` → api/findsimilar.mdx
-- `/docs/api-reference/contents` → api/contents.mdx
-- `/docs/api-reference/errors` → api/errors.mdx
+- `/docs/api-reference/getting-started/overview` → api/getting-started/overview.mdx
+- `/docs/api-reference/getting-started/authentication` → api/getting-started/authentication.mdx
+- `/docs/api-reference/getting-started/errors` → api/getting-started/errors.mdx
+- `/docs/api-reference/sdks-tools/typescript-sdk` → api/sdks-tools/typescript-sdk.mdx
+- `/docs/api-reference/sdks-tools/mcp-server` → api/sdks-tools/mcp-server.mdx
 
 ### Validation Process
 
@@ -139,7 +128,7 @@ Based on actual docs structure (21 .mdx files):
 If a link is invalid, suggest the closest valid path:
 - `/docs/integrations/github` → Suggest `/docs/integrate` (no integrations directory exists)
 - `/docs/integrations/vercel` → Suggest `/docs/integrate` (no integrations directory exists)
-- `/docs/neural-memory` → Suggest `/docs/features/memory` (partial match)
+- `/docs/neural-memory` → Suggest `/docs/get-started/overview` (no dedicated memory page)
 
 ## Step 6: Fact-Checked Files Validation
 
@@ -206,7 +195,7 @@ Output structured report:
 ✗ /docs/integrations/vercel → FILE NOT FOUND
   Suggestion: /docs/integrate (closest match)
 ✗ /docs/neural-memory → FILE NOT FOUND
-  Suggestion: /docs/features/memory (partial match)
+  Suggestion: /docs/get-started/overview (closest match)
 ✓ /docs/api-reference → EXISTS (api/overview.mdx)
 
 ### Fact-Checked Files
@@ -228,7 +217,7 @@ Output structured report:
 3. Fix resource links:
    - Replace `/docs/integrations/github` with valid docs path
    - Replace `/docs/integrations/vercel` with valid docs path
-   - Replace `/docs/neural-memory` with `/docs/features/memory`
+   - Replace `/docs/neural-memory` with `/docs/get-started/overview`
 ```
 
 ## Error Handling

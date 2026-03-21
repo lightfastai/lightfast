@@ -1,4 +1,4 @@
-import { generateChangelogFeed } from "~/lib/feeds/generate-changelog-feed";
+import { generateChangelogFeed } from "~/app/(app)/_lib/feeds/generate-changelog-feed";
 
 // Alias for rss.xml - some feed readers expect /feed.xml
 export const revalidate = 3600;

@@ -17,6 +17,7 @@ catalog:
   '@hookform/resolvers': ^5.2.2
   '@inngest/middleware-sentry': ^0.1.2
   '@neondatabase/serverless': ^1.0.2
+  '@noble/ed25519': ^2.2.3
   '@noble/hashes': ^2.0.1
   '@sentry/core': ^10.42.0
   '@sentry/nextjs': ^10.42.0

@@ -38,6 +38,8 @@ export const env = createEnv({
       .min(1)
       .startsWith("bshb_pk_")
       .optional(),
+    MXBAI_API_KEY: z.string().min(1),
+    MXBAI_STORE_ID: z.string().min(1),
   },
 
   /**

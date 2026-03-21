@@ -138,7 +138,7 @@ export const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
    * https://docs.sentry.io/product/crons/
    * https://vercel.com/docs/cron-jobs
    */
-  automaticVercelMonitors: true,
+  automaticVercelMonitors: false,
 };
 
 export const withSentry: (sourceConfig: NextConfig) => NextConfig = (

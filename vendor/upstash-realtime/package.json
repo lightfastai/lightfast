@@ -6,16 +6,16 @@
   "exports": {
     ".": {
       "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
+      "default": "./src/index.ts"
     },
     "./client": {
       "types": "./dist/src/client.d.ts",
-      "default": "./dist/src/client.js"
+      "default": "./src/client.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup && tsc --incremental false",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "dev": "tsc",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
@@ -27,7 +27,6 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@types/react": "19.2.14",
-    "tsup": "^8.5.1",
     "typescript": "catalog:"
   }
 }

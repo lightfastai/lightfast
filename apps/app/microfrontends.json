@@ -1,0 +1,55 @@
+{
+  "$schema": "https://openapi.vercel.sh/microfrontends.json",
+  "applications": {
+    "lightfast-app": {
+      "packageName": "@lightfast/app",
+      "development": {
+        "local": 4107,
+        "fallback": "lightfast-app.vercel.app"
+      }
+    },
+    "lightfast-www": {
+      "packageName": "@lightfast/www",
+      "development": {
+        "local": 4101
+      },
+      "routing": [
+        {
+          "group": "marketing",
+          "paths": [
+            "/",
+            "/opengraph-image-:hash",
+            "/pricing",
+            "/changelog",
+            "/changelog/:path*",
+            "/blog",
+            "/blog/:path*",
+            "/use-cases/agent-builders",
+            "/use-cases/engineering-leaders",
+            "/use-cases/platform-engineers",
+            "/use-cases/technical-founders",
+            "/legal/:path*",
+            "/search",
+            "/pitch-deck",
+            "/api/health",
+            "/images/:path*",
+            "/fonts/:path*",
+            "/favicon.ico",
+            "/android-chrome-192x192.png",
+            "/android-chrome-512x512.png",
+            "/apple-touch-icon.png",
+            "/favicon-16x16.png",
+            "/favicon-32x32.png",
+            "/docs",
+            "/docs/:path*",
+            "/api/search",
+            "/sitemap.xml",
+            "/robots.txt",
+            "/manifest.json",
+            "/llms.txt"
+          ]
+        }
+      ]
+    }
+  }
+}

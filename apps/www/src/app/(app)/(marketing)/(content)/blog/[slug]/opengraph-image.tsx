@@ -26,9 +26,9 @@ export default async function Image({
   try {
     const post = await blog.getPost(slug);
     if (post) {
-      title = post._title ?? "Blog";
-      description = post.description ?? undefined;
-      category = post.categories?.[0]?._title ?? undefined;
+      title = post._title;
+      description = post.description;
+      category = post.categories[0]?._title;
       date = post.publishedAt
         ? new Date(post.publishedAt).toLocaleDateString("en-US", {
             year: "numeric",
@@ -36,7 +36,7 @@ export default async function Image({
             day: "numeric",
           })
         : undefined;
-      author = post.authors?.[0]?._title ?? undefined;
+      author = post.authors[0]?._title;
     }
   } catch {
     // Fall back to defaults

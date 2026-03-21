@@ -1,10 +1,6 @@
-import type { Post } from "@vendor/cms";
 import { categories as categoriesAPI } from "@vendor/cms";
-import type { GraphContext } from "@vendor/seo/json-ld";
-import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
-import Link from "next/link";
-import { notFound } from "next/navigation";
+import { redirect } from "next/navigation";
 
 const categorySEO: Record<
   string,
@@ -63,17 +59,6 @@ interface Props {
   }>;
 }
 
-export async function generateStaticParams() {
-  try {
-    const allCategories = await categoriesAPI.getCategories();
-    return allCategories.map((category) => ({
-      category: category._slug ?? "",
-    }));
-  } catch {
-    return [];
-  }
-}
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { category } = await params;
   const seo = categorySEO[category];
@@ -82,7 +67,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   try {
     const allCategories = await categoriesAPI.getCategories();
     currentCategory = allCategories.find(
-      (cat) => cat._slug?.toLowerCase() === category.toLowerCase()
+      (cat) => cat._slug.toLowerCase() === category.toLowerCase()
     );
   } catch {
     return { title: seo?.metaTitle ?? "Blog" };
@@ -122,155 +107,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default async function CategoryPage({ params }: Props) {
-  const { category } = await params;
-
-  // Fetch categories from BaseHub
-  let allCategories;
-  try {
-    allCategories = await categoriesAPI.getCategories();
-  } catch {
-    // CMS unavailable — show empty state with category slug as display name
-    return (
-      <div className="space-y-2">
-        <div className="rounded-xs border border-transparent bg-card/40 p-4">
-          <h2 className="mb-4 font-semibold text-sm">
-            Temporarily unavailable
-          </h2>
-          <p className="text-muted-foreground text-sm leading-relaxed">
-            We&apos;re having trouble loading posts right now. Please try again
-            shortly or{" "}
-            <Link className="underline" href="/blog">
-              view all posts
-            </Link>
-            .
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Find the current category
-  const currentCategory = allCategories.find(
-    (cat) => cat._slug?.toLowerCase() === category.toLowerCase()
-  );
-
-  // Validate category exists
-  if (!currentCategory) {
-    notFound();
-  }
-
-  const displayName = currentCategory._title ?? category;
-
-  // TODO: Fetch real posts from CMS
-  const allPosts: Post[] = [];
-
-  // Filter posts by category
-  const posts = allPosts.filter((post) =>
-    post.categories?.some(
-      (cat) =>
-        cat._title?.toLowerCase() === currentCategory._title?.toLowerCase()
-    )
-  );
-
-  // Structured data for category page
-  const structuredData: GraphContext = {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://lightfast.ai/#organization",
-        name: "Lightfast",
-        url: "https://lightfast.ai",
-        logo: {
-          "@type": "ImageObject",
-          url: "https://lightfast.ai/android-chrome-512x512.png",
-        },
-      },
-      {
-        "@type": "CollectionPage",
-        "@id": `https://lightfast.ai/blog/topic/${category}`,
-        name: displayName,
-        description: categorySEO[category]?.metaDescription ?? "",
-        url: `https://lightfast.ai/blog/topic/${category}`,
-        isPartOf: {
-          "@id": "https://lightfast.ai/blog#blog",
-        },
-      },
-    ],
-  };
-
-  return (
-    <>
-      <JsonLd code={structuredData} />
-
-      {/* Posts List */}
-      <div className="space-y-2">
-        {posts.length === 0 ? (
-          <div className="rounded-xs border border-transparent bg-card/40 p-4">
-            <h2 className="mb-4 font-semibold text-sm">
-              No {displayName} posts yet
-            </h2>
-            <p className="text-muted-foreground text-sm leading-relaxed">
-              We haven't published any {displayName.toLowerCase()} posts yet.
-              Check back soon or{" "}
-              <Link className="underline" href="/blog">
-                view all posts
-              </Link>
-              .
-            </p>
-          </div>
-        ) : (
-          posts.map((post) => {
-            const publishedDate = post.publishedAt
-              ? new Date(post.publishedAt)
-              : null;
-            const dateStr = publishedDate
-              ? publishedDate.toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })
-              : "";
-
-            // Get primary category
-            const primaryCategory = post.categories?.[0]?._title;
-
-            return (
-              <article
-                className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
-                key={post._slug ?? post._title}
-              >
-                <Link
-                  className="group block"
-                  href={`/blog/${post.slug ?? post._slug}`}
-                >
-                  <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
-                    {post._title}
-                  </h2>
-
-                  {post.description && (
-                    <p className="mb-4 text-md text-muted-foreground leading-relaxed">
-                      {post.description}
-                    </p>
-                  )}
-
-                  {/* Metadata */}
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                    {primaryCategory && (
-                      <>
-                        <span>{primaryCategory}</span>
-                        <span>·</span>
-                      </>
-                    )}
-                    <time>{dateStr}</time>
-                  </div>
-                </Link>
-              </article>
-            );
-          })
-        )}
-      </div>
-    </>
-  );
+export default async function CategoryPage({ params: _params }: Props) {
+  // Redirect to blog listing until category filtering is implemented
+  redirect("/blog");
 }

@@ -1,0 +1,76 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "env": [
+        "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "NEXT_PUBLIC_POSTHOG_KEY",
+        "NEXT_PUBLIC_BETTERSTACK_SOURCE_TOKEN",
+        "NEXT_PUBLIC_BETTERSTACK_INGESTING_HOST",
+        "NEXT_PUBLIC_KNOCK_PUBLIC_API_KEY",
+        "NEXT_PUBLIC_GITHUB_APP_SLUG",
+        "NEXT_PUBLIC_API_URL",
+        "NEXT_PUBLIC_VERCEL_ENV",
+        "NEXT_PUBLIC_VERCEL_INTEGRATION_SLUG"
+      ],
+      "passThroughEnv": [
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "CLERK_SECRET_KEY",
+        "CLERK_MACHINE_SECRET_KEY_TRPC",
+        "CLERK_MACHINE_SECRET_KEY_WEBHOOK",
+        "CLERK_MACHINE_SECRET_KEY_INNGEST",
+        "DATABASE_HOST",
+        "DATABASE_USERNAME",
+        "DATABASE_PASSWORD",
+        "BETTERSTACK_SOURCE_TOKEN",
+        "BETTERSTACK_INGESTING_HOST",
+        "KNOCK_API_KEY",
+        "GITHUB_APP_ID",
+        "GITHUB_APP_PRIVATE_KEY",
+        "GITHUB_APP_SLUG",
+        "GITHUB_CLIENT_ID",
+        "GITHUB_CLIENT_SECRET",
+        "GITHUB_WEBHOOK_SECRET",
+        "VERCEL_INTEGRATION_SLUG",
+        "VERCEL_CLIENT_SECRET_ID",
+        "VERCEL_CLIENT_INTEGRATION_SECRET",
+        "VERCEL_REDIRECT_URI",
+        "KV_REST_API_URL",
+        "KV_REST_API_TOKEN",
+        "BASEHUB_TOKEN",
+        "BASEHUB_ADMIN_TOKEN",
+        "HEALTH_CHECK_AUTH_TOKEN",
+        "ENCRYPTION_KEY",
+        "PINECONE_API_KEY",
+        "COHERE_API_KEY",
+        "INNGEST_APP_NAME",
+        "INNGEST_EVENT_KEY",
+        "INNGEST_SIGNING_KEY",
+        "SERVICE_JWT_SECRET",
+        "PORT"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**",
+        "!.next/dev/**",
+        "next-env.d.ts"
+      ]
+    },
+    "dev": {
+      "persistent": true,
+      "with": [
+        "@lightfast/app#dev:inngest",
+        "//#dev:ngrok",
+        "@db/app#dev:studio"
+      ]
+    },
+    "transit": {}
+  }
+}

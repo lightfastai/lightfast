@@ -1,23 +1,12 @@
-import type { Metadata, Viewport } from "next";
-
-import "~/styles/globals.css";
-
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
 import { PrefetchCrossZoneLinks } from "@vercel/microfrontends/next/client";
-import { ApolloTracker } from "~/components/apollo-tracker";
+import type { Metadata, Viewport } from "next";
 import { StablePrefetchCrossZoneLinksProvider } from "~/components/stable-prefetch-provider";
-import { env } from "~/env";
-import {
-  exposurePlus,
-  geistMono,
-  geistSans,
-  ppNeueMontreal,
-  ppSupplySans,
-} from "~/lib/fonts";
+import { geistMono, geistSans, ppNeueMontreal } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast – The Operating Layer for Agents and Apps",
@@ -45,9 +34,6 @@ export const metadata: Metadata = createMetadata({
       "max-image-preview": "large",
       "max-snippet": -1,
     },
-  },
-  verification: {
-    google: "PLACEHOLDER_VERIFICATION_CODE",
   },
   openGraph: {
     type: "website",
@@ -150,8 +136,6 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         ppNeueMontreal.variable,
-        exposurePlus.variable,
-        ppSupplySans.variable,
         "dark scrollbar-thin touch-manipulation font-sans antialiased"
       )}
       lang="en"
@@ -161,10 +145,9 @@ export default function RootLayout({
         <JsonLd code={organizationSchema} />
         <JsonLd code={websiteSchema} />
       </head>
-      <body className={cn("min-h-screen bg-background font-sans")}>
+      <body>
         <StablePrefetchCrossZoneLinksProvider>
           {children}
-          {env.NEXT_PUBLIC_VERCEL_ENV === "production" && <ApolloTracker />}
           <VercelAnalytics />
           <SpeedInsights />
           <PrefetchCrossZoneLinks />

@@ -36,10 +36,9 @@ Add to BaseHub Description field:
 ## 3. Internal Links
 
 Link to 3-5 related docs:
-- Setup guides: `[GitHub Setup](/docs/integrations/github)`
-- API docs: `[API Reference](/docs/api)`
-- Configuration: `[Config Reference](/docs/config)`
-- Quick start: `[Quick Start](/docs/quick-start)`
+- Setup guides: `[GitHub Setup](/docs/connectors/github)`
+- API docs: `[API Reference](/docs/api-reference/getting-started/overview)`
+- Quick start: `[Quick Start](/docs/get-started/quickstart)`
 
 ## 4. Code Examples
 

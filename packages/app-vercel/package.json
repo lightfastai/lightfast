@@ -1,0 +1,33 @@
+{
+  "name": "@repo/app-vercel",
+  "license": "FSL-1.1-Apache-2.0",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./env": {
+      "types": "./dist/env.d.ts",
+      "default": "./src/env.ts"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./src/types.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@t3-oss/env-nextjs": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

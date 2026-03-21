@@ -9,9 +9,8 @@ import type { NavItem } from "~/types/nav";
 
 export const INTERNAL_NAV: NavItem[] = [
   { title: "Pricing", href: "/pricing" },
-  // Docs is served from the docs microfrontend
   { title: "Early Access", href: "/early-access", microfrontend: true },
-  { title: "Docs", href: "/docs/get-started/overview", microfrontend: true },
+  { title: "Docs", href: "/docs/get-started/overview" },
 ];
 
 export const SOCIAL_NAV: NavItem[] = [

@@ -1,0 +1,221 @@
+import type { EntityCategory, ExtractedEntity } from "@repo/app-validation";
+
+/**
+ * Entity extraction pattern definition
+ */
+interface ExtractionPattern {
+  category: EntityCategory;
+  confidence: number;
+  keyExtractor: (match: RegExpMatchArray) => string;
+  pattern: RegExp;
+  valueExtractor?: (match: RegExpMatchArray) => string;
+}
+
+/**
+ * Entity extraction patterns ordered by specificity
+ */
+const EXTRACTION_PATTERNS: ExtractionPattern[] = [
+  // API Endpoints - highest confidence, very specific pattern
+  {
+    category: "endpoint",
+    pattern: /\b(GET|POST|PUT|PATCH|DELETE)\s+(\/[^\s"'<>]{1,200})/gi,
+    confidence: 0.95,
+    keyExtractor: (m) => `${m[1]?.toUpperCase()} ${m[2]}`,
+    valueExtractor: (m) => m[2] ?? "",
+  },
+
+  // Issue/PR References - GitHub style
+  {
+    category: "project",
+    pattern: /(#\d{1,6})/g,
+    confidence: 0.95,
+    keyExtractor: (m) => m[1] ?? "",
+  },
+
+  // Issue/PR References - Linear/Jira style (e.g., ENG-123, PROJ-456)
+  {
+    category: "project",
+    pattern: /\b([A-Z]{2,10}-\d{1,6})\b/g,
+    confidence: 0.9,
+    keyExtractor: (m) => m[1] ?? "",
+  },
+
+  // Environment Variables - UPPERCASE_WITH_UNDERSCORES
+  {
+    category: "config",
+    pattern: /\b([A-Z][A-Z0-9_]{2,}(?:_[A-Z0-9]+)+)\b/g,
+    confidence: 0.85,
+    keyExtractor: (m) => m[1] ?? "",
+  },
+
+  // File Paths - common patterns
+  {
+    category: "definition",
+    pattern:
+      /\b(?:src|lib|packages|apps|api|components)\/[^\s"'<>]{1,150}\.[a-z]{1,10}\b/gi,
+    confidence: 0.8,
+    keyExtractor: (m) => m[0],
+  },
+
+  // Git commit hashes (7+ chars)
+  {
+    category: "reference",
+    pattern: /\b([a-f0-9]{7,40})\b/g,
+    confidence: 0.7,
+    keyExtractor: (m) => m[1]?.substring(0, 7) ?? "",
+    valueExtractor: (m) => m[1] ?? "",
+  },
+
+  // Branch references
+  {
+    category: "reference",
+    pattern: /\bbranch[:\s]+([a-zA-Z0-9/_-]{1,100})\b/gi,
+    confidence: 0.75,
+    keyExtractor: (m) => `branch:${m[1]}`,
+    valueExtractor: (m) => m[1] ?? "",
+  },
+];
+
+/**
+ * Blacklist patterns to filter out false positives
+ */
+const BLACKLIST_PATTERNS: RegExp[] = [
+  // Common false positives for env vars
+  /^(HTTP|HTTPS|GET|POST|PUT|DELETE|API|URL|ID|DB|SQL)$/,
+  // Single character entities
+  /^.$/,
+  // Pure numbers
+  /^\d+$/,
+];
+
+/**
+ * Check if an entity key should be filtered out
+ */
+function isBlacklisted(key: string): boolean {
+  return BLACKLIST_PATTERNS.some((p) => p.test(key));
+}
+
+/**
+ * Extract evidence snippet around the match
+ */
+function extractEvidence(
+  text: string,
+  matchIndex: number,
+  matchLength: number
+): string {
+  const contextSize = 50;
+  const start = Math.max(0, matchIndex - contextSize);
+  const end = Math.min(text.length, matchIndex + matchLength + contextSize);
+
+  let evidence = text.substring(start, end);
+  if (start > 0) {
+    evidence = `...${evidence}`;
+  }
+  if (end < text.length) {
+    evidence += "...";
+  }
+
+  return evidence.replace(/\s+/g, " ").trim();
+}
+
+/**
+ * Extract entities from observation content
+ *
+ * @param title - Observation title
+ * @param content - Observation body content
+ * @returns Array of extracted entities (deduplicated by key)
+ */
+export function extractEntities(
+  title: string,
+  content: string
+): ExtractedEntity[] {
+  const text = `${title}\n${content}`;
+  const entityMap = new Map<string, ExtractedEntity>();
+
+  for (const pattern of EXTRACTION_PATTERNS) {
+    // Reset lastIndex for global patterns
+    pattern.pattern.lastIndex = 0;
+
+    let match: RegExpExecArray | null;
+    while ((match = pattern.pattern.exec(text)) !== null) {
+      const key = pattern.keyExtractor(match);
+
+      // Skip blacklisted or empty keys
+      if (!key || key.length < 2 || isBlacklisted(key)) {
+        continue;
+      }
+
+      // Use composite key for deduplication within extraction
+      const mapKey = `${pattern.category}:${key.toLowerCase()}`;
+
+      // Keep highest confidence match if duplicate
+      const existing = entityMap.get(mapKey);
+      if (!existing || existing.confidence < pattern.confidence) {
+        entityMap.set(mapKey, {
+          category: pattern.category,
+          key,
+          value: pattern.valueExtractor?.(match),
+          confidence: pattern.confidence,
+          evidence: extractEvidence(text, match.index, match[0].length),
+        });
+      }
+    }
+  }
+
+  return Array.from(entityMap.values());
+}
+
+/**
+ * Extract entities specifically from source relations
+ * (Already-structured data from GitHub/Vercel events)
+ */
+export function extractFromRelations(
+  relations: {
+    entityType: string;
+    entityId: string;
+    relationshipType: string;
+  }[]
+): ExtractedEntity[] {
+  const entities: ExtractedEntity[] = [];
+
+  for (const rel of relations) {
+    let category: EntityCategory;
+    let key: string;
+
+    switch (rel.entityType) {
+      case "commit":
+        category = "commit";
+        key = rel.entityId.substring(0, 7);
+        break;
+      case "branch":
+        category = "branch";
+        key = rel.entityId;
+        break;
+      case "pr":
+        category = "pr";
+        key = rel.entityId;
+        break;
+      case "issue":
+        category = "issue";
+        key = rel.entityId;
+        break;
+      case "deployment":
+        category = "deployment";
+        key = rel.entityId;
+        break;
+      default:
+        category = "reference";
+        key = rel.entityId;
+    }
+
+    entities.push({
+      category,
+      key,
+      value: rel.relationshipType,
+      confidence: 0.98, // High confidence - from structured data
+      evidence: `Relation: ${rel.entityType}`,
+    });
+  }
+
+  return entities;
+}
