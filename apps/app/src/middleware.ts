@@ -27,10 +27,6 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/api/health(.*)",
   "/api/inngest(.*)",
-  "/robots.txt",
-  "/sitemap(.*)",
-  "/llms.txt", // AI crawler guidance file
-  "/llms-full.txt", // AI crawler full content file
   "/docs(.*)", // Documentation pages
   "/monitoring", // Sentry error reporting tunnel (tunnelRoute in vendor/next config)
   "/ingest(.*)", // PostHog analytics proxy (rewrites to us.i.posthog.com)
