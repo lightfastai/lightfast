@@ -1,7 +1,7 @@
 import { categories as categoriesAPI } from "@vendor/cms";
 import { RssIcon } from "lucide-react";
 import Link from "next/link";
-import { CategoryNav } from "~/components/blog-category-nav";
+import { CategoryNav } from "~/app/(app)/_components/blog-category-nav";
 
 export default async function BlogListingLayout({
   children,

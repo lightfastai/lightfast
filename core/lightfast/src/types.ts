@@ -18,20 +18,20 @@ export type {
   SearchRequest,
   SearchResponse,
   SearchResult,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 
 import type {
   ContentsRequest,
   FindSimilarRequest,
   RelatedRequest,
   SearchRequest,
-} from "@repo/console-validation";
+} from "@repo/app-validation";
 
 /**
  * SDK Input Type Pattern
  * =====================
  *
- * The canonical API schemas in @repo/console-validation use Zod .default() for fields with
+ * The canonical API schemas in @repo/app-validation use Zod .default() for fields with
  * server-side defaults. However, z.infer<> treats these fields as REQUIRED in the TypeScript
  * type, even though Zod applies defaults at runtime.
  *
@@ -71,7 +71,12 @@ export type FindSimilarInput = Omit<
   FindSimilarRequest,
   "limit" | "threshold" | "sameSourceOnly"
 > &
-  Partial<Pick<FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">>;
+  Partial<
+    Pick<FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">
+  > & {
+    /** Anchor by arbitrary text for semantic similarity search */
+    text?: string;
+  };
 
 /**
  * SDK input type for graph requests.
@@ -106,6 +111,53 @@ export interface LightfastConfig {
    * @default 30000
    */
   timeout?: number;
+
+  /**
+   * Workspace ID to scope API requests.
+   * Required for all query operations.
+   */
+  workspaceId: string;
+}
+
+/**
+ * Response from proxySearch — all available provider API endpoints for the workspace
+ */
+export interface ProxyEndpoint {
+  description: string;
+  endpointId: string;
+  method: "GET" | "POST";
+  path: string;
+  pathParams?: string[];
+  timeout?: number;
+}
+
+export interface ProxyConnection {
+  baseUrl: string;
+  endpoints: ProxyEndpoint[];
+  installationId: string;
+  provider: string;
+  status: string;
+}
+
+export interface ProxySearchResponse {
+  connections: ProxyConnection[];
+}
+
+/**
+ * Input for proxyExecute — execute a provider API call through the Lightfast proxy
+ */
+export interface ProxyExecuteInput {
+  body?: unknown;
+  endpointId: string;
+  installationId: string;
+  pathParams?: Record<string, string>;
+  queryParams?: Record<string, string>;
+}
+
+export interface ProxyExecuteResponse {
+  data: unknown;
+  headers: Record<string, string>;
+  status: number;
 }
 
 /**

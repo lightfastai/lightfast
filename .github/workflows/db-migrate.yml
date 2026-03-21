@@ -41,7 +41,7 @@ jobs:
         run: pnpm --filter @vendor/db build
 
       - name: Show pending migrations
-        working-directory: db/console
+        working-directory: db/app
         env:
           DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
           DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
@@ -55,7 +55,7 @@ jobs:
           cat src/migrations/meta/_journal.json | tail -30
 
       - name: Run migrations
-        working-directory: db/console
+        working-directory: db/app
         env:
           DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
           DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}

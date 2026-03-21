@@ -105,7 +105,7 @@ Extract `/docs/*` links and verify:
 - `/docs/connectors/*`
 - `/docs/api-reference/*`
 
-Map to actual files in `apps/docs/src/content/`.
+Map to actual files in `apps/www/src/content/`.
 
 ### External Links
 Count external links (should be 3-10 depending on category).

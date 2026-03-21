@@ -34,7 +34,7 @@ export function StablePrefetchCrossZoneLinksProvider({
     <PrefetchCrossZoneLinksContext.Provider value={value}>
       {children}
       {[...hrefs].map((href) => (
-        <link as="fetch" href={href} key={href} rel="preload" />
+        <link href={href} key={href} rel="prefetch" />
       ))}
     </PrefetchCrossZoneLinksContext.Provider>
   );

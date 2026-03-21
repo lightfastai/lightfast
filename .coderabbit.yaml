@@ -83,7 +83,7 @@ reviews:
         tRPC API layer. Review for:
         - Auth boundaries: userRouter (no org), orgRouter (org required), m2mRouter (internal only)
         - No direct third-party SDK imports — use @vendor/* packages
-        - Inngest workflow patterns in api/console/src/inngest/workflow/
+        - Inngest workflow patterns in api/app/src/inngest/workflow/
         - Proper error handling in tRPC procedures
 
     - path: "vendor/**"

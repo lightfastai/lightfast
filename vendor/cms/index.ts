@@ -33,14 +33,6 @@ const categoryFragment = fragmentOn("CategoriesItem", {
   },
 });
 
-export interface Category {
-  _slug?: string | null;
-  _title?: string | null;
-  description?: {
-    plainText?: string | null;
-  } | null;
-}
-
 export const categories = {
   query: fragmentOn("Query", {
     blog: {
@@ -50,7 +42,7 @@ export const categories = {
     },
   }),
 
-  getCategories: async (): Promise<Category[]> => {
+  getCategories: async () => {
     try {
       const data = await basehub.query(categories.query);
       return data.blog.categories.items;
@@ -59,6 +51,10 @@ export const categories = {
     }
   },
 };
+
+export type Category = Awaited<
+  ReturnType<(typeof categories)["getCategories"]>
+>[number];
 
 /* -------------------------------------------------------------------------------------------------
  * Blog Fragments & Queries
@@ -111,84 +107,6 @@ const postFragment = fragmentOn("PostItem_1", {
   },
 });
 
-// Relaxed runtime-facing types to avoid tight coupling to BaseHub's d.ts during app typecheck
-export interface PostMeta {
-  _slug?: string | null;
-  _sys?: {
-    lastModifiedAt?: string | null;
-  } | null;
-  _title?: string | null;
-  authors?: {
-    _title?: string | null;
-    avatar?: {
-      url?: string | null;
-      width?: number | null;
-      height?: number | null;
-      alt?: string | null;
-      blurDataURL?: string | null;
-    } | null;
-    xUrl?: string | null;
-  }[];
-  categories?: { _title?: string | null }[];
-  description?: string | null;
-  featuredImage?: {
-    url?: string | null;
-    width?: number | null;
-    height?: number | null;
-    alt?: string | null;
-    blurDataURL?: string | null;
-  } | null;
-  publishedAt?: string | null;
-  slug?: string | null;
-}
-
-export type Post = PostMeta & {
-  tldr?: string | null;
-  body?: {
-    plainText?: string | null;
-    json?: { content?: RichTextNode[]; toc?: RichTextTocNode[] } | null;
-    readingTime?: number | null;
-  } | null;
-  seo?: {
-    metaTitle?: string | null;
-    metaDescription?: string | null;
-    focusKeyword?: string | null;
-    secondaryKeywords?: string | null;
-    canonicalUrl?: string | null;
-    noIndex?: boolean | null;
-    faq?: {
-      items?: {
-        question?: string | null;
-        answer?: string | null;
-      }[];
-    } | null;
-  } | null;
-};
-
-const mapLegalMetaToBlogMeta = (item: LegalPostMeta): PostMeta => ({
-  _slug: item._slug,
-  _title: item._title,
-  _sys: item._sys ? { lastModifiedAt: item._sys.lastModifiedAt } : null,
-  authors: [],
-  categories: [],
-  publishedAt: item._sys?.createdAt,
-  description: item.description,
-});
-
-const mapLegalToBlogPost = (item: LegalPost): Post => ({
-  ...mapLegalMetaToBlogMeta(item),
-  body: item.body
-    ? {
-        plainText: item.body.plainText ?? "",
-        json: {
-          content: item.body.json?.content ?? undefined,
-          toc: item.body.json?.toc ?? undefined,
-        },
-        readingTime: item.body.readingTime ?? undefined,
-      }
-    : undefined,
-});
-
 export const blog = {
   postsQuery: fragmentOn("Query", {
     blog: {
@@ -223,49 +141,44 @@ export const blog = {
       },
     }),
 
-  getPosts: async (): Promise<PostMeta[]> => {
+  getPosts: async () => {
     try {
       const data = await basehub.query(blog.postsQuery);
       return data.blog.post.items;
     } catch {
-      try {
-        const fallback = await legal.getPosts();
-        return fallback.map(mapLegalMetaToBlogMeta);
-      } catch {
-        return [];
-      }
+      return [];
     }
   },
 
-  getLatestPost: async (): Promise<Post | null> => {
+  getLatestPost: async () => {
     try {
       const data = await basehub.query(blog.latestPostQuery);
       return data.blog.post.item;
     } catch {
-      try {
-        const fallback = await legal.getLatestPost();
-        return fallback ? mapLegalToBlogPost(fallback) : null;
-      } catch {
-        return null;
-      }
+      return null;
     }
   },
 
-  getPost: async (slug: string): Promise<Post | null> => {
+  getPost: async (slug: string) => {
     try {
       const query = blog.postQuery(slug);
       const data = await basehub.query(query);
       return data.blog.post.item;
     } catch {
-      try {
-        const fallback = await legal.getPost(slug);
-        return fallback ? mapLegalToBlogPost(fallback) : null;
-      } catch {
-        return null;
-      }
+      return null;
     }
   },
 };
+
+// Blog types — derived from fragment-backed query return types
+export type PostMeta = Awaited<ReturnType<(typeof blog)["getPosts"]>>[number];
+export type Post = NonNullable<Awaited<ReturnType<(typeof blog)["getPost"]>>>;
+
+// Blog Feed response wrapper — exported for use in blog/[slug]/page.tsx Feed callback
+// (replaces the local BlogPostQueryResponse defined in that file)
+export interface BlogPostQueryResponse {
+  blog: { post: { item: Post | null } };
+}
 
 /* -------------------------------------------------------------------------------------------------
  * Legal Fragments & Queries
@@ -427,75 +340,6 @@ const changelogEntryFragment = fragmentOn("PostItem", {
   },
 });
 
-export interface ChangelogEntryMeta {
-  _slug?: string | null;
-  _sys?: {
-    createdAt?: string | null;
-    lastModifiedAt?: string | null;
-  } | null;
-  _title?: string | null;
-  prefix?: string | null;
-  slug?: string | null;
-}
-
-export type ChangelogEntry = ChangelogEntryMeta & {
-  body?: {
-    plainText?: string | null;
-    json?: { content?: RichTextNode[]; toc?: RichTextTocNode[] } | null;
-    readingTime?: number | null;
-  } | null;
-  improvements?: string | null;
-  infrastructure?: string | null;
-  fixes?: string | null;
-  patches?: string | null;
-  // AEO fields
-  featuredImage?: {
-    url?: string | null;
-    width?: number | null;
-    height?: number | null;
-    alt?: string | null;
-    blurDataURL?: string | null;
-  } | null;
-  publishedAt?: string | null;
-  excerpt?: string | null;
-  tldr?: string | null;
-  seo?: {
-    metaTitle?: string | null;
-    metaDescription?: string | null;
-    focusKeyword?: string | null;
-    secondaryKeyword?: string | null;
-    canonicalUrl?: string | null;
-    noIndex?: boolean | null;
-    faq?: {
-      items?: {
-        question?: string | null;
-        answer?: string | null;
-      }[];
-    } | null;
-  } | null;
-};
-
-export interface ChangelogEntryQueryResponse {
-  changelog?: {
-    post?: {
-      item?: ChangelogEntry | null;
-    } | null;
-  } | null;
-}
-
-export interface ChangelogEntriesQueryResponse {
-  changelog?: {
-    post?: {
-      items?: ChangelogEntry[] | null;
-    } | null;
-  } | null;
-}
-
-export interface ChangelogAdjacentEntries {
-  next?: ChangelogEntryMeta | null;
-  previous?: ChangelogEntryMeta | null;
-}
-
 export const changelog = {
   entriesQuery: fragmentOn("Query", {
     changelog: {
@@ -558,7 +402,7 @@ export const changelog = {
       },
     }),
 
-  getEntries: async (): Promise<ChangelogEntry[]> => {
+  getEntries: async () => {
     try {
       const data = await basehub.query(changelog.entriesQuery);
       return data.changelog.post.items;
@@ -567,7 +411,7 @@ export const changelog = {
     }
   },
 
-  getLatestEntry: async (): Promise<ChangelogEntry | null> => {
+  getLatestEntry: async () => {
     try {
       const data = await basehub.query(changelog.latestEntryQuery);
       return data.changelog.post.item;
@@ -576,7 +420,7 @@ export const changelog = {
     }
   },
 
-  getEntry: async (slug: string): Promise<ChangelogEntry | null> => {
+  getEntry: async (slug: string) => {
     try {
       const query = changelog.entryQuery(slug);
       const data = await basehub.query(query);
@@ -586,7 +430,7 @@ export const changelog = {
     }
   },
 
-  getEntryBySlug: async (slug: string): Promise<ChangelogEntry | null> => {
+  getEntryBySlug: async (slug: string) => {
     try {
       const query = changelog.entryBySlugQuery(slug);
       const data = await basehub.query(query);
@@ -596,9 +440,7 @@ export const changelog = {
     }
   },
 
-  getAdjacentEntries: async (
-    currentSlug: string
-  ): Promise<ChangelogAdjacentEntries> => {
+  getAdjacentEntries: async (currentSlug: string) => {
     try {
       const data = await basehub.query(changelog.entriesMetaQuery);
       const entries = data.changelog.post.items;
@@ -623,3 +465,23 @@ export const changelog = {
     }
   },
 };
+
+// Changelog types — derived from fragment-backed query return types
+// ChangelogAdjacentEntries must be declared before ChangelogEntryMeta
+// since ChangelogEntryMeta is derived from it
+export type ChangelogAdjacentEntries = Awaited<
+  ReturnType<(typeof changelog)["getAdjacentEntries"]>
+>;
+export type ChangelogEntryMeta = NonNullable<ChangelogAdjacentEntries["next"]>;
+export type ChangelogEntry = Awaited<
+  ReturnType<(typeof changelog)["getEntries"]>
+>[number];
+
+// Changelog Feed response wrappers — tightened to match actual query results
+// (non-optional top-level since Feed only calls these on success)
+export interface ChangelogEntryQueryResponse {
+  changelog: { post: { item: ChangelogEntry | null } };
+}
+export interface ChangelogEntriesQueryResponse {
+  changelog: { post: { items: ChangelogEntry[] } };
+}

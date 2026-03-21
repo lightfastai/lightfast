@@ -2,7 +2,7 @@
  * Type definitions for Pinecone operations
  *
  * Generic types for vector operations. Application-specific metadata
- * types should be defined in application packages (e.g., @repo/console-pinecone).
+ * types should be defined in application packages (e.g., @repo/app-pinecone).
  */
 
 import type { RecordMetadata } from "@pinecone-database/pinecone";
@@ -13,7 +13,7 @@ import type { RecordMetadata } from "@pinecone-database/pinecone";
  * Generic type - use with application-specific metadata types:
  * @example
  * ```typescript
- * import type { VectorMetadata } from "@repo/console-pinecone";
+ * import type { VectorMetadata } from "@repo/app-pinecone";
  * const request: UpsertRequest<VectorMetadata> = { ... };
  * ```
  */
