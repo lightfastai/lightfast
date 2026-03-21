@@ -111,7 +111,7 @@ function isOperationId(id: string): id is OperationId {
 
 export function getCodeSamples(endpoint: MethodInformation): CodeSample[] {
   const operationId = endpoint.operationId;
-  if (!operationId || !isOperationId(operationId)) {
+  if (!(operationId && isOperationId(operationId))) {
     return [];
   }
 

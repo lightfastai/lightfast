@@ -49,7 +49,7 @@ export const backfillRouter = {
    */
   trigger: serviceProcedure
     .input(backfillTriggerPayload)
-    .mutation(async ({ input, ctx }) => {
+    .mutation(async ({ input, ctx: _ctx }) => {
       // Verify connection exists and is active via direct DB query
       const installationRows = await db
         .select()

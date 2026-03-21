@@ -32,7 +32,9 @@ console.log(`Found ${schemaNames.length} schemas in OpenAPI spec`);
 const schemaRefPattern = /schema="([^"]+)"/g;
 function extractSchemaRefs(filePath: string): string[] {
   const content = readFileSync(filePath, "utf-8");
-  return [...content.matchAll(schemaRefPattern)].map((m) => m[1] ?? "").filter(Boolean);
+  return [...content.matchAll(schemaRefPattern)]
+    .map((m) => m[1] ?? "")
+    .filter(Boolean);
 }
 
 // 3. Validate all references exist in OpenAPI spec

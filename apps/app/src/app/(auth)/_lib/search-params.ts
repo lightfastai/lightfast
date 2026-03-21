@@ -1,10 +1,10 @@
+import type { Route } from "next";
 import {
   createLoader,
   createSerializer,
   parseAsString,
   parseAsStringLiteral,
 } from "nuqs/server";
-import type { Route } from "next";
 
 const signInSteps = ["email", "code", "activate"] as const;
 const signUpSteps = ["email", "code"] as const;

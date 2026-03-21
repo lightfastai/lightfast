@@ -9,18 +9,6 @@ import { jwtVerify, SignJWT } from "jose";
 
 import { env } from "../env";
 
-/** Standard JWT claims for service-to-service auth */
-interface ServiceJWTPayload {
-  /** Audience -- always "lightfast-memory" */
-  aud: string;
-  /** Expiration -- Unix timestamp (iss + 60s) */
-  exp: number;
-  /** Issued at -- Unix timestamp */
-  iat: number;
-  /** Issuer -- identity of the calling service (e.g., "console", "platform", "admin") */
-  iss: string;
-}
-
 /** Verified JWT result returned to callers */
 export interface VerifiedServiceJWT {
   caller: string; // From `iss` claim

@@ -41,7 +41,7 @@ export const connectionLifecycle = inngest.createFunction(
   },
   { event: "memory/connection.lifecycle" },
   async ({ event, step }) => {
-    const { installationId, provider: providerName, orgId } = event.data;
+    const { installationId, provider: providerName } = event.data;
 
     // Step 1: Close the ingress gate — all guards check status === 'active',
     // so setting 'revoked' immediately blocks new requests.

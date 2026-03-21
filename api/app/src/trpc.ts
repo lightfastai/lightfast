@@ -64,7 +64,9 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
 
   if (clerkSession.userId) {
     if (clerkSession.orgId) {
-      console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-active)`);
+      console.info(
+        `>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-active)`
+      );
       return {
         auth: {
           type: "clerk-active" as const,
@@ -75,7 +77,9 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
         headers: opts.headers,
       };
     }
-    console.info(`>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-pending)`);
+    console.info(
+      `>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-pending)`
+    );
     return {
       auth: {
         type: "clerk-pending" as const,
@@ -277,7 +281,6 @@ export const orgScopedProcedure = sentrifiedProcedure
     });
   });
 
-
 /**
  * Helper: Resolve workspace by name within an org (user-facing)
  *
@@ -387,4 +390,3 @@ export async function verifyOrgMembership(params: {
     },
   };
 }
-

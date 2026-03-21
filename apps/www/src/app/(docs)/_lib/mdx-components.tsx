@@ -13,7 +13,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type React from "react";
 import { Children, isValidElement } from "react";
-import { consoleUrl } from "~/lib/related-projects";
 import { AlphaBanner } from "@/src/app/(docs)/_components/alpha-banner";
 import { ApiEndpoint } from "@/src/app/(docs)/_components/api-endpoint";
 import { ApiMethod } from "@/src/app/(docs)/_components/api-method";
@@ -29,6 +28,7 @@ import {
   ValidationErrorList,
   ValidationExample,
 } from "@/src/app/(docs)/_components/validation-error";
+import { consoleUrl } from "~/lib/related-projects";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {

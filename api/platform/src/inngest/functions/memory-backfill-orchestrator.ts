@@ -285,7 +285,6 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
       await step.run("persist-run-records", async () => {
         const now = new Date().toISOString();
         for (const r of completionResults) {
-          const isTerminal = true; // All results here are terminal
           const sharedFields = {
             since,
             depth,

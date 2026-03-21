@@ -1,8 +1,8 @@
 import { createAPIPage } from "fumadocs-openapi/ui";
-import { openapi } from "./openapi";
 import client from "./api-page.client";
 import { renderOperationLayout, renderPageLayout } from "./api-page-renderers";
 import { getCodeSamples } from "./code-samples";
+import { openapi } from "./openapi";
 
 /**
  * Lightfast-branded API page component

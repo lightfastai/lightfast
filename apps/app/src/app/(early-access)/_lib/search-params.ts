@@ -1,10 +1,10 @@
+import type { Route } from "next";
 import {
   createLoader,
   createSerializer,
   parseAsBoolean,
   parseAsString,
 } from "nuqs/server";
-import type { Route } from "next";
 
 export const earlyAccessSearchParams = {
   // Form field values (preserved across validation errors)

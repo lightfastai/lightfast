@@ -8,5 +8,7 @@ const isDevelopment =
 // Get the console (app) URL dynamically based on environment
 export const consoleUrl = withRelatedProject({
   projectName: "lightfast-app",
-  defaultHost: isDevelopment ? "http://localhost:4107" : "https://app.lightfast.ai",
+  defaultHost: isDevelopment
+    ? "http://localhost:4107"
+    : "https://app.lightfast.ai",
 });

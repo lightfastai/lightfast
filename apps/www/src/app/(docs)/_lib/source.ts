@@ -54,15 +54,15 @@ export type DocsFrontmatter = (typeof docs)[number];
  * instead of repeating the inline duck-type check.
  */
 interface OpenAPIPageData {
+  description?: string;
   // ApiPageProps is exported from fumadocs-openapi/ui — no `any` needed
   getAPIPageProps: () => ApiPageProps;
   title?: string;
-  description?: string;
 }
 
-export function isOpenAPIPage(
-  page: { data: unknown }
-): page is { data: OpenAPIPageData } {
+export function isOpenAPIPage(page: {
+  data: unknown;
+}): page is { data: OpenAPIPageData } {
   const data = page.data as Record<string, unknown>;
   return typeof data?.getAPIPageProps === "function";
 }
