@@ -4,6 +4,7 @@ import { PitchDeck } from "./_components/pitch-deck";
 export const metadata: Metadata = {
   title: "Pitch Deck | Lightfast",
   description: "Lightfast — the operating layer between your agents and apps",
+  robots: { index: false, follow: false },
   openGraph: {
     title: "Pitch Deck | Lightfast",
     description: "Lightfast — the operating layer between your agents and apps",

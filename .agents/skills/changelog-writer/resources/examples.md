@@ -120,7 +120,7 @@ Search your codebase using natural language, not keywords. Ask "how does authent
 
 **How it works:** Each file is chunked with context preservation, embedded using sentence transformers, and indexed with metadata. Queries use hybrid retrieval (dense + sparse) followed by reranking.
 
-[API documentation](/docs/api/search)
+[API documentation](/docs/api-reference/getting-started/overview)
 
 ---
 
@@ -150,8 +150,6 @@ Based on your feedback:
 
 ### Resources
 
-- [Quick Start Guide](/docs/quick-start)
-- [GitHub Integration Setup](/docs/integrations/github)
-- [Configuration Reference](/docs/config)
-- [API Documentation](/docs/api)
-- [Workspace Management](/docs/workspaces)
+- [Quick Start Guide](/docs/get-started/quickstart)
+- [GitHub Integration Setup](/docs/connectors/github)
+- [API Documentation](/docs/api-reference/getting-started/overview)

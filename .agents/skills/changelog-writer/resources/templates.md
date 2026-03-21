@@ -123,10 +123,9 @@ _internal:
 
 ### Resources
 
-- [Quick Start](/docs/quick-start)
-- [GitHub Setup](/docs/integrations/github)
-- [API Reference](/docs/api)
-- [Configuration Docs](/docs/config)
+- [Quick Start](/docs/get-started/quickstart)
+- [GitHub Setup](/docs/connectors/github)
+- [API Reference](/docs/api-reference/getting-started/overview)
 ```
 
 ## Section Guidelines

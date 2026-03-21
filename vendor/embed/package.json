@@ -16,9 +16,9 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsup",
+    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsup --watch",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -29,7 +29,6 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
-    "tsup": "^8.5.1",
     "typescript": "catalog:"
   }
 }

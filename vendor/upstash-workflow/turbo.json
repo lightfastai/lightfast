@@ -1,9 +1,0 @@
-{
-  "extends": ["//"],
-  "tags": ["vendor"],
-  "tasks": {
-    "build": {
-      "passThroughEnv": ["QSTASH_TOKEN", "QSTASH_URL"]
-    }
-  }
-}

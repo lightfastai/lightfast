@@ -67,7 +67,7 @@ Blog posts should include contextual CTAs:
 ## 6. Internal Links
 
 Link to 3-5 related docs:
-- Feature docs: `/docs/features/{feature}`
+- Feature docs: `/docs/get-started/overview`
 - API reference: `/docs/api-reference/{endpoint}`
 - Quick start: `/docs/get-started/quickstart`
 - Pricing: `/pricing`

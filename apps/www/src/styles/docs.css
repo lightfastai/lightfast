@@ -1,0 +1,34 @@
+@import "tailwindcss";
+@import "fumadocs-ui/css/black.css";
+@import "fumadocs-ui/css/preset.css";
+@import "fumadocs-openapi/css/preset.css";
+@import "@repo/ui/globals.css";
+
+/* Lightfast brand color scale for OpenAPI customization */
+@layer components {
+  :root {
+    --brand-50: 225 100% 97%;
+    --brand-100: 225 96% 90%;
+    --brand-200: 225 96% 82%;
+    --brand-500: 225 86% 55%;
+    --brand-600: 225 70% 44%;
+    --brand-900: 225 80% 15%;
+  }
+}
+
+@layer utilities {
+  .font-pp {
+    font-family: var(--font-pp-neue-montreal);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -1,4 +1,4 @@
-import { generateBlogFeed } from "~/lib/feeds/generate-feed";
+import { generateBlogFeed } from "~/app/(app)/_lib/feeds/generate-feed";
 
 // Using Node.js runtime for feed generation (feed package requires it)
 export const revalidate = 3600; // Revalidate every hour

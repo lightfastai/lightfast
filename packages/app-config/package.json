@@ -1,0 +1,33 @@
+{
+  "name": "@repo/app-config",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./src/index.ts"
+    },
+    "./parse": "./src/parse.ts",
+    "./schema": "./src/schema.ts"
+  },
+  "license": "FSL-1.1-Apache-2.0",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@repo/app-validation": "workspace:*",
+    "fast-glob": "^3.3.2",
+    "neverthrow": "catalog:",
+    "yaml": "^2.8.2",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

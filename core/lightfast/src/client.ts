@@ -15,6 +15,9 @@ import type {
   FindSimilarResponse,
   GraphInput,
   LightfastConfig,
+  ProxyExecuteInput,
+  ProxyExecuteResponse,
+  ProxySearchResponse,
   RelatedInput,
   RelatedResponse,
   SearchInput,
@@ -48,6 +51,7 @@ interface ApiErrorResponse {
  */
 export class Lightfast {
   private readonly apiKey: string;
+  private readonly workspaceId: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
 
@@ -60,8 +64,12 @@ export class Lightfast {
         `Invalid API key format. Keys should start with '${LIGHTFAST_API_KEY_PREFIX}'`
       );
     }
+    if (!config.workspaceId) {
+      throw new Error("Workspace ID is required");
+    }
 
     this.apiKey = config.apiKey;
+    this.workspaceId = config.workspaceId;
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
     this.timeout = config.timeout ?? DEFAULT_TIMEOUT;
   }
@@ -126,13 +134,16 @@ export class Lightfast {
    * ```
    */
   async findSimilar(request: FindSimilarInput): Promise<FindSimilarResponse> {
-    if (!(request.id || request.url)) {
-      throw new ValidationError("Either 'id' or 'url' must be provided");
+    if (!(request.id || request.url || request.text)) {
+      throw new ValidationError(
+        "Either 'id', 'url', or 'text' must be provided"
+      );
     }
 
     return this.request<FindSimilarResponse>("/v1/findsimilar", {
       id: request.id,
       url: request.url,
+      text: request.text,
       limit: request.limit ?? 10,
       threshold: request.threshold ?? 0.5,
       sameSourceOnly: request.sameSourceOnly ?? false,
@@ -182,6 +193,35 @@ export class Lightfast {
   }
 
   /**
+   * Discover all available provider API endpoints across connected providers
+   *
+   * @returns All connected providers and their available API endpoints
+   */
+  async proxySearch(): Promise<ProxySearchResponse> {
+    return this.request<ProxySearchResponse>("/v1/proxy/search", {});
+  }
+
+  /**
+   * Execute a provider API call through the Lightfast proxy
+   *
+   * Auth is handled automatically — the proxy injects the correct token.
+   *
+   * @param request - Provider, endpoint, and parameters
+   * @returns Raw provider API response
+   */
+  async proxyExecute(
+    request: ProxyExecuteInput
+  ): Promise<ProxyExecuteResponse> {
+    return this.request<ProxyExecuteResponse>("/v1/proxy/execute", {
+      installationId: request.installationId,
+      endpointId: request.endpointId,
+      pathParams: request.pathParams,
+      queryParams: request.queryParams,
+      body: request.body,
+    });
+  }
+
+  /**
    * Make an HTTP request to the Lightfast API
    */
   private async request<T>(endpoint: string, body: unknown): Promise<T> {
@@ -196,6 +236,7 @@ export class Lightfast {
           Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
           "User-Agent": `lightfast/${SDK_VERSION}`,
+          "X-Workspace-ID": this.workspaceId,
         },
         body: JSON.stringify(body),
         signal: controller.signal,
