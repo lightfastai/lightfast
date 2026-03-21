@@ -5,7 +5,12 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "env": ["NEXT_PUBLIC_SENTRY_DSN", "NEXT_PUBLIC_VERCEL_ENV"],
+      "env": [
+        "NEXT_PUBLIC_SENTRY_DSN",
+        "NEXT_PUBLIC_BETTERSTACK_SOURCE_TOKEN",
+        "NEXT_PUBLIC_BETTERSTACK_INGESTING_HOST",
+        "NEXT_PUBLIC_VERCEL_ENV"
+      ],
       "passThroughEnv": [
         "SENTRY_AUTH_TOKEN",
         "SENTRY_ORG",
