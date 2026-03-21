@@ -3,6 +3,7 @@ import GithubSlugger from "github-slugger";
 import type { NextRequest } from "next/server";
 import removeMd from "remove-markdown";
 import { env } from "~/env";
+import type { SortedResult } from "~/app/(docs)/_types/search";
 
 export const runtime = "edge";
 
@@ -36,14 +37,6 @@ interface MixedbreadSearchItem {
   metadata?: MixedbreadMetadata;
   score: number;
   text?: string;
-}
-
-export interface SortedResult {
-  content: string;
-  id: string;
-  source: string;
-  type: "page" | "heading" | "text";
-  url: string;
 }
 
 // --- Heading Extraction ---
@@ -83,6 +76,21 @@ function buildSource(filePath: string): string {
   return filePath.includes("content/api/") ? "API Reference" : "Documentation";
 }
 
+const SNIPPET_MAX_CHARS = 120;
+
+function buildSnippet(text: string | undefined): string | undefined {
+  if (!text) return undefined;
+  const lines = text.trim().split("\n");
+  const bodyLines = lines[0]?.startsWith("#") ? lines.slice(1) : lines;
+  const body = bodyLines.join(" ").trim();
+  if (!body) return undefined;
+  const stripped = removeMd(body, { useImgAltText: false }).trim();
+  if (!stripped) return undefined;
+  return stripped.length > SNIPPET_MAX_CHARS
+    ? `${stripped.slice(0, SNIPPET_MAX_CHARS)}…`
+    : stripped;
+}
+
 // --- Transform ---
 
 function transformResults(items: MixedbreadSearchItem[]): SortedResult[] {
@@ -97,13 +105,15 @@ function transformResults(items: MixedbreadSearchItem[]): SortedResult[] {
     const url = buildUrl(filePath, item.filename);
     const source = buildSource(filePath);
 
-    // Page result
+    // Page result — carry score and snippet from the MXBai item
     results.push({
       id: `${item.file_id}-${item.chunk_index}-page`,
       type: "page",
       content: title,
       url,
       source,
+      score: item.score,
+      snippet: buildSnippet(item.text),
     });
 
     // Heading result (deep-link)
