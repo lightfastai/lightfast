@@ -22,8 +22,6 @@ import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
-import { redis } from "@vendor/upstash";
-import { resourceKey } from "../../lib/cache";
 import { getEncryptionKey } from "../../lib/encryption";
 import { providerConfigs } from "../../lib/provider-configs";
 import { inngest } from "../client";
@@ -117,27 +115,7 @@ export const connectionLifecycle = inngest.createFunction(
       }
     });
 
-    // Step 4: Clean up Redis cache for linked resources
-    await step.run("cleanup-cache", async () => {
-      const linkedResources = await db
-        .select({ providerResourceId: gatewayResources.providerResourceId })
-        .from(gatewayResources)
-        .where(
-          and(
-            eq(gatewayResources.installationId, installationId),
-            eq(gatewayResources.status, "active")
-          )
-        );
-
-      const keys = linkedResources.map((r) =>
-        resourceKey(providerName as SourceType, r.providerResourceId)
-      );
-      if (keys.length > 0) {
-        await redis.del(...keys);
-      }
-    });
-
-    // Step 5: Remove linked resources in DB
+    // Step 4: Remove linked resources in DB
     await step.run("remove-resources", async () => {
       const resources = await db
         .select({ providerResourceId: gatewayResources.providerResourceId })

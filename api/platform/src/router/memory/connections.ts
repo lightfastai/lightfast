@@ -23,11 +23,9 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq, sql } from "@vendor/db";
-import { redis } from "@vendor/upstash";
 import { z } from "zod";
 
 import { inngest } from "../../inngest/client";
-import { resourceKey } from "../../lib/cache";
 import { buildAuthorizeUrl } from "../../lib/oauth/authorize";
 import { providerConfigs } from "../../lib/provider-configs";
 import { getActiveTokenForInstallation } from "../../lib/token-helpers";
@@ -379,12 +377,6 @@ export const connectionsRouter = {
         });
       }
 
-      // Populate Redis routing cache
-      await redis.hset(
-        resourceKey(installation.provider, input.providerResourceId),
-        { connectionId: input.installationId, orgId: installation.orgId }
-      );
-
       return {
         status: "linked" as const,
         resource: {
@@ -438,20 +430,6 @@ export const connectionsRouter = {
         .update(gatewayResources)
         .set({ status: "removed" })
         .where(eq(gatewayResources.id, input.resourceId));
-
-      const installationRows = await db
-        .select({ provider: gatewayInstallations.provider })
-        .from(gatewayInstallations)
-        .where(eq(gatewayInstallations.id, input.installationId))
-        .limit(1);
-
-      const installation = installationRows[0];
-
-      if (installation) {
-        await redis.del(
-          resourceKey(installation.provider, resource.providerResourceId)
-        );
-      }
 
       return { status: "removed" as const, resourceId: input.resourceId };
     }),
