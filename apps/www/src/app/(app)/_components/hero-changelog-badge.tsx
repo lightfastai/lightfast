@@ -29,6 +29,7 @@ export function HeroChangelogBadge() {
           <Link
             className="inline-flex h-7 items-center gap-2 rounded-sm border border-border/50 bg-card/80 px-2.5 text-muted-foreground text-sm backdrop-blur-md transition-colors hover:text-foreground"
             href={`/changelog/${latest.slug}`}
+            prefetch
           >
             <span className="text-foreground">{dateStr}</span>
             <span className="line-clamp-1">{latest._title}</span>

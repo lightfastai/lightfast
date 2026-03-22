@@ -45,7 +45,7 @@ export default function EngineeringLeadersPage() {
             {/* CTA - centered */}
             <div className="mt-8 flex flex-col justify-center gap-8 sm:flex-row">
               <Button asChild className="rounded-full" size="lg">
-                <MicrofrontendLink className="group" href="/early-access">
+                <MicrofrontendLink className="group" href="/early-access" prefetch={true}>
                   <span>Join Early Access</span>
                 </MicrofrontendLink>
               </Button>

@@ -60,6 +60,7 @@ export function AppFooter() {
                 <MicrofrontendLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/early-access"
+                  prefetch={true}
                 >
                   Early Access
                 </MicrofrontendLink>

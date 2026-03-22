@@ -17,7 +17,7 @@ export function SearchNavbar() {
 
       <div className="flex items-center gap-4">
         <Button asChild className="rounded-full" size="lg" variant="secondary">
-          <MicrofrontendLink href="/sign-in">
+          <MicrofrontendLink href="/sign-in" prefetch={true}>
             <span className="font-medium text-foreground text-sm">Log In</span>
           </MicrofrontendLink>
         </Button>

@@ -35,7 +35,7 @@ export function AppNavbar() {
 
           {/* Join Early Access Button */}
           <Button asChild className="ml-1" size="sm">
-            <MicrofrontendLink href="/early-access">
+            <MicrofrontendLink href="/early-access" prefetch={true}>
               Join Early Access
             </MicrofrontendLink>
           </Button>

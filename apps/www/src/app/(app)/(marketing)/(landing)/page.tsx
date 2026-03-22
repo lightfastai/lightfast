@@ -275,7 +275,7 @@ export default function HomePage() {
               </h1>
               <div>
                 <Button asChild size="sm">
-                  <MicrofrontendLink href="/early-access">
+                  <MicrofrontendLink href="/early-access" prefetch={true}>
                     Join Early Access
                     <span className="ml-2">→</span>
                   </MicrofrontendLink>

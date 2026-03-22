@@ -342,6 +342,7 @@ export default async function ChangelogEntryPage({
                     <Link
                       className="group"
                       href={`/changelog/${adjacentEntries.previous.slug}`}
+                      prefetch
                     >
                       <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
                         <span className="flex items-center gap-1 text-muted-foreground text-sm">
@@ -360,6 +361,7 @@ export default async function ChangelogEntryPage({
                     <Link
                       className="group md:text-right"
                       href={`/changelog/${adjacentEntries.next.slug}`}
+                      prefetch
                     >
                       <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
                         <span className="flex items-center justify-end gap-1 text-muted-foreground text-sm md:justify-end">

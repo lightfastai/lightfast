@@ -85,6 +85,7 @@ export function FAQSection() {
               <MicrofrontendLink
                 className="group inline-flex items-center gap-2 font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
                 href="/early-access"
+                prefetch={true}
               >
                 Join early access
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />

@@ -12,7 +12,7 @@ export function WaitlistCTA() {
 
         {/* CTA Button */}
         <Button asChild className="rounded-full text-md" size="xl">
-          <MicrofrontendLink href="/early-access">
+          <MicrofrontendLink href="/early-access" prefetch={true}>
             Join Early Access
           </MicrofrontendLink>
         </Button>

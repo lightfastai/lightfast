@@ -36,7 +36,7 @@ export function AppNavbarMenu() {
                 {RESOURCES_NAV.map((item) => (
                   <NavigationMenuLink asChild key={item.href}>
                     {item.microfrontend ? (
-                      <MicrofrontendLink href={item.href}>
+                      <MicrofrontendLink href={item.href} prefetch={true}>
                         {item.title}
                       </MicrofrontendLink>
                     ) : (
@@ -62,7 +62,7 @@ export function AppNavbarMenu() {
             size="sm"
             variant="none"
           >
-            <MicrofrontendLink href={item.href}>{item.title}</MicrofrontendLink>
+            <MicrofrontendLink href={item.href} prefetch={true}>{item.title}</MicrofrontendLink>
           </Button>
         ) : (
           <Button
@@ -81,7 +81,7 @@ export function AppNavbarMenu() {
 
       {/* Sign In Link */}
       <Button asChild className={navLinkClass} size="sm" variant="none">
-        <MicrofrontendLink href="/sign-in">Sign in</MicrofrontendLink>
+        <MicrofrontendLink href="/sign-in" prefetch={true}>Sign in</MicrofrontendLink>
       </Button>
     </div>
   );

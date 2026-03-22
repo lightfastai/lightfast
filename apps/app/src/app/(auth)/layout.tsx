@@ -30,7 +30,11 @@ export default function AuthLayout({
           <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
             {/* Left: Logo — routes to www via microfrontend */}
             <div className="-ml-2 flex items-center md:justify-self-start">
-              <MicrofrontendLink className="flex items-center" href="/">
+              <MicrofrontendLink
+                className="flex items-center"
+                href="/"
+                prefetch={true}
+              >
                 <Icons.logoShort className="h-4 w-4 text-foreground" />
               </MicrofrontendLink>
             </div>
@@ -44,7 +48,9 @@ export default function AuthLayout({
                 size="lg"
                 variant="secondary"
               >
-                <Link href="/early-access">Join the Early Access</Link>
+                <Link href="/early-access" prefetch={true}>
+                  Join the Early Access
+                </Link>
               </Button>
             </div>
           </div>

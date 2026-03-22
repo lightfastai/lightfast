@@ -80,6 +80,7 @@ export function AppMobileNav() {
                           href={item.href}
                           key={item.href}
                           onClick={() => setOpen(false)}
+                          prefetch={true}
                         >
                           {item.title}
                         </MicrofrontendLink>
@@ -106,6 +107,7 @@ export function AppMobileNav() {
                 <MicrofrontendLink
                   href="/early-access"
                   onClick={() => setOpen(false)}
+                  prefetch={true}
                 >
                   Join Early Access
                 </MicrofrontendLink>
@@ -114,6 +116,7 @@ export function AppMobileNav() {
                 <MicrofrontendLink
                   href="/sign-in"
                   onClick={() => setOpen(false)}
+                  prefetch={true}
                 >
                   Sign in
                 </MicrofrontendLink>
