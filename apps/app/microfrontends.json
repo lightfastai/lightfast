@@ -6,19 +6,7 @@
       "development": {
         "local": 4107,
         "fallback": "lightfast-app.vercel.app"
-      },
-      "routing": [
-        {
-          "group": "auth",
-          "paths": [
-            "/sign-in",
-            "/sign-in/:path*",
-            "/sign-up",
-            "/sign-up/:path*",
-            "/early-access"
-          ]
-        }
-      ]
+      }
     },
     "lightfast-www": {
       "packageName": "@lightfast/www",
@@ -36,25 +24,22 @@
             "/changelog/:path*",
             "/blog",
             "/blog/:path*",
-            "/use-cases/agent-builders",
-            "/use-cases/engineering-leaders",
-            "/use-cases/platform-engineers",
-            "/use-cases/technical-founders",
+            "/use-cases/:path*",
             "/legal/:path*",
             "/search",
             "/pitch-deck",
             "/api/health",
+            "/api/search",
             "/images/:path*",
             "/fonts/:path*",
             "/favicon.ico",
+            "/favicon-16x16.png",
+            "/favicon-32x32.png",
             "/android-chrome-192x192.png",
             "/android-chrome-512x512.png",
             "/apple-touch-icon.png",
-            "/favicon-16x16.png",
-            "/favicon-32x32.png",
             "/docs",
             "/docs/:path*",
-            "/api/search",
             "/sitemap.xml",
             "/robots.txt",
             "/manifest.json",
