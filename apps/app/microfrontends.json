@@ -6,7 +6,19 @@
       "development": {
         "local": 4107,
         "fallback": "lightfast-app.vercel.app"
-      }
+      },
+      "routing": [
+        {
+          "group": "auth",
+          "paths": [
+            "/sign-in",
+            "/sign-in/:path*",
+            "/sign-up",
+            "/sign-up/:path*",
+            "/early-access"
+          ]
+        }
+      ]
     },
     "lightfast-www": {
       "packageName": "@lightfast/www",
