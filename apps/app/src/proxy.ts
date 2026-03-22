@@ -1,5 +1,6 @@
 import { createNEMO } from "@rescale/nemo";
 import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
+import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
 import {
   composeCspOptions,
   createAnalyticsCspDirectives,
@@ -109,6 +110,13 @@ const composedMiddleware = createNEMO(
  */
 export default clerkMiddleware(
   async (auth, req: NextRequest, event) => {
+    // Handle microfrontends client-config endpoint for cross-zone prefetching
+    const mfeResponse = await runMicrofrontendsMiddleware({
+      request: req,
+      flagValues: {},
+    });
+    if (mfeResponse) return mfeResponse;
+
     // Single auth check - detect both pending and active users
     const { userId, orgId, orgSlug } = await auth({
       treatPendingAsSignedOut: false,
@@ -219,6 +227,7 @@ export default clerkMiddleware(
 
 export const config = {
   matcher: [
+    "/.well-known/vercel/microfrontends/client-config",
     "/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)",
     // Always run for API routes
     "/(api|trpc)(.*)",
