@@ -14,7 +14,8 @@ import { Activity, Blocks, Brain, Plug, Shield, Wand2 } from "lucide-react";
 import type { Metadata } from "next";
 import Image from "next/image";
 import { ChangelogPreview } from "~/app/(app)/_components/changelog-preview";
-import { FAQSection, faqs } from "~/app/(app)/_components/faq-section";
+import { faqs } from "~/app/(app)/_components/faq-data";
+import { FAQSection } from "~/app/(app)/_components/faq-section";
 import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
 import { IntegrationShowcase } from "~/app/(app)/_components/integration-showcase";
 import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
@@ -222,7 +223,7 @@ export default function HomePage() {
         <section className="relative min-h-screen w-full overflow-hidden bg-background">
           {/* Mobile hero: static image only — no video download on mobile */}
           <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden md:hidden">
-            <div className="absolute top-[22%] -right-[42%] h-[90%] w-[150%]">
+            <div className="absolute top-[18%] -right-[50%] h-[110%] w-[180%]">
               <Image
                 alt="Data flows through the Lightfast engine"
                 className="object-contain object-[65%_25%]"
@@ -243,7 +244,7 @@ export default function HomePage() {
 
           {/* Desktop hero: animated WebM video */}
           <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block">
-            <div className="absolute top-[25%] -right-[10%] h-[85%] w-[100%] lg:top-[5%] lg:-right-[12.5%] lg:h-[95%] lg:w-[80%]">
+            <div className="absolute top-[20%] -right-[20%] h-[100%] w-[120%] lg:top-[0%] lg:-right-[20%] lg:h-[110%] lg:w-[95%]">
               <video
                 autoPlay
                 className="h-full w-full object-contain object-right-top"
@@ -264,6 +265,19 @@ export default function HomePage() {
               </video>
             </div>
           </div>
+
+          {/* Vignette overlay — fades hero media into bg along bottom, bottom-left, and right */}
+          <div
+            className="pointer-events-none absolute inset-0 z-10"
+            style={{
+              background: [
+                "linear-gradient(to top, var(--background) 0%, transparent 25%)",
+                "linear-gradient(to left, var(--background) 0%, transparent 20%)",
+                "linear-gradient(to top right, var(--background) 0% 15%, transparent 50%)",
+                "linear-gradient(to bottom right, var(--background) 0% 8%, transparent 40%)",
+              ].join(", "),
+            }}
+          />
 
           {/* Hero text - positioned on the left */}
           <div className="relative z-20 mx-auto flex min-h-screen w-full max-w-[1400px] items-start px-8 pt-[18vh] pb-24 md:px-16 md:pt-[15vh] md:pb-32 lg:items-center lg:px-24 lg:pt-0 lg:pb-40">
@@ -309,7 +323,7 @@ export default function HomePage() {
             <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-16">
               {/* Left: Badge */}
               <div>
-                <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-xs">
+                <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-sm">
                   Connect Your Tools
                 </span>
               </div>
