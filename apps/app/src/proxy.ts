@@ -88,7 +88,7 @@ const clerkHandler = clerkMiddleware(
 // Wrap clerkMiddleware to measure its total overhead (including its own init)
 export default async function middleware(
   req: NextRequest,
-  event: NextFetchEvent,
+  event: Parameters<typeof clerkHandler>[1],
 ) {
   const t0 = Date.now();
   const result = await clerkHandler(req, event);
