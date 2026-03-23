@@ -270,13 +270,11 @@ export default function HomePage() {
             <div className="flex w-full max-w-sm flex-col justify-center md:max-w-lg lg:max-w-sm">
               <Icons.logoShort className="mb-4 hidden h-5 w-5 text-muted-foreground md:block" />
               <h1 className="mb-4 font-medium font-pp text-4xl md:text-3xl lg:text-3xl">
-                <span className="text-primary">Superintelligence</span>{" "}
-                <span className="text-muted-foreground">layer for founders.</span>
+                <span className="text-muted-foreground">Building the</span>{" "}
+                <span className="text-primary">superintelligence layer</span>{" "}
+                <span className="text-muted-foreground">for</span>{" "}
+                <span className="text-primary">founders.</span>
               </h1>
-              <p className="mb-4 max-w-sm text-sm text-muted-foreground leading-relaxed">
-                Built on a unified operating layer — your tools, your agents, your entire
-                operation orchestrated in one place.
-              </p>
               <div>
                 <Button asChild size="sm">
                   <MicrofrontendLink href="/early-access" prefetch={true}>

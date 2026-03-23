@@ -3,7 +3,10 @@ import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
 import type { Organization, WithContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
-import { PrefetchCrossZoneLinks, PrefetchCrossZoneLinksProvider } from "@vercel/microfrontends/next/client";
+import {
+  PrefetchCrossZoneLinks,
+  PrefetchCrossZoneLinksProvider,
+} from "@vercel/microfrontends/next/client";
 import type { Metadata, Viewport } from "next";
 import { geistMono, geistSans, ppNeueMontreal } from "~/lib/fonts";
 
@@ -135,7 +138,7 @@ export default function RootLayout({
         geistSans.variable,
         geistMono.variable,
         ppNeueMontreal.variable,
-        "dark scrollbar-thin touch-manipulation font-sans antialiased"
+        "dark scrollbar-thin touch-manipulation font-sans antialiased",
       )}
       lang="en"
       suppressHydrationWarning
