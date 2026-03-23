@@ -12,12 +12,7 @@ interface FeedEvent {
 }
 
 const FEED_EVENTS: FeedEvent[] = [
-  { source: "Vercel", label: "Deployment Started", detail: "web@main" },
-  {
-    source: "GitHub",
-    label: "PR Opened",
-    detail: "#842 search index batching",
-  },
+  { source: "GitHub", label: "PR Opened", detail: "#842 search index batching" },
   {
     source: "Sentry",
     label: "Issue Created",
@@ -27,11 +22,7 @@ const FEED_EVENTS: FeedEvent[] = [
       "at SearchWorker.process (worker.ts:142)",
     ],
   },
-  {
-    source: "Linear",
-    label: "Issue Updated",
-    detail: "MEM-302 ranking threshold",
-  },
+  { source: "Linear", label: "Issue Updated", detail: "MEM-302 ranking threshold" },
   { source: "Vercel", label: "Deployment Ready", detail: "api@prod-us-east-1" },
   { source: "GitHub", label: "PR Merged", detail: "#839 edge cache warmup" },
   {
@@ -42,22 +33,6 @@ const FEED_EVENTS: FeedEvent[] = [
       "Current: 312ms · Threshold: 240ms",
       "Region: us-east-1 · Window: 5m",
     ],
-  },
-  {
-    source: "Linear",
-    label: "Comment Added",
-    detail: "MEM-271 rollout checklist",
-  },
-  {
-    source: "GitHub",
-    label: "Issue Closed",
-    detail: "#311 stale query regression",
-  },
-  {
-    source: "Vercel",
-    label: "Deployment Succeeded",
-    detail: "chat-worker@main",
-    extra: ["Build: 42s · 3 functions · 12 static assets"],
   },
 ];
 
@@ -92,8 +67,8 @@ const COMPACT_ROW_HEIGHT = 74;
 const EXTRA_LINE_HEIGHT = 20; // text-xs leading-tight(16) + gap-1(4)
 const EXTRA_SECTION_OVERHEAD = 21; // gap(8) + margin(4) + border(1) + padding(8)
 const FEED_PADDING_Y = 0;
-// 10 events × 30 frames = 300, divides evenly into GIF loop for seamless restart
-const FRAMES_PER_EVENT = 30;
+// 6 events × 50 frames = 300, divides evenly into GIF loop for seamless restart
+const FRAMES_PER_EVENT = 50;
 const STEP_MOVE_FRAMES = 10;
 const LOOP_FRAMES = FEED_EVENTS.length * FRAMES_PER_EVENT;
 const N = FEED_EVENTS.length;
@@ -241,91 +216,93 @@ export const StreamEvents: React.FC = () => {
     >
       <div className="relative h-full w-full overflow-hidden">
         {renderItems.map(({ eventIndex, event, fromY, toY, waveIndex }) => {
-        // ── Per-row wave progress ──
-        const waveDelay = waveIndex * ROW_STAGGER.STREAM_EVENTS;
-        const rowProgress = interpolate(
-          stepFrame - waveDelay,
-          [0, STEP_MOVE_FRAMES],
-          [0, 1],
-          {
-            extrapolateLeft: "clamp",
-            extrapolateRight: "clamp",
-            easing: STEP_EASING,
-          }
-        );
+          // ── Per-row wave progress ──
+          const waveDelay = waveIndex * ROW_STAGGER.STREAM_EVENTS;
+          const rowProgress = interpolate(
+            stepFrame - waveDelay,
+            [0, STEP_MOVE_FRAMES],
+            [0, 1],
+            {
+              extrapolateLeft: "clamp",
+              extrapolateRight: "clamp",
+              easing: STEP_EASING,
+            }
+          );
 
-        // ── Compute Y position ──
-        let y: number;
+          // ── Compute Y position ──
+          let y: number;
 
-        if (fromY !== null && toY !== null) {
-          // Staying item: shift downward to new position
-          y = interpolate(rowProgress, [0, 1], [fromY, toY as number]);
-        } else if (fromY === null && toY !== null) {
-          // Entering from top: slide down from above container
-          const entryStartY = -(eventHeights[eventIndex] ?? COMPACT_ROW_HEIGHT);
-          y = interpolate(rowProgress, [0, 1], [entryStartY, toY as number]);
-        } else if (fromY !== null && toY === null) {
-          // Exiting: slide down off the bottom
-          y = interpolate(rowProgress, [0, 1], [fromY, FEED_HEIGHT]);
-          if (y >= FEED_HEIGHT) {
+          if (fromY !== null && toY !== null) {
+            // Staying item: shift downward to new position
+            y = interpolate(rowProgress, [0, 1], [fromY, toY as number]);
+          } else if (fromY === null && toY !== null) {
+            // Entering from top: slide down from above container
+            const entryStartY = -(
+              eventHeights[eventIndex] ?? COMPACT_ROW_HEIGHT
+            );
+            y = interpolate(rowProgress, [0, 1], [entryStartY, toY as number]);
+          } else if (fromY !== null && toY === null) {
+            // Exiting: slide down off the bottom
+            y = interpolate(rowProgress, [0, 1], [fromY, FEED_HEIGHT]);
+            if (y >= FEED_HEIGHT) {
+              return null;
+            }
+          } else {
             return null;
           }
-        } else {
-          return null;
-        }
 
-        // Don't render if fully above container (still entering)
-        if (y + (eventHeights[eventIndex] ?? 0) < 0) {
-          return null;
-        }
+          // Don't render if fully above container (still entering)
+          if (y + (eventHeights[eventIndex] ?? 0) < 0) {
+            return null;
+          }
 
-        return (
-          <div
-            className="absolute flex flex-col gap-2 rounded-md border border-border px-3 py-3 font-sans"
-            key={eventIndex}
-            style={{
-              left: FEED_PADDING_X,
-              top: y,
-              width: FEED_WIDTH - FEED_PADDING_X * 2,
-            }}
-          >
-            <div className="flex items-center gap-2">
-              {(() => {
-                const Icon =
-                  IntegrationLogoIcons[SOURCE_ICON_KEY[event.source]];
-                return (
-                  <Icon
-                    className="size-4 shrink-0"
-                    style={{ color: SOURCE_COLORS[event.source] }}
-                  />
-                );
-              })()}
-              <span className="font-medium font-mono text-muted-foreground text-xs uppercase tracking-wide">
-                {event.source}
-              </span>
-            </div>
-            <div className="flex items-center gap-2 overflow-hidden text-sm">
-              <span className="shrink-0 text-foreground">{event.label}</span>
-              <span className="shrink-0 text-muted-foreground/40">•</span>
-              <span className="truncate text-muted-foreground">
-                {event.detail}
-              </span>
-            </div>
-            {event.extra && (
-              <div className="mt-1 flex flex-col gap-1 border-border/50 border-t pt-2">
-                {event.extra.map((line, lineIndex) => (
-                  <span
-                    className="truncate font-mono text-muted-foreground/50 text-xs leading-tight"
-                    key={`${lineIndex}-${line}`}
-                  >
-                    {line}
-                  </span>
-                ))}
+          return (
+            <div
+              className="absolute flex flex-col gap-2 rounded-md border border-border px-3 py-3 font-sans"
+              key={eventIndex}
+              style={{
+                left: FEED_PADDING_X,
+                top: y,
+                width: FEED_WIDTH - FEED_PADDING_X * 2,
+              }}
+            >
+              <div className="flex items-center gap-2">
+                {(() => {
+                  const Icon =
+                    IntegrationLogoIcons[SOURCE_ICON_KEY[event.source]];
+                  return (
+                    <Icon
+                      className="size-4 shrink-0"
+                      style={{ color: SOURCE_COLORS[event.source] }}
+                    />
+                  );
+                })()}
+                <span className="font-medium font-mono text-muted-foreground text-xs uppercase tracking-wide">
+                  {event.source}
+                </span>
               </div>
-            )}
-          </div>
-        );
-      })}
+              <div className="flex items-center gap-2 overflow-hidden text-sm">
+                <span className="shrink-0 text-foreground">{event.label}</span>
+                <span className="shrink-0 text-muted-foreground/40">•</span>
+                <span className="truncate text-muted-foreground">
+                  {event.detail}
+                </span>
+              </div>
+              {event.extra && (
+                <div className="mt-1 flex flex-col gap-1 border-border/50 border-t pt-2">
+                  {event.extra.map((line, lineIndex) => (
+                    <span
+                      className="truncate font-mono text-muted-foreground/50 text-xs leading-tight"
+                      key={`${lineIndex}-${line}`}
+                    >
+                      {line}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </div>
     </IsometricCard>
   );

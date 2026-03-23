@@ -1,59 +1,19 @@
 import { cn } from "@repo/ui/lib/utils";
 import type React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
+import { Easing, interpolate, useCurrentFrame } from "remotion";
 import { IsometricCard } from "../shared/isometric-card";
-import { BEAM_TIMING, MOTION_DURATION, SPRING_CONFIGS } from "../shared/timing";
 
-// ── Pre-populated items — visible from the start so the list looks full ──
-const INITIAL_ITEMS = [
-  {
-    title: "Weekly engineering standup notes",
-    domain: "notion.so/acme/meetings",
-    timestamp: "2 days ago",
-  },
-  {
-    title: "Frontend deployment pipeline overview",
-    domain: "github.com/acme/infra",
-    timestamp: "5 days ago",
-  },
-  {
-    title: "Q4 performance review guidelines",
-    domain: "notion.so/acme/hr",
-    timestamp: "1 week ago",
-  },
-  {
-    title: "Database migration runbook",
-    domain: "github.com/acme/backend",
-    timestamp: "2 weeks ago",
-  },
-  {
-    title: "Design system component library",
-    domain: "figma.com/acme/design",
-    timestamp: "3 weeks ago",
-  },
-  {
-    title: "Incident response playbook — SRE",
-    domain: "notion.so/acme/sre",
-    timestamp: "1 month ago",
-  },
-  {
-    title: "Service mesh configuration guide",
-    domain: "github.com/acme/platform",
-    timestamp: "1 month ago",
-  },
-  {
-    title: "On-call rotation schedule Q1",
-    domain: "pagerduty.com/acme/schedules",
-    timestamp: "2 months ago",
-  },
-];
-
-// ── New items that push in one-by-one at the top after search ──
-const NEW_SEARCH_RESULTS = [
+// ── Result items — cycled infinitely ──
+const RESULT_ITEMS = [
   {
     title: "Authentication service architecture decision",
     domain: "github.com/acme/backend",
     timestamp: "3 days ago",
+  },
+  {
+    title: "Weekly engineering standup notes",
+    domain: "notion.so/acme/meetings",
+    timestamp: "2 days ago",
   },
   {
     title: "API rate limiting implementation — PR #842",
@@ -61,9 +21,19 @@ const NEW_SEARCH_RESULTS = [
     timestamp: "1 week ago",
   },
   {
+    title: "Frontend deployment pipeline overview",
+    domain: "github.com/acme/infra",
+    timestamp: "5 days ago",
+  },
+  {
     title: "User authentication flow diagram",
     domain: "notion.so/acme/docs",
     timestamp: "2 weeks ago",
+  },
+  {
+    title: "Q4 performance review guidelines",
+    domain: "notion.so/acme/hr",
+    timestamp: "1 week ago",
   },
   {
     title: "Choosing between Clerk vs Auth0",
@@ -71,9 +41,19 @@ const NEW_SEARCH_RESULTS = [
     timestamp: "3 weeks ago",
   },
   {
+    title: "Database migration runbook",
+    domain: "github.com/acme/backend",
+    timestamp: "2 weeks ago",
+  },
+  {
     title: "Auth middleware refactor discussion",
     domain: "github.com/acme/backend",
     timestamp: "1 month ago",
+  },
+  {
+    title: "Design system component library",
+    domain: "figma.com/acme/design",
+    timestamp: "3 weeks ago",
   },
 ];
 
@@ -92,6 +72,18 @@ const QUERY_TEXT = '"How does our authentication service work?"';
 const SIDEBAR_WIDTH = 256;
 const ROW_HEIGHT = 52;
 
+const N = RESULT_ITEMS.length;
+// 10 items × 30 frames = 300, matches composition loop
+const FRAMES_PER_ITEM = 30;
+const LOOP_FRAMES = N * FRAMES_PER_ITEM;
+const SHIFT_DURATION = 12;
+const DROP_DELAY = 2;
+const DROP_DURATION = 14;
+const MAX_VISIBLE = 8;
+const RESULTS_HEIGHT = MAX_VISIBLE * ROW_HEIGHT;
+
+const STEP_EASING = Easing.inOut((t: number) => Easing.cubic(t));
+
 const RowContent: React.FC<{
   item: { title: string; domain: string; timestamp: string };
 }> = ({ item }) => (
@@ -109,72 +101,57 @@ const RowContent: React.FC<{
 
 export const IngestedData: React.FC = () => {
   const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
 
-  // ── Typewriter animation — starts after beam arrives ──
-  const TYPEWRITER_START = BEAM_TIMING.ARRIVAL + 12;
-  const CHARS_PER_FRAME = 1.2;
-  const typingFrame = Math.max(0, frame - TYPEWRITER_START);
-  const charsToShow = Math.min(
-    Math.floor(typingFrame * CHARS_PER_FRAME),
-    QUERY_TEXT.length
+  // ── Step timing ──
+  const loopFrame = frame % LOOP_FRAMES;
+  const stepIndex = Math.floor(loopFrame / FRAMES_PER_ITEM);
+  const stepFrame = loopFrame % FRAMES_PER_ITEM;
+
+  // ── Shift progress (existing items moving down) ──
+  const shiftProgress = interpolate(
+    stepFrame,
+    [0, SHIFT_DURATION],
+    [0, 1],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: STEP_EASING,
+    }
   );
-  const isTypingComplete = charsToShow >= QUERY_TEXT.length;
-  const typingEndFrame =
-    TYPEWRITER_START + Math.ceil(QUERY_TEXT.length / CHARS_PER_FRAME);
 
-  // Cursor: solid during typing, blinks after, hidden after 30 frames
-  const cursorFramesAfterTyping = frame - typingEndFrame;
-  const showCursor =
-    frame >= TYPEWRITER_START &&
-    (!isTypingComplete || cursorFramesAfterTyping < 30);
-  const cursorOpacity =
-    showCursor && isTypingComplete
-      ? Math.floor(cursorFramesAfterTyping / 8) % 2 === 0
-        ? 1
-        : 0
-      : showCursor
-        ? 1
-        : 0;
+  // ── Drop progress (entering item falling from z=60) ──
+  const dropProgress = interpolate(
+    stepFrame - DROP_DELAY,
+    [0, DROP_DURATION],
+    [0, 1],
+    {
+      extrapolateLeft: "clamp",
+      extrapolateRight: "clamp",
+      easing: STEP_EASING,
+    }
+  );
 
-  // ── Two-phase arrival: shift first, pause, then drop ──
-  const RESULTS_START = typingEndFrame + 10;
-  const ARRIVAL_INTERVAL = 38; // frames between consecutive item cycles
-  const DROP_DELAY = 14; // frames after shift starts before drop begins
+  // ── 3D drop values for entering item ──
+  const rowZ = interpolate(dropProgress, [0, 1], [60, 0], {
+    extrapolateRight: "clamp",
+  });
+  const wireframeOpacity = interpolate(
+    dropProgress,
+    [0.0, 0.7, 1.0],
+    [0.8, 0.8, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+  const ghostOpacity = interpolate(
+    dropProgress,
+    [0, 0.8, 1.0],
+    [0.35, 0.35, 0],
+    { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
+  );
+  const landed = wireframeOpacity < 0.01;
 
-  // Single pass: compute both shift and drop springs together to avoid two
-  // separate .map() allocations and a .reduce() on every frame.
-  const N_RESULTS = NEW_SEARCH_RESULTS.length;
-  const shiftValues: number[] = new Array<number>(N_RESULTS);
-  const dropValues: number[] = new Array<number>(N_RESULTS);
-  let totalShift = 0;
-  for (let k = 0; k < N_RESULTS; k++) {
-    const baseFrame = RESULTS_START + k * ARRIVAL_INTERVAL;
-    const sv = spring({
-      frame: frame - baseFrame,
-      fps,
-      config: SPRING_CONFIGS.SNAPPY,
-      durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
-    });
-    const dv = spring({
-      frame: frame - baseFrame - DROP_DELAY,
-      fps,
-      config: SPRING_CONFIGS.SNAPPY,
-      durationInFrames: MOTION_DURATION.ROW_ENTRANCE,
-    });
-    shiftValues[k] = sv;
-    dropValues[k] = dv;
-    totalShift += sv;
-  }
-
-  // Suffix sums: suffixShift[i] = sum of shiftValues[i..N_RESULTS-1].
-  // Replaces the per-item .slice(resultIndex+1).reduce() in the render loop.
-  const suffixShift: number[] = new Array<number>(N_RESULTS + 1).fill(0);
-  for (let i = N_RESULTS - 1; i >= 0; i--) {
-    suffixShift[i] = (suffixShift[i + 1] ?? 0) + (shiftValues[i] ?? 0);
-  }
-
-  const RESULTS_HEIGHT = INITIAL_ITEMS.length * ROW_HEIGHT;
+  // ── Entering item ──
+  const enteringIdx = stepIndex % N;
+  const enteringItem = RESULT_ITEMS[enteringIdx]!;
 
   return (
     <IsometricCard
@@ -260,7 +237,7 @@ export const IngestedData: React.FC = () => {
           className="flex flex-1 flex-col"
           style={{ transformStyle: "preserve-3d" }}
         >
-          {/* Search query section */}
+          {/* Search query — static, fully typed */}
           <div className="flex min-h-18 flex-col justify-center border-border border-b px-4 py-3">
             <div className="text-xs leading-normal">
               <span className="font-medium text-primary">lightfast</span>
@@ -269,13 +246,7 @@ export const IngestedData: React.FC = () => {
               <span className="text-muted-foreground">(</span>
             </div>
             <div className="pl-4 text-foreground text-xs leading-normal">
-              {QUERY_TEXT.slice(0, charsToShow)}
-              <span
-                className="font-light text-primary"
-                style={{ opacity: cursorOpacity }}
-              >
-                |
-              </span>
+              {QUERY_TEXT}
             </div>
             <div className="text-xs leading-normal">
               <span className="text-muted-foreground">)</span>
@@ -290,11 +261,15 @@ export const IngestedData: React.FC = () => {
               transformStyle: "preserve-3d",
             }}
           >
-            {/* ── Clipped layer: initial items (2D only, safe to clip) ── */}
+            {/* ── Clipped layer: shifting items ── */}
             <div className="absolute inset-0 overflow-hidden">
-              {INITIAL_ITEMS.map((item, j) => {
-                const slot = j + totalShift;
-                const y = slot * ROW_HEIGHT;
+              {Array.from({ length: MAX_VISIBLE }, (_, slot) => {
+                const itemIdx = ((stepIndex - 1 - slot) % N + N) % N;
+                const item = RESULT_ITEMS[itemIdx]!;
+                const fromY = slot * ROW_HEIGHT;
+                const toY = (slot + 1) * ROW_HEIGHT;
+                const y = interpolate(shiftProgress, [0, 1], [fromY, toY]);
+
                 if (y >= RESULTS_HEIGHT) {
                   return null;
                 }
@@ -302,7 +277,7 @@ export const IngestedData: React.FC = () => {
                 return (
                   <div
                     className="absolute right-0 left-0"
-                    key={`initial-${j}`}
+                    key={itemIdx}
                     style={{
                       height: ROW_HEIGHT,
                       transform: `translateY(${y}px)`,
@@ -316,120 +291,83 @@ export const IngestedData: React.FC = () => {
               })}
             </div>
 
-            {/* ── New search result items (preserve-3d for drop animation) ── */}
-            {NEW_SEARCH_RESULTS.map((result, resultIndex) => {
-              const drop = dropValues[resultIndex] ?? 0;
-              // Only render once the drop phase begins
-              if (drop <= 0) {
-                return null;
-              }
+            {/* ── 3D layer: entering item with drop effect ── */}
+            {dropProgress > 0 && (
+              <div
+                className="absolute right-0 left-0"
+                style={{
+                  height: ROW_HEIGHT,
+                  transform: "translateY(0px)",
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                {/* Wireframe: dashed landing zone at z=0 */}
+                {wireframeOpacity > 0 && (
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      border: "1px dashed var(--muted-foreground)",
+                      opacity: wireframeOpacity,
+                    }}
+                  />
+                )}
 
-              // Slot = sum of shift springs that fired AFTER this one.
-              // suffixShift[resultIndex+1] is the precomputed suffix sum.
-              const slot = suffixShift[resultIndex + 1] ?? 0;
-              const y = slot * ROW_HEIGHT;
+                {/* Ghost: faint content preview at landing zone */}
+                {ghostOpacity > 0 && (
+                  <div
+                    className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
+                    style={{ opacity: ghostOpacity }}
+                  >
+                    <RowContent item={enteringItem} />
+                  </div>
+                )}
 
-              // 3D drop: new item floats from z=60 down to z=0
-              const rowZ = interpolate(drop, [0, 1], [60, 0], {
-                extrapolateRight: "clamp",
-              });
-
-              // Wireframe cage: dashed outline at landing zone
-              const wireframeOpacity = interpolate(
-                drop,
-                [0.0, 0.7, 1.0],
-                [0.8, 0.8, 0],
-                { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-              );
-
-              // Ghost: faint content preview at landing zone
-              const ghostOpacity = interpolate(
-                drop,
-                [0, 0.8, 1.0],
-                [0.35, 0.35, 0],
-                { extrapolateLeft: "clamp", extrapolateRight: "clamp" }
-              );
-
-              const landed = wireframeOpacity < 0.01;
-
-              return (
-                <div
-                  className="absolute right-0 left-0"
-                  key={result.title}
-                  style={{
-                    height: ROW_HEIGHT,
-                    transform: `translateY(${y}px)`,
-                    transformStyle: "preserve-3d",
-                  }}
-                >
-                  {/* ── Wireframe: dashed landing zone at z=0 ── */}
-                  {wireframeOpacity > 0 && (
+                {/* Tracer lines: guide rails from z=0 to z=rowZ */}
+                {rowZ > 0.5 &&
+                  wireframeOpacity > 0 &&
+                  [0, 1].map((side) => (
                     <div
-                      className="pointer-events-none absolute inset-0"
+                      className="pointer-events-none absolute top-0"
+                      key={`tracer-${side}`}
                       style={{
-                        border: "1px dashed var(--muted-foreground)",
+                        left: side === 0 ? 0 : undefined,
+                        right: side === 1 ? 0 : undefined,
+                        width: 0,
+                        height: rowZ,
+                        borderLeft: "1px dashed var(--muted-foreground)",
+                        transform: "rotateX(90deg)",
+                        transformOrigin: "0 0",
                         opacity: wireframeOpacity,
                       }}
                     />
-                  )}
+                  ))}
 
-                  {/* ── Ghost: faint content preview at landing zone (z=0) ── */}
-                  {ghostOpacity > 0 && (
-                    <div
-                      className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
-                      style={{ opacity: ghostOpacity }}
-                    >
-                      <RowContent item={result} />
-                    </div>
-                  )}
-
-                  {/* ── Tracer lines: guide rails from z=0 to z=rowZ ── */}
-                  {rowZ > 0.5 &&
-                    wireframeOpacity > 0 &&
-                    [0, 1].map((side) => (
-                      <div
-                        className="pointer-events-none absolute top-0"
-                        key={`tracer-${side}`}
-                        style={{
-                          left: side === 0 ? 0 : undefined,
-                          right: side === 1 ? 0 : undefined,
-                          width: 0,
-                          height: rowZ,
-                          borderLeft: "1px dashed var(--muted-foreground)",
-                          transform: "rotateX(90deg)",
-                          transformOrigin: "0 0",
-                          opacity: wireframeOpacity,
-                        }}
-                      />
-                    ))}
-
-                  {/* ── Floating wrapper at z=rowZ: drops into landing zone ── */}
+                {/* Floating wrapper at z=rowZ: drops into landing zone */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    transform: `translateZ(${rowZ}px)`,
+                    transformStyle: "preserve-3d",
+                  }}
+                >
                   <div
-                    className="absolute inset-0"
-                    style={{
-                      transform: `translateZ(${rowZ}px)`,
-                      transformStyle: "preserve-3d",
-                    }}
+                    className={cn(
+                      "absolute inset-0 flex flex-col justify-center bg-background px-4 py-2",
+                      landed && "border-border border-b"
+                    )}
+                    style={
+                      landed
+                        ? undefined
+                        : {
+                            border: `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`,
+                          }
+                    }
                   >
-                    <div
-                      className={cn(
-                        "absolute inset-0 flex flex-col justify-center bg-background px-4 py-2",
-                        landed && "border-border border-b"
-                      )}
-                      style={
-                        landed
-                          ? undefined
-                          : {
-                              border: `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`,
-                            }
-                      }
-                    >
-                      <RowContent item={result} />
-                    </div>
+                    <RowContent item={enteringItem} />
                   </div>
                 </div>
-              );
-            })}
+              </div>
+            )}
           </div>
         </div>
       </div>

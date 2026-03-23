@@ -64,7 +64,9 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
         {children}
       </div>
       {/* Border overlay — always visible on top */}
-      {!transparent && <div className="pointer-events-none absolute inset-0 border border-border" />}
+      {!transparent && (
+        <div className="pointer-events-none absolute inset-0 border border-border" />
+      )}
     </div>
   );
 };
