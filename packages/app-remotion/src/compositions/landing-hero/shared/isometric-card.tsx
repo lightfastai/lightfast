@@ -7,6 +7,8 @@ interface IsometricCardProps {
   children: React.ReactNode;
   entranceFrame: number;
   height: number;
+  /** Remove card background and border */
+  transparent?: boolean;
   width: number;
   /** Absolute position within the isometric plane */
   x: number;
@@ -17,6 +19,7 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
   children,
   entranceFrame,
   animate = true,
+  transparent = false,
   width,
   height,
   x,
@@ -52,7 +55,7 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
       }}
     >
       {/* Card background */}
-      <div className="absolute inset-0 bg-card" />
+      {!transparent && <div className="absolute inset-0 bg-card" />}
       {/* Children — clipped to card shape */}
       <div
         className="relative h-full w-full"
@@ -61,7 +64,7 @@ export const IsometricCard: React.FC<IsometricCardProps> = ({
         {children}
       </div>
       {/* Border overlay — always visible on top */}
-      <div className="pointer-events-none absolute inset-0 border border-border" />
+      {!transparent && <div className="pointer-events-none absolute inset-0 border border-border" />}
     </div>
   );
 };

@@ -20,11 +20,11 @@ export const MOTION_DURATION = {
 export const SECTION_TIMING = {
   /** Grid lines draw in */
   GRID: { start: -MOTION_DURATION.GRID_DRAW },
-  /** Section 1: Stream events card — cell (0,1) */
+  /** Section 1: Stream events card — cell (1,0) */
   STREAM_EVENTS: { start: 6, entrance: 6 },
   /** Section 2: Logo / engine — cell (1,1) */
   LOGO: { start: 48, entrance: 48 },
-  /** Bottom row — cells (2,0), (2,1), (2,2) */
+  /** Bottom row — cells (0,2), (1,2), (2,2) */
   BOTTOM_LEFT: { start: 78, entrance: 78 },
   BOTTOM_CENTER: { start: 88, entrance: 88 },
   BOTTOM_RIGHT: { start: 98, entrance: 98 },
@@ -42,6 +42,6 @@ export const BEAM_TIMING = {
 
 /** Stagger delay between rows appearing inside cards */
 export const ROW_STAGGER = {
-  STREAM_EVENTS: 6,
+  STREAM_EVENTS: 3,
   INGESTED_DATA: 24,
 } as const;
