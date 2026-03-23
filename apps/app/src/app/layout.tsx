@@ -1,4 +1,3 @@
-// perf/sign-in-isolation — STEP 1: restore root layout (fonts, MFE providers, analytics)
 import type { Metadata, Viewport } from "next";
 
 import "~/styles/globals.css";

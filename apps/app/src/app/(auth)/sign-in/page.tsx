@@ -51,6 +51,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
 
   return (
     <div className="w-full space-y-8">
+      {/* Header — only on email step */}
       {step === "email" && !hasError && (
         <div className="text-center">
           <h1 className="font-medium font-pp text-3xl text-foreground">
@@ -60,6 +61,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
       )}
 
       <div className="space-y-4">
+        {/* Error display */}
         {(error ?? errorCode) && (
           <ErrorBanner
             backUrl="/sign-in"
@@ -68,6 +70,7 @@ export default async function SignInPage({ searchParams }: PageProps) {
           />
         )}
 
+        {/* Step: email — server component form + client OAuth island */}
         {!hasError && step === "email" && (
           <>
             <EmailForm action="sign-in" />
@@ -76,10 +79,12 @@ export default async function SignInPage({ searchParams }: PageProps) {
           </>
         )}
 
+        {/* Step: code — client island (irreducible: OTP + Clerk FAPI) */}
         {!hasError && step === "code" && email && (
           <OTPIsland email={email} mode="sign-in" />
         )}
 
+        {/* Step: activate — thin client island for session creation */}
         {step === "activate" && token && <SessionActivator token={token} />}
       </div>
     </div>
