@@ -117,10 +117,12 @@ export default clerkMiddleware(
     });
     if (mfeResponse) return mfeResponse;
 
-    // Single auth check - detect both pending and active users
-    const { userId, orgId, orgSlug } = await auth({
-      treatPendingAsSignedOut: false,
-    });
+    // Skip Clerk JWT decode for routes that never use auth state
+    // (public routes that don't redirect authenticated users away)
+    const skipAuth = isPublicRoute(req) && !isAuthRoute(req);
+    const { userId, orgId, orgSlug } = skipAuth
+      ? { userId: null, orgId: null, orgSlug: null }
+      : await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
 
     // Helper to apply headers and return redirect

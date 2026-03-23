@@ -1,6 +1,7 @@
 import { mergeNextConfig } from "@vendor/next/merge-config";
 import {
   config as vendorConfig,
+  withAnalyzer,
   withBetterStack,
   withSentry,
 } from "@vendor/next/next-config-builder";
@@ -80,7 +81,6 @@ const config: NextConfig = withSentry(
           "@vendor/security",
           "@vendor/seo",
         ],
-        turbopackScopeHoisting: false,
         serverActions: {
           bodySizeLimit: "2mb",
           allowedOrigins:
@@ -148,6 +148,10 @@ const config: NextConfig = withSentry(
   )
 );
 
-export default withMicrofrontends(config, {
+const baseExport = withMicrofrontends(config, {
   debug: env.NODE_ENV !== "production",
 });
+
+export default process.env.ANALYZE === "true"
+  ? withAnalyzer(baseExport)
+  : baseExport;

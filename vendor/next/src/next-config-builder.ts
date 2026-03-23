@@ -112,9 +112,9 @@ export const sentryConfig: Parameters<typeof withSentryConfig>[1] = {
    * https://docs.sentry.io/platforms/javascript/guides/nextjs/manual-setup/
    */
 
-  // Automatically annotate React components to show their full name in breadcrumbs and session replay
+  // Disabled: injects data-sentry-* attrs on every component, adding HTML weight and per-render cost
   reactComponentAnnotation: {
-    enabled: true,
+    enabled: false,
   },
 
   /*
