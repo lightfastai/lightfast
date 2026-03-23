@@ -1,3 +1,7 @@
+import {
+  lissajousPoints as computeLissajousPoints,
+  LOGO_CURVE,
+} from "@repo/ui/lib/brand";
 import type React from "react";
 import { useCurrentFrame } from "remotion";
 import type { Box3D, Vec2 } from "../shared/iso";
@@ -17,21 +21,17 @@ const cx = BOX.x + BOX.w / 2;
 const cy = BOX.y + BOX.h / 2;
 const STEPS = 512;
 
-// Precompute projected points for path + length calculation
-const lissajousPoints: Vec2[] = (() => {
-  const pts: Vec2[] = [];
-  for (let i = 0; i < STEPS; i++) {
-    const t = (i / STEPS) * 2 * Math.PI;
-    pts.push(
-      project(
-        cx + 60 * Math.sin(3 * t + Math.PI / 2),
-        cy + 60 * Math.sin(2 * t),
-        topZ
-      )
-    );
-  }
-  return pts;
-})();
+// Precompute projected points for path + length calculation.
+// computeLissajousPoints with steps=STEPS generates STEPS+1 points (inclusive);
+// slicing to STEPS is identical to the original loop with i < STEPS.
+const lissajousPoints: Vec2[] = computeLissajousPoints(
+  LOGO_CURVE.a,
+  LOGO_CURVE.b,
+  LOGO_CURVE.delta,
+  STEPS
+)
+  .slice(0, STEPS)
+  .map(([px, py]) => project(cx + 60 * px, cy + 60 * py, topZ));
 
 const lissajousPath = `${lissajousPoints
   .map((v, i) => `${i === 0 ? "M" : "L"}${v[0].toFixed(2)},${v[1].toFixed(2)}`)

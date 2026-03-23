@@ -14,6 +14,7 @@
     "./components/ssr-code-block": "./src/components/ssr-code-block/index.tsx",
     "./integration-icons": "./src/components/integration-icons.tsx",
     "./framework-icons": "./src/components/framework-icons.tsx",
+    "./lib/brand": "./src/lib/brand/index.ts",
     "./lib/*": "./src/lib/*.ts",
     "./postcss.config": "./postcss.config.mjs",
     "./globals.css": "./src/globals.css",

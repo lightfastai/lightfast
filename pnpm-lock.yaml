@@ -1762,6 +1762,9 @@ importers:
 
   packages/og:
     dependencies:
+      '@repo/ui':
+        specifier: workspace:*
+        version: link:../ui
       react:
         specifier: ^19.2.4
         version: 19.2.4

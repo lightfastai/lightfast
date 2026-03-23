@@ -1,7 +1,15 @@
 import { Icons } from "@repo/ui/components/icons";
-import { LISSAJOUS_PATHS } from "@repo/ui/lib/lissajous-paths";
+import {
+  LISSAJOUS_PATTERNS,
+  lissajousPathNormalized,
+} from "@repo/ui/lib/brand";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import NextLink from "next/link";
+
+const LISSAJOUS_PATHS = LISSAJOUS_PATTERNS.map(({ name, a, b, delta }) => ({
+  name,
+  d: lissajousPathNormalized(a, b, delta),
+}));
 
 export function AppFooter() {
   return (
