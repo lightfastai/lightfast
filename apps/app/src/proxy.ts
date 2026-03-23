@@ -22,6 +22,8 @@ const securityHeaders = securityMiddleware(
   ),
 );
 
+// Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
+// but auth.protect() is NOT called, so no JWKS fetch for unauthenticated visitors.
 const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
@@ -34,6 +36,7 @@ const isPublicRoute = createRouteMatcher([
   "/manifest.json",
 ]);
 
+// API routes that handle their own auth (withDualAuth at route level)
 const isApiRoute = createRouteMatcher([
   "/v1/(.*)",
   "/search(.*)",
@@ -44,20 +47,13 @@ const isApiRoute = createRouteMatcher([
   "/api/events/(.*)",
 ]);
 
-const clerkHandler = clerkMiddleware(
+export default clerkMiddleware(
   async (auth, req: NextRequest) => {
-    const t0 = Date.now();
-
     const mfeResponse = await runMicrofrontendsMiddleware({
       request: req,
       flagValues: {},
     });
-    const tMfe = Date.now() - t0;
-
-    if (mfeResponse) {
-      console.log(`[proxy] mfe:${tMfe}ms returned`);
-      return mfeResponse;
-    }
+    if (mfeResponse) return mfeResponse;
 
     if (!isPublicRoute(req) && !isApiRoute(req)) {
       await auth.protect();
@@ -68,10 +64,6 @@ const clerkHandler = clerkMiddleware(
     for (const [key, value] of headersResponse.headers.entries()) {
       response.headers.set(key, value);
     }
-
-    const tTotal = Date.now() - t0;
-    console.log(`[proxy] ${req.nextUrl.pathname} mfe:${tMfe}ms handler:${tTotal}ms`);
-    response.headers.set("x-proxy-timing", `mfe=${tMfe}ms;handler=${tTotal}ms`);
     return response;
   },
   {
@@ -84,21 +76,6 @@ const clerkHandler = clerkMiddleware(
     },
   },
 );
-
-// Wrap clerkMiddleware to measure its total overhead (including its own init)
-export default async function middleware(
-  req: NextRequest,
-  event: Parameters<typeof clerkHandler>[1],
-) {
-  const t0 = Date.now();
-  const result = await clerkHandler(req, event);
-  const tClerk = Date.now() - t0;
-  console.log(`[proxy] clerk-total:${tClerk}ms ${req.nextUrl.pathname}`);
-  if (result) {
-    result.headers.set("x-proxy-clerk-total", `${tClerk}ms`);
-  }
-  return result;
-}
 
 export const config = {
   matcher: [
