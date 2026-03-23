@@ -2,10 +2,8 @@ import {
   captureConsoleIntegration,
   captureRouterTransitionStart,
   extraErrorDataIntegration,
-  feedbackIntegration,
   httpClientIntegration,
   init as initSentry,
-  replayIntegration,
   spotlightBrowserIntegration,
 } from "@sentry/nextjs";
 
@@ -36,10 +34,7 @@ initSentry({
     env.NEXT_PUBLIC_VERCEL_ENV === "production" ? 0.1 : 1.0,
   replaysOnErrorSampleRate: 1.0,
   integrations: [
-    replayIntegration({
-      maskAllText: true,
-      blockAllMedia: true,
-    }),
+    // replayIntegration lazy-loaded below
     httpClientIntegration({
       failedRequestStatusCodes: [[400, 599]],
     }),
@@ -49,11 +44,7 @@ initSentry({
     extraErrorDataIntegration({
       depth: 3,
     }),
-    feedbackIntegration({
-      colorScheme: "system",
-      showBranding: false,
-      enableScreenshot: true,
-    }),
+    // feedbackIntegration lazy-loaded below
     ...(env.NEXT_PUBLIC_VERCEL_ENV === "development"
       ? [spotlightBrowserIntegration()]
       : []),
@@ -61,3 +52,34 @@ initSentry({
 });
 
 export const onRouterTransitionStart = captureRouterTransitionStart;
+
+// Lazy-load replay and feedback after page is fully interactive
+// This defers ~418KB of Sentry integrations from the initial bundle
+if (typeof window !== "undefined") {
+  const loadLazySentryIntegrations = async () => {
+    const Sentry = await import("@sentry/nextjs");
+
+    Sentry.addIntegration(
+      Sentry.replayIntegration({
+        maskAllText: true,
+        blockAllMedia: true,
+      })
+    );
+
+    Sentry.addIntegration(
+      Sentry.feedbackIntegration({
+        colorScheme: "system",
+        showBranding: false,
+        enableScreenshot: true,
+      })
+    );
+  };
+
+  if (document.readyState === "complete") {
+    void loadLazySentryIntegrations();
+  } else {
+    window.addEventListener("load", () => void loadLazySentryIntegrations(), {
+      once: true,
+    });
+  }
+}
