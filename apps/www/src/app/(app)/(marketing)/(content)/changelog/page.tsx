@@ -42,7 +42,6 @@ export const metadata: Metadata = {
   },
 };
 
-
 export default function ChangelogPage() {
   return (
     <Feed queries={[changelog.entriesQuery]}>

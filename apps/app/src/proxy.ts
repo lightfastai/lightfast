@@ -1,5 +1,4 @@
 import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
-import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
 import {
   composeCspOptions,
   createAnalyticsCspDirectives,
@@ -9,6 +8,7 @@ import {
   createSentryCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
+import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -18,8 +18,8 @@ const securityHeaders = securityMiddleware(
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
     createKnockCspDirectives(),
-    createSentryCspDirectives(),
-  ),
+    createSentryCspDirectives()
+  )
 );
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
@@ -53,9 +53,11 @@ export default clerkMiddleware(
       request: req,
       flagValues: {},
     });
-    if (mfeResponse) return mfeResponse;
+    if (mfeResponse) {
+      return mfeResponse;
+    }
 
-    if (!isPublicRoute(req) && !isApiRoute(req)) {
+    if (!(isPublicRoute(req) || isApiRoute(req))) {
       await auth.protect();
     }
 
@@ -74,7 +76,7 @@ export default clerkMiddleware(
     organizationSyncOptions: {
       organizationPatterns: ["/:slug", "/:slug/(.*)"],
     },
-  },
+  }
 );
 
 export const config = {

@@ -16,7 +16,7 @@ const integrations = [
 export function IntegrationShowcase() {
   return (
     <div className="w-full">
-      <span className="mb-4 inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-xs">
+      <span className="mb-4 inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-sm">
         Integrations
       </span>
       {/* Logo Garden Grid */}

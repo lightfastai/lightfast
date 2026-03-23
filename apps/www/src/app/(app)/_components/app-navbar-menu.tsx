@@ -62,7 +62,9 @@ export function AppNavbarMenu() {
             size="sm"
             variant="none"
           >
-            <MicrofrontendLink href={item.href} prefetch={true}>{item.title}</MicrofrontendLink>
+            <MicrofrontendLink href={item.href} prefetch={true}>
+              {item.title}
+            </MicrofrontendLink>
           </Button>
         ) : (
           <Button
@@ -81,7 +83,9 @@ export function AppNavbarMenu() {
 
       {/* Sign In Link */}
       <Button asChild className={navLinkClass} size="sm" variant="none">
-        <MicrofrontendLink href="/sign-in" prefetch={true}>Sign in</MicrofrontendLink>
+        <MicrofrontendLink href="/sign-in" prefetch={true}>
+          Sign in
+        </MicrofrontendLink>
       </Button>
     </div>
   );

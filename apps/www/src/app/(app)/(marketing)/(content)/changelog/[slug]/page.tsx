@@ -24,7 +24,6 @@ interface ChangelogPageProps {
   params: Promise<{ slug: string }>;
 }
 
-
 export async function generateStaticParams(): Promise<{ slug: string }[]> {
   try {
     const entries = await changelog.getEntries();

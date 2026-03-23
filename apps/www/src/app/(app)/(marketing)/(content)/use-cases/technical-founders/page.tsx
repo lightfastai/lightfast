@@ -7,8 +7,7 @@ import { UseCaseGrid } from "~/app/(app)/_components/use-case-grid";
 import { technicalFoundersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title:
-    "Lightfast for Technical Founders – Superintelligence for Your Stack",
+  title: "Lightfast for Technical Founders – Superintelligence for Your Stack",
   description:
     "Ship the operating layer between your agents and tools. One system for observing, remembering, and acting across your entire engineering stack.",
   openGraph: {
@@ -46,7 +45,11 @@ export default function TechnicalFoundersPage() {
             {/* CTA - centered */}
             <div className="mt-8 flex flex-col justify-center gap-8 sm:flex-row">
               <Button asChild className="rounded-full" size="lg">
-                <MicrofrontendLink className="group" href="/early-access" prefetch={true}>
+                <MicrofrontendLink
+                  className="group"
+                  href="/early-access"
+                  prefetch={true}
+                >
                   <span>Join Early Access</span>
                 </MicrofrontendLink>
               </Button>
