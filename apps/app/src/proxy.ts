@@ -9,7 +9,7 @@ import {
   createSentryCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
-import type { NextFetchEvent, NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 const securityHeaders = securityMiddleware(
@@ -22,9 +22,9 @@ const securityHeaders = securityMiddleware(
   ),
 );
 
-// Fully public — bypass clerkMiddleware entirely (no JWKS fetch, no auth() call)
-// Clerk UI components handle auth state client-side for these routes.
-const isPublicBypassRoute = createRouteMatcher([
+// Public routes — clerkMiddleware still runs (so ClerkProvider works server-side),
+// but auth() / auth.protect() are NOT called, so no JWKS fetch for unauthenticated visitors.
+const isPublicRoute = createRouteMatcher([
   "/sign-in(.*)",
   "/sign-up(.*)",
   "/early-access(.*)",
@@ -36,18 +36,7 @@ const isPublicBypassRoute = createRouteMatcher([
   "/manifest.json",
 ]);
 
-const isTeamCreationRoute = createRouteMatcher([
-  "/account(.*)",
-  "/provider/vercel/connected",
-  "/provider/github/connected",
-  "/provider/sentry/connected",
-  "/api/organizations(.*)",
-]);
-
-const isUserScopedRoute = createRouteMatcher(["/api/trpc/user(.*)"]);
-const isOrgScopedRoute = createRouteMatcher(["/api/trpc/org(.*)"]);
-const isOrgPageRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
-
+// API routes that handle their own auth (withDualAuth at route level)
 const isApiRoute = createRouteMatcher([
   "/v1/(.*)",
   "/search(.*)",
@@ -58,21 +47,15 @@ const isApiRoute = createRouteMatcher([
   "/api/events/(.*)",
 ]);
 
-// Only runs for protected routes — public routes bypass this entirely
-const clerkHandler = clerkMiddleware(
+export default clerkMiddleware(
   async (auth, req: NextRequest) => {
-    if (isTeamCreationRoute(req)) {
-      if (!(await auth({ treatPendingAsSignedOut: false })).userId)
-        await auth.protect();
-    } else if (isUserScopedRoute(req)) {
-      // let tRPC handle auth
-    } else if (isApiRoute(req)) {
-      // allow — withDualAuth at route level
-    } else if (isOrgScopedRoute(req)) {
-      await auth.protect();
-    } else if (isOrgPageRoute(req)) {
-      await auth.protect();
-    } else {
+    const mfeResponse = await runMicrofrontendsMiddleware({
+      request: req,
+      flagValues: {},
+    });
+    if (mfeResponse) return mfeResponse;
+
+    if (!isPublicRoute(req) && !isApiRoute(req)) {
       await auth.protect();
     }
 
@@ -93,29 +76,6 @@ const clerkHandler = clerkMiddleware(
     },
   },
 );
-
-export default async function middleware(
-  req: NextRequest,
-  event: NextFetchEvent,
-) {
-  const mfeResponse = await runMicrofrontendsMiddleware({
-    request: req,
-    flagValues: {},
-  });
-  if (mfeResponse) return mfeResponse;
-
-  // Public routes bypass Clerk entirely — instant response, no JWKS fetch
-  if (isPublicBypassRoute(req)) {
-    const headersResponse = await securityHeaders();
-    const response = NextResponse.next();
-    for (const [key, value] of headersResponse.headers.entries()) {
-      response.headers.set(key, value);
-    }
-    return response;
-  }
-
-  return clerkHandler(req, event);
-}
 
 export const config = {
   matcher: [
