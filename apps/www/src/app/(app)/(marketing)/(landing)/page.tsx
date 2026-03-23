@@ -60,10 +60,13 @@ const benefits = [
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
-  title: "The Operating Layer for Agents and Apps",
+  title: "Superintelligence Layer for Founders",
   description:
-    "Lightfast is the operating layer between your agents and apps. Observe what's happening across your tools, remember what happened, and give agents and people a single system to reason and act through.",
+    "Lightfast is the superintelligence layer for founders. Built on a unified operating layer that connects your tools, unifies your agents, and orchestrates your entire operation.",
   keywords: [
+    "superintelligence",
+    "AI for founders",
+    "founder tools",
     "operating infrastructure",
     "agent infrastructure",
     "event-driven architecture",
@@ -93,9 +96,9 @@ export const metadata: Metadata = {
     canonical: "https://lightfast.ai",
   },
   openGraph: {
-    title: "Lightfast – The Operating Layer for Agents and Apps",
+    title: "Lightfast – Superintelligence Layer for Founders",
     description:
-      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+      "The superintelligence layer for founders. Built on a unified operating layer — your tools, your agents, your entire operation orchestrated in one place.",
     url: "https://lightfast.ai",
     siteName: "Lightfast",
     type: "website",
@@ -103,9 +106,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Lightfast – The Operating Layer for Agents and Apps",
+    title: "Lightfast – Superintelligence Layer for Founders",
     description:
-      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+      "The superintelligence layer for founders. Built on a unified operating layer — your tools, your agents, your entire operation orchestrated in one place.",
     site: "@lightfastai",
     creator: "@lightfastai",
   },
@@ -129,7 +132,7 @@ export default function HomePage() {
       "https://www.linkedin.com/company/lightfastai",
     ],
     description:
-      "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+      "Lightfast is the superintelligence layer for founders. Built on a unified operating layer that connects tools, unifies agents, and orchestrates entire operations through one system.",
   };
 
   // Build website entity
@@ -139,7 +142,7 @@ export default function HomePage() {
     url: "https://lightfast.ai",
     name: "Lightfast",
     description:
-      "The operating layer for agents and apps — observe, remember, and act across every tool",
+      "Superintelligence layer for founders — built on a unified operating layer to observe, remember, and act across every tool.",
     publisher: {
       "@id": "https://lightfast.ai/#organization",
     },
@@ -159,7 +162,7 @@ export default function HomePage() {
       url: "https://lightfast.ai/early-access",
     },
     description:
-      "The operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack through a single system.",
+      "The superintelligence layer for founders. Built on a unified operating layer — observe events, build memory, and orchestrate action across your entire tool stack through a single system.",
     featureList: [
       "Real-time event ingestion from connected tools",
       "Semantic search with cited sources",
@@ -267,12 +270,13 @@ export default function HomePage() {
             <div className="flex w-full max-w-sm flex-col justify-center md:max-w-lg lg:max-w-sm">
               <Icons.logoShort className="mb-4 hidden h-5 w-5 text-muted-foreground md:block" />
               <h1 className="mb-4 font-medium font-pp text-4xl md:text-3xl lg:text-3xl">
-                <span className="text-muted-foreground">The</span>{" "}
-                <span className="text-primary">operating layer</span>{" "}
-                <span className="text-muted-foreground">
-                  for your agents and apps.
-                </span>
+                <span className="text-primary">Superintelligence</span>{" "}
+                <span className="text-muted-foreground">layer for founders.</span>
               </h1>
+              <p className="mb-4 max-w-sm text-sm text-muted-foreground leading-relaxed">
+                Built on a unified operating layer — your tools, your agents, your entire
+                operation orchestrated in one place.
+              </p>
               <div>
                 <Button asChild size="sm">
                   <MicrofrontendLink href="/early-access" prefetch={true}>

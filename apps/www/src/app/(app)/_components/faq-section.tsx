@@ -13,7 +13,7 @@ export const faqs = [
   {
     question: "What is Lightfast?",
     answer:
-      "Lightfast is the operating layer between your agents and apps. It observes what's happening across your tools, remembers what happened, and gives agents and people a single system to reason and act through — without knowing which tools exist or how they work.",
+      "Lightfast is the superintelligence layer for founders. Built on a unified operating layer, it observes what's happening across your tools, remembers what happened, and gives agents and people a single system to reason and act through — without knowing which tools exist or how they work.",
   },
   {
     question: "What does 'operating layer' mean?",
@@ -38,7 +38,7 @@ export const faqs = [
   {
     question: "What's coming after events?",
     answer:
-      "Next is Memory — semantic search and cited answers across your entire tool stack. Everything from the event system gets indexed, connected, and made searchable by meaning. After that, the full Operating Layer: agents express what they want in natural language, and Lightfast resolves it to the right tool, enforces your rules, and tracks everything.",
+      "Next is Memory — semantic search and cited answers across your entire tool stack. Everything from the event system gets indexed, connected, and made searchable by meaning. After that, full orchestration: agents express what they want in natural language, and Lightfast resolves it to the right tool, enforces your rules, and tracks everything.",
   },
   {
     question: "Is our data secure and private?",
@@ -74,7 +74,7 @@ export function FAQSection() {
           <div className="mb-8 flex flex-col border-border border-b pb-8 lg:flex-row lg:items-start lg:justify-between">
             <div className="space-y-1">
               <p className="text-base text-muted-foreground leading-relaxed md:text-lg">
-                Learn how the operating layer works.
+                Learn how Lightfast works.
               </p>
             </div>
 

@@ -7,7 +7,7 @@ import { UseCaseGrid } from "~/app/(app)/_components/use-case-grid";
 import { engineeringLeadersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Engineering Leaders – Observe Your Entire Team",
+  title: "Lightfast for Engineering Leaders – Superintelligence for Your Team",
   description:
     "See what's happening across your engineering org in real time. Events from every tool, surfaced and searchable — so your team operates as one.",
   openGraph: {

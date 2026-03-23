@@ -8,7 +8,7 @@ import { technicalFoundersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
   title:
-    "Lightfast for Technical Founders – The Operating Layer for Your Stack",
+    "Lightfast for Technical Founders – Superintelligence for Your Stack",
   description:
     "Ship the operating layer between your agents and tools. One system for observing, remembering, and acting across your entire engineering stack.",
   openGraph: {

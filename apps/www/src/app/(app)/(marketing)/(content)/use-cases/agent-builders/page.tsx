@@ -7,7 +7,7 @@ import { UseCaseGrid } from "~/app/(app)/_components/use-case-grid";
 import { agentBuildersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Agent Builders – Build on the Operating Layer",
+  title: "Lightfast for Agent Builders – Build the Superintelligence Layer",
   description:
     "Give your agents a single system to observe, reason, and act across every tool. REST API, MCP tools, and webhooks — integrate in minutes.",
   openGraph: {

@@ -7,7 +7,7 @@ import { UseCaseGrid } from "~/app/(app)/_components/use-case-grid";
 import { platformEngineersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
-  title: "Lightfast for Platform Engineers – One Layer, Every Tool",
+  title: "Lightfast for Platform Engineers – Superintelligence for Your Platform",
   description:
     "Connect your infrastructure tools through a single operating layer. Ingest events from GitHub, Vercel, Sentry, Linear, and more — with complete tenant isolation.",
   openGraph: {
