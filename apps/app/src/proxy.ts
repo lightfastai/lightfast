@@ -74,7 +74,14 @@ export default clerkMiddleware(
     if (mfeResponse) return mfeResponse;
 
     const skipAuth = isPublicRoute(req) && !isAuthRoute(req);
-    const { userId, orgId, orgSlug } = skipAuth
+    // For auth pages (sign-in, sign-up): skip JWKS fetch when no session cookie exists.
+    // Unauthenticated users have no JWT to validate — auth() is only needed to detect
+    // authenticated users who should be redirected away. Without __session there is no
+    // active session, so we short-circuit and avoid the ~1.5-2s Clerk FAPI round-trip
+    // on every cold function instance (which is every request at low sign-in traffic).
+    const skipAuthNoSession =
+      isAuthRoute(req) && !req.cookies.has("__session");
+    const { userId, orgId, orgSlug } = skipAuth || skipAuthNoSession
       ? { userId: null, orgId: null, orgSlug: null }
       : await auth({ treatPendingAsSignedOut: false });
     const isPending = Boolean(userId && !orgId);
