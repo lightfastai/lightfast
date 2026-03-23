@@ -1,12 +1,76 @@
-// perf/sign-in-isolation — STEP 0: bare root layout (no fonts, no analytics, no MFE)
-import type { ReactNode } from "react";
+// perf/sign-in-isolation — STEP 1: restore root layout (fonts, MFE providers, analytics)
+import type { Metadata, Viewport } from "next";
+
+import "~/styles/globals.css";
+
+import { fonts as geistFonts } from "@repo/ui/lib/fonts";
+import { cn } from "@repo/ui/lib/utils";
+import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import { createMetadata } from "@vendor/seo/metadata";
+import {
+  PrefetchCrossZoneLinks,
+  PrefetchCrossZoneLinksProvider,
+} from "@vercel/microfrontends/next/client";
+import { ppNeueMontreal } from "~/lib/fonts";
+
+export const metadata: Metadata = createMetadata({
+  title: "Console",
+  description:
+    "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
+  metadataBase: new URL("https://lightfast.ai"),
+  authors: [{ name: "Lightfast", url: "https://lightfast.ai" }],
+  creator: "Lightfast",
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://lightfast.ai",
+    title: "Console - AI Workflow Orchestration",
+    description:
+      "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
+    siteName: "Lightfast",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Console - AI Workflow Orchestration",
+    description:
+      "Build powerful AI workflow orchestration with natural language. Connect AI to any tool via MCP and automate complex workflows without code.",
+  },
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon-16x16.png",
+    apple: "/apple-touch-icon.png",
+    other: [
+      { rel: "icon", url: "/favicon-32x32.png", sizes: "32x32" },
+      { rel: "icon", url: "/android-chrome-192x192.png", sizes: "192x192" },
+      { rel: "icon", url: "/android-chrome-512x512.png", sizes: "512x512" },
+    ],
+  },
+});
+
+export const viewport: Viewport = {
+  themeColor: "#09090b",
+};
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: ReactNode }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html
+      className={cn(geistFonts, ppNeueMontreal.variable)}
+      lang="en"
+      suppressHydrationWarning
+    >
+      <head />
+      <body className="dark min-h-screen bg-background antialiased">
+        <PrefetchCrossZoneLinksProvider>
+          {children}
+          <VercelAnalytics />
+          <SpeedInsights />
+          <PrefetchCrossZoneLinks />
+        </PrefetchCrossZoneLinksProvider>
+      </body>
     </html>
   );
 }
