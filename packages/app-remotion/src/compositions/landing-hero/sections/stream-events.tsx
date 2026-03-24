@@ -1,6 +1,6 @@
 import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
+import { Easing, interpolate, useCurrentFrame } from "@vendor/remotion";
 import type React from "react";
-import { Easing, interpolate, useCurrentFrame } from "remotion";
 import { IsometricCard } from "../shared/isometric-card";
 import { ROW_STAGGER, SECTION_TIMING } from "../shared/timing";
 
@@ -12,7 +12,11 @@ interface FeedEvent {
 }
 
 const FEED_EVENTS: FeedEvent[] = [
-  { source: "GitHub", label: "PR Opened", detail: "#842 search index batching" },
+  {
+    source: "GitHub",
+    label: "PR Opened",
+    detail: "#842 search index batching",
+  },
   {
     source: "Sentry",
     label: "Issue Created",
@@ -22,7 +26,11 @@ const FEED_EVENTS: FeedEvent[] = [
       "at SearchWorker.process (worker.ts:142)",
     ],
   },
-  { source: "Linear", label: "Issue Updated", detail: "MEM-302 ranking threshold" },
+  {
+    source: "Linear",
+    label: "Issue Updated",
+    detail: "MEM-302 ranking threshold",
+  },
   { source: "Vercel", label: "Deployment Ready", detail: "api@prod-us-east-1" },
   { source: "GitHub", label: "PR Merged", detail: "#839 edge cache warmup" },
   {
@@ -60,26 +68,18 @@ const FEED_HEIGHT = 512;
 const FEED_PADDING_X = 14;
 const ROW_GAP = 8;
 
-// Natural height estimates for scroll-position math (content drives actual size).
-// Compact: py-3(24) + source-line(20) + gap-2(8) + label-line(20) + border(2) = 74
-// Extra section adds: gap-2(8) + mt-1(4) + border-t(1) + pt-2(8) + lines
+// Fixed row heights — expanded is exactly 2× compact for predictable layout
 const COMPACT_ROW_HEIGHT = 74;
-const EXTRA_LINE_HEIGHT = 20; // text-xs leading-tight(16) + gap-1(4)
-const EXTRA_SECTION_OVERHEAD = 21; // gap(8) + margin(4) + border(1) + padding(8)
-const FEED_PADDING_Y = 0;
+const EXPANDED_ROW_HEIGHT = COMPACT_ROW_HEIGHT * 2;
 // 6 events × 50 frames = 300, divides evenly into GIF loop for seamless restart
 const FRAMES_PER_EVENT = 50;
 const STEP_MOVE_FRAMES = 10;
 const LOOP_FRAMES = FEED_EVENTS.length * FRAMES_PER_EVENT;
 const N = FEED_EVENTS.length;
 
-// Per-event heights and pitches
+// Per-event heights
 const eventHeights = FEED_EVENTS.map((e) =>
-  e.extra
-    ? COMPACT_ROW_HEIGHT +
-      EXTRA_SECTION_OVERHEAD +
-      e.extra.length * EXTRA_LINE_HEIGHT
-    : COMPACT_ROW_HEIGHT
+  e.extra ? EXPANDED_ROW_HEIGHT : COMPACT_ROW_HEIGHT
 );
 
 // Module-level easing — avoids creating a new closure on every frame.
@@ -92,7 +92,9 @@ const STEP_EASING = Easing.inOut((t: number) => Easing.cubic(t));
  * At step s, the top item is event index (s % N). Items fill downward
  * until the next would overflow the container.
  */
-const MAX_CONTENT_HEIGHT = FEED_HEIGHT - FEED_PADDING_Y * 2; // 512 - 16 = 496
+const MAX_CONTENT_HEIGHT = FEED_HEIGHT;
+// Cap visible items so exactly 1 enters and 1 exits per step
+const MAX_VISIBLE = 4;
 
 interface VisibleWindow {
   /** Event indices visible in this window, ordered top-to-bottom */
@@ -109,7 +111,7 @@ function computeVisibleWindow(newestEventIndex: number): VisibleWindow {
   let used = 0;
 
   // Iterate backwards: newest event at top, older events fill downward
-  for (let offset = 0; offset < N; offset++) {
+  for (let offset = 0; offset < N && indices.length < MAX_VISIBLE; offset++) {
     const idx = (((newestEventIndex - offset) % N) + N) % N;
     const h = eventHeights[idx] ?? 0;
 
@@ -144,6 +146,11 @@ export const StreamEvents: React.FC = () => {
   const currWindow = WINDOWS[stepIndex % N]!;
   const nextWindow = WINDOWS[(stepIndex + 1) % N]!;
 
+  // ── Bottom-anchor offsets: content sticks to the bottom with a small inset ──
+  const bottomGap = FEED_PADDING_X; // match horizontal spacing to grid lines
+  const currAnchor = FEED_HEIGHT - currWindow.totalHeight - bottomGap;
+  const nextAnchor = FEED_HEIGHT - nextWindow.totalHeight - bottomGap;
+
   // ── Build render list: bottom-to-top cascade ──
   // Wave order: bottom item exits first, then items above cascade down, new item enters last.
   const renderItems: Array<{
@@ -167,13 +174,13 @@ export const StreamEvents: React.FC = () => {
     renderItems.push({
       eventIndex: idx,
       event: FEED_EVENTS[idx]!,
-      fromY: FEED_PADDING_Y + (currWindow.offsets[ci] ?? 0),
+      fromY: currAnchor + (currWindow.offsets[ci] ?? 0),
       toY: null,
       waveIndex: waveIdx++,
     });
   }
 
-  // 2. Staying items: bottom-to-top in currWindow (shift down to their nextWindow position)
+  // 2. Staying items: bottom-to-top in currWindow (shift to their nextWindow position)
   for (let ci = currWindow.indices.length - 1; ci >= 0; ci--) {
     const idx = currWindow.indices[ci]!;
     if (!nextIndexSet.has(idx)) {
@@ -183,8 +190,8 @@ export const StreamEvents: React.FC = () => {
     renderItems.push({
       eventIndex: idx,
       event: FEED_EVENTS[idx]!,
-      fromY: FEED_PADDING_Y + (currWindow.offsets[ci] ?? 0),
-      toY: FEED_PADDING_Y + (nextWindow.offsets[ni] ?? 0),
+      fromY: currAnchor + (currWindow.offsets[ci] ?? 0),
+      toY: nextAnchor + (nextWindow.offsets[ni] ?? 0),
       waveIndex: waveIdx++,
     });
   }
@@ -199,7 +206,7 @@ export const StreamEvents: React.FC = () => {
       eventIndex: idx,
       event: FEED_EVENTS[idx]!,
       fromY: null,
-      toY: FEED_PADDING_Y + (nextWindow.offsets[ni] ?? 0),
+      toY: nextAnchor + (nextWindow.offsets[ni] ?? 0),
       waveIndex: waveIdx++,
     });
   }
@@ -264,6 +271,7 @@ export const StreamEvents: React.FC = () => {
                 left: FEED_PADDING_X,
                 top: y,
                 width: FEED_WIDTH - FEED_PADDING_X * 2,
+                height: eventHeights[eventIndex],
               }}
             >
               <div className="flex items-center gap-2">
