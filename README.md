@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://lightfast.ai/images/github-banner.png" alt="Lightfast" width="100%" />
+</p>
+
 # Lightfast
 
 [![License: FSL-1.1-ALv2](https://img.shields.io/badge/License-FSL--1.1--ALv2-orange.svg)](LICENSE)
