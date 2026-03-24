@@ -1382,18 +1382,6 @@ importers:
 
   packages/app-remotion:
     dependencies:
-      '@remotion/bundler':
-        specifier: ^4.0.434
-        version: 4.0.434(@swc/helpers@0.5.15)(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@remotion/cli':
-        specifier: ^4.0.434
-        version: 4.0.434(@swc/helpers@0.5.15)(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@remotion/fonts':
-        specifier: ^4.0.434
-        version: 4.0.434(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      '@remotion/renderer':
-        specifier: ^4.0.434
-        version: 4.0.434(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@vendor/remotion':
         specifier: workspace:*
         version: link:../../vendor/remotion
@@ -1406,13 +1394,13 @@ importers:
       react-dom:
         specifier: ^19.2.4
         version: 19.2.4(react@19.2.4)
-      remotion:
-        specifier: ^4.0.434
-        version: 4.0.434(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       tailwind-merge:
         specifier: 'catalog:'
         version: 3.5.0
     devDependencies:
+      '@remotion/cli':
+        specifier: ^4.0.434
+        version: 4.0.434(@swc/helpers@0.5.15)(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
