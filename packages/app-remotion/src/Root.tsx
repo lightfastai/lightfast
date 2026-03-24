@@ -2,6 +2,14 @@
 
 import { Composition, Still } from "@vendor/remotion";
 import type React from "react";
+import { BlogFeaturedBase } from "./compositions/blog-featured-base";
+import { BlogFeaturedConcentric } from "./compositions/blog-featured-concentric";
+import { BlogFeaturedCross } from "./compositions/blog-featured-cross";
+import { BlogFeaturedDuo } from "./compositions/blog-featured-duo";
+import { BlogFeaturedGhost } from "./compositions/blog-featured-ghost";
+import { BlogFeaturedLissajous } from "./compositions/blog-featured-lissajous";
+import { BlogFeaturedRule } from "./compositions/blog-featured-rule";
+import { BlogFeaturedTrail } from "./compositions/blog-featured-trail";
 import { GitHubBanner } from "./compositions/github-banner";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { Logo } from "./compositions/logo";
@@ -10,6 +18,14 @@ import { MANIFEST } from "./manifest";
 
 // Component registry — maps manifest component names to actual React components
 const COMPONENTS: Record<string, React.FC<Record<string, unknown>>> = {
+  BlogFeaturedBase,
+  BlogFeaturedConcentric,
+  BlogFeaturedCross,
+  BlogFeaturedDuo,
+  BlogFeaturedGhost,
+  BlogFeaturedLissajous,
+  BlogFeaturedRule,
+  BlogFeaturedTrail,
   LandingHero,
   Logo,
   TwitterBanner,

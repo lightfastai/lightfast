@@ -32,10 +32,10 @@ export const LISSAJOUS_PATTERNS = [
 export function lissajousPath(
   size: number,
   padding: number,
-  a = LOGO_CURVE.a,
-  b = LOGO_CURVE.b,
-  delta = LOGO_CURVE.delta,
-  steps = 512,
+  a: number = LOGO_CURVE.a,
+  b: number = LOGO_CURVE.b,
+  delta: number = LOGO_CURVE.delta,
+  steps: number = 512,
 ): string {
   const center = size / 2;
   const radius = size * (0.5 - padding);

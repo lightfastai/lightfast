@@ -75,6 +75,177 @@ export interface CompositionManifest {
 
 export const MANIFEST: CompositionManifest = {
   compositions: {
+    // ── Blog Featured Images ───────────────────────────────────────
+    "blog-featured-concentric": {
+      type: "still",
+      component: "BlogFeaturedConcentric",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-concentric.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-concentric.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "blog-featured-lissajous": {
+      type: "still",
+      component: "BlogFeaturedLissajous",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-lissajous.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-lissajous.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "blog-featured-base": {
+      type: "still",
+      component: "BlogFeaturedBase",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-base.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-base.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "blog-featured-rule": {
+      type: "still",
+      component: "BlogFeaturedRule",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-rule.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-rule.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "blog-featured-trail": {
+      type: "still",
+      component: "BlogFeaturedTrail",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-trail.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-trail.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "blog-featured-ghost": {
+      type: "still",
+      component: "BlogFeaturedGhost",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-ghost.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-ghost.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "blog-featured-cross": {
+      type: "still",
+      component: "BlogFeaturedCross",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-cross.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-cross.webp",
+          scale: 2,
+        },
+      ],
+    },
+
+    "blog-featured-duo": {
+      type: "still",
+      component: "BlogFeaturedDuo",
+      width: 1200,
+      height: 630,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-duo.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "packages/app-remotion/out/featured",
+          filename: "blog-featured-duo.webp",
+          scale: 2,
+        },
+      ],
+    },
+
     // ── Video ──────────────────────────────────────────────────────
     "landing-hero": {
       type: "video",
@@ -82,7 +253,7 @@ export const MANIFEST: CompositionManifest = {
       width: 1920,
       height: 1280,
       fps: 30,
-      durationInFrames: 301,
+      durationInFrames: 300,
       renderProfile: {
         codec: "vp9",
         imageFormat: "png",
