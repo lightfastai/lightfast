@@ -162,7 +162,8 @@ async function main() {
   }
 
   // ── Post-processing ────────────────────────────────────────────
-  for (const pp of MANIFEST.postProcess) {
+  // Only runs when stills were rendered (post-process sources are always stills)
+  if ((onlyFlag === "all" || onlyFlag === "stills") && !idFlag) for (const pp of MANIFEST.postProcess) {
     if (pp.type === "ico") {
       console.log(`Building ${pp.filename}...`);
       const pngBuffers = await Promise.all(
