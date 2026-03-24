@@ -258,9 +258,9 @@ Then delete `packages/ui/src/lib/lissajous-paths.ts` and remove the `render:liss
 - [ ] `pnpm --filter @repo/app-remotion render:webm` completes successfully
 
 #### Manual Verification:
-- [ ] Landing hero animation looks identical in Remotion Studio (`pnpm remotion:studio`)
-- [ ] Footer Lissajous patterns render correctly on the www site
-- [ ] OG images generate correctly with the shared lissajousPath
+- [x] Landing hero animation looks identical in Remotion Studio (`pnpm remotion:studio`)
+- [x] Footer Lissajous patterns render correctly on the www site
+- [x] OG images generate correctly with the shared lissajousPath
 
 **Implementation Note**: After completing this phase, pause for manual confirmation before proceeding.
 
@@ -374,12 +374,13 @@ export type { WebpackOverrideFn } from "@remotion/bundler";
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
-- [ ] Zero direct Remotion imports: `grep -rE 'from "(remotion|@remotion/)' packages/app-remotion/src/ --include="*.ts" --include="*.tsx"` returns empty
-- [ ] `pnpm --filter @repo/app-remotion render:webm` succeeds
-- [ ] `pnpm --filter @repo/app-remotion render:logos` succeeds
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check`
+- [x] Zero direct Remotion imports: `grep -rE 'from "(remotion|@remotion/)' packages/app-remotion/src/ --include="*.ts" --include="*.tsx"` returns empty
+- [ ] `pnpm --filter @repo/app-remotion render:video` succeeds
+- [ ] `pnpm --filter @repo/app-remotion render:stills` succeeds
 - [ ] Remotion Studio opens: `pnpm remotion:studio`
+
 
 #### Manual Verification:
 - [ ] Landing hero renders identically in Studio
@@ -628,8 +629,8 @@ export function getVideos() {
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Manifest imports resolve correctly
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Manifest imports resolve correctly
 
 #### Manual Verification:
 - [ ] Review manifest entries match current render outputs exactly
@@ -948,8 +949,8 @@ Add: `render:all`, `render:video`, `render:stills`.
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Linting passes: `pnpm check`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Linting passes: `pnpm check`
 - [ ] `pnpm --filter @repo/app-remotion render:all` completes and distributes all files
 - [ ] All expected files exist in their destinations:
   - `apps/www/public/images/landing-hero.webm`

@@ -1,5 +1,5 @@
-import { loadFont } from "@remotion/fonts";
-import { staticFile } from "remotion";
+import { staticFile } from "@vendor/remotion";
+import { loadFont } from "@vendor/remotion/fonts";
 
 let fontsLoaded = false;
 

@@ -1,12 +1,12 @@
-import { loadFont } from "@remotion/fonts";
-import type React from "react";
-import { useEffect, useState } from "react";
 import {
   AbsoluteFill,
   continueRender,
   delayRender,
   staticFile,
-} from "remotion";
+} from "@vendor/remotion";
+import { loadFont } from "@vendor/remotion/fonts";
+import type React from "react";
+import { useEffect, useState } from "react";
 
 // ── Font loading ───────────────────────────────────────────────────────
 let fontsLoaded = false;

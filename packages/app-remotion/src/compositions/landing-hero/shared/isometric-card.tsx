@@ -1,5 +1,10 @@
+import {
+  interpolate,
+  spring,
+  useCurrentFrame,
+  useVideoConfig,
+} from "@vendor/remotion";
 import type React from "react";
-import { interpolate, spring, useCurrentFrame, useVideoConfig } from "remotion";
 import { MOTION_DURATION, SPRING_CONFIGS } from "./timing";
 
 interface IsometricCardProps {

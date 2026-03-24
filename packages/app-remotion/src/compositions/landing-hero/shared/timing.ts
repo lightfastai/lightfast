@@ -1,4 +1,4 @@
-import type { SpringConfig } from "remotion";
+import type { SpringConfig } from "@vendor/remotion";
 
 export const SPRING_CONFIGS = {
   SMOOTH: { damping: 200 } satisfies Partial<SpringConfig>,

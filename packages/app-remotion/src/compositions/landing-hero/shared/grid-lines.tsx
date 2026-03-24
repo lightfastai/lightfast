@@ -1,5 +1,5 @@
+import { Easing, interpolate, useCurrentFrame } from "@vendor/remotion";
 import type React from "react";
-import { Easing, interpolate, useCurrentFrame } from "remotion";
 import { BEAM_TIMING, MOTION_DURATION } from "./timing";
 
 interface GridLinesProps {

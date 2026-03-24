@@ -1,4 +1,4 @@
-import type { WebpackOverrideFn } from "@remotion/bundler";
+import type { WebpackOverrideFn } from "@vendor/remotion/bundler";
 
 export const enableCssLoaders: WebpackOverrideFn = (currentConfig) => ({
   ...currentConfig,

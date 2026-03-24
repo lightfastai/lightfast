@@ -1,6 +1,6 @@
+import { AbsoluteFill, continueRender, delayRender } from "@vendor/remotion";
 import type React from "react";
 import { useEffect, useState } from "react";
-import { AbsoluteFill, continueRender, delayRender } from "remotion";
 import { IngestedData } from "./sections/ingested-data";
 import { LogoAnimation } from "./sections/logo-animation";
 import { StreamEvents } from "./sections/stream-events";

@@ -2438,6 +2438,9 @@ importers:
       '@remotion/bundler':
         specifier: ^4.0.434
         version: 4.0.434(@swc/helpers@0.5.15)(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
+      '@remotion/fonts':
+        specifier: ^4.0.434
+        version: 4.0.434(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       '@remotion/renderer':
         specifier: ^4.0.434
         version: 4.0.434(bufferutil@4.1.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)

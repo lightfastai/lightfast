@@ -17,6 +17,10 @@
     "./bundler": {
       "types": "./dist/src/bundler.d.ts",
       "default": "./src/bundler.ts"
+    },
+    "./fonts": {
+      "types": "./dist/src/fonts.d.ts",
+      "default": "./src/fonts.ts"
     }
   },
   "scripts": {
@@ -27,6 +31,7 @@
   },
   "dependencies": {
     "@remotion/bundler": "^4.0.434",
+    "@remotion/fonts": "^4.0.434",
     "@remotion/renderer": "^4.0.434",
     "remotion": "^4.0.434"
   },

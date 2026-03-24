@@ -42,7 +42,7 @@
     "release": "changeset publish",
     "claude": "./scripts/c",
     "remotion:studio": "pnpm --filter @repo/app-remotion studio",
-    "remotion:render": "pnpm --filter @repo/app-remotion render:gif",
+    "remotion:render": "pnpm --filter @repo/app-remotion render:all",
     "db:generate": "pnpm --filter @db/app db:generate",
     "db:migrate": "pnpm --filter @db/app db:migrate",
     "knip": "knip"

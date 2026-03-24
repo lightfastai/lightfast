@@ -2,8 +2,8 @@ import {
   lissajousPoints as computeLissajousPoints,
   LOGO_CURVE,
 } from "@repo/ui/lib/brand";
+import { useCurrentFrame } from "@vendor/remotion";
 import type React from "react";
-import { useCurrentFrame } from "remotion";
 import type { Box3D, Vec2 } from "../shared/iso";
 import { createBox, facePath, project, shapeBounds } from "../shared/iso";
 

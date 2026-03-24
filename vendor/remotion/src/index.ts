@@ -1,3 +1,4 @@
+export type { SpringConfig } from "remotion";
 export {
   AbsoluteFill,
   Composition,
@@ -7,6 +8,7 @@ export {
   interpolate,
   registerRoot,
   Sequence,
+  Still,
   spring,
   staticFile,
   useCurrentFrame,

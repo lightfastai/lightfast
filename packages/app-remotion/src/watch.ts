@@ -18,15 +18,15 @@ function render() {
 
   isRendering = true;
   const start = performance.now();
-  console.log("[remotion] Rendering GIF...");
+  console.log("[remotion] Rendering video...");
 
   try {
-    execSync("npx tsx src/render.ts", {
+    execSync("npx tsx src/render.ts --only video", {
       cwd: path.resolve(__dirname, ".."),
       stdio: "inherit",
     });
     const elapsed = ((performance.now() - start) / 1000).toFixed(1);
-    console.log(`[remotion] GIF rendered in ${elapsed}s`);
+    console.log(`[remotion] Video rendered in ${elapsed}s`);
   } catch {
     console.error("[remotion] Render failed");
   } finally {

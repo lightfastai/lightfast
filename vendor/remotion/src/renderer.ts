@@ -1,1 +1,6 @@
-export { renderMedia, selectComposition } from "@remotion/renderer";
+export type { RenderMediaOptions } from "@remotion/renderer";
+export {
+  renderMedia,
+  renderStill,
+  selectComposition,
+} from "@remotion/renderer";
