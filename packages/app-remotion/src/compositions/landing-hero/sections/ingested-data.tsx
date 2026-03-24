@@ -4,51 +4,7 @@ import type React from "react";
 import { IsometricCard } from "../shared/isometric-card";
 import { BEAM_TIMING } from "../shared/timing";
 
-// ── Pre-populated items — visible before search results arrive ──
-const INITIAL_ITEMS = [
-  {
-    title: "Weekly engineering standup notes",
-    domain: "notion.so/acme/meetings",
-    timestamp: "2 days ago",
-  },
-  {
-    title: "Frontend deployment pipeline overview",
-    domain: "github.com/acme/infra",
-    timestamp: "5 days ago",
-  },
-  {
-    title: "Q4 performance review guidelines",
-    domain: "notion.so/acme/hr",
-    timestamp: "1 week ago",
-  },
-  {
-    title: "Database migration runbook",
-    domain: "github.com/acme/backend",
-    timestamp: "2 weeks ago",
-  },
-  {
-    title: "Design system component library",
-    domain: "figma.com/acme/design",
-    timestamp: "3 weeks ago",
-  },
-  {
-    title: "Incident response playbook — SRE",
-    domain: "notion.so/acme/sre",
-    timestamp: "1 month ago",
-  },
-  {
-    title: "Service mesh configuration guide",
-    domain: "github.com/acme/platform",
-    timestamp: "1 month ago",
-  },
-  {
-    title: "On-call rotation schedule Q1",
-    domain: "pagerduty.com/acme/schedules",
-    timestamp: "2 months ago",
-  },
-];
-
-// ── Search result items — cycled after search completes ──
+// ── Search result items — 8 items × 19 frames = 152, spans [typingEndFrame, 299] ──
 const RESULT_ITEMS = [
   {
     title: "Authentication service architecture decision",
@@ -76,29 +32,19 @@ const RESULT_ITEMS = [
     timestamp: "1 month ago",
   },
   {
-    title: "Design system component library",
-    domain: "figma.com/acme/design",
-    timestamp: "3 weeks ago",
-  },
-  {
-    title: "Weekly engineering standup notes",
-    domain: "notion.so/acme/meetings",
-    timestamp: "2 days ago",
-  },
-  {
-    title: "Frontend deployment pipeline overview",
-    domain: "github.com/acme/infra",
-    timestamp: "5 days ago",
-  },
-  {
-    title: "Q4 performance review guidelines",
-    domain: "notion.so/acme/hr",
+    title: "JWT refresh token rotation implementation",
+    domain: "github.com/acme/backend",
     timestamp: "1 week ago",
   },
   {
-    title: "Database migration runbook",
-    domain: "github.com/acme/backend",
+    title: "OAuth2 provider comparison notes",
+    domain: "notion.so/acme/docs",
     timestamp: "2 weeks ago",
+  },
+  {
+    title: "Session hijacking vulnerability report",
+    domain: "slack.com/acme/security",
+    timestamp: "3 weeks ago",
   },
 ];
 
@@ -115,16 +61,16 @@ const MANAGE_NAV = [
 
 const QUERY_TEXT = '"How does our authentication service work?"';
 const SIDEBAR_WIDTH = 256;
-const ROW_HEIGHT = 52;
+const ROW_HEIGHT = 62;
 
 const N = RESULT_ITEMS.length;
-// 10 items × 30 frames = 300, matches composition duration for seamless loop
-const FRAMES_PER_ITEM = 30;
+// 8 items × 19 frames = 152 — exactly spans the [typingEndFrame (148), 299] cycling window
+const FRAMES_PER_ITEM = 19;
 const LOOP_FRAMES = N * FRAMES_PER_ITEM;
-const SHIFT_DURATION = 12;
-const DROP_DELAY = 2;
-const DROP_DURATION = 14;
-const MAX_VISIBLE = 8;
+const SHIFT_DURATION = 7;
+const DROP_DELAY = 1;
+const DROP_DURATION = 9;
+const MAX_VISIBLE = 7;
 const RESULTS_HEIGHT = MAX_VISIBLE * ROW_HEIGHT;
 const CHARS_PER_FRAME = 1.2;
 
@@ -173,9 +119,10 @@ export const IngestedData: React.FC = () => {
         ? 1
         : 0;
 
-  // ── Result cycling — runs from frame 0 for seamless 300-frame loop ──
-  const showResults = frame >= typingEndFrame;
-  const loopFrame = frame % LOOP_FRAMES;
+  // ── Result cycling — starts after typing completes, frozen at loopFrame=0 before ──
+  // typingEndFrame = 148; window [148, 299] = 152 frames = exactly 1 LOOP_FRAMES cycle
+  const loopFrame =
+    frame >= typingEndFrame ? (frame - typingEndFrame) % LOOP_FRAMES : 0;
   const stepIndex = Math.floor(loopFrame / FRAMES_PER_ITEM);
   const stepFrame = loopFrame % FRAMES_PER_ITEM;
 
@@ -334,133 +281,111 @@ export const IngestedData: React.FC = () => {
               transformStyle: "preserve-3d",
             }}
           >
-            {showResults ? (
-              <>
-                {/* ── Clipped layer: shifting items ── */}
-                <div className="absolute inset-0 overflow-hidden">
-                  {Array.from({ length: MAX_VISIBLE }, (_, slot) => {
-                    const itemIdx = (((stepIndex - 1 - slot) % N) + N) % N;
-                    const item = RESULT_ITEMS[itemIdx]!;
-                    const fromY = slot * ROW_HEIGHT;
-                    const toY = (slot + 1) * ROW_HEIGHT;
-                    const y = interpolate(shiftProgress, [0, 1], [fromY, toY]);
+            {/* ── Clipped layer: shifting items ── */}
+            <div className="absolute inset-0 overflow-hidden">
+              {Array.from({ length: MAX_VISIBLE }, (_, slot) => {
+                const itemIdx = (((stepIndex - 1 - slot) % N) + N) % N;
+                const item = RESULT_ITEMS[itemIdx]!;
+                const fromY = slot * ROW_HEIGHT;
+                const toY = (slot + 1) * ROW_HEIGHT;
+                const y = interpolate(shiftProgress, [0, 1], [fromY, toY]);
 
-                    if (y >= RESULTS_HEIGHT) {
-                      return null;
-                    }
+                if (y >= RESULTS_HEIGHT) {
+                  return null;
+                }
 
-                    return (
-                      <div
-                        className="absolute right-0 left-0"
-                        key={itemIdx}
-                        style={{
-                          height: ROW_HEIGHT,
-                          transform: `translateY(${y}px)`,
-                        }}
-                      >
-                        <div className="flex h-full flex-col justify-center border-border border-b px-4 py-2">
-                          <RowContent item={item} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* ── 3D layer: entering item with drop effect ── */}
-                {dropProgress > 0 && (
+                return (
                   <div
                     className="absolute right-0 left-0"
+                    key={itemIdx}
                     style={{
                       height: ROW_HEIGHT,
-                      transform: "translateY(0px)",
-                      transformStyle: "preserve-3d",
-                    }}
-                  >
-                    {/* Wireframe: dashed landing zone at z=0 */}
-                    {wireframeOpacity > 0 && (
-                      <div
-                        className="pointer-events-none absolute inset-0"
-                        style={{
-                          border: "1px dashed var(--muted-foreground)",
-                          opacity: wireframeOpacity,
-                        }}
-                      />
-                    )}
-
-                    {/* Ghost: faint content preview at landing zone */}
-                    {ghostOpacity > 0 && (
-                      <div
-                        className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
-                        style={{ opacity: ghostOpacity }}
-                      >
-                        <RowContent item={enteringItem} />
-                      </div>
-                    )}
-
-                    {/* Tracer lines: guide rails from z=0 to z=rowZ */}
-                    {rowZ > 0.5 &&
-                      wireframeOpacity > 0 &&
-                      [0, 1].map((side) => (
-                        <div
-                          className="pointer-events-none absolute top-0"
-                          key={`tracer-${side}`}
-                          style={{
-                            left: side === 0 ? 0 : undefined,
-                            right: side === 1 ? 0 : undefined,
-                            width: 0,
-                            height: rowZ,
-                            borderLeft: "1px dashed var(--muted-foreground)",
-                            transform: "rotateX(90deg)",
-                            transformOrigin: "0 0",
-                            opacity: wireframeOpacity,
-                          }}
-                        />
-                      ))}
-
-                    {/* Floating wrapper at z=rowZ: drops into landing zone */}
-                    <div
-                      className="absolute inset-0"
-                      style={{
-                        transform: `translateZ(${rowZ}px)`,
-                        transformStyle: "preserve-3d",
-                      }}
-                    >
-                      <div
-                        className={cn(
-                          "absolute inset-0 flex flex-col justify-center bg-background px-4 py-2",
-                          landed && "border-border border-b"
-                        )}
-                        style={
-                          landed
-                            ? undefined
-                            : {
-                                border: `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`,
-                              }
-                        }
-                      >
-                        <RowContent item={enteringItem} />
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </>
-            ) : (
-              /* ── Initial items — before search completes ── */
-              <div className="absolute inset-0 overflow-hidden">
-                {INITIAL_ITEMS.map((item, j) => (
-                  <div
-                    className="absolute right-0 left-0"
-                    key={`initial-${j}`}
-                    style={{
-                      height: ROW_HEIGHT,
-                      transform: `translateY(${j * ROW_HEIGHT}px)`,
+                      transform: `translateY(${y}px)`,
                     }}
                   >
                     <div className="flex h-full flex-col justify-center border-border border-b px-4 py-2">
                       <RowContent item={item} />
                     </div>
                   </div>
-                ))}
+                );
+              })}
+            </div>
+
+            {/* ── 3D layer: entering item with drop effect ── */}
+            {dropProgress > 0 && (
+              <div
+                className="absolute right-0 left-0"
+                style={{
+                  height: ROW_HEIGHT,
+                  transform: "translateY(0px)",
+                  transformStyle: "preserve-3d",
+                }}
+              >
+                {/* Wireframe: dashed landing zone at z=0 */}
+                {wireframeOpacity > 0 && (
+                  <div
+                    className="pointer-events-none absolute inset-0"
+                    style={{
+                      border: "1px dashed var(--muted-foreground)",
+                      opacity: wireframeOpacity,
+                    }}
+                  />
+                )}
+
+                {/* Ghost: faint content preview at landing zone */}
+                {ghostOpacity > 0 && (
+                  <div
+                    className="pointer-events-none absolute inset-0 flex flex-col justify-center px-4 py-2"
+                    style={{ opacity: ghostOpacity }}
+                  >
+                    <RowContent item={enteringItem} />
+                  </div>
+                )}
+
+                {/* Tracer lines: guide rails from z=0 to z=rowZ */}
+                {rowZ > 0.5 &&
+                  wireframeOpacity > 0 &&
+                  [0, 1].map((side) => (
+                    <div
+                      className="pointer-events-none absolute top-0"
+                      key={`tracer-${side}`}
+                      style={{
+                        left: side === 0 ? 0 : undefined,
+                        right: side === 1 ? 0 : undefined,
+                        width: 0,
+                        height: rowZ,
+                        borderLeft: "1px dashed var(--muted-foreground)",
+                        transform: "rotateX(90deg)",
+                        transformOrigin: "0 0",
+                        opacity: wireframeOpacity,
+                      }}
+                    />
+                  ))}
+
+                {/* Floating wrapper at z=rowZ: drops into landing zone */}
+                <div
+                  className="absolute inset-0"
+                  style={{
+                    transform: `translateZ(${rowZ}px)`,
+                    transformStyle: "preserve-3d",
+                  }}
+                >
+                  <div
+                    className={cn(
+                      "absolute inset-0 flex flex-col justify-center bg-background px-4 py-2",
+                      landed && "border-border border-b"
+                    )}
+                    style={
+                      landed
+                        ? undefined
+                        : {
+                            border: `1px dashed rgba(128, 128, 128, ${wireframeOpacity})`,
+                          }
+                    }
+                  >
+                    <RowContent item={enteringItem} />
+                  </div>
+                </div>
               </div>
             )}
           </div>
