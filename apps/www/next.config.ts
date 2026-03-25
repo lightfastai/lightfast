@@ -76,14 +76,9 @@ const wwwConfig: NextConfig = {
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@repo/og",
-    "@repo/ui",
     "@vendor/seo",
-    "@vendor/security",
-    "@vendor/analytics",
     "@vendor/email",
     "@vendor/inngest",
-    "@vendor/observability",
-    "@vendor/next",
     "@vendor/cms",
   ],
 
@@ -126,5 +121,5 @@ if (process.env.ANALYZE === "true") {
 const withMDX = createMDX();
 
 export default withMicrofrontends(withMDX(config), {
-  debug: env.VERCEL_ENV !== "production",
+  debug: process.env.NODE_ENV === "development",
 });

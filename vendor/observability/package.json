@@ -7,50 +7,50 @@
   "exports": {
     "./sentry-env": {
       "types": "./dist/env/sentry-env.d.ts",
-      "default": "./src/env/sentry-env.ts"
+      "default": "./dist/env/sentry-env.js"
     },
     "./sentry": {
       "types": "./dist/sentry.d.ts",
-      "default": "./src/sentry.ts"
+      "default": "./dist/sentry.js"
     },
     "./betterstack-env": {
       "types": "./dist/env/betterstack.d.ts",
-      "default": "./src/env/betterstack.ts"
+      "default": "./dist/env/betterstack.js"
     },
     "./betterstack-edge-env": {
       "types": "./dist/env/betterstack-edge.d.ts",
-      "default": "./src/env/betterstack-edge.ts"
+      "default": "./dist/env/betterstack-edge.js"
     },
     "./log/next": {
       "types": "./dist/log/next.d.ts",
-      "default": "./src/log/next.ts"
+      "default": "./dist/log/next.js"
     },
     "./log/edge": {
       "types": "./dist/log/edge.d.ts",
-      "default": "./src/log/edge.ts"
+      "default": "./dist/log/edge.js"
     },
     "./log/types": {
       "types": "./dist/log/types.d.ts",
-      "default": "./src/log/types.ts"
+      "default": "./dist/log/types.js"
     },
     "./error/next": {
       "types": "./dist/error/next.d.ts",
-      "default": "./src/error/next.ts"
+      "default": "./dist/error/next.js"
     },
     "./error/edge": {
       "types": "./dist/error/edge.d.ts",
-      "default": "./src/error/edge.ts"
+      "default": "./dist/error/edge.js"
     },
     "./print-routes": {
       "types": "./dist/print-routes.d.ts",
-      "default": "./src/print-routes.ts"
+      "default": "./dist/print-routes.js"
     }
   },
   "license": "MIT",
   "scripts": {
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {

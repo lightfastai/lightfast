@@ -6,19 +6,28 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
-      "default": "./src/index.ts"
+      "types": "./dist/src/index.d.ts",
+      "default": "./dist/src/index.js"
     },
     "./env": "./env.ts",
-    "./middleware": "./src/middleware.ts",
-    "./clerk-nosecone": "./src/clerk-nosecone.ts",
-    "./csp": "./src/csp/index.ts"
+    "./middleware": {
+      "types": "./dist/src/middleware.d.ts",
+      "default": "./dist/src/middleware.js"
+    },
+    "./clerk-nosecone": {
+      "types": "./dist/src/clerk-nosecone.d.ts",
+      "default": "./dist/src/clerk-nosecone.js"
+    },
+    "./csp": {
+      "types": "./dist/src/csp/index.d.ts",
+      "default": "./dist/src/csp/index.js"
+    }
   },
   "license": "MIT",
   "scripts": {
     "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {

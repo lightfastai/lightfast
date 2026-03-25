@@ -7,25 +7,32 @@
   "license": "MIT",
   "exports": {
     "./posthog-server": {
-      "types": "./src/providers/posthog/server.ts",
-      "default": "./src/providers/posthog/server.ts"
+      "types": "./dist/src/providers/posthog/server.d.ts",
+      "default": "./dist/src/providers/posthog/server.js"
     },
-    "./posthog-client": "./src/providers/posthog/client.tsx",
-    "./posthog-instrumentation-client": "./src/providers/posthog/instrumentation-client.ts",
+    "./posthog-client": {
+      "types": "./dist/src/providers/posthog/client.d.ts",
+      "default": "./dist/src/providers/posthog/client.js"
+    },
+    "./posthog-instrumentation-client": {
+      "types": "./dist/src/providers/posthog/instrumentation-client.d.ts",
+      "default": "./dist/src/providers/posthog/instrumentation-client.js"
+    },
     "./posthog": {
-      "types": "./src/providers/posthog/index.ts",
-      "default": "./src/providers/posthog/index.ts"
+      "types": "./dist/src/providers/posthog/index.d.ts",
+      "default": "./dist/src/providers/posthog/index.js"
     },
     "./vercel": {
-      "types": "./src/providers/vercel/index.ts",
-      "default": "./src/providers/vercel/index.ts"
+      "types": "./dist/src/providers/vercel/index.d.ts",
+      "default": "./dist/src/providers/vercel/index.js"
     },
     "./env": "./env.ts"
   },
   "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
-    "build": "tsc"
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

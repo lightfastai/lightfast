@@ -89,7 +89,14 @@ export const config: NextConfig = withVercelToolbar()({
       dynamic: 30,
       static: 180,
     },
-    optimizePackageImports: ["@repo/ui", "lucide-react"],
+    optimizePackageImports: [
+      "@repo/ui",
+      "lucide-react",
+      "shiki",
+      "recharts",
+      "@tanstack/react-table",
+      "@tanstack/table-core",
+    ],
   },
 
   // This is required to support PostHog trailing slash API requests
