@@ -101,6 +101,8 @@
     "@radix-ui/react-toggle-group": "^1.1.10",
     "@radix-ui/react-tooltip": "^1.2.7",
     "@radix-ui/react-use-controllable-state": "^1.2.2",
+    "@shikijs/langs": "^3.9.2",
+    "@shikijs/themes": "^3.9.2",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/table-core": "^8.21.3",
     "@vendor/forms": "workspace:*",

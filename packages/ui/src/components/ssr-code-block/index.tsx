@@ -3,9 +3,57 @@ import { toJsxRuntime } from "hast-util-to-jsx-runtime";
 import { Fragment } from "react";
 import { jsx, jsxs } from "react/jsx-runtime";
 import type { BundledLanguage } from "shiki";
-import { codeToHast } from "shiki";
+import type { HighlighterCore } from "shiki/core";
+import { createHighlighterCore } from "shiki/core";
+import { createJavaScriptRegexEngine } from "shiki/engine/javascript";
+import langBash from "@shikijs/langs/bash";
+import langCss from "@shikijs/langs/css";
+import langGo from "@shikijs/langs/go";
+import langHtml from "@shikijs/langs/html";
+import langJs from "@shikijs/langs/javascript";
+import langJson from "@shikijs/langs/json";
+import langJsonc from "@shikijs/langs/jsonc";
+import langJsx from "@shikijs/langs/jsx";
+import langMarkdown from "@shikijs/langs/markdown";
+import langPy from "@shikijs/langs/python";
+import langRust from "@shikijs/langs/rust";
+import langSql from "@shikijs/langs/sql";
+import langTs from "@shikijs/langs/typescript";
+import langTsx from "@shikijs/langs/tsx";
+import langYaml from "@shikijs/langs/yaml";
+import githubLightDefault from "@shikijs/themes/github-light-default";
 import { SSRCodeBlockCopyButton } from "./copy-button";
 import { openaiDark } from "./openai-dark-theme";
+
+// Singleton highlighter — initialized once, reused across all SSR renders
+let _highlighterPromise: Promise<HighlighterCore> | null = null;
+
+function getHighlighter(): Promise<HighlighterCore> {
+  if (!_highlighterPromise) {
+    _highlighterPromise = createHighlighterCore({
+      themes: [githubLightDefault, openaiDark],
+      langs: [
+        langTs,
+        langJs,
+        langTsx,
+        langJsx,
+        langBash,
+        langJson,
+        langJsonc,
+        langYaml,
+        langPy,
+        langGo,
+        langRust,
+        langSql,
+        langCss,
+        langHtml,
+        langMarkdown,
+      ],
+      engine: createJavaScriptRegexEngine(),
+    });
+  }
+  return _highlighterPromise;
+}
 
 // Re-export types for consumers
 export type { BundledLanguage, BundledTheme } from "shiki";
@@ -44,29 +92,30 @@ export async function SSRCodeBlock({
   type HastNodes = Parameters<typeof toJsxRuntime>[0];
 
   // Generate HAST for both themes in parallel, with fallback to plain text
+  const hl = await getHighlighter();
   let lightHast: HastNodes;
   let darkHast: HastNodes;
   try {
     [lightHast, darkHast] = (await Promise.all([
-      codeToHast(code, {
+      hl.codeToHast(code, {
         lang,
         theme: "github-light-default",
       }),
-      codeToHast(code, {
+      hl.codeToHast(code, {
         lang,
-        theme: openaiDark,
+        theme: "openai-dark",
       }),
     ])) as [HastNodes, HastNodes];
   } catch {
     // If language is not supported, fall back to plain text
     [lightHast, darkHast] = (await Promise.all([
-      codeToHast(code, {
+      hl.codeToHast(code, {
         lang: "text",
         theme: "github-light-default",
       }),
-      codeToHast(code, {
+      hl.codeToHast(code, {
         lang: "text",
-        theme: openaiDark,
+        theme: "openai-dark",
       }),
     ])) as [HastNodes, HastNodes];
   }
