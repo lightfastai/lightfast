@@ -11,7 +11,25 @@ import {
   useState,
 } from "react";
 import type { BundledLanguage, BundledTheme } from "shiki";
-import { createHighlighter } from "shiki";
+import langBash from "@shikijs/langs/bash";
+import langCss from "@shikijs/langs/css";
+import langGo from "@shikijs/langs/go";
+import langHtml from "@shikijs/langs/html";
+import langJs from "@shikijs/langs/javascript";
+import langJson from "@shikijs/langs/json";
+import langJsonc from "@shikijs/langs/jsonc";
+import langJsx from "@shikijs/langs/jsx";
+import langMarkdown from "@shikijs/langs/markdown";
+import langPy from "@shikijs/langs/python";
+import langRust from "@shikijs/langs/rust";
+import langSql from "@shikijs/langs/sql";
+import langTs from "@shikijs/langs/typescript";
+import langTsx from "@shikijs/langs/tsx";
+import langYaml from "@shikijs/langs/yaml";
+import githubDark from "@shikijs/themes/github-dark";
+import githubLight from "@shikijs/themes/github-light";
+import { createHighlighterCore } from "shiki/core";
+import type { HighlighterCore } from "shiki/core";
 
 // Re-export types for consumers
 export type { BundledLanguage, BundledTheme } from "shiki";
@@ -43,73 +61,58 @@ const CodeBlockContext = createContext<CodeBlockContextType>({
   code: "",
 });
 
+// Maps BundledLanguage names and common aliases to pre-imported grammar objects.
+// Only these languages are highlighted; others fall back to plain text.
+const LANG_REGISTRY = new Map<string, unknown>([
+  ["bash", langBash],
+  ["shell", langBash],
+  ["sh", langBash],
+  ["css", langCss],
+  ["go", langGo],
+  ["html", langHtml],
+  ["javascript", langJs],
+  ["js", langJs],
+  ["json", langJson],
+  ["jsonc", langJsonc],
+  ["jsx", langJsx],
+  ["markdown", langMarkdown],
+  ["md", langMarkdown],
+  ["python", langPy],
+  ["py", langPy],
+  ["rust", langRust],
+  ["sql", langSql],
+  ["typescript", langTs],
+  ["ts", langTs],
+  ["tsx", langTsx],
+  ["yaml", langYaml],
+  ["yml", langYaml],
+]);
+
 class HighlighterManager {
-  private lightHighlighter: Awaited<
-    ReturnType<typeof createHighlighter>
-  > | null = null;
-  private darkHighlighter: Awaited<
-    ReturnType<typeof createHighlighter>
-  > | null = null;
-  private lightTheme: BundledTheme | null = null;
-  private darkTheme: BundledTheme | null = null;
-  private readonly loadedLanguages = new Set<BundledLanguage>();
+  private highlighter: HighlighterCore | null = null;
+  private readonly loadedLanguages = new Set<string>();
   private initializationPromise: Promise<void> | null = null;
 
-  private async ensureHighlightersInitialized(
-    themes: [BundledTheme, BundledTheme],
+  private async ensureHighlighterInitialized(
     language: BundledLanguage
   ): Promise<void> {
-    const [lightTheme, darkTheme] = themes;
     const jsEngine = createJavaScriptRegexEngine({ forgiving: true });
 
-    // Check if we need to recreate highlighters due to theme change
-    const needsLightRecreation =
-      !this.lightHighlighter || this.lightTheme !== lightTheme;
-    const needsDarkRecreation =
-      !this.darkHighlighter || this.darkTheme !== darkTheme;
-
-    if (needsLightRecreation || needsDarkRecreation) {
-      // If themes changed, reset loaded languages
-      this.loadedLanguages.clear();
-    }
-
-    // Check if we need to load the language
-    const needsLanguageLoad = !this.loadedLanguages.has(language);
-
-    // Create or recreate light highlighter if needed
-    if (needsLightRecreation) {
-      this.lightHighlighter = await createHighlighter({
-        themes: [lightTheme],
-        langs: [language],
+    if (!this.highlighter) {
+      this.highlighter = await createHighlighterCore({
+        themes: [githubLight, githubDark],
+        langs: [],
         engine: jsEngine,
       });
-      this.lightTheme = lightTheme;
-      this.loadedLanguages.add(language);
-    } else if (needsLanguageLoad) {
-      // Load the language if not already loaded
-      await this.lightHighlighter?.loadLanguage(language);
     }
 
-    // Create or recreate dark highlighter if needed
-    if (needsDarkRecreation) {
-      // If recreating dark highlighter, load all previously loaded languages plus the new one
-      const langsToLoad = needsLanguageLoad
-        ? [...this.loadedLanguages, language]
-        : Array.from(this.loadedLanguages);
-
-      this.darkHighlighter = await createHighlighter({
-        themes: [darkTheme],
-        langs: langsToLoad.length > 0 ? langsToLoad : [language],
-        engine: jsEngine,
-      });
-      this.darkTheme = darkTheme;
-    } else if (needsLanguageLoad) {
-      // Load the language if not already loaded
-      await this.darkHighlighter?.loadLanguage(language);
-    }
-
-    // Mark language as loaded after both highlighters have it
-    if (needsLanguageLoad) {
+    if (!this.loadedLanguages.has(language)) {
+      const lang = LANG_REGISTRY.get(language);
+      if (lang) {
+        await this.highlighter.loadLanguage(
+          lang as Parameters<HighlighterCore["loadLanguage"]>[0]
+        );
+      }
       this.loadedLanguages.add(language);
     }
   }
@@ -125,11 +128,7 @@ class HighlighterManager {
       await this.initializationPromise;
     }
 
-    // Initialize or load language
-    this.initializationPromise = this.ensureHighlightersInitialized(
-      themes,
-      language
-    );
+    this.initializationPromise = this.ensureHighlighterInitialized(language);
     await this.initializationPromise;
     this.initializationPromise = null;
 
@@ -142,19 +141,30 @@ class HighlighterManager {
 
     const [lightTheme, darkTheme] = themes;
 
-    const light = this.lightHighlighter?.codeToHtml(code, {
-      lang: language,
-      theme: lightTheme,
-    });
-    const dark = this.darkHighlighter?.codeToHtml(code, {
-      lang: language,
-      theme: darkTheme,
-    });
-
-    return [
-      light ? removePreBackground(addPreClass(light)) : "",
-      dark ? removePreBackground(addPreClass(dark)) : "",
-    ];
+    try {
+      const light =
+        this.highlighter?.codeToHtml(code, {
+          lang: language,
+          theme: lightTheme,
+        }) ?? "";
+      const dark =
+        this.highlighter?.codeToHtml(code, {
+          lang: language,
+          theme: darkTheme,
+        }) ?? "";
+      return [
+        light ? removePreBackground(addPreClass(light)) : "",
+        dark ? removePreBackground(addPreClass(dark)) : "",
+      ];
+    } catch {
+      // Language not in registry — return plain preformatted text
+      const escaped = code
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
+      const plain = `<pre><code>${escaped}</code></pre>`;
+      return [addPreClass(plain), addPreClass(plain)];
+    }
   }
 }
 
