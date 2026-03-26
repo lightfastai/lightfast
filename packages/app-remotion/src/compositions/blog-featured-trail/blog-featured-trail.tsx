@@ -15,7 +15,7 @@ const CY = CANVAS_H / 2;
 const RADIUS = 100;
 
 // How far along the path the "head" sits — frozen at ~70% completion
-const TRAIL_FILL = 0.70;
+const TRAIL_FILL = 0.7;
 
 // Number of discrete segments used to build the fading trail
 const SEGMENT_COUNT = 120;
@@ -55,7 +55,7 @@ export const BlogFeaturedTrail: React.FC = () => {
     const rawPts = lissajousPoints(); // 513 points for LOGO_CURVE
 
     // Map to canvas coordinates
-    const pts: Array<[number, number]> = rawPts.map(([x, y]) => [
+    const pts: [number, number][] = rawPts.map(([x, y]) => [
       CX + x * RADIUS,
       CY + y * RADIUS,
     ]);
@@ -80,16 +80,20 @@ export const BlogFeaturedTrail: React.FC = () => {
 
       // Slice points for this segment
       const segPts = pts.slice(startIdx, endIdx + 1);
-      if (segPts.length < 2) continue;
+      if (segPts.length < 2) {
+        continue;
+      }
 
       const d = segPts
-        .map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`)
+        .map(
+          ([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`
+        )
         .join("");
 
       // Ease-in opacity: dim tail → bright head
       // Use a slight power curve so the bright part feels concentrated
       const t = (s + 1) / SEGMENT_COUNT;
-      const opacity = Math.pow(t, 1.8);
+      const opacity = t ** 1.8;
 
       segments.push({ d, opacity });
     }
@@ -100,7 +104,10 @@ export const BlogFeaturedTrail: React.FC = () => {
     const ghostD =
       ghostPts.length > 1
         ? ghostPts
-            .map(([x, y], i) => `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`)
+            .map(
+              ([x, y], i) =>
+                `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`
+            )
             .join("")
         : "";
 
@@ -118,9 +125,9 @@ export const BlogFeaturedTrail: React.FC = () => {
     <AbsoluteFill className="bg-background">
       <svg
         height={CANVAS_H}
+        style={{ display: "block" }}
         viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
         width={CANVAS_W}
-        style={{ display: "block" }}
       >
         {/* Ghost remainder of the path so the closed shape is sublty implied */}
         {geometry.ghostD && (
@@ -138,10 +145,10 @@ export const BlogFeaturedTrail: React.FC = () => {
         {/* Fading trail segments from tail (dim) to head (bright) */}
         {geometry.segments.map(({ d, opacity }, i) => (
           <path
-            // biome-ignore lint/suspicious/noArrayIndexKey: stable geometry array
-            key={i}
             d={d}
             fill="none"
+            // biome-ignore lint/suspicious/noArrayIndexKey: stable geometry array
+            key={i}
             opacity={opacity}
             stroke="var(--foreground)"
             strokeLinecap="round"
