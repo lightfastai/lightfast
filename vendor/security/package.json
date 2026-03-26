@@ -6,29 +6,30 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     },
-    "./env": "./env.ts",
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
     "./middleware": {
-      "types": "./dist/src/middleware.d.ts",
-      "default": "./dist/src/middleware.js"
+      "types": "./src/middleware.ts",
+      "default": "./src/middleware.ts"
     },
     "./clerk-nosecone": {
-      "types": "./dist/src/clerk-nosecone.d.ts",
-      "default": "./dist/src/clerk-nosecone.js"
+      "types": "./src/clerk-nosecone.ts",
+      "default": "./src/clerk-nosecone.ts"
     },
     "./csp": {
-      "types": "./dist/src/csp/index.d.ts",
-      "default": "./dist/src/csp/index.js"
+      "types": "./src/csp/index.ts",
+      "default": "./src/csp/index.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

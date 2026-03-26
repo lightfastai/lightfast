@@ -76,10 +76,15 @@ const wwwConfig: NextConfig = {
   /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@repo/og",
-    "@vendor/seo",
+    "@vendor/aeo",
+    "@vendor/analytics",
+    "@vendor/cms",
     "@vendor/email",
     "@vendor/inngest",
-    "@vendor/cms",
+    "@vendor/next",
+    "@vendor/observability",
+    "@vendor/security",
+    "@vendor/seo",
   ],
 
   // Add automatic static optimization where possible

@@ -6,17 +6,17 @@
   "license": "FSL-1.1-Apache-2.0",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./fixtures": {
-      "types": "./dist/fixtures.d.ts",
+      "types": "./src/fixtures.ts",
       "default": "./src/fixtures.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "clean": "git clean -xdf .cache .turbo node_modules"
   },
   "dependencies": {
     "@db/app": "workspace:*",

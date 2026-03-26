@@ -6,52 +6,50 @@
   "sideEffects": false,
   "exports": {
     "./sentry-env": {
-      "types": "./dist/env/sentry-env.d.ts",
-      "default": "./dist/env/sentry-env.js"
+      "types": "./src/env/sentry-env.ts",
+      "default": "./src/env/sentry-env.ts"
     },
     "./sentry": {
-      "types": "./dist/sentry.d.ts",
-      "default": "./dist/sentry.js"
+      "types": "./src/sentry.ts",
+      "default": "./src/sentry.ts"
     },
     "./betterstack-env": {
-      "types": "./dist/env/betterstack.d.ts",
-      "default": "./dist/env/betterstack.js"
+      "types": "./src/env/betterstack.ts",
+      "default": "./src/env/betterstack.ts"
     },
     "./betterstack-edge-env": {
-      "types": "./dist/env/betterstack-edge.d.ts",
-      "default": "./dist/env/betterstack-edge.js"
+      "types": "./src/env/betterstack-edge.ts",
+      "default": "./src/env/betterstack-edge.ts"
     },
     "./log/next": {
-      "types": "./dist/log/next.d.ts",
-      "default": "./dist/log/next.js"
+      "types": "./src/log/next.ts",
+      "default": "./src/log/next.ts"
     },
     "./log/edge": {
-      "types": "./dist/log/edge.d.ts",
-      "default": "./dist/log/edge.js"
+      "types": "./src/log/edge.ts",
+      "default": "./src/log/edge.ts"
     },
     "./log/types": {
-      "types": "./dist/log/types.d.ts",
-      "default": "./dist/log/types.js"
+      "types": "./src/log/types.ts",
+      "default": "./src/log/types.ts"
     },
     "./error/next": {
-      "types": "./dist/error/next.d.ts",
-      "default": "./dist/error/next.js"
+      "types": "./src/error/next.ts",
+      "default": "./src/error/next.ts"
     },
     "./error/edge": {
-      "types": "./dist/error/edge.d.ts",
-      "default": "./dist/error/edge.js"
+      "types": "./src/error/edge.ts",
+      "default": "./src/error/edge.ts"
     },
     "./print-routes": {
-      "types": "./dist/print-routes.d.ts",
-      "default": "./dist/print-routes.js"
+      "types": "./src/print-routes.ts",
+      "default": "./src/print-routes.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

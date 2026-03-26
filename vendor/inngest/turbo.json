@@ -1,13 +1,4 @@
 {
   "extends": ["//"],
-  "tags": ["vendor"],
-  "tasks": {
-    "build": {
-      "passThroughEnv": [
-        "INNGEST_APP_NAME",
-        "INNGEST_EVENT_KEY",
-        "INNGEST_SIGNING_KEY"
-      ]
-    }
-  }
+  "tags": ["vendor"]
 }

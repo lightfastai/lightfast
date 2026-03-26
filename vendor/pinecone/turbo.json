@@ -1,9 +1,4 @@
 {
   "extends": ["//"],
-  "tags": ["vendor"],
-  "tasks": {
-    "build": {
-      "passThroughEnv": ["PINECONE_API_KEY"]
-    }
-  }
+  "tags": ["vendor"]
 }

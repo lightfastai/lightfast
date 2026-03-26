@@ -11,16 +11,23 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./components/provider": "./src/components/provider.tsx",
-    "./components/trigger": "./src/components/trigger.tsx",
+    "./components/provider": {
+      "types": "./src/components/provider.tsx",
+      "default": "./src/components/provider.tsx"
+    },
+    "./components/trigger": {
+      "types": "./src/components/trigger.tsx",
+      "default": "./src/components/trigger.tsx"
+    },
     "./styles": "./src/styles.css",
-    "./env": "./src/env.ts"
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

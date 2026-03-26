@@ -1,9 +1,4 @@
 {
   "extends": ["//"],
-  "tags": ["packages"],
-  "tasks": {
-    "build": {
-      "passThroughEnv": ["COHERE_API_KEY"]
-    }
-  }
+  "tags": ["packages"]
 }

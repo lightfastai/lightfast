@@ -1,9 +1,4 @@
 {
   "extends": ["//"],
-  "tags": ["vendor"],
-  "tasks": {
-    "build": {
-      "passThroughEnv": ["FLAGS"]
-    }
-  }
+  "tags": ["vendor"]
 }

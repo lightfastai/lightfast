@@ -7,12 +7,25 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "default": "./index.ts"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     },
-    "./env": "./env.ts",
-    "./types": "./types.ts",
-    "./next-config": "./next-config.ts",
-    "./components/*": "./components/*"
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
+    "./next-config": {
+      "types": "./src/next-config.ts",
+      "default": "./src/next-config.ts"
+    },
+    "./components/*": {
+      "types": "./src/components/*.tsx",
+      "default": "./src/components/*.tsx"
+    }
   },
   "scripts": {
     "dev": "basehub dev",
@@ -20,7 +33,7 @@
     "basehub:build": "basehub build",
     "analyze": "basehub",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",

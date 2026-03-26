@@ -1,16 +1,5 @@
 "use client";
 
-import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
-import type { ComponentProps, HTMLAttributes } from "react";
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import type { BundledLanguage, BundledTheme } from "shiki";
 import langBash from "@shikijs/langs/bash";
 import langCss from "@shikijs/langs/css";
 import langGo from "@shikijs/langs/go";
@@ -23,13 +12,24 @@ import langMarkdown from "@shikijs/langs/markdown";
 import langPy from "@shikijs/langs/python";
 import langRust from "@shikijs/langs/rust";
 import langSql from "@shikijs/langs/sql";
-import langTs from "@shikijs/langs/typescript";
 import langTsx from "@shikijs/langs/tsx";
+import langTs from "@shikijs/langs/typescript";
 import langYaml from "@shikijs/langs/yaml";
 import githubDark from "@shikijs/themes/github-dark";
 import githubLight from "@shikijs/themes/github-light";
-import { createHighlighterCore } from "shiki/core";
+import { CheckIcon, CopyIcon, DownloadIcon } from "lucide-react";
+import type { ComponentProps, HTMLAttributes } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import type { BundledLanguage, BundledTheme } from "shiki";
 import type { HighlighterCore } from "shiki/core";
+import { createHighlighterCore } from "shiki/core";
 
 // Re-export types for consumers
 export type { BundledLanguage, BundledTheme } from "shiki";

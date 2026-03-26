@@ -13,21 +13,21 @@ import Image from "next/image";
 import Link from "next/link";
 import type React from "react";
 import { Children, isValidElement } from "react";
-import { AlphaBanner } from "@/src/app/(docs)/_components/alpha-banner";
-import { ApiEndpoint } from "@/src/app/(docs)/_components/api-endpoint";
-import { ApiMethod } from "@/src/app/(docs)/_components/api-method";
+import { AlphaBanner } from "~/app/(docs)/_components/alpha-banner";
+import { ApiEndpoint } from "~/app/(docs)/_components/api-endpoint";
+import { ApiMethod } from "~/app/(docs)/_components/api-method";
 import {
   ApiReferenceCard,
   ApiReferenceGrid,
-} from "@/src/app/(docs)/_components/api-reference-card";
-import { FeatureList } from "@/src/app/(docs)/_components/feature-list";
-import { NextSteps } from "@/src/app/(docs)/_components/next-steps";
-import { EmbeddedOperation } from "@/src/app/(docs)/_components/schema/embedded-operation";
+} from "~/app/(docs)/_components/api-reference-card";
+import { FeatureList } from "~/app/(docs)/_components/feature-list";
+import { NextSteps } from "~/app/(docs)/_components/next-steps";
+import { EmbeddedOperation } from "~/app/(docs)/_components/schema/embedded-operation";
 import {
   ValidationError,
   ValidationErrorList,
   ValidationExample,
-} from "@/src/app/(docs)/_components/validation-error";
+} from "~/app/(docs)/_components/validation-error";
 import { consoleUrl } from "~/lib/related-projects";
 
 // Properly typed component props based on react-markdown's actual types

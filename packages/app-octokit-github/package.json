@@ -7,18 +7,16 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./env": {
-      "types": "./dist/env.d.ts",
+      "types": "./src/env.ts",
       "default": "./src/env.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

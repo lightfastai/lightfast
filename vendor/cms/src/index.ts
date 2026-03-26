@@ -1,9 +1,9 @@
 import { basehub as basehubClient, fragmentOn } from "basehub";
 import type { RichTextNode, RichTextTocNode } from "basehub/api-transaction";
 // biome-ignore lint/correctness/noUnusedImports: ensures types are passed through to apps that use this package
-import type * as _types from "./basehub-types.d.ts";
+import type * as _types from "../basehub-types.d.ts";
 import { basehubEnv } from "./env";
-import "./basehub.config";
+import "../basehub.config";
 
 const { BASEHUB_TOKEN } = basehubEnv;
 

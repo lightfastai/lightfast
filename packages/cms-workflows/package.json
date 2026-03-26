@@ -10,10 +10,8 @@
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../apps/www/.vercel/.env.development.local --",
     "publish:blog": "pnpm with-env tsx src/publish-blog.ts",
     "publish:changelog": "pnpm with-env tsx src/publish-changelog.ts"

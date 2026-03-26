@@ -1,8 +1,5 @@
 {
-  "extends": "@repo/typescript-config/internal-package.json",
-  "compilerOptions": {
-    "rootDir": "."
-  },
+  "extends": "@repo/typescript-config/base.json",
   "include": ["src", "scripts"],
-  "exclude": ["node_modules", "dist"]
+  "exclude": ["node_modules"]
 }

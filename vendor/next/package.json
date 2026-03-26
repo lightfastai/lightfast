@@ -6,21 +6,22 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    "./env": "./env.ts",
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
     "./next-config-builder": {
-      "types": "./dist/src/next-config-builder.d.ts",
+      "types": "./src/next-config-builder.ts",
       "default": "./src/next-config-builder.ts"
     },
     "./merge-config": {
-      "types": "./dist/src/merge-config.d.ts",
+      "types": "./src/merge-config.ts",
       "default": "./src/merge-config.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

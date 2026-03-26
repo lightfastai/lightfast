@@ -8,7 +8,7 @@
  */
 
 // Import the type augmentation file to ensure it's loaded
-import "./basehub-types.d.ts";
+import "../basehub-types.d.ts";
 
 // Re-export the augmented Scalars type
 // Re-export specific scalar types for convenience

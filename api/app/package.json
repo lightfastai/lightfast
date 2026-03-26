@@ -6,37 +6,35 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./env": {
-      "types": "./dist/env.d.ts",
+      "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
     "./inngest": {
-      "types": "./dist/inngest/index.d.ts",
+      "types": "./src/inngest/index.ts",
       "default": "./src/inngest/index.ts"
     },
     "./inngest/client": {
-      "types": "./dist/inngest/client/client.d.ts",
+      "types": "./src/inngest/client/client.ts",
       "default": "./src/inngest/client/client.ts"
     },
     "./lib/activity": {
-      "types": "./dist/lib/activity.d.ts",
+      "types": "./src/lib/activity.ts",
       "default": "./src/lib/activity.ts"
     },
     "./lib/token-vault": {
-      "types": "./dist/lib/token-vault.d.ts",
+      "types": "./src/lib/token-vault.ts",
       "default": "./src/lib/token-vault.ts"
     }
   },
   "license": "FSL-1.1-Apache-2.0",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@db/app": "workspace:*",

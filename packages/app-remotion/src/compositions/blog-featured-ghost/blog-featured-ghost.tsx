@@ -12,11 +12,11 @@ const PADDING = 0.28;
 
 // Four concentric copies — smallest/faintest behind, largest/brightest front.
 // Each layer: [size in px, opacity, strokeWidth in px]
-const LAYERS: Array<[number, number, number]> = [
-  [80,  0.10, 1.0],
-  [120, 0.20, 1.2],
+const LAYERS: [number, number, number][] = [
+  [80, 0.1, 1.0],
+  [120, 0.2, 1.2],
   [160, 0.42, 1.4],
-  [200, 0.90, 1.6],
+  [200, 0.9, 1.6],
 ];
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -59,19 +59,18 @@ export const BlogFeaturedGhost: React.FC = () => {
         const ty = CANVAS_H / 2 - size / 2;
         return { path, tx, ty, opacity, sw };
       }),
-    [],
+    []
   );
 
   return (
     <AbsoluteFill className="bg-background">
       <svg
         height={CANVAS_H}
+        style={{ display: "block" }}
         viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
         width={CANVAS_W}
-        style={{ display: "block" }}
       >
         {layers.map(({ path, tx, ty, opacity, sw }, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: stable geometry array
           <g key={i} opacity={opacity} transform={`translate(${tx}, ${ty})`}>
             <path
               d={path}

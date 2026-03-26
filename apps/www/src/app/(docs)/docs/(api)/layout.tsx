@@ -3,11 +3,11 @@ import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { DocsMobileNav } from "@/src/app/(docs)/_components/docs-mobile-nav";
-import { DocsSidebar } from "@/src/app/(docs)/_components/docs-sidebar";
-import { Search } from "@/src/app/(docs)/_components/search";
-import { buildApiPageTree } from "@/src/app/(docs)/_lib/build-api-tree";
-import { pageTree } from "@/src/app/(docs)/_lib/source";
+import { DocsMobileNav } from "~/app/(docs)/_components/docs-mobile-nav";
+import { DocsSidebar } from "~/app/(docs)/_components/docs-sidebar";
+import { Search } from "~/app/(docs)/_components/search";
+import { buildApiPageTree } from "~/app/(docs)/_lib/build-api-tree";
+import { pageTree } from "~/app/(docs)/_lib/source";
 import { consoleUrl } from "~/lib/related-projects";
 
 export default function ApiDocsLayout({ children }: { children: ReactNode }) {

@@ -6,20 +6,37 @@
   "sideEffects": false,
   "exports": {
     ".": {
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./env.ts",
-    "./server": "./src/server.ts",
-    "./types": "./src/types.ts",
-    "./webhooks": "./src/webhooks.ts",
-    "./client": "./src/client/index.ts",
-    "./backend": "./src/backend.ts"
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
+    "./server": {
+      "types": "./src/server.ts",
+      "default": "./src/server.ts"
+    },
+    "./types": {
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
+    },
+    "./webhooks": {
+      "types": "./src/webhooks.ts",
+      "default": "./src/webhooks.ts"
+    },
+    "./client": {
+      "types": "./src/client/index.ts",
+      "default": "./src/client/index.ts"
+    },
+    "./backend": {
+      "types": "./src/backend.ts",
+      "default": "./src/backend.ts"
+    }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
     "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
