@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { AlphaBanner } from "@/src/app/(docs)/_components/alpha-banner";
+import { AlphaBanner } from "~/app/(docs)/_components/alpha-banner";
 
 interface NavCard {
   action: string;

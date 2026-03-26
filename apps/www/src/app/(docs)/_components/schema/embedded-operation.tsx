@@ -1,5 +1,5 @@
-import { InlineAPIPage } from "@/src/app/(docs)/_lib/inline-api-page";
-import { getApiPages, isOpenAPIPage } from "@/src/app/(docs)/_lib/source";
+import { InlineAPIPage } from "~/app/(docs)/_lib/inline-api-page";
+import { getApiPages, isOpenAPIPage } from "~/app/(docs)/_lib/source";
 
 interface EmbeddedOperationProps {
   /** The operationId from the OpenAPI spec (e.g., "search", "get-contents") */

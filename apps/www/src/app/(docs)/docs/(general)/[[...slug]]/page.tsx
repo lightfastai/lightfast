@@ -9,10 +9,10 @@ import { JsonLd } from "@vendor/seo/json-ld";
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
-import { DocsLayout } from "@/src/app/(docs)/_components/docs-layout";
-import { mdxComponents } from "@/src/app/(docs)/_lib/mdx-components";
-import type { DocsFrontmatter } from "@/src/app/(docs)/_lib/source";
-import { getPage, getPages } from "@/src/app/(docs)/_lib/source";
+import { DocsLayout } from "~/app/(docs)/_components/docs-layout";
+import { mdxComponents } from "~/app/(docs)/_lib/mdx-components";
+import type { DocsFrontmatter } from "~/app/(docs)/_lib/source";
+import { getPage, getPages } from "~/app/(docs)/_lib/source";
 import { DeveloperPlatformLanding } from "./_components/developer-platform-landing";
 
 export default async function Page({
