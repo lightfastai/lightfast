@@ -5,7 +5,7 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import type { NextConfig } from "next";
 import { createSecureHeaders } from "next-secure-headers";
 
-import { env } from "../env";
+import { env } from "./env";
 
 export const config: NextConfig = withVercelToolbar()({
   poweredByHeader: false,

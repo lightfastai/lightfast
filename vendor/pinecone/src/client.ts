@@ -7,7 +7,7 @@
 import type { RecordMetadata } from "@pinecone-database/pinecone";
 import { Pinecone } from "@pinecone-database/pinecone";
 
-import { env } from "../env";
+import { env } from "./env";
 import {
   PineconeConnectionError,
   PineconeError,

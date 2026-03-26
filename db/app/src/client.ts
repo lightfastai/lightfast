@@ -1,6 +1,6 @@
 import { neon, neonConfig } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-http";
-import { env } from "../env";
+import { env } from "./env";
 import * as schema from "./schema";
 
 // Required: point Neon driver at PlanetScale's HTTP SQL endpoint

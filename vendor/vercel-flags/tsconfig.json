@@ -2,15 +2,9 @@
   "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
     "paths": {
-      "~/env": [
-        "./src/env.ts"
-      ]
+      "~/env": ["./src/env.ts"]
     }
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src"],
+  "exclude": ["node_modules"]
 }

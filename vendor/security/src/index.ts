@@ -1,6 +1,6 @@
 import type { ArcjetDecision } from "@arcjet/next";
 import arcjet from "@arcjet/next";
-import { env } from "../env";
+import { env } from "./env";
 
 export { type ArcjetCanDecorate, setRateLimitHeaders } from "@arcjet/decorate";
 // Re-export everything from Arcjet for convenience

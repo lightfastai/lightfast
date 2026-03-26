@@ -7,22 +7,25 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./index.ts",
-      "default": "./index.ts"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./env": {
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
     "./types": {
-      "types": "./types.ts",
-      "default": "./types.ts"
+      "types": "./src/types.ts",
+      "default": "./src/types.ts"
     },
     "./next-config": {
-      "types": "./next-config.ts",
-      "default": "./next-config.ts"
+      "types": "./src/next-config.ts",
+      "default": "./src/next-config.ts"
     },
-    "./components/*": "./components/*"
+    "./components/*": {
+      "types": "./src/components/*.tsx",
+      "default": "./src/components/*.tsx"
+    }
   },
   "scripts": {
     "dev": "basehub dev",

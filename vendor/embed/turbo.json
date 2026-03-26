@@ -1,8 +1,4 @@
 {
-  "extends": [
-    "//"
-  ],
-  "tags": [
-    "vendor"
-  ]
+  "extends": ["//"],
+  "tags": ["vendor"]
 }
