@@ -7,38 +7,36 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./primitives": {
-      "types": "./dist/primitives/index.d.ts",
+      "types": "./src/primitives/index.ts",
       "default": "./src/primitives/index.ts"
     },
     "./schemas": {
-      "types": "./dist/schemas/index.d.ts",
+      "types": "./src/schemas/index.ts",
       "default": "./src/schemas/index.ts"
     },
     "./forms": {
-      "types": "./dist/forms/index.d.ts",
+      "types": "./src/forms/index.ts",
       "default": "./src/forms/index.ts"
     },
     "./constants": {
-      "types": "./dist/constants/index.d.ts",
+      "types": "./src/constants/index.ts",
       "default": "./src/constants/index.ts"
     },
     "./utils": {
-      "types": "./dist/utils/index.d.ts",
+      "types": "./src/utils/index.ts",
       "default": "./src/utils/index.ts"
     },
     "./api": {
-      "types": "./dist/schemas/api/index.d.ts",
+      "types": "./src/schemas/api/index.ts",
       "default": "./src/schemas/api/index.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

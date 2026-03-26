@@ -1,12 +1,10 @@
 {
-  "extends": "@repo/typescript-config/internal-package.json",
-  "include": ["src/**/*"],
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@repo/typescript-config/compiled-package.json",
   "compilerOptions": {
-    "declaration": true,
-    "declarationMap": true,
-    "outDir": "./dist",
     "types": ["node"],
-    "lib": ["ES2022", "DOM"]
+    "lib": ["ES2022", "dom", "dom.iterable"]
   },
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "examples"]
 }

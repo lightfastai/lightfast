@@ -6,39 +6,37 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./schema": {
-      "types": "./dist/src/schema/index.d.ts",
+      "types": "./src/schema/index.ts",
       "default": "./src/schema/index.ts"
     },
     "./client": {
-      "types": "./dist/src/client.d.ts",
+      "types": "./src/client.ts",
       "default": "./src/client.ts"
     },
     "./utils": {
-      "types": "./dist/src/utils/workspace.d.ts",
+      "types": "./src/utils/workspace.ts",
       "default": "./src/utils/workspace.ts"
     },
     "./env": {
-      "types": "./dist/env.d.ts",
+      "types": "./env.ts",
       "default": "./env.ts"
     },
     "./migrations": "./src/migrations/meta/_journal.json"
   },
   "license": "FSL-1.1-Apache-2.0",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "dev:studio": "pnpm db:studio",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
     "db:generate": "pnpm with-env drizzle-kit generate --config=./src/drizzle.config.ts",
     "db:migrate": "pnpm with-env drizzle-kit migrate --config=./src/drizzle.config.ts",
     "db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
     "db:introspect": "pnpm with-env drizzle-kit introspect --config=./src/drizzle.config.ts",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false",
+    "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {

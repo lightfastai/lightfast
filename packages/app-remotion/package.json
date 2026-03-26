@@ -6,13 +6,12 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "dev": "npx tsx src/watch.ts",
     "typecheck": "tsc --noEmit",
     "studio": "npx remotion studio src/index.ts",

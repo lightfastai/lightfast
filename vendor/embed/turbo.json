@@ -1,9 +1,8 @@
 {
-  "extends": ["//"],
-  "tags": ["vendor"],
-  "tasks": {
-    "build": {
-      "passThroughEnv": ["COHERE_API_KEY", "OPENAI_API_KEY"]
-    }
-  }
+  "extends": [
+    "//"
+  ],
+  "tags": [
+    "vendor"
+  ]
 }

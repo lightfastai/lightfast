@@ -5,28 +5,22 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
-      "default": "./dist/src/index.js"
-    },
-    "./server": {
-      "types": "./dist/src/server.d.ts",
-      "default": "./dist/src/server.js"
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
     },
     "./hono": {
-      "types": "./dist/src/hono.d.ts",
-      "default": "./dist/src/hono.js"
+      "types": "./src/hono.ts",
+      "default": "./src/hono.ts"
     },
     "./env": {
-      "types": "./dist/env.d.ts",
-      "default": "./dist/env.js"
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

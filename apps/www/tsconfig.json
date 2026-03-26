@@ -5,7 +5,6 @@
     "checkJs": false,
     "paths": {
       "~/*": ["./src/*"],
-      "@/*": ["./*"],
       "@vendor/cms/*": ["../../vendor/cms/*"],
       "fumadocs-mdx:collections/*": [".source/*"]
     }

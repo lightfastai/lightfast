@@ -7,26 +7,24 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/src/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./renderer": {
-      "types": "./dist/src/renderer.d.ts",
+      "types": "./src/renderer.ts",
       "default": "./src/renderer.ts"
     },
     "./bundler": {
-      "types": "./dist/src/bundler.d.ts",
+      "types": "./src/bundler.ts",
       "default": "./src/bundler.ts"
     },
     "./fonts": {
-      "types": "./dist/src/fonts.d.ts",
+      "types": "./src/fonts.ts",
       "default": "./src/fonts.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

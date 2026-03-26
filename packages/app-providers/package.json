@@ -7,22 +7,20 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./client": {
-      "types": "./dist/client.d.ts",
+      "types": "./src/client.ts",
       "default": "./src/client.ts"
     },
     "./contracts": {
-      "types": "./dist/contracts.d.ts",
+      "types": "./src/contracts.ts",
       "default": "./src/contracts.ts"
     }
   },
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc --watch",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },

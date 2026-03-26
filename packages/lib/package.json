@@ -6,37 +6,35 @@
   "sideEffects": false,
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./pretty-project-name": {
-      "types": "./dist/pretty-project-name.d.ts",
+      "types": "./src/pretty-project-name.ts",
       "default": "./src/pretty-project-name.ts"
     },
     "./datetime": {
-      "types": "./dist/datetime/index.d.ts",
+      "types": "./src/datetime/index.ts",
       "default": "./src/datetime/index.ts"
     },
     "./uuid": {
-      "types": "./dist/uuid.d.ts",
+      "types": "./src/uuid.ts",
       "default": "./src/uuid.ts"
     },
     "./nanoid": {
-      "types": "./dist/nanoid.d.ts",
+      "types": "./src/nanoid.ts",
       "default": "./src/nanoid.ts"
     },
     "./friendly-words": {
-      "types": "./dist/friendly-words.d.ts",
+      "types": "./src/friendly-words.ts",
       "default": "./src/friendly-words.ts"
     }
   },
   "license": "MIT",
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "dev": "tsc",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "joyful": "^1.1.1",

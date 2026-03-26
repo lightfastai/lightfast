@@ -1,11 +1,16 @@
 {
-  "extends": "@repo/typescript-config/internal-package.json",
+  "extends": "@repo/typescript-config/base.json",
   "compilerOptions": {
-    "emitDeclarationOnly": false,
     "paths": {
-      "~/env": ["./env.ts"]
+      "~/env": [
+        "./src/env.ts"
+      ]
     }
   },
-  "include": ["*.ts", "src"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "node_modules"
+  ]
 }

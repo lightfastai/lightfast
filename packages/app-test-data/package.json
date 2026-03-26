@@ -6,19 +6,19 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./trigger": {
-      "types": "./dist/trigger/index.d.ts",
+      "types": "./src/trigger/index.ts",
       "default": "./src/trigger/index.ts"
     },
     "./loader": {
-      "types": "./dist/loader/index.d.ts",
+      "types": "./src/loader/index.ts",
       "default": "./src/loader/index.ts"
     },
     "./raw": {
-      "types": "./dist/raw.d.ts",
+      "types": "./src/raw.ts",
       "default": "./src/raw.ts"
     }
   },
@@ -30,7 +30,8 @@
     "seed-integrations:prod": "dotenv -e ../../apps/app/.vercel/.env.production.local -- tsx src/cli/seed-integrations.ts",
     "reset-demo": "pnpm with-env tsx src/cli/reset-demo.ts",
     "verify": "tsx src/cli/generate-schema.ts && tsx src/cli/verify-datasets.ts",
-    "generate-schema": "tsx src/cli/generate-schema.ts"
+    "generate-schema": "tsx src/cli/generate-schema.ts",
+    "clean": "git clean -xdf .cache .turbo node_modules"
   },
   "dependencies": {
     "@api/app": "workspace:*",

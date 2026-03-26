@@ -7,15 +7,15 @@
   "type": "module",
   "exports": {
     ".": {
-      "types": "./dist/index.d.ts",
+      "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
     "./workspace": {
-      "types": "./dist/workspace.d.ts",
+      "types": "./src/workspace.ts",
       "default": "./src/workspace.ts"
     },
     "./organization": {
-      "types": "./dist/organization.d.ts",
+      "types": "./src/organization.ts",
       "default": "./src/organization.ts"
     }
   },
@@ -24,8 +24,7 @@
     "data"
   ],
   "scripts": {
-    "build": "tsc",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "clean": "git clean -xdf .cache .turbo node_modules",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
