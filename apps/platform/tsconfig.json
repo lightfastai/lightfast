@@ -8,5 +8,6 @@
       "@api/platform/*": ["../../api/platform/src/*"]
     }
   },
+  "include": [".", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
