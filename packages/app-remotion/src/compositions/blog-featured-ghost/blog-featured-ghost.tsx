@@ -71,7 +71,6 @@ export const BlogFeaturedGhost: React.FC = () => {
         width={CANVAS_W}
       >
         {layers.map(({ path, tx, ty, opacity, sw }, i) => (
-          // biome-ignore lint/suspicious/noArrayIndexKey: stable geometry array
           <g key={i} opacity={opacity} transform={`translate(${tx}, ${ty})`}>
             <path
               d={path}

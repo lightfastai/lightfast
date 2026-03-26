@@ -163,31 +163,33 @@ async function main() {
 
   // ── Post-processing ────────────────────────────────────────────
   // Only runs when stills were rendered (post-process sources are always stills)
-  if ((onlyFlag === "all" || onlyFlag === "stills") && !idFlag) for (const pp of MANIFEST.postProcess) {
-    if (pp.type === "ico") {
-      console.log(`Building ${pp.filename}...`);
-      const pngBuffers = await Promise.all(
-        pp.sources.map(async (sourceId) => {
-          const entry = MANIFEST.compositions[sourceId];
-          if (!entry || entry.type !== "still") {
-            throw new Error(
-              `ICO source "${sourceId}" is not a still composition`
-            );
-          }
-          const output = entry.outputs[0]!;
-          const filename = output.filename ?? `${sourceId}.png`;
-          const filePath = path.join(tmpDir, filename);
-          return fs.readFile(filePath);
-        })
-      );
+  if ((onlyFlag === "all" || onlyFlag === "stills") && !idFlag) {
+    for (const pp of MANIFEST.postProcess) {
+      if (pp.type === "ico") {
+        console.log(`Building ${pp.filename}...`);
+        const pngBuffers = await Promise.all(
+          pp.sources.map(async (sourceId) => {
+            const entry = MANIFEST.compositions[sourceId];
+            if (!entry || entry.type !== "still") {
+              throw new Error(
+                `ICO source "${sourceId}" is not a still composition`
+              );
+            }
+            const output = entry.outputs[0]!;
+            const filename = output.filename ?? `${sourceId}.png`;
+            const filePath = path.join(tmpDir, filename);
+            return fs.readFile(filePath);
+          })
+        );
 
-      const icoBuffer = buildIco(pngBuffers);
-      for (const dest of pp.dests) {
-        const icoPath = resolveDest(dest, pp.filename);
-        await fs.mkdir(path.dirname(icoPath), { recursive: true });
-        await fs.writeFile(icoPath, icoBuffer);
+        const icoBuffer = buildIco(pngBuffers);
+        for (const dest of pp.dests) {
+          const icoPath = resolveDest(dest, pp.filename);
+          await fs.mkdir(path.dirname(icoPath), { recursive: true });
+          await fs.writeFile(icoPath, icoBuffer);
+        }
+        console.log(`  ✔ ${pp.filename} → ${pp.dests.join(", ")}`);
       }
-      console.log(`  ✔ ${pp.filename} → ${pp.dests.join(", ")}`);
     }
   }
 

@@ -70,14 +70,14 @@ export const BlogFeaturedDuo: React.FC = () => {
         PADDING,
         LEFT_CURVE.a,
         LEFT_CURVE.b,
-        LEFT_CURVE.delta,
+        LEFT_CURVE.delta
       ),
       rightPath: lissajousPath(
         DUO_SIZE,
         PADDING,
         RIGHT_CURVE.a,
         RIGHT_CURVE.b,
-        RIGHT_CURVE.delta,
+        RIGHT_CURVE.delta
       ),
     };
   }, []);
@@ -86,19 +86,19 @@ export const BlogFeaturedDuo: React.FC = () => {
     <AbsoluteFill className="bg-background">
       <svg
         height={CANVAS_H}
+        style={{ display: "block" }}
         viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}
         width={CANVAS_W}
-        style={{ display: "block" }}
       >
         {/* Hairline at y = CY — shared horizon for both subjects */}
         <line
-          x1={0}
-          y1={CY}
-          x2={CANVAS_W}
-          y2={CY}
+          opacity={HAIRLINE_OPACITY}
           stroke="var(--border)"
           strokeWidth={HAIRLINE_SW}
-          opacity={HAIRLINE_OPACITY}
+          x1={0}
+          x2={CANVAS_W}
+          y1={CY}
+          y2={CY}
         />
 
         {/* Left subject — infinity curve (a=2, b=1) */}

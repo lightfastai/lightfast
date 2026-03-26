@@ -58,7 +58,7 @@ export const BlogFeaturedConcentric: React.FC = () => {
         PADDING,
         LOGO_CURVE.a,
         LOGO_CURVE.b,
-        LOGO_CURVE.delta,
+        LOGO_CURVE.delta
       );
 
       return { path, tx, ty, opacity, strokeWidth, size };

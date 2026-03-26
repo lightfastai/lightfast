@@ -147,7 +147,6 @@ export const BlogFeaturedTrail: React.FC = () => {
           <path
             d={d}
             fill="none"
-            // biome-ignore lint/suspicious/noArrayIndexKey: stable geometry array
             key={i}
             opacity={opacity}
             stroke="var(--foreground)"
