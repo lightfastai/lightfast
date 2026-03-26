@@ -27,15 +27,21 @@ const config: NextConfig = withSentry(
         // @db packages
         "@db/app",
         // @repo packages
+        "@repo/app-ai",
+        "@repo/app-ai-types",
+        "@repo/app-api-key",
         "@repo/app-auth-middleware",
+        "@repo/app-clerk-cache",
         "@repo/app-embed",
         "@repo/app-octokit-github",
         "@repo/app-pinecone",
+        "@repo/app-providers",
         "@repo/app-trpc",
+        "@repo/app-upstash-realtime",
         "@repo/app-validation",
         "@repo/app-vercel",
-        "@repo/app-providers",
         "@repo/lib",
+        "@repo/prompt-engine",
         "@repo/ui",
         "@repo/url-utils",
         // @vendor packages
@@ -47,6 +53,7 @@ const config: NextConfig = withSentry(
         "@vendor/observability",
         "@vendor/security",
         "@vendor/seo",
+        "@vendor/upstash",
       ],
       experimental: {
         optimizePackageImports: [
