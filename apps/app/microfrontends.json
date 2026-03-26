@@ -28,6 +28,7 @@
             "/legal/:path*",
             "/search",
             "/pitch-deck",
+            "/company",
             "/api/health",
             "/api/search",
             "/images/:path*",

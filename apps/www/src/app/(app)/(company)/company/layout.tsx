@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Manifesto",
-  description: "The Lightfast manifesto.",
+  title: "Company",
+  description: "The Lightfast company.",
 };
 
 export default function ManifestoLayout({
