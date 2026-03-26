@@ -61,7 +61,7 @@ catalog:
 
 catalogs:
   next16:
-    next: ^16.1.6
+    next: ^16.1.7
   tailwind4:
     tailwindcss: 4.2.1
     postcss: 8.5.8
