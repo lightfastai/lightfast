@@ -5,6 +5,6 @@
     "lib": ["ES2022", "dom", "dom.iterable"],
     "jsx": "react-jsx"
   },
-  "include": ["*.ts", "components", "basehub-types.d.ts", "basehub.config.ts"],
+  "include": ["*.ts", "src", "components", "basehub-types.d.ts", "basehub.config.ts"],
   "exclude": ["node_modules", "dist"]
 }

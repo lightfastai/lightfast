@@ -9,7 +9,10 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./env": "./src/env.ts",
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
     "./middleware": {
       "types": "./src/middleware.ts",
       "default": "./src/middleware.ts"

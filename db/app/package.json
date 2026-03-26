@@ -22,8 +22,8 @@
       "default": "./src/utils/workspace.ts"
     },
     "./env": {
-      "types": "./env.ts",
-      "default": "./env.ts"
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
     },
     "./migrations": "./src/migrations/meta/_journal.json"
   },

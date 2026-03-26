@@ -7,11 +7,21 @@
   "sideEffects": false,
   "exports": {
     ".": {
+      "types": "./index.ts",
       "default": "./index.ts"
     },
-    "./env": "./env.ts",
-    "./types": "./types.ts",
-    "./next-config": "./next-config.ts",
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
+    "./types": {
+      "types": "./types.ts",
+      "default": "./types.ts"
+    },
+    "./next-config": {
+      "types": "./next-config.ts",
+      "default": "./next-config.ts"
+    },
     "./components/*": "./components/*"
   },
   "scripts": {

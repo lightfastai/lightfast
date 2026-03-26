@@ -6,7 +6,10 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    "./env": "./src/env.ts",
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
     "./next-config-builder": {
       "types": "./src/next-config-builder.ts",
       "default": "./src/next-config-builder.ts"

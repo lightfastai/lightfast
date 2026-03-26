@@ -3,12 +3,11 @@
   "compilerOptions": {
     "paths": {
       "~/env": [
-        "./env.ts"
+        "./src/env.ts"
       ]
     }
   },
   "include": [
-    "*.ts",
     "src"
   ],
   "exclude": [

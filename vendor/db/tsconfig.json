@@ -10,8 +10,7 @@
   },
   "include": [
     "src",
-    "drizzle.config.ts",
-    "env.ts"
+    "drizzle.config.ts"
   ],
   "exclude": [
     "node_modules"

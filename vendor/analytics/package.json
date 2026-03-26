@@ -26,7 +26,10 @@
       "types": "./src/providers/vercel/index.ts",
       "default": "./src/providers/vercel/index.ts"
     },
-    "./env": "./env.ts"
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    }
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
