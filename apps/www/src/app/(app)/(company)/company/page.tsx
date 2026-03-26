@@ -1,31 +1,31 @@
 import { Icons } from "@repo/ui/components/icons";
 import NextLink from "next/link";
-import { execSync } from "node:child_process";
 import { ManifestoShader } from "./_components/manifesto-shader";
 
-function getGitCommit(): { hash: string; url: string } {
+export const revalidate = 3600;
+
+async function getLatestCommit(): Promise<{ hash: string; url: string }> {
   try {
-    if (process.env.VERCEL_GIT_COMMIT_SHA) {
-      const hash = process.env.VERCEL_GIT_COMMIT_SHA.slice(0, 7);
-      const owner = process.env.VERCEL_GIT_REPO_OWNER;
-      const slug = process.env.VERCEL_GIT_REPO_SLUG;
-      return {
-        hash,
-        url: `https://github.com/${owner}/${slug}/commit/${process.env.VERCEL_GIT_COMMIT_SHA}`,
-      };
-    }
-    const full = execSync("git log -1 --format=%H", { encoding: "utf8" }).trim();
+    const res = await fetch(
+      "https://api.github.com/repos/lightfastai/.lightfast/commits?per_page=1",
+      {
+        headers: { Accept: "application/vnd.github.v3+json" },
+        next: { revalidate: 3600 },
+      },
+    );
+    if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+    const [commit] = (await res.json()) as [{ sha: string }];
     return {
-      hash: full.slice(0, 7),
-      url: `https://github.com/lightfastai/lightfast/commit/${full}`,
+      hash: commit.sha.slice(0, 7),
+      url: `https://github.com/lightfastai/.lightfast/commit/${commit.sha}`,
     };
   } catch {
-    return { hash: "unknown", url: "https://github.com/lightfastai/lightfast" };
+    return { hash: "unknown", url: "https://github.com/lightfastai/.lightfast" };
   }
 }
 
-export default function ManifestoPage() {
-  const { hash } = getGitCommit();
+export default async function ManifestoPage() {
+  const { hash, url } = await getLatestCommit();
 
   return (
     <main className="flex h-screen flex-col">
@@ -62,7 +62,7 @@ export default function ManifestoPage() {
             </span>
             <NextLink
               className="font-mono text-foreground text-sm uppercase hover:underline"
-              href="https://github.com/lightfastai/.lightfast"
+              href={url}
               rel="noopener noreferrer"
               target="_blank"
             >
