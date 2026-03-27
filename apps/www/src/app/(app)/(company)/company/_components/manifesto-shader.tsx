@@ -1,7 +1,6 @@
 "use client";
 
 import { ShaderMount } from "@paper-design/shaders-react";
-import gsap from "gsap";
 import { type ComponentRef, useEffect, useRef } from "react";
 
 // Color palette from research: thoughts/shared/research/2026-03-24-web-analysis-backhouse-glsl-shader-extraction.md
@@ -48,7 +47,7 @@ void main() {
 }`;
 
 // Stable initial uniforms — defined outside component so React never re-sets them.
-// u_amplitude is driven imperatively via GSAP; u_colors never changes.
+// u_amplitude is driven imperatively via rAF; u_colors never changes.
 const INITIAL_UNIFORMS = { u_amplitude: 0.65, u_colors: COLORS };
 
 // ShaderMount speed maps to: u_time += (dt_ms * speed) * 0.001
@@ -66,24 +65,44 @@ export function ManifestoShader() {
     const cursor = cursorRef.current!;
     const overlay = overlayRef.current!;
 
-    // Center rect on cursor hotspot
-    gsap.set(cursor, { xPercent: -50, yPercent: -50 });
-    const xTo = gsap.quickTo(cursor, "x", { duration: 0.3, ease: "power3" });
-    const yTo = gsap.quickTo(cursor, "y", { duration: 0.3, ease: "power3" });
+    // Reveal: black overlay fades out after 300ms delay
+    const revealTimer = setTimeout(() => {
+      overlay.style.transition = "opacity 2s ease-in-out";
+      overlay.style.opacity = "0";
+    }, 300);
 
-    // Reveal: black overlay fades out
-    gsap.to(overlay, {
-      opacity: 0,
-      duration: 2,
-      delay: 0.3,
-      ease: "power2.inOut",
-    });
+    // Cursor smooth follow state
+    let mouseX = 0;
+    let mouseY = 0;
+    let curX = 0;
+    let curY = 0;
 
-    // Animation state — lerped each GSAP tick, then pushed to shader imperatively
+    // Shader animation state — lerped each frame, pushed imperatively
     const cur = { amplitude: 0.65, speed: 0.48 };
     const tgt = { amplitude: 0.65, speed: 0.48 };
 
+    // Cursor visibility/scale state
+    let curOpacity = 0;
+    let tgtOpacity = 0;
+    let curScale = 1;
+    let tgtScale = 1;
+
+    let rafId: number;
+
     const tick = () => {
+      // Lerp cursor position (approx equivalent to gsap quickTo power3, 0.3s)
+      curX += (mouseX - curX) * 0.18;
+      curY += (mouseY - curY) * 0.18;
+      cursor.style.left = `${curX}px`;
+      cursor.style.top = `${curY}px`;
+
+      // Lerp cursor opacity + scale
+      curOpacity += (tgtOpacity - curOpacity) * 0.15;
+      curScale += (tgtScale - curScale) * 0.12;
+      cursor.style.opacity = String(curOpacity);
+      cursor.style.transform = `translate(-50%, -50%) scale(${curScale})`;
+
+      // Lerp shader state
       cur.amplitude += (tgt.amplitude - cur.amplitude) * 0.03;
       cur.speed += (tgt.speed - cur.speed) * 0.03;
       const sm = shaderRef.current?.paperShaderMount;
@@ -91,28 +110,33 @@ export function ManifestoShader() {
         sm.setUniforms({ u_amplitude: cur.amplitude });
         sm.setSpeed(cur.speed);
       }
+
+      rafId = requestAnimationFrame(tick);
     };
-    gsap.ticker.add(tick);
+    rafId = requestAnimationFrame(tick);
 
     const onMouseMove = (e: MouseEvent) => {
-      xTo(e.clientX);
-      yTo(e.clientY);
+      mouseX = e.clientX;
+      mouseY = e.clientY;
     };
-    const onEnter = () => gsap.to(cursor, { opacity: 1, duration: 0.17 });
+    const onEnter = () => {
+      tgtOpacity = 1;
+    };
     const onDown = () => {
       tgt.amplitude = 1.3;
       tgt.speed = 0.72;
-      gsap.to(cursor, { scale: 0.82, duration: 0.4, ease: "power2.out" });
+      tgtScale = 0.82;
     };
     const onUp = () => {
       tgt.amplitude = 0.65;
       tgt.speed = 0.48;
-      gsap.to(cursor, { scale: 1, duration: 0.3, ease: "power2.out" });
+      tgtScale = 1;
     };
     const onLeave = () => {
       tgt.amplitude = 0.65;
       tgt.speed = 0.48;
-      gsap.to(cursor, { opacity: 0, scale: 1, duration: 0.17 });
+      tgtOpacity = 0;
+      tgtScale = 1;
     };
 
     wrapper.addEventListener("mousemove", onMouseMove);
@@ -124,7 +148,8 @@ export function ManifestoShader() {
     wrapper.addEventListener("touchend", onUp);
 
     return () => {
-      gsap.ticker.remove(tick);
+      cancelAnimationFrame(rafId);
+      clearTimeout(revealTimer);
       wrapper.removeEventListener("mousemove", onMouseMove);
       wrapper.removeEventListener("mouseenter", onEnter);
       wrapper.removeEventListener("mousedown", onDown);
@@ -166,7 +191,7 @@ export function ManifestoShader() {
             outlineOffset: "-1px",
           }}
         />
-        {/* Reveal overlay: starts opaque, GSAP fades to transparent */}
+        {/* Reveal overlay: starts opaque, fades to transparent */}
         <div
           aria-hidden="true"
           ref={overlayRef}
@@ -179,10 +204,10 @@ export function ManifestoShader() {
           }}
         />
       </div>
-      {/* Cursor rect — fixed, follows mouse via gsap.quickTo */}
+      {/* Cursor rect — fixed, follows mouse via rAF lerp */}
       <div
         aria-hidden="true"
-        className="pointer-events-none fixed top-0 left-0 z-50 border border-white/40 px-4 py-2 opacity-0"
+        className="pointer-events-none fixed top-0 left-0 z-50 border border-white/40 px-4 py-2"
         ref={cursorRef}
       >
         <span className="font-medium text-[11px] text-white/60 uppercase tracking-widest">
