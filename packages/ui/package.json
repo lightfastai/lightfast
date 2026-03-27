@@ -8,57 +8,25 @@
     "*.css"
   ],
   "exports": {
-    "./components/*": {
-      "types": "./dist/components/*.d.ts",
-      "default": "./dist/components/*.js"
-    },
-    "./components/chat": {
-      "types": "./dist/components/chat/index.d.ts",
-      "default": "./dist/components/chat/index.js"
-    },
-    "./components/chat/*": {
-      "types": "./dist/components/chat/*.d.ts",
-      "default": "./dist/components/chat/*.js"
-    },
-    "./components/ssr-code-block": {
-      "types": "./dist/components/ssr-code-block/index.d.ts",
-      "default": "./dist/components/ssr-code-block/index.js"
-    },
-    "./integration-icons": {
-      "types": "./dist/components/integration-icons.d.ts",
-      "default": "./dist/components/integration-icons.js"
-    },
-    "./framework-icons": {
-      "types": "./dist/components/framework-icons.d.ts",
-      "default": "./dist/components/framework-icons.js"
-    },
-    "./lib/brand": {
-      "types": "./dist/lib/brand/index.d.ts",
-      "default": "./dist/lib/brand/index.js"
-    },
-    "./lib/*": {
-      "types": "./dist/lib/*.d.ts",
-      "default": "./dist/lib/*.js"
-    },
-    "./hooks/*": {
-      "types": "./dist/hooks/*.d.ts",
-      "default": "./dist/hooks/*.js"
-    },
-    "./types/*": {
-      "types": "./dist/types/*.d.ts",
-      "default": "./dist/types/*.js"
-    },
+    "./components/chat": "./src/components/chat/index.ts",
+    "./components/chat/*": "./src/components/chat/*",
+    "./components/ssr-code-block": "./src/components/ssr-code-block/index.tsx",
+    "./components/*": "./src/components/*",
+    "./integration-icons": "./src/components/integration-icons.tsx",
+    "./framework-icons": "./src/components/framework-icons.tsx",
+    "./lib/brand": "./src/lib/brand/index.ts",
+    "./lib/*": "./src/lib/*",
+    "./hooks/*": "./src/hooks/*",
+    "./types/*": "./src/types/*",
     "./postcss.config": "./postcss.config.mjs",
     "./globals.css": "./src/globals.css",
     "./shiki.css": "./src/shiki.css"
   },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "typecheck": "tsc --noEmit",
     "ui": "pnpm dlx shadcn@canary",
     "generate:component": "turbo gen react-component",
-    "clean": "git clean -xdf .cache .turbo dist node_modules",
-    "typecheck": "tsc --noEmit"
+    "clean": "git clean -xdf .cache .turbo dist node_modules"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
