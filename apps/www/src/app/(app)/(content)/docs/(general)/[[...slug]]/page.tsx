@@ -1,0 +1,363 @@
+import type {
+  BreadcrumbList,
+  GraphContext,
+  Organization,
+  TechArticle,
+  WebSite,
+} from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
+import type { Metadata } from "next";
+import { notFound, redirect } from "next/navigation";
+import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
+import type { DocsFrontmatter } from "~/app/(app)/(content)/_lib/source";
+import { getPage, getPages } from "~/app/(app)/(content)/_lib/source";
+import { DocsLayout } from "~/app/(app)/(content)/docs/_components/docs-layout";
+import { DeveloperPlatformLanding } from "~/app/(app)/(content)/docs/(general)/[[...slug]]/_components/developer-platform-landing";
+import { createMetadata } from "~/lib/content-seo";
+
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}) {
+  const resolvedParams = await params;
+
+  // Redirect /docs to /docs/get-started/overview
+  if (!resolvedParams.slug || resolvedParams.slug.length === 0) {
+    redirect("/docs/get-started/overview");
+  }
+
+  // TypeScript now knows slug is defined
+  const slug = resolvedParams.slug;
+  const page = getPage(slug);
+
+  if (!page) {
+    return notFound();
+  }
+
+  // Show custom landing page for the get-started/overview page
+  if (
+    slug.length === 2 &&
+    slug[0] === "get-started" &&
+    slug[1] === "overview"
+  ) {
+    return <DeveloperPlatformLanding />;
+  }
+
+  // Type-safe access using collection type from fumadocs-mdx v14
+  // DocsPageType includes runtime properties (body, toc) from DocData
+  const pageData = page.data;
+  const MDX = pageData.body;
+  const toc = pageData.toc;
+  const frontmatter = pageData;
+  const title = frontmatter.title;
+  const description = frontmatter.description;
+
+  // Build structured data for SEO
+  const organizationEntity: Organization = {
+    "@type": "Organization",
+    "@id": "https://lightfast.ai/#organization",
+    name: "Lightfast",
+    url: "https://lightfast.ai",
+    logo: {
+      "@type": "ImageObject",
+      url: "https://lightfast.ai/android-chrome-512x512.png",
+    },
+    sameAs: [
+      "https://twitter.com/lightfastai",
+      "https://github.com/lightfastai",
+      "https://www.linkedin.com/company/lightfastai",
+    ],
+    description:
+      "Lightfast is the operating layer between your agents and apps. Observe events, build memory, and act across your entire tool stack.",
+  };
+
+  const websiteEntity: WebSite = {
+    "@type": "WebSite",
+    "@id": "https://lightfast.ai/docs#website",
+    url: "https://lightfast.ai/docs",
+    name: "Lightfast Documentation",
+    description:
+      "Documentation for Lightfast — Learn how to observe events, build memory, and act across your tool stack via a simple REST API and MCP tools",
+    publisher: {
+      "@id": "https://lightfast.ai/#organization",
+    },
+  };
+
+  // Build breadcrumb list
+  const breadcrumbItems = slug.map((segment, index) => {
+    const url = `/docs/${slug.slice(0, index + 1).join("/")}`;
+    const name = segment
+      .split("-")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+
+    return {
+      "@type": "ListItem" as const,
+      position: index + 1,
+      name,
+      item: `https://lightfast.ai${url}`,
+    };
+  });
+
+  const breadcrumbList: BreadcrumbList = {
+    "@type": "BreadcrumbList",
+    "@id": `https://lightfast.ai/docs/${slug.join("/")}#breadcrumb`,
+    itemListElement: breadcrumbItems,
+  };
+
+  // Build TechArticle entity for documentation pages
+  // TechArticle is better suited for technical documentation than generic Article
+  const techArticleEntity: TechArticle = {
+    "@type": "TechArticle",
+    "@id": `https://lightfast.ai/docs/${slug.join("/")}#article`,
+    headline: title,
+    description,
+    url: `https://lightfast.ai/docs/${slug.join("/")}`,
+    author: {
+      "@type": "Person",
+      name: frontmatter.authors[0]?.name ?? "Lightfast Team",
+    },
+    publisher: {
+      "@id": "https://lightfast.ai/#organization",
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://lightfast.ai/docs/${slug.join("/")}`,
+    },
+    proficiencyLevel: frontmatter.proficiencyLevel ?? "Beginner",
+    datePublished: frontmatter.publishedAt,
+    dateModified: frontmatter.updatedAt,
+  };
+
+  const structuredData: GraphContext = {
+    "@context": "https://schema.org",
+    "@graph": [
+      organizationEntity,
+      websiteEntity,
+      breadcrumbList,
+      techArticleEntity,
+    ],
+  };
+
+  return (
+    <>
+      <JsonLd code={structuredData} />
+      <DocsLayout toc={toc}>
+        <article className="max-w-none">
+          {/* Page Header */}
+          {(title || description) && (
+            <div className="mx-auto mb-16 flex w-full max-w-3xl flex-col items-center text-center">
+              {title ? (
+                <h1 className="text-balance font-light font-pp text-2xl leading-[1.1] tracking-[-0.02em] sm:text-3xl md:text-4xl">
+                  {title}
+                </h1>
+              ) : null}
+              {description && (
+                <div className="mt-4 w-full">
+                  <p className="text-base text-muted-foreground">
+                    {description}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          <MDX components={mdxComponents} />
+        </article>
+      </DocsLayout>
+    </>
+  );
+}
+
+export function generateStaticParams() {
+  return getPages().map((page) => ({
+    slug: page.slugs,
+  }));
+}
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug?: string[] }>;
+}): Promise<Metadata> {
+  const resolvedParams = await params;
+
+  // Handle root docs metadata
+  if (!resolvedParams.slug || resolvedParams.slug.length === 0) {
+    return createMetadata({
+      title: "Documentation – Lightfast",
+      description:
+        "Comprehensive documentation for Lightfast — surface decisions across your tools",
+      metadataBase: new URL("https://lightfast.ai"),
+      keywords: [
+        "Lightfast documentation",
+        "decision search",
+        "decisions across tools",
+        "team decisions",
+        "engineering knowledge search",
+        "cited answers",
+        "semantic search",
+        "semantic search docs",
+        "answers with sources",
+        "developer API",
+        "developer API reference",
+        "MCP tools",
+        "REST API",
+        "security best practices",
+      ],
+      authors: [
+        {
+          name: "Lightfast",
+          url: "https://lightfast.ai",
+        },
+      ],
+      creator: "Lightfast",
+      publisher: "Lightfast",
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      },
+      alternates: {
+        canonical: "https://lightfast.ai/docs",
+      },
+      openGraph: {
+        title: "Documentation – Lightfast",
+        description:
+          "Comprehensive documentation for Lightfast — surface decisions across your tools",
+        url: "https://lightfast.ai/docs",
+        siteName: "Lightfast Documentation",
+        type: "website",
+        locale: "en_US",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: "Documentation – Lightfast",
+        description:
+          "Comprehensive documentation for Lightfast — surface decisions across your tools",
+        site: "@lightfastai",
+        creator: "@lightfastai",
+      },
+      category: "Technology",
+    });
+  }
+
+  // TypeScript knows slug is defined after the redirect check
+  const slug = resolvedParams.slug;
+  const page = getPage(slug);
+
+  // Return 404 metadata for missing pages
+  if (!page) {
+    return createMetadata({
+      title: "Page Not Found – Lightfast Docs",
+      description: "The requested documentation page could not be found",
+      metadataBase: new URL("https://lightfast.ai"),
+      robots: {
+        index: false,
+        follow: false,
+      },
+    });
+  }
+
+  const frontmatter = page.data as DocsFrontmatter;
+
+  // Build canonical URL for SEO
+  const pageUrl = `/docs/${slug.join("/")}`;
+  const title = `${frontmatter.title} – Lightfast Docs`;
+  const description = frontmatter.description;
+
+  const pageKeywords = frontmatter.keywords;
+  const canonical =
+    frontmatter.canonicalUrl ?? `https://lightfast.ai${pageUrl}`;
+  const noindex = frontmatter.noindex ?? false;
+  const nofollow = frontmatter.nofollow ?? false;
+
+  // Use ogTitle/ogDescription/ogImage overrides if provided, otherwise use defaults
+  const ogTitle = frontmatter.ogTitle ?? title;
+  const ogDescription = frontmatter.ogDescription ?? description;
+  const ogImage = frontmatter.ogImage ?? `https://lightfast.ai${pageUrl}/og`;
+
+  // Enhance the metadata with comprehensive SEO properties
+  return createMetadata({
+    title,
+    description,
+    metadataBase: new URL("https://lightfast.ai"),
+    // Merge per-page keywords with default docs keywords
+    keywords: [
+      ...pageKeywords,
+      "Lightfast documentation",
+      "decision search",
+      "decisions across tools",
+      "team decisions",
+      "engineering knowledge search",
+      "cited answers",
+      "semantic search",
+      "semantic search docs",
+      "answers with sources",
+      "developer API",
+      "developer API reference",
+      "MCP tools",
+      "REST API",
+      "security best practices",
+    ],
+    authors: frontmatter.authors.map((a: { name: string; url: string }) => ({
+      name: a.name,
+      url: a.url,
+    })),
+    creator: "Lightfast",
+    publisher: "Lightfast",
+    robots: {
+      index: !noindex,
+      follow: !nofollow,
+      googleBot: {
+        index: !noindex,
+        follow: !nofollow,
+        "max-video-preview": -1,
+        "max-image-preview": "large",
+        "max-snippet": -1,
+      },
+    },
+    alternates: {
+      canonical,
+    },
+    openGraph: {
+      title: ogTitle,
+      description: ogDescription,
+      url: `https://lightfast.ai${pageUrl}`,
+      siteName: "Lightfast Documentation",
+      type: "article",
+      locale: "en_US",
+      // Include article dates for better SEO and freshness signals
+      publishedTime: frontmatter.publishedAt,
+      modifiedTime: frontmatter.updatedAt,
+      authors: frontmatter.authors.map(
+        (a: { name: string; url: string }) => a.url
+      ),
+      images: [
+        {
+          url: ogImage,
+          width: 1200,
+          height: 630,
+          alt: ogTitle,
+          type: "image/jpeg",
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      site: "@lightfastai",
+      creator: "@lightfastai",
+      images: [ogImage],
+    },
+    category: "Technology",
+  });
+}

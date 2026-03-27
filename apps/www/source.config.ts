@@ -1,40 +1,41 @@
 import {
+  defineCollections,
   defineConfig,
   defineDocs,
-  frontmatterSchema,
 } from "fumadocs-mdx/config";
-import { z } from "zod";
-
-const docsSchema = frontmatterSchema.extend({
-  title: z.string().min(1),
-  description: z.string().min(1),
-  keywords: z.string().min(1),
-  author: z.string().min(1),
-  publishedAt: z.string().min(1),
-  updatedAt: z.string().min(1),
-  canonical: z.string().optional(),
-  ogImage: z.string().optional(),
-  ogTitle: z.string().optional(),
-  ogDescription: z.string().optional(),
-  noindex: z.boolean().default(false),
-  nofollow: z.boolean().default(false),
-  proficiencyLevel: z
-    .enum(["Beginner", "Intermediate", "Advanced", "Expert"])
-    .optional(),
-});
+import {
+  BlogPostSchema,
+  ChangelogEntrySchema,
+  DocsPageSchema,
+  LegalPageSchema,
+} from "./src/lib/content-schemas";
 
 export const { docs, meta } = defineDocs({
   dir: "src/content/docs",
-  docs: {
-    schema: docsSchema,
-  },
+  docs: { schema: DocsPageSchema },
 });
 
 export const { docs: apiDocs, meta: apiMeta } = defineDocs({
   dir: "src/content/api",
-  docs: {
-    schema: docsSchema,
-  },
+  docs: { schema: DocsPageSchema },
+});
+
+export const blogCollection = defineCollections({
+  type: "doc",
+  dir: "src/content/blog",
+  schema: BlogPostSchema,
+});
+
+export const changelogCollection = defineCollections({
+  type: "doc",
+  dir: "src/content/changelog",
+  schema: ChangelogEntrySchema,
+});
+
+export const legalCollection = defineCollections({
+  type: "doc",
+  dir: "src/content/legal",
+  schema: LegalPageSchema,
 });
 
 export default defineConfig({
