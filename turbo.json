@@ -39,8 +39,7 @@
     "test": {
       "dependsOn": ["^build"],
       "inputs": ["src/**", "vitest.config.ts", "tsconfig.json"],
-      "outputs": [],
-      "env": []
+      "outputs": []
     },
     "typecheck": {
       "dependsOn": ["^build", "transit"],
@@ -73,12 +72,12 @@
       "interactive": true
     }
   },
-  "globalEnv": ["NODE_ENV", "CI"],
+  "globalEnv": ["CI"],
   "globalPassThroughEnv": [
+    "NODE_ENV",
     "SKIP_ENV_VALIDATION",
     "npm_lifecycle_event",
     "VERCEL",
-    "VERCEL_ENV",
     "VERCEL_URL",
     "VERCEL_PROJECT_PRODUCTION_URL",
     "BETTERSTACK_SOURCE_TOKEN"

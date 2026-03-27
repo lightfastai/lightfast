@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turborepo.org/schema.json",
+  "$schema": "https://turborepo.dev/schema.json",
   "extends": ["//"],
   "tags": ["app"],
   "tasks": {
@@ -42,6 +42,7 @@
         "SENTRY_CLIENT_SECRET",
         "PORT"
       ],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
       "outputs": [
         ".next/**",
         "!.next/cache/**",

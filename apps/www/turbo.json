@@ -1,5 +1,5 @@
 {
-  "$schema": "https://turborepo.org/schema.json",
+  "$schema": "https://turborepo.dev/schema.json",
   "extends": ["//"],
   "tags": ["app"],
   "tasks": {
@@ -38,6 +38,7 @@
         "MXBAI_API_KEY",
         "MXBAI_STORE_ID"
       ],
+      "inputs": ["$TURBO_DEFAULT$", ".vercel/.env*"],
       "outputs": [
         ".next/**",
         "!.next/cache/**",
