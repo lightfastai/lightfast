@@ -26,6 +26,7 @@
   "dependencies": {
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
+    "schema-dts": "^1.1.5",
     "zod": "catalog:"
   },
   "devDependencies": {

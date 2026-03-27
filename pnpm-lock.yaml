@@ -2438,6 +2438,9 @@ importers:
       react:
         specifier: ^19.2.4
         version: 19.2.4
+      schema-dts:
+        specifier: ^1.1.5
+        version: 1.1.5
       zod:
         specifier: 'catalog:'
         version: 4.3.6

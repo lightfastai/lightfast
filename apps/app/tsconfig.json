@@ -6,7 +6,8 @@
     "plugins": [{ "name": "next" }],
     "types": ["@testing-library/jest-dom", "node"],
     "paths": {
-      "~/*": ["./src/*"]
+      "~/*": ["./src/*"],
+      "@repo/ui/*": ["../../packages/ui/src/*"]
     }
   },
   "include": [".", "next-env.d.ts", ".next/types/**/*.ts"],
