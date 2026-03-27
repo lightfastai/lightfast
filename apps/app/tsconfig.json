@@ -1,12 +1,14 @@
 {
   "extends": "@repo/typescript-config/nextjs.json",
   "compilerOptions": {
-    "baseUrl": ".",
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    "jsx": "preserve",
+    "plugins": [{ "name": "next" }],
     "types": ["@testing-library/jest-dom", "node"],
     "paths": {
       "~/*": ["./src/*"]
     }
   },
-  "include": [".", ".next/types/**/*.ts"],
+  "include": [".", "next-env.d.ts", ".next/types/**/*.ts"],
   "exclude": ["node_modules", "vitest.config.ts"]
 }
