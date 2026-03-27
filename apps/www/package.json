@@ -13,13 +13,10 @@
     "search:sync": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY",
     "search:sync:ci": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY -y",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "export VC_MICROFRONTENDS_CONFIG=../../apps/app/microfrontends.json && pnpm with-env next dev --port $(microfrontends port) --turbopack",
+    "dev": "pnpm with-env next dev --port $(microfrontends port) --turbo",
     "start": "pnpm with-env next start -p 4101",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "cms:types": "pnpm with-env pnpm --filter @vendor/cms exec basehub generate",
-    "cms:dev": "pnpm with-env pnpm --filter @vendor/cms exec basehub dev",
-    "cms:analyze": "pnpm with-env pnpm --filter @vendor/cms exec basehub",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
@@ -33,7 +30,6 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/aeo": "workspace:*",
     "@vendor/analytics": "workspace:*",
-    "@vendor/cms": "workspace:*",
     "@vendor/email": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/next": "workspace:*",

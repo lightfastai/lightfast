@@ -78,7 +78,6 @@ const wwwConfig: NextConfig = {
     "@repo/og",
     "@vendor/aeo",
     "@vendor/analytics",
-    "@vendor/cms",
     "@vendor/email",
     "@vendor/inngest",
     "@vendor/next",

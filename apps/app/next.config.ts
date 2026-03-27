@@ -47,7 +47,6 @@ const config: NextConfig = withSentry(
         // @vendor packages
         "@vendor/analytics",
         "@vendor/clerk",
-        "@vendor/cms",
         "@vendor/knock",
         "@vendor/next",
         "@vendor/observability",
@@ -82,7 +81,6 @@ const config: NextConfig = withSentry(
           // Vendor packages
           "@vendor/analytics",
           "@vendor/clerk",
-          "@vendor/cms",
           "@vendor/knock",
           "@vendor/observability",
           "@vendor/security",
