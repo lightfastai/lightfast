@@ -7,7 +7,6 @@ import type { JsonLdData } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SocialShare } from "~/app/(app)/_components/blog-social-share";
 
@@ -282,14 +281,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                         {post.authors.map((author, authorIdx) => (
                           <span key={`author-name-${authorIdx}`}>
                             {author.xUrl ? (
-                              <Link
+                              <a
                                 className="transition-colors hover:text-foreground"
                                 href={author.xUrl}
                                 rel="noopener noreferrer"
                                 target="_blank"
                               >
                                 {author._title}
-                              </Link>
+                              </a>
                             ) : (
                               author._title
                             )}
@@ -404,14 +403,14 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                             {author._title}
                           </h4>
                           {author.xUrl && (
-                            <Link
+                            <a
                               className="text-muted-foreground text-sm transition-colors hover:text-foreground"
                               href={author.xUrl}
                               rel="noopener noreferrer"
                               target="_blank"
                             >
                               @{author.xUrl.split("/").pop()}
-                            </Link>
+                            </a>
                           )}
                         </div>
                       </div>

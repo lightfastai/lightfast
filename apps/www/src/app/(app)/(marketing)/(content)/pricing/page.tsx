@@ -17,10 +17,10 @@ import type {
   WithContext,
 } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
-import { createMetadata } from "@vendor/seo/metadata";
 import { ArrowRight, ArrowUpRight, Check, HelpCircle } from "lucide-react";
 import type { Metadata } from "next";
 import type * as React from "react";
+import { createMetadata } from "~/lib/content-seo";
 
 export const metadata: Metadata = createMetadata({
   title: "Lightfast Pricing – Scales With Your Team",

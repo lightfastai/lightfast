@@ -65,14 +65,14 @@ export default async function ManifestoPage() {
             <span className="font-mono text-foreground text-sm uppercase">
               Read the Program →
             </span>
-            <NextLink
+            <a
               className="font-mono text-foreground text-sm uppercase hover:underline"
               href={url}
               rel="noopener noreferrer"
               target="_blank"
             >
               @{hash}
-            </NextLink>
+            </a>
           </div>
           <p className="absolute left-[50%] font-pp font-semibold text-foreground text-lg lg:text-2xl">
             We are building the runtime.
