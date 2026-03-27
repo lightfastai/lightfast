@@ -25,6 +25,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/lodash.merge": "^4.6.9",
     "next": "catalog:next16",
     "typescript": "catalog:",
     "webpack": "^5.105.4"
@@ -36,6 +37,7 @@
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
     "@vercel/toolbar": "^0.2.2",
+    "lodash.merge": "^4.6.2",
     "next-secure-headers": "^2.2.0"
   }
 }

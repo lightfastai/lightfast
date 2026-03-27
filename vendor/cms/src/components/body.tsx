@@ -1,6 +1,5 @@
 import { RichText } from "basehub/react-rich-text";
 import Image from "next/image";
-import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "../lib/utils";
 
@@ -193,14 +192,14 @@ function createRichTextComponents(codeBlockComponent?: CodeBlockRenderer) {
         return <span>{children}</span>;
       }
       return (
-        <Link
+        <a
           className="text-primary underline underline-offset-4 hover:text-primary/80"
           href={href}
           rel="noopener noreferrer"
           target="_blank"
         >
           {children}
-        </Link>
+        </a>
       );
     },
 

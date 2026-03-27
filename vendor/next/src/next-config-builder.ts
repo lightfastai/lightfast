@@ -2,6 +2,7 @@ import { withBetterStack as withBetterStackNext } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
+import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { createSecureHeaders } from "next-secure-headers";
 
@@ -170,5 +171,7 @@ export const withAnalyzer = (sourceConfig: NextConfig): NextConfig =>
  */
 export const withBetterStack: (sourceConfig: NextConfig) => NextConfig = (
   sourceConfig: NextConfig
-  // eslint-disable-next-line @typescript-eslint/no-unsafe-return -- withBetterStackNext types are loosely typed
 ) => withBetterStackNext(sourceConfig);
+
+export const mergeNextConfig = (...configs: NextConfig[]): NextConfig =>
+  merge({}, ...configs) as NextConfig;

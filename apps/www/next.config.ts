@@ -87,6 +87,8 @@ const wwwConfig: NextConfig = {
     "@vendor/seo",
   ],
 
+  typedRoutes: true,
+
   // Add automatic static optimization where possible
   experimental: {
     optimizePackageImports: [
