@@ -10,7 +10,7 @@ import {
   NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import NextLink from "next/link";
+import { NavLink } from "~/components/nav-link";
 import { INTERNAL_NAV, RESOURCES_NAV } from "~/config/nav";
 
 const navLinkClass =
@@ -35,15 +35,9 @@ export function AppNavbarMenu() {
               <div className="flex flex-col gap-1 rounded-sm">
                 {RESOURCES_NAV.map((item) => (
                   <NavigationMenuLink asChild key={item.href}>
-                    {item.microfrontend ? (
-                      <MicrofrontendLink href={item.href} prefetch={true}>
-                        {item.title}
-                      </MicrofrontendLink>
-                    ) : (
-                      <NextLink href={item.href} prefetch>
-                        {item.title}
-                      </NextLink>
-                    )}
+                    <NavLink {...item} prefetch>
+                      {item.title}
+                    </NavLink>
                   </NavigationMenuLink>
                 ))}
               </div>
@@ -53,33 +47,19 @@ export function AppNavbarMenu() {
       </NavigationMenu>
 
       {/* Flat nav items (Pricing, Docs) */}
-      {INTERNAL_NAV.filter((i) => i.href !== "/early-access").map((item) =>
-        item.microfrontend ? (
-          <Button
-            asChild
-            className={navLinkClass}
-            key={item.href}
-            size="sm"
-            variant="none"
-          >
-            <MicrofrontendLink href={item.href} prefetch={true}>
-              {item.title}
-            </MicrofrontendLink>
-          </Button>
-        ) : (
-          <Button
-            asChild
-            className={navLinkClass}
-            key={item.href}
-            size="sm"
-            variant="none"
-          >
-            <NextLink href={item.href} prefetch>
-              {item.title}
-            </NextLink>
-          </Button>
-        )
-      )}
+      {INTERNAL_NAV.filter((i) => i.href !== "/early-access").map((item) => (
+        <Button
+          asChild
+          className={navLinkClass}
+          key={item.href}
+          size="sm"
+          variant="none"
+        >
+          <NavLink {...item} prefetch>
+            {item.title}
+          </NavLink>
+        </Button>
+      ))}
 
       {/* Sign In Link */}
       <Button asChild className={navLinkClass} size="sm" variant="none">

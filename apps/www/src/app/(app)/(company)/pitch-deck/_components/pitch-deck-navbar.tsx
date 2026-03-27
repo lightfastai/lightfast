@@ -10,6 +10,7 @@ import {
   NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
 import NextLink from "next/link";
+import { NavLink } from "~/components/nav-link";
 import { RESOURCES_NAV } from "~/config/nav";
 
 const navLinkClass =
@@ -38,9 +39,9 @@ export function PitchDeckNavbar() {
               <div className="flex flex-col gap-1 rounded-sm">
                 {RESOURCES_NAV.map((item) => (
                   <NavigationMenuLink asChild key={item.href}>
-                    <NextLink href={item.href} prefetch>
+                    <NavLink {...item} prefetch>
                       {item.title}
-                    </NextLink>
+                    </NavLink>
                   </NavigationMenuLink>
                 ))}
               </div>

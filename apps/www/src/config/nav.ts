@@ -1,19 +1,19 @@
 /**
  * App navigation configuration
  *
- * Exposes two nav groups using the shared UI NavItem type:
+ * Exposes nav groups using defineNavItems() for compile-time route validation:
  * - INTERNAL_NAV: links within the app/site
  * - SOCIAL_NAV: external/social links with optional icons
  */
-import type { NavItem } from "~/types/nav";
+import { defineNavItems } from "~/types/nav";
 
-export const INTERNAL_NAV: NavItem[] = [
+export const INTERNAL_NAV = defineNavItems([
   { title: "Pricing", href: "/pricing" },
   { title: "Early Access", href: "/early-access", microfrontend: true },
   { title: "Docs", href: "/docs/get-started/overview" },
-];
+]);
 
-export const SOCIAL_NAV: NavItem[] = [
+export const SOCIAL_NAV = defineNavItems([
   {
     title: "X",
     label: "X",
@@ -35,10 +35,20 @@ export const SOCIAL_NAV: NavItem[] = [
     icon: "discord",
     external: true,
   },
-];
+]);
 
 // Resources sub-navigation used for the marketing header dropdown
-export const RESOURCES_NAV: NavItem[] = [
+export const RESOURCES_NAV = defineNavItems([
   { title: "Changelog", href: "/changelog" },
   { title: "Blog", href: "/blog" },
-];
+]);
+
+// Navigation for the pitch-deck pages
+export const PITCH_DECK_NAV = defineNavItems([
+  { title: "Home", href: "/" },
+  { title: "Pricing", href: "/pricing" },
+  { title: "Blog", href: "/blog" },
+  { title: "Changelog", href: "/changelog" },
+  { title: "Docs", href: "/docs/get-started/overview" },
+  { title: "Contact", href: "mailto:jp@lightfast.ai", external: true },
+]);

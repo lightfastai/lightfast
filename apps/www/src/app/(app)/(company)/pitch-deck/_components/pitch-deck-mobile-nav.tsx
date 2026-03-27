@@ -8,17 +8,12 @@ import {
   SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
 import { Menu, X } from "lucide-react";
-import Link from "next/link";
 import * as React from "react";
+import { NavLink } from "~/components/nav-link";
+import { PITCH_DECK_NAV } from "~/config/nav";
 
-const MENU_ITEMS = [
-  { title: "Home", href: "/" },
-  { title: "Pricing", href: "/pricing" },
-  { title: "Blog", href: "/blog" },
-  { title: "Changelog", href: "/changelog" },
-  { title: "Docs", href: "/docs/get-started/overview" },
-  { title: "Contact", href: "mailto:jp@lightfast.ai" },
-];
+const linkClass =
+  "block py-3 font-medium text-2xl text-foreground transition-colors hover:text-muted-foreground";
 
 export function PitchDeckMobileNav() {
   const [open, setOpen] = React.useState(false);
@@ -54,15 +49,15 @@ export function PitchDeckMobileNav() {
           <ScrollArea className="flex-1 overflow-hidden">
             <div className="px-6">
               <nav className="space-y-1">
-                {MENU_ITEMS.map((item) => (
-                  <Link
-                    className="block py-3 font-medium text-2xl text-foreground transition-colors hover:text-muted-foreground"
-                    href={item.href}
+                {PITCH_DECK_NAV.map((item) => (
+                  <NavLink
+                    {...item}
+                    className={linkClass}
                     key={item.href}
                     onClick={() => setOpen(false)}
                   >
                     {item.title}
-                  </Link>
+                  </NavLink>
                 ))}
               </nav>
             </div>
