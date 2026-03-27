@@ -6,6 +6,7 @@ import {
   PrefetchCrossZoneLinks,
   PrefetchCrossZoneLinksProvider,
 } from "@vercel/microfrontends/next/client";
+
 import type { Metadata, Viewport } from "next";
 import { createMetadata } from "~/lib/content-seo";
 import { geistMono, geistSans, ppNeueMontreal } from "~/lib/fonts";
