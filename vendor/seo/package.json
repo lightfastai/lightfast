@@ -1,29 +1,37 @@
 {
   "name": "@vendor/seo",
   "license": "MIT",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "private": true,
   "type": "module",
   "sideEffects": false,
   "exports": {
-    "./metadata": "./metadata.ts",
-    "./json-ld": "./json-ld.tsx"
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
+    "./json-ld": {
+      "types": "./src/json-ld.tsx",
+      "default": "./src/json-ld.tsx"
+    },
+    "./components/mdx-link": {
+      "types": "./src/components/mdx-link.tsx",
+      "default": "./src/components/mdx-link.tsx"
+    }
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo dist node_modules",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "lodash.merge": "^4.6.2",
+    "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
-    "schema-dts": "^1.1.5"
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/lodash.merge": "^4.6.9",
     "@types/node": "catalog:",
-    "@types/react": "19.2.14",
-    "@types/react-dom": "19.2.3",
+    "@types/react": "catalog:react19",
     "next": "catalog:next16",
     "typescript": "catalog:"
   }
