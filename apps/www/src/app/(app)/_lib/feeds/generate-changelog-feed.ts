@@ -1,11 +1,7 @@
-import { changelog } from "@vendor/cms";
 import { Feed } from "feed";
+import { getChangelogPages } from "~/app/(app)/(content)/_lib/source";
 
-/**
- * Generate RSS/Atom feed for changelog entries.
- * Mirrors the blog feed pattern from generate-feed.ts
- */
-export async function generateChangelogFeed(): Promise<Feed> {
+export function generateChangelogFeed(): Feed {
   const baseUrl = "https://lightfast.ai";
   const buildDate = new Date();
 
@@ -32,33 +28,26 @@ export async function generateChangelogFeed(): Promise<Feed> {
     },
   });
 
-  try {
-    const entries = await changelog.getEntries();
+  const pages = getChangelogPages();
 
-    // Add entries to feed (newest first, limit 50)
-    entries.slice(0, 50).forEach((entry) => {
-      const url = `${baseUrl}/changelog/${entry.slug ?? entry._slug}`;
+  const sortedPages = [...pages]
+    .sort(
+      (a, b) =>
+        new Date(b.data.publishedAt).getTime() -
+        new Date(a.data.publishedAt).getTime()
+    )
+    .slice(0, 50);
 
-      const publishedDate = new Date(entry.publishedAt);
-
-      // Use AEO fields for enhanced descriptions
-      const description =
-        entry.excerpt ??
-        entry.tldr ??
-        entry.body?.plainText?.slice(0, 300) ??
-        "View the latest updates from Lightfast";
-
-      feed.addItem({
-        title: entry._title,
-        id: url,
-        link: url,
-        description,
-        date: publishedDate,
-        ...(entry.featuredImage?.url ? { image: entry.featuredImage.url } : {}),
-      });
+  for (const page of sortedPages) {
+    const url = `${baseUrl}/changelog/${page.slugs[0]}`;
+    feed.addItem({
+      title: page.data.title,
+      id: url,
+      link: url,
+      description: page.data.description,
+      date: new Date(page.data.publishedAt),
+      image: page.data.ogImage,
     });
-  } catch {
-    // Return empty feed when CMS is unavailable
   }
 
   return feed;

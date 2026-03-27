@@ -91,6 +91,24 @@ export type LegalPageData = z.infer<typeof LegalPageSchema>;
 export type DocsPageData = z.infer<typeof DocsPageSchema>;
 export type MarketingPageData = z.infer<typeof MarketingPageSchema>;
 
+// Fields required by the SEO layer — satisfied structurally by BlogPostData,
+// ChangelogEntryData, and DocsPageData. Derived from BlogPostData so schema
+// renames propagate here automatically.
+export type ContentSeoData = Pick<
+  BlogPostData,
+  | "authors"
+  | "description"
+  | "keywords"
+  | "nofollow"
+  | "noindex"
+  | "ogDescription"
+  | "ogImage"
+  | "ogTitle"
+  | "publishedAt"
+  | "title"
+  | "updatedAt"
+>;
+
 // Derived from Zod — Zod is the sole source of truth for these unions
 export type BlogCategory = BlogPostData["category"];
 // → "engineering" | "product" | "company" | "tutorial" | "research"

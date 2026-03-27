@@ -1,7 +1,7 @@
 import { ContentLayout } from "@repo/og";
 import { OG_HEIGHT, OG_WIDTH } from "@repo/og/brand";
-import { changelog } from "@vendor/cms";
 import { ImageResponse } from "next/og";
+import { getChangelogPage } from "~/app/(app)/(content)/_lib/source";
 import { loadOGFonts } from "~/lib/og-fonts";
 
 export const runtime = "nodejs";
@@ -15,37 +15,28 @@ export default async function Image({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const page = getChangelogPage([slug]);
   const fonts = await loadOGFonts();
 
-  let title = "Changelog";
-  let description: string | undefined;
-  let date: string | undefined;
-
-  try {
-    const entry = await changelog.getEntryBySlug(slug);
-    if (entry) {
-      title = entry._title;
-      description = entry.excerpt ?? undefined;
-      const publishedAt = entry.publishedAt;
-      date = publishedAt
-        ? new Date(publishedAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        : undefined;
-    }
-  } catch {
-    // Fall back to defaults
+  if (!page) {
+    return new ImageResponse(<div>Not Found</div>, { ...size });
   }
 
+  const { title, description, publishedAt } = page.data;
+
   return new ImageResponse(
-    <ContentLayout
-      category="Changelog"
-      date={date}
-      description={description}
-      title={title}
-    />,
-    { ...size, fonts }
+    (
+      <ContentLayout
+        category="Changelog"
+        date={new Date(publishedAt).toLocaleDateString("en-US", {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        })}
+        description={description}
+        title={title}
+      />
+    ),
+    { ...size, fonts },
   );
 }

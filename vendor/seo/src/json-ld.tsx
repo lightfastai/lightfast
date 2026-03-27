@@ -54,6 +54,7 @@ export type {
   HowToStep,
   // Media types
   ImageObject,
+  ListItem,
   Offer,
   // Organization types
   Organization,

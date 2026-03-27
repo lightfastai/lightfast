@@ -1,15 +1,19 @@
-import { categories as categoriesAPI } from "@vendor/cms";
 import { RssIcon } from "lucide-react";
 import Link from "next/link";
 import { CategoryNav } from "~/app/(app)/_components/blog-category-nav";
+import { BlogPostSchema } from "~/lib/content-schemas";
 
-export default async function BlogListingLayout({
+// Derived from the Zod enum — single source of truth in content-schemas.ts
+const BLOG_CATEGORIES = BlogPostSchema.shape.category.options.map((slug) => ({
+  slug,
+  title: slug.charAt(0).toUpperCase() + slug.slice(1),
+}));
+
+export default function BlogListingLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const allCategories = await categoriesAPI.getCategories();
-
   return (
     <div className="mx-auto w-full max-w-2xl pt-24 pb-32">
       <div className="mb-12 flex items-center justify-between">
@@ -27,12 +31,12 @@ export default async function BlogListingLayout({
       <div className="relative">
         {/* Desktop: Category nav positioned to the left of content */}
         <div className="absolute top-0 right-full mr-12 hidden xl:block">
-          <CategoryNav categories={allCategories} />
+          <CategoryNav categories={BLOG_CATEGORIES} />
         </div>
 
         {/* Mobile/tablet: Category nav above content */}
         <div className="mb-8 xl:hidden">
-          <CategoryNav categories={allCategories} />
+          <CategoryNav categories={BLOG_CATEGORIES} />
         </div>
 
         <main>{children}</main>

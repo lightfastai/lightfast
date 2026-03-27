@@ -5,8 +5,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface Category {
-  _slug?: string | null;
-  _title?: string | null;
+  slug: string;
+  title: string;
 }
 
 interface CategoryNavProps {
@@ -37,17 +37,15 @@ export function CategoryNav({ categories }: CategoryNavProps) {
           <Button
             asChild
             className={`h-auto h-fit w-full justify-start px-0 py-1 font-normal ${
-              currentCategory === category._slug
+              currentCategory === category.slug
                 ? "text-foreground"
                 : "text-muted-foreground"
             }`}
-            key={category._slug}
+            key={category.slug}
             size="sm"
             variant="link"
           >
-            <Link href={`/blog/topic/${category._slug}`}>
-              {category._title}
-            </Link>
+            <Link href={`/blog/topic/${category.slug}`}>{category.title}</Link>
           </Button>
         ))}
       </nav>

@@ -1,5 +1,9 @@
 import { createLlmsTxtHandler, type PageEntry } from "@vendor/aeo";
-import { blog, changelog, legal } from "@vendor/cms";
+import {
+  getBlogPages,
+  getChangelogPages,
+  getLegalPages,
+} from "~/app/(app)/(content)/_lib/source";
 
 export const revalidate = false;
 
@@ -19,70 +23,60 @@ const providers: Array<() => Promise<PageEntry[]>> = [
     ]),
 
   // Blog listing + posts
-  () =>
-    blog.getPosts().then((posts) => {
-      const entries: PageEntry[] = [
-        {
-          url: `${BASE_URL}/blog`,
-          title: "Blog",
-          description:
-            "Insights, guides, and product updates from the Lightfast team.",
-          section: "Blog",
-        },
-      ];
-      for (const post of posts) {
-        const slug = post.slug ?? post._slug;
-        if (!slug) {
-          continue;
-        }
-        entries.push({
-          url: `${BASE_URL}/blog/${slug}`,
-          title: post._title ?? slug,
-          description: post.description ?? undefined,
-          section: "Blog",
-        });
-      }
-      return entries;
-    }),
+  () => {
+    const pages = getBlogPages();
+    const entries: PageEntry[] = [
+      {
+        url: `${BASE_URL}/blog`,
+        title: "Blog",
+        description:
+          "Insights, guides, and product updates from the Lightfast team.",
+        section: "Blog",
+      },
+    ];
+    for (const page of pages) {
+      entries.push({
+        url: `${BASE_URL}/blog/${page.slugs[0]}`,
+        title: page.data.title,
+        description: page.data.description,
+        section: "Blog",
+      });
+    }
+    return Promise.resolve(entries);
+  },
 
   // Changelog listing + entries
-  () =>
-    changelog.getEntries().then((entries) => {
-      const pages: PageEntry[] = [
-        {
-          url: `${BASE_URL}/changelog`,
-          title: "Changelog",
-          description:
-            "What's new in Lightfast — product updates and improvements.",
-          section: "Changelog",
-        },
-      ];
-      for (const entry of entries) {
-        const slug = entry.slug ?? entry._slug;
-        if (!slug) {
-          continue;
-        }
-        pages.push({
-          url: `${BASE_URL}/changelog/${slug}`,
-          title: entry._title ?? slug,
-          section: "Changelog",
-        });
-      }
-      return pages;
-    }),
+  () => {
+    const pages = getChangelogPages();
+    const entries: PageEntry[] = [
+      {
+        url: `${BASE_URL}/changelog`,
+        title: "Changelog",
+        description:
+          "What's new in Lightfast — product updates and improvements.",
+        section: "Changelog",
+      },
+    ];
+    for (const page of pages) {
+      entries.push({
+        url: `${BASE_URL}/changelog/${page.slugs[0]}`,
+        title: page.data.title,
+        section: "Changelog",
+      });
+    }
+    return Promise.resolve(entries);
+  },
 
   // Legal pages
   () =>
-    legal.getPosts().then((pages) =>
-      pages
-        .filter((p) => !!p._slug)
-        .map((p) => ({
-          url: `${BASE_URL}/legal/${p._slug}`,
-          title: p._title ?? p._slug!,
-          description: p.description ?? undefined,
-          section: "Legal",
-          optional: true as const,
-        }))
+    Promise.resolve(
+      getLegalPages().map((page) => ({
+        url: `${BASE_URL}/legal/${page.slugs[0]}`,
+        title: page.data.title,
+        description: page.data.description,
+        section: "Legal",
+        optional: true as const,
+      })),
     ),
 ];
 
@@ -136,5 +130,5 @@ export const { GET } = createLlmsTxtHandler(
   {
     skipUrl: [/\/search(\b|\/)/, /\/pitch-deck/],
     stripTitleSuffix: "Lightfast",
-  }
+  },
 );

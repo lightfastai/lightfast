@@ -1,0 +1,197 @@
+import type { GraphContext } from "@vendor/seo/json-ld";
+import type { Metadata } from "next";
+import type { Crumb } from "./builders";
+import {
+  buildApiRefJsonLd,
+  buildBlogPostJsonLd,
+  buildChangelogEntryJsonLd,
+  buildDocsJsonLd,
+  buildLegalJsonLd,
+} from "./builders";
+import type {
+  BlogPostData,
+  ChangelogEntryData,
+  ContentSeoData,
+  DocsPageData,
+  LegalPageData,
+} from "./content-schemas";
+import { createArticleMetadata, createMetadata } from "./content-seo";
+import type {
+  ApiRefUrl,
+  BlogPostUrl,
+  ChangelogUrl,
+  DocsUrl,
+  LegalUrl,
+} from "./url-types";
+
+export interface SeoBundle {
+  readonly jsonLd: GraphContext;
+  readonly metadata: Metadata;
+}
+
+// SeoBundle owns canonical URL derivation — derives from the typed url param,
+// respects frontmatter canonicalUrl as an escape hatch.
+// Both metadata.alternates.canonical and JSON-LD url come from the same value:
+// drift is structurally impossible.
+
+function buildArticleMetadata(
+  data: ContentSeoData,
+  canonicalUrl: string,
+  titleSuffix: string,
+  siteName: string
+): Metadata {
+  return createArticleMetadata(
+    {
+      title: `${data.title} – ${titleSuffix}`,
+      description: data.description,
+      keywords: data.keywords,
+      authors: data.authors.map((a) => ({ name: a.name, url: a.url })),
+      creator: "Lightfast",
+      publisher: "Lightfast",
+      robots: {
+        index: !data.noindex,
+        follow: !data.nofollow,
+        googleBot: {
+          index: !data.noindex,
+          follow: !data.nofollow,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      },
+      alternates: { canonical: canonicalUrl },
+      openGraph: {
+        title: data.ogTitle,
+        description: data.ogDescription,
+        url: canonicalUrl,
+        siteName,
+        locale: "en_US",
+        images: [
+          { url: data.ogImage, width: 1200, height: 630, alt: data.ogTitle },
+        ],
+        authors: data.authors.map((a) => a.url),
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: data.ogTitle,
+        description: data.ogDescription,
+        site: "@lightfastai",
+        creator: "@lightfastai",
+        images: [data.ogImage],
+      },
+      category: "Technology",
+    },
+    { publishedAt: data.publishedAt, updatedAt: data.updatedAt }
+  );
+}
+
+export function emitBlogPostSeo(
+  data: BlogPostData,
+  url: BlogPostUrl
+): SeoBundle {
+  const canonicalUrl = data.canonicalUrl ?? url;
+  return {
+    metadata: buildArticleMetadata(
+      data,
+      canonicalUrl,
+      "Lightfast Blog",
+      "Lightfast Blog"
+    ),
+    jsonLd: buildBlogPostJsonLd(data, url),
+  };
+}
+
+export function emitChangelogEntrySeo(
+  data: ChangelogEntryData,
+  url: ChangelogUrl
+): SeoBundle {
+  const canonicalUrl = data.canonicalUrl ?? url;
+  return {
+    metadata: buildArticleMetadata(
+      data,
+      canonicalUrl,
+      "Lightfast Changelog",
+      "Lightfast Changelog"
+    ),
+    jsonLd: buildChangelogEntryJsonLd(data, url),
+  };
+}
+
+export function emitDocsSeo(
+  data: DocsPageData,
+  url: DocsUrl,
+  breadcrumbs: Crumb[]
+): SeoBundle {
+  const canonicalUrl = data.canonicalUrl ?? url;
+  return {
+    metadata: buildArticleMetadata(
+      data,
+      canonicalUrl,
+      "Lightfast Docs",
+      "Lightfast Documentation"
+    ),
+    jsonLd: buildDocsJsonLd(data, url, breadcrumbs),
+  };
+}
+
+export function emitLegalSeo(data: LegalPageData, url: LegalUrl): SeoBundle {
+  const canonicalUrl = data.canonicalUrl ?? url;
+  return {
+    metadata: createMetadata({
+      title: `${data.title} – Lightfast`,
+      description: data.description,
+      keywords: data.keywords,
+      creator: "Lightfast",
+      publisher: "Lightfast",
+      robots: {
+        index: !data.noindex,
+        follow: !data.nofollow,
+        googleBot: {
+          index: !data.noindex,
+          follow: !data.nofollow,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      },
+      alternates: { canonical: canonicalUrl },
+      openGraph: {
+        title: data.ogTitle,
+        description: data.ogDescription,
+        type: "website",
+        url: canonicalUrl,
+        siteName: "Lightfast",
+        locale: "en_US",
+        images: [
+          { url: data.ogImage, width: 1200, height: 630, alt: data.ogTitle },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: data.ogTitle,
+        description: data.ogDescription,
+        site: "@lightfastai",
+        creator: "@lightfastai",
+        images: [data.ogImage],
+      },
+    }),
+    jsonLd: buildLegalJsonLd(data, url),
+  };
+}
+
+export function emitApiRefSeo(
+  data: DocsPageData,
+  url: ApiRefUrl,
+  breadcrumbs: Crumb[]
+): SeoBundle {
+  const canonicalUrl = data.canonicalUrl ?? url;
+  return {
+    metadata: buildArticleMetadata(
+      data,
+      canonicalUrl,
+      "Lightfast API Reference",
+      "Lightfast API Reference"
+    ),
+    jsonLd: buildApiRefJsonLd(data, url, breadcrumbs),
+  };
+}
