@@ -1,25 +1,11 @@
 import type { Icons } from "../components/icons";
 
-export interface NavItem {
+export interface NavItem<H extends string = string> {
   disabled?: boolean;
   external?: boolean;
-  href: string;
+  href: H;
   icon?: keyof typeof Icons;
   label?: string;
+  microfrontend?: boolean;
   title: string;
 }
-
-export interface NavItemWithChildren extends NavItem {
-  items: NavItemWithChildren[];
-}
-
-/**
- * A record of nav items with a string key.
- * @example ```ts
- * const nav: NavItemRecord<"home" | "about"> = {
- *   home: { title: "Home", href: "/" },
- *   about: { title: "About", href: "/about" },
- * };
- * ```
- */
-export type NavItemRecord<T extends string> = Record<T, NavItem>;

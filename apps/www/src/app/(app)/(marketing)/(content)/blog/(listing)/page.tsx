@@ -1,45 +1,41 @@
-import type { PostMeta } from "@vendor/cms";
-import { blog } from "@vendor/cms";
-import type { BlogPosting, GraphContext } from "@vendor/seo/json-ld";
+import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata, Route } from "next";
+import { getBlogPages } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
+import {
+  buildFaqEntity,
+  buildOrganizationEntity,
+  buildWebSiteEntity,
+} from "~/lib/builders";
+import { createMetadata } from "~/lib/content-seo";
 
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
-  title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
-  description:
-    "The Lightfast blog covers operating infrastructure, event-driven architecture, agent tooling, and building the layer between your agents and apps. Product updates, architecture deep dives, and guides.",
+const PAGE_TITLE = "Blog";
+const PAGE_DESCRIPTION =
+  "Engineering deep-dives, product updates, and lessons from building the superintelligence layer for founders at Lightfast.";
+const PAGE_URL = "https://lightfast.ai/blog";
+const FAQ = [
+  {
+    question: "What topics does the Lightfast blog cover?",
+    answer:
+      "We cover engineering deep-dives on AI agent orchestration, product launches and changelogs, company updates, tutorials for integrating with Lightfast, and research on MCP tools and agent memory.",
+  },
+];
+
+export const metadata: Metadata = createMetadata({
+  title: `${PAGE_TITLE} | Lightfast`,
+  description: PAGE_DESCRIPTION,
   keywords: [
-    "operating infrastructure",
+    "lightfast blog",
+    "ai engineering blog",
     "agent infrastructure",
-    "event-driven architecture",
-    "AI agents",
-    "MCP tools",
-    "tool integration",
-    "real-time events",
-    "semantic search",
-    "Lightfast blog",
-    "answer engine optimization",
+    "mcp tools",
+    "product updates",
   ],
-  openGraph: {
-    title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
-    description:
-      "Articles on operating infrastructure, event-driven architecture, and agent tooling for engineering and platform teams, plus product updates and deep dives.",
-    type: "website",
-    url: "https://lightfast.ai/blog",
-    siteName: "Lightfast",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
-    description:
-      "Operating infrastructure, event-driven architecture, and agent tooling for engineering and platform teams.",
-    creator: "@lightfastai",
-  },
   alternates: {
-    canonical: "https://lightfast.ai/blog",
+    canonical: PAGE_URL,
     types: {
       "application/rss+xml": [
         { url: "https://lightfast.ai/blog/rss.xml", title: "RSS 2.0" },
@@ -49,84 +45,72 @@ export const metadata: Metadata = {
       ],
     },
   },
-};
+  openGraph: {
+    title: "Lightfast Blog – Operating Infrastructure for Agents and Apps",
+    description:
+      "Articles on operating infrastructure, event-driven architecture, and agent tooling.",
+    type: "website",
+    url: PAGE_URL,
+    siteName: "Lightfast",
+    locale: "en_US",
+    images: [
+      {
+        url: "https://lightfast.ai/images/og-default.png",
+        width: 1200,
+        height: 630,
+        alt: "Lightfast Blog",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lightfast Blog",
+    description: PAGE_DESCRIPTION,
+    site: "@lightfastai",
+    creator: "@lightfastai",
+    images: ["https://lightfast.ai/images/og-default.png"],
+  },
+});
 
-export default async function BlogPage() {
-  let posts: PostMeta[] = [];
-  try {
-    posts = await blog.getPosts();
-  } catch {
-    // CMS unavailable — render empty state
-  }
+export default function BlogPage() {
+  const pages = getBlogPages();
 
-  // Structured data for SEO - using @graph for multiple entities
+  const sortedPages = [...pages].sort((a, b) => {
+    return (
+      new Date(b.data.publishedAt).getTime() -
+      new Date(a.data.publishedAt).getTime()
+    );
+  });
+
   const structuredData: GraphContext = {
     "@context": "https://schema.org",
     "@graph": [
+      buildOrganizationEntity(),
+      buildWebSiteEntity(),
       {
-        "@type": "Organization",
-        "@id": "https://lightfast.ai/#organization",
-        name: "Lightfast",
-        url: "https://lightfast.ai",
-        logo: {
-          "@type": "ImageObject",
-          url: "https://lightfast.ai/android-chrome-512x512.png",
-        },
-        sameAs: [
-          "https://twitter.com/lightfastai",
-          "https://github.com/lightfastai",
-        ],
-      },
-      {
-        "@type": "WebSite",
-        "@id": "https://lightfast.ai/#website",
-        url: "https://lightfast.ai",
-        name: "Lightfast",
-        publisher: {
-          "@id": "https://lightfast.ai/#organization",
-        },
-      },
-      {
-        "@type": "Blog",
-        "@id": "https://lightfast.ai/blog#blog",
-        url: "https://lightfast.ai/blog",
+        "@type": "Blog" as const,
+        "@id": `${PAGE_URL}#blog`,
+        url: PAGE_URL,
         name: "Lightfast Blog",
-        description:
-          "Insights on operating infrastructure, event-driven architecture, and agent tooling for engineering teams",
-        publisher: {
-          "@id": "https://lightfast.ai/#organization",
-        },
-        blogPost: posts.slice(0, 10).map((post) => {
-          const blogPosting: BlogPosting = {
-            "@type": "BlogPosting",
-            "@id": `https://lightfast.ai/blog/${post.slug}`,
-            url: `https://lightfast.ai/blog/${post.slug}`,
-          };
-
-          // Only add properties if they have values
-          if (post._title) {
-            blogPosting.headline = post._title;
-          }
-          if (post.description) {
-            blogPosting.description = post.description;
-          }
-          if (post.publishedAt) {
-            blogPosting.datePublished = post.publishedAt;
-          }
-
-          return blogPosting;
-        }),
+        description: PAGE_DESCRIPTION,
+        publisher: { "@id": "https://lightfast.ai/#organization" },
+        blogPost: sortedPages.slice(0, 10).map((page) => ({
+          "@type": "BlogPosting" as const,
+          headline: page.data.title,
+          description: page.data.description,
+          url: `https://lightfast.ai/blog/${page.slugs[0]}`,
+          datePublished: page.data.publishedAt,
+        })),
       },
+      buildFaqEntity(FAQ, PAGE_URL),
     ],
   };
 
   return (
     <>
       <JsonLd code={structuredData} />
-
-      {/* Posts List */}
       <div className="space-y-2">
-        {posts.length === 0 ? (
+        {sortedPages.length === 0 ? (
           <div className="rounded-xs border border-transparent bg-card/40 p-4">
             <h2 className="mb-4 font-semibold text-sm">Coming soon</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
@@ -136,51 +120,34 @@ export default async function BlogPage() {
             </p>
           </div>
         ) : (
-          posts.map((post) => {
-            const publishedDate = post.publishedAt
-              ? new Date(post.publishedAt)
-              : null;
-            const dateStr = publishedDate
-              ? publishedDate.toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "short",
-                  day: "numeric",
-                })
-              : "";
-
-            // Get primary category
-            const primaryCategory = post.categories[0]?._title;
-
-            return (
-              <article
-                className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
-                key={post._slug}
+          sortedPages.map((page) => (
+            <article
+              className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
+              key={page.slugs[0]}
+            >
+              <NavLink
+                className="group block"
+                href={`/blog/${page.slugs[0]}` as Route}
               >
-                <Link className="group block" href={`/blog/${post.slug}`}>
-                  <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
-                    {post._title}
-                  </h2>
-
-                  {post.description && (
-                    <p className="mb-4 text-md text-muted-foreground leading-relaxed">
-                      {post.description}
-                    </p>
-                  )}
-
-                  {/* Metadata */}
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                    {primaryCategory && (
-                      <>
-                        <span>{primaryCategory}</span>
-                        <span>·</span>
-                      </>
+                <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
+                  {page.data.title}
+                </h2>
+                <p className="mb-4 text-md text-muted-foreground leading-relaxed">
+                  {page.data.description}
+                </p>
+                <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                  <span>{page.data.category}</span>
+                  <span>·</span>
+                  <time dateTime={page.data.publishedAt}>
+                    {new Date(page.data.publishedAt).toLocaleDateString(
+                      "en-US",
+                      { year: "numeric", month: "short", day: "numeric" }
                     )}
-                    <time>{dateStr}</time>
-                  </div>
-                </Link>
-              </article>
-            );
-          })
+                  </time>
+                </div>
+              </NavLink>
+            </article>
+          ))
         )}
       </div>
     </>

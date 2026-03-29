@@ -1,7 +1,7 @@
 import { ContentLayout } from "@repo/og";
 import { OG_HEIGHT, OG_WIDTH } from "@repo/og/brand";
-import { blog } from "@vendor/cms";
 import { ImageResponse } from "next/og";
+import { getBlogPage } from "~/app/(app)/(content)/_lib/source";
 import { loadOGFonts } from "~/lib/og-fonts";
 
 export const runtime = "nodejs";
@@ -15,38 +15,24 @@ export default async function Image({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
+  const page = getBlogPage([slug]);
   const fonts = await loadOGFonts();
 
-  let title = "Blog";
-  let description: string | undefined;
-  let category: string | undefined;
-  let date: string | undefined;
-  let author: string | undefined;
-
-  try {
-    const post = await blog.getPost(slug);
-    if (post) {
-      title = post._title;
-      description = post.description;
-      category = post.categories[0]?._title;
-      date = post.publishedAt
-        ? new Date(post.publishedAt).toLocaleDateString("en-US", {
-            year: "numeric",
-            month: "long",
-            day: "numeric",
-          })
-        : undefined;
-      author = post.authors[0]?._title;
-    }
-  } catch {
-    // Fall back to defaults
+  if (!page) {
+    return new ImageResponse(<div>Not Found</div>, { ...size });
   }
+
+  const { title, description, category, publishedAt, authors } = page.data;
 
   return new ImageResponse(
     <ContentLayout
-      author={author}
-      category={category}
-      date={date}
+      author={authors[0]?.name ?? "Lightfast"}
+      category={category.charAt(0).toUpperCase() + category.slice(1)}
+      date={new Date(publishedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}
       description={description}
       title={title}
     />,

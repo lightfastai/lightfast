@@ -1,428 +1,197 @@
-import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
-import type { BlogPostQueryResponse } from "@vendor/cms";
-import { blog } from "@vendor/cms";
-import { Body } from "@vendor/cms/components/body";
-import { Feed } from "@vendor/cms/components/feed";
-import type { JsonLdData } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { SocialShare } from "~/app/(app)/_components/blog-social-share";
+import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
+import { getBlogPage, getBlogPages } from "~/app/(app)/(content)/_lib/source";
+import { emitBlogPostSeo } from "~/lib/seo-bundle";
+import type { BlogPostUrl } from "~/lib/url-types";
 
 export const dynamic = "force-static";
 
-interface BlogPostPageProps {
+interface Props {
   params: Promise<{ slug: string }>;
 }
 
-export async function generateStaticParams(): Promise<{ slug: string }[]> {
-  try {
-    const posts = await blog.getPosts();
-    return posts
-      .filter((post) => post.slug.length > 0)
-      .map((post) => ({ slug: post.slug }));
-  } catch {
-    return [];
-  }
+export async function generateStaticParams() {
+  return getBlogPages().map((page) => ({ slug: page.slugs[0] }));
 }
 
-export async function generateMetadata({
-  params,
-}: BlogPostPageProps): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
-
-  let post;
-  try {
-    post = await blog.getPost(slug);
-  } catch {
+  const page = getBlogPage([slug]);
+  if (!page) {
     return {};
   }
+  const url = `https://lightfast.ai/blog/${slug}` as BlogPostUrl;
+  const { metadata } = emitBlogPostSeo(page.data, url);
+  return metadata;
+}
 
-  if (!post) {
-    return {};
+export default async function BlogPostPage({ params }: Props) {
+  const { slug } = await params;
+  const page = getBlogPage([slug]);
+  if (!page) {
+    notFound();
   }
 
-  const description = post.description;
+  const url = `https://lightfast.ai/blog/${slug}` as BlogPostUrl;
+  const { jsonLd } = emitBlogPostSeo(page.data, url);
+  const MDXContent = page.data.body;
 
-  const canonicalUrl = `https://lightfast.ai/blog/${slug}`;
-  return {
-    title: post._title,
+  const {
+    title,
     description,
-    authors: post.authors.map((author) => ({
-      name: author._title,
-    })),
-    alternates: {
-      canonical: canonicalUrl,
-      types: {
-        "application/rss+xml": [
-          { url: "https://lightfast.ai/blog/rss.xml", title: "RSS 2.0" },
-        ],
-      },
-    },
-    openGraph: {
-      title: post._title,
-      description,
-      type: "article",
-      url: canonicalUrl,
-      siteName: "Lightfast",
-      publishedTime: post.publishedAt ?? undefined,
-      authors: post.authors.map((author) => author._title),
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: post._title,
-      description,
-      creator: "@lightfastai",
-    },
-  } satisfies Metadata;
-}
-
-export default async function BlogPostPage({ params }: BlogPostPageProps) {
-  const { slug } = await params;
+    authors,
+    publishedAt,
+    readingTimeMinutes,
+    tldr,
+    ogImage,
+    category,
+  } = page.data;
 
   return (
-    <Feed queries={[blog.postQuery(slug)]}>
-      {async ([data]) => {
-        "use server";
+    <>
+      <JsonLd code={jsonLd} />
+      <article className="mx-auto w-full max-w-2xl pt-24 pb-32">
+        {/* Breadcrumb */}
+        <p className="mb-8 text-muted-foreground text-sm">
+          Blog / {category.charAt(0).toUpperCase() + category.slice(1)}
+        </p>
 
-        const response = data as BlogPostQueryResponse;
-        const post = response.blog.post.item;
-        if (!post) {
-          notFound();
-        }
-
-        const publishedDate = post.publishedAt
-          ? new Date(post.publishedAt)
-          : null;
-        const dateStr = publishedDate
-          ? publishedDate.toLocaleDateString("en-US", {
-              year: "numeric",
-              month: "long",
-              day: "numeric",
-            })
-          : "";
-
-        // Get category names for schema generation
-        const categoryNames = post.categories
-          .map((c) => c._title?.toLowerCase())
-          .filter(Boolean) as string[];
-
-        // Helper function to get additional schema types based on categories
-
-        const getAdditionalSchemas = (): Record<string, unknown>[] => {
-          const schemas: Record<string, unknown>[] = [];
-
-          // Add FAQ schema from CMS data
-          if (post.seo.faq.items.length > 0) {
-            const faqItems = post.seo.faq.items
-              .filter((item) => item.question && item.answer)
-              .map((item) => ({
-                "@type": "Question",
-                name: item.question,
-                acceptedAnswer: {
-                  "@type": "Answer",
-                  text: item.answer,
-                },
-              }));
-
-            if (faqItems.length > 0) {
-              schemas.push({
-                "@type": "FAQPage",
-                mainEntity: faqItems,
-              });
-            }
-          }
-
-          // Add HowTo schema for Data category posts
-          if (categoryNames.includes("data")) {
-            schemas.push({
-              "@type": "HowTo",
-              name: post._title,
-              description: post.description,
-              step: [
-                {
-                  "@type": "HowToStep",
-                  name: "Methodology",
-                  text: post.description,
-                },
-              ],
-            });
-          }
-
-          // Add TechArticle schema for Technology posts
-          if (categoryNames.includes("technology")) {
-            schemas.push({
-              "@type": "TechArticle",
-              name: post._title,
-              description: post.description,
-            });
-          }
-
-          return schemas;
-        };
-
-        // Generate structured data for SEO
-        const baseStructuredData = {
-          "@context": "https://schema.org" as const,
-          "@type": "BlogPosting" as const,
-          headline: post._title,
-          description: post.description,
-          ...(publishedDate
-            ? { datePublished: publishedDate.toISOString() }
-            : {}),
-          url: `https://lightfast.ai/blog/${slug}`,
-          ...(post.authors && post.authors.length > 0
-            ? {
-                author: post.authors.map((author) => ({
-                  "@type": "Person" as const,
-                  name: author._title,
-                  ...(author.xUrl ? { url: author.xUrl } : {}),
-                })),
-              }
-            : {}),
-          ...(post.featuredImage?.url
-            ? {
-                image: {
-                  "@type": "ImageObject" as const,
-                  url: post.featuredImage.url,
-                  ...(post.featuredImage.width
-                    ? { width: post.featuredImage.width }
-                    : {}),
-                  ...(post.featuredImage.height
-                    ? { height: post.featuredImage.height }
-                    : {}),
-                },
-              }
-            : {}),
-          publisher: {
-            "@type": "Organization" as const,
-            name: "Lightfast",
-            logo: {
-              "@type": "ImageObject" as const,
-              url: "https://lightfast.ai/android-chrome-512x512.png",
-            },
-          },
-        };
-
-        // Get additional schemas based on category
-        const additionalSchemas = getAdditionalSchemas();
-
-        // Combine base schema with additional schemas
-        const structuredData =
-          additionalSchemas.length > 0
-            ? {
-                "@context": "https://schema.org",
-                "@graph": [baseStructuredData, ...additionalSchemas],
-              }
-            : baseStructuredData;
-
-        // Get primary category for breadcrumb
-        const primaryCategory = post.categories?.[0];
-
-        return (
-          <>
-            {/* Structured data for SEO */}
-            <JsonLd code={structuredData as JsonLdData} />
-
-            <article className="mx-auto w-full max-w-2xl pt-24 pb-32">
-              <p className="mb-8 text-muted-foreground text-sm">
-                Blog
-                {primaryCategory?._title ? (
-                  <> / {primaryCategory._title}</>
-                ) : null}
+        {/* Header */}
+        <header className="space-y-6">
+          <div className="space-y-4">
+            <h1 className="font-medium font-pp text-2xl text-foreground">
+              {title}
+            </h1>
+            {description && (
+              <p className="text-muted-foreground text-sm leading-relaxed">
+                {description}
               </p>
-              {/* Header */}
-              <header className="space-y-6">
-                <div className="space-y-4">
-                  {/* Title */}
-                  <h1 className="font-medium font-pp text-2xl text-foreground">
-                    {post._title}
-                  </h1>
+            )}
+          </div>
 
-                  {/* Description */}
-                  {post.description && (
-                    <p className="text-muted-foreground text-sm leading-relaxed">
-                      {post.description}
-                    </p>
-                  )}
+          {/* Author + date + reading time */}
+          <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
+            {authors.length > 0 && (
+              <div className="flex items-center gap-3">
+                <div>
+                  {authors.map((author, idx) => (
+                    <span key={author.name}>
+                      {author.url ? (
+                        <a
+                          className="transition-colors hover:text-foreground"
+                          href={author.url}
+                          rel="noopener noreferrer"
+                          target="_blank"
+                        >
+                          {author.name}
+                        </a>
+                      ) : (
+                        author.name
+                      )}
+                      {idx < authors.length - 1 && ", "}
+                    </span>
+                  ))}
                 </div>
-
-                {/* Author info and metadata */}
-                <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
-                  {/* Authors */}
-                  {post.authors.length > 0 && (
-                    <div className="flex items-center gap-3">
-                      <div className="flex -space-x-2">
-                        {post.authors.map((author, authorIdx) => (
-                          <div
-                            className="relative"
-                            key={`${author._title}-${authorIdx}`}
-                          >
-                            {author.avatar?.url ? (
-                              <Image
-                                alt={author._title ?? "Author"}
-                                className="rounded-full border-2 border-background"
-                                height={32}
-                                src={author.avatar.url}
-                                width={32}
-                              />
-                            ) : (
-                              <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-background bg-muted">
-                                <span className="text-muted-foreground text-xs">
-                                  {author._title?.charAt(0)}
-                                </span>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      <div>
-                        {post.authors.map((author, authorIdx) => (
-                          <span key={`author-name-${authorIdx}`}>
-                            {author.xUrl ? (
-                              <Link
-                                className="transition-colors hover:text-foreground"
-                                href={author.xUrl}
-                                rel="noopener noreferrer"
-                                target="_blank"
-                              >
-                                {author._title}
-                              </Link>
-                            ) : (
-                              author._title
-                            )}
-                            {authorIdx < post.authors.length - 1 && ", "}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Date */}
-                  {dateStr && (
-                    <>
-                      <span className="text-muted-foreground/50">·</span>
-                      <time>{dateStr}</time>
-                    </>
-                  )}
-
-                  {/* Reading time */}
-                  {post.body?.readingTime && (
-                    <>
-                      <span className="text-muted-foreground/50">·</span>
-                      <span>{post.body.readingTime} min read</span>
-                    </>
-                  )}
-                </div>
-
-                {/* Social sharing */}
-                <div className="border-t pt-4">
-                  <SocialShare
-                    description={post.description}
-                    title={post._title}
-                    url={`https://lightfast.ai/blog/${slug}`}
-                  />
-                </div>
-              </header>
-
-              {/* TL;DR Summary for AEO */}
-              {post.tldr && (
-                <div className="my-8 rounded-xs bg-card p-8">
-                  <h2 className="mb-12 font-mono font-semibold text-muted-foreground text-xs uppercase tracking-widest">
-                    TL;DR
-                  </h2>
-                  <p className="text-foreground/90 text-sm leading-relaxed">
-                    {post.tldr}
-                  </p>
-                </div>
-              )}
-
-              {/* Featured Image */}
-              {post.featuredImage?.url && (
-                <div className="relative mt-8 mb-12 aspect-video overflow-hidden rounded-lg">
-                  <Image
-                    alt={post.featuredImage.alt ?? post._title}
-                    className="h-full w-full object-cover"
-                    height={post.featuredImage.height}
-                    priority
-                    src={post.featuredImage.url}
-                    width={post.featuredImage.width}
-                  />
-                </div>
-              )}
-
-              {/* Content */}
-              {post.body?.json?.content ? (
-                <div className="mt-12 max-w-none">
-                  <Body
-                    codeBlockComponent={SSRCodeBlock}
-                    content={post.body.json.content}
-                  />
-                </div>
-              ) : null}
-
-              {/* Share CTA */}
-              <div className="mt-16 rounded-sm bg-card p-6">
-                <h3 className="mb-2 font-semibold text-lg">
-                  Enjoyed this article?
-                </h3>
-                <p className="mb-4 text-muted-foreground">
-                  Share it with your team to spread the knowledge.
-                </p>
-                <SocialShare
-                  description={post.description}
-                  title={post._title}
-                  url={`https://lightfast.ai/blog/${slug}`}
-                />
               </div>
+            )}
 
-              {/* Author Bios */}
-              {post.authors.length > 0 && (
-                <div className="mt-16 border-t pt-8">
-                  <h3 className="mb-6 font-semibold text-muted-foreground text-sm uppercase tracking-wide">
-                    About the {post.authors.length > 1 ? "Authors" : "Author"}
-                  </h3>
-                  <div className="space-y-6">
-                    {post.authors.map((author, authorIdx) => (
-                      <div
-                        className="flex gap-4"
-                        key={`${author._title}-${authorIdx}`}
+            <span className="text-muted-foreground/50">·</span>
+            <time dateTime={publishedAt}>
+              {new Date(publishedAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </time>
+            <span className="text-muted-foreground/50">·</span>
+            <span>{readingTimeMinutes} min read</span>
+          </div>
+
+          {/* Social sharing */}
+          <div className="border-t pt-4">
+            <SocialShare
+              description={description}
+              title={title}
+              url={`https://lightfast.ai/blog/${slug}`}
+            />
+          </div>
+        </header>
+
+        {/* TL;DR */}
+        {tldr && (
+          <div className="my-8 rounded-xs bg-card p-8">
+            <h2 className="mb-12 font-mono font-semibold text-muted-foreground text-xs uppercase tracking-widest">
+              TL;DR
+            </h2>
+            <p className="text-foreground/90 text-sm leading-relaxed">{tldr}</p>
+          </div>
+        )}
+
+        {/* Featured image */}
+        {ogImage && (
+          <div className="relative mt-8 mb-12 aspect-video overflow-hidden rounded-lg">
+            <Image
+              alt={title}
+              className="h-full w-full object-cover"
+              fill
+              priority
+              src={ogImage}
+            />
+          </div>
+        )}
+
+        {/* MDX content */}
+        <div className="mt-12 max-w-none">
+          <MDXContent components={mdxComponents} />
+        </div>
+
+        {/* Share CTA */}
+        <div className="mt-16 rounded-sm bg-card p-6">
+          <h3 className="mb-2 font-semibold text-lg">Enjoyed this article?</h3>
+          <p className="mb-4 text-muted-foreground">
+            Share it with your team to spread the knowledge.
+          </p>
+          <SocialShare
+            description={description}
+            title={title}
+            url={`https://lightfast.ai/blog/${slug}`}
+          />
+        </div>
+
+        {/* Author bios */}
+        {authors.length > 0 && (
+          <div className="mt-16 border-t pt-8">
+            <h3 className="mb-6 font-semibold text-muted-foreground text-sm uppercase tracking-wide">
+              About the {authors.length > 1 ? "Authors" : "Author"}
+            </h3>
+            <div className="space-y-6">
+              {authors.map((author) => (
+                <div className="flex gap-4" key={author.name}>
+                  <div>
+                    <h4 className="font-semibold text-foreground">
+                      {author.name}
+                    </h4>
+                    {author.twitterHandle && (
+                      <a
+                        className="text-muted-foreground text-sm transition-colors hover:text-foreground"
+                        href={`https://x.com/${author.twitterHandle.replace(/^@/, "")}`}
+                        rel="noopener noreferrer"
+                        target="_blank"
                       >
-                        {author.avatar?.url && (
-                          <Image
-                            alt={author._title ?? "Author"}
-                            className="flex-shrink-0 rounded-full"
-                            height={48}
-                            src={author.avatar.url}
-                            width={48}
-                          />
-                        )}
-                        <div>
-                          <h4 className="font-semibold text-foreground">
-                            {author._title}
-                          </h4>
-                          {author.xUrl && (
-                            <Link
-                              className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-                              href={author.xUrl}
-                              rel="noopener noreferrer"
-                              target="_blank"
-                            >
-                              @{author.xUrl.split("/").pop()}
-                            </Link>
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                        {author.twitterHandle}
+                      </a>
+                    )}
                   </div>
                 </div>
-              )}
-            </article>
-          </>
-        );
-      }}
-    </Feed>
+              ))}
+            </div>
+          </div>
+        )}
+      </article>
+    </>
   );
 }

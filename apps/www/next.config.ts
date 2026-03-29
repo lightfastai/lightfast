@@ -1,28 +1,16 @@
+import { withBetterStack } from "@logtail/next";
+import withBundleAnalyzer from "@next/bundle-analyzer";
+import { withSentryConfig } from "@sentry/nextjs";
+import { baseConfig, sentryOptions } from "@vendor/next/config";
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
+import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import { createMDX } from "fumadocs-mdx/next";
+import merge from "lodash.merge";
 import type { NextConfig } from "next";
-
-import "~/env";
-
-import { mergeNextConfig } from "@vendor/next/merge-config";
-import {
-  config as vendorConfig,
-  withAnalyzer,
-  withBetterStack,
-  withSentry,
-} from "@vendor/next/next-config-builder";
 
 import { env } from "~/env";
 
-/**
- * Type-safe config for Next.js 16.
- *
- * The vendor functions are typed with Next.js 15's NextConfig, so we cast
- * at the boundary where we call them. The final config is properly typed
- * with Next.js 16's NextConfig.
- */
-const wwwConfig: NextConfig = {
-  // Next.js 16 requires explicit quality values
+const wwwConfig: NextConfig = merge({}, baseConfig, {
   images: {
     qualities: [10, 75, 100],
   },
@@ -44,7 +32,6 @@ const wwwConfig: NextConfig = {
         destination: "/docs/api-reference/getting-started/overview",
         permanent: true,
       },
-      // Section roots — redirect to first page since no index.mdx exists
       {
         source: "/docs/get-started",
         destination: "/docs/get-started/overview",
@@ -73,12 +60,11 @@ const wwwConfig: NextConfig = {
     ];
   },
 
-  /** Enables hot reloading for local packages without a build step */
   transpilePackages: [
     "@repo/og",
+    "@repo/ui",
     "@vendor/aeo",
     "@vendor/analytics",
-    "@vendor/cms",
     "@vendor/email",
     "@vendor/inngest",
     "@vendor/next",
@@ -87,43 +73,31 @@ const wwwConfig: NextConfig = {
     "@vendor/seo",
   ],
 
-  // Add automatic static optimization where possible
+  typedRoutes: true,
+
   experimental: {
     optimizePackageImports: [
       "framer-motion",
       "date-fns",
       "class-variance-authority",
-      // lucide-react ships hundreds of icons — optimizePackageImports
-      // makes the compiler only bundle the specific icons imported rather
-      // than the full barrel, eliminating dead icon code from every chunk.
       "lucide-react",
     ],
   },
+} satisfies NextConfig);
 
-  // Note: /docs routing is handled by @vercel/microfrontends via
-  // apps/app/microfrontends.json. No manual rewrites needed.
-};
-
-// Build config using vendor utilities (cast at Next.js 15/16 boundary)
-let config = withBetterStack(
-  mergeNextConfig(
-    vendorConfig,
-    wwwConfig as Parameters<typeof mergeNextConfig>[1]
-  )
-) as NextConfig;
+let config: NextConfig = withBetterStack(withVercelToolbar()(wwwConfig));
 
 if (env.VERCEL) {
-  config = withSentry(config as Parameters<typeof withSentry>[0]) as NextConfig;
+  config = withSentryConfig(config, sentryOptions) as NextConfig;
 }
 
-// Enable bundle analysis when requested
 if (process.env.ANALYZE === "true") {
-  config = withAnalyzer(
-    config as Parameters<typeof withAnalyzer>[0]
-  ) as NextConfig;
+  config = withBundleAnalyzer()(config) as NextConfig;
 }
 
-const withMDX = createMDX();
+const withMDX = createMDX({
+  configPath: "source.config.ts",
+});
 
 export default withMicrofrontends(withMDX(config), {
   debug: process.env.NODE_ENV === "development",

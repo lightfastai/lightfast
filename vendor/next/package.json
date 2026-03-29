@@ -10,13 +10,9 @@
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
-    "./next-config-builder": {
-      "types": "./src/next-config-builder.ts",
-      "default": "./src/next-config-builder.ts"
-    },
-    "./merge-config": {
-      "types": "./src/merge-config.ts",
-      "default": "./src/merge-config.ts"
+    "./config": {
+      "types": "./src/config.ts",
+      "default": "./src/config.ts"
     }
   },
   "scripts": {
@@ -26,16 +22,12 @@
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "next": "catalog:next16",
-    "typescript": "catalog:",
-    "webpack": "^5.105.4"
+    "typescript": "catalog:"
   },
   "dependencies": {
-    "@logtail/next": "^0.3.1",
-    "@next/bundle-analyzer": "^16.0.0",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/observability": "workspace:*",
-    "@vercel/toolbar": "^0.2.2",
     "next-secure-headers": "^2.2.0"
   }
 }

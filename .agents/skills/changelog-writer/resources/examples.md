@@ -34,42 +34,38 @@
 ```yaml
 ---
 title: "GitHub File Sync, Semantic Search, Team Workspaces"
-slug: "0-1-lightfast-github-file-sync-semantic-search"
-publishedAt: "2025-01-15"
-excerpt: "Connect GitHub repos with webhook-driven sync, search code semantically with vector + full-text retrieval, and organize work in isolated team workspaces."
-tldr: "Lightfast v0.1 brings GitHub file sync with automatic webhook updates, semantic code search combining vector embeddings and BM25 full-text with cross-encoder reranking, and team workspaces with Clerk SSO. Currently supports file contents; PR metadata coming in v0.2."
+description: "Lightfast v0.1 brings GitHub file sync with webhook-driven updates, semantic code search with vector + full-text retrieval, and isolated team workspaces. Production-ready."
+keywords:
+  - "webhook-driven sync"
+  - "semantic code search"
+  - "team knowledge base"
+  - "vector search"
+canonicalUrl: "https://lightfast.ai/changelog/2025-01-15-github-file-sync-semantic-search"
+ogTitle: "Lightfast v0.1 — GitHub File Sync, Semantic Search"
+ogDescription: "GitHub file sync with webhook-driven updates, semantic code search with vector + full-text retrieval, and team workspaces."
+ogImage: "https://lightfast.ai/images/og-default.png"
+noindex: false
+nofollow: false
+authors:
+  - name: "Jeevan Pillay"
+    url: "https://lightfast.ai"
+    twitterHandle: "@jeevanpillay"
+publishedAt: "2025-01-15T00:00:00Z"
+updatedAt: "2025-01-15T00:00:00Z"
+version: "v0.1.0"
+type: "feature"
+tldr: "Lightfast v0.1 brings GitHub file sync with automatic webhook updates, semantic code search combining vector embeddings and BM25 full-text with cross-encoder reranking, and team workspaces with Clerk SSO."
+faq:
+  - question: "What is webhook-driven sync?"
+    answer: "Webhook-driven sync automatically updates your knowledge base when you push code to GitHub. Instead of polling, Lightfast receives instant notifications, ensuring sub-minute latency for code updates."
+  - question: "How does semantic code search work?"
+    answer: "Lightfast combines vector embeddings (Pinecone) with BM25 full-text search and cross-encoder reranking. Ask natural language questions like 'how does authentication work' and get relevant code results."
 
-improvements:
-  - "Search highlighting with context-aware snippets and keyword emphasis"
-  - "Intelligent chunking that respects code structure (functions, classes, modules)"
-  - "Activity tracking with per-workspace job status and search metrics"
-  - "Batch processing for efficient handling of large repository updates"
-  - "Webhook verification using HMAC SHA-256 signature validation"
-  - "Incremental sync that only re-indexes changed files on push"
-  - "Config hash tracking to auto-detect config changes and re-process"
-  - "Full glob pattern support including **, *, and ! syntax"
-
-infrastructure:
-  - "Multi-source schema with generic document model ready for future integrations"
-  - "Event-driven workflows using Inngest orchestration with waitForEvent"
-  - "Idempotent processing with safe retries and partial failure recovery"
-  - "Metrics tracking for per-workspace job lifecycle monitoring"
-  - "Type-safe APIs with discriminated unions throughout (TypeScript + Zod)"
-
-seo:
-  metaDescription: "Lightfast v0.1 brings GitHub file sync with webhook-driven updates, semantic code search with vector + full-text retrieval, and isolated team workspaces. Production-ready."
-  focusKeyword: "webhook-driven sync"
-  secondaryKeyword: "semantic code search"
-  faq:
-    - question: "What is webhook-driven sync?"
-      answer: "Webhook-driven sync automatically updates your knowledge base when you push code to GitHub. Instead of polling, Lightfast receives instant notifications, ensuring sub-minute latency for code updates."
-    - question: "How does semantic code search work?"
-      answer: "Lightfast combines vector embeddings (Pinecone) with BM25 full-text search and cross-encoder reranking. Ask natural language questions like 'how does authentication work' and get relevant code results."
-
-_internal:
-  status: draft
-  source_prs: ["#1", "#2", "#3"]
-  generated: "2025-01-15T10:00:00Z"
+_draft: true
+_source_prs:
+  - "#1"
+  - "#2"
+  - "#3"
 ---
 ```
 
@@ -104,7 +100,7 @@ exclude:
 
 **Why webhooks over polling:** Webhooks provide sub-minute update latency while avoiding GitHub API rate limits (5,000 requests/hour). Polling would exhaust limits for active teams.
 
-[Learn more about GitHub setup](/docs/integrations/github)
+[Learn more about GitHub setup](/docs/connectors/github)
 
 ---
 
@@ -134,7 +130,7 @@ Create isolated knowledge bases per team or project. Each workspace has separate
 - Team-based access control
 - Activity and metrics tracking
 
-[Setup guide](/docs/workspaces)
+[Setup guide](/docs/get-started/overview)
 
 ---
 

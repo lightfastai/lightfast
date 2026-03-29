@@ -1,11 +1,10 @@
-import { blog } from "@vendor/cms";
 import { Feed } from "feed";
+import { getBlogPages } from "~/app/(app)/(content)/_lib/source";
 
-export async function generateBlogFeed(): Promise<Feed> {
+export function generateBlogFeed(): Feed {
   const baseUrl = "https://lightfast.ai";
   const buildDate = new Date();
 
-  // Create feed instance
   const feed = new Feed({
     title: "Lightfast Blog",
     description:
@@ -29,40 +28,31 @@ export async function generateBlogFeed(): Promise<Feed> {
     },
   });
 
-  try {
-    const posts = await blog.getPosts();
+  const pages = getBlogPages();
 
-    // Add posts to the feed
-    posts
-      .filter((post) => post.publishedAt) // Only published posts
-      .sort((a, b) => {
-        const dateA = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
-        const dateB = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
-        return dateB - dateA; // Most recent first
-      })
-      .slice(0, 50) // Limit to 50 most recent posts
-      .forEach((post) => {
-        const url = `${baseUrl}/blog/${post.slug}`;
-        const date = post.publishedAt ? new Date(post.publishedAt) : buildDate;
+  const sortedPages = [...pages]
+    .sort(
+      (a, b) =>
+        new Date(b.data.publishedAt).getTime() -
+        new Date(a.data.publishedAt).getTime()
+    )
+    .slice(0, 50);
 
-        feed.addItem({
-          title: post._title,
-          id: url,
-          link: url,
-          description: post.description,
-          date,
-          category: post.categories.map((cat) => ({
-            name: cat._title,
-          })),
-          author: post.authors.map((author) => ({
-            name: author._title,
-            link: author.xUrl ?? undefined,
-          })),
-          image: post.featuredImage?.url ?? undefined,
-        });
-      });
-  } catch {
-    // Return empty feed when CMS is unavailable
+  for (const page of sortedPages) {
+    const url = `${baseUrl}/blog/${page.slugs[0]}`;
+    feed.addItem({
+      title: page.data.title,
+      id: url,
+      link: url,
+      description: page.data.description,
+      date: new Date(page.data.publishedAt),
+      category: [{ name: page.data.category }],
+      author: page.data.authors.map((a) => ({
+        name: a.name,
+        link: a.url,
+      })),
+      image: page.data.ogImage,
+    });
   }
 
   return feed;

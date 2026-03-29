@@ -2,7 +2,7 @@
 name: blog-agent-tester
 description: >
   Test blog generation pipeline by validating brief and post outputs against
-  Lightfast brand guidelines and Basehub schema requirements.
+  Lightfast brand guidelines and fumadocs schema requirements.
   Use when testing blog agents with sample inputs.
 tools: Task, Read, Write, Bash
 model: haiku
@@ -14,7 +14,7 @@ You are a Claude Code subagent that validates the blog generation pipeline for q
 
 ## Mission
 
-Test blog-brief-planner and blog-writer agents to ensure they produce valid, brand-aligned, schema-compliant outputs.
+Test blog-brief-planner and blog-writer agents to ensure they produce valid, brand-aligned, schema-compliant outputs matching `BlogPostSchema` from `apps/www/src/lib/content-schemas.ts`.
 
 ## Test Workflow
 
@@ -32,28 +32,15 @@ Input: {
 ### 2. Validate Brief Output (Category-Aware)
 Check brief JSON based on category:
 
-**Company**:
-- TL;DR points (3-5), External sources (3-5), FAQs (3-5)
-
-**Data**:
-- TL;DR points (5), External sources (7-10), FAQs (5+)
-- Methodology in outline
-
-**Guides**:
-- TL;DR points (3-5), External sources (5+), FAQs (5-7)
-- Step-by-step structure
-
-**Technology**:
-- TL;DR points (3-5), External sources (5-10), FAQs (3-5)
-- Technical depth present
-
-**Product**:
-- TL;DR points (5), External sources (3-5), FAQs (5+)
-- Comparison angle if applicable
+**Company**: TL;DR points (3-5), External sources (3-5), FAQs (3-5)
+**Engineering**: TL;DR points (3-5), External sources (5-10), FAQs (3-5), Technical depth
+**Tutorial**: TL;DR points (3-5), External sources (5+), FAQs (5-7), Step-by-step structure
+**Product**: TL;DR points (5), External sources (3-5), FAQs (5+)
+**Research**: TL;DR points (5), External sources (7-10), FAQs (5+), Methodology
 
 **All Categories**:
 - Valid JSON structure
-- Category field present
+- Category field present and valid enum value
 - Positioning aligns with brand kit
 - Keywords appropriate
 - Outline logical and complete
@@ -66,34 +53,40 @@ Input: [brief JSON from step 1]
 ```
 
 ### 4. Validate Post Output
-Check post JSON for:
-- Valid JSON structure matching Basehub PostItem schema
-- Required fields:
-  - title, slugSuggestion, description (150-160 chars)
-  - excerpt (2-3 sentences)
-  - content (markdown, 1200-2000 words)
-  - contentType (valid enum value)
-  - author object (name, role, experience, bio)
-  - seo object (all fields)
-  - distribution object (all fields)
-  - metadata (lastUpdated, externalCitations, faqCount)
-- Content quality:
-  - TL;DR block present after opening
-  - 5+ external citations integrated
-  - FAQ section with 3-5 questions
-  - Author bio at end with E-E-A-T signals
-  - Positioning as "memory built for teams"
-  - Keywords naturally integrated
-  - Structure follows brief outline
-  - CTA matches business goal
+
+Check the written `.mdx` file in `apps/www/src/content/blog/` for:
+
+**Frontmatter (BlogPostSchema compliance)**:
+- `title`: present
+- `description`: 150-160 chars
+- `keywords`: array, min 3 entries
+- `ogTitle`: max 70 chars
+- `ogDescription`: 50-160 chars
+- `ogImage`: valid URL
+- `authors`: array, min 1 (name/url/twitterHandle)
+- `publishedAt` / `updatedAt`: ISO datetime
+- `category`: one of `engineering | product | company | tutorial | research`
+- `readingTimeMinutes`: integer ≥ 1
+- `featured`: boolean
+- `tldr`: 20-300 chars
+- `faq`: array, min 1 item
+
+**Content quality**:
+- No `## TL;DR` section in body (tldr is frontmatter only)
+- 5+ external citations integrated
+- FAQ section in body with 3-5 questions
+- Author bio at end with E-E-A-T signals
+- Positioning as "memory built for teams"
+- Keywords naturally integrated
+- Structure follows brief outline
 
 ## Test Cases
 
-### Test 1: Technology Category
+### Test 1: Engineering Category
 ```json
 {
   "rawTopic": "How AI agents use team memory",
-  "category": "Technology",
+  "category": "Engineering",
   "businessGoal": "awareness",
   "primaryProductArea": "Lightfast Core",
   "targetPersona": "Platform Engineers",
@@ -103,11 +96,11 @@ Check post JSON for:
 }
 ```
 
-### Test 2: Guides Category
+### Test 2: Tutorial Category
 ```json
 {
   "rawTopic": "Migrating from DIY RAG to Lightfast",
-  "category": "Guides",
+  "category": "Tutorial",
   "businessGoal": "consideration",
   "primaryProductArea": "API Platform",
   "targetPersona": "Technical Founders",
@@ -117,33 +110,19 @@ Check post JSON for:
 }
 ```
 
-### Test 3: Data Category
-```json
-{
-  "rawTopic": "Analysis of 1000 teams' search patterns",
-  "category": "Data",
-  "businessGoal": "awareness",
-  "primaryProductArea": "Research",
-  "targetPersona": "Engineering Leaders",
-  "context": {
-    "docs": ["Internal research findings"]
-  }
-}
-```
-
 ### Test 3: Edge Cases
 - Null/missing fields in input
 - Beta features in context
-- AEO/AI search topics (positioning test)
+- Invalid category value (e.g., "technology" — should be "engineering")
 
 ## Validation Rules
 
 ### Schema Compliance
-- contentType ∈ ["tutorial", "announcement", "thought-leadership", "case-study", "comparison", "deep-dive", "guide"]
-- businessGoal ∈ ["awareness", "consideration", "conversion", "retention"]
-- description.length ∈ [150, 160]
-- noIndex === false (default)
-- canonicalUrl === null (default)
+- `category` ∈ ["engineering", "product", "company", "tutorial", "research"]
+- `description.length` ∈ [150, 160]
+- `tldr.length` ∈ [20, 300]
+- `faq.length` >= 1
+- `keywords.length` >= 3
 
 ### Brand Compliance
 - Uses "memory system built for teams" or close variant
@@ -151,9 +130,8 @@ Check post JSON for:
 - AEO topics frame as memory substrate, not analytics
 
 ### Output Files
-Verify files written to:
-- `outputs/blog/briefs/<topic>.json`
-- `outputs/blog/posts/<slug>.json`
+Verify file written to:
+- `apps/www/src/content/blog/YYYY-MM-DD-{slug}.mdx`
 
 ## Reporting
 
@@ -176,4 +154,4 @@ Generate test report with:
 }
 ```
 
-Write report to: `outputs/blog/test-reports/<timestamp>.json`
+Write report to: `outputs/blog/test-reports/{timestamp}.json`

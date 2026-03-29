@@ -4,7 +4,6 @@ import { vercelEnv } from "@repo/app-vercel/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
-import { basehubEnv } from "@vendor/cms/env";
 import { env as knockEnv } from "@vendor/knock/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
@@ -22,7 +21,6 @@ export const env = createEnv({
     githubEnv,
     vercelEnv,
     upstashEnv,
-    basehubEnv,
   ],
   shared: {
     NODE_ENV: z

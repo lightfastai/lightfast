@@ -1,7 +1,7 @@
-import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import { SearchInterface } from "~/app/(app)/_components/search-interface";
 import { SearchNavbar } from "~/app/(app)/_components/search-navbar";
+import { createMetadata } from "~/lib/content-seo";
 
 export const metadata: Metadata = createMetadata({
   title: "Search – Lightfast",

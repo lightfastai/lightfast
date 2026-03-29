@@ -10,8 +10,8 @@ import {
 } from "@repo/ui/components/ui/sheet";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Menu, X } from "lucide-react";
-import NextLink from "next/link";
 import * as React from "react";
+import { NavLink } from "~/components/nav-link";
 import { INTERNAL_NAV, RESOURCES_NAV, SOCIAL_NAV } from "~/config/nav";
 
 export function AppMobileNav() {
@@ -54,15 +54,15 @@ export function AppMobileNav() {
                   </div>
                   <div className="space-y-1">
                     {RESOURCES_NAV.map((item) => (
-                      <NextLink
+                      <NavLink
+                        {...item}
                         className="block py-1 font-medium text-foreground text-lg transition-colors hover:text-muted-foreground"
-                        href={item.href}
                         key={item.href}
                         onClick={() => setOpen(false)}
                         prefetch
                       >
                         {item.title}
-                      </NextLink>
+                      </NavLink>
                     ))}
                   </div>
                 </div>
@@ -73,29 +73,17 @@ export function AppMobileNav() {
                     More
                   </div>
                   <div className="space-y-1">
-                    {INTERNAL_NAV.map((item) =>
-                      item.microfrontend ? (
-                        <MicrofrontendLink
-                          className="block py-1 font-medium text-foreground text-lg transition-colors hover:text-muted-foreground"
-                          href={item.href}
-                          key={item.href}
-                          onClick={() => setOpen(false)}
-                          prefetch={true}
-                        >
-                          {item.title}
-                        </MicrofrontendLink>
-                      ) : (
-                        <NextLink
-                          className="block py-1 font-medium text-foreground text-lg transition-colors hover:text-muted-foreground"
-                          href={item.href}
-                          key={item.href}
-                          onClick={() => setOpen(false)}
-                          prefetch
-                        >
-                          {item.title}
-                        </NextLink>
-                      )
-                    )}
+                    {INTERNAL_NAV.map((item) => (
+                      <NavLink
+                        {...item}
+                        className="block py-1 font-medium text-foreground text-lg transition-colors hover:text-muted-foreground"
+                        key={item.href}
+                        onClick={() => setOpen(false)}
+                        prefetch
+                      >
+                        {item.title}
+                      </NavLink>
+                    ))}
                   </div>
                 </div>
               </div>

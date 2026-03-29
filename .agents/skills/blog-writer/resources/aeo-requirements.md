@@ -2,36 +2,30 @@
 
 Every blog post MUST include these elements for Answer Engine Optimization.
 
-## 1. TL;DR Section
+## 1. TL;DR Field
 
 **Purpose**: AI citation, featured snippets, quick scanning
 
+**Location**: Frontmatter `tldr` field (rendered automatically as highlight box on page)
+
 **Requirements**:
-- 80-100 words (self-contained paragraph)
-- Immediately after title in rendered page
+- 20-300 chars (self-contained)
 - Covers key user benefits
 - Can stand alone as quotable text
 - No bullet points (use flowing prose)
+- Do NOT add a `## TL;DR` section in the body — it's rendered from frontmatter automatically
 
 **Example**:
-> Lightfast v0.4 introduces Neural Memory, a breakthrough in team knowledge retrieval. Neural Memory automatically captures and organizes decisions, discussions, and context from your tools--Slack, GitHub, Linear, and more. Your team can now search by meaning across all sources, get answers with citations, and trace the reasoning behind any decision. This release marks our shift from simple indexing to true organizational memory.
+> "Lightfast v0.4 introduces Neural Memory — automatic capture and semantic search across team knowledge from Slack, GitHub, Linear, and more. Teams can now trace decisions, find context, and search by meaning across all their tools."
 
-## 2. Excerpt
-
-**Purpose**: Listing pages, RSS feeds, social sharing
-
-**Requirements**:
-- Max 300 characters
-- Different from seo.metaDescription
-- Entices click-through
-- 2-3 complete sentences
-
-## 3. FAQ Section
+## 2. FAQ Array
 
 **Purpose**: FAQPage schema, featured snippets, voice search
 
+**Location**: Frontmatter `faq[]` array (top-level, not nested under `seo`)
+
 **Requirements**:
-- 3-5 questions per post
+- Min 1 item (recommend 3-5)
 - Questions match real search queries ("How do I...", "What is...")
 - Answers are complete and self-contained (2-3 sentences)
 - Each answer works without surrounding context
@@ -39,23 +33,35 @@ Every blog post MUST include these elements for Answer Engine Optimization.
 **Category-specific FAQ focus**:
 | Category | FAQ Focus |
 |----------|-----------|
-| Technology | Implementation, architecture, scaling |
+| Engineering | Implementation, architecture, scaling |
 | Company | Impact, timeline, vision |
 | Product | Pricing, migration, compatibility |
+| Tutorial | Steps, prerequisites, troubleshooting |
+| Research | Methodology, findings, implications |
 
-## 4. Meta Description
+## 3. Meta Description
+
+**Location**: Frontmatter `description` field (this IS the meta description — no nested `seo.metaDescription`)
 
 **Requirements**:
 - Exactly 150-160 characters
-- Include primary keyword
+- Include primary keyword (keywords[0])
 - Match actual content
 - End with benefit or CTA
+
+## 4. Keywords Array
+
+**Location**: Frontmatter `keywords[]` (replaces old nested `seo.focusKeyword` + `seo.secondaryKeywords`)
+
+- First entry = primary focus keyword
+- Remaining entries = secondary keywords
+- Min 3, max 20
 
 ## 5. Three-CTA Pattern
 
 Blog posts should include contextual CTAs:
 
-1. **Above the fold**: After TL;DR (+18% opt-in rate)
+1. **Above the fold**: After opening paragraph (+18% opt-in rate)
 2. **Mid-content**: Most relevant section (+32% conversions)
 3. **End of post**: Strong close (45% of total conversions)
 
@@ -84,26 +90,24 @@ Link to 3-5 related docs:
 
 ## 8. Author Attribution
 
-Every post includes author bio with E-E-A-T signals:
-- Name and role
-- Years of experience
-- Relevant expertise
-- LinkedIn (optional)
+Every post includes author info with E-E-A-T signals via the `authors[]` frontmatter array:
+- `name`: Author display name
+- `url`: Author profile URL
+- `twitterHandle`: Twitter/X handle
 
-Currently hardcoded to: **Jeevan Pillay, Founder**
+Currently defaulting to: **Jeevan Pillay, Founder**
 
-## SEO Checklist
+## AEO Checklist
 
 ### Required Fields
-- [ ] `tldr`: 80-100 words, self-contained summary
-- [ ] `excerpt`: Max 300 chars, distinct from metaDescription
-- [ ] `seo.metaDescription`: 150-160 chars with keyword
-- [ ] `seo.focusKeyword`: Primary keyword selected
-- [ ] `seo.faq`: 3-5 Q&A pairs
+- [ ] `tldr`: 20-300 chars, self-contained summary in frontmatter
+- [ ] `description`: 150-160 chars with primary keyword (IS the meta description)
+- [ ] `keywords[]`: min 3 entries, first is primary keyword
+- [ ] `faq[]`: min 1 Q&A pair in frontmatter
 
 ### Content Requirements
 - [ ] 3-5 internal links to docs
 - [ ] 5+ external citations
-- [ ] Code examples (Technology posts)
-- [ ] Focus keyword used naturally (2-3 times)
-- [ ] Author bio at end
+- [ ] Code examples (Engineering/Tutorial posts)
+- [ ] Primary keyword used naturally (2-3 times in body)
+- [ ] Author bio at end of post

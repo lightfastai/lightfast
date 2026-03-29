@@ -1,86 +1,69 @@
 # Changelog Templates
 
-## BaseHub Entry Fields
+## Frontmatter Schema
 
-This frontmatter structure maps directly to `ChangelogEntryInput` type in `@repo/cms-workflows`, enabling zero-mapping publish via `/publish_changelog`.
+This frontmatter structure maps directly to `ChangelogEntrySchema` in `apps/www/src/lib/content-schemas.ts`. The `/create_changelog` command writes the file directly to `apps/www/src/content/changelog/`.
 
 ### Core Fields
 
 - **title**: 2-3 key features (e.g., "GitHub File Sync, Semantic Search, Team Workspaces")
-- **prefix**: Version identifier for breadcrumb display. Format: `\d+-\d+` (e.g., `"0-1"`). BaseHub regex: `^\d+-\d+$`
-- **slug**: Descriptive URL slug, no version prefix. Format: `lightfast-<feature-slug>` (e.g., `"lightfast-github-file-sync-semantic-search"`)
-- **publishedAt**: ISO date string (YYYY-MM-DD)
-- **body**: Main changelog content (markdown) - this is the content after frontmatter
+- **description**: 150-160 char meta description — this IS the SEO meta description (includes version + keyword)
+- **keywords**: Array of keyword phrases (min 3). First entry is the primary focus keyword.
+- **ogTitle**: Social sharing title (max 70 chars)
+- **ogDescription**: 50-160 char OG description
+- **ogImage**: OG image URL
+- **version**: Version string shown in the changelog (e.g., `"v0.1.0"`)
+- **type**: Change type — `feature` | `improvement` | `fix` | `breaking`
+- **publishedAt** / **updatedAt**: ISO datetime strings
+- **authors**: Array of author objects with name, url, twitterHandle
 
-### AEO Fields (Answer Engine Optimization)
+### AEO Fields
 
-- **excerpt**: Short summary for listing pages (max 300 chars). Appears on changelog index pages and RSS feeds.
-- **tldr**: 50-100 word summary optimized for AI citation engines. Rendered in a highlighted box at the top of the changelog page.
-
-### SEO Fields (nested under `seo:`)
-
-- **seo.metaDescription**: 150-160 char meta description with version number and target keyword
-- **seo.focusKeyword**: Primary keyword phrase for SEO optimization (e.g., "webhook-driven sync", "semantic code search")
-- **seo.secondaryKeyword**: Optional secondary keyword phrase for additional optimization
-- **seo.faq**: Array of 2-4 question/answer pairs. Generates FAQPage schema for Google featured snippets.
-
-### Internal Fields (nested under `_internal:`)
-
-These fields are stripped before publishing to BaseHub:
-
-- **_internal.status**: `draft` or `published`
-- **_internal.source_prs**: Array of PR numbers or commit SHAs for traceability
-- **_internal.generated**: ISO timestamp when draft was generated
+- **tldr**: 20-300 char summary optimized for AI citation engines. Rendered in a highlighted box at the top of the changelog page.
+- **faq**: Array of Q&A pairs (min 1). Generates FAQPage schema for Google featured snippets.
 
 ### Frontmatter Template
 
 ```yaml
 ---
-# Fields that map directly to ChangelogEntryInput
-title: "Feature Name, Feature Name, Feature Name"
-prefix: "0-1"                                  # Version identifier (format: \d+-\d+), shown in breadcrumbs
-slug: "lightfast-<feature-slug>"               # Descriptive URL slug, no version prefix (e.g., "lightfast-neural-memory-foundation-2026")
-publishedAt: "YYYY-MM-DD"
-excerpt: "Short summary for listings, max 300 chars"
-tldr: "50-100 word summary for AI citation and featured snippets. Appears at top of page."
+title: "Feature Name, Feature Name"
+description: "150-160 char meta description with version and keyword — this is the SEO meta tag"
+keywords:
+  - "primary keyword phrase"
+  - "secondary keyword"
+  - "additional keyword"
+canonicalUrl: "https://lightfast.ai/changelog/YYYY-MM-DD-slug"  # optional
+ogTitle: "Title for social sharing (max 70 chars)"
+ogDescription: "50-160 char OG description for social cards"
+ogImage: "https://lightfast.ai/images/og-default.png"
+noindex: false
+nofollow: false
+authors:
+  - name: "Jeevan Pillay"
+    url: "https://lightfast.ai"
+    twitterHandle: "@jeevanpillay"
+publishedAt: "YYYY-MM-DDTHH:MM:SSZ"
+updatedAt: "YYYY-MM-DDTHH:MM:SSZ"
+version: "v0.X.0"
+type: "feature"  # feature | improvement | fix | breaking
+tldr: "20-300 char summary for AI citation and featured snippets. Self-contained sentence(s) covering key user benefits."
+faq:
+  - question: "What is [feature]?"
+    answer: "Concise answer optimized for featured snippets and voice search."
+  - question: "How do I [action]?"
+    answer: "Step-by-step answer with specifics."
 
-# Categorized change sections (optional, arrays converted to newline-separated text)
-improvements:
-  - "Improved X for better Y"
-  - "Enhanced Z performance by N%"
-infrastructure:
-  - "Migrated to new database schema"
-  - "Added caching layer for API responses"
-fixes:
-  - "Fixed issue where X caused Y"
-  - "Resolved race condition in Z"
-patches:
-  - "Security patch for CVE-XXXX"
-  - "Updated dependencies to latest versions"
-
-# SEO nested object (matches ChangelogSeoInput)
-seo:
-  metaDescription: "150-160 char meta description with version and keyword"
-  focusKeyword: "primary-keyword-phrase"
-  secondaryKeyword: "secondary-keyword-phrase"
-  faq:
-    - question: "What is [feature]?"
-      answer: "Concise answer optimized for featured snippets and voice search."
-    - question: "How do I [action]?"
-      answer: "Step-by-step answer with specifics."
-
-# Internal fields (stripped before publish, not sent to BaseHub)
-_internal:
-  status: draft
-  source_prs: ["#123", "commit-hash"]
-  generated: "YYYY-MM-DDTHH:MM:SSZ"
+# Internal fields (stripped before publishing)
+_draft: true
+_source_prs:
+  - "#123"
+  - "#124"
 ---
 ```
 
-**Note on categorized sections:** The `improvements`, `infrastructure`, `fixes`, and `patches` fields are optional. Use them to organize changes into categories that render as bullet lists in BaseHub. Each array item becomes a bullet point.
+**Note on filename**: The filename determines the URL slug in fumadocs. Use `YYYY-MM-DD-{descriptive-slug}.md` for drafts; the publish command converts to `.mdx`.
 
 ## Document Structure
-
 
 ```markdown
 **[2-3 key features as subtitle]**
@@ -113,7 +96,7 @@ _internal:
 
 ### What's Coming Next
 
-[ONLY include if validated by implementation docs]
+[ONLY include if validated by codebase/roadmap]
 
 **Based on your feedback:**
 1. **[Feature]** (vX.X) — [brief description, validated by roadmap]
@@ -136,15 +119,6 @@ _internal:
 - Add code example
 - Disclose what's NOT included
 - Optional: "Why we built it this way"
-
-### Categorized Sections (in frontmatter)
-
-Use the frontmatter arrays for categorized changes. These render as bullet lists in BaseHub:
-
-- **improvements**: Enhancements to existing features (1-2 lines per item, focus on user impact)
-- **infrastructure**: Platform/architecture changes (can be more technical)
-- **fixes**: Bug fixes (describe what was broken and how it's fixed)
-- **patches**: Security updates, dependency bumps
 
 ### What's Coming Next (in body)
 - ONLY validated items from roadmap

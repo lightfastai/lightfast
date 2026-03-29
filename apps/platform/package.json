@@ -15,6 +15,7 @@
   "dependencies": {
     "@api/platform": "workspace:*",
     "@db/app": "workspace:*",
+    "@logtail/next": "^0.3.1",
     "@repo/app-providers": "workspace:*",
     "@repo/lib": "workspace:*",
     "@sentry/nextjs": "catalog:",
@@ -26,6 +27,8 @@
     "@vendor/security": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vercel/related-projects": "catalog:",
+    "@vercel/toolbar": "^0.2.2",
+    "lodash.merge": "^4.6.2",
     "next": "catalog:next16",
     "react": "19.2.4",
     "react-dom": "19.2.4",
@@ -34,6 +37,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@types/lodash.merge": "^4.6.9",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",

@@ -1,36 +1,42 @@
-import { SSRCodeBlock } from "@repo/ui/components/ssr-code-block";
 import { Button } from "@repo/ui/components/ui/button";
-import type { ChangelogEntriesQueryResponse } from "@vendor/cms";
-import { changelog } from "@vendor/cms";
-import { Body } from "@vendor/cms/components/body";
-import { Feed } from "@vendor/cms/components/feed";
-import type { Metadata } from "next";
+import type { GraphContext } from "@vendor/seo/json-ld";
+import { JsonLd } from "@vendor/seo/json-ld";
+import type { Metadata, Route } from "next";
 import Image from "next/image";
-import Link from "next/link";
+import { getChangelogPages } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
+import {
+  buildFaqEntity,
+  buildOrganizationEntity,
+  buildWebSiteEntity,
+} from "~/lib/builders";
+import { createMetadata } from "~/lib/content-seo";
 
 export const dynamic = "force-static";
 
-export const metadata: Metadata = {
-  title: "Lightfast Changelog",
-  description:
-    "Product updates, new features, and improvements from Lightfast — surfaces decisions across your tools",
-  openGraph: {
-    title: "Lightfast Changelog",
-    description:
-      "Product updates, new features, and improvements from Lightfast — surfaces decisions across your tools",
-    type: "website",
-    url: "https://lightfast.ai/changelog",
-    siteName: "Lightfast",
+const PAGE_TITLE = "Changelog";
+const PAGE_DESCRIPTION =
+  "Every feature, improvement, fix, and breaking change shipped in Lightfast. Follow the full release history of the superintelligence layer.";
+const PAGE_URL = "https://lightfast.ai/changelog";
+const FAQ = [
+  {
+    question: "Where can I follow Lightfast product updates?",
+    answer:
+      "This changelog is the canonical source for all Lightfast releases. Each entry includes the version, change type, and a summary of what shipped.",
   },
-  twitter: {
-    card: "summary_large_image",
-    title: "Lightfast Changelog",
-    description:
-      "Product updates, new features, and improvements from Lightfast",
-    creator: "@lightfastai",
-  },
+];
+
+export const metadata: Metadata = createMetadata({
+  title: `${PAGE_TITLE} | Lightfast`,
+  description: PAGE_DESCRIPTION,
+  keywords: [
+    "lightfast changelog",
+    "release notes",
+    "product updates",
+    "version history",
+  ],
   alternates: {
-    canonical: "https://lightfast.ai/changelog",
+    canonical: PAGE_URL,
     types: {
       "application/rss+xml": [
         { url: "https://lightfast.ai/changelog/rss.xml", title: "RSS 2.0" },
@@ -40,103 +46,124 @@ export const metadata: Metadata = {
       ],
     },
   },
-};
+  openGraph: {
+    title: "Lightfast Changelog",
+    description: PAGE_DESCRIPTION,
+    type: "website",
+    url: PAGE_URL,
+    siteName: "Lightfast",
+    locale: "en_US",
+    images: [
+      {
+        url: "https://lightfast.ai/images/og-default.png",
+        width: 1200,
+        height: 630,
+        alt: "Lightfast Changelog",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Lightfast Changelog",
+    description: PAGE_DESCRIPTION,
+    site: "@lightfastai",
+    creator: "@lightfastai",
+    images: ["https://lightfast.ai/images/og-default.png"],
+  },
+});
 
 export default function ChangelogPage() {
+  const pages = getChangelogPages();
+
+  const sortedPages = [...pages].sort((a, b) => {
+    return (
+      new Date(b.data.publishedAt).getTime() -
+      new Date(a.data.publishedAt).getTime()
+    );
+  });
+
+  const structuredData: GraphContext = {
+    "@context": "https://schema.org",
+    "@graph": [
+      buildOrganizationEntity(),
+      buildWebSiteEntity(),
+      {
+        "@type": "WebPage" as const,
+        "@id": `${PAGE_URL}#webpage`,
+        url: PAGE_URL,
+        name: "Lightfast Changelog",
+        description: PAGE_DESCRIPTION,
+        isPartOf: { "@id": "https://lightfast.ai/#website" },
+        publisher: { "@id": "https://lightfast.ai/#organization" },
+      },
+      buildFaqEntity(FAQ, PAGE_URL),
+    ],
+  };
+
   return (
-    <Feed queries={[changelog.entriesQuery]}>
-      {async ([data]) => {
-        "use server";
-
-        const response = data as ChangelogEntriesQueryResponse;
-        const entries = response.changelog.post.items;
-
-        return (
-          <div className="space-y-12 text-foreground">
-            {entries.length === 0 ? (
-              <div className="py-16">
-                <h2 className="mb-4 font-semibold text-2xl">Stay tuned</h2>
-                <p className="text-foreground/80 leading-relaxed">
-                  We're shipping fast. Changelog entries will appear here after
-                  our next release.
-                </p>
-              </div>
-            ) : (
-              entries.map((item) => {
-                const publishedTime = item.publishedAt;
-                const publishedDate = publishedTime
-                  ? new Date(publishedTime)
-                  : null;
-                const dateStr = publishedDate
-                  ? publishedDate.toLocaleDateString(undefined, {
-                      year: "numeric",
-                      month: "short",
-                      day: "numeric",
-                    })
-                  : "";
-
-                return (
-                  <div className="relative" key={item._slug}>
-                    <article className="space-y-3">
-                      <p className="text-muted-foreground text-sm">
-                        Changelog
-                        {item.prefix ? <> / {item.prefix}</> : null}
-                      </p>
-
-                      <h2 className="pb-4 font-medium font-pp text-2xl">
-                        {item.slug ? (
-                          <Button
-                            asChild
-                            className="h-auto p-0 font-medium font-pp text-2xl"
-                            variant="link"
-                          >
-                            <Link href={`/changelog/${item.slug}`}>
-                              {item._title}
-                            </Link>
-                          </Button>
-                        ) : (
-                          item._title
-                        )}
-                      </h2>
-
-                      {item.featuredImage?.url && (
-                        <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
-                          <Image
-                            alt={item.featuredImage.alt ?? item._title ?? ""}
-                            className="h-full w-full object-cover"
-                            height={item.featuredImage.height ?? 506}
-                            src={item.featuredImage.url}
-                            width={item.featuredImage.width ?? 900}
-                          />
-                        </div>
-                      )}
-
-                      <p className="text-muted-foreground text-sm">
-                        {/* @todo add author into basehub Changelog component */}
-                        Jeevan Pillay · {dateStr}
-                      </p>
-
-                      {item.excerpt && (
-                        <p className="pt-4 text-muted-foreground text-sm leading-relaxed">
-                          {item.excerpt}
-                        </p>
-                      )}
-                      {item.body?.json?.content ? (
-                        <div className="">
-                          <Body
-                            codeBlockComponent={SSRCodeBlock}
-                            content={item.body.json.content}
-                          />
-                        </div>
-                      ) : null}
-                    </article>
-                  </div>
-                );
-              })
-            )}
+    <>
+      <JsonLd code={structuredData} />
+      <div className="space-y-12 text-foreground">
+        {sortedPages.length === 0 ? (
+          <div className="py-16">
+            <h2 className="mb-4 font-semibold text-2xl">Stay tuned</h2>
+            <p className="text-foreground/80 leading-relaxed">
+              We're shipping fast. Changelog entries will appear here after our
+              next release.
+            </p>
           </div>
-        );
-      }}
-    </Feed>
+        ) : (
+          sortedPages.map((page) => (
+            <article className="space-y-3" key={page.slugs[0]}>
+              <p className="text-muted-foreground text-sm">
+                Changelog
+                {page.data.version ? <> / {page.data.version}</> : null}
+              </p>
+
+              <h2 className="pb-4 font-medium font-pp text-2xl">
+                <Button
+                  asChild
+                  className="h-auto p-0 font-medium font-pp text-2xl"
+                  variant="link"
+                >
+                  <NavLink href={`/changelog/${page.slugs[0]}` as Route}>
+                    {page.data.title}
+                  </NavLink>
+                </Button>
+              </h2>
+
+              {page.data.ogImage &&
+                page.data.ogImage !==
+                  "https://lightfast.ai/images/og-default.png" && (
+                  <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
+                    <Image
+                      alt={page.data.title}
+                      className="h-full w-full object-cover"
+                      fill
+                      src={page.data.ogImage}
+                    />
+                  </div>
+                )}
+
+              <p className="text-muted-foreground text-sm">
+                {page.data.authors[0]?.name ?? "Lightfast"} ·{" "}
+                <time dateTime={page.data.publishedAt}>
+                  {new Date(page.data.publishedAt).toLocaleDateString(
+                    undefined,
+                    { year: "numeric", month: "short", day: "numeric" }
+                  )}
+                </time>
+              </p>
+
+              {page.data.description && (
+                <p className="pt-4 text-muted-foreground text-sm leading-relaxed">
+                  {page.data.description}
+                </p>
+              )}
+            </article>
+          ))
+        )}
+      </div>
+    </>
   );
 }

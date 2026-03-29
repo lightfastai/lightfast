@@ -1,5 +1,3 @@
-import { Icons } from "@repo/ui/components/icons";
-import NextLink from "next/link";
 import { ManifestoShader } from "./_components/manifesto-shader";
 
 export const revalidate = 3600;
@@ -37,10 +35,6 @@ export default async function ManifestoPage() {
       {/* Top (50%) */}
       <section className="relative flex-[5]">
         <header className="relative flex items-start justify-between px-6 pt-6">
-          <NextLink href="/">
-            <Icons.logoShort className="h-4 w-4 text-foreground" />
-          </NextLink>
-
           <div className="absolute left-[50%] max-w-sm space-y-4 font-pp text-lg lg:text-2xl">
             <p className="font-medium text-foreground">
               This is our specification.
@@ -65,14 +59,14 @@ export default async function ManifestoPage() {
             <span className="font-mono text-foreground text-sm uppercase">
               Read the Program →
             </span>
-            <NextLink
+            <a
               className="font-mono text-foreground text-sm uppercase hover:underline"
               href={url}
               rel="noopener noreferrer"
               target="_blank"
             >
               @{hash}
-            </NextLink>
+            </a>
           </div>
           <p className="absolute left-[50%] font-pp font-semibold text-foreground text-lg lg:text-2xl">
             We are building the runtime.

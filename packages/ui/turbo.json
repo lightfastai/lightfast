@@ -1,5 +1,7 @@
 {
   "extends": ["//"],
   "tags": ["packages"],
-  "tasks": {}
+  "tasks": {
+    "transit": {}
+  }
 }

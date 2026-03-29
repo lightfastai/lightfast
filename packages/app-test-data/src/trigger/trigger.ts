@@ -5,7 +5,7 @@
  */
 
 import { randomUUID } from "node:crypto";
-import { inngest } from "@api/app/inngest/client";
+import { inngest } from "@api/platform/inngest/client";
 import type { PostTransformEvent } from "@repo/app-providers/contracts";
 
 export interface TriggerOptions {

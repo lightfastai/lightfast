@@ -1,9 +1,9 @@
 import { Button } from "@repo/ui/components/ui/button";
-import { createMetadata } from "@vendor/seo/metadata";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { ArrowRight } from "lucide-react";
 import type { Metadata } from "next";
 import { UseCaseGrid } from "~/app/(app)/_components/use-case-grid";
+import { createMetadata } from "~/lib/content-seo";
 import { platformEngineersUseCases } from "./data";
 
 export const metadata: Metadata = createMetadata({
