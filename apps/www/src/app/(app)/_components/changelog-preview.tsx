@@ -1,12 +1,13 @@
-import Link from "next/link";
+import type { Route } from "next";
 import { getChangelogPages } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
 
 export async function ChangelogPreview() {
   const entries = getChangelogPages()
     .sort(
       (a, b) =>
         new Date(b.data.publishedAt).getTime() -
-        new Date(a.data.publishedAt).getTime(),
+        new Date(a.data.publishedAt).getTime()
     )
     .slice(0, 4);
 
@@ -35,13 +36,13 @@ export async function ChangelogPreview() {
               year: "numeric",
               month: "short",
               day: "numeric",
-            },
+            }
           );
 
           return (
-            <Link
+            <NavLink
               className="group"
-              href={`/changelog/${page.slugs[0]}`}
+              href={`/changelog/${page.slugs[0]}` as Route}
               key={page.slugs[0]}
             >
               <div className="h-full rounded-md border border-border p-4 transition-colors hover:bg-card/60">
@@ -62,7 +63,7 @@ export async function ChangelogPreview() {
                   {page.data.title}
                 </h3>
               </div>
-            </Link>
+            </NavLink>
           );
         })}
       </div>

@@ -1,14 +1,15 @@
-import { JsonLd } from "@vendor/seo/json-ld";
 import { Button } from "@repo/ui/components/ui/button";
+import { JsonLd } from "@vendor/seo/json-ld";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { notFound } from "next/navigation";
+import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
 import {
   getChangelogPage,
   getChangelogPages,
 } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
 import { emitChangelogEntrySeo } from "~/lib/seo-bundle";
 import type { ChangelogUrl } from "~/lib/url-types";
 
@@ -25,7 +26,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const page = getChangelogPage([slug]);
-  if (!page) return {};
+  if (!page) {
+    return {};
+  }
   const url = `https://lightfast.ai/changelog/${slug}` as ChangelogUrl;
   const { metadata } = emitChangelogEntrySeo(page.data, url);
   return metadata;
@@ -34,7 +37,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function ChangelogEntryPage({ params }: Props) {
   const { slug } = await params;
   const page = getChangelogPage([slug]);
-  if (!page) notFound();
+  if (!page) {
+    notFound();
+  }
 
   const url = `https://lightfast.ai/changelog/${slug}` as ChangelogUrl;
   const { jsonLd } = emitChangelogEntrySeo(page.data, url);
@@ -71,7 +76,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
             className="h-auto p-0 text-muted-foreground text-sm hover:text-foreground"
             variant="link"
           >
-            <Link href="/changelog">Changelog</Link>
+            <NavLink href="/changelog">Changelog</NavLink>
           </Button>
           {version ? <> / {version}</> : null}
         </p>
@@ -122,7 +127,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
         )}
 
         <div className="mt-8 max-w-none">
-          <MDXContent />
+          <MDXContent components={mdxComponents} />
         </div>
 
         {(prevEntry ?? nextEntry) && (
@@ -131,9 +136,9 @@ export default async function ChangelogEntryPage({ params }: Props) {
             className="grid grid-cols-1 gap-4 pt-8 md:grid-cols-2"
           >
             {prevEntry ? (
-              <Link
+              <NavLink
                 className="group"
-                href={`/changelog/${prevEntry.slugs[0]}`}
+                href={`/changelog/${prevEntry.slugs[0]}` as Route}
                 prefetch
               >
                 <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
@@ -145,14 +150,14 @@ export default async function ChangelogEntryPage({ params }: Props) {
                     {prevEntry.data.title}
                   </span>
                 </div>
-              </Link>
+              </NavLink>
             ) : (
               <div />
             )}
             {nextEntry ? (
-              <Link
+              <NavLink
                 className="group md:text-right"
-                href={`/changelog/${nextEntry.slugs[0]}`}
+                href={`/changelog/${nextEntry.slugs[0]}` as Route}
                 prefetch
               >
                 <div className="h-full rounded-sm border border-transparent bg-card p-4 transition-all duration-200 hover:border-muted-foreground/20 hover:bg-accent/5">
@@ -164,7 +169,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
                     {nextEntry.data.title}
                   </span>
                 </div>
-              </Link>
+              </NavLink>
             ) : (
               <div />
             )}

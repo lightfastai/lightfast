@@ -27,18 +27,20 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const blogPosts = getBlogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
-      new Date(a.data.publishedAt).getTime(),
+      new Date(a.data.publishedAt).getTime()
   );
   const changelogEntries = getChangelogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
-      new Date(a.data.publishedAt).getTime(),
+      new Date(a.data.publishedAt).getTime()
   );
   const legalPages = getLegalPages();
 
-  const mostRecentBlog = blogPosts[0]?.data.updatedAt ?? blogPosts[0]?.data.publishedAt;
+  const mostRecentBlog =
+    blogPosts[0]?.data.updatedAt ?? blogPosts[0]?.data.publishedAt;
   const mostRecentChangelog =
-    changelogEntries[0]?.data.updatedAt ?? changelogEntries[0]?.data.publishedAt;
+    changelogEntries[0]?.data.updatedAt ??
+    changelogEntries[0]?.data.publishedAt;
 
   return [
     // Homepage
@@ -117,7 +119,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // Changelog listing
     {
       url: `${base}/changelog`,
-      ...(mostRecentChangelog && { lastModified: new Date(mostRecentChangelog) }),
+      ...(mostRecentChangelog && {
+        lastModified: new Date(mostRecentChangelog),
+      }),
       changeFrequency: "weekly",
       priority: 0.8,
     },
@@ -150,19 +154,25 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // RSS/Atom feeds for changelog
     {
       url: `${base}/changelog/rss.xml`,
-      ...(mostRecentChangelog && { lastModified: new Date(mostRecentChangelog) }),
+      ...(mostRecentChangelog && {
+        lastModified: new Date(mostRecentChangelog),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },
     {
       url: `${base}/changelog/atom.xml`,
-      ...(mostRecentChangelog && { lastModified: new Date(mostRecentChangelog) }),
+      ...(mostRecentChangelog && {
+        lastModified: new Date(mostRecentChangelog),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },
     {
       url: `${base}/changelog/feed.xml`,
-      ...(mostRecentChangelog && { lastModified: new Date(mostRecentChangelog) }),
+      ...(mostRecentChangelog && {
+        lastModified: new Date(mostRecentChangelog),
+      }),
       changeFrequency: "daily",
       priority: 0.6,
     },

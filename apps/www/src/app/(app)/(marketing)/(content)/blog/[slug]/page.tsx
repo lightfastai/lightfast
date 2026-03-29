@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { SocialShare } from "~/app/(app)/_components/blog-social-share";
+import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
 import { getBlogPage, getBlogPages } from "~/app/(app)/(content)/_lib/source";
 import { emitBlogPostSeo } from "~/lib/seo-bundle";
 import type { BlogPostUrl } from "~/lib/url-types";
@@ -20,7 +21,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { slug } = await params;
   const page = getBlogPage([slug]);
-  if (!page) return {};
+  if (!page) {
+    return {};
+  }
   const url = `https://lightfast.ai/blog/${slug}` as BlogPostUrl;
   const { metadata } = emitBlogPostSeo(page.data, url);
   return metadata;
@@ -29,7 +32,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function BlogPostPage({ params }: Props) {
   const { slug } = await params;
   const page = getBlogPage([slug]);
-  if (!page) notFound();
+  if (!page) {
+    notFound();
+  }
 
   const url = `https://lightfast.ai/blog/${slug}` as BlogPostUrl;
   const { jsonLd } = emitBlogPostSeo(page.data, url);
@@ -141,7 +146,7 @@ export default async function BlogPostPage({ params }: Props) {
 
         {/* MDX content */}
         <div className="mt-12 max-w-none">
-          <MDXContent />
+          <MDXContent components={mdxComponents} />
         </div>
 
         {/* Share CTA */}

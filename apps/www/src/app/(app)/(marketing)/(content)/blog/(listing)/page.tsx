@@ -1,8 +1,8 @@
 import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
-import type { Metadata } from "next";
-import Link from "next/link";
+import type { Metadata, Route } from "next";
 import { getBlogPages } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
 import {
   buildFaqEntity,
   buildOrganizationEntity,
@@ -125,7 +125,10 @@ export default function BlogPage() {
               className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
               key={page.slugs[0]}
             >
-              <Link className="group block" href={`/blog/${page.slugs[0]}`}>
+              <NavLink
+                className="group block"
+                href={`/blog/${page.slugs[0]}` as Route}
+              >
                 <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
                   {page.data.title}
                 </h2>
@@ -142,7 +145,7 @@ export default function BlogPage() {
                     )}
                   </time>
                 </div>
-              </Link>
+              </NavLink>
             </article>
           ))
         )}

@@ -22,9 +22,11 @@ Before writing anything:
    - Be honest about beta status and rollout timelines
 
 3. **Match category voice:**
-   - Technology: Technical authority, data-driven
+   - Engineering: Technical authority, data-driven
    - Company: Visionary, category-defining
    - Product: Problem-solver, benefit-oriented
+   - Tutorial: Step-by-step, practical
+   - Research: Data-driven, methodology-first
 
 ## Writing Guidelines
 
@@ -33,9 +35,9 @@ Before writing anything:
 3. **Be transparent**: Mention beta status, limitations
 4. **Active voice**: "You can now..." not "Users are able to..."
 5. **No emoji**: Professional tone
-6. **Include TL;DR**: 80-100 words for AI citation
-7. **FAQ section**: 3-5 questions matching search queries
-8. **Code examples**: Required for Technology posts
+6. **Include TL;DR**: 20-300 chars for AI citation (in frontmatter `tldr` field)
+7. **FAQ section**: 3-5 questions matching search queries (in frontmatter `faq[]`)
+8. **Code examples**: Required for Engineering posts
 
 ## Workflow
 
@@ -51,12 +53,14 @@ Before writing anything:
 ### Category Selection
 | Category | Use When | Audience |
 |----------|----------|----------|
-| Technology | Technical deep-dives, architecture, research | Developers, engineers |
+| Engineering | Technical deep-dives, architecture, research | Developers, engineers |
 | Company | Funding, partnerships, events, hiring | Executives, investors |
 | Product | Feature launches, updates, tutorials | Customers, prospects |
+| Tutorial | Step-by-step how-tos, guides | Developers learning |
+| Research | Data analysis, findings, benchmarks | Engineering leaders |
 
 ### Do
-- Include code examples (Technology)
+- Include code examples (Engineering/Tutorial)
 - Use "shift from/to" narratives (Company)
 - Lead with pain point (Product)
 - Link to 3-5 related docs
@@ -69,15 +73,23 @@ Before writing anything:
 
 ## Output
 
-Save drafts to: `thoughts/blog/{slug}-{YYYYMMDD-HHMMSS}.md`
+Save drafts to: `thoughts/blog/{YYYY-MM-DD-slug}.md`
 
 ### Required Frontmatter Fields
 
-Every draft MUST include:
-- `title`, `slug`, `publishedAt`, `category` (core)
-- `excerpt`, `tldr` (AEO)
-- `seo.metaDescription`, `seo.focusKeyword` (SEO)
-- `_internal.status`, `_internal.generated` (traceability)
+Every draft MUST include (maps to `BlogPostSchema` in `apps/www/src/lib/content-schemas.ts`):
+- `title` (core)
+- `description` (150-160 chars — this is the meta description)
+- `keywords[]` (min 3 — first entry is primary keyword)
+- `ogTitle`, `ogDescription`, `ogImage` (social/OG)
+- `authors[]` (structured array with name, url, twitterHandle)
+- `publishedAt`, `updatedAt` (ISO datetimes)
+- `category` (engineering | product | company | tutorial | research)
+- `readingTimeMinutes` (integer)
+- `featured` (boolean)
+- `tldr` (20-300 chars)
+- `faq[]` (min 1 entry)
+- `_draft: true` (traceability)
 
 See `resources/templates.md` for complete frontmatter template.
 
@@ -86,6 +98,6 @@ See `resources/templates.md` for complete frontmatter template.
 - [Document Templates](resources/templates.md)
 - [AEO Requirements](resources/aeo-requirements.md)
 - [Pre-Publish Checklist](resources/checklist.md)
-- [Technology Style Guide](resources/categories/technology.md)
+- [Engineering Style Guide](resources/categories/technology.md)
 - [Company Style Guide](resources/categories/company.md)
 - [Product Style Guide](resources/categories/product.md)

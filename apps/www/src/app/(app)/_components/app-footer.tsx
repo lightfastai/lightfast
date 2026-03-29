@@ -3,8 +3,8 @@ import {
   LISSAJOUS_PATTERNS,
   lissajousPathNormalized,
 } from "@repo/ui/lib/brand";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import NextLink from "next/link";
+import type { Route } from "next";
+import { NavLink } from "~/components/nav-link";
 
 const LISSAJOUS_PATHS = LISSAJOUS_PATTERNS.map(({ name, a, b, delta }) => ({
   name,
@@ -19,9 +19,9 @@ export function AppFooter() {
         <div className="grid grid-cols-1 gap-8 pt-16 pb-16 lg:grid-cols-2 lg:gap-12">
           {/* Logo - left column */}
           <div>
-            <NextLink aria-label="Lightfast" href="/">
+            <NavLink aria-label="Lightfast" href="/">
               <Icons.logoShort className="h-4 w-auto text-muted-foreground" />
-            </NextLink>
+            </NavLink>
           </div>
 
           {/* Nav columns - right column with nested 3-column grid */}
@@ -32,24 +32,24 @@ export function AppFooter() {
                 Product
               </h3>
               <nav className="flex flex-col gap-2">
-                <NextLink
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/pricing"
                 >
                   Pricing
-                </NextLink>
-                <NextLink
+                </NavLink>
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/blog"
                 >
                   Blog
-                </NextLink>
-                <NextLink
+                </NavLink>
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/changelog"
                 >
                   Changelog
-                </NextLink>
+                </NavLink>
               </nav>
             </div>
 
@@ -59,25 +59,26 @@ export function AppFooter() {
                 Resources
               </h3>
               <nav className="flex flex-col gap-2">
-                <NextLink
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
-                  href="/docs/get-started/overview"
+                  href={"/docs/get-started/overview" as Route}
                 >
                   Documentation
-                </NextLink>
-                <MicrofrontendLink
+                </NavLink>
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
                   href="/early-access"
-                  prefetch={true}
+                  microfrontend
+                  prefetch
                 >
                   Early Access
-                </MicrofrontendLink>
-                <NextLink
+                </NavLink>
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
-                  href="/docs/api-reference/getting-started/overview"
+                  href={"/docs/api-reference/getting-started/overview" as Route}
                 >
                   API Reference
-                </NextLink>
+                </NavLink>
               </nav>
             </div>
 
@@ -87,30 +88,33 @@ export function AppFooter() {
                 Connect
               </h3>
               <nav className="flex flex-col gap-2">
-                <NextLink
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
+                  external
                   href="https://x.com/lightfastai"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
                   Twitter
-                </NextLink>
-                <NextLink
+                </NavLink>
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
+                  external
                   href="https://github.com/lightfastai"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
                   GitHub
-                </NextLink>
-                <NextLink
+                </NavLink>
+                <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
+                  external
                   href="https://discord.gg/YqPDfcar2C"
                   rel="noopener noreferrer"
                   target="_blank"
                 >
                   Discord
-                </NextLink>
+                </NavLink>
               </nav>
             </div>
           </div>
@@ -126,24 +130,25 @@ export function AppFooter() {
           {/* Row 2 on mobile: Legal links / On desktop: right column */}
           <div className="lg:grid lg:grid-cols-3 lg:gap-8">
             <nav className="flex flex-wrap items-center gap-x-6 gap-y-2">
-              <NextLink
+              <NavLink
                 className="text-muted-foreground text-sm transition-colors hover:text-foreground"
+                external
                 href="mailto:hello@lightfast.ai"
               >
                 Contact
-              </NextLink>
-              <NextLink
+              </NavLink>
+              <NavLink
                 className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-                href="/legal/privacy"
+                href={"/legal/privacy" as Route}
               >
                 Privacy
-              </NextLink>
-              <NextLink
+              </NavLink>
+              <NavLink
                 className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-                href="/legal/terms"
+                href={"/legal/terms" as Route}
               >
                 Terms
-              </NextLink>
+              </NavLink>
             </nav>
 
             {/* Spacer (desktop only) */}

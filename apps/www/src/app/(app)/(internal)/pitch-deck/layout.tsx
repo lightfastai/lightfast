@@ -1,7 +1,7 @@
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { cookies } from "next/headers";
-import NextLink from "next/link";
+import { NavLink } from "~/components/nav-link";
 import { DownloadButton } from "./_components/download-button";
 import { PitchDeckProvider } from "./_components/pitch-deck-context";
 import { PitchDeckLayoutContent } from "./_components/pitch-deck-layout-content";
@@ -36,13 +36,13 @@ export default async function PitchDeckLayout({
               <div className="absolute inset-0 -z-10 rounded-md border border-border/50 bg-card/40 backdrop-blur-md" />
 
               {/* Logo */}
-              <NextLink
+              <NavLink
                 className="mr-auto flex items-center pr-4"
                 href="/"
                 prefetch
               >
                 <Icons.logoShort className="h-4 w-4 text-foreground/60 transition-colors hover:text-foreground" />
-              </NextLink>
+              </NavLink>
 
               {/* Menu dropdown */}
               <PitchDeckNavbar />
@@ -55,13 +55,13 @@ export default async function PitchDeckLayout({
 
             {/* Mobile: Logo left, hamburger right */}
             <div className="flex w-full items-center justify-between md:hidden">
-              <NextLink
+              <NavLink
                 className="flex items-center transition-opacity hover:opacity-80"
                 href="/"
                 prefetch
               >
                 <Icons.logoShort className="h-4 w-4 text-foreground" />
-              </NextLink>
+              </NavLink>
               <PitchDeckMobileNav />
             </div>
 

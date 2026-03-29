@@ -10,7 +10,7 @@ Create clear, accurate changelog entries that help developers understand what's 
 
 ## Critical: Fact-Check First
 
-Before writing anything, verify against `docs/architecture/implementation-status/README.md`:
+Before writing anything, verify claims against the actual codebase:
 
 1. **Check implementation status** to verify:
    - What's actually completed vs planned
@@ -23,7 +23,7 @@ Before writing anything, verify against `docs/architecture/implementation-status
    - Be honest about conditionals: "when 3+ customers request"
 
 3. **Verify every claim:**
-   - If you cite a number, confirm it's in implementation docs
+   - If you cite a number, confirm it's in the codebase
    - If you mention a feature, confirm it exists in production
    - When uncertain, ask for clarification
 
@@ -36,14 +36,14 @@ Before writing anything, verify against `docs/architecture/implementation-status
 5. **Active voice**: "You can now..." not "Users are able to..."
 6. **No emoji**: Professional tone
 7. **Specific examples**: Include config snippets, API calls
-8. **SEO-conscious**: Use target keywords naturally
-9. **AEO-conscious**: Write `tldr` for AI citation engines, `excerpt` for listings
+8. **SEO-conscious**: Use target keywords naturally in `description` and `keywords[]`
+9. **AEO-conscious**: Write `tldr` for AI citation engines
 10. **FAQ quality**: Questions must match real search queries, answers must be complete
 
 ## Workflow
 
 1. **Gather input**: PR numbers, URLs, or manual change list
-2. **Read implementation status** for fact-checking
+2. **Fact-check claims** against the codebase
 3. **Draft following** [templates](resources/templates.md)
 4. **Cross-check claims** against implementation reality
 5. **Add SEO elements** per [seo-requirements](resources/seo-requirements.md)
@@ -65,33 +65,26 @@ Before writing anything, verify against `docs/architecture/implementation-status
 
 ## Output
 
-Save drafts to: `thoughts/changelog/{title-slug}-{YYYYMMDD-HHMMSS}.md`
+Save drafts to: `thoughts/changelog/{YYYY-MM-DD-title-slug}.md`
 
 ### Required Frontmatter Fields
 
-Every draft MUST include:
-- `title`, `slug`, `publishedAt` (core)
-- `excerpt`, `tldr` (AEO)
-- `seo.metaDescription`, `seo.focusKeyword` (SEO)
-- `_internal.status`, `_internal.source_prs` (traceability)
-
-### Fields: `prefix` and `slug`
-
-These are two separate fields:
-
-- **`prefix`**: Version identifier shown in breadcrumbs. Format: `\d+-\d+` (e.g., `0-1`, `0-2`). BaseHub regex constraint: `^\d+-\d+$`
-- **`slug`**: Descriptive URL slug, no version prefix. Format: `lightfast-<feature-slug>` (e.g., `lightfast-neural-memory-foundation-2026`)
-
-Examples:
-- prefix: `0-1` / slug: `lightfast-github-file-sync-semantic-search`
-- prefix: `0-2` / slug: `lightfast-pr-metadata-linear-integration`
-
-Recommended:
-- `seo.secondaryKeyword`, `seo.faq[]` (enhanced SEO)
-
-The frontmatter structure maps directly to `ChangelogEntryInput` type. Use `/publish_changelog` to publish drafts to BaseHub.
+Every draft MUST include (maps to `ChangelogEntrySchema` in `apps/www/src/lib/content-schemas.ts`):
+- `title` (core)
+- `description` (150-160 chars — this is the meta description)
+- `keywords[]` (min 3 — first entry is the primary keyword)
+- `ogTitle`, `ogDescription`, `ogImage` (social/OG)
+- `authors[]` (structured array with name, url, twitterHandle)
+- `publishedAt`, `updatedAt` (ISO datetimes)
+- `version` (e.g., "v0.1.0")
+- `type` (feature | improvement | fix | breaking)
+- `tldr` (20-300 chars)
+- `faq[]` (min 1 entry)
+- `_draft: true` (traceability)
 
 See `resources/templates.md` for complete frontmatter template.
+
+The `/create_changelog` command writes the `.mdx` file directly to `apps/www/src/content/changelog/`.
 
 ## Resources
 

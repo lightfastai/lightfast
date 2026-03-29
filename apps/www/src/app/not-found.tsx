@@ -4,7 +4,7 @@ import {
   LightfastErrorPage,
 } from "@repo/ui/components/lightfast-error-page";
 import { Button } from "@repo/ui/components/ui/button";
-import Link from "next/link";
+import { NavLink } from "~/components/nav-link";
 
 export default function NotFound() {
   return (
@@ -20,7 +20,7 @@ export default function NotFound() {
           description="Sorry, we couldn't find the page you're looking for."
         >
           <Button asChild>
-            <Link href="/">Return Home</Link>
+            <NavLink href="/">Return Home</NavLink>
           </Button>
         </LightfastErrorPage>
       </LightfastCustomGridBackground.Container>

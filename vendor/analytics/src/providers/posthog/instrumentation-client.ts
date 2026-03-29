@@ -1,5 +1,5 @@
 import posthog from "posthog-js";
-import { posthogEnv } from "../../../env";
+import { posthogEnv } from "../../env";
 
 /**
  * Initialize PostHog analytics.

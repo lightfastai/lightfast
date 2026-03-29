@@ -24,5 +24,5 @@ const platformConfig: NextConfig = merge({}, baseConfig, {
 
 export default withSentryConfig(
   withBetterStack(withVercelToolbar()(platformConfig)),
-  sentryOptions,
+  sentryOptions
 );

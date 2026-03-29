@@ -1,11 +1,12 @@
-import Link from "next/link";
+import type { Route } from "next";
 import { getChangelogPages } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
 
 export async function HeroChangelogBadge() {
   const pages = getChangelogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
-      new Date(a.data.publishedAt).getTime(),
+      new Date(a.data.publishedAt).getTime()
   );
   const latest = pages[0];
 
@@ -18,18 +19,18 @@ export async function HeroChangelogBadge() {
     {
       month: "short",
       day: "numeric",
-    },
+    }
   );
 
   return (
-    <Link
+    <NavLink
       className="inline-flex h-7 items-center gap-2 rounded-sm border border-border/50 bg-card/80 px-2.5 text-muted-foreground text-sm backdrop-blur-md transition-colors hover:text-foreground"
-      href={`/changelog/${latest.slugs[0]}`}
+      href={`/changelog/${latest.slugs[0]}` as Route}
       prefetch
     >
       <span className="text-foreground">{dateStr}</span>
       <span className="line-clamp-1">{latest.data.title}</span>
       <span>→</span>
-    </Link>
+    </NavLink>
   );
 }

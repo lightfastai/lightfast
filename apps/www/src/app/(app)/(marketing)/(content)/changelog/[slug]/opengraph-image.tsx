@@ -25,18 +25,16 @@ export default async function Image({
   const { title, description, publishedAt } = page.data;
 
   return new ImageResponse(
-    (
-      <ContentLayout
-        category="Changelog"
-        date={new Date(publishedAt).toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        })}
-        description={description}
-        title={title}
-      />
-    ),
-    { ...size, fonts },
+    <ContentLayout
+      category="Changelog"
+      date={new Date(publishedAt).toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      })}
+      description={description}
+      title={title}
+    />,
+    { ...size, fonts }
   );
 }

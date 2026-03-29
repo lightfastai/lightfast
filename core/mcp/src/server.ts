@@ -13,12 +13,14 @@ declare const __SDK_VERSION__: string;
 export interface ServerConfig {
   apiKey: string;
   baseUrl?: string;
+  workspaceId: string;
 }
 
 export async function createServer(config: ServerConfig): Promise<void> {
   const lightfast = new Lightfast({
     apiKey: config.apiKey,
     baseUrl: config.baseUrl,
+    workspaceId: config.workspaceId,
   });
 
   const server = new McpServer({

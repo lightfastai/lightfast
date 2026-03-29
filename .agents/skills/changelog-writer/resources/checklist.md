@@ -4,7 +4,7 @@ Quick checklist before publishing. 2 minutes max.
 
 ## 1. Fact Check (Critical)
 
-Compare against `docs/architecture/implementation-status/README.md`:
+Verify claims against the codebase:
 
 - [ ] Every feature mentioned is actually complete
 - [ ] Incomplete features marked "Not yet" or "when N+ customers request"
@@ -14,25 +14,30 @@ Compare against `docs/architecture/implementation-status/README.md`:
 ## 2. Frontmatter Validation (Required)
 
 - [ ] `title`: 2-3 key features, clear and specific
-- [ ] `slug`: URL-safe, matches version or feature theme
 - [ ] `description`: 150-160 characters (count: ___)
-- [ ] `date`: Valid ISO date format
-- [ ] `status`: Set to `draft`
-- [ ] `source_prs`: All source PRs/commits listed
-- [ ] `excerpt`: Max 300 characters, distinct from description
-- [ ] `tldr`: 50-100 words, self-contained summary
-- [ ] `focusKeyword`: Selected from target keywords list
+- [ ] `keywords[]`: min 3 entries — first is primary keyword
+- [ ] `ogTitle`: max 70 chars
+- [ ] `ogDescription`: 50-160 chars
+- [ ] `ogImage`: valid URL
+- [ ] `authors[]`: min 1 entry with name, url, twitterHandle
+- [ ] `publishedAt` / `updatedAt`: valid ISO datetime format
+- [ ] `version`: present (e.g., "v0.1.0")
+- [ ] `type`: one of feature | improvement | fix | breaking
+- [ ] `tldr`: 20-300 chars, self-contained summary
+- [ ] `faq[]`: min 1 Q&A pair
+- [ ] `_draft: true`: set
 
-## 3. Optional SEO Fields
+## 3. Filename
 
-- [ ] `secondaryKeywords`: Relevant secondary keyword (if applicable)
-- [ ] `faq`: 2-4 Q&A pairs with search-optimized questions
+- [ ] Draft filename: `YYYY-MM-DD-{descriptive-slug}.md`
+- [ ] Slug is URL-safe kebab-case, version or feature-themed
 
 ## 4. SEO Content
 
 - [ ] 3+ internal links to docs
 - [ ] At least 1 code example per major feature
 - [ ] Technical specifics present (not just marketing fluff)
+- [ ] Primary keyword (keywords[0]) appears naturally in body 2-3 times
 
 ## 5. Style
 
@@ -47,13 +52,13 @@ Compare against `docs/architecture/implementation-status/README.md`:
 
 - "Coming soon: Linear, Notion" (use "when 3+ customers request")
 - "GitHub Integration" without specifying what (files/PRs/issues)
-- Claims about features at 0% in implementation docs
+- Claims about features not yet in production
 - No limitations disclosed for partial features
-- Meta description missing or >160 chars
+- `description` missing or outside 150-160 chars
 - No code examples
-- `tldr` is missing or too short (< 50 words)
-- `excerpt` is identical to `description`
-- `focusKeyword` not present in body text
+- `tldr` missing or too short (< 20 chars)
+- `faq` empty or missing
+- `keywords[0]` not present in body text
 - `faq` questions don't match real search queries
 
 ## Quick Reference
@@ -74,5 +79,5 @@ For every feature, ask:
 - [ ] Is this 100% complete and in production?
 - [ ] Are there limitations users should know?
 - [ ] Is this beta/rolling out?
-- [ ] Did I verify against implementation docs?
+- [ ] Did I verify against the codebase?
 - [ ] Would a developer hit any surprises?

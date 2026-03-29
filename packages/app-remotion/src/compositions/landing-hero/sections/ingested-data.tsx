@@ -1,4 +1,11 @@
-import { cn } from "@repo/ui/lib/utils";
+import type { ClassValue } from "clsx";
+import { clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
+
 import { Easing, interpolate, useCurrentFrame } from "@vendor/remotion";
 import type React from "react";
 import { IsometricCard } from "../shared/isometric-card";

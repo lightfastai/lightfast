@@ -76,7 +76,7 @@ const providers: Array<() => Promise<PageEntry[]>> = [
         description: page.data.description,
         section: "Legal",
         optional: true as const,
-      })),
+      }))
     ),
 ];
 
@@ -130,5 +130,5 @@ export const { GET } = createLlmsTxtHandler(
   {
     skipUrl: [/\/search(\b|\/)/, /\/pitch-deck/],
     stripTitleSuffix: "Lightfast",
-  },
+  }
 );

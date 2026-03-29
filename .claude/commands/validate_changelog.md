@@ -1,16 +1,16 @@
 ---
-description: Validate changelog output, verify content accuracy, check resource links
+description: Validate changelog entries against ChangelogEntrySchema, check resource links
 ---
 
 # Validate Changelog
 
-Validate changelog draft files against all rules defined in the changelog-writer skill.
+Validate changelog `.mdx` files against all rules defined in the changelog-writer skill.
 
 ## Initial Response
 
 When invoked:
 
-**If path provided** (e.g., `/validate_changelog thoughts/changelog/my-changelog.md`):
+**If path provided** (e.g., `/validate_changelog apps/www/src/content/changelog/2025-01-15-github-file-sync.mdx`):
 - Read the file immediately
 - Begin validation workflow
 
@@ -18,206 +18,138 @@ When invoked:
 ```
 I'll help you validate a changelog. Please provide:
 
-1. **File path**: `/validate_changelog thoughts/changelog/{filename}.md`
-2. **Or select from available drafts**: I'll list all files in `thoughts/changelog/`
-
-I'll validate against all checklist requirements and report any issues.
+1. **File path**: `/validate_changelog apps/www/src/content/changelog/{filename}.mdx`
+2. **Or select from available entries**: I'll list all files in apps/www/src/content/changelog/
 ```
 
-Then list available changelog files using: `ls thoughts/changelog/`
+Then list available changelog files using Glob on `apps/www/src/content/changelog/*.mdx`.
 
 ## Step 1: Parse Changelog
 
-1. Read the changelog file completely
-2. Parse YAML frontmatter (everything between the first `---` markers)
-3. Extract body content (everything after the second `---`)
+1. Read the file completely
+2. Parse YAML frontmatter
+3. Extract body content
 4. Store both for validation
 
 ## Step 2: Frontmatter Validation
 
-Check all required fields:
+Check all required fields against `ChangelogEntrySchema`:
 
 | Field | Rule | Check |
 |-------|------|-------|
-| `title` | Required, 2-3 key features | Present and descriptive |
-| `slug` | Format: `0-{version}-lightfast-{feature-slug}` | Regex: `^0-\d+-lightfast-` |
-| `publishedAt` | ISO 8601 date | Valid date format (YYYY-MM-DD) |
-| `excerpt` | Max 300 characters | Character count |
-| `tldr` | 50-100 words | Word count |
-| `seo.metaDescription` | 150-160 characters | Character count |
-| `seo.focusKeyword` | Required | Present |
-| `_internal.status` | `draft` or `published` | Value check |
-| `_internal.source_prs` | Non-empty array | Array length |
+| `title` | Required | Present and non-empty |
+| `description` | 150-160 chars | Character count |
+| `keywords` | Array, min 3 | Array length |
+| `ogTitle` | Max 70 chars | Character count |
+| `ogDescription` | 50-160 chars | Character count |
+| `ogImage` | Valid URL | URL format |
+| `authors` | Array, min 1 | Each has name/url/twitterHandle |
+| `publishedAt` | ISO datetime | Valid format |
+| `updatedAt` | ISO datetime | Valid format |
+| `version` | Required | Present and non-empty |
+| `type` | Enum | One of: feature \| improvement \| fix \| breaking |
+| `tldr` | 20-300 chars | Character count |
+| `faq` | Array, min 1 | Has question/answer pairs |
 
 Report each field: ✓ (pass), ✗ (fail), ⚠ (warning)
 
 ## Step 3: SEO Validation
 
-Check SEO requirements:
-
-1. `metaDescription` length: 150-160 chars (warn if <150 or >160)
-2. `focusKeyword` present in body (count occurrences, expect 2-3)
-3. `excerpt` ≠ `metaDescription` (must be different)
-4. `faq` structure valid (if present):
-   - 2-4 Q&A pairs
-   - Questions use "How do I..." or "What is..." patterns
-   - Answers are 2-3 sentences
+1. `description` length: 150-160 chars
+2. `keywords[0]` present in body (count occurrences, expect 2-3)
+3. `faq` structure valid: questions min 10 chars, answers min 20 chars
 
 ## Step 4: Body Content Validation
 
 Parse markdown body and check:
 
-1. **Internal links**: Count `/docs/*` links (require >= 3)
-2. **Code examples**: Count code blocks (require >= 1 per major feature)
+1. **Internal links**: Count `/docs/*` links (recommend >= 3)
+2. **Code examples**: Count code blocks (recommend >= 1 per major feature)
 3. **Forbidden patterns**:
    - "Users are able to" (passive voice)
-   - "Coming soon" without conditional (should use "when N+ customers request")
-4. **Focus keyword**: Verify appears 2-3 times naturally
-5. **Why section**: Check for "Why we built it this way" or "Why We Built It This Way" heading
+   - "Coming soon" without conditional
+4. **Primary keyword**: Verify `keywords[0]` appears 2-3 times naturally
+5. **Why section**: Check for "Why we built it this way" heading
 
 ## Step 5: Resource Link Validation
 
-**CRITICAL**: Map `/docs/*` links to actual file paths and verify existence.
+Map `/docs/*` links to actual file paths and verify existence.
 
 ### Link Mapping Rules
 
-The docs use Fumadocs with this structure:
-- `apps/www/src/content/docs/` - Main docs
-- `apps/www/src/content/api/` - API reference (mapped to `/docs/api-reference/`)
-
 | Link Pattern | File Location |
 |--------------|---------------|
-| `/docs` | `apps/www/src/content/docs/index.mdx` |
-| `/docs/X` | `apps/www/src/content/docs/X.mdx` OR `apps/www/src/content/docs/X/index.mdx` |
+| `/docs/X` | `apps/www/src/content/docs/X.mdx` or `X/index.mdx` |
 | `/docs/X/Y` | `apps/www/src/content/docs/X/Y.mdx` |
-| `/docs/api-reference` | `apps/www/src/content/api/overview.mdx` |
 | `/docs/api-reference/X` | `apps/www/src/content/api/X.mdx` |
 
-### Current Valid Documentation Paths
-
-Based on actual docs structure (21 .mdx files):
+### Valid Documentation Paths
 
 **Get Started:**
-- `/docs/get-started/overview` → get-started/overview.mdx
-- `/docs/get-started/quickstart` → get-started/quickstart.mdx
-- `/docs/get-started/config` → get-started/config.mdx
+- `/docs/get-started/overview`
+- `/docs/get-started/quickstart`
 
 **Integrate:**
-- `/docs/integrate` → integrate/index.mdx
-- `/docs/integrate/sdk` → integrate/sdk.mdx
-- `/docs/integrate/mcp` → integrate/mcp.mdx
+- `/docs/integrate/sdk`
+- `/docs/integrate/mcp`
+
+**Connectors:**
+- `/docs/connectors/github`
+- `/docs/connectors/linear`
+- `/docs/connectors/sentry`
+- `/docs/connectors/vercel`
 
 **API Reference:**
-- `/docs/api-reference/getting-started/overview` → api/getting-started/overview.mdx
-- `/docs/api-reference/getting-started/authentication` → api/getting-started/authentication.mdx
-- `/docs/api-reference/getting-started/errors` → api/getting-started/errors.mdx
-- `/docs/api-reference/sdks-tools/typescript-sdk` → api/sdks-tools/typescript-sdk.mdx
-- `/docs/api-reference/sdks-tools/mcp-server` → api/sdks-tools/mcp-server.mdx
+- `/docs/api-reference/getting-started/overview`
+- `/docs/api-reference/getting-started/authentication`
+- `/docs/api-reference/getting-started/errors`
+- `/docs/api-reference/sdks-tools/typescript-sdk`
+- `/docs/api-reference/sdks-tools/mcp-server`
 
 ### Validation Process
 
-1. Extract all links matching `/docs/*` pattern from body using regex: `\[([^\]]+)\]\((/docs[^)]+)\)`
-2. For each link:
-   a. Map to expected file path using rules above
-   b. Check if file exists using Glob
-   c. If not found, check alternate paths (index.mdx)
-   d. Report result
+1. Extract all links matching `/docs/*` from body
+2. For each link: map to file path and check existence with Glob
+3. Report missing files with closest valid suggestion
 
-### Suggest Corrections
-
-If a link is invalid, suggest the closest valid path:
-- `/docs/integrations/github` → Suggest `/docs/integrate` (no integrations directory exists)
-- `/docs/integrations/vercel` → Suggest `/docs/integrate` (no integrations directory exists)
-- `/docs/neural-memory` → Suggest `/docs/get-started/overview` (no dedicated memory page)
-
-## Step 6: Fact-Checked Files Validation
-
-Parse `_internal.fact_checked_files` array and verify each entry:
-
-```yaml
-# Format examples:
-- 'path/to/file.ts:startLine-endLine'   # Specific line range
-- 'path/to/file.ts:lineNumber'          # Single line
-- 'path/to/file.ts'                     # Entire file
-```
-
-For each entry:
-1. Parse file path and optional line numbers
-2. Check file exists (relative to repo root)
-3. If line numbers specified, note them for reference (don't validate line counts as files change)
-4. Report missing files
-
-## Step 7: Red Flags Detection
-
-Check for automatic rejection criteria:
-
-| Red Flag | Detection |
-|----------|-----------|
-| "Coming soon: X, Y" | Regex: `/coming soon[:\s]+\w+/i` without conditional |
-| Vague feature names | "GitHub Integration" without specifics (should be "GitHub File Sync") |
-| Missing meta description | `seo.metaDescription` undefined or empty |
-| No code examples | Code block count = 0 |
-| tldr too short | Word count < 50 |
-| excerpt = metaDescription | String equality check |
-| focusKeyword missing from body | Keyword not found in body text |
-
-## Step 8: Generate Validation Report
-
-Output structured report:
+## Step 6: Generate Validation Report
 
 ```markdown
 ## Changelog Validation Report
 
-**File**: `thoughts/changelog/{filename}`
+**File**: `apps/www/src/content/changelog/{filename}`
 **Validated**: {timestamp}
 
 ### Frontmatter Validation
-✓ title: Present and valid
-✓ slug: Matches format `0-X-lightfast-*`
-✓ publishedAt: Valid ISO date
-✗ excerpt: 342 characters (max 300)
-✓ tldr: 67 words (valid range: 50-100)
+✓ title: Present
+✓ description: 158 chars (valid: 150-160)
+✓ keywords: 4 entries
+✓ version: "v0.1.0"
+✓ type: "feature"
+✗ tldr: 18 chars (min 20)
+✓ faq: 2 entries
 
 ### SEO Validation
-✓ seo.metaDescription: 158 characters (valid: 150-160)
-✓ seo.focusKeyword: "observation pipeline"
-✗ focusKeyword in body: Found 1 time (should be 2-3)
+✓ keywords[0] in body: found 3 times
+✓ faq structure valid
 
 ### Body Content
-✓ Internal links: 4 found (min: 3)
-✓ Code examples: 3 found
-✓ No forbidden patterns detected
-✓ "Why we built it this way" section present
+✓ Internal links: 4 found
+✓ Code examples: 2 found
+✓ No forbidden patterns
 
 ### Resource Links
-✗ /docs/integrations/github → FILE NOT FOUND
-  Suggestion: /docs/integrate (closest match)
-✗ /docs/integrations/vercel → FILE NOT FOUND
-  Suggestion: /docs/integrate (closest match)
-✗ /docs/neural-memory → FILE NOT FOUND
-  Suggestion: /docs/get-started/overview (closest match)
-✓ /docs/api-reference → EXISTS (api/overview.mdx)
-
-### Fact-Checked Files
-✓ api/console/src/inngest/workflow/neural/observation-capture.ts:335-1165
-✓ api/console/src/inngest/workflow/neural/classification.ts:1-176
-...
-
-### Red Flags
-⚠ None detected
+✓ /docs/get-started/quickstart → EXISTS
+✗ /docs/integrations/github → NOT FOUND
+  Suggestion: /docs/connectors/github
 
 ### Summary
-- **Passed**: 14/18 checks
-- **Failed**: 4 checks
-- **Warnings**: 0
+- **Passed**: 15/16 checks
+- **Failed**: 1 check
 
 ### Recommendations
-1. Shorten excerpt to under 300 characters
-2. Add focusKeyword "observation pipeline" to body (2-3 times)
-3. Fix resource links:
-   - Replace `/docs/integrations/github` with valid docs path
-   - Replace `/docs/integrations/vercel` with valid docs path
-   - Replace `/docs/neural-memory` with `/docs/get-started/overview`
+1. Extend tldr to at least 20 chars
+2. Fix link: /docs/integrations/github → /docs/connectors/github
 ```
 
 ## Error Handling
@@ -226,20 +158,18 @@ Output structured report:
 ```
 Could not find changelog file at: {path}
 
-Available changelogs in thoughts/changelog/:
+Available changelogs in apps/www/src/content/changelog/:
 - {list files}
 ```
 
 ### Parse Error
 ```
-Failed to parse changelog frontmatter. Please check YAML syntax.
+Failed to parse frontmatter. Please check YAML syntax.
 Error: {error message}
 ```
 
-## Important Notes
+## Notes
 
 - Validation is advisory, not blocking
-- Use this before `/publish_changelog` to catch issues
-- All validation rules sourced from `.claude/skills/changelog-writer/resources/`
-- Run validation after editing to verify fixes
+- All validation rules sourced from `.agents/skills/changelog-writer/resources/`
 - The docs structure may change; verify against actual files if suggestions seem wrong

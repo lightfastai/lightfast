@@ -9,7 +9,6 @@ import {
   NavigationMenuList,
   NavigationMenuTrigger,
 } from "@repo/ui/components/ui/navigation-menu";
-import NextLink from "next/link";
 import { NavLink } from "~/components/nav-link";
 import { RESOURCES_NAV } from "~/config/nav";
 
@@ -21,9 +20,9 @@ export function PitchDeckNavbar() {
     <div className="flex items-center gap-0.5">
       {/* Home link */}
       <Button asChild className={navLinkClass} size="sm" variant="none">
-        <NextLink href="/" prefetch>
+        <NavLink href="/" prefetch>
           Home
-        </NextLink>
+        </NavLink>
       </Button>
 
       {/* Resources dropdown */}
