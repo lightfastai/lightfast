@@ -94,7 +94,7 @@
     "@vitest/expect": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
     "dotenv-cli": "^8.0.0",
-    "happy-dom": "^20.8.3",
+    "happy-dom": "^20.8.8",
     "import-in-the-middle": "catalog:",
     "postcss": "catalog:tailwind4",
     "require-in-the-middle": "catalog:",
