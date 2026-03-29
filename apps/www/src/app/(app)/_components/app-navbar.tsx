@@ -1,7 +1,6 @@
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import NextLink from "next/link";
+import { NavLink } from "~/components/nav-link";
 import { AppMobileNavLazy } from "./app-mobile-nav-lazy";
 import { AppNavbarMenu } from "./app-navbar-menu";
 
@@ -22,34 +21,30 @@ export function AppNavbar() {
           {/* Glass backdrop layer - sibling so dropdown's backdrop-blur isn't trapped */}
           <div className="absolute inset-0 -z-10 rounded-md border border-border/50 bg-card/40 backdrop-blur-md" />
           {/* Logo */}
-          <NextLink
-            className="mr-auto flex items-center pr-4"
-            href="/"
-            prefetch
-          >
+          <NavLink className="mr-auto flex items-center pr-4" href="/" prefetch>
             <Icons.logoShort className="h-4 w-4 text-foreground/60 transition-colors hover:text-foreground" />
-          </NextLink>
+          </NavLink>
 
           {/* Nav items */}
           <AppNavbarMenu />
 
           {/* Join Early Access Button */}
           <Button asChild className="ml-1" size="sm">
-            <MicrofrontendLink href="/early-access" prefetch={true}>
+            <NavLink href="/early-access" microfrontend prefetch>
               Join Early Access
-            </MicrofrontendLink>
+            </NavLink>
           </Button>
         </nav>
 
         {/* Mobile: Logo left, hamburger right */}
         <div className="flex w-full items-center justify-between md:hidden">
-          <NextLink
+          <NavLink
             className="flex items-center transition-opacity hover:opacity-80"
             href="/"
             prefetch
           >
             <Icons.logoShort className="h-4 w-4 text-foreground" />
-          </NextLink>
+          </NavLink>
           <AppMobileNavLazy />
         </div>
       </div>

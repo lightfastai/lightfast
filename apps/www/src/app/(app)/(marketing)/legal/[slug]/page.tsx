@@ -17,7 +17,9 @@ export async function generateStaticParams() {
 export async function generateMetadata({ params }: LegalPageProps) {
   const { slug } = await params;
   const page = getLegalPage([slug]);
-  if (!page) return {};
+  if (!page) {
+    return {};
+  }
   const url = `https://lightfast.ai/legal/${slug}` as LegalUrl;
   const { metadata } = emitLegalSeo(page.data, url);
   return metadata;
@@ -26,7 +28,9 @@ export async function generateMetadata({ params }: LegalPageProps) {
 export default async function LegalPage({ params }: LegalPageProps) {
   const { slug } = await params;
   const page = getLegalPage([slug]);
-  if (!page) notFound();
+  if (!page) {
+    notFound();
+  }
 
   const url = `https://lightfast.ai/legal/${slug}` as LegalUrl;
   const { jsonLd } = emitLegalSeo(page.data, url);

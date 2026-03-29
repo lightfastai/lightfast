@@ -1,13 +1,14 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
-import Link from "next/link";
+import type { Route } from "next";
 import type { ReactNode } from "react";
 import { buildApiPageTree } from "~/app/(app)/(content)/_lib/build-api-tree";
 import { pageTree } from "~/app/(app)/(content)/_lib/source";
 import { DocsMobileNav } from "~/app/(app)/(content)/docs/_components/docs-mobile-nav";
 import { DocsSidebar } from "~/app/(app)/(content)/docs/_components/docs-sidebar";
 import { Search } from "~/app/(app)/(content)/docs/_components/search";
+import { NavLink } from "~/components/nav-link";
 import { consoleUrl } from "~/lib/related-projects";
 
 export default function GeneralDocsLayout({
@@ -54,7 +55,9 @@ export default function GeneralDocsLayout({
                     )}
                     variant="link"
                   >
-                    <Link href="/docs/get-started/overview">Docs</Link>
+                    <NavLink href={"/docs/get-started/overview" as Route}>
+                      Docs
+                    </NavLink>
                   </Button>
                   <Button
                     asChild
@@ -64,9 +67,13 @@ export default function GeneralDocsLayout({
                     )}
                     variant="link"
                   >
-                    <Link href="/docs/api-reference/getting-started/overview">
+                    <NavLink
+                      href={
+                        "/docs/api-reference/getting-started/overview" as Route
+                      }
+                    >
                       API
-                    </Link>
+                    </NavLink>
                   </Button>
                 </nav>
 

@@ -35,6 +35,7 @@
   },
   "dependencies": {
     "@api/app": "workspace:*",
+    "@api/platform": "workspace:*",
     "@db/app": "workspace:*",
     "@repo/app-pinecone": "workspace:*",
     "@repo/app-providers": "workspace:*",

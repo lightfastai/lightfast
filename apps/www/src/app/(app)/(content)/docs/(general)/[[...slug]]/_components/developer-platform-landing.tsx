@@ -9,10 +9,11 @@ import {
   Layers,
   Zap,
 } from "lucide-react";
+import type { Route } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { AlphaBanner } from "~/app/(app)/(content)/docs/_components/alpha-banner";
 import { ContentLink } from "~/components/content-link";
+import { NavLink } from "~/components/nav-link";
 
 interface NavCard {
   action: string;
@@ -154,9 +155,9 @@ export function DeveloperPlatformLanding() {
         <SectionBadge label="Get started" />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {/* Quickstart — featured, 2/3 width */}
-          <Link
+          <NavLink
             className="group md:col-span-2"
-            href="/docs/get-started/quickstart"
+            href={"/docs/get-started/quickstart" as Route}
           >
             <div className="relative h-72 overflow-hidden rounded-md">
               <Image
@@ -179,7 +180,7 @@ export function DeveloperPlatformLanding() {
                 </span>
               </div>
             </div>
-          </Link>
+          </NavLink>
         </div>
       </section>
 

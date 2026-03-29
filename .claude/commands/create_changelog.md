@@ -1,20 +1,19 @@
 ---
-description: Generate changelog entries from PRs, URLs, or manual input. Output saved to thoughts/changelog/
+description: Generate and write changelog entries from PRs, URLs, or manual input directly to apps/www/src/content/changelog/
 model: sonnet
 ---
 
 # Changelog Generator
 
-Generate SEO-optimized, fact-checked changelog entries for Lightfast releases.
+Generate SEO-optimized, fact-checked changelog entries and write them directly to the fumadocs content directory.
 
 ## CRITICAL: Accuracy Over Marketing
 
 - **NEVER** oversell or make unverified claims
-- **NEVER** use vague feature names (e.g., "GitHub Integration" - be specific: "GitHub File Sync")
+- **NEVER** use vague feature names (e.g., "GitHub Integration" — be specific: "GitHub File Sync")
 - **ALWAYS** disclose limitations for partial features
 - **ALWAYS** fact-check against live codebase using agents before writing
 - **ALWAYS** include code examples for major features
-- You are creating accurate technical documentation, not marketing copy
 
 ## Initial Response
 
@@ -30,187 +29,99 @@ I'll help you generate a changelog entry. Please provide one of:
 
 1. **PR number(s)**: `/changelog #123` or `/changelog #123 #124 #125`
 2. **PR URL(s)**: `/changelog https://github.com/lightfastai/lightfast/pull/123`
-3. **Manual list**: `/changelog "Added semantic search, Fixed webhook retry logic, Improved chunking performance"`
+3. **Manual list**: `/changelog "Added semantic search, Fixed webhook retry logic"`
 
-I'll fact-check against the codebase and generate an SEO-optimized entry.
+I'll fact-check against the codebase and write the entry to apps/www/src/content/changelog/.
 ```
 
 Then wait for user input.
 
-## Input Parsing
-
-### Supported Formats
-
-1. **Single PR number**: `#123` or `123`
-2. **Multiple PR numbers**: `#123 #124 #125`
-3. **PR URLs**: `https://github.com/{owner}/{repo}/pull/{number}`
-4. **Manual text**: Quoted string with comma-separated changes
-5. **Mixed**: Any combination of the above
-
-### Parsing Logic
-
-```
-Input: #123 #124 https://github.com/lightfastai/lightfast/pull/125 "Manual change"
-
-Parsed:
-- PR #123 (fetch details)
-- PR #124 (fetch details)
-- PR #125 from URL (fetch details)
-- Manual: "Manual change"
-```
-
-## Steps to follow after receiving input:
+## Steps
 
 1. **Parse input and gather PR information:**
-   - For each PR number/URL, use `gh pr view {number} --json title,body,labels,files,commits`
-   - Extract: title, description, files changed, labels, commit messages
+   - For each PR number/URL: `gh pr view {number} --json title,body,labels,files,commits`
    - For manual input, parse comma-separated items as individual changes
-   - **CRITICAL**: Complete this step before spawning any sub-agents
+   - **Complete this step before spawning any sub-agents**
 
-2. **Ask for version number:**
-   - Use `AskUserQuestion` to prompt for the changelog version
-   - Question: "What version number is this changelog for?"
-   - Accept either format: `4` or `0-4` (both produce slug prefix `0-4`)
-   - Parse the input:
-     - If user enters `4` → version is `4`
-     - If user enters `0-4` → version is `4` (strip the `0-` prefix)
-   - The final slug will be: `0-{version}-lightfast-{feature-slug}`
-   - Example: version `4` + features "Neural Memory" → `0-4-lightfast-neural-memory`
+2. **Ask for version:**
+   - Use `AskUserQuestion`: "What version is this changelog for? (e.g., v0.4.0)"
+   - Goes directly into the `version` frontmatter field
 
-3. **Create tracking plan using TodoWrite:**
-   - Break down the changelog into trackable items
-   - Create todos for each feature/change to document
-   - Track fact-checking progress for each claim
+3. **Create tracking plan using TodoWrite**
 
 4. **Spawn parallel sub-agents for fact-checking:**
-   - Create multiple Task agents to verify claims concurrently
-   - Use specialized agents that know how to research the codebase:
+   - **codebase-locator** — find WHERE feature code lives
+   - **codebase-analyzer** — understand HOW features work
+   - **codebase-pattern-finder** — find usage patterns and examples
 
-   **For locating implementations:**
-   - Use the **codebase-locator** agent to find WHERE feature code lives
-   - Example: "Find where GitHub file sync webhook handlers are implemented"
+5. **Wait for all sub-agents, synthesize findings:**
+   - Compile verification results
+   - Note discrepancies between PR claims and actual implementation
+   - Identify limitations to disclose
 
-   **For understanding implementations:**
-   - Use the **codebase-analyzer** agent to understand HOW features work
-   - Example: "Analyze the semantic search implementation - what vector DB, what chunking strategy"
+6. **Determine `type`:**
+   - `feature` | `improvement` | `fix` | `breaking`
+   - Use dominant change type if mixed
 
-   **For finding usage patterns:**
-   - Use the **codebase-pattern-finder** agent to find existing patterns and examples
-   - Example: "Find examples of how hybrid search combines vector and full-text results"
+7. **Generate changelog** following `.agents/skills/changelog-writer/SKILL.md`:
+   - 1-3 sentences per feature
+   - Lead with benefit
+   - Code examples for major features
+   - Disclose limitations
 
-   The key is to use these agents intelligently:
-   - Start with locator agents to find what exists
-   - Then use analyzer agents on the most promising findings
-   - Run multiple agents in parallel when verifying different features
-   - Each agent knows its job - just tell it what you're looking for
-   - Don't write detailed prompts about HOW to search - the agents already know
+8. **Determine filename:**
+   - Format: `YYYY-MM-DD-{title-slug}.mdx`
+   - Date from `publishedAt`, slug from top 2-3 features kebab-cased
+   - Example: `2025-01-15-github-file-sync-semantic-search.mdx`
 
-5. **Wait for all sub-agents to complete and synthesize findings:**
-   - **IMPORTANT**: Wait for ALL sub-agent tasks to complete before proceeding
-   - Compile verification results for each claimed feature
-   - Note any discrepancies between PR claims and actual implementation
-   - Identify limitations or partial implementations to disclose
-   - Include specific file paths for reference
+9. **Write the file to `apps/www/src/content/changelog/{filename}`**
 
-6. **Categorize changes:**
-   - Group verified changes into:
-     - **Features**: New capabilities (use PR labels or title keywords)
-     - **Improvements**: Enhancements to existing features
-     - **Infrastructure**: Technical/platform changes
-     - **Fixes**: Bug fixes (usually not in changelog unless significant)
-   - Remove or flag any claims that couldn't be verified
+10. **Present results:**
+    ```
+    ## Changelog Written
 
-7. **Generate changelog using skill templates:**
-   - Load skill from `.claude/skills/changelog-writer/SKILL.md`
-   - Apply templates from `resources/templates.md`
-   - Follow SEO requirements from `resources/seo-requirements.md`
-   - Run through checklist from `resources/checklist.md`
-   - **Key requirements**:
-     - 1-3 sentences per feature (Cursor-style brevity)
-     - Lead with benefit, then how
-     - Include code examples for major features
-     - Disclose beta status, limitations
-     - No emoji - professional tone
-     - **DO NOT include "Key files:" sections** - file references belong ONLY in the Metadata section at the bottom under "Fact-checked files"
+    **File**: apps/www/src/content/changelog/{filename}
+    **URL**: https://lightfast.ai/changelog/{slug}
 
-8. **Save output:**
-   - **Filename format**: `{title-slug}-{YYYYMMDD-HHMMSS}.md`
-   - **Title slug**: Top 2-3 features in kebab-case, max 50 characters
-   - **Output path**: `thoughts/changelog/{filename}`
-   - Example: `github-file-sync-semantic-search-20251217-143022.md`
+    - Version: {version}
+    - Type: {type}
+    - {N} features documented
 
-9. **Present results:**
-   ```
-   ## Changelog Generated
+    The entry is live on next build. Use `/validate_changelog` to audit.
+    ```
 
-   **File**: `thoughts/changelog/{filename}`
+## Frontmatter Schema
 
-   ### Summary
-   - {N} features documented
-   - {N} improvements listed
-   - {N} infrastructure changes
-
-   ### Fact-Check Results
-   - {N} claims verified against codebase
-   - {N} limitations disclosed
-   - Files referenced: {list}
-
-   ### SEO Elements
-   - Meta description: {150-160 chars}
-   - Internal links: {N}
-   - Code examples: {N}
-
-   ### Next Steps
-   1. Review the generated changelog
-   2. Make any manual adjustments
-   3. Use `/publish-changelog` when ready to push to BaseHub
-
-   Would you like me to open the file for review?
-   ```
-
-## Output Format
-
-Save to: `thoughts/changelog/{title-slug}-{YYYYMMDD-HHMMSS}.md`
-
-The frontmatter structure maps directly to `ChangelogEntryInput` type, enabling zero-mapping publish via `/publish_changelog`.
+Maps to `ChangelogEntrySchema` in `apps/www/src/lib/content-schemas.ts`:
 
 ```yaml
 ---
-# Fields that map directly to ChangelogEntryInput
-title: "{2-3 key features}"
-slug: "0-{version}-lightfast-{feature-slug}"  # e.g., "0-1-lightfast-github-file-sync"
-publishedAt: "{YYYY-MM-DD}"
-excerpt: "{Max 300 char summary for listings and RSS feeds}"
-tldr: "{50-100 word summary for AI citation. Self-contained paragraph covering key user benefits.}"
-
-# Categorized change sections (optional, arrays converted to bullet lists)
-improvements:
-  - "{Enhancement to existing feature}"
-infrastructure:
-  - "{Platform/architecture change}"
-fixes:
-  - "{Bug fix description}"
-patches:
-  - "{Security or dependency update}"
-
-# SEO nested object (matches ChangelogSeoInput)
-seo:
-  metaDescription: "{150-160 char meta description with version and focus keyword}"
-  focusKeyword: "{primary keyword phrase}"
-  secondaryKeyword: "{optional secondary keyword}"
-  faq:
-    - question: "{What is [feature]?}"
-      answer: "{Concise answer for featured snippets}"
-    - question: "{How do I [action]?}"
-      answer: "{Step-by-step answer}"
-
-# Internal fields (stripped before publish, not sent to BaseHub)
-_internal:
-  status: draft
-  source_prs: ["{PR numbers and commit hashes}"]
-  generated: "{ISO timestamp}"
-  fact_checked_files:
-    - "{file:line references}"
+title: "Feature Name, Feature Name"
+description: "150-160 char meta description with version and keyword"
+keywords:
+  - "primary keyword phrase"
+  - "secondary keyword"
+  - "additional keyword"
+canonicalUrl: "https://lightfast.ai/changelog/YYYY-MM-DD-slug"  # optional
+ogTitle: "Title for social sharing (max 70 chars)"
+ogDescription: "50-160 char OG description"
+ogImage: "https://lightfast.ai/images/og-default.png"
+noindex: false
+nofollow: false
+authors:
+  - name: "Jeevan Pillay"
+    url: "https://lightfast.ai"
+    twitterHandle: "@jeevanpillay"
+publishedAt: "YYYY-MM-DDTHH:MM:SSZ"
+updatedAt: "YYYY-MM-DDTHH:MM:SSZ"
+version: "v0.X.0"
+type: "feature"  # feature | improvement | fix | breaking
+tldr: "20-300 char summary for AI citation."
+faq:
+  - question: "What is [feature]?"
+    answer: "Concise answer for featured snippets."
+  - question: "How do I [action]?"
+    answer: "Step-by-step answer."
 ---
 
 # v{X.X} · {Month Day, Year}
@@ -226,43 +137,18 @@ _internal:
 
 ### PR Not Found
 ```
-Could not fetch PR #{number}. Please verify:
-1. PR exists and is accessible
-2. You have `gh` CLI authenticated: `gh auth status`
-3. PR number is correct
-
+Could not fetch PR #{number}. Verify gh auth status and PR number.
 Continuing with other inputs...
 ```
 
-### Agent Verification Failed
+### Verification Failed
 ```
-Warning: Could not verify claim "{claim}" in codebase.
-Options:
-1. Remove claim from changelog
-2. Mark as "unverified" for manual review
-3. Provide additional context for re-verification
-
-Proceeding with verified claims only...
-```
-
-### Empty Input
-```
-No changes to document. Please provide:
-- PR numbers: `/changelog #123`
-- PR URLs: `/changelog https://github.com/.../pull/123`
-- Manual list: `/changelog "Feature X, Improvement Y"`
+Warning: Could not verify "{claim}" in codebase.
+Proceeding with verified claims only.
 ```
 
 ## Important Notes
 
-- Always use parallel Task agents to maximize efficiency and minimize context usage
-- Each sub-agent prompt should be specific and focused on verification
-- Keep the main agent focused on synthesis, not deep file reading
-- **Critical ordering**: Follow the numbered steps exactly
-  - ALWAYS fetch PR data first before spawning sub-tasks (step 1)
-  - ALWAYS ask for version number before fact-checking (step 2)
-  - ALWAYS wait for all sub-agents to complete before writing (step 5)
-  - NEVER write the changelog with unverified claims
-- **Accuracy first**: It's better to document fewer features accurately than many features incorrectly
-- **Disclosure over hype**: Always disclose limitations, beta status, partial implementations
-- Output is a draft - human review required before publishing
+- Fact-check before writing — unverified claims don't ship
+- Wait for ALL sub-agents before generating
+- Accuracy over completeness — fewer accurate features beats many inaccurate ones

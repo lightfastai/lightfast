@@ -1,8 +1,9 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
-import Link from "next/link";
+import type { Route } from "next";
 import { usePathname } from "next/navigation";
+import { NavLink } from "~/components/nav-link";
 
 interface Category {
   slug: string;
@@ -31,7 +32,7 @@ export function CategoryNav({ categories }: CategoryNavProps) {
           size="sm"
           variant="link"
         >
-          <Link href="/blog">All Posts</Link>
+          <NavLink href="/blog">All Posts</NavLink>
         </Button>
         {categories.map((category) => (
           <Button
@@ -45,7 +46,9 @@ export function CategoryNav({ categories }: CategoryNavProps) {
             size="sm"
             variant="link"
           >
-            <Link href={`/blog/topic/${category.slug}`}>{category.title}</Link>
+            <NavLink href={`/blog/topic/${category.slug}` as Route}>
+              {category.title}
+            </NavLink>
           </Button>
         ))}
       </nav>

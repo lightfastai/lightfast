@@ -1,4 +1,4 @@
-import { withSentryConfig } from "@sentry/nextjs";
+import type { withSentryConfig } from "@sentry/nextjs";
 import type { NextConfig } from "next";
 import { createSecureHeaders } from "next-secure-headers";
 

@@ -12,10 +12,10 @@ import {
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
 import type * as PageTree from "fumadocs-core/page-tree";
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { DocsSidebarScrollArea } from "~/app/(app)/(content)/docs/_components/docs-sidebar-scroll-area";
 import { ContentLink } from "~/components/content-link";
+import { NavLink } from "~/components/nav-link";
 
 interface DocsSidebarProps {
   tree?: PageTree.Root;
@@ -53,9 +53,9 @@ export function DocsSidebar({ tree }: DocsSidebarProps) {
       <SidebarHeader className="!p-0 gap-0">
         {/* Logo - aligned with main header */}
         <div className="page-gutter -ml-2 flex h-[4.25rem] flex-row items-center gap-2">
-          <Link href="/">
+          <NavLink href="/">
             <Icons.logoShort className="h-4 w-4 text-foreground transition-colors group-hover:text-foreground" />
-          </Link>
+          </NavLink>
         </div>
       </SidebarHeader>
 

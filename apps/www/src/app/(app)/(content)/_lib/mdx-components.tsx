@@ -83,7 +83,7 @@ export const mdxComponents = {
       return (
         <code
           className={cn(
-            "rounded-md bg-muted/50 px-1 py-0.5 font-mono text-sm",
+            "rounded-md bg-muted/50 px-1 py-0.5 font-mono",
             className
           )}
           {...props}
@@ -104,11 +104,11 @@ export const mdxComponents = {
       });
     }
 
-    // Fallback for block code without language
+    // Fallback: no language class (inline code that fumadocs doesn't mark with inline prop)
     return (
       <code
         className={cn(
-          "rounded-md border bg-card/80 px-2 font-mono text-sm tracking-wide",
+          "rounded-md bg-muted/50 px-1 py-0.5 font-mono",
           className
         )}
         {...props}
@@ -362,7 +362,7 @@ export const mdxComponents = {
     return (
       <th
         className={cn(
-          "h-10 break-words px-4 text-left align-middle font-semibold text-xs [&:has([role=checkbox])]:pr-0",
+          "h-10 break-words px-4 text-left align-middle font-semibold text-sm [&:has([role=checkbox])]:pr-0",
           className
         )}
         {...props}
@@ -376,7 +376,7 @@ export const mdxComponents = {
     return (
       <td
         className={cn(
-          "break-words p-4 align-middle text-xs [&:has([role=checkbox])]:pr-0",
+          "break-words p-4 align-middle text-sm [&:has([role=checkbox])]:pr-0",
           className
         )}
         {...props}

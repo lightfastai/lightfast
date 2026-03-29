@@ -1,89 +1,79 @@
 # Blog Templates
 
-## BaseHub Entry Fields
+## Frontmatter Schema
 
-This frontmatter structure maps to `AIGeneratedPost` type in `@repo/cms-workflows`, enabling publish via `/publish_blog`.
+This frontmatter structure maps to `BlogPostSchema` in `apps/www/src/lib/content-schemas.ts`. The `/create_blog` command writes the file directly to `apps/www/src/content/blog/`.
 
 ### Core Fields
 
 - **title**: Blog post title (compelling, keyword-rich)
-- **slug**: URL slug (kebab-case, no category prefix)
-- **publishedAt**: ISO date string (YYYY-MM-DD)
-- **category**: One of: `technology`, `company`, `product`
-- **contentType**: One of: `tutorial`, `announcement`, `thought-leadership`, `case-study`, `comparison`, `deep-dive`, `guide`
+- **description**: 150-160 char meta description — this IS the SEO meta tag (not a nested `seo.metaDescription`)
+- **keywords**: Array of keyword phrases (min 3, max 20). First entry is primary keyword.
+- **ogTitle**: Social sharing title (max 70 chars)
+- **ogDescription**: 50-160 char OG description
+- **ogImage**: OG image URL
+- **publishedAt** / **updatedAt**: ISO datetime strings
+- **category**: One of: `engineering`, `company`, `product`, `tutorial`, `research`
+- **readingTimeMinutes**: Estimated reading time (integer, min 1)
+- **featured**: Boolean — whether post appears in featured sections
 
-### AEO Fields (Answer Engine Optimization)
+### AEO Fields
 
-- **excerpt**: 2-3 sentences for listings (max 300 chars)
-- **tldr**: 80-100 word summary for AI citation. Self-contained paragraph with key benefits.
+- **tldr**: 20-300 char summary for AI citation. Rendered as highlighted box at top of post.
+- **faq**: Array of Q&A pairs (min 1). Generates FAQPage schema for featured snippets.
 
-### SEO Fields (nested under `seo:`)
+### Author
 
-- **seo.metaDescription**: 150-160 chars with primary keyword
-- **seo.focusKeyword**: Primary keyword phrase
-- **seo.secondaryKeywords**: Array of 2-4 secondary keywords
-- **seo.faq**: Array of 3-5 question/answer pairs
-
-### Author (hardcoded for now)
-
-- **author**: `jeevanpillay`
-
-### Internal Fields (nested under `_internal:`)
-
-Stripped before publishing:
-
-- **_internal.status**: `draft` or `published`
-- **_internal.generated**: ISO timestamp
-- **_internal.sources**: Array of research URLs
-- **_internal.word_count**: Approximate word count
-- **_internal.reading_time**: Estimated reading time
+- **authors**: Array of author objects (min 1):
+  - `name`: Author display name
+  - `url`: Author profile URL
+  - `twitterHandle`: Twitter/X handle
 
 ### Frontmatter Template
 
 ```yaml
 ---
-# Core fields
 title: "Blog Post Title"
-slug: "blog-post-slug"
-publishedAt: "YYYY-MM-DD"
-category: "technology" | "company" | "product"
-contentType: "deep-dive" | "announcement" | "tutorial" | etc.
+description: "150-160 char meta description with primary keyword — this is the SEO meta tag"
+keywords:
+  - "primary keyword phrase"
+  - "secondary keyword 1"
+  - "secondary keyword 2"
+canonicalUrl: "https://lightfast.ai/blog/YYYY-MM-DD-slug"  # optional
+ogTitle: "Title for social sharing (max 70 chars)"
+ogDescription: "50-160 char OG description for social cards"
+ogImage: "https://lightfast.ai/images/og-default.png"
+noindex: false
+nofollow: false
+authors:
+  - name: "Jeevan Pillay"
+    url: "https://lightfast.ai"
+    twitterHandle: "@jeevanpillay"
+publishedAt: "YYYY-MM-DDTHH:MM:SSZ"
+updatedAt: "YYYY-MM-DDTHH:MM:SSZ"
+category: "engineering"  # engineering | product | company | tutorial | research
+readingTimeMinutes: 5
+featured: false
+tldr: "20-300 char summary for AI citation. Self-contained, covers key user benefits."
+faq:
+  - question: "What is [topic]?"
+    answer: "Concise answer optimized for featured snippets."
+  - question: "How do I [action]?"
+    answer: "Step-by-step answer with specifics."
 
-# AEO fields
-excerpt: "2-3 sentence summary for listings, max 300 chars"
-tldr: "80-100 word summary for AI citation. Self-contained paragraph covering key user benefits and main insights."
-
-# SEO nested object
-seo:
-  metaDescription: "150-160 char meta description with primary keyword"
-  focusKeyword: "primary keyword phrase"
-  secondaryKeywords:
-    - "secondary keyword 1"
-    - "secondary keyword 2"
-  faq:
-    - question: "What is [topic]?"
-      answer: "Concise answer optimized for featured snippets."
-    - question: "How do I [action]?"
-      answer: "Step-by-step answer with specifics."
-
-# Author (hardcoded)
-author: "jeevanpillay"
-
-# Internal fields (stripped before publish)
-_internal:
-  status: draft
-  generated: "YYYY-MM-DDTHH:MM:SSZ"
-  sources:
-    - "https://source1.com"
-    - "https://source2.com"
-  word_count: 1200
-  reading_time: "6 min"
+# Internal fields (stripped before publishing)
+_draft: true
+_sources:
+  - "https://source1.com"
+  - "https://source2.com"
 ---
 ```
 
+**Note on filename**: The filename determines the URL slug in fumadocs. Use `YYYY-MM-DD-{slug}.md` for drafts; the publish command converts to `.mdx`.
+
 ## Document Structure by Category
 
-### Technology Posts (800-1,500 words)
+### Engineering Posts (800-1,500 words)
 
 Note: The `tldr` frontmatter field is rendered automatically in a highlight box on the page. Do NOT include a `## TL;DR` section in the body.
 
@@ -102,9 +92,9 @@ Note: The `tldr` frontmatter field is rendered automatically in a highlight box 
 
 [Layer 1: Foundation explanation]
 
-```typescript
+\`\`\`typescript
 // Code example
-```
+\`\`\`
 
 [Layer 2: Implementation details]
 
@@ -218,9 +208,9 @@ Note: The `tldr` frontmatter field is rendered automatically in a highlight box 
 
 [Brief explanation or walkthrough]
 
-```yaml
+\`\`\`yaml
 # Example configuration
-```
+\`\`\`
 
 ---
 
@@ -253,4 +243,79 @@ A: [Technical answer]
 - [Quick Start](/docs/get-started/quickstart)
 - [Documentation](/docs/get-started/overview)
 - [Pricing](/pricing)
+```
+
+### Tutorial Posts (1,000-2,000 words)
+
+```markdown
+## Overview
+
+[What the reader will learn and why it matters]
+
+**Prerequisites:**
+- [Requirement 1]
+- [Requirement 2]
+
+---
+
+## Step 1: [Action]
+
+[Explanation]
+
+\`\`\`bash
+# Command
+\`\`\`
+
+---
+
+## Step 2: [Action]
+
+[Explanation with code]
+
+---
+
+## Troubleshooting
+
+**[Common issue]**: [Solution]
+
+---
+
+## Next Steps
+
+- [Related tutorial](/docs/...)
+- [API Reference](/docs/api-reference/...)
+```
+
+### Research Posts (1,200-2,000 words)
+
+```markdown
+## Overview
+
+[What was studied and why]
+
+---
+
+## Methodology
+
+[How the research was conducted]
+
+---
+
+## Findings
+
+### [Finding 1]
+
+[Data with citations]
+
+---
+
+## Implications
+
+[What this means for practitioners]
+
+---
+
+## Conclusion
+
+[Key takeaways]
 ```

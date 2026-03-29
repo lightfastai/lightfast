@@ -1,10 +1,10 @@
+import { Button } from "@repo/ui/components/ui/button";
 import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
-import { Button } from "@repo/ui/components/ui/button";
-import type { Metadata } from "next";
+import type { Metadata, Route } from "next";
 import Image from "next/image";
-import Link from "next/link";
 import { getChangelogPages } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
 import {
   buildFaqEntity,
   buildOrganizationEntity,
@@ -126,9 +126,9 @@ export default function ChangelogPage() {
                   className="h-auto p-0 font-medium font-pp text-2xl"
                   variant="link"
                 >
-                  <Link href={`/changelog/${page.slugs[0]}`}>
+                  <NavLink href={`/changelog/${page.slugs[0]}` as Route}>
                     {page.data.title}
-                  </Link>
+                  </NavLink>
                 </Button>
               </h2>
 

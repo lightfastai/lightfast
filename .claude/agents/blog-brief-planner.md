@@ -116,7 +116,7 @@ Return **valid JSON only** (no markdown wrapper):
 }
 ```
 
-Also write output to: `outputs/blog/briefs/<kebab-case-topic>.json`
+Also write output to: `thoughts/blog/briefs/<kebab-case-topic>.json`
 
 ---
 

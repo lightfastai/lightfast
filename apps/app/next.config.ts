@@ -2,8 +2,8 @@ import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import { baseConfig, sentryOptions } from "@vendor/next/config";
-import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
+import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
@@ -113,14 +113,12 @@ const appConfig: NextConfig = merge({}, baseConfig, {
       },
       {
         source: "/changelog/0-2-lightfast-neural-memory",
-        destination:
-          "/changelog/lightfast-observation-entity-extraction-2026",
+        destination: "/changelog/lightfast-observation-entity-extraction-2026",
         permanent: true,
       },
       {
         source: "/changelog/0-3-lightfast-search-api-hybrid-retrieval",
-        destination:
-          "/changelog/lightfast-search-api-hybrid-retrieval-2026",
+        destination: "/changelog/lightfast-search-api-hybrid-retrieval-2026",
         permanent: true,
       },
       {
@@ -139,7 +137,7 @@ const appConfig: NextConfig = merge({}, baseConfig, {
 
 const config = withSentryConfig(
   withBetterStack(withVercelToolbar()(appConfig)),
-  sentryOptions,
+  sentryOptions
 );
 
 const baseExport = withMicrofrontends(config, {

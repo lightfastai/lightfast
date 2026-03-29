@@ -1,5 +1,6 @@
 import { RssIcon } from "lucide-react";
-import Link from "next/link";
+import type { Route } from "next";
+import { NavLink } from "~/components/nav-link";
 
 export default function ChangelogLayout({
   children,
@@ -12,14 +13,14 @@ export default function ChangelogLayout({
         <h1 className="font-medium font-pp text-3xl text-foreground">
           Changelog
         </h1>
-        <Link
+        <NavLink
           className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
-          href="/changelog/rss.xml"
+          href={"/changelog/rss.xml" as Route}
           title="Subscribe to RSS Feed"
         >
           <RssIcon className="h-4 w-4" />
           <span>RSS Feed</span>
-        </Link>
+        </NavLink>
       </div>
       {children}
     </div>
