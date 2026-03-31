@@ -24,7 +24,7 @@ import type {
   LegalUrl,
 } from "./url-types";
 
-export interface SeoBundle {
+interface SeoBundle {
   readonly jsonLd: GraphContext;
   readonly metadata: Metadata;
 }

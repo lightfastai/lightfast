@@ -1,7 +1,7 @@
 import { buildPrompt, buildPromptContext } from "@repo/prompt-engine";
 import { ANSWER_PROVIDERS } from "./providers";
 
-export interface AnswerPromptOptions {
+interface AnswerPromptOptions {
   /** Model ID for token budgeting */
   modelId?: string;
   /** Workspace context (hardcoded for now, dynamic later) */
