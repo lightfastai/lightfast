@@ -17,7 +17,7 @@ import { auth, clerkClient } from "@vendor/clerk/server";
 /**
  * Organization with access information
  */
-export interface OrgWithAccess {
+interface OrgWithAccess {
   org: {
     id: string;
     name: string;

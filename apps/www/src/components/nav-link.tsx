@@ -27,7 +27,7 @@ type DistributiveOmit<T, K extends PropertyKey> = T extends unknown
  * Standalone use (title not required):
  *   <NavLink href="/">Home</NavLink>
  */
-export type NavLinkProps = DistributiveOmit<NavItem, "title"> &
+type NavLinkProps = DistributiveOmit<NavItem, "title"> &
   // Inherits className, onClick, prefetch, target, rel, children, replace, scroll, etc.
   // href is omitted here — it comes from the NavItem discriminated union (typed Route vs string)
   Omit<ComponentPropsWithoutRef<typeof NextLink>, "href"> & {

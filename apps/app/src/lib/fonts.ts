@@ -1,4 +1,3 @@
-import { cn } from "@repo/ui/lib/utils";
 import localFont from "next/font/local";
 
 /**
@@ -21,11 +20,3 @@ export const ppNeueMontreal = localFont({
   variable: "--font-pp-neue-montreal",
   display: "swap",
 });
-
-/**
- * Combined font classes for use in className
- */
-export const fonts = cn(
-  ppNeueMontreal.variable,
-  "touch-manipulation font-sans antialiased"
-);

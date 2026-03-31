@@ -33,7 +33,7 @@ const SAFE_MESSAGE_CODES: ReadonlySet<TRPCErrorCode> = new Set([
 /**
  * Type guard to check if an error is a TRPCClientError
  */
-export function isTRPCClientError(
+function isTRPCClientError(
   error: unknown
 ): error is TRPCClientError<AppRouter> {
   return error instanceof Error && error.name === "TRPCClientError";
@@ -42,7 +42,7 @@ export function isTRPCClientError(
 /**
  * Extract the TRPC error code from an error
  */
-export function getTRPCErrorCode(error: unknown): TRPCErrorCode | null {
+function getTRPCErrorCode(error: unknown): TRPCErrorCode | null {
   if (!isTRPCClientError(error)) {
     return null;
   }
@@ -60,7 +60,7 @@ export function getTRPCErrorCode(error: unknown): TRPCErrorCode | null {
  * For known-safe codes (CONFLICT, BAD_REQUEST, etc.), returns the server message.
  * For INTERNAL_SERVER_ERROR or unknown errors, returns a generic message.
  */
-export function getSafeErrorMessage(
+function getSafeErrorMessage(
   error: unknown,
   fallback = "An unexpected error occurred. Please try again."
 ): string {

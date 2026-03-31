@@ -1,9 +1,6 @@
 import { seoEnv } from "@vendor/seo/env";
 import merge from "lodash.merge";
 import type { Metadata } from "next";
-import type { BasePageData } from "./content-schemas";
-
-export type { BasePageData };
 
 const applicationName = "Lightfast";
 const protocol = process.env.NODE_ENV === "production" ? "https" : "http";

@@ -1,17 +1,17 @@
 import { z } from "zod";
 
-export const AuthorSchema = z.object({
+const AuthorSchema = z.object({
   name: z.string().min(1),
   url: z.url(),
   twitterHandle: z.string().min(1),
 });
 
-export const FaqItemSchema = z.object({
+const FaqItemSchema = z.object({
   question: z.string().min(10),
   answer: z.string().min(20),
 });
 
-export const BasePageSchema = z.object({
+const BasePageSchema = z.object({
   title: z.string().min(1),
   description: z.string().min(50).max(160),
   keywords: z.array(z.string().min(1)).min(3).max(20),
@@ -23,7 +23,7 @@ export const BasePageSchema = z.object({
   nofollow: z.boolean().default(false),
 });
 
-export const ContentPageSchema = BasePageSchema.extend({
+const ContentPageSchema = BasePageSchema.extend({
   authors: z.array(AuthorSchema).min(1),
   publishedAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
@@ -79,17 +79,11 @@ export const DocsPageSchema = BasePageSchema.extend({
     .optional(),
 });
 
-export const MarketingPageSchema = BasePageSchema.extend({
-  faq: z.array(FaqItemSchema).min(1),
-});
-
 // Inferred TypeScript types
-export type BasePageData = z.infer<typeof BasePageSchema>;
 export type BlogPostData = z.infer<typeof BlogPostSchema>;
 export type ChangelogEntryData = z.infer<typeof ChangelogEntrySchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
 export type DocsPageData = z.infer<typeof DocsPageSchema>;
-export type MarketingPageData = z.infer<typeof MarketingPageSchema>;
 
 // Fields required by the SEO layer — satisfied structurally by BlogPostData,
 // ChangelogEntryData, and DocsPageData. Derived from BlogPostData so schema

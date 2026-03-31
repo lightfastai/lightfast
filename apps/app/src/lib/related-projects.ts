@@ -11,10 +11,3 @@ export const wwwUrl = withRelatedProject({
   defaultHost: isDevelopment ? "http://localhost:4101" : "https://lightfast.ai",
 });
 
-// Get the platform service URL dynamically based on environment
-export const platformUrl = withRelatedProject({
-  projectName: "lightfast-platform",
-  defaultHost: isDevelopment
-    ? "http://localhost:4112"
-    : "https://platform.lightfast.ai",
-});

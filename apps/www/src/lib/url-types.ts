@@ -6,9 +6,3 @@ export type ChangelogUrl = LightfastUrl<`changelog/${string}`>;
 export type LegalUrl = LightfastUrl<`legal/${string}`>;
 export type DocsUrl = LightfastUrl<`docs/${string}`>;
 export type ApiRefUrl = LightfastUrl<`docs/api-reference/${string}`>;
-export type MarketingUrl =
-  | "https://lightfast.ai"
-  | LightfastUrl<"pricing">
-  | LightfastUrl<"blog">
-  | LightfastUrl<"changelog">
-  | LightfastUrl<`use-cases/${string}`>;

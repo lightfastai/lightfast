@@ -18,7 +18,7 @@
     "apps/www": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["jiti"]
+      "ignoreDependencies": ["jiti", "@repo/app-openapi"]
     },
     "api/*": {
       "project": ["src/**/*.ts"]
