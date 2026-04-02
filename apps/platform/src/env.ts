@@ -16,9 +16,6 @@ export const env = createEnv({
     // Service auth — JWT shared secret for cross-service calls
     SERVICE_JWT_SECRET: z.string().min(32),
 
-    // Service auth — internal API key for legacy cross-service calls
-    MEMORY_API_KEY: z.string().min(1).optional(),
-
     // Token vault encryption (32 bytes: 64 hex chars or 44 base64 chars)
     ENCRYPTION_KEY: z.string().min(44),
 
