@@ -1,29 +1,5 @@
-/**
- * Relay ↔ Console Pipeline Wire Contracts
- *
- * Cross-service schemas for the relay → console webhook delivery pipeline.
- * These are consumed exclusively by the relay service — not by providers.
- */
-
 import { z } from "zod";
 import { providerSlugSchema } from "../client/display";
-
-/**
- * Service auth webhook body — sent by internal services (backfill) with X-API-Key.
- * Pre-resolved connectionId/orgId; skips HMAC/dedup/connection resolution.
- */
-export const serviceAuthWebhookBodySchema = z.object({
-  connectionId: z.string().min(1),
-  orgId: z.string().min(1),
-  deliveryId: z.string().min(1),
-  eventType: z.string().min(1),
-  resourceId: z.string().nullable().optional(),
-  payload: z.unknown(),
-  receivedAt: z.number().finite(),
-});
-export type ServiceAuthWebhookBody = z.infer<
-  typeof serviceAuthWebhookBodySchema
->;
 
 /**
  * Payload passed from the thin webhook route to the durable receipt workflow.

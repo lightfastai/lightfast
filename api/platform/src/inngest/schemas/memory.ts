@@ -55,7 +55,6 @@ export const memoryEvents = {
     resourceId: z.string().nullable(),
     payload: z.unknown(),
     receivedAt: z.number(),
-    serviceAuth: z.boolean().optional(),
     preResolved: z
       .object({
         connectionId: z.string(),
