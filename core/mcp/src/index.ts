@@ -3,28 +3,28 @@ import { LIGHTFAST_API_KEY_PREFIX } from "lightfast/constants";
 import { createServer } from "./server";
 
 const HELP_TEXT = `
-Lightfast MCP Server - Connect AI assistants to your workspace memory
+Lightfast MCP Server - Connect AI assistants to your org memory
 
 Usage:
   npx @lightfastai/mcp [options]
 
 Options:
   --api-key <key>         Lightfast API key (or set LIGHTFAST_API_KEY env var)
-  --workspace-id <id>     Workspace ID (or set LIGHTFAST_WORKSPACE_ID env var)
+  --org-id <id>           Org ID (or set LIGHTFAST_ORG_ID env var)
   --base-url <url>        API base URL (default: https://lightfast.ai)
   --help, -h              Show this help message
   --version, -v           Show version
 
 Examples:
-  npx @lightfastai/mcp --api-key sk-lf-abc123xyz --workspace-id ws_abc123
-  LIGHTFAST_API_KEY=sk-lf-abc123xyz LIGHTFAST_WORKSPACE_ID=ws_abc123 npx @lightfastai/mcp
+  npx @lightfastai/mcp --api-key sk-lf-abc123xyz --org-id org_abc123
+  LIGHTFAST_API_KEY=sk-lf-abc123xyz LIGHTFAST_ORG_ID=org_abc123 npx @lightfastai/mcp
 
 Configure in Claude Desktop (claude_desktop_config.json):
   {
     "mcpServers": {
       "lightfast": {
         "command": "npx",
-        "args": ["-y", "@lightfastai/mcp", "--api-key", "sk-lf-...", "--workspace-id", "ws_..."]
+        "args": ["-y", "@lightfastai/mcp", "--api-key", "sk-lf-...", "--org-id", "org_..."]
       }
     }
   }
@@ -34,7 +34,7 @@ async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       "api-key": { type: "string" },
-      "workspace-id": { type: "string" },
+      "org-id": { type: "string" },
       "base-url": { type: "string", default: "https://lightfast.ai" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
@@ -70,12 +70,11 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const workspaceId =
-    values["workspace-id"] ?? process.env.LIGHTFAST_WORKSPACE_ID;
+  const orgId = values["org-id"] ?? process.env.LIGHTFAST_ORG_ID;
 
-  if (!workspaceId) {
+  if (!orgId) {
     console.error(
-      "Error: Workspace ID required. Use --workspace-id flag or set LIGHTFAST_WORKSPACE_ID environment variable."
+      "Error: Org ID required. Use --org-id flag or set LIGHTFAST_ORG_ID environment variable."
     );
     console.error("\nRun with --help for usage information.");
     process.exit(1);
@@ -84,7 +83,7 @@ async function main(): Promise<void> {
   const baseUrl = values["base-url"];
 
   // Start the MCP server
-  await createServer({ apiKey, baseUrl, workspaceId });
+  await createServer({ apiKey, baseUrl, orgId });
 }
 
 main().catch((error: unknown) => {

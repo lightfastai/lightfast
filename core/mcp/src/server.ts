@@ -13,14 +13,14 @@ declare const __SDK_VERSION__: string;
 export interface ServerConfig {
   apiKey: string;
   baseUrl?: string;
-  workspaceId: string;
+  orgId: string;
 }
 
 export async function createServer(config: ServerConfig): Promise<void> {
   const lightfast = new Lightfast({
     apiKey: config.apiKey,
     baseUrl: config.baseUrl,
-    workspaceId: config.workspaceId,
+    orgId: config.orgId,
   });
 
   const server = new McpServer({
@@ -31,7 +31,7 @@ export async function createServer(config: ServerConfig): Promise<void> {
   // Register search tool
   server.tool(
     "lightfast_search",
-    "Search through workspace decisions and observations across connected tools. Returns semantically relevant results with scores, snippets, and metadata.",
+    "Search through org decisions and observations across connected tools. Returns semantically relevant results with scores, snippets, and metadata.",
     SearchRequestSchema.shape,
     async (args) => {
       const results = await lightfast.search(args);
