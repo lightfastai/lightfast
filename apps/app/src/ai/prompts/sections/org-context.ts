@@ -8,8 +8,8 @@ export const answerOrgContextSection: SectionProvider = (ctx) => {
     return null;
   }
 
-  const ws = ctx.userContext.org;
-  const hasContent = ws.integrations.length > 0 || ws.repos.length > 0;
+  const org = ctx.userContext.org;
+  const hasContent = org.integrations.length > 0 || org.repos.length > 0;
 
   if (!hasContent) {
     return null;
@@ -21,11 +21,11 @@ export const answerOrgContextSection: SectionProvider = (ctx) => {
     estimateTokens: () => 200,
     render: () => {
       const parts: string[] = ["ORG CONTEXT:"];
-      if (ws.integrations.length > 0) {
-        parts.push(`Connected sources: ${ws.integrations.join(", ")}`);
+      if (org.integrations.length > 0) {
+        parts.push(`Connected sources: ${org.integrations.join(", ")}`);
       }
-      if (ws.repos.length > 0) {
-        parts.push(`Repositories: ${ws.repos.join(", ")}`);
+      if (org.repos.length > 0) {
+        parts.push(`Repositories: ${org.repos.join(", ")}`);
       }
       return parts.join("\n");
     },

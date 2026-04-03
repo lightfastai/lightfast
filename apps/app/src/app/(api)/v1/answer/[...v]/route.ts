@@ -2,23 +2,14 @@ import { randomUUID } from "node:crypto";
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "@lightfastai/ai-sdk/agent";
 import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
-import { orgContentsTool } from "@repo/app-ai/org-contents";
-import { orgFindSimilarTool } from "@repo/app-ai/org-find-similar";
-import { orgRelatedTool } from "@repo/app-ai/org-related";
 import { orgSearchTool } from "@repo/app-ai/org-search";
 import type { AnswerAppRuntimeContext } from "@repo/app-ai-types";
-import { auth } from "@vendor/clerk/server";
+import { auth, clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 import { smoothStream, stepCountIs } from "ai";
 import type { NextRequest } from "next/server";
-import {
-  buildAnswerSystemPrompt,
-  HARDCODED_ORG_CONTEXT,
-} from "~/ai/prompts/system-prompt";
+import { buildAnswerSystemPrompt } from "~/ai/prompts/system-prompt";
 import { AnswerRedisMemory } from "~/ai/runtime/memory";
-import { contentsLogic } from "~/lib/contents";
-import { findSimilarLogic } from "~/lib/findsimilar";
-import { relatedLogic } from "~/lib/related";
 import { searchLogic } from "~/lib/search";
 import {
   createDualAuthErrorResponse,
@@ -29,9 +20,6 @@ const MODEL_ID = "anthropic/claude-sonnet-4.6";
 
 const answerTools = {
   orgSearch: orgSearchTool(),
-  orgContents: orgContentsTool(),
-  orgFindSimilar: orgFindSimilarTool(),
-  orgRelated: orgRelatedTool(),
 };
 
 export async function POST(request: NextRequest) {
@@ -52,6 +40,11 @@ export async function POST(request: NextRequest) {
     const token = await clerkAuth.getToken();
     const authToken = token ?? undefined;
 
+    const clerk = await clerkClient();
+    const clerkOrg = await clerk.organizations.getOrganization({
+      organizationId: authData.clerkOrgId,
+    });
+
     let body: { messages?: { role: string; content: string }[] };
     try {
       body = (await request.json()) as typeof body;
@@ -64,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = buildAnswerSystemPrompt({
-      org: HARDCODED_ORG_CONTEXT,
+      org: { name: clerkOrg.name },
       modelId: MODEL_ID,
     });
 
@@ -91,16 +84,6 @@ export async function POST(request: NextRequest) {
         tools: {
           orgSearch: {
             handler: (input) => searchLogic(authContext, input, randomUUID()),
-          },
-          orgContents: {
-            handler: (input) => contentsLogic(authContext, input, randomUUID()),
-          },
-          orgFindSimilar: {
-            handler: (input) =>
-              findSimilarLogic(authContext, input, randomUUID()),
-          },
-          orgRelated: {
-            handler: (input) => relatedLogic(authContext, input, randomUUID()),
           },
         },
       }),
@@ -161,8 +144,13 @@ export async function GET(request: NextRequest) {
     const token = await clerkAuth.getToken();
     const authToken = token ?? undefined;
 
+    const clerk = await clerkClient();
+    const clerkOrg = await clerk.organizations.getOrganization({
+      organizationId: authData.clerkOrgId,
+    });
+
     const systemPrompt = buildAnswerSystemPrompt({
-      org: HARDCODED_ORG_CONTEXT,
+      org: { name: clerkOrg.name },
       modelId: MODEL_ID,
     });
 
@@ -189,16 +177,6 @@ export async function GET(request: NextRequest) {
         tools: {
           orgSearch: {
             handler: (input) => searchLogic(authContext, input, randomUUID()),
-          },
-          orgContents: {
-            handler: (input) => contentsLogic(authContext, input, randomUUID()),
-          },
-          orgFindSimilar: {
-            handler: (input) =>
-              findSimilarLogic(authContext, input, randomUUID()),
-          },
-          orgRelated: {
-            handler: (input) => relatedLogic(authContext, input, randomUUID()),
           },
         },
       }),
