@@ -18,6 +18,9 @@ export const eventsRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
+      // No error handling: pure DB read. Sentry's trpcMiddleware captures
+      // failures with full stack + input context. A manual log.error here
+      // would be redundant and increase BetterStack noise.
       const clerkOrgId = ctx.auth.orgId;
       const { source, limit, cursor, search, receivedAfter } = input;
 

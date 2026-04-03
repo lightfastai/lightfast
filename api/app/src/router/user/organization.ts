@@ -160,6 +160,12 @@ export const organizationRouter = {
           slug: input.name, // Clerk uses slug for URL-safe names
         });
 
+        log.info("[organization] updateName success", {
+          organizationId: org.id,
+          slug: input.name,
+          userId: ctx.auth.userId,
+        });
+
         return {
           success: true,
           id: org.id, // Return org ID for setActive calls
@@ -170,6 +176,12 @@ export const organizationRouter = {
         if (error instanceof TRPCError) {
           throw error;
         }
+
+        log.error("[organization] updateName failed", {
+          slug: input.slug,
+          userId: ctx.auth.userId,
+          error: error instanceof Error ? error.message : String(error),
+        });
 
         // Check for specific Clerk errors
         if (error && typeof error === "object" && "errors" in error) {

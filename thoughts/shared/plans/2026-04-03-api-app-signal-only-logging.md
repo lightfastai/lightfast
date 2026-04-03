@@ -142,8 +142,8 @@ After the deletions, `createTRPCContext` becomes a clean context factory with no
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Build passes: `pnpm --filter @api/app build`
-- [ ] Lint passes: `pnpm check`
+- [x] Build passes: `pnpm --filter @api/app build`
+- [x] Lint passes: `pnpm check`
 
 #### Manual Verification
 - [ ] BetterStack: No `[trpc] request` entries appear for normal page loads
@@ -224,8 +224,8 @@ The `log` import at line 16 must be checked after this change — if `connection
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Build passes: `pnpm --filter @api/app build`
-- [ ] Lint passes: `pnpm check`
+- [x] Build passes: `pnpm --filter @api/app build`
+- [x] Lint passes: `pnpm check`
 
 ---
 
@@ -279,8 +279,8 @@ Note: The `log` import already exists at line 5 of this file — no new import n
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Build passes: `pnpm --filter @api/app build`
-- [ ] Lint passes: `pnpm check`
+- [x] Build passes: `pnpm --filter @api/app build`
+- [x] Lint passes: `pnpm check`
 
 #### Manual Verification
 - [ ] BetterStack: `[organization] updateName success` appears when renaming an org
@@ -326,7 +326,7 @@ export async function getInstallationToken(
 ### Success Criteria
 
 #### Automated Verification
-- [ ] Build passes: `pnpm --filter @api/app build`
+- [x] Build passes: `pnpm --filter @api/app build`
 
 ---
 

@@ -58,17 +58,10 @@ type AuthContext =
  * not tRPC. The CLI uses REST endpoints, not tRPC procedures.
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const source = opts.headers.get("x-trpc-source") ?? "unknown";
-
   const clerkSession = await auth({ treatPendingAsSignedOut: false });
 
   if (clerkSession.userId) {
     if (clerkSession.orgId) {
-      log.info("[trpc] request", {
-        source,
-        userId: clerkSession.userId,
-        authType: "clerk-active",
-      });
       return {
         auth: {
           type: "clerk-active" as const,
@@ -79,11 +72,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
         headers: opts.headers,
       };
     }
-    log.info("[trpc] request", {
-      source,
-      userId: clerkSession.userId,
-      authType: "clerk-pending",
-    });
     return {
       auth: {
         type: "clerk-pending" as const,
@@ -94,7 +82,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     };
   }
 
-  log.info("[trpc] request", { source, authType: "unauthenticated" });
   return {
     auth: { type: "unauthenticated" as const },
     db,

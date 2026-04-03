@@ -7,6 +7,10 @@ import { env } from "../env";
 /**
  * Get a decrypted access token for an installation.
  * Reads directly from gw_tokens in PlanetScale (no HTTP call).
+ *
+ * No logging here: callers own error handling. Logging at this layer
+ * would create unpredictable double-logging for callers that also log.
+ * Failures propagate as thrown Errors and are handled upstream.
  */
 export async function getInstallationToken(
   installationId: string

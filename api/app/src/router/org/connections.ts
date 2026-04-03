@@ -58,36 +58,23 @@ export const connectionsRouter = {
    * Returns all active OAuth integrations connected by the org.
    */
   list: orgScopedProcedure.query(async ({ ctx }) => {
-    try {
-      const installations = await ctx.db
-        .select()
-        .from(gatewayInstallations)
-        .where(
-          and(
-            eq(gatewayInstallations.orgId, ctx.auth.orgId),
-            eq(gatewayInstallations.status, "active")
-          )
-        );
+    const installations = await ctx.db
+      .select()
+      .from(gatewayInstallations)
+      .where(
+        and(
+          eq(gatewayInstallations.orgId, ctx.auth.orgId),
+          eq(gatewayInstallations.status, "active")
+        )
+      );
 
-      return installations.map((inst) => ({
-        id: inst.id,
-        sourceType: inst.provider,
-        isActive: true,
-        connectedAt: inst.createdAt,
-        lastSyncAt: inst.updatedAt,
-      }));
-    } catch (error: unknown) {
-      log.error("[connections] list failed", {
-        clerkOrgId: ctx.auth.orgId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to fetch integrations",
-        cause: error,
-      });
-    }
+    return installations.map((inst) => ({
+      id: inst.id,
+      sourceType: inst.provider,
+      isActive: true,
+      connectedAt: inst.createdAt,
+      lastSyncAt: inst.updatedAt,
+    }));
   }),
 
   /**
