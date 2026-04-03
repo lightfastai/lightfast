@@ -3,7 +3,7 @@ import { flagsEnv } from "~/env";
 
 type FlagsClient = ReturnType<typeof createClient>;
 
-export interface FlagsClientOptions {
+interface FlagsClientOptions {
   /** Polling fallback config */
   polling?: { intervalMs: number; initTimeoutMs: number };
   /** SSE stream config */

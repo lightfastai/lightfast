@@ -48,7 +48,7 @@ export interface ResumeOptions {
   silentStreamFailure?: boolean;
 }
 
-export interface StreamChatOptions<
+interface StreamChatOptions<
   TMessage extends UIMessage = UIMessage,
   TRequestContext = {},
   TFetchContext = {},
@@ -71,12 +71,12 @@ export interface StreamChatOptions<
   systemContext: SystemContext;
 }
 
-export interface ValidatedSession {
+interface ValidatedSession {
   exists: boolean;
   session?: { resourceId: string };
 }
 
-export interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
+interface ProcessMessagesResult<TMessage extends UIMessage = UIMessage> {
   allMessages: TMessage[];
   recentUserMessage: TMessage;
 }

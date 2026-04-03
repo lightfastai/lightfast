@@ -35,14 +35,14 @@ const consoleUrl = (() => {
 
 // ── Types ──
 
-export interface AuthorizeParams {
+interface AuthorizeParams {
   connectedBy: string;
   orgId: string;
   provider: SourceType;
   redirectTo?: string;
 }
 
-export type AuthorizeResult =
+type AuthorizeResult =
   | { ok: true; url: string; state: string }
   | { ok: false; error: string };
 

@@ -334,7 +334,7 @@ export type HasBuildAuth<
 // ── Provider Lookup ───────────────────────────────────────────────────────────
 
 /** Union of all concrete provider shapes — preserves per-provider TAccountInfo. */
-export type AnyProviderShape = (typeof PROVIDERS)[keyof typeof PROVIDERS];
+type AnyProviderShape = (typeof PROVIDERS)[keyof typeof PROVIDERS];
 
 /** Narrow overload: literal slug → exact provider shape (no cast required). */
 export function getProvider<K extends keyof typeof PROVIDERS>(

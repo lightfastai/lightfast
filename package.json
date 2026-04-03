@@ -49,8 +49,7 @@
     "turbo-ignore": "2.9.3",
     "typescript": "^5.9.2",
     "ultracite": "7.2.5",
-    "vercel": "^50.28.0",
-    "vitest": "^4.0.18"
+    "vercel": "^50.28.0"
   },
   "pnpm": {
     "overrides": {

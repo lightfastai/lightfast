@@ -88,7 +88,7 @@ export async function requireOrgAccess(slug: string): Promise<OrgWithAccess> {
  * @param role - Role to check for ("admin" or "member")
  * @returns True if user has the role
  */
-export async function hasOrgRole(role: "admin" | "member"): Promise<boolean> {
+async function hasOrgRole(role: "admin" | "member"): Promise<boolean> {
   const { orgRole } = await auth();
 
   if (!orgRole) {

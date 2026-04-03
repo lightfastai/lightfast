@@ -10,7 +10,7 @@ import {
 
 declare const __SDK_VERSION__: string;
 
-export interface ServerConfig {
+interface ServerConfig {
   apiKey: string;
   baseUrl?: string;
 }

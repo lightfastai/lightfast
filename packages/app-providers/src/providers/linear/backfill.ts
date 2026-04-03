@@ -67,7 +67,7 @@ const linearIssueNodeSchema = z
   })
   .loose();
 
-export type LinearIssueNode = z.infer<typeof linearIssueNodeSchema>;
+type LinearIssueNode = z.infer<typeof linearIssueNodeSchema>;
 
 const issuesQueryResponseSchema = z.object({
   data: z.object({
@@ -104,7 +104,7 @@ const linearCommentNodeSchema = z
   })
   .loose();
 
-export type LinearCommentNode = z.infer<typeof linearCommentNodeSchema>;
+type LinearCommentNode = z.infer<typeof linearCommentNodeSchema>;
 
 const commentsQueryResponseSchema = z.object({
   data: z.object({
@@ -148,7 +148,7 @@ const linearProjectNodeSchema = z
   })
   .loose();
 
-export type LinearProjectNode = z.infer<typeof linearProjectNodeSchema>;
+type LinearProjectNode = z.infer<typeof linearProjectNodeSchema>;
 
 const projectsQueryResponseSchema = z.object({
   data: z.object({

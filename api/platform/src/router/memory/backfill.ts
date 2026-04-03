@@ -35,7 +35,7 @@ import { serviceProcedure } from "../../trpc";
 
 // ── Backfill Router ──────────────────────────────────────────────────────
 
-export interface Sample {
+interface Sample {
   hasMore: boolean;
   resourceId: string;
   returnedCount: number;

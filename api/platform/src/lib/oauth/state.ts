@@ -9,7 +9,7 @@ import { oauthResultKey, oauthStateKey } from "../cache";
 
 // ── Store OAuth State ──
 
-export interface OAuthStateData {
+interface OAuthStateData {
   connectedBy: string;
   createdAt: string;
   orgId: string;
@@ -37,65 +37,6 @@ export async function storeOAuthState(
     })
     .expire(key, 600)
     .exec();
-}
-
-// ── Consume OAuth State ──
-
-/**
- * Atomic read-and-delete to prevent state replay via concurrent requests.
- * Returns stateData if valid, null if missing or expired.
- */
-export async function consumeOAuthState(
-  state: string
-): Promise<Record<string, string> | null> {
-  const key = oauthStateKey(state);
-  const [stateData] = await redis
-    .multi()
-    .hgetall<Record<string, string>>(key)
-    .del(key)
-    .exec<[Record<string, string> | null, number]>();
-
-  if (!stateData?.orgId) {
-    return null;
-  }
-
-  return stateData;
-}
-
-// ── Store OAuth Result ──
-
-export interface OAuthResultData {
-  error?: string;
-  provider?: string;
-  reactivated?: string;
-  setupAction?: string;
-  status: "completed" | "failed";
-}
-
-/**
- * Store OAuth completion/failure result in Redis for CLI polling (5-min TTL).
- */
-export async function storeOAuthResult(
-  state: string,
-  data: OAuthResultData
-): Promise<void> {
-  const key = oauthResultKey(state);
-  const fields: Record<string, string> = { status: data.status };
-
-  if (data.provider) {
-    fields.provider = data.provider;
-  }
-  if (data.reactivated) {
-    fields.reactivated = data.reactivated;
-  }
-  if (data.setupAction) {
-    fields.setupAction = data.setupAction;
-  }
-  if (data.error) {
-    fields.error = data.error;
-  }
-
-  await redis.pipeline().hset(key, fields).expire(key, 300).exec();
 }
 
 // ── Get OAuth Result ──

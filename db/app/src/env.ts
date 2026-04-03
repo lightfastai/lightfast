@@ -1,5 +1,5 @@
 import { createEnv } from "@t3-oss/env-core";
-import { env as vendorDbEnv } from "@vendor/db/env";
+import { dbEnv as vendorDbEnv } from "@vendor/db/env";
 
 export const env = createEnv({
   extends: [vendorDbEnv],

@@ -10,9 +10,9 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./workspace": {
-      "types": "./src/workspace.ts",
-      "default": "./src/workspace.ts"
+    "./org-access": {
+      "types": "./src/org-access.ts",
+      "default": "./src/org-access.ts"
     },
     "./resources": {
       "types": "./src/resources.ts",

@@ -4,7 +4,7 @@ import type { ApiError } from "./errors";
 /**
  * Base event data that includes system and request context
  */
-export interface BaseLifecycleEvent {
+interface BaseLifecycleEvent {
   /** Request context including userAgent and ipAddress */
   requestContext?: RequestContext;
   /** System context including sessionId and resourceId */
@@ -79,7 +79,7 @@ export interface LifecycleCallbacks {
 /**
  * Helper to create lifecycle event with base data
  */
-export function createLifecycleEvent(
+function createLifecycleEvent(
   systemContext: SystemContext,
   requestContext?: RequestContext
 ): BaseLifecycleEvent {

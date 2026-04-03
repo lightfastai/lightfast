@@ -219,32 +219,6 @@ export async function completeJob(
 }
 
 /**
- * Get job by ID
- *
- * @param jobId Job ID (string representation of BIGINT)
- * @returns Job or null if not found
- */
-export async function getJob(jobId: string): Promise<OrgWorkflowRun | null> {
-  try {
-    // Parse jobId to number (BIGINT internal ID)
-    const jobIdNum = Number.parseInt(jobId, 10);
-    if (Number.isNaN(jobIdNum)) {
-      log.error("[jobs] invalid job ID format", { jobId });
-      return null;
-    }
-
-    const job = await db.query.orgWorkflowRuns.findFirst({
-      where: eq(orgWorkflowRuns.id, jobIdNum),
-    });
-
-    return job ?? null;
-  } catch (error) {
-    log.error("[jobs] failed to get job", { error, jobId });
-    return null;
-  }
-}
-
-/**
  * Get job by Inngest run ID
  *
  * @param inngestRunId Inngest run ID

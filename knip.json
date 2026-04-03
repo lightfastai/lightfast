@@ -8,12 +8,7 @@
     "apps/app": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": [
-        "@repo/app-auth-middleware",
-        "@repo/lib",
-        "@vitest/expect",
-        "zustand"
-      ]
+      "ignoreDependencies": ["@repo/lib", "@vitest/expect", "zustand"]
     },
     "apps/www": {
       "entry": ["src/app/**/*.{ts,tsx}"],
@@ -42,7 +37,7 @@
       "project": ["src/**/*.ts"]
     },
     "packages/app-ai": {
-      "entry": ["src/workspace-*.ts"],
+      "entry": ["src/org-*.ts"],
       "project": ["src/**/*.ts"]
     },
     "packages/app-test-data": {
@@ -70,6 +65,10 @@
       "project": ["src/**/*.ts"],
       "drizzle": false
     },
+    "vendor/aeo": {
+      "project": ["*.ts"],
+      "drizzle": false
+    },
     "vendor/analytics": {
       "project": ["src/**/*.{ts,tsx}"],
       "drizzle": false
@@ -80,7 +79,7 @@
       "drizzle": false
     },
     "vendor/seo": {
-      "project": ["*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"],
       "drizzle": false
     },
     "vendor/inngest": {
@@ -88,12 +87,11 @@
     },
     "vendor/next": {
       "project": ["src/**/*.ts"],
-      "drizzle": false,
-      "ignoreDependencies": ["webpack"]
+      "drizzle": false
     },
     "internal/typescript": {
       "entry": ["base.json"],
-      "ignoreDependencies": ["hono", "next"]
+      "ignoreDependencies": ["next"]
     }
   },
   "ignore": [".agents/**", ".claude/**"],
@@ -106,7 +104,6 @@
     "autoprefixer",
     "import-in-the-middle",
     "require-in-the-middle",
-    "tsx",
     "@vitest/coverage-v8"
   ]
 }

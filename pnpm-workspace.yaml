@@ -34,12 +34,9 @@ catalog:
   '@vitest/expect': ^4.0.18
   ai: 5.0.52
   babel-plugin-react-compiler: ^1.0.0
-  braintrust: ^0.2.1
   clsx: ^2.1.1
-  dotenv-cli: ^8.0.0
   drizzle-orm: ^0.45.1
   drizzle-zod: ^0.8.3
-  fast-check: ^3.23.2
   geist: ^1.7.0
   hono: ^4.12.5
   import-in-the-middle: ^1.8.1
@@ -48,9 +45,7 @@ catalog:
   lucide-react: ^0.577.0
   nanoid: ^5.1.5
   neverthrow: ^8.2.0
-  postgres: ^3.4.5
   react-hook-form: ^7.71.2
-  redis: ^5.6.0
   require-in-the-middle: ^7.1.1
   superjson: ^2.2.6
   tailwind-merge: ^3.5.0

@@ -68,7 +68,7 @@ export function unwrapOr<T, E>(result: Result<T, E>, defaultValue: T): T {
 /**
  * Helper to check if all Results in an array are Ok
  */
-export function allOk<T, E>(
+function allOk<T, E>(
   results: Result<T, E>[]
 ): results is { ok: true; value: T }[] {
   return results.every((r) => r.ok);
