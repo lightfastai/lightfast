@@ -2,9 +2,9 @@ import { db } from "@db/app/client";
 import { orgWorkflowRuns } from "@db/app/schema";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import { log } from "@vendor/observability/log/next";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
-import { log } from "@vendor/observability/log/next";
 import { orgScopedProcedure } from "../../trpc";
 
 /**
