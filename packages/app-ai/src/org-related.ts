@@ -18,17 +18,17 @@ const inputSchema = z.object({
 
 const outputSchema = RelatedResponseSchema;
 
-export function workspaceRelatedTool() {
+export function orgRelatedTool() {
   return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Get related events for a specific observation. Use this to find what happened around a particular event or to understand context. Returns related observations as a graph of nodes and edges.",
     inputSchema: inputSchema as any,
     outputSchema: outputSchema as any,
     execute: async (input, context) => {
-      const handler = context.tools?.workspaceRelated?.handler;
+      const handler = context.tools?.orgRelated?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace related handler not configured in runtime context."
+          "Org related handler not configured in runtime context."
         );
       }
       return handler(input);

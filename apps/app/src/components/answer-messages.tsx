@@ -275,7 +275,9 @@ export function AnswerMessages({ messages, status }: AnswerMessagesProps) {
             <div className="py-8">
               <div className="mx-auto max-w-3xl px-4 lg:px-14 xl:px-20">
                 <div className="text-center text-muted-foreground">
-                  <p className="text-sm">Ask a question about your workspace</p>
+                  <p className="text-sm">
+                    Ask a question about your organization
+                  </p>
                 </div>
               </div>
             </div>

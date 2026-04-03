@@ -2,10 +2,10 @@ import { randomUUID } from "node:crypto";
 import { gateway } from "@ai-sdk/gateway";
 import { createAgent } from "@lightfastai/ai-sdk/agent";
 import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
-import { workspaceContentsTool } from "@repo/app-ai/workspace-contents";
-import { workspaceFindSimilarTool } from "@repo/app-ai/workspace-find-similar";
-import { workspaceRelatedTool } from "@repo/app-ai/workspace-related";
-import { workspaceSearchTool } from "@repo/app-ai/workspace-search";
+import { orgContentsTool } from "@repo/app-ai/org-contents";
+import { orgFindSimilarTool } from "@repo/app-ai/org-find-similar";
+import { orgRelatedTool } from "@repo/app-ai/org-related";
+import { orgSearchTool } from "@repo/app-ai/org-search";
 import type { AnswerAppRuntimeContext } from "@repo/app-ai-types";
 import { auth } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
@@ -13,7 +13,7 @@ import { smoothStream, stepCountIs } from "ai";
 import type { NextRequest } from "next/server";
 import {
   buildAnswerSystemPrompt,
-  HARDCODED_WORKSPACE_CONTEXT,
+  HARDCODED_ORG_CONTEXT,
 } from "~/ai/prompts/system-prompt";
 import { AnswerRedisMemory } from "~/ai/runtime/memory";
 import { contentsLogic } from "~/lib/contents";
@@ -28,10 +28,10 @@ import {
 const MODEL_ID = "anthropic/claude-sonnet-4.6";
 
 const answerTools = {
-  workspaceSearch: workspaceSearchTool(),
-  workspaceContents: workspaceContentsTool(),
-  workspaceFindSimilar: workspaceFindSimilarTool(),
-  workspaceRelated: workspaceRelatedTool(),
+  orgSearch: orgSearchTool(),
+  orgContents: orgContentsTool(),
+  orgFindSimilar: orgFindSimilarTool(),
+  orgRelated: orgRelatedTool(),
 };
 
 export async function POST(request: NextRequest) {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
     }
 
     const systemPrompt = buildAnswerSystemPrompt({
-      workspace: HARDCODED_WORKSPACE_CONTEXT,
+      org: HARDCODED_ORG_CONTEXT,
       modelId: MODEL_ID,
     });
 
@@ -89,17 +89,17 @@ export async function POST(request: NextRequest) {
         userId: authData.userId,
         authToken,
         tools: {
-          workspaceSearch: {
+          orgSearch: {
             handler: (input) => searchLogic(authContext, input, randomUUID()),
           },
-          workspaceContents: {
+          orgContents: {
             handler: (input) => contentsLogic(authContext, input, randomUUID()),
           },
-          workspaceFindSimilar: {
+          orgFindSimilar: {
             handler: (input) =>
               findSimilarLogic(authContext, input, randomUUID()),
           },
-          workspaceRelated: {
+          orgRelated: {
             handler: (input) => relatedLogic(authContext, input, randomUUID()),
           },
         },
@@ -162,7 +162,7 @@ export async function GET(request: NextRequest) {
     const authToken = token ?? undefined;
 
     const systemPrompt = buildAnswerSystemPrompt({
-      workspace: HARDCODED_WORKSPACE_CONTEXT,
+      org: HARDCODED_ORG_CONTEXT,
       modelId: MODEL_ID,
     });
 
@@ -187,17 +187,17 @@ export async function GET(request: NextRequest) {
         userId: authData.userId,
         authToken,
         tools: {
-          workspaceSearch: {
+          orgSearch: {
             handler: (input) => searchLogic(authContext, input, randomUUID()),
           },
-          workspaceContents: {
+          orgContents: {
             handler: (input) => contentsLogic(authContext, input, randomUUID()),
           },
-          workspaceFindSimilar: {
+          orgFindSimilar: {
             handler: (input) =>
               findSimilarLogic(authContext, input, randomUUID()),
           },
-          workspaceRelated: {
+          orgRelated: {
             handler: (input) => relatedLogic(authContext, input, randomUUID()),
           },
         },

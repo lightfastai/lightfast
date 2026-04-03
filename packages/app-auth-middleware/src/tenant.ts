@@ -8,17 +8,16 @@
  * Security principles:
  * 1. Always filter by clerkOrgId in multi-tenant queries
  * 2. Use these helpers to prevent cross-tenant data leakage
- * 3. Combine with workspace/resource ownership checks for full security
+ * 3. Combine with org/resource ownership checks for full security
  *
  * @example
  * ```typescript
  * import { createTenantFilter } from "@repo/app-auth-middleware/tenant";
- * import { workspaces } from "@db/app/schema";
  * import { eq } from "drizzle-orm";
  *
  * const filter = createTenantFilter(clerkOrgId);
  *
- * const allWorkspaces = await db
+ * const allIntegrations = await db
  *   .select()
  *   .from(orgIntegrations)
  *   .where(eq(orgIntegrations.clerkOrgId, filter.clerkOrgId));
@@ -44,7 +43,6 @@ import type { TenantFilter } from "./types";
  * @example
  * ```typescript
  * import { createTenantFilter } from "@repo/app-auth-middleware/tenant";
- * import { workspaces } from "@db/app/schema";
  * import { eq, and } from "drizzle-orm";
  *
  * // In a tRPC procedure after verifying org access
@@ -58,7 +56,7 @@ import type { TenantFilter } from "./types";
  *   .where(eq(orgIntegrations.clerkOrgId, filter.clerkOrgId));
  *
  * // Combine with other conditions
- * const activeWorkspaces = await ctx.db
+ * const activeIntegrations = await ctx.db
  *   .select()
  *   .from(orgIntegrations)
  *   .where(and(
@@ -100,43 +98,43 @@ export function isValidTenantId(clerkOrgId: string): boolean {
 }
 
 /**
- * Extract tenant ID from workspace
+ * Extract tenant ID from a resource
  *
- * Convenience function to extract the clerkOrgId from a workspace object.
- * This is useful when you have a workspace and need to create a tenant filter.
+ * Convenience function to extract the clerkOrgId from a resource object.
+ * This is useful when you have a resource and need to create a tenant filter.
  *
- * @param workspace - Workspace object with clerkOrgId
+ * @param resource - Resource object with clerkOrgId
  * @returns Clerk organization ID
  *
  * @example
  * ```typescript
  * import { extractTenantId } from "@repo/app-auth-middleware/tenant";
  *
- * const workspace = await db.query.orgIntegrations.findFirst({ ... });
- * const clerkOrgId = extractTenantId(workspace);
+ * const integration = await db.query.orgIntegrations.findFirst({ ... });
+ * const clerkOrgId = extractTenantId(integration);
  *
  * // Now use for tenant isolation
  * const filter = createTenantFilter(clerkOrgId);
  * ```
  */
-export function extractTenantId(workspace: { clerkOrgId: string }): string {
-  return workspace.clerkOrgId;
+export function extractTenantId(resource: { clerkOrgId: string }): string {
+  return resource.clerkOrgId;
 }
 
 /**
- * Create tenant filter from workspace
+ * Create tenant filter from org resource
  *
  * Convenience function that combines extractTenantId and createTenantFilter.
  *
- * @param workspace - Workspace object with clerkOrgId
+ * @param resource - Resource object with clerkOrgId
  * @returns Tenant filter object
  *
  * @example
  * ```typescript
- * import { createTenantFilterFromWorkspace } from "@repo/app-auth-middleware/tenant";
+ * import { createTenantFilterFromOrg } from "@repo/app-auth-middleware/tenant";
  *
- * const workspace = await db.query.orgIntegrations.findFirst({ ... });
- * const filter = createTenantFilterFromWorkspace(workspace);
+ * const integration = await db.query.orgIntegrations.findFirst({ ... });
+ * const filter = createTenantFilterFromOrg(integration);
  *
  * // Use in queries
  * const resources = await db
@@ -145,10 +143,10 @@ export function extractTenantId(workspace: { clerkOrgId: string }): string {
  *   .where(eq(integrationResources.clerkOrgId, filter.clerkOrgId));
  * ```
  */
-export function createTenantFilterFromWorkspace(workspace: {
+export function createTenantFilterFromOrg(resource: {
   clerkOrgId: string;
 }): TenantFilter {
-  return createTenantFilter(workspace.clerkOrgId);
+  return createTenantFilter(resource.clerkOrgId);
 }
 
 /**
@@ -166,11 +164,11 @@ export function createTenantFilterFromWorkspace(workspace: {
  * ```typescript
  * import { assertTenantIdsMatch } from "@repo/app-auth-middleware/tenant";
  *
- * // Ensure workspace and integration belong to same org
+ * // Ensure resource and integration belong to same org
  * assertTenantIdsMatch(
- *   workspace.clerkOrgId,
+ *   resource.clerkOrgId,
  *   integration.clerkOrgId,
- *   "Integration doesn't belong to this workspace's organization"
+ *   "Integration doesn't belong to this organization"
  * );
  * ```
  */
@@ -199,12 +197,12 @@ export function assertTenantIdsMatch(
  * ```typescript
  * import { belongsToTenant } from "@repo/app-auth-middleware/tenant";
  *
- * const workspace = await db.query.orgIntegrations.findFirst({ ... });
+ * const integration = await db.query.orgIntegrations.findFirst({ ... });
  *
- * if (!belongsToTenant(workspace, clerkOrgId)) {
+ * if (!belongsToTenant(integration, clerkOrgId)) {
  *   throw new TRPCError({
  *     code: "FORBIDDEN",
- *     message: "Workspace doesn't belong to this organization",
+ *     message: "Resource doesn't belong to this organization",
  *   });
  * }
  * ```
@@ -259,14 +257,13 @@ export function filterResourcesByTenant<T extends { clerkOrgId: string }>(
  * @example
  * ```typescript
  * import { createMultiTenantFilter } from "@repo/app-auth-middleware/tenant";
- * import { workspaces } from "@db/app/schema";
  * import { inArray } from "drizzle-orm";
  *
- * // Get workspaces across multiple orgs
+ * // Get integrations across multiple orgs
  * const filters = createMultiTenantFilter(["org_1", "org_2", "org_3"]);
  * const orgIds = filters.map(f => f.clerkOrgId);
  *
- * const multiOrgWorkspaces = await ctx.db
+ * const multiOrgIntegrations = await ctx.db
  *   .select()
  *   .from(orgIntegrations)
  *   .where(inArray(orgIntegrations.clerkOrgId, orgIds));

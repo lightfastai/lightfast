@@ -50,7 +50,7 @@ export const organizationRouter = {
    * Creates a new Clerk organization with the user as admin
    *
    * Used by team creation flow at /account/teams/new
-   * Does NOT create a default workspace - user creates workspace separately at /new
+   * Does NOT create a default project - user sets up integrations separately
    */
   create: userScopedProcedure
     .input(

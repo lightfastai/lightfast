@@ -1,7 +1,7 @@
 /**
  * Slug Validation Primitives
  *
- * Reusable Zod schemas for validating slugs (org, workspace, store).
+ * Reusable Zod schemas for validating slugs (org, store).
  * All slugs are URL-safe and follow specific naming conventions.
  */
 

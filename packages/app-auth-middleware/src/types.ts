@@ -2,7 +2,7 @@
  * Type definitions for Console authorization middleware
  *
  * This module provides TypeScript types and interfaces for:
- * - Workspace access verification
+ * - Org access verification
  * - Resource ownership validation
  * - Tenant isolation
  */
@@ -90,10 +90,10 @@ export type ResourceOwnershipResult =
  * Use with eq() in where clauses to enforce tenant isolation:
  * ```typescript
  * const filter = createTenantFilter(clerkOrgId);
- * const workspaces = await db
+ * const integrations = await db
  *   .select()
- *   .from(workspaces)
- *   .where(eq(workspaces.clerkOrgId, filter.clerkOrgId));
+ *   .from(orgIntegrations)
+ *   .where(eq(orgIntegrations.clerkOrgId, filter.clerkOrgId));
  * ```
  */
 export interface TenantFilter {

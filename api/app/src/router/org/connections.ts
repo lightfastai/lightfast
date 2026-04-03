@@ -120,7 +120,7 @@ export const connectionsRouter = {
         provider: installation.provider,
       });
 
-      // Cascade: mark all workspace integrations for this installation as disconnected.
+      // Cascade: mark all org integrations for this installation as disconnected.
       // This covers all providers (Vercel, Linear, Sentry, Apollo, GitHub).
       // The cascade here ensures the gate closes immediately on user-triggered disconnect.
       const now = new Date().toISOString();
@@ -680,9 +680,9 @@ export const connectionsRouter = {
             return providerDef.resourcePicker.enrichInstallation(executeApi, {
               id: inst.id,
               externalId: inst.externalId,
-              // Wide overload loses TAccountInfo generic (resolves to never | null = null).
+              // ProviderDefinition loses TAccountInfo generic — contravariance on
+              // ResourcePickerDef method params collapses the union to never | null.
               // Runtime value is always the correct type for this provider.
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               providerAccountInfo: inst.providerAccountInfo as any,
             });
           })
@@ -758,9 +758,7 @@ export const connectionsRouter = {
           {
             id: installation.id,
             externalId: installation.externalId,
-            // Wide overload loses TAccountInfo generic (resolves to never | null = null).
-            // Runtime value is always the correct type for this provider.
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            // ProviderDefinition loses TAccountInfo generic — see comment above.
             providerAccountInfo: installation.providerAccountInfo as any,
           }
         );

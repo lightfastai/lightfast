@@ -37,7 +37,7 @@ export type JobStatus = z.infer<typeof jobStatusSchema>;
  * - manual: User explicitly clicked "Restart" or "Re-sync" button
  * - scheduled: Triggered by a scheduled/cron job
  * - webhook: Triggered by external webhook (GitHub push, etc.)
- * - automatic: System-initiated (workspace creation, initial connection)
+ * - automatic: System-initiated (initial connection setup)
  */
 export const jobTriggerSchema = z.enum([
   "manual",

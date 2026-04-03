@@ -10,7 +10,7 @@ import { z } from "zod";
  * Nanoid Schema
  *
  * Validates nanoid format (default 21 characters, URL-safe)
- * Used for: workspace IDs, job IDs, API key IDs, document IDs, etc.
+ * Used for: job IDs, API key IDs, document IDs, etc.
  *
  * @example
  * ```typescript

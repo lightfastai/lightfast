@@ -23,7 +23,7 @@ export function SecurityNotice() {
           tools
         </li>
         <li>
-          Organization API keys are scoped to a specific workspace for security
+          Organization API keys are scoped to your organization for security
         </li>
       </ul>
     </div>

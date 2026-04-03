@@ -46,7 +46,7 @@ export const gatewayInstallations = pgTable(
      * - This column stores identity + operational data, not presentation data
      *
      * NEVER add resource-specific data (repos[], projects[], teams[]) — those
-     * belong in providerConfig on workspace_integrations, one row per resource.
+     * belong in providerConfig on gateway_installations, one row per resource.
      */
     providerAccountInfo: jsonb(
       "provider_account_info"

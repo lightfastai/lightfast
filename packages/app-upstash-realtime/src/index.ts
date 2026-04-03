@@ -7,7 +7,7 @@ import { z } from "zod";
 export { handle } from "@vendor/upstash-realtime";
 
 const schema = {
-  workspace: {
+  org: {
     event: z.object({
       eventId: z.number(),
       clerkOrgId: z.string(),
@@ -18,4 +18,4 @@ const schema = {
 
 export const realtime = new Realtime({ schema, redis: redis as never });
 export type RealtimeEvents = InferRealtimeEvents<typeof realtime>;
-export type EventNotification = z.infer<typeof schema.workspace.event>;
+export type EventNotification = z.infer<typeof schema.org.event>;

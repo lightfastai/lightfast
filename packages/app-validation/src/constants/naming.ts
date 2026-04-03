@@ -1,7 +1,7 @@
 /**
  * Naming Constraints and Validation Constants
  *
- * Centralized naming rules for organizations and workspaces to ensure:
+ * Centralized naming rules for organizations to ensure:
  * - URL compatibility
  * - External system constraints (Pinecone, GitHub, Clerk)
  * - Consistent validation across frontend and backend
@@ -13,7 +13,7 @@
  * Clerk Organization Slug Constraints
  *
  * Used for team/organization creation (Clerk orgs)
- * URL format: /{orgSlug}/{workspaceSlug}
+ * URL format: /{orgSlug}
  *
  * Constraints:
  * - Max 39 chars (matches GitHub organization name limit)
@@ -33,8 +33,8 @@ export const CLERK_ORG_SLUG = {
 /**
  * Store Name Constraints
  *
- * Used for vector store naming within workspaces
- * Part of Pinecone index: ws-{workspaceSlug}-{storeSlug}
+ * Used for vector store naming within organizations
+ * Part of Pinecone index: ws-{orgSlug}-{storeSlug}
  */
 export const STORE_NAME = {
   MIN_LENGTH: 1,
@@ -48,7 +48,7 @@ export const STORE_NAME = {
 /**
  * Reserved Names
  *
- * Names that cannot be used for organizations or workspaces to prevent routing conflicts.
+ * Names that cannot be used for organizations to prevent routing conflicts.
  * These names are reserved for app routes, features, and critical system paths.
  *
  * Organization URL format: /{orgSlug}

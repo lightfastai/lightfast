@@ -55,19 +55,19 @@ export type RelatedToolOutput = RelatedResponse;
 // ─── Tool Set Definition ─────────────────────────────────────────
 
 export interface AnswerToolSet {
-  workspaceContents: {
+  orgContents: {
     input: ContentsToolInput;
     output: ContentsToolOutput;
   };
-  workspaceFindSimilar: {
+  orgFindSimilar: {
     input: FindSimilarToolInput;
     output: FindSimilarToolOutput;
   };
-  workspaceRelated: {
+  orgRelated: {
     input: RelatedToolInput;
     output: RelatedToolOutput;
   };
-  workspaceSearch: {
+  orgSearch: {
     input: SearchToolInput;
     output: SearchToolOutput;
   };
@@ -111,22 +111,22 @@ type ToolUIPartState<TName extends string, TInput, TOutput> =
     };
 
 export type SearchToolUIPart = ToolUIPartState<
-  "workspaceSearch",
+  "orgSearch",
   SearchToolInput,
   SearchToolOutput
 >;
 export type ContentsToolUIPart = ToolUIPartState<
-  "workspaceContents",
+  "orgContents",
   ContentsToolInput,
   ContentsToolOutput
 >;
 export type FindSimilarToolUIPart = ToolUIPartState<
-  "workspaceFindSimilar",
+  "orgFindSimilar",
   FindSimilarToolInput,
   FindSimilarToolOutput
 >;
 export type RelatedToolUIPart = ToolUIPartState<
-  "workspaceRelated",
+  "orgRelated",
   RelatedToolInput,
   RelatedToolOutput
 >;
@@ -165,10 +165,10 @@ export type RelatedToolHandler = (
 
 /** Runtime configuration for tool handlers, injected per-request */
 export interface AnswerToolRuntimeConfig {
-  workspaceContents?: { handler: ContentsToolHandler };
-  workspaceFindSimilar?: { handler: FindSimilarToolHandler };
-  workspaceRelated?: { handler: RelatedToolHandler };
-  workspaceSearch?: { handler: SearchToolHandler };
+  orgContents?: { handler: ContentsToolHandler };
+  orgFindSimilar?: { handler: FindSimilarToolHandler };
+  orgRelated?: { handler: RelatedToolHandler };
+  orgSearch?: { handler: SearchToolHandler };
 }
 
 /** Application runtime context for the answer agent */

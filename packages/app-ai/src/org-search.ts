@@ -43,17 +43,17 @@ const inputSchema = z.object({
 
 const outputSchema = SearchResponseSchema;
 
-export function workspaceSearchTool() {
+export function orgSearchTool() {
   return createTool<LightfastAnswerRuntimeContext>({
     description:
-      "Search through workspace decisions and observations across connected tools. Use this to find commits, PRs, issues, deployments, and other development events. Returns ranked results with scores, snippets, source types, and extracted entities.",
+      "Search through organization decisions and observations across connected tools. Use this to find commits, PRs, issues, deployments, and other development events. Returns ranked results with scores, snippets, source types, and extracted entities.",
     inputSchema: inputSchema as any,
     outputSchema: outputSchema as any,
     execute: async (input, context) => {
-      const handler = context.tools?.workspaceSearch?.handler;
+      const handler = context.tools?.orgSearch?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace search handler not configured in runtime context."
+          "Org search handler not configured in runtime context."
         );
       }
       return handler(input);

@@ -11,17 +11,17 @@ const inputSchema = z.object({
 
 const outputSchema = ContentsResponseSchema;
 
-export function workspaceContentsTool() {
+export function orgContentsTool() {
   return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Fetch full content for specific observations by ID. Use this to get the complete details of a document after finding it via search or related queries.",
     inputSchema: inputSchema as any,
     outputSchema: outputSchema as any,
     execute: async (input, context) => {
-      const handler = context.tools?.workspaceContents?.handler;
+      const handler = context.tools?.orgContents?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace contents handler not configured in runtime context."
+          "Org contents handler not configured in runtime context."
         );
       }
       return handler(input);

@@ -2,11 +2,11 @@ import type { SectionProvider } from "@repo/prompt-engine";
 import { answerCitationSection } from "./sections/citation";
 import { answerCoreBehaviorSection } from "./sections/core-behavior";
 import { answerIdentitySection } from "./sections/identity";
+import { answerOrgContextSection } from "./sections/org-context";
 import { answerSecuritySection } from "./sections/security";
 import { answerStyleSection } from "./sections/style";
 import { answerTemporalContextSection } from "./sections/temporal-context";
 import { answerToolGuidanceSection } from "./sections/tool-guidance";
-import { answerWorkspaceContextSection } from "./sections/workspace-context";
 
 /**
  * Answer agent provider set.
@@ -19,7 +19,7 @@ export const ANSWER_PROVIDERS: SectionProvider[] = [
   answerCoreBehaviorSection,
   answerSecuritySection,
   answerToolGuidanceSection,
-  answerWorkspaceContextSection,
+  answerOrgContextSection,
   answerTemporalContextSection,
   answerStyleSection,
   answerCitationSection,

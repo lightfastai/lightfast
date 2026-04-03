@@ -7,6 +7,5 @@ export async function relatedLogic(
   requestId: string
 ): Promise<RelatedResponse> {
   // TODO: Implement with BFS graph traversal
-  // Refer to thoughts/shared/research/2026-03-13-v2-route-implementation-research.md
   throw new Error(`relatedLogic not implemented [requestId=${requestId}]`);
 }

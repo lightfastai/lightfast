@@ -17,8 +17,7 @@ import { orgScopedProcedure } from "../../trpc";
  * Organization API Keys Router
  *
  * Manages org-scoped API keys for secure API access.
- * Each key authenticates the org and can access all workspaces within it.
- * Workspace context moves to request-level input (body params).
+ * Each key authenticates the org and can access all resources within it.
  *
  * Security:
  * - Keys are hashed using SHA-256 before storage (never store plaintext)

@@ -1,6 +1,6 @@
 import type { SectionProvider } from "@repo/prompt-engine";
 
-export const answerWorkspaceContextSection: SectionProvider = (ctx) => {
+export const answerOrgContextSection: SectionProvider = (ctx) => {
   if (!ctx.features.userContext) {
     return null;
   }
@@ -16,7 +16,7 @@ export const answerWorkspaceContextSection: SectionProvider = (ctx) => {
   }
 
   return {
-    id: "workspace-context",
+    id: "org-context",
     priority: "high",
     estimateTokens: () => 200,
     render: () => {

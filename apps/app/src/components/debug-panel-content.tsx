@@ -126,7 +126,7 @@ export function DebugPanelContent() {
   if (integrations.length === 0) {
     return (
       <div className="px-3 py-4 text-center text-white/40">
-        No sources connected to this workspace.
+        No sources connected to this organization.
       </div>
     );
   }

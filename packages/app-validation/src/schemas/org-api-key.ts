@@ -4,7 +4,7 @@ import { z } from "zod";
  * Organization API Key Validation Schemas
  *
  * These schemas are used for organization-scoped API key management.
- * Keys are scoped to the org and can access all workspaces within it.
+ * Keys are scoped to the org and can access all resources within it.
  */
 
 /**

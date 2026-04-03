@@ -96,7 +96,7 @@ async function main() {
   console.log("=".repeat(60));
   console.log("Test Data Injection");
   console.log("=".repeat(60));
-  console.log(`  Workspace: ${clerkOrgId}`);
+  console.log(`  Organization: ${clerkOrgId}`);
   console.log(`  Scenario: ${scenarioName}`);
   console.log(`  Events: ${events.length}`);
   console.log();

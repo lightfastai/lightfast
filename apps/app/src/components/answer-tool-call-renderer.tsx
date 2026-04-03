@@ -44,10 +44,10 @@ function getInputPreview(
 }
 
 const TOOL_NAMES = {
-  workspaceSearch: "workspace search",
-  workspaceContents: "workspace contents",
-  workspaceFindSimilar: "find similar",
-  workspaceRelated: "related",
+  orgSearch: "search",
+  orgContents: "contents",
+  orgFindSimilar: "find similar",
+  orgRelated: "related",
 };
 
 export function ToolCallRenderer({
@@ -138,7 +138,7 @@ export function ToolCallRenderer({
   }
 
   // Handle output-available (final state after error checks)
-  if (toolName === "workspaceSearch") {
+  if (toolName === "orgSearch") {
     return (
       <SearchToolResult
         data={
@@ -148,7 +148,7 @@ export function ToolCallRenderer({
     );
   }
 
-  if (toolName === "workspaceContents") {
+  if (toolName === "orgContents") {
     return (
       <ContentsToolResult
         data={
@@ -159,7 +159,7 @@ export function ToolCallRenderer({
     );
   }
 
-  if (toolName === "workspaceFindSimilar") {
+  if (toolName === "orgFindSimilar") {
     return (
       <FindSimilarToolResult
         data={

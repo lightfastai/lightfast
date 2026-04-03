@@ -62,10 +62,10 @@ export type {
 } from "./types";
 
 // ============================================================================
-// Workspace Access Exports
+// Org Access Exports
 // ============================================================================
 
-export { verifyOrgAccess } from "./workspace";
+export { verifyOrgAccess } from "./org-access";
 
 // ============================================================================
 // Resource Ownership Exports
@@ -86,7 +86,7 @@ export {
   belongsToTenant,
   createMultiTenantFilter,
   createTenantFilter,
-  createTenantFilterFromWorkspace,
+  createTenantFilterFromOrg,
   extractTenantId,
   filterResourcesByTenant,
   isValidTenantId,

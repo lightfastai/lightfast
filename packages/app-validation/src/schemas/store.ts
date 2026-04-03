@@ -159,11 +159,11 @@ export type ChunkOverlap = z.infer<typeof chunkOverlapSchema>;
  * - Must not start or end with a hyphen
  * - No consecutive hyphens
  *
- * Format: ws-{workspaceSlug}-{storeSlug}
+ * Format: ws-{orgSlug}-{storeSlug}
  *
  * @example
  * ```typescript
- * pineconeIndexNameSchema.parse("ws-my-workspace-docs"); // ✅ Valid
+ * pineconeIndexNameSchema.parse("ws-my-org-docs"); // ✅ Valid
  * pineconeIndexNameSchema.parse("ws-robust-chicken-kb"); // ✅ Valid
  * pineconeIndexNameSchema.parse("UPPERCASE"); // ❌ Must be lowercase
  * pineconeIndexNameSchema.parse("-invalid"); // ❌ Cannot start with hyphen

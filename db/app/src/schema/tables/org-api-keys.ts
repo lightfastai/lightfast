@@ -13,9 +13,8 @@ import {
 /**
  * Organization API Keys table for org-scoped API authentication
  *
- * Org-scoped: Each key authenticates the org and can access all workspaces
- * within that org. Workspace context moves to request-level input (body params)
- * instead of key-level binding.
+ * Org-scoped: Each key authenticates the org and can access all resources
+ * within that org.
  *
  * Design:
  * - Each org can have multiple API keys
@@ -137,7 +136,7 @@ export const orgApiKeys = pgTable(
     // Index for active keys lookup
     isActiveIdx: index("ws_api_key_is_active_idx").on(table.isActive),
 
-    // Composite for org + active keys (replaces workspace-scoped index)
+    // Composite for org + active keys
     clerkOrgActiveIdx: index("org_api_key_clerk_org_active_idx").on(
       table.clerkOrgId,
       table.isActive

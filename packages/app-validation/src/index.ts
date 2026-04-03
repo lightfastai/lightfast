@@ -5,7 +5,7 @@
  *
  * This package provides:
  * - Primitive Zod schemas (IDs, slugs, names, timestamps)
- * - Domain-specific schemas (workspace, organization, store, job, etc.)
+ * - Domain-specific schemas (organization, store, job, etc.)
  * - Form validation schemas (client-side React Hook Form)
  * - Database schema integration (Drizzle ORM)
  * - Reusable validation utilities

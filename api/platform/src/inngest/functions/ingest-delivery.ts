@@ -87,7 +87,7 @@ export const ingestDelivery = inngest.createFunction(
       throw new NonRetriableError("no_connection");
     }
 
-    // clerkOrgId IS the orgId — no workspace resolution needed
+    // clerkOrgId IS the orgId
     const clerkOrgId = connectionInfo.orgId;
 
     log.info("[ingest-delivery] connection resolved", {
@@ -181,7 +181,7 @@ export const ingestDelivery = inngest.createFunction(
     await step.run("publish-realtime", async () => {
       const { realtime } = await import("@repo/app-upstash-realtime");
       const channel = realtime.channel(`org-${clerkOrgId}`);
-      await channel.emit("workspace.event", {
+      await channel.emit("org.event", {
         eventId: result.ingestLogId,
         clerkOrgId,
         sourceEvent: result.sourceEvent,

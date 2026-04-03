@@ -46,7 +46,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       let catchUpComplete = false;
 
       const unsubscribe = await channel.subscribe({
-        events: ["workspace.event"],
+        events: ["org.event"],
         onData({ data }: { data: EventNotification }) {
           try {
             const notification = data;

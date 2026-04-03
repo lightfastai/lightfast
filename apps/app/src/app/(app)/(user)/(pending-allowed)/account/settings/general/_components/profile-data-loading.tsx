@@ -69,9 +69,7 @@ export function ProfileDataLoading() {
 
         <div className="w-full space-y-4">
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground text-sm">
-              lightfast.ai/
-            </span>
+            <span className="text-muted-foreground text-sm">lightfast.ai/</span>
             <Skeleton className="h-10 flex-1" />
           </div>
 

@@ -38,7 +38,7 @@ import {
  *
  * Type Safety: metric and cloud are validated against validation schemas.
  *
- * Future: Could be made configurable per workspace or store.
+ * Future: Could be made configurable per organization or store.
  */
 export const PINECONE_CONFIG = {
   /**
@@ -206,7 +206,7 @@ export const EMBEDDING_CONFIG = {
  * Controls reranking behavior for neural memory search.
  * Currently private - optimized for quality vs latency trade-offs.
  *
- * Future: Could allow users to specify mode per workspace.
+ * Future: Could allow users to specify mode per organization.
  */
 export const RERANK_CONFIG = {
   /**

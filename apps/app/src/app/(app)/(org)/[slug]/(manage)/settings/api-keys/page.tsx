@@ -8,7 +8,7 @@ import { SecurityNotice } from "./_components/security-notice";
  * Organization API Keys Settings Page
  *
  * Server component with client islands for optimal SSR performance.
- * API keys are org-scoped and can access all workspaces.
+ * API keys are org-scoped and can access all resources.
  *
  * Architecture:
  * - Server components: Static headers, security notice, loading skeletons
@@ -26,7 +26,7 @@ export default function OrgApiKeysPage() {
         </h2>
         <p className="mt-1 text-muted-foreground text-sm">
           Manage API keys for authenticating with Lightfast services. Keys can
-          access all workspaces in your organization.
+          access all resources in your organization.
         </p>
       </div>
 

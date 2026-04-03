@@ -2,7 +2,7 @@
  * API Key Authentication Middleware for v1 Routes
  *
  * SECURITY: Validates org-scoped API keys.
- * Keys authenticate the org and can access all workspaces within it.
+ * Keys authenticate the org and can access all resources within it.
  */
 
 import { db } from "@db/app/client";

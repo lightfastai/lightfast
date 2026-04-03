@@ -137,7 +137,7 @@ export function EventsTable({ initialSource }: EventsTableProps) {
 
   const { status } = useRealtime({
     channels: organization?.id ? [`org-${organization.id}`] : [],
-    events: ["workspace.event"],
+    events: ["org.event"],
     enabled: !!organization?.id && isDefaultView,
     onData({ data: notification }) {
       if (notification.clerkOrgId !== data.clerkOrgId) {

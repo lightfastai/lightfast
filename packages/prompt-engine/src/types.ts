@@ -29,7 +29,7 @@ export interface PromptFeatureFlags {
   temporalContext?: boolean;
   /** Enable per-tool guidance section (default: true) */
   toolGuidance?: boolean;
-  /** Enable user/workspace context section (default: false) */
+  /** Enable user/org context section (default: false) */
   userContext?: boolean;
 }
 
@@ -94,7 +94,7 @@ export interface PromptContext {
   style: CommunicationStyle;
   /** Temporal context (only used when features.temporalContext is true) */
   temporalContext?: TemporalContext;
-  /** User/workspace context (only used when features.userContext is true) */
+  /** User/org context (only used when features.userContext is true) */
   userContext?: UserContext;
   webSearchEnabled: boolean;
 }

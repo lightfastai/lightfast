@@ -199,7 +199,7 @@ export const memoryEntityEmbed = inngest.createFunction(
       });
     }
 
-    // Step 2: Embed the narrative using constants (no workspace settings needed)
+    // Step 2: Embed the narrative using constants
     const embedding = await step.run("embed-narrative", async () => {
       const { createEmbeddingProviderForOrg } = await import("@repo/app-embed");
       const embeddingProvider = createEmbeddingProviderForOrg(

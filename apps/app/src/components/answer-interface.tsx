@@ -133,7 +133,7 @@ export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
           <AnswerPromptInput
             isSubmitDisabled={isSubmitDisabled}
             onSubmit={handleSubmit}
-            placeholder="Ask anything about your workspace..."
+            placeholder="Ask anything about your organization..."
             ref={formRef}
             status={status}
             submitDisabledReason={submitDisabledReason}

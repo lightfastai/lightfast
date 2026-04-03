@@ -39,12 +39,12 @@ export function SearchToolResult({ data }: { data: SearchResponse }) {
   return (
     <div className="w-full rounded-lg border">
       <Accordion className="w-full" collapsible type="single">
-        <AccordionItem value="workspace-search-results">
+        <AccordionItem value="org-search-results">
           <AccordionTrigger className="items-center px-4 py-3 hover:no-underline data-[state=closed]:hover:bg-muted/50">
             <div className="flex flex-1 items-center gap-2">
               <div className="flex-1 text-left">
                 <div className="font-medium text-muted-foreground text-xs lowercase">
-                  workspace search
+                  search
                 </div>
               </div>
               <span className="text-muted-foreground/70 text-xs">

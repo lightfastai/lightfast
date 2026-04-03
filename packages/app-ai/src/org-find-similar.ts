@@ -43,17 +43,17 @@ const inputSchema = z.object({
 
 const outputSchema = FindSimilarResponseSchema;
 
-export function workspaceFindSimilarTool() {
+export function orgFindSimilarTool() {
   return createTool<LightfastAnswerRuntimeContext>({
     description:
       "Find semantically similar content to a given document. Use this to discover related observations, expand search results, or find alternatives to a specific document.",
     inputSchema: inputSchema as any,
     outputSchema: outputSchema as any,
     execute: async (input, context) => {
-      const handler = context.tools?.workspaceFindSimilar?.handler;
+      const handler = context.tools?.orgFindSimilar?.handler;
       if (!handler) {
         throw new Error(
-          "Workspace find-similar handler not configured in runtime context."
+          "Org find-similar handler not configured in runtime context."
         );
       }
       return handler(input);

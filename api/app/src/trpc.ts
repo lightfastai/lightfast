@@ -191,7 +191,7 @@ export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
  * - Create new organization
  * - User-level integrations (GitHub account connection)
  *
- * For org-scoped operations (workspaces, repos), use `orgScopedProcedure`.
+ * For org-scoped operations (repos, integrations), use `orgScopedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
@@ -228,16 +228,15 @@ export const userScopedProcedure = sentrifiedProcedure
 /**
  * Org-Scoped Procedure
  *
- * For org-level operations: workspaces, repositories, members, integrations.
+ * For org-level operations: repositories, members, integrations.
  * Only accepts clerk-active users (authenticated + has claimed org).
  *
  * Type-safe: `ctx.auth.orgId` is guaranteed to exist.
  *
  * Use cases:
- * - Workspaces (list, create, update)
  * - Repositories (connect, sync)
  * - Org members (invite, remove)
- * - Org integrations (GitHub org, Slack workspace)
+ * - Org integrations (GitHub org, Slack)
  * - Org settings
  *
  * For user-level operations (profile, create org), use `userScopedProcedure`.

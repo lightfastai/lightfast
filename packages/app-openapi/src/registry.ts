@@ -48,7 +48,7 @@ export function generateOpenAPIDocument(): ReturnType<typeof createDocument> {
           scheme: "bearer",
           bearerFormat: "API Key",
           description:
-            "Use your Lightfast API key (sk-lf-...) as the bearer token. Optionally include X-Workspace-ID header.",
+            "Use your Lightfast API key (sk-lf-...) as the bearer token.",
         },
       },
       schemas: {

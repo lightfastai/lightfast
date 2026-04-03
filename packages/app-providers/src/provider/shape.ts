@@ -25,7 +25,7 @@ interface BaseProviderFields<
 > extends Readonly<ProviderDisplayEntry> {
   readonly accountInfoSchema: TAccountInfoSchema;
   readonly api: TApi;
-  /** Build the providerConfig JSONB blob for a new workspace integration record. */
+  /** Build the providerConfig JSONB blob for a new gateway installation record. */
   readonly buildProviderConfig: (params: {
     defaultSyncEvents: readonly string[];
   }) => z.infer<TProviderConfigSchema>;
@@ -55,7 +55,7 @@ interface BaseProviderFields<
   readonly healthCheck?: HealthCheckDef<TConfig>;
   /** When true, all env vars are optional — the provider is disabled and its env preset is excluded from PROVIDER_ENVS(). */
   readonly optional?: true;
-  /** Zod schema for the provider_config JSONB blob stored in workspace_integrations. */
+  /** Zod schema for the provider_config JSONB blob stored in gateway_installations. */
   readonly providerConfigSchema: TProviderConfigSchema;
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */
   readonly resolveCategory: (eventType: string) => string;
