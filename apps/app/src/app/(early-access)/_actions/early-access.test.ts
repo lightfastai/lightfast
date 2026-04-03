@@ -58,6 +58,7 @@ vi.mock("@vendor/clerk", () => ({
 const mockCaptureException = vi.fn();
 vi.mock("@sentry/nextjs", () => ({
   captureException: (...args: unknown[]) => mockCaptureException(...args),
+  getActiveSpan: vi.fn(),
 }));
 
 // Env
