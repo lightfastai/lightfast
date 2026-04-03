@@ -668,8 +668,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_react_compiler_368",
-            "name": "lightfast-console",
-            "url": "lightfast-console-react-compiler-368.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-react-compiler-368.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "8042056a1e5c7d92",
@@ -685,7 +685,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -706,8 +706,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_react_compiler_368",
-            "name": "lightfast-console",
-            "url": "lightfast-console-react-compiler-368.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-react-compiler-368.vercel.app",
             "readyState": "ERROR",
             "errorMessage": "Build failed in CI. See logs for details.",
             "errorCode": "BUILD_SCRIPT_ERROR",
@@ -725,7 +725,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -827,8 +827,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": null,
             "logger": "node",
@@ -1045,8 +1045,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_config_fix_441",
-            "name": "lightfast-console",
-            "url": "lightfast-console-config-fix-441.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-config-fix-441.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "91ba85041f2e9c34",
@@ -1061,7 +1061,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1082,8 +1082,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_config_fix_441",
-            "name": "lightfast-console",
-            "url": "lightfast-console.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "91ba85041f2e9c34",
@@ -1098,7 +1098,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1135,8 +1135,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": {
               "id": "user_jeevan_sentry",

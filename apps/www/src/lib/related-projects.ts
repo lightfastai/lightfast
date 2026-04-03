@@ -10,5 +10,5 @@ export const consoleUrl = withRelatedProject({
   projectName: "lightfast-app",
   defaultHost: isDevelopment
     ? "http://localhost:4107"
-    : "https://app.lightfast.ai",
+    : "https://lightfast.ai",
 });

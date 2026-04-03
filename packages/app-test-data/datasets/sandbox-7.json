@@ -101,8 +101,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": null,
             "logger": "node",
@@ -1166,7 +1166,7 @@
           "deployment": {
             "id": "dpl_sdk_fix_370_npm",
             "name": "lightfast-sdk-npm",
-            "url": "npm.lightfast.ai/sdk",
+            "url": "lightfast-sdk.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "f7c6b5a94d3e2f81",
@@ -1201,7 +1201,7 @@
           "deployment": {
             "id": "dpl_mcp_fix_370_npm",
             "name": "lightfast-mcp-npm",
-            "url": "npm.lightfast.ai/mcp",
+            "url": "lightfast-mcp.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "f7c6b5a94d3e2f81",
@@ -1499,8 +1499,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": {
               "id": "user_jeevan_sentry",

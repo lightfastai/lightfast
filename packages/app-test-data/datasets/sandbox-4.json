@@ -102,8 +102,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": null,
             "logger": "javascript",
@@ -1254,8 +1254,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_search_fix_356",
-            "name": "lightfast-console",
-            "url": "lightfast-console-search-fix-356.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-search-fix-356.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "7a914dbd",
@@ -1271,7 +1271,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1292,8 +1292,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_search_fix_356",
-            "name": "lightfast-console",
-            "url": "lightfast-console.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "7a914dbd",
@@ -1309,7 +1309,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1346,8 +1346,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": {
               "id": "user_jeevan_sentry",

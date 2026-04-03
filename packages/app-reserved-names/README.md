@@ -228,7 +228,7 @@ for (let i = 0; i < 100000; i++) {
     "paths": ["/sign-in", "/sign-up"]
   },
   "lightfast-console": {
-    "fallback": "app.lightfast.ai"  // Handles all other routes including /{orgSlug}
+    "fallback": "lightfast.ai"  // Handles all other routes including /{orgSlug}
   }
 }
 ```

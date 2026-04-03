@@ -947,8 +947,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_perf_opt_360",
-            "name": "lightfast-console",
-            "url": "lightfast-console-perf-opt-360.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-perf-opt-360.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "f9e8d7c6b5a49382",
@@ -964,7 +964,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -985,8 +985,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_perf_opt_360",
-            "name": "lightfast-console",
-            "url": "lightfast-console.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "f9e8d7c6b5a49382",
@@ -1004,7 +1004,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",

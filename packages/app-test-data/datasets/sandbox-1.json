@@ -102,8 +102,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": null,
             "logger": "node",
@@ -1058,8 +1058,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_neural_fix_362",
-            "name": "lightfast-console",
-            "url": "lightfast-console-neural-fix-362.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-neural-fix-362.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "a8f3c2d91e4b5678",
@@ -1075,7 +1075,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1096,8 +1096,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_neural_fix_362",
-            "name": "lightfast-console",
-            "url": "lightfast-console.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "a8f3c2d91e4b5678",
@@ -1113,7 +1113,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1150,8 +1150,8 @@
             },
             "project": {
               "id": "9012345",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "assignedTo": {
               "id": "user_jeevan_sentry",
