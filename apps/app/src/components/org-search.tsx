@@ -239,7 +239,6 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
             onActiveTabChange={(v) => void setActiveTab(v as typeof activeTab)}
             onExpandedIdChange={setExpandedId}
             searchResults={searchResults}
-            storeId={clerkOrgId}
           />
         </div>
       </div>

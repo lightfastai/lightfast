@@ -6,15 +6,6 @@
   "exports": {
     "./org-search": {
       "default": "./src/org-search.ts"
-    },
-    "./org-contents": {
-      "default": "./src/org-contents.ts"
-    },
-    "./org-find-similar": {
-      "default": "./src/org-find-similar.ts"
-    },
-    "./org-related": {
-      "default": "./src/org-related.ts"
     }
   },
   "license": "FSL-1.1-Apache-2.0",

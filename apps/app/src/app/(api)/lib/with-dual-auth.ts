@@ -3,7 +3,6 @@
  *
  * Supports both API key and Clerk session authentication.
  * - API key: Uses withApiKeyAuth, org resolved from DB (no X-Org-ID needed)
- * - Clerk JWT bearer: Verifies org membership via cached memberships
  * - Session: Validates org membership via Clerk
  */
 
@@ -40,11 +39,10 @@ export type DualAuthResult = DualAuthSuccess | DualAuthError;
  * Verify authentication via API key OR Clerk session
  *
  * Priority:
- * 1. API key (Authorization: Bearer header) - for external clients, org from DB
+ * 1. API key (Authorization: Bearer sk-lf-...) - for external clients, org from DB
  * 2. Clerk session - for console UI
  *
  * For API key auth: org resolved from key's DB record (no headers needed)
- * For Clerk JWT bearer: verifies org membership via cached memberships
  * For session auth: validates org membership via Clerk
  */
 export async function withDualAuth(
@@ -73,53 +71,16 @@ export async function withDualAuth(
       };
     }
 
-    // Clerk JWT bearer path (internal service-to-service)
-    const clerkOrgId = request.headers.get("x-org-id");
-    const userId = request.headers.get("x-user-id");
-
-    if (!(clerkOrgId && userId)) {
-      log.warn("Missing X-Org-ID or X-User-ID for bearer token", {
-        requestId,
-      });
-      return {
-        success: false,
-        error: {
-          code: "BAD_REQUEST",
-          message: "X-Org-ID and X-User-ID headers required with bearer token",
-        },
-        status: 400,
-      };
-    }
-
-    // Verify org membership
-    const { getCachedUserOrgMemberships } = await import(
-      "@repo/app-clerk-cache"
-    );
-    const userMemberships = await getCachedUserOrgMemberships(userId);
-    const isMember = userMemberships.some(
-      (m) => m.organizationId === clerkOrgId
-    );
-
-    if (!isMember) {
-      log.warn("User not member of org", { requestId, userId, clerkOrgId });
-      return {
-        success: false,
-        error: {
-          code: "FORBIDDEN",
-          message: "Access denied to this organization",
-        },
-        status: 403,
-      };
-    }
-
-    log.info("Bearer token auth via headers", {
-      requestId,
-      userId,
-      clerkOrgId,
-    });
+    // Unrecognized bearer token format — reject
+    log.warn("Unrecognized bearer token format", { requestId });
     return {
-      success: true,
-      auth: { clerkOrgId, userId, authType: "session" },
+      success: false,
+      error: {
+        code: "UNAUTHORIZED",
+        message:
+          "Invalid bearer token. Use an API key (sk-lf-...) or sign in via session.",
+      },
+      status: 401,
     };
   }
 

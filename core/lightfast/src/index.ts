@@ -1,12 +1,7 @@
 // Client
 
 // Zod Schemas (for runtime validation, used by MCP server)
-export {
-  ContentsRequestSchema,
-  FindSimilarRequestSchema,
-  RelatedRequestSchema,
-  SearchRequestSchema,
-} from "@repo/app-validation/api";
+export { SearchRequestSchema } from "@repo/app-validation/api";
 export {
   createLightfast,
   createLightfastMemory,
@@ -34,16 +29,6 @@ export {
 
 // Types
 export type {
-  ContentItem,
-  ContentsInput,
-  ContentsRequest,
-  ContentsResponse,
-  FindSimilarInput,
-  FindSimilarRequest,
-  FindSimilarResponse,
-  FindSimilarResult,
-  FindSimilarSource,
-  GraphInput,
   LightfastConfig,
   // Deprecated alias
   LightfastMemoryConfig,
@@ -52,10 +37,6 @@ export type {
   ProxyExecuteInput,
   ProxyExecuteResponse,
   ProxySearchResponse,
-  RelatedEvent,
-  RelatedInput,
-  RelatedRequest,
-  RelatedResponse,
   RerankMode,
   SearchContext,
   SearchFilters,

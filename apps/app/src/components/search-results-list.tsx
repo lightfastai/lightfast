@@ -10,7 +10,6 @@ interface SearchResultsListProps {
   offset: number;
   onExpandedIdChange: (id: string) => void;
   searchResults: SearchResponse;
-  storeId: string;
 }
 
 export function SearchResultsList({
@@ -18,7 +17,6 @@ export function SearchResultsList({
   expandedId,
   onExpandedIdChange,
   offset,
-  storeId,
 }: SearchResultsListProps) {
   return (
     <div className="space-y-2">
@@ -58,7 +56,6 @@ export function SearchResultsList({
               }
               rank={index + offset + 1}
               result={result}
-              storeId={storeId}
             />
           ))}
         </div>

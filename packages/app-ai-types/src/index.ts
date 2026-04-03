@@ -1,10 +1,5 @@
 import type { RuntimeContext } from "@lightfastai/ai-sdk/server/adapters/types";
-import type {
-  ContentsResponse,
-  FindSimilarResponse,
-  RelatedResponse,
-  SearchResponse,
-} from "@repo/app-validation";
+import type { SearchResponse } from "@repo/app-validation";
 import type { DeepPartial, UIMessage } from "ai";
 
 // ─── Tool Input Types ────────────────────────────────────────────
@@ -21,52 +16,14 @@ export interface SearchToolInput {
   query: string;
 }
 
-export interface ContentsToolInput {
-  ids: string[];
-}
-
-export interface FindSimilarToolInput {
-  excludeIds?: string[];
-  filters?: {
-    observationTypes?: string[];
-    sourceTypes?: string[];
-  };
-  id?: string;
-  limit: number;
-  sameSourceOnly: boolean;
-  threshold: number;
-  url?: string;
-}
-
-export interface RelatedToolInput {
-  depth: number;
-  id: string;
-  types?: string[];
-}
-
 // ─── Tool Output Types ───────────────────────────────────────────
 // Re-export from @repo/app-validation for single import convenience
 
 export type SearchToolOutput = SearchResponse;
-export type ContentsToolOutput = ContentsResponse;
-export type FindSimilarToolOutput = FindSimilarResponse;
-export type RelatedToolOutput = RelatedResponse;
 
 // ─── Tool Set Definition ─────────────────────────────────────────
 
 export interface AnswerToolSet {
-  orgContents: {
-    input: ContentsToolInput;
-    output: ContentsToolOutput;
-  };
-  orgFindSimilar: {
-    input: FindSimilarToolInput;
-    output: FindSimilarToolOutput;
-  };
-  orgRelated: {
-    input: RelatedToolInput;
-    output: RelatedToolOutput;
-  };
   orgSearch: {
     input: SearchToolInput;
     output: SearchToolOutput;
@@ -115,27 +72,8 @@ export type SearchToolUIPart = ToolUIPartState<
   SearchToolInput,
   SearchToolOutput
 >;
-export type ContentsToolUIPart = ToolUIPartState<
-  "orgContents",
-  ContentsToolInput,
-  ContentsToolOutput
->;
-export type FindSimilarToolUIPart = ToolUIPartState<
-  "orgFindSimilar",
-  FindSimilarToolInput,
-  FindSimilarToolOutput
->;
-export type RelatedToolUIPart = ToolUIPartState<
-  "orgRelated",
-  RelatedToolInput,
-  RelatedToolOutput
->;
 
-export type AnswerToolUIPart =
-  | SearchToolUIPart
-  | ContentsToolUIPart
-  | FindSimilarToolUIPart
-  | RelatedToolUIPart;
+export type AnswerToolUIPart = SearchToolUIPart;
 
 // ─── Message Types ───────────────────────────────────────────────
 
@@ -153,21 +91,9 @@ export type LightfastAnswerUIMessage =
 export type SearchToolHandler = (
   input: SearchToolInput
 ) => Promise<SearchToolOutput>;
-export type ContentsToolHandler = (
-  input: ContentsToolInput
-) => Promise<ContentsToolOutput>;
-export type FindSimilarToolHandler = (
-  input: FindSimilarToolInput
-) => Promise<FindSimilarToolOutput>;
-export type RelatedToolHandler = (
-  input: RelatedToolInput
-) => Promise<RelatedToolOutput>;
 
 /** Runtime configuration for tool handlers, injected per-request */
 export interface AnswerToolRuntimeConfig {
-  orgContents?: { handler: ContentsToolHandler };
-  orgFindSimilar?: { handler: FindSimilarToolHandler };
-  orgRelated?: { handler: RelatedToolHandler };
   orgSearch?: { handler: SearchToolHandler };
 }
 

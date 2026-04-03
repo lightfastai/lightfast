@@ -60,42 +60,6 @@ export {
 } from "./schemas/api/common";
 // Canonical API schemas (versioning-free) — import from @repo/app-validation/api for subpath
 export type {
-  ContentItem,
-  ContentsRequest,
-  ContentsResponse,
-} from "./schemas/api/contents";
-export {
-  ContentItemSchema,
-  ContentsRequestSchema,
-  ContentsResponseSchema,
-} from "./schemas/api/contents";
-export type {
-  FindSimilarRequest,
-  FindSimilarResponse,
-  FindSimilarResult,
-  FindSimilarSource,
-} from "./schemas/api/findsimilar";
-export {
-  FindSimilarRequestSchema,
-  FindSimilarResponseSchema,
-  FindSimilarResultSchema,
-  FindSimilarSourceSchema,
-} from "./schemas/api/findsimilar";
-export type {
-  RelatedEdge,
-  RelatedEvent,
-  RelatedNode,
-  RelatedRequest,
-  RelatedResponse,
-} from "./schemas/api/related";
-export {
-  RelatedEdgeSchema,
-  RelatedEventSchema,
-  RelatedNodeSchema,
-  RelatedRequestSchema,
-  RelatedResponseSchema,
-} from "./schemas/api/related";
-export type {
   SearchContext,
   SearchLatency,
   SearchRequest,

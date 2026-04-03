@@ -1,16 +1,6 @@
 // Re-export API types from console-validation for SDK consumers
 // These are used at compile time only (devDependency)
 export type {
-  ContentItem,
-  ContentsRequest,
-  ContentsResponse,
-  FindSimilarRequest,
-  FindSimilarResponse,
-  FindSimilarResult,
-  FindSimilarSource,
-  RelatedEvent,
-  RelatedRequest,
-  RelatedResponse,
   RerankMode,
   SearchContext,
   SearchFilters,
@@ -20,12 +10,7 @@ export type {
   SearchResult,
 } from "@repo/app-validation";
 
-import type {
-  ContentsRequest,
-  FindSimilarRequest,
-  RelatedRequest,
-  SearchRequest,
-} from "@repo/app-validation";
+import type { SearchRequest } from "@repo/app-validation";
 
 /**
  * SDK Input Type Pattern
@@ -56,40 +41,6 @@ import type {
  */
 export type SearchInput = Omit<SearchRequest, "limit" | "offset" | "mode"> &
   Partial<Pick<SearchRequest, "limit" | "offset" | "mode">>;
-
-/**
- * SDK input type for contents requests.
- * Matches ContentsRequest (no defaults to make optional).
- */
-export type ContentsInput = ContentsRequest;
-
-/**
- * SDK input type for findSimilar requests.
- * Makes fields with defaults optional for better developer experience.
- */
-export type FindSimilarInput = Omit<
-  FindSimilarRequest,
-  "limit" | "threshold" | "sameSourceOnly"
-> &
-  Partial<
-    Pick<FindSimilarRequest, "limit" | "threshold" | "sameSourceOnly">
-  > & {
-    /** Anchor by arbitrary text for semantic similarity search */
-    text?: string;
-  };
-
-/**
- * SDK input type for graph requests.
- * Makes depth optional (defaults to 1).
- */
-export type GraphInput = Omit<RelatedRequest, "depth"> &
-  Partial<Pick<RelatedRequest, "depth">>;
-
-/**
- * SDK input type for related requests.
- * Matches RelatedRequest (no extra defaults to make optional).
- */
-export type RelatedInput = RelatedRequest;
 
 /**
  * Configuration for the Lightfast client

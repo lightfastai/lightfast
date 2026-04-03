@@ -9,17 +9,10 @@ import {
   ValidationError,
 } from "./errors";
 import type {
-  ContentsInput,
-  ContentsResponse,
-  FindSimilarInput,
-  FindSimilarResponse,
-  GraphInput,
   LightfastConfig,
   ProxyExecuteInput,
   ProxyExecuteResponse,
   ProxySearchResponse,
-  RelatedInput,
-  RelatedResponse,
   SearchInput,
   SearchResponse,
 } from "./types";
@@ -70,7 +63,7 @@ export class Lightfast {
   }
 
   /**
-   * Search through workspace decisions and observations
+   * Search through org decisions and observations
    *
    * @param request - Search parameters
    * @returns Search results with scores and metadata
@@ -92,99 +85,6 @@ export class Lightfast {
       mode: request.mode ?? "balanced",
       filters: request.filters,
     });
-  }
-
-  /**
-   * Fetch full content for documents and observations by ID
-   *
-   * @param request - Content IDs to fetch
-   * @returns Full content items and list of missing IDs
-   *
-   * @example
-   * ```typescript
-   * const content = await lightfast.contents({
-   *   ids: ["doc_abc123", "obs_def456"],
-   * });
-   * ```
-   */
-  async contents(request: ContentsInput): Promise<ContentsResponse> {
-    return this.request<ContentsResponse>("/v1/contents", {
-      ids: request.ids,
-    });
-  }
-
-  /**
-   * Find content semantically similar to a given document or URL
-   *
-   * @param request - Source ID or URL and similarity parameters
-   * @returns Similar items with similarity scores
-   *
-   * @example
-   * ```typescript
-   * const similar = await lightfast.findSimilar({
-   *   id: "doc_abc123",
-   *   limit: 5,
-   *   threshold: 0.7,
-   * });
-   * ```
-   */
-  async findSimilar(request: FindSimilarInput): Promise<FindSimilarResponse> {
-    if (!(request.id || request.url || request.text)) {
-      throw new ValidationError(
-        "Either 'id', 'url', or 'text' must be provided"
-      );
-    }
-
-    return this.request<FindSimilarResponse>("/v1/findsimilar", {
-      id: request.id,
-      url: request.url,
-      text: request.text,
-      limit: request.limit ?? 10,
-      threshold: request.threshold ?? 0.5,
-      sameSourceOnly: request.sameSourceOnly ?? false,
-      excludeIds: request.excludeIds,
-      filters: request.filters,
-    });
-  }
-
-  /**
-   * Traverse the relationship graph from a starting observation
-   *
-   * @param request - Graph traversal parameters
-   * @returns Graph nodes, edges, and metadata
-   *
-   * @example
-   * ```typescript
-   * const graph = await lightfast.graph({
-   *   id: "obs_abc123",
-   *   depth: 2,
-   *   types: ["fixes", "deploys"],
-   * });
-   * ```
-   */
-  async graph(request: GraphInput): Promise<RelatedResponse> {
-    return this.request<RelatedResponse>("/v1/graph", {
-      id: request.id,
-      depth: request.depth ?? 2,
-      types: request.types,
-    });
-  }
-
-  /**
-   * Find observations directly connected via relationships
-   *
-   * @param request - Source observation ID
-   * @returns Related observations grouped by source
-   *
-   * @example
-   * ```typescript
-   * const related = await lightfast.related({
-   *   id: "obs_abc123",
-   * });
-   * ```
-   */
-  async related(request: RelatedInput): Promise<RelatedResponse> {
-    return this.request<RelatedResponse>("/v1/related", request);
   }
 
   /**
