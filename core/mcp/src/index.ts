@@ -10,21 +10,20 @@ Usage:
 
 Options:
   --api-key <key>         Lightfast API key (or set LIGHTFAST_API_KEY env var)
-  --org-id <id>           Org ID (or set LIGHTFAST_ORG_ID env var)
   --base-url <url>        API base URL (default: https://lightfast.ai)
   --help, -h              Show this help message
   --version, -v           Show version
 
 Examples:
-  npx @lightfastai/mcp --api-key sk-lf-abc123xyz --org-id org_abc123
-  LIGHTFAST_API_KEY=sk-lf-abc123xyz LIGHTFAST_ORG_ID=org_abc123 npx @lightfastai/mcp
+  npx @lightfastai/mcp --api-key sk-lf-abc123xyz
+  LIGHTFAST_API_KEY=sk-lf-abc123xyz npx @lightfastai/mcp
 
 Configure in Claude Desktop (claude_desktop_config.json):
   {
     "mcpServers": {
       "lightfast": {
         "command": "npx",
-        "args": ["-y", "@lightfastai/mcp", "--api-key", "sk-lf-...", "--org-id", "org_..."]
+        "args": ["-y", "@lightfastai/mcp", "--api-key", "sk-lf-..."]
       }
     }
   }
@@ -34,7 +33,6 @@ async function main(): Promise<void> {
   const { values } = parseArgs({
     options: {
       "api-key": { type: "string" },
-      "org-id": { type: "string" },
       "base-url": { type: "string", default: "https://lightfast.ai" },
       help: { type: "boolean", short: "h" },
       version: { type: "boolean", short: "v" },
@@ -70,20 +68,10 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const orgId = values["org-id"] ?? process.env.LIGHTFAST_ORG_ID;
-
-  if (!orgId) {
-    console.error(
-      "Error: Org ID required. Use --org-id flag or set LIGHTFAST_ORG_ID environment variable."
-    );
-    console.error("\nRun with --help for usage information.");
-    process.exit(1);
-  }
-
   const baseUrl = values["base-url"];
 
   // Start the MCP server
-  await createServer({ apiKey, baseUrl, orgId });
+  await createServer({ apiKey, baseUrl });
 }
 
 main().catch((error: unknown) => {

@@ -2,7 +2,7 @@
  * Dual Authentication Middleware for API Routes
  *
  * Supports both API key and Clerk session authentication.
- * - API key: Uses existing withApiKeyAuth, trusts X-Org-ID
+ * - API key: Uses withApiKeyAuth, org resolved from DB (no X-Org-ID needed)
  * - Clerk JWT bearer: Verifies org membership via cached memberships
  * - Session: Validates org membership via Clerk
  */
@@ -40,10 +40,10 @@ export type DualAuthResult = DualAuthSuccess | DualAuthError;
  * Verify authentication via API key OR Clerk session
  *
  * Priority:
- * 1. API key (Authorization: Bearer header) - for external clients
+ * 1. API key (Authorization: Bearer header) - for external clients, org from DB
  * 2. Clerk session - for console UI
  *
- * For API key auth: trusts X-Org-ID header (org established by API key lookup)
+ * For API key auth: org resolved from key's DB record (no headers needed)
  * For Clerk JWT bearer: verifies org membership via cached memberships
  * For session auth: validates org membership via Clerk
  */
@@ -55,30 +55,17 @@ export async function withDualAuth(
   if (authHeader?.startsWith("Bearer ")) {
     const token = authHeader.slice(7);
 
-    // API key path — org established by key lookup, trust X-Org-ID
+    // API key path — org resolved from DB via key lookup
     if (token.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
       const apiKeyResult = await withApiKeyAuth(request, requestId);
       if (!apiKeyResult.success) {
         return apiKeyResult;
       }
 
-      const clerkOrgId = request.headers.get("x-org-id");
-      if (!clerkOrgId) {
-        log.warn("Missing X-Org-ID for API key auth", {
-          requestId,
-          orgId: apiKeyResult.auth.orgId,
-        });
-        return {
-          success: false,
-          error: { code: "BAD_REQUEST", message: "X-Org-ID header required" },
-          status: 400,
-        };
-      }
-
       return {
         success: true,
         auth: {
-          clerkOrgId,
+          clerkOrgId: apiKeyResult.auth.orgId,
           userId: apiKeyResult.auth.userId,
           authType: "api-key",
           apiKeyId: apiKeyResult.auth.apiKeyId,

@@ -22,9 +22,9 @@ describe("LightfastMemory", () => {
 
   describe("constructor", () => {
     it("should throw if apiKey is missing", () => {
-      expect(
-        () => new LightfastMemory({ apiKey: "", orgId: "org_test123" })
-      ).toThrow("API key is required");
+      expect(() => new LightfastMemory({ apiKey: "" })).toThrow(
+        "API key is required"
+      );
     });
 
     it("should throw if apiKey has invalid format", () => {
@@ -32,25 +32,13 @@ describe("LightfastMemory", () => {
         () =>
           new LightfastMemory({
             apiKey: "invalid_key",
-            orgId: "org_test123",
           })
       ).toThrow("Invalid API key format");
-    });
-
-    it("should throw if orgId is empty", () => {
-      expect(
-        () =>
-          new LightfastMemory({
-            apiKey: "sk-lf-test123abc",
-            orgId: "",
-          })
-      ).toThrow("Org ID is required");
     });
 
     it("should accept valid apiKey", () => {
       const memory = new LightfastMemory({
         apiKey: "sk-lf-live123test",
-        orgId: "org_test123",
       });
       expect(memory).toBeInstanceOf(LightfastMemory);
     });
@@ -58,7 +46,6 @@ describe("LightfastMemory", () => {
     it("should use default baseUrl", () => {
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       expect(memory).toBeInstanceOf(LightfastMemory);
     });
@@ -66,7 +53,7 @@ describe("LightfastMemory", () => {
     it("should accept custom baseUrl", () => {
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
+
         baseUrl: "https://custom.api.com",
       });
       expect(memory).toBeInstanceOf(LightfastMemory);
@@ -96,7 +83,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.search({ query: "test query" });
 
@@ -107,7 +93,6 @@ describe("LightfastMemory", () => {
           headers: expect.objectContaining({
             Authorization: "Bearer sk-lf-test123abc",
             "Content-Type": "application/json",
-            "X-Org-ID": "org_test123",
           }),
           body: expect.stringContaining('"query":"test query"'),
         })
@@ -124,7 +109,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await memory.search({ query: "test" });
 
@@ -153,7 +137,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.contents({ ids: ["doc_123", "obs_456"] });
 
@@ -189,7 +172,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.findSimilar({ id: "doc_123" });
 
@@ -215,7 +197,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.findSimilar({
         text: "authentication best practices",
@@ -229,7 +210,6 @@ describe("LightfastMemory", () => {
     it("should throw ValidationError if neither id, url, nor text provided", async () => {
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await expect(memory.findSimilar({})).rejects.toThrow(ValidationError);
       await expect(memory.findSimilar({})).rejects.toThrow(
@@ -262,7 +242,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.graph({ id: "obs_123" });
 
@@ -286,7 +265,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await memory.graph({ id: "obs_123" });
 
@@ -303,7 +281,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await memory.graph({
         id: "obs_123",
@@ -339,7 +316,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.related({ id: "obs_123", depth: 1 });
 
@@ -365,7 +341,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         AuthenticationError
@@ -381,7 +356,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         ValidationError
@@ -397,7 +371,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         RateLimitError
@@ -413,7 +386,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         ServerError
@@ -425,7 +397,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       await expect(memory.search({ query: "test" })).rejects.toThrow(
         NetworkError
@@ -437,7 +408,6 @@ describe("LightfastMemory", () => {
     it("should create LightfastMemory instance", () => {
       const memory = createLightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       expect(memory).toBeInstanceOf(LightfastMemory);
     });
@@ -471,7 +441,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.proxySearch();
 
@@ -479,9 +448,6 @@ describe("LightfastMemory", () => {
         "https://lightfast.ai/v1/proxy/search",
         expect.objectContaining({
           method: "POST",
-          headers: expect.objectContaining({
-            "X-Org-ID": "org_test123",
-          }),
         })
       );
 
@@ -504,7 +470,6 @@ describe("LightfastMemory", () => {
 
       const memory = new LightfastMemory({
         apiKey: "sk-lf-test123abc",
-        orgId: "org_test123",
       });
       const result = await memory.proxyExecute({
         installationId: "inst_123",
