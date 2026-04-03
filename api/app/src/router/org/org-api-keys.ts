@@ -11,6 +11,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq } from "drizzle-orm";
 
+import { log } from "@vendor/observability/log/next";
 import { orgScopedProcedure } from "../../trpc";
 
 /**
@@ -87,11 +88,14 @@ export const orgApiKeysRouter = {
         });
 
       if (!created) {
+        log.error("[org-api-keys] create failed", { clerkOrgId: ctx.auth.orgId, name: input.name });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to create API key",
         });
       }
+
+      log.info("[org-api-keys] created", { clerkOrgId: ctx.auth.orgId, keyId: created.publicId, name: input.name });
 
       return {
         id: created.publicId,
@@ -143,6 +147,8 @@ export const orgApiKeysRouter = {
         .set({ isActive: false, updatedAt: new Date().toISOString() })
         .where(eq(orgApiKeys.id, existingKey.id));
 
+      log.info("[org-api-keys] revoked", { clerkOrgId: ctx.auth.orgId, keyId: input.keyId });
+
       return { success: true };
     }),
 
@@ -172,6 +178,8 @@ export const orgApiKeysRouter = {
       }
 
       await db.delete(orgApiKeys).where(eq(orgApiKeys.id, existingKey.id));
+
+      log.info("[org-api-keys] deleted", { clerkOrgId: ctx.auth.orgId, keyId: input.keyId });
 
       return { success: true };
     }),
@@ -236,11 +244,14 @@ export const orgApiKeysRouter = {
       const [newKey] = insertResult;
 
       if (!newKey) {
+        log.error("[org-api-keys] rotate failed", { clerkOrgId: ctx.auth.orgId, oldKeyId: input.keyId });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to rotate API key",
         });
       }
+
+      log.info("[org-api-keys] rotated", { clerkOrgId: ctx.auth.orgId, oldKeyId: input.keyId, newKeyId: newKey.publicId });
 
       return {
         id: newKey.publicId,

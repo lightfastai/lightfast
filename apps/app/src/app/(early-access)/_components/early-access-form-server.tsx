@@ -1,4 +1,5 @@
 import { Input } from "@repo/ui/components/ui/input";
+import type { Route } from "next";
 import Link from "next/link";
 import { joinEarlyAccessAction } from "../_actions/early-access";
 import { CompanySizeIsland } from "./company-size-island";
@@ -70,14 +71,14 @@ export function EarlyAccessFormServer({
           By continuing you acknowledge that you understand and agree to our{" "}
           <Link
             className="underline transition-colors hover:text-foreground"
-            href="/legal/terms"
+            href={"/legal/terms" as Route}
           >
             Terms and Conditions
           </Link>{" "}
           and{" "}
           <Link
             className="underline transition-colors hover:text-foreground"
-            href="/legal/privacy"
+            href={"/legal/privacy" as Route}
           >
             Privacy Policy
           </Link>

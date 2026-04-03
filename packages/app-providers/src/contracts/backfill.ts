@@ -1,15 +1,15 @@
 /**
  * Backfill Orchestration Contracts
  *
- * Cross-service schemas for the Console → Relay → Backfill orchestration pipeline.
- * These define the wire formats between the console API, relay, and backfill services.
+ * Cross-service schemas for the Console → Platform backfill orchestration pipeline.
+ * These define the wire formats between the console API and the platform service.
  */
 
 import { z } from "zod";
 import { providerSlugSchema } from "../client/display";
 import { backfillDepthSchema } from "../client/options";
 
-// ── Trigger payload (Console → Relay → Backfill) ──
+// ── Trigger payload (Console → Platform backfill) ──
 
 export const backfillTriggerPayload = z.object({
   installationId: z.string().min(1),

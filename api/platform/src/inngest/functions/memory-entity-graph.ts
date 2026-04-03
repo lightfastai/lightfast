@@ -25,20 +25,15 @@ export const memoryEntityGraph = inngest.createFunction(
   },
   { event: "memory/entity.upserted" },
   async ({ event, step }) => {
-    const {
-      workspaceId,
-      internalEventId,
-      provider,
-      entityRefs,
-      correlationId,
-    } = event.data;
+    const { clerkOrgId, internalEventId, provider, entityRefs, correlationId } =
+      event.data;
 
     const edgeCount = await step.run("resolve-edges", () =>
-      resolveEdges(workspaceId, internalEventId, provider, entityRefs)
+      resolveEdges(clerkOrgId, internalEventId, provider, entityRefs)
     );
 
     log.info("[entity-graph] edges resolved", {
-      workspaceId,
+      clerkOrgId,
       internalEventId,
       provider,
       entityExternalId: event.data.entityExternalId,
@@ -49,7 +44,7 @@ export const memoryEntityGraph = inngest.createFunction(
     await step.sendEvent("emit-entity-graphed", {
       name: "memory/entity.graphed" as const,
       data: {
-        workspaceId,
+        clerkOrgId,
         entityExternalId: event.data.entityExternalId,
         entityType: event.data.entityType,
         provider,

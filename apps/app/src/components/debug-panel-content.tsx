@@ -49,13 +49,7 @@ function getEventsForSource(sourceType: ProviderSlug): {
   return { categories, eventsByCategory };
 }
 
-export function DebugPanelContent({
-  slug,
-  workspaceName,
-}: {
-  slug: string;
-  workspaceName: string;
-}) {
+export function DebugPanelContent() {
   const trpc = useTRPC();
   const [expandedProvider, setExpandedProvider] = useState<ProviderSlug | null>(
     null
@@ -68,17 +62,12 @@ export function DebugPanelContent({
   const [injecting, setInjecting] = useState<string | null>(null);
   const [result, setResult] = useState<InjectionResult | null>(null);
 
-  const { data: sourcesData, isLoading } = useQuery({
-    ...trpc.workspace.sources.list.queryOptions({
-      clerkOrgSlug: slug,
-      workspaceName,
-    }),
+  const { data: integrations = [], isLoading } = useQuery({
+    ...trpc.connections.list.queryOptions(),
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     staleTime: 60 * 1000,
   });
-
-  const integrations = sourcesData?.list ?? [];
 
   // Group by provider
   const byProvider = integrations.reduce<Record<string, typeof integrations>>(
@@ -203,7 +192,9 @@ export function DebugPanelContent({
                 <div className="border-white/5 border-t">
                   {/* Integration list */}
                   {providerIntegrations.map((integration) => {
-                    const label = integration.displayName;
+                    const label =
+                      PROVIDER_DISPLAY[integration.sourceType as ProviderSlug]
+                        ?.displayName ?? integration.sourceType;
                     const isSelected = selectedIntegrationId === integration.id;
 
                     return (

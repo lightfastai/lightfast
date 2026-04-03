@@ -54,8 +54,8 @@ export const PINECONE_CONFIG = {
    * - Physical isolation via Pinecone's serverless architecture
    * - Environment separation at Pinecone project level (different API keys)
    *
-   * Each workspace gets a hierarchical namespace within the shared index:
-   * Format: org_{clerkOrgId}:ws_{workspaceId}
+   * Each org gets its own namespace within the shared index:
+   * Format: sanitize(clerkOrgId) (e.g. org_abc123xyz)
    *
    * Values from: @repo/app-validation/constants (single source of truth)
    */

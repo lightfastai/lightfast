@@ -96,7 +96,7 @@ describe("oauth.buildAuthUrl", () => {
   it("includes redirect_uri using callbackBaseUrl", () => {
     const url = linear.auth.buildAuthUrl(testConfig, "s");
     expect(url).toContain(
-      encodeURIComponent("https://app.lightfast.ai/gateway/linear/callback")
+      encodeURIComponent("https://app.lightfast.ai/api/connect/linear/callback")
     );
   });
 
@@ -125,7 +125,7 @@ describe("oauth.exchangeCode", () => {
     const tokens = await linear.auth.exchangeCode(
       testConfig,
       "auth-code-123",
-      "https://app.lightfast.ai/gateway/linear/callback"
+      "https://app.lightfast.ai/api/connect/linear/callback"
     );
 
     expect(tokens.accessToken).toBe("lin_api_token123");
@@ -381,7 +381,7 @@ describe("oauth.processCallback", () => {
 
     const [, init] = mockFetch.mock.calls[0] as [string, RequestInit];
     expect(init.body).toContain(
-      encodeURIComponent("https://app.lightfast.ai/gateway/linear/callback")
+      encodeURIComponent("https://app.lightfast.ai/api/connect/linear/callback")
     );
   });
 });

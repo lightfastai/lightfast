@@ -16,5 +16,3 @@ export * from "./source-metadata";
 export * from "./sources";
 export * from "./store";
 export * from "./workflow-io";
-export * from "./workspace";
-export * from "./workspace-settings";

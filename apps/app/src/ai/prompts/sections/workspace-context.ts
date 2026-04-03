@@ -4,21 +4,23 @@ export const answerWorkspaceContextSection: SectionProvider = (ctx) => {
   if (!ctx.features.userContext) {
     return null;
   }
-  if (!ctx.userContext?.workspace) {
+  if (!ctx.userContext?.org) {
     return null;
   }
 
-  const ws = ctx.userContext.workspace;
+  const ws = ctx.userContext.org;
+  const hasContent = ws.integrations.length > 0 || ws.repos.length > 0;
+
+  if (!hasContent) {
+    return null;
+  }
 
   return {
     id: "workspace-context",
     priority: "high",
     estimateTokens: () => 200,
     render: () => {
-      const parts = [`WORKSPACE CONTEXT:\nProject: ${ws.name}`];
-      if (ws.description) {
-        parts.push(`Description: ${ws.description}`);
-      }
+      const parts: string[] = ["ORG CONTEXT:"];
       if (ws.integrations.length > 0) {
         parts.push(`Connected sources: ${ws.integrations.join(", ")}`);
       }

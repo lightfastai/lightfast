@@ -4,12 +4,36 @@ import { z } from "zod";
 export const env = createEnv({
   server: {
     SERVICE_JWT_SECRET: z.string().min(32),
-    ENCRYPTION_KEY: z.string().min(32),
+    ENCRYPTION_KEY: z
+      .string()
+      .min(44)
+      .refine(
+        (key) => {
+          const hexPattern = /^[0-9a-f]{64}$/i;
+          const base64Pattern = /^[A-Za-z0-9+/]{43}=$/;
+          return hexPattern.test(key) || base64Pattern.test(key);
+        },
+        {
+          message:
+            "ENCRYPTION_KEY must be 32 bytes (64 hex chars or 44 base64 chars)",
+        }
+      )
+      .refine((key) => key !== "0".repeat(64), {
+        message:
+          "ENCRYPTION_KEY must be a cryptographically secure random value",
+      }),
     NODE_ENV: z
       .enum(["development", "test", "production"])
       .default("development"),
   },
-  experimental__runtimeEnv: process.env,
+  client: {
+    NEXT_PUBLIC_VERCEL_ENV: z
+      .enum(["development", "preview", "production"])
+      .default("development"),
+  },
+  experimental__runtimeEnv: {
+    NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+  },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||
     process.env.npm_lifecycle_event === "lint",

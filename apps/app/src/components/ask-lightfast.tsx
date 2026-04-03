@@ -1,34 +1,14 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useOrganization } from "@vendor/clerk/client";
 import { AnswerInterface } from "./answer-interface";
 
-interface AskLightfastProps {
-  orgSlug: string;
-  workspaceName: string;
-}
+export function AskLightfast() {
+  const { organization } = useOrganization();
+  const clerkOrgId = organization?.id ?? "";
 
-export function AskLightfast({ orgSlug, workspaceName }: AskLightfastProps) {
-  const trpc = useTRPC();
-
-  const { data: store } = useSuspenseQuery({
-    ...trpc.workspace.store.get.queryOptions({
-      clerkOrgSlug: orgSlug,
-      workspaceName,
-    }),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  // store is guaranteed by useSuspenseQuery
-  if (!store) {
-    throw new Error("Store not found");
-  }
-
-  return <AnswerInterface workspaceId={store.id} />;
+  return <AnswerInterface clerkOrgId={clerkOrgId} />;
 }
 
 export function AskLightfastSkeleton() {

@@ -18,8 +18,8 @@ export const webhookReceiptPayloadSchema = z.object({
 export type WebhookReceiptPayload = z.infer<typeof webhookReceiptPayloadSchema>;
 
 /**
- * Envelope sent from Relay to Console ingress via QStash.
- * This is the Relay->Console contract for webhook delivery.
+ * Envelope sent from the platform ingest endpoint to the app ingress via QStash.
+ * Historical: formerly the Relay→Console contract; now handled within the platform service.
  */
 export const webhookEnvelopeSchema = z.object({
   /** Unique delivery ID for deduplication */

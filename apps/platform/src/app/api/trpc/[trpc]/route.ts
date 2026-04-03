@@ -1,6 +1,7 @@
 import { createMemoryTRPCContext, memoryRouter } from "@api/platform";
 import { captureException } from "@sentry/nextjs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
+import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 import { appUrl } from "~/lib/related-projects";
 
@@ -40,7 +41,11 @@ const handler = async (req: NextRequest) => {
         headers: req.headers,
       }),
     onError({ error, path }) {
-      console.error(`>>> tRPC Error on 'memory.${path}'`, error);
+      log.error("[trpc] procedure error", {
+        path,
+        error: error.message,
+        code: error.code,
+      });
       if (error.code === "INTERNAL_SERVER_ERROR") {
         captureException(error);
       }

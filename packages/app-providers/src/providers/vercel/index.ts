@@ -339,7 +339,7 @@ export const vercel = defineWebhookProvider({
         throw new Error("missing configurationId");
       }
 
-      const redirectUri = `${config.callbackBaseUrl}/gateway/vercel/callback`;
+      const redirectUri = `${config.callbackBaseUrl}/api/connect/vercel/callback`;
       const oauthTokens = await exchangeVercelCode(config, code, redirectUri);
 
       const parsed = vercelOAuthResponseSchema.parse(oauthTokens.raw);

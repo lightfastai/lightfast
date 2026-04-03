@@ -1,14 +1,13 @@
-import { db } from "@db/app/client";
-import { orgWorkspaces } from "@db/app/schema";
-import { createEmbeddingProviderForWorkspace } from "@repo/app-embed";
+import { buildOrgNamespace } from "@db/app/utils";
+import { createEmbeddingProvider } from "@repo/app-embed";
 import { consolePineconeClient } from "@repo/app-pinecone";
 import type {
   EntityVectorMetadata,
   SearchRequest,
   SearchResponse,
 } from "@repo/app-validation";
+import { EMBEDDING_DEFAULTS } from "@repo/app-validation/constants";
 import { log } from "@vendor/observability/log/next";
-import { eq } from "drizzle-orm";
 import type { AuthContext } from "./types";
 
 export async function searchLogic(
@@ -17,26 +16,13 @@ export async function searchLogic(
   requestId: string
 ): Promise<SearchResponse> {
   const startTime = Date.now();
-  const workspace = await db.query.orgWorkspaces.findFirst({
-    where: eq(orgWorkspaces.id, auth.workspaceId),
+
+  const indexName = EMBEDDING_DEFAULTS.indexName;
+  const namespaceName = buildOrgNamespace(auth.clerkOrgId);
+
+  const embeddingProvider = createEmbeddingProvider({
+    inputType: "search_query",
   });
-
-  if (!workspace) {
-    throw new Error(`Workspace not found: ${auth.workspaceId}`);
-  }
-
-  if ((workspace.settings.version as number) !== 1) {
-    throw new Error(`Workspace ${auth.workspaceId} has invalid settings`);
-  }
-
-  const { indexName, namespaceName, embeddingModel, embeddingDim } =
-    workspace.settings.embedding;
-
-  // Embed the search query
-  const embeddingProvider = createEmbeddingProviderForWorkspace(
-    { id: workspace.id, embeddingModel, embeddingDim },
-    { inputType: "search_query" }
-  );
   const { embeddings } = await embeddingProvider.embed([request.query]);
   const queryVector = embeddings[0];
 

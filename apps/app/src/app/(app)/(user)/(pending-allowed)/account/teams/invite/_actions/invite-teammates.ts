@@ -47,5 +47,5 @@ export async function inviteTeammates(formData: FormData) {
     );
   }
 
-  redirect(`/new?teamSlug=${teamSlug}`);
+  redirect(`/${teamSlug}`);
 }

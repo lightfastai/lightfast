@@ -6,11 +6,8 @@
  */
 
 import { db } from "@db/app/client";
-import type {
-  InsertWorkspaceWorkflowRun,
-  WorkspaceWorkflowRun,
-} from "@db/app/schema";
-import { workspaceWorkflowRuns } from "@db/app/schema";
+import type { InsertOrgWorkflowRun, OrgWorkflowRun } from "@db/app/schema";
+import { orgWorkflowRuns } from "@db/app/schema";
 import type {
   JobTrigger,
   WorkflowInput,
@@ -34,7 +31,6 @@ import { eq } from "drizzle-orm";
  */
 export async function createJob(params: {
   clerkOrgId: string;
-  workspaceId: string;
   repositoryId?: string | null;
   inngestRunId: string;
   inngestFunctionId: string;
@@ -48,7 +44,7 @@ export async function createJob(params: {
     if (params.input) {
       const validated = workflowInputSchema.safeParse(params.input);
       if (!validated.success) {
-        log.error("Invalid workflow input", {
+        log.error("[jobs] invalid workflow input", {
           error: validated.error.format(),
           input: params.input,
         });
@@ -57,12 +53,12 @@ export async function createJob(params: {
     }
 
     // Check for existing job with same inngestRunId (idempotency)
-    const existing = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.inngestRunId, params.inngestRunId),
+    const existing = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.inngestRunId, params.inngestRunId),
     });
 
     if (existing) {
-      log.info("Job already exists, returning existing ID", {
+      log.info("[jobs] job already exists", {
         jobId: existing.id,
         inngestRunId: params.inngestRunId,
       });
@@ -71,10 +67,9 @@ export async function createJob(params: {
 
     // Create new job record
     const [job] = await db
-      .insert(workspaceWorkflowRuns)
+      .insert(orgWorkflowRuns)
       .values({
         clerkOrgId: params.clerkOrgId,
-        workspaceId: params.workspaceId,
         repositoryId: params.repositoryId ?? null,
         inngestRunId: params.inngestRunId,
         inngestFunctionId: params.inngestFunctionId,
@@ -90,7 +85,7 @@ export async function createJob(params: {
       throw new Error("Failed to create job record");
     }
 
-    log.info("Created job record", {
+    log.info("[jobs] job created", {
       jobId: job.id,
       inngestRunId: params.inngestRunId,
       name: params.name,
@@ -98,7 +93,7 @@ export async function createJob(params: {
 
     return job.id;
   } catch (error) {
-    log.error("Failed to create job record", {
+    log.error("[jobs] failed to create job record", {
       error,
       inngestRunId: params.inngestRunId,
       name: params.name,
@@ -118,7 +113,7 @@ export async function updateJobStatus(
   status: "running" | "queued" | "completed" | "failed" | "cancelled"
 ): Promise<void> {
   try {
-    const updates: Partial<InsertWorkspaceWorkflowRun> = {
+    const updates: Partial<InsertOrgWorkflowRun> = {
       status,
     };
 
@@ -128,13 +123,13 @@ export async function updateJobStatus(
     }
 
     await db
-      .update(workspaceWorkflowRuns)
+      .update(orgWorkflowRuns)
       .set(updates)
-      .where(eq(workspaceWorkflowRuns.id, jobId));
+      .where(eq(orgWorkflowRuns.id, jobId));
 
-    log.info("Updated job status", { jobId, status });
+    log.info("[jobs] job status updated", { jobId, status });
   } catch (error) {
-    log.error("Failed to update job status", { error, jobId, status });
+    log.error("[jobs] failed to update job status", { error, jobId, status });
     throw error;
   }
 }
@@ -167,7 +162,7 @@ export async function completeJob(
     if (params.status === "completed" || params.status === "failed") {
       const validated = workflowOutputSchema.safeParse(params.output);
       if (!validated.success) {
-        log.error("Invalid workflow output", {
+        log.error("[jobs] invalid workflow output", {
           error: validated.error.format(),
           output: params.output,
         });
@@ -176,8 +171,8 @@ export async function completeJob(
     }
 
     // Fetch job to calculate duration
-    const job = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.id, jobIdNum),
+    const job = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.id, jobIdNum),
     });
 
     if (!job) {
@@ -197,7 +192,7 @@ export async function completeJob(
 
     // Update job record
     await db
-      .update(workspaceWorkflowRuns)
+      .update(orgWorkflowRuns)
       .set({
         status: params.status,
         output: params.status === "cancelled" ? null : params.output,
@@ -206,15 +201,15 @@ export async function completeJob(
         completedAt,
         durationMs,
       })
-      .where(eq(workspaceWorkflowRuns.id, jobIdNum));
+      .where(eq(orgWorkflowRuns.id, jobIdNum));
 
-    log.info("Completed job", {
+    log.info("[jobs] job completed", {
       jobId: params.jobId,
       status: params.status,
       durationMs,
     });
   } catch (error) {
-    log.error("Failed to complete job", {
+    log.error("[jobs] failed to complete job", {
       error,
       jobId: params.jobId,
       status: params.status,
@@ -229,24 +224,22 @@ export async function completeJob(
  * @param jobId Job ID (string representation of BIGINT)
  * @returns Job or null if not found
  */
-export async function getJob(
-  jobId: string
-): Promise<WorkspaceWorkflowRun | null> {
+export async function getJob(jobId: string): Promise<OrgWorkflowRun | null> {
   try {
     // Parse jobId to number (BIGINT internal ID)
     const jobIdNum = Number.parseInt(jobId, 10);
     if (Number.isNaN(jobIdNum)) {
-      log.error("Invalid job ID format", { jobId });
+      log.error("[jobs] invalid job ID format", { jobId });
       return null;
     }
 
-    const job = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.id, jobIdNum),
+    const job = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.id, jobIdNum),
     });
 
     return job ?? null;
   } catch (error) {
-    log.error("Failed to get job", { error, jobId });
+    log.error("[jobs] failed to get job", { error, jobId });
     return null;
   }
 }
@@ -259,15 +252,15 @@ export async function getJob(
  */
 export async function getJobByInngestRunId(
   inngestRunId: string
-): Promise<WorkspaceWorkflowRun | null> {
+): Promise<OrgWorkflowRun | null> {
   try {
-    const job = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.inngestRunId, inngestRunId),
+    const job = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.inngestRunId, inngestRunId),
     });
 
     return job ?? null;
   } catch (error) {
-    log.error("Failed to get job by Inngest run ID", {
+    log.error("[jobs] failed to get job by inngest run ID", {
       error,
       inngestRunId,
     });

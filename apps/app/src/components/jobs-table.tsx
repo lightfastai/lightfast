@@ -38,35 +38,24 @@ import type { Job, JobStatus } from "~/types";
 import { useJobFilters } from "./use-job-filters";
 
 interface JobsTableWrapperProps {
-  clerkOrgSlug: string;
   initialSearch?: string;
   initialStatus?: string;
-  workspaceName: string;
 }
 
 interface JobsTableProps {
-  clerkOrgSlug: string;
   initialSearch?: string;
   initialStatus?: string;
-  workspaceName: string;
 }
 
 /**
  * Wrapper component for JobsTable
  */
 export function JobsTableWrapper({
-  clerkOrgSlug,
-  workspaceName,
   initialStatus,
   initialSearch,
 }: JobsTableWrapperProps) {
   return (
-    <JobsTable
-      clerkOrgSlug={clerkOrgSlug}
-      initialSearch={initialSearch}
-      initialStatus={initialStatus}
-      workspaceName={workspaceName}
-    />
+    <JobsTable initialSearch={initialSearch} initialStatus={initialStatus} />
   );
 }
 
@@ -99,12 +88,10 @@ function getEventType(jobName: string): string {
 }
 
 interface JobRowProps {
-  clerkOrgSlug: string;
   job: Job;
-  workspaceName: string;
 }
 
-function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
+function JobRow({ job }: JobRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
@@ -130,11 +117,7 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
         });
         // Invalidate jobs list to show the new job
         void queryClient.invalidateQueries({
-          queryKey: trpc.jobs.list.queryOptions({
-            clerkOrgSlug,
-            workspaceName,
-            limit: 50,
-          }).queryKey,
+          queryKey: trpc.jobs.list.queryOptions({ limit: 50 }).queryKey,
         });
       },
       onError: (error) => {
@@ -147,8 +130,6 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
     e.stopPropagation();
     restartMutation.mutate({
       jobId: String(job.id),
-      clerkOrgSlug,
-      workspaceName,
     });
   };
 
@@ -397,12 +378,7 @@ function EmptyState({ filter }: { filter: string }) {
   );
 }
 
-function JobsTable({
-  clerkOrgSlug,
-  workspaceName,
-  initialStatus,
-  initialSearch,
-}: JobsTableProps) {
+function JobsTable({ initialStatus, initialSearch }: JobsTableProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const {
@@ -415,8 +391,6 @@ function JobsTable({
   // Fetch jobs list
   const { data: jobsData } = useSuspenseQuery({
     ...trpc.jobs.list.queryOptions({
-      clerkOrgSlug,
-      workspaceName,
       status: activeTab === "all" ? undefined : (activeTab as JobStatus),
       limit: 50,
     }),
@@ -438,8 +412,6 @@ function JobsTable({
       // Invalidate and refetch jobs list
       void queryClient.invalidateQueries({
         queryKey: trpc.jobs.list.queryOptions({
-          clerkOrgSlug,
-          workspaceName,
           status: activeTab === "all" ? undefined : (activeTab as JobStatus),
           limit: 50,
         }).queryKey,
@@ -447,7 +419,7 @@ function JobsTable({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [jobs, queryClient, trpc, clerkOrgSlug, workspaceName, activeTab]);
+  }, [jobs, queryClient, trpc, activeTab]);
 
   // Normalize once so the filter loop doesn't lowercase on every item
   const searchQueryLower = useMemo(
@@ -513,12 +485,7 @@ function JobsTable({
       {filteredJobs.length > 0 ? (
         <div className="overflow-hidden rounded-lg border border-border/60">
           {filteredJobs.map((job) => (
-            <JobRow
-              clerkOrgSlug={clerkOrgSlug}
-              job={job}
-              key={job.id}
-              workspaceName={workspaceName}
-            />
+            <JobRow job={job} key={job.id} />
           ))}
         </div>
       ) : (

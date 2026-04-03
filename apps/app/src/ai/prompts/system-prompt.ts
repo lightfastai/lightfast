@@ -35,7 +35,7 @@ export function buildAnswerSystemPrompt(options: AnswerPromptOptions): string {
       currentTimestamp: new Date().toISOString(),
     },
     userContext: {
-      workspace: {
+      org: {
         name: options.workspace.projectName,
         description: options.workspace.projectDescription,
         repos: [],

@@ -6,6 +6,7 @@
  */
 import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
+import { log } from "@vendor/observability/log/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -44,9 +45,11 @@ export const createMemoryTRPCContext = async (opts: { headers: Headers }) => {
 
     try {
       const verified = await verifyServiceJWT(token);
-      console.info(
-        `>>> Memory tRPC Request from ${source} - service JWT (caller: ${verified.caller})`
-      );
+      log.info("[trpc] memory service request", {
+        source,
+        auth: "service",
+        caller: verified.caller,
+      });
       return {
         auth: {
           type: "service" as const,
@@ -55,12 +58,18 @@ export const createMemoryTRPCContext = async (opts: { headers: Headers }) => {
         headers: opts.headers,
       };
     } catch (error) {
-      console.warn("[Memory Auth] JWT verification error:", error);
+      log.warn("[trpc] JWT verification error", {
+        source,
+        error: error instanceof Error ? error.message : String(error),
+      });
     }
   }
 
   // No authentication
-  console.info(`>>> Memory tRPC Request from ${source} - unauthenticated`);
+  log.info("[trpc] memory service request", {
+    source,
+    auth: "unauthenticated",
+  });
   return {
     auth: { type: "unauthenticated" as const },
     headers: opts.headers,
@@ -109,7 +118,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
 
   const result = await next();
   const end = Date.now();
-  console.log(`[TRPC:memory] ${path} took ${end - start}ms to execute`);
+  log.info("[trpc] procedure timing", { path, durationMs: end - start });
 
   return result;
 });

@@ -14,19 +14,15 @@ export const memoryNotificationDispatch = inngest.createFunction(
   },
   { event: "memory/event.stored" },
   async ({ event, step }) => {
-    const {
-      workspaceId,
-      clerkOrgId,
-      eventExternalId,
-      sourceType,
-      significanceScore,
-    } = event.data;
-
-    if (!clerkOrgId) {
-      return { status: "skipped", reason: "no_clerk_org_id" };
-    }
+    const { clerkOrgId, eventExternalId, sourceType, significanceScore } =
+      event.data;
 
     if (significanceScore < NOTIFICATION_SIGNIFICANCE_THRESHOLD) {
+      log.info("[notification-dispatch] below threshold, skipping", {
+        clerkOrgId,
+        eventExternalId,
+        significanceScore,
+      });
       return {
         status: "skipped",
         reason: "below_notification_threshold",
@@ -38,8 +34,8 @@ export const memoryNotificationDispatch = inngest.createFunction(
       const { notifications } = await import("@vendor/knock");
 
       if (!notifications) {
-        log.info("Knock not configured, skipping notification", {
-          workspaceId,
+        log.info("[notification-dispatch] Knock not configured, skipping", {
+          clerkOrgId,
           eventExternalId,
         });
         return;
@@ -52,12 +48,11 @@ export const memoryNotificationDispatch = inngest.createFunction(
           eventExternalId,
           eventType: sourceType,
           significanceScore,
-          workspaceId,
         },
       });
 
-      log.info("Knock notification triggered", {
-        workspaceId,
+      log.info("[notification-dispatch] Knock notification triggered", {
+        clerkOrgId,
         eventExternalId,
         significanceScore,
       });

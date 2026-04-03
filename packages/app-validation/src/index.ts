@@ -13,19 +13,13 @@
  * @example
  * ```typescript
  * // Import primitives
- * import { clerkOrgSlugSchema, workspaceNameSchema } from "@repo/app-validation/primitives";
+ * import { clerkOrgSlugSchema } from "@repo/app-validation/primitives";
  *
  * // Import domain schemas
- * import { workspaceCreateInputSchema } from "@repo/app-validation/schemas";
- *
- * // Import form schemas
- * import { workspaceFormSchema } from "@repo/app-validation/forms";
- *
- * // Import database schemas
- * import { insertWorkspaceSchema } from "@repo/app-validation/database";
+ * import { jobListInputSchema } from "@repo/app-validation/schemas";
  *
  * // Import constants
- * import { WORKSPACE_NAME, NAMING_ERRORS } from "@repo/app-validation/constants";
+ * import { NAMING_ERRORS } from "@repo/app-validation/constants";
  * ```
  */
 
@@ -43,14 +37,10 @@ export {
   STORE_NAME,
   validateOrgSlug,
   validateStoreName,
-  validateWorkspaceName,
-  WORKSPACE_NAME,
 } from "./constants/naming";
 export * from "./forms/auth-form";
 export * from "./forms/early-access-form";
 export * from "./forms/team-form";
-// Forms (direct to leaf modules)
-export * from "./forms/workspace-form";
 // Primitives (direct to leaf modules)
 export * from "./primitives/ids";
 export * from "./primitives/names";
@@ -129,10 +119,3 @@ export * from "./schemas/source-metadata";
 export * from "./schemas/sources";
 export * from "./schemas/store";
 export * from "./schemas/workflow-io";
-// Schemas (direct to leaf modules - these are heavy runtime Zod objects)
-export * from "./schemas/workspace";
-// Workspace settings (JSON column schema — distinct from CRUD workspace schemas above)
-export * from "./schemas/workspace-settings";
-
-// Utils (direct to leaf module)
-export * from "./utils/workspace-names";

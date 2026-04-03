@@ -15,7 +15,7 @@ import { AnswerPromptInput } from "./answer-prompt-input";
 import { AskLightfastSuggestions } from "./ask-lightfast-suggestions";
 
 interface AnswerInterfaceProps {
-  workspaceId: string;
+  clerkOrgId: string;
 }
 
 const emptySubscribeCleanup = () => {
@@ -23,7 +23,7 @@ const emptySubscribeCleanup = () => {
 };
 const emptySubscribe = () => emptySubscribeCleanup;
 
-export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
+export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
   const [sessionId] = useState(() => crypto.randomUUID());
   const isClient = useSyncExternalStore(
     emptySubscribe,
@@ -34,7 +34,7 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
 
   const transport = useAnswerTransport({
     sessionId,
-    workspaceId,
+    clerkOrgId,
   });
 
   const { messages, sendMessage, status } = useChat({
@@ -63,7 +63,7 @@ export function AnswerInterface({ workspaceId }: AnswerInterfaceProps) {
       category: "answer-ui",
       message: "send_message",
       data: {
-        workspaceId,
+        clerkOrgId,
         sessionId,
         length: trimmedText.length,
       },

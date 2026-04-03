@@ -1,3 +1,4 @@
+import { providerEnv } from "@repo/app-providers/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
@@ -6,7 +7,7 @@ import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [vercel(), sentryEnv, betterstackEnv, upstashEnv],
+  extends: [vercel(), sentryEnv, betterstackEnv, upstashEnv, providerEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
@@ -18,12 +19,6 @@ export const env = createEnv({
 
     // Token vault encryption (32 bytes: 64 hex chars or 44 base64 chars)
     ENCRYPTION_KEY: z.string().min(44),
-
-    // Webhook verification secrets (per-provider, ported from relay)
-    GITHUB_WEBHOOK_SECRET: z.string().min(1).optional(),
-    VERCEL_CLIENT_INTEGRATION_SECRET: z.string().min(1).optional(),
-    LINEAR_WEBHOOK_SIGNING_SECRET: z.string().min(1).optional(),
-    SENTRY_CLIENT_SECRET: z.string().min(1).optional(),
 
     // Inngest
     INNGEST_EVENT_KEY: z.string().min(1).optional(),

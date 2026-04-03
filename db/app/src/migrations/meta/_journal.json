@@ -421,6 +421,13 @@
       "when": 1773829908447,
       "tag": "0059_minor_princess_powerful",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1775181947969,
+      "tag": "0060_youthful_spencer_smythe",
+      "breakpoints": true
     }
   ]
 }

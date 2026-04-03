@@ -10,9 +10,9 @@ import type { PostTransformEvent } from "@repo/app-providers/contracts";
 
 export interface TriggerOptions {
   batchSize?: number; // Number of events to send in parallel per batch
+  clerkOrgId: string;
   delayMs?: number; // Delay between batches to avoid overwhelming
   onProgress?: (current: number, total: number) => void;
-  workspaceId: string;
 }
 
 export interface TriggerResult {
@@ -46,7 +46,7 @@ export const triggerEventCapture = async (
   const delayMs = options.delayMs ?? 100;
 
   // Generate unique run ID for this injection batch
-  // This allows re-injecting to same workspace without hitting idempotency
+  // This allows re-injecting to same org without hitting idempotency
   const runId = randomUUID();
 
   const batches = chunk(events, batchSize);
@@ -67,7 +67,7 @@ export const triggerEventCapture = async (
           name: "memory/event.capture",
           id: eventId,
           data: {
-            workspaceId: options.workspaceId,
+            clerkOrgId: options.clerkOrgId,
             sourceEvent: event,
           },
         });

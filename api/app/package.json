@@ -47,7 +47,6 @@
     "@repo/app-providers": "workspace:*",
     "@repo/app-validation": "workspace:^",
     "@repo/app-vercel": "workspace:^",
-    "@repo/app-workspace-cache": "workspace:*",
     "@repo/lib": "workspace:^",
     "@repo/platform-trpc": "workspace:*",
     "@sentry/core": "catalog:",

@@ -2,10 +2,9 @@ import { z } from "zod";
 
 export const consoleEvents = {
   "console/activity.record": z.object({
-    workspaceId: z.string(),
+    clerkOrgId: z.string(),
     category: z.enum([
       "auth",
-      "workspace",
       "integration",
       "store",
       "job",

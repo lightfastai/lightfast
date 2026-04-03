@@ -17,10 +17,10 @@ export type {
 // Export console-specific utilities
 export {
   createEmbeddingProvider,
-  createEmbeddingProviderForWorkspace,
+  createEmbeddingProviderForOrg,
   type EmbeddingDefaults,
   type EmbeddingProviderConfig,
   embedTextsInBatches,
+  type OrgEmbeddingConfig,
   resolveEmbeddingDefaults,
-  type WorkspaceEmbeddingConfig,
 } from "./utils";

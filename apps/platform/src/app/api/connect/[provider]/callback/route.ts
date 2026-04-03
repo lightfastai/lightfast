@@ -12,6 +12,7 @@ import {
   processOAuthCallback,
 } from "@api/platform/lib/oauth/callback";
 import type { SourceType } from "@repo/app-providers";
+import { log } from "@vendor/observability/log/next";
 import { type NextRequest, NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -39,15 +40,25 @@ export async function GET(
 
   switch (result.kind) {
     case "redirect":
+      log.info("[oauth/callback] redirecting", { provider: providerName });
       return NextResponse.redirect(result.url);
 
     case "inline_html":
+      log.info("[oauth/callback] inline html response", {
+        provider: providerName,
+        status: result.status ?? 200,
+      });
       return new Response(result.html, {
         status: result.status ?? 200,
         headers: { "Content-Type": "text/html" },
       });
 
     case "error":
+      log.warn("[oauth/callback] error result", {
+        provider: providerName,
+        error: result.error,
+        status: result.status,
+      });
       return Response.json({ error: result.error }, { status: result.status });
   }
 }

@@ -107,16 +107,16 @@ export interface LightfastConfig {
   baseUrl?: string;
 
   /**
+   * Org ID to scope API requests.
+   * Required for all query operations.
+   */
+  orgId: string;
+
+  /**
    * Request timeout in milliseconds
    * @default 30000
    */
   timeout?: number;
-
-  /**
-   * Workspace ID to scope API requests.
-   * Required for all query operations.
-   */
-  workspaceId: string;
 }
 
 /**

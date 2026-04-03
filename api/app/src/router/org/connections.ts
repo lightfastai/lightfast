@@ -1,15 +1,19 @@
-import { gatewayInstallations, workspaceIntegrations } from "@db/app/schema";
+import { gatewayInstallations, orgIntegrations } from "@db/app/schema";
 import {
+  getDefaultSyncEvents,
   getProvider,
   gwInstallationBackfillConfigSchema,
   type NormalizedInstallation,
+  type ProviderName,
   type ResourcePickerExecuteApiFn,
   sourceTypeSchema,
 } from "@repo/app-providers";
+import type { SourceIdentifier } from "@repo/app-validation";
 import { createMemoryCaller } from "@repo/platform-trpc/caller";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
+import { log } from "@vendor/observability/log/next";
 import yaml from "yaml";
 import { z } from "zod";
 import { orgScopedProcedure } from "../../trpc";
@@ -73,10 +77,10 @@ export const connectionsRouter = {
         lastSyncAt: inst.updatedAt,
       }));
     } catch (error: unknown) {
-      console.error(
-        "[tRPC connections.list] Failed to fetch integrations:",
-        error
-      );
+      log.error("[connections] list failed", {
+        clerkOrgId: ctx.auth.orgId,
+        error: error instanceof Error ? error.message : String(error),
+      });
 
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
@@ -134,13 +138,13 @@ export const connectionsRouter = {
       // The cascade here ensures the gate closes immediately on user-triggered disconnect.
       const now = new Date().toISOString();
       await ctx.db
-        .update(workspaceIntegrations)
+        .update(orgIntegrations)
         .set({
           status: "disconnected",
           statusReason: "installation_revoked",
           updatedAt: now,
         })
-        .where(eq(workspaceIntegrations.installationId, input.integrationId));
+        .where(eq(orgIntegrations.installationId, input.integrationId));
 
       return { success: true };
     }),
@@ -253,10 +257,10 @@ export const connectionsRouter = {
 
         return { added: 0, removed: 0, total: 1 };
       } catch (error: unknown) {
-        console.error(
-          "[tRPC connections.github.validate] GitHub installation validation failed:",
-          error
-        );
+        log.error("[connections/github] validate failed", {
+          clerkOrgId: ctx.auth.orgId,
+          error: error instanceof Error ? error.message : String(error),
+        });
 
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
@@ -422,10 +426,10 @@ export const connectionsRouter = {
 
           return { exists: false };
         } catch (error: unknown) {
-          console.error(
-            "[tRPC connections.github.detectConfig] Failed to detect config:",
-            error
-          );
+          log.error("[connections/github] detectConfig failed", {
+            clerkOrgId: ctx.auth.orgId,
+            error: error instanceof Error ? error.message : String(error),
+          });
 
           throw new TRPCError({
             code: "INTERNAL_SERVER_ERROR",
@@ -478,6 +482,172 @@ export const connectionsRouter = {
   },
 
   // ── Generic Resource Picker Procedures ────────────────────────────────────
+
+  // ── Linked Resources (orgIntegrations) ────────────────────────────────────
+
+  resources: {
+    /**
+     * List linked resources for the current org.
+     *
+     * Joins orgIntegrations with gatewayInstallations to return
+     * per-resource metadata including backfill config.
+     */
+    list: orgScopedProcedure.query(async ({ ctx }) => {
+      const rows = await ctx.db
+        .select({
+          id: orgIntegrations.id,
+          provider: orgIntegrations.provider,
+          providerConfig: orgIntegrations.providerConfig,
+          providerResourceId: orgIntegrations.providerResourceId,
+          installationId: orgIntegrations.installationId,
+          documentCount: orgIntegrations.documentCount,
+          backfillConfig: gatewayInstallations.backfillConfig,
+        })
+        .from(orgIntegrations)
+        .leftJoin(
+          gatewayInstallations,
+          eq(orgIntegrations.installationId, gatewayInstallations.id)
+        )
+        .where(
+          and(
+            eq(orgIntegrations.clerkOrgId, ctx.auth.orgId),
+            eq(orgIntegrations.status, "active")
+          )
+        );
+
+      const list = rows.map((row) => {
+        // ProviderConfig is a discriminated union — access common fields via cast
+        const config = row.providerConfig as {
+          sync?: { events?: string[] };
+          status?: { configStatus?: string };
+        };
+        return {
+          id: row.id,
+          metadata: {
+            provider: row.provider,
+            sync: config.sync
+              ? { events: config.sync.events ?? [] }
+              : undefined,
+            status: config.status
+              ? { configStatus: config.status.configStatus }
+              : undefined,
+          },
+          displayName: row.providerResourceId,
+          installationId: row.installationId,
+          documentCount: row.documentCount,
+          backfillConfig: row.backfillConfig,
+        };
+      });
+
+      return { list };
+    }),
+
+    /**
+     * Bulk-link resources from a gateway installation to this org.
+     *
+     * Creates new orgIntegration rows, or reactivates disconnected ones.
+     * Returns counts of created / reactivated entries.
+     */
+    bulkLink: orgScopedProcedure
+      .input(
+        z.object({
+          provider: sourceTypeSchema,
+          gwInstallationId: z.string().min(1),
+          resources: z
+            .array(
+              z.object({
+                resourceId: z.string(),
+                resourceName: z.string().optional(),
+              })
+            )
+            .min(1),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        // Verify the installation belongs to this org
+        const installation = await ctx.db
+          .select({ id: gatewayInstallations.id })
+          .from(gatewayInstallations)
+          .where(
+            and(
+              eq(gatewayInstallations.id, input.gwInstallationId),
+              eq(gatewayInstallations.orgId, ctx.auth.orgId),
+              eq(gatewayInstallations.status, "active")
+            )
+          )
+          .limit(1)
+          .then((rows) => rows[0]);
+
+        if (!installation) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Installation not found or not owned by this org",
+          });
+        }
+
+        const providerDef = getProvider(input.provider);
+        if (!providerDef) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Unknown provider: ${input.provider}`,
+          });
+        }
+
+        const defaultSyncEvents = getDefaultSyncEvents(
+          input.provider as ProviderName
+        );
+        const providerConfig = providerDef.buildProviderConfig({
+          defaultSyncEvents: [...defaultSyncEvents],
+        });
+
+        let created = 0;
+        let reactivated = 0;
+
+        for (const resource of input.resources) {
+          const existing = await ctx.db
+            .select({ id: orgIntegrations.id, status: orgIntegrations.status })
+            .from(orgIntegrations)
+            .where(
+              and(
+                eq(orgIntegrations.clerkOrgId, ctx.auth.orgId),
+                eq(orgIntegrations.provider, input.provider),
+                eq(
+                  orgIntegrations.providerResourceId,
+                  resource.resourceId as SourceIdentifier
+                ),
+                eq(orgIntegrations.installationId, input.gwInstallationId)
+              )
+            )
+            .limit(1)
+            .then((rows) => rows[0]);
+
+          if (existing) {
+            if (existing.status === "disconnected") {
+              await ctx.db
+                .update(orgIntegrations)
+                .set({
+                  status: "active",
+                  statusReason: null,
+                  updatedAt: new Date().toISOString(),
+                })
+                .where(eq(orgIntegrations.id, existing.id));
+              reactivated++;
+            }
+          } else {
+            await ctx.db.insert(orgIntegrations).values({
+              clerkOrgId: ctx.auth.orgId,
+              installationId: input.gwInstallationId,
+              provider: input.provider,
+              providerConfig,
+              providerResourceId: resource.resourceId as SourceIdentifier,
+            });
+            created++;
+          }
+        }
+
+        return { created, reactivated };
+      }),
+  },
 
   generic: {
     listInstallations: orgScopedProcedure

@@ -60,6 +60,11 @@ catalog:
   zustand: ^5.0.11
 
 catalogs:
+  react19:
+    react: ^19.2.4
+    react-dom: ^19.2.4
+    '@types/react': ^19.2.14
+    '@types/react-dom': ^19.2.3
   next16:
     next: ^16.2.1
   tailwind4:
@@ -76,11 +81,8 @@ ignoredBuiltDependencies:
   - protobufjs
   - sharp
 
-linkWorkspacePackages: true
-
 onlyBuiltDependencies:
   - '@clerk/shared'
-  - '@lightfastai/dual'
   - '@sentry/cli'
   - '@tailwindcss/oxide'
   - '@vercel/speed-insights'

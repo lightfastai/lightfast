@@ -65,8 +65,8 @@ export type ProxyExecuteResponse = z.infer<typeof proxyExecuteResponseSchema>;
 export interface ApiEndpoint {
   /**
    * Optional auth override for this endpoint.
-   * When present, the gateway calls this instead of the default oauth.getActiveToken flow.
-   * Receives the provider config (typed as unknown — gateway erases generics).
+   * When present, the platform calls this instead of the default oauth.getActiveToken flow.
+   * Receives the provider config (typed as unknown — platform erases generics).
    * Use for endpoints that require different credentials than the per-installation token
    * (e.g. GitHub App JWT for app-level endpoints, basic auth, API key, etc.).
    */
@@ -94,6 +94,6 @@ export interface ProviderApi {
   /** Available API endpoints, keyed by a stable identifier */
   readonly endpoints: Record<string, ApiEndpoint>;
   /** Parse rate-limit info from response headers. Return null if not parseable.
-   *  This is an API-level concern — consumed by callers, never by gateway. */
+   *  This is an API-level concern — consumed by callers, never by the platform proxy. */
   readonly parseRateLimit: (headers: Headers) => RateLimit | null;
 }

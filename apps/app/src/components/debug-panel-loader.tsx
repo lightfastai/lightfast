@@ -7,12 +7,6 @@ const DebugPanel = dynamic(
   { ssr: false }
 );
 
-export function DebugPanelLoader({
-  slug,
-  workspaceName,
-}: {
-  slug: string;
-  workspaceName: string;
-}) {
-  return <DebugPanel slug={slug} workspaceName={workspaceName} />;
+export function DebugPanelLoader() {
+  return <DebugPanel />;
 }

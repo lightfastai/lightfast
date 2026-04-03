@@ -51,7 +51,7 @@ interface ApiErrorResponse {
  */
 export class Lightfast {
   private readonly apiKey: string;
-  private readonly workspaceId: string;
+  private readonly orgId: string;
   private readonly baseUrl: string;
   private readonly timeout: number;
 
@@ -64,12 +64,12 @@ export class Lightfast {
         `Invalid API key format. Keys should start with '${LIGHTFAST_API_KEY_PREFIX}'`
       );
     }
-    if (!config.workspaceId) {
-      throw new Error("Workspace ID is required");
+    if (!config.orgId) {
+      throw new Error("Org ID is required");
     }
 
     this.apiKey = config.apiKey;
-    this.workspaceId = config.workspaceId;
+    this.orgId = config.orgId;
     this.baseUrl = config.baseUrl ?? DEFAULT_BASE_URL;
     this.timeout = config.timeout ?? DEFAULT_TIMEOUT;
   }
@@ -236,7 +236,7 @@ export class Lightfast {
           Authorization: `Bearer ${this.apiKey}`,
           "Content-Type": "application/json",
           "User-Agent": `lightfast/${SDK_VERSION}`,
-          "X-Workspace-ID": this.workspaceId,
+          "X-Org-ID": this.orgId,
         },
         body: JSON.stringify(body),
         signal: controller.signal,

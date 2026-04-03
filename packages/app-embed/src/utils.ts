@@ -97,58 +97,58 @@ export function createEmbeddingProvider(
 }
 
 /**
- * Workspace configuration required for embedding provider selection
+ * Org configuration required for embedding provider selection
  */
-export interface WorkspaceEmbeddingConfig {
+export interface OrgEmbeddingConfig {
   /**
    * Embedding dimension
    */
   embeddingDim: number | null;
 
   /**
-   * Embedding model used by this workspace
+   * Embedding model used by this org
    */
   embeddingModel: string | null;
   /**
-   * Workspace ID for error messages
+   * Org ID for error messages
    */
   id: string;
 }
 
 /**
- * Create an embedding provider bound to a specific workspace's configuration
+ * Create an embedding provider bound to a specific org's configuration
  *
  * CRITICAL: This ensures the same embedding model is used for both indexing
  * and retrieval. Vector stores require consistent embedding models - you
  * cannot mix different models in the same semantic space.
  *
- * This function enforces workspace-level embedding model locking:
- * - Uses the workspace's configured Cohere embedding model
- * - All workspaces must use Cohere (COHERE_API_KEY required)
+ * This function enforces org-level embedding model locking:
+ * - Uses the org's configured Cohere embedding model
+ * - All orgs must use Cohere (COHERE_API_KEY required)
  * - Prevents accidental model switching that would corrupt search results
  *
- * @param workspace - Workspace configuration with embedding model settings
+ * @param org - Org configuration with embedding model settings
  * @param config - Provider configuration (input type)
- * @returns Cohere embedding provider instance matching workspace's configuration
+ * @returns Cohere embedding provider instance matching org's configuration
  *
  * @example
  * ```typescript
- * // Create provider for a workspace
- * const provider = createEmbeddingProviderForWorkspace(
- *   { id: "workspace_123", embeddingModel: "embed-english-v3.0", embeddingDim: 1024 },
+ * // Create provider for an org
+ * const provider = createEmbeddingProviderForOrg(
+ *   { id: "org_123", embeddingModel: "embed-english-v3.0", embeddingDim: 1024 },
  *   { inputType: "search_query" }
  * );
  * ```
  */
-export function createEmbeddingProviderForWorkspace(
-  workspace: WorkspaceEmbeddingConfig,
+export function createEmbeddingProviderForOrg(
+  org: OrgEmbeddingConfig,
   config: EmbeddingProviderConfig
 ): EmbeddingProvider {
   return createCohereEmbedding({
     apiKey: embedEnv.COHERE_API_KEY,
     model: EMBEDDING_CONFIG.cohere.model,
     inputType: config.inputType as CohereInputType,
-    dimension: workspace.embeddingDim ?? EMBEDDING_CONFIG.cohere.dimension,
+    dimension: org.embeddingDim ?? EMBEDDING_CONFIG.cohere.dimension,
   });
 }
 

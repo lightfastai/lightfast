@@ -17,6 +17,10 @@
     "./contracts": {
       "types": "./src/contracts.ts",
       "default": "./src/contracts.ts"
+    },
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
     }
   },
   "scripts": {

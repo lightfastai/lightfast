@@ -56,9 +56,9 @@ export interface TemporalContext {
   currentTimestamp: string;
 }
 
-/** User context — workspace info (future: preferences, activity) */
+/** User context — org info (future: preferences, activity) */
 export interface UserContext {
-  workspace?: {
+  org?: {
     name: string;
     description?: string;
     repos: string[];

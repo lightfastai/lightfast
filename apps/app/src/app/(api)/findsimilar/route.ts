@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     const result = await findSimilarLogic(
       {
-        workspaceId: authResult.auth.workspaceId,
+        clerkOrgId: authResult.auth.clerkOrgId,
         userId: authResult.auth.userId,
         authType: authResult.auth.authType,
         apiKeyId: authResult.auth.apiKeyId,

@@ -1,8 +1,8 @@
 /**
  * Redis key convention functions for the Memory service.
  *
- * All keys are namespaced under `gw:` to share the same namespace as the
- * gateway and relay services (preserves key compatibility during migration).
+ * All keys are namespaced under `gw:` (legacy namespace from the former
+ * gateway and relay services — preserved for Redis key compatibility).
  */
 import type { SourceType } from "@repo/app-providers";
 

@@ -1,5 +1,5 @@
 import { withRelatedProject } from "@vercel/related-projects";
-import { env } from "~/env";
+import { env } from "../env";
 
 const isDevelopment =
   env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
@@ -11,3 +11,10 @@ export const wwwUrl = withRelatedProject({
   defaultHost: isDevelopment ? "http://localhost:4101" : "https://lightfast.ai",
 });
 
+// Get the platform URL dynamically based on environment
+export const platformUrl = withRelatedProject({
+  projectName: "lightfast-platform",
+  defaultHost: isDevelopment
+    ? "http://localhost:4112"
+    : "https://lightfast-platform.vercel.app",
+});

@@ -22,6 +22,7 @@ import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { and, eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/next";
 import { getEncryptionKey } from "../../lib/encryption";
 import { providerConfigs } from "../../lib/provider-configs";
 import { inngest } from "../client";
@@ -40,6 +41,11 @@ export const connectionLifecycle = inngest.createFunction(
   { event: "memory/connection.lifecycle" },
   async ({ event, step }) => {
     const { installationId, provider: providerName } = event.data;
+
+    log.info("[connection-lifecycle] starting", {
+      installationId,
+      provider: providerName,
+    });
 
     // Step 1: Close the ingress gate — all guards check status === 'active',
     // so setting 'revoked' immediately blocks new requests.
@@ -61,6 +67,8 @@ export const connectionLifecycle = inngest.createFunction(
           triggeredBy: "system",
         },
       });
+
+      log.info("[connection-lifecycle] gate closed", { installationId });
     });
 
     // Step 2: Cancel any running backfill (best-effort, via Inngest event)
@@ -72,22 +80,44 @@ export const connectionLifecycle = inngest.createFunction(
             installationId,
           },
         });
-      } catch {
-        // Best-effort — swallow errors so teardown proceeds
+        log.info("[connection-lifecycle] backfill cancellation sent", {
+          installationId,
+        });
+      } catch (err) {
+        log.warn(
+          "[connection-lifecycle] backfill cancellation failed (best-effort)",
+          {
+            installationId,
+            error: err instanceof Error ? err.message : String(err),
+          }
+        );
       }
     });
 
     // Step 3: Revoke token at provider (best-effort)
     await step.run("revoke-token", async () => {
       if (providerName === "github") {
+        log.info(
+          "[connection-lifecycle] skipping token revocation (github uses on-demand JWTs)",
+          {
+            installationId,
+          }
+        );
         return;
-      } // GitHub uses on-demand JWTs, no stored token
+      }
 
       const providerDef = getProvider(providerName as SourceType);
       const config = providerConfigs[providerName];
 
       if (!config) {
-        return; // optional provider not configured — no token to revoke
+        log.warn(
+          "[connection-lifecycle] provider not configured, skipping token revocation",
+          {
+            installationId,
+            provider: providerName,
+          }
+        );
+        return;
       }
 
       const tokenRows = await db
@@ -98,6 +128,12 @@ export const connectionLifecycle = inngest.createFunction(
 
       const tokenRow = tokenRows[0];
       if (!tokenRow) {
+        log.info(
+          "[connection-lifecycle] no token row found, skipping revocation",
+          {
+            installationId,
+          }
+        );
         return;
       }
 
@@ -110,8 +146,19 @@ export const connectionLifecycle = inngest.createFunction(
           );
           await auth.revokeToken(config as never, decryptedToken);
         }
-      } catch {
-        // Best-effort — swallow errors
+        log.info("[connection-lifecycle] token revoked", {
+          installationId,
+          provider: providerName,
+        });
+      } catch (err) {
+        log.warn(
+          "[connection-lifecycle] token revocation failed (best-effort)",
+          {
+            installationId,
+            provider: providerName,
+            error: err instanceof Error ? err.message : String(err),
+          }
+        );
       }
     });
 
@@ -149,6 +196,16 @@ export const connectionLifecycle = inngest.createFunction(
           triggeredBy: "system",
         },
       });
+
+      log.info("[connection-lifecycle] resources removed", {
+        installationId,
+        count: resources.length,
+      });
+    });
+
+    log.info("[connection-lifecycle] teardown complete", {
+      installationId,
+      provider: providerName,
     });
 
     return { success: true, installationId };

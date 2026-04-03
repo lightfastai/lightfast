@@ -1,7 +1,7 @@
 /**
  * Activity Recording Helper Functions
  *
- * Three-tier recording strategy for workspace user activities:
+ * Three-tier recording strategy for org user activities:
  *
  * Tier 1 (Synchronous) - recordCriticalActivity()
  *   - For critical operations requiring immediate persistence
@@ -23,8 +23,8 @@
  */
 
 import { db } from "@db/app/client";
-import type { InsertWorkspaceUserActivity } from "@db/app/schema";
-import { workspaceUserActivities } from "@db/app/schema";
+import type { InsertOrgUserActivity } from "@db/app/schema";
+import { orgUserActivities } from "@db/app/schema";
 import type {
   ActivityCategory,
   ActivityMetadata,
@@ -43,16 +43,15 @@ import { inngest } from "../inngest/client/client";
  * @example
  * ```typescript
  * const data: ActivityData = {
- *   workspaceId: "ws_123",
+ *   clerkOrgId: "org_abc123",
  *   actorType: "user",
  *   actorUserId: ctx.session.userId,
- *   category: "workspace",
- *   action: "workspace.created",
- *   entityType: "workspace",
- *   entityId: "ws_123",
+ *   category: "org",
+ *   action: "integration.connected",
+ *   entityType: "org",
+ *   entityId: "org_xxx",
  *   metadata: {
- *     workspaceName: "My Workspace",
- *     workspaceSlug: "my-workspace",
+ *     orgName: "My Org",
  *     clerkOrgId: "org_123",
  *   },
  * };
@@ -63,6 +62,8 @@ export interface ActivityData {
   action: ActivityType["action"];
   /** Activity category */
   category: ActivityCategory;
+  /** Org ID */
+  clerkOrgId: string;
   /** Entity ID */
   entityId: string;
   /** Entity type */
@@ -71,8 +72,6 @@ export interface ActivityData {
   metadata: ActivityMetadata;
   /** Related activity ID (for grouping) */
   relatedActivityId?: string;
-  /** Workspace ID */
-  workspaceId: string;
 }
 
 /**
@@ -95,16 +94,15 @@ export interface ActivityData {
  * @example
  * ```typescript
  * await recordCriticalActivity({
- *   workspaceId: ctx.session.workspaceId,
+ *   clerkOrgId: ctx.auth.orgId,
  *   actorType: "user",
  *   actorUserId: ctx.session.userId,
  *   category: "workspace",
- *   action: "workspace.created",
+ *   action: "integration.connected",
  *   entityType: "workspace",
  *   entityId: workspace.id,
  *   metadata: {
- *     workspaceName: workspace.name,
- *     workspaceSlug: workspace.slug,
+ *     orgSlug: ctx.auth.orgSlug,
  *     clerkOrgId: workspace.clerkOrgId,
  *   },
  * });
@@ -125,7 +123,7 @@ export async function recordCriticalActivity(
 
     if (!validation.success) {
       log.error("Invalid activity data", {
-        workspaceId: data.workspaceId,
+        clerkOrgId: data.clerkOrgId,
         action: data.action,
         errors: validation.error.flatten(),
       });
@@ -136,9 +134,9 @@ export async function recordCriticalActivity(
     }
 
     const [result] = await db
-      .insert(workspaceUserActivities)
+      .insert(orgUserActivities)
       .values({
-        workspaceId: data.workspaceId,
+        clerkOrgId: data.clerkOrgId,
         category: data.category,
         action: data.action,
         entityType: data.entityType,
@@ -146,11 +144,11 @@ export async function recordCriticalActivity(
         metadata: data.metadata,
         relatedActivityId: data.relatedActivityId ?? null,
       })
-      .returning({ id: workspaceUserActivities.id });
+      .returning({ id: orgUserActivities.id });
 
     log.info("Critical activity recorded", {
       activityId: result?.id,
-      workspaceId: data.workspaceId,
+      clerkOrgId: data.clerkOrgId,
       category: data.category,
       action: data.action,
     });
@@ -158,7 +156,7 @@ export async function recordCriticalActivity(
     return { success: true, activityId: result?.id ?? 0 };
   } catch (error) {
     log.error("Failed to record critical activity", {
-      workspaceId: data.workspaceId,
+      clerkOrgId: data.clerkOrgId,
       category: data.category,
       action: data.action,
       error: error instanceof Error ? error.message : String(error),
@@ -193,13 +191,13 @@ export async function recordCriticalActivity(
  * @example
  * ```typescript
  * await recordActivity({
- *   workspaceId: ctx.session.workspaceId,
+ *   clerkOrgId: ctx.auth.orgId,
  *   actorType: "user",
  *   actorUserId: ctx.session.userId,
- *   category: "workspace",
- *   action: "workspace.updated",
- *   entityType: "workspace",
- *   entityId: workspaceId,
+ *   category: "org",
+ *   action: "org.updated",
+ *   entityType: "org",
+ *   entityId: clerkOrgId,
  *   metadata: {
  *     changes: {
  *       name: { from: "Old Name", to: "New Name" },
@@ -221,7 +219,7 @@ export async function recordActivity(
 
     if (!validation.success) {
       log.error("Invalid activity data", {
-        workspaceId: data.workspaceId,
+        clerkOrgId: data.clerkOrgId,
         action: data.action,
         errors: validation.error.flatten(),
       });
@@ -234,7 +232,7 @@ export async function recordActivity(
     await inngest.send({
       name: "console/activity.record",
       data: {
-        workspaceId: data.workspaceId,
+        clerkOrgId: data.clerkOrgId,
         category: data.category,
         action: data.action,
         entityType: data.entityType,
@@ -246,7 +244,7 @@ export async function recordActivity(
     });
 
     log.debug("Activity event sent", {
-      workspaceId: data.workspaceId,
+      clerkOrgId: data.clerkOrgId,
       category: data.category,
       action: data.action,
     });
@@ -254,7 +252,7 @@ export async function recordActivity(
     return { success: true };
   } catch (error) {
     log.error("Failed to send activity event", {
-      workspaceId: data.workspaceId,
+      clerkOrgId: data.clerkOrgId,
       category: data.category,
       action: data.action,
       error: error instanceof Error ? error.message : String(error),
@@ -288,7 +286,7 @@ export async function recordActivity(
  * @example
  * ```typescript
  * recordSystemActivity({
- *   workspaceId: workspaceId,
+ *   clerkOrgId: clerkOrgId,
  *   actorType: "system",
  *   category: "job",
  *   action: "job.cancelled",
@@ -312,7 +310,7 @@ export function recordSystemActivity(data: ActivityData): void {
 
   if (!validation.success) {
     log.error("Invalid system activity data", {
-      workspaceId: data.workspaceId,
+      clerkOrgId: data.clerkOrgId,
       action: data.action,
       errors: validation.error.flatten(),
     });
@@ -324,7 +322,7 @@ export function recordSystemActivity(data: ActivityData): void {
     .send({
       name: "console/activity.record",
       data: {
-        workspaceId: data.workspaceId,
+        clerkOrgId: data.clerkOrgId,
         category: data.category,
         action: data.action,
         entityType: data.entityType,
@@ -337,7 +335,7 @@ export function recordSystemActivity(data: ActivityData): void {
     .catch((error) => {
       // Log error but don't throw (fire-and-forget)
       log.warn("System activity event failed (fire-and-forget)", {
-        workspaceId: data.workspaceId,
+        clerkOrgId: data.clerkOrgId,
         category: data.category,
         action: data.action,
         error: error instanceof Error ? error.message : String(error),
@@ -359,13 +357,13 @@ export function recordSystemActivity(data: ActivityData): void {
  * @internal
  */
 export async function batchRecordActivities(
-  activities: InsertWorkspaceUserActivity[]
+  activities: InsertOrgUserActivity[]
 ): Promise<{ success: boolean; insertedCount: number; error?: string }> {
   try {
     const result = await db
-      .insert(workspaceUserActivities)
+      .insert(orgUserActivities)
       .values(activities)
-      .returning({ id: workspaceUserActivities.id });
+      .returning({ id: orgUserActivities.id });
 
     log.info("Batch activities recorded", {
       insertedCount: result.length,

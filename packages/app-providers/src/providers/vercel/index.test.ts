@@ -94,7 +94,7 @@ describe("oauth.exchangeCode", () => {
     const tokens = await vercel.auth.exchangeCode(
       testConfig,
       "vercel-code-123",
-      "https://app.lightfast.ai/gateway/vercel/callback"
+      "https://app.lightfast.ai/api/connect/vercel/callback"
     );
 
     expect(tokens.accessToken).toBe("vercel-access-token-abc");

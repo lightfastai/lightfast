@@ -8,7 +8,7 @@
 import {
   gatewayInstallations,
   orgApiKeys,
-  workspaceIntegrations,
+  orgIntegrations,
 } from "@db/app/schema";
 import { eq } from "drizzle-orm";
 import type {
@@ -107,7 +107,7 @@ async function verifyApiKeyOwnership(
 /**
  * Verify user has access to a repository (via installation)
  *
- * Ownership is verified by: workspaceIntegrations → gatewayInstallations.connectedBy
+ * Ownership is verified by: orgIntegrations → gatewayInstallations.connectedBy
  */
 async function verifyRepositoryOwnership(
   userId: string,
@@ -115,8 +115,8 @@ async function verifyRepositoryOwnership(
   db: ResourceOwnershipContext["db"]
 ): Promise<ResourceOwnershipResult> {
   try {
-    const source = await db.query.workspaceIntegrations.findFirst({
-      where: eq(workspaceIntegrations.id, resourceId),
+    const source = await db.query.orgIntegrations.findFirst({
+      where: eq(orgIntegrations.id, resourceId),
     });
 
     if (!source) {

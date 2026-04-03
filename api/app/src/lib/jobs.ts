@@ -6,11 +6,8 @@
  */
 
 import { db } from "@db/app/client";
-import type {
-  InsertWorkspaceWorkflowRun,
-  WorkspaceWorkflowRun,
-} from "@db/app/schema";
-import { workspaceWorkflowRuns } from "@db/app/schema";
+import type { InsertOrgWorkflowRun, OrgWorkflowRun } from "@db/app/schema";
+import { orgWorkflowRuns } from "@db/app/schema";
 import type {
   JobTrigger,
   WorkflowInput,
@@ -34,7 +31,6 @@ import { eq } from "drizzle-orm";
  */
 export async function createJob(params: {
   clerkOrgId: string;
-  workspaceId: string;
   repositoryId?: string | null;
   inngestRunId: string;
   inngestFunctionId: string;
@@ -57,8 +53,8 @@ export async function createJob(params: {
     }
 
     // Check for existing job with same inngestRunId (idempotency)
-    const existing = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.inngestRunId, params.inngestRunId),
+    const existing = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.inngestRunId, params.inngestRunId),
     });
 
     if (existing) {
@@ -71,10 +67,9 @@ export async function createJob(params: {
 
     // Create new job record
     const [job] = await db
-      .insert(workspaceWorkflowRuns)
+      .insert(orgWorkflowRuns)
       .values({
         clerkOrgId: params.clerkOrgId,
-        workspaceId: params.workspaceId,
         repositoryId: params.repositoryId ?? null,
         inngestRunId: params.inngestRunId,
         inngestFunctionId: params.inngestFunctionId,
@@ -118,7 +113,7 @@ export async function updateJobStatus(
   status: "running" | "queued" | "completed" | "failed" | "cancelled"
 ): Promise<void> {
   try {
-    const updates: Partial<InsertWorkspaceWorkflowRun> = {
+    const updates: Partial<InsertOrgWorkflowRun> = {
       status,
     };
 
@@ -128,9 +123,9 @@ export async function updateJobStatus(
     }
 
     await db
-      .update(workspaceWorkflowRuns)
+      .update(orgWorkflowRuns)
       .set(updates)
-      .where(eq(workspaceWorkflowRuns.id, jobId));
+      .where(eq(orgWorkflowRuns.id, jobId));
 
     log.info("Updated job status", { jobId, status });
   } catch (error) {
@@ -176,8 +171,8 @@ export async function completeJob(
     }
 
     // Fetch job to calculate duration
-    const job = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.id, jobIdNum),
+    const job = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.id, jobIdNum),
     });
 
     if (!job) {
@@ -197,7 +192,7 @@ export async function completeJob(
 
     // Update job record
     await db
-      .update(workspaceWorkflowRuns)
+      .update(orgWorkflowRuns)
       .set({
         status: params.status,
         output: params.status === "cancelled" ? null : params.output,
@@ -206,7 +201,7 @@ export async function completeJob(
         completedAt,
         durationMs,
       })
-      .where(eq(workspaceWorkflowRuns.id, jobIdNum));
+      .where(eq(orgWorkflowRuns.id, jobIdNum));
 
     log.info("Completed job", {
       jobId: params.jobId,
@@ -229,9 +224,7 @@ export async function completeJob(
  * @param jobId Job ID (string representation of BIGINT)
  * @returns Job or null if not found
  */
-export async function getJob(
-  jobId: string
-): Promise<WorkspaceWorkflowRun | null> {
+export async function getJob(jobId: string): Promise<OrgWorkflowRun | null> {
   try {
     // Parse jobId to number (BIGINT internal ID)
     const jobIdNum = Number.parseInt(jobId, 10);
@@ -240,8 +233,8 @@ export async function getJob(
       return null;
     }
 
-    const job = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.id, jobIdNum),
+    const job = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.id, jobIdNum),
     });
 
     return job ?? null;
@@ -259,10 +252,10 @@ export async function getJob(
  */
 export async function getJobByInngestRunId(
   inngestRunId: string
-): Promise<WorkspaceWorkflowRun | null> {
+): Promise<OrgWorkflowRun | null> {
   try {
-    const job = await db.query.workspaceWorkflowRuns.findFirst({
-      where: eq(workspaceWorkflowRuns.inngestRunId, inngestRunId),
+    const job = await db.query.orgWorkflowRuns.findFirst({
+      where: eq(orgWorkflowRuns.inngestRunId, inngestRunId),
     });
 
     return job ?? null;

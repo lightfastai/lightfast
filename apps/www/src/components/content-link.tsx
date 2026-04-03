@@ -13,10 +13,7 @@ import type { ComponentPropsWithoutRef } from "react";
  * Use next/link directly for routes you control; use ContentLink only for URLs
  * that originate from fumadocs at runtime.
  */
-type ContentLinkProps = Omit<
-  ComponentPropsWithoutRef<typeof Link>,
-  "href"
-> & {
+type ContentLinkProps = Omit<ComponentPropsWithoutRef<typeof Link>, "href"> & {
   href: string;
 };
 

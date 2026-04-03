@@ -20,8 +20,8 @@
  *
  * const allWorkspaces = await db
  *   .select()
- *   .from(workspaces)
- *   .where(eq(workspaces.clerkOrgId, filter.clerkOrgId));
+ *   .from(orgIntegrations)
+ *   .where(eq(orgIntegrations.clerkOrgId, filter.clerkOrgId));
  * ```
  */
 
@@ -47,23 +47,23 @@ import type { TenantFilter } from "./types";
  * import { workspaces } from "@db/app/schema";
  * import { eq, and } from "drizzle-orm";
  *
- * // In a tRPC procedure after verifying workspace access
+ * // In a tRPC procedure after verifying org access
  * const { clerkOrgId } = result.data;
  * const filter = createTenantFilter(clerkOrgId);
  *
- * // Query all workspaces in this org
- * const orgWorkspaces = await ctx.db
+ * // Query all integrations in this org
+ * const integrations = await ctx.db
  *   .select()
- *   .from(workspaces)
- *   .where(eq(workspaces.clerkOrgId, filter.clerkOrgId));
+ *   .from(orgIntegrations)
+ *   .where(eq(orgIntegrations.clerkOrgId, filter.clerkOrgId));
  *
  * // Combine with other conditions
  * const activeWorkspaces = await ctx.db
  *   .select()
- *   .from(workspaces)
+ *   .from(orgIntegrations)
  *   .where(and(
- *     eq(workspaces.clerkOrgId, filter.clerkOrgId),
- *     eq(workspaces.isActive, true)
+ *     eq(orgIntegrations.clerkOrgId, filter.clerkOrgId),
+ *     eq(orgIntegrations.clerkOrgId, true)
  *   ));
  * ```
  */
@@ -112,7 +112,7 @@ export function isValidTenantId(clerkOrgId: string): boolean {
  * ```typescript
  * import { extractTenantId } from "@repo/app-auth-middleware/tenant";
  *
- * const workspace = await db.query.workspaces.findFirst({ ... });
+ * const workspace = await db.query.orgIntegrations.findFirst({ ... });
  * const clerkOrgId = extractTenantId(workspace);
  *
  * // Now use for tenant isolation
@@ -135,7 +135,7 @@ export function extractTenantId(workspace: { clerkOrgId: string }): string {
  * ```typescript
  * import { createTenantFilterFromWorkspace } from "@repo/app-auth-middleware/tenant";
  *
- * const workspace = await db.query.workspaces.findFirst({ ... });
+ * const workspace = await db.query.orgIntegrations.findFirst({ ... });
  * const filter = createTenantFilterFromWorkspace(workspace);
  *
  * // Use in queries
@@ -199,7 +199,7 @@ export function assertTenantIdsMatch(
  * ```typescript
  * import { belongsToTenant } from "@repo/app-auth-middleware/tenant";
  *
- * const workspace = await db.query.workspaces.findFirst({ ... });
+ * const workspace = await db.query.orgIntegrations.findFirst({ ... });
  *
  * if (!belongsToTenant(workspace, clerkOrgId)) {
  *   throw new TRPCError({
@@ -268,8 +268,8 @@ export function filterResourcesByTenant<T extends { clerkOrgId: string }>(
  *
  * const multiOrgWorkspaces = await ctx.db
  *   .select()
- *   .from(workspaces)
- *   .where(inArray(workspaces.clerkOrgId, orgIds));
+ *   .from(orgIntegrations)
+ *   .where(inArray(orgIntegrations.clerkOrgId, orgIds));
  * ```
  */
 export function createMultiTenantFilter(clerkOrgIds: string[]): TenantFilter[] {

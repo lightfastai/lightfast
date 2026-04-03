@@ -18,8 +18,8 @@ const securityHeaders = securityMiddleware(
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
     createKnockCspDirectives(),
-    createSentryCspDirectives()
-  )
+    createSentryCspDirectives(),
+  ),
 );
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
@@ -29,7 +29,6 @@ const isPublicRoute = createRouteMatcher([
   "/sign-up(.*)",
   "/early-access(.*)",
   "/api/health(.*)",
-  "/api/inngest(.*)",
   "/docs(.*)",
   "/monitoring",
   "/ingest(.*)",
@@ -47,6 +46,17 @@ const isApiRoute = createRouteMatcher([
   "/api/events/(.*)",
 ]);
 
+// Routes accessible during a pending session (user signed in but has outstanding tasks
+// like choosing an org). auth.protect() always redirects pending sessions to /sign-in/tasks,
+// so these routes skip protect() and do a manual userId check instead.
+const isPendingAllowedRoute = createRouteMatcher([
+  "/account/(.*)",
+  // tRPC mutations that must be callable before an org exists (e.g. creating the first org).
+  // The tRPC handler's userScopedProcedure enforces its own auth; the middleware must not
+  // intercept these with auth.protect() before they reach the handler.
+  "/api/trpc/organization.create(.*)",
+]);
+
 export default clerkMiddleware(
   async (auth, req: NextRequest) => {
     const mfeResponse = await runMicrofrontendsMiddleware({
@@ -57,7 +67,16 @@ export default clerkMiddleware(
       return mfeResponse;
     }
 
-    if (!(isPublicRoute(req) || isApiRoute(req))) {
+    if (isPendingAllowedRoute(req)) {
+      // Allow pending sessions through without redirecting to /sign-in/tasks.
+      // Redirect only truly unauthenticated users (userId is null even with treatPendingAsSignedOut: false).
+      const { userId } = await auth({ treatPendingAsSignedOut: false });
+      if (!userId) {
+        const url = new URL("/sign-in", req.url);
+        url.searchParams.set("redirect_url", req.nextUrl.href);
+        return NextResponse.redirect(url);
+      }
+    } else if (!(isPublicRoute(req) || isApiRoute(req))) {
       await auth.protect();
     }
 
@@ -76,7 +95,7 @@ export default clerkMiddleware(
     organizationSyncOptions: {
       organizationPatterns: ["/:slug", "/:slug/(.*)"],
     },
-  }
+  },
 );
 
 export const config = {

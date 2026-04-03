@@ -20,13 +20,7 @@ function viewportHeight() {
   return document.documentElement.clientHeight;
 }
 
-export function DebugPanel({
-  slug,
-  workspaceName,
-}: {
-  slug: string;
-  workspaceName: string;
-}) {
+export function DebugPanel() {
   const [open, setOpen] = useState(false);
   const [pos, _setPos] = useState(() => {
     if (typeof window === "undefined") {
@@ -177,7 +171,7 @@ export function DebugPanel({
               <X className="size-3" />
             </Button>
           </div>
-          <DebugPanelContent slug={slug} workspaceName={workspaceName} />
+          <DebugPanelContent />
         </PopoverPrimitive.Content>
       </PopoverPrimitive.Root>
     </div>

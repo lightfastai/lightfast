@@ -1,6 +1,6 @@
 import type { ProxyExecuteResponse } from "./api";
 
-/** Callback signature for gateway proxy calls inside resourcePicker functions.
+/** Callback signature for platform proxy calls inside resourcePicker functions.
  *  The generic tRPC procedure binds the installationId and passes this to the provider. */
 export type ResourcePickerExecuteApiFn = (request: {
   endpointId: string;

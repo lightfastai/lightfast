@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
+import { HydrateClient } from "@repo/app-trpc/server";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
@@ -18,7 +18,7 @@ interface OrgLayoutProps {
  *
  * Flow:
  * 1. Layout verifies org access via requireOrgAccess (fetches org directly from Clerk by slug)
- * 2. Prefetches workspace list via user-scoped endpoint (allows pending users)
+ * 2. Validates org access and sets up org context
  * 3. Procedure manually verifies user has access to the org
  * 4. Middleware's organizationSyncOptions syncs org from URL (happens in parallel)
  * 5. Data is hydrated to client → fast render
@@ -62,14 +62,6 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   if (!hasAccess) {
     notFound();
   }
-
-  // Prefetch workspace list - uses user-scoped endpoint that allows pending users
-  // The procedure manually verifies the user has access to this org
-  prefetch(
-    trpc.workspaceAccess.listByClerkOrgSlug.queryOptions({
-      clerkOrgSlug: slug,
-    })
-  );
 
   return (
     <HydrateClient>

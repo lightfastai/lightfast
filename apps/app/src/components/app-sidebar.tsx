@@ -34,59 +34,37 @@ interface NavItem {
 }
 
 /**
- * Build primary navigation items for workspace-level pages
+ * Build primary navigation items for org-level pages
  */
-function getWorkspacePrimaryItems(
-  orgSlug: string,
-  workspaceName: string
-): NavItem[] {
+function getOrgPrimaryItems(orgSlug: string): NavItem[] {
   return [
     {
       title: "Ask",
-      href: `/${orgSlug}/${workspaceName}`,
+      href: `/${orgSlug}`,
     },
     {
       title: "Search",
-      href: `/${orgSlug}/${workspaceName}/search`,
+      href: `/${orgSlug}/search`,
     },
   ];
 }
 
 /**
- * Build management navigation items for workspace-level pages
+ * Build management navigation items for org-level pages
  */
-function getWorkspaceManageItems(
-  orgSlug: string,
-  workspaceName: string
-): NavItem[] {
+function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
     {
       title: "Events",
-      href: `/${orgSlug}/${workspaceName}/events`,
+      href: `/${orgSlug}/events`,
     },
     {
       title: "Sources",
-      href: `/${orgSlug}/${workspaceName}/sources`,
+      href: `/${orgSlug}/sources`,
     },
     {
       title: "Jobs",
-      href: `/${orgSlug}/${workspaceName}/jobs`,
-    },
-    {
-      title: "Settings",
-      href: `/${orgSlug}/${workspaceName}/settings`,
-    },
-  ];
-}
-
-/**
- * Build org-level navigation items
- */
-function getOrgNavItems(orgSlug: string): NavItem[] {
-  return [
-    {
-      title: "Workspaces",
-      href: `/${orgSlug}`,
+      href: `/${orgSlug}/jobs`,
     },
     {
       title: "Settings",
@@ -139,19 +117,10 @@ export function AppSidebar() {
     }
   };
 
-  // Extract orgSlug and workspaceName from pathname
-  // Pathname format: /[slug]/[workspaceName]/...
+  // Extract orgSlug from pathname
+  // Pathname format: /[slug]/...
   const pathParts = pathname.split("/").filter(Boolean);
   const orgSlug = pathParts[0] ?? ""; // [slug]
-  const workspaceName = pathParts[1] ?? ""; // [workspaceName]
-
-  // Determine the current context
-  const isInOrgSettings = pathname.startsWith(`/${orgSlug}/settings`);
-  const _isInWorkspaceSettings = pathname.startsWith(
-    `/${orgSlug}/${workspaceName}/settings`
-  );
-  const isInWorkspace =
-    workspaceName && workspaceName !== "settings" && !isInOrgSettings;
 
   // Determine mode based on pathname
   const mode =
@@ -177,14 +146,14 @@ export function AppSidebar() {
         </div>
       )}
       <SidebarContent>
-        {isInWorkspace ? (
+        {orgSlug && (
           <>
             {/* Primary Navigation - no label */}
             <SidebarGroup>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems
-                    items={getWorkspacePrimaryItems(orgSlug, workspaceName)}
+                    items={getOrgPrimaryItems(orgSlug)}
                     pathname={pathname}
                   />
                 </SidebarMenu>
@@ -197,22 +166,13 @@ export function AppSidebar() {
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems
-                    items={getWorkspaceManageItems(orgSlug, workspaceName)}
+                    items={getOrgManageItems(orgSlug)}
                     pathname={pathname}
                   />
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
           </>
-        ) : (
-          /* Org Navigation - single group, no label */
-          <SidebarGroup>
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavItems items={getOrgNavItems(orgSlug)} pathname={pathname} />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
         )}
       </SidebarContent>
       <SidebarFooter>

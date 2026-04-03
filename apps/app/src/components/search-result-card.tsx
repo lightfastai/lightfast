@@ -46,7 +46,7 @@ export function SearchResultCard({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Workspace-ID": storeId,
+          "X-Org-ID": storeId,
         },
         body: JSON.stringify({ ids: [result.id] }),
       });
@@ -82,7 +82,7 @@ export function SearchResultCard({
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-Workspace-ID": storeId,
+          "X-Org-ID": storeId,
         },
         body: JSON.stringify({ id: result.id, limit: 5, threshold: 0.5 }),
       });

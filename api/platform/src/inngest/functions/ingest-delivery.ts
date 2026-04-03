@@ -6,10 +6,9 @@
  *
  * Steps:
  * 1. resolve-connection — DB JOIN gatewayResources <-> gatewayInstallations, or use preResolved
- * 2. resolve-workspace — lookup workspace from Clerk org ID
- * 3. transform-and-store — call transformEnvelope, insert ingest log
- * 4. emit-event-capture — step.sendEvent("memory/event.capture")
- * 5. publish-realtime — Upstash Realtime SSE for console UI
+ * 2. transform-and-store — call transformEnvelope, insert ingest log
+ * 3. emit-event-capture — step.sendEvent("memory/event.capture")
+ * 4. publish-realtime — Upstash Realtime SSE for console UI
  */
 
 import { db } from "@db/app/client";
@@ -17,8 +16,7 @@ import {
   gatewayInstallations,
   gatewayResources,
   gatewayWebhookDeliveries,
-  orgWorkspaces,
-  workspaceIngestLogs,
+  orgIngestLogs,
 } from "@db/app/schema";
 import type { ProviderSlug } from "@repo/app-providers";
 import { sanitizePostTransformEvent } from "@repo/app-providers";
@@ -89,37 +87,17 @@ export const ingestDelivery = inngest.createFunction(
       throw new NonRetriableError("no_connection");
     }
 
-    // Step 2: Resolve workspace from Clerk org ID
-    const workspace = await step.run("resolve-workspace", async () => {
-      const row = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.clerkOrgId, connectionInfo.orgId),
-        columns: { id: true, name: true, clerkOrgId: true },
-      });
+    // clerkOrgId IS the orgId — no workspace resolution needed
+    const clerkOrgId = connectionInfo.orgId;
 
-      if (!row) {
-        return null;
-      }
-
-      return {
-        workspaceId: row.id,
-        workspaceName: row.name,
-        clerkOrgId: row.clerkOrgId,
-      };
-    });
-
-    if (!workspace) {
-      throw new NonRetriableError("unknown_org");
-    }
-
-    log.info("[ingest-delivery] workspace resolved", {
-      workspaceId: workspace.workspaceId,
-      workspaceName: workspace.workspaceName,
+    log.info("[ingest-delivery] connection resolved", {
+      clerkOrgId,
       provider: data.provider,
       deliveryId: data.deliveryId,
       correlationId: data.correlationId,
     });
 
-    // Step 3: Transform envelope and store ingest log
+    // Step 2: Transform envelope and store ingest log
     const result = await step.run("transform-and-store", async () => {
       const rawEvent = transformEnvelope({
         provider: data.provider as ProviderSlug,
@@ -144,15 +122,15 @@ export const ingestDelivery = inngest.createFunction(
       const sourceEvent = sanitizePostTransformEvent(rawEvent);
 
       const [record] = await db
-        .insert(workspaceIngestLogs)
+        .insert(orgIngestLogs)
         .values({
-          workspaceId: workspace.workspaceId,
+          clerkOrgId,
           deliveryId: data.deliveryId,
           sourceEvent,
           receivedAt: new Date(data.receivedAt).toISOString(),
           ingestionSource: "webhook",
         })
-        .returning({ id: workspaceIngestLogs.id });
+        .returning({ id: orgIngestLogs.id });
 
       if (!record) {
         throw new Error("Failed to insert ingest log");
@@ -160,7 +138,7 @@ export const ingestDelivery = inngest.createFunction(
 
       log.info("[ingest-delivery] event stored", {
         ingestLogId: record.id,
-        workspaceId: workspace.workspaceId,
+        clerkOrgId,
         deliveryId: data.deliveryId,
         correlationId: data.correlationId,
       });
@@ -187,12 +165,11 @@ export const ingestDelivery = inngest.createFunction(
       };
     }
 
-    // Step 4: Emit memory/event.capture to trigger the neural pipeline
+    // Step 3: Emit memory/event.capture to trigger the neural pipeline
     await step.sendEvent("emit-event-capture", {
       name: "memory/event.capture" as const,
       data: {
-        workspaceId: workspace.workspaceId,
-        clerkOrgId: workspace.clerkOrgId,
+        clerkOrgId,
         sourceEvent: result.sourceEvent,
         ingestionSource: "webhook",
         ingestLogId: result.ingestLogId,
@@ -200,25 +177,24 @@ export const ingestDelivery = inngest.createFunction(
       },
     });
 
-    // Step 5: Publish to Upstash Realtime for console SSE
+    // Step 4: Publish to Upstash Realtime for console SSE
     await step.run("publish-realtime", async () => {
       const { realtime } = await import("@repo/app-upstash-realtime");
-      const channel = realtime.channel(`org-${connectionInfo.orgId}`);
+      const channel = realtime.channel(`org-${clerkOrgId}`);
       await channel.emit("workspace.event", {
         eventId: result.ingestLogId,
-        workspaceId: workspace.workspaceId,
+        clerkOrgId,
         sourceEvent: result.sourceEvent,
       } satisfies EventNotification);
 
       log.info("[ingest-delivery] realtime notification published", {
-        orgId: connectionInfo.orgId,
-        workspaceId: workspace.workspaceId,
+        clerkOrgId,
         ingestLogId: result.ingestLogId,
         correlationId: data.correlationId,
       });
     });
 
-    // Step 6: Mark delivery as processed
+    // Step 5: Mark delivery as processed
     await step.run("mark-delivery-processed", async () => {
       await db
         .update(gatewayWebhookDeliveries)
@@ -228,7 +204,7 @@ export const ingestDelivery = inngest.createFunction(
 
     return {
       status: "delivered",
-      workspaceId: workspace.workspaceId,
+      clerkOrgId,
       ingestLogId: result.ingestLogId,
     };
   }

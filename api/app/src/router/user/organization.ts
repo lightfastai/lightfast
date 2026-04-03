@@ -2,6 +2,7 @@ import { clerkOrgSlugSchema } from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
+import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
 import { userScopedProcedure, verifyOrgMembership } from "../../trpc";
@@ -59,10 +60,10 @@ export const organizationRouter = {
     )
     .mutation(async ({ ctx, input }) => {
       // userScopedProcedure guarantees clerk-pending or clerk-active
-      console.log("[organization.create] Creating organization", {
+      log.info("[organization] create", {
         slug: input.slug,
         userId: ctx.auth.userId,
-        authType: ctx.auth.type, // Log whether pending or active
+        authType: ctx.auth.type,
       });
 
       const clerk = await clerkClient();
@@ -75,7 +76,7 @@ export const organizationRouter = {
           createdBy: ctx.auth.userId,
         });
 
-        console.log("[organization.create] Successfully created organization", {
+        log.info("[organization] create success", {
           organizationId: clerkOrg.id,
           slug: clerkOrg.slug,
         });
@@ -85,7 +86,7 @@ export const organizationRouter = {
           slug: clerkOrg.slug || input.slug,
         };
       } catch (error: unknown) {
-        console.error("[organization.create] Failed to create organization", {
+        log.error("[organization] create failed", {
           slug: input.slug,
           userId: ctx.auth.userId,
           error: error instanceof Error ? error.message : String(error),
@@ -98,7 +99,7 @@ export const organizationRouter = {
             errors?: { code: string; message: string }[];
           };
 
-          console.error("[organization.create] Clerk error details", {
+          log.error("[organization] clerk error details", {
             errors: clerkError.errors,
           });
 

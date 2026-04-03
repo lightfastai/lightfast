@@ -18,8 +18,8 @@
       "default": "./src/client.ts"
     },
     "./utils": {
-      "types": "./src/utils/workspace.ts",
-      "default": "./src/utils/workspace.ts"
+      "types": "./src/utils/org.ts",
+      "default": "./src/utils/org.ts"
     },
     "./env": {
       "types": "./src/env.ts",

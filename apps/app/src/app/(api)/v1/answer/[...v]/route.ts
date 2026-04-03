@@ -25,7 +25,7 @@ import {
   withDualAuth,
 } from "../../../lib/with-dual-auth";
 
-const MODEL_ID = "anthropic/claude-sonnet-4-5-20250929";
+const MODEL_ID = "anthropic/claude-sonnet-4.6";
 
 const answerTools = {
   workspaceSearch: workspaceSearchTool(),
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     const sessionId = pathSegments[4] ?? randomUUID();
 
     const authContext = {
-      workspaceId: authData.workspaceId,
+      clerkOrgId: authData.clerkOrgId,
       userId: authData.userId,
       authType: authData.authType,
       apiKeyId: authData.apiKeyId,
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
       system: systemPrompt,
       tools: answerTools,
       createRuntimeContext: () => ({
-        workspaceId: authData.workspaceId,
+        clerkOrgId: authData.clerkOrgId,
         userId: authData.userId,
         authToken,
         tools: {
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
     const sessionId = pathSegments[4] ?? randomUUID();
 
     const authContext = {
-      workspaceId: authData.workspaceId,
+      clerkOrgId: authData.clerkOrgId,
       userId: authData.userId,
       authType: authData.authType,
       apiKeyId: authData.apiKeyId,
@@ -183,7 +183,7 @@ export async function GET(request: NextRequest) {
       system: systemPrompt,
       tools: answerTools,
       createRuntimeContext: () => ({
-        workspaceId: authData.workspaceId,
+        clerkOrgId: authData.clerkOrgId,
         userId: authData.userId,
         authToken,
         tools: {

@@ -174,9 +174,9 @@ export interface AnswerToolRuntimeConfig {
 /** Application runtime context for the answer agent */
 export interface AnswerAppRuntimeContext {
   authToken?: string;
+  clerkOrgId: string;
   tools?: AnswerToolRuntimeConfig;
   userId?: string;
-  workspaceId: string;
 }
 
 /** Full runtime context (SystemContext & RequestContext & AnswerAppRuntimeContext) */
