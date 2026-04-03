@@ -78,7 +78,7 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
  */
 function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   return items.map((item) => {
-    // For Settings, match any settings subpage (org or workspace level)
+    // For Settings, match any settings subpage (org level)
     const isActive =
       item.title === "Settings"
         ? pathname.startsWith(item.href)

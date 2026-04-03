@@ -70,4 +70,4 @@ export {
 
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
-export { generateStoreSlug, validateStoreSlug } from "./utils/workspace-names";
+export { generateStoreSlug, validateStoreSlug } from "./utils/org-names";

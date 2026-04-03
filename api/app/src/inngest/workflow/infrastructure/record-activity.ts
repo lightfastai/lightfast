@@ -6,7 +6,7 @@
  * for better performance and reduced database load.
  *
  * Triggered by: console/activity.record events (Tier 2 user actions)
- * Batching: Up to 100 events per batch, 10s timeout per workspace
+ * Batching: Up to 100 events per batch, 10s timeout per org
  * Performance: 50-100x faster than individual inserts
  *
  * @see /docs/implementation/user-activity-tracking.md

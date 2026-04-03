@@ -60,10 +60,10 @@ Options:
   --help, -h        Show this help
 
 Examples:
-  pnpm inject -- -w <clerkOrgId>
-  pnpm inject -- -w <clerkOrgId> -s performance
-  pnpm inject -- -w <clerkOrgId> -s balanced -c 10
-  pnpm inject -- -w <clerkOrgId> -s /path/to/custom.json
+  pnpm inject -- -o <clerkOrgId>
+  pnpm inject -- -o <clerkOrgId> -s performance
+  pnpm inject -- -o <clerkOrgId> -s balanced -c 10
+  pnpm inject -- -o <clerkOrgId> -s /path/to/custom.json
 `);
 }
 

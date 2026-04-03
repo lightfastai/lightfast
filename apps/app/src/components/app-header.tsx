@@ -4,7 +4,7 @@ import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useClerk, useUser } from "@vendor/clerk/client";
 import { NotificationsTrigger } from "@vendor/knock/components/trigger";
 /**
- * Application header - full width with workspace switcher on left and user actions on right
+ * Application header - full width with org switcher on left and user actions on right
  */
 export function AppHeader() {
   const { signOut } = useClerk();

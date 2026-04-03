@@ -97,13 +97,13 @@ export interface ActivityData {
  *   clerkOrgId: ctx.auth.orgId,
  *   actorType: "user",
  *   actorUserId: ctx.session.userId,
- *   category: "workspace",
+ *   category: "org",
  *   action: "integration.connected",
- *   entityType: "workspace",
- *   entityId: workspace.id,
+ *   entityType: "org",
+ *   entityId: org.id,
  *   metadata: {
  *     orgSlug: ctx.auth.orgSlug,
- *     clerkOrgId: workspace.clerkOrgId,
+ *     clerkOrgId: org.clerkOrgId,
  *   },
  * });
  * ```

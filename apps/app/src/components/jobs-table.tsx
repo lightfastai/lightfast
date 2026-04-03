@@ -10,14 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle2,
@@ -28,12 +23,10 @@ import {
   Loader2,
   MoreHorizontal,
   PlayCircle,
-  RotateCcw,
   StopCircle,
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { showErrorToast } from "~/lib/trpc-errors";
 import type { Job, JobStatus } from "~/types";
 import { useJobFilters } from "./use-job-filters";
 
@@ -93,8 +86,6 @@ interface JobRowProps {
 
 function JobRow({ job }: JobRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
 
   // Extract commit data from job input (safely handle discriminated union)
   const commitSha: string | undefined =
@@ -107,31 +98,6 @@ function JobRow({ job }: JobRowProps) {
       : undefined;
   const branch: string | undefined =
     job.input && "branch" in job.input ? String(job.input.branch) : undefined;
-
-  // Restart mutation
-  const restartMutation = useMutation(
-    trpc.jobs.restart.mutationOptions({
-      onSuccess: () => {
-        toast.success("Job restart triggered", {
-          description: "A new sync has been queued.",
-        });
-        // Invalidate jobs list to show the new job
-        void queryClient.invalidateQueries({
-          queryKey: trpc.jobs.list.queryOptions({ limit: 50 }).queryKey,
-        });
-      },
-      onError: (error) => {
-        showErrorToast(error, "Failed to restart job");
-      },
-    })
-  );
-
-  const handleRetry = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    restartMutation.mutate({
-      jobId: String(job.id),
-    });
-  };
 
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -249,25 +215,6 @@ function JobRow({ job }: JobRowProps) {
                     <FileText className="mr-2 h-4 w-4" />
                     {isExpanded ? "Hide" : "View"} details
                   </DropdownMenuItem>
-                )}
-                {(job.status === "completed" ||
-                  job.status === "failed" ||
-                  job.status === "cancelled") && (
-                  <>
-                    {hasDetails && <DropdownMenuSeparator />}
-                    <DropdownMenuItem
-                      disabled={restartMutation.isPending}
-                      onClick={handleRetry}
-                    >
-                      <RotateCcw
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          restartMutation.isPending && "animate-spin"
-                        )}
-                      />
-                      {restartMutation.isPending ? "Restarting..." : "Restart"}
-                    </DropdownMenuItem>
-                  </>
                 )}
                 {(job.status === "running" || job.status === "queued") && (
                   <>
