@@ -1,31 +1,30 @@
 ---
 title: API Overview
-description: "Introduction to the Lightfast REST API — three core routes for team memory: search, contents, and similar endpoints."
+description: Introduction to the Lightfast REST API — search your team's knowledge by meaning with a single API call.
 keywords:
   - API overview
   - REST API
   - search endpoint
-  - contents endpoint
-  - similar endpoint
+  - semantic search
 canonicalUrl: https://lightfast.ai/docs/api-reference/getting-started/overview
 ogTitle: API Overview – Lightfast
-ogDescription: "Introduction to the Lightfast REST API — three core routes for team memory: search, contents, and similar endpoints."
+ogDescription: Introduction to the Lightfast REST API — search your team's knowledge by meaning with a single API call.
 ogImage: https://lightfast.ai/og/docs/api/overview.jpg
 authors:
   - name: Lightfast Team
     url: https://lightfast.ai
     twitterHandle: "@lightfastai"
 publishedAt: "2024-12-01T00:00:00Z"
-updatedAt: "2026-02-18T00:00:00Z"
+updatedAt: "2026-04-03T00:00:00Z"
 ---
 
 import { ApiReferenceCard, ApiReferenceGrid } from '~/app/(app)/(content)/docs/_components/api-reference-card';
 
 # API Overview
 
-The Lightfast API provides **memory built for teams**. Three routes enable you to search by meaning, get full documents, and find similar content.
+The Lightfast API provides **memory built for teams**. Search by meaning across everything your engineering org produces — pull requests, issues, discussions, docs, and deployments.
 
-## The Three Routes
+## Search
 
 <ApiReferenceGrid>
   <ApiReferenceCard
@@ -34,20 +33,6 @@ The Lightfast API provides **memory built for teams**. Three routes enable you t
     method="POST"
     path="/api/v1/search"
     href="/api/endpoints/search"
-  />
-  <ApiReferenceCard
-    title="Contents"
-    description="Get full documents and metadata by ID"
-    method="POST"
-    path="/api/v1/contents"
-    href="/api/endpoints/contents"
-  />
-  <ApiReferenceCard
-    title="FindSimilar"
-    description="Find related content based on semantic similarity"
-    method="POST"
-    path="/api/v1/findsimilar"
-    href="/api/endpoints/findsimilar"
   />
 </ApiReferenceGrid>
 
@@ -59,26 +44,23 @@ https://lightfast.ai/api/v1
 
 ## Authentication
 
-All API requests require two headers:
+All API requests require one header:
 
 ```bash
-Authorization: Bearer YOUR_API_KEY
-X-Workspace-ID: ws_abc123
+Authorization: Bearer sk-lf-your-api-key
 ```
 
-See [Authentication](/api/getting-started/authentication) for details on obtaining API keys and workspace IDs.
+The organization is resolved automatically from the API key. See [Authentication](/api/getting-started/authentication) for details on obtaining API keys.
 
 ## Quick Start
 
 ### Make Your First Call
 
 ```typescript
-// Search for content
 const response = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
-    'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID,
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({
@@ -88,37 +70,6 @@ const response = await fetch('https://lightfast.ai/api/v1/search', {
 })
 
 const results = await response.json()
-```
-
-### Complete Workflow
-
-```typescript
-// 1. Search for relevant content
-const searchResponse = await fetch('https://lightfast.ai/api/v1/search', {
-  method: 'POST',
-  headers: { /* auth headers */ },
-  body: JSON.stringify({ query: 'authentication implementation' })
-})
-const searchResults = await searchResponse.json()
-
-// 2. Get full content for top result
-const contentResponse = await fetch('https://lightfast.ai/api/v1/contents', {
-  method: 'POST',
-  headers: { /* auth headers */ },
-  body: JSON.stringify({ ids: [searchResults.data[0].id] })
-})
-const fullContent = await contentResponse.json()
-
-// 3. Find similar content
-const similarResponse = await fetch('https://lightfast.ai/api/v1/findsimilar', {
-  method: 'POST',
-  headers: { /* auth headers */ },
-  body: JSON.stringify({
-    id: searchResults.data[0].id,
-    limit: 5
-  })
-})
-const similar = await similarResponse.json()
 ```
 
 ## Core Features
@@ -163,7 +114,10 @@ Filter results by source, type, contributor, or date:
 ```typescript
 const results = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
-  headers: { /* auth headers */ },
+  headers: {
+    'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
+    'Content-Type': 'application/json'
+  },
   body: JSON.stringify({
     query: 'authentication',
     filters: {
@@ -198,7 +152,7 @@ All errors follow a consistent format:
 |------|--------|-------------|
 | `VALIDATION_ERROR` | 400 | Invalid request parameters |
 | `UNAUTHORIZED` | 401 | Missing or invalid authentication |
-| `FORBIDDEN` | 403 | Access denied to workspace |
+| `FORBIDDEN` | 403 | Access denied to organization |
 | `NOT_FOUND` | 404 | Resource not found |
 | `INTERNAL_ERROR` | 500 | Server error |
 
@@ -215,8 +169,6 @@ Connect sources in the [Console](https://lightfast.ai) settings.
 
 ## Next Steps
 
-- **[POST /v1/search](/api/endpoints/search)** - Search by meaning
-- **[POST /v1/contents](/api/endpoints/contents)** - Get full documents
-- **[POST /v1/findsimilar](/api/endpoints/findsimilar)** - Find related content
-- **[Authentication](/api/getting-started/authentication)** - API key setup
-- **[Errors](/api/getting-started/errors)** - Error handling
+- **[POST /v1/search](/api/endpoints/search)** — Search by meaning
+- **[Authentication](/api/getting-started/authentication)** — API key setup
+- **[Errors](/api/getting-started/errors)** — Error handling

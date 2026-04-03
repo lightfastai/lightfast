@@ -17,23 +17,23 @@ authors:
     url: https://lightfast.ai
     twitterHandle: "@lightfastai"
 publishedAt: "2024-12-01T00:00:00Z"
-updatedAt: "2026-02-19T00:00:00Z"
+updatedAt: "2026-04-03T00:00:00Z"
 proficiencyLevel: Beginner
 ---
 
 Lightfast is the memory layer for software teams. It indexes everything your engineering org produces — pull requests, issues, discussions, docs, deployments — and makes it searchable with natural language. This guide walks you through connecting your first source and getting your team's knowledge into Lightfast.
 
-## Step 1 — Create a workspace
+## Step 1 — Create an organization
 
-To get started, sign up at <a href="https://lightfast.ai/sign-in">lightfast.ai</a> and create a workspace for your team. A workspace is the central place where all your connected sources are indexed and made searchable. Think of it as your team's shared memory — one place where everyone can find what they need, regardless of which tool the information originally lived in.
+To get started, sign up at <a href="https://lightfast.ai/sign-in">lightfast.ai</a> and create an organization for your team. An organization is the central place where all your connected sources are indexed and made searchable. Think of it as your team's shared memory — one place where everyone can find what they need, regardless of which tool the information originally lived in.
 
-During workspace creation you'll be asked to select a GitHub organization and give your workspace a name. We recommend naming it after your product or team — something like `acme-platform` or `frontend`. You can always rename it later.
+During organization creation you'll be asked to select a GitHub organization and give your org a name. We recommend naming it after your product or team — something like `acme-platform` or `frontend`. You can always rename it later.
 
-Once your workspace is created, you're ready to start connecting sources.
+Once your organization is created, you're ready to start connecting sources.
 
 ## Step 2 — Connect your sources
 
-From your workspace dashboard, connect the tools your team already uses. Lightfast continuously syncs content from each connected source and keeps everything up to date — no configuration files, no manual exports, no scripts to maintain.
+From your dashboard, connect the tools your team already uses. Lightfast continuously syncs content from each connected source and keeps everything up to date — no configuration files, no manual exports, no scripts to maintain.
 
 **Currently supported connectors:**
 
@@ -42,7 +42,7 @@ From your workspace dashboard, connect the tools your team already uses. Lightfa
 - [**Linear**](/docs/connectors/linear) — Issues, projects, and cycles, so your product and engineering work is searchable alongside your code.
 - [**Sentry**](/docs/connectors/sentry) — Errors and performance data, so you can trace incidents back to the code changes and decisions that caused them.
 
-To connect GitHub, click **Add source** in your workspace dashboard and authorize Lightfast via OAuth. You'll then be able to select which repositories to index. Start with the ones your team touches most — you can always add more later.
+To connect GitHub, click **Add source** in your dashboard and authorize Lightfast via OAuth. You'll then be able to select which repositories to index. Start with the ones your team touches most — you can always add more later.
 
 Each source moves through three sync states after you connect it:
 
@@ -58,7 +58,7 @@ Most repositories complete their initial sync within 5–10 minutes depending on
 
 ## Step 3 — Monitor indexing
 
-Once a source is connected, you can track sync progress from your workspace dashboard at <a href="https://lightfast.ai/dashboard">lightfast.ai/dashboard</a>. You'll see real-time status for each connected source as documents are processed, along with a count of how many documents have been indexed so far.
+Once a source is connected, you can track sync progress from your organization's home page in the <a href="https://lightfast.ai">Lightfast Console</a>. You'll see real-time status for each connected source as documents are processed, along with a count of how many documents have been indexed so far.
 
 **What Lightfast indexes from GitHub:**
 
@@ -68,7 +68,7 @@ Once a source is connected, you can track sync progress from your workspace dash
 - **Discussions**: Decision rationale, architecture conversations, Q&A threads, and context that would otherwise get lost
 - **People & Ownership**: Contributors, code owners, and subject matter experts based on commit and review history
 
-All team members in your workspace can start searching as soon as the first source finishes syncing. You don't need to wait for everything to be indexed before you get value — even a single repository gives you powerful search across all its history.
+All team members in your organization can start searching as soon as the first source finishes syncing. You don't need to wait for everything to be indexed before you get value — even a single repository gives you powerful search across all its history.
 
 <Alert>
 **Re-syncing is automatic.** When your team pushes new PRs, closes issues, or publishes new docs, Lightfast picks up the changes automatically. Your team's memory stays current without any manual intervention.
@@ -78,7 +78,7 @@ All team members in your workspace can start searching as soon as the first sour
 
 Once your sources are syncing, your team's knowledge becomes searchable from three places: the dashboard, the API, and MCP tools for AI agents.
 
-**Dashboard search** at <a href="https://lightfast.ai/dashboard">lightfast.ai</a> gives your whole team a natural language interface to everything that's been indexed. No keywords needed — just ask questions the way you'd ask a colleague.
+**Search** in the <a href="https://lightfast.ai">Lightfast Console</a> gives your whole team a natural language interface to everything that's been indexed. No keywords needed — just ask questions the way you'd ask a colleague.
 
 **Try these example queries to get started:**
 
@@ -105,7 +105,7 @@ For programmatic access, use the [TypeScript SDK](/docs/integrate/sdk) or call t
     value="connect-github"
     question="How do I connect my GitHub account?"
   >
-    Sign up at <a href="https://lightfast.ai/sign-in">lightfast.ai</a>, create a workspace, and connect GitHub via OAuth from the workspace dashboard. Select which repositories you want Lightfast to index and syncing begins automatically. For more about GitHub OAuth, see the GitHub docs on <a href="https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps" target="_blank" rel="noreferrer">authorizing OAuth apps</a>. Full setup details are in the [GitHub connector guide](/docs/connectors/github).
+    Sign up at <a href="https://lightfast.ai/sign-in">lightfast.ai</a>, create an organization, and connect GitHub via OAuth from your dashboard. Select which repositories you want Lightfast to index and syncing begins automatically. For more about GitHub OAuth, see the GitHub docs on <a href="https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/authorizing-oauth-apps" target="_blank" rel="noreferrer">authorizing OAuth apps</a>. Full setup details are in the [GitHub connector guide](/docs/connectors/github).
   </FAQItem>
   <FAQItem
     value="what-we-index"
@@ -117,7 +117,7 @@ For programmatic access, use the [TypeScript SDK](/docs/integrate/sdk) or call t
     value="add-more-sources"
     question="Can I connect more repositories or sources later?"
   >
-    Yes. You can add or remove connected sources at any time from your workspace settings. Each new source syncs automatically once connected, and removed sources stop syncing and are cleaned up from your index. There's no limit on the number of repositories you can connect.
+    Yes. You can add or remove connected sources at any time from your organization settings. Each new source syncs automatically once connected, and removed sources stop syncing and are cleaned up from your index. There's no limit on the number of repositories you can connect.
   </FAQItem>
   <FAQItem
     value="how-current"

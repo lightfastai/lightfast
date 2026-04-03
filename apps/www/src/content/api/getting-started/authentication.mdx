@@ -1,36 +1,35 @@
 ---
 title: Authentication
-description: Authenticate with the Lightfast API using API keys or session-based auth for secure workspace access and requests.
+description: Authenticate with the Lightfast API using API keys or session-based auth for secure access to your organization's knowledge.
 keywords:
   - API authentication
   - API keys
   - session auth
   - authorization
-  - workspace ID
+  - organization
 canonicalUrl: https://lightfast.ai/docs/api-reference/getting-started/authentication
 ogTitle: API Authentication – Lightfast
-ogDescription: Authenticate with the Lightfast API using API keys or session-based auth for secure workspace access and requests.
+ogDescription: Authenticate with the Lightfast API using API keys or session-based auth for secure access to your organization's knowledge.
 ogImage: https://lightfast.ai/og/docs/api/authentication.jpg
 authors:
   - name: Lightfast Team
     url: https://lightfast.ai
     twitterHandle: "@lightfastai"
 publishedAt: "2024-12-01T00:00:00Z"
-updatedAt: "2026-02-18T00:00:00Z"
+updatedAt: "2026-04-03T00:00:00Z"
 ---
 
-All Lightfast API requests require authentication and a workspace identifier. The API supports two authentication methods: API keys for external clients and session authentication for the Console UI.
+All Lightfast API requests require authentication. The API supports two authentication methods: API keys for external clients and session authentication for the Console UI.
 
 ## Authentication Methods
 
 ### API Key Authentication
 
-For external API clients, use an API key in the `Authorization` header along with the `X-Workspace-ID` header:
+For external API clients, use an API key in the `Authorization` header:
 
 ```bash
 curl -X POST https://lightfast.ai/api/v1/search \
-  -H "Authorization: Bearer YOUR_API_KEY" \
-  -H "X-Workspace-ID: ws_abc123" \
+  -H "Authorization: Bearer sk-lf-your-api-key" \
   -H "Content-Type: application/json" \
   -d '{"query": "authentication implementation"}'
 ```
@@ -39,21 +38,22 @@ curl -X POST https://lightfast.ai/api/v1/search \
 
 | Header | Description |
 |--------|-------------|
-| `Authorization` | `Bearer <api-key>` - Your API key |
-| `X-Workspace-ID` | The workspace ID to query |
+| `Authorization` | `Bearer <api-key>` — Your API key (prefixed with `sk-lf-`) |
 | `Content-Type` | `application/json` |
+
+The organization is resolved automatically from the API key's database record — no additional headers are needed.
 
 ### Session Authentication
 
-For the Console UI, authentication uses Clerk session cookies. The `X-Workspace-ID` header is still required:
+For the Console UI, authentication uses Clerk session cookies with an `X-Org-ID` header:
 
 ```bash
 # Session auth (used by Console UI)
 Cookie: __session=<clerk-session>
-X-Workspace-ID: ws_abc123
+X-Org-ID: <clerk-org-id>
 ```
 
-Session authentication validates that the user is a member of the organization that owns the workspace.
+Session authentication validates that the user is a member of the specified organization.
 
 ## Getting Your API Key
 
@@ -62,11 +62,7 @@ Session authentication validates that the user is a member of the organization t
 3. Click **Create New Key**
 4. Copy the key immediately (it won't be shown again)
 
-## Getting Your Workspace ID
-
-Your workspace ID can be found in:
-- The Console URL: `https://lightfast.ai/{org}/{workspace}` → workspace ID is in settings
-- Settings → Workspace → Workspace ID
+API keys are scoped to your organization. All requests made with a key are automatically associated with the organization that created it.
 
 ## Security Best Practices
 
@@ -75,20 +71,18 @@ Your workspace ID can be found in:
 Never hardcode API keys in your source code:
 
 ```typescript
-// ✅ Good - load from environment
+// Good - load from environment
 const apiKey = process.env.LIGHTFAST_API_KEY
-const workspaceId = process.env.LIGHTFAST_WORKSPACE_ID
 
-// ❌ Bad - hardcoded credentials
-const apiKey = 'lf_abc123...'
+// Bad - hardcoded credentials
+const apiKey = 'sk-lf-abc123...'
 ```
 
 ### Environment Setup
 
 ```bash
 # .env.local
-LIGHTFAST_API_KEY=your-api-key
-LIGHTFAST_WORKSPACE_ID=ws_abc123
+LIGHTFAST_API_KEY=sk-lf-your-api-key
 ```
 
 ### Never Commit Keys
@@ -107,18 +101,17 @@ Add environment files to `.gitignore`:
 API keys should only be used in server-side code:
 
 ```typescript
-// ✅ Server-side (Node.js, API routes, server actions)
+// Server-side (Node.js, API routes, server actions)
 const response = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
-    'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID,
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({ query: 'authentication' })
 })
 
-// ❌ Never expose API keys in client-side code
+// Never expose API keys in client-side code
 ```
 
 ## Error Responses
@@ -138,9 +131,7 @@ Authentication errors return JSON with an error code and message:
 | Status | Code | Description |
 |--------|------|-------------|
 | 401 | `UNAUTHORIZED` | No authentication provided or invalid API key |
-| 400 | `BAD_REQUEST` | Missing `X-Workspace-ID` header |
-| 403 | `FORBIDDEN` | User not authorized to access the workspace |
-| 404 | `NOT_FOUND` | Workspace not found |
+| 403 | `FORBIDDEN` | User not authorized to access the organization |
 
 ### Handling Errors
 
@@ -149,7 +140,6 @@ const response = await fetch('https://lightfast.ai/api/v1/search', {
   method: 'POST',
   headers: {
     'Authorization': `Bearer ${apiKey}`,
-    'X-Workspace-ID': workspaceId,
     'Content-Type': 'application/json'
   },
   body: JSON.stringify({ query: 'search query' })
@@ -162,14 +152,8 @@ if (!response.ok) {
     case 'UNAUTHORIZED':
       console.error('Invalid or missing API key')
       break
-    case 'BAD_REQUEST':
-      console.error('Missing X-Workspace-ID header')
-      break
     case 'FORBIDDEN':
-      console.error('No access to this workspace')
-      break
-    case 'NOT_FOUND':
-      console.error('Workspace not found')
+      console.error('No access to this organization')
       break
   }
 }
@@ -178,12 +162,11 @@ if (!response.ok) {
 ## Example: Complete Request
 
 ```typescript
-async function searchWorkspace(query: string) {
+async function search(query: string) {
   const response = await fetch('https://lightfast.ai/api/v1/search', {
     method: 'POST',
     headers: {
       'Authorization': `Bearer ${process.env.LIGHTFAST_API_KEY}`,
-      'X-Workspace-ID': process.env.LIGHTFAST_WORKSPACE_ID!,
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({ query })
@@ -198,12 +181,10 @@ async function searchWorkspace(query: string) {
 }
 
 // Usage
-const results = await searchWorkspace('how does authentication work?')
+const results = await search('how does authentication work?')
 ```
 
 ## Next Steps
 
-- **[POST /v1/search](/api/endpoints/search)** - Search your team's knowledge
-- **[POST /v1/contents](/api/endpoints/contents)** - Retrieve full content by ID
-- **[POST /v1/findsimilar](/api/endpoints/findsimilar)** - Find semantically similar content
-- **[Error Handling](/api/getting-started/errors)** - Complete error code reference
+- **[POST /v1/search](/api/endpoints/search)** — Search your team's knowledge
+- **[Error Handling](/api/getting-started/errors)** — Complete error code reference
