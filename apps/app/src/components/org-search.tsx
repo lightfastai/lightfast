@@ -170,10 +170,9 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
 
   return (
     // biome-ignore lint/a11y/noNoninteractiveElementInteractions: search container handles keyboard navigation
-    <div
+    <search
       className="flex h-full flex-col overflow-hidden"
       onKeyDown={handleKeyDown}
-      role="search"
     >
       {/* Split Layout */}
       <div className="flex flex-1 overflow-hidden">
@@ -244,7 +243,7 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
           />
         </div>
       </div>
-    </div>
+    </search>
   );
 }
 

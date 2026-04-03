@@ -60,5 +60,10 @@ export async function GET(
         status: result.status,
       });
       return Response.json({ error: result.error }, { status: result.status });
+
+    default: {
+      const _exhaustive: never = result;
+      return _exhaustive;
+    }
   }
 }

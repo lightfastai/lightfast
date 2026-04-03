@@ -29,6 +29,7 @@ const escapeJsonForHtml = (json: string): string =>
 
 export const JsonLd = ({ code }: JsonLdProps) => (
   <script
+    // biome-ignore lint/security/noDangerouslySetInnerHtml: JSON-LD must be injected via script tag; content is escaped
     dangerouslySetInnerHTML={{
       __html: escapeJsonForHtml(JSON.stringify(code)),
     }}

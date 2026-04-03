@@ -23,6 +23,7 @@ export function AppMobileNav() {
         <button
           aria-label="Toggle Menu"
           className="p-2 text-foreground/60 transition-colors hover:text-foreground md:hidden"
+          type="button"
         >
           <Menu className="h-5 w-5" />
         </button>

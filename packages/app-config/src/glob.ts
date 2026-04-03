@@ -148,7 +148,9 @@ export function matchesGlobs(filePath: string, globs: string[]): boolean {
         // Exact match
         return true;
       }
-    } catch {}
+    } catch {
+      // Ignore invalid glob patterns
+    }
   }
 
   return false;

@@ -120,7 +120,7 @@ export function SearchResultCard({
               {/* Title row with expand trigger */}
               <div className="flex items-start justify-between gap-2">
                 <CollapsibleTrigger asChild>
-                  <button className="flex items-center gap-1 text-left transition-colors hover:text-primary">
+                  <button className="flex items-center gap-1 text-left transition-colors hover:text-primary" type="button">
                     <h3 className="font-medium text-xs leading-tight">
                       {result.title || "Untitled Document"}
                     </h3>

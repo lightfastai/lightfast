@@ -15,14 +15,11 @@
   "linter": {
     "rules": {
       "a11y": {
-        "noSvgWithoutTitle": "off",
-        "useButtonType": "off",
-        "useSemanticElements": "off"
+        "noSvgWithoutTitle": "off"
       },
       "complexity": {
         "noBannedTypes": "off",
         "noExcessiveCognitiveComplexity": "off",
-        "noForEach": "off",
         "noVoid": "off"
       },
       "performance": {
@@ -30,29 +27,21 @@
         "noNamespaceImport": "off",
         "useTopLevelRegex": "off"
       },
-      "security": {
-        "noDangerouslySetInnerHtml": "off"
-      },
       "style": {
-        "noEnum": "off",
         "noExportedImports": "off",
         "noNestedTernary": "off",
         "noNonNullAssertion": "off",
         "noParameterProperties": "off",
-        "useConsistentMemberAccessibility": "off",
-        "useDefaultSwitchClause": "off"
+        "useConsistentMemberAccessibility": "off"
       },
       "suspicious": {
-        "noAlert": "off",
         "noArrayIndexKey": "off",
         "noAssignInExpressions": "off",
         "noBitwiseOperators": "off",
-        "noEmptyBlockStatements": "off",
         "noEvolvingTypes": "off",
         "noExplicitAny": "off",
         "noImplicitAnyLet": "off",
-        "useAwait": "off",
-        "useIterableCallbackReturn": "off"
+        "useAwait": "off"
       }
     }
   }

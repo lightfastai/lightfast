@@ -65,6 +65,7 @@ export const ThinkingAnimation = memo(function ThinkingAnimation() {
       </svg>
 
       <style
+        // biome-ignore lint/security/noDangerouslySetInnerHtml: CSS keyframe injection for animation
         dangerouslySetInnerHTML={{
           __html: `
 				@keyframes gradient {

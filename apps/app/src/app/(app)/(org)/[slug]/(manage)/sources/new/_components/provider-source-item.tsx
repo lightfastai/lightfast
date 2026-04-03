@@ -431,6 +431,7 @@ export function ProviderSourceItem({ provider }: Props) {
                   <button
                     className="text-blue-500 underline-offset-4 transition-colors hover:text-blue-600 hover:underline"
                     onClick={handleAdjustPermissions ?? handleConnect}
+                    type="button"
                   >
                     {handleAdjustPermissions
                       ? `Adjust ${display.displayName} permissions \u2192`

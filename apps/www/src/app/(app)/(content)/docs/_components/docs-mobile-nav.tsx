@@ -57,6 +57,7 @@ export function DocsMobileNav({
         aria-label="Search"
         className="p-2 text-foreground/60 transition-colors hover:text-foreground"
         onClick={openSearch}
+        type="button"
       >
         <SearchIcon className="h-5 w-5" />
       </button>
@@ -67,6 +68,7 @@ export function DocsMobileNav({
           <button
             aria-label="Toggle Menu"
             className="p-2 text-foreground/60 transition-colors hover:text-foreground"
+            type="button"
           >
             <Menu className="h-5 w-5" />
           </button>
@@ -99,6 +101,7 @@ export function DocsMobileNav({
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 onClick={() => setSelectedTab("docs")}
+                type="button"
               >
                 Docs
               </button>
@@ -110,6 +113,7 @@ export function DocsMobileNav({
                     : "text-muted-foreground hover:text-foreground"
                 )}
                 onClick={() => setSelectedTab("api")}
+                type="button"
               >
                 API
               </button>

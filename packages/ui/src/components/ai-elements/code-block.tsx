@@ -279,6 +279,7 @@ export const CodeBlockContent = ({
               "[&_*]:!border-0",
               className
             )}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki syntax-highlighted HTML output
             dangerouslySetInnerHTML={{ __html: html }}
             data-code-block
             data-language={language}
@@ -293,6 +294,7 @@ export const CodeBlockContent = ({
               "[&_*]:!border-0",
               className
             )}
+            // biome-ignore lint/security/noDangerouslySetInnerHtml: Shiki syntax-highlighted HTML output
             dangerouslySetInnerHTML={{ __html: darkHtml }}
             data-code-block
             data-language={language}

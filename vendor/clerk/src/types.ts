@@ -1,7 +1,8 @@
-export enum SessionType {
-  User = "user",
-  Server = "server",
-}
+export const SessionType = {
+  User: "user",
+  Server: "server",
+} as const;
+export type SessionType = (typeof SessionType)[keyof typeof SessionType];
 
 export interface AuthSession {
   type: SessionType.User;
