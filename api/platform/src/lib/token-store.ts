@@ -5,6 +5,49 @@ import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
 import { getEncryptionKey } from "./encryption";
 
+/**
+ * Write an encrypted token record for an installation.
+ * Used after OAuth code exchange.
+ */
+export async function writeTokenRecord(
+  installationId: string,
+  oauthTokens: OAuthTokens
+): Promise<void> {
+  const encryptedAccess = await encrypt(
+    oauthTokens.accessToken,
+    getEncryptionKey()
+  );
+  const encryptedRefresh = oauthTokens.refreshToken
+    ? await encrypt(oauthTokens.refreshToken, getEncryptionKey())
+    : null;
+
+  const expiresAt = oauthTokens.expiresIn
+    ? new Date(Date.now() + oauthTokens.expiresIn * 1000).toISOString()
+    : null;
+
+  await db
+    .insert(gatewayTokens)
+    .values({
+      installationId,
+      accessToken: encryptedAccess,
+      refreshToken: encryptedRefresh,
+      expiresAt,
+      tokenType: oauthTokens.tokenType,
+      scope: oauthTokens.scope,
+    })
+    .onConflictDoUpdate({
+      target: gatewayTokens.installationId,
+      set: {
+        accessToken: encryptedAccess,
+        refreshToken: encryptedRefresh,
+        expiresAt,
+        tokenType: oauthTokens.tokenType,
+        scope: oauthTokens.scope,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+}
+
 /** Minimum base64-decoded byte length for a valid AES-GCM encrypted value (12-byte IV + 16-byte tag). */
 const MIN_ENCRYPTED_BYTES = 28;
 

@@ -1,4 +1,4 @@
-import { env } from "./src/env";
+import { dbEnv as env } from "./src/env";
 
 import { createDrizzleConfig } from "./src/utils/create-drizzle-config";
 

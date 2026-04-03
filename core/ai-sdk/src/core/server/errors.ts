@@ -471,8 +471,8 @@ function mapAiSdkErrorToApiError(
       ? errorWithStatusCode.statusCode
       : undefined;
 
-  let category = LightfastErrorCategory.Stream;
-  let severity = LightfastErrorSeverity.Recoverable;
+  let category: LightfastErrorCategory = LightfastErrorCategory.Stream;
+  let severity: LightfastErrorSeverity = LightfastErrorSeverity.Recoverable;
 
   if (statusCode === undefined) {
     if (lowerName.includes("invalid") || lowerName.includes("argument")) {
