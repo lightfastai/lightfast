@@ -15,6 +15,10 @@
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["jiti", "@repo/app-openapi"]
     },
+    "apps/platform": {
+      "entry": ["src/app/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"]
+    },
     "api/*": {
       "project": ["src/**/*.ts"]
     },
@@ -31,10 +35,6 @@
     },
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
-    },
-    "packages/cms-workflows": {
-      "entry": ["src/publish-blog.ts", "src/publish-changelog.ts"],
-      "project": ["src/**/*.ts"]
     },
     "packages/app-ai": {
       "entry": ["src/org-*.ts"],
@@ -73,11 +73,6 @@
       "project": ["src/**/*.{ts,tsx}"],
       "drizzle": false
     },
-    "vendor/cms": {
-      "entry": ["lib/**/*.ts", "components/**/*.tsx"],
-      "project": ["lib/**/*.ts", "components/**/*.tsx", "*.{ts,tsx}"],
-      "drizzle": false
-    },
     "vendor/seo": {
       "project": ["src/**/*.{ts,tsx}"],
       "drizzle": false
@@ -90,8 +85,10 @@
       "drizzle": false
     },
     "internal/typescript": {
-      "entry": ["base.json"],
-      "ignoreDependencies": ["next"]
+      "entry": ["base.json"]
+    },
+    "internal/vitest-config": {
+      "entry": ["vitest.shared.ts"]
     }
   },
   "ignore": [".agents/**", ".claude/**"],
