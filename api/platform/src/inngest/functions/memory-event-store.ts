@@ -442,10 +442,10 @@ export const memoryEventStore = inngest.createFunction(
                   orgEntities.key,
                 ],
                 set: {
-                  lastSeenAt: sql`GREATEST(${orgEntities.lastSeenAt}, EXCLUDED.${orgEntities.lastSeenAt})`,
+                  lastSeenAt: sql`GREATEST(${orgEntities.lastSeenAt}, EXCLUDED."last_seen_at")`,
                   occurrenceCount: sql`${orgEntities.occurrenceCount} + 1`,
                   updatedAt: new Date().toISOString(),
-                  state: sql`CASE WHEN EXCLUDED.${orgEntities.lastSeenAt} > ${orgEntities.lastSeenAt} THEN EXCLUDED.${orgEntities.state} ELSE ${orgEntities.state} END`,
+                  state: sql`CASE WHEN EXCLUDED."last_seen_at" > ${orgEntities.lastSeenAt} THEN EXCLUDED."state" ELSE ${orgEntities.state} END`,
                   url: sql`COALESCE(EXCLUDED.url, ${orgEntities.url})`,
                 },
               })
