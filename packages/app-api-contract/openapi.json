@@ -24,6 +24,10 @@
     {
       "name": "Search",
       "description": "Semantic search across indexed content"
+    },
+    {
+      "name": "Proxy",
+      "description": "Authenticated proxy to connected provider APIs (GitHub, Linear, Vercel, etc.)"
     }
   ],
   "components": {
@@ -43,7 +47,9 @@
         "operationId": "search",
         "summary": "Search",
         "description": "Search across your team's knowledge with semantic understanding and multi-path retrieval.",
-        "tags": ["Search"],
+        "tags": [
+          "Search"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -71,7 +77,10 @@
                     "description": "Result offset for pagination (default: 0)"
                   },
                   "mode": {
-                    "enum": ["fast", "balanced"],
+                    "enum": [
+                      "fast",
+                      "balanced"
+                    ],
                     "type": "string",
                     "default": "balanced",
                     "description": "Search quality mode: 'fast' (vector scores only), 'balanced' (Cohere rerank)"
@@ -101,7 +110,9 @@
                     "description": "Only include results before this ISO 8601 datetime"
                   }
                 },
-                "required": ["query"]
+                "required": [
+                  "query"
+                ]
               }
             }
           }
@@ -180,7 +191,215 @@
                       "type": "string"
                     }
                   },
-                  "required": ["results", "total", "requestId"]
+                  "required": [
+                    "results",
+                    "total",
+                    "requestId"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/proxy/search": {
+      "post": {
+        "operationId": "proxy.search",
+        "summary": "List proxy endpoints",
+        "description": "Discover all connected providers and their available API endpoints. Returns the full endpoint catalog for each active connection.",
+        "tags": [
+          "Proxy"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connections": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "installationId": {
+                            "type": "string",
+                            "description": "Gateway installation ID"
+                          },
+                          "provider": {
+                            "type": "string",
+                            "description": "Provider name (e.g. github, linear, vercel)"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Connection status"
+                          },
+                          "baseUrl": {
+                            "type": "string",
+                            "description": "Provider API base URL"
+                          },
+                          "endpoints": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "endpointId": {
+                                  "type": "string",
+                                  "description": "Unique identifier for this endpoint in the provider catalog"
+                                },
+                                "method": {
+                                  "enum": [
+                                    "GET",
+                                    "POST"
+                                  ],
+                                  "type": "string",
+                                  "description": "HTTP method"
+                                },
+                                "path": {
+                                  "type": "string",
+                                  "description": "URL path template with {param} placeholders"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "Human-readable description of what this endpoint does"
+                                },
+                                "pathParams": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Path parameter names extracted from the path template"
+                                },
+                                "timeout": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0,
+                                  "description": "Custom timeout in milliseconds"
+                                }
+                              },
+                              "required": [
+                                "endpointId",
+                                "method",
+                                "path",
+                                "description"
+                              ]
+                            },
+                            "description": "Available API endpoints for this provider"
+                          }
+                        },
+                        "required": [
+                          "installationId",
+                          "provider",
+                          "status",
+                          "baseUrl",
+                          "endpoints"
+                        ]
+                      },
+                      "description": "Connected providers and their available API endpoints"
+                    }
+                  },
+                  "required": [
+                    "connections"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v1/proxy/execute": {
+      "post": {
+        "operationId": "proxy.execute",
+        "summary": "Execute proxy request",
+        "description": "Execute an API call through a connected provider. Authentication is injected automatically — you only need to specify the endpoint and parameters.",
+        "tags": [
+          "Proxy"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "installationId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Gateway installation ID for the target connection"
+                  },
+                  "endpointId": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Endpoint ID from the provider's API catalog"
+                  },
+                  "pathParams": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Values for path template parameters (e.g. { owner: 'acme' })"
+                  },
+                  "queryParams": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "string"
+                    },
+                    "description": "Query string parameters"
+                  },
+                  "body": {
+                    "description": "JSON request body"
+                  }
+                },
+                "required": [
+                  "installationId",
+                  "endpointId"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "HTTP status code from the provider API"
+                    },
+                    "data": {
+                      "description": "Response body from the provider API"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Response headers from the provider API"
+                    }
+                  },
+                  "required": [
+                    "status",
+                    "headers"
+                  ]
                 }
               }
             }

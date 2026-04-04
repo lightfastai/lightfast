@@ -44,6 +44,7 @@
     "@repo/app-validation": "workspace:^",
     "@repo/app-vercel": "workspace:^",
     "@repo/lib": "workspace:*",
+    "@repo/platform-trpc": "workspace:*",
     "@repo/prompt-engine": "workspace:*",
     "@repo/ui": "workspace:*",
     "@sentry/nextjs": "catalog:",

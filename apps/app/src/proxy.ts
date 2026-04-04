@@ -36,12 +36,8 @@ const isPublicRoute = createRouteMatcher([
 // API routes that handle their own auth (withDualAuth at route level)
 const isApiRoute = createRouteMatcher([
   "/v1/(.*)",
-  "/search(.*)",
-  "/contents(.*)",
-  "/findsimilar(.*)",
-  "/related(.*)",
   "/api/cli/(.*)",
-  "/api/events/(.*)",
+  "/api/inngest(.*)",
 ]);
 
 // Auth routes — authenticated users should not see sign-in/sign-up forms.

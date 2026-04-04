@@ -15,70 +15,54 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarTrigger,
+  useSidebar,
 } from "@repo/ui/components/ui/sidebar";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
-import { BookOpen, HelpCircle, Mail } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  HelpCircle,
+  ListTodo,
+  Mail,
+  MessageSquare,
+  PlugZap,
+  Search,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/**
- * Navigation item types
- */
 interface NavItem {
   href: string;
+  icon: LucideIcon;
   title: string;
 }
 
-/**
- * Build primary navigation items for org-level pages
- */
 function getOrgPrimaryItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Ask",
-      href: `/${orgSlug}`,
-    },
-    {
-      title: "Search",
-      href: `/${orgSlug}/search`,
-    },
+    { title: "Ask", href: `/${orgSlug}`, icon: MessageSquare },
+    { title: "Search", href: `/${orgSlug}/search`, icon: Search },
   ];
 }
 
-/**
- * Build management navigation items for org-level pages
- */
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Events",
-      href: `/${orgSlug}/events`,
-    },
-    {
-      title: "Sources",
-      href: `/${orgSlug}/sources`,
-    },
-    {
-      title: "Jobs",
-      href: `/${orgSlug}/jobs`,
-    },
-    {
-      title: "Settings",
-      href: `/${orgSlug}/settings`,
-    },
+    { title: "Events", href: `/${orgSlug}/events`, icon: Activity },
+    { title: "Sources", href: `/${orgSlug}/sources`, icon: PlugZap },
+    { title: "Jobs", href: `/${orgSlug}/jobs`, icon: ListTodo },
+    { title: "Settings", href: `/${orgSlug}/settings`, icon: Settings },
   ];
 }
 
-/**
- * Render a set of navigation items as a proper component for correct reconciliation
- */
 function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   return items.map((item) => {
-    // For Settings, match any settings subpage (org level)
     const isActive =
       item.title === "Settings"
         ? pathname.startsWith(item.href)
@@ -86,8 +70,15 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
 
     return (
       <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton asChild isActive={isActive} size="sm">
+        <SidebarMenuButton
+          asChild
+          className="group-data-[collapsible=icon]:mx-auto [&>svg]:size-3.5"
+          isActive={isActive}
+          size="sm"
+          tooltip={item.title}
+        >
           <Link href={{ pathname: item.href }} prefetch={true}>
+            <item.icon />
             <span>{item.title}</span>
           </Link>
         </SidebarMenuButton>
@@ -96,13 +87,11 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   });
 }
 
-/**
- * PlanetScale-style sidebar component for the Console app
- */
 export function AppSidebar() {
   const pathname = usePathname();
   const trpc = useTRPC();
   const { setActive } = useOrganizationList();
+  const { state } = useSidebar();
 
   const { data: organizations = [] } = useSuspenseQuery({
     ...trpc.organization.listUserOrganizations.queryOptions(),
@@ -117,12 +106,9 @@ export function AppSidebar() {
     }
   };
 
-  // Extract orgSlug from pathname
-  // Pathname format: /[slug]/...
   const pathParts = pathname.split("/").filter(Boolean);
-  const orgSlug = pathParts[0] ?? ""; // [slug]
+  const orgSlug = pathParts[0] ?? "";
 
-  // Determine mode based on pathname
   const mode =
     pathname.startsWith("/account") || pathname.startsWith("/new")
       ? "account"
@@ -130,26 +116,29 @@ export function AppSidebar() {
 
   return (
     <Sidebar
-      className="group/sidebar border-border/50 border-r"
-      collapsible="none"
+      className="border-border/50 group-data-[state=collapsed]:border-r"
+      collapsible="icon"
       variant="inset"
     >
-      {/* Org component header - only show if in org context */}
       {orgSlug && (
-        <div className="flex h-14 items-center px-4">
-          <TeamSwitcher
-            createTeamHref="/account/teams/new"
-            mode={mode}
-            onOrgSelect={handleOrgSelect}
-            organizations={organizations}
-          />
-        </div>
+        <SidebarHeader className="h-14 flex-row items-center gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
+          {state === "expanded" && (
+            <div className="flex min-w-0 flex-1">
+              <TeamSwitcher
+                createTeamHref="/account/teams/new"
+                mode={mode}
+                onOrgSelect={handleOrgSelect}
+                organizations={organizations}
+              />
+            </div>
+          )}
+          <SidebarTrigger className="shrink-0" />
+        </SidebarHeader>
       )}
       <SidebarContent>
         {orgSlug && (
           <>
-            {/* Primary Navigation - no label */}
-            <SidebarGroup>
+            <SidebarGroup className="group-data-[collapsible=icon]:px-0">
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems
@@ -159,10 +148,10 @@ export function AppSidebar() {
                 </SidebarMenu>
               </SidebarGroupContent>
             </SidebarGroup>
-
-            {/* Manage Section - with label */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Manage</SidebarGroupLabel>
+            <SidebarGroup className="group-data-[collapsible=icon]:px-0">
+              <SidebarGroupLabel className="group-data-[collapsible=icon]:mt-0">
+                Manage
+              </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems
@@ -175,7 +164,7 @@ export function AppSidebar() {
           </>
         )}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="group-data-[collapsible=icon]:items-center group-data-[collapsible=icon]:px-0">
         <Popover>
           <PopoverTrigger asChild>
             <Button

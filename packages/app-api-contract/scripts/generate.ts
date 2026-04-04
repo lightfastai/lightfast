@@ -36,6 +36,11 @@ async function generate() {
         name: "Search",
         description: "Semantic search across indexed content",
       },
+      {
+        name: "Proxy",
+        description:
+          "Authenticated proxy to connected provider APIs (GitHub, Linear, Vercel, etc.)",
+      },
     ],
     components: {
       securitySchemes: {

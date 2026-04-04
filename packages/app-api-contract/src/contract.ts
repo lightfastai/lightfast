@@ -1,5 +1,8 @@
 import { oc } from "@orpc/contract";
 import {
+  ProxyExecuteRequestSchema,
+  ProxyExecuteResponseSchema,
+  ProxySearchResponseSchema,
   SearchRequestSchema,
   SearchResponseSchema,
 } from "@repo/app-validation/api";
@@ -26,6 +29,31 @@ export const apiContract = {
     })
     .input(SearchRequestSchema)
     .output(SearchResponseSchema),
+
+  proxy: {
+    search: oc
+      .route({
+        method: "POST",
+        path: "/v1/proxy/search",
+        tags: ["Proxy"],
+        summary: "List proxy endpoints",
+        description:
+          "Discover all connected providers and their available API endpoints. Returns the full endpoint catalog for each active connection.",
+      })
+      .output(ProxySearchResponseSchema),
+
+    execute: oc
+      .route({
+        method: "POST",
+        path: "/v1/proxy/execute",
+        tags: ["Proxy"],
+        summary: "Execute proxy request",
+        description:
+          "Execute an API call through a connected provider. Authentication is injected automatically — you only need to specify the endpoint and parameters.",
+      })
+      .input(ProxyExecuteRequestSchema)
+      .output(ProxyExecuteResponseSchema),
+  },
 };
 
 export type ApiContract = typeof apiContract;
