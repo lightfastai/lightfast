@@ -5,7 +5,6 @@ import type {
   ActionEventDef,
   EventDefinition,
   ProviderDefinition,
-  ProxyExecuteRequest,
 } from "./provider/index";
 import { apollo } from "./providers/apollo/index";
 import { github } from "./providers/github/index";
@@ -286,20 +285,6 @@ export type PathParamsFor<
       ? undefined
       : Record<ExtractPathParams<Path>, string>
     : undefined;
-
-/**
- * Typed proxy request for a known provider + endpoint at compile time.
- * Use when the caller knows the provider slug and endpoint key statically.
- *
- * For runtime-dynamic calls (slug from DB): use the base ProxyExecuteRequest.
- */
-export type TypedProxyRequest<
-  P extends keyof typeof PROVIDERS,
-  E extends EndpointKey<P>,
-> = Omit<ProxyExecuteRequest, "endpointId" | "pathParams"> & {
-  readonly endpointId: E;
-  readonly pathParams: PathParamsFor<P, E>;
-};
 
 // ── ResponseDataFor — thread responseSchema to call sites ─────────────────────
 

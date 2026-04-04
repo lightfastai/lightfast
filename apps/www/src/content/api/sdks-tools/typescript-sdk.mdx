@@ -95,7 +95,7 @@ console.log(results.meta.total); // Total matching documents
 
 ### proxySearch()
 
-Discover all available provider API endpoints across connected providers.
+Discover connected providers, their resources, and available actions. Returns connection IDs, resource names with pre-computed action params, and the full action catalog.
 
 ```typescript
 const response = await client.proxySearch(): Promise<ProxySearchResponse>
@@ -104,46 +104,43 @@ const response = await client.proxySearch(): Promise<ProxySearchResponse>
 #### Example
 
 ```typescript
-const providers = await client.proxySearch();
+const { connections } = await client.proxySearch();
 
-for (const connection of providers.connections) {
-  console.log(connection.provider); // e.g., "github"
-  console.log(connection.endpoints); // Available API endpoints
+for (const conn of connections) {
+  console.log(conn.provider);    // e.g., "github"
+  console.log(conn.resources);   // Connected repos/projects with params
+  console.log(conn.actions);     // Available actions
 }
 ```
 
 ---
 
-### proxyExecute()
+### proxyCall()
 
-Execute a provider API call through the Lightfast proxy. Auth is handled automatically — the proxy injects the correct token.
+Execute a provider API action. Use action strings from `proxySearch()` and pass a flat params object — resource params from the search response can be spread directly into the call. Auth is handled automatically.
 
 ```typescript
-const response = await client.proxyExecute(input: ProxyExecuteInput): Promise<ProxyExecuteResponse>
+const response = await client.proxyCall(input: ProxyCall): Promise<ProxyCallResponse>
 ```
 
-#### ProxyExecuteInput
+#### ProxyCall
 
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
-| `installationId` | `string` | Yes | Connection installation ID |
-| `endpointId` | `string` | Yes | Endpoint ID from proxySearch |
-| `pathParams` | `Record<string, string>` | No | Path parameters |
-| `queryParams` | `Record<string, string>` | No | Query parameters |
-| `body` | `unknown` | No | Request body |
+| `action` | `string` | Yes | Action to execute (e.g. `github.list-pull-requests`) |
+| `params` | `Record<string, unknown>` | No | Action parameters — spread resource params and add extras |
+| `connection` | `string` | No | Connection ID (optional, for future multi-connection support) |
 
 #### Example
 
 ```typescript
-const result = await client.proxyExecute({
-  installationId: "inst_abc123",
-  endpointId: "list-pull-requests",
-  pathParams: { owner: "myorg", repo: "myrepo" },
-  queryParams: { state: "open" },
+const result = await client.proxyCall({
+  action: "github.list-pull-requests",
+  params: { owner: "acme", repo: "web", state: "open" },
 });
 
-console.log(result.data); // Raw provider API response
-console.log(result.status); // HTTP status code
+console.log(result.data);    // Raw provider API response
+console.log(result.status);  // HTTP status code
 ```
 
 ---
@@ -191,9 +188,10 @@ import type {
   SearchLatency,
   ProxySearchResponse,
   ProxyConnection,
-  ProxyEndpoint,
-  ProxyExecuteInput,
-  ProxyExecuteResponse,
+  ProxyAction,
+  ProxyResource,
+  ProxyCall,
+  ProxyCallResponse,
 } from "lightfast";
 ```
 

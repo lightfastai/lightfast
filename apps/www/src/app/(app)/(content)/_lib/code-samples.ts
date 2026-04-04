@@ -12,7 +12,7 @@ interface CodeSample {
  * Must stay in sync with the OpenAPI spec — add/remove entries here when
  * endpoints are added/removed from the contract.
  */
-type OperationId = "search" | "proxy.search" | "proxy.execute";
+type OperationId = "search" | "proxy.search" | "proxy.call";
 
 const sdkSamples: Record<OperationId, string> = {
   search: `import { Lightfast } from "lightfast";
@@ -33,22 +33,21 @@ console.log(results.total);`,
 
 const client = new Lightfast({ apiKey: "sk-lf-..." });
 
-const providers = await client.proxySearch();
+const { connections } = await client.proxySearch();
 
-for (const connection of providers.connections) {
-  console.log(connection.provider);   // e.g., "github"
-  console.log(connection.endpoints);  // Available API endpoints
+for (const conn of connections) {
+  console.log(conn.provider);    // e.g., "github"
+  console.log(conn.resources);   // Connected repos/projects with params
+  console.log(conn.actions);     // Available actions
 }`,
 
-  "proxy.execute": `import { Lightfast } from "lightfast";
+  "proxy.call": `import { Lightfast } from "lightfast";
 
 const client = new Lightfast({ apiKey: "sk-lf-..." });
 
-const result = await client.proxyExecute({
-  installationId: "inst_abc123",
-  endpointId: "list-pull-requests",
-  pathParams: { owner: "myorg", repo: "myrepo" },
-  queryParams: { state: "open" },
+const result = await client.proxyCall({
+  action: "github.list-pull-requests",
+  params: { owner: "acme", repo: "web", state: "open" },
 });
 
 console.log(result.data);    // Raw provider API response
@@ -63,6 +62,13 @@ const mcpSamples: Partial<Record<OperationId, string>> = {
     "limit": 5,
     "mode": "balanced",
     "sources": ["github"]
+  }
+}`,
+  "proxy.call": `{
+  "name": "lightfast_proxy_call",
+  "arguments": {
+    "action": "github.list-pull-requests",
+    "params": { "owner": "acme", "repo": "web", "state": "open" }
   }
 }`,
 };
