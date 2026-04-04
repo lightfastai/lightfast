@@ -46,12 +46,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.27.1",
-    "lightfast": "workspace:*"
+    "@modelcontextprotocol/sdk": "^1.27.1"
   },
   "devDependencies": {
+    "@repo/app-api-contract": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
+    "@vendor/mcp": "workspace:*",
+    "lightfast": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "catalog:"
   },

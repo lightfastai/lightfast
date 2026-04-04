@@ -8,6 +8,8 @@ export default defineConfig({
   clean: true,
   sourcemap: true,
   target: "node18",
+  bundle: true,
+  external: ["@modelcontextprotocol/sdk"],
   outExtension: () => ({ js: ".mjs" }),
   banner: {
     js: "#!/usr/bin/env node",

@@ -971,11 +971,22 @@ importers:
         version: 5.9.3
 
   core/lightfast:
-    dependencies:
+    devDependencies:
+      '@orpc/client':
+        specifier: ^1.13.0
+        version: 1.13.13(@opentelemetry/api@1.9.0)
+      '@orpc/contract':
+        specifier: ^1.13.0
+        version: 1.13.13(@opentelemetry/api@1.9.0)
+      '@orpc/openapi-client':
+        specifier: ^1.13.0
+        version: 1.13.13(@opentelemetry/api@1.9.0)
+      '@repo/app-api-contract':
+        specifier: workspace:*
+        version: link:../../packages/app-api-contract
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
-    devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
@@ -1003,19 +1014,22 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.27.1
         version: 1.27.1(@cfworker/json-schema@4.1.1)(zod@4.3.6)
-      lightfast:
-        specifier: workspace:*
-        version: link:../lightfast
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
     devDependencies:
+      '@repo/app-api-contract':
+        specifier: workspace:*
+        version: link:../../packages/app-api-contract
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
       '@types/node':
         specifier: 'catalog:'
         version: 20.19.22
+      '@vendor/mcp':
+        specifier: workspace:*
+        version: link:../../vendor/mcp
+      lightfast:
+        specifier: workspace:*
+        version: link:../lightfast
       tsup:
         specifier: ^8.5.1
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.8)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.2)
@@ -2166,6 +2180,25 @@ importers:
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  vendor/mcp:
+    dependencies:
+      '@modelcontextprotocol/sdk':
+        specifier: ^1.27.1
+        version: 1.27.1(@cfworker/json-schema@4.1.1)(zod@4.3.6)
+      '@orpc/contract':
+        specifier: ^1.13.0
+        version: 1.13.13(@opentelemetry/api@1.9.0)
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 20.19.22
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
