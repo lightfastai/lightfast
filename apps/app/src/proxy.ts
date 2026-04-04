@@ -18,8 +18,8 @@ const securityHeaders = securityMiddleware(
     createClerkCspDirectives(),
     createAnalyticsCspDirectives(),
     createKnockCspDirectives(),
-    createSentryCspDirectives(),
-  ),
+    createSentryCspDirectives()
+  )
 );
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
@@ -27,6 +27,7 @@ const securityHeaders = securityMiddleware(
 const isPublicRoute = createRouteMatcher([
   "/early-access(.*)",
   "/api/health(.*)",
+  "/api/ingest(.*)",
   "/docs(.*)",
   "/monitoring",
   "/ingest(.*)",
@@ -99,7 +100,7 @@ export default clerkMiddleware(
     organizationSyncOptions: {
       organizationPatterns: ["/:slug", "/:slug/(.*)"],
     },
-  },
+  }
 );
 
 export const config = {
