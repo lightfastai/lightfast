@@ -607,10 +607,7 @@ export const connectionsRouter = {
             .from(orgIntegrations)
             .where(
               and(
-                eq(
-                  orgIntegrations.installationId,
-                  input.gwInstallationId
-                ),
+                eq(orgIntegrations.installationId, input.gwInstallationId),
                 eq(
                   orgIntegrations.providerResourceId,
                   resource.resourceId as SourceIdentifier
