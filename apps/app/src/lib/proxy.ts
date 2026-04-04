@@ -1,9 +1,9 @@
 import { db } from "@db/app/client";
-import { gatewayInstallations } from "@db/app/schema";
-import { getProvider } from "@repo/app-providers";
+import { gatewayInstallations, orgIntegrations } from "@db/app/schema";
+import { getProvider, type SourceType } from "@repo/app-providers";
 import type {
-  ProxyExecuteRequest,
-  ProxyExecuteResponse,
+  ProxyCall,
+  ProxyCallResponse,
   ProxySearchResponse,
 } from "@repo/app-validation/api";
 import { createMemoryCaller } from "@repo/platform-trpc/caller";
@@ -11,16 +11,11 @@ import { log } from "@vendor/observability/log/next";
 import { and, eq } from "drizzle-orm";
 import type { AuthContext } from "./types";
 
-/**
- * Extract path parameter names from a URL template.
- * E.g., "/repos/{owner}/{repo}" → ["owner", "repo"]
- */
+const CONN_PREFIX = "conn_";
+
 function extractPathParams(path: string): string[] {
   const matches = path.match(/\{(\w+)\}/g);
-  if (!matches) {
-    return [];
-  }
-  return matches.map((m) => m.slice(1, -1));
+  return matches ? matches.map((m) => m.slice(1, -1)) : [];
 }
 
 export async function proxySearchLogic(
@@ -37,79 +32,247 @@ export async function proxySearchLogic(
       )
     );
 
-  const connections = installations
-    .map((inst) => {
-      const providerDef = getProvider(inst.provider);
+  const connections = await Promise.all(
+    installations.map(async (inst) => {
+      // Cast to string to use the wide getProvider overload — avoids
+      // union-of-function parameter intersection issues with TAccountInfo.
+      const providerDef = getProvider(inst.provider as string);
       if (!providerDef) {
         return null;
       }
 
-      const endpoints = Object.entries(providerDef.api.endpoints).map(
-        ([key, ep]) => {
-          const pathParams = extractPathParams(ep.path);
+      // Query connected resources for this installation
+      const integrations = await db
+        .select()
+        .from(orgIntegrations)
+        .where(
+          and(
+            eq(orgIntegrations.installationId, inst.id),
+            eq(orgIntegrations.status, "active")
+          )
+        );
+
+      // Build executeApi callback for this installation
+      const memory = await createMemoryCaller();
+      const executeApi = async (req: {
+        endpointId: string;
+        pathParams?: Record<string, string>;
+        queryParams?: Record<string, string>;
+        body?: unknown;
+      }) =>
+        memory.proxy.execute({
+          installationId: inst.id,
+          endpointId: req.endpointId,
+          pathParams: req.pathParams,
+          queryParams: req.queryParams,
+          body: req.body,
+        });
+
+      // Resolve all resources (1 batch API call per provider)
+      // On failure, fall back to using providerResourceId as the display name
+      // so connected resources still appear (with opaque IDs instead of names).
+      let resolvedResources: Awaited<
+        ReturnType<typeof providerDef.resourcePicker.resolveProxyResources>
+      > = [];
+      try {
+        resolvedResources =
+          await providerDef.resourcePicker.resolveProxyResources(executeApi, {
+            id: inst.id,
+            externalId: inst.externalId,
+            providerAccountInfo: inst.providerAccountInfo!,
+          });
+      } catch (err) {
+        log.warn("Failed to resolve proxy resources, falling back to IDs", {
+          requestId,
+          provider: inst.provider,
+          error: err instanceof Error ? err.message : String(err),
+        });
+        // Degraded mode: use orgIntegrations data directly so resources
+        // still appear with providerResourceId as name and empty params.
+        resolvedResources = integrations.map((i) => ({
+          providerResourceId: i.providerResourceId,
+          name: i.providerResourceId,
+          params: {},
+        }));
+      }
+
+      // Build a lookup set of connected providerResourceIds
+      const connectedSet = new Map(
+        integrations.map((i) => [i.providerResourceId, i])
+      );
+
+      // Filter to connected resources and merge sync events
+      const resources = resolvedResources
+        .filter((r) => connectedSet.has(r.providerResourceId))
+        .map((r) => {
+          const integration = connectedSet.get(r.providerResourceId);
+          const config = integration?.providerConfig as {
+            sync?: { events?: string[] };
+          } | null;
           return {
-            endpointId: key,
-            method: ep.method as "GET" | "POST",
-            path: ep.path,
+            name: r.name,
+            params: r.params,
+            ...(config?.sync?.events?.length
+              ? { syncing: config.sync.events }
+              : {}),
+          };
+        });
+
+      // Build action catalog from endpoint definitions
+      const actions = Object.entries(providerDef.api.endpoints).map(
+        ([key, ep]) => {
+          const params = extractPathParams(ep.path);
+          return {
+            action: `${inst.provider}.${key}`,
+            ...(params.length > 0 ? { params } : {}),
             description: ep.description,
-            ...(pathParams.length > 0 ? { pathParams } : {}),
-            ...(ep.timeout ? { timeout: ep.timeout } : {}),
           };
         }
       );
 
       return {
-        installationId: inst.id,
+        id: `${CONN_PREFIX}${inst.id}`,
         provider: inst.provider,
-        status: inst.status,
-        baseUrl: providerDef.api.baseUrl,
-        endpoints,
+        resources,
+        actions,
       };
     })
-    .filter((c): c is NonNullable<typeof c> => c !== null);
+  );
+
+  const filtered = connections.filter(
+    (c): c is NonNullable<typeof c> => c !== null
+  );
 
   log.info("Proxy search complete", {
     requestId,
-    connectionCount: connections.length,
+    connectionCount: filtered.length,
   });
 
-  return { connections };
+  return { connections: filtered };
 }
 
-export async function proxyExecuteLogic(
+export async function proxyCallLogic(
   auth: AuthContext,
-  request: ProxyExecuteRequest,
+  request: ProxyCall,
   requestId: string
-): Promise<ProxyExecuteResponse> {
-  // Verify the installation belongs to the user's org
-  const installation = await db.query.gatewayInstallations.findFirst({
-    where: and(
-      eq(gatewayInstallations.id, request.installationId),
-      eq(gatewayInstallations.orgId, auth.clerkOrgId)
-    ),
-  });
+): Promise<ProxyCallResponse> {
+  // Parse action → provider + endpointId
+  const dotIndex = request.action.indexOf(".");
+  if (dotIndex === -1) {
+    throw new Error(
+      `Invalid action format: "${request.action}". Expected "provider.endpointId"`
+    );
+  }
+  const providerName = request.action.slice(0, dotIndex);
+  const endpointId = request.action.slice(dotIndex + 1);
 
-  if (!installation) {
-    throw new Error("Installation not found or access denied");
+  // Resolve installation
+  let installationId: string;
+
+  if (request.connection) {
+    // Validate provided connection
+    installationId = request.connection.startsWith(CONN_PREFIX)
+      ? request.connection.slice(CONN_PREFIX.length)
+      : request.connection;
+
+    const installation = await db.query.gatewayInstallations.findFirst({
+      where: and(
+        eq(gatewayInstallations.id, installationId),
+        eq(gatewayInstallations.orgId, auth.clerkOrgId)
+      ),
+    });
+
+    if (!installation) {
+      throw new Error("Connection not found or access denied");
+    }
+    if (installation.status !== "active") {
+      throw new Error(`Connection not active (status: ${installation.status})`);
+    }
+    if (installation.provider !== providerName) {
+      throw new Error(
+        `Connection provider mismatch: expected ${providerName}, got ${installation.provider}`
+      );
+    }
+  } else {
+    // Auto-resolve: find single active installation for this provider
+    const installations = await db
+      .select()
+      .from(gatewayInstallations)
+      .where(
+        and(
+          eq(gatewayInstallations.orgId, auth.clerkOrgId),
+          eq(gatewayInstallations.provider, providerName as SourceType),
+          eq(gatewayInstallations.status, "active")
+        )
+      );
+
+    if (installations.length === 0) {
+      throw new Error(`Provider "${providerName}" is not connected`);
+    }
+    installationId = installations[0]!.id;
   }
 
-  if (installation.status !== "active") {
-    throw new Error(`Installation not active (status: ${installation.status})`);
+  // Validate endpoint exists
+  const providerDef = getProvider(providerName);
+  if (!providerDef) {
+    throw new Error(`Unknown provider: ${providerName}`);
+  }
+  const endpoint = providerDef.api.endpoints[endpointId];
+  if (!endpoint) {
+    throw new Error(
+      `Unknown action: ${request.action}. Available: ${Object.keys(
+        providerDef.api.endpoints
+      )
+        .map((k) => `${providerName}.${k}`)
+        .join(", ")}`
+    );
   }
 
+  // Route flat params → pathParams / queryParams / body
+  const pathParamNames = new Set(extractPathParams(endpoint.path));
+  const flatParams = (request.params ?? {}) as Record<string, unknown>;
+
+  const pathParams: Record<string, string> = {};
+  const remaining: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(flatParams)) {
+    if (pathParamNames.has(key)) {
+      pathParams[key] = String(value);
+    } else {
+      remaining[key] = value;
+    }
+  }
+
+  let queryParams: Record<string, string> | undefined;
+  let body: unknown | undefined;
+
+  const hasRemaining = Object.keys(remaining).length > 0;
+
+  if (endpoint.method === "GET" && hasRemaining) {
+    // GET: remaining → query params
+    queryParams = {};
+    for (const [key, value] of Object.entries(remaining)) {
+      queryParams[key] = String(value);
+    }
+  } else if (hasRemaining) {
+    // POST: remaining → body
+    body = remaining;
+  }
+
+  // Execute via platform proxy
   const memory = await createMemoryCaller();
   const result = await memory.proxy.execute({
-    installationId: request.installationId,
-    endpointId: request.endpointId,
-    pathParams: request.pathParams,
-    queryParams: request.queryParams,
-    body: request.body,
+    installationId,
+    endpointId,
+    pathParams: Object.keys(pathParams).length > 0 ? pathParams : undefined,
+    queryParams,
+    body,
   });
 
-  log.info("Proxy execute complete", {
+  log.info("Proxy call complete", {
     requestId,
-    installationId: request.installationId,
-    endpointId: request.endpointId,
+    action: request.action,
+    installationId,
     status: result.status,
   });
 

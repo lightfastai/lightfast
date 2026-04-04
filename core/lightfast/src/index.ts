@@ -25,10 +25,11 @@ export interface LightfastOptions {
 // ---------------------------------------------------------------------------
 
 export type {
+  ProxyAction,
+  ProxyCall,
+  ProxyCallResponse,
   ProxyConnection,
-  ProxyEndpoint,
-  ProxyExecuteRequest,
-  ProxyExecuteResponse,
+  ProxyResource,
   ProxySearchResponse,
   SearchMode,
   SearchRequest,
@@ -37,10 +38,11 @@ export type {
 } from "@repo/app-validation/api";
 
 export {
+  ProxyActionSchema,
+  ProxyCallResponseSchema,
+  ProxyCallSchema,
   ProxyConnectionSchema,
-  ProxyEndpointSchema,
-  ProxyExecuteRequestSchema,
-  ProxyExecuteResponseSchema,
+  ProxyResourceSchema,
   ProxySearchResponseSchema,
   SearchModeSchema,
   SearchRequestSchema,

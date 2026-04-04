@@ -366,6 +366,19 @@ export const linear = defineWebhookProvider({
         iconLabel: t.key.substring(0, 2),
       }));
     },
+
+    resolveProxyResources: async (executeApi) => {
+      const result = await executeApi({
+        endpointId: "graphql",
+        body: { query: "{ teams { nodes { id name } } }" },
+      });
+      const parsed = graphqlTeamsResponseSchema.parse(result.data);
+      return (parsed.data?.teams?.nodes ?? []).map((t) => ({
+        providerResourceId: t.id,
+        name: t.name,
+        params: { teamId: t.id },
+      }));
+    },
   },
 
   edgeRules: [

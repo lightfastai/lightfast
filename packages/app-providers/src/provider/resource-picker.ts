@@ -28,6 +28,15 @@ export interface NormalizedResource {
   readonly subtitle?: string | null;
 }
 
+export interface ProxyResolvedResource {
+  /** Human-readable display name (e.g. "acme/web", "Engineering") */
+  name: string;
+  /** Pre-computed params the agent can spread into action calls */
+  params: Record<string, string>;
+  /** Provider's stable resource ID (matches orgIntegrations.providerResourceId) */
+  providerResourceId: string;
+}
+
 export type InstallationMode = "multi" | "merged" | "single";
 
 export interface ResourcePickerDef<TAccountInfo = unknown> {
@@ -56,6 +65,19 @@ export interface ResourcePickerDef<TAccountInfo = unknown> {
       readonly providerAccountInfo: TAccountInfo;
     }
   ) => Promise<NormalizedResource[]>;
+  /**
+   * Batch-resolve all resources for the proxy search response.
+   * Returns providerResourceId + human name + pre-computed action params.
+   * The server filters to connected resources (orgIntegrations) after resolution.
+   */
+  readonly resolveProxyResources: (
+    executeApi: ResourcePickerExecuteApiFn,
+    installation: {
+      id: string;
+      externalId: string;
+      providerAccountInfo: TAccountInfo;
+    }
+  ) => Promise<ProxyResolvedResource[]>;
   /** Human label for resources, e.g. "repositories", "projects", "teams" */
   readonly resourceLabel: string;
 }

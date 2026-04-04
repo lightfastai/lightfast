@@ -1,7 +1,7 @@
 import { oc } from "@orpc/contract";
 import {
-  ProxyExecuteRequestSchema,
-  ProxyExecuteResponseSchema,
+  ProxyCallResponseSchema,
+  ProxyCallSchema,
   ProxySearchResponseSchema,
   SearchRequestSchema,
   SearchResponseSchema,
@@ -67,25 +67,25 @@ export const apiContract = {
         method: "POST",
         path: "/v1/proxy/search",
         tags: ["Proxy"],
-        summary: "List proxy endpoints",
+        summary: "Discover connections and actions",
         description:
-          "Discover all connected providers and their available API endpoints. Returns the full endpoint catalog for each active connection.",
+          "Discover connected providers, their resources, and available actions. Returns connection IDs, resource names with pre-computed action params, and the full action catalog. Call this first to learn what you can do, then use proxy.call to execute actions.",
       })
       .errors(apiErrors)
       .output(ProxySearchResponseSchema),
 
-    execute: oc
+    call: oc
       .route({
         method: "POST",
-        path: "/v1/proxy/execute",
+        path: "/v1/proxy/call",
         tags: ["Proxy"],
-        summary: "Execute proxy request",
+        summary: "Execute a provider action",
         description:
-          "Execute an API call through a connected provider. Authentication is injected automatically — you only need to specify the endpoint and parameters.",
+          "Execute a provider API action. Use action strings from proxy.search (e.g. 'github.list-pull-requests'). Pass a flat params object — resource params from the search response can be spread directly into the call. Auth is handled automatically.",
       })
       .errors(apiErrors)
-      .input(ProxyExecuteRequestSchema)
-      .output(ProxyExecuteResponseSchema),
+      .input(ProxyCallSchema)
+      .output(ProxyCallResponseSchema),
   },
 };
 

@@ -247,6 +247,21 @@ export const sentry = defineWebhookProvider({
         linkName: `${p.organization?.slug ?? ""}/${p.slug}`,
       }));
     },
+
+    resolveProxyResources: async (executeApi) => {
+      const orgResult = await executeApi({ endpointId: "list-organizations" });
+      const orgs = z.array(sentryOrganizationSchema).parse(orgResult.data);
+      const orgSlug = orgs[0]?.slug ?? "";
+
+      const projResult = await executeApi({ endpointId: "list-projects" });
+      const projects = z.array(sentryProjectSchema).parse(projResult.data);
+
+      return projects.map((p) => ({
+        providerResourceId: p.id,
+        name: p.name,
+        params: { organization_slug: orgSlug, project_slug: p.slug },
+      }));
+    },
   },
 
   edgeRules: [],

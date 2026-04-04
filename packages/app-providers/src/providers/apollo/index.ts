@@ -79,6 +79,14 @@ export const apollo = defineApiProvider({
     listResources: async () => [
       { id: "workspace", name: "Apollo Workspace", subtitle: null },
     ],
+
+    resolveProxyResources: async () => [
+      {
+        providerResourceId: "workspace",
+        name: "Apollo Workspace",
+        params: {},
+      },
+    ],
   },
 
   edgeRules: [],

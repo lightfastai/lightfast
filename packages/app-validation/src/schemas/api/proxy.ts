@@ -2,70 +2,60 @@ import { z } from "zod";
 
 // --- Proxy Search Response ---
 
-export const ProxyEndpointSchema = z.object({
-  endpointId: z
+export const ProxyActionSchema = z.object({
+  action: z
     .string()
-    .describe("Unique identifier for this endpoint in the provider catalog"),
-  method: z.enum(["GET", "POST"]).describe("HTTP method"),
-  path: z.string().describe("URL path template with {param} placeholders"),
-  description: z
-    .string()
-    .describe("Human-readable description of what this endpoint does"),
-  pathParams: z
+    .describe("Action identifier (e.g. github.list-pull-requests)"),
+  params: z.array(z.string()).optional().describe("Required parameter names"),
+  description: z.string().describe("What this action does"),
+});
+
+export const ProxyResourceSchema = z.object({
+  name: z.string().describe("Human-readable resource name (e.g. acme/web)"),
+  params: z
+    .record(z.string(), z.string())
+    .describe("Pre-computed params for action calls"),
+  syncing: z
     .array(z.string())
     .optional()
-    .describe("Path parameter names extracted from the path template"),
-  timeout: z
-    .number()
-    .int()
-    .positive()
-    .optional()
-    .describe("Custom timeout in milliseconds"),
+    .describe("Event types being synced to Lightfast"),
 });
 
 export const ProxyConnectionSchema = z.object({
-  installationId: z.string().describe("Gateway installation ID"),
+  id: z.string().describe("Connection ID"),
   provider: z.string().describe("Provider name (e.g. github, linear, vercel)"),
-  status: z.string().describe("Connection status"),
-  baseUrl: z.string().describe("Provider API base URL"),
-  endpoints: z
-    .array(ProxyEndpointSchema)
-    .describe("Available API endpoints for this provider"),
+  resources: z
+    .array(ProxyResourceSchema)
+    .describe("Connected resources with pre-computed action params"),
+  actions: z
+    .array(ProxyActionSchema)
+    .describe("Available actions for this provider"),
 });
 
 export const ProxySearchResponseSchema = z.object({
   connections: z
     .array(ProxyConnectionSchema)
-    .describe("Connected providers and their available API endpoints"),
+    .describe("Connected providers with resources and available actions"),
 });
 
-export type ProxyEndpoint = z.infer<typeof ProxyEndpointSchema>;
-export type ProxyConnection = z.infer<typeof ProxyConnectionSchema>;
-export type ProxySearchResponse = z.infer<typeof ProxySearchResponseSchema>;
+// --- Proxy Call ---
 
-// --- Proxy Execute ---
-
-export const ProxyExecuteRequestSchema = z.object({
-  installationId: z
+export const ProxyCallSchema = z.object({
+  action: z
     .string()
     .min(1)
-    .describe("Gateway installation ID for the target connection"),
-  endpointId: z
+    .describe("Action to execute (e.g. github.list-pull-requests)"),
+  params: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe("Action parameters — spread resource params and add extras"),
+  connection: z
     .string()
-    .min(1)
-    .describe("Endpoint ID from the provider's API catalog"),
-  pathParams: z
-    .record(z.string(), z.string())
     .optional()
-    .describe("Values for path template parameters (e.g. { owner: 'acme' })"),
-  queryParams: z
-    .record(z.string(), z.string())
-    .optional()
-    .describe("Query string parameters"),
-  body: z.unknown().optional().describe("JSON request body"),
+    .describe("Connection ID (optional, for future multi-connection support)"),
 });
 
-export const ProxyExecuteResponseSchema = z.object({
+export const ProxyCallResponseSchema = z.object({
   status: z.number().int().describe("HTTP status code from the provider API"),
   data: z.unknown().describe("Response body from the provider API"),
   headers: z
@@ -73,5 +63,11 @@ export const ProxyExecuteResponseSchema = z.object({
     .describe("Response headers from the provider API"),
 });
 
-export type ProxyExecuteRequest = z.infer<typeof ProxyExecuteRequestSchema>;
-export type ProxyExecuteResponse = z.infer<typeof ProxyExecuteResponseSchema>;
+// --- Types ---
+
+export type ProxyAction = z.infer<typeof ProxyActionSchema>;
+export type ProxyResource = z.infer<typeof ProxyResourceSchema>;
+export type ProxyConnection = z.infer<typeof ProxyConnectionSchema>;
+export type ProxySearchResponse = z.infer<typeof ProxySearchResponseSchema>;
+export type ProxyCall = z.infer<typeof ProxyCallSchema>;
+export type ProxyCallResponse = z.infer<typeof ProxyCallResponseSchema>;

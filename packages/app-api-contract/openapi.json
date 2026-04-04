@@ -468,8 +468,8 @@
     "/v1/proxy/search": {
       "post": {
         "operationId": "proxy.search",
-        "summary": "List proxy endpoints",
-        "description": "Discover all connected providers and their available API endpoints. Returns the full endpoint catalog for each active connection.",
+        "summary": "Discover connections and actions",
+        "description": "Discover connected providers, their resources, and available actions. Returns connection IDs, resource names with pre-computed action params, and the full action catalog. Call this first to learn what you can do, then use proxy.call to execute actions.",
         "tags": [
           "Proxy"
         ],
@@ -486,81 +486,85 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "installationId": {
+                          "id": {
                             "type": "string",
-                            "description": "Gateway installation ID"
+                            "description": "Connection ID"
                           },
                           "provider": {
                             "type": "string",
                             "description": "Provider name (e.g. github, linear, vercel)"
                           },
-                          "status": {
-                            "type": "string",
-                            "description": "Connection status"
-                          },
-                          "baseUrl": {
-                            "type": "string",
-                            "description": "Provider API base URL"
-                          },
-                          "endpoints": {
+                          "resources": {
                             "type": "array",
                             "items": {
                               "type": "object",
                               "properties": {
-                                "endpointId": {
+                                "name": {
                                   "type": "string",
-                                  "description": "Unique identifier for this endpoint in the provider catalog"
+                                  "description": "Human-readable resource name (e.g. acme/web)"
                                 },
-                                "method": {
-                                  "enum": [
-                                    "GET",
-                                    "POST"
-                                  ],
-                                  "type": "string",
-                                  "description": "HTTP method"
+                                "params": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "description": "Pre-computed params for action calls"
                                 },
-                                "path": {
-                                  "type": "string",
-                                  "description": "URL path template with {param} placeholders"
-                                },
-                                "description": {
-                                  "type": "string",
-                                  "description": "Human-readable description of what this endpoint does"
-                                },
-                                "pathParams": {
+                                "syncing": {
                                   "type": "array",
                                   "items": {
                                     "type": "string"
                                   },
-                                  "description": "Path parameter names extracted from the path template"
-                                },
-                                "timeout": {
-                                  "type": "integer",
-                                  "minimum": -9007199254740991,
-                                  "maximum": 9007199254740991,
-                                  "exclusiveMinimum": 0,
-                                  "description": "Custom timeout in milliseconds"
+                                  "description": "Event types being synced to Lightfast"
                                 }
                               },
                               "required": [
-                                "endpointId",
-                                "method",
-                                "path",
+                                "name",
+                                "params"
+                              ]
+                            },
+                            "description": "Connected resources with pre-computed action params"
+                          },
+                          "actions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "action": {
+                                  "type": "string",
+                                  "description": "Action identifier (e.g. github.list-pull-requests)"
+                                },
+                                "params": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Required parameter names"
+                                },
+                                "description": {
+                                  "type": "string",
+                                  "description": "What this action does"
+                                }
+                              },
+                              "required": [
+                                "action",
                                 "description"
                               ]
                             },
-                            "description": "Available API endpoints for this provider"
+                            "description": "Available actions for this provider"
                           }
                         },
                         "required": [
-                          "installationId",
+                          "id",
                           "provider",
-                          "status",
-                          "baseUrl",
-                          "endpoints"
+                          "resources",
+                          "actions"
                         ]
                       },
-                      "description": "Connected providers and their available API endpoints"
+                      "description": "Connected providers with resources and available actions"
                     }
                   },
                   "required": [
@@ -835,11 +839,11 @@
         }
       }
     },
-    "/v1/proxy/execute": {
+    "/v1/proxy/call": {
       "post": {
-        "operationId": "proxy.execute",
-        "summary": "Execute proxy request",
-        "description": "Execute an API call through a connected provider. Authentication is injected automatically — you only need to specify the endpoint and parameters.",
+        "operationId": "proxy.call",
+        "summary": "Execute a provider action",
+        "description": "Execute a provider API action. Use action strings from proxy.search (e.g. 'github.list-pull-requests'). Pass a flat params object — resource params from the search response can be spread directly into the call. Auth is handled automatically.",
         "tags": [
           "Proxy"
         ],
@@ -850,43 +854,26 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "installationId": {
+                  "action": {
                     "type": "string",
                     "minLength": 1,
-                    "description": "Gateway installation ID for the target connection"
+                    "description": "Action to execute (e.g. github.list-pull-requests)"
                   },
-                  "endpointId": {
-                    "type": "string",
-                    "minLength": 1,
-                    "description": "Endpoint ID from the provider's API catalog"
-                  },
-                  "pathParams": {
+                  "params": {
                     "type": "object",
                     "propertyNames": {
                       "type": "string"
                     },
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Values for path template parameters (e.g. { owner: 'acme' })"
+                    "additionalProperties": {},
+                    "description": "Action parameters — spread resource params and add extras"
                   },
-                  "queryParams": {
-                    "type": "object",
-                    "propertyNames": {
-                      "type": "string"
-                    },
-                    "additionalProperties": {
-                      "type": "string"
-                    },
-                    "description": "Query string parameters"
-                  },
-                  "body": {
-                    "description": "JSON request body"
+                  "connection": {
+                    "type": "string",
+                    "description": "Connection ID (optional, for future multi-connection support)"
                   }
                 },
                 "required": [
-                  "installationId",
-                  "endpointId"
+                  "action"
                 ]
               }
             }
