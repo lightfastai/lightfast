@@ -1,0 +1,192 @@
+{
+  "info": {
+    "title": "Lightfast API",
+    "version": "1.0.0-alpha",
+    "description": "Real-time semantic search across all your company's data sources. This API is currently in alpha — breaking changes may occur between releases.",
+    "contact": {
+      "name": "Lightfast Support",
+      "email": "support@lightfast.ai",
+      "url": "https://lightfast.ai"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://lightfast.ai",
+      "description": "Production API"
+    }
+  ],
+  "security": [
+    {
+      "apiKey": []
+    }
+  ],
+  "tags": [
+    {
+      "name": "Search",
+      "description": "Semantic search across indexed content"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "apiKey": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "API Key",
+        "description": "Use your Lightfast API key (sk-lf-...) as the bearer token."
+      }
+    }
+  },
+  "openapi": "3.1.1",
+  "paths": {
+    "/v1/search": {
+      "post": {
+        "operationId": "search",
+        "summary": "Search",
+        "description": "Search across your team's knowledge with semantic understanding and multi-path retrieval.",
+        "tags": ["Search"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "The search query text to find relevant documents"
+                  },
+                  "limit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 100,
+                    "default": 10,
+                    "description": "Maximum number of results to return (1-100, default: 10)"
+                  },
+                  "offset": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991,
+                    "default": 0,
+                    "description": "Result offset for pagination (default: 0)"
+                  },
+                  "mode": {
+                    "enum": ["fast", "balanced"],
+                    "type": "string",
+                    "default": "balanced",
+                    "description": "Search quality mode: 'fast' (vector scores only), 'balanced' (Cohere rerank)"
+                  },
+                  "sources": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Filter by source provider (e.g. [\"github\", \"linear\", \"sentry\"])"
+                  },
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Filter by entity type (e.g. [\"pull_request\", \"issue\", \"error\"])"
+                  },
+                  "after": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Only include results after this ISO 8601 datetime"
+                  },
+                  "before": {
+                    "type": "string",
+                    "format": "date-time",
+                    "description": "Only include results before this ISO 8601 datetime"
+                  }
+                },
+                "required": ["query"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "type": "string"
+                          },
+                          "snippet": {
+                            "type": "string"
+                          },
+                          "score": {
+                            "type": "number"
+                          },
+                          "source": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "type": "string"
+                          },
+                          "url": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "occurredAt": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "format": "date-time"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "title",
+                          "snippet",
+                          "score",
+                          "source",
+                          "type",
+                          "url",
+                          "occurredAt"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "requestId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": ["results", "total", "requestId"]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

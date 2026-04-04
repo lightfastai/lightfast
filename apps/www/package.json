@@ -9,7 +9,7 @@
     "build:dev": "pnpm with-env next build --turbopack",
     "build:prod": "pnpm with-env next build --turbopack",
     "postinstall": "fumadocs-mdx",
-    "prebuild": "pnpm --filter @repo/app-openapi generate:openapi && tsx scripts/validate-schema-docs.ts",
+    "validate:schema-docs": "tsx scripts/validate-schema-docs.ts",
     "search:sync": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY",
     "search:sync:ci": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY -y",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
@@ -62,6 +62,7 @@
   },
   "devDependencies": {
     "@mixedbread/cli": "^2.3.0",
+    "@repo/app-api-contract": "workspace:*",
     "@repo/app-openapi": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",

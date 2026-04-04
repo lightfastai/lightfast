@@ -1,0 +1,31 @@
+{
+  "name": "@repo/app-api-contract",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./openapi.json": "./openapi.json"
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit",
+    "generate:openapi": "tsx scripts/generate.ts"
+  },
+  "dependencies": {
+    "@orpc/contract": "^1.13.0",
+    "@repo/app-validation": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@orpc/openapi": "^1.13.0",
+    "@orpc/zod": "^1.13.0",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "extends": ["//"],
+  "tags": ["packages"],
+  "tasks": {
+    "generate:openapi": {
+      "dependsOn": ["^build"],
+      "inputs": ["src/**", "scripts/**"],
+      "outputs": ["openapi.json"]
+    }
+  }
+}
