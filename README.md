@@ -163,9 +163,7 @@ LIGHTFAST_API_KEY = "sk-lf-..."
 </details>
 
 **Available tools:**
-- `lightfast_search` — Search your workspace
-- `lightfast_contents` — Fetch full document content
-- `lightfast_find_similar` — Find semantically similar documents
+- `lightfast_search` — Search across connected tools for decisions and observations
 
 ## Security
 

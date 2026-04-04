@@ -12,13 +12,9 @@ Model Context Protocol (MCP) server for Lightfast — Connect Claude and other A
 
 ## Features
 
-- **Semantic Search** - Let Claude search your workspace memory
-- **Content Retrieval** - Fetch full documents and observations
-- **Similar Content Discovery** - Find semantically related items
-- **Related Memories** - Discover connected information
-- **Graph Traversal** - Explore memory relationships
-- **Smart Context** - Automatically find relevant context for conversations
-- **Zero Config** - Works with Claude Desktop, Code, Cursor, and more
+- **Semantic Search** — Search across connected tools for decisions and observations
+- **Reranking** — Cohere rerank for high-quality result ordering
+- **Zero Config** — Works with Claude Desktop, Code, Cursor, and more
 
 ## Installation
 
@@ -136,29 +132,26 @@ API keys start with `sk-lf-` prefix.
 
 ## Available Tools
 
-The MCP server exposes these tools to Claude:
+The MCP server exposes the `lightfast_search` tool to Claude.
 
 ### `lightfast_search`
 
-Search your workspace memory using natural language.
+Search across connected tools for decisions and observations.
 
 **Parameters:**
-- `query` (required) - Natural language search query
-- `limit` (optional) - Number of results, 1-100 (default: 10)
-- `offset` (optional) - Pagination offset (default: 0)
-- `mode` (optional) - Search mode: "fast" | "balanced" | "thorough" (default: "balanced")
-- `includeContext` (optional) - Include topic clusters and actors (default: true)
-- `includeHighlights` (optional) - Include text highlights (default: true)
-- `filters` (optional) - Filter results by:
-  - `sourceTypes` - e.g., ["github", "linear"]
-  - `observationTypes` - e.g., ["commit", "issue"]
-  - `actorNames` - e.g., ["@sarah"]
-  - `dateRange` - { start?, end? }
+- `query` (required) — Natural language search query
+- `limit` (optional) — Max results, 1–100 (default: 10)
+- `offset` (optional) — Pagination offset (default: 0)
+- `mode` (optional) — `"fast"` (vector scores only) or `"balanced"` (Cohere rerank, default)
+- `sources` (optional) — Filter by provider, e.g. `["github", "linear"]`
+- `types` (optional) — Filter by entity type, e.g. `["pull_request", "issue"]`
+- `after` (optional) — ISO 8601 datetime lower bound
+- `before` (optional) — ISO 8601 datetime upper bound
 
 **Response:**
 ```json
 {
-  "data": [
+  "results": [
     {
       "id": "obs_abc123",
       "title": "Fix authentication bug",
@@ -167,200 +160,17 @@ Search your workspace memory using natural language.
       "score": 0.95,
       "source": "github",
       "type": "commit",
-      "occurredAt": "2024-11-15T10:30:00Z",
-      "highlights": {
-        "snippet": "Fixed the <mark>session timeout</mark> issue"
-      }
+      "occurredAt": "2024-11-15T10:30:00Z"
     }
   ],
-  "meta": {
-    "total": 42,
-    "took": 125,
-    "mode": "balanced"
-  },
+  "total": 42,
   "requestId": "req_xyz"
 }
 ```
 
 **Search Modes:**
-- `fast` - Vector search only (~50ms)
-- `balanced` - Cohere reranking (~130ms)
-- `thorough` - LLM-based scoring (~600ms)
-
-### `lightfast_contents`
-
-Fetch full content for specific documents or observations by ID.
-
-**Parameters:**
-- `ids` (required) - Array of document/observation IDs (1-50 IDs)
-
-**Response:**
-```json
-{
-  "items": [
-    {
-      "id": "obs_abc123",
-      "title": "Fix authentication bug",
-      "url": "https://github.com/...",
-      "snippet": "Short snippet...",
-      "content": "Full content here...",
-      "source": "github",
-      "type": "commit",
-      "occurredAt": "2024-11-15T10:30:00Z",
-      "metadata": {
-        "author": "sarah",
-        "sha": "abc123"
-      }
-    }
-  ],
-  "missing": [],
-  "requestId": "req_xyz"
-}
-```
-
-### `lightfast_find_similar`
-
-Find content semantically similar to a given document or URL.
-
-**Parameters:**
-- `id` (optional) - Document/observation ID to find similar items for
-- `url` (optional) - URL to find similar items for (alternative to id)
-- `limit` (optional) - Maximum results, 1-50 (default: 10)
-- `threshold` (optional) - Minimum similarity score 0-1 (default: 0.5)
-- `sameSourceOnly` (optional) - Only return results from same source (default: false)
-- `excludeIds` (optional) - Array of IDs to exclude
-- `filters` (optional) - Same as search filters
-
-**Note:** Either `id` or `url` must be provided.
-
-**Response:**
-```json
-{
-  "source": {
-    "id": "obs_abc123",
-    "title": "Original document",
-    "type": "commit",
-    "cluster": {
-      "topic": "Authentication",
-      "memberCount": 25
-    }
-  },
-  "similar": [
-    {
-      "id": "obs_def456",
-      "title": "Similar commit",
-      "url": "https://github.com/...",
-      "snippet": "Related changes...",
-      "score": 0.85,
-      "vectorSimilarity": 0.82,
-      "entityOverlap": 0.75,
-      "sameCluster": true,
-      "source": "github",
-      "type": "commit"
-    }
-  ],
-  "meta": {
-    "total": 12,
-    "took": 95,
-    "inputEmbedding": {
-      "found": true,
-      "generated": false
-    }
-  },
-  "requestId": "req_xyz"
-}
-```
-
-### `lightfast_related`
-
-Find observations directly connected to a given observation via relationships.
-
-**Parameters:**
-- `id` (required) - Observation ID to find related events for
-
-**Response:**
-```json
-{
-  "data": {
-    "source": {
-      "id": "obs_abc123",
-      "title": "Original observation",
-      "source": "github"
-    },
-    "related": [
-      {
-        "id": "obs_def456",
-        "title": "Related PR",
-        "source": "github",
-        "type": "pull_request",
-        "occurredAt": "2024-11-16T10:30:00Z",
-        "url": "https://github.com/...",
-        "relationshipType": "references",
-        "direction": "outgoing"
-      }
-    ],
-    "bySource": {
-      "github": [...],
-      "linear": [...]
-    }
-  },
-  "meta": {
-    "total": 8,
-    "took": 45
-  },
-  "requestId": "req_xyz"
-}
-```
-
-### `lightfast_graph`
-
-Traverse the relationship graph from a starting observation.
-
-**Parameters:**
-- `id` (required) - Observation ID to start graph traversal from
-- `depth` (optional) - Traversal depth 1-3 (default: 2)
-- `types` (optional) - Filter by relationship types, e.g., ["references", "mentioned_in"]
-
-**Response:**
-```json
-{
-  "data": {
-    "root": {
-      "id": "obs_abc123",
-      "title": "Starting node",
-      "source": "github",
-      "type": "commit"
-    },
-    "nodes": [
-      {
-        "id": "obs_def456",
-        "title": "Connected node",
-        "source": "github",
-        "type": "pull_request",
-        "occurredAt": "2024-11-16T10:30:00Z",
-        "url": "https://github.com/...",
-        "isRoot": false
-      }
-    ],
-    "edges": [
-      {
-        "source": "obs_abc123",
-        "target": "obs_def456",
-        "type": "references",
-        "linkingKey": "PR-123",
-        "confidence": 0.95
-      }
-    ]
-  },
-  "meta": {
-    "depth": 2,
-    "nodeCount": 15,
-    "edgeCount": 18,
-    "took": 78
-  },
-  "requestId": "req_xyz"
-}
-```
+- `fast` — Vector search only
+- `balanced` — Cohere reranking (default)
 
 ## Usage Examples
 
@@ -368,23 +178,13 @@ Traverse the relationship graph from a starting observation.
 
 Once configured, Claude can automatically use these tools:
 
-**User:** "Search my workspace for information about authentication"
+**User:** "Search for information about authentication"
 
 **Claude:** *Uses `lightfast_search` tool*
-> I found 15 results about authentication in your workspace. Here are the most relevant ones:
+> I found 15 results about authentication. Here are the most relevant ones:
 > 1. Fix authentication bug in login flow (score: 0.95)
 > 2. Add OAuth2 configuration (score: 0.89)
 > ...
-
-**User:** "Show me code related to that first result"
-
-**Claude:** *Uses `lightfast_contents` and `lightfast_related` tools*
-> Here's the full implementation and related discussions...
-
-**User:** "Find similar issues"
-
-**Claude:** *Uses `lightfast_find_similar` tool*
-> I found 8 similar authentication-related items...
 
 ### In Claude Code
 
@@ -449,16 +249,7 @@ LIGHTFAST_BASE_URL=https://lightfast.ai  # Optional, custom API endpoint
 
 ### Tool not found errors
 
-**Error**: Claude says "lightfast_get_contents is not available"
-
-**Solution**: The correct tool names are:
-- `lightfast_search`
-- `lightfast_contents` (not `lightfast_get_contents`)
-- `lightfast_find_similar`
-- `lightfast_related` (not `lightfast_get_related`)
-- `lightfast_graph` (not `lightfast_traverse_graph`)
-
-Make sure you're using the latest version: `npx @lightfastai/mcp@latest`
+**Solution**: The MCP server exposes one tool: `lightfast_search`. Make sure you're using the latest version: `npx @lightfastai/mcp@latest`
 
 ### Rate limiting
 
