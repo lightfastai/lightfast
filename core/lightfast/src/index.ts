@@ -1,13 +1,12 @@
 // Client
+export { createLightfast, Lightfast } from "./client";
 
 // Zod Schemas (for runtime validation, used by MCP server)
-export { SearchRequestSchema } from "@repo/app-validation/api";
 export {
-  createLightfast,
-  createLightfastMemory,
-  Lightfast,
-  LightfastMemory,
-} from "./client";
+  ProxyExecuteRequestSchema,
+  ProxySearchResponseSchema,
+  SearchRequestSchema,
+} from "@repo/app-validation/api";
 
 // Constants
 export {
@@ -30,11 +29,10 @@ export {
 // Types
 export type {
   LightfastConfig,
-  // Deprecated alias
-  LightfastMemoryConfig,
   ProxyConnection,
   ProxyEndpoint,
   ProxyExecuteInput,
+  ProxyExecuteRequest,
   ProxyExecuteResponse,
   ProxySearchResponse,
   SearchInput,

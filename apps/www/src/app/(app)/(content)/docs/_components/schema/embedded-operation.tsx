@@ -2,7 +2,7 @@ import { InlineAPIPage } from "~/app/(app)/(content)/_lib/inline-api-page";
 import { getApiPages, isOpenAPIPage } from "~/app/(app)/(content)/_lib/source";
 
 interface EmbeddedOperationProps {
-  /** The operationId from the OpenAPI spec (e.g., "search", "get-contents") */
+  /** The operationId from the OpenAPI spec (e.g., "search", "proxy.search") */
   operationId: string;
 }
 
@@ -19,7 +19,7 @@ export function EmbeddedOperation({ operationId }: EmbeddedOperationProps) {
   const pages = getApiPages();
 
   // Find the virtual page matching this operationId
-  // Slugs are based on operationId: ["search"], ["get-contents"], etc.
+  // Slugs are based on operationId: ["search"], ["proxy.search"], etc.
   const page = pages.find(
     (p) => p.slugs.length === 1 && p.slugs[0] === operationId
   );

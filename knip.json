@@ -13,7 +13,7 @@
     "apps/www": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["jiti", "@repo/app-openapi"]
+      "ignoreDependencies": ["jiti"]
     },
     "apps/platform": {
       "entry": ["src/app/**/*.{ts,tsx}"],

@@ -214,12 +214,3 @@ export function createLightfast(config: LightfastConfig): Lightfast {
   return new Lightfast(config);
 }
 
-/**
- * @deprecated Use `Lightfast` instead
- */
-export const LightfastMemory = Lightfast;
-
-/**
- * @deprecated Use `createLightfast` instead
- */
-export const createLightfastMemory = createLightfast;

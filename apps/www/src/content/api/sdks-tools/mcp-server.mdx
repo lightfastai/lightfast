@@ -95,10 +95,6 @@ Search through workspace memory for relevant documents and observations.
 
 Fetch full content for documents by their IDs.
 
-#### Parameters & Response
-
-<EmbeddedOperation operationId="get-contents" />
-
 #### Example Request
 ```json
 {
@@ -114,12 +110,6 @@ Fetch full content for documents by their IDs.
 ### lightfast_find_similar
 
 Find content semantically similar to a given document or URL.
-
-#### Parameters & Response
-
-<EmbeddedOperation operationId="find-similar" />
-
-**Note:** Filters have the same structure as `lightfast_search`.
 
 #### Example Request
 ```json
@@ -139,10 +129,6 @@ Find content semantically similar to a given document or URL.
 
 Traverse the relationship graph from a starting observation. Returns connected observations with relationship edges. Supports depth control (1-3) and relationship type filtering.
 
-#### Parameters & Response
-
-<EmbeddedOperation operationId="graph" />
-
 #### Example Request
 ```json
 {
@@ -159,10 +145,6 @@ Traverse the relationship graph from a starting observation. Returns connected o
 ### lightfast_related
 
 Find observations directly connected to a given observation via relationships. Returns related events grouped by source system with relationship types and directions.
-
-#### Parameters & Response
-
-<EmbeddedOperation operationId="find-related" />
 
 #### Example Request
 ```json

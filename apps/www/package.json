@@ -63,7 +63,6 @@
   "devDependencies": {
     "@mixedbread/cli": "^2.3.0",
     "@repo/app-api-contract": "workspace:*",
-    "@repo/app-openapi": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
