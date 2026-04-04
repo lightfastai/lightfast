@@ -78,7 +78,7 @@ export const ingestDelivery = inngest.createFunction(
       return { connectionId: row.installationId, orgId: row.orgId };
     });
 
-    if (!connectionInfo) {
+    if (!connectionInfo?.orgId) {
       throw new NonRetriableError("no_connection");
     }
 
