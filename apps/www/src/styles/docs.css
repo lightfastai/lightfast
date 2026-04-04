@@ -4,16 +4,78 @@
 @import "fumadocs-openapi/css/preset.css";
 @import "@repo/ui/globals.css";
 
-/* Lightfast brand color scale for OpenAPI customization */
-@layer components {
-  :root {
-    --brand-50: 225 100% 97%;
-    --brand-100: 225 96% 90%;
-    --brand-200: 225 96% 82%;
-    --brand-500: 225 86% 55%;
-    --brand-600: 225 70% 44%;
-    --brand-900: 225 80% 15%;
-  }
+/*
+ * Token bridge: fumadocs → Lightfast
+ *
+ * fumadocs and Lightfast define the same semantic tokens in different color
+ * spaces (fd: hex #050505, LF: lab 9.26%). Instead of fighting individual
+ * classes, we bridge the entire fd-* namespace to Lightfast equivalents.
+ * Every fumadocs component automatically inherits the Lightfast palette.
+ *
+ * Outside @layer so overrides beat fumadocs' unlayered component styles.
+ */
+.dark {
+  --color-fd-background: var(--background);
+  --color-fd-foreground: var(--foreground);
+  --color-fd-card: var(--background);
+  --color-fd-card-foreground: var(--foreground);
+  --color-fd-secondary: var(--secondary);
+  --color-fd-secondary-foreground: var(--secondary-foreground);
+  --color-fd-muted: var(--muted);
+  --color-fd-muted-foreground: var(--muted-foreground);
+  --color-fd-border: var(--border);
+  --color-fd-accent: var(--accent);
+  --color-fd-accent-foreground: var(--accent-foreground);
+  --color-fd-popover: var(--card);
+  --color-fd-popover-foreground: var(--card-foreground);
+  --color-fd-primary: var(--primary);
+  --color-fd-primary-foreground: var(--primary-foreground);
+  --color-fd-ring: var(--ring);
+
+  --radius-xl: var(--radius-md);
+}
+
+/* Tighten rounded-xl to match rounded-md (Tailwind v4 compiles at build time) */
+.rounded-xl {
+  border-radius: var(--radius-md);
+}
+
+/* Kill card/code-block shadows — flat aesthetic */
+[class*="bg-fd-card"],
+[class*="bg-fd-secondary"],
+figure.shiki {
+  box-shadow: none;
+}
+
+/* Tighten code example panel spacing in the sticky sidebar */
+.prose-no-margin > :first-child {
+  margin-top: 0;
+}
+
+.prose-no-margin > :last-child {
+  margin-bottom: 0;
+}
+
+.prose-no-margin > * + * {
+  margin-top: 0.5rem;
+}
+
+/* Neutralize fumadocs colored badges (method, status, required) */
+.dark .text-blue-400,
+.dark .text-green-400,
+.dark .text-green-600,
+.dark .text-yellow-400,
+.dark .text-yellow-600,
+.dark .text-orange-400,
+.dark .text-orange-600,
+.dark .text-red-400,
+.dark .text-red-600,
+.dark .text-blue-600 {
+  color: var(--color-fd-muted-foreground);
+}
+
+.dark .bg-green-500\/20 {
+  background-color: transparent;
 }
 
 @layer utilities {
