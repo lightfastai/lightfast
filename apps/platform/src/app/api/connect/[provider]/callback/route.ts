@@ -24,11 +24,11 @@ export async function GET(
   const { provider } = await params;
   const providerName = provider as SourceType;
 
-  // Build query dict from all URL search params
-  const query: Record<string, string> = Object.create(null);
-  for (const [k, v] of req.nextUrl.searchParams) {
-    query[k] = v;
-  }
+  // Build query dict from all URL search params (null-prototype to prevent prototype pollution)
+  const query: Record<string, string> = Object.assign(
+    Object.create(null) as Record<string, string>,
+    Object.fromEntries(req.nextUrl.searchParams)
+  );
 
   const state = query.state ?? "";
 
