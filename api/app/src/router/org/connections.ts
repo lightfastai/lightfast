@@ -599,8 +599,26 @@ export const connectionsRouter = {
         });
 
         let created = 0;
+        let reactivated = 0;
 
         for (const resource of input.resources) {
+          const existing = await ctx.db
+            .select({ id: orgIntegrations.id })
+            .from(orgIntegrations)
+            .where(
+              and(
+                eq(
+                  orgIntegrations.installationId,
+                  input.gwInstallationId
+                ),
+                eq(
+                  orgIntegrations.providerResourceId,
+                  resource.resourceId as SourceIdentifier
+                )
+              )
+            )
+            .then((rows) => rows[0]);
+
           await ctx.db
             .insert(orgIntegrations)
             .values({
@@ -621,10 +639,15 @@ export const connectionsRouter = {
                 updatedAt: new Date().toISOString(),
               },
             });
-          created++;
+
+          if (existing) {
+            reactivated++;
+          } else {
+            created++;
+          }
         }
 
-        return { created, reactivated: 0 };
+        return { created, reactivated };
       }),
   },
 
