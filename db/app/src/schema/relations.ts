@@ -1,7 +1,6 @@
 import { relations } from "drizzle-orm";
 import { gatewayInstallations } from "./tables/gateway-installations";
 import { gatewayLifecycleLogs } from "./tables/gateway-lifecycle-log";
-import { gatewayResources } from "./tables/gateway-resources";
 import { gatewayTokens } from "./tables/gateway-tokens";
 import { orgEntities } from "./tables/org-entities";
 import { orgEntityEdges } from "./tables/org-entity-edges";
@@ -21,7 +20,6 @@ export const gatewayInstallationsRelations = relations(
   gatewayInstallations,
   ({ many }) => ({
     tokens: many(gatewayTokens),
-    resources: many(gatewayResources),
     orgIntegrations: many(orgIntegrations),
     lifecycleLogs: many(gatewayLifecycleLogs),
   })
@@ -43,16 +41,6 @@ export const gatewayTokensRelations = relations(gatewayTokens, ({ one }) => ({
     references: [gatewayInstallations.id],
   }),
 }));
-
-export const gatewayResourcesRelations = relations(
-  gatewayResources,
-  ({ one }) => ({
-    installation: one(gatewayInstallations, {
-      fields: [gatewayResources.installationId],
-      references: [gatewayInstallations.id],
-    }),
-  })
-);
 
 export const orgIntegrationsRelations = relations(
   orgIntegrations,

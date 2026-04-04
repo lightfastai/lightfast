@@ -16,11 +16,6 @@ export {
   type InsertGatewayLifecycleLog,
 } from "./gateway-lifecycle-log";
 export {
-  type GatewayResource,
-  gatewayResources,
-  type InsertGatewayResource,
-} from "./gateway-resources";
-export {
   type GatewayToken,
   gatewayTokens,
   type InsertGatewayToken,

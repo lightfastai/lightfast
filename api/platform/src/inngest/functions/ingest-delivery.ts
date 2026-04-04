@@ -5,7 +5,7 @@
  * console ingress Upstash Workflow (2 steps) with a single Inngest function.
  *
  * Steps:
- * 1. resolve-connection — DB JOIN gatewayResources <-> gatewayInstallations, or use preResolved
+ * 1. resolve-connection — query orgIntegrations, or use preResolved
  * 2. transform-and-store — call transformEnvelope, insert ingest log
  * 3. emit-event-capture — step.sendEvent("memory/event.capture")
  * 4. publish-realtime — Upstash Realtime SSE for console UI

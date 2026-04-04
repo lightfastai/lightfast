@@ -435,6 +435,13 @@
       "when": 1775282966939,
       "tag": "0061_left_timeslip",
       "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1775284485113,
+      "tag": "0062_chemical_captain_flint",
+      "breakpoints": true
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
-  "id": "30a4fee7-0a2f-4fac-ba48-6fd4e36ab548",
-  "prevId": "d3a6e779-c33c-4c4c-8e46-58e875cc8734",
+  "id": "e6f225b9-7a76-4e79-962c-e2913a640f02",
+  "prevId": "30a4fee7-0a2f-4fac-ba48-6fd4e36ab548",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -154,8 +154,12 @@
           "name": "lightfast_gateway_backfill_runs_installation_id_lightfast_gateway_installations_id_fk",
           "tableFrom": "lightfast_gateway_backfill_runs",
           "tableTo": "lightfast_gateway_installations",
-          "columnsFrom": ["installation_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "installation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -452,112 +456,12 @@
           "name": "lightfast_gateway_lifecycle_logs_installation_id_lightfast_gateway_installations_id_fk",
           "tableFrom": "lightfast_gateway_lifecycle_logs",
           "tableTo": "lightfast_gateway_installations",
-          "columnsFrom": ["installation_id"],
-          "columnsTo": ["id"],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
-    },
-    "public.lightfast_gateway_resources": {
-      "name": "lightfast_gateway_resources",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(191)",
-          "primaryKey": true,
-          "notNull": true
-        },
-        "installation_id": {
-          "name": "installation_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "provider_resource_id": {
-          "name": "provider_resource_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "resource_name": {
-          "name": "resource_name",
-          "type": "varchar(500)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(50)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "gateway_res_installation_id_idx": {
-          "name": "gateway_res_installation_id_idx",
-          "columns": [
-            {
-              "expression": "installation_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
+          "columnsFrom": [
+            "installation_id"
           ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "gateway_res_provider_resource_idx": {
-          "name": "gateway_res_provider_resource_idx",
-          "columns": [
-            {
-              "expression": "installation_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "provider_resource_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
+          "columnsTo": [
+            "id"
           ],
-          "isUnique": true,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {
-        "lightfast_gateway_resources_installation_id_lightfast_gateway_installations_id_fk": {
-          "name": "lightfast_gateway_resources_installation_id_lightfast_gateway_installations_id_fk",
-          "tableFrom": "lightfast_gateway_resources",
-          "tableTo": "lightfast_gateway_installations",
-          "columnsFrom": ["installation_id"],
-          "columnsTo": ["id"],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -644,8 +548,12 @@
           "name": "lightfast_gateway_tokens_installation_id_lightfast_gateway_installations_id_fk",
           "tableFrom": "lightfast_gateway_tokens",
           "tableTo": "lightfast_gateway_installations",
-          "columnsFrom": ["installation_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "installation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -959,7 +867,9 @@
         "lightfast_workspace_api_keys_public_id_unique": {
           "name": "lightfast_workspace_api_keys_public_id_unique",
           "nullsNotDistinct": false,
-          "columns": ["public_id"]
+          "columns": [
+            "public_id"
+          ]
         }
       },
       "policies": {},
@@ -1395,8 +1305,12 @@
           "name": "lightfast_org_entity_edges_source_entity_id_lightfast_org_entities_id_fk",
           "tableFrom": "lightfast_org_entity_edges",
           "tableTo": "lightfast_org_entities",
-          "columnsFrom": ["source_entity_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "source_entity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1404,8 +1318,12 @@
           "name": "lightfast_org_entity_edges_target_entity_id_lightfast_org_entities_id_fk",
           "tableFrom": "lightfast_org_entity_edges",
           "tableTo": "lightfast_org_entities",
-          "columnsFrom": ["target_entity_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "target_entity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1413,8 +1331,12 @@
           "name": "lightfast_org_entity_edges_source_event_id_lightfast_org_events_id_fk",
           "tableFrom": "lightfast_org_entity_edges",
           "tableTo": "lightfast_org_events",
-          "columnsFrom": ["source_event_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "source_event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -1542,8 +1464,12 @@
           "name": "lightfast_org_event_entities_entity_id_lightfast_org_entities_id_fk",
           "tableFrom": "lightfast_org_event_entities",
           "tableTo": "lightfast_org_entities",
-          "columnsFrom": ["entity_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "entity_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
@@ -1551,8 +1477,12 @@
           "name": "lightfast_org_event_entities_event_id_lightfast_org_events_id_fk",
           "tableFrom": "lightfast_org_event_entities",
           "tableTo": "lightfast_org_events",
-          "columnsFrom": ["event_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "event_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }
@@ -1796,8 +1726,12 @@
           "name": "lightfast_org_events_ingest_log_id_lightfast_org_ingest_logs_id_fk",
           "tableFrom": "lightfast_org_events",
           "tableTo": "lightfast_org_ingest_logs",
-          "columnsFrom": ["ingest_log_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "ingest_log_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "set null",
           "onUpdate": "no action"
         }
@@ -2133,8 +2067,12 @@
           "name": "lightfast_org_integrations_installation_id_lightfast_gateway_installations_id_fk",
           "tableFrom": "lightfast_org_integrations",
           "tableTo": "lightfast_gateway_installations",
-          "columnsFrom": ["installation_id"],
-          "columnsTo": ["id"],
+          "columnsFrom": [
+            "installation_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
           "onDelete": "cascade",
           "onUpdate": "no action"
         }

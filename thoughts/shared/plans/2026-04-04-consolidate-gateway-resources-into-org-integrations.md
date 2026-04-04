@@ -645,17 +645,17 @@ Search globally for `gatewayResources`, `GatewayResource`, `InsertGatewayResourc
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Migration generates cleanly: `cd db/app && pnpm db:generate`
-- [ ] Migration applies cleanly: `cd db/app && pnpm db:migrate`
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] App builds: `pnpm build:app`
-- [ ] Platform builds: `pnpm build:platform`
-- [ ] No references to `gatewayResources` remain: `rg "gatewayResources|GatewayResource|InsertGatewayResource|gateway.resources|gateway_resources" --type ts -l` returns empty (excluding migrations and thoughts)
+- [x] Migration generates cleanly: `cd db/app && pnpm db:generate`
+- [x] Migration applies cleanly: `cd db/app && pnpm db:migrate`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Lint passes: `pnpm check`
+- [x] App builds: `pnpm build:app`
+- [x] Platform builds: `pnpm build:platform`
+- [x] No references to `gatewayResources` remain: `rg "gatewayResources|GatewayResource|InsertGatewayResource|gateway.resources|gateway_resources" --type ts -l` returns empty (excluding migrations and thoughts)
 
 #### Manual Verification:
-- [ ] Full end-to-end flow: connect a provider → link resources → receive webhook → backfill → disconnect
-- [ ] Drizzle Studio confirms `lightfast_gateway_resources` table no longer exists
+- [x] Full end-to-end flow: connect a provider → link resources → receive webhook → backfill → disconnect
+- [x] Drizzle Studio confirms `lightfast_gateway_resources` table no longer exists
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful.
 
