@@ -99,11 +99,16 @@ export function SourceSelectionProvider({ children }: { children: ReactNode }) {
       updateProvider(provider, (s) => {
         const exists = s.selectedResources.some((r) => r.id === resource.id);
         if (exists) {
-          return { ...s, selectedResources: [] };
+          return {
+            ...s,
+            selectedResources: s.selectedResources.filter(
+              (r) => r.id !== resource.id
+            ),
+          };
         }
         return {
           ...s,
-          selectedResources: [resource],
+          selectedResources: [...s.selectedResources, resource],
         };
       }),
     [updateProvider]

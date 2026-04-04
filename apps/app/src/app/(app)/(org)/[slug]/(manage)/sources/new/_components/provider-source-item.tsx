@@ -13,6 +13,7 @@ import {
 } from "@repo/ui/components/ui/accordion";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Input } from "@repo/ui/components/ui/input";
 import {
   Select,
@@ -208,7 +209,8 @@ export function ProviderSourceItem({ provider }: Props) {
       (r.badge?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false)
   );
 
-  const selectedResource = state.selectedResources[0] ?? null;
+  const selectedIds = new Set(state.selectedResources.map((r) => r.id));
+  const selectionCount = state.selectedResources.length;
 
   // ── Helpers ──────────────────────────────────────────────────────────────
 
@@ -249,9 +251,9 @@ export function ProviderSourceItem({ provider }: Props) {
               Not connected
             </Badge>
           )}
-          {selectedResource && (
+          {selectionCount > 0 && (
             <Badge className="mr-2 ml-auto text-xs" variant="default">
-              1 selected
+              {selectionCount} selected
             </Badge>
           )}
         </div>
@@ -259,26 +261,20 @@ export function ProviderSourceItem({ provider }: Props) {
       <AccordionContent className="px-4">
         {hasConnection ? (
           <div className="space-y-4 pt-2">
-            {selectedResource && !showPicker ? (
+            {selectionCount > 0 && !showPicker ? (
               <div className="rounded-lg border bg-card p-4">
                 <div className="flex items-center gap-3">
-                  {renderIcon(selectedResource)}
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                    <span className="font-bold text-xs">{selectionCount}</span>
+                  </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="truncate font-medium">
-                        {selectedResource.name}
-                      </span>
-                      {selectedResource.badge && (
-                        <span className="shrink-0 rounded border px-2 py-0.5 text-muted-foreground text-xs">
-                          {selectedResource.badge}
-                        </span>
-                      )}
-                    </div>
-                    {selectedResource.subtitle && (
-                      <p className="line-clamp-1 text-muted-foreground text-sm">
-                        {selectedResource.subtitle}
-                      </p>
-                    )}
+                    <span className="font-medium">
+                      {selectionCount}{" "}
+                      {selectionCount === 1
+                        ? resourceLabel.replace(/s$/, "")
+                        : resourceLabel}{" "}
+                      selected
+                    </span>
                   </div>
                   <div className="flex shrink-0 gap-2">
                     <Button
@@ -296,7 +292,7 @@ export function ProviderSourceItem({ provider }: Props) {
                       size="sm"
                       variant="ghost"
                     >
-                      Clear
+                      Clear all
                     </Button>
                   </div>
                 </div>
@@ -389,19 +385,19 @@ export function ProviderSourceItem({ provider }: Props) {
                       {filteredResources.map((resource) => (
                         <button
                           className={`flex w-full cursor-pointer items-center gap-3 p-4 text-left transition-colors hover:bg-accent ${
-                            selectedResource?.id === resource.id
-                              ? "bg-accent/50"
-                              : ""
+                            selectedIds.has(resource.id) ? "bg-accent/50" : ""
                           }`}
                           key={resource.id}
                           onClick={() => {
                             toggleResource(provider, resource);
-                            if (selectedResource?.id !== resource.id) {
-                              setShowPicker(false);
-                            }
                           }}
                           type="button"
                         >
+                          <Checkbox
+                            checked={selectedIds.has(resource.id)}
+                            className="pointer-events-none"
+                            tabIndex={-1}
+                          />
                           {renderIcon(resource)}
                           <div className="min-w-0 flex-1">
                             <div className="flex items-center gap-2">
