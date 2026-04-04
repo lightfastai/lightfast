@@ -381,6 +381,27 @@ export function adaptLinearProjectForTransformer(
 export const linearBackfill: BackfillDef = {
   supportedEntityTypes: ["Issue", "Comment", "Project"],
   defaultEntityTypes: ["Issue", "Comment", "Project"],
+  resolveResourceMeta: async ({ providerResourceId, token }) => {
+    const res = await fetch("https://api.linear.app/graphql", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        query: `query($id: String!) { team(id: $id) { name } }`,
+        variables: { id: providerResourceId },
+      }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!res.ok) {
+      throw new Error(`Linear team lookup failed: ${res.status}`);
+    }
+    const body = (await res.json()) as {
+      data?: { team?: { name?: string } };
+    };
+    return body.data?.team?.name ?? "";
+  },
   entityTypes: {
     Issue: typedEntityHandler<string>({
       endpointId: "graphql",

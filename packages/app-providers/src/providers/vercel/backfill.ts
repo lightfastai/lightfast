@@ -70,6 +70,20 @@ export function adaptVercelDeploymentForTransformer(
 export const vercelBackfill: BackfillDef = {
   supportedEntityTypes: ["deployment"],
   defaultEntityTypes: ["deployment"],
+  resolveResourceMeta: async ({ providerResourceId, token }) => {
+    const res = await fetch(
+      `https://api.vercel.com/v9/projects/${providerResourceId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10_000),
+      }
+    );
+    if (!res.ok) {
+      return providerResourceId;
+    }
+    const project = (await res.json()) as { name?: string };
+    return project.name ?? providerResourceId;
+  },
   entityTypes: {
     deployment: typedEntityHandler<number>({
       endpointId: "list-deployments",

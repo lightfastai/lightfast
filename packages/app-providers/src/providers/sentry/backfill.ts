@@ -135,6 +135,49 @@ export function adaptSentryErrorForTransformer(
 export const sentryBackfill: BackfillDef = {
   supportedEntityTypes: ["issue", "error"],
   defaultEntityTypes: ["issue", "error"],
+  resolveResourceMeta: async ({ providerResourceId, token }) => {
+    // Step 1: Get org slug — token is org-scoped, so this returns one org
+    const orgRes = await fetch("https://sentry.io/api/0/organizations/", {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: AbortSignal.timeout(10_000),
+    });
+    if (!orgRes.ok) {
+      throw new Error(`Sentry org lookup failed: ${orgRes.status}`);
+    }
+    const orgs = (await orgRes.json()) as Array<{ slug: string }>;
+    const orgSlug = orgs[0]?.slug;
+    if (!orgSlug) {
+      throw new Error("Sentry org not found for token");
+    }
+
+    // Step 2: Get project slug — paginate org projects to find by numeric ID
+    let nextUrl: string | null =
+      `https://sentry.io/api/0/organizations/${orgSlug}/projects/?per_page=100`;
+    while (nextUrl) {
+      const pageRes: Response = await fetch(nextUrl, {
+        headers: { Authorization: `Bearer ${token}` },
+        signal: AbortSignal.timeout(10_000),
+      });
+      if (!pageRes.ok) {
+        throw new Error(`Sentry project lookup failed: ${pageRes.status}`);
+      }
+      const projects = (await pageRes.json()) as Array<{
+        id: string;
+        slug: string;
+      }>;
+      const project = projects.find((p) => p.id === providerResourceId);
+      if (project) {
+        return `${orgSlug}/${project.slug}`;
+      }
+      // Parse Link header for next page
+      const linkHeader: string = pageRes.headers.get("link") ?? "";
+      const nextMatch = linkHeader.match(
+        /<([^>]+)>;\s*rel="next";\s*results="true"/
+      );
+      nextUrl = nextMatch?.[1] ?? null;
+    }
+    throw new Error(`Sentry project not found: ${providerResourceId}`);
+  },
   entityTypes: {
     issue: typedEntityHandler<string>({
       endpointId: "list-org-issues",
