@@ -132,7 +132,7 @@ export const createCallerFactory = t.createCallerFactory;
  * Public procedure -- no auth required.
  * Use for health checks or publicly accessible endpoints.
  */
-const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
+export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
 
 /**
  * Service procedure -- requires valid service JWT.
@@ -165,7 +165,7 @@ export const serviceProcedure = sentrifiedProcedure
  *
  * Restricts `ctx.auth.caller` to "admin" only.
  */
-const adminProcedure = sentrifiedProcedure
+export const adminProcedure = sentrifiedProcedure
   .use(timingMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type !== "service") {

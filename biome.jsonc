@@ -9,7 +9,8 @@
       "!packages/ui/src/hooks",
       "!packages/ui/src/lib",
       "!vendor/cms/basehub-types.d.ts",
-      "!packages/app-api-contract/openapi.json"
+      "!packages/app-api-contract/openapi.json",
+      "!db/app/src/migrations"
     ]
   },
   "linter": {

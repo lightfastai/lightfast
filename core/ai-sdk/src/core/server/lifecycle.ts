@@ -79,7 +79,7 @@ export interface LifecycleCallbacks {
 /**
  * Helper to create lifecycle event with base data
  */
-function createLifecycleEvent(
+export function createLifecycleEvent(
   systemContext: SystemContext,
   requestContext?: RequestContext
 ): BaseLifecycleEvent {

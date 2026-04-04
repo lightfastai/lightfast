@@ -47,6 +47,17 @@ figure.shiki {
   box-shadow: none;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 /* Tighten code example panel spacing in the sticky sidebar */
 .prose-no-margin > :first-child {
   margin-top: 0;
@@ -81,16 +92,5 @@ figure.shiki {
 @layer utilities {
   .font-pp {
     font-family: var(--font-pp-neue-montreal);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
   }
 }

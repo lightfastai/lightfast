@@ -173,7 +173,7 @@ export class InvalidPathError extends BadRequestError {
 /**
  * Specific error for missing agent
  */
-class AgentNotFoundError extends NotFoundError {
+export class AgentNotFoundError extends NotFoundError {
   readonly errorCode = "AGENT_NOT_FOUND";
 
   constructor(agentId: string) {
@@ -695,6 +695,6 @@ export function toAgentApiError(error: unknown, operation: string): ApiError {
 /**
  * Type guard for ApiError
  */
-function isApiError(error: unknown): error is ApiError {
+export function isApiError(error: unknown): error is ApiError {
   return error instanceof ApiError;
 }

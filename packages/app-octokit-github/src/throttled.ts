@@ -98,7 +98,7 @@ export async function getThrottledInstallationOctokit(
  * @param octokit - Octokit instance (throttled or regular)
  * @returns Rate limit information
  */
-async function checkRateLimit(octokit: InstanceType<typeof Octokit>) {
+export async function checkRateLimit(octokit: InstanceType<typeof Octokit>) {
   const { data } = await octokit.request("GET /rate_limit");
   const { remaining, limit, reset } = data.rate;
 

@@ -1,5 +1,5 @@
-import { isContractProcedure } from "@orpc/contract";
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { isContractProcedure } from "@orpc/contract";
 
 // ---------------------------------------------------------------------------
 // Re-exports — MCP SDK essentials
@@ -81,8 +81,7 @@ export function registerContractTools(
             content: [
               {
                 type: "text" as const,
-                text:
-                  error instanceof Error ? error.message : String(error),
+                text: error instanceof Error ? error.message : String(error),
               },
             ],
             isError: true,
@@ -91,8 +90,12 @@ export function registerContractTools(
       };
 
       const config: Record<string, unknown> = { description };
-      if (def.inputSchema) config.inputSchema = def.inputSchema;
-      if (def.outputSchema) config.outputSchema = def.outputSchema;
+      if (def.inputSchema) {
+        config.inputSchema = def.inputSchema;
+      }
+      if (def.outputSchema) {
+        config.outputSchema = def.outputSchema;
+      }
 
       server.registerTool(toolName, config as any, handle as any);
       return;
@@ -101,11 +104,13 @@ export function registerContractTools(
     // Recurse into nested router objects
     if (contractNode && typeof contractNode === "object") {
       for (const key in contractNode as Record<string, unknown>) {
-        walk(
-          (contractNode as Record<string, unknown>)[key],
-          (clientNode as Record<string, unknown>)[key],
-          [...keyPath, key]
-        );
+        if (Object.hasOwn(contractNode as Record<string, unknown>, key)) {
+          walk(
+            (contractNode as Record<string, unknown>)[key],
+            (clientNode as Record<string, unknown>)[key],
+            [...keyPath, key]
+          );
+        }
       }
     }
   }

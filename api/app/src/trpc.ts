@@ -177,7 +177,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
+export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
 
 /**
  * User-Scoped Procedure

@@ -41,7 +41,7 @@ export interface LightfastErrorContext {
   readonly source?: LightfastErrorSource;
 }
 
-interface SerializedLightfastError {
+export interface SerializedLightfastError {
   category: LightfastErrorCategory;
   error: string;
   errorCode?: string;
