@@ -16,7 +16,7 @@ authors:
     url: https://lightfast.ai
     twitterHandle: "@lightfastai"
 publishedAt: "2024-12-01T00:00:00Z"
-updatedAt: "2026-02-18T00:00:00Z"
+updatedAt: "2026-04-04T00:00:00Z"
 ---
 
 # TypeScript SDK Reference
@@ -51,10 +51,10 @@ const client = new Lightfast(config: LightfastConfig);
 
 ### search()
 
-Search through workspace memory for relevant documents and observations.
+Search through your organization's knowledge — decisions, observations, and documents.
 
 ```typescript
-const response = await client.search(input: SearchInput): Promise<V1SearchResponse>
+const response = await client.search(input: SearchInput): Promise<SearchResponse>
 ```
 
 #### SearchInput & Response
@@ -92,107 +92,57 @@ console.log(results.meta.total); // Total matching documents
 
 ---
 
-### contents()
+### proxySearch()
 
-Fetch full content for documents by their IDs.
+Discover all available provider API endpoints across connected providers.
 
 ```typescript
-const response = await client.contents(input: ContentsInput): Promise<V1ContentsResponse>
+const response = await client.proxySearch(): Promise<ProxySearchResponse>
 ```
-
-#### ContentsInput & Response
-
-<EmbeddedOperation operationId="get-contents" />
 
 #### Example
 
 ```typescript
-const contents = await client.contents({
-  ids: ["obs_abc123", "doc_def456"],
-});
+const providers = await client.proxySearch();
 
-console.log(contents.items); // Found content items
-console.log(contents.missing); // IDs that were not found
+for (const connection of providers.connections) {
+  console.log(connection.provider); // e.g., "github"
+  console.log(connection.endpoints); // Available API endpoints
+}
 ```
 
 ---
 
-### findSimilar()
+### proxyExecute()
 
-Find content semantically similar to a given document or URL.
+Execute a provider API call through the Lightfast proxy. Auth is handled automatically — the proxy injects the correct token.
 
 ```typescript
-const response = await client.findSimilar(input: FindSimilarInput): Promise<V1FindSimilarResponse>
+const response = await client.proxyExecute(input: ProxyExecuteInput): Promise<ProxyExecuteResponse>
 ```
 
-#### FindSimilarInput & Response
+#### ProxyExecuteInput
 
-<EmbeddedOperation operationId="find-similar" />
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `installationId` | `string` | Yes | Connection installation ID |
+| `endpointId` | `string` | Yes | Endpoint ID from proxySearch |
+| `pathParams` | `Record<string, string>` | No | Path parameters |
+| `queryParams` | `Record<string, string>` | No | Query parameters |
+| `body` | `unknown` | No | Request body |
 
 #### Example
 
 ```typescript
-const similar = await client.findSimilar({
-  url: "https://github.com/org/repo/pull/123",
-  limit: 5,
-  threshold: 0.7,
+const result = await client.proxyExecute({
+  installationId: "inst_abc123",
+  endpointId: "list-pull-requests",
+  pathParams: { owner: "myorg", repo: "myrepo" },
+  queryParams: { state: "open" },
 });
 
-console.log(similar.similar); // Array of similar items
-console.log(similar.source); // Source document info
-```
-
----
-
-### graph()
-
-Traverse the relationship graph from a starting observation. Returns connected observations with relationship edges.
-
-```typescript
-const response = await client.graph(input: GraphInput): Promise<GraphResponse>
-```
-
-#### GraphInput & Response
-
-<EmbeddedOperation operationId="graph" />
-
-#### Example
-
-```typescript
-const graph = await client.graph({
-  id: "obs_abc123",
-  depth: 2,
-});
-
-console.log(graph.data.nodes); // All connected nodes
-console.log(graph.data.edges); // Relationship edges
-console.log(graph.meta.nodeCount); // Total nodes traversed
-```
-
----
-
-### related()
-
-Find observations directly connected to a given observation via relationships. Returns related events grouped by source system.
-
-```typescript
-const response = await client.related(input: RelatedInput): Promise<RelatedResponse>
-```
-
-#### RelatedInput & Response
-
-<EmbeddedOperation operationId="find-related" />
-
-#### Example
-
-```typescript
-const related = await client.related({
-  id: "obs_abc123",
-});
-
-console.log(related.data.related); // All related events
-console.log(related.data.bySource); // Events grouped by source
-console.log(related.meta.total); // Total related events found
+console.log(result.data); // Raw provider API response
+console.log(result.status); // HTTP status code
 ```
 
 ---
@@ -232,18 +182,17 @@ import type {
   LightfastConfig,
   SearchInput,
   SearchFilters,
-  V1SearchResponse,
-  V1SearchResult,
-  ContentsInput,
-  V1ContentsResponse,
-  V1ContentItem,
-  FindSimilarInput,
-  V1FindSimilarResponse,
-  V1SimilarResult,
-  GraphInput,
-  GraphResponse,
-  RelatedInput,
-  RelatedResponse,
+  SearchRequest,
+  SearchResponse,
+  SearchResult,
+  RerankMode,
+  SearchContext,
+  SearchLatency,
+  ProxySearchResponse,
+  ProxyConnection,
+  ProxyEndpoint,
+  ProxyExecuteInput,
+  ProxyExecuteResponse,
 } from "lightfast";
 ```
 
