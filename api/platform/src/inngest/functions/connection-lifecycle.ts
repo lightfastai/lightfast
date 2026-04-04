@@ -21,7 +21,7 @@ import {
 import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
-import { and, eq } from "@vendor/db";
+import { eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
 import { getEncryptionKey } from "../../lib/encryption";
 import { providerConfigs } from "../../lib/provider-configs";
@@ -162,31 +162,27 @@ export const connectionLifecycle = inngest.createFunction(
       }
     });
 
-    // Step 4: Log resource disconnection
-    // The app-layer cascade already sets orgIntegrations.status → 'disconnected'
-    // before this Inngest event fires. We just preserve the lifecycle log.
-    await step.run("log-resource-disconnection", async () => {
-      // orgIntegrations may already be 'disconnected' if app-layer ran first.
-      // Fall back to getting all resources for this installation.
-      const activeResources = await db
+    // Step 4: Disconnect org integrations and log resource disconnection.
+    // For user-initiated disconnects the app-layer cascade may have already
+    // set orgIntegrations.status → 'disconnected', but for health-check
+    // triggers no cascade runs. We update unconditionally (idempotent).
+    await step.run("disconnect-resources", async () => {
+      const allResources = await db
         .select({ providerResourceId: orgIntegrations.providerResourceId })
         .from(orgIntegrations)
-        .where(
-          and(
-            eq(orgIntegrations.installationId, installationId),
-            eq(orgIntegrations.status, "active")
-          )
-        );
+        .where(eq(orgIntegrations.installationId, installationId));
 
-      const allResources =
-        activeResources.length > 0
-          ? activeResources
-          : await db
-              .select({
-                providerResourceId: orgIntegrations.providerResourceId,
-              })
-              .from(orgIntegrations)
-              .where(eq(orgIntegrations.installationId, installationId));
+      if (allResources.length > 0) {
+        const now = new Date().toISOString();
+        await db
+          .update(orgIntegrations)
+          .set({
+            status: "disconnected",
+            statusReason: "installation_revoked",
+            updatedAt: now,
+          })
+          .where(eq(orgIntegrations.installationId, installationId));
+      }
 
       const resourceIdMap: Record<string, string> = {};
       for (const r of allResources) {
@@ -200,7 +196,7 @@ export const connectionLifecycle = inngest.createFunction(
         toStatus: "revoked",
         reason: `Disconnected ${allResources.length} linked resource(s) during teardown`,
         resourceIds: resourceIdMap,
-        metadata: { step: "close-gate", triggeredBy: "system" },
+        metadata: { step: "disconnect-resources", triggeredBy: "system" },
       });
 
       log.info("[connection-lifecycle] resources disconnected", {
