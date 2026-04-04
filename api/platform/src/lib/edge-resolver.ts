@@ -254,9 +254,9 @@ export async function resolveEdges(
           orgEntityEdges.relationshipType,
         ],
         set: {
-          confidence: sql`GREATEST(EXCLUDED.confidence, ${orgEntityEdges.confidence})`,
+          confidence: sql`GREATEST(excluded.${sql.identifier(orgEntityEdges.confidence.name)}, ${orgEntityEdges.confidence})`,
           lastSeenAt: sql`CURRENT_TIMESTAMP`,
-          sourceEventId: sql`EXCLUDED.source_event_id`,
+          sourceEventId: sql`excluded.${sql.identifier(orgEntityEdges.sourceEventId.name)}`,
         },
       });
     log.info("[edge-resolver] entity edges created", {
