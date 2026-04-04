@@ -24,7 +24,6 @@ export const DEFAULT_SKIP_URL: RegExp[] = [
 
 function decodeHtmlEntities(str: string): string {
   return str
-    .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
@@ -34,7 +33,8 @@ function decodeHtmlEntities(str: string): string {
     .replace(/&#x2F;/g, "/")
     .replace(/&#x60;/g, "`")
     .replace(/&ndash;/g, "–")
-    .replace(/&mdash;/g, "—");
+    .replace(/&mdash;/g, "—")
+    .replace(/&amp;/g, "&");
 }
 
 function extractMeta(

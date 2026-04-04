@@ -25,7 +25,7 @@ export async function GET(
   const providerName = provider as SourceType;
 
   // Build query dict from all URL search params
-  const query: Record<string, string> = {};
+  const query: Record<string, string> = Object.create(null);
   for (const [k, v] of req.nextUrl.searchParams) {
     query[k] = v;
   }
