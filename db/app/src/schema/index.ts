@@ -13,11 +13,7 @@ export {
 } from "./relations";
 
 // Re-exported types from tables
-export type {
-  GitHubSourceMetadata,
-  WorkflowInput,
-  WorkflowOutput,
-} from "./tables";
+export type { WorkflowInput, WorkflowOutput } from "./tables";
 export {
   type GatewayBackfillRun,
   type GatewayInstallation,

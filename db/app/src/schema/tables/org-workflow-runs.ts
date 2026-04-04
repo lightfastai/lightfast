@@ -164,7 +164,6 @@ export const orgWorkflowRuns = pgTable(
 
 // Type re-exports from validation schemas
 export type {
-  GitHubSourceMetadata,
   WorkflowInput,
   WorkflowOutput,
 } from "@repo/app-validation";

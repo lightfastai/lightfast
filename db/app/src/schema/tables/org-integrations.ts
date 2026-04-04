@@ -1,5 +1,5 @@
 import type { ProviderConfig, SourceType } from "@repo/app-providers";
-import type { SourceIdentifier, SyncStatus } from "@repo/app-validation";
+import type { SourceIdentifier } from "@repo/app-validation";
 import { nanoid } from "@repo/lib";
 import { sql } from "drizzle-orm";
 import {
@@ -7,8 +7,8 @@ import {
   integer,
   jsonb,
   pgTable,
-  text,
   timestamp,
+  uniqueIndex,
   varchar,
 } from "drizzle-orm/pg-core";
 import { gatewayInstallations } from "./gateway-installations";
@@ -71,26 +71,10 @@ export const orgIntegrations = pgTable(
     status: varchar("status", { length: 50 }).notNull().default("active"),
     statusReason: varchar("status_reason", { length: 100 }),
 
-    // Sync tracking
-    lastSyncedAt: timestamp("last_synced_at", {
-      mode: "string",
-      withTimezone: true,
-    }),
-    lastSyncStatus: varchar("last_sync_status", {
-      length: 50,
-    }).$type<SyncStatus>(), // "success" | "failed" | "pending"
-    lastSyncError: text("last_sync_error"),
-
     // Document count (denormalized for performance)
     documentCount: integer("document_count").notNull().default(0),
 
     // Timestamps
-    connectedAt: timestamp("connected_at", {
-      mode: "string",
-      withTimezone: true,
-    })
-      .notNull()
-      .defaultNow(),
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -109,6 +93,12 @@ export const orgIntegrations = pgTable(
     providerResourceIdIdx: index("org_integration_provider_resource_id_idx").on(
       table.providerResourceId
     ),
+    providerResourceStatusIdx: index(
+      "org_integration_provider_resource_status_idx"
+    ).on(table.providerResourceId, table.status),
+    installationResourceIdx: uniqueIndex(
+      "org_integration_installation_resource_idx"
+    ).on(table.installationId, table.providerResourceId),
   })
 );
 

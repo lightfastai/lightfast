@@ -158,7 +158,6 @@ async function seedIntegrations({ clerkOrgId, userId }: SeedOptions) {
       providerConfig: source.providerConfig,
       providerResourceId: source.providerResourceId,
       status: "active",
-      lastSyncStatus: "success",
       documentCount: source.documentCount,
     });
     console.log(`  [created] ${provider} org integration`);

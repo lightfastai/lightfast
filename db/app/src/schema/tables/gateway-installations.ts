@@ -8,7 +8,6 @@ import {
   integer,
   jsonb,
   pgTable,
-  text,
   timestamp,
   uniqueIndex,
   varchar,
@@ -30,9 +29,6 @@ export const gatewayInstallations = pgTable(
     orgId: varchar("org_id", { length: 191 }).notNull(),
 
     status: varchar("status", { length: 50 }).notNull(), // active|pending|error|revoked
-
-    webhookSecret: text("webhook_secret"),
-    metadata: jsonb("metadata"),
 
     /**
      * Provider-specific installation metadata (JSONB) — discriminated union by sourceType.
@@ -65,9 +61,6 @@ export const gatewayInstallations = pgTable(
       withTimezone: true,
     }),
     healthCheckFailures: integer("health_check_failures").notNull().default(0),
-    configStatus: varchar("config_status", { length: 50 })
-      .notNull()
-      .default("unknown"),
 
     createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
       .notNull()

@@ -76,11 +76,7 @@ export {
   type OrgUserActivity,
   orgUserActivities,
 } from "./org-user-activities";
-export type {
-  GitHubSourceMetadata,
-  WorkflowInput,
-  WorkflowOutput,
-} from "./org-workflow-runs";
+export type { WorkflowInput, WorkflowOutput } from "./org-workflow-runs";
 export {
   type InsertOrgWorkflowRun,
   type OrgWorkflowRun,
