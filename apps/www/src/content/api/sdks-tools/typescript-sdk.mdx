@@ -67,7 +67,8 @@ const response = await client.search(input: SearchInput): Promise<SearchResponse
 |----------|------|-------------|
 | `sourceTypes` | `string[]` | Source types to include (e.g., `["github", "linear"]`) |
 | `observationTypes` | `string[]` | Observation types to include (e.g., `["commit", "issue"]`) |
-| `actorNames` | `string[]` | Actor names to filter by (e.g., `["@sarah", "@mike"]`) |
+| `sources` | `string[]` | Source identifiers to filter by |
+| `entityTypes` | `string[]` | Entity types to filter by |
 | `dateRange` | `{ start?: string; end?: string }` | Date range filter with ISO datetime strings |
 
 #### Example

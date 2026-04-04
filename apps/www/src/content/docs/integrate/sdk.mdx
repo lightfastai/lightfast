@@ -90,9 +90,10 @@ const results = await lightfast.search({
   // Optional: Search mode - "fast" | "balanced" | "thorough" (default: "balanced")
   mode: "balanced",
 
-  // Optional: Filter by source, date, type
+  // Optional: Filter results
   filters: {
     sourceTypes: ["github"],
+    observationTypes: ["pull_request", "issue"],
     dateRange: {
       start: "2024-01-01T00:00:00Z",
     },
@@ -112,17 +113,18 @@ const results = await lightfast.search({
       snippet: "Implemented Drizzle ORM migrations with...",
       score: 0.92,
       source: "github",
-      url: "https://github.com/org/repo/pull/456",
-      metadata: {
-        author: "jane",
-        mergedAt: "2024-12-01"
-      }
+      url: "https://github.com/org/repo/pull/456"
     }
   ],
   meta: {
     total: 24,
-    latency: { total: 145 }
-  }
+    limit: 10,
+    offset: 0,
+    took: 145,
+    mode: "balanced",
+    paths: { vector: true, entity: true, cluster: true }
+  },
+  requestId: "req_abc123"
 }
 ```
 
