@@ -17,12 +17,19 @@ async function handleRequest(request: Request) {
     });
 
     if (matched) {
-      return response;
+      const enriched = new Response(response.body, response);
+      enriched.headers.set("X-Request-ID", requestId);
+      return enriched;
     }
 
     return Response.json(
-      { error: "NOT_FOUND", message: "Endpoint not found", requestId },
-      { status: 404 }
+      {
+        defined: false,
+        code: "NOT_FOUND",
+        status: 404,
+        message: "Endpoint not found",
+      },
+      { status: 404, headers: { "X-Request-ID": requestId } }
     );
   } catch (error) {
     log.error("oRPC handler error", {
@@ -30,8 +37,13 @@ async function handleRequest(request: Request) {
       requestId,
     });
     return Response.json(
-      { error: "INTERNAL_ERROR", requestId },
-      { status: 500 }
+      {
+        defined: false,
+        code: "INTERNAL_SERVER_ERROR",
+        status: 500,
+        message: "Internal server error",
+      },
+      { status: 500, headers: { "X-Request-ID": requestId } }
     );
   }
 }
