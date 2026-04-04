@@ -1,7 +1,6 @@
 "use client";
 
 import type { SearchResponse } from "@repo/app-validation";
-import { Badge } from "@repo/ui/components/ui/badge";
 import { FileText } from "lucide-react";
 import { SearchResultCard } from "./search-result-card";
 
@@ -23,21 +22,12 @@ export function SearchResultsList({
       {/* Results header */}
       <div className="flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
-          {searchResults.data.length} results
-          <span className="ml-1">
-            ({searchResults.latency?.total ?? 0}ms total,{" "}
-            {searchResults.latency?.retrieval ?? 0}ms retrieval
-            {searchResults.latency?.rerank != null
-              ? `, ${searchResults.latency.rerank}ms ${searchResults.meta.mode}`
-              : ""}
-            )
-          </span>
+          {searchResults.total} results
         </p>
-        <Badge variant="outline">{searchResults.meta.mode}</Badge>
       </div>
 
       {/* Result cards */}
-      {searchResults.data.length === 0 ? (
+      {searchResults.results.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-12 text-center">
           <FileText className="mb-3 h-10 w-10 text-muted-foreground/40" />
           <p className="font-medium text-sm">No results found</p>
@@ -47,7 +37,7 @@ export function SearchResultsList({
         </div>
       ) : (
         <div className="space-y-3">
-          {searchResults.data.map((result, index) => (
+          {searchResults.results.map((result, index) => (
             <SearchResultCard
               isExpanded={expandedId === result.id}
               key={result.id}

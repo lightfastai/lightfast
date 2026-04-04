@@ -1,6 +1,6 @@
 "use client";
 
-import type { RerankMode, SearchResponse } from "@repo/app-validation";
+import type { SearchMode, SearchResponse } from "@repo/app-validation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";
@@ -64,10 +64,10 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
     setQuery,
     mode,
     setMode,
-    sourceTypes,
-    setSourceTypes,
-    observationTypes,
-    setObservationTypes,
+    sources,
+    setSources,
+    types,
+    setTypes,
     expandedId,
     setExpandedId,
     limit,
@@ -126,11 +126,9 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
       limit,
       offset,
       mode,
-      filters: {
-        ...(sourceTypes.length > 0 && { sourceTypes }),
-        ...(observationTypes.length > 0 && { observationTypes }),
-        ...dateRangeFromPreset(agePreset),
-      },
+      ...(sources.length > 0 && { sources }),
+      ...(types.length > 0 && { types }),
+      ...dateRangeFromPreset(agePreset),
     };
 
     executeSearch(body, clerkOrgId, abortControllerRef.current.signal)
@@ -187,15 +185,15 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
               <SearchPromptInput
                 clearDisabledReason="No filters applied"
                 isClearDisabled={
-                  sourceTypes.length === 0 &&
-                  observationTypes.length === 0 &&
+                  sources.length === 0 &&
+                  types.length === 0 &&
                   agePreset === "none"
                 }
                 isSubmitDisabled={isSearching || !inputValue.trim()}
                 mode={mode}
                 onChange={setInputValue}
                 onClear={clearFilters}
-                onModeChange={(v) => setMode(v as RerankMode)}
+                onModeChange={(v) => setMode(v as SearchMode)}
                 onSubmit={handlePromptSubmit}
                 placeholder="Ask a question or describe what you're looking for..."
                 status={isSearching ? "submitted" : "ready"}
@@ -206,16 +204,16 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
                 <SearchFilters
                   agePreset={agePreset}
                   limit={limit}
-                  observationTypes={observationTypes}
+                  observationTypes={types}
                   offset={offset}
                   onAgePresetChange={(v) =>
                     void setAgePreset(v as typeof agePreset)
                   }
                   onLimitChange={setLimit}
-                  onObservationTypesChange={setObservationTypes}
+                  onObservationTypesChange={setTypes}
                   onOffsetChange={setOffset}
-                  onSourceTypesChange={setSourceTypes}
-                  sourceTypes={sourceTypes}
+                  onSourceTypesChange={setSources}
+                  sourceTypes={sources}
                 />
               </div>
 

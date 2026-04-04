@@ -119,29 +119,6 @@ export function SearchResultCard({
                     </a>
                   )}
                 </div>
-
-                {/* Entities */}
-                {result.entities && result.entities.length > 0 && (
-                  <div className="space-y-1">
-                    <span className="font-medium text-muted-foreground text-xs">
-                      Entities
-                    </span>
-                    <div className="flex flex-wrap gap-1">
-                      {result.entities.map((entity, idx) => (
-                        <Badge
-                          className="text-xs"
-                          key={`${entity.key}-${entity.category}-${idx}`}
-                          variant="outline"
-                        >
-                          {entity.key}
-                          <span className="ml-1 text-muted-foreground">
-                            ({entity.category})
-                          </span>
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </CollapsibleContent>
             </div>
           </div>

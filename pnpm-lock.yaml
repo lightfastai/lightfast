@@ -427,6 +427,9 @@ importers:
       '@repo/app-providers':
         specifier: workspace:*
         version: link:../../packages/app-providers
+      '@repo/app-rerank':
+        specifier: workspace:*
+        version: link:../../packages/app-rerank
       '@repo/app-trpc':
         specifier: workspace:^
         version: link:../../packages/app-trpc

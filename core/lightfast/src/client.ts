@@ -83,7 +83,10 @@ export class Lightfast {
       limit: request.limit ?? 10,
       offset: request.offset ?? 0,
       mode: request.mode ?? "balanced",
-      filters: request.filters,
+      ...(request.sources && { sources: request.sources }),
+      ...(request.types && { types: request.types }),
+      ...(request.after && { after: request.after }),
+      ...(request.before && { before: request.before }),
     });
   }
 

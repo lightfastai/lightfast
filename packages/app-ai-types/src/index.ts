@@ -5,15 +5,14 @@ import type { DeepPartial, UIMessage } from "ai";
 // ─── Tool Input Types ────────────────────────────────────────────
 
 export interface SearchToolInput {
-  filters?: {
-    dateRange?: { end?: string; start?: string };
-    observationTypes?: string[];
-    sourceTypes?: string[];
-  };
+  after?: string;
+  before?: string;
   limit: number;
-  mode: "fast" | "balanced" | "thorough";
+  mode: "fast" | "balanced";
   offset: number;
   query: string;
+  sources?: string[];
+  types?: string[];
 }
 
 // ─── Tool Output Types ───────────────────────────────────────────

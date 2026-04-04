@@ -63,16 +63,8 @@ describe("LightfastMemory", () => {
   describe("search", () => {
     it("should call /v1/search with correct parameters", async () => {
       const mockResponse = {
-        data: [],
-        meta: {
-          total: 0,
-          limit: 10,
-          offset: 0,
-          took: 100,
-          mode: "balanced",
-          paths: {},
-        },
-        latency: { total: 100 },
+        results: [],
+        total: 0,
         requestId: "req_123",
       };
 

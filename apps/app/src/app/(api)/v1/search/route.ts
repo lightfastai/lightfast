@@ -7,7 +7,7 @@ import { searchLogic } from "~/lib/search";
 import {
   createDualAuthErrorResponse,
   withDualAuth,
-} from "../lib/with-dual-auth";
+} from "../../lib/with-dual-auth";
 
 export async function POST(request: NextRequest) {
   const requestId = randomUUID();

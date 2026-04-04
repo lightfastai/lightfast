@@ -37,12 +37,8 @@ export type {
   ProxyExecuteInput,
   ProxyExecuteResponse,
   ProxySearchResponse,
-  RerankMode,
-  SearchContext,
-  SearchFilters,
-  // SDK input types (with optional fields for defaults)
   SearchInput,
-  SearchLatency,
+  SearchMode,
   SearchRequest,
   SearchResponse,
   SearchResult,

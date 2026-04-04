@@ -1,6 +1,8 @@
 import { buildOrgNamespace } from "@db/app/utils";
 import { createEmbeddingProvider } from "@repo/app-embed";
 import { consolePineconeClient } from "@repo/app-pinecone";
+import type { RerankCandidate } from "@repo/app-rerank";
+import { createRerankProvider } from "@repo/app-rerank";
 import type {
   EntityVectorMetadata,
   SearchRequest,
@@ -15,8 +17,6 @@ export async function searchLogic(
   request: SearchRequest,
   requestId: string
 ): Promise<SearchResponse> {
-  const startTime = Date.now();
-
   const indexName = EMBEDDING_DEFAULTS.indexName;
   const namespaceName = buildOrgNamespace(auth.clerkOrgId);
 
@@ -33,31 +33,38 @@ export async function searchLogic(
   // Build Pinecone filter — occurredAt is stored as Unix ms number
   const pineconeFilter: Record<string, unknown> = { layer: "entities" };
 
-  const dateFilter: Record<string, unknown> = {};
-  if (request.filters?.dateRange?.start) {
-    dateFilter.$gte = new Date(request.filters.dateRange.start).getTime();
+  if (request.after) {
+    pineconeFilter.occurredAt = {
+      ...((pineconeFilter.occurredAt as Record<string, unknown>) ?? {}),
+      $gte: new Date(request.after).getTime(),
+    };
   }
-  if (request.filters?.dateRange?.end) {
-    dateFilter.$lte = new Date(request.filters.dateRange.end).getTime();
-  }
-  if (Object.keys(dateFilter).length > 0) {
-    pineconeFilter.occurredAt = dateFilter;
-  }
-
-  if (request.filters?.sources?.length) {
-    pineconeFilter.provider = { $in: request.filters.sources };
+  if (request.before) {
+    pineconeFilter.occurredAt = {
+      ...((pineconeFilter.occurredAt as Record<string, unknown>) ?? {}),
+      $lte: new Date(request.before).getTime(),
+    };
   }
 
-  if (request.filters?.entityTypes?.length) {
-    pineconeFilter.entityType = { $in: request.filters.entityTypes };
+  if (request.sources?.length) {
+    pineconeFilter.provider = { $in: request.sources };
   }
 
-  // Query entity vectors — one result per entity (no duplicate events for same entity)
+  if (request.types?.length) {
+    pineconeFilter.entityType = { $in: request.types };
+  }
+
+  // Query entity vectors — fetch more than limit so reranker has candidates to work with
+  const topK =
+    request.mode === "balanced"
+      ? Math.min(request.limit * 3, 100)
+      : request.limit;
+
   const queryResult = await consolePineconeClient.query<EntityVectorMetadata>(
     indexName,
     {
       vector: queryVector,
-      topK: request.limit,
+      topK,
       filter: pineconeFilter,
       includeMetadata: true,
     },
@@ -70,43 +77,53 @@ export async function searchLogic(
     resultCount: queryResult.matches.length,
   });
 
-  // Map entity vector metadata to SearchResponse format
-  const data = queryResult.matches.map((match) => ({
+  // Build rerank candidates from Pinecone matches
+  const candidates: RerankCandidate[] = queryResult.matches.map((match) => ({
     id: String(match.metadata?.entityExternalId ?? match.id),
     title: String(match.metadata?.title ?? ""),
-    source: String(match.metadata?.provider ?? ""),
-    type: String(match.metadata?.entityType ?? ""),
-    url: null,
-    // occurredAt stored as Unix ms — convert to ISO datetime string
-    occurredAt:
-      match.metadata?.occurredAt != null
-        ? new Date(Number(match.metadata.occurredAt)).toISOString()
-        : null,
-    snippet: String(match.metadata?.snippet ?? ""),
+    content: String(match.metadata?.snippet ?? ""),
     score: match.score ?? 0,
-    latestAction: match.metadata?.latestAction || undefined,
-    totalEvents:
-      match.metadata?.totalEvents != null
-        ? Number(match.metadata.totalEvents)
-        : undefined,
-    significanceScore:
-      match.metadata?.significanceScore != null
-        ? Number(match.metadata.significanceScore)
-        : undefined,
-    entities: undefined,
-    references: undefined,
   }));
 
+  const rerankProvider = createRerankProvider(request.mode);
+  const rerankResponse = await rerankProvider.rerank(
+    request.query,
+    candidates,
+    {
+      topK: request.limit,
+      requestId,
+    }
+  );
+
+  // Build lookup map for metadata from original Pinecone matches
+  const matchById = new Map(
+    queryResult.matches.map((m) => [
+      String(m.metadata?.entityExternalId ?? m.id),
+      m,
+    ])
+  );
+
+  const results = rerankResponse.results.map((r) => {
+    const match = matchById.get(r.id);
+    const meta = match?.metadata;
+    return {
+      id: r.id,
+      title: String(meta?.title ?? ""),
+      snippet: String(meta?.snippet ?? ""),
+      score: r.score,
+      source: String(meta?.provider ?? ""),
+      type: String(meta?.entityType ?? ""),
+      url: null as string | null,
+      occurredAt:
+        meta?.occurredAt != null
+          ? new Date(Number(meta.occurredAt)).toISOString()
+          : null,
+    };
+  });
+
   return {
-    data,
-    meta: {
-      total: data.length,
-      limit: request.limit,
-      offset: request.offset,
-      took: Date.now() - startTime,
-      mode: request.mode,
-      paths: { vector: true, entity: false, cluster: false },
-    },
+    results,
+    total: results.length,
     requestId,
   };
 }

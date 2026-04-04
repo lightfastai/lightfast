@@ -1,10 +1,7 @@
 // Re-export API types from console-validation for SDK consumers
 // These are used at compile time only (devDependency)
 export type {
-  RerankMode,
-  SearchContext,
-  SearchFilters,
-  SearchLatency,
+  SearchMode,
   SearchRequest,
   SearchResponse,
   SearchResult,
@@ -39,8 +36,8 @@ import type { SearchRequest } from "@repo/app-validation";
  * SDK input type for search requests.
  * Makes fields with defaults optional for better developer experience.
  */
-export type SearchInput = Omit<SearchRequest, "limit" | "offset" | "mode"> &
-  Partial<Pick<SearchRequest, "limit" | "offset" | "mode">>;
+export type SearchInput = Pick<SearchRequest, "query"> &
+  Partial<Omit<SearchRequest, "query">>;
 
 /**
  * Configuration for the Lightfast client

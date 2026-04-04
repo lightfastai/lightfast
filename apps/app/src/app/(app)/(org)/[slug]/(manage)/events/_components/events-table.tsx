@@ -77,7 +77,7 @@ export function EventsTable({ initialSource }: EventsTableProps) {
   // Derive receivedAfter from age preset
   const receivedAfter = useMemo(() => {
     const range = dateRangeFromPreset(filters.age);
-    return range.dateRange?.start;
+    return range.after;
   }, [filters.age]);
 
   const trpc = useTRPC();

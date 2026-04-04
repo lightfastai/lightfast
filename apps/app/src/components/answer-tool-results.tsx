@@ -21,8 +21,8 @@ const toHostname = (url: string): string => {
  * Render search tool results in an accordion with links
  */
 export function SearchToolResult({ data }: { data: SearchResponse }) {
-  const results = data.data;
-  const resultCount = results.length;
+  const results = data.results;
+  const resultCount = data.total;
 
   if (resultCount === 0) {
     return (

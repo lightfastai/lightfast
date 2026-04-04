@@ -35,6 +35,7 @@
     "@repo/app-octokit-github": "workspace:*",
     "@repo/app-pinecone": "workspace:*",
     "@repo/app-providers": "workspace:*",
+    "@repo/app-rerank": "workspace:*",
     "@repo/app-trpc": "workspace:^",
     "@repo/app-upstash-realtime": "workspace:*",
     "@repo/app-validation": "workspace:^",

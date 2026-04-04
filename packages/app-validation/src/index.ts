@@ -46,29 +46,15 @@ export * from "./primitives/ids";
 export * from "./primitives/names";
 export * from "./primitives/slugs";
 export * from "./schemas/activities";
-export type {
-  EventBase,
-  RerankMode,
-  SearchFilters,
-  SourceReference,
-} from "./schemas/api/common";
-export {
-  EventBaseSchema,
-  RerankModeSchema,
-  SearchFiltersSchema,
-  SourceReferenceSchema,
-} from "./schemas/api/common";
 // Canonical API schemas (versioning-free) — import from @repo/app-validation/api for subpath
 export type {
-  SearchContext,
-  SearchLatency,
+  SearchMode,
   SearchRequest,
   SearchResponse,
   SearchResult,
 } from "./schemas/api/search";
 export {
-  SearchContextSchema,
-  SearchLatencySchema,
+  SearchModeSchema,
   SearchRequestSchema,
   SearchResponseSchema,
   SearchResultSchema,
