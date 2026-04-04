@@ -11,8 +11,6 @@ export * from "./ingestion";
 export * from "./job";
 export * from "./neural";
 export * from "./org-api-key";
-export * from "./post-transform-event";
-export * from "./source-metadata";
 export * from "./sources";
 export * from "./store";
 export * from "./workflow-io";

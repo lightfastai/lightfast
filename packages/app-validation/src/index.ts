@@ -65,7 +65,6 @@ export * from "./schemas/ingestion";
 export * from "./schemas/job";
 export * from "./schemas/neural";
 export * from "./schemas/org-api-key";
-export * from "./schemas/source-metadata";
 export * from "./schemas/sources";
 export * from "./schemas/store";
 export * from "./schemas/workflow-io";
