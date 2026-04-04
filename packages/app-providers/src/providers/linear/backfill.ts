@@ -389,7 +389,7 @@ export const linearBackfill: BackfillDef = {
         Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        query: `query($id: String!) { team(id: $id) { name } }`,
+        query: "query($id: String!) { team(id: $id) { name } }",
         variables: { id: providerResourceId },
       }),
       signal: AbortSignal.timeout(10_000),
