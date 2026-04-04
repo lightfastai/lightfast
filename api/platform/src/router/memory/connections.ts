@@ -12,7 +12,6 @@ import {
   gatewayBackfillRuns,
   gatewayInstallations,
   gatewayLifecycleLogs,
-  gatewayResources,
 } from "@db/app/schema";
 import type { ProviderDefinition } from "@repo/app-providers";
 import { getProvider, sourceTypeSchema } from "@repo/app-providers";
@@ -22,7 +21,7 @@ import {
 } from "@repo/app-providers/contracts";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { and, eq, sql } from "@vendor/db";
+import { and, eq } from "@vendor/db";
 import { z } from "zod";
 
 import { inngest } from "../../inngest/client";
@@ -63,62 +62,6 @@ export const connectionsRouter = {
         .where(and(...conditions));
 
       return rows;
-    }),
-
-  /**
-   * Get connection details by ID.
-   * Source: GET /connections/:id
-   */
-  get: serviceProcedure
-    .input(
-      z.object({
-        id: z.string(),
-      })
-    )
-    .query(async ({ input }) => {
-      const installation = await db.query.gatewayInstallations.findFirst({
-        where: eq(gatewayInstallations.id, input.id),
-        with: {
-          tokens: {
-            columns: {
-              id: true,
-              expiresAt: true,
-              tokenType: true,
-              scope: true,
-              updatedAt: true,
-            },
-          },
-          resources: { where: eq(gatewayResources.status, "active") },
-        },
-      });
-
-      if (!installation) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connection not found",
-        });
-      }
-
-      return {
-        id: installation.id,
-        provider: installation.provider,
-        externalId: installation.externalId,
-        orgId: installation.orgId,
-        status: installation.status,
-        hasToken:
-          !getProvider(installation.provider).auth.usesStoredToken ||
-          installation.tokens.length > 0,
-        tokenExpiresAt: installation.tokens[0]?.expiresAt ?? null,
-        resources: installation.resources.map(
-          (r: (typeof installation.resources)[number]) => ({
-            id: r.id,
-            providerResourceId: r.providerResourceId,
-            resourceName: r.resourceName,
-          })
-        ),
-        createdAt: installation.createdAt,
-        updatedAt: installation.updatedAt,
-      };
     }),
 
   /**
@@ -287,151 +230,6 @@ export const connectionsRouter = {
       }
 
       return { url: result.url, state: result.state };
-    }),
-
-  /**
-   * Link a resource to a connection.
-   * Source: POST /connections/:id/resources
-   */
-  registerResource: serviceProcedure
-    .input(
-      z.object({
-        installationId: z.string(),
-        providerResourceId: z.string().min(1),
-        resourceName: z.string().optional(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const installationRows = await db
-        .select()
-        .from(gatewayInstallations)
-        .where(eq(gatewayInstallations.id, input.installationId))
-        .limit(1);
-
-      const installation = installationRows[0];
-
-      if (!installation) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Connection not found",
-        });
-      }
-
-      if (installation.status !== "active") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Installation not active (status: ${installation.status})`,
-        });
-      }
-
-      // Check for existing active resource link
-      const existingRows = await db
-        .select({ id: gatewayResources.id })
-        .from(gatewayResources)
-        .where(
-          and(
-            eq(gatewayResources.installationId, input.installationId),
-            eq(gatewayResources.providerResourceId, input.providerResourceId),
-            eq(gatewayResources.status, "active")
-          )
-        )
-        .limit(1);
-
-      const existing = existingRows[0];
-
-      if (existing) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: `Resource already linked (resourceId: ${existing.id})`,
-        });
-      }
-
-      const resourceRows = await db
-        .insert(gatewayResources)
-        .values({
-          installationId: input.installationId,
-          providerResourceId: input.providerResourceId,
-          resourceName: input.resourceName,
-          status: "active",
-        })
-        .onConflictDoUpdate({
-          target: [
-            gatewayResources.installationId,
-            gatewayResources.providerResourceId,
-          ],
-          set: {
-            status: "active",
-            ...(input.resourceName !== undefined
-              ? { resourceName: input.resourceName }
-              : {}),
-            updatedAt: sql`CURRENT_TIMESTAMP`,
-          },
-        })
-        .returning();
-
-      const resource = resourceRows[0];
-      if (!resource) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Resource insert failed",
-        });
-      }
-
-      return {
-        status: "linked" as const,
-        resource: {
-          id: resource.id,
-          providerResourceId: resource.providerResourceId,
-          resourceName: resource.resourceName,
-        },
-      };
-    }),
-
-  /**
-   * Unlink a resource from a connection.
-   * Source: DELETE /connections/:id/resources/:resourceId
-   */
-  removeResource: serviceProcedure
-    .input(
-      z.object({
-        installationId: z.string(),
-        resourceId: z.string(),
-      })
-    )
-    .mutation(async ({ input }) => {
-      const resourceRows = await db
-        .select()
-        .from(gatewayResources)
-        .where(
-          and(
-            eq(gatewayResources.id, input.resourceId),
-            eq(gatewayResources.installationId, input.installationId)
-          )
-        )
-        .limit(1);
-
-      const resource = resourceRows[0];
-
-      if (!resource) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Resource not found",
-        });
-      }
-
-      if (resource.status === "removed") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Resource already removed",
-        });
-      }
-
-      await db
-        .update(gatewayResources)
-        .set({ status: "removed" })
-        .where(eq(gatewayResources.id, input.resourceId));
-
-      return { status: "removed" as const, resourceId: input.resourceId };
     }),
 
   /**

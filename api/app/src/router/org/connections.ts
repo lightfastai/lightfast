@@ -464,6 +464,17 @@ export const connectionsRouter = {
         provider: "vercel",
       });
 
+      // Cascade: mark all org integrations for this installation as disconnected
+      const now = new Date().toISOString();
+      await ctx.db
+        .update(orgIntegrations)
+        .set({
+          status: "disconnected",
+          statusReason: "installation_revoked",
+          updatedAt: now,
+        })
+        .where(eq(orgIntegrations.installationId, installation.id));
+
       return { success: true };
     }),
   },
@@ -588,51 +599,32 @@ export const connectionsRouter = {
         });
 
         let created = 0;
-        let reactivated = 0;
 
         for (const resource of input.resources) {
-          const existing = await ctx.db
-            .select({ id: orgIntegrations.id, status: orgIntegrations.status })
-            .from(orgIntegrations)
-            .where(
-              and(
-                eq(orgIntegrations.clerkOrgId, ctx.auth.orgId),
-                eq(orgIntegrations.provider, input.provider),
-                eq(
-                  orgIntegrations.providerResourceId,
-                  resource.resourceId as SourceIdentifier
-                ),
-                eq(orgIntegrations.installationId, input.gwInstallationId)
-              )
-            )
-            .limit(1)
-            .then((rows) => rows[0]);
-
-          if (existing) {
-            if (existing.status === "disconnected") {
-              await ctx.db
-                .update(orgIntegrations)
-                .set({
-                  status: "active",
-                  statusReason: null,
-                  updatedAt: new Date().toISOString(),
-                })
-                .where(eq(orgIntegrations.id, existing.id));
-              reactivated++;
-            }
-          } else {
-            await ctx.db.insert(orgIntegrations).values({
+          await ctx.db
+            .insert(orgIntegrations)
+            .values({
               clerkOrgId: ctx.auth.orgId,
               installationId: input.gwInstallationId,
               provider: input.provider,
               providerConfig,
               providerResourceId: resource.resourceId as SourceIdentifier,
+            })
+            .onConflictDoUpdate({
+              target: [
+                orgIntegrations.installationId,
+                orgIntegrations.providerResourceId,
+              ],
+              set: {
+                status: "active",
+                statusReason: null,
+                updatedAt: new Date().toISOString(),
+              },
             });
-            created++;
-          }
+          created++;
         }
 
-        return { created, reactivated };
+        return { created, reactivated: 0 };
       }),
   },
 

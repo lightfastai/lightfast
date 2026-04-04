@@ -592,10 +592,10 @@ c) Remove `gatewayResources` import from the file.
 ### Success Criteria:
 
 #### Automated Verification:
-- [ ] Type checking passes: `pnpm typecheck`
-- [ ] Lint passes: `pnpm check`
-- [ ] App builds: `pnpm build:app`
-- [ ] Platform builds: `pnpm build:platform`
+- [x] Type checking passes: `pnpm typecheck`
+- [x] Lint passes: `pnpm check`
+- [x] App builds: `pnpm build:app`
+- [x] Platform builds: `pnpm build:platform`
 
 #### Manual Verification:
 - [ ] Link new resources via the sources UI → `orgIntegrations` row created, no `gatewayResources` row

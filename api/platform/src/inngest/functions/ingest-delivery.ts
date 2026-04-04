@@ -13,10 +13,9 @@
 
 import { db } from "@db/app/client";
 import {
-  gatewayInstallations,
-  gatewayResources,
   gatewayWebhookDeliveries,
   orgIngestLogs,
+  orgIntegrations,
 } from "@db/app/schema";
 import type { ProviderSlug } from "@repo/app-providers";
 import { sanitizePostTransformEvent } from "@repo/app-providers";
@@ -59,18 +58,14 @@ export const ingestDelivery = inngest.createFunction(
 
       const rows = await db
         .select({
-          installationId: gatewayResources.installationId,
-          orgId: gatewayInstallations.orgId,
+          installationId: orgIntegrations.installationId,
+          orgId: orgIntegrations.clerkOrgId,
         })
-        .from(gatewayResources)
-        .innerJoin(
-          gatewayInstallations,
-          eq(gatewayResources.installationId, gatewayInstallations.id)
-        )
+        .from(orgIntegrations)
         .where(
           and(
-            eq(gatewayResources.providerResourceId, data.resourceId),
-            eq(gatewayResources.status, "active")
+            eq(orgIntegrations.providerResourceId, data.resourceId),
+            eq(orgIntegrations.status, "active")
           )
         )
         .limit(1);

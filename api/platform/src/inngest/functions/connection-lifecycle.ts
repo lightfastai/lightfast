@@ -15,8 +15,8 @@ import { db } from "@db/app/client";
 import {
   gatewayInstallations,
   gatewayLifecycleLogs,
-  gatewayResources,
   gatewayTokens,
+  orgIntegrations,
 } from "@db/app/schema";
 import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
@@ -162,26 +162,35 @@ export const connectionLifecycle = inngest.createFunction(
       }
     });
 
-    // Step 4: Remove linked resources in DB
-    await step.run("remove-resources", async () => {
-      const resources = await db
-        .select({ providerResourceId: gatewayResources.providerResourceId })
-        .from(gatewayResources)
+    // Step 4: Log resource disconnection
+    // The app-layer cascade already sets orgIntegrations.status → 'disconnected'
+    // before this Inngest event fires. We just preserve the lifecycle log.
+    await step.run("log-resource-disconnection", async () => {
+      // orgIntegrations may already be 'disconnected' if app-layer ran first.
+      // Fall back to getting all resources for this installation.
+      const activeResources = await db
+        .select({ providerResourceId: orgIntegrations.providerResourceId })
+        .from(orgIntegrations)
         .where(
           and(
-            eq(gatewayResources.installationId, installationId),
-            eq(gatewayResources.status, "active")
+            eq(orgIntegrations.installationId, installationId),
+            eq(orgIntegrations.status, "active")
           )
         );
 
-      await db
-        .update(gatewayResources)
-        .set({ status: "removed", updatedAt: new Date().toISOString() })
-        .where(eq(gatewayResources.installationId, installationId));
+      const allResources =
+        activeResources.length > 0
+          ? activeResources
+          : await db
+              .select({
+                providerResourceId: orgIntegrations.providerResourceId,
+              })
+              .from(orgIntegrations)
+              .where(eq(orgIntegrations.installationId, installationId));
 
       const resourceIdMap: Record<string, string> = {};
-      for (const r of resources) {
-        resourceIdMap[r.providerResourceId] = "removed";
+      for (const r of allResources) {
+        resourceIdMap[r.providerResourceId] = "disconnected";
       }
 
       await db.insert(gatewayLifecycleLogs).values({
@@ -189,17 +198,14 @@ export const connectionLifecycle = inngest.createFunction(
         event: "resources_removed",
         fromStatus: "revoked",
         toStatus: "revoked",
-        reason: `Removed ${resources.length} linked resource(s) during teardown`,
+        reason: `Disconnected ${allResources.length} linked resource(s) during teardown`,
         resourceIds: resourceIdMap,
-        metadata: {
-          step: "remove-resources",
-          triggeredBy: "system",
-        },
+        metadata: { step: "close-gate", triggeredBy: "system" },
       });
 
-      log.info("[connection-lifecycle] resources removed", {
+      log.info("[connection-lifecycle] resources disconnected", {
         installationId,
-        count: resources.length,
+        count: allResources.length,
       });
     });
 
