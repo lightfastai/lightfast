@@ -7,6 +7,20 @@ import { appUrl } from "~/lib/related-projects";
 
 export const runtime = "nodejs";
 
+/** tRPC error codes that represent expected domain conditions, not bugs. */
+const EXPECTED_TRPC_ERRORS = new Set([
+  "UNAUTHORIZED",
+  "FORBIDDEN",
+  "NOT_FOUND",
+  "BAD_REQUEST",
+  "CONFLICT",
+  "PRECONDITION_FAILED",
+  "PARSE_ERROR",
+  "UNPROCESSABLE_CONTENT",
+  "TOO_MANY_REQUESTS",
+  "CLIENT_CLOSED_REQUEST",
+]);
+
 const setCorsHeaders = (req: NextRequest, res: Response) => {
   const origin = req.headers.get("origin");
   // Only the app calls platform tRPC — appUrl resolves per environment via VERCEL_RELATED_PROJECTS
@@ -41,12 +55,17 @@ const handler = async (req: NextRequest) => {
         headers: req.headers,
       }),
     onError({ error, path }) {
-      log.error("[trpc] procedure error", {
-        path,
-        error: error.message,
-        code: error.code,
-      });
-      if (error.code === "INTERNAL_SERVER_ERROR") {
+      if (EXPECTED_TRPC_ERRORS.has(error.code)) {
+        log.info("[trpc] expected error", {
+          path,
+          code: error.code,
+        });
+      } else {
+        log.error("[trpc] unexpected error", {
+          path,
+          error: error.message,
+          code: error.code,
+        });
         captureException(error);
       }
     },

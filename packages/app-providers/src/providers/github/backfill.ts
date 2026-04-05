@@ -5,6 +5,7 @@ import type {
   BackfillWebhookEvent,
 } from "../../provider/backfill";
 import { typedEntityHandler } from "../../provider/backfill";
+import { readErrorBody } from "../../runtime/http";
 import { githubIssueSchema, githubPullRequestSchema } from "./api";
 import type {
   PreTransformGitHubIssuesEvent,
@@ -131,8 +132,9 @@ export const githubBackfill: BackfillDef = {
       }
     );
     if (!res.ok) {
+      const body = await readErrorBody(res);
       throw new Error(
-        `GitHub repo lookup failed for ${providerResourceId}: ${res.status}`
+        `GitHub repo lookup failed for ${providerResourceId}: ${res.status} ${body}`
       );
     }
     const repo = (await res.json()) as { full_name: string };

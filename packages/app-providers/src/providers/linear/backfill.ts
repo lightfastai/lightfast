@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { BackfillContext, BackfillDef } from "../../provider/backfill";
 import { typedEntityHandler } from "../../provider/backfill";
+import { readErrorBody } from "../../runtime/http";
 import type {
   PreTransformLinearCommentWebhook,
   PreTransformLinearIssueWebhook,
@@ -395,7 +396,8 @@ export const linearBackfill: BackfillDef = {
       signal: AbortSignal.timeout(10_000),
     });
     if (!res.ok) {
-      throw new Error(`Linear team lookup failed: ${res.status}`);
+      const body = await readErrorBody(res);
+      throw new Error(`Linear team lookup failed: ${res.status} ${body}`);
     }
     const body = (await res.json()) as {
       data?: { team?: { name?: string } };

@@ -3,6 +3,7 @@ import { gatewayTokens } from "@db/app/schema";
 import type { ProviderDefinition } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/next";
 import { getEncryptionKey } from "./encryption";
 import { updateTokenRecord } from "./token-store";
 
@@ -108,8 +109,19 @@ export async function forceRefreshToken(
         row.expiresAt
       );
       return refreshed.accessToken;
-    } catch {
-      // Refresh failed — fall through to getActiveToken
+    } catch (refreshErr) {
+      log.warn(
+        "[token-helpers] token refresh failed, falling back to getActiveToken",
+        {
+          installationId: installation.id,
+          provider: installation.provider,
+          error:
+            refreshErr instanceof Error
+              ? refreshErr.message
+              : String(refreshErr),
+        }
+      );
+      // Fall through to getActiveToken
     }
   }
 
@@ -122,7 +134,16 @@ export async function forceRefreshToken(
       installation.externalId,
       null
     );
-  } catch {
+  } catch (fallbackErr) {
+    log.warn("[token-helpers] getActiveToken fallback failed", {
+      installationId: installation.id,
+      provider: installation.provider,
+      externalId: installation.externalId,
+      error:
+        fallbackErr instanceof Error
+          ? fallbackErr.message
+          : String(fallbackErr),
+    });
     return null;
   }
 }

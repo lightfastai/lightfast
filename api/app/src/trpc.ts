@@ -153,22 +153,43 @@ export const createCallerFactory = t.createCallerFactory;
  * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
  * network latency that would occur in production but not in local development.
  */
-const timingMiddleware = t.middleware(async ({ next, path }) => {
-  const start = Date.now();
+const observabilityMiddleware = t.middleware(
+  async ({ next, path, ctx, type }) => {
+    const start = Date.now();
 
-  if (t._config.isDev) {
-    // artificial delay in dev 100-500ms
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    if (t._config.isDev) {
+      // artificial delay in dev 100-500ms
+      const waitMs = Math.floor(Math.random() * 400) + 100;
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+
+    const result = await next();
+    const durationMs = Date.now() - start;
+
+    const meta = {
+      path,
+      type,
+      durationMs,
+      ok: result.ok,
+      ...(!result.ok && { errorCode: result.error?.code }),
+      ...(ctx.auth.type === "clerk-active" && {
+        userId: ctx.auth.userId,
+        orgId: ctx.auth.orgId,
+      }),
+      ...(ctx.auth.type === "clerk-pending" && {
+        userId: ctx.auth.userId,
+      }),
+    };
+
+    if (result.ok) {
+      log.info("[trpc] procedure completed", meta);
+    } else {
+      log.warn("[trpc] procedure failed", meta);
+    }
+
+    return result;
   }
-
-  const result = await next();
-
-  const end = Date.now();
-  log.info("[trpc] procedure timing", { path, durationMs: end - start });
-
-  return result;
-});
+);
 
 /**
  * Public (unauthed) procedure
@@ -177,7 +198,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
+export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
 
 /**
  * User-Scoped Procedure
@@ -196,7 +217,7 @@ export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 export const userScopedProcedure = sentrifiedProcedure
-  .use(timingMiddleware)
+  .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type === "unauthenticated") {
       throw new TRPCError({
@@ -244,7 +265,7 @@ export const userScopedProcedure = sentrifiedProcedure
  * @see https://trpc.io/docs/procedures
  */
 export const orgScopedProcedure = sentrifiedProcedure
-  .use(timingMiddleware)
+  .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type === "unauthenticated") {
       throw new TRPCError({

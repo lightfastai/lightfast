@@ -26,8 +26,8 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
-
 import { inngest } from "../../inngest/client";
 import { providerConfigs } from "../../lib/provider-configs";
 import { getActiveTokenForInstallation } from "../../lib/token-helpers";
@@ -94,6 +94,12 @@ export const backfillRouter = {
           },
         });
       } catch (err) {
+        log.error("[backfill] trigger dispatch failed", {
+          installationId: input.installationId,
+          provider: input.provider,
+          orgId: input.orgId,
+          error: err instanceof Error ? err.message : String(err),
+        });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to enqueue backfill: ${err instanceof Error ? err.message : String(err)}`,
@@ -139,6 +145,11 @@ export const backfillRouter = {
           },
         });
       } catch (err) {
+        log.error("[backfill] cancel dispatch failed", {
+          installationId: input.installationId,
+          correlationId: input.correlationId,
+          error: err instanceof Error ? err.message : String(err),
+        });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to enqueue cancellation: ${err instanceof Error ? err.message : String(err)}`,
@@ -230,6 +241,12 @@ export const backfillRouter = {
           providerDef as ProviderDefinition
         ));
       } catch (err) {
+        log.error("[backfill] token acquisition failed for estimate", {
+          installationId,
+          provider,
+          orgId,
+          error: err instanceof Error ? err.message : String(err),
+        });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: `Failed to get token: ${err instanceof Error ? err.message : String(err)}`,
@@ -251,7 +268,16 @@ export const backfillRouter = {
                 token,
               });
               return { providerResourceId: r.providerResourceId, resourceName };
-            } catch {
+            } catch (resolveErr) {
+              log.warn("[backfill] resolveResourceMeta failed", {
+                installationId,
+                provider,
+                resourceId: r.providerResourceId,
+                error:
+                  resolveErr instanceof Error
+                    ? resolveErr.message
+                    : String(resolveErr),
+              });
               if (resourceNameRequiredForRouting) {
                 // GitHub/Sentry: can't estimate without valid path segments — skip
                 return null;
@@ -364,7 +390,17 @@ export const backfillRouter = {
                   hasMore: processed.nextCursor !== null,
                 },
               };
-            } catch {
+            } catch (probeErr) {
+              log.warn("[backfill] estimate probe failed", {
+                installationId,
+                provider,
+                resourceId: resource.providerResourceId,
+                entityType,
+                error:
+                  probeErr instanceof Error
+                    ? probeErr.message
+                    : String(probeErr),
+              });
               return {
                 entityType,
                 sample: {
