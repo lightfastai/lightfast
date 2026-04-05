@@ -1,27 +1,14 @@
 import "server-only";
 
-import * as Sentry from "@sentry/nextjs";
-import { log } from "../log/next";
-
 export const parseError = (error: unknown): string => {
-  let message = "An error occurred";
-
   if (error instanceof Error) {
-    message = error.message;
-  } else if (error && typeof error === "object" && "message" in error) {
-    message = error.message as string;
-  } else if (typeof error === "string") {
-    message = error;
-  } else {
-    message = String(error);
+    return error.message;
   }
-
-  try {
-    Sentry.captureException(error);
-    log.error(`Parsing error: ${message}`);
-  } catch (newError) {
-    console.error("Error parsing error:", newError);
+  if (error && typeof error === "object" && "message" in error) {
+    return error.message as string;
   }
-
-  return message;
+  if (typeof error === "string") {
+    return error;
+  }
+  return String(error);
 };
