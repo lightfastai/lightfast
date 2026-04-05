@@ -638,6 +638,9 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.12.0(typescript@5.9.3)
+      '@vendor/inngest':
+        specifier: workspace:*
+        version: link:../../vendor/inngest
       '@vendor/next':
         specifier: workspace:*
         version: link:../../vendor/next
