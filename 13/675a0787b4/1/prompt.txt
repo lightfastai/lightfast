@@ -1,0 +1,27 @@
+/implement_plan @thoughts/shared/plans/2026-04-05-trpc-client-error-propagation.md
+
+---
+
+proced
+
+---
+
+proceed
+
+---
+
+who are builds?
+
+---
+
+<task-notification>
+<task-id>bi7z5a9ho</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/1c1533ed-bffd-4ed6-b5a4-406d72ecfca1/tasks/bi7z5a9ho.output</output-file>
+<status>completed</status>
+<summary>Background command "Verify all cleanup criteria" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+/oneshot_merge
