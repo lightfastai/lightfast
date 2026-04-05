@@ -1,0 +1,13 @@
+/create_plan @thoughts/shared/research/2026-04-05-entity-first-ui-rework-landscape.md
+
+---
+
+proceed
+
+---
+
+note: the entity events does it become real time too?
+
+---
+
+realtime for entity list + an entitys event posssible? so both

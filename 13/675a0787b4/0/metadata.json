@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "13675a0787b4",
+  "session_id": "2f057360-cb0e-4353-a946-75ef013ec220",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T09:50:46.458906Z",
+  "branch": "fix/trpc-client-error-propagation",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/src/components/errors/org-page-error-boundary.tsx",
+    "packages/app-trpc/package.json",
+    "packages/app-trpc/src/client.ts",
+    "packages/app-trpc/src/react.tsx",
+    "packages/app-trpc/src/types.ts",
+    "pnpm-lock.yaml"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "c12591c1884d",
+  "token_usage": {
+    "input_tokens": 17388,
+    "cache_creation_tokens": 134197,
+    "cache_read_tokens": 3145458,
+    "output_tokens": 34023,
+    "api_call_count": 32
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T09:50:45.59096Z",
+    "agent_lines": 36,
+    "agent_removed": 3,
+    "human_added": 10,
+    "human_modified": 5,
+    "human_removed": 0,
+    "total_committed": 51,
+    "total_lines_changed": 168,
+    "agent_percentage": 23.214285714285715,
+    "metric_version": 2
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "13675a0787b4",
+  "strategy": "manual-commit",
+  "branch": "fix/trpc-client-error-propagation",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/src/components/errors/org-page-error-boundary.tsx",
+    "packages/app-trpc/package.json",
+    "packages/app-trpc/src/client.ts",
+    "packages/app-trpc/src/react.tsx",
+    "packages/app-trpc/src/types.ts",
+    "pnpm-lock.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/13/675a0787b4/0/metadata.json",
+      "transcript": "/13/675a0787b4/0/full.jsonl",
+      "content_hash": "/13/675a0787b4/0/content_hash.txt",
+      "prompt": "/13/675a0787b4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 17388,
+    "cache_creation_tokens": 134197,
+    "cache_read_tokens": 3145458,
+    "output_tokens": 34023,
+    "api_call_count": 32
+  }
+}
