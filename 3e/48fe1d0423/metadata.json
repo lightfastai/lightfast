@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "3e48fe1d0423",
+  "strategy": "manual-commit",
+  "branch": "refactor/lightfast-pinecone-client",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/3e/48fe1d0423/0/metadata.json",
+      "transcript": "/3e/48fe1d0423/0/full.jsonl",
+      "content_hash": "/3e/48fe1d0423/0/content_hash.txt",
+      "prompt": "/3e/48fe1d0423/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2290,
+    "cache_creation_tokens": 49591,
+    "cache_read_tokens": 1621038,
+    "output_tokens": 19489,
+    "api_call_count": 34
+  }
+}
