@@ -3,7 +3,7 @@
   "checkpoint_id": "dc5e672b8543",
   "strategy": "manual-commit",
   "branch": "refactor/trpc-error-handling-consolidation",
-  "checkpoints_count": 14,
+  "checkpoints_count": 17,
   "files_touched": [
     "api/app/src/trpc.ts",
     "api/platform/src/trpc.ts",
@@ -40,13 +40,19 @@
       "transcript": "/dc/5e672b8543/3/full.jsonl",
       "content_hash": "/dc/5e672b8543/3/content_hash.txt",
       "prompt": "/dc/5e672b8543/3/prompt.txt"
+    },
+    {
+      "metadata": "/dc/5e672b8543/4/metadata.json",
+      "transcript": "/dc/5e672b8543/4/full.jsonl",
+      "content_hash": "/dc/5e672b8543/4/content_hash.txt",
+      "prompt": "/dc/5e672b8543/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 14292,
-    "cache_creation_tokens": 309885,
-    "cache_read_tokens": 10523794,
-    "output_tokens": 88005,
-    "api_call_count": 150
+    "input_tokens": 15305,
+    "cache_creation_tokens": 383372,
+    "cache_read_tokens": 10933962,
+    "output_tokens": 101098,
+    "api_call_count": 157
   }
 }

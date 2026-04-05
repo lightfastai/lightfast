@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "dc5e672b8543",
+  "session_id": "f2a654e1-4c4d-4b65-9699-82c7a8641c6f",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T08:36:50.281101Z",
+  "branch": "refactor/trpc-error-handling-consolidation",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/app/src/trpc.ts",
+    "api/platform/src/trpc.ts",
+    "apps/app/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/app/src/instrumentation.ts",
+    "apps/platform/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/platform/src/instrumentation.ts",
+    "pnpm-lock.yaml",
+    "vendor/observability/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "283027d12749",
+  "token_usage": {
+    "input_tokens": 1013,
+    "cache_creation_tokens": 73487,
+    "cache_read_tokens": 410168,
+    "output_tokens": 13093,
+    "api_call_count": 7
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T08:36:49.960996Z",
+    "agent_lines": 34,
+    "agent_removed": 190,
+    "human_added": 800,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 834,
+    "total_lines_changed": 1024,
+    "agent_percentage": 21.875,
+    "metric_version": 2
+  }
+}

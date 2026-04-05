@@ -1,0 +1,17 @@
+/research_codebase consider our git status implementation of @thoughts/shared/plans/2026-04-05-trpc-error-handling-consolidation.md 
+
+now given this is done, let's discuss the code smell that is @apps/app/src/lib/trpc-errors.ts 
+
+consider now, how errors should be propagated from a trpc procedure to client-side
+
+we want to improve developer long-term maintainability by 100x. 
+
+what is the most accretive, innovative, radical and creative step we cna take at this point
+
+---
+
+this is brilliant. thanks! is there anything else we should do here to go from what it can be to 100x improvement
+
+---
+
+this seems complicated
