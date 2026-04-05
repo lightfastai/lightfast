@@ -1,14 +1,14 @@
 {
   "name": "lightfast",
   "version": "0.1.0-alpha.5",
-  "description": "Lightfast Neural Memory SDK - TypeScript client for the Lightfast Memory API",
+  "description": "Lightfast Platform SDK - TypeScript client for the Lightfast Platform API",
   "publishConfig": {
     "tag": "latest",
     "access": "public"
   },
   "keywords": [
     "lightfast",
-    "memory",
+    "platform",
     "ai",
     "semantic-search",
     "typescript"

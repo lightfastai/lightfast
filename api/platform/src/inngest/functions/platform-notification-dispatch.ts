@@ -4,15 +4,15 @@ import { inngest } from "../client";
 const NOTIFICATION_SIGNIFICANCE_THRESHOLD = 70;
 const OBSERVATION_WORKFLOW_KEY = "observation-captured";
 
-export const memoryNotificationDispatch = inngest.createFunction(
+export const platformNotificationDispatch = inngest.createFunction(
   {
-    id: "memory/notification.dispatch",
+    id: "platform/notification.dispatch",
     name: "Notification Dispatch",
     description: "Dispatches high-significance event notifications via Knock",
     retries: 2,
     timeouts: { finish: "1m" },
   },
-  { event: "memory/event.stored" },
+  { event: "platform/event.stored" },
   async ({ event, step }) => {
     const { clerkOrgId, eventExternalId, sourceType, significanceScore } =
       event.data;

@@ -14,16 +14,16 @@ import { resolveEdges } from "../../lib/edge-resolver";
 import { inngest } from "../client";
 import { createNeuralOnFailureHandler } from "../on-failure-handler";
 
-export const memoryEntityGraph = inngest.createFunction(
+export const platformEntityGraph = inngest.createFunction(
   {
-    id: "memory/entity.graph",
+    id: "platform/entity.graph",
     name: "Entity Graph",
     description: "Resolves entity edges after upsert (fast, pure SQL)",
     retries: 3,
     timeouts: { finish: "2m" },
-    onFailure: createNeuralOnFailureHandler("memory/entity.upserted"),
+    onFailure: createNeuralOnFailureHandler("platform/entity.upserted"),
   },
-  { event: "memory/entity.upserted" },
+  { event: "platform/entity.upserted" },
   async ({ event, step }) => {
     const { clerkOrgId, internalEventId, provider, entityRefs, correlationId } =
       event.data;
@@ -42,7 +42,7 @@ export const memoryEntityGraph = inngest.createFunction(
     });
 
     await step.sendEvent("emit-entity-graphed", {
-      name: "memory/entity.graphed" as const,
+      name: "platform/entity.graphed" as const,
       data: {
         clerkOrgId,
         entityExternalId: event.data.entityExternalId,

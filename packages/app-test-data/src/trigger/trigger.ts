@@ -64,7 +64,7 @@ export const triggerEventCapture = async (
         const eventId = `${runId}:${event.sourceId}`;
 
         await inngest.send({
-          name: "memory/event.capture",
+          name: "platform/event.capture",
           id: eventId,
           data: {
             clerkOrgId: options.clerkOrgId,

@@ -2,7 +2,7 @@
  * Lazy-initialized provider configs — built on first access from validated env vars.
  *
  * Ported from apps/gateway/src/routes/connections.ts (lines 44–64).
- * Uses the memory app's base URL for OAuth callbacks instead of the gateway.
+ * Uses the platform app's base URL for OAuth callbacks instead of the gateway.
  *
  * IMPORTANT: Lazy initialization prevents build-time crashes when env vars
  * are not yet available during `next build` static analysis.

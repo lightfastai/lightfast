@@ -29,7 +29,7 @@ describe("service JWT", () => {
     const token = await new SignJWT({})
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
       .setIssuer("app")
-      .setAudience("lightfast-memory")
+      .setAudience("lightfast-platform")
       .setIssuedAt(Math.floor(Date.now() / 1000) - 120)
       .setExpirationTime(Math.floor(Date.now() / 1000) - 60)
       .sign(key);

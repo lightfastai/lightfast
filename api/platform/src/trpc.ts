@@ -1,5 +1,5 @@
 /**
- * Memory service tRPC initialization.
+ * Platform service tRPC initialization.
  *
  * Auth model: service-to-service JWT (not Clerk).
  * All callers are internal services (app, platform, inngest, cron).
@@ -17,10 +17,10 @@ import { verifyServiceJWT } from "./lib/jwt";
 // -- Auth Context -------------------------------------------------------------
 
 /**
- * Discriminated union for memory service authentication.
+ * Discriminated union for platform service authentication.
  * Every request resolves to exactly one variant.
  */
-export type MemoryAuthContext =
+export type PlatformAuthContext =
   | { type: "service"; caller: string }
   | { type: "webhook"; provider: string }
   | { type: "inngest" }
@@ -30,14 +30,14 @@ export type MemoryAuthContext =
 // -- Context Creation ---------------------------------------------------------
 
 /**
- * Create tRPC context for memory service requests.
+ * Create tRPC context for platform service requests.
  *
  * Auth resolution order:
  * 1. Bearer JWT in Authorization header -> service auth
- * 2. X-Memory-Source header for internal identification
+ * 2. x-trpc-source header for internal identification
  * 3. Unauthenticated fallback
  */
-export const createMemoryTRPCContext = async (opts: { headers: Headers }) => {
+export const createPlatformTRPCContext = async (opts: { headers: Headers }) => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
   // Check for service JWT in Authorization header
@@ -47,7 +47,7 @@ export const createMemoryTRPCContext = async (opts: { headers: Headers }) => {
 
     try {
       const verified = await verifyServiceJWT(token);
-      log.info("[trpc] memory service request", {
+      log.info("[trpc] platform service request", {
         source,
         auth: "service",
         caller: verified.caller,
@@ -68,7 +68,7 @@ export const createMemoryTRPCContext = async (opts: { headers: Headers }) => {
   }
 
   // No authentication
-  log.info("[trpc] memory service request", {
+  log.info("[trpc] platform service request", {
     source,
     auth: "unauthenticated",
   });
@@ -82,7 +82,7 @@ export const createMemoryTRPCContext = async (opts: { headers: Headers }) => {
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const t = initTRPC.context<typeof createMemoryTRPCContext>().create({
+const t = initTRPC.context<typeof createPlatformTRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => {
     const shouldSanitize =
@@ -159,7 +159,7 @@ export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
 
 /**
  * Service procedure -- requires valid service JWT.
- * Used by app, platform, or other internal services calling platform.
+ * Used by app or other internal services calling platform.
  *
  * Guarantees `ctx.auth.type === "service"` and `ctx.auth.caller` is available.
  */
@@ -177,7 +177,7 @@ export const serviceProcedure = sentrifiedProcedure
     return next({
       ctx: {
         ...ctx,
-        auth: ctx.auth as Extract<MemoryAuthContext, { type: "service" }>,
+        auth: ctx.auth as Extract<PlatformAuthContext, { type: "service" }>,
       },
     });
   });
@@ -209,7 +209,7 @@ export const adminProcedure = sentrifiedProcedure
     return next({
       ctx: {
         ...ctx,
-        auth: ctx.auth as Extract<MemoryAuthContext, { type: "service" }>,
+        auth: ctx.auth as Extract<PlatformAuthContext, { type: "service" }>,
       },
     });
   });

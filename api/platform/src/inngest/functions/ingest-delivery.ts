@@ -7,7 +7,7 @@
  * Steps:
  * 1. resolve-connection — query orgIntegrations, or use preResolved
  * 2. transform-and-store — call transformEnvelope, insert ingest log
- * 3. emit-event-capture — step.sendEvent("memory/event.capture")
+ * 3. emit-event-capture — step.sendEvent("platform/event.capture")
  * 4. publish-realtime — Upstash Realtime SSE for console UI
  */
 
@@ -28,7 +28,7 @@ import { inngest } from "../client";
 
 export const ingestDelivery = inngest.createFunction(
   {
-    id: "memory/ingest.delivery",
+    id: "platform/ingest.delivery",
     name: "Ingest Delivery",
     description:
       "Webhook delivery -> transform -> emit event.capture (replaces relay workflow + QStash + console ingress)",
@@ -42,7 +42,7 @@ export const ingestDelivery = inngest.createFunction(
       finish: "3m",
     },
   },
-  { event: "memory/webhook.received" },
+  { event: "platform/webhook.received" },
   async ({ event, step }) => {
     const data = event.data;
 
@@ -160,9 +160,9 @@ export const ingestDelivery = inngest.createFunction(
       };
     }
 
-    // Step 3: Emit memory/event.capture to trigger the neural pipeline
+    // Step 3: Emit platform/event.capture to trigger the neural pipeline
     await step.sendEvent("emit-event-capture", {
-      name: "memory/event.capture" as const,
+      name: "platform/event.capture" as const,
       data: {
         clerkOrgId,
         sourceEvent: result.sourceEvent,

@@ -6,7 +6,7 @@ import type {
   ProxyCallResponse,
   ProxySearchResponse,
 } from "@repo/app-validation/api";
-import { createMemoryCaller } from "@repo/platform-trpc/caller";
+import { createPlatformCaller } from "@repo/platform-trpc/caller";
 import { log } from "@vendor/observability/log/next";
 import { and, eq } from "drizzle-orm";
 import type { AuthContext } from "./types";
@@ -34,7 +34,7 @@ export async function proxySearchLogic(
 
   // Create caller once — it's stateless w.r.t. installations.
   // installationId is passed as procedure input at call time.
-  const memory = await createMemoryCaller();
+  const platform = await createPlatformCaller();
 
   const connections = await Promise.all(
     installations.map(async (inst) => {
@@ -63,7 +63,7 @@ export async function proxySearchLogic(
         queryParams?: Record<string, string>;
         body?: unknown;
       }) =>
-        memory.proxy.execute({
+        platform.proxy.execute({
           installationId: inst.id,
           endpointId: req.endpointId,
           pathParams: req.pathParams,
@@ -263,8 +263,8 @@ export async function proxyCallLogic(
   }
 
   // Execute via platform proxy
-  const memory = await createMemoryCaller();
-  const result = await memory.proxy.execute({
+  const platform = await createPlatformCaller();
+  const result = await platform.proxy.execute({
     installationId,
     endpointId,
     pathParams: Object.keys(pathParams).length > 0 ? pathParams : undefined,

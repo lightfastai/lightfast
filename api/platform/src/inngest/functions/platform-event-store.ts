@@ -73,9 +73,9 @@ function isEventAllowed(
  * Fast path: stores facts only. No LLM, no embeddings.
  * Emits entity.upserted to trigger the entity-graph -> entity-embed chain.
  */
-export const memoryEventStore = inngest.createFunction(
+export const platformEventStore = inngest.createFunction(
   {
-    id: "memory/event.store",
+    id: "platform/event.store",
     name: "Event Store",
     description: "Stores engineering events (fast path)",
     retries: 3,
@@ -96,7 +96,7 @@ export const memoryEventStore = inngest.createFunction(
     },
 
     // Handle failures gracefully - complete job as failed
-    onFailure: createNeuralOnFailureHandler("memory/event.capture", {
+    onFailure: createNeuralOnFailureHandler("platform/event.capture", {
       logMessage: "Neural observation store failed",
       logContext: ({ clerkOrgId, sourceEvent }) => ({
         clerkOrgId,
@@ -111,7 +111,7 @@ export const memoryEventStore = inngest.createFunction(
         }) satisfies EventCaptureOutputFailure,
     }),
   },
-  { event: "memory/event.capture" },
+  { event: "platform/event.capture" },
   async ({ event, step }) => {
     const { clerkOrgId, sourceEvent, ingestLogId, correlationId } = event.data;
 
@@ -141,7 +141,7 @@ export const memoryEventStore = inngest.createFunction(
       return createJob({
         clerkOrgId,
         inngestRunId,
-        inngestFunctionId: "memory/event.capture",
+        inngestFunctionId: "platform/event.capture",
         name: `Capture ${sourceEvent.provider}/${sourceEvent.eventType}`,
         trigger: "webhook",
         input: {
@@ -518,7 +518,7 @@ export const memoryEventStore = inngest.createFunction(
     // Step 7: Emit entity.upserted (triggers entity-graph -> entity-embed chain)
     if (entityUpsertResult.primaryEntityExternalId) {
       await step.sendEvent("emit-downstream-events", {
-        name: "memory/entity.upserted" as const,
+        name: "platform/entity.upserted" as const,
         data: {
           clerkOrgId,
           entityExternalId: entityUpsertResult.primaryEntityExternalId,
@@ -534,7 +534,7 @@ export const memoryEventStore = inngest.createFunction(
 
     // Step 7b: Emit event.stored (triggers notification dispatch)
     await step.sendEvent("emit-event-stored", {
-      name: "memory/event.stored" as const,
+      name: "platform/event.stored" as const,
       data: {
         clerkOrgId,
         eventExternalId: observation.externalId,

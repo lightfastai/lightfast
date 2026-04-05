@@ -9,7 +9,7 @@ import {
   sourceTypeSchema,
 } from "@repo/app-providers";
 import type { SourceIdentifier } from "@repo/app-validation";
-import { createMemoryCaller } from "@repo/platform-trpc/caller";
+import { createPlatformCaller } from "@repo/platform-trpc/caller";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
@@ -44,8 +44,8 @@ export const connectionsRouter = {
       })
     )
     .query(async ({ ctx, input }) => {
-      const memory = await createMemoryCaller();
-      return memory.connections.getAuthorizeUrl({
+      const platform = await createPlatformCaller();
+      return platform.connections.getAuthorizeUrl({
         provider: input.provider,
         orgId: ctx.auth.orgId,
         connectedBy: ctx.auth.userId,
@@ -114,8 +114,8 @@ export const connectionsRouter = {
         });
       }
 
-      const memory = await createMemoryCaller();
-      await memory.connections.disconnect({
+      const platform = await createPlatformCaller();
+      await platform.connections.disconnect({
         id: installation.id,
         provider: installation.provider,
       });
@@ -214,10 +214,10 @@ export const connectionsRouter = {
       }
 
       try {
-        const memory = await createMemoryCaller();
+        const platform = await createPlatformCaller();
 
         // Validate that the installation still exists on GitHub (App JWT auth via proxy)
-        const result = await memory.proxy.execute({
+        const result = await platform.proxy.execute({
           installationId: installation.id,
           endpointId: "get-app-installation",
           pathParams: { installation_id: installation.externalId },
@@ -312,11 +312,11 @@ export const connectionsRouter = {
         }
 
         try {
-          const memory = await createMemoryCaller();
+          const platform = await createPlatformCaller();
 
           let ref = input.ref;
           if (!ref) {
-            const repoResult = await memory.proxy.execute({
+            const repoResult = await platform.proxy.execute({
               installationId: input.integrationId,
               endpointId: "get-repo",
               pathParams: { owner, repo },
@@ -351,7 +351,7 @@ export const connectionsRouter = {
             if (ref) {
               queryParams.ref = ref;
             }
-            const fileResult = await memory.proxy.execute({
+            const fileResult = await platform.proxy.execute({
               installationId: input.integrationId,
               endpointId: "get-file-contents",
               pathParams: { owner, repo, path },
@@ -458,8 +458,8 @@ export const connectionsRouter = {
         });
       }
 
-      const memory = await createMemoryCaller();
-      await memory.connections.disconnect({
+      const platform = await createPlatformCaller();
+      await platform.connections.disconnect({
         id: installation.id,
         provider: "vercel",
       });
@@ -679,12 +679,12 @@ export const connectionsRouter = {
           };
         }
 
-        const memory = await createMemoryCaller();
+        const platform = await createPlatformCaller();
 
         const enriched = await Promise.all(
           installations.map(async (inst) => {
             const executeApi: ResourcePickerExecuteApiFn = (request) =>
-              memory.proxy.execute({
+              platform.proxy.execute({
                 installationId: inst.id,
                 ...request,
               });
@@ -745,10 +745,10 @@ export const connectionsRouter = {
           });
         }
 
-        const memory = await createMemoryCaller();
+        const platform = await createPlatformCaller();
 
         const executeApi: ResourcePickerExecuteApiFn = async (request) => {
-          const result = await memory.proxy.execute({
+          const result = await platform.proxy.execute({
             installationId: installation.id,
             ...request,
           });

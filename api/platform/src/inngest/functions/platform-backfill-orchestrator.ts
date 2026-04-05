@@ -1,15 +1,15 @@
 /**
- * Memory backfill orchestrator
+ * Platform backfill orchestrator
  *
  * Ported from apps/backfill/src/workflows/backfill-orchestrator.ts
  *
  * KEY CHANGES vs backfill service:
- * - Function ID: memory/backfill.orchestrator (was backfill/run.orchestrator)
- * - Trigger: memory/backfill.run.requested (was backfill/run.requested)
- * - cancelOn: memory/backfill.run.cancelled (was backfill/run.cancelled)
+ * - Function ID: platform/backfill.orchestrator (was backfill/run.orchestrator)
+ * - Trigger: platform/backfill.run.requested (was backfill/run.requested)
+ * - cancelOn: platform/backfill.run.cancelled (was backfill/run.cancelled)
  * - Replace createGatewayClient() HTTP calls with direct DB queries
- * - Replace relay.replayCatchup() with direct DB query + inngest.send("memory/webhook.received")
- * - step.invoke() references memoryEntityWorker
+ * - Replace relay.replayCatchup() with direct DB query + inngest.send("platform/webhook.received")
+ * - step.invoke() references platformEntityWorker
  */
 
 import { db } from "@db/app/client";
@@ -26,12 +26,12 @@ import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../../lib/provider-configs";
 import { getActiveTokenForInstallation } from "../../lib/token-helpers";
 import { inngest } from "../client";
-import { memoryEntityWorker } from "./memory-entity-worker";
+import { platformEntityWorker } from "./platform-entity-worker";
 
-export const memoryBackfillOrchestrator = inngest.createFunction(
+export const platformBackfillOrchestrator = inngest.createFunction(
   {
-    id: "memory/backfill.orchestrator",
-    name: "Memory Backfill Orchestrator",
+    id: "platform/backfill.orchestrator",
+    name: "Platform Backfill Orchestrator",
     retries: 3,
     concurrency: [
       // 1 backfill per connection — prevents duplicate backfills
@@ -41,7 +41,7 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
     ],
     cancelOn: [
       {
-        event: "memory/backfill.run.cancelled",
+        event: "platform/backfill.run.cancelled",
         match: "data.installationId",
       },
     ],
@@ -50,7 +50,7 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
     // = 15/5 * 2hr = 6hr total. Set to 8hr for safety.
     timeouts: { start: "2m", finish: "8h" },
   },
-  { event: "memory/backfill.run.requested" },
+  { event: "platform/backfill.run.requested" },
   async ({ event, step }) => {
     const {
       installationId,
@@ -283,7 +283,7 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
       filteredWorkUnits.map(async (wu) => {
         try {
           const result = await step.invoke(`invoke-${wu.workUnitId}`, {
-            function: memoryEntityWorker,
+            function: platformEntityWorker,
             data: {
               installationId,
               provider,
@@ -364,7 +364,7 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
     // ── Step 7: Replay held webhooks (replaces relay.replayCatchup) ──
     // When holdForReplay is set, entity workers persist webhooks without delivery.
     // After all workers complete, drain them by querying DB directly and sending
-    // memory/webhook.received events so they are processed in chronological order.
+    // platform/webhook.received events so they are processed in chronological order.
     if (holdForReplay && succeeded.length > 0) {
       log.info("[backfill-orchestrator] replaying held webhooks", {
         installationId,
@@ -402,11 +402,11 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
             break;
           }
 
-          // Send each delivery as a memory/webhook.received event
+          // Send each delivery as a platform/webhook.received event
           const events = deliveries
             .filter((d) => d.payload)
             .map((d) => ({
-              name: "memory/webhook.received" as const,
+              name: "platform/webhook.received" as const,
               data: {
                 provider: d.provider,
                 deliveryId: d.deliveryId,

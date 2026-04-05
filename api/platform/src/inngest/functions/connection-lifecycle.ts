@@ -5,8 +5,8 @@
  *
  * KEY CHANGES vs gateway service:
  * - Upstash Workflow context.run() → Inngest step.run()
- * - Function ID: memory/connection.lifecycle
- * - Trigger: memory/connection.lifecycle event (was Upstash Workflow trigger)
+ * - Function ID: platform/connection.lifecycle
+ * - Trigger: platform/connection.lifecycle event (was Upstash Workflow trigger)
  * - Cancel backfill: fires Inngest event instead of QStash publish
  * - All 5 steps preserved: close-gate, cancel-backfill, revoke-token, cleanup-cache, remove-resources
  */
@@ -29,7 +29,7 @@ import { inngest } from "../client";
 
 export const connectionLifecycle = inngest.createFunction(
   {
-    id: "memory/connection.lifecycle",
+    id: "platform/connection.lifecycle",
     name: "Connection Lifecycle (Teardown)",
     retries: 3,
     concurrency: [
@@ -38,7 +38,7 @@ export const connectionLifecycle = inngest.createFunction(
     ],
     timeouts: { start: "1m", finish: "5m" },
   },
-  { event: "memory/connection.lifecycle" },
+  { event: "platform/connection.lifecycle" },
   async ({ event, step }) => {
     const { installationId, provider: providerName } = event.data;
 
@@ -75,7 +75,7 @@ export const connectionLifecycle = inngest.createFunction(
     await step.run("cancel-backfill", async () => {
       try {
         await inngest.send({
-          name: "memory/backfill.run.cancelled",
+          name: "platform/backfill.run.cancelled",
           data: {
             installationId,
           },

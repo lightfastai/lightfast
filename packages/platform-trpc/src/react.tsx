@@ -1,6 +1,6 @@
 "use client";
 
-import type { MemoryRouter } from "@api/platform";
+import type { PlatformRouter } from "@api/platform";
 import type { QueryClient } from "@tanstack/react-query";
 import { QueryClientProvider } from "@tanstack/react-query";
 import {
@@ -14,12 +14,12 @@ import SuperJSON from "superjson";
 
 import { createQueryClient } from "./client";
 
-export interface CreateMemoryTRPCProviderOptions {
+export interface CreatePlatformTRPCProviderOptions {
   baseUrl?: string;
   getAuthHeaders?: () => Record<string, string>;
 }
 
-const trpcContext = createTRPCContext<MemoryRouter>();
+const trpcContext = createTRPCContext<PlatformRouter>();
 
 export const useTRPC = trpcContext.useTRPC;
 export const TRPCProvider = trpcContext.TRPCProvider;
@@ -44,29 +44,28 @@ function defaultGetBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 4112}`;
 }
 
-export function MemoryTRPCReactProvider({
+export function PlatformTRPCReactProvider({
   children,
   options,
 }: {
   children: React.ReactNode;
-  options?: CreateMemoryTRPCProviderOptions;
+  options?: CreatePlatformTRPCProviderOptions;
 }) {
   const queryClient = getQueryClient();
 
   const [trpcClient] = useState(() => {
     const baseUrl = options?.baseUrl ?? defaultGetBaseUrl();
 
-    return createTRPCClient<MemoryRouter>({
+    return createTRPCClient<PlatformRouter>({
       links: [
         loggerLink({
           enabled: (op) =>
             process.env.NODE_ENV === "development" ||
             (op.direction === "down" && op.result instanceof Error),
         }),
-        // Single link -- memory has one router at one endpoint
         httpBatchStreamLink({
           transformer: SuperJSON,
-          url: `${baseUrl}/api/trpc/memory`,
+          url: `${baseUrl}/api/trpc`,
           headers: () => ({
             "x-trpc-source": "client",
             ...(options?.getAuthHeaders?.() ?? {}),
