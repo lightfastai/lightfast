@@ -1,0 +1,19 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6851fad0bbd2",
+  "session_id": "f49e1b79-74d3-42b8-a526-df0f3a236747",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T07:16:42.033129Z",
+  "branch": "refactor/rename-memory-to-platform",
+  "checkpoints_count": 0,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "turn_id": "a24a7e650128",
+  "token_usage": {
+    "input_tokens": 57,
+    "cache_creation_tokens": 181709,
+    "cache_read_tokens": 2808916,
+    "output_tokens": 32288,
+    "api_call_count": 39
+  }
+}
