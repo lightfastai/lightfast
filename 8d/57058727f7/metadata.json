@@ -3,7 +3,7 @@
   "checkpoint_id": "8d57058727f7",
   "strategy": "manual-commit",
   "branch": "chore/remove-app-clerk-m2m",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     ".changeset/pre.json",
     "packages/app-clerk-m2m/README.md",
@@ -12,7 +12,8 @@
     "packages/app-clerk-m2m/src/index.ts",
     "packages/app-clerk-m2m/src/m2m.ts",
     "packages/app-clerk-m2m/tsconfig.json",
-    "packages/app-clerk-m2m/turbo.json"
+    "packages/app-clerk-m2m/turbo.json",
+    "pnpm-lock.yaml"
   ],
   "sessions": [
     {
@@ -20,13 +21,19 @@
       "transcript": "/8d/57058727f7/0/full.jsonl",
       "content_hash": "/8d/57058727f7/0/content_hash.txt",
       "prompt": "/8d/57058727f7/0/prompt.txt"
+    },
+    {
+      "metadata": "/8d/57058727f7/1/metadata.json",
+      "transcript": "/8d/57058727f7/1/full.jsonl",
+      "content_hash": "/8d/57058727f7/1/content_hash.txt",
+      "prompt": "/8d/57058727f7/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 4139,
-    "cache_creation_tokens": 35401,
-    "cache_read_tokens": 198337,
-    "output_tokens": 5720,
-    "api_call_count": 6
+    "input_tokens": 4169,
+    "cache_creation_tokens": 62503,
+    "cache_read_tokens": 894931,
+    "output_tokens": 9962,
+    "api_call_count": 28
   }
 }
