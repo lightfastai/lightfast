@@ -1,0 +1,56 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f126f8ca78e6",
+  "strategy": "manual-commit",
+  "branch": "chore/claude-config-cleanup",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".claude/agents/blog-agent-tester.md",
+    ".claude/agents/blog-brief-planner.md",
+    ".claude/agents/blog-writer.md",
+    ".claude/agents/codebase-analyze-github.md",
+    ".claude/agents/codebase-analyzer.md",
+    ".claude/agents/codebase-locator.md",
+    ".claude/agents/codebase-pattern-finder.md",
+    ".claude/agents/connector-manager.md",
+    ".claude/agents/debug-browser.md",
+    ".claude/agents/github-action-runner.md",
+    ".claude/agents/math-extractor.md",
+    ".claude/agents/technical-writer.md",
+    ".claude/agents/thoughts-analyzer.md",
+    ".claude/agents/thoughts-locator.md",
+    ".claude/agents/web-search-researcher.md",
+    ".claude/commands/commit.md",
+    ".claude/commands/create_blog.md",
+    ".claude/commands/create_changelog.md",
+    ".claude/commands/create_issue.md",
+    ".claude/commands/create_plan.md",
+    ".claude/commands/debug.md",
+    ".claude/commands/extract_math.md",
+    ".claude/commands/implement_plan.md",
+    ".claude/commands/manage_connector.md",
+    ".claude/commands/research_codebase.md",
+    ".claude/commands/research_codebase_external.md",
+    ".claude/commands/research_team.md",
+    ".claude/commands/research_web.md",
+    ".claude/commands/review.md",
+    ".claude/commands/update_plan.md",
+    ".claude/commands/validate_blog.md",
+    ".claude/commands/validate_changelog.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f1/26f8ca78e6/0/metadata.json",
+      "transcript": "/f1/26f8ca78e6/0/full.jsonl",
+      "content_hash": "/f1/26f8ca78e6/0/content_hash.txt",
+      "prompt": "/f1/26f8ca78e6/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 20008,
+    "cache_read_tokens": 194760,
+    "output_tokens": 3194,
+    "api_call_count": 8
+  }
+}
