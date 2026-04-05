@@ -22,7 +22,6 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
-import { useOrganization } from "@vendor/clerk/client";
 import { Radio, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -131,14 +130,13 @@ export function EventsTable({ initialSource }: EventsTableProps) {
 
   // Live events — only when on default view (no search, no date filter)
   const [liveEvents, setLiveEvents] = useState<EventNotification[]>([]);
-  const { organization } = useOrganization();
   const isDefaultView =
     filters.search === "" && filters.age === "none" && nextCursor === undefined;
 
   const { status } = useRealtime({
-    channels: organization?.id ? [`org-${organization.id}`] : [],
+    channels: data.clerkOrgId ? [`org-${data.clerkOrgId}`] : [],
     events: ["org.event"],
-    enabled: !!organization?.id && isDefaultView,
+    enabled: !!data.clerkOrgId && isDefaultView,
     onData({ data: notification }) {
       if (notification.clerkOrgId !== data.clerkOrgId) {
         return;

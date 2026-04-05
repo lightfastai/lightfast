@@ -1,11 +1,11 @@
 "use client";
 
+import { useActiveOrg } from "@repo/app-trpc/hooks";
 import type { SearchMode, SearchResponse } from "@repo/app-validation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { useOrganization } from "@vendor/clerk/client";
 import { parseError } from "@vendor/observability/error/next";
 import { useEffect, useRef, useState } from "react";
 import { dateRangeFromPreset } from "./search-constants";
@@ -57,7 +57,7 @@ interface OrgSearchProps {
  * All state persisted to URL via nuqs for shareable links.
  */
 export function OrgSearch({ initialQuery }: OrgSearchProps) {
-  const { organization } = useOrganization();
+  const activeOrg = useActiveOrg();
 
   // URL-persisted state via nuqs
   const {
@@ -97,7 +97,7 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
     }
   }, [query, prevQuery]);
 
-  const clerkOrgId = organization?.id ?? "";
+  const clerkOrgId = activeOrg?.id ?? "";
 
   // Reference to track current request for cancellation
   const abortControllerRef = useRef<AbortController | null>(null);
