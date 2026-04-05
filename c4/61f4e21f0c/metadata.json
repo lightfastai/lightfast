@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "c461f4e21f0c",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".coderabbit.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c4/61f4e21f0c/0/metadata.json",
+      "transcript": "/c4/61f4e21f0c/0/full.jsonl",
+      "content_hash": "/c4/61f4e21f0c/0/content_hash.txt",
+      "prompt": "/c4/61f4e21f0c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4148,
+    "cache_creation_tokens": 50407,
+    "cache_read_tokens": 546783,
+    "output_tokens": 11271,
+    "api_call_count": 13
+  }
+}

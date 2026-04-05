@@ -1,0 +1,9 @@
+consider @thoughts/shared/plans/2026-04-05-trpc-error-handling-consolidation.md 
+
+scrutinize the pattern being used: EXPECTED_TRPC_ERRORS and all the changes we are making.
+
+is this truly the best long-term maintainbility and best code quality solution we can design.
+
+we need to ensure that our log and sentry is best set up for actual proper debug and logging.
+
+consider designing the most accretive, innovative, radical and creative solution that will 100x developer productivity.
