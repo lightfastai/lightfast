@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "3e48fe1d0423",
+  "session_id": "f49e1b79-74d3-42b8-a526-df0f3a236747",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T07:23:10.892189Z",
+  "branch": "refactor/lightfast-pinecone-client",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/inngest/functions/platform-entity-embed.ts",
+    "apps/app/src/lib/search.ts",
+    "packages/app-pinecone/src/client.ts",
+    "packages/app-pinecone/src/index.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "61ab683b7c89",
+  "token_usage": {
+    "input_tokens": 85,
+    "cache_creation_tokens": 202639,
+    "cache_read_tokens": 5117806,
+    "output_tokens": 39017,
+    "api_call_count": 59
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T07:23:10.312401Z",
+    "agent_lines": 21,
+    "agent_removed": 21,
+    "human_added": 77,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 98,
+    "total_lines_changed": 119,
+    "agent_percentage": 35.294117647058826,
+    "metric_version": 2
+  }
+}
