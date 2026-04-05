@@ -60,12 +60,8 @@ async function exchangeSentryCode(
   );
 
   if (!response.ok) {
-    const errorBody = await response.text();
-    console.error("[sentry] token exchange failed:", {
-      status: response.status,
-      body: errorBody,
-    });
-    throw new Error(`Sentry token exchange failed: ${response.status}`);
+    const body = await readErrorBody(response);
+    throw new Error(`Sentry token exchange failed: ${response.status} ${body}`);
   }
 
   const rawData: unknown = await response.json();
