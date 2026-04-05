@@ -16,7 +16,6 @@
     "@repo/app-ai-types": "0.1.0",
     "@repo/app-api-key": "0.1.0",
     "@repo/app-clerk-cache": "0.0.1",
-    "@repo/app-clerk-m2m": "0.1.0",
     "@repo/app-config": "0.1.0",
     "@repo/app-embed": "0.1.0",
     "@repo/app-octokit-github": "0.1.0",
