@@ -1,6 +1,6 @@
 ---
 description: Implement technical plans from thoughts/shared/plans with verification
-model: sonnet
+model: opus
 ---
 
 # Implement Plan
@@ -10,6 +10,7 @@ You are tasked with implementing an approved technical plan from `thoughts/share
 ## Getting Started
 
 When given a plan path:
+
 - Read the plan completely and check for any existing checkmarks (- [x])
 - Read the original ticket and all files mentioned in the plan
 - **Read files fully** - never use limit/offset parameters, you need complete context
@@ -19,9 +20,24 @@ When given a plan path:
 
 If no plan path provided, ask for one.
 
+## Autonomous Mode
+
+When invoked with `autonomous: true` in the parameters:
+
+- Do NOT pause for manual verification between phases
+- Implement exactly ONE phase, then exit
+- Run only automated verification (skip manual verification steps entirely)
+- Do NOT use AskUserQuestion at any point
+- If automated verification passes, mark the phase done:
+  1. Check off automated verification items (`- [x]`)
+  2. **Append `[DONE]` to the phase heading** (e.g., `## Phase 1: Title` → `## Phase 1: Title [DONE]`). This is critical — the loop uses this marker to detect phase completion.
+  3. Commit and exit
+- If stuck after 3 fix attempts, exit and note the issue in the plan file
+
 ## Implementation Philosophy
 
 Plans are carefully designed, but reality can be messy. Your job is to:
+
 - Follow the plan's intent while adapting to what you find
 - Implement each phase fully before moving to the next
 - Verify your work makes sense in the broader codebase context
@@ -30,8 +46,10 @@ Plans are carefully designed, but reality can be messy. Your job is to:
 When things don't match the plan exactly, think about why and communicate clearly. The plan is your guide, but your judgment matters too.
 
 If you encounter a mismatch:
+
 - STOP and think deeply about why the plan can't be followed
 - Present the issue clearly:
+
   ```
   Issue in Phase [N]:
   Expected: [what the plan says]
@@ -44,11 +62,14 @@ If you encounter a mismatch:
 ## Verification Approach
 
 After implementing a phase:
-- Run the success criteria checks (usually `pnpm lint && pnpm typecheck && pnpm test` plus `pnpm build:<app>` for affected apps)
+
+- Run the success criteria checks
 - Fix any issues before proceeding
 - Update your progress in both the plan and your todos
 - Check off completed items in the plan file itself using Edit
-- **Pause for human verification**: After completing all automated verification for a phase, pause and inform the human that the phase is ready for manual testing. Use this format:
+- **In autonomous mode**: skip the pause below. Append `[DONE]` to the phase heading, commit, and exit.
+- **Pause for human verification** (interactive mode only): After completing all automated verification for a phase, pause and inform the human that the phase is ready for manual testing. Use this format:
+
   ```
   Phase [N] Complete - Ready for Manual Verification
 
@@ -63,12 +84,12 @@ After implementing a phase:
 
 If instructed to execute multiple phases consecutively, skip the pause until the last phase. Otherwise, assume you are just doing one phase.
 
-do not check off items in the manual testing steps until confirmed by the user.
-
+Do not check off items in the manual testing steps until confirmed by the user.
 
 ## If You Get Stuck
 
 When something isn't working as expected:
+
 - First, make sure you've read and understood all the relevant code
 - Consider if the codebase has evolved since the plan was written
 - Present the mismatch clearly and ask for guidance
@@ -78,6 +99,7 @@ Use sub-tasks sparingly - mainly for targeted debugging or exploring unfamiliar 
 ## Resuming Work
 
 If the plan has existing checkmarks:
+
 - Trust that completed work is done
 - Pick up from the first unchecked item
 - Verify previous work only if something seems off

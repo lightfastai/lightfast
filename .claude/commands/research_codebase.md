@@ -1,15 +1,14 @@
 ---
 description: Document codebase as-is with thoughts directory for historical context
-model: sonnet
+model: opus
 ---
 
 # Research Codebase
 
 You are tasked with conducting comprehensive research across the codebase to answer user questions by spawning parallel sub-agents and synthesizing their findings.
 
-**CRITICAL: Use `AskUserQuestion` at every checkpoint where you need user input.** Do not present questions as plain text and continue — use the tool to block execution until the user responds. This ensures the research process is truly collaborative, not a monologue. Never assume the user's intent or skip confirmation when the research direction could go multiple ways.
-
 ## CRITICAL: YOUR ONLY JOB IS TO DOCUMENT AND EXPLAIN THE CODEBASE AS IT EXISTS TODAY
+
 - DO NOT suggest improvements or changes unless the user explicitly asks for them
 - DO NOT perform root cause analysis unless the user explicitly asks for them
 - DO NOT propose future enhancements unless the user explicitly asks for them
@@ -20,18 +19,10 @@ You are tasked with conducting comprehensive research across the codebase to ans
 
 ## Initial Setup:
 
-When this command is invoked:
+When this command is invoked, respond with:
 
-1. **Check if parameters were provided**:
-   - If a file path or research topic was provided as a parameter, skip the default message
-   - Immediately read any provided files FULLY
-   - Begin the research process
-
-2. **If no parameters provided**, use `AskUserQuestion` to ask:
 ```
 I'm ready to research the codebase. Please provide your research question or area of interest, and I'll analyze it thoroughly by exploring relevant components and connections.
-
-Tip: You can also invoke this command with a topic directly: `/research_codebase how does the relay webhook pipeline work?`
 ```
 
 Then wait for the user's research query.
@@ -39,7 +30,7 @@ Then wait for the user's research query.
 ## Steps to follow after receiving the research query:
 
 1. **Read any directly mentioned files first:**
-   - If the user mentions specific files (docs, JSON, configs), read them FULLY first
+   - If the user mentions specific files (tickets, docs, JSON), read them FULLY first
    - **IMPORTANT**: Use the Read tool WITHOUT limit/offset parameters to read entire files
    - **CRITICAL**: Read these files yourself in the main context before spawning any sub-tasks
    - This ensures you have full context before decomposing the research
@@ -50,16 +41,6 @@ Then wait for the user's research query.
    - Identify specific components, patterns, or concepts to investigate
    - Create a research plan using TodoWrite to track all subtasks
    - Consider which directories, files, or architectural patterns are relevant
-
-   Then, output your proposed research plan as text:
-   ```
-   I've broken down your question into these research areas:
-   1. [Area 1] - what I'll investigate and why
-   2. [Area 2] - what I'll investigate and why
-   3. [Area 3] - what I'll investigate and why
-   ```
-
-   Then, **use `AskUserQuestion`** to confirm the research plan covers the right areas. Ask if there are specific components or directions they want prioritized. Do NOT spawn sub-agents until the user confirms the research direction.
 
 3. **Spawn parallel sub-agent tasks for comprehensive research:**
    - Create multiple Task agents to research different aspects concurrently
@@ -98,21 +79,6 @@ Then wait for the user's research query.
    - Highlight patterns, connections, and architectural decisions
    - Answer the user's specific questions with concrete evidence
 
-   Then, output a summary of key findings as text:
-   ```
-   Here's what I've found so far:
-
-   **Key Findings:**
-   - [Finding 1 with file:line reference]
-   - [Finding 2 with file:line reference]
-
-   **Areas that could use deeper investigation:**
-   - [Area 1]
-   - [Area 2]
-   ```
-
-   Then, **use `AskUserQuestion`** to ask if the findings cover what they needed, or if they want deeper investigation into any specific area before you write the research document. Do NOT proceed to writing the document until the user confirms the findings are sufficient.
-
 5. **Gather metadata for the research document:**
    - Get the current git commit hash: `git rev-parse HEAD`
    - Get the current branch: `git branch --show-current`
@@ -121,20 +87,17 @@ Then wait for the user's research query.
      - Format: `YYYY-MM-DD-description.md` where:
        - YYYY-MM-DD is today's date
        - description is a brief kebab-case description of the research topic
-     - Examples:
-       - `2026-03-08-relay-webhook-pipeline.md`
-       - `2026-03-07-provider-account-info-abstraction.md`
 
 6. **Generate research document:**
    - Use the metadata gathered in step 5
    - Structure the document with YAML frontmatter followed by content:
+
      ```markdown
      ---
      date: [Current date and time with timezone in ISO format]
      researcher: claude
      git_commit: [Current commit hash]
      branch: [Current branch name]
-     repository: lightfast
      topic: "[User's Question/Topic]"
      tags: [research, codebase, relevant-component-names]
      status: complete
@@ -148,36 +111,46 @@ Then wait for the user's research query.
      **Branch**: [Current branch name]
 
      ## Research Question
+
      [Original user query]
 
      ## Summary
+
      [High-level documentation of what was found, answering the user's question by describing what exists]
 
      ## Detailed Findings
 
      ### [Component/Area 1]
+
      - Description of what exists (`file.ext:line`)
      - How it connects to other components
      - Current implementation details (without evaluation)
 
      ### [Component/Area 2]
+
      ...
 
      ## Code References
+
      - `path/to/file.ts:123` - Description of what's there
      - `another/file.ts:45-67` - Description of the code block
 
      ## Architecture Documentation
+
      [Current patterns, conventions, and design implementations found in the codebase]
 
      ## Historical Context (from thoughts/)
+
      [Relevant insights from thoughts/ directory with references]
+
      - `thoughts/shared/something.md` - Historical decision about X
 
      ## Related Research
+
      [Links to other research documents in thoughts/shared/research/]
 
      ## Open Questions
+
      [Any areas that need further investigation]
      ```
 
@@ -188,20 +161,56 @@ Then wait for the user's research query.
      - Create permalinks: `https://github.com/{owner}/{repo}/blob/{commit}/{file}#L{line}`
    - Replace local file references with permalinks in the document
 
-8. **Present findings:**
+8. **Evaluate open questions (automatic):**
+   - If the research document has an Open Questions section with items, this step runs automatically
+   - Spawn the **open-questions-evaluator** agent with:
+     - The path to the research document you just wrote
+     - The path to `SPEC.md`
+   - The evaluator will triage each question as **"now"**, **"defer"**, or **"already answered"**
+
+   **For "now" questions:**
+   - Use `AskUserQuestion` to surface the quick-answerable questions to the user:
+
+     ```
+     The research produced these open questions that can be answered quickly:
+     1. [Question] — [evaluator's reason]
+     2. [Question] — [evaluator's reason]
+
+     Which would you like me to answer now? (all / numbers / none)
+     ```
+
+   - For each question the user approves, run `/research_codebase_lightweight` with:
+     - The specific question
+     - The parent research document path
+     - The SPEC.md path
+   - Run approved questions in parallel when possible
+   - Each produces a separate followup research file linked from the parent
+
+   **For "defer" questions:**
+   - Leave them in the Open Questions section as-is
+   - Append a note: `(deferred — needs dedicated research session)`
+
+   **For "already answered" questions:**
+   - Remove them from Open Questions and add the reference the evaluator found
+
+   **If no open questions exist**, skip this step entirely.
+
+9. **Present findings:**
    - Present a concise summary of findings to the user
    - Include key file references for easy navigation
-   - Use `AskUserQuestion` to ask if they have follow-up questions or need clarification on any area
+   - Note any followup research files that were generated
+   - Ask if they have follow-up questions or need clarification
 
-9. **Handle follow-up questions:**
-   - If the user has follow-up questions, append to the same research document
-   - Update the frontmatter field `last_updated` to reflect the update
-   - Add `last_updated_note: "Added follow-up research for [brief description]"` to frontmatter
-   - Add a new section: `## Follow-up Research [timestamp]`
-   - Spawn new sub-agents as needed for additional investigation
-   - Continue updating the document
+10. **Handle follow-up questions:**
+    - If the user has follow-up questions, append to the same research document
+    - Update the frontmatter field `last_updated` to reflect the update
+    - Add `last_updated_note: "Added follow-up research for [brief description]"` to frontmatter
+    - Add a new section: `## Follow-up Research [timestamp]`
+    - Spawn new sub-agents as needed for additional investigation
+    - Continue updating the document
 
 ## Important notes:
+
 - Always use parallel Task agents to maximize efficiency and minimize context usage
 - Always run fresh codebase research - never rely solely on existing research documents
 - The thoughts/ directory provides historical context to supplement live findings
