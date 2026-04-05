@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "_test_comment": "propagation test - safe to revert",
   "workspaces": {
     ".": {
       "entry": ["scripts/*.{js,ts,sh}"],
