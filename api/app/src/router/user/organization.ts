@@ -2,6 +2,7 @@ import { clerkOrgSlugSchema } from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
@@ -89,7 +90,7 @@ export const organizationRouter = {
         log.error("[organization] create failed", {
           slug: input.slug,
           userId: ctx.auth.userId,
-          error: error instanceof Error ? error.message : String(error),
+          error: parseError(error),
           errorDetails: error,
         });
 
@@ -180,7 +181,7 @@ export const organizationRouter = {
         log.error("[organization] updateName failed", {
           slug: input.slug,
           userId: ctx.auth.userId,
-          error: error instanceof Error ? error.message : String(error),
+          error: parseError(error),
         });
 
         // Check for specific Clerk errors

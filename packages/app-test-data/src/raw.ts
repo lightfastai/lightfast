@@ -9,6 +9,7 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { SourceType } from "@repo/app-providers";
+import { parseError } from "@vendor/observability/error/next";
 
 export interface RawWebhook {
   eventType: string;
@@ -64,7 +65,7 @@ export const loadAllRawWebhooks = (): RawWebhook[] => {
         raw = JSON.parse(readFileSync(filePath, "utf-8"));
       } catch (err) {
         throw new Error(
-          `Failed to parse dataset ${filePath}: ${err instanceof Error ? err.message : String(err)}`
+          `Failed to parse dataset ${filePath}: ${parseError(err)}`
         );
       }
       if (

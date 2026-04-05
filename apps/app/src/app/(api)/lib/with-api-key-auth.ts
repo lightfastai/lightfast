@@ -8,6 +8,7 @@
 import { db } from "@db/app/client";
 import { orgApiKeys } from "@db/app/schema";
 import { hashApiKey, isValidApiKeyFormat } from "@repo/app-api-key";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { and, eq, sql } from "drizzle-orm";
 import type { NextRequest } from "next/server";
@@ -140,7 +141,7 @@ export async function withApiKeyAuth(
       .where(eq(orgApiKeys.id, foundKey.id))
       .catch((err: unknown) => {
         log.error("Failed to update API key lastUsedAt", {
-          error: err instanceof Error ? err.message : String(err),
+          error: parseError(err),
           apiKeyId: foundKey.publicId,
         });
       });

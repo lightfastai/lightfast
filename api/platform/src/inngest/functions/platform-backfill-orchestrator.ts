@@ -22,6 +22,7 @@ import {
 import { getProvider, type ProviderDefinition } from "@repo/app-providers";
 import { and, eq, inArray, notInArray } from "@vendor/db";
 import { NonRetriableError } from "@vendor/inngest";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../../lib/provider-configs";
 import { getActiveTokenForInstallation } from "../../lib/token-helpers";
@@ -202,7 +203,7 @@ export const platformBackfillOrchestrator = inngest.createFunction(
             } catch (err) {
               log.warn("[backfill] failed to resolve resource meta", {
                 providerResourceId: r.providerResourceId,
-                error: err instanceof Error ? err.message : String(err),
+                error: parseError(err),
               });
               if (resourceNameRequiredForRouting) {
                 // GitHub/Sentry: resourceName is used in buildRequest pathParams — must skip
@@ -313,7 +314,7 @@ export const platformBackfillOrchestrator = inngest.createFunction(
             eventsProduced: 0,
             eventsDispatched: 0,
             pagesProcessed: 0,
-            error: err instanceof Error ? err.message : "entity worker failed",
+            error: parseError(err),
           };
         }
       })

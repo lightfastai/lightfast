@@ -1,5 +1,7 @@
 import { HydrateClient } from "@repo/app-trpc/server";
 import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
+import { parseError } from "@vendor/observability/error/next";
+import { log } from "@vendor/observability/log/next";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -56,7 +58,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   try {
     await requireOrgAccess(slug);
   } catch (error) {
-    console.debug("Org access denied for slug:", slug, error);
+    log.debug("[org-layout] access denied", { slug, error: parseError(error) });
     hasAccess = false;
   }
   if (!hasAccess) {

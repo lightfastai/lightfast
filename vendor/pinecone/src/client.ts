@@ -6,6 +6,7 @@
 
 import type { RecordMetadata } from "@pinecone-database/pinecone";
 import { Pinecone } from "@pinecone-database/pinecone";
+import { parseError } from "@vendor/observability/error/next";
 
 import { env } from "./env";
 import {
@@ -329,7 +330,7 @@ export class PineconeClient {
       throw error;
     }
 
-    const message = error instanceof Error ? error.message : String(error);
+    const message = parseError(error);
     const lowerMessage = message.toLowerCase();
 
     if (lowerMessage.includes("rate limit") || lowerMessage.includes("429")) {

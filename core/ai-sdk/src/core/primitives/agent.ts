@@ -1,3 +1,4 @@
+import { parseError } from "@vendor/observability/error/next";
 import type {
   LanguageModel,
   ModelMessage,
@@ -187,7 +188,7 @@ export class Agent<
       } catch (error) {
         throw new ContextCreationError(
           "runtime",
-          error instanceof Error ? error.message : String(error),
+          parseError(error),
           error instanceof Error ? error : undefined
         );
       }
@@ -230,7 +231,7 @@ export class Agent<
         } catch (error) {
           throw new ToolExecutionError(
             name,
-            `Failed to resolve tool factory '${name}': ${error instanceof Error ? error.message : String(error)}`,
+            `Failed to resolve tool factory '${name}': ${parseError(error)}`,
             error instanceof Error ? error : undefined
           );
         }
@@ -266,7 +267,7 @@ export class Agent<
       } catch (error) {
         throw new CacheOperationError(
           "system and message caching",
-          error instanceof Error ? error.message : String(error),
+          parseError(error),
           error instanceof Error ? error : undefined
         );
       }
@@ -285,7 +286,7 @@ export class Agent<
       } catch (error) {
         throw new MessageConversionError(
           "convert to model messages",
-          error instanceof Error ? error.message : String(error),
+          parseError(error),
           error instanceof Error ? error : undefined
         );
       }

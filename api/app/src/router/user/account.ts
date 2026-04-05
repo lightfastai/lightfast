@@ -1,6 +1,7 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { userScopedProcedure } from "../../trpc";
 
@@ -46,7 +47,7 @@ export const accountRouter = {
     } catch (error: unknown) {
       log.error("[account] get profile failed", {
         userId: ctx.auth.userId,
-        error: error instanceof Error ? error.message : String(error),
+        error: parseError(error),
       });
 
       throw new TRPCError({

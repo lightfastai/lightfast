@@ -1,5 +1,6 @@
 import { implement, ORPCError } from "@orpc/server";
 import { apiContract } from "@repo/app-api-contract";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { proxyCallLogic, proxySearchLogic } from "~/lib/proxy";
 import { searchLogic } from "~/lib/search";
@@ -62,8 +63,7 @@ export const router = impl.router({
           context.requestId
         );
       } catch (error) {
-        const message =
-          error instanceof Error ? error.message : "Proxy call failed";
+        const message = parseError(error);
 
         if (
           message.includes("not found") ||

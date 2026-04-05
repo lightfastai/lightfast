@@ -1,5 +1,6 @@
 "use server";
 
+import { log } from "@vendor/observability/log/next";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { serializeInviteParams } from "../_lib/search-params";
@@ -41,10 +42,10 @@ export async function inviteTeammates(formData: FormData) {
 
   // Mock: log invitations (no real email sending yet)
   if (invitedEmails.length > 0) {
-    console.log(
-      `[invite-teammates] Mock: inviting to "${teamSlug}":`,
-      invitedEmails
-    );
+    log.info("[invite-teammates] mock invitation", {
+      teamSlug,
+      emails: invitedEmails,
+    });
   }
 
   redirect(`/${teamSlug}`);

@@ -1,4 +1,5 @@
 import { clerkClient } from "@vendor/clerk/server";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { redis } from "@vendor/upstash";
 import { getUserOrgsCacheKey } from "./keys";
@@ -41,8 +42,7 @@ export async function getCachedUserOrgMemberships(
     // Cache read failed - log and continue to Clerk API
     log.warn("Clerk membership cache read failed", {
       userId,
-      error:
-        cacheError instanceof Error ? cacheError.message : String(cacheError),
+      error: parseError(cacheError),
     });
   }
 
@@ -53,8 +53,7 @@ export async function getCachedUserOrgMemberships(
   cacheUserOrgMemberships(userId, memberships).catch((cacheError) => {
     log.warn("Clerk membership cache write failed", {
       userId,
-      error:
-        cacheError instanceof Error ? cacheError.message : String(cacheError),
+      error: parseError(cacheError),
     });
   });
 

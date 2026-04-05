@@ -4,6 +4,7 @@
  * @see docs/architecture/phase1/dx-configuration.md
  */
 
+import { parseError } from "@vendor/observability/error/next";
 import fg from "fast-glob";
 
 /**
@@ -56,7 +57,7 @@ export async function matchFiles(
   } catch (error) {
     // If glob matching fails, throw a helpful error
     throw new Error(
-      `Failed to match files with globs ${JSON.stringify(globs)}: ${error instanceof Error ? error.message : String(error)}`
+      `Failed to match files with globs ${JSON.stringify(globs)}: ${parseError(error)}`
     );
   }
 }

@@ -3,6 +3,7 @@
 import { captureException } from "@sentry/nextjs";
 import { isClerkAPIResponseError } from "@vendor/clerk";
 import { clerkClient } from "@vendor/clerk/server";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import {
   ARCJET_KEY,
@@ -298,7 +299,7 @@ export async function joinEarlyAccessAction(
     // Non-Clerk errors
     captureException(error);
     log.error("Early access signup error", {
-      error: error instanceof Error ? error.message : String(error),
+      error: parseError(error),
       ...getAuthTraceContext(),
     });
     redirect(

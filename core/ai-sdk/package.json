@@ -74,6 +74,7 @@
   },
   "dependencies": {
     "@upstash/redis": "^1.35.1",
+    "@vendor/observability": "workspace:*",
     "ai": "5.0.52",
     "redis": "^4.7.0",
     "resumable-stream": "^2.2.10",

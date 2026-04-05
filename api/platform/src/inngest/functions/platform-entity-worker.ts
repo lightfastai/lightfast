@@ -19,6 +19,7 @@ import type { ProviderApi, ProviderDefinition } from "@repo/app-providers";
 import { type BackfillContext, getProvider } from "@repo/app-providers";
 import { eq } from "@vendor/db";
 import { NonRetriableError } from "@vendor/inngest";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { GITHUB_RATE_LIMIT_BUDGET, MAX_PAGES } from "../../lib/constants";
 import { providerConfigs } from "../../lib/provider-configs";
@@ -144,7 +145,7 @@ export const platformEntityWorker = inngest.createFunction(
             ));
           } catch (err) {
             throw new NonRetriableError(
-              `Failed to get token for installation ${installationId}: ${err instanceof Error ? err.message : String(err)}`
+              `Failed to get token for installation ${installationId}: ${parseError(err)}`
             );
           }
 

@@ -28,8 +28,6 @@ export default function EarlyAccessError({
         errorDigest: error.digest,
       },
     });
-
-    console.error("Early access route error:", error);
   }, [error]);
 
   return (
