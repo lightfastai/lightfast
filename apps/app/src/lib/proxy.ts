@@ -32,6 +32,10 @@ export async function proxySearchLogic(
       )
     );
 
+  // Create caller once — it's stateless w.r.t. installations.
+  // installationId is passed as procedure input at call time.
+  const memory = await createMemoryCaller();
+
   const connections = await Promise.all(
     installations.map(async (inst) => {
       // Cast to string to use the wide getProvider overload — avoids
@@ -53,7 +57,6 @@ export async function proxySearchLogic(
         );
 
       // Build executeApi callback for this installation
-      const memory = await createMemoryCaller();
       const executeApi = async (req: {
         endpointId: string;
         pathParams?: Record<string, string>;
