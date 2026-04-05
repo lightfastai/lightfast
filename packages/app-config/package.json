@@ -20,7 +20,7 @@
     "@repo/app-validation": "workspace:*",
     "fast-glob": "^3.3.2",
     "neverthrow": "catalog:",
-    "yaml": "^2.8.2",
+    "yaml": "^2.8.3",
     "zod": "catalog:"
   },
   "devDependencies": {
