@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "10bb2f3bf9d7",
+  "session_id": "e88739a1-85f8-4915-967e-939d66f635b8",
   "strategy": "manual-commit",
+  "created_at": "2026-04-05T11:32:48.769191Z",
   "branch": "refactor/parseerror-adoption-console-cleanup",
-  "checkpoints_count": 8,
+  "checkpoints_count": 4,
   "files_touched": [
     "api/app/src/inngest/workflow/infrastructure/record-activity.ts",
     "api/app/src/lib/activity.ts",
@@ -49,37 +51,29 @@
     "vendor/pinecone/package.json",
     "vendor/pinecone/src/client.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/10/bb2f3bf9d7/0/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/0/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/0/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/0/prompt.txt"
-    },
-    {
-      "metadata": "/10/bb2f3bf9d7/1/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/1/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/1/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/1/prompt.txt"
-    },
-    {
-      "metadata": "/10/bb2f3bf9d7/2/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/2/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/2/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/2/prompt.txt"
-    },
-    {
-      "metadata": "/10/bb2f3bf9d7/3/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/3/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/3/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/3/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "969d445832eb",
   "token_usage": {
-    "input_tokens": 977,
-    "cache_creation_tokens": 303499,
-    "cache_read_tokens": 10078571,
-    "output_tokens": 73509,
-    "api_call_count": 100
+    "input_tokens": 78,
+    "cache_creation_tokens": 167671,
+    "cache_read_tokens": 8823089,
+    "output_tokens": 48780,
+    "api_call_count": 67
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T11:32:47.397012Z",
+    "agent_lines": 130,
+    "agent_removed": 84,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 130,
+    "total_lines_changed": 214,
+    "agent_percentage": 100,
+    "metric_version": 2
   }
 }

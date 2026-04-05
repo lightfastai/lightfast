@@ -1,0 +1,13 @@
+/implement_plan @thoughts/shared/plans/2026-04-05-parseerror-adoption-console-cleanup.md
+
+---
+
+all builds typecheck check works?
+
+---
+
+yes
+
+---
+
+/oneshot_merge
