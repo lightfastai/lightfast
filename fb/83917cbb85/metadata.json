@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "fb83917cbb85",
+  "strategy": "manual-commit",
+  "branch": "chore/claude-config-cleanup",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".claude/settings.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/fb/83917cbb85/0/metadata.json",
+      "transcript": "/fb/83917cbb85/0/full.jsonl",
+      "content_hash": "/fb/83917cbb85/0/content_hash.txt",
+      "prompt": "/fb/83917cbb85/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 14,
+    "cache_creation_tokens": 20802,
+    "cache_read_tokens": 256946,
+    "output_tokens": 3380,
+    "api_call_count": 10
+  }
+}

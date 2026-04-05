@@ -1,0 +1,5 @@
+/oneshot_merge .claude and .entire
+
+---
+
+yes
