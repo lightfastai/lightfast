@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "a94f4dbbcdcf",
+  "session_id": "1545ae5d-aefc-4ed4-94ab-d174b8a91c00",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T12:06:56.629356Z",
+  "branch": "refactor/tanstack-query-optimistic-prefetch-rework",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/_components/team-general-settings-client.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/api-keys/_components/org-api-key-list.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/_components/installed-sources.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/new/_components/link-sources-button.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/new/_components/provider-source-item.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-allowed)/account/settings/general/_components/profile-data-display.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/app/src/components/jobs-table.tsx",
+    "apps/app/src/components/notifications-provider.tsx",
+    "apps/app/src/components/user-page-header.tsx",
+    "packages/app-trpc/src/client.ts",
+    "packages/app-trpc/src/hooks/use-active-org.ts",
+    "packages/app-trpc/src/server.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "262460fe0c69",
+  "token_usage": {
+    "input_tokens": 86,
+    "cache_creation_tokens": 239911,
+    "cache_read_tokens": 8952583,
+    "output_tokens": 46160,
+    "api_call_count": 75
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T12:06:55.915581Z",
+    "agent_lines": 197,
+    "agent_removed": 226,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 197,
+    "total_lines_changed": 423,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}

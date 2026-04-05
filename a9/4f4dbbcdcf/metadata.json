@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "a94f4dbbcdcf",
+  "strategy": "manual-commit",
+  "branch": "refactor/tanstack-query-optimistic-prefetch-rework",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/_components/team-general-settings-client.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/api-keys/_components/org-api-key-list.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/_components/installed-sources.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/new/_components/link-sources-button.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/new/_components/provider-source-item.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-allowed)/account/settings/general/_components/profile-data-display.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/app/src/components/jobs-table.tsx",
+    "apps/app/src/components/notifications-provider.tsx",
+    "apps/app/src/components/user-page-header.tsx",
+    "packages/app-trpc/src/client.ts",
+    "packages/app-trpc/src/hooks/use-active-org.ts",
+    "packages/app-trpc/src/server.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a9/4f4dbbcdcf/0/metadata.json",
+      "transcript": "/a9/4f4dbbcdcf/0/full.jsonl",
+      "content_hash": "/a9/4f4dbbcdcf/0/content_hash.txt",
+      "prompt": "/a9/4f4dbbcdcf/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 86,
+    "cache_creation_tokens": 239911,
+    "cache_read_tokens": 8952583,
+    "output_tokens": 46160,
+    "api_call_count": 75
+  }
+}
