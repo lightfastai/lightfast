@@ -1,0 +1,40 @@
+no eslint. its' biome. correct type that. any is bad.
+
+---
+
+the only thing im noticing in logs:       meta: [Object]
+    },
+    {
+      ts: 1775374046787,
+      level: 'info',
+      msg: '[trpc] ok',
+      meta: [Object]
+    }
+
+meta: [Object].
+
+of course this is local. in prod will it work?
+
+---
+
+very nice. one question. use removing onError from trpc's route.ts what does that do?
+
+---
+
+question, would this cause issues in sentry for error tracing?
+
+---
+
+are you 100% sure?
+
+---
+
+this is great. where do we go from here
+
+---
+
+wait so why is it that client-errors should not have sentry events? is that really best pratice?
+
+---
+
+/oneshot_merge
