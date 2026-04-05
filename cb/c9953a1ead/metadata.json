@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cbc9953a1ead",
+  "strategy": "manual-commit",
+  "branch": "fix/trpc-observability-sentry-quality",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(early-access)/_actions/early-access.ts",
+    "apps/app/src/instrumentation-client.ts",
+    "vendor/observability/src/error/next.ts",
+    "vendor/observability/src/trpc.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/cb/c9953a1ead/0/metadata.json",
+      "transcript": "/cb/c9953a1ead/0/full.jsonl",
+      "content_hash": "/cb/c9953a1ead/0/content_hash.txt",
+      "prompt": "/cb/c9953a1ead/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 17363,
+    "cache_creation_tokens": 91223,
+    "cache_read_tokens": 696342,
+    "output_tokens": 22354,
+    "api_call_count": 11
+  }
+}

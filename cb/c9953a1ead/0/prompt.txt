@@ -1,0 +1,5 @@
+/create_plan @thoughts/shared/research/2026-04-05-entity-first-ui-rework-landscape.md
+
+---
+
+proceed
