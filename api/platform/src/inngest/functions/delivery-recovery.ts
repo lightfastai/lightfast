@@ -80,8 +80,15 @@ export const deliveryRecovery = inngest.createFunction(
               resourceId =
                 providerDef.webhook.extractResourceId(parsedPayload) ?? null;
             }
-          } catch {
-            // If extraction fails, proceed with null — ingest delivery handles it
+          } catch (err) {
+            log.warn(
+              "[delivery-recovery] resource extraction failed — proceeding with null",
+              {
+                deliveryId: delivery.deliveryId,
+                provider: providerName,
+                error: err instanceof Error ? err.message : String(err),
+              }
+            );
           }
 
           // Resolve connection info for preResolved if installationId is available
@@ -135,7 +142,12 @@ export const deliveryRecovery = inngest.createFunction(
               error: err,
             });
           }
-        } catch {
+        } catch (err) {
+          log.warn("[delivery-recovery] replay failed for delivery", {
+            deliveryId: delivery.deliveryId,
+            provider: delivery.provider,
+            error: err instanceof Error ? err.message : String(err),
+          });
           failed.push(delivery.deliveryId);
         }
       }

@@ -88,8 +88,15 @@ export const healthCheck = inngest.createFunction(
             providerDef as ProviderDefinition
           );
           accessToken = tokenResult.token;
-        } catch {
-          // If we can't get the token, we can't probe — treat as transient
+        } catch (err) {
+          log.warn(
+            "[health-check] token fetch failed — recording transient failure",
+            {
+              installationId: installation.id,
+              provider: providerName,
+              error: err instanceof Error ? err.message : String(err),
+            }
+          );
           await recordTransientFailure(installation);
           return;
         }
@@ -104,8 +111,15 @@ export const healthCheck = inngest.createFunction(
             installation.externalId,
             accessToken
           );
-        } catch {
-          // Network error / timeout — treat as transient failure
+        } catch (err) {
+          log.warn(
+            "[health-check] probe failed — recording transient failure",
+            {
+              installationId: installation.id,
+              provider: providerName,
+              error: err instanceof Error ? err.message : String(err),
+            }
+          );
           await recordTransientFailure(installation);
           return;
         }
