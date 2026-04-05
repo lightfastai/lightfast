@@ -3,7 +3,7 @@
   "checkpoint_id": "fb83917cbb85",
   "strategy": "manual-commit",
   "branch": "chore/claude-config-cleanup",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     ".claude/settings.json"
   ],
@@ -13,13 +13,19 @@
       "transcript": "/fb/83917cbb85/0/full.jsonl",
       "content_hash": "/fb/83917cbb85/0/content_hash.txt",
       "prompt": "/fb/83917cbb85/0/prompt.txt"
+    },
+    {
+      "metadata": "/fb/83917cbb85/1/metadata.json",
+      "transcript": "/fb/83917cbb85/1/full.jsonl",
+      "content_hash": "/fb/83917cbb85/1/content_hash.txt",
+      "prompt": "/fb/83917cbb85/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 14,
-    "cache_creation_tokens": 20802,
-    "cache_read_tokens": 256946,
-    "output_tokens": 3380,
-    "api_call_count": 10
+    "input_tokens": 607,
+    "cache_creation_tokens": 128881,
+    "cache_read_tokens": 10625828,
+    "output_tokens": 26667,
+    "api_call_count": 123
   }
 }
