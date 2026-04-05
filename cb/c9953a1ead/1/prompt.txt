@@ -1,0 +1,3 @@
+/research_codebase considering we have a new infrastrucure for @apps/app/src/app/(api)/lib/orpc-router.ts i think i want to migrate off server actions for @apps/app/src/app/(early-access)/_actions/ 
+
+basically this will allow us to also expose early-access as a public route for consumption by agents.
