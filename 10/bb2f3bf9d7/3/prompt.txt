@@ -11,3 +11,7 @@ yes
 ---
 
 /oneshot_merge
+
+---
+
+yes
