@@ -1,0 +1,1 @@
+/create_plan @thoughts/shared/research/2026-04-05-clerk-hooks-vs-trpc-layer.md

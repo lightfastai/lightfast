@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "10bb2f3bf9d7",
+  "session_id": "7e5e8672-f986-4cf4-b5a4-903c8f49fc6f",
   "strategy": "manual-commit",
+  "created_at": "2026-04-05T11:32:44.297401Z",
   "branch": "refactor/parseerror-adoption-console-cleanup",
-  "checkpoints_count": 4,
+  "checkpoints_count": 2,
   "files_touched": [
     "api/app/src/inngest/workflow/infrastructure/record-activity.ts",
     "api/app/src/lib/activity.ts",
@@ -49,31 +51,29 @@
     "vendor/pinecone/package.json",
     "vendor/pinecone/src/client.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/10/bb2f3bf9d7/0/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/0/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/0/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/0/prompt.txt"
-    },
-    {
-      "metadata": "/10/bb2f3bf9d7/1/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/1/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/1/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/1/prompt.txt"
-    },
-    {
-      "metadata": "/10/bb2f3bf9d7/2/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/2/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/2/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/2/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "527e3c40d5c4",
   "token_usage": {
-    "input_tokens": 899,
-    "cache_creation_tokens": 135828,
-    "cache_read_tokens": 1255482,
-    "output_tokens": 24729,
-    "api_call_count": 33
+    "input_tokens": 20,
+    "cache_creation_tokens": 56854,
+    "cache_read_tokens": 665288,
+    "output_tokens": 13747,
+    "api_call_count": 14
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T11:32:44.171859Z",
+    "agent_lines": 99,
+    "agent_removed": 71,
+    "human_added": 5,
+    "human_modified": 13,
+    "human_removed": 0,
+    "total_committed": 117,
+    "total_lines_changed": 188,
+    "agent_percentage": 90.42553191489363,
+    "metric_version": 2
   }
 }
