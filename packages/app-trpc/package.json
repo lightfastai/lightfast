@@ -31,6 +31,7 @@
     "@trpc/tanstack-react-query": "catalog:",
     "next": "catalog:next16",
     "react": "19.2.4",
+    "sonner": "^2.0.6",
     "superjson": "catalog:"
   },
   "devDependencies": {

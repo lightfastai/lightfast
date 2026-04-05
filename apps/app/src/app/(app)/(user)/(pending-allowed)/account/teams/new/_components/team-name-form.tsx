@@ -27,6 +27,7 @@ export function TeamNameForm() {
 
   const mutation = useMutation(
     trpc.organization.create.mutationOptions({
+      meta: { suppressErrorToast: true },
       onSuccess: async (data) => {
         if (setActive) {
           await setActive({ organization: data.organizationId });

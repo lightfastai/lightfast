@@ -34,11 +34,9 @@ export function LinkSourcesButton() {
 
   const linkMutation = useMutation(
     trpc.connections.resources.bulkLink.mutationOptions({
+      meta: { errorTitle: "Sources not linked" },
       onError: (error) => {
         console.error("Failed to link sources:", error);
-        toast.error("Sources not linked", {
-          description: "Failed to connect sources. You can try again.",
-        });
       },
     })
   );

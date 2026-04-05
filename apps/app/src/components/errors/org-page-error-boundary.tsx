@@ -34,13 +34,16 @@ export class OrgPageErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Determine error type from tRPC error message
-    const message = error.message.toLowerCase();
-    let errorType: State["errorType"] = "unknown";
+    // Classify using tRPC's typed error code instead of message substring matching
+    const data = (error as unknown as Record<string, unknown>).data as
+      | Record<string, unknown>
+      | undefined;
+    const code = data?.code;
 
-    if (message.includes("access denied") || message.includes("forbidden")) {
+    let errorType: State["errorType"] = "unknown";
+    if (code === "FORBIDDEN") {
       errorType = "access_denied";
-    } else if (message.includes("not found")) {
+    } else if (code === "NOT_FOUND") {
       errorType = "not_found";
     }
 

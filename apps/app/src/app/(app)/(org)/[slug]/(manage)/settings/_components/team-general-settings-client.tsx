@@ -26,7 +26,6 @@ import { useOrganizationList } from "@vendor/clerk/client";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { showErrorToast } from "~/lib/trpc-errors";
 
 interface TeamGeneralSettingsClientProps {
   slug: string;
@@ -71,9 +70,7 @@ export function TeamGeneralSettingsClient({
   // Update organization name mutation
   const updateNameMutation = useMutation(
     trpc.organization.updateName.mutationOptions({
-      onError: (err) => {
-        showErrorToast(err, "Failed to update team name", "Please try again.");
-      },
+      meta: { errorTitle: "Failed to update team name" },
 
       onSuccess: async (data) => {
         toast.success("Team updated!", {
