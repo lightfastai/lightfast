@@ -1,6 +1,6 @@
 /**
  * Service-to-service JWT utilities using HS256 (HMAC-SHA256).
- * Used by console/platform to authenticate calls to memory service.
+ * Used by app/platform to authenticate calls to platform service.
  *
  * Short-lived (60s) tokens with explicit audience and issuer claims.
  * Edge-compatible via jose (no Node.js crypto dependency).
@@ -25,7 +25,7 @@ function getSecretKey(): Uint8Array {
 /**
  * Sign a short-lived service JWT.
  *
- * @param caller - Identity of the calling service (e.g., "console", "platform")
+ * @param caller - Identity of the calling service (e.g., "app", "platform")
  * @returns Signed JWT string (valid for 60 seconds)
  */
 export async function signServiceJWT(caller: string): Promise<string> {

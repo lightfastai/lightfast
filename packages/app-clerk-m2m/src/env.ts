@@ -2,7 +2,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
 /**
- * Console-specific M2M (Machine-to-Machine) environment variables
+ * App-specific M2M (Machine-to-Machine) environment variables
  *
  * Setup (one-time in Clerk Dashboard):
  * 1. Create 3 machines: "tRPC API", "Webhook Handler", "Inngest Workflows"
@@ -20,7 +20,7 @@ import { z } from "zod";
  * 3. Receiver (tRPC) verifies token using its secret
  * 4. Verified token's `subject` field identifies which machine sent it
  */
-export const consoleM2MEnv = createEnv({
+export const appM2MEnv = createEnv({
   shared: {},
   server: {
     // tRPC Machine - Secret key to VERIFY all incoming M2M tokens

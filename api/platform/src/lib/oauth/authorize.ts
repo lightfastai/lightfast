@@ -11,13 +11,13 @@ import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../provider-configs";
 import { storeOAuthState } from "./state";
 
-// ── Console URL ──
+// ── App URL ──
 
 /**
- * Console URL for redirects. Mirrors the gateway's consoleUrl logic.
+ * App URL for redirects.
  * Used to validate redirect_to parameters.
  */
-const consoleUrl = (() => {
+const appUrl = (() => {
   const vercelEnv = process.env.VERCEL_ENV;
   const vercelUrl = process.env.VERCEL_URL;
   const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
@@ -68,11 +68,11 @@ export async function buildAuthorizeUrl(
     return { ok: false, error: "unknown_provider" };
   }
 
-  // Validate redirect_to — allowlist: "inline", localhost, or consoleUrl
+  // Validate redirect_to — allowlist: "inline", localhost, or appUrl
   if (redirectTo && redirectTo !== "inline") {
     try {
       const url = new URL(redirectTo);
-      if (url.hostname !== "localhost" && !redirectTo.startsWith(consoleUrl)) {
+      if (url.hostname !== "localhost" && !redirectTo.startsWith(appUrl)) {
         log.warn("[oauth/authorize] invalid redirect_to (not on allowlist)", {
           provider,
           redirectTo,

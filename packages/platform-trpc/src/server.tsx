@@ -17,14 +17,14 @@ import { createQueryClient } from "./client";
 
 /**
  * Create context for memory RSC calls.
- * Signs a service JWT automatically with caller="console".
+ * Signs a service JWT automatically with caller="app".
  */
 const createMemoryContext = cache(async () => {
   const heads = new Headers(await headers());
   heads.set("x-trpc-source", "rsc");
 
   // Sign a service JWT for the memory service
-  const token = await signServiceJWT("console");
+  const token = await signServiceJWT("app");
   heads.set("authorization", `Bearer ${token}`);
 
   return createMemoryTRPCContext({
@@ -36,7 +36,7 @@ export const getQueryClient = cache(createQueryClient);
 
 /**
  * Memory tRPC proxy for RSC.
- * Automatically authenticated as "console" caller.
+ * Automatically authenticated as "app" caller.
  */
 export const memoryTrpc: TRPCOptionsProxy<MemoryRouter> =
   createTRPCOptionsProxy({
@@ -49,9 +49,9 @@ export const memoryTrpc: TRPCOptionsProxy<MemoryRouter> =
  * Create a server-side memory caller for service use.
  * Authenticated as the specified caller identity.
  *
- * @param caller - Service identity (e.g., "console", "platform", "inngest")
+ * @param caller - Service identity (e.g., "app", "platform", "inngest")
  */
-export const createMemoryCaller = cache(async (caller = "console") => {
+export const createMemoryCaller = cache(async (caller = "app") => {
   const token = await signServiceJWT(caller);
 
   const heads = new Headers();

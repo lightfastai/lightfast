@@ -1,7 +1,7 @@
 /**
  * @repo/app-api-key
  *
- * API Key cryptographic utilities for Console CLI authentication
+ * API Key cryptographic utilities for CLI authentication
  *
  * This package provides cryptographic utilities for:
  * - Generating API keys with the correct format

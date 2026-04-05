@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-export const consoleEvents = {
-  "console/activity.record": z.object({
+export const appEvents = {
+  "app/activity.record": z.object({
     clerkOrgId: z.string(),
     category: z.enum([
       "auth",

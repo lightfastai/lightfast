@@ -1,5 +1,5 @@
 /**
- * Inngest exports for console application
+ * Inngest exports for app
  */
 
 import { serve } from "inngest/next";

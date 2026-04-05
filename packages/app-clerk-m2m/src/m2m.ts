@@ -1,5 +1,5 @@
 /**
- * Clerk Machine-to-Machine (M2M) Authentication for Console App
+ * Clerk Machine-to-Machine (M2M) Authentication for App
  *
  * Provides Clerk's M2M token system for server-to-server authentication.
  * Uses long-lived tokens (365-day expiration) created once in Clerk Dashboard.
@@ -34,7 +34,7 @@
  */
 
 import { createClerkClient } from "@vendor/clerk/backend";
-import { consoleM2MEnv } from "./env";
+import { appM2MEnv } from "./env";
 
 /**
  * Service types for M2M authentication
@@ -52,10 +52,10 @@ export type M2MService = "webhook" | "inngest";
  */
 function getMachineSecretKey(service: M2MService): string {
   if (service === "webhook") {
-    return consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_WEBHOOK;
+    return appM2MEnv.CLERK_MACHINE_SECRET_KEY_WEBHOOK;
   }
   if (service === "inngest") {
-    return consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_INNGEST;
+    return appM2MEnv.CLERK_MACHINE_SECRET_KEY_INNGEST;
   }
   throw new Error(`Unknown M2M service: ${service}`);
 }
@@ -159,7 +159,7 @@ export async function verifyM2MToken(token: string): Promise<{
 }> {
   // Use the tRPC machine secret to verify ALL incoming tokens
   // Following Clerk's example pattern exactly
-  const machineSecretKey = consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_TRPC;
+  const machineSecretKey = appM2MEnv.CLERK_MACHINE_SECRET_KEY_TRPC;
 
   console.log("[M2M] Verifying token with tRPC machine secret");
   console.log(`[M2M] Token prefix: ${token.substring(0, 10)}...`);
@@ -215,7 +215,7 @@ export async function verifyM2MToken(token: string): Promise<{
 export function isM2MConfigured(service: M2MService): boolean {
   try {
     const secretKey = getMachineSecretKey(service);
-    const trpcSecretKey = consoleM2MEnv.CLERK_MACHINE_SECRET_KEY_TRPC;
+    const trpcSecretKey = appM2MEnv.CLERK_MACHINE_SECRET_KEY_TRPC;
     return (
       !!secretKey &&
       secretKey.startsWith("ak_") &&

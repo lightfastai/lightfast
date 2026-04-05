@@ -2,7 +2,7 @@
  * Memory service tRPC initialization.
  *
  * Auth model: service-to-service JWT (not Clerk).
- * All callers are internal services (console, platform, inngest, cron).
+ * All callers are internal services (app, platform, inngest, cron).
  */
 import { nanoid } from "@repo/lib";
 import { trpcMiddleware } from "@sentry/core";
@@ -105,7 +105,7 @@ const t = initTRPC.context<typeof createMemoryTRPCContext>().create({
 const sentryMiddleware = t.middleware(
   trpcMiddleware({
     attachRpcInput: true,
-  }),
+  })
 );
 
 const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
@@ -122,7 +122,7 @@ const observabilityMiddleware = t.middleware(
         requestId: nanoid(),
         ...(ctx.auth.type === "service" && { caller: ctx.auth.caller }),
       },
-      () => next(),
+      () => next()
     );
 
     const meta = {
@@ -143,7 +143,7 @@ const observabilityMiddleware = t.middleware(
     emitJournal(journal, { path, durationMs, ok: result.ok });
 
     return result;
-  },
+  }
 );
 
 // -- Router & Procedure Exports -----------------------------------------------
@@ -159,7 +159,7 @@ export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
 
 /**
  * Service procedure -- requires valid service JWT.
- * Used by console, platform, or other internal services calling memory.
+ * Used by app, platform, or other internal services calling platform.
  *
  * Guarantees `ctx.auth.type === "service"` and `ctx.auth.caller` is available.
  */

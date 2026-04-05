@@ -28,11 +28,6 @@ export const API_KEY_SECRET_LENGTH = 43;
 export const API_KEY_PREVIEW_LENGTH = 4;
 
 /**
- * @deprecated Legacy prefix - do not use for new keys
- */
-export const API_KEY_PREFIX = "console_sk_";
-
-/**
  * Generate a new API key with the unified Lightfast format
  *
  * @param prefix - The prefix to use (default: "sk-lf-")

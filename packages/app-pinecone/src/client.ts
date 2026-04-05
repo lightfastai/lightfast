@@ -1,8 +1,8 @@
 /**
- * Console-specific Pinecone client wrapper
+ * App-specific Pinecone client wrapper
  *
  * Wraps @vendor/pinecone and injects configuration from @repo/app-config.
- * Provides a convenience API with sensible defaults for the console application.
+ * Provides a convenience API with sensible defaults for the app.
  */
 
 import type { RecordMetadata } from "@pinecone-database/pinecone";
@@ -18,12 +18,12 @@ import type {
 } from "@vendor/pinecone/types";
 
 /**
- * Console-specific Pinecone client with injected configuration
+ * App-specific Pinecone client with injected configuration
  *
  * This wrapper provides the same API as @vendor/pinecone but automatically
  * injects private configuration defaults from @repo/app-config.
  */
-export class ConsolePineconeClient {
+export class AppPineconeClient {
   private readonly client: VendorPineconeClient;
 
   constructor() {
@@ -31,7 +31,7 @@ export class ConsolePineconeClient {
   }
 
   /**
-   * Create index with console configuration defaults
+   * Create index with app configuration defaults
    *
    * Automatically injects:
    * - metric: "cosine"
@@ -64,7 +64,7 @@ export class ConsolePineconeClient {
   }
 
   /**
-   * Upsert vectors with automatic batching based on console config
+   * Upsert vectors with automatic batching based on app config
    *
    * Generic method - works with any metadata type extending RecordMetadata
    *
@@ -187,15 +187,15 @@ export class ConsolePineconeClient {
 }
 
 /**
- * Create a new console Pinecone client instance
+ * Create a new app Pinecone client instance
  */
-export function createConsolePineconeClient(): ConsolePineconeClient {
-  return new ConsolePineconeClient();
+export function createAppPineconeClient(): AppPineconeClient {
+  return new AppPineconeClient();
 }
 
 /**
- * Default console Pinecone client instance
+ * Default app Pinecone client instance
  *
  * Use this for most operations unless you need a custom instance.
  */
-export const consolePineconeClient = new ConsolePineconeClient();
+export const appPineconeClient = new AppPineconeClient();

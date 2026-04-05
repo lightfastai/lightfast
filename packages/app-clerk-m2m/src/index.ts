@@ -1,7 +1,7 @@
 /**
- * Console Clerk M2M Package
+ * App Clerk M2M Package
  *
- * Machine-to-Machine authentication for the Console application using Clerk.
+ * Machine-to-Machine authentication for the App using Clerk.
  * This package provides M2M token management and verification for internal services.
  *
  * @example
@@ -21,7 +21,7 @@
  * ```
  */
 
-export { consoleM2MEnv } from "./env";
+export { appM2MEnv } from "./env";
 export {
   createM2MToken,
   isM2MConfigured,

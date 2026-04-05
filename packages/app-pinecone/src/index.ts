@@ -1,7 +1,7 @@
 /**
  * @repo/app-pinecone
  *
- * Console-specific Pinecone utilities with typed vector metadata.
+ * App-specific Pinecone utilities with typed vector metadata.
  * Uses @vendor/pinecone for core Pinecone functionality.
  *
  * @packageDocumentation
@@ -18,11 +18,10 @@ export type {
   UpsertRequest,
   UpsertResponse,
 } from "@vendor/pinecone/types";
-// Export console-specific client with injected config
-// Alias for backwards compatibility
+// Export app-specific client with injected config
 export {
-  ConsolePineconeClient,
-  consolePineconeClient,
-  consolePineconeClient as pineconeClient,
-  createConsolePineconeClient,
+  AppPineconeClient,
+  appPineconeClient,
+  appPineconeClient as pineconeClient,
+  createAppPineconeClient,
 } from "./client";
