@@ -83,8 +83,7 @@
     "npm_lifecycle_event",
     "VERCEL",
     "VERCEL_URL",
-    "VERCEL_PROJECT_PRODUCTION_URL",
-    "BETTERSTACK_SOURCE_TOKEN"
+    "VERCEL_PROJECT_PRODUCTION_URL"
   ],
   "boundaries": {
     "implicitDependencies": ["~"],
