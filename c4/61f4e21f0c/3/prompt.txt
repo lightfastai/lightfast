@@ -1,0 +1,17 @@
+check if @.coderabbit.yaml has parsing error?
+
+---
+
+.coderabbit.yaml has a parsing error
+The CodeRabbit configuration file in this repository has a parsing error and default settings were used instead. Please fix the error(s) in the configuration file. You can initialize chat with CodeRabbit to get help with the configuration file.
+
+💥 Parsing errors (1)
+Validation error: String must contain at most 250 character(s) at "tone_instructions"
+⚙️ Configuration instructions
+Please see the configuration documentation for more information.
+You can also validate your configuration using the online YAML validator.
+If your editor has YAML language server enabled, you can add the path at the top of this file to enable auto-completion and validation: # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+
+---
+
+/commit
