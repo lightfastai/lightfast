@@ -2,6 +2,7 @@ import type { AppRouter } from "@api/app";
 import { appRouter, createTRPCContext } from "@api/app";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import type {
+  TRPCInfiniteQueryOptions,
   TRPCOptionsProxy,
   TRPCQueryOptions,
 } from "@trpc/tanstack-react-query";
@@ -36,7 +37,9 @@ export function HydrateClient(props: { children: React.ReactNode }) {
 
 export function prefetch(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  queryOptions: ReturnType<TRPCQueryOptions<any>>
+  queryOptions:
+    | ReturnType<TRPCQueryOptions<any>>
+    | ReturnType<TRPCInfiniteQueryOptions<any>>
 ) {
   const queryClient = getQueryClient();
   if (
@@ -46,6 +49,7 @@ export function prefetch(
     // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
     void queryClient.prefetchInfiniteQuery(queryOptions as any);
   } else {
-    void queryClient.prefetchQuery(queryOptions);
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-argument, @typescript-eslint/no-explicit-any
+    void queryClient.prefetchQuery(queryOptions as any);
   }
 }

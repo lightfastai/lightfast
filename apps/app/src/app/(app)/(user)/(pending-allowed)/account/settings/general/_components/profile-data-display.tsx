@@ -27,8 +27,6 @@ export function ProfileDataDisplay() {
 
   const { data: profile } = useSuspenseQuery({
     ...trpc.account.get.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: 10 * 60 * 1000, // 10 minutes - user profile rarely changes
   });
 

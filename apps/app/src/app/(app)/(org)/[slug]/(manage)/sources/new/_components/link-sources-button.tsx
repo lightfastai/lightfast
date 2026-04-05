@@ -24,11 +24,9 @@ export function LinkSourcesButton() {
   const { slug } = useParams<{ slug: string }>();
   const { getState, hasAnySelection } = useSourceSelection();
 
-  const { data: sourcesData } = useSuspenseQuery({
-    ...trpc.connections.resources.list.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  const { data: sourcesData } = useSuspenseQuery(
+    trpc.connections.resources.list.queryOptions()
+  );
 
   void sourcesData; // prefetched — no direct use needed here
 

@@ -14,8 +14,6 @@ export function AppHeader() {
 
   const { data: profile } = useSuspenseQuery({
     ...trpc.account.get.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
   });
 

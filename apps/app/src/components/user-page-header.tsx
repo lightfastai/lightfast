@@ -14,15 +14,11 @@ export function UserPageHeader() {
 
   const { data: profile } = useSuspenseQuery({
     ...trpc.account.get.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: organizations = [] } = useSuspenseQuery({
     ...trpc.organization.listUserOrganizations.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
   });
 

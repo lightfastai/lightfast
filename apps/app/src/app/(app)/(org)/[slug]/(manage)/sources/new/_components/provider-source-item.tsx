@@ -95,11 +95,9 @@ export function ProviderSourceItem({ provider }: Props) {
       : null;
 
   // ── Connection query ─────────────────────────────────────────────────────
-  const { data: connectionData } = useSuspenseQuery({
-    ...trpc.connections.generic.listInstallations.queryOptions({ provider }),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  const { data: connectionData } = useSuspenseQuery(
+    trpc.connections.generic.listInstallations.queryOptions({ provider })
+  );
 
   const { installationMode, resourceLabel, installations } = connectionData;
   const hasConnection = installations.length > 0;
@@ -156,8 +154,6 @@ export function ProviderSourceItem({ provider }: Props) {
       installationId: selectedInstallation?.id ?? "",
     }),
     enabled: installationMode !== "merged" && Boolean(selectedInstallation),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     retry: false,
   });
 
@@ -169,8 +165,6 @@ export function ProviderSourceItem({ provider }: Props) {
               provider,
               installationId: inst.id,
             }),
-            refetchOnMount: false,
-            refetchOnWindowFocus: false,
             retry: false,
           }))
         : [],
