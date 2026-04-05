@@ -5,19 +5,16 @@ import { z } from "zod";
 export const betterstackEnv = createEnv({
   extends: [vercel()],
   shared: {},
-  server: {
-    BETTERSTACK_SOURCE_TOKEN: z.string().min(1).optional(),
-    BETTERSTACK_INGESTING_HOST: z.url().optional(),
-  },
+  server: {},
   client: {
-    NEXT_PUBLIC_BETTERSTACK_SOURCE_TOKEN: z.string().min(1).optional(),
-    NEXT_PUBLIC_BETTERSTACK_INGESTING_HOST: z.url().optional(),
+    NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN: z.string().min(1).optional(),
+    NEXT_PUBLIC_BETTER_STACK_INGESTING_URL: z.url().optional(),
   },
   experimental__runtimeEnv: {
-    NEXT_PUBLIC_BETTERSTACK_SOURCE_TOKEN:
-      process.env.NEXT_PUBLIC_BETTERSTACK_SOURCE_TOKEN,
-    NEXT_PUBLIC_BETTERSTACK_INGESTING_HOST:
-      process.env.NEXT_PUBLIC_BETTERSTACK_INGESTING_HOST,
+    NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN:
+      process.env.NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN,
+    NEXT_PUBLIC_BETTER_STACK_INGESTING_URL:
+      process.env.NEXT_PUBLIC_BETTER_STACK_INGESTING_URL,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

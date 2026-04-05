@@ -7,8 +7,8 @@
       "dependsOn": ["^build"],
       "env": [
         "NEXT_PUBLIC_SENTRY_DSN",
-        "NEXT_PUBLIC_BETTERSTACK_SOURCE_TOKEN",
-        "NEXT_PUBLIC_BETTERSTACK_INGESTING_HOST",
+        "NEXT_PUBLIC_BETTER_STACK_SOURCE_TOKEN",
+        "NEXT_PUBLIC_BETTER_STACK_INGESTING_URL",
         "NEXT_PUBLIC_VERCEL_ENV"
       ],
       "passThroughEnv": [
@@ -18,8 +18,6 @@
         "DATABASE_HOST",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",
-        "BETTERSTACK_SOURCE_TOKEN",
-        "BETTERSTACK_INGESTING_HOST",
         "ENCRYPTION_KEY",
         "SERVICE_JWT_SECRET",
         "INNGEST_APP_NAME",

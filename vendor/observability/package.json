@@ -17,17 +17,9 @@
       "types": "./src/env/betterstack.ts",
       "default": "./src/env/betterstack.ts"
     },
-    "./betterstack-edge-env": {
-      "types": "./src/env/betterstack-edge.ts",
-      "default": "./src/env/betterstack-edge.ts"
-    },
     "./log/next": {
       "types": "./src/log/next.ts",
       "default": "./src/log/next.ts"
-    },
-    "./log/edge": {
-      "types": "./src/log/edge.ts",
-      "default": "./src/log/edge.ts"
     },
     "./log/types": {
       "types": "./src/log/types.ts",
@@ -36,14 +28,6 @@
     "./error/next": {
       "types": "./src/error/next.ts",
       "default": "./src/error/next.ts"
-    },
-    "./error/edge": {
-      "types": "./src/error/edge.ts",
-      "default": "./src/error/edge.ts"
-    },
-    "./print-routes": {
-      "types": "./src/print-routes.ts",
-      "default": "./src/print-routes.ts"
     }
   },
   "license": "MIT",
@@ -57,11 +41,9 @@
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@logtail/edge": "^0.5.8",
     "@logtail/next": "^0.3.1",
     "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",
-    "@t3-oss/env-core": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "react": "catalog:react19",
     "server-only": "^0.0.1",
