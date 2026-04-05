@@ -10,10 +10,12 @@ export default async function EventsLayout({
 }) {
   for (const source of SOURCES) {
     prefetch(
-      trpc.events.list.queryOptions({
-        source,
-        limit: 30,
-      })
+      trpc.events.list.infiniteQueryOptions(
+        { source, limit: 30 },
+        {
+          getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        }
+      )
     );
   }
 

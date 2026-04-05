@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { Radio, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -80,25 +80,34 @@ export function EventsTable({ initialSource }: EventsTableProps) {
   }, [filters.age]);
 
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
 
-  const { data } = useSuspenseQuery(
-    trpc.events.list.queryOptions({
-      source,
-      limit: 30,
-      search: filters.search || undefined,
-      receivedAfter,
-    })
+  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useSuspenseInfiniteQuery(
+      trpc.events.list.infiniteQueryOptions(
+        {
+          source,
+          limit: 30,
+          search: filters.search || undefined,
+          receivedAfter,
+        },
+        {
+          getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        }
+      )
+    );
+
+  const firstPage = data.pages[0];
+  const dbEvents = useMemo(
+    () => data.pages.flatMap((page) => page.events),
+    [data.pages]
   );
 
-  // Accumulated pages from "load more"
-  const [loadedEvents, setLoadedEvents] = useState<EventData[]>([]);
-  const [nextCursor, setNextCursor] = useState<number | null | undefined>(
-    undefined
-  );
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Live events — only when on default view (no search, no date filter, single page)
+  const [liveEvents, setLiveEvents] = useState<EventNotification[]>([]);
+  const isDefaultView =
+    filters.search === "" && filters.age === "none" && data.pages.length <= 1;
 
-  // Reset accumulation when filters change
+  // Reset live events when filters change
   const prevFiltersRef = useRef({
     source: filters.source,
     search: filters.search,
@@ -111,8 +120,6 @@ export function EventsTable({ initialSource }: EventsTableProps) {
       prev.search !== filters.search ||
       prev.age !== filters.age
     ) {
-      setLoadedEvents([]);
-      setNextCursor(undefined);
       setLiveEvents([]);
       prevFiltersRef.current = {
         source: filters.source,
@@ -122,23 +129,12 @@ export function EventsTable({ initialSource }: EventsTableProps) {
     }
   }, [filters.source, filters.search, filters.age]);
 
-  // Effective hasMore / cursor from the latest state
-  const effectiveHasMore =
-    nextCursor !== undefined ? nextCursor !== null : data.hasMore;
-  const effectiveCursor =
-    nextCursor !== undefined ? nextCursor : data.nextCursor;
-
-  // Live events — only when on default view (no search, no date filter)
-  const [liveEvents, setLiveEvents] = useState<EventNotification[]>([]);
-  const isDefaultView =
-    filters.search === "" && filters.age === "none" && nextCursor === undefined;
-
   const { status } = useRealtime({
-    channels: data.clerkOrgId ? [`org-${data.clerkOrgId}`] : [],
+    channels: firstPage?.clerkOrgId ? [`org-${firstPage.clerkOrgId}`] : [],
     events: ["org.event"],
-    enabled: !!data.clerkOrgId && isDefaultView,
+    enabled: !!firstPage?.clerkOrgId && isDefaultView,
     onData({ data: notification }) {
-      if (notification.clerkOrgId !== data.clerkOrgId) {
+      if (notification.clerkOrgId !== firstPage?.clerkOrgId) {
         return;
       }
       if (source && notification.sourceEvent.provider !== source) {
@@ -149,16 +145,9 @@ export function EventsTable({ initialSource }: EventsTableProps) {
   });
 
   // Stable set of DB IDs — only recalculates when pages change, not on every live event
-  const dbIds = useMemo(
-    () =>
-      new Set([
-        ...data.events.map((e) => e.id),
-        ...loadedEvents.map((e) => e.id),
-      ]),
-    [data.events, loadedEvents]
-  );
+  const dbIds = useMemo(() => new Set(dbEvents.map((e) => e.id)), [dbEvents]);
 
-  // Merge: live prepend + initial page + additional loaded pages
+  // Merge: live prepend + all pages
   const allEvents = useMemo(() => {
     const newLive = liveEvents.filter((e) => !dbIds.has(e.eventId));
 
@@ -172,30 +161,8 @@ export function EventsTable({ initialSource }: EventsTableProps) {
       createdAt: new Date().toISOString(),
     }));
 
-    return [...liveAsEvents, ...data.events, ...loadedEvents];
-  }, [liveEvents, dbIds, data.events, loadedEvents]);
-
-  const handleLoadMore = async () => {
-    if (!effectiveCursor || isLoadingMore) {
-      return;
-    }
-    setIsLoadingMore(true);
-    try {
-      const result = await queryClient.fetchQuery(
-        trpc.events.list.queryOptions({
-          source,
-          limit: 30,
-          cursor: effectiveCursor,
-          search: filters.search || undefined,
-          receivedAfter,
-        })
-      );
-      setLoadedEvents((prev) => [...prev, ...result.events]);
-      setNextCursor(result.hasMore ? result.nextCursor : null);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
+    return [...liveAsEvents, ...dbEvents];
+  }, [liveEvents, dbIds, dbEvents]);
 
   return (
     <div className="space-y-4">
@@ -280,14 +247,14 @@ export function EventsTable({ initialSource }: EventsTableProps) {
       )}
 
       {/* Load more */}
-      {effectiveHasMore && allEvents.length > 0 && (
+      {hasNextPage && allEvents.length > 0 && (
         <div className="flex justify-center py-2">
           <Button
-            disabled={isLoadingMore}
-            onClick={() => void handleLoadMore()}
+            disabled={isFetchingNextPage}
+            onClick={() => void fetchNextPage()}
             variant="outline"
           >
-            {isLoadingMore ? "Loading..." : "Load more"}
+            {isFetchingNextPage ? "Loading..." : "Load more"}
           </Button>
         </div>
       )}

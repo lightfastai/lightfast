@@ -12,7 +12,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { cn } from "@repo/ui/lib/utils";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle2,
@@ -26,7 +26,7 @@ import {
   StopCircle,
   XCircle,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import type { Job, JobStatus } from "~/types";
 import { useJobFilters } from "./use-job-filters";
 
@@ -327,7 +327,6 @@ function EmptyState({ filter }: { filter: string }) {
 
 function JobsTable({ initialStatus, initialSearch }: JobsTableProps) {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const {
     status: activeTab,
     setStatus: setActiveTab,
@@ -335,38 +334,21 @@ function JobsTable({ initialStatus, initialSearch }: JobsTableProps) {
     setSearch: setSearchQuery,
   } = useJobFilters(initialStatus, initialSearch);
 
-  // Fetch jobs list
+  // Fetch jobs list — polls every 5s when running jobs exist
   const { data: jobsData } = useSuspenseQuery({
     ...trpc.jobs.list.queryOptions({
       status: activeTab === "all" ? undefined : (activeTab as JobStatus),
       limit: 50,
     }),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: 10 * 1000, // 10 seconds - jobs are real-time sensitive
+    refetchOnMount: true,
+    refetchInterval: (query) =>
+      query.state.data?.items.some((job) => job.status === "running")
+        ? 5000
+        : false,
   });
 
   const jobs = jobsData.items;
-
-  // Poll for updates every 5 seconds if there are running jobs
-  useEffect(() => {
-    const hasRunningJobs = jobs.some((job) => job.status === "running");
-    if (!hasRunningJobs) {
-      return;
-    }
-
-    const interval = setInterval(() => {
-      // Invalidate and refetch jobs list
-      void queryClient.invalidateQueries({
-        queryKey: trpc.jobs.list.queryOptions({
-          status: activeTab === "all" ? undefined : (activeTab as JobStatus),
-          limit: 50,
-        }).queryKey,
-      });
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [jobs, queryClient, trpc, activeTab]);
 
   // Normalize once so the filter loop doesn't lowercase on every item
   const searchQueryLower = useMemo(

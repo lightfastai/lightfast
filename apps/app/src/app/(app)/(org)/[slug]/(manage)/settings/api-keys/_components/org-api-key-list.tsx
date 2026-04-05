@@ -15,6 +15,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { cn } from "@repo/ui/lib/utils";
 import {
   useMutation,
   useQueryClient,
@@ -47,8 +48,6 @@ export function OrgApiKeyList() {
   // Use prefetched data from server (no client-side fetch)
   const { data: apiKeys } = useSuspenseQuery({
     ...trpc.orgApiKeys.list.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes - API keys rarely change
   });
 
@@ -71,6 +70,8 @@ export function OrgApiKeyList() {
       meta: { errorTitle: "Failed to revoke API key" },
       onSuccess: () => {
         toast.success("API key revoked successfully");
+      },
+      onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
@@ -83,6 +84,8 @@ export function OrgApiKeyList() {
       meta: { errorTitle: "Failed to delete API key" },
       onSuccess: () => {
         toast.success("API key deleted successfully");
+      },
+      onSettled: () => {
         void queryClient.invalidateQueries({
           queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
@@ -249,95 +252,115 @@ export function OrgApiKeyList() {
       {/* API Keys List */}
       {apiKeys.length > 0 ? (
         <div className="space-y-3">
-          {apiKeys.map((key) => (
-            <div
-              className="flex items-center justify-between rounded-lg border border-border bg-card p-4"
-              key={key.id}
-            >
-              <div className="flex min-w-0 flex-1 items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
-                  <Key className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-foreground">{key.name}</p>
-                    {key.isActive ? (
-                      <Badge className="text-xs" variant="default">
-                        Active
-                      </Badge>
-                    ) : (
-                      <Badge className="text-xs" variant="secondary">
-                        Revoked
-                      </Badge>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                    <code className="text-xs">{key.keyPreview}</code>
-                    <span>-</span>
-                    <span>
-                      Created{" "}
-                      {formatDistanceToNow(new Date(key.createdAt), {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    {key.lastUsedAt && (
-                      <>
-                        <span>-</span>
-                        <span>
-                          Last used{" "}
-                          {formatDistanceToNow(new Date(key.lastUsedAt), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </>
-                    )}
-                    {key.expiresAt && (
-                      <>
-                        <span>-</span>
-                        <span>
-                          Expires{" "}
-                          {formatDistanceToNow(new Date(key.expiresAt), {
-                            addSuffix: true,
-                          })}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
-                {key.isActive && (
-                  <>
-                    <Button
-                      disabled={rotateMutation.isPending}
-                      onClick={() => handleRotate(key.id, key.name)}
-                      size="sm"
-                      title="Rotate key"
-                      variant="outline"
-                    >
-                      <RotateCcw className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      disabled={revokeMutation.isPending}
-                      onClick={() => handleRevoke(key.id, key.name)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      Revoke
-                    </Button>
-                  </>
-                )}
-                <Button
-                  disabled={deleteMutation.isPending}
-                  onClick={() => handleDelete(key.id, key.name)}
-                  size="sm"
-                  variant="ghost"
+          {apiKeys
+            .filter(
+              (key) =>
+                !(
+                  deleteMutation.isPending &&
+                  deleteMutation.variables?.keyId === key.id
+                )
+            )
+            .map((key) => {
+              const isOptimisticallyRevoked =
+                revokeMutation.isPending &&
+                revokeMutation.variables?.keyId === key.id;
+              const isActive = key.isActive && !isOptimisticallyRevoked;
+
+              return (
+                <div
+                  className={cn(
+                    "flex items-center justify-between rounded-lg border border-border bg-card p-4 transition-opacity",
+                    isOptimisticallyRevoked && "opacity-60"
+                  )}
+                  key={key.id}
                 >
-                  <Trash2 className="h-4 w-4 text-destructive" />
-                </Button>
-              </div>
-            </div>
-          ))}
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                      <Key className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-foreground">
+                          {key.name}
+                        </p>
+                        {isActive ? (
+                          <Badge className="text-xs" variant="default">
+                            Active
+                          </Badge>
+                        ) : (
+                          <Badge className="text-xs" variant="secondary">
+                            Revoked
+                          </Badge>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2 text-muted-foreground text-sm">
+                        <code className="text-xs">{key.keyPreview}</code>
+                        <span>-</span>
+                        <span>
+                          Created{" "}
+                          {formatDistanceToNow(new Date(key.createdAt), {
+                            addSuffix: true,
+                          })}
+                        </span>
+                        {key.lastUsedAt && (
+                          <>
+                            <span>-</span>
+                            <span>
+                              Last used{" "}
+                              {formatDistanceToNow(new Date(key.lastUsedAt), {
+                                addSuffix: true,
+                              })}
+                            </span>
+                          </>
+                        )}
+                        {key.expiresAt && (
+                          <>
+                            <span>-</span>
+                            <span>
+                              Expires{" "}
+                              {formatDistanceToNow(new Date(key.expiresAt), {
+                                addSuffix: true,
+                              })}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {isActive && (
+                      <>
+                        <Button
+                          disabled={rotateMutation.isPending}
+                          onClick={() => handleRotate(key.id, key.name)}
+                          size="sm"
+                          title="Rotate key"
+                          variant="outline"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          disabled={revokeMutation.isPending}
+                          onClick={() => handleRevoke(key.id, key.name)}
+                          size="sm"
+                          variant="outline"
+                        >
+                          Revoke
+                        </Button>
+                      </>
+                    )}
+                    <Button
+                      disabled={deleteMutation.isPending}
+                      onClick={() => handleDelete(key.id, key.name)}
+                      size="sm"
+                      variant="ghost"
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                </div>
+              );
+            })}
         </div>
       ) : (
         <div className="rounded-lg border border-border border-dashed py-12 text-center">

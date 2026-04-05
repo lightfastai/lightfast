@@ -13,6 +13,10 @@ export const createQueryClient = (opts?: { mutationCache?: MutationCache }) =>
         // With SSR, we usually want to set some default staleTime
         // above 0 to avoid refetching immediately on the client
         staleTime: 30 * 1000,
+        // All data is server-prefetched via RSC — suppress automatic refetches
+        // on mount and window focus. Individual queries can opt back in.
+        refetchOnMount: false,
+        refetchOnWindowFocus: false,
       },
       dehydrate: {
         serializeData: SuperJSON.serialize,

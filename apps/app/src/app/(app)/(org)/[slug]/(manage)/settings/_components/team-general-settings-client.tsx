@@ -41,11 +41,9 @@ export function TeamGeneralSettingsClient({
   const [isUpdating, setIsUpdating] = useState(false);
 
   // Use cached organization list from app layout (avoids Clerk 404 timing issues)
-  const { data: organizations } = useSuspenseQuery({
-    ...trpc.organization.listUserOrganizations.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  const { data: organizations } = useSuspenseQuery(
+    trpc.organization.listUserOrganizations.queryOptions()
+  );
 
   // Find current organization from cached list by slug
   const organization = organizations.find((org) => org.slug === slug);
@@ -67,10 +65,31 @@ export function TeamGeneralSettingsClient({
   const currentFormName = form.watch("teamName");
   const hasChanges = currentFormName !== organization.slug;
 
-  // Update organization name mutation
+  const orgListQueryKey =
+    trpc.organization.listUserOrganizations.queryOptions().queryKey;
+
+  // Update organization name mutation — optimistic cache update
+  // so sidebar, header, and useActiveOrg all reflect the new name instantly
   const updateNameMutation = useMutation(
     trpc.organization.updateName.mutationOptions({
       meta: { errorTitle: "Failed to update team name" },
+
+      onMutate: async (input) => {
+        await queryClient.cancelQueries({ queryKey: orgListQueryKey });
+        const previousOrgs = queryClient.getQueryData(orgListQueryKey);
+        queryClient.setQueryData(orgListQueryKey, (old: typeof previousOrgs) =>
+          old?.map((org) =>
+            org.slug === input.slug ? { ...org, slug: input.name } : org
+          )
+        );
+        return { previousOrgs };
+      },
+
+      onError: (_err, _input, context) => {
+        if (context?.previousOrgs) {
+          queryClient.setQueryData(orgListQueryKey, context.previousOrgs);
+        }
+      },
 
       onSuccess: async (data) => {
         toast.success("Team updated!", {
@@ -98,11 +117,7 @@ export function TeamGeneralSettingsClient({
 
       onSettled: () => {
         // Invalidate to ensure consistency with server
-        void queryClient.invalidateQueries({
-          queryKey:
-            trpc.organization.listUserOrganizations.queryOptions().queryKey,
-        });
-
+        void queryClient.invalidateQueries({ queryKey: orgListQueryKey });
         setIsUpdating(false);
       },
     })

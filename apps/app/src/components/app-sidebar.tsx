@@ -106,8 +106,6 @@ export function AppSidebar() {
 
   const { data: organizations = [] } = useSuspenseQuery({
     ...trpc.organization.listUserOrganizations.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
   });
 

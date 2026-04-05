@@ -72,11 +72,9 @@ export function InstalledSources({
     }
   );
 
-  const { data: sourcesData } = useSuspenseQuery({
-    ...trpc.connections.resources.list.queryOptions(),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
-  });
+  const { data: sourcesData } = useSuspenseQuery(
+    trpc.connections.resources.list.queryOptions()
+  );
 
   const integrations = sourcesData.list ?? [];
 
@@ -212,8 +210,6 @@ function ResourceRow({ integration }: { integration: Source }) {
       provider: metadata.provider,
       installationId: integration.installationId,
     }),
-    refetchOnMount: false,
-    refetchOnWindowFocus: false,
     retry: false,
   });
 
