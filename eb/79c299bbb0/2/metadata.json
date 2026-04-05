@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "eb79c299bbb0",
+  "session_id": "e88739a1-85f8-4915-967e-939d66f635b8",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T11:52:10.988769Z",
+  "branch": "refactor/drop-redundant-clerk-hooks",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/src/app/(app)/layout.tsx",
+    "packages/app-trpc/package.json",
+    "packages/app-trpc/src/hooks/use-active-org.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "969d445832eb",
+  "token_usage": {
+    "input_tokens": 82,
+    "cache_creation_tokens": 169929,
+    "cache_read_tokens": 9542371,
+    "output_tokens": 49460,
+    "api_call_count": 71
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T11:52:09.612842Z",
+    "agent_lines": 36,
+    "agent_removed": 4,
+    "human_added": 46,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 82,
+    "total_lines_changed": 125,
+    "agent_percentage": 32,
+    "metric_version": 2
+  }
+}

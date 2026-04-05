@@ -3,7 +3,7 @@
   "checkpoint_id": "eb79c299bbb0",
   "strategy": "manual-commit",
   "branch": "refactor/drop-redundant-clerk-hooks",
-  "checkpoints_count": 7,
+  "checkpoints_count": 9,
   "files_touched": [
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
     "apps/app/src/app/(app)/layout.tsx",
@@ -26,13 +26,19 @@
       "transcript": "/eb/79c299bbb0/1/full.jsonl",
       "content_hash": "/eb/79c299bbb0/1/content_hash.txt",
       "prompt": "/eb/79c299bbb0/1/prompt.txt"
+    },
+    {
+      "metadata": "/eb/79c299bbb0/2/metadata.json",
+      "transcript": "/eb/79c299bbb0/2/full.jsonl",
+      "content_hash": "/eb/79c299bbb0/2/content_hash.txt",
+      "prompt": "/eb/79c299bbb0/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 99,
-    "cache_creation_tokens": 96730,
-    "cache_read_tokens": 2627159,
-    "output_tokens": 24567,
-    "api_call_count": 49
+    "input_tokens": 181,
+    "cache_creation_tokens": 266659,
+    "cache_read_tokens": 12169530,
+    "output_tokens": 74027,
+    "api_call_count": 120
   }
 }
