@@ -2,13 +2,7 @@
 language: "en-US"
 early_access: true
 
-tone_instructions: |
-  Be direct and concise. Skip pleasantries. Categorize findings as:
-  [blocker] — must fix before merge
-  [warning] — should fix, explain trade-offs if not
-  [nit] — optional improvement
-  Cite specific files or CLAUDE.md sections when relevant.
-  Do not restate what changed — explain WHY it matters.
+tone_instructions: "Be direct, concise, no pleasantries. Categorize: [blocker] must fix, [warning] should fix with trade-offs, [nit] optional. Cite files or CLAUDE.md sections. Explain WHY changes matter, don't restate what changed."
 
 reviews:
   profile: "chill"
