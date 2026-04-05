@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "b9b201c5b529",
+  "strategy": "manual-commit",
+  "branch": "rename/console-to-app",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/app/src/inngest/client/client.ts",
+    "api/app/src/inngest/index.ts",
+    "api/app/src/inngest/schemas/app.ts",
+    "api/app/src/inngest/schemas/console.ts",
+    "api/app/src/inngest/workflow/infrastructure/record-activity.ts",
+    "api/app/src/lib/activity.ts",
+    "api/platform/src/inngest/functions/memory-entity-embed.ts",
+    "api/platform/src/lib/jwt.test.ts",
+    "api/platform/src/lib/jwt.ts",
+    "api/platform/src/lib/oauth/authorize.ts",
+    "api/platform/src/lib/oauth/callback.ts",
+    "api/platform/src/trpc.ts",
+    "apps/app/src/app/(health)/api/health/route.ts",
+    "apps/app/src/lib/search.ts",
+    "apps/www/src/app/(app)/(content)/docs/(api)/layout.tsx",
+    "apps/www/src/app/(app)/(content)/docs/(general)/layout.tsx",
+    "apps/www/src/lib/related-projects.ts",
+    "packages/app-api-key/src/crypto.ts",
+    "packages/app-api-key/src/index.ts",
+    "packages/app-clerk-m2m/src/env.ts",
+    "packages/app-clerk-m2m/src/index.ts",
+    "packages/app-clerk-m2m/src/m2m.ts",
+    "packages/app-pinecone/src/client.ts",
+    "packages/app-pinecone/src/index.ts",
+    "packages/app-reserved-names/package.json",
+    "packages/app-validation/src/primitives/ids.ts",
+    "packages/app-validation/src/schemas/job.ts",
+    "packages/platform-trpc/src/caller.ts",
+    "packages/platform-trpc/src/server.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b9/b201c5b529/0/metadata.json",
+      "transcript": "/b9/b201c5b529/0/full.jsonl",
+      "content_hash": "/b9/b201c5b529/0/content_hash.txt",
+      "prompt": "/b9/b201c5b529/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 589,
+    "cache_creation_tokens": 105827,
+    "cache_read_tokens": 9904174,
+    "output_tokens": 22521,
+    "api_call_count": 109
+  }
+}
