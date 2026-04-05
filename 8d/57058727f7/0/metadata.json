@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "8d57058727f7",
+  "session_id": "523d6993-c3b6-4a45-af92-d0f43ea60e92",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T07:01:33.373794Z",
+  "branch": "chore/remove-app-clerk-m2m",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".changeset/pre.json",
+    "packages/app-clerk-m2m/README.md",
+    "packages/app-clerk-m2m/package.json",
+    "packages/app-clerk-m2m/src/env.ts",
+    "packages/app-clerk-m2m/src/index.ts",
+    "packages/app-clerk-m2m/src/m2m.ts",
+    "packages/app-clerk-m2m/tsconfig.json",
+    "packages/app-clerk-m2m/turbo.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "f6821c71a521",
+  "token_usage": {
+    "input_tokens": 4139,
+    "cache_creation_tokens": 35401,
+    "cache_read_tokens": 198337,
+    "output_tokens": 5720,
+    "api_call_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T07:01:33.247957Z",
+    "agent_lines": 0,
+    "agent_removed": 503,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 525,
+    "agent_percentage": 95.80952380952381,
+    "metric_version": 2
+  }
+}
