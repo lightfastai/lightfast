@@ -1,0 +1,7 @@
+/research_codebase in @apps/app/ find all optimistic mutation gaps and let's rework the entire tanstack query and trpc prefetch layer.
+
+also note: figure out best practices for this as well.
+
+deide what should be optimistic and what shouldnt. 
+
+deep figure this out

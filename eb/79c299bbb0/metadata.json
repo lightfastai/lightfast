@@ -1,0 +1,31 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "eb79c299bbb0",
+  "strategy": "manual-commit",
+  "branch": "refactor/drop-redundant-clerk-hooks",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
+    "apps/app/src/app/(app)/layout.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/ask-lightfast.tsx",
+    "apps/app/src/components/notifications-provider.tsx",
+    "apps/app/src/components/org-search.tsx",
+    "packages/app-trpc/package.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/eb/79c299bbb0/0/metadata.json",
+      "transcript": "/eb/79c299bbb0/0/full.jsonl",
+      "content_hash": "/eb/79c299bbb0/0/content_hash.txt",
+      "prompt": "/eb/79c299bbb0/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 73687,
+    "cache_read_tokens": 481507,
+    "output_tokens": 13300,
+    "api_call_count": 10
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "eb79c299bbb0",
+  "session_id": "1545ae5d-aefc-4ed4-94ab-d174b8a91c00",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T11:52:06.324776Z",
+  "branch": "refactor/drop-redundant-clerk-hooks",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
+    "apps/app/src/app/(app)/layout.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/ask-lightfast.tsx",
+    "apps/app/src/components/notifications-provider.tsx",
+    "apps/app/src/components/org-search.tsx",
+    "packages/app-trpc/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "b1c020e0797d",
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 73687,
+    "cache_read_tokens": 481507,
+    "output_tokens": 13300,
+    "api_call_count": 10
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T11:52:05.968187Z",
+    "agent_lines": 58,
+    "agent_removed": 43,
+    "human_added": 24,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 82,
+    "total_lines_changed": 125,
+    "agent_percentage": 80.80000000000001,
+    "metric_version": 2
+  }
+}
