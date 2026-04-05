@@ -1,0 +1,29 @@
+/research_codebase httpBatchStreamLink({
+      68            transformer: SuperJSON,
+      69 -          url: `${baseUrl}/api/trpc/memory`,
+      69 +          url: `${baseUrl}/api/trpc/platform`,
+      70            headers: () => ({
+      71              "x-trpc-source": "client",
+      72              ...(options?.getAuthHeaders?.() ?? {}),
+
+⏺ Now types.ts.
+ is that an error. 
+
+we have two lyaers of api trpc.
+
+@packages/app-trpc/src/react.tsx 
+@packages/platform-trpc/src/react.tsx 
+
+i think they should be the same standards.
+
+note: @apps/platform/src/app/api/trpc/[trpc]/ 
+
+and @apps/app/src/app/(trpc)/api/trpc/[trpc]/
+
+---
+
+run /create_plan
+
+future use. make updates.
+
+moreover, also use the (trpc) folde pattern
