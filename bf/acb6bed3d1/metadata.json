@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "bfacb6bed3d1",
+  "strategy": "manual-commit",
+  "branch": "fix/provider-console-inngest-silent-catches",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/inngest/functions/delivery-recovery.ts",
+    "api/platform/src/inngest/functions/health-check.ts",
+    "packages/app-providers/src/providers/sentry/index.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bf/acb6bed3d1/0/metadata.json",
+      "transcript": "/bf/acb6bed3d1/0/full.jsonl",
+      "content_hash": "/bf/acb6bed3d1/0/content_hash.txt",
+      "prompt": "/bf/acb6bed3d1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 32,
+    "cache_creation_tokens": 43929,
+    "cache_read_tokens": 955924,
+    "output_tokens": 8351,
+    "api_call_count": 21
+  }
+}

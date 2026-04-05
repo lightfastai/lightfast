@@ -1,0 +1,13 @@
+/create_plan @thoughts/shared/research/2026-04-05-observability-remaining-work-inventory.md parse error done. let's discuss next
+
+---
+
+yeap proced
+
+---
+
+run /implement_plan
+
+---
+
+/oneshot_merge

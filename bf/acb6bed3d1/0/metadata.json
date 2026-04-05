@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "bfacb6bed3d1",
+  "session_id": "dc4ca47f-a775-4b76-ba67-74fc7654a9e3",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T12:21:23.501306Z",
+  "branch": "fix/provider-console-inngest-silent-catches",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/inngest/functions/delivery-recovery.ts",
+    "api/platform/src/inngest/functions/health-check.ts",
+    "packages/app-providers/src/providers/sentry/index.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "4bf351238754",
+  "token_usage": {
+    "input_tokens": 32,
+    "cache_creation_tokens": 43929,
+    "cache_read_tokens": 955924,
+    "output_tokens": 8351,
+    "api_call_count": 21
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T12:21:23.321403Z",
+    "agent_lines": 35,
+    "agent_removed": 13,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 35,
+    "total_lines_changed": 48,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
