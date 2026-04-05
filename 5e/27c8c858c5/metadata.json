@@ -3,7 +3,7 @@
   "checkpoint_id": "5e27c8c858c5",
   "strategy": "manual-commit",
   "branch": "refactor/rename-memory-to-platform",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     "api/platform/src/root.ts",
     "apps/platform/src/app/api/trpc/[trpc]/route.ts",
@@ -16,13 +16,19 @@
       "transcript": "/5e/27c8c858c5/0/full.jsonl",
       "content_hash": "/5e/27c8c858c5/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/5e/27c8c858c5/1/metadata.json",
+      "transcript": "/5e/27c8c858c5/1/full.jsonl",
+      "content_hash": "/5e/27c8c858c5/1/content_hash.txt",
+      "prompt": "/5e/27c8c858c5/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 2261,
-    "cache_creation_tokens": 16595,
-    "cache_read_tokens": 479795,
-    "output_tokens": 3822,
-    "api_call_count": 11
+    "input_tokens": 2269,
+    "cache_creation_tokens": 20045,
+    "cache_read_tokens": 943544,
+    "output_tokens": 5249,
+    "api_call_count": 19
   }
 }
