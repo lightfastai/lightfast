@@ -4,9 +4,11 @@
  * Auth model: service-to-service JWT (not Clerk).
  * All callers are internal services (console, platform, inngest, cron).
  */
+import { nanoid } from "@repo/lib";
 import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
+import { emitJournal, withRequestContext } from "@vendor/observability/request";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -103,22 +105,25 @@ const t = initTRPC.context<typeof createMemoryTRPCContext>().create({
 const sentryMiddleware = t.middleware(
   trpcMiddleware({
     attachRpcInput: true,
-  })
+  }),
 );
 
 const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
 
 const observabilityMiddleware = t.middleware(
   async ({ next, path, ctx, type }) => {
-    const start = Date.now();
-
     if (t._config.isDev) {
       const waitMs = Math.floor(Math.random() * 400) + 100;
       await new Promise((resolve) => setTimeout(resolve, waitMs));
     }
 
-    const result = await next();
-    const durationMs = Date.now() - start;
+    const { result, journal, durationMs } = await withRequestContext(
+      {
+        requestId: nanoid(),
+        ...(ctx.auth.type === "service" && { caller: ctx.auth.caller }),
+      },
+      () => next(),
+    );
 
     const meta = {
       path,
@@ -135,8 +140,10 @@ const observabilityMiddleware = t.middleware(
       log.warn("[trpc] procedure failed", meta);
     }
 
+    emitJournal(journal, { path, durationMs, ok: result.ok });
+
     return result;
-  }
+  },
 );
 
 // -- Router & Procedure Exports -----------------------------------------------

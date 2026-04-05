@@ -25,6 +25,14 @@
       "types": "./src/log/types.ts",
       "default": "./src/log/types.ts"
     },
+    "./context": {
+      "types": "./src/context.ts",
+      "default": "./src/context.ts"
+    },
+    "./request": {
+      "types": "./src/request.ts",
+      "default": "./src/request.ts"
+    },
     "./error/next": {
       "types": "./src/error/next.ts",
       "default": "./src/error/next.ts"

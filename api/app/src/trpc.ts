@@ -9,10 +9,12 @@
 
 import { db } from "@db/app/client";
 import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
+import { nanoid } from "@repo/lib";
 import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { auth } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
+import { emitJournal, withRequestContext } from "@vendor/observability/request";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -155,16 +157,25 @@ export const createCallerFactory = t.createCallerFactory;
  */
 const observabilityMiddleware = t.middleware(
   async ({ next, path, ctx, type }) => {
-    const start = Date.now();
-
     if (t._config.isDev) {
       // artificial delay in dev 100-500ms
       const waitMs = Math.floor(Math.random() * 400) + 100;
       await new Promise((resolve) => setTimeout(resolve, waitMs));
     }
 
-    const result = await next();
-    const durationMs = Date.now() - start;
+    const { result, journal, durationMs } = await withRequestContext(
+      {
+        requestId: nanoid(),
+        ...(ctx.auth.type === "clerk-active" && {
+          userId: ctx.auth.userId,
+          orgId: ctx.auth.orgId,
+        }),
+        ...(ctx.auth.type === "clerk-pending" && {
+          userId: ctx.auth.userId,
+        }),
+      },
+      () => next()
+    );
 
     const meta = {
       path,
@@ -186,6 +197,8 @@ const observabilityMiddleware = t.middleware(
     } else {
       log.warn("[trpc] procedure failed", meta);
     }
+
+    emitJournal(journal, { path, durationMs, ok: result.ok });
 
     return result;
   }
