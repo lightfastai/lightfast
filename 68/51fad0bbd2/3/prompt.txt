@@ -1,0 +1,13 @@
+/implement_plan @thoughts/shared/plans/2026-04-05-rename-console-memory-naming.md phase 2
+
+---
+
+proceed
+
+---
+
+/oneshot_merge
+
+---
+
+nice proceed

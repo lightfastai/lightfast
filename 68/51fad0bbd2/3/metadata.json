@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "6851fad0bbd2",
+  "session_id": "8d3ad54f-2fc2-4ce3-9d9c-41a296d18590",
   "strategy": "manual-commit",
+  "created_at": "2026-04-05T07:16:32.529062Z",
   "branch": "refactor/rename-memory-to-platform",
-  "checkpoints_count": 5,
+  "checkpoints_count": 2,
   "files_touched": [
     "api/app/src/router/org/connections.ts",
     "api/platform/src/index.ts",
@@ -39,7 +41,6 @@
     "api/platform/src/router/memory/proxy.ts",
     "api/platform/src/router/platform/backfill.ts",
     "api/platform/src/router/platform/connections.ts",
-    "api/platform/src/router/platform/proxy.ts",
     "api/platform/src/trpc.ts",
     "apps/app/src/lib/proxy.ts",
     "apps/platform/src/app/api/ingest/[provider]/route.ts",
@@ -53,37 +54,30 @@
     "packages/platform-trpc/src/server.tsx",
     "packages/platform-trpc/src/types.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/68/51fad0bbd2/0/metadata.json",
-      "transcript": "/68/51fad0bbd2/0/full.jsonl",
-      "content_hash": "/68/51fad0bbd2/0/content_hash.txt",
-      "prompt": "/68/51fad0bbd2/0/prompt.txt"
-    },
-    {
-      "metadata": "/68/51fad0bbd2/1/metadata.json",
-      "transcript": "/68/51fad0bbd2/1/full.jsonl",
-      "content_hash": "/68/51fad0bbd2/1/content_hash.txt",
-      "prompt": "/68/51fad0bbd2/1/prompt.txt"
-    },
-    {
-      "metadata": "/68/51fad0bbd2/2/metadata.json",
-      "transcript": "/68/51fad0bbd2/2/full.jsonl",
-      "content_hash": "/68/51fad0bbd2/2/content_hash.txt",
-      "prompt": "/68/51fad0bbd2/2/prompt.txt"
-    },
-    {
-      "metadata": "/68/51fad0bbd2/3/metadata.json",
-      "transcript": "/68/51fad0bbd2/3/full.jsonl",
-      "content_hash": "/68/51fad0bbd2/3/content_hash.txt",
-      "prompt": "/68/51fad0bbd2/3/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "turn_id": "edaaf0d93852",
+  "checkpoint_transcript_start": 330,
+  "transcript_lines_at_start": 330,
   "token_usage": {
-    "input_tokens": 3881,
-    "cache_creation_tokens": 271854,
-    "cache_read_tokens": 16781299,
-    "output_tokens": 50619,
-    "api_call_count": 139
+    "input_tokens": 95,
+    "cache_creation_tokens": 35064,
+    "cache_read_tokens": 14468223,
+    "output_tokens": 20095,
+    "api_call_count": 92
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T07:16:30.935678Z",
+    "agent_lines": 2955,
+    "agent_removed": 3217,
+    "human_added": 265,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3220,
+    "total_lines_changed": 6437,
+    "agent_percentage": 95.88317539226348,
+    "metric_version": 2
   }
 }
