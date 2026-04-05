@@ -1,7 +1,7 @@
 /**
  * @repo/app-pinecone
  *
- * App-specific Pinecone utilities with typed vector metadata.
+ * Lightfast Pinecone utilities with typed vector metadata.
  * Uses @vendor/pinecone for core Pinecone functionality.
  *
  * @packageDocumentation
@@ -18,10 +18,10 @@ export type {
   UpsertRequest,
   UpsertResponse,
 } from "@vendor/pinecone/types";
-// Export app-specific client with injected config
+// Export Lightfast client with injected config
 export {
-  AppPineconeClient,
-  appPineconeClient,
-  appPineconeClient as pineconeClient,
-  createAppPineconeClient,
+  LightfastPineconeClient,
+  lightfastPineconeClient,
+  lightfastPineconeClient as pineconeClient,
+  createLightfastPineconeClient,
 } from "./client";
