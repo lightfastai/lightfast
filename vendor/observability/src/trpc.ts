@@ -122,7 +122,15 @@ export function createObservabilityMiddleware<TCtx>(
               scope.setTag("trpc.error_code", result.error.code);
               scope.setExtra("durationMs", durationMs);
               scope.setExtra("requestId", requestId);
-              captureException(result.error, {
+              // Send the original error for better Sentry grouping and titles.
+              // TRPCError wraps raw Errors with a generic message; the cause has the real info.
+              const reportedError =
+                result.error.code === "INTERNAL_SERVER_ERROR" &&
+                result.error.cause instanceof Error
+                  ? result.error.cause
+                  : result.error;
+
+              captureException(reportedError, {
                 mechanism: {
                   handled: false,
                   type: "auto.rpc.trpc.middleware",
