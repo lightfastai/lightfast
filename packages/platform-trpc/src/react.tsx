@@ -63,10 +63,9 @@ export function PlatformTRPCReactProvider({
             process.env.NODE_ENV === "development" ||
             (op.direction === "down" && op.result instanceof Error),
         }),
-        // Single link -- platform has one router at one endpoint
         httpBatchStreamLink({
           transformer: SuperJSON,
-          url: `${baseUrl}/api/trpc/platform`,
+          url: `${baseUrl}/api/trpc`,
           headers: () => ({
             "x-trpc-source": "client",
             ...(options?.getAuthHeaders?.() ?? {}),

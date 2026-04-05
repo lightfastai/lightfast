@@ -12,7 +12,7 @@ import { createTRPCRouter } from "./trpc";
 
 /**
  * Platform router -- service-accessible procedures.
- * Accessible via /api/trpc/platform/*
+ * Accessible via /api/trpc/*
  *
  * Sub-routers:
  * - connections.*: Connection lifecycle operations
