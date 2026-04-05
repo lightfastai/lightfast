@@ -1,0 +1,9 @@
+/create_plan to delete and /implement_plan then and run /oneshot_merge (no need touch research/plan)
+
+---
+
+yes
+
+---
+
+did you pop everything
