@@ -10,7 +10,10 @@ export function deriveVerifySignature(scheme: SignatureScheme): VerifyFn {
       return _deriveHmacVerify(scheme);
     case "ed25519":
       return _deriveEd25519Verify(scheme);
+
+    default: {
+      const _exhaustive: never = scheme;
+      return _exhaustive;
+    }
   }
 }
-
-export type { VerifyFn } from "../../provider/webhook";

@@ -42,7 +42,6 @@
   "dependencies": {
     "@repo/app-providers": "workspace:*",
     "@repo/app-reserved-names": "workspace:^",
-    "@repo/lib": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

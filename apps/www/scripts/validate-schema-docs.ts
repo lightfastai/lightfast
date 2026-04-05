@@ -9,7 +9,7 @@ const __dirname = dirname(__filename);
 
 const openApiPath = resolve(
   __dirname,
-  "../../../packages/app-openapi/openapi.json"
+  "../../../packages/app-api-contract/openapi.json"
 );
 const sdkMdxPath = resolve(
   __dirname,

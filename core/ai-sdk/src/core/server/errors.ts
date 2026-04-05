@@ -88,7 +88,7 @@ export class UnauthorizedError extends ApiError {
 /**
  * 403 Forbidden
  */
-export abstract class ForbiddenError extends ApiError {
+abstract class ForbiddenError extends ApiError {
   readonly statusCode = 403;
 
   protected constructor(message: string, options: ApiErrorOptions = {}) {
@@ -103,7 +103,7 @@ export abstract class ForbiddenError extends ApiError {
 /**
  * 404 Not Found
  */
-export abstract class NotFoundError extends ApiError {
+abstract class NotFoundError extends ApiError {
   readonly statusCode = 404;
 
   protected constructor(message: string, options: ApiErrorOptions = {}) {
@@ -228,7 +228,7 @@ export class NoUserMessageError extends BadRequestError {
 /**
  * Memory operation errors
  */
-export class MemoryError extends ApiError {
+class MemoryError extends ApiError {
   readonly statusCode = 500;
   readonly errorCode = "MEMORY_ERROR";
 
@@ -246,7 +246,7 @@ export class MemoryError extends ApiError {
 /**
  * Session creation error
  */
-export class SessionCreationError extends BadRequestError {
+class SessionCreationError extends BadRequestError {
   readonly errorCode = "SESSION_CREATION_ERROR";
 
   constructor(message: string) {
@@ -257,7 +257,7 @@ export class SessionCreationError extends BadRequestError {
 /**
  * Message operation error
  */
-export class MessageOperationError extends BadRequestError {
+class MessageOperationError extends BadRequestError {
   readonly errorCode = "MESSAGE_OPERATION_ERROR";
 
   constructor(
@@ -275,7 +275,7 @@ export class MessageOperationError extends BadRequestError {
 /**
  * Stream operation error
  */
-export class StreamOperationError extends ApiError {
+class StreamOperationError extends ApiError {
   readonly statusCode = 500;
   readonly errorCode = "STREAM_OPERATION_ERROR";
 
@@ -471,8 +471,8 @@ function mapAiSdkErrorToApiError(
       ? errorWithStatusCode.statusCode
       : undefined;
 
-  let category = LightfastErrorCategory.Stream;
-  let severity = LightfastErrorSeverity.Recoverable;
+  let category: LightfastErrorCategory = LightfastErrorCategory.Stream;
+  let severity: LightfastErrorSeverity = LightfastErrorSeverity.Recoverable;
 
   if (statusCode === undefined) {
     if (lowerName.includes("invalid") || lowerName.includes("argument")) {

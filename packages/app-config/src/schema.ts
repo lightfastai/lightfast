@@ -25,7 +25,7 @@ export const LightfastConfigSchema = z.object({
   version: z.literal(1),
 
   /**
-   * Human-readable store name (unique per workspace)
+   * Human-readable store name (unique per organization)
    * Used as the store key in the system
    *
    * Constraints:

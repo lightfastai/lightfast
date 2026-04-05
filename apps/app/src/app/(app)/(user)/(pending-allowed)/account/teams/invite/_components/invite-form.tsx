@@ -26,7 +26,7 @@ export function InviteForm({ teamSlug }: InviteFormProps) {
 
       <SubmitButton label="Send Invites" pendingLabel="Sending..." />
       <Button asChild className="w-full" variant="ghost">
-        <Link href={`/new?teamSlug=${teamSlug}`}>Skip for now</Link>
+        <Link href={`/${teamSlug}`}>Skip for now</Link>
       </Button>
     </form>
   );

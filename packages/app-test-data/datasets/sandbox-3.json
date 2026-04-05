@@ -20,8 +20,8 @@
             "platform": "node",
             "project": {
               "id": "201",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "type": "error",
             "metadata": {
@@ -179,8 +179,8 @@
             "platform": "node",
             "project": {
               "id": "201",
-              "name": "lightfast-console",
-              "slug": "lightfast-console"
+              "name": "lightfast-app",
+              "slug": "lightfast-app"
             },
             "type": "error",
             "metadata": {
@@ -226,8 +226,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_sb3_security",
-            "name": "lightfast-console",
-            "url": "lightfast-console-security-patch.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-security-patch.vercel.app",
             "meta": {
               "githubCommitSha": "g1a2b3c4d5e6f7a8",
               "githubCommitMessage": "fix(security): update Next.js and React to patch CVE-2025-55182",
@@ -1859,8 +1859,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_sb3_pr343",
-            "name": "lightfast-console",
-            "url": "lightfast-console-pr343.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-pr343.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "g13a4b5c6d7e8f9a0",
@@ -1876,7 +1876,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1897,8 +1897,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_sb3_pr343",
-            "name": "lightfast-console",
-            "url": "lightfast-console.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "g13a4b5c6d7e8f9a0",
@@ -1914,7 +1914,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -2438,8 +2438,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_sb3_pr350",
-            "name": "lightfast-console",
-            "url": "lightfast-console-pr350.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-pr350.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "g16d7e8f9a0b1c2d3",
@@ -2455,7 +2455,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -2476,8 +2476,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_sb3_pr350",
-            "name": "lightfast-console",
-            "url": "lightfast-console.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "g16d7e8f9a0b1c2d3",
@@ -2493,7 +2493,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",

@@ -28,7 +28,6 @@ export default async function SettingsLayout({
             basePath={`/${slug}/settings`}
             items={[
               { name: "General", path: "" },
-              { name: "Sources", path: "sources" },
               { name: "API Keys", path: "api-keys" },
             ]}
           />

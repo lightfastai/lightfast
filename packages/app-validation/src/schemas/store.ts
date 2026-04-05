@@ -6,31 +6,7 @@
  */
 
 import { z } from "zod";
-import { nanoidSchema } from "../primitives/ids";
 import { storeNameSchema } from "../primitives/slugs";
-
-/**
- * Store Get or Create Input Schema
- *
- * Used in:
- * - tRPC stores.getOrCreate procedure
- *
- * @example
- * ```typescript
- * const input = storeGetOrCreateInputSchema.parse({
- *   workspaceId: "V1StGXR8_Z5jdHi6B-myT",
- *   storeSlug: "docs",
- *   embeddingDim: 1024,
- * });
- * ```
- */
-export const storeGetOrCreateInputSchema = z.object({
-  workspaceId: nanoidSchema,
-  storeSlug: storeNameSchema,
-  embeddingDim: z.number().int().positive().default(1024),
-});
-
-export type StoreGetOrCreateInput = z.infer<typeof storeGetOrCreateInputSchema>;
 
 /**
  * Store Get by Name Input Schema
@@ -50,27 +26,6 @@ export const storeGetByNameInputSchema = z.object({
 });
 
 export type StoreGetByNameInput = z.infer<typeof storeGetByNameInputSchema>;
-
-/**
- * Store List by Workspace Input Schema
- *
- * Used in:
- * - tRPC stores.listByWorkspace procedure
- *
- * @example
- * ```typescript
- * const input = storeListByWorkspaceInputSchema.parse({
- *   workspaceId: "V1StGXR8_Z5jdHi6B-myT",
- * });
- * ```
- */
-export const storeListByWorkspaceInputSchema = z.object({
-  workspaceId: nanoidSchema,
-});
-
-export type StoreListByWorkspaceInput = z.infer<
-  typeof storeListByWorkspaceInputSchema
->;
 
 /**
  * Pinecone Metric Enum
@@ -204,11 +159,11 @@ export type ChunkOverlap = z.infer<typeof chunkOverlapSchema>;
  * - Must not start or end with a hyphen
  * - No consecutive hyphens
  *
- * Format: ws-{workspaceSlug}-{storeSlug}
+ * Format: ws-{orgSlug}-{storeSlug}
  *
  * @example
  * ```typescript
- * pineconeIndexNameSchema.parse("ws-my-workspace-docs"); // ✅ Valid
+ * pineconeIndexNameSchema.parse("ws-my-org-docs"); // ✅ Valid
  * pineconeIndexNameSchema.parse("ws-robust-chicken-kb"); // ✅ Valid
  * pineconeIndexNameSchema.parse("UPPERCASE"); // ❌ Must be lowercase
  * pineconeIndexNameSchema.parse("-invalid"); // ❌ Cannot start with hyphen

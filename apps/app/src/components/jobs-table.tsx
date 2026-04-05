@@ -10,14 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
   CheckCircle2,
@@ -28,45 +23,32 @@ import {
   Loader2,
   MoreHorizontal,
   PlayCircle,
-  RotateCcw,
   StopCircle,
   XCircle,
 } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-import { showErrorToast } from "~/lib/trpc-errors";
 import type { Job, JobStatus } from "~/types";
 import { useJobFilters } from "./use-job-filters";
 
 interface JobsTableWrapperProps {
-  clerkOrgSlug: string;
   initialSearch?: string;
   initialStatus?: string;
-  workspaceName: string;
 }
 
 interface JobsTableProps {
-  clerkOrgSlug: string;
   initialSearch?: string;
   initialStatus?: string;
-  workspaceName: string;
 }
 
 /**
  * Wrapper component for JobsTable
  */
 export function JobsTableWrapper({
-  clerkOrgSlug,
-  workspaceName,
   initialStatus,
   initialSearch,
 }: JobsTableWrapperProps) {
   return (
-    <JobsTable
-      clerkOrgSlug={clerkOrgSlug}
-      initialSearch={initialSearch}
-      initialStatus={initialStatus}
-      workspaceName={workspaceName}
-    />
+    <JobsTable initialSearch={initialSearch} initialStatus={initialStatus} />
   );
 }
 
@@ -99,15 +81,11 @@ function getEventType(jobName: string): string {
 }
 
 interface JobRowProps {
-  clerkOrgSlug: string;
   job: Job;
-  workspaceName: string;
 }
 
-function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
+function JobRow({ job }: JobRowProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
 
   // Extract commit data from job input (safely handle discriminated union)
   const commitSha: string | undefined =
@@ -120,37 +98,6 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
       : undefined;
   const branch: string | undefined =
     job.input && "branch" in job.input ? String(job.input.branch) : undefined;
-
-  // Restart mutation
-  const restartMutation = useMutation(
-    trpc.jobs.restart.mutationOptions({
-      onSuccess: () => {
-        toast.success("Job restart triggered", {
-          description: "A new sync has been queued.",
-        });
-        // Invalidate jobs list to show the new job
-        void queryClient.invalidateQueries({
-          queryKey: trpc.jobs.list.queryOptions({
-            clerkOrgSlug,
-            workspaceName,
-            limit: 50,
-          }).queryKey,
-        });
-      },
-      onError: (error) => {
-        showErrorToast(error, "Failed to restart job");
-      },
-    })
-  );
-
-  const handleRetry = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    restartMutation.mutate({
-      jobId: String(job.id),
-      clerkOrgSlug,
-      workspaceName,
-    });
-  };
 
   const handleCancel = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -269,25 +216,6 @@ function JobRow({ job, clerkOrgSlug, workspaceName }: JobRowProps) {
                     {isExpanded ? "Hide" : "View"} details
                   </DropdownMenuItem>
                 )}
-                {(job.status === "completed" ||
-                  job.status === "failed" ||
-                  job.status === "cancelled") && (
-                  <>
-                    {hasDetails && <DropdownMenuSeparator />}
-                    <DropdownMenuItem
-                      disabled={restartMutation.isPending}
-                      onClick={handleRetry}
-                    >
-                      <RotateCcw
-                        className={cn(
-                          "mr-2 h-4 w-4",
-                          restartMutation.isPending && "animate-spin"
-                        )}
-                      />
-                      {restartMutation.isPending ? "Restarting..." : "Restart"}
-                    </DropdownMenuItem>
-                  </>
-                )}
                 {(job.status === "running" || job.status === "queued") && (
                   <>
                     {hasDetails && <DropdownMenuSeparator />}
@@ -397,12 +325,7 @@ function EmptyState({ filter }: { filter: string }) {
   );
 }
 
-function JobsTable({
-  clerkOrgSlug,
-  workspaceName,
-  initialStatus,
-  initialSearch,
-}: JobsTableProps) {
+function JobsTable({ initialStatus, initialSearch }: JobsTableProps) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const {
@@ -415,8 +338,6 @@ function JobsTable({
   // Fetch jobs list
   const { data: jobsData } = useSuspenseQuery({
     ...trpc.jobs.list.queryOptions({
-      clerkOrgSlug,
-      workspaceName,
       status: activeTab === "all" ? undefined : (activeTab as JobStatus),
       limit: 50,
     }),
@@ -438,8 +359,6 @@ function JobsTable({
       // Invalidate and refetch jobs list
       void queryClient.invalidateQueries({
         queryKey: trpc.jobs.list.queryOptions({
-          clerkOrgSlug,
-          workspaceName,
           status: activeTab === "all" ? undefined : (activeTab as JobStatus),
           limit: 50,
         }).queryKey,
@@ -447,7 +366,7 @@ function JobsTable({
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [jobs, queryClient, trpc, clerkOrgSlug, workspaceName, activeTab]);
+  }, [jobs, queryClient, trpc, activeTab]);
 
   // Normalize once so the filter loop doesn't lowercase on every item
   const searchQueryLower = useMemo(
@@ -513,12 +432,7 @@ function JobsTable({
       {filteredJobs.length > 0 ? (
         <div className="overflow-hidden rounded-lg border border-border/60">
           {filteredJobs.map((job) => (
-            <JobRow
-              clerkOrgSlug={clerkOrgSlug}
-              job={job}
-              key={job.id}
-              workspaceName={workspaceName}
-            />
+            <JobRow job={job} key={job.id} />
           ))}
         </div>
       ) : (

@@ -67,6 +67,7 @@ export default function GitHubConnectedPage() {
           <button
             className="text-primary text-sm hover:underline"
             onClick={() => window.close()}
+            type="button"
           >
             Or click here to close now
           </button>

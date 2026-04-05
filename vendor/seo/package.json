@@ -17,10 +17,6 @@
     "./metadata": {
       "types": "./src/metadata.ts",
       "default": "./src/metadata.ts"
-    },
-    "./components/mdx-link": {
-      "types": "./src/components/mdx-link.tsx",
-      "default": "./src/components/mdx-link.tsx"
     }
   },
   "scripts": {

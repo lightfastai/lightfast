@@ -9,30 +9,7 @@
  */
 import type { RuntimeConfig } from "@repo/app-providers";
 import { PROVIDERS } from "@repo/app-providers";
-import { env } from "../env";
-
-/**
- * Memory service base URL (self).
- *
- * In the gateway this resolved to `gatewayBaseUrl` (e.g. https://<url>/services).
- * Here we resolve to the memory app's base URL so that OAuth callback URLs
- * point to the memory service's route handlers.
- */
-function getMemoryBaseUrl(): string {
-  const vercelUrl = process.env.VERCEL_URL;
-  const vercelEnv = process.env.VERCEL_ENV;
-  const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-
-  if (vercelEnv === "preview" && vercelUrl) {
-    return `https://${vercelUrl}`;
-  }
-
-  if (productionUrl) {
-    return `https://${productionUrl}`;
-  }
-
-  return "http://localhost:4112";
-}
+import { appUrl } from "./related-projects";
 
 let _providerConfigs: Record<string, unknown> | null = null;
 
@@ -44,16 +21,10 @@ let _providerConfigs: Record<string, unknown> | null = null;
  */
 export function getProviderConfigs(): Record<string, unknown> {
   if (!_providerConfigs) {
-    const runtime: RuntimeConfig = { callbackBaseUrl: getMemoryBaseUrl() };
+    const runtime: RuntimeConfig = { callbackBaseUrl: appUrl };
     _providerConfigs = Object.fromEntries(
       Object.entries(PROVIDERS)
-        .map(
-          ([name, p]) =>
-            [
-              name,
-              p.createConfig(env as unknown as Record<string, string>, runtime),
-            ] as const
-        )
+        .map(([name, p]) => [name, p.createConfig(p.env, runtime)] as const)
         .filter(([, config]) => config !== null)
     );
   }

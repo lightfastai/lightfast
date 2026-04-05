@@ -1,46 +1,17 @@
 import type { RuntimeContext } from "@lightfastai/ai-sdk/server/adapters/types";
-import type {
-  ContentsResponse,
-  FindSimilarResponse,
-  RelatedResponse,
-  SearchResponse,
-} from "@repo/app-validation";
+import type { SearchResponse } from "@repo/app-validation";
 import type { DeepPartial, UIMessage } from "ai";
 
 // ─── Tool Input Types ────────────────────────────────────────────
 
 export interface SearchToolInput {
-  filters?: {
-    dateRange?: { end?: string; start?: string };
-    observationTypes?: string[];
-    sourceTypes?: string[];
-  };
+  after?: string;
+  before?: string;
   limit: number;
-  mode: "fast" | "balanced" | "thorough";
+  mode: "fast" | "balanced";
   offset: number;
   query: string;
-}
-
-export interface ContentsToolInput {
-  ids: string[];
-}
-
-export interface FindSimilarToolInput {
-  excludeIds?: string[];
-  filters?: {
-    observationTypes?: string[];
-    sourceTypes?: string[];
-  };
-  id?: string;
-  limit: number;
-  sameSourceOnly: boolean;
-  threshold: number;
-  url?: string;
-}
-
-export interface RelatedToolInput {
-  depth: number;
-  id: string;
+  sources?: string[];
   types?: string[];
 }
 
@@ -48,26 +19,11 @@ export interface RelatedToolInput {
 // Re-export from @repo/app-validation for single import convenience
 
 export type SearchToolOutput = SearchResponse;
-export type ContentsToolOutput = ContentsResponse;
-export type FindSimilarToolOutput = FindSimilarResponse;
-export type RelatedToolOutput = RelatedResponse;
 
 // ─── Tool Set Definition ─────────────────────────────────────────
 
 export interface AnswerToolSet {
-  workspaceContents: {
-    input: ContentsToolInput;
-    output: ContentsToolOutput;
-  };
-  workspaceFindSimilar: {
-    input: FindSimilarToolInput;
-    output: FindSimilarToolOutput;
-  };
-  workspaceRelated: {
-    input: RelatedToolInput;
-    output: RelatedToolOutput;
-  };
-  workspaceSearch: {
+  orgSearch: {
     input: SearchToolInput;
     output: SearchToolOutput;
   };
@@ -111,31 +67,12 @@ type ToolUIPartState<TName extends string, TInput, TOutput> =
     };
 
 export type SearchToolUIPart = ToolUIPartState<
-  "workspaceSearch",
+  "orgSearch",
   SearchToolInput,
   SearchToolOutput
 >;
-export type ContentsToolUIPart = ToolUIPartState<
-  "workspaceContents",
-  ContentsToolInput,
-  ContentsToolOutput
->;
-export type FindSimilarToolUIPart = ToolUIPartState<
-  "workspaceFindSimilar",
-  FindSimilarToolInput,
-  FindSimilarToolOutput
->;
-export type RelatedToolUIPart = ToolUIPartState<
-  "workspaceRelated",
-  RelatedToolInput,
-  RelatedToolOutput
->;
 
-export type AnswerToolUIPart =
-  | SearchToolUIPart
-  | ContentsToolUIPart
-  | FindSimilarToolUIPart
-  | RelatedToolUIPart;
+export type AnswerToolUIPart = SearchToolUIPart;
 
 // ─── Message Types ───────────────────────────────────────────────
 
@@ -153,30 +90,18 @@ export type LightfastAnswerUIMessage =
 export type SearchToolHandler = (
   input: SearchToolInput
 ) => Promise<SearchToolOutput>;
-export type ContentsToolHandler = (
-  input: ContentsToolInput
-) => Promise<ContentsToolOutput>;
-export type FindSimilarToolHandler = (
-  input: FindSimilarToolInput
-) => Promise<FindSimilarToolOutput>;
-export type RelatedToolHandler = (
-  input: RelatedToolInput
-) => Promise<RelatedToolOutput>;
 
 /** Runtime configuration for tool handlers, injected per-request */
 export interface AnswerToolRuntimeConfig {
-  workspaceContents?: { handler: ContentsToolHandler };
-  workspaceFindSimilar?: { handler: FindSimilarToolHandler };
-  workspaceRelated?: { handler: RelatedToolHandler };
-  workspaceSearch?: { handler: SearchToolHandler };
+  orgSearch?: { handler: SearchToolHandler };
 }
 
 /** Application runtime context for the answer agent */
 export interface AnswerAppRuntimeContext {
   authToken?: string;
+  clerkOrgId: string;
   tools?: AnswerToolRuntimeConfig;
   userId?: string;
-  workspaceId: string;
 }
 
 /** Full runtime context (SystemContext & RequestContext & AnswerAppRuntimeContext) */

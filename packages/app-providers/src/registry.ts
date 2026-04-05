@@ -5,7 +5,6 @@ import type {
   ActionEventDef,
   EventDefinition,
   ProviderDefinition,
-  ProxyExecuteRequest,
 } from "./provider/index";
 import { apollo } from "./providers/apollo/index";
 import { github } from "./providers/github/index";
@@ -287,20 +286,6 @@ export type PathParamsFor<
       : Record<ExtractPathParams<Path>, string>
     : undefined;
 
-/**
- * Typed proxy request for a known provider + endpoint at compile time.
- * Use when the caller knows the provider slug and endpoint key statically.
- *
- * For runtime-dynamic calls (slug from DB): use the base ProxyExecuteRequest.
- */
-export type TypedProxyRequest<
-  P extends keyof typeof PROVIDERS,
-  E extends EndpointKey<P>,
-> = Omit<ProxyExecuteRequest, "endpointId" | "pathParams"> & {
-  readonly endpointId: E;
-  readonly pathParams: PathParamsFor<P, E>;
-};
-
 // ── ResponseDataFor — thread responseSchema to call sites ─────────────────────
 
 /** Inferred response data type for a provider + endpoint. */
@@ -333,11 +318,14 @@ export type HasBuildAuth<
 
 // ── Provider Lookup ───────────────────────────────────────────────────────────
 
+/** Union of all concrete provider shapes — preserves per-provider TAccountInfo. */
+export type AnyProviderShape = (typeof PROVIDERS)[keyof typeof PROVIDERS];
+
 /** Narrow overload: literal slug → exact provider shape (no cast required). */
 export function getProvider<K extends keyof typeof PROVIDERS>(
   slug: K
 ): ProviderShape<K>;
-/** Wide overload: runtime string → union ProviderDefinition (may be undefined). */
+/** Wide overload: runtime string or ProviderSlug → ProviderDefinition (may be undefined). */
 export function getProvider(slug: string): ProviderDefinition | undefined;
 export function getProvider(slug: string) {
   return (PROVIDERS as Record<string, ProviderDefinition>)[slug];

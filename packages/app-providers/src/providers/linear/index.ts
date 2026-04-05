@@ -366,6 +366,19 @@ export const linear = defineWebhookProvider({
         iconLabel: t.key.substring(0, 2),
       }));
     },
+
+    resolveProxyResources: async (executeApi) => {
+      const result = await executeApi({
+        endpointId: "graphql",
+        body: { query: "{ teams { nodes { id name } } }" },
+      });
+      const parsed = graphqlTeamsResponseSchema.parse(result.data);
+      return (parsed.data?.teams?.nodes ?? []).map((t) => ({
+        providerResourceId: t.id,
+        name: t.name,
+        params: { teamId: t.id },
+      }));
+    },
   },
 
   edgeRules: [
@@ -413,7 +426,7 @@ export const linear = defineWebhookProvider({
       url.searchParams.set("client_id", config.clientId);
       url.searchParams.set(
         "redirect_uri",
-        `${config.callbackBaseUrl}/gateway/linear/callback`
+        `${config.callbackBaseUrl}/api/connect/linear/callback`
       );
       url.searchParams.set("response_type", "code");
       const scopes =
@@ -478,7 +491,7 @@ export const linear = defineWebhookProvider({
         throw new Error("missing code");
       }
 
-      const redirectUri = `${config.callbackBaseUrl}/gateway/linear/callback`;
+      const redirectUri = `${config.callbackBaseUrl}/api/connect/linear/callback`;
       const oauthTokens = await exchangeLinearCode(config, code, redirectUri);
 
       // Minimal viewer query for externalId only (org ID or viewer ID).

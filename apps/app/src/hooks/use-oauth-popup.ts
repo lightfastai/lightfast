@@ -110,6 +110,7 @@ export function useOAuthPopup({
         `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
       );
       if (!popup || popup.closed) {
+        // biome-ignore lint/suspicious/noAlert: alert is the only reliable way to notify about blocked popups
         alert("Popup was blocked. Please allow popups for this site.");
         return;
       }

@@ -1,18 +1,13 @@
 /**
  * Slug Validation Primitives
  *
- * Reusable Zod schemas for validating slugs (org, workspace, store).
+ * Reusable Zod schemas for validating slugs (org, store).
  * All slugs are URL-safe and follow specific naming conventions.
  */
 
-import { organization, workspace } from "@repo/app-reserved-names";
+import { organization } from "@repo/app-reserved-names";
 import { z } from "zod";
-import {
-  CLERK_ORG_SLUG,
-  NAMING_ERRORS,
-  STORE_NAME,
-  WORKSPACE_NAME,
-} from "../constants/naming";
+import { CLERK_ORG_SLUG, NAMING_ERRORS, STORE_NAME } from "../constants/naming";
 
 /**
  * Clerk Organization Slug Schema
@@ -49,70 +44,6 @@ export const clerkOrgSlugSchema = z
   .refine((slug) => !organization.check(slug), {
     message: NAMING_ERRORS.ORG_RESERVED,
   });
-
-/**
- * Workspace Name Schema (User-Facing)
- *
- * Validates user-facing workspace names:
- * - 1-100 characters (GitHub repo naming rules)
- * - Alphanumeric + hyphens, periods, underscores
- * - URL-safe without encoding (. _ - don't need escaping)
- * - Can start/end with any allowed character
- * - Cannot use reserved names (case-insensitive)
- *
- * Used in: Workspace creation, workspace settings, URL paths
- *
- * @example
- * ```typescript
- * workspaceNameSchema.parse("my-awesome-project"); // ✅ Valid
- * workspaceNameSchema.parse("Project_v2.0"); // ✅ Valid (periods, underscores)
- * workspaceNameSchema.parse("my project"); // ❌ No spaces
- * workspaceNameSchema.parse("project@2024"); // ❌ No special chars
- * workspaceNameSchema.parse("settings"); // ❌ Reserved name
- * workspaceNameSchema.parse("Settings"); // ❌ Reserved name (case-insensitive)
- * ```
- */
-export const workspaceNameSchema = z
-  .string()
-  .min(WORKSPACE_NAME.MIN_LENGTH, NAMING_ERRORS.WORKSPACE_MIN_LENGTH)
-  .max(WORKSPACE_NAME.MAX_LENGTH, NAMING_ERRORS.WORKSPACE_MAX_LENGTH)
-  .regex(WORKSPACE_NAME.PATTERN, NAMING_ERRORS.WORKSPACE_PATTERN)
-  .refine((name) => !workspace.check(name), {
-    message: NAMING_ERRORS.WORKSPACE_RESERVED,
-  });
-
-/**
- * Workspace Slug Schema (Internal, Pinecone)
- *
- * Validates internal workspace slugs:
- * - 1-20 characters (Pinecone constraint)
- * - Lowercase alphanumeric + hyphens only
- * - No leading/trailing/consecutive hyphens
- *
- * Used in: Pinecone namespace naming, internal references
- * Generated from workspace name via generateWorkspaceSlug()
- *
- * @example
- * ```typescript
- * workspaceSlugSchema.parse("robust-chicken"); // ✅ Valid
- * workspaceSlugSchema.parse("my-workspace-123"); // ✅ Valid
- * workspaceSlugSchema.parse("My-Workspace"); // ❌ Must be lowercase
- * workspaceSlugSchema.parse("-invalid-"); // ❌ No leading/trailing hyphens
- * workspaceSlugSchema.parse("test--slug"); // ❌ No consecutive hyphens
- * ```
- */
-export const workspaceSlugSchema = z
-  .string()
-  .min(1, "Workspace slug must not be empty")
-  .max(20, "Workspace slug must be 20 characters or less")
-  .regex(
-    /^[a-z0-9-]+$/,
-    "Workspace slug must be lowercase alphanumeric with hyphens"
-  )
-  .refine(
-    (slug) => !/^-|-$|--/.test(slug),
-    "Workspace slug cannot have leading/trailing/consecutive hyphens"
-  );
 
 /**
  * Store Name Schema

@@ -1,20 +1,13 @@
-import { WorkspacesList } from "~/components/workspaces-list";
+import { HydrateClient } from "@repo/app-trpc/server";
+import { Suspense } from "react";
+import { AskLightfast, AskLightfastSkeleton } from "~/components/ask-lightfast";
 
-export default async function OrgHomePage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
-
-  // Access verification handled in [slug]/layout.tsx
-  // Data is already prefetched in layout - no need to duplicate here
-
+export default async function OrgHomePage() {
   return (
-    <div className="flex h-full flex-1 flex-col overflow-auto">
-      <div className="flex flex-col gap-6 px-6 pt-2 pb-6">
-        <WorkspacesList orgSlug={slug} />
-      </div>
-    </div>
+    <Suspense fallback={<AskLightfastSkeleton />}>
+      <HydrateClient>
+        <AskLightfast />
+      </HydrateClient>
+    </Suspense>
   );
 }

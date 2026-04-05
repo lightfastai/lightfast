@@ -26,6 +26,3 @@ export const dbEnv = createEnv({
     !!process.env.SKIP_ENV_VALIDATION ||
     process.env.npm_lifecycle_event === "lint",
 });
-
-// Also export as 'env' for backward compatibility with existing imports
-export const env = dbEnv;

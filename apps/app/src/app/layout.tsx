@@ -5,11 +5,13 @@ import "~/styles/globals.css";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
+import { ClerkProvider } from "@vendor/clerk/client";
 import { createMetadata } from "@vendor/seo/metadata";
 import {
   PrefetchCrossZoneLinks,
   PrefetchCrossZoneLinksProvider,
 } from "@vercel/microfrontends/next/client";
+import { env } from "~/env";
 import { ppNeueMontreal } from "~/lib/fonts";
 
 export const metadata: Metadata = createMetadata({
@@ -63,12 +65,22 @@ export default function RootLayout({
     >
       <head />
       <body className="dark min-h-screen bg-background antialiased">
-        <PrefetchCrossZoneLinksProvider>
-          {children}
-          <VercelAnalytics />
-          <SpeedInsights />
-          <PrefetchCrossZoneLinks />
-        </PrefetchCrossZoneLinksProvider>
+        <ClerkProvider
+          afterSignOutUrl="/sign-in"
+          publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+          signInFallbackRedirectUrl="/account/welcome"
+          signInUrl="/sign-in"
+          signUpFallbackRedirectUrl="/account/welcome"
+          signUpUrl="/sign-up"
+          waitlistUrl="/early-access"
+        >
+          <PrefetchCrossZoneLinksProvider>
+            {children}
+            <VercelAnalytics />
+            <SpeedInsights />
+            <PrefetchCrossZoneLinks />
+          </PrefetchCrossZoneLinksProvider>
+        </ClerkProvider>
       </body>
     </html>
   );

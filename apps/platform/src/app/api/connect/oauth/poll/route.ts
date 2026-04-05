@@ -9,6 +9,7 @@
  */
 
 import { getOAuthResult } from "@api/platform/lib/oauth/state";
+import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
@@ -17,6 +18,7 @@ export async function GET(req: NextRequest) {
   const state = req.nextUrl.searchParams.get("state");
 
   if (!state) {
+    log.warn("[oauth/poll] missing state token");
     return Response.json({ error: "missing_state" }, { status: 400 });
   }
 
@@ -26,5 +28,8 @@ export async function GET(req: NextRequest) {
     return Response.json({ status: "pending" });
   }
 
+  log.info("[oauth/poll] result found", {
+    state: `${state.slice(0, 8)}...`,
+  });
   return Response.json(result);
 }

@@ -52,6 +52,7 @@ function SSOCallback() {
           window.location.href = "/account/welcome";
         },
       })
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: intentional error swallow — Clerk finalize can fail silently
       .catch(() => {});
   }, [signUp]);
 

@@ -64,22 +64,20 @@ export const memoryEvents = {
     correlationId: z.string().optional(),
   }),
   "memory/event.capture": z.object({
-    workspaceId: z.string(),
-    clerkOrgId: z.string().optional(),
+    clerkOrgId: z.string(),
     sourceEvent: postTransformEventSchema,
     ingestionSource: ingestionSourceSchema.optional(),
     ingestLogId: z.number().optional(),
     correlationId: z.string().optional(),
   }),
   "memory/event.stored": z.object({
-    workspaceId: z.string(),
     clerkOrgId: z.string(),
     eventExternalId: z.string(),
     sourceType: z.string(),
     significanceScore: z.number(),
   }),
   "memory/entity.upserted": z.object({
-    workspaceId: z.string(),
+    clerkOrgId: z.string(),
     entityExternalId: z.string(),
     entityType: z.string(),
     provider: z.string(),
@@ -95,7 +93,7 @@ export const memoryEvents = {
     correlationId: z.string().optional(),
   }),
   "memory/entity.graphed": z.object({
-    workspaceId: z.string(),
+    clerkOrgId: z.string(),
     entityExternalId: z.string(),
     entityType: z.string(),
     provider: z.string(),

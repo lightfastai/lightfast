@@ -8,6 +8,7 @@ const Confetti = dynamic(() => import("react-confetti"), {
   ssr: false,
 });
 
+// biome-ignore lint/suspicious/noEmptyBlockStatements: no-op subscribe for useSyncExternalStore
 const subscribe = () => () => {};
 const getSnapshot = () => true;
 const getServerSnapshot = () => false;

@@ -45,12 +45,11 @@
     "@biomejs/biome": "2.4.6",
     "@changesets/cli": "^2.30.0",
     "knip": "^5.85.0",
-    "turbo": "2.8.20",
-    "turbo-ignore": "2.8.20",
+    "turbo": "2.9.3",
+    "turbo-ignore": "2.9.3",
     "typescript": "^5.9.2",
     "ultracite": "7.2.5",
-    "vercel": "^50.28.0",
-    "vitest": "^4.0.18"
+    "vercel": "^50.28.0"
   },
   "pnpm": {
     "overrides": {
@@ -59,7 +58,6 @@
       "@types/react": "^19.2.14",
       "@types/react-dom": "^19.2.3",
       "@types/minimatch": "5.1.2",
-      "@browserbasehq/stagehand>dotenv": "^17.2.1",
       "zod-to-json-schema>zod": "^3.25.76",
       "tar": "^7.5.8",
       "basic-ftp": "^5.2.0",
@@ -68,15 +66,10 @@
       "lodash": "^4.17.23",
       "lodash-es": "^4.17.23",
       "mdast-util-to-hast": "^13.2.1",
-      "jws": "^4.0.1",
       "qs": "^6.14.2",
-      "prismjs": "^1.30.0",
-      "serialize-javascript": "^7.0.3",
       "body-parser": "^2.2.1",
       "path-to-regexp": "^6.3.0",
-      "fast-xml-parser": "^5.3.8",
-      "jsondiffpatch": "^0.7.2",
-      "diff": "^4.0.4"
+      "fast-xml-parser": "^5.3.8"
     }
   }
 }

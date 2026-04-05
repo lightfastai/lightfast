@@ -52,6 +52,7 @@ export type {
   ProviderKind,
   ProxyExecuteRequest,
   ProxyExecuteResponse,
+  ProxyResolvedResource,
   RateLimit,
   ResourcePickerDef,
   ResourcePickerExecuteApiFn,
@@ -302,7 +303,6 @@ export type {
   ProviderShape,
   ResponseDataFor,
   SourceType,
-  TypedProxyRequest,
 } from "./registry";
 export {
   EVENT_REGISTRY,

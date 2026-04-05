@@ -6,14 +6,14 @@
  * for better performance and reduced database load.
  *
  * Triggered by: console/activity.record events (Tier 2 user actions)
- * Batching: Up to 100 events per batch, 10s timeout per workspace
+ * Batching: Up to 100 events per batch, 10s timeout per org
  * Performance: 50-100x faster than individual inserts
  *
  * @see /docs/implementation/user-activity-tracking.md
  */
 
 import { db } from "@db/app/client";
-import { workspaceUserActivities } from "@db/app/schema";
+import { orgUserActivities } from "@db/app/schema";
 import type { ActivityMetadata } from "@repo/app-validation";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../../client/client";
@@ -35,7 +35,7 @@ export const recordActivity = inngest.createFunction(
     batchEvents: {
       maxSize: 100, // Process up to 100 events at once
       timeout: "10s", // Wait max 10s before processing partial batch
-      key: "event.data.workspaceId", // Batch per workspace
+      key: "event.data.clerkOrgId", // Batch per org
     },
 
     timeouts: {
@@ -51,7 +51,7 @@ export const recordActivity = inngest.createFunction(
       log.warn("Received empty activity batch, skipping");
       return {
         success: true,
-        workspaceId: undefined,
+        clerkOrgId: undefined,
         batchSize: 0,
         insertedCount: 0,
         timestamp: new Date().toISOString(),
@@ -60,11 +60,11 @@ export const recordActivity = inngest.createFunction(
 
     const batchSize = events.length;
     // Safe after the length guard above
-    const workspaceId = events[0].data.workspaceId;
+    const clerkOrgId = events[0].data.clerkOrgId;
 
     log.info("Processing activity batch", {
       batchSize,
-      workspaceId,
+      clerkOrgId,
       firstEventTimestamp: events[0].ts,
       lastEventTimestamp: events.at(-1)?.ts,
     });
@@ -75,7 +75,7 @@ export const recordActivity = inngest.createFunction(
         const { data } = event;
 
         return {
-          workspaceId: data.workspaceId,
+          clerkOrgId: data.clerkOrgId,
           category: data.category,
           action: data.action,
           entityType: data.entityType,
@@ -93,12 +93,12 @@ export const recordActivity = inngest.createFunction(
       try {
         // Use Drizzle's batch insert for optimal performance
         const result = await db
-          .insert(workspaceUserActivities)
+          .insert(orgUserActivities)
           .values(activityRecords)
-          .returning({ id: workspaceUserActivities.id });
+          .returning({ id: orgUserActivities.id });
 
         log.info("Activity batch inserted", {
-          workspaceId,
+          clerkOrgId,
           insertedCount: result.length,
           batchSize,
         });
@@ -110,7 +110,7 @@ export const recordActivity = inngest.createFunction(
         };
       } catch (error) {
         log.error("Failed to insert activity batch", {
-          workspaceId,
+          clerkOrgId,
           batchSize,
           error: error instanceof Error ? error.message : String(error),
         });
@@ -121,7 +121,7 @@ export const recordActivity = inngest.createFunction(
 
     return {
       success: true,
-      workspaceId,
+      clerkOrgId,
       batchSize,
       insertedCount: insertResult.insertedCount,
       timestamp: new Date().toISOString(),

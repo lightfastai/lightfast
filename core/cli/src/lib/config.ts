@@ -14,7 +14,7 @@ const CONFIG_FILE = join(CONFIG_DIR, "config.json");
 
 export const getBaseUrl = () => env.LIGHTFAST_API_URL;
 
-export interface LightfastConfig {
+interface LightfastConfig {
   apiKey: string;
   orgId: string;
   orgName: string;

@@ -64,7 +64,7 @@ export function DocsLayout({ title, section, breadcrumb }: DocsOGProps) {
         }}
         tw="flex items-center mt-auto font-normal"
       >
-        docs.lightfast.ai
+        lightfast.ai/docs
       </div>
     </div>
   );

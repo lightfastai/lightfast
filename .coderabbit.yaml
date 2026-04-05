@@ -1,43 +1,39 @@
-# .coderabbit.yaml
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "en-US"
-early_access: false
+early_access: true
+
+tone_instructions: |
+  Be direct and concise. Skip pleasantries. Categorize findings as:
+  [blocker] — must fix before merge
+  [warning] — should fix, explain trade-offs if not
+  [nit] — optional improvement
+  Cite specific files or CLAUDE.md sections when relevant.
+  Do not restate what changed — explain WHY it matters.
 
 reviews:
-  # assertive = flags real issues, chill = more lenient
-  profile: "assertive"
-
-  # Auto-approve PR when all CodeRabbit comments are resolved
-  request_changes_workflow: true
+  profile: "chill"
+  request_changes_workflow: false
 
   # PR summary features
   high_level_summary: true
-  high_level_summary_in_walkthrough: true
+  review_status: true
+  collapse_walkthrough: true
   poem: false
   sequence_diagrams: true
-  estimate_code_review_effort: true
 
   # Link tracking
   assess_linked_issues: true
-  related_issues: true
-  related_prs: true
-
-  # Labels & reviewers
-  suggested_labels: true
-  auto_apply_labels: false
-  suggested_reviewers: false
-  auto_assign_reviewers: false
 
   # Auto-review triggers (disabled — use @coderabbitai in PR comments to trigger)
   auto_review:
     enabled: false
     drafts: false
     auto_incremental_review: true
-    # Pause after 5 pushes to same PR to avoid noise
-    auto_pause_after_reviewed_commits: 5
-    # Skip bot PRs
     ignore_title_keywords:
       - "WIP"
+      - "DRAFT"
       - "DO NOT MERGE"
+      - "[skip-review]"
     base_branches:
       - "main"
       - "develop"
@@ -46,17 +42,23 @@ reviews:
   # Exclude generated/vendored/binary files from review
   path_filters:
     - "!**/dist/**"
+    - "!**/build/**"
     - "!**/node_modules/**"
     - "!**/.next/**"
     - "!**/.vercel/**"
     - "!**/pnpm-lock.yaml"
     - "!**/*.lock"
     - "!**/drizzle/**/meta/**"
+    - "!db/**/migrations/**"
     - "!**/__generated__/**"
     - "!**/generated/**"
+    - "!**/*.snap"
     - "!**/*.min.js"
     - "!**/*.min.css"
     - "!**/*.d.ts"
+    - "!**/coverage/**"
+    - "!CHANGELOG.md"
+    - "!**/CHANGELOG.md"
     # Non-code directories
     - "!thoughts/**"
     - "!scripts/**"
@@ -68,47 +70,66 @@ reviews:
     - "!.agents/**"
 
   # ── Path-specific review instructions ──
-  # These tell CodeRabbit HOW to review each area of the monorepo
   path_instructions:
-    - path: "apps/**"
+    - path: "**/*"
       instructions: |
-        This is a Next.js 15 App Router application. Review for:
-        - Server/client component boundaries ("use client" / "use server" directives)
-        - tRPC pattern: prefetch() must be called BEFORE <HydrateClient>
-        - No direct third-party imports — must use @vendor/* abstractions
-        - Proper use of workspace:* for internal deps, catalog: for shared externals
+        This is a pnpm monorepo (Turborepo). Key rules:
+        - Never import third-party SDKs directly — use @vendor/* abstractions
+        - Internal packages use workspace:* protocol; shared externals use catalog:
+        - TypeScript strict mode is enforced everywhere
+        - Flag any use of `any` type without a justification comment
+
+    - path: "apps/app/**"
+      instructions: |
+        Next.js 15 App Router (main app, port 4107). Review for:
+        - Server/client component boundaries — 'use client' only when DOM APIs or hooks require it
+        - tRPC: prefetch() must run BEFORE <HydrateClient> to avoid UNAUTHORIZED errors
+        - Auth routes (/sign-in, /sign-up, /early-access) are served directly by this app
+        - Check new route directories for missing error.tsx and loading.tsx
+
+    - path: "apps/platform/**"
+      instructions: |
+        Standalone Next.js + Inngest service at platform.lightfast.ai (port 4112). Review for:
+        - OAuth tokens must go through vault abstraction — never stored raw
+        - Inngest workflows must have idempotency keys and proper error handling
+        - Webhook ingestion endpoints must validate provider signatures
+
+    - path: "apps/www/**"
+      instructions: |
+        Marketing + docs site using Fumadocs MDX. Review for:
+        - Docs served via microfrontends at /docs routes
+        - Check all external links for correctness (domain: lightfast.ai)
 
     - path: "api/**"
       instructions: |
         tRPC API layer. Review for:
-        - Auth boundaries: userRouter (no org), orgRouter (org required), m2mRouter (internal only)
-        - No direct third-party SDK imports — use @vendor/* packages
-        - Inngest workflow patterns in api/app/src/inngest/workflow/
-        - Proper error handling in tRPC procedures
+        - Auth boundaries: userRouter (no org), orgRouter (org required)
+        - All procedures must use correct guard (userProcedure vs orgProcedure)
+        - Inngest workflows in api/app/src/inngest/workflow/ and api/platform/src/inngest/
+        - Inngest functions need: idempotency key, proper step boundaries, timeout handling
 
     - path: "vendor/**"
       instructions: |
-        Vendor abstraction packages — standalone re-exports of third-party SDKs.
-        Review for:
-        - These MUST be thin wrappers, not business logic
+        Vendor abstraction packages — standalone re-exports of third-party SDKs. Review for:
+        - Must be thin wrappers, not business logic
         - Consumers should never need to import the underlying SDK directly
-        - Env vars should be validated at the package level via env.ts
-        - Exports should be explicit (no barrel export *)
+        - Env vars validated at package level via env.ts
+        - Exports must be explicit (no barrel export *)
 
     - path: "packages/**"
       instructions: |
         Shared internal packages (@repo/*). Review for:
-        - No direct third-party SDK imports — use @vendor/* abstractions
+        - Flag all breaking changes — multiple apps consume these
+        - New exports must be added to the package index file
         - Explicit named exports (no barrel export *)
         - Type-only imports where applicable
-        - workspace:* protocol for internal deps
 
     - path: "db/**"
       instructions: |
         Database packages using Drizzle ORM. Review for:
-        - NEVER manually created .sql migration files — only db:generate
-        - Schema changes must use Drizzle schema definitions
-        - Relations must be properly defined
+        - Never suggest hand-written SQL — migrations generated by drizzle-kit only
+        - Schema changes must have a corresponding migration
+        - Review index coverage on new foreign key columns
         - No raw SQL queries — use Drizzle query builder
 
     - path: "core/ai-sdk/**"
@@ -117,15 +138,20 @@ reviews:
         - Public API surface stability — breaking changes need justification
         - Test coverage for primitives (agent, tool, server)
         - Proper error handling and types
-        - V2 migration patterns
 
     - path: "**/*.test.ts"
       instructions: |
         Test files. Review for:
-        - Descriptive test names
-        - Proper assertions (not just smoke tests)
+        - Prefer behavior-based assertions over implementation details
+        - Auth boundary edge cases (no org, wrong org, expired token) must be covered
         - No flaky patterns (timeouts, race conditions)
-        - Mock cleanup
+
+    - path: ".github/workflows/**"
+      instructions: |
+        CI/CD workflows. Review for:
+        - All action versions must be pinned to a SHA, not a mutable tag
+        - Every job needs timeout-minutes to prevent runaway CI
+        - Secrets should use GitHub Environments where possible
 
   # ── Pre-merge checks ──
   pre_merge_checks:
@@ -135,23 +161,34 @@ reviews:
     description:
       mode: "warning"
 
-  # ── Tools ──
-  tools:
-    eslint:
-      enabled: true
-    ast-grep:
-      essential_rules: true
-    github-checks:
-      enabled: true
-    gitleaks:
-      enabled: true
+# ── Tools ──
+tools:
+  eslint:
+    enabled: true
+  biome:
+    enabled: false
+  ast-grep:
+    enabled: true
+    essential_rules: true
+  shellcheck:
+    enabled: true
+  actionlint:
+    enabled: true
+  markdownlint:
+    enabled: true
+  yamllint:
+    enabled: true
+  github-checks:
+    enabled: true
+  gitleaks:
+    enabled: true
 
-  # Finishing touches
-  finishing_touches:
-    docstrings:
-      enabled: false
-    unit_tests:
-      enabled: false
+# ── Finishing touches — one-click agentic actions in PR comments ──
+finishing_touches:
+  docstrings:
+    enabled: true
+  unit_tests:
+    enabled: true
 
 chat:
   auto_reply: true
@@ -164,5 +201,7 @@ knowledge_base:
     enabled: true
   learnings:
     scope: "auto"
+  issues:
+    scope: "auto"
   pull_requests:
-    scope: "local"
+    scope: "auto"

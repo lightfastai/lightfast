@@ -45,6 +45,7 @@
     "@vendor/knock": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
     "jose": "catalog:",

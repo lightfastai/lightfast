@@ -1,18 +1,18 @@
 import { createHash } from "node:crypto";
 
-export interface NarrativeEvent {
+interface NarrativeEvent {
   occurredAt: string; // ISO datetime string (mode: "string" from Drizzle)
   sourceType: string;
   title: string;
 }
 
-export interface NarrativeEdge {
+interface NarrativeEdge {
   relationshipType: string;
   targetCategory: string;
   targetKey: string;
 }
 
-export interface NarrativeEntity {
+interface NarrativeEntity {
   category: string;
   extractedAt: string | null; // ISO datetime string (mode: "string" from Drizzle)
   key: string;

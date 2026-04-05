@@ -23,9 +23,7 @@ export const answerTemporalContextSection: SectionProvider = (ctx) => {
       parts.push(
         `When citing sources, include freshness: "Based on PR #123 merged 3 days ago..."`
       );
-      parts.push(
-        "If workspace data may be stale (last sync > 1 hour), note it."
-      );
+      parts.push("If data may be stale (last sync > 1 hour), note it.");
       return parts.join("\n");
     },
   };

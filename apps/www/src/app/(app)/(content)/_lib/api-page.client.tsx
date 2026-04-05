@@ -33,7 +33,7 @@ export default defineClientConfig({
      *
      * Future enhancements could include:
      * - Validation for sk-lf- prefix
-     * - Link to console.lightfast.ai/settings/api-keys
+     * - Link to lightfast.ai/settings/api-keys
      * - Visual feedback for valid/invalid tokens
      */
     transformAuthInputs: (fields) => {

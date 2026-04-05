@@ -12,7 +12,7 @@
  */
 
 import { db } from "@db/app/client";
-import { gatewayInstallations, gatewayResources } from "@db/app/schema";
+import { gatewayInstallations, orgIntegrations } from "@db/app/schema";
 import {
   type BackfillContext,
   getProvider,
@@ -35,7 +35,7 @@ import { serviceProcedure } from "../../trpc";
 
 // ── Backfill Router ──────────────────────────────────────────────────────
 
-export interface Sample {
+interface Sample {
   hasMore: boolean;
   resourceId: string;
   returnedCount: number;
@@ -182,17 +182,16 @@ export const backfillRouter = {
         });
       }
 
-      // Fetch resources
+      // Fetch resources from orgIntegrations
       const resources = await db
         .select({
-          providerResourceId: gatewayResources.providerResourceId,
-          resourceName: gatewayResources.resourceName,
+          providerResourceId: orgIntegrations.providerResourceId,
         })
-        .from(gatewayResources)
+        .from(orgIntegrations)
         .where(
           and(
-            eq(gatewayResources.installationId, installationId),
-            eq(gatewayResources.status, "active")
+            eq(orgIntegrations.installationId, installationId),
+            eq(orgIntegrations.status, "active")
           )
         );
 
@@ -239,9 +238,37 @@ export const backfillRouter = {
 
       const api: ProviderApi = providerDef.api;
 
+      // Resolve resource names live from provider API
+      const resourceNameRequiredForRouting = ["github", "sentry"].includes(
+        provider
+      );
+      const resolvedResources = (
+        await Promise.all(
+          resources.map(async (r) => {
+            try {
+              const resourceName = await backfill.resolveResourceMeta({
+                providerResourceId: r.providerResourceId,
+                token,
+              });
+              return { providerResourceId: r.providerResourceId, resourceName };
+            } catch {
+              if (resourceNameRequiredForRouting) {
+                // GitHub/Sentry: can't estimate without valid path segments — skip
+                return null;
+              }
+              // Linear/Vercel: resourceName not used in buildRequest — fallback is safe
+              return {
+                providerResourceId: r.providerResourceId,
+                resourceName: r.providerResourceId,
+              };
+            }
+          })
+        )
+      ).filter((r): r is NonNullable<typeof r> => r !== null);
+
       // Probe page 1 for each resource x entityType
       const probeJobs = resolvedEntityTypes.flatMap((entityType) =>
-        resources.map(
+        resolvedResources.map(
           async (resource): Promise<{ entityType: string; sample: Sample }> => {
             const entityHandler = backfill.entityTypes[entityType];
             if (!entityHandler) {
@@ -259,7 +286,7 @@ export const backfillRouter = {
               installationId,
               resource: {
                 providerResourceId: resource.providerResourceId,
-                resourceName: resource.resourceName ?? "",
+                resourceName: resource.resourceName,
               },
               since,
             };
@@ -370,7 +397,7 @@ export const backfillRouter = {
         }
         const { entityType, sample } = result.value;
         probes[entityType] ??= {
-          resources: resources.length,
+          resources: resolvedResources.length,
           samples: [],
           estimatedItems: 0,
           estimatedPages: 0,

@@ -493,6 +493,7 @@ describe("Runtime Functions", () => {
       const streamError = new Error("Stream creation failed");
       mockMemory.createStream = vi.fn().mockRejectedValue(streamError);
 
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op mock
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
       const result = await streamChat({
@@ -788,6 +789,7 @@ describe("Runtime Functions", () => {
 
     it("should silently handle stream failures with silentStreamFailure guard", async () => {
       const onError = vi.fn();
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op mock
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       mockMemory.createStream = vi
         .fn()
@@ -890,6 +892,7 @@ describe("Runtime Functions", () => {
 
     it("should prioritize resumeOptions over enableResume", async () => {
       const onError = vi.fn();
+      // biome-ignore lint/suspicious/noEmptyBlockStatements: intentional no-op mock
       const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
       mockMemory.createStream = vi
         .fn()

@@ -34,10 +34,8 @@
     "clean": "git clean -xdf .cache .turbo node_modules"
   },
   "dependencies": {
-    "@api/app": "workspace:*",
     "@api/platform": "workspace:*",
     "@db/app": "workspace:*",
-    "@repo/app-pinecone": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "@repo/lib": "workspace:*",
     "@vendor/db": "workspace:*",

@@ -1,6 +1,6 @@
 import { PROVIDER_DISPLAY } from "@repo/app-providers/client";
 import type { LucideIcon } from "lucide-react";
-import { Brain, Scale, Zap } from "lucide-react";
+import { Scale, Zap } from "lucide-react";
 
 export const SOURCE_TYPE_OPTIONS = Object.entries(PROVIDER_DISPLAY).map(
   ([value, entry]) => ({ value, label: entry.displayName })
@@ -46,12 +46,6 @@ export const MODE_OPTIONS: {
     icon: Scale,
     description: "Cohere rerank (~130ms)",
   },
-  {
-    value: "thorough",
-    label: "Thinking",
-    icon: Brain,
-    description: "LLM scoring (~600ms)",
-  },
 ];
 
 export const AGE_PRESET_OPTIONS = [
@@ -65,7 +59,7 @@ export const AGE_PRESET_OPTIONS = [
 ] as const;
 
 export function dateRangeFromPreset(preset: string): {
-  dateRange?: { start: string };
+  after?: string;
 } {
   if (preset === "none") {
     return {};
@@ -82,6 +76,6 @@ export function dateRangeFromPreset(preset: string): {
   if (!hours) {
     return {};
   }
-  const start = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
-  return { dateRange: { start } };
+  const after = new Date(Date.now() - hours * 60 * 60 * 1000).toISOString();
+  return { after };
 }

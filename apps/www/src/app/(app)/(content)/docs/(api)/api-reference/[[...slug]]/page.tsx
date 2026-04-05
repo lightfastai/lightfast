@@ -91,7 +91,7 @@ export default async function Page({
     return (
       <>
         <JsonLd code={structuredData} />
-        <DocsLayout toc={[]}>
+        <DocsLayout fullWidth toc={[]}>
           <AlphaBanner />
           <article className="max-w-none">
             <APIPage {...props} />

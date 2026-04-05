@@ -16,13 +16,15 @@ import { db } from "@db/app/client";
 import {
   gatewayBackfillRuns,
   gatewayInstallations,
-  gatewayResources,
   gatewayWebhookDeliveries,
+  orgIntegrations,
 } from "@db/app/schema";
-import { getProvider } from "@repo/app-providers";
+import { getProvider, type ProviderDefinition } from "@repo/app-providers";
 import { and, eq, inArray, notInArray } from "@vendor/db";
 import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
+import { providerConfigs } from "../../lib/provider-configs";
+import { getActiveTokenForInstallation } from "../../lib/token-helpers";
 import { inngest } from "../client";
 import { memoryEntityWorker } from "./memory-entity-worker";
 
@@ -98,22 +100,22 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
         );
       }
 
-      // Fetch linked resources
+      // Fetch linked resources from orgIntegrations
       const resources = await db
         .select({
-          providerResourceId: gatewayResources.providerResourceId,
-          resourceName: gatewayResources.resourceName,
+          providerResourceId: orgIntegrations.providerResourceId,
         })
-        .from(gatewayResources)
+        .from(orgIntegrations)
         .where(
           and(
-            eq(gatewayResources.installationId, installationId),
-            eq(gatewayResources.status, "active")
+            eq(orgIntegrations.installationId, installationId),
+            eq(orgIntegrations.status, "active")
           )
         );
 
       return {
         id: conn.id,
+        externalId: conn.externalId,
         provider: conn.provider,
         orgId: conn.orgId,
         status: conn.status,
@@ -168,24 +170,65 @@ export const memoryBackfillOrchestrator = inngest.createFunction(
       new Date(Date.now() - depth * 24 * 60 * 60 * 1000).toISOString()
     );
 
-    // ── Step 3: Enumerate work units (resource x entityType) ──
-    const workUnits = connection.resources.flatMap((resource) => {
-      const resourceName = resource.resourceName;
-      if (!resourceName) {
-        log.warn("[backfill] skipping resource with null/empty resourceName", {
-          installationId,
-          providerResourceId: resource.providerResourceId,
-          correlationId,
-        });
-        return [];
+    // ── Step 2b: Resolve resource names live from provider API ──
+    const resolvedResources = await step.run(
+      "resolve-resource-meta",
+      async () => {
+        const config = providerConfigs[provider];
+        const { token } = await getActiveTokenForInstallation(
+          {
+            id: connection.id,
+            externalId: connection.externalId,
+            provider: connection.provider,
+          },
+          config,
+          providerDef as ProviderDefinition
+        );
+
+        // Providers where resourceName is NOT needed for API routing can fall back
+        const resourceNameRequiredForRouting = ["github", "sentry"].includes(
+          provider
+        );
+
+        return Promise.all(
+          connection.resources.map(async (r) => {
+            try {
+              const resourceName =
+                await providerDef.backfill!.resolveResourceMeta({
+                  providerResourceId: r.providerResourceId,
+                  token,
+                });
+              return { providerResourceId: r.providerResourceId, resourceName };
+            } catch (err) {
+              log.warn("[backfill] failed to resolve resource meta", {
+                providerResourceId: r.providerResourceId,
+                error: err instanceof Error ? err.message : String(err),
+              });
+              if (resourceNameRequiredForRouting) {
+                // GitHub/Sentry: resourceName is used in buildRequest pathParams — must skip
+                return null;
+              }
+              // Linear/Vercel: resourceName is only used in adapter output — fallback is safe
+              return {
+                providerResourceId: r.providerResourceId,
+                resourceName: r.providerResourceId,
+              };
+            }
+          })
+        ).then((results) =>
+          results.filter((r): r is NonNullable<typeof r> => r !== null)
+        );
       }
+    );
+
+    // ── Step 3: Enumerate work units (resource x entityType) ──
+    const workUnits = resolvedResources.flatMap((resource) => {
       return resolvedEntityTypes.map((entityType: string) => ({
         entityType,
         resource: {
           providerResourceId: resource.providerResourceId,
-          resourceName,
+          resourceName: resource.resourceName,
         },
-        // Stable ID for step naming
         workUnitId: `${resource.providerResourceId}-${entityType}`,
       }));
     });

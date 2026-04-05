@@ -4,16 +4,16 @@ import { DefaultChatTransport } from "ai";
 
 export function useAnswerTransport({
   sessionId,
-  workspaceId,
+  clerkOrgId,
 }: {
   sessionId: string;
-  workspaceId: string;
+  clerkOrgId: string;
 }) {
   return new DefaultChatTransport({
     api: `/v1/answer/answer-v1/${sessionId}`,
     headers: {
       "Content-Type": "application/json",
-      "X-Workspace-ID": workspaceId,
+      "X-Org-ID": clerkOrgId,
     },
     prepareSendMessagesRequest: ({ body, headers, messages, api }) => ({
       api,

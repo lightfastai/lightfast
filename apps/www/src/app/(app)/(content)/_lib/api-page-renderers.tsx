@@ -28,17 +28,12 @@ export function renderOperationLayout(slots: {
   callbacks: ReactNode;
 }) {
   return (
-    <div className="flex @4xl:flex-row flex-col @4xl:items-start gap-x-6 gap-y-4">
+    <div className="flex @2xl:flex-row flex-col @2xl:items-start gap-x-6 gap-y-4">
       {/* Main content area */}
       <div className="min-w-0 flex-1">
-        {/* Lightfast-branded header with accent border */}
-        <div className="mb-6 border-[hsl(var(--brand-500))] border-l-4 pl-4">
-          {slots.header}
-        </div>
-
-        {/* Playground and content sections */}
+        {slots.header}
         {slots.apiPlayground}
-        {slots.description}
+        <div className="mt-4">{slots.description}</div>
         {slots.authSchemes}
         {slots.paremeters}
         {slots.body}
@@ -46,11 +41,9 @@ export function renderOperationLayout(slots: {
         {slots.callbacks}
       </div>
 
-      {/* Enhanced sidebar with Lightfast branding */}
-      <div className="@4xl:sticky @4xl:top-[calc(var(--fd-docs-row-1,2rem)+1rem)] @4xl:w-[400px]">
-        <div className="rounded-lg border-2 border-[hsl(var(--brand-100))] bg-gradient-to-br from-[hsl(var(--brand-50))] to-transparent p-6 shadow-lg">
-          {slots.apiExample}
-        </div>
+      {/* Code examples sidebar */}
+      <div className="@2xl:sticky @2xl:top-[calc(var(--fd-docs-row-1,2rem)+1rem)] @2xl:w-[440px]">
+        {slots.apiExample}
       </div>
     </div>
   );

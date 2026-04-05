@@ -318,6 +318,22 @@ export const github = defineWebhookProvider({
         badge: r.private ? "Private" : null,
       }));
     },
+
+    resolveProxyResources: async (executeApi) => {
+      const result = await executeApi({
+        endpointId: "list-installation-repos",
+        queryParams: { per_page: "100" },
+      });
+      const parsed = githubInstallationReposSchema.parse(result.data);
+      return (parsed.repositories ?? []).map((r) => {
+        const [owner, repo] = (r.full_name ?? r.name).split("/");
+        return {
+          providerResourceId: String(r.id),
+          name: r.full_name ?? r.name,
+          params: { owner: owner ?? "", repo: repo ?? r.name },
+        };
+      });
+    },
   },
 
   edgeRules: [

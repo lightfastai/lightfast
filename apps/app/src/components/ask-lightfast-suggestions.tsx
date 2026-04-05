@@ -18,7 +18,7 @@ const categories: PromptCategory[] = [
     label: "Explore",
     icon: <Search className="h-3 w-3" />,
     prompts: [
-      "What are the main topics in this workspace?",
+      "What are the main topics in this organization?",
       "Summarize the most recent documents",
       "What are the key themes across all sources?",
       "Find the most referenced concepts",

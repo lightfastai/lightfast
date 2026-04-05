@@ -1,0 +1,1 @@
+DROP TABLE "lightfast_gateway_resources" CASCADE;

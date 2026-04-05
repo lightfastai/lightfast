@@ -12,7 +12,7 @@ import {
   nanoidSchema,
 } from "../primitives/ids";
 import { jobNameSchema } from "../primitives/names";
-import { clerkOrgSlugSchema, workspaceNameSchema } from "../primitives/slugs";
+import { clerkOrgSlugSchema } from "../primitives/slugs";
 
 /**
  * Job Status Enum
@@ -37,7 +37,7 @@ export type JobStatus = z.infer<typeof jobStatusSchema>;
  * - manual: User explicitly clicked "Restart" or "Re-sync" button
  * - scheduled: Triggered by a scheduled/cron job
  * - webhook: Triggered by external webhook (GitHub push, etc.)
- * - automatic: System-initiated (workspace creation, initial connection)
+ * - automatic: System-initiated (initial connection setup)
  */
 export const jobTriggerSchema = z.enum([
   "manual",
@@ -80,7 +80,7 @@ export type SyncTrigger = z.infer<typeof syncTriggerSchema>;
  * ```typescript
  * const input = jobListInputSchema.parse({
  *   clerkOrgSlug: "lightfast-ai",
- *   workspaceName: "my-workspace",
+ *   clerkOrgSlug: "lightfast-ai",
  *   status: "running",
  *   repositoryId: "V1StGXR8_Z5jdHi6B-myT",
  *   limit: 50,
@@ -90,7 +90,6 @@ export type SyncTrigger = z.infer<typeof syncTriggerSchema>;
  */
 export const jobListInputSchema = z.object({
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: workspaceNameSchema,
   status: jobStatusSchema.optional(),
   repositoryId: nanoidSchema.optional(),
   limit: z.number().min(1).max(100).default(20),
@@ -110,14 +109,13 @@ export type JobListInput = z.infer<typeof jobListInputSchema>;
  * const input = jobGetInputSchema.parse({
  *   jobId: "V1StGXR8_Z5jdHi6B-myT",
  *   clerkOrgSlug: "lightfast-ai",
- *   workspaceName: "my-workspace",
+ *   clerkOrgSlug: "lightfast-ai",
  * });
  * ```
  */
 export const jobGetInputSchema = z.object({
   jobId: nanoidSchema,
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: workspaceNameSchema,
 });
 
 export type JobGetInput = z.infer<typeof jobGetInputSchema>;
@@ -133,7 +131,7 @@ export type JobGetInput = z.infer<typeof jobGetInputSchema>;
  * ```typescript
  * const input = jobCreateInputSchema.parse({
  *   clerkOrgId: "org_2abcdef123",
- *   workspaceId: "V1StGXR8_Z5jdHi6B-myT",
+ *   clerkOrgId: "org_2abcdef123",
  *   repositoryId: "V1StGXR8_Z5jdHi6B-myT",
  *   inngestRunId: "01HE8X7ZQK6YG9B5R8J9QVXT0Q",
  *   inngestFunctionId: "console/docs.push",
@@ -144,7 +142,6 @@ export type JobGetInput = z.infer<typeof jobGetInputSchema>;
  */
 export const jobCreateInputSchema = z.object({
   clerkOrgId: z.string().min(1, "Organization ID must not be empty"),
-  workspaceId: nanoidSchema,
   repositoryId: nanoidSchema.optional(),
   inngestRunId: inngestRunIdSchema,
   inngestFunctionId: inngestFunctionIdSchema,
@@ -193,14 +190,13 @@ export type JobUpdateStatusInput = z.infer<typeof jobUpdateStatusInputSchema>;
  * const input = jobCancelInputSchema.parse({
  *   jobId: "V1StGXR8_Z5jdHi6B-myT",
  *   clerkOrgSlug: "lightfast-ai",
- *   workspaceName: "my-workspace",
+ *   clerkOrgSlug: "lightfast-ai",
  * });
  * ```
  */
 export const jobCancelInputSchema = z.object({
   jobId: nanoidSchema,
   clerkOrgSlug: clerkOrgSlugSchema,
-  workspaceName: workspaceNameSchema,
 });
 
 export type JobCancelInput = z.infer<typeof jobCancelInputSchema>;

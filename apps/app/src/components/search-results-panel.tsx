@@ -22,7 +22,6 @@ interface SearchResultsPanelProps {
   onActiveTabChange: (tab: string) => void;
   onExpandedIdChange: (id: string) => void;
   searchResults: SearchResponse | null;
-  storeId: string;
 }
 
 export function SearchResultsPanel({
@@ -32,7 +31,6 @@ export function SearchResultsPanel({
   expandedId,
   onExpandedIdChange,
   offset,
-  storeId,
 }: SearchResultsPanelProps) {
   return (
     <Tabs
@@ -63,7 +61,6 @@ export function SearchResultsPanel({
               offset={offset}
               onExpandedIdChange={onExpandedIdChange}
               searchResults={searchResults}
-              storeId={storeId}
             />
           ) : (
             <SearchEmptyState message="Run a search to see results" />

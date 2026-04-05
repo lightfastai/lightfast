@@ -8,4 +8,3 @@
 export * from "./auth-form";
 export * from "./early-access-form";
 export * from "./team-form";
-export * from "./workspace-form";

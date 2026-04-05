@@ -163,6 +163,9 @@ export async function processOAuthCallback(
   const config = providerConfigs[providerName];
 
   if (!config) {
+    log.warn("[oauth/callback] provider not configured", {
+      provider: providerName,
+    });
     return {
       kind: "error",
       error: "unknown_provider",
@@ -204,6 +207,10 @@ export async function processOAuthCallback(
   }
 
   if (!stateData) {
+    log.warn("[oauth/callback] invalid or expired state", {
+      provider: providerName,
+      state: state ? `${state.slice(0, 8)}...` : "empty",
+    });
     return {
       kind: "error",
       error: "invalid_or_expired_state",
@@ -212,6 +219,10 @@ export async function processOAuthCallback(
   }
 
   if (stateData.provider !== providerName) {
+    log.warn("[oauth/callback] state provider mismatch", {
+      provider: providerName,
+      stateProvider: stateData.provider,
+    });
     return {
       kind: "error",
       error: "invalid_or_expired_state",
@@ -225,6 +236,10 @@ export async function processOAuthCallback(
   try {
     const auth = providerDef.auth;
     if (auth.kind !== "oauth" && auth.kind !== "app-token") {
+      log.warn("[oauth/callback] provider does not support OAuth callback", {
+        provider: providerName,
+        authKind: auth.kind,
+      });
       return {
         kind: "error",
         error: "provider_does_not_support_oauth",
@@ -248,6 +263,10 @@ export async function processOAuthCallback(
         setupAction: result.setupAction,
       });
 
+      log.info("[oauth/callback] pending setup, redirecting", {
+        provider: providerName,
+        setupAction: result.setupAction,
+      });
       return buildRedirectForCompletion(stateData, providerName, {
         setupAction: result.setupAction,
       });
@@ -323,6 +342,10 @@ export async function processOAuthCallback(
       return { kind: "redirect", url: result.nextUrl };
     }
 
+    log.info("[oauth/callback] connected", {
+      provider: providerName,
+      reactivated,
+    });
     return buildRedirectForCompletion(stateData, providerName, {
       reactivated,
     });

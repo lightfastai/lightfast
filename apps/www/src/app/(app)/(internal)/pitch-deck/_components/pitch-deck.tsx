@@ -117,10 +117,9 @@ export function PitchDeck() {
           }}
         >
           {/* Sticky wrapper */}
-          <div
+          <section
             aria-label="Slide viewer"
             className="page-gutter sticky top-0 flex h-screen flex-col items-center justify-center overflow-visible py-16"
-            role="region"
           >
             {/* Slide container */}
             <div className="relative aspect-[16/9] w-full max-w-[860px] overflow-visible">
@@ -152,7 +151,7 @@ export function PitchDeck() {
               onPrev={handlePrevSlide}
               totalSlides={PITCH_SLIDES.length}
             />
-          </div>
+          </section>
         </div>
 
         {/* Mobile: Simple vertical scroll */}
@@ -325,6 +324,7 @@ function NavigationControls({
         className="p-2 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
         disabled={isFirst}
         onClick={onPrev}
+        type="button"
       >
         <ChevronUp className="h-4 w-4" />
       </button>
@@ -341,6 +341,7 @@ function NavigationControls({
         className="p-2 text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-30"
         disabled={isLast}
         onClick={onNext}
+        type="button"
       >
         <ChevronDown className="h-4 w-4" />
       </button>

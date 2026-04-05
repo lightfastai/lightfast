@@ -23,13 +23,11 @@ const securityHeaders = securityMiddleware(
 );
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
-// but auth.protect() is NOT called, so no JWKS fetch for unauthenticated visitors.
+// but auth is not enforced, so no JWKS fetch for unauthenticated visitors.
 const isPublicRoute = createRouteMatcher([
-  "/sign-in(.*)",
-  "/sign-up(.*)",
   "/early-access(.*)",
   "/api/health(.*)",
-  "/api/inngest(.*)",
+  "/api/ingest(.*)",
   "/docs(.*)",
   "/monitoring",
   "/ingest(.*)",
@@ -39,12 +37,22 @@ const isPublicRoute = createRouteMatcher([
 // API routes that handle their own auth (withDualAuth at route level)
 const isApiRoute = createRouteMatcher([
   "/v1/(.*)",
-  "/search(.*)",
-  "/contents(.*)",
-  "/findsimilar(.*)",
-  "/related(.*)",
   "/api/cli/(.*)",
-  "/api/events/(.*)",
+  "/api/inngest(.*)",
+]);
+
+// Auth routes — authenticated users should not see sign-in/sign-up forms.
+const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
+
+// Routes accessible during a pending session (signed in but has outstanding tasks
+// like choosing an org). Pending users on these routes pass through to complete
+// onboarding; on all other protected routes they're sent to /account/welcome.
+const isPendingAllowedRoute = createRouteMatcher([
+  "/account/(.*)",
+  // tRPC mutations that must be callable before an org exists (e.g. creating the first org).
+  // The tRPC handler's userScopedProcedure enforces its own auth; the middleware must not
+  // intercept these with auth.protect() before they reach the handler.
+  "/api/trpc/organization.create(.*)",
 ]);
 
 export default clerkMiddleware(
@@ -57,8 +65,24 @@ export default clerkMiddleware(
       return mfeResponse;
     }
 
-    if (!(isPublicRoute(req) || isApiRoute(req))) {
-      await auth.protect();
+    // Auth routes: authenticated users → /account/welcome; unauthenticated → pass through.
+    if (isAuthRoute(req)) {
+      const { userId } = await auth({ treatPendingAsSignedOut: false });
+      if (userId) {
+        return NextResponse.redirect(new URL("/account/welcome", req.url));
+      }
+    } else if (!(isPublicRoute(req) || isApiRoute(req))) {
+      const { userId, sessionStatus } = await auth({
+        treatPendingAsSignedOut: false,
+      });
+      if (!userId) {
+        const url = new URL("/sign-in", req.url);
+        url.searchParams.set("redirect_url", req.nextUrl.href);
+        return NextResponse.redirect(url);
+      }
+      if (sessionStatus === "pending" && !isPendingAllowedRoute(req)) {
+        return NextResponse.redirect(new URL("/account/welcome", req.url));
+      }
     }
 
     const headersResponse = await securityHeaders();

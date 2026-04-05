@@ -1,4 +1,4 @@
-// Gateway-owned tables (gateway_*)
+// Platform-owned tables (gateway_* prefix is historical)
 
 export {
   type GatewayBackfillRun,
@@ -16,11 +16,6 @@ export {
   type InsertGatewayLifecycleLog,
 } from "./gateway-lifecycle-log";
 export {
-  type GatewayResource,
-  gatewayResources,
-  type InsertGatewayResource,
-} from "./gateway-resources";
-export {
   type GatewayToken,
   gatewayTokens,
   type InsertGatewayToken,
@@ -36,59 +31,49 @@ export {
   type OrgApiKey,
   orgApiKeys,
 } from "./org-api-keys";
-// Org-scoped tables
+// Org entities
 export {
-  type InsertOrgWorkspace,
-  type OrgWorkspace,
-  orgWorkspaces,
-} from "./org-workspaces";
-// Workspace entities
-export {
-  type InsertWorkspaceEntity,
-  type WorkspaceEntity,
-  workspaceEntities,
-} from "./workspace-entities";
+  type InsertOrgEntity,
+  type OrgEntity,
+  orgEntities,
+} from "./org-entities";
 // Entity↔entity edges
 export {
-  type InsertWorkspaceEntityEdge,
-  type WorkspaceEntityEdge,
-  workspaceEntityEdges,
-} from "./workspace-entity-edges";
+  type InsertOrgEntityEdge,
+  type OrgEntityEdge,
+  orgEntityEdges,
+} from "./org-entity-edges";
 // Entity-event junction
 export {
-  type InsertWorkspaceEventEntity,
-  type WorkspaceEventEntity,
-  workspaceEventEntities,
-} from "./workspace-event-entities";
-// Workspace events (neural observations)
+  type InsertOrgEventEntity,
+  type OrgEventEntity,
+  orgEventEntities,
+} from "./org-event-entities";
+// Org events (neural observations)
 export {
-  type InsertWorkspaceEvent,
-  type WorkspaceEvent,
-  workspaceEvents,
-} from "./workspace-events";
-// Workspace ingest log (raw webhook ingress log)
+  type InsertOrgEvent,
+  type OrgEvent,
+  orgEvents,
+} from "./org-events";
+// Org ingest log (raw webhook ingress log)
 export {
-  type InsertWorkspaceIngestLog,
-  type WorkspaceIngestLog,
-  workspaceIngestLogs,
-} from "./workspace-ingest-logs";
+  type InsertOrgIngestLog,
+  type OrgIngestLog,
+  orgIngestLogs,
+} from "./org-ingest-logs";
 export {
-  type InsertWorkspaceIntegration,
-  type WorkspaceIntegration,
-  workspaceIntegrations,
-} from "./workspace-integrations";
+  type InsertOrgIntegration,
+  type OrgIntegration,
+  orgIntegrations,
+} from "./org-integrations";
 export {
-  type InsertWorkspaceUserActivity,
-  type WorkspaceUserActivity,
-  workspaceUserActivities,
-} from "./workspace-user-activities";
-export type {
-  GitHubSourceMetadata,
-  WorkflowInput,
-  WorkflowOutput,
-} from "./workspace-workflow-runs";
+  type InsertOrgUserActivity,
+  type OrgUserActivity,
+  orgUserActivities,
+} from "./org-user-activities";
+export type { WorkflowInput, WorkflowOutput } from "./org-workflow-runs";
 export {
-  type InsertWorkspaceWorkflowRun,
-  type WorkspaceWorkflowRun,
-  workspaceWorkflowRuns,
-} from "./workspace-workflow-runs";
+  type InsertOrgWorkflowRun,
+  type OrgWorkflowRun,
+  orgWorkflowRuns,
+} from "./org-workflow-runs";

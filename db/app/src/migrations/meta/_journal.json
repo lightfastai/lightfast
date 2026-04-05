@@ -421,6 +421,27 @@
       "when": 1773829908447,
       "tag": "0059_minor_princess_powerful",
       "breakpoints": true
+    },
+    {
+      "idx": 60,
+      "version": "7",
+      "when": 1775181947969,
+      "tag": "0060_youthful_spencer_smythe",
+      "breakpoints": true
+    },
+    {
+      "idx": 61,
+      "version": "7",
+      "when": 1775282966939,
+      "tag": "0061_left_timeslip",
+      "breakpoints": true
+    },
+    {
+      "idx": 62,
+      "version": "7",
+      "when": 1775284485113,
+      "tag": "0062_chemical_captain_flint",
+      "breakpoints": true
     }
   ]
 }

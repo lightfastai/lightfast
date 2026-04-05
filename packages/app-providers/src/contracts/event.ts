@@ -3,7 +3,7 @@
  *
  * Canonical type definitions for webhook-derived events after transformation.
  * These are the shapes produced by provider transformers and stored
- * as JSONB in the workspace_events table.
+ * as JSONB in the org_ingest_logs table.
  */
 
 import { z } from "zod";

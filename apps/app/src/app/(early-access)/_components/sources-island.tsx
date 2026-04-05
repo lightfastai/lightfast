@@ -74,7 +74,7 @@ export function SourcesIsland({ defaultSources }: SourcesIslandProps) {
                         variant="secondary"
                       >
                         {source?.label}
-                        <span
+                        <button
                           className="ml-1 cursor-pointer rounded-sm opacity-70 hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -91,11 +91,10 @@ export function SourcesIsland({ defaultSources }: SourcesIslandProps) {
                               );
                             }
                           }}
-                          role="button"
-                          tabIndex={0}
+                          type="button"
                         >
                           <X className="h-3 w-3" />
-                        </span>
+                        </button>
                       </Badge>
                     );
                   })

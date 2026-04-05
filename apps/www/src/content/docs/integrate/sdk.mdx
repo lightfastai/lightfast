@@ -16,7 +16,7 @@ authors:
     url: https://lightfast.ai
     twitterHandle: "@lightfastai"
 publishedAt: "2024-12-01T00:00:00Z"
-updatedAt: "2026-02-18T00:00:00Z"
+updatedAt: "2026-04-04T00:00:00Z"
 ---
 
 # TypeScript SDK
@@ -38,12 +38,12 @@ const lightfast = new Lightfast({
   apiKey: process.env.LIGHTFAST_API_KEY,
 });
 
-// Search your workspace memory
+// Search your organization's memory
 const results = await lightfast.search({
   query: "how does authentication work",
 });
 
-console.log(results.results[0].title);
+console.log(results.data[0].title);
 // → "Add JWT authentication to API endpoints"
 ```
 
@@ -74,7 +74,7 @@ const lightfast = new Lightfast({
 
 ### search()
 
-Search through workspace neural memory for relevant documents and observations.
+Search through your organization's knowledge for relevant documents and observations.
 
 ```typescript
 const results = await lightfast.search({
@@ -87,19 +87,16 @@ const results = await lightfast.search({
   // Optional: Pagination offset (default: 0)
   offset: 0,
 
-  // Optional: Search mode - "fast" | "balanced" | "quality" (default: "balanced")
+  // Optional: Search mode - "fast" | "balanced" | "thorough" (default: "balanced")
   mode: "balanced",
 
-  // Optional: Include surrounding context (default: true)
-  includeContext: true,
-
-  // Optional: Include highlighted snippets (default: true)
-  includeHighlights: true,
-
-  // Optional: Filter by source, date, type
+  // Optional: Filter results
   filters: {
-    sources: ["github"],
-    dateRange: "30d",
+    sourceTypes: ["github"],
+    observationTypes: ["pull_request", "issue"],
+    dateRange: {
+      start: "2024-01-01T00:00:00Z",
+    },
   },
 });
 ```
@@ -108,7 +105,7 @@ const results = await lightfast.search({
 
 ```typescript
 {
-  results: [
+  data: [
     {
       id: "doc_abc123",
       type: "pull_request",
@@ -116,86 +113,18 @@ const results = await lightfast.search({
       snippet: "Implemented Drizzle ORM migrations with...",
       score: 0.92,
       source: "github",
-      url: "https://github.com/org/repo/pull/456",
-      metadata: {
-        author: "jane",
-        mergedAt: "2024-12-01"
-      }
+      url: "https://github.com/org/repo/pull/456"
     }
   ],
   meta: {
     total: 24,
-    latency: { total: 145 }
-  }
-}
-```
-
-### contents()
-
-Fetch full content for documents and observations by their IDs.
-
-```typescript
-const content = await lightfast.contents({
-  // Required: Array of document IDs
-  ids: ["doc_abc123", "obs_def456"],
-});
-```
-
-**Response:**
-
-```typescript
-{
-  items: [
-    {
-      id: "doc_abc123",
-      type: "pull_request",
-      title: "Add database migration framework",
-      content: "Full document content...",
-      metadata: { ... }
-    }
-  ],
-  missing: [] // IDs that weren't found
-}
-```
-
-### findSimilar()
-
-Find content semantically similar to a given document or URL.
-
-```typescript
-// By document ID
-const similar = await lightfast.findSimilar({
-  id: "doc_abc123",
-  limit: 5,
-  threshold: 0.7,
-});
-
-// By URL
-const similar = await lightfast.findSimilar({
-  url: "https://github.com/org/repo/pull/123",
-  limit: 5,
-});
-```
-
-**Options:**
-
-```typescript
-{
-  // One of id or url is required
-  id: "doc_abc123",
-  url: "https://github.com/...",
-
-  // Optional: Number of results (default: 10)
-  limit: 10,
-
-  // Optional: Minimum similarity score 0-1 (default: 0.5)
-  threshold: 0.5,
-
-  // Optional: Only return results from same source (default: false)
-  sameSourceOnly: false,
-
-  // Optional: Exclude specific document IDs
-  excludeIds: ["doc_xyz"],
+    limit: 10,
+    offset: 0,
+    took: 145,
+    mode: "balanced",
+    paths: { vector: true, entity: true, cluster: true }
+  },
+  requestId: "req_abc123"
 }
 ```
 
@@ -240,12 +169,16 @@ All request and response types are exported:
 import type {
   LightfastConfig,
   SearchInput,
-  V1SearchResponse,
-  V1SearchResult,
-  ContentsInput,
-  V1ContentsResponse,
-  FindSimilarInput,
-  V1FindSimilarResponse,
+  SearchFilters,
+  SearchRequest,
+  SearchResponse,
+  SearchResult,
+  RerankMode,
+  ProxySearchResponse,
+  ProxyAction,
+  ProxyResource,
+  ProxyCall,
+  ProxyCallResponse,
 } from "lightfast";
 ```
 
@@ -261,9 +194,9 @@ const lightfast = new Lightfast({
 });
 
 async function search(query: string) {
-  const { results } = await lightfast.search({ query, limit: 5 });
+  const { data } = await lightfast.search({ query, limit: 5 });
 
-  for (const result of results) {
+  for (const result of data) {
     console.log(`[${result.score.toFixed(2)}] ${result.title}`);
     console.log(`  ${result.url}\n`);
   }
@@ -284,12 +217,12 @@ const lightfast = new Lightfast({
 
 async function answerWithContext(question: string) {
   // Get relevant context from your codebase
-  const { results } = await lightfast.search({
+  const { data } = await lightfast.search({
     query: question,
     limit: 5,
   });
 
-  const context = results
+  const context = data
     .map((r) => `[${r.title}]\n${r.snippet}`)
     .join("\n\n");
 

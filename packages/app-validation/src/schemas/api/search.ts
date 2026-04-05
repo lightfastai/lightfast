@@ -1,10 +1,8 @@
 import { z } from "zod";
-import {
-  EventBaseSchema,
-  RerankModeSchema,
-  SearchFiltersSchema,
-  SourceReferenceSchema,
-} from "./common";
+
+// --- Request ---
+
+export const SearchModeSchema = z.enum(["fast", "balanced"]);
 
 export const SearchRequestSchema = z.object({
   query: z
@@ -24,72 +22,57 @@ export const SearchRequestSchema = z.object({
     .min(0)
     .default(0)
     .describe("Result offset for pagination (default: 0)"),
-  mode: RerankModeSchema.default("balanced").describe(
-    "Search quality mode: 'fast' (speed), 'balanced' (default), 'thorough' (quality)"
+  mode: SearchModeSchema.default("balanced").describe(
+    "Search quality mode: 'fast' (vector scores only), 'balanced' (Cohere rerank)"
   ),
-  filters: SearchFiltersSchema.optional().describe(
-    "Optional filters to scope results by source type, observation type, or date range"
-  ),
+  sources: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Filter by source provider (e.g. ["github", "linear", "sentry"])'
+    ),
+  types: z
+    .array(z.string())
+    .optional()
+    .describe(
+      'Filter by entity type (e.g. ["pull_request", "issue", "error"])'
+    ),
+  after: z
+    .string()
+    .datetime()
+    .optional()
+    .describe("Only include results after this ISO 8601 datetime"),
+  before: z
+    .string()
+    .datetime()
+    .optional()
+    .describe("Only include results before this ISO 8601 datetime"),
 });
-export type SearchRequest = z.infer<typeof SearchRequestSchema>;
 
-export const SearchResultSchema = EventBaseSchema.extend({
+export type SearchRequest = z.infer<typeof SearchRequestSchema>;
+export type SearchMode = z.infer<typeof SearchModeSchema>;
+
+// --- Result ---
+
+export const SearchResultSchema = z.object({
+  id: z.string(),
+  title: z.string(),
   snippet: z.string(),
   score: z.number(),
-  latestAction: z.string().optional(),
-  totalEvents: z.number().optional(),
-  significanceScore: z.number().optional(),
-  entities: z
-    .array(z.object({ key: z.string(), category: z.string() }))
-    .optional(),
-  references: z.array(SourceReferenceSchema).optional(),
+  source: z.string(),
+  type: z.string(),
+  url: z.string().nullable(),
+  occurredAt: z.string().datetime().nullable(),
 });
+
 export type SearchResult = z.infer<typeof SearchResultSchema>;
 
-export const SearchContextSchema = z.object({
-  clusters: z
-    .array(
-      z.object({
-        topic: z.string().nullable(),
-        summary: z.string().nullable(),
-        keywords: z.array(z.string()),
-      })
-    )
-    .optional(),
-});
-export type SearchContext = z.infer<typeof SearchContextSchema>;
-
-export const SearchLatencySchema = z.object({
-  total: z.number().nonnegative(),
-  auth: z.number().nonnegative().optional(),
-  parse: z.number().nonnegative().optional(),
-  search: z.number().nonnegative().optional(),
-  embedding: z.number().nonnegative().optional(),
-  retrieval: z.number().nonnegative(),
-  entitySearch: z.number().nonnegative().optional(),
-  clusterSearch: z.number().nonnegative().optional(),
-  rerank: z.number().nonnegative(),
-  enrich: z.number().nonnegative().optional(),
-  maxParallel: z.number().nonnegative().optional(),
-});
-export type SearchLatency = z.infer<typeof SearchLatencySchema>;
+// --- Response ---
 
 export const SearchResponseSchema = z.object({
-  data: z.array(SearchResultSchema),
-  context: SearchContextSchema.optional(),
-  meta: z.object({
-    total: z.number().nonnegative(),
-    limit: z.number(),
-    offset: z.number(),
-    took: z.number().nonnegative(),
-    mode: RerankModeSchema,
-    paths: z.object({
-      vector: z.boolean(),
-      entity: z.boolean(),
-      cluster: z.boolean(),
-    }),
-  }),
-  latency: SearchLatencySchema.optional(),
+  results: z.array(SearchResultSchema),
+  total: z.number().int().nonnegative(),
   requestId: z.string(),
 });
+
 export type SearchResponse = z.infer<typeof SearchResponseSchema>;

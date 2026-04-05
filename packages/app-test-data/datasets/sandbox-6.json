@@ -974,8 +974,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_security_hardening_359",
-            "name": "lightfast-console",
-            "url": "lightfast-console-security-359.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app-security-359.vercel.app",
             "readyState": "BUILDING",
             "meta": {
               "githubCommitSha": "3c8d9f4a7e2b1567",
@@ -991,7 +991,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",
@@ -1012,8 +1012,8 @@
         "payload": {
           "deployment": {
             "id": "dpl_security_hardening_359",
-            "name": "lightfast-console",
-            "url": "lightfast-console.vercel.app",
+            "name": "lightfast-app",
+            "url": "lightfast-app.vercel.app",
             "readyState": "READY",
             "meta": {
               "githubCommitSha": "3c8d9f4a7e2b1567",
@@ -1029,7 +1029,7 @@
           },
           "project": {
             "id": "prj_lightfast_console",
-            "name": "lightfast-console"
+            "name": "lightfast-app"
           },
           "team": {
             "id": "team_lightfastai",

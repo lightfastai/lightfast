@@ -15,7 +15,7 @@
  *   "memory/event.capture",
  *   {
  *     logMessage: "Event capture failed",
- *     logContext: ({ workspaceId, sourceEvent }) => ({ workspaceId, sourceId: sourceEvent.sourceId }),
+ *     logContext: ({ clerkOrgId, sourceEvent }) => ({ clerkOrgId, sourceId: sourceEvent.sourceId }),
  *     buildOutput: ({ data: { sourceEvent }, error }) => ({
  *       inngestFunctionId: "event.capture",
  *       status: "failure",

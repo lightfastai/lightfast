@@ -7,6 +7,7 @@
 import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { nanoid } from "@repo/lib";
+import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../provider-configs";
 import { storeOAuthState } from "./state";
 
@@ -34,14 +35,14 @@ const consoleUrl = (() => {
 
 // ── Types ──
 
-export interface AuthorizeParams {
+interface AuthorizeParams {
   connectedBy: string;
   orgId: string;
   provider: SourceType;
   redirectTo?: string;
 }
 
-export type AuthorizeResult =
+type AuthorizeResult =
   | { ok: true; url: string; state: string }
   | { ok: false; error: string };
 
@@ -63,6 +64,7 @@ export async function buildAuthorizeUrl(
   const config = providerConfigs[provider];
 
   if (!config) {
+    log.warn("[oauth/authorize] provider not configured", { provider });
     return { ok: false, error: "unknown_provider" };
   }
 
@@ -71,9 +73,17 @@ export async function buildAuthorizeUrl(
     try {
       const url = new URL(redirectTo);
       if (url.hostname !== "localhost" && !redirectTo.startsWith(consoleUrl)) {
+        log.warn("[oauth/authorize] invalid redirect_to (not on allowlist)", {
+          provider,
+          redirectTo,
+        });
         return { ok: false, error: "invalid_redirect_to" };
       }
     } catch {
+      log.warn("[oauth/authorize] invalid redirect_to (malformed URL)", {
+        provider,
+        redirectTo,
+      });
       return { ok: false, error: "invalid_redirect_to" };
     }
   }
@@ -101,6 +111,7 @@ export async function buildAuthorizeUrl(
   } else if (auth.kind === "app-token") {
     url = auth.buildInstallUrl(config as never, state);
   } else {
+    log.warn("[oauth/authorize] provider does not support OAuth", { provider });
     return { ok: false, error: "provider_does_not_support_oauth" };
   }
 

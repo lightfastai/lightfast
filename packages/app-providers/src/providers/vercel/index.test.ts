@@ -44,7 +44,7 @@ const testConfig: VercelConfig = {
   integrationSlug: "my-vercel-integration",
   clientSecretId: "vercel-secret-id",
   clientIntegrationSecret: "vercel-integration-secret",
-  callbackBaseUrl: "https://app.lightfast.ai",
+  callbackBaseUrl: "https://lightfast.ai",
 };
 
 // ── Fixtures ───────────────────────────────────────────────────────────────────
@@ -94,7 +94,7 @@ describe("oauth.exchangeCode", () => {
     const tokens = await vercel.auth.exchangeCode(
       testConfig,
       "vercel-code-123",
-      "https://app.lightfast.ai/gateway/vercel/callback"
+      "https://lightfast.ai/api/connect/vercel/callback"
     );
 
     expect(tokens.accessToken).toBe("vercel-access-token-abc");

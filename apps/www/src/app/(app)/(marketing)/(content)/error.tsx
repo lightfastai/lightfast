@@ -13,6 +13,7 @@ export default function ContentError({
       <button
         className="text-muted-foreground text-sm underline underline-offset-4 transition-colors hover:text-foreground"
         onClick={reset}
+        type="button"
       >
         Try again
       </button>

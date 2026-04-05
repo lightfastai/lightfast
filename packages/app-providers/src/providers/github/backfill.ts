@@ -118,6 +118,26 @@ function buildRepoData(ctx: BackfillContext) {
 export const githubBackfill: BackfillDef = {
   supportedEntityTypes: ["pull_request", "issue"],
   defaultEntityTypes: ["pull_request", "issue"],
+  resolveResourceMeta: async ({ providerResourceId, token }) => {
+    const res = await fetch(
+      `https://api.github.com/repositories/${providerResourceId}`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/vnd.github+json",
+          "X-GitHub-Api-Version": "2022-11-28",
+        },
+        signal: AbortSignal.timeout(10_000),
+      }
+    );
+    if (!res.ok) {
+      throw new Error(
+        `GitHub repo lookup failed for ${providerResourceId}: ${res.status}`
+      );
+    }
+    const repo = (await res.json()) as { full_name: string };
+    return repo.full_name;
+  },
   entityTypes: {
     pull_request: typedEntityHandler<{ page: number }>({
       endpointId: "list-pull-requests",

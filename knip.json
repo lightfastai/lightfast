@@ -8,17 +8,16 @@
     "apps/app": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": [
-        "@repo/app-auth-middleware",
-        "@repo/lib",
-        "@vitest/expect",
-        "zustand"
-      ]
+      "ignoreDependencies": ["@repo/lib", "@vitest/expect", "zustand"]
     },
     "apps/www": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["jiti", "@repo/app-openapi"]
+      "ignoreDependencies": ["jiti"]
+    },
+    "apps/platform": {
+      "entry": ["src/app/**/*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"]
     },
     "api/*": {
       "project": ["src/**/*.ts"]
@@ -37,12 +36,8 @@
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/cms-workflows": {
-      "entry": ["src/publish-blog.ts", "src/publish-changelog.ts"],
-      "project": ["src/**/*.ts"]
-    },
     "packages/app-ai": {
-      "entry": ["src/workspace-*.ts"],
+      "entry": ["src/org-*.ts"],
       "project": ["src/**/*.ts"]
     },
     "packages/app-test-data": {
@@ -70,17 +65,16 @@
       "project": ["src/**/*.ts"],
       "drizzle": false
     },
+    "vendor/aeo": {
+      "project": ["*.ts"],
+      "drizzle": false
+    },
     "vendor/analytics": {
       "project": ["src/**/*.{ts,tsx}"],
       "drizzle": false
     },
-    "vendor/cms": {
-      "entry": ["lib/**/*.ts", "components/**/*.tsx"],
-      "project": ["lib/**/*.ts", "components/**/*.tsx", "*.{ts,tsx}"],
-      "drizzle": false
-    },
     "vendor/seo": {
-      "project": ["*.{ts,tsx}"],
+      "project": ["src/**/*.{ts,tsx}"],
       "drizzle": false
     },
     "vendor/inngest": {
@@ -88,12 +82,13 @@
     },
     "vendor/next": {
       "project": ["src/**/*.ts"],
-      "drizzle": false,
-      "ignoreDependencies": ["webpack"]
+      "drizzle": false
     },
     "internal/typescript": {
-      "entry": ["base.json"],
-      "ignoreDependencies": ["hono", "next"]
+      "entry": ["base.json"]
+    },
+    "internal/vitest-config": {
+      "entry": ["vitest.shared.ts"]
     }
   },
   "ignore": [".agents/**", ".claude/**"],
@@ -106,7 +101,6 @@
     "autoprefixer",
     "import-in-the-middle",
     "require-in-the-middle",
-    "tsx",
     "@vitest/coverage-v8"
   ]
 }

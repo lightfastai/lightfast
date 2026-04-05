@@ -1,18 +1,19 @@
 import type React from "react";
 import { Icons } from "./icons";
 
-export enum ErrorCode {
-  BadRequest = "400",
-  Unauthorized = "401",
-  Forbidden = "403",
-  NotFound = "404",
-  MethodNotAllowed = "405",
-  TooManyRequests = "429",
-  InternalServerError = "500",
-  BadGateway = "502",
-  ServiceUnavailable = "503",
-  GatewayTimeout = "504",
-}
+export const ErrorCode = {
+  BadRequest: "400",
+  Unauthorized: "401",
+  Forbidden: "403",
+  NotFound: "404",
+  MethodNotAllowed: "405",
+  TooManyRequests: "429",
+  InternalServerError: "500",
+  BadGateway: "502",
+  ServiceUnavailable: "503",
+  GatewayTimeout: "504",
+} as const;
+export type ErrorCode = (typeof ErrorCode)[keyof typeof ErrorCode];
 
 interface LightfastErrorPageProps {
   /**

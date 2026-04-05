@@ -15,10 +15,8 @@ export type Job = JobsListResponse["items"][number];
 export type JobStatus = Job["status"];
 
 // ============================================================================
-// Sources & Store (granular endpoints)
-// Note: Each workspace has exactly ONE store (1:1 relationship)
+// Sources & Connections
 // ============================================================================
 
-export type SourcesList = RouterOutputs["workspace"]["sources"]["list"];
-export type Source = SourcesList["list"][number];
-
+export type ResourcesList = RouterOutputs["connections"]["resources"]["list"];
+export type Source = ResourcesList["list"][number];

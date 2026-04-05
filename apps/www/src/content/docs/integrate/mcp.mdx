@@ -128,42 +128,24 @@ LIGHTFAST_API_KEY = "sk-lf-..."
 
 ## Available Tools
 
-Once configured, your AI assistant has access to three tools:
+Once configured, your AI assistant has access to the `lightfast_search` tool.
 
 ### lightfast_search
 
-Search through workspace neural memory for relevant documents and observations.
+Search through connected tools for relevant decisions and observations.
 
 **Parameters:**
 - `query` (required): Natural language search query
-- `limit`: Number of results (default: 10)
-- `mode`: Search mode — "fast", "balanced", or "quality"
-- `filters`: Filter by source, date range, or type
+- `limit`: Max results, 1–100 (default: 10)
+- `offset`: Pagination offset (default: 0)
+- `mode`: `"fast"` (vector scores only) or `"balanced"` (Cohere rerank, default)
+- `sources`: Filter by provider (e.g. `["github", "linear"]`)
+- `types`: Filter by entity type (e.g. `["pull_request", "issue"]`)
+- `after`: ISO 8601 datetime lower bound
+- `before`: ISO 8601 datetime upper bound
 
 **Example prompt:**
 > "Search lightfast for how authentication works in our API"
-
-### lightfast_contents
-
-Fetch full content for documents by their IDs.
-
-**Parameters:**
-- `ids` (required): Array of document IDs to fetch
-
-**Example prompt:**
-> "Get the full content of doc_abc123 from lightfast"
-
-### lightfast_find_similar
-
-Find content semantically similar to a given document or URL.
-
-**Parameters:**
-- `id` or `url` (one required): Document ID or URL to find similar content for
-- `limit`: Number of results (default: 10)
-- `threshold`: Minimum similarity score (default: 0.5)
-
-**Example prompt:**
-> "Find PRs similar to https://github.com/org/repo/pull/123"
 
 ## Usage Examples
 
@@ -173,9 +155,8 @@ Once configured, you can ask your AI assistant questions like:
 - "What decisions have we made about database choices?"
 - "Find documentation about our deployment process"
 - "Who has worked on the payment service?"
-- "Find PRs similar to this authentication refactor"
 
-The AI assistant will automatically use the Lightfast tools to search your workspace memory and provide answers with sources.
+The AI assistant will automatically use the Lightfast search tool to find answers with sources.
 
 ## CLI Options
 

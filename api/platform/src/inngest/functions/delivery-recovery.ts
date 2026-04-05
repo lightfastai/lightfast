@@ -87,11 +87,6 @@ export const deliveryRecovery = inngest.createFunction(
           // Resolve connection info for preResolved if installationId is available
           let preResolved: { connectionId: string; orgId: string } | undefined;
           if (delivery.installationId) {
-            preResolved = {
-              connectionId: delivery.installationId,
-              orgId: "", // will be resolved below
-            };
-
             // Look up orgId from installation
             const installationRows = await db
               .select({ orgId: gatewayInstallations.orgId })
@@ -99,8 +94,11 @@ export const deliveryRecovery = inngest.createFunction(
               .where(eq(gatewayInstallations.id, delivery.installationId))
               .limit(1);
 
-            if (installationRows[0]) {
-              preResolved.orgId = installationRows[0].orgId;
+            if (installationRows[0]?.orgId) {
+              preResolved = {
+                connectionId: delivery.installationId,
+                orgId: installationRows[0].orgId,
+              };
             }
           }
 

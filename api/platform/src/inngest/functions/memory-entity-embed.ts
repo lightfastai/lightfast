@@ -9,15 +9,16 @@
  * Debounced per entity: burst events collapse into a single embed call.
  */
 
+import { buildOrgNamespace } from "@db/app";
 import { db } from "@db/app/client";
 import {
-  orgWorkspaces,
-  workspaceEntities,
-  workspaceEntityEdges,
-  workspaceEventEntities,
-  workspaceEvents,
+  orgEntities,
+  orgEntityEdges,
+  orgEventEntities,
+  orgEvents,
 } from "@db/app/schema";
 import type { EntityVectorMetadata } from "@repo/app-validation";
+import { EMBEDDING_DEFAULTS } from "@repo/app-validation";
 import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
 import { asc, desc, eq, sql } from "drizzle-orm";
@@ -63,14 +64,21 @@ export const memoryEntityEmbed = inngest.createFunction(
   },
   { event: "memory/entity.graphed" },
   async ({ event, step }) => {
-    const { workspaceId, entityExternalId, provider, correlationId } =
+    const { clerkOrgId, entityExternalId, provider, correlationId } =
       event.data;
+
+    log.info("[entity-embed] starting", {
+      clerkOrgId,
+      entityExternalId,
+      provider,
+      correlationId,
+    });
 
     // Step 1: Fetch all narrative inputs in a single step.
     // Throws NonRetriableError for missing rows so Inngest does not retry infinitely.
     const entity = await step.run("fetch-entity", async () => {
-      const row = await db.query.workspaceEntities.findFirst({
-        where: eq(workspaceEntities.externalId, entityExternalId),
+      const row = await db.query.orgEntities.findFirst({
+        where: eq(orgEntities.externalId, entityExternalId),
         columns: {
           id: true,
           externalId: true,
@@ -83,24 +91,13 @@ export const memoryEntityEmbed = inngest.createFunction(
         },
       });
       if (!row) {
+        log.warn("[entity-embed] entity not found, aborting", {
+          entityExternalId,
+          correlationId,
+        });
         throw new NonRetriableError(`Entity not found: ${entityExternalId}`);
       }
       return row;
-    });
-
-    const workspace = await step.run("fetch-workspace", async () => {
-      const ws = await db.query.orgWorkspaces.findFirst({
-        where: eq(orgWorkspaces.id, workspaceId),
-      });
-      if (!ws) {
-        throw new NonRetriableError(`Workspace not found: ${workspaceId}`);
-      }
-      if ((ws.settings.version as number) !== 1) {
-        throw new NonRetriableError(
-          `Workspace ${workspaceId} has invalid settings version`
-        );
-      }
-      return ws;
     });
 
     const [genesisResults, recentEvents, edges, maxSignificanceResults] =
@@ -109,33 +106,27 @@ export const memoryEntityEmbed = inngest.createFunction(
           // Genesis event (first ever — founding context, never lost)
           db
             .select({
-              title: workspaceEvents.title,
-              sourceType: workspaceEvents.sourceType,
-              occurredAt: workspaceEvents.occurredAt,
+              title: orgEvents.title,
+              sourceType: orgEvents.sourceType,
+              occurredAt: orgEvents.occurredAt,
             })
-            .from(workspaceEventEntities)
-            .innerJoin(
-              workspaceEvents,
-              eq(workspaceEventEntities.eventId, workspaceEvents.id)
-            )
-            .where(eq(workspaceEventEntities.entityId, entity.id))
-            .orderBy(asc(workspaceEvents.occurredAt))
+            .from(orgEventEntities)
+            .innerJoin(orgEvents, eq(orgEventEntities.eventId, orgEvents.id))
+            .where(eq(orgEventEntities.entityId, entity.id))
+            .orderBy(asc(orgEvents.occurredAt))
             .limit(1),
 
           // Last 3 events (recency signal + current state)
           db
             .select({
-              title: workspaceEvents.title,
-              sourceType: workspaceEvents.sourceType,
-              occurredAt: workspaceEvents.occurredAt,
+              title: orgEvents.title,
+              sourceType: orgEvents.sourceType,
+              occurredAt: orgEvents.occurredAt,
             })
-            .from(workspaceEventEntities)
-            .innerJoin(
-              workspaceEvents,
-              eq(workspaceEventEntities.eventId, workspaceEvents.id)
-            )
-            .where(eq(workspaceEventEntities.entityId, entity.id))
-            .orderBy(desc(workspaceEvents.occurredAt))
+            .from(orgEventEntities)
+            .innerJoin(orgEvents, eq(orgEventEntities.eventId, orgEvents.id))
+            .where(eq(orgEventEntities.entityId, entity.id))
+            .orderBy(desc(orgEvents.occurredAt))
             .limit(3),
 
           // Graph edges — both outgoing and incoming, mapped to "related entity".
@@ -143,44 +134,41 @@ export const memoryEntityEmbed = inngest.createFunction(
           // See NARRATIVE_CHAR_CAP for the full token budget reasoning.
           db
             .select({
-              relationshipType: workspaceEntityEdges.relationshipType,
-              targetCategory: workspaceEntities.category,
-              targetKey: workspaceEntities.key,
+              relationshipType: orgEntityEdges.relationshipType,
+              targetCategory: orgEntities.category,
+              targetKey: orgEntities.key,
             })
-            .from(workspaceEntityEdges)
+            .from(orgEntityEdges)
             .innerJoin(
-              workspaceEntities,
-              eq(workspaceEntityEdges.targetEntityId, workspaceEntities.id)
+              orgEntities,
+              eq(orgEntityEdges.targetEntityId, orgEntities.id)
             )
-            .where(eq(workspaceEntityEdges.sourceEntityId, entity.id))
+            .where(eq(orgEntityEdges.sourceEntityId, entity.id))
             .limit(3)
             .union(
               db
                 .select({
-                  relationshipType: workspaceEntityEdges.relationshipType,
-                  targetCategory: workspaceEntities.category,
-                  targetKey: workspaceEntities.key,
+                  relationshipType: orgEntityEdges.relationshipType,
+                  targetCategory: orgEntities.category,
+                  targetKey: orgEntities.key,
                 })
-                .from(workspaceEntityEdges)
+                .from(orgEntityEdges)
                 .innerJoin(
-                  workspaceEntities,
-                  eq(workspaceEntityEdges.sourceEntityId, workspaceEntities.id)
+                  orgEntities,
+                  eq(orgEntityEdges.sourceEntityId, orgEntities.id)
                 )
-                .where(eq(workspaceEntityEdges.targetEntityId, entity.id))
+                .where(eq(orgEntityEdges.targetEntityId, entity.id))
                 .limit(3)
             ),
 
           // Max significance score across all events for this entity
           db
             .select({
-              max: sql<number>`MAX(${workspaceEvents.significanceScore})`,
+              max: sql<number>`MAX(${orgEvents.significanceScore})`,
             })
-            .from(workspaceEventEntities)
-            .innerJoin(
-              workspaceEvents,
-              eq(workspaceEventEntities.eventId, workspaceEvents.id)
-            )
-            .where(eq(workspaceEventEntities.entityId, entity.id)),
+            .from(orgEventEntities)
+            .innerJoin(orgEvents, eq(orgEventEntities.eventId, orgEvents.id))
+            .where(eq(orgEventEntities.entityId, entity.id)),
         ]);
       });
 
@@ -202,17 +190,23 @@ export const memoryEntityEmbed = inngest.createFunction(
     // truncate: "NONE" in the Cohere provider will surface an error if this cap
     // ever fails to hold (e.g. an unusually long entity.value in Section 1).
     const cappedNarrative = narrative.slice(0, NARRATIVE_CHAR_CAP);
+    if (narrative.length > NARRATIVE_CHAR_CAP) {
+      log.warn("[entity-embed] narrative capped", {
+        entityExternalId,
+        original: narrative.length,
+        cap: NARRATIVE_CHAR_CAP,
+        correlationId,
+      });
+    }
 
-    // Step 2: Embed the narrative
+    // Step 2: Embed the narrative using constants
     const embedding = await step.run("embed-narrative", async () => {
-      const { createEmbeddingProviderForWorkspace } = await import(
-        "@repo/app-embed"
-      );
-      const embeddingProvider = createEmbeddingProviderForWorkspace(
+      const { createEmbeddingProviderForOrg } = await import("@repo/app-embed");
+      const embeddingProvider = createEmbeddingProviderForOrg(
         {
-          id: workspace.id,
-          embeddingModel: workspace.settings.embedding.embeddingModel,
-          embeddingDim: workspace.settings.embedding.embeddingDim,
+          id: clerkOrgId,
+          embeddingModel: EMBEDDING_DEFAULTS.embeddingModel,
+          embeddingDim: EMBEDDING_DEFAULTS.embeddingDim,
         },
         { inputType: "search_document" }
       );
@@ -220,6 +214,10 @@ export const memoryEntityEmbed = inngest.createFunction(
       const { embeddings } = await embeddingProvider.embed([cappedNarrative]);
       const vector = embeddings[0];
       if (!vector) {
+        log.error("[entity-embed] embedding provider returned no vector", {
+          entityExternalId,
+          correlationId,
+        });
         throw new Error("Embedding provider returned no vector");
       }
       return vector;
@@ -228,7 +226,8 @@ export const memoryEntityEmbed = inngest.createFunction(
     // Step 3: UPSERT single entity vector to Pinecone
     await step.run("upsert-entity-vector", async () => {
       const { consolePineconeClient } = await import("@repo/app-pinecone");
-      const { indexName, namespaceName } = workspace.settings.embedding;
+      const indexName = EMBEDDING_DEFAULTS.indexName;
+      const namespaceName = buildOrgNamespace(clerkOrgId);
 
       const metadata: EntityVectorMetadata = {
         layer: "entities",
@@ -258,7 +257,7 @@ export const memoryEntityEmbed = inngest.createFunction(
         namespaceName
       );
 
-      log.info("Entity vector upserted", {
+      log.info("[entity-embed] entity vector upserted", {
         entityExternalId: entity.externalId,
         entityType: entity.category,
         vectorId: `ent_${entity.externalId}`,

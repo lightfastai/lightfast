@@ -5,7 +5,7 @@
  * Injects JSON dataset events via Inngest workflow.
  *
  * Usage:
- *   pnpm inject -- --workspace <id> [options]
+ *   pnpm inject -- --org <clerkOrgId> [options]
  */
 
 import {
@@ -51,7 +51,7 @@ Usage:
   pnpm inject -- [options]
 
 Required:
-  --workspace, -w   Workspace ID
+  --org, -o         Clerk Org ID
 
 Options:
   --scenario, -s    Dataset name or path (default: sandbox-1)
@@ -60,10 +60,10 @@ Options:
   --help, -h        Show this help
 
 Examples:
-  pnpm inject -- -w <workspaceId>
-  pnpm inject -- -w <workspaceId> -s performance
-  pnpm inject -- -w <workspaceId> -s balanced -c 10
-  pnpm inject -- -w <workspaceId> -s /path/to/custom.json
+  pnpm inject -- -o <clerkOrgId>
+  pnpm inject -- -o <clerkOrgId> -s performance
+  pnpm inject -- -o <clerkOrgId> -s balanced -c 10
+  pnpm inject -- -o <clerkOrgId> -s /path/to/custom.json
 `);
 }
 
@@ -75,12 +75,12 @@ async function main() {
     process.exit(0);
   }
 
-  const workspaceId = (args.workspace ?? args.w) as string;
+  const clerkOrgId = (args.org ?? args.o) as string;
   const scenarioName = (args.scenario ?? args.s ?? "sandbox-1") as string;
   const count = Number.parseInt((args.count ?? args.c ?? "6") as string, 10);
 
-  if (!workspaceId) {
-    console.error("Error: --workspace is required");
+  if (!clerkOrgId) {
+    console.error("Error: --org is required");
     showHelp();
     process.exit(1);
   }
@@ -96,7 +96,7 @@ async function main() {
   console.log("=".repeat(60));
   console.log("Test Data Injection");
   console.log("=".repeat(60));
-  console.log(`  Workspace: ${workspaceId}`);
+  console.log(`  Organization: ${clerkOrgId}`);
   console.log(`  Scenario: ${scenarioName}`);
   console.log(`  Events: ${events.length}`);
   console.log();
@@ -104,7 +104,7 @@ async function main() {
   console.log(`Triggering ${events.length} events via Inngest workflow...\n`);
 
   const triggerResult = await triggerEventCapture(events, {
-    workspaceId,
+    clerkOrgId,
     onProgress: (current, total) => {
       process.stdout.write(`\rTriggered: ${current}/${total}`);
     },

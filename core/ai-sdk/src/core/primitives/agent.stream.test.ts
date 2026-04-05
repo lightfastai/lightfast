@@ -156,11 +156,11 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
 
       // All param builds should succeed
       expect(streamParams).toHaveLength(5);
-      streamParams.forEach((params) => {
+      for (const params of streamParams) {
         expect(params.model).toBeDefined();
         expect(params.messages).toBeDefined();
         expect(params.tools).toBeDefined();
-      });
+      }
     });
   });
 

@@ -1,15 +1,12 @@
 import { relations } from "drizzle-orm";
 import { gatewayInstallations } from "./tables/gateway-installations";
 import { gatewayLifecycleLogs } from "./tables/gateway-lifecycle-log";
-import { gatewayResources } from "./tables/gateway-resources";
 import { gatewayTokens } from "./tables/gateway-tokens";
-import { orgWorkspaces } from "./tables/org-workspaces";
-import { workspaceEntities } from "./tables/workspace-entities";
-import { workspaceEntityEdges } from "./tables/workspace-entity-edges";
-import { workspaceEventEntities } from "./tables/workspace-event-entities";
-import { workspaceEvents } from "./tables/workspace-events";
-import { workspaceIntegrations } from "./tables/workspace-integrations";
-import { workspaceUserActivities } from "./tables/workspace-user-activities";
+import { orgEntities } from "./tables/org-entities";
+import { orgEntityEdges } from "./tables/org-entity-edges";
+import { orgEventEntities } from "./tables/org-event-entities";
+import { orgEvents } from "./tables/org-events";
+import { orgIntegrations } from "./tables/org-integrations";
 
 /**
  * Define relations between tables for Drizzle ORM queries
@@ -23,8 +20,7 @@ export const gatewayInstallationsRelations = relations(
   gatewayInstallations,
   ({ many }) => ({
     tokens: many(gatewayTokens),
-    resources: many(gatewayResources),
-    workspaceIntegrations: many(workspaceIntegrations),
+    orgIntegrations: many(orgIntegrations),
     lifecycleLogs: many(gatewayLifecycleLogs),
   })
 );
@@ -46,97 +42,47 @@ export const gatewayTokensRelations = relations(gatewayTokens, ({ one }) => ({
   }),
 }));
 
-export const gatewayResourcesRelations = relations(
-  gatewayResources,
+export const orgIntegrationsRelations = relations(
+  orgIntegrations,
   ({ one }) => ({
     installation: one(gatewayInstallations, {
-      fields: [gatewayResources.installationId],
+      fields: [orgIntegrations.installationId],
       references: [gatewayInstallations.id],
     }),
   })
 );
 
-export const orgWorkspacesRelations = relations(orgWorkspaces, ({ many }) => ({
-  events: many(workspaceEvents),
+export const orgEventsRelations = relations(orgEvents, ({ many }) => ({
+  entityEvents: many(orgEventEntities),
 }));
 
-export const workspaceUserActivitiesRelations = relations(
-  workspaceUserActivities,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceUserActivities.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    relatedActivity: one(workspaceUserActivities, {
-      fields: [workspaceUserActivities.relatedActivityId],
-      references: [workspaceUserActivities.id],
-    }),
-  })
-);
-
-export const workspaceIntegrationsRelations = relations(
-  workspaceIntegrations,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceIntegrations.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    installation: one(gatewayInstallations, {
-      fields: [workspaceIntegrations.installationId],
-      references: [gatewayInstallations.id],
-    }),
-  })
-);
-
-export const workspaceEventsRelations = relations(
-  workspaceEvents,
-  ({ one, many }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceEvents.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    entityEvents: many(workspaceEventEntities),
-  })
-);
-
 // Entity-event junction relations
-export const workspaceEventEntitiesRelations = relations(
-  workspaceEventEntities,
+export const orgEventEntitiesRelations = relations(
+  orgEventEntities,
   ({ one }) => ({
-    entity: one(workspaceEntities, {
-      fields: [workspaceEventEntities.entityId],
-      references: [workspaceEntities.id],
+    entity: one(orgEntities, {
+      fields: [orgEventEntities.entityId],
+      references: [orgEntities.id],
     }),
-    event: one(workspaceEvents, {
-      fields: [workspaceEventEntities.eventId],
-      references: [workspaceEvents.id],
-    }),
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceEventEntities.workspaceId],
-      references: [orgWorkspaces.id],
+    event: one(orgEvents, {
+      fields: [orgEventEntities.eventId],
+      references: [orgEvents.id],
     }),
   })
 );
 
 // Entity↔entity edges relations
-export const workspaceEntityEdgesRelations = relations(
-  workspaceEntityEdges,
-  ({ one }) => ({
-    workspace: one(orgWorkspaces, {
-      fields: [workspaceEntityEdges.workspaceId],
-      references: [orgWorkspaces.id],
-    }),
-    sourceEntity: one(workspaceEntities, {
-      fields: [workspaceEntityEdges.sourceEntityId],
-      references: [workspaceEntities.id],
-    }),
-    targetEntity: one(workspaceEntities, {
-      fields: [workspaceEntityEdges.targetEntityId],
-      references: [workspaceEntities.id],
-    }),
-    sourceEvent: one(workspaceEvents, {
-      fields: [workspaceEntityEdges.sourceEventId],
-      references: [workspaceEvents.id],
-    }),
-  })
-);
+export const orgEntityEdgesRelations = relations(orgEntityEdges, ({ one }) => ({
+  sourceEntity: one(orgEntities, {
+    fields: [orgEntityEdges.sourceEntityId],
+    references: [orgEntities.id],
+  }),
+  targetEntity: one(orgEntities, {
+    fields: [orgEntityEdges.targetEntityId],
+    references: [orgEntities.id],
+  }),
+  sourceEvent: one(orgEvents, {
+    fields: [orgEntityEdges.sourceEventId],
+    references: [orgEvents.id],
+  }),
+}));

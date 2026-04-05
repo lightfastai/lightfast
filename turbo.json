@@ -55,6 +55,10 @@
     "migrate:generate": {
       "cache": false
     },
+    "generate:openapi": {
+      "dependsOn": ["^build"],
+      "outputs": ["openapi.json"]
+    },
     "studio": {
       "cache": false,
       "persistent": true

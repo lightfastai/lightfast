@@ -10,6 +10,7 @@
 
 import { buildAuthorizeUrl } from "@api/platform/lib/oauth/authorize";
 import type { SourceType } from "@repo/app-providers";
+import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
@@ -29,6 +30,7 @@ export async function GET(
   const redirectTo = req.nextUrl.searchParams.get("redirect_to") ?? undefined;
 
   if (!orgId) {
+    log.warn("[oauth/authorize] missing org_id", { provider: providerName });
     return Response.json({ error: "missing_org_id" }, { status: 400 });
   }
 
@@ -40,8 +42,13 @@ export async function GET(
   });
 
   if (!result.ok) {
+    log.warn("[oauth/authorize] failed to build authorize URL", {
+      provider: providerName,
+      error: result.error,
+    });
     return Response.json({ error: result.error }, { status: 400 });
   }
 
+  log.info("[oauth/authorize] authorize URL built", { provider: providerName });
   return Response.json({ url: result.url, state: result.state });
 }

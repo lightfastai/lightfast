@@ -59,7 +59,7 @@ export const githubOAuthResponseSchema = z.union([
 // ── Provider Config Schema ──
 
 /**
- * Stable workspace-resource config stored as JSONB in workspace_integrations.provider_config.
+ * Stable connection config stored as JSONB in gateway_installations.provider_config.
  *
  * ONLY stable provider-issued IDs and user-controlled settings belong here.
  *

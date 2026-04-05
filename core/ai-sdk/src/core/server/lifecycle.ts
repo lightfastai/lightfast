@@ -4,7 +4,7 @@ import type { ApiError } from "./errors";
 /**
  * Base event data that includes system and request context
  */
-export interface BaseLifecycleEvent {
+interface BaseLifecycleEvent {
   /** Request context including userAgent and ipAddress */
   requestContext?: RequestContext;
   /** System context including sessionId and resourceId */

@@ -51,6 +51,9 @@ function searchReducer(
         ...state,
         selectedIndex: (state.selectedIndex - 1 + action.max) % action.max,
       };
+
+    default:
+      return state;
   }
 }
 

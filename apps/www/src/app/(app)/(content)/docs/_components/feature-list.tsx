@@ -10,7 +10,7 @@ export function FeatureList({
   className = "",
 }: FeatureListProps) {
   return (
-    <div className={`border-primary border-l-4 py-2 pl-6 ${className}`}>
+    <div className={`border-foreground/20 border-l-4 py-2 pl-6 ${className}`}>
       {title && (
         <h3 className="mb-4 font-semibold text-foreground text-lg">{title}</h3>
       )}

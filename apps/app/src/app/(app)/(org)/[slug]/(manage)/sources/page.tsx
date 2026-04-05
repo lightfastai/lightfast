@@ -1,0 +1,94 @@
+import {
+  PROVIDER_DISPLAY,
+  type ProviderSlug,
+} from "@repo/app-providers/client";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
+import { Button } from "@repo/ui/components/ui/button";
+import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import Link from "next/link";
+import { Suspense } from "react";
+import { InstalledSources } from "./_components/installed-sources";
+import { LatestIntegrations } from "./_components/latest-integrations";
+
+export default async function SourcesPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<{ search?: string; status?: string }>;
+}) {
+  const { slug } = await params;
+  const { search = "", status = "all" } = await searchParams;
+
+  // Prefetch connection status for all providers (for resource name lookups)
+  for (const provider of Object.keys(PROVIDER_DISPLAY) as ProviderSlug[]) {
+    void prefetch(
+      trpc.connections.generic.listInstallations.queryOptions({ provider })
+    );
+  }
+
+  prefetch(trpc.connections.resources.list.queryOptions());
+
+  return (
+    <HydrateClient>
+      <div className="pb-6">
+        {/* Header */}
+        <div className="mb-6 flex items-center justify-between">
+          <div>
+            <h1 className="font-semibold text-2xl tracking-tight">Sources</h1>
+            <p className="mt-1 text-muted-foreground text-sm">
+              Manage integrations connected to this org
+            </p>
+          </div>
+          <Button asChild size="sm">
+            <Link href={`/${slug}/sources/new`}>Add New Source</Link>
+          </Button>
+        </div>
+
+        {/* 12-column grid: 9 cols sources + 3 cols integrations */}
+        <div className="grid grid-cols-12 gap-6">
+          {/* Left column: Installed sources (9 cols) */}
+          <div className="col-span-12 lg:col-span-9">
+            <Suspense fallback={<InstalledSourcesSkeleton />}>
+              <InstalledSources
+                clerkOrgSlug={slug}
+                initialSearch={search}
+                initialStatus={status as "all" | "active" | "inactive"}
+              />
+            </Suspense>
+          </div>
+
+          {/* Right column: Latest integrations (3 cols) */}
+          <div className="col-span-12 lg:col-span-3">
+            <LatestIntegrations />
+          </div>
+        </div>
+      </div>
+    </HydrateClient>
+  );
+}
+
+function InstalledSourcesSkeleton() {
+  return (
+    <div className="space-y-4">
+      {/* Filter bar skeleton */}
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-8 flex-1" />
+        <Skeleton className="h-8 w-32" />
+      </div>
+      {/* Provider list skeleton */}
+      <div className="w-full divide-y rounded-lg border">
+        {Array.from({ length: 3 }).map((_, i) => (
+          <div className="flex items-center justify-between px-4 py-3" key={i}>
+            <div className="flex items-center gap-3">
+              <Skeleton className="h-5 w-5 rounded" />
+              <Skeleton className="h-4 w-16" />
+              <Skeleton className="h-5 w-20 rounded-full" />
+            </div>
+            <Skeleton className="h-4 w-4" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}

@@ -1,11 +1,5 @@
 {
-  "enabledPlugins": {
-    "vercel@claude-plugins-official": true,
-    "coderabbit@claude-plugins-official": true,
-    "semgrep@claude-plugins-official": true,
-    "pinecone@claude-plugins-official": true,
-    "posthog@claude-plugins-official": true
-  },
+  "enabledPlugins": {},
   "hooks": {
     "PostToolUse": [
       {

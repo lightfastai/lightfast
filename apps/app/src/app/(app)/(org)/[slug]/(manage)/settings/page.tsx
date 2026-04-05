@@ -8,8 +8,6 @@ export default async function SettingsPage({
   // Settings layout already verified admin role; no additional checks needed here
   const { slug } = await params;
 
-  console.log("[Settings Page] Rendering for slug:", slug);
-
   // Note: We rely on listUserOrganizations cache from (app)/layout.tsx
   // No separate prefetch needed - avoids Clerk propagation timing issues
   // The client component will find the org from the cached list by slug

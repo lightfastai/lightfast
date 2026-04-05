@@ -17,11 +17,9 @@
     "@db/app": "workspace:*",
     "@logtail/next": "^0.3.1",
     "@repo/app-providers": "workspace:*",
-    "@repo/lib": "workspace:*",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
-    "@vendor/inngest": "workspace:*",
     "@vendor/next": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",
@@ -32,7 +30,6 @@
     "next": "catalog:next16",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "server-only": "^0.0.1",
     "zod": "catalog:"
   },
   "devDependencies": {

@@ -530,7 +530,7 @@ describe("Error Handling - Critical Edge Cases", () => {
         { error: new Error("Unknown error"), operation: "stream" },
       ];
 
-      testCases.forEach(({ error, operation }) => {
+      for (const { error, operation } of testCases) {
         const result = toAgentApiError(error, operation);
         expect(result).toBeInstanceOf(ApiError);
         expect(result.statusCode).toBeGreaterThanOrEqual(400);
@@ -545,7 +545,7 @@ describe("Error Handling - Critical Edge Cases", () => {
           category: expect.any(String),
           severity: expect.any(String),
         });
-      });
+      }
     });
   });
 });

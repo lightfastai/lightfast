@@ -17,11 +17,10 @@
 
 import { db } from "@db/app/client";
 import {
-  orgWorkspaces,
-  workspaceEntities,
-  workspaceEventEntities,
-  workspaceEvents,
-  workspaceIntegrations,
+  orgEntities,
+  orgEventEntities,
+  orgEvents,
+  orgIntegrations,
 } from "@db/app/schema";
 import type { ProviderConfig } from "@repo/app-providers";
 import { deriveObservationType, getBaseEventType } from "@repo/app-providers";
@@ -69,35 +68,6 @@ function isEventAllowed(
 }
 
 /**
- * Resolve clerkOrgId from event data or database.
- *
- * New events include clerkOrgId from webhook handler.
- * Legacy events (or edge cases) fallback to database lookup.
- *
- * @returns clerkOrgId or empty string if workspace not found
- */
-async function resolveClerkOrgId(
-  eventClerkOrgId: string | undefined,
-  workspaceId: string
-): Promise<string> {
-  if (eventClerkOrgId) {
-    return eventClerkOrgId;
-  }
-
-  log.warn("clerkOrgId fallback to DB lookup", {
-    workspaceId,
-    reason: "event_missing_clerkOrgId",
-  });
-
-  const workspace = await db.query.orgWorkspaces.findFirst({
-    where: eq(orgWorkspaces.id, workspaceId),
-    columns: { clerkOrgId: true },
-  });
-
-  return workspace?.clerkOrgId ?? "";
-}
-
-/**
  * Event store workflow
  *
  * Fast path: stores facts only. No LLM, no embeddings.
@@ -110,14 +80,14 @@ export const memoryEventStore = inngest.createFunction(
     description: "Stores engineering events (fast path)",
     retries: 3,
 
-    // Idempotency by workspace + source ID to prevent duplicate observations per workspace
+    // Idempotency by org + source ID to prevent duplicate observations per org
     idempotency:
-      "event.data.workspaceId + '-' + event.data.sourceEvent.sourceId",
+      "event.data.clerkOrgId + '-' + event.data.sourceEvent.sourceId",
 
-    // Concurrency limit per workspace
+    // Concurrency limit per org
     concurrency: {
       limit: 10,
-      key: "event.data.workspaceId",
+      key: "event.data.clerkOrgId",
     },
 
     timeouts: {
@@ -128,8 +98,8 @@ export const memoryEventStore = inngest.createFunction(
     // Handle failures gracefully - complete job as failed
     onFailure: createNeuralOnFailureHandler("memory/event.capture", {
       logMessage: "Neural observation store failed",
-      logContext: ({ workspaceId, sourceEvent }) => ({
-        workspaceId,
+      logContext: ({ clerkOrgId, sourceEvent }) => ({
+        clerkOrgId,
         sourceId: sourceEvent.sourceId,
       }),
       buildOutput: ({ data: { sourceEvent }, error }) =>
@@ -143,13 +113,7 @@ export const memoryEventStore = inngest.createFunction(
   },
   { event: "memory/event.capture" },
   async ({ event, step }) => {
-    const {
-      workspaceId,
-      clerkOrgId: eventClerkOrgId,
-      sourceEvent,
-      ingestLogId,
-      correlationId,
-    } = event.data;
+    const { clerkOrgId, sourceEvent, ingestLogId, correlationId } = event.data;
 
     // Generate replay-safe values inside steps so they're memoized across retries.
     const { externalId, startTime } = await step.run(
@@ -160,12 +124,7 @@ export const memoryEventStore = inngest.createFunction(
       })
     );
 
-    const clerkOrgId = await step.run("resolve-clerk-org-id", async () => {
-      return resolveClerkOrgId(eventClerkOrgId, workspaceId);
-    });
-
-    log.info("Storing neural observation", {
-      workspaceId,
+    log.info("[event-store] storing observation", {
       clerkOrgId,
       externalId,
       provider: sourceEvent.provider,
@@ -181,7 +140,6 @@ export const memoryEventStore = inngest.createFunction(
     const jobId = await step.run("create-job", async () => {
       return createJob({
         clerkOrgId,
-        workspaceId,
         inngestRunId,
         inngestFunctionId: "memory/event.capture",
         name: `Capture ${sourceEvent.provider}/${sourceEvent.eventType}`,
@@ -202,15 +160,15 @@ export const memoryEventStore = inngest.createFunction(
 
     // Step 1: Check for duplicate
     const existing = await step.run("check-duplicate", async () => {
-      const obs = await db.query.workspaceEvents.findFirst({
+      const obs = await db.query.orgEvents.findFirst({
         where: and(
-          eq(workspaceEvents.workspaceId, workspaceId),
-          eq(workspaceEvents.sourceId, sourceEvent.sourceId)
+          eq(orgEvents.clerkOrgId, clerkOrgId),
+          eq(orgEvents.sourceId, sourceEvent.sourceId)
         ),
       });
 
       if (obs) {
-        log.info("Observation already exists, skipping", {
+        log.info("[event-store] observation already exists, skipping", {
           observationId: obs.id,
           sourceId: sourceEvent.sourceId,
         });
@@ -271,7 +229,7 @@ export const memoryEventStore = inngest.createFunction(
       }
 
       if (!resourceId) {
-        log.info("No resource ID in attributes, rejecting event", {
+        log.info("[event-store] no resource ID, rejecting event", {
           provider: sourceEvent.provider,
           eventType: sourceEvent.eventType,
         });
@@ -281,16 +239,16 @@ export const memoryEventStore = inngest.createFunction(
         };
       }
 
-      const integration = await db.query.workspaceIntegrations.findFirst({
+      const integration = await db.query.orgIntegrations.findFirst({
         where: and(
-          eq(workspaceIntegrations.workspaceId, workspaceId),
-          eq(workspaceIntegrations.providerResourceId, resourceId)
+          eq(orgIntegrations.clerkOrgId, clerkOrgId),
+          eq(orgIntegrations.providerResourceId, resourceId)
         ),
       });
 
       if (!integration) {
-        log.info("Integration not found for resource, rejecting event", {
-          workspaceId,
+        log.info("[event-store] integration not found, rejecting event", {
+          clerkOrgId,
           resourceId,
           provider: sourceEvent.provider,
         });
@@ -302,8 +260,8 @@ export const memoryEventStore = inngest.createFunction(
 
       // Gate 2: check integration is active
       if (integration.status !== "active") {
-        log.info("Integration is not active, rejecting event (Gate 2)", {
-          workspaceId,
+        log.info("[event-store] integration not active, rejecting (Gate 2)", {
+          clerkOrgId,
           resourceId,
           provider: sourceEvent.provider,
           integrationStatus: integration.status,
@@ -322,8 +280,8 @@ export const memoryEventStore = inngest.createFunction(
       const allowed = isEventAllowed(integration.providerConfig, baseEventType);
 
       if (!allowed) {
-        log.info("Event filtered by provider config", {
-          workspaceId,
+        log.info("[event-store] event filtered by provider config", {
+          clerkOrgId,
           resourceId,
           eventType: sourceEvent.eventType,
           baseEventType,
@@ -377,7 +335,7 @@ export const memoryEventStore = inngest.createFunction(
       const refEntities = extractFromRelations(sourceEvent.relations);
 
       // Primary entity from sourceEvent.entity — always upserted with highest
-      // confidence so entity-embed can always find it by (workspaceId, category, key).
+      // confidence so entity-embed can always find it by (clerkOrgId, category, key).
       // value is undefined so refLabel on the junction row stays null (it has no
       // relationship-type label — it IS the event's primary subject).
       const primaryEntityExtracted: ExtractedEntity = {
@@ -401,8 +359,8 @@ export const memoryEventStore = inngest.createFunction(
 
       for (const entity of allEntities) {
         const key = `${entity.category}:${entity.key.toLowerCase()}`;
-        const existing = entityMap.get(key);
-        if (!existing || existing.confidence < entity.confidence) {
+        const existingEntity = entityMap.get(key);
+        if (!existingEntity || existingEntity.confidence < entity.confidence) {
           entityMap.set(key, entity);
         }
       }
@@ -419,10 +377,10 @@ export const memoryEventStore = inngest.createFunction(
       );
 
       const [obs] = await db
-        .insert(workspaceEvents)
+        .insert(orgEvents)
         .values({
           externalId,
-          workspaceId,
+          clerkOrgId,
           occurredAt: sourceEvent.occurredAt,
           observationType,
           title: sourceEvent.title,
@@ -442,7 +400,7 @@ export const memoryEventStore = inngest.createFunction(
         throw new NonRetriableError("Failed to insert observation");
       }
 
-      log.info("Observation stored", {
+      log.info("[event-store] observation stored", {
         observationId: obs.id,
         externalId: obs.externalId,
         observationType,
@@ -466,9 +424,9 @@ export const memoryEventStore = inngest.createFunction(
         const entityResults = await Promise.all(
           extractedEntities.map((entity) =>
             db
-              .insert(workspaceEntities)
+              .insert(orgEntities)
               .values({
-                workspaceId,
+                clerkOrgId,
                 category: entity.category,
                 key: entity.key,
                 value: entity.value,
@@ -479,21 +437,21 @@ export const memoryEventStore = inngest.createFunction(
               })
               .onConflictDoUpdate({
                 target: [
-                  workspaceEntities.workspaceId,
-                  workspaceEntities.category,
-                  workspaceEntities.key,
+                  orgEntities.clerkOrgId,
+                  orgEntities.category,
+                  orgEntities.key,
                 ],
                 set: {
-                  lastSeenAt: sql`GREATEST(${workspaceEntities.lastSeenAt}, EXCLUDED.${workspaceEntities.lastSeenAt})`,
-                  occurrenceCount: sql`${workspaceEntities.occurrenceCount} + 1`,
+                  lastSeenAt: sql`GREATEST(${orgEntities.lastSeenAt}, excluded.${sql.identifier(orgEntities.lastSeenAt.name)})`,
+                  occurrenceCount: sql`${orgEntities.occurrenceCount} + 1`,
                   updatedAt: new Date().toISOString(),
-                  state: sql`CASE WHEN EXCLUDED.${workspaceEntities.lastSeenAt} > ${workspaceEntities.lastSeenAt} THEN EXCLUDED.${workspaceEntities.state} ELSE ${workspaceEntities.state} END`,
-                  url: sql`COALESCE(EXCLUDED.url, ${workspaceEntities.url})`,
+                  state: sql`CASE WHEN excluded.${sql.identifier(orgEntities.lastSeenAt.name)} > ${orgEntities.lastSeenAt} THEN excluded.${sql.identifier(orgEntities.state.name)} ELSE ${orgEntities.state} END`,
+                  url: sql`COALESCE(excluded.${sql.identifier(orgEntities.url.name)}, ${orgEntities.url})`,
                 },
               })
               .returning({
-                id: workspaceEntities.id,
-                externalId: workspaceEntities.externalId,
+                id: orgEntities.id,
+                externalId: orgEntities.externalId,
               })
           )
         );
@@ -514,7 +472,7 @@ export const memoryEventStore = inngest.createFunction(
             return {
               entityId,
               eventId: observation.id,
-              workspaceId,
+              clerkOrgId,
               category: entity.category,
               // Only structural ref entities carry a contextual relationship label.
               // The primary entity (index 0) has value=undefined -> refLabel=null.
@@ -527,12 +485,12 @@ export const memoryEventStore = inngest.createFunction(
 
         if (junctionRows.length > 0) {
           await db
-            .insert(workspaceEventEntities)
+            .insert(orgEventEntities)
             .values(junctionRows)
             .onConflictDoNothing();
         }
 
-        log.info("Entities and junctions stored", {
+        log.info("[event-store] entities and junctions stored", {
           observationId: observation.id,
           entitiesStored: junctionRows.length,
           ingestLogId,
@@ -562,7 +520,7 @@ export const memoryEventStore = inngest.createFunction(
       await step.sendEvent("emit-downstream-events", {
         name: "memory/entity.upserted" as const,
         data: {
-          workspaceId,
+          clerkOrgId,
           entityExternalId: entityUpsertResult.primaryEntityExternalId,
           entityType: sourceEvent.entity.entityType,
           provider: sourceEvent.provider,
@@ -578,7 +536,6 @@ export const memoryEventStore = inngest.createFunction(
     await step.sendEvent("emit-event-stored", {
       name: "memory/event.stored" as const,
       data: {
-        workspaceId,
         clerkOrgId,
         eventExternalId: observation.externalId,
         sourceType: sourceEvent.eventType,

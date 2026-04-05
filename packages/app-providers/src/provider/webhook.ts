@@ -6,7 +6,7 @@ import { z } from "zod";
 //   Adding sha512: add to algorithm enum + update HMAC_ALGO_MAP.
 //   Adding base64: add encoding field with .default("hex") + update _deriveHmacVerify.
 //   Adding new kind: new variantSchema + add to union array + new case in deriveVerifySignature.
-// In all cases: WebhookDef, ProviderDefinition, and relay middleware are untouched.
+// In all cases: WebhookDef, ProviderDefinition, and platform webhook handling are untouched.
 
 const hmacSchemeSchema = z.object({
   kind: z.literal("hmac"),
@@ -45,7 +45,7 @@ export const ed25519 = <const T extends Omit<Ed25519Scheme, "kind">>(
 ): { readonly kind: "ed25519" } & T => ({ kind: "ed25519", ...opts });
 
 // VerifyFn is async-capable — Ed25519 verification is async (WebCrypto).
-// HMAC returns synchronously; relay awaits all results uniformly.
+// HMAC returns synchronously; the platform webhook handler awaits all results uniformly.
 export type VerifyFn = (
   rawBody: string,
   headers: Headers,
@@ -59,16 +59,16 @@ export interface WebhookDef<TConfig> {
   extractResourceId: (payload: unknown) => string | null;
   extractSecret: (config: TConfig) => string;
   /** Zod schema for required webhook headers — validated before body read.
-   *  Keys are lowercase header names. Used by relay middleware for early rejection.
+   *  Keys are lowercase header names. Used by the platform webhook handler for early rejection.
    *  Must be a z.object() with string-valued fields (required or optional). */
   readonly headersSchema: z.ZodObject<
     Record<string, z.ZodType<string | undefined>>
   >;
   parsePayload: (raw: unknown) => unknown;
-  /** Zod-first signature scheme — relay derives verifySignature from this automatically. */
+  /** Zod-first signature scheme — the platform derives verifySignature from this automatically. */
   readonly signatureScheme: SignatureScheme;
   /** Optional override — only needed when scheme is non-standard.
-   *  When absent, relay derives from signatureScheme via deriveVerifySignature(). */
+   *  When absent, the platform derives from signatureScheme via deriveVerifySignature(). */
   readonly verifySignature?: (
     rawBody: string,
     headers: Headers,

@@ -7,6 +7,7 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
+import { platformUrl } from "./src/lib/related-projects";
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   typedRoutes: true,
@@ -24,7 +25,6 @@ const appConfig: NextConfig = merge({}, baseConfig, {
     "@repo/app-ai",
     "@repo/app-ai-types",
     "@repo/app-api-key",
-    "@repo/app-auth-middleware",
     "@repo/app-clerk-cache",
     "@repo/app-embed",
     "@repo/app-octokit-github",
@@ -56,7 +56,6 @@ const appConfig: NextConfig = merge({}, baseConfig, {
       "@repo/app-ai",
       "@repo/app-ai-types",
       "@repo/app-api-key",
-      "@repo/app-auth-middleware",
       "@repo/app-clerk-cache",
       "@repo/app-embed",
       "@repo/app-octokit-github",
@@ -66,7 +65,6 @@ const appConfig: NextConfig = merge({}, baseConfig, {
       "@repo/app-validation",
       "@repo/app-vercel",
       "@repo/app-providers",
-      "@repo/app-workspace-cache",
       "@repo/lib",
       "@repo/url-utils",
       "@vendor/analytics",
@@ -83,6 +81,18 @@ const appConfig: NextConfig = merge({}, baseConfig, {
           ? ["localhost:*"]
           : ["lightfast.ai", "*.lightfast.ai"],
     },
+  },
+  async rewrites() {
+    return [
+      {
+        source: "/api/connect/:path*",
+        destination: `${platformUrl}/api/connect/:path*`,
+      },
+      {
+        source: "/api/ingest/:path*",
+        destination: `${platformUrl}/api/ingest/:path*`,
+      },
+    ];
   },
   async redirects() {
     return [

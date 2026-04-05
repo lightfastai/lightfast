@@ -127,7 +127,9 @@ function verifyEventFiltering() {
 
   if (issues.length > 0) {
     console.log("\n❌ Issues found:\n");
-    issues.forEach((issue) => console.log(issue));
+    for (const issue of issues) {
+      console.log(issue);
+    }
     console.log(
       "\nThese events will be filtered by observation-capture.ts workflow."
     );

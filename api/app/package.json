@@ -33,21 +33,18 @@
   "license": "FSL-1.1-Apache-2.0",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@db/app": "workspace:*",
     "@inngest/middleware-sentry": "catalog:",
     "@repo/app-api-key": "workspace:*",
-    "@repo/app-auth-middleware": "workspace:^",
     "@repo/app-clerk-cache": "workspace:*",
-    "@repo/app-config": "workspace:*",
     "@repo/app-octokit-github": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "@repo/app-validation": "workspace:^",
     "@repo/app-vercel": "workspace:^",
-    "@repo/app-workspace-cache": "workspace:*",
     "@repo/lib": "workspace:^",
     "@repo/platform-trpc": "workspace:*",
     "@sentry/core": "catalog:",
@@ -56,10 +53,8 @@
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",
-    "date-fns": "^4.1.0",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
-    "nanoid": "catalog:",
     "superjson": "catalog:",
     "yaml": "^2.8.2",
     "zod": "catalog:"

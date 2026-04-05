@@ -38,7 +38,7 @@ import {
  *
  * Type Safety: metric and cloud are validated against validation schemas.
  *
- * Future: Could be made configurable per workspace or store.
+ * Future: Could be made configurable per organization or store.
  */
 export const PINECONE_CONFIG = {
   /**
@@ -54,8 +54,8 @@ export const PINECONE_CONFIG = {
    * - Physical isolation via Pinecone's serverless architecture
    * - Environment separation at Pinecone project level (different API keys)
    *
-   * Each workspace gets a hierarchical namespace within the shared index:
-   * Format: org_{clerkOrgId}:ws_{workspaceId}
+   * Each org gets its own namespace within the shared index:
+   * Format: sanitize(clerkOrgId) (e.g. org_abc123xyz)
    *
    * Values from: @repo/app-validation/constants (single source of truth)
    */
@@ -206,7 +206,7 @@ export const EMBEDDING_CONFIG = {
  * Controls reranking behavior for neural memory search.
  * Currently private - optimized for quality vs latency trade-offs.
  *
- * Future: Could allow users to specify mode per workspace.
+ * Future: Could allow users to specify mode per organization.
  */
 export const RERANK_CONFIG = {
   /**

@@ -127,6 +127,7 @@ export function OrgApiKeyList() {
 
   const handleRevoke = (keyId: string, keyName: string) => {
     if (
+      // biome-ignore lint/suspicious/noAlert: confirm dialog for destructive action
       window.confirm(
         `Are you sure you want to revoke "${keyName}"? This action cannot be undone and any applications using this key will lose access.`
       )
@@ -137,6 +138,7 @@ export function OrgApiKeyList() {
 
   const handleRotate = (keyId: string, keyName: string) => {
     if (
+      // biome-ignore lint/suspicious/noAlert: confirm dialog for destructive action
       window.confirm(
         `Are you sure you want to rotate "${keyName}"? The old key will be revoked immediately and a new key will be generated.`
       )
@@ -147,6 +149,7 @@ export function OrgApiKeyList() {
 
   const handleDelete = (keyId: string, keyName: string) => {
     if (
+      // biome-ignore lint/suspicious/noAlert: confirm dialog for destructive action
       window.confirm(
         `Are you sure you want to permanently delete "${keyName}"? This action cannot be undone.`
       )

@@ -1,6 +1,6 @@
 ---
 title: MCP Server
-description: Model Context Protocol server API reference for integrating AI assistants with Lightfast workspace memory.
+description: Model Context Protocol server API reference for integrating AI assistants with Lightfast.
 keywords:
   - MCP server
   - Model Context Protocol
@@ -9,7 +9,7 @@ keywords:
   - Cursor
 canonicalUrl: https://lightfast.ai/docs/api-reference/sdks-tools/mcp-server
 ogTitle: MCP Server API Reference – Lightfast
-ogDescription: Model Context Protocol server API reference for integrating AI assistants with Lightfast workspace memory.
+ogDescription: Model Context Protocol server API reference for integrating AI assistants with Lightfast.
 ogImage: https://lightfast.ai/og/docs/api/mcp-server.jpg
 authors:
   - name: Lightfast Team
@@ -54,21 +54,26 @@ npx @lightfastai/mcp [options]
 
 ## Tools
 
-The MCP server exposes five tools to AI assistants.
+The MCP server exposes the following tool to AI assistants.
 
 ### lightfast_search
 
-Search through workspace memory for relevant documents and observations.
+Search through connected tools for relevant decisions and observations.
 
-#### Parameters & Response
+#### Parameters
 
 <EmbeddedOperation operationId="search" />
 
-**Filters object structure:**
-- `sourceTypes`: `string[]` - Source types to include (e.g., `["github", "linear"]`)
-- `observationTypes`: `string[]` - Observation types to include (e.g., `["commit", "issue"]`)
-- `actorNames`: `string[]` - Actor names to filter by (e.g., `["@sarah", "@mike"]`)
-- `dateRange`: `object` - Date range filter with `start` and `end` ISO datetime strings
+| Parameter | Type | Required | Default | Description |
+|-----------|------|----------|---------|-------------|
+| `query` | `string` | Yes | — | Search query text |
+| `limit` | `number` | No | `10` | Max results (1–100) |
+| `offset` | `number` | No | `0` | Pagination offset |
+| `mode` | `"fast" \| "balanced"` | No | `"balanced"` | `fast` = vector scores only, `balanced` = Cohere rerank |
+| `sources` | `string[]` | No | — | Filter by provider (e.g. `["github", "linear"]`) |
+| `types` | `string[]` | No | — | Filter by entity type (e.g. `["pull_request", "issue"]`) |
+| `after` | `string` | No | — | ISO 8601 datetime lower bound |
+| `before` | `string` | No | — | ISO 8601 datetime upper bound |
 
 #### Example Request
 ```json
@@ -77,99 +82,9 @@ Search through workspace memory for relevant documents and observations.
   "arguments": {
     "query": "how does authentication work",
     "limit": 5,
-    "mode": "thorough",
-    "filters": {
-      "sourceTypes": ["github"],
-      "dateRange": {
-        "start": "2024-01-01T00:00:00Z",
-        "end": "2024-12-31T23:59:59Z"
-      }
-    }
-  }
-}
-```
-
----
-
-### lightfast_contents
-
-Fetch full content for documents by their IDs.
-
-#### Parameters & Response
-
-<EmbeddedOperation operationId="get-contents" />
-
-#### Example Request
-```json
-{
-  "name": "lightfast_contents",
-  "arguments": {
-    "ids": ["obs_abc123", "doc_def456"]
-  }
-}
-```
-
----
-
-### lightfast_find_similar
-
-Find content semantically similar to a given document or URL.
-
-#### Parameters & Response
-
-<EmbeddedOperation operationId="find-similar" />
-
-**Note:** Filters have the same structure as `lightfast_search`.
-
-#### Example Request
-```json
-{
-  "name": "lightfast_find_similar",
-  "arguments": {
-    "url": "https://github.com/org/repo/pull/123",
-    "limit": 5,
-    "threshold": 0.7
-  }
-}
-```
-
----
-
-### lightfast_graph
-
-Traverse the relationship graph from a starting observation. Returns connected observations with relationship edges. Supports depth control (1-3) and relationship type filtering.
-
-#### Parameters & Response
-
-<EmbeddedOperation operationId="graph" />
-
-#### Example Request
-```json
-{
-  "name": "lightfast_graph",
-  "arguments": {
-    "id": "obs_abc123",
-    "depth": 2
-  }
-}
-```
-
----
-
-### lightfast_related
-
-Find observations directly connected to a given observation via relationships. Returns related events grouped by source system with relationship types and directions.
-
-#### Parameters & Response
-
-<EmbeddedOperation operationId="find-related" />
-
-#### Example Request
-```json
-{
-  "name": "lightfast_related",
-  "arguments": {
-    "id": "obs_abc123"
+    "mode": "balanced",
+    "sources": ["github"],
+    "after": "2024-01-01T00:00:00Z"
   }
 }
 ```

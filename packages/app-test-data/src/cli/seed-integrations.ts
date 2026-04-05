@@ -2,39 +2,35 @@
 /**
  * Integration Seeder
  *
- * Seeds workspace integrations (GitHub, Vercel, Sentry, Linear)
+ * Seeds org integrations (GitHub, Vercel, Sentry, Linear)
  * for demo / testing purposes. Idempotent — skips records that already exist.
  *
  * Usage:
- *   pnpm seed-integrations:prod -- -w <workspaceId> -u <clerkUserId>
+ *   pnpm seed-integrations:prod -- -o <clerkOrgId> -u <clerkUserId>
  */
 
 import { db } from "@db/app";
-import type { InsertWorkspaceIntegration } from "@db/app/schema";
-import {
-  gatewayInstallations,
-  orgWorkspaces,
-  workspaceIntegrations,
-} from "@db/app/schema";
+import type { InsertOrgIntegration } from "@db/app/schema";
+import { gatewayInstallations, orgIntegrations } from "@db/app/schema";
 import { nanoid } from "@repo/lib";
 import { and, eq } from "@vendor/db";
 
 interface SeedOptions {
+  clerkOrgId: string;
   userId: string;
-  workspaceId: string;
 }
 
 interface DemoSource {
   documentCount: number;
   /** Stable externalId used to find/create the gwInstallation for this provider */
   gwExternalId: string;
-  providerConfig: InsertWorkspaceIntegration["providerConfig"];
+  providerConfig: InsertOrgIntegration["providerConfig"];
   providerResourceId: string;
 }
 
 /**
  * Demo source definitions for all 4 providers.
- * Each entry seeds a gwInstallation + workspaceIntegration.
+ * Each entry seeds a gwInstallation + orgIntegration.
  */
 const DEMO_SOURCES: DemoSource[] = [
   {
@@ -98,22 +94,9 @@ const DEMO_SOURCES: DemoSource[] = [
   },
 ];
 
-async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
-  console.log(`\nSeeding integrations for workspace: ${workspaceId}`);
+async function seedIntegrations({ clerkOrgId, userId }: SeedOptions) {
+  console.log(`\nSeeding integrations for org: ${clerkOrgId}`);
   console.log(`  User: ${userId}\n`);
-
-  // Look up the workspace to get clerkOrgId (needed for gatewayInstallations.orgId)
-  const workspace = await db.query.orgWorkspaces.findFirst({
-    where: eq(orgWorkspaces.id, workspaceId),
-    columns: { clerkOrgId: true },
-  });
-
-  if (!workspace) {
-    console.error(`Error: Workspace not found: ${workspaceId}`);
-    process.exit(1);
-  }
-
-  const orgId = workspace.clerkOrgId;
 
   for (const source of DEMO_SOURCES) {
     const provider = source.providerConfig.provider;
@@ -123,7 +106,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       where: and(
         eq(gatewayInstallations.provider, provider),
         eq(gatewayInstallations.externalId, source.gwExternalId),
-        eq(gatewayInstallations.orgId, orgId)
+        eq(gatewayInstallations.orgId, clerkOrgId)
       ),
       columns: { id: true },
     });
@@ -138,7 +121,7 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
           provider,
           externalId: source.gwExternalId,
           connectedBy: userId,
-          orgId,
+          orgId: clerkOrgId,
           status: "active",
         })
         .returning({ id: gatewayInstallations.id });
@@ -151,37 +134,33 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
       continue;
     }
 
-    // Check if workspace integration already exists for this provider resource
+    // Check if org integration already exists for this provider resource
     const existingIntegration = await db
-      .select({ id: workspaceIntegrations.id })
-      .from(workspaceIntegrations)
+      .select({ id: orgIntegrations.id })
+      .from(orgIntegrations)
       .where(
         and(
-          eq(workspaceIntegrations.workspaceId, workspaceId),
-          eq(
-            workspaceIntegrations.providerResourceId,
-            source.providerResourceId
-          )
+          eq(orgIntegrations.clerkOrgId, clerkOrgId),
+          eq(orgIntegrations.providerResourceId, source.providerResourceId)
         )
       );
 
     if (existingIntegration.length > 0) {
-      console.log(`  [skip] ${provider} workspace integration already exists`);
+      console.log(`  [skip] ${provider} org integration already exists`);
       continue;
     }
 
-    await db.insert(workspaceIntegrations).values({
+    await db.insert(orgIntegrations).values({
       id: `wi-${provider}-${nanoid(8)}`,
-      workspaceId,
+      clerkOrgId,
       installationId: installation.id,
       provider,
       providerConfig: source.providerConfig,
       providerResourceId: source.providerResourceId,
       status: "active",
-      lastSyncStatus: "success",
       documentCount: source.documentCount,
     });
-    console.log(`  [created] ${provider} workspace integration`);
+    console.log(`  [created] ${provider} org integration`);
   }
 
   console.log("\nDone! All integrations seeded.");
@@ -193,29 +172,29 @@ async function seedIntegrations({ workspaceId, userId }: SeedOptions) {
 
 function parseArgs(): SeedOptions {
   const args = process.argv.slice(2);
-  const options: SeedOptions = { workspaceId: "", userId: "" };
+  const options: SeedOptions = { clerkOrgId: "", userId: "" };
 
   // biome-ignore lint/style/useForOf: index manipulation (++i) inside loop body
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
-    if (arg === "-w" || arg === "--workspace") {
-      options.workspaceId = args[++i] ?? "";
+    if (arg === "-o" || arg === "--org") {
+      options.clerkOrgId = args[++i] ?? "";
     } else if (arg === "-u" || arg === "--user") {
       options.userId = args[++i] ?? "";
     } else if (arg === "-h" || arg === "--help") {
       console.log(`
-Usage: seed-integrations -w <workspaceId> -u <clerkUserId>
+Usage: seed-integrations -o <clerkOrgId> -u <clerkUserId>
 
-Seeds demo workspace integrations for GitHub, Vercel, Sentry,
+Seeds demo org integrations for GitHub, Vercel, Sentry,
 and Linear. Idempotent — existing records are skipped.
 
 Options:
-  -w, --workspace  Workspace ID (required)
-  -u, --user       Clerk user ID (required)
-  -h, --help       Show this help message
+  -o, --org    Clerk Org ID (required)
+  -u, --user   Clerk user ID (required)
+  -h, --help   Show this help message
 
 Example:
-  pnpm seed-integrations:prod -- -w ws_abc123 -u user_abc123
+  pnpm seed-integrations:prod -- -o org_abc123 -u user_abc123
 `);
       process.exit(0);
     }
@@ -226,8 +205,8 @@ Example:
 
 const options = parseArgs();
 
-if (!options.workspaceId) {
-  console.error("Error: --workspace (-w) is required");
+if (!options.clerkOrgId) {
+  console.error("Error: --org (-o) is required");
   process.exit(1);
 }
 if (!options.userId) {

@@ -36,6 +36,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check OpenAPI spec is up to date
+        run: |
+          pnpm turbo generate:openapi
+          git diff --exit-code packages/app-api-contract/openapi.json || {
+            echo "::error::openapi.json is stale. Run 'pnpm turbo generate:openapi' and commit the result."
+            exit 1
+          }
+
       - name: Lint (biome)
         run: pnpm check
 

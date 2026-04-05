@@ -25,7 +25,7 @@ interface BaseProviderFields<
 > extends Readonly<ProviderDisplayEntry> {
   readonly accountInfoSchema: TAccountInfoSchema;
   readonly api: TApi;
-  /** Build the providerConfig JSONB blob for a new workspace integration record. */
+  /** Build the providerConfig JSONB blob for a new gateway installation record. */
   readonly buildProviderConfig: (params: {
     defaultSyncEvents: readonly string[];
   }) => z.infer<TProviderConfigSchema>;
@@ -55,7 +55,7 @@ interface BaseProviderFields<
   readonly healthCheck?: HealthCheckDef<TConfig>;
   /** When true, all env vars are optional — the provider is disabled and its env preset is excluded from PROVIDER_ENVS(). */
   readonly optional?: true;
-  /** Zod schema for the provider_config JSONB blob stored in workspace_integrations. */
+  /** Zod schema for the provider_config JSONB blob stored in gateway_installations. */
   readonly providerConfigSchema: TProviderConfigSchema;
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */
   readonly resolveCategory: (eventType: string) => string;
@@ -110,8 +110,8 @@ export interface WebhookProvider<
  * Programmatically registers/unregisters webhooks with the provider on connection
  * setup/teardown. Auth via OAuth or API key. Inbound events arrive via signed POST.
  *
- * Runtime wiring (DB migration for webhookSetupState, relay guard migration,
- * gateway managed-provider setup flow) is deferred until a concrete managed provider
+ * Runtime wiring (DB migration for webhookSetupState, platform webhook guard,
+ * platform managed-provider setup flow) is deferred until a concrete managed provider
  * is added. This phase establishes the complete type architecture.
  */
 export interface ManagedProvider<
@@ -245,7 +245,7 @@ type ProviderWithInboundWebhooks =
  * True for providers that receive inbound webhooks — natively (WebhookProvider),
  * via programmatic registration (ManagedProvider), or via manual customer setup
  * (ApiProvider with an `inbound` field, e.g. Clerk, Datadog).
- * Used by relay middleware to gate webhook handling.
+ * Used by the platform webhook handler to gate webhook handling.
  */
 export function hasInboundWebhooks(
   p: ProviderDefinition

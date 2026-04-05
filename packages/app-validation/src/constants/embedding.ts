@@ -7,7 +7,7 @@
  * **This is the single source of truth for embedding configuration defaults.**
  *
  * Used by:
- * - @db/app: Workspace creation (buildWorkspaceSettings)
+ * - @db/app: Store creation
  * - @repo/app-config: PRIVATE_CONFIG (re-exports these)
  * - Workflows: Embedding provider initialization
  */
@@ -49,9 +49,9 @@ export const CHUNKING_DEFAULTS = {
 } as const;
 
 /**
- * Combined embedding defaults for workspace settings
+ * Combined embedding defaults for store settings
  *
- * All configuration values needed to populate workspace.settings.embedding
+ * All configuration values needed to populate store.settings.embedding
  */
 export const EMBEDDING_DEFAULTS = {
   indexName: PINECONE_DEFAULTS.indexName,

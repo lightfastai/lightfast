@@ -1,5 +1,5 @@
 import { db } from "@db/app/client";
-import { orgWorkspaces, workspaceIngestLogs } from "@db/app/schema";
+import { orgIngestLogs } from "@db/app/schema";
 import type { EventNotification } from "@repo/app-upstash-realtime";
 import { realtime } from "@repo/app-upstash-realtime";
 import { and, eq, gt } from "drizzle-orm";
@@ -32,24 +32,7 @@ export async function GET(request: NextRequest): Promise<Response> {
 
   const { orgId } = authResult.auth;
 
-  // 2. Resolve workspace for catch-up queries
-  const row = await db.query.orgWorkspaces.findFirst({
-    where: eq(orgWorkspaces.clerkOrgId, orgId),
-    columns: { id: true },
-  });
-
-  if (!row) {
-    return Response.json(
-      {
-        error: "WORKSPACE_NOT_FOUND",
-        message: "No workspace found for this org",
-        requestId,
-      },
-      { status: 404 }
-    );
-  }
-
-  // 3. Build SSE stream
+  // 2. Build SSE stream
   const encoder = new TextEncoder();
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
@@ -63,7 +46,7 @@ export async function GET(request: NextRequest): Promise<Response> {
       let catchUpComplete = false;
 
       const unsubscribe = await channel.subscribe({
-        events: ["workspace.event"],
+        events: ["org.event"],
         onData({ data }: { data: EventNotification }) {
           try {
             const notification = data;
@@ -92,25 +75,25 @@ export async function GET(request: NextRequest): Promise<Response> {
           if (!Number.isNaN(lastId)) {
             const missed = await db
               .select({
-                id: workspaceIngestLogs.id,
-                workspaceId: workspaceIngestLogs.workspaceId,
-                sourceEvent: workspaceIngestLogs.sourceEvent,
+                id: orgIngestLogs.id,
+                clerkOrgId: orgIngestLogs.clerkOrgId,
+                sourceEvent: orgIngestLogs.sourceEvent,
               })
-              .from(workspaceIngestLogs)
+              .from(orgIngestLogs)
               .where(
                 and(
-                  eq(workspaceIngestLogs.workspaceId, row.id),
-                  gt(workspaceIngestLogs.id, lastId)
+                  eq(orgIngestLogs.clerkOrgId, orgId),
+                  gt(orgIngestLogs.id, lastId)
                 )
               )
-              .orderBy(workspaceIngestLogs.id)
+              .orderBy(orgIngestLogs.id)
               .limit(1000);
 
             for (const missed_row of missed) {
               lastCatchUpId = missed_row.id;
               const notification: EventNotification = {
                 eventId: missed_row.id,
-                workspaceId: missed_row.workspaceId,
+                clerkOrgId: missed_row.clerkOrgId,
                 sourceEvent: missed_row.sourceEvent,
               };
               controller.enqueue(

@@ -1,7 +1,7 @@
 /**
  * User Activity Validation Schemas
  *
- * Type definitions for workspace user activities tracking.
+ * Type definitions for org user activity tracking.
  * Used for audit trails, compliance (GDPR/SOC2), and product analytics.
  */
 
@@ -14,7 +14,6 @@ import { z } from "zod";
  *
  * Categories:
  * - auth: Authentication and session events
- * - workspace: Workspace management (create, update, delete)
  * - integration: Integration connections (GitHub, Linear, Notion)
  * - store: Knowledge store operations
  * - job: Background job management
@@ -26,7 +25,6 @@ import { z } from "zod";
  */
 export const activityCategorySchema = z.enum([
   "auth",
-  "workspace",
   "integration",
   "store",
   "job",
@@ -93,40 +91,6 @@ export const ACTIVITY_ACTIONS = {
  * Note: The action field is NOT included in metadata - it's a top-level field.
  * We use a mapped type approach to maintain type safety.
  */
-
-// ============================================================================
-// Workspace Activities
-// ============================================================================
-
-/**
- * Metadata for workspace.created action
- */
-export const workspaceCreatedMetadataSchema = z
-  .object({
-    workspaceName: z.string(),
-    workspaceSlug: z.string(),
-    clerkOrgId: z.string(),
-  })
-  .passthrough();
-
-/**
- * Metadata for workspace.updated action
- */
-export const workspaceUpdatedMetadataSchema = z
-  .object({
-    changes: z
-      .object({
-        name: z
-          .object({
-            from: z.string(),
-            to: z.string(),
-          })
-          .optional(),
-        // Additional change types can be added here in the future
-      })
-      .passthrough(),
-  })
-  .passthrough();
 
 // ============================================================================
 // Integration Activities
@@ -358,24 +322,6 @@ export const searchContentsMetadataSchema = z
 // ============================================================================
 
 /**
- * Workspace Created Activity
- */
-export const workspaceCreatedActivitySchema = z.object({
-  category: z.literal("workspace"),
-  action: z.literal("workspace.created"),
-  metadata: workspaceCreatedMetadataSchema,
-});
-
-/**
- * Workspace Updated Activity
- */
-export const workspaceUpdatedActivitySchema = z.object({
-  category: z.literal("workspace"),
-  action: z.literal("workspace.updated"),
-  metadata: workspaceUpdatedMetadataSchema,
-});
-
-/**
  * Integration Connected Activity
  */
 export const integrationConnectedActivitySchema = z.object({
@@ -531,15 +477,13 @@ export const searchContentsActivitySchema = z.object({
  * Usage:
  * ```typescript
  * const result = activityTypeSchema.safeParse({
- *   action: "workspace.created",
- *   category: "workspace",
- *   metadata: { workspaceName, workspaceSlug, clerkOrgId }
+ *   action: "integration.connected",
+ *   category: "integration",
+ *   metadata: { provider, repoFullName, repoId, isPrivate, syncConfig }
  * });
  * ```
  */
 export const activityTypeSchema = z.discriminatedUnion("action", [
-  workspaceCreatedActivitySchema,
-  workspaceUpdatedActivitySchema,
   integrationConnectedActivitySchema,
   integrationStatusUpdatedActivitySchema,
   integrationConfigUpdatedActivitySchema,
@@ -569,12 +513,6 @@ export type ActivityMetadata = ActivityType["metadata"];
 // Individual Metadata Types (for type-safe usage in code)
 // ============================================================================
 
-export type WorkspaceCreatedMetadata = z.infer<
-  typeof workspaceCreatedMetadataSchema
->;
-export type WorkspaceUpdatedMetadata = z.infer<
-  typeof workspaceUpdatedMetadataSchema
->;
 export type IntegrationConnectedMetadata = z.infer<
   typeof integrationConnectedMetadataSchema
 >;
@@ -614,7 +552,7 @@ export type SearchContentsMetadata = z.infer<
  * Validation for creating new activity records.
  */
 export const insertActivitySchema = z.object({
-  workspaceId: z.string(),
+  clerkOrgId: z.string(),
 
   // Activity classification
   category: activityCategorySchema,

@@ -54,27 +54,6 @@ export const gatewayTokenResultSchema = z.object({
 });
 export type GatewayTokenResult = z.infer<typeof gatewayTokenResultSchema>;
 
-/**
- * Gateway proxy endpoints response shape.
- * Returned by GET /gateway/:id/proxy/endpoints
- */
-export const proxyEndpointsResponseSchema = z.object({
-  provider: z.string(),
-  baseUrl: z.string(),
-  endpoints: z.record(
-    z.string(),
-    z.object({
-      method: z.enum(["GET", "POST"]),
-      path: z.string(),
-      description: z.string(),
-      timeout: z.number().optional(),
-    })
-  ),
-});
-export type ProxyEndpointsResponse = z.infer<
-  typeof proxyEndpointsResponseSchema
->;
-
 // ── Installation-level Backfill Config (gatewayInstallations.backfillConfig) ──
 
 export const gwInstallationBackfillConfigSchema = z.object({

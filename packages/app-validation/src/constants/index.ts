@@ -27,7 +27,4 @@ export {
   // Validation helper functions
   validateOrgSlug,
   validateStoreName,
-  validateWorkspaceName,
-  // Workspace constraints
-  WORKSPACE_NAME,
 } from "./naming";

@@ -8,11 +8,11 @@
  */
 
 import { db } from "@db/app/client";
-import { resolveWorkspaceByName as resolveWorkspace } from "@repo/app-auth-middleware";
 import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
 import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { auth } from "@vendor/clerk/server";
+import { log } from "@vendor/observability/log/next";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -58,15 +58,10 @@ type AuthContext =
  * not tRPC. The CLI uses REST endpoints, not tRPC procedures.
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const source = opts.headers.get("x-trpc-source") ?? "unknown";
-
   const clerkSession = await auth({ treatPendingAsSignedOut: false });
 
   if (clerkSession.userId) {
     if (clerkSession.orgId) {
-      console.info(
-        `>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-active)`
-      );
       return {
         auth: {
           type: "clerk-active" as const,
@@ -77,9 +72,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
         headers: opts.headers,
       };
     }
-    console.info(
-      `>>> tRPC Request from ${source} by ${clerkSession.userId} (clerk-pending)`
-    );
     return {
       auth: {
         type: "clerk-pending" as const,
@@ -90,7 +82,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     };
   }
 
-  console.info(`>>> tRPC Request from ${source} - unauthenticated`);
   return {
     auth: { type: "unauthenticated" as const },
     db,
@@ -174,7 +165,7 @@ const timingMiddleware = t.middleware(async ({ next, path }) => {
   const result = await next();
 
   const end = Date.now();
-  console.log(`[TRPC] ${path} took ${end - start}ms to execute`);
+  log.info("[trpc] procedure timing", { path, durationMs: end - start });
 
   return result;
 });
@@ -200,7 +191,7 @@ export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
  * - Create new organization
  * - User-level integrations (GitHub account connection)
  *
- * For org-scoped operations (workspaces, repos), use `orgScopedProcedure`.
+ * For org-scoped operations (repos, integrations), use `orgScopedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
@@ -237,16 +228,15 @@ export const userScopedProcedure = sentrifiedProcedure
 /**
  * Org-Scoped Procedure
  *
- * For org-level operations: workspaces, repositories, members, integrations.
+ * For org-level operations: repositories, members, integrations.
  * Only accepts clerk-active users (authenticated + has claimed org).
  *
  * Type-safe: `ctx.auth.orgId` is guaranteed to exist.
  *
  * Use cases:
- * - Workspaces (list, create, update)
  * - Repositories (connect, sync)
  * - Org members (invite, remove)
- * - Org integrations (GitHub org, Slack workspace)
+ * - Org integrations (GitHub org, Slack)
  * - Org settings
  *
  * For user-level operations (profile, create org), use `userScopedProcedure`.
@@ -280,52 +270,6 @@ export const orgScopedProcedure = sentrifiedProcedure
       },
     });
   });
-
-/**
- * Helper: Resolve workspace by name within an org (user-facing)
- *
- * This centralizes the pattern of:
- * 1. Verifying org access (via verifyOrgAccessAndResolve)
- * 2. Fetching workspace by name within that org (name is user-facing, used in URLs)
- * 3. Returning workspace ID and internal slug for database queries
- *
- * Use this in procedures that need to work with workspace-scoped data from URL params
- * (jobs, stores, documents, etc.)
- *
- * @throws {TRPCError} NOT_FOUND if org or workspace doesn't exist
- * @throws {TRPCError} FORBIDDEN if user doesn't have access to org
- */
-export async function resolveWorkspaceByName(params: {
-  clerkOrgSlug: string;
-  workspaceName: string;
-  userId: string;
-}): Promise<{
-  workspaceId: string;
-  workspaceName: string;
-  workspaceSlug: string;
-  clerkOrgId: string;
-}> {
-  const result = await resolveWorkspace({
-    clerkOrgSlug: params.clerkOrgSlug,
-    workspaceName: params.workspaceName,
-    userId: params.userId,
-    db,
-  });
-
-  if (!result.success) {
-    throw new TRPCError({
-      code: result.errorCode,
-      message: result.error,
-    });
-  }
-
-  return {
-    workspaceId: result.data.workspaceId,
-    workspaceName: params.workspaceName,
-    workspaceSlug: result.data.workspaceSlug,
-    clerkOrgId: result.data.clerkOrgId,
-  };
-}
 
 /**
  * Helper: Verify organization membership

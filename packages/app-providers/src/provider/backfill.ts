@@ -94,5 +94,12 @@ export function typedEntityHandler<TCursor>(handler: {
 export interface BackfillDef {
   readonly defaultEntityTypes: readonly string[];
   readonly entityTypes: Record<string, BackfillEntityHandler>;
+  /** Resolve resource metadata (e.g., owner/repo) live from provider API.
+   *  Replaces stale DB-stored resourceName with current values.
+   *  Called once per resource at the start of backfill orchestration. */
+  readonly resolveResourceMeta: (params: {
+    providerResourceId: string;
+    token: string;
+  }) => Promise<string>;
   readonly supportedEntityTypes: readonly string[];
 }

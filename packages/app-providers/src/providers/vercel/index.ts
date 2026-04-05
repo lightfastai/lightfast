@@ -246,6 +246,28 @@ export const vercel = defineWebhookProvider({
         subtitle: null,
       }));
     },
+
+    resolveProxyResources: async (executeApi, installation) => {
+      const info = installation.providerAccountInfo as {
+        raw?: { team_id?: string };
+      } | null;
+      const queryParams: Record<string, string> = { limit: "100" };
+      if (info?.raw?.team_id) {
+        queryParams.teamId = info.raw.team_id;
+      }
+
+      const result = await executeApi({
+        endpointId: "list-projects",
+        queryParams,
+      });
+      const parsed = vercelProjectsListSchema.parse(result.data);
+
+      return parsed.projects.map((p) => ({
+        providerResourceId: String(p.id),
+        name: p.name,
+        params: { projectId: String(p.id) },
+      }));
+    },
   },
 
   edgeRules: [],
@@ -339,7 +361,7 @@ export const vercel = defineWebhookProvider({
         throw new Error("missing configurationId");
       }
 
-      const redirectUri = `${config.callbackBaseUrl}/gateway/vercel/callback`;
+      const redirectUri = `${config.callbackBaseUrl}/api/connect/vercel/callback`;
       const oauthTokens = await exchangeVercelCode(config, code, redirectUri);
 
       const parsed = vercelOAuthResponseSchema.parse(oauthTokens.raw);

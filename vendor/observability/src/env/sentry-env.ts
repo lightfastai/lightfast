@@ -10,7 +10,7 @@ export const sentryEnv = createEnv({
     SENTRY_AUTH_TOKEN: z.string().min(1).optional(),
   },
   client: {
-    NEXT_PUBLIC_SENTRY_DSN: z.string().min(1),
+    NEXT_PUBLIC_SENTRY_DSN: z.string().min(1).optional(),
     NEXT_PUBLIC_VERCEL_ENV: z
       .enum(["development", "preview", "production"])
       .default("development"),

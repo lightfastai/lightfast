@@ -7,22 +7,20 @@
  */
 
 import { connectionsRouter } from "./router/org/connections";
+import { eventsRouter } from "./router/org/events";
 import { jobsRouter } from "./router/org/jobs";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
-import { workspaceRouter } from "./router/org/workspace";
 import { accountRouter } from "./router/user/account";
 import { organizationRouter } from "./router/user/organization";
-import { workspaceAccessRouter } from "./router/user/workspace";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
   // User-scoped (clerk-pending | clerk-active)
   organization: organizationRouter,
   account: accountRouter,
-  workspaceAccess: workspaceAccessRouter,
   // Org-scoped (clerk-active only)
-  workspace: workspaceRouter,
   connections: connectionsRouter,
+  events: eventsRouter,
   jobs: jobsRouter,
   orgApiKeys: orgApiKeysRouter,
 });

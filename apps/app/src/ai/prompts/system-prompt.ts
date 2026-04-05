@@ -4,10 +4,9 @@ import { ANSWER_PROVIDERS } from "./providers";
 interface AnswerPromptOptions {
   /** Model ID for token budgeting */
   modelId?: string;
-  /** Workspace context (hardcoded for now, dynamic later) */
-  workspace: {
-    projectName: string;
-    projectDescription: string;
+  /** Org context */
+  org: {
+    name: string;
   };
 }
 
@@ -18,12 +17,7 @@ export function buildAnswerSystemPrompt(options: AnswerPromptOptions): string {
   const context = buildPromptContext({
     isAnonymous: false,
     userId: "system",
-    activeTools: [
-      "workspaceSearch",
-      "workspaceContents",
-      "workspaceFindSimilar",
-      "workspaceRelated",
-    ],
+    activeTools: ["orgSearch"],
     features: {
       temporalContext: true,
       style: true,
@@ -35,9 +29,8 @@ export function buildAnswerSystemPrompt(options: AnswerPromptOptions): string {
       currentTimestamp: new Date().toISOString(),
     },
     userContext: {
-      workspace: {
-        name: options.workspace.projectName,
-        description: options.workspace.projectDescription,
+      org: {
+        name: options.org.name,
         repos: [],
         integrations: [],
       },
@@ -47,10 +40,3 @@ export function buildAnswerSystemPrompt(options: AnswerPromptOptions): string {
 
   return buildPrompt(context, ANSWER_PROVIDERS);
 }
-
-// Hardcoded workspace context for V1 (localhost = Lightfast project)
-export const HARDCODED_WORKSPACE_CONTEXT = {
-  projectName: "Lightfast",
-  projectDescription:
-    "Lightfast is a pnpm monorepo (Turborepo) for building AI agent orchestration tools. It includes a console app (Next.js), marketing site, chat app, and supporting infrastructure across GitHub, Linear, Vercel, and Sentry integrations.",
-};

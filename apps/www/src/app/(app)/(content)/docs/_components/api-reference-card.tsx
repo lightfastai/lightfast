@@ -12,7 +12,6 @@ interface ApiReferenceCardProps {
 }
 
 export function ApiReferenceCard({
-  title,
   description,
   method,
   path,
@@ -22,18 +21,17 @@ export function ApiReferenceCard({
   return (
     <ContentLink
       className={cn(
-        "group relative flex flex-col gap-2 rounded-lg border border-border bg-background/50 p-4 transition-all hover:border-foreground/20 hover:bg-muted/30 hover:shadow-sm",
+        "group flex flex-col gap-1.5 border-border/20 border-b py-4 transition-colors hover:text-foreground",
         className
       )}
       href={href}
     >
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="font-semibold text-foreground transition-colors group-hover:text-primary">
-          {title}
-        </h3>
+      <div className="flex items-center gap-3">
         <ApiMethod method={method} />
+        <code className="font-mono text-muted-foreground text-sm group-hover:text-foreground">
+          {path}
+        </code>
       </div>
-      <code className="font-mono text-muted-foreground text-xs">{path}</code>
       <p className="line-clamp-2 text-muted-foreground text-sm">
         {description}
       </p>
@@ -50,7 +48,5 @@ export function ApiReferenceGrid({
   children,
   className,
 }: ApiReferenceGridProps) {
-  return (
-    <div className={cn("grid gap-4 sm:grid-cols-2", className)}>{children}</div>
-  );
+  return <div className={cn("flex flex-col", className)}>{children}</div>;
 }

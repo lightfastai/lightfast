@@ -2,7 +2,7 @@
  * API Key Authentication Middleware for v1 Routes
  *
  * SECURITY: Validates org-scoped API keys.
- * Keys authenticate the org and can access all workspaces within it.
+ * Keys authenticate the org and can access all resources within it.
  */
 
 import { db } from "@db/app/client";
@@ -36,15 +36,15 @@ export interface AuthError {
 export type AuthResult = AuthSuccess | AuthError;
 
 /**
- * Verify workspace-scoped API key
+ * Verify org-scoped API key
  *
  * Required headers:
  * - Authorization: Bearer <api-key>
  *
- * The workspace is determined by the key binding, NOT by X-Workspace-ID header.
- * This prevents unauthorized access to other workspaces.
+ * The org is determined by the key binding.
+ * This prevents unauthorized access to other orgs.
  *
- * @returns AuthResult with workspace context from the key binding
+ * @returns AuthResult with org context from the key binding
  */
 export async function withApiKeyAuth(
   request: NextRequest,

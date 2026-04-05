@@ -1,9 +1,9 @@
 import { db } from "@db/app/client";
 import {
-  workspaceEntities,
-  workspaceEntityEdges,
-  workspaceEventEntities,
-  workspaceEvents,
+  orgEntities,
+  orgEntityEdges,
+  orgEventEntities,
+  orgEvents,
 } from "@db/app/schema";
 import type { EdgeRule } from "@repo/app-providers";
 import { PROVIDERS } from "@repo/app-providers";
@@ -24,7 +24,7 @@ const STRUCTURAL_TYPES = ["commit", "branch", "pr", "issue", "deployment"];
  * 5. Insert entity<->entity edges
  */
 export async function resolveEdges(
-  workspaceId: string,
+  clerkOrgId: string,
   eventId: number,
   source: string,
   entityRefs: Array<{ type: string; key: string; label: string | null }>
@@ -40,19 +40,19 @@ export async function resolveEdges(
   // 2. Find entity IDs for our refs
   const entityConditions = structuralRefs.map(
     (ref) =>
-      sql`(${workspaceEntities.category} = ${ref.type} AND ${workspaceEntities.key} = ${ref.key})`
+      sql`(${orgEntities.category} = ${ref.type} AND ${orgEntities.key} = ${ref.key})`
   );
 
   const ourEntities = await db
     .select({
-      id: workspaceEntities.id,
-      category: workspaceEntities.category,
-      key: workspaceEntities.key,
+      id: orgEntities.id,
+      category: orgEntities.category,
+      key: orgEntities.key,
     })
-    .from(workspaceEntities)
+    .from(orgEntities)
     .where(
       and(
-        eq(workspaceEntities.workspaceId, workspaceId),
+        eq(orgEntities.clerkOrgId, clerkOrgId),
         sql`(${sql.join(entityConditions, sql` OR `)})`
       )
     );
@@ -73,17 +73,17 @@ export async function resolveEdges(
   // 3. Find co-occurring events via junction table
   const coOccurring = await db
     .select({
-      eventId: workspaceEventEntities.eventId,
-      entityId: workspaceEventEntities.entityId,
+      eventId: orgEventEntities.eventId,
+      entityId: orgEventEntities.entityId,
     })
-    .from(workspaceEventEntities)
+    .from(orgEventEntities)
     .where(
       and(
-        inArray(workspaceEventEntities.entityId, ourEntityIds),
-        ne(workspaceEventEntities.eventId, eventId)
+        inArray(orgEventEntities.entityId, ourEntityIds),
+        ne(orgEventEntities.eventId, eventId)
       )
     )
-    .orderBy(desc(workspaceEventEntities.eventId))
+    .orderBy(desc(orgEventEntities.eventId))
     .limit(100);
 
   if (coOccurring.length === 0) {
@@ -92,10 +92,10 @@ export async function resolveEdges(
 
   if (coOccurring.length === 100) {
     log.warn(
-      "Edge resolver co-occurrence limit reached, recent events preferred",
+      "[edge-resolver] co-occurrence limit reached, recent events preferred",
       {
         eventId,
-        workspaceId,
+        clerkOrgId,
         entityCount: ourEntityIds.length,
       }
     );
@@ -106,18 +106,18 @@ export async function resolveEdges(
 
   const [coEvents, coEventEntityJunctions] = await Promise.all([
     db
-      .select({ id: workspaceEvents.id, source: workspaceEvents.source })
-      .from(workspaceEvents)
-      .where(inArray(workspaceEvents.id, coEventIds)),
+      .select({ id: orgEvents.id, source: orgEvents.source })
+      .from(orgEvents)
+      .where(inArray(orgEvents.id, coEventIds)),
     db
       .select({
-        eventId: workspaceEventEntities.eventId,
-        entityId: workspaceEventEntities.entityId,
-        refLabel: workspaceEventEntities.refLabel,
-        category: workspaceEventEntities.category,
+        eventId: orgEventEntities.eventId,
+        entityId: orgEventEntities.entityId,
+        refLabel: orgEventEntities.refLabel,
+        category: orgEventEntities.category,
       })
-      .from(workspaceEventEntities)
-      .where(inArray(workspaceEventEntities.eventId, coEventIds)),
+      .from(orgEventEntities)
+      .where(inArray(orgEventEntities.eventId, coEventIds)),
   ]);
 
   const coEventSourceMap = new Map(coEvents.map((e) => [e.id, e.source]));
@@ -233,7 +233,7 @@ export async function resolveEdges(
   // 8. Insert entity<->entity edges
   const inserts = deduped.map((edge) => ({
     externalId: nanoid(),
-    workspaceId,
+    clerkOrgId,
     sourceEntityId: edge.sourceEntityId,
     targetEntityId: edge.targetEntityId,
     relationshipType: edge.relationshipType,
@@ -244,28 +244,31 @@ export async function resolveEdges(
 
   try {
     await db
-      .insert(workspaceEntityEdges)
+      .insert(orgEntityEdges)
       .values(inserts)
       .onConflictDoUpdate({
         target: [
-          workspaceEntityEdges.workspaceId,
-          workspaceEntityEdges.sourceEntityId,
-          workspaceEntityEdges.targetEntityId,
-          workspaceEntityEdges.relationshipType,
+          orgEntityEdges.clerkOrgId,
+          orgEntityEdges.sourceEntityId,
+          orgEntityEdges.targetEntityId,
+          orgEntityEdges.relationshipType,
         ],
         set: {
-          confidence: sql`GREATEST(EXCLUDED.confidence, ${workspaceEntityEdges.confidence})`,
+          confidence: sql`GREATEST(excluded.${sql.identifier(orgEntityEdges.confidence.name)}, ${orgEntityEdges.confidence})`,
           lastSeenAt: sql`CURRENT_TIMESTAMP`,
-          sourceEventId: sql`EXCLUDED.source_event_id`,
+          sourceEventId: sql`excluded.${sql.identifier(orgEntityEdges.sourceEventId.name)}`,
         },
       });
-    log.info("Entity edges created", {
+    log.info("[edge-resolver] entity edges created", {
       eventId,
       count: inserts.length,
     });
     return inserts.length;
   } catch (error) {
-    log.error("Failed to create entity edges", { error, workspaceId });
+    log.error("[edge-resolver] failed to create entity edges", {
+      error,
+      clerkOrgId,
+    });
     return 0;
   }
 }

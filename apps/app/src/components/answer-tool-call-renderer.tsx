@@ -1,10 +1,6 @@
 "use client";
 
-import type {
-  ContentsToolUIPart,
-  FindSimilarToolUIPart,
-  SearchToolUIPart,
-} from "@repo/app-ai-types";
+import type { SearchToolUIPart } from "@repo/app-ai-types";
 import {
   Accordion,
   AccordionContent,
@@ -15,11 +11,7 @@ import { cn } from "@repo/ui/lib/utils";
 import type { ToolUIPart } from "ai";
 import { AlertCircle, Loader2, Search } from "lucide-react";
 import { formatToolErrorPayload } from "./answer-tool-error-utils";
-import {
-  ContentsToolResult,
-  FindSimilarToolResult,
-  SearchToolResult,
-} from "./answer-tool-results";
+import { SearchToolResult } from "./answer-tool-results";
 
 interface ToolCallRendererProps {
   className?: string;
@@ -44,10 +36,7 @@ function getInputPreview(
 }
 
 const TOOL_NAMES = {
-  workspaceSearch: "workspace search",
-  workspaceContents: "workspace contents",
-  workspaceFindSimilar: "find similar",
-  workspaceRelated: "related",
+  orgSearch: "search",
 };
 
 export function ToolCallRenderer({
@@ -138,33 +127,11 @@ export function ToolCallRenderer({
   }
 
   // Handle output-available (final state after error checks)
-  if (toolName === "workspaceSearch") {
+  if (toolName === "orgSearch") {
     return (
       <SearchToolResult
         data={
           (toolPart as SearchToolUIPart & { state: "output-available" }).output
-        }
-      />
-    );
-  }
-
-  if (toolName === "workspaceContents") {
-    return (
-      <ContentsToolResult
-        data={
-          (toolPart as ContentsToolUIPart & { state: "output-available" })
-            .output
-        }
-      />
-    );
-  }
-
-  if (toolName === "workspaceFindSimilar") {
-    return (
-      <FindSimilarToolResult
-        data={
-          (toolPart as FindSimilarToolUIPart & { state: "output-available" })
-            .output
         }
       />
     );

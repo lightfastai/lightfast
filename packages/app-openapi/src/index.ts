@@ -1,1 +1,0 @@
-export { generateOpenAPIDocument } from "./registry";
