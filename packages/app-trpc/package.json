@@ -15,6 +15,9 @@
     "./react": {
       "default": "./src/react.tsx"
     },
+    "./hooks": {
+      "default": "./src/hooks/use-active-org.ts"
+    },
     "./types": {
       "default": "./src/types.ts"
     }

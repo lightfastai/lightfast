@@ -1,26 +1,36 @@
 "use client";
 
+import { useTRPC } from "@repo/app-trpc/react";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
-import { useClerk, useUser } from "@vendor/clerk/client";
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { useClerk } from "@vendor/clerk/client";
 import { NotificationsTrigger } from "@vendor/knock/components/trigger";
 /**
  * Application header - full width with org switcher on left and user actions on right
  */
 export function AppHeader() {
+  const trpc = useTRPC();
   const { signOut } = useClerk();
-  const { user, isLoaded } = useUser();
 
-  const email =
-    user?.primaryEmailAddress?.emailAddress ??
-    user?.emailAddresses[0]?.emailAddress ??
-    user?.username ??
-    "";
+  const { data: profile } = useSuspenseQuery({
+    ...trpc.account.get.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const email = profile.primaryEmailAddress ?? profile.username ?? "";
 
   const initials = (() => {
-    if (!user) {
-      return "LF";
+    const { firstName, lastName, fullName, username } = profile;
+    if (fullName) {
+      return fullName
+        .split(" ")
+        .map((n) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2);
     }
-    const { firstName, lastName, username } = user;
     if (firstName && lastName) {
       return `${firstName[0]}${lastName[0]}`.toUpperCase();
     }
@@ -44,14 +54,12 @@ export function AppHeader() {
       {/* Right side - Notifications and User dropdown */}
       <div className="ml-auto flex items-center gap-3">
         <NotificationsTrigger />
-        {isLoaded && user && (
-          <UserMenu
-            email={email}
-            initials={initials}
-            onSignOut={() => void signOut({ redirectUrl: "/sign-in" })}
-            settingsHref="/account/settings/general"
-          />
-        )}
+        <UserMenu
+          email={email}
+          initials={initials}
+          onSignOut={() => void signOut({ redirectUrl: "/sign-in" })}
+          settingsHref="/account/settings/general"
+        />
       </div>
     </div>
   );

@@ -1,12 +1,12 @@
 "use client";
 
+import { useActiveOrg } from "@repo/app-trpc/hooks";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
-import { useOrganization } from "@vendor/clerk/client";
 import { AnswerInterface } from "./answer-interface";
 
 export function AskLightfast() {
-  const { organization } = useOrganization();
-  const clerkOrgId = organization?.id ?? "";
+  const activeOrg = useActiveOrg();
+  const clerkOrgId = activeOrg?.id ?? "";
 
   return <AnswerInterface clerkOrgId={clerkOrgId} />;
 }

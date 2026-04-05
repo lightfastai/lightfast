@@ -1,6 +1,7 @@
 "use client";
 
-import { useUser } from "@vendor/clerk/client";
+import { useTRPC } from "@repo/app-trpc/react";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { NotificationsProvider } from "@vendor/knock/components/provider";
 import type { ReactNode } from "react";
 
@@ -9,17 +10,17 @@ export function ConsoleNotificationsProvider({
 }: {
   children: ReactNode;
 }) {
-  const { user, isLoaded } = useUser();
-
-  // Always wrap with provider, even if user is still loading
-  // This ensures Knock context is available when needed
-  if (!(isLoaded && user)) {
-    return (
-      <NotificationsProvider userId="loading">{children}</NotificationsProvider>
-    );
-  }
+  const trpc = useTRPC();
+  const { data: profile } = useSuspenseQuery({
+    ...trpc.account.get.queryOptions(),
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    staleTime: 5 * 60 * 1000,
+  });
 
   return (
-    <NotificationsProvider userId={user.id}>{children}</NotificationsProvider>
+    <NotificationsProvider userId={profile.id}>
+      {children}
+    </NotificationsProvider>
   );
 }
