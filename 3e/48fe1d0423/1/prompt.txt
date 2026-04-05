@@ -9,3 +9,7 @@ yes
 ---
 
 also commit stale @apps/platform/src/app/(trpc)/ route group and run /oneshot_merge
+
+---
+
+no need to add the changes makde the observability stuff. yes to rest
