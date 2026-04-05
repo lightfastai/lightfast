@@ -1,0 +1,33 @@
+/research_codebase consideer beforeSend in @apps/platform/src/instrumentation.ts 
+
+that obfuscates TRPCErrors from Sentry. is this truely the best practice when it comes to actually handling client + server-side error.
+
+i want you to scrutinize the current architecture we have designing for observability + error handling.
+
+run git diff or git status to see the changes we've made.
+
+DO NOT consider anything in this layer correct/wrong. we are currently undergoing the design of this architectural for the first time.
+
+you need to evaluate and decide what truly is the 100x long-term developer maintainability for both errors that occur in lightfast + logs.
+
+how we would debug + fix things iteratively and fast.
+
+we want to design a high velocity moving approach.
+
+---
+
+/research_codebase consideer beforeSend in @apps/platform/src/instrumentation.ts 
+
+that obfuscates TRPCErrors from Sentry. is this truely the best practice when it comes to actually handling client + server-side error.
+
+i want you to scrutinize the current architecture we have designing for observability + error handling.
+
+run git diff or git status to see the changes we've made.
+
+DO NOT consider anything in this layer correct/wrong. we are currently undergoing the design of this architectural for the first time.
+
+you need to evaluate and decide what truly is the 100x long-term developer maintainability for both errors that occur in lightfast + logs.
+
+how we would debug + fix things iteratively and fast.
+
+note: for now all we focus on is trpc-related. avoid epxloring inngest + webhook layer.
