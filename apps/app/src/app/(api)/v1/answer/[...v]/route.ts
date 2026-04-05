@@ -5,6 +5,7 @@ import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
 import { orgSearchTool } from "@repo/app-ai/org-search";
 import type { AnswerAppRuntimeContext } from "@repo/app-ai-types";
 import { auth, clerkClient } from "@vendor/clerk/server";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { smoothStream, stepCountIs } from "ai";
 import type { NextRequest } from "next/server";
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
     });
   } catch (err) {
     log.error("Answer API handler error", {
-      error: err instanceof Error ? err.message : String(err),
+      error: parseError(err),
       requestId,
     });
     return Response.json(
@@ -205,7 +206,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (err) {
     log.error("Answer API GET handler error", {
-      error: err instanceof Error ? err.message : String(err),
+      error: parseError(err),
       requestId,
     });
     return Response.json(

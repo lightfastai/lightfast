@@ -889,6 +889,9 @@ importers:
       '@upstash/redis':
         specifier: ^1.35.1
         version: 1.36.3
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       ai:
         specifier: 5.0.52
         version: 5.0.52(zod@4.3.6)
@@ -1218,6 +1221,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../app-validation
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       fast-glob:
         specifier: ^3.3.2
         version: 3.3.3
@@ -1465,6 +1471,9 @@ importers:
       '@vendor/db':
         specifier: workspace:*
         version: link:../../vendor/db
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../../vendor/observability
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
@@ -2176,6 +2185,9 @@ importers:
       '@orpc/contract':
         specifier: ^1.13.0
         version: 1.13.13(@opentelemetry/api@1.9.0)
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../observability
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2260,6 +2272,9 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
+      '@vendor/observability':
+        specifier: workspace:*
+        version: link:../observability
       zod:
         specifier: 'catalog:'
         version: 4.3.6

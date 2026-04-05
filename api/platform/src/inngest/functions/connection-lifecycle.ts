@@ -22,6 +22,7 @@ import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { getEncryptionKey } from "../../lib/encryption";
 import { providerConfigs } from "../../lib/provider-configs";
@@ -88,7 +89,7 @@ export const connectionLifecycle = inngest.createFunction(
           "[connection-lifecycle] backfill cancellation failed (best-effort)",
           {
             installationId,
-            error: err instanceof Error ? err.message : String(err),
+            error: parseError(err),
           }
         );
       }
@@ -156,7 +157,7 @@ export const connectionLifecycle = inngest.createFunction(
           {
             installationId,
             provider: providerName,
-            error: err instanceof Error ? err.message : String(err),
+            error: parseError(err),
           }
         );
       }

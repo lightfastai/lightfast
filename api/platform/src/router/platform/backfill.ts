@@ -26,6 +26,7 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "@vendor/db";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 import { inngest } from "../../inngest/client";
@@ -94,15 +95,16 @@ export const backfillRouter = {
           },
         });
       } catch (err) {
+        const message = parseError(err);
         log.error("[backfill] trigger dispatch failed", {
           installationId: input.installationId,
           provider: input.provider,
           orgId: input.orgId,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to enqueue backfill: ${err instanceof Error ? err.message : String(err)}`,
+          message: `Failed to enqueue backfill: ${message}`,
         });
       }
 
@@ -145,14 +147,15 @@ export const backfillRouter = {
           },
         });
       } catch (err) {
+        const message = parseError(err);
         log.error("[backfill] cancel dispatch failed", {
           installationId: input.installationId,
           correlationId: input.correlationId,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to enqueue cancellation: ${err instanceof Error ? err.message : String(err)}`,
+          message: `Failed to enqueue cancellation: ${message}`,
         });
       }
 
@@ -241,15 +244,16 @@ export const backfillRouter = {
           providerDef as ProviderDefinition
         ));
       } catch (err) {
+        const message = parseError(err);
         log.error("[backfill] token acquisition failed for estimate", {
           installationId,
           provider,
           orgId,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `Failed to get token: ${err instanceof Error ? err.message : String(err)}`,
+          message: `Failed to get token: ${message}`,
         });
       }
 
@@ -273,10 +277,7 @@ export const backfillRouter = {
                 installationId,
                 provider,
                 resourceId: r.providerResourceId,
-                error:
-                  resolveErr instanceof Error
-                    ? resolveErr.message
-                    : String(resolveErr),
+                error: parseError(resolveErr),
               });
               if (resourceNameRequiredForRouting) {
                 // GitHub/Sentry: can't estimate without valid path segments — skip
@@ -396,10 +397,7 @@ export const backfillRouter = {
                 provider,
                 resourceId: resource.providerResourceId,
                 entityType,
-                error:
-                  probeErr instanceof Error
-                    ? probeErr.message
-                    : String(probeErr),
+                error: parseError(probeErr),
               });
               return {
                 entityType,

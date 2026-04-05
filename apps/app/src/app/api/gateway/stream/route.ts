@@ -2,6 +2,8 @@ import { db } from "@db/app/client";
 import { orgIngestLogs } from "@db/app/schema";
 import type { EventNotification } from "@repo/app-upstash-realtime";
 import { realtime } from "@repo/app-upstash-realtime";
+import { parseError } from "@vendor/observability/error/next";
+import { log } from "@vendor/observability/log/next";
 import { and, eq, gt } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import {
@@ -105,9 +107,9 @@ export async function GET(request: NextRequest): Promise<Response> {
           }
         }
       } catch (err) {
-        console.error("[events/stream] Catch-up query failed", {
+        log.error("[events/stream] catch-up query failed", {
           orgId,
-          error: err,
+          error: parseError(err),
         });
         controller.error(err);
         return;

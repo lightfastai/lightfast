@@ -6,6 +6,7 @@ import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useOrganization } from "@vendor/clerk/client";
+import { parseError } from "@vendor/observability/error/next";
 import { useEffect, useRef, useState } from "react";
 import { dateRangeFromPreset } from "./search-constants";
 import { SearchFilters } from "./search-filters";
@@ -140,7 +141,7 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
         if (err instanceof Error && err.name === "AbortError") {
           return;
         }
-        setError(err instanceof Error ? err.message : "Search failed");
+        setError(parseError(err));
         setSearchResults(null);
         setIsSearching(false);
       });

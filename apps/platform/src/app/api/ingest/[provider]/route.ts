@@ -18,6 +18,7 @@ import {
   hasInboundWebhooks,
   isWebhookProvider,
 } from "@repo/app-providers";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 
@@ -147,11 +148,10 @@ async function handleStandardWebhook(
   let parsedPayload: unknown;
   try {
     parsedPayload = webhookDef.parsePayload(jsonPayload);
-  } catch (parseError) {
+  } catch (err) {
     log.warn("[ingest] payload schema validation failed", {
       provider: providerSlug,
-      error:
-        parseError instanceof Error ? parseError.message : String(parseError),
+      error: parseError(err),
     });
     return Response.json(
       { error: "payload_validation_failed", provider: providerSlug },

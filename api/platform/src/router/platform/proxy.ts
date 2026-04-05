@@ -14,6 +14,7 @@ import { getProvider } from "@repo/app-providers";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { eq } from "@vendor/db";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 import { providerConfigs } from "../../lib/provider-configs";
@@ -157,14 +158,15 @@ export const proxyRouter = {
           ));
         }
       } catch (err) {
+        const message = parseError(err);
         log.error("[proxy] token acquisition failed", {
           installationId: input.installationId,
           provider: providerName,
-          error: err instanceof Error ? err.message : String(err),
+          error: message,
         });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `token_error: ${err instanceof Error ? err.message : "unknown error"}`,
+          message: `token_error: ${message}`,
         });
       }
 
@@ -216,8 +218,7 @@ export const proxyRouter = {
               installationId: input.installationId,
               provider: providerName,
               endpointId: input.endpointId,
-              error:
-                retryErr instanceof Error ? retryErr.message : String(retryErr),
+              error: parseError(retryErr),
             });
             // fall through without retry
           }
@@ -246,8 +247,7 @@ export const proxyRouter = {
           provider: providerName,
           endpointId: input.endpointId,
           status: response.status,
-          error:
-            parseErr instanceof Error ? parseErr.message : String(parseErr),
+          error: parseError(parseErr),
         });
         return null;
       });

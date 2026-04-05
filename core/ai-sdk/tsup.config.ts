@@ -32,7 +32,14 @@ export default defineConfig({
   clean: true,
 
   // External dependencies - don't bundle
-  external: ["@upstash/redis", "ai", "resumable-stream", "uuid", "zod"],
+  external: [
+    "@upstash/redis",
+    "@vendor/observability",
+    "ai",
+    "resumable-stream",
+    "uuid",
+    "zod",
+  ],
 
   // Target Node.js 18+
   target: "node18",

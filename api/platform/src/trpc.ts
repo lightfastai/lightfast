@@ -5,6 +5,7 @@
  * All callers are internal services (app, platform, inngest, cron).
  */
 import { initTRPC, TRPCError } from "@trpc/server";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
@@ -60,7 +61,7 @@ export const createPlatformTRPCContext = async (opts: { headers: Headers }) => {
     } catch (error) {
       log.warn("[trpc] JWT verification error", {
         source,
-        error: error instanceof Error ? error.message : String(error),
+        error: parseError(error),
       });
     }
   }

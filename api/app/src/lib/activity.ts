@@ -31,6 +31,7 @@ import type {
   ActivityType,
 } from "@repo/app-validation";
 import { activityTypeSchema } from "@repo/app-validation";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../inngest/client/client";
 
@@ -159,12 +160,12 @@ export async function recordCriticalActivity(
       clerkOrgId: data.clerkOrgId,
       category: data.category,
       action: data.action,
-      error: error instanceof Error ? error.message : String(error),
+      error: parseError(error),
     });
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: parseError(error),
     };
   }
 }
@@ -255,12 +256,12 @@ export async function recordActivity(
       clerkOrgId: data.clerkOrgId,
       category: data.category,
       action: data.action,
-      error: error instanceof Error ? error.message : String(error),
+      error: parseError(error),
     });
 
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: parseError(error),
     };
   }
 }
@@ -338,7 +339,7 @@ export function recordSystemActivity(data: ActivityData): void {
         clerkOrgId: data.clerkOrgId,
         category: data.category,
         action: data.action,
-        error: error instanceof Error ? error.message : String(error),
+        error: parseError(error),
       });
     });
 }
@@ -377,13 +378,13 @@ export async function batchRecordActivities(
   } catch (error) {
     log.error("Failed to batch record activities", {
       count: activities.length,
-      error: error instanceof Error ? error.message : String(error),
+      error: parseError(error),
     });
 
     return {
       success: false,
       insertedCount: 0,
-      error: error instanceof Error ? error.message : "Unknown error",
+      error: parseError(error),
     };
   }
 }

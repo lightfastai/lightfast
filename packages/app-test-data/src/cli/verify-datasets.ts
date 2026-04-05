@@ -18,6 +18,7 @@
 
 import { EVENT_REGISTRY } from "@repo/app-providers";
 import type { PostTransformEvent } from "@repo/app-providers/contracts";
+import { parseError } from "@vendor/observability/error/next";
 import { listDatasets, loadDataset } from "../loader/index.js";
 
 interface VerifyResult {
@@ -41,7 +42,7 @@ function verifyDataset(name: string): VerifyResult {
   try {
     ds = loadDataset(name);
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = parseError(err);
     result.errors.push(`Failed to load: ${message}`);
     return result;
   }

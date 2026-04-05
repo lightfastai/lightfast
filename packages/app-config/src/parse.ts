@@ -6,6 +6,7 @@
 
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { parseError } from "@vendor/observability/error/next";
 import type { Result } from "neverthrow";
 import { err, ok } from "neverthrow";
 import { parse as parseYAML } from "yaml";
@@ -86,7 +87,7 @@ export async function loadConfig(
   } catch (error) {
     return err(
       new ConfigError(
-        `Invalid YAML syntax in ${configPath}: ${error instanceof Error ? error.message : String(error)}`,
+        `Invalid YAML syntax in ${configPath}: ${parseError(error)}`,
         "INVALID_YAML",
         error
       )

@@ -7,6 +7,7 @@ import type {
   ProxySearchResponse,
 } from "@repo/app-validation/api";
 import { createPlatformCaller } from "@repo/platform-trpc/caller";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { and, eq } from "drizzle-orm";
 import type { AuthContext } from "./types";
@@ -88,7 +89,7 @@ export async function proxySearchLogic(
         log.warn("Failed to resolve proxy resources, falling back to IDs", {
           requestId,
           provider: inst.provider,
-          error: err instanceof Error ? err.message : String(err),
+          error: parseError(err),
         });
         // Degraded mode: use orgIntegrations data directly so resources
         // still appear with providerResourceId as name and empty params.

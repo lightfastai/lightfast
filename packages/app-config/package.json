@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@repo/app-validation": "workspace:*",
+    "@vendor/observability": "workspace:*",
     "fast-glob": "^3.3.2",
     "neverthrow": "catalog:",
     "yaml": "^2.8.3",

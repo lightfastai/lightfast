@@ -1,5 +1,6 @@
 import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { isContractProcedure } from "@orpc/contract";
+import { parseError } from "@vendor/observability/error/next";
 
 // ---------------------------------------------------------------------------
 // Re-exports — MCP SDK essentials
@@ -81,7 +82,7 @@ export function registerContractTools(
             content: [
               {
                 type: "text" as const,
-                text: error instanceof Error ? error.message : String(error),
+                text: parseError(error),
               },
             ],
             isError: true,

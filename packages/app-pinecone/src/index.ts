@@ -20,8 +20,8 @@ export type {
 } from "@vendor/pinecone/types";
 // Export Lightfast client with injected config
 export {
+  createLightfastPineconeClient,
   LightfastPineconeClient,
   lightfastPineconeClient,
   lightfastPineconeClient as pineconeClient,
-  createLightfastPineconeClient,
 } from "./client";

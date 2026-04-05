@@ -12,6 +12,7 @@ import type { SourceIdentifier } from "@repo/app-validation";
 import { createPlatformCaller } from "@repo/platform-trpc/caller";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { and, eq } from "drizzle-orm";
 import yaml from "yaml";
@@ -246,7 +247,7 @@ export const connectionsRouter = {
       } catch (error: unknown) {
         log.error("[connections/github] validate failed", {
           clerkOrgId: ctx.auth.orgId,
-          error: error instanceof Error ? error.message : String(error),
+          error: parseError(error),
         });
 
         throw new TRPCError({
@@ -415,7 +416,7 @@ export const connectionsRouter = {
         } catch (error: unknown) {
           log.error("[connections/github] detectConfig failed", {
             clerkOrgId: ctx.auth.orgId,
-            error: error instanceof Error ? error.message : String(error),
+            error: parseError(error),
           });
 
           throw new TRPCError({

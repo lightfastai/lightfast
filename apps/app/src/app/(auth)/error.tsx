@@ -25,9 +25,6 @@ export default function AuthError({ error, reset }: AuthErrorProps) {
         errorDigest: error.digest,
       },
     });
-
-    // Always log for local debugging
-    console.error("Auth route error:", error);
   }, [error]);
 
   return (

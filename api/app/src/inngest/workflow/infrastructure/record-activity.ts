@@ -15,6 +15,7 @@
 import { db } from "@db/app/client";
 import { orgUserActivities } from "@db/app/schema";
 import type { ActivityMetadata } from "@repo/app-validation";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { inngest } from "../../client/client";
 
@@ -112,7 +113,7 @@ export const recordActivity = inngest.createFunction(
         log.error("Failed to insert activity batch", {
           clerkOrgId,
           batchSize,
-          error: error instanceof Error ? error.message : String(error),
+          error: parseError(error),
         });
 
         throw error;

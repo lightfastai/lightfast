@@ -14,6 +14,7 @@ import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { decrypt } from "@repo/lib";
 import { and, eq, isNotNull, lt } from "@vendor/db";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { getEncryptionKey } from "../../lib/encryption";
 import { providerConfigs } from "../../lib/provider-configs";
@@ -120,7 +121,7 @@ export const tokenRefresh = inngest.createFunction(
           log.warn("[token-refresh] refresh failed", {
             installationId: row.installationId,
             provider: providerName,
-            error: err instanceof Error ? err.message : String(err),
+            error: parseError(err),
           });
         }
       });

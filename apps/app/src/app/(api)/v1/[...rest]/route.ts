@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { router } from "../../lib/orpc-router";
 
@@ -33,7 +34,7 @@ async function handleRequest(request: Request) {
     );
   } catch (error) {
     log.error("oRPC handler error", {
-      error: error instanceof Error ? error.message : String(error),
+      error: parseError(error),
       requestId,
     });
     return Response.json(

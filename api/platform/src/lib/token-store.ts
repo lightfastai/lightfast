@@ -3,6 +3,7 @@ import { gatewayTokens } from "@db/app/schema";
 import type { OAuthTokens } from "@repo/app-providers";
 import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { getEncryptionKey } from "./encryption";
 
@@ -70,7 +71,7 @@ function assertEncryptedFormat(value: string): void {
       throw new Error("too short");
     }
   } catch (e) {
-    const reason = e instanceof Error ? e.message : String(e);
+    const reason = parseError(e);
     throw new Error(
       `existingEncryptedRefreshToken does not appear to be an encrypted value — refusing to persist potentially plaintext token (${reason})`
     );
