@@ -4,9 +4,9 @@ import { signServiceJWT, verifyServiceJWT } from "./jwt";
 
 describe("service JWT", () => {
   it("signs and verifies a valid token", async () => {
-    const token = await signServiceJWT("console");
+    const token = await signServiceJWT("app");
     const { caller } = await verifyServiceJWT(token);
-    expect(caller).toBe("console");
+    expect(caller).toBe("app");
   });
 
   it("rejects tokens with wrong audience", async () => {
@@ -14,7 +14,7 @@ describe("service JWT", () => {
     const key = new TextEncoder().encode(process.env.SERVICE_JWT_SECRET);
     const token = await new SignJWT({})
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setIssuer("console")
+      .setIssuer("app")
       .setAudience("wrong-audience")
       .setIssuedAt()
       .setExpirationTime("60s")
@@ -28,7 +28,7 @@ describe("service JWT", () => {
     const key = new TextEncoder().encode(process.env.SERVICE_JWT_SECRET);
     const token = await new SignJWT({})
       .setProtectedHeader({ alg: "HS256", typ: "JWT" })
-      .setIssuer("console")
+      .setIssuer("app")
       .setAudience("lightfast-memory")
       .setIssuedAt(Math.floor(Date.now() / 1000) - 120)
       .setExpirationTime(Math.floor(Date.now() / 1000) - 60)

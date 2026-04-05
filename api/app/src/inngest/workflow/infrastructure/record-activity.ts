@@ -5,7 +5,7 @@
  * Receives activity events from helper functions and batch inserts them
  * for better performance and reduced database load.
  *
- * Triggered by: console/activity.record events (Tier 2 user actions)
+ * Triggered by: app/activity.record events (Tier 2 user actions)
  * Batching: Up to 100 events per batch, 10s timeout per org
  * Performance: 50-100x faster than individual inserts
  *
@@ -26,7 +26,7 @@ import { inngest } from "../../client/client";
  */
 export const recordActivity = inngest.createFunction(
   {
-    id: "console/record-activity",
+    id: "app/record-activity",
     name: "Record Activity",
     description: "Batch record user activities for efficient database writes",
     retries: 3,
@@ -43,7 +43,7 @@ export const recordActivity = inngest.createFunction(
       finish: "2m",
     },
   },
-  { event: "console/activity.record" },
+  { event: "app/activity.record" },
   async ({ events, step }) => {
     // Guard: Inngest's batchEvents config should never deliver an empty array,
     // but defend against it to avoid a Postgres error on INSERT with no values.

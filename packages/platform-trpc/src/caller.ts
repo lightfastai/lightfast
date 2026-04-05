@@ -15,9 +15,9 @@ import { cache } from "react";
  * Create a server-side memory caller for service use.
  * Authenticated as the specified caller identity.
  *
- * @param caller - Service identity (e.g., "console", "platform", "inngest")
+ * @param caller - Service identity (e.g., "app", "platform", "inngest")
  */
-export const createMemoryCaller = cache(async (caller = "console") => {
+export const createMemoryCaller = cache(async (caller = "app") => {
   const token = await signServiceJWT(caller);
 
   const heads = new Headers();

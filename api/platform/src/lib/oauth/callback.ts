@@ -15,12 +15,12 @@ import { providerConfigs } from "../provider-configs";
 import { writeTokenRecord } from "../token-store";
 import { consumeOAuthState, storeOAuthResult } from "./state";
 
-// ── Console URL ──
+// ── App URL ──
 
 /**
- * Console URL for redirects. Mirrors the gateway's consoleUrl logic.
+ * App URL for redirects.
  */
-const consoleUrl = (() => {
+const appUrl = (() => {
   const vercelEnv = process.env.VERCEL_ENV;
   const vercelUrl = process.env.VERCEL_URL;
   const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
@@ -103,10 +103,8 @@ function buildRedirectForCompletion(
     return { kind: "redirect", url: redirectUrl.toString() };
   }
 
-  // Default: redirect to console (existing behavior, backwards compatible)
-  const redirectUrl = new URL(
-    `${consoleUrl}/provider/${providerName}/connected`
-  );
+  // Default: redirect to app (existing behavior, backwards compatible)
+  const redirectUrl = new URL(`${appUrl}/provider/${providerName}/connected`);
   if (opts.reactivated) {
     redirectUrl.searchParams.set("reactivated", "true");
   }
@@ -136,7 +134,7 @@ function buildRedirectForError(
 
   return {
     kind: "redirect",
-    url: `${consoleUrl}/provider/${providerName}/connected?error=${encodeURIComponent(message)}`,
+    url: `${appUrl}/provider/${providerName}/connected?error=${encodeURIComponent(message)}`,
   };
 }
 

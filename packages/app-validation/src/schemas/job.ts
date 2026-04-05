@@ -134,7 +134,7 @@ export type JobGetInput = z.infer<typeof jobGetInputSchema>;
  *   clerkOrgId: "org_2abcdef123",
  *   repositoryId: "V1StGXR8_Z5jdHi6B-myT",
  *   inngestRunId: "01HE8X7ZQK6YG9B5R8J9QVXT0Q",
- *   inngestFunctionId: "console/docs.push",
+ *   inngestFunctionId: "app/docs.push",
  *   name: "Document Ingestion - PR #123",
  *   trigger: "webhook",
  * });

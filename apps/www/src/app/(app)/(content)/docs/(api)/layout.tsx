@@ -9,10 +9,10 @@ import { DocsMobileNav } from "~/app/(app)/(content)/docs/_components/docs-mobil
 import { DocsSidebar } from "~/app/(app)/(content)/docs/_components/docs-sidebar";
 import { Search } from "~/app/(app)/(content)/docs/_components/search";
 import { NavLink } from "~/components/nav-link";
-import { consoleUrl } from "~/lib/related-projects";
+import { appUrl } from "~/lib/related-projects";
 
 export default function ApiDocsLayout({ children }: { children: ReactNode }) {
-  const signInUrl = `${consoleUrl}/sign-in`;
+  const signInUrl = `${appUrl}/sign-in`;
 
   // Build custom tree that includes OpenAPI virtual pages
   const apiTree = buildApiPageTree();
