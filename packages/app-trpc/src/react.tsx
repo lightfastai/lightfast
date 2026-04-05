@@ -2,14 +2,16 @@
 
 import type { AppRouter } from "@api/app";
 import type { QueryClient } from "@tanstack/react-query";
-import { QueryClientProvider } from "@tanstack/react-query";
+import { MutationCache, QueryClientProvider } from "@tanstack/react-query";
 import {
   createTRPCClient,
   httpBatchStreamLink,
   loggerLink,
+  TRPCClientError,
 } from "@trpc/client";
 import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import SuperJSON from "superjson";
 import { createQueryClient } from "./client";
 
@@ -23,6 +25,27 @@ const trpcContext = createTRPCContext<AppRouter>();
 export const useTRPC = trpcContext.useTRPC;
 export const TRPCProvider = trpcContext.TRPCProvider;
 
+const mutationCache = new MutationCache({
+  onError: (error, _variables, _context, mutation) => {
+    if (mutation.options.meta?.suppressErrorToast) {
+      return;
+    }
+
+    const title = mutation.options.meta?.errorTitle ?? "Something went wrong";
+
+    let message = "An unexpected error occurred. Please try again.";
+    if (
+      error instanceof TRPCClientError &&
+      error.data?.httpStatus != null &&
+      error.data.httpStatus < 500
+    ) {
+      message = error.message;
+    }
+
+    toast.error(title, { description: message });
+  },
+});
+
 let clientQueryClientSingleton: QueryClient | undefined;
 
 function getQueryClient() {
@@ -30,7 +53,7 @@ function getQueryClient() {
     return createQueryClient();
   }
 
-  return (clientQueryClientSingleton ??= createQueryClient());
+  return (clientQueryClientSingleton ??= createQueryClient({ mutationCache }));
 }
 
 function defaultGetBaseUrl() {

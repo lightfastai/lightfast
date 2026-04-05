@@ -23,7 +23,6 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { Copy, Key, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { useState } from "react";
-import { showErrorToast } from "~/lib/trpc-errors";
 
 /**
  * Organization API Key List (Client Component)
@@ -55,6 +54,7 @@ export function OrgApiKeyList() {
 
   const createMutation = useMutation(
     trpc.orgApiKeys.create.mutationOptions({
+      meta: { errorTitle: "Failed to create API key" },
       onSuccess: (data) => {
         setCreatedKey(data.key);
         setNewKeyName("");
@@ -63,51 +63,42 @@ export function OrgApiKeyList() {
           queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
       },
-      onError: (error) => {
-        showErrorToast(error, "Failed to create API key");
-      },
     })
   );
 
   const revokeMutation = useMutation(
     trpc.orgApiKeys.revoke.mutationOptions({
+      meta: { errorTitle: "Failed to revoke API key" },
       onSuccess: () => {
         toast.success("API key revoked successfully");
         void queryClient.invalidateQueries({
           queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
       },
-      onError: (error) => {
-        showErrorToast(error, "Failed to revoke API key");
-      },
     })
   );
 
   const deleteMutation = useMutation(
     trpc.orgApiKeys.delete.mutationOptions({
+      meta: { errorTitle: "Failed to delete API key" },
       onSuccess: () => {
         toast.success("API key deleted successfully");
         void queryClient.invalidateQueries({
           queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
       },
-      onError: (error) => {
-        showErrorToast(error, "Failed to delete API key");
-      },
     })
   );
 
   const rotateMutation = useMutation(
     trpc.orgApiKeys.rotate.mutationOptions({
+      meta: { errorTitle: "Failed to rotate API key" },
       onSuccess: (data) => {
         setCreatedKey(data.key);
         toast.success("API key rotated successfully");
         void queryClient.invalidateQueries({
           queryKey: trpc.orgApiKeys.list.queryOptions().queryKey,
         });
-      },
-      onError: (error) => {
-        showErrorToast(error, "Failed to rotate API key");
       },
     })
   );
