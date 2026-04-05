@@ -1,7 +1,9 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "10bb2f3bf9d7",
+  "session_id": "4a974a2d-cee7-442d-9db1-946a9f15a473",
   "strategy": "manual-commit",
+  "created_at": "2026-04-05T11:32:44.094578Z",
   "branch": "refactor/parseerror-adoption-console-cleanup",
   "checkpoints_count": 2,
   "files_touched": [
@@ -22,12 +24,7 @@
     "apps/app/src/app/(api)/lib/with-api-key-auth.ts",
     "apps/app/src/app/(api)/v1/[...rest]/route.ts",
     "apps/app/src/app/(api)/v1/answer/[...v]/route.ts",
-    "apps/app/src/app/(app)/(org)/[slug]/layout.tsx",
-    "apps/app/src/app/(app)/(user)/(pending-allowed)/account/teams/invite/_actions/invite-teammates.ts",
-    "apps/app/src/app/(auth)/error.tsx",
     "apps/app/src/app/(early-access)/_actions/early-access.ts",
-    "apps/app/src/app/(early-access)/error.tsx",
-    "apps/app/src/app/api/gateway/stream/route.ts",
     "apps/app/src/components/org-search.tsx",
     "apps/app/src/lib/proxy.ts",
     "apps/platform/src/app/api/ingest/[provider]/route.ts",
@@ -49,25 +46,29 @@
     "vendor/pinecone/package.json",
     "vendor/pinecone/src/client.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/10/bb2f3bf9d7/0/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/0/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/0/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/0/prompt.txt"
-    },
-    {
-      "metadata": "/10/bb2f3bf9d7/1/metadata.json",
-      "transcript": "/10/bb2f3bf9d7/1/full.jsonl",
-      "content_hash": "/10/bb2f3bf9d7/1/content_hash.txt",
-      "prompt": "/10/bb2f3bf9d7/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "7c9a20f022b8",
   "token_usage": {
-    "input_tokens": 879,
-    "cache_creation_tokens": 78974,
-    "cache_read_tokens": 590194,
-    "output_tokens": 10982,
-    "api_call_count": 19
+    "input_tokens": 866,
+    "cache_creation_tokens": 45751,
+    "cache_read_tokens": 357907,
+    "output_tokens": 8751,
+    "api_call_count": 12
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T11:32:43.893605Z",
+    "agent_lines": 44,
+    "agent_removed": 46,
+    "human_added": 34,
+    "human_modified": 26,
+    "human_removed": 0,
+    "total_committed": 104,
+    "total_lines_changed": 162,
+    "agent_percentage": 55.55555555555556,
+    "metric_version": 2
   }
 }

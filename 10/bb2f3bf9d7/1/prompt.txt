@@ -1,0 +1,7 @@
+consider @thoughts/shared/plans/2026-04-05-entity-first-ui-rework.md evaluate whether this is truly the most accretive, innovative, and ultra efficient approach to designing this page and architecture.
+
+consider the purpose of entity page and how it can provide value to the mission goals of lightfast.
+
+---
+
+agreed. what do you suggest then.
