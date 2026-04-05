@@ -108,20 +108,36 @@ const sentryMiddleware = t.middleware(
 
 const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
 
-const timingMiddleware = t.middleware(async ({ next, path }) => {
-  const start = Date.now();
+const observabilityMiddleware = t.middleware(
+  async ({ next, path, ctx, type }) => {
+    const start = Date.now();
 
-  if (t._config.isDev) {
-    const waitMs = Math.floor(Math.random() * 400) + 100;
-    await new Promise((resolve) => setTimeout(resolve, waitMs));
+    if (t._config.isDev) {
+      const waitMs = Math.floor(Math.random() * 400) + 100;
+      await new Promise((resolve) => setTimeout(resolve, waitMs));
+    }
+
+    const result = await next();
+    const durationMs = Date.now() - start;
+
+    const meta = {
+      path,
+      type,
+      durationMs,
+      ok: result.ok,
+      ...(!result.ok && { errorCode: result.error?.code }),
+      ...(ctx.auth.type === "service" && { caller: ctx.auth.caller }),
+    };
+
+    if (result.ok) {
+      log.info("[trpc] procedure completed", meta);
+    } else {
+      log.warn("[trpc] procedure failed", meta);
+    }
+
+    return result;
   }
-
-  const result = await next();
-  const end = Date.now();
-  log.info("[trpc] procedure timing", { path, durationMs: end - start });
-
-  return result;
-});
+);
 
 // -- Router & Procedure Exports -----------------------------------------------
 
@@ -132,7 +148,7 @@ export const createCallerFactory = t.createCallerFactory;
  * Public procedure -- no auth required.
  * Use for health checks or publicly accessible endpoints.
  */
-export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
+export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
 
 /**
  * Service procedure -- requires valid service JWT.
@@ -141,7 +157,7 @@ export const publicProcedure = sentrifiedProcedure.use(timingMiddleware);
  * Guarantees `ctx.auth.type === "service"` and `ctx.auth.caller` is available.
  */
 export const serviceProcedure = sentrifiedProcedure
-  .use(timingMiddleware)
+  .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type !== "service") {
       throw new TRPCError({
@@ -166,7 +182,7 @@ export const serviceProcedure = sentrifiedProcedure
  * Restricts `ctx.auth.caller` to "admin" only.
  */
 export const adminProcedure = sentrifiedProcedure
-  .use(timingMiddleware)
+  .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type !== "service") {
       throw new TRPCError({

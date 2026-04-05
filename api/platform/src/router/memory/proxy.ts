@@ -14,8 +14,8 @@ import { getProvider } from "@repo/app-providers";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
-
 import { providerConfigs } from "../../lib/provider-configs";
 import {
   forceRefreshToken,
@@ -157,10 +157,14 @@ export const proxyRouter = {
           ));
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "token_error";
+        log.error("[proxy] token acquisition failed", {
+          installationId: input.installationId,
+          provider: providerName,
+          error: err instanceof Error ? err.message : String(err),
+        });
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: `token_error: ${message}`,
+          message: `token_error: ${err instanceof Error ? err.message : "unknown error"}`,
         });
       }
 
@@ -207,8 +211,15 @@ export const proxyRouter = {
         if (endpoint.buildAuth) {
           try {
             freshToken = await endpoint.buildAuth(config);
-          } catch {
-            // ignore -- fall through without retry
+          } catch (retryErr) {
+            log.warn("[proxy] auth rebuild failed during 401 retry", {
+              installationId: input.installationId,
+              provider: providerName,
+              endpointId: input.endpointId,
+              error:
+                retryErr instanceof Error ? retryErr.message : String(retryErr),
+            });
+            // fall through without retry
           }
         } else {
           // SAFETY: getProvider() returns the full generic ProviderDefinition<TConfig, ...>
@@ -229,7 +240,17 @@ export const proxyRouter = {
       }
 
       // Return raw response -- no parsing, no transformation
-      const data = await response.json().catch(() => null);
+      const data = await response.json().catch((parseErr: unknown) => {
+        log.warn("[proxy] response body parse failed", {
+          installationId: input.installationId,
+          provider: providerName,
+          endpointId: input.endpointId,
+          status: response.status,
+          error:
+            parseErr instanceof Error ? parseErr.message : String(parseErr),
+        });
+        return null;
+      });
       const responseHeaders: Record<string, string> = {};
       response.headers.forEach((value, key) => {
         responseHeaders[key] = value;

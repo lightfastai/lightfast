@@ -3,6 +3,7 @@ import { PROVIDER_DISPLAY } from "../../client/display";
 import { defineWebhookProvider } from "../../factory/index";
 import { actionEvent, hmac } from "../../provider/index";
 import type { CallbackResult, OAuthTokens } from "../../provider/primitives";
+import { readErrorBody } from "../../runtime/http";
 import {
   graphqlTeamsResponseSchema,
   graphqlViewerOrgResponseSchema,
@@ -54,7 +55,8 @@ async function fetchLinearExternalId(accessToken: string): Promise<string> {
   });
 
   if (!response.ok) {
-    throw new Error(`Linear viewer query failed: ${response.status}`);
+    const body = await readErrorBody(response);
+    throw new Error(`Linear viewer query failed: ${response.status} ${body}`);
   }
 
   const result = (await response.json()) as {
@@ -133,7 +135,8 @@ async function exchangeLinearCode(
   });
 
   if (!response.ok) {
-    throw new Error(`Linear token exchange failed: ${response.status}`);
+    const body = await readErrorBody(response);
+    throw new Error(`Linear token exchange failed: ${response.status} ${body}`);
   }
 
   const rawData: unknown = await response.json();
@@ -450,7 +453,10 @@ export const linear = defineWebhookProvider({
       });
 
       if (!response.ok) {
-        throw new Error(`Linear token refresh failed: ${response.status}`);
+        const body = await readErrorBody(response);
+        throw new Error(
+          `Linear token refresh failed: ${response.status} ${body}`
+        );
       }
 
       const rawData: unknown = await response.json();
@@ -475,7 +481,10 @@ export const linear = defineWebhookProvider({
         },
       });
       if (!response.ok) {
-        throw new Error(`Linear token revocation failed: ${response.status}`);
+        const body = await readErrorBody(response);
+        throw new Error(
+          `Linear token revocation failed: ${response.status} ${body}`
+        );
       }
     },
     usesStoredToken: true,

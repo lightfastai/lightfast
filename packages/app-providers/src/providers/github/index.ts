@@ -3,6 +3,7 @@ import { PROVIDER_DISPLAY } from "../../client/display";
 import { defineWebhookProvider } from "../../factory/index";
 import { actionEvent, hmac } from "../../provider/index";
 import type { CallbackResult } from "../../provider/primitives";
+import { readErrorBody } from "../../runtime/http";
 import { createRS256JWT } from "../../runtime/jwt";
 import {
   githubApi,
@@ -59,8 +60,9 @@ async function getInstallationToken(
     }
   );
   if (!response.ok) {
+    const body = await readErrorBody(response);
     throw new Error(
-      `GitHub installation token request failed: ${response.status}`
+      `GitHub installation token request failed: ${response.status} ${body}`
     );
   }
 
@@ -184,8 +186,9 @@ export const github = defineWebhookProvider({
       );
       // 204 = success, 404 = already uninstalled — both are fine
       if (!response.ok && response.status !== 404) {
+        const body = await readErrorBody(response);
         throw new Error(
-          `GitHub installation revocation failed: ${response.status}`
+          `GitHub installation revocation failed: ${response.status} ${body}`
         );
       }
     },

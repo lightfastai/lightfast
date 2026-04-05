@@ -22,8 +22,8 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
-
 import { inngest } from "../../inngest/client";
 import { buildAuthorizeUrl } from "../../lib/oauth/authorize";
 import { providerConfigs } from "../../lib/provider-configs";
@@ -121,6 +121,12 @@ export const connectionsRouter = {
         };
       } catch (err) {
         const message = err instanceof Error ? err.message : "unknown";
+        log.warn("[connections] token retrieval failed", {
+          installationId: input.id,
+          provider: providerName,
+          error: message,
+        });
+
         if (message === "no_token_found") {
           throw new TRPCError({
             code: "NOT_FOUND",

@@ -4,6 +4,7 @@
  * Ported from apps/gateway/src/routes/connections.ts (lines 113-168, 180-196).
  * Functions return data structures — no HTTP responses.
  */
+import { log } from "@vendor/observability/log/next";
 import { redis } from "@vendor/upstash";
 import { oauthResultKey, oauthStateKey } from "../cache";
 
@@ -37,6 +38,12 @@ export async function storeOAuthState(
     })
     .expire(key, 600)
     .exec();
+
+  log.info("[oauth/state] state stored", {
+    provider: data.provider,
+    orgId: data.orgId,
+    statePrefix: state.slice(0, 8),
+  });
 }
 
 // ── Consume OAuth State ──
@@ -56,8 +63,16 @@ export async function consumeOAuthState(
     .exec<[Record<string, string> | null, number]>();
 
   if (!stateData?.orgId) {
+    log.warn("[oauth/state] state not found or expired", {
+      statePrefix: state.slice(0, 8),
+    });
     return null;
   }
+
+  log.info("[oauth/state] state consumed", {
+    statePrefix: state.slice(0, 8),
+    orgId: stateData.orgId,
+  });
 
   return stateData;
 }

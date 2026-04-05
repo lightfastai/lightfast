@@ -3,6 +3,7 @@ import { gatewayTokens } from "@db/app/schema";
 import type { OAuthTokens } from "@repo/app-providers";
 import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
+import { log } from "@vendor/observability/log/next";
 import { getEncryptionKey } from "./encryption";
 
 /**
@@ -46,6 +47,12 @@ export async function writeTokenRecord(
         updatedAt: new Date().toISOString(),
       },
     });
+
+  log.info("[token-store] token record written", {
+    installationId,
+    hasRefreshToken: !!oauthTokens.refreshToken,
+    hasExpiry: !!oauthTokens.expiresIn,
+  });
 }
 
 /** Minimum base64-decoded byte length for a valid AES-GCM encrypted value (12-byte IV + 16-byte tag). */
@@ -113,4 +120,10 @@ export async function updateTokenRecord(
       updatedAt: new Date().toISOString(),
     })
     .where(eq(gatewayTokens.id, tokenId));
+
+  log.info("[token-store] token record updated", {
+    tokenId,
+    refreshed: true,
+    hasNewExpiry: !!oauthTokens.expiresIn,
+  });
 }

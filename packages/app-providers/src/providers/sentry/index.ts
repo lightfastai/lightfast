@@ -3,6 +3,7 @@ import { PROVIDER_DISPLAY } from "../../client/display";
 import { defineWebhookProvider } from "../../factory/index";
 import { actionEvent, hmac, simpleEvent } from "../../provider/index";
 import type { CallbackResult, OAuthTokens } from "../../provider/primitives";
+import { readErrorBody } from "../../runtime/http";
 import {
   sentryApi,
   sentryOrganizationSchema,
@@ -325,7 +326,10 @@ export const sentry = defineWebhookProvider({
       );
 
       if (!response.ok) {
-        throw new Error(`Sentry token refresh failed: ${response.status}`);
+        const body = await readErrorBody(response);
+        throw new Error(
+          `Sentry token refresh failed: ${response.status} ${body}`
+        );
       }
 
       const rawData: unknown = await response.json();
@@ -361,7 +365,10 @@ export const sentry = defineWebhookProvider({
       );
 
       if (!response.ok) {
-        throw new Error(`Sentry token revocation failed: ${response.status}`);
+        const body = await readErrorBody(response);
+        throw new Error(
+          `Sentry token revocation failed: ${response.status} ${body}`
+        );
       }
     },
     usesStoredToken: true,
