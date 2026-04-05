@@ -1,0 +1,9 @@
+/create_plan @thoughts/shared/research/2026-04-05-trpc-client-error-propagation-next-step.md for both apps/platform and apps/app
+
+---
+
+before continuing, what do you reckon is the most accretive, innovative, radical and creative addition for long term developer maintainability and 100x improvement in architecture
+
+---
+
+perfect. prced
