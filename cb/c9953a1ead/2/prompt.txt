@@ -1,0 +1,9 @@
+/implement_plan @thoughts/shared/plans/2026-04-05-trpc-observability-fixes.md
+
+---
+
+whats left?
+
+---
+
+all good run /oneshot_merge
