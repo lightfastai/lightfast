@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6851fad0bbd2",
+  "session_id": "188be02c-59df-421c-b76e-a2b0a1048ddf",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-05T07:16:18.551154Z",
+  "branch": "refactor/rename-memory-to-platform",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/index.ts",
+    "api/platform/src/inngest/functions/memory-backfill-orchestrator.ts",
+    "api/platform/src/inngest/functions/memory-entity-embed.ts",
+    "api/platform/src/inngest/functions/memory-entity-graph.ts",
+    "api/platform/src/inngest/functions/memory-entity-worker.ts",
+    "api/platform/src/inngest/functions/memory-event-store.ts",
+    "api/platform/src/inngest/functions/memory-notification-dispatch.ts",
+    "api/platform/src/inngest/schemas/memory.ts",
+    "api/platform/src/lib/jwt.test.ts",
+    "api/platform/src/lib/jwt.ts",
+    "api/platform/src/root.ts",
+    "api/platform/src/router/memory/backfill.ts",
+    "api/platform/src/router/memory/connections.ts",
+    "api/platform/src/router/memory/proxy.ts",
+    "api/platform/src/trpc.ts",
+    "packages/platform-trpc/src/caller.ts",
+    "packages/platform-trpc/src/react.tsx",
+    "packages/platform-trpc/src/server.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "3df0d1746879",
+  "token_usage": {
+    "input_tokens": 1497,
+    "cache_creation_tokens": 166325,
+    "cache_read_tokens": 1280890,
+    "output_tokens": 17021,
+    "api_call_count": 20
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-05T07:16:17.90858Z",
+    "agent_lines": 0,
+    "agent_removed": 46,
+    "human_added": 90,
+    "human_modified": 3084,
+    "human_removed": 0,
+    "total_committed": 136,
+    "total_lines_changed": 3307,
+    "agent_percentage": 1.3909888116117326,
+    "metric_version": 2
+  }
+}

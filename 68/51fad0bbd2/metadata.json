@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6851fad0bbd2",
+  "strategy": "manual-commit",
+  "branch": "refactor/rename-memory-to-platform",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/index.ts",
+    "api/platform/src/inngest/functions/memory-backfill-orchestrator.ts",
+    "api/platform/src/inngest/functions/memory-entity-embed.ts",
+    "api/platform/src/inngest/functions/memory-entity-graph.ts",
+    "api/platform/src/inngest/functions/memory-entity-worker.ts",
+    "api/platform/src/inngest/functions/memory-event-store.ts",
+    "api/platform/src/inngest/functions/memory-notification-dispatch.ts",
+    "api/platform/src/inngest/schemas/memory.ts",
+    "api/platform/src/lib/jwt.test.ts",
+    "api/platform/src/lib/jwt.ts",
+    "api/platform/src/root.ts",
+    "api/platform/src/router/memory/backfill.ts",
+    "api/platform/src/router/memory/connections.ts",
+    "api/platform/src/router/memory/proxy.ts",
+    "api/platform/src/trpc.ts",
+    "packages/platform-trpc/src/caller.ts",
+    "packages/platform-trpc/src/react.tsx",
+    "packages/platform-trpc/src/server.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/68/51fad0bbd2/0/metadata.json",
+      "transcript": "/68/51fad0bbd2/0/full.jsonl",
+      "content_hash": "/68/51fad0bbd2/0/content_hash.txt",
+      "prompt": "/68/51fad0bbd2/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1497,
+    "cache_creation_tokens": 166325,
+    "cache_read_tokens": 1280890,
+    "output_tokens": 17021,
+    "api_call_count": 20
+  }
+}
