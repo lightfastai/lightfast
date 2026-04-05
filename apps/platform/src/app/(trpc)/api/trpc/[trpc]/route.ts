@@ -1,25 +1,9 @@
 import { createPlatformTRPCContext, platformRouter } from "@api/platform";
-import { captureException } from "@sentry/nextjs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 import { appUrl } from "~/lib/related-projects";
 
 export const runtime = "nodejs";
-
-/** tRPC error codes that represent expected domain conditions, not bugs. */
-const EXPECTED_TRPC_ERRORS = new Set([
-  "UNAUTHORIZED",
-  "FORBIDDEN",
-  "NOT_FOUND",
-  "BAD_REQUEST",
-  "CONFLICT",
-  "PRECONDITION_FAILED",
-  "PARSE_ERROR",
-  "UNPROCESSABLE_CONTENT",
-  "TOO_MANY_REQUESTS",
-  "CLIENT_CLOSED_REQUEST",
-]);
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
   const origin = req.headers.get("origin");
@@ -54,21 +38,6 @@ const handler = async (req: NextRequest) => {
       createPlatformTRPCContext({
         headers: req.headers,
       }),
-    onError({ error, path }) {
-      if (EXPECTED_TRPC_ERRORS.has(error.code)) {
-        log.info("[trpc] expected error", {
-          path,
-          code: error.code,
-        });
-      } else {
-        log.error("[trpc] unexpected error", {
-          path,
-          error: error.message,
-          code: error.code,
-        });
-        captureException(error);
-      }
-    },
   });
 
   return setCorsHeaders(req, response);

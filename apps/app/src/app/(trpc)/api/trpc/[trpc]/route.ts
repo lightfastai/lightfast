@@ -1,7 +1,5 @@
 import { appRouter, createTRPCContext } from "@api/app";
-import { captureException } from "@sentry/nextjs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
-import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
 import { wwwUrl } from "~/lib/related-projects";
@@ -9,20 +7,6 @@ import { wwwUrl } from "~/lib/related-projects";
 // Use Node.js runtime instead of Edge for GitHub App crypto operations
 // Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)
 export const runtime = "nodejs";
-
-/** tRPC error codes that represent expected domain conditions, not bugs. */
-const EXPECTED_TRPC_ERRORS = new Set([
-  "UNAUTHORIZED",
-  "FORBIDDEN",
-  "NOT_FOUND",
-  "BAD_REQUEST",
-  "CONFLICT",
-  "PRECONDITION_FAILED",
-  "PARSE_ERROR",
-  "UNPROCESSABLE_CONTENT",
-  "TOO_MANY_REQUESTS",
-  "CLIENT_CLOSED_REQUEST",
-]);
 
 // Allowed request origins per environment — derived from related projects
 // wwwUrl resolves to the correct origin per environment via VERCEL_RELATED_PROJECTS
@@ -60,21 +44,6 @@ const handler = async (req: NextRequest) => {
     router: appRouter,
     req,
     createContext: () => createTRPCContext({ headers: req.headers }),
-    onError({ error, path }) {
-      if (EXPECTED_TRPC_ERRORS.has(error.code)) {
-        log.info("[trpc] expected error", {
-          path,
-          code: error.code,
-        });
-      } else {
-        log.error("[trpc] unexpected error", {
-          path,
-          error: error.message,
-          code: error.code,
-        });
-        captureException(error);
-      }
-    },
   });
 
   return setCorsHeaders(req, response);
