@@ -5,24 +5,53 @@
   "branch": "refactor/rename-memory-to-platform",
   "checkpoints_count": 1,
   "files_touched": [
+    "api/app/src/router/org/connections.ts",
     "api/platform/src/index.ts",
+    "api/platform/src/inngest/client.ts",
+    "api/platform/src/inngest/functions/connection-lifecycle.ts",
+    "api/platform/src/inngest/functions/delivery-recovery.ts",
+    "api/platform/src/inngest/functions/health-check.ts",
+    "api/platform/src/inngest/functions/ingest-delivery.ts",
     "api/platform/src/inngest/functions/memory-backfill-orchestrator.ts",
     "api/platform/src/inngest/functions/memory-entity-embed.ts",
     "api/platform/src/inngest/functions/memory-entity-graph.ts",
     "api/platform/src/inngest/functions/memory-entity-worker.ts",
     "api/platform/src/inngest/functions/memory-event-store.ts",
     "api/platform/src/inngest/functions/memory-notification-dispatch.ts",
+    "api/platform/src/inngest/functions/platform-backfill-orchestrator.ts",
+    "api/platform/src/inngest/functions/platform-entity-embed.ts",
+    "api/platform/src/inngest/functions/platform-entity-graph.ts",
+    "api/platform/src/inngest/functions/platform-entity-worker.ts",
+    "api/platform/src/inngest/functions/platform-event-store.ts",
+    "api/platform/src/inngest/functions/platform-notification-dispatch.ts",
+    "api/platform/src/inngest/functions/token-refresh.ts",
+    "api/platform/src/inngest/index.ts",
+    "api/platform/src/inngest/on-failure-handler.ts",
     "api/platform/src/inngest/schemas/memory.ts",
+    "api/platform/src/inngest/schemas/platform.ts",
+    "api/platform/src/lib/cache.ts",
     "api/platform/src/lib/jwt.test.ts",
     "api/platform/src/lib/jwt.ts",
+    "api/platform/src/lib/provider-configs.ts",
     "api/platform/src/root.ts",
     "api/platform/src/router/memory/backfill.ts",
     "api/platform/src/router/memory/connections.ts",
     "api/platform/src/router/memory/proxy.ts",
+    "api/platform/src/router/platform/backfill.ts",
+    "api/platform/src/router/platform/connections.ts",
+    "api/platform/src/router/platform/proxy.ts",
     "api/platform/src/trpc.ts",
+    "apps/app/src/lib/proxy.ts",
+    "apps/platform/src/app/api/ingest/[provider]/route.ts",
+    "apps/platform/src/app/api/trpc/[trpc]/route.ts",
+    "core/cli/package.json",
+    "core/lightfast/package.json",
+    "core/mcp/package.json",
+    "packages/app-test-data/src/trigger/trigger.ts",
     "packages/platform-trpc/src/caller.ts",
     "packages/platform-trpc/src/react.tsx",
-    "packages/platform-trpc/src/server.tsx"
+    "packages/platform-trpc/src/server.tsx",
+    "packages/platform-trpc/src/types.ts"
   ],
   "sessions": [
     {
@@ -30,13 +59,19 @@
       "transcript": "/68/51fad0bbd2/0/full.jsonl",
       "content_hash": "/68/51fad0bbd2/0/content_hash.txt",
       "prompt": "/68/51fad0bbd2/0/prompt.txt"
+    },
+    {
+      "metadata": "/68/51fad0bbd2/1/metadata.json",
+      "transcript": "/68/51fad0bbd2/1/full.jsonl",
+      "content_hash": "/68/51fad0bbd2/1/content_hash.txt",
+      "prompt": "/68/51fad0bbd2/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1497,
-    "cache_creation_tokens": 166325,
-    "cache_read_tokens": 1280890,
-    "output_tokens": 17021,
-    "api_call_count": 20
+    "input_tokens": 3753,
+    "cache_creation_tokens": 191100,
+    "cache_read_tokens": 1384223,
+    "output_tokens": 18297,
+    "api_call_count": 24
   }
 }
