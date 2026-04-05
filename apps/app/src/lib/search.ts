@@ -1,6 +1,6 @@
 import { buildOrgNamespace } from "@db/app/utils";
 import { createEmbeddingProvider } from "@repo/app-embed";
-import { appPineconeClient } from "@repo/app-pinecone";
+import { lightfastPineconeClient } from "@repo/app-pinecone";
 import type { RerankCandidate } from "@repo/app-rerank";
 import { createRerankProvider } from "@repo/app-rerank";
 import type {
@@ -60,7 +60,7 @@ export async function searchLogic(
       ? Math.min(request.limit * 3, 100)
       : request.limit;
 
-  const queryResult = await appPineconeClient.query<EntityVectorMetadata>(
+  const queryResult = await lightfastPineconeClient.query<EntityVectorMetadata>(
     indexName,
     {
       vector: queryVector,

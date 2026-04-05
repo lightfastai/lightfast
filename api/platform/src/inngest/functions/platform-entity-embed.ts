@@ -225,7 +225,7 @@ export const platformEntityEmbed = inngest.createFunction(
 
     // Step 3: UPSERT single entity vector to Pinecone
     await step.run("upsert-entity-vector", async () => {
-      const { appPineconeClient } = await import("@repo/app-pinecone");
+      const { lightfastPineconeClient } = await import("@repo/app-pinecone");
       const indexName = EMBEDDING_DEFAULTS.indexName;
       const namespaceName = buildOrgNamespace(clerkOrgId);
 
@@ -247,7 +247,7 @@ export const platformEntityEmbed = inngest.createFunction(
         significanceScore: maxSignificanceScore,
       };
 
-      await appPineconeClient.upsertVectors<EntityVectorMetadata>(
+      await lightfastPineconeClient.upsertVectors<EntityVectorMetadata>(
         indexName,
         {
           ids: [`ent_${entity.externalId}`],

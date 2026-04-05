@@ -1,8 +1,8 @@
 /**
- * App-specific Pinecone client wrapper
+ * Lightfast Pinecone client wrapper
  *
  * Wraps @vendor/pinecone and injects configuration from @repo/app-config.
- * Provides a convenience API with sensible defaults for the app.
+ * Provides a convenience API with sensible defaults for Lightfast services.
  */
 
 import type { RecordMetadata } from "@pinecone-database/pinecone";
@@ -18,12 +18,12 @@ import type {
 } from "@vendor/pinecone/types";
 
 /**
- * App-specific Pinecone client with injected configuration
+ * Lightfast Pinecone client with injected configuration
  *
  * This wrapper provides the same API as @vendor/pinecone but automatically
  * injects private configuration defaults from @repo/app-config.
  */
-export class AppPineconeClient {
+export class LightfastPineconeClient {
   private readonly client: VendorPineconeClient;
 
   constructor() {
@@ -31,7 +31,7 @@ export class AppPineconeClient {
   }
 
   /**
-   * Create index with app configuration defaults
+   * Create index with Lightfast configuration defaults
    *
    * Automatically injects:
    * - metric: "cosine"
@@ -64,7 +64,7 @@ export class AppPineconeClient {
   }
 
   /**
-   * Upsert vectors with automatic batching based on app config
+   * Upsert vectors with automatic batching based on Lightfast config
    *
    * Generic method - works with any metadata type extending RecordMetadata
    *
@@ -187,15 +187,15 @@ export class AppPineconeClient {
 }
 
 /**
- * Create a new app Pinecone client instance
+ * Create a new Lightfast Pinecone client instance
  */
-export function createAppPineconeClient(): AppPineconeClient {
-  return new AppPineconeClient();
+export function createLightfastPineconeClient(): LightfastPineconeClient {
+  return new LightfastPineconeClient();
 }
 
 /**
- * Default app Pinecone client instance
+ * Default Lightfast Pinecone client instance
  *
  * Use this for most operations unless you need a custom instance.
  */
-export const appPineconeClient = new AppPineconeClient();
+export const lightfastPineconeClient = new LightfastPineconeClient();
