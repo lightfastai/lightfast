@@ -11,3 +11,7 @@ run /implement_plan
 ---
 
 /oneshot_merge
+
+---
+
+yes
