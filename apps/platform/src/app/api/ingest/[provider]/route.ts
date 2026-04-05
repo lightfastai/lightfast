@@ -179,7 +179,7 @@ async function handleStandardWebhook(
   // Dispatch Inngest event
   await inngest.send({
     id: `wh-${providerSlug}-${deliveryId}`,
-    name: "memory/webhook.received",
+    name: "platform/webhook.received",
     data: {
       provider: providerSlug,
       deliveryId,

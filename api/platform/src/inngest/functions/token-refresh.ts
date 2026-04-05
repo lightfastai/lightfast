@@ -4,7 +4,7 @@
  * Ported from apps/gateway/src/functions/token-refresh.ts
  *
  * KEY CHANGES vs gateway service:
- * - Function ID: memory/token.refresh (was apps-gateway/token.refresh)
+ * - Function ID: platform/token.refresh (was apps-gateway/token.refresh)
  * - Uses providerConfigs from memory lib (was gateway env + runtime)
  */
 
@@ -25,7 +25,7 @@ const REFRESH_WINDOW_MS = 10 * 60 * 1000; // 10 minutes
 
 export const tokenRefresh = inngest.createFunction(
   {
-    id: "memory/token.refresh",
+    id: "platform/token.refresh",
     name: "Token Refresh (5m cron)",
     retries: 2,
     concurrency: [{ limit: 1 }],

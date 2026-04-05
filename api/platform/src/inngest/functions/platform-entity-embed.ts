@@ -47,9 +47,9 @@ import { createNeuralOnFailureHandler } from "../on-failure-handler";
  */
 const NARRATIVE_CHAR_CAP = 1800;
 
-export const memoryEntityEmbed = inngest.createFunction(
+export const platformEntityEmbed = inngest.createFunction(
   {
-    id: "memory/entity.embed",
+    id: "platform/entity.embed",
     name: "Entity Embed",
     description:
       "Builds entity narrative and upserts to Pinecone (layer=entities)",
@@ -60,9 +60,9 @@ export const memoryEntityEmbed = inngest.createFunction(
     },
     retries: 3,
     timeouts: { finish: "2m" },
-    onFailure: createNeuralOnFailureHandler("memory/entity.graphed"),
+    onFailure: createNeuralOnFailureHandler("platform/entity.graphed"),
   },
-  { event: "memory/entity.graphed" },
+  { event: "platform/entity.graphed" },
   async ({ event, step }) => {
     const { clerkOrgId, entityExternalId, provider, correlationId } =
       event.data;

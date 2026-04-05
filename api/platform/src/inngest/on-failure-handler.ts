@@ -12,7 +12,7 @@
  * @example
  * ```ts
  * onFailure: createNeuralOnFailureHandler(
- *   "memory/event.capture",
+ *   "platform/event.capture",
  *   {
  *     logMessage: "Event capture failed",
  *     logContext: ({ clerkOrgId, sourceEvent }) => ({ clerkOrgId, sourceId: sourceEvent.sourceId }),

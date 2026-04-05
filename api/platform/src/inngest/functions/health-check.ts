@@ -4,8 +4,8 @@
  * Ported from apps/gateway/src/functions/health-check.ts
  *
  * KEY CHANGES vs gateway service:
- * - Function ID: memory/health.check (was apps-gateway/health.check)
- * - Fires memory/connection.lifecycle (was platform/connection.lifecycle)
+ * - Function ID: platform/health.check (was apps-gateway/health.check)
+ * - Fires platform/connection.lifecycle (was platform/connection.lifecycle)
  * - Uses providerConfigs from memory lib (was gateway env + runtime)
  */
 
@@ -25,7 +25,7 @@ const FAILURE_THRESHOLD_LIFECYCLE = 6; // fire lifecycle event (~30 min)
 
 export const healthCheck = inngest.createFunction(
   {
-    id: "memory/health.check",
+    id: "platform/health.check",
     name: "Health Check (5m cron)",
     retries: 1,
     /**
@@ -145,9 +145,9 @@ export const healthCheck = inngest.createFunction(
           metadata: { connectionStatus: status },
         });
 
-        // Fire memory/connection.lifecycle event (was platform/connection.lifecycle)
+        // Fire platform/connection.lifecycle event (was platform/connection.lifecycle)
         await inngest.send({
-          name: "memory/connection.lifecycle",
+          name: "platform/connection.lifecycle",
           data: {
             reason: "health_check_revoked",
             installationId: installation.id,
@@ -204,7 +204,7 @@ async function recordTransientFailure(installation: {
     });
 
     await inngest.send({
-      name: "memory/connection.lifecycle",
+      name: "platform/connection.lifecycle",
       data: {
         reason: "health_check_unreachable",
         installationId: installation.id,

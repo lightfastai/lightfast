@@ -1,5 +1,5 @@
 /**
- * Redis key convention functions for the Memory service.
+ * Redis key convention functions for the Platform service.
  *
  * All keys are namespaced under `gw:` (legacy namespace from the former
  * gateway and relay services — preserved for Redis key compatibility).

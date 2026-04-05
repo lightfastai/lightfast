@@ -6,7 +6,7 @@
  *
  * KEY CHANGES vs backfill service:
  * - tRPC procedures instead of Hono routes
- * - Sends memory/* events instead of backfill/* events
+ * - Sends platform/* events instead of backfill/* events
  * - Direct DB queries instead of gateway HTTP client for connection lookup
  * - Direct provider API calls instead of gw.executeApi() for estimate
  */
@@ -82,7 +82,7 @@ export const backfillRouter = {
 
       try {
         await inngest.send({
-          name: "memory/backfill.run.requested",
+          name: "platform/backfill.run.requested",
           data: {
             installationId: input.installationId,
             provider: input.provider,
@@ -138,7 +138,7 @@ export const backfillRouter = {
 
       try {
         await inngest.send({
-          name: "memory/backfill.run.cancelled",
+          name: "platform/backfill.run.cancelled",
           data: {
             installationId: input.installationId,
             correlationId: input.correlationId,

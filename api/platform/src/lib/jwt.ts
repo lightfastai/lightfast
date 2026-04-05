@@ -34,7 +34,7 @@ export async function signServiceJWT(caller: string): Promise<string> {
   return new SignJWT({} as Record<string, unknown>)
     .setProtectedHeader({ alg: "HS256", typ: "JWT" })
     .setIssuer(caller)
-    .setAudience("lightfast-memory")
+    .setAudience("lightfast-platform")
     .setIssuedAt(now)
     .setExpirationTime(now + 60)
     .sign(getSecretKey());
@@ -51,7 +51,7 @@ export async function verifyServiceJWT(
   token: string
 ): Promise<VerifiedServiceJWT> {
   const { payload } = await jwtVerify(token, getSecretKey(), {
-    audience: "lightfast-memory",
+    audience: "lightfast-platform",
     algorithms: ["HS256"],
   });
 

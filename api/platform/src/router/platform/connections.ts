@@ -4,7 +4,7 @@
  * All procedures use serviceProcedure (JWT auth required).
  * orgId comes as an input parameter (no tenant middleware in tRPC).
  *
- * `disconnect` fires the "memory/connection.lifecycle" Inngest event
+ * `disconnect` fires the "platform/connection.lifecycle" Inngest event
  * to trigger the connection teardown workflow.
  */
 import { db } from "@db/app/client";
@@ -152,7 +152,7 @@ export const connectionsRouter = {
   /**
    * Disconnect (teardown) a connection.
    *
-   * Fires "memory/connection.lifecycle" Inngest event to initiate teardown.
+   * Fires "platform/connection.lifecycle" Inngest event to initiate teardown.
    */
   disconnect: serviceProcedure
     .input(
@@ -188,13 +188,16 @@ export const connectionsRouter = {
         event: "user_disconnect",
         fromStatus: installation.status,
         toStatus: "revoked",
-        reason: "User-initiated disconnect via memory service",
-        metadata: { source: "memory_disconnect_handler", triggeredBy: "user" },
+        reason: "User-initiated disconnect via platform service",
+        metadata: {
+          source: "platform_disconnect_handler",
+          triggeredBy: "user",
+        },
       });
 
       // Fire Inngest event to trigger connection teardown workflow
       await inngest.send({
-        name: "memory/connection.lifecycle",
+        name: "platform/connection.lifecycle",
         data: {
           reason: "user_disconnect",
           installationId: input.id,

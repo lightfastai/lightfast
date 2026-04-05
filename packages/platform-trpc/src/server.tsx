@@ -1,7 +1,7 @@
-import type { MemoryRouter } from "@api/platform";
+import type { PlatformRouter } from "@api/platform";
 import {
-  createMemoryTRPCContext,
-  memoryRouter,
+  createPlatformTRPCContext,
+  platformRouter,
   signServiceJWT,
 } from "@api/platform";
 import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
@@ -16,10 +16,10 @@ import { cache } from "react";
 import { createQueryClient } from "./client";
 
 /**
- * Create context for memory RSC calls.
+ * Create context for platform RSC calls.
  * Signs a service JWT automatically with caller="app".
  */
-const createMemoryContext = cache(async () => {
+const createPlatformContext = cache(async () => {
   const heads = new Headers(await headers());
   heads.set("x-trpc-source", "rsc");
 
@@ -27,7 +27,7 @@ const createMemoryContext = cache(async () => {
   const token = await signServiceJWT("app");
   heads.set("authorization", `Bearer ${token}`);
 
-  return createMemoryTRPCContext({
+  return createPlatformTRPCContext({
     headers: heads,
   });
 });
@@ -35,31 +35,31 @@ const createMemoryContext = cache(async () => {
 export const getQueryClient = cache(createQueryClient);
 
 /**
- * Memory tRPC proxy for RSC.
+ * Platform tRPC proxy for RSC.
  * Automatically authenticated as "app" caller.
  */
-export const memoryTrpc: TRPCOptionsProxy<MemoryRouter> =
+export const platformTrpc: TRPCOptionsProxy<PlatformRouter> =
   createTRPCOptionsProxy({
-    router: memoryRouter,
-    ctx: createMemoryContext,
+    router: platformRouter,
+    ctx: createPlatformContext,
     queryClient: getQueryClient,
   });
 
 /**
- * Create a server-side memory caller for service use.
+ * Create a server-side platform caller for service use.
  * Authenticated as the specified caller identity.
  *
  * @param caller - Service identity (e.g., "app", "platform", "inngest")
  */
-export const createMemoryCaller = cache(async (caller = "app") => {
+export const createPlatformCaller = cache(async (caller = "app") => {
   const token = await signServiceJWT(caller);
 
   const heads = new Headers();
   heads.set("x-trpc-source", `${caller}-service`);
   heads.set("authorization", `Bearer ${token}`);
 
-  const ctx = await createMemoryTRPCContext({ headers: heads });
-  return memoryRouter.createCaller(ctx);
+  const ctx = await createPlatformTRPCContext({ headers: heads });
+  return platformRouter.createCaller(ctx);
 });
 
 export function HydrateClient(props: { children: React.ReactNode }) {

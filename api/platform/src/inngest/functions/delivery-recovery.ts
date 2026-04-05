@@ -5,7 +5,7 @@
  * Source logic: apps/relay/src/lib/replay.ts + apps/relay/src/routes/admin.ts (lines 224-249)
  *
  * Sweeps all deliveries stuck in status='received' for more than 5 minutes
- * across all providers and installations, then sends memory/webhook.received
+ * across all providers and installations, then sends platform/webhook.received
  * events for each one instead of re-triggering Upstash Workflows.
  */
 
@@ -19,7 +19,7 @@ import { inngest } from "../client";
 
 export const deliveryRecovery = inngest.createFunction(
   {
-    id: "memory/delivery.recovery",
+    id: "platform/delivery.recovery",
     name: "Delivery Recovery (5m cron)",
     retries: 1,
     concurrency: [{ limit: 1 }],
@@ -56,7 +56,7 @@ export const deliveryRecovery = inngest.createFunction(
       count: deliveries.length,
     });
 
-    // -- Step 2: Re-send each as memory/webhook.received --------------------
+    // -- Step 2: Re-send each as platform/webhook.received --------------------
     const result = await step.run("replay-deliveries", async () => {
       const replayed: string[] = [];
       const skipped: string[] = [];
@@ -104,7 +104,7 @@ export const deliveryRecovery = inngest.createFunction(
 
           // Send as Inngest event instead of Upstash Workflow trigger
           await inngest.send({
-            name: "memory/webhook.received",
+            name: "platform/webhook.received",
             data: {
               provider: providerName,
               deliveryId: delivery.deliveryId,

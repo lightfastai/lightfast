@@ -6,14 +6,14 @@ import {
 import { ingestionSourceSchema } from "@repo/app-validation";
 import { z } from "zod";
 
-export const memoryEvents = {
+export const platformEvents = {
   // ── Backfill orchestration events ──
-  "memory/backfill.run.requested": backfillTriggerPayload,
-  "memory/backfill.run.cancelled": z.object({
+  "platform/backfill.run.requested": backfillTriggerPayload,
+  "platform/backfill.run.cancelled": z.object({
     installationId: z.string(),
     correlationId: z.string().max(128).optional(),
   }),
-  "memory/backfill.entity.requested": z.object({
+  "platform/backfill.entity.requested": z.object({
     installationId: z.string(),
     provider: z.string(),
     orgId: z.string(),
@@ -28,7 +28,7 @@ export const memoryEvents = {
     correlationId: z.string().max(128).optional(),
   }),
   // ── Health check signal ──
-  "memory/health.check.requested": z.object({
+  "platform/health.check.requested": z.object({
     /** Installation ID of the connection whose token was revoked */
     installationId: z.string(),
     /** Provider name (e.g. "github", "linear") */
@@ -39,7 +39,7 @@ export const memoryEvents = {
     correlationId: z.string().max(128).optional(),
   }),
   // ── Connection lifecycle (teardown) ──
-  "memory/connection.lifecycle": z.object({
+  "platform/connection.lifecycle": z.object({
     installationId: z.string(),
     orgId: z.string(),
     provider: z.string(),
@@ -48,7 +48,7 @@ export const memoryEvents = {
     correlationId: z.string().optional(),
   }),
   // ── Ingest + neural pipeline events ──
-  "memory/webhook.received": z.object({
+  "platform/webhook.received": z.object({
     provider: z.string(),
     deliveryId: z.string(),
     eventType: z.string(),
@@ -63,20 +63,20 @@ export const memoryEvents = {
       .optional(),
     correlationId: z.string().optional(),
   }),
-  "memory/event.capture": z.object({
+  "platform/event.capture": z.object({
     clerkOrgId: z.string(),
     sourceEvent: postTransformEventSchema,
     ingestionSource: ingestionSourceSchema.optional(),
     ingestLogId: z.number().optional(),
     correlationId: z.string().optional(),
   }),
-  "memory/event.stored": z.object({
+  "platform/event.stored": z.object({
     clerkOrgId: z.string(),
     eventExternalId: z.string(),
     sourceType: z.string(),
     significanceScore: z.number(),
   }),
-  "memory/entity.upserted": z.object({
+  "platform/entity.upserted": z.object({
     clerkOrgId: z.string(),
     entityExternalId: z.string(),
     entityType: z.string(),
@@ -92,7 +92,7 @@ export const memoryEvents = {
     occurredAt: z.string(),
     correlationId: z.string().optional(),
   }),
-  "memory/entity.graphed": z.object({
+  "platform/entity.graphed": z.object({
     clerkOrgId: z.string(),
     entityExternalId: z.string(),
     entityType: z.string(),

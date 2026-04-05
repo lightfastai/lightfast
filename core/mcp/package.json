@@ -1,7 +1,7 @@
 {
   "name": "@lightfastai/mcp",
   "version": "0.1.0-alpha.5",
-  "description": "Lightfast Neural Memory MCP Server - MCP for the Lightfast Memory API",
+  "description": "Lightfast Platform MCP Server - MCP for the Lightfast Platform API",
   "publishConfig": {
     "tag": "latest",
     "access": "public"
@@ -11,7 +11,7 @@
     "mcp",
     "model-context-protocol",
     "ai",
-    "memory",
+    "platform",
     "claude"
   ],
   "repository": {

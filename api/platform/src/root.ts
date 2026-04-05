@@ -1,18 +1,18 @@
 /**
- * Memory service root router.
+ * Platform service root router.
  *
  * Two top-level routers:
- * - memoryRouter: Service-accessible procedures (store, retrieve, search)
+ * - platformRouter: Service-accessible procedures (store, retrieve, search)
  * - adminRouter: Admin-only procedures (reindex, purge, diagnostics)
  */
-import { backfillRouter } from "./router/memory/backfill";
-import { connectionsRouter } from "./router/memory/connections";
-import { proxyRouter } from "./router/memory/proxy";
+import { backfillRouter } from "./router/platform/backfill";
+import { connectionsRouter } from "./router/platform/connections";
+import { proxyRouter } from "./router/platform/proxy";
 import { createTRPCRouter } from "./trpc";
 
 /**
- * Memory router -- service-accessible procedures.
- * Accessible via /api/trpc/memory/*
+ * Platform router -- service-accessible procedures.
+ * Accessible via /api/trpc/platform/*
  *
  * Sub-routers:
  * - connections.*: Connection lifecycle operations
@@ -21,7 +21,7 @@ import { createTRPCRouter } from "./trpc";
  * - ingest.*: Webhook ingestion operations (future)
  * - pipeline.*: Neural pipeline operations (future)
  */
-export const memoryRouter = createTRPCRouter({
+export const platformRouter = createTRPCRouter({
   connections: connectionsRouter,
   proxy: proxyRouter,
   backfill: backfillRouter,
@@ -40,5 +40,5 @@ export const adminRouter = createTRPCRouter({
 });
 
 // Export types for client usage
-export type MemoryRouter = typeof memoryRouter;
+export type PlatformRouter = typeof platformRouter;
 export type AdminRouter = typeof adminRouter;

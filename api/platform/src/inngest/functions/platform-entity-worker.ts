@@ -1,16 +1,16 @@
 /**
- * Memory backfill entity worker
+ * Platform backfill entity worker
  *
  * Ported from apps/backfill/src/workflows/entity-worker.ts
  *
  * KEY CHANGES vs backfill service:
- * - Function ID: memory/backfill.entity-worker (was backfill/entity.worker)
- * - Trigger: memory/backfill.entity.requested (was backfill/entity.requested)
- * - cancelOn: memory/backfill.run.cancelled (was backfill/run.cancelled)
+ * - Function ID: platform/backfill.entity-worker (was backfill/entity.worker)
+ * - Trigger: platform/backfill.entity.requested (was backfill/entity.requested)
+ * - cancelOn: platform/backfill.run.cancelled (was backfill/run.cancelled)
  * - Replace gw.executeApi() with direct provider API calls using
  *   getActiveTokenForInstallation() + forceRefreshToken() + direct fetch()
- * - Replace relay.dispatchWebhook() with step.sendEvent("memory/webhook.received")
- * - 401 health check signal uses memory/health.check.requested
+ * - Replace relay.dispatchWebhook() with step.sendEvent("platform/webhook.received")
+ * - 401 health check signal uses platform/health.check.requested
  */
 
 import { db } from "@db/app/client";
@@ -28,10 +28,10 @@ import {
 } from "../../lib/token-helpers";
 import { inngest } from "../client";
 
-export const memoryEntityWorker = inngest.createFunction(
+export const platformEntityWorker = inngest.createFunction(
   {
-    id: "memory/backfill.entity-worker",
-    name: "Memory Backfill Entity Worker",
+    id: "platform/backfill.entity-worker",
+    name: "Platform Backfill Entity Worker",
     retries: 3,
     concurrency: [
       // Per-org: max 5 entity workers per organization
@@ -48,13 +48,13 @@ export const memoryEntityWorker = inngest.createFunction(
     // Workers must declare their own cancelOn — it does NOT propagate from parent
     cancelOn: [
       {
-        event: "memory/backfill.run.cancelled",
+        event: "platform/backfill.run.cancelled",
         match: "data.installationId",
       },
     ],
     timeouts: { start: "5m", finish: "2h" },
   },
-  { event: "memory/backfill.entity.requested" },
+  { event: "platform/backfill.entity.requested" },
   async ({ event, step }) => {
     const {
       installationId,
@@ -275,7 +275,7 @@ export const memoryEntityWorker = inngest.createFunction(
       // Handle 401 health check signal outside of the step
       if (fetchResult.__healthCheckSignal) {
         await step.sendEvent("signal-connection-health-check", {
-          name: "memory/health.check.requested",
+          name: "platform/health.check.requested",
           data: {
             installationId,
             provider,
@@ -336,7 +336,7 @@ export const memoryEntityWorker = inngest.createFunction(
               // Send events to Inngest immediately
               await inngest.send(
                 batch.map((webhookEvent) => ({
-                  name: "memory/webhook.received" as const,
+                  name: "platform/webhook.received" as const,
                   data: {
                     provider,
                     deliveryId: webhookEvent.deliveryId,

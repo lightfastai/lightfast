@@ -1,4 +1,4 @@
-import { createMemoryTRPCContext, memoryRouter } from "@api/platform";
+import { createPlatformTRPCContext, platformRouter } from "@api/platform";
 import { captureException } from "@sentry/nextjs";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import { log } from "@vendor/observability/log/next";
@@ -48,10 +48,10 @@ export const OPTIONS = (req: NextRequest) => {
 const handler = async (req: NextRequest) => {
   const response = await fetchRequestHandler({
     endpoint: "/api/trpc",
-    router: memoryRouter,
+    router: platformRouter,
     req,
     createContext: () =>
-      createMemoryTRPCContext({
+      createPlatformTRPCContext({
         headers: req.headers,
       }),
     onError({ error, path }) {
