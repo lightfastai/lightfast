@@ -6,21 +6,9 @@ import {
   spotlightIntegration,
 } from "@sentry/nextjs";
 import { TRPCError } from "@trpc/server";
+import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 
 import { env } from "~/env";
-
-const EXPECTED_TRPC_CODES = new Set([
-  "UNAUTHORIZED",
-  "FORBIDDEN",
-  "NOT_FOUND",
-  "BAD_REQUEST",
-  "CONFLICT",
-  "PRECONDITION_FAILED",
-  "PARSE_ERROR",
-  "UNPROCESSABLE_CONTENT",
-  "TOO_MANY_REQUESTS",
-  "CLIENT_CLOSED_REQUEST",
-]);
 
 const sharedIntegrations = () => [
   captureConsoleIntegration({ levels: ["error", "warn"] }),
@@ -32,7 +20,7 @@ const beforeSend: NonNullable<Parameters<typeof init>[0]["beforeSend"]> = (
   hint
 ) => {
   const err = hint?.originalException;
-  if (err instanceof TRPCError && EXPECTED_TRPC_CODES.has(err.code)) {
+  if (err instanceof TRPCError && getHTTPStatusCodeFromError(err) < 500) {
     return null;
   }
   return event;

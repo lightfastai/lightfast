@@ -4,11 +4,9 @@
  * Auth model: service-to-service JWT (not Clerk).
  * All callers are internal services (app, platform, inngest, cron).
  */
-import { nanoid } from "@repo/lib";
-import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
-import { emitJournal, withRequestContext } from "@vendor/observability/request";
+import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -102,48 +100,13 @@ const t = initTRPC.context<typeof createPlatformTRPCContext>().create({
 
 // -- Middleware ----------------------------------------------------------------
 
-const sentryMiddleware = t.middleware(
-  trpcMiddleware({
-    attachRpcInput: true,
-  })
-);
-
-const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
-
 const observabilityMiddleware = t.middleware(
-  async ({ next, path, ctx, type }) => {
-    if (t._config.isDev) {
-      const waitMs = Math.floor(Math.random() * 400) + 100;
-      await new Promise((resolve) => setTimeout(resolve, waitMs));
-    }
-
-    const { result, journal, durationMs } = await withRequestContext(
-      {
-        requestId: nanoid(),
-        ...(ctx.auth.type === "service" && { caller: ctx.auth.caller }),
-      },
-      () => next()
-    );
-
-    const meta = {
-      path,
-      type,
-      durationMs,
-      ok: result.ok,
-      ...(!result.ok && { errorCode: result.error?.code }),
+  createObservabilityMiddleware({
+    isDev: t._config.isDev,
+    extractAuth: (ctx) => ({
       ...(ctx.auth.type === "service" && { caller: ctx.auth.caller }),
-    };
-
-    if (result.ok) {
-      log.info("[trpc] procedure completed", meta);
-    } else {
-      log.warn("[trpc] procedure failed", meta);
-    }
-
-    emitJournal(journal, { path, durationMs, ok: result.ok });
-
-    return result;
-  }
+    }),
+  })
 );
 
 // -- Router & Procedure Exports -----------------------------------------------
@@ -155,7 +118,7 @@ export const createCallerFactory = t.createCallerFactory;
  * Public procedure -- no auth required.
  * Use for health checks or publicly accessible endpoints.
  */
-export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
+export const publicProcedure = t.procedure.use(observabilityMiddleware);
 
 /**
  * Service procedure -- requires valid service JWT.
@@ -163,7 +126,7 @@ export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
  *
  * Guarantees `ctx.auth.type === "service"` and `ctx.auth.caller` is available.
  */
-export const serviceProcedure = sentrifiedProcedure
+export const serviceProcedure = t.procedure
   .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type !== "service") {
@@ -188,7 +151,7 @@ export const serviceProcedure = sentrifiedProcedure
  *
  * Restricts `ctx.auth.caller` to "admin" only.
  */
-export const adminProcedure = sentrifiedProcedure
+export const adminProcedure = t.procedure
   .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type !== "service") {

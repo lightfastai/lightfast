@@ -2214,6 +2214,9 @@ importers:
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.1(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(react@19.2.4)
+      '@repo/lib':
+        specifier: workspace:*
+        version: link:../../packages/lib
       '@sentry/core':
         specifier: 'catalog:'
         version: 10.42.0
@@ -2223,6 +2226,9 @@ importers:
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
+      '@trpc/server':
+        specifier: 'catalog:'
+        version: 11.12.0(typescript@5.9.3)
       react:
         specifier: ^19.2.4
         version: 19.2.4

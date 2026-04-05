@@ -9,12 +9,9 @@
 
 import { db } from "@db/app/client";
 import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
-import { nanoid } from "@repo/lib";
-import { trpcMiddleware } from "@sentry/core";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { auth } from "@vendor/clerk/server";
-import { log } from "@vendor/observability/log/next";
-import { emitJournal, withRequestContext } from "@vendor/observability/request";
+import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
@@ -122,14 +119,6 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
   },
 });
 
-const sentryMiddleware = t.middleware(
-  trpcMiddleware({
-    attachRpcInput: true,
-  })
-);
-
-const sentrifiedProcedure = t.procedure.use(sentryMiddleware);
-
 /**
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
  *
@@ -156,33 +145,9 @@ export const createCallerFactory = t.createCallerFactory;
  * network latency that would occur in production but not in local development.
  */
 const observabilityMiddleware = t.middleware(
-  async ({ next, path, ctx, type }) => {
-    if (t._config.isDev) {
-      // artificial delay in dev 100-500ms
-      const waitMs = Math.floor(Math.random() * 400) + 100;
-      await new Promise((resolve) => setTimeout(resolve, waitMs));
-    }
-
-    const { result, journal, durationMs } = await withRequestContext(
-      {
-        requestId: nanoid(),
-        ...(ctx.auth.type === "clerk-active" && {
-          userId: ctx.auth.userId,
-          orgId: ctx.auth.orgId,
-        }),
-        ...(ctx.auth.type === "clerk-pending" && {
-          userId: ctx.auth.userId,
-        }),
-      },
-      () => next()
-    );
-
-    const meta = {
-      path,
-      type,
-      durationMs,
-      ok: result.ok,
-      ...(!result.ok && { errorCode: result.error?.code }),
+  createObservabilityMiddleware({
+    isDev: t._config.isDev,
+    extractAuth: (ctx) => ({
       ...(ctx.auth.type === "clerk-active" && {
         userId: ctx.auth.userId,
         orgId: ctx.auth.orgId,
@@ -190,18 +155,8 @@ const observabilityMiddleware = t.middleware(
       ...(ctx.auth.type === "clerk-pending" && {
         userId: ctx.auth.userId,
       }),
-    };
-
-    if (result.ok) {
-      log.info("[trpc] procedure completed", meta);
-    } else {
-      log.warn("[trpc] procedure failed", meta);
-    }
-
-    emitJournal(journal, { path, durationMs, ok: result.ok });
-
-    return result;
-  }
+    }),
+  })
 );
 
 /**
@@ -211,7 +166,7 @@ const observabilityMiddleware = t.middleware(
  * tRPC API. It does not guarantee that a user querying is authorized, but you
  * can still access user session data if they are logged in
  */
-export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
+export const publicProcedure = t.procedure.use(observabilityMiddleware);
 
 /**
  * User-Scoped Procedure
@@ -229,7 +184,7 @@ export const publicProcedure = sentrifiedProcedure.use(observabilityMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const userScopedProcedure = sentrifiedProcedure
+export const userScopedProcedure = t.procedure
   .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type === "unauthenticated") {
@@ -277,7 +232,7 @@ export const userScopedProcedure = sentrifiedProcedure
  *
  * @see https://trpc.io/docs/procedures
  */
-export const orgScopedProcedure = sentrifiedProcedure
+export const orgScopedProcedure = t.procedure
   .use(observabilityMiddleware)
   .use(({ ctx, next }) => {
     if (ctx.auth.type === "unauthenticated") {

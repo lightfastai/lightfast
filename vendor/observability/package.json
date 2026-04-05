@@ -36,6 +36,10 @@
     "./error/next": {
       "types": "./src/error/next.ts",
       "default": "./src/error/next.ts"
+    },
+    "./trpc": {
+      "types": "./src/trpc.ts",
+      "default": "./src/trpc.ts"
     }
   },
   "license": "MIT",
@@ -50,9 +54,11 @@
   },
   "dependencies": {
     "@logtail/next": "^0.3.1",
+    "@repo/lib": "workspace:*",
     "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
+    "@trpc/server": "catalog:",
     "react": "catalog:react19",
     "server-only": "^0.0.1",
     "zod": "catalog:"
