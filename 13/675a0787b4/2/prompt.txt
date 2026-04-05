@@ -1,0 +1,84 @@
+/research_codebase 
+  1. Inngest Observability Middleware + ALS (v3 — no upgrade needed)
+
+  Inngest v3 already supports middleware via InngestMiddleware (already exported
+  from @vendor/inngest). The v3 API:
+
+  new InngestMiddleware({
+    name: "observability",
+    init: () => ({
+      onFunctionRun: ({ fn, ctx }) => ({
+        beforeExecution: () => {
+          // Open ALS scope with inngestRunId, functionName, correlationId
+        },
+        afterExecution: () => {
+          // Emit journal, log lifecycle
+        },
+      }),
+    }),
+  })
+
+  This would:
+  - Wrap every function run in requestStore.run — all log.* calls auto-enrich with
+   inngestRunId, functionName, correlationId
+  - Add automatic lifecycle logging (start/complete/error) at the middleware level
+   — removing the need for manual log.info("[fn] starting")/log.info("[fn]
+  complete") bookends in each function
+  - Feed the journal system (same pattern as tRPC)
+  - Work on the current v3.52.6 without any version change
+
+  This is the single highest-leverage next step — it extends your ALS investment
+  to the code paths that need it most.
+
+  2. Correlation ID Propagation Across Event Chains
+
+  Once ALS is in Inngest, the next innovation: auto-inject correlationId into
+  outgoing events. When entity-worker calls step.sendEvent({ name:
+  "memory/entity.embed", data: { ... } }), the middleware reads the correlationId
+  from ALS and attaches it to the outgoing event data. The receiving function's
+  middleware extracts it and opens its own ALS scope with the same ID.
+
+  Result: a single correlationId traces the full chain from webhook delivery
+  through entity graph updates. One BetterStack query reconstructs the entire
+  pipeline execution.
+
+  3. Inngest v4 Upgrade
+
+  After the v3 middleware proves the pattern, upgrade to v4 for:
+  - Step-level observability: onStepComplete / onStepError hooks — know which step
+   failed and how long each took, without adding logs inside every step.run()
+  block
+  - @inngest/middleware-sentry v1.0.0: onlyCaptureFinalAttempt: true (only Sentry
+  after ALL retries exhausted), withIsolationScope (no tag leaking between
+  concurrent runs)
+  - Per-request middleware instances (no shared state bugs)
+
+  This is a breaking upgrade affecting 12 functions, but the surface area is
+  well-contained and the v3 middleware gives you a migration bridge.
+
+ @thoughts/shared/plans/2026-04-05-tier1-observability-primitives.md and these: Tier 1 — Do these first (immediate production value):
+
+  1. Add logging to the 6 blind files — proxy.ts, connections.ts, backfill.ts, token-helpers.ts, token-store.ts, oauth/state.ts. This isn't innovative
+   but it's the single highest-ROI change. Every production incident today hits these unlogged paths.
+  2. Provider response body capture — GitHub's 401 body tells you why (revoked, suspended, bad JWT). This is the exact thing that was missing in the
+  incident that prompted the original research. One-line fix per provider, massive diagnostic value.
+  3. Enhanced tRPC observability middleware — Replace timingMiddleware with one that logs outcome (result.ok), error code, userId/orgId. Low effort,
+  immediately enriches every single procedure call.
+  4. Error classification — Separate 4xx from 5xx at the onError handler and Sentry beforeSend. Reduces noise so Sentry alerts actually mean
+  something.
+
+  Tier 2 — Do next (architectural, compound value):
+
+  5. AsyncLocalStorage context propagation — This is the most genuinely innovative one. Once it's in, every log call everywhere automatically carries
+  requestId, userId, orgId, correlationId. It eliminates the "which installation? which provider?" question permanently. But it's a foundational
+  change that should come after the blind spots are lit up.
+
+ are implemented.
+
+also consider a couple more things. sentyr error handling integation for @api/platform/ and @api/app/ 
+
+consider @vendor/observability/src/error/next.ts how does this work and should this be integrateed through our entire architecture.
+
+we need to fill in all the gaps in this researchs
+
+we have also implement more fixes and changes you can look through git logs if needed.
