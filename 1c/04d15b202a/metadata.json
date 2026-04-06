@@ -3,7 +3,7 @@
   "checkpoint_id": "1c04d15b202a",
   "strategy": "manual-commit",
   "branch": "feat/inngest-observability-and-internal-caller",
-  "checkpoints_count": 12,
+  "checkpoints_count": 14,
   "files_touched": [
     "api/app/package.json",
     "api/app/src/inngest/client/client.ts",
@@ -29,13 +29,19 @@
       "transcript": "/1c/04d15b202a/1/full.jsonl",
       "content_hash": "/1c/04d15b202a/1/content_hash.txt",
       "prompt": "/1c/04d15b202a/1/prompt.txt"
+    },
+    {
+      "metadata": "/1c/04d15b202a/2/metadata.json",
+      "transcript": "/1c/04d15b202a/2/full.jsonl",
+      "content_hash": "/1c/04d15b202a/2/content_hash.txt",
+      "prompt": "/1c/04d15b202a/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 476,
-    "cache_creation_tokens": 341406,
-    "cache_read_tokens": 16579378,
-    "output_tokens": 74833,
-    "api_call_count": 216
+    "input_tokens": 11144,
+    "cache_creation_tokens": 639029,
+    "cache_read_tokens": 18319923,
+    "output_tokens": 114683,
+    "api_call_count": 245
   }
 }
