@@ -31,3 +31,15 @@ run /create_plan
 ---
 
 yes
+
+---
+
+okay nice. we're now done with item 2, 3.
+
+for item 5. can you check if it is done or not
+
+---
+
+okay nice. we're now done with item 2, 3, 5.
+
+let's discuss next step. item 4.
