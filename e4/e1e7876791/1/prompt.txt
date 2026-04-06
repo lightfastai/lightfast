@@ -1,0 +1,9 @@
+/implement_plan @thoughts/shared/plans/2026-04-06-route-handlers-to-internal-trpc.md
+
+---
+
+question for this, dont we technically know the data format? im just curious whether it's smarter to have mostof the header conversion stuff in the actually route.ts and when passed into webhook.ingest it's post-transformed into correct types?
+
+---
+
+proceed
