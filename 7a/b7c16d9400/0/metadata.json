@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "7ab7c16d9400",
+  "session_id": "1545ae5d-aefc-4ed4-94ab-d174b8a91c00",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T12:22:29.346135Z",
+  "branch": "ui/layout-refinements",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "thoughts/shared/research/2026-04-05-optimistic-mutations-prefetch-layer.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "262460fe0c69",
+  "token_usage": {
+    "input_tokens": 90,
+    "cache_creation_tokens": 241745,
+    "cache_read_tokens": 9588359,
+    "output_tokens": 46914,
+    "api_call_count": 79
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T12:22:28.621604Z",
+    "agent_lines": 292,
+    "agent_removed": 0,
+    "human_added": 20734,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 21026,
+    "total_lines_changed": 21026,
+    "agent_percentage": 1.388756777323314,
+    "metric_version": 2
+  }
+}
