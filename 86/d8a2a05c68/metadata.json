@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "86d8a2a05c68",
+  "strategy": "manual-commit",
+  "branch": "feat/inngest-observability-and-internal-caller",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/index.ts",
+    "api/platform/src/inngest/platform.ts",
+    "api/platform/src/internal.ts",
+    "api/platform/src/trpc.ts",
+    "apps/platform/src/lib/internal-caller.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/86/d8a2a05c68/0/metadata.json",
+      "transcript": "/86/d8a2a05c68/0/full.jsonl",
+      "content_hash": "/86/d8a2a05c68/0/content_hash.txt",
+      "prompt": "/86/d8a2a05c68/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 434,
+    "cache_creation_tokens": 309854,
+    "cache_read_tokens": 15696457,
+    "output_tokens": 68326,
+    "api_call_count": 188
+  }
+}
