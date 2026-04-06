@@ -1,0 +1,47 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "50fa7002cfcf",
+  "session_id": "774abf42-0a29-4f89-8ef8-51be502da5c3",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T12:22:21.04688Z",
+  "branch": "ui/layout-refinements",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "api/platform/src/inngest/functions/ingest-delivery.ts",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/layout.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/www/src/app/(app)/(content)/docs/_components/docs-mobile-nav.tsx",
+    "packages/ui/src/components/app-header/team-switcher.tsx",
+    "packages/ui/src/components/app-header/user-menu.tsx",
+    "packages/ui/src/components/ui/dropdown-menu.tsx",
+    "packages/ui/src/components/ui/popover.tsx",
+    "packages/ui/src/components/ui/sidebar.tsx",
+    "packages/ui/src/globals.css"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "0dc6be6c6528",
+  "token_usage": {
+    "input_tokens": 33,
+    "cache_creation_tokens": 51686,
+    "cache_read_tokens": 885845,
+    "output_tokens": 4829,
+    "api_call_count": 23
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T12:22:20.822716Z",
+    "agent_lines": 0,
+    "agent_removed": 108,
+    "human_added": 3,
+    "human_modified": 644,
+    "human_removed": 0,
+    "total_committed": 111,
+    "total_lines_changed": 755,
+    "agent_percentage": 14.304635761589404,
+    "metric_version": 2
+  }
+}

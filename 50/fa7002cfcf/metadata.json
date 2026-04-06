@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "50fa7002cfcf",
+  "strategy": "manual-commit",
+  "branch": "ui/layout-refinements",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "api/platform/src/inngest/functions/ingest-delivery.ts",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/layout.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/www/src/app/(app)/(content)/docs/_components/docs-mobile-nav.tsx",
+    "packages/ui/src/components/app-header/team-switcher.tsx",
+    "packages/ui/src/components/app-header/user-menu.tsx",
+    "packages/ui/src/components/ui/dropdown-menu.tsx",
+    "packages/ui/src/components/ui/popover.tsx",
+    "packages/ui/src/components/ui/sidebar.tsx",
+    "packages/ui/src/globals.css"
+  ],
+  "sessions": [
+    {
+      "metadata": "/50/fa7002cfcf/0/metadata.json",
+      "transcript": "/50/fa7002cfcf/0/full.jsonl",
+      "content_hash": "/50/fa7002cfcf/0/content_hash.txt",
+      "prompt": "/50/fa7002cfcf/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 33,
+    "cache_creation_tokens": 51686,
+    "cache_read_tokens": 885845,
+    "output_tokens": 4829,
+    "api_call_count": 23
+  }
+}
