@@ -1,0 +1,9 @@
+/improve_plan @thoughts/shared/plans/2026-04-06-internal-trpc-caller-setup.md
+
+---
+
+question, is this system truly secure? can external hacker hack it?
+
+---
+
+all good
