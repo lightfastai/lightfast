@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "88c56e8f6e9d",
+  "strategy": "manual-commit",
+  "branch": "refactor/strip-inngest-manual-bookkeeping",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/app/src/inngest/workflow/infrastructure/record-activity.ts",
+    "api/platform/src/inngest/functions/connection-lifecycle.ts",
+    "api/platform/src/inngest/functions/delivery-recovery.ts",
+    "api/platform/src/inngest/functions/health-check.ts",
+    "api/platform/src/inngest/functions/ingest-delivery.ts",
+    "api/platform/src/inngest/functions/platform-backfill-orchestrator.ts",
+    "api/platform/src/inngest/functions/platform-entity-embed.ts",
+    "api/platform/src/inngest/functions/platform-entity-graph.ts",
+    "api/platform/src/inngest/functions/platform-entity-worker.ts",
+    "api/platform/src/inngest/functions/platform-event-store.ts",
+    "api/platform/src/inngest/functions/platform-notification-dispatch.ts",
+    "api/platform/src/inngest/functions/token-refresh.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/88/c56e8f6e9d/0/metadata.json",
+      "transcript": "/88/c56e8f6e9d/0/full.jsonl",
+      "content_hash": "/88/c56e8f6e9d/0/content_hash.txt",
+      "prompt": "/88/c56e8f6e9d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2973,
+    "cache_creation_tokens": 389194,
+    "cache_read_tokens": 28062227,
+    "output_tokens": 85759,
+    "api_call_count": 276
+  }
+}
