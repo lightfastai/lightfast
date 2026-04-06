@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "1c04d15b202a",
+  "strategy": "manual-commit",
+  "branch": "feat/inngest-observability-and-internal-caller",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "api/app/package.json",
+    "api/app/src/inngest/client/client.ts",
+    "api/platform/package.json",
+    "api/platform/src/inngest/client.ts",
+    "apps/app/package.json",
+    "apps/app/src/instrumentation.ts",
+    "apps/platform/src/instrumentation.ts",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "vendor/observability/package.json",
+    "vendor/observability/src/inngest.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/1c/04d15b202a/0/metadata.json",
+      "transcript": "/1c/04d15b202a/0/full.jsonl",
+      "content_hash": "/1c/04d15b202a/0/content_hash.txt",
+      "prompt": "/1c/04d15b202a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 432,
+    "cache_creation_tokens": 309345,
+    "cache_read_tokens": 15530374,
+    "output_tokens": 67994,
+    "api_call_count": 186
+  }
+}

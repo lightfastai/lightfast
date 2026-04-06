@@ -1,0 +1,47 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "1c04d15b202a",
+  "session_id": "36cc9e63-2ad3-4e06-81ed-c7f7d0273647",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T08:37:47.768822Z",
+  "branch": "feat/inngest-observability-and-internal-caller",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "api/app/package.json",
+    "api/app/src/inngest/client/client.ts",
+    "api/platform/package.json",
+    "api/platform/src/inngest/client.ts",
+    "apps/app/package.json",
+    "apps/app/src/instrumentation.ts",
+    "apps/platform/src/instrumentation.ts",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "vendor/observability/package.json",
+    "vendor/observability/src/inngest.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "ddbd5d2646f6",
+  "token_usage": {
+    "input_tokens": 432,
+    "cache_creation_tokens": 309345,
+    "cache_read_tokens": 15530374,
+    "output_tokens": 67994,
+    "api_call_count": 186
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T08:37:47.019348Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 275,
+    "human_modified": 61,
+    "human_removed": 0,
+    "total_committed": 275,
+    "total_lines_changed": 336,
+    "agent_percentage": 0,
+    "metric_version": 2
+  }
+}
