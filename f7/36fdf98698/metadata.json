@@ -3,7 +3,7 @@
   "checkpoint_id": "f736fdf98698",
   "strategy": "manual-commit",
   "branch": "feat/correlationid-auto-propagation",
-  "checkpoints_count": 7,
+  "checkpoints_count": 10,
   "files_touched": [
     "api/platform/src/inngest/functions/connection-lifecycle.ts",
     "api/platform/src/inngest/functions/platform-event-store.ts",
@@ -29,13 +29,19 @@
       "transcript": "/f7/36fdf98698/2/full.jsonl",
       "content_hash": "/f7/36fdf98698/2/content_hash.txt",
       "prompt": "/f7/36fdf98698/2/prompt.txt"
+    },
+    {
+      "metadata": "/f7/36fdf98698/3/metadata.json",
+      "transcript": "/f7/36fdf98698/3/full.jsonl",
+      "content_hash": "/f7/36fdf98698/3/content_hash.txt",
+      "prompt": "/f7/36fdf98698/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 66,
-    "cache_creation_tokens": 246338,
-    "cache_read_tokens": 2111097,
-    "output_tokens": 31181,
-    "api_call_count": 43
+    "input_tokens": 130,
+    "cache_creation_tokens": 335100,
+    "cache_read_tokens": 4127325,
+    "output_tokens": 46472,
+    "api_call_count": 82
   }
 }
