@@ -1,0 +1,17 @@
+delete @.agents/skills/seo/ @.agents/skills/blog-writer/ @.agents/skills/changelog-writer/ @.claude/skills/react-doctor @.agents/skills/vercel-react-best-practices/
+
+---
+
+dont forge tto clean up symlik in @.claude/skills/
+
+---
+
+remove remotion and react doctor too
+
+---
+
+/oneshot_merge
+
+---
+
+check any other things we removed too. ensure all .claude and .agents skill stuff is included. i deleted more
