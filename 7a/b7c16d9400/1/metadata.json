@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "7ab7c16d9400",
+  "session_id": "1b2b0fc4-1663-46d2-a598-c9a2cebf1763",
   "strategy": "manual-commit",
+  "created_at": "2026-04-06T12:22:30.380556Z",
   "branch": "ui/layout-refinements",
-  "checkpoints_count": 2,
+  "checkpoints_count": 1,
   "files_touched": [
     "thoughts/shared/plans/2026-04-04-fix-codeql-alerts-pr555.md",
     "thoughts/shared/plans/2026-04-04-fix-org-entities-excluded-reference.md",
@@ -34,30 +36,32 @@
     "thoughts/shared/research/2026-04-05-env-validation-patterns.md",
     "thoughts/shared/research/2026-04-05-github-installation-token-404-error.md",
     "thoughts/shared/research/2026-04-05-logging-error-handling-architecture.md",
-    "thoughts/shared/research/2026-04-05-optimistic-mutations-prefetch-layer.md",
     "thoughts/shared/research/2026-04-05-platform-logging-gaps.md",
     "thoughts/shared/research/2026-04-05-proxy-search-createMemorycaller-n-plus-1.md",
     "thoughts/shared/research/2026-04-05-trpc-error-handling-propagation.md"
   ],
-  "sessions": [
-    {
-      "metadata": "/7a/b7c16d9400/0/metadata.json",
-      "transcript": "/7a/b7c16d9400/0/full.jsonl",
-      "content_hash": "/7a/b7c16d9400/0/content_hash.txt",
-      "prompt": "/7a/b7c16d9400/0/prompt.txt"
-    },
-    {
-      "metadata": "/7a/b7c16d9400/1/metadata.json",
-      "transcript": "/7a/b7c16d9400/1/full.jsonl",
-      "content_hash": "/7a/b7c16d9400/1/content_hash.txt",
-      "prompt": "/7a/b7c16d9400/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "turn_id": "4a329959b9dc",
   "token_usage": {
-    "input_tokens": 683,
-    "cache_creation_tokens": 349824,
-    "cache_read_tokens": 19957241,
-    "output_tokens": 70201,
-    "api_call_count": 192
+    "input_tokens": 593,
+    "cache_creation_tokens": 108079,
+    "cache_read_tokens": 10368882,
+    "output_tokens": 23287,
+    "api_call_count": 113
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T12:22:29.38056Z",
+    "agent_lines": 11238,
+    "agent_removed": 0,
+    "human_added": 9780,
+    "human_modified": 8,
+    "human_removed": 0,
+    "total_committed": 21026,
+    "total_lines_changed": 21026,
+    "agent_percentage": 53.4481118615048,
+    "metric_version": 2
   }
 }
