@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "817fdbbbe183",
+  "strategy": "manual-commit",
+  "branch": "fix/enforce-embed-env-remove-knock",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/inngest/functions/ingest-delivery.ts",
+    "api/platform/src/inngest/functions/platform-entity-embed.ts",
+    "apps/platform/package.json",
+    "apps/platform/src/env.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/81/7fdbbbe183/0/metadata.json",
+      "transcript": "/81/7fdbbbe183/0/full.jsonl",
+      "content_hash": "/81/7fdbbbe183/0/content_hash.txt",
+      "prompt": "/81/7fdbbbe183/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 51,
+    "cache_creation_tokens": 65449,
+    "cache_read_tokens": 1708169,
+    "output_tokens": 34649,
+    "api_call_count": 35
+  }
+}
