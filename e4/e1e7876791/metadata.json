@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e4e1e7876791",
+  "strategy": "manual-commit",
+  "branch": "refactor/route-handlers-to-internal-trpc",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/internal.ts",
+    "api/platform/src/lib/oauth/callback.ts",
+    "apps/platform/src/app/api/connect/[provider]/authorize/route.ts",
+    "apps/platform/src/app/api/connect/[provider]/callback/route.ts",
+    "apps/platform/src/app/api/connect/oauth/poll/route.ts",
+    "apps/platform/src/app/api/ingest/[provider]/route.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e4/e1e7876791/0/metadata.json",
+      "transcript": "/e4/e1e7876791/0/full.jsonl",
+      "content_hash": "/e4/e1e7876791/0/content_hash.txt",
+      "prompt": "/e4/e1e7876791/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 368,
+    "cache_creation_tokens": 24855,
+    "cache_read_tokens": 169492,
+    "output_tokens": 1322,
+    "api_call_count": 7
+  }
+}

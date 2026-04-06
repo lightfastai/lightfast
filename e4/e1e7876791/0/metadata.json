@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e4e1e7876791",
+  "session_id": "1c21e39a-ff3a-44d8-bfd5-b8d0ca90646b",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T10:16:28.816162Z",
+  "branch": "refactor/route-handlers-to-internal-trpc",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/internal.ts",
+    "api/platform/src/lib/oauth/callback.ts",
+    "apps/platform/src/app/api/connect/[provider]/authorize/route.ts",
+    "apps/platform/src/app/api/connect/[provider]/callback/route.ts",
+    "apps/platform/src/app/api/connect/oauth/poll/route.ts",
+    "apps/platform/src/app/api/ingest/[provider]/route.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "2b1358721fb4",
+  "token_usage": {
+    "input_tokens": 368,
+    "cache_creation_tokens": 24855,
+    "cache_read_tokens": 169492,
+    "output_tokens": 1322,
+    "api_call_count": 7
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T10:16:28.700309Z",
+    "agent_lines": 0,
+    "agent_removed": 192,
+    "human_added": 291,
+    "human_modified": 53,
+    "human_removed": 0,
+    "total_committed": 318,
+    "total_lines_changed": 536,
+    "agent_percentage": 35.82089552238806,
+    "metric_version": 2
+  }
+}
