@@ -19,6 +19,10 @@
   }
 }
 
+.dark {
+  --sidebar: oklch(0.2178 0 0); /* Match background — docs sidebar should not contrast */
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
