@@ -97,3 +97,7 @@ proceed phase 3
 ---
 
 /oneshot_merge
+
+---
+
+yes
