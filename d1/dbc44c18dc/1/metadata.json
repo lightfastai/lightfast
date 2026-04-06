@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d1dbc44c18dc",
+  "session_id": "f4bf1f65-e7c0-4444-be4b-99997a4467de",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T07:39:20.09247Z",
+  "branch": "feat/lightfast-sentry-skill",
+  "checkpoints_count": 5,
+  "files_touched": [
+    ".claude/skills/lightfast-sentry/SKILL.md",
+    ".claude/skills/lightfast-sentry/command/lightfast-sentry.md",
+    ".claude/skills/lightfast-sentry/references/issues/RULE.md",
+    ".claude/skills/lightfast-sentry/references/issues/commands.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "88f221b3d922",
+  "token_usage": {
+    "input_tokens": 7333,
+    "cache_creation_tokens": 84607,
+    "cache_read_tokens": 2863064,
+    "output_tokens": 14937,
+    "api_call_count": 56
+  },
+  "session_metrics": {
+    "turn_count": 17
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T07:39:19.710622Z",
+    "agent_lines": 420,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 420,
+    "total_lines_changed": 420,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
