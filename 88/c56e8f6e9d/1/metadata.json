@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "88c56e8f6e9d",
+  "session_id": "e286820a-affa-4b9c-9d18-d63a10ca47b1",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T09:02:07.878955Z",
+  "branch": "refactor/strip-inngest-manual-bookkeeping",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "api/platform/src/inngest/functions/token-refresh.ts",
+    "api/app/src/inngest/workflow/infrastructure/record-activity.ts",
+    "api/platform/src/inngest/functions/health-check.ts",
+    "api/platform/src/inngest/functions/platform-entity-embed.ts",
+    "api/platform/src/inngest/functions/platform-entity-worker.ts",
+    "api/platform/src/inngest/functions/platform-event-store.ts",
+    "api/platform/src/inngest/functions/connection-lifecycle.ts",
+    "api/platform/src/inngest/functions/delivery-recovery.ts",
+    "api/platform/src/inngest/functions/ingest-delivery.ts",
+    "api/platform/src/inngest/functions/platform-backfill-orchestrator.ts",
+    "api/platform/src/inngest/functions/platform-entity-graph.ts",
+    "api/platform/src/inngest/functions/platform-notification-dispatch.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "f8d57268d325",
+  "token_usage": {
+    "input_tokens": 3,
+    "cache_creation_tokens": 19476,
+    "cache_read_tokens": 11853,
+    "output_tokens": 1556,
+    "api_call_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T09:02:07.867529Z",
+    "agent_lines": 67,
+    "agent_removed": 267,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 67,
+    "total_lines_changed": 334,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
