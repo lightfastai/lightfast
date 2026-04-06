@@ -7,6 +7,7 @@ import {
 } from "@sentry/nextjs";
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+import { NonRetriableError } from "@vendor/inngest";
 
 import { env } from "~/env";
 
@@ -21,6 +22,13 @@ const beforeSend: NonNullable<Parameters<typeof init>[0]["beforeSend"]> = (
 ) => {
   const err = hint?.originalException;
   if (err instanceof TRPCError && getHTTPStatusCodeFromError(err) < 500) {
+    return null;
+  }
+  // Drop Inngest business rejections — NonRetriableError is an expected
+  // outcome (e.g. no_connection, filtered event). The framework console.errors
+  // thrown errors which captureConsoleIntegration intercepts; this filter
+  // prevents those from creating Sentry issues.
+  if (err instanceof NonRetriableError) {
     return null;
   }
   return event;

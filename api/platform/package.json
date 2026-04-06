@@ -20,6 +20,10 @@
     "./inngest/client": {
       "types": "./src/inngest/client.ts",
       "default": "./src/inngest/client.ts"
+    },
+    "./internal": {
+      "types": "./src/internal.ts",
+      "default": "./src/internal.ts"
     }
   },
   "license": "FSL-1.1-Apache-2.0",
@@ -30,7 +34,6 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
-    "@inngest/middleware-sentry": "catalog:",
     "@repo/app-embed": "workspace:*",
     "@repo/app-pinecone": "workspace:*",
     "@repo/app-providers": "workspace:*",
