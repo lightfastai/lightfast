@@ -75,6 +75,7 @@ export const platformEvents = {
     eventExternalId: z.string(),
     sourceType: z.string(),
     significanceScore: z.number(),
+    correlationId: z.string().optional(),
   }),
   "platform/entity.upserted": z.object({
     clerkOrgId: z.string(),

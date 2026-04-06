@@ -41,7 +41,11 @@ export const connectionLifecycle = inngest.createFunction(
   },
   { event: "platform/connection.lifecycle" },
   async ({ event, step }) => {
-    const { installationId, provider: providerName } = event.data;
+    const {
+      installationId,
+      provider: providerName,
+      correlationId,
+    } = event.data;
 
     log.info("[connection-lifecycle] starting", {
       installationId,
@@ -79,6 +83,7 @@ export const connectionLifecycle = inngest.createFunction(
           name: "platform/backfill.run.cancelled",
           data: {
             installationId,
+            correlationId,
           },
         });
         log.info("[connection-lifecycle] backfill cancellation sent", {
