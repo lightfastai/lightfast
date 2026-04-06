@@ -47,14 +47,14 @@ export function UserMenu({
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64">
+      <DropdownMenuContent align="end" className="w-64 rounded-xl border-border/50">
         <div className="px-2 py-1.5">
           <p className="text-muted-foreground text-sm">{email || "User"}</p>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
           <Link
-            className="cursor-pointer"
+            className="cursor-pointer rounded-xl"
             href={{ pathname: settingsHref }}
             prefetch={true}
           >
@@ -64,7 +64,7 @@ export function UserMenu({
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="cursor-pointer text-sm"
+          className="cursor-pointer rounded-xl text-sm"
           onClick={onSignOut}
         >
           Sign out

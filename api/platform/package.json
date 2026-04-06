@@ -45,7 +45,6 @@
     "@trpc/server": "catalog:",
     "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:*",
-    "@vendor/knock": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vercel/related-projects": "catalog:",

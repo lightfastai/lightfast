@@ -15,11 +15,6 @@
       "command": "bash",
       "args": [".mcp/start-exa.sh"]
     },
-    "knock": {
-      "type": "stdio",
-      "command": "bash",
-      "args": [".mcp/start-knock.sh"]
-    },
     "lightfast": {
       "type": "stdio",
       "command": "bash",

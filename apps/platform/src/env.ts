@@ -1,6 +1,7 @@
 import { providerEnv } from "@repo/app-providers/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
+import { embedEnv } from "@vendor/embed/env";
 import { env as inngestEnv } from "@vendor/inngest/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
@@ -15,6 +16,7 @@ export const env = createEnv({
     upstashEnv,
     providerEnv,
     inngestEnv,
+    embedEnv,
   ],
   shared: {
     NODE_ENV: z

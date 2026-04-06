@@ -35,7 +35,6 @@
 export { createAnalyticsCspDirectives } from "./analytics";
 export { createClerkCspDirectives } from "./clerk";
 export { composeCspDirectives, composeCspOptions } from "./compose";
-export { createKnockCspDirectives } from "./knock";
 export { createNextjsCspDirectives } from "./nextjs";
 export { createSentryCspDirectives } from "./sentry";
 export type {

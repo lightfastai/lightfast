@@ -38,7 +38,6 @@
     "@vendor/email": "0.1.0",
     "@vendor/embed": "0.1.0",
     "@vendor/inngest": "0.1.0",
-    "@vendor/knock": "0.1.0",
     "@vendor/next": "0.0.0",
     "@vendor/observability": "0.1.0",
     "@vendor/pinecone": "0.1.0",

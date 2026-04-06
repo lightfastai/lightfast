@@ -4,7 +4,6 @@ import { vercelEnv } from "@repo/app-vercel/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
-import { env as knockEnv } from "@vendor/knock/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { upstashEnv } from "@vendor/upstash/env";
@@ -14,7 +13,6 @@ export const env = createEnv({
   extends: [
     vercel(),
     clerkEnvBase,
-    knockEnv,
     dbEnv,
     sentryEnv,
     betterstackEnv,
