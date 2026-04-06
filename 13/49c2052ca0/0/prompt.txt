@@ -15,3 +15,7 @@ remove remotion and react doctor too
 ---
 
 check any other things we removed too. ensure all .claude and .agents skill stuff is included. i deleted more
+
+---
+
+nice proceed
