@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "1349c2052ca0",
+  "session_id": "f4bf1f65-e7c0-4444-be4b-99997a4467de",
   "strategy": "manual-commit",
+  "created_at": "2026-04-06T07:26:18.939432Z",
   "branch": "chore/remove-unused-skills",
-  "checkpoints_count": 18,
+  "checkpoints_count": 13,
   "files_touched": [
     ".agents/skills/blog-writer/SKILL.md",
     ".agents/skills/blog-writer/resources/aeo-requirements.md",
@@ -133,25 +135,29 @@
     ".claude/skills/seo",
     ".claude/skills/vercel-react-best-practices"
   ],
-  "sessions": [
-    {
-      "metadata": "/13/49c2052ca0/0/metadata.json",
-      "transcript": "/13/49c2052ca0/0/full.jsonl",
-      "content_hash": "/13/49c2052ca0/0/content_hash.txt",
-      "prompt": "/13/49c2052ca0/0/prompt.txt"
-    },
-    {
-      "metadata": "/13/49c2052ca0/1/metadata.json",
-      "transcript": "/13/49c2052ca0/1/full.jsonl",
-      "content_hash": "/13/49c2052ca0/1/content_hash.txt",
-      "prompt": "/13/49c2052ca0/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "e786568aa096",
   "token_usage": {
-    "input_tokens": 7334,
-    "cache_creation_tokens": 87297,
-    "cache_read_tokens": 2120553,
-    "output_tokens": 11437,
-    "api_call_count": 57
+    "input_tokens": 7308,
+    "cache_creation_tokens": 66504,
+    "cache_read_tokens": 1750472,
+    "output_tokens": 9047,
+    "api_call_count": 42
+  },
+  "session_metrics": {
+    "turn_count": 13
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T07:26:18.646616Z",
+    "agent_lines": 0,
+    "agent_removed": 13550,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 13550,
+    "agent_percentage": 100,
+    "metric_version": 2
   }
 }

@@ -1,0 +1,111 @@
+/research_codebase we have just setup sentry dsn for @apps/platform/ 
+
+i want to test whether it works and also figure out if sentry cli cna correctly find the issues. let's discuss how we can do this.
+
+---
+
+create this api route for me. im running server.
+
+---
+
+go on hit the url
+
+---
+
+it worked! nice.
+
+---
+
+so each project gets their own SENTRY_ORG, SENTRY_PROJECT and SENTRY_AUTH_TOKEN?
+
+---
+
+okay done!
+
+---
+
+i think it's just sentry
+
+---
+
+its just "sentry"
+
+---
+
+no. try sentry issue list
+
+---
+
+okay done! try now
+
+---
+
+go vercel pull for each app again
+
+---
+
+ive done it. can you run the issue list for each app
+
+---
+
+<task-notification>
+<task-id>bwrvfp0vv</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/f4bf1f65-e7c0-4444-be4b-99997a4467de/tasks/bwrvfp0vv.output</output-file>
+<status>completed</status>
+<summary>Background command "List Sentry issues for apps/platform" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b2mcanh54</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/f4bf1f65-e7c0-4444-be4b-99997a4467de/tasks/b2mcanh54.output</output-file>
+<status>completed</status>
+<summary>Background command "List Sentry issues for apps/www" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>b76khivqa</task-id>
+<tool-use-id>toolu_01QZu1hEPFTohCY1Rk6QXLax</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/f4bf1f65-e7c0-4444-be4b-99997a4467de/tasks/b76khivqa.output</output-file>
+<status>completed</status>
+<summary>Background command "List Sentry issues for apps/app" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+okay now, shall we discuss creating a general purpose skill for sentry stuff.
+
+consider best practices for writing a skill.
+
+we will call this skill: lightfast-sentry (for now, let's isolate and focus this purely for dev environment).
+
+meaning you need to essential traverse the "sentry help" to see what is possible.
+
+for now, we maintain a simple issue only example.
+
+let's discuss this skill
+
+---
+
+okay now, shall we discuss creating a general purpose skill for sentry stuff.
+
+consider best practices for writing a skill.
+
+we will call this skill: lightfast-sentry (for now, let's isolate and focus this purely for dev environment).
+
+meaning you need to essential traverse the "sentry help" to see what is possible.
+
+for now, we maintain a simple issue only example.
+
+let's discuss this skill
+
+follow only the pattern seen in @../../.claude/skills/turborepo for good skill design
+
+---
+
+very nice. but question. what is the Trigger? e.g Load Turborepo skill for creating workflows, tasks, and pipelines in monorepos. Use when users ask to "create a workflow", "make a task", "generate a pipeline", or set up build orchestration.
