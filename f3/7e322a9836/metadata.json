@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f37e322a9836",
+  "strategy": "manual-commit",
+  "branch": "fix/docs-sidebar-correct-stylesheet",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/www/src/styles/docs.css",
+    "apps/www/src/styles/globals.css"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f3/7e322a9836/0/metadata.json",
+      "transcript": "/f3/7e322a9836/0/full.jsonl",
+      "content_hash": "/f3/7e322a9836/0/content_hash.txt",
+      "prompt": "/f3/7e322a9836/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 21,
+    "cache_creation_tokens": 13326,
+    "cache_read_tokens": 534470,
+    "output_tokens": 4407,
+    "api_call_count": 16
+  }
+}
