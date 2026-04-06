@@ -7,9 +7,10 @@ import type { AdminRouter, PlatformRouter } from "./root";
  * Platform API exports
  */
 
+export type { InternalRouter } from "./internal";
 export type { AdminRouter, PlatformRouter } from "./root";
 export { adminRouter, platformRouter } from "./root";
-export type { PlatformAuthContext } from "./trpc";
+export type { PlatformAuthContext, PlatformContext } from "./trpc";
 // Export context creation
 export { createPlatformTRPCContext } from "./trpc";
 

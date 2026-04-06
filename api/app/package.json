@@ -38,7 +38,6 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
-    "@inngest/middleware-sentry": "catalog:",
     "@repo/app-api-key": "workspace:*",
     "@repo/app-clerk-cache": "workspace:*",
     "@repo/app-octokit-github": "workspace:*",

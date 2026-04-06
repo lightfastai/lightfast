@@ -22,9 +22,23 @@ import { verifyServiceJWT } from "./lib/jwt";
 export type PlatformAuthContext =
   | { type: "service"; caller: string }
   | { type: "webhook"; provider: string }
+  | { type: "internal"; source: string }
   | { type: "inngest" }
   | { type: "cron" }
   | { type: "unauthenticated" };
+
+/** Explicit context type for tRPC initialization.
+ *
+ * Must be used instead of `typeof createPlatformTRPCContext` because the
+ * context factory only returns "service" | "unauthenticated" — but in-process
+ * callers (createInternalCaller) provide other auth variants directly.
+ *
+ * If you add fields to createPlatformTRPCContext's return type, add them here too.
+ */
+export interface PlatformContext {
+  auth: PlatformAuthContext;
+  headers: Headers;
+}
 
 // -- Context Creation ---------------------------------------------------------
 
@@ -36,7 +50,9 @@ export type PlatformAuthContext =
  * 2. x-trpc-source header for internal identification
  * 3. Unauthenticated fallback
  */
-export const createPlatformTRPCContext = async (opts: { headers: Headers }) => {
+export const createPlatformTRPCContext = async (opts: {
+  headers: Headers;
+}): Promise<PlatformContext> => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
 
   // Check for service JWT in Authorization header
@@ -81,7 +97,7 @@ export const createPlatformTRPCContext = async (opts: { headers: Headers }) => {
 
 const isProduction = process.env.NODE_ENV === "production";
 
-const t = initTRPC.context<typeof createPlatformTRPCContext>().create({
+const t = initTRPC.context<PlatformContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => {
     const shouldSanitize =
@@ -106,6 +122,7 @@ const observabilityMiddleware = t.middleware(
     isDev: t._config.isDev,
     extractAuth: (ctx) => ({
       ...(ctx.auth.type === "service" && { caller: ctx.auth.caller }),
+      ...(ctx.auth.type === "internal" && { source: ctx.auth.source }),
     }),
   })
 );
@@ -177,3 +194,11 @@ export const adminProcedure = t.procedure
       },
     });
   });
+
+/**
+ * Internal procedure -- trusted in-process callers only.
+ * Used by Inngest functions and platform route handlers via createInternalCaller().
+ *
+ * NOT exposed over HTTP. Applies observability middleware without auth checks.
+ */
+export const internalProcedure = t.procedure.use(observabilityMiddleware);

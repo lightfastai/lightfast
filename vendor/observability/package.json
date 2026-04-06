@@ -40,6 +40,10 @@
     "./trpc": {
       "types": "./src/trpc.ts",
       "default": "./src/trpc.ts"
+    },
+    "./inngest": {
+      "types": "./src/inngest.ts",
+      "default": "./src/inngest.ts"
     }
   },
   "license": "MIT",
@@ -59,6 +63,7 @@
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@trpc/server": "catalog:",
+    "@vendor/inngest": "workspace:*",
     "react": "catalog:react19",
     "server-only": "^0.0.1",
     "zod": "catalog:"
