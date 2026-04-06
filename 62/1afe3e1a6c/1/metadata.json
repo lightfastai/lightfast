@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "621afe3e1a6c",
+  "session_id": "7596272b-4e69-4141-8c7c-ac47e9f935e1",
   "strategy": "manual-commit",
+  "created_at": "2026-04-06T11:09:53.672042Z",
   "branch": "fix/enforce-embed-env-remove-knock",
-  "checkpoints_count": 15,
+  "checkpoints_count": 8,
   "files_touched": [
     ".changeset/pre.json",
     ".env.mcp.example",
@@ -37,25 +39,29 @@
     "vendor/security/src/csp/index.ts",
     "vendor/security/src/csp/knock.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/62/1afe3e1a6c/0/metadata.json",
-      "transcript": "/62/1afe3e1a6c/0/full.jsonl",
-      "content_hash": "/62/1afe3e1a6c/0/content_hash.txt",
-      "prompt": "/62/1afe3e1a6c/0/prompt.txt"
-    },
-    {
-      "metadata": "/62/1afe3e1a6c/1/metadata.json",
-      "transcript": "/62/1afe3e1a6c/1/full.jsonl",
-      "content_hash": "/62/1afe3e1a6c/1/content_hash.txt",
-      "prompt": "/62/1afe3e1a6c/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "bad330982e90",
   "token_usage": {
-    "input_tokens": 202,
-    "cache_creation_tokens": 148911,
-    "cache_read_tokens": 7141046,
-    "output_tokens": 56589,
-    "api_call_count": 129
+    "input_tokens": 151,
+    "cache_creation_tokens": 83462,
+    "cache_read_tokens": 5432877,
+    "output_tokens": 21940,
+    "api_call_count": 94
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T11:09:53.263346Z",
+    "agent_lines": 0,
+    "agent_removed": 523,
+    "human_added": 0,
+    "human_modified": 84,
+    "human_removed": 627,
+    "total_committed": 35,
+    "total_lines_changed": 1234,
+    "agent_percentage": 42.382495948136146,
+    "metric_version": 2
   }
 }
