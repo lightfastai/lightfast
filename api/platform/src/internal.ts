@@ -3,26 +3,17 @@
  *
  * NOT served over HTTP. Accessed exclusively via createInternalCaller().
  * All procedures use internalProcedure (observability middleware, no auth).
- *
- * Sub-routers will be added as business logic is migrated from:
- * - Inngest function steps (DB calls, provider APIs, token management)
- * - Route handler lib calls (OAuth, webhook ingestion)
  */
-import { createTRPCRouter, internalProcedure } from "./trpc";
+
+import { oauthInternalRouter } from "./router/internal/oauth";
+import { webhooksInternalRouter } from "./router/internal/webhooks";
+import { createTRPCRouter } from "./trpc";
 
 // -- Internal Router ----------------------------------------------------------
 
 export const internalRouter = createTRPCRouter({
-  /**
-   * Proof-of-concept procedure.
-   * Validates the full chain: caller -> router -> procedure -> middleware -> response.
-   * Remove once real sub-routers are added.
-   */
-  ping: internalProcedure.query(({ ctx }) => ({
-    ok: true as const,
-    timestamp: new Date().toISOString(),
-    source: ctx.auth.type === "internal" ? ctx.auth.source : "unknown",
-  })),
+  webhooks: webhooksInternalRouter,
+  oauth: oauthInternalRouter,
 });
 
 export type InternalRouter = typeof internalRouter;

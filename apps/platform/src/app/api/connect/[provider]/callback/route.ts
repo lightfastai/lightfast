@@ -1,19 +1,14 @@
 /**
  * GET /api/connect/:provider/callback
  *
- * OAuth callback. Ported from apps/gateway/src/routes/connections.ts (lines 208-489).
- *
- * NOT tRPC — OAuth provider redirects here directly (browser).
- * Maps CallbackProcessResult from the lib layer to HTTP responses.
+ * OAuth callback. Provider redirects here after authorization.
+ * All business logic lives in platform.oauth.processCallback().
+ * Maps CallbackProcessResult to HTTP responses.
  */
 
-import {
-  type CallbackProcessResult,
-  processOAuthCallback,
-} from "@api/platform/lib/oauth/callback";
-import type { SourceType } from "@repo/app-providers";
 import { log } from "@vendor/observability/log/next";
 import { type NextRequest, NextResponse } from "next/server";
+import { platform } from "~/lib/internal-caller";
 
 export const runtime = "nodejs";
 
@@ -22,9 +17,7 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   const { provider } = await params;
-  const providerName = provider as SourceType;
 
-  // Build query dict from all URL search params (null-prototype to prevent prototype pollution)
   const query: Record<string, string> = Object.assign(
     Object.create(null) as Record<string, string>,
     Object.fromEntries(req.nextUrl.searchParams)
@@ -32,20 +25,20 @@ export async function GET(
 
   const state = query.state ?? "";
 
-  const result: CallbackProcessResult = await processOAuthCallback({
-    provider: providerName,
+  const result = await platform.oauth.processCallback({
+    provider,
     state,
     query,
   });
 
   switch (result.kind) {
     case "redirect":
-      log.info("[oauth/callback] redirecting", { provider: providerName });
+      log.info("[oauth/callback] redirecting", { provider });
       return NextResponse.redirect(result.url);
 
     case "inline_html":
       log.info("[oauth/callback] inline html response", {
-        provider: providerName,
+        provider,
         status: result.status ?? 200,
       });
       return new Response(result.html, {
@@ -55,7 +48,7 @@ export async function GET(
 
     case "error":
       log.warn("[oauth/callback] error result", {
-        provider: providerName,
+        provider,
         error: result.error,
         status: result.status,
       });
