@@ -33,3 +33,7 @@
 ---
 
 /oneshot_merge
+
+---
+
+yes
