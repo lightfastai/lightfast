@@ -3,7 +3,7 @@
   "checkpoint_id": "e4e1e7876791",
   "strategy": "manual-commit",
   "branch": "refactor/route-handlers-to-internal-trpc",
-  "checkpoints_count": 4,
+  "checkpoints_count": 8,
   "files_touched": [
     "api/platform/src/internal.ts",
     "api/platform/src/lib/oauth/callback.ts",
@@ -26,13 +26,19 @@
       "transcript": "/e4/e1e7876791/1/full.jsonl",
       "content_hash": "/e4/e1e7876791/1/content_hash.txt",
       "prompt": "/e4/e1e7876791/1/prompt.txt"
+    },
+    {
+      "metadata": "/e4/e1e7876791/2/metadata.json",
+      "transcript": "/e4/e1e7876791/2/full.jsonl",
+      "content_hash": "/e4/e1e7876791/2/content_hash.txt",
+      "prompt": "/e4/e1e7876791/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 2662,
-    "cache_creation_tokens": 111659,
-    "cache_read_tokens": 4605915,
-    "output_tokens": 21080,
-    "api_call_count": 76
+    "input_tokens": 2693,
+    "cache_creation_tokens": 166085,
+    "cache_read_tokens": 6498726,
+    "output_tokens": 40471,
+    "api_call_count": 95
   }
 }

@@ -1,0 +1,91 @@
+i'm just thinking right now, should we actually introduce a package like neverthrow or something more recent to solve any async problems at consumer level. we maintain clean non try/catch in vendor pacakges for example. what is the most accretive, innovative, radical and creative solution to increase developer experience by 100x and improve long-term maintainability without introducing code smells
+
+---
+
+i'm just thinking right now, should we actually introduce a package like neverthrow or something more recent to solve any async problems at consumer level. we maintain clean non try/catch in vendor pacakges for example. what is the most accretive, innovative, radical and creative solution to increase developer experience by 100x and improve long-term maintainability without introducing code smells
+
+consider this: we dont really care about ai-sdk for now. we only care about whats truly the actual high-impact related paths: db calls, calls in @api/platform/src/inngest/ to async things, etc.
+
+with that said, perhaps there are better ways to design our architecture.
+
+consider this: what if we make everything go through trpc. we have 100s of new trpc routes doing small contained things.
+
+this way, inngest is pure. trpc handles all errors and propagates to the layer.
+
+scrutinize this approach.
+
+i understand this "adds" more processing time but consideer if having single layer for all async calls > simpler observability layer.
+
+whatwe dont care about: ai streaming, early-access, etc, etc.
+
+---
+
+i'm just thinking right now, should we actually introduce a package like neverthrow or something more recent to solve any async problems at consumer level. we maintain clean non try/catch in vendor pacakges for example. what is the most accretive, innovative, radical and creative solution to increase developer experience by 100x and improve long-term maintainability without introducing code smells
+
+consider this: we dont really care about ai-sdk for now. we only care about whats truly the actual high-impact related paths: db calls, calls in @api/platform/src/inngest/ to async things, etc.
+
+with that said, perhaps there are better ways to design our architecture.
+
+consider this: what if we make everything go through trpc. we have 100s of new trpc routes doing small contained things.
+
+this way, inngest is pure. trpc handles all errors and propagates to the layer.
+
+scrutinize this approach.
+
+i understand this "adds" more processing time but consideer if having single layer for all async calls > simpler observability layer.
+
+whatwe dont care about: ai streaming, early-access, etc, etc.
+
+note: im not talking about inngest steps being converted to trpc. im advocating that when db is called the inngest step calls a trpc procedure. when inngest needs to call cohere, it doesn't just call cohere, it calls our trpc layer's cohere procedure.
+
+---
+
+iwell, it's not really observability that is the gap. it's developer maintainability. having every async call in 1 place (trpc layer) IMO does wonder for maintainabiility. I know where everything lives. i dont need to go to inngest to debug. i go to trpc. ultrathink
+
+---
+
+question, what if we also expand this to the whole of @apps/platform/src/app/api/
+
+---
+
+let's focus on trpc setup first. instead of doing the whole upgrade. let's focus on purely settings up the callers + communication logic.
+
+---
+
+why does this use "ping" system
+
+---
+
+i changed my mind. i can see value in having that ping for first time testing.
+
+---
+
+question, what if we also expand this to the whole of @apps/platform/src/app/api/inngest/ 
+
+also: also have a look at @api/platform/src/root.ts and figure out where these procedures are being consumed.
+
+afaik, apps/platform is PURELY server-side. given this we should be able to expand the whole apps/platform layer into using trpc as source of truth.
+
+---
+
+yes perfect. generate this next plan for phase 2
+
+---
+
+qiestopm whats is the purpose of router/platform?
+
+---
+
+what are the consumers of router/platform?
+
+---
+
+so these are basically api/app calling the platform-layer?
+
+---
+
+im just curious should we fundamentally change how the api layer works. seems like lots of confusing layers, maybe single api folder. everything runs through that layer. would eliminate many layers of complexity. what do you think? just high-level with what youve researched so far
+
+---
+
+are you 100% sure of these concerns? why not just server the entirity of everything through api/platform. idk, feels like it would be cleaner. re-evaluate.
