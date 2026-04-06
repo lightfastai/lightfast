@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "208d9d1bddd7",
+  "strategy": "manual-commit",
+  "branch": "fix/docs-sidebar-dark-bg",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/www/src/styles/globals.css"
+  ],
+  "sessions": [
+    {
+      "metadata": "/20/8d9d1bddd7/0/metadata.json",
+      "transcript": "/20/8d9d1bddd7/0/full.jsonl",
+      "content_hash": "/20/8d9d1bddd7/0/content_hash.txt",
+      "prompt": "/20/8d9d1bddd7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 11,
+    "cache_creation_tokens": 27523,
+    "cache_read_tokens": 133174,
+    "output_tokens": 881,
+    "api_call_count": 6
+  }
+}

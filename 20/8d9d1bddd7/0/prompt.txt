@@ -1,0 +1,9 @@
+i noticed in recent merge we changed the sidebar background color in @packages/ui/src/globals.css 
+
+we need to override the sidebar background color for @apps/www/src/app/(app)/(content)/docs/_components/docs-sidebar.tsx to be the actual background color of our dark background.
+
+update @apps/www/src/styles/globals.css
+
+---
+
+/oneshot_merge
