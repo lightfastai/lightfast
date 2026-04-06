@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f736fdf98698",
+  "session_id": "721f3a83-b8df-47de-9c5c-cd98215de201",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T01:56:19.408969Z",
+  "branch": "feat/correlationid-auto-propagation",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/inngest/functions/connection-lifecycle.ts",
+    "api/platform/src/inngest/functions/platform-event-store.ts",
+    "api/platform/src/inngest/functions/platform-notification-dispatch.ts",
+    "api/platform/src/inngest/schemas/platform.ts",
+    "apps/platform/src/app/api/ingest/[provider]/route.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "103481164101",
+  "token_usage": {
+    "input_tokens": 17,
+    "cache_creation_tokens": 78764,
+    "cache_read_tokens": 344705,
+    "output_tokens": 19936,
+    "api_call_count": 7
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T01:56:19.07149Z",
+    "agent_lines": 1,
+    "agent_removed": 0,
+    "human_added": 11,
+    "human_modified": 5,
+    "human_removed": 0,
+    "total_committed": 17,
+    "total_lines_changed": 17,
+    "agent_percentage": 5.88235294117647,
+    "metric_version": 2
+  }
+}

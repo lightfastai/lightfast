@@ -1,0 +1,13 @@
+/create_plan @thoughts/shared/research/2026-04-05-parseerror-full-propagation-inventory.md can we actually discuss what is the actually the most superintelligent infrastructure where we dont introduce massive amount of codesmell to whole codebase yet allow all of these different async layers to have parse error. what is the most radical, innovative, accretive design to solve the whole async problem
+
+---
+
+well, i would argue ading log.... to like 58 call sits are also is code smell. think about the core problem. we have async failure problem.
+
+---
+
+i would now argue that having log caller in like 100 sites is terrible too
+
+---
+
+i have more radical question, is it possible for everything to flow through trpc layer?
