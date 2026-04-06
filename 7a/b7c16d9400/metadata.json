@@ -5,18 +5,31 @@
   "branch": "ui/layout-refinements",
   "checkpoints_count": 2,
   "files_touched": [
+    ".claude/agents/spike-validator.md",
+    ".claude/commands/improve_plan.md",
     "thoughts/shared/plans/2026-04-04-fix-codeql-alerts-pr555.md",
     "thoughts/shared/plans/2026-04-04-fix-org-entities-excluded-reference.md",
     "thoughts/shared/plans/2026-04-04-migrate-excluded-to-sql-identifier.md",
     "thoughts/shared/plans/2026-04-04-multi-repo-selection.md",
     "thoughts/shared/plans/2026-04-04-proxy-action-based-dispatch.md",
     "thoughts/shared/plans/2026-04-05-asynclocalstorage-request-context.md",
+    "thoughts/shared/plans/2026-04-05-correlationid-auto-propagation.md",
+    "thoughts/shared/plans/2026-04-05-drop-redundant-clerk-hooks.md",
+    "thoughts/shared/plans/2026-04-05-entity-first-ui-rework.md",
     "thoughts/shared/plans/2026-04-05-fix-betterstack-env-var-mismatch.md",
     "thoughts/shared/plans/2026-04-05-hoist-createMemorycaller-proxy-search.md",
+    "thoughts/shared/plans/2026-04-05-inngest-observability-middleware.md",
     "thoughts/shared/plans/2026-04-05-normalize-platform-env-validation.md",
+    "thoughts/shared/plans/2026-04-05-parseerror-adoption-console-cleanup.md",
     "thoughts/shared/plans/2026-04-05-platform-logging-gaps.md",
+    "thoughts/shared/plans/2026-04-05-provider-console-inngest-silent-catches.md",
     "thoughts/shared/plans/2026-04-05-rename-console-memory-naming.md",
+    "thoughts/shared/plans/2026-04-05-standardize-platform-trpc.md",
     "thoughts/shared/plans/2026-04-05-tier1-observability-primitives.md",
+    "thoughts/shared/plans/2026-04-05-trpc-client-error-propagation.md",
+    "thoughts/shared/plans/2026-04-05-trpc-observability-fixes.md",
+    "thoughts/shared/plans/2026-04-06-internal-trpc-caller-setup.md",
+    "thoughts/shared/plans/2026-04-06-route-handlers-to-internal-trpc.md",
     "thoughts/shared/research/2026-04-04-codeql-alerts-pr555.md",
     "thoughts/shared/research/2026-04-04-cross-source-linking-fixes.md",
     "thoughts/shared/research/2026-04-04-cross-source-monorepo-linking.md",
@@ -30,14 +43,26 @@
     "thoughts/shared/research/2026-04-04-sources-multi-repo-selection.md",
     "thoughts/shared/research/2026-04-05-app-platform-auth-flow.md",
     "thoughts/shared/research/2026-04-05-betterstack-env-var-mismatch.md",
+    "thoughts/shared/research/2026-04-05-clerk-hooks-vs-trpc-layer.md",
     "thoughts/shared/research/2026-04-05-console-memory-naming-audit.md",
+    "thoughts/shared/research/2026-04-05-entity-first-ui-rework-landscape.md",
     "thoughts/shared/research/2026-04-05-env-validation-patterns.md",
     "thoughts/shared/research/2026-04-05-github-installation-token-404-error.md",
     "thoughts/shared/research/2026-04-05-logging-error-handling-architecture.md",
+    "thoughts/shared/research/2026-04-05-observability-architecture-complete-state.md",
+    "thoughts/shared/research/2026-04-05-observability-remaining-work-inventory.md",
     "thoughts/shared/research/2026-04-05-optimistic-mutations-prefetch-layer.md",
+    "thoughts/shared/research/2026-04-05-parseerror-full-propagation-inventory.md",
     "thoughts/shared/research/2026-04-05-platform-logging-gaps.md",
     "thoughts/shared/research/2026-04-05-proxy-search-createMemorycaller-n-plus-1.md",
-    "thoughts/shared/research/2026-04-05-trpc-error-handling-propagation.md"
+    "thoughts/shared/research/2026-04-05-trpc-client-error-propagation-next-step.md",
+    "thoughts/shared/research/2026-04-05-trpc-error-handling-propagation.md",
+    "thoughts/shared/research/2026-04-05-trpc-observability-architecture-evaluation.md",
+    "thoughts/shared/research/2026-04-05-trpc-package-comparison.md",
+    "thoughts/shared/research/2026-04-06-knock-complete-deletion-map.md",
+    "thoughts/shared/research/2026-04-06-lightfast-os-architecture-roadmap.md",
+    "thoughts/shared/research/2026-04-06-platform-sentry-testing-verification.md",
+    "thoughts/shared/research/2026-04-06-sentry-error-handling-gaps.md"
   ],
   "sessions": [
     {
@@ -51,13 +76,19 @@
       "transcript": "/7a/b7c16d9400/1/full.jsonl",
       "content_hash": "/7a/b7c16d9400/1/content_hash.txt",
       "prompt": "/7a/b7c16d9400/1/prompt.txt"
+    },
+    {
+      "metadata": "/7a/b7c16d9400/2/metadata.json",
+      "transcript": "/7a/b7c16d9400/2/full.jsonl",
+      "content_hash": "/7a/b7c16d9400/2/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
-    "input_tokens": 683,
-    "cache_creation_tokens": 349824,
-    "cache_read_tokens": 19957241,
-    "output_tokens": 70201,
-    "api_call_count": 192
+    "input_tokens": 685,
+    "cache_creation_tokens": 350215,
+    "cache_read_tokens": 20081806,
+    "output_tokens": 70417,
+    "api_call_count": 194
   }
 }
