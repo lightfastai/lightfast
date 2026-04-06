@@ -17,6 +17,8 @@ import {
   orgEventEntities,
   orgEvents,
 } from "@db/app/schema";
+import { createEmbeddingProviderForOrg } from "@repo/app-embed";
+import { lightfastPineconeClient } from "@repo/app-pinecone";
 import type { EntityVectorMetadata } from "@repo/app-validation";
 import { EMBEDDING_DEFAULTS } from "@repo/app-validation";
 import { NonRetriableError } from "@vendor/inngest";
@@ -191,7 +193,6 @@ export const platformEntityEmbed = inngest.createFunction(
 
     // Step 2: Embed the narrative using constants
     const embedding = await step.run("embed-narrative", async () => {
-      const { createEmbeddingProviderForOrg } = await import("@repo/app-embed");
       const embeddingProvider = createEmbeddingProviderForOrg(
         {
           id: clerkOrgId,
@@ -214,7 +215,6 @@ export const platformEntityEmbed = inngest.createFunction(
 
     // Step 3: UPSERT single entity vector to Pinecone
     await step.run("upsert-entity-vector", async () => {
-      const { lightfastPineconeClient } = await import("@repo/app-pinecone");
       const indexName = EMBEDDING_DEFAULTS.indexName;
       const namespaceName = buildOrgNamespace(clerkOrgId);
 

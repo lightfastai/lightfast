@@ -18,6 +18,7 @@ import {
   orgIntegrations,
 } from "@db/app/schema";
 import type { ProviderSlug } from "@repo/app-providers";
+import { realtime } from "@repo/app-upstash-realtime";
 import { sanitizePostTransformEvent } from "@repo/app-providers";
 import type { EventNotification } from "@repo/app-upstash-realtime";
 import { NonRetriableError } from "@vendor/inngest";
@@ -162,7 +163,6 @@ export const ingestDelivery = inngest.createFunction(
 
     // Step 4: Publish to Upstash Realtime for console SSE
     await step.run("publish-realtime", async () => {
-      const { realtime } = await import("@repo/app-upstash-realtime");
       const channel = realtime.channel(`org-${clerkOrgId}`);
       await channel.emit("org.event", {
         eventId: result.ingestLogId,
