@@ -65,7 +65,6 @@ export const recordActivity = inngest.createFunction(
 
     log.info("Processing activity batch", {
       batchSize,
-      clerkOrgId,
       firstEventTimestamp: events[0].ts,
       lastEventTimestamp: events.at(-1)?.ts,
     });
@@ -99,7 +98,6 @@ export const recordActivity = inngest.createFunction(
           .returning({ id: orgUserActivities.id });
 
         log.info("Activity batch inserted", {
-          clerkOrgId,
           insertedCount: result.length,
           batchSize,
         });
@@ -111,7 +109,6 @@ export const recordActivity = inngest.createFunction(
         };
       } catch (error) {
         log.error("Failed to insert activity batch", {
-          clerkOrgId,
           batchSize,
           error: parseError(error),
         });

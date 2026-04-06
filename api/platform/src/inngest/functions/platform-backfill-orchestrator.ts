@@ -63,14 +63,6 @@ export const platformBackfillOrchestrator = inngest.createFunction(
       correlationId,
     } = event.data;
 
-    log.info("[backfill-orchestrator] starting", {
-      installationId,
-      provider,
-      depth,
-      entityTypes,
-      correlationId,
-    });
-
     if (depth <= 0) {
       throw new NonRetriableError(
         `Invalid depth: ${depth} — must be a positive number of days`
@@ -122,13 +114,6 @@ export const platformBackfillOrchestrator = inngest.createFunction(
         status: conn.status,
         resources,
       };
-    });
-
-    log.info("[backfill-orchestrator] connection fetched", {
-      installationId,
-      provider,
-      resourceCount: connection.resources.length,
-      correlationId,
     });
 
     // ── Step 1b: Fetch backfill history from DB (replaces gateway HTTP call) ──
@@ -201,7 +186,7 @@ export const platformBackfillOrchestrator = inngest.createFunction(
                 });
               return { providerResourceId: r.providerResourceId, resourceName };
             } catch (err) {
-              log.warn("[backfill] failed to resolve resource meta", {
+              log.warn("failed to resolve resource meta", {
                 providerResourceId: r.providerResourceId,
                 error: parseError(err),
               });
@@ -248,14 +233,11 @@ export const platformBackfillOrchestrator = inngest.createFunction(
       return new Date(priorRun.since) > new Date(since);
     });
 
-    log.info("[backfill-orchestrator] work units planned", {
-      installationId,
-      provider,
+    log.info("work units planned", {
       total: workUnits.length,
       afterFilter: filteredWorkUnits.length,
       skippedByGapFilter: workUnits.length - filteredWorkUnits.length,
       since,
-      correlationId,
     });
 
     if (filteredWorkUnits.length === 0) {
@@ -270,14 +252,6 @@ export const platformBackfillOrchestrator = inngest.createFunction(
         eventsDispatched: 0,
       };
     }
-
-    log.info("[backfill-orchestrator] dispatching entity workers", {
-      installationId,
-      provider,
-      count: filteredWorkUnits.length,
-      workUnitIds: filteredWorkUnits.map((wu) => wu.workUnitId),
-      correlationId,
-    });
 
     // ── Step 4: Invoke entity workers directly ──
     const completionResults = await Promise.all(
@@ -367,10 +341,9 @@ export const platformBackfillOrchestrator = inngest.createFunction(
     // After all workers complete, drain them by querying DB directly and sending
     // platform/webhook.received events so they are processed in chronological order.
     if (holdForReplay && succeeded.length > 0) {
-      log.info("[backfill-orchestrator] replaying held webhooks", {
+      log.info("replaying held webhooks", {
         installationId,
         succeededWorkers: succeeded.length,
-        correlationId,
       });
       await step.run("replay-held-webhooks", async () => {
         const BATCH_SIZE = 200;
@@ -448,30 +421,13 @@ export const platformBackfillOrchestrator = inngest.createFunction(
         }
 
         if (iterations >= MAX_ITERATIONS) {
-          log.error("[backfill] replay-held-webhooks hit iteration cap", {
+          log.error("replay-held-webhooks hit iteration cap", {
             installationId,
             iterations,
-            correlationId,
           });
         }
       });
     }
-
-    log.info("[backfill-orchestrator] complete", {
-      installationId,
-      provider,
-      completed: succeeded.length,
-      failed: failed.length,
-      eventsProduced: completionResults.reduce(
-        (sum, r) => sum + r.eventsProduced,
-        0
-      ),
-      eventsDispatched: completionResults.reduce(
-        (sum, r) => sum + r.eventsDispatched,
-        0
-      ),
-      correlationId,
-    });
 
     return {
       success: failed.length === 0,

@@ -85,11 +85,8 @@ export const ingestDelivery = inngest.createFunction(
     // clerkOrgId IS the orgId
     const clerkOrgId = connectionInfo.orgId;
 
-    log.info("[ingest-delivery] connection resolved", {
-      clerkOrgId,
-      provider: data.provider,
+    log.info("connection resolved", {
       deliveryId: data.deliveryId,
-      correlationId: data.correlationId,
     });
 
     // Step 2: Transform envelope and store ingest log
@@ -105,11 +102,9 @@ export const ingestDelivery = inngest.createFunction(
       });
 
       if (!rawEvent) {
-        log.info("[ingest-delivery] No transformer, skipping", {
-          provider: data.provider,
+        log.info("no transformer, skipping", {
           eventType: data.eventType,
           deliveryId: data.deliveryId,
-          correlationId: data.correlationId,
         });
         return { status: "unsupported" as const };
       }
@@ -130,13 +125,6 @@ export const ingestDelivery = inngest.createFunction(
       if (!record) {
         throw new Error("Failed to insert ingest log");
       }
-
-      log.info("[ingest-delivery] event stored", {
-        ingestLogId: record.id,
-        clerkOrgId,
-        deliveryId: data.deliveryId,
-        correlationId: data.correlationId,
-      });
 
       return {
         status: "transformed" as const,
@@ -181,12 +169,6 @@ export const ingestDelivery = inngest.createFunction(
         clerkOrgId,
         sourceEvent: result.sourceEvent,
       } satisfies EventNotification);
-
-      log.info("[ingest-delivery] realtime notification published", {
-        clerkOrgId,
-        ingestLogId: result.ingestLogId,
-        correlationId: data.correlationId,
-      });
     });
 
     // Step 5: Mark delivery as processed
