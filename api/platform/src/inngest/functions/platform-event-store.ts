@@ -540,6 +540,7 @@ export const platformEventStore = inngest.createFunction(
         eventExternalId: observation.externalId,
         sourceType: sourceEvent.eventType,
         significanceScore: significance.score,
+        correlationId,
       },
     });
 

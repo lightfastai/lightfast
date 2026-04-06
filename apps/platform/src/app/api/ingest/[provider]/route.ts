@@ -177,6 +177,8 @@ async function handleStandardWebhook(
     .onConflictDoNothing();
 
   // Dispatch Inngest event
+  const correlationId = crypto.randomUUID();
+
   await inngest.send({
     id: `wh-${providerSlug}-${deliveryId}`,
     name: "platform/webhook.received",
@@ -187,6 +189,7 @@ async function handleStandardWebhook(
       resourceId,
       payload: parsedPayload,
       receivedAt,
+      correlationId,
     },
   });
 
@@ -195,6 +198,7 @@ async function handleStandardWebhook(
     deliveryId,
     eventType,
     resourceId,
+    correlationId,
   });
 
   return Response.json({ status: "accepted", deliveryId });
