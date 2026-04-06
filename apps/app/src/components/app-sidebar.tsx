@@ -1,7 +1,6 @@
 "use client";
 
 import { useTRPC } from "@repo/app-trpc/react";
-import { cn } from "@repo/ui/lib/utils";
 import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -19,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
+import { cn } from "@repo/ui/lib/utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
 import {
@@ -40,8 +40,8 @@ import { usePathname } from "next/navigation";
  */
 interface NavItem {
   href: string;
-  title: string;
   icon: React.ComponentType<{ className?: string }>;
+  title: string;
 }
 
 /**
@@ -50,7 +50,7 @@ interface NavItem {
 function getOrgPrimaryItems(orgSlug: string): NavItem[] {
   return [
     {
-      title: "Ask",
+      title: "Explore",
       href: `/${orgSlug}`,
       icon: MessageSquare,
     },
@@ -104,7 +104,7 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
             "rounded-xl [&>svg]:size-3.5",
             isActive
               ? "text-foreground data-[active=true]:text-foreground"
-              : "text-muted-foreground",
+              : "text-muted-foreground"
           )}
           isActive={isActive}
           size="sm"
@@ -150,11 +150,7 @@ export function AppSidebar() {
       : "organization";
 
   return (
-    <Sidebar
-      className="group/sidebar border-border/50 border-r"
-      collapsible="none"
-      variant="inset"
-    >
+    <Sidebar className="group/sidebar" collapsible="none" variant="inset">
       {/* Org component header - only show if in org context */}
       {orgSlug && (
         <div className="flex h-14 items-center justify-between px-4">
@@ -168,8 +164,8 @@ export function AppSidebar() {
             asChild
             className="h-6 w-6 rounded-full text-muted-foreground"
             size="icon"
-            variant="ghost"
             title="Search"
+            variant="ghost"
           >
             <Link href={{ pathname: `/${orgSlug}/search` }} prefetch={true}>
               <Search className="size-3.5" />
@@ -181,7 +177,7 @@ export function AppSidebar() {
         {orgSlug && (
           <>
             {/* Primary Navigation - no label */}
-            <SidebarGroup>
+            <SidebarGroup className="pt-0">
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems
@@ -193,7 +189,7 @@ export function AppSidebar() {
             </SidebarGroup>
 
             {/* Manage Section */}
-            <SidebarGroup label="Manage" collapsible defaultOpen>
+            <SidebarGroup collapsible defaultOpen label="Manage">
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems
@@ -210,30 +206,30 @@ export function AppSidebar() {
         <Popover>
           <PopoverTrigger asChild>
             <Button
-              className="rounded-full bg-muted p-1"
+              className="h-8 w-8 rounded-full bg-muted p-1"
               size="icon"
               title="Help"
               variant="outline"
             >
-              <HelpCircle className="h-3 w-3" />
+              <HelpCircle className="size-3.5" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="center" className="w-48 p-1">
+          <PopoverContent align="center" className="w-48 p-0.5">
             <div className="flex flex-col gap-1">
               <Button
                 asChild
-                className="justify-start gap-2 text-sm"
+                className="justify-start gap-2 rounded-xl text-sm"
                 size="sm"
                 variant="ghost"
               >
                 <a href="mailto:support@lightfast.ai">
-                  <Mail className="size-3" />
+                  <Mail className="size-3.5" />
                   Contact Support
                 </a>
               </Button>
               <Button
                 asChild
-                className="justify-start gap-2 text-sm"
+                className="justify-start gap-2 rounded-xl text-sm"
                 size="sm"
                 variant="ghost"
               >
@@ -242,7 +238,7 @@ export function AppSidebar() {
                   rel="noopener noreferrer"
                   target="_blank"
                 >
-                  <BookOpen className="size-3" />
+                  <BookOpen className="size-3.5" />
                   Help Docs
                 </Link>
               </Button>

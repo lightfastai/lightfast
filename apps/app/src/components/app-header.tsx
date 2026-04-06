@@ -4,6 +4,7 @@ import { useTRPC } from "@repo/app-trpc/react";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useClerk } from "@vendor/clerk/client";
+import Link from "next/link";
 /**
  * Application header - full width with org switcher on left and user actions on right
  */
@@ -50,6 +51,22 @@ export function AppHeader() {
 
       {/* Right side - Notifications and User dropdown */}
       <div className="ml-auto flex items-center gap-3">
+        <Link
+          className="text-muted-foreground text-sm hover:text-foreground"
+          href="https://lightfast.ai/docs/get-started/overview"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          Docs
+        </Link>
+        <Link
+          className="text-muted-foreground text-sm hover:text-foreground"
+          href="https://lightfast.ai/docs/api-reference"
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          API Reference
+        </Link>
         <UserMenu
           email={email}
           initials={initials}

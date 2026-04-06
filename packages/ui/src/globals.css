@@ -159,11 +159,11 @@
     0.24 0 0
   ); /* Very subtle, slightly lighter than background */
   --ring: oklch(0.7058 0 0);
-  --sidebar: oklch(0.2178 0 0); /* Same as background */
+  --sidebar: oklch(0.155 0 0); /* Darker than background for contrast */
   --sidebar-foreground: oklch(0.8853 0 0);
-  --sidebar-accent: oklch(0.26 0 0);
+  --sidebar-accent: oklch(0.22 0 0);
   --sidebar-accent-foreground: oklch(0.8853 0 0);
-  --sidebar-border: oklch(0.329 0 0);
+  --sidebar-border: oklch(0.26 0 0);
   --sidebar-ring: oklch(0.7058 0 0);
   --scrollbar-thumb-bg: oklch(1 0 0 / 0.2);
   --scrollbar-thumb-bg-hover: oklch(1 0 0 / 0.3);

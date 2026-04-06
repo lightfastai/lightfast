@@ -115,7 +115,7 @@ export function DocsMobileNav({
                 onClick={() => setSelectedTab("api")}
                 type="button"
               >
-                API
+                API Reference
               </button>
             </div>
 
