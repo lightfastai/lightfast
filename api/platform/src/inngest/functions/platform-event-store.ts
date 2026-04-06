@@ -124,16 +124,6 @@ export const platformEventStore = inngest.createFunction(
       })
     );
 
-    log.info("[event-store] storing observation", {
-      clerkOrgId,
-      externalId,
-      provider: sourceEvent.provider,
-      eventType: sourceEvent.eventType,
-      sourceId: sourceEvent.sourceId,
-      ingestLogId,
-      correlationId,
-    });
-
     // Step 0: Create job record for tracking
     const inngestRunId =
       event.id ?? `neural-obs-${sourceEvent.sourceId}-${startTime}`;
@@ -168,7 +158,7 @@ export const platformEventStore = inngest.createFunction(
       });
 
       if (obs) {
-        log.info("[event-store] observation already exists, skipping", {
+        log.info("observation already exists, skipping", {
           observationId: obs.id,
           sourceId: sourceEvent.sourceId,
         });
@@ -229,8 +219,7 @@ export const platformEventStore = inngest.createFunction(
       }
 
       if (!resourceId) {
-        log.info("[event-store] no resource ID, rejecting event", {
-          provider: sourceEvent.provider,
+        log.info("no resource ID, rejecting event", {
           eventType: sourceEvent.eventType,
         });
         return {
@@ -247,10 +236,8 @@ export const platformEventStore = inngest.createFunction(
       });
 
       if (!integration) {
-        log.info("[event-store] integration not found, rejecting event", {
-          clerkOrgId,
+        log.info("integration not found, rejecting event", {
           resourceId,
-          provider: sourceEvent.provider,
         });
         return {
           allowed: false as const,
@@ -260,10 +247,7 @@ export const platformEventStore = inngest.createFunction(
 
       // Gate 2: check integration is active
       if (integration.status !== "active") {
-        log.info("[event-store] integration not active, rejecting (Gate 2)", {
-          clerkOrgId,
-          resourceId,
-          provider: sourceEvent.provider,
+        log.info("integration not active, rejecting (Gate 2)", {
           integrationStatus: integration.status,
           statusReason: integration.statusReason,
         });
@@ -280,9 +264,7 @@ export const platformEventStore = inngest.createFunction(
       const allowed = isEventAllowed(integration.providerConfig, baseEventType);
 
       if (!allowed) {
-        log.info("[event-store] event filtered by provider config", {
-          clerkOrgId,
-          resourceId,
+        log.info("event filtered by provider config", {
           eventType: sourceEvent.eventType,
           baseEventType,
           configuredEvents: integration.providerConfig?.sync?.events,
@@ -400,12 +382,11 @@ export const platformEventStore = inngest.createFunction(
         throw new NonRetriableError("Failed to insert observation");
       }
 
-      log.info("[event-store] observation stored", {
+      log.info("observation stored", {
         observationId: obs.id,
         externalId: obs.externalId,
         observationType,
         ingestLogId,
-        correlationId,
       });
 
       return obs;
@@ -490,11 +471,10 @@ export const platformEventStore = inngest.createFunction(
             .onConflictDoNothing();
         }
 
-        log.info("[event-store] entities and junctions stored", {
+        log.info("entities and junctions stored", {
           observationId: observation.id,
           entitiesStored: junctionRows.length,
           ingestLogId,
-          correlationId,
         });
 
         return { count: junctionRows.length, primaryEntityExternalId };

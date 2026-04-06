@@ -68,15 +68,6 @@ export const platformEntityWorker = inngest.createFunction(
       correlationId,
     } = event.data;
 
-    log.info("[entity-worker] starting", {
-      installationId,
-      provider,
-      entityType,
-      resource: resource.providerResourceId,
-      since,
-      correlationId,
-    });
-
     // ── Resolve provider ──
     const providerDef = getProvider(provider);
     if (!providerDef) {
@@ -289,8 +280,7 @@ export const platformEntityWorker = inngest.createFunction(
         );
       }
 
-      log.info("[entity-worker] page fetched", {
-        installationId,
+      log.info("page fetched", {
         entityType,
         resource: resource.providerResourceId,
         page: pageNum,
@@ -298,7 +288,6 @@ export const platformEntityWorker = inngest.createFunction(
         ...(fetchResult.rateLimit && {
           rateLimitRemaining: fetchResult.rateLimit.remaining,
         }),
-        correlationId,
       });
 
       eventsProduced += fetchResult.events.length;
@@ -360,13 +349,11 @@ export const platformEntityWorker = inngest.createFunction(
         }
       );
 
-      log.info("[entity-worker] page dispatched", {
-        installationId,
+      log.info("page dispatched", {
         entityType,
         resource: resource.providerResourceId,
         page: pageNum,
         dispatched,
-        correlationId,
       });
 
       eventsDispatched += dispatched;
@@ -377,13 +364,11 @@ export const platformEntityWorker = inngest.createFunction(
         if (remaining < limit * 0.1) {
           const sleepMs = Math.max(0, new Date(resetAt).getTime() - Date.now());
           if (sleepMs > 0) {
-            log.info("[entity-worker] rate limit sleep", {
-              installationId,
+            log.info("rate limit sleep", {
               entityType,
               resource: resource.providerResourceId,
               sleepMs,
               resetAt,
-              correlationId,
             });
             await step.sleep(
               `rate-limit-${entityType}-p${pageNum}`,
@@ -397,28 +382,15 @@ export const platformEntityWorker = inngest.createFunction(
         break;
       }
       if (pageNum >= MAX_PAGES) {
-        log.warn(`[backfill] entity-worker hit MAX_PAGES cap (${MAX_PAGES})`, {
-          installationId,
+        log.warn(`entity-worker hit MAX_PAGES cap (${MAX_PAGES})`, {
           entityType,
           resource: resource.providerResourceId,
-          correlationId,
         });
         break;
       }
       cursor = fetchResult.nextCursor;
       pageNum++;
     }
-
-    log.info("[entity-worker] complete", {
-      installationId,
-      provider,
-      entityType,
-      resource: resource.providerResourceId,
-      eventsProduced,
-      eventsDispatched,
-      pagesProcessed: pageNum,
-      correlationId,
-    });
 
     return {
       entityType,

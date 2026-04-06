@@ -47,11 +47,6 @@ export const connectionLifecycle = inngest.createFunction(
       correlationId,
     } = event.data;
 
-    log.info("[connection-lifecycle] starting", {
-      installationId,
-      provider: providerName,
-    });
-
     // Step 1: Close the ingress gate — all guards check status === 'active',
     // so setting 'revoked' immediately blocks new requests.
     await step.run("close-gate", async () => {
@@ -73,7 +68,7 @@ export const connectionLifecycle = inngest.createFunction(
         },
       });
 
-      log.info("[connection-lifecycle] gate closed", { installationId });
+      log.info("gate closed");
     });
 
     // Step 2: Cancel any running backfill (best-effort, via Inngest event)
@@ -86,29 +81,18 @@ export const connectionLifecycle = inngest.createFunction(
             correlationId,
           },
         });
-        log.info("[connection-lifecycle] backfill cancellation sent", {
-          installationId,
-        });
+        log.info("backfill cancellation sent");
       } catch (err) {
-        log.warn(
-          "[connection-lifecycle] backfill cancellation failed (best-effort)",
-          {
-            installationId,
-            error: parseError(err),
-          }
-        );
+        log.warn("backfill cancellation failed (best-effort)", {
+          error: parseError(err),
+        });
       }
     });
 
     // Step 3: Revoke token at provider (best-effort)
     await step.run("revoke-token", async () => {
       if (providerName === "github") {
-        log.info(
-          "[connection-lifecycle] skipping token revocation (github uses on-demand JWTs)",
-          {
-            installationId,
-          }
-        );
+        log.info("skipping token revocation (github uses on-demand JWTs)");
         return;
       }
 
@@ -116,13 +100,7 @@ export const connectionLifecycle = inngest.createFunction(
       const config = providerConfigs[providerName];
 
       if (!config) {
-        log.warn(
-          "[connection-lifecycle] provider not configured, skipping token revocation",
-          {
-            installationId,
-            provider: providerName,
-          }
-        );
+        log.warn("provider not configured, skipping token revocation");
         return;
       }
 
@@ -134,12 +112,7 @@ export const connectionLifecycle = inngest.createFunction(
 
       const tokenRow = tokenRows[0];
       if (!tokenRow) {
-        log.info(
-          "[connection-lifecycle] no token row found, skipping revocation",
-          {
-            installationId,
-          }
-        );
+        log.info("no token row found, skipping revocation");
         return;
       }
 
@@ -152,19 +125,11 @@ export const connectionLifecycle = inngest.createFunction(
           );
           await auth.revokeToken(config as never, decryptedToken);
         }
-        log.info("[connection-lifecycle] token revoked", {
-          installationId,
-          provider: providerName,
-        });
+        log.info("token revoked");
       } catch (err) {
-        log.warn(
-          "[connection-lifecycle] token revocation failed (best-effort)",
-          {
-            installationId,
-            provider: providerName,
-            error: parseError(err),
-          }
-        );
+        log.warn("token revocation failed (best-effort)", {
+          error: parseError(err),
+        });
       }
     });
 
@@ -205,15 +170,9 @@ export const connectionLifecycle = inngest.createFunction(
         metadata: { step: "disconnect-resources", triggeredBy: "system" },
       });
 
-      log.info("[connection-lifecycle] resources disconnected", {
-        installationId,
+      log.info("resources disconnected", {
         count: allResources.length,
       });
-    });
-
-    log.info("[connection-lifecycle] teardown complete", {
-      installationId,
-      provider: providerName,
     });
 
     return { success: true, installationId };

@@ -32,13 +32,10 @@ export const platformEntityGraph = inngest.createFunction(
       resolveEdges(clerkOrgId, internalEventId, provider, entityRefs)
     );
 
-    log.info("[entity-graph] edges resolved", {
-      clerkOrgId,
+    log.info("edges resolved", {
       internalEventId,
-      provider,
       entityExternalId: event.data.entityExternalId,
       edgeCount,
-      correlationId,
     });
 
     await step.sendEvent("emit-entity-graphed", {

@@ -62,7 +62,7 @@ export const tokenRefresh = inngest.createFunction(
         );
     });
 
-    log.info("[token-refresh] tokens expiring soon", {
+    log.info("tokens expiring soon", {
       count: expiringSoon.length,
     });
 
@@ -87,7 +87,7 @@ export const tokenRefresh = inngest.createFunction(
         const config = providerConfigs[providerName];
 
         if (!config) {
-          log.warn("[token-refresh] provider not configured — skipping", {
+          log.warn("provider not configured — skipping", {
             provider: providerName,
             installationId: row.installationId,
           });
@@ -111,14 +111,14 @@ export const tokenRefresh = inngest.createFunction(
           );
 
           refreshedCount++;
-          log.info("[token-refresh] token refreshed", {
+          log.info("token refreshed", {
             installationId: row.installationId,
             provider: providerName,
           });
         } catch (err) {
           // Refresh failure is logged but not fatal — the request-time refresh
           // path in getActiveTokenForInstallation() is the fallback.
-          log.warn("[token-refresh] refresh failed", {
+          log.warn("refresh failed", {
             installationId: row.installationId,
             provider: providerName,
             error: parseError(err),

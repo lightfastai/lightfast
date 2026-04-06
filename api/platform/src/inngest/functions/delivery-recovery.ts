@@ -52,7 +52,7 @@ export const deliveryRecovery = inngest.createFunction(
       return { replayed: 0, skipped: 0, failed: 0 };
     }
 
-    log.info("[delivery-recovery] found stuck deliveries", {
+    log.info("found stuck deliveries", {
       count: deliveries.length,
     });
 
@@ -81,14 +81,11 @@ export const deliveryRecovery = inngest.createFunction(
                 providerDef.webhook.extractResourceId(parsedPayload) ?? null;
             }
           } catch (err) {
-            log.warn(
-              "[delivery-recovery] resource extraction failed — proceeding with null",
-              {
-                deliveryId: delivery.deliveryId,
-                provider: providerName,
-                error: err instanceof Error ? err.message : String(err),
-              }
-            );
+            log.warn("resource extraction failed — proceeding with null", {
+              deliveryId: delivery.deliveryId,
+              provider: providerName,
+              error: err instanceof Error ? err.message : String(err),
+            });
           }
 
           // Resolve connection info for preResolved if installationId is available
@@ -137,13 +134,13 @@ export const deliveryRecovery = inngest.createFunction(
                 )
               );
           } catch (err) {
-            log.error("[delivery-recovery] DB status update failed", {
+            log.error("DB status update failed", {
               deliveryId: delivery.deliveryId,
               error: err,
             });
           }
         } catch (err) {
-          log.warn("[delivery-recovery] replay failed for delivery", {
+          log.warn("replay failed for delivery", {
             deliveryId: delivery.deliveryId,
             provider: delivery.provider,
             error: err instanceof Error ? err.message : String(err),
@@ -153,12 +150,6 @@ export const deliveryRecovery = inngest.createFunction(
       }
 
       return { replayed, skipped, failed };
-    });
-
-    log.info("[delivery-recovery] complete", {
-      replayed: result.replayed.length,
-      skipped: result.skipped.length,
-      failed: result.failed.length,
     });
 
     return {

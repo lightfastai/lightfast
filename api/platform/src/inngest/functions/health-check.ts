@@ -54,7 +54,7 @@ export const healthCheck = inngest.createFunction(
       }
     );
 
-    log.info("[health-check] probing installations", {
+    log.info("probing installations", {
       count: installations.length,
     });
 
@@ -72,7 +72,7 @@ export const healthCheck = inngest.createFunction(
         const config = providerConfigs[providerName];
 
         if (!config) {
-          log.warn("[health-check] provider not configured — skipping", {
+          log.warn("provider not configured — skipping", {
             provider: providerName,
             installationId: installation.id,
           });
@@ -89,14 +89,11 @@ export const healthCheck = inngest.createFunction(
           );
           accessToken = tokenResult.token;
         } catch (err) {
-          log.warn(
-            "[health-check] token fetch failed — recording transient failure",
-            {
-              installationId: installation.id,
-              provider: providerName,
-              error: err instanceof Error ? err.message : String(err),
-            }
-          );
+          log.warn("token fetch failed — recording transient failure", {
+            installationId: installation.id,
+            provider: providerName,
+            error: err instanceof Error ? err.message : String(err),
+          });
           await recordTransientFailure(installation);
           return;
         }
@@ -112,14 +109,11 @@ export const healthCheck = inngest.createFunction(
             accessToken
           );
         } catch (err) {
-          log.warn(
-            "[health-check] probe failed — recording transient failure",
-            {
-              installationId: installation.id,
-              provider: providerName,
-              error: err instanceof Error ? err.message : String(err),
-            }
-          );
+          log.warn("probe failed — recording transient failure", {
+            installationId: installation.id,
+            provider: providerName,
+            error: err instanceof Error ? err.message : String(err),
+          });
           await recordTransientFailure(installation);
           return;
         }
@@ -134,7 +128,7 @@ export const healthCheck = inngest.createFunction(
             })
             .where(eq(gatewayInstallations.id, installation.id));
 
-          log.info("[health-check] healthy", {
+          log.info("healthy", {
             installationId: installation.id,
             provider: providerName,
           });
@@ -142,7 +136,7 @@ export const healthCheck = inngest.createFunction(
         }
 
         // revoked | suspended -> fire lifecycle event immediately
-        log.warn("[health-check] auth failure — firing lifecycle", {
+        log.warn("auth failure — firing lifecycle", {
           installationId: installation.id,
           provider: providerName,
           status,
@@ -198,7 +192,7 @@ async function recordTransientFailure(installation: {
     })
     .where(eq(gatewayInstallations.id, installation.id));
 
-  log.warn("[health-check] transient failure recorded", {
+  log.warn("transient failure recorded", {
     installationId: installation.id,
     provider: installation.provider,
     newFailureCount,

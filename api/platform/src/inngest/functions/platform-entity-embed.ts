@@ -64,15 +64,7 @@ export const platformEntityEmbed = inngest.createFunction(
   },
   { event: "platform/entity.graphed" },
   async ({ event, step }) => {
-    const { clerkOrgId, entityExternalId, provider, correlationId } =
-      event.data;
-
-    log.info("[entity-embed] starting", {
-      clerkOrgId,
-      entityExternalId,
-      provider,
-      correlationId,
-    });
+    const { clerkOrgId, entityExternalId, provider } = event.data;
 
     // Step 1: Fetch all narrative inputs in a single step.
     // Throws NonRetriableError for missing rows so Inngest does not retry infinitely.
@@ -91,9 +83,8 @@ export const platformEntityEmbed = inngest.createFunction(
         },
       });
       if (!row) {
-        log.warn("[entity-embed] entity not found, aborting", {
+        log.warn("entity not found, aborting", {
           entityExternalId,
-          correlationId,
         });
         throw new NonRetriableError(`Entity not found: ${entityExternalId}`);
       }
@@ -191,11 +182,10 @@ export const platformEntityEmbed = inngest.createFunction(
     // ever fails to hold (e.g. an unusually long entity.value in Section 1).
     const cappedNarrative = narrative.slice(0, NARRATIVE_CHAR_CAP);
     if (narrative.length > NARRATIVE_CHAR_CAP) {
-      log.warn("[entity-embed] narrative capped", {
+      log.warn("narrative capped", {
         entityExternalId,
         original: narrative.length,
         cap: NARRATIVE_CHAR_CAP,
-        correlationId,
       });
     }
 
@@ -214,9 +204,8 @@ export const platformEntityEmbed = inngest.createFunction(
       const { embeddings } = await embeddingProvider.embed([cappedNarrative]);
       const vector = embeddings[0];
       if (!vector) {
-        log.error("[entity-embed] embedding provider returned no vector", {
+        log.error("embedding provider returned no vector", {
           entityExternalId,
-          correlationId,
         });
         throw new Error("Embedding provider returned no vector");
       }
@@ -257,14 +246,13 @@ export const platformEntityEmbed = inngest.createFunction(
         namespaceName
       );
 
-      log.info("[entity-embed] entity vector upserted", {
+      log.info("entity vector upserted", {
         entityExternalId: entity.externalId,
         entityType: entity.category,
         vectorId: `ent_${entity.externalId}`,
         totalEvents: entity.occurrenceCount,
         edgeCount: edges.length,
         narrativeHash: hash,
-        correlationId,
       });
     });
 

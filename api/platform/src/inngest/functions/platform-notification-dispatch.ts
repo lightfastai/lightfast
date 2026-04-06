@@ -14,20 +14,13 @@ export const platformNotificationDispatch = inngest.createFunction(
   },
   { event: "platform/event.stored" },
   async ({ event, step }) => {
-    const {
-      clerkOrgId,
-      eventExternalId,
-      sourceType,
-      significanceScore,
-      correlationId,
-    } = event.data;
+    const { clerkOrgId, eventExternalId, sourceType, significanceScore } =
+      event.data;
 
     if (significanceScore < NOTIFICATION_SIGNIFICANCE_THRESHOLD) {
-      log.info("[notification-dispatch] below threshold, skipping", {
-        clerkOrgId,
+      log.info("below threshold, skipping", {
         eventExternalId,
         significanceScore,
-        correlationId,
       });
       return {
         status: "skipped",
@@ -40,10 +33,8 @@ export const platformNotificationDispatch = inngest.createFunction(
       const { notifications } = await import("@vendor/knock");
 
       if (!notifications) {
-        log.info("[notification-dispatch] Knock not configured, skipping", {
-          clerkOrgId,
+        log.info("Knock not configured, skipping", {
           eventExternalId,
-          correlationId,
         });
         return;
       }
@@ -56,13 +47,6 @@ export const platformNotificationDispatch = inngest.createFunction(
           eventType: sourceType,
           significanceScore,
         },
-      });
-
-      log.info("[notification-dispatch] Knock notification triggered", {
-        clerkOrgId,
-        eventExternalId,
-        significanceScore,
-        correlationId,
       });
     });
 
