@@ -47,24 +47,19 @@ export function UserMenu({
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-64 rounded-xl border-border/50">
+      <DropdownMenuContent align="end" className="w-54">
         <div className="px-2 py-1.5">
           <p className="text-muted-foreground text-sm">{email || "User"}</p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link
-            className="cursor-pointer rounded-xl"
-            href={{ pathname: settingsHref }}
-            prefetch={true}
-          >
-            <Settings className="mr-2 h-3 w-3" />
-            Settings
+        <DropdownMenuItem asChild className="cursor-pointer rounded-xl">
+          <Link href={{ pathname: settingsHref }} prefetch={true}>
+            <Settings className="h-3 w-3" />
+            Your Profile
           </Link>
         </DropdownMenuItem>
-        <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="cursor-pointer rounded-xl text-sm"
+          className="cursor-pointer rounded-xl"
           onClick={onSignOut}
         >
           Sign out

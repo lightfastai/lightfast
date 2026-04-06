@@ -32,25 +32,6 @@ interface OrgLayoutProps {
  * - requireOrgAccess fetches org directly from Clerk by slug and verifies membership
  * - This avoids race conditions with Clerk cookie propagation
  */
-// Layout wrapper for answer page with floating header
-function AnswerPageLayout({ children }: { children: React.ReactNode }) {
-  return (
-    <SidebarInset>
-      {/* Floating header absolutely positioned over content */}
-      <div className="absolute top-0 right-0 left-0 z-40 flex h-14 items-center px-4">
-        <AppHeader />
-      </div>
-
-      {/* Content spans full height with floating header, scrollbar at viewport edge */}
-      <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden pt-14">
-        <div className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden">
-          <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
-        </div>
-      </div>
-    </SidebarInset>
-  );
-}
-
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
 
@@ -68,10 +49,22 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <HydrateClient>
       <OrgPageErrorBoundary orgSlug={slug}>
-        <SidebarProvider className="!h-full !min-h-0 overflow-hidden">
+        <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-sidebar">
           <AppSidebar />
-          {/* Use AnswerPageLayout for answer interface pages, StandardOrgLayout for others */}
-          <AnswerPageLayout>{children}</AnswerPageLayout>
+          {/* Right column: header (outside inset) + inset content below */}
+          {/* pr-2 pb-2 creates the gap for the inset card — margin on SidebarInset doesn't work because w-full overflows */}
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
+            {/* h-14 header — same visual level as sidebar's team-switcher row */}
+            <div className="flex h-14 shrink-0 items-center justify-end px-4">
+              <Suspense fallback={<div className="h-8 w-8" />}>
+                <AppHeader />
+              </Suspense>
+            </div>
+            {/* Inset panel: 100% - h-14, rounded card floating in bg-sidebar */}
+            <SidebarInset className="overflow-hidden rounded-xl shadow-sm">
+              <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
+            </SidebarInset>
+          </div>
         </SidebarProvider>
       </OrgPageErrorBoundary>
     </HydrateClient>

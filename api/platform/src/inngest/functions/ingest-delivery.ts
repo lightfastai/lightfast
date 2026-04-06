@@ -18,9 +18,9 @@ import {
   orgIntegrations,
 } from "@db/app/schema";
 import type { ProviderSlug } from "@repo/app-providers";
-import { realtime } from "@repo/app-upstash-realtime";
 import { sanitizePostTransformEvent } from "@repo/app-providers";
 import type { EventNotification } from "@repo/app-upstash-realtime";
+import { realtime } from "@repo/app-upstash-realtime";
 import { NonRetriableError } from "@vendor/inngest";
 import { log } from "@vendor/observability/log/next";
 import { and, eq } from "drizzle-orm";
