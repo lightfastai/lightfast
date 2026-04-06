@@ -1,0 +1,45 @@
+/lightfast-sentry for the production errors in lightfast-platforn
+
+---
+
+we need to enfroce strict non-optional COHERE_API_KEY
+
+---
+
+yes
+
+---
+
+i dont think we do that there. it's meant to be in @apps/platform/turbo.json
+
+---
+
+that doesnt make any sense. if cohere is required in env.ts then it should hve failed th built
+
+---
+
+what other errors to solve right now?
+
+---
+
+okay nice. check builds, check, typecheck
+
+---
+
+undo. no! im fixeing the keys.
+
+---
+
+okay try now. we've also gone ahead and deleted knock for good.not used.
+
+---
+
+okay now, consider that we are in wrong branch right now, we need to basically go back to main and then commit these changes + the knock changes and then run /oneshot_merge
+
+---
+
+why stash. just git pop it. it's all valid changes
+
+---
+
+looks good proceed

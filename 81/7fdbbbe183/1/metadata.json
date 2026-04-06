@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "817fdbbbe183",
+  "session_id": "7596272b-4e69-4141-8c7c-ac47e9f935e1",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-06T11:10:09.143553Z",
+  "branch": "fix/enforce-embed-env-remove-knock",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "api/platform/src/inngest/functions/ingest-delivery.ts",
+    "api/platform/src/inngest/functions/platform-entity-embed.ts",
+    "apps/platform/package.json",
+    "apps/platform/src/env.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "bad330982e90",
+  "checkpoint_transcript_start": 349,
+  "transcript_lines_at_start": 349,
+  "token_usage": {
+    "input_tokens": 2,
+    "cache_creation_tokens": 679,
+    "cache_read_tokens": 185521,
+    "output_tokens": 371,
+    "api_call_count": 2
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-06T11:10:08.731466Z",
+    "agent_lines": 6,
+    "agent_removed": 3,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 6,
+    "total_lines_changed": 9,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
