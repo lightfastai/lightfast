@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { Slot } from "@radix-ui/react-slot";
 import type { VariantProps } from "class-variance-authority";
 import { cva } from "class-variance-authority";
-import { PanelLeftIcon } from "lucide-react";
+import { ChevronDown, PanelLeftIcon } from "lucide-react";
 
 import { useIsMobile } from "@repo/ui/hooks/use-mobile";
 import { cn } from "@repo/ui/lib/utils";
@@ -391,14 +392,57 @@ function SidebarContent({ className, ...props }: React.ComponentProps<"div">) {
 	);
 }
 
-function SidebarGroup({ className, ...props }: React.ComponentProps<"div">) {
+function SidebarGroup({
+	className,
+	label,
+	collapsible = false,
+	defaultOpen = true,
+	children,
+	...props
+}: React.ComponentProps<"div"> & {
+	label?: string;
+	collapsible?: boolean;
+	defaultOpen?: boolean;
+}) {
 	return (
 		<div
 			data-slot="sidebar-group"
 			data-sidebar="group"
 			className={cn("relative flex w-full min-w-0 flex-col p-2", className)}
 			{...props}
-		/>
+		>
+			{collapsible && label ? (
+				<AccordionPrimitive.Root
+					type="multiple"
+					defaultValue={defaultOpen ? [label] : []}
+				>
+					<AccordionPrimitive.Item value={label}>
+						<SidebarMenu>
+							<SidebarMenuItem>
+								<SidebarMenuButton
+									asChild
+									size="sm"
+									className="rounded-xl text-muted-foreground hover:bg-sidebar-accent/50 [&>svg]:size-3.5 [&[data-state=closed]>svg]:rotate-[-90deg] [&>svg]:transition-transform [&>svg]:duration-200"
+								>
+									<AccordionPrimitive.Trigger>
+										<span>{label}</span>
+										<ChevronDown className="ml-auto" />
+									</AccordionPrimitive.Trigger>
+								</SidebarMenuButton>
+							</SidebarMenuItem>
+						</SidebarMenu>
+						<AccordionPrimitive.Content className="data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down mt-1 overflow-hidden">
+							{children}
+						</AccordionPrimitive.Content>
+					</AccordionPrimitive.Item>
+				</AccordionPrimitive.Root>
+			) : (
+				<>
+					{label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
+					{children}
+				</>
+			)}
+		</div>
 	);
 }
 

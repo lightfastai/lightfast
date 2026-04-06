@@ -5,7 +5,6 @@ import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useClerk, useOrganizationList } from "@vendor/clerk/client";
-import { NotificationsTrigger } from "@vendor/knock/components/trigger";
 
 export function UserPageHeader() {
   const trpc = useTRPC();
@@ -64,7 +63,6 @@ export function UserPageHeader() {
         organizations={organizations}
       />
       <div className="ml-auto flex items-center gap-3">
-        <NotificationsTrigger />
         <UserMenu
           email={email}
           initials={initials}

@@ -121,7 +121,7 @@ export function TeamSwitcher({
           </Button>
         </DropdownMenuTrigger>
       </div>
-      <DropdownMenuContent align="start" className="w-[280px] space-y-1">
+      <DropdownMenuContent align="start" className="w-[280px] space-y-1 rounded-xl border-border/50">
         <div className="px-2 py-1.5">
           <p className="font-medium text-muted-foreground text-xs">Teams</p>
         </div>
@@ -133,7 +133,7 @@ export function TeamSwitcher({
             <DropdownMenuItem asChild className="p-0" key={org.id}>
               <Link
                 className={cn(
-                  "flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 hover:bg-accent focus:bg-accent",
+                  "flex w-full cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 hover:bg-accent focus:bg-accent",
                   isSelected && "bg-muted/50"
                 )}
                 href={`/${org.slug}`}
@@ -164,11 +164,11 @@ export function TeamSwitcher({
 
         <DropdownMenuItem asChild className="p-0">
           <Link
-            className="flex w-full cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:bg-accent"
+            className="flex w-full cursor-pointer items-center gap-2 rounded-xl px-2 py-1.5 text-muted-foreground hover:bg-accent hover:text-foreground focus:bg-accent"
             href={{ pathname: createTeamHref }}
             prefetch={true}
           >
-            <div className="flex h-5 w-5 items-center justify-center rounded-full border border-muted-foreground/50 border-dashed">
+            <div className="flex h-5 w-5 items-center justify-center rounded-full border border-border/50 border-dashed">
               <Plus className="h-3 w-3" />
             </div>
             <span>Create Team</span>

@@ -6,13 +6,12 @@
  * 2. platformEventStore - Event pipeline fast path (store facts + entities)
  * 3. platformEntityGraph - Entity edge resolution via co-occurrence
  * 4. platformEntityEmbed - Entity narrative embed to Pinecone layer="entities"
- * 5. platformNotificationDispatch - High-significance event notifications via Knock
- * 6. platformBackfillOrchestrator - Backfill orchestration (fan-out entity workers)
- * 7. platformEntityWorker - Per-entity-type backfill pagination + dispatch
- * 8. connectionLifecycle - Connection teardown (close gate, revoke, cleanup)
- * 9. healthCheck - 5m cron: probe all active installations
- * 10. tokenRefresh - 5m cron: refresh expiring OAuth tokens
- * 11. deliveryRecovery - 5m cron: sweep stuck webhook deliveries
+ * 5. platformBackfillOrchestrator - Backfill orchestration (fan-out entity workers)
+ * 6. platformEntityWorker - Per-entity-type backfill pagination + dispatch
+ * 7. connectionLifecycle - Connection teardown (close gate, revoke, cleanup)
+ * 8. healthCheck - 5m cron: probe all active installations
+ * 9. tokenRefresh - 5m cron: refresh expiring OAuth tokens
+ * 10. deliveryRecovery - 5m cron: sweep stuck webhook deliveries
  */
 
 import { serve } from "inngest/next";
@@ -26,7 +25,6 @@ import { platformEntityEmbed } from "./functions/platform-entity-embed";
 import { platformEntityGraph } from "./functions/platform-entity-graph";
 import { platformEntityWorker } from "./functions/platform-entity-worker";
 import { platformEventStore } from "./functions/platform-event-store";
-import { platformNotificationDispatch } from "./functions/platform-notification-dispatch";
 import { tokenRefresh } from "./functions/token-refresh";
 
 export { inngest };
@@ -35,7 +33,6 @@ export {
   platformEventStore,
   platformEntityGraph,
   platformEntityEmbed,
-  platformNotificationDispatch,
   platformBackfillOrchestrator,
   platformEntityWorker,
   connectionLifecycle,
@@ -55,7 +52,6 @@ export function createInngestRouteContext() {
       platformEventStore,
       platformEntityGraph,
       platformEntityEmbed,
-      platformNotificationDispatch,
       platformBackfillOrchestrator,
       platformEntityWorker,
       connectionLifecycle,

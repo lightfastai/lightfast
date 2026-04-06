@@ -1,6 +1,7 @@
 "use client";
 
 import { useTRPC } from "@repo/app-trpc/react";
+import { cn } from "@repo/ui/lib/utils";
 import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -14,14 +15,23 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
-  SidebarGroupLabel,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
-import { BookOpen, HelpCircle, Mail } from "lucide-react";
+import {
+  Activity,
+  BookOpen,
+  Briefcase,
+  HelpCircle,
+  Mail,
+  MessageSquare,
+  Plug,
+  Search,
+  Settings,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -31,6 +41,7 @@ import { usePathname } from "next/navigation";
 interface NavItem {
   href: string;
   title: string;
+  icon: React.ComponentType<{ className?: string }>;
 }
 
 /**
@@ -41,10 +52,7 @@ function getOrgPrimaryItems(orgSlug: string): NavItem[] {
     {
       title: "Ask",
       href: `/${orgSlug}`,
-    },
-    {
-      title: "Search",
-      href: `/${orgSlug}/search`,
+      icon: MessageSquare,
     },
   ];
 }
@@ -57,18 +65,22 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
     {
       title: "Events",
       href: `/${orgSlug}/events`,
+      icon: Activity,
     },
     {
       title: "Sources",
       href: `/${orgSlug}/sources`,
+      icon: Plug,
     },
     {
       title: "Jobs",
       href: `/${orgSlug}/jobs`,
+      icon: Briefcase,
     },
     {
       title: "Settings",
       href: `/${orgSlug}/settings`,
+      icon: Settings,
     },
   ];
 }
@@ -86,8 +98,19 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
 
     return (
       <SidebarMenuItem key={item.title}>
-        <SidebarMenuButton asChild isActive={isActive} size="sm">
+        <SidebarMenuButton
+          asChild
+          className={cn(
+            "rounded-xl [&>svg]:size-3.5",
+            isActive
+              ? "text-foreground data-[active=true]:text-foreground"
+              : "text-muted-foreground",
+          )}
+          isActive={isActive}
+          size="sm"
+        >
           <Link href={{ pathname: item.href }} prefetch={true}>
+            <item.icon className="size-3.5" />
             <span>{item.title}</span>
           </Link>
         </SidebarMenuButton>
@@ -134,13 +157,24 @@ export function AppSidebar() {
     >
       {/* Org component header - only show if in org context */}
       {orgSlug && (
-        <div className="flex h-14 items-center px-4">
+        <div className="flex h-14 items-center justify-between px-4">
           <TeamSwitcher
             createTeamHref="/account/teams/new"
             mode={mode}
             onOrgSelect={handleOrgSelect}
             organizations={organizations}
           />
+          <Button
+            asChild
+            className="h-6 w-6 rounded-full text-muted-foreground"
+            size="icon"
+            variant="ghost"
+            title="Search"
+          >
+            <Link href={{ pathname: `/${orgSlug}/search` }} prefetch={true}>
+              <Search className="size-3.5" />
+            </Link>
+          </Button>
         </div>
       )}
       <SidebarContent>
@@ -158,9 +192,8 @@ export function AppSidebar() {
               </SidebarGroupContent>
             </SidebarGroup>
 
-            {/* Manage Section - with label */}
-            <SidebarGroup>
-              <SidebarGroupLabel>Manage</SidebarGroupLabel>
+            {/* Manage Section */}
+            <SidebarGroup label="Manage" collapsible defaultOpen>
               <SidebarGroupContent>
                 <SidebarMenu>
                   <NavItems

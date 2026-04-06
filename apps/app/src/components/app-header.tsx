@@ -4,7 +4,6 @@ import { useTRPC } from "@repo/app-trpc/react";
 import { UserMenu } from "@repo/ui/components/app-header/user-menu";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useClerk } from "@vendor/clerk/client";
-import { NotificationsTrigger } from "@vendor/knock/components/trigger";
 /**
  * Application header - full width with org switcher on left and user actions on right
  */
@@ -51,7 +50,6 @@ export function AppHeader() {
 
       {/* Right side - Notifications and User dropdown */}
       <div className="ml-auto flex items-center gap-3">
-        <NotificationsTrigger />
         <UserMenu
           email={email}
           initials={initials}
