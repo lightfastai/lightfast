@@ -1,0 +1,37 @@
+in @apps/app/src/components/app-sidebar.tsx for each "group", e.g Manage, allow users to hover and click Manager to "close" the group. not persisted across sessions.
+
+---
+
+lets use radix-accordion
+
+---
+
+text-sm for manage. the icon next to manage. not at the end. manage also should be sidebar menu button.
+
+---
+
+question should this primitive be actually part of @packages/ui/src/components/ui/sidebar.tsx 
+
+perhaps, we need to rework how our sidebar.tsx is structured instead of doing this on the actual app-level
+
+so imagine if sidebar-group was ltiterally this accordion-like component with a title.
+
+---
+
+yes!
+
+---
+
+i mean on the right side of manage.
+
+---
+
+very nice. final update to sidebar.tsx,
+
+we want hover and active to be different colors.
+
+hover use /50 opacity reduce
+
+---
+
+hmm not convinved its working

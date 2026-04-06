@@ -1,0 +1,55 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "621afe3e1a6c",
+  "strategy": "manual-commit",
+  "branch": "fix/enforce-embed-env-remove-knock",
+  "checkpoints_count": 7,
+  "files_touched": [
+    ".changeset/pre.json",
+    ".env.mcp.example",
+    ".mcp.json",
+    ".mcp/start-knock.sh",
+    "api/platform/package.json",
+    "api/platform/src/inngest/functions/platform-notification-dispatch.ts",
+    "api/platform/src/inngest/index.ts",
+    "apps/app/next.config.ts",
+    "apps/app/package.json",
+    "apps/app/src/app/(app)/layout.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/app/src/components/notifications-provider.tsx",
+    "apps/app/src/components/user-page-header.tsx",
+    "apps/app/src/env.ts",
+    "apps/app/src/proxy.ts",
+    "apps/app/turbo.json",
+    "packages/ui/src/components/app-header/team-switcher.tsx",
+    "packages/ui/src/components/app-header/user-menu.tsx",
+    "packages/ui/src/components/ui/sidebar.tsx",
+    "pnpm-lock.yaml",
+    "vendor/knock/package.json",
+    "vendor/knock/src/components/provider.tsx",
+    "vendor/knock/src/components/trigger.tsx",
+    "vendor/knock/src/env.ts",
+    "vendor/knock/src/index.ts",
+    "vendor/knock/src/styles.css",
+    "vendor/knock/tsconfig.json",
+    "vendor/knock/turbo.json",
+    "vendor/security/src/csp/index.ts",
+    "vendor/security/src/csp/knock.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/62/1afe3e1a6c/0/metadata.json",
+      "transcript": "/62/1afe3e1a6c/0/full.jsonl",
+      "content_hash": "/62/1afe3e1a6c/0/content_hash.txt",
+      "prompt": "/62/1afe3e1a6c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 51,
+    "cache_creation_tokens": 65449,
+    "cache_read_tokens": 1708169,
+    "output_tokens": 34649,
+    "api_call_count": 35
+  }
+}
