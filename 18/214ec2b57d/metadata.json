@@ -3,7 +3,7 @@
   "checkpoint_id": "18214ec2b57d",
   "strategy": "manual-commit",
   "branch": "feat/api-keys-settings-page",
-  "checkpoints_count": 4,
+  "checkpoints_count": 5,
   "files_touched": [
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/api-keys/_components/org-api-key-list.tsx",
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/api-keys/_components/security-notice.tsx"
@@ -14,13 +14,19 @@
       "transcript": "/18/214ec2b57d/0/full.jsonl",
       "content_hash": "/18/214ec2b57d/0/content_hash.txt",
       "prompt": "/18/214ec2b57d/0/prompt.txt"
+    },
+    {
+      "metadata": "/18/214ec2b57d/1/metadata.json",
+      "transcript": "/18/214ec2b57d/1/full.jsonl",
+      "content_hash": "/18/214ec2b57d/1/content_hash.txt",
+      "prompt": "/18/214ec2b57d/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 191,
-    "cache_creation_tokens": 61017,
-    "cache_read_tokens": 2256128,
-    "output_tokens": 15951,
-    "api_call_count": 43
+    "input_tokens": 195,
+    "cache_creation_tokens": 63437,
+    "cache_read_tokens": 2655556,
+    "output_tokens": 16518,
+    "api_call_count": 47
   }
 }
