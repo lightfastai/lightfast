@@ -20,6 +20,12 @@ export async function searchLogic(
   const indexName = EMBEDDING_DEFAULTS.indexName;
   const namespaceName = buildOrgNamespace(auth.clerkOrgId);
 
+  log.info("Search started", {
+    requestId,
+    query: request.query,
+    namespace: namespaceName,
+  });
+
   const embeddingProvider = createEmbeddingProvider({
     inputType: "search_query",
   });
@@ -29,6 +35,11 @@ export async function searchLogic(
   if (!queryVector) {
     throw new Error("Failed to generate query embedding");
   }
+
+  log.debug("Query embedding generated", {
+    requestId,
+    vectorDimension: queryVector.length,
+  });
 
   // Build Pinecone filter — occurredAt is stored as Unix ms number
   const pineconeFilter: Record<string, unknown> = { layer: "entities" };
@@ -54,11 +65,20 @@ export async function searchLogic(
     pineconeFilter.entityType = { $in: request.types };
   }
 
+  log.debug("Pinecone filter built", { requestId, filter: pineconeFilter });
+
   // Query entity vectors — fetch more than limit so reranker has candidates to work with
   const topK =
     request.mode === "balanced"
       ? Math.min(request.limit * 3, 100)
       : request.limit;
+
+  log.debug("Querying Pinecone", {
+    requestId,
+    topK,
+    mode: request.mode,
+    index: indexName,
+  });
 
   const queryResult = await lightfastPineconeClient.query<EntityVectorMetadata>(
     indexName,
@@ -71,10 +91,10 @@ export async function searchLogic(
     namespaceName
   );
 
-  log.info("Search complete", {
+  log.info("Pinecone query complete", {
     requestId,
-    query: request.query,
-    resultCount: queryResult.matches.length,
+    matchCount: queryResult.matches.length,
+    topK,
   });
 
   // Build rerank candidates from Pinecone matches
@@ -85,6 +105,11 @@ export async function searchLogic(
     score: match.score ?? 0,
   }));
 
+  log.debug("Rerank candidates prepared", {
+    requestId,
+    candidateCount: candidates.length,
+  });
+
   const rerankProvider = createRerankProvider(request.mode);
   const rerankResponse = await rerankProvider.rerank(
     request.query,
@@ -94,6 +119,11 @@ export async function searchLogic(
       requestId,
     }
   );
+
+  log.debug("Reranking complete", {
+    requestId,
+    rerankResultCount: rerankResponse.results.length,
+  });
 
   // Build lookup map for metadata from original Pinecone matches
   const matchById = new Map(
@@ -119,6 +149,12 @@ export async function searchLogic(
           ? new Date(Number(meta.occurredAt)).toISOString()
           : null,
     };
+  });
+
+  log.info("Search complete", {
+    requestId,
+    query: request.query,
+    resultCount: results.length,
   });
 
   return {
