@@ -1,50 +1,20 @@
 "use client";
 
 import { useActiveOrg } from "@repo/app-trpc/hooks";
-import type { SearchMode, SearchResponse } from "@repo/app-validation";
+import type { SearchMode } from "@repo/app-validation";
 import type { PromptInputMessage } from "@repo/ui/components/ai-elements/prompt-input";
 import { ScrollArea } from "@repo/ui/components/ui/scroll-area";
 import { Separator } from "@repo/ui/components/ui/separator";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { parseError } from "@vendor/observability/error/next";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { createApiClient } from "~/lib/api-client";
 import { dateRangeFromPreset } from "./search-constants";
 import { SearchFilters } from "./search-filters";
 import { SearchPromptInput } from "./search-prompt-input";
 import { SearchResultsPanel } from "./search-results-panel";
 import { useOrgSearchParams } from "./use-org-search-params";
-
-async function executeSearch(
-  body: Record<string, unknown>,
-  clerkOrgId: string,
-  signal: AbortSignal
-): Promise<SearchResponse> {
-  const response = await fetch("/v1/search", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "X-Org-ID": clerkOrgId,
-    },
-    body: JSON.stringify(body),
-    signal,
-  });
-
-  if (!response.ok) {
-    const errorData = (await response
-      .json()
-      .catch(() => ({ error: undefined, message: undefined }))) as {
-      error?: string;
-      message?: string;
-    };
-    throw new Error(
-      errorData.message ??
-        errorData.error ??
-        `Search failed: ${response.status}`
-    );
-  }
-
-  return (await response.json()) as SearchResponse;
-}
 
 interface OrgSearchProps {
   initialQuery: string;
@@ -58,6 +28,10 @@ interface OrgSearchProps {
  */
 export function OrgSearch({ initialQuery }: OrgSearchProps) {
   const activeOrg = useActiveOrg();
+  const clerkOrgId = activeOrg?.id ?? "";
+
+  // Typed oRPC client scoped to the active org
+  const client = useMemo(() => createApiClient(clerkOrgId), [clerkOrgId]);
 
   // URL-persisted state via nuqs
   const {
@@ -82,12 +56,7 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
     clearFilters,
   } = useOrgSearchParams(initialQuery);
 
-  // Local state for search results and input
-  const [searchResults, setSearchResults] = useState<SearchResponse | null>(
-    null
-  );
-  const [isSearching, setIsSearching] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // Local input state (what the user is typing, before submission)
   const [inputValue, setInputValue] = useState(query);
   const [prevQuery, setPrevQuery] = useState(query);
   useEffect(() => {
@@ -97,66 +66,43 @@ export function OrgSearch({ initialQuery }: OrgSearchProps) {
     }
   }, [query, prevQuery]);
 
-  const clerkOrgId = activeOrg?.id ?? "";
-
-  // Reference to track current request for cancellation
-  const abortControllerRef = useRef<AbortController | null>(null);
-
-  // Abort any in-flight request when the component unmounts
-  useEffect(() => {
-    return () => {
-      abortControllerRef.current?.abort();
-    };
-  }, []);
-
-  const performSearch = (searchQuery: string) => {
-    if (!searchQuery.trim()) {
-      setError("Please enter a search query");
-      return;
-    }
-
-    abortControllerRef.current?.abort();
-    abortControllerRef.current = new AbortController();
-
-    setIsSearching(true);
-    setError(null);
-    // Keep previous results visible during loading to avoid flash of empty state
-
-    const body: Record<string, unknown> = {
-      query: searchQuery.trim(),
+  // Build search request from URL-persisted params
+  const searchInput = useMemo(
+    () => ({
+      query: query.trim(),
       limit,
       offset,
       mode,
       ...(sources.length > 0 && { sources }),
       ...(types.length > 0 && { types }),
       ...dateRangeFromPreset(agePreset),
-    };
+    }),
+    [query, limit, offset, mode, sources, types, agePreset]
+  );
 
-    executeSearch(body, clerkOrgId, abortControllerRef.current.signal)
-      .then((data) => {
-        setSearchResults(data);
-        setIsSearching(false);
-      })
-      .catch((err: unknown) => {
-        if (err instanceof Error && err.name === "AbortError") {
-          return;
-        }
-        setError(parseError(err));
-        setSearchResults(null);
-        setIsSearching(false);
-      });
-  };
+  // Search query — fires when URL params change and query is non-empty
+  // queryKey includes clerkOrgId to prevent cross-org cache pollution
+  const searchQuery = useQuery({
+    queryKey: ["search", clerkOrgId, searchInput],
+    queryFn: ({ signal }) => client.search(searchInput, { signal }),
+    enabled: !!query.trim() && !!clerkOrgId,
+    placeholderData: keepPreviousData,
+  });
 
-  const handleSearch = () => {
-    performSearch(inputValue);
-  };
+  const isSearching = searchQuery.isFetching;
+  const searchResults = searchQuery.data ?? null;
+  const error = searchQuery.error ? parseError(searchQuery.error) : null;
 
+  // Submit handler — writes inputValue to URL, triggering the query
   const handlePromptSubmit = async (
     message: PromptInputMessage
   ): Promise<void> => {
     const content = message.text?.trim() ?? "";
     await setQuery(content);
-    performSearch(content);
+  };
+
+  const handleSearch = () => {
+    void setQuery(inputValue);
   };
 
   // Handle Cmd+Enter keyboard shortcut
