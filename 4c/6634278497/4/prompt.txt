@@ -1,0 +1,1 @@
+/research_codebase similar to @vendor/observability/src/inngest.ts and @vendor/observability/src/trpc.ts let's also integrate an observability layer for @apps/app/src/app/(api)/v1/[...rest]/ orpc layer
