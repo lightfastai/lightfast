@@ -1,0 +1,17 @@
+/implement_plan @thoughts/shared/plans/2026-04-07-search-page-orpc-client.md
+
+---
+
+nice it's working! whats left?
+
+---
+
+/oneshot_merge
+
+---
+
+i think we should commit the answer message sidebar avatar searcn all that too. basically all the stuff expect for the thought
+
+---
+
+yes
