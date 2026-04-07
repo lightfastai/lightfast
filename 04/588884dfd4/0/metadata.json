@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "04588884dfd4",
+  "session_id": "1c21e39a-ff3a-44d8-bfd5-b8d0ca90646b",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-07T04:48:56.987004Z",
+  "branch": "feat/entity-first-ui",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "thoughts/shared/plans/2026-04-05-entity-first-ui-rework.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "5bf0ef760faf",
+  "token_usage": {
+    "input_tokens": 1687,
+    "cache_creation_tokens": 329297,
+    "cache_read_tokens": 3502527,
+    "output_tokens": 40863,
+    "api_call_count": 46
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-07T04:48:55.807977Z",
+    "agent_lines": 229,
+    "agent_removed": 432,
+    "human_added": 947,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1176,
+    "total_lines_changed": 1615,
+    "agent_percentage": 40.92879256965944,
+    "metric_version": 2
+  }
+}
