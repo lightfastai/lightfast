@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "c467fa2f17fc",
+  "strategy": "manual-commit",
+  "branch": "feat/search-orpc-client",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/app/package.json",
+    "apps/app/src/app/(app)/(org)/[slug]/search/page.tsx",
+    "apps/app/src/components/org-search.tsx",
+    "apps/app/src/lib/api-client.ts",
+    "pnpm-lock.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/c4/67fa2f17fc/0/metadata.json",
+      "transcript": "/c4/67fa2f17fc/0/full.jsonl",
+      "content_hash": "/c4/67fa2f17fc/0/content_hash.txt",
+      "prompt": "/c4/67fa2f17fc/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 75,
+    "cache_creation_tokens": 129948,
+    "cache_read_tokens": 3371085,
+    "output_tokens": 14720,
+    "api_call_count": 64
+  }
+}
