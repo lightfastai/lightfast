@@ -7,3 +7,7 @@ fix last remaining errors in pnpm check
 ---
 
 /oneshot_merge
+
+---
+
+yes
