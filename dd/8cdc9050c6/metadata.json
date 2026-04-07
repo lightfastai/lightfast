@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "dd8cdc9050c6",
+  "strategy": "manual-commit",
+  "branch": "feat/entity-first-ui",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/dd/8cdc9050c6/0/metadata.json",
+      "transcript": "/dd/8cdc9050c6/0/full.jsonl",
+      "content_hash": "/dd/8cdc9050c6/0/content_hash.txt",
+      "prompt": "/dd/8cdc9050c6/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 156,
+    "cache_creation_tokens": 34415,
+    "cache_read_tokens": 483290,
+    "output_tokens": 2568,
+    "api_call_count": 13
+  }
+}
