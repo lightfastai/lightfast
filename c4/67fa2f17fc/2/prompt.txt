@@ -1,0 +1,13 @@
+/improve_plan @thoughts/shared/plans/2026-04-07-dotlightfast-context-indexing.md also ensure better naming and ensure that this will eventually allow us to migrate easily to full dynamic repo style + pinecone embedding for the whole of the repo for data.
+
+---
+
+soexplain this implement in a few bullet points
+
+---
+
+question, when does this become it's own "pinecone" pipeline?
+
+---
+
+cool. all good then for now we good with this plan?
