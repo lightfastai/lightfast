@@ -2,7 +2,7 @@
 
 import { providerSlugSchema } from "@repo/app-providers/client";
 import { parseAsString, parseAsStringEnum, useQueryStates } from "nuqs";
-import { AGE_PRESET_OPTIONS } from "~/components/search-constants";
+import { AGE_PRESET_OPTIONS } from "~/lib/filter-constants";
 
 const SOURCE_OPTIONS = ["all", ...providerSlugSchema.options] as const;
 const AGE_OPTIONS = AGE_PRESET_OPTIONS.map((o) => o.value);

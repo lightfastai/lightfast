@@ -167,15 +167,23 @@ export function AppSidebar() {
             organizations={organizations}
           />
           <Button
-            asChild
             className="h-6 w-6 rounded-full text-muted-foreground"
+            onClick={() => {
+              document.dispatchEvent(
+                new KeyboardEvent("keydown", {
+                  key: "k",
+                  metaKey: true,
+                  bubbles: true,
+                  cancelable: true,
+                  composed: true,
+                })
+              );
+            }}
             size="icon"
-            title="Search"
+            title="Search (⌘K)"
             variant="ghost"
           >
-            <Link href={{ pathname: `/${orgSlug}/search` }} prefetch={true}>
-              <Search className="size-3.5" />
-            </Link>
+            <Search className="size-3.5" />
           </Button>
         </div>
       )}

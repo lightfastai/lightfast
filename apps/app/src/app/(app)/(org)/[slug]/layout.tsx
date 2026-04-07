@@ -7,6 +7,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "~/components/app-header";
 import { AppSidebar } from "~/components/app-sidebar";
+import { CommandPalette } from "~/components/command-palette";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 
@@ -51,6 +52,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
       <OrgPageErrorBoundary orgSlug={slug}>
         <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-sidebar">
           <AppSidebar />
+          <CommandPalette />
           {/* Right column: header (outside inset) + inset content below */}
           {/* pr-2 pb-2 creates the gap for the inset card — margin on SidebarInset doesn't work because w-full overflows */}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
