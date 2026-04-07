@@ -15,3 +15,7 @@ already added entity to sidebar. no to 2. i think we're done maybe?
 ---
 
 /oneshot_merge but also with other changes we made to ui.
+
+---
+
+great! proceed
