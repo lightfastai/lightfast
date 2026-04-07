@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "b59f98cb14af",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/use-event-filters.ts",
+    "apps/app/src/app/(app)/(org)/[slug]/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/search/page.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/app/src/components/command-palette.tsx",
+    "apps/app/src/components/org-search.tsx",
+    "apps/app/src/components/search-constants.ts",
+    "apps/app/src/components/search-empty-state.tsx",
+    "apps/app/src/components/search-filters.tsx",
+    "apps/app/src/components/search-prompt-input.tsx",
+    "apps/app/src/components/search-result-card.tsx",
+    "apps/app/src/components/search-results-list.tsx",
+    "apps/app/src/components/search-results-panel.tsx",
+    "apps/app/src/components/search-tab-content.tsx",
+    "apps/app/src/components/use-org-search-params.ts",
+    "apps/app/src/lib/filter-constants.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/b5/9f98cb14af/0/metadata.json",
+      "transcript": "/b5/9f98cb14af/0/full.jsonl",
+      "content_hash": "/b5/9f98cb14af/0/content_hash.txt",
+      "prompt": "/b5/9f98cb14af/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 87093,
+    "cache_read_tokens": 2754275,
+    "output_tokens": 11803,
+    "api_call_count": 50
+  }
+}

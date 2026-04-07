@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "b59f98cb14af",
+  "session_id": "1ceb7827-ff3a-42fd-986d-00c573ac02d0",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-07T13:56:22.788267Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/use-event-filters.ts",
+    "apps/app/src/app/(app)/(org)/[slug]/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/search/page.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/app/src/components/command-palette.tsx",
+    "apps/app/src/components/org-search.tsx",
+    "apps/app/src/components/search-constants.ts",
+    "apps/app/src/components/search-empty-state.tsx",
+    "apps/app/src/components/search-filters.tsx",
+    "apps/app/src/components/search-prompt-input.tsx",
+    "apps/app/src/components/search-result-card.tsx",
+    "apps/app/src/components/search-results-list.tsx",
+    "apps/app/src/components/search-results-panel.tsx",
+    "apps/app/src/components/search-tab-content.tsx",
+    "apps/app/src/components/use-org-search-params.ts",
+    "apps/app/src/lib/filter-constants.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "67a1278ecbd1",
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 87093,
+    "cache_read_tokens": 2754275,
+    "output_tokens": 11803,
+    "api_call_count": 50
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-07T13:56:22.325463Z",
+    "agent_lines": 264,
+    "agent_removed": 1190,
+    "human_added": 10,
+    "human_modified": 5,
+    "human_removed": 0,
+    "total_committed": 279,
+    "total_lines_changed": 1469,
+    "agent_percentage": 98.9788972089857,
+    "metric_version": 2
+  }
+}
