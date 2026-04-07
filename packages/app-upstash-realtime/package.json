@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "@repo/app-providers": "workspace:*",
+    "@repo/app-validation": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vendor/upstash-realtime": "workspace:*",
     "zod": "catalog:"

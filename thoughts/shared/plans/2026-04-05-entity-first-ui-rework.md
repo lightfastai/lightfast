@@ -22,6 +22,9 @@ Replace the Events page with an Entities page and remove Jobs from the sidebar. 
 - Entity realtime channel for live updates
 - All entity UI components (EntityTable, EntityRow, EntityDetail, etc.)
 
+**Descoped (v2):**
+- Related entities / entity graph edges UI — `orgEntityEdges` is sparse (only 5 categories generate edges, cross-provider linking is broken). Ship entity detail without it; add when cross-source linking is fixed.
+
 ### Key Discoveries:
 
 - Events UI reads `orgIngestLogs` via `trpc.events.list` — raw webhook logs, not enriched events (`api/app/src/router/org/events.ts:2,52-57`)
@@ -39,7 +42,7 @@ After this plan is complete:
 
 1. The sidebar "Manage" section shows: **Entities, Sources, Settings** (Events and Jobs removed)
 2. `/{slug}/entities` shows a paginated, filterable list of all entities for the org, with live prepend when new entities are upserted
-3. `/{slug}/entities/[entityId]` shows entity details: header (category, key, state, URL, metrics), events timeline from `orgEvents` via junction with live prepend, and flat related-entities list from `orgEntityEdges`
+3. `/{slug}/entities/[entityId]` shows entity details: header (category, key, state, URL, metrics) and events timeline from `orgEvents` via junction with live prepend
 4. The events and jobs page directories are deleted; their tRPC routers and DB tables remain untouched
 5. Realtime `org.entity` events power live updates on the entity list; `org.entityEvent` events power live event prepend on entity detail pages
 
@@ -47,7 +50,7 @@ After this plan is complete:
 
 - Navigate to `/{slug}/entities` — see a list of entities sorted by `lastSeenAt DESC`
 - Filter by category and search by key — results update correctly
-- Click an entity — navigate to detail page showing header, events, and related entities
+- Click an entity — navigate to detail page showing header and events
 - Trigger a webhook → entity list shows live update (green pulse + new entity appears)
 - Open an entity detail page, trigger another webhook for that entity → new event prepends live to the timeline
 - Sidebar shows Entities/Sources/Settings only
@@ -57,11 +60,13 @@ After this plan is complete:
 
 ## What We're NOT Doing
 
-- **No graph visualization** — entity detail shows a flat related-entities list, not a visual graph
+- **No related entities section** — `orgEntityEdges` is sparse and cross-source linking is broken; deferred to v2
+- **No graph visualization** — deferred to v2 alongside related entities
 - **No entity editing/deletion** — entities are read-only, managed by the pipeline
 - **No entity category prioritization** — all 12 categories shown equally, no structural vs semantic split in UI
-- **No changes to the neural pipeline** — `platform-event-store.ts`, `platform-entity-graph.ts`, `platform-entity-embed.ts` remain as-is
+- **No changes to the neural pipeline** — `platform-event-store.ts`, `platform-entity-graph.ts`, `platform-entity-embed.ts` remain as-is (realtime publish is added to the existing upsert step, not a new step)
 - **No changes to DB schema** — all tables and indexes are sufficient
+- **No Drizzle relations changes** — no procedure uses `db.query` relational `with:`, so `orgEntitiesRelations` is unnecessary
 - **No removal of events/jobs tRPC routers** — `eventsRouter` and `jobsRouter` stay in the API; they may serve future admin/API use cases
 - **No changes to search** — the existing Pinecone search UI remains independent
 
@@ -71,7 +76,7 @@ After this plan is complete:
 
 ### Overview
 
-Create the entity tRPC router with four procedures: `list`, `get`, `getEvents`, and `getRelatedEntities`. Register it in the app router.
+Create the entity tRPC router with three procedures: `list`, `get`, and `getEvents`. Register it in the app router. (`getRelatedEntities` deferred to v2.)
 
 ### Changes Required:
 
@@ -83,12 +88,13 @@ Create the entity tRPC router with four procedures: `list`, `get`, `getEvents`, 
 import { db } from "@db/app/client";
 import {
   orgEntities,
-  orgEntityEdges,
   orgEventEntities,
   orgEvents,
 } from "@db/app/schema";
 import { entityCategorySchema } from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import type { SQL } from "drizzle-orm";
 import { and, desc, eq, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import { orgScopedProcedure } from "../../trpc";
@@ -99,7 +105,7 @@ export const entitiesRouter = {
       z.object({
         category: entityCategorySchema.optional(),
         limit: z.number().min(1).max(100).default(30),
-        cursor: z.number().optional(), // entity id for keyset pagination
+        cursor: z.number().optional(),
         search: z.string().optional(),
       })
     )
@@ -119,19 +125,18 @@ export const entitiesRouter = {
 
       if (search) {
         const pattern = `%${search}%`;
-        conditions.push(
-          or(
-            ilike(orgEntities.key, pattern),
-            ilike(orgEntities.value, pattern)
-          )!
-        );
+        const searchCond = or(
+          ilike(orgEntities.key, pattern),
+          ilike(sql`COALESCE(${orgEntities.value}, '')`, pattern)
+        ) as SQL<unknown>;
+        conditions.push(searchCond);
       }
 
       const rows = await db
         .select()
         .from(orgEntities)
         .where(and(...conditions))
-        .orderBy(desc(orgEntities.lastSeenAt), desc(orgEntities.id))
+        .orderBy(sql`${orgEntities.id} DESC`)
         .limit(limit + 1);
 
       const hasMore = rows.length > limit;
@@ -149,6 +154,7 @@ export const entitiesRouter = {
         confidence: row.confidence,
         occurrenceCount: row.occurrenceCount,
         lastSeenAt: row.lastSeenAt,
+        extractedAt: row.extractedAt,
         createdAt: row.createdAt,
       }));
 
@@ -160,13 +166,18 @@ export const entitiesRouter = {
     .query(async ({ ctx, input }) => {
       const clerkOrgId = ctx.auth.orgId;
 
-      const entity = await db.query.orgEntities.findFirst({
-        where: and(
-          eq(orgEntities.clerkOrgId, clerkOrgId),
-          eq(orgEntities.externalId, input.externalId)
-        ),
-      });
+      const rows = await db
+        .select()
+        .from(orgEntities)
+        .where(
+          and(
+            eq(orgEntities.clerkOrgId, clerkOrgId),
+            eq(orgEntities.externalId, input.externalId)
+          )
+        )
+        .limit(1);
 
+      const entity = rows[0];
       if (!entity) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Entity not found" });
       }
@@ -179,22 +190,26 @@ export const entitiesRouter = {
       z.object({
         externalId: z.string(),
         limit: z.number().min(1).max(100).default(20),
-        cursor: z.number().optional(), // orgEvents.id for keyset pagination
+        cursor: z.number().optional(),
       })
     )
     .query(async ({ ctx, input }) => {
       const clerkOrgId = ctx.auth.orgId;
       const { limit, cursor } = input;
 
-      // Look up entity by externalId
-      const entity = await db.query.orgEntities.findFirst({
-        where: and(
-          eq(orgEntities.clerkOrgId, clerkOrgId),
-          eq(orgEntities.externalId, input.externalId)
-        ),
-        columns: { id: true },
-      });
+      // Look up entity by externalId using db.select() (matches app router convention)
+      const entityRows = await db
+        .select({ id: orgEntities.id })
+        .from(orgEntities)
+        .where(
+          and(
+            eq(orgEntities.clerkOrgId, clerkOrgId),
+            eq(orgEntities.externalId, input.externalId)
+          )
+        )
+        .limit(1);
 
+      const entity = entityRows[0];
       if (!entity) {
         throw new TRPCError({ code: "NOT_FOUND", message: "Entity not found" });
       }
@@ -238,106 +253,13 @@ export const entitiesRouter = {
         nextCursor,
       };
     }),
-
-  getRelatedEntities: orgScopedProcedure
-    .input(z.object({ externalId: z.string() }))
-    .query(async ({ ctx, input }) => {
-      const clerkOrgId = ctx.auth.orgId;
-
-      const entity = await db.query.orgEntities.findFirst({
-        where: and(
-          eq(orgEntities.clerkOrgId, clerkOrgId),
-          eq(orgEntities.externalId, input.externalId)
-        ),
-        columns: { id: true },
-      });
-
-      if (!entity) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Entity not found" });
-      }
-
-      // Get edges where this entity is source OR target
-      const [outgoing, incoming] = await Promise.all([
-        db
-          .select({
-            edgeId: orgEntityEdges.externalId,
-            relationshipType: orgEntityEdges.relationshipType,
-            confidence: orgEntityEdges.confidence,
-            targetId: orgEntities.externalId,
-            targetCategory: orgEntities.category,
-            targetKey: orgEntities.key,
-            targetValue: orgEntities.value,
-            targetState: orgEntities.state,
-            targetUrl: orgEntities.url,
-          })
-          .from(orgEntityEdges)
-          .innerJoin(orgEntities, eq(orgEntityEdges.targetEntityId, orgEntities.id))
-          .where(
-            and(
-              eq(orgEntityEdges.clerkOrgId, clerkOrgId),
-              eq(orgEntityEdges.sourceEntityId, entity.id)
-            )
-          ),
-        db
-          .select({
-            edgeId: orgEntityEdges.externalId,
-            relationshipType: orgEntityEdges.relationshipType,
-            confidence: orgEntityEdges.confidence,
-            sourceId: orgEntities.externalId,
-            sourceCategory: orgEntities.category,
-            sourceKey: orgEntities.key,
-            sourceValue: orgEntities.value,
-            sourceState: orgEntities.state,
-            sourceUrl: orgEntities.url,
-          })
-          .from(orgEntityEdges)
-          .innerJoin(orgEntities, eq(orgEntityEdges.sourceEntityId, orgEntities.id))
-          .where(
-            and(
-              eq(orgEntityEdges.clerkOrgId, clerkOrgId),
-              eq(orgEntityEdges.targetEntityId, entity.id)
-            )
-          ),
-      ]);
-
-      return {
-        outgoing: outgoing.map((e) => ({
-          edgeId: e.edgeId,
-          direction: "outgoing" as const,
-          relationshipType: e.relationshipType,
-          confidence: e.confidence,
-          entity: {
-            externalId: e.targetId,
-            category: e.targetCategory,
-            key: e.targetKey,
-            value: e.targetValue,
-            state: e.targetState,
-            url: e.targetUrl,
-          },
-        })),
-        incoming: incoming.map((e) => ({
-          edgeId: e.edgeId,
-          direction: "incoming" as const,
-          relationshipType: e.relationshipType,
-          confidence: e.confidence,
-          entity: {
-            externalId: e.sourceId,
-            category: e.sourceCategory,
-            key: e.sourceKey,
-            value: e.sourceValue,
-            state: e.sourceState,
-            url: e.sourceUrl,
-          },
-        })),
-      };
-    }),
 } satisfies TRPCRouterRecord;
 ```
 
-**Note**: `TRPCError` must be imported from `@trpc/server`. The `get`, `getEvents`, and `getRelatedEntities` procedures need:
-```typescript
-import { TRPCError } from "@trpc/server";
-```
+**Convention notes:**
+- Uses `db.select().from().where().limit(1)` for lookups — matches all existing `api/app/src/router/org/` routers (never `db.query.*.findFirst()` which is a platform-side convention)
+- Search uses `COALESCE` on nullable `value` column to avoid null ilike issues (spike-validated)
+- `ilike` search cast to `SQL<unknown>` to satisfy Drizzle's `or()` return type
 
 #### 2. Register router
 
@@ -360,41 +282,7 @@ export const appRouter = createTRPCRouter({
 });
 ```
 
-#### 3. Add Drizzle relations for `orgEntities`
-
-**File**: `db/app/src/schema/relations.ts`
-**Changes**: Add `orgEntitiesRelations` so `db.query.orgEntities.findFirst()` works.
-
-```typescript
-export const orgEntitiesRelations = relations(orgEntities, ({ many }) => ({
-  eventEntities: many(orgEventEntities),
-  outgoingEdges: many(orgEntityEdges, { relationName: "sourceEntity" }),
-  incomingEdges: many(orgEntityEdges, { relationName: "targetEntity" }),
-}));
-```
-
-**Note**: The existing `orgEntityEdgesRelations` must be updated to use `relationName` on the `sourceEntity` and `targetEntity` fields to match. Update lines 75-88:
-
-```typescript
-export const orgEntityEdgesRelations = relations(orgEntityEdges, ({ one }) => ({
-  sourceEntity: one(orgEntities, {
-    fields: [orgEntityEdges.sourceEntityId],
-    references: [orgEntities.id],
-    relationName: "sourceEntity",
-  }),
-  targetEntity: one(orgEntities, {
-    fields: [orgEntityEdges.targetEntityId],
-    references: [orgEntities.id],
-    relationName: "targetEntity",
-  }),
-  sourceEvent: one(orgEvents, {
-    fields: [orgEntityEdges.sourceEventId],
-    references: [orgEvents.id],
-  }),
-}));
-```
-
-#### 4. Add entity types
+#### 3. Add entity types
 
 **File**: `apps/app/src/types/index.ts`
 **Changes**: Add entity type exports from `RouterOutputs`
@@ -409,21 +297,20 @@ export type Entity = EntitiesListResponse["entities"][number];
 export type EntityDetail = RouterOutputs["entities"]["get"];
 export type EntityEventsResponse = RouterOutputs["entities"]["getEvents"];
 export type EntityEvent = EntityEventsResponse["events"][number];
-export type EntityRelatedResponse = RouterOutputs["entities"]["getRelatedEntities"];
 ```
 
 ### Success Criteria:
 
 #### Automated Verification:
 
-- [ ] `pnpm typecheck` passes (tRPC types resolve end-to-end)
-- [ ] `pnpm check` passes (lint clean)
-- [ ] `pnpm build:app` succeeds
+- [x] `pnpm typecheck` passes (tRPC types resolve end-to-end)
+- [x] `pnpm check` passes (lint clean)
+- [x] `pnpm build:app` succeeds
 
 #### Manual Verification:
 
 - [ ] Run `pnpm dev:app`, open browser console, call `trpc.entities.list.queryOptions({})` — returns entity data
-- [ ] Verify `entities.get`, `entities.getEvents`, `entities.getRelatedEntities` return expected shapes
+- [ ] Verify `entities.get` and `entities.getEvents` return expected shapes
 
 **Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
 
@@ -495,44 +382,44 @@ export type EntityEventNotification = z.infer<typeof schema.org.entityEvent>;
 **File**: `api/platform/src/inngest/functions/platform-event-store.ts`
 **Changes**: After the `upsert-entities-and-junctions` step (line 502), add a new step to publish both realtime notifications. This runs after `observation` and `entityUpsertResult` are both available.
 
-Insert after line 502 (after `entityUpsertResult` is assigned), before `entityRefs` construction at line 504:
+Fold the realtime publish into the **existing** `"upsert-entities-and-junctions"` step, after the DB writes succeed. Do NOT create a separate `step.run()` — that adds an unnecessary network round-trip per event.
+
+Add at the end of the `"upsert-entities-and-junctions"` step body, after the DB upserts complete and before the `return`:
 
 ```typescript
     // Publish to Upstash Realtime for live entity list + entity detail pages
-    if (entityUpsertResult.primaryEntityExternalId) {
-      await step.run("publish-entity-realtime", async () => {
-        const { realtime } = await import("@repo/app-upstash-realtime");
-        const channel = realtime.channel(`org-${clerkOrgId}`);
+    if (primaryEntityExternalId) {
+      const { realtime } = await import("@repo/app-upstash-realtime");
+      const channel = realtime.channel(`org-${clerkOrgId}`);
 
-        // 1. Entity list live prepend
-        await channel.emit("org.entity", {
-          entityExternalId: entityUpsertResult.primaryEntityExternalId!,
-          clerkOrgId,
-          category: sourceEvent.entity.entityType as EntityCategory,
-          key: sourceEvent.entity.entityId,
-          value: null,
-          state: sourceEvent.entity.state ?? null,
-          url: sourceEvent.entity.url ?? null,
-          occurrenceCount: 1, // Approximate — real count is in DB
-          lastSeenAt: sourceEvent.occurredAt,
-        } satisfies EntityNotification);
+      // 1. Entity list live prepend
+      await channel.emit("org.entity", {
+        entityExternalId: primaryEntityExternalId,
+        clerkOrgId,
+        category: sourceEvent.entity.entityType as EntityCategory,
+        key: sourceEvent.entity.entityId,
+        value: null,
+        state: sourceEvent.entity.state ?? null,
+        url: sourceEvent.entity.url ?? null,
+        occurrenceCount: 1, // Approximate — real count is in DB
+        lastSeenAt: sourceEvent.occurredAt,
+      } satisfies EntityNotification);
 
-        // 2. Entity detail page live prepend — emit for the primary entity
-        await channel.emit("org.entityEvent", {
-          entityExternalId: entityUpsertResult.primaryEntityExternalId!,
-          clerkOrgId,
-          eventId: observation.id,
-          eventExternalId: observation.externalId,
-          observationType: observation.observationType,
-          title: observation.title,
-          source: observation.source,
-          sourceType: observation.sourceType,
-          sourceId: observation.sourceId,
-          significanceScore: observation.significanceScore,
-          occurredAt: observation.occurredAt,
-          refLabel: null, // Primary entity has no refLabel
-        } satisfies EntityEventNotification);
-      });
+      // 2. Entity detail page live prepend
+      await channel.emit("org.entityEvent", {
+        entityExternalId: primaryEntityExternalId,
+        clerkOrgId,
+        eventId: observation.id,
+        eventExternalId: observation.externalId,
+        observationType: observation.observationType,
+        title: observation.title,
+        source: observation.source,
+        sourceType: observation.sourceType,
+        sourceId: observation.sourceId,
+        significanceScore: observation.significanceScore,
+        occurredAt: observation.occurredAt,
+        refLabel: null,
+      } satisfies EntityEventNotification);
     }
 ```
 
@@ -542,9 +429,9 @@ Insert after line 502 (after `entityUpsertResult` is assigned), before `entityRe
 
 #### Automated Verification:
 
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm check` passes
-- [ ] `pnpm build:app && pnpm build:platform` succeed
+- [x] `pnpm typecheck` passes
+- [x] `pnpm check` passes
+- [x] `pnpm build:app && pnpm build:platform` succeed
 
 #### Manual Verification:
 
@@ -661,12 +548,10 @@ export function EntityRow({ entity }: EntityRowProps) {
 
 Client component with:
 - Category and search filters via `useEntityFilters`
-- `useSuspenseQuery` on `trpc.entities.list`
+- `useSuspenseInfiniteQuery` on `trpc.entities.list.infiniteQueryOptions` (matches events-table.tsx pattern exactly — spike-validated)
 - Live prepend via `useRealtime` on `org.entity` events
-- Cursor-based "Load more" pagination
+- Built-in "Load more" via `fetchNextPage` / `hasNextPage` from TanStack Query
 - Debounced search input
-
-Pattern follows `events-table.tsx` conventions exactly.
 
 ```typescript
 "use client";
@@ -691,7 +576,7 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery } from "@tanstack/react-query";
 import { useOrganization } from "@vendor/clerk/client";
 import { Boxes, Search } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -723,24 +608,36 @@ export function EntitiesTable() {
   }, [searchInput, setFilters]);
 
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
 
-  const { data } = useSuspenseQuery(
-    trpc.entities.list.queryOptions({
-      category,
-      limit: 30,
-      search: filters.search || undefined,
-    })
+  // Uses useSuspenseInfiniteQuery — matches events-table.tsx pattern exactly
+  // TanStack Query manages cursor state, pages, hasNextPage automatically
+  const { data, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useSuspenseInfiniteQuery(
+      trpc.entities.list.infiniteQueryOptions(
+        {
+          category,
+          limit: 30,
+          search: filters.search || undefined,
+        },
+        {
+          getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        }
+      )
+    );
+
+  const firstPage = data.pages[0];
+  const dbEntities = useMemo(
+    () => data.pages.flatMap((page) => page.entities),
+    [data.pages]
   );
 
-  // Pagination accumulation
-  const [loadedEntities, setLoadedEntities] = useState<Entity[]>([]);
-  const [nextCursor, setNextCursor] = useState<number | null | undefined>(
-    undefined
-  );
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  // Live entities — only when on default view (no search, single page)
+  const [liveEntities, setLiveEntities] = useState<EntityNotification[]>([]);
+  const { organization } = useOrganization();
+  const isDefaultView =
+    filters.search === "" && data.pages.length <= 1;
 
-  // Reset on filter change
+  // Reset live entities when filters change
   const prevFiltersRef = useRef({
     category: filters.category,
     search: filters.search,
@@ -751,8 +648,6 @@ export function EntitiesTable() {
       prev.category !== filters.category ||
       prev.search !== filters.search
     ) {
-      setLoadedEntities([]);
-      setNextCursor(undefined);
       setLiveEntities([]);
       prevFiltersRef.current = {
         category: filters.category,
@@ -761,49 +656,30 @@ export function EntitiesTable() {
     }
   }, [filters.category, filters.search]);
 
-  const effectiveHasMore =
-    nextCursor !== undefined ? nextCursor !== null : data.hasMore;
-  const effectiveCursor =
-    nextCursor !== undefined ? nextCursor : data.nextCursor;
-
-  // Live entities
-  const [liveEntities, setLiveEntities] = useState<EntityNotification[]>([]);
-  const { organization } = useOrganization();
-  const isDefaultView =
-    filters.search === "" && nextCursor === undefined;
-
   const { status } = useRealtime({
-    channels: organization?.id ? [`org-${organization.id}`] : [],
+    channels: firstPage?.clerkOrgId ? [`org-${firstPage.clerkOrgId}`] : [],
     events: ["org.entity"],
-    enabled: !!organization?.id && isDefaultView,
+    enabled: !!firstPage?.clerkOrgId && isDefaultView,
     onData({ data: notification }) {
-      if (notification.clerkOrgId !== data.clerkOrgId) return;
-      if (
-        category &&
-        notification.category !== category
-      )
-        return;
+      if (notification.clerkOrgId !== firstPage?.clerkOrgId) return;
+      if (category && notification.category !== category) return;
       setLiveEntities((prev) => [notification, ...prev]);
     },
   });
 
   // Stable set of DB entity externalIds
   const dbExternalIds = useMemo(
-    () =>
-      new Set([
-        ...data.entities.map((e) => e.externalId),
-        ...loadedEntities.map((e) => e.externalId),
-      ]),
-    [data.entities, loadedEntities]
+    () => new Set(dbEntities.map((e) => e.externalId)),
+    [dbEntities]
   );
 
-  // Merge: live prepend + initial page + loaded pages
+  // Merge: live prepend + all pages
   const allEntities = useMemo(() => {
     const newLive = liveEntities.filter(
       (e) => !dbExternalIds.has(e.entityExternalId)
     );
     const liveAsEntities: Entity[] = newLive.map((e) => ({
-      id: 0, // Placeholder — not used for keying
+      id: 0,
       externalId: e.entityExternalId,
       category: e.category,
       key: e.key,
@@ -813,29 +689,11 @@ export function EntitiesTable() {
       confidence: null,
       occurrenceCount: e.occurrenceCount,
       lastSeenAt: e.lastSeenAt,
+      extractedAt: e.lastSeenAt,
       createdAt: e.lastSeenAt,
     }));
-    return [...liveAsEntities, ...data.entities, ...loadedEntities];
-  }, [liveEntities, dbExternalIds, data.entities, loadedEntities]);
-
-  const handleLoadMore = async () => {
-    if (!effectiveCursor || isLoadingMore) return;
-    setIsLoadingMore(true);
-    try {
-      const result = await queryClient.fetchQuery(
-        trpc.entities.list.queryOptions({
-          category,
-          limit: 30,
-          cursor: effectiveCursor,
-          search: filters.search || undefined,
-        })
-      );
-      setLoadedEntities((prev) => [...prev, ...result.entities]);
-      setNextCursor(result.hasMore ? result.nextCursor : null);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
+    return [...liveAsEntities, ...dbEntities];
+  }, [liveEntities, dbExternalIds, dbEntities]);
 
   return (
     <div className="space-y-4">
@@ -908,15 +766,15 @@ export function EntitiesTable() {
         </div>
       )}
 
-      {/* Load more */}
-      {effectiveHasMore && allEntities.length > 0 && (
+      {/* Load more — uses TanStack Query's built-in infinite query state */}
+      {hasNextPage && allEntities.length > 0 && (
         <div className="flex justify-center py-2">
           <Button
-            disabled={isLoadingMore}
-            onClick={() => void handleLoadMore()}
+            disabled={isFetchingNextPage}
+            onClick={() => void fetchNextPage()}
             variant="outline"
           >
-            {isLoadingMore ? "Loading..." : "Load more"}
+            {isFetchingNextPage ? "Loading..." : "Load more"}
           </Button>
         </div>
       )}
@@ -940,15 +798,16 @@ function EmptyState() {
 }
 ```
 
+**Key difference from original plan:** Uses `useSuspenseInfiniteQuery` instead of `useSuspenseQuery` + manual cursor state. This eliminates ~50 lines of `loadedEntities`, `nextCursor`, `isLoadingMore`, `effectiveHasMore` state management that TanStack Query handles automatically. Spike-validated: `infiniteQueryOptions` resolves correctly with the entity router's return shape.
+
 #### 4. Entity list layout (server)
 
 **File**: `apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/layout.tsx` (new)
 
-Prefetches entity list for the default and per-category views, wraps in `HydrateClient` + `RealtimeProviderWrapper`.
+Prefetches the default entity list view (all categories), wraps in `HydrateClient` + `RealtimeProviderWrapper`. Only prefetches the default view — category switches are client-side fetches (avoids 13 SSR queries).
 
 ```typescript
 import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
-import { ENTITY_CATEGORIES } from "@repo/app-validation";
 import { RealtimeProviderWrapper } from "@repo/app-upstash-realtime/client";
 
 export default async function EntitiesLayout({
@@ -956,11 +815,10 @@ export default async function EntitiesLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Prefetch default (all categories) + each individual category
-  prefetch(trpc.entities.list.queryOptions({ limit: 30 }));
-  for (const category of ENTITY_CATEGORIES) {
-    prefetch(trpc.entities.list.queryOptions({ category, limit: 30 }));
-  }
+  // Prefetch default view only — category switches are client-side fetches
+  prefetch(trpc.entities.list.infiniteQueryOptions({ limit: 30 }, {
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  }));
 
   return (
     <HydrateClient>
@@ -1022,9 +880,9 @@ function EntitiesSkeleton() {
 
 #### Automated Verification:
 
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm check` passes
-- [ ] `pnpm build:app` succeeds
+- [x] `pnpm typecheck` passes
+- [x] `pnpm check` passes
+- [x] `pnpm build:app` succeeds
 
 #### Manual Verification:
 
@@ -1043,7 +901,7 @@ function EntitiesSkeleton() {
 
 ### Overview
 
-Create the `/{slug}/entities/[entityId]` route showing entity header, events timeline from `orgEvents` with live prepend via `org.entityEvent` realtime, and flat related-entities list.
+Create the `/{slug}/entities/[entityId]` route showing entity header and events timeline from `orgEvents` with live prepend via `org.entityEvent` realtime. (Related entities deferred to v2.)
 
 ### Changes Required:
 
@@ -1114,63 +972,11 @@ export function EntityEventRow({ event }: EntityEventRowProps) {
 }
 ```
 
-#### 2. Related entity card component
-
-**File**: `apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/related-entity-card.tsx` (new)
-
-Renders a single related entity as a compact card. Links to the related entity's detail page.
-
-```typescript
-"use client";
-
-import { Badge } from "@repo/ui/components/ui/badge";
-import Link from "next/link";
-import { useParams } from "next/navigation";
-
-interface RelatedEntityCardProps {
-  edge: {
-    edgeId: string;
-    direction: "incoming" | "outgoing";
-    relationshipType: string;
-    confidence: number;
-    entity: {
-      externalId: string;
-      category: string;
-      key: string;
-      value: string | null;
-      state: string | null;
-      url: string | null;
-    };
-  };
-}
-
-export function RelatedEntityCard({ edge }: RelatedEntityCardProps) {
-  const params = useParams<{ slug: string }>();
-
-  return (
-    <Link
-      className="flex items-center gap-2 rounded-lg border border-border/60 px-3 py-2 transition-colors hover:bg-muted/50"
-      href={`/${params.slug}/entities/${edge.entity.externalId}`}
-    >
-      <Badge className="font-normal text-xs" variant="outline">
-        {edge.entity.category}
-      </Badge>
-      <span className="min-w-0 flex-1 truncate font-mono text-sm">
-        {edge.entity.key}
-      </span>
-      <span className="shrink-0 text-muted-foreground text-xs">
-        {edge.direction === "outgoing" ? edge.relationshipType : `${edge.relationshipType} (incoming)`}
-      </span>
-    </Link>
-  );
-}
-```
-
-#### 3. Entity detail client component
+#### 2. Entity detail client component
 
 **File**: `apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-detail-view.tsx` (new)
 
-Client component that renders the full entity detail: header, events timeline with live prepend via `org.entityEvent` and "Load more" pagination, and related entities list.
+Client component that renders the full entity detail: header and events timeline with live prepend via `org.entityEvent` and infinite query pagination. (Related entities deferred to v2.)
 
 ```typescript
 "use client";
@@ -1180,10 +986,7 @@ import { useTRPC } from "@repo/app-trpc/react";
 import { useRealtime } from "@repo/app-upstash-realtime/client";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
-import {
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseInfiniteQuery, useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganization } from "@vendor/clerk/client";
 import { formatDistanceToNow } from "date-fns";
 import { ArrowLeft, ExternalLink } from "lucide-react";
@@ -1192,7 +995,6 @@ import { useParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import type { EntityEvent } from "~/types";
 import { EntityEventRow } from "./entity-event-row";
-import { RelatedEntityCard } from "./related-entity-card";
 
 interface EntityDetailViewProps {
   entityId: string;
@@ -1200,44 +1002,38 @@ interface EntityDetailViewProps {
 
 export function EntityDetailView({ entityId }: EntityDetailViewProps) {
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const params = useParams<{ slug: string }>();
 
   const { data: entity } = useSuspenseQuery(
     trpc.entities.get.queryOptions({ externalId: entityId })
   );
 
-  const { data: eventsData } = useSuspenseQuery(
-    trpc.entities.getEvents.queryOptions({ externalId: entityId, limit: 20 })
-  );
+  // Uses useSuspenseInfiniteQuery for events — matches entity list pattern
+  const { data: eventsData, hasNextPage, isFetchingNextPage, fetchNextPage } =
+    useSuspenseInfiniteQuery(
+      trpc.entities.getEvents.infiniteQueryOptions(
+        { externalId: entityId, limit: 20 },
+        {
+          getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+        }
+      )
+    );
 
-  const { data: relatedData } = useSuspenseQuery(
-    trpc.entities.getRelatedEntities.queryOptions({ externalId: entityId })
+  const dbEvents = useMemo(
+    () => eventsData.pages.flatMap((page) => page.events),
+    [eventsData.pages]
   );
-
-  // Events pagination
-  const [loadedEvents, setLoadedEvents] = useState<EntityEvent[]>([]);
-  const [nextCursor, setNextCursor] = useState<number | null | undefined>(
-    undefined
-  );
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-
-  const effectiveHasMore =
-    nextCursor !== undefined ? nextCursor !== null : eventsData.hasMore;
-  const effectiveCursor =
-    nextCursor !== undefined ? nextCursor : eventsData.nextCursor;
 
   // Live events — prepend new events for this entity in real time
   const [liveEvents, setLiveEvents] = useState<EntityEventNotification[]>([]);
   const { organization } = useOrganization();
-  const isDefaultView = nextCursor === undefined;
+  const isDefaultView = eventsData.pages.length <= 1;
 
   const { status } = useRealtime({
     channels: organization?.id ? [`org-${organization.id}`] : [],
     events: ["org.entityEvent"],
     enabled: !!organization?.id && isDefaultView,
     onData({ data: notification }) {
-      // Only prepend events for the entity we're viewing
       if (notification.entityExternalId !== entityId) return;
       if (notification.clerkOrgId !== entity.clerkOrgId) return;
       setLiveEvents((prev) => [notification, ...prev]);
@@ -1246,15 +1042,11 @@ export function EntityDetailView({ entityId }: EntityDetailViewProps) {
 
   // Stable set of DB event IDs for dedup
   const dbEventIds = useMemo(
-    () =>
-      new Set([
-        ...eventsData.events.map((e) => e.id),
-        ...loadedEvents.map((e) => e.id),
-      ]),
-    [eventsData.events, loadedEvents]
+    () => new Set(dbEvents.map((e) => e.id)),
+    [dbEvents]
   );
 
-  // Merge: live prepend + initial page + loaded pages
+  // Merge: live prepend + all pages
   const allEvents = useMemo(() => {
     const newLive = liveEvents.filter((e) => !dbEventIds.has(e.eventId));
     const liveAsEvents: EntityEvent[] = newLive.map((e) => ({
@@ -1270,28 +1062,8 @@ export function EntityDetailView({ entityId }: EntityDetailViewProps) {
       occurredAt: e.occurredAt,
       refLabel: e.refLabel,
     }));
-    return [...liveAsEvents, ...eventsData.events, ...loadedEvents];
-  }, [liveEvents, dbEventIds, eventsData.events, loadedEvents]);
-
-  const handleLoadMore = async () => {
-    if (!effectiveCursor || isLoadingMore) return;
-    setIsLoadingMore(true);
-    try {
-      const result = await queryClient.fetchQuery(
-        trpc.entities.getEvents.queryOptions({
-          externalId: entityId,
-          limit: 20,
-          cursor: effectiveCursor,
-        })
-      );
-      setLoadedEvents((prev) => [...prev, ...result.events]);
-      setNextCursor(result.hasMore ? result.nextCursor : null);
-    } finally {
-      setIsLoadingMore(false);
-    }
-  };
-
-  const allRelated = [...relatedData.outgoing, ...relatedData.incoming];
+    return [...liveAsEvents, ...dbEvents];
+  }, [liveEvents, dbEventIds, dbEvents]);
 
   return (
     <div className="space-y-6 pb-6">
@@ -1365,47 +1137,34 @@ export function EntityDetailView({ entityId }: EntityDetailViewProps) {
                 <EntityEventRow event={event} key={event.id} />
               ))}
             </div>
-            {effectiveHasMore && (
+            {hasNextPage && (
               <div className="flex justify-center py-3">
                 <Button
-                  disabled={isLoadingMore}
-                  onClick={() => void handleLoadMore()}
+                  disabled={isFetchingNextPage}
+                  onClick={() => void fetchNextPage()}
                   size="sm"
                   variant="outline"
                 >
-                  {isLoadingMore ? "Loading..." : "Load more events"}
+                  {isFetchingNextPage ? "Loading..." : "Load more events"}
                 </Button>
               </div>
             )}
           </>
         )}
       </div>
-
-      {/* Related entities */}
-      {allRelated.length > 0 && (
-        <div>
-          <h2 className="mb-3 font-semibold text-lg">Related Entities</h2>
-          <div className="space-y-2">
-            {allRelated.map((edge) => (
-              <RelatedEntityCard edge={edge} key={edge.edgeId} />
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
 ```
 
-#### 4. Entity detail layout (server)
+#### 3. Entity detail layout (server)
 
 **File**: `apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/layout.tsx` (new)
 
-Wraps with `RealtimeProviderWrapper` to enable live event prepend on the detail page.
+Prefetches entity detail + events. Does NOT wrap with `RealtimeProviderWrapper` — the parent `entities/layout.tsx` already provides it. Double-wrapping would cause duplicate WebSocket connections.
 
 ```typescript
 import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
-import { RealtimeProviderWrapper } from "@repo/app-upstash-realtime/client";
 
 export default async function EntityDetailLayout({
   children,
@@ -1418,21 +1177,17 @@ export default async function EntityDetailLayout({
 
   prefetch(trpc.entities.get.queryOptions({ externalId: entityId }));
   prefetch(
-    trpc.entities.getEvents.queryOptions({ externalId: entityId, limit: 20 })
-  );
-  prefetch(
-    trpc.entities.getRelatedEntities.queryOptions({ externalId: entityId })
+    trpc.entities.getEvents.infiniteQueryOptions(
+      { externalId: entityId, limit: 20 },
+      { getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined }
+    )
   );
 
-  return (
-    <HydrateClient>
-      <RealtimeProviderWrapper>{children}</RealtimeProviderWrapper>
-    </HydrateClient>
-  );
+  return <HydrateClient>{children}</HydrateClient>;
 }
 ```
 
-#### 5. Entity detail page (server)
+#### 4. Entity detail page (server)
 
 **File**: `apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/page.tsx` (new)
 
@@ -1489,9 +1244,9 @@ function EntityDetailSkeleton() {
 
 #### Automated Verification:
 
-- [ ] `pnpm typecheck` passes
-- [ ] `pnpm check` passes
-- [ ] `pnpm build:app` succeeds
+- [x] `pnpm typecheck` passes
+- [x] `pnpm check` passes
+- [x] `pnpm build:app` succeeds
 
 #### Manual Verification:
 
@@ -1501,8 +1256,6 @@ function EntityDetailSkeleton() {
 - [ ] "Load more events" button works
 - [ ] Green "Live" pulse indicator visible next to "Events" heading
 - [ ] Trigger a webhook that produces an event for the viewed entity → new event prepends to the timeline in real time
-- [ ] Related entities section shows bidirectional edges with relationship types
-- [ ] Clicking a related entity navigates to its detail page
 - [ ] "View source" link opens the entity's URL in a new tab
 - [ ] Back arrow navigates to entity list
 
@@ -1529,18 +1282,23 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
     {
       title: "Entities",
       href: `/${orgSlug}/entities`,
+      icon: Boxes,
     },
     {
       title: "Sources",
       href: `/${orgSlug}/sources`,
+      icon: Plug,
     },
     {
       title: "Settings",
       href: `/${orgSlug}/settings`,
+      icon: Settings,
     },
   ];
 }
 ```
+
+**Note**: Add `Boxes` to the existing lucide-react import. `NavItem` interface requires `icon: React.ComponentType<{ className?: string }>` — omitting it would fail typecheck.
 
 #### 2. Delete events page directory
 
@@ -1644,9 +1402,8 @@ No new unit tests required — the entity backend (schema, upsert, graph, embed)
 
 - **Entity list query**: Uses `org_entity_org_last_seen_idx` composite index on `(clerkOrgId, lastSeenAt)` for efficient default sort. Category filter uses `org_entity_org_category_idx`. Search uses `ilike` on `key`/`value` — acceptable for current scale, may need full-text search index if entity count grows significantly.
 - **Entity events query**: Uses `org_event_entity_entity_idx` on `entityId` for the junction lookup, then joins to `orgEvents`. The `occurredAt` sort is on the joined table — this is efficient for moderate event counts per entity.
-- **Related entities query**: Two parallel queries on `org_edge_source_idx` and `org_edge_target_idx` — both indexed, fast for typical entity graph density.
-- **Layout prefetch**: Prefetches 13 query variants (1 default + 12 categories) — each is a simple indexed query. This is more than the events layout (5 variants) but still within acceptable SSR budget.
-- **Realtime**: Two additional `channel.emit` calls per event store pipeline run (`org.entity` + `org.entityEvent`), both in a single Inngest step. Negligible overhead. Entity detail page filters `org.entityEvent` client-side by `entityExternalId` — events for other entities are discarded immediately in `onData`.
+- **Layout prefetch**: Prefetches only the default view (1 query) — category switches are client-side fetches. Lighter than the events layout's 5-variant prefetch.
+- **Realtime**: Two additional `channel.emit` calls per event store pipeline run (`org.entity` + `org.entityEvent`), folded into the existing `upsert-entities-and-junctions` step. No additional Inngest step or network round-trip. Entity detail page filters `org.entityEvent` client-side by `entityExternalId` — events for other entities are discarded immediately in `onData`.
 
 ## Migration Notes
 
@@ -1669,3 +1426,43 @@ No new unit tests required — the entity backend (schema, upsert, graph, embed)
 - Upstash Realtime schema: `packages/app-upstash-realtime/src/index.ts`
 - Realtime publisher: `api/platform/src/inngest/functions/ingest-delivery.ts:176-190`
 - Entity upsert pipeline: `api/platform/src/inngest/functions/platform-event-store.ts`
+
+---
+
+## Improvement Log
+
+**Reviewed: 2026-04-07**
+
+Changes applied after adversarial review with codebase analysis, pattern verification, and spike validation.
+
+### Scope Changes
+
+1. **Related entities removed from v1** — `orgEntityEdges` is sparse (only 5 structural categories generate edges) and cross-source linking is broken. The "Related Entities" section, `getRelatedEntities` procedure, and `related-entity-card.tsx` are all deferred to v2. This removes a file, a procedure, and simplifies the entity detail page.
+
+2. **Drizzle relations change (Phase 1 Step 3) removed entirely** — Without `getRelatedEntities`, no procedure needs `db.query` relational traversal. All procedures use `db.select().from().where()` which doesn't require `orgEntitiesRelations`.
+
+### Bug Fixes
+
+3. **Sidebar `NavItem.icon` was missing** — The plan's Phase 5 omitted the required `icon` field from nav items. `NavItem` at `app-sidebar.tsx:41-45` requires `icon: React.ComponentType<{ className?: string }>`. Added `icon: Boxes` for Entities, kept `Plug`/`Settings` for Sources/Settings.
+
+### Pattern Alignment
+
+4. **Switched from `useSuspenseQuery` to `useSuspenseInfiniteQuery`** — The original plan used `useSuspenseQuery` + ~50 lines of manual cursor state (`loadedEntities`, `nextCursor`, `isLoadingMore`, `effectiveHasMore`). The codebase's established pattern (events-table.tsx:84-97) uses `useSuspenseInfiniteQuery` with `infiniteQueryOptions` which handles all cursor/pagination state automatically. **Spike-validated**: typecheck passes, `data.pages.flatMap(p => p.entities)` resolves correctly, `getNextPageParam` works. Applied to both entity list and entity detail events.
+
+5. **Switched from `db.query.*.findFirst()` to `db.select().from().where().limit(1)`** — All four existing routers in `api/app/src/router/org/` use `db.select()`. `db.query.*` is a platform-side convention. Aligned `get` and `getEvents` procedures.
+
+6. **Search uses `COALESCE` on nullable `value` column** — Original plan used `ilike(orgEntities.value, pattern)` which fails on null values. Spike revealed the fix: `ilike(sql\`COALESCE(\${orgEntities.value}, '')\`, pattern)`.
+
+### Performance
+
+7. **Layout prefetch reduced from 13 to 1 query** — Original prefetched 1 default + 12 category variants. Now prefetches only the default view; category switches are client-side fetches.
+
+8. **Realtime publish folded into existing Inngest step** — Original created a separate `step.run("publish-entity-realtime")`, adding an unnecessary network round-trip per event. Now published at the end of the existing `"upsert-entities-and-junctions"` step.
+
+9. **Removed double `RealtimeProviderWrapper`** — Original wrapped in both `entities/layout.tsx` and `entities/[entityId]/layout.tsx`. Parent layout already provides it; detail layout now uses only `HydrateClient`.
+
+### Spike Evidence
+
+**Hypothesis**: `entities.list` works with `useSuspenseInfiniteQuery` + `infiniteQueryOptions` + live prepend.
+**Verdict**: CONFIRMED. 53/53 packages typecheck pass. `infiniteQueryOptions` resolved on first try. Pattern copied 1:1 from events-table.tsx with zero type gymnastics. The manual cursor state management is provably unnecessary.
+**Worktree**: `worktree-agent-a52604dc` (5 files, +228/-0 lines)

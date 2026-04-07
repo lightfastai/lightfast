@@ -24,6 +24,7 @@ import { useOrganizationList } from "@vendor/clerk/client";
 import {
   Activity,
   BookOpen,
+  Boxes,
   Briefcase,
   HelpCircle,
   Mail,
@@ -62,6 +63,11 @@ function getOrgPrimaryItems(orgSlug: string): NavItem[] {
  */
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
+    {
+      title: "Entities",
+      href: `/${orgSlug}/entities`,
+      icon: Boxes,
+    },
     {
       title: "Events",
       href: `/${orgSlug}/events`,

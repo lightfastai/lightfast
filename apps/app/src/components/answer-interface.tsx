@@ -12,7 +12,6 @@ import { useRef, useState, useSyncExternalStore } from "react";
 import { useAnswerTransport } from "~/ai/hooks/use-answer-transport";
 import { AnswerMessages } from "./answer-messages";
 import { AnswerPromptInput } from "./answer-prompt-input";
-import { AskLightfastSuggestions } from "./ask-lightfast-suggestions";
 
 interface AnswerInterfaceProps {
   clerkOrgId: string;
@@ -28,7 +27,7 @@ export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
   const isClient = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false
+    () => false,
   );
   const formRef = useRef<PromptInputRef | null>(null);
 
@@ -123,7 +122,7 @@ export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
     return (
       <div className="flex h-full w-full flex-col items-center justify-center bg-background">
         <div className="-mt-24 w-full max-w-3xl px-1.5 md:px-3 lg:px-6 xl:px-10">
-          <div className="mb-8">
+          <div className="mb-4">
             <div className="flex flex-col items-center justify-center">
               <p className="text-center font-semibold text-3xl">
                 Explore your infrastructure
@@ -138,12 +137,6 @@ export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
             status={status}
             submitDisabledReason={submitDisabledReason}
           />
-          {/* Prompt suggestions - only visible on tablet and above (md breakpoint) */}
-          <div className="relative mt-4 hidden h-12 md:block">
-            <div className="absolute top-0 right-0 left-0">
-              <AskLightfastSuggestions onSelectPrompt={handleSuggestionClick} />
-            </div>
-          </div>
         </div>
       </div>
     );

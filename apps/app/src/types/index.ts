@@ -15,6 +15,16 @@ export type Job = JobsListResponse["items"][number];
 export type JobStatus = Job["status"];
 
 // ============================================================================
+// Entities
+// ============================================================================
+
+export type EntitiesListResponse = RouterOutputs["entities"]["list"];
+export type Entity = EntitiesListResponse["entities"][number];
+export type EntityDetail = RouterOutputs["entities"]["get"];
+export type EntityEventsResponse = RouterOutputs["entities"]["getEvents"];
+export type EntityEvent = EntityEventsResponse["events"][number];
+
+// ============================================================================
 // Sources & Connections
 // ============================================================================
 
