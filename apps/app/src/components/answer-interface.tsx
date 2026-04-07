@@ -27,7 +27,7 @@ export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
   const isClient = useSyncExternalStore(
     emptySubscribe,
     () => true,
-    () => false,
+    () => false
   );
   const formRef = useRef<PromptInputRef | null>(null);
 
@@ -86,15 +86,6 @@ export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
     await Promise.resolve(); // Satisfy linter - function must be async for prop signature
     const text = promptMessage.text ?? "";
     const success = handleSendMessage(text);
-
-    // Clear form only if message was successfully queued
-    if (success && formRef.current) {
-      formRef.current.reset();
-    }
-  };
-
-  const handleSuggestionClick = (prompt: string) => {
-    const success = handleSendMessage(prompt);
 
     // Clear form only if message was successfully queued
     if (success && formRef.current) {

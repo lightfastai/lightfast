@@ -11,7 +11,6 @@ import {
   FormDescription,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
   useFormCompat,
 } from "@repo/ui/components/ui/form";
@@ -42,7 +41,7 @@ export function TeamGeneralSettingsClient({
 
   // Use cached organization list from app layout (avoids Clerk 404 timing issues)
   const { data: organizations } = useSuspenseQuery(
-    trpc.organization.listUserOrganizations.queryOptions(),
+    trpc.organization.listUserOrganizations.queryOptions()
   );
 
   // Find current organization from cached list by slug
@@ -79,8 +78,8 @@ export function TeamGeneralSettingsClient({
         const previousOrgs = queryClient.getQueryData(orgListQueryKey);
         queryClient.setQueryData(orgListQueryKey, (old: typeof previousOrgs) =>
           old?.map((org) =>
-            org.slug === input.slug ? { ...org, slug: input.name } : org,
-          ),
+            org.slug === input.slug ? { ...org, slug: input.name } : org
+          )
         );
         return { previousOrgs };
       },
@@ -120,7 +119,7 @@ export function TeamGeneralSettingsClient({
         void queryClient.invalidateQueries({ queryKey: orgListQueryKey });
         setIsUpdating(false);
       },
-    }),
+    })
   );
 
   const onSubmit = async (values: TeamSettingsFormValues) => {

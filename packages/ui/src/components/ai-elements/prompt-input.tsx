@@ -107,7 +107,7 @@ export const usePromptInputAttachments = () => {
 
   if (!context) {
     throw new Error(
-      "usePromptInputAttachments must be used within a PromptInput",
+      "usePromptInputAttachments must be used within a PromptInput"
     );
   }
 
@@ -140,7 +140,7 @@ export function PromptInputAttachment({
             alt={data.filename ?? "attachment"}
             className={cn(
               "size-full rounded-md object-cover",
-              isUploading && "opacity-50",
+              isUploading && "opacity-50"
             )}
             height={56}
             src={data.url}
@@ -210,7 +210,7 @@ export function PromptInputAttachments({
       aria-live="polite"
       className={cn(
         "overflow-hidden transition-[height] duration-200 ease-out",
-        className,
+        className
       )}
       style={{ height: attachments.files.length ? height : 0 }}
       {...props}
@@ -291,12 +291,12 @@ export type PromptInputProps = Omit<
     message: string;
   }) => void;
   onAttachmentUpload?: (
-    file: File,
+    file: File
   ) => Promise<PromptInputAttachmentItem | null | undefined>;
   onAttachmentsChange?: (attachments: PromptInputAttachmentItem[]) => void;
   onSubmit: (
     message: PromptInputMessage,
-    event: FormEvent<HTMLFormElement>,
+    event: FormEvent<HTMLFormElement>
   ) => void;
 };
 
@@ -316,7 +316,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
       onSubmit,
       ...props
     },
-    ref,
+    ref
   ) => {
     const [items, setItems] = useState<PromptInputAttachmentItem[]>([]);
     const itemsRef = useRef<PromptInputAttachmentItem[]>(items);
@@ -362,7 +362,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
           return false;
         });
       },
-      [accept],
+      [accept]
     );
 
     const add = useCallback(
@@ -445,7 +445,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
                   size: file.size,
                   uploadState: "pending" as const,
                 };
-              },
+              }
             );
 
             // Add pending items to UI immediately
@@ -463,7 +463,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
                 if (!uploaded) {
                   // Remove the pending item if upload returned null/undefined
                   setItems((prev) =>
-                    prev.filter((item) => item.id !== pendingItem.id),
+                    prev.filter((item) => item.id !== pendingItem.id)
                   );
                   revokeObjectURL(pendingItem.url);
                   continue;
@@ -490,8 +490,8 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
                           contentType: uploaded.contentType ?? mediaType,
                           uploadState: "complete" as const,
                         }
-                      : item,
-                  ),
+                      : item
+                  )
                 );
               } catch (error) {
                 const message =
@@ -502,7 +502,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
 
                 // Remove the failed pending item
                 setItems((prev) =>
-                  prev.filter((item) => item.id !== pendingItem.id),
+                  prev.filter((item) => item.id !== pendingItem.id)
                 );
                 revokeObjectURL(pendingItem.url);
               }
@@ -526,7 +526,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
           }
         })();
       },
-      [matchesAccept, maxFiles, maxFileSize, onAttachmentUpload, onError],
+      [matchesAccept, maxFiles, maxFileSize, onAttachmentUpload, onError]
     );
 
     const remove = useCallback((id: string) => {
@@ -563,7 +563,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
           clear();
         },
       }),
-      [clear],
+      [clear]
     );
 
     // Note: File input cannot be programmatically set for security reasons
@@ -656,7 +656,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
           contentType: item.contentType,
           metadata: item.metadata ?? null,
           uploadState: item.uploadState,
-        }),
+        })
       );
 
       const messageEl = event.currentTarget.elements.namedItem("message");
@@ -665,7 +665,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
           text: messageEl instanceof HTMLTextAreaElement ? messageEl.value : "",
           attachments: attachmentsPayload,
         },
-        event,
+        event
       );
 
       // Don't clear automatically - let parent control via ref.reset() or ref.clear()
@@ -681,7 +681,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
         openFileDialog,
         fileInputRef: inputRef,
       }),
-      [items, add, remove, clear, openFileDialog],
+      [items, add, remove, clear, openFileDialog]
     );
 
     return (
@@ -698,7 +698,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
         <form
           className={cn(
             "w-full divide-y overflow-hidden rounded-xl border bg-background shadow-sm",
-            className,
+            className
           )}
           onSubmit={handleSubmit}
           ref={formRef}
@@ -706,7 +706,7 @@ export const PromptInput = forwardRef<PromptInputRef, PromptInputProps>(
         />
       </AttachmentsContext.Provider>
     );
-  },
+  }
 );
 
 PromptInput.displayName = "PromptInput";
@@ -777,7 +777,7 @@ export const PromptInputTextarea = ({
         "field-sizing-content bg-transparent dark:bg-transparent",
         "max-h-32 min-h-16",
         "focus-visible:ring-0",
-        className,
+        className
       )}
       name="message"
       onChange={(e) => {
@@ -813,7 +813,7 @@ export const PromptInputTools = ({
     className={cn(
       "flex items-center gap-1",
       "[&_button:first-child]:rounded-bl-xl",
-      className,
+      className
     )}
     {...props}
   />
@@ -833,7 +833,7 @@ export const PromptInputButton = ({
         "shrink-0 gap-1.5 rounded-full text-xs",
         "border-border/30 dark:border-border/50",
         variant === "ghost" && "text-muted-foreground",
-        className,
+        className
       )}
       size={size}
       type="button"
@@ -935,7 +935,7 @@ export const PromptInputClear = ({
       className={cn(
         "shrink-0 gap-1.5 rounded-full! text-xs",
         "border-border/30 dark:border-border/50",
-        className,
+        className
       )}
       size={size}
       type="button"
@@ -965,7 +965,7 @@ export const PromptInputModelSelectTrigger = ({
     className={cn(
       "border-none bg-transparent font-medium text-muted-foreground shadow-none transition-colors",
       'hover:bg-accent hover:text-foreground [&[aria-expanded="true"]]:bg-accent [&[aria-expanded="true"]]:text-foreground',
-      className,
+      className
     )}
     {...props}
   />

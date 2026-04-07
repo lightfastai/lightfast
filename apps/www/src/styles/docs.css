@@ -15,7 +15,9 @@
  * Outside @layer so overrides beat fumadocs' unlayered component styles.
  */
 .dark {
-  --sidebar: var(--background); /* Docs sidebar should blend with page, not contrast */
+  --sidebar: var(
+    --background
+  ); /* Docs sidebar should blend with page, not contrast */
   --color-fd-background: var(--background);
   --color-fd-foreground: var(--foreground);
   --color-fd-card: var(--background);
