@@ -3,7 +3,7 @@
   "checkpoint_id": "4c6634278497",
   "strategy": "manual-commit",
   "branch": "feat/search-orpc-client",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "apps/app/src/components/answer-messages.tsx",
     "apps/app/src/components/app-header.tsx",
@@ -23,13 +23,19 @@
       "transcript": "/4c/6634278497/1/full.jsonl",
       "content_hash": "/4c/6634278497/1/content_hash.txt",
       "prompt": "/4c/6634278497/1/prompt.txt"
+    },
+    {
+      "metadata": "/4c/6634278497/2/metadata.json",
+      "transcript": "/4c/6634278497/2/full.jsonl",
+      "content_hash": "/4c/6634278497/2/content_hash.txt",
+      "prompt": "/4c/6634278497/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 77,
-    "cache_creation_tokens": 130454,
-    "cache_read_tokens": 3520325,
-    "output_tokens": 15000,
-    "api_call_count": 66
+    "input_tokens": 147,
+    "cache_creation_tokens": 301222,
+    "cache_read_tokens": 7538117,
+    "output_tokens": 46358,
+    "api_call_count": 124
   }
 }
