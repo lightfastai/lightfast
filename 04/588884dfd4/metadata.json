@@ -3,10 +3,14 @@
   "checkpoint_id": "04588884dfd4",
   "strategy": "manual-commit",
   "branch": "feat/entity-first-ui",
-  "checkpoints_count": 2,
+  "checkpoints_count": 7,
   "files_touched": [
     "api/app/src/root.ts",
     "api/platform/src/inngest/functions/platform-event-store.ts",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-detail-view.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-event-row.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/page.tsx",
     "apps/app/src/components/app-sidebar.tsx",
     "apps/app/src/types/index.ts",
     "packages/app-upstash-realtime/package.json",
@@ -32,13 +36,19 @@
       "transcript": "/04/588884dfd4/2/full.jsonl",
       "content_hash": "/04/588884dfd4/2/content_hash.txt",
       "prompt": "/04/588884dfd4/2/prompt.txt"
+    },
+    {
+      "metadata": "/04/588884dfd4/3/metadata.json",
+      "transcript": "/04/588884dfd4/3/full.jsonl",
+      "content_hash": "/04/588884dfd4/3/content_hash.txt",
+      "prompt": "/04/588884dfd4/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 8732,
-    "cache_creation_tokens": 418684,
-    "cache_read_tokens": 4087593,
-    "output_tokens": 49839,
-    "api_call_count": 62
+    "input_tokens": 9253,
+    "cache_creation_tokens": 507003,
+    "cache_read_tokens": 7118772,
+    "output_tokens": 63738,
+    "api_call_count": 109
   }
 }
