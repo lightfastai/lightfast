@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "18214ec2b57d",
+  "session_id": "4fc58fac-7b36-4754-8917-fde17d88a418",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-07T05:25:24.835979Z",
+  "branch": "feat/api-keys-settings-page",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/api-keys/_components/org-api-key-list.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/api-keys/_components/security-notice.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "c2c64ba830f5",
+  "token_usage": {
+    "input_tokens": 191,
+    "cache_creation_tokens": 61017,
+    "cache_read_tokens": 2256128,
+    "output_tokens": 15951,
+    "api_call_count": 43
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-07T05:25:24.533771Z",
+    "agent_lines": 455,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 455,
+    "total_lines_changed": 455,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
