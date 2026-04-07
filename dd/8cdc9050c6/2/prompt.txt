@@ -1,0 +1,17 @@
+/implement_plan @thoughts/shared/research/2026-04-05-entity-first-ui-rework-landscape.md phase 4
+
+---
+
+beautiful! whaats the last phase?
+
+---
+
+im just thinking should we maintain events and jobs page for now. seems useful for debugging during dev phase.
+
+---
+
+already added entity to sidebar. no to 2. i think we're done maybe?
+
+---
+
+/oneshot_merge but also with other changes we made to ui.
