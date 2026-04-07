@@ -1,0 +1,30 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "4c09917d4972",
+  "strategy": "manual-commit",
+  "branch": "feat/api-keys-settings-page",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/_components/team-general-settings-client.tsx",
+    "apps/app/src/components/answer-interface.tsx",
+    "apps/app/src/components/answer-prompt-input.tsx",
+    "apps/app/src/components/settings-sidebar.tsx",
+    "apps/www/src/styles/docs.css",
+    "packages/ui/src/components/ai-elements/prompt-input.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/4c/09917d4972/0/metadata.json",
+      "transcript": "/4c/09917d4972/0/full.jsonl",
+      "content_hash": "/4c/09917d4972/0/content_hash.txt",
+      "prompt": "/4c/09917d4972/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 192,
+    "cache_creation_tokens": 61422,
+    "cache_read_tokens": 2326903,
+    "output_tokens": 16194,
+    "api_call_count": 44
+  }
+}
