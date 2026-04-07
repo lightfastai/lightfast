@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "b59f98cb14af",
+  "session_id": "ad3bd1e2-b919-4e30-bb23-66fe2bcb2457",
   "strategy": "manual-commit",
+  "created_at": "2026-04-07T13:56:26.081159Z",
   "branch": "main",
-  "checkpoints_count": 6,
+  "checkpoints_count": 4,
   "files_touched": [
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/use-event-filters.ts",
@@ -23,25 +25,31 @@
     "apps/app/src/components/use-org-search-params.ts",
     "apps/app/src/lib/filter-constants.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/b5/9f98cb14af/0/metadata.json",
-      "transcript": "/b5/9f98cb14af/0/full.jsonl",
-      "content_hash": "/b5/9f98cb14af/0/content_hash.txt",
-      "prompt": "/b5/9f98cb14af/0/prompt.txt"
-    },
-    {
-      "metadata": "/b5/9f98cb14af/1/metadata.json",
-      "transcript": "/b5/9f98cb14af/1/full.jsonl",
-      "content_hash": "/b5/9f98cb14af/1/content_hash.txt",
-      "prompt": "/b5/9f98cb14af/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "e38211766742",
+  "checkpoint_transcript_start": 14,
+  "transcript_lines_at_start": 14,
   "token_usage": {
-    "input_tokens": 133,
-    "cache_creation_tokens": 145324,
-    "cache_read_tokens": 6112070,
-    "output_tokens": 25781,
-    "api_call_count": 114
+    "input_tokens": 75,
+    "cache_creation_tokens": 58231,
+    "cache_read_tokens": 3357795,
+    "output_tokens": 13978,
+    "api_call_count": 64
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-07T13:56:25.873386Z",
+    "agent_lines": 284,
+    "agent_removed": 1195,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 284,
+    "total_lines_changed": 1479,
+    "agent_percentage": 100,
+    "metric_version": 2
   }
 }
