@@ -1,16 +1,17 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "b59f98cb14af",
+  "session_id": "b2b79d25-4ed9-4b49-888e-e01872d72788",
   "strategy": "manual-commit",
+  "created_at": "2026-04-07T13:56:29.409232Z",
   "branch": "main",
-  "checkpoints_count": 7,
+  "checkpoints_count": 1,
   "files_touched": [
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/events-table.tsx",
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/use-event-filters.ts",
     "apps/app/src/app/(app)/(org)/[slug]/layout.tsx",
     "apps/app/src/app/(app)/(org)/[slug]/search/page.tsx",
     "apps/app/src/components/app-sidebar.tsx",
-    "apps/app/src/components/command-palette.tsx",
     "apps/app/src/components/org-search.tsx",
     "apps/app/src/components/search-constants.ts",
     "apps/app/src/components/search-empty-state.tsx",
@@ -23,31 +24,29 @@
     "apps/app/src/components/use-org-search-params.ts",
     "apps/app/src/lib/filter-constants.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/b5/9f98cb14af/0/metadata.json",
-      "transcript": "/b5/9f98cb14af/0/full.jsonl",
-      "content_hash": "/b5/9f98cb14af/0/content_hash.txt",
-      "prompt": "/b5/9f98cb14af/0/prompt.txt"
-    },
-    {
-      "metadata": "/b5/9f98cb14af/1/metadata.json",
-      "transcript": "/b5/9f98cb14af/1/full.jsonl",
-      "content_hash": "/b5/9f98cb14af/1/content_hash.txt",
-      "prompt": "/b5/9f98cb14af/1/prompt.txt"
-    },
-    {
-      "metadata": "/b5/9f98cb14af/2/metadata.json",
-      "transcript": "/b5/9f98cb14af/2/full.jsonl",
-      "content_hash": "/b5/9f98cb14af/2/content_hash.txt",
-      "prompt": "/b5/9f98cb14af/2/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "6eb41bd397be",
   "token_usage": {
-    "input_tokens": 190,
-    "cache_creation_tokens": 251222,
-    "cache_read_tokens": 8770833,
-    "output_tokens": 45955,
-    "api_call_count": 163
+    "input_tokens": 57,
+    "cache_creation_tokens": 105898,
+    "cache_read_tokens": 2658763,
+    "output_tokens": 20174,
+    "api_call_count": 49
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-07T13:56:29.150332Z",
+    "agent_lines": 34,
+    "agent_removed": 1190,
+    "human_added": 240,
+    "human_modified": 5,
+    "human_removed": 0,
+    "total_committed": 279,
+    "total_lines_changed": 1469,
+    "agent_percentage": 83.32198774676651,
+    "metric_version": 2
   }
 }
