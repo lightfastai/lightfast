@@ -1,0 +1,17 @@
+/create_plan @thoughts/shared/research/2026-04-07-clerk-team-member-github-org-migration.md
+
+---
+
+makes sense.
+
+---
+
+question wouldnt this technically change the org create flow too. since we're linking single github org with a single lightfast org.
+
+---
+
+hmm, but im just thinking that it makes more sense for the org name in lightfast to be their org name in github tho.
+
+---
+
+i think for day 1 to 100 we expect every user to have a github org. if not, not part of lightfast. simple and straight foraward.
