@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
-import { cn } from "@repo/ui/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
