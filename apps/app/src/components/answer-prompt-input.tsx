@@ -23,7 +23,7 @@ interface AnswerPromptInputProps {
   isSubmitDisabled: boolean;
   onSubmit: (
     message: PromptInputMessage,
-    event: FormEvent<HTMLFormElement>
+    event: FormEvent<HTMLFormElement>,
   ) => Promise<void>;
   placeholder: string;
   status: ChatStatus;
@@ -47,14 +47,14 @@ export const AnswerPromptInput = forwardRef<
     submitDisabledReason,
     className,
   },
-  ref
+  ref,
 ) {
   return (
     <PromptInput
       className={cn(
         "w-full overflow-hidden rounded-xl border border-border/50 bg-card/40 shadow-sm backdrop-blur-md transition-all",
         "!divide-y-0",
-        className
+        className,
       )}
       onSubmit={onSubmit}
       ref={ref}
@@ -64,7 +64,7 @@ export const AnswerPromptInput = forwardRef<
           className={cn(
             "w-full resize-none whitespace-pre-wrap break-words rounded-none border-0 p-3 focus-visible:ring-0",
             "!bg-transparent focus:!bg-transparent hover:!bg-transparent disabled:!bg-transparent dark:!bg-transparent",
-            "min-h-0 min-h-[72px] outline-none"
+            "min-h-0 min-h-[56px] outline-none",
           )}
           placeholder={placeholder}
           style={{ lineHeight: "24px" }}
@@ -72,7 +72,7 @@ export const AnswerPromptInput = forwardRef<
       </PromptInputBody>
       <PromptInputToolbar
         className={cn(
-          "flex items-center justify-end gap-2 bg-transparent p-2 transition-[color,box-shadow]"
+          "flex items-center justify-end gap-2 bg-transparent p-2 transition-[color,box-shadow]",
         )}
       >
         <PromptInputTools className="flex items-center gap-2">

@@ -28,12 +28,8 @@ export function SettingsSidebar({ basePath, items }: SettingsSidebarProps) {
           return (
             <Button
               asChild
-              className={cn(
-                "w-full justify-start rounded-lg font-normal",
-                isActive
-                  ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground hover:bg-sidebar-accent dark:hover:bg-sidebar-accent"
-                  : "text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-              )}
+              className="w-full justify-start rounded-xl font-normal text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground"
+              data-active={isActive}
               key={item.name}
               size="sm"
               variant="ghost"
