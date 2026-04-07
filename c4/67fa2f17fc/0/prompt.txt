@@ -11,3 +11,7 @@ nice it's working! whats left?
 ---
 
 i think we should commit the answer message sidebar avatar searcn all that too. basically all the stuff expect for the thought
+
+---
+
+yes
