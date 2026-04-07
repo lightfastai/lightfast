@@ -1,0 +1,5 @@
+/research_codebase im just thinking right now for @vendor/observability/src/inngest.ts @vendor/observability/src/trpc.ts should we introduce something like pino or something more for strcutured logging.
+
+---
+
+hmm, im pretty sure logtail allows pine transport.
