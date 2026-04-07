@@ -1,0 +1,1 @@
+add some logs to @apps/app/src/lib/search.ts im teting
