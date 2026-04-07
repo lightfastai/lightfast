@@ -7,6 +7,7 @@
  */
 
 import { connectionsRouter } from "./router/org/connections";
+import { entitiesRouter } from "./router/org/entities";
 import { eventsRouter } from "./router/org/events";
 import { jobsRouter } from "./router/org/jobs";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
@@ -20,6 +21,7 @@ export const appRouter = createTRPCRouter({
   account: accountRouter,
   // Org-scoped (clerk-active only)
   connections: connectionsRouter,
+  entities: entitiesRouter,
   events: eventsRouter,
   jobs: jobsRouter,
   orgApiKeys: orgApiKeysRouter,

@@ -477,6 +477,46 @@ export const platformEventStore = inngest.createFunction(
           ingestLogId,
         });
 
+        // Publish to Upstash Realtime for live entity list + entity detail pages
+        if (primaryEntityExternalId) {
+          const { realtime } = await import("@repo/app-upstash-realtime");
+          const channel = realtime.channel(`org-${clerkOrgId}`);
+
+          // 1. Entity list live prepend
+          await channel.emit("org.entity", {
+            entityExternalId: primaryEntityExternalId,
+            clerkOrgId,
+            category: sourceEvent.entity.entityType as EntityCategory,
+            key: sourceEvent.entity.entityId,
+            value: null,
+            state: sourceEvent.entity.state ?? null,
+            url: sourceEvent.entity.url ?? null,
+            occurrenceCount: 1, // Approximate — real count is in DB
+            lastSeenAt: sourceEvent.occurredAt,
+          });
+
+          // 2. Entity detail page live prepend
+          await channel.emit("org.entityEvent", {
+            entityExternalId: primaryEntityExternalId,
+            clerkOrgId,
+            eventId: observation.id,
+            eventExternalId: observation.externalId,
+            observationType: observation.observationType,
+            title: observation.title,
+            source: observation.source,
+            sourceType: observation.sourceType,
+            sourceId: observation.sourceId,
+            significanceScore: observation.significanceScore,
+            occurredAt: observation.occurredAt,
+            refLabel: null,
+          });
+
+          log.info("entity realtime published", {
+            entityExternalId: primaryEntityExternalId,
+            observationId: observation.id,
+          });
+        }
+
         return { count: junctionRows.length, primaryEntityExternalId };
       }
     );
