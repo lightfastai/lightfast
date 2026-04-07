@@ -1,0 +1,5 @@
+/create_plan @thoughts/shared/research/2026-04-07-orpc-observability-middleware.md
+
+---
+
+makes snese proceed
