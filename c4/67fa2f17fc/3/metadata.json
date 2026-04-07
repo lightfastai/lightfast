@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "c467fa2f17fc",
+  "session_id": "ad3bd1e2-b919-4e30-bb23-66fe2bcb2457",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-07T13:29:24.60329Z",
+  "branch": "feat/search-orpc-client",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/app/package.json",
+    "apps/app/src/app/(app)/(org)/[slug]/search/page.tsx",
+    "apps/app/src/components/org-search.tsx",
+    "apps/app/src/lib/api-client.ts",
+    "pnpm-lock.yaml"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "e0c084565e7f",
+  "token_usage": {
+    "input_tokens": 3,
+    "cache_creation_tokens": 7603,
+    "cache_read_tokens": 11886,
+    "output_tokens": 126,
+    "api_call_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-07T13:29:24.597504Z",
+    "agent_lines": 82,
+    "agent_removed": 102,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 82,
+    "total_lines_changed": 184,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
