@@ -48,7 +48,6 @@ export function AppHeader() {
     <div className="flex w-full items-center pl-2">
       {/* Left side placeholder */}
       <div />
-
       {/* Right side - Notifications and User dropdown */}
       <div className="ml-auto flex items-center gap-3">
         <Link

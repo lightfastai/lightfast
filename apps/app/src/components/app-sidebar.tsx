@@ -55,6 +55,11 @@ function getOrgPrimaryItems(orgSlug: string): NavItem[] {
       href: `/${orgSlug}`,
       icon: MessageSquare,
     },
+    {
+      title: "Entities",
+      href: `/${orgSlug}/entities`,
+      icon: Boxes,
+    },
   ];
 }
 
@@ -63,11 +68,6 @@ function getOrgPrimaryItems(orgSlug: string): NavItem[] {
  */
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Entities",
-      href: `/${orgSlug}/entities`,
-      icon: Boxes,
-    },
     {
       title: "Events",
       href: `/${orgSlug}/events`,
