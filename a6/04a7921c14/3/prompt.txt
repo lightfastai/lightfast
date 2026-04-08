@@ -1,0 +1,29 @@
+see @.claude/skills/lightfast-sdk/
+
+now i want to create a skill to basically access local.drizzle.studio https://github.com/vercel-labs/agent-browser/blob/main/skills/agent-browser/SKILL.md for how to use it.
+
+for now, let's discuss how we can design this skill specifically for local.drizzle.studio utilising agent-browser.
+
+it obviously doesnt need ALL the commands from agent-browser.
+
+just very specific ones. you can git clone this repo if needed to see how to strcuture.
+
+you can run agent-browser -h to see.
+
+im running local.drizzle.studio alreayd. you can use this to agent-browser to explore the ui if needed
+
+secondly we also have localhost:8288 which is inngest instance.
+
+we also want to have lightfast-inngest similarly structured.
+
+---
+
+hmm, im just thinking maybe it would be worth actually setting up mcp for inngest https://www.inngest.com/docs/ai-dev-tools/mcp#available-mcp-tools and figuring out a postgres db mcp?
+
+---
+
+postgres. yeap perfect. let's go ahead with these. see @.mcp.json and @.mcp/
+
+---
+
+okay go ahead test it.
