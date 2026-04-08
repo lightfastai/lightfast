@@ -1,0 +1,32 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "0e46667af321",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/app/src/root.ts",
+    "api/app/src/router/org/repo-index.ts",
+    "db/app/src/migrations/0063_cooing_ultimatum.sql",
+    "db/app/src/migrations/meta/0063_snapshot.json",
+    "db/app/src/migrations/meta/_journal.json",
+    "db/app/src/schema/index.ts",
+    "db/app/src/schema/tables/index.ts",
+    "db/app/src/schema/tables/org-repo-indexes.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/0e/46667af321/0/metadata.json",
+      "transcript": "/0e/46667af321/0/full.jsonl",
+      "content_hash": "/0e/46667af321/0/content_hash.txt",
+      "prompt": "/0e/46667af321/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 87093,
+    "cache_read_tokens": 2754275,
+    "output_tokens": 11803,
+    "api_call_count": 50
+  }
+}
