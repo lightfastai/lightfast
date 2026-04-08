@@ -7,7 +7,8 @@
   "files_touched": [
     "apps/www/src/app/(app)/(marketing)/legal/[slug]/page.tsx",
     "apps/www/src/content/legal/privacy-policy.mdx",
-    "apps/www/src/content/legal/privacy.mdx"
+    "apps/www/src/content/legal/privacy.mdx",
+    "apps/www/src/content/legal/terms-of-service.mdx"
   ],
   "sessions": [
     {
@@ -21,6 +22,12 @@
       "transcript": "/e7/8e9fd5b132/1/full.jsonl",
       "content_hash": "/e7/8e9fd5b132/1/content_hash.txt",
       "prompt": "/e7/8e9fd5b132/1/prompt.txt"
+    },
+    {
+      "metadata": "/e7/8e9fd5b132/2/metadata.json",
+      "transcript": "/e7/8e9fd5b132/2/full.jsonl",
+      "content_hash": "/e7/8e9fd5b132/2/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
