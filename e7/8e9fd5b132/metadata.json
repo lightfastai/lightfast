@@ -3,7 +3,7 @@
   "checkpoint_id": "e78e9fd5b132",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 7,
+  "checkpoints_count": 13,
   "files_touched": [
     "apps/www/src/app/(app)/(marketing)/legal/[slug]/page.tsx",
     "apps/www/src/content/legal/privacy-policy.mdx",
@@ -28,13 +28,19 @@
       "transcript": "/e7/8e9fd5b132/2/full.jsonl",
       "content_hash": "/e7/8e9fd5b132/2/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/e7/8e9fd5b132/3/metadata.json",
+      "transcript": "/e7/8e9fd5b132/3/full.jsonl",
+      "content_hash": "/e7/8e9fd5b132/3/content_hash.txt",
+      "prompt": "/e7/8e9fd5b132/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 108,
-    "cache_creation_tokens": 134718,
-    "cache_read_tokens": 5967151,
-    "output_tokens": 20176,
-    "api_call_count": 86
+    "input_tokens": 177,
+    "cache_creation_tokens": 177602,
+    "cache_read_tokens": 7924035,
+    "output_tokens": 31006,
+    "api_call_count": 135
   }
 }

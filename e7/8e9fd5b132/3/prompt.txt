@@ -1,0 +1,35 @@
+/implement_plan @thoughts/shared/research/2026-04-08-mcp-local-dev-wiring.md
+
+---
+
+i just created api key. where do i add this?
+
+---
+
+okay now check if you have access its added
+
+---
+
+okay now test the mcp. its added.
+
+---
+
+yes it's running. something wrong with mcp server maybe. you can run pnpm dev:full if needed a deep bug mcp
+
+---
+
+no run here. if you run pnpm dev:full then the app server is 100%running bro
+
+---
+
+<task-notification>
+<task-id>bvezdxs8w</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/9cb0420f-2c45-448e-9364-50eb75410a78/tasks/bvezdxs8w.output</output-file>
+<status>completed</status>
+<summary>Background command "Start full dev stack in background" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+what happened?
