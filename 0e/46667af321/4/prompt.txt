@@ -1,0 +1,9 @@
+/research_codebase i want to work on a new swtup for @apps/app/src/components/app-sidebar.tsx specifically for like smalller screens.
+
+basically, right now we are using non collapsible sidebar. basically, anything this is below ipad screen size, we sidebar automatically collapses.
+
+and on the @apps/app/src/components/app-header.tsx on left most we show the sidebar trigger icon.
+
+whihc then opens the sidebar as a floating.
+
+investigate all the changes to be made to app-sidebar + sidebar component for this to happen

@@ -3,7 +3,7 @@
   "checkpoint_id": "0e46667af321",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 6,
+  "checkpoints_count": 7,
   "files_touched": [
     "api/app/src/root.ts",
     "api/app/src/router/org/repo-index.ts",
@@ -12,6 +12,8 @@
     "apps/app/src/ai/prompts/system-prompt.ts",
     "apps/app/src/app/(api)/v1/answer/[...v]/route.ts",
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/repo-index/_components/repo-index-config-loading.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/repo-index/_components/repo-index-config.tsx",
     "apps/app/src/components/settings-sidebar.tsx",
     "db/app/src/migrations/0063_cooing_ultimatum.sql",
     "db/app/src/migrations/meta/0063_snapshot.json",
@@ -45,13 +47,19 @@
       "transcript": "/0e/46667af321/3/full.jsonl",
       "content_hash": "/0e/46667af321/3/content_hash.txt",
       "prompt": "/0e/46667af321/3/prompt.txt"
+    },
+    {
+      "metadata": "/0e/46667af321/4/metadata.json",
+      "transcript": "/0e/46667af321/4/full.jsonl",
+      "content_hash": "/0e/46667af321/4/content_hash.txt",
+      "prompt": "/0e/46667af321/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 887,
-    "cache_creation_tokens": 209062,
-    "cache_read_tokens": 5932776,
-    "output_tokens": 40996,
-    "api_call_count": 116
+    "input_tokens": 7194,
+    "cache_creation_tokens": 250769,
+    "cache_read_tokens": 6026693,
+    "output_tokens": 46502,
+    "api_call_count": 120
   }
 }
