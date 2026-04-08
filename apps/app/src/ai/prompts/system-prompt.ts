@@ -7,6 +7,8 @@ interface AnswerPromptOptions {
   /** Org context */
   org: {
     name: string;
+    /** Cached content from indexed repo */
+    repoIndex?: string;
   };
 }
 
@@ -31,6 +33,7 @@ export function buildAnswerSystemPrompt(options: AnswerPromptOptions): string {
     userContext: {
       org: {
         name: options.org.name,
+        repoIndex: options.org.repoIndex,
         repos: [],
         integrations: [],
       },
