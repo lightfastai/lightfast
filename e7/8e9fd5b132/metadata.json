@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e78e9fd5b132",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/legal/[slug]/page.tsx",
+    "apps/www/src/content/legal/privacy-policy.mdx",
+    "apps/www/src/content/legal/privacy.mdx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e7/8e9fd5b132/0/metadata.json",
+      "transcript": "/e7/8e9fd5b132/0/full.jsonl",
+      "content_hash": "/e7/8e9fd5b132/0/content_hash.txt",
+      "prompt": "/e7/8e9fd5b132/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 44,
+    "cache_creation_tokens": 43703,
+    "cache_read_tokens": 1334618,
+    "output_tokens": 7518,
+    "api_call_count": 30
+  }
+}
