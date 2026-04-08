@@ -19,6 +19,15 @@
       "type": "stdio",
       "command": "bash",
       "args": [".mcp/start-lightfast.sh"]
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "bash",
+      "args": [".mcp/start-postgres.sh"]
+    },
+    "inngest": {
+      "type": "http",
+      "url": "http://127.0.0.1:8288/mcp"
     }
   }
 }
