@@ -1,0 +1,163 @@
+/implement_plan @thoughts/shared/plans/2026-04-08-github-first-org-creation.md phase 4
+
+---
+
+im confused, i technically already have connected my github account from pre migratino. do i have to do this again?
+
+---
+
+hmm, what about existing users?
+
+---
+
+right now, for my current logged in user, who already has an org + github connection in that org, goes to /accoutns/team/new, see install github app. but he already technically has github logged in?
+
+---
+
+very nice. i just tried.it does seem to work. but hit a fatal error. i cliciked create the org button and hit with 404.   caller: 'app',
+  provider: 'github',
+  statePrefix: 'OAfBFSRh'
+}
+[trpc] ok {
+  requestId: '5fx6i0zxPAnFpm3ZaKkIp',
+  traceId: '2c41febed15c9722688a8b2b29f53320',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED',
+  path: 'connections.getAuthorizeUrl',
+  type: 'query',
+  durationMs: 310,
+  ok: true,
+  caller: 'app'
+}
+[trpc] request journal {
+  requestId: 'mxDFXZsfBPYBDrhjCeKjo',
+  traceId: '2c41febed15c9722688a8b2b29f53320',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED',
+  path: 'connections.getAuthorizeUrl',
+  durationMs: 310,
+  ok: true,
+  entryCount: 1,
+  entries: [
+    {
+      ts: 1775643647248,
+      level: 'info',
+      msg: '[oauth/state] state stored',
+      meta: [Object]
+    }
+  ]
+}
+[trpc] ok {
+  path: 'organization.getGitHubInstallUrl',
+  type: 'query',
+  durationMs: 441,
+  ok: true,
+  requestId: 'mxDFXZsfBPYBDrhjCeKjo',
+  traceId: '2c41febed15c9722688a8b2b29f53320',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED'
+}
+[trpc] request journal {
+  path: 'organization.getGitHubInstallUrl',
+  durationMs: 441,
+  ok: true,
+  entryCount: 3,
+  entries: [
+    {
+      ts: 1775643646812,
+      level: 'info',
+      msg: '[trpc] platform service request',
+      meta: [Object]
+    },
+    {
+      ts: 1775643647248,
+      level: 'info',
+      msg: '[trpc] ok',
+      meta: [Object]
+    },
+    {
+      ts: 1775643647248,
+      level: 'info',
+      msg: '[trpc] request journal',
+      meta: [Object]
+    }
+  ]
+}
+ GET /account/teams/new 200 in 625ms (next.js: 6ms, proxy.ts: 5ms, application-code: 613ms)
+[trpc] ok {
+  path: 'organization.listUserOrganizations',
+  type: 'query',
+  durationMs: 316,
+  ok: true,
+  requestId: 'giSJRXjxwhbvu9wkZQhnf',
+  traceId: '8296f4c7ec7e46e9aea28f5bac405697',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED'
+}
+ GET /api/trpc/organization.listUserOrganizations?batch=1&input=%7B%220%22%3A%7B%22json%22%3Anull%2C%22meta%22%3A%7B%22values%22%3A%5B%22undefined%22%5D%2C%22v%22%3A1%7D%7D%7D 200 in 722ms (next.js: 7ms, proxy.ts: 37ms, application-code: 679ms)
+Clerk membership cache hit { userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj', count: 1 }
+[org-layout] access denied { slug: 'lightfastai', error: 'Access denied to this organization.' }
+ GET /lightfastai 200 in 911ms (next.js: 18ms, proxy.ts: 39ms, application-code: 855ms)
+ PUT /api/inngest 200 in 15ms (proxy.ts: 4ms)
+[trpc] ok {
+  path: 'account.get',
+  type: 'query',
+  durationMs: 2,
+  ok: true,
+  requestId: 'f9ULm0uiGtSbWi8AgRA7D',
+  traceId: 'db6819953bb1ee6807796bcf6bee77e3',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED'
+}
+[trpc] ok {
+  path: 'organization.listUserOrganizations',
+  type: 'query',
+  durationMs: 278,
+  ok: true,
+  requestId: 'EVlQHI6EBomNWR32YJuv4',
+  traceId: 'db6819953bb1ee6807796bcf6bee77e3',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED'
+}
+Clerk membership cache hit { userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj', count: 1 }
+[org-layout] access denied { slug: 'lightfastai', error: 'Access denied to this organization.' }
+ GET /lightfastai 404 in 696ms (next.js: 8ms, proxy.ts: 4ms, application-code: 684ms)
+[browser] Clerk: Clerk has been loaded with development keys. Development instances have strict usage limits and should not be used when deploying your application to production. Learn more: https://clerk.com/docs/deployments/overview (file:///Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/.next/dev/static/chunks/0z-6_next_dist_0ioe2_-._.js:1074:13)
+[trpc] ok {
+  path: 'account.get',
+  type: 'query',
+  durationMs: 3,
+  ok: true,
+  requestId: 'beMmpntBPxIL10pDlfTeb',
+  traceId: 'b5e14af002dd5ca2b74c6a006c749bb3',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED'
+}
+Clerk membership cache hit { userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj', count: 1 }
+[org-layout] access denied { slug: 'lightfastai', error: 'Access denied to this organization.' }
+[trpc] ok {
+  path: 'organization.listUserOrganizations',
+  type: 'query',
+  durationMs: 546,
+  ok: true,
+  requestId: 'XoSCn1SLUbndAiuXwtqXc',
+  traceId: 'b5e14af002dd5ca2b74c6a006c749bb3',
+  userId: 'user_35e6ucjx7DBt7GorwtpmeEjgDwj',
+  orgId: 'REDACTED'
+}
+
+---
+
+while this is a good idea, i think for now, we should remove all clerk caching until we lock in the infra wouldnt you say so. if yes, i will run new task to do so.
+
+---
+
+also question are we "saving"the org name to clerk? or the org id.
+
+---
+
+i see. note: i think we need to drop lightfastai provider_org_login name. and instead need a lyer to resolve this name. or cache it. feels like there's stale "data" right now wouldnt you say so? or okay for now, handle in the future.
+
+---
+
+i rather clean up right now. im curious tho, should we utilise https://clerk.com/docs/reference/backend/organization/create-organization#backend-api-bapi-endpoint public metadata or cache layer for the name.
