@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e59dcf128358",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".mcp/start-postgres.sh"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e5/9dcf128358/0/metadata.json",
+      "transcript": "/e5/9dcf128358/0/full.jsonl",
+      "content_hash": "/e5/9dcf128358/0/content_hash.txt",
+      "prompt": "/e5/9dcf128358/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 42556,
+    "cache_read_tokens": 283491,
+    "output_tokens": 7698,
+    "api_call_count": 8
+  }
+}

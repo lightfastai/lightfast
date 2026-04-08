@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e59dcf128358",
+  "session_id": "01842688-96fa-43cb-934d-4f81b8397748",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T10:59:41.401381Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".mcp/start-postgres.sh"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "c899720080f5",
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 42556,
+    "cache_read_tokens": 283491,
+    "output_tokens": 7698,
+    "api_call_count": 8
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T10:59:41.231532Z",
+    "agent_lines": 26,
+    "agent_removed": 0,
+    "human_added": 222,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 248,
+    "total_lines_changed": 248,
+    "agent_percentage": 10.483870967741936,
+    "metric_version": 2
+  }
+}
