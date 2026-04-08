@@ -1,0 +1,7 @@
+/research_codebase for some reason when the sidebar goes into collapsed view in @apps/app/src/components/app-sidebar.tsx @apps/app/src/app/(app)/(org)/[slug]/layout.tsx the whole ui kinda bugs out and we lose all the mouse interactivity like hover states and after many clicks it comes back.
+
+i cant really pinpoint whether this is a collapsed view thing or inset or some variant problem.
+
+---
+
+okay i think this is my browser error. all good. delete resrach
