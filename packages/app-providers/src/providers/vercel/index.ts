@@ -357,8 +357,6 @@ export const vercel = defineWebhookProvider({
     processCallback: async (config, query) => {
       const code = query.code;
       const configurationId = query.configurationId;
-      const next = query.next;
-
       if (!code) {
         throw new Error("missing code");
       }
@@ -403,16 +401,6 @@ export const vercel = defineWebhookProvider({
           team_id: parsed.team_id,
         },
       };
-
-      if (next) {
-        return {
-          status: "connected-redirect",
-          externalId,
-          accountInfo,
-          tokens: oauthTokens,
-          nextUrl: next,
-        } satisfies CallbackResult<VercelAccountInfo>;
-      }
 
       return {
         status: "connected",

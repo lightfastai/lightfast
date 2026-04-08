@@ -321,10 +321,7 @@ export async function processOAuthCallback(
     }
 
     // Persist OAuth tokens for statuses that include them
-    if (
-      result.status === "connected" ||
-      result.status === "connected-redirect"
-    ) {
+    if (result.status === "connected") {
       await writeTokenRecord(installation.id, result.tokens);
     }
 
@@ -334,11 +331,6 @@ export async function processOAuthCallback(
       provider: providerName,
       ...(reactivated ? { reactivated: "true" } : {}),
     });
-
-    // Provider-specific redirect (e.g. Vercel "next" URL to complete installation lifecycle)
-    if (result.status === "connected-redirect") {
-      return { kind: "redirect", url: result.nextUrl };
-    }
 
     log.info("[oauth/callback] connected", {
       provider: providerName,
