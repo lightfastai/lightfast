@@ -1,0 +1,25 @@
+/implement_plan @thoughts/shared/plans/2026-04-07-orpc-observability-middleware.md
+
+---
+
+proceed
+
+---
+
+perfect! journal working! should we clean up the logs in lib/search too
+
+---
+
+yes
+
+---
+
+/commit
+
+---
+
+yes
+
+---
+
+whats elft?

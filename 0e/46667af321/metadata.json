@@ -3,7 +3,7 @@
   "checkpoint_id": "0e46667af321",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 45,
+  "checkpoints_count": 48,
   "files_touched": [
     "api/app/src/root.ts",
     "api/app/src/router/org/repo-index.ts",
@@ -78,13 +78,19 @@
       "transcript": "/0e/46667af321/8/full.jsonl",
       "content_hash": "/0e/46667af321/8/content_hash.txt",
       "prompt": "/0e/46667af321/8/prompt.txt"
+    },
+    {
+      "metadata": "/0e/46667af321/9/metadata.json",
+      "transcript": "/0e/46667af321/9/full.jsonl",
+      "content_hash": "/0e/46667af321/9/content_hash.txt",
+      "prompt": "/0e/46667af321/9/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 7815,
-    "cache_creation_tokens": 667212,
-    "cache_read_tokens": 20084138,
-    "output_tokens": 177896,
-    "api_call_count": 363
+    "input_tokens": 7911,
+    "cache_creation_tokens": 955363,
+    "cache_read_tokens": 25275834,
+    "output_tokens": 205161,
+    "api_call_count": 442
   }
 }
