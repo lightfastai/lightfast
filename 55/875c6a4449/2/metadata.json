@@ -1,0 +1,48 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "55875c6a4449",
+  "session_id": "4f748467-d7b7-4b04-9fd2-e41b06634b88",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T11:03:49.38455Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".changeset/pre.json",
+    "api/app/package.json",
+    "api/app/src/trpc.ts",
+    "apps/app/next.config.ts",
+    "apps/app/package.json",
+    "apps/app/src/app/(api)/lib/orpc-middleware.ts",
+    "apps/app/src/app/(api)/lib/with-dual-auth.ts",
+    "apps/app/src/app/(app)/(user)/(pending-allowed)/account/welcome/page.tsx",
+    "apps/app/src/lib/org-access-clerk.ts",
+    "pnpm-lock.yaml",
+    "vendor/clerk/src/membership.ts",
+    "vendor/clerk/src/server.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "ec53f37f8f74",
+  "token_usage": {
+    "input_tokens": 4310,
+    "cache_creation_tokens": 105436,
+    "cache_read_tokens": 4838012,
+    "output_tokens": 21572,
+    "api_call_count": 63
+  },
+  "session_metrics": {
+    "turn_count": 9
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T11:03:48.99844Z",
+    "agent_lines": 54,
+    "agent_removed": 76,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 54,
+    "total_lines_changed": 316,
+    "agent_percentage": 41.139240506329116,
+    "metric_version": 2
+  }
+}
