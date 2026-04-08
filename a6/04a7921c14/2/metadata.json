@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "a604a7921c14",
+  "session_id": "471724e6-39d8-429a-b6e9-fd2897f23f20",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T10:52:40.328722Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/lib/oauth/callback.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "db7ed8975e60",
+  "token_usage": {
+    "input_tokens": 120,
+    "cache_creation_tokens": 78384,
+    "cache_read_tokens": 1129945,
+    "output_tokens": 10509,
+    "api_call_count": 17
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T10:52:39.968657Z",
+    "agent_lines": 1,
+    "agent_removed": 9,
+    "human_added": 0,
+    "human_modified": 7,
+    "human_removed": 136,
+    "total_committed": 8,
+    "total_lines_changed": 189,
+    "agent_percentage": 5.291005291005291,
+    "metric_version": 2
+  }
+}
