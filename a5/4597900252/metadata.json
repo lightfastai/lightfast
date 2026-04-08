@@ -5,6 +5,8 @@
   "branch": "main",
   "checkpoints_count": 3,
   "files_touched": [
+    ".claude/skills/lightfast-sdk/SKILL.md",
+    ".claude/skills/lightfast-sdk/command/lightfast-sdk.md",
     ".claude/skills/lightfast-sentry/SKILL.md",
     ".claude/skills/lightfast-sentry/command/lightfast-sentry.md",
     ".claude/skills/lightfast-sentry/references/issues/RULE.md",
@@ -29,6 +31,12 @@
       "transcript": "/a5/4597900252/2/full.jsonl",
       "content_hash": "/a5/4597900252/2/content_hash.txt",
       "prompt": "/a5/4597900252/2/prompt.txt"
+    },
+    {
+      "metadata": "/a5/4597900252/3/metadata.json",
+      "transcript": "/a5/4597900252/3/full.jsonl",
+      "content_hash": "/a5/4597900252/3/content_hash.txt",
+      "prompt": ""
     }
   ],
   "token_usage": {
