@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "55875c6a4449",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".changeset/pre.json",
+    "api/app/package.json",
+    "apps/app/next.config.ts",
+    "apps/app/package.json",
+    "pnpm-lock.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/55/875c6a4449/0/metadata.json",
+      "transcript": "/55/875c6a4449/0/full.jsonl",
+      "content_hash": "/55/875c6a4449/0/content_hash.txt",
+      "prompt": "/55/875c6a4449/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 42556,
+    "cache_read_tokens": 283491,
+    "output_tokens": 7698,
+    "api_call_count": 8
+  }
+}
