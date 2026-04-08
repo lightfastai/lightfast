@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "57b43af0663c",
+  "session_id": "56ab0e9d-059f-473c-96b2-de1112daced3",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T05:17:10.047725Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/page.tsx",
+    "apps/app/src/components/answer-interface.tsx",
+    "apps/app/src/components/answer-messages.tsx",
+    "apps/app/src/components/app-header.tsx",
+    "apps/app/src/components/command-palette.tsx",
+    "packages/ui/src/components/ai-elements/message.tsx",
+    "packages/ui/src/components/app-header/team-switcher.tsx",
+    "packages/ui/src/components/ui/command.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "3c2d6b6e1f05",
+  "token_usage": {
+    "input_tokens": 461,
+    "cache_creation_tokens": 68399,
+    "cache_read_tokens": 1657271,
+    "output_tokens": 13655,
+    "api_call_count": 33
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T05:17:09.83577Z",
+    "agent_lines": 45,
+    "agent_removed": 39,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 45,
+    "total_lines_changed": 84,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
