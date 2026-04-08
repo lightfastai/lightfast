@@ -1,0 +1,47 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "0e46667af321",
+  "session_id": "cf50fa1b-cde1-44f7-96a7-e561c72b83cc",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T04:30:23.78223Z",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/app/src/root.ts",
+    "api/platform/src/inngest/functions/platform-repo-index-sync.ts",
+    "api/platform/src/inngest/index.ts",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/repo-index/_components/repo-index-config-loading.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/repo-index/_components/repo-index-config.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/repo-index/page.tsx",
+    "apps/app/src/components/settings-sidebar.tsx",
+    "db/app/src/migrations/meta/_journal.json",
+    "db/app/src/schema/index.ts",
+    "db/app/src/schema/tables/index.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "2475f10c3b15",
+  "token_usage": {
+    "input_tokens": 2626,
+    "cache_creation_tokens": 109951,
+    "cache_read_tokens": 3683126,
+    "output_tokens": 16019,
+    "api_call_count": 70
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T04:30:23.22851Z",
+    "agent_lines": 421,
+    "agent_removed": 1,
+    "human_added": 3135,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3556,
+    "total_lines_changed": 3559,
+    "agent_percentage": 11.85726327620118,
+    "metric_version": 2
+  }
+}
