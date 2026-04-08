@@ -165,3 +165,9 @@ i rather clean up right now. im curious tho, should we utilise https://clerk.com
 ---
 
 given this: if user goes then to lightfast.ai/<someorgname> will it resolve "nicely" without too much delay.
+
+---
+
+well i think you've just fundamentally got this wrongly configured. i checked clerk, you saved the org name as lightfastai with slug lightfastai. these both will be invalidated if they change their org name.
+
+shouldnt it be saved as github org id instead?
