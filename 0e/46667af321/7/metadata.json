@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "0e46667af321",
+  "session_id": "ad3bd1e2-b919-4e30-bb23-66fe2bcb2457",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T04:30:22.218895Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/app/src/root.ts",
+    "api/app/src/router/org/repo-index.ts",
+    "api/platform/src/inngest/index.ts",
+    "db/app/src/migrations/0063_cooing_ultimatum.sql",
+    "db/app/src/migrations/meta/0063_snapshot.json",
+    "db/app/src/migrations/meta/_journal.json",
+    "db/app/src/schema/index.ts",
+    "db/app/src/schema/tables/index.ts",
+    "db/app/src/schema/tables/org-repo-indexes.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "e38211766742",
+  "token_usage": {
+    "input_tokens": 80,
+    "cache_creation_tokens": 66591,
+    "cache_read_tokens": 3507502,
+    "output_tokens": 14175,
+    "api_call_count": 67
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T04:30:22.008374Z",
+    "agent_lines": 3094,
+    "agent_removed": 0,
+    "human_added": 462,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3556,
+    "total_lines_changed": 3559,
+    "agent_percentage": 86.93453217195841,
+    "metric_version": 2
+  }
+}
