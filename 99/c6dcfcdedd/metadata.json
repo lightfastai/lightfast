@@ -3,8 +3,11 @@
   "checkpoint_id": "99c6dcfcdedd",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 3,
   "files_touched": [
+    "apps/app/src/app/(api)/lib/orpc-middleware.ts",
+    "apps/app/src/app/(api)/lib/orpc-router.ts",
+    "apps/app/src/app/(api)/v1/[...rest]/route.ts",
     "pnpm-lock.yaml",
     "vendor/observability/package.json",
     "vendor/observability/src/context.ts",
@@ -17,13 +20,19 @@
       "transcript": "/99/c6dcfcdedd/0/full.jsonl",
       "content_hash": "/99/c6dcfcdedd/0/content_hash.txt",
       "prompt": "/99/c6dcfcdedd/0/prompt.txt"
+    },
+    {
+      "metadata": "/99/c6dcfcdedd/1/metadata.json",
+      "transcript": "/99/c6dcfcdedd/1/full.jsonl",
+      "content_hash": "/99/c6dcfcdedd/1/content_hash.txt",
+      "prompt": "/99/c6dcfcdedd/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 58,
-    "cache_creation_tokens": 87093,
-    "cache_read_tokens": 2754275,
-    "output_tokens": 11803,
-    "api_call_count": 50
+    "input_tokens": 138,
+    "cache_creation_tokens": 153684,
+    "cache_read_tokens": 6261777,
+    "output_tokens": 25978,
+    "api_call_count": 117
   }
 }

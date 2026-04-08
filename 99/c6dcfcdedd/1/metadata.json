@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "99c6dcfcdedd",
+  "session_id": "ad3bd1e2-b919-4e30-bb23-66fe2bcb2457",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T01:37:25.521859Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/src/app/(api)/lib/orpc-middleware.ts",
+    "apps/app/src/app/(api)/lib/orpc-router.ts",
+    "apps/app/src/app/(api)/v1/[...rest]/route.ts",
+    "pnpm-lock.yaml",
+    "vendor/observability/package.json",
+    "vendor/observability/src/context.ts",
+    "vendor/observability/src/request.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-haiku-4-5-20251001",
+  "turn_id": "e38211766742",
+  "token_usage": {
+    "input_tokens": 80,
+    "cache_creation_tokens": 66591,
+    "cache_read_tokens": 3507502,
+    "output_tokens": 14175,
+    "api_call_count": 67
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T01:37:25.31393Z",
+    "agent_lines": 65,
+    "agent_removed": 36,
+    "human_added": 152,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 217,
+    "total_lines_changed": 288,
+    "agent_percentage": 35.06944444444444,
+    "metric_version": 2
+  }
+}
