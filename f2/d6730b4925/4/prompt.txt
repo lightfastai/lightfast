@@ -1,0 +1,38 @@
+/create_plan @thoughts/shared/research/2026-04-08-responsive-sidebar-collapse.md
+
+---
+
+offcanvas collapse, 1024px is good. 3. yes.
+4. yes
+
+---
+
+nope all good
+
+---
+
+a couple thing. the sidebar trigger not shown. unless in collapsed view.
+
+---
+
+nope not seeing it. do you understand the outcomes i want? use AskUserQuestions tool
+
+---
+
+im not seeing the sidebartrigger at all.
+
+---
+
+proceed
+
+---
+
+okay nice. i noticed that after adding the "inset" everything "moved" in the sidebar can you double check this
+
+---
+
+should this be changing in the root sidebar.tsx itself?
+
+---
+
+one last thing: the rounded corners ned to be removed in collapsed view. and rmeove the cmd + b trigger for good.
