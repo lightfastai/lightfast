@@ -1,0 +1,93 @@
+/research_codebase investigate @apps/app/ and @apps/platform/ to understand what is lightfast and let's design the @apps/www/src/content/legal/privacy-policy.mdx and terms: note Australian pty ltd. Lightfast Pty Ltd.
+
+---
+
+<task-notification>
+<task-id>a93041823e0a4f634</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/c1fdfdd7-0121-476d-b756-dafb45b9aa49/tasks/a93041823e0a4f634.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze auth and user data flows" completed</summary>
+<result>API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"REDACTED"}</result>
+<usage><total_tokens>0</total_tokens><tool_uses>0</tool_uses><duration_ms>212162</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a58e7d12c134d5ec9</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/c1fdfdd7-0121-476d-b756-dafb45b9aa49/tasks/a58e7d12c134d5ec9.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze platform data collection" completed</summary>
+<result>API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"req_011CZqy3nYjqGDu8wQ9mmRay"}</result>
+<usage><total_tokens>0</total_tokens><tool_uses>0</tool_uses><duration_ms>208798</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a102f9a5fa055eca3</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/c1fdfdd7-0121-476d-b756-dafb45b9aa49/tasks/a102f9a5fa055eca3.output</output-file>
+<status>completed</status>
+<summary>Agent "Find all third-party services used" completed</summary>
+<result>API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"req_011CZqy4eVLA3BvqG1Y2MkYP"}</result>
+<usage><total_tokens>0</total_tokens><tool_uses>0</tool_uses><duration_ms>216781</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a11628bc80ef5cb17</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/c1fdfdd7-0121-476d-b756-dafb45b9aa49/tasks/a11628bc80ef5cb17.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze database schemas for data model" completed</summary>
+<result>API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"REDACTED"}</result>
+<usage><total_tokens>0</total_tokens><tool_uses>0</tool_uses><duration_ms>221421</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a8f577ca120a83990</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/c1fdfdd7-0121-476d-b756-dafb45b9aa49/tasks/a8f577ca120a83990.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze www site legal pages setup" completed</summary>
+<result>API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"req_011CZqy5SSZmbRALqLuiQoGJ"}</result>
+<usage><total_tokens>0</total_tokens><tool_uses>0</tool_uses><duration_ms>221396</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a6906490f960f754e</task-id>
+<tool-use-id>toolu_01LciziE7UzrSyQKT1oSbL1v</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/c1fdfdd7-0121-476d-b756-dafb45b9aa49/tasks/a6906490f960f754e.output</output-file>
+<status>completed</status>
+<summary>Agent "Analyze auth and user data flows" completed</summary>
+<result>API Error: 529 {"type":"error","error":{"type":"overloaded_error","message":"Overloaded"},"request_id":"REDACTED"}</result>
+<usage><total_tokens>0</total_tokens><tool_uses>0</tool_uses><duration_ms>207990</duration_ms></usage>
+</task-notification>
+
+---
+
+35 690 889 984, just use support@lightfast.ai for both
+
+---
+
+rename privacy-policy to privacy
+
+---
+
+im noticing that @apps/www/src/app/(app)/(content)/_lib/mdx-components.tsx is not being applied to these pages
+
+---
+
+/commit
+
+---
+
+no need for research doc. delete but yes

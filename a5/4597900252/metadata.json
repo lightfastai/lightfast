@@ -3,7 +3,7 @@
   "checkpoint_id": "a54597900252",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 6,
+  "checkpoints_count": 14,
   "files_touched": [
     ".claude/skills/lightfast-sdk/SKILL.md",
     ".claude/skills/lightfast-sdk/command/lightfast-sdk.md",
@@ -49,13 +49,19 @@
       "transcript": "/a5/4597900252/5/full.jsonl",
       "content_hash": "/a5/4597900252/5/content_hash.txt",
       "prompt": "/a5/4597900252/5/prompt.txt"
+    },
+    {
+      "metadata": "/a5/4597900252/6/metadata.json",
+      "transcript": "/a5/4597900252/6/full.jsonl",
+      "content_hash": "/a5/4597900252/6/content_hash.txt",
+      "prompt": "/a5/4597900252/6/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 4456,
-    "cache_creation_tokens": 256491,
-    "cache_read_tokens": 10699793,
-    "output_tokens": 45165,
-    "api_call_count": 182
+    "input_tokens": 4850,
+    "cache_creation_tokens": 345688,
+    "cache_read_tokens": 14173981,
+    "output_tokens": 66491,
+    "api_call_count": 238
   }
 }
