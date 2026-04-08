@@ -20,12 +20,6 @@ export async function searchLogic(
   const indexName = EMBEDDING_DEFAULTS.indexName;
   const namespaceName = buildOrgNamespace(auth.clerkOrgId);
 
-  log.info("Search started", {
-    requestId,
-    query: request.query,
-    namespace: namespaceName,
-  });
-
   const embeddingProvider = createEmbeddingProvider({
     inputType: "search_query",
   });
@@ -37,7 +31,6 @@ export async function searchLogic(
   }
 
   log.debug("Query embedding generated", {
-    requestId,
     vectorDimension: queryVector.length,
   });
 
@@ -65,7 +58,7 @@ export async function searchLogic(
     pineconeFilter.entityType = { $in: request.types };
   }
 
-  log.debug("Pinecone filter built", { requestId, filter: pineconeFilter });
+  log.debug("Pinecone filter built", { filter: pineconeFilter });
 
   // Query entity vectors — fetch more than limit so reranker has candidates to work with
   const topK =
@@ -74,7 +67,6 @@ export async function searchLogic(
       : request.limit;
 
   log.debug("Querying Pinecone", {
-    requestId,
     topK,
     mode: request.mode,
     index: indexName,
@@ -92,7 +84,6 @@ export async function searchLogic(
   );
 
   log.info("Pinecone query complete", {
-    requestId,
     matchCount: queryResult.matches.length,
     topK,
   });
@@ -106,7 +97,6 @@ export async function searchLogic(
   }));
 
   log.debug("Rerank candidates prepared", {
-    requestId,
     candidateCount: candidates.length,
   });
 
@@ -121,7 +111,6 @@ export async function searchLogic(
   );
 
   log.debug("Reranking complete", {
-    requestId,
     rerankResultCount: rerankResponse.results.length,
   });
 
@@ -149,12 +138,6 @@ export async function searchLogic(
           ? new Date(Number(meta.occurredAt)).toISOString()
           : null,
     };
-  });
-
-  log.info("Search complete", {
-    requestId,
-    query: request.query,
-    resultCount: results.length,
   });
 
   return {

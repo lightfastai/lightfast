@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { OpenAPIHandler } from "@orpc/openapi/fetch";
+import { captureException } from "@sentry/nextjs";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { router } from "../../lib/orpc-router";
@@ -36,6 +37,12 @@ async function handleRequest(request: Request) {
     log.error("oRPC handler error", {
       error: parseError(error),
       requestId,
+    });
+    captureException(error, {
+      mechanism: {
+        handled: false,
+        type: "auto.rpc.orpc.handler",
+      },
     });
     return Response.json(
       {

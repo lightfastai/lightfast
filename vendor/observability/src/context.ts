@@ -40,6 +40,18 @@ export function getJournal(): readonly JournalEntry[] {
   return requestStore.getStore()?.journal ?? [];
 }
 
+/**
+ * Merge additional fields into the current request context.
+ * Useful for downstream middleware (e.g., auth) to enrich ALS context
+ * after the observability middleware has already seeded it.
+ */
+export function enrichContext(fields: Record<string, unknown>): void {
+  const store = requestStore.getStore();
+  if (store) {
+    store.ctx = { ...store.ctx, ...fields };
+  }
+}
+
 export function pushJournal(
   level: JournalEntry["level"],
   msg: string,

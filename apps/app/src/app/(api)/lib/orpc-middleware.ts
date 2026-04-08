@@ -1,7 +1,9 @@
 import { ORPCError, os } from "@orpc/server";
 import { LIGHTFAST_API_KEY_PREFIX } from "@repo/app-api-key";
 import { auth } from "@vendor/clerk/server";
+import { enrichContext } from "@vendor/observability/context";
 import { log } from "@vendor/observability/log/next";
+import { createORPCObservabilityMiddleware } from "@vendor/observability/orpc";
 import type { NextRequest } from "next/server";
 import { withApiKeyAuth } from "./with-api-key-auth";
 
@@ -91,8 +93,18 @@ async function resolveAuth(
   };
 }
 
+export const observabilityMiddleware = base.middleware(
+  createORPCObservabilityMiddleware()
+);
+
 export const authMiddleware = base.middleware(async ({ context, next }) => {
   const authContext = await resolveAuth(context.headers, context.requestId);
+  enrichContext({
+    userId: authContext.userId,
+    clerkOrgId: authContext.clerkOrgId,
+    authType: authContext.authType,
+    ...(authContext.apiKeyId && { apiKeyId: authContext.apiKeyId }),
+  });
   return next({ context: authContext });
 });
 
