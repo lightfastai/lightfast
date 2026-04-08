@@ -66,6 +66,12 @@ export {
   type OrgIntegration,
   orgIntegrations,
 } from "./org-integrations";
+// Org repo indexes (.lightfast repo indexing)
+export {
+  type InsertOrgRepoIndex,
+  type OrgRepoIndex,
+  orgRepoIndexes,
+} from "./org-repo-indexes";
 export {
   type InsertOrgUserActivity,
   type OrgUserActivity,

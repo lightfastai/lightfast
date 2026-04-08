@@ -18,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
+import { platformModifierKey } from "@repo/ui/lib/platform";
 import { cn } from "@repo/ui/lib/utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
@@ -156,7 +157,7 @@ export function AppSidebar() {
       : "organization";
 
   return (
-    <Sidebar className="group/sidebar" collapsible="none" variant="inset">
+    <Sidebar className="group/sidebar" collapsible="offcanvas" variant="inset">
       {/* Org component header - only show if in org context */}
       {orgSlug && (
         <div className="flex h-14 items-center justify-between px-4">
@@ -167,15 +168,23 @@ export function AppSidebar() {
             organizations={organizations}
           />
           <Button
-            asChild
             className="h-6 w-6 rounded-full text-muted-foreground"
+            onClick={() => {
+              document.dispatchEvent(
+                new KeyboardEvent("keydown", {
+                  key: "k",
+                  ...platformModifierKey(),
+                  bubbles: true,
+                  cancelable: true,
+                  composed: true,
+                })
+              );
+            }}
             size="icon"
-            title="Search"
+            title="Search (⌘K)"
             variant="ghost"
           >
-            <Link href={{ pathname: `/${orgSlug}/search` }} prefetch={true}>
-              <Search className="size-3.5" />
-            </Link>
+            <Search className="size-3.5" />
           </Button>
         </div>
       )}

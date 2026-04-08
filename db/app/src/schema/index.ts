@@ -37,6 +37,7 @@ export {
   type InsertOrgEventEntity,
   type InsertOrgIngestLog,
   type InsertOrgIntegration,
+  type InsertOrgRepoIndex,
   type InsertOrgUserActivity,
   type InsertOrgWorkflowRun,
   type OrgApiKey,
@@ -46,6 +47,7 @@ export {
   type OrgEventEntity,
   type OrgIngestLog,
   type OrgIntegration,
+  type OrgRepoIndex,
   type OrgUserActivity,
   type OrgWorkflowRun,
   orgApiKeys,
@@ -56,6 +58,7 @@ export {
   orgEvents,
   orgIngestLogs,
   orgIntegrations,
+  orgRepoIndexes,
   orgUserActivities,
   orgWorkflowRuns,
 } from "./tables";

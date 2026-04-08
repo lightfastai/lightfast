@@ -29,6 +29,7 @@ export default async function SettingsLayout({
             items={[
               { name: "General", path: "" },
               { name: "API Keys", path: "api-keys" },
+              { name: "Repo Index", path: "repo-index" },
             ]}
           />
 

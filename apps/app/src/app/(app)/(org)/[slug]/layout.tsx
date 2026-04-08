@@ -1,5 +1,9 @@
 import { HydrateClient } from "@repo/app-trpc/server";
-import { SidebarInset, SidebarProvider } from "@repo/ui/components/ui/sidebar";
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@repo/ui/components/ui/sidebar";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { Loader2 } from "lucide-react";
@@ -7,6 +11,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AppHeader } from "~/components/app-header";
 import { AppSidebar } from "~/components/app-sidebar";
+import { CommandPalette } from "~/components/command-palette";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 
@@ -51,17 +56,19 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
       <OrgPageErrorBoundary orgSlug={slug}>
         <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-sidebar">
           <AppSidebar />
+          <CommandPalette />
           {/* Right column: header (outside inset) + inset content below */}
           {/* pr-2 pb-2 creates the gap for the inset card — margin on SidebarInset doesn't work because w-full overflows */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden pr-2 pb-2">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:pr-2 lg:pb-2">
             {/* h-14 header — same visual level as sidebar's team-switcher row */}
-            <div className="flex h-14 shrink-0 items-center justify-end px-4">
+            <div className="flex h-14 shrink-0 items-center px-4">
+              <SidebarTrigger className="lg:hidden" />
               <Suspense fallback={<div className="h-8 w-8" />}>
                 <AppHeader />
               </Suspense>
             </div>
             {/* Inset panel: 100% - h-14, rounded card floating in bg-sidebar */}
-            <SidebarInset className="overflow-hidden rounded-xl shadow-sm">
+            <SidebarInset className="overflow-hidden lg:rounded-xl lg:shadow-sm">
               <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
             </SidebarInset>
           </div>

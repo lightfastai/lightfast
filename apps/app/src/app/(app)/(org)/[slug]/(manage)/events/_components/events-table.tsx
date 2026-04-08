@@ -28,7 +28,7 @@ import {
   AGE_PRESET_OPTIONS,
   dateRangeFromPreset,
   SOURCE_TYPE_OPTIONS,
-} from "~/components/search-constants";
+} from "~/lib/filter-constants";
 import { EventRow } from "./event-row";
 import { useEventFilters } from "./use-event-filters";
 

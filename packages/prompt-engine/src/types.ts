@@ -61,6 +61,8 @@ export interface UserContext {
   org?: {
     name: string;
     description?: string;
+    /** Cached content from an indexed repo (day 1: .lightfast README.md) */
+    repoIndex?: string;
     repos: string[];
     integrations: string[];
   };

@@ -5,6 +5,7 @@ import { createStore, requestStore } from "./context";
 import { log } from "./log/next";
 
 interface RequestResult<T> {
+  ctx: RequestContext;
   durationMs: number;
   journal: readonly JournalEntry[];
   result: T;
@@ -22,7 +23,7 @@ export async function withRequestContext<T>(
   const start = Date.now();
   const result = await requestStore.run(store, fn);
   const durationMs = Date.now() - start;
-  return { result, journal: store.journal, durationMs };
+  return { result, journal: store.journal, durationMs, ctx: store.ctx };
 }
 
 /**

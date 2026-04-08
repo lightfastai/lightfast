@@ -12,6 +12,7 @@
  * 8. healthCheck - 5m cron: probe all active installations
  * 9. tokenRefresh - 5m cron: refresh expiring OAuth tokens
  * 10. deliveryRecovery - 5m cron: sweep stuck webhook deliveries
+ * 11. platformRepoIndexSync - Syncs indexed repo content (README.md) on push events
  */
 
 import { serve } from "inngest/next";
@@ -25,6 +26,7 @@ import { platformEntityEmbed } from "./functions/platform-entity-embed";
 import { platformEntityGraph } from "./functions/platform-entity-graph";
 import { platformEntityWorker } from "./functions/platform-entity-worker";
 import { platformEventStore } from "./functions/platform-event-store";
+import { platformRepoIndexSync } from "./functions/platform-repo-index-sync";
 import { tokenRefresh } from "./functions/token-refresh";
 
 export { inngest };
@@ -39,6 +41,7 @@ export {
   healthCheck,
   tokenRefresh,
   deliveryRecovery,
+  platformRepoIndexSync,
 };
 
 /**
@@ -58,6 +61,7 @@ export function createInngestRouteContext() {
       healthCheck,
       tokenRefresh,
       deliveryRecovery,
+      platformRepoIndexSync,
     ],
     servePath: "/api/inngest",
   });

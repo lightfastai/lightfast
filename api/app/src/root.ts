@@ -11,6 +11,7 @@ import { entitiesRouter } from "./router/org/entities";
 import { eventsRouter } from "./router/org/events";
 import { jobsRouter } from "./router/org/jobs";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
+import { repoIndexRouter } from "./router/org/repo-index";
 import { accountRouter } from "./router/user/account";
 import { organizationRouter } from "./router/user/organization";
 import { createTRPCRouter } from "./trpc";
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   events: eventsRouter,
   jobs: jobsRouter,
   orgApiKeys: orgApiKeysRouter,
+  repoIndex: repoIndexRouter,
 });
 
 export type AppRouter = typeof appRouter;

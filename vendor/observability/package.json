@@ -44,6 +44,10 @@
     "./inngest": {
       "types": "./src/inngest.ts",
       "default": "./src/inngest.ts"
+    },
+    "./orpc": {
+      "types": "./src/orpc.ts",
+      "default": "./src/orpc.ts"
     }
   },
   "license": "MIT",
@@ -58,6 +62,7 @@
   },
   "dependencies": {
     "@logtail/next": "^0.3.1",
+    "@orpc/client": "^1.13.0",
     "@repo/lib": "workspace:*",
     "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",

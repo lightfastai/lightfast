@@ -96,21 +96,6 @@ function SidebarProvider({
     return isMobile ? setOpenMobile((open) => !open) : setOpen((open) => !open);
   }, [isMobile, setOpen, setOpenMobile]);
 
-  // Adds a keyboard shortcut to toggle the sidebar.
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (
-        event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-        (event.metaKey || event.ctrlKey)
-      ) {
-        event.preventDefault();
-        toggleSidebar();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
 
   // We add a state so that we can do data-state="expanded" or "collapsed".
   // This makes it easier to style the sidebar with Tailwind classes.
@@ -240,13 +225,17 @@ function Sidebar({
           side === "left"
             ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
             : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-          // Adjust the padding for floating and inset variants.
-          variant === "floating" || variant === "inset"
+          // Adjust the padding for floating variant.
+          variant === "floating"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
-          variant === "floating" || variant === "inset"
+            : variant === "inset"
+              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
+              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          variant === "floating"
             ? "group-data-[collapsible=header-only]:w-[calc(var(--sidebar-width-header-only)+(--spacing(4))+2px)]"
-            : "group-data-[collapsible=header-only]:w-(--sidebar-width-header-only) group-data-[side=left]:border-r group-data-[side=right]:border-l",
+            : variant === "inset"
+              ? "group-data-[collapsible=header-only]:w-[calc(var(--sidebar-width-header-only)+(--spacing(4))+2px)]"
+              : "group-data-[collapsible=header-only]:w-(--sidebar-width-header-only) group-data-[side=left]:border-r group-data-[side=right]:border-l",
           className,
         )}
         {...props}
@@ -276,14 +265,14 @@ function SidebarTrigger({
       data-slot="sidebar-trigger"
       variant="ghost"
       size="icon"
-      className={cn("size-8", className)}
+      className={cn("h-6 w-6 rounded-xl", className)}
       onClick={(event) => {
         onClick?.(event);
         toggleSidebar();
       }}
       {...props}
     >
-      <PanelLeftIcon />
+      <PanelLeftIcon className="size-3.5 text-muted-foreground" />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

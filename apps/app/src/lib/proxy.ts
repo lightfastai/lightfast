@@ -20,8 +20,7 @@ function extractPathParams(path: string): string[] {
 }
 
 export async function proxySearchLogic(
-  auth: AuthContext,
-  requestId: string
+  auth: AuthContext
 ): Promise<ProxySearchResponse> {
   const installations = await db
     .select()
@@ -87,7 +86,6 @@ export async function proxySearchLogic(
           });
       } catch (err) {
         log.warn("Failed to resolve proxy resources, falling back to IDs", {
-          requestId,
           provider: inst.provider,
           error: parseError(err),
         });
@@ -147,18 +145,12 @@ export async function proxySearchLogic(
     (c): c is NonNullable<typeof c> => c !== null
   );
 
-  log.info("Proxy search complete", {
-    requestId,
-    connectionCount: filtered.length,
-  });
-
   return { connections: filtered };
 }
 
 export async function proxyCallLogic(
   auth: AuthContext,
-  request: ProxyCall,
-  requestId: string
+  request: ProxyCall
 ): Promise<ProxyCallResponse> {
   // Parse action → provider + endpointId
   const dotIndex = request.action.indexOf(".");
@@ -271,13 +263,6 @@ export async function proxyCallLogic(
     pathParams: Object.keys(pathParams).length > 0 ? pathParams : undefined,
     queryParams,
     body,
-  });
-
-  log.info("Proxy call complete", {
-    requestId,
-    action: request.action,
-    installationId,
-    status: result.status,
   });
 
   return {

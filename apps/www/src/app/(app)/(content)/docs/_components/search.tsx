@@ -2,6 +2,7 @@
 
 import * as Popover from "@radix-ui/react-popover";
 import { Input } from "@repo/ui/components/ui/input";
+import { isPlatformModifier } from "@repo/ui/lib/platform";
 import { cn } from "@repo/ui/lib/utils";
 import {
   AlignLeft,
@@ -95,7 +96,7 @@ export function Search() {
       if (e.isComposing) {
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if (isPlatformModifier(e) && e.key === "k") {
         e.preventDefault();
         inputRef.current?.focus();
         dispatch({ type: "OPEN" });

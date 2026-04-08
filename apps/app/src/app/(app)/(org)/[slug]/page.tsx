@@ -6,7 +6,9 @@ export default async function OrgHomePage() {
   return (
     <Suspense fallback={<AskLightfastSkeleton />}>
       <HydrateClient>
-        <AskLightfast />
+        <div className="h-full w-full px-6">
+          <AskLightfast />
+        </div>
       </HydrateClient>
     </Suspense>
   );
