@@ -8,6 +8,7 @@ import {
   SheetPrimitive,
   SheetTrigger,
 } from "@repo/ui/components/ui/sheet";
+import { platformModifierKey } from "@repo/ui/lib/platform";
 import { cn } from "@repo/ui/lib/utils";
 import type * as PageTree from "fumadocs-core/page-tree";
 import { Menu, Search as SearchIcon, X } from "lucide-react";
@@ -42,7 +43,7 @@ export function DocsMobileNav({
     document.dispatchEvent(
       new KeyboardEvent("keydown", {
         key: "k",
-        metaKey: true,
+        ...platformModifierKey(),
         bubbles: true,
         cancelable: true,
         composed: true,

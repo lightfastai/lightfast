@@ -9,8 +9,8 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
-  CommandSeparator,
 } from "@repo/ui/components/ui/command";
+import { isPlatformModifier } from "@repo/ui/lib/platform";
 import {
   Activity,
   Boxes,
@@ -19,6 +19,7 @@ import {
   MessageSquare,
   Plug,
   Settings,
+  X,
 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -94,7 +95,7 @@ export function CommandPalette() {
       if (e.isComposing) {
         return;
       }
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      if (isPlatformModifier(e) && e.key === "k") {
         e.preventDefault();
         setOpen((prev) => !prev);
       }
@@ -176,9 +177,18 @@ export function CommandPalette() {
       <CommandInput
         onValueChange={setQuery}
         placeholder="Search entities or jump to..."
+        showSearchIcon={false}
         value={query}
-      />
-      <CommandList className="max-h-[min(400px,50vh)]">
+      >
+        <button
+          className="flex shrink-0 items-center justify-center rounded-full p-1 hover:bg-accent"
+          onClick={() => setOpen(false)}
+          type="button"
+        >
+          <X className="size-4 text-muted-foreground" />
+        </button>
+      </CommandInput>
+      <CommandList className="max-h-[320px]">
         <CommandEmpty>No results found.</CommandEmpty>
 
         {filteredNav.length > 0 && (
@@ -188,7 +198,7 @@ export function CommandPalette() {
                 key={item.href}
                 onSelect={() => handleSelect(item.href)}
               >
-                <item.icon className="mr-2 size-4" />
+                <item.icon className="size-3.5" />
                 {item.title}
               </CommandItem>
             ))}
@@ -197,7 +207,6 @@ export function CommandPalette() {
 
         {query.length >= 2 && (
           <>
-            <CommandSeparator />
             <CommandGroup heading="Entities">
               {isLoading && results.length === 0 && (
                 <div className="flex items-center justify-center py-6">

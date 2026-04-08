@@ -18,6 +18,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
+import { platformModifierKey } from "@repo/ui/lib/platform";
 import { cn } from "@repo/ui/lib/utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
@@ -156,7 +157,7 @@ export function AppSidebar() {
       : "organization";
 
   return (
-    <Sidebar className="group/sidebar" collapsible="none" variant="inset">
+    <Sidebar className="group/sidebar" collapsible="offcanvas" variant="inset">
       {/* Org component header - only show if in org context */}
       {orgSlug && (
         <div className="flex h-14 items-center justify-between px-4">
@@ -172,7 +173,7 @@ export function AppSidebar() {
               document.dispatchEvent(
                 new KeyboardEvent("keydown", {
                   key: "k",
-                  metaKey: true,
+                  ...platformModifierKey(),
                   bubbles: true,
                   cancelable: true,
                   composed: true,
