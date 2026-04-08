@@ -1,0 +1,5 @@
+/implement_plan @thoughts/shared/plans/2026-04-07-dotlightfast-context-indexing.md phase3
+
+---
+
+yes proceed
