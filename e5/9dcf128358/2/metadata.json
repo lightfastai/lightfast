@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e59dcf128358",
+  "session_id": "4f748467-d7b7-4b04-9fd2-e41b06634b88",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T10:59:45.270853Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    ".claude/skills/lightfast-db/SKILL.md",
+    ".claude/skills/lightfast-db/command/lightfast-db.md",
+    ".claude/skills/lightfast-inngest/SKILL.md",
+    ".claude/skills/lightfast-inngest/command/lightfast-inngest.md",
+    ".mcp.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "07054791f3c6",
+  "checkpoint_transcript_start": 278,
+  "transcript_lines_at_start": 278,
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 3321,
+    "cache_read_tokens": 225183,
+    "output_tokens": 1749,
+    "api_call_count": 2
+  },
+  "session_metrics": {
+    "turn_count": 9
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T10:59:44.881741Z",
+    "agent_lines": 222,
+    "agent_removed": 0,
+    "human_added": 26,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 248,
+    "total_lines_changed": 248,
+    "agent_percentage": 89.51612903225806,
+    "metric_version": 2
+  }
+}
