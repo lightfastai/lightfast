@@ -74,3 +74,7 @@ added @apps/www/public/images/changelog/v010-hero.png before adding this figure 
 ---
 
 do we need to update next.config for alloweed images?
+
+---
+
+but you used lightfast.ai meaning that will fail.
