@@ -1,0 +1,15 @@
+/create_plan the @apps/app/src/components/command-palette.tsx and @packages/ui/src/components/ui/command.tsx has a keyboard shortcut bug.
+
+basically only cmd + k should open the command dialog.
+
+right now the movement is meant to be ctrl + j/k.
+
+ctrl k closes it too.
+
+note this is for mac.
+
+ensure you solution fixes the root problem and fixes it for both windows + maco
+
+---
+
+run /create_plan
