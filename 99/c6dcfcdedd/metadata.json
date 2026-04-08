@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "99c6dcfcdedd",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "pnpm-lock.yaml",
+    "vendor/observability/package.json",
+    "vendor/observability/src/context.ts",
+    "vendor/observability/src/orpc.ts",
+    "vendor/observability/src/request.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/99/c6dcfcdedd/0/metadata.json",
+      "transcript": "/99/c6dcfcdedd/0/full.jsonl",
+      "content_hash": "/99/c6dcfcdedd/0/content_hash.txt",
+      "prompt": "/99/c6dcfcdedd/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 58,
+    "cache_creation_tokens": 87093,
+    "cache_read_tokens": 2754275,
+    "output_tokens": 11803,
+    "api_call_count": 50
+  }
+}
