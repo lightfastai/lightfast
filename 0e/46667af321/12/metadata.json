@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "0e46667af321",
+  "session_id": "e2acd781-c502-4749-ad14-7a77deb00146",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-08T04:30:24.024102Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "api/app/src/root.ts",
+    "api/platform/src/inngest/index.ts",
+    "apps/app/src/ai/prompts/providers.ts",
+    "apps/app/src/ai/prompts/system-prompt.ts",
+    "apps/app/src/app/(api)/v1/answer/[...v]/route.ts",
+    "apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/layout.tsx",
+    "apps/app/src/components/settings-sidebar.tsx",
+    "db/app/src/migrations/0063_cooing_ultimatum.sql",
+    "db/app/src/migrations/meta/0063_snapshot.json",
+    "db/app/src/migrations/meta/_journal.json",
+    "db/app/src/schema/index.ts",
+    "db/app/src/schema/tables/index.ts",
+    "db/app/src/schema/tables/org-repo-indexes.ts",
+    "packages/prompt-engine/src/types.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "36da0f041286",
+  "checkpoint_transcript_start": 72,
+  "transcript_lines_at_start": 72,
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 72599,
+    "cache_read_tokens": 70748,
+    "output_tokens": 1841,
+    "api_call_count": 2
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-08T04:30:23.846667Z",
+    "agent_lines": 2892,
+    "agent_removed": 3,
+    "human_added": 664,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3556,
+    "total_lines_changed": 3559,
+    "agent_percentage": 81.34307389716213,
+    "metric_version": 2
+  }
+}
