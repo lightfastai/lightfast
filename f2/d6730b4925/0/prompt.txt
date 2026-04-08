@@ -1,0 +1,7 @@
+/research_codebase i noticed that for some reason in production we seem to be accepting github push events and it returns with 200 even though lightfast doesnt accept github push. afaik, we dont use github push for anything so im curious why that event was acccepted by our @apps/platform/ layer.
+
+note: right now we HAVE finally implement the githubpush with dot lightfast (repo index, see git status), but again, it deosnt make sense to me how some of events that clearly should havefailed pre-this new upgrade (in local) and having 200 status.
+
+---
+
+so all good?
