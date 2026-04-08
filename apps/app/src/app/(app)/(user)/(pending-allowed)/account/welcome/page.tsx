@@ -1,5 +1,4 @@
-import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
-import { auth } from "@vendor/clerk/server";
+import { auth, getUserOrgMemberships } from "@vendor/clerk/server";
 import { redirect } from "next/navigation";
 
 export const dynamic = "force-dynamic";
@@ -22,7 +21,7 @@ export default async function WelcomePage() {
   }
 
   if (userId) {
-    const memberships = await getCachedUserOrgMemberships(userId);
+    const memberships = await getUserOrgMemberships(userId);
     const first = memberships.find((m) => m.organizationSlug);
     if (first?.organizationSlug) {
       redirect(`/${first.organizationSlug}`);

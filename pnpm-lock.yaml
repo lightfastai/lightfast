@@ -209,9 +209,6 @@ importers:
       '@repo/app-api-key':
         specifier: workspace:*
         version: link:../../packages/app-api-key
-      '@repo/app-clerk-cache':
-        specifier: workspace:*
-        version: link:../../packages/app-clerk-cache
       '@repo/app-octokit-github':
         specifier: workspace:*
         version: link:../../packages/app-octokit-github
@@ -221,9 +218,6 @@ importers:
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
-      '@repo/app-vercel':
-        specifier: workspace:^
-        version: link:../../packages/app-vercel
       '@repo/lib':
         specifier: workspace:^
         version: link:../../packages/lib
@@ -418,9 +412,6 @@ importers:
       '@repo/app-api-key':
         specifier: workspace:*
         version: link:../../packages/app-api-key
-      '@repo/app-clerk-cache':
-        specifier: workspace:*
-        version: link:../../packages/app-clerk-cache
       '@repo/app-embed':
         specifier: workspace:*
         version: link:../../packages/app-embed
@@ -445,9 +436,6 @@ importers:
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
-      '@repo/app-vercel':
-        specifier: workspace:^
-        version: link:../../packages/app-vercel
       '@repo/lib':
         specifier: workspace:*
         version: link:../../packages/lib
@@ -1194,28 +1182,6 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  packages/app-clerk-cache:
-    dependencies:
-      '@vendor/clerk':
-        specifier: workspace:*
-        version: link:../../vendor/clerk
-      '@vendor/observability':
-        specifier: workspace:*
-        version: link:../../vendor/observability
-      '@vendor/upstash':
-        specifier: workspace:*
-        version: link:../../vendor/upstash
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
   packages/app-config:
     dependencies:
       '@repo/app-validation':
@@ -1576,25 +1542,6 @@ importers:
       '@repo/app-reserved-names':
         specifier: workspace:^
         version: link:../app-reserved-names
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
-  packages/app-vercel:
-    dependencies:
-      '@t3-oss/env-nextjs':
-        specifier: 'catalog:'
-        version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       zod:
         specifier: 'catalog:'
         version: 4.3.6

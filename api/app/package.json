@@ -39,11 +39,9 @@
   "dependencies": {
     "@db/app": "workspace:*",
     "@repo/app-api-key": "workspace:*",
-    "@repo/app-clerk-cache": "workspace:*",
     "@repo/app-octokit-github": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "@repo/app-validation": "workspace:^",
-    "@repo/app-vercel": "workspace:^",
     "@repo/lib": "workspace:^",
     "@repo/platform-trpc": "workspace:*",
     "@sentry/core": "catalog:",
