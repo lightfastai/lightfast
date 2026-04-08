@@ -1,0 +1,11 @@
+/create_plan @thoughts/shared/research/2026-04-08-changelog-feature-audit.md 
+
+note: backfil not live yet.
+ignore cli. we havent did anything for that.
+omit v1/answer, dont focus on command palette, neural pipeline, .lightfast. focus more on neural pipeline and what it enables.
+
+---
+
+1. yes
+2. yes
+3. yes
