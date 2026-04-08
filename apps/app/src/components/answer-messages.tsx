@@ -77,7 +77,7 @@ function UserMessage({ message }: { message: UIMessage }) {
         <Message className="justify-end" from="user">
           <MessageContent variant="chat">
             {textContent.trim().length > 0 && (
-              <p className="whitespace-pre-wrap py-1 text-sm">{textContent}</p>
+              <p className="whitespace-pre-wrap text-base">{textContent}</p>
             )}
           </MessageContent>
         </Message>

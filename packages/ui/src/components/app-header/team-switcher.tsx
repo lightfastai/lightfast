@@ -102,7 +102,9 @@ export function TeamSwitcher({
                 {displayInitials}
               </AvatarFallback>
             </Avatar>
-            <span className="truncate font-medium text-sm">{displayText}</span>
+            <span className="truncate font-medium text-base">
+              {displayText}
+            </span>
           </Link>
         ) : (
           <div className="flex min-w-0 items-center gap-2">
@@ -111,7 +113,9 @@ export function TeamSwitcher({
                 {displayInitials}
               </AvatarFallback>
             </Avatar>
-            <span className="truncate font-medium text-sm">{displayText}</span>
+            <span className="truncate font-medium text-base">
+              {displayText}
+            </span>
           </div>
         )}
 

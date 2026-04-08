@@ -162,7 +162,7 @@ export function AnswerInterface({ clerkOrgId }: AnswerInterfaceProps) {
             {/* Description text */}
             <div className="answer-container px-1.5 md:px-3 lg:px-5 xl:px-8">
               <p className="mt-2 text-center text-muted-foreground text-xs">
-                AI may make mistakes. Use with discretion.
+                Lightfast may make mistakes. Use with discretion.
               </p>
             </div>
           </div>

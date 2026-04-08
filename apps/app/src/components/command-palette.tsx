@@ -206,32 +206,30 @@ export function CommandPalette() {
         )}
 
         {query.length >= 2 && (
-          <>
-            <CommandGroup heading="Entities">
-              {isLoading && results.length === 0 && (
-                <div className="flex items-center justify-center py-6">
-                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+          <CommandGroup heading="Entities">
+            {isLoading && results.length === 0 && (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="size-4 animate-spin text-muted-foreground" />
+              </div>
+            )}
+            {results.map((result) => (
+              <CommandItem
+                key={result.id}
+                onSelect={() =>
+                  handleSelect(`/${orgSlug}/entities/${result.id}`)
+                }
+              >
+                <div className="flex flex-col gap-0.5">
+                  <span className="text-sm">{result.title}</span>
+                  {result.snippet && (
+                    <span className="line-clamp-1 text-muted-foreground text-xs">
+                      {result.snippet}
+                    </span>
+                  )}
                 </div>
-              )}
-              {results.map((result) => (
-                <CommandItem
-                  key={result.id}
-                  onSelect={() =>
-                    handleSelect(`/${orgSlug}/entities/${result.id}`)
-                  }
-                >
-                  <div className="flex flex-col gap-0.5">
-                    <span className="text-sm">{result.title}</span>
-                    {result.snippet && (
-                      <span className="line-clamp-1 text-muted-foreground text-xs">
-                        {result.snippet}
-                      </span>
-                    )}
-                  </div>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          </>
+              </CommandItem>
+            ))}
+          </CommandGroup>
         )}
       </CommandList>
     </CommandDialog>
