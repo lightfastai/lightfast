@@ -1,0 +1,203 @@
+---
+title: "Privacy Policy"
+description: "Lightfast Privacy Policy — how we collect, use, and protect your data when you use the Lightfast platform and services."
+keywords: ["lightfast privacy policy", "data protection", "privacy", "ai platform privacy", "australian privacy"]
+canonicalUrl: "https://lightfast.ai/legal/privacy"
+ogTitle: "Privacy Policy — Lightfast"
+ogDescription: "How Lightfast collects, uses, and protects your data. Read our full privacy policy."
+ogImage: "https://lightfast.ai/images/og-default.png"
+noindex: false
+nofollow: false
+updatedAt: "2026-04-08T00:00:00Z"
+effectiveAt: "2026-04-08T00:00:00Z"
+---
+
+# Privacy Policy
+
+**Lightfast Pty Ltd** ABN 35 690 889 984 ("**Lightfast**", "**we**", "**us**", "**our**") operates the Lightfast platform at [lightfast.ai](https://lightfast.ai).
+
+This Privacy Policy explains how we collect, use, disclose, and protect personal information in accordance with the _Privacy Act 1988_ (Cth) and the Australian Privacy Principles (APPs). It applies to all users of the Lightfast platform, website, and related services (the "**Service**").
+
+By using the Service, you acknowledge that you have read and understood this Privacy Policy. If you do not agree, please do not use the Service.
+
+---
+
+## 1. Information We Collect
+
+### 1.1 Account Information
+
+When you create an account, we collect personal information through our authentication provider, Clerk, including:
+
+- Email address
+- Full name
+- Profile photograph (if provided)
+- Password or single sign-on (SSO) credentials
+
+This information is managed by Clerk and is not stored in Lightfast's own databases. We reference your account via unique identifiers only.
+
+### 1.2 Organisation Information
+
+When you create or join an organisation on Lightfast, we collect:
+
+- Organisation name and identifier
+- Team membership and roles
+- Billing and subscription information (processed by Clerk)
+
+### 1.3 Connected Tool Data
+
+When you connect third-party tools (such as GitHub, Vercel, Linear, or Sentry) to Lightfast, we collect and process:
+
+- **OAuth tokens**: Access and refresh tokens required to communicate with your connected tools. These tokens are encrypted at rest using AES-256-GCM.
+- **Webhook events**: Events sent from your connected tools, including pull requests, deployments, issues, errors, and other engineering activity.
+- **Extracted entities**: Structured data derived from events, such as engineer names, project identifiers, endpoints, and their relationships.
+- **Repository content**: If you enable repository indexing (e.g., a `.lightfast` repository), we cache specific file content to provide AI-powered context.
+
+### 1.4 Usage and Analytics Data
+
+We automatically collect:
+
+- **Page views and navigation data** via PostHog, including URLs visited and anonymous usage identifiers.
+- **Error and performance data** via Sentry, including error traces, browser information, and session replays (with all text masked and media blocked).
+- **User agent strings** and request metadata recorded in activity audit logs.
+- **IP addresses** recorded when API keys are used.
+
+### 1.5 Information You Provide
+
+- Feedback submitted through our in-app feedback tool (which may include screenshots).
+- Communications you send to us, such as support requests or emails.
+
+---
+
+## 2. How We Use Your Information
+
+We use the information we collect to:
+
+- **Provide the Service**: Ingest events from your connected tools, build a knowledge graph of your engineering activity, and enable semantic search and AI-powered reasoning.
+- **Authenticate and authorise**: Verify your identity and manage access to your organisation's data.
+- **Maintain and improve**: Monitor performance, diagnose errors, and improve the Service.
+- **Communicate**: Send transactional emails (e.g., invitations, notifications) via our email provider.
+- **Analyse usage**: Understand how the Service is used to inform product decisions.
+- **Ensure security**: Detect and prevent fraud, abuse, and security incidents. Maintain audit logs of user activities.
+- **Comply with law**: Meet our legal obligations, including under the _Privacy Act 1988_ (Cth).
+
+---
+
+## 3. How We Share Your Information
+
+We do not sell your personal information. We share information only in the following circumstances:
+
+### 3.1 Sub-Processors
+
+We use third-party service providers ("sub-processors") to operate the Service. These providers process data on our behalf and are contractually required to protect your information:
+
+| Provider | Purpose | Data Processed | Location |
+|---|---|---|---|
+| Clerk | Authentication and user management | Account details, sessions, billing | United States |
+| Sentry | Error tracking and session replay | Error data, masked session replays | United States |
+| PostHog | Product analytics | Page views, anonymous usage data | United States / EU |
+| Pinecone | Vector search and embeddings | Event content embeddings | United States |
+| Upstash | Caching and real-time data | Cached organisation data | United States / EU |
+| Resend | Transactional email | Email addresses, email content | United States |
+| Vercel | Hosting and deployment | Server logs, request data | United States |
+| OpenAI | AI model processing | Event content for AI analysis | United States |
+| Inngest | Background job orchestration | Event payloads, workflow state | United States |
+
+### 3.2 Connected Tool Providers
+
+When you connect tools to Lightfast, we exchange data with those providers (GitHub, Vercel, Linear, Sentry, Apollo) as necessary to provide the Service. The data shared is governed by each provider's own privacy policy and the OAuth scopes you authorise.
+
+### 3.3 Legal Requirements
+
+We may disclose information if required by law, regulation, legal process, or governmental request, or to protect the rights, property, or safety of Lightfast, our users, or the public.
+
+### 3.4 Business Transfers
+
+In the event of a merger, acquisition, or sale of assets, your information may be transferred as part of that transaction. We will notify you of any such change.
+
+---
+
+## 4. Cross-Border Data Transfers
+
+Lightfast is an Australian company, but our sub-processors are primarily located in the United States and the European Union. In accordance with APP 8, before disclosing personal information to an overseas recipient, we take reasonable steps to ensure that the recipient handles your information consistently with the APPs. This includes entering into contractual arrangements that require equivalent protections.
+
+---
+
+## 5. Data Security
+
+We implement appropriate technical and organisational measures to protect your information, including:
+
+- **Encryption at rest**: OAuth tokens are encrypted using AES-256-GCM. API keys are stored as SHA-256 hashes.
+- **Encryption in transit**: All data transmitted between your browser and our servers uses TLS encryption.
+- **Access controls**: Organisation-scoped data isolation ensures that your data is accessible only to authorised members of your organisation.
+- **Session replay masking**: Sentry session replays mask all text and block all media to minimise data exposure.
+- **Token scrubbing**: Authentication tokens are redacted from diagnostic breadcrumbs and logs.
+- **Audit logging**: User activities are logged for security monitoring and compliance.
+
+No method of transmission or storage is completely secure. If we become aware of a data breach that is likely to result in serious harm, we will notify affected individuals and the Office of the Australian Information Commissioner (OAIC) in accordance with the Notifiable Data Breaches scheme.
+
+---
+
+## 6. Data Retention
+
+We retain your information for as long as your account is active or as needed to provide the Service. Specifically:
+
+- **Account data**: Retained while your account exists. Managed by Clerk and deleted upon account closure.
+- **Organisation data**: Retained while the organisation is active. Events, entities, and related data are retained for the lifetime of the organisation.
+- **OAuth tokens**: Retained while the associated tool connection is active. Deleted when a connection is revoked (cascade delete).
+- **Audit logs**: Retained for compliance and security purposes.
+- **Analytics data**: Retained in accordance with our analytics providers' retention policies.
+
+You may request deletion of your personal information at any time (see Section 8).
+
+---
+
+## 7. Cookies and Tracking Technologies
+
+We use the following tracking technologies:
+
+- **Essential cookies**: Set by Clerk for authentication and session management. These are necessary for the Service to function.
+- **Analytics cookies**: Set by PostHog for product analytics. These help us understand how the Service is used.
+- **Error tracking**: Sentry uses cookies and local storage for error reporting and session replay.
+
+---
+
+## 8. Your Rights
+
+Under the Australian Privacy Principles, you have the right to:
+
+- **Access**: Request access to the personal information we hold about you.
+- **Correction**: Request correction of inaccurate or incomplete personal information.
+- **Complaint**: Lodge a complaint if you believe we have breached the APPs.
+- **Deletion**: Request deletion of your personal information, subject to our legal obligations.
+
+To exercise any of these rights, please contact us at **support@lightfast.ai**.
+
+If you are not satisfied with our response, you may lodge a complaint with the [Office of the Australian Information Commissioner (OAIC)](https://www.oaic.gov.au/).
+
+---
+
+## 9. Third-Party Links
+
+The Service may contain links to third-party websites or services that are not operated by us. We are not responsible for the privacy practices of those third parties. We encourage you to review their privacy policies.
+
+---
+
+## 10. Children's Privacy
+
+The Service is not directed to individuals under the age of 16. We do not knowingly collect personal information from children. If we become aware that we have collected information from a child, we will take steps to delete it.
+
+---
+
+## 11. Changes to This Policy
+
+We may update this Privacy Policy from time to time. We will notify you of material changes by updating the "Last updated" date at the top of this page. Your continued use of the Service after any changes constitutes acceptance of the updated policy.
+
+---
+
+## 12. Contact Us
+
+If you have questions about this Privacy Policy or our data practices, please contact us:
+
+**Lightfast Pty Ltd**
+Email: [support@lightfast.ai](mailto:support@lightfast.ai)
+Website: [lightfast.ai](https://lightfast.ai)

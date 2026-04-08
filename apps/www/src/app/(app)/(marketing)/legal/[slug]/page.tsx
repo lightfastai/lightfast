@@ -1,5 +1,6 @@
 import { JsonLd } from "@vendor/seo/json-ld";
 import { notFound } from "next/navigation";
+import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
 import { getLegalPage, getLegalPages } from "~/app/(app)/(content)/_lib/source";
 import { emitLegalSeo } from "~/lib/seo-bundle";
 import type { LegalUrl } from "~/lib/url-types";
@@ -39,7 +40,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
   return (
     <>
       <JsonLd code={jsonLd} />
-      <div className="grid grid-cols-1 items-start gap-8 py-8 sm:py-12 md:grid-cols-12 lg:py-16">
+      <div className="grid grid-cols-1 items-start gap-8 py-8 sm:py-12 md:grid-cols-12 lg:py-32">
         <div className="md:col-span-2">
           {page.data.updatedAt && (
             <div className="text-muted-foreground text-sm">
@@ -56,7 +57,7 @@ export default async function LegalPage({ params }: LegalPageProps) {
         </div>
         <article className="space-y-8 md:col-span-8 md:col-start-3 lg:col-span-6 lg:col-start-4">
           <div className="max-w-none">
-            <MDXContent />
+            <MDXContent components={mdxComponents} />
           </div>
         </article>
       </div>
