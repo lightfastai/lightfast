@@ -1,0 +1,13 @@
+/improve_plan @thoughts/shared/plans/2026-04-08-vercel-oauth-callback-redirect-fix.md
+
+---
+
+/implement_plan @thoughts/shared/plans/2026-04-08-vercel-oauth-callback-redirect-fix.md
+
+---
+
+perfect! run /commit
+
+---
+
+all the vercel stuff that was related t the vercel change
