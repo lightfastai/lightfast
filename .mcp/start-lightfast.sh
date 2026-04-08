@@ -14,5 +14,18 @@ if [[ -z "${LIGHTFAST_API_KEY:-}" ]]; then
   exit 1
 fi
 
-# Start the Lightfast MCP server
-exec npx -y @lightfastai/mcp --api-key "$LIGHTFAST_API_KEY" "$@"
+# Local dev mode: run the local build instead of the published npm package
+if [[ "${LIGHTFAST_MCP_LOCAL:-}" == "true" ]]; then
+  LOCAL_BUILD="$SCRIPT_DIR/../core/mcp/dist/index.mjs"
+  if [[ ! -f "$LOCAL_BUILD" ]]; then
+    echo "Local build not found at $LOCAL_BUILD" >&2
+    echo "Run: pnpm --filter @lightfastai/mcp build" >&2
+    exit 1
+  fi
+  export LIGHTFAST_BASE_URL="${LIGHTFAST_BASE_URL:-http://localhost:3024}"
+  exec node "$LOCAL_BUILD" "$@"
+fi
+
+# Production mode: use the published npm package
+# LIGHTFAST_API_KEY is already exported via set -a; the server reads process.env directly
+exec npx -y @lightfastai/mcp "$@"
