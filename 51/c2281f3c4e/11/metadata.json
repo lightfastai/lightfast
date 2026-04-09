@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "51c2281f3c4e",
+  "session_id": "fbc15cb5-e4a9-4162-a0b9-104f8213d142",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-09T08:19:57.323361Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "thoughts/shared/plans/2026-04-09-webhook-schemas.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "b3e5e68d882a",
+  "token_usage": {
+    "input_tokens": 1898,
+    "cache_creation_tokens": 74712,
+    "cache_read_tokens": 1391205,
+    "output_tokens": 22637,
+    "api_call_count": 24
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-09T08:19:56.978983Z",
+    "agent_lines": 537,
+    "agent_removed": 0,
+    "human_added": 4312,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 4849,
+    "total_lines_changed": 4849,
+    "agent_percentage": 11.074448339863888,
+    "metric_version": 2
+  }
+}

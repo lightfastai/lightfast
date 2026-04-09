@@ -1,0 +1,5 @@
+/improve_plan @thoughts/shared/plans/2026-04-09-github-org-binding.md
+
+---
+
+you can spike it, but how are you gonna test it without valid keys? are you thinking of using the lightfast-db skill
