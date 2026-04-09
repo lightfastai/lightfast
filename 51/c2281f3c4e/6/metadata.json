@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "51c2281f3c4e",
+  "session_id": "8b0491d2-8a9d-449d-ba72-5344d7870e1c",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-09T08:19:55.216003Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "packages/webhook-schemas/fixtures/github/installation.created.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.closed.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.labeled.json",
+    "packages/webhook-schemas/src/report.ts",
+    "packages/webhook-schemas/src/validate.ts",
+    "packages/webhook-schemas/fixtures/github/.gitkeep",
+    "packages/webhook-schemas/fixtures/github/installation.deleted.json",
+    "packages/webhook-schemas/fixtures/github/installation.new_permissions_accepted.json",
+    "packages/webhook-schemas/tsconfig.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.edited.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.opened.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.synchronize.json",
+    "packages/webhook-schemas/fixtures/github/push.json",
+    "packages/webhook-schemas/package.json",
+    "packages/webhook-schemas/src/capture.ts",
+    "pnpm-lock.yaml",
+    "packages/webhook-schemas/fixtures/vercel/.gitkeep",
+    "thoughts/shared/plans/2026-04-09-webhook-schemas.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "69ec15a146a2",
+  "token_usage": {
+    "input_tokens": 9,
+    "cache_creation_tokens": 24988,
+    "cache_read_tokens": 159800,
+    "output_tokens": 2145,
+    "api_call_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-09T08:19:55.148884Z",
+    "agent_lines": 4849,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 4849,
+    "total_lines_changed": 4849,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
