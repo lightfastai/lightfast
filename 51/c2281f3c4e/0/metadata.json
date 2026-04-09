@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "51c2281f3c4e",
+  "session_id": "1946e1a9-206d-4459-a4dd-c3e696959c4f",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-09T08:19:43.824928Z",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "packages/webhook-schemas/fixtures/github/.gitkeep",
+    "packages/webhook-schemas/fixtures/github/installation.created.json",
+    "packages/webhook-schemas/fixtures/github/installation.deleted.json",
+    "packages/webhook-schemas/fixtures/github/installation.new_permissions_accepted.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.closed.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.edited.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.labeled.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.opened.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.synchronize.json",
+    "packages/webhook-schemas/fixtures/github/push.json",
+    "packages/webhook-schemas/fixtures/vercel/.gitkeep",
+    "packages/webhook-schemas/package.json",
+    "packages/webhook-schemas/src/capture.ts",
+    "packages/webhook-schemas/src/report.ts",
+    "packages/webhook-schemas/src/validate.ts",
+    "packages/webhook-schemas/tsconfig.json",
+    "pnpm-lock.yaml",
+    "thoughts/shared/plans/2026-04-09-webhook-schemas.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "6aad7e5e0ba6",
+  "token_usage": {
+    "input_tokens": 618,
+    "cache_creation_tokens": 132422,
+    "cache_read_tokens": 4154086,
+    "output_tokens": 21342,
+    "api_call_count": 71
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-09T08:19:43.378349Z",
+    "agent_lines": 4817,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 12,
+    "human_removed": 8,
+    "total_committed": 4829,
+    "total_lines_changed": 4837,
+    "agent_percentage": 99.5865205706016,
+    "metric_version": 2
+  }
+}

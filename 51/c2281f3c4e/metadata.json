@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "51c2281f3c4e",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "packages/webhook-schemas/fixtures/github/.gitkeep",
+    "packages/webhook-schemas/fixtures/github/installation.created.json",
+    "packages/webhook-schemas/fixtures/github/installation.deleted.json",
+    "packages/webhook-schemas/fixtures/github/installation.new_permissions_accepted.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.closed.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.edited.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.labeled.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.opened.json",
+    "packages/webhook-schemas/fixtures/github/pull_request.synchronize.json",
+    "packages/webhook-schemas/fixtures/github/push.json",
+    "packages/webhook-schemas/fixtures/vercel/.gitkeep",
+    "packages/webhook-schemas/package.json",
+    "packages/webhook-schemas/src/capture.ts",
+    "packages/webhook-schemas/src/report.ts",
+    "packages/webhook-schemas/src/validate.ts",
+    "packages/webhook-schemas/tsconfig.json",
+    "pnpm-lock.yaml",
+    "thoughts/shared/plans/2026-04-09-webhook-schemas.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/51/c2281f3c4e/0/metadata.json",
+      "transcript": "/51/c2281f3c4e/0/full.jsonl",
+      "content_hash": "/51/c2281f3c4e/0/content_hash.txt",
+      "prompt": "/51/c2281f3c4e/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 618,
+    "cache_creation_tokens": 132422,
+    "cache_read_tokens": 4154086,
+    "output_tokens": 21342,
+    "api_call_count": 71
+  }
+}
