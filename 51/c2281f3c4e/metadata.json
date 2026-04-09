@@ -3,7 +3,7 @@
   "checkpoint_id": "51c2281f3c4e",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 19,
+  "checkpoints_count": 21,
   "files_touched": [
     "packages/webhook-schemas/fixtures/github/.gitkeep",
     "packages/webhook-schemas/fixtures/github/installation.created.json",
@@ -72,13 +72,19 @@
       "transcript": "/51/c2281f3c4e/7/full.jsonl",
       "content_hash": "/51/c2281f3c4e/7/content_hash.txt",
       "prompt": "/51/c2281f3c4e/7/prompt.txt"
+    },
+    {
+      "metadata": "/51/c2281f3c4e/8/metadata.json",
+      "transcript": "/51/c2281f3c4e/8/full.jsonl",
+      "content_hash": "/51/c2281f3c4e/8/content_hash.txt",
+      "prompt": "/51/c2281f3c4e/8/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 15466,
-    "cache_creation_tokens": 984163,
-    "cache_read_tokens": 15201988,
-    "output_tokens": 113020,
-    "api_call_count": 238
+    "input_tokens": 16820,
+    "cache_creation_tokens": 1054367,
+    "cache_read_tokens": 15718479,
+    "output_tokens": 128583,
+    "api_call_count": 248
   }
 }

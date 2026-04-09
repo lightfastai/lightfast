@@ -1,0 +1,17 @@
+/research_codebase i want to rework our @apps/app/src/app/(app)/(org)/[slug]/page.tsx and @apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/page.tsx 
+
+basically i have realised that there is a better more visually appealing design that modelles after apple's Mail ui.
+
+basically, im just thinking that we have a column in explore spanning some width that shows the list of events. and on the right it's the ask ai search system.
+
+do you understand what im talking about?
+
+---
+
+1. hmm, i think it should maintain all of these views tbh. both entities + events tbh. (jobs can stay where it is).
+2. for now navigate to seperate page.
+3. no delete.
+
+ote: the mailbox sidebar thing is not going to replace the AppSidebar. its inside the content itself.
+
+so its appsidebar, mailbox sidebrar ask lightfast search.
