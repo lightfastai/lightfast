@@ -1,0 +1,11 @@
+/create_plan @thoughts/shared/research/2026-04-09-vercel-deployment-github-pr-linking-gaps.md let's focus on the new repo. note: the current repo structure imo is just way to complicated. there needs to be a simpler repo structure, reconsider and re-evalaute it and design the repo.
+
+---
+
+1. for now just github + vercel.
+2. capture.ts pulling from existing db is smart. and we can setup the db connection.
+3. maintain in this repo for now.
+
+---
+
+makes sense. note: all data can come from db. is this the approach?
