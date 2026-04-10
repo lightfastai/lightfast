@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "dd120cd9b21f",
+  "session_id": "0cb1079d-6b56-4a0a-9a4a-d05894f9f650",
   "strategy": "manual-commit",
+  "created_at": "2026-04-10T08:57:29.131052Z",
   "branch": "main",
-  "checkpoints_count": 5,
+  "checkpoints_count": 4,
   "files_touched": [
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-detail-view.tsx",
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-event-row.tsx",
@@ -89,25 +91,29 @@
     "apps/www/src/lib/content-schemas.ts",
     "thoughts/shared/plans/2026-04-10-changelog-improvements-accordion.md"
   ],
-  "sessions": [
-    {
-      "metadata": "/dd/120cd9b21f/0/metadata.json",
-      "transcript": "/dd/120cd9b21f/0/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/0/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/0/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/1/metadata.json",
-      "transcript": "/dd/120cd9b21f/1/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/1/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "ec450d85776b",
   "token_usage": {
-    "input_tokens": 640,
-    "cache_creation_tokens": 180019,
-    "cache_read_tokens": 5733799,
-    "output_tokens": 28154,
-    "api_call_count": 110
+    "input_tokens": 94,
+    "cache_creation_tokens": 56807,
+    "cache_read_tokens": 2151294,
+    "output_tokens": 10903,
+    "api_call_count": 47
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-10T08:57:28.805007Z",
+    "agent_lines": 0,
+    "agent_removed": 1,
+    "human_added": 290,
+    "human_modified": 4026,
+    "human_removed": 0,
+    "total_committed": 406,
+    "total_lines_changed": 4317,
+    "agent_percentage": 0.02316423442205235,
+    "metric_version": 2
   }
 }

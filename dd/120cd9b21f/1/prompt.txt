@@ -1,0 +1,13 @@
+/implement_plan @thoughts/shared/plans/2026-04-10-changelog-improvements-accordion.md
+
+---
+
+hmm maybe wrap it in border-border/50
+
+---
+
+rounded-lg
+
+---
+
+/commit
