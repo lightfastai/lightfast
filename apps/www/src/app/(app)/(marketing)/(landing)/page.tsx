@@ -17,6 +17,7 @@ import { ChangelogPreview } from "~/app/(app)/_components/changelog-preview";
 import { FAQSection, faqs } from "~/app/(app)/_components/faq-section";
 import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
 import { IntegrationShowcase } from "~/app/(app)/_components/integration-showcase";
+import { ProductDemo } from "~/app/(app)/_components/product-demo";
 import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
 
 const benefits = [
@@ -226,15 +227,9 @@ export default function HomePage() {
               <Image
                 alt="Data flows through the Lightfast engine"
                 className="object-contain object-[65%_25%]"
-                // fetchPriority explicit because Next.js <Image priority> with fill
-                // does not reliably inject fetchpriority="high" on the <img> tag —
-                // Lighthouse flags this as missing on the LCP element.
                 fetchPriority="high"
                 fill
                 priority
-                // Scope to mobile only — on desktop (hidden) this would preload
-                // a 2160px+ image for a display:none element. The desktop poster
-                // is covered by the <link rel="preload"> above.
                 sizes="(max-width: 767px) 150vw, 1px"
                 src="/images/landing-hero-poster.webp"
               />
@@ -253,9 +248,6 @@ export default function HomePage() {
                 poster="/images/landing-hero-poster.webp"
                 preload="none"
               >
-                {/* media query prevents the browser loading the video source on
-                    mobile — autoPlay overrides preload="none" for display:none
-                    elements, causing the full webm to download on mobile. */}
                 <source
                   media="(min-width: 768px)"
                   src="/images/landing-hero.webm"
@@ -265,7 +257,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Vignette overlay — fades hero media into bg along bottom, bottom-left, and right */}
+          {/* Vignette overlay */}
           <div
             className="pointer-events-none absolute inset-0 z-10"
             style={{
@@ -292,7 +284,7 @@ export default function HomePage() {
                 <Button asChild size="sm">
                   <MicrofrontendLink href="/early-access" prefetch={true}>
                     Join Early Access
-                    <span className="ml-2">→</span>
+                    <span className="ml-2">&rarr;</span>
                   </MicrofrontendLink>
                 </Button>
               </div>
@@ -308,11 +300,28 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
         {/* Integrations Section */}
         <section className="w-full py-16">
           <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
             <IntegrationShowcase />
+          </div>
+        </section>
+        {/* Product Demo Section — bottom 33% clipped */}
+        <section className="w-full overflow-hidden border-b border-t border-border/50 bg-accent/50 pt-24 md:pt-32">
+          <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+            <div className="mb-12 max-w-lg md:mb-8">
+              <h2 className="mb-4 font-medium font-pp text-2xl md:text-3xl">
+                One place for everything that happens
+              </h2>
+              <p className="text-base text-muted-foreground leading-relaxed">
+                Events from GitHub, Sentry, Linear, and Vercel stream into a
+                single feed. Search across your entire stack by meaning — every
+                answer traces back to the source.
+              </p>
+            </div>
+            <div className="h-[360px] overflow-hidden md:h-[388px] lg:h-[475px]">
+              <ProductDemo />
+            </div>
           </div>
         </section>
 
@@ -341,7 +350,7 @@ export default function HomePage() {
                     const Icon = benefit.icon;
                     return (
                       <div
-                        className="rounded-md border border-border p-8"
+                        className="rounded-md border border-border/50 p-8"
                         key={benefit.title}
                       >
                         <div className="mb-12">
