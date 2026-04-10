@@ -1,0 +1,13 @@
+/implement_plan @thoughts/shared/plans/2026-04-10-bind-page-rework-conditional-layout.md
+
+---
+
+proceed
+
+---
+
+yeaps all working. run clean up
+
+---
+
+questio did we end up defering the /bind page?
