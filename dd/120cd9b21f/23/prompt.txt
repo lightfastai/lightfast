@@ -1,0 +1,11 @@
+/create_plan @thoughts/shared/research/2026-04-09-changelog-ogimage-featuredimage-rework.md faetured image
+
+---
+
+1. a)
+2. a) 
+3. c)
+
+---
+
+yes
