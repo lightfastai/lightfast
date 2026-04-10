@@ -233,6 +233,12 @@
       "transcript": "/dd/120cd9b21f/23/full.jsonl",
       "content_hash": "/dd/120cd9b21f/23/content_hash.txt",
       "prompt": "/dd/120cd9b21f/23/prompt.txt"
+    },
+    {
+      "metadata": "/dd/120cd9b21f/24/metadata.json",
+      "transcript": "/dd/120cd9b21f/24/full.jsonl",
+      "content_hash": "/dd/120cd9b21f/24/content_hash.txt",
+      "prompt": "/dd/120cd9b21f/24/prompt.txt"
     }
   ],
   "token_usage": {
