@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "dd120cd9b21f",
+  "session_id": "1aa9bbf7-b736-42a2-a8b9-547ef9a9c6fa",
   "strategy": "manual-commit",
+  "created_at": "2026-04-10T08:57:33.252708Z",
   "branch": "main",
-  "checkpoints_count": 11,
+  "checkpoints_count": 4,
   "files_touched": [
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-detail-view.tsx",
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-event-row.tsx",
@@ -89,37 +91,29 @@
     "apps/www/src/lib/content-schemas.ts",
     "thoughts/shared/plans/2026-04-10-changelog-improvements-accordion.md"
   ],
-  "sessions": [
-    {
-      "metadata": "/dd/120cd9b21f/0/metadata.json",
-      "transcript": "/dd/120cd9b21f/0/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/0/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/0/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/1/metadata.json",
-      "transcript": "/dd/120cd9b21f/1/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/1/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/1/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/2/metadata.json",
-      "transcript": "/dd/120cd9b21f/2/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/2/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/2/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/3/metadata.json",
-      "transcript": "/dd/120cd9b21f/3/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/3/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/3/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "195acd4c05d7",
   "token_usage": {
-    "input_tokens": 7080,
-    "cache_creation_tokens": 367304,
-    "cache_read_tokens": 11347895,
-    "output_tokens": 72817,
-    "api_call_count": 197
+    "input_tokens": 6368,
+    "cache_creation_tokens": 80934,
+    "cache_read_tokens": 2300560,
+    "output_tokens": 26035,
+    "api_call_count": 36
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-10T08:57:32.687371Z",
+    "agent_lines": 4337,
+    "agent_removed": 3951,
+    "human_added": 0,
+    "human_modified": 51,
+    "human_removed": 25,
+    "total_committed": 4356,
+    "total_lines_changed": 8364,
+    "agent_percentage": 99.09134385461502,
+    "metric_version": 2
   }
 }
