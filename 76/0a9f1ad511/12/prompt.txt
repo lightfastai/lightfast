@@ -1,0 +1,5 @@
+/implement_plan @thoughts/shared/plans/2026-04-09-apple-mail-split-pane-org-home.md
+
+---
+
+whats phase 2?
