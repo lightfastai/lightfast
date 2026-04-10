@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "44e6ec8f9df7",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx",
+    "apps/www/src/app/(app)/(marketing)/(content)/changelog/page.tsx",
+    "apps/www/src/content/changelog/2026-03-26-initial.mdx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/44/e6ec8f9df7/0/metadata.json",
+      "transcript": "/44/e6ec8f9df7/0/full.jsonl",
+      "content_hash": "/44/e6ec8f9df7/0/content_hash.txt",
+      "prompt": "/44/e6ec8f9df7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 546,
+    "cache_creation_tokens": 123212,
+    "cache_read_tokens": 3582505,
+    "output_tokens": 17251,
+    "api_call_count": 63
+  }
+}

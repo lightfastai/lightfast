@@ -1,0 +1,31 @@
+/implement_plan @thoughts/shared/plans/2026-04-09-landing-page-rework-product-demo-hero.md
+
+---
+
+proceed next
+
+---
+
+good start. do the clean up now. and then we'll discuss reworking the ui
+
+---
+
+okay now let's clean up.
+
+firstly, the hero text with logo and cta, move back to the left. how it was before.
+
+---
+
+nice. now move the changelog badge the same same level as the join early access but on the right most.
+
+let's also ensure that the newly created lightfast app display spans the same width as the hero text.
+
+---
+
+remove the shadow stuff from the component. and also let's remove the docs and api reference + user menu.
+
+basically we'll still have the inset, but just without the that top ehader on the inset.
+
+---
+
+drop "entities" sidebar item. and drop the entities event tab group. just straight into entities basically
