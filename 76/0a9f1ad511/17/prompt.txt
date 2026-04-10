@@ -1,0 +1,11 @@
+remove playwright from @.mcp.json 
+
+also move inngest started to .mcp/start-inngest too.
+
+---
+
+inngest mcp failed. can you investigate
+
+---
+
+all good
