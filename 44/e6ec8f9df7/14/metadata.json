@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "44e6ec8f9df7",
+  "session_id": "8b897c12-cdd2-4a64-aa3b-d9639cb641be",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-10T06:43:28.872278Z",
+  "branch": "main",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx",
+    "apps/www/src/app/(app)/(marketing)/(content)/changelog/page.tsx",
+    "apps/www/src/content/changelog/2026-03-26-initial.mdx",
+    "thoughts/shared/plans/2026-04-10-featuredimage-ogimage-separation.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "77075375f4cb",
+  "checkpoint_transcript_start": 71,
+  "transcript_lines_at_start": 71,
+  "token_usage": {
+    "input_tokens": 81,
+    "cache_creation_tokens": 106497,
+    "cache_read_tokens": 5545120,
+    "output_tokens": 14377,
+    "api_call_count": 63
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-10T06:43:28.512671Z",
+    "agent_lines": 659,
+    "agent_removed": 55,
+    "human_added": 148,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 807,
+    "total_lines_changed": 911,
+    "agent_percentage": 78.37541163556531,
+    "metric_version": 2
+  }
+}
