@@ -1,1 +1,6 @@
 /create_plan @thoughts/shared/research/2026-04-10-lightfast-github-app-management-skill-design.md
+
+---
+
+for now just continue with this github for now. 2. here.
+3. no need to care abotu that.
