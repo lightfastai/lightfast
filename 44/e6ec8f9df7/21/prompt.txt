@@ -1,0 +1,3 @@
+let's work on @apps/www/src/content/changelog/2026-03-26-initial.mdx s featured image through @packages/app-remotion/ 
+
+run the app for me and create the featured image scaffold. we will start fine tuning it.
