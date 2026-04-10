@@ -1,0 +1,48 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "760a9f1ad511",
+  "session_id": "9f04ccd4-221c-4e96-98f9-9a1eb6f9a5f8",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-10T07:20:19.753864Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/www/src/content/changelog/2026-03-26-initial.mdx",
+    "packages/app-remotion/src/compositions/changelog-v010-events/index.ts",
+    "apps/www/public/images/changelog/v010-events.webp",
+    "apps/www/src/app/(app)/_components/product-demo-mailbox.tsx",
+    "apps/www/src/app/(app)/_components/product-demo.tsx",
+    "packages/app-remotion/src/Root.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-events/changelog-v010-events.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-featured/changelog-v010-featured.tsx",
+    "apps/www/public/images/changelog/v010-events.png",
+    "apps/www/public/images/changelog/v010-featured.png",
+    "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
+    "apps/www/public/images/changelog/v010-featured.webp",
+    "packages/app-remotion/src/compositions/changelog-v010-featured/index.ts",
+    "packages/app-remotion/src/compositions/landing-hero/sections/stream-events.tsx",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "a3bfd031593b",
+  "token_usage": {
+    "input_tokens": 4,
+    "cache_creation_tokens": 11257,
+    "cache_read_tokens": 34217,
+    "output_tokens": 875,
+    "api_call_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-10T07:20:19.693079Z",
+    "agent_lines": 565,
+    "agent_removed": 22,
+    "human_added": 0,
+    "human_modified": 3,
+    "human_removed": 0,
+    "total_committed": 568,
+    "total_lines_changed": 590,
+    "agent_percentage": 99.49152542372882,
+    "metric_version": 2
+  }
+}

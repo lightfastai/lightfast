@@ -1,0 +1,21 @@
+/create_plan ive decided that in @apps/app/src/app/(app)/(org)/[slug]/layout.tsx instead of doing a bind if check and returning this here , we should maintain an onboard flow for our org.
+
+so this becomes a redirect to that page.
+
+as sch, we need to rethink our design.
+
+firstly: we need to fundamentally restructure our org layout structure.
+
+there are a couple things that should "always" be shown to the user when it org routes.
+
+the @packages/ui/src/components/app-header/team-switcher.tsx + @apps/app/src/components/app-header.tsx 
+
+right now, we have accidentally coupled the team-switcher in @apps/app/src/components/app-sidebar.tsx which we need to extract out and place on the same level app header. so that becomes 1 component.
+
+and then it's the sidebar + the inset.
+
+we need to maintain the same logic as we have right now tho. in mobile and smaller the team swticher is not seen and inside the app-siderbar.
+
+im not sure f we really need a complete restructure of the layout of this is possible in the current structure. re-design this.
+
+use AskUserQuestions tool to undrstand more

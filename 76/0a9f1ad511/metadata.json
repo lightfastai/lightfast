@@ -5,11 +5,19 @@
   "branch": "main",
   "checkpoints_count": 8,
   "files_touched": [
+    "apps/www/public/images/changelog/v010-events.png",
+    "apps/www/public/images/changelog/v010-events.webp",
+    "apps/www/public/images/changelog/v010-featured.png",
+    "apps/www/public/images/changelog/v010-featured.webp",
     "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
     "apps/www/src/app/(app)/_components/product-demo-mailbox.tsx",
     "apps/www/src/app/(app)/_components/product-demo.tsx",
     "apps/www/src/content/changelog/2026-03-26-initial.mdx",
     "packages/app-remotion/src/Root.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-events/changelog-v010-events.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-events/index.ts",
+    "packages/app-remotion/src/compositions/changelog-v010-featured/changelog-v010-featured.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-featured/index.ts",
     "packages/app-remotion/src/compositions/landing-hero/sections/stream-events.tsx",
     "packages/app-remotion/src/manifest.ts"
   ],
@@ -79,13 +87,19 @@
       "transcript": "/76/0a9f1ad511/10/full.jsonl",
       "content_hash": "/76/0a9f1ad511/10/content_hash.txt",
       "prompt": "/76/0a9f1ad511/10/prompt.txt"
+    },
+    {
+      "metadata": "/76/0a9f1ad511/11/metadata.json",
+      "transcript": "/76/0a9f1ad511/11/full.jsonl",
+      "content_hash": "/76/0a9f1ad511/11/content_hash.txt",
+      "prompt": "/76/0a9f1ad511/11/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 7540,
-    "cache_creation_tokens": 400360,
-    "cache_read_tokens": 10498603,
-    "output_tokens": 80489,
-    "api_call_count": 192
+    "input_tokens": 7544,
+    "cache_creation_tokens": 411617,
+    "cache_read_tokens": 10532820,
+    "output_tokens": 81364,
+    "api_call_count": 194
   }
 }
