@@ -4,6 +4,7 @@ const AuthorSchema = z.object({
   name: z.string().min(1),
   url: z.url(),
   twitterHandle: z.string().min(1),
+  jobTitle: z.string().min(1).optional(),
 });
 
 const FaqItemSchema = z.object({
@@ -55,6 +56,7 @@ export const ChangelogEntrySchema = ContentPageSchema.extend({
   version: z.string().min(1),
   type: z.enum(["feature", "improvement", "fix", "breaking"]),
   tldr: z.string().min(20).max(300),
+  improvements: z.array(z.string().min(1)).optional(),
 });
 
 export const LegalPageSchema = BasePageSchema.extend({

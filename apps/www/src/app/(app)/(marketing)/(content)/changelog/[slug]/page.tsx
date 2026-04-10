@@ -2,8 +2,16 @@ import { Button } from "@repo/ui/components/ui/button";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata, Route } from "next";
+import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+
+const ChangelogImprovements = nextDynamic<{ items: string[] }>(() =>
+  import("../_components/changelog-improvements").then((m) => ({
+    default: m.ChangelogImprovements,
+  }))
+);
+
 import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
 import {
   getChangelogPage,
@@ -54,12 +62,13 @@ export default async function ChangelogEntryPage({ params }: Props) {
     tldr,
     featuredImage,
     description,
+    improvements,
   } = page.data;
 
   const allPages = getChangelogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
-      new Date(a.data.publishedAt).getTime(),
+      new Date(a.data.publishedAt).getTime()
   );
   const currentIndex = allPages.findIndex((p) => p.slugs[0] === slug);
   const prevEntry =
@@ -128,6 +137,12 @@ export default async function ChangelogEntryPage({ params }: Props) {
         <div className="mt-8 max-w-none">
           <MDXContent components={mdxComponents} />
         </div>
+
+        {improvements && improvements.length > 0 && (
+          <div className="mt-12 rounded-lg border border-border/50 px-6">
+            <ChangelogImprovements items={improvements} />
+          </div>
+        )}
 
         {(prevEntry ?? nextEntry) && (
           <nav
