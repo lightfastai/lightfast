@@ -1,0 +1,51 @@
+we are working on @apps/www/src/app/(app)/_components/product-demo.tsx 
+
+firstly, go through @packages/app-remotion/src/compositions/landing-hero/ compoisition and notce how we "structure" each item that comes in. let's replace the current entities in this page with the exact same data.
+
+---
+
+ohh this looking nice. now, let's introduce the same button hover states in the sidebar as seen in @packages/ui/src/components/ui/sidebar.tsx 
+
+let's make the chevron up down in team name to also have the same css as the search.
+
+remove the help icon on buttom left.
+
+---
+
+okay ive decided to take a direction with this now. basically we want to maintai the product demo however, notice in https://www.braintrust.dev/
+
+we basically have this section where it's a carousel showing the different functionalities.
+
+we instead want just 1 section, use bg-accent as background w-full from 0vw to 100vw similar to @apps/www/src/app/(app)/_components/waitlist-cta.tsx 
+
+and we place this product demo component inside it. we revert changes in hero section back to what it was originally.
+
+---
+
+okay nice great start!
+
+now, let's overflow hidden and shorten the height of container so that last 33% of the product demo is cut off
+
+---
+
+let's now place the integrations above this component
+
+---
+
+okay nice. add new heading to production demo in landing page basically describing the faeture. on the left
+
+---
+
+font-pp for the title
+
+---
+
+cool. lastly, need to rework he explore your infrastructure chat prompt input. taller. more like @apps/app/src/components/answer-interface.tsx implementation.
+
+---
+
+slightly lower down.
+
+---
+
+/commit
