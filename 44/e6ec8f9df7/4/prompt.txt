@@ -1,0 +1,35 @@
+/research_codebase can you check how to "design" a lightfast-github app connection for managing our github app connection for our provider settings. 
+
+basically we need to check either browser-use vs agent-browser (vercel) on which provides more fine-tuned configurations of these things.
+
+as such: we only want certain uris e.g https://github.com/organizations/lightfastai/settings/apps/lightfastai-dev to be accessible for now.
+
+and my different org that i own to uninstall the installation if need be. e.g https://github.com/organizations/lightfast-8aRQ0QCx/settings/installations/122585005
+
+im curious what our @.claude/skills/lightfast-sdk/ eequivalent skill would look like for manage github app.
+
+note: we will eventually introduce skill to manage vercel, sentry, linear.
+
+---
+
+1. no i refuse to allow domain-based allowlist. are you 100% sure they dont allow url-only allowlist?
+
+---
+
+nah, no need a custom mcp wrapper. let's do what we can with what we have.
+
+---
+
+nah, no need a custom mcp wrapper. let's do what we can with what we have. i dont like playwright. i rather use agent-browser. no mcp layer basically. cleaner.
+
+---
+
+do 1.
+
+---
+
+hmm, i definitely do not want to have any mcps.
+
+---
+
+yes
