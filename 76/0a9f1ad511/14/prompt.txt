@@ -35,3 +35,11 @@ okay it's not hero, it's featured image. secondly lets use our bg-card color for
 ---
 
 update the initial mdx
+
+---
+
+/commit
+
+---
+
+yes
