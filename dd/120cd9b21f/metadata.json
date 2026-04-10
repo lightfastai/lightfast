@@ -209,6 +209,12 @@
       "transcript": "/dd/120cd9b21f/19/full.jsonl",
       "content_hash": "/dd/120cd9b21f/19/content_hash.txt",
       "prompt": "/dd/120cd9b21f/19/prompt.txt"
+    },
+    {
+      "metadata": "/dd/120cd9b21f/20/metadata.json",
+      "transcript": "/dd/120cd9b21f/20/full.jsonl",
+      "content_hash": "/dd/120cd9b21f/20/content_hash.txt",
+      "prompt": "/dd/120cd9b21f/20/prompt.txt"
     }
   ],
   "token_usage": {
