@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "760a9f1ad511",
+  "session_id": "bbd4ee44-f3d6-4230-a7ab-cece95c8971c",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-10T07:20:24.21882Z",
+  "branch": "main",
+  "checkpoints_count": 8,
+  "files_touched": [
+    "apps/www/public/images/changelog/v010-events.png",
+    "apps/www/public/images/changelog/v010-events.webp",
+    "apps/www/public/images/changelog/v010-featured.png",
+    "apps/www/public/images/changelog/v010-featured.webp",
+    "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
+    "apps/www/src/content/changelog/2026-03-26-initial.mdx",
+    "packages/app-remotion/src/Root.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-events/changelog-v010-events.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-events/index.ts",
+    "packages/app-remotion/src/compositions/changelog-v010-featured/changelog-v010-featured.tsx",
+    "packages/app-remotion/src/compositions/changelog-v010-featured/index.ts",
+    "packages/app-remotion/src/compositions/landing-hero/sections/stream-events.tsx",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "b299ff571bf2",
+  "checkpoint_transcript_start": 38,
+  "transcript_lines_at_start": 38,
+  "token_usage": {
+    "input_tokens": 60,
+    "cache_creation_tokens": 41076,
+    "cache_read_tokens": 2513836,
+    "output_tokens": 15184,
+    "api_call_count": 45
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-10T07:20:23.870467Z",
+    "agent_lines": 312,
+    "agent_removed": 19,
+    "human_added": 239,
+    "human_modified": 9,
+    "human_removed": 0,
+    "total_committed": 560,
+    "total_lines_changed": 579,
+    "agent_percentage": 57.167530224525045,
+    "metric_version": 2
+  }
+}

@@ -1,0 +1,37 @@
+let's work on @apps/www/src/content/changelog/2026-03-26-initial.mdx s featured image through @packages/app-remotion/ 
+
+run the app for me and create the featured image scaffold. we will start fine tuning it.
+
+---
+
+nope, for v1. i want to design it based on @src/compositions/landing-hero/'s event stream.
+
+we show 4 of them.  thats it.
+
+---
+
+a couple things here: the vercel event api@prod-us-east-1 is not a real vercel pattern. choose better naming for that.
+
+for both the landing hero + this.
+
+secondly, let's also change the color for linear to monochrome like the rest of the icons.
+
+---
+
+okay ive decided that this image is going to be the events image in @../../apps/www/src/content/changelog/2026-03-26-initial.mdx instead of featured.
+
+featured image we'll be using the @src/compositions/blog-featured-duo/ instead. create replica of that.
+
+secondly, ensure the aspect ratio of all these changelog are 16:9. thats what our @../../apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx accepts.
+
+---
+
+generate these 2.
+
+---
+
+okay it's not hero, it's featured image. secondly lets use our bg-card color for the background of both of these.
+
+---
+
+update the initial mdx
