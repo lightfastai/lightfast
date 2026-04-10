@@ -1,0 +1,33 @@
+i want to rework the hero/first 100vh of @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx 
+
+firstly comment out the gif.
+
+secondly, move the hero text building the super.... + cta up more.
+
+---
+
+slightly lower
+
+---
+
+more
+
+---
+
+okay now, i want you to add a component that spans about 30vh below this wrapped in bg-accent border-border/50 rounded-md.
+
+this component will be a link to our first blog post. about lightfast and what we're building.
+
+for now scaffodl this component
+
+---
+
+note: this should be part of the first 100vh. in between changelog badge and the hero text.
+
+---
+
+i changed my mind. make this component a 16:9 component w-full so the height auto sizes based on the width.
+
+---
+
+make sure the content fits properly. right now overflow hapening.

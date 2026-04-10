@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "dd120cd9b21f",
+  "session_id": "c6e63871-035f-40ab-b000-40eebc101352",
   "strategy": "manual-commit",
+  "created_at": "2026-04-10T08:57:39.397282Z",
   "branch": "main",
-  "checkpoints_count": 27,
+  "checkpoints_count": 7,
   "files_touched": [
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-detail-view.tsx",
     "apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/[entityId]/_components/entity-event-row.tsx",
@@ -86,148 +88,31 @@
     "apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx",
     "apps/www/src/app/(app)/(marketing)/(content)/changelog/_components/changelog-improvements.tsx",
     "apps/www/src/content/changelog/2026-03-26-initial.mdx",
-    "apps/www/src/lib/content-schemas.ts",
-    "thoughts/shared/plans/2026-04-10-changelog-improvements-accordion.md"
+    "apps/www/src/lib/content-schemas.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/dd/120cd9b21f/0/metadata.json",
-      "transcript": "/dd/120cd9b21f/0/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/0/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/0/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/1/metadata.json",
-      "transcript": "/dd/120cd9b21f/1/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/1/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/1/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/2/metadata.json",
-      "transcript": "/dd/120cd9b21f/2/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/2/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/2/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/3/metadata.json",
-      "transcript": "/dd/120cd9b21f/3/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/3/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/3/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/4/metadata.json",
-      "transcript": "/dd/120cd9b21f/4/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/4/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/4/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/5/metadata.json",
-      "transcript": "/dd/120cd9b21f/5/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/5/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/5/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/6/metadata.json",
-      "transcript": "/dd/120cd9b21f/6/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/6/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/6/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/7/metadata.json",
-      "transcript": "/dd/120cd9b21f/7/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/7/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/7/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/8/metadata.json",
-      "transcript": "/dd/120cd9b21f/8/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/8/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/8/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/9/metadata.json",
-      "transcript": "/dd/120cd9b21f/9/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/9/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/9/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/10/metadata.json",
-      "transcript": "/dd/120cd9b21f/10/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/10/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/10/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/11/metadata.json",
-      "transcript": "/dd/120cd9b21f/11/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/11/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/11/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/12/metadata.json",
-      "transcript": "/dd/120cd9b21f/12/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/12/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/12/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/13/metadata.json",
-      "transcript": "/dd/120cd9b21f/13/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/13/content_hash.txt",
-      "prompt": ""
-    },
-    {
-      "metadata": "/dd/120cd9b21f/14/metadata.json",
-      "transcript": "/dd/120cd9b21f/14/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/14/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/14/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/15/metadata.json",
-      "transcript": "/dd/120cd9b21f/15/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/15/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/15/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/16/metadata.json",
-      "transcript": "/dd/120cd9b21f/16/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/16/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/16/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/17/metadata.json",
-      "transcript": "/dd/120cd9b21f/17/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/17/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/17/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/18/metadata.json",
-      "transcript": "/dd/120cd9b21f/18/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/18/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/18/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/19/metadata.json",
-      "transcript": "/dd/120cd9b21f/19/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/19/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/19/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/20/metadata.json",
-      "transcript": "/dd/120cd9b21f/20/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/20/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/20/prompt.txt"
-    },
-    {
-      "metadata": "/dd/120cd9b21f/21/metadata.json",
-      "transcript": "/dd/120cd9b21f/21/full.jsonl",
-      "content_hash": "/dd/120cd9b21f/21/content_hash.txt",
-      "prompt": "/dd/120cd9b21f/21/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "2bd9fb6e8dbe",
   "token_usage": {
-    "input_tokens": 14523,
-    "cache_creation_tokens": 1070213,
-    "cache_read_tokens": 33068855,
-    "output_tokens": 259936,
-    "api_call_count": 510
+    "input_tokens": 36,
+    "cache_creation_tokens": 24727,
+    "cache_read_tokens": 650131,
+    "output_tokens": 7289,
+    "api_call_count": 22
+  },
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-10T08:57:39.311107Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 325,
+    "human_modified": 4065,
+    "human_removed": 0,
+    "total_committed": 382,
+    "total_lines_changed": 4390,
+    "agent_percentage": 0,
+    "metric_version": 2
   }
 }
