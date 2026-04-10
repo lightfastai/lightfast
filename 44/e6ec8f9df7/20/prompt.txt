@@ -1,0 +1,23 @@
+/implement_plan @thoughts/shared/plans/2026-04-10-featuredimage-ogimage-separation.md
+
+---
+
+add featured imgae for @apps/www/src/content/changelog/2026-03-26-initial.mdx
+
+---
+
+great start.
+
+now, we want to rework @apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx so that this featured image doesnt follow the same constraints as the rest of the components. its aspect locked in 4:3 and it's like outwards by 16 px on both left and right. so kinda looks like it's prominent and in view.
+
+---
+
+ive made some changes. i used aspect video. what is the equivalent of aspect video in numbers?
+
+---
+
+yeap make changes
+
+---
+
+/commit
