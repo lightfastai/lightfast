@@ -1,0 +1,871 @@
+/research_codebase have a look at @apps/app/src/app/(app)/(user)/(pending-allowed)/account/teams/new/bind/ 
+
+basically we want to rework the UI for bind. given that bind if basically a post-create new org flow, i think it's best for us to introduce nuqs  http://localhost:3024/account/teams/new/bind?slug=lightfastai extract the org name and display more coherently. rigjht now, the ui is slightly confusing. it's like it shows Connect your Github Org ....
+
+but doesn't really tell you which org youre in. but then again, i also think this step cna slightly confusing.
+
+since @apps/app/src/app/(app)/(user)/(pending-allowed)/account/teams/new/ deos setActive.
+
+so im thinking whether binding should actually be in @apps/app/src/app/(app)/(org)/[slug]/(manage)/ 
+
+instead.
+
+as such, we could also manage like an onboarding flow of route groups for orgs.
+
+this way, when we decide to add invite team members, it just works immediately.
+
+this route isnot pending clerk users anymore.
+
+and then we can improvide the ux in @packages/ui/src/components/app-header/team-switcher.tsx where if user has not binded, we can show some kind of badge or something about not "setup full".
+
+---
+
+<task-notification>
+<task-id>ae1dca423d746ca46</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/9f01eb98-3363-44a2-ba34-3678db3074b1/tasks/ae1dca423d746ca46.output</output-file>
+<status>completed</status>
+<summary>Agent "Research nuqs usage in codebase" completed</summary>
+<result>Here is a complete picture of how `nuqs` is used across the codebase.
+
+---
+
+## Analysis: `nuqs` Usage in the Codebase
+
+### Overview
+
+`nuqs` (v2.8.9) is used in `apps/app` as the sole mechanism for type-safe URL search parameter management. It is applied in two distinct patterns: a **server-side loader/serializer pattern** for auth and early-access pages, and a **client-side `useQueryState(s)` hook pattern** for interactive filter UIs inside the authenticated app.
+
+---
+
+### Dependency
+
+- `apps/app/package.json:74` — `"nuqs": "^2.8.9"`
+
+---
+
+### Adapter Registration
+
+`apps/app/src/app/(app)/layout.tsx:4,13-24`
+
+The `NuqsAdapter` from `nuqs/adapters/next/app` wraps the entire authenticated app subtree. It is the outermost wrapper inside `AppLayout`, sitting above `TRPCReactProvider` and `HydrateClient`. This is required for the client-side hooks to function.
+
+---
+
+### Pattern 1: Server-Side Param Loaders (RSC pages)
+
+These use `nuqs/server` — no React hooks, no client bundle. The `createLoader` function produces a typed async parser that receives Next.js `searchParams` directly in async Server Components.
+
+**Auth search params** — `/apps/app/src/app/(auth)/_lib/search-params.ts`
+
+- Defines two param schemas: `signInSearchParams` and `signUpSearchParams`
+- Uses `parseAsString`, `parseAsStringLiteral` with a fixed union of step values (`"email" | "code" | "activate"` for sign-in; `"email" | "code"` for sign-up)
+- Exports `loadSignInSearchParams` and `loadSignUpSearchParams` (via `createLoader`) for RSC consumption
+- Exports `serializeSignInParams` and `serializeSignUpParams` (via `createSerializer`) typed as `Route&lt;string&gt;` for type-safe URL construction
+
+Consumed at:
+- `/apps/app/src/app/(auth)/sign-in/page.tsx:4,48` — imports `SearchParams` type from `nuqs/server`, calls `await loadSignInSearchParams(searchParams)` to destructure `step`, `email`, `error`, `token`, `errorCode`
+- `/apps/app/src/app/(auth)/sign-up/page.tsx:7,65` — same pattern for `loadSignUpSearchParams`
+
+**Early-access search params** — `/apps/app/src/app/(early-access)/_lib/search-params.ts`
+
+- Defines `earlyAccessSearchParams` with 8 params: form field values (`email`, `companySize`, `sources`), field-level errors (`emailError`, `sourcesError`, `companySizeError`), a general `error`, `isRateLimit` (boolean), and `success` (boolean)
+- Exports `loadEarlyAccessSearchParams` and `serializeEarlyAccessParams`
+
+Consumed at:
+- `/apps/app/src/app/(early-access)/early-access/page.tsx:4,46` — `await loadEarlyAccessSearchParams(searchParams)` to drive conditional rendering of error banners, success state, and pre-populating form fields
+
+---
+
+### Pattern 2: Client-Side `useQueryState(s)` Hooks (Client Components)
+
+These import from `"nuqs"` (not `"nuqs/server"`) and use React hooks that sync state bidirectionally with the URL.
+
+**`useJobFilters`** — `/apps/app/src/components/use-job-filters.ts:3,15-28`
+
+- Calls `useQueryState` twice independently — once for `"status"` key and once for `"search"` key
+- Both use `parseAsString.withDefault(initial).withOptions({ shallow: true })` (shallow routing, no full navigation)
+- Accepts `initialStatus` and `initialSearch` from server-provided `searchParams` for SSR hydration alignment
+- Returns `{ status, setStatus, search, setSearch }`
+
+**`useEventFilters`** — `/apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/use-event-filters.ts:4,14-23`
+
+- Uses `useQueryStates` (batch, single URL update) with three params: `source` (`parseAsStringEnum` over `["all", ...providerSlugSchema.options]`), `search` (`parseAsString`), `age` (`parseAsStringEnum` over age preset values)
+- Options: `{ history: "replace", shallow: true }`
+- Accepts `initialSource` prop for SSR default
+
+**`useEntityFilters`** — `/apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/_components/use-entity-filters.ts:4,10-20`
+
+- Uses `useQueryStates` with two params: `category` (`parseAsStringEnum` over `["all", ...entityCategorySchema.options]`) and `search` (`parseAsString`)
+- Options: `{ history: "replace", shallow: true }`
+
+**`InstalledSources` component** — `/apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/_components/installed-sources.tsx:39,60-73`
+
+- Inline `useQueryStates` (not extracted into a separate hook) with `search` and `status` (`parseAsStringEnum&lt;"all" | "active" | "inactive"&gt;`)
+- Options: `{ history: "push", shallow: true }` — the only usage that uses `"push"` instead of `"replace"`
+
+---
+
+### Summary of nuqs APIs in Use
+
+| API | Import path | Usage locations |
+|---|---|---|
+| `NuqsAdapter` | `nuqs/adapters/next/app` | `(app)/layout.tsx` |
+| `useQueryState` | `nuqs` | `use-job-filters.ts` |
+| `useQueryStates` | `nuqs` | `use-event-filters.ts`, `use-entity-filters.ts`, `installed-sources.tsx` |
+| `parseAsString` | `nuqs` / `nuqs/server` | All filter hooks + auth/early-access params |
+| `parseAsStringEnum` | `nuqs` | `use-event-filters.ts`, `use-entity-filters.ts`, `installed-sources.tsx` |
+| `parseAsStringLiteral` | `nuqs/server` | `(auth)/_lib/search-params.ts` |
+| `parseAsBoolean` | `nuqs/server` | `(early-access)/_lib/search-params.ts` |
+| `createLoader` | `nuqs/server` | `(auth)/_lib/search-params.ts`, `(early-access)/_lib/search-params.ts` |
+| `createSerializer` | `nuqs/server` | `(auth)/_lib/search-params.ts`, `(early-access)/_lib/search-params.ts` |
+| `SearchParams` (type) | `nuqs/server` | `sign-in/page.tsx`, `sign-up/page.tsx`, `early-access/page.tsx` |
+
+---
+
+### Key Files
+
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/layout.tsx` — adapter registration
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(auth)/_lib/search-params.ts` — auth param schemas + serializers
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(early-access)/_lib/search-params.ts` — early-access param schemas
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/components/use-job-filters.ts` — individual `useQueryState` pattern
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(org)/[slug]/(manage)/events/_components/use-event-filters.ts` — `useQueryStates` pattern
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(org)/[slug]/(manage)/entities/_components/use-entity-filters.ts` — `useQueryStates` pattern
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(org)/[slug]/(manage)/sources/_components/installed-sources.tsx` — inline `useQueryStates`</result>
+<usage><total_tokens>23774</total_tokens><tool_uses>17</tool_uses><duration_ms>59221</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a869fe152825e0e6c</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/9f01eb98-3363-44a2-ba34-3678db3074b1/tasks/a869fe152825e0e6c.output</output-file>
+<status>completed</status>
+<summary>Agent "Research org route group structure" completed</summary>
+<result>I now have all the information needed. Here is the full analysis.
+
+---
+
+## Analysis: Route Groups and Auth Flow under `(app)` in `apps/app`
+
+### Overview
+
+The `(app)` route group contains two parallel sub-trees: `(org)/[slug]/` for workspace-scoped pages (requiring org membership and an active GitHub binding), and `(user)/` for account-level pages. Authentication and authorization is layered across a Next.js middleware in `proxy.ts`, the `(app)/layout.tsx` at the top, and imperative checks in each branch's layout. The `(pending-allowed)` group within `(user)` is a route-group-only concept — it has no layout file of its own; its significance lives entirely in the middleware.
+
+---
+
+### Entry Point: Middleware
+
+**`/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/proxy.ts`**
+
+This file is the actual Next.js middleware (exported as `default` from `proxy.ts`, wired up via `config.matcher`). It runs on every request before any layout.
+
+**Route matchers defined (lines 25–55):**
+
+- `isPublicRoute` — `/early-access`, `/api/health`, `/api/connect`, `/api/ingest`, `/docs`, `/monitoring`, `/ingest`, `/manifest.json` — Clerk runs but auth is not enforced.
+- `isApiRoute` — `/v1/(.*)`, `/api/cli/(.*)`, `/api/inngest(.*)` — handle their own auth, middleware passes through.
+- `isAuthRoute` — `/sign-in(.*)`, `/sign-up(.*)` — if a `userId` exists, redirected to `/account/welcome`.
+- `isPendingAllowedRoute` — `/account/(.*)` and `/api/trpc/organization.create(.*)` — routes a pending (signed-in but no org) user is allowed to reach.
+
+**Core auth logic (lines 57–103):**
+
+1. Microfrontends middleware runs first (`runMicrofrontendsMiddleware`). If it produces a response, that wins immediately.
+2. If the route is an auth route and a `userId` exists → redirect to `/account/welcome`.
+3. Otherwise, if the route is not public and not an API route:
+   - If no `userId` → redirect to `/sign-in?redirect_url=...`.
+   - If `sessionStatus === "pending"` (signed in but no active org) and the route is not in `isPendingAllowedRoute` → redirect to `/account/welcome`.
+4. Security headers are applied on every response.
+
+**Clerk middleware options (lines 95–102):**
+- `afterSignInUrl` and `afterSignUpUrl` both point to `/account/welcome`.
+- `organizationSyncOptions.organizationPatterns: ["/:slug", "/:slug/(.*)"]` — Clerk's middleware syncs the active org from the URL slug in parallel with RSC fetches.
+
+---
+
+### Layout Stack
+
+#### 1. Root App Layout — `(app)/layout.tsx`
+**`/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/layout.tsx`** (lines 1–26)
+
+Wraps every authenticated page. Establishes:
+- `NuqsAdapter` — URL search param state management.
+- `TRPCReactProvider` — the React Query / tRPC client context for the entire `(app)` tree.
+- `PageErrorBoundary` — top-level error UI.
+- `HydrateClient` — hydrates server-prefetched tRPC data.
+- Prefetches two queries used everywhere (lines 8–10):
+  - `trpc.organization.listUserOrganizations` — org switcher data.
+  - `trpc.account.get` — user profile.
+- No auth check. Auth is enforced by middleware before this layout runs.
+
+#### 2. User Layout — `(user)/layout.tsx`
+**`/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(user)/layout.tsx`** (lines 1–24)
+
+Wraps all `(user)` pages. Adds:
+- Another `prefetch(trpc.account.get.queryOptions())` (line 10) — deduplicated by React Query.
+- `UserPageHeader` wrapped in `Suspense`.
+- A scrollable column layout (`overflow-y-auto`).
+- No auth check here either; inherited from middleware.
+
+#### 3. `(pending-allowed)` — No Layout File
+
+Confirmed absent. The `(pending-allowed)` route group has no `layout.tsx`. Its sole purpose is to group routes that the middleware's `isPendingAllowedRoute` matcher allows through for pending-session users. This includes:
+- `/account/teams/new` — create team page.
+- `/account/teams/new/bind` — GitHub binding page.
+- `/account/settings/general` — general account settings.
+- `/account/welcome` — post-login relay.
+
+#### 4. Org Layout — `(org)/[slug]/layout.tsx`
+**`/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(org)/[slug]/layout.tsx`** (lines 42–93)
+
+This is the primary authorization gate for all org-scoped routes. It runs as an `async` server component.
+
+**Two imperative checks execute in sequence (lines 47–58):**
+
+**Check 1 — Org membership (lines 46–52):**
+Calls `requireOrgAccess(slug)` from `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/lib/org-access-clerk.ts`.
+
+Inside `requireOrgAccess` (lines 45–82 of that file):
+1. Calls `auth()` — throws/returns null `userId` if unauthenticated.
+2. Calls `clerk.organizations.getOrganization({ slug })` — throws if org doesn't exist.
+3. Calls `getUserOrgMemberships(userId)` (cached) and checks that the user's memberships contain the org's ID.
+4. Returns `{ org, role }` if found; throws `"Access denied to this organization."` if not.
+
+On any thrown error, `OrgLayout` catches it and calls `notFound()` (line 52) — resulting in a 404, not a redirect.
+
+**Check 2 — GitHub binding (lines 55–58):**
+Calls `getGitHubBinding(org.id)` from `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/lib/github-binding.ts` — queries `githubOrgBindings` table for the Clerk org ID, returns the first row.
+
+If `binding` is null or `binding.status !== "active"` → `redirect("/account/teams/new/bind?slug=${slug}")`.
+
+This means: a user who is a valid org member but has not completed GitHub App installation is bounced to the bind page, not a 404.
+
+**Layout structure rendered (lines 60–84):**
+- `HydrateClient` → `OrgPageErrorBoundary` → `SidebarProvider` containing `AppSidebar`, `CommandPalette`, and the main column with `AppHeader` (h-14 header) and `SidebarInset` wrapping `{children}` in a `Suspense`.
+
+---
+
+### Sub-Layouts Inside `(org)/[slug]/`
+
+#### `(manage)/layout.tsx`
+**`/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(org)/[slug]/(manage)/layout.tsx`** (lines 1–13)
+
+Pure layout — a centered column with max-width (`max-w-5xl`) and vertical margin. No data fetching, no auth check.
+
+Wraps: entities, events, jobs, sources, and settings sections.
+
+#### `(manage)/settings/layout.tsx`
+**`/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/layout.tsx`** (lines 1–42)
+
+Renders a `SettingsSidebar` with three nav items (General, API Keys, Repo Index) and a content area. Explicitly notes at line 12: "Access verification handled in parent `[slug]/layout.tsx`".
+
+#### `(manage)/entities/layout.tsx`
+Prefetches `trpc.entities.list.infiniteQueryOptions` with `limit: 30` and wraps children in `HydrateClient` + `RealtimeProviderWrapper`.
+
+#### `(manage)/entities/[entityId]/layout.tsx`
+Prefetches `trpc.entities.get` and `trpc.entities.getEvents` using the `entityId` param.
+
+#### `(manage)/events/layout.tsx`
+Prefetches `trpc.events.list.infiniteQueryOptions` for 5 source filter values (`undefined`, `github`, `vercel`, `linear`, `sentry`) at once.
+
+#### `(manage)/jobs/layout.tsx`
+Prefetches `trpc.jobs.list.queryOptions` for 4 status values (`undefined`/all, `running`, `completed`, `failed`).
+
+---
+
+### `(user)/(pending-allowed)/account/teams/` Structure
+
+```
+account/teams/
+├── _components/
+│   ├── error-banner.tsx
+│   └── submit-button.tsx
+└── new/
+    ├── _components/
+    │   ├── slug-preview.tsx
+    │   └── team-name-form.tsx
+    ├── bind/
+    │   └── page.tsx          ← GitHub App install (OAuth popup flow)
+    └── page.tsx              ← Create team form
+```
+
+**`new/page.tsx`** — renders `TeamNameForm` (force-dynamic). The form at `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(user)/(pending-allowed)/account/teams/new/_components/team-name-form.tsx` calls `trpc.organization.create.mutationOptions`, and on success calls `setActive({ organization: data.organizationId })` then navigates to `/account/teams/new/bind?slug=${data.slug}`.
+
+**`new/bind/page.tsx`** — client component. Reads `slug` from `useSearchParams`. Calls `useOAuthPopup` with `provider: "github"`. On OAuth success, navigates to `/${slug}`. Listens on `BroadcastChannel("oauth-connections")` for errors from the popup.
+
+---
+
+### `(user)/(pending-allowed)/account/welcome/page.tsx`
+
+**`/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(user)/(pending-allowed)/account/welcome/page.tsx`** (lines 1–32)
+
+Post-login relay. Server component, `force-dynamic`. Logic:
+1. If `orgSlug` in JWT → `redirect("/${orgSlug}")`.
+2. Else if `userId` → calls `getUserOrgMemberships(userId)`, takes first membership with a slug → `redirect("/${slug}")`.
+3. Else → `redirect("/account/teams/new")`.
+
+---
+
+### Authorization Flow Summary
+
+```
+Request hits proxy.ts middleware
+  │
+  ├─ Microfrontends check (MFE routing, Vercel)
+  ├─ isAuthRoute + userId → /account/welcome
+  ├─ not public/api + no userId → /sign-in?redirect_url=...
+  ├─ pending session + not isPendingAllowedRoute → /account/welcome
+  └─ passes through
+        │
+        ├─ (app)/layout.tsx — TRPCReactProvider, prefetch orgs+profile
+        │
+        ├─ (user)/layout.tsx — UserPageHeader, prefetch account
+        │   └─ (pending-allowed)/* — no layout, passes through
+        │       ├─ /account/welcome — relay to org or /account/teams/new
+        │       ├─ /account/teams/new — create org via Clerk
+        │       └─ /account/teams/new/bind — GitHub App OAuth popup
+        │
+        └─ (org)/[slug]/layout.tsx — GATE
+            ├─ requireOrgAccess(slug) → notFound() if user not a member
+            ├─ getGitHubBinding(orgId) → redirect /account/teams/new/bind if no active binding
+            └─ renders sidebar shell
+                └─ (manage)/layout.tsx — centered content wrapper
+                    ├─ entities/ — prefetch entities list + realtime
+                    ├─ events/  — prefetch events per source + realtime
+                    ├─ jobs/    — prefetch jobs per status
+                    ├─ sources/ — no sub-layout
+                    └─ settings/ — SettingsSidebar (General, API Keys, Repo Index)
+```
+
+### Key Patterns
+
+- **`(pending-allowed)` as a pure routing concept**: The group has no `layout.tsx`. Its meaning is defined exclusively at line 49–55 of `proxy.ts`, where `isPendingAllowedRoute` matches `/account/(.*)` to allow pending-session users through.
+- **`notFound()` vs `redirect()` in org layout**: Membership failure → `notFound()` (404). Missing GitHub binding → `redirect("/account/teams/new/bind?slug=...")`. These are intentionally different responses at `[slug]/layout.tsx:52` and `[slug]/layout.tsx:57`.
+- **Organization sync parallelism**: The `clerkMiddleware` option `organizationSyncOptions.organizationPatterns` at `proxy.ts:100` syncs the active org cookie from the URL in parallel with RSC execution. `requireOrgAccess` deliberately does not rely on `auth().orgSlug` for this reason (documented at `org-access-clerk.ts:36–42`).
+- **Prefetch strategy**: Each layout in the `(manage)` subtree prefetches exactly the data its page needs before `HydrateClient`, so the client receives hydrated state with no waterfall on first render.</result>
+<usage><total_tokens>33700</total_tokens><tool_uses>35</tool_uses><duration_ms>126624</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>a7f137ce032342652</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/9f01eb98-3363-44a2-ba34-3678db3074b1/tasks/a7f137ce032342652.output</output-file>
+<status>completed</status>
+<summary>Agent "Research GitHub binding flow" completed</summary>
+<result>I now have the complete picture. Here is the full documented flow.
+
+---
+
+## Analysis: GitHub Binding Flow
+
+### Overview
+
+A Lightfast organization has a permanent 1:1 binding to a GitHub organization, stored in `lightfast_github_org_bindings`. When an org is created, the user is immediately redirected to connect GitHub. The OAuth popup flow runs through the platform service, which resolves the GitHub account, enforces binding constraints, and writes the binding record. Every access to the org workspace checks binding status — no active binding means a redirect back to the connect screen.
+
+---
+
+### Database Schema
+
+**Table: `lightfast_github_org_bindings`**
+Defined at `/Users/jeevanpillay/Code/@lightfastai/lightfast/db/app/src/schema/tables/github-org-bindings.ts`
+
+Key columns:
+- `clerk_org_id` — unique index, maps to Clerk org (one row per Lightfast org)
+- `github_org_id` — unique index, maps to GitHub account ID as string (one row per GitHub org)
+- `github_org_login` / `github_org_avatar_url` — display fields, refreshed on each callback
+- `installation_id` — FK to `lightfast_gateway_installations`, set null on installation delete
+- `status` — `varchar(50)`, values: `"active"` or `"revoked"`
+- `bound_by` — Clerk user ID of the person who made the connection
+
+Both `clerk_org_id` and `github_org_id` have `uniqueIndex`, enforcing the 1:1 constraint at the database level (lines 48–52).
+
+---
+
+### Entry Points
+
+- `apps/app/src/app/(app)/(user)/(pending-allowed)/account/teams/new/_components/team-name-form.tsx:40` — after org creation, router pushes to `/account/teams/new/bind?slug=...`
+- `apps/app/src/app/(app)/(org)/[slug]/layout.tsx:55-58` — every org layout load checks binding; redirects to bind page if missing or not active
+- `apps/app/src/app/(app)/(user)/(pending-allowed)/account/teams/new/bind/page.tsx` — the bind UI where the user clicks "Connect GitHub"
+- `apps/platform/src/app/api/connect/[provider]/callback/route.ts:20` — `GET /api/connect/github/callback`, the OAuth return URL
+
+---
+
+### Core Implementation
+
+#### 1. Org Creation → Bind Redirect (`team-name-form.tsx:29-41`)
+
+The `TeamNameForm` component calls `trpc.organization.create` mutation. On success it calls Clerk's `setActive` to activate the new org, invalidates the org list query, then routes to `/account/teams/new/bind?slug={slug}` at line 40. The `slug` query param is carried forward so the bind page knows where to redirect after success.
+
+#### 2. Bind Page and OAuth Popup (`bind/page.tsx:37-48`)
+
+The `BindContent` component calls `useOAuthPopup` with:
+- `provider: "github"`
+- `queryKeysToInvalidate`: includes `trpc.githubBinding.get.queryKey()` and `trpc.connections.generic.listInstallations.queryKey()`
+- `onSuccess`: pushes to `/{slug}`
+
+A `BroadcastChannel("oauth-connections")` listener is registered at line 24-35, listening for `{ type: "github_error", reason }` messages to display binding constraint errors.
+
+#### 3. `useOAuthPopup` — Popup Mechanics (`apps/app/src/hooks/use-oauth-popup.ts`)
+
+`handleConnect` at line 147-166:
+1. Calls `queryClient.fetchQuery(trpc.connections.getAuthorizeUrl.queryOptions({ provider }))` — this hits the app tRPC router
+2. Opens a 600×800 popup to the returned URL via `openPopupAndPoll`
+3. Polls popup closure at 500ms intervals (line 121)
+4. On closure, if no `github_connected` BroadcastChannel message was received, waits 3 seconds then invalidates query keys as a fallback (line 130-139)
+5. Also listens for `window.message` as a secondary mechanism (line 79-88)
+
+#### 4. `connections.getAuthorizeUrl` — tRPC Proxy Chain
+
+- **App tRPC** (`api/app/src/router/org/connections.ts:41-54`): `orgScopedProcedure` that proxies to the platform service via `createPlatformCaller()`, forwarding `provider`, `orgId` from `ctx.auth.orgId`, and `connectedBy` from `ctx.auth.userId`.
+- **Platform tRPC** (`api/platform/src/router/platform/connections.ts:217-242`): `serviceProcedure` that calls `buildAuthorizeUrl(...)` and returns `{ url, state }`.
+
+#### 5. `buildAuthorizeUrl` — State Storage (`api/platform/src/lib/oauth/authorize.ts:59-119`)
+
+1. Validates `redirectTo` against an allowlist: `"inline"`, `localhost`, or the app production URL (line 72-89)
+2. Generates a cryptographically random `state` via `nanoid()` at line 91
+3. Calls `storeOAuthState(state, { provider, orgId, connectedBy, redirectTo, createdAt })` at line 94-100 — stores as Redis hash with `HSET + EXPIRE 600` (10-minute TTL) via atomic pipeline
+4. Calls `auth.buildInstallUrl(config, state)` for GitHub App flow (line 112) — GitHub's `app-token` auth kind
+5. Returns `{ ok: true, url, state }`
+
+#### 6. OAuth Callback Route Handler (`apps/platform/src/app/api/connect/[provider]/callback/route.ts:20-69`)
+
+Receives `GET /api/connect/github/callback?code=...&amp;state=...&amp;installation_id=...`. Extracts all query params, calls `processOAuthCallback({ provider, state, query })`. Maps the `CallbackProcessResult` union to HTTP responses: `"redirect"` → `NextResponse.redirect`, `"inline_html"` → `text/html` response, `"error"` → JSON with status code.
+
+#### 7. `processOAuthCallback` — The Core Logic (`api/platform/src/lib/oauth/callback.ts:161-457`)
+
+**State recovery** (lines 180-211): If `stateData` is missing but `installation_id` is present (GitHub-initiated reinstall), looks up the existing `gatewayInstallations` row to recover `orgId` and `connectedBy`.
+
+**State consumption** (line 180): `consumeOAuthState(state)` — atomic Redis `HGETALL + DEL` to prevent replay.
+
+**GitHub App callback** (line 259): `auth.processCallback(config, query)` on the GitHub provider. Returns `{ status, externalId (installationId), accountInfo, tokens? }`.
+
+**Pending-setup branch** (lines 263-277): If `result.status === "pending-setup"` (GitHub App request flow, not direct install), stores OAuth result in Redis and redirects without writing to DB.
+
+**Binding enforcement** (lines 283-298):
+- `resolveGitHubAccount(config, result.externalId)` at line 284 — fetches `GET /app/installations/{id}` from GitHub API using a JWT signed with the App's private key. Returns `{ id, login, avatarUrl, type }`.
+- `enforceGitHubBinding(orgId, String(githubAccount.id))` at line 285 — returns a `BindingAction`.
+- If `bindingAction.action === "reject"`, calls `buildRedirectForError(...)` with the reason string as the error query parameter and returns early.
+
+**Installation upsert** (lines 302-360): Upserts `gatewayInstallations` on `(provider, externalId)` conflict, setting `status: "active"`, `providerAccountInfo`, `connectedBy`, `orgId`. Returns the row id.
+
+**Binding write** (lines 363-421):
+- `"create"` action (lines 369-399): inserts into `githubOrgBindings` with `status: "active"`. Uses `.onConflictDoNothing()` — if another concurrent callback created the binding between the SELECT in `enforceGitHubBinding` and this INSERT, the insert returns 0 rows and the callback redirects with `"github_org_bound_to_other"`.
+- `"reinstate"` action (lines 405-419): updates existing binding row: sets `status: "active"`, updates `installationId`, `githubOrgLogin`, `githubOrgAvatarUrl`.
+
+**Token persistence** (line 424-426): If `result.status === "connected"` (not `"app-installed"`), calls `writeTokenRecord(installation.id, result.tokens)`.
+
+**Result storage** (lines 429-433): Stores `{ status: "completed", provider, reactivated? }` in Redis for CLI polling (5-minute TTL).
+
+**Redirect** (line 439): Calls `buildRedirectForCompletion(stateData, providerName, { reactivated })`. Since `stateData.redirectTo` is not set in the browser popup flow, this defaults to `${appUrl}/provider/github/connected` (line 113-120 of callback.ts).
+
+#### 8. `enforceGitHubBinding` — Binding Constraints (`api/platform/src/lib/github-binding.ts:77-119`)
+
+Two sequential DB reads, no transaction:
+
+1. Query `githubOrgBindings` by `githubOrgId` (line 82-89):
+   - If found and `clerkOrgId === orgId` → `{ action: "reinstate", bindingId }`
+   - If found and `clerkOrgId !== orgId` → `{ action: "reject", reason: "github_org_bound_to_other" }`
+
+2. Query `githubOrgBindings` by `clerkOrgId` (line 103-110):
+   - If found → `{ action: "reject", reason: "org_already_bound" }`
+
+3. No rows in either query → `{ action: "create" }`
+
+#### 9. GitHub Connected Page — Signal Emission (`apps/app/src/app/(providers)/provider/github/connected/page.tsx:10-33`)
+
+On mount, posts to `BroadcastChannel("oauth-connections")`:
+- On error query param: `{ type: "github_error", reason: error }`
+- On success: `{ type: "github_connected" }`
+
+Also attempts `window.opener.postMessage(...)` as a fallback. Closes the window after 2 seconds.
+
+#### 10. `githubBinding.get` — tRPC Read Endpoint (`api/app/src/router/org/github-binding.ts:7-14`)
+
+`orgScopedProcedure.query` — selects all columns from `githubOrgBindings` where `clerkOrgId = ctx.auth.orgId`, returns first row or `null`. This is the endpoint invalidated by `useOAuthPopup` after success.
+
+#### 11. `getGitHubBinding` — Server-Side Binding Check (`apps/app/src/lib/github-binding.ts:5-17`)
+
+React `cache()`-wrapped function. Selects `{ id, status, githubOrgLogin, githubOrgAvatarUrl }` from `githubOrgBindings` by `clerkOrgId`. Called in `OrgLayout` at `layout.tsx:55`. If the result is `null` or `binding.status !== "active"`, `redirect()` to `/account/teams/new/bind?slug={slug}` (line 57).
+
+---
+
+### Data Flow: Org Creation → Binding Active
+
+1. User submits team name form → `trpc.organization.create` mutation → on success, `router.push("/account/teams/new/bind?slug={slug}")` (`team-name-form.tsx:40`)
+2. Bind page renders; user clicks "Connect GitHub" → `handleConnect()` (`use-oauth-popup.ts:147`)
+3. `trpc.connections.getAuthorizeUrl({ provider: "github" })` called → proxied through app tRPC → platform tRPC `getAuthorizeUrl` (`connections.ts:217`)
+4. `buildAuthorizeUrl` generates `state` via `nanoid()`, stores `{ provider, orgId, connectedBy }` in Redis with 10-min TTL (`authorize.ts:91-100`)
+5. GitHub App install URL returned; popup opens at `https://github.com/apps/{app}/installations/new?state={state}`
+6. User authorizes in GitHub; GitHub redirects browser to `https://platform.lightfast.ai/api/connect/github/callback?installation_id=...&amp;state=...`
+7. Route handler calls `processOAuthCallback` (`callback/route.ts:35`)
+8. `consumeOAuthState(state)` atomically reads and deletes the Redis state hash (`state.ts:55-78`)
+9. `auth.processCallback(config, query)` exchanges the installation for account info
+10. `resolveGitHubAccount(config, installationId)` fetches GitHub API `/app/installations/{id}` with JWT auth → returns `{ id, login, avatarUrl, type }` (`github-binding.ts:23-58`)
+11. `enforceGitHubBinding(orgId, githubOrgId)` runs two DB reads to determine action (`github-binding.ts:77-119`)
+12. If action is not `"reject"`: upserts `gatewayInstallations` row with `status: "active"` (`callback.ts:332-360`)
+13. If action is `"create"`: inserts `githubOrgBindings` with `status: "active"`, `installationId` FK, `boundBy`, `githubOrgId`, `githubOrgLogin` (`callback.ts:369-399`)
+14. If action is `"reinstate"`: updates existing binding row to `status: "active"` with new `installationId` (`callback.ts:405-419`)
+15. Callback redirects to `${appUrl}/provider/github/connected`
+16. Connected page posts `{ type: "github_connected" }` to `BroadcastChannel("oauth-connections")` (`connected/page.tsx:16`)
+17. `useOAuthPopup` receives the broadcast, calls `queryClient.invalidateQueries` on `trpc.githubBinding.get.queryKey()` (`use-oauth-popup.ts:56-65`)
+18. `onSuccess` callback fires → `router.push("/{slug}")` (`bind/page.tsx:43-45`)
+19. `OrgLayout` runs server-side, calls `getGitHubBinding(org.id)` → finds row with `status: "active"` → renders the org workspace (`layout.tsx:55-58`)
+
+---
+
+### Key Files
+
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/db/app/src/schema/tables/github-org-bindings.ts` — table definition with unique indexes
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/api/platform/src/lib/github-binding.ts` — `resolveGitHubAccount` + `enforceGitHubBinding` logic
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/api/platform/src/lib/oauth/callback.ts` — the binding write happens at lines 363-421
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/api/platform/src/lib/oauth/authorize.ts` — state generation and Redis storage
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/api/platform/src/lib/oauth/state.ts` — Redis state/result CRUD
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/api/app/src/router/org/github-binding.ts` — `githubBinding.get` tRPC endpoint
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/lib/github-binding.ts` — server-side `getGitHubBinding` used in layout gate
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(app)/(org)/[slug]/layout.tsx:55-58` — the gate that enforces binding on every org page load
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/app/(providers)/provider/github/connected/page.tsx` — BroadcastChannel emitter after OAuth completes
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/hooks/use-oauth-popup.ts` — popup open, poll, and query invalidation
+- `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/platform/src/app/api/connect/[provider]/callback/route.ts` — HTTP entry point for OAuth callback</result>
+<usage><total_tokens>36741</total_tokens><tool_uses>29</tool_uses><duration_ms>128977</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>afcb9deabd6007853</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/9f01eb98-3363-44a2-ba34-3678db3074b1/tasks/afcb9deabd6007853.output</output-file>
+<status>completed</status>
+<summary>Agent "Research team-switcher and onboarding UX" completed</summary>
+<result>Now I have a complete picture. Let me compile all findings.
+
+---
+
+## Analysis: TeamSwitcher, Onboarding UX, and Organization Creation
+
+### 1. TeamSwitcher Component
+
+**File:** `/Users/jeevanpillay/Code/@lightfastai/lightfast/packages/ui/src/components/app-header/team-switcher.tsx`
+
+#### Interface
+
+Lines 17-38 define the public API:
+
+- `TeamSwitcherMode`: `"organization" | "account"`
+- `Organization`: `{ id: string; name: string; slug: string | null }`
+- `TeamSwitcherProps`:
+  - `createTeamHref: string` — href for the "Create Team" link
+  - `mode?: TeamSwitcherMode` — defaults to `"organization"`
+  - `onOrgSelect: (orgId: string, orgSlug: string) =&gt; Promise&lt;void&gt;` — auth SDK callback; the component does NOT call Clerk directly
+  - `organizations: Organization[]` — full list provided by caller
+
+#### Current org resolution (lines 53-63)
+
+When `mode === "organization"`, the component extracts the org slug from `usePathname()` by splitting on `/`, filtering to the first segment, and checking it against a hardcoded `reservedRoutes` list: `["new", "account", "api", "sign-in", "sign-up"]`. The matching `Organization` from the passed array is called `currentOrg`.
+
+#### Rendering logic (lines 83-182)
+
+- The trigger area shows an Avatar (initials from `getInitials()` at lines 69-76) + display text.
+- When `mode === "organization"` and `currentOrg` is found, the display area is a `&lt;Link&gt;` pointing to `/${currentOrg.slug}` with an `onClick` that calls `onOrgSelect` before programmatically pushing the route (line 90-96). This prevents Clerk + router from racing.
+- When `mode === "account"` or no current org, it renders a non-interactive `&lt;div&gt;` with `"My Account"` / `"Select team"`.
+- The dropdown lists all orgs from the `organizations` prop. Selected item shows a `Check` icon (lines 161-163). All items navigate the same way: `onOrgSelect` then `router.push`.
+- The last dropdown item is always a `&lt;Link href={createTeamHref}&gt;` "Create Team" entry (lines 169-179).
+
+There is no badge, status dot, or incomplete-setup indicator anywhere in `TeamSwitcher`.
+
+---
+
+### 2. Where TeamSwitcher is Consumed
+
+Two components render `TeamSwitcher`:
+
+**`AppSidebar`** — `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/components/app-sidebar.tsx:164-169`
+
+- Rendered inside a `&lt;div className="flex h-14 items-center justify-between px-4"&gt;` at the top of the sidebar, but only when `orgSlug` is non-empty (line 162).
+- Props passed:
+  - `createTeamHref="/account/teams/new"`
+  - `mode` derived from pathname: `"account"` if path starts with `/account` or `/new`, else `"organization"` (lines 155-157)
+  - `onOrgSelect` calls `setActive({ organization: orgId })` from Clerk's `useOrganizationList()` hook (lines 142-146)
+  - `organizations` from `trpc.organization.listUserOrganizations` with 5-minute stale time (lines 137-140)
+- The sidebar is only rendered in the `(org)` layout (confirmed by `AppSidebar` being imported in `[slug]/layout.tsx:14`).
+
+**`UserPageHeader`** — `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/components/user-page-header.tsx:59-64`
+
+- Rendered in a sticky top bar for the `(user)` route group.
+- Props passed:
+  - `createTeamHref="/account/teams/new"`
+  - `mode="account"` — hardcoded (line 61); always shows "My Account"
+  - Same `onOrgSelect` / `organizations` pattern as AppSidebar
+
+---
+
+### 3. App Header Composition
+
+The `(org)/[slug]/layout.tsx` (lines 62-84) composes the full app chrome:
+
+```
+SidebarProvider
+  AppSidebar          ← contains TeamSwitcher in its header row
+  CommandPalette
+  div (flex col)
+    div h-14 (header row)
+      SidebarTrigger  ← mobile only
+      AppHeader       ← right side only: Docs, API Reference, UserMenu
+    SidebarInset
+      {children}
+```
+
+`AppHeader` at `/Users/jeevanpillay/Code/@lightfastai/lightfast/apps/app/src/components/app-header.tsx` does **not** render `TeamSwitcher`. It renders only external links and `UserMenu`. The team switcher lives entirely in the sidebar's top header row.
+
+The `(user)/layout.tsx` renders `UserPageHeader` (which contains `TeamSwitcher` in account mode) above the page content.
+
+---
+
+### 4. Onboarding Patterns
+
+The onboarding flow is a three-page sequence under the `(pending-allowed)` route group:
+
+**Step 1 — Welcome relay:** `/account/welcome` (`page.tsx`)
+- Server component, `force-dynamic`.
+- Reads `orgSlug` from `auth()`. If present → redirects to `/${orgSlug}`.
+- Otherwise fetches `getUserOrgMemberships(userId)` and redirects to first org's slug if any exist.
+- Final fallback: `redirect("/account/teams/new")`.
+- This is the `afterSignInUrl` and `afterSignUpUrl` set in the middleware (proxy.ts lines 96-97).
+
+**Step 2 — Create team:** `/account/teams/new` (page.tsx + `TeamNameForm`)
+- Renders a centered card with logo, heading "Create your team", and `TeamNameForm`.
+- `TeamNameForm` normalizes input to lowercase alphanumeric + hyphens (lines 14-19).
+- Shows a `SlugPreview` component displaying `lightfast.ai/{slug}` preview.
+- On submit, calls `trpc.organization.create.mutationOptions()` with `{ slug }`.
+- On success: calls `setActive({ organization: data.organizationId })` from Clerk's `useOrganizationList`, invalidates `listUserOrganizations` query, then navigates to `/account/teams/new/bind?slug=${data.slug}`.
+
+**Step 3 — Bind GitHub:** `/account/teams/new/bind` (page.tsx `BindPage`)
+- Reads `slug` from query params.
+- Uses `useOAuthPopup` hook with `provider: "github"`.
+- On successful connection, navigates to `/${slug}`.
+- Listens for binding errors via `BroadcastChannel("oauth-connections")` with specific error messages for `github_org_bound_to_other` and `org_already_bound`.
+
+**Middleware enforcement** (`proxy.ts:49-55, 82-84`):
+- `isPendingAllowedRoute` matches `/account/(.*)` and `/api/trpc/organization.create(.*)`.
+- Pending sessions (signed in, no org) are redirected to `/account/welcome` unless the route is pending-allowed.
+- All other protected routes require a non-pending session.
+
+**GitHub binding check in org layout** (`[slug]/layout.tsx:54-58`):
+- After `requireOrgAccess` succeeds, `getGitHubBinding(org.id)` queries the `githubOrgBindings` DB table.
+- If no binding or `binding.status !== "active"`, the layout server-redirects to `/account/teams/new/bind?slug=${slug}`.
+- This means visiting any org route without an active GitHub binding sends the user back to the bind step.
+
+---
+
+### 5. Badge and Status Indicator Patterns
+
+There is no badge or status indicator on `TeamSwitcher` or the sidebar nav items for incomplete setup.
+
+The only existing status indicator patterns are in the Sources pages:
+
+**`installed-sources.tsx` lines 237-244** — `Circle` icon (from lucide-react) used as a status dot:
+```tsx
+&lt;Circle
+  className={cn(
+    "h-2 w-2 shrink-0 fill-current",
+    isAwaitingConfig ? "text-amber-500" : "text-green-500"
+  )}
+/&gt;
+```
+This appears inline in the `ResourceRow` collapsible trigger. `isAwaitingConfig` is derived from `metadata.status?.configStatus === "awaiting_config"` (line 221-223).
+
+**`installed-sources.tsx` lines 263-286** — When a resource is awaiting config, a warning banner renders inside the expanded collapsible content: amber border/background box with an `AlertTriangle` icon and text "Configuration Required".
+
+**`installed-sources.tsx` line 180** — `Badge` component from `@repo/ui` used to show resource count: `&lt;Badge variant="secondary"&gt;{resources.length} connected&lt;/Badge&gt;`.
+
+The `Badge` component itself (`packages/ui/src/components/ui/badge.tsx`) supports variants `default`, `secondary`, `destructive`, and `outline` via `cva`.
+
+---
+
+### 6. `requireOrgAccess` (`apps/app/src/lib/org-access-clerk.ts`)
+
+Lines 45-82 define the function signature and return type:
+
+```
+requireOrgAccess(slug: string): Promise&lt;OrgWithAccess&gt;
+```
+
+where `OrgWithAccess` is:
+```
+{
+  org: { id: string; name: string; slug: string; imageUrl: string }
+  role: string   // Clerk role like "org:admin" or "org:member"
+}
+```
+
+**Execution path:**
+1. Calls `auth()` — throws if `userId` is null (line 49-51).
+2. Calls `clerk.organizations.getOrganization({ slug })` — throws with "Organization not found: {slug}" if the Clerk API call fails (lines 54-59).
+3. Calls `getUserOrgMemberships(userId)` (cached) and finds the matching membership by `organizationId === clerkOrg.id` (lines 62-68).
+4. Throws "Access denied to this organization." if no membership found (lines 69-71).
+5. Returns the `OrgWithAccess` shape (lines 73-81).
+
+The function intentionally does **not** use `auth().orgSlug` for the access check — comments at lines 36-43 explain this is to avoid race conditions with Clerk cookie propagation after org name changes.
+
+---
+
+### 7. `organization.create` tRPC Mutation (`api/app/src/router/user/organization.ts:56-126`)
+
+**Procedure type:** `userScopedProcedure` — accepts both `clerk-pending` and `clerk-active` auth types. This is what allows it to be called before an org exists.
+
+**Input schema:** `z.object({ slug: clerkOrgSlugSchema })` — `clerkOrgSlugSchema` comes from `@repo/app-validation`.
+
+**Execution path (lines 62-125):**
+1. Logs `[organization] create` with slug, userId, authType.
+2. Calls `clerk.organizations.createOrganization({ name: input.slug, slug: input.slug, createdBy: ctx.auth.userId })` — uses the slug as both name and display name.
+3. On success, logs and returns `{ organizationId: clerkOrg.id, slug: clerkOrg.slug || input.slug }`.
+4. On error, checks for Clerk error codes `duplicate_record` or `form_identifier_exists` (or messages containing "already exists" / "slug is taken") and throws `TRPCError({ code: "CONFLICT" })`.
+5. All other errors throw `TRPCError({ code: "INTERNAL_SERVER_ERROR" })`.
+
+The mutation is registered in the `appRouter` under `organization` key (`root.ts:22`), making it callable as `trpc.organization.create`. The middleware explicitly passes `/api/trpc/organization.create(.*)` as a pending-allowed route so it can be called during onboarding before a Clerk org/session is active.</result>
+<usage><total_tokens>50018</total_tokens><tool_uses>50</tool_uses><duration_ms>147190</duration_ms></usage>
+</task-notification>
+
+---
+
+i think we need a solutio where the binding check is on the authentication level. SO EVERYTHING gets hit with this binding check. if GitHub org removed, everything "halts". wouldnt you say so? for now Bind only.
+3. best practices with efficeint querying
+4. cannot. IT MUST BE done.
+
+---
+
+<task-notification>
+<task-id>aa3b3c91388a367f0</task-id>
+<tool-use-id>toolu_01B6dBGz5Bu1buvaEfabcRh6</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/9f01eb98-3363-44a2-ba34-3678db3074b1/tasks/aa3b3c91388a367f0.output</output-file>
+<status>completed</status>
+<summary>Agent "Research listUserOrganizations query" completed</summary>
+<result>Now I have a complete picture. Here is the full analysis.
+
+---
+
+## Analysis: `organization.listUserOrganizations` tRPC Endpoint
+
+### Overview
+
+`listUserOrganizations` is a `userScopedProcedure` query that calls the Clerk backend API to fetch all organizations a user belongs to, then returns a normalized subset of each membership's organization fields. It performs no database queries — it is pure Clerk API. The result is prefetched server-side in the root app layout and shared across all consuming components via React Query's cache.
+
+---
+
+### Entry Points
+
+- `api/app/src/router/user/organization.ts:24` — procedure definition
+- `api/app/src/root.ts:22` — mounted as `organization: organizationRouter` on the `appRouter`
+- `apps/app/src/app/(app)/layout.tsx:8` — server-side `prefetch()` call that seeds the React Query cache before hydration
+
+---
+
+### Core Implementation
+
+#### 1. Procedure Definition (`api/app/src/router/user/organization.ts:24-47`)
+
+The procedure is declared as `userScopedProcedure.query(async ({ ctx }) =&gt; { ... })`.
+
+**Auth gate** (`api/app/src/trpc.ts:186-214`):
+`userScopedProcedure` rejects `unauthenticated` requests with `UNAUTHORIZED`. It permits both `clerk-pending` (authenticated, no org yet) and `clerk-active` (authenticated, has org). This is the only procedure in the router that intentionally allows pending users, so org switcher works during onboarding.
+
+**Clerk call** (`api/app/src/router/user/organization.ts:31-33`):
+```
+clerk.users.getOrganizationMembershipList({ userId })
+```
+Returns a paginated Clerk `OrganizationMembership[]`. The code destructures `{ data: memberships }` — only the first page is consumed; there is no pagination loop.
+
+**Mapping** (`api/app/src/router/user/organization.ts:36-46`):
+Each `membership` is mapped to a plain object with five fields extracted from `membership.organization`:
+- `id` — Clerk org ID (e.g. `org_xxx`)
+- `slug` — URL slug
+- `name` — display name
+- `role` — the membership role (e.g. `"org:admin"`, `"org:member"`)
+- `imageUrl` — Clerk-hosted org avatar URL
+
+---
+
+### Return Type / Shape
+
+The inferred return type is an array of:
+
+```ts
+{
+  id: string;       // Clerk org ID
+  slug: string | null;
+  name: string;
+  role: string;
+  imageUrl: string;
+}[]
+```
+
+There is no explicit `z.output()` schema — the shape is TypeScript-inferred from the mapping at `api/app/src/router/user/organization.ts:36-46`. Consumers get this type automatically through tRPC's end-to-end inference.
+
+---
+
+### Data Flow
+
+1. **Server prefetch** — `apps/app/src/app/(app)/layout.tsx:8` calls `prefetch(trpc.organization.listUserOrganizations.queryOptions())` before `&lt;HydrateClient&gt;`, seeding the React Query cache as a server component.
+
+2. **Client hydration** — `&lt;HydrateClient&gt;` at `apps/app/src/app/(app)/layout.tsx:17` dehydrates that prefetch into the client bundle so the first client render is instant with no waterfall.
+
+3. **Client consumers** each call `useSuspenseQuery({ ...trpc.organization.listUserOrganizations.queryOptions(), staleTime: 5 * 60 * 1000 })` — they all read from the same cache key, so no duplicate network requests are made:
+   - `apps/app/src/components/app-sidebar.tsx:137-140`
+   - `apps/app/src/components/user-page-header.tsx:19-22`
+   - `packages/app-trpc/src/hooks/use-active-org.ts:16-19`
+   - `apps/app/src/app/(app)/(org)/[slug]/(manage)/settings/_components/team-general-settings-client.tsx:43-45`
+
+4. **`useActiveOrg` hook** (`packages/app-trpc/src/hooks/use-active-org.ts:12-22`) reads from the same cache and does a `.find()` against the current URL `params.slug` — no network call, just a cache lookup.
+
+5. **Optimistic update in settings** (`team-general-settings-client.tsx:76-84`) — when `updateName` mutation fires, it directly writes to the `listUserOrganizations` query cache via `queryClient.setQueryData(orgListQueryKey, ...)`, updating the `slug` field optimistically. On error (`line 87-90`), it rolls back to `previousOrgs`.
+
+---
+
+### How It Is Consumed in `app-sidebar.tsx` and `user-page-header.tsx`
+
+**`app-sidebar.tsx` (`apps/app/src/components/app-sidebar.tsx:137-140`)**
+```ts
+const { data: organizations = [] } = useSuspenseQuery({
+  ...trpc.organization.listUserOrganizations.queryOptions(),
+  staleTime: 5 * 60 * 1000,
+});
+```
+The result is passed directly to the `&lt;TeamSwitcher&gt;` component at line 165 as the `organizations` prop. The component also calls `useOrganizationList()` from Clerk (`line 135`) solely to get `setActive`, which is wired to the `handleOrgSelect` callback at line 142-146 — `setActive` notifies Clerk's session about the org switch, but the displayed list comes from tRPC.
+
+**`user-page-header.tsx` (`apps/app/src/components/user-page-header.tsx:19-22`)**
+Identical pattern — `useSuspenseQuery` at lines 19-22, result passed to `&lt;TeamSwitcher&gt;` at line 60 as `organizations`. Same `setActive` from Clerk at line 12, same `handleOrgSelect` wiring at lines 24-28.
+
+---
+
+### DB Queries
+
+None. The procedure does not touch `db` at all. The `db` object is available on `ctx` (injected by `createTRPCContext` at `api/app/src/trpc.ts:69`) but `listUserOrganizations` only uses `ctx.auth.userId`. All data is fetched from Clerk via `clerk.users.getOrganizationMembershipList` at `api/app/src/router/user/organization.ts:31-33`.
+
+---
+
+### Key Patterns
+
+- **Clerk as sole org source of truth** — `api/app/src/router/user/organization.ts:11-16` comment explicitly states there is no DB table for organizations.
+- **Shared cache key** — all four consumers call the same `.queryOptions()` helper, so they share one React Query cache entry and one server prefetch.
+- **`staleTime: 5 * 60 * 1000`** — set consistently at every call site; cache is valid for 5 minutes before a background refetch is triggered.
+- **`useSuspenseQuery` everywhere** — all consumers use the suspense variant, relying on the server prefetch to prevent the Suspense boundary from ever showing a loading state on initial render.</result>
+<usage><total_tokens>23365</total_tokens><tool_uses>11</tool_uses><duration_ms>56182</duration_ms></usage>
+</task-notification>
+
+---
+
+question, do you reckon this is truly the best ux? or just maintaining the existing structure is better
+
+---
+
+question, do you reckon this is truly the best ux? or just maintaining the existing structure is better
+
+---
+
+all good any open questions to solve before plan? use ASkUserQUestions tool
+
+---
+
+proceed
