@@ -1,0 +1,5 @@
+/research_codebase in recent changes regarding github 1:1 with bind, i noticed that the implementation is fundamentally broken where after installing the github org through our github app: we go to http://localhost:3024/api/connect/github/callback?installation_id=122585005&setup_action=install&state=5WEwDXiai2JIXOXNwo7C0 which is a 404.
+
+---
+
+we use @apps/app/next.config.ts
