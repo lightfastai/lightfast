@@ -53,14 +53,6 @@ export const metadata: Metadata = createMetadata({
     url: PAGE_URL,
     siteName: "Lightfast",
     locale: "en_US",
-    images: [
-      {
-        url: "https://lightfast.ai/images/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: "Lightfast Blog",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -68,7 +60,6 @@ export const metadata: Metadata = createMetadata({
     description: PAGE_DESCRIPTION,
     site: "@lightfastai",
     creator: "@lightfastai",
-    images: ["https://lightfast.ai/images/og-default.png"],
   },
 });
 

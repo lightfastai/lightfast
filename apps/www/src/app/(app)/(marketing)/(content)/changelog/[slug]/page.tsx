@@ -52,14 +52,14 @@ export default async function ChangelogEntryPage({ params }: Props) {
     publishedAt,
     authors,
     tldr,
-    ogImage,
+    featuredImage,
     description,
   } = page.data;
 
   const allPages = getChangelogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
-      new Date(a.data.publishedAt).getTime()
+      new Date(a.data.publishedAt).getTime(),
   );
   const currentIndex = allPages.findIndex((p) => p.slugs[0] === slug);
   const prevEntry =
@@ -67,7 +67,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
   const nextEntry = currentIndex > 0 ? allPages[currentIndex - 1] : null;
 
   return (
-    <>
+    <div className="mx-auto w-full min-w-0 max-w-2xl pt-24 pb-32">
       <JsonLd code={jsonLd} />
       <article className="space-y-3">
         <p className="text-muted-foreground text-sm">
@@ -81,26 +81,25 @@ export default async function ChangelogEntryPage({ params }: Props) {
           {version ? <> / {version}</> : null}
         </p>
 
-        <h2 className="pb-4 font-medium font-pp text-2xl">{title}</h2>
+        <h2 className="pb-8 font-medium font-pp text-2xl">{title}</h2>
 
-        <p className="font-mono text-muted-foreground text-xs uppercase tracking-wider">
+        <p className="font-mono hidden text-muted-foreground text-xs uppercase tracking-wider">
           {type}
         </p>
 
-        {ogImage &&
-          ogImage !== "https://lightfast.ai/images/og-default.png" && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
-              <Image
-                alt={title}
-                className="h-full w-full object-cover"
-                fill
-                priority
-                src={ogImage}
-              />
-            </div>
-          )}
+        {featuredImage && (
+          <div className="-mx-24 relative aspect-16/9 overflow-hidden rounded-lg bg-card">
+            <Image
+              alt={title}
+              className="h-full w-full object-cover"
+              fill
+              priority
+              src={featuredImage}
+            />
+          </div>
+        )}
 
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-sm mt-8">
           {authors[0]?.name ?? "Lightfast"} ·{" "}
           <time dateTime={publishedAt}>
             {new Date(publishedAt).toLocaleDateString(undefined, {
@@ -121,7 +120,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
         )}
 
         {description && (
-          <p className="pt-4 text-muted-foreground text-sm leading-relaxed">
+          <p className="pt-4 hidden text-muted-foreground text-sm leading-relaxed">
             {description}
           </p>
         )}
@@ -176,6 +175,6 @@ export default async function ChangelogEntryPage({ params }: Props) {
           </nav>
         )}
       </article>
-    </>
+    </div>
   );
 }

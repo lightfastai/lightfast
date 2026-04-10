@@ -38,7 +38,8 @@ function buildArticleMetadata(
   data: ContentSeoData,
   canonicalUrl: string,
   titleSuffix: string,
-  siteName: string
+  siteName: string,
+  ogImageUrl?: string
 ): Metadata {
   return createArticleMetadata(
     {
@@ -66,10 +67,17 @@ function buildArticleMetadata(
         url: canonicalUrl,
         siteName,
         locale: "en_US",
-        images: [
-          { url: data.ogImage, width: 1200, height: 630, alt: data.ogTitle },
-        ],
         authors: data.authors.map((a) => a.url),
+        ...(ogImageUrl && {
+          images: [
+            {
+              url: ogImageUrl,
+              width: 1200,
+              height: 630,
+              alt: data.ogTitle,
+            },
+          ],
+        }),
       },
       twitter: {
         card: "summary_large_image",
@@ -77,7 +85,7 @@ function buildArticleMetadata(
         description: data.ogDescription,
         site: "@lightfastai",
         creator: "@lightfastai",
-        images: [data.ogImage],
+        ...(ogImageUrl && { images: [ogImageUrl] }),
       },
       category: "Technology",
     },
@@ -123,12 +131,14 @@ export function emitDocsSeo(
   breadcrumbs: Crumb[]
 ): SeoBundle {
   const canonicalUrl = data.canonicalUrl ?? url;
+  const ogImageUrl = url.replace("/docs/", "/docs/og/");
   return {
     metadata: buildArticleMetadata(
       data,
       canonicalUrl,
       "Lightfast Docs",
-      "Lightfast Documentation"
+      "Lightfast Documentation",
+      ogImageUrl
     ),
     jsonLd: buildDocsJsonLd(data, url, breadcrumbs),
   };
@@ -162,9 +172,6 @@ export function emitLegalSeo(data: LegalPageData, url: LegalUrl): SeoBundle {
         url: canonicalUrl,
         siteName: "Lightfast",
         locale: "en_US",
-        images: [
-          { url: data.ogImage, width: 1200, height: 630, alt: data.ogTitle },
-        ],
       },
       twitter: {
         card: "summary_large_image",
@@ -172,7 +179,6 @@ export function emitLegalSeo(data: LegalPageData, url: LegalUrl): SeoBundle {
         description: data.ogDescription,
         site: "@lightfastai",
         creator: "@lightfastai",
-        images: [data.ogImage],
       },
     }),
     jsonLd: buildLegalJsonLd(data, url),
@@ -185,12 +191,17 @@ export function emitApiRefSeo(
   breadcrumbs: Crumb[]
 ): SeoBundle {
   const canonicalUrl = data.canonicalUrl ?? url;
+  const ogImageUrl = url.replace(
+    "/docs/api-reference/",
+    "/docs/api-reference/og/"
+  );
   return {
     metadata: buildArticleMetadata(
       data,
       canonicalUrl,
       "Lightfast API Reference",
-      "Lightfast API Reference"
+      "Lightfast API Reference",
+      ogImageUrl
     ),
     jsonLd: buildApiRefJsonLd(data, url, breadcrumbs),
   };

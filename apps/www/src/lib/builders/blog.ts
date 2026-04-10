@@ -18,7 +18,8 @@ const ARTICLE_SECTIONS: Record<BlogCategory, string> = {
 };
 
 function buildBlogPostEntity(
-  data: BlogPostData
+  data: BlogPostData,
+  url: BlogPostUrl
 ): Omit<BlogPosting, "@id" | "url"> {
   return {
     "@type": "BlogPosting",
@@ -35,7 +36,7 @@ function buildBlogPostEntity(
     })),
     image: {
       "@type": "ImageObject" as const,
-      url: data.ogImage,
+      url: `${url}/opengraph-image`,
       width: "1200",
       height: "630",
     },
@@ -51,7 +52,7 @@ export function buildBlogPostJsonLd(
   data: BlogPostData,
   url: BlogPostUrl
 ): GraphContext {
-  const entity = buildBlogPostEntity(data);
+  const entity = buildBlogPostEntity(data, url);
   return {
     "@context": "https://schema.org",
     "@graph": [

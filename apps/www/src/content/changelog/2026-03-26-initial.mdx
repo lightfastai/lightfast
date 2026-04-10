@@ -1,11 +1,10 @@
 ---
-title: "Initial Release — Lightfast Changelog"
-description: "Lightfast is now tracking changes. Follow this changelog for every feature, improvement, fix, and breaking change as we build the superintelligence layer."
-keywords: ["lightfast changelog", "product updates", "release notes", "ai platform updates"]
-canonicalUrl: "https://lightfast.ai/changelog/initial"
-ogTitle: "Initial Release — Lightfast Changelog"
-ogDescription: "Lightfast is now tracking changes publicly. Follow along as we ship."
-ogImage: "https://lightfast.ai/images/og-default.png"
+title: "Engineering Intelligence, Shipped"
+description: "The first Lightfast release: a neural pipeline, AI chat, four source integrations, a public API, TypeScript SDK, and MCP server."
+keywords: ["lightfast", "engineering intelligence", "neural pipeline", "entity extraction", "ai chat", "github integration", "vercel integration", "linear integration", "sentry integration", "developer tools", "api", "sdk", "mcp"]
+canonicalUrl: "https://lightfast.ai/changelog/2026-03-26-initial"
+ogTitle: "Engineering Intelligence, Shipped"
+ogDescription: "A neural pipeline that turns engineering events into searchable, connected knowledge you can query with AI."
 noindex: false
 nofollow: false
 authors:
@@ -13,13 +12,93 @@ authors:
     url: "https://lightfast.ai"
     twitterHandle: "@jeevanpillay"
 publishedAt: "2026-03-26T12:00:00Z"
-updatedAt: "2026-03-26T12:00:00Z"
+updatedAt: "2026-04-08T12:00:00Z"
 version: "v0.1.0"
 type: "feature"
-tldr: "Lightfast changelog is now public — follow every feature, improvement, fix, and breaking change as we build."
+featuredImage: "/images/changelog/v010-hero.png"
+tldr: "Lightfast v0.1.0 ships a neural pipeline that extracts entities and relationships from GitHub, Vercel, Linear, and Sentry — then lets you query it all with AI."
 faq:
-  - question: "Where can I follow Lightfast product updates?"
-    answer: "This changelog is the canonical source for all Lightfast releases. Each entry includes the version, change type, and a summary of what shipped."
+  - question: "What sources does Lightfast connect to in v0.1.0?"
+    answer: "Lightfast connects to GitHub, Vercel, Linear, and Sentry via OAuth. Events flow in real-time through webhooks and are automatically processed by the neural pipeline."
+  - question: "How does the neural pipeline work?"
+    answer: "Every incoming event is validated, scored for significance, and decomposed into entities like PRs, deployments, issues, and endpoints. Entities are linked into a relationship graph and embedded into a vector store for semantic search."
+  - question: "Can I access Lightfast programmatically?"
+    answer: "Yes. Lightfast ships with a public REST API, a TypeScript SDK (lightfast on npm), and an MCP server (@lightfastai/mcp) for AI agent integration."
 ---
 
-Lightfast changelog is live.
+Here's everything in v0.1.0.
+
+![Lightfast v0.1.0](/images/changelog/v010-hero.png)
+
+## Neural Pipeline
+
+The core of Lightfast. Every webhook event flows through four stages:
+
+1. **Ingest** — validates webhook signatures, transforms provider-specific payloads into a canonical format, and stores a delivery log.
+2. **Extract** — scores each event for significance, then decomposes it into up to 50 entities: PRs, deployments, issues, endpoints, branches, configs, and more. Each entity is deduplicated and tracked across occurrences.
+3. **Graph** — resolves relationships between co-occurring entities and inserts edges with confidence scores. Entities that appear together in the same events become connected.
+4. **Embed** — builds a narrative summary for each entity (identity, recent activity, relationships), generates a vector embedding, and upserts it into the search index.
+
+No configuration required. Connect a source, and the pipeline handles everything from there.
+
+{/* TODO: pipeline diagram or screenshot — apps/www/public/images/changelog/v010-neural-pipeline.png */}
+
+## AI Explore
+
+Ask questions about your engineering infrastructure and get answers grounded in your actual data.
+
+Explore is a streaming AI interface that searches your entity graph, retrieves relevant context from the vector store, and responds with cited, markdown-formatted answers. You can see exactly which entities and events informed each response through collapsible reasoning traces and tool call cards.
+
+{/* TODO: screenshot of AI Explore — apps/www/public/images/changelog/v010-ai-explore.png */}
+
+## Source Connections
+
+Connect GitHub, Vercel, Linear, and Sentry in seconds. Each integration uses OAuth with secure token storage — GitHub via App installation tokens, others via standard OAuth 2.0 flows.
+
+Once connected, events flow in real-time through webhooks. Each source shows its status, active resources, and event subscriptions. You choose which repos, projects, and resources to track.
+
+{/* TODO: screenshot of sources page — apps/www/public/images/changelog/v010-sources.png */}
+
+## Entities
+
+A real-time browser for every entity extracted from your engineering events — repositories, pull requests, deployments, issues, users, endpoints, and more.
+
+Filter by category, search by name, and watch new entities appear live as events are processed. Each entity links to a detail view showing its full metadata and event timeline.
+
+Powered by server-sent events — no polling, no refresh.
+
+{/* TODO: screenshot of entities list — apps/www/public/images/changelog/v010-entities.png */}
+
+## Events
+
+A real-time feed of every event from your connected sources. Filter by provider, search by content, and scope by time range. New events stream in as they arrive.
+
+{/* TODO: screenshot of events feed — apps/www/public/images/changelog/v010-events.png */}
+
+## Public API
+
+A contract-first REST API with interactive documentation. Search entities with semantic reranking, or integrate Lightfast into your own tools and workflows.
+
+Dual authentication: API keys for programmatic access, session tokens for browser-based flows.
+
+{/* TODO: screenshot of API docs — apps/www/public/images/changelog/v010-api-docs.png */}
+
+## SDK & MCP Server
+
+The TypeScript SDK (`lightfast` on npm) gives you typed access to the full API from any Node.js environment. The MCP server (`@lightfastai/mcp`) exposes the same capabilities to AI agents and tools that support the Model Context Protocol.
+
+```bash
+npm install lightfast
+```
+
+## API Keys
+
+Create, rotate, and revoke org-scoped API keys from the dashboard. Keys are hashed at rest and shown only once on creation. Rotate atomically — the old key is revoked and a new one is issued in a single operation.
+
+## Improvements
+
+- **Real-time updates** — entities and events stream live via SSE across all views
+- **Jobs dashboard** — monitor background workflows with live status, duration, and error details
+- **Responsive sidebar** — collapsible navigation with mobile support
+- **Platform-aware shortcuts** — Cmd on macOS, Ctrl on Windows and Linux
+- **Command palette** — navigate anywhere or search entities with Cmd+K

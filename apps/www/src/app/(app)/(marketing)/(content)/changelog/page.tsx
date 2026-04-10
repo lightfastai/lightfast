@@ -1,6 +1,7 @@
 import { Button } from "@repo/ui/components/ui/button";
 import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
+import { RssIcon } from "lucide-react";
 import type { Metadata, Route } from "next";
 import Image from "next/image";
 import { getChangelogPages } from "~/app/(app)/(content)/_lib/source";
@@ -53,14 +54,6 @@ export const metadata: Metadata = createMetadata({
     url: PAGE_URL,
     siteName: "Lightfast",
     locale: "en_US",
-    images: [
-      {
-        url: "https://lightfast.ai/images/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: "Lightfast Changelog",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -68,7 +61,6 @@ export const metadata: Metadata = createMetadata({
     description: PAGE_DESCRIPTION,
     site: "@lightfastai",
     creator: "@lightfastai",
-    images: ["https://lightfast.ai/images/og-default.png"],
   },
 });
 
@@ -101,8 +93,21 @@ export default function ChangelogPage() {
   };
 
   return (
-    <>
+    <div className="mx-auto w-full min-w-0 max-w-2xl pt-24 pb-32">
       <JsonLd code={structuredData} />
+      <div className="mb-12 flex items-center justify-between">
+        <h1 className="font-medium font-pp text-3xl text-foreground">
+          Changelog
+        </h1>
+        <NavLink
+          className="inline-flex items-center gap-2 text-muted-foreground text-sm transition-colors hover:text-foreground"
+          href={"/changelog/rss.xml" as Route}
+          title="Subscribe to RSS Feed"
+        >
+          <RssIcon className="h-4 w-4" />
+          <span>RSS Feed</span>
+        </NavLink>
+      </div>
       <div className="space-y-12 text-foreground">
         {sortedPages.length === 0 ? (
           <div className="py-16">
@@ -132,18 +137,16 @@ export default function ChangelogPage() {
                 </Button>
               </h2>
 
-              {page.data.ogImage &&
-                page.data.ogImage !==
-                  "https://lightfast.ai/images/og-default.png" && (
-                  <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
-                    <Image
-                      alt={page.data.title}
-                      className="h-full w-full object-cover"
-                      fill
-                      src={page.data.ogImage}
-                    />
-                  </div>
-                )}
+              {page.data.featuredImage && (
+                <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
+                  <Image
+                    alt={page.data.title}
+                    className="h-full w-full object-cover"
+                    fill
+                    src={page.data.featuredImage}
+                  />
+                </div>
+              )}
 
               <p className="text-muted-foreground text-sm">
                 {page.data.authors[0]?.name ?? "Lightfast"} ·{" "}
@@ -164,6 +167,6 @@ export default function ChangelogPage() {
           ))
         )}
       </div>
-    </>
+    </div>
   );
 }

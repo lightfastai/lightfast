@@ -47,7 +47,7 @@ export default async function BlogPostPage({ params }: Props) {
     publishedAt,
     readingTimeMinutes,
     tldr,
-    ogImage,
+    featuredImage,
     category,
   } = page.data;
 
@@ -132,14 +132,14 @@ export default async function BlogPostPage({ params }: Props) {
         )}
 
         {/* Featured image */}
-        {ogImage && (
+        {featuredImage && (
           <div className="relative mt-8 mb-12 aspect-video overflow-hidden rounded-lg">
             <Image
               alt={title}
               className="h-full w-full object-cover"
               fill
               priority
-              src={ogImage}
+              src={featuredImage}
             />
           </div>
         )}

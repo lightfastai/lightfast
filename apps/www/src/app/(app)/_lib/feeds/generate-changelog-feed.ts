@@ -46,7 +46,7 @@ export function generateChangelogFeed(): Feed {
       link: url,
       description: page.data.description,
       date: new Date(page.data.publishedAt),
-      image: page.data.ogImage,
+      image: `${url}/opengraph-image`,
     });
   }
 

@@ -18,7 +18,6 @@ const BasePageSchema = z.object({
   canonicalUrl: z.url(),
   ogTitle: z.string().min(1).max(70),
   ogDescription: z.string().min(50).max(160),
-  ogImage: z.url(),
   noindex: z.boolean().default(false),
   nofollow: z.boolean().default(false),
 });
@@ -28,6 +27,7 @@ const ContentPageSchema = BasePageSchema.extend({
   publishedAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   faq: z.array(FaqItemSchema).min(1),
+  featuredImage: z.string().startsWith("/images/").optional(),
 });
 
 export const BlogPostSchema = ContentPageSchema.extend({
@@ -96,7 +96,6 @@ export type ContentSeoData = Pick<
   | "nofollow"
   | "noindex"
   | "ogDescription"
-  | "ogImage"
   | "ogTitle"
   | "publishedAt"
   | "title"
