@@ -1,0 +1,5 @@
+/implement_plan @thoughts/shared/research/2026-04-09-github-callback-404-routing.md
+
+---
+
+hmm it did show the connect page now but there is a seperate bug all good for ow
