@@ -1,0 +1,7 @@
+/research_codebase consider the "improvements" in @apps/www/src/content/changelog/2026-03-26-initial.mdx 
+
+now, we want to re-design this to match cursors, where basically instead of it being improvement in bullet points, it's an accordion that one can add with the title.
+
+we maintain these in the schema itself for changelog.
+
+[Image #1] see image 1.
