@@ -1,0 +1,21 @@
+/research_codebase i want to rework the @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx 
+
+basically, have a look at cursor.com landing page for hero section. i think we've decided to adopt sort of a similar ui.
+
+also see linear.app's landing seciton.
+
+we want to adopt similar patterns for lightfast.
+
+the gif will be placed elsewhere.
+
+and we will create basically a replica of @apps/app/ in with basically the new @thoughts/shared/research/2026-04-09-apple-mail-split-pane-org-home.md structure.
+
+---
+
+minimal js.
+we'll move it in a sec. remove from ui for now
+on right hand side top of demo
+no glow effect no gradient
+no secondary cta.
+
+note: also, we edont want to copy linear or cursor. we have a well document design standard. maintain the same kinda text sizes for hero text as seen now. no change to that. what will be changed: positioning. it moves up a little.
