@@ -3,7 +3,7 @@
   "checkpoint_id": "44e6ec8f9df7",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 28,
+  "checkpoints_count": 29,
   "files_touched": [
     "apps/www/src/app/(app)/(content)/docs/(api)/api-reference/og/[...slug]/route.tsx",
     "apps/www/src/app/(app)/(content)/docs/og/[...slug]/route.tsx",
@@ -85,13 +85,19 @@
       "transcript": "/44/e6ec8f9df7/7/full.jsonl",
       "content_hash": "/44/e6ec8f9df7/7/content_hash.txt",
       "prompt": "/44/e6ec8f9df7/7/prompt.txt"
+    },
+    {
+      "metadata": "/44/e6ec8f9df7/8/metadata.json",
+      "transcript": "/44/e6ec8f9df7/8/full.jsonl",
+      "content_hash": "/44/e6ec8f9df7/8/content_hash.txt",
+      "prompt": "/44/e6ec8f9df7/8/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 12374,
-    "cache_creation_tokens": 718351,
-    "cache_read_tokens": 14197620,
-    "output_tokens": 137321,
-    "api_call_count": 246
+    "input_tokens": 14621,
+    "cache_creation_tokens": 1098431,
+    "cache_read_tokens": 22022947,
+    "output_tokens": 164953,
+    "api_call_count": 346
   }
 }
