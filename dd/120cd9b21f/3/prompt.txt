@@ -27,3 +27,7 @@ https://www.npmjs.com/package/@lightfastai/mcp
 note: dont do this for the prose/code section. the (lightfast on npm)....
 
 just the bullet points
+
+---
+
+this is incredible. now with the data you have synthesized, can you create a new skill called lightfast-changelog in @.claude/skills/ that defines how to write the changelog
