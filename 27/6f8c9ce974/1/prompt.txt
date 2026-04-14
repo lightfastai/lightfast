@@ -1,0 +1,15 @@
+/implement_plan @thoughts/shared/plans/2026-04-14-blog-topic-category-page.md
+
+---
+
+we dont need the - Lightfast Blog in title. instead use the patern Blog--  ENgineering.
+
+we also dont need the "Tutorials are practical, task-oriented guides: you come here with a specific thing you're trying to build and leave with working code. Topics span Lightfast SDK usage, MCP tool authoring, agent orchestration patterns, integrating providers like GitHub or Linear, and operational playbooks for running agents in production. Every tutorial is written against the current version of the platform and tested end-to-end before publication." that whole card.
+
+---
+
+very nice /commit
+
+---
+
+yes
