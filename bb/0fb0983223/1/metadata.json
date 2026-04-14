@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "bb0fb0983223",
+  "session_id": "b0f62a6a-56fa-4f7a-ba9d-c86ee85e5fc8",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T10:29:32.210868Z",
+  "branch": "main",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(content)/blog/[slug]/page.tsx",
+    "apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx",
+    "apps/www/src/app/(app)/_components/blog-social-share.tsx",
+    "apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx",
+    "apps/www/src/content/changelog/2026-03-26-initial.mdx",
+    "thoughts/shared/plans/2026-04-14-standardise-blog-changelog-slug.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "761d05849a1b",
+  "token_usage": {
+    "input_tokens": 112,
+    "cache_creation_tokens": 116657,
+    "cache_read_tokens": 2336442,
+    "output_tokens": 27965,
+    "api_call_count": 34
+  },
+  "session_metrics": {
+    "turn_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T10:29:31.889982Z",
+    "agent_lines": 287,
+    "agent_removed": 77,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 287,
+    "total_lines_changed": 364,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}

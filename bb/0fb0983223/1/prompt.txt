@@ -1,0 +1,31 @@
+/create_plan i've noticed a couple things we dont need from @apps/www/src/app/(app)/(marketing)/(content)/blog/[slug]/page.tsx 
+
+firstly: the enjoyed this article & abut the author at the bottom. we want to rework and standarise blog slug page and @apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx 
+
+secondly, we can maintain the share in top seciton for blog. no need for changelog.
+
+but use size-3.5 icons with h-6 w-6 button size. the tldr css should be the same too, follow changelog's.
+
+finally, add the seperate seen in blog to changelog too. use bordr-border/50 for the color. use shadcn's seperate if possible.
+
+finally, use the same faetueed image seen in @apps/www/src/content/changelog/2026-03-26-initial.mdx for @apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx
+
+---
+
+run /implement_plan
+
+---
+
+also note how it's technically wider
+
+---
+
+okay now for the Jeevan Pillay author name, ensure on hover it's actually jeevanpillay's linked. https://linkedin/in/jeevanpillay
+
+---
+
+adopt same pattern for date + spacing for this (follow blog) -- for the changelog
+
+---
+
+/commit
