@@ -246,6 +246,28 @@ export const MANIFEST: CompositionManifest = {
       ],
     },
 
+    "blog-why-we-built-featured": {
+      type: "still",
+      component: "BlogWhyWeBuiltFeatured",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/blog",
+          filename: "why-we-built-lightfast.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/blog",
+          filename: "why-we-built-lightfast.webp",
+          scale: 2,
+        },
+      ],
+    },
+
     // ── Changelog Featured Images ─────────────────────────────────
     "changelog-v010-featured": {
       type: "still",
