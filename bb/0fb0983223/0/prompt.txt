@@ -5,3 +5,9 @@ firstly, instead of directly landing and seeing the list of blog. we need to alw
 follow the title size + featued image size as seen in @apps/www/src/app/(app)/(marketing)/(content)/changelog/page.tsx for the iterated changelog's. just need to title + featured image size.
 
 and then ALL subsequent blog items, follow the current pattern (card styled)
+
+---
+
+1. just title + featured image.
+2. hmm, fallback to card pattern.
+3. no, should be title click.
