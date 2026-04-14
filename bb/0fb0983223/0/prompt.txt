@@ -1,0 +1,7 @@
+/create_plan i've decided to rework the landing section in @apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx 
+
+firstly, instead of directly landing and seeing the list of blog. we need to always maintain the MOST latest "blog" as a the feature image + title.
+
+follow the title size + featued image size as seen in @apps/www/src/app/(app)/(marketing)/(content)/changelog/page.tsx for the iterated changelog's. just need to title + featured image size.
+
+and then ALL subsequent blog items, follow the current pattern (card styled)
