@@ -3,7 +3,7 @@
   "checkpoint_id": "54a31bbb33cf",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx",
     "thoughts/shared/plans/2026-04-14-blog-listing-featured-post.md"
@@ -38,13 +38,19 @@
       "transcript": "/54/a31bbb33cf/4/full.jsonl",
       "content_hash": "/54/a31bbb33cf/4/content_hash.txt",
       "prompt": "/54/a31bbb33cf/4/prompt.txt"
+    },
+    {
+      "metadata": "/54/a31bbb33cf/5/metadata.json",
+      "transcript": "/54/a31bbb33cf/5/full.jsonl",
+      "content_hash": "/54/a31bbb33cf/5/content_hash.txt",
+      "prompt": "/54/a31bbb33cf/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 108,
-    "cache_creation_tokens": 113224,
-    "cache_read_tokens": 2185715,
-    "output_tokens": 23270,
-    "api_call_count": 44
+    "input_tokens": 364,
+    "cache_creation_tokens": 219082,
+    "cache_read_tokens": 5879353,
+    "output_tokens": 50367,
+    "api_call_count": 96
   }
 }

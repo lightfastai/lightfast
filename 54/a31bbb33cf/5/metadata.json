@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "54a31bbb33cf",
+  "session_id": "d0c6616a-0555-4681-a89c-6be27423f25a",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T11:09:05.268995Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "f325c75b6220",
+  "token_usage": {
+    "input_tokens": 256,
+    "cache_creation_tokens": 105858,
+    "cache_read_tokens": 3693638,
+    "output_tokens": 27097,
+    "api_call_count": 52
+  },
+  "session_metrics": {
+    "turn_count": 10
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T11:09:04.985125Z",
+    "agent_lines": 39,
+    "agent_removed": 1,
+    "human_added": 171,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 210,
+    "total_lines_changed": 211,
+    "agent_percentage": 18.95734597156398,
+    "metric_version": 2
+  }
+}
