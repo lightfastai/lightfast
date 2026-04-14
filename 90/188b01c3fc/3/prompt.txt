@@ -1,0 +1,31 @@
+/implement_plan @thoughts/shared/plans/2026-04-14-why-we-built-featured-image.md
+
+---
+
+run the dev server for remotion
+
+---
+
+nice. now a couple things.
+
+calculate the maths & add a horizontal line from middle left to the start of the isometric projection, specifically, to the "left most" point of the isometric projection which is the bottom square's left most corner.
+
+---
+
+now, do the same for the bottom rightmost corner and the bottom most corner and top most corner.
+
+---
+
+now, make it so the middle items is actually the bg color in terms of fill. so it looks like 1 color the whole thing except the lines
+
+---
+
+beautiful now, using the golden raio, what is the actual optimal position of the square. like photography techniques of proper framing.
+
+---
+
+okay export and replace @apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx
+
+---
+
+/commit
