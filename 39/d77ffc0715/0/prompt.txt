@@ -1,0 +1,20 @@
+/research_codebase let's rework @apps/www/src/app/(app)/(marketing)/(content)/integrations/[slug]/page.tsx 
+
+firstly: go to https://linear.app/integrations/github
+
+and EXTRACt the full sturcture for the page content.
+
+im seeing 
+
+badge
+title
+content left and content right
+
+content left is feauted Image + mdx component render
+content right is main details. likew ebsite, category, docs, contact.
+
+we want all the same things. 
+
+for now, we follow the same ui + structure but using our @apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx badge system, etc.
+
+basically adopting our patterns but using their layout.
