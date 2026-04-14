@@ -1,0 +1,12 @@
+/create_plan @thoughts/shared/research/2026-04-09-changelog-ogimage-featuredimage-rework.md
+
+---
+
+1. yes
+2. featured should be for both. 
+3. i guess blog pattern is fine. 
+4. og handlers for legal and docs yes.
+
+---
+
+eprfect!
