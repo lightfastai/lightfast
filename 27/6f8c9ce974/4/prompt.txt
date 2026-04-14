@@ -1,0 +1,25 @@
+/research_codebase we wnat to introduce new integrations page modelled after linear's https://linear.app/integrations for lightfast.
+
+we also update the resources menu in @apps/www/src/config/nav.ts to include integrations.
+
+note: https://linear.app/integrations/github
+
+basically we want to design these integration pages for lightfast.
+
+for now simple using content system through
+
+---
+
+what do you reckon are best solutions for our codebase for these long-term.
+
+---
+
+not yet, are these truly the best solution possible?
+
+---
+
+perfect! makes sense. proceed. dual is good. i want rich data with seo/aeo optimization. update research docs with findings/decisions/remove.
+
+---
+
+all done here. good
