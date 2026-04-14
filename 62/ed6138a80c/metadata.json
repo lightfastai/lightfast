@@ -3,8 +3,9 @@
   "checkpoint_id": "62ed6138a80c",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 6,
+  "checkpoints_count": 7,
   "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/_components/blog-listing-header.tsx",
     "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/layout.tsx",
     "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx",
     "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/topic/[category]/page.tsx"
@@ -21,13 +22,19 @@
       "transcript": "/62/ed6138a80c/1/full.jsonl",
       "content_hash": "/62/ed6138a80c/1/content_hash.txt",
       "prompt": "/62/ed6138a80c/1/prompt.txt"
+    },
+    {
+      "metadata": "/62/ed6138a80c/2/metadata.json",
+      "transcript": "/62/ed6138a80c/2/full.jsonl",
+      "content_hash": "/62/ed6138a80c/2/content_hash.txt",
+      "prompt": "/62/ed6138a80c/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 120,
-    "cache_creation_tokens": 135226,
-    "cache_read_tokens": 5779029,
-    "output_tokens": 37071,
-    "api_call_count": 90
+    "input_tokens": 3730,
+    "cache_creation_tokens": 234226,
+    "cache_read_tokens": 7637247,
+    "output_tokens": 63032,
+    "api_call_count": 126
   }
 }
