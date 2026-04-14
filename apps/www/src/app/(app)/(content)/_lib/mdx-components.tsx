@@ -14,12 +14,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type React from "react";
 import { Children, isValidElement } from "react";
-import {
-  IntegrationFeature,
-  IntegrationFeatureGrid,
-} from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-feature-grid";
-import { IntegrationHero } from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-hero";
-import { IntegrationScreenshot } from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-screenshot";
 import { AlphaBanner } from "~/app/(app)/(content)/docs/_components/alpha-banner";
 import { ApiEndpoint } from "~/app/(app)/(content)/docs/_components/api-endpoint";
 import { ApiMethod } from "~/app/(app)/(content)/docs/_components/api-method";
@@ -35,6 +29,11 @@ import {
   ValidationErrorList,
   ValidationExample,
 } from "~/app/(app)/(content)/docs/_components/validation-error";
+import {
+  IntegrationFeature,
+  IntegrationFeatureGrid,
+} from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-feature-grid";
+import { IntegrationScreenshot } from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-screenshot";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -70,9 +69,9 @@ export const mdxComponents = {
       <Image
         alt={alt ?? ""}
         className={cn(
-          "my-6 rounded-lg aspect-video",
+          "my-6 aspect-video rounded-lg",
           "h-auto w-full object-fill",
-          className,
+          className
         )}
         height={0}
         sizes="100vw"
@@ -90,7 +89,7 @@ export const mdxComponents = {
         <code
           className={cn(
             "rounded-md bg-muted/50 px-1 py-0.5 font-mono",
-            className,
+            className
           )}
           {...props}
         >
@@ -115,7 +114,7 @@ export const mdxComponents = {
       <code
         className={cn(
           "rounded-md bg-muted/50 px-1 py-0.5 font-mono",
-          className,
+          className
         )}
         {...props}
       >
@@ -205,7 +204,7 @@ export const mdxComponents = {
   h2({ children, ...props }: MarkdownComponentProps) {
     return (
       <h2
-        className="mt-12 scroll-m-20 font-semibold text-2xl font-pp"
+        className="mt-12 scroll-m-20 font-pp font-semibold text-2xl"
         {...props}
       >
         {children}
@@ -308,7 +307,7 @@ export const mdxComponents = {
       <blockquote
         className={cn(
           "my-6 border-border border-l-4 pl-6 text-base text-muted-foreground italic",
-          className,
+          className
         )}
         {...props}
       >
@@ -349,7 +348,7 @@ export const mdxComponents = {
       <tr
         className={cn(
           "border-border/30 border-b transition-colors hover:bg-muted/30",
-          className,
+          className
         )}
         {...props}
       >
@@ -363,7 +362,7 @@ export const mdxComponents = {
       <th
         className={cn(
           "h-10 break-words px-4 text-left align-middle font-semibold text-sm [&:has([role=checkbox])]:pr-0",
-          className,
+          className
         )}
         {...props}
       >
@@ -377,7 +376,7 @@ export const mdxComponents = {
       <td
         className={cn(
           "break-words p-4 align-middle text-sm [&:has([role=checkbox])]:pr-0",
-          className,
+          className
         )}
         {...props}
       >
@@ -392,7 +391,7 @@ export const mdxComponents = {
       <div
         className={cn(
           "my-10 flex gap-3 rounded-xs border border-transparent bg-card p-6 [&_*]:text-sm [&_p]:mt-0 [&_p]:leading-relaxed",
-          className,
+          className
         )}
         {...props}
       >
@@ -403,7 +402,6 @@ export const mdxComponents = {
   },
 
   // Integration components
-  IntegrationHero,
   IntegrationFeatureGrid,
   IntegrationFeature,
   IntegrationScreenshot,
@@ -470,7 +468,7 @@ export const mdxComponents = {
         <AccordionTriggerRoot
           className={cn(
             "flex w-full items-center justify-between py-6 text-left",
-            "group hover:no-underline",
+            "group hover:no-underline"
           )}
         >
           <span className="pr-4 font-medium text-base text-foreground">
@@ -500,7 +498,7 @@ export const mdxComponents = {
       <Link
         className={cn(
           "text-foreground underline decoration-foreground/40 underline-offset-4 transition-colors hover:decoration-foreground",
-          className,
+          className
         )}
         href={href as Route}
         prefetch
@@ -532,7 +530,7 @@ export const mdxComponents = {
         className={cn(
           "my-6 rounded-xl border border-border/50 shadow-sm",
           "w-full object-cover",
-          className,
+          className
         )}
         height={height ?? 400}
         priority={priority}

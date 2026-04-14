@@ -1,16 +1,22 @@
 import { PROVIDER_DISPLAY } from "@repo/app-providers/client";
+import { Button } from "@repo/ui/components/ui/button";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { JsonLd } from "@vendor/seo/json-ld";
-import type { Metadata } from "next";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import type { Metadata, Route } from "next";
+import Image from "next/image";
 import { notFound } from "next/navigation";
 import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
 import {
   getIntegrationPage,
   getIntegrationPages,
 } from "~/app/(app)/(content)/_lib/source";
+import { NavLink } from "~/components/nav-link";
 import { getProviderIcon } from "~/lib/get-provider-icon";
 import { emitIntegrationSeo } from "~/lib/seo-bundle";
 import type { IntegrationUrl } from "~/lib/url-types";
-import { IntegrationHero } from "../_components/integration-hero";
+import { STATUS_LABEL } from "../_components/integration-labels";
+import { IntegrationSidebar } from "../_components/integration-sidebar";
 
 export const dynamic = "force-static";
 
@@ -44,7 +50,16 @@ export default async function IntegrationDetailPage({ params }: Props) {
   const { jsonLd } = emitIntegrationSeo(page.data, url);
   const MDXContent = page.data.body;
 
-  const { title, tagline, providerId, status: mdxStatus } = page.data;
+  const {
+    title,
+    tagline,
+    providerId,
+    status: mdxStatus,
+    category,
+    featuredImage,
+    docsUrl,
+  } = page.data;
+
   const providerComingSoon =
     providerId && "comingSoon" in PROVIDER_DISPLAY[providerId]
       ? PROVIDER_DISPLAY[providerId].comingSoon
@@ -54,17 +69,105 @@ export default async function IntegrationDetailPage({ params }: Props) {
   const Icon = providerId ? getProviderIcon(providerId) : undefined;
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-3xl pt-24 pb-32">
+    <div className="mx-auto w-full min-w-0 max-w-6xl pt-24 pb-32">
       <JsonLd code={jsonLd} />
-      <IntegrationHero
-        icon={Icon}
-        status={derivedStatus}
-        tagline={tagline}
-        title={title}
-      />
-      <div className="mt-8 max-w-none">
-        <MDXContent components={mdxComponents} />
-      </div>
+      <article className="space-y-8">
+        <p className="text-muted-foreground text-sm">
+          <Button
+            asChild
+            className="h-auto p-0 text-muted-foreground text-sm hover:text-foreground"
+            variant="link"
+          >
+            <NavLink href="/integrations">Integrations</NavLink>
+          </Button>
+          {" / "}
+          {title}
+          {derivedStatus !== "live" && (
+            <>
+              {" · "}
+              {STATUS_LABEL[derivedStatus]}
+            </>
+          )}
+        </p>
+
+        <p className="max-w-2xl text-foreground text-lg leading-relaxed">
+          {tagline}
+        </p>
+
+        <Separator className="bg-border/50" />
+
+        <div className="grid grid-cols-1 gap-16 lg:grid-cols-[minmax(0,1fr)_280px]">
+          <div className="min-w-0 space-y-8">
+            {featuredImage && (
+              <div className="relative aspect-16/9 overflow-hidden">
+                <Image
+                  alt={title}
+                  className="h-full w-full object-cover"
+                  fill
+                  priority
+                  src={featuredImage}
+                />
+              </div>
+            )}
+            <div className="max-w-none">
+              <MDXContent components={mdxComponents} />
+            </div>
+          </div>
+
+          <IntegrationSidebar
+            category={category}
+            docsUrl={docsUrl}
+            icon={Icon}
+            status={derivedStatus}
+            title={title}
+          />
+        </div>
+
+        {(() => {
+          const related = getIntegrationPages().filter(
+            (p) => p.slugs[0] !== slug
+          );
+          if (related.length === 0) {
+            return null;
+          }
+          return (
+            <section className="pt-16">
+              <h2 className="mb-6 font-medium font-pp text-xl">
+                Other integrations
+              </h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {related.map((p) => {
+                  const rSlug = p.slugs[0] ?? "";
+                  const RIcon = p.data.providerId
+                    ? getProviderIcon(p.data.providerId)
+                    : undefined;
+                  return (
+                    <NavLink
+                      className="group flex h-[200px] flex-col justify-between gap-6 overflow-hidden rounded-md bg-accent/40 p-6 transition-colors hover:bg-accent"
+                      href={`/integrations/${rSlug}` as Route}
+                      key={rSlug}
+                      prefetch
+                    >
+                      {RIcon && (
+                        <RIcon aria-hidden className="size-5 text-foreground" />
+                      )}
+                      <div className="flex flex-col gap-3">
+                        <h3 className="font-medium font-pp text-foreground text-xl">
+                          {p.data.title}
+                        </h3>
+                        <p className="line-clamp-2 text-muted-foreground text-sm leading-relaxed">
+                          {p.data.tagline}
+                        </p>
+                      </div>
+                    </NavLink>
+                  );
+                })}
+              </div>
+            </section>
+          );
+        })()}
+
+      </article>
     </div>
   );
 }
