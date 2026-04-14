@@ -1,0 +1,42 @@
+/research_codebase let's work on lgihtfast's first blog in @apps/www/src/content/blog/ @apps/www/src/content/blog/2026-03-26-hello-world.mdx 
+
+im thinking something more in line with: https://lightfield.app/blog/why-we-built-lightfield
+
+and let's discuss writing this whole blog post.
+
+---
+
+i like your thinking. angel a with b woven in is perfect! yes to all the rest. author voice is "we". 
+i like the personal story. we can re-discuss that section in my founder journey.
+hmm, we can start at tigher 1.5k words.
+4. both makes sense.
+5. a is nice.
+6. i think in general, we should maintain the same url strucutre: this is best aeo practice in terms of dates addition, but we use rename hello world to why we document
+
+---
+
+1. lightfast was initial building an agent harness sdk to build agents, and while we did experiments, running multiple apps for different users on vercel, i noticed that closing the loop was hard without lots of "developer"-level scaffolding. and wanted a simple way to run everything on my termianl instead of going to the web constantly to look at deployments. at that time, CLI/APIs were still not the in-thing. mcp's were not as reliable. i had the insights that the memory layer needs to be designed first to enable an operating system to work. moreover, before building an open source agent harness, i was working with applicaitons like touchdesigner, blender, maya to orchestrate those apps with llms. during that time, i noticed a few fundamental flaws, llms not good at aesthetics, doesn't understand the full context of whats happening. similar issue right, the connecting tissue layer is obfuscated from the apps and requires lots of scaffolding to get it working. for example, when design nice looking ui, llm's love to repeat patterns, its hard to do this in blender since aesthetics are not easily looked at patterns but more of geometry and topology. so i wonder, how do we get good looking 3d generations. perhaps, there is a pathway, im unsure. i want to figure it out one day. but my intuition says, build startup memory into operating system to understand how the LLMs actual fundamentally work.
+2. hmm, i think for closing line, there is an interesting unique insights: @apps/www/src/app/(app)/(company)/company/page.tsx about usage of Programs. my thesis is that every company becomes a md file. we are trying to do this with lightfast as the experiment. can we run the whole of Lightfast through this set of markdowns hosted on lightfastai/.lightfast (github). and if yes, what is the infra that needs to be put in place. so lightfast is liteerally building the platform that lets anyone do this while living it.
+3. i think in general we as in Lightfast team, even though it's just me.
+
+---
+
+C.
+
+---
+
+1. cut completely for now
+2. yeap
+3. no need to go deep into it. program should paintt the picture.
+
+---
+
+all good for now. proceed
+
+---
+
+all good. /commit
+
+---
+
+yes

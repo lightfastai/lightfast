@@ -3,7 +3,7 @@
   "checkpoint_id": "52ae14b2308f",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 13,
+  "checkpoints_count": 15,
   "files_touched": [
     "apps/www/package.json",
     "apps/www/source.config.ts",
@@ -11,6 +11,7 @@
     "apps/www/src/app/(app)/(content)/_lib/source.ts",
     "apps/www/src/app/(app)/(marketing)/(content)/integrations/[slug]/opengraph-image.tsx",
     "apps/www/src/app/(app)/(marketing)/(content)/integrations/[slug]/page.tsx",
+    "apps/www/src/app/(app)/(marketing)/(content)/integrations/page.tsx",
     "apps/www/src/app/sitemap.ts",
     "apps/www/src/config/nav.ts",
     "apps/www/src/content/integrations/github.mdx",
@@ -106,13 +107,19 @@
       "transcript": "/52/ae14b2308f/13/full.jsonl",
       "content_hash": "/52/ae14b2308f/13/content_hash.txt",
       "prompt": "/52/ae14b2308f/13/prompt.txt"
+    },
+    {
+      "metadata": "/52/ae14b2308f/14/metadata.json",
+      "transcript": "/52/ae14b2308f/14/full.jsonl",
+      "content_hash": "/52/ae14b2308f/14/content_hash.txt",
+      "prompt": "/52/ae14b2308f/14/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 23660,
-    "cache_creation_tokens": 2152094,
-    "cache_read_tokens": 38078910,
-    "output_tokens": 311934,
-    "api_call_count": 514
+    "input_tokens": 33577,
+    "cache_creation_tokens": 2265105,
+    "cache_read_tokens": 40637888,
+    "output_tokens": 351543,
+    "api_call_count": 547
   }
 }
