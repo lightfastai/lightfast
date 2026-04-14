@@ -1,0 +1,21 @@
+/create_plan i want to rework @apps/www/src/app/(app)/(marketing)/(content)/integrations/page.tsx 
+
+firstly note @apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx 
+
+notice the positioning + text size and general html layout. also can see @apps/www/src/app/(app)/(marketing)/(content)/changelog/page.tsx for example. it's technically the same.
+
+we want to rework our integrations page similarly.
+
+as for the actual components (linear/github/etc).
+
+go to https://developers.openai.com/ and see the first 3 cards in hero section.
+
+api platform, codex, apps sdk. same positioining between icon and the title + description is perfered.
+
+---
+
+yeap b sounds good. run /create_plan
+
+---
+
+run /implement_plan
