@@ -1,4 +1,3 @@
-import { PROVIDER_DISPLAY } from "@repo/app-providers/client";
 import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata, Route } from "next";
@@ -88,49 +87,36 @@ export default function IntegrationsIndexPage() {
   return (
     <div className="mx-auto w-full min-w-0 max-w-4xl pt-24 pb-32">
       <JsonLd code={structuredData} />
-      <div className="mb-12">
-        <h1 className="mb-4 font-medium font-pp text-4xl text-foreground">
+      <div className="mb-12 flex items-center justify-between">
+        <h1 className="font-medium font-pp text-3xl text-foreground">
           Integrations
         </h1>
-        <p className="max-w-2xl text-lg text-muted-foreground leading-relaxed">
-          {PAGE_DESCRIPTION}
-        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {pages.map((page) => {
-          const { providerId, status: mdxStatus, title, tagline } = page.data;
-          const providerComingSoon =
-            providerId && "comingSoon" in PROVIDER_DISPLAY[providerId]
-              ? PROVIDER_DISPLAY[providerId].comingSoon
-              : false;
-          const derivedStatus: "live" | "beta" | "coming-soon" =
-            mdxStatus ?? (providerComingSoon ? "coming-soon" : "live");
+          const { providerId, title, tagline } = page.data;
           const Icon = providerId ? getProviderIcon(providerId) : undefined;
           const slug = page.slugs[0] ?? "";
 
           return (
             <NavLink
-              className="group flex h-full flex-col gap-4 rounded-lg border border-border/50 bg-card/40 p-6 transition-colors hover:border-border hover:bg-card"
+              className="group flex h-[200px] flex-col justify-between gap-6 overflow-hidden rounded-md bg-accent/40 p-6 transition-colors hover:bg-accent md:h-[260px] md:p-8"
               href={`/integrations/${slug}` as Route}
               key={slug}
               prefetch
             >
-              <div className="flex items-center justify-between">
-                {Icon && (
-                  <Icon aria-hidden className="size-8 text-foreground" />
-                )}
-                {derivedStatus !== "live" && (
-                  <span className="inline-flex items-center rounded-md border border-border px-2 py-0.5 text-muted-foreground text-xs uppercase tracking-wider">
-                    {derivedStatus === "coming-soon" ? "Soon" : "Beta"}
-                  </span>
-                )}
-              </div>
-              <div className="flex flex-col gap-2">
+              {Icon && (
+                <Icon
+                  aria-hidden
+                  className="size-5 text-foreground md:size-6"
+                />
+              )}
+              <div className="flex flex-col gap-3">
                 <h2 className="font-medium font-pp text-foreground text-xl">
                   {title}
                 </h2>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="line-clamp-2 text-muted-foreground text-sm leading-relaxed">
                   {tagline}
                 </p>
               </div>
