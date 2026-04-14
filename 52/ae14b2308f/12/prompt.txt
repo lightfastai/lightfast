@@ -7,3 +7,7 @@ proceed next step
 ---
 
 /commit
+
+---
+
+yes
