@@ -148,7 +148,7 @@
   --secondary: oklch(0.3092 0 0);
   --secondary-foreground: oklch(0.8853 0 0);
   --muted: oklch(0.285 0 0);
-  --muted-foreground: oklch(0.5999 0 0);
+  --muted-foreground: oklch(0.708 0 0);
   --accent: oklch(0.26 0 0); /* Consistent accent color matching sidebar */
   --accent-foreground: oklch(0.8853 0 0);
   --destructive: oklch(0.6591 0.153 22.1703);
