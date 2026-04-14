@@ -1,0 +1,13 @@
+/implement_plan @thoughts/shared/plans/2026-04-14-integrations-branded-mcp-cards.md
+
+---
+
+great start.
+
+now, remove the Model Context Protocl title.
+
+place the description: Expose your ... to the right hand side. so we have left and right column for that hero section.
+
+---
+
+font pp text semibold for USe Lightfast ....
