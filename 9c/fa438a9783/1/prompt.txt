@@ -1,0 +1,9 @@
+consider @packages/ui/src/globals.css personally i think the text-muted-foreground is super ugly and doesnt match our app. given this background what do you reckon should be the text-muted-background color
+
+---
+
+proceed
+
+---
+
+/commit
