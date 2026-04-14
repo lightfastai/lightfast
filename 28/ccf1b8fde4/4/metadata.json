@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "28ccf1b8fde4",
+  "session_id": "9977ea54-b90d-485f-8750-0989bca5275d",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T09:37:24.509058Z",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/www/src/content/blog/2026-03-26-hello-world.mdx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "7545b3fceccc",
+  "token_usage": {
+    "input_tokens": 2147,
+    "cache_creation_tokens": 151235,
+    "cache_read_tokens": 487211,
+    "output_tokens": 32531,
+    "api_call_count": 9
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T09:37:24.080941Z",
+    "agent_lines": 0,
+    "agent_removed": 27,
+    "human_added": 112,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 112,
+    "total_lines_changed": 139,
+    "agent_percentage": 19.424460431654676,
+    "metric_version": 2
+  }
+}
