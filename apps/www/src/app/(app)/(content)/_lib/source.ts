@@ -4,6 +4,7 @@ import {
   blogCollection,
   changelogCollection,
   docs,
+  integrationsCollection,
   legalCollection,
   meta,
 } from "fumadocs-mdx:collections/server";
@@ -112,3 +113,13 @@ const legalSource = loader({
 
 export const getLegalPage = (slugs: string[]) => legalSource.getPage(slugs);
 export const getLegalPages = () => legalSource.getPages();
+
+// --- Integrations ---
+const integrationsSource = loader({
+  baseUrl: "/integrations",
+  source: toFumadocsSource(integrationsCollection, []),
+});
+
+export const getIntegrationPage = (slugs: string[]) =>
+  integrationsSource.getPage(slugs);
+export const getIntegrationPages = () => integrationsSource.getPages();

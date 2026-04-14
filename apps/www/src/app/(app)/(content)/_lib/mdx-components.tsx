@@ -14,6 +14,12 @@ import Image from "next/image";
 import Link from "next/link";
 import type React from "react";
 import { Children, isValidElement } from "react";
+import {
+  IntegrationFeature,
+  IntegrationFeatureGrid,
+} from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-feature-grid";
+import { IntegrationHero } from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-hero";
+import { IntegrationScreenshot } from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-screenshot";
 import { AlphaBanner } from "~/app/(app)/(content)/docs/_components/alpha-banner";
 import { ApiEndpoint } from "~/app/(app)/(content)/docs/_components/api-endpoint";
 import { ApiMethod } from "~/app/(app)/(content)/docs/_components/api-method";
@@ -64,9 +70,9 @@ export const mdxComponents = {
       <Image
         alt={alt ?? ""}
         className={cn(
-          "my-6 rounded-sm border border-border shadow-sm",
-          "h-auto max-h-[400px] w-full object-contain",
-          className
+          "my-6 rounded-lg aspect-video",
+          "h-auto w-full object-fill",
+          className,
         )}
         height={0}
         sizes="100vw"
@@ -84,7 +90,7 @@ export const mdxComponents = {
         <code
           className={cn(
             "rounded-md bg-muted/50 px-1 py-0.5 font-mono",
-            className
+            className,
           )}
           {...props}
         >
@@ -109,7 +115,7 @@ export const mdxComponents = {
       <code
         className={cn(
           "rounded-md bg-muted/50 px-1 py-0.5 font-mono",
-          className
+          className,
         )}
         {...props}
       >
@@ -199,7 +205,7 @@ export const mdxComponents = {
   h2({ children, ...props }: MarkdownComponentProps) {
     return (
       <h2
-        className="mt-12 mb-5 scroll-m-20 font-semibold text-3xl tracking-tight"
+        className="mt-12 scroll-m-20 font-semibold text-2xl font-pp"
         {...props}
       >
         {children}
@@ -254,10 +260,7 @@ export const mdxComponents = {
   // Paragraph with proper spacing
   p({ children, ...props }: MarkdownComponentProps) {
     return (
-      <p
-        className="break-words text-base leading-7 [&:not(:first-child)]:mt-6"
-        {...props}
-      >
+      <p className="break-words text-md [&:not(:first-child)]:mt-6" {...props}>
         {children}
       </p>
     );
@@ -288,10 +291,7 @@ export const mdxComponents = {
 
   li({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <li
-        className={cn("break-words text-base leading-7", className)}
-        {...props}
-      >
+      <li className={cn("break-words text-md", className)} {...props}>
         {children}
       </li>
     );
@@ -308,7 +308,7 @@ export const mdxComponents = {
       <blockquote
         className={cn(
           "my-6 border-border border-l-4 pl-6 text-base text-muted-foreground italic",
-          className
+          className,
         )}
         {...props}
       >
@@ -349,7 +349,7 @@ export const mdxComponents = {
       <tr
         className={cn(
           "border-border/30 border-b transition-colors hover:bg-muted/30",
-          className
+          className,
         )}
         {...props}
       >
@@ -363,7 +363,7 @@ export const mdxComponents = {
       <th
         className={cn(
           "h-10 break-words px-4 text-left align-middle font-semibold text-sm [&:has([role=checkbox])]:pr-0",
-          className
+          className,
         )}
         {...props}
       >
@@ -377,7 +377,7 @@ export const mdxComponents = {
       <td
         className={cn(
           "break-words p-4 align-middle text-sm [&:has([role=checkbox])]:pr-0",
-          className
+          className,
         )}
         {...props}
       >
@@ -392,7 +392,7 @@ export const mdxComponents = {
       <div
         className={cn(
           "my-10 flex gap-3 rounded-xs border border-transparent bg-card p-6 [&_*]:text-sm [&_p]:mt-0 [&_p]:leading-relaxed",
-          className
+          className,
         )}
         {...props}
       >
@@ -401,6 +401,12 @@ export const mdxComponents = {
       </div>
     );
   },
+
+  // Integration components
+  IntegrationHero,
+  IntegrationFeatureGrid,
+  IntegrationFeature,
+  IntegrationScreenshot,
 
   // Custom components
   FeatureList,
@@ -464,7 +470,7 @@ export const mdxComponents = {
         <AccordionTriggerRoot
           className={cn(
             "flex w-full items-center justify-between py-6 text-left",
-            "group hover:no-underline"
+            "group hover:no-underline",
           )}
         >
           <span className="pr-4 font-medium text-base text-foreground">
@@ -494,7 +500,7 @@ export const mdxComponents = {
       <Link
         className={cn(
           "text-foreground underline decoration-foreground/40 underline-offset-4 transition-colors hover:decoration-foreground",
-          className
+          className,
         )}
         href={href as Route}
         prefetch
@@ -524,9 +530,9 @@ export const mdxComponents = {
       <Image
         alt={alt}
         className={cn(
-          "my-6 rounded-sm border border-border shadow-sm",
-          "max-h-[400px] w-full object-cover",
-          className
+          "my-6 rounded-xl border border-border/50 shadow-sm",
+          "w-full object-cover",
+          className,
         )}
         height={height ?? 400}
         priority={priority}

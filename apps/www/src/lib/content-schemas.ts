@@ -1,5 +1,16 @@
 import { z } from "zod";
 
+// Mirror of providerSlugSchema from @repo/app-providers/client. Inlined because
+// fumadocs-mdx's build-time loader can't resolve the package's extensionless
+// re-exports under Node ESM. Keep in sync with packages/app-providers/src/client/display.ts.
+const providerSlugSchema = z.enum([
+  "apollo",
+  "github",
+  "vercel",
+  "linear",
+  "sentry",
+]);
+
 const AuthorSchema = z.object({
   name: z.string().min(1),
   url: z.url(),
@@ -10,6 +21,12 @@ const AuthorSchema = z.object({
 const FaqItemSchema = z.object({
   question: z.string().min(10),
   answer: z.string().min(20),
+});
+
+const HowToStepSchema = z.object({
+  name: z.string().min(1),
+  text: z.string().min(20),
+  url: z.url().optional(),
 });
 
 const BasePageSchema = z.object({
@@ -46,6 +63,7 @@ export const BlogPostSchema = ContentPageSchema.extend({
   readingTimeMinutes: z.number().int().min(1),
   featured: z.boolean().default(false),
   tldr: z.string().min(20).max(300),
+  howToSteps: z.array(HowToStepSchema).min(2).optional(),
 });
 
 export const ChangelogEntrySchema = ContentPageSchema.extend({
@@ -68,6 +86,30 @@ export const LegalPageSchema = BasePageSchema.extend({
   effectiveAt: z.iso.datetime(),
 });
 
+const IntegrationStatusSchema = z.enum(["live", "beta", "coming-soon"]);
+const IntegrationCategorySchema = z.enum([
+  "dev-tools",
+  "monitoring",
+  "comms",
+  "data",
+  "project-management",
+]);
+
+export const IntegrationPageSchema = BasePageSchema.extend({
+  canonicalUrl: z
+    .url()
+    .refine((val) => val.startsWith("https://lightfast.ai/integrations/"))
+    .optional(),
+  providerId: providerSlugSchema.optional(),
+  tagline: z.string().min(10).max(120),
+  category: IntegrationCategorySchema,
+  featuredImage: z.string().startsWith("/images/").optional(),
+  docsUrl: z.string().startsWith("/docs/").optional(),
+  status: IntegrationStatusSchema.optional(),
+  faq: z.array(FaqItemSchema).min(1).optional(),
+  updatedAt: z.iso.datetime(),
+});
+
 export const DocsPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
@@ -86,6 +128,9 @@ export type BlogPostData = z.infer<typeof BlogPostSchema>;
 export type ChangelogEntryData = z.infer<typeof ChangelogEntrySchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
 export type DocsPageData = z.infer<typeof DocsPageSchema>;
+export type IntegrationPageData = z.infer<typeof IntegrationPageSchema>;
+export type IntegrationCategory = IntegrationPageData["category"];
+export type IntegrationStatus = IntegrationPageData["status"];
 
 // Fields required by the SEO layer — satisfied structurally by BlogPostData,
 // ChangelogEntryData, and DocsPageData. Derived from BlogPostData so schema

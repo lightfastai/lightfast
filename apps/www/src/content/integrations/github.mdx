@@ -1,0 +1,68 @@
+---
+title: "GitHub"
+description: "Connect GitHub to Lightfast. Ingest pull requests, issues, pushes, and CI status in real-time — query your repo activity with AI."
+keywords:
+  - github integration
+  - lightfast github
+  - pull request analytics
+  - repo intelligence
+  - engineering insights
+canonicalUrl: "https://lightfast.ai/integrations/github"
+ogTitle: "GitHub Integration – Lightfast"
+ogDescription: "Connect GitHub to Lightfast. Ingest pull requests, issues, pushes, and CI status in real-time — query your repo activity with AI."
+providerId: "github"
+tagline: "Ingest every pull request, issue, push, and CI run from your repos. Query your codebase activity with AI."
+category: "dev-tools"
+featuredImage: "/images/github-banner.png"
+docsUrl: "/docs/connectors/github"
+updatedAt: "2026-04-14T00:00:00Z"
+faq:
+  - question: "What events does the GitHub integration capture?"
+    answer: "Pull requests (open/merge/close/review), issues, pushes, workflow runs, deployments, and releases. Full event list in the connector docs."
+  - question: "What permissions does Lightfast request?"
+    answer: "Read-only access to repositories, issues, pull requests, and workflow runs. Lightfast never writes to your repos."
+  - question: "How long does backfill take?"
+    answer: "Historical events backfill in minutes for small repos, up to an hour for large orgs. Progress is visible in your workspace."
+---
+
+<IntegrationFeatureGrid>
+  <IntegrationFeature title="Real-time events">
+    Webhooks stream every PR, issue, push, and workflow run into Lightfast within seconds.
+  </IntegrationFeature>
+  <IntegrationFeature title="Read-only access">
+    Lightfast requests the minimum scope needed — repository read, issues read, pull requests read. Never writes.
+  </IntegrationFeature>
+  <IntegrationFeature title="Historical backfill">
+    Install once and Lightfast backfills your entire event history. Query activity from day one.
+  </IntegrationFeature>
+  <IntegrationFeature title="Entity graph">
+    Pull requests, issues, authors, and reviewers become first-class entities in your engineering graph.
+  </IntegrationFeature>
+</IntegrationFeatureGrid>
+
+## Why connect GitHub?
+
+Your repos are the source of truth for what your team shipped, reviewed, and deployed. Connecting GitHub turns that activity into queryable knowledge — ask "what did Alex ship last sprint?" and Lightfast answers from real PR data.
+
+## How it works
+
+1. Click **Install GitHub** on the Lightfast integrations settings page.
+2. Authorize the Lightfast GitHub App on the repos you want to connect.
+3. Events start flowing immediately. Backfill runs in the background.
+4. Query your engineering activity through chat or the API.
+
+<NextLink href="/docs/connectors/github">Read the full GitHub connector docs →</NextLink>
+
+## Frequently asked questions
+
+<FAQAccordion>
+  <FAQItem question="What events does the GitHub integration capture?" value="events">
+    Pull requests (open/merge/close/review), issues, pushes, workflow runs, deployments, and releases. Full event list in the connector docs.
+  </FAQItem>
+  <FAQItem question="What permissions does Lightfast request?" value="permissions">
+    Read-only access to repositories, issues, pull requests, and workflow runs. Lightfast never writes to your repos.
+  </FAQItem>
+  <FAQItem question="How long does backfill take?" value="backfill">
+    Historical events backfill in minutes for small repos, up to an hour for large orgs. Progress is visible in your workspace.
+  </FAQItem>
+</FAQAccordion>

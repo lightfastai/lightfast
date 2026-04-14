@@ -7,6 +7,7 @@ import {
   BlogPostSchema,
   ChangelogEntrySchema,
   DocsPageSchema,
+  IntegrationPageSchema,
   LegalPageSchema,
 } from "./src/lib/content-schemas";
 
@@ -36,6 +37,12 @@ export const legalCollection = defineCollections({
   type: "doc",
   dir: "src/content/legal",
   schema: LegalPageSchema,
+});
+
+export const integrationsCollection = defineCollections({
+  type: "doc",
+  dir: "src/content/integrations",
+  schema: IntegrationPageSchema,
 });
 
 export default defineConfig({
