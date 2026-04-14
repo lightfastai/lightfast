@@ -3,7 +3,7 @@
   "checkpoint_id": "276f8c9ce974",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 5,
+  "checkpoints_count": 7,
   "files_touched": [
     "apps/www/src/app/(app)/(content)/_lib/mdx-components.tsx",
     "apps/www/src/app/(app)/(marketing)/(content)/integrations/[slug]/page.tsx",
@@ -24,13 +24,19 @@
       "transcript": "/27/6f8c9ce974/1/full.jsonl",
       "content_hash": "/27/6f8c9ce974/1/content_hash.txt",
       "prompt": "/27/6f8c9ce974/1/prompt.txt"
+    },
+    {
+      "metadata": "/27/6f8c9ce974/2/metadata.json",
+      "transcript": "/27/6f8c9ce974/2/full.jsonl",
+      "content_hash": "/27/6f8c9ce974/2/content_hash.txt",
+      "prompt": "/27/6f8c9ce974/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 250,
-    "cache_creation_tokens": 293723,
-    "cache_read_tokens": 11927464,
-    "output_tokens": 62127,
-    "api_call_count": 154
+    "input_tokens": 344,
+    "cache_creation_tokens": 376031,
+    "cache_read_tokens": 15158925,
+    "output_tokens": 92775,
+    "api_call_count": 204
   }
 }
