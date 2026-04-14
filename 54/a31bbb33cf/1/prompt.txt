@@ -1,0 +1,17 @@
+/research_codebase i want to "steal" a component from https://linear.app/build using agent-browser go to this page and notice the 3 cards Claude Code - ChatGPT Deep Research and Figma.
+
+i want to steal these 3 componnent for our @apps/www/src/app/(app)/(marketing)/(content)/integrations/page.tsx 
+
+below the list of integrations.
+
+we follow 1:1 with these component. even steal the image + svg.
+
+but instead of CC, ChatGPT Deeep Research and FIgma.
+
+it's going to be
+
+Claude Code
+Codex
+Slack
+
+these are either outbound through Slack (not yet implement) or using MCP layer.
