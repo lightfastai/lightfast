@@ -1,0 +1,12 @@
+/create_plan @thoughts/shared/research/2026-04-14-blog-topic-category-route-status.md
+
+---
+
+1. no need, if gone into topic it should only the cards
+2. if category has 0 posts, show no post yet.
+3. sure
+4. need deep expansion of metadata for sure.
+5. no dont skip. need all.
+6. sure.
+
+im not 100% sure, but need long-term AEO and SEO focus for sure.
