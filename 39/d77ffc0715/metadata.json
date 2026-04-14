@@ -3,7 +3,7 @@
   "checkpoint_id": "39d77ffc0715",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 0,
+  "checkpoints_count": 8,
   "files_touched": [
     "apps/www/src/app/(app)/(marketing)/(content)/integrations/page.tsx",
     "thoughts/shared/plans/2026-04-14-integrations-page-rework.md"
@@ -14,13 +14,19 @@
       "transcript": "/39/d77ffc0715/0/full.jsonl",
       "content_hash": "/39/d77ffc0715/0/content_hash.txt",
       "prompt": "/39/d77ffc0715/0/prompt.txt"
+    },
+    {
+      "metadata": "/39/d77ffc0715/1/metadata.json",
+      "transcript": "/39/d77ffc0715/1/full.jsonl",
+      "content_hash": "/39/d77ffc0715/1/content_hash.txt",
+      "prompt": "/39/d77ffc0715/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 6,
-    "cache_creation_tokens": 20549,
-    "cache_read_tokens": 17246,
-    "output_tokens": 391,
-    "api_call_count": 1
+    "input_tokens": 90,
+    "cache_creation_tokens": 69941,
+    "cache_read_tokens": 2084744,
+    "output_tokens": 20819,
+    "api_call_count": 41
   }
 }
