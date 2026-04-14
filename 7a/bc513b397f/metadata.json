@@ -3,7 +3,7 @@
   "checkpoint_id": "7abc513b397f",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 13,
+  "checkpoints_count": 14,
   "files_touched": [
     "apps/www/public/images/blog/why-we-built-lightfast.png",
     "apps/www/public/images/blog/why-we-built-lightfast.webp",
@@ -62,13 +62,19 @@
       "transcript": "/7a/bc513b397f/7/full.jsonl",
       "content_hash": "/7a/bc513b397f/7/content_hash.txt",
       "prompt": "/7a/bc513b397f/7/prompt.txt"
+    },
+    {
+      "metadata": "/7a/bc513b397f/8/metadata.json",
+      "transcript": "/7a/bc513b397f/8/full.jsonl",
+      "content_hash": "/7a/bc513b397f/8/content_hash.txt",
+      "prompt": "/7a/bc513b397f/8/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 8364,
-    "cache_creation_tokens": 641585,
-    "cache_read_tokens": 18708668,
-    "output_tokens": 141746,
-    "api_call_count": 285
+    "input_tokens": 8392,
+    "cache_creation_tokens": 730721,
+    "cache_read_tokens": 19298860,
+    "output_tokens": 156239,
+    "api_call_count": 298
   }
 }
