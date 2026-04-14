@@ -1,0 +1,21 @@
+i want to rework blog card in @apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx 
+
+firstly, Capitalize the category.
+
+secondly, use text-sm for the description
+
+---
+
+same for cateogry page
+
+---
+
+okay now, for both components, no hover change color. and color goes from bg-accent/40 to hover bg-accent
+
+---
+
+empte states cards should use bg-accent/40 too
+
+---
+
+nice. /commit
