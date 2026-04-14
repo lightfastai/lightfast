@@ -1,0 +1,5 @@
+/create_plan @thoughts/shared/research/2026-04-14-integrations-detail-rework.md
+
+---
+
+use AskUserQuestions tool
