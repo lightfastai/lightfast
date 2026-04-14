@@ -1,0 +1,15 @@
+/create_plan i want to create a new featured image for @apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx and replace the currently borrowed featued image from changelog.
+
+as such, let's discuss this.
+
+basically i want this to steal the isometric projections from @packages/app-remotion/src/compositions/landing-hero/
+
+in-fact we steal the middle seciton. the square + lissajous.
+
+without the lined effect.
+
+we follow @packages/app-remotion/src/compositions/changelog-v010-featured/ 's aspect ratio + size
+
+---
+
+use AskUserQuestions tool
