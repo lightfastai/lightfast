@@ -3,9 +3,10 @@
   "checkpoint_id": "28ccf1b8fde4",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 18,
+  "checkpoints_count": 25,
   "files_touched": [
-    "apps/www/src/content/blog/2026-03-26-hello-world.mdx"
+    "apps/www/src/content/blog/2026-03-26-hello-world.mdx",
+    "apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx"
   ],
   "sessions": [
     {
@@ -43,13 +44,19 @@
       "transcript": "/28/ccf1b8fde4/5/full.jsonl",
       "content_hash": "/28/ccf1b8fde4/5/content_hash.txt",
       "prompt": "/28/ccf1b8fde4/5/prompt.txt"
+    },
+    {
+      "metadata": "/28/ccf1b8fde4/6/metadata.json",
+      "transcript": "/28/ccf1b8fde4/6/full.jsonl",
+      "content_hash": "/28/ccf1b8fde4/6/content_hash.txt",
+      "prompt": "/28/ccf1b8fde4/6/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 9780,
-    "cache_creation_tokens": 1426664,
-    "cache_read_tokens": 20908134,
-    "output_tokens": 212392,
-    "api_call_count": 254
+    "input_tokens": 19695,
+    "cache_creation_tokens": 1535124,
+    "cache_read_tokens": 23248395,
+    "output_tokens": 251834,
+    "api_call_count": 285
   }
 }
