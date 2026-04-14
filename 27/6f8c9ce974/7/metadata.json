@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "276f8c9ce974",
+  "session_id": "e15d6bad-9a57-459e-a8da-8966da1d84fc",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T12:25:38.447251Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "thoughts/shared/plans/2026-04-14-integrations-detail-rework.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "008bc747a720",
+  "checkpoint_transcript_start": 72,
+  "transcript_lines_at_start": 72,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T12:25:38.293677Z",
+    "agent_lines": 567,
+    "agent_removed": 0,
+    "human_added": 233,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 800,
+    "total_lines_changed": 876,
+    "agent_percentage": 64.72602739726028,
+    "metric_version": 2
+  }
+}
