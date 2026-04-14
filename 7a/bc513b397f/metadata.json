@@ -3,13 +3,14 @@
   "checkpoint_id": "7abc513b397f",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "apps/www/public/images/blog/why-we-built-lightfast.png",
     "apps/www/public/images/blog/why-we-built-lightfast.webp",
     "apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx",
     "packages/app-remotion/src/Root.tsx",
-    "packages/app-remotion/src/manifest.ts"
+    "packages/app-remotion/src/manifest.ts",
+    "thoughts/shared/plans/2026-04-14-why-we-built-featured-image.md"
   ],
   "sessions": [
     {
@@ -17,13 +18,19 @@
       "transcript": "/7a/bc513b397f/0/full.jsonl",
       "content_hash": "/7a/bc513b397f/0/content_hash.txt",
       "prompt": "/7a/bc513b397f/0/prompt.txt"
+    },
+    {
+      "metadata": "/7a/bc513b397f/1/metadata.json",
+      "transcript": "/7a/bc513b397f/1/full.jsonl",
+      "content_hash": "/7a/bc513b397f/1/content_hash.txt",
+      "prompt": "/7a/bc513b397f/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 107,
-    "cache_creation_tokens": 112704,
-    "cache_read_tokens": 5346826,
-    "output_tokens": 25666,
-    "api_call_count": 82
+    "input_tokens": 3729,
+    "cache_creation_tokens": 252234,
+    "cache_read_tokens": 7239629,
+    "output_tokens": 52733,
+    "api_call_count": 120
   }
 }
