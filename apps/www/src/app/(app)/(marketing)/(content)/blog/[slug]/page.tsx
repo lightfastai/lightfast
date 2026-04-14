@@ -1,3 +1,4 @@
+import { Separator } from "@repo/ui/components/ui/separator";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
 import Image from "next/image";
@@ -73,6 +74,19 @@ export default async function BlogPostPage({ params }: Props) {
             )}
           </div>
 
+          {/* Featured image */}
+          {featuredImage && (
+            <div className="-mx-24 relative aspect-16/9 overflow-hidden rounded-lg bg-card">
+              <Image
+                alt={title}
+                className="h-full w-full object-cover"
+                fill
+                priority
+                src={featuredImage}
+              />
+            </div>
+          )}
+
           {/* Author + date + reading time */}
           <div className="flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
             {authors.length > 0 && (
@@ -112,35 +126,21 @@ export default async function BlogPostPage({ params }: Props) {
           </div>
 
           {/* Social sharing */}
-          <div className="border-t pt-4">
-            <SocialShare
-              description={description}
-              title={title}
-              url={`https://lightfast.ai/blog/${slug}`}
-            />
-          </div>
+          <Separator className="bg-border/50" />
+          <SocialShare
+            description={description}
+            title={title}
+            url={`https://lightfast.ai/blog/${slug}`}
+          />
         </header>
 
         {/* TL;DR */}
         {tldr && (
           <div className="my-8 rounded-xs bg-card p-8">
-            <h2 className="mb-12 font-mono font-semibold text-muted-foreground text-xs uppercase tracking-widest">
+            <h2 className="mb-4 font-mono font-semibold text-muted-foreground text-xs uppercase tracking-widest">
               TL;DR
             </h2>
             <p className="text-foreground/90 text-sm leading-relaxed">{tldr}</p>
-          </div>
-        )}
-
-        {/* Featured image */}
-        {featuredImage && (
-          <div className="relative mt-8 mb-12 aspect-video overflow-hidden rounded-lg">
-            <Image
-              alt={title}
-              className="h-full w-full object-cover"
-              fill
-              priority
-              src={featuredImage}
-            />
           </div>
         )}
 
@@ -148,49 +148,6 @@ export default async function BlogPostPage({ params }: Props) {
         <div className="mt-12 max-w-none">
           <MDXContent components={mdxComponents} />
         </div>
-
-        {/* Share CTA */}
-        <div className="mt-16 rounded-sm bg-card p-6">
-          <h3 className="mb-2 font-semibold text-lg">Enjoyed this article?</h3>
-          <p className="mb-4 text-muted-foreground">
-            Share it with your team to spread the knowledge.
-          </p>
-          <SocialShare
-            description={description}
-            title={title}
-            url={`https://lightfast.ai/blog/${slug}`}
-          />
-        </div>
-
-        {/* Author bios */}
-        {authors.length > 0 && (
-          <div className="mt-16 border-t pt-8">
-            <h3 className="mb-6 font-semibold text-muted-foreground text-sm uppercase tracking-wide">
-              About the {authors.length > 1 ? "Authors" : "Author"}
-            </h3>
-            <div className="space-y-6">
-              {authors.map((author) => (
-                <div className="flex gap-4" key={author.name}>
-                  <div>
-                    <h4 className="font-semibold text-foreground">
-                      {author.name}
-                    </h4>
-                    {author.twitterHandle && (
-                      <a
-                        className="text-muted-foreground text-sm transition-colors hover:text-foreground"
-                        href={`https://x.com/${author.twitterHandle.replace(/^@/, "")}`}
-                        rel="noopener noreferrer"
-                        target="_blank"
-                      >
-                        {author.twitterHandle}
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
       </article>
     </>
   );

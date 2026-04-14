@@ -1,4 +1,5 @@
 import { Button } from "@repo/ui/components/ui/button";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata, Route } from "next";
@@ -108,16 +109,40 @@ export default async function ChangelogEntryPage({ params }: Props) {
           </div>
         )}
 
-        <p className="text-muted-foreground text-sm mt-8">
-          {authors[0]?.name ?? "Lightfast"} ·{" "}
+        <div className="mt-8 flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
+          {authors.length > 0 && (
+            <div>
+              {authors.map((author, idx) => (
+                <span key={author.name}>
+                  {author.url ? (
+                    <a
+                      className="transition-colors hover:text-foreground"
+                      href={author.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {author.name}
+                    </a>
+                  ) : (
+                    author.name
+                  )}
+                  {idx < authors.length - 1 && ", "}
+                </span>
+              ))}
+            </div>
+          )}
+
+          <span className="text-muted-foreground/50">·</span>
           <time dateTime={publishedAt}>
-            {new Date(publishedAt).toLocaleDateString(undefined, {
+            {new Date(publishedAt).toLocaleDateString("en-US", {
               year: "numeric",
-              month: "short",
+              month: "long",
               day: "numeric",
             })}
           </time>
-        </p>
+        </div>
+
+        <Separator className="mt-4 bg-border/50" />
 
         {tldr && (
           <div className="my-8 rounded-xs bg-card p-8">
