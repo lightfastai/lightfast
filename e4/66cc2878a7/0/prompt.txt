@@ -1,0 +1,21 @@
+/implement_plan @thoughts/shared/plans/2026-04-14-integrations-detail-rework.md
+
+---
+
+what the fuck is this terrrible over-use of cards and font mono?
+
+---
+
+remove: Dev tool . lightfast crafted.
+
+copy @apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx 's badge.
+
+Integrations Github basically.
+
+remove the github title.
+
+The description becomes text-foreground.
+
+---
+
+whats the max-w on this page?
