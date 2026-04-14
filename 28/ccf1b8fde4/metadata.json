@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "28ccf1b8fde4",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/www/src/content/blog/2026-03-26-hello-world.mdx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/28/ccf1b8fde4/0/metadata.json",
+      "transcript": "/28/ccf1b8fde4/0/full.jsonl",
+      "content_hash": "/28/ccf1b8fde4/0/content_hash.txt",
+      "prompt": "/28/ccf1b8fde4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 6390,
+    "cache_creation_tokens": 299732,
+    "cache_read_tokens": 3397653,
+    "output_tokens": 37186,
+    "api_call_count": 48
+  }
+}

@@ -1,0 +1,41 @@
+/research_codebase consider @apps/www/src/content/changelog/2026-03-26-initial.mdx i want you to go into tryprofound.com's blog to figure out what is the best practice for structuring post for aeo and let's figure out what we should do for our changelog.
+
+note: this is a technical changelog. so we need to think in more of technical-led sense but still we would like good aeo at the same time.
+
+given this, i've already setup lots of the schema and structure seen in @apps/www/src/app/(app)/(marketing)/(content)/changelog/page.tsx and @apps/www/src/app/(app)/(marketing)/(content)/changelog/[slug]/page.tsx 
+
+note: you should deep index tryprofound.com's blog
+
+---
+
+yes proceed
+
+---
+
+perhaps we should have more "links" too.
+
+https://www.npmjs.com/package/lightfast
+https://www.npmjs.com/package/@lightfastai/mcp
+
+---
+
+perhaps we should have more "links" too.
+
+https://www.npmjs.com/package/lightfast
+https://www.npmjs.com/package/@lightfastai/mcp
+
+note: dont do this for the prose/code section. the (lightfast on npm)....
+
+just the bullet points
+
+---
+
+this is incredible. now with the data you have synthesized, can you create a new skill called lightfast-changelog in @.claude/skills/ that defines how to write the changelog
+
+---
+
+question, how do you reckon blogs should be written
+
+---
+
+proceed
