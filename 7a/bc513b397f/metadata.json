@@ -1,0 +1,29 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "7abc513b397f",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/www/public/images/blog/why-we-built-lightfast.png",
+    "apps/www/public/images/blog/why-we-built-lightfast.webp",
+    "apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx",
+    "packages/app-remotion/src/Root.tsx",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/7a/bc513b397f/0/metadata.json",
+      "transcript": "/7a/bc513b397f/0/full.jsonl",
+      "content_hash": "/7a/bc513b397f/0/content_hash.txt",
+      "prompt": "/7a/bc513b397f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 107,
+    "cache_creation_tokens": 112704,
+    "cache_read_tokens": 5346826,
+    "output_tokens": 25666,
+    "api_call_count": 82
+  }
+}
