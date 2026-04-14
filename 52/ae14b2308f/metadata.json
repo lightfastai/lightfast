@@ -3,12 +3,19 @@
   "checkpoint_id": "52ae14b2308f",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 10,
+  "checkpoints_count": 13,
   "files_touched": [
     "apps/www/package.json",
     "apps/www/source.config.ts",
     "apps/www/src/app/(app)/(content)/_lib/mdx-components.tsx",
     "apps/www/src/app/(app)/(content)/_lib/source.ts",
+    "apps/www/src/app/(app)/(marketing)/(content)/integrations/[slug]/opengraph-image.tsx",
+    "apps/www/src/app/(app)/(marketing)/(content)/integrations/[slug]/page.tsx",
+    "apps/www/src/app/sitemap.ts",
+    "apps/www/src/config/nav.ts",
+    "apps/www/src/content/integrations/github.mdx",
+    "apps/www/src/content/integrations/linear.mdx",
+    "apps/www/src/content/integrations/vercel.mdx",
     "apps/www/src/lib/builders/index.ts",
     "apps/www/src/lib/content-schemas.ts",
     "apps/www/src/lib/seo-bundle.ts",
@@ -87,13 +94,19 @@
       "transcript": "/52/ae14b2308f/11/full.jsonl",
       "content_hash": "/52/ae14b2308f/11/content_hash.txt",
       "prompt": "/52/ae14b2308f/11/prompt.txt"
+    },
+    {
+      "metadata": "/52/ae14b2308f/12/metadata.json",
+      "transcript": "/52/ae14b2308f/12/full.jsonl",
+      "content_hash": "/52/ae14b2308f/12/content_hash.txt",
+      "prompt": "/52/ae14b2308f/12/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 23576,
-    "cache_creation_tokens": 1994116,
-    "cache_read_tokens": 33100541,
-    "output_tokens": 287367,
-    "api_call_count": 454
+    "input_tokens": 23660,
+    "cache_creation_tokens": 2152094,
+    "cache_read_tokens": 38078910,
+    "output_tokens": 311934,
+    "api_call_count": 514
   }
 }
