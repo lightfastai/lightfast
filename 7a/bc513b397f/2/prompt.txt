@@ -1,0 +1,5 @@
+/create_plan swithc the @apps/www/src/app/(app)/_components/app-footer.tsx lissajous to border-border/50 for each item both outer border and lissajous
+
+---
+
+/commit
