@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "54a31bbb33cf",
+  "session_id": "2464d582-31dc-41b9-9507-c3acfa8849a0",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T11:08:54.691026Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx",
+    "thoughts/shared/plans/2026-04-14-blog-listing-featured-post.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "57f806cddbfc",
+  "checkpoint_transcript_start": 16,
+  "transcript_lines_at_start": 16,
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 22744,
+    "cache_read_tokens": 17339,
+    "output_tokens": 1372,
+    "api_call_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T11:08:54.647085Z",
+    "agent_lines": 210,
+    "agent_removed": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 210,
+    "total_lines_changed": 211,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
