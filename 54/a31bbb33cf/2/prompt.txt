@@ -1,0 +1,45 @@
+/create_plan i've decided to rework the landing section in @apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/page.tsx 
+
+firstly, instead of directly landing and seeing the list of blog. we need to always maintain the MOST latest "blog" as a the feature image + title.
+
+follow the title size + featued image size as seen in @apps/www/src/app/(app)/(marketing)/(content)/changelog/page.tsx for the iterated changelog's. just need to title + featured image size.
+
+and then ALL subsequent blog items, follow the current pattern (card styled)
+
+---
+
+1. just title + featured image.
+2. hmm, fallback to card pattern.
+3. no, should be title click.
+
+---
+
+run /implement_plan
+
+---
+
+actually switch it around. the featured images first then the title for this.
+
+---
+
+let's also add the date below the title
+
+---
+
+very nice. slightly more spacing between title and featureed image
+
+---
+
+ensure the title and the date is closer tho
+
+---
+
+mt-2 maybe?
+
+---
+
+/commit
+
+---
+
+yes
