@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "7abc513b397f",
+  "session_id": "d2569400-6188-4800-89ce-7cfbf45e7550",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T12:10:48.786804Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/www/public/images/blog/why-we-built-lightfast.png",
+    "apps/www/public/images/blog/why-we-built-lightfast.webp",
+    "apps/www/src/content/blog/2026-03-26-why-we-built-lightfast.mdx",
+    "packages/app-remotion/src/Root.tsx",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "403544821898",
+  "token_usage": {
+    "input_tokens": 3290,
+    "cache_creation_tokens": 28853,
+    "cache_read_tokens": 654754,
+    "output_tokens": 5299,
+    "api_call_count": 18
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T12:10:48.68587Z",
+    "agent_lines": 25,
+    "agent_removed": 1,
+    "human_added": 492,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 517,
+    "total_lines_changed": 518,
+    "agent_percentage": 5.019305019305019,
+    "metric_version": 2
+  }
+}
