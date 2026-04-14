@@ -1,0 +1,5 @@
+/create_plan @thoughts/shared/research/2026-04-14-marketing-integrations-page.md
+
+---
+
+makes perfect sense. this is great start!
