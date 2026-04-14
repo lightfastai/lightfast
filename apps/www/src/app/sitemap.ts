@@ -5,6 +5,7 @@ import {
   getIntegrationPages,
   getLegalPages,
 } from "~/app/(app)/(content)/_lib/source";
+import { BlogPostSchema } from "~/lib/content-schemas";
 
 function getCategoryPriority(category: string): number {
   switch (category) {
@@ -122,6 +123,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly" as const,
       priority: getCategoryPriority(page.data.category),
     })),
+    // Blog topic/category pages — one per BlogPostSchema.shape.category enum value
+    ...BlogPostSchema.shape.category.options.map((category) => {
+      const postsInCategory = blogPosts.filter(
+        (p) => p.data.category === category
+      );
+      const mostRecentInCategory = postsInCategory[0];
+      return {
+        url: `${base}/blog/topic/${category}`,
+        ...(mostRecentInCategory && {
+          lastModified: new Date(
+            mostRecentInCategory.data.updatedAt ??
+              mostRecentInCategory.data.publishedAt
+          ),
+        }),
+        changeFrequency: "weekly" as const,
+        priority: getCategoryPriority(category),
+      };
+    }),
     // Changelog listing
     {
       url: `${base}/changelog`,

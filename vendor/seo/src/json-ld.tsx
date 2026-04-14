@@ -48,6 +48,8 @@ export type {
   Blog,
   BlogPosting,
   BreadcrumbList,
+  // Collection types
+  CollectionPage,
   // Event types
   Event,
   FAQPage,
@@ -55,6 +57,7 @@ export type {
   HowToStep,
   // Media types
   ImageObject,
+  ItemList,
   ListItem,
   Offer,
   // Organization types

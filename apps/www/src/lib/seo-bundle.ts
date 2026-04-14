@@ -1,8 +1,10 @@
 import type { GraphContext } from "@vendor/seo/json-ld";
 import type { Metadata } from "next";
-import type { Crumb } from "./builders";
+import type { BlogCategoryMeta } from "~/config/blog-categories";
+import type { BlogCategoryPost, Crumb } from "./builders";
 import {
   buildApiRefJsonLd,
+  buildBlogCategoryJsonLd,
   buildBlogPostJsonLd,
   buildChangelogEntryJsonLd,
   buildDocsJsonLd,
@@ -109,6 +111,61 @@ export function emitBlogPostSeo(
       "Lightfast Blog"
     ),
     jsonLd: buildBlogPostJsonLd(data, url),
+  };
+}
+
+export function emitBlogCategorySeo(
+  meta: BlogCategoryMeta,
+  posts: readonly BlogCategoryPost[]
+): SeoBundle {
+  const url = `https://lightfast.ai/blog/topic/${meta.slug}`;
+  return {
+    metadata: createMetadata({
+      title: `${meta.heading} | Lightfast`,
+      description: meta.description,
+      keywords: [...meta.keywords],
+      creator: "Lightfast",
+      publisher: "Lightfast",
+      robots: {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      },
+      alternates: {
+        canonical: url,
+        types: {
+          "application/rss+xml": [
+            { url: "https://lightfast.ai/blog/rss.xml", title: "RSS 2.0" },
+          ],
+          "application/atom+xml": [
+            { url: "https://lightfast.ai/blog/atom.xml", title: "Atom 1.0" },
+          ],
+        },
+      },
+      openGraph: {
+        title: meta.ogTitle,
+        description: meta.description,
+        type: "website",
+        url,
+        siteName: "Lightfast Blog",
+        locale: "en_US",
+      },
+      twitter: {
+        card: "summary_large_image",
+        title: meta.ogTitle,
+        description: meta.description,
+        site: "@lightfastai",
+        creator: "@lightfastai",
+      },
+      category: meta.title,
+    }),
+    jsonLd: buildBlogCategoryJsonLd(meta, posts, url),
   };
 }
 
