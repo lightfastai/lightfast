@@ -3,7 +3,7 @@
   "checkpoint_id": "28ccf1b8fde4",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 16,
+  "checkpoints_count": 18,
   "files_touched": [
     "apps/www/src/content/blog/2026-03-26-hello-world.mdx"
   ],
@@ -37,13 +37,19 @@
       "transcript": "/28/ccf1b8fde4/4/full.jsonl",
       "content_hash": "/28/ccf1b8fde4/4/content_hash.txt",
       "prompt": "/28/ccf1b8fde4/4/prompt.txt"
+    },
+    {
+      "metadata": "/28/ccf1b8fde4/5/metadata.json",
+      "transcript": "/28/ccf1b8fde4/5/full.jsonl",
+      "content_hash": "/28/ccf1b8fde4/5/content_hash.txt",
+      "prompt": "/28/ccf1b8fde4/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 9714,
-    "cache_creation_tokens": 1293762,
-    "cache_read_tokens": 16955602,
-    "output_tokens": 195534,
-    "api_call_count": 203
+    "input_tokens": 9780,
+    "cache_creation_tokens": 1426664,
+    "cache_read_tokens": 20908134,
+    "output_tokens": 212392,
+    "api_call_count": 254
   }
 }
