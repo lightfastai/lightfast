@@ -3,7 +3,7 @@
   "checkpoint_id": "52ae14b2308f",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "apps/www/src/app/(app)/(content)/_lib/mdx-components.tsx"
   ],
@@ -13,13 +13,19 @@
       "transcript": "/52/ae14b2308f/0/full.jsonl",
       "content_hash": "/52/ae14b2308f/0/content_hash.txt",
       "prompt": "/52/ae14b2308f/0/prompt.txt"
+    },
+    {
+      "metadata": "/52/ae14b2308f/1/metadata.json",
+      "transcript": "/52/ae14b2308f/1/full.jsonl",
+      "content_hash": "/52/ae14b2308f/1/content_hash.txt",
+      "prompt": "/52/ae14b2308f/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 619,
-    "cache_creation_tokens": 133051,
-    "cache_read_tokens": 4239696,
-    "output_tokens": 21356,
-    "api_call_count": 72
+    "input_tokens": 11046,
+    "cache_creation_tokens": 298981,
+    "cache_read_tokens": 5269904,
+    "output_tokens": 44339,
+    "api_call_count": 90
   }
 }
