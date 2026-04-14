@@ -1,0 +1,13 @@
+/create_plan consider @apps/www/src/content/integrations/ now, we want to spam add a ton of new "integrations" into lightfast but all of them will be under upcoming integrations.
+
+we will rework @apps/www/src/app/(app)/(marketing)/(content)/integrations/page.tsx to add a new section called "Upcoming Integrations".
+
+given this, for now, this whole list of integratons will be not need a md page. instead just an array of items.
+
+the items will be designed as such:
+
+a list of cards.
+
+each item is a single line
+
+icon name description status on right. all status is Planned for now.
