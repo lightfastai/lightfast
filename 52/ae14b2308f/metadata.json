@@ -3,10 +3,16 @@
   "checkpoint_id": "52ae14b2308f",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 5,
+  "checkpoints_count": 6,
   "files_touched": [
+    "apps/www/package.json",
+    "apps/www/source.config.ts",
     "apps/www/src/app/(app)/(content)/_lib/mdx-components.tsx",
+    "apps/www/src/app/(app)/(content)/_lib/source.ts",
+    "apps/www/src/lib/builders/index.ts",
     "apps/www/src/lib/content-schemas.ts",
+    "apps/www/src/lib/seo-bundle.ts",
+    "apps/www/src/lib/url-types.ts",
     "thoughts/shared/plans/2026-04-14-marketing-integrations-page.md"
   ],
   "sessions": [
@@ -39,13 +45,19 @@
       "transcript": "/52/ae14b2308f/4/full.jsonl",
       "content_hash": "/52/ae14b2308f/4/content_hash.txt",
       "prompt": "/52/ae14b2308f/4/prompt.txt"
+    },
+    {
+      "metadata": "/52/ae14b2308f/5/metadata.json",
+      "transcript": "/52/ae14b2308f/5/full.jsonl",
+      "content_hash": "/52/ae14b2308f/5/content_hash.txt",
+      "prompt": "/52/ae14b2308f/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 18104,
-    "cache_creation_tokens": 1174778,
-    "cache_read_tokens": 12048337,
-    "output_tokens": 171748,
-    "api_call_count": 179
+    "input_tokens": 18231,
+    "cache_creation_tokens": 1341422,
+    "cache_read_tokens": 21778267,
+    "output_tokens": 206699,
+    "api_call_count": 286
   }
 }

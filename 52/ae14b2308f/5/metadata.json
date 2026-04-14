@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "52ae14b2308f",
+  "session_id": "506f04fb-e876-4a17-8d38-bea6548e6f50",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-14T09:42:44.555766Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/www/package.json",
+    "apps/www/source.config.ts",
+    "apps/www/src/app/(app)/(content)/_lib/mdx-components.tsx",
+    "apps/www/src/app/(app)/(content)/_lib/source.ts",
+    "apps/www/src/lib/builders/index.ts",
+    "apps/www/src/lib/content-schemas.ts",
+    "apps/www/src/lib/seo-bundle.ts",
+    "apps/www/src/lib/url-types.ts",
+    "thoughts/shared/plans/2026-04-14-marketing-integrations-page.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "4f982124c546",
+  "token_usage": {
+    "input_tokens": 127,
+    "cache_creation_tokens": 166644,
+    "cache_read_tokens": 9729930,
+    "output_tokens": 34951,
+    "api_call_count": 107
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-14T09:42:43.973021Z",
+    "agent_lines": 1350,
+    "agent_removed": 24,
+    "human_added": 591,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1941,
+    "total_lines_changed": 1965,
+    "agent_percentage": 69.92366412213741,
+    "metric_version": 2
+  }
+}
