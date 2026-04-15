@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "7d9b0e678ec0",
+  "session_id": "baa63421-73e1-462d-af2c-3033b4716935",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-15T12:01:51.185535Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/www/src/content/changelog/2026-03-26-lightfast-engineering-intelligence-shipped.mdx",
+    "packages/app-remotion/src/Root.tsx",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "d67bca17b004",
+  "checkpoint_transcript_start": 210,
+  "transcript_lines_at_start": 210,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-15T12:01:50.557167Z",
+    "agent_lines": 172,
+    "agent_removed": 0,
+    "human_added": 86,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 258,
+    "total_lines_changed": 390,
+    "agent_percentage": 44.1025641025641,
+    "metric_version": 2
+  }
+}
