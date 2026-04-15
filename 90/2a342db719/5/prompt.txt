@@ -1,0 +1,31 @@
+/create_plan i want to move the blog's "nav items" one the same level as the blog's first item. right now it's on the same level as the Blog title.
+
+@apps/www/src/app/(app)/(marketing)/(content)/blog/layout.tsx
+
+---
+
+Option A
+
+---
+
+run /implement_plan
+
+---
+
+looks good whats next
+
+---
+
+okay now, there is one last weird scenario: the nav is weird in mobile. it's at the top.
+
+let's discuss how this should look like for other mobile views.
+
+note: use AskUserQuestions once you have brainstormed the best design approach given the nav layout
+
+---
+
+just straight make changes
+
+---
+
+nice /commit
