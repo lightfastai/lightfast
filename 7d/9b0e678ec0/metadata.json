@@ -3,7 +3,7 @@
   "checkpoint_id": "7d9b0e678ec0",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 5,
+  "checkpoints_count": 7,
   "files_touched": [
     "apps/www/src/content/changelog/2026-03-26-initial.mdx",
     "apps/www/src/content/changelog/2026-03-26-lightfast-engineering-intelligence-shipped.mdx",
@@ -28,13 +28,19 @@
       "transcript": "/7d/9b0e678ec0/2/full.jsonl",
       "content_hash": "/7d/9b0e678ec0/2/content_hash.txt",
       "prompt": "/7d/9b0e678ec0/2/prompt.txt"
+    },
+    {
+      "metadata": "/7d/9b0e678ec0/3/metadata.json",
+      "transcript": "/7d/9b0e678ec0/3/full.jsonl",
+      "content_hash": "/7d/9b0e678ec0/3/content_hash.txt",
+      "prompt": "/7d/9b0e678ec0/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 248,
-    "cache_creation_tokens": 241691,
-    "cache_read_tokens": 11586192,
-    "output_tokens": 71470,
-    "api_call_count": 103
+    "input_tokens": 255,
+    "cache_creation_tokens": 244975,
+    "cache_read_tokens": 11656529,
+    "output_tokens": 72604,
+    "api_call_count": 105
   }
 }
