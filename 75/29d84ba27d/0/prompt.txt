@@ -1,0 +1,19 @@
+beautiful. 
+
+i gues the only thing im confused by: why Github Linear dont have logos?
+
+---
+
+in the root page itself i dont see github and linear's icon. only vercel.
+
+---
+
+hmm, it's literally not showing up even after restart
+
+---
+
+nice perfect! we're done. run /commit
+
+---
+
+yeaps
