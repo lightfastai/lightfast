@@ -31,6 +31,7 @@ function buildChangelogEntryEntity(
       "@type": "Person" as const,
       name: a.name,
       url: a.url,
+      ...(a.jobTitle ? { jobTitle: a.jobTitle } : {}),
       sameAs: [`https://x.com/${a.twitterHandle.replace(/^@/, "")}`],
     })),
     image: {

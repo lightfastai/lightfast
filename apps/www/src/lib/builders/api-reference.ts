@@ -19,6 +19,7 @@ function buildApiRefEntity(data: DocsPageData): Omit<Article, "@id" | "url"> {
       "@type": "Person" as const,
       name: a.name,
       url: a.url,
+      ...(a.jobTitle ? { jobTitle: a.jobTitle } : {}),
     })),
     keywords: data.keywords.join(", "),
     inLanguage: "en-US",
