@@ -9,7 +9,6 @@ import { defineNavItems } from "~/types/nav";
 
 export const INTERNAL_NAV = defineNavItems([
   { title: "Pricing", href: "/pricing" },
-  { title: "Integrations", href: "/integrations" },
   { title: "Early Access", href: "/early-access", microfrontend: true },
   { title: "Docs", href: "/docs/get-started/overview" },
 ]);
@@ -40,8 +39,9 @@ export const SOCIAL_NAV = defineNavItems([
 
 // Resources sub-navigation used for the marketing header dropdown
 export const RESOURCES_NAV = defineNavItems([
-  { title: "Changelog", href: "/changelog" },
   { title: "Blog", href: "/blog" },
+  { title: "Changelog", href: "/changelog" },
+  { title: "Integrations", href: "/integrations" },
 ]);
 
 // Navigation for the pitch-deck pages

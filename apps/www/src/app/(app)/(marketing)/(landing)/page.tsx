@@ -209,20 +209,20 @@ export default function HomePage() {
           targets the original URL so the browser has it in cache before the
           video element is painted, fixing desktop LCP.
           React 19 / Next.js 15 hoist <link> elements from Server Components to <head>. */}
-      <link
+      {/* <link
         as="image"
         fetchPriority="high"
         href="/images/landing-hero-poster.webp"
         media="(min-width: 768px)"
         rel="preload"
-      />
+      /> */}
 
       {/* Grid-based landing page */}
       <div className="min-h-screen bg-background">
         {/* Hero Section */}
         <section className="relative min-h-screen w-full overflow-hidden bg-background">
           {/* Mobile hero: static image only — no video download on mobile */}
-          <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden md:hidden">
+          {/* <div className="pointer-events-none absolute inset-0 z-0 overflow-hidden md:hidden">
             <div className="absolute top-[18%] -right-[50%] h-[110%] w-[180%]">
               <Image
                 alt="Data flows through the Lightfast engine"
@@ -234,10 +234,10 @@ export default function HomePage() {
                 src="/images/landing-hero-poster.webp"
               />
             </div>
-          </div>
+          </div> */}
 
           {/* Desktop hero: animated WebM video */}
-          <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block">
+          {/* <div className="pointer-events-none absolute inset-0 z-0 hidden overflow-hidden md:block">
             <div className="absolute top-[20%] -right-[20%] h-[100%] w-[120%] lg:top-[0%] lg:-right-[20%] lg:h-[110%] lg:w-[95%]">
               <video
                 autoPlay
@@ -255,10 +255,10 @@ export default function HomePage() {
                 />
               </video>
             </div>
-          </div>
+          </div> */}
 
           {/* Vignette overlay */}
-          <div
+          {/* <div
             className="pointer-events-none absolute inset-0 z-10"
             style={{
               background: [
@@ -268,35 +268,53 @@ export default function HomePage() {
                 "linear-gradient(to bottom right, var(--background) 0% 8%, transparent 40%)",
               ].join(", "),
             }}
-          />
+          /> */}
 
-          {/* Hero text - positioned on the left */}
-          <div className="relative z-20 mx-auto flex min-h-screen w-full max-w-[1400px] items-start px-8 pt-[18vh] pb-24 md:px-16 md:pt-[15vh] md:pb-32 lg:items-center lg:px-24 lg:pt-0 lg:pb-40">
-            <div className="flex w-full max-w-sm flex-col justify-center md:max-w-lg lg:max-w-sm">
-              <Icons.logoShort className="mb-4 hidden h-5 w-5 text-muted-foreground md:block" />
+          {/* Hero layout — fills first 100vh as a column: text, card, badge */}
+          <div className="relative z-20 mx-auto flex h-screen w-full max-w-[1400px] flex-col overflow-hidden px-8 pt-[15vh] pb-8 md:px-16 md:pt-[12vh] lg:px-24 lg:pt-[16vh]">
+            {/* Hero text */}
+            <div className="flex w-full max-w-sm flex-col justify-center md:max-w-lg lg:max-w-lg">
               <h1 className="mb-4 font-medium font-pp text-4xl md:text-3xl lg:text-3xl">
                 <span className="text-muted-foreground">Building the</span>{" "}
                 <span className="text-primary">superintelligence layer</span>{" "}
                 <span className="text-muted-foreground">for</span>{" "}
-                <span className="text-primary">founders.</span>
+                <span className="text-primary">startups.</span>
               </h1>
               <div>
                 <Button asChild size="sm">
                   <MicrofrontendLink href="/early-access" prefetch={true}>
                     Join Early Access
-                    <span className="ml-2">&rarr;</span>
                   </MicrofrontendLink>
                 </Button>
               </div>
             </div>
-          </div>
 
-          {/* Changelog badge - pinned to bottom of initial viewport */}
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-30 flex h-screen items-end pb-8">
-            <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
-              <div className="pointer-events-auto">
-                <HeroChangelogBadge />
-              </div>
+            {/* Hero blog post card */}
+            <div className="mt-auto mb-auto min-h-0 flex-1 pt-16 pb-32">
+              <MicrofrontendLink
+                href="/blog/2026-03-26-why-we-built-lightfast"
+                className="block h-full max-h-full w-full rounded-md bg-accent p-8 transition-colors hover:bg-accent/80"
+                style={{ aspectRatio: "16/9", maxHeight: "100%" }}
+              >
+                <div className="flex h-full flex-col justify-end">
+                  <p className="mb-2 text-muted-foreground text-sm">
+                    Founder letter
+                  </p>
+                  <h2 className="font-medium font-pp text-xl md:text-2xl">
+                    Why We Built Lightfast
+                  </h2>
+                  <p className="mt-2 max-w-lg text-muted-foreground text-sm leading-relaxed">
+                    Before Lightfast was a runtime, it was an agent harness.
+                    The story behind why we're building the operating layer
+                    for founders.
+                  </p>
+                </div>
+              </MicrofrontendLink>
+            </div>
+
+            {/* Changelog badge */}
+            <div>
+              <HeroChangelogBadge />
             </div>
           </div>
         </section>
