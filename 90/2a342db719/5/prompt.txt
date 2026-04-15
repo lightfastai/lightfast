@@ -29,3 +29,7 @@ just straight make changes
 ---
 
 nice /commit
+
+---
+
+yes
