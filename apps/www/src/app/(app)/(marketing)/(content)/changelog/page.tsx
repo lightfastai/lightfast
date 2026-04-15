@@ -25,6 +25,26 @@ const FAQ = [
     answer:
       "This changelog is the canonical source for all Lightfast releases. Each entry includes the version, change type, and a summary of what shipped.",
   },
+  {
+    question: "What is Lightfast?",
+    answer:
+      "Lightfast is an engineering intelligence platform that connects to your developer tools, processes events through a neural pipeline, and lets you query your engineering knowledge with AI.",
+  },
+  {
+    question: "How often does Lightfast ship updates?",
+    answer:
+      "Lightfast ships continuously. Each release is documented here with a version number, change type (feature, improvement, fix, or breaking change), and detailed release notes.",
+  },
+  {
+    question: "What integrations does Lightfast support?",
+    answer:
+      "Lightfast integrates with GitHub, Vercel, Linear, and Sentry via OAuth. Events flow in real-time through webhooks and are processed by the neural pipeline.",
+  },
+  {
+    question: "Does Lightfast have an API?",
+    answer:
+      "Yes. Lightfast ships with a public REST API, a TypeScript SDK (lightfast on npm), and an MCP server (@lightfastai/mcp) for AI agent integration.",
+  },
 ];
 
 export const metadata: Metadata = createMetadata({
