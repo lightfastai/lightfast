@@ -358,7 +358,7 @@ export default function PricingPage() {
                         : "",
                       "md:col-span-2 lg:col-span-1",
                       plan.plan === "business" &&
-                        "md:col-start-2 lg:col-start-auto"
+                        "md:col-start-2 lg:col-start-auto",
                     )}
                     key={plan.plan}
                   >
@@ -499,7 +499,7 @@ export default function PricingPage() {
                       <AccordionTrigger
                         className={cn(
                           "flex w-full items-center justify-between py-6 text-left",
-                          "group hover:no-underline"
+                          "group hover:no-underline",
                         )}
                       >
                         <span className="pr-4 font-medium text-base text-foreground">

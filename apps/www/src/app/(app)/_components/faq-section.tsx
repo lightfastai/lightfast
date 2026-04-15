@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 // The FAQ is below the fold — no need to block the critical path with
 // @radix-ui/react-accordion + its shared primitives on initial load.
 const FaqAccordion = dynamic<{ faqs: (typeof faqs)[number][] }>(() =>
-  import("./faq-accordion").then((m) => ({ default: m.FaqAccordion }))
+  import("./faq-accordion").then((m) => ({ default: m.FaqAccordion })),
 );
 
 export const faqs = [
