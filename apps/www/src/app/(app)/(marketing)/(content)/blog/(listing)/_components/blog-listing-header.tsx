@@ -1,11 +1,18 @@
 import { RssIcon } from "lucide-react";
 import type { Route } from "next";
+import { BlogCategoryDropdown } from "~/app/(app)/_components/blog-category-dropdown";
 import { NavLink } from "~/components/nav-link";
+import { BlogPostSchema } from "~/lib/content-schemas";
 
 interface BlogListingHeaderProps {
   tagline?: string;
   title: string;
 }
+
+const BLOG_CATEGORIES = BlogPostSchema.shape.category.options.map((slug) => ({
+  slug,
+  title: slug.charAt(0).toUpperCase() + slug.slice(1),
+}));
 
 export function BlogListingHeader({ title, tagline }: BlogListingHeaderProps) {
   return (
@@ -28,6 +35,9 @@ export function BlogListingHeader({ title, tagline }: BlogListingHeaderProps) {
           {tagline}
         </p>
       )}
+      <div className="mt-6 xl:hidden">
+        <BlogCategoryDropdown categories={BLOG_CATEGORIES} />
+      </div>
     </div>
   );
 }

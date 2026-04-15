@@ -15,13 +15,8 @@ export default function BlogListingLayout({
   return (
     <div className="mx-auto w-full max-w-2xl pt-24 pb-32">
       <div className="relative">
-        {/* Desktop: Category nav positioned to the left of content */}
-        <div className="absolute top-0 right-full mr-12 hidden xl:block">
-          <CategoryNav categories={BLOG_CATEGORIES} />
-        </div>
-
-        {/* Mobile/tablet: Category nav above content */}
-        <div className="mb-8 xl:hidden">
+        {/* Desktop: Category nav aligned with first post (offset matches BlogListingHeader: text-3xl line-height + mb-12) */}
+        <div className="absolute top-[5.25rem] right-full mr-12 hidden xl:block">
           <CategoryNav categories={BLOG_CATEGORIES} />
         </div>
 
