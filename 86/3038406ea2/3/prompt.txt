@@ -1,0 +1,9 @@
+clear all nextjs turbo and stale pids
+
+---
+
+keep deep finding
+
+---
+
+hmm, 3.
