@@ -1,0 +1,24 @@
+/research_codebase consider @thoughts/shared/research/2026-04-14-landing-page-restructure.md and the new changes in lightfast direction.
+
+now, given this, we want to design and update a bunch of things. @README.md @SPEC.md these have been updated recently with latest changes based on the landing-page-resturcutre resarch with latest information about lightfast.
+
+now we want to focus on landing page. we need deep analysis and layout structure investigate and suggestions for lightfast. note: focus on pages in Linear, Supabase, and Verce. let's discuss the new and improved Landing page for Lightfast.
+
+
+for linear: root page: https://linear.app/, https://linear.app/plan, https://linear.app/intake, https://linear.app/build
+
+for Supabase just the root supabase.com page.
+
+vercel you can explore a bit more.
+
+i think in general, linear is closest competitor with really good wording + structure imo.
+
+we want to accretively be more like linear, however, lightfast needs to position more like Vercel than Linear.
+
+we are more infrastructure platform vibes than "task and product development". 
+
+need to find balance.
+
+---
+
+for now, draw this page layout directly here using blocks/etc
