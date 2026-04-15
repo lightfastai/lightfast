@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e4ce65d7c87f",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "README.md",
+    "SPEC.md",
+    "apps/www/src/content/changelog/2026-03-26-initial.mdx",
+    "apps/www/src/content/changelog/2026-03-26-lightfast-engineering-intelligence-shipped.mdx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/e4/ce65d7c87f/0/metadata.json",
+      "transcript": "/e4/ce65d7c87f/0/full.jsonl",
+      "content_hash": "/e4/ce65d7c87f/0/content_hash.txt",
+      "prompt": "/e4/ce65d7c87f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 173,
+    "cache_creation_tokens": 108867,
+    "cache_read_tokens": 9408496,
+    "output_tokens": 54829,
+    "api_call_count": 76
+  }
+}
