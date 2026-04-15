@@ -11,11 +11,8 @@ export const CATEGORY_LABEL: Record<IntegrationCategory, string> = {
   "project-management": "Project management",
 };
 
-export const STATUS_LABEL: Record<
-  NonNullable<IntegrationStatus> | "live",
-  string
-> = {
+export const STATUS_LABEL: Record<IntegrationStatus, string> = {
   live: "Live",
   beta: "Beta",
-  "coming-soon": "Coming soon",
+  planned: "Planned",
 };

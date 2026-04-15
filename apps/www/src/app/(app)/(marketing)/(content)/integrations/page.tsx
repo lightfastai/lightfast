@@ -1,3 +1,4 @@
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata, Route } from "next";
@@ -9,29 +10,30 @@ import {
   buildWebSiteEntity,
 } from "~/lib/builders";
 import { createMetadata } from "~/lib/content-seo";
-import { getProviderIcon } from "~/lib/get-provider-icon";
+import { McpBentoSection } from "./_components/mcp-bento";
+import { UpcomingIntegrationsList } from "./_components/upcoming-integrations-list";
 
 export const dynamic = "force-static";
 
 const PAGE_TITLE = "Integrations";
 const PAGE_DESCRIPTION =
-  "Connect Lightfast to the tools your engineering org already runs on. GitHub, Vercel, Linear, Sentry, and more — one integration, every event.";
+  "Connect Lightfast to the tools your engineering org runs on. GitHub, Vercel, Linear today — Sentry, PagerDuty, Stripe, Clerk, and 30+ more on the roadmap.";
 const PAGE_URL = "https://lightfast.ai/integrations";
 const FAQ = [
   {
-    question: "What integrations does Lightfast support?",
+    question: "What integrations does Lightfast support today?",
     answer:
-      "Lightfast integrates with GitHub and Vercel today, with Linear, Sentry, and Apollo shipping next. Each integration ingests events in real-time via OAuth and webhooks.",
+      "GitHub, Vercel, and Linear are live. Each ingests events via OAuth and webhooks in real-time — pull requests, deploys, issues, and more.",
   },
   {
-    question: "How do I connect an integration?",
+    question: "What's on the roadmap?",
     answer:
-      "Install the integration from your Lightfast workspace under Settings → Integrations. OAuth flow completes in under a minute; events start flowing immediately.",
+      "37 planned integrations — each with its own dedicated page — spanning error tracking (Sentry, Datadog), incident response (PagerDuty, incident.io), billing (Stripe), auth (Clerk, WorkOS), product analytics (PostHog, Mixpanel, Amplitude), support (Intercom, Plain), CRM (HubSpot, Attio), and more. Click any row in the roadmap list to see per-integration details.",
   },
   {
-    question: "Can I request a new integration?",
+    question: "Can I request an integration or vote on priority?",
     answer:
-      "Yes. Join the waitlist from any coming-soon integration page — demand drives our roadmap prioritisation.",
+      "Yes. Reach out from any live integration page — demand from design-partner teams drives our roadmap order.",
   },
 ];
 
@@ -43,6 +45,12 @@ export const metadata: Metadata = createMetadata({
     "github integration",
     "vercel integration",
     "linear integration",
+    "sentry integration",
+    "pagerduty integration",
+    "stripe integration",
+    "clerk integration",
+    "posthog integration",
+    "datadog integration",
     "engineering intelligence integrations",
   ],
   alternates: { canonical: PAGE_URL },
@@ -64,7 +72,9 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default function IntegrationsIndexPage() {
-  const pages = getIntegrationPages();
+  const pages = getIntegrationPages().filter(
+    (p) => p.data.status === "live"
+  );
 
   const structuredData: GraphContext = {
     "@context": "https://schema.org",
@@ -85,45 +95,57 @@ export default function IntegrationsIndexPage() {
   };
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-4xl pt-24 pb-32">
+    <>
       <JsonLd code={structuredData} />
-      <div className="mb-12 flex items-center justify-between">
-        <h1 className="font-medium font-pp text-3xl text-foreground">
-          Integrations
-        </h1>
-      </div>
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-16">
+        {/* Left: Badge */}
+        <div>
+          <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-sm">
+            Integrations
+          </span>
+        </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {pages.map((page) => {
-          const { providerId, title, tagline } = page.data;
-          const Icon = providerId ? getProviderIcon(providerId) : undefined;
-          const slug = page.slugs[0] ?? "";
+        {/* Right: Live integrations - spans 2 columns */}
+        <div className="lg:col-span-2">
+          <div className="mb-8 border-border border-b pb-8">
+            <p className="text-base text-muted-foreground leading-relaxed md:text-lg">
+              Live today — GitHub, Vercel, and Linear ingest events in real
+              time.
+            </p>
+          </div>
 
-          return (
-            <NavLink
-              className="group flex h-[200px] flex-col justify-between gap-6 overflow-hidden rounded-md bg-accent/40 p-6 transition-colors hover:bg-accent md:h-[260px] md:p-8"
-              href={`/integrations/${slug}` as Route}
-              key={slug}
-              prefetch
-            >
-              {Icon && (
-                <Icon
-                  aria-hidden
-                  className="size-5 text-foreground md:size-6"
-                />
-              )}
-              <div className="flex flex-col gap-3">
-                <h2 className="font-medium font-pp text-foreground text-xl">
-                  {title}
-                </h2>
-                <p className="line-clamp-2 text-muted-foreground text-sm leading-relaxed">
-                  {tagline}
-                </p>
-              </div>
-            </NavLink>
-          );
-        })}
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            {pages.map((page) => {
+              const { iconKey, title, tagline } = page.data;
+              const Icon = IntegrationLogoIcons[iconKey];
+              const slug = page.slugs[0] ?? "";
+
+              return (
+                <NavLink
+                  className="group flex h-[180px] flex-col justify-between gap-4 overflow-hidden rounded-md border border-border/50 bg-accent/20 p-6 transition-colors hover:bg-accent/40 md:h-[220px]"
+                  href={`/integrations/${slug}` as Route}
+                  key={slug}
+                  prefetch
+                >
+                  {Icon && (
+                    <Icon aria-hidden className="size-5 text-foreground" />
+                  )}
+                  <div className="flex flex-col gap-2">
+                    <h2 className="font-medium font-pp text-foreground text-lg">
+                      {title}
+                    </h2>
+                    <p className="line-clamp-2 text-muted-foreground text-sm leading-relaxed">
+                      {tagline}
+                    </p>
+                  </div>
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
       </div>
-    </div>
+      <UpcomingIntegrationsList />
+      <McpBentoSection />
+    </>
   );
 }

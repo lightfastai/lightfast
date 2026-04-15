@@ -1,8 +1,7 @@
-import { PROVIDER_DISPLAY } from "@repo/app-providers/client";
 import { Button } from "@repo/ui/components/ui/button";
 import { Separator } from "@repo/ui/components/ui/separator";
+import { IntegrationLogoIcons } from "@repo/ui/integration-icons";
 import { JsonLd } from "@vendor/seo/json-ld";
-import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata, Route } from "next";
 import Image from "next/image";
 import { notFound } from "next/navigation";
@@ -12,7 +11,6 @@ import {
   getIntegrationPages,
 } from "~/app/(app)/(content)/_lib/source";
 import { NavLink } from "~/components/nav-link";
-import { getProviderIcon } from "~/lib/get-provider-icon";
 import { emitIntegrationSeo } from "~/lib/seo-bundle";
 import type { IntegrationUrl } from "~/lib/url-types";
 import { STATUS_LABEL } from "../_components/integration-labels";
@@ -50,26 +48,15 @@ export default async function IntegrationDetailPage({ params }: Props) {
   const { jsonLd } = emitIntegrationSeo(page.data, url);
   const MDXContent = page.data.body;
 
-  const {
-    title,
-    tagline,
-    providerId,
-    status: mdxStatus,
-    category,
-    featuredImage,
-    docsUrl,
-  } = page.data;
-
-  const providerComingSoon =
-    providerId && "comingSoon" in PROVIDER_DISPLAY[providerId]
-      ? PROVIDER_DISPLAY[providerId].comingSoon
-      : false;
-  const derivedStatus: "live" | "beta" | "coming-soon" =
-    mdxStatus ?? (providerComingSoon ? "coming-soon" : "live");
-  const Icon = providerId ? getProviderIcon(providerId) : undefined;
+  const { title, tagline, status, category, iconKey } = page.data;
+  const featuredImage =
+    page.data.status === "planned" ? undefined : page.data.featuredImage;
+  const docsUrl =
+    page.data.status === "planned" ? undefined : page.data.docsUrl;
+  const Icon = IntegrationLogoIcons[iconKey];
 
   return (
-    <div className="mx-auto w-full min-w-0 max-w-6xl pt-24 pb-32">
+    <>
       <JsonLd code={jsonLd} />
       <article className="space-y-8">
         <p className="text-muted-foreground text-sm">
@@ -82,10 +69,10 @@ export default async function IntegrationDetailPage({ params }: Props) {
           </Button>
           {" / "}
           {title}
-          {derivedStatus !== "live" && (
+          {status !== "live" && (
             <>
               {" · "}
-              {STATUS_LABEL[derivedStatus]}
+              {STATUS_LABEL[status]}
             </>
           )}
         </p>
@@ -118,14 +105,14 @@ export default async function IntegrationDetailPage({ params }: Props) {
             category={category}
             docsUrl={docsUrl}
             icon={Icon}
-            status={derivedStatus}
+            status={status}
             title={title}
           />
         </div>
 
         {(() => {
           const related = getIntegrationPages().filter(
-            (p) => p.slugs[0] !== slug
+            (p) => p.data.status === "live" && p.slugs[0] !== slug
           );
           if (related.length === 0) {
             return null;
@@ -138,9 +125,7 @@ export default async function IntegrationDetailPage({ params }: Props) {
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {related.map((p) => {
                   const rSlug = p.slugs[0] ?? "";
-                  const RIcon = p.data.providerId
-                    ? getProviderIcon(p.data.providerId)
-                    : undefined;
+                  const RIcon = IntegrationLogoIcons[p.data.iconKey];
                   return (
                     <NavLink
                       className="group flex h-[200px] flex-col justify-between gap-6 overflow-hidden rounded-md bg-accent/40 p-6 transition-colors hover:bg-accent"
@@ -166,8 +151,7 @@ export default async function IntegrationDetailPage({ params }: Props) {
             </section>
           );
         })()}
-
       </article>
-    </div>
+    </>
   );
 }

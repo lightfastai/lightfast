@@ -86,7 +86,7 @@ export const LegalPageSchema = BasePageSchema.extend({
   effectiveAt: z.iso.datetime(),
 });
 
-const IntegrationStatusSchema = z.enum(["live", "beta", "coming-soon"]);
+const IntegrationStatusSchema = z.enum(["live", "beta", "planned"]);
 const IntegrationCategorySchema = z.enum([
   "dev-tools",
   "monitoring",
@@ -95,20 +95,92 @@ const IntegrationCategorySchema = z.enum([
   "project-management",
 ]);
 
-export const IntegrationPageSchema = BasePageSchema.extend({
+// Mirror of IntegrationLogoIcons keys from @repo/ui/integration-icons. Inlined
+// because fumadocs-mdx's build-time loader can't resolve TSX component exports
+// under Node ESM. Keep in sync with packages/ui/src/components/integration-icons.tsx.
+const integrationIconKeySchema = z.enum([
+  "apollo",
+  "airtable",
+  "claude",
+  "codex",
+  "datadog",
+  "discord",
+  "github",
+  "linear",
+  "notion",
+  "posthog",
+  "sentry",
+  "slack",
+  "vercel",
+  "circleci",
+  "pagerduty",
+  "intercom",
+  "hubspot",
+  "stripe",
+  "grafana",
+  "clerk",
+  "jira",
+  "mixpanel",
+  "zendesk",
+  "cloudflare",
+  "supabase",
+  "resend",
+  "typeform",
+  "cal-com",
+  "better-stack",
+  "loops",
+  "segment",
+  "statsig",
+  "launchdarkly",
+  "amplitude",
+  "gong",
+  "outreach",
+  "instantly",
+  "incident-io",
+  "plain",
+  "attio",
+  "neon",
+  "customer-io",
+  "fireflies",
+  "workos",
+]);
+
+const BaseIntegrationSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
     .refine((val) => val.startsWith("https://lightfast.ai/integrations/"))
     .optional(),
-  providerId: providerSlugSchema.optional(),
+  iconKey: integrationIconKeySchema,
   tagline: z.string().min(10).max(120),
   category: IntegrationCategorySchema,
-  featuredImage: z.string().startsWith("/images/").optional(),
-  docsUrl: z.string().startsWith("/docs/").optional(),
-  status: IntegrationStatusSchema.optional(),
   faq: z.array(FaqItemSchema).min(1).optional(),
   updatedAt: z.iso.datetime(),
 });
+
+const IntegrationPageLiveSchema = BaseIntegrationSchema.extend({
+  status: z.literal("live"),
+  providerId: providerSlugSchema,
+  featuredImage: z.string().startsWith("/images/"),
+  docsUrl: z.string().startsWith("/docs/"),
+});
+
+const IntegrationPageBetaSchema = BaseIntegrationSchema.extend({
+  status: z.literal("beta"),
+  providerId: providerSlugSchema,
+  featuredImage: z.string().startsWith("/images/").optional(),
+  docsUrl: z.string().startsWith("/docs/").optional(),
+});
+
+const IntegrationPagePlannedSchema = BaseIntegrationSchema.extend({
+  status: z.literal("planned"),
+  featuredImage: z.string().startsWith("/images/").optional(),
+});
+
+export const IntegrationPageSchema = z.discriminatedUnion("status", [
+  IntegrationPageLiveSchema,
+  IntegrationPageBetaSchema,
+  IntegrationPagePlannedSchema,
+]);
 
 export const DocsPageSchema = BasePageSchema.extend({
   canonicalUrl: z

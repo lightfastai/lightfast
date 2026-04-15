@@ -17,6 +17,7 @@ function buildIntegrationPageEntity(
   data: IntegrationPageData,
   url: IntegrationUrl
 ): Omit<WebPage, "@id" | "url"> {
+  const hasProvider = data.status !== "planned";
   return {
     "@type": "WebPage",
     name: data.title,
@@ -25,9 +26,7 @@ function buildIntegrationPageEntity(
     inLanguage: "en-US",
     isPartOf: { "@id": "https://lightfast.ai/#website" },
     publisher: { "@id": "https://lightfast.ai/#organization" },
-    ...(data.providerId
-      ? { about: { "@id": `${url}#integrated-app` } }
-      : {}),
+    ...(hasProvider ? { about: { "@id": `${url}#integrated-app` } } : {}),
     keywords: data.keywords.join(", "),
   };
 }
@@ -36,7 +35,7 @@ function buildIntegratedAppEntity(
   data: IntegrationPageData,
   url: IntegrationUrl
 ): SoftwareApplication | null {
-  if (!data.providerId) return null;
+  if (data.status === "planned") return null;
   const display = PROVIDER_DISPLAY[data.providerId];
   return {
     "@type": "SoftwareApplication",

@@ -13,7 +13,7 @@ interface IntegrationSidebarProps {
   category: IntegrationCategory;
   docsUrl?: string;
   icon?: ComponentType<SVGProps<SVGSVGElement>>;
-  status: NonNullable<IntegrationStatus> | "live";
+  status: IntegrationStatus;
   title: string;
 }
 
@@ -25,7 +25,7 @@ export function IntegrationSidebar({
   docsUrl,
 }: IntegrationSidebarProps) {
   const ctaLabel =
-    status === "coming-soon" ? "Join waitlist" : "Connect in workspace";
+    status === "planned" ? "Join waitlist" : "Connect in workspace";
 
   return (
     <aside className="flex w-full flex-col gap-6 lg:w-[280px]">
