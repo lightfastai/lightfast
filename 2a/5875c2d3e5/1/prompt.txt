@@ -1,0 +1,27 @@
+/research_codebase consider @thoughts/shared/research/2026-04-14-landing-page-restructure.md and the new changes in lightfast direction.
+
+now, given this, we want to design and update a bunch of things. @README.md @SPEC.md (note: git clone github.com/lightfastai/harness to see SPEC.md guideline (but we omit the actual implementation details, focusing on high-level, we'll populate the FULL Lightfast SPEC.md in the futre)
+
+moreso, we also require deep analysis (using agent-browser) again to different pages in Linear, Supabase, and let's discuss the new and improved Landing page for Lightfast.
+
+---
+
+yeap perfect! thats a good start. focus on README.md draft + SPEC.md update.
+
+---
+
+before that, these updates & claims youve made in SPEC.md & README.md, are they truly accurate?
+
+---
+
+1. yes
+2. b)
+3. makes sense.
+
+---
+
+/commit
+
+---
+
+yes
