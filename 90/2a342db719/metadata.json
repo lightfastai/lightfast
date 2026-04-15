@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "902a342db719",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 9,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/_components/blog-listing-header.tsx",
+    "apps/www/src/app/(app)/(marketing)/(content)/blog/(listing)/layout.tsx",
+    "apps/www/src/app/(app)/_components/blog-category-dropdown.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/90/2a342db719/0/metadata.json",
+      "transcript": "/90/2a342db719/0/full.jsonl",
+      "content_hash": "/90/2a342db719/0/content_hash.txt",
+      "prompt": "/90/2a342db719/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 150,
+    "cache_creation_tokens": 683205,
+    "cache_read_tokens": 4574892,
+    "output_tokens": 109471,
+    "api_call_count": 62
+  }
+}
