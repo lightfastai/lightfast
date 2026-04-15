@@ -1,0 +1,9 @@
+/create_plan @thoughts/shared/research/2026-04-14-integrations-detail-rework.md
+
+---
+
+use AskUserQuestions tool
+
+---
+
+actually i changd my mind the root page (no slug, alll items), dont need any changes. thats fine.
