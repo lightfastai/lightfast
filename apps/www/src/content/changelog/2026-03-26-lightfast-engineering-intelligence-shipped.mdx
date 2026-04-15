@@ -2,7 +2,7 @@
 title: "Engineering Intelligence, Shipped"
 description: "The first Lightfast release: a neural pipeline, AI chat, four source integrations, a public API, TypeScript SDK, and MCP server."
 keywords: ["lightfast", "engineering intelligence", "neural pipeline", "entity extraction", "ai chat", "github integration", "vercel integration", "linear integration", "sentry integration", "developer tools", "api", "sdk", "mcp"]
-canonicalUrl: "https://lightfast.ai/changelog/2026-03-26-initial"
+canonicalUrl: "https://lightfast.ai/changelog/2026-03-26-lightfast-engineering-intelligence-shipped"
 ogTitle: "Engineering Intelligence, Shipped"
 ogDescription: "A neural pipeline that turns engineering events into searchable, connected knowledge you can query with AI."
 noindex: false
@@ -54,8 +54,6 @@ The neural pipeline is the core of Lightfast. Every webhook event flows through 
 
 Connect a source, and the pipeline handles everything from there.
 
-{/* TODO: pipeline diagram or screenshot — apps/www/public/images/changelog/v010-neural-pipeline.png */}
-
 ## How does Explore use AI to answer engineering questions?
 
 Explore is a streaming AI interface that searches your entity graph, retrieves relevant context from the vector store, and responds with cited, markdown-formatted answers grounded in your actual engineering data.
@@ -67,9 +65,9 @@ Ask questions about your infrastructure and get answers with full provenance. Co
 - Streaming responses with reasoning visibility
 - Markdown-formatted output
 
-{/* TODO: screenshot of Explore — apps/www/public/images/changelog/v010-ai-explore.png */}
-
 ## What sources can I connect to Lightfast?
+
+![Connected sources](/images/changelog/v010-sources.png)
 
 Lightfast v0.1.0 supports four source integrations: GitHub, Vercel, Linear, and Sentry. Each integration uses OAuth with secure token storage — GitHub via App installation tokens, the others via standard OAuth 2.0 flows.
 
@@ -80,8 +78,6 @@ Once connected, events flow in real-time through webhooks. Each source shows its
 - **Linear** — issues, projects, and workflow events via OAuth
 - **Sentry** — errors, issues, and alert events via OAuth
 
-{/* TODO: screenshot of sources page — apps/www/public/images/changelog/v010-sources.png */}
-
 ## How does Lightfast track entities across sources?
 
 The Entities view is a real-time browser for every entity extracted from your engineering events — repositories, pull requests, deployments, issues, users, endpoints, and more.
@@ -90,15 +86,13 @@ Filter by category, search by name, and watch new entities appear live as events
 
 Powered by server-sent events — no polling, no refresh.
 
-{/* TODO: screenshot of entities list — apps/www/public/images/changelog/v010-entities.png */}
-
 ## How does the real-time event feed work?
+
+![Events feed](/images/changelog/v010-events.png)
 
 The Events view is a real-time feed of every event from your connected sources. New events stream in as they arrive via server-sent events.
 
 Filter by provider, search by content, and scope by time range to find the events you need.
-
-![Events feed](/images/changelog/v010-events.png)
 
 ## How do I access Lightfast programmatically?
 
@@ -109,9 +103,9 @@ The API supports dual authentication:
 - **API keys** — for programmatic access from scripts, CI/CD pipelines, and backend services
 - **Session tokens** — for browser-based flows in custom frontends
 
-{/* TODO: screenshot of API docs — apps/www/public/images/changelog/v010-api-docs.png */}
-
 ## How do the TypeScript SDK and MCP server work?
+
+![SDK and MCP server](/images/changelog/v010-sdk-mcp.png)
 
 The TypeScript SDK (`lightfast` on npm) gives you typed access to the full Lightfast API from any Node.js environment. The MCP server (`@lightfastai/mcp`) exposes the same capabilities to AI agents and tools that support the Model Context Protocol.
 

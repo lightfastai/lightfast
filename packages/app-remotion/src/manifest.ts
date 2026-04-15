@@ -311,6 +311,48 @@ export const MANIFEST: CompositionManifest = {
         },
       ],
     },
+    "changelog-v010-sources": {
+      type: "still",
+      component: "ChangelogV010Sources",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sources.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sources.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "changelog-v010-sdk-mcp": {
+      type: "still",
+      component: "ChangelogV010SdkMcp",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sdk-mcp.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sdk-mcp.webp",
+          scale: 2,
+        },
+      ],
+    },
 
     // ── Video ──────────────────────────────────────────────────────
     "landing-hero": {
