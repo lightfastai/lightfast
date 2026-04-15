@@ -1,0 +1,61 @@
+/implement_plan @thoughts/shared/plans/2026-04-15-changelog-v010-rename-and-featured-images.md
+
+---
+
+run the remotion studio
+
+---
+
+great start!
+
+now, no need so complex for sources.
+
+just the 4 logos side-by-side with circle around them and horizontal line connecting them.
+
+---
+
+very nice. connect the lines to the "ends". meaning 0vw and 100vw basically. and also change color to border-border not border/50
+
+---
+
+nice. 
+
+now for SDK x MCP.
+
+we'll be simplifying it.
+
+it's going to be simply:
+
+a card kinda thing
+
+with claude title.
+
+mcp add --transport .......
+
+see [Image #1] for example (note image can be quite faded on right, we want the full thing).
+
+but now, it's not mcp.linear..... its more using @lightfastai/mcp npm package.
+
+---
+
+remove the bg-background. follow patterns for rounded and border seen in @packages/app-remotion/src/compositions/changelog-v010-events/
+
+---
+
+nice, make it 1 liner. i think it's more like: claude mcp add --transport .....
+
+---
+
+nice generate this two and update the md file
+
+---
+
+proceed
+
+---
+
+yes
+
+---
+
+/commit
