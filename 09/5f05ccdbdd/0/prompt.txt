@@ -1,0 +1,1 @@
+analyze @SPEC.md and and tell me if yo think lightfast is a tarpit idea or not
