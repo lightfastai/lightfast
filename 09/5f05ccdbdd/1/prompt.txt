@@ -3,3 +3,7 @@ rename @apps/www/src/content/legal/terms-of-service.mdx to terms.mdx
 ---
 
 /commit
+
+---
+
+yes
