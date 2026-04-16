@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "bc71b1b953b4",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
+    "apps/www/src/app/(app)/_components/product-demo-mailbox.tsx",
+    "apps/www/src/app/(app)/_components/product-demo.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/bc/71b1b953b4/0/metadata.json",
+      "transcript": "/bc/71b1b953b4/0/full.jsonl",
+      "content_hash": "/bc/71b1b953b4/0/content_hash.txt",
+      "prompt": "/bc/71b1b953b4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 25,
+    "cache_creation_tokens": 56108,
+    "cache_read_tokens": 592493,
+    "output_tokens": 8687,
+    "api_call_count": 16
+  }
+}

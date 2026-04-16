@@ -1,0 +1,9 @@
+i've decied to reset the landing page in @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx back to what it was original. im not sure if we're commited this in the past few days or not. but previously we have a landing page where it was a webm graphic lets go back there and also discuss any components to be deleted.
+
+---
+
+perf. proceed
+
+---
+
+great start /commit
