@@ -1,0 +1,66 @@
+/create_plan okay we want to rework @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx i've decided to go from a more minimal landing page as we're still in development and i feel like the current landing page is wrongly signalling that we have this webm that does data ingestion but we still havent figured out WHAT lightfast really is.
+
+i have a vision for what this landing seciton will look like.
+
+we also in the same process will remove Integrations, Connect your Tools. 
+
+as for the actual landing page, notice @packages/app-remotion/src/compositions/blog-why-we-built-featured/ 
+
+basically i want to replicate this but without using remotion. just straight up isometric svg. do you think thats possible? or does remotion export to svg.
+
+basically its an isometric lissajous svg with lines wrapped in a 16:9 aspect ration. we want the extact thing in this page position on the right hand side of hero section Building the superinte......
+
+---
+
+1) i think iso is standalone no? does need "brand". so repo/ui/lib/iso.
+2) 16:9 with bg-accent rounded-md
+3. yes see above. we do the exact same thing. lines to the canvas edges. bg-accent rounded-md
+4) yes to golden ratio focal point but opposite right.
+
+---
+
+run /implement_plan
+
+---
+
+perfect! i change to bg-card as well. and add a border around the whole thing. now, for let's step, i noticed you changed the positioning of the hero section. move it back to where it was.
+
+---
+
+i think we need to decouple left and right. right now changing left moves right.
+
+so we can position right indepdentally.
+
+---
+
+okay now, i want to create a line extension not part of the isometric card but positioning should be exactly where the canvas edges happen through to the left and right viewport edges
+
+---
+
+very nice. now possitionally, let's move the hero text above this line. right now the Join early access "cuts" into it
+
+---
+
+uhm the whole base is scrollable horizontally now?
+
+---
+
+okay now, we need to ensure that the hero text is perfectly positionned above the line tho
+
+---
+
+okay finally, the top and bottom lines should also extend fully.
+
+---
+
+hmm i think we need to ensure it doesnt exrend past 100vh tho. right not's its more like 100vh from the start point so it extends below the main page
+
+---
+
+okay finally, im realise that the isometric hero's lines are slightly thinner
+
+---
+
+perfect!, okay now i've decided a couple new changes. we are moving the isometric hero more higher. think golden ratio placement on top rght ish.
+
+and we move the Building the superintelligen..... hero section below the left line. and remove the logo

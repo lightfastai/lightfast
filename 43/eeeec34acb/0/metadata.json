@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "43eeeec34acb",
+  "session_id": "06a07398-177c-47f4-814a-c3bce019d849",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T09:28:20.64392Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/inngest/functions/platform-event-store.ts",
+    "api/platform/src/lib/entity-extraction-patterns.ts",
+    "packages/app-providers/src/client/categories.ts",
+    "packages/app-providers/src/client/display.ts",
+    "packages/app-providers/src/client/event-labels.ts",
+    "packages/app-providers/src/index.ts",
+    "packages/app-providers/src/providers/github/index.ts",
+    "packages/app-providers/src/providers/github/schemas.ts",
+    "packages/app-providers/src/providers/github/transformers.ts",
+    "packages/app-validation/src/schemas/entities.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "adb968ba058f",
+  "token_usage": {
+    "input_tokens": 271,
+    "cache_creation_tokens": 129221,
+    "cache_read_tokens": 6761519,
+    "output_tokens": 54127,
+    "api_call_count": 71
+  },
+  "session_metrics": {
+    "turn_count": 13
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T09:28:19.946782Z",
+    "agent_lines": 139,
+    "agent_removed": 4,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 139,
+    "total_lines_changed": 143,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
