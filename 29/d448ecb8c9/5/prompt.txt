@@ -1,0 +1,21 @@
+in @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx and @apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx remove the line that goes "down to 100vh" from the bottom edge of the isometric square
+
+---
+
+okay now, i've decided that the build the super .... section should be placed above the horizontal line
+
+---
+
+okay good start but i think the whole isometric hero should be moved lower to the middle of the page vertically
+
+---
+
+as such the hero section should be placed right above the left hand side line
+
+---
+
+try now
+
+---
+
+hmm needs to be higher. the Join Early Access is cutting into the left line of the isometric hero
