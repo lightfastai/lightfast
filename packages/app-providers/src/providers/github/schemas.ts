@@ -74,6 +74,27 @@ export const preTransformGitHubIssuesEventSchema = z.object({
   installation: z.object({ id: z.number() }).optional(),
 });
 
+export const preTransformGitHubIssueCommentEventSchema = z.object({
+  action: z.string(),
+  issue: z.object({
+    number: z.number(),
+    title: z.string(),
+    html_url: z.string(),
+    pull_request: z.object({ url: z.string() }).optional(),
+  }),
+  comment: z.object({
+    id: z.number(),
+    body: z.string(),
+    html_url: z.string(),
+    user: ghUserSchema.nullable(),
+    created_at: z.string(),
+    updated_at: z.string(),
+  }),
+  repository: ghRepositorySchema,
+  sender: ghUserSchema,
+  installation: z.object({ id: z.number() }).optional(),
+});
+
 // ── Relay-level loose webhook payload schema (for signature verification + extraction) ──
 
 export const githubWebhookPayloadSchema = z
@@ -97,8 +118,15 @@ export type PreTransformGitHubIssuesEvent = z.infer<
   typeof preTransformGitHubIssuesEventSchema
 >;
 export type GitHubWebhookPayload = z.infer<typeof githubWebhookPayloadSchema>;
+export type PreTransformGitHubIssueCommentEvent = z.infer<
+  typeof preTransformGitHubIssueCommentEventSchema
+>;
 
-export const githubWebhookEventTypeSchema = z.enum(["pull_request", "issues"]);
+export const githubWebhookEventTypeSchema = z.enum([
+  "pull_request",
+  "issues",
+  "issue_comment",
+]);
 export type GitHubWebhookEventType = z.infer<
   typeof githubWebhookEventTypeSchema
 >;

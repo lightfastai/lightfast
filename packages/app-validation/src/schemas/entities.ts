@@ -12,6 +12,7 @@ export const entityCategorySchema = z.enum([
   "branch",
   "pr",
   "issue",
+  "comment",
   "deployment",
   // Semantic types (from text extraction — used for search enrichment)
   "engineer", // Team members, contributors (@mentions, emails)

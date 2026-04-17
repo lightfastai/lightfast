@@ -19,11 +19,13 @@ import {
 import { githubBackfill } from "./backfill";
 import {
   githubWebhookPayloadSchema,
+  preTransformGitHubIssueCommentEventSchema,
   preTransformGitHubIssuesEventSchema,
   preTransformGitHubPullRequestEventSchema,
 } from "./schemas";
 import {
   transformGitHubIssue,
+  transformGitHubIssueComment,
   transformGitHubPullRequest,
 } from "./transformers";
 
@@ -92,6 +94,11 @@ export const github = defineWebhookProvider({
       description: "Capture issue opens, closes, and reopens",
       type: "observation",
     },
+    issue_comment: {
+      label: "Comments",
+      description: "Capture comments on issues and pull requests",
+      type: "observation",
+    },
   },
 
   events: {
@@ -117,6 +124,17 @@ export const github = defineWebhookProvider({
         opened: { label: "Issue Opened", weight: 45 },
         closed: { label: "Issue Closed", weight: 40 },
         reopened: { label: "Issue Reopened", weight: 40 },
+      },
+    }),
+    issue_comment: actionEvent({
+      label: "Comments",
+      weight: 25,
+      schema: preTransformGitHubIssueCommentEventSchema,
+      transform: transformGitHubIssueComment,
+      actions: {
+        created: { label: "Comment Added", weight: 25 },
+        edited: { label: "Comment Edited", weight: 20 },
+        deleted: { label: "Comment Deleted", weight: 20 },
       },
     }),
   },
@@ -217,7 +235,7 @@ export const github = defineWebhookProvider({
         accountInfo: {
           version: 1 as const,
           sourceType: "github" as const,
-          events: ["pull_request", "issues"],
+          events: ["pull_request", "issues", "issue_comment"],
           installedAt: now,
           lastValidatedAt: now,
           raw: {},
@@ -226,7 +244,7 @@ export const github = defineWebhookProvider({
     },
   },
 
-  defaultSyncEvents: ["pull_request", "issues"],
+  defaultSyncEvents: ["pull_request", "issues", "issue_comment"],
 
   buildProviderConfig: ({ defaultSyncEvents }) => ({
     provider: "github" as const,

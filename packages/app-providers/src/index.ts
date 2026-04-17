@@ -143,17 +143,20 @@ export { github } from "./providers/github/index";
 export type {
   GitHubWebhookEventType,
   GitHubWebhookPayload,
+  PreTransformGitHubIssueCommentEvent,
   PreTransformGitHubIssuesEvent,
   PreTransformGitHubPullRequestEvent,
 } from "./providers/github/schemas";
 export {
   githubWebhookEventTypeSchema,
   githubWebhookPayloadSchema,
+  preTransformGitHubIssueCommentEventSchema,
   preTransformGitHubIssuesEventSchema,
   preTransformGitHubPullRequestEventSchema,
 } from "./providers/github/schemas";
 export {
   transformGitHubIssue,
+  transformGitHubIssueComment,
   transformGitHubPullRequest,
 } from "./providers/github/transformers";
 // ── Linear ────────────────────────────────────────────────────────────────────

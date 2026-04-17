@@ -18,6 +18,11 @@ export const PROVIDER_CATEGORIES: Record<
       description: "Capture issue opens, closes, and reopens",
       type: "observation",
     },
+    issue_comment: {
+      label: "Comments",
+      description: "Capture comments on issues and pull requests",
+      type: "observation",
+    },
   },
   linear: {
     Issue: {

@@ -203,6 +203,10 @@ export function extractFromRelations(
         category = "deployment";
         key = rel.entityId;
         break;
+      case "comment":
+        category = "comment";
+        key = rel.entityId;
+        break;
       default:
         category = "reference";
         key = rel.entityId;

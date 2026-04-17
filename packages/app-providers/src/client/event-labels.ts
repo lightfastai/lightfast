@@ -12,6 +12,9 @@ export const EVENT_LABELS: Record<string, string> = {
   "github:issues.opened": "Issue Opened",
   "github:issues.closed": "Issue Closed",
   "github:issues.reopened": "Issue Reopened",
+  "github:issue_comment.created": "Comment Added",
+  "github:issue_comment.edited": "Comment Edited",
+  "github:issue_comment.deleted": "Comment Deleted",
   // Linear
   "linear:Issue.created": "Issue Created",
   "linear:Issue.updated": "Issue Updated",

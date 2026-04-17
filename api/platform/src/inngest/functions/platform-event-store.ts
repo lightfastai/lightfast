@@ -50,6 +50,7 @@ const STRUCTURAL_TYPES = new Set([
   "branch",
   "pr",
   "issue",
+  "comment",
   "deployment",
 ]);
 
