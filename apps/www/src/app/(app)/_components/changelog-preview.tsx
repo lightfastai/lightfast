@@ -7,7 +7,7 @@ export async function ChangelogPreview() {
     .sort(
       (a, b) =>
         new Date(b.data.publishedAt).getTime() -
-        new Date(a.data.publishedAt).getTime()
+        new Date(a.data.publishedAt).getTime(),
     )
     .slice(0, 4);
 
@@ -36,7 +36,7 @@ export async function ChangelogPreview() {
               year: "numeric",
               month: "short",
               day: "numeric",
-            }
+            },
           );
 
           return (
@@ -45,7 +45,7 @@ export async function ChangelogPreview() {
               href={`/changelog/${page.slugs[0]}` as Route}
               key={page.slugs[0]}
             >
-              <div className="h-full rounded-md border border-border p-4 transition-colors hover:bg-card/60">
+              <div className="h-full rounded-md border bg-card border-border p-4 transition-colors hover:bg-card/60">
                 {/* Version Badge and Date on same line */}
                 <div className="mb-4 flex items-center gap-2">
                   {page.data.version && (

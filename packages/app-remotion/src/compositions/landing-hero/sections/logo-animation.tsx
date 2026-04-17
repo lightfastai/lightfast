@@ -4,8 +4,8 @@ import {
 } from "@repo/ui/lib/brand";
 import { useCurrentFrame } from "@vendor/remotion";
 import type React from "react";
-import type { Box3D, Vec2 } from "../shared/iso";
-import { createBox, facePath, project, shapeBounds } from "../shared/iso";
+import type { Box3D, Vec2 } from "@repo/ui/lib/iso";
+import { createBox, facePath, project, shapeBounds } from "@repo/ui/lib/iso";
 
 const FACE_FILL: Record<string, string> = {
   top: "var(--background)",

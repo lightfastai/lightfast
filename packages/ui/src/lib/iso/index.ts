@@ -4,4 +4,4 @@ export {
   facePath,
   shapeBounds,
 } from "./shape";
-export type { Box3D, Vec2 } from "./types";
+export type { Bounds, Box3D, Face, FaceType, Polygon, Shape, Vec2 } from "./types";
