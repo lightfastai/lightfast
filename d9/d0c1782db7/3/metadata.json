@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d9d0c1782db7",
+  "session_id": "a9cb27a5-a985-4dae-9e91-f3eaf4c33ef0",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T09:28:33.973907Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
+    "apps/www/src/app/(app)/_components/changelog-preview.tsx",
+    "apps/www/src/app/(app)/_components/faq-section.tsx",
+    "apps/www/src/app/(app)/_components/hero-changelog-badge.tsx",
+    "apps/www/src/app/layout.tsx",
+    "packages/app-remotion/src/compositions/blog-why-we-built-featured/blog-why-we-built-featured.tsx",
+    "packages/app-remotion/src/compositions/landing-hero/sections/logo-animation.tsx",
+    "packages/ui/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "55837a948b3d",
+  "checkpoint_transcript_start": 50,
+  "transcript_lines_at_start": 50,
+  "token_usage": {
+    "input_tokens": 4,
+    "cache_creation_tokens": 1138,
+    "cache_read_tokens": 146726,
+    "output_tokens": 886,
+    "api_call_count": 4
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T09:28:33.812137Z",
+    "agent_lines": 53,
+    "agent_removed": 186,
+    "human_added": 567,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 620,
+    "total_lines_changed": 1284,
+    "agent_percentage": 18.613707165109034,
+    "metric_version": 2
+  }
+}
