@@ -1,0 +1,46 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d9d0c1782db7",
+  "session_id": "e6161535-9b0d-462b-bcff-9c03a6c69a27",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T09:28:34.446909Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx",
+    "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
+    "apps/www/src/app/(app)/_components/changelog-preview.tsx",
+    "apps/www/src/app/(app)/_components/faq-section.tsx",
+    "apps/www/src/app/(app)/_components/hero-changelog-badge.tsx",
+    "apps/www/src/app/layout.tsx",
+    "packages/app-remotion/src/compositions/blog-why-we-built-featured/blog-why-we-built-featured.tsx",
+    "packages/app-remotion/src/compositions/landing-hero/sections/logo-animation.tsx",
+    "packages/ui/package.json"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "738f6711e43f",
+  "checkpoint_transcript_start": 83,
+  "transcript_lines_at_start": 83,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T09:28:34.296523Z",
+    "agent_lines": 185,
+    "agent_removed": 186,
+    "human_added": 435,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 620,
+    "total_lines_changed": 1284,
+    "agent_percentage": 28.894080996884735,
+    "metric_version": 2
+  }
+}

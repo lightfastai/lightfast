@@ -5,6 +5,7 @@
   "branch": "main",
   "checkpoints_count": 1,
   "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx",
     "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
     "apps/www/src/app/(app)/_components/changelog-preview.tsx",
     "apps/www/src/app/(app)/_components/faq-section.tsx",
@@ -44,6 +45,12 @@
       "transcript": "/d9/d0c1782db7/4/full.jsonl",
       "content_hash": "/d9/d0c1782db7/4/content_hash.txt",
       "prompt": "/d9/d0c1782db7/4/prompt.txt"
+    },
+    {
+      "metadata": "/d9/d0c1782db7/5/metadata.json",
+      "transcript": "/d9/d0c1782db7/5/full.jsonl",
+      "content_hash": "/d9/d0c1782db7/5/content_hash.txt",
+      "prompt": "/d9/d0c1782db7/5/prompt.txt"
     }
   ],
   "token_usage": {
