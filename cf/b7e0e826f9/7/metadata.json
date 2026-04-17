@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cfb7e0e826f9",
+  "session_id": "e6161535-9b0d-462b-bcff-9c03a6c69a27",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-17T09:28:11.108711Z",
+  "branch": "main",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "api/app/src/env.ts",
+    "apps/app/src/env.ts",
+    "knip.json",
+    "packages/app-vercel/package.json",
+    "packages/app-vercel/src/env.ts",
+    "packages/app-vercel/src/types.ts",
+    "packages/app-vercel/tsconfig.json",
+    "packages/app-vercel/turbo.json"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "738f6711e43f",
+  "token_usage": {
+    "input_tokens": 22,
+    "cache_creation_tokens": 35374,
+    "cache_read_tokens": 348070,
+    "output_tokens": 6272,
+    "api_call_count": 13
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-17T09:28:10.958734Z",
+    "agent_lines": 1,
+    "agent_removed": 113,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1,
+    "total_lines_changed": 114,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
