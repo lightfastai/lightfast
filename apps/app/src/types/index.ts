@@ -25,6 +25,12 @@ export type EntityEventsResponse = RouterOutputs["entities"]["getEvents"];
 export type EntityEvent = EntityEventsResponse["events"][number];
 
 // ============================================================================
+// Events
+// ============================================================================
+
+export type EventListItem = RouterOutputs["events"]["list"]["events"][number];
+
+// ============================================================================
 // Sources & Connections
 // ============================================================================
 
