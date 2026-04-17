@@ -1,15 +1,5 @@
 {
   "mcpServers": {
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest",
-        "--isolated",
-        "--user-data-dir=/tmp/playwright-mcp",
-        "--storage-state=.auth/browser-session.json"
-      ]
-    },
     "exa": {
       "type": "stdio",
       "command": "bash",
