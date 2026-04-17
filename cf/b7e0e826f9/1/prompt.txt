@@ -1,0 +1,9 @@
+/improve_plan wouldnt technically removing the migrations from db instead of doing pnpm db:generate and migrate be cleaner since generally the migration that was applied will go into prod which we dont want @thoughts/shared/plans/2026-04-16-revert-github-org-binding.md
+
+---
+
+dont we need to revert the migration too in db? use /lightfast-db to check
+
+---
+
+dont we need to revert the migration too in db? use /lightfast-db to check
