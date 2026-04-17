@@ -1,0 +1,5 @@
+/create_plan okay have a look at @db/app/src/migrations/0064_loose_nightmare.sql basically we started work on changing how lightfast's github integration works but i've decided otherwise. let's revert ALL changes in relation to this. can we discuss how to do so and what the process looks like. you will need to git status and figure out all affected changes.
+
+---
+
+yes migration has been applied to dev
