@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "2de046784806",
+  "session_id": "3712fa4e-19a9-4d39-aa2c-383b5d2117d5",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T09:08:07.750669Z",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/www/public/images/landing-hero-poster.webp",
+    "apps/www/public/images/landing-hero.webm",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "6338610d94f6",
+  "token_usage": {
+    "input_tokens": 190,
+    "cache_creation_tokens": 196073,
+    "cache_read_tokens": 7301833,
+    "output_tokens": 48058,
+    "api_call_count": 92
+  },
+  "session_metrics": {
+    "turn_count": 17
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T09:08:07.528193Z",
+    "agent_lines": 24,
+    "agent_removed": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 24,
+    "total_lines_changed": 25,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
