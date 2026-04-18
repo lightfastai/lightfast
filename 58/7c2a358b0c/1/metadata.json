@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "587c2a358b0c",
+  "session_id": "a9c8f24b-4c6f-44d8-8fed-afd8292c55bf",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T06:34:27.593605Z",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "api/platform/src/inngest/schemas/platform.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "7aeb39d3aa81",
+  "token_usage": {
+    "input_tokens": 186,
+    "cache_creation_tokens": 176393,
+    "cache_read_tokens": 7883127,
+    "output_tokens": 97373,
+    "api_call_count": 95
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T06:34:27.333092Z",
+    "agent_lines": 8,
+    "agent_removed": 0,
+    "human_added": 271,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 279,
+    "total_lines_changed": 279,
+    "agent_percentage": 2.867383512544803,
+    "metric_version": 2
+  }
+}
