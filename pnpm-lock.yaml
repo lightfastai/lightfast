@@ -82,8 +82,8 @@ catalogs:
       specifier: ^2.1.1
       version: 2.1.1
     drizzle-orm:
-      specifier: ^0.45.1
-      version: 0.45.1
+      specifier: ^0.45.2
+      version: 0.45.2
     drizzle-zod:
       specifier: ^0.8.3
       version: 0.8.3
@@ -244,7 +244,7 @@ importers:
         version: link:../../vendor/observability
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       inngest:
         specifier: 'catalog:'
         version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.2.1(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@4.3.6)
@@ -332,7 +332,7 @@ importers:
         version: 5.0.52(zod@4.3.6)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       inngest:
         specifier: 'catalog:'
         version: 3.52.6(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@vercel/node@5.6.11(encoding@0.1.13)(rollup@4.59.0))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.5)(next@16.2.1(@opentelemetry/api@1.9.0)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(typescript@5.9.3)(zod@4.3.6)
@@ -516,7 +516,7 @@ importers:
         version: 4.1.0
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       lodash.merge:
         specifier: ^4.6.2
         version: 4.6.2
@@ -1065,7 +1065,7 @@ importers:
         version: link:../../vendor/db
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -1420,7 +1420,7 @@ importers:
         version: link:../../vendor/observability
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -1889,7 +1889,7 @@ importers:
         version: link:../app-providers
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -2021,10 +2021,10 @@ importers:
         version: 0.13.10(typescript@5.9.3)(zod@4.3.6)
       drizzle-orm:
         specifier: 'catalog:'
-        version: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       drizzle-zod:
         specifier: 'catalog:'
-        version: 0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@4.3.6)
+        version: 0.8.3(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@4.3.6)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -8362,6 +8362,7 @@ packages:
   basic-ftp@5.2.0:
     resolution: {integrity: sha512-VoMINM2rqJwJgfdHq6RiUudKt2BV+FY5ZFezP/ypmwayk68+NzzAQy4XXLlqsGD4MCzq3DrmNFD/uUmBJuGoXw==}
     engines: {node: '>=10.0.0'}
+    deprecated: Security vulnerability fixed in 5.2.1, please upgrade
 
   before-after-hook@4.0.0:
     resolution: {integrity: sha512-q6tR3RPqIB1pMiTRMFcZwuG5T8vwp+vUvEG0vuI6B+Rikh5BfPp2fQ82c925FOs+b0lcFQ8CFrL+KbilfZFhOQ==}
@@ -9139,8 +9140,8 @@ packages:
     resolution: {integrity: sha512-GViD3IgsXn7trFyBUUHyTFBpH/FsHTxYJ66qdbVggxef4UBPHRYxQaRzYLTuekYnk9i5FIEL9pbBIwMqX/Uwrg==}
     hasBin: true
 
-  drizzle-orm@0.45.1:
-    resolution: {integrity: sha512-Te0FOdKIistGNPMq2jscdqngBRfBpC8uMFVwqjf6gtTVJHIQ/dosgV/CLBU2N4ZJBsXL5savCba9b0YJskKdcA==}
+  drizzle-orm@0.45.2:
+    resolution: {integrity: sha512-kY0BSaTNYWnoDMVoyY8uxmyHjpJW1geOmBMdSSicKo9CIIWkSxMIj2rkeSR51b8KAPB7m+qysjuHme5nKP+E5Q==}
     peerDependencies:
       '@aws-sdk/client-rds-data': '>=3'
       '@cloudflare/workers-types': '>=4'
@@ -10505,6 +10506,7 @@ packages:
 
   joyful@1.1.1:
     resolution: {integrity: sha512-WTaiev2wquTC2eSzV8uj4bOpih1jseyi98pbIL5o7/SEx5iwTKR41LKxbsjlDeilhu0DrwbAb7a2vASceMP2Ew==}
+    deprecated: Use human-id instead
 
   js-base64@3.7.8:
     resolution: {integrity: sha512-hNngCeKxIUQiEUN3GPJOkz4wF/YvdUdbNL9hsBcMQTkKzboD7T/q3OYOuuPZLUE6dBxSGpwhk5mwuDud7JVAow==}
@@ -20927,7 +20929,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7):
+  drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7):
     optionalDependencies:
       '@cloudflare/workers-types': 4.20260301.1
       '@electric-sql/pglite': 0.3.15
@@ -20939,9 +20941,9 @@ snapshots:
       '@upstash/redis': 1.36.3
       postgres: 3.4.7
 
-  drizzle-zod@0.8.3(drizzle-orm@0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@4.3.6):
+  drizzle-zod@0.8.3(drizzle-orm@0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7))(zod@4.3.6):
     dependencies:
-      drizzle-orm: 0.45.1(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
+      drizzle-orm: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.0.2)(@opentelemetry/api@1.9.0)(@planetscale/database@1.19.0)(@types/pg@8.15.6)(@upstash/redis@1.36.3)(postgres@3.4.7)
       zod: 4.3.6
 
   dunder-proto@1.0.1:

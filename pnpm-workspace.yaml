@@ -34,7 +34,7 @@ catalog:
   ai: 5.0.52
   babel-plugin-react-compiler: ^1.0.0
   clsx: ^2.1.1
-  drizzle-orm: ^0.45.1
+  drizzle-orm: ^0.45.2
   drizzle-zod: ^0.8.3
   geist: ^1.7.0
   hono: ^4.12.5
