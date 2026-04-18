@@ -93,3 +93,7 @@ wait it's not .lightfast in this repo. it's lightfastai/.lightfast which we alra
 ---
 
 can you search claude code on how claude actually does the whole skill execution side of things. is this hw they do it?
+
+---
+
+makes sense. now, use /research_codebase to design the most accretive first step touching every surface to get this working in our codebase
