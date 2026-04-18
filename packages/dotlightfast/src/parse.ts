@@ -30,7 +30,7 @@ function extractFrontmatter(source: string): Record<string, unknown> | null {
 export async function parseDotLightfast(
   fetcher: Fetcher,
 ): Promise<DotLightfastConfig> {
-  const specResult = await fetcher(".lightfast/SPEC.md");
+  const specResult = await fetcher("SPEC.md");
   let spec: string | null = null;
   if (specResult.type === "file") {
     spec =
@@ -40,11 +40,11 @@ export async function parseDotLightfast(
   } else if (specResult.type !== "missing") {
     throw new DotLightfastParseError(
       "SPEC.md path resolved to a directory",
-      ".lightfast/SPEC.md",
+      "SPEC.md",
     );
   }
 
-  const skillsRoot = await fetcher(".lightfast/skills");
+  const skillsRoot = await fetcher("skills");
   const skills: SkillManifest[] = [];
   if (skillsRoot.type === "dir") {
     const dirEntries = skillsRoot.entries
@@ -64,7 +64,7 @@ async function loadSkill(
   fetcher: Fetcher,
   dirName: string,
 ): Promise<SkillManifest | null> {
-  const skillPath = `.lightfast/skills/${dirName}/SKILL.md`;
+  const skillPath = `skills/${dirName}/SKILL.md`;
   const skillFile = await fetcher(skillPath);
   if (skillFile.type !== "file") return null;
 
@@ -75,13 +75,13 @@ async function loadSkill(
   if (!parsed.success) return null;
 
   const commandProbe = await fetcher(
-    `.lightfast/skills/${dirName}/command/${parsed.data.name}.md`,
+    `skills/${dirName}/command/${parsed.data.name}.md`,
   );
 
   return {
     name: parsed.data.name,
     description: parsed.data.description,
     hasCommand: commandProbe.type === "file",
-    path: `.lightfast/skills/${dirName}/`,
+    path: `skills/${dirName}/`,
   };
 }
