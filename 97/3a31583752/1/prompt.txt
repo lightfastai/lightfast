@@ -19,3 +19,7 @@ proceed
 ---
 
 perfect! run /commit
+
+---
+
+yes
