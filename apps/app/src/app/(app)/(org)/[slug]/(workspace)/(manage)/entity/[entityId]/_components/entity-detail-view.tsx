@@ -97,10 +97,10 @@ export function EntityDetailView({ entityId }: EntityDetailViewProps) {
       {/* Back link */}
       <Link
         className="inline-flex items-center gap-1 text-muted-foreground text-sm hover:text-foreground"
-        href={`/${params.slug}/entities`}
+        href={`/${params.slug}`}
       >
         <ArrowLeft className="h-3.5 w-3.5" />
-        Entities
+        Explore
       </Link>
 
       {/* Entity header */}

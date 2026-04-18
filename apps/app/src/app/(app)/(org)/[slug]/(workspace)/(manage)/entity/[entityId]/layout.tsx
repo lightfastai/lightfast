@@ -1,4 +1,5 @@
 import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
+import { RealtimeProviderWrapper } from "@repo/app-upstash-realtime/client";
 
 export default async function EntityDetailLayout({
   children,
@@ -17,5 +18,9 @@ export default async function EntityDetailLayout({
     )
   );
 
-  return <HydrateClient>{children}</HydrateClient>;
+  return (
+    <HydrateClient>
+      <RealtimeProviderWrapper>{children}</RealtimeProviderWrapper>
+    </HydrateClient>
+  );
 }
