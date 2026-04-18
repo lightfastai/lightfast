@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f7210095514f",
+  "session_id": "c4de5fee-a4ed-4b40-beca-83e9df1eca3f",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T13:53:22.669604Z",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/src/inngest/index.ts",
+    "packages/dotlightfast/src/parse.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "cdf8ff93c75a",
+  "checkpoint_transcript_start": 182,
+  "transcript_lines_at_start": 182,
+  "token_usage": {
+    "input_tokens": 1,
+    "cache_creation_tokens": 756,
+    "cache_read_tokens": 79138,
+    "output_tokens": 28,
+    "api_call_count": 1
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T13:53:22.575385Z",
+    "agent_lines": 10,
+    "agent_removed": 6,
+    "human_added": 2014,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2024,
+    "total_lines_changed": 2030,
+    "agent_percentage": 0.7881773399014778,
+    "metric_version": 2
+  }
+}
