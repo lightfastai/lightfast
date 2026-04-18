@@ -35,9 +35,11 @@ function isoToCanvas([ix, iy]: Vec2): Vec2 {
 // Extreme projected corners for hairlines
 const bottomZ = BOX.z;
 const topZB = BOX.z + BOX.d;
-const leftCorner = isoToCanvas(project(BOX.x, BOX.y + BOX.h, bottomZ));
 const rightCorner = isoToCanvas(project(BOX.x + BOX.w, BOX.y, bottomZ));
 const topCorner = isoToCanvas(project(BOX.x, BOX.y, topZB));
+const bottomCorner = isoToCanvas(
+  project(BOX.x + BOX.w, BOX.y + BOX.h, bottomZ),
+);
 
 // Box SVG position within the canvas
 const BOX_LEFT = ANCHOR_X - (focalIso[0] - vx);
@@ -64,8 +66,11 @@ const lissajousPath = `${lissajousProjected
 
 const faces = shape.faces;
 
-/** Horizontal hairline Y as % of canvas height — both left and right hairlines share this Y. */
-export const HAIRLINE_Y_PCT = (leftCorner[1] / CANVAS_H) * 100;
+/** Horizontal hairline Y as % of canvas height — right hairline uses this Y. */
+export const HAIRLINE_Y_PCT = (rightCorner[1] / CANVAS_H) * 100;
+
+/** Vertical hairline X as % of canvas width — bottom hairline. */
+export const HAIRLINE_BOTTOM_X_PCT = (bottomCorner[0] / CANVAS_W) * 100;
 
 /** Vertical hairline X as % of canvas width — both top and bottom hairlines share this X. */
 export const HAIRLINE_X_PCT = (topCorner[0] / CANVAS_W) * 100;
@@ -83,15 +88,6 @@ export function IsometricHero() {
           stroke="var(--border)"
           strokeWidth={1}
           vectorEffect="non-scaling-stroke"
-          x1={0}
-          x2={leftCorner[0]}
-          y1={leftCorner[1]}
-          y2={leftCorner[1]}
-        />
-        <line
-          stroke="var(--border)"
-          strokeWidth={1}
-          vectorEffect="non-scaling-stroke"
           x1={rightCorner[0]}
           x2={CANVAS_W}
           y1={rightCorner[1]}
@@ -105,6 +101,15 @@ export function IsometricHero() {
           x2={topCorner[0]}
           y1={0}
           y2={topCorner[1]}
+        />
+        <line
+          stroke="var(--border)"
+          strokeWidth={1}
+          vectorEffect="non-scaling-stroke"
+          x1={bottomCorner[0]}
+          x2={bottomCorner[0]}
+          y1={bottomCorner[1]}
+          y2={CANVAS_H}
         />
 
         {/* Isometric box faces + Lissajous curve */}

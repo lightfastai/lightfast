@@ -15,10 +15,12 @@ import { FAQSection, faqs } from "~/app/(app)/_components/faq-section";
 import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
 import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
 import {
+  HAIRLINE_BOTTOM_X_PCT,
   HAIRLINE_X_PCT,
   HAIRLINE_Y_PCT,
   IsometricHero,
 } from "./_components/isometric-hero";
+import { FlowField } from "./_components/flow-field";
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
@@ -77,7 +79,35 @@ export const metadata: Metadata = {
   category: "Technology",
 };
 
-export default function HomePage() {
+export const revalidate = 3600;
+
+async function getLatestCommit(): Promise<{ hash: string; url: string }> {
+  try {
+    const res = await fetch(
+      "https://api.github.com/repos/lightfastai/.lightfast/commits?per_page=1",
+      {
+        headers: { Accept: "application/vnd.github.v3+json" },
+        next: { revalidate: 3600 },
+      }
+    );
+    if (!res.ok) {
+      throw new Error(`GitHub API ${res.status}`);
+    }
+    const [commit] = (await res.json()) as [{ sha: string }];
+    return {
+      hash: commit.sha.slice(0, 7),
+      url: `https://github.com/lightfastai/.lightfast/commit/${commit.sha}`,
+    };
+  } catch {
+    return {
+      hash: "unknown",
+      url: "https://github.com/lightfastai/.lightfast",
+    };
+  }
+}
+
+export default async function HomePage() {
+  const { hash, url } = await getLatestCommit();
   // Build organization entity
   const organizationEntity: Organization = {
     "@type": "Organization",
@@ -169,16 +199,9 @@ export default function HomePage() {
         {/* Hero Section */}
         <section className="relative min-h-screen w-full overflow-clip bg-background">
           {/* Right: Isometric Lissajous SVG — golden ratio from top, right-aligned */}
-          <div className="pointer-events-none absolute inset-0 z-0 hidden items-center justify-end lg:flex">
+          <div className="pointer-events-none absolute inset-0 z-0 hidden items-center justify-end pb-[18vh] lg:flex">
             <div className="relative mr-24 w-[55%] max-w-[750px]">
-              {/* Horizontal extension lines — from card edges to viewport edges */}
-              <div
-                className="absolute right-full h-px w-[100vw]"
-                style={{
-                  top: `${HAIRLINE_Y_PCT}%`,
-                  backgroundColor: "var(--border)",
-                }}
-              />
+              {/* Horizontal extension line — from right card edge to viewport edge */}
               <div
                 className="absolute left-full h-px w-[100vw]"
                 style={{
@@ -191,6 +214,13 @@ export default function HomePage() {
                 className="absolute bottom-full w-px h-[100vh]"
                 style={{
                   left: `${HAIRLINE_X_PCT}%`,
+                  backgroundColor: "var(--border)",
+                }}
+              />
+              <div
+                className="absolute top-full w-px h-[100vh]"
+                style={{
+                  left: `${HAIRLINE_BOTTOM_X_PCT}%`,
                   backgroundColor: "var(--border)",
                 }}
               />
@@ -229,6 +259,65 @@ export default function HomePage() {
               <div className="pointer-events-auto">
                 <HeroChangelogBadge />
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Full-width horizontal hairline at bottom of hero */}
+        <div
+          className="hidden w-full lg:block"
+          style={{ height: 1, backgroundColor: "var(--border)" }}
+        />
+
+        {/* Company / Manifesto Section */}
+        <section className="dark relative w-full bg-background text-foreground">
+          <div className="relative flex h-screen flex-col">
+            {/* Top — manifesto text */}
+            <div className="relative flex-[5]">
+              <header className="relative flex items-start justify-between px-6 pt-6">
+                <div className="absolute left-[50%] max-w-sm space-y-4 font-pp text-lg lg:text-2xl">
+                  <p className="font-medium text-foreground">
+                    This is our specification.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    We are building the runtime that executes Programs — the
+                    substrate where organisational intelligence runs
+                    autonomously, accumulates memory, and compounds over time.
+                  </p>
+                  <p className="font-medium text-foreground">
+                    We believe a company should be expressible as a Program. We
+                    believe a founder's highest leverage is writing that Program
+                    clearly. We believe everything else — the orchestration, the
+                    memory, the execution, the intelligence — is the runtime's
+                    job.
+                  </p>
+                </div>
+              </header>
+
+              {/* Bottom row — CTA left, last sentence at same level */}
+              <div className="absolute right-0 bottom-6 left-0 flex items-start">
+                <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-8 md:px-16 lg:px-24">
+                  <span className="font-mono text-sm text-foreground uppercase">
+                    Read the Program →
+                  </span>
+                  <a
+                    className="font-mono text-sm text-foreground uppercase hover:underline"
+                    href={url}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    @{hash}
+                  </a>
+                </div>
+                <p className="absolute left-[50%] font-pp text-lg font-semibold text-foreground lg:text-2xl">
+                  We are building the runtime.
+                </p>
+              </div>
+            </div>
+
+            {/* Flow field */}
+            <div className="relative h-[30vh] border-t border-b border-border">
+              <FlowField />
             </div>
           </div>
         </section>
