@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6f7853486363",
+  "strategy": "manual-commit",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".claude/skills/lightfast-changelog/SKILL.md",
+    ".claude/skills/lightfast-changelog/command/lightfast-changelog.md",
+    "packages/webhook-schemas/fixtures/vercel/deployment.created.json",
+    "packages/webhook-schemas/fixtures/vercel/deployment.succeeded.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/6f/7853486363/0/metadata.json",
+      "transcript": "/6f/7853486363/0/full.jsonl",
+      "content_hash": "/6f/7853486363/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1,
+    "cache_creation_tokens": 333,
+    "cache_read_tokens": 60716,
+    "output_tokens": 323,
+    "api_call_count": 1
+  }
+}
