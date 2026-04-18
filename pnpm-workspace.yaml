@@ -61,7 +61,7 @@ catalogs:
     '@types/react': ^19.2.14
     '@types/react-dom': ^19.2.3
   next16:
-    next: ^16.2.1
+    next: ^16.2.3
   tailwind4:
     tailwindcss: 4.2.1
     postcss: 8.5.8
