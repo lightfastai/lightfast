@@ -1,0 +1,111 @@
+okay now that we have added .lightfast root repo.
+
+we want to basically design a few new features.
+
+1. skills, users basically will write skills in a folder in .lightfast called .skills/....., as such let's adopt cluade code's approach to how skills are structured.
+2. let's then add a post-processing after entities are ingested.
+
+
+consider these few scenarios:
+1. we made changes in core/lightfast, technically, in this sense, if we had a skill that was basically like "yo when this changes, we should tell the user to create a npm publish + updates docs". this is the idea of triaging using skills.
+2. a sentry errors comes in, super crtical, it's in prod, send a slack message to lightfast discord.
+
+moreover a second feature:
+1. it knows what user is currently building.
+
+
+right now the .lightfast is pretty bare. but consider this, we allow users to design a more complex structure for .lightfast, a general rule of thumb: we adopt SPEC.md as the root explainer for what the company is.
+
+so basically this ai agent runs with 
+
+some internal system prompt + spec.md + skills (adopted from claude's approach to skills) 
+
+and it has a bunch of TOOLS to do things. e.g it has access to @apps/app/src/app/(api)/v1/answer/[...v]/route.ts 's tools.
+
+---
+
+why is our skill format so complex? why not just let the agent decided? all skills loaded all the time.
+
+---
+
+okay now that we have added .lightfast root repo.
+
+we want to basically design a few new features.
+
+1. skills, users basically will write skills in a folder in .lightfast called .skills/....., as such let's adopt cluade code's approach to how skills are structured.
+2. let's then add a post-processing after entities are ingested.
+
+
+consider these few scenarios:
+1. we made changes in core/lightfast, technically, in this sense, if we had a skill that was basically like "yo when this changes, we should tell the user to create a npm publish + updates docs". this is the idea of triaging using skills.
+2. a sentry errors comes in, super crtical, it's in prod, send a slack message to lightfast discord.
+
+moreover a second feature:
+1. it knows what user is currently building.
+
+
+right now the .lightfast is pretty bare. but consider this, we allow users to design a more complex structure for .lightfast, a general rule of thumb: we adopt SPEC.md as the root explainer for what the company is.
+
+so basically this ai agent runs with 
+
+some internal system prompt + spec.md + skills (adopted from claude's approach to skills) 
+
+and it has a bunch of TOOLS to do things. e.g it has access to @apps/app/src/app/(api)/v1/answer/[...v]/route.ts 's tools.
+
+note: for the skills folder, let's discuss this more deeply. go understand claude code's skill structure. it's pretty minimal but has folders. im curious in our context, i'm currently thinking the agent runtime runs everytime a new event happens. 
+
+as such, do we just load all skills all the time. and then let the agent kinda decide what ro do.
+
+---
+
+i think in general it should just be Option A. feels like the most natural process without compledxity. and if needed we add option b in the future.
+
+so no sill.evaluate.
+
+---
+
+in general, this agent should be a stateful agent that runs after some amount of processing has been done. to be honest, i'm unsure.
+
+maybe for now, we do this AT every event. and from there kinda figure it out.
+
+2. i think i would very much like to adopt claude's structure with skills having command.
+
+can you actually search the web to understand how claude structure's theirs + how they load skills + use skills.
+
+3. tbh, you might be right, but im thinking what if we give lightfast a tmp/memory folder where it can build memories of whats happening.
+
+considr how claude code does this. every now and then /memory gets invoked. but we want to do this for the whole a company level.
+
+---
+
+we'll store it in .lightfast/memory, and yes we'll have git commits. i think that's pretty simple consider we can utilize vercel sandbox and lightfastai's dev account. what do you think?
+2. wtf is "dream"?
+3. the customer/user will set this up himself.
+
+---
+
+all makes sense. what is the accretive steps to get this working
+
+---
+
+wait it's not .lightfast in this repo. it's lightfastai/.lightfast which we alraedy scaffolded.
+
+---
+
+can you search claude code on how claude actually does the whole skill execution side of things. is this hw they do it?
+
+---
+
+makes sense. now, use /research_codebase to design the most accretive first step touching every surface to get this working in our codebase
+
+---
+
+okay we implement v1. whats next?
+
+---
+
+okay we finished implementing v1. whats next?
+
+---
+
+before that, you reckon we should go to prod with this first?
