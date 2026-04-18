@@ -1,0 +1,15 @@
+in @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx ive decided that the horizontal line on the left of the isometric hero should be removed. @apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx 
+
+and instead a line from the bottom edge to 100vh should be added
+
+---
+
+can we also add a border-b from the edge of the bottom line 0vw to 100vw.
+
+---
+
+cant seeem to see it? ultrathink
+
+---
+
+very nice. okay now, i think i want to move the isometric hero slguthtly higher up. feels like it should be positioning on the same middle ground as the hero text.

@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "d14cd9f47812",
+  "session_id": "9ecc3f03-4ba1-415b-a145-2797ccc5bacc",
   "strategy": "manual-commit",
+  "created_at": "2026-04-18T03:14:18.584553Z",
   "branch": "main",
-  "checkpoints_count": 9,
+  "checkpoints_count": 4,
   "files_touched": [
     "packages/app-providers/src/client/categories.ts",
     "packages/app-providers/src/client/event-labels.ts",
@@ -19,31 +21,29 @@
     "packages/app-test-data/datasets/webhook-schema.json",
     "packages/app-test-data/src/cli/seed-integrations.ts"
   ],
-  "sessions": [
-    {
-      "metadata": "/d1/4cd9f47812/0/metadata.json",
-      "transcript": "/d1/4cd9f47812/0/full.jsonl",
-      "content_hash": "/d1/4cd9f47812/0/content_hash.txt",
-      "prompt": "/d1/4cd9f47812/0/prompt.txt"
-    },
-    {
-      "metadata": "/d1/4cd9f47812/1/metadata.json",
-      "transcript": "/d1/4cd9f47812/1/full.jsonl",
-      "content_hash": "/d1/4cd9f47812/1/content_hash.txt",
-      "prompt": "/d1/4cd9f47812/1/prompt.txt"
-    },
-    {
-      "metadata": "/d1/4cd9f47812/2/metadata.json",
-      "transcript": "/d1/4cd9f47812/2/full.jsonl",
-      "content_hash": "/d1/4cd9f47812/2/content_hash.txt",
-      "prompt": "/d1/4cd9f47812/2/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "7efb6b6acb6a",
   "token_usage": {
-    "input_tokens": 138,
-    "cache_creation_tokens": 312295,
-    "cache_read_tokens": 5636542,
-    "output_tokens": 31709,
-    "api_call_count": 101
+    "input_tokens": 47,
+    "cache_creation_tokens": 47064,
+    "cache_read_tokens": 1173257,
+    "output_tokens": 12002,
+    "api_call_count": 33
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T03:14:18.387801Z",
+    "agent_lines": 0,
+    "agent_removed": 106,
+    "human_added": 0,
+    "human_modified": 4,
+    "human_removed": 9,
+    "total_committed": 1,
+    "total_lines_changed": 119,
+    "agent_percentage": 89.07563025210085,
+    "metric_version": 2
   }
 }
