@@ -13,3 +13,7 @@ cant seeem to see it? ultrathink
 ---
 
 very nice. okay now, i think i want to move the isometric hero slguthtly higher up. feels like it should be positioning on the same middle ground as the hero text.
+
+---
+
+uhmmm nope it's too high up right now. use agent-browser and go to localhost:3024 and position this so that the middle of the isometric square lines up with the middle fo the hero section on the left
