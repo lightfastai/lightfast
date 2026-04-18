@@ -1,0 +1,3 @@
+let's work on @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx 
+
+firstly, the read the program section with the flow field, needs to move all the way down  after Try Lightfast now
