@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d14cd9f47812",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "packages/app-providers/src/client/categories.ts",
+    "packages/app-providers/src/client/event-labels.ts",
+    "packages/app-providers/src/providers/github/backfill-round-trip.test.ts",
+    "packages/app-providers/src/providers/vercel/backfill.test.ts",
+    "packages/app-providers/src/providers/vercel/backfill.ts",
+    "packages/app-providers/src/providers/vercel/index.test.ts",
+    "packages/app-providers/src/providers/vercel/index.ts",
+    "packages/app-providers/src/providers/vercel/schemas.ts",
+    "packages/app-providers/src/providers/vercel/transformers.ts",
+    "packages/app-providers/src/registry.test.ts",
+    "packages/app-test-data/datasets/sandbox-8.json",
+    "packages/app-test-data/datasets/webhook-schema.json",
+    "packages/app-test-data/src/cli/seed-integrations.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d1/4cd9f47812/0/metadata.json",
+      "transcript": "/d1/4cd9f47812/0/full.jsonl",
+      "content_hash": "/d1/4cd9f47812/0/content_hash.txt",
+      "prompt": "/d1/4cd9f47812/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 17,
+    "cache_creation_tokens": 26757,
+    "cache_read_tokens": 340219,
+    "output_tokens": 1592,
+    "api_call_count": 12
+  }
+}

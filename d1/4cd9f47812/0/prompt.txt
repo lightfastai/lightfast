@@ -1,0 +1,9 @@
+clean up @thoughts/
+
+---
+
+/commit
+
+---
+
+yes
