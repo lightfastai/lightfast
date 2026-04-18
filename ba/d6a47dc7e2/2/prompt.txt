@@ -1,0 +1,7 @@
+in @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx ive decided that the horizontal line on the left of the isometric hero should be removed. @apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx 
+
+and instead a line from the bottom edge to 100vh should be added
+
+---
+
+can we also add a border-b from the edge of the bottom line 0vw to 100vw.

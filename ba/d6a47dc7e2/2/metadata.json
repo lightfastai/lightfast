@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "bad6a47dc7e2",
+  "session_id": "9ecc3f03-4ba1-415b-a145-2797ccc5bacc",
   "strategy": "manual-commit",
+  "created_at": "2026-04-18T02:24:11.761905Z",
   "branch": "main",
-  "checkpoints_count": 5,
+  "checkpoints_count": 2,
   "files_touched": [
     "thoughts/shared/plans/2026-04-04-consolidate-gateway-resources-into-org-integrations.md",
     "thoughts/shared/plans/2026-04-04-fix-codeql-alerts-pr555.md",
@@ -77,31 +79,29 @@
     "thoughts/shared/research/2026-04-06-platform-sentry-testing-verification.md",
     "thoughts/shared/research/2026-04-06-sentry-error-handling-gaps.md"
   ],
-  "sessions": [
-    {
-      "metadata": "/ba/d6a47dc7e2/0/metadata.json",
-      "transcript": "/ba/d6a47dc7e2/0/full.jsonl",
-      "content_hash": "/ba/d6a47dc7e2/0/content_hash.txt",
-      "prompt": "/ba/d6a47dc7e2/0/prompt.txt"
-    },
-    {
-      "metadata": "/ba/d6a47dc7e2/1/metadata.json",
-      "transcript": "/ba/d6a47dc7e2/1/full.jsonl",
-      "content_hash": "/ba/d6a47dc7e2/1/content_hash.txt",
-      "prompt": "/ba/d6a47dc7e2/1/prompt.txt"
-    },
-    {
-      "metadata": "/ba/d6a47dc7e2/2/metadata.json",
-      "transcript": "/ba/d6a47dc7e2/2/full.jsonl",
-      "content_hash": "/ba/d6a47dc7e2/2/content_hash.txt",
-      "prompt": "/ba/d6a47dc7e2/2/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "3e0c3fbecedf",
   "token_usage": {
-    "input_tokens": 89,
-    "cache_creation_tokens": 217000,
-    "cache_read_tokens": 4036837,
-    "output_tokens": 22059,
-    "api_call_count": 70
+    "input_tokens": 17,
+    "cache_creation_tokens": 32678,
+    "cache_read_tokens": 359298,
+    "output_tokens": 4630,
+    "api_call_count": 13
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T02:24:11.6455Z",
+    "agent_lines": 0,
+    "agent_removed": 27762,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 27762,
+    "agent_percentage": 100,
+    "metric_version": 2
   }
 }
