@@ -3,7 +3,7 @@
   "checkpoint_id": "30e3faed9de6",
   "strategy": "manual-commit",
   "branch": "feat/agent-triage-runtime-v1",
-  "checkpoints_count": 26,
+  "checkpoints_count": 38,
   "files_touched": [
     "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx"
   ],
@@ -37,13 +37,19 @@
       "transcript": "/30/e3faed9de6/4/full.jsonl",
       "content_hash": "/30/e3faed9de6/4/content_hash.txt",
       "prompt": "/30/e3faed9de6/4/prompt.txt"
+    },
+    {
+      "metadata": "/30/e3faed9de6/5/metadata.json",
+      "transcript": "/30/e3faed9de6/5/full.jsonl",
+      "content_hash": "/30/e3faed9de6/5/content_hash.txt",
+      "prompt": "/30/e3faed9de6/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1469,
-    "cache_creation_tokens": 871997,
-    "cache_read_tokens": 18849885,
-    "output_tokens": 165619,
-    "api_call_count": 273
+    "input_tokens": 1608,
+    "cache_creation_tokens": 1037973,
+    "cache_read_tokens": 24476570,
+    "output_tokens": 210048,
+    "api_call_count": 338
   }
 }

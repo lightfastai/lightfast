@@ -1,0 +1,58 @@
+/create_plan i want to rework @apps/www/src/app/(app)/_components/changelog-preview.tsx to now not only host changelog previews but also blogs.
+
+and the way we display is
+
+on left 1 big 16:9 featued image
+
+we show the title "Featured" above with the most latest either blog or changelog, which first is the most latest basically.
+
+and on 3 1:1 square aspect ratio clickalbe links into the 2nd to 4th most latest.
+
+---
+
+1. A
+2. Yes
+3. Fall back to 16:9 block with Lightfast Logo in the middle
+4. yes show the cropped to square featured image.
+5. yes name is latest-content-preview
+6. yes replace with featured
+
+---
+
+looks good. run /implement_plan
+
+---
+
+hmm i think i want to make the square's much smaller. like 1/5th the size.
+
+---
+
+question what the fuck is up with the quality of these images?
+
+---
+
+wait then how is the images looking so good in @apps/www/src/app/(app)/(marketing)/(content)/blog/[slug]/page.tsx or changeloge page?
+
+---
+
+b
+
+---
+
+ensure when hover on the title its underline
+
+---
+
+now, work on a nice ui for mobile view. use AskUserQuestions after you've decided on the best approach to display
+
+---
+
+let's omit the thumbnail for mobile. just the featured thumbnail is good enough
+
+---
+
+/commit
+
+---
+
+proceed
