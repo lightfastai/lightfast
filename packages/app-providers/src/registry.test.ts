@@ -39,7 +39,7 @@ describe("EventKey derivation", () => {
     expectTypeOf<"github:pull_request.merged">().toMatchTypeOf<EventKey>();
     expectTypeOf<"github:issues.opened">().toMatchTypeOf<EventKey>();
     expectTypeOf<"vercel:deployment.created">().toMatchTypeOf<EventKey>();
-    expectTypeOf<"vercel:deployment.error">().toMatchTypeOf<EventKey>();
+    expectTypeOf<"vercel:deployment.succeeded">().toMatchTypeOf<EventKey>();
     expectTypeOf<"linear:Issue.created">().toMatchTypeOf<EventKey>();
     expectTypeOf<"linear:Comment.updated">().toMatchTypeOf<EventKey>();
     expectTypeOf<"linear:ProjectUpdate.deleted">().toMatchTypeOf<EventKey>();
