@@ -1,0 +1,15 @@
+let's work on @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx 
+
+firstly, the read the program section with the flow field, needs to move all the way down  after Try Lightfast now
+
+---
+
+in @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx i want to comment out the middle 3 sections.
+
+the this is our spec section.
+the operationalize ... with 2x2 card
+the full company and tool stuff
+
+---
+
+hmm i notice this massive space block between faq and featured blog/changelogs. reudce it.
