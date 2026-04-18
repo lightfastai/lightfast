@@ -1,0 +1,5 @@
+ive decided that i want to move @apps/www/src/app/(app)/(company)/company/page.tsx 
+
+to @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx 
+
+so it's hero section - this company thing below that and then faq.
