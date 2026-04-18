@@ -1,0 +1,50 @@
+OKay i want to add a new seciton before FAQ.
+
+this section will have:
+
+Operationalize product development with ambient intelligence. Built for AI-native software development teams, Lightfast enables an entirely new layer of self-driving product development as title.
+
+and then 4 cards. empty for now.
+
+2 by 2 row w-full
+
+---
+
+maybe 16:9 instead of squares? or 4:3?
+
+---
+
+okay now, we are adding a new section. basically, we want to add a section for this image: @apps/www/public/images/landing-hero.webm 
+
+this is placed on the right.
+
+on the left, it's going to be title A full understand of your company and tools (in the top middle of the page)
+
+on the left, it's 3 parts
+
+Every customer interaction in context
+Lightfield reads emails, meeting transcripts, and other conversation records you share with it to compile an exhaustive history of your customer relationships.
+A world model for your business
+Lightfield develops contextual understanding of your company, your product, and your market. This gives agents comprehensive context when they answer questions or perform tasks for you.
+Schema-less foundation
+No upfront configuration required - Lightfield captures everything from day 1 and lets you evolve your data model over time.
+
+---
+
+okay slightly different, the webm, spans the full thing not in a card + border wrap. its much bigger and placed in the page. we'll position properly soon.
+
+this should be below the 2x2 cards section
+
+---
+
+max-w-sm for the left section items.
+
+the right section signifcantly bigger.
+
+---
+
+no right columns needs absolute positioning or just free in general. it should be signifcantly larger
+
+---
+
+hmm maybe use the gif instead of webm, see @apps/www/public/images/landing-hero.gif
