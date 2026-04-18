@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "898e6fe17e7b",
+  "session_id": "a4bc0bfc-668e-4a15-8ef1-334a9cdb72df",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T01:14:37.320546Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(app)/(org)/[slug]/(workspace)/(manage)/entity/[entityId]/_components/entity-detail-view.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(workspace)/(manage)/entity/[entityId]/_components/entity-event-row.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(workspace)/(manage)/entity/[entityId]/layout.tsx",
+    "apps/app/src/app/(app)/(org)/[slug]/(workspace)/(manage)/entity/[entityId]/page.tsx",
+    "apps/app/src/components/app-sidebar.tsx",
+    "apps/app/src/components/command-palette.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "fa9518912d46",
+  "token_usage": {
+    "input_tokens": 113,
+    "cache_creation_tokens": 241514,
+    "cache_read_tokens": 7795324,
+    "output_tokens": 34497,
+    "api_call_count": 96
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T01:14:36.961789Z",
+    "agent_lines": 313,
+    "agent_removed": 29,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 313,
+    "total_lines_changed": 1029,
+    "agent_percentage": 33.23615160349854,
+    "metric_version": 2
+  }
+}
