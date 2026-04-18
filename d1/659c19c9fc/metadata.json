@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d1659c19c9fc",
+  "strategy": "manual-commit",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "packages/dotlightfast/package.json",
+    "pnpm-lock.yaml",
+    "thoughts/shared/plans/2026-04-18-dotlightfast-unit-tests.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d1/659c19c9fc/0/metadata.json",
+      "transcript": "/d1/659c19c9fc/0/full.jsonl",
+      "content_hash": "/d1/659c19c9fc/0/content_hash.txt",
+      "prompt": "/d1/659c19c9fc/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 192,
+    "cache_creation_tokens": 197235,
+    "cache_read_tokens": 7540244,
+    "output_tokens": 48252,
+    "api_call_count": 94
+  }
+}

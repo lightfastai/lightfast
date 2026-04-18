@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d1659c19c9fc",
+  "session_id": "3712fa4e-19a9-4d39-aa2c-383b5d2117d5",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T09:25:28.584504Z",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "packages/dotlightfast/package.json",
+    "pnpm-lock.yaml",
+    "thoughts/shared/plans/2026-04-18-dotlightfast-unit-tests.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "6338610d94f6",
+  "token_usage": {
+    "input_tokens": 192,
+    "cache_creation_tokens": 197235,
+    "cache_read_tokens": 7540244,
+    "output_tokens": 48252,
+    "api_call_count": 94
+  },
+  "session_metrics": {
+    "turn_count": 18
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T09:25:28.314966Z",
+    "agent_lines": 344,
+    "agent_removed": 1,
+    "human_added": 293,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 637,
+    "total_lines_changed": 638,
+    "agent_percentage": 54.075235109717866,
+    "metric_version": 2
+  }
+}
