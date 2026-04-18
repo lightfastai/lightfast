@@ -3,7 +3,7 @@
   "checkpoint_id": "f7210095514f",
   "strategy": "manual-commit",
   "branch": "feat/agent-triage-runtime-v1",
-  "checkpoints_count": 5,
+  "checkpoints_count": 8,
   "files_touched": [
     "api/platform/src/inngest/index.ts",
     "packages/dotlightfast/src/parse.ts",
@@ -40,13 +40,19 @@
       "transcript": "/f7/210095514f/4/full.jsonl",
       "content_hash": "/f7/210095514f/4/content_hash.txt",
       "prompt": "/f7/210095514f/4/prompt.txt"
+    },
+    {
+      "metadata": "/f7/210095514f/5/metadata.json",
+      "transcript": "/f7/210095514f/5/full.jsonl",
+      "content_hash": "/f7/210095514f/5/content_hash.txt",
+      "prompt": "/f7/210095514f/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 394,
-    "cache_creation_tokens": 364724,
-    "cache_read_tokens": 15897209,
-    "output_tokens": 106843,
-    "api_call_count": 207
+    "input_tokens": 440,
+    "cache_creation_tokens": 496246,
+    "cache_read_tokens": 16715278,
+    "output_tokens": 122343,
+    "api_call_count": 229
   }
 }
