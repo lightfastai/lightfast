@@ -3,7 +3,7 @@
   "checkpoint_id": "fc464e5ed2d7",
   "strategy": "manual-commit",
   "branch": "feat/agent-triage-runtime-v1",
-  "checkpoints_count": 1,
+  "checkpoints_count": 8,
   "files_touched": [
     "packages/dotlightfast/package.json",
     "packages/dotlightfast/src/index.ts",
@@ -21,13 +21,19 @@
       "transcript": "/fc/464e5ed2d7/0/full.jsonl",
       "content_hash": "/fc/464e5ed2d7/0/content_hash.txt",
       "prompt": "/fc/464e5ed2d7/0/prompt.txt"
+    },
+    {
+      "metadata": "/fc/464e5ed2d7/1/metadata.json",
+      "transcript": "/fc/464e5ed2d7/1/full.jsonl",
+      "content_hash": "/fc/464e5ed2d7/1/content_hash.txt",
+      "prompt": "/fc/464e5ed2d7/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 80,
-    "cache_creation_tokens": 191025,
-    "cache_read_tokens": 1595380,
-    "output_tokens": 10724,
-    "api_call_count": 25
+    "input_tokens": 228,
+    "cache_creation_tokens": 351873,
+    "cache_read_tokens": 7791550,
+    "output_tokens": 97335,
+    "api_call_count": 107
   }
 }
