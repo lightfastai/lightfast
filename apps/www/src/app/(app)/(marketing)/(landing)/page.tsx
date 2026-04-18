@@ -322,6 +322,92 @@ export default async function HomePage() {
           </div>
         </section>
 
+        {/* Self-Driving Product Development Section */}
+        <section className="w-full bg-background py-24 md:py-32">
+          <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+            <div className="mb-12 max-w-4xl md:mb-16">
+              <h2 className="font-medium font-pp text-2xl md:text-3xl lg:text-4xl">
+                <span className="text-primary">
+                  Operationalize product development with ambient intelligence.
+                </span>{" "}
+                <span className="text-muted-foreground">
+                  Built for AI-native software development teams, Lightfast
+                  enables an entirely new layer of self-driving product
+                  development.
+                </span>
+              </h2>
+            </div>
+            <div className="grid w-full grid-cols-1 gap-4 md:grid-cols-2">
+              <div className="aspect-video rounded-md border border-border/50 bg-card/40" />
+              <div className="aspect-video rounded-md border border-border/50 bg-card/40" />
+              <div className="aspect-video rounded-md border border-border/50 bg-card/40" />
+              <div className="aspect-video rounded-md border border-border/50 bg-card/40" />
+            </div>
+          </div>
+        </section>
+
+        {/* Full Understanding Section */}
+        <section className="relative w-full overflow-hidden bg-background py-24 md:py-32">
+          <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
+            {/* Title at top center */}
+            <div className="mb-16 text-center md:mb-24">
+              <h2 className="mx-auto max-w-3xl font-medium font-pp text-3xl md:text-4xl lg:text-5xl">
+                A full understanding of your company and tools
+              </h2>
+            </div>
+
+            {/* Left text — video overlays to right */}
+            <div className="relative">
+              <div className="w-full max-w-sm space-y-12">
+                <div>
+                  <h3 className="mb-3 font-medium font-pp text-xl md:text-2xl">
+                    Every customer interaction in context
+                  </h3>
+                  <p className="text-base text-muted-foreground leading-relaxed">
+                    Lightfast reads emails, meeting transcripts, and other
+                    conversation records you share with it to compile an
+                    exhaustive history of your customer relationships.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="mb-3 font-medium font-pp text-xl md:text-2xl">
+                    A world model for your business
+                  </h3>
+                  <p className="text-base text-muted-foreground leading-relaxed">
+                    Lightfast develops contextual understanding of your
+                    company, your product, and your market. This gives agents
+                    comprehensive context when they answer questions or perform
+                    tasks for you.
+                  </p>
+                </div>
+                <div>
+                  <h3 className="mb-3 font-medium font-pp text-xl md:text-2xl">
+                    Schema-less foundation
+                  </h3>
+                  <p className="text-base text-muted-foreground leading-relaxed">
+                    No upfront configuration required — Lightfast captures
+                    everything from day 1 and lets you evolve your data model
+                    over time.
+                  </p>
+                </div>
+              </div>
+
+              {/* Video — stacked on mobile, absolutely positioned and much larger on desktop */}
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <video
+                autoPlay
+                className="mt-12 w-full lg:absolute lg:top-1/2 lg:left-[420px] lg:mt-0 lg:w-[70vw] lg:max-w-none lg:-translate-y-1/2"
+                loop
+                muted
+                playsInline
+                poster="/images/landing-hero-poster.webp"
+              >
+                <source src="/images/landing-hero.webm" type="video/webm" />
+              </video>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ Section */}
         <section className="w-full bg-background py-24 md:py-32">
           <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
