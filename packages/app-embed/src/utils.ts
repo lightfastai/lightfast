@@ -1,11 +1,8 @@
 /**
- * Console-specific embedding utilities
- *
- * Provides environment-aware configuration and provider selection
- * for the console application.
+ * Embedding utilities with environment-aware configuration and provider selection.
  */
 
-import { EMBEDDING_CONFIG } from "@repo/app-config";
+import { EMBEDDING_CONFIG } from "./config";
 import type { CohereEmbeddingModel } from "@repo/app-validation";
 import type { CohereInputType, EmbeddingProvider } from "@vendor/embed";
 import { createCohereEmbedding } from "@vendor/embed";
@@ -34,7 +31,6 @@ export interface EmbeddingDefaults {
  *
  * Returns the default embedding settings for Cohere.
  * COHERE_API_KEY is required in the environment.
- * Configuration values come from @repo/app-config.
  *
  * @returns Default embedding configuration
  *

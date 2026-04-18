@@ -108,9 +108,6 @@ catalogs:
     nanoid:
       specifier: ^5.1.5
       version: 5.1.6
-    neverthrow:
-      specifier: ^8.2.0
-      version: 8.2.0
     react-hook-form:
       specifier: ^7.71.2
       version: 7.71.2
@@ -1185,42 +1182,8 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
-  packages/app-config:
-    dependencies:
-      '@repo/app-validation':
-        specifier: workspace:*
-        version: link:../app-validation
-      '@vendor/observability':
-        specifier: workspace:*
-        version: link:../../vendor/observability
-      fast-glob:
-        specifier: ^3.3.2
-        version: 3.3.3
-      neverthrow:
-        specifier: 'catalog:'
-        version: 8.2.0
-      yaml:
-        specifier: ^2.8.3
-        version: 2.8.3
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 20.19.22
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
   packages/app-embed:
     dependencies:
-      '@repo/app-config':
-        specifier: workspace:*
-        version: link:../app-config
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../app-validation
@@ -1274,9 +1237,9 @@ importers:
       '@pinecone-database/pinecone':
         specifier: ^6.1.3
         version: 6.1.3
-      '@repo/app-config':
+      '@repo/app-validation':
         specifier: workspace:*
-        version: link:../app-config
+        version: link:../app-validation
       '@vendor/pinecone':
         specifier: workspace:*
         version: link:../../vendor/pinecone
@@ -11195,10 +11158,6 @@ packages:
   netmask@2.0.2:
     resolution: {integrity: sha512-dBpDMdxv9Irdq66304OLfEmQ9tbNRFnFTuZiLo+bD+r332bBmMJ8GBLXklIXXgxd3+v9+KUnZaUR5PJMa75Gsg==}
     engines: {node: '>= 0.4.0'}
-
-  neverthrow@8.2.0:
-    resolution: {integrity: sha512-kOCT/1MCPAxY5iUV3wytNFUMUolzuwd/VF/1KCx7kf6CutrOsTie+84zTGTpgQycjvfLdBBdvBvFLqFD2c0wkQ==}
-    engines: {node: '>=18'}
 
   next-secure-headers@2.2.0:
     resolution: {integrity: sha512-C7OfZ9JdSJyYMz2ZBMI/WwNbt0qNjlFWX9afUp8nEUzbz6ez3JbeopdyxSZJZJAzVLIAfyk6n73rFpd4e22jRg==}
@@ -23421,10 +23380,6 @@ snapshots:
   neo-async@2.6.2: {}
 
   netmask@2.0.2: {}
-
-  neverthrow@8.2.0:
-    optionalDependencies:
-      '@rollup/rollup-linux-x64-gnu': 4.59.0
 
   next-secure-headers@2.2.0: {}
 
