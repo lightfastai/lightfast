@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6a9810c7f76d",
+  "session_id": "831cdd3c-deba-4508-93df-6eb63e585c0e",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T07:10:41.020842Z",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx",
+    "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "4c492c94c701",
+  "token_usage": {
+    "input_tokens": 98,
+    "cache_creation_tokens": 219960,
+    "cache_read_tokens": 4409253,
+    "output_tokens": 24209,
+    "api_call_count": 63
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T07:10:40.814584Z",
+    "agent_lines": 108,
+    "agent_removed": 21,
+    "human_added": 133,
+    "human_modified": 7,
+    "human_removed": 0,
+    "total_committed": 248,
+    "total_lines_changed": 269,
+    "agent_percentage": 47.95539033457249,
+    "metric_version": 2
+  }
+}
