@@ -1,0 +1,29 @@
+ive decided to take a different direction with @apps/www/src/app/(app)/(marketing)/(landing)/_components/flow-field.tsx can you suggest some different options. be super creative but more mathemtical and precise in the sense that the overal aesthetics is more mathy.
+
+---
+
+let's go simple. a flow field. grid with x times y grid items. each item is a line pointing in some flow field direction. done!
+
+---
+
+use agent-browser, to fix the problems. we need to ensure we use noise to corectly structute them. not random.
+
+---
+
+it literally looks random and sporatic instead of smooth in some direction
+
+---
+
+it possible to make it even smoother
+
+---
+
+now make the color of the grid lines the same as @apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx 's
+
+---
+
+ensure the border t and border-b wrapping the flow-field also uses border
+
+---
+
+/commit
