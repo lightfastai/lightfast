@@ -7,3 +7,7 @@ where is generate-schema? let's inevstigate this bug
 ---
 
 nah. surely server-only should be able to be run in this package. search server only package.
+
+---
+
+all good /commit what we have done so far
