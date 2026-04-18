@@ -1,0 +1,42 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "8a8810ae8113",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    ".changeset/pre.json",
+    "packages/app-config/README.md",
+    "packages/app-config/package.json",
+    "packages/app-config/src/glob.ts",
+    "packages/app-config/src/index.ts",
+    "packages/app-config/src/parse.ts",
+    "packages/app-config/src/private-config.ts",
+    "packages/app-config/src/schema.ts",
+    "packages/app-config/tsconfig.json",
+    "packages/app-config/turbo.json",
+    "packages/app-embed/package.json",
+    "packages/app-embed/src/config.ts",
+    "packages/app-embed/src/utils.ts",
+    "packages/app-pinecone/package.json",
+    "packages/app-pinecone/src/client.ts",
+    "packages/app-pinecone/src/config.ts",
+    "packages/app-validation/src/constants/embedding.ts",
+    "pnpm-lock.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/8a/8810ae8113/0/metadata.json",
+      "transcript": "/8a/8810ae8113/0/full.jsonl",
+      "content_hash": "/8a/8810ae8113/0/content_hash.txt",
+      "prompt": "/8a/8810ae8113/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 41,
+    "cache_creation_tokens": 78498,
+    "cache_read_tokens": 1150257,
+    "output_tokens": 8897,
+    "api_call_count": 29
+  }
+}

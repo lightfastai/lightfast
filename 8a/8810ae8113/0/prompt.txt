@@ -1,0 +1,13 @@
+/research_codebase check if @packages/app-config/ is being used in this repo or not. if not let's work on delete.
+
+---
+
+proceed
+
+---
+
+can you check if there's any leftover QoL to be done
+
+---
+
+/commit
