@@ -10,7 +10,7 @@ import type {
 import { JsonLd } from "@vendor/seo/json-ld";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
-import { ChangelogPreview } from "~/app/(app)/_components/changelog-preview";
+import { LatestContentPreview } from "~/app/(app)/_components/latest-content-preview";
 import { FAQSection, faqs } from "~/app/(app)/_components/faq-section";
 import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
 import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
@@ -329,10 +329,10 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* Changelog Preview */}
+        {/* Featured Content Preview */}
         <section className="w-full bg-background py-24 md:py-32">
           <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
-            <ChangelogPreview />
+            <LatestContentPreview />
           </div>
         </section>
       </div>
