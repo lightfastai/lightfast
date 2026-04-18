@@ -7,3 +7,7 @@ proceed phase 5
 ---
 
 okay done! setup a valid repo index. can you check. note: given this, we will also need to git clone and add this SPEC.md and example skill to lightfastai/.lightfast
+
+---
+
+okay done! the llm call should work now. ive fixed the oidc token
