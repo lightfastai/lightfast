@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "587c2a358b0c",
+  "strategy": "manual-commit",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/platform/package.json",
+    "api/platform/src/inngest/schemas/platform.ts",
+    "pnpm-lock.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/58/7c2a358b0c/0/metadata.json",
+      "transcript": "/58/7c2a358b0c/0/full.jsonl",
+      "content_hash": "/58/7c2a358b0c/0/content_hash.txt",
+      "prompt": "/58/7c2a358b0c/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 13,
+    "cache_creation_tokens": 15931,
+    "cache_read_tokens": 79108,
+    "output_tokens": 2816,
+    "api_call_count": 3
+  }
+}

@@ -1,0 +1,1 @@
+ive decided to take a different direction with @apps/www/src/app/(app)/(marketing)/(landing)/_components/flow-field.tsx can you suggest some different options. be super creative but more mathemtical and precise in the sense that the overal aesthetics is more mathy.
