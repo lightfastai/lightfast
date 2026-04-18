@@ -1,0 +1,47 @@
+ive decided that i want to move @apps/www/src/app/(app)/(company)/company/page.tsx 
+
+to @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx 
+
+so it's hero section - this company thing below that and then faq.
+
+---
+
+hmm for some reason the shader is not showing
+
+---
+
+okay nice, now, i've decided to not use a shader. but it's a canvas object of flow field with some noise. curved in some direction.
+
+---
+
+static.
+
+---
+
+okay now whil e i think flow fields is col, i think we just want a bunch of simple curve lines . like 10 of the side by side spaced evenly.
+
+---
+
+change the background to our dark mode background color and the line to our isometric hold border color
+
+---
+
+hmm it's black
+
+---
+
+use agent-browser, the sizing of the canvas container doesnt seem to be correct.
+
+---
+
+its more like 75% the viewport? or am i tripping
+
+---
+
+very nice. now add border t and border b to this canvas
+
+---
+
+okay now, the read the program should follow the same max-w start as the hero section's. 
+
+note: the canvas should stay 0vw to 100vw

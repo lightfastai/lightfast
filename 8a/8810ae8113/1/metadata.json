@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "8a8810ae8113",
+  "session_id": "c79f1fed-6206-455e-81dd-2cfce84c7d67",
   "strategy": "manual-commit",
+  "created_at": "2026-04-18T04:15:07.349704Z",
   "branch": "main",
-  "checkpoints_count": 14,
+  "checkpoints_count": 10,
   "files_touched": [
     ".changeset/pre.json",
     "packages/app-config/README.md",
@@ -16,7 +18,6 @@
     "packages/app-config/tsconfig.json",
     "packages/app-config/turbo.json",
     "packages/app-embed/package.json",
-    "packages/app-embed/src/config.ts",
     "packages/app-embed/src/utils.ts",
     "packages/app-pinecone/package.json",
     "packages/app-pinecone/src/client.ts",
@@ -24,25 +25,31 @@
     "packages/app-validation/src/constants/embedding.ts",
     "pnpm-lock.yaml"
   ],
-  "sessions": [
-    {
-      "metadata": "/8a/8810ae8113/0/metadata.json",
-      "transcript": "/8a/8810ae8113/0/full.jsonl",
-      "content_hash": "/8a/8810ae8113/0/content_hash.txt",
-      "prompt": "/8a/8810ae8113/0/prompt.txt"
-    },
-    {
-      "metadata": "/8a/8810ae8113/1/metadata.json",
-      "transcript": "/8a/8810ae8113/1/full.jsonl",
-      "content_hash": "/8a/8810ae8113/1/content_hash.txt",
-      "prompt": "/8a/8810ae8113/1/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "054eed70b08f",
+  "checkpoint_transcript_start": 48,
+  "transcript_lines_at_start": 48,
   "token_usage": {
-    "input_tokens": 113,
-    "cache_creation_tokens": 104725,
-    "cache_read_tokens": 3653811,
-    "output_tokens": 21042,
-    "api_call_count": 79
+    "input_tokens": 72,
+    "cache_creation_tokens": 26227,
+    "cache_read_tokens": 2503554,
+    "output_tokens": 12145,
+    "api_call_count": 50
+  },
+  "session_metrics": {
+    "turn_count": 10
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T04:15:07.165727Z",
+    "agent_lines": 0,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 28,
+    "human_removed": 884,
+    "total_committed": 21,
+    "total_lines_changed": 912,
+    "agent_percentage": 0,
+    "metric_version": 2
   }
 }
