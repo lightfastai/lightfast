@@ -49,7 +49,13 @@ interface VideoComposition {
   outputs: OutputTarget[];
   renderProfile: Pick<
     RenderMediaOptions,
-    "codec" | "imageFormat" | "scale" | "everyNthFrame" | "numberOfGifLoops"
+    | "codec"
+    | "imageFormat"
+    | "scale"
+    | "everyNthFrame"
+    | "numberOfGifLoops"
+    | "colorSpace"
+    | "ffmpegOverride"
   >;
   type: "video";
   width: number;
@@ -366,6 +372,23 @@ export const MANIFEST: CompositionManifest = {
         codec: "vp9",
         imageFormat: "png",
         scale: 2,
+        // Tag BT.709 color space and force FULL (pc) range so the browser
+        // decodes the video background identically to the CSS bg-background
+        // token. Default VP9 output uses limited/tv range, which darkens
+        // #1a1a1a to #181818 in most browsers and creates a visible seam
+        // against the page.
+        colorSpace: "bt709",
+        ffmpegOverride: ({ args }) => {
+          return args.map((arg, i, all) => {
+            if (i > 0 && all[i - 1] === "-color_range" && arg === "tv") {
+              return "pc";
+            }
+            if (typeof arg === "string" && arg.includes("range=limited")) {
+              return arg.replace(/range=limited/g, "range=full");
+            }
+            return arg;
+          });
+        },
       },
       outputs: [
         {
