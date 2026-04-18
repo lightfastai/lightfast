@@ -3,7 +3,7 @@
   "checkpoint_id": "6a9810c7f76d",
   "strategy": "manual-commit",
   "branch": "feat/agent-triage-runtime-v1",
-  "checkpoints_count": 11,
+  "checkpoints_count": 12,
   "files_touched": [
     "apps/www/src/app/(app)/(marketing)/(landing)/_components/flow-field.tsx",
     "apps/www/src/app/(app)/(marketing)/(landing)/_components/isometric-hero.tsx",
@@ -21,13 +21,19 @@
       "transcript": "/6a/9810c7f76d/1/full.jsonl",
       "content_hash": "/6a/9810c7f76d/1/content_hash.txt",
       "prompt": "/6a/9810c7f76d/1/prompt.txt"
+    },
+    {
+      "metadata": "/6a/9810c7f76d/2/metadata.json",
+      "transcript": "/6a/9810c7f76d/2/full.jsonl",
+      "content_hash": "/6a/9810c7f76d/2/content_hash.txt",
+      "prompt": "/6a/9810c7f76d/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 176,
-    "cache_creation_tokens": 279961,
-    "cache_read_tokens": 6191126,
-    "output_tokens": 42565,
-    "api_call_count": 97
+    "input_tokens": 362,
+    "cache_creation_tokens": 456354,
+    "cache_read_tokens": 14074253,
+    "output_tokens": 139938,
+    "api_call_count": 192
   }
 }
