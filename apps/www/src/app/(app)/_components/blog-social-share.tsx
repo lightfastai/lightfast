@@ -42,29 +42,32 @@ export function SocialShare({
 
       <Button
         aria-label="Share on Twitter"
+        className="h-6 w-6"
         onClick={() => window.open(shareLinks.twitter, "_blank")}
-        size="sm"
+        size="icon"
         variant="ghost"
       >
-        <Twitter className="h-4 w-4" />
+        <Twitter className="size-3.5" />
       </Button>
 
       <Button
         aria-label="Share on LinkedIn"
+        className="h-6 w-6"
         onClick={() => window.open(shareLinks.linkedin, "_blank")}
-        size="sm"
+        size="icon"
         variant="ghost"
       >
-        <Linkedin className="h-4 w-4" />
+        <Linkedin className="size-3.5" />
       </Button>
 
       <Button
         aria-label="Copy link"
+        className="h-6 w-6"
         onClick={handleCopyLink}
-        size="sm"
+        size="icon"
         variant="ghost"
       >
-        <Link2 className="h-4 w-4" />
+        <Link2 className="size-3.5" />
         {copied && <span className="ml-2 text-green-600 text-xs">Copied!</span>}
       </Button>
     </div>

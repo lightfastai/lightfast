@@ -27,20 +27,20 @@ describe("adaptVercelDeploymentForTransformer — readyState mapping", () => {
     expect(eventType).toBe("deployment.succeeded");
   });
 
-  it('ERROR → eventType: "deployment.error"', () => {
+  it('ERROR → eventType: "deployment.created"', () => {
     const { eventType } = adaptVercelDeploymentForTransformer(
       makeDeployment({ readyState: "ERROR" }),
       "my-app"
     );
-    expect(eventType).toBe("deployment.error");
+    expect(eventType).toBe("deployment.created");
   });
 
-  it('CANCELED → eventType: "deployment.canceled"', () => {
+  it('CANCELED → eventType: "deployment.created"', () => {
     const { eventType } = adaptVercelDeploymentForTransformer(
       makeDeployment({ readyState: "CANCELED" }),
       "my-app"
     );
-    expect(eventType).toBe("deployment.canceled");
+    expect(eventType).toBe("deployment.created");
   });
 
   it('BUILDING → eventType: "deployment.created"', () => {

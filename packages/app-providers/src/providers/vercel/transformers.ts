@@ -33,25 +33,11 @@ export function transformVercelDeployment(
   const eventTitleMap: Record<VercelWebhookEventType, string> = {
     "deployment.created": "Deployment Started",
     "deployment.succeeded": "Deployment Succeeded",
-    "deployment.ready": "Deployment Ready",
-    "deployment.canceled": "Deployment Canceled",
-    "deployment.error": "Deployment Failed",
-    "deployment.check-rerequested": "Deployment Check Re-requested",
-    "deployment.promoted": "Deployment Promoted",
-    "deployment.rollback": "Deployment Rollback",
-    "deployment.cleanup": "Deployment Cleanup",
   };
 
   const actionTitle = eventTitleMap[eventType];
 
-  const emoji =
-    eventType === "deployment.succeeded" || eventType === "deployment.ready"
-      ? "+"
-      : eventType === "deployment.error"
-        ? "x"
-        : eventType === "deployment.canceled"
-          ? "!"
-          : ">";
+  const emoji = eventType === "deployment.succeeded" ? "+" : ">";
 
   const rawBody = [
     `${emoji} ${actionTitle}`,

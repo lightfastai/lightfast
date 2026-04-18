@@ -29,6 +29,11 @@ import {
   ValidationErrorList,
   ValidationExample,
 } from "~/app/(app)/(content)/docs/_components/validation-error";
+import {
+  IntegrationFeature,
+  IntegrationFeatureGrid,
+} from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-feature-grid";
+import { IntegrationScreenshot } from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-screenshot";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -64,8 +69,8 @@ export const mdxComponents = {
       <Image
         alt={alt ?? ""}
         className={cn(
-          "my-6 rounded-sm border border-border shadow-sm",
-          "h-auto max-h-[400px] w-full object-contain",
+          "my-6 aspect-video rounded-lg",
+          "h-auto w-full object-fill",
           className
         )}
         height={0}
@@ -199,7 +204,7 @@ export const mdxComponents = {
   h2({ children, ...props }: MarkdownComponentProps) {
     return (
       <h2
-        className="mt-12 mb-5 scroll-m-20 font-semibold text-3xl tracking-tight"
+        className="mt-12 scroll-m-20 font-pp font-semibold text-2xl"
         {...props}
       >
         {children}
@@ -254,10 +259,7 @@ export const mdxComponents = {
   // Paragraph with proper spacing
   p({ children, ...props }: MarkdownComponentProps) {
     return (
-      <p
-        className="break-words text-base leading-7 [&:not(:first-child)]:mt-6"
-        {...props}
-      >
+      <p className="break-words text-md [&:not(:first-child)]:mt-6" {...props}>
         {children}
       </p>
     );
@@ -288,10 +290,7 @@ export const mdxComponents = {
 
   li({ className, children, ...props }: MarkdownComponentProps) {
     return (
-      <li
-        className={cn("break-words text-base leading-7", className)}
-        {...props}
-      >
+      <li className={cn("break-words text-md", className)} {...props}>
         {children}
       </li>
     );
@@ -401,6 +400,11 @@ export const mdxComponents = {
       </div>
     );
   },
+
+  // Integration components
+  IntegrationFeatureGrid,
+  IntegrationFeature,
+  IntegrationScreenshot,
 
   // Custom components
   FeatureList,
@@ -524,8 +528,8 @@ export const mdxComponents = {
       <Image
         alt={alt}
         className={cn(
-          "my-6 rounded-sm border border-border shadow-sm",
-          "max-h-[400px] w-full object-cover",
+          "my-6 rounded-xl border border-border/50 shadow-sm",
+          "w-full object-cover",
           className
         )}
         height={height ?? 400}

@@ -16,7 +16,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/app-config": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@vendor/embed": "workspace:*"
   },

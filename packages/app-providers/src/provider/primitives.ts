@@ -82,13 +82,6 @@ export const callbackResultSchema = z.discriminatedUnion("status", [
     accountInfo: baseProviderAccountInfoSchema.loose(),
   }),
   z.object({
-    status: z.literal("connected-redirect"),
-    externalId: z.string(),
-    accountInfo: baseProviderAccountInfoSchema.loose(),
-    tokens: oAuthTokensSchema,
-    nextUrl: z.string(),
-  }),
-  z.object({
     status: z.literal("pending-setup"),
     externalId: z.string(),
     setupAction: z.string(),

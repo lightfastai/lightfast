@@ -8,9 +8,8 @@
  */
 
 import { db } from "@db/app/client";
-import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
 import { initTRPC, TRPCError } from "@trpc/server";
-import { auth } from "@vendor/clerk/server";
+import { auth, getUserOrgMemberships } from "@vendor/clerk/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -291,7 +290,7 @@ export async function verifyOrgMembership(params: {
   };
 }> {
   // User-centric lookup: get user's orgs (cached)
-  const userMemberships = await getCachedUserOrgMemberships(params.userId);
+  const userMemberships = await getUserOrgMemberships(params.userId);
 
   // Find membership in target org
   const userMembership = userMemberships.find(

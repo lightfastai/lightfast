@@ -55,11 +55,7 @@
             {
               "enum": [
                 "deployment.created",
-                "deployment.succeeded",
-                "deployment.ready",
-                "deployment.error",
-                "deployment.canceled",
-                "deployment.check-rerequested"
+                "deployment.succeeded"
               ],
               "description": "Vercel event types"
             },

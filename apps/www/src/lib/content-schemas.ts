@@ -1,14 +1,32 @@
 import { z } from "zod";
 
+// Mirror of providerSlugSchema from @repo/app-providers/client. Inlined because
+// fumadocs-mdx's build-time loader can't resolve the package's extensionless
+// re-exports under Node ESM. Keep in sync with packages/app-providers/src/client/display.ts.
+const providerSlugSchema = z.enum([
+  "apollo",
+  "github",
+  "vercel",
+  "linear",
+  "sentry",
+]);
+
 const AuthorSchema = z.object({
   name: z.string().min(1),
   url: z.url(),
   twitterHandle: z.string().min(1),
+  jobTitle: z.string().min(1).optional(),
 });
 
 const FaqItemSchema = z.object({
   question: z.string().min(10),
   answer: z.string().min(20),
+});
+
+const HowToStepSchema = z.object({
+  name: z.string().min(1),
+  text: z.string().min(20),
+  url: z.url().optional(),
 });
 
 const BasePageSchema = z.object({
@@ -18,7 +36,6 @@ const BasePageSchema = z.object({
   canonicalUrl: z.url(),
   ogTitle: z.string().min(1).max(70),
   ogDescription: z.string().min(50).max(160),
-  ogImage: z.url(),
   noindex: z.boolean().default(false),
   nofollow: z.boolean().default(false),
 });
@@ -28,6 +45,7 @@ const ContentPageSchema = BasePageSchema.extend({
   publishedAt: z.iso.datetime(),
   updatedAt: z.iso.datetime(),
   faq: z.array(FaqItemSchema).min(1),
+  featuredImage: z.string().startsWith("/images/").optional(),
 });
 
 export const BlogPostSchema = ContentPageSchema.extend({
@@ -45,6 +63,7 @@ export const BlogPostSchema = ContentPageSchema.extend({
   readingTimeMinutes: z.number().int().min(1),
   featured: z.boolean().default(false),
   tldr: z.string().min(20).max(300),
+  howToSteps: z.array(HowToStepSchema).min(2).optional(),
 });
 
 export const ChangelogEntrySchema = ContentPageSchema.extend({
@@ -55,6 +74,7 @@ export const ChangelogEntrySchema = ContentPageSchema.extend({
   version: z.string().min(1),
   type: z.enum(["feature", "improvement", "fix", "breaking"]),
   tldr: z.string().min(20).max(300),
+  improvements: z.array(z.string().min(1)).optional(),
 });
 
 export const LegalPageSchema = BasePageSchema.extend({
@@ -65,6 +85,102 @@ export const LegalPageSchema = BasePageSchema.extend({
   updatedAt: z.iso.datetime(),
   effectiveAt: z.iso.datetime(),
 });
+
+const IntegrationStatusSchema = z.enum(["live", "beta", "planned"]);
+const IntegrationCategorySchema = z.enum([
+  "dev-tools",
+  "monitoring",
+  "comms",
+  "data",
+  "project-management",
+]);
+
+// Mirror of IntegrationLogoIcons keys from @repo/ui/integration-icons. Inlined
+// because fumadocs-mdx's build-time loader can't resolve TSX component exports
+// under Node ESM. Keep in sync with packages/ui/src/components/integration-icons.tsx.
+const integrationIconKeySchema = z.enum([
+  "apollo",
+  "airtable",
+  "claude",
+  "codex",
+  "datadog",
+  "discord",
+  "github",
+  "linear",
+  "notion",
+  "posthog",
+  "sentry",
+  "slack",
+  "vercel",
+  "circleci",
+  "pagerduty",
+  "intercom",
+  "hubspot",
+  "stripe",
+  "grafana",
+  "clerk",
+  "jira",
+  "mixpanel",
+  "zendesk",
+  "cloudflare",
+  "supabase",
+  "resend",
+  "typeform",
+  "cal-com",
+  "better-stack",
+  "loops",
+  "segment",
+  "statsig",
+  "launchdarkly",
+  "amplitude",
+  "gong",
+  "outreach",
+  "instantly",
+  "incident-io",
+  "plain",
+  "attio",
+  "neon",
+  "customer-io",
+  "fireflies",
+  "workos",
+]);
+
+const BaseIntegrationSchema = BasePageSchema.extend({
+  canonicalUrl: z
+    .url()
+    .refine((val) => val.startsWith("https://lightfast.ai/integrations/"))
+    .optional(),
+  iconKey: integrationIconKeySchema,
+  tagline: z.string().min(10).max(120),
+  category: IntegrationCategorySchema,
+  faq: z.array(FaqItemSchema).min(1).optional(),
+  updatedAt: z.iso.datetime(),
+});
+
+const IntegrationPageLiveSchema = BaseIntegrationSchema.extend({
+  status: z.literal("live"),
+  providerId: providerSlugSchema,
+  featuredImage: z.string().startsWith("/images/"),
+  docsUrl: z.string().startsWith("/docs/"),
+});
+
+const IntegrationPageBetaSchema = BaseIntegrationSchema.extend({
+  status: z.literal("beta"),
+  providerId: providerSlugSchema,
+  featuredImage: z.string().startsWith("/images/").optional(),
+  docsUrl: z.string().startsWith("/docs/").optional(),
+});
+
+const IntegrationPagePlannedSchema = BaseIntegrationSchema.extend({
+  status: z.literal("planned"),
+  featuredImage: z.string().startsWith("/images/").optional(),
+});
+
+export const IntegrationPageSchema = z.discriminatedUnion("status", [
+  IntegrationPageLiveSchema,
+  IntegrationPageBetaSchema,
+  IntegrationPagePlannedSchema,
+]);
 
 export const DocsPageSchema = BasePageSchema.extend({
   canonicalUrl: z
@@ -84,6 +200,9 @@ export type BlogPostData = z.infer<typeof BlogPostSchema>;
 export type ChangelogEntryData = z.infer<typeof ChangelogEntrySchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
 export type DocsPageData = z.infer<typeof DocsPageSchema>;
+export type IntegrationPageData = z.infer<typeof IntegrationPageSchema>;
+export type IntegrationCategory = IntegrationPageData["category"];
+export type IntegrationStatus = IntegrationPageData["status"];
 
 // Fields required by the SEO layer — satisfied structurally by BlogPostData,
 // ChangelogEntryData, and DocsPageData. Derived from BlogPostData so schema
@@ -96,7 +215,6 @@ export type ContentSeoData = Pick<
   | "nofollow"
   | "noindex"
   | "ogDescription"
-  | "ogImage"
   | "ogTitle"
   | "publishedAt"
   | "title"

@@ -39,8 +39,9 @@ export const SOCIAL_NAV = defineNavItems([
 
 // Resources sub-navigation used for the marketing header dropdown
 export const RESOURCES_NAV = defineNavItems([
-  { title: "Changelog", href: "/changelog" },
   { title: "Blog", href: "/blog" },
+  { title: "Changelog", href: "/changelog" },
+  { title: "Integrations", href: "/integrations" },
 ]);
 
 // Navigation for the pitch-deck pages

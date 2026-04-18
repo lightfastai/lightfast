@@ -47,9 +47,6 @@
     "packages/app-trpc": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/app-vercel": {
-      "project": ["src/**/*.ts"]
-    },
     "packages/og": {
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["react", "@types/react"]

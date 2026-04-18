@@ -1,12 +1,11 @@
 /**
  * Lightfast Pinecone client wrapper
  *
- * Wraps @vendor/pinecone and injects configuration from @repo/app-config.
- * Provides a convenience API with sensible defaults for Lightfast services.
+ * Wraps @vendor/pinecone and injects Lightfast configuration defaults.
  */
 
 import type { RecordMetadata } from "@pinecone-database/pinecone";
-import { PINECONE_CONFIG } from "@repo/app-config";
+import { PINECONE_CONFIG } from "./config";
 import { PineconeClient as VendorPineconeClient } from "@vendor/pinecone/client";
 import type {
   FetchResponse,
@@ -20,8 +19,7 @@ import type {
 /**
  * Lightfast Pinecone client with injected configuration
  *
- * This wrapper provides the same API as @vendor/pinecone but automatically
- * injects private configuration defaults from @repo/app-config.
+ * Wraps @vendor/pinecone with Lightfast configuration defaults.
  */
 export class LightfastPineconeClient {
   private readonly client: VendorPineconeClient;

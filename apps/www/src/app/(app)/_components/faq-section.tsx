@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 // The FAQ is below the fold — no need to block the critical path with
 // @radix-ui/react-accordion + its shared primitives on initial load.
 const FaqAccordion = dynamic<{ faqs: (typeof faqs)[number][] }>(() =>
-  import("./faq-accordion").then((m) => ({ default: m.FaqAccordion }))
+  import("./faq-accordion").then((m) => ({ default: m.FaqAccordion })),
 );
 
 export const faqs = [
@@ -63,7 +63,7 @@ export function FAQSection() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3 lg:gap-16">
         {/* Left: Badge */}
         <div>
-          <span className="inline-flex h-7 items-center rounded-md border border-border px-3 text-muted-foreground text-sm">
+          <span className="inline-flex h-7 bg-card/40 items-center rounded-md border border-border px-3 text-muted-foreground text-sm">
             FAQ
           </span>
         </div>

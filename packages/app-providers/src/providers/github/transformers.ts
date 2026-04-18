@@ -6,6 +6,7 @@ import {
   validatePostTransformEvent,
 } from "../../runtime/validation";
 import type {
+  PreTransformGitHubIssueCommentEvent,
   PreTransformGitHubIssuesEvent,
   PreTransformGitHubPullRequestEvent,
 } from "./schemas";
@@ -138,6 +139,78 @@ export function transformGitHubIssue(
   const validation = validatePostTransformEvent(event);
   if (!validation.success && validation.errors) {
     logValidationErrors("transformGitHubIssue", event, validation.errors);
+  }
+
+  return event;
+}
+
+export function transformGitHubIssueComment(
+  payload: PreTransformGitHubIssueCommentEvent,
+  context: TransformContext,
+  _eventType: string
+): PostTransformEvent {
+  const comment = payload.comment;
+  const issue = payload.issue;
+  const repoId = String(payload.repository.id);
+  const isPR = !!issue.pull_request;
+
+  const parentEntityType = isPR ? "pr" : "issue";
+  const parentEntityId = `${repoId}#${issue.number}`;
+
+  const relations: EntityRelation[] = [
+    {
+      provider: "github",
+      entityType: parentEntityType,
+      entityId: parentEntityId,
+      title: issue.title,
+      url: issue.html_url,
+      relationshipType: "belongs_to",
+    },
+  ];
+
+  const actionMap: Record<string, string> = {
+    created: "Comment Added",
+    edited: "Comment Edited",
+    deleted: "Comment Deleted",
+  };
+
+  const actionTitle = actionMap[payload.action] ?? `Comment ${payload.action}`;
+  const rawBody = [comment.body, `On: ${issue.title}`].join("\n");
+
+  const event: PostTransformEvent = {
+    deliveryId: context.deliveryId,
+    sourceId: `github:comment:${repoId}#${issue.number}:${comment.id}:issue-comment.${payload.action}`,
+    provider: "github",
+    eventType: `issue-comment.${payload.action}`,
+    title: sanitizeTitle(`[${actionTitle}] ${issue.title.slice(0, 100)}`),
+    body: sanitizeBody(rawBody),
+    occurredAt: comment.updated_at,
+    entity: {
+      provider: "github",
+      entityType: "comment",
+      entityId: `${repoId}#${comment.id}`,
+      title: comment.body.slice(0, 100),
+      url: comment.html_url,
+      state: null,
+    },
+    relations,
+    attributes: {
+      repoId: payload.repository.id,
+      repoFullName: payload.repository.full_name,
+      issueNumber: issue.number,
+      commentId: comment.id,
+      isPullRequest: isPR,
+      action: payload.action,
+    },
+  };
+
+  const validation = validatePostTransformEvent(event);
+  if (!validation.success && validation.errors) {
+    logValidationErrors(
+      "transformGitHubIssueComment",
+      event,
+      validation.errors
+    );
   }
 
   return event;

@@ -17,7 +17,8 @@ const CHANGELOG_SECTIONS: Record<ChangelogType, string> = {
 };
 
 function buildChangelogEntryEntity(
-  data: ChangelogEntryData
+  data: ChangelogEntryData,
+  url: ChangelogUrl
 ): Omit<BlogPosting, "@id" | "url"> {
   return {
     "@type": "BlogPosting",
@@ -30,11 +31,12 @@ function buildChangelogEntryEntity(
       "@type": "Person" as const,
       name: a.name,
       url: a.url,
+      ...(a.jobTitle ? { jobTitle: a.jobTitle } : {}),
       sameAs: [`https://x.com/${a.twitterHandle.replace(/^@/, "")}`],
     })),
     image: {
       "@type": "ImageObject" as const,
-      url: data.ogImage,
+      url: `${url}/opengraph-image`,
       width: "1200",
       height: "630",
     },
@@ -50,7 +52,7 @@ export function buildChangelogEntryJsonLd(
   data: ChangelogEntryData,
   url: ChangelogUrl
 ): GraphContext {
-  const entity = buildChangelogEntryEntity(data);
+  const entity = buildChangelogEntryEntity(data, url);
   return {
     "@context": "https://schema.org",
     "@graph": [

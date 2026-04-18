@@ -13,6 +13,7 @@
  * 9. tokenRefresh - 5m cron: refresh expiring OAuth tokens
  * 10. deliveryRecovery - 5m cron: sweep stuck webhook deliveries
  * 11. platformRepoIndexSync - Syncs indexed repo content (README.md) on push events
+ * 12. platformAgentTriage - Loads .lightfast config and runs a triage LLM call on stored events
  */
 
 import { serve } from "inngest/next";
@@ -21,6 +22,7 @@ import { connectionLifecycle } from "./functions/connection-lifecycle";
 import { deliveryRecovery } from "./functions/delivery-recovery";
 import { healthCheck } from "./functions/health-check";
 import { ingestDelivery } from "./functions/ingest-delivery";
+import { platformAgentTriage } from "./functions/platform-agent-triage";
 import { platformBackfillOrchestrator } from "./functions/platform-backfill-orchestrator";
 import { platformEntityEmbed } from "./functions/platform-entity-embed";
 import { platformEntityGraph } from "./functions/platform-entity-graph";
@@ -42,6 +44,7 @@ export {
   tokenRefresh,
   deliveryRecovery,
   platformRepoIndexSync,
+  platformAgentTriage,
 };
 
 /**
@@ -62,6 +65,7 @@ export function createInngestRouteContext() {
       tokenRefresh,
       deliveryRecovery,
       platformRepoIndexSync,
+      platformAgentTriage,
     ],
     servePath: "/api/inngest",
   });

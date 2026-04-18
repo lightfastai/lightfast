@@ -1,0 +1,113 @@
+---
+title: "Why We Built Lightfast"
+description: "The story behind Lightfast — why founders need an operating layer beneath their tools and agents, and what we've already shipped toward building it."
+keywords:
+  - "why we built lightfast"
+  - "founder letter"
+  - "operating layer"
+  - "agent infrastructure"
+  - "lightfast runtime"
+  - "mcp tools"
+  - "agent memory"
+  - "company as a program"
+  - "neural pipeline"
+  - "ai for founders"
+canonicalUrl: "https://lightfast.ai/blog/2026-03-26-why-we-built-lightfast"
+ogTitle: "Why We Built Lightfast"
+ogDescription: "The story behind Lightfast — why founders need an operating layer beneath their tools, and what we've already shipped."
+noindex: false
+nofollow: false
+authors:
+  - name: "Jeevan Pillay"
+    url: "https://linkedin.com/in/jeevanpillay"
+    twitterHandle: "@jeevanpillay"
+    jobTitle: "Founder"
+publishedAt: "2026-03-26T12:00:00Z"
+updatedAt: "2026-04-14T12:00:00Z"
+category: "company"
+readingTimeMinutes: 6
+featured: true
+featuredImage: "/images/blog/why-we-built-lightfast.png"
+tldr: "Before Lightfast was a runtime, it was an agent harness. Closing the loop meant becoming the scaffolding. We're building the operating layer — the substrate agents and founders actually need — and running ourselves through it first."
+faq:
+  - question: "Why did you build Lightfast?"
+    answer: "We started building an agent harness and discovered that closing the loop between agents, tools, and context was impossible without becoming the scaffolding ourselves. Lightfast is the operating layer — the runtime — that replaces that scaffolding with a substrate agents and founders can operate through."
+  - question: "What does 'operating layer' mean?"
+    answer: "An operating layer sits between every tool and everyone who needs to act across them. Agents and people express intent — the layer resolves where and how. Tools stay. Teams stay. What changes is the substrate underneath, built around four verbs: observe, remember, reason, act."
+  - question: "What does 'every company is a Program' mean?"
+    answer: "A company is the sum of what it decides, remembers, and does. We believe that should be expressible as text — diffable, versionable, executable. The runtime executes the Program. Lightfast itself runs this way, with its own Program committed to GitHub and executed on the runtime we ship."
+  - question: "What has Lightfast shipped so far?"
+    answer: "Lightfast v0.1.0 ships a neural pipeline that extracts entities and relationships from GitHub, Vercel, Linear, and Sentry events, plus an AI chat interface (Explore), a REST API, a TypeScript SDK, and an MCP server for agent integration. The substrate is live and in production."
+---
+
+## The connecting tissue
+
+Before Lightfast was a runtime, it was an agent harness — an SDK for building agents, deploying them as user-facing apps on Vercel, letting them loose on real work. It mostly worked. What didn't work was closing the loop.
+
+Every time we shipped something, the loop opened right back up. An agent would deploy. We'd bounce to the Vercel dashboard to check. Bounce to Sentry when something broke. Bounce to GitHub to see what changed. Back to the terminal to fix it, then back to the web to check again. The agent never saw any of this. Neither did the next one we deployed after it. The context that mattered — what happened, why, and what to do about it — lived in tabs, and the only runtime connecting those tabs was us.
+
+We spent months accepting that and writing scaffolding to paper over it. More scripts, more glue, more bespoke polling. At some point the scaffolding got bigger than the agents.
+
+That's when it clicked. The problem wasn't the agents. It wasn't the tools. It was the thing underneath — or rather, the absence of the thing underneath. Every app assumes it's the center of the universe. None of them are. The connecting tissue between them was invisible, and every team we watched was reinventing it by hand.
+
+You can't build an operating system *on top of* LLMs. You have to build the memory layer underneath them first. The runtime isn't glue between apps. The runtime *is* the substrate.
+
+## Every founder now runs two companies
+
+Founders used to run one company. Today they run two.
+
+The first is the business they built — the customers, the code, the team, the product. The second is quieter and newer: a small, growing fleet of agents operating across their stack. Deploy bots. Triage agents. Research agents. Code review agents. Most of them were hacked together in an afternoon. Most of them don't talk to each other.
+
+Tools weren't built for either of those companies. They were built for humans clicking buttons. Every agent you ship has to learn — from scratch, every time — which tool owns what, how to call it, how to interpret what comes back. Every person you hire has to do the same, slower.
+
+The gap between *I know what needs to happen* and *it happens* is supposed to close in the AI era. For most founders, it's widened. The agents added more surface, not more leverage. We think that's because the substrate hasn't caught up.
+
+## More tools isn't the answer
+
+The industry's reflex to fragmentation has been to ship another tool to manage the fragmentation.
+
+A dashboard on top of dashboards. An integration to unify your integrations. An agent to orchestrate your agents. Each one arrives promising to be the one. Each one adds its own surface area, its own auth model, its own event schema, its own way of being wrong.
+
+We stopped believing the fix was one more app. If every app reinvents the connecting tissue, the answer isn't a better app. The answer is moving the connecting tissue out of the apps entirely.
+
+## An operating layer, not another app
+
+An operating layer isn't a product. It's a position.
+
+It sits between every tool and everyone — agents and people — who needs to act across them. Instead of agents calling the Vercel API, the GitHub API, the Linear API, they express intent: *ship this*, *triage this*, *find out what broke*. The runtime resolves where and how. Tools stay. Teams stay. What changes is the substrate underneath.
+
+We organised the work around four verbs. **Observe** every event across every connected tool — pushes, deployments, incidents, issues — as structured, immutable facts. **Remember** them in a graph that preserves what happened, who was involved, and how things relate. **Reason** across that graph — detect patterns, compute truth when sources conflict, enforce the invariants a team defines. **Act** on it — resolve intent to the right tool, trace every action back to the event that triggered it.
+
+This was a vision paper a year ago. It isn't now. MCP landed. Embeddings got cheap enough to index everything. Webhook-first SaaS became the default. Agents got good enough to reason over structured memory when you hand it to them properly. The primitives finally exist. The substrate is the last thing left to build.
+
+## What's live today
+
+v0.1.0 is out. The runtime is real, and it does real work.
+
+The neural pipeline ingests events from GitHub, Vercel, Linear, and Sentry in real time. Every webhook is validated, scored for significance, and decomposed into entities — pull requests, deployments, issues, endpoints, branches, users — up to fifty types per event. Entities get deduplicated, linked into a graph, and embedded for semantic search. Connect a source, and the pipeline handles the rest.
+
+Explore is the first thing you can do with that substrate. Ask a question in natural language, get a streaming answer grounded in your actual events, with citations back to the source. Every response shows which entities it pulled and why. No black boxes. No summarisation without verification.
+
+For anything we haven't built a UI for yet, there's a REST API, a typed TypeScript SDK (`lightfast` on npm), and an MCP server (`@lightfastai/mcp`) that exposes the same capabilities to any agent that speaks the protocol. The same primitives for your team and the agents your team is running.
+
+Everything is tenant-isolated. Your data never mixes with anyone else's. We don't train on it. You can delete it whenever you want. The [changelog](/changelog) has the full list. The point is: the substrate already runs.
+
+## Every company is a Program
+
+Here's the thesis underneath all of it.
+
+A company is the sum of what it decides, what it remembers, and what it does. Most of that lives in tabs — in docs no one reads, in Slack threads no one finds, in the heads of the three people who were there when it happened. We don't think any of that is load-bearing. We think it's where companies leak.
+
+The version we believe in is different. A company should be expressible as [a Program](/company) — text, diffable, versionable, executable. Decisions are commits. Memory is a graph. Roadmap is code. Every process is legible, every rule is enforced, every action traces back to the intent that asked for it. The runtime executes the Program. The Program becomes the company.
+
+We don't just believe this. We're running it. Lightfast itself — roadmap, decisions, invariants, memory — lives as a Program we're committing to GitHub and executing on the runtime we ship. Every process we build is one we're also using to build the next one. This blog post is evidence. The [company page](/company) is evidence. The changelog is evidence.
+
+That's the experiment. We're the first user because we had to be.
+
+## We are building the runtime
+
+We're not going to be the only ones who write a company as a Program. We're just going to be first.
+
+The primitives are ready. The substrate is live. What's left is writing ours in the open, shipping the runtime as fast as we can, and watching the next generation of founders use it to write theirs.
+
+**Every company will be a Program. We're writing ours in the open — so you can write yours next.**

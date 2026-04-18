@@ -2,8 +2,10 @@ import type { MetadataRoute } from "next";
 import {
   getBlogPages,
   getChangelogPages,
+  getIntegrationPages,
   getLegalPages,
 } from "~/app/(app)/(content)/_lib/source";
+import { BlogPostSchema } from "~/lib/content-schemas";
 
 function getCategoryPriority(category: string): number {
   switch (category) {
@@ -35,6 +37,11 @@ export default function sitemap(): MetadataRoute.Sitemap {
       new Date(a.data.publishedAt).getTime()
   );
   const legalPages = getLegalPages();
+  const integrationPages = getIntegrationPages();
+  const mostRecentIntegration = integrationPages
+    .map((p) => p.data.updatedAt)
+    .sort()
+    .reverse()[0];
 
   const mostRecentBlog =
     blogPosts[0]?.data.updatedAt ?? blogPosts[0]?.data.publishedAt;
@@ -116,6 +123,24 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly" as const,
       priority: getCategoryPriority(page.data.category),
     })),
+    // Blog topic/category pages — one per BlogPostSchema.shape.category enum value
+    ...BlogPostSchema.shape.category.options.map((category) => {
+      const postsInCategory = blogPosts.filter(
+        (p) => p.data.category === category
+      );
+      const mostRecentInCategory = postsInCategory[0];
+      return {
+        url: `${base}/blog/topic/${category}`,
+        ...(mostRecentInCategory && {
+          lastModified: new Date(
+            mostRecentInCategory.data.updatedAt ??
+              mostRecentInCategory.data.publishedAt
+          ),
+        }),
+        changeFrequency: "weekly" as const,
+        priority: getCategoryPriority(category),
+      };
+    }),
     // Changelog listing
     {
       url: `${base}/changelog`,
@@ -176,6 +201,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 0.6,
     },
+    // Integrations listing
+    {
+      url: `${base}/integrations`,
+      ...(mostRecentIntegration && {
+        lastModified: new Date(mostRecentIntegration),
+      }),
+      changeFrequency: "weekly",
+      priority: 0.9,
+    },
+    // Individual integration pages
+    ...integrationPages.map((page) => ({
+      url: `${base}/integrations/${page.slugs[0]}`,
+      lastModified: new Date(page.data.updatedAt),
+      changeFrequency: "weekly" as const,
+      priority: 0.85,
+    })),
     // Search
     {
       url: `${base}/search`,

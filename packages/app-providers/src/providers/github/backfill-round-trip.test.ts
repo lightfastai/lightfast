@@ -267,7 +267,7 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
     expect(event.eventType).toContain("succeeded");
   });
 
-  it("ERROR deployment produces error eventType", () => {
+  it("ERROR deployment produces created eventType", () => {
     const { webhookPayload: errPayload, eventType: errType } =
       adaptVercelDeploymentForTransformer(
         {
@@ -277,6 +277,6 @@ describe("Vercel Deployment: adapter → transformer round-trip", () => {
         "my-app"
       );
     const event = transformVercelDeployment(errPayload, context, errType);
-    expect(event.eventType).toContain("error");
+    expect(event.eventType).toBe("deployment.created");
   });
 });

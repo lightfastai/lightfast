@@ -50,6 +50,7 @@ catalog:
   tailwind-merge: ^3.5.0
   typescript: ^5.8.2
   vitest: ^4.0.18
+  yaml: ^2.8.3
   zod: ^4.0.0
   zustand: ^5.0.11
 

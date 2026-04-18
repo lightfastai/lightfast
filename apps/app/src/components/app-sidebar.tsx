@@ -23,9 +23,7 @@ import { cn } from "@repo/ui/lib/utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
 import {
-  Activity,
   BookOpen,
-  Boxes,
   Briefcase,
   HelpCircle,
   Mail,
@@ -56,11 +54,6 @@ function getOrgPrimaryItems(orgSlug: string): NavItem[] {
       href: `/${orgSlug}`,
       icon: MessageSquare,
     },
-    {
-      title: "Entities",
-      href: `/${orgSlug}/entities`,
-      icon: Boxes,
-    },
   ];
 }
 
@@ -69,11 +62,6 @@ function getOrgPrimaryItems(orgSlug: string): NavItem[] {
  */
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Events",
-      href: `/${orgSlug}/events`,
-      icon: Activity,
-    },
     {
       title: "Sources",
       href: `/${orgSlug}/sources`,

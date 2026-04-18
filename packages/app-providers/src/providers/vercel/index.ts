@@ -100,26 +100,6 @@ export const vercel = defineWebhookProvider({
       description: "Capture successful deployment completions",
       type: "observation",
     },
-    "deployment.ready": {
-      label: "Deployment Ready",
-      description: "Capture when deployments are live",
-      type: "observation",
-    },
-    "deployment.error": {
-      label: "Deployment Failed",
-      description: "Capture deployment failures",
-      type: "observation",
-    },
-    "deployment.canceled": {
-      label: "Deployment Canceled",
-      description: "Capture canceled deployments",
-      type: "observation",
-    },
-    "deployment.check-rerequested": {
-      label: "Check Re-requested",
-      description: "Capture deployment check re-request events",
-      type: "observation",
-    },
   },
 
   // Coarse-grained events for dispatch (resolveCategory strips dot-suffix)
@@ -132,24 +112,11 @@ export const vercel = defineWebhookProvider({
       actions: {
         created: { label: "Deployment Started", weight: 30 },
         succeeded: { label: "Deployment Succeeded", weight: 40 },
-        ready: { label: "Deployment Ready", weight: 40 },
-        error: { label: "Deployment Failed", weight: 70 },
-        canceled: { label: "Deployment Canceled", weight: 65 },
-        "check-rerequested": {
-          label: "Deployment Check Re-requested",
-          weight: 25,
-        },
       },
     }),
   },
 
-  defaultSyncEvents: [
-    "deployment.created",
-    "deployment.succeeded",
-    "deployment.ready",
-    "deployment.error",
-    "deployment.canceled",
-  ],
+  defaultSyncEvents: ["deployment.created", "deployment.succeeded"],
 
   buildProviderConfig: ({ defaultSyncEvents }) => ({
     provider: "vercel" as const,
@@ -357,8 +324,6 @@ export const vercel = defineWebhookProvider({
     processCallback: async (config, query) => {
       const code = query.code;
       const configurationId = query.configurationId;
-      const next = query.next;
-
       if (!code) {
         throw new Error("missing code");
       }
@@ -385,10 +350,7 @@ export const vercel = defineWebhookProvider({
         sourceType: "vercel" as const,
         events: [
           "deployment.created",
-          "deployment.ready",
           "deployment.succeeded",
-          "deployment.error",
-          "deployment.canceled",
           "project.created",
           "project.removed",
           "integration-configuration.removed",
@@ -403,16 +365,6 @@ export const vercel = defineWebhookProvider({
           team_id: parsed.team_id,
         },
       };
-
-      if (next) {
-        return {
-          status: "connected-redirect",
-          externalId,
-          accountInfo,
-          tokens: oauthTokens,
-          nextUrl: next,
-        } satisfies CallbackResult<VercelAccountInfo>;
-      }
 
       return {
         status: "connected",

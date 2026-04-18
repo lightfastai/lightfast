@@ -10,23 +10,49 @@
 [![CI Status](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml/badge.svg)](https://github.com/lightfastai/lightfast/actions/workflows/ci.yml)
 [![GitHub stars](https://img.shields.io/github/stars/lightfastai/lightfast)](https://github.com/lightfastai/lightfast/stargazers)
 
-**Superintelligence layer for founders.**
+**An operating system for product development.**
+**For agents and teams.**
 
 [Website](https://lightfast.ai) · [Documentation](https://lightfast.ai/docs/get-started/overview) · [Discord](https://discord.gg/YqPDfcar2C)
 
-Lightfast is the operating system that runs your startup. Your tools, your agents, your entire operation — orchestrated in one place. Strategy, ops, execution. Lightfast runs all of it.
+Lightfast ingests events from your stack — code, signals, feedback, decisions, deploys — and stores them as cited memory that agents and engineers query through the same primitives. The operating layer is a pipeline: **memory → intelligence → agents**. `v0.1.0` ships memory and a proxy for agent actions; intelligence, and the auto-drafted artifacts that close the loop, are in development.
 
 ## Memory
 
-Your tools don't share memory. Something breaks in production and you're switching between Sentry, GitHub, Vercel, and Linear — manually connecting dots that the system should already know. Lightfast builds the memory layer your stack never had.
+Memory is the substrate, and the layer Lightfast ships today.
 
-Every event across every connected tool flows into a living graph that understands causality, ownership, and relationships — not just stores them. The PR that caused the incident. The engineer who owns the system. The Linear ticket tracking the fix. The deployment that shipped it. Ask one question, get the full picture with cited sources. The longer Lightfast runs, the more it understands about your team, your patterns, and your stage.
+Every event from every connected tool flows into a temporal graph with semantic embeddings, cited by source. Not a log — a graph that resolves commits, PRs, deployments, incidents, and the people behind them into entities and traces the relationships between them. `Explore` answers questions against that graph with streaming, cited responses grounded in the actual events.
 
-## Operating Layer
+The direction: causal reasoning across tools — not just storing that *a PR merged* and *an error spiked*, but understanding which commit caused which incident, which ticket tracks the fix, and which deployment shipped it. The longer Lightfast runs, the more it understands about your team, your patterns, and your stage.
 
-The operating layer is what acts on that memory. Agents don't call twelve different APIs — they express intent to Lightfast, and Lightfast resolves it: right tool, right context, every time. Define a rule — "every production release needs an approved review and a closed ticket" — and the OS enforces it continuously, not on a schedule.
+## Intelligence
 
-As the number of agents in your company grows, you don't want twelve agents calling twelve tools independently. You want one system they all operate through — with shared memory, shared context, and your rules enforced at the kernel level. That's where Lightfast is going.
+Intelligence will compose memory into action. Skills, workflows, rules, and permissions — defined once, enforced continuously.
+
+The target: express an invariant — *"every production release needs an approved review and a closed ticket"* — and the layer enforces it at all times, not on a schedule.
+
+This layer is in development. Today, Lightfast exposes memory through cited answers and a proxy primitive (below) that executes provider actions on behalf of agents.
+
+## Agents
+
+Agents operate on memory through the REST API, TypeScript SDK, and MCP server — the same primitives available to people.
+
+The `proxy` primitive is the first step toward intent-based resolution: `proxy.search` discovers connected providers, resources, and available actions; `proxy.call` executes an action (`github.list-pull-requests`) through Lightfast with auth handled. Action-level today; higher-order intent resolution — *find the owner of this system, open a PR with full context* — is where this is headed.
+
+The destination: as the number of agents in your company grows, one system they all operate through — with shared memory, shared context, and your rules enforced at the kernel level.
+
+Surfaces today: REST API, TypeScript SDK, MCP (Claude, Cursor, Codex). IDE and CI surfaces are planned.
+
+## The Loop
+
+Where Lightfast is going — bug → fix → changelog, without anyone copy-pasting:
+
+1. **Signal lands.** A Sentry error and a customer report resolve to the same symptom.
+2. **Context stitches.** Lightfast correlates the symptom to a commit, PRs, owner, and prior discussion.
+3. **Fix ships.** A PR opens with full context, merges, deploys.
+4. **Loop closes.** A changelog entry, a customer reply, and a docs update auto-draft — each human-reviewable.
+
+Today, steps 1 and 2 are addressable through memory + Explore. Steps 3 and 4 — the write-back and auto-drafting — are the roadmap. Every feature Lightfast ships is meant to make your team smarter, not just the product larger.
 
 ## Supported Sources
 
@@ -54,25 +80,23 @@ npm install lightfast
 ```
 
 ```typescript
-import { Lightfast } from "lightfast";
+import { createLightfast } from "lightfast";
 
-const lightfast = new Lightfast({ apiKey: process.env.LIGHTFAST_API_KEY });
+const lf = createLightfast(process.env.LIGHTFAST_API_KEY!);
 
-// Search your workspace
-const results = await lightfast.search({
-  query: "how does authentication work",
+// Semantic search across all connected sources
+const { results } = await lf.search({
+  query: "deployment errors last week",
   limit: 10,
 });
 
-// Get full document content
-const content = await lightfast.contents({
-  ids: ["doc_abc123"],
-});
+// Discover connected providers, resources, and available actions
+const { connections } = await lf.proxy.search();
 
-// Find similar documents
-const similar = await lightfast.findSimilar({
-  id: "doc_abc123",
-  threshold: 0.7,
+// Execute a provider action through Lightfast (auth handled)
+const { status, data } = await lf.proxy.call({
+  action: "github.list-pull-requests",
+  params: { owner: "acme", repo: "web" },
 });
 ```
 
@@ -163,7 +187,9 @@ LIGHTFAST_API_KEY = "sk-lf-..."
 </details>
 
 **Available tools:**
-- `lightfast_search` — Search across connected tools for decisions and observations
+- `lightfast_search` — semantic search across connected sources, with cited results
+- `lightfast_proxy_search` — discover connected providers, resources, and available provider actions
+- `lightfast_proxy_call` — execute a provider action through Lightfast (auth handled)
 
 ## Security
 

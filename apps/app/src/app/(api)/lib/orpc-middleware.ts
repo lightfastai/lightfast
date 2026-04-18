@@ -73,8 +73,8 @@ async function resolveAuth(
     });
   }
 
-  const { getCachedUserOrgMemberships } = await import("@repo/app-clerk-cache");
-  const userMemberships = await getCachedUserOrgMemberships(userId);
+  const { getUserOrgMemberships } = await import("@vendor/clerk/server");
+  const userMemberships = await getUserOrgMemberships(userId);
   const isMember = userMemberships.some((m) => m.organizationId === clerkOrgId);
 
   if (!isMember) {

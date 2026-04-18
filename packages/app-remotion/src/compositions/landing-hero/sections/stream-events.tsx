@@ -31,7 +31,7 @@ const FEED_EVENTS: FeedEvent[] = [
     label: "Issue Updated",
     detail: "MEM-302 ranking threshold",
   },
-  { source: "Vercel", label: "Deployment Ready", detail: "api@prod-us-east-1" },
+  { source: "Vercel", label: "Deployment Ready", detail: "lightfast-app — Production" },
   { source: "GitHub", label: "PR Merged", detail: "#839 edge cache warmup" },
   {
     source: "Sentry",
@@ -48,7 +48,7 @@ const SOURCE_COLORS: Record<FeedEvent["source"], string> = {
   Vercel: "#e5e5e5",
   GitHub: "#c7c7c7",
   Sentry: "#9b9b9b",
-  Linear: "#7aa2ff",
+  Linear: "#c7c7c7",
 };
 
 const SOURCE_ICON_KEY: Record<

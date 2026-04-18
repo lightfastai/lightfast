@@ -8,7 +8,8 @@
  *
  * Used by:
  * - @db/app: Store creation
- * - @repo/app-config: PRIVATE_CONFIG (re-exports these)
+ * - @repo/app-pinecone: PINECONE_CONFIG
+ * - @repo/app-embed: EMBEDDING_CONFIG
  * - Workflows: Embedding provider initialization
  */
 

@@ -30,6 +30,8 @@
             "/pitch-deck",
             "/company",
             "/company/:path*",
+            "/integrations",
+            "/integrations/:paht*",
             "/careers",
             "/careers/:path",
             "/api/health",

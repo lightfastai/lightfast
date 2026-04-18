@@ -271,10 +271,7 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    if (
-      result.status === "connected" ||
-      result.status === "connected-redirect"
-    ) {
+    if (result.status === "connected") {
       expect(result.accountInfo.sourceType).toBe("vercel");
       expect(result.accountInfo.version).toBe(1);
     }
@@ -291,10 +288,7 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    if (
-      result.status === "connected" ||
-      result.status === "connected-redirect"
-    ) {
+    if (result.status === "connected") {
       const raw = result.accountInfo.raw as typeof tokenResponseTeam;
       expect(raw.installation_id).toBe("icfg-abc123");
       expect(raw.user_id).toBe("user-xyz");
@@ -302,7 +296,7 @@ describe("oauth.processCallback", () => {
     }
   });
 
-  it("returns connected-redirect with nextUrl when next query param is present", async () => {
+  it("returns connected status even when next query param is present", async () => {
     mockFetch.mockResolvedValueOnce({
       ok: true,
       json: () => Promise.resolve(tokenResponseTeam),
@@ -314,10 +308,7 @@ describe("oauth.processCallback", () => {
       next: "https://vercel.com/dashboard",
     });
 
-    expect(result.status).toBe("connected-redirect");
-    if (result.status === "connected-redirect") {
-      expect(result.nextUrl).toBe("https://vercel.com/dashboard");
-    }
+    expect(result.status).toBe("connected");
   });
 
   it("returns connected status when next query param is absent", async () => {
@@ -361,13 +352,9 @@ describe("oauth.processCallback", () => {
       configurationId: "icfg-abc123",
     });
 
-    if (
-      result.status === "connected" ||
-      result.status === "connected-redirect"
-    ) {
+    if (result.status === "connected") {
       expect(result.accountInfo.events).toContain("deployment.created");
       expect(result.accountInfo.events).toContain("deployment.succeeded");
-      expect(result.accountInfo.events).toContain("deployment.error");
     }
   });
 });
@@ -448,14 +435,7 @@ describe("webhook.extractEventType", () => {
   });
 
   it("handles all documented deployment event types", () => {
-    const types = [
-      "deployment.created",
-      "deployment.succeeded",
-      "deployment.ready",
-      "deployment.error",
-      "deployment.canceled",
-      "deployment.check-rerequested",
-    ];
+    const types = ["deployment.created", "deployment.succeeded"];
     for (const type of types) {
       expect(vercel.webhook.extractEventType(new Headers(), { type })).toBe(
         type
@@ -519,7 +499,6 @@ describe("resolveCategory", () => {
   it("strips dot-suffix to produce dispatch category", () => {
     expect(vercel.resolveCategory("deployment.created")).toBe("deployment");
     expect(vercel.resolveCategory("deployment.succeeded")).toBe("deployment");
-    expect(vercel.resolveCategory("deployment.error")).toBe("deployment");
   });
 
   it("returns eventType unchanged when no dot", () => {

@@ -1,9 +1,18 @@
 import { Button } from "@repo/ui/components/ui/button";
+import { Separator } from "@repo/ui/components/ui/separator";
 import { JsonLd } from "@vendor/seo/json-ld";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Metadata, Route } from "next";
+import nextDynamic from "next/dynamic";
 import Image from "next/image";
 import { notFound } from "next/navigation";
+
+const ChangelogImprovements = nextDynamic<{ items: string[] }>(() =>
+  import("../_components/changelog-improvements").then((m) => ({
+    default: m.ChangelogImprovements,
+  }))
+);
+
 import { mdxComponents } from "~/app/(app)/(content)/_lib/mdx-components";
 import {
   getChangelogPage,
@@ -52,8 +61,9 @@ export default async function ChangelogEntryPage({ params }: Props) {
     publishedAt,
     authors,
     tldr,
-    ogImage,
+    featuredImage,
     description,
+    improvements,
   } = page.data;
 
   const allPages = getChangelogPages().sort(
@@ -67,7 +77,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
   const nextEntry = currentIndex > 0 ? allPages[currentIndex - 1] : null;
 
   return (
-    <>
+    <div className="mx-auto w-full min-w-0 max-w-2xl pt-24 pb-32">
       <JsonLd code={jsonLd} />
       <article className="space-y-3">
         <p className="text-muted-foreground text-sm">
@@ -81,35 +91,58 @@ export default async function ChangelogEntryPage({ params }: Props) {
           {version ? <> / {version}</> : null}
         </p>
 
-        <h2 className="pb-4 font-medium font-pp text-2xl">{title}</h2>
+        <h2 className="pb-8 font-medium font-pp text-2xl">{title}</h2>
 
-        <p className="font-mono text-muted-foreground text-xs uppercase tracking-wider">
+        <p className="font-mono hidden text-muted-foreground text-xs uppercase tracking-wider">
           {type}
         </p>
 
-        {ogImage &&
-          ogImage !== "https://lightfast.ai/images/og-default.png" && (
-            <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
-              <Image
-                alt={title}
-                className="h-full w-full object-cover"
-                fill
-                priority
-                src={ogImage}
-              />
+        {featuredImage && (
+          <div className="-mx-24 relative aspect-16/9 overflow-hidden rounded-lg bg-card">
+            <Image
+              alt={title}
+              className="h-full w-full object-cover"
+              fill
+              priority
+              src={featuredImage}
+            />
+          </div>
+        )}
+
+        <div className="mt-8 flex flex-wrap items-center gap-4 text-muted-foreground text-sm">
+          {authors.length > 0 && (
+            <div>
+              {authors.map((author, idx) => (
+                <span key={author.name}>
+                  {author.url ? (
+                    <a
+                      className="transition-colors hover:text-foreground"
+                      href={author.url}
+                      rel="noopener noreferrer"
+                      target="_blank"
+                    >
+                      {author.name}
+                    </a>
+                  ) : (
+                    author.name
+                  )}
+                  {idx < authors.length - 1 && ", "}
+                </span>
+              ))}
             </div>
           )}
 
-        <p className="text-muted-foreground text-sm">
-          {authors[0]?.name ?? "Lightfast"} ·{" "}
+          <span className="text-muted-foreground/50">·</span>
           <time dateTime={publishedAt}>
-            {new Date(publishedAt).toLocaleDateString(undefined, {
+            {new Date(publishedAt).toLocaleDateString("en-US", {
               year: "numeric",
-              month: "short",
+              month: "long",
               day: "numeric",
             })}
           </time>
-        </p>
+        </div>
+
+        <Separator className="mt-4 bg-border/50" />
 
         {tldr && (
           <div className="my-8 rounded-xs bg-card p-8">
@@ -121,7 +154,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
         )}
 
         {description && (
-          <p className="pt-4 text-muted-foreground text-sm leading-relaxed">
+          <p className="pt-4 hidden text-muted-foreground text-sm leading-relaxed">
             {description}
           </p>
         )}
@@ -129,6 +162,12 @@ export default async function ChangelogEntryPage({ params }: Props) {
         <div className="mt-8 max-w-none">
           <MDXContent components={mdxComponents} />
         </div>
+
+        {improvements && improvements.length > 0 && (
+          <div className="mt-12 rounded-lg border border-border/50 px-6">
+            <ChangelogImprovements items={improvements} />
+          </div>
+        )}
 
         {(prevEntry ?? nextEntry) && (
           <nav
@@ -176,6 +215,6 @@ export default async function ChangelogEntryPage({ params }: Props) {
           </nav>
         )}
       </article>
-    </>
+    </div>
   );
 }

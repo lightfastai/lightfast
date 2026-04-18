@@ -1,6 +1,5 @@
 import "server-only";
-import { getCachedUserOrgMemberships } from "@repo/app-clerk-cache";
-import { auth, clerkClient } from "@vendor/clerk/server";
+import { auth, clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
 
 /**
  * Organization access utilities using Clerk RBAC
@@ -61,7 +60,7 @@ export async function requireOrgAccess(slug: string): Promise<OrgWithAccess> {
   }
 
   // User-centric membership check (cached)
-  const userMemberships = await getCachedUserOrgMemberships(userId);
+  const userMemberships = await getUserOrgMemberships(userId);
 
   const userMembership = userMemberships.find(
     (m) => m.organizationId === clerkOrg.id

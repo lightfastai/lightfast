@@ -12,8 +12,6 @@ import {
 } from "@repo/ui/components/ui/command";
 import { isPlatformModifier } from "@repo/ui/lib/platform";
 import {
-  Activity,
-  Boxes,
   Briefcase,
   Loader2,
   MessageSquare,
@@ -40,18 +38,6 @@ function getNavItems(orgSlug: string): NavItem[] {
       href: `/${orgSlug}`,
       icon: MessageSquare,
       keywords: ["chat", "ask", "ai", "answer"],
-    },
-    {
-      title: "Entities",
-      href: `/${orgSlug}/entities`,
-      icon: Boxes,
-      keywords: ["objects", "resources", "infrastructure"],
-    },
-    {
-      title: "Events",
-      href: `/${orgSlug}/events`,
-      icon: Activity,
-      keywords: ["logs", "activity", "webhook"],
     },
     {
       title: "Sources",
@@ -215,9 +201,7 @@ export function CommandPalette() {
             {results.map((result) => (
               <CommandItem
                 key={result.id}
-                onSelect={() =>
-                  handleSelect(`/${orgSlug}/entities/${result.id}`)
-                }
+                onSelect={() => handleSelect(`/${orgSlug}/entity/${result.id}`)}
               >
                 <div className="flex flex-col gap-0.5">
                   <span className="text-sm">{result.title}</span>

@@ -1,15 +1,5 @@
 {
   "mcpServers": {
-    "playwright": {
-      "type": "stdio",
-      "command": "npx",
-      "args": [
-        "@playwright/mcp@latest",
-        "--isolated",
-        "--user-data-dir=/tmp/playwright-mcp",
-        "--storage-state=.auth/browser-session.json"
-      ]
-    },
     "exa": {
       "type": "stdio",
       "command": "bash",
@@ -19,6 +9,15 @@
       "type": "stdio",
       "command": "bash",
       "args": [".mcp/start-lightfast.sh"]
+    },
+    "postgres": {
+      "type": "stdio",
+      "command": "bash",
+      "args": [".mcp/start-postgres.sh"]
+    },
+    "inngest": {
+      "type": "http",
+      "url": "http://127.0.0.1:8288/mcp"
     }
   }
 }

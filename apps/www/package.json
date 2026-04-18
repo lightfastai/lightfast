@@ -25,6 +25,7 @@
     "@next/bundle-analyzer": "^16.1.6",
     "@paper-design/shaders-react": "^0.0.72",
     "@radix-ui/react-popover": "^1.1.14",
+    "@repo/app-providers": "workspace:*",
     "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
     "@rescale/nemo": "^2.1.1",

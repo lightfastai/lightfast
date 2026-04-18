@@ -10,6 +10,11 @@ import { BlogFeaturedGhost } from "./compositions/blog-featured-ghost";
 import { BlogFeaturedLissajous } from "./compositions/blog-featured-lissajous";
 import { BlogFeaturedRule } from "./compositions/blog-featured-rule";
 import { BlogFeaturedTrail } from "./compositions/blog-featured-trail";
+import { BlogWhyWeBuiltFeatured } from "./compositions/blog-why-we-built-featured";
+import { ChangelogV010Events } from "./compositions/changelog-v010-events";
+import { ChangelogV010Featured } from "./compositions/changelog-v010-featured";
+import { ChangelogV010SdkMcp } from "./compositions/changelog-v010-sdk-mcp";
+import { ChangelogV010Sources } from "./compositions/changelog-v010-sources";
 import { GitHubBanner } from "./compositions/github-banner";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { Logo } from "./compositions/logo";
@@ -26,6 +31,11 @@ const COMPONENTS: Record<string, React.FC<Record<string, unknown>>> = {
   BlogFeaturedLissajous,
   BlogFeaturedRule,
   BlogFeaturedTrail,
+  BlogWhyWeBuiltFeatured,
+  ChangelogV010Events,
+  ChangelogV010Featured,
+  ChangelogV010SdkMcp,
+  ChangelogV010Sources,
   LandingHero,
   Logo,
   TwitterBanner,

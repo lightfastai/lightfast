@@ -18,6 +18,11 @@ export const PROVIDER_CATEGORIES: Record<
       description: "Capture issue opens, closes, and reopens",
       type: "observation",
     },
+    issue_comment: {
+      label: "Comments",
+      description: "Capture comments on issues and pull requests",
+      type: "observation",
+    },
   },
   linear: {
     Issue: {
@@ -88,26 +93,6 @@ export const PROVIDER_CATEGORIES: Record<
     "deployment.succeeded": {
       label: "Deployment Succeeded",
       description: "Capture successful deployment completions",
-      type: "observation",
-    },
-    "deployment.ready": {
-      label: "Deployment Ready",
-      description: "Capture when deployments are live",
-      type: "observation",
-    },
-    "deployment.error": {
-      label: "Deployment Failed",
-      description: "Capture deployment failures",
-      type: "observation",
-    },
-    "deployment.canceled": {
-      label: "Deployment Canceled",
-      description: "Capture canceled deployments",
-      type: "observation",
-    },
-    "deployment.check-rerequested": {
-      label: "Check Re-requested",
-      description: "Capture deployment check re-request events",
       type: "observation",
     },
   },

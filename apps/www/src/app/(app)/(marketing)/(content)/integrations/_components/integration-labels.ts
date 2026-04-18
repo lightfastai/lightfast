@@ -1,0 +1,18 @@
+import type {
+  IntegrationCategory,
+  IntegrationStatus,
+} from "~/lib/content-schemas";
+
+export const CATEGORY_LABEL: Record<IntegrationCategory, string> = {
+  "dev-tools": "Dev tools",
+  monitoring: "Monitoring",
+  comms: "Comms",
+  data: "Data",
+  "project-management": "Project management",
+};
+
+export const STATUS_LABEL: Record<IntegrationStatus, string> = {
+  live: "Live",
+  beta: "Beta",
+  planned: "Planned",
+};

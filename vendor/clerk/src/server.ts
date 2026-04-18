@@ -1,5 +1,8 @@
 import "server-only";
 
+export { getUserOrgMemberships } from "./membership";
+export type { UserOrgMembership } from "./membership";
+
 export type {
   AllowlistIdentifier,
   ClerkMiddlewareAuth,

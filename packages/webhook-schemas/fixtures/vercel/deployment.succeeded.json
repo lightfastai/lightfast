@@ -1,0 +1,65 @@
+{
+  "id": "WqKGa1OK0A6eWLJ2CfmLi",
+  "type": "deployment.succeeded",
+  "payload": {
+    "project": {
+      "id": "prj_fCNbgzrn0hHuJRVvM7EZuUvFyGgW"
+    },
+    "team": {
+      "id": "team_oOLHPMLVuBjXyFafgsGKEZxl"
+    },
+    "user": {
+      "id": "8siqQqUqQWIYEvIAVe0Y0frQ"
+    },
+    "installationIds": [
+      "icfg_inW7GGIU7ZpPC6qOQfPmknj1"
+    ],
+    "integrations": [
+      {
+        "installationId": "icfg_inW7GGIU7ZpPC6qOQfPmknj1"
+      }
+    ],
+    "deployment": {
+      "id": "dpl_HQpHGt3ytgC4vv73vj9xbw3e2uqX",
+      "customEnvironmentId": null,
+      "meta": {
+        "githubCommitAuthorName": "Redacted User",
+        "githubCommitAuthorEmail": "redacted@example.com",
+        "githubCommitMessage": "chore(deps): bump next from 16.2.1 to 16.2.3\n\nBumps [next](https://github.com/vercel/next.js) from 16.2.1 to 16.2.3.\n- [Release notes](https://github.com/vercel/next.js/releases)\n- [Changelog](https://github.com/vercel/next.js/blob/canary/release.js)\n- [Commits](https://github.com/vercel/next.js/compare/v16.2.1...v16.2.3)\n\n---\nupdated-dependencies:\n- dependency-name: next\n  dependency-version: 16.2.3\n  dependency-type: direct:production\n...\n\nSigned-off-by: dependabot[bot] <support@github.com>",
+        "githubCommitOrg": "lightfastai",
+        "githubCommitRef": "dependabot/npm_and_yarn/next-16.2.3",
+        "githubCommitRepo": "lightfast",
+        "githubCommitSha": "7b00a00f74c91fd5ccfc096c66e9bd3d4ca56071",
+        "githubDeployment": "1",
+        "githubOrg": "lightfastai",
+        "githubRepo": "lightfast",
+        "githubRepoOwnerType": "Organization",
+        "githubCommitRepoId": "955790356",
+        "githubRepoId": "955790356",
+        "githubRepoVisibility": "public",
+        "githubHost": "github.com",
+        "githubCommitAuthorLogin": "dependabot[bot]",
+        "githubPrId": "597",
+        "repoPushedAt": "1775863827000",
+        "branchAlias": "lightfast-platform-git-dependabot-npmandyarnnext-1623-lightfast.vercel.app",
+        "lambdaRuntimeStats": "{\"nodejs\":2}"
+      },
+      "name": "lightfast-platform",
+      "url": "lightfast-platform-q8yh6opzj-lightfast.vercel.app",
+      "inspectorUrl": "https://vercel.com/lightfast/lightfast-platform/HQpHGt3ytgC4vv73vj9xbw3e2uqX"
+    },
+    "links": {
+      "deployment": "https://vercel.com/lightfast/lightfast-platform/HQpHGt3ytgC4vv73vj9xbw3e2uqX",
+      "project": "https://vercel.com/lightfast/lightfast-platform"
+    },
+    "name": "lightfast-platform",
+    "plan": "pro",
+    "regions": [
+      "iad1"
+    ],
+    "target": null,
+    "type": "LAMBDAS",
+    "url": "lightfast-platform-q8yh6opzj-lightfast.vercel.app"
+  },
+  "createdAt": 1775863892256
+}

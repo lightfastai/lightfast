@@ -33,12 +33,14 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "catalog:",
     "@db/app": "workspace:*",
     "@repo/app-embed": "workspace:*",
     "@repo/app-pinecone": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "@repo/app-upstash-realtime": "workspace:*",
     "@repo/app-validation": "workspace:*",
+    "@repo/dotlightfast": "workspace:*",
     "@repo/lib": "workspace:^",
     "@sentry/core": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
@@ -48,6 +50,7 @@
     "@vendor/observability": "workspace:*",
     "@vendor/upstash": "workspace:*",
     "@vercel/related-projects": "catalog:",
+    "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
     "jose": "catalog:",

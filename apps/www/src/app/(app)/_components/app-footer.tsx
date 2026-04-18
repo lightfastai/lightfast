@@ -167,7 +167,7 @@ export function AppFooter() {
         <div className="grid grid-cols-3 gap-4 md:grid-cols-9">
           {LISSAJOUS_PATHS.map((pattern) => (
             <div
-              className="flex aspect-square items-center justify-center border border-border p-4"
+              className="flex aspect-square items-center justify-center border border-border/50 p-4"
               key={pattern.name}
             >
               <svg
@@ -177,8 +177,8 @@ export function AppFooter() {
                 xmlns="http://www.w3.org/2000/svg"
               >
                 <path
+                  className="stroke-border/50"
                   d={pattern.d}
-                  stroke="var(--border)"
                   strokeLinecap="round"
                   strokeLinejoin="round"
                   strokeWidth={1.5}

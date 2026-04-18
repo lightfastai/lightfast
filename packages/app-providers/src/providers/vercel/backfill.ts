@@ -24,10 +24,6 @@ function mapReadyStateToEventType(readyState?: string): VercelWebhookEventType {
   switch (readyState) {
     case "READY":
       return "deployment.succeeded";
-    case "ERROR":
-      return "deployment.error";
-    case "CANCELED":
-      return "deployment.canceled";
     default:
       return "deployment.created";
   }

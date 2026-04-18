@@ -1,6 +1,7 @@
 import { db } from "@db/app/client";
 import { orgIngestLogs } from "@db/app/schema";
 import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import type { SQL } from "drizzle-orm";
 import { and, eq, gte, ilike, or, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -75,6 +76,38 @@ export const eventsRouter = {
         hasMore,
         nextCursor,
         clerkOrgId,
+      };
+    }),
+  get: orgScopedProcedure
+    .input(z.object({ id: z.number() }))
+    .query(async ({ ctx, input }) => {
+      const clerkOrgId = ctx.auth.orgId;
+      const [row] = await db
+        .select()
+        .from(orgIngestLogs)
+        .where(
+          and(
+            eq(orgIngestLogs.clerkOrgId, clerkOrgId),
+            eq(orgIngestLogs.id, input.id)
+          )
+        )
+        .limit(1);
+
+      if (!row) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `Event ${input.id} not found`,
+        });
+      }
+
+      return {
+        id: row.id,
+        source: row.sourceEvent.provider,
+        sourceType: row.sourceEvent.eventType,
+        sourceEvent: row.sourceEvent,
+        ingestionSource: row.ingestionSource,
+        receivedAt: row.receivedAt,
+        createdAt: row.createdAt,
       };
     }),
 } satisfies TRPCRouterRecord;

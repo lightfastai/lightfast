@@ -51,7 +51,7 @@ export function generateBlogFeed(): Feed {
         name: a.name,
         link: a.url,
       })),
-      image: page.data.ogImage,
+      image: `${url}/opengraph-image`,
     });
   }
 

@@ -6,7 +6,7 @@ export async function HeroChangelogBadge() {
   const pages = getChangelogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
-      new Date(a.data.publishedAt).getTime()
+      new Date(a.data.publishedAt).getTime(),
   );
   const latest = pages[0];
 
@@ -19,12 +19,12 @@ export async function HeroChangelogBadge() {
     {
       month: "short",
       day: "numeric",
-    }
+    },
   );
 
   return (
     <NavLink
-      className="inline-flex h-7 items-center gap-2 rounded-sm border border-border/50 bg-card/80 px-2.5 text-muted-foreground text-sm backdrop-blur-md transition-colors hover:text-foreground"
+      className="inline-flex h-7 items-center gap-2 rounded-md border border-border bg-card/40 px-2.5 text-muted-foreground text-sm backdrop-blur-md transition-colors hover:text-foreground"
       href={`/changelog/${latest.slugs[0]}` as Route}
       prefetch
     >

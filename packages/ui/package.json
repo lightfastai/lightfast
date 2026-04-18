@@ -15,6 +15,7 @@
     "./integration-icons": "./src/components/integration-icons.tsx",
     "./framework-icons": "./src/components/framework-icons.tsx",
     "./lib/brand": "./src/lib/brand/index.ts",
+    "./lib/iso": "./src/lib/iso/index.ts",
     "./lib/*": "./src/lib/*",
     "./hooks/*": "./src/hooks/*",
     "./types/*": "./src/types/*",

@@ -1,6 +1,8 @@
+import { Button } from "@repo/ui/components/ui/button";
 import type { GraphContext } from "@vendor/seo/json-ld";
 import { JsonLd } from "@vendor/seo/json-ld";
 import type { Metadata, Route } from "next";
+import Image from "next/image";
 import { getBlogPages } from "~/app/(app)/(content)/_lib/source";
 import { NavLink } from "~/components/nav-link";
 import {
@@ -9,6 +11,7 @@ import {
   buildWebSiteEntity,
 } from "~/lib/builders";
 import { createMetadata } from "~/lib/content-seo";
+import { BlogListingHeader } from "./_components/blog-listing-header";
 
 export const dynamic = "force-static";
 
@@ -53,14 +56,6 @@ export const metadata: Metadata = createMetadata({
     url: PAGE_URL,
     siteName: "Lightfast",
     locale: "en_US",
-    images: [
-      {
-        url: "https://lightfast.ai/images/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: "Lightfast Blog",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
@@ -68,7 +63,6 @@ export const metadata: Metadata = createMetadata({
     description: PAGE_DESCRIPTION,
     site: "@lightfastai",
     creator: "@lightfastai",
-    images: ["https://lightfast.ai/images/og-default.png"],
   },
 });
 
@@ -81,6 +75,10 @@ export default function BlogPage() {
       new Date(a.data.publishedAt).getTime()
     );
   });
+
+  const [latest, ...restPages] = sortedPages;
+  const featured = latest?.data.featuredImage ? latest : null;
+  const listPages = featured ? restPages : sortedPages;
 
   const structuredData: GraphContext = {
     "@context": "https://schema.org",
@@ -109,9 +107,42 @@ export default function BlogPage() {
   return (
     <>
       <JsonLd code={structuredData} />
+      <BlogListingHeader title="Blog" />
+      {featured?.data.featuredImage && (
+        <article className="mb-12" key={featured.slugs[0]}>
+          <div className="relative aspect-video w-full overflow-hidden rounded-lg bg-card">
+            <Image
+              alt={featured.data.title}
+              className="h-full w-full object-cover"
+              fill
+              src={featured.data.featuredImage}
+            />
+          </div>
+          <h2 className="mt-6 font-medium font-pp text-2xl">
+            <Button
+              asChild
+              className="h-auto p-0 font-medium font-pp text-2xl"
+              variant="link"
+            >
+              <NavLink href={`/blog/${featured.slugs[0]}` as Route}>
+                {featured.data.title}
+              </NavLink>
+            </Button>
+          </h2>
+          <p className="mt-2 text-muted-foreground text-sm">
+            <time dateTime={featured.data.publishedAt}>
+              {new Date(featured.data.publishedAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "short",
+                day: "numeric",
+              })}
+            </time>
+          </p>
+        </article>
+      )}
       <div className="space-y-2">
         {sortedPages.length === 0 ? (
-          <div className="rounded-xs border border-transparent bg-card/40 p-4">
+          <div className="rounded-xs bg-accent/40 p-4">
             <h2 className="mb-4 font-semibold text-sm">Coming soon</h2>
             <p className="text-muted-foreground text-sm leading-relaxed">
               We're preparing news and updates about Lightfast. Check back soon
@@ -120,28 +151,28 @@ export default function BlogPage() {
             </p>
           </div>
         ) : (
-          sortedPages.map((page) => (
+          listPages.map((page) => (
             <article
-              className="rounded-xs border border-transparent bg-card p-4 transition-colors hover:border-border/40"
+              className="rounded-xs bg-accent/40 p-4 transition-colors hover:bg-accent"
               key={page.slugs[0]}
             >
               <NavLink
-                className="group block"
+                className="block"
                 href={`/blog/${page.slugs[0]}` as Route}
               >
-                <h2 className="mb-1 font-base text-md transition-colors group-hover:text-foreground/80">
+                <h2 className="mb-1 font-base text-md">
                   {page.data.title}
                 </h2>
-                <p className="mb-4 text-md text-muted-foreground leading-relaxed">
+                <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
                   {page.data.description}
                 </p>
                 <div className="flex items-center gap-2 text-muted-foreground text-sm">
-                  <span>{page.data.category}</span>
+                  <span className="capitalize">{page.data.category}</span>
                   <span>·</span>
                   <time dateTime={page.data.publishedAt}>
                     {new Date(page.data.publishedAt).toLocaleDateString(
                       "en-US",
-                      { year: "numeric", month: "short", day: "numeric" }
+                      { year: "numeric", month: "short", day: "numeric" },
                     )}
                   </time>
                 </div>

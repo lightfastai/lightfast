@@ -1,0 +1,29 @@
+{
+  "name": "@repo/webhook-schemas",
+  "version": "0.1.0",
+  "private": true,
+  "license": "FSL-1.1-Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --",
+    "capture": "pnpm with-env tsx src/capture.ts",
+    "validate": "tsx --conditions react-server src/validate.ts",
+    "report": "tsx --conditions react-server src/report.ts",
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@db/app": "workspace:*",
+    "@repo/app-providers": "workspace:*",
+    "drizzle-orm": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "^8.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:"
+  }
+}

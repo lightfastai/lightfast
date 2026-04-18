@@ -51,14 +51,7 @@ const DEMO_SOURCES: DemoSource[] = [
       provider: "vercel",
       type: "project",
       sync: {
-        events: [
-          "deployment.created",
-          "deployment.succeeded",
-          "deployment.ready",
-          "deployment.error",
-          "deployment.canceled",
-          "deployment.check-rerequested",
-        ],
+        events: ["deployment.created", "deployment.succeeded"],
         autoSync: true,
       },
     },

@@ -101,4 +101,12 @@ export const platformEvents = {
     occurredAt: z.string(),
     correlationId: z.string().optional(),
   }),
+  "platform/agent.decided": z.object({
+    clerkOrgId: z.string(),
+    eventExternalId: z.string(),
+    decision: z.enum(["skip", "invoke"]),
+    skillName: z.string().optional(),
+    reasoning: z.string(),
+    correlationId: z.string().optional(),
+  }),
 };

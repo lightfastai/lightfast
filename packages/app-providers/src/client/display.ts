@@ -62,7 +62,6 @@ export const PROVIDER_DISPLAY = {
     name: "vercel",
     displayName: "Vercel",
     description: "Connect your Vercel projects",
-    comingSoon: true,
     icon: {
       viewBox: "0 0 24 24",
       d: "M24 22.525H0l12-21.05 12 21.05z",

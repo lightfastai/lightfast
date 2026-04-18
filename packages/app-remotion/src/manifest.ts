@@ -49,7 +49,13 @@ interface VideoComposition {
   outputs: OutputTarget[];
   renderProfile: Pick<
     RenderMediaOptions,
-    "codec" | "imageFormat" | "scale" | "everyNthFrame" | "numberOfGifLoops"
+    | "codec"
+    | "imageFormat"
+    | "scale"
+    | "everyNthFrame"
+    | "numberOfGifLoops"
+    | "colorSpace"
+    | "ffmpegOverride"
   >;
   type: "video";
   width: number;
@@ -246,6 +252,114 @@ export const MANIFEST: CompositionManifest = {
       ],
     },
 
+    "blog-why-we-built-featured": {
+      type: "still",
+      component: "BlogWhyWeBuiltFeatured",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/blog",
+          filename: "why-we-built-lightfast.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/blog",
+          filename: "why-we-built-lightfast.webp",
+          scale: 2,
+        },
+      ],
+    },
+
+    // ── Changelog Featured Images ─────────────────────────────────
+    "changelog-v010-featured": {
+      type: "still",
+      component: "ChangelogV010Featured",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-featured.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-featured.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "changelog-v010-events": {
+      type: "still",
+      component: "ChangelogV010Events",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-events.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-events.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "changelog-v010-sources": {
+      type: "still",
+      component: "ChangelogV010Sources",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sources.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sources.webp",
+          scale: 2,
+        },
+      ],
+    },
+    "changelog-v010-sdk-mcp": {
+      type: "still",
+      component: "ChangelogV010SdkMcp",
+      width: 1200,
+      height: 675,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sdk-mcp.png",
+          scale: 2,
+        },
+        {
+          format: "webp",
+          dest: "apps/www/public/images/changelog",
+          filename: "v010-sdk-mcp.webp",
+          scale: 2,
+        },
+      ],
+    },
+
     // ── Video ──────────────────────────────────────────────────────
     "landing-hero": {
       type: "video",
@@ -258,6 +372,23 @@ export const MANIFEST: CompositionManifest = {
         codec: "vp9",
         imageFormat: "png",
         scale: 2,
+        // Tag BT.709 color space and force FULL (pc) range so the browser
+        // decodes the video background identically to the CSS bg-background
+        // token. Default VP9 output uses limited/tv range, which darkens
+        // #1a1a1a to #181818 in most browsers and creates a visible seam
+        // against the page.
+        colorSpace: "bt709",
+        ffmpegOverride: ({ args }) => {
+          return args.map((arg, i, all) => {
+            if (i > 0 && all[i - 1] === "-color_range" && arg === "tv") {
+              return "pc";
+            }
+            if (typeof arg === "string" && arg.includes("range=limited")) {
+              return arg.replace(/range=limited/g, "range=full");
+            }
+            return arg;
+          });
+        },
       },
       outputs: [
         {

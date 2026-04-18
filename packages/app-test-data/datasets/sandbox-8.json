@@ -697,10 +697,10 @@
     },
     {
       "source": "vercel",
-      "eventType": "deployment.error",
+      "eventType": "deployment.created",
       "payload": {
         "id": "hook_react_compiler_002",
-        "type": "deployment.error",
+        "type": "deployment.created",
         "createdAt": 1770631860000,
         "region": "sfo1",
         "payload": {
