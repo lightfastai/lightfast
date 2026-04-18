@@ -270,9 +270,8 @@ export default async function HomePage() {
         />
 
         {/* Company / Manifesto Section */}
-        <section className="dark relative w-full bg-background text-foreground">
+        {/* <section className="dark relative w-full bg-background text-foreground">
           <div className="relative flex h-screen flex-col">
-            {/* Top — manifesto text */}
             <div className="relative flex-[5]">
               <header className="relative flex items-start justify-between px-6 pt-6">
                 <div className="absolute left-[50%] max-w-sm space-y-4 font-pp text-lg lg:text-2xl">
@@ -294,7 +293,6 @@ export default async function HomePage() {
                 </div>
               </header>
 
-              {/* Bottom row — CTA left, last sentence at same level */}
               <div className="absolute right-0 bottom-6 left-0 flex items-start">
                 <div className="mx-auto flex w-full max-w-[1400px] items-center gap-4 px-8 md:px-16 lg:px-24">
                   <span className="font-mono text-sm text-foreground uppercase">
@@ -315,15 +313,14 @@ export default async function HomePage() {
               </div>
             </div>
 
-            {/* Flow field */}
             <div className="relative h-[30vh] border-t border-b border-border">
               <FlowField />
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Self-Driving Product Development Section */}
-        <section className="w-full bg-background py-24 md:py-32">
+        {/* <section className="w-full bg-background py-24 md:py-32">
           <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
             <div className="mb-12 max-w-4xl md:mb-16">
               <h2 className="font-medium font-pp text-2xl md:text-3xl lg:text-4xl">
@@ -344,19 +341,17 @@ export default async function HomePage() {
               <div className="aspect-video rounded-md border border-border/50 bg-card/40" />
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* Full Understanding Section */}
-        <section className="relative w-full overflow-hidden bg-background py-24 md:py-32">
+        {/* <section className="relative w-full overflow-hidden bg-background py-24 md:py-32">
           <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
-            {/* Title at top center */}
             <div className="mb-16 text-center md:mb-24">
               <h2 className="mx-auto max-w-3xl font-medium font-pp text-3xl md:text-4xl lg:text-5xl">
                 A full understanding of your company and tools
               </h2>
             </div>
 
-            {/* Left text — video overlays to right */}
             <div className="relative">
               <div className="w-full max-w-sm space-y-12">
                 <div>
@@ -392,8 +387,6 @@ export default async function HomePage() {
                 </div>
               </div>
 
-              {/* Video — stacked on mobile, absolutely positioned and much larger on desktop */}
-              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
               <video
                 autoPlay
                 className="mt-12 w-full lg:absolute lg:top-1/2 lg:left-[420px] lg:mt-0 lg:w-[70vw] lg:max-w-none lg:-translate-y-1/2"
@@ -406,7 +399,7 @@ export default async function HomePage() {
               </video>
             </div>
           </div>
-        </section>
+        </section> */}
 
         {/* FAQ Section */}
         <section className="w-full bg-background py-24 md:py-32">
@@ -416,7 +409,7 @@ export default async function HomePage() {
         </section>
 
         {/* Featured Content Preview */}
-        <section className="w-full bg-background py-24 md:py-32">
+        <section className="w-full bg-background pb-24 md:pb-32">
           <div className="mx-auto w-full max-w-[1400px] px-8 md:px-16 lg:px-24">
             <LatestContentPreview />
           </div>
