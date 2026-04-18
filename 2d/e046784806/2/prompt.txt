@@ -1,0 +1,41 @@
+/implement_plan @thoughts/shared/plans/2026-04-18-dotlightfast-path-prefix-fix.md
+
+---
+
+proceed phase 2
+
+---
+
+triage spam is connected. note: repo is redirect-fix-apr3 yes.
+
+---
+
+triage spam is connected. note: our clekr org is redirect-fix-apr3 yes.
+
+---
+
+provide me a new prompt to go and implement the full push event transformer to get it setup for this change.
+
+---
+
+let's go with A
+
+---
+
+okay done! i setup issues webhook.
+
+---
+
+perfect! hows it looking then? like now that we hvae all of this.
+
+---
+
+perfect! what do you suggest for unit test. proivde me in list form
+
+---
+
+run /create_plan in seperate Task with all the information needed
+
+---
+
+/commit
