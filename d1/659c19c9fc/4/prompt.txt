@@ -11,3 +11,7 @@ proceed with testing these manual verifications for me
 ---
 
 /commit
+
+---
+
+yes
