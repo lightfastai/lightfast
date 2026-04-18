@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "61781525b74b",
+  "session_id": "831cdd3c-deba-4508-93df-6eb63e585c0e",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-18T08:07:09.953887Z",
+  "branch": "feat/agent-triage-runtime-v1",
+  "checkpoints_count": 6,
+  "files_touched": [
+    "apps/www/src/app/(app)/(marketing)/(landing)/page.tsx",
+    "apps/www/src/app/(app)/_components/changelog-preview.tsx",
+    "apps/www/src/app/(app)/_components/latest-content-preview.tsx",
+    "thoughts/shared/plans/2026-04-18-latest-content-preview.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "e6c57e3834ad",
+  "token_usage": {
+    "input_tokens": 142,
+    "cache_creation_tokens": 257283,
+    "cache_read_tokens": 6803922,
+    "output_tokens": 45357,
+    "api_call_count": 82
+  },
+  "session_metrics": {
+    "turn_count": 8
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-18T08:07:09.620129Z",
+    "agent_lines": 85,
+    "agent_removed": 0,
+    "human_added": 59,
+    "human_modified": 161,
+    "human_removed": 0,
+    "total_committed": 305,
+    "total_lines_changed": 305,
+    "agent_percentage": 27.86885245901639,
+    "metric_version": 2
+  }
+}
