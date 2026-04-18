@@ -3,7 +3,7 @@
   "checkpoint_id": "2de046784806",
   "strategy": "manual-commit",
   "branch": "feat/agent-triage-runtime-v1",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "apps/www/public/images/landing-hero-poster.webp",
     "apps/www/public/images/landing-hero.webm",
@@ -27,13 +27,19 @@
       "transcript": "/2d/e046784806/2/full.jsonl",
       "content_hash": "/2d/e046784806/2/content_hash.txt",
       "prompt": "/2d/e046784806/2/prompt.txt"
+    },
+    {
+      "metadata": "/2d/e046784806/3/metadata.json",
+      "transcript": "/2d/e046784806/3/full.jsonl",
+      "content_hash": "/2d/e046784806/3/content_hash.txt",
+      "prompt": "/2d/e046784806/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 377,
-    "cache_creation_tokens": 340666,
-    "cache_read_tokens": 15451695,
-    "output_tokens": 101071,
-    "api_call_count": 200
+    "input_tokens": 402,
+    "cache_creation_tokens": 400776,
+    "cache_read_tokens": 16101114,
+    "output_tokens": 105857,
+    "api_call_count": 215
   }
 }
