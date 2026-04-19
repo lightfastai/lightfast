@@ -1728,11 +1728,11 @@ importers:
         specifier: ^1.2.2
         version: 1.2.2(@types/react@19.2.14)(react@19.2.5)
       '@shikijs/langs':
-        specifier: ^3.9.2
-        version: 3.13.0
+        specifier: ^4.0.2
+        version: 4.0.2
       '@shikijs/themes':
-        specifier: ^3.9.2
-        version: 3.13.0
+        specifier: ^4.0.2
+        version: 4.0.2
       '@tanstack/react-table':
         specifier: ^8.21.3
         version: 8.21.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -1800,8 +1800,8 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1
       shiki:
-        specifier: ^3.9.2
-        version: 3.13.0
+        specifier: ^4.0.2
+        version: 4.0.2
       sonner:
         specifier: ^2.0.6
         version: 2.0.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)

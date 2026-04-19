@@ -472,7 +472,7 @@ If either returns results, stop and migrate before bumping.
 
 ---
 
-## Phase 7: Shiki 4 Ecosystem
+## Phase 7: Shiki 4 Ecosystem [DONE]
 
 ### Overview
 
@@ -511,12 +511,12 @@ The expected pattern is `createHighlighter` / `codeToHtml` / `bundledLanguages` 
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes — watch for any `shiki` type errors from the 4.0 types regression
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
-- [ ] `pnpm build:app` succeeds
-- [ ] `pnpm build:www` succeeds (fumadocs uses shiki under the hood for doc code blocks)
-- [ ] `pnpm lint:ws` reports no new issues
+- [x] `pnpm install` succeeds
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes — watch for any `shiki` type errors from the 4.0 types regression
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm build:app` succeeds
+- [x] `pnpm build:www` succeeds (fumadocs uses shiki under the hood for doc code blocks)
+- [x] `pnpm lint:ws` reports no new issues
 
 #### Manual Verification:
 
@@ -525,6 +525,8 @@ The expected pattern is `createHighlighter` / `codeToHtml` / `bundledLanguages` 
 - [ ] SSR code block (`packages/ui/src/components/ssr-code-block/index.tsx`) renders correctly on a server-rendered page
 
 **Implementation Note**: After Phase 7 passes, commit and pause for human confirmation before Phase 8.
+
+**2026-04-19 implementation finding:** Shiki 4.x expanded the `BundledLanguage` union by 26 languages (bird, bird2, c3, cjs, and 22 more). `packages/ui/src/components/ai-elements/code-block.tsx:320` had `languageExtensionMap` typed as full `Record<BundledLanguage, string>`, which broke with `TS2740`. Access is already guarded with `language in languageExtensionMap`, so the safe fix is `Partial<Record<BundledLanguage, string>>` — no behavior change, unknown extensions still fall back to `"txt"`. Consumer files otherwise typecheck clean against 4.x; no `createHighlighter` / `codeToHtml` / `bundledLanguages` API regressions surfaced.
 
 ---
 

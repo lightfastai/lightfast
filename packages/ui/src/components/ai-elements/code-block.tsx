@@ -317,7 +317,7 @@ export type CodeBlockDownloadButtonProps = ComponentProps<"button"> & {
   onError?: (error: Error) => void;
 };
 
-const languageExtensionMap: Record<BundledLanguage, string> = {
+const languageExtensionMap: Partial<Record<BundledLanguage, string>> = {
   "1c": "1c",
   "1c-query": "1cq",
   abap: "abap",
