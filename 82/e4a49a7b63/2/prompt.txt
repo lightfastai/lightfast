@@ -1,0 +1,29 @@
+/implement_plan @thoughts/shared/plans/2026-04-19-relicense-to-apache-2.md
+
+---
+
+show me the branch rule full setup
+
+---
+
+run path b.
+
+---
+
+it's already setup.
+
+---
+
+very nice. proceed with new branch + commit and pr
+
+---
+
+merge in
+
+---
+
+go to main then i'll fix that next.
+
+---
+
+are w edone here?
