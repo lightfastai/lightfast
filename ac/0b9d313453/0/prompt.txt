@@ -1,0 +1,9 @@
+/oneshot_merge
+
+---
+
+yes
+
+---
+
+proceed

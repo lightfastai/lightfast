@@ -1,0 +1,63 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "ac0b9d313453",
+  "strategy": "manual-commit",
+  "branch": "fix/split-repo-lib-boundaries",
+  "checkpoints_count": 1,
+  "files_touched": [
+    ".changeset/pre.json",
+    "api/app/package.json",
+    "api/platform/package.json",
+    "api/platform/src/inngest/functions/health-check.ts",
+    "api/platform/src/lib/oauth/authorize.ts",
+    "apps/app/next.config.ts",
+    "apps/app/package.json",
+    "apps/platform/next.config.ts",
+    "db/app/package.json",
+    "db/app/src/schema/tables/gateway-backfill-runs.ts",
+    "db/app/src/schema/tables/gateway-installations.ts",
+    "db/app/src/schema/tables/gateway-lifecycle-log.ts",
+    "db/app/src/schema/tables/gateway-tokens.ts",
+    "db/app/src/schema/tables/gateway-webhook-deliveries.ts",
+    "db/app/src/schema/tables/org-api-keys.ts",
+    "db/app/src/schema/tables/org-entities.ts",
+    "db/app/src/schema/tables/org-entity-edges.ts",
+    "db/app/src/schema/tables/org-events.ts",
+    "db/app/src/schema/tables/org-integrations.ts",
+    "db/app/src/schema/tables/org-repo-indexes.ts",
+    "knip.json",
+    "packages/app-api-key/package.json",
+    "packages/app-api-key/src/crypto.ts",
+    "packages/app-test-data/package.json",
+    "packages/app-test-data/src/cli/seed-integrations.ts",
+    "pnpm-lock.yaml",
+    "vendor/lib/package.json",
+    "vendor/lib/src/datetime/index.ts",
+    "vendor/lib/src/errors.ts",
+    "vendor/lib/src/friendly-words.ts",
+    "vendor/lib/src/index.ts",
+    "vendor/lib/src/nanoid.ts",
+    "vendor/lib/src/pretty-project-name.ts",
+    "vendor/lib/src/uuid.ts",
+    "vendor/lib/tsconfig.json",
+    "vendor/lib/turbo.json",
+    "vendor/lib/vitest.config.ts",
+    "vendor/observability/package.json",
+    "vendor/observability/src/trpc.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ac/0b9d313453/0/metadata.json",
+      "transcript": "/ac/0b9d313453/0/full.jsonl",
+      "content_hash": "/ac/0b9d313453/0/content_hash.txt",
+      "prompt": "/ac/0b9d313453/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 180,
+    "cache_creation_tokens": 182103,
+    "cache_read_tokens": 15498146,
+    "output_tokens": 41015,
+    "api_call_count": 156
+  }
+}
