@@ -133,15 +133,13 @@ Delete six dependency entries across five package.json files that knip flagged a
 **File**: `api/platform/package.json`
 **Changes**: Line 45 — delete `"@sentry/core": "catalog:"` from `dependencies`.
 
-#### 3. Remove `redis` from core/ai-sdk
+#### 3. ~~Remove `redis` from core/ai-sdk~~ — **KEEP**
 
-**File**: `core/ai-sdk/package.json`
-**Changes**: Line 79 — delete `redis` entry from `dependencies`.
+Per user direction during implementation: `redis` is a runtime requirement of the internal (this workspace hit MODULE_NOT_FOUND previously when `redis` was dropped). Leave the entry in place; knip will continue to flag it — acceptable.
 
-#### 4. Remove `@modelcontextprotocol/sdk` from core/mcp
+#### 4. ~~Remove `@modelcontextprotocol/sdk` from core/mcp~~ — **KEEP**
 
-**File**: `core/mcp/package.json`
-**Changes**: Line 49 — delete `@modelcontextprotocol/sdk` entry from `dependencies`.
+Verified during implementation: `core/mcp` is published as the `@lightfastai/mcp` npm package (`bin: lightfast-mcp`). Its tsup build (`core/mcp/tsup.config.ts:12`) marks `@modelcontextprotocol/sdk` as `external`, and the bundled `dist/index.mjs` contains unbundled imports from `@modelcontextprotocol/sdk/server/{mcp,stdio}.js` that originate from `@vendor/mcp`'s re-exports. Dropping the `dependencies` entry would break `npm install -g @lightfastai/mcp` at runtime. Knip flags it because grep misses vendor-re-exported peer-style deps; acceptable.
 
 #### 5. Remove `zod` from packages/app-ai
 
@@ -162,14 +160,14 @@ Delete six dependency entries across five package.json files that knip flagged a
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds
-- [ ] `pnpm knip --no-exit-code` no longer lists these 7 entries under "Unused dependencies" / "Unused devDependencies"
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes (52 turbo tasks)
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes (11 turbo tasks)
-- [ ] `pnpm build:app` succeeds
-- [ ] `pnpm build:platform` succeeds
-- [ ] `pnpm build:www` succeeds
-- [ ] `pnpm lint:ws` (sherif) reports no new issues
+- [x] `pnpm install` succeeds
+- [x] `pnpm knip --no-exit-code` no longer lists the 5 intended entries (2 deferred: `redis` and `@modelcontextprotocol/sdk` kept as documented above)
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes (53 turbo tasks)
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes (12 turbo tasks)
+- [x] `pnpm build:app` succeeds
+- [x] `pnpm build:platform` succeeds
+- [x] `pnpm build:www` succeeds
+- [x] `pnpm lint:ws` (sherif) reports no new issues (postinstall)
 
 #### Manual Verification:
 

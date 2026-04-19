@@ -64,7 +64,6 @@
     "@logtail/next": "^0.3.1",
     "@orpc/client": "^1.13.14",
     "@sentry/core": "catalog:",
-    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@trpc/server": "catalog:",
     "@vendor/inngest": "workspace:*",

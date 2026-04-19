@@ -44,7 +44,6 @@
     "@repo/app-providers": "workspace:*",
     "@repo/app-validation": "workspace:^",
     "@repo/platform-trpc": "workspace:*",
-    "@sentry/core": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",

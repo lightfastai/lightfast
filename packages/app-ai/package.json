@@ -16,8 +16,7 @@
   "dependencies": {
     "@lightfastai/ai-sdk": "workspace:*",
     "@repo/app-ai-types": "workspace:*",
-    "@repo/app-validation": "workspace:*",
-    "zod": "catalog:"
+    "@repo/app-validation": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

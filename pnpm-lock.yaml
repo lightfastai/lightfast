@@ -219,9 +219,6 @@ importers:
       '@repo/platform-trpc':
         specifier: workspace:*
         version: link:../../packages/platform-trpc
-      '@sentry/core':
-        specifier: 'catalog:'
-        version: 10.49.0
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
@@ -298,9 +295,6 @@ importers:
       '@repo/dotlightfast':
         specifier: workspace:*
         version: link:../../packages/dotlightfast
-      '@sentry/core':
-        specifier: 'catalog:'
-        version: 10.49.0
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
@@ -818,9 +812,6 @@ importers:
       '@mixedbread/cli':
         specifier: ^2.3.2
         version: 2.3.2
-      '@repo/app-api-contract':
-        specifier: workspace:*
-        version: link:../../packages/app-api-contract
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
@@ -1106,9 +1097,6 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../app-validation
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2204,9 +2192,6 @@ importers:
       '@sentry/core':
         specifier: 'catalog:'
         version: 10.49.0
-      '@sentry/nextjs':
-        specifier: 'catalog:'
-        version: 10.49.0(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.213.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.0(@opentelemetry/api@1.9.1))(encoding@0.1.13)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(webpack@5.105.4)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
