@@ -1,0 +1,1 @@
+/create_plan i've decided to move lightfast from fsl license to straight up MIT/Apache. can we discuss this.
