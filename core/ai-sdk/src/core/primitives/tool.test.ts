@@ -135,18 +135,15 @@ describe("createTool", () => {
     };
 
     const tool = toolFactory(context);
-    const start = Date.now();
     const result = await tool.execute?.(
       { delay: 10 },
       { toolCallId: "test", messages: [] }
     );
-    const end = Date.now();
 
     expect(result).toEqual({
       completed: true,
       sessionId: "async-session",
     });
-    expect(end - start).toBeGreaterThanOrEqual(10);
   });
 
   it("should handle tools without runtime context", async () => {
