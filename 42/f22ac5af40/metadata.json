@@ -3,7 +3,7 @@
   "checkpoint_id": "42f22ac5af40",
   "strategy": "manual-commit",
   "branch": "chore/core-packages-upgrade-phase-a",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "core/ai-sdk/package.json",
     "core/lightfast/package.json",
@@ -22,13 +22,19 @@
       "transcript": "/42/f22ac5af40/1/full.jsonl",
       "content_hash": "/42/f22ac5af40/1/content_hash.txt",
       "prompt": "/42/f22ac5af40/1/prompt.txt"
+    },
+    {
+      "metadata": "/42/f22ac5af40/2/metadata.json",
+      "transcript": "/42/f22ac5af40/2/full.jsonl",
+      "content_hash": "/42/f22ac5af40/2/content_hash.txt",
+      "prompt": "/42/f22ac5af40/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 50,
-    "cache_creation_tokens": 119735,
-    "cache_read_tokens": 858568,
-    "output_tokens": 24355,
-    "api_call_count": 20
+    "input_tokens": 76,
+    "cache_creation_tokens": 165669,
+    "cache_read_tokens": 1663794,
+    "output_tokens": 34827,
+    "api_call_count": 36
   }
 }
