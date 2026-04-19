@@ -88,13 +88,8 @@ Note: ngrok and inngest automatically runs with `pnpm dev:app`. You can test ngr
 
 ## Environment
 
-- **Node.js** >= 22.0.0 | **pnpm** 10.5.2
+- **Node.js** >= 22.0.0 | **pnpm** 10.32.1 (pinned via `packageManager` in root `package.json` — that's the source of truth)
 - **Env files**: `apps/<app>/.vercel/.env.development.local`
-
-## Workflows
-
-- **External repos**: Clone to `/tmp/repos/<repo-name>`
-- **Dependencies**: Check root `node_modules/` (hoisted with `node-linker=hoisted`)
 
 ## Troubleshooting
 
