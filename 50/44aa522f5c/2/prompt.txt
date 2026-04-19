@@ -1,0 +1,5 @@
+/create_plan can we discuss the upgrade of some of the most core and fundamental packages in here, like next, react, etc, and general just cleaning up any overrides, removing packages that are not being used, updating knip. basically all the core infra package related things.
+
+---
+
+note: we already have @thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-c.md in the works to be implement. chose after this
