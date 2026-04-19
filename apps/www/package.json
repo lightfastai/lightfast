@@ -22,7 +22,7 @@
   "dependencies": {
     "@logtail/next": "^0.3.1",
     "@mixedbread/sdk": "^0.46.0",
-    "@next/bundle-analyzer": "^16.1.6",
+    "@next/bundle-analyzer": "^16.2.4",
     "@paper-design/shaders-react": "^0.0.72",
     "@radix-ui/react-popover": "^1.1.14",
     "@repo/app-providers": "workspace:*",

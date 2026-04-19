@@ -42,11 +42,11 @@
     "knip": "knip"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.6",
+    "@biomejs/biome": "2.4.12",
     "@changesets/cli": "^2.30.0",
     "knip": "^5.85.0",
-    "turbo": "2.9.3",
-    "turbo-ignore": "2.9.3",
+    "turbo": "2.9.6",
+    "turbo-ignore": "2.9.6",
     "typescript": "^5.9.2",
     "ultracite": "7.2.5",
     "vercel": "^50.28.0"

@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
-    "@orpc/contract": "^1.13.0",
+    "@orpc/contract": "^1.13.14",
     "@vendor/observability": "workspace:*"
   },
   "devDependencies": {

@@ -62,7 +62,7 @@
   },
   "dependencies": {
     "@logtail/next": "^0.3.1",
-    "@orpc/client": "^1.13.0",
+    "@orpc/client": "^1.13.14",
     "@repo/lib": "workspace:*",
     "@sentry/core": "catalog:",
     "@sentry/nextjs": "catalog:",
