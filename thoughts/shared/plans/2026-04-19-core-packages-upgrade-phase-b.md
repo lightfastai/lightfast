@@ -254,15 +254,15 @@ git diff pnpm-lock.yaml | head -200
 
 #### Automated Verification:
 
-- [ ] All Phase 1 + Phase 2 automated checks still pass (full turbo cache hit expected — nothing invalidated)
-- [ ] `pnpm audit --prod` output attached to the merge PR body for traceability
+- [x] All Phase 1 + Phase 2 automated checks still pass (full turbo cache hit expected — nothing invalidated)
+- [x] `pnpm audit --prod` output attached to the merge PR body for traceability
 
 #### Manual Verification:
 
-- [ ] Dev smoke test: all four URLs render without errors
-- [ ] Browser console clean on app home, docs home, sign-in
-- [ ] No hydration errors, no 4xx/5xx from tRPC or webhook endpoints
-- [ ] Trigger one handled Sentry error and confirm it reaches the Sentry project
+- [x] Dev smoke test: all four URLs render without errors
+- [x] Browser console clean on app home, docs home, sign-in
+- [x] No hydration errors, no 4xx/5xx from tRPC or webhook endpoints
+- [x] Trigger one handled Sentry error and confirm it reaches the Sentry project
 
 **Implementation Note**: Once Phase 3 passes, Phase B is complete. The remaining core-packages work is the deferred-majors plan (`ai 5→6`, `@ai-sdk/* *→latest`, `inngest 3→4`, `typescript 5→6`, etc.) — open that as a separate planning effort when prioritized.
 
