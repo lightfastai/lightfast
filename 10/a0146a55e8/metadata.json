@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "10a0146a55e8",
+  "strategy": "manual-commit",
+  "branch": "chore/core-packages-upgrade-phase-a",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/package.json",
+    "apps/www/package.json",
+    "core/ai-sdk/package.json",
+    "core/cli/package.json",
+    "core/lightfast/package.json",
+    "core/mcp/package.json",
+    "db/app/package.json",
+    "package.json",
+    "packages/app-octokit-github/package.json",
+    "packages/ui/package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "vendor/analytics/package.json",
+    "vendor/clerk/package.json",
+    "vendor/db/package.json",
+    "vendor/mcp/package.json",
+    "vendor/upstash/package.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/10/a0146a55e8/0/metadata.json",
+      "transcript": "/10/a0146a55e8/0/full.jsonl",
+      "content_hash": "/10/a0146a55e8/0/content_hash.txt",
+      "prompt": "/10/a0146a55e8/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 47,
+    "cache_creation_tokens": 64270,
+    "cache_read_tokens": 1065482,
+    "output_tokens": 19744,
+    "api_call_count": 18
+  }
+}
