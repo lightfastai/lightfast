@@ -61,9 +61,8 @@ describe("createAgent", () => {
     const toolFactory = createTool<TestRuntimeContext>({
       description: "Context-aware tool",
       inputSchema: z.object({ message: z.string() }),
-      execute: ({ message }, context) => {
-        return Promise.resolve(`${message} from ${context.sessionId}`);
-      },
+      execute: ({ message }, context) =>
+        Promise.resolve(`${message} from ${context.sessionId}`),
     });
 
     const toolFactories = {
@@ -208,9 +207,8 @@ describe("agent utility functions", () => {
     const toolFactory = createTool<TestRuntimeContext>({
       description: "Resolvable tool",
       inputSchema: z.object({ value: z.string() }),
-      execute: ({ value }, context) => {
-        return Promise.resolve(`${value}-${context.sessionId}`);
-      },
+      execute: ({ value }, context) =>
+        Promise.resolve(`${value}-${context.sessionId}`),
     });
 
     const toolFactories = {

@@ -40,8 +40,8 @@ export const healthCheck = inngest.createFunction(
     // -- Step 1: Fetch all active installations ----------------------------
     const installations = await step.run(
       "list-active-installations",
-      async () => {
-        return db
+      async () =>
+        db
           .select({
             id: gatewayInstallations.id,
             provider: gatewayInstallations.provider,
@@ -50,8 +50,7 @@ export const healthCheck = inngest.createFunction(
             healthCheckFailures: gatewayInstallations.healthCheckFailures,
           })
           .from(gatewayInstallations)
-          .where(eq(gatewayInstallations.status, "active"));
-      }
+          .where(eq(gatewayInstallations.status, "active"))
     );
 
     log.info("probing installations", {

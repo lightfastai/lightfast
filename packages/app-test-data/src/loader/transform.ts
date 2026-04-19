@@ -17,9 +17,8 @@ export interface WebhookPayload {
 /**
  * Generate a unique delivery ID for test webhooks
  */
-const generateDeliveryId = (): string => {
-  return `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-};
+const generateDeliveryId = (): string =>
+  `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
 /**
  * Transform a raw webhook payload to PostTransformEvent using the production dispatch.

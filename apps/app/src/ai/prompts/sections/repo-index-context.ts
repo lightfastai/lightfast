@@ -14,8 +14,6 @@ export const answerRepoIndexSection: SectionProvider = (ctx) => {
     id: "repo-index-context",
     priority: "high",
     estimateTokens: () => Math.ceil(content.length / 4),
-    render: () => {
-      return `ORG CONTEXT (repo index):\n${content}`;
-    },
+    render: () => `ORG CONTEXT (repo index):\n${content}`,
   };
 };

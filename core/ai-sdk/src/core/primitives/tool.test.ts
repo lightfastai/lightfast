@@ -14,11 +14,10 @@ describe("createTool", () => {
       inputSchema: z.object({
         message: z.string(),
       }),
-      execute: ({ message }, context) => {
-        return Promise.resolve({
+      execute: ({ message }, context) =>
+        Promise.resolve({
           result: `Hello ${message} from ${context.sessionId}`,
-        });
-      },
+        }),
     });
 
     expect(typeof toolFactory).toBe("function");
@@ -30,11 +29,10 @@ describe("createTool", () => {
       inputSchema: z.object({
         message: z.string(),
       }),
-      execute: ({ message }, context) => {
-        return Promise.resolve({
+      execute: ({ message }, context) =>
+        Promise.resolve({
           result: `Hello ${message} from ${context.sessionId}`,
-        });
-      },
+        }),
     });
 
     const context: TestRuntimeContext = {
@@ -62,9 +60,8 @@ describe("createTool", () => {
         count: z.number().min(1).max(10),
         name: z.string().min(2),
       }),
-      execute: ({ count, name }, _context) => {
-        return Promise.resolve({ result: `${name}: ${count}` });
-      },
+      execute: ({ count, name }, _context) =>
+        Promise.resolve({ result: `${name}: ${count}` }),
     });
 
     const context: TestRuntimeContext = {
@@ -92,12 +89,11 @@ describe("createTool", () => {
         processed: z.string(),
         timestamp: z.number(),
       }),
-      execute: ({ value }, _context) => {
-        return Promise.resolve({
+      execute: ({ value }, _context) =>
+        Promise.resolve({
           processed: value.toUpperCase(),
           timestamp: Date.now(),
-        });
-      },
+        }),
     });
 
     const context: TestRuntimeContext = {
@@ -152,9 +148,7 @@ describe("createTool", () => {
       inputSchema: z.object({
         text: z.string(),
       }),
-      execute: ({ text }) => {
-        return Promise.resolve({ uppercase: text.toUpperCase() });
-      },
+      execute: ({ text }) => Promise.resolve({ uppercase: text.toUpperCase() }),
     });
 
     const tool = toolFactory(undefined);

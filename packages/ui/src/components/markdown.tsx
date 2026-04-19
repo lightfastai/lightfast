@@ -353,15 +353,13 @@ export interface MarkdownProps {
  * Non-memoized Markdown component
  * Renders markdown content with custom styling
  */
-const NonMemoizedMarkdown = ({ children, className }: MarkdownProps) => {
-  return (
-    <div className={cn("w-full break-words", className)}>
-      <ReactMarkdown components={components} remarkPlugins={remarkPlugins}>
-        {children}
-      </ReactMarkdown>
-    </div>
-  );
-};
+const NonMemoizedMarkdown = ({ children, className }: MarkdownProps) => (
+  <div className={cn("w-full break-words", className)}>
+    <ReactMarkdown components={components} remarkPlugins={remarkPlugins}>
+      {children}
+    </ReactMarkdown>
+  </div>
+);
 
 /**
  * Memoized Markdown component for better performance

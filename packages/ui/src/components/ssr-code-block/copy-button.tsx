@@ -26,11 +26,12 @@ export function SSRCodeBlockCopyButton({
     }
   };
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       window.clearTimeout(timeoutRef.current);
-    };
-  }, []);
+    },
+    []
+  );
 
   return (
     <button

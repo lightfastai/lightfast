@@ -23,9 +23,8 @@ interface RawDataset {
   webhooks: WebhookPayload[];
 }
 
-const getDatasetsDir = (): string => {
-  return resolve(import.meta.dirname, "..", "..", "datasets");
-};
+const getDatasetsDir = (): string =>
+  resolve(import.meta.dirname, "..", "..", "datasets");
 
 /**
  * Load a dataset by name or file path

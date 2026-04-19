@@ -42,40 +42,38 @@ const COMPONENTS: Record<string, React.FC<Record<string, unknown>>> = {
   GitHubBanner,
 };
 
-export const RemotionRoot = () => {
-  return (
-    <>
-      {Object.entries(MANIFEST.compositions).map(([id, entry]) => {
-        const Component = COMPONENTS[entry.component];
-        if (!Component) {
-          throw new Error(`No component registered for composition "${id}"`);
-        }
+export const RemotionRoot = () => (
+  <>
+    {Object.entries(MANIFEST.compositions).map(([id, entry]) => {
+      const Component = COMPONENTS[entry.component];
+      if (!Component) {
+        throw new Error(`No component registered for composition "${id}"`);
+      }
 
-        if (entry.type === "video") {
-          return (
-            <Composition
-              component={Component}
-              durationInFrames={entry.durationInFrames}
-              fps={entry.fps}
-              height={entry.height}
-              id={id}
-              key={id}
-              width={entry.width}
-            />
-          );
-        }
-
+      if (entry.type === "video") {
         return (
-          <Still
+          <Composition
             component={Component}
-            defaultProps={entry.props}
+            durationInFrames={entry.durationInFrames}
+            fps={entry.fps}
             height={entry.height}
             id={id}
             key={id}
             width={entry.width}
           />
         );
-      })}
-    </>
-  );
-};
+      }
+
+      return (
+        <Still
+          component={Component}
+          defaultProps={entry.props}
+          height={entry.height}
+          id={id}
+          key={id}
+          width={entry.width}
+        />
+      );
+    })}
+  </>
+);

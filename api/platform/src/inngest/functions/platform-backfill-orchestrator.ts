@@ -117,8 +117,8 @@ export const platformBackfillOrchestrator = inngest.createFunction(
     });
 
     // ── Step 1b: Fetch backfill history from DB (replaces gateway HTTP call) ──
-    const backfillHistory = await step.run("get-backfill-history", async () => {
-      return db
+    const backfillHistory = await step.run("get-backfill-history", async () =>
+      db
         .select({
           entityType: gatewayBackfillRuns.entityType,
           providerResourceId: gatewayBackfillRuns.providerResourceId,
@@ -130,8 +130,8 @@ export const platformBackfillOrchestrator = inngest.createFunction(
             eq(gatewayBackfillRuns.installationId, installationId),
             eq(gatewayBackfillRuns.status, "completed")
           )
-        );
-    });
+        )
+    );
 
     // ── Step 2: Resolve entity types and validate provider ──
     const providerDef = getProvider(provider);
@@ -208,16 +208,16 @@ export const platformBackfillOrchestrator = inngest.createFunction(
     );
 
     // ── Step 3: Enumerate work units (resource x entityType) ──
-    const workUnits = resolvedResources.flatMap((resource) => {
-      return resolvedEntityTypes.map((entityType: string) => ({
+    const workUnits = resolvedResources.flatMap((resource) =>
+      resolvedEntityTypes.map((entityType: string) => ({
         entityType,
         resource: {
           providerResourceId: resource.providerResourceId,
           resourceName: resource.resourceName,
         },
         workUnitId: `${resource.providerResourceId}-${entityType}`,
-      }));
-    });
+      }))
+    );
 
     // ── Gap-aware filtering: skip (resource, entityType) pairs covered by prior runs ──
     const filteredWorkUnits = workUnits.filter((wu) => {

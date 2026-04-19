@@ -391,12 +391,11 @@ describe("Agent buildStreamParams - Critical Edge Cases", () => {
           email: z.string().email(),
           options: z.array(z.string()).max(5),
         }),
-        execute: (validatedInput, _context) => {
-          return Promise.resolve({
+        execute: (validatedInput, _context) =>
+          Promise.resolve({
             result: "Validation passed",
             input: validatedInput,
-          });
-        },
+          }),
       });
 
       const agent = createAgent<TestRuntimeContext>({

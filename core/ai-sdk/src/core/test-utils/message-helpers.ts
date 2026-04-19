@@ -77,7 +77,7 @@ export function getMessageText(
     return textPart?.text;
   }
 
-  return undefined;
+  return;
 }
 
 /**

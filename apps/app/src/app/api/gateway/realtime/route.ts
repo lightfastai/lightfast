@@ -22,6 +22,6 @@ export const GET = handle({
     }
 
     // Return undefined to allow the connection
-    return undefined;
+    return;
   },
 });

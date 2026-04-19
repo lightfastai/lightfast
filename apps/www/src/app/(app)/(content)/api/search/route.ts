@@ -80,17 +80,17 @@ const SNIPPET_MAX_CHARS = 120;
 
 function buildSnippet(text: string | undefined): string | undefined {
   if (!text) {
-    return undefined;
+    return;
   }
   const lines = text.trim().split("\n");
   const bodyLines = lines[0]?.startsWith("#") ? lines.slice(1) : lines;
   const body = bodyLines.join(" ").trim();
   if (!body) {
-    return undefined;
+    return;
   }
   const stripped = removeMd(body, { useImgAltText: false }).trim();
   if (!stripped) {
-    return undefined;
+    return;
   }
   return stripped.length > SNIPPET_MAX_CHARS
     ? `${stripped.slice(0, SNIPPET_MAX_CHARS)}…`

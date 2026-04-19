@@ -129,11 +129,12 @@ export function CommandPalette() {
   }, [query, clerkOrgId, client]);
 
   // Cleanup abort controller on unmount
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       abortRef.current?.abort();
-    };
-  }, []);
+    },
+    []
+  );
 
   const handleSelect = useCallback(
     (href: string) => {

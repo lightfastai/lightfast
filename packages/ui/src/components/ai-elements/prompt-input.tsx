@@ -826,22 +826,20 @@ export const PromptInputButton = ({
   className,
   size = "sm",
   ...props
-}: PromptInputButtonProps) => {
-  return (
-    <Button
-      className={cn(
-        "shrink-0 gap-1.5 rounded-full text-xs",
-        "border-border/30 dark:border-border/50",
-        variant === "ghost" && "text-muted-foreground",
-        className
-      )}
-      size={size}
-      type="button"
-      variant={variant}
-      {...props}
-    />
-  );
-};
+}: PromptInputButtonProps) => (
+  <Button
+    className={cn(
+      "shrink-0 gap-1.5 rounded-full text-xs",
+      "border-border/30 dark:border-border/50",
+      variant === "ghost" && "text-muted-foreground",
+      className
+    )}
+    size={size}
+    type="button"
+    variant={variant}
+    {...props}
+  />
+);
 
 export type PromptInputActionMenuProps = ComponentProps<typeof DropdownMenu>;
 export const PromptInputActionMenu = (props: PromptInputActionMenuProps) => (
@@ -929,23 +927,21 @@ export const PromptInputClear = ({
   size = "sm",
   children,
   ...props
-}: PromptInputClearProps) => {
-  return (
-    <Button
-      className={cn(
-        "shrink-0 gap-1.5 rounded-full! text-xs",
-        "border-border/30 dark:border-border/50",
-        className
-      )}
-      size={size}
-      type="button"
-      variant={variant}
-      {...props}
-    >
-      {children ?? "Clear"}
-    </Button>
-  );
-};
+}: PromptInputClearProps) => (
+  <Button
+    className={cn(
+      "shrink-0 gap-1.5 rounded-full! text-xs",
+      "border-border/30 dark:border-border/50",
+      className
+    )}
+    size={size}
+    type="button"
+    variant={variant}
+    {...props}
+  >
+    {children ?? "Clear"}
+  </Button>
+);
 
 export type PromptInputModelSelectProps = ComponentProps<typeof Select>;
 

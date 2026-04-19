@@ -180,9 +180,8 @@ export const github = defineWebhookProvider({
       return url.toString();
     },
     usesStoredToken: false as const,
-    getActiveToken: async (config, storedExternalId, _storedAccessToken) => {
-      return getInstallationToken(config, storedExternalId);
-    },
+    getActiveToken: async (config, storedExternalId, _storedAccessToken) =>
+      getInstallationToken(config, storedExternalId),
     getAppToken: async (config) => createGitHubAppJWT(config),
     revokeAccess: async (config, _externalId) => {
       // GitHub App installations are revoked via the GitHub UI or GitHub API.

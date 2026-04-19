@@ -1,6 +1,6 @@
 import { AbsoluteFill } from "@vendor/remotion";
 import type React from "react";
 
-export const TwitterBanner: React.FC = () => {
-  return <AbsoluteFill className="bg-black" />;
-};
+export const TwitterBanner: React.FC = () => (
+  <AbsoluteFill className="bg-black" />
+);
