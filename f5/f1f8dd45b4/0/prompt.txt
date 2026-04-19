@@ -1,0 +1,13 @@
+/create_plan can we discuss the upgrade of some of the most core and fundamental packages in here, like next, zod, etc.
+
+---
+
+in general, we should start with A. and then work on B.
+
+---
+
+this sounds great!
+
+---
+
+/create_plan can we discuss the upgrade of some of the most core and fundamental packages in here, like next, zod, etc.

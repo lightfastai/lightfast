@@ -1,0 +1,52 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f5f1f8dd45b4",
+  "strategy": "manual-commit",
+  "branch": "chore/relicense-to-apache-2",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "LICENSING.md",
+    "README.md",
+    "api/app/package.json",
+    "api/platform/package.json",
+    "apps/app/package.json",
+    "apps/platform/package.json",
+    "apps/www/package.json",
+    "db/app/package.json",
+    "internal/typescript/package.json",
+    "internal/vitest-config/package.json",
+    "packages/app-ai-types/package.json",
+    "packages/app-ai/package.json",
+    "packages/app-api-key/package.json",
+    "packages/app-embed/package.json",
+    "packages/app-octokit-github/package.json",
+    "packages/app-pinecone/package.json",
+    "packages/app-providers/package.json",
+    "packages/app-remotion/package.json",
+    "packages/app-rerank/package.json",
+    "packages/app-reserved-names/package.json",
+    "packages/app-test-data/package.json",
+    "packages/app-trpc/package.json",
+    "packages/app-upstash-realtime/package.json",
+    "packages/app-validation/package.json",
+    "packages/platform-trpc/package.json",
+    "packages/webhook-schemas/package.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/f5/f1f8dd45b4/0/metadata.json",
+      "transcript": "/f5/f1f8dd45b4/0/full.jsonl",
+      "content_hash": "/f5/f1f8dd45b4/0/content_hash.txt",
+      "prompt": "/f5/f1f8dd45b4/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 108,
+    "cache_creation_tokens": 75813,
+    "cache_read_tokens": 416830,
+    "output_tokens": 22283,
+    "api_call_count": 11
+  }
+}
