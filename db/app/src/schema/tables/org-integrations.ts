@@ -1,6 +1,6 @@
 import type { ProviderConfig, SourceType } from "@repo/app-providers";
 import type { SourceIdentifier } from "@repo/app-validation";
-import { nanoid } from "@repo/lib";
+import { nanoid } from "@vendor/lib";
 import { sql } from "drizzle-orm";
 import {
   index,

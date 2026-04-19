@@ -1,6 +1,6 @@
 import { db } from "@db/app/client";
 import { gatewayInstallations, gatewayTokens } from "@db/app/schema";
-import { decrypt } from "@repo/lib";
+import { decrypt } from "@repo/app-encryption";
 import { eq } from "drizzle-orm";
 import { env } from "../env";
 

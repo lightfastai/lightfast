@@ -1,4 +1,4 @@
-import { nanoid } from "@repo/lib";
+import { nanoid } from "@vendor/lib";
 import { sql } from "drizzle-orm";
 import {
   boolean,
