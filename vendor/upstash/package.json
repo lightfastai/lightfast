@@ -25,7 +25,7 @@
   },
   "dependencies": {
     "@t3-oss/env-core": "catalog:",
-    "@upstash/redis": "^1.35.1",
+    "@upstash/redis": "^1.37.0",
     "zod": "catalog:"
   }
 }

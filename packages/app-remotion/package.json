@@ -27,7 +27,7 @@
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
-    "@remotion/cli": "^4.0.434",
+    "@remotion/cli": "^4.0.448",
     "@repo/typescript-config": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",

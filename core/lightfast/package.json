@@ -40,18 +40,18 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@orpc/client": "^1.13.0",
-    "@orpc/contract": "^1.13.0",
-    "@orpc/openapi-client": "^1.13.0",
+    "@orpc/client": "^1.13.14",
+    "@orpc/contract": "^1.13.14",
+    "@orpc/openapi-client": "^1.13.14",
     "@repo/app-api-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
-    "@types/node": "^24.3.0",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@types/node": "catalog:",
+    "@vitest/coverage-v8": "^4.1.4",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.2",
-    "vitest": "^4.0.18"
+    "typescript": "catalog:",
+    "vitest": "^4.1.4"
   },
   "engines": {
     "node": ">=18"

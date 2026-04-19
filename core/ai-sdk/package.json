@@ -73,24 +73,24 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@upstash/redis": "^1.35.1",
+    "@upstash/redis": "^1.37.0",
     "@vendor/observability": "workspace:*",
     "ai": "5.0.52",
     "redis": "^4.7.0",
-    "resumable-stream": "^2.2.10",
+    "resumable-stream": "^2.2.12",
     "uuid": "^11.1.0",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
-    "@types/node": "^24.3.0",
+    "@types/node": "catalog:",
     "@types/uuid": "^10.0.0",
-    "@vitest/coverage-v8": "^4.0.18",
-    "@vitest/ui": "^4.0.18",
+    "@vitest/coverage-v8": "^4.1.4",
+    "@vitest/ui": "^4.1.4",
     "tsup": "^8.5.1",
-    "typescript": "^5.9.2",
-    "vitest": "^4.0.18"
+    "typescript": "catalog:",
+    "vitest": "^4.1.4"
   },
   "engines": {
     "node": ">=18"
