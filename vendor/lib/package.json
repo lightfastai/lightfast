@@ -8,22 +8,6 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
-    },
-    "./pretty-project-name": {
-      "types": "./src/pretty-project-name.ts",
-      "default": "./src/pretty-project-name.ts"
-    },
-    "./datetime": {
-      "types": "./src/datetime/index.ts",
-      "default": "./src/datetime/index.ts"
-    },
-    "./uuid": {
-      "types": "./src/uuid.ts",
-      "default": "./src/uuid.ts"
-    },
-    "./nanoid": {
-      "types": "./src/nanoid.ts",
-      "default": "./src/nanoid.ts"
     }
   },
   "license": "MIT",
@@ -33,14 +17,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "nanoid": "catalog:",
-    "uuid": "^11.1.0"
+    "nanoid": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
-    "@types/uuid": "^10.0.0",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

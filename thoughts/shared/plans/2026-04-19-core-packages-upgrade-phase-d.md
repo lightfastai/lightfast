@@ -2,7 +2,7 @@
 
 ## Overview
 
-Follow-on to Phases A (patch/minor sweep), B (overrides audit), and C (knip cleanup + React override sync). This plan tackles the first wave of the deferred-majors backlog — roughly 29 dependency changes grouped into seven bisect-friendly commits. Scope stays tight: CLI/tooling majors with Node-20-drop semantics, type-only majors, isolated UI majors (shiki + lucide-react), Arcjet/nosecone GA, and Sentry instrumentation alignment. UI heavyweights (framer-motion, recharts, react-resizable-panels, streamdown, resend, fumadocs), the AI runtime stack (ai, @ai-sdk/*, inngest, cohere-ai, pinecone, redis, mixedbread), and TypeScript/Node (`typescript 5→6`, `@types/node 24→25`) stay explicitly deferred to Phases E / F / G.
+Follow-on to Phases A (patch/minor sweep), B (overrides audit), and C (knip cleanup + React override sync). This plan tackles the first wave of the deferred-majors backlog — roughly 29 dependency changes grouped into eight bisect-friendly commits. Scope stays tight: CLI/tooling majors with Node-20-drop semantics, type-only majors, isolated UI majors (shiki + lucide-react), Arcjet/nosecone GA, and Sentry instrumentation alignment. UI heavyweights (framer-motion, recharts, react-resizable-panels, streamdown, resend, fumadocs), the AI runtime stack (ai, @ai-sdk/*, inngest, cohere-ai, pinecone, redis, mixedbread), and TypeScript/Node (`typescript 5→6`, `@types/node 24→25`) stay explicitly deferred to Phases E / F / G.
 
 ## Current State Analysis
 
@@ -61,17 +61,18 @@ Security residuals post-Phase-B: the `hono <4.12.14` advisory (GHSA-458j-xx4x-43
 
 ## Implementation Approach
 
-Seven commits, each independently revertible. Verification commands run after every commit. The risk ordering puts zero-impact hygiene first so bisect narrows quickly if a later phase regresses.
+Eight commits, each independently revertible. Verification commands run after every commit. The risk ordering puts zero-impact hygiene first so bisect narrows quickly if a later phase regresses.
 
 1. **Zero-impact hygiene** — tool bumps with no source surface (`hono` CVE, `knip`, `ultracite`, `vercel` CLI, Vercel observability 2.0, `joyful` deletion).
-2. **Drop-in CLI/type majors** — packages where every major bump is only a Node-20 drop or type-only change (`commander`, `open`, `ora`, `@inquirer/select`, `html2canvas-pro`, `@octokit/openapi-types`, `schema-dts`).
-3. **API-change majors** — packages with small but real migration work (`uuid`/`@types/uuid`, `@noble/ed25519`, `jiti`, `dotenv-cli`).
-4. **Sentry instrumentation alignment** — `import-in-the-middle 1→3`, `require-in-the-middle 7→8`; align with Sentry's internal peer.
-5. **Arcjet + nosecone GA** — beta.10 → 1.4 across four packages.
-6. **Shiki 4 ecosystem** — three packages in lockstep; target the highest 4.x with the types regression fix.
-7. **lucide-react 1.x** — single package but 94 source files; icon audit required.
+2. **Collapse `@vendor/lib` dead surface** — delete `errors.ts`, `uuid.ts`, `datetime/`, `pretty-project-name.ts`; drop matching subpath exports and `uuid`/`@types/uuid` deps. Runs before dep bumps so the subsequent uuid bump targets `core/ai-sdk` only.
+3. **Drop-in CLI/type majors** — packages where every major bump is only a Node-20 drop or type-only change (`commander`, `open`, `ora`, `@inquirer/select`, `html2canvas-pro`, `@octokit/openapi-types`, `schema-dts`).
+4. **API-change majors** — packages with small but real migration work (`uuid`/`@types/uuid`, `@noble/ed25519`, `jiti`, `dotenv-cli`).
+5. **Sentry instrumentation alignment** — `import-in-the-middle 1→3`, `require-in-the-middle 7→8`; align with Sentry's internal peer.
+6. **Arcjet + nosecone GA** — beta.10 → 1.4 across four packages.
+7. **Shiki 4 ecosystem** — three packages in lockstep; target the highest 4.x with the types regression fix.
+8. **lucide-react 1.x** — single package but 94 source files; icon audit required.
 
-Phase 8 is the final verification gate; no code changes.
+Phase 9 is the final verification gate; no code changes.
 
 Each code phase ends with:
 
@@ -177,7 +178,37 @@ Resulting `exports` block should have six keys: `.`, `./pretty-project-name`, `.
 
 ---
 
-## Phase 2: Drop-in CLI/Type Majors
+## Phase 2: Collapse `@vendor/lib` dead surface [DONE]
+
+### Overview
+
+See standalone plan: `thoughts/shared/plans/2026-04-19-collapse-vendor-lib-to-nanoid.md`. Deletes four zero-consumer modules (`errors.ts`, `uuid.ts`, `datetime/`, `pretty-project-name.ts`), their re-exports, their subpath export entries, and the `uuid`/`@types/uuid` deps. `@vendor/lib` reduces to a `nanoid`-only vendor shim. Zero consumer edits — all 16 importers pull `nanoid` from the root barrel and are unaffected.
+
+### Changes Required:
+
+See the standalone plan. Summary: 6 file ops in `vendor/lib/` + 1 `package.json` trim.
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- [x] `pnpm install` succeeds; lockfile diff drops `uuid@11.1.0` + `@types/uuid@10.0.0` from the `vendor/lib` subgraph with no other dep changes
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes (52 turbo tasks)
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm knip --no-exit-code` reports no new findings vs the Phase D baseline
+- [x] `pnpm lint:ws` reports no new issues
+- [x] Repo-wide grep for `DomainError`, `isDomainError`, `DomainErrorOptions`, `formatMySqlDateTime`, `generatePrettyProjectName` returns hits only inside `thoughts/` docs
+
+#### Manual Verification:
+
+- [ ] `pnpm dev:full` boots all three apps; no new warnings in `/tmp/console-dev.log`
+- [ ] Exercise any `nanoid()` code path (e.g. create a row that uses `db/app/src/schema/tables/org-entities.ts`'s nanoid default) — confirm unchanged behaviour
+
+**Implementation Note**: After Phase 2 passes, commit and pause for human confirmation before Phase 3.
+
+---
+
+## Phase 3: Drop-in CLI/Type Majors
 
 ### Overview
 
@@ -249,27 +280,19 @@ Usage: `vendor/seo/src/json-ld.tsx:1,77`. Breaking: `Role` typings tightened, `Q
 - [ ] Pitch-deck slide export in `apps/www` successfully renders a PNG (html2canvas-pro 2)
 - [ ] A page in `apps/www` that renders `JsonLd` via `vendor/seo` passes `rich results` tool check (schema-dts 2 types still valid)
 
-**Implementation Note**: After Phase 2 passes, commit and pause for human confirmation before Phase 3.
+**Implementation Note**: After Phase 3 passes, commit and pause for human confirmation before Phase 4.
 
 ---
 
-## Phase 3: API-Change Majors
+## Phase 4: API-Change Majors
 
 ### Overview
 
-Five packages across three sub-bumps with small but real migration work. All sub-bumps land in the same commit; if one regresses, the phase commit reverts the whole batch.
+Four packages across three sub-bumps with small but real migration work. All sub-bumps land in the same commit; if one regresses, the phase commit reverts the whole batch.
 
 ### Changes Required:
 
 #### 1. `uuid 11 → 13` + `@types/uuid 10 → 11`
-
-**File**: `vendor/lib/package.json`
-**Changes**: Lines 42, 48.
-
-```jsonc
-"uuid": "^13.0.0",         // was ^11.1.0 — ESM-only, browser exports default
-"@types/uuid": "^11.0.0"   // was ^10.0.0 — clears deprecation
-```
 
 **File**: `core/ai-sdk/package.json`
 **Changes**: Lines 81, 88.
@@ -279,7 +302,7 @@ Five packages across three sub-bumps with small but real migration work. All sub
 "@types/uuid": "^11.0.0"
 ```
 
-Call sites (`vendor/lib/src/uuid.ts:1`, `core/ai-sdk/src/core/server/runtime.ts:8`) use standard named imports — no code change needed. Runtime is Node 22+, browser WebCrypto path defaults are fine.
+Call site (`core/ai-sdk/src/core/server/runtime.ts:8`) uses a standard named import — no code change needed. Runtime is Node 22+, browser WebCrypto path defaults are fine. `vendor/lib` no longer declares `uuid` after Phase 2.
 
 #### 2. `@noble/ed25519 2 → 3`
 
@@ -331,11 +354,11 @@ Used only as the script prefix in the `with-env` pattern. v9 changed the default
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes (watch the ai-sdk runtime test — uses `uuid`)
-- [ ] `pnpm build:app`, `pnpm build:platform`, `pnpm build:www` all succeed
-- [ ] `pnpm list uuid -r --depth 0` shows `uuid@13.x` across all workspaces (no leftover 11.x from transitive)
+- [x] `pnpm install` succeeds
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes (watch the ai-sdk runtime test — uses `uuid`)
+- [x] `pnpm build:app`, `pnpm build:platform`, `pnpm build:www` all succeed
+- [x] `pnpm list uuid -r --depth 0` shows `uuid@13.x` for `core/ai-sdk` with no leftover 11.x from transitive (`vendor/lib` no longer declares uuid after Phase 2)
 
 #### Manual Verification:
 
@@ -344,11 +367,13 @@ Used only as the script prefix in the `with-env` pattern. v9 changed the default
 - [ ] `apps/www` dev server boots (jiti 2 loader works for env)
 - [ ] Any route that calls `crypto.randomUUID` equivalent via `uuid.v4` returns a valid UUID
 
-**Implementation Note**: After Phase 3 passes, commit and pause for human confirmation before Phase 4.
+**Implementation Note**: After Phase 4 passes, commit and pause for human confirmation before Phase 5.
+
+**2026-04-19 implementation finding:** The `@types/uuid 10 → 11` bump did not clear the deprecation warning — `@types/uuid@11.0.0` is itself marked deprecated because `uuid@10+` ships its own type definitions. The stub still typechecks cleanly; to actually clear the warning, a follow-up should delete `@types/uuid` entirely from `vendor/lib/package.json` and `core/ai-sdk/package.json`. Left in place for now to keep Phase 3 scoped. No other issues: `uuid@13.0.0` resolves in both workspaces, the ed25519 verify call typechecks against `@noble/ed25519@3.x`, jiti 2 bump caused no transitive breakage, and `dotenv-cli` catalog promotion flowed through all 7 consumers.
 
 ---
 
-## Phase 4: Remove Dead IITM/RITM Pins
+## Phase 5: Remove Dead IITM/RITM Pins
 
 ### Overview
 
@@ -373,13 +398,13 @@ Two workspace apps consume these through `catalog:`: `apps/app/package.json:97,9
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds
-- [ ] Lockfile diff: `import-in-the-middle@1.15.0` and `require-in-the-middle@7.5.2` disappear; `import-in-the-middle@3.0.x` and `require-in-the-middle@8.0.x` become the sole resolutions for `apps/app` + `apps/www`
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
-- [ ] `pnpm build:app` succeeds (webpack/turbopack — the `require-in-the-middle 7→8` resolve-module removal would break here if bundled)
-- [ ] `pnpm build:www` succeeds
-- [ ] `pnpm lint:ws` reports no new issues
+- [x] `pnpm install` succeeds
+- [x] Lockfile diff: `import-in-the-middle@3.0.1` and `require-in-the-middle@8.0.1` are the sole direct resolutions for `apps/app` + `apps/www`. The residual `import-in-the-middle@1.15.0` / `require-in-the-middle@7.5.2` copies in the lockfile come from an unrelated subgraph (`@traceloop/instrumentation-anthropic@0.20.0` → `@opentelemetry/instrumentation@0.203.0` via `inngest@3.52.6`), not from any direct catalog pin; Sentry's `@sentry/node@10.49.0` subgraph now resolves to 3.0.1 / 8.0.1.
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm build:app` succeeds (webpack/turbopack — the `require-in-the-middle 7→8` resolve-module removal would break here if bundled)
+- [x] `pnpm build:www` succeeds
+- [x] `pnpm lint:ws` reports no new issues
 
 #### Manual Verification:
 
@@ -388,11 +413,13 @@ Two workspace apps consume these through `catalog:`: `apps/app/package.json:97,9
 - [ ] Trigger the same from `apps/www` → confirm event reaches Sentry
 - [ ] `pnpm dev:platform` boots (platform does not ship the IITM/RITM deps directly but shares the lockfile)
 
-**Implementation Note**: After Phase 4 passes, commit and pause for human confirmation before Phase 5.
+**Implementation Note**: After Phase 5 passes, commit and pause for human confirmation before Phase 6.
+
+**2026-04-19 implementation finding:** Bumping the direct catalog floors successfully flowed through to `apps/app` and `apps/www` (both now resolve IITM 3.0.1 / RITM 8.0.1). `@sentry/node@10.49.0` also resolves to the new versions. However, the lockfile still carries `import-in-the-middle@1.15.0` and `require-in-the-middle@7.5.2` as transitives via `@traceloop/instrumentation-anthropic@0.20.0` → `@opentelemetry/instrumentation@0.203.0` → `inngest@3.52.6` (consumed by `api/app`, `api/platform`, `vendor/inngest`). Those older versions will only disappear when `inngest`/`@traceloop/instrumentation-anthropic` bump their internal `@opentelemetry/instrumentation` — out of scope for Phase D. The plan's "sole resolutions" wording was slightly optimistic; the direct-consumer goal was met.
 
 ---
 
-## Phase 5: Arcjet + Nosecone GA
+## Phase 6: Arcjet + Nosecone GA [DONE]
 
 ### Overview
 
@@ -430,28 +457,28 @@ If either returns results, stop and migrate before bumping.
 
 #### Automated Verification:
 
-- [ ] Both grep commands return zero hits before the install runs
-- [ ] `pnpm install` succeeds
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
-- [ ] `pnpm build:app`, `pnpm build:platform`, `pnpm build:www` all succeed
+- [x] Both grep commands return zero hits before the install runs
+- [x] `pnpm install` succeeds
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm build:app`, `pnpm build:platform`, `pnpm build:www` all succeed
 
 #### Manual Verification:
 
 - [ ] `pnpm dev:full` boots; visiting any Arcjet-gated route (rate-limited or bot-checked endpoint) returns the expected 200 on normal traffic
 - [ ] CSP response headers (via `@nosecone/next` middleware) include the expected directives — check `curl -I http://localhost:3024/` for `content-security-policy`
 
-**Implementation Note**: After Phase 5 passes, commit and pause for human confirmation before Phase 6.
+**Implementation Note**: After Phase 6 passes, commit and pause for human confirmation before Phase 7.
 
 ---
 
-## Phase 6: Shiki 4 Ecosystem
+## Phase 7: Shiki 4 Ecosystem
 
 ### Overview
 
 Bump `shiki`, `@shikijs/langs`, and `@shikijs/themes` from `^3.9.2` to the highest 4.x release that has the types regression (issue #1254) fixed. Target floor: `^4.0.2` or newer — verify at implementation time with `npm view shiki versions --json | tail -20`.
 
-**This is a dedup, not a fresh install.** `shiki@4.0.2` and the matching `@shikijs/*@4.0.2` family are already in `pnpm-lock.yaml` (pulled transitively — see `pnpm-lock.yaml:12074`, `pnpm-lock.yaml:24173`). `shiki@3.13.0` also coexists because our direct pin is `^3.9.2`. Phase 6 removes the 3.x side of the duplicate — so the only real risk surface is whether our 6 direct consumer files typecheck against 4.x, not whether the ecosystem works.
+**This is a dedup, not a fresh install.** `shiki@4.0.2` and the matching `@shikijs/*@4.0.2` family are already in `pnpm-lock.yaml` (pulled transitively — see `pnpm-lock.yaml:12074`, `pnpm-lock.yaml:24173`). `shiki@3.13.0` also coexists because our direct pin is `^3.9.2`. Phase 7 removes the 3.x side of the duplicate — so the only real risk surface is whether our 6 direct consumer files typecheck against 4.x, not whether the ecosystem works.
 
 ### Changes Required:
 
@@ -497,11 +524,11 @@ The expected pattern is `createHighlighter` / `codeToHtml` / `bundledLanguages` 
 - [ ] `pnpm dev:www` — `/docs` page with fenced code shows syntax-highlighted output; switching between light/dark mode still swaps the theme
 - [ ] SSR code block (`packages/ui/src/components/ssr-code-block/index.tsx`) renders correctly on a server-rendered page
 
-**Implementation Note**: After Phase 6 passes, commit and pause for human confirmation before Phase 7.
+**Implementation Note**: After Phase 7 passes, commit and pause for human confirmation before Phase 8.
 
 ---
 
-## Phase 7: lucide-react 1.x
+## Phase 8: lucide-react 1.x
 
 ### Overview
 
@@ -576,11 +603,11 @@ rg 'DynamicIcon' apps packages vendor
 - [ ] Spot-check one page per workspace for visual icon regressions (no bounding-box placeholders, no missing SVGs in console)
 - [ ] Dark/light mode icon coloring unchanged (lucide uses `currentColor`, should be unaffected)
 
-**Implementation Note**: After Phase 7 passes, commit and pause for human confirmation before Phase 8.
+**Implementation Note**: After Phase 8 passes, commit and pause for human confirmation before Phase 9.
 
 ---
 
-## Phase 8: Final Verification & Audit Snapshot
+## Phase 9: Final Verification & Audit Snapshot
 
 ### Overview
 
@@ -633,7 +660,7 @@ pkill -f "next dev"
 
 #### Automated Verification:
 
-- [ ] All Phase 1-7 automated checks still pass with the final combined lockfile
+- [ ] All Phase 1-8 automated checks still pass with the final combined lockfile
 - [ ] `pnpm audit --prod` total ≤ 43 (one advisory cleared via hono CVE bump)
 
 #### Manual Verification:
@@ -645,7 +672,7 @@ pkill -f "next dev"
 - [ ] Arcjet-gated endpoint passes on expected-good traffic (no 403)
 - [ ] CSP headers on `/` include expected directives (nosecone 1.4)
 
-**Implementation Note**: Once Phase 8 passes, Phase D is complete. Phase E (UI heavyweights) opens next; Phase F (AI runtime) and Phase G (typescript 5→6, @types/node 24→25) follow.
+**Implementation Note**: Once Phase 9 passes, Phase D is complete. Phase E (UI heavyweights) opens next; Phase F (AI runtime) and Phase G (typescript 5→6, @types/node 24→25) follow.
 
 ---
 
@@ -653,14 +680,14 @@ pkill -f "next dev"
 
 ### Unit Tests:
 
-- `pnpm test` after each phase. The highest-risk behavior change is Phase 3 (uuid ESM-only + @noble/ed25519 input typing) — watch the ai-sdk runtime test and any webhook-verification test.
+- `pnpm test` after each phase. The highest-risk behavior change is Phase 4 (uuid ESM-only + @noble/ed25519 input typing) — watch the ai-sdk runtime test and any webhook-verification test.
 
 ### Integration Tests:
 
 - tRPC prefetch-then-hydrate flow (exercised by any `pnpm dev:app` dashboard visit) — probes the IITM/RITM path via Sentry's instrumentation.
-- Clerk auth flow — exercises nosecone CSP headers after Phase 5.
-- Fumadocs `/docs` rendering — exercises shiki code block highlighting after Phase 6.
-- Icon rendering across `apps/app`, `apps/www`, `packages/ui` surfaces — exercises lucide-react 1.x after Phase 7.
+- Clerk auth flow — exercises nosecone CSP headers after Phase 6.
+- Fumadocs `/docs` rendering — exercises shiki code block highlighting after Phase 7.
+- Icon rendering across `apps/app`, `apps/www`, `packages/ui` surfaces — exercises lucide-react 1.x after Phase 8.
 
 ### Manual Testing Steps:
 
