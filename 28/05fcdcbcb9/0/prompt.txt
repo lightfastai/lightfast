@@ -1,0 +1,10 @@
+i'm 100% sure we need redis on ai-sdk bc the internal uses it. we faced this issue before. 
+for 1. mcp/sdk, keep.
+
+---
+
+looks good
+
+---
+
+/commit

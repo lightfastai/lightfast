@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "2805fcdcbcb9",
+  "strategy": "manual-commit",
+  "branch": "chore/core-packages-upgrade-phase-c",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/inngest/platform.ts",
+    "apps/platform/src/lib/internal-caller.ts",
+    "packages/app-validation/src/schemas/api/common.ts",
+    "thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-c.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/28/05fcdcbcb9/0/metadata.json",
+      "transcript": "/28/05fcdcbcb9/0/full.jsonl",
+      "content_hash": "/28/05fcdcbcb9/0/content_hash.txt",
+      "prompt": "/28/05fcdcbcb9/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 130,
+    "cache_creation_tokens": 210103,
+    "cache_read_tokens": 7111116,
+    "output_tokens": 28644,
+    "api_call_count": 96
+  }
+}
