@@ -10,9 +10,9 @@
 
 import { db } from "@db/app/client";
 import { gatewayInstallations, gatewayTokens } from "@db/app/schema";
+import { decrypt } from "@repo/app-encryption";
 import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
-import { decrypt } from "@repo/lib";
 import { and, eq, isNotNull, lt } from "@vendor/db";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";

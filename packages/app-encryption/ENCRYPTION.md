@@ -15,10 +15,10 @@ This utility provides encryption/decryption functions using Node.js built-in `cr
 
 ## Installation
 
-The encryption utility is part of `@repo/lib`:
+The encryption utility is part of `@repo/app-encryption`:
 
 ```typescript
-import { encrypt, decrypt, generateEncryptionKey } from "@repo/lib";
+import { encrypt, decrypt, generateEncryptionKey } from "@repo/app-encryption";
 ```
 
 ## Usage
@@ -28,7 +28,7 @@ import { encrypt, decrypt, generateEncryptionKey } from "@repo/lib";
 Generate a secure 32-byte (256-bit) encryption key:
 
 ```typescript
-import { generateEncryptionKey } from "@repo/lib";
+import { generateEncryptionKey } from "@repo/app-encryption";
 
 const key = generateEncryptionKey();
 // Returns: "e4e1cb36c73d95219f18dad883a5154bd5b3b30ea49392bf8adf3377807b4f5d"
@@ -43,7 +43,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ### Encrypt Data
 
 ```typescript
-import { encrypt } from "@repo/lib";
+import { encrypt } from "@repo/app-encryption";
 
 const token = "ghp_1234567890abcdefghijklmnopqrstuvwxyz";
 const key = process.env.ENCRYPTION_KEY!;
@@ -55,7 +55,7 @@ const encrypted = encrypt(token, key);
 ### Decrypt Data
 
 ```typescript
-import { decrypt } from "@repo/lib";
+import { decrypt } from "@repo/app-encryption";
 
 const encrypted = "W78VnVQxfrv3zFfcLbiMkFt/FG+iWFNgnEHi6AwbzUHZ...";
 const key = process.env.ENCRYPTION_KEY!;
@@ -88,7 +88,7 @@ The encrypted string is a base64-encoded combination of:
 The utility provides specific error types for better error handling:
 
 ```typescript
-import { encrypt, decrypt, EncryptionError, DecryptionError } from "@repo/lib";
+import { encrypt, decrypt, EncryptionError, DecryptionError } from "@repo/app-encryption";
 
 try {
   const encrypted = encrypt(plaintext, key);
@@ -185,7 +185,7 @@ export const env = createEnv({
 **1. User completes GitHub OAuth** (`apps/app/src/app/(github)/api/github/callback/route.ts`):
 
 ```typescript
-import { encrypt } from "@repo/lib";
+import { encrypt } from "@repo/app-encryption";
 import { env } from "~/env";
 
 // Exchange OAuth code for access token
@@ -209,7 +209,7 @@ await db.insert(integrations).values({
 **2. API uses token** (`api/app/src/router/integration.ts`):
 
 ```typescript
-import { decrypt } from "@repo/lib";
+import { decrypt } from "@repo/app-encryption";
 import { env } from "../env";
 
 // Fetch integration from database
@@ -253,7 +253,7 @@ To rotate encryption keys:
 
 2. **Re-encrypt existing data:**
    ```typescript
-   import { encrypt, decrypt } from "@repo/lib";
+   import { encrypt, decrypt } from "@repo/app-encryption";
 
    // Migration script
    const integrations = await db.select().from(integrations);
@@ -340,7 +340,7 @@ Error thrown when decryption fails.
 Run the encryption utility tests:
 
 ```typescript
-import { encrypt, decrypt, generateEncryptionKey } from "@repo/lib";
+import { encrypt, decrypt, generateEncryptionKey } from "@repo/app-encryption";
 
 // Generate test key
 const key = generateEncryptionKey();

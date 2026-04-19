@@ -36,6 +36,7 @@
     "@ai-sdk/gateway": "catalog:",
     "@db/app": "workspace:*",
     "@repo/app-embed": "workspace:*",
+    "@repo/app-encryption": "workspace:*",
     "@repo/app-pinecone": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "@repo/app-upstash-realtime": "workspace:*",
