@@ -19,7 +19,11 @@
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "api/*": {
+    "api/app": {
+      "project": ["src/**/*.ts"]
+    },
+    "api/platform": {
+      "entry": ["src/lib/oauth/callback.ts"],
       "project": ["src/**/*.ts"]
     },
     "core/*": {
@@ -35,6 +39,10 @@
     },
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
+    },
+    "packages/webhook-schemas": {
+      "entry": ["src/capture.ts"],
+      "project": ["src/**/*.ts"]
     },
     "packages/app-ai": {
       "entry": ["src/org-*.ts"],
@@ -82,11 +90,10 @@
       "drizzle": false
     },
     "internal/typescript": {
-      "entry": ["base.json"]
+      "entry": ["base.json"],
+      "ignoreDependencies": ["next"]
     },
-    "internal/vitest-config": {
-      "entry": ["vitest.shared.ts"]
-    }
+    "internal/vitest-config": {}
   },
   "ignore": [".agents/**", ".claude/**"],
   "ignoreWorkspaces": ["packages/app-remotion"],
@@ -97,7 +104,6 @@
     "postcss",
     "autoprefixer",
     "import-in-the-middle",
-    "require-in-the-middle",
-    "@vitest/coverage-v8"
+    "require-in-the-middle"
   ]
 }

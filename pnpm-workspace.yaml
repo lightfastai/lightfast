@@ -13,7 +13,6 @@ catalog:
   '@clerk/backend': 3.2.13
   '@clerk/nextjs': 7.2.3
   '@clerk/shared': 4.8.2
-  '@electric-sql/pglite': ^0.3.15
   '@hookform/resolvers': ^5.2.2
   '@neondatabase/serverless': ^1.1.0
   '@noble/ed25519': ^2.2.3
@@ -43,7 +42,6 @@ catalog:
   jose: ^6.2.2
   lucide-react: ^0.577.0
   nanoid: ^5.1.9
-  neverthrow: ^8.2.0
   react-hook-form: ^7.72.1
   require-in-the-middle: ^7.1.1
   superjson: ^2.2.6

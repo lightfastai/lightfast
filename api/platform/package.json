@@ -42,7 +42,6 @@
     "@repo/app-upstash-realtime": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/dotlightfast": "workspace:*",
-    "@sentry/core": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
     "@vendor/db": "workspace:*",
