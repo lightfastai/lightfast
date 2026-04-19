@@ -1,0 +1,1 @@
+have a look at @.npmrc can you search thr web and lets discuss the most optimal setup for this file
