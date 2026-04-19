@@ -1,0 +1,41 @@
+/create_plan can we discuss the upgrade of some of the most core and fundamental packages in here, like next, zod, etc.
+
+---
+
+in general, we should start with A. and then work on B.
+
+---
+
+this sounds great!
+
+---
+
+/create_plan can we discuss the upgrade of some of the most core and fundamental packages in here, like next, zod, etc.
+
+---
+
+proceed 1)
+
+---
+
+looks good
+
+---
+
+would you reckon these are the best approaches?
+
+---
+
+/create_plan can we discuss the upgrade of some of the most core and fundamental packages in here, like next, react, etc, and general just cleaning up any overrides, removing packages that are not being used, updating knip. basically all the core infra package related things.
+
+---
+
+proceed A.
+
+---
+
+yes sounds good
+
+---
+
+proceed
