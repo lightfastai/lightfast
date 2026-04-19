@@ -10,15 +10,15 @@ const platformConfig: NextConfig = merge({}, baseConfig, {
     "@api/platform",
     "@db/app",
     "@repo/app-providers",
-    "@repo/lib",
     "@vendor/inngest",
+    "@vendor/lib",
     "@vendor/next",
     "@vendor/observability",
     "@vendor/security",
     "@vendor/upstash",
   ],
   experimental: {
-    optimizePackageImports: ["@repo/lib", "@vendor/observability"],
+    optimizePackageImports: ["@vendor/lib", "@vendor/observability"],
   },
 } satisfies NextConfig);
 

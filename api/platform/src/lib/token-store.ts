@@ -1,7 +1,7 @@
 import { db } from "@db/app/client";
 import { gatewayTokens } from "@db/app/schema";
+import { encrypt } from "@repo/app-encryption";
 import type { OAuthTokens } from "@repo/app-providers";
-import { encrypt } from "@repo/lib";
 import { eq } from "@vendor/db";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";

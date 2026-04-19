@@ -12,8 +12,8 @@
 import { db } from "@db/app";
 import type { InsertOrgIntegration } from "@db/app/schema";
 import { gatewayInstallations, orgIntegrations } from "@db/app/schema";
-import { nanoid } from "@repo/lib";
 import { and, eq } from "@vendor/db";
+import { nanoid } from "@vendor/lib";
 
 interface SeedOptions {
   clerkOrgId: string;

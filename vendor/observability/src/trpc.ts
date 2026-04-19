@@ -1,6 +1,5 @@
 import "server-only";
 
-import { nanoid } from "@repo/lib";
 import {
   captureException,
   getActiveSpan,
@@ -11,6 +10,7 @@ import {
 } from "@sentry/core";
 import type { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+import { nanoid } from "@vendor/lib";
 
 import { log } from "./log/next";
 import { emitJournal, withRequestContext } from "./request";

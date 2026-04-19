@@ -1,5 +1,5 @@
 import type { EntityRelation } from "@repo/app-providers/contracts";
-import { nanoid } from "@repo/lib";
+import { nanoid } from "@vendor/lib";
 import { sql } from "drizzle-orm";
 import {
   bigint,
