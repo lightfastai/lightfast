@@ -236,11 +236,11 @@ Usage: `vendor/seo/src/json-ld.tsx:1,77`. Breaking: `Role` typings tightened, `Q
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
-- [ ] `pnpm build:app`, `pnpm build:platform`, `pnpm build:www` all succeed
-- [ ] `pnpm --filter @lightfastai/cli typecheck` passes (explicit CLI check)
+- [x] `pnpm install` succeeds
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm build:app`, `pnpm build:platform`, `pnpm build:www` all succeed
+- [x] `pnpm --filter @lightfastai/cli typecheck` passes (explicit CLI check)
 
 #### Manual Verification:
 
