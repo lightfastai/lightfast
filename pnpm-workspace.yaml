@@ -90,3 +90,11 @@ onlyBuiltDependencies:
 publicHoistPattern:
   - '*import-in-the-middle*'
   - '*require-in-the-middle*'
+
+packageExtensions:
+  '@hookform/resolvers':
+    peerDependencies:
+      zod: '>=3.24.0'
+    peerDependenciesMeta:
+      zod:
+        optional: true
