@@ -33,13 +33,13 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "nosecone": "1.0.0-beta.15",
+    "nosecone": "^1.4.0",
     "typescript": "catalog:"
   },
   "dependencies": {
-    "@arcjet/decorate": "1.0.0-beta.10",
-    "@arcjet/next": "1.0.0-beta.10",
-    "@nosecone/next": "1.1.0",
+    "@arcjet/decorate": "^1.4.0",
+    "@arcjet/next": "^1.4.0",
+    "@nosecone/next": "^1.4.0",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/clerk": "workspace:^",
     "zod": "catalog:"

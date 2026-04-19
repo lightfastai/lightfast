@@ -69,12 +69,11 @@ export const metadata: Metadata = createMetadata({
 export default function BlogPage() {
   const pages = getBlogPages();
 
-  const sortedPages = [...pages].sort((a, b) => {
-    return (
+  const sortedPages = [...pages].sort(
+    (a, b) =>
       new Date(b.data.publishedAt).getTime() -
       new Date(a.data.publishedAt).getTime()
-    );
-  });
+  );
 
   const [latest, ...restPages] = sortedPages;
   const featured = latest?.data.featuredImage ? latest : null;

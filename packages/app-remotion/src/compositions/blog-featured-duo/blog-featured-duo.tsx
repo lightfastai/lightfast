@@ -63,8 +63,8 @@ export const BlogFeaturedDuo: React.FC = () => {
       });
   }, [handle]);
 
-  const { leftPath, rightPath } = useMemo(() => {
-    return {
+  const { leftPath, rightPath } = useMemo(
+    () => ({
       leftPath: lissajousPath(
         DUO_SIZE,
         PADDING,
@@ -79,8 +79,9 @@ export const BlogFeaturedDuo: React.FC = () => {
         RIGHT_CURVE.b,
         RIGHT_CURVE.delta
       ),
-    };
-  }, []);
+    }),
+    []
+  );
 
   return (
     <AbsoluteFill className="bg-background">

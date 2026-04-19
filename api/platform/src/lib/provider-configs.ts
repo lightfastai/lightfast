@@ -56,7 +56,7 @@ export const providerConfigs: Record<string, unknown> = new Proxy(
           value: configs[prop as string],
         };
       }
-      return undefined;
+      return;
     },
   }
 );

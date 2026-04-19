@@ -109,7 +109,7 @@ export const { GET } = createLlmsTxtHandler(
       if (url.includes("/docs")) {
         return "Docs";
       }
-      return undefined; // fall through to defaultSection
+      return; // fall through to defaultSection
     },
     defaultSection: "Marketing",
     footer: [

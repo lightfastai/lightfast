@@ -172,12 +172,11 @@ class HighlighterManager {
 const highlighterManager = new HighlighterManager();
 
 // Remove background styles from <pre> tags (inline style)
-const removePreBackground = (html: string) => {
-  return html.replace(
+const removePreBackground = (html: string) =>
+  html.replace(
     /(<pre[^>]*)(style="[^"]*background[^";]*;?[^"]*")([^>]*>)/g,
     "$1$3"
   );
-};
 
 // Composable CodeBlock components following artifact.tsx pattern
 
@@ -317,7 +316,7 @@ export type CodeBlockDownloadButtonProps = ComponentProps<"button"> & {
   onError?: (error: Error) => void;
 };
 
-const languageExtensionMap: Record<BundledLanguage, string> = {
+const languageExtensionMap: Partial<Record<BundledLanguage, string>> = {
   "1c": "1c",
   "1c-query": "1cq",
   abap: "abap",
@@ -702,11 +701,12 @@ export const CodeBlockCopyButton = ({
     }
   };
 
-  useEffect(() => {
-    return () => {
+  useEffect(
+    () => () => {
       window.clearTimeout(timeoutRef.current);
-    };
-  }, []);
+    },
+    []
+  );
 
   const Icon = isCopied ? CheckIcon : CopyIcon;
 

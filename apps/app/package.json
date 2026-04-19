@@ -92,7 +92,7 @@
     "@vitest/coverage-v8": "catalog:",
     "@vitest/expect": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
-    "dotenv-cli": "^8.0.0",
+    "dotenv-cli": "catalog:",
     "happy-dom": "^20.9.0",
     "import-in-the-middle": "catalog:",
     "postcss": "catalog:tailwind4",

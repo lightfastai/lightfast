@@ -378,8 +378,8 @@ export const MANIFEST: CompositionManifest = {
         // #1a1a1a to #181818 in most browsers and creates a visible seam
         // against the page.
         colorSpace: "bt709",
-        ffmpegOverride: ({ args }) => {
-          return args.map((arg, i, all) => {
+        ffmpegOverride: ({ args }) =>
+          args.map((arg, i, all) => {
             if (i > 0 && all[i - 1] === "-color_range" && arg === "tv") {
               return "pc";
             }
@@ -387,8 +387,7 @@ export const MANIFEST: CompositionManifest = {
               return arg.replace(/range=limited/g, "range=full");
             }
             return arg;
-          });
-        },
+          }),
       },
       outputs: [
         {

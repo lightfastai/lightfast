@@ -31,14 +31,14 @@ export const router = impl.router({
   }),
 
   proxy: {
-    search: impl.proxy.search.handler(async ({ context }) => {
-      return proxySearchLogic({
+    search: impl.proxy.search.handler(async ({ context }) =>
+      proxySearchLogic({
         clerkOrgId: context.clerkOrgId,
         userId: context.userId,
         authType: context.authType,
         apiKeyId: context.apiKeyId,
-      });
-    }),
+      })
+    ),
 
     call: impl.proxy.call.handler(async ({ input, context }) => {
       try {

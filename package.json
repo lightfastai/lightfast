@@ -44,12 +44,12 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.12",
     "@changesets/cli": "^2.31.0",
-    "knip": "^5.85.0",
+    "knip": "^6.4.1",
     "turbo": "2.9.6",
     "turbo-ignore": "2.9.6",
     "typescript": "^5.9.2",
-    "ultracite": "7.2.5",
-    "vercel": "^50.28.0"
+    "ultracite": "7.6.0",
+    "vercel": "^51.7.0"
   },
   "pnpm": {
     "overrides": {

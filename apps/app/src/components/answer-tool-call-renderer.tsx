@@ -23,7 +23,7 @@ function getInputPreview(
   input: Record<string, unknown> | undefined
 ): string | undefined {
   if (!input) {
-    return undefined;
+    return;
   }
   const firstArg = Object.values(input)[0];
   if (typeof firstArg === "string") {
@@ -32,7 +32,7 @@ function getInputPreview(
   if (firstArg !== undefined) {
     return JSON.stringify(firstArg);
   }
-  return undefined;
+  return;
 }
 
 const TOOL_NAMES = {

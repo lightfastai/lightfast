@@ -412,9 +412,8 @@ export const linear = defineWebhookProvider({
       }
       return p.type ?? "unknown";
     },
-    extractDeliveryId: (headers, payload) => {
-      return headers.get("linear-delivery") ?? stableFingerprint(payload);
-    },
+    extractDeliveryId: (headers, payload) =>
+      headers.get("linear-delivery") ?? stableFingerprint(payload),
     extractResourceId: (payload) => {
       const p = payload as { organizationId?: string };
       return p.organizationId ?? null;

@@ -128,8 +128,8 @@ export const platformEventStore = inngest.createFunction(
     // Step 0: Create job record for tracking
     const inngestRunId =
       event.id ?? `neural-obs-${sourceEvent.sourceId}-${startTime}`;
-    const jobId = await step.run("create-job", async () => {
-      return createJob({
+    const jobId = await step.run("create-job", async () =>
+      createJob({
         clerkOrgId,
         inngestRunId,
         inngestFunctionId: "platform/event.capture",
@@ -142,8 +142,8 @@ export const platformEventStore = inngest.createFunction(
           sourceType: sourceEvent.eventType,
           title: sourceEvent.title,
         } satisfies EventCaptureInput,
-      });
-    });
+      })
+    );
 
     await step.run("update-job-running", async () => {
       await updateJobStatus(jobId, "running");
@@ -308,9 +308,9 @@ export const platformEventStore = inngest.createFunction(
     }
 
     // Step 3: Evaluate significance (metadata annotation, not a gate)
-    const significance = await step.run("evaluate-significance", () => {
-      return scoreSignificance(sourceEvent);
-    });
+    const significance = await step.run("evaluate-significance", () =>
+      scoreSignificance(sourceEvent)
+    );
 
     // Step 4: Extract entities (structural categories from relations)
     const extractedEntities = await step.run("extract-entities", () => {

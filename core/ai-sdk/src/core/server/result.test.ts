@@ -189,13 +189,11 @@ describe("Result", () => {
 
   describe("complex scenarios", () => {
     it("should handle async operations returning Results", async () => {
-      const asyncOk = (): Promise<Result<string, Error>> => {
-        return Promise.resolve(Ok("async success"));
-      };
+      const asyncOk = (): Promise<Result<string, Error>> =>
+        Promise.resolve(Ok("async success"));
 
-      const asyncErr = (): Promise<Result<string, Error>> => {
-        return Promise.resolve(Err(new Error("async error")));
-      };
+      const asyncErr = (): Promise<Result<string, Error>> =>
+        Promise.resolve(Err(new Error("async error")));
 
       const result1 = await asyncOk();
       const result2 = await asyncErr();
@@ -210,13 +208,10 @@ describe("Result", () => {
         return Number.isNaN(num) ? Err("not a number") : Ok(num);
       };
 
-      const double = (num: number): Result<number, string> => {
-        return Ok(num * 2);
-      };
+      const double = (num: number): Result<number, string> => Ok(num * 2);
 
-      const processInput = (input: string): Result<number, string> => {
-        return andThen(parse(input), double);
-      };
+      const processInput = (input: string): Result<number, string> =>
+        andThen(parse(input), double);
 
       const result1 = processInput("21");
       expect(result1.ok).toBe(true);

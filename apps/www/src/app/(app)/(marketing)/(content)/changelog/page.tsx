@@ -87,12 +87,11 @@ export const metadata: Metadata = createMetadata({
 export default function ChangelogPage() {
   const pages = getChangelogPages();
 
-  const sortedPages = [...pages].sort((a, b) => {
-    return (
+  const sortedPages = [...pages].sort(
+    (a, b) =>
       new Date(b.data.publishedAt).getTime() -
       new Date(a.data.publishedAt).getTime()
-    );
-  });
+  );
 
   const structuredData: GraphContext = {
     "@context": "https://schema.org",
