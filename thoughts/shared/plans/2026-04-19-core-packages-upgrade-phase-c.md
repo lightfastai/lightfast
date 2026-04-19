@@ -243,11 +243,11 @@ Three source files knip flagged are genuinely dead — the only references to th
 
 #### Automated Verification:
 
-- [ ] `pnpm knip --no-exit-code` no longer lists these three files under `Unused files`
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
-- [ ] `pnpm build:app` succeeds
-- [ ] `pnpm build:platform` succeeds
+- [x] `pnpm knip --no-exit-code` no longer lists these three files under `Unused files` (remaining 2: targets of Phase 5 config)
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm build:app` succeeds
+- [x] `pnpm build:platform` succeeds
 
 #### Manual Verification:
 
@@ -272,10 +272,12 @@ Update `knip.json` to (a) include the real CLI entries for `packages/webhook-sch
 
 ```jsonc
 "packages/webhook-schemas": {
-  "entry": ["src/capture.ts", "src/validate.ts", "src/report.ts"],
+  "entry": ["src/capture.ts"],
   "project": ["src/**/*.ts"]
 }
 ```
+
+**Implementation note**: Only `capture.ts` needs manual declaration — it runs via `pnpm with-env tsx src/capture.ts` which knip can't parse. `validate.ts` and `report.ts` are invoked directly via `tsx --conditions react-server src/*.ts`, which knip's script-parser auto-detects. Adding all three caused knip to emit `redundant entry pattern` hints for the auto-detected pair.
 
 #### 2. Declare `api/platform` OAuth callback entry
 
@@ -339,16 +341,16 @@ Or delete the workspace entry entirely if the block is now empty.
 
 #### Automated Verification:
 
-- [ ] `pnpm knip --no-exit-code` reports:
+- [x] `pnpm knip --no-exit-code` reports:
   - Zero `Unused files`
-  - Zero `Unused dependencies`
+  - Zero `Unused dependencies` (except the 2 documented-KEEP entries from Phase 2: `redis`, `@modelcontextprotocol/sdk`)
   - Zero `Unused devDependencies`
   - Zero `Unused catalog entries`
   - Zero `Unresolved imports`
   - Zero `Configuration hints` except the two `.agents/**` / `.claude/**` hints we explicitly keep
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
-- [ ] `pnpm build:app` / `pnpm build:platform` / `pnpm build:www` all succeed
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes (53 turbo tasks)
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes (12 turbo tasks)
+- [x] `pnpm build:app` / `pnpm build:platform` / `pnpm build:www` all succeed
 
 #### Manual Verification:
 
