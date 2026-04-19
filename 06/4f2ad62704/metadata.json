@@ -3,11 +3,8 @@
   "checkpoint_id": "064f2ad62704",
   "strategy": "manual-commit",
   "branch": "fix/hookform-resolvers-zod-peer",
-  "checkpoints_count": 4,
-  "files_touched": [
-    "pnpm-lock.yaml",
-    "pnpm-workspace.yaml"
-  ],
+  "checkpoints_count": 1,
+  "files_touched": null,
   "sessions": [
     {
       "metadata": "/06/4f2ad62704/0/metadata.json",
@@ -17,10 +14,10 @@
     }
   ],
   "token_usage": {
-    "input_tokens": 1255,
-    "cache_creation_tokens": 65787,
-    "cache_read_tokens": 1372896,
-    "output_tokens": 15221,
-    "api_call_count": 28
+    "input_tokens": 9,
+    "cache_creation_tokens": 1625,
+    "cache_read_tokens": 266025,
+    "output_tokens": 1141,
+    "api_call_count": 4
   }
 }

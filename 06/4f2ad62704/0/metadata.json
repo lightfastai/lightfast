@@ -3,36 +3,23 @@
   "checkpoint_id": "064f2ad62704",
   "session_id": "b020d219-b770-4887-beb6-22e869b93ff3",
   "strategy": "manual-commit",
-  "created_at": "2026-04-19T11:28:03.792153Z",
+  "created_at": "2026-04-19T11:29:39.285624Z",
   "branch": "fix/hookform-resolvers-zod-peer",
-  "checkpoints_count": 4,
-  "files_touched": [
-    "pnpm-lock.yaml",
-    "pnpm-workspace.yaml"
-  ],
+  "checkpoints_count": 1,
+  "files_touched": [],
   "agent": "Claude Code",
   "model": "claude-opus-4-7[1m]",
-  "turn_id": "6b48b0596189",
+  "turn_id": "7804bcbbadfa",
+  "checkpoint_transcript_start": 172,
+  "transcript_lines_at_start": 172,
   "token_usage": {
-    "input_tokens": 1255,
-    "cache_creation_tokens": 65787,
-    "cache_read_tokens": 1372896,
-    "output_tokens": 15221,
-    "api_call_count": 28
+    "input_tokens": 9,
+    "cache_creation_tokens": 1625,
+    "cache_read_tokens": 266025,
+    "output_tokens": 1141,
+    "api_call_count": 4
   },
   "session_metrics": {
-    "turn_count": 4
-  },
-  "initial_attribution": {
-    "calculated_at": "2026-04-19T11:28:03.657794Z",
-    "agent_lines": 18,
-    "agent_removed": 2,
-    "human_added": 0,
-    "human_modified": 0,
-    "human_removed": 0,
-    "total_committed": 18,
-    "total_lines_changed": 20,
-    "agent_percentage": 100,
-    "metric_version": 2
+    "turn_count": 5
   }
 }
