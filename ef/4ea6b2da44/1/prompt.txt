@@ -1,0 +1,35 @@
+so in recent PR we work a bunch into essential setting up the v1 triage runtime. now, before proceeding, i want to rework @.claude/skills/lightfast-changelog/ to be more general purpose. i think it's a great start, but imo, it requires more comprehensive structure and rdesign.
+
+moreover, consider that skilsl shouldnt be explaining what the frontmatter schema is for example, as that may change overtime and we'll need to re-work that.
+
+let's discuss how to synthesize thi better
+
+---
+
+i dont think we even want to have content-schema.ts as that would change to no?
+
+i think like like lightfast-aeo, it makes sense.
+
+i dont see the point in why we need lightfast-changelog as such. in general, it should really just be about "language and how to structure correctly".
+
+ligthfast-aeo becomes the root best practices for aeo.
+lightfast-changelog becomes language and structure heirarchy
+lightfast-blog becomes language and structure hierarchy
+
+---
+
+okay before continuing, scrape the whole of tryprofound.com's blog /research_codebase and synthesize the data.
+
+---
+
+yeap perfect
+
+---
+
+question, are you 100% this is general purpose enough. i reckon you're still kinda exposing specific lanauge like where the files are. this will fundamentally break as we change repo structure. general purpose is the way to go.
+
+read: https://agentskills.io/ for good skills.
+
+https://agentskills.io/skill-creation/best-practices
+
+https://agentskills.io/skill-creation/optimizing-descriptions

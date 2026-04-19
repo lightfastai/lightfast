@@ -3,7 +3,7 @@
   "checkpoint_id": "ef4ea6b2da44",
   "strategy": "manual-commit",
   "branch": "chore/core-packages-upgrade-phase-a",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "apps/app/package.json",
     "apps/www/package.json",
@@ -26,13 +26,19 @@
       "transcript": "/ef/4ea6b2da44/0/full.jsonl",
       "content_hash": "/ef/4ea6b2da44/0/content_hash.txt",
       "prompt": "/ef/4ea6b2da44/0/prompt.txt"
+    },
+    {
+      "metadata": "/ef/4ea6b2da44/1/metadata.json",
+      "transcript": "/ef/4ea6b2da44/1/full.jsonl",
+      "content_hash": "/ef/4ea6b2da44/1/content_hash.txt",
+      "prompt": "/ef/4ea6b2da44/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 15,
-    "cache_creation_tokens": 11837,
-    "cache_read_tokens": 311314,
-    "output_tokens": 7989,
-    "api_call_count": 5
+    "input_tokens": 69,
+    "cache_creation_tokens": 209028,
+    "cache_read_tokens": 1349070,
+    "output_tokens": 39180,
+    "api_call_count": 24
   }
 }
