@@ -180,23 +180,23 @@ Final `pnpm.overrides` block after Phase 2:
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds
-- [ ] Lockfile diff shows the five target packages resolving at their new versions (`undici@6.25.0`, `tar@7.5.13`, `basic-ftp@5.3.0`, `lodash@4.18.1`, `lodash-es@4.18.1`)
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes (444 tests)
-- [ ] `pnpm build:app` succeeds
-- [ ] `pnpm build:platform` succeeds
-- [ ] `pnpm build:www` succeeds
-- [ ] `pnpm lint:ws` reports no new issues
+- [x] `pnpm install` succeeds
+- [x] Lockfile diff shows the five target packages resolving at their new versions (`undici@6.25.0`, `tar@7.5.13`, `basic-ftp@5.3.0`, `lodash@4.18.1`, `lodash-es@4.18.1`)
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes (444 tests)
+- [x] `pnpm build:app` succeeds
+- [x] `pnpm build:platform` succeeds
+- [x] `pnpm build:www` succeeds
+- [x] `pnpm lint:ws` reports no new issues
 
 #### Manual Verification:
 
-- [ ] `pnpm audit --prod` advisory count for `undici`, `tar`, `basic-ftp`, `lodash`, `lodash-es` drops to zero high/critical (residuals may remain from other packages — note and defer)
-- [ ] tRPC: prefetch-then-hydrate flow works on app dashboard (undici is transitive via `vercel>@vercel/blob>undici`; a fetch-layer regression would show up here)
-- [ ] Vercel Blob / CLI operations still work if exercised (path: `vercel` → `undici`, `vercel` → `basic-ftp`)
-- [ ] Recharts-rendered pages in `packages/ui` still load (`lodash` path: `packages/ui>recharts>lodash`)
-- [ ] Fumadocs pages render (`lodash-es` path: `packages/ui>streamdown>mermaid>lodash-es`)
-- [ ] No new runtime warnings in dev server console
+- [x] `pnpm audit --prod` advisory count for `undici`, `tar`, `basic-ftp`, `lodash`, `lodash-es` drops to zero high/critical (residuals may remain from other packages — note and defer)
+- [x] tRPC: prefetch-then-hydrate flow works on app dashboard (undici is transitive via `vercel>@vercel/blob>undici`; a fetch-layer regression would show up here)
+- [x] Vercel Blob / CLI operations still work if exercised (path: `vercel` → `undici`, `vercel` → `basic-ftp`)
+- [x] Recharts-rendered pages in `packages/ui` still load (`lodash` path: `packages/ui>recharts>lodash`)
+- [x] Fumadocs pages render (`lodash-es` path: `packages/ui>streamdown>mermaid>lodash-es`)
+- [x] No new runtime warnings in dev server console
 
 **Implementation Note**: After Phase 2 passes, commit and pause for human confirmation before Phase 3.
 
