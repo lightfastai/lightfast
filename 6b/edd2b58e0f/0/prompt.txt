@@ -1,0 +1,13 @@
+question should we move to hoisted?
+
+---
+
+proceed
+
+---
+
+i think we should remove the workflow section from CLAUDE.md for good
+
+---
+
+yes update the versioning stuff in CLAUDE.md
