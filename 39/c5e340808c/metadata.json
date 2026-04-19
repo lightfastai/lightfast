@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "39c5e340808c",
+  "strategy": "manual-commit",
+  "branch": "fix/split-repo-lib-boundaries",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "vendor/lib/package.json"
+  ],
+  "sessions": [
+    {
+      "metadata": "/39/c5e340808c/0/metadata.json",
+      "transcript": "/39/c5e340808c/0/full.jsonl",
+      "content_hash": "/39/c5e340808c/0/content_hash.txt",
+      "prompt": ""
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 16100,
+    "cache_read_tokens": 4189824,
+    "output_tokens": 5476,
+    "api_call_count": 24
+  }
+}

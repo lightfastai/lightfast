@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "39c5e340808c",
+  "session_id": "125fea2d-7ae2-4e78-9da0-fefcb4bdc6ff",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T04:47:23.920057Z",
+  "branch": "fix/split-repo-lib-boundaries",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "vendor/lib/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "edc4a0662222",
+  "checkpoint_transcript_start": 533,
+  "transcript_lines_at_start": 533,
+  "token_usage": {
+    "input_tokens": 24,
+    "cache_creation_tokens": 16100,
+    "cache_read_tokens": 4189824,
+    "output_tokens": 5476,
+    "api_call_count": 24
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T04:47:23.450803Z",
+    "agent_lines": 1,
+    "agent_removed": 1,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1,
+    "total_lines_changed": 2,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
