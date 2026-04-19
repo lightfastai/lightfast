@@ -1,0 +1,21 @@
+/create_plan i've decided to move lightfast from fsl license to straight up MIT/Apache. can we discuss this.
+
+---
+
+APACHE 2.0 is good approach.
+
+Hmm, I think it would be siple if just standarise to 1 LICENSE instead of needing to handle apache + mit wouldnt you say so?
+
+honestly, i think in general i would just like to build open source software. fuck it. full send.
+
+---
+
+deep evalaute lightfast and value prop and decided whther apache or mit is better.
+
+---
+
+hmm maybe MIT for the core/*? would make sense tbh. and we keep platform stuff APACHE. what do you think
+
+---
+
+i dont think we even need LICENSING.md, cause the core/... should have it's own LICENSE files anyways. so all good.
