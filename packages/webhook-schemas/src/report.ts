@@ -36,8 +36,7 @@ function deepKeys(obj: unknown, prefix = ""): Set<string> {
   }
 
   if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; i++) {
-      const item = obj[i];
+    for (const item of obj) {
       if (item !== null && typeof item === "object") {
         for (const k of deepKeys(item, `${prefix}[]`)) {
           keys.add(k);
@@ -229,7 +228,7 @@ function analyzeVercelFixtures(fixtures: Fixture[]) {
         }
 
         const allSmallInts = values.every(
-          (v) => /^\d+$/.test(v) && Number.parseInt(v) < 100_000
+          (v) => /^\d+$/.test(v) && Number.parseInt(v, 10) < 100_000
         );
         return allSmallInts
           ? `PR number (small integer as string) — values: [${values.join(", ")}]`

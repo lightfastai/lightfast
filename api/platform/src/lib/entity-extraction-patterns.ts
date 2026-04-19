@@ -62,7 +62,7 @@ const EXTRACTION_PATTERNS: ExtractionPattern[] = [
     category: "reference",
     pattern: /\b([a-f0-9]{7,40})\b/g,
     confidence: 0.7,
-    keyExtractor: (m) => m[1]?.substring(0, 7) ?? "",
+    keyExtractor: (m) => m[1]?.slice(0, 7) ?? "",
     valueExtractor: (m) => m[1] ?? "",
   },
 
@@ -107,7 +107,7 @@ function extractEvidence(
   const start = Math.max(0, matchIndex - contextSize);
   const end = Math.min(text.length, matchIndex + matchLength + contextSize);
 
-  let evidence = text.substring(start, end);
+  let evidence = text.slice(start, end);
   if (start > 0) {
     evidence = `...${evidence}`;
   }
@@ -185,7 +185,7 @@ export function extractFromRelations(
     switch (rel.entityType) {
       case "commit":
         category = "commit";
-        key = rel.entityId.substring(0, 7);
+        key = rel.entityId.slice(0, 7);
         break;
       case "branch":
         category = "branch";

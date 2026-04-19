@@ -170,7 +170,7 @@ async function main() {
     mkdirSync(dir, { recursive: true });
 
     const filePath = join(dir, `${eventAction}.json`);
-    writeFileSync(filePath, JSON.stringify(payload, null, 2) + "\n");
+    writeFileSync(filePath, `${JSON.stringify(payload, null, 2)}\n`);
   }
 
   // Summary

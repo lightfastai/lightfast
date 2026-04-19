@@ -38,8 +38,7 @@ function deepKeys(obj: unknown, prefix = ""): Set<string> {
   }
 
   if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; i++) {
-      const item = obj[i];
+    for (const item of obj) {
       if (item !== null && typeof item === "object") {
         for (const k of deepKeys(item, `${prefix}[]`)) {
           keys.add(k);

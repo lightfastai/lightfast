@@ -80,33 +80,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-async function getLatestCommit(): Promise<{ hash: string; url: string }> {
-  try {
-    const res = await fetch(
-      "https://api.github.com/repos/lightfastai/.lightfast/commits?per_page=1",
-      {
-        headers: { Accept: "application/vnd.github.v3+json" },
-        next: { revalidate: 3600 },
-      }
-    );
-    if (!res.ok) {
-      throw new Error(`GitHub API ${res.status}`);
-    }
-    const [commit] = (await res.json()) as [{ sha: string }];
-    return {
-      hash: commit.sha.slice(0, 7),
-      url: `https://github.com/lightfastai/.lightfast/commit/${commit.sha}`,
-    };
-  } catch {
-    return {
-      hash: "unknown",
-      url: "https://github.com/lightfastai/.lightfast",
-    };
-  }
-}
-
 export default async function HomePage() {
-  const { hash, url } = await getLatestCommit();
   // Build organization entity
   const organizationEntity: Organization = {
     "@type": "Organization",

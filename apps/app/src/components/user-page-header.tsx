@@ -43,13 +43,13 @@ export function UserPageHeader() {
       return `${firstName[0]}${lastName[0]}`.toUpperCase();
     }
     if (firstName) {
-      return firstName.substring(0, 2).toUpperCase();
+      return firstName.slice(0, 2).toUpperCase();
     }
     if (lastName) {
-      return lastName.substring(0, 2).toUpperCase();
+      return lastName.slice(0, 2).toUpperCase();
     }
     if (username) {
-      return username.substring(0, 2).toUpperCase();
+      return username.slice(0, 2).toUpperCase();
     }
     return "LF";
   })();

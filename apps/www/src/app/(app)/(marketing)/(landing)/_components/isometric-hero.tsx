@@ -18,8 +18,6 @@ const bounds = shapeBounds(shape);
 const PAD = 4;
 const vx = bounds.minX - PAD;
 const vy = bounds.minY - PAD;
-const vw = bounds.maxX - bounds.minX + PAD * 2;
-const vh = bounds.maxY - bounds.minY + PAD * 2;
 
 // Golden-ratio framing — focal point at upper-RIGHT power point
 const PHI_INV_SQ = 0.381_966_011_250_105_1;

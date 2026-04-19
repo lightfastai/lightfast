@@ -86,7 +86,6 @@ export const LegalPageSchema = BasePageSchema.extend({
   effectiveAt: z.iso.datetime(),
 });
 
-const IntegrationStatusSchema = z.enum(["live", "beta", "planned"]);
 const IntegrationCategorySchema = z.enum([
   "dev-tools",
   "monitoring",

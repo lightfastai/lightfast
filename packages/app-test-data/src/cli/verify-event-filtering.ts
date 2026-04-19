@@ -43,7 +43,7 @@ function normalizeEventType(source: string, eventType: string): string {
   if (source === "github") {
     const dotIndex = eventType.indexOf(".");
     if (dotIndex > 0) {
-      const base = eventType.substring(0, dotIndex);
+      const base = eventType.slice(0, dotIndex);
       const configBase = base.replace(/-/g, "_");
       return configBase === "issue" ? "issues" : configBase;
     }
@@ -64,7 +64,7 @@ function normalizeEventType(source: string, eventType: string): string {
   if (source === "linear") {
     const colonIndex = eventType.indexOf(":");
     if (colonIndex > 0) {
-      return eventType.substring(0, colonIndex);
+      return eventType.slice(0, colonIndex);
     }
     return eventType;
   }

@@ -18,7 +18,7 @@ export interface WebhookPayload {
  * Generate a unique delivery ID for test webhooks
  */
 const generateDeliveryId = (): string => {
-  return `test-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
+  return `test-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 };
 
 /**
