@@ -3,7 +3,7 @@
   "checkpoint_id": "9f51b4928121",
   "strategy": "manual-commit",
   "branch": "chore/core-packages-upgrade-phase-b",
-  "checkpoints_count": 1,
+  "checkpoints_count": 4,
   "files_touched": [
     "package.json",
     "pnpm-lock.yaml",
@@ -21,13 +21,19 @@
       "transcript": "/9f/51b4928121/1/full.jsonl",
       "content_hash": "/9f/51b4928121/1/content_hash.txt",
       "prompt": "/9f/51b4928121/1/prompt.txt"
+    },
+    {
+      "metadata": "/9f/51b4928121/2/metadata.json",
+      "transcript": "/9f/51b4928121/2/full.jsonl",
+      "content_hash": "/9f/51b4928121/2/content_hash.txt",
+      "prompt": "/9f/51b4928121/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 55,
-    "cache_creation_tokens": 163043,
-    "cache_read_tokens": 1390010,
-    "output_tokens": 31271,
-    "api_call_count": 30
+    "input_tokens": 101,
+    "cache_creation_tokens": 252287,
+    "cache_read_tokens": 2251760,
+    "output_tokens": 38444,
+    "api_call_count": 51
   }
 }
