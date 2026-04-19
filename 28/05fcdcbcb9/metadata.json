@@ -3,7 +3,7 @@
   "checkpoint_id": "2805fcdcbcb9",
   "strategy": "manual-commit",
   "branch": "chore/core-packages-upgrade-phase-c",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "api/platform/src/inngest/platform.ts",
     "apps/platform/src/lib/internal-caller.ts",
@@ -22,13 +22,19 @@
       "transcript": "/28/05fcdcbcb9/1/full.jsonl",
       "content_hash": "/28/05fcdcbcb9/1/content_hash.txt",
       "prompt": "/28/05fcdcbcb9/1/prompt.txt"
+    },
+    {
+      "metadata": "/28/05fcdcbcb9/2/metadata.json",
+      "transcript": "/28/05fcdcbcb9/2/full.jsonl",
+      "content_hash": "/28/05fcdcbcb9/2/content_hash.txt",
+      "prompt": "/28/05fcdcbcb9/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 154,
-    "cache_creation_tokens": 266000,
-    "cache_read_tokens": 7972531,
-    "output_tokens": 35218,
-    "api_call_count": 115
+    "input_tokens": 156,
+    "cache_creation_tokens": 285154,
+    "cache_read_tokens": 8206087,
+    "output_tokens": 54811,
+    "api_call_count": 117
   }
 }
