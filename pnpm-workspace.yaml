@@ -36,7 +36,7 @@ catalog:
   drizzle-orm: ^0.45.2
   drizzle-zod: ^0.8.3
   geist: ^1.7.0
-  hono: ^4.12.5
+  hono: ^4.12.14
   import-in-the-middle: ^1.8.1
   inngest: ^3.52.6
   jose: ^6.2.2
