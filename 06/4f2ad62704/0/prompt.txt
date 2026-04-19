@@ -1,0 +1,30 @@
+research why https://vercel.com/lightfast/lightfast-app/REDACTED has been failing. with t/app:build:   · staleTimes
+@lightfast/app:build: 
+@lightfast/app:build:   Creating an optimized production build ...
+@lightfast/app:build: [@sentry/nextjs] DEPRECATION WARNING: disableLogger is deprecated and will be removed in a future version. Use webpack.treeshake.removeDebugLogging instead. (Not supported with Turbopack.)
+@lightfast/app:build: [@sentry/nextjs] DEPRECATION WARNING: automaticVercelMonitors is deprecated and will be removed in a future version. Use webpack.automaticVercelMonitors instead. (Not supported with Turbopack.)
+@lightfast/app:build: [@sentry/nextjs] DEPRECATION WARNING: reactComponentAnnotation is deprecated and will be removed in a future version. Use webpack.reactComponentAnnotation instead. (Not supported with Turbopack.)
+@lightfast/app:build: 
+@lightfast/app:build: > Build error occurred
+@lightfast/app:build: Error: Turbopack build failed with 1 errors:
+@lightfast/app:build: ./node_modules/.pnpm/@hookform+resolvers@5.2.2_react-hook-form@7.72.1_react@19.2.5_/node_modules/@hookform/resolvers/zod/dist/zod.mjs:1:127
+@lightfast/app:build: Module not found: Can't resolve 'zod/v4/core'
+@lightfast/app:build: > 1 | ...s as o}from"react-hook-form";import*as n from"zod/v4/core";function t(r,e){try{var o=r()...
+@lightfast/app:build:     |                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+@lightfast/app:build:   2 | ...
+@lightfast/app:build:   3 | ...
+@lightfast/app:build: 
+@lightfast/app:build: 
+@lightfast/app:build:
+
+---
+
+let's try 2
+
+---
+
+1.
+
+---
+
+/oneshot_merge
