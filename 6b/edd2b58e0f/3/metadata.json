@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6bedd2b58e0f",
+  "session_id": "e98accd2-95f0-4d48-93b1-73602be6b56f",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T10:08:15.088653Z",
+  "branch": "chore/core-packages-upgrade-phase-d",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "packages/webhook-schemas/package.json",
+    "pnpm-workspace.yaml",
+    "thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-d.md",
+    "thoughts/shared/research/2026-04-19-vendor-lib-errors-usage.md",
+    "vendor/db/package.json",
+    "vendor/lib/src/datetime/index.ts",
+    "apps/app/package.json",
+    "vendor/lib/src/errors.ts",
+    "vendor/lib/src/index.ts",
+    "vendor/lib/src/pretty-project-name.ts",
+    "vendor/lib/src/uuid.ts",
+    "vendor/security/package.json",
+    "core/ai-sdk/package.json",
+    "db/app/package.json",
+    "packages/app-test-data/package.json",
+    "thoughts/shared/plans/2026-04-19-collapse-vendor-lib-to-nanoid.md",
+    "vendor/lib/package.json",
+    "pnpm-lock.yaml",
+    "apps/platform/package.json",
+    "apps/www/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "afbe6d5800ad",
+  "token_usage": {
+    "input_tokens": 55,
+    "cache_creation_tokens": 247947,
+    "cache_read_tokens": 4331522,
+    "output_tokens": 42437,
+    "api_call_count": 45
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T10:08:14.562369Z",
+    "agent_lines": 461,
+    "agent_removed": 511,
+    "human_added": 13,
+    "human_modified": 194,
+    "human_removed": 0,
+    "total_committed": 668,
+    "total_lines_changed": 1179,
+    "agent_percentage": 82.44274809160305,
+    "metric_version": 2
+  }
+}

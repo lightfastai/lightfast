@@ -21,8 +21,10 @@
     "vendor/lib/package.json",
     "vendor/lib/src/datetime/index.ts",
     "vendor/lib/src/errors.ts",
+    "vendor/lib/src/index.ts",
     "vendor/lib/src/pretty-project-name.ts",
-    "vendor/lib/src/uuid.ts"
+    "vendor/lib/src/uuid.ts",
+    "vendor/security/package.json"
   ],
   "sessions": [
     {
@@ -42,13 +44,19 @@
       "transcript": "/6b/edd2b58e0f/2/full.jsonl",
       "content_hash": "/6b/edd2b58e0f/2/content_hash.txt",
       "prompt": "/6b/edd2b58e0f/2/prompt.txt"
+    },
+    {
+      "metadata": "/6b/edd2b58e0f/3/metadata.json",
+      "transcript": "/6b/edd2b58e0f/3/full.jsonl",
+      "content_hash": "/6b/edd2b58e0f/3/content_hash.txt",
+      "prompt": "/6b/edd2b58e0f/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 125,
-    "cache_creation_tokens": 385828,
-    "cache_read_tokens": 4966589,
-    "output_tokens": 74808,
-    "api_call_count": 80
+    "input_tokens": 180,
+    "cache_creation_tokens": 633775,
+    "cache_read_tokens": 9298111,
+    "output_tokens": 117245,
+    "api_call_count": 125
   }
 }
