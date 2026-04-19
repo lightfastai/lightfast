@@ -1,0 +1,49 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6bedd2b58e0f",
+  "session_id": "94c0d1b9-09a6-455c-90f7-2f6b51fcdb0c",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T10:08:08.419422Z",
+  "branch": "chore/core-packages-upgrade-phase-d",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/app/package.json",
+    "apps/platform/package.json",
+    "apps/www/package.json",
+    "core/ai-sdk/package.json",
+    "db/app/package.json",
+    "packages/app-test-data/package.json",
+    "packages/webhook-schemas/package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "thoughts/shared/plans/2026-04-19-collapse-vendor-lib-to-nanoid.md",
+    "thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-d.md",
+    "vendor/db/package.json",
+    "vendor/lib/package.json"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "0002f9a538f7",
+  "token_usage": {
+    "input_tokens": 37,
+    "cache_creation_tokens": 183065,
+    "cache_read_tokens": 762174,
+    "output_tokens": 35396,
+    "api_call_count": 12
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T10:08:07.900176Z",
+    "agent_lines": 337,
+    "agent_removed": 132,
+    "human_added": 19,
+    "human_modified": 378,
+    "human_removed": 0,
+    "total_committed": 666,
+    "total_lines_changed": 1143,
+    "agent_percentage": 41.032370953630796,
+    "metric_version": 2
+  }
+}
