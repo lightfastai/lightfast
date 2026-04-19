@@ -47,7 +47,7 @@
     "@inquirer/select": "^4.0.0",
     "@t3-oss/env-core": "catalog:",
     "commander": "^13.1.0",
-    "eventsource-parser": "^3.0.0",
+    "eventsource-parser": "^3.0.7",
     "open": "^10.1.0",
     "ora": "^8.1.1",
     "picocolors": "^1.1.0",

@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@octokit/openapi-types": "^26.0.0",
-    "@octokit/plugin-retry": "^8.0.3",
+    "@octokit/plugin-retry": "^8.1.0",
     "@octokit/plugin-throttling": "^11.0.3",
     "@t3-oss/env-nextjs": "catalog:",
     "octokit": "^5.0.5",

@@ -43,7 +43,7 @@
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.12",
-    "@changesets/cli": "^2.30.0",
+    "@changesets/cli": "^2.31.0",
     "knip": "^5.85.0",
     "turbo": "2.9.6",
     "turbo-ignore": "2.9.6",
@@ -58,6 +58,7 @@
       "@types/react": "^19.2.14",
       "@types/react-dom": "^19.2.3",
       "@types/minimatch": "5.1.2",
+      "@opentelemetry/api": "1.9.1",
       "zod-to-json-schema>zod": "^3.25.76",
       "tar": "^7.5.8",
       "basic-ftp": "^5.2.0",
