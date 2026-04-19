@@ -27,3 +27,7 @@ whats left?
 ---
 
 proceed
+
+---
+
+proceed with both
