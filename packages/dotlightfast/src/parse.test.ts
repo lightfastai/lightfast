@@ -199,7 +199,6 @@ describe("parseDotLightfast — frontmatter resilience", () => {
         "skills/broken/SKILL.md": { type: "file", content: skillContent },
       })
     );
-    // biome-ignore lint/suspicious/noMisplacedAssertion: expectSkipped is a test helper invoked from each it()
     expect(result.skills).toEqual([]);
   };
 

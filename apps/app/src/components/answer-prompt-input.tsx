@@ -15,8 +15,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import type { ChatStatus } from "ai";
 import { ArrowUp } from "lucide-react";
-import type { FormEvent } from "react";
-import { forwardRef } from "react";
+import type { FormEvent, RefObject } from "react";
 
 interface AnswerPromptInputProps {
   className?: string;
@@ -26,6 +25,7 @@ interface AnswerPromptInputProps {
     event: FormEvent<HTMLFormElement>
   ) => Promise<void>;
   placeholder: string;
+  ref?: RefObject<PromptInputRef | null>;
   status: ChatStatus;
   submitDisabledReason?: string;
 }
@@ -35,20 +35,15 @@ interface AnswerPromptInputProps {
  * Simplified version of ChatPromptInput without attachments, web search, or model selection.
  * Consolidates the shared input configuration for the answer interface.
  */
-export const AnswerPromptInput = forwardRef<
-  PromptInputRef,
-  AnswerPromptInputProps
->(function AnswerPromptInput(
-  {
-    placeholder,
-    onSubmit,
-    status,
-    isSubmitDisabled,
-    submitDisabledReason,
-    className,
-  },
-  ref
-) {
+export function AnswerPromptInput({
+  placeholder,
+  onSubmit,
+  status,
+  isSubmitDisabled,
+  submitDisabledReason,
+  className,
+  ref,
+}: AnswerPromptInputProps) {
   return (
     <PromptInput
       className={cn(
@@ -90,6 +85,4 @@ export const AnswerPromptInput = forwardRef<
       </PromptInputToolbar>
     </PromptInput>
   );
-});
-
-AnswerPromptInput.displayName = "AnswerPromptInput";
+}

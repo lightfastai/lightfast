@@ -26,10 +26,6 @@
       "types": "./src/constants/index.ts",
       "default": "./src/constants/index.ts"
     },
-    "./utils": {
-      "types": "./src/utils/index.ts",
-      "default": "./src/utils/index.ts"
-    },
     "./api": {
       "types": "./src/schemas/api/index.ts",
       "default": "./src/schemas/api/index.ts"
