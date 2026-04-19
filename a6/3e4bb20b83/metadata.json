@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "a63e4bb20b83",
+  "strategy": "manual-commit",
+  "branch": "fix/split-repo-lib-boundaries",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "api/app/package.json",
+    "api/app/src/lib/token-vault.ts",
+    "api/platform/package.json",
+    "api/platform/src/inngest/functions/connection-lifecycle.ts",
+    "api/platform/src/inngest/functions/token-refresh.ts",
+    "api/platform/src/lib/token-helpers.ts",
+    "api/platform/src/lib/token-store.ts",
+    "packages/app-encryption/ENCRYPTION.md",
+    "packages/app-encryption/package.json",
+    "packages/app-encryption/src/encryption.test.ts",
+    "packages/app-encryption/src/encryption.ts",
+    "packages/app-encryption/src/index.ts",
+    "packages/app-encryption/tsconfig.json",
+    "packages/app-encryption/turbo.json",
+    "packages/app-encryption/vitest.config.ts",
+    "packages/lib/ENCRYPTION.md",
+    "packages/lib/src/encryption.test.ts",
+    "packages/lib/src/encryption.ts",
+    "packages/lib/src/index.ts",
+    "thoughts/shared/plans/2026-04-19-fix-ci-turbo-boundaries-vendor-lib.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/a6/3e4bb20b83/0/metadata.json",
+      "transcript": "/a6/3e4bb20b83/0/full.jsonl",
+      "content_hash": "/a6/3e4bb20b83/0/content_hash.txt",
+      "prompt": "/a6/3e4bb20b83/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 142,
+    "cache_creation_tokens": 112280,
+    "cache_read_tokens": 13606707,
+    "output_tokens": 35441,
+    "api_call_count": 128
+  }
+}
