@@ -3,7 +3,7 @@
   "checkpoint_id": "951ea9ddb069",
   "strategy": "manual-commit",
   "branch": "chore/core-packages-upgrade-phase-c",
-  "checkpoints_count": 5,
+  "checkpoints_count": 6,
   "files_touched": [
     "knip.json"
   ],
@@ -19,13 +19,19 @@
       "transcript": "/95/1ea9ddb069/1/full.jsonl",
       "content_hash": "/95/1ea9ddb069/1/content_hash.txt",
       "prompt": "/95/1ea9ddb069/1/prompt.txt"
+    },
+    {
+      "metadata": "/95/1ea9ddb069/2/metadata.json",
+      "transcript": "/95/1ea9ddb069/2/full.jsonl",
+      "content_hash": "/95/1ea9ddb069/2/content_hash.txt",
+      "prompt": "/95/1ea9ddb069/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 180,
-    "cache_creation_tokens": 279012,
-    "cache_read_tokens": 8770207,
-    "output_tokens": 38808,
-    "api_call_count": 127
+    "input_tokens": 186,
+    "cache_creation_tokens": 398360,
+    "cache_read_tokens": 8787483,
+    "output_tokens": 39482,
+    "api_call_count": 128
   }
 }
