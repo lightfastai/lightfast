@@ -202,15 +202,15 @@ Two catalog entries declared in `pnpm-workspace.yaml` have zero `catalog:` consu
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds
-- [ ] `pnpm knip --no-exit-code` no longer reports `Unused catalog entries`
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm install` succeeds
+- [x] `pnpm knip --no-exit-code` no longer reports `Unused catalog entries`
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
 
 #### Manual Verification:
 
-- [ ] `pnpm list @electric-sql/pglite -r` reports no resolutions (or only unrelated transitive hits)
-- [ ] `pnpm list neverthrow -r` reports no workspace consumers
+- [x] `pnpm list @electric-sql/pglite -r` reports no resolutions
+- [x] `pnpm list neverthrow -r` reports no workspace consumers
 
 **Implementation Note**: After Phase 3 passes, commit and pause for human confirmation before Phase 4.
 
