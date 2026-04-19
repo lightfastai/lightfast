@@ -214,6 +214,16 @@ When reporting issues, please include:
 
 ## License
 
-By contributing to Lightfast, you agree that your contributions will be licensed under the Functional Source License, Version 1.1 (FSL-1.1-ALv2).
+Lightfast is Apache 2.0 for the platform and MIT for the SDKs and shared libraries. By contributing, you agree that your contribution is licensed under the same license as the file(s) you are modifying (as declared by the nearest `package.json` `license` field, or the repository-root `LICENSE` if none applies).
+
+### Developer Certificate of Origin (DCO)
+
+All commits must be signed off per the [Developer Certificate of Origin](https://developercertificate.org/). Add `Signed-off-by: Your Name <your.email@example.com>` to every commit:
+
+```bash
+git commit -s -m "your commit message"
+```
+
+The `-s` flag adds the trailer automatically using your `git config user.name` and `user.email`. PRs without DCO sign-off on every commit will be blocked by automation.
 
 Thank you for contributing to Lightfast!

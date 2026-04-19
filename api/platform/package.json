@@ -26,7 +26,7 @@
       "default": "./src/internal.ts"
     }
   },
-  "license": "FSL-1.1-Apache-2.0",
+  "license": "Apache-2.0",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
     "test": "vitest run",
