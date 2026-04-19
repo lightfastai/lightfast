@@ -530,7 +530,7 @@ The expected pattern is `createHighlighter` / `codeToHtml` / `bundledLanguages` 
 
 ---
 
-## Phase 8: lucide-react 1.x
+## Phase 8: lucide-react 1.x [DONE]
 
 ### Overview
 
@@ -590,13 +590,13 @@ rg 'DynamicIcon' apps packages vendor
 
 #### Automated Verification:
 
-- [ ] Step 3 guard greps return zero results (post-edit)
-- [ ] `pnpm install` succeeds
-- [ ] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes — TS catches any missed removed-icon reference
-- [ ] `SKIP_ENV_VALIDATION=true pnpm test` passes
-- [ ] `pnpm build:app` succeeds
-- [ ] `pnpm build:www` succeeds (only workspace requiring source edits in this phase)
-- [ ] `pnpm build:platform` succeeds (platform does not use lucide-react directly but shares lockfile)
+- [x] Step 3 guard greps return zero results (post-edit)
+- [x] `pnpm install` succeeds
+- [x] `SKIP_ENV_VALIDATION=true pnpm typecheck` passes — TS catches any missed removed-icon reference
+- [x] `SKIP_ENV_VALIDATION=true pnpm test` passes
+- [x] `pnpm build:app` succeeds
+- [x] `pnpm build:www` succeeds (only workspace requiring source edits in this phase)
+- [x] `pnpm build:platform` succeeds (platform does not use lucide-react directly but shares lockfile)
 
 #### Manual Verification:
 
@@ -606,6 +606,8 @@ rg 'DynamicIcon' apps packages vendor
 - [ ] Dark/light mode icon coloring unchanged (lucide uses `currentColor`, should be unaffected)
 
 **Implementation Note**: After Phase 8 passes, commit and pause for human confirmation before Phase 9.
+
+**2026-04-19 implementation finding:** Spike-predicted scope held — exactly 3 removed brand icons across 2 files, all in `apps/www`. Replaced `Twitter`/`Linkedin` inline in `blog-social-share.tsx` and `Github` in `developer-platform-landing.tsx` with local SVG components (simple-icons paths, `currentColor` fill, `SVGProps<SVGSVGElement>` typing). In `developer-platform-landing.tsx`, the `NavCard.icon` field was typed as `LucideIcon` — broadened to `ComponentType<SVGProps<SVGSVGElement>>` so both lucide icons and the local `GithubIcon` satisfy it. No other workspace required edits; `packages/ui` and `apps/app` typecheck clean against `lucide-react@^1.8.0`. Sherif, typecheck, tests, and builds (app + www + platform) all pass.
 
 ---
 
