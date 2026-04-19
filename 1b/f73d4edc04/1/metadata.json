@@ -1,0 +1,24 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "1bf73d4edc04",
+  "session_id": "29bf6fea-b3fd-473b-b110-00cd0a713767",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T05:47:36.07431Z",
+  "branch": "chore/core-packages-upgrade-phase-c",
+  "checkpoints_count": 0,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "turn_id": "6d054cabd473",
+  "checkpoint_transcript_start": 127,
+  "transcript_lines_at_start": 127,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 2
+  }
+}
