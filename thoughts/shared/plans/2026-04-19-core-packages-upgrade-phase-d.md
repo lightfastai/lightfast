@@ -611,7 +611,7 @@ rg 'DynamicIcon' apps packages vendor
 
 ---
 
-## Phase 9: Final Verification & Audit Snapshot
+## Phase 9: Final Verification & Audit Snapshot [DONE]
 
 ### Overview
 
@@ -664,8 +664,8 @@ pkill -f "next dev"
 
 #### Automated Verification:
 
-- [ ] All Phase 1-8 automated checks still pass with the final combined lockfile
-- [ ] `pnpm audit --prod` total ≤ 43 (one advisory cleared via hono CVE bump)
+- [x] All Phase 1-8 automated checks still pass with the final combined lockfile
+- [x] `pnpm audit --prod` total ≤ 43 (one advisory cleared via hono CVE bump)
 
 #### Manual Verification:
 
@@ -677,6 +677,8 @@ pkill -f "next dev"
 - [ ] CSP headers on `/` include expected directives (nosecone 1.4)
 
 **Implementation Note**: Once Phase 9 passes, Phase D is complete. Phase E (UI heavyweights) opens next; Phase F (AI runtime) and Phase G (typescript 5→6, @types/node 24→25) follow.
+
+**2026-04-19 implementation finding:** Full workspace gate passes end-to-end on the combined Phase D.1–D.8 lockfile: install, typecheck (53/53), test (12/12), build:app + build:platform + build:www, `pnpm lint:ws`, `pnpm knip --no-exit-code` all green with no new findings beyond the known baseline (2 unused deps, 1 unused devDep, 9 unused exports, 7 unused exported types, 2 config hints in `.agents`/`.claude` — all pre-existing). `pnpm audit --prod` reports **31 vulnerabilities** (1 low, 15 moderate, 12 high, 3 critical) — down from the Phase B baseline of **44**, a drop of 13. `GHSA-458j-xx4x-4375` (hono/jsx SSR HTML injection) is no longer present. Manual dev-server smoke test deferred.
 
 ---
 
