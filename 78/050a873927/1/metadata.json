@@ -1,0 +1,44 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "78050a873927",
+  "session_id": "29bf6fea-b3fd-473b-b110-00cd0a713767",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T05:46:39.110474Z",
+  "branch": "chore/core-packages-upgrade-phase-c",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/app/package.json",
+    "api/platform/package.json",
+    "apps/www/package.json",
+    "packages/app-ai/package.json",
+    "pnpm-lock.yaml",
+    "thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-c.md",
+    "vendor/observability/package.json"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "6d054cabd473",
+  "checkpoint_transcript_start": 63,
+  "transcript_lines_at_start": 63,
+  "token_usage": {
+    "input_tokens": 2480,
+    "cache_creation_tokens": 32837,
+    "cache_read_tokens": 1038662,
+    "output_tokens": 13670,
+    "api_call_count": 10
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T05:46:38.80547Z",
+    "agent_lines": 13,
+    "agent_removed": 35,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 13,
+    "total_lines_changed": 48,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
