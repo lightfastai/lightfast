@@ -9,28 +9,28 @@
  *   cd packages/webhook-schemas && pnpm validate
  */
 
-import {
-  preTransformVercelWebhookPayloadSchema,
-  preTransformGitHubPullRequestEventSchema,
-  preTransformGitHubIssuesEventSchema,
-  preTransformGitHubIssueCommentEventSchema,
-} from "@repo/app-providers";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  preTransformGitHubIssueCommentEventSchema,
+  preTransformGitHubIssuesEventSchema,
+  preTransformGitHubPullRequestEventSchema,
+  preTransformVercelWebhookPayloadSchema,
+} from "@repo/app-providers";
 import type { ZodType } from "zod";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
 interface Fixture {
-  provider: string;
+  data: Record<string, unknown>;
   eventType: string;
   path: string;
-  data: Record<string, unknown>;
+  provider: string;
 }
 
 // ── Deep key extraction ─────────────────────────────────────────────────────
 
-function deepKeys(obj: unknown, prefix: string = ""): Set<string> {
+function deepKeys(obj: unknown, prefix = ""): Set<string> {
   const keys = new Set<string>();
 
   if (obj === null || obj === undefined || typeof obj !== "object") {
@@ -66,14 +66,19 @@ function deepKeys(obj: unknown, prefix: string = ""): Set<string> {
 // ── Schema mapping ──────────────────────────────────────────────────────────
 
 function getSchema(provider: string, eventType: string): ZodType | null {
-  if (provider === "vercel") return preTransformVercelWebhookPayloadSchema;
+  if (provider === "vercel") {
+    return preTransformVercelWebhookPayloadSchema;
+  }
   if (provider === "github") {
-    if (eventType.startsWith("pull_request"))
+    if (eventType.startsWith("pull_request")) {
       return preTransformGitHubPullRequestEventSchema;
-    if (eventType.startsWith("issues"))
+    }
+    if (eventType.startsWith("issues")) {
       return preTransformGitHubIssuesEventSchema;
-    if (eventType.startsWith("issue_comment"))
+    }
+    if (eventType.startsWith("issue_comment")) {
       return preTransformGitHubIssueCommentEventSchema;
+    }
   }
   return null;
 }
@@ -152,9 +157,7 @@ function main() {
     } else {
       console.log(`\x1b[31m✗\x1b[0m ${fixture.path} — PARSE FAILED`);
       for (const issue of result.error.issues) {
-        console.log(
-          `    ${issue.path.join(".")}: ${issue.message}`
-        );
+        console.log(`    ${issue.path.join(".")}: ${issue.message}`);
       }
       failCount++;
     }

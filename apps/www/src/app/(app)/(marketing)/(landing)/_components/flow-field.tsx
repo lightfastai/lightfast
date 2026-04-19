@@ -12,24 +12,28 @@ const SEED = 1337;
 function mulberry32(seed: number) {
   let a = seed >>> 0;
   return () => {
-    a = (a + 0x6d2b79f5) >>> 0;
+    a = (a + 0x6d_2b_79_f5) >>> 0;
     let t = a;
     t = Math.imul(t ^ (t >>> 15), t | 1);
     t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    return ((t ^ (t >>> 14)) >>> 0) / 4_294_967_296;
   };
 }
 
 const PERM = (() => {
   const rand = mulberry32(SEED);
   const p = new Uint8Array(256);
-  for (let i = 0; i < 256; i++) p[i] = i;
+  for (let i = 0; i < 256; i++) {
+    p[i] = i;
+  }
   for (let i = 255; i > 0; i--) {
     const j = Math.floor(rand() * (i + 1));
     [p[i], p[j]] = [p[j]!, p[i]!];
   }
   const ext = new Uint8Array(512);
-  for (let i = 0; i < 512; i++) ext[i] = p[i & 255]!;
+  for (let i = 0; i < 512; i++) {
+    ext[i] = p[i & 255]!;
+  }
   return ext;
 })();
 
@@ -66,7 +70,7 @@ function perlin2(x: number, y: number) {
   return lerp(
     lerp(grad(PERM[A]!, xf, yf), grad(PERM[B]!, xf - 1, yf), u),
     lerp(grad(PERM[A + 1]!, xf, yf - 1), grad(PERM[B + 1]!, xf - 1, yf - 1), u),
-    v,
+    v
   );
 }
 

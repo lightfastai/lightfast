@@ -159,11 +159,11 @@ function JobRow({ job }: JobRowProps) {
               <span className="text-sm capitalize">{job.status}</span>
             </div>
             <span className="text-muted-foreground text-xs">
-              {job.durationMs !== null
-                ? formatDuration(Number.parseInt(job.durationMs, 10))
-                : job.status === "running"
+              {job.durationMs === null
+                ? job.status === "running"
                   ? "In progress"
-                  : "—"}
+                  : "—"
+                : formatDuration(Number.parseInt(job.durationMs, 10))}
             </span>
           </div>
 

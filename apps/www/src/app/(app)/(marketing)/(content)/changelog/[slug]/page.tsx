@@ -93,12 +93,12 @@ export default async function ChangelogEntryPage({ params }: Props) {
 
         <h2 className="pb-8 font-medium font-pp text-2xl">{title}</h2>
 
-        <p className="font-mono hidden text-muted-foreground text-xs uppercase tracking-wider">
+        <p className="hidden font-mono text-muted-foreground text-xs uppercase tracking-wider">
           {type}
         </p>
 
         {featuredImage && (
-          <div className="-mx-24 relative aspect-16/9 overflow-hidden rounded-lg bg-card">
+          <div className="relative -mx-24 aspect-16/9 overflow-hidden rounded-lg bg-card">
             <Image
               alt={title}
               className="h-full w-full object-cover"
@@ -154,7 +154,7 @@ export default async function ChangelogEntryPage({ params }: Props) {
         )}
 
         {description && (
-          <p className="pt-4 hidden text-muted-foreground text-sm leading-relaxed">
+          <p className="hidden pt-4 text-muted-foreground text-sm leading-relaxed">
             {description}
           </p>
         )}

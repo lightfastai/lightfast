@@ -2,12 +2,12 @@ import {
   lissajousPoints as computeLissajousPoints,
   LOGO_CURVE,
 } from "@repo/ui/lib/brand";
+import type { Box3D, Vec2 } from "@repo/ui/lib/iso";
+import { createBox, facePath, project, shapeBounds } from "@repo/ui/lib/iso";
 import { AbsoluteFill, continueRender, delayRender } from "@vendor/remotion";
 import type React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { ensureFontsLoaded } from "../landing-hero/shared/fonts";
-import type { Box3D, Vec2 } from "@repo/ui/lib/iso";
-import { createBox, facePath, project, shapeBounds } from "@repo/ui/lib/iso";
 
 const CANVAS_W = 1200;
 const CANVAS_H = 675;
@@ -48,7 +48,9 @@ const bottomZ = BOX.z;
 const topZB = BOX.z + BOX.d;
 const leftCorner = isoToCanvas(project(BOX.x, BOX.y + BOX.h, bottomZ));
 const rightCorner = isoToCanvas(project(BOX.x + BOX.w, BOX.y, bottomZ));
-const bottomCorner = isoToCanvas(project(BOX.x + BOX.w, BOX.y + BOX.h, bottomZ));
+const bottomCorner = isoToCanvas(
+  project(BOX.x + BOX.w, BOX.y + BOX.h, bottomZ)
+);
 const topCorner = isoToCanvas(project(BOX.x, BOX.y, topZB));
 
 // Pixel offset for the box SVG so its focal point lands on the anchor.

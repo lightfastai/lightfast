@@ -158,7 +158,7 @@ export function composeCspOptions(...configs: PartialCspDirectives[]): Options {
     } else if (userValue) {
       // MERGE: other directives merge with defaults (extends them)
       mergedDirectives[key] = mergeDirectives(
-        safeDefault != null ? ([...safeDefault] as Source[]) : [],
+        safeDefault == null ? [] : ([...safeDefault] as Source[]),
         userValue
       );
     } else if (safeDefault != null) {

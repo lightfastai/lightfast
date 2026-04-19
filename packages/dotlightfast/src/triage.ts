@@ -11,14 +11,14 @@ export const TriageDecisionSchema = z.object({
 export type TriageDecision = z.infer<typeof TriageDecisionSchema>;
 
 export interface TriageEventContext {
-  externalId: string;
-  source: string;
-  sourceType: string;
-  observationType: string;
-  title: string;
   content: string;
+  externalId: string;
+  observationType: string;
   occurredAt: string;
   significanceScore: number;
+  source: string;
+  sourceType: string;
+  title: string;
 }
 
 export function buildTriageSystemPrompt(config: DotLightfastConfig): string {
@@ -27,7 +27,7 @@ export function buildTriageSystemPrompt(config: DotLightfastConfig): string {
   parts.push(
     "You are Lightfast's triage agent. For each event you receive, decide whether any configured skill should run.",
     "Output one of: skip (no skill is appropriate) or invoke (select exactly one skill by name).",
-    "Be decisive. If no skill clearly applies, pick skip.",
+    "Be decisive. If no skill clearly applies, pick skip."
   );
 
   if (config.spec) {
@@ -48,7 +48,7 @@ export function buildTriageSystemPrompt(config: DotLightfastConfig): string {
     "## Output rules",
     "- If you choose invoke, skillName MUST exactly match one of the skill names above.",
     "- If you choose skip, omit skillName.",
-    "- reasoning must be one or two short sentences explaining your choice.",
+    "- reasoning must be one or two short sentences explaining your choice."
   );
 
   return parts.join("\n");

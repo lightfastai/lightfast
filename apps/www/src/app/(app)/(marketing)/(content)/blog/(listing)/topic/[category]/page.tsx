@@ -98,9 +98,7 @@ export default async function BlogCategoryPage({ params }: Props) {
                 className="block"
                 href={`/blog/${page.slugs[0]}` as Route}
               >
-                <h2 className="mb-1 font-base text-md">
-                  {page.data.title}
-                </h2>
+                <h2 className="mb-1 font-base text-md">{page.data.title}</h2>
                 <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
                   {page.data.description}
                 </p>

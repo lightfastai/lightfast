@@ -8,10 +8,10 @@
  *   cd packages/webhook-schemas && pnpm capture
  */
 
+import { mkdirSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
 import { db } from "@db/app/client";
 import { gatewayWebhookDeliveries } from "@db/app/schema";
-import { writeFileSync, mkdirSync } from "node:fs";
-import { join } from "node:path";
 import { and, isNotNull, sql } from "drizzle-orm";
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -26,11 +26,7 @@ type JsonValue =
 
 // ── PII Sanitization ────────────────────────────────────────────────────────
 
-const AUTHOR_CONTEXT_KEYS = new Set([
-  "author",
-  "committer",
-  "co-authored-by",
-]);
+const AUTHOR_CONTEXT_KEYS = new Set(["author", "committer", "co-authored-by"]);
 
 function isAuthorContext(key: string): boolean {
   const lower = key.toLowerCase();
@@ -39,7 +35,7 @@ function isAuthorContext(key: string): boolean {
 
 function walk(
   obj: Record<string, JsonValue>,
-  parentKey: string = ""
+  parentKey = ""
 ): Record<string, JsonValue> {
   for (const [key, value] of Object.entries(obj)) {
     if (key === "avatar_url" && typeof value === "string") {
@@ -80,7 +76,9 @@ function walk(
   return obj;
 }
 
-function sanitize(payload: Record<string, JsonValue>): Record<string, JsonValue> {
+function sanitize(
+  payload: Record<string, JsonValue>
+): Record<string, JsonValue> {
   const clone = structuredClone(payload);
   return walk(clone);
 }
@@ -137,13 +135,17 @@ async function main() {
   const providerCounts: Record<string, number> = {};
 
   for (const row of rows) {
-    if (!row.payload) continue;
+    if (!row.payload) {
+      continue;
+    }
 
     let parsed: Record<string, JsonValue>;
     try {
       parsed = JSON.parse(row.payload) as Record<string, JsonValue>;
     } catch {
-      console.log(`  Skipping unparseable payload for ${row.provider}/${row.eventType}`);
+      console.log(
+        `  Skipping unparseable payload for ${row.provider}/${row.eventType}`
+      );
       continue;
     }
 

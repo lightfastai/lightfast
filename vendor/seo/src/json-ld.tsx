@@ -37,9 +37,6 @@ export const JsonLd = ({ code }: JsonLdProps) => (
   />
 );
 
-// Export types for use in components
-export type { GraphContext, JsonLdData };
-
 // Re-export commonly used schema types for convenience
 export type {
   Answer,
@@ -78,3 +75,5 @@ export type {
   WebSite,
   WithContext,
 } from "schema-dts";
+// Export types for use in components
+export type { GraphContext, JsonLdData };

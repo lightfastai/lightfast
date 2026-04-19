@@ -10,7 +10,7 @@ export const createDrizzleConfig = (opts: {
 }): Config => {
   // Construct DATABASE_URL for PlanetScale
   const database =
-    (opts.database?.trim() !== "" ? opts.database : undefined) ?? "lightfast";
+    (opts.database?.trim() === "" ? undefined : opts.database) ?? "lightfast";
   // Remove any quotes from all values if they exist
   const cleanHost = opts.host.replace(/^["']|["']$/g, "");
   const cleanUsername = opts.username.replace(/^["']|["']$/g, "");

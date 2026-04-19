@@ -6,8 +6,7 @@ import { serve } from "inngest/next";
 import { inngest } from "./client/client";
 import { recordActivity } from "./workflow/infrastructure/record-activity";
 
-export { inngest };
-export { recordActivity };
+export { inngest, recordActivity };
 
 /**
  * Create the route context for Next.js API routes

@@ -1,8 +1,5 @@
 import "server-only";
 
-export { getUserOrgMemberships } from "./membership";
-export type { UserOrgMembership } from "./membership";
-
 export type {
   AllowlistIdentifier,
   ClerkMiddlewareAuth,
@@ -62,3 +59,5 @@ export {
   reverificationErrorResponse,
   verifyToken,
 } from "@clerk/nextjs/server";
+export type { UserOrgMembership } from "./membership";
+export { getUserOrgMemberships } from "./membership";

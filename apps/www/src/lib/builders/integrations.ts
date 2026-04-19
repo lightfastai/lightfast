@@ -35,7 +35,9 @@ function buildIntegratedAppEntity(
   data: IntegrationPageData,
   url: IntegrationUrl
 ): SoftwareApplication | null {
-  if (data.status === "planned") return null;
+  if (data.status === "planned") {
+    return null;
+  }
   const display = PROVIDER_DISPLAY[data.providerId];
   return {
     "@type": "SoftwareApplication",
