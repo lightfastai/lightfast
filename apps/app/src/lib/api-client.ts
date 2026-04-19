@@ -15,7 +15,7 @@ export type ApiClient = JsonifiedClient<
  */
 export function createApiClient(clerkOrgId: string): ApiClient {
   const link = new OpenAPILink(apiContract, {
-    url: typeof window !== "undefined" ? window.location.origin : "",
+    url: typeof window === "undefined" ? "" : window.location.origin,
     headers: { "x-org-id": clerkOrgId },
     fetch: (request, init) =>
       fetch(request, { ...init, credentials: "include" }),

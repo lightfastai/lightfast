@@ -6,7 +6,7 @@ export async function HeroChangelogBadge() {
   const pages = getChangelogPages().sort(
     (a, b) =>
       new Date(b.data.publishedAt).getTime() -
-      new Date(a.data.publishedAt).getTime(),
+      new Date(a.data.publishedAt).getTime()
   );
   const latest = pages[0];
 
@@ -19,7 +19,7 @@ export async function HeroChangelogBadge() {
     {
       month: "short",
       day: "numeric",
-    },
+    }
   );
 
   return (

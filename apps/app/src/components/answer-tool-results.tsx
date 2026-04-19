@@ -42,7 +42,7 @@ export function SearchToolResult({ data }: { data: SearchResponse }) {
                 </div>
               </div>
               <span className="text-muted-foreground/70 text-xs">
-                {resultCount} result{resultCount !== 1 ? "s" : ""}
+                {resultCount} result{resultCount === 1 ? "" : "s"}
               </span>
             </div>
           </AccordionTrigger>

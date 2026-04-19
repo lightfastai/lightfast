@@ -288,7 +288,7 @@ export const linear = defineWebhookProvider({
   getBaseEventType: (sourceType) => {
     const dotIndex = sourceType.indexOf(".");
     if (dotIndex > 0) {
-      const base = sourceType.substring(0, dotIndex);
+      const base = sourceType.slice(0, dotIndex);
       return base
         .split("-")
         .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
@@ -366,7 +366,7 @@ export const linear = defineWebhookProvider({
         subtitle: t.description ?? null,
         badge: t.key,
         iconColor: t.color ?? null,
-        iconLabel: t.key.substring(0, 2),
+        iconLabel: t.key.slice(0, 2),
       }));
     },
 

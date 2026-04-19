@@ -11,9 +11,7 @@
     "user": {
       "id": "8siqQqUqQWIYEvIAVe0Y0frQ"
     },
-    "installationIds": [
-      "icfg_inW7GGIU7ZpPC6qOQfPmknj1"
-    ],
+    "installationIds": ["icfg_inW7GGIU7ZpPC6qOQfPmknj1"],
     "integrations": [
       {
         "installationId": "icfg_inW7GGIU7ZpPC6qOQfPmknj1"
@@ -54,9 +52,7 @@
     },
     "name": "lightfast-platform",
     "plan": "pro",
-    "regions": [
-      "iad1"
-    ],
+    "regions": ["iad1"],
     "target": null,
     "type": "LAMBDAS",
     "url": "lightfast-platform-q8yh6opzj-lightfast.vercel.app"

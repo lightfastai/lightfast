@@ -72,9 +72,7 @@ export const metadata: Metadata = createMetadata({
 });
 
 export default function IntegrationsIndexPage() {
-  const pages = getIntegrationPages().filter(
-    (p) => p.data.status === "live"
-  );
+  const pages = getIntegrationPages().filter((p) => p.data.status === "live");
 
   const structuredData: GraphContext = {
     "@context": "https://schema.org",

@@ -53,10 +53,7 @@
               "description": "GitHub event types (X-GitHub-Event header values)"
             },
             {
-              "enum": [
-                "deployment.created",
-                "deployment.succeeded"
-              ],
+              "enum": ["deployment.created", "deployment.succeeded"],
               "description": "Vercel event types"
             },
             {

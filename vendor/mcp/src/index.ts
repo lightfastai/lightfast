@@ -73,7 +73,7 @@ export function registerContractTools(
           // With inputSchema: args = [parsedInput, extra]
           // Without inputSchema: args = [extra]
           const input = def.inputSchema ? args[0] : undefined;
-          const result = input !== undefined ? await fn(input) : await fn();
+          const result = input === undefined ? await fn() : await fn(input);
           return {
             structuredContent: result as Record<string, unknown>,
           };

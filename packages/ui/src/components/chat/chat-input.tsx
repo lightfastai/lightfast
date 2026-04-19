@@ -51,7 +51,7 @@ const ChatInputComponent = forwardRef<HTMLTextAreaElement, ChatInputProps>(
     // Use controlled value if provided, otherwise use internal state
     const message = value ?? internalMessage;
     const setMessage =
-      value !== undefined ? (onChange ?? noop) : setInternalMessage;
+      value === undefined ? setInternalMessage : (onChange ?? noop);
     const [isSending, setIsSending] = useState(false);
     const textareaRef = useRef<HTMLTextAreaElement>(null);
 

@@ -261,7 +261,7 @@ export const github = defineWebhookProvider({
   getBaseEventType: (sourceType) => {
     const dotIndex = sourceType.indexOf(".");
     if (dotIndex > 0) {
-      const base = sourceType.substring(0, dotIndex);
+      const base = sourceType.slice(0, dotIndex);
       const configBase = base.replace(/-/g, "_");
       return configBase === "issue" ? "issues" : configBase;
     }

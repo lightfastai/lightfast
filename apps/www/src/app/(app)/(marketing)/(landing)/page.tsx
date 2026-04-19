@@ -10,9 +10,9 @@ import type {
 import { JsonLd } from "@vendor/seo/json-ld";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
-import { LatestContentPreview } from "~/app/(app)/_components/latest-content-preview";
 import { FAQSection, faqs } from "~/app/(app)/_components/faq-section";
 import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
+import { LatestContentPreview } from "~/app/(app)/_components/latest-content-preview";
 import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
 import {
   HAIRLINE_BOTTOM_X_PCT,
@@ -20,7 +20,6 @@ import {
   HAIRLINE_Y_PCT,
   IsometricHero,
 } from "./_components/isometric-hero";
-import { FlowField } from "./_components/flow-field";
 
 // SEO metadata for the landing page
 export const metadata: Metadata = {
@@ -81,33 +80,7 @@ export const metadata: Metadata = {
 
 export const revalidate = 3600;
 
-async function getLatestCommit(): Promise<{ hash: string; url: string }> {
-  try {
-    const res = await fetch(
-      "https://api.github.com/repos/lightfastai/.lightfast/commits?per_page=1",
-      {
-        headers: { Accept: "application/vnd.github.v3+json" },
-        next: { revalidate: 3600 },
-      }
-    );
-    if (!res.ok) {
-      throw new Error(`GitHub API ${res.status}`);
-    }
-    const [commit] = (await res.json()) as [{ sha: string }];
-    return {
-      hash: commit.sha.slice(0, 7),
-      url: `https://github.com/lightfastai/.lightfast/commit/${commit.sha}`,
-    };
-  } catch {
-    return {
-      hash: "unknown",
-      url: "https://github.com/lightfastai/.lightfast",
-    };
-  }
-}
-
 export default async function HomePage() {
-  const { hash, url } = await getLatestCommit();
   // Build organization entity
   const organizationEntity: Organization = {
     "@type": "Organization",
@@ -211,14 +184,14 @@ export default async function HomePage() {
               />
               {/* Vertical extension lines — from card edges to section edges */}
               <div
-                className="absolute bottom-full w-px h-[100vh]"
+                className="absolute bottom-full h-[100vh] w-px"
                 style={{
                   left: `${HAIRLINE_X_PCT}%`,
                   backgroundColor: "var(--border)",
                 }}
               />
               <div
-                className="absolute top-full w-px h-[100vh]"
+                className="absolute top-full h-[100vh] w-px"
                 style={{
                   left: `${HAIRLINE_BOTTOM_X_PCT}%`,
                   backgroundColor: "var(--border)",
