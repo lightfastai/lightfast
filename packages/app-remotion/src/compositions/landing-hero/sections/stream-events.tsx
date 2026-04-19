@@ -31,7 +31,11 @@ const FEED_EVENTS: FeedEvent[] = [
     label: "Issue Updated",
     detail: "MEM-302 ranking threshold",
   },
-  { source: "Vercel", label: "Deployment Ready", detail: "lightfast-app — Production" },
+  {
+    source: "Vercel",
+    label: "Deployment Ready",
+    detail: "lightfast-app — Production",
+  },
   { source: "GitHub", label: "PR Merged", detail: "#839 edge cache warmup" },
   {
     source: "Sentry",

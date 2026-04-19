@@ -76,7 +76,7 @@ export default async function BlogPostPage({ params }: Props) {
 
           {/* Featured image */}
           {featuredImage && (
-            <div className="-mx-24 relative aspect-16/9 overflow-hidden rounded-lg bg-card">
+            <div className="relative -mx-24 aspect-16/9 overflow-hidden rounded-lg bg-card">
               <Image
                 alt={title}
                 className="h-full w-full object-cover"

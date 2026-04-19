@@ -1,13 +1,13 @@
 export interface SkillManifest {
-  name: string;
   description: string;
   hasCommand: boolean;
+  name: string;
   path: string;
 }
 
 export interface DotLightfastConfig {
-  spec: string | null;
   skills: SkillManifest[];
+  spec: string | null;
 }
 
 export type FetcherResult =
@@ -21,7 +21,7 @@ export class DotLightfastParseError extends Error {
   constructor(
     message: string,
     public readonly path: string,
-    public readonly cause?: unknown,
+    public readonly cause?: unknown
   ) {
     super(message);
     this.name = "DotLightfastParseError";

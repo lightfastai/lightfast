@@ -8,28 +8,27 @@
  *   cd packages/webhook-schemas && pnpm report
  */
 
-import {
-  preTransformVercelWebhookPayloadSchema,
-  preTransformGitHubPullRequestEventSchema,
-  preTransformGitHubIssuesEventSchema,
-  preTransformGitHubIssueCommentEventSchema,
-} from "@repo/app-providers";
 import { readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
+import {
+  preTransformGitHubIssueCommentEventSchema,
+  preTransformGitHubIssuesEventSchema,
+  preTransformGitHubPullRequestEventSchema,
+} from "@repo/app-providers";
 import type { ZodType } from "zod";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
 interface Fixture {
-  provider: string;
+  data: Record<string, unknown>;
   eventType: string;
   path: string;
-  data: Record<string, unknown>;
+  provider: string;
 }
 
 // ── Deep key extraction (shared with validate) ──────────────────────────────
 
-function deepKeys(obj: unknown, prefix: string = ""): Set<string> {
+function deepKeys(obj: unknown, prefix = ""): Set<string> {
   const keys = new Set<string>();
 
   if (obj === null || obj === undefined || typeof obj !== "object") {
@@ -37,8 +36,7 @@ function deepKeys(obj: unknown, prefix: string = ""): Set<string> {
   }
 
   if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; i++) {
-      const item = obj[i];
+    for (const item of obj) {
       if (item !== null && typeof item === "object") {
         for (const k of deepKeys(item, `${prefix}[]`)) {
           keys.add(k);
@@ -94,14 +92,15 @@ function loadFixtures(provider: string): Fixture[] {
 
 // ── Safely navigate nested objects ──────────────────────────────────────────
 
-function getNestedValue(
-  obj: Record<string, unknown>,
-  path: string
-): unknown {
+function getNestedValue(obj: Record<string, unknown>, path: string): unknown {
   const parts = path.split(".");
   let current: unknown = obj;
   for (const part of parts) {
-    if (current === null || current === undefined || typeof current !== "object") {
+    if (
+      current === null ||
+      current === undefined ||
+      typeof current !== "object"
+    ) {
       return undefined;
     }
     current = (current as Record<string, unknown>)[part];
@@ -152,13 +151,17 @@ function analyzeVercelFixtures(fixtures: Fixture[]) {
 
   for (const fixture of fixtures) {
     const meta = getNestedValue(fixture.data, "payload.deployment.meta");
-    if (!meta || typeof meta !== "object") continue;
+    if (!meta || typeof meta !== "object") {
+      continue;
+    }
 
     const metaObj = meta as Record<string, unknown>;
     for (const field of VERCEL_META_GITHUB_FIELDS) {
       const value = metaObj[field];
       const stats = fieldStats.get(field);
-      if (!stats) continue;
+      if (!stats) {
+        continue;
+      }
 
       if (value !== undefined && value !== null) {
         stats.present++;
@@ -199,7 +202,11 @@ function analyzeVercelFixtures(fixtures: Fixture[]) {
         const total = fixtures.length;
         const withPrId = fixtures.filter((f) => {
           const meta = getNestedValue(f.data, "payload.deployment.meta");
-          return meta && typeof meta === "object" && (meta as Record<string, unknown>).githubPrId;
+          return (
+            meta &&
+            typeof meta === "object" &&
+            (meta as Record<string, unknown>).githubPrId
+          );
         }).length;
         return `${withPrId}/${total} fixtures have githubPrId`;
       },
@@ -216,10 +223,12 @@ function analyzeVercelFixtures(fixtures: Fixture[]) {
           })
           .filter((v): v is string => typeof v === "string");
 
-        if (values.length === 0) return "No githubPrId values found";
+        if (values.length === 0) {
+          return "No githubPrId values found";
+        }
 
         const allSmallInts = values.every(
-          (v) => /^\d+$/.test(v) && parseInt(v) < 100000
+          (v) => /^\d+$/.test(v) && Number.parseInt(v, 10) < 100_000
         );
         return allSmallInts
           ? `PR number (small integer as string) — values: [${values.join(", ")}]`
@@ -238,7 +247,9 @@ function analyzeVercelFixtures(fixtures: Fixture[]) {
           })
           .filter((v): v is string => typeof v === "string");
 
-        if (shas.length === 0) return "No githubCommitSha values found";
+        if (shas.length === 0) {
+          return "No githubCommitSha values found";
+        }
 
         const allFull = shas.every((s) => /^[a-f0-9]{40}$/.test(s));
         return allFull
@@ -251,7 +262,9 @@ function analyzeVercelFixtures(fixtures: Fixture[]) {
       answer: () => {
         const withShaNopr = fixtures.filter((f) => {
           const meta = getNestedValue(f.data, "payload.deployment.meta");
-          if (!meta || typeof meta !== "object") return false;
+          if (!meta || typeof meta !== "object") {
+            return false;
+          }
           const m = meta as Record<string, unknown>;
           return m.githubCommitSha && !m.githubPrId;
         });
@@ -269,12 +282,15 @@ function analyzeVercelFixtures(fixtures: Fixture[]) {
 // ── Section B: GitHub Field Coverage ────────────────────────────────────────
 
 function getSchema(eventType: string): ZodType | null {
-  if (eventType.startsWith("pull_request"))
+  if (eventType.startsWith("pull_request")) {
     return preTransformGitHubPullRequestEventSchema;
-  if (eventType.startsWith("issues"))
+  }
+  if (eventType.startsWith("issues")) {
     return preTransformGitHubIssuesEventSchema;
-  if (eventType.startsWith("issue_comment"))
+  }
+  if (eventType.startsWith("issue_comment")) {
     return preTransformGitHubIssueCommentEventSchema;
+  }
   return null;
 }
 
@@ -301,17 +317,25 @@ function analyzeGitHubFixtures(fixtures: Fixture[]) {
   };
 
   function categorize(field: string): string {
-    if (field.match(/\bid\b|_id|node_id|number/i)) return "identifiers";
-    if (field.match(/\bat\b|_at|date|time/i)) return "timestamps";
-    if (field.match(/url|href|link/i)) return "urls";
-    if (field.match(/user|author|owner|sender|assignee|reviewer|committer/i))
+    if (field.match(/\bid\b|_id|node_id|number/i)) {
+      return "identifiers";
+    }
+    if (field.match(/\bat\b|_at|date|time/i)) {
+      return "timestamps";
+    }
+    if (field.match(/url|href|link/i)) {
+      return "urls";
+    }
+    if (field.match(/user|author|owner|sender|assignee|reviewer|committer/i)) {
       return "users";
+    }
     if (
       field.match(
         /label|milestone|description|permissions|events|type|state|locked|active_lock_reason/i
       )
-    )
+    ) {
       return "metadata";
+    }
     return "other";
   }
 
@@ -334,18 +358,24 @@ function analyzeGitHubFixtures(fixtures: Fixture[]) {
     const captured = [...inputKeys].filter((k) => outputKeys.has(k));
 
     console.log(`\x1b[36m${fixture.path}\x1b[0m`);
-    console.log(`  Captured: ${captured.length}  |  Dropped: ${dropped.length}\n`);
+    console.log(
+      `  Captured: ${captured.length}  |  Dropped: ${dropped.length}\n`
+    );
 
     // Group dropped fields by category
     const grouped: Record<string, string[]> = {};
     for (const field of dropped) {
       const cat = categorize(field);
-      if (!grouped[cat]) grouped[cat] = [];
+      if (!grouped[cat]) {
+        grouped[cat] = [];
+      }
       grouped[cat].push(field);
     }
 
     for (const [cat, fields] of Object.entries(grouped)) {
-      if (fields.length === 0) continue;
+      if (fields.length === 0) {
+        continue;
+      }
       console.log(`  \x1b[33m${cat}\x1b[0m (${fields.length}):`);
       for (const field of fields.slice(0, 15)) {
         console.log(`    - ${field}`);
@@ -369,7 +399,9 @@ function analyzeGitHubFixtures(fixtures: Fixture[]) {
   // Global summary
   console.log("─── Dropped Fields Summary (across all GitHub fixtures) ──\n");
   for (const [cat, fields] of Object.entries(categories)) {
-    if (fields.length === 0) continue;
+    if (fields.length === 0) {
+      continue;
+    }
     console.log(`  ${cat}: ${fields.length} unique field(s)`);
   }
   const totalUnique = Object.values(categories).reduce(

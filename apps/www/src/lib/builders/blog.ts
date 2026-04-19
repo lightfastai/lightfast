@@ -67,7 +67,6 @@ function buildBlogPostEntity(
 }
 
 function buildHowToEntity(data: BlogPostData, url: BlogPostUrl): HowTo {
-  // biome-ignore lint/style/noNonNullAssertion: caller guards on howToSteps presence
   const steps = data.howToSteps!;
   return {
     "@type": "HowTo",

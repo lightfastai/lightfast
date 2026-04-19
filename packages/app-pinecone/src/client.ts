@@ -5,7 +5,6 @@
  */
 
 import type { RecordMetadata } from "@pinecone-database/pinecone";
-import { PINECONE_CONFIG } from "./config";
 import { PineconeClient as VendorPineconeClient } from "@vendor/pinecone/client";
 import type {
   FetchResponse,
@@ -15,6 +14,7 @@ import type {
   UpsertRequest,
   UpsertResponse,
 } from "@vendor/pinecone/types";
+import { PINECONE_CONFIG } from "./config";
 
 /**
  * Lightfast Pinecone client with injected configuration

@@ -136,7 +136,7 @@ export async function withApiKeyAuth(
       .update(orgApiKeys)
       .set({
         lastUsedAt: sql`CURRENT_TIMESTAMP`,
-        lastUsedFromIp: clientIp.substring(0, 45),
+        lastUsedFromIp: clientIp.slice(0, 45),
       })
       .where(eq(orgApiKeys.id, foundKey.id))
       .catch((err: unknown) => {

@@ -31,20 +31,20 @@ import { platformEventStore } from "./functions/platform-event-store";
 import { platformRepoIndexSync } from "./functions/platform-repo-index-sync";
 import { tokenRefresh } from "./functions/token-refresh";
 
-export { inngest };
 export {
-  ingestDelivery,
-  platformEventStore,
-  platformEntityGraph,
-  platformEntityEmbed,
-  platformBackfillOrchestrator,
-  platformEntityWorker,
   connectionLifecycle,
-  healthCheck,
-  tokenRefresh,
   deliveryRecovery,
-  platformRepoIndexSync,
+  healthCheck,
+  ingestDelivery,
+  inngest,
   platformAgentTriage,
+  platformBackfillOrchestrator,
+  platformEntityEmbed,
+  platformEntityGraph,
+  platformEntityWorker,
+  platformEventStore,
+  platformRepoIndexSync,
+  tokenRefresh,
 };
 
 /**

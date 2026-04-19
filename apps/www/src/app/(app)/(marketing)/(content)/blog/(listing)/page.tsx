@@ -160,9 +160,7 @@ export default function BlogPage() {
                 className="block"
                 href={`/blog/${page.slugs[0]}` as Route}
               >
-                <h2 className="mb-1 font-base text-md">
-                  {page.data.title}
-                </h2>
+                <h2 className="mb-1 font-base text-md">{page.data.title}</h2>
                 <p className="mb-4 text-muted-foreground text-sm leading-relaxed">
                   {page.data.description}
                 </p>
@@ -172,7 +170,7 @@ export default function BlogPage() {
                   <time dateTime={page.data.publishedAt}>
                     {new Date(page.data.publishedAt).toLocaleDateString(
                       "en-US",
-                      { year: "numeric", month: "short", day: "numeric" },
+                      { year: "numeric", month: "short", day: "numeric" }
                     )}
                   </time>
                 </div>

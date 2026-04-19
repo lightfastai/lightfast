@@ -197,23 +197,23 @@ export const platformEventStore = inngest.createFunction(
       switch (sourceEvent.provider) {
         case "github":
           resourceId =
-            attributes.repoId != null ? String(attributes.repoId) : undefined;
+            attributes.repoId == null ? undefined : String(attributes.repoId);
           break;
         case "vercel":
           resourceId =
-            attributes.projectId != null
-              ? String(attributes.projectId)
-              : undefined;
+            attributes.projectId == null
+              ? undefined
+              : String(attributes.projectId);
           break;
         case "sentry":
           resourceId =
-            attributes.projectId != null
-              ? String(attributes.projectId)
-              : undefined;
+            attributes.projectId == null
+              ? undefined
+              : String(attributes.projectId);
           break;
         case "linear":
           resourceId =
-            attributes.teamId != null ? String(attributes.teamId) : undefined;
+            attributes.teamId == null ? undefined : String(attributes.teamId);
           break;
         default:
           resourceId = undefined;

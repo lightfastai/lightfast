@@ -77,7 +77,7 @@ function getEventType(jobName: string): string {
   if (colonIndex === -1) {
     return jobName;
   }
-  return jobName.substring(0, colonIndex).trim();
+  return jobName.slice(0, colonIndex).trim();
 }
 
 interface JobRowProps {
@@ -159,11 +159,11 @@ function JobRow({ job }: JobRowProps) {
               <span className="text-sm capitalize">{job.status}</span>
             </div>
             <span className="text-muted-foreground text-xs">
-              {job.durationMs !== null
-                ? formatDuration(Number.parseInt(job.durationMs, 10))
-                : job.status === "running"
+              {job.durationMs === null
+                ? job.status === "running"
                   ? "In progress"
-                  : "—"}
+                  : "—"
+                : formatDuration(Number.parseInt(job.durationMs, 10))}
             </span>
           </div>
 
@@ -178,7 +178,7 @@ function JobRow({ job }: JobRowProps) {
             <div className="flex items-center gap-2">
               <GitCommit className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
               <span className="font-mono text-muted-foreground text-xs">
-                {commitSha?.substring(0, 7) ?? ""}
+                {commitSha?.slice(0, 7) ?? ""}
               </span>
               <span className="truncate text-muted-foreground text-xs">
                 {commitMessage ?? job.name}

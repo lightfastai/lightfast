@@ -87,7 +87,7 @@ export function GET(request: NextRequest) {
       ...(isLikelyBetterStack && {
         monitor: {
           detected: true,
-          userAgent: userAgent.substring(0, 100), // Truncate for security
+          userAgent: userAgent.slice(0, 100), // Truncate for security
         },
       }),
     },

@@ -134,9 +134,9 @@ export async function searchLogic(
       type: String(meta?.entityType ?? ""),
       url: null as string | null,
       occurredAt:
-        meta?.occurredAt != null
-          ? new Date(Number(meta.occurredAt)).toISOString()
-          : null,
+        meta?.occurredAt == null
+          ? null
+          : new Date(Number(meta.occurredAt)).toISOString(),
     };
   });
 

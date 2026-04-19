@@ -4,9 +4,6 @@ import type React from "react";
 import { useEffect, useState } from "react";
 import { ensureFontsLoaded } from "../landing-hero/shared/fonts";
 
-const CANVAS_W = 1200;
-const CANVAS_H = 675;
-
 interface FeedEvent {
   detail: string;
   extra?: string[];

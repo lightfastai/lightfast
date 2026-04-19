@@ -18,8 +18,6 @@ const bounds = shapeBounds(shape);
 const PAD = 4;
 const vx = bounds.minX - PAD;
 const vy = bounds.minY - PAD;
-const vw = bounds.maxX - bounds.minX + PAD * 2;
-const vh = bounds.maxY - bounds.minY + PAD * 2;
 
 // Golden-ratio framing — focal point at upper-RIGHT power point
 const PHI_INV_SQ = 0.381_966_011_250_105_1;
@@ -38,7 +36,7 @@ const topZB = BOX.z + BOX.d;
 const rightCorner = isoToCanvas(project(BOX.x + BOX.w, BOX.y, bottomZ));
 const topCorner = isoToCanvas(project(BOX.x, BOX.y, topZB));
 const bottomCorner = isoToCanvas(
-  project(BOX.x + BOX.w, BOX.y + BOX.h, bottomZ),
+  project(BOX.x + BOX.w, BOX.y + BOX.h, bottomZ)
 );
 
 // Box SVG position within the canvas
@@ -53,11 +51,11 @@ const lissajousProjected: Vec2[] = computeLissajousPoints(
   LOGO_CURVE.a,
   LOGO_CURVE.b,
   LOGO_CURVE.delta,
-  STEPS,
+  STEPS
 )
   .slice(0, STEPS)
   .map(([px, py]) =>
-    project(cx + LISSAJOUS_RADIUS * px, cy + LISSAJOUS_RADIUS * py, topZ),
+    project(cx + LISSAJOUS_RADIUS * px, cy + LISSAJOUS_RADIUS * py, topZ)
   );
 
 const lissajousPath = `${lissajousProjected
@@ -77,7 +75,7 @@ export const HAIRLINE_X_PCT = (topCorner[0] / CANVAS_W) * 100;
 
 export function IsometricHero() {
   return (
-    <div className="aspect-video w-full overflow-hidden rounded-md bg-">
+    <div className="bg- aspect-video w-full overflow-hidden rounded-md">
       <svg
         className="h-full w-full"
         viewBox={`0 0 ${CANVAS_W} ${CANVAS_H}`}

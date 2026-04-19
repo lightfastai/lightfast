@@ -18,7 +18,7 @@ const skillFile = (frontmatter: string, body = ""): FetcherResult => ({
 });
 
 const dir = (
-  entries: { name: string; type: "file" | "dir" }[] = [],
+  entries: { name: string; type: "file" | "dir" }[] = []
 ): FetcherResult => ({ type: "dir", entries });
 
 describe("parseDotLightfast — happy path / shape", () => {
@@ -29,11 +29,11 @@ describe("parseDotLightfast — happy path / shape", () => {
       { name: "beta", type: "dir" },
     ]),
     "skills/alpha/SKILL.md": skillFile(
-      "name: alpha\ndescription: The alpha skill",
+      "name: alpha\ndescription: The alpha skill"
     ),
     "skills/alpha/command/alpha.md": { type: "file", content: "" },
     "skills/beta/SKILL.md": skillFile(
-      "name: beta\ndescription: The beta skill",
+      "name: beta\ndescription: The beta skill"
     ),
   });
 
@@ -85,7 +85,7 @@ describe("parseDotLightfast — happy path / shape", () => {
         "skills/alpha/command/alpha.md",
         "skills/beta/SKILL.md",
         "skills/beta/command/beta.md",
-      ]),
+      ])
     );
   });
 });
@@ -101,7 +101,7 @@ describe("parseDotLightfast — missing-config branches", () => {
     const result = await parseDotLightfast(
       makeFetcher({
         "SPEC.md": { type: "file", content: "# Spec" },
-      }),
+      })
     );
     expect(result.spec).not.toBeNull();
     expect(result.skills).toEqual([]);
@@ -112,7 +112,7 @@ describe("parseDotLightfast — SPEC edge cases", () => {
   it("throws DotLightfastParseError with path='SPEC.md' when SPEC.md resolves to a directory", async () => {
     const fetcher = makeFetcher({ "SPEC.md": dir() });
     await expect(parseDotLightfast(fetcher)).rejects.toThrowError(
-      DotLightfastParseError,
+      DotLightfastParseError
     );
     await expect(parseDotLightfast(fetcher)).rejects.toMatchObject({
       path: "SPEC.md",
@@ -122,7 +122,7 @@ describe("parseDotLightfast — SPEC edge cases", () => {
   it("truncates SPEC longer than MAX_SPEC_BYTES (32_000) to exactly 32_000 chars", async () => {
     const input = "x".repeat(40_000);
     const result = await parseDotLightfast(
-      makeFetcher({ "SPEC.md": { type: "file", content: input } }),
+      makeFetcher({ "SPEC.md": { type: "file", content: input } })
     );
     expect(result.spec).not.toBeNull();
     expect(result.spec!.length).toBe(32_000);
@@ -132,7 +132,7 @@ describe("parseDotLightfast — SPEC edge cases", () => {
   it("does not truncate SPEC at exactly MAX_SPEC_BYTES", async () => {
     const input = "y".repeat(32_000);
     const result = await parseDotLightfast(
-      makeFetcher({ "SPEC.md": { type: "file", content: input } }),
+      makeFetcher({ "SPEC.md": { type: "file", content: input } })
     );
     expect(result.spec).toBe(input);
   });
@@ -147,9 +147,9 @@ describe("parseDotLightfast — skills filtering and caps", () => {
           { name: "alpha", type: "dir" },
         ]),
         "skills/alpha/SKILL.md": skillFile(
-          "name: alpha\ndescription: alpha skill",
+          "name: alpha\ndescription: alpha skill"
         ),
-      }),
+      })
     );
     expect(result.skills).toHaveLength(1);
     expect(result.skills[0]?.name).toBe("alpha");
@@ -162,12 +162,12 @@ describe("parseDotLightfast — skills filtering and caps", () => {
       const name = `skill-${i.toString().padStart(2, "0")}`;
       entries.push({ name, type: "dir" });
       skillFiles[`skills/${name}/SKILL.md`] = skillFile(
-        `name: ${name}\ndescription: skill ${i}`,
+        `name: ${name}\ndescription: skill ${i}`
       );
     }
 
     const result = await parseDotLightfast(
-      makeFetcher({ skills: dir(entries), ...skillFiles }),
+      makeFetcher({ skills: dir(entries), ...skillFiles })
     );
     expect(result.skills).toHaveLength(50);
     expect(result.skills[49]?.name).toBe("skill-49");
@@ -182,9 +182,9 @@ describe("parseDotLightfast — skills filtering and caps", () => {
           { name: "bravo", type: "dir" },
         ]),
         "skills/alpha/SKILL.md": skillFile(
-          "name: alpha\ndescription: alpha skill",
+          "name: alpha\ndescription: alpha skill"
         ),
-      }),
+      })
     );
     expect(result.skills).toHaveLength(1);
     expect(result.skills[0]?.name).toBe("alpha");
@@ -197,8 +197,9 @@ describe("parseDotLightfast — frontmatter resilience", () => {
       makeFetcher({
         skills: dir([{ name: "broken", type: "dir" }]),
         "skills/broken/SKILL.md": { type: "file", content: skillContent },
-      }),
+      })
     );
+    // biome-ignore lint/suspicious/noMisplacedAssertion: expectSkipped is a test helper invoked from each it()
     expect(result.skills).toEqual([]);
   };
 
@@ -225,7 +226,7 @@ describe("parseDotLightfast — frontmatter resilience", () => {
       makeFetcher({
         skills: dir([{ name: "alpha", type: "dir" }]),
         "skills/alpha/SKILL.md": { type: "file", content },
-      }),
+      })
     );
     expect(result.skills).toHaveLength(1);
     expect(result.skills[0]).toMatchObject({
@@ -240,32 +241,29 @@ describe("parseDotLightfast — command probe branching", () => {
     ["file", { type: "file", content: "" }, true],
     ["dir", dir(), false],
     ["missing", { type: "missing" }, false],
-  ])(
-    "hasCommand is true only when probe resolves to a file (probe=%s)",
-    async (_label, commandResult, expected) => {
-      const result = await parseDotLightfast(
-        makeFetcher({
-          skills: dir([{ name: "alpha", type: "dir" }]),
-          "skills/alpha/SKILL.md": skillFile(
-            "name: alpha\ndescription: alpha skill",
-          ),
-          "skills/alpha/command/alpha.md": commandResult,
-        }),
-      );
-      expect(result.skills).toHaveLength(1);
-      expect(result.skills[0]?.hasCommand).toBe(expected);
-    },
-  );
+  ])("hasCommand is true only when probe resolves to a file (probe=%s)", async (_label, commandResult, expected) => {
+    const result = await parseDotLightfast(
+      makeFetcher({
+        skills: dir([{ name: "alpha", type: "dir" }]),
+        "skills/alpha/SKILL.md": skillFile(
+          "name: alpha\ndescription: alpha skill"
+        ),
+        "skills/alpha/command/alpha.md": commandResult,
+      })
+    );
+    expect(result.skills).toHaveLength(1);
+    expect(result.skills[0]?.hasCommand).toBe(expected);
+  });
 
   it("probes skills/<dirName>/command/<frontmatter.name>.md when dirName differs from name", async () => {
     const fetcher = vi.fn(
       makeFetcher({
         skills: dir([{ name: "alpha-v2", type: "dir" }]),
         "skills/alpha-v2/SKILL.md": skillFile(
-          "name: alpha\ndescription: alpha skill",
+          "name: alpha\ndescription: alpha skill"
         ),
         "skills/alpha-v2/command/alpha.md": { type: "file", content: "" },
-      }),
+      })
     );
 
     const result = await parseDotLightfast(fetcher);

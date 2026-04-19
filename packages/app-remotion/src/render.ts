@@ -99,7 +99,21 @@ async function main() {
       for (const output of entry.outputs) {
         const filename = output.filename ?? `${id}.${output.format}`;
 
-        if (output.frame !== undefined) {
+        if (output.frame === undefined) {
+          // Full video render
+          const tmpPath = path.join(tmpDir, filename);
+          console.log(
+            `Rendering ${id} (${entry.width}×${entry.height} @ ${entry.fps}fps)...`
+          );
+          await renderMedia({
+            composition,
+            serveUrl: bundled,
+            outputLocation: tmpPath,
+            ...entry.renderProfile,
+          });
+          await distribute(tmpPath, [output], filename);
+          console.log(`  ✔ ${filename} → ${output.dest}`);
+        } else {
           // Still frame extraction from video
           const tmpPath = path.join(tmpDir, filename);
           console.log(`Rendering ${id} poster (frame ${output.frame})...`);
@@ -111,20 +125,6 @@ async function main() {
             imageFormat: output.format as "webp" | "png",
             scale: output.scale ?? 1,
             overwrite: true,
-          });
-          await distribute(tmpPath, [output], filename);
-          console.log(`  ✔ ${filename} → ${output.dest}`);
-        } else {
-          // Full video render
-          const tmpPath = path.join(tmpDir, filename);
-          console.log(
-            `Rendering ${id} (${entry.width}×${entry.height} @ ${entry.fps}fps)...`
-          );
-          await renderMedia({
-            composition,
-            serveUrl: bundled,
-            outputLocation: tmpPath,
-            ...entry.renderProfile,
           });
           await distribute(tmpPath, [output], filename);
           console.log(`  ✔ ${filename} → ${output.dest}`);

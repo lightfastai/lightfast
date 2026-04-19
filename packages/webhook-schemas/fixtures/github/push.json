@@ -180,9 +180,7 @@
       },
       "added": [],
       "removed": [],
-      "modified": [
-        "README.md"
-      ]
+      "modified": ["README.md"]
     }
   ],
   "head_commit": {
@@ -206,8 +204,6 @@
     },
     "added": [],
     "removed": [],
-    "modified": [
-      "README.md"
-    ]
+    "modified": ["README.md"]
   }
 }

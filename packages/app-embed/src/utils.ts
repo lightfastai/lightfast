@@ -2,11 +2,11 @@
  * Embedding utilities with environment-aware configuration and provider selection.
  */
 
-import { EMBEDDING_CONFIG } from "./config";
 import type { CohereEmbeddingModel } from "@repo/app-validation";
 import type { CohereInputType, EmbeddingProvider } from "@vendor/embed";
 import { createCohereEmbedding } from "@vendor/embed";
 import { embedEnv } from "@vendor/embed/env";
+import { EMBEDDING_CONFIG } from "./config";
 
 /**
  * Default embedding configuration

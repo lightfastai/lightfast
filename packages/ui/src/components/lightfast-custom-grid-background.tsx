@@ -489,5 +489,5 @@ export const LightfastCustomGridBackground = {
 };
 
 // Export types for external use
-export type { LightfastCustomGridBackgroundProps, ContainerProps, ItemProps };
-export { gridRootVariants, containerVariants };
+export type { ContainerProps, ItemProps, LightfastCustomGridBackgroundProps };
+export { containerVariants, gridRootVariants };
