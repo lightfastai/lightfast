@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@repo/app-providers": "workspace:*",
-    "@repo/lib": "workspace:*"
+    "@vendor/lib": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

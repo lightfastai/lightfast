@@ -8,7 +8,7 @@
  */
 
 import { sha256Hex } from "@repo/app-providers";
-import { nanoid } from "@repo/lib";
+import { nanoid } from "@vendor/lib";
 
 /**
  * Unified API key prefix for all Lightfast keys

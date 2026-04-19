@@ -1,5 +1,5 @@
 {
   "extends": ["//"],
-  "tags": ["packages"],
+  "tags": ["vendor"],
   "tasks": {}
 }

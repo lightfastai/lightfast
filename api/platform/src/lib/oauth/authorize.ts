@@ -6,7 +6,7 @@
  */
 import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
-import { nanoid } from "@repo/lib";
+import { nanoid } from "@vendor/lib";
 import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../provider-configs";
 import { storeOAuthState } from "./state";

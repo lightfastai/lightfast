@@ -37,8 +37,8 @@
     "@api/platform": "workspace:*",
     "@db/app": "workspace:*",
     "@repo/app-providers": "workspace:*",
-    "@repo/lib": "workspace:*",
     "@vendor/db": "workspace:*",
+    "@vendor/lib": "workspace:*",
     "@vendor/observability": "workspace:*",
     "drizzle-orm": "catalog:"
   },

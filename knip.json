@@ -8,7 +8,7 @@
     "apps/app": {
       "entry": ["src/app/**/*.{ts,tsx}"],
       "project": ["src/**/*.{ts,tsx}"],
-      "ignoreDependencies": ["@repo/lib", "@vitest/expect", "zustand"]
+      "ignoreDependencies": ["@vendor/lib", "@vitest/expect", "zustand"]
     },
     "apps/www": {
       "entry": ["src/app/**/*.{ts,tsx}"],

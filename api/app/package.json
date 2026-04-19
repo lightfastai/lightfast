@@ -43,7 +43,6 @@
     "@repo/app-octokit-github": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "@repo/app-validation": "workspace:^",
-    "@repo/lib": "workspace:^",
     "@repo/platform-trpc": "workspace:*",
     "@sentry/core": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",

@@ -1,7 +1,7 @@
 import type { ProviderAccountInfo, SourceType } from "@repo/app-providers";
 import type { GwInstallationBackfillConfig } from "@repo/app-providers/contracts";
 import type { ClerkUserId } from "@repo/app-validation";
-import { nanoid } from "@repo/lib";
+import { nanoid } from "@vendor/lib";
 import { sql } from "drizzle-orm";
 import {
   index,
