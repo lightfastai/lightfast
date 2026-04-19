@@ -11,3 +11,7 @@
 ---
 
 /implement_plan @thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-d.md phase 4
+
+---
+
+/implement_plan @thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-d.md phase 5
