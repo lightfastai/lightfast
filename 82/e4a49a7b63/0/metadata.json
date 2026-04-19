@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "82e4a49a7b63",
+  "session_id": "0fffd38c-94dd-4ac6-80bd-eb4333f22359",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-19T03:29:56.591591Z",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "package.json",
+    "pnpm-lock.yaml",
+    "thoughts/shared/plans/2026-04-19-core-packages-upgrade-phase-b.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "27c1f03a7a94",
+  "token_usage": {
+    "input_tokens": 135,
+    "cache_creation_tokens": 112092,
+    "cache_read_tokens": 1156434,
+    "output_tokens": 43813,
+    "api_call_count": 23
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-19T03:29:56.275537Z",
+    "agent_lines": 319,
+    "agent_removed": 26,
+    "human_added": 0,
+    "human_modified": 32,
+    "human_removed": 4,
+    "total_committed": 351,
+    "total_lines_changed": 381,
+    "agent_percentage": 90.5511811023622,
+    "metric_version": 2
+  }
+}
