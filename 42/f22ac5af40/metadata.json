@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "42f22ac5af40",
+  "strategy": "manual-commit",
+  "branch": "chore/core-packages-upgrade-phase-a",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "core/ai-sdk/package.json",
+    "core/lightfast/package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml"
+  ],
+  "sessions": [
+    {
+      "metadata": "/42/f22ac5af40/0/metadata.json",
+      "transcript": "/42/f22ac5af40/0/full.jsonl",
+      "content_hash": "/42/f22ac5af40/0/content_hash.txt",
+      "prompt": "/42/f22ac5af40/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 12,
+    "cache_creation_tokens": 39854,
+    "cache_read_tokens": 291543,
+    "output_tokens": 6843,
+    "api_call_count": 7
+  }
+}

@@ -1,0 +1,1 @@
+/create_plan i think pnpm check is failing. can we discuss what are the issues and create a plan to fix these
