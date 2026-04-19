@@ -15,3 +15,7 @@ yes update the versioning stuff in CLAUDE.md
 ---
 
 can we create new worktree, moves these there and run /oneshot_merge on that and clean up worktree once done. we are working on different stuff in this current branch
+
+---
+
+yes
