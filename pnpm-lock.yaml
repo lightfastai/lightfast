@@ -170,6 +170,8 @@ overrides:
   path-to-regexp: ^6.3.0
   fast-xml-parser: ^5.5.6
 
+packageExtensionsChecksum: sha256-2FPZBw94MFNppirrJdB4qikbdLGsOF45SnJk4YB2rYM=
+
 importers:
 
   .:
@@ -379,7 +381,7 @@ importers:
         version: link:../../db/app
       '@hookform/resolvers':
         specifier: 'catalog:'
-        version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))
+        version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))(zod@4.3.6)
       '@lightfastai/ai-sdk':
         specifier: workspace:*
         version: link:../../core/ai-sdk
@@ -3846,6 +3848,10 @@ packages:
     resolution: {integrity: sha512-A/IxlMLShx3KjV/HeTcTfaMxdwy690+L/ZADoeaTltLx+CVuzkeVIPuybK3jrRfw7YZnmdKsVVHAlEPIAEUNlA==}
     peerDependencies:
       react-hook-form: ^7.55.0
+      zod: '>=3.24.0'
+    peerDependenciesMeta:
+      zod:
+        optional: true
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -14804,10 +14810,12 @@ snapshots:
     dependencies:
       hono: 4.12.14
 
-  '@hookform/resolvers@5.2.2(react-hook-form@7.72.1(react@19.2.5))':
+  '@hookform/resolvers@5.2.2(react-hook-form@7.72.1(react@19.2.5))(zod@4.3.6)':
     dependencies:
       '@standard-schema/utils': 0.3.0
       react-hook-form: 7.72.1(react@19.2.5)
+    optionalDependencies:
+      zod: 4.3.6
 
   '@iconify/types@2.0.0': {}
 
