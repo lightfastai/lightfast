@@ -1,0 +1,51 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "f0e146b3af6c",
+  "session_id": "00874dd6-0878-4df2-a5ec-cffd66983787",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-20T01:51:17.241643Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "packages/app-test-data/README.md",
+    "packages/app-test-data/package.json",
+    "packages/app-test-data/src/cli/generate-schema.ts",
+    "packages/app-test-data/src/cli/inject.ts",
+    "packages/app-test-data/src/cli/reset-demo.ts",
+    "packages/app-test-data/src/cli/seed-integrations.ts",
+    "packages/app-test-data/src/cli/verify-datasets.ts",
+    "packages/app-test-data/src/cli/verify-event-filtering.ts",
+    "packages/app-test-data/src/index.ts",
+    "packages/app-test-data/src/loader/index.ts",
+    "packages/app-test-data/src/loader/transform.ts",
+    "packages/app-test-data/src/raw.ts",
+    "packages/app-test-data/src/trigger/index.ts",
+    "packages/app-test-data/src/trigger/trigger.ts",
+    "thoughts/shared/plans/2026-04-20-test-data-sandbox-cleanup.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "6c47a003d679",
+  "token_usage": {
+    "input_tokens": 26,
+    "cache_creation_tokens": 112470,
+    "cache_read_tokens": 598159,
+    "output_tokens": 26402,
+    "api_call_count": 11
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-20T01:51:17.025056Z",
+    "agent_lines": 750,
+    "agent_removed": 1617,
+    "human_added": 1072,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1822,
+    "total_lines_changed": 17271,
+    "agent_percentage": 13.705054715997916,
+    "metric_version": 2
+  }
+}
