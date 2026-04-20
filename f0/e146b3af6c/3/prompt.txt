@@ -1,0 +1,5 @@
+/create_plan consider the changes we hvae made for the test data automation system in git status. let's discuss the clean up + qol + just generally making the code more structurally sounds and cleaner.
+
+---
+
+use AskUserQuestions tool
