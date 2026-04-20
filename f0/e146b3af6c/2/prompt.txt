@@ -1,0 +1,34 @@
+/research_codebase we are fundamentally changing how lightfast works. firstly, we are basically instead of creating "entities" and "events" and shit, i think what i really just want is the full entity as 1 object.
+
+so we are redefinining what an "entity" is.
+
+an entity is:
+1. a PR 
+2. a deployment
+3. a sentry issue
+4. a GH issue
+
+thats it.
+
+so when we get a PR open, merge, close, it's all technically the same "entity".
+
+same for deployment started, done, ......
+
+let's design the data model.
+
+essentially each one of these has their own "data model". this is the fundamental entity data model.
+
+we have multiple types of data model. 
+1. a pr
+2. a deployment
+3. an issue
+4. a customer feedback
+5. a bug fix request
+6. gh issue/linear task
+
+
+note: we will be performing this design indepdendately of what we currently have in this codebase. consider our codebase to be wrong. we are literally restarting development. 
+
+as such: let's also discuss this data model, and then also ripping OUT all the parts of Lightfast to make the infra barebones. all the things setup like webhook ingestion. but not piping anything together.
+
+we want to reach a "clean" architecture with all the MUST have things before we start the development of Lightfast 2.0
