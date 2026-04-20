@@ -1,0 +1,13 @@
+/implement_plan @thoughts/shared/plans/2026-04-20-test-data-sandbox-cleanup.md
+
+---
+
+let's defer all manual verification to the end
+
+---
+
+explain to me all the things this can do?
+
+---
+
+/commit
