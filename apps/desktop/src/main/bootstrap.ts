@@ -6,8 +6,9 @@ if (squirrelStartup) {
   app.quit();
 }
 
-app.setName("Lightfast");
-app.setPath("userData", join(app.getPath("appData"), "Lightfast"));
+const productName = app.isPackaged ? "Lightfast" : "Lightfast Dev";
+app.setName(productName);
+app.setPath("userData", join(app.getPath("appData"), productName));
 
 if (!app.requestSingleInstanceLock()) {
   app.exit(0);
