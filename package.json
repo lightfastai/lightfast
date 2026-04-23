@@ -19,6 +19,8 @@
     "dev:www": "turbo run dev -F @lightfast/www",
     "dev:platform": "turbo run dev -F @lightfast/platform --continue",
     "dev:full": "turbo run dev --concurrency=15 -F @lightfast/www -F @lightfast/app -F @lightfast/platform --continue",
+    "dev:desktop": "pnpm --filter @lightfast/desktop dev",
+    "dev:desktop-stack": "concurrently --names app,proxy --prefix-colors cyan,magenta 'pnpm dev:full' 'pnpm --filter @lightfast/app proxy:wait'",
     "dev:log": "NO_COLOR=1 pnpm dev --concurrency=15 2>&1 | tee /tmp/lightfast-dev.log",
     "dev:ngrok": "./scripts/ngrok 3024",
     "dev:email": "turbo run dev:email -F @lightfast/www",
@@ -44,6 +46,7 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.12",
     "@changesets/cli": "^2.31.0",
+    "concurrently": "^9.2.1",
     "knip": "^6.4.1",
     "turbo": "2.9.6",
     "turbo-ignore": "2.9.6",
