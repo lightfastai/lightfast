@@ -79,3 +79,31 @@ iteratively proceed with commits and changes without user confirmation. your end
 ---
 
 restart app for me
+
+---
+
+next few steps:
+1. sidebar trigger setup.
+3. keyboard commands setup.
+3. settings page setup.
+
+run compact then proceed.
+
+---
+
+next few steps:
+1. sidebar trigger setup.
+3. keyboard commands setup.
+3. settings page setup.
+run compact then similar 1:1 match openai codex desktop.
+
+---
+
+can you now check if codex uses tanstack start or smoething for their react app.
+
+we also want to start working on setting up
+1. sidebar trigger
+2. settings page
+3. keyboard commands
+
+all 1:1 with codex app
