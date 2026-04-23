@@ -31,6 +31,14 @@
     "vite": "^5.4.11"
   },
   "dependencies": {
+    "@sentry-internal/browser-utils": "^10.49.0",
+    "@sentry-internal/feedback": "^10.49.0",
+    "@sentry-internal/replay": "^10.49.0",
+    "@sentry-internal/replay-canvas": "^10.49.0",
+    "@sentry/browser": "^10.49.0",
+    "@sentry/core": "catalog:",
+    "@sentry/electron": "^7.11.0",
+    "@sentry/node": "^10.49.0",
     "electron-context-menu": "^4.1.1",
     "electron-squirrel-startup": "^1.0.1",
     "zod": "catalog:"

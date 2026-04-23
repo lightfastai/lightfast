@@ -3,6 +3,7 @@ import {
   type BuildInfoSnapshot,
   IpcChannels,
   type LightfastBridge,
+  type SentryInitSnapshot,
   type SystemThemeVariant,
   type WindowKind,
 } from "../shared/ipc";
@@ -10,9 +11,13 @@ import {
 const buildInfo = ipcRenderer.sendSync(
   IpcChannels.getBuildInfoSync
 ) as BuildInfoSnapshot;
+const sentryInit = ipcRenderer.sendSync(
+  IpcChannels.getSentryInitOptionsSync
+) as SentryInitSnapshot;
 
 const bridge: LightfastBridge = {
   buildInfo,
+  sentryInit,
   platform: process.platform,
   getSystemThemeVariant: () =>
     ipcRenderer.invoke(IpcChannels.getSystemThemeVariant),

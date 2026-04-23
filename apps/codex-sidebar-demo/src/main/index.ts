@@ -11,6 +11,7 @@ import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
+import { getSentryInitOptions, initSentry } from "./sentry";
 import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
@@ -96,6 +97,10 @@ function registerIpcHandlers(): void {
     event.returnValue = getBuildInfo();
   });
 
+  ipcMain.on(IpcChannels.getSentryInitOptionsSync, (event) => {
+    event.returnValue = getSentryInitOptions();
+  });
+
   ipcMain.handle(
     IpcChannels.getSystemThemeVariant,
     (): SystemThemeVariant => currentThemeVariant()
@@ -147,6 +152,8 @@ export function openSecondaryWindow(): Promise<BrowserWindow> {
 export function openHudWindow(): Promise<BrowserWindow> {
   return createWindow({ kind: "hud", harden: hardenContents });
 }
+
+initSentry();
 
 contextMenu({
   showInspectElement: !app.isPackaged,

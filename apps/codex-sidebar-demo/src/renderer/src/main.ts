@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/browser";
 import type { LightfastBridge, WindowKind } from "../../shared/ipc";
 
 declare global {
@@ -7,7 +8,15 @@ declare global {
   }
 }
 
-const { buildInfo, platform } = window.lightfastBridge;
+const { buildInfo, platform, sentryInit } = window.lightfastBridge;
+
+if (sentryInit.enabled) {
+  Sentry.init({
+    dsn: sentryInit.dsn,
+    release: sentryInit.release,
+    environment: sentryInit.environment,
+  });
+}
 document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window.codexWindowType;
 document.documentElement.dataset.buildFlavor = buildInfo.buildFlavor;

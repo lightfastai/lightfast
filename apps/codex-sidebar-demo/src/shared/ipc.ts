@@ -9,6 +9,7 @@ export const IpcChannels = {
   openExternal: channel("open-external"),
   openWindow: channel("open-window"),
   getBuildInfoSync: channel("get-build-info-sync"),
+  getSentryInitOptionsSync: channel("get-sentry-init-options-sync"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -39,6 +40,13 @@ export interface BuildInfoSnapshot {
   version: string;
 }
 
+export interface SentryInitSnapshot {
+  dsn: string;
+  enabled: boolean;
+  environment: string;
+  release: string;
+}
+
 export interface LightfastBridge {
   buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
@@ -48,4 +56,5 @@ export interface LightfastBridge {
   openExternal: (url: string) => Promise<void>;
   openWindow: (kind: WindowKind) => Promise<void>;
   platform: Platform;
+  sentryInit: SentryInitSnapshot;
 }
