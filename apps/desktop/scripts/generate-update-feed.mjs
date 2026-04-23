@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 
@@ -35,6 +35,7 @@ const assetsJson = gh([
 ]);
 const { assets } = JSON.parse(assetsJson);
 
+const outDir = mkdtempSync(join(tmpdir(), "lightfast-update-feed-"));
 const outputs = [];
 for (const arch of ARCHES) {
   const match = assets.find(
@@ -50,7 +51,7 @@ for (const arch of ARCHES) {
     notes: NOTES,
     pub_date: new Date().toISOString(),
   };
-  const file = join(tmpdir(), `latest-mac-${arch}.json`);
+  const file = join(outDir, `latest-mac-${arch}.json`);
   writeFileSync(file, JSON.stringify(feed, null, 2), "utf8");
   outputs.push(file);
   console.log(`wrote ${file} -> ${match.url}`);
