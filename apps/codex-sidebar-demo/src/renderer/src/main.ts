@@ -1,10 +1,14 @@
+import type { LightfastBridge, WindowKind } from "../../shared/ipc";
+
 declare global {
   interface Window {
-    demo: { platform: string };
+    codexWindowType: WindowKind;
+    lightfastBridge: LightfastBridge;
   }
 }
 
-document.documentElement.dataset.platform = window.demo.platform;
+document.documentElement.dataset.platform = window.lightfastBridge.platform;
+document.documentElement.dataset.windowKind = window.codexWindowType;
 
 const items = document.querySelectorAll<HTMLButtonElement>(".sidebar .item");
 
