@@ -71,3 +71,7 @@ perfect! can you now run a deep research again in codex desktop and investigate 
 ---
 
 use 1:1 with codex.whatever they choose we use.
+
+---
+
+iteratively proceed with commits and changes without user confirmation. your endgoal: 1:1 template setup with codex
