@@ -1,14 +1,8 @@
 import type { ReactNode } from "react";
 import { TRPCReactProvider } from "./react";
 
-declare global {
-  interface Window {
-    lightfastBridge?: {
-      auth?: {
-        getToken?: () => Promise<string | null> | string | null;
-      };
-    };
-  }
+interface DesktopBridgeAuth {
+  getToken?: () => Promise<string | null> | string | null;
 }
 
 interface DesktopTRPCProviderProps {
@@ -25,7 +19,12 @@ export function DesktopTRPCProvider({
       options={{
         baseUrl,
         getAuthHeaders: async () => {
-          const token = await window.lightfastBridge?.auth?.getToken?.();
+          const bridge = (
+            window as unknown as {
+              lightfastBridge?: { auth?: DesktopBridgeAuth };
+            }
+          ).lightfastBridge;
+          const token = await bridge?.auth?.getToken?.();
           const headers: Record<string, string> = {
             "x-trpc-source": "desktop",
           };

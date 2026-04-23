@@ -14,6 +14,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import SuperJSON from "superjson";
 import { createQueryClient } from "./client";
+import "./types";
 
 export interface CreateTRPCReactProviderOptions {
   baseUrl?: string;
