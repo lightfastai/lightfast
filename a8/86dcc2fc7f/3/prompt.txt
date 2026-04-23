@@ -1,0 +1,13 @@
+/create_plan @thoughts/shared/research/2026-04-23-codex-vs-lightfast-desktop-production-gap.md let's select the next batch of things to implement right now pre release to production. and also tell me what to setup: e.g sentry/apple dev/blah/blah
+
+---
+
+what are you best suggestion here for 1.
+
+---
+
+a) makes sense. but i think maybe we should use a better naming convention instead of desktop-v. what is industry standard.
+
+---
+
+good job. agreed one these proceed.
