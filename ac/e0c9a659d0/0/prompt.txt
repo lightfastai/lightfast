@@ -115,3 +115,11 @@ i think we need only what we have. dont need everything for the commands. e.g do
 ---
 
 wahts next for this template?
+
+---
+
+proceed next steps
+
+---
+
+continue
