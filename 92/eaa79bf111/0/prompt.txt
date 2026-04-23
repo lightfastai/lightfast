@@ -14,3 +14,7 @@ a lightfast org has many of their github org members or all of them + extra memb
 how shall we set up the high level structure.
 
 note:no need research
+
+---
+
+what do you mean by Alice's user-to-server token?
