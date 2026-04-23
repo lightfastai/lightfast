@@ -131,6 +131,11 @@ function registerIpcHandlers(): void {
     }
   });
 
+  ipcMain.on(IpcChannels.rendererError, (_event, payload: unknown) => {
+    // eslint-disable-next-line no-console
+    console.error("[renderer]", payload);
+  });
+
   ipcMain.handle(IpcChannels.openWindow, async (_event, kind: unknown) => {
     if (kind === "secondary") {
       await openSecondaryWindow();

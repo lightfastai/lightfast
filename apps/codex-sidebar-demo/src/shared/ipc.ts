@@ -10,6 +10,7 @@ export const IpcChannels = {
   openWindow: channel("open-window"),
   getBuildInfoSync: channel("get-build-info-sync"),
   getSentryInitOptionsSync: channel("get-sentry-init-options-sync"),
+  rendererError: channel("renderer-error"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -47,6 +48,14 @@ export interface SentryInitSnapshot {
   release: string;
 }
 
+export interface RendererErrorPayload {
+  kind: "error" | "unhandledrejection";
+  message: string;
+  source?: string;
+  stack?: string;
+  url?: string;
+}
+
 export interface LightfastBridge {
   buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
@@ -56,5 +65,6 @@ export interface LightfastBridge {
   openExternal: (url: string) => Promise<void>;
   openWindow: (kind: WindowKind) => Promise<void>;
   platform: Platform;
+  reportError: (payload: RendererErrorPayload) => void;
   sentryInit: SentryInitSnapshot;
 }

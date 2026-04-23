@@ -218,3 +218,57 @@ code {
   font-size: calc(var(--text-sm) * 0.9);
   color: var(--color-text-foreground-tertiary);
 }
+
+#codex-sidebar-demo-error-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklab, var(--gray-1000) 85%, transparent);
+}
+
+#codex-sidebar-demo-error-overlay[data-visible="true"] {
+  display: flex;
+}
+
+.error-overlay__panel {
+  max-width: 520px;
+  padding: calc(var(--spacing) * 6) calc(var(--spacing) * 8);
+  color: var(--color-text-foreground);
+  background: var(--color-background-elevated-primary-opaque);
+  border: 1px solid var(--color-border-heavy);
+  border-radius: 8px;
+}
+
+.error-overlay__panel h2 {
+  margin: 0 0 calc(var(--spacing) * 3);
+  font-size: calc(var(--text-base) * 1.3);
+  font-weight: 600;
+}
+
+.error-overlay__message {
+  max-height: 200px;
+  padding: calc(var(--spacing) * 2);
+  margin: 0 0 calc(var(--spacing) * 4);
+  overflow: auto;
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: calc(var(--text-sm) * 0.95);
+  color: var(--color-text-foreground-secondary);
+  white-space: pre-wrap;
+  background: var(--color-background-elevated-secondary);
+  border-radius: 4px;
+}
+
+.error-overlay__reload {
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 4);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-foreground);
+  appearance: none;
+  cursor: default;
+  background: var(--color-background-elevated-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}

@@ -1,5 +1,6 @@
 import * as Sentry from "@sentry/browser";
 import type { LightfastBridge, WindowKind } from "../../shared/ipc";
+import { installErrorBoundary } from "./error-boundary";
 
 declare global {
   interface Window {
@@ -7,6 +8,8 @@ declare global {
     lightfastBridge: LightfastBridge;
   }
 }
+
+installErrorBoundary(window.lightfastBridge.reportError);
 
 const { buildInfo, platform, sentryInit } = window.lightfastBridge;
 

@@ -30,6 +30,8 @@ const bridge: LightfastBridge = {
   },
   openExternal: (url) => ipcRenderer.invoke(IpcChannels.openExternal, url),
   openWindow: (kind) => ipcRenderer.invoke(IpcChannels.openWindow, kind),
+  reportError: (payload) =>
+    ipcRenderer.send(IpcChannels.rendererError, payload),
 };
 
 contextBridge.exposeInMainWorld("lightfastBridge", bridge);
