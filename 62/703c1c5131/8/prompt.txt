@@ -1,0 +1,13 @@
+actually let's move to full agent-browser approach for both x and linkedin. i think this is relatively defensible for both and cost nothing.
+
+---
+
+can you actually run and test these functionalities before decided on the commands. so meaning run agent-browsers let's do the task and ensure it all wokr
+
+---
+
+i think something broken. when i click the login and enter something it doesnt allow the login to happen. try it and check the logs
+
+---
+
+done
