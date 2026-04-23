@@ -148,3 +148,10 @@ this is now going to a lightfast app not a template
 nah commit here tbh. all good. after commit let's work on complete rename with git mv to preserve history. this app is going to be called apps/desktop
 
 this is now going to a lightfast app not a template, let's also add logos from @apps/www/public/
+
+---
+
+you cna figure this out through @packages/app-remotion/ 
+and delete the old applicaiton support.
+
+moreover shoul we have 1 Apllication Supoort thing for dev and use Lightfast/ for prod?
