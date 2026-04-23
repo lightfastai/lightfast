@@ -1,0 +1,181 @@
+<scheduled-task name="lightfast-xcom-opportunities" file="/Users/jeevanpillay/.claude/scheduled-tasks/lightfast-xcom-opportunities/SKILL.md">
+This is an automated run of a scheduled task. The user is not present to answer questions. For implementation details, execute autonomously without asking clarifying questions — make reasonable choices and note them in your output. "write" actions (e.g. MCP tools that send, post, create, update, or delete), only take them if the task file asks for that specific action. When in doubt, producing a report of what you found is the correct output.
+
+Find 5–10 high-quality posts on x.com where Lightfast (@lightfastai) can engage to nurture distribution. Research only — never post, reply, like, follow, DM, or any other write action. Output is for human review.
+
+## Mission
+
+Lightfast = the operating layer for product development. Memory + cited reasoning + agent action across GitHub, Vercel, Sentry, Linear. We're building the kernel agents and people both run on.
+
+Engage to **nurture, not pitch**. The best replies make the original poster look smarter, not us. If a reply could be ghostwritten by a SaaS marketing team, it's wrong.
+
+## Tooling — agent-browser over CDP into a real Chrome
+
+Do NOT use agent-browser's bundled Chromium (`navigator.webdriver === true` gets blocked by x.com anti-bot). Instead, connect to a real Chrome launched with remote debugging on port 9222 and a dedicated user-data-dir (`~/.chrome-agent-browser`). That Chrome has a real user agent, real plugin list, `navigator.webdriver === false`, and cookies for x.com persist across Chrome restarts.
+
+### Precheck
+
+Before any other command, confirm the debug Chrome is up. If not, stop and report `auth: stale` — the user must launch + log in interactively.
+
+```bash
+~/.claude/bin/chrome-agent-browser.sh --check || { echo "auth: stale — run ~/.claude/bin/chrome-agent-browser.sh headed, then log into x.com"; exit 1; }
+```
+
+### Navigate + extract
+
+Use `--auto-connect` on every call; it discovers port 9222 automatically.
+
+```bash
+# 1. Go to a timeline URL
+agent-browser --auto-connect open https://x.com/home
+agent-browser --auto-connect wait --load networkidle
+
+# 2. Extract the first N posts as structured JSON (always wrap JS in an IIFE —
+#    eval context persists across calls, so bare `const` collides on re-runs).
+agent-browser --auto-connect eval --stdin <<'JS'
+(() => {
+  const posts = Array.from(document.querySelectorAll('article[data-testid="tweet"]')).slice(0, 15);
+  return JSON.stringify(posts.map(a => ({
+    author_handle: a.querySelector('[data-testid="User-Name"] a[href^="/"]')?.getAttribute('href') || null,
+    post_url: a.querySelector('time')?.closest('a')?.getAttribute('href') || null,
+    posted: a.querySelector('time')?.getAttribute('datetime') || null,
+    text: (a.querySelector('[data-testid="tweetText"]')?.innerText || '').slice(0, 300),
+    likes: a.querySelector('[data-testid="like"]')?.innerText || '',
+    replies: a.querySelector('[data-testid="reply"]')?.innerText || '',
+    reposts: a.querySelector('[data-testid="retweet"]')?.innerText || '',
+  })), null, 2);
+})();
+JS
+
+# 3. For a promising author, visit their profile and extract bio + follower count
+agent-browser --auto-connect open https://x.com/<handle>
+agent-browser --auto-connect wait --load networkidle
+agent-browser --auto-connect eval --stdin <<'JS'
+(() => {
+  const bio = document.querySelector('[data-testid="UserDescription"]')?.innerText || '';
+  const name = document.querySelector('[data-testid="UserName"]')?.innerText || '';
+  const stats = {};
+  document.querySelectorAll('a').forEach(a => {
+    const href = a.getAttribute('href') || '';
+    if (href.endsWith('/verified_followers') || href.endsWith('/followers')) stats.followers = a.innerText.trim();
+    if (href.endsWith('/following')) stats.following = a.innerText.trim();
+  });
+  return JSON.stringify({ name, bio: bio.slice(0, 400), stats });
+})();
+JS
+```
+
+### Rules
+
+- Always `--auto-connect`. Never pass `--session-name` (bundled-Chromium construct; ignored on CDP and gets blocked by x.com).
+- Always `wait --load networkidle` after an `open` before extracting — x.com loads content async.
+- Always wrap eval JS in an IIFE `(() => { ... })()` and return a string (JSON.stringify).
+- Read-only. No `click`, `fill`, `type`, `press` on anything that could post/reply/like/follow/DM.
+- If the first extract returns empty arrays, the cookies may have expired silently. Stop and report `auth: stale`.
+
+## Search seeds
+
+Start with these. Add 2–3 of your own based on what's trending the day of the run.
+
+- `https://x.com/home`
+- `https://x.com/search?q=agent%20memory&f=live`
+- `https://x.com/search?q=MCP%20server&f=live`
+- `https://x.com/search?q=Claude%20Code&f=live`
+- `https://x.com/search?q=Cursor%20agent&f=live`
+- `https://x.com/search?q=context%20for%20agents&f=live`
+- `https://x.com/search?q=Mem0%20OR%20Zep%20OR%20Letta&f=live` (competitor mentions)
+- `https://x.com/search?q=LangChain%20memory&f=live`
+- `https://x.com/search?q=agents%20in%20production&f=live`
+- `https://x.com/search?q=dev%20tool%20sprawl&f=live`
+- `https://x.com/search?q=incident%20root%20cause&f=live`
+- Also: `x.com/lightfastai` mentions tab; replies under @AnthropicAI / @cursor_ai / @claude_code MCP launch threads.
+
+## Author quality bar
+
+**Auto-include:**
+- 500+ followers AND bio mentions: founder, CTO, eng, builds, ships, AI, agents, dev tools, infra, researcher
+- Verified blue + technical content (skip influencer / general-business blue checks)
+- Anyone @lightfastai already follows or who follows back (`"Follows you"` badge visible on profile)
+
+**Auto-skip:**
+- <500 followers (unless bio is bullseye ICP — *founder of <agent infra startup>*, *eng at <known AI lab>*)
+- Bio is generic ("entrepreneur", "investor", "AI enthusiast" with no specifics)
+- Last 5 posts are all hashtag-stuffed promo
+- Account created in last 90 days with thread-bot posting cadence
+- Engagement looks bot-amplified: 100+ likes / 0 replies, identical reply patterns
+
+## Post quality bar
+
+**Engage:**
+- Genuine question or working-out-loud thinking about agents/memory/infra/MCP
+- Strong opinion grounded in shipped work (not airport-takeoff threads)
+- Bug report, frustration, or unmet need in the dev-tool stack — Lightfast-shaped problem
+- Replies on launch / changelog threads from Anthropic, Cursor, Vercel, Linear, Sentry
+
+**Skip:**
+- Pure promotion / launch announcement of an MCP-aggregator / vibes product
+- Politics, drama, hot-takes detached from work
+- Posts older than 6 hours unless mega-thread
+- Anything with 50+ replies — reply gets buried
+
+## Reply rubric — Lightfast voice
+
+**Voice:** technical, curious, lowercase ok, dry. Never starts with *"great point"* / *"this"* / *"so true"*. Never pitches Lightfast unprompted. Never bait questions. 1–10 words, hard cap.
+
+**Good replies:**
+- *"persistent state across runs is the unlock"* (peer founder shipped a primitive)
+- *"goal-fit signals beat recency every time"* (someone working out memory ranking)
+- *"citations on every memory writeback helps"* (someone raising memory-poisoning)
+- *"same — cold tool calls especially"* (someone complaining about Claude Code latency)
+
+**Bad replies:**
+- *"great point! we're building exactly this"* (sycophantic pitch)
+- *"have you tried Lightfast?"* (pitch, ignores the post)
+- *"agents need memory to scale, totally agree"* (generic)
+- *"interesting take — what do you think about XYZ?"* (bait question)
+
+## Scoring + dedupe
+
+Per candidate:
+- `icp_fit` (1–5): author matches Lightfast's ICP
+- `resonance` (1–5): post hits Lightfast's value prop
+- `engagement_signal` (1–5): fresh + getting traction (not buried, not bot-amplified)
+- `priority_score` = `icp_fit + resonance + engagement_signal` (max 15)
+
+Dedupe by `author_handle` — one post per author per run.
+
+Cutoff: only return candidates with `priority_score ≥ 10`. Don't pad with sub-10s; surface fewer, higher-quality candidates.
+
+## Output schema
+
+```json
+{
+  "opportunities": [
+    {
+      "post_url": "https://x.com/handle/status/...",
+      "author_handle": "@handle",
+      "author_bio": "1–2 sentences from their profile",
+      "author_follower_count": 12500,
+      "author_signal": "founder of X, builds agent infra",
+      "post_excerpt": "≤200 chars",
+      "post_engagement": { "likes": 42, "replies": 7, "reposts": 3 },
+      "posted_ago": "2h",
+      "icp_fit": 5,
+      "resonance": 4,
+      "engagement_signal": 3,
+      "priority_score": 12,
+      "why_relevant": "1 sentence",
+      "suggested_reply": "1–10 words"
+    }
+  ],
+  "notes": "signal quality, search-term recommendations for next run, anything worth flagging"
+}
+```
+
+Sort by `priority_score` desc.
+
+## Hard rules
+
+- **Never post, reply, DM, follow, unfollow, like, or repost.** Read-only nav + extract only.
+- If any command would write to x.com (click Post, fill compose, etc.), stop and report.
+</scheduled-task>
