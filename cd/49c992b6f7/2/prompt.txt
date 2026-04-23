@@ -1,0 +1,3 @@
+/research_codebase go into codex's binary in my machine and let's discuss all the things that we are missing from general base for production-grade electron app. list them. note: @apps/desktop/
+
+run parallel task / subagent to deep investigate the codex files and synthesize the findings
