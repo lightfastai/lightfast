@@ -69,8 +69,6 @@ const config: ForgeConfig = {
       LSApplicationCategoryType: "public.app-category.developer-tools",
       NSHighResolutionCapable: true,
       NSSupportsAutomaticGraphicsSwitching: true,
-      NSCameraUsageDescription:
-        "Used for in-app screen sharing and media capture.",
       NSMicrophoneUsageDescription:
         "Used for voice notes and audio capture inside the app.",
       NSAudioCaptureUsageDescription:
