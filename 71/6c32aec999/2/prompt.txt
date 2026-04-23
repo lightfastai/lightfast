@@ -1,0 +1,19 @@
+/research_codebase go into codex's binary in my machine and let's discuss all the things that we are missing from general base for production-grade electron app. list them. note: @apps/desktop/
+
+run parallel task / subagent to deep investigate the codex files and synthesize the findings
+
+---
+
+can you run a second research to confirm we didn't misss anything. what about project scripts setup and stuff
+
+---
+
+proceed
+
+---
+
+root match. desktop-release disabled cause i havent setup the keys yet
+
+---
+
+is this it?
