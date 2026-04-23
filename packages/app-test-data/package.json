@@ -4,42 +4,19 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "exports": {
-    ".": {
-      "types": "./src/index.ts",
-      "default": "./src/index.ts"
-    },
-    "./trigger": {
-      "types": "./src/trigger/index.ts",
-      "default": "./src/trigger/index.ts"
-    },
-    "./loader": {
-      "types": "./src/loader/index.ts",
-      "default": "./src/loader/index.ts"
-    },
-    "./raw": {
-      "types": "./src/raw.ts",
-      "default": "./src/raw.ts"
-    }
-  },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --",
-    "inject": "pnpm with-env tsx src/cli/inject.ts",
-    "inject:prod": "dotenv -e ../../apps/app/.vercel/.env.production.local -- tsx src/cli/inject.ts",
-    "seed-integrations:prod": "dotenv -e ../../apps/app/.vercel/.env.production.local -- tsx src/cli/seed-integrations.ts",
-    "reset-demo": "pnpm with-env tsx src/cli/reset-demo.ts",
-    "verify": "tsx src/cli/generate-schema.ts && tsx src/cli/verify-datasets.ts",
-    "generate-schema": "tsx src/cli/generate-schema.ts",
+    "with-env": "dotenv -e ../../apps/platform/.vercel/.env.development.local --",
+    "sandbox:list": "pnpm with-env tsx --conditions react-server src/cli.ts list",
+    "sandbox:doctor": "pnpm with-env tsx --conditions react-server src/cli.ts doctor",
+    "sandbox:seed": "pnpm with-env tsx --conditions react-server src/cli.ts seed",
+    "sandbox:replay": "pnpm with-env tsx --conditions react-server src/cli.ts replay",
+    "sandbox:run": "pnpm with-env tsx --conditions react-server src/cli.ts run",
     "clean": "git clean -xdf .cache .turbo node_modules"
   },
   "dependencies": {
-    "@api/platform": "workspace:*",
     "@db/app": "workspace:*",
     "@repo/app-providers": "workspace:*",
-    "@vendor/db": "workspace:*",
-    "@vendor/lib": "workspace:*",
-    "@vendor/observability": "workspace:*",
     "drizzle-orm": "catalog:"
   },
   "devDependencies": {

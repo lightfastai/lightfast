@@ -49,7 +49,7 @@
       "project": ["src/**/*.ts"]
     },
     "packages/app-test-data": {
-      "entry": ["src/cli/**/*.ts"],
+      "entry": ["src/cli.ts"],
       "project": ["src/**/*.ts"]
     },
     "packages/app-trpc": {

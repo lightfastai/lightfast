@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" class="electron-dark">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lightfast</title>
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar" data-kind-primary>
+        <div class="titlebar-drag">
+          <button
+            type="button"
+            class="sidebar-trigger"
+            data-sidebar-trigger
+            aria-label="Collapse sidebar"
+            aria-expanded="true"
+            title="Toggle sidebar"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="3" width="12" height="10" rx="2" />
+              <line x1="6" y1="3" x2="6" y2="13" />
+            </svg>
+          </button>
+        </div>
+        <nav class="nav">
+          <button type="button" class="item active" data-route-to="home">
+            Home
+          </button>
+          <button type="button" class="item">Projects</button>
+          <button type="button" class="item">Agents</button>
+          <button type="button" class="item">Runs</button>
+          <button type="button" class="item" data-route-to="settings">
+            Settings
+          </button>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="titlebar-drag">
+          <button
+            type="button"
+            class="content-sidebar-trigger"
+            data-sidebar-trigger-collapsed
+            aria-label="Expand sidebar"
+            title="Toggle sidebar"
+          >
+            <svg
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="2" y="3" width="12" height="10" rx="2" />
+              <line x1="6" y1="3" x2="6" y2="13" />
+            </svg>
+          </button>
+        </div>
+        <section class="content-inner" data-route-home data-kind-primary>
+          <h1>Primary window</h1>
+          <p>
+            The left pane is transparent so the
+            <code>NSVisualEffectView</code>
+            (<code>vibrancy: "menu"</code>) shows through. Drag the window from
+            the top strip; click items to confirm they don't drag.
+          </p>
+          <p class="content-hint">
+            Press <kbd data-kbd-hint="toggleSidebar"></kbd> to toggle the
+            sidebar,
+            <kbd data-kbd-hint="settings"></kbd>
+            for settings,
+            <kbd data-kbd-hint="newThread"></kbd>
+            for a new window.
+          </p>
+          <div class="actions">
+            <button type="button" class="action" data-open-window="secondary">
+              Open Secondary
+            </button>
+            <button type="button" class="action" data-open-window="hud">
+              Open HUD
+            </button>
+          </div>
+          <div class="build-badge" data-build-badge></div>
+        </section>
+        <section
+          class="content-inner settings-root"
+          data-route-settings
+          data-kind-primary
+        ></section>
+        <section class="content-inner" data-kind-secondary>
+          <h1>Secondary window</h1>
+          <p>
+            Separate 720&times;540 window for settings/about flows. Same
+            vibrancy backing, no sidebar. Opened from the primary window's menu
+            or <code>Cmd+N</code>.
+          </p>
+        </section>
+        <section class="content-inner" data-kind-hud>
+          <h1>HUD</h1>
+          <p>
+            Compact 440&times;320 always-on-top panel. Traffic lights sit
+            tighter at <code>{ 10, 10}</code>.
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
