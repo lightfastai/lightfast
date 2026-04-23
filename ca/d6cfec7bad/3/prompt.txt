@@ -1,0 +1,23 @@
+let's address issues in @thoughts/shared/research/2026-04-20-lightfast-2-barebones-rearchitecture-baseline.md 
+
+using AskUserQuestion you can prompt me for each section and we can discuss.
+
+in terms of each section, prompt based on UI-first approach. what this allow us to do is figure out the kidna UI approach to sign up-> org -> bind -.....
+
+---
+
+let's address issues in @thoughts/shared/research/2026-04-20-lightfast-2-barebones-rearchitecture-baseline.md 
+
+using AskUserQuestion you can prompt me for each section and we can discuss.
+
+in terms of each section, prompt based on UI-first approach. what this allow us to do is figure out the kidna UI approach to sign up-> org -> bind -.....
+
+note: focus on sign up flows. not post sign up.
+
+---
+
+q1,q6,q7 all out of scope. for now we want to lock in the general onboarding flow.
+
+---
+
+sure
