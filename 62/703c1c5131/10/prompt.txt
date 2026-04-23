@@ -1,0 +1,134 @@
+<scheduled-task name="lightfast-xcom-opportunities" file="/Users/jeevanpillay/.claude/scheduled-tasks/lightfast-xcom-opportunities/SKILL.md">
+This is an automated run of a scheduled task. The user is not present to answer questions. For implementation details, execute autonomously without asking clarifying questions — make reasonable choices and note them in your output. "write" actions (e.g. MCP tools that send, post, create, update, or delete), only take them if the task file asks for that specific action. When in doubt, producing a report of what you found is the correct output.
+
+Find 5–10 high-quality posts on x.com where Lightfast (@lightfastai) can engage to nurture distribution. Research only — never post or reply. Output is for human review.
+
+## Mission
+
+Lightfast = the operating layer for product development. Memory + cited reasoning + agent action across GitHub, Vercel, Sentry, Linear. We're building the kernel agents and people both run on.
+
+We engage to **nurture, not pitch**. The best replies make the original poster look smarter, not us. If a reply could be ghostwritten by a SaaS marketing team, it's wrong.
+
+## Tooling — Browserbase MCP (cloud, step-by-step)
+
+The MCP launches with `--contextId $BROWSERBASE_XCOM_CONTEXT_ID --persist true`. Sessions start already logged into x.com. Six primitives: `start`, `end`, `navigate`, `act`, `observe`, `extract`.
+
+Loop:
+1. `mcp__browserbase__start` → session in persisted Context.
+2. `mcp__browserbase__navigate` → home or search URL.
+3. `mcp__browserbase__extract` with a Zod-style schema → pull `{ author_handle, post_text, post_url, like_count, reply_count, repost_count, posted_ago }` for visible posts.
+4. For promising authors, `navigate` to their profile, `extract` follower count + bio.
+5. Score, dedupe, repeat until you have 5–10 quality candidates.
+6. `mcp__browserbase__end` — cookies auto-persist back.
+
+Drive each call. Do not delegate to a black-box agent.
+
+## Search seeds
+
+Start with these. Add 2–3 of your own based on what's trending the day of run.
+
+- `https://x.com/search?q=agent%20memory&f=live`
+- `https://x.com/search?q=MCP%20server&f=live`
+- `https://x.com/search?q=Claude%20Code&f=live`
+- `https://x.com/search?q=Cursor%20agent&f=live`
+- `https://x.com/search?q=context%20for%20agents&f=live`
+- `https://x.com/search?q=Mem0%20OR%20Zep%20OR%20Letta&f=live` (competitor mentions)
+- `https://x.com/search?q=LangChain%20memory&f=live`
+- `https://x.com/search?q=agents%20in%20production&f=live`
+- `https://x.com/search?q=dev%20tool%20sprawl&f=live`
+- `https://x.com/search?q=incident%20root%20cause&f=live`
+- Also check: `x.com/lightfastai` mentions tab; replies under @AnthropicAI / @cursor_ai / @claude_code MCP launch threads.
+
+## Author quality bar
+
+**Auto-include:**
+- 500+ followers AND bio mentions: founder, CTO, eng, builds, ships, AI, agents, dev tools, infra, researcher
+- Verified blue + technical content (skip influencer / general-business blue checks)
+- Anyone @lightfastai already follows or who follows back
+
+**Auto-skip:**
+- <500 followers (unless bio is bullseye ICP — *founder of <agent infra startup>*, *eng at <known AI lab>*)
+- Bio is generic ("entrepreneur", "investor", "AI enthusiast" with no specifics)
+- Last 5 posts are all hashtag-stuffed promo
+- Account created in last 90 days with thread-bot posting cadence
+- Engagement looks bot-amplified: 100+ likes / 0 replies, identical reply patterns
+
+## Post quality bar
+
+**Engage:**
+- Genuine question or working-out-loud thinking about agents/memory/infra/MCP
+- Strong opinion grounded in shipped work (not airport-takeoff threads)
+- Bug report, frustration, or unmet need in the dev-tool stack — Lightfast-shaped problem
+- Replies on launch / changelog threads from Anthropic, Cursor, Vercel, Linear, Sentry — high-context, builders are watching
+
+**Skip:**
+- Pure promotion / launch announcement of an MCP-aggregator / vibes product
+- Politics, drama, hot-takes detached from work
+- Posts older than 6 hours unless mega-thread (replies feel late after that window)
+- Anything that already has 50+ replies — your reply gets buried
+
+## Reply rubric — Lightfast voice
+
+**Voice:** technical, curious, lowercase ok, dry. Never starts with *"great point"* / *"this"* / *"so true"*. Never pitches Lightfast unprompted. Never asks a bait question to fish for engagement. 1–10 words, hard cap.
+
+**Good replies (engage):**
+- *"persistent state across runs is the unlock"* (peer founder shipped a primitive)
+- *"goal-fit signals beat recency every time"* (someone working out memory ranking)
+- *"citations on every memory writeback helps"* (someone raising memory-poisoning)
+- *"same — cold tool calls especially"* (someone complaining about Claude Code latency)
+
+**Bad replies (would not ship):**
+- *"great point! we're building exactly this"* (pitchy, sycophantic)
+- *"have you tried Lightfast?"* (pitch, ignores the post)
+- *"agents need memory to scale, totally agree"* (generic, adds nothing)
+- *"interesting take — what do you think about XYZ?"* (bait question, low-effort)
+
+**Length test:** if a reply could be a tweet on its own (i.e. has nothing to do with the original post), reject it.
+
+## Scoring + dedupe
+
+For each candidate:
+- `icp_fit` (1–5): how well does the author match Lightfast's ICP?
+- `resonance` (1–5): how directly does the post hit Lightfast's value prop?
+- `engagement_signal` (1–5): is the post fresh + getting traction (not buried, not bot-amplified)?
+- `priority_score` = `icp_fit + resonance + engagement_signal` (max 15)
+
+Dedupe by `author_handle` — one opportunity per author per run, even if they have multiple matching posts. Pick their highest-scoring post.
+
+Cutoff: only return candidates with `priority_score ≥ 10`. If pass 1 yields fewer than 5, expand search seeds and run again. Don't pad the list with sub-10s.
+
+## Output schema
+
+```json
+{
+  "opportunities": [
+    {
+      "post_url": "...",
+      "author_handle": "@...",
+      "author_bio": "1–2 sentences from their profile",
+      "author_follower_count": 12500,
+      "author_signal": "founder of X, builds agent infra",
+      "post_excerpt": "≤200 chars",
+      "post_engagement": { "likes": 42, "replies": 7, "reposts": 3 },
+      "posted_ago": "2h",
+      "icp_fit": 5,
+      "resonance": 4,
+      "engagement_signal": 3,
+      "priority_score": 12,
+      "why_relevant": "1 sentence",
+      "suggested_reply": "1–10 words"
+    }
+  ],
+  "notes": "timeline signal quality, search-term recommendations for next run, anything noticed worth flagging"
+}
+```
+
+Sort by `priority_score` desc.
+
+## Hard rules
+
+- **Never post.** Not via Browserbase, not via API, not at all.
+- **Never DM.** Same rule.
+- **Never follow / unfollow / like / repost.** Read-only navigation only.
+- If you find yourself about to do any write action on x.com, stop and report.
+</scheduled-task>
