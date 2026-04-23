@@ -1,0 +1,271 @@
+<scheduled-task name="lightfast-xcom-opportunities" file="/Users/jeevanpillay/.claude/scheduled-tasks/lightfast-xcom-opportunities/SKILL.md">
+This is an automated run of a scheduled task. The user is not present to answer questions. For implementation details, execute autonomously without asking clarifying questions — make reasonable choices and note them in your output. "write" actions (e.g. MCP tools that send, post, create, update, or delete), only take them if the task file asks for that specific action. When in doubt, producing a report of what you found is the correct output.
+
+Navigate to x.com, find relevant post in relation to Lightfast to build distribution through Customer & Relationship nurturing. 
+
+Focus on analyzing Lightfast's value proposition through README.md or SPEC.md, then analyze latest post on x.com, find out more about the Person through his x.com details and synthesize 5-10 post oppurtunities with brief 1-10 word replies.
+
+Use browser-use MCP for this exclusively.
+</scheduled-task>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 04:58:04</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 04:58:35</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 04:59:06</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 04:59:37</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 05:00:07</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 05:00:38</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 05:01:09</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 05:01:40</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 05:02:11</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=running at 05:02:41</event>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>buzlsycdq</task-id>
+<summary>Monitor event: "Poll browser-use session until terminal"</summary>
+<event>status=stopped at 05:03:12
+TERMINAL</event>
+</task-notification>
+
+---
+
+question did you use the browser-use's agent chat for this?
+
+---
+
+does browser use provide calls so we actually do the navigation isntead of browser-use's session
+
+---
+
+i see. can you now check if browserbase is a better option here
+
+---
+
+perfect. let's discuss this switch. what needs to be done. also consider delete of browser-use and stuff too
+
+---
+
+not really, browserbase mcp will be used more for our automated sessions. i dont want it to use my local browser.
+
+---
+
+hmm question if we do want to use agent-browser, is it possible to use headless? so it runs in background?
+
+---
+
+yea proceed
+
+---
+
+let's actually just switch to using browserbase instead can we discuss this. i've alrready setup account
+
+---
+
+can you double check the browserbase docs. i would like to run this in the cloud so unsure where self-hosed is best option but want a clean solution
+
+---
+
+okay thats fine for now. proceed
+
+---
+
+okay aded api and project id. wahts next and yes clean up too
+
+---
+
+is it possible to do this in our pc?
+
+---
+
+the live view url is super buggy. surely there is cleaner solution here.
+
+---
+
+use [
+    {
+        "domain": ".x.com",
+        "expirationDate": 1810649188.837272,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "auth_token",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "fa4886b533fcae9f0ca1333e63ba0f114b191226"
+    },
+    {
+        "domain": ".x.com",
+        "expirationDate": 1810649171.191424,
+        "hostOnly": false,
+        "httpOnly": false,
+        "name": "guest_id",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "v1%3A177608917114815095"
+    },
+    {
+        "domain": ".x.com",
+        "expirationDate": 1808441131.488284,
+        "hostOnly": false,
+        "httpOnly": false,
+        "name": "twid",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "u%3D1111836258"
+    },
+    {
+        "domain": ".x.com",
+        "expirationDate": 1776906931.488318,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "__cf_bm",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "utEtzhuP0jKMi.zZAyfd33RFLqGTF.6EIPbkuA8TW8w-1776905131.2024121-1.0.1.REDACTED"
+    },
+    {
+        "domain": ".x.com",
+        "expirationDate": 1810649189.247902,
+        "hostOnly": false,
+        "httpOnly": false,
+        "name": "ct0",
+        "path": "/",
+        "sameSite": "lax",
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "e8a8040cda652ff78262583f7f3f7dfcddd87cb47116958781700471570d055dbd0e471bbca3808a2c8f9fa054b376262e443de60d06532b0046c6238e210f034424f228f6ae03066d17745b3b0e1442"
+    },
+    {
+        "domain": ".x.com",
+        "expirationDate": 1791891070.629375,
+        "hostOnly": false,
+        "httpOnly": false,
+        "name": "d_prefs",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "MjoxLGNvbnNlbnRfdmVyc2lvbjoyLHRleHRfdmVyc2lvbjoxMDAw"
+    },
+    {
+        "domain": ".x.com",
+        "expirationDate": 1810649188.837089,
+        "hostOnly": false,
+        "httpOnly": true,
+        "name": "kdt",
+        "path": "/",
+        "sameSite": null,
+        "secure": true,
+        "session": false,
+        "storeId": null,
+        "value": "REDACTED"
+    }
+]
+for x.com
+
+---
+
+okay next go find the Lightfast xcom oppurtunities Claude Desktop routine and let's rework it
+
+---
+
+question are we supposed to clean up any of the runners you created?
+
+---
+
+question, can you confirm that x.com will not ban us for doing these kinda automation?
+
+---
+
+hmm, can you explore more into X API and LinkedIn API for this stuff
+
+---
+
+can you do a second research into LinkedIn.
+
+---
+
+question what if we ran linkedin locally with agent-browser?
