@@ -1,0 +1,29 @@
+/implement_plan @thoughts/shared/plans/2026-04-23-desktop-codex-gap-quick-wins.md
+
+---
+
+proceed
+
+---
+
+/commit
+
+---
+
+proceed
+
+---
+
+proceed next
+
+---
+
+proceed
+
+---
+
+proceed
+
+---
+
+run all the manual veirfications. update the plan and and the research that these are done.
