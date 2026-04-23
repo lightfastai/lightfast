@@ -3,7 +3,7 @@
   "checkpoint_id": "54004dd72b90",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "apps/app/package.json",
     "apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/_components/desktop-auth-client.tsx",
@@ -16,13 +16,19 @@
       "transcript": "/54/004dd72b90/0/full.jsonl",
       "content_hash": "/54/004dd72b90/0/content_hash.txt",
       "prompt": "/54/004dd72b90/0/prompt.txt"
+    },
+    {
+      "metadata": "/54/004dd72b90/1/metadata.json",
+      "transcript": "/54/004dd72b90/1/full.jsonl",
+      "content_hash": "/54/004dd72b90/1/content_hash.txt",
+      "prompt": "/54/004dd72b90/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1019,
-    "cache_creation_tokens": 1235656,
-    "cache_read_tokens": 104233838,
-    "output_tokens": 429520,
-    "api_call_count": 785
+    "input_tokens": 1096,
+    "cache_creation_tokens": 1316725,
+    "cache_read_tokens": 105586058,
+    "output_tokens": 450081,
+    "api_call_count": 806
   }
 }
