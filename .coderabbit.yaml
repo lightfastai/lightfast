@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
 language: "en-US"
-early_access: true
+early_access: false
 
 tone_instructions: "Be direct, concise, no pleasantries. Categorize: [blocker] must fix, [warning] should fix with trade-offs, [nit] optional. Cite files or CLAUDE.md sections. Explain WHY changes matter, don't restate what changed."
 
@@ -18,9 +18,10 @@ reviews:
   # Link tracking
   assess_linked_issues: true
 
-  # Auto-review triggers (disabled — use @coderabbitai in PR comments to trigger)
+  # Auto-review triggers — runs on non-draft PRs targeting main/develop unless title opts out.
+  # Incremental reviews run automatically on each push so pre-merge checks stay fresh.
   auto_review:
-    enabled: false
+    enabled: true
     drafts: false
     auto_incremental_review: true
     ignore_title_keywords:
@@ -154,13 +155,17 @@ reviews:
       requirements: "PR title should follow conventional commits format (feat:, fix:, chore:, etc.) and be under 70 characters"
     description:
       mode: "warning"
+    issue_assessment:
+      mode: "warning"
+    docstrings:
+      mode: "warning"
 
 # ── Tools ──
 tools:
   eslint:
-    enabled: true
-  biome:
     enabled: false
+  biome:
+    enabled: true
   ast-grep:
     enabled: true
     essential_rules: true
@@ -182,6 +187,8 @@ finishing_touches:
   docstrings:
     enabled: true
   unit_tests:
+    enabled: true
+  simplify:
     enabled: true
 
 chat:
