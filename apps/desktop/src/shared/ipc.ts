@@ -5,7 +5,6 @@ const channel = (name: string) => `${IPC_NAMESPACE}:${name}` as const;
 export const IpcChannels = {
   getSystemThemeVariant: channel("get-system-theme-variant"),
   systemThemeVariantUpdated: channel("system-theme-variant-updated"),
-  showContextMenu: channel("show-context-menu"),
   openExternal: channel("open-external"),
   openWindow: channel("open-window"),
   getBuildInfoSync: channel("get-build-info-sync"),
@@ -19,6 +18,11 @@ export const IpcChannels = {
   getSettingsSync: channel("get-settings-sync"),
   updateSetting: channel("update-setting"),
   settingsChanged: channel("settings-changed"),
+  authSnapshotSync: channel("auth-snapshot-sync"),
+  authGetToken: channel("auth-get-token"),
+  authSignIn: channel("auth-sign-in"),
+  authSignOut: channel("auth-sign-out"),
+  authChanged: channel("auth-changed"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -90,7 +94,18 @@ export interface SettingsSnapshot {
   themeSource: ThemeSource;
 }
 
+export interface AuthSnapshot {
+  isSignedIn: boolean;
+}
+
 export interface LightfastBridge {
+  auth: {
+    snapshot: AuthSnapshot;
+    getToken: () => Promise<string | null>;
+    signIn: () => Promise<string | null>;
+    signOut: () => Promise<void>;
+    onChanged: (listener: (snapshot: AuthSnapshot) => void) => () => void;
+  };
   buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
   onMenuAction: (listener: (action: AcceleratorName) => void) => () => void;

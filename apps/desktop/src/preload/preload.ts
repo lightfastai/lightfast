@@ -1,6 +1,7 @@
-import { contextBridge, ipcRenderer } from "electron";
+import { contextBridge, ipcRenderer, type IpcRendererEvent } from "electron";
 import type { AcceleratorName } from "../shared/accelerators";
 import {
+  type AuthSnapshot,
   type BuildInfoSnapshot,
   IpcChannels,
   type LightfastBridge,
@@ -23,8 +24,23 @@ const updaterStatus = ipcRenderer.sendSync(
 const settings = ipcRenderer.sendSync(
   IpcChannels.getSettingsSync
 ) as SettingsSnapshot;
+const authSnapshot = ipcRenderer.sendSync(
+  IpcChannels.authSnapshotSync
+) as AuthSnapshot;
 
 const bridge: LightfastBridge = {
+  auth: {
+    snapshot: authSnapshot,
+    getToken: () => ipcRenderer.invoke(IpcChannels.authGetToken),
+    signIn: () => ipcRenderer.invoke(IpcChannels.authSignIn),
+    signOut: () => ipcRenderer.invoke(IpcChannels.authSignOut),
+    onChanged: (listener) => {
+      const handler = (_event: IpcRendererEvent, snap: AuthSnapshot) =>
+        listener(snap);
+      ipcRenderer.on(IpcChannels.authChanged, handler);
+      return () => ipcRenderer.off(IpcChannels.authChanged, handler);
+    },
+  },
   buildInfo,
   sentryInit,
   platform: process.platform,

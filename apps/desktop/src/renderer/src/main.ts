@@ -1,4 +1,5 @@
 import * as Sentry from "@sentry/browser";
+import "./react/entry";
 import {
   ACCELERATORS,
   type AcceleratorName,

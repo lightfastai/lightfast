@@ -597,3 +597,111 @@ kbd {
   border: 1px solid var(--color-border);
   border-radius: 6px;
 }
+
+/* Signed-out onboarding overlay */
+
+.auth-gate {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  background: var(--color-background-surface);
+  color: var(--color-text-foreground);
+  -webkit-app-region: drag;
+}
+
+.auth-gate__titlebar-drag {
+  flex-shrink: 0;
+  height: var(--height-toolbar);
+}
+
+.auth-gate__content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: calc(var(--spacing) * 8);
+  -webkit-app-region: no-drag;
+}
+
+.auth-gate__logo {
+  width: 48px;
+  height: 48px;
+  color: var(--color-text-foreground);
+}
+
+.auth-gate__title {
+  margin: calc(var(--spacing) * 4) 0 0;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text-foreground);
+  text-align: center;
+}
+
+.auth-gate__subtitle {
+  margin: calc(var(--spacing) * 1) 0 0;
+  font-size: 15px;
+  font-weight: 400;
+  color: var(--color-text-foreground-secondary);
+  text-align: center;
+}
+
+.auth-gate__actions {
+  margin-top: calc(var(--spacing) * 8);
+  display: flex;
+  flex-direction: column;
+  gap: calc(var(--spacing) * 3);
+  width: 100%;
+  max-width: 200px;
+}
+
+.auth-gate__primary-button,
+.auth-gate__secondary-button {
+  padding: calc(var(--spacing) * 2.5) calc(var(--spacing) * 4);
+  font-size: var(--text-base);
+  border-radius: 6px;
+  cursor: default;
+  appearance: none;
+  transition:
+    background 120ms ease,
+    border-color 120ms ease,
+    opacity 120ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-gate__primary-button,
+  .auth-gate__secondary-button {
+    transition: none;
+  }
+}
+
+.auth-gate__primary-button {
+  font-weight: 500;
+  color: var(--color-background-surface);
+  background: var(--color-text-foreground);
+  border: 1px solid var(--color-text-foreground);
+}
+
+.auth-gate__primary-button:hover {
+  opacity: 0.88;
+}
+
+.auth-gate__secondary-button {
+  font-weight: 400;
+  color: var(--color-text-foreground);
+  background: transparent;
+  border: 1px solid var(--color-border);
+}
+
+.auth-gate__secondary-button:hover {
+  background: var(--color-background-elevated-secondary);
+  border-color: var(--color-border-heavy);
+}
+
+.auth-gate__primary-button:focus-visible,
+.auth-gate__secondary-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}

@@ -9,7 +9,6 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { PublisherGithub } from "@electron-forge/publisher-github";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
-const PROTOCOL_SCHEME = "lightfast";
 const BUNDLE_ID = "ai.lightfast.desktop";
 
 const osxSign =
@@ -67,18 +66,15 @@ const config: ForgeConfig = {
     ...(osxNotarize && { osxNotarize }),
     extendInfo: {
       LSApplicationCategoryType: "public.app-category.developer-tools",
+      LSMinimumSystemVersion: "12.0",
       NSHighResolutionCapable: true,
       NSSupportsAutomaticGraphicsSwitching: true,
+      NSQuitAlwaysKeepsWindows: false,
+      LSEnvironment: { MallocNanoZone: "0" },
       NSMicrophoneUsageDescription:
         "Used for voice notes and audio capture inside the app.",
       NSAudioCaptureUsageDescription:
         "Used for capturing system audio during sessions.",
-      CFBundleURLTypes: [
-        {
-          CFBundleURLName: BUNDLE_ID,
-          CFBundleURLSchemes: [PROTOCOL_SCHEME],
-        },
-      ],
     },
   },
   rebuildConfig: {},

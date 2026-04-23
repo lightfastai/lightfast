@@ -9,13 +9,15 @@ import {
 } from "electron";
 import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
+import {
+  getAuthSnapshot,
+  getToken as getAuthToken,
+  onAuthChanged,
+  signOut as signOutAuth,
+} from "./auth-store";
+import { beginSignIn } from "./auth-flow";
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
-import {
-  focusForDeepLink,
-  onDeepLink,
-  registerProtocolHandler,
-} from "./protocol";
 import { getSentryInitOptions, initSentry } from "./sentry";
 import {
   getSettings,
@@ -40,7 +42,36 @@ function currentThemeVariant(): SystemThemeVariant {
   return nativeTheme.shouldUseDarkColors ? "dark" : "light";
 }
 
+function getApiOriginForCsp(): string {
+  return (
+    process.env.LIGHTFAST_API_URL ??
+    (process.env.NODE_ENV === "production"
+      ? "https://lightfast.ai"
+      : "http://localhost:3024")
+  );
+}
+
+function getClerkFrontendApi(): string | null {
+  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  if (!publishableKey) return null;
+  const base64Part = publishableKey.split("_")[2];
+  if (!base64Part) return null;
+  try {
+    const domain = Buffer.from(base64Part, "base64")
+      .toString("utf-8")
+      .replace(/\$$/, "");
+    if (!domain) return null;
+    return `https://${domain}`;
+  } catch {
+    return null;
+  }
+}
+
 function buildContentSecurityPolicy(): string {
+  const apiOrigin = getApiOriginForCsp();
+  const clerkOrigin = getClerkFrontendApi();
+  const extraConnect = [apiOrigin, clerkOrigin].filter(Boolean).join(" ");
+
   const devServer = MAIN_WINDOW_VITE_DEV_SERVER_URL;
   if (devServer) {
     const origin = new URL(devServer).origin;
@@ -49,7 +80,7 @@ function buildContentSecurityPolicy(): string {
       `default-src 'self' ${origin}`,
       `script-src 'self' 'unsafe-inline' ${origin}`,
       `style-src 'self' 'unsafe-inline' ${origin}`,
-      `connect-src 'self' ${origin} ${wsOrigin}`,
+      `connect-src 'self' ${origin} ${wsOrigin} ${extraConnect}`.trim(),
       `img-src 'self' data: blob: ${origin}`,
       `font-src 'self' data: ${origin}`,
     ].join("; ");
@@ -58,6 +89,7 @@ function buildContentSecurityPolicy(): string {
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
+    `connect-src 'self' ${extraConnect}`.trim(),
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
   ].join("; ");
@@ -170,6 +202,15 @@ function registerIpcHandlers(): void {
       await openPrimaryWindow();
     }
   });
+
+  ipcMain.on(IpcChannels.authSnapshotSync, (event) => {
+    event.returnValue = getAuthSnapshot();
+  });
+  ipcMain.handle(IpcChannels.authGetToken, () => getAuthToken());
+  ipcMain.handle(IpcChannels.authSignIn, () => beginSignIn());
+  ipcMain.handle(IpcChannels.authSignOut, () => {
+    signOutAuth();
+  });
 }
 
 function broadcastThemeUpdates(): void {
@@ -276,7 +317,6 @@ function broadcastSettings(snapshot: SettingsSnapshot): void {
 }
 
 initSentry();
-registerProtocolHandler();
 
 contextMenu({
   showInspectElement: !app.isPackaged,
@@ -318,13 +358,9 @@ app.whenReady().then(() => {
   });
   void openPrimaryWindow();
 
-  onDeepLink((url) => {
-    const primary = findWindow("primary") ?? BrowserWindow.getAllWindows()[0];
-    if (primary) {
-      focusForDeepLink(primary);
-    }
+  onAuthChanged((snapshot) => {
     for (const win of BrowserWindow.getAllWindows()) {
-      win.webContents.send(IpcChannels.openExternal, url);
+      win.webContents.send(IpcChannels.authChanged, snapshot);
     }
   });
 
