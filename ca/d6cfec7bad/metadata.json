@@ -3,7 +3,7 @@
   "checkpoint_id": "cad6cfec7bad",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 10,
+  "checkpoints_count": 14,
   "files_touched": [
     "api/app/src/__tests__/resolve-clerk-session.test.ts",
     "api/app/src/trpc.ts"
@@ -14,13 +14,19 @@
       "transcript": "/ca/d6cfec7bad/0/full.jsonl",
       "content_hash": "/ca/d6cfec7bad/0/content_hash.txt",
       "prompt": "/ca/d6cfec7bad/0/prompt.txt"
+    },
+    {
+      "metadata": "/ca/d6cfec7bad/1/metadata.json",
+      "transcript": "/ca/d6cfec7bad/1/full.jsonl",
+      "content_hash": "/ca/d6cfec7bad/1/content_hash.txt",
+      "prompt": "/ca/d6cfec7bad/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 323,
-    "cache_creation_tokens": 561233,
-    "cache_read_tokens": 29634973,
-    "output_tokens": 132672,
-    "api_call_count": 234
+    "input_tokens": 365,
+    "cache_creation_tokens": 659285,
+    "cache_read_tokens": 30401425,
+    "output_tokens": 151915,
+    "api_call_count": 251
   }
 }

@@ -1,0 +1,23 @@
+consider @thoughts/shared/2026-04-23-onboarding-funnel-v2.md i think we need to decide on more things. the db table structure. consider that most of the curent imlpement is old lightfast stuff before the fundamental restructure we are going through with lightfast.
+
+basically right now, we have this new restriction that 1 github org === 1 lightfast org.
+
+im curious whether you think we need to rework the db table structure consider that our db tables for integration stuff is 1 big table with linear/sentry/....
+
+technically github uses the same logic but im curious where it would cause issues with this new infra of binding. whether we need seperate table for github for example.
+
+---
+
+i agree. i think in general we just need this to be placed insidd the original md file.
+
+---
+
+any qol to do to this file to keep to clean and straight to the point.
+
+---
+
+sounds good. proced with your best approaches. note: @.claude/commands/research_codebase.md for best practices
+
+---
+
+proceed
