@@ -1,0 +1,31 @@
+let's rework our Slide 01 - Title in paper.
+
+consider @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx 's isometric hero and the lines, i think it's best we do something similar
+
+so using golden ratio on right side this line and isometric hero
+
+then on right logo + Lightfast text (no Lightfast workmark replace with Lightfast text)
+
+and the 2 Lines similar to landig hero section (text foreground and muted approach) + boldness
+
+---
+
+i want to maintain my @thoughts/shared/pitch-deck-2026-04.md 's description. 2 points. not just building the .....
+
+---
+
+okay now, make the logo + Lightfast bigger,
+
+let's also place the accelerating at the bottom and bigger text size.
+
+---
+
+okay now, that we have this base system consider slides 03 solution and 05. let's discuss how can we can turn these into similar design aethetics.
+
+---
+
+this sounds cool. spike each. but create new frames.
+
+---
+
+this is cool. done for now.
