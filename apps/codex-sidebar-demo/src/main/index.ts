@@ -22,6 +22,7 @@ import {
   registerGlobalShortcuts,
   unregisterGlobalShortcuts,
 } from "./shortcuts";
+import { createTray, destroyTray } from "./tray";
 import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
@@ -245,6 +246,18 @@ app.whenReady().then(() => {
   registerIpcHandlers();
   broadcastThemeUpdates();
   registerGlobalShortcuts({ toggleHud: toggleHudWindow });
+  createTray({
+    showPrimary: () => {
+      const existing = findWindow("primary");
+      if (existing) {
+        existing.show();
+        existing.focus();
+      } else {
+        void openPrimaryWindow();
+      }
+    },
+    toggleHud: toggleHudWindow,
+  });
   void openPrimaryWindow();
 
   onDeepLink((url) => {
@@ -266,6 +279,7 @@ app.whenReady().then(() => {
 
 app.on("will-quit", () => {
   unregisterGlobalShortcuts();
+  destroyTray();
 });
 
 app.on("web-contents-created", (_event, contents) => {

@@ -14,6 +14,7 @@ const config: ForgeConfig = {
     appBundleId: "ai.lightfast.codex-sidebar-demo",
     appCategoryType: "public.app-category.developer-tools",
     asar: true,
+    extraResource: ["src/main/assets"],
     extendInfo: {
       LSApplicationCategoryType: "public.app-category.developer-tools",
       NSHighResolutionCapable: true,
