@@ -1,0 +1,9 @@
+consider our slide 07 and slide product, we need to follow more closely with design patterns seen in slide 02 to 05. basically we are display in a large hall for presentation. things need to be large and big. see slide 04 for example. big text. rework.
+
+---
+
+i think you should be more creative here. surely there are better ways to display sldie 07. in general we dont need title Operating Landscape. I like the 01 - Build... stuff.
+
+just need bigger text for the Ship features. change background color to the other slides bg color.
+
+more boldness in title etc
