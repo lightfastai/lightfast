@@ -17,35 +17,10 @@ const SECTIONS: Array<{ id: SettingsSection; label: string }> = [
 ];
 
 const SHORTCUT_LABELS: Record<AcceleratorName, string> = {
-  archiveThread: "Archive thread",
-  copyConversationPath: "Copy conversation path",
-  copyDeeplink: "Copy deep link",
-  copySessionId: "Copy session ID",
-  copyWorkingDirectory: "Copy working directory",
-  dictation: "Dictation",
-  findInThread: "Find in thread",
-  navigateBack: "Back",
-  navigateForward: "Forward",
-  newThread: "New thread",
-  newThreadAlt: "New thread (alt)",
-  newWindow: "New window",
-  nextThread: "Next thread",
-  openCommandMenu: "Open command menu",
-  openCommandMenuAlt: "Open command menu (alt)",
-  openFolder: "Open folder…",
-  previousThread: "Previous thread",
-  quickChat: "Quick chat",
-  renameThread: "Rename thread",
-  searchChats: "Find in chats",
-  searchFiles: "Go to file",
+  newThread: "New window",
+  newWindow: "New primary window",
   settings: "Open settings",
-  toggleBrowserPanel: "Toggle browser panel",
-  toggleDiffPanel: "Toggle diff panel",
-  toggleFileTreePanel: "Toggle file tree",
   toggleSidebar: "Toggle sidebar",
-  toggleTerminal: "Toggle terminal",
-  toggleThreadPin: "Toggle thread pin",
-  toggleTraceRecording: "Toggle trace recording",
 };
 
 function renderShortcutRow(
@@ -129,10 +104,6 @@ function renderShortcutsSection(platform: FormatPlatform): string {
     <section class="settings-section" data-section="shortcuts">
       <header class="settings-section__header">
         <div class="settings-section__title">Keyboard Shortcuts</div>
-        <div class="settings-section__subtitle">
-          Shortcuts mirror OpenAI Codex's accelerator table. Menu actions send
-          through the same IPC channel used by window-local hotkeys.
-        </div>
       </header>
       <div class="settings-card">${rows}</div>
     </section>

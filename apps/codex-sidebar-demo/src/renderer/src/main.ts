@@ -101,23 +101,6 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(
   button.addEventListener("click", () => sidebar.toggle());
 }
 
-const toastStack = document.querySelector<HTMLElement>("[data-toast-stack]");
-
-function showToast(message: string): void {
-  if (!toastStack) return;
-  const el = document.createElement("div");
-  el.className = "toast";
-  el.textContent = message;
-  toastStack.append(el);
-  requestAnimationFrame(() => {
-    el.dataset.visible = "true";
-  });
-  window.setTimeout(() => {
-    el.dataset.visible = "false";
-    window.setTimeout(() => el.remove(), 200);
-  }, 1800);
-}
-
 function dispatchAction(name: AcceleratorName): void {
   switch (name) {
     case "toggleSidebar":
@@ -127,16 +110,10 @@ function dispatchAction(name: AcceleratorName): void {
       router.navigate("settings");
       break;
     case "newThread":
-    case "newThreadAlt":
       void window.lightfastBridge.openWindow("secondary");
       break;
     case "newWindow":
       void window.lightfastBridge.openWindow("primary");
-      break;
-    default:
-      showToast(
-        `${name} (${formatAccelerator(ACCELERATORS[name], formatPlatform)})`
-      );
       break;
   }
 }

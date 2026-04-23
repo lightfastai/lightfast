@@ -126,8 +126,6 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
             { type: "separator" as const },
             { role: "selectAll" as const },
           ]),
-      { type: "separator" },
-      dispatchItem("findInThread", t("edit.find")),
     ],
   };
 
@@ -135,7 +133,6 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
     label: t("view.name"),
     submenu: [
       dispatchItem("toggleSidebar", t("view.toggleSidebar")),
-      dispatchItem("toggleTerminal", t("view.toggleTerminal")),
       { type: "separator" },
       { label: t("view.reload"), role: "reload" },
       { label: t("view.forceReload"), role: "forceReload" },
@@ -146,24 +143,6 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
       { label: t("view.zoomOut"), role: "zoomOut" },
       { type: "separator" },
       { label: t("view.toggleFullscreen"), role: "togglefullscreen" },
-    ],
-  };
-
-  const goMenu: MenuItemConstructorOptions = {
-    label: t("go.name"),
-    submenu: [
-      dispatchItem("openCommandMenu", t("go.commandMenu")),
-      {
-        label: t("go.commandMenuAlt"),
-        accelerator: ACCELERATORS.openCommandMenuAlt,
-        click: () => sendMenuAction("openCommandMenu"),
-      },
-      { type: "separator" },
-      dispatchItem("searchFiles", t("go.searchFiles")),
-      dispatchItem("searchChats", t("go.searchChats")),
-      { type: "separator" },
-      dispatchItem("navigateBack", t("go.navigateBack")),
-      dispatchItem("navigateForward", t("go.navigateForward")),
     ],
   };
 
@@ -198,7 +177,6 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
     fileMenu,
     editMenu,
     viewMenu,
-    goMenu,
     windowMenu,
     helpMenu,
   ];
