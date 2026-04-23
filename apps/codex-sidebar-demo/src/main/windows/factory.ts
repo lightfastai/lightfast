@@ -7,6 +7,7 @@ import {
   type WebContents,
 } from "electron";
 import type { WindowKind } from "../../shared/ipc";
+import { loadWindowState, trackWindowState } from "../window-state";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
 declare const MAIN_WINDOW_VITE_NAME: string;
@@ -113,15 +114,28 @@ export interface CreateWindowOptions {
   kind: WindowKind;
 }
 
-export function createWindow({
+export async function createWindow({
   kind,
   harden,
-}: CreateWindowOptions): BrowserWindow {
+}: CreateWindowOptions): Promise<BrowserWindow> {
+  const savedBounds = await loadWindowState(kind);
   const options: BrowserWindowConstructorOptions = {
     ...optionsForKind(kind),
     ...preloadOptions(kind),
+    ...(savedBounds.width && savedBounds.height
+      ? {
+          width: savedBounds.width,
+          height: savedBounds.height,
+          ...(typeof savedBounds.x === "number" && { x: savedBounds.x }),
+          ...(typeof savedBounds.y === "number" && { y: savedBounds.y }),
+        }
+      : {}),
   };
   const win = new BrowserWindow(options);
+  if (savedBounds.isMaximized) {
+    win.maximize();
+  }
+  trackWindowState(kind, win);
   win.once("ready-to-show", () => win.show());
   harden?.(win.webContents);
   loadRenderer(win.webContents, kind);

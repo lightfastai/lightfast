@@ -110,13 +110,13 @@ function registerIpcHandlers(): void {
     }
   });
 
-  ipcMain.handle(IpcChannels.openWindow, (_event, kind: unknown) => {
+  ipcMain.handle(IpcChannels.openWindow, async (_event, kind: unknown) => {
     if (kind === "secondary") {
-      openSecondaryWindow();
+      await openSecondaryWindow();
     } else if (kind === "hud") {
-      openHudWindow();
+      await openHudWindow();
     } else if (kind === "primary") {
-      openPrimaryWindow();
+      await openPrimaryWindow();
     }
   });
 }
@@ -131,15 +131,15 @@ function broadcastThemeUpdates(): void {
   });
 }
 
-export function openPrimaryWindow(): BrowserWindow {
+export function openPrimaryWindow(): Promise<BrowserWindow> {
   return createWindow({ kind: "primary", harden: hardenContents });
 }
 
-export function openSecondaryWindow(): BrowserWindow {
+export function openSecondaryWindow(): Promise<BrowserWindow> {
   return createWindow({ kind: "secondary", harden: hardenContents });
 }
 
-export function openHudWindow(): BrowserWindow {
+export function openHudWindow(): Promise<BrowserWindow> {
   return createWindow({ kind: "hud", harden: hardenContents });
 }
 
@@ -161,21 +161,21 @@ app.whenReady().then(() => {
   Menu.setApplicationMenu(
     buildApplicationMenu({
       openSecondary: () => {
-        openSecondaryWindow();
+        void openSecondaryWindow();
       },
       openHud: () => {
-        openHudWindow();
+        void openHudWindow();
       },
     })
   );
 
   registerIpcHandlers();
   broadcastThemeUpdates();
-  openPrimaryWindow();
+  void openPrimaryWindow();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      openPrimaryWindow();
+      void openPrimaryWindow();
     }
   });
 });
