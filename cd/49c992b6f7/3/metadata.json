@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cd49c992b6f7",
+  "session_id": "a305a09a-e071-4c39-8c86-70369287d8e4",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-23T13:22:55.223488Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/desktop/build/entitlements.mac.plist",
+    "apps/desktop/forge.config.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "215eea3da861",
+  "token_usage": {
+    "input_tokens": 31,
+    "cache_creation_tokens": 112637,
+    "cache_read_tokens": 1076416,
+    "output_tokens": 22596,
+    "api_call_count": 16
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-23T13:22:55.084552Z",
+    "agent_lines": 0,
+    "agent_removed": 8,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 0,
+    "total_lines_changed": 8,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
