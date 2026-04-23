@@ -18,6 +18,7 @@ const bridge: LightfastBridge = {
       ipcRenderer.off(IpcChannels.systemThemeVariantUpdated, handler);
   },
   openExternal: (url) => ipcRenderer.invoke(IpcChannels.openExternal, url),
+  openWindow: (kind) => ipcRenderer.invoke(IpcChannels.openWindow, kind),
 };
 
 contextBridge.exposeInMainWorld("lightfastBridge", bridge);

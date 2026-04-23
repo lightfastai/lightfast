@@ -20,3 +20,15 @@ for (const item of items) {
     item.classList.add("active");
   });
 }
+
+const openButtons =
+  document.querySelectorAll<HTMLButtonElement>("[data-open-window]");
+
+for (const button of openButtons) {
+  button.addEventListener("click", () => {
+    const kind = button.dataset.openWindow as WindowKind | undefined;
+    if (kind) {
+      void window.lightfastBridge.openWindow(kind);
+    }
+  });
+}

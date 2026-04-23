@@ -8,7 +8,7 @@
   </head>
   <body>
     <div id="app">
-      <aside class="sidebar">
+      <aside class="sidebar" data-kind-primary>
         <div class="titlebar-drag"></div>
         <nav class="nav">
           <button type="button" class="item active">Home</button>
@@ -20,13 +20,36 @@
       </aside>
       <main class="content">
         <div class="titlebar-drag"></div>
-        <section class="content-inner">
-          <h1>Native-looking sidebar</h1>
+        <section class="content-inner" data-kind-primary>
+          <h1>Primary window</h1>
           <p>
             The left pane is transparent so the
             <code>NSVisualEffectView</code>
             (<code>vibrancy: "menu"</code>) shows through. Drag the window from
             the top strip; click items to confirm they don't drag.
+          </p>
+          <div class="actions">
+            <button type="button" class="action" data-open-window="secondary">
+              Open Secondary
+            </button>
+            <button type="button" class="action" data-open-window="hud">
+              Open HUD
+            </button>
+          </div>
+        </section>
+        <section class="content-inner" data-kind-secondary>
+          <h1>Secondary window</h1>
+          <p>
+            Separate 720&times;540 window for settings/about flows. Same
+            vibrancy backing, no sidebar. Opened from the primary window's menu
+            or <code>Cmd+N</code>.
+          </p>
+        </section>
+        <section class="content-inner" data-kind-hud>
+          <h1>HUD</h1>
+          <p>
+            Compact 440&times;320 always-on-top panel. Traffic lights sit
+            tighter at <code>{ 10, 10}</code>.
           </p>
         </section>
       </main>

@@ -171,3 +171,43 @@ code {
   background: var(--color-background-elevated-secondary);
   border-radius: 4px;
 }
+
+[data-kind-primary],
+[data-kind-secondary],
+[data-kind-hud] {
+  display: none;
+}
+
+:root[data-window-kind="primary"] [data-kind-primary],
+:root[data-window-kind="secondary"] [data-kind-secondary],
+:root[data-window-kind="hud"] [data-kind-hud] {
+  display: revert;
+}
+
+:root[data-window-kind="secondary"] .sidebar,
+:root[data-window-kind="hud"] .sidebar {
+  display: none;
+}
+
+.actions {
+  display: flex;
+  gap: calc(var(--spacing) * 2);
+  margin-top: calc(var(--spacing) * 4);
+}
+
+.action {
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 3);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-foreground);
+  appearance: none;
+  cursor: default;
+  background: var(--color-background-elevated-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.action:hover {
+  background: var(--color-background-elevated-primary);
+  border-color: var(--color-border-heavy);
+}

@@ -7,6 +7,7 @@ export const IpcChannels = {
   systemThemeVariantUpdated: channel("system-theme-variant-updated"),
   showContextMenu: channel("show-context-menu"),
   openExternal: channel("open-external"),
+  openWindow: channel("open-window"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -26,13 +27,14 @@ export type Platform =
   | "cygwin"
   | "netbsd";
 
+export type WindowKind = "primary" | "secondary" | "hud";
+
 export interface LightfastBridge {
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
   onSystemThemeVariantUpdated: (
     listener: (variant: SystemThemeVariant) => void
   ) => () => void;
   openExternal: (url: string) => Promise<void>;
+  openWindow: (kind: WindowKind) => Promise<void>;
   platform: Platform;
 }
-
-export type WindowKind = "primary" | "secondary" | "hud";

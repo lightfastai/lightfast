@@ -1,5 +1,3 @@
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
 import {
   app,
   BrowserWindow,
@@ -10,11 +8,9 @@ import {
 } from "electron";
 import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
+import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
-declare const MAIN_WINDOW_VITE_NAME: string;
-
-const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const ALLOWED_EXTERNAL_PROTOCOLS = new Set(["http:", "https:", "mailto:"]);
 
@@ -92,51 +88,6 @@ function hardenContents(contents: Electron.WebContents): void {
   });
 }
 
-function createWindow(): BrowserWindow {
-  const isMac = process.platform === "darwin";
-  const isWindows = process.platform === "win32";
-
-  const win = new BrowserWindow({
-    width: 1024,
-    height: 720,
-    minWidth: 720,
-    minHeight: 480,
-    show: false,
-    titleBarStyle: isMac ? "hiddenInset" : "hidden",
-    ...(isMac && { trafficLightPosition: { x: 16, y: 16 } }),
-    ...(isWindows && {
-      titleBarOverlay: {
-        color: "#00000000",
-        symbolColor: "#ffffff",
-        height: 46,
-      },
-    }),
-    vibrancy: "menu",
-    visualEffectState: "active",
-    backgroundMaterial: "mica",
-    backgroundColor: "#00000000",
-    webPreferences: {
-      preload: join(__dirname, "preload.js"),
-      sandbox: true,
-      contextIsolation: true,
-      additionalArguments: ["--window-kind=primary"],
-    },
-  });
-
-  win.once("ready-to-show", () => win.show());
-  hardenContents(win.webContents);
-
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    win.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    win.loadFile(
-      join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`)
-    );
-  }
-
-  return win;
-}
-
 function registerIpcHandlers(): void {
   ipcMain.handle(
     IpcChannels.getSystemThemeVariant,
@@ -156,6 +107,16 @@ function registerIpcHandlers(): void {
       // ignore malformed urls
     }
   });
+
+  ipcMain.handle(IpcChannels.openWindow, (_event, kind: unknown) => {
+    if (kind === "secondary") {
+      openSecondaryWindow();
+    } else if (kind === "hud") {
+      openHudWindow();
+    } else if (kind === "primary") {
+      openPrimaryWindow();
+    }
+  });
 }
 
 function broadcastThemeUpdates(): void {
@@ -163,8 +124,21 @@ function broadcastThemeUpdates(): void {
     const variant = currentThemeVariant();
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send(IpcChannels.systemThemeVariantUpdated, variant);
+      applyTitleBarOverlayTheme(win);
     }
   });
+}
+
+export function openPrimaryWindow(): BrowserWindow {
+  return createWindow({ kind: "primary", harden: hardenContents });
+}
+
+export function openSecondaryWindow(): BrowserWindow {
+  return createWindow({ kind: "secondary", harden: hardenContents });
+}
+
+export function openHudWindow(): BrowserWindow {
+  return createWindow({ kind: "hud", harden: hardenContents });
 }
 
 contextMenu({
@@ -184,11 +158,11 @@ app.whenReady().then(() => {
 
   registerIpcHandlers();
   broadcastThemeUpdates();
-  createWindow();
+  openPrimaryWindow();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow();
+      openPrimaryWindow();
     }
   });
 });
