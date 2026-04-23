@@ -1,0 +1,25 @@
+consider our Paper design Slide -1 to Slide 10 (we skipped Slide 9 for now), i want to export this into a pdf format. so 1 pdf, all 9 slides. how to do so.
+
+---
+
+yea proceed
+
+---
+
+yes proceed
+
+---
+
+try the export again
+
+---
+
+i'll export. you do the rest. await my confirmaition
+
+---
+
+okay ive accidentaly saved in @apps/www/public/images/pitch-deck/
+
+---
+
+i got a new title apge. regen
