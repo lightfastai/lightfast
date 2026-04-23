@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cd49c992b6f7",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 14,
+  "files_touched": [
+    "apps/desktop/build/entitlements.mac.plist",
+    "apps/desktop/forge.config.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/cd/49c992b6f7/0/metadata.json",
+      "transcript": "/cd/49c992b6f7/0/full.jsonl",
+      "content_hash": "/cd/49c992b6f7/0/content_hash.txt",
+      "prompt": "/cd/49c992b6f7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 808,
+    "cache_creation_tokens": 1061615,
+    "cache_read_tokens": 75137391,
+    "output_tokens": 325816,
+    "api_call_count": 629
+  }
+}
