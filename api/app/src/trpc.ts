@@ -9,7 +9,8 @@
 
 import { db } from "@db/app/client";
 import { initTRPC, TRPCError } from "@trpc/server";
-import { auth, getUserOrgMemberships } from "@vendor/clerk/server";
+import { clerkEnvBase } from "@vendor/clerk/env";
+import { auth, getUserOrgMemberships, verifyToken } from "@vendor/clerk/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -50,21 +51,72 @@ type AuthContext =
  */
 
 /**
+ * Resolved Clerk session — minimal shape consumed by createTRPCContext.
+ *
+ * `null` means no valid session was found via either Bearer token or cookie.
+ */
+type ResolvedSession = { userId: string; orgId: string | null } | null;
+
+/**
+ * Resolve a Clerk session from either an `Authorization: Bearer <jwt>` header
+ * (used by desktop / non-browser clients) or the standard Clerk cookie
+ * (used by the Next.js web app).
+ *
+ * Bearer is tried first. Invalid/expired Bearer tokens fall through to the
+ * cookie path so a stale token never blocks a still-valid cookie session.
+ *
+ * Exported for unit testing — production callers should use `createTRPCContext`.
+ */
+export async function resolveClerkSession(
+  headers: Headers
+): Promise<ResolvedSession> {
+  const authHeader = headers.get("authorization") ?? "";
+  const match = /^Bearer\s+(.+)$/i.exec(authHeader);
+  if (match) {
+    const jwt = match[1];
+    if (jwt) {
+      try {
+        const claims = await verifyToken(jwt, {
+          secretKey: clerkEnvBase.CLERK_SECRET_KEY,
+        });
+        const userId = typeof claims.sub === "string" ? claims.sub : null;
+        if (userId) {
+          const orgIdClaim = (claims as { org_id?: unknown }).org_id;
+          const orgId = typeof orgIdClaim === "string" ? orgIdClaim : null;
+          return { userId, orgId };
+        }
+      } catch {
+        // Invalid/expired JWT — fall through to cookie path.
+      }
+    }
+  }
+
+  const cookieSession = await auth({ treatPendingAsSignedOut: false });
+  if (!cookieSession.userId) return null;
+  return {
+    userId: cookieSession.userId,
+    orgId: cookieSession.orgId ?? null,
+  };
+}
+
+/**
  * Unified tRPC context factory (Clerk auth only)
+ *
+ * Accepts both the Clerk cookie (web) and `Authorization: Bearer <jwt>` (desktop).
  *
  * API key auth is handled by the REST layer (withApiKeyAuth, withDualAuth),
  * not tRPC. The CLI uses REST endpoints, not tRPC procedures.
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const clerkSession = await auth({ treatPendingAsSignedOut: false });
+  const session = await resolveClerkSession(opts.headers);
 
-  if (clerkSession.userId) {
-    if (clerkSession.orgId) {
+  if (session) {
+    if (session.orgId) {
       return {
         auth: {
           type: "clerk-active" as const,
-          userId: clerkSession.userId,
-          orgId: clerkSession.orgId,
+          userId: session.userId,
+          orgId: session.orgId,
         },
         db,
         headers: opts.headers,
@@ -73,7 +125,7 @@ export const createTRPCContext = async (opts: { headers: Headers }) => {
     return {
       auth: {
         type: "clerk-pending" as const,
-        userId: clerkSession.userId,
+        userId: session.userId,
       },
       db,
       headers: opts.headers,
