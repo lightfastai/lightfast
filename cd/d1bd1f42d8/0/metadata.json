@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cdd1bd1f42d8",
+  "session_id": "19951b07-a37f-49f7-8c4d-ec2385ae16a9",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-23T11:22:47.309829Z",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "thoughts/shared/plans/2026-04-23-desktop-clerk-trpc-wiring.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "b2195d961729",
+  "token_usage": {
+    "input_tokens": 327,
+    "cache_creation_tokens": 563914,
+    "cache_read_tokens": 29942163,
+    "output_tokens": 134380,
+    "api_call_count": 238
+  },
+  "session_metrics": {
+    "turn_count": 10
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-23T11:22:46.187268Z",
+    "agent_lines": 1394,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1394,
+    "total_lines_changed": 1394,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}

@@ -1,0 +1,51 @@
+/implement_plan @thoughts/shared/plans/2026-04-23-desktop-clerk-trpc-wiring.md phase 1
+
+---
+
+run the manual verificaiton for me
+
+---
+
+hmm, i can set up clerk lightfast-desktop jwt token if needed.
+
+---
+
+done! i think you need to learn how to login. and we'll create a new skill in @.claude/skills/ for lightfast-clerk auth stuff
+
+---
+
+can you deeply think about it. note: clerk has testing keys too.
+
+we need a plan on how to ensure we can effectively login/cleanup/logout and ensure persistence when needed
+
+---
+
+1. not implemented yet. can defer.
+2. hmm, i think ideally debug-${git-user-email}.... or something like that?
+3. let's scaffold all and ensure during each scaffold of the script, we test to make sure it all works, so meaning add script, run the script for real, fix issues and fine tune the script.
+4. multi-user defer.
+5. per repo. but surely not .claude/...., consider this skill being used by codex too.
+
+---
+
+proceed
+
+---
+
+so whats next
+
+---
+
+yes proceed
+
+---
+
+proceed
+
+---
+
+/commit first then /compact
+
+---
+
+yes
