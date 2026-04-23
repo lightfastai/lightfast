@@ -136,3 +136,15 @@ okay whats next from here?
 ---
 
 alright proceed
+
+---
+
+nah commit here tbh. all good. after commit let's work on complete rename with git mv to preserve history. this app is going to be called apps/desktop
+
+this is now going to a lightfast app not a template
+
+---
+
+nah commit here tbh. all good. after commit let's work on complete rename with git mv to preserve history. this app is going to be called apps/desktop
+
+this is now going to a lightfast app not a template, let's also add logos from @apps/www/public/
