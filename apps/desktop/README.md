@@ -1,12 +1,12 @@
-# @lightfast/codex-sidebar-demo
+# @lightfast/desktop
 
-Electron test app that reproduces the Codex-style native macOS sidebar — a
-translucent `NSVisualEffectView`-backed left pane with inset traffic lights.
+Lightfast desktop app (Electron). Native-looking macOS sidebar via
+`NSVisualEffectView`, Mica on Windows 11, signed + notarized releases.
 
 ## Run
 
 ```bash
-pnpm -F @lightfast/codex-sidebar-demo dev
+pnpm -F @lightfast/desktop dev
 ```
 
 ## The recipe
@@ -28,14 +28,14 @@ Renderer (`src/renderer/src/styles.css`):
 
 ## Release
 
-Releases are cut by pushing a tag matching `codex-sidebar-demo-v<version>`:
+Releases are cut by pushing a tag matching `desktop-v<version>`:
 
 ```bash
-git tag codex-sidebar-demo-v0.1.0
-git push origin codex-sidebar-demo-v0.1.0
+git tag desktop-v0.1.0
+git push origin desktop-v0.1.0
 ```
 
-The `Release codex-sidebar-demo` workflow then:
+The `Release desktop` workflow then:
 
 1. Creates a draft GitHub Release for the tag.
 2. Builds signed+notarized ZIP and DMG artifacts for both `arm64` and `x64`
@@ -65,7 +65,7 @@ The `Release codex-sidebar-demo` workflow then:
 Run the packager locally without publishing:
 
 ```bash
-pnpm -F @lightfast/codex-sidebar-demo exec electron-forge package \
+pnpm -F @lightfast/desktop exec electron-forge package \
   --arch=arm64 --platform=darwin
 ```
 
@@ -76,8 +76,8 @@ sets):
 APPLE_SIGNING_IDENTITY=... APPLE_TEAM_ID=... \
 APPLE_API_KEY=$HOME/.private_keys/AuthKey_XXX.p8 \
 APPLE_API_KEY_ID=... APPLE_API_ISSUER=... \
-CODEX_SIDEBAR_DEMO_RELEASE_REPO=lightfastai/lightfast \
+LIGHTFAST_DESKTOP_RELEASE_REPO=lightfastai/lightfast \
 GITHUB_TOKEN=$(gh auth token) \
-pnpm -F @lightfast/codex-sidebar-demo exec electron-forge publish \
+pnpm -F @lightfast/desktop exec electron-forge publish \
   --arch=arm64 --platform=darwin
 ```

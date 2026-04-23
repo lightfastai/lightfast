@@ -9,8 +9,8 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { PublisherGithub } from "@electron-forge/publisher-github";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
-const PROTOCOL_SCHEME = "codex-sidebar-demo";
-const BUNDLE_ID = "ai.lightfast.codex-sidebar-demo";
+const PROTOCOL_SCHEME = "lightfast";
+const BUNDLE_ID = "ai.lightfast.desktop";
 
 const osxSign =
   process.env.APPLE_SIGNING_IDENTITY && process.env.APPLE_TEAM_ID
@@ -42,7 +42,7 @@ const osxNotarize =
     : undefined;
 
 const [publishOwner, publishRepo] = (
-  process.env.CODEX_SIDEBAR_DEMO_RELEASE_REPO ?? ""
+  process.env.LIGHTFAST_DESKTOP_RELEASE_REPO ?? ""
 ).split("/");
 
 const githubPublisher =
@@ -50,18 +50,18 @@ const githubPublisher =
     ? new PublisherGithub({
         repository: { owner: publishOwner, name: publishRepo },
         draft: true,
-        prerelease:
-          process.env.CODEX_SIDEBAR_DEMO_RELEASE_PRERELEASE === "true",
+        prerelease: process.env.LIGHTFAST_DESKTOP_RELEASE_PRERELEASE === "true",
       })
     : null;
 
 const config: ForgeConfig = {
   packagerConfig: {
-    name: "Codex Sidebar Demo",
-    executableName: "codex-sidebar-demo",
+    name: "Lightfast",
+    executableName: "lightfast",
     appBundleId: BUNDLE_ID,
     appCategoryType: "public.app-category.developer-tools",
     asar: true,
+    icon: resolve(import.meta.dirname, "build/icon"),
     extraResource: ["src/main/assets"],
     ...(osxSign && { osxSign }),
     ...(osxNotarize && { osxNotarize }),
@@ -86,7 +86,8 @@ const config: ForgeConfig = {
   rebuildConfig: {},
   makers: [
     new MakerSquirrel({
-      name: "codex_sidebar_demo",
+      name: "lightfast",
+      setupIcon: resolve(import.meta.dirname, "build/icon.ico"),
     }),
     new MakerZIP({}, ["darwin"]),
     new MakerDMG({

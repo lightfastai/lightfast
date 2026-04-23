@@ -1,12 +1,12 @@
-name: Release codex-sidebar-demo
+name: Release desktop
 
 on:
   push:
     tags:
-      - 'codex-sidebar-demo-v*'
+      - 'desktop-v*'
 
 concurrency:
-  group: codex-sidebar-demo-release-${{ github.ref }}
+  group: desktop-release-${{ github.ref }}
 
 jobs:
   prepare:
@@ -23,7 +23,7 @@ jobs:
         run: |
           tag="${{ github.ref_name }}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=${tag#codex-sidebar-demo-v}" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#desktop-v}" >> "$GITHUB_OUTPUT"
 
       - name: Create draft release if missing
         env:
@@ -35,8 +35,8 @@ jobs:
             gh release create "${{ steps.ver.outputs.tag }}" \
               --repo "${{ github.repository }}" \
               --draft \
-              --title "codex-sidebar-demo v${{ steps.ver.outputs.version }}" \
-              --notes "Automated release of @lightfast/codex-sidebar-demo."
+              --title "Lightfast desktop v${{ steps.ver.outputs.version }}" \
+              --notes "Automated release of @lightfast/desktop."
           fi
 
   build:
@@ -51,7 +51,7 @@ jobs:
     permissions:
       contents: write
     env:
-      CODEX_SIDEBAR_DEMO_RELEASE_REPO: ${{ github.repository }}
+      LIGHTFAST_DESKTOP_RELEASE_REPO: ${{ github.repository }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
@@ -74,7 +74,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Stamp version + feed URL in package.json
-        working-directory: apps/codex-sidebar-demo
+        working-directory: apps/desktop
         run: |
           npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
           npm pkg set buildFlavor=prod
@@ -107,7 +107,7 @@ jobs:
           echo "APPLE_API_KEY=$key_file" >> "$GITHUB_ENV"
 
       - name: Publish (forge)
-        working-directory: apps/codex-sidebar-demo
+        working-directory: apps/desktop
         run: pnpm exec electron-forge publish --arch=${{ matrix.arch }} --platform=darwin
 
   finalize:
@@ -126,7 +126,7 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
-        run: node apps/codex-sidebar-demo/scripts/generate-update-feed.mjs
+        run: node apps/desktop/scripts/generate-update-feed.mjs
 
       - name: Publish release (undraft)
         env:

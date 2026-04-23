@@ -1,6 +1,6 @@
 import type { RendererErrorPayload } from "../../shared/ipc";
 
-const OVERLAY_ID = "codex-sidebar-demo-error-overlay";
+const OVERLAY_ID = "lightfast-desktop-error-overlay";
 
 function ensureOverlay(): HTMLElement {
   const existing = document.getElementById(OVERLAY_ID);

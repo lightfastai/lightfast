@@ -1,8 +1,8 @@
 {
-  "name": "@lightfast/codex-sidebar-demo",
+  "name": "@lightfast/desktop",
   "version": "0.0.0",
   "private": true,
-  "description": "Electron template matching the Codex desktop app's architecture (Forge + plugin-vite + Fuses, vibrancy + hiddenInset traffic lights, Sentry-ready).",
+  "description": "Lightfast desktop app (Electron Forge + plugin-vite + Fuses, macOS vibrancy sidebar, Sentry-ready).",
   "main": ".vite/build/bootstrap.js",
   "scripts": {
     "dev": "electron-forge start",

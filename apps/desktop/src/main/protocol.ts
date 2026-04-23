@@ -1,6 +1,6 @@
 import { app, type BrowserWindow } from "electron";
 
-export const PROTOCOL_SCHEME = "codex-sidebar-demo";
+export const PROTOCOL_SCHEME = "lightfast";
 
 type DeepLinkHandler = (url: string) => void;
 

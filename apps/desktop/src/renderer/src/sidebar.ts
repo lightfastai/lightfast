@@ -1,4 +1,4 @@
-const STORAGE_KEY = "codex-sidebar-demo:sidebar-collapsed";
+const STORAGE_KEY = "lightfast-desktop:sidebar-collapsed";
 
 export interface SidebarController {
   isCollapsed(): boolean;

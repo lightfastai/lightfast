@@ -544,7 +544,7 @@ kbd {
 
 /* Error overlay */
 
-#codex-sidebar-demo-error-overlay {
+#lightfast-desktop-error-overlay {
   position: fixed;
   inset: 0;
   z-index: 9999;
@@ -554,7 +554,7 @@ kbd {
   background: color-mix(in oklab, var(--gray-1000) 85%, transparent);
 }
 
-#codex-sidebar-demo-error-overlay[data-visible="true"] {
+#lightfast-desktop-error-overlay[data-visible="true"] {
   display: flex;
 }
 

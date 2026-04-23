@@ -1,4 +1,4 @@
-export const IPC_NAMESPACE = "codex_sidebar_demo";
+export const IPC_NAMESPACE = "lightfast_desktop";
 
 const channel = (name: string) => `${IPC_NAMESPACE}:${name}` as const;
 

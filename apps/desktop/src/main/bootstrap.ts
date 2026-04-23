@@ -6,8 +6,8 @@ if (squirrelStartup) {
   app.quit();
 }
 
-app.setName("Codex Sidebar Demo");
-app.setPath("userData", join(app.getPath("appData"), "Codex Sidebar Demo"));
+app.setName("Lightfast");
+app.setPath("userData", join(app.getPath("appData"), "Lightfast"));
 
 if (!app.requestSingleInstanceLock()) {
   app.exit(0);
