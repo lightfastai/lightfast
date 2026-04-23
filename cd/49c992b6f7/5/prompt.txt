@@ -1,0 +1,9 @@
+/implement_plan @thoughts/shared/plans/2026-04-23-desktop-codex-gap-quick-wins.md
+
+---
+
+proceed
+
+---
+
+/commit

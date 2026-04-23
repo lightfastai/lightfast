@@ -3,7 +3,7 @@
   "checkpoint_id": "cd49c992b6f7",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 19,
+  "checkpoints_count": 21,
   "files_touched": [
     "apps/desktop/build/entitlements.mac.plist",
     "apps/desktop/forge.config.ts"
@@ -38,13 +38,19 @@
       "transcript": "/cd/49c992b6f7/4/full.jsonl",
       "content_hash": "/cd/49c992b6f7/4/content_hash.txt",
       "prompt": "/cd/49c992b6f7/4/prompt.txt"
+    },
+    {
+      "metadata": "/cd/49c992b6f7/5/metadata.json",
+      "transcript": "/cd/49c992b6f7/5/full.jsonl",
+      "content_hash": "/cd/49c992b6f7/5/content_hash.txt",
+      "prompt": "/cd/49c992b6f7/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 19339,
-    "cache_creation_tokens": 1446212,
-    "cache_read_tokens": 78782547,
-    "output_tokens": 418752,
-    "api_call_count": 684
+    "input_tokens": 19369,
+    "cache_creation_tokens": 1490477,
+    "cache_read_tokens": 79549592,
+    "output_tokens": 424239,
+    "api_call_count": 700
   }
 }
