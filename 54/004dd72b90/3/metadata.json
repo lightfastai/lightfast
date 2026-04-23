@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "54004dd72b90",
+  "session_id": "67fa9a6e-8281-443f-bc5f-bb4904c912c5",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-23T14:09:53.974103Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/app/package.json",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/_components/desktop-auth-client.tsx",
+    "apps/app/src/proxy.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "99b5d5f91f9c",
+  "checkpoint_transcript_start": 120,
+  "transcript_lines_at_start": 120,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-23T14:09:53.479046Z",
+    "agent_lines": 53,
+    "agent_removed": 8,
+    "human_added": 8,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 61,
+    "total_lines_changed": 72,
+    "agent_percentage": 84.72222222222221,
+    "metric_version": 2
+  }
+}
