@@ -1,0 +1,173 @@
+:root {
+  --spacing: 0.25rem;
+  --text-base: 13px;
+  --text-sm: 12px;
+  --height-toolbar: 46px;
+
+  --gray-0: #ffffff;
+  --gray-50: #f9f9f9;
+  --gray-100: #ededed;
+  --gray-300: #afafaf;
+  --gray-500: #5d5d5d;
+  --gray-600: #414141;
+  --gray-750: #282828;
+  --gray-800: #212121;
+  --gray-900: #181818;
+  --gray-1000: #0d0d0d;
+
+  --spacing-token-sidebar: clamp(240px, 300px, min(520px, calc(100vw - 320px)));
+
+  --thread-content-max-width: 480px;
+
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: var(--text-base);
+  color-scheme: dark;
+}
+
+.electron-dark {
+  --color-background-surface: var(--gray-900);
+  --color-background-surface-under: #000000;
+  --color-background-elevated-primary: color-mix(
+    in oklab,
+    var(--gray-800) 96%,
+    transparent
+  );
+  --color-background-elevated-primary-opaque: var(--gray-750);
+  --color-background-elevated-secondary: color-mix(
+    in oklab,
+    var(--gray-0) 3%,
+    transparent
+  );
+  --color-background-elevated-secondary-opaque: var(--gray-800);
+  --color-background-button-tertiary: color-mix(
+    in oklab,
+    var(--gray-0) 3%,
+    transparent
+  );
+  --color-background-button-tertiary-hover: color-mix(
+    in oklab,
+    var(--gray-0) 7%,
+    transparent
+  );
+  --color-background-button-tertiary-active: color-mix(
+    in oklab,
+    var(--gray-0) 10%,
+    transparent
+  );
+
+  --color-text-foreground: var(--gray-0);
+  --color-text-foreground-secondary: color-mix(
+    in oklab,
+    var(--gray-0) 70%,
+    transparent
+  );
+  --color-text-foreground-tertiary: color-mix(
+    in oklab,
+    var(--gray-0) 50%,
+    transparent
+  );
+
+  --color-border: color-mix(in oklab, #ffffff 8%, transparent);
+  --color-border-heavy: color-mix(in oklab, #ffffff 16%, transparent);
+  --color-border-light: color-mix(in oklab, #ffffff 4%, transparent);
+}
+
+html,
+body,
+#app {
+  height: 100%;
+  margin: 0;
+  color: var(--color-text-foreground);
+  background: transparent;
+}
+
+#app {
+  display: flex;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+  width: var(--spacing-token-sidebar);
+  height: 100%;
+  background: transparent;
+  border-right: 1px solid var(--color-border);
+}
+
+.content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  height: 100%;
+  background: var(--color-background-surface);
+}
+
+.titlebar-drag {
+  -webkit-app-region: drag;
+  height: var(--height-toolbar);
+  flex-shrink: 0;
+}
+
+:root[data-platform="darwin"] .sidebar .titlebar-drag {
+  padding-left: 80px;
+}
+
+:root[data-platform="win32"] .content .titlebar-drag {
+  padding-right: 138px;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+}
+
+.item {
+  -webkit-app-region: no-drag;
+  appearance: none;
+  background: var(--color-background-button-tertiary);
+  border: 0;
+  border-radius: 6px;
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
+  cursor: default;
+}
+
+.item:hover {
+  background: var(--color-background-button-tertiary-hover);
+}
+
+.item.active {
+  background: var(--color-background-button-tertiary-active);
+}
+
+.content-inner {
+  max-width: var(--thread-content-max-width);
+  padding: calc(var(--spacing) * 6) calc(var(--spacing) * 8);
+  color: var(--color-text-foreground-secondary);
+}
+
+.content-inner h1 {
+  margin: 0 0 calc(var(--spacing) * 3);
+  font-size: calc(var(--text-base) * 1.6);
+  font-weight: 600;
+  color: var(--color-text-foreground);
+}
+
+.content-inner p {
+  margin: 0;
+  line-height: 1.55;
+}
+
+code {
+  padding: 1px calc(var(--spacing) * 1);
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: 0.92em;
+  background: var(--color-background-elevated-secondary);
+  border-radius: 4px;
+}

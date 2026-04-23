@@ -1,0 +1,5 @@
+out/
+dist/
+.cache/
+.vite/
+node_modules/

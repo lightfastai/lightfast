@@ -83,7 +83,11 @@ onlyBuiltDependencies:
   - bufferutil
   - core-js
   - core-js-pure
+  - electron
+  - electron-winstaller
   - esbuild
+  - fs-xattr
+  - macos-alias
   - protobufjs
   - sharp
 

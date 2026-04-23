@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en" class="electron-dark">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codex Sidebar Demo</title>
+    <link rel="stylesheet" href="./src/styles.css">
+  </head>
+  <body>
+    <div id="app">
+      <aside class="sidebar">
+        <div class="titlebar-drag"></div>
+        <nav class="nav">
+          <button type="button" class="item active">Home</button>
+          <button type="button" class="item">Projects</button>
+          <button type="button" class="item">Agents</button>
+          <button type="button" class="item">Runs</button>
+          <button type="button" class="item">Settings</button>
+        </nav>
+      </aside>
+      <main class="content">
+        <div class="titlebar-drag"></div>
+        <section class="content-inner">
+          <h1>Native-looking sidebar</h1>
+          <p>
+            The left pane is transparent so the
+            <code>NSVisualEffectView</code>
+            (<code>vibrancy: "menu"</code>) shows through. Drag the window from
+            the top strip; click items to confirm they don't drag.
+          </p>
+        </section>
+      </main>
+    </div>
+    <script type="module" src="./src/main.ts"></script>
+  </body>
+</html>
