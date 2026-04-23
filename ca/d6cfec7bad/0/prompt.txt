@@ -45,3 +45,7 @@ proceed
 ---
 
 /commit first then /compact
+
+---
+
+yes
