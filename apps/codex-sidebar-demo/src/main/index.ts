@@ -18,6 +18,12 @@ import {
 } from "./protocol";
 import { getSentryInitOptions, initSentry } from "./sentry";
 import {
+  getSettings,
+  onSettingsChanged,
+  type SettingsSnapshot,
+  updateSetting,
+} from "./settings-store";
+import {
   attachLocalShortcuts,
   registerGlobalShortcuts,
   unregisterGlobalShortcuts,
@@ -111,6 +117,24 @@ function registerIpcHandlers(): void {
 
   ipcMain.on(IpcChannels.getSentryInitOptionsSync, (event) => {
     event.returnValue = getSentryInitOptions();
+  });
+
+  ipcMain.on(IpcChannels.getSettingsSync, (event) => {
+    event.returnValue = getSettings();
+  });
+
+  ipcMain.handle(IpcChannels.updateSetting, (_event, payload: unknown) => {
+    if (!payload || typeof payload !== "object") {
+      return getSettings();
+    }
+    const { key, value } = payload as {
+      key: keyof SettingsSnapshot;
+      value: SettingsSnapshot[keyof SettingsSnapshot];
+    };
+    if (!(key in getSettings())) {
+      return getSettings();
+    }
+    return updateSetting(key, value);
   });
 
   ipcMain.handle(
@@ -220,6 +244,37 @@ function toggleHudWindow(): void {
   }
 }
 
+const trayActions = {
+  showPrimary: () => {
+    const existing = findWindow("primary");
+    if (existing) {
+      existing.show();
+      existing.focus();
+    } else {
+      void openPrimaryWindow();
+    }
+  },
+  toggleHud: toggleHudWindow,
+};
+
+function applySettings(snapshot: SettingsSnapshot): void {
+  nativeTheme.themeSource = snapshot.themeSource;
+  if (process.platform !== "linux" && app.isPackaged) {
+    app.setLoginItemSettings({ openAtLogin: snapshot.launchAtLogin });
+  }
+  if (snapshot.showInMenuBar) {
+    createTray(trayActions);
+  } else {
+    destroyTray();
+  }
+}
+
+function broadcastSettings(snapshot: SettingsSnapshot): void {
+  for (const win of BrowserWindow.getAllWindows()) {
+    win.webContents.send(IpcChannels.settingsChanged, snapshot);
+  }
+}
+
 initSentry();
 registerProtocolHandler();
 
@@ -253,18 +308,13 @@ app.whenReady().then(() => {
   registerUpdaterIpc();
   broadcastThemeUpdates();
   registerGlobalShortcuts({ toggleHud: toggleHudWindow });
-  initUpdater();
-  createTray({
-    showPrimary: () => {
-      const existing = findWindow("primary");
-      if (existing) {
-        existing.show();
-        existing.focus();
-      } else {
-        void openPrimaryWindow();
-      }
-    },
-    toggleHud: toggleHudWindow,
+  applySettings(getSettings());
+  if (getSettings().checkForUpdatesAutomatically) {
+    initUpdater();
+  }
+  onSettingsChanged((snapshot) => {
+    applySettings(snapshot);
+    broadcastSettings(snapshot);
   });
   void openPrimaryWindow();
 

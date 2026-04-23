@@ -16,6 +16,9 @@ export const IpcChannels = {
   updaterStatusSync: channel("updater-status-sync"),
   updaterStatusChanged: channel("updater-status-changed"),
   menuAction: channel("menu-action"),
+  getSettingsSync: channel("get-settings-sync"),
+  updateSetting: channel("update-setting"),
+  settingsChanged: channel("settings-changed"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -78,11 +81,21 @@ export interface UpdaterStatusSnapshot {
 
 import type { AcceleratorName } from "./accelerators";
 
+export type ThemeSource = "system" | "light" | "dark";
+
+export interface SettingsSnapshot {
+  checkForUpdatesAutomatically: boolean;
+  launchAtLogin: boolean;
+  showInMenuBar: boolean;
+  themeSource: ThemeSource;
+}
+
 export interface LightfastBridge {
   buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
-  onMenuAction: (
-    listener: (action: AcceleratorName) => void
+  onMenuAction: (listener: (action: AcceleratorName) => void) => () => void;
+  onSettingsChanged: (
+    listener: (snapshot: SettingsSnapshot) => void
   ) => () => void;
   onSystemThemeVariantUpdated: (
     listener: (variant: SystemThemeVariant) => void
@@ -95,9 +108,14 @@ export interface LightfastBridge {
   platform: Platform;
   reportError: (payload: RendererErrorPayload) => void;
   sentryInit: SentryInitSnapshot;
+  settings: SettingsSnapshot;
   updater: {
     status: UpdaterStatusSnapshot;
     check: () => Promise<{ ok: boolean; reason?: string }>;
     install: () => Promise<void>;
   };
+  updateSetting: <K extends keyof SettingsSnapshot>(
+    key: K,
+    value: SettingsSnapshot[K]
+  ) => Promise<SettingsSnapshot>;
 }

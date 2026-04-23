@@ -1,6 +1,6 @@
 import {
-  type AcceleratorName,
   ACCELERATORS,
+  type AcceleratorName,
   type FormatPlatform,
 } from "../../shared/accelerators";
 
@@ -62,8 +62,11 @@ function parse(
   for (const part of parts) {
     switch (part) {
       case "CmdOrCtrl":
-        if (isMac) requireMeta = true;
-        else requireCtrl = true;
+        if (isMac) {
+          requireMeta = true;
+        } else {
+          requireCtrl = true;
+        }
         break;
       case "Command":
       case "Cmd":
@@ -98,15 +101,27 @@ function parse(
 }
 
 function matches(event: KeyboardEvent, spec: ParsedAccelerator): boolean {
-  if (!spec.key) return false;
+  if (!spec.key) {
+    return false;
+  }
   const keyHit =
     event.key.toLowerCase() === spec.key ||
     spec.codeCandidates.includes(event.code);
-  if (!keyHit) return false;
-  if (event.ctrlKey !== spec.requireCtrl) return false;
-  if (event.metaKey !== spec.requireMeta) return false;
-  if (event.altKey !== spec.requireAlt) return false;
-  if (event.shiftKey !== spec.requireShift) return false;
+  if (!keyHit) {
+    return false;
+  }
+  if (event.ctrlKey !== spec.requireCtrl) {
+    return false;
+  }
+  if (event.metaKey !== spec.requireMeta) {
+    return false;
+  }
+  if (event.altKey !== spec.requireAlt) {
+    return false;
+  }
+  if (event.shiftKey !== spec.requireShift) {
+    return false;
+  }
   return true;
 }
 
@@ -125,11 +140,17 @@ export function createHotkeyManager(options: HotkeyManagerOptions) {
   }
 
   function onKeyDown(event: KeyboardEvent): void {
-    if (event.repeat) return;
+    if (event.repeat) {
+      return;
+    }
     for (const [name, spec] of specs) {
-      if (!matches(event, spec)) continue;
+      if (!matches(event, spec)) {
+        continue;
+      }
       const set = handlers.get(name);
-      if (!set || set.size === 0) continue;
+      if (!set || set.size === 0) {
+        continue;
+      }
       event.preventDefault();
       for (const handler of set) {
         handler(event);

@@ -5,10 +5,7 @@ import {
   type MenuItemConstructorOptions,
   shell,
 } from "electron";
-import {
-  type AcceleratorName,
-  ACCELERATORS,
-} from "../shared/accelerators";
+import { ACCELERATORS, type AcceleratorName } from "../shared/accelerators";
 import { IpcChannels } from "../shared/ipc";
 import enLocale from "./locales/en.json";
 
@@ -96,12 +93,12 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
         click: actions.openHud,
       },
       { type: "separator" },
-      ...(!isMac
-        ? [
+      ...(isMac
+        ? []
+        : [
             dispatchItem("settings", t("file.settings")),
             { type: "separator" as const },
-          ]
-        : []),
+          ]),
       { label: t("file.close"), role: "close" },
     ],
   };

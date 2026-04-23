@@ -1,9 +1,9 @@
 import * as Sentry from "@sentry/browser";
 import {
-  type AcceleratorName,
   ACCELERATORS,
-  formatAccelerator,
+  type AcceleratorName,
   type FormatPlatform,
+  formatAccelerator,
 } from "../../shared/accelerators";
 import type { LightfastBridge, WindowKind } from "../../shared/ipc";
 import { installErrorBoundary } from "./error-boundary";
@@ -39,6 +39,15 @@ document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window.codexWindowType;
 document.documentElement.dataset.buildFlavor = buildInfo.buildFlavor;
 
+function applyThemeVariant(variant: "light" | "dark"): void {
+  const classes = document.documentElement.classList;
+  classes.toggle("electron-dark", variant === "dark");
+  classes.toggle("electron-light", variant === "light");
+}
+
+void window.lightfastBridge.getSystemThemeVariant().then(applyThemeVariant);
+window.lightfastBridge.onSystemThemeVariantUpdated(applyThemeVariant);
+
 const buildBadge = document.querySelector<HTMLElement>("[data-build-badge]");
 if (buildBadge) {
   buildBadge.textContent = `${buildInfo.buildFlavor} · v${buildInfo.version} (${buildInfo.buildNumber})`;
@@ -56,9 +65,7 @@ const router = createRouter();
 
 function renderForRoute(route: Route): void {
   if (route === "settings") {
-    const root = document.querySelector<HTMLElement>(
-      "[data-route-settings]"
-    );
+    const root = document.querySelector<HTMLElement>("[data-route-settings]");
     if (root && root.dataset.rendered !== "true") {
       renderSettings(root, formatPlatform);
       root.dataset.rendered = "true";
@@ -67,7 +74,9 @@ function renderForRoute(route: Route): void {
   const items = document.querySelectorAll<HTMLButtonElement>(".sidebar .item");
   for (const item of items) {
     const target = item.dataset.routeTo as Route | undefined;
-    if (!target) continue;
+    if (!target) {
+      continue;
+    }
     item.classList.toggle("active", target === route);
   }
 }
@@ -80,7 +89,9 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(
 )) {
   button.addEventListener("click", () => {
     const target = button.dataset.routeTo as Route | undefined;
-    if (target) router.navigate(target);
+    if (target) {
+      router.navigate(target);
+    }
   });
 }
 
@@ -114,6 +125,8 @@ function dispatchAction(name: AcceleratorName): void {
       break;
     case "newWindow":
       void window.lightfastBridge.openWindow("primary");
+      break;
+    default:
       break;
   }
 }

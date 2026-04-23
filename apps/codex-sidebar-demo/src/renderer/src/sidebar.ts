@@ -45,7 +45,9 @@ export function createSidebarController(): SidebarController {
       return collapsed;
     },
     setCollapsed(next) {
-      if (next === collapsed) return;
+      if (next === collapsed) {
+        return;
+      }
       collapsed = next;
       writePersistedState(collapsed);
       apply();

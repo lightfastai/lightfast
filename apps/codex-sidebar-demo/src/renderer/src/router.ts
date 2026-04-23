@@ -6,7 +6,9 @@ const ROUTE_HASHES: Record<Route, string> = {
 };
 
 function parseRoute(hash: string): Route {
-  if (hash.startsWith("#/settings")) return "settings";
+  if (hash.startsWith("#/settings")) {
+    return "settings";
+  }
   return "home";
 }
 
@@ -34,7 +36,9 @@ export function createRouter(): Router {
 
   window.addEventListener("hashchange", () => {
     const next = parseRoute(window.location.hash);
-    if (next === route) return;
+    if (next === route) {
+      return;
+    }
     route = next;
     apply();
     emit();
@@ -45,7 +49,9 @@ export function createRouter(): Router {
       return route;
     },
     navigate(next) {
-      if (next === route) return;
+      if (next === route) {
+        return;
+      }
       window.location.hash = ROUTE_HASHES[next];
     },
     onChange(listener) {

@@ -5,6 +5,7 @@ import {
   IpcChannels,
   type LightfastBridge,
   type SentryInitSnapshot,
+  type SettingsSnapshot,
   type SystemThemeVariant,
   type UpdaterStatusSnapshot,
   type WindowKind,
@@ -19,6 +20,9 @@ const sentryInit = ipcRenderer.sendSync(
 const updaterStatus = ipcRenderer.sendSync(
   IpcChannels.updaterStatusSync
 ) as UpdaterStatusSnapshot;
+const settings = ipcRenderer.sendSync(
+  IpcChannels.getSettingsSync
+) as SettingsSnapshot;
 
 const bridge: LightfastBridge = {
   buildInfo,
@@ -45,10 +49,19 @@ const bridge: LightfastBridge = {
     ipcRenderer.on(IpcChannels.menuAction, handler);
     return () => ipcRenderer.off(IpcChannels.menuAction, handler);
   },
+  onSettingsChanged: (listener) => {
+    const handler = (_event: unknown, snapshot: SettingsSnapshot) =>
+      listener(snapshot);
+    ipcRenderer.on(IpcChannels.settingsChanged, handler);
+    return () => ipcRenderer.off(IpcChannels.settingsChanged, handler);
+  },
   openExternal: (url) => ipcRenderer.invoke(IpcChannels.openExternal, url),
   openWindow: (kind) => ipcRenderer.invoke(IpcChannels.openWindow, kind),
   reportError: (payload) =>
     ipcRenderer.send(IpcChannels.rendererError, payload),
+  settings,
+  updateSetting: (key, value) =>
+    ipcRenderer.invoke(IpcChannels.updateSetting, { key, value }),
   updater: {
     status: updaterStatus,
     check: () => ipcRenderer.invoke(IpcChannels.updaterCheck),
