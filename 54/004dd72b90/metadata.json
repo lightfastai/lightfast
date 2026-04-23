@@ -1,0 +1,28 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "54004dd72b90",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/package.json",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/_components/desktop-auth-client.tsx",
+    "apps/app/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/app/src/proxy.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/54/004dd72b90/0/metadata.json",
+      "transcript": "/54/004dd72b90/0/full.jsonl",
+      "content_hash": "/54/004dd72b90/0/content_hash.txt",
+      "prompt": "/54/004dd72b90/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1019,
+    "cache_creation_tokens": 1235656,
+    "cache_read_tokens": 104233838,
+    "output_tokens": 429520,
+    "api_call_count": 785
+  }
+}
