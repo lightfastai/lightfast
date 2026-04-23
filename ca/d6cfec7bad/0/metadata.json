@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cad6cfec7bad",
+  "session_id": "19951b07-a37f-49f7-8c4d-ec2385ae16a9",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-23T11:21:59.155193Z",
+  "branch": "main",
+  "checkpoints_count": 10,
+  "files_touched": [
+    "api/app/src/__tests__/resolve-clerk-session.test.ts",
+    "api/app/src/trpc.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "b2195d961729",
+  "token_usage": {
+    "input_tokens": 323,
+    "cache_creation_tokens": 561233,
+    "cache_read_tokens": 29634973,
+    "output_tokens": 132672,
+    "api_call_count": 234
+  },
+  "session_metrics": {
+    "turn_count": 10
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-23T11:21:58.037308Z",
+    "agent_lines": 175,
+    "agent_removed": 7,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 175,
+    "total_lines_changed": 182,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cad6cfec7bad",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 10,
+  "files_touched": [
+    "api/app/src/__tests__/resolve-clerk-session.test.ts",
+    "api/app/src/trpc.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/ca/d6cfec7bad/0/metadata.json",
+      "transcript": "/ca/d6cfec7bad/0/full.jsonl",
+      "content_hash": "/ca/d6cfec7bad/0/content_hash.txt",
+      "prompt": "/ca/d6cfec7bad/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 323,
+    "cache_creation_tokens": 561233,
+    "cache_read_tokens": 29634973,
+    "output_tokens": 132672,
+    "api_call_count": 234
+  }
+}
