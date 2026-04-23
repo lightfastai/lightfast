@@ -111,3 +111,7 @@ okay im now cnovinced there's something fundamentally broken. firstly, the redir
 cli/auth is old code. most likely wrong.
 
 and yes it's 1. i want to use os browser instead. meaning after sign in click, the browser opens -> user signs -> ..... -> electron logs in
+
+---
+
+im not sure what is deeplink tbh. which is best solution
