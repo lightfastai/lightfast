@@ -1,0 +1,1 @@
+/spec-creator consider @.agents/skills/lightfast-clerk/ can we discuss best practices + ensuring this is a reliable skill for lightfast debug.
