@@ -1,0 +1,27 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "4cba5ea51f6a",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "packages/app-trpc/package.json",
+    "packages/app-trpc/src/desktop.tsx",
+    "packages/app-trpc/src/react.tsx"
+  ],
+  "sessions": [
+    {
+      "metadata": "/4c/ba5ea51f6a/0/metadata.json",
+      "transcript": "/4c/ba5ea51f6a/0/full.jsonl",
+      "content_hash": "/4c/ba5ea51f6a/0/content_hash.txt",
+      "prompt": "/4c/ba5ea51f6a/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 324,
+    "cache_creation_tokens": 561725,
+    "cache_read_tokens": 29710977,
+    "output_tokens": 133024,
+    "api_call_count": 235
+  }
+}
