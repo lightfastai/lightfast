@@ -1,0 +1,5 @@
+in slide 04 in paper, why now, the image is not correctly positioned. we need to use fill instead of cover, riht now it's like a small paper of the image can be seen becasue the image is huge in the backgroudn
+
+---
+
+yes
