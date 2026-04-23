@@ -1,0 +1,16 @@
+explain to me all the different types of github oauth possibilities.
+
+---
+
+okaay now, consider this.
+
+we want to basically enable lightfast to have different levels of authroization based on github.
+
+1. we have user's in lightfast, should be able to do things on behave of users.
+2. we have lightfast orgs, mirrors a github org
+
+a lightfast org has many of their github org members or all of them + extra members only through lightfast.
+
+how shall we set up the high level structure.
+
+note:no need research
