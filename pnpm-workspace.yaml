@@ -50,22 +50,22 @@ catalog:
   typescript: ^5.9.2
   vitest: ^4.1.4
   yaml: ^2.8.3
-  zod: ^4.0.0
+  zod: ^4.3.6
   zustand: ^5.0.12
 
 catalogs:
-  react19:
-    react: ^19.2.5
-    react-dom: ^19.2.5
-    '@types/react': ^19.2.14
-    '@types/react-dom': ^19.2.3
   next16:
     next: ^16.2.4
+  react19:
+    '@types/react': ^19.2.14
+    '@types/react-dom': ^19.2.3
+    react: ^19.2.5
+    react-dom: ^19.2.5
   tailwind4:
-    tailwindcss: 4.2.2
-    postcss: 8.5.10
     '@tailwindcss/postcss': 4.2.2
     '@tailwindcss/typography': ^0.5.16
+    postcss: 8.5.10
+    tailwindcss: 4.2.2
 
 ignoredBuiltDependencies:
   - bufferutil
@@ -91,10 +91,6 @@ onlyBuiltDependencies:
   - protobufjs
   - sharp
 
-publicHoistPattern:
-  - '*import-in-the-middle*'
-  - '*require-in-the-middle*'
-
 packageExtensions:
   '@hookform/resolvers':
     peerDependencies:
@@ -102,3 +98,7 @@ packageExtensions:
     peerDependenciesMeta:
       zod:
         optional: true
+
+publicHoistPattern:
+  - '*import-in-the-middle*'
+  - '*require-in-the-middle*'

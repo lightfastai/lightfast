@@ -7,8 +7,15 @@ declare global {
   }
 }
 
-document.documentElement.dataset.platform = window.lightfastBridge.platform;
+const { buildInfo, platform } = window.lightfastBridge;
+document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window.codexWindowType;
+document.documentElement.dataset.buildFlavor = buildInfo.buildFlavor;
+
+const buildBadge = document.querySelector<HTMLElement>("[data-build-badge]");
+if (buildBadge) {
+  buildBadge.textContent = `${buildInfo.buildFlavor} · v${buildInfo.version} (${buildInfo.buildNumber})`;
+}
 
 const items = document.querySelectorAll<HTMLButtonElement>(".sidebar .item");
 

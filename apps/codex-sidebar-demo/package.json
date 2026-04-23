@@ -32,6 +32,11 @@
   },
   "dependencies": {
     "electron-context-menu": "^4.1.1",
-    "electron-squirrel-startup": "^1.0.1"
-  }
+    "electron-squirrel-startup": "^1.0.1",
+    "zod": "catalog:"
+  },
+  "buildFlavor": "dev",
+  "buildNumber": "1",
+  "sparkleFeedUrl": "",
+  "sparklePublicKey": ""
 }

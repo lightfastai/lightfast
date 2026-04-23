@@ -1,12 +1,18 @@
 import { contextBridge, ipcRenderer } from "electron";
 import {
+  type BuildInfoSnapshot,
   IpcChannels,
   type LightfastBridge,
   type SystemThemeVariant,
   type WindowKind,
 } from "../shared/ipc";
 
+const buildInfo = ipcRenderer.sendSync(
+  IpcChannels.getBuildInfoSync
+) as BuildInfoSnapshot;
+
 const bridge: LightfastBridge = {
+  buildInfo,
   platform: process.platform,
   getSystemThemeVariant: () =>
     ipcRenderer.invoke(IpcChannels.getSystemThemeVariant),

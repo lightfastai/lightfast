@@ -8,6 +8,7 @@ export const IpcChannels = {
   showContextMenu: channel("show-context-menu"),
   openExternal: channel("open-external"),
   openWindow: channel("open-window"),
+  getBuildInfoSync: channel("get-build-info-sync"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -29,7 +30,17 @@ export type Platform =
 
 export type WindowKind = "primary" | "secondary" | "hud";
 
+export interface BuildInfoSnapshot {
+  buildFlavor: "dev" | "preview" | "prod";
+  buildNumber: string;
+  name: string;
+  sparkleFeedUrl: string;
+  sparklePublicKey: string;
+  version: string;
+}
+
 export interface LightfastBridge {
+  buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
   onSystemThemeVariantUpdated: (
     listener: (variant: SystemThemeVariant) => void

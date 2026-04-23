@@ -211,3 +211,10 @@ code {
   background: var(--color-background-elevated-primary);
   border-color: var(--color-border-heavy);
 }
+
+.build-badge {
+  margin-top: calc(var(--spacing) * 4);
+  font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  font-size: calc(var(--text-sm) * 0.9);
+  color: var(--color-text-foreground-tertiary);
+}

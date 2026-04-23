@@ -9,6 +9,7 @@ import {
 } from "electron";
 import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
+import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
 import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 
@@ -91,6 +92,10 @@ function hardenContents(contents: Electron.WebContents): void {
 }
 
 function registerIpcHandlers(): void {
+  ipcMain.on(IpcChannels.getBuildInfoSync, (event) => {
+    event.returnValue = getBuildInfo();
+  });
+
   ipcMain.handle(
     IpcChannels.getSystemThemeVariant,
     (): SystemThemeVariant => currentThemeVariant()
