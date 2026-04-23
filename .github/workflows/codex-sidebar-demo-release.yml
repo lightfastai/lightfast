@@ -1,0 +1,137 @@
+name: Release codex-sidebar-demo
+
+on:
+  push:
+    tags:
+      - 'codex-sidebar-demo-v*'
+
+concurrency:
+  group: codex-sidebar-demo-release-${{ github.ref }}
+
+jobs:
+  prepare:
+    name: Prepare draft release
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
+      tag: ${{ steps.ver.outputs.tag }}
+    permissions:
+      contents: write
+    steps:
+      - name: Resolve version
+        id: ver
+        run: |
+          tag="${{ github.ref_name }}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#codex-sidebar-demo-v}" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release if missing
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if gh release view "${{ steps.ver.outputs.tag }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "Release already exists, reusing."
+          else
+            gh release create "${{ steps.ver.outputs.tag }}" \
+              --repo "${{ github.repository }}" \
+              --draft \
+              --title "codex-sidebar-demo v${{ steps.ver.outputs.version }}" \
+              --notes "Automated release of @lightfast/codex-sidebar-demo."
+          fi
+
+  build:
+    name: Build ${{ matrix.arch }}
+    needs: prepare
+    runs-on: macos-14
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [arm64, x64]
+    permissions:
+      contents: write
+    env:
+      CODEX_SIDEBAR_DEMO_RELEASE_REPO: ${{ github.repository }}
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
+      APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Stamp version + feed URL in package.json
+        working-directory: apps/codex-sidebar-demo
+        run: |
+          npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm pkg set buildFlavor=prod
+          npm pkg set buildNumber="$GITHUB_RUN_NUMBER"
+          npm pkg set sparkleFeedUrl='https://github.com/${{ github.repository }}/releases/latest/download/latest-mac-${arch}.json'
+
+      - name: Import Apple signing certificate
+        env:
+          APPLE_CERT_BASE64: ${{ secrets.APPLE_CERT_BASE64 }}
+          APPLE_CERT_PASSWORD: ${{ secrets.APPLE_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.KEYCHAIN_PASSWORD }}
+        run: |
+          echo "$APPLE_CERT_BASE64" | base64 -d > /tmp/cert.p12
+          security create-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security default-keychain -s build.keychain
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" build.keychain
+          security set-keychain-settings -t 3600 -u build.keychain
+          security import /tmp/cert.p12 -k build.keychain -P "$APPLE_CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
+          rm /tmp/cert.p12
+
+      - name: Write notarize API key
+        env:
+          APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
+          APPLE_API_KEY_ID_SECRET: ${{ secrets.APPLE_API_KEY_ID }}
+        run: |
+          mkdir -p "$HOME/.private_keys"
+          key_file="$HOME/.private_keys/AuthKey_${APPLE_API_KEY_ID_SECRET}.p8"
+          printf '%s' "$APPLE_API_KEY_CONTENT" > "$key_file"
+          echo "APPLE_API_KEY=$key_file" >> "$GITHUB_ENV"
+
+      - name: Publish (forge)
+        working-directory: apps/codex-sidebar-demo
+        run: pnpm exec electron-forge publish --arch=${{ matrix.arch }} --platform=darwin
+
+  finalize:
+    name: Finalize release
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Generate Squirrel.Mac update feed
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
+          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+        run: node apps/codex-sidebar-demo/scripts/generate-update-feed.mjs
+
+      - name: Publish release (undraft)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release edit "${{ needs.prepare.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --draft=false

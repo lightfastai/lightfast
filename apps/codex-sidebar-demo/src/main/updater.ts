@@ -24,11 +24,16 @@ function broadcastStatus(): void {
   }
 }
 
+function expandFeedUrl(url: string): string {
+  return url.replace(/\$\{arch\}/g, process.arch);
+}
+
 function resolveFeedUrl(): string | null {
   const build = getBuildInfo();
   const env = getRuntimeEnv();
   if (process.platform === "darwin") {
-    return env.SPARKLE_FEED_URL ?? (build.sparkleFeedUrl || null);
+    const raw = env.SPARKLE_FEED_URL ?? (build.sparkleFeedUrl || null);
+    return raw ? expandFeedUrl(raw) : null;
   }
   if (process.platform === "win32") {
     return env.SQUIRREL_FEED_URL ?? null;

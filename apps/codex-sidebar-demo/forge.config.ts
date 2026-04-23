@@ -6,6 +6,7 @@ import { MakerZIP } from "@electron-forge/maker-zip";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
 import { FusesPlugin } from "@electron-forge/plugin-fuses";
 import { VitePlugin } from "@electron-forge/plugin-vite";
+import { PublisherGithub } from "@electron-forge/publisher-github";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
 const PROTOCOL_SCHEME = "codex-sidebar-demo";
@@ -39,6 +40,20 @@ const osxNotarize =
         appleApiIssuer: process.env.APPLE_API_ISSUER,
       }
     : undefined;
+
+const [publishOwner, publishRepo] = (
+  process.env.CODEX_SIDEBAR_DEMO_RELEASE_REPO ?? ""
+).split("/");
+
+const githubPublisher =
+  process.env.GITHUB_TOKEN && publishOwner && publishRepo
+    ? new PublisherGithub({
+        repository: { owner: publishOwner, name: publishRepo },
+        draft: true,
+        prerelease:
+          process.env.CODEX_SIDEBAR_DEMO_RELEASE_PRERELEASE === "true",
+      })
+    : null;
 
 const config: ForgeConfig = {
   packagerConfig: {
@@ -110,6 +125,7 @@ const config: ForgeConfig = {
       [FuseV1Options.OnlyLoadAppFromAsar]: true,
     }),
   ],
+  publishers: githubPublisher ? [githubPublisher] : [],
 };
 
 export default config;
