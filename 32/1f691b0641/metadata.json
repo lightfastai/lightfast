@@ -3,7 +3,7 @@
   "checkpoint_id": "321f691b0641",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 9,
+  "checkpoints_count": 10,
   "files_touched": [
     "packages/app-trpc/src/desktop.tsx",
     "packages/app-trpc/src/react.tsx"
@@ -14,13 +14,19 @@
       "transcript": "/32/1f691b0641/0/full.jsonl",
       "content_hash": "/32/1f691b0641/0/content_hash.txt",
       "prompt": "/32/1f691b0641/0/prompt.txt"
+    },
+    {
+      "metadata": "/32/1f691b0641/1/metadata.json",
+      "transcript": "/32/1f691b0641/1/full.jsonl",
+      "content_hash": "/32/1f691b0641/1/content_hash.txt",
+      "prompt": "/32/1f691b0641/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1017,
-    "cache_creation_tokens": 1234645,
-    "cache_read_tokens": 103685214,
-    "output_tokens": 428153,
-    "api_call_count": 783
+    "input_tokens": 1094,
+    "cache_creation_tokens": 1315714,
+    "cache_read_tokens": 105037434,
+    "output_tokens": 448714,
+    "api_call_count": 804
   }
 }
