@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "716c32aec999",
+  "strategy": "manual-commit",
+  "branch": "main",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/desktop/.gitignore",
+    "apps/desktop/README.md",
+    "apps/desktop/forge.config.ts",
+    "apps/desktop/package.json",
+    "apps/desktop/src/main/auth-flow.ts",
+    "apps/desktop/src/main/auth-store.ts",
+    "apps/desktop/src/main/bootstrap.ts",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/main/sentry.ts",
+    "apps/desktop/src/preload/preload.ts",
+    "apps/desktop/src/renderer/index.html",
+    "apps/desktop/src/renderer/src/main.ts",
+    "apps/desktop/src/renderer/src/react/account-card.tsx",
+    "apps/desktop/src/renderer/src/react/app-shell.tsx",
+    "apps/desktop/src/renderer/src/react/entry.tsx",
+    "apps/desktop/src/renderer/src/react/signed-out-shell.tsx",
+    "apps/desktop/src/renderer/src/styles.css",
+    "apps/desktop/src/renderer/vite-env.d.ts",
+    "apps/desktop/src/shared/ipc.ts",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/vite.renderer.config.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/71/6c32aec999/0/metadata.json",
+      "transcript": "/71/6c32aec999/0/full.jsonl",
+      "content_hash": "/71/6c32aec999/0/content_hash.txt",
+      "prompt": "/71/6c32aec999/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 1021,
+    "cache_creation_tokens": 1237812,
+    "cache_read_tokens": 104785121,
+    "output_tokens": 431745,
+    "api_call_count": 787
+  }
+}
