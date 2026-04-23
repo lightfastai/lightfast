@@ -5,6 +5,7 @@ import {
   type LightfastBridge,
   type SentryInitSnapshot,
   type SystemThemeVariant,
+  type UpdaterStatusSnapshot,
   type WindowKind,
 } from "../shared/ipc";
 
@@ -14,6 +15,9 @@ const buildInfo = ipcRenderer.sendSync(
 const sentryInit = ipcRenderer.sendSync(
   IpcChannels.getSentryInitOptionsSync
 ) as SentryInitSnapshot;
+const updaterStatus = ipcRenderer.sendSync(
+  IpcChannels.updaterStatusSync
+) as UpdaterStatusSnapshot;
 
 const bridge: LightfastBridge = {
   buildInfo,
@@ -28,10 +32,21 @@ const bridge: LightfastBridge = {
     return () =>
       ipcRenderer.off(IpcChannels.systemThemeVariantUpdated, handler);
   },
+  onUpdaterStatusChanged: (listener) => {
+    const handler = (_event: unknown, status: UpdaterStatusSnapshot) =>
+      listener(status);
+    ipcRenderer.on(IpcChannels.updaterStatusChanged, handler);
+    return () => ipcRenderer.off(IpcChannels.updaterStatusChanged, handler);
+  },
   openExternal: (url) => ipcRenderer.invoke(IpcChannels.openExternal, url),
   openWindow: (kind) => ipcRenderer.invoke(IpcChannels.openWindow, kind),
   reportError: (payload) =>
     ipcRenderer.send(IpcChannels.rendererError, payload),
+  updater: {
+    status: updaterStatus,
+    check: () => ipcRenderer.invoke(IpcChannels.updaterCheck),
+    install: () => ipcRenderer.invoke(IpcChannels.updaterInstall),
+  },
 };
 
 contextBridge.exposeInMainWorld("lightfastBridge", bridge);

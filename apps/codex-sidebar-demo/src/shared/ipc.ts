@@ -11,6 +11,10 @@ export const IpcChannels = {
   getBuildInfoSync: channel("get-build-info-sync"),
   getSentryInitOptionsSync: channel("get-sentry-init-options-sync"),
   rendererError: channel("renderer-error"),
+  updaterCheck: channel("updater-check"),
+  updaterInstall: channel("updater-install"),
+  updaterStatusSync: channel("updater-status-sync"),
+  updaterStatusChanged: channel("updater-status-changed"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -56,15 +60,38 @@ export interface RendererErrorPayload {
   url?: string;
 }
 
+export type UpdaterState =
+  | "idle"
+  | "checking"
+  | "available"
+  | "not-available"
+  | "downloading"
+  | "ready"
+  | "error";
+
+export interface UpdaterStatusSnapshot {
+  message?: string;
+  progress?: number;
+  state: UpdaterState;
+}
+
 export interface LightfastBridge {
   buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
   onSystemThemeVariantUpdated: (
     listener: (variant: SystemThemeVariant) => void
   ) => () => void;
+  onUpdaterStatusChanged: (
+    listener: (status: UpdaterStatusSnapshot) => void
+  ) => () => void;
   openExternal: (url: string) => Promise<void>;
   openWindow: (kind: WindowKind) => Promise<void>;
   platform: Platform;
   reportError: (payload: RendererErrorPayload) => void;
   sentryInit: SentryInitSnapshot;
+  updater: {
+    status: UpdaterStatusSnapshot;
+    check: () => Promise<{ ok: boolean; reason?: string }>;
+    install: () => Promise<void>;
+  };
 }

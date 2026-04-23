@@ -23,6 +23,7 @@ import {
   unregisterGlobalShortcuts,
 } from "./shortcuts";
 import { createTray, destroyTray } from "./tray";
+import { initUpdater, registerUpdaterIpc } from "./updater";
 import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
@@ -249,8 +250,10 @@ app.whenReady().then(() => {
   );
 
   registerIpcHandlers();
+  registerUpdaterIpc();
   broadcastThemeUpdates();
   registerGlobalShortcuts({ toggleHud: toggleHudWindow });
+  initUpdater();
   createTray({
     showPrimary: () => {
       const existing = findWindow("primary");
