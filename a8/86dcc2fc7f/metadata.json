@@ -3,7 +3,7 @@
   "checkpoint_id": "a886dcc2fc7f",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 1,
+  "checkpoints_count": 2,
   "files_touched": [
     "thoughts/shared/plans/2026-04-23-desktop-clerk-trpc-wiring.md"
   ],
@@ -13,13 +13,19 @@
       "transcript": "/a8/86dcc2fc7f/0/full.jsonl",
       "content_hash": "/a8/86dcc2fc7f/0/content_hash.txt",
       "prompt": "/a8/86dcc2fc7f/0/prompt.txt"
+    },
+    {
+      "metadata": "/a8/86dcc2fc7f/1/metadata.json",
+      "transcript": "/a8/86dcc2fc7f/1/full.jsonl",
+      "content_hash": "/a8/86dcc2fc7f/1/content_hash.txt",
+      "prompt": "/a8/86dcc2fc7f/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1025,
-    "cache_creation_tokens": 1241287,
-    "cache_read_tokens": 105901189,
-    "output_tokens": 433068,
-    "api_call_count": 791
+    "input_tokens": 1102,
+    "cache_creation_tokens": 1322356,
+    "cache_read_tokens": 107253409,
+    "output_tokens": 453629,
+    "api_call_count": 812
   }
 }

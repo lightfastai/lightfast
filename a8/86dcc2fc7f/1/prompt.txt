@@ -1,0 +1,9 @@
+/create_plan consider @thoughts/shared/research/2026-04-23-codex-vs-lightfast-desktop-production-gap.md let's select in groups a few that are easy and fast wins to implement right now and defer the rest. omit any "release" stuff.
+
+---
+
+proceed with all that you think is best approach for right now
+
+---
+
+update original document with this that it's being done. so we can keep track of whats being done and whats not
