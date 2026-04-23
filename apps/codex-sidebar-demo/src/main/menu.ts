@@ -1,4 +1,15 @@
-import { app, Menu, type MenuItemConstructorOptions, shell } from "electron";
+import {
+  app,
+  BrowserWindow,
+  Menu,
+  type MenuItemConstructorOptions,
+  shell,
+} from "electron";
+import {
+  type AcceleratorName,
+  ACCELERATORS,
+} from "../shared/accelerators";
+import { IpcChannels } from "../shared/ipc";
 import enLocale from "./locales/en.json";
 
 type LocaleKeys = keyof typeof enLocale;
@@ -22,6 +33,25 @@ function translate(
   return template.replace(/\{(\w+)\}/g, (_, name: string) => vars[name] ?? "");
 }
 
+function sendMenuAction(action: AcceleratorName): void {
+  const target =
+    BrowserWindow.getFocusedWindow() ?? BrowserWindow.getAllWindows()[0];
+  if (target && !target.isDestroyed()) {
+    target.webContents.send(IpcChannels.menuAction, action);
+  }
+}
+
+function dispatchItem(
+  name: AcceleratorName,
+  label: string
+): MenuItemConstructorOptions {
+  return {
+    label,
+    accelerator: ACCELERATORS[name],
+    click: () => sendMenuAction(name),
+  };
+}
+
 export interface MenuActions {
   openHud: () => void;
   openSecondary: () => void;
@@ -40,6 +70,8 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
     submenu: [
       { label: t("app.about"), role: "about" },
       { type: "separator" },
+      dispatchItem("settings", t("app.preferences")),
+      { type: "separator" },
       { label: t("app.services"), role: "services" },
       { type: "separator" },
       { label: t("app.hide"), role: "hide" },
@@ -55,7 +87,7 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
     submenu: [
       {
         label: t("file.newSecondary"),
-        accelerator: "CmdOrCtrl+N",
+        accelerator: ACCELERATORS.newThread,
         click: actions.openSecondary,
       },
       {
@@ -64,6 +96,12 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
         click: actions.openHud,
       },
       { type: "separator" },
+      ...(!isMac
+        ? [
+            dispatchItem("settings", t("file.settings")),
+            { type: "separator" as const },
+          ]
+        : []),
       { label: t("file.close"), role: "close" },
     ],
   };
@@ -88,12 +126,17 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
             { type: "separator" as const },
             { role: "selectAll" as const },
           ]),
+      { type: "separator" },
+      dispatchItem("findInThread", t("edit.find")),
     ],
   };
 
   const viewMenu: MenuItemConstructorOptions = {
     label: t("view.name"),
     submenu: [
+      dispatchItem("toggleSidebar", t("view.toggleSidebar")),
+      dispatchItem("toggleTerminal", t("view.toggleTerminal")),
+      { type: "separator" },
       { label: t("view.reload"), role: "reload" },
       { label: t("view.forceReload"), role: "forceReload" },
       { label: t("view.toggleDevtools"), role: "toggleDevTools" },
@@ -103,6 +146,24 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
       { label: t("view.zoomOut"), role: "zoomOut" },
       { type: "separator" },
       { label: t("view.toggleFullscreen"), role: "togglefullscreen" },
+    ],
+  };
+
+  const goMenu: MenuItemConstructorOptions = {
+    label: t("go.name"),
+    submenu: [
+      dispatchItem("openCommandMenu", t("go.commandMenu")),
+      {
+        label: t("go.commandMenuAlt"),
+        accelerator: ACCELERATORS.openCommandMenuAlt,
+        click: () => sendMenuAction("openCommandMenu"),
+      },
+      { type: "separator" },
+      dispatchItem("searchFiles", t("go.searchFiles")),
+      dispatchItem("searchChats", t("go.searchChats")),
+      { type: "separator" },
+      dispatchItem("navigateBack", t("go.navigateBack")),
+      dispatchItem("navigateForward", t("go.navigateForward")),
     ],
   };
 
@@ -137,6 +198,7 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
     fileMenu,
     editMenu,
     viewMenu,
+    goMenu,
     windowMenu,
     helpMenu,
   ];

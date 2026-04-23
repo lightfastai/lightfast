@@ -9,24 +9,56 @@
   <body>
     <div id="app">
       <aside class="sidebar" data-kind-primary>
-        <div class="titlebar-drag"></div>
+        <div class="titlebar-drag">
+          <button
+            type="button"
+            class="sidebar-trigger"
+            data-sidebar-trigger
+            aria-label="Collapse sidebar"
+            aria-expanded="true"
+            title="Toggle sidebar"
+          >
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="12" height="10" rx="2" />
+              <line x1="6" y1="3" x2="6" y2="13" />
+            </svg>
+          </button>
+        </div>
         <nav class="nav">
-          <button type="button" class="item active">Home</button>
+          <button type="button" class="item active" data-route-to="home">Home</button>
           <button type="button" class="item">Projects</button>
           <button type="button" class="item">Agents</button>
           <button type="button" class="item">Runs</button>
-          <button type="button" class="item">Settings</button>
+          <button type="button" class="item" data-route-to="settings">Settings</button>
         </nav>
       </aside>
       <main class="content">
-        <div class="titlebar-drag"></div>
-        <section class="content-inner" data-kind-primary>
+        <div class="titlebar-drag">
+          <button
+            type="button"
+            class="content-sidebar-trigger"
+            data-sidebar-trigger-collapsed
+            aria-label="Expand sidebar"
+            title="Toggle sidebar"
+          >
+            <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="12" height="10" rx="2" />
+              <line x1="6" y1="3" x2="6" y2="13" />
+            </svg>
+          </button>
+        </div>
+        <section class="content-inner" data-route-home data-kind-primary>
           <h1>Primary window</h1>
           <p>
             The left pane is transparent so the
             <code>NSVisualEffectView</code>
             (<code>vibrancy: "menu"</code>) shows through. Drag the window from
             the top strip; click items to confirm they don't drag.
+          </p>
+          <p class="content-hint">
+            Press <kbd data-kbd-hint="toggleSidebar"></kbd> to toggle the sidebar,
+            <kbd data-kbd-hint="settings"></kbd> for settings,
+            <kbd data-kbd-hint="openCommandMenu"></kbd> for the command menu.
           </p>
           <div class="actions">
             <button type="button" class="action" data-open-window="secondary">
@@ -38,6 +70,7 @@
           </div>
           <div class="build-badge" data-build-badge></div>
         </section>
+        <section class="content-inner settings-root" data-route-settings data-kind-primary></section>
         <section class="content-inner" data-kind-secondary>
           <h1>Secondary window</h1>
           <p>
@@ -55,6 +88,7 @@
         </section>
       </main>
     </div>
+    <div class="toast-stack" data-toast-stack></div>
     <script type="module" src="./src/main.ts"></script>
   </body>
 </html>

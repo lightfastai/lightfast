@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer } from "electron";
+import type { AcceleratorName } from "../shared/accelerators";
 import {
   type BuildInfoSnapshot,
   IpcChannels,
@@ -37,6 +38,12 @@ const bridge: LightfastBridge = {
       listener(status);
     ipcRenderer.on(IpcChannels.updaterStatusChanged, handler);
     return () => ipcRenderer.off(IpcChannels.updaterStatusChanged, handler);
+  },
+  onMenuAction: (listener) => {
+    const handler = (_event: unknown, action: AcceleratorName) =>
+      listener(action);
+    ipcRenderer.on(IpcChannels.menuAction, handler);
+    return () => ipcRenderer.off(IpcChannels.menuAction, handler);
   },
   openExternal: (url) => ipcRenderer.invoke(IpcChannels.openExternal, url),
   openWindow: (kind) => ipcRenderer.invoke(IpcChannels.openWindow, kind),

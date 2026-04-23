@@ -1,6 +1,16 @@
 import * as Sentry from "@sentry/browser";
+import {
+  type AcceleratorName,
+  ACCELERATORS,
+  formatAccelerator,
+  type FormatPlatform,
+} from "../../shared/accelerators";
 import type { LightfastBridge, WindowKind } from "../../shared/ipc";
 import { installErrorBoundary } from "./error-boundary";
+import { createHotkeyManager } from "./hotkey";
+import { createRouter, type Route } from "./router";
+import { renderSettings } from "./settings";
+import { createSidebarController } from "./sidebar";
 
 declare global {
   interface Window {
@@ -12,6 +22,10 @@ declare global {
 installErrorBoundary(window.lightfastBridge.reportError);
 
 const { buildInfo, platform, sentryInit } = window.lightfastBridge;
+const formatPlatform: FormatPlatform =
+  platform === "darwin" || platform === "linux" || platform === "win32"
+    ? platform
+    : "linux";
 
 if (sentryInit.enabled) {
   Sentry.init({
@@ -20,6 +34,7 @@ if (sentryInit.enabled) {
     environment: sentryInit.environment,
   });
 }
+
 document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window.codexWindowType;
 document.documentElement.dataset.buildFlavor = buildInfo.buildFlavor;
@@ -29,21 +44,49 @@ if (buildBadge) {
   buildBadge.textContent = `${buildInfo.buildFlavor} · v${buildInfo.version} (${buildInfo.buildNumber})`;
 }
 
-const items = document.querySelectorAll<HTMLButtonElement>(".sidebar .item");
+for (const el of document.querySelectorAll<HTMLElement>("[data-kbd-hint]")) {
+  const name = el.dataset.kbdHint as AcceleratorName | undefined;
+  if (name && name in ACCELERATORS) {
+    el.textContent = formatAccelerator(ACCELERATORS[name], formatPlatform);
+  }
+}
 
-for (const item of items) {
-  item.addEventListener("click", () => {
-    for (const other of items) {
-      other.classList.remove("active");
+const sidebar = createSidebarController();
+const router = createRouter();
+
+function renderForRoute(route: Route): void {
+  if (route === "settings") {
+    const root = document.querySelector<HTMLElement>(
+      "[data-route-settings]"
+    );
+    if (root && root.dataset.rendered !== "true") {
+      renderSettings(root, formatPlatform);
+      root.dataset.rendered = "true";
     }
-    item.classList.add("active");
+  }
+  const items = document.querySelectorAll<HTMLButtonElement>(".sidebar .item");
+  for (const item of items) {
+    const target = item.dataset.routeTo as Route | undefined;
+    if (!target) continue;
+    item.classList.toggle("active", target === route);
+  }
+}
+
+renderForRoute(router.current());
+router.onChange(renderForRoute);
+
+for (const button of document.querySelectorAll<HTMLButtonElement>(
+  "[data-route-to]"
+)) {
+  button.addEventListener("click", () => {
+    const target = button.dataset.routeTo as Route | undefined;
+    if (target) router.navigate(target);
   });
 }
 
-const openButtons =
-  document.querySelectorAll<HTMLButtonElement>("[data-open-window]");
-
-for (const button of openButtons) {
+for (const button of document.querySelectorAll<HTMLButtonElement>(
+  "[data-open-window]"
+)) {
   button.addEventListener("click", () => {
     const kind = button.dataset.openWindow as WindowKind | undefined;
     if (kind) {
@@ -51,3 +94,56 @@ for (const button of openButtons) {
     }
   });
 }
+
+for (const button of document.querySelectorAll<HTMLButtonElement>(
+  "[data-sidebar-trigger], [data-sidebar-trigger-collapsed]"
+)) {
+  button.addEventListener("click", () => sidebar.toggle());
+}
+
+const toastStack = document.querySelector<HTMLElement>("[data-toast-stack]");
+
+function showToast(message: string): void {
+  if (!toastStack) return;
+  const el = document.createElement("div");
+  el.className = "toast";
+  el.textContent = message;
+  toastStack.append(el);
+  requestAnimationFrame(() => {
+    el.dataset.visible = "true";
+  });
+  window.setTimeout(() => {
+    el.dataset.visible = "false";
+    window.setTimeout(() => el.remove(), 200);
+  }, 1800);
+}
+
+function dispatchAction(name: AcceleratorName): void {
+  switch (name) {
+    case "toggleSidebar":
+      sidebar.toggle();
+      break;
+    case "settings":
+      router.navigate("settings");
+      break;
+    case "newThread":
+    case "newThreadAlt":
+      void window.lightfastBridge.openWindow("secondary");
+      break;
+    case "newWindow":
+      void window.lightfastBridge.openWindow("primary");
+      break;
+    default:
+      showToast(
+        `${name} (${formatAccelerator(ACCELERATORS[name], formatPlatform)})`
+      );
+      break;
+  }
+}
+
+const hotkeys = createHotkeyManager({ platform: formatPlatform });
+for (const name of Object.keys(ACCELERATORS) as AcceleratorName[]) {
+  hotkeys.on(name, () => dispatchAction(name));
+}
+
+window.lightfastBridge.onMenuAction((name) => dispatchAction(name));

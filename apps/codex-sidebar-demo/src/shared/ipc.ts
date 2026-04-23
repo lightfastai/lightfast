@@ -15,6 +15,7 @@ export const IpcChannels = {
   updaterInstall: channel("updater-install"),
   updaterStatusSync: channel("updater-status-sync"),
   updaterStatusChanged: channel("updater-status-changed"),
+  menuAction: channel("menu-action"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -75,9 +76,14 @@ export interface UpdaterStatusSnapshot {
   state: UpdaterState;
 }
 
+import type { AcceleratorName } from "./accelerators";
+
 export interface LightfastBridge {
   buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;
+  onMenuAction: (
+    listener: (action: AcceleratorName) => void
+  ) => () => void;
   onSystemThemeVariantUpdated: (
     listener: (variant: SystemThemeVariant) => void
   ) => () => void;
