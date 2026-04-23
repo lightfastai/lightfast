@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "62703c1c5131",
+  "session_id": "82ac47c3-a56d-48c9-a012-253c1bc89f3e",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-23T03:23:32.557318Z",
+  "branch": "main",
+  "checkpoints_count": 7,
+  "files_touched": [
+    "apps/codex-sidebar-demo/.gitignore",
+    "apps/codex-sidebar-demo/README.md",
+    "apps/codex-sidebar-demo/forge.config.ts",
+    "apps/codex-sidebar-demo/package.json",
+    "apps/codex-sidebar-demo/src/main/bootstrap.ts",
+    "apps/codex-sidebar-demo/src/main/index.ts",
+    "apps/codex-sidebar-demo/src/preload/preload.ts",
+    "apps/codex-sidebar-demo/src/renderer/index.html",
+    "apps/codex-sidebar-demo/src/renderer/src/main.ts",
+    "apps/codex-sidebar-demo/src/renderer/src/styles.css",
+    "apps/codex-sidebar-demo/tsconfig.json",
+    "apps/codex-sidebar-demo/tsconfig.node.json",
+    "apps/codex-sidebar-demo/vite.main.config.ts",
+    "apps/codex-sidebar-demo/vite.preload.config.ts",
+    "apps/codex-sidebar-demo/vite.renderer.config.ts",
+    "biome.jsonc",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "740ea1316362",
+  "token_usage": {
+    "input_tokens": 295,
+    "cache_creation_tokens": 382833,
+    "cache_read_tokens": 22513086,
+    "output_tokens": 110992,
+    "api_call_count": 231
+  },
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-23T03:23:32.013018Z",
+    "agent_lines": 3552,
+    "agent_removed": 12,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 3552,
+    "total_lines_changed": 3564,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
