@@ -107,3 +107,7 @@ we also want to start working on setting up
 3. keyboard commands
 
 all 1:1 with codex app
+
+---
+
+i think we need only what we have. dont need everything for the commands. e.g dont need toggleTerminal, findInTHread, etc
