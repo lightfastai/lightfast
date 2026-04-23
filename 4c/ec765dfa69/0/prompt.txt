@@ -167,3 +167,7 @@ cool. so what do i need to setup?
 ---
 
 so i gotta do all 1. a b and c?
+
+---
+
+its okay we'll skip for now. pause the CI stuff we'll come back to it
