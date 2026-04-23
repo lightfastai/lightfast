@@ -11,7 +11,17 @@ import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
+import {
+  focusForDeepLink,
+  onDeepLink,
+  registerProtocolHandler,
+} from "./protocol";
 import { getSentryInitOptions, initSentry } from "./sentry";
+import {
+  attachLocalShortcuts,
+  registerGlobalShortcuts,
+  unregisterGlobalShortcuts,
+} from "./shortcuts";
 import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
@@ -141,19 +151,70 @@ function broadcastThemeUpdates(): void {
   });
 }
 
+type Kind = "primary" | "secondary" | "hud";
+
+const windowsByKind = new Map<Kind, Set<BrowserWindow>>();
+
+function registerWindow(kind: Kind, win: BrowserWindow): void {
+  const set = windowsByKind.get(kind) ?? new Set<BrowserWindow>();
+  set.add(win);
+  windowsByKind.set(kind, set);
+  win.once("closed", () => {
+    set.delete(win);
+  });
+}
+
+async function openKind(kind: Kind): Promise<BrowserWindow> {
+  const win = await createWindow({ kind, harden: hardenContents });
+  registerWindow(kind, win);
+  attachLocalShortcuts(win);
+  if (!app.isPackaged) {
+    win.webContents.openDevTools({ mode: "detach" });
+  }
+  return win;
+}
+
 export function openPrimaryWindow(): Promise<BrowserWindow> {
-  return createWindow({ kind: "primary", harden: hardenContents });
+  return openKind("primary");
 }
 
 export function openSecondaryWindow(): Promise<BrowserWindow> {
-  return createWindow({ kind: "secondary", harden: hardenContents });
+  return openKind("secondary");
 }
 
 export function openHudWindow(): Promise<BrowserWindow> {
-  return createWindow({ kind: "hud", harden: hardenContents });
+  return openKind("hud");
+}
+
+function findWindow(kind: Kind): BrowserWindow | null {
+  const set = windowsByKind.get(kind);
+  if (!set) {
+    return null;
+  }
+  for (const win of set) {
+    if (!win.isDestroyed()) {
+      return win;
+    }
+  }
+  return null;
+}
+
+function toggleHudWindow(): void {
+  const existing = findWindow("hud");
+  if (existing) {
+    if (existing.isVisible()) {
+      existing.hide();
+    } else {
+      existing.show();
+      existing.focus();
+    }
+  } else {
+    void openHudWindow();
+  }
 }
 
 initSentry();
+registerProtocolHandler();
 
 contextMenu({
   showInspectElement: !app.isPackaged,
@@ -183,13 +244,28 @@ app.whenReady().then(() => {
 
   registerIpcHandlers();
   broadcastThemeUpdates();
+  registerGlobalShortcuts({ toggleHud: toggleHudWindow });
   void openPrimaryWindow();
+
+  onDeepLink((url) => {
+    const primary = findWindow("primary") ?? BrowserWindow.getAllWindows()[0];
+    if (primary) {
+      focusForDeepLink(primary);
+    }
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send(IpcChannels.openExternal, url);
+    }
+  });
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       void openPrimaryWindow();
     }
   });
+});
+
+app.on("will-quit", () => {
+  unregisterGlobalShortcuts();
 });
 
 app.on("web-contents-created", (_event, contents) => {
