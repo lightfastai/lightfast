@@ -2,12 +2,14 @@ import {
   app,
   BrowserWindow,
   ipcMain,
+  Menu,
   nativeTheme,
   session,
   shell,
 } from "electron";
 import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
+import { buildApplicationMenu } from "./menu";
 import { applyTitleBarOverlayTheme, createWindow } from "./windows/factory";
 
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
@@ -154,6 +156,17 @@ app.whenReady().then(() => {
     (_contents, _permission, callback) => {
       callback(false);
     }
+  );
+
+  Menu.setApplicationMenu(
+    buildApplicationMenu({
+      openSecondary: () => {
+        openSecondaryWindow();
+      },
+      openHud: () => {
+        openHudWindow();
+      },
+    })
   );
 
   registerIpcHandlers();
