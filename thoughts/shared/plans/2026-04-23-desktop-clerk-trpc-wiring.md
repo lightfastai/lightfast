@@ -905,16 +905,18 @@ function buildContentSecurityPolicy(): string {
 
 > **Note on BrowserWindow CSP**: the sign-in BrowserWindow loads `http://localhost:3024/desktop/auth` (or `https://lightfast.ai` in prod) — a top-level navigation to an external origin. CSP applies to the *renderer window's document*, not to external URLs the user navigates to. So extending `connect-src` only matters for XHR/fetch/WS the React renderer makes to the API; the BrowserWindow sign-in page is governed by the web app's own CSP, not the desktop's.
 
+> **Implementation note**: in Phase 4 execution I **inlined** a local `getClerkFrontendApi` helper in `apps/desktop/src/main/index.ts` rather than importing from `@vendor/clerk/env`. Reason: `@vendor/clerk/env` eagerly runs `@t3-oss/env-nextjs`'s `createEnv()` at module import time, which requires `CLERK_SECRET_KEY` to be set — a Next.js-only concern that would crash the Electron main process on boot. The inlined helper does exactly the same base64 decode; Phase 6 can revisit if env unification becomes desirable. The helper returns `null` when the publishable key is absent, and CSP `connect-src` silently omits the Clerk origin in that case.
+
 ### Success Criteria
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @lightfast/desktop typecheck` passes
-- [ ] `pnpm --filter @lightfast/desktop build` (via `electron-forge package`) is not required here — `typecheck` is sufficient at this phase.
+- [x] `pnpm --filter @lightfast/desktop typecheck` passes.
+- [~] `pnpm --filter @lightfast/desktop build` skipped at this phase — plan explicitly calls typecheck sufficient.
 
 #### Automated Verification (extended)
 
-- [ ] Unit test `apps/desktop/src/main/__tests__/auth-flow.test.ts` added. Covers the pure `parseCallback` helper (exported for testability):
+- [~] Unit test `apps/desktop/src/main/__tests__/auth-flow.test.ts` — **deferred**. `apps/desktop` has no test runner configured (no vitest/jest in `package.json`), so adding it is an infra investment orthogonal to Phase 4 scope. `parseCallback` is exported from `auth-flow.ts` so the test can land later without refactoring. Cases to cover when added:
   - Valid `lightfast://auth/callback?token=x&state=y` → `{ token: "x", state: "y" }`
   - Wrong protocol (`https://auth/callback`) → `null`
   - Wrong host (`lightfast://other/callback`) → `null`
@@ -1110,16 +1112,16 @@ export function AccountCard() {
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @lightfast/desktop typecheck` passes
-- [ ] `pnpm install` succeeds with new deps (root workspace)
-- [ ] `pnpm --filter @lightfast/desktop dev` starts without errors (electron-forge boot)
+- [x] `pnpm --filter @lightfast/desktop typecheck` passes
+- [x] `pnpm install` succeeds with new deps (root workspace)
+- [x] `pnpm --filter @lightfast/desktop dev` starts without errors (electron-forge boot); Vite dev server + main + preload all build, Electron launches, React mounts (verified via CDP, 11/11 checks).
 
 #### Manual Verification
 
-- [ ] Primary window renders the "Sign in with Lightfast" button.
-- [ ] React tree is isolated — existing settings screen (`#/settings`) still renders.
+- [x] Primary window renders the "Sign in with Lightfast" button. Verified via CDP `document.querySelector('#react-root button').textContent === "Sign in with Lightfast"`.
+- [x] React tree is isolated — existing sidebar/settings vanilla DOM still renders. Verified via CDP: `.sidebar`, `[data-route-home]`, build badge, active item "Home" all present alongside `#react-root`.
 
-**Implementation Note**: Pause after automated verification before moving to E2E.
+**Implementation Note**: Automated verification complete. True manual sign-in drive-through (click the button, complete Clerk flow) is deferred to Phase 6 end-to-end (requires `VITE_LIGHTFAST_API_URL` env + Clerk JWT template).
 
 ---
 
@@ -1193,11 +1195,11 @@ pnpm dev:desktop
 # Wait for Electron window to appear
 ```
 
-- [ ] `pnpm --filter app typecheck` passes
-- [ ] `pnpm --filter @lightfast/desktop typecheck` passes
-- [ ] `pnpm --filter @repo/app-trpc typecheck` passes
-- [ ] `pnpm --filter @api/app typecheck` passes
-- [ ] `curl -i http://localhost:3024/desktop/auth?state=test` returns 200 (page exists, renders sign-in prompt if not already signed in)
+- [x] `pnpm --filter app typecheck` passes _(2026-04-23 — ran as `pnpm --filter @lightfast/app typecheck`, exit 0)_
+- [x] `pnpm --filter @lightfast/desktop typecheck` passes _(2026-04-23 — exit 0)_
+- [x] `pnpm --filter @repo/app-trpc typecheck` passes _(2026-04-23 — exit 0)_
+- [x] `pnpm --filter @api/app typecheck` passes _(2026-04-23 — exit 0)_
+- [x] `curl -i http://localhost:3024/desktop/auth?state=test` returns 200 (page exists, renders sign-in prompt if not already signed in) _(2026-04-23 — signed-out caller gets 307 → `/sign-in?redirect_url=…`, final 200; behavior matches plan's "redirects to sign-in if not already signed in")_
 
 #### Manual Verification (golden path)
 
@@ -1392,3 +1394,52 @@ This plan was adversarially reviewed on 2026-04-23 against the current state of 
 - **Refresh concurrency guard** (Phase 7.2 note): if multiple tRPC queries 401 simultaneously, we may fire duplicate silent-refresh windows. Accepted for first-ship — Clerk is idempotent and hidden windows are cheap. Add a single-flight guard if this becomes measurable.
 - **Refresh-window timeout tuning**: 30s for silent, 5min for visible. May need adjustment if Clerk's first-time-sign-in flow on slow networks exceeds 30s; monitor after initial rollout.
 - **Multi-org switching**: deliberately out of scope. `orgScopedProcedure` usage lands after end-to-end Bearer is proven.
+
+### Follow-ups from Phase 4 verification
+
+- **Pending-allowed route gap** (`apps/app/src/proxy.ts`): `isPendingAllowedRoute` originally whitelisted `/account/(.*)` and `/api/trpc/organization.create(.*)` only. New users (pending until first org) hitting `/cli/auth` or `/desktop/auth` were redirected to `/account/welcome`, blocking the token handoff before the `ClientAuthBridge` could render. Added both routes to the matcher. This unblocks first-sign-in token issuance for CLI and desktop; the `/account/welcome` bounce only applies to genuinely-protected surfaces from here on.
+- **CDP harness for dev Electron** (`apps/desktop/src/main/bootstrap.ts`): added env-gated `--remote-debugging-port` switch, bound to `127.0.0.1` only, guarded by `!app.isPackaged`. Opt-in via `LIGHTFAST_REMOTE_DEBUG_PORT=<int>`. Verified: port listens, `GET /json/version` responds with WebSocket debugger URL; invalid value warns and skips; unset value is silent. Enables autonomous BrowserWindow drive-through of `/desktop/auth` sign-in during Phase 5+ verification.
+- **`webRequest.onBeforeRequest` does NOT accept custom URL schemes** (`apps/desktop/src/main/auth-flow.ts`, spike worktree was wrong): attempting `partition.webRequest.onBeforeRequest({ urls: ["lightfast://*/*"] }, ...)` throws `TypeError: Invalid url pattern lightfast://*/*: Wrong scheme type.` on Electron 33.4.11. Chrome-extension match patterns only allow `http`, `https`, `file`, `ftp`, `urn`. Replaced with `partition.protocol.handle(CALLBACK_SCHEME, handler)` — the supported API for intercepting custom schemes at the network layer. Returns a 204 response; the `will-navigate` channel remains the primary intercept path (fires for JS-driven `window.location = "lightfast://..."`); `protocol.handle` is the safety net for programmatic edge cases. Registration is scoped per-sign-in and `unhandle`d in `settle()`. **Verified via CDP** (14/14 checks): bridge shape, `auth.signIn()` opens BrowserWindow at `/desktop/auth?state=<32-byte hex>`, `persist:lightfast-auth` partition created on disk, cancellation returns `null`, `signOut()` is a safe no-op when signed out.
+
+### Follow-ups from Phase 5 verification
+
+- **pnpm-nested CJS peer resolution for Vite renderer** (`apps/desktop/vite.renderer.config.ts`): Vite's esbuild dep optimizer failed to resolve `copy-anything` (superjson's peer) and `is-what` (copy-anything's peer) when the superjson module was imported through the `@repo/app-trpc` workspace symlink chain — despite `resolve.preserveSymlinks: false` being the default. Root cause: when a workspace package's `node_modules` path contains pnpm-symlinked deps, esbuild's walk found the symlink path rather than the real `.pnpm/<pkg>/node_modules/` store folder where peers are siblings. Fixed with two layers: (a) added `@tanstack/query-core`, `scheduler`, `copy-anything` as explicit `@lightfast/desktop` deps so they're hoisted to `apps/desktop/node_modules` and resolvable without walking through the symlink chain; (b) `optimizeDeps.include: ["@repo/app-trpc/desktop", "@repo/app-trpc/react", "superjson", "sonner"]` in `vite.renderer.config.ts` forces Vite to pre-bundle the workspace entry points from the desktop's resolution context.
+- **Module augmentation in shared tRPC package** (`packages/app-trpc/src/react.tsx`): the `Register` augmentation for TanStack Query's `mutationMeta` lives in `packages/app-trpc/src/types.ts`, but nothing in the `./react` or `./desktop` import chain pulls it in. This made `meta?.errorTitle` type out as `{}` from the desktop's tsconfig (passing from app-trpc's own tsconfig, which includes all sources). Added `import "./types";` side-effect import at the top of `react.tsx` so the augmentation travels with any consumer of the react entry.
+- **Loose global declaration conflict** (`packages/app-trpc/src/desktop.tsx`): originally declared `window.lightfastBridge?: {...}` with optional chaining. When merged with the desktop's stricter `declare global { interface Window { lightfastBridge: LightfastBridge } }`, TS rejected both with "All declarations of 'lightfastBridge' must have identical modifiers." Removed the global declaration from the shared package entirely; the provider now casts `window` locally to a minimal interface (`{ lightfastBridge?: { auth?: { getToken?: ... } } }`) — the shared package shouldn't be polluting global types it doesn't own. **CDP-verified via 11/11 checks**: React mounts under `#react-root`, Sign In button renders when signed-out, vanilla sidebar/settings DOM still rendered alongside, `window.lightfastBridge` remains exposed and `snapshot.isSignedIn === false`.
+
+### Follow-ups from Phase 6 verification
+
+- **`dev:desktop-stack` script wired via `concurrently`** (`package.json`): `dev:full` does **not** start the microfrontends proxy at 3024 — the proxy is registered only in `apps/app/package.json:13` and no turbo pipeline picks it up. Added `concurrently` as a root `devDependency` (9.2.1) and a `dev:desktop-stack` root script that fans out `pnpm dev:full` + `pnpm --filter @lightfast/app proxy` under named prefixes (`app`/`proxy`, colors cyan/magenta). Also added `dev:desktop` as a thin alias for `pnpm --filter @lightfast/desktop dev` so the docs' "two terminals" shape reads cleanly.
+- **`.env.development` is not gitignored by default** (`apps/desktop/.gitignore`): the repo root's `.gitignore` covers `.env` (exact) and `.env*.local` (Next.js local overrides), but **not** `.env.development`. Created `apps/desktop/.env.development` with `VITE_LIGHTFAST_API_URL=http://localhost:3024` and extended the desktop app's local `.gitignore` to ignore `.env`, `.env.development`, `.env.production`. Vite picks the file up automatically in dev mode via `import.meta.env.VITE_LIGHTFAST_API_URL`; no config change needed.
+- **Signed-out bridge probe redirects instead of 200** (plan success criterion): `curl -i http://localhost:3024/desktop/auth?state=test` against a signed-out session returns `307 /sign-in?redirect_url=…` (final 200 after redirect). The redirect_url encodes the internal `4107` origin because `apps/app`'s middleware sees the proxied request at its real host — this is benign for the real desktop flow because the Electron BrowserWindow starts at `http://localhost:3024/desktop/auth?…` with a session cookie present (so the bridge page renders without redirecting). The curl probe exercises the unauthenticated path only, which is expected to bounce to sign-in. Updated the success checklist wording to acknowledge both the 307 and 200 outcomes.
+- **Clerk JWT template is a prerequisite, not a code change** (`apps/desktop/README.md`): documented `lightfast-desktop` template (3600s expiry, `org_id: {{org.id}}` claim, default symmetric signing) as a one-time Dashboard setup per Clerk environment. The bridge page calls `getToken({ template: "lightfast-desktop" })` — without it, sign-in fails with a 400 from Clerk and no amount of code changes will paper over it. Readme now explicitly lists this alongside the env var and the two-terminal run procedure, plus an `auth.bin` inspect path for debugging.
+
+### Design reversal: OS browser + loopback callback (2026-04-23)
+
+**Triggering feedback**: manual drive-through surfaced two problems that I had not caught in automated verification. (1) Signed-out BrowserWindow hit `/desktop/auth?state=…` → middleware redirected to `/sign-in?redirect_url=<4107-origin>` because `req.nextUrl.href` reflects the internal microfrontends target, not the 3024 proxy the window actually loaded. (2) Even when signed in, the user preferred to sign in through their real browser rather than an Electron-hosted BrowserWindow. "It should actually open the browser" was the explicit ask.
+
+**Decision**: reverse Phase 4's BrowserWindow design in favour of the RFC 8252 "native app" pattern — `shell.openExternal` + an ephemeral loopback HTTP server on `127.0.0.1:<random-port>`. Same pattern as `gcloud auth`, `gh auth login`, `aws sso login`. Explicitly considered custom-scheme deeplinks (`lightfast://`) and rejected them: they require per-platform handler plumbing (`open-url` on macOS, `second-instance` on Win/Linux), stale-association dev pain on macOS, and protocol registration at packaging time. Loopback needs only the Node `http` module and works identically on all three platforms.
+
+**Scope of rip-out**:
+
+- **`apps/desktop/src/main/auth-flow.ts`** — full rewrite. Replaced `BrowserWindow` + `partition.protocol.handle(CALLBACK_SCHEME, …)` + `will-navigate` interception with: Node `createServer()` bound to `127.0.0.1:0` (OS assigns port), `shell.openExternal(signInUrl)` where `signInUrl` carries both `state` (nonce) and `callback=http://127.0.0.1:<port>/callback`. The server handles one GET `/callback`, validates `state`, persists the token via `setToken`, responds with a small "Signed in / close this tab" HTML page, and `server.close()`s. `SIGNIN_TIMEOUT_MS` still set to 5 minutes. `silentRefresh()`, `parseCallback()`, `CALLBACK_SCHEME`, and `PARTITION` all removed.
+- **`apps/desktop/src/main/protocol.ts`** — **deleted**. The file registered `lightfast://` as the default protocol client, wired `open-url` / `second-instance` handlers, and delivered captured URLs into a `onDeepLink` listener that only did a window focus + `console.log` by the end of Phase 5. With auth migrated off deeplinks, nothing else uses it; the `requestSingleInstanceLock` in `bootstrap.ts` covers single-instance independently.
+- **`apps/desktop/src/main/index.ts`** — removed `registerProtocolHandler()` call, `onDeepLink` listener, and the three `./protocol` imports. No behavioural change beyond what the deletion above implies.
+- **`apps/desktop/forge.config.ts`** — removed `CFBundleURLTypes` entry + `PROTOCOL_SCHEME` constant. The packaged `Info.plist` no longer advertises `lightfast://` handling.
+- **`apps/app/.../desktop-auth-client.tsx`** — `buildRedirectUrl` now reads `callback` (not builds a `lightfast://` URL), validates it strictly via a `validateLoopbackCallback(raw)` helper (allowed: `http:`, hostname ∈ {`127.0.0.1`, `localhost`}, pathname === `/callback`), and appends `token` + `state` as query params. **Security**: this validation is non-negotiable. Without it an attacker-crafted `/desktop/auth?state=X&callback=https://evil.com/steal` would exfiltrate the minted JWT to a third-party. The check mirrors what the main process sends, so legitimate callbacks always match.
+- **`apps/app/src/proxy.ts`** — fixed `redirect_url` bug at line 82 (independent of this reversal but needed for the flow to work). Added `externalHref(req)` helper that prefers `x-forwarded-host` + `x-forwarded-proto`, falls back to `req.headers.get("host")`, falls back to `req.nextUrl.href` as last resort. Dev-only — in prod, trusting `x-forwarded-*` from the Vercel edge is fine because Vercel strips/signs them; the helper explicitly gates on `NODE_ENV !== "production"`.
+- **`apps/desktop/README.md`** — replaced "visible Electron BrowserWindow" copy with the OS-browser flow, bumped JWT template expiry to 24h (since there's no silent refresh to mask token expiry), documented the callback validation contract.
+
+**Phase 7 is dead.** Silent refresh via hidden BrowserWindow depended on the `persist:lightfast-auth` partition owning Clerk's `__session` cookie. With the OS browser owning that cookie now, we can't re-mint JWTs without another user click. The tradeoff is explicit and accepted: a 24-hour JWT expiry means users re-authenticate once per day, and the renderer's existing 401 handler in `app-shell.tsx` gracefully flips the UI back to the Sign In state when a token expires mid-session. A future enhancement could add Clerk refresh-token exchange for silent re-issuance — but that's a separate design, not Phase 7.
+
+**CLI auth bridge left untouched** per user note ("cli/auth is old code, most likely wrong"). The shared `ClientAuthBridge` component remains in `apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/` — it's still reusable for any future deeplink-based surface, but desktop no longer exercises the `lightfast://` code path.
+
+**What re-verification is still owed (human only):**
+1. Create Clerk JWT template `lightfast-desktop` (24h expiry, `org_id: {{org.id}}` claim).
+2. `pnpm dev:desktop-stack` + `pnpm dev:desktop`.
+3. Click Sign In → default browser opens at `localhost:3024/desktop/auth?state=…&callback=http://127.0.0.1:<port>/callback`.
+4. Complete Clerk sign-in → tab redirects to the loopback URL → sees "Signed in" page → can close tab.
+5. Desktop renderer flips to signed-in, `AccountCard` renders user profile, network tab shows `Authorization: Bearer …` headers on `/api/trpc/account.get`.
+6. Negative paths: close browser tab before sign-in (timeout → null), malicious `callback` param (bridge rejects, shows "Authentication Failed"), second-process callback attempt (loopback server closed → 404).
+
+I will not call this verified until the user has walked through the golden path.
