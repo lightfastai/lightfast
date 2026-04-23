@@ -1,0 +1,53 @@
+have a look at this docx file: /Users/jeevanpillay/Downloads/Business plan template doc (1).docx
+
+we need to start filling this up based on Lightfast's description.
+
+can we copy over the business plan to this repo and start working on this docx
+
+---
+
+makes sense go with markdown approach.
+
+---
+
+perfect. yes proceed. using AskUserQuestions when needed
+
+---
+
+Lightfast Pty Ltd
+ABN: 35 690 889 984
+ACN: 690 889 984
+Date of Registration: 11 Sep 2025
+Phone: +61433970179
+LinkedIn: https://www.linkedin.com/company/lightfastai
+X: https://x.com/lightfastai
+GitHub: http://github.com/lightfastai/
+No laptop yet.
+
+---
+
+1. 51 Grosvenor St, South Yarra, 3141, VIC
+2. Accountant we havent done yet.
+
+---
+
+1. 51 Grosvenor St, South Yarra, 3141, VIC
+2. Accountant we havent done yet.
+
+and yes to editorial pass
+
+---
+
+i think we need to expand the team more. 5 engineers. 1 designer. 1 sales. 1 product manager.
+
+---
+
+we intend to do pre-seed $500k -> $2M seed raise in 6-18 months.
+
+---
+
+how are we getting 1.8M total balance for Year 1?
+
+---
+
+shall we move seed SAFE to next year instead. we're already in Y1 APril rn. so seed in next 3-6 months, Y2 (next year, we do Seed)
