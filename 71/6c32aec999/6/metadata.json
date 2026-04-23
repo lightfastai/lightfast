@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "716c32aec999",
+  "session_id": "c7e5f936-8246-4992-a8ee-fedee6669799",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-23T14:10:47.606817Z",
+  "branch": "main",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/desktop/.gitignore",
+    "apps/desktop/README.md",
+    "apps/desktop/forge.config.ts",
+    "apps/desktop/package.json",
+    "apps/desktop/src/main/auth-flow.ts",
+    "apps/desktop/src/main/bootstrap.ts",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/main/sentry.ts",
+    "apps/desktop/src/preload/preload.ts",
+    "apps/desktop/src/renderer/index.html",
+    "apps/desktop/src/renderer/src/main.ts",
+    "apps/desktop/src/renderer/src/react/signed-out-shell.tsx",
+    "apps/desktop/src/renderer/src/styles.css",
+    "apps/desktop/src/shared/ipc.ts",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/vite.renderer.config.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "fe8eae380b43",
+  "checkpoint_transcript_start": 244,
+  "transcript_lines_at_start": 244,
+  "token_usage": {
+    "input_tokens": 0,
+    "cache_creation_tokens": 0,
+    "cache_read_tokens": 0,
+    "output_tokens": 0,
+    "api_call_count": 0
+  },
+  "session_metrics": {
+    "turn_count": 7
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-23T14:10:47.257613Z",
+    "agent_lines": 546,
+    "agent_removed": 23,
+    "human_added": 202,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 748,
+    "total_lines_changed": 832,
+    "agent_percentage": 68.38942307692307,
+    "metric_version": 2
+  }
+}
