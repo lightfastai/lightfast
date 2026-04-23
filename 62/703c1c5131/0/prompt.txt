@@ -1,0 +1,198 @@
+do you have access to paper
+
+---
+
+try it
+
+---
+
+we want to work on a pitch-deck.
+
+the slides.
+1. intro page
+2. problem
+3. solution
+4. why now
+5. market
+6. comp landscape
+7. landscape
+8. product
+9. business model
+10. me.
+
+now have a look at @apps/www/src/config/pitch-deck-data.ts 
+
+note: this is old data of what lightfast is. it's change significantly.
+
+for now, we jsut want to "design" each slide.
+
+do not run codebase search and explore this codebase.
+
+the only reference: @apps/www/src/app/(app)/(marketing)/(landing)/page.tsx for best practice for how we like our design.
+
+---
+
+in general, we are building an operating system to build startups. let's discuss this together to build an understand of what im building.
+
+---
+
+1. it's the entire core product building lifecycle operating through Lightfast. there's many hard problems: building product on github, knowing what to build next, what to build now, which task to focus on, new customer feedback, potential customer acquisition but needs feature X that is not built out, need triage of blogs when new features go out & tell customers who were keen about it. there's lots of it. our thesis is simple: we are building an operating system that manages the building of startups and companies at scale, orchestratign the different pipelines like ops, gtm, dev, design, support, feedback, errors, etc, we unify company knowledge into expressible logic to be used wherever, our ambient intelligence works makes building startups autopilot mode.
+2. a startup is 1-30 person teams.
+3. based on what i said in 1, you tell me.
+4. why now. because code is commoditize, why not building a startup.
+
+---
+
+i think we want to focus on linear-like wording and mindset. we are defining a new category of product development. see linear.app/next (their new thesis), note: linear is biggest competitor as well. but i reckon there are ways for us to navigate around it and build even faster and move faster. see linear.app for how they word their product.
+
+---
+
+Hmm, I think Building software is no longer the hard part .... is the one that makes sense but Code is solved Companies aren't is strong. We need to lead with the fact that we want to commodotize startup building, going to accelerate the pathway to validation -> growth -> scale.
+
+---
+
+I think leading with Commoditizing startup-building is too bold for title. I do like Accelerating the path from validation to scale.
+
+---
+
+1. Beautiful. I like Slide 2 -- H1.
+2. Soundd good with Noun pair.
+
+---
+
+i think before contuining on, can we generate a tmp md with the actual content and fine tune those first.
+
+---
+
+okay now also in a seperate md outline the discussion and thoughts kinda like for handoff to new instance if need to resrart this
+
+---
+
+now, generate the problem
+
+---
+
+okay now, let's discus this re-design. consider these few facts: 1) we are presenting to large room. we need to focus on limited words + text. consider: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck and https://www.uvic.ca/gustavson/_assets/docs/pitch-deck-template-web.pdf
+
+these are fundamental pitch-decks. we need to focus on a minimal design with focus on middle placement.
+
+simple and clean.
+
+also in title we need to add lightfast logo
+
+---
+
+okay now, let's discus this re-design. consider these few facts: 1) we are presenting to large room. we need to focus on limited words + text. consider: https://www.ycombinator.com/library/2u-how-to-build-your-seed-round-pitch-deck and https://www.uvic.ca/gustavson/_assets/docs/pitch-deck-template-web.pdf
+
+these are fundamental pitch-decks. we need to focus on a minimal design with focus on middle placement.
+
+simple and clean.
+
+also in title we need to add lightfast logo
+
+note: for now, dont worry too much about the actual "content" in pitch-deck md slides, maybe those words can be trimmed in seperate chat but for now, focus on the actual design + placement + text size for these 2 slides.
+
+once you have synthesized the best design, suggest in AskUserQuestions or make consise decisions based on the contraints
+
+---
+
+i htink it's Logo + Wordmark on one line. then it's Operating syste.... and Accelerating the path from validation to scale. on the same line.
+
+---
+
+i think we need to outline the 3 bullet points too for problem.
+
+---
+
+consider what we talked about before: we are displaying in a large hall. right now the title is massive these text is super small. find balance.
+
+---
+
+consider the weight now.
+
+---
+
+i would aruge that the bullet points need more weight tho
+
+---
+
+yes proceed
+
+---
+
+i dont general think we need to lock in the same pattern for each one. but it's fine for now.
+
+for WHy now, i actually want to add a pretty interesting graphic. @apps/www/public/images/pitch-deck-anthropic-visual.png 
+
+let's design this next
+
+---
+
+this looks great. let's go with market next.
+
+---
+
+okay nest one
+
+---
+
+proceed wit operating landscape
+
+---
+
+ensure operating landscapes follow patterns seen in 02, 06, 05, 03. proced with that.
+
+---
+
+okay now do the product
+
+---
+
+note: the operating landscape has changed. check the md file @thoughts/shared/pitch-deck-2026-04.md
+
+---
+
+proceed with 08
+
+---
+
+consider copying the 02 problem more closely for this. note: focus on the size and overal font and stuff. we dont need extra data. consider what we talked about before, this is being displayed in large room. small shit cant be seen
+
+---
+
+generate the founder slide
+
+---
+
+i think we can expand more on Founder slide. basically, see @apps/www/src/config/pitch-deck-data.ts this is the one slide we go deeper.
+
+---
+
+remove the iterated through semantic search.... see new: Practice at the intersection of computational systems, material fabrication, and artificial intelligence. Generative algorithms and parametric CAD pipelines fabricated through CNC machining, 3D printing, and laser projection. Research into procedural noise, recursive geometry, and GPGPU shader programming.
+
+The practice now extends into AGI research and infrastructure — building substrates and runtimes that test the limits of what autonomous intelligence can reason about and act on. Same discipline: design the substrate, define the program, let the output emerge beyond what the author could specify.
+
+
+ounded Lightfast and iterated through multiple product directions — code search tooling, generative web graphics, and a cloud-based agent platform. Each iteration narrowed the problem space. Studied the thesis through extensive founder interviews, workflow analysis, and deep technical research until the core gap became undeniable: founders don't need more tools. They need a superintelligence operating system.
+
+Now architecting the full system. From memory — ingestion and normalisation pipelines across every tool a founder touches. Intelligence that understands context, cites its sources, and sharpens through evaluation loops. The Programs substrate — a new primitive where organisational logic executes autonomously and compounds over time. Infrastructure designed for both people and agents from the ground up.
+
+Leading product direction, infrastructure design, stakeholder conversations, and go-to-market strategy.
+
+Founder and CEO of Lightfast — building the superintelligence layer for founders. 
+
+My background is in computational systems. I design generative algorithms, program GPGPU shaders, and research into agent harnesses and memory architectures. I've built platforms for algorithmic art, led technical campaigns generating over $1M in revenue, and studied drawing, anatomy, and painting alongside the code that simulates them.
+
+Deep systems thinking across AI infrastructure, computational design, and product development — shapes how I approach building intelligent software.
+
+
+
+a bunch of stuff about me. let's discuss what to add
+
+---
+
+perfect!
+
+---
+
+nah skipping business model for now. we'll come back.
