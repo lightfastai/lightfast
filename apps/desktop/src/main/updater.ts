@@ -1,6 +1,7 @@
 import { app, autoUpdater, BrowserWindow, ipcMain } from "electron";
+import { mainEnv } from "../env/main";
 import { IpcChannels } from "../shared/ipc";
-import { getBuildInfo, getRuntimeEnv } from "./build-info";
+import { getBuildInfo } from "./build-info";
 
 export interface UpdaterStatus {
   message?: string;
@@ -30,13 +31,12 @@ function expandFeedUrl(url: string): string {
 
 function resolveFeedUrl(): string | null {
   const build = getBuildInfo();
-  const env = getRuntimeEnv();
   if (process.platform === "darwin") {
-    const raw = env.SPARKLE_FEED_URL ?? (build.sparkleFeedUrl || null);
+    const raw = mainEnv.SPARKLE_FEED_URL ?? (build.sparkleFeedUrl || null);
     return raw ? expandFeedUrl(raw) : null;
   }
   if (process.platform === "win32") {
-    return env.SQUIRREL_FEED_URL ?? null;
+    return mainEnv.SQUIRREL_FEED_URL ?? null;
   }
   return null;
 }

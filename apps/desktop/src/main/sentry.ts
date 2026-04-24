@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import * as Sentry from "@sentry/electron/main";
 import { rewriteFramesIntegration } from "@sentry/electron/main";
 import { app } from "electron";
-import { getBuildInfo, getRuntimeEnv } from "./build-info";
+import { mainEnv } from "../env/main";
+import { getBuildInfo } from "./build-info";
 
 export interface SentryInitOptions {
   dsn: string;
@@ -15,8 +16,7 @@ const SESSION_ID = randomUUID();
 
 export function getSentryInitOptions(): SentryInitOptions {
   const build = getBuildInfo();
-  const env = getRuntimeEnv();
-  const dsn = env.SENTRY_DSN ?? "";
+  const dsn = mainEnv.SENTRY_DSN ?? "";
   return {
     dsn,
     release: `${build.name}@${build.version}+${build.buildNumber}`,

@@ -3,10 +3,11 @@ name: Release desktop
 on:
   push:
     tags:
-      - 'desktop-v*'
+      - '@lightfast/desktop@*'
 
 concurrency:
   group: desktop-release-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   prepare:
@@ -18,12 +19,17 @@ jobs:
     permissions:
       contents: write
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - name: Resolve version
         id: ver
         run: |
           tag="${{ github.ref_name }}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "version=${tag#desktop-v}" >> "$GITHUB_OUTPUT"
+          echo "version=${tag#@lightfast/desktop@}" >> "$GITHUB_OUTPUT"
 
       - name: Create draft release if missing
         env:
@@ -32,11 +38,16 @@ jobs:
           if gh release view "${{ steps.ver.outputs.tag }}" --repo "${{ github.repository }}" >/dev/null 2>&1; then
             echo "Release already exists, reusing."
           else
+            prev=$(git tag -l '@lightfast/desktop@*' --sort=-v:refname | grep -v "${{ steps.ver.outputs.tag }}" | head -n1 || true)
+            notes_arg=(--generate-notes)
+            if [ -n "$prev" ]; then
+              notes_arg=(--generate-notes --notes-start-tag "$prev")
+            fi
             gh release create "${{ steps.ver.outputs.tag }}" \
               --repo "${{ github.repository }}" \
               --draft \
               --title "Lightfast desktop v${{ steps.ver.outputs.version }}" \
-              --notes "Automated release of @lightfast/desktop."
+              "${notes_arg[@]}"
           fi
 
   build:
@@ -50,13 +61,18 @@ jobs:
         arch: [arm64, x64]
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     env:
-      LIGHTFAST_DESKTOP_RELEASE_REPO: ${{ github.repository }}
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       APPLE_SIGNING_IDENTITY: ${{ secrets.APPLE_SIGNING_IDENTITY }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
       APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
       APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
+      SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+      SENTRY_ORG: ${{ vars.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -109,6 +125,15 @@ jobs:
       - name: Publish (forge)
         working-directory: apps/desktop
         run: pnpm exec electron-forge publish --arch=${{ matrix.arch }} --platform=darwin
+
+      - name: Upload source maps to Sentry
+        working-directory: apps/desktop
+        run: pnpm sourcemaps:upload
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'apps/desktop/out/make/**/*.zip'
 
   finalize:
     name: Finalize release

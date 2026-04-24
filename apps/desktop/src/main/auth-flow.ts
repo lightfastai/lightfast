@@ -1,20 +1,12 @@
 import { randomBytes } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import { shell } from "electron";
+import { mainEnv } from "../env/main";
 import { setToken } from "./auth-store";
 
 const SIGNIN_TIMEOUT_MS = 5 * 60_000;
 const LOOPBACK_HOST = "127.0.0.1";
 const CALLBACK_PATH = "/callback";
-
-function getApiOrigin(): string {
-  return (
-    process.env.LIGHTFAST_API_URL ??
-    (process.env.NODE_ENV === "production"
-      ? "https://lightfast.ai"
-      : "http://localhost:3024")
-  );
-}
 
 function responsePage(message: string): string {
   return `<!doctype html>
@@ -127,7 +119,7 @@ export async function beginSignIn(): Promise<string | null> {
       settle(null);
     });
 
-    const signInUrl = new URL("/desktop/auth", getApiOrigin());
+    const signInUrl = new URL("/desktop/auth", mainEnv.LIGHTFAST_API_URL);
     signInUrl.searchParams.set("state", state);
     signInUrl.searchParams.set("callback", callbackUrl);
 
