@@ -35,6 +35,12 @@
       "transcript": "/ea/6223ac4275/3/full.jsonl",
       "content_hash": "/ea/6223ac4275/3/content_hash.txt",
       "prompt": "/ea/6223ac4275/3/prompt.txt"
+    },
+    {
+      "metadata": "/ea/6223ac4275/4/metadata.json",
+      "transcript": "/ea/6223ac4275/4/full.jsonl",
+      "content_hash": "/ea/6223ac4275/4/content_hash.txt",
+      "prompt": "/ea/6223ac4275/4/prompt.txt"
     }
   ],
   "token_usage": {
