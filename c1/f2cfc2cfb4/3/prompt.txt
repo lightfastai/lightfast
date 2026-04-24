@@ -1,0 +1,17 @@
+/create_plan we have started to work on @apps/desktop/ now we simultaneously always want to work on the @core/cli/ and get it working too. however, before we start with the cli, let's first delete everything in cli and maintain barebones structure.
+
+then we follow package structures seen in @core/lightfast/ for cli too.
+
+no need to follow versioning tho.
+
+cli is mostly independent from these two.
+
+let's get all that setup first.
+
+---
+
+proceed
+
+---
+
+we need to setup changelog stuff too. getting ready the base stuff basically.
