@@ -3,7 +3,7 @@
   "checkpoint_id": "2cc270fdbafc",
   "strategy": "manual-commit",
   "branch": "main",
-  "checkpoints_count": 3,
+  "checkpoints_count": 8,
   "files_touched": [
     "thoughts/shared/plans/2026-04-23-desktop-pre-release-batch.md"
   ],
@@ -25,13 +25,19 @@
       "transcript": "/2c/c270fdbafc/2/full.jsonl",
       "content_hash": "/2c/c270fdbafc/2/content_hash.txt",
       "prompt": "/2c/c270fdbafc/2/prompt.txt"
+    },
+    {
+      "metadata": "/2c/c270fdbafc/3/metadata.json",
+      "transcript": "/2c/c270fdbafc/3/full.jsonl",
+      "content_hash": "/2c/c270fdbafc/3/content_hash.txt",
+      "prompt": "/2c/c270fdbafc/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 11741,
-    "cache_creation_tokens": 235605,
-    "cache_read_tokens": 3602035,
-    "output_tokens": 59929,
-    "api_call_count": 40
+    "input_tokens": 11805,
+    "cache_creation_tokens": 405351,
+    "cache_read_tokens": 5900672,
+    "output_tokens": 91776,
+    "api_call_count": 65
   }
 }
