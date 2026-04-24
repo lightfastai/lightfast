@@ -7,3 +7,7 @@ in @.claude/commands/improve_plan.md can we add notes to clean up spike worktree
 ---
 
 /commit
+
+---
+
+yes
