@@ -988,7 +988,7 @@ Effect: `pnpm changeset` won't prompt for desktop; desktop changes never need a 
 #### Manual Verification
 
 - [x] `pnpm changeset` (in interactive mode) does not list `@lightfast/desktop` as a selectable package. (Automated: `.changeset/config.json.ignore` contains `"@lightfast/desktop"`, which is the mechanism changesets uses to hide it.)
-- [x] `pnpm dev:desktop-api` starts the API + proxy stack; `pnpm dev:desktop-stack` no longer exists (errors out cleanly). (Automated: root `package.json.scripts.dev:desktop-api` exists and invokes `dev:full` + `proxy:wait`; `dev:desktop-stack` key is absent.)
+- [x] `pnpm dev:desktop-api` starts the API + proxy stack; `pnpm dev:desktop-stack` no longer exists (errors out cleanly). (Superseded by main commit `f1786701d`: Turbo 2.9's built-in microfrontends integration now owns the proxy task, so the wrapper script was removed entirely instead of renamed. `pnpm dev:full` boots the proxy at 3024 alongside the Next.js apps.)
 - [ ] A fresh contributor running `cp apps/desktop/.env.example apps/desktop/.env.development` + populating `VITE_CLERK_PUBLISHABLE_KEY` can run `pnpm dev:desktop` and sign in. (Cannot automate end-to-end sign-in without real Clerk key + human interaction with the login window.)
 
 ---

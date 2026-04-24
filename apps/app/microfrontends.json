@@ -11,7 +11,8 @@
     "lightfast-www": {
       "packageName": "@lightfast/www",
       "development": {
-        "local": 4101
+        "local": 4101,
+        "fallback": "lightfast-www.vercel.app"
       },
       "routing": [
         {

@@ -160,36 +160,36 @@ reviews:
     docstrings:
       mode: "warning"
 
-# ── Tools ──
-tools:
-  eslint:
-    enabled: false
-  biome:
-    enabled: true
-  ast-grep:
-    enabled: true
-    essential_rules: true
-  shellcheck:
-    enabled: true
-  actionlint:
-    enabled: true
-  markdownlint:
-    enabled: true
-  yamllint:
-    enabled: true
-  github-checks:
-    enabled: true
-  gitleaks:
-    enabled: true
+  # ── Tools ──
+  tools:
+    eslint:
+      enabled: false
+    biome:
+      enabled: true
+    ast-grep:
+      enabled: true
+      essential_rules: true
+    shellcheck:
+      enabled: true
+    actionlint:
+      enabled: true
+    markdownlint:
+      enabled: true
+    yamllint:
+      enabled: true
+    github-checks:
+      enabled: true
+    gitleaks:
+      enabled: true
 
-# ── Finishing touches — one-click agentic actions in PR comments ──
-finishing_touches:
-  docstrings:
-    enabled: true
-  unit_tests:
-    enabled: true
-  simplify:
-    enabled: true
+  # ── Finishing touches — one-click agentic actions in PR comments ──
+  finishing_touches:
+    docstrings:
+      enabled: true
+    unit_tests:
+      enabled: true
+    simplify:
+      enabled: true
 
 chat:
   auto_reply: true
