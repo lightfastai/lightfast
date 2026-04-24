@@ -91,6 +91,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
+    "@vitejs/plugin-react": "^6.0.1",
     "@vitest/coverage-v8": "catalog:",
     "@vitest/expect": "catalog:",
     "babel-plugin-react-compiler": "catalog:",

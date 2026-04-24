@@ -1,10 +1,12 @@
 import { resolve } from "node:path";
+import react from "@vitejs/plugin-react";
 import sharedConfig from "@repo/vitest-config";
 import { defineConfig, mergeConfig } from "vitest/config";
 
 export default mergeConfig(
   sharedConfig,
   defineConfig({
+    plugins: [react()],
     esbuild: {
       jsx: "automatic",
     },
