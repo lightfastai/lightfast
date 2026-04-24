@@ -11,3 +11,7 @@ no manual testing. you need to automate full testing
 ---
 
 /commit
+
+---
+
+yes
