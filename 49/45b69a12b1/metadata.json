@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "4945b69a12b1",
+  "strategy": "manual-commit",
+  "branch": "feat/desktop-clerk-loopback",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/49/45b69a12b1/0/metadata.json",
+      "transcript": "/49/45b69a12b1/0/full.jsonl",
+      "content_hash": "/49/45b69a12b1/0/content_hash.txt",
+      "prompt": "/49/45b69a12b1/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 4455,
+    "cache_creation_tokens": 79652,
+    "cache_read_tokens": 2270546,
+    "output_tokens": 20678,
+    "api_call_count": 32
+  }
+}
