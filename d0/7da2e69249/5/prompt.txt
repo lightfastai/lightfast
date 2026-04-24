@@ -1,0 +1,13 @@
+/implement_plan @thoughts/shared/plans/2026-04-24-coderabbit-pr614-fixes.md
+
+---
+
+proceed phase 2
+
+---
+
+no manual testing. you need to automate full testing
+
+---
+
+/commit
