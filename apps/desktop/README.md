@@ -102,24 +102,26 @@ Renderer (`src/renderer/src/styles.css`):
 - `.titlebar-drag { -webkit-app-region: drag; }` on the top strip;
   `-webkit-app-region: no-drag` on buttons.
 
-## Release
+## Cutting a release
 
-Releases are cut by pushing a tag matching `desktop-v<version>`:
+1. Confirm `main` is green.
+2. Tag and push:
 
-```bash
-git tag desktop-v0.1.0
-git push origin desktop-v0.1.0
-```
+   ```bash
+   git tag '@lightfast/desktop@0.1.0'
+   git push origin '@lightfast/desktop@0.1.0'
+   ```
 
-The `Release desktop` workflow then:
+3. The `desktop-release.yml` workflow creates a draft release, builds arm64
+   + x64 on `macos-14`, notarizes, uploads source maps to Sentry with
+   `--url-prefix "app:///"`, generates Squirrel.Mac feed JSON
+   (`latest-mac-<arch>.json`), and publishes release assets via
+   `electron-forge publish`.
+4. The draft is auto-undrafted by the `finalize` job once all assets are
+   present.
 
-1. Creates a draft GitHub Release for the tag.
-2. Builds signed+notarized ZIP and DMG artifacts for both `arm64` and `x64`
-   via `electron-forge publish` on `macos-14`.
-3. Generates `latest-mac-<arch>.json` (Squirrel.Mac feed format) and uploads
-   them to the release. The app's updater points at
-   `releases/latest/download/latest-mac-${arch}.json`.
-4. Undrafts the release.
+Tag format is `@lightfast/desktop@<semver>` to match the repo's existing
+changesets-style convention (`lightfast@x.y.z`, `@lightfastai/mcp@x.y.z`).
 
 ### Required GitHub secrets
 

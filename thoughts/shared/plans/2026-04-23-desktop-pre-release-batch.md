@@ -741,8 +741,8 @@ Tag format is `@lightfast/desktop@<semver>` to match the repo's existing changes
 #### Automated Verification
 
 - [ ] `gh workflow view "Release desktop"` (after push to main) lists the workflow as enabled.
-- [ ] `yamllint .github/workflows/desktop-release.yml` passes (or `gh workflow list` shows no parse errors).
-- [ ] `.github/workflows/desktop-release.yml.disabled` no longer exists.
+- [x] `yamllint .github/workflows/desktop-release.yml` passes (verified via `yaml-lint`).
+- [x] `.github/workflows/desktop-release.yml.disabled` no longer exists.
 
 #### Manual Verification (requires Phase A + C complete)
 
