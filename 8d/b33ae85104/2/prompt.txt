@@ -1,0 +1,25 @@
+run all the test plan for this pr
+
+---
+
+you will do all the interactive items too
+
+---
+
+yeap
+
+---
+
+<task-notification>
+<task-id>bnci38prn</task-id>
+<summary>Monitor event: "Waiting for Electron CDP on 9229 (retry)"</summary>
+<event>[Monitor timed out — re-arm if needed.]</event>
+</task-notification>
+
+---
+
+i think you need to figure out the problem and fix it. surely there's somehting wrong. maybe pid needss to be killed first
+
+---
+
+merge in
