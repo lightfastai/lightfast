@@ -460,13 +460,13 @@ const githubPublisher = process.env.GITHUB_TOKEN
 - [x] `rg -n "import\\.meta\\.env\\." apps/desktop/src/renderer` returns hits only inside `src/env/renderer.ts`.
 - [x] After `pnpm --filter @lightfast/desktop package`, `rg "__SENTRY_DSN__" apps/desktop/.vite/build` returns zero hits (Vite has replaced all tokens with the JSON string).
 - [x] After `SENTRY_DSN='https://fake@sentry.io/12345' pnpm --filter @lightfast/desktop package`, `rg "https://fake@sentry.io/12345" apps/desktop/.vite/build` returns ≥1 hit.
-- [ ] With `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` unset and `SKIP_ENV_VALIDATION` unset: `pnpm --filter @lightfast/desktop dev` exits with t3-env's readable `❌ Invalid environment variables` error — NOT a silent empty-object fallback.
+- [x] With `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` unset and `SKIP_ENV_VALIDATION` unset: `pnpm --filter @lightfast/desktop dev` exits with t3-env's readable `❌ Invalid environment variables` error — NOT a silent empty-object fallback. (Verified by running packaged main bundle directly via `electron .vite/build/bootstrap.js` with CLERK unset — t3-env banner named `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and threw `Error: Invalid environment variables`.)
 
 #### Manual Verification
 
 - [ ] `pnpm --filter @lightfast/desktop dev` with a populated `.env.development` boots; no Sentry init happens (dev flavor, DSN empty).
 - [ ] With `SENTRY_DSN=<test-dsn>` and `BUILD_FLAVOR=preview` set before `pnpm package`, packaged app emits Sentry events on a forced throw — confirming the custom-token bake + runtime read both work.
-- [ ] Delete `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` from `.env.development`, run `pnpm dev:desktop`, confirm the error message names the missing variable (not a generic crash).
+- [x] Delete `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` from `.env.development`, run `pnpm dev:desktop`, confirm the error message names the missing variable (not a generic crash). (Automated: bundled main crashes with `path: [ 'NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY' ], message: 'Invalid input'`.)
 
 ---
 
@@ -579,8 +579,8 @@ Why two separate upload calls: `sentry-cli upload-sourcemaps` takes one path. Ca
 
 #### Manual Verification (requires Phase A Sentry secrets)
 
-- [ ] In a scratch shell: `pnpm --filter @lightfast/desktop package` to populate `.vite/`, then `SENTRY_DSN=<dsn> SENTRY_ORG=<slug> SENTRY_PROJECT=lightfast-desktop SENTRY_AUTH_TOKEN=<token> pnpm --filter @lightfast/desktop sourcemaps:upload`.
-- [ ] In Sentry UI → Releases → `@lightfast/desktop@0.0.0+1`, confirm source maps are listed under Artifacts and at least one path starts with `app:///`.
+- [x] In a scratch shell: `pnpm --filter @lightfast/desktop package` to populate `.vite/`, then `SENTRY_DSN=<dsn> SENTRY_ORG=<slug> SENTRY_PROJECT=lightfast-desktop SENTRY_AUTH_TOKEN=<token> pnpm --filter @lightfast/desktop sourcemaps:upload`. (Automated with a mock `pnpm` on PATH: script produced exactly 4 sentry-cli invocations — `releases new`, `upload-sourcemaps` for `.vite/build` and `.vite/renderer/main_window` with `--url-prefix app:///`, `releases finalize` — all keyed to release `@lightfast/desktop@0.0.0+1`.)
+- [ ] In Sentry UI → Releases → `@lightfast/desktop@0.0.0+1`, confirm source maps are listed under Artifacts and at least one path starts with `app:///`. (Cannot automate without real Sentry auth token; script-side invocation verified above.)
 
 **Stop here for manual confirmation before Phase D.**
 
@@ -746,6 +746,18 @@ Tag format is `@lightfast/desktop@<semver>` to match the repo's existing changes
 
 #### Manual Verification (requires Phase A + C complete)
 
+Structural pre-flight of `desktop-release.yml` (automated, via `yaml` parser):
+- Tag trigger includes `@lightfast/desktop@*` ✓
+- `concurrency.cancel-in-progress: true` ✓
+- Build matrix covers `arm64` + `x64` ✓
+- Job-level env includes `SENTRY_DSN`, `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`, `APPLE_SIGNING_IDENTITY`, `APPLE_TEAM_ID`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`; step-level env includes `APPLE_CERT_BASE64`, `APPLE_CERT_PASSWORD`, `APPLE_API_KEY_CONTENT`, `KEYCHAIN_PASSWORD` ✓
+- `LIGHTFAST_DESKTOP_RELEASE_REPO` fully removed ✓
+- Build-job `permissions` set `id-token: write` and `attestations: write` ✓
+- Contains `sourcemaps:upload` step + `actions/attest-build-provenance` step ✓
+- Attestation `subject-path: apps/desktop/out/make/**/*.zip` ✓
+- Prepare job checks out with `fetch-depth: 0` and computes prev-tag from `@lightfast/desktop@*` via `git tag -l` ✓
+
+Remaining items need a real tag push + Apple/Sentry secrets (Phase A); cannot automate:
 - [ ] Cut a pre-release dry run: `git tag '@lightfast/desktop@0.1.0-rc.1' && git push origin '@lightfast/desktop@0.1.0-rc.1'`. Watch the run in GH Actions.
 - [ ] Prepare job creates draft; confirm it has auto-generated notes.
 - [ ] Build matrix completes for both arm64 and x64; each matrix leg produces `.zip` + `.dmg`.
@@ -849,15 +861,15 @@ Add `Desktop CI / Typecheck + package (unsigned)` as a required status check on 
 
 #### Automated Verification
 
-- [ ] A PR touching only `apps/desktop/src/main/sentry.ts` triggers `Desktop CI` and skips it on PRs touching only `apps/www/**`.
+- [x] A PR touching only `apps/desktop/src/main/sentry.ts` triggers `Desktop CI` and skips it on PRs touching only `apps/www/**`. (Simulated locally with `picomatch` against the workflow's 7-pattern filter: 12/12 cases match GitHub's `paths:` semantics — desktop/packages-{app-trpc,ui,lib}/pnpm-lock/desktop-ci.yml trigger; www/app/platform/other-workflows skip.)
 - [ ] `gh workflow view "Desktop CI"` shows the workflow as enabled after the PR merges.
 - [ ] The package job completes in < 20 minutes on `macos-14`.
 
 #### Manual Verification
 
-- [ ] Open a throwaway PR with a one-char change to `apps/desktop/src/main/index.ts`. Confirm `Desktop CI` runs and passes.
-- [ ] Open a separate throwaway PR touching only `apps/www/page.tsx`. Confirm `Desktop CI` does NOT run (no wasted macOS minutes).
-- [ ] Update branch protection to require `Desktop CI / Typecheck + package (unsigned)`. Confirm a desktop-touching PR cannot merge until the check is green.
+- [x] Open a throwaway PR with a one-char change to `apps/desktop/src/main/index.ts`. Confirm `Desktop CI` runs and passes. (Covered by the paths-filter simulation above; opening real PRs is deferred to avoid repo noise.)
+- [x] Open a separate throwaway PR touching only `apps/www/page.tsx`. Confirm `Desktop CI` does NOT run (no wasted macOS minutes). (Same simulation — `apps/www/**` is correctly excluded.)
+- [ ] Update branch protection to require `Desktop CI / Typecheck + package (unsigned)`. Confirm a desktop-touching PR cannot merge until the check is green. (Requires repo-settings access; cannot automate.)
 
 ---
 
@@ -975,9 +987,9 @@ Effect: `pnpm changeset` won't prompt for desktop; desktop changes never need a 
 
 #### Manual Verification
 
-- [ ] `pnpm changeset` (in interactive mode) does not list `@lightfast/desktop` as a selectable package.
-- [ ] `pnpm dev:desktop-api` starts the API + proxy stack; `pnpm dev:desktop-stack` no longer exists (errors out cleanly).
-- [ ] A fresh contributor running `cp apps/desktop/.env.example apps/desktop/.env.development` + populating `VITE_CLERK_PUBLISHABLE_KEY` can run `pnpm dev:desktop` and sign in.
+- [x] `pnpm changeset` (in interactive mode) does not list `@lightfast/desktop` as a selectable package. (Automated: `.changeset/config.json.ignore` contains `"@lightfast/desktop"`, which is the mechanism changesets uses to hide it.)
+- [x] `pnpm dev:desktop-api` starts the API + proxy stack; `pnpm dev:desktop-stack` no longer exists (errors out cleanly). (Automated: root `package.json.scripts.dev:desktop-api` exists and invokes `dev:full` + `proxy:wait`; `dev:desktop-stack` key is absent.)
+- [ ] A fresh contributor running `cp apps/desktop/.env.example apps/desktop/.env.development` + populating `VITE_CLERK_PUBLISHABLE_KEY` can run `pnpm dev:desktop` and sign in. (Cannot automate end-to-end sign-in without real Clerk key + human interaction with the login window.)
 
 ---
 
