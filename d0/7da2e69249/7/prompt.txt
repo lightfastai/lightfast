@@ -1,0 +1,45 @@
+we are fundamentally changing @.claude/commands/create_plan.md 
+
+specific, in this next phase of lightfast there is no more "manual verification" 
+
+let's discuss this change and how it will work
+
+---
+
+1. hmm, perhaps during this lifecycle of testing, we allow b) because we can iteratively figure out how to automate those too. deep think. go check our @thoughts/shared/plans/ there's a few here.
+
+what are the Manual Verifications that were created. where there any you think are not automatable.
+
+dont confirm anything. let's discuss
+
+---
+
+use AskUSerQuestions
+
+---
+
+no need to say explicit continue. 
+b) is good.
+as for narrow bucket, i think we need to keep this general purpose. saying stuff like visual/editorial review feels like we restrict it.
+
+let's disucuss that further
+
+---
+
+use AskUserQuestions
+
+---
+
+use AskUserQuestions
+
+---
+
+good job. you need to just update the create_plan.md
+
+---
+
+do this in seperate worktree and /oneshot_merge
+
+---
+
+merge
