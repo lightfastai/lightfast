@@ -1,0 +1,45 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d07da2e69249",
+  "session_id": "a72a9ed6-eaa9-4196-80bf-82abade2e92f",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T07:54:09.615267Z",
+  "branch": "fix/coderabbit-pr614-followup",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/cli/auth/_components/cli-auth-client.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/_components/desktop-auth-client.tsx",
+    "apps/desktop/src/main/auth-flow.ts",
+    "apps/desktop/src/main/auth-focus-gate.ts",
+    "apps/desktop/src/main/auth-store.ts",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/renderer/src/react/app-shell.tsx",
+    "apps/desktop/src/shared/ipc.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "cd27fc12e168",
+  "token_usage": {
+    "input_tokens": 198,
+    "cache_creation_tokens": 293258,
+    "cache_read_tokens": 18698447,
+    "output_tokens": 74862,
+    "api_call_count": 173
+  },
+  "session_metrics": {
+    "turn_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-24T07:54:08.371962Z",
+    "agent_lines": 338,
+    "agent_removed": 79,
+    "human_added": 961,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 1299,
+    "total_lines_changed": 1378,
+    "agent_percentage": 30.26124818577649,
+    "metric_version": 2
+  }
+}
