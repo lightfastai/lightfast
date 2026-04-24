@@ -153,3 +153,6 @@ worktrees/
 
 # Claude Code
 .claude/settings.local.json
+
+# agent-browser profiles (Clerk test sessions, cookies, meta sidecars)
+.agent-browser/

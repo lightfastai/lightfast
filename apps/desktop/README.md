@@ -9,6 +9,85 @@ Lightfast desktop app (Electron). Native-looking macOS sidebar via
 pnpm -F @lightfast/desktop dev
 ```
 
+## Local development
+
+The desktop app is a Clerk-authenticated tRPC client for the `apps/app` API.
+Signed-in requests go through the microfrontends proxy at
+`http://localhost:3024`, not directly to `apps/app` (4107) — the tRPC route's
+CORS only whitelists the 3024 origin in dev.
+
+### Required env var
+
+Create `apps/desktop/.env.development` (gitignored):
+
+```
+VITE_LIGHTFAST_API_URL=http://localhost:3024
+```
+
+Vite injects this into the renderer as `import.meta.env.VITE_LIGHTFAST_API_URL`
+and `DesktopTRPCProvider` uses it to build the tRPC client.
+
+### Clerk JWT template (one-time, per Clerk environment)
+
+In the Clerk Dashboard, create a JWT template named exactly `lightfast-desktop`:
+
+- **Name**: `lightfast-desktop`
+- **Expiry**: `86400` seconds (24 hours) — users re-sign-in daily. There is no
+  silent refresh; when the token expires the renderer's 401 handler clears
+  local state and the user clicks "Sign in" again.
+- **Claims**: include `org_id: {{org.id}}` so `orgRouter` procedures work
+- **Signing**: default (symmetric — the server verifies via `CLERK_SECRET_KEY`)
+
+This must be done once in each Clerk environment (dev and prod). The web
+bridge page (`apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/page.tsx`)
+calls `getToken({ template: "lightfast-desktop" })` — without the template,
+sign-in will fail with a 400 from Clerk.
+
+### Sign-in flow (OS browser + loopback callback)
+
+1. User clicks **Sign in with Lightfast** in the desktop app
+2. Main process starts an ephemeral HTTP listener on
+   `127.0.0.1:<random-port>` and calls `shell.openExternal(...)` to open the
+   user's default browser at
+   `http://localhost:3024/desktop/auth?state=<hex>&callback=http://127.0.0.1:<port>/callback`
+3. Browser completes Clerk sign-in (instant if already signed in to
+   lightfast.ai). The bridge page calls `getToken({ template: "lightfast-desktop" })`,
+   then redirects the tab to the loopback callback with `?token=…&state=…`
+4. The loopback server validates `state`, persists the token via `safeStorage`,
+   responds with a "You can close this tab" HTML page, and shuts down
+5. Main process broadcasts the new auth snapshot to the renderer; UI flips to
+   signed-in
+
+The bridge page only honours `callback` values of the form
+`http://127.0.0.1:<port>/callback` or `http://localhost:<port>/callback` —
+anything else is rejected.
+
+### Run the stack (two terminals)
+
+```bash
+# Terminal 1 — app + www + platform + microfrontends proxy at 3024
+pnpm dev:desktop-stack
+
+# Terminal 2 — Electron app
+pnpm dev:desktop
+```
+
+`pnpm dev:full` alone is **not** sufficient — it only boots the Next.js apps
+at 4107/4101/4112. The microfrontends proxy at 3024 is a separate process
+launched by `dev:desktop-stack` via `concurrently`.
+
+### Inspect the encrypted token store
+
+The main process persists the Clerk JWT + refresh cookie via `safeStorage`
+into a keychain-backed file:
+
+```bash
+# macOS
+ls ~/Library/Application\ Support/Lightfast/auth.bin
+```
+
+Delete this file to force a fresh sign-in.
+
 ## The recipe
 
 Main process (`src/main/index.ts`):

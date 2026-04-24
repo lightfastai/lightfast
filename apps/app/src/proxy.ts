@@ -11,6 +11,25 @@ import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middlew
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
+// Reconstruct the external URL the client actually hit. Under the
+// microfrontends mesh (`apps/app/microfrontends.json`) dev traffic arrives
+// via the 3024 proxy which forwards to the app at 4107; `req.nextUrl.href`
+// reflects the internal origin. Trust `x-forwarded-*` only in dev — in prod
+// Vercel strips/signs these at the edge and `req.nextUrl.href` is already the
+// public URL.
+function externalHref(req: NextRequest): string {
+  if (process.env.NODE_ENV !== "production") {
+    const forwardedHost = req.headers.get("x-forwarded-host");
+    const forwardedProto = req.headers.get("x-forwarded-proto");
+    const host = forwardedHost ?? req.headers.get("host");
+    if (host) {
+      const proto = forwardedProto ?? req.nextUrl.protocol.replace(":", "");
+      return `${proto}://${host}${req.nextUrl.pathname}${req.nextUrl.search}`;
+    }
+  }
+  return req.nextUrl.href;
+}
+
 const securityHeaders = securityMiddleware(
   composeCspOptions(
     createNextjsCspDirectives(),
@@ -32,11 +51,16 @@ const isPublicRoute = createRouteMatcher([
   "/manifest.json",
 ]);
 
-// API routes that handle their own auth (withDualAuth at route level)
+// API routes that handle their own auth (withDualAuth at route level).
+// /api/trpc/(.*) handles auth in createTRPCContext (Bearer token or Clerk
+// cookie) and responds to CORS preflight directly. Leaving it in the
+// else-branch makes middleware redirect OPTIONS requests to /sign-in, which
+// browsers reject with ERR_INVALID_REDIRECT on preflight.
 const isApiRoute = createRouteMatcher([
   "/v1/(.*)",
   "/api/cli/(.*)",
   "/api/inngest(.*)",
+  "/api/trpc/(.*)",
 ]);
 
 // Auth routes — authenticated users should not see sign-in/sign-up forms.
@@ -51,6 +75,10 @@ const isPendingAllowedRoute = createRouteMatcher([
   // The tRPC handler's userScopedProcedure enforces its own auth; the middleware must not
   // intercept these with auth.protect() before they reach the handler.
   "/api/trpc/organization.create(.*)",
+  // Token-handoff routes for CLI / desktop must be reachable during a pending session
+  // so first-time users can finish issuing a bearer token before they've picked an org.
+  "/cli/auth(.*)",
+  "/desktop/auth(.*)",
 ]);
 
 export default clerkMiddleware(
@@ -75,7 +103,7 @@ export default clerkMiddleware(
       });
       if (!userId) {
         const url = new URL("/sign-in", req.url);
-        url.searchParams.set("redirect_url", req.nextUrl.href);
+        url.searchParams.set("redirect_url", externalHref(req));
         return NextResponse.redirect(url);
       }
       if (sessionStatus === "pending" && !isPendingAllowedRoute(req)) {

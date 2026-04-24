@@ -9,10 +9,15 @@ import { wwwUrl } from "~/lib/related-projects";
 export const runtime = "nodejs";
 
 // Allowed request origins per environment — derived from related projects
-// wwwUrl resolves to the correct origin per environment via VERCEL_RELATED_PROJECTS
+// wwwUrl resolves to the correct origin per environment via VERCEL_RELATED_PROJECTS.
+// In dev we also whitelist http://localhost:5173 (the Electron renderer's Vite
+// dev server origin) so the desktop app can call tRPC cross-origin with a
+// Bearer token.
 const allowedOrigins = new Set<string>([
   wwwUrl,
-  ...(env.NODE_ENV === "development" ? ["http://localhost:3024"] : []),
+  ...(env.NODE_ENV === "development"
+    ? ["http://localhost:3024", "http://localhost:5173"]
+    : []),
 ]);
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
@@ -25,7 +30,7 @@ const setCorsHeaders = (req: NextRequest, res: Response) => {
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.headers.set(
     "Access-Control-Allow-Headers",
-    "content-type,authorization,x-trpc-source"
+    "content-type,authorization,x-trpc-source,trpc-accept"
   );
   res.headers.set("Vary", "Origin");
   res.headers.set("Access-Control-Allow-Credentials", "true");

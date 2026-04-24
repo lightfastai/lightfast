@@ -3,7 +3,7 @@
   "compilerOptions": {
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["vite/client"],
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "moduleResolution": "Bundler"
   },
   "include": [

@@ -15,6 +15,9 @@
     "./react": {
       "default": "./src/react.tsx"
     },
+    "./desktop": {
+      "default": "./src/desktop.tsx"
+    },
     "./hooks": {
       "default": "./src/hooks/use-active-org.ts"
     },

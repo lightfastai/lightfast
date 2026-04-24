@@ -14,10 +14,13 @@ import { useState } from "react";
 import { toast } from "sonner";
 import SuperJSON from "superjson";
 import { createQueryClient } from "./client";
+import "./types";
 
 export interface CreateTRPCReactProviderOptions {
   baseUrl?: string;
-  getAuthHeaders?: () => Record<string, string>;
+  getAuthHeaders?: () =>
+    | Record<string, string>
+    | Promise<Record<string, string>>;
 }
 
 const trpcContext = createTRPCContext<AppRouter>();
@@ -88,14 +91,18 @@ export function TRPCReactProvider({
         httpBatchStreamLink({
           transformer: SuperJSON,
           url: `${baseUrl}/api/trpc`,
-          headers: () => ({
+          headers: async () => ({
             "x-trpc-source": "client",
-            ...(options?.getAuthHeaders?.() ?? {}),
+            ...((await options?.getAuthHeaders?.()) ?? {}),
           }),
           fetch(url, init) {
+            const sameOrigin =
+              typeof window !== "undefined" &&
+              new URL(url.toString(), window.location.origin).origin ===
+                window.location.origin;
             return fetch(url, {
               ...init,
-              credentials: "include",
+              credentials: sameOrigin ? "include" : "omit",
             } as RequestInit);
           },
         }),

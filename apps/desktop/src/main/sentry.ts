@@ -1,4 +1,7 @@
+import { randomUUID } from "node:crypto";
 import * as Sentry from "@sentry/electron/main";
+import { rewriteFramesIntegration } from "@sentry/electron/main";
+import { app } from "electron";
 import { getBuildInfo, getRuntimeEnv } from "./build-info";
 
 export interface SentryInitOptions {
@@ -7,6 +10,8 @@ export interface SentryInitOptions {
   environment: string;
   release: string;
 }
+
+const SESSION_ID = randomUUID();
 
 export function getSentryInitOptions(): SentryInitOptions {
   const build = getBuildInfo();
@@ -30,10 +35,22 @@ export function initSentry(): void {
   if (!options.enabled) {
     return;
   }
+  const build = getBuildInfo();
   Sentry.init({
     dsn: options.dsn,
     release: options.release,
     environment: options.environment,
+    dist: build.buildNumber,
+    integrations: [
+      rewriteFramesIntegration({ root: app.getAppPath(), prefix: "app:///" }),
+    ],
+    initialScope: {
+      tags: {
+        sessionId: SESSION_ID,
+        bundle: "electron",
+        host: "app",
+      },
+    },
   });
   initialized = true;
 }
