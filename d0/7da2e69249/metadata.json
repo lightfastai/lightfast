@@ -3,7 +3,7 @@
   "checkpoint_id": "d07da2e69249",
   "strategy": "manual-commit",
   "branch": "fix/coderabbit-pr614-followup",
-  "checkpoints_count": 12,
+  "checkpoints_count": 14,
   "files_touched": [
     "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.tsx",
     "apps/app/src/app/(app)/(user)/(pending-not-allowed)/cli/auth/_components/cli-auth-client.tsx",
@@ -64,13 +64,19 @@
       "transcript": "/d0/7da2e69249/7/full.jsonl",
       "content_hash": "/d0/7da2e69249/7/content_hash.txt",
       "prompt": "/d0/7da2e69249/7/prompt.txt"
+    },
+    {
+      "metadata": "/d0/7da2e69249/8/metadata.json",
+      "transcript": "/d0/7da2e69249/8/full.jsonl",
+      "content_hash": "/d0/7da2e69249/8/content_hash.txt",
+      "prompt": "/d0/7da2e69249/8/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 20563,
-    "cache_creation_tokens": 1075755,
-    "cache_read_tokens": 43827695,
-    "output_tokens": 239169,
-    "api_call_count": 435
+    "input_tokens": 20604,
+    "cache_creation_tokens": 1114283,
+    "cache_read_tokens": 44479161,
+    "output_tokens": 244766,
+    "api_call_count": 451
   }
 }

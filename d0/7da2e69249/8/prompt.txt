@@ -1,0 +1,17 @@
+can you check which checks restricting pr 617 from merging. its merging is blocked
+
+---
+
+approve it
+
+---
+
+loosen the rule on main.
+
+---
+
+nah we honestly dont need approving review count at all. we dont use it.
+
+---
+
+merge the pr in
