@@ -86,6 +86,7 @@
     "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@testing-library/jest-dom": "^6.6.3",
+    "@testing-library/react": "^16.1.0",
     "@types/lodash.merge": "^4.6.9",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
