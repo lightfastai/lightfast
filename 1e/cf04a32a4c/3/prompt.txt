@@ -1,0 +1,9 @@
+git checkout main and delete this branch + the worktree that's locking it
+
+---
+
+proceed
+
+---
+
+nuke it
