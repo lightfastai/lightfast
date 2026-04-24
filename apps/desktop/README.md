@@ -66,15 +66,15 @@ anything else is rejected.
 
 ```bash
 # Terminal 1 — app + www + platform + microfrontends proxy at 3024
-pnpm dev:desktop-stack
+pnpm dev:full
 
 # Terminal 2 — Electron app
 pnpm dev:desktop
 ```
 
-`pnpm dev:full` alone is **not** sufficient — it only boots the Next.js apps
-at 4107/4101/4112. The microfrontends proxy at 3024 is a separate process
-launched by `dev:desktop-stack` via `concurrently`.
+`pnpm dev:full` boots all three Next.js apps (4107/4101/4112) and the
+microfrontends proxy at 3024 — Turbo 2.9's built-in microfrontends
+integration auto-injects the proxy task alongside `@lightfast/app#dev`.
 
 ### Inspect the encrypted token store
 
