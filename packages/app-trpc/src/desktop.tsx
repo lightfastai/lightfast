@@ -6,8 +6,8 @@ interface DesktopBridgeAuth {
 }
 
 interface DesktopTRPCProviderProps {
-  children: ReactNode;
   baseUrl: string;
+  children: ReactNode;
 }
 
 export function DesktopTRPCProvider({

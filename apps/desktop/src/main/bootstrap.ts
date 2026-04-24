@@ -14,7 +14,7 @@ if (!app.isPackaged) {
   const raw = process.env.LIGHTFAST_REMOTE_DEBUG_PORT?.trim();
   if (raw) {
     const port = Number(raw);
-    if (Number.isInteger(port) && port >= 1 && port <= 65535) {
+    if (Number.isInteger(port) && port >= 1 && port <= 65_535) {
       app.commandLine.appendSwitch("remote-debugging-port", String(port));
       app.commandLine.appendSwitch("remote-debugging-address", "127.0.0.1");
       console.log(`[cdp] remote debugging on 127.0.0.1:${port}`);

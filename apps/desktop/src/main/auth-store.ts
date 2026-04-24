@@ -21,10 +21,16 @@ function storePath(): string {
 }
 
 function load(): string | null {
-  if (memory) return memory;
+  if (memory) {
+    return memory;
+  }
   const path = storePath();
-  if (!existsSync(path)) return null;
-  if (!safeStorage.isEncryptionAvailable()) return null;
+  if (!existsSync(path)) {
+    return null;
+  }
+  if (!safeStorage.isEncryptionAvailable()) {
+    return null;
+  }
   try {
     const buf = readFileSync(path);
     const plain = safeStorage.decryptString(buf);
@@ -69,16 +75,22 @@ function clearPersisted(): void {
 
 function emit(): void {
   const snapshot: AuthSnapshot = { isSignedIn: memory !== null };
-  for (const listener of listeners) listener(snapshot);
+  for (const listener of listeners) {
+    listener(snapshot);
+  }
 }
 
 export function getAuthSnapshot(): AuthSnapshot {
-  if (memory === null) load();
+  if (memory === null) {
+    load();
+  }
   return { isSignedIn: memory !== null };
 }
 
 export function getToken(): string | null {
-  if (memory === null) load();
+  if (memory === null) {
+    load();
+  }
   return memory;
 }
 

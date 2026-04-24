@@ -9,13 +9,13 @@ import {
 } from "electron";
 import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
+import { beginSignIn } from "./auth-flow";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
   onAuthChanged,
   signOut as signOutAuth,
 } from "./auth-store";
-import { beginSignIn } from "./auth-flow";
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
 import { getSentryInitOptions, initSentry } from "./sentry";
@@ -53,14 +53,20 @@ function getApiOriginForCsp(): string {
 
 function getClerkFrontendApi(): string | null {
   const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (!publishableKey) return null;
+  if (!publishableKey) {
+    return null;
+  }
   const base64Part = publishableKey.split("_")[2];
-  if (!base64Part) return null;
+  if (!base64Part) {
+    return null;
+  }
   try {
     const domain = Buffer.from(base64Part, "base64")
       .toString("utf-8")
       .replace(/\$$/, "");
-    if (!domain) return null;
+    if (!domain) {
+      return null;
+    }
     return `https://${domain}`;
   } catch {
     return null;

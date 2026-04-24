@@ -92,7 +92,9 @@ export async function resolveClerkSession(
   }
 
   const cookieSession = await auth({ treatPendingAsSignedOut: false });
-  if (!cookieSession.userId) return null;
+  if (!cookieSession.userId) {
+    return null;
+  }
   return {
     userId: cookieSession.userId,
     orgId: cookieSession.orgId ?? null,

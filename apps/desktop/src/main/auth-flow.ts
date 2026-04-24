@@ -44,7 +44,10 @@ function responsePage(message: string): string {
 </html>`;
 }
 
-async function startLoopbackServer(): Promise<{ server: Server; port: number }> {
+async function startLoopbackServer(): Promise<{
+  server: Server;
+  port: number;
+}> {
   const server = createServer();
   await new Promise<void>((resolve, reject) => {
     const onError = (error: Error) => {
@@ -83,11 +86,15 @@ export async function beginSignIn(): Promise<string | null> {
   return new Promise<string | null>((resolve) => {
     let settled = false;
     const settle = (token: string | null) => {
-      if (settled) return;
+      if (settled) {
+        return;
+      }
       settled = true;
       clearTimeout(timer);
       server.close();
-      if (token) setToken(token);
+      if (token) {
+        setToken(token);
+      }
       resolve(token);
     };
 
@@ -95,10 +102,7 @@ export async function beginSignIn(): Promise<string | null> {
 
     server.on("request", (req, res) => {
       try {
-        const url = new URL(
-          req.url ?? "/",
-          `http://${LOOPBACK_HOST}:${port}`
-        );
+        const url = new URL(req.url ?? "/", `http://${LOOPBACK_HOST}:${port}`);
         if (url.pathname !== CALLBACK_PATH) {
           res.writeHead(404, { "Content-Type": "text/plain" });
           res.end("Not Found");
@@ -108,9 +112,7 @@ export async function beginSignIn(): Promise<string | null> {
         const returned = url.searchParams.get("state");
         const ok = !!token && returned === state;
         res.writeHead(ok ? 200 : 400, { "Content-Type": "text/html" });
-        res.end(
-          responsePage(ok ? "Signed in to Lightfast" : "Sign-in failed")
-        );
+        res.end(responsePage(ok ? "Signed in to Lightfast" : "Sign-in failed"));
         settle(ok ? token : null);
       } catch (error) {
         console.error("[auth-flow] loopback handler error", error);

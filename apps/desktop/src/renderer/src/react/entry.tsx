@@ -1,6 +1,6 @@
+import { DesktopTRPCProvider } from "@repo/app-trpc/desktop";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { DesktopTRPCProvider } from "@repo/app-trpc/desktop";
 import { AppShell } from "./app-shell";
 
 const baseUrl =

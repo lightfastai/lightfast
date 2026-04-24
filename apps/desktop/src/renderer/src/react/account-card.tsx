@@ -1,13 +1,19 @@
-import { useQuery } from "@tanstack/react-query";
 import { useTRPC } from "@repo/app-trpc/react";
+import { useQuery } from "@tanstack/react-query";
 
 export function AccountCard() {
   const trpc = useTRPC();
   const query = useQuery(trpc.account.get.queryOptions());
 
-  if (query.isLoading) return <p>Loading account…</p>;
-  if (query.error) return <p>Error: {query.error.message}</p>;
-  if (!query.data) return null;
+  if (query.isLoading) {
+    return <p>Loading account…</p>;
+  }
+  if (query.error) {
+    return <p>Error: {query.error.message}</p>;
+  }
+  if (!query.data) {
+    return null;
+  }
 
   const user = query.data;
   return (

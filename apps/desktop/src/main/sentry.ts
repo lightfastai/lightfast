@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
-import { app } from "electron";
 import * as Sentry from "@sentry/electron/main";
 import { rewriteFramesIntegration } from "@sentry/electron/main";
+import { app } from "electron";
 import { getBuildInfo, getRuntimeEnv } from "./build-info";
 
 export interface SentryInitOptions {

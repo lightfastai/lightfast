@@ -2,17 +2,17 @@
 
 import { useAuth } from "@vendor/clerk/client";
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect, useState, type ReactNode } from "react";
+import { type ReactNode, Suspense, useEffect, useState } from "react";
 
 export interface ClientAuthBridgeProps {
   buildRedirectUrl: (args: {
     token: string;
     searchParams: URLSearchParams;
   }) => string | null;
-  jwtTemplate?: string;
-  title: string;
-  subtitle: string;
   fallback?: ReactNode;
+  jwtTemplate?: string;
+  subtitle: string;
+  title: string;
 }
 
 function BridgeContent(props: ClientAuthBridgeProps) {
@@ -23,7 +23,9 @@ function BridgeContent(props: ClientAuthBridgeProps) {
   );
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
+    if (!(isLoaded && isSignedIn)) {
+      return;
+    }
     void (async () => {
       try {
         const token = await getToken(
