@@ -10,6 +10,7 @@ import {
 import contextMenu from "electron-context-menu";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
 import { beginSignIn } from "./auth-flow";
+import { createAuthFocusGate } from "./auth-focus-gate";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
@@ -214,9 +215,7 @@ function registerIpcHandlers(): void {
   });
   ipcMain.handle(IpcChannels.authGetToken, () => getAuthToken());
   ipcMain.handle(IpcChannels.authSignIn, () => beginSignIn());
-  ipcMain.handle(IpcChannels.authSignOut, () => {
-    signOutAuth();
-  });
+  ipcMain.handle(IpcChannels.authSignOut, () => signOutAuth());
 }
 
 function broadcastThemeUpdates(): void {
@@ -364,10 +363,15 @@ app.whenReady().then(() => {
   });
   void openPrimaryWindow();
 
+  const focusGate = createAuthFocusGate({
+    initiallySignedIn: Boolean(getAuthSnapshot().isSignedIn),
+    getWindows: () => BrowserWindow.getAllWindows(),
+  });
   onAuthChanged((snapshot) => {
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send(IpcChannels.authChanged, snapshot);
     }
+    focusGate(snapshot);
   });
 
   app.on("activate", () => {

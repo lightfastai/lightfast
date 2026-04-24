@@ -1,11 +1,24 @@
 import { randomBytes } from "node:crypto";
-import { createServer, type Server } from "node:http";
+import {
+  createServer,
+  type IncomingMessage,
+  type Server,
+  type ServerResponse,
+} from "node:http";
+import * as Sentry from "@sentry/electron/main";
 import { shell } from "electron";
+import { z } from "zod";
 import { setToken } from "./auth-store";
 
 const SIGNIN_TIMEOUT_MS = 5 * 60_000;
 const LOOPBACK_HOST = "127.0.0.1";
 const CALLBACK_PATH = "/callback";
+const MAX_BODY_BYTES = 16 * 1024;
+
+const callbackBodySchema = z.object({
+  token: z.string().min(1),
+  state: z.string().min(1),
+});
 
 function getApiOrigin(): string {
   return (
@@ -16,32 +29,32 @@ function getApiOrigin(): string {
   );
 }
 
-function responsePage(message: string): string {
-  return `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <title>Lightfast</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-      html, body { height: 100%; margin: 0; }
-      body {
-        display: flex; align-items: center; justify-content: center;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
-        background: #0a0a0a; color: #e5e5e5;
-      }
-      .card { text-align: center; padding: 2rem; max-width: 28rem; }
-      h1 { font-size: 1.125rem; font-weight: 600; margin: 0 0 0.5rem; }
-      p { color: #a3a3a3; margin: 0; font-size: 0.875rem; }
-    </style>
-  </head>
-  <body>
-    <div class="card">
-      <h1>${message}</h1>
-      <p>You can close this tab and return to Lightfast.</p>
-    </div>
-  </body>
-</html>`;
+const ALLOWED_ORIGIN = getApiOrigin();
+
+console.log("[auth-flow] ALLOWED_ORIGIN =", ALLOWED_ORIGIN);
+
+function applyCors(res: ServerResponse): void {
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  res.setHeader("Access-Control-Max-Age", "600");
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Private-Network", "true");
+}
+
+async function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  const chunks: Buffer[] = [];
+  let total = 0;
+  for await (const chunk of req) {
+    const buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    total += buf.length;
+    if (total > MAX_BODY_BYTES) {
+      req.destroy();
+      throw new Error("payload too large");
+    }
+    chunks.push(buf);
+  }
+  return JSON.parse(Buffer.concat(chunks).toString("utf8")) as unknown;
 }
 
 async function startLoopbackServer(): Promise<{
@@ -70,7 +83,23 @@ async function startLoopbackServer(): Promise<{
   return { server, port: address.port };
 }
 
-export async function beginSignIn(): Promise<string | null> {
+let inflight: Promise<string | null> | null = null;
+
+export function beginSignIn(): Promise<string | null> {
+  if (inflight) {
+    return inflight;
+  }
+  inflight = (async () => {
+    try {
+      return await runSignIn();
+    } finally {
+      inflight = null;
+    }
+  })();
+  return inflight;
+}
+
+async function runSignIn(): Promise<string | null> {
   const state = randomBytes(32).toString("hex");
 
   let bound: { server: Server; port: number };
@@ -78,6 +107,7 @@ export async function beginSignIn(): Promise<string | null> {
     bound = await startLoopbackServer();
   } catch (error) {
     console.error("[auth-flow] loopback bind failed", error);
+    Sentry.captureException(error, { tags: { scope: "auth-flow.bind" } });
     return null;
   }
   const { server, port } = bound;
@@ -92,30 +122,87 @@ export async function beginSignIn(): Promise<string | null> {
       settled = true;
       clearTimeout(timer);
       server.close();
-      if (token) {
-        setToken(token);
-      }
       resolve(token);
     };
 
-    const timer = setTimeout(() => settle(null), SIGNIN_TIMEOUT_MS);
+    const timer = setTimeout(() => {
+      Sentry.captureMessage("auth-flow: sign-in timeout", {
+        level: "warning",
+        tags: { scope: "auth-flow.timeout" },
+      });
+      settle(null);
+    }, SIGNIN_TIMEOUT_MS);
 
-    server.on("request", (req, res) => {
+    server.on("request", async (req, res) => {
       try {
+        const origin = req.headers.origin ?? "";
+        if (origin !== ALLOWED_ORIGIN) {
+          Sentry.captureMessage("auth-flow: forbidden origin", {
+            level: "warning",
+            tags: { scope: "auth-flow.forbidden_origin" },
+          });
+          res.writeHead(403, { "Content-Type": "text/plain" });
+          res.end("Forbidden origin");
+          return;
+        }
         const url = new URL(req.url ?? "/", `http://${LOOPBACK_HOST}:${port}`);
         if (url.pathname !== CALLBACK_PATH) {
           res.writeHead(404, { "Content-Type": "text/plain" });
           res.end("Not Found");
           return;
         }
-        const token = url.searchParams.get("token");
-        const returned = url.searchParams.get("state");
-        const ok = !!token && returned === state;
-        res.writeHead(ok ? 200 : 400, { "Content-Type": "text/html" });
-        res.end(responsePage(ok ? "Signed in to Lightfast" : "Sign-in failed"));
-        settle(ok ? token : null);
+        if (req.method === "OPTIONS") {
+          applyCors(res);
+          res.writeHead(204);
+          res.end();
+          return;
+        }
+        if (req.method !== "POST") {
+          res.writeHead(405, { "Content-Type": "text/plain", Allow: "POST" });
+          res.end("Method Not Allowed");
+          return;
+        }
+
+        applyCors(res);
+        const body = await readJsonBody(req);
+        const parsed = callbackBodySchema.safeParse(body);
+        if (!parsed.success) {
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, reason: "bad_request" }));
+          settle(null);
+          return;
+        }
+        const { token, state: returned } = parsed.data;
+        if (returned !== state) {
+          Sentry.captureMessage("auth-flow: state mismatch", {
+            level: "warning",
+            tags: { scope: "auth-flow.state_mismatch" },
+          });
+          res.writeHead(400, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ ok: false, reason: "state_mismatch" }));
+          settle(null);
+          return;
+        }
+        const persisted = setToken(token);
+        if (!persisted) {
+          Sentry.captureException(new Error("auth-flow: persist failed"), {
+            tags: { scope: "auth-flow.persist_failed" },
+          });
+        }
+        res.writeHead(persisted ? 204 : 500, {
+          "Content-Type": "application/json",
+        });
+        res.end(
+          persisted
+            ? ""
+            : JSON.stringify({ ok: false, reason: "persist_failed" })
+        );
+        settle(persisted ? token : null);
       } catch (error) {
         console.error("[auth-flow] loopback handler error", error);
+        Sentry.captureException(error, {
+          tags: { scope: "auth-flow.handler_error" },
+        });
         res.writeHead(500, { "Content-Type": "text/plain" });
         res.end("Internal Server Error");
         settle(null);
@@ -124,10 +211,13 @@ export async function beginSignIn(): Promise<string | null> {
 
     server.on("error", (error) => {
       console.error("[auth-flow] loopback server error", error);
+      Sentry.captureException(error, {
+        tags: { scope: "auth-flow.server_error" },
+      });
       settle(null);
     });
 
-    const signInUrl = new URL("/desktop/auth", getApiOrigin());
+    const signInUrl = new URL("/desktop/auth", ALLOWED_ORIGIN);
     signInUrl.searchParams.set("state", state);
     signInUrl.searchParams.set("callback", callbackUrl);
 
@@ -137,6 +227,9 @@ export async function beginSignIn(): Promise<string | null> {
 
     shell.openExternal(signInUrl.toString()).catch((error) => {
       console.error("[auth-flow] shell.openExternal failed", error);
+      Sentry.captureException(error, {
+        tags: { scope: "auth-flow.open_external" },
+      });
       settle(null);
     });
   });

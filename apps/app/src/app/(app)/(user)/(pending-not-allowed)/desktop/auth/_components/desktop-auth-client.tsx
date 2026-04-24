@@ -28,17 +28,17 @@ function validateLoopbackCallback(raw: string | null): URL | null {
 export function DesktopAuthClient() {
   return (
     <ClientAuthBridge
-      buildRedirectUrl={({ token, searchParams }) => {
+      buildPostCallback={({ searchParams }) => {
         const state = searchParams.get("state");
         const callback = validateLoopbackCallback(searchParams.get("callback"));
         if (!(state && callback)) {
           return null;
         }
-        callback.searchParams.set("token", token);
-        callback.searchParams.set("state", state);
-        return callback.toString();
+        callback.search = "";
+        return { url: callback.toString(), state };
       }}
       jwtTemplate="lightfast-desktop"
+      mode="post"
       subtitle="You'll be redirected back to the Lightfast desktop app shortly."
       title="Authenticating…"
     />

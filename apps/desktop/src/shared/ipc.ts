@@ -103,7 +103,7 @@ export interface LightfastBridge {
     snapshot: AuthSnapshot;
     getToken: () => Promise<string | null>;
     signIn: () => Promise<string | null>;
-    signOut: () => Promise<void>;
+    signOut: () => Promise<boolean>;
     onChanged: (listener: (snapshot: AuthSnapshot) => void) => () => void;
   };
   buildInfo: BuildInfoSnapshot;
