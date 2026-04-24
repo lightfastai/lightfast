@@ -451,15 +451,15 @@ const githubPublisher = process.env.GITHUB_TOKEN
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @lightfast/desktop typecheck` passes.
-- [ ] `rg -n "sparklePublicKey" apps/desktop` returns zero hits.
-- [ ] `rg -n "LIGHTFAST_DESKTOP_RELEASE_REPO" .` returns zero hits.
-- [ ] `rg -n "parseRuntimeEnv|getRuntimeEnv|runtimeEnvSchema" apps/desktop/src` returns zero hits (helper, export, and schema all removed).
-- [ ] `rg -n "src/shared/env" apps/desktop/src` returns zero hits (old file deleted, all imports migrated).
-- [ ] `rg -n "process\\.env\\.(LIGHTFAST_API_URL|SENTRY_DSN|NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY|BUILD_FLAVOR|SPARKLE_FEED_URL|SQUIRREL_FEED_URL|LIGHTFAST_REMOTE_DEBUG_PORT)" apps/desktop/src` returns hits ONLY inside `src/env/main.ts` (the validator is the single reader).
-- [ ] `rg -n "import\\.meta\\.env\\." apps/desktop/src/renderer` returns hits only inside `src/env/renderer.ts`.
-- [ ] After `pnpm --filter @lightfast/desktop package`, `rg "__SENTRY_DSN__" apps/desktop/.vite/build` returns zero hits (Vite has replaced all tokens with the JSON string).
-- [ ] After `SENTRY_DSN='https://fake@sentry.io/12345' pnpm --filter @lightfast/desktop package`, `rg "https://fake@sentry.io/12345" apps/desktop/.vite/build` returns ≥1 hit.
+- [x] `pnpm --filter @lightfast/desktop typecheck` passes.
+- [x] `rg -n "sparklePublicKey" apps/desktop` returns zero hits.
+- [x] `rg -n "LIGHTFAST_DESKTOP_RELEASE_REPO" .` returns zero hits (only plan doc self-references).
+- [x] `rg -n "parseRuntimeEnv|getRuntimeEnv|runtimeEnvSchema" apps/desktop/src` returns zero hits (helper, export, and schema all removed).
+- [x] `rg -n "src/shared/env" apps/desktop/src` returns zero hits (old file deleted, all imports migrated).
+- [x] `rg -n "process\\.env\\.(LIGHTFAST_API_URL|SENTRY_DSN|NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY|BUILD_FLAVOR|SPARKLE_FEED_URL|SQUIRREL_FEED_URL|LIGHTFAST_REMOTE_DEBUG_PORT)" apps/desktop/src` returns hits ONLY inside `src/env/main.ts` (the validator is the single reader).
+- [x] `rg -n "import\\.meta\\.env\\." apps/desktop/src/renderer` returns hits only inside `src/env/renderer.ts`.
+- [x] After `pnpm --filter @lightfast/desktop package`, `rg "__SENTRY_DSN__" apps/desktop/.vite/build` returns zero hits (Vite has replaced all tokens with the JSON string).
+- [x] After `SENTRY_DSN='https://fake@sentry.io/12345' pnpm --filter @lightfast/desktop package`, `rg "https://fake@sentry.io/12345" apps/desktop/.vite/build` returns ≥1 hit.
 - [ ] With `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` unset and `SKIP_ENV_VALIDATION` unset: `pnpm --filter @lightfast/desktop dev` exits with t3-env's readable `❌ Invalid environment variables` error — NOT a silent empty-object fallback.
 
 #### Manual Verification
@@ -573,9 +573,9 @@ Why two separate upload calls: `sentry-cli upload-sourcemaps` takes one path. Ca
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @lightfast/desktop exec sentry-cli --version` prints a version.
-- [ ] `pnpm --filter @lightfast/desktop typecheck` still passes (no TS changes, but sanity).
-- [ ] `node apps/desktop/scripts/upload-sourcemaps.mjs` with all three env vars missing exits 1 with a clear message.
+- [x] `pnpm --filter @lightfast/desktop exec sentry-cli --version` prints a version.
+- [x] `pnpm --filter @lightfast/desktop typecheck` still passes (no TS changes, but sanity).
+- [x] `node apps/desktop/scripts/upload-sourcemaps.mjs` with all three env vars missing exits 1 with a clear message.
 
 #### Manual Verification (requires Phase A Sentry secrets)
 

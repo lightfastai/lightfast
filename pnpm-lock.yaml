@@ -717,6 +717,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@sentry/cli':
+        specifier: ^2.39.1
+        version: 2.58.5(encoding@0.1.13)
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
