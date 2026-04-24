@@ -7,3 +7,7 @@ go and perform all the manual verification by automating the testing
 ---
 
 can you in this next step use @apps/app/'s .vercel env keys to copy into the worktree and we can most likely test after this
+
+---
+
+proceed with interactive test
