@@ -1,0 +1,49 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cd4c10ee0381",
+  "session_id": "5f0590b2-bd21-4658-8914-b4cbd41e1bd5",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T05:34:53.318672Z",
+  "branch": "feat/desktop-clerk-loopback",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "apps/desktop/src/renderer/src/react/app-shell.tsx",
+    "api/app/src/trpc.ts",
+    "apps/desktop/src/main/auth-flow.ts",
+    "apps/desktop/src/main/auth-store.ts",
+    "apps/desktop/src/preload/preload.ts",
+    "apps/desktop/src/renderer/src/react/entry.tsx",
+    "packages/app-trpc/src/desktop.tsx",
+    "apps/desktop/src/main/bootstrap.ts",
+    "apps/desktop/src/renderer/src/styles.css",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/cli/auth/_components/cli-auth-client.tsx",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/renderer/src/react/account-card.tsx",
+    "apps/desktop/src/renderer/src/react/signed-out-shell.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/_components/desktop-auth-client.tsx",
+    "apps/desktop/src/main/sentry.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "12b824102a4c",
+  "token_usage": {
+    "input_tokens": 7,
+    "cache_creation_tokens": 13888,
+    "cache_read_tokens": 44907,
+    "output_tokens": 288,
+    "api_call_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-24T05:34:53.266348Z",
+    "agent_lines": 109,
+    "agent_removed": 65,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 109,
+    "total_lines_changed": 174,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
