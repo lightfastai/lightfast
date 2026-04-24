@@ -1,0 +1,19 @@
+/improve_plan @thoughts/shared/plans/2026-04-23-desktop-pre-release-batch.md 
+
+consider the sentry env solution.
+
+im currently thinking that perhaps we need to introduce a more-long-term env maintainbility taking inspiration from @apps/www/src/env.ts and @apps/www/next.config.ts (where next.config) basicall  at build time / runtime is these are not presetn it crashes.
+
+im wondering if t3-oss/env-core or maybe a custom solution could solve this. 
+
+this a clear full expansion of the env but i think it's important to get right now.
+
+search t3-oss env-core on the web if neded or find how other poeple solve the env problem in electron
+
+---
+
+/commit
+
+---
+
+yes
