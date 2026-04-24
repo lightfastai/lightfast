@@ -1,0 +1,55 @@
+<task-notification>
+<task-id>a4bbdb4bc322be2cb</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/8e8163f3-c2d7-4078-aa34-d22927baa7ba/tasks/a4bbdb4bc322be2cb.output</output-file>
+<status>completed</status>
+<summary>Agent "Spike Turbo 2.9 proxy cleanup" completed</summary>
+<result>All clean.
+
+---
+
+## Spike 2 Result: cold-start sign-in behavior with `--names lightfast-app`
+
+### Verdict: CONFIRMED — the plan is safe; `ef8bdc9c8` regression does NOT reappear
+
+### Test 1 (proxy alone, no app)
+Boot banner with `--names lightfast-app` only, no Next.js running:
+```
+- Local Applications:    • lightfast-app (port 4107)
+- Fallback Applications: • lightfast-www → lightfast-www.vercel.app
+```
+`lightfast-app` is classified as **local at banner time even when 4107 is cold** — classification is driven by the flag, not by port probing. Cold `curl /sign-in` → **HTTP 500**, 92-byte body: `Error proxying request to lightfast-app (local). Is the server running locally on port 4107?` **No `dpl_`, no `lightfast-app.vercel.app`, no silent fallback.**
+
+### Test 2 (proxy first, app second)
+Warm `/sign-in` after 4107 binds: HTTP 200, 185,052 bytes, turbopack-local paths, no `dpl_` marker. **Proxy re-probes dynamically** — no sticky decision from the cold boot, no process restart needed.
+
+### Test 3 (dev:app boot race, 75 probes at ~100ms intervals)
+Full timeline across ~9s of boot:
+- Probes 1–8 (~1.0s): connect refused (3024 not listening)
+- Probes 9–15 (~0.8s): **HTTP 500** with local-port error message
+- Probe 16: 3s read timeout during handover
+- Probes 17–75: HTTP 200 with local turbopack content
+
+**Zero probes** returned `dpl_` markers, `lightfast-app.vercel.app` URLs, or production Clerk. The entire boot window is covered by 500 errors that loudly name the local port, not silent production fallthrough.
+
+### Conclusion
+The `--local-apps lightfast-app lightfast-www` flag in `ef8bdc9c8` was doing two things: (a) classify both apps as local so cold boot returns 500 instead of prod (b) cover lightfast-www. With Turbo's injected `--names lightfast-app`:
+- (a) is preserved for `lightfast-app` (the critical Clerk-sensitive app) — confirmed by Test 1.
+- lightfast-www intentionally falls back to prod during `dev:app`, which is desired (we added `fallback: "lightfast-www.vercel.app"` for exactly this). During `dev:full`, www port 4101 is listening, and the proxy re-probes it onto the local list (spike 1 confirmed).
+
+**Safe to delete `--local-apps lightfast-app lightfast-www`.** The `--names lightfast-app` that Turbo injects + the fallback addition in `microfrontends.json` fully replace it. The original `ef8bdc9c8` regression cannot reappear as long as the package listed in `--names` (lightfast-app) matches the desktop/Clerk-bound app.
+
+### Residual risk
+Minimal. One small gotcha: an automated health probe hitting `/sign-in` during the ~800ms boot window will see an HTTP 500 page (not a redirect to prod). Readiness gates that block on `GET /sign-in == 200` (not 500) will behave correctly. Any tooling that treats 500 as "try prod" would be a problem, but nothing in this repo does that.
+
+### Recommendation
+**Ship the plan as-is. No mitigations needed.** If belt-and-suspenders is wanted, adding `lightfast-app` to a turbo passthrough or re-introducing explicit `--local-apps` via `turbo.json` task override is unnecessary — the injected `--names lightfast-app` is already load-bearing and correct.
+
+Worktree: `/Users/jeevanpillay/Code/@lightfastai/lightfast/.claude/worktrees/agent-a4bbdb4bc322be2cb`. Key log: `/tmp/spike2-race-probes.txt` (75-probe timeline).</result>
+<usage><total_tokens>90093</total_tokens><tool_uses>14</tool_uses><duration_ms>176103</duration_ms></usage>
+<worktree><worktreePath>/Users/jeevanpillay/Code/@lightfastai/lightfast/.claude/worktrees/agent-a4bbdb4bc322be2cb</worktreePath></worktree>
+</task-notification>
+
+---
+
+yes proceed
