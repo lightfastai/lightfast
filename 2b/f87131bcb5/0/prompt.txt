@@ -1,0 +1,117 @@
+<task-notification>
+<task-id>a0c176f72e4358111</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/a0c176f72e4358111.output</output-file>
+<status>completed</status>
+<summary>Agent "Implement desktop deps upgrade plan" completed</summary>
+<result># Phase 1 Complete — Halt for user go-ahead
+
+## Approach picked + rationale
+
+**Added `@vitejs/plugin-react@^6.0.1` as a devDep on `apps/app` and loaded it in `apps/app/vitest.config.ts`.** Vite 8's `vite:import-analysis` runs before `esbuild` transforms, so the existing `esbuild: { jsx: "automatic" }` line in vitest config no longer catches `.tsx` before import-analysis rejects `jsx: preserve` tsconfigs; plugin-react registers a pre-import-analysis JSX transform hook that's the idiomatic Vite 8 fix.
+
+## Updated `git diff --stat`
+
+```
+ apps/app/package.json     |   1 +
+ apps/app/vitest.config.ts |   2 +
+ apps/desktop/package.json |   8 +-
+ package.json              |   2 +-
+ pnpm-lock.yaml            | 636 +++++++++++++++++++++++++++++++---------------
+ 5 files changed, 434 insertions(+), 215 deletions(-)
+```
+
+## `SKIP_ENV_VALIDATION=true pnpm test` result
+
+- Exit: **0**
+- `@lightfast/app:test`: `Test Files  6 passed (6)` / `Tests  70 passed (70)` — previously-failing `client-auth-bridge.test.tsx` (10 tests) now passes, total climbed from 60 → 70.
+- `@lightfast/desktop:test`: `Test Files  2 passed (2)` / `Tests  23 passed (23)` — unchanged, still green.
+- All 12 turbo test tasks completed successfully.
+
+## Peer-warning baseline
+
+Unchanged from first install — only the known `fumadocs-mdx@14.2.9` (expected) and pre-existing `@t3-oss/env-nextjs` → zod (displayed on `api/platform` after the reinstall dedup, but same warning — unrelated to this upgrade).
+
+## Halting before Phase 2
+
+Worktree path: `/Users/jeevanpillay/Code/@lightfastai/lightfast/.claude/worktrees/desktop-deps-upgrade`  
+Branch: `desktop-deps-upgrade-2026-04-24`  
+Changes uncommitted, left in working tree as instructed. Awaiting explicit go-ahead for Phase 2 (build pipeline + cross-app build sweep).</result>
+<usage><total_tokens>68916</total_tokens><tool_uses>10</tool_uses><duration_ms>118146</duration_ms></usage>
+</task-notification>
+
+---
+
+perfect proced
+
+---
+
+<task-notification>
+<task-id>a0c176f72e4358111</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/a0c176f72e4358111.output</output-file>
+<status>completed</status>
+<summary>Agent "Implement desktop deps upgrade plan" completed</summary>
+<result>All env validators honor `SKIP_ENV_VALIDATION=true`. Let me try with that, bypassing the validation gate (which is the same approach the root `pnpm test` uses).</result>
+<usage><total_tokens>83889</total_tokens><tool_uses>16</tool_uses><duration_ms>134526</duration_ms></usage>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bghixs9db</task-id>
+<tool-use-id>toolu_01QpUYsapysja6DjiW1Z8sA9</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/bghixs9db.output</output-file>
+<status>completed</status>
+<summary>Background command "Run build:platform with SKIP_ENV_VALIDATION in worktree" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bn0b7xikp</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/bn0b7xikp.output</output-file>
+<status>completed</status>
+<summary>Background command "Run build:www with SKIP_ENV_VALIDATION in worktree" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bhyfgjbu0</task-id>
+<tool-use-id>toolu_01QkxwZRKT1vS2WsXcZwpkbZ</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/bhyfgjbu0.output</output-file>
+<status>completed</status>
+<summary>Background command "Run build:app with SKIP_ENV_VALIDATION in worktree" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bmj5uyd2s</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/bmj5uyd2s.output</output-file>
+<status>completed</status>
+<summary>Background command "Re-run build:platform with env files present" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bdy1edroy</task-id>
+<tool-use-id>toolu_01J98ZPMsL8EvnvMzQ6cMSee</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/bdy1edroy.output</output-file>
+<status>completed</status>
+<summary>Background command "Re-run build:www with env files present" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+<task-notification>
+<task-id>bdjlyczgf</task-id>
+<tool-use-id>toolu_01RUzi1mfUijV6e1ion4M7z1</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/60f1e1bf-9b57-47f3-a931-40e4db3821d6/tasks/bdjlyczgf.output</output-file>
+<status>completed</status>
+<summary>Background command "Re-run build:app with env files present" completed (exit code 0)</summary>
+</task-notification>
