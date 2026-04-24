@@ -717,6 +717,9 @@ importers:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       '@types/electron-squirrel-startup':
         specifier: ^1.0.2
         version: 1.0.2

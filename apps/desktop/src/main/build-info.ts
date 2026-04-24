@@ -1,35 +1,23 @@
 import packageJson from "../../package.json";
+import { mainEnv } from "../env/main";
 import {
   type BuildInfo,
   buildInfoSchema,
-  parseRuntimeEnv,
-  type RuntimeEnv,
-} from "../shared/env";
+} from "../shared/build-info-schema";
 
 let cachedBuildInfo: BuildInfo | null = null;
-let cachedRuntimeEnv: RuntimeEnv | null = null;
 
 export function getBuildInfo(): BuildInfo {
   if (cachedBuildInfo) {
     return cachedBuildInfo;
   }
-  const runtime = getRuntimeEnv();
   const candidate = {
     name: packageJson.name,
     version: packageJson.version,
-    buildFlavor: runtime.BUILD_FLAVOR ?? packageJson.buildFlavor,
+    buildFlavor: mainEnv.BUILD_FLAVOR ?? packageJson.buildFlavor,
     buildNumber: packageJson.buildNumber,
-    sparkleFeedUrl: runtime.SPARKLE_FEED_URL ?? packageJson.sparkleFeedUrl,
-    sparklePublicKey: packageJson.sparklePublicKey,
+    sparkleFeedUrl: mainEnv.SPARKLE_FEED_URL ?? packageJson.sparkleFeedUrl,
   };
   cachedBuildInfo = buildInfoSchema.parse(candidate);
   return cachedBuildInfo;
-}
-
-export function getRuntimeEnv(): RuntimeEnv {
-  if (cachedRuntimeEnv) {
-    return cachedRuntimeEnv;
-  }
-  cachedRuntimeEnv = parseRuntimeEnv(process.env);
-  return cachedRuntimeEnv;
 }

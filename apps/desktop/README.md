@@ -16,16 +16,13 @@ Signed-in requests go through the microfrontends proxy at
 `http://localhost:3024`, not directly to `apps/app` (4107) — the tRPC route's
 CORS only whitelists the 3024 origin in dev.
 
-### Required env var
+### Required env vars
 
-Create `apps/desktop/.env.development` (gitignored):
-
-```
-VITE_LIGHTFAST_API_URL=http://localhost:3024
-```
-
-Vite injects this into the renderer as `import.meta.env.VITE_LIGHTFAST_API_URL`
-and `DesktopTRPCProvider` uses it to build the tRPC client.
+Create `apps/desktop/.env.development` (gitignored) by copying
+`apps/desktop/.env.example`. The only required var in dev is
+`NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` (used by the main process to compute the
+Clerk CSP origin); everything else has sensible defaults documented in the
+example file.
 
 ### Clerk JWT template (one-time, per Clerk environment)
 
@@ -155,8 +152,14 @@ sets):
 APPLE_SIGNING_IDENTITY=... APPLE_TEAM_ID=... \
 APPLE_API_KEY=$HOME/.private_keys/AuthKey_XXX.p8 \
 APPLE_API_KEY_ID=... APPLE_API_ISSUER=... \
-LIGHTFAST_DESKTOP_RELEASE_REPO=lightfastai/lightfast \
 GITHUB_TOKEN=$(gh auth token) \
 pnpm -F @lightfast/desktop exec electron-forge publish \
   --arch=arm64 --platform=darwin
 ```
+
+## Environment
+
+Required/optional env vars are documented in `apps/desktop/.env.example`.
+Copy it to `.env.development` and fill in what you need; missing required
+vars cause `pnpm dev` / `pnpm package` to fail at startup with a readable
+t3-env validation error (see `src/env/main.ts` and `src/env/renderer.ts`).
