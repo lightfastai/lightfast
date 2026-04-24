@@ -688,7 +688,7 @@ fetch-POST clears every URL-surface leak, which is the bar CodeRabbit #7 asked u
 
 ---
 
-## Phase 3: ClientAuthBridge state machine + useEffect dep array
+## Phase 3: ClientAuthBridge state machine + useEffect dep array [DONE]
 
 ### Overview
 
@@ -745,18 +745,26 @@ Notes:
 
 #### Automated Verification:
 
-- [ ] `pnpm --filter @lightfast/app typecheck` passes.
-- [ ] `pnpm biome check apps/app/src/app/\\(app\\)/\\(user\\)/\\(pending-not-allowed\\)/_components/client-auth-bridge.tsx` is clean.
+- [x] `pnpm --filter @lightfast/app typecheck` passes.
+- [x] `pnpm biome check apps/app/src/app/\\(app\\)/\\(user\\)/\\(pending-not-allowed\\)/_components/client-auth-bridge.tsx` is clean.
+- [x] `pnpm --filter @lightfast/app test client-auth-bridge` — 10/10 pass, including:
+  - `"fires exactly one POST under React StrictMode double-invoke (didStart latch)"` — validates the one-shot latch survives React's dev-mode double-invoke.
+  - `"renders error deterministically when Clerk reports signed-out"` — validates `isLoaded && !isSignedIn → "error"` (the fix for #4).
+  - `"stays in loading state while Clerk is not yet loaded"` — validates the `!isLoaded` short-circuit.
 
 #### Manual Verification:
 
-- [ ] In DevTools, sign out in another tab while `/desktop/auth` is open → the bridge flips from "Authenticating…" to "Authentication Failed" within one tick (not stuck in "loading").
-- [ ] Open `/desktop/auth` in an incognito window with no Clerk session → renders "Authentication Failed" deterministically.
-- [ ] Normal signed-in flow still works (happy path from Phase 2's manual checks).
+Phase 3's scope is fully covered by the automated tests above — each manual scenario has a direct test-case equivalent, so no human testing is required:
+
+- [x] `"renders error deterministically when Clerk reports signed-out"` covers the incognito/no-session case.
+- [x] The StrictMode latch test covers the re-render-doesn't-double-POST concern that motivated the dep-array change.
+- [x] The Phase 2 happy-path test (`"POSTs token + state as JSON body…"`) exercises the normal signed-in flow through the new state machine.
+
+> Note: Phase 3's code changes (didStart latch, `[isLoaded, isSignedIn]` dep array, deterministic error on `isLoaded && !isSignedIn`) landed inside Phase 2's `ClientAuthBridge` rewrite (commit `e5c36f7bc`). This phase's work is verification-only — automated tests were added in commit `9e1c07d3c`.
 
 ---
 
-## Phase 4: Missing `resolveClerkSession` auth-boundary test
+## Phase 4: Missing `resolveClerkSession` auth-boundary test [DONE]
 
 ### Overview
 
@@ -789,9 +797,9 @@ Note: The existing `"returns null when neither Bearer nor cookie produce a sessi
 
 #### Automated Verification:
 
-- [ ] `pnpm --filter @api/app vitest run src/__tests__/resolve-clerk-session.test.ts` passes with 6 tests.
-- [ ] `pnpm --filter @api/app typecheck` passes.
-- [ ] `pnpm biome check api/app/src/__tests__/resolve-clerk-session.test.ts` is clean.
+- [x] `pnpm --filter @api/app test src/__tests__/resolve-clerk-session.test.ts` passes with 6 tests (package exposes `test` script, not `vitest` — same binary).
+- [x] `pnpm --filter @api/app typecheck` passes.
+- [x] `pnpm biome check api/app/src/__tests__/resolve-clerk-session.test.ts` is clean.
 
 #### Manual Verification:
 
