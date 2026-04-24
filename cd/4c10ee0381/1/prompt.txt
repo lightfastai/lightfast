@@ -1,0 +1,13 @@
+can you double check if @apps/app/ and @apps/platform/ nextjs is setup with the best prcatices in terms of for agent development. go see recent next versioning for their new features
+
+---
+
+i was talking about the nextjs log stuff they introduced. easy browser logs and stuff.
+
+---
+
+yes
+
+---
+
+all good

@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "cd4c10ee0381",
+  "session_id": "aaaecda3-1e46-4d4a-9e4d-212cb79d93d5",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T05:34:53.690424Z",
+  "branch": "feat/desktop-clerk-loopback",
+  "checkpoints_count": 4,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "f6402c846a39",
+  "token_usage": {
+    "input_tokens": 4455,
+    "cache_creation_tokens": 79652,
+    "cache_read_tokens": 2270546,
+    "output_tokens": 20678,
+    "api_call_count": 32
+  },
+  "session_metrics": {
+    "turn_count": 5
+  }
+}

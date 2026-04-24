@@ -3,7 +3,7 @@
   "checkpoint_id": "cd4c10ee0381",
   "strategy": "manual-commit",
   "branch": "feat/desktop-clerk-loopback",
-  "checkpoints_count": 0,
+  "checkpoints_count": 4,
   "files_touched": [
     "api/app/src/trpc.ts",
     "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.tsx",
@@ -28,13 +28,19 @@
       "transcript": "/cd/4c10ee0381/0/full.jsonl",
       "content_hash": "/cd/4c10ee0381/0/content_hash.txt",
       "prompt": "/cd/4c10ee0381/0/prompt.txt"
+    },
+    {
+      "metadata": "/cd/4c10ee0381/1/metadata.json",
+      "transcript": "/cd/4c10ee0381/1/full.jsonl",
+      "content_hash": "/cd/4c10ee0381/1/content_hash.txt",
+      "prompt": "/cd/4c10ee0381/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 7,
-    "cache_creation_tokens": 13888,
-    "cache_read_tokens": 44907,
-    "output_tokens": 288,
-    "api_call_count": 2
+    "input_tokens": 4462,
+    "cache_creation_tokens": 93540,
+    "cache_read_tokens": 2315453,
+    "output_tokens": 20966,
+    "api_call_count": 34
   }
 }
