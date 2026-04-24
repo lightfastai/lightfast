@@ -1,0 +1,12 @@
+Validation error: Unrecognized key(s) in object: 'tools', 'finishing_touches' in .coderabbit/yaml
+
+coderabbit.yaml has unrecognized properties
+CodeRabbit is using all valid settings from your configuration. Unrecognized properties (listed below) have been ignored and may indicate typos or deprecated fields that can be removed.
+
+⚠️ Parsing warnings (1)
+Validation error: Unrecognized key(s) in object: 'tools', 'finishing_touches'
+⚙️ Configuration instructions
+Please see the configuration documentation for more information.
+You can also validate your configuration using the online YAML validator.
+If your editor has YAML language server enabled, you can add the path at the top of this file to enable auto-completion and validation: # yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+📝
