@@ -1,1 +1,5 @@
 using sentyr fetch latest errors in lightfast-platform let's see fix these
+
+---
+
+i htink you can use "sentry" (not sentry-cli)
