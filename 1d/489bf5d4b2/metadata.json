@@ -3,7 +3,7 @@
   "checkpoint_id": "1d489bf5d4b2",
   "strategy": "manual-commit",
   "branch": "fix/coderabbit-pr614-followup",
-  "checkpoints_count": 2,
+  "checkpoints_count": 5,
   "files_touched": [
     "api/app/src/__tests__/resolve-clerk-session.test.ts",
     "thoughts/shared/plans/2026-04-24-coderabbit-pr614-fixes.md"
@@ -32,13 +32,19 @@
       "transcript": "/1d/489bf5d4b2/3/full.jsonl",
       "content_hash": "/1d/489bf5d4b2/3/content_hash.txt",
       "prompt": "/1d/489bf5d4b2/3/prompt.txt"
+    },
+    {
+      "metadata": "/1d/489bf5d4b2/4/metadata.json",
+      "transcript": "/1d/489bf5d4b2/4/full.jsonl",
+      "content_hash": "/1d/489bf5d4b2/4/content_hash.txt",
+      "prompt": "/1d/489bf5d4b2/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 75,
-    "cache_creation_tokens": 172732,
-    "cache_read_tokens": 1453845,
-    "output_tokens": 27732,
-    "api_call_count": 35
+    "input_tokens": 126,
+    "cache_creation_tokens": 237170,
+    "cache_read_tokens": 3636018,
+    "output_tokens": 37073,
+    "api_call_count": 66
   }
 }

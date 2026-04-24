@@ -1,0 +1,40 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "1d489bf5d4b2",
+  "session_id": "88d7243c-e499-4ca1-8527-fa325e9f623c",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T08:16:37.418146Z",
+  "branch": "fix/coderabbit-pr614-followup",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/app/src/__tests__/resolve-clerk-session.test.ts",
+    "thoughts/shared/plans/2026-04-24-coderabbit-pr614-fixes.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "20efee888c9f",
+  "checkpoint_transcript_start": 628,
+  "transcript_lines_at_start": 628,
+  "token_usage": {
+    "input_tokens": 51,
+    "cache_creation_tokens": 64438,
+    "cache_read_tokens": 2182173,
+    "output_tokens": 9341,
+    "api_call_count": 31
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-24T08:16:35.747058Z",
+    "agent_lines": 31,
+    "agent_removed": 10,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 31,
+    "total_lines_changed": 41,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
