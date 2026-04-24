@@ -206,6 +206,10 @@ After structure approval:
 
 [High-level strategy and reasoning]
 
+## Execution Protocol
+
+Phase boundaries halt execution. Automated checks passing is necessary but not sufficient — the next phase starts only on user go-ahead.
+
 ## Phase 1: [Descriptive Name]
 
 ### Overview
@@ -231,20 +235,17 @@ After structure approval:
 - [ ] Type checking passes: `[your typecheck command]`
 - [ ] Linting passes: `[your lint command]`
 
-#### Manual Verification:
+#### Human Review:
 
-- [ ] Feature works as expected when tested
-- [ ] Performance is acceptable under load
-- [ ] Edge case handling verified manually
-- [ ] No regressions in related features
+(Omit this section when there is nothing for the human to observe. Each item must state a concrete action and expected observation — not a feeling. Optionally suffix entries with ` — TODO: automate via <approach>` to track graduation.)
 
-**Implementation Note**: After completing this phase and all automated verification passes, pause here for manual confirmation from the human that the manual testing was successful before proceeding to the next phase.
+- [ ] [Open X, do Y] → [expected observation Z] — TODO: automate via [approach]
 
 ---
 
 ## Phase 2: [Descriptive Name]
 
-[Similar structure with both automated and manual success criteria...]
+[Same structure: Automated Verification required; Human Review optional.]
 
 ---
 
@@ -258,12 +259,6 @@ After structure approval:
 ### Integration Tests:
 
 - [End-to-end scenarios]
-
-### Manual Testing Steps:
-
-1. [Specific step to verify feature]
-2. [Another verification step]
-3. [Edge case to test manually]
 
 ## Performance Considerations
 
@@ -298,7 +293,7 @@ After structure approval:
 2. **Iterate based on feedback** - be ready to:
    - Add missing phases
    - Adjust technical approach
-   - Clarify success criteria (both automated and manual)
+   - Clarify success criteria (Automated Verification and, where needed, Human Review)
    - Add/remove scope items
 
 3. **Continue refining** until the user is satisfied
@@ -321,7 +316,7 @@ After structure approval:
    - Read all context files COMPLETELY before planning
    - Research actual code patterns using parallel sub-tasks
    - Include specific file paths and line numbers
-   - Write measurable success criteria with clear automated vs manual distinction
+   - Write measurable success criteria with a clear Automated Verification / Human Review distinction
 
 4. **Be Practical**:
    - Focus on incremental, testable changes
@@ -343,19 +338,22 @@ After structure approval:
 
 ## Success Criteria Guidelines
 
-**Always separate success criteria into two categories:**
+Success criteria fall into two buckets:
 
-1. **Automated Verification** (can be run by execution agents):
+1. **Automated Verification** (the executor runs these):
    - Commands that can be run: test suites, linters, type checkers
    - Specific files that should exist
-   - Code compilation/type checking
-   - Automated test suites
+   - Code compilation / type checking
+   - Browser automation, DB assertions, HTTP checks, Inngest run inspections
+   - Anything verifiable by tools available to the executor today
 
-2. **Manual Verification** (requires human testing):
-   - UI/UX functionality
-   - Performance under real conditions
-   - Edge cases that are hard to automate
-   - User acceptance criteria
+2. **Human Review** (what the human looks at during the phase-boundary halt):
+   - Each item must state a specific action and expected observation — not a feeling
+   - No restriction on kind: visual output, prose quality, behavioral observations, perceptual checks all qualify
+   - Omit the section entirely when there is nothing to observe
+   - Optionally suffix entries with ` — TODO: automate via <approach>` to track graduation toward automation
+
+The phase boundary halts regardless of whether a Human Review section exists — Human Review is the menu for the halt, not the gate.
 
 ## Common Patterns
 
