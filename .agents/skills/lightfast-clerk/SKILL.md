@@ -10,18 +10,28 @@ description: |
 
 # Lightfast Clerk Skill
 
-End-to-end Clerk auth automation for local development. Provisions test users,
-drives sign-in, mints JWTs, and cleans up — all without human interaction.
+Clerk auth primitives for local development. Strict scripts for operations
+with stable contracts (Clerk Backend API, filesystem). A playbook for the
+browser-driven sign-in flow, because Lightfast's auth UI changes and a
+hardcoded script would silently rot.
+
+The split:
+- **Scripts** talk to Clerk's Backend API and the local filesystem. These are
+  stable contracts — a script is the right tool.
+- **Playbook** (`references/sign-in-playbook.md`) drives the browser via
+  `agent-browser`. The calling agent (Claude, a human, another skill) reads
+  the playbook and executes it. Failures become *observations* instead of
+  opaque `exit 1` — which is exactly what you want when debugging auth.
 
 ## Decision tree
 
 ```
 What do you need?
 ├── A JWT to call /api/trpc/...               -> command/token.sh <profile> [template]
-├── A live browser session (cookie persisted) -> command/login.sh <profile>
-├── Inspect a profile's state                 -> command/status.sh <profile>
 ├── Curl a tRPC procedure with auth           -> command/curl.sh <profile> <procedure>
-├── Sign out (server-side, keep profile)      -> command/signout.sh <profile>
+├── Inspect a profile's state                 -> command/status.sh <profile> [--json]
+├── A live browser session (cookie persisted) -> drive references/sign-in-playbook.md
+├── Sign out                                  -> drive the sign-out section of that playbook
 ├── Wipe local profile state                  -> command/reset.sh <profile>
 └── Delete the Clerk user entirely            -> command/delete-user.sh <profile>
 ```
@@ -30,19 +40,27 @@ What do you need?
 ```bash
 .agents/skills/lightfast-clerk/command/curl.sh -t lightfast-desktop claude-default account.get
 ```
-This single call handles user provisioning, token minting, and the curl in one step.
+This single call handles user provisioning, token minting, and the curl in one
+step. No browser needed — pure Clerk Backend API.
 
 ## Commands
 
 | Command | Purpose | Browser? | Side effects |
 |---|---|---|---|
-| `token.sh <profile> [template]` | Mint a JWT (stdout = JWT) | No | Provisions user if first call |
-| `login.sh <profile> [email]` | Browser sign-in for cookie persistence | Yes (headless) | Provisions user, persists Clerk cookie |
-| `status.sh <profile>` | Report profile state | Yes (headless) | None |
-| `signout.sh <profile>` | Server-side sign out | Yes (headless) | Clerk session invalidated |
+| `token.sh <profile> [template]` | Mint a JWT (stdout = JWT) | No | Provisions user on cold start (no dir + no meta); refuses if profile dir exists but meta missing |
+| `curl.sh [-t tpl] <profile> <proc> [body]` | Mint + curl convenience | No | Same as `token.sh` |
+| `status.sh [--json] <profile>` | Report profile state via Clerk Backend API | No | None |
 | `reset.sh <profile>` | Wipe profile dir + meta | No | `rm -rf` profile |
 | `delete-user.sh <profile>` | Delete Clerk user + reset | No | Clerk user permanently removed |
-| `curl.sh [-t tpl] <profile> <proc> [body]` | Mint + curl convenience | No | None |
+
+## References
+
+| File | Purpose |
+|---|---|
+| `references/sign-in-playbook.md` | Goal-driven recipe for browser sign-in / sign-out via `agent-browser`. Read + execute from your own prompt — do not shell out to a one-shot script. |
+| `references/safety.md` | Layered guardrails |
+| `references/test-mode.md` | Clerk test-mode primer (`+clerk_test@`, OTP `424242`) |
+| `references/jwt-templates.md` | Template names and claims |
 
 ## Mental model
 
@@ -51,23 +69,26 @@ A **profile** = `<repo>/.agent-browser/profiles/<name>/` (Playwright user-data-d
 
 Profiles are **per-repo, gitignored**, scoped to one Clerk test user each.
 
-State machine:
-```
-[UNKNOWN]                                              ┌─────────────┐
-   │  token.sh ─ provisions user (Backend API)         │ delete-user │
-   ▼                                                   │   (Clerk)   │
-[PROVISIONED] ──login.sh──> [SIGNED_IN]                │             │
-                                │                      └──────┬──────┘
-                                │ signout.sh                  ▼
-                                ▼                       [UNKNOWN] (no Clerk user, no disk)
-                          [SIGNED_OUT] ──login.sh──┐
-                                │                  │
-                                │ reset.sh         │
-                                ▼                  │
-                          [UNKNOWN]                │
-                                                   │
-                          (re-login) ──────────────┘
-```
+### States reported by `status.sh`
+
+| State | Meaning | Next step |
+|---|---|---|
+| `UNKNOWN` | No meta sidecar | `token.sh` to cold-start, or drive the playbook |
+| `GHOST` | Meta has `userId`, but Clerk 404s on it (user deleted out-of-band) | `reset.sh` then re-provision |
+| `PROVISIONED` | Valid Clerk user, no browser profile dir (token-only use so far) | Drive the playbook if you need a cookie |
+| `SIGNED_IN_LOCAL` | Valid user + profile dir + `signedInAt` written | Proceed; cookies are presumed live |
+
+`status.sh` does **not** verify the browser cookie is still valid. That would
+require a browser probe, which is expensive and almost never what the caller
+needs. If you must know, drive the playbook and observe what happens.
+
+### Transitions
+
+- `token.sh` on cold start (no dir, no meta) → `UNKNOWN` becomes `PROVISIONED`
+- Driving the sign-in playbook + `meta_write` → `PROVISIONED` (or `UNKNOWN`) becomes `SIGNED_IN_LOCAL`
+- `reset.sh` → any state becomes `UNKNOWN`
+- `delete-user.sh` → any state becomes `UNKNOWN` + Clerk user gone
+- Someone deletes the user out-of-band → `SIGNED_IN_LOCAL`/`PROVISIONED` becomes `GHOST` next time you check
 
 ## Key conventions
 
@@ -86,9 +107,12 @@ Every script aborts immediately if any of these fire:
 1. Clerk publishable key in `apps/app/.vercel/.env.development.local` is not `pk_test_*`
 2. Target URL is not localhost AND override flag is unset
 3. Profile name contains characters outside `[a-zA-Z0-9_-]`
-4. Email passed to `login.sh` does not contain `+clerk_test@`
+4. `token.sh` is called on a profile with a browser dir but no meta (would
+   silently cross-contaminate profiles via `derive_test_email`)
 
-Backend operations (`clerk-backend.mjs`) refuse non-test secret keys.
+Backend operations (`clerk-backend.mjs`) refuse non-test secret keys. The
+sign-in playbook expects callers to pass a `+clerk_test@`-suffixed email —
+that's enforced by Clerk test mode, not by a script.
 
 ## Prerequisites
 
@@ -108,12 +132,13 @@ The `pk_test_` / `sk_test_` Clerk keys enable test mode:
 - OTP code `424242` always verifies in those flows
 - Backend-created users skip waitlist gating
 
-This is what makes the skill fully scriptable. See `references/test-mode.md`.
+See `references/test-mode.md`.
 
 ## See also
 
+- `references/sign-in-playbook.md` — browser sign-in / sign-out waypoints
 - `references/safety.md` — guardrails in detail
 - `references/test-mode.md` — Clerk test-mode primer
 - `references/jwt-templates.md` — template names + claims
-- `lib/common.sh` — shared bash helpers (sourced by all commands)
-- `lib/clerk-backend.mjs` — Backend API wrapper (ensure-user, delete-user, mint-session-token)
+- `lib/common.sh` — shared bash helpers (sourced by all scripts; bash-only)
+- `lib/clerk-backend.mjs` — Backend API wrapper (ensure-user, get-user, delete-user, mint-session-token)

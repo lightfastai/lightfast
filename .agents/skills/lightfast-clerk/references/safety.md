@@ -35,14 +35,17 @@ All profiles live under `<repo>/.agent-browser/profiles/`. The path is computed
 from the skill's `lib/` location (relative resolution, not configurable). No
 script accepts an absolute path argument.
 
-### 5. Email allowlist (login.sh only)
+### 5. Token auto-provision guard
 
-`login.sh` refuses any email that does not contain `+clerk_test@`. Prevents
-accidentally driving sign-in for a real Clerk user.
+`token.sh` auto-provisions a user on cold start (no meta, no profile dir),
+using `derive_test_email` or `LIGHTFAST_CLERK_EMAIL`. If the profile dir
+exists but meta is missing, `token.sh` refuses — otherwise the derived email
+would silently clobber whatever that profile dir belonged to. Fix: either
+drive the sign-in playbook and write meta, or `reset.sh` to start clean.
 
-This guard does **not** apply to `token.sh` if you call it without first running
-`login.sh` — `token.sh` will provision whatever email `derive_test_email` returns
-or `LIGHTFAST_CLERK_EMAIL` is set to. Set responsibly.
+The sign-in playbook expects callers to supply a `+clerk_test@` email. This
+isn't enforced by a script anymore; Clerk test mode itself rejects any email
+that doesn't match, so real-user sign-in via this flow is impossible.
 
 ### 6. .gitignore
 
@@ -62,5 +65,6 @@ should never be committed.
 |---|---|---|
 | `refusing to run against non-test Clerk key` | Live keys in `.env.development.local` | Restore test keys (`vercel env pull` from dev project) |
 | `LIGHTFAST_CLERK_URL=... is not localhost` | Custom URL without override | Set `LIGHTFAST_CLERK_I_KNOW_WHAT_IM_DOING=1` only if you really mean it |
-| `email '...' is not a Clerk test address` | Custom email lacks `+clerk_test@` | Use the derived format or set `LIGHTFAST_CLERK_EMAIL` to one that includes it |
 | `profile name must match [a-zA-Z0-9_-]+` | Spaces, dots, slashes | Use a simple identifier |
+| `profile '...' has a browser dir but no meta` | Sign-in playbook was started but `meta_write` was skipped (or meta was lost) | Finish sign-in + `meta_write`, or run `reset.sh <profile>` |
+| `state: GHOST` from `status.sh` | The `userId` in meta no longer exists in Clerk (deleted out-of-band) | `reset.sh <profile>` then re-provision |

@@ -47,7 +47,7 @@ assert_safe_env
 
 # Mint the JWT (token.sh writes log to stderr; we only capture stdout)
 TOKEN="$("$SCRIPT_DIR/token.sh" "$PROFILE" "$TEMPLATE" 2>/dev/null | tr -d '\n')"
-[[ -n "$TOKEN" ]] || die "token.sh returned empty token (run login.sh $PROFILE first?)"
+[[ -n "$TOKEN" ]] || die "token.sh returned empty token for profile '$PROFILE' (check its state: status.sh $PROFILE)"
 
 URL="$LIGHTFAST_CLERK_URL/api/trpc/$PROCEDURE"
 if [[ "$RAW" == "0" ]]; then
