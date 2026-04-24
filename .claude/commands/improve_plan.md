@@ -156,6 +156,13 @@ This could be:
    - If REFUTED: drop the suggestion, note why the current approach is correct
    - If PARTIAL: present the nuance to the user before editing
 
+4. **Clean up the spike worktree** once findings are incorporated:
+   - If the agent made no changes, the worktree is auto-cleaned — nothing to do
+   - If changes were made, the agent returns a worktree path and branch name. After extracting all needed evidence:
+     - Remove the worktree: `git worktree remove <path>` (add `--force` if it has uncommitted changes you've already captured)
+     - Delete the branch: `git branch -D <branch>`
+   - Never leave spike worktrees lying around — they confuse future `git worktree list` output and waste disk
+
 Only spike once per review. The point is targeted evidence, not a full prototype.
 
 ## Editing the Plan
