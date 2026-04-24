@@ -63,7 +63,7 @@ anything else is rejected.
 
 ```bash
 # Terminal 1 — app + www + platform + microfrontends proxy at 3024
-pnpm dev:desktop-stack
+pnpm dev:desktop-api
 
 # Terminal 2 — Electron app
 pnpm dev:desktop
@@ -71,7 +71,7 @@ pnpm dev:desktop
 
 `pnpm dev:full` alone is **not** sufficient — it only boots the Next.js apps
 at 4107/4101/4112. The microfrontends proxy at 3024 is a separate process
-launched by `dev:desktop-stack` via `concurrently`.
+launched by `dev:desktop-api` via `concurrently`.
 
 ### Inspect the encrypted token store
 

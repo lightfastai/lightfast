@@ -1,9 +1,6 @@
 import packageJson from "../../package.json";
 import { mainEnv } from "../env/main";
-import {
-  type BuildInfo,
-  buildInfoSchema,
-} from "../shared/build-info-schema";
+import { type BuildInfo, buildInfoSchema } from "../shared/build-info-schema";
 
 let cachedBuildInfo: BuildInfo | null = null;
 

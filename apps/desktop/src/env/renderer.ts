@@ -4,10 +4,7 @@ import { z } from "zod";
 export const rendererEnv = createEnv({
   clientPrefix: "VITE_",
   client: {
-    VITE_LIGHTFAST_API_URL: z
-      .string()
-      .url()
-      .default("http://localhost:3024"),
+    VITE_LIGHTFAST_API_URL: z.string().url().default("http://localhost:3024"),
   },
   runtimeEnv: import.meta.env,
   emptyStringAsUndefined: true,

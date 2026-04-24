@@ -5,6 +5,7 @@
   "description": "Lightfast desktop app (Electron Forge + plugin-vite + Fuses, macOS vibrancy sidebar, Sentry-ready).",
   "main": ".vite/build/bootstrap.js",
   "scripts": {
+    "clean": "rm -rf out .vite .cache",
     "dev": "electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",

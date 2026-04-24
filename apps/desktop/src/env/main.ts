@@ -19,7 +19,7 @@ export const mainEnv = createEnv({
       .number()
       .int()
       .min(1)
-      .max(65535)
+      .max(65_535)
       .optional(),
   },
   runtimeEnv: {

@@ -969,9 +969,9 @@ Effect: `pnpm changeset` won't prompt for desktop; desktop changes never need a 
 
 #### Automated Verification
 
-- [ ] `pnpm check` passes (root ultracite run covers desktop files).
-- [ ] `pnpm --filter @lightfast/desktop clean && pnpm --filter @lightfast/desktop typecheck` passes.
-- [ ] `git check-ignore apps/desktop/.env.example` returns exit 1 (not ignored).
+- [x] `pnpm check` passes (root ultracite run covers desktop files).
+- [x] `pnpm --filter @lightfast/desktop clean && pnpm --filter @lightfast/desktop typecheck` passes.
+- [x] `git check-ignore apps/desktop/.env.example` returns exit 1 (not ignored).
 
 #### Manual Verification
 
