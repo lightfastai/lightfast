@@ -3,12 +3,13 @@
   "checkpoint_id": "ea6223ac4275",
   "strategy": "manual-commit",
   "branch": "fix/microfrontends-proxy-turbo29-cleanup",
-  "checkpoints_count": 3,
+  "checkpoints_count": 4,
   "files_touched": [
     "apps/app/microfrontends.json",
     "apps/app/package.json",
     "apps/desktop/README.md",
-    "package.json"
+    "package.json",
+    "thoughts/shared/plans/2026-04-24-microfrontends-proxy-turbo29-cleanup.md"
   ],
   "sessions": [
     {
@@ -28,13 +29,19 @@
       "transcript": "/ea/6223ac4275/2/full.jsonl",
       "content_hash": "/ea/6223ac4275/2/content_hash.txt",
       "prompt": "/ea/6223ac4275/2/prompt.txt"
+    },
+    {
+      "metadata": "/ea/6223ac4275/3/metadata.json",
+      "transcript": "/ea/6223ac4275/3/full.jsonl",
+      "content_hash": "/ea/6223ac4275/3/content_hash.txt",
+      "prompt": "/ea/6223ac4275/3/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 11762,
-    "cache_creation_tokens": 364583,
-    "cache_read_tokens": 4042984,
-    "output_tokens": 72876,
-    "api_call_count": 46
+    "input_tokens": 11856,
+    "cache_creation_tokens": 608765,
+    "cache_read_tokens": 7044525,
+    "output_tokens": 120483,
+    "api_call_count": 81
   }
 }

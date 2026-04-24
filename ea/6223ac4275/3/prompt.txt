@@ -1,0 +1,21 @@
+/improve_plan @thoughts/shared/plans/2026-04-24-microfrontends-proxy-turbo29-cleanup.md can we focus on spiking to ensure these actually solve the problem
+
+---
+
+i think this error happened when due desktop sign-in route going to vercel app for some reason. did you test that
+
+---
+
+run /implement_plan
+
+---
+
+looks good whats nexrt
+
+---
+
+/oneshot_merge
+
+---
+
+no need clerk skills. just the changes you made

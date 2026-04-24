@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "ea6223ac4275",
+  "session_id": "8e8163f3-c2d7-4078-aa34-d22927baa7ba",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T07:03:11.740661Z",
+  "branch": "fix/microfrontends-proxy-turbo29-cleanup",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/microfrontends.json",
+    "apps/app/package.json",
+    "apps/desktop/README.md",
+    "package.json",
+    "thoughts/shared/plans/2026-04-24-microfrontends-proxy-turbo29-cleanup.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "c4e55b0ec928",
+  "token_usage": {
+    "input_tokens": 94,
+    "cache_creation_tokens": 244182,
+    "cache_read_tokens": 3001541,
+    "output_tokens": 47607,
+    "api_call_count": 35
+  },
+  "session_metrics": {
+    "turn_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-24T07:03:11.41407Z",
+    "agent_lines": 235,
+    "agent_removed": 8,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 235,
+    "total_lines_changed": 243,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
