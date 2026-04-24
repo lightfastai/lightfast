@@ -3,12 +3,14 @@
   "checkpoint_id": "c1f2cfc2cfb4",
   "strategy": "manual-commit",
   "branch": "fix/coderabbit-pr614-followup",
-  "checkpoints_count": 5,
+  "checkpoints_count": 6,
   "files_touched": [
     "apps/app/package.json",
     "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.test.tsx",
     "apps/desktop/package.json",
+    "apps/desktop/src/main/__tests__/auth-flow.test.ts",
     "apps/desktop/src/main/__tests__/auth-focus-gate.test.ts",
+    "apps/desktop/vitest.config.ts",
     "pnpm-lock.yaml"
   ],
   "sessions": [
@@ -47,13 +49,19 @@
       "transcript": "/c1/f2cfc2cfb4/5/full.jsonl",
       "content_hash": "/c1/f2cfc2cfb4/5/content_hash.txt",
       "prompt": "/c1/f2cfc2cfb4/5/prompt.txt"
+    },
+    {
+      "metadata": "/c1/f2cfc2cfb4/6/metadata.json",
+      "transcript": "/c1/f2cfc2cfb4/6/full.jsonl",
+      "content_hash": "/c1/f2cfc2cfb4/6/content_hash.txt",
+      "prompt": "/c1/f2cfc2cfb4/6/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 220,
-    "cache_creation_tokens": 115653,
-    "cache_read_tokens": 3999188,
-    "output_tokens": 30489,
-    "api_call_count": 43
+    "input_tokens": 429,
+    "cache_creation_tokens": 417455,
+    "cache_read_tokens": 23667787,
+    "output_tokens": 109298,
+    "api_call_count": 227
   }
 }
