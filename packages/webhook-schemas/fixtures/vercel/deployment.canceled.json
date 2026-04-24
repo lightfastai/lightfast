@@ -1,9 +1,9 @@
 {
-  "id": "dl-0Ua5Tre8eh-bAwSOS-",
-  "type": "deployment.created",
+  "id": "wSIE7hgVNY3vwzc8A9jQe",
+  "type": "deployment.canceled",
   "payload": {
     "project": {
-      "id": "prj_JRXRxBruTvB5Bs99JjA63TLek6GT"
+      "id": "prj_xCPWTpgHXaGOJdNry3D8vyfQhwt0"
     },
     "team": {
       "id": "team_oOLHPMLVuBjXyFafgsGKEZxl"
@@ -17,9 +17,8 @@
         "installationId": "icfg_inW7GGIU7ZpPC6qOQfPmknj1"
       }
     ],
-    "alias": ["lightfast-www-env-preview-lightfast.vercel.app"],
     "deployment": {
-      "id": "dpl_BAJFMmJqvbVKCqvQigyXcebaYGA1",
+      "id": "dpl_3wKbA5cwUZTS3qys8gUtU51Nsy6Z",
       "customEnvironmentId": null,
       "meta": {
         "githubCommitAuthorName": "Redacted User",
@@ -38,22 +37,23 @@
         "githubRepoVisibility": "public",
         "githubHost": "github.com",
         "githubCommitAuthorLogin": "redacted-user",
-        "repoPushedAt": "1777015668000"
+        "repoPushedAt": "1777015668000",
+        "branchAlias": "lightfast-app-git-main-lightfast.vercel.app"
       },
-      "name": "lightfast-www",
-      "url": "lightfast-mk4kxzwgl-lightfast.vercel.app",
-      "inspectorUrl": "https://vercel.com/lightfast/lightfast-www/BAJFMmJqvbVKCqvQigyXcebaYGA1"
+      "name": "lightfast-app",
+      "url": "lightfast-arm8v2pmg-lightfast.vercel.app",
+      "inspectorUrl": "https://vercel.com/lightfast/lightfast-app/3wKbA5cwUZTS3qys8gUtU51Nsy6Z"
     },
     "links": {
-      "deployment": "https://vercel.com/lightfast/lightfast-www/BAJFMmJqvbVKCqvQigyXcebaYGA1",
-      "project": "https://vercel.com/lightfast/lightfast-www"
+      "deployment": "https://vercel.com/lightfast/lightfast-app/3wKbA5cwUZTS3qys8gUtU51Nsy6Z",
+      "project": "https://vercel.com/lightfast/lightfast-app"
     },
-    "name": "lightfast-www",
+    "name": "lightfast-app",
     "plan": "pro",
-    "regions": ["iad1", "sfo1", "bom1"],
-    "target": null,
+    "regions": ["iad1", "syd1", "fra1"],
+    "target": "production",
     "type": "LAMBDAS",
-    "url": "lightfast-mk4kxzwgl-lightfast.vercel.app"
+    "url": "lightfast-arm8v2pmg-lightfast.vercel.app"
   },
-  "createdAt": 1777015674760
+  "createdAt": 1777015685832
 }

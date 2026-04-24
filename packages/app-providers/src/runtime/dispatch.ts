@@ -27,6 +27,20 @@ export function transformWebhookPayload(
     return null;
   }
 
+  // Sub-action allowlist — only enforced when the provider opts in via
+  // resolveAction. GitHub leaves resolveAction undefined because its action
+  // lives in payload.action, not the wire event header; dot-splitting
+  // "pull_request" would be wrong.
+  if (providerDef.resolveAction && eventDef.kind === "with-actions") {
+    const action = providerDef.resolveAction(eventType);
+    if (action !== null && !(action in eventDef.actions)) {
+      console.warn(
+        `transformWebhookPayload: unknown sub-action "${action}" for ${provider}:${category}`
+      );
+      return null;
+    }
+  }
+
   const parsed = eventDef.schema.parse(payload);
   return eventDef.transform(parsed, context, eventType);
 }

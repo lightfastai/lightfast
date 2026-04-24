@@ -1,6 +1,6 @@
 {
-  "id": "pJLeJ7Hult-IXvvVRkpWf",
-  "type": "deployment.succeeded",
+  "id": "h6gFGg9X_q7On1wHbnn6y",
+  "type": "deployment.error",
   "payload": {
     "project": {
       "id": "prj_fCNbgzrn0hHuJRVvM7EZuUvFyGgW"
@@ -18,16 +18,16 @@
       }
     ],
     "deployment": {
-      "id": "dpl_2x5K8GQJSNmhgRSRf7b27rKgsU2h",
+      "id": "dpl_ZvVTjyBCKBF8RmmaTpKDh1ra2SoH",
       "customEnvironmentId": null,
       "meta": {
         "githubCommitAuthorName": "Redacted User",
         "githubCommitAuthorEmail": "redacted@example.com",
-        "githubCommitMessage": "fix(coderabbit): nest tools and finishing_touches under reviews\n\nPer schema.v2.json both keys live under `reviews.*`. They were at the\ntop level, so CodeRabbit rejected them with \"Unrecognized key(s)\" and\nsilently ignored all tool/finishing-touches config.",
+        "githubCommitMessage": "Finalize transcript for Checkpoint: ea6223ac4275",
         "githubCommitOrg": "lightfastai",
-        "githubCommitRef": "fix/coderabbit-config-nesting",
+        "githubCommitRef": "entire/checkpoints/v1",
         "githubCommitRepo": "lightfast",
-        "githubCommitSha": "9cd44787c70ac23caa7c0fe4ea72e646b8d4f11b",
+        "githubCommitSha": "fe272f57ce48a510b3e475c203defb45c5be093c",
         "githubDeployment": "1",
         "githubOrg": "lightfastai",
         "githubRepo": "lightfast",
@@ -37,17 +37,15 @@
         "githubRepoVisibility": "public",
         "githubHost": "github.com",
         "githubCommitAuthorLogin": "redacted-user",
-        "repoPushedAt": "1777015497000",
-        "branchAlias": "lightfast-platform-git-fix-coderabbit-config-nesting-lightfast.vercel.app",
-        "githubPrId": "618",
-        "lambdaRuntimeStats": "{\"nodejs\":2}"
+        "repoPushedAt": "1777015495000",
+        "branchAlias": "lightfast-platform-git-entire-checkpointsv1-lightfast.vercel.app"
       },
       "name": "lightfast-platform",
-      "url": "lightfast-platform-22yqytk1v-lightfast.vercel.app",
-      "inspectorUrl": "https://vercel.com/lightfast/lightfast-platform/2x5K8GQJSNmhgRSRf7b27rKgsU2h"
+      "url": "lightfast-platform-alv4v6qvv-lightfast.vercel.app",
+      "inspectorUrl": "https://vercel.com/lightfast/lightfast-platform/ZvVTjyBCKBF8RmmaTpKDh1ra2SoH"
     },
     "links": {
-      "deployment": "https://vercel.com/lightfast/lightfast-platform/2x5K8GQJSNmhgRSRf7b27rKgsU2h",
+      "deployment": "https://vercel.com/lightfast/lightfast-platform/ZvVTjyBCKBF8RmmaTpKDh1ra2SoH",
       "project": "https://vercel.com/lightfast/lightfast-platform"
     },
     "name": "lightfast-platform",
@@ -55,7 +53,7 @@
     "regions": ["iad1"],
     "target": null,
     "type": "LAMBDAS",
-    "url": "lightfast-platform-22yqytk1v-lightfast.vercel.app"
+    "url": "lightfast-platform-alv4v6qvv-lightfast.vercel.app"
   },
-  "createdAt": 1777015569053
+  "createdAt": 1777015529600
 }

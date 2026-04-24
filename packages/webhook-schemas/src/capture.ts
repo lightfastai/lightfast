@@ -12,7 +12,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { db } from "@db/app/client";
 import { gatewayWebhookDeliveries } from "@db/app/schema";
-import { and, isNotNull, sql } from "drizzle-orm";
+import { and, desc, gt, inArray, isNotNull, sql } from "drizzle-orm";
 
 // ── Types ───────────────────────────────────────────────────────────────────
 
@@ -57,9 +57,19 @@ function walk(
       continue;
     }
 
-    // Vercel meta field
+    // Vercel meta fields — author identity inside deployment.meta
     if (key === "githubCommitAuthorName" && typeof value === "string") {
       obj[key] = "Redacted User";
+      continue;
+    }
+
+    if (key === "githubCommitAuthorEmail" && typeof value === "string") {
+      obj[key] = "redacted@example.com";
+      continue;
+    }
+
+    if (key === "githubCommitAuthorLogin" && typeof value === "string") {
+      obj[key] = "redacted-user";
       continue;
     }
 
@@ -112,21 +122,28 @@ async function main() {
   console.log("Querying gateway_webhook_deliveries...\n");
 
   const rows = await db
-    .select({
-      provider: gatewayWebhookDeliveries.provider,
-      eventType: gatewayWebhookDeliveries.eventType,
-      payload: gatewayWebhookDeliveries.payload,
-      receivedAt: gatewayWebhookDeliveries.receivedAt,
-    })
+    .selectDistinctOn(
+      [gatewayWebhookDeliveries.provider, gatewayWebhookDeliveries.eventType],
+      {
+        provider: gatewayWebhookDeliveries.provider,
+        eventType: gatewayWebhookDeliveries.eventType,
+        payload: gatewayWebhookDeliveries.payload,
+        receivedAt: gatewayWebhookDeliveries.receivedAt,
+      }
+    )
     .from(gatewayWebhookDeliveries)
     .where(
       and(
         isNotNull(gatewayWebhookDeliveries.payload),
-        sql`${gatewayWebhookDeliveries.provider} IN ('github', 'vercel')`
+        inArray(gatewayWebhookDeliveries.provider, ["github", "vercel"]),
+        gt(gatewayWebhookDeliveries.receivedAt, sql`NOW() - INTERVAL '30 days'`)
       )
     )
-    .orderBy(gatewayWebhookDeliveries.receivedAt)
-    .limit(100);
+    .orderBy(
+      gatewayWebhookDeliveries.provider,
+      gatewayWebhookDeliveries.eventType,
+      desc(gatewayWebhookDeliveries.receivedAt)
+    );
 
   console.log(`Found ${rows.length} rows with payloads\n`);
 

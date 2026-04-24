@@ -1,0 +1,39 @@
+{
+  "installation": {
+    "id": 124664830
+  },
+  "action": "added",
+  "repository_selection": "all",
+  "repositories_added": [
+    {
+      "id": 1214159906,
+      "node_id": "R_kgDOSF6cIg",
+      "name": "triage-spam-c384f29f",
+      "full_name": "lightfastai/triage-spam-c384f29f",
+      "private": false
+    }
+  ],
+  "repositories_removed": [],
+  "requester": null,
+  "sender": {
+    "login": "jeevanpillay",
+    "id": 169354619,
+    "node_id": "U_kgDOChglew",
+    "avatar_url": "https://avatars.githubusercontent.com/u/0",
+    "gravatar_id": "",
+    "url": "https://api.github.com/users/jeevanpillay",
+    "html_url": "https://github.com/jeevanpillay",
+    "followers_url": "https://api.github.com/users/jeevanpillay/followers",
+    "following_url": "https://api.github.com/users/jeevanpillay/following{/other_user}",
+    "gists_url": "https://api.github.com/users/jeevanpillay/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/jeevanpillay/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/jeevanpillay/subscriptions",
+    "organizations_url": "https://api.github.com/users/jeevanpillay/orgs",
+    "repos_url": "https://api.github.com/users/jeevanpillay/repos",
+    "events_url": "https://api.github.com/users/jeevanpillay/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/jeevanpillay/received_events",
+    "type": "User",
+    "user_view_type": "public",
+    "site_admin": false
+  }
+}
