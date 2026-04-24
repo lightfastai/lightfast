@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "ea6223ac4275",
+  "strategy": "manual-commit",
+  "branch": "fix/microfrontends-proxy-turbo29-cleanup",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/ea/6223ac4275/0/metadata.json",
+      "transcript": "/ea/6223ac4275/0/full.jsonl",
+      "content_hash": "/ea/6223ac4275/0/content_hash.txt",
+      "prompt": "/ea/6223ac4275/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 16,
+    "cache_creation_tokens": 22313,
+    "cache_read_tokens": 190234,
+    "output_tokens": 3089,
+    "api_call_count": 6
+  }
+}
