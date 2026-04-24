@@ -3,7 +3,7 @@
   "checkpoint_id": "8db33ae85104",
   "strategy": "manual-commit",
   "branch": "feat/desktop-clerk-loopback",
-  "checkpoints_count": 0,
+  "checkpoints_count": 1,
   "files_touched": [
     ".agents/skills/lightfast-clerk/SKILL.md",
     ".agents/skills/lightfast-clerk/command/curl.sh",
@@ -20,13 +20,19 @@
       "transcript": "/8d/b33ae85104/0/full.jsonl",
       "content_hash": "/8d/b33ae85104/0/content_hash.txt",
       "prompt": ""
+    },
+    {
+      "metadata": "/8d/b33ae85104/1/metadata.json",
+      "transcript": "/8d/b33ae85104/1/full.jsonl",
+      "content_hash": "/8d/b33ae85104/1/content_hash.txt",
+      "prompt": "/8d/b33ae85104/1/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 4,
-    "cache_creation_tokens": 2335,
-    "cache_read_tokens": 122798,
-    "output_tokens": 871,
-    "api_call_count": 4
+    "input_tokens": 4459,
+    "cache_creation_tokens": 81987,
+    "cache_read_tokens": 2393344,
+    "output_tokens": 21549,
+    "api_call_count": 36
   }
 }
