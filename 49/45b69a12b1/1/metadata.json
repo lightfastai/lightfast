@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "4945b69a12b1",
+  "session_id": "f3445403-f857-4daf-84e6-d2dc2ccd1885",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-24T05:36:19.00576Z",
+  "branch": "feat/desktop-clerk-loopback",
+  "checkpoints_count": 0,
+  "files_touched": [],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "3849e321923a",
+  "checkpoint_transcript_start": 585,
+  "transcript_lines_at_start": 585,
+  "token_usage": {
+    "input_tokens": 3,
+    "cache_creation_tokens": 3032,
+    "cache_read_tokens": 649578,
+    "output_tokens": 1405,
+    "api_call_count": 3
+  },
+  "session_metrics": {
+    "turn_count": 5
+  }
+}
