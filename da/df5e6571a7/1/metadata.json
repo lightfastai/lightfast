@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "dadf5e6571a7",
+  "session_id": "4fb8d546-7e41-4889-91db-8f2603fd9856",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-25T07:28:26.42069Z",
+  "branch": "fix/coderabbit-pr614-followup",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "apps/desktop/src/main/windows/factory.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "c377b838d010",
+  "token_usage": {
+    "input_tokens": 93,
+    "cache_creation_tokens": 342647,
+    "cache_read_tokens": 7806632,
+    "output_tokens": 92889,
+    "api_call_count": 53
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-25T07:28:25.843889Z",
+    "agent_lines": 4,
+    "agent_removed": 3,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 4,
+    "total_lines_changed": 7,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}

@@ -1,0 +1,626 @@
+/improve_plan @thoughts/shared/plans/2026-04-24-portless-local-dev.md  ▐▛███▜▌   Claude Code v2.1.119
+▝▜█████▛▘  Opus 4.7 · Claude Max
+  ▘▘ ▝▝    ~/Code/@lightfastai/lightfast
+
+✻ Conversation compacted (ctrl+o for history)
+
+
+❯ /compact                                                                      
+  ⎿  Compacted 
+  ⎿  Referenced file thoughts/shared/plans/2026-04-24-portless-local-dev.md
+  ⎿  Referenced file thoughts/shared/research/2026-04-24-portless-spike-manual.md
+  ⎿  Read thoughts/shared/research/2026-04-24-portless-spike-probe.sh (256 lines)
+  ⎿  Referenced file thoughts/shared/research/2026-04-24-portless-spike-results.md
+  ⎿  Read .agents/skills/lightfast-clerk/lib/common.sh (181 lines)
+  ⎿  Skills restored (improve_plan)
+  ⎿  SessionStart:compact says: 
+
+     Powered by Entire:
+       This conversation will be linked to your next commit.
+       3 other active conversation(s) in this workspace will also be included.
+       Use 'entire status' for more information.
+
+❯ okay im not convinced of these findings about microfrontend issue. surely     
+  this is something that the portless team would have known was going to be an  
+  issue. perhaps, maybe read docs, check node modules of portless, and think of 
+   other potential solutions we may have missed                                 
+
+⏺ You're right to push back — both portless and @vercel/microfrontends are
+  Vercel Labs tools, so a hard incompatibility would be a glaring oversight. Let
+   me re-examine, this time looking for what I may have missed.
+
+  Searched for 1 pattern (ctrl+o to expand)
+
+⏺ Bash(which portless && portless --help 2>&1 | head -50)
+  ⎿  /Users/jeevanpillay/.local/state/fnm_multishells/92653_1777092283349/b
+     in/portless
+     … +37 lines (ctrl+o to expand)
+
+  Searched for 3 patterns (ctrl+o to expand)
+
+⏺ Bash(portless --version && readlink "$(which portless)")
+  ⎿  0.10.3
+     ../lib/node_modules/portless/dist/cli.js
+
+  Searched for 1 pattern, read 1 file, listed 2 directories (ctrl+o to expand)
+
+⏺ Important new findings from the README:
+  - --app-port / PORTLESS_APP_PORT — pin a fixed port (overrides random
+  assignment)
+  - Each service gets its own subdomain (api.myapp.localhost)
+  - "Proxying Between Portless Apps" section documents the cross-service pattern
+   with changeOrigin: true
+
+  Now let me re-examine the microfrontends CLI more carefully — specifically
+  around MFE_APP_PORT, the multi-app guard, and whether there's any per-worktree
+   templating mechanism I missed.
+
+  Searched for 2 patterns, read 2 files, listed 1 directory (ctrl+o to expand)
+
+⏺ Background command "Locate portless install directory" completed (exit code 0)
+
+⏺ Important new finding at line 875-885: local in microfrontends.json can be a 
+  URL string, not just a port number. The code parses it and accepts protocol +
+  host + port from the URL.
+
+  This may be the missing piece — each app could be addressed by its own
+  portless URL instead of by port. Let me dig further.
+
+  Searched for 4 patterns, read 1 file, listed 1 directory (ctrl+o to expand)
+
+⏺ Critical new findings:
+  - MFE_CONFIG env var (line 526) — config can be passed as JSON env var, not
+  just file
+  - MFE_LOCAL_PROXY_PORT (line 1287) — proxy port itself overridable via env
+  - VC_MICROFRONTENDS_CONFIG_FILE_NAME — custom config file name supported
+
+  Let me confirm these.
+
+  Searched for 4 patterns, read 1 file (ctrl+o to expand)
+
+⏺ Strong finding: at line 1863-1905, MicrofrontendsServer.infer() reads
+  VC_MICROFRONTENDS_CONFIG_FILE_NAME and VC_MICROFRONTENDS_CONFIG env vars. And
+  LocalProxy.fromFile at line 2706 falls through to infer() when no filePath is
+  passed — which is what package.json:13 already does (no filePath argument).
+
+  Now let me verify with a quick spike that this works end-to-end.
+⏺ Let me run the spike directly — this is non-destructive (temp files +
+  ephemeral processes).
+
+⏺ Bash(mkdir -p /tmp/mfe-spike && cd /tmp/mfe-spike && rm -rf * .vercel
+      2>/dev/null; ls -la)
+  ⎿  (eval):1: no matches found: *
+     total 0
+     drwxr-xr-x@   2 jeevanpillay  wheel     64 25 Apr 15:56 .
+     drwxrwxrwt  602 root          wheel  19264 25 Apr 15:56 ..
+  ⎿  Shell cwd was reset to /Users/jeevanpillay/Code/@lightfastai/lightfast
+
+⏺ Write(/tmp/mfe-spike/package.json)
+  ⎿  Wrote 7 lines to ../../../../../tmp/mfe-spike/package.json
+      1 {
+      2   "name": "lightfast-app",
+      3   "private": true,
+      4   "dependencies": {
+      5     "@vercel/microfrontends": "2.3.2"
+      6   }
+      7 }
+
+⏺ Write(/tmp/mfe-spike/microfrontends-wt-A.json)
+  ⎿  Wrote 20 lines to
+     ../../../../../tmp/mfe-spike/microfrontends-wt-A.json
+       1 {
+       2   "$schema": "https://openapi.vercel.sh/microfrontends.json",
+       3   "applications": {
+       4     "lightfast-app": {
+       5       "development": {
+       6         "local": 5107,
+       7         "fallback": "https://app.example.com"
+       8       }
+       9     },
+      10     "lightfast-www": {
+     … +10 lines (ctrl+o to expand)
+
+⏺ Write(/tmp/mfe-spike/microfrontends-wt-B.json)
+  ⎿  Wrote 20 lines to
+     ../../../../../tmp/mfe-spike/microfrontends-wt-B.json
+       1 {
+       2   "$schema": "https://openapi.vercel.sh/microfrontends.json",
+       3   "applications": {
+       4     "lightfast-app": {
+       5       "development": {
+       6         "local": 6107,
+       7         "fallback": "https://app.example.com"
+       8       }
+       9     },
+      10     "lightfast-www": {
+     … +10 lines (ctrl+o to expand)
+
+⏺ Write(/tmp/mfe-spike/fake-app.cjs)
+  ⎿  Wrote 12 lines to ../../../../../tmp/mfe-spike/fake-app.cjs
+       2 // Tiny HTTP server that just echoes its label + port + path.
+       3 const http = require('node:http');
+       4 const port = Number(process.argv[2]);
+       5 const label = process.argv[3] || 'app';
+       6 const server = http.createServer((req, res) => {
+       7   res.writeHead(200, { 'Content-Type': 'application/json' });
+       8   res.end(JSON.stringify({ label, port, path: req.url, host: req
+         .headers.host }) + '\n');
+       9 });
+      10 server.listen(port, '127.0.0.1', () => {
+     … +3 lines (ctrl+o to expand)
+
+⏺ Bash(cd /tmp/mfe-spike && pnpm install --silent 2>&1 | tail -5)
+  ⎿  Shell cwd was reset to /Users/jeevanpillay/Code/@lightfastai/lightfast
+
+  Listed 1 directory (ctrl+o to expand)
+
+⏺ Good. Now let me boot the fake apps for both worktrees, then run two MFE
+  proxies with VC_MICROFRONTENDS_CONFIG pointed at different config files and
+  MFE_LOCAL_PROXY_PORT overrides.
+
+⏺ Bash(node /tmp/mfe-spike/fake-app.cjs 5107 wt-A-app >
+      /tmp/mfe-spike/wt-A-app.log 2>&1 &
+      node /tmp/mfe-spike/fake-app.cjs 5101 wt-A-www >
+      /tmp/mfe-spike/wt-A-www.log…)
+  ⎿  node      98111 jeevanpillay   12u  IPv4 0xe83b528b71698760      0t0
+     TCP 127.0.0.1:5107 (LISTEN)
+     node      98112 jeevanpillay   12u  IPv4 0xa338d2beb9dc1b61      0t0
+     … +5 lines (ctrl+o to expand)
+
+⏺ All 4 fake apps listening. Now run the two MFE proxies with env overrides.
+
+⏺ Bash(cd /tmp/mfe-spike && \
+        REDACTED.json \…)
+  ⎿  proxy A pid=98654
+     --- A log ---
+       appName: undefined,
+     … +19 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/jeevanpillay/Code/@lightfastai/lightfast
+
+⏺ Proxy A is running on :3034 reading worktree-A config. Now boot proxy B
+  simultaneously.
+
+⏺ Bash(cd /tmp/mfe-spike && \
+        REDACTED.json \…)
+  ⎿  proxy B pid=99211
+     --- B log ---
+     … +22 lines (ctrl+o to expand)
+  ⎿  Shell cwd was reset to /Users/jeevanpillay/Code/@lightfastai/lightfast
+
+⏺ Both proxies running concurrently. Now verify routing — proxy A should hit the
+   wt-A apps, proxy B should hit the wt-B apps.
+
+⏺ Bash(echo "--- Proxy A: catch-all (lightfast-app) ---"
+      curl -s http://localhost:3034/sign-in…)
+  ⎿  --- Proxy A: catch-all (lightfast-app) ---
+     {
+       "label": "wt-A-app",
+     … +25 lines (ctrl+o to expand)
+⏺ Spike RESULT: Two concurrent MFE proxies work perfectly with 
+  VC_MICROFRONTENDS_CONFIG + MFE_LOCAL_PROXY_PORT env overrides. Each routes to
+  its own upstream port pairs (wt-A-app:5107 vs wt-B-app:6107, etc.) without any
+   patching.
+
+  This refutes the earlier "hard upstream blocker" finding. Let me clean up.
+
+⏺ Bash(pkill -f "fake-app.cjs" 2>/dev/null; pkill -f "microfrontends.*proxy"
+      2>/dev/null; sleep 1
+      lsof -nP -iTCP -sTCP:LISTEN 2>/dev/null | grep -E ":(5107|5101|6107|6…)
+  ⎿  cleaned
+
+⏺ Now let me update the plan to retract the bad finding and document the correct
+   mechanism. First, find the relevant sections.
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+⏺ Update(thoughts/shared/plans/2026-04-24-portless-local-dev.md)
+  ⎿  Added 25 lines, removed 29 lines
+       53  - **Portless auto-starts the daemon** when `portless run` is i
+           nvoked. No long-running process to babysit. `sudo portless tru
+           st` is the ONE privileged step.
+       54  - **Cross-origin cookie behavior between `lightfast.localhost`
+            and `platform.localhost`** matches prod. `lightfast.ai` and `
+           platform.lightfast.ai` are cross-site under modern SameSite ru
+           les, and the existing code already accounts for this (platform
+            uses Bearer tokens, not cross-domain cookies). No new work ne
+           eded.
+       55  
+       56 -## Known Limitation: Concurrent multi-worktree `dev:full` is b
+          -locked by `@vercel/microfrontends`                            
+       56 +## Known Limitation: Concurrent multi-worktree `dev:full` requ
+          +ires per-worktree config injection                            
+       57  
+       58 -Spike 2026-04-25 (artifacts in this plan's Improvement Log) te
+          -sted whether dropping `--port` flags would let two worktrees r
+          -un concurrently. Result: **partial**. The full `pnpm dev:full`
+          - flow (MFE-proxied `:3024`) is blocked by an upstream constrai
+          -nt; single-app dev works fine.                                
+       58 +> **2026-04-25 update — earlier "hard upstream blocker" framin
+          +g was wrong.** Spike 3 (this plan's Improvement Log) re-invest
+          +igated `@vercel/microfrontends@2.3.2` source after pushback. `
+          +MFE_APP_PORT` is a dead-end (multi-app guard at `cli.cjs:2741-
+          +2745` does block it), but Vercel ships **two purpose-built env
+          + vars** for exactly this dynamic-config use case: `VC_MICROFRO
+          +NTENDS_CONFIG` (alternate config file path) and `MFE_LOCAL_PRO
+          +XY_PORT` (proxy listen port). Spike 3 ran two MFE proxies side
+          +-by-side with these env vars and proved isolated routing works
+          +. Concurrent `dev:full` is solvable; it just requires a per-wo
+          +rktree config file.                                           
+       59  
+       60 -### What's true (spike-confirmed)                             
+       60 +### Port collisions in current dev scripts (`grep` 2026-04-25)
+       61 +- `apps/app/package.json:12` → `next dev --port 4107 --turbo` 
+          +(hardcoded — needs to drop `--port` or read `MFE_APP_PORT` per
+          + worktree)                                                    
+       62 +- `apps/app/package.json:13` → `microfrontends proxy --port 30
+          +24` (hardcoded — replace with `MFE_LOCAL_PROXY_PORT` env var p
+          +er worktree)                                                  
+       63 +- `apps/platform/package.json:10` → `next dev --port 4112 --tu
+          +rbo` (hardcoded — same fix as app)                            
+       64 +- `apps/www/package.json:16` → `next dev --port $(microfronten
+          +ds port) --turbopack` (already dynamic — reads `MFE_APP_PORT` 
+          +via `microfrontends port` CLI). This is the pattern to copy in
+          +to `app` and `platform`.                                      
+       65  
+       62 -**Port collisions in current dev scripts** (`grep` 2026-04-25)
+          -:                                                             
+       63 -- `apps/app/package.json:12` → `next dev --port 4107 --turbo` 
+          -(hardcoded)                                                   
+       64 -- `apps/app/package.json:13` → `microfrontends proxy --port 30
+          -24` (hardcoded)                                               
+       65 -- `apps/platform/package.json:10` → `next dev --port 4112 --tu
+          -rbo` (hardcoded)                                              
+       66 -- `apps/www/package.json:16` → `next dev --port $(microfronten
+          -ds port) --turbopack` (dynamic — reads `microfrontends.json`) 
+       66 +### Vercel-supported env var stack (source-verified)          
+       67 +- `VC_MICROFRONTENDS_CONFIG=<path>` — `microfrontends/dist/bin
+          +/cli.cjs:1889-1905`. When `microfrontends proxy` is invoked wi
+          +thout a positional `[filePath]` argument (which is how `apps/a
+          +pp/package.json:13` calls it today), it falls through to `Micr
+          +ofrontendsServer.infer()` which reads this env var and loads t
+          +he config file at the resolved path.                          
+       68 +- `VC_MICROFRONTENDS_CONFIG_FILE_NAME=<filename>` — `cli.cjs:1
+          +863`. Just changes which filename to look for in `.vercel/`. U
+          +seful if the per-worktree generated config lives at `.vercel/m
+          +icrofrontends.local.<worktree>.json`.                         
+       69 +- `MFE_LOCAL_PROXY_PORT=<port>` — `cli.cjs:1289-1297`. Overrid
+          +es the proxy's listen port at runtime. Documented in source as
+          +: "Returns the configured port for the local proxy. Can be ove
+          +rridden via MFE_LOCAL_PROXY_PORT environment variable."       
+       70 +- `MFE_APP_PORT=<port>` — useful for the app-side `next dev --
+          +port $(microfrontends port)` invocation (read by `microfronten
+          +ds port` at `cli.cjs:3024-3033`). Set per app process; won't t
+          +rip the proxy-side multi-app guard because it's only set on th
+          +e `next dev` process, not the proxy process.                  
+       71  
+       68 -**`portless run` injects `PORT` into child env when `--app-por
+          -t` is omitted** (H1, CONFIRMED). Spike output: portless prints
+          - `Using port 4173 -> https://app1.localhost:1355` and runs the
+          - child with `PORT=4173 HOST=127.0.0.1 PORTLESS_URL=...`. `next
+          - dev` honors `PORT` natively, so dropping `--port 4107 --port 
+          -4112` would let portless allocate.                            
+       72 +### Spike 3 evidence (2026-04-25)                             
+       73 +Hypothesis: a per-worktree dev wrapper that (a) generates a te
+          +mp `microfrontends-<worktree>.json` with unique ports and (b) 
+          +sets `VC_MICROFRONTENDS_CONFIG` + `MFE_LOCAL_PROXY_PORT` env v
+          +ars at proxy start gives isolated routing.                    
+       74  
+       70 -**Two concurrent `portless run` invocations with different `--
+          -name`s allocate distinct deterministic ports** (H2, CONFIRMED)
+          -. Spike: `app1` got 4173, `app2` got 4624; both reachable simu
+          -ltaneously. Caveat: ports are **deterministic per `--name`+wor
+          -ktree**, so two worktrees using the same `--name` (e.g. both `
+          ---name lightfast`) get the SAME port unless they're on differe
+          -nt branches (the branch prefix differentiates). The earlier sp
+          -ike's success relied on this branch differentiation — primary 
+          -+ branch worktree.                                            
+       75 +Method: in `/tmp/mfe-spike`, started 4 fake HTTP servers on `:
+          +5107/:5101/:6107/:6101`, wrote two configs (`microfrontends-wt
+          +-A.json` pointing at the 5xxx pair, `microfrontends-wt-B.json`
+          + at the 6xxx pair), then ran two `microfrontends proxy --local
+          +-apps lightfast-app lightfast-www` processes simultaneously wi
+          +th different env vars.                                        
+       76  
+       72 -### What's blocked (spike-refuted)                            
+       77 +Result (raw):                                                 
+       78 +- Proxy A bound `:3034`, log: `Local Applications: • lightfast
+          +-app (port 5107) • lightfast-www (port 5101)`. `[MFE Config] C
+          +onfig loaded from VC_MICROFRONTENDS_CONFIG: /private/tmp/mfe-s
+          +pike/microfrontends-wt-A.json`                                
+       79 +- Proxy B bound `:3044`, log: `Local Applications: • lightfast
+          +-app (port 6107) • lightfast-www (port 6101)`                 
+       80 +- Routing: `curl :3034/sign-in` → `wt-A-app:5107`. `curl :3044
+          +/sign-in` → `wt-B-app:6107`. `curl :3034/api/health` → `wt-A-w
+          +ww:5101`. `curl :3044/api/health` → `wt-B-www:6101`. Zero cros
+          +s-talk.                                                       
+       81  
+       74 -**`@vercel/microfrontends@2.3.2` can't accept per-app dynamic 
+          -ports when running 2+ local apps under one proxy** (H3, source
+          --verified):                                                   
+       82 +Verdict: **CONFIRMED**. Concurrent multi-worktree `dev:full` w
+          +orks with the env-var stack — no patching required.           
+       83  
+       76 -- `apps/app/node_modules/.pnpm/@vercel+microfrontends@2.3.2...
+          -/cli.cjs:855-895` — `LocalHost` constructor resolves child app
+          - target port from (1) `process.env.MFE_APP_PORT` if set, (2) `
+          -microfrontends.json#applications[*].development.local`, (3) de
+          -terministic hash of app name. Single global env var, no per-ap
+          -p variant.                                                    
+       77 -- `cli.cjs:2741-2745` — explicit guard:                       
+       78 -  ```js                                                       
+       79 -  if (process.env[MFE_APP_PORT_ENV] && localApps.length > 1) {
+       80 -    throw new Error("MFE_APP_PORT cannot be used when multiple
+          - applications are running locally...")                        
+       81 -  }                                                           
+       82 -  ```                                                         
+       84 +### Three options (decide before Phase 1 executes)            
+       85  
+       84 -So if portless allocates `4173` for `lightfast-app` and `4205`
+          - for `lightfast-www`, **the MFE proxy still forwards to `4107`
+          - and `4101` (the static config values) and 502s.** Concurrent 
+          -multi-worktree `pnpm dev:full` cannot be fixed by env-var pass
+          -through alone.                                                
+       86 +1. **Pragmatic — portless for single-app dev, primary-worktree
+          + owns `dev:full`** (smallest scope). Drop `--port` from `dev:a
+          +pp` / `dev:www` / `dev:platform`, wrap them in `portless run`.
+          + Leave `dev:full` static-ported on the primary checkout. Sibli
+          +ng worktrees run a single app at a time. **Ships within Phase 
+          +1.** Concurrent `dev:full` deferred unless a real need surface
+          +s.                                                            
+       87  
+       86 -### Four options (decide before Phase 1 executes)             
+       88 +2. **Per-worktree dev wrapper** (full isolation). New script (
+          +`scripts/dev-worktree.sh`, ~40 lines) computes a deterministic
+          + port offset from the worktree path hash, writes `.vercel/micr
+          +ofrontends.local.json` with offset ports, then starts the prox
+          +y with `VC_MICROFRONTENDS_CONFIG=.vercel/microfrontends.local.
+          +json MFE_LOCAL_PROXY_PORT=$((3024+OFFSET)) portless run microf
+          +rontends proxy --local-apps ...`. Each app's `next dev` reads 
+          +`MFE_APP_PORT=$((BASE+OFFSET))` (via the existing `microfronte
+          +nds port` pattern from www, copied to app + platform). Vercel-
+          +supported, no patches. **Ships if concurrent `dev:full` is a P
+          +hase-1 requirement.**                                         
+       89  
+       88 -1. **Pragmatic — portless for single-app dev only** (recommend
+          -ed). Keep `dev:full` static-ported (it runs in the primary wor
+          -ktree only). Wrap `pnpm dev:app`, `pnpm dev:www`, `pnpm dev:pl
+          -atform` with `portless run` and drop their `--port` flags. Sib
+          -ling worktrees run a single app at a time — common dev pattern
+          -. Two devs editing `app` from two worktrees: each binds a dist
+          -inct portless-allocated port + gets a worktree-prefixed URL. C
+          -oncurrent `dev:full` is reserved for the primary. **Smallest s
+          -cope; ships now.**                                            
+       90 +3. **Drop the MFE proxy in dev** (worst). Each app gets its ow
+          +n portless route. Path routing via dev-only Next.js rewrites. 
+          +Diverges from prod where MFE routing is the truth. Don't pick 
+          +this.                                                         
+       91  
+       90 -2. **Per-worktree templated `microfrontends.json`**. Pre-`micr
+          -ofrontends proxy` startup, write the portless-allocated child 
+          -ports back into `applications[*].development.local` (a small w
+          -rapper that runs `portless run --app-port 0` to get an allocat
+          -ed port, writes JSON, then starts the proxy). Defeats the "no 
+          -config" spirit but keeps `dev:full` working per-worktree.     
+       92 +**Recommendation**: ship Option 1 within Phase 1 (1 day). If c
+          +oncurrent `dev:full` is needed, add Option 2 as Phase 1.5 — it
+          +'s a single bash/node wrapper script and 3 small edits to the 
+          +per-app `next dev` invocations, all using already-supported Ve
+          +rcel env vars.                                                
+       93  
+       92 -3. **Drop the MFE proxy in dev**. Each app gets its own portle
+          -ss route: `https://app.localhost`, `https://www.localhost`, `h
+          -ttps://platform.localhost`. Path routing happens in the browse
+          -r via dev-only Next.js rewrites. Diverges from prod (where MFE
+          - routing is the truth). Hard sell.                            
+       93 -                                                              
+       94 -4. **Patch / fork `@vercel/microfrontends` for `MFE_APP_PORT_<
+          -NAME>`**. Upstream change is small (add a per-app env-var read
+          - in `LocalHost`, remove the multi-app guard). Right long-term 
+          -fix; out of scope for this plan.                              
+       95 -                                                              
+       96 -**Recommendation**: ship Option 1 within Phase 1. Treat `dev:f
+          -ull` as a primary-worktree-only flow and document it. If concu
+          -rrent `dev:full` becomes a real workflow need, escalate to Opt
+          -ion 2 or 4 in a follow-up plan.                               
+       97 -                                                              
+       94  ## What We're NOT Doing
+       95  
+       96  - Replacing the `@vercel/microfrontends` proxy — it still owns
+            path routing between `lightfast-app` and `lightfast-www`. Por
+           tless only provides the named origin in front.
+
+⏺ Now append a Spike 3 section to the Improvement Log so the audit trail is
+  complete.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Update(thoughts/shared/plans/2026-04-24-portless-local-dev.md)
+  ⎿  Added 33 lines
+      805  - Decision: rewrite "Known Limitation" with four options (prag
+           matic single-app portless / templated config / drop MFE in dev
+            / patch microfrontends). **Recommendation: Option 1 (portless
+            for single-app dev only) within Phase 1; reserve `dev:full` f
+           or the primary worktree.** Concurrent `dev:full` escalates to 
+           a follow-up plan if needed.
+      806  
+      807  **My earlier "Option 1 (drop --port flags)" recommendation was
+            wrong as written.** It works for `pnpm dev:app` / `pnpm dev:w
+           ww` / `pnpm dev:platform` individually but cannot work for `pn
+           pm dev:full` without either templating `microfrontends.json` p
+           er-worktree or patching the MFE CLI. The corrected plan now sc
+           opes Option 1 to single-app dev only.
+      808 +                                                              
+      809 +**Spike 3: `VC_MICROFRONTENDS_CONFIG` + `MFE_LOCAL_PROXY_PORT`
+          + for concurrent `dev:full` — VERDICT: CONFIRMED** (2026-04-25)
+      810 +                                                              
+      811 +> **Retraction of "hard upstream blocker" framing.** User push
+          +ed back on Spike 2's conclusion that concurrent `dev:full` was
+          + unfixable, asking whether the Vercel team really wouldn't hav
+          +e planned for it. Re-read `node_modules/@vercel/microfrontends
+          +/dist/bin/cli.cjs` end-to-end and the portless README. Found t
+          +wo purpose-built env vars I missed on first pass.             
+      812 +                                                              
+      813 +- Hypothesis: per-worktree config injection via `VC_MICROFRONT
+          +ENDS_CONFIG` + `MFE_LOCAL_PROXY_PORT` lets two MFE proxies + t
+          +wo app stacks run concurrently with isolated routing.         
+      814 +- Evidence (source):                                          
+      815 +  - `cli.cjs:1863` — `process.env.VC_MICROFRONTENDS_CONFIG_FIL
+          +E_NAME` is read inside `MicrofrontendsServer.infer()` to overr
+          +ide the config filename                                       
+      816 +  - `cli.cjs:1889-1905` — `process.env.VC_MICROFRONTENDS_CONFI
+          +G` is read to override the **full path** to the config file. W
+          +hen `microfrontends proxy` is invoked without a positional `[f
+          +ilePath]` argument (which is `apps/app/package.json:13`'s curr
+          +ent shape), it falls through to `LocalProxy.fromFile(undefined
+          +, ...)` → `MicrofrontendsServer.infer()` → reads the env var. 
+      817 +  - `cli.cjs:1289-1297` — `MFE_LOCAL_PROXY_PORT` overrides the
+          + proxy's listen port. Documented in source: *"Returns the conf
+          +igured port for the local proxy. Can be overridden via MFE_LOC
+          +AL_PROXY_PORT environment variable."*                         
+      818 +- Method: in `/tmp/mfe-spike`, installed `@vercel/microfronten
+          +ds@2.3.2`, wrote two configs (`microfrontends-wt-A.json` mappi
+          +ng apps to `:5107`/`:5101`, `microfrontends-wt-B.json` mapping
+          + to `:6107`/`:6101`), booted 4 fake HTTP echo servers on those
+          + ports, then started two MFE proxies side-by-side.            
+      819 +- Result (raw, both proxies running concurrently):            
+      820 +  ```                                                         
+      821 +  Proxy A (env: REDACTED.j
+          +son MFE_LOCAL_PROXY_PORT=3034):                               
+      822 +    [MFE Config] Config loaded from VC_MICROFRONTENDS_CONFIG: 
+          +/private/tmp/mfe-spike/microfrontends-wt-A.json               
+      823 +    ▲ Microfrontends Proxy (2.3.2) Started                    
+      824 +      - Proxy URL: http://localhost:3034                      
+      825 +      - Local Applications: • lightfast-app (port 5107) • ligh
+          +tfast-www (port 5101)                                         
+      826 +                                                              
+      827 +  Proxy B (env: REDACTED.j
+          +son MFE_LOCAL_PROXY_PORT=3044):                               
+      828 +    ▲ Microfrontends Proxy (2.3.2) Started                    
+      829 +      - Proxy URL: http://localhost:3044                      
+      830 +      - Local Applications: • lightfast-app (port 6107) • ligh
+          +tfast-www (port 6101)                                         
+      831 +                                                              
+      832 +  curl :3034/sign-in   → {"label":"wt-A-app","port":5107,...} 
+      833 +  curl :3034/api/health → {"label":"wt-A-www","port":5101,...}
+      834 +  curl :3044/sign-in   → {"label":"wt-B-app","port":6107,...} 
+      835 +  curl :3044/api/health → {"label":"wt-B-www","port":6101,...}
+      836 +  ```                                                         
+      837 +- Verdict: **CONFIRMED**. Concurrent multi-worktree `dev:full`
+          + is solvable with stock Vercel-shipped env vars. No patching, 
+          +no fork, no `MFE_APP_PORT` (the dead-end I latched onto).     
+      838 +- Decision: rewrote the "Known Limitation" section. Replaced t
+          +he four-options list (which included "patch microfrontends" as
+          + Option 4) with a three-options list where **Option 2 is now a
+          + per-worktree dev wrapper using `VC_MICROFRONTENDS_CONFIG` + `
+          +MFE_LOCAL_PROXY_PORT` + per-app `MFE_APP_PORT`**. Recommendati
+          +on still ships Option 1 within Phase 1 (smaller scope) but Opt
+          +ion 2 is now a real, supported escalation path — not a "patch 
+          +upstream" pipe dream.                                         
+      839 +                                                              
+      840 +**Lesson:** I declared a "hard upstream blocker" after only in
+          +specting one env var (`MFE_APP_PORT`) and one guard (`cli.cjs:
+          +2741-2745`). The user was right to push back. A 3115-line bund
+          +led CLI deserves a fuller read before claiming an architectura
+          +l dead-end. `MFE_LOCAL_PROXY_PORT` is referenced *in the sourc
+          +e-code comments* at `cli.cjs:1287` — I'd already cited that li
+          +ne range in Spike 2 without noticing.                         
+
+⏺ You were right to push back
+
+  The "hard upstream blocker" framing was wrong. Re-read of
+  @vercel/microfrontends@2.3.2 source surfaced two env vars I missed on the
+  first pass:
+
+  - VC_MICROFRONTENDS_CONFIG=<path> (cli.cjs:1889-1905) — overrides the config
+  file path when no positional filePath is passed to microfrontends proxy.
+  That's exactly how apps/app/package.json:13 already invokes it.
+  - MFE_LOCAL_PROXY_PORT=<port> (cli.cjs:1289-1297) — overrides the proxy listen
+   port. Source comment: "Can be overridden via MFE_LOCAL_PROXY_PORT environment
+   variable." I'd cited this line range in Spike 2 without reading it.
+
+  Spike 3 result (just ran)
+
+  Two microfrontends proxy instances side-by-side, each pointed at a different
+  config file, each on a different listen port. Hit them concurrently with curl:
+
+  :3034/sign-in    → wt-A-app:5107
+  :3034/api/health → wt-A-www:5101
+  :3044/sign-in    → wt-B-app:6107
+  :3044/api/health → wt-B-www:6101
+
+  Zero cross-talk. No patches. No fork. Concurrent dev:full is solvable with 
+  stock Vercel env vars.
+
+  Plan updates
+
+  - Rewrote ## Known Limitation (lines ~56-99): retracted the "blocker" framing,
+   documented the env var stack, replaced the 4-options list (which had "patch
+  microfrontends" as Option 4) with 3 options where Option 2 is now a 
+  per-worktree dev wrapper using VC_MICROFRONTENDS_CONFIG + MFE_LOCAL_PROXY_PORT
+   + per-app MFE_APP_PORT — fully supported, ~40 lines of bash/node.
+  - Appended Spike 3 to the Improvement Log with raw evidence + an explicit
+  retraction of the previous claim.
+  - Recommendation: still ship Option 1 (single-app portless) in Phase 1 for
+  scope reasons, but Option 2 is now a real Phase-1.5 escalation path if
+  concurrent dev:full is needed — not the upstream-patch pipe dream the previous
+   plan implied.
+
+  Want me to spike Option 2 end-to-end (real dev-worktree.sh wrapper against the
+   actual lightfast stack) so we can promote it from "documented but untested"
+  to "ready to ship"?
+
+✻ Sautéed for 11m 34s
+
+❯ i dont think we need to "options". i dont understand why we have options. we  
+  just need to decide on the final one. what is this options you are talking    
+  about                                                                         
+
+⏺ You're right — a plan shouldn't have "options," it should have a decision.
+  That section was scope-creep from my earlier wrong "blocker" framing. I left
+  the alternatives in instead of just deleting them.
+
+  The actual decision, given Spike 3 confirmed VC_MICROFRONTENDS_CONFIG +
+  MFE_LOCAL_PROXY_PORT works:
+
+  Per-worktree dev wrapper — scripts/dev-worktree.sh computes a port offset from
+   the worktree path hash, writes a temp microfrontends.local.json with offset
+  ports, sets the env vars, wraps microfrontends proxy in portless run. Each
+  app's next dev reads MFE_APP_PORT (the pattern www already uses, copied to app
+   + platform). Concurrent dev:full works in any worktree, no patching.
+
+  Want me to rewrite the section as one decision (no "options 1/2/3"), with the
+  concrete wrapper-script shape and package.json edits inlined?
+
+✻ Crunched for 1m 32s
+
+---
+
+why do we need a scripts file?
+
+---
+
+wait im super confused here, i thought portless already automatically handles the port issues? is it not?
+
+---
+
+okay mfe proxy also becomes portless port makes complete sense to me. why not do that without the script? have you really looked at vercel microfrontends docs/commands/flags it allows yet?
+
+---
+
+also see: https://vercel.com/docs/microfrontends/configuration#childdevelopment
+
+---
+
+read: https://vercel.com/docs/microfrontends/configuration too
+
+we want to use microfrontends proxy 100%. we use MFE for our local dev. 
+
+i need you to clarify understnad using AskUserQuestions
+
+---
+
+read: https://vercel.com/docs/microfrontends/configuration too
+
+we want to use microfrontends proxy 100%. we use MFE for our local dev. 
+
+i need you to clarify understnad using AskUserQuestions
