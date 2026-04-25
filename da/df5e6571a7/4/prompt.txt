@@ -1,0 +1,17 @@
+/implement_plan @thoughts/shared/plans/2026-04-25-desktop-auth-url-scheme-pkce.md
+
+---
+
+no manual verification you ened to test this fully
+
+---
+
+good job all done then?
+
+---
+
+proceed with full automated testing using agent-browser
+
+---
+
+/commit

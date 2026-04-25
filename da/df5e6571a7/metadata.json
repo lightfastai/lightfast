@@ -3,7 +3,7 @@
   "checkpoint_id": "dadf5e6571a7",
   "strategy": "manual-commit",
   "branch": "fix/coderabbit-pr614-followup",
-  "checkpoints_count": 8,
+  "checkpoints_count": 13,
   "files_touched": [
     "apps/desktop/src/main/windows/factory.ts"
   ],
@@ -31,13 +31,19 @@
       "transcript": "/da/df5e6571a7/3/full.jsonl",
       "content_hash": "/da/df5e6571a7/3/content_hash.txt",
       "prompt": "/da/df5e6571a7/3/prompt.txt"
+    },
+    {
+      "metadata": "/da/df5e6571a7/4/metadata.json",
+      "transcript": "/da/df5e6571a7/4/full.jsonl",
+      "content_hash": "/da/df5e6571a7/4/content_hash.txt",
+      "prompt": "/da/df5e6571a7/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 492,
-    "cache_creation_tokens": 1201972,
-    "cache_read_tokens": 36877786,
-    "output_tokens": 240089,
-    "api_call_count": 334
+    "input_tokens": 663,
+    "cache_creation_tokens": 1516266,
+    "cache_read_tokens": 63584353,
+    "output_tokens": 368839,
+    "api_call_count": 471
   }
 }
