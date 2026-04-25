@@ -3,7 +3,7 @@
   "checkpoint_id": "06b998039e1f",
   "strategy": "manual-commit",
   "branch": "fix/coderabbit-pr614-followup",
-  "checkpoints_count": 2,
+  "checkpoints_count": 3,
   "files_touched": [
     "apps/app/src/proxy.ts"
   ],
@@ -31,13 +31,19 @@
       "transcript": "/06/b998039e1f/3/full.jsonl",
       "content_hash": "/06/b998039e1f/3/content_hash.txt",
       "prompt": "/06/b998039e1f/3/prompt.txt"
+    },
+    {
+      "metadata": "/06/b998039e1f/4/metadata.json",
+      "transcript": "/06/b998039e1f/4/full.jsonl",
+      "content_hash": "/06/b998039e1f/4/content_hash.txt",
+      "prompt": "/06/b998039e1f/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 115,
-    "cache_creation_tokens": 372901,
-    "cache_read_tokens": 8221957,
-    "output_tokens": 97154,
-    "api_call_count": 65
+    "input_tokens": 287,
+    "cache_creation_tokens": 687736,
+    "cache_read_tokens": 35232246,
+    "output_tokens": 226249,
+    "api_call_count": 203
   }
 }
