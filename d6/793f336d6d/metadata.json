@@ -1,0 +1,33 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "d6793f336d6d",
+  "strategy": "manual-commit",
+  "branch": "fix/coderabbit-pr614-followup",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.test.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.tsx",
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/_components/desktop-auth-client.tsx",
+    "apps/desktop/forge.config.ts",
+    "apps/desktop/src/main/__tests__/auth-flow.test.ts",
+    "apps/desktop/src/main/auth-flow.ts",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/preload/preload.ts",
+    "apps/desktop/src/shared/ipc.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/d6/793f336d6d/0/metadata.json",
+      "transcript": "/d6/793f336d6d/0/full.jsonl",
+      "content_hash": "/d6/793f336d6d/0/content_hash.txt",
+      "prompt": "/d6/793f336d6d/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 22,
+    "cache_creation_tokens": 30254,
+    "cache_read_tokens": 415325,
+    "output_tokens": 4265,
+    "api_call_count": 12
+  }
+}
