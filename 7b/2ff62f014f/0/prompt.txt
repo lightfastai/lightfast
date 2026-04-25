@@ -1,0 +1,5 @@
+/loop poll GitHub PR #622 (lightfastai/lightfast) until CodeRabbit posts its full review, then stop and report the findings. Check for coderabbitai's review (not just the "review in progress" comment) via `gh pr view 622 --json reviews,comments`. When CodeRabbit's review is complete, summarize its comments/suggestions concisely.
+
+---
+
+;;yes proceed

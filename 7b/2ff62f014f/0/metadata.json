@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "7b2ff62f014f",
+  "session_id": "60f1e1bf-9b57-47f3-a931-40e4db3821d6",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-25T02:14:39.734485Z",
+  "branch": "chore/desktop-deps-upgrade",
+  "checkpoints_count": 0,
+  "files_touched": [
+    "pnpm-workspace.yaml",
+    "apps/app/package.json",
+    "apps/desktop/package.json",
+    "apps/app/vitest.config.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "a77a772a6e52",
+  "checkpoint_transcript_start": 222,
+  "transcript_lines_at_start": 222,
+  "token_usage": {
+    "input_tokens": 60,
+    "cache_creation_tokens": 186113,
+    "cache_read_tokens": 5183813,
+    "output_tokens": 21190,
+    "api_call_count": 40
+  },
+  "session_metrics": {
+    "turn_count": 9
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-25T02:14:39.240668Z",
+    "agent_lines": 8,
+    "agent_removed": 6,
+    "human_added": 10,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 18,
+    "total_lines_changed": 28,
+    "agent_percentage": 50,
+    "metric_version": 2
+  }
+}
