@@ -31,11 +31,14 @@ export function transformWebhookPayload(
   // resolveAction. GitHub leaves resolveAction undefined because its action
   // lives in payload.action, not the wire event header; dot-splitting
   // "pull_request" would be wrong.
+  // A `null` return means the provider could not extract an action from the
+  // wire eventType (malformed shape) — drop those too rather than letting the
+  // transformer's strict enum throw downstream.
   if (providerDef.resolveAction && eventDef.kind === "with-actions") {
     const action = providerDef.resolveAction(eventType);
-    if (action !== null && !(action in eventDef.actions)) {
+    if (action === null || !(action in eventDef.actions)) {
       console.warn(
-        `transformWebhookPayload: unknown sub-action "${action}" for ${provider}:${category}`
+        `transformWebhookPayload: unknown or missing sub-action for ${provider}:${category} (eventType="${eventType}")`
       );
       return null;
     }

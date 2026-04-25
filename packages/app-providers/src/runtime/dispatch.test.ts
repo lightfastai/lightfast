@@ -108,7 +108,27 @@ describe("transformWebhookPayload", () => {
     );
     expect(result).toBeNull();
     expect(warn).toHaveBeenCalledWith(
-      expect.stringContaining(`unknown sub-action "promoted"`)
+      expect.stringContaining(`eventType="deployment.promoted"`)
+    );
+    warn.mockRestore();
+  });
+
+  it("returns null when resolveAction returns null (compound type, Vercel)", () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {
+      /* silence expected warning */
+    });
+    // Vercel's resolveAction returns null for shapes other than "category.action".
+    // The dispatcher must drop those rather than fall through to schema.parse +
+    // the transformer's strict enum (which would throw a ZodError).
+    const result = transformWebhookPayload(
+      "vercel",
+      "deployment.error.retry",
+      validVercelPayload,
+      context
+    );
+    expect(result).toBeNull();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining("unknown or missing sub-action")
     );
     warn.mockRestore();
   });

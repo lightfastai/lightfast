@@ -147,8 +147,14 @@ export const vercel = defineWebhookProvider({
   // Wire eventType "deployment.created" → dispatch category "deployment"
   resolveCategory: (eventType) => eventType.split(".")[0] ?? eventType,
 
-  // Wire eventType "deployment.created" → sub-action "created"
-  resolveAction: (eventType) => eventType.split(".")[1] ?? null,
+  // Wire eventType "deployment.created" → sub-action "created".
+  // Returns null for any shape that isn't exactly `category.action` so that
+  // a future compound type (e.g., "deployment.error.retry") can't masquerade
+  // as a known action — the dispatcher then drops it with a warning.
+  resolveAction: (eventType) => {
+    const parts = eventType.split(".");
+    return parts.length === 2 ? (parts[1] ?? null) : null;
+  },
 
   getBaseEventType: (sourceType) => sourceType,
 
