@@ -271,6 +271,188 @@ describe("ClientAuthBridge — POST mode", () => {
   });
 });
 
+describe("ClientAuthBridge — code-redirect mode (desktop PKCE)", () => {
+  let fetchSpy: ReturnType<typeof vi.fn>;
+  let originalFetch: typeof globalThis.fetch;
+
+  beforeEach(() => {
+    originalFetch = globalThis.fetch;
+    fetchSpy = vi.fn();
+    globalThis.fetch = fetchSpy as unknown as typeof globalThis.fetch;
+    captureExceptionMock.mockClear();
+    captureMessageMock.mockClear();
+    useAuthMock.mockClear();
+    useSearchParamsMock.mockClear();
+    useSearchParamsMock.mockReturnValue(new URLSearchParams());
+  });
+
+  afterEach(() => {
+    globalThis.fetch = originalFetch;
+    cleanup();
+  });
+
+  it("POSTs to /api/desktop/auth/code with PKCE body + Bearer auth, then redirects to redirectUri?code=…&state=…", async () => {
+    mockSignedInWithToken("real-jwt");
+    fetchSpy.mockResolvedValue(
+      new Response(JSON.stringify({ code: "issued-code" }), { status: 200 })
+    );
+    const locationSpy = vi.spyOn(
+      window.location,
+      "href",
+      "set"
+    ) as unknown as ReturnType<typeof vi.fn>;
+
+    render(
+      <ClientAuthBridge
+        buildExchangeRequest={() => ({
+          state: "S1",
+          codeChallenge: "CHAL",
+          redirectUri: "lightfast-dev://auth/callback",
+        })}
+        mode="code-redirect"
+        subtitle="sub"
+        title="title"
+      />
+    );
+
+    await waitFor(() => {
+      expect(fetchSpy).toHaveBeenCalled();
+    });
+    const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("/api/desktop/auth/code");
+    expect(init.method).toBe("POST");
+    expect(init.credentials).toBe("omit");
+    expect(init.headers).toEqual({
+      "Content-Type": "application/json",
+      Authorization: "Bearer real-jwt",
+    });
+    expect(JSON.parse(init.body as string)).toEqual({
+      state: "S1",
+      code_challenge: "CHAL",
+      code_challenge_method: "S256",
+      redirect_uri: "lightfast-dev://auth/callback",
+    });
+
+    await waitFor(() => {
+      expect(locationSpy).toHaveBeenCalledWith(
+        "lightfast-dev://auth/callback?code=issued-code&state=S1"
+      );
+    });
+    locationSpy.mockRestore();
+  });
+
+  it("renders Authentication Failed and captures warning when buildExchangeRequest returns null", async () => {
+    mockSignedInWithToken("real-jwt");
+
+    render(
+      <ClientAuthBridge
+        buildExchangeRequest={() => null}
+        mode="code-redirect"
+        subtitle="sub"
+        title="title"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Authentication Failed")).toBeTruthy();
+    });
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(captureMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining("buildExchangeRequest returned null"),
+      expect.objectContaining({
+        level: "warning",
+        tags: { scope: "auth-bridge.invalid_callback" },
+      })
+    );
+  });
+
+  it("renders error and captures warning when /api/desktop/auth/code returns 4xx", async () => {
+    mockSignedInWithToken("real-jwt");
+    fetchSpy.mockResolvedValue(
+      new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 })
+    );
+
+    render(
+      <ClientAuthBridge
+        buildExchangeRequest={() => ({
+          state: "S1",
+          codeChallenge: "CHAL",
+          redirectUri: "lightfast-dev://auth/callback",
+        })}
+        mode="code-redirect"
+        subtitle="sub"
+        title="title"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Authentication Failed")).toBeTruthy();
+    });
+    expect(captureMessageMock).toHaveBeenCalledWith(
+      expect.stringContaining("code endpoint non-ok"),
+      expect.objectContaining({
+        level: "warning",
+        tags: expect.objectContaining({
+          scope: "auth-bridge.code_non_ok",
+          status: "401",
+        }),
+      })
+    );
+  });
+
+  it("renders error when fetch throws a network error during exchange POST", async () => {
+    mockSignedInWithToken("real-jwt");
+    fetchSpy.mockRejectedValue(new TypeError("Failed to fetch"));
+
+    render(
+      <ClientAuthBridge
+        buildExchangeRequest={() => ({
+          state: "S1",
+          codeChallenge: "CHAL",
+          redirectUri: "lightfast-dev://auth/callback",
+        })}
+        mode="code-redirect"
+        subtitle="sub"
+        title="title"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Authentication Failed")).toBeTruthy();
+    });
+    expect(captureExceptionMock).toHaveBeenCalledWith(
+      expect.any(TypeError),
+      expect.objectContaining({
+        tags: { scope: "auth-bridge.code_network_error" },
+      })
+    );
+  });
+
+  it("renders error when response body is missing the code field", async () => {
+    mockSignedInWithToken("real-jwt");
+    fetchSpy.mockResolvedValue(
+      new Response(JSON.stringify({ ok: true }), { status: 200 })
+    );
+
+    render(
+      <ClientAuthBridge
+        buildExchangeRequest={() => ({
+          state: "S1",
+          codeChallenge: "CHAL",
+          redirectUri: "lightfast-dev://auth/callback",
+        })}
+        mode="code-redirect"
+        subtitle="sub"
+        title="title"
+      />
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Authentication Failed")).toBeTruthy();
+    });
+  });
+});
+
 describe("ClientAuthBridge — redirect mode (CLI parity)", () => {
   const originalFetch = globalThis.fetch;
 

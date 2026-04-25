@@ -27,10 +27,20 @@ interface RedirectProps {
   mode: "redirect";
 }
 
+interface CodeRedirectProps {
+  buildExchangeRequest: (args: {
+    searchParams: URLSearchParams;
+  }) => { state: string; codeChallenge: string; redirectUri: string } | null;
+  mode: "code-redirect";
+}
+
 export type ClientAuthBridgeProps = ClientAuthBridgeBaseProps &
-  (PostCallbackProps | RedirectProps);
+  (PostCallbackProps | RedirectProps | CodeRedirectProps);
 
 type BridgeStatus = "loading" | "redirecting" | "success" | "error";
+
+const CODE_ENDPOINT = "/api/desktop/auth/code";
+const WINDOW_CLOSE_DELAY_MS = 250;
 
 function BridgeContent(props: ClientAuthBridgeProps) {
   const { getToken, isSignedIn, isLoaded } = useAuth();
@@ -95,6 +105,79 @@ function BridgeContent(props: ClientAuthBridgeProps) {
             return;
           }
           setStatus("success");
+          return;
+        }
+        if (props.mode === "code-redirect") {
+          const built = props.buildExchangeRequest({ searchParams });
+          if (!built) {
+            captureMessage("auth-bridge: buildExchangeRequest returned null", {
+              level: "warning",
+              tags: { scope: "auth-bridge.invalid_callback" },
+            });
+            setStatus("error");
+            return;
+          }
+          let response: Response;
+          try {
+            response = await fetch(CODE_ENDPOINT, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                state: built.state,
+                code_challenge: built.codeChallenge,
+                code_challenge_method: "S256",
+                redirect_uri: built.redirectUri,
+              }),
+              credentials: "omit",
+            });
+          } catch (error) {
+            captureException(error, {
+              tags: { scope: "auth-bridge.code_network_error" },
+            });
+            setStatus("error");
+            return;
+          }
+          if (!response.ok) {
+            captureMessage("auth-bridge: code endpoint non-ok", {
+              level: "warning",
+              tags: {
+                scope: "auth-bridge.code_non_ok",
+                status: String(response.status),
+              },
+            });
+            setStatus("error");
+            return;
+          }
+          let parsed: { code?: unknown };
+          try {
+            parsed = (await response.json()) as { code?: unknown };
+          } catch (error) {
+            captureException(error, {
+              tags: { scope: "auth-bridge.code_parse_error" },
+            });
+            setStatus("error");
+            return;
+          }
+          if (typeof parsed.code !== "string" || parsed.code.length === 0) {
+            setStatus("error");
+            return;
+          }
+          const finalUrl = `${built.redirectUri}?code=${encodeURIComponent(parsed.code)}&state=${encodeURIComponent(built.state)}`;
+          setStatus("redirecting");
+          window.location.href = finalUrl;
+          // Best-effort: let the navigation flush, then close this tab.
+          // Browsers only allow window.close() on script-opened windows and
+          // even then may silently no-op. Close failures are not surfaced.
+          setTimeout(() => {
+            try {
+              window.close();
+            } catch {
+              // ignore — best-effort
+            }
+          }, WINDOW_CLOSE_DELAY_MS);
           return;
         }
         const url = props.buildRedirectUrl({ token, searchParams });

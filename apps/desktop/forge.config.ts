@@ -10,6 +10,7 @@ import { PublisherGithub } from "@electron-forge/publisher-github";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
 const BUNDLE_ID = "ai.lightfast.desktop";
+const URL_SCHEME = "lightfast";
 
 const osxSign =
   process.env.APPLE_SIGNING_IDENTITY && process.env.APPLE_TEAM_ID
@@ -75,7 +76,14 @@ const config: ForgeConfig = {
         "Used for voice notes and audio capture inside the app.",
       NSAudioCaptureUsageDescription:
         "Used for capturing system audio during sessions.",
+      CFBundleURLTypes: [
+        {
+          CFBundleURLName: BUNDLE_ID,
+          CFBundleURLSchemes: [URL_SCHEME],
+        },
+      ],
     },
+    protocols: [{ name: "Lightfast", schemes: [URL_SCHEME] }],
   },
   rebuildConfig: {},
   makers: [
