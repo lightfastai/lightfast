@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "dadf5e6571a7",
+  "strategy": "manual-commit",
+  "branch": "fix/coderabbit-pr614-followup",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/desktop/src/main/windows/factory.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/da/df5e6571a7/0/metadata.json",
+      "transcript": "/da/df5e6571a7/0/full.jsonl",
+      "content_hash": "/da/df5e6571a7/0/content_hash.txt",
+      "prompt": "/da/df5e6571a7/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 21,
+    "cache_creation_tokens": 27550,
+    "cache_read_tokens": 373133,
+    "output_tokens": 3145,
+    "api_call_count": 11
+  }
+}
