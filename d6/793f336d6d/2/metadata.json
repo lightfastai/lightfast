@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "d6793f336d6d",
+  "session_id": "9acff36b-eabd-4841-ab4f-1a5a70e2c0f5",
   "strategy": "manual-commit",
+  "created_at": "2026-04-25T07:29:40.928138Z",
   "branch": "fix/coderabbit-pr614-followup",
-  "checkpoints_count": 2,
+  "checkpoints_count": 1,
   "files_touched": [
     ".agents/skills/lightfast-desktop-signin/SKILL.md",
     "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.test.tsx",
@@ -24,31 +26,29 @@
     "apps/desktop/src/shared/ipc.ts",
     "thoughts/shared/plans/2026-04-25-desktop-auth-url-scheme-pkce.md"
   ],
-  "sessions": [
-    {
-      "metadata": "/d6/793f336d6d/0/metadata.json",
-      "transcript": "/d6/793f336d6d/0/full.jsonl",
-      "content_hash": "/d6/793f336d6d/0/content_hash.txt",
-      "prompt": "/d6/793f336d6d/0/prompt.txt"
-    },
-    {
-      "metadata": "/d6/793f336d6d/1/metadata.json",
-      "transcript": "/d6/793f336d6d/1/full.jsonl",
-      "content_hash": "/d6/793f336d6d/1/content_hash.txt",
-      "prompt": "/d6/793f336d6d/1/prompt.txt"
-    },
-    {
-      "metadata": "/d6/793f336d6d/2/metadata.json",
-      "transcript": "/d6/793f336d6d/2/full.jsonl",
-      "content_hash": "/d6/793f336d6d/2/content_hash.txt",
-      "prompt": "/d6/793f336d6d/2/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "0a10cbaa254f",
   "token_usage": {
-    "input_tokens": 196,
-    "cache_creation_tokens": 346834,
-    "cache_read_tokens": 28034638,
-    "output_tokens": 135931,
-    "api_call_count": 152
+    "input_tokens": 174,
+    "cache_creation_tokens": 316580,
+    "cache_read_tokens": 27619313,
+    "output_tokens": 131666,
+    "api_call_count": 140
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-25T07:29:39.497284Z",
+    "agent_lines": 2718,
+    "agent_removed": 702,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 2718,
+    "total_lines_changed": 3420,
+    "agent_percentage": 100,
+    "metric_version": 2
   }
 }
