@@ -44,4 +44,6 @@ export const EVENT_LABELS: Record<string, string> = {
   // Vercel
   "vercel:deployment.created": "Deployment Started",
   "vercel:deployment.succeeded": "Deployment Succeeded",
+  "vercel:deployment.error": "Deployment Failed",
+  "vercel:deployment.canceled": "Deployment Canceled",
 } as const;

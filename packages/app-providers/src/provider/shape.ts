@@ -57,6 +57,15 @@ interface BaseProviderFields<
   readonly optional?: true;
   /** Zod schema for the provider_config JSONB blob stored in gateway_installations. */
   readonly providerConfigSchema: TProviderConfigSchema;
+  /**
+   * Optional: extract a sub-action name from the wire eventType
+   * (e.g., "deployment.created" → "created"). When defined, the dispatcher
+   * enforces that the resolved action is present in the event's `actions` map
+   * and returns null otherwise. Providers whose action lives in the payload
+   * body (e.g., GitHub's `payload.action`) should leave this undefined — the
+   * allowlist check is then skipped.
+   */
+  readonly resolveAction?: (eventType: string) => string | null;
   /** Normalize wire eventType to dispatch category key. Use identity `(et) => et` if 1:1. */
   readonly resolveCategory: (eventType: string) => string;
   /** UI resource picker configuration for sources/new — installation enrichment + resource listing */

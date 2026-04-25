@@ -77,6 +77,8 @@ export const preTransformVercelWebhookPayloadSchema = z.object({
 export const vercelWebhookEventTypeSchema = z.enum([
   "deployment.created",
   "deployment.succeeded",
+  "deployment.error",
+  "deployment.canceled",
 ]);
 
 // ── Relay-level loose webhook payload schema ──

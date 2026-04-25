@@ -95,6 +95,16 @@ export const PROVIDER_CATEGORIES: Record<
       description: "Capture successful deployment completions",
       type: "observation",
     },
+    "deployment.error": {
+      label: "Deployment Failed",
+      description: "Capture deployment failures",
+      type: "observation",
+    },
+    "deployment.canceled": {
+      label: "Deployment Canceled",
+      description: "Capture canceled deployments",
+      type: "observation",
+    },
   },
   apollo: {},
 } as const satisfies Record<ProviderSlug, Record<string, CategoryDef>>;

@@ -359,6 +359,30 @@ describe("oauth.processCallback", () => {
   });
 });
 
+// ── defaultSyncEvents + categories coverage ───────────────────────────────────
+
+describe("defaultSyncEvents", () => {
+  it("includes all 4 deployment event types", () => {
+    expect(vercel.defaultSyncEvents).toEqual([
+      "deployment.created",
+      "deployment.succeeded",
+      "deployment.error",
+      "deployment.canceled",
+    ]);
+  });
+});
+
+describe("categories", () => {
+  it("has entries for all 4 deployment event types", () => {
+    expect(Object.keys(vercel.categories)).toEqual([
+      "deployment.created",
+      "deployment.succeeded",
+      "deployment.error",
+      "deployment.canceled",
+    ]);
+  });
+});
+
 // ── webhook.signatureScheme + deriveVerifySignature ───────────────────────────
 
 describe("webhook.signatureScheme", () => {
@@ -435,7 +459,12 @@ describe("webhook.extractEventType", () => {
   });
 
   it("handles all documented deployment event types", () => {
-    const types = ["deployment.created", "deployment.succeeded"];
+    const types = [
+      "deployment.created",
+      "deployment.succeeded",
+      "deployment.error",
+      "deployment.canceled",
+    ];
     for (const type of types) {
       expect(vercel.webhook.extractEventType(new Headers(), { type })).toBe(
         type
@@ -499,6 +528,8 @@ describe("resolveCategory", () => {
   it("strips dot-suffix to produce dispatch category", () => {
     expect(vercel.resolveCategory("deployment.created")).toBe("deployment");
     expect(vercel.resolveCategory("deployment.succeeded")).toBe("deployment");
+    expect(vercel.resolveCategory("deployment.error")).toBe("deployment");
+    expect(vercel.resolveCategory("deployment.canceled")).toBe("deployment");
   });
 
   it("returns eventType unchanged when no dot", () => {
