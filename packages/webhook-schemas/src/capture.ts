@@ -26,11 +26,59 @@ type JsonValue =
 
 // ── PII Sanitization ────────────────────────────────────────────────────────
 
-const AUTHOR_CONTEXT_KEYS = new Set(["author", "committer", "co-authored-by"]);
+const AUTHOR_CONTEXT_KEYS = new Set([
+  "author",
+  "committer",
+  "co-authored-by",
+  // GitHub push events use `pusher: { name, email }` for the actor that
+  // pushed; treat it as an author context so name/email/username get scrubbed.
+  "pusher",
+]);
 
 function isAuthorContext(key: string): boolean {
   const lower = key.toLowerCase();
   return AUTHOR_CONTEXT_KEYS.has(lower);
+}
+
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+// GitHub user/org objects ("actors") have a stable shape: login + id + node_id
+// plus a fan of *_url fields. Detect by signature and replace identifying
+// fields in-place so committed fixtures contain no real handles.
+function isGitHubActor(obj: Record<string, JsonValue>): boolean {
+  return (
+    typeof obj.login === "string" &&
+    typeof obj.node_id === "string" &&
+    typeof obj.id === "number"
+  );
+}
+
+function redactGitHubActor(obj: Record<string, JsonValue>): void {
+  // Capture the original login *before* redacting so we can do a bounded
+  // replacement of it inside URL fields. A blanket regex against
+  // `github.com/[^/]+` would over-match — it would turn
+  // `api.github.com/orgs/<org>` into `api.github.com/redacted-user/<org>`.
+  const originalLogin = typeof obj.login === "string" ? obj.login : null;
+  obj.login = "redacted-user";
+  obj.id = 0;
+  obj.node_id = "U_REDACTED";
+  if (!originalLogin) {
+    return;
+  }
+  const segmentRe = new RegExp(
+    `/${escapeRegex(originalLogin)}(?=/|$|[?#])`,
+    "g"
+  );
+  for (const [key, val] of Object.entries(obj)) {
+    if (typeof val !== "string") {
+      continue;
+    }
+    if (key === "url" || key === "html_url" || key.endsWith("_url")) {
+      obj[key] = val.replace(segmentRe, "/redacted-user");
+    }
+  }
 }
 
 function walk(
@@ -57,6 +105,18 @@ function walk(
       continue;
     }
 
+    // GitHub commit author/committer blocks have `name`, `email`, AND
+    // `username` — the last is missed by both the actor signature (no node_id
+    // on commit author objects) and the blanket `name` rule.
+    if (
+      key === "username" &&
+      typeof value === "string" &&
+      isAuthorContext(parentKey)
+    ) {
+      obj[key] = "redacted-user";
+      continue;
+    }
+
     // Vercel meta fields — author identity inside deployment.meta
     if (key === "githubCommitAuthorName" && typeof value === "string") {
       obj[key] = "Redacted User";
@@ -74,11 +134,19 @@ function walk(
     }
 
     if (value !== null && typeof value === "object" && !Array.isArray(value)) {
-      walk(value as Record<string, JsonValue>, key);
+      const child = value as Record<string, JsonValue>;
+      if (isGitHubActor(child)) {
+        redactGitHubActor(child);
+      }
+      walk(child, key);
     } else if (Array.isArray(value)) {
       for (const item of value) {
         if (item !== null && typeof item === "object" && !Array.isArray(item)) {
-          walk(item as Record<string, JsonValue>, key);
+          const child = item as Record<string, JsonValue>;
+          if (isGitHubActor(child)) {
+            redactGitHubActor(child);
+          }
+          walk(child, key);
         }
       }
     }
@@ -121,16 +189,17 @@ function deriveAction(
 async function main() {
   console.log("Querying gateway_webhook_deliveries...\n");
 
+  // Pull all candidate rows newest-first; the in-memory loop below dedupes by
+  // (provider, derivedAction). DB-side DISTINCT ON would collapse all of
+  // GitHub's pull_request.* variants to a single row before the action key
+  // (which lives in payload.action, not eventType) is extracted.
   const rows = await db
-    .selectDistinctOn(
-      [gatewayWebhookDeliveries.provider, gatewayWebhookDeliveries.eventType],
-      {
-        provider: gatewayWebhookDeliveries.provider,
-        eventType: gatewayWebhookDeliveries.eventType,
-        payload: gatewayWebhookDeliveries.payload,
-        receivedAt: gatewayWebhookDeliveries.receivedAt,
-      }
-    )
+    .select({
+      provider: gatewayWebhookDeliveries.provider,
+      eventType: gatewayWebhookDeliveries.eventType,
+      payload: gatewayWebhookDeliveries.payload,
+      receivedAt: gatewayWebhookDeliveries.receivedAt,
+    })
     .from(gatewayWebhookDeliveries)
     .where(
       and(
@@ -139,15 +208,11 @@ async function main() {
         gt(gatewayWebhookDeliveries.receivedAt, sql`NOW() - INTERVAL '30 days'`)
       )
     )
-    .orderBy(
-      gatewayWebhookDeliveries.provider,
-      gatewayWebhookDeliveries.eventType,
-      desc(gatewayWebhookDeliveries.receivedAt)
-    );
+    .orderBy(desc(gatewayWebhookDeliveries.receivedAt));
 
   console.log(`Found ${rows.length} rows with payloads\n`);
 
-  // Group by provider + action, keep first (oldest) per group
+  // Group by provider + action, keep first (newest — rows are desc by receivedAt) per group
   const grouped = new Map<string, Record<string, JsonValue>>();
   const providerCounts: Record<string, number> = {};
 
