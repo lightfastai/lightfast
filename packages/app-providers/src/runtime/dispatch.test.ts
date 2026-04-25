@@ -113,6 +113,26 @@ describe("transformWebhookPayload", () => {
     warn.mockRestore();
   });
 
+  it("returns null for prototype-chain action keys (e.g. toString)", () => {
+    // Regression guard: a naive `action in eventDef.actions` check would let
+    // `deployment.toString` past the allowlist because `toString` lives on
+    // Object.prototype. The transformer's strict enum would then throw.
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {
+      /* silence expected warning */
+    });
+    const result = transformWebhookPayload(
+      "vercel",
+      "deployment.toString",
+      validVercelPayload,
+      context
+    );
+    expect(result).toBeNull();
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining(`eventType="deployment.toString"`)
+    );
+    warn.mockRestore();
+  });
+
   it("returns null when resolveAction returns null (compound type, Vercel)", () => {
     const warn = vi.spyOn(console, "warn").mockImplementation(() => {
       /* silence expected warning */

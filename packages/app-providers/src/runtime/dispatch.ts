@@ -36,7 +36,10 @@ export function transformWebhookPayload(
   // transformer's strict enum throw downstream.
   if (providerDef.resolveAction && eventDef.kind === "with-actions") {
     const action = providerDef.resolveAction(eventType);
-    if (action === null || !(action in eventDef.actions)) {
+    // Use Object.hasOwn rather than the `in` operator so prototype keys
+    // ("toString", "__proto__", etc.) cannot masquerade as known actions and
+    // slip past into the transformer's strict enum parse.
+    if (action === null || !Object.hasOwn(eventDef.actions, action)) {
       console.warn(
         `transformWebhookPayload: unknown or missing sub-action for ${provider}:${category} (eventType="${eventType}")`
       );
