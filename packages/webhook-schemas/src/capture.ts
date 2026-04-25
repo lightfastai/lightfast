@@ -55,6 +55,51 @@ function isGitHubActor(obj: Record<string, JsonValue>): boolean {
   );
 }
 
+// GitHub repository objects always carry name + full_name + private.
+// Detect by signature and redact the names — both private repo names
+// (yc-apply-2025, lightfast-debug-env) and the org/repo path inside any
+// URL fields would otherwise leak into committed fixtures.
+function isGitHubRepo(obj: Record<string, JsonValue>): boolean {
+  return (
+    typeof obj.name === "string" &&
+    typeof obj.full_name === "string" &&
+    typeof obj.private === "boolean"
+  );
+}
+
+const REPO_URL_KEYS = new Set([
+  "url",
+  "html_url",
+  "ssh_url",
+  "clone_url",
+  "git_url",
+  "svn_url",
+  "homepage",
+  "mirror_url",
+]);
+
+function redactGitHubRepo(obj: Record<string, JsonValue>): void {
+  const originalName = obj.name as string;
+  const originalFullName = obj.full_name as string;
+  obj.name = "redacted-repo";
+  obj.full_name = "redacted-org/redacted-repo";
+  const fullNameRe = new RegExp(escapeRegex(originalFullName), "g");
+  const nameSegmentRe = new RegExp(
+    `/${escapeRegex(originalName)}(?=/|$|[?#])`,
+    "g"
+  );
+  for (const [key, val] of Object.entries(obj)) {
+    if (typeof val !== "string") {
+      continue;
+    }
+    if (REPO_URL_KEYS.has(key) || key.endsWith("_url")) {
+      obj[key] = val
+        .replace(fullNameRe, "redacted-org/redacted-repo")
+        .replace(nameSegmentRe, "/redacted-repo");
+    }
+  }
+}
+
 function redactGitHubActor(obj: Record<string, JsonValue>): void {
   // Capture the original login *before* redacting so we can do a bounded
   // replacement of it inside URL fields. A blanket regex against
@@ -138,6 +183,9 @@ function walk(
       if (isGitHubActor(child)) {
         redactGitHubActor(child);
       }
+      if (isGitHubRepo(child)) {
+        redactGitHubRepo(child);
+      }
       walk(child, key);
     } else if (Array.isArray(value)) {
       for (const item of value) {
@@ -145,6 +193,9 @@ function walk(
           const child = item as Record<string, JsonValue>;
           if (isGitHubActor(child)) {
             redactGitHubActor(child);
+          }
+          if (isGitHubRepo(child)) {
+            redactGitHubRepo(child);
           }
           walk(child, key);
         }
