@@ -15,3 +15,7 @@ proceed with full automated testing using agent-browser
 ---
 
 /commit
+
+---
+
+yes
