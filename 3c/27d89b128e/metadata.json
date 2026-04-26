@@ -3,7 +3,7 @@
   "checkpoint_id": "3c27d89b128e",
   "strategy": "manual-commit",
   "branch": "fix/coderabbit-pr614-followup",
-  "checkpoints_count": 4,
+  "checkpoints_count": 20,
   "files_touched": [
     "pnpm-lock.yaml"
   ],
@@ -19,13 +19,19 @@
       "transcript": "/3c/27d89b128e/1/full.jsonl",
       "content_hash": "/3c/27d89b128e/1/content_hash.txt",
       "prompt": "/3c/27d89b128e/1/prompt.txt"
+    },
+    {
+      "metadata": "/3c/27d89b128e/2/metadata.json",
+      "transcript": "/3c/27d89b128e/2/full.jsonl",
+      "content_hash": "/3c/27d89b128e/2/content_hash.txt",
+      "prompt": "/3c/27d89b128e/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 87,
-    "cache_creation_tokens": 190611,
-    "cache_read_tokens": 3635000,
-    "output_tokens": 51428,
-    "api_call_count": 57
+    "input_tokens": 435,
+    "cache_creation_tokens": 519014,
+    "cache_read_tokens": 23362642,
+    "output_tokens": 208493,
+    "api_call_count": 290
   }
 }

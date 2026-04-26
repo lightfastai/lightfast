@@ -1,0 +1,172 @@
+Build a minimal Turborepo monorepo with two Next.js apps wired up via @vercel/microfrontends.
+  This is a reproduction sandbox — keep it as small as possible. Do NOT add UI components, auth,
+  databases, ESLint configs, Prettier, tests, CI, or anything beyond what's strictly required to
+  boot two MFE-routed Next.js apps via `pnpm dev:full`.
+
+  ## Shape
+
+  Repo: `mfe-sandbox/`
+  Two apps mirroring a real microfrontends setup:
+  - `apps/app` — default application. Owns `microfrontends.json`. Runs the `microfrontends proxy`.
+    Has one page at `/sign-in` rendering "app: /sign-in".
+  - `apps/www` — child application. Has one page at `/docs` rendering "www: /docs".
+
+  ## Pinned versions (do not deviate)
+
+  - Node 22.x
+  - pnpm 10.32.1 (set via `packageManager` in root package.json)
+  - `@vercel/microfrontends@2.3.2` (exact, in both apps)
+  - `next@15.x` (latest stable 15)
+  - `react@19.x` / `react-dom@19.x`
+  - `turbo@2.5.x` (latest 2.5)
+  - `typescript@5.x`
+
+  ## Required behavior
+
+  1. `pnpm install` from root succeeds with no peer-dep warnings about missing required deps.
+  2. `pnpm dev:full` (root script) runs three things concurrently via Turbo:
+     - `apps/app` Next.js dev server
+     - `apps/www` Next.js dev server (port via `microfrontends port`)
+     - `microfrontends proxy --local-apps app www` (in apps/app)
+  3. `curl http://localhost:3024/sign-in` returns the app page; `curl http://localhost:3024/docs`
+     returns the www page. Both routed through the MFE proxy.
+  4. `pnpm typecheck` passes.
+
+  ## microfrontends.json shape
+
+  Lives at `apps/app/microfrontends.json`. Two applications (`app` is default, `www` has routing for
+  `/docs/:path*`). Use static port numbers for `local` (e.g., 4107 for app, 4101 for www). The MFE
+  proxy listens on 3024 by default — keep that.
+
+  ## package.json names
+
+  - Root: `mfe-sandbox`
+  - apps/app: `app` (matches the MFE config key)
+  - apps/www: `www`
+
+  ## What NOT to do
+
+  - No `apps/*/microfrontends.json` in the child app — only the default app holds it.
+  - No app-level ESLint/Prettier configs. Use Next.js's built-in defaults.
+  - No `tsconfig` packages, no shared `@repo/*` packages. Each app's tsconfig is standalone,
+    extending `next/core-web-vitals` only if needed for typecheck.
+  - No `.env*` files, no environment variables, no secrets.
+  - No README beyond a one-liner.
+  - Do NOT install or wire up `portless` — that comes in a later step.
+
+  ## Verification before reporting done
+
+  1. `pnpm install` clean
+  2. `pnpm dev:full` boots all three processes; logs show MFE proxy started on :3024
+  3. `curl -s http://localhost:3024/sign-in | grep "app: /sign-in"` succeeds
+  4. `curl -s http://localhost:3024/docs | grep "www: /docs"` succeeds
+  5. `pnpm typecheck` passes
+  6. `git init && git add . && git commit -m "init"` succeeds (we'll test worktrees later)
+
+  Report the final tree (`tree -I node_modules` output) and the contents of root `package.json` +
+  both app `package.json`s + `microfrontends.json` + `turbo.json`. Nothing else.
+
+placed in tmp folder
+
+---
+
+great start now, i want to do a test basically with /tmp/mfe-sandbox, let's introduce vercel's portless and check if starting the app works
+
+---
+
+great start now, i want to do a test basically with /tmp/mfe-sandbox, let's introduce vercel's portless and check if starting the app works https://github.com/vercel-labs/portless
+
+---
+
+nope, MFE is a must. never dropping the proxy. its a primitive.
+
+note: we are also testing. meaning this repo is a spike to validate whether MFE proxy with portless proxy works in multiple worktrees at a time.
+
+whats next step to test then
+
+---
+
+nope, MFE is a must. never dropping the proxy. its a primitive.
+
+note: we are also testing. meaning this repo is a spike to validate whether MFE proxy with portless proxy works in multiple worktrees at a time.
+
+whats next step to test then
+
+https://portless.sh/
+https://portless.sh/commands
+https://portless.sh/configuration
+
+---
+
+hmm from portless docs: Git Worktrees
+portless run automatically detects git worktrees. In a linked worktree, the branch name is prepended as a subdomain so each worktree gets its own URL without any config changes:
+
+# Main worktree (no prefix)
+portless run next dev   # -> https://myapp.localhost
+
+# Linked worktree on branch "fix-ui"
+portless run next dev   # -> https://fix-ui.myapp.localhost
+Put portless run in your package.json once and it works everywhere. The main checkout uses the plain name, each worktree gets a unique subdomain. No collisions, no --force.
+
+Use --name to override the inferred base name while keeping the worktree prefix:
+
+portless run --name myapp next dev   # -> https://fix-ui.myapp.localhost
+ does that not solve it
+
+---
+
+actually i reckon there is an even simpler solution, we omit "port" endpoint from microfrontends.json
+
+---
+
+yes
+
+---
+
+proceeed with option 1 test
+
+---
+
+proceed
+
+---
+
+check using agent-browser that we can actually the whole logic works across multiple worktrees
+
+---
+
+i want to do a new test we have add an electron app. to both the main + worktree. 
+
+and ensure that works too
+
+---
+
+great! now, i want this electron app to be able to send an "api request" to one the nextjs app. is that also possible?
+
+---
+
+hmm now for our app in this repo, what needs to chang to enable all of this.
+
+---
+
+oh we're still keeping the whole 1 microfrontend per worktree?
+
+---
+
+nah we're keep MFE per worktree.
+
+im just thinking right now, that will all of these, we should create a "custom" package to address our microfrontend + portless system and the whole dynamic "micronfrontend". and i think we do this by using branch's name during start.
+
+basically each time an app is being started in some worktree, the first step is ALWAYS to generate the microfrontend file. so instead of doing this "once" at the creation of worktree, it's at runtime. 
+
+we then also address the custom url scheme issue, similarly using the "branch" name.
+
+for now, we omit, clerk / database issues.
+
+for inngest, in general, we only need to run 1 inngest dev environment but ensure that ALL worktrees get connected. but for now, we omit this problem.
+
+run /create_plan to design this new package. note: we do this in the spike, not in this repo.
+
+---
+
+yes proceed

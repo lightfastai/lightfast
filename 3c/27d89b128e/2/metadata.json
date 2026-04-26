@@ -1,0 +1,37 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "3c27d89b128e",
+  "session_id": "c744a617-d23a-4bd6-9884-f2bef3a76b06",
+  "strategy": "manual-commit",
+  "created_at": "2026-04-26T09:16:20.16927Z",
+  "branch": "fix/coderabbit-pr614-followup",
+  "checkpoints_count": 16,
+  "files_touched": [
+    "pnpm-lock.yaml"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "fb8f94f24cc6",
+  "token_usage": {
+    "input_tokens": 348,
+    "cache_creation_tokens": 328403,
+    "cache_read_tokens": 19727642,
+    "output_tokens": 157065,
+    "api_call_count": 233
+  },
+  "session_metrics": {
+    "turn_count": 16
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-04-26T09:16:19.42272Z",
+    "agent_lines": 530,
+    "agent_removed": 490,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 530,
+    "total_lines_changed": 1020,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
