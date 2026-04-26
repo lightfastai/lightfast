@@ -27,6 +27,26 @@ export function transformWebhookPayload(
     return null;
   }
 
+  // Sub-action allowlist — only enforced when the provider opts in via
+  // resolveAction. GitHub leaves resolveAction undefined because its action
+  // lives in payload.action, not the wire event header; dot-splitting
+  // "pull_request" would be wrong.
+  // A `null` return means the provider could not extract an action from the
+  // wire eventType (malformed shape) — drop those too rather than letting the
+  // transformer's strict enum throw downstream.
+  if (providerDef.resolveAction && eventDef.kind === "with-actions") {
+    const action = providerDef.resolveAction(eventType);
+    // Use Object.hasOwn rather than the `in` operator so prototype keys
+    // ("toString", "__proto__", etc.) cannot masquerade as known actions and
+    // slip past into the transformer's strict enum parse.
+    if (action === null || !Object.hasOwn(eventDef.actions, action)) {
+      console.warn(
+        `transformWebhookPayload: unknown or missing sub-action for ${provider}:${category} (eventType="${eventType}")`
+      );
+      return null;
+    }
+  }
+
   const parsed = eventDef.schema.parse(payload);
   return eventDef.transform(parsed, context, eventType);
 }

@@ -8,6 +8,7 @@ import {
   shell,
 } from "electron";
 import contextMenu from "electron-context-menu";
+import { mainEnv } from "../env/main";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
 import {
   beginSignIn,
@@ -50,19 +51,11 @@ function currentThemeVariant(): SystemThemeVariant {
 }
 
 function getApiOriginForCsp(): string {
-  return (
-    process.env.LIGHTFAST_API_URL ??
-    (process.env.NODE_ENV === "production"
-      ? "https://lightfast.ai"
-      : "http://localhost:3024")
-  );
+  return mainEnv.LIGHTFAST_API_URL;
 }
 
 function getClerkFrontendApi(): string | null {
-  const publishableKey = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  if (!publishableKey) {
-    return null;
-  }
+  const publishableKey = mainEnv.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const base64Part = publishableKey.split("_")[2];
   if (!base64Part) {
     return null;

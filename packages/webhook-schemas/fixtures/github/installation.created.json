@@ -1,119 +1,119 @@
 {
   "installation": {
-    "id": 122337251
+    "id": 124664830
   },
   "action": "created",
   "repositories": [
     {
       "id": 955790356,
       "node_id": "R_kgDOOPg0FA",
-      "name": "lightfast",
-      "full_name": "lightfastai/lightfast",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     },
     {
       "id": 981390206,
       "node_id": "R_kgDOOn7Tfg",
-      "name": "yc-apply-2025",
-      "full_name": "lightfastai/yc-apply-2025",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": true
     },
     {
       "id": 987365228,
       "node_id": "R_kgDOOtn_bA",
-      "name": "lightfast-mcp",
-      "full_name": "lightfastai/lightfast-mcp",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": true
     },
     {
       "id": 999906035,
       "node_id": "R_kgDOO5la8w",
-      "name": "chat",
-      "full_name": "lightfastai/chat",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": true
     },
     {
       "id": 1075767681,
       "node_id": "R_kgDOQB7pgQ",
-      "name": "homebrew-tap",
-      "full_name": "lightfastai/homebrew-tap",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     },
     {
       "id": 1114218563,
       "node_id": "R_kgDOQmmgQw",
-      "name": "lightfast-debug-env",
-      "full_name": "lightfastai/lightfast-debug-env",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": true
     },
     {
       "id": 1165604365,
       "node_id": "R_kgDORXm2DQ",
-      "name": "godmode",
-      "full_name": "lightfastai/godmode",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": true
     },
     {
       "id": 1170615486,
       "node_id": "R_kgDORcYsvg",
-      "name": ".github",
-      "full_name": "lightfastai/.github",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     },
     {
       "id": 1176010540,
       "node_id": "R_kgDORhh_LA",
-      "name": "viewsrc",
-      "full_name": "lightfastai/viewsrc",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     },
     {
       "id": 1191464825,
       "node_id": "R_kgDORwRPeQ",
-      "name": ".lightfast",
-      "full_name": "lightfastai/.lightfast",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     },
     {
       "id": 1196985014,
       "node_id": "R_kgDOR1iKtg",
-      "name": "climode",
-      "full_name": "lightfastai/climode",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     },
     {
       "id": 1197025726,
       "node_id": "R_kgDOR1kpvg",
-      "name": "harness",
-      "full_name": "lightfastai/harness",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     },
     {
       "id": 1201670975,
       "node_id": "R_kgDOR6ALPw",
-      "name": "metaharness",
-      "full_name": "lightfastai/metaharness",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
       "private": false
     }
   ],
   "requester": null,
   "sender": {
-    "login": "jeevanpillay",
-    "id": 169354619,
-    "node_id": "U_kgDOChglew",
+    "login": "redacted-user",
+    "id": 0,
+    "node_id": "U_REDACTED",
     "avatar_url": "https://avatars.githubusercontent.com/u/0",
     "gravatar_id": "",
-    "url": "https://api.github.com/users/jeevanpillay",
-    "html_url": "https://github.com/jeevanpillay",
-    "followers_url": "https://api.github.com/users/jeevanpillay/followers",
-    "following_url": "https://api.github.com/users/jeevanpillay/following{/other_user}",
-    "gists_url": "https://api.github.com/users/jeevanpillay/gists{/gist_id}",
-    "starred_url": "https://api.github.com/users/jeevanpillay/starred{/owner}{/repo}",
-    "subscriptions_url": "https://api.github.com/users/jeevanpillay/subscriptions",
-    "organizations_url": "https://api.github.com/users/jeevanpillay/orgs",
-    "repos_url": "https://api.github.com/users/jeevanpillay/repos",
-    "events_url": "https://api.github.com/users/jeevanpillay/events{/privacy}",
-    "received_events_url": "https://api.github.com/users/jeevanpillay/received_events",
+    "url": "https://api.github.com/users/redacted-user",
+    "html_url": "https://github.com/redacted-user",
+    "followers_url": "https://api.github.com/users/redacted-user/followers",
+    "following_url": "https://api.github.com/users/redacted-user/following{/other_user}",
+    "gists_url": "https://api.github.com/users/redacted-user/gists{/gist_id}",
+    "starred_url": "https://api.github.com/users/redacted-user/starred{/owner}{/repo}",
+    "subscriptions_url": "https://api.github.com/users/redacted-user/subscriptions",
+    "organizations_url": "https://api.github.com/users/redacted-user/orgs",
+    "repos_url": "https://api.github.com/users/redacted-user/repos",
+    "events_url": "https://api.github.com/users/redacted-user/events{/privacy}",
+    "received_events_url": "https://api.github.com/users/redacted-user/received_events",
     "type": "User",
     "user_view_type": "public",
     "site_admin": false

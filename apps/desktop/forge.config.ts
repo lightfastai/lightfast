@@ -41,18 +41,13 @@ const osxNotarize =
       }
     : undefined;
 
-const [publishOwner, publishRepo] = (
-  process.env.LIGHTFAST_DESKTOP_RELEASE_REPO ?? ""
-).split("/");
-
-const githubPublisher =
-  process.env.GITHUB_TOKEN && publishOwner && publishRepo
-    ? new PublisherGithub({
-        repository: { owner: publishOwner, name: publishRepo },
-        draft: true,
-        prerelease: process.env.LIGHTFAST_DESKTOP_RELEASE_PRERELEASE === "true",
-      })
-    : null;
+const githubPublisher = process.env.GITHUB_TOKEN
+  ? new PublisherGithub({
+      repository: { owner: "lightfastai", name: "lightfast" },
+      draft: true,
+      prerelease: process.env.LIGHTFAST_DESKTOP_RELEASE_PRERELEASE === "true",
+    })
+  : null;
 
 const config: ForgeConfig = {
   packagerConfig: {

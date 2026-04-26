@@ -100,6 +100,16 @@ export const vercel = defineWebhookProvider({
       description: "Capture successful deployment completions",
       type: "observation",
     },
+    "deployment.error": {
+      label: "Deployment Failed",
+      description: "Capture deployment failures",
+      type: "observation",
+    },
+    "deployment.canceled": {
+      label: "Deployment Canceled",
+      description: "Capture canceled deployments",
+      type: "observation",
+    },
   },
 
   // Coarse-grained events for dispatch (resolveCategory strips dot-suffix)
@@ -112,11 +122,18 @@ export const vercel = defineWebhookProvider({
       actions: {
         created: { label: "Deployment Started", weight: 30 },
         succeeded: { label: "Deployment Succeeded", weight: 40 },
+        error: { label: "Deployment Failed", weight: 50 },
+        canceled: { label: "Deployment Canceled", weight: 20 },
       },
     }),
   },
 
-  defaultSyncEvents: ["deployment.created", "deployment.succeeded"],
+  defaultSyncEvents: [
+    "deployment.created",
+    "deployment.succeeded",
+    "deployment.error",
+    "deployment.canceled",
+  ],
 
   buildProviderConfig: ({ defaultSyncEvents }) => ({
     provider: "vercel" as const,
@@ -129,6 +146,15 @@ export const vercel = defineWebhookProvider({
 
   // Wire eventType "deployment.created" → dispatch category "deployment"
   resolveCategory: (eventType) => eventType.split(".")[0] ?? eventType,
+
+  // Wire eventType "deployment.created" → sub-action "created".
+  // Returns null for any shape that isn't exactly `category.action` so that
+  // a future compound type (e.g., "deployment.error.retry") can't masquerade
+  // as a known action — the dispatcher then drops it with a warning.
+  resolveAction: (eventType) => {
+    const parts = eventType.split(".");
+    return parts.length === 2 ? (parts[1] ?? null) : null;
+  },
 
   getBaseEventType: (sourceType) => sourceType,
 

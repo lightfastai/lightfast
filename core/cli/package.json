@@ -26,14 +26,6 @@
   "bin": {
     "lightfast": "./dist/bin.mjs"
   },
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs"
-    }
-  },
   "files": [
     "dist"
   ],
@@ -44,14 +36,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@inquirer/select": "^5.1.3",
-    "@t3-oss/env-core": "catalog:",
-    "commander": "^14.0.3",
-    "eventsource-parser": "^3.0.7",
-    "open": "^11.0.0",
-    "ora": "^9.3.0",
-    "picocolors": "^1.1.0",
-    "zod": "catalog:"
+    "commander": "^14.0.3"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

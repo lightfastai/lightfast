@@ -51,7 +51,6 @@ export interface BuildInfoSnapshot {
   buildNumber: string;
   name: string;
   sparkleFeedUrl: string;
-  sparklePublicKey: string;
   version: string;
 }
 

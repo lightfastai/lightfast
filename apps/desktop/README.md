@@ -16,16 +16,24 @@ Signed-in requests go through the microfrontends proxy at
 `http://localhost:3024`, not directly to `apps/app` (4107) — the tRPC route's
 CORS only whitelists the 3024 origin in dev.
 
-### Required env var
+### Required env vars
 
-Create `apps/desktop/.env.development` (gitignored):
+Create `apps/desktop/.vercel/.env.development.local` (gitignored) by copying
+`apps/desktop/.env.example`:
 
+```bash
+cp apps/desktop/.env.example apps/desktop/.vercel/.env.development.local
+# then set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY to your dev Clerk key
 ```
-VITE_LIGHTFAST_API_URL=http://localhost:3024
-```
 
-Vite injects this into the renderer as `import.meta.env.VITE_LIGHTFAST_API_URL`
-and `DesktopTRPCProvider` uses it to build the tRPC client.
+The `with-env` script (invoked by `pnpm dev:desktop`) loads this file via
+`dotenv-cli` so the main process gets `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` on
+`process.env` — required by the t3-env validator in `src/env/main.ts`. Every
+other var has a sensible default; see `.env.example` for the full surface.
+
+For the renderer, Vite reads `.env.development` at `apps/desktop/.env.development`
+for `VITE_`-prefixed vars (`VITE_LIGHTFAST_API_URL` defaults to
+`http://localhost:3024` via the renderer env schema).
 
 ### Clerk JWT template (one-time, per Clerk environment)
 
@@ -66,15 +74,15 @@ anything else is rejected.
 
 ```bash
 # Terminal 1 — app + www + platform + microfrontends proxy at 3024
-pnpm dev:desktop-stack
+pnpm dev:full
 
 # Terminal 2 — Electron app
 pnpm dev:desktop
 ```
 
-`pnpm dev:full` alone is **not** sufficient — it only boots the Next.js apps
-at 4107/4101/4112. The microfrontends proxy at 3024 is a separate process
-launched by `dev:desktop-stack` via `concurrently`.
+`pnpm dev:full` boots all three Next.js apps (4107/4101/4112) and the
+microfrontends proxy at 3024 — Turbo 2.9's built-in microfrontends
+integration auto-injects the proxy task alongside `@lightfast/app#dev`.
 
 ### Inspect the encrypted token store
 

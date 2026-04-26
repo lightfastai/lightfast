@@ -1,10 +1,10 @@
 import { DesktopTRPCProvider } from "@repo/app-trpc/desktop";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
+import { rendererEnv } from "../../../env/renderer";
 import { AppShell } from "./app-shell";
 
-const baseUrl =
-  import.meta.env.VITE_LIGHTFAST_API_URL ?? "https://lightfast.ai";
+const baseUrl = rendererEnv.VITE_LIGHTFAST_API_URL;
 
 function Root() {
   return (

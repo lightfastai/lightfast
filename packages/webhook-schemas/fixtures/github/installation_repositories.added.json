@@ -2,7 +2,19 @@
   "installation": {
     "id": 124664830
   },
-  "action": "new_permissions_accepted",
+  "action": "added",
+  "repository_selection": "all",
+  "repositories_added": [
+    {
+      "id": 1214159906,
+      "node_id": "R_kgDOSF6cIg",
+      "name": "redacted-repo",
+      "full_name": "redacted-org/redacted-repo",
+      "private": false
+    }
+  ],
+  "repositories_removed": [],
+  "requester": null,
   "sender": {
     "login": "redacted-user",
     "id": 0,
@@ -20,7 +32,7 @@
     "repos_url": "https://api.github.com/users/redacted-user/repos",
     "events_url": "https://api.github.com/users/redacted-user/events{/privacy}",
     "received_events_url": "https://api.github.com/users/redacted-user/received_events",
-    "type": "Organization",
+    "type": "User",
     "user_view_type": "public",
     "site_admin": false
   }
