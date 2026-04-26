@@ -1,0 +1,9 @@
+can you check why suddenly the --local-apps has been re-added to @apps/app/microfrontends.json i swear i removed it (check main check commits and do all the things to figur eit out)
+
+---
+
+alright rebase or merge depending on whats best then
+
+---
+
+yes proceed
