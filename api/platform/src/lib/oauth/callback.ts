@@ -10,6 +10,7 @@ import { gatewayInstallations } from "@db/app/schema";
 import type { SourceType } from "@repo/app-providers";
 import { getProvider, providerAccountInfoSchema } from "@repo/app-providers";
 import { and, eq } from "@vendor/db";
+import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../provider-configs";
 import { writeTokenRecord } from "../token-store";
@@ -340,7 +341,7 @@ export async function processOAuthCallback(
       reactivated,
     });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "unknown";
+    const message = parseError(err);
     log.error("[oauth/callback] oauth callback failed", {
       provider: providerName,
       error: message,
