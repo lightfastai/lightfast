@@ -1,3 +1,4 @@
+import { resolveRelatedProjectUrl } from "@lightfastai/related-projects/related-projects";
 import { withRelatedProject } from "@vercel/related-projects";
 import { env } from "../env";
 
@@ -6,9 +7,11 @@ const isDevelopment =
   env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
 
 // Get the www URL dynamically based on environment
-export const wwwUrl = withRelatedProject({
+export const wwwUrl = resolveRelatedProjectUrl({
+  key: "www",
   projectName: "lightfast-www",
-  defaultHost: isDevelopment ? "http://localhost:4101" : "https://lightfast.ai",
+  fallbackHost: "https://lightfast.ai",
+  portlessName: "lightfast",
 });
 
 // Get the platform URL dynamically based on environment

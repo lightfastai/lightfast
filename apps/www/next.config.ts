@@ -1,3 +1,4 @@
+import { withPortlessMfeDev } from "@lightfastai/related-projects/next";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -99,6 +100,8 @@ const withMDX = createMDX({
   configPath: "source.config.ts",
 });
 
-export default withMicrofrontends(withMDX(config), {
-  debug: process.env.NODE_ENV === "development",
-});
+export default withPortlessMfeDev(
+  withMicrofrontends(withMDX(config), {
+    debug: process.env.NODE_ENV === "development",
+  })
+);

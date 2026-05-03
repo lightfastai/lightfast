@@ -1,12 +1,9 @@
-import { withRelatedProject } from "@vercel/related-projects";
-import { env } from "~/env";
-
-const isDevelopment =
-  env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
-  env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
+import { resolveRelatedProjectUrl } from "@lightfastai/related-projects/related-projects";
 
 // Get the app URL dynamically based on environment
-export const appUrl = withRelatedProject({
+export const appUrl = resolveRelatedProjectUrl({
+  key: "app",
   projectName: "lightfast-app",
-  defaultHost: isDevelopment ? "http://localhost:4107" : "https://lightfast.ai",
+  fallbackHost: "https://lightfast.ai",
+  portlessName: "lightfast",
 });

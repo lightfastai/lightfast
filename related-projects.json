@@ -1,0 +1,23 @@
+{
+  "$schema": "./node_modules/@lightfastai/related-projects/schema/config.schema.json",
+  "portless": {
+    "name": "lightfast",
+    "port": 1355,
+    "https": false
+  },
+  "microfrontends": {
+    "config": "apps/app/microfrontends.json"
+  },
+  "relatedProjects": {
+    "app": {
+      "projectName": "lightfast-app",
+      "fallbackHost": "https://lightfast.ai",
+      "portlessName": "lightfast"
+    },
+    "www": {
+      "projectName": "lightfast-www",
+      "fallbackHost": "https://lightfast.ai",
+      "portlessName": "lightfast"
+    }
+  }
+}
