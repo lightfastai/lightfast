@@ -1,8 +1,8 @@
-import { withBetterStack } from "@logtail/next";
 import {
   getPortlessMfeDevOrigins,
   withPortlessMfeDev,
 } from "@lightfastai/related-projects/next";
+import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import { baseConfig, sentryOptions } from "@vendor/next/config";

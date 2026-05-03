@@ -10,9 +10,7 @@ export const runtime = "nodejs";
 
 // Production remains pinned to related-project origins. In development, allow
 // the portless mesh and local desktop/browser origins.
-const allowedOrigins = new Set<string>([
-  wwwUrl,
-]);
+const allowedOrigins = new Set<string>([wwwUrl]);
 
 const isDevelopmentLocalOrigin = (origin: string) => {
   try {
