@@ -2,6 +2,9 @@
 
 import { ClientAuthBridge } from "../../../_components/client-auth-bridge";
 
+// CLI retains the GET ?token= redirect handoff. Desktop moved to POST in
+// Phase 2 of the PR #614 follow-up; the CLI side can migrate later when its
+// loopback server adds POST support.
 export function CLIAuthClient() {
   return (
     <ClientAuthBridge
@@ -19,6 +22,7 @@ export function CLIAuthClient() {
           token
         )}&state=${encodeURIComponent(state)}`;
       }}
+      mode="redirect"
       subtitle="You'll be redirected back to the CLI shortly."
       title="Authenticating…"
     />

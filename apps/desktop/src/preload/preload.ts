@@ -40,6 +40,15 @@ const bridge: LightfastBridge = {
       ipcRenderer.on(IpcChannels.authChanged, handler);
       return () => ipcRenderer.off(IpcChannels.authChanged, handler);
     },
+    pendingSigninUrl: () =>
+      ipcRenderer.invoke(IpcChannels.authPendingSigninUrl),
+    onPendingSigninUrlChanged: (listener) => {
+      const handler = (_event: IpcRendererEvent, url: string | null) =>
+        listener(url);
+      ipcRenderer.on(IpcChannels.authPendingSigninUrlChanged, handler);
+      return () =>
+        ipcRenderer.off(IpcChannels.authPendingSigninUrlChanged, handler);
+    },
   },
   buildInfo,
   sentryInit,

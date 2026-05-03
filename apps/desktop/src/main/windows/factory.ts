@@ -1,5 +1,4 @@
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import {
   BrowserWindow,
   type BrowserWindowConstructorOptions,
@@ -12,7 +11,9 @@ import { loadWindowState, trackWindowState } from "../window-state";
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
 declare const MAIN_WINDOW_VITE_NAME: string;
 
-const factoryDir = dirname(fileURLToPath(import.meta.url));
+// Vite 8 emits the main bundle as CJS, where `import.meta.url` resolves to
+// `undefined`. Use the CJS-native `__dirname` instead.
+const factoryDir = __dirname;
 const PRELOAD_PATH = join(factoryDir, "preload.js");
 const RENDERER_DIST = join(factoryDir, `../renderer/${MAIN_WINDOW_VITE_NAME}`);
 

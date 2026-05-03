@@ -12,6 +12,7 @@
     "publish": "electron-forge publish",
     "sourcemaps:upload": "node scripts/upload-sourcemaps.mjs",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
+    "test": "vitest run",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "devDependencies": {
@@ -25,20 +26,21 @@
     "@electron-forge/publisher-github": "^7.11.1",
     "@electron-forge/shared-types": "^7.11.1",
     "@electron/fuses": "^1.8.0",
-    "@electron/notarize": "^3.1.1",
-    "@electron/osx-sign": "^1.3.3",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@sentry/cli": "^2.39.1",
     "@t3-oss/env-core": "catalog:",
     "@types/electron-squirrel-startup": "^1.0.2",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",
     "@types/react-dom": "catalog:react19",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "catalog:",
     "dotenv-cli": "catalog:",
-    "electron": "^39.8.5",
+    "electron": "^41.3.0",
+    "happy-dom": "catalog:",
     "typescript": "catalog:",
-    "vite": "^5.4.11"
+    "vite": "^8.0.10",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@repo/app-trpc": "workspace:*",

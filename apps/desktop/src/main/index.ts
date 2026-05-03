@@ -10,7 +10,13 @@ import {
 import contextMenu from "electron-context-menu";
 import { mainEnv } from "../env/main";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
-import { beginSignIn } from "./auth-flow";
+import {
+  beginSignIn,
+  getPendingSigninUrl,
+  maybeAutoBeginSignIn,
+  onPendingSigninUrl,
+} from "./auth-flow";
+import { createAuthFocusGate } from "./auth-focus-gate";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
@@ -19,6 +25,7 @@ import {
 } from "./auth-store";
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
+import { registerProtocolHandler } from "./protocol";
 import { getSentryInitOptions, initSentry } from "./sentry";
 import {
   getSettings,
@@ -207,9 +214,8 @@ function registerIpcHandlers(): void {
   });
   ipcMain.handle(IpcChannels.authGetToken, () => getAuthToken());
   ipcMain.handle(IpcChannels.authSignIn, () => beginSignIn());
-  ipcMain.handle(IpcChannels.authSignOut, () => {
-    signOutAuth();
-  });
+  ipcMain.handle(IpcChannels.authSignOut, () => signOutAuth());
+  ipcMain.handle(IpcChannels.authPendingSigninUrl, () => getPendingSigninUrl());
 }
 
 function broadcastThemeUpdates(): void {
@@ -345,6 +351,7 @@ app.whenReady().then(() => {
 
   registerIpcHandlers();
   registerUpdaterIpc();
+  registerProtocolHandler(() => BrowserWindow.getAllWindows());
   broadcastThemeUpdates();
   registerGlobalShortcuts({ toggleHud: toggleHudWindow });
   applySettings(getSettings());
@@ -357,11 +364,25 @@ app.whenReady().then(() => {
   });
   void openPrimaryWindow();
 
+  const focusGate = createAuthFocusGate({
+    initiallySignedIn: Boolean(getAuthSnapshot().isSignedIn),
+    getWindows: () => BrowserWindow.getAllWindows(),
+  });
   onAuthChanged((snapshot) => {
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send(IpcChannels.authChanged, snapshot);
     }
+    focusGate(snapshot);
   });
+  onPendingSigninUrl((url) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send(IpcChannels.authPendingSigninUrlChanged, url);
+    }
+  });
+
+  // Agent-mode auto-trigger. No-op outside agent mode. Idempotent — emits
+  // auth_already_signed_in if a token is already persisted.
+  maybeAutoBeginSignIn();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

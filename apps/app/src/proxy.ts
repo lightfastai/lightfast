@@ -59,6 +59,7 @@ const isPublicRoute = createRouteMatcher([
 const isApiRoute = createRouteMatcher([
   "/v1/(.*)",
   "/api/cli/(.*)",
+  "/api/desktop/(.*)",
   "/api/inngest(.*)",
   "/api/trpc/(.*)",
 ]);
