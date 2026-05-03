@@ -2,6 +2,7 @@ import {
   getPortlessMfeDevOrigins,
   withPortlessMfeDev,
 } from "@lightfastai/related-projects/next";
+import { resolveRelatedProjectUrl } from "@lightfastai/related-projects/related-projects";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -16,14 +17,9 @@ import { env } from "./src/env";
 const portlessMfeDevOrigins = getPortlessMfeDevOrigins({
   allowMissingConfig: true,
 });
-const isDevelopmentRelatedProject =
-  env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
-  env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
 const platformUrl = withRelatedProject({
   projectName: "lightfast-platform",
-  defaultHost: isDevelopmentRelatedProject
-    ? "http://localhost:4112"
-    : "https://lightfast-platform.vercel.app",
+  defaultHost: resolveRelatedProjectUrl("lightfast-platform"),
 });
 
 const appConfig: NextConfig = merge({}, baseConfig, {

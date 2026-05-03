@@ -7,17 +7,5 @@
   },
   "microfrontends": {
     "config": "apps/app/microfrontends.json"
-  },
-  "relatedProjects": {
-    "app": {
-      "projectName": "lightfast-app",
-      "fallbackHost": "https://lightfast.ai",
-      "portlessName": "lightfast"
-    },
-    "www": {
-      "projectName": "lightfast-www",
-      "fallbackHost": "https://lightfast.ai",
-      "portlessName": "lightfast"
-    }
   }
 }
