@@ -31,12 +31,15 @@ function externalHref(req: NextRequest): string {
 }
 
 const securityHeaders = securityMiddleware(
-  composeCspOptions(
-    createNextjsCspDirectives(),
-    createClerkCspDirectives(),
-    createAnalyticsCspDirectives(),
-    createSentryCspDirectives()
-  )
+  {
+    ...composeCspOptions(
+      createNextjsCspDirectives(),
+      createClerkCspDirectives(),
+      createAnalyticsCspDirectives(),
+      createSentryCspDirectives()
+    ),
+    referrerPolicy: { policy: ["strict-origin-when-cross-origin"] },
+  }
 );
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),

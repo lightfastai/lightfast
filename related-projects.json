@@ -2,10 +2,10 @@
   "$schema": "./node_modules/@lightfastai/related-projects/schema/config.schema.json",
   "portless": {
     "name": "lightfast",
-    "port": 1355,
-    "https": false
+    "port": 443,
+    "https": true
   },
   "microfrontends": {
-    "config": "apps/app/microfrontends.json"
+    "config": "microfrontends.json"
   }
 }

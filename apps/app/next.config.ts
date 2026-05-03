@@ -15,6 +15,7 @@ import { platformUrl } from "./src/lib/related-projects";
 
 const portlessMfeDevOrigins = getPortlessMfeDevOrigins({
   allowMissingConfig: true,
+  includePort: "both",
 });
 
 const appConfig: NextConfig = merge({}, baseConfig, {
