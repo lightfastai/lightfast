@@ -8,21 +8,35 @@ import { wwwUrl } from "~/lib/related-projects";
 // Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)
 export const runtime = "nodejs";
 
-// Allowed request origins per environment — derived from related projects
-// wwwUrl resolves to the correct origin per environment via VERCEL_RELATED_PROJECTS.
-// In dev we also whitelist http://localhost:5173 (the Electron renderer's Vite
-// dev server origin) so the desktop app can call tRPC cross-origin with a
-// Bearer token.
+// Production remains pinned to related-project origins. In development, allow
+// the portless mesh and local desktop/browser origins.
 const allowedOrigins = new Set<string>([
   wwwUrl,
-  ...(env.NODE_ENV === "development"
-    ? ["http://localhost:3024", "http://localhost:5173"]
-    : []),
 ]);
+
+const isDevelopmentLocalOrigin = (origin: string) => {
+  try {
+    const url = new URL(origin);
+    return (
+      (url.protocol === "http:" || url.protocol === "https:") &&
+      (url.hostname === "localhost" || url.hostname.endsWith(".localhost"))
+    );
+  } catch {
+    return false;
+  }
+};
+
+const isAllowedOrigin = (origin: string) => {
+  if (allowedOrigins.has(origin)) {
+    return true;
+  }
+
+  return env.NODE_ENV === "development" && isDevelopmentLocalOrigin(origin);
+};
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
   const origin = req.headers.get("origin");
-  if (!(origin && allowedOrigins.has(origin))) {
+  if (!(origin && isAllowedOrigin(origin))) {
     return res;
   }
 
