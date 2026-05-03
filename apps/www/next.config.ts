@@ -103,5 +103,5 @@ const withMDX = createMDX({
 export default withPortlessMfeDev(
   withMicrofrontends(withMDX(config), {
     debug: process.env.NODE_ENV === "development",
-  }) as NextConfig & Record<string, unknown>
+  })
 );

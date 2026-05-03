@@ -164,7 +164,7 @@ const config = withSentryConfig(
 const baseExport = withPortlessMfeDev(
   withMicrofrontends(config, {
     debug: env.NODE_ENV !== "production",
-  }) as NextConfig & Record<string, unknown>
+  })
 );
 
 export default process.env.ANALYZE === "true"

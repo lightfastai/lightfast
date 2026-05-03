@@ -25,8 +25,8 @@ catalogs:
       specifier: ^5.2.2
       version: 5.2.2
     '@lightfastai/related-projects':
-      specifier: ^0.1.0
-      version: 0.1.0
+      specifier: ^0.1.1
+      version: 0.1.1
     '@neondatabase/serverless':
       specifier: ^1.1.0
       version: 1.1.0
@@ -190,7 +190,7 @@ importers:
         version: 2.31.0(@types/node@25.3.3)
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.1.1
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -402,7 +402,7 @@ importers:
         version: link:../../core/ai-sdk
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.1.1
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -855,7 +855,7 @@ importers:
     dependencies:
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.0
+        version: 0.1.1
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -4719,8 +4719,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@lightfastai/related-projects@0.1.0':
-    resolution: {integrity: sha512-j0YIpZEqy81zCzGM5OTztFYoAU0HuerHHVUOD4MDCWWuFfriSV8Kwqn0DkCFBozTxGmzELZJmb1O1k9UDbhhVQ==}
+  '@lightfastai/related-projects@0.1.1':
+    resolution: {integrity: sha512-jJhRPqn8CBO2SPZYciqRDUeLVSnespqmDxzix/7JaKD3oVTE0vhDjajc33lebRC1+HkEHD6N4e0OTp5LxRZ7rQ==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -17448,7 +17448,7 @@ snapshots:
   '@libsql/win32-x64-msvc@0.4.7':
     optional: true
 
-  '@lightfastai/related-projects@0.1.0':
+  '@lightfastai/related-projects@0.1.1':
     dependencies:
       '@vercel/related-projects': 1.1.0
       portless: 0.12.0
