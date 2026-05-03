@@ -54,13 +54,6 @@
           ]
         }
       ]
-    },
-    "lightfast-platform": {
-      "packageName": "@lightfast/platform",
-      "development": {
-        "local": 4112,
-        "fallback": "lightfast-platform.vercel.app"
-      }
     }
   }
 }
