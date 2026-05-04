@@ -31,8 +31,8 @@ catalogs:
       specifier: ^0.1.2
       version: 0.1.2
     '@lightfastai/related-projects':
-      specifier: ^0.1.10
-      version: 0.1.10
+      specifier: ^0.1.12
+      version: 0.1.12
     '@neondatabase/serverless':
       specifier: ^1.1.0
       version: 1.1.0
@@ -199,7 +199,7 @@ importers:
         version: 0.1.2
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.10
+        version: 0.1.12
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -417,7 +417,7 @@ importers:
         version: link:../../core/ai-sdk
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.10
+        version: 0.1.12
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -870,7 +870,7 @@ importers:
     dependencies:
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.10
+        version: 0.1.12
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -4740,8 +4740,8 @@ packages:
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  '@lightfastai/related-projects@0.1.10':
-    resolution: {integrity: sha512-CXP3QqfYa6qZ2S16M3qJpctPH+ec2kK1Itb6XW41zM4wIULtzDaGHfnlIbHigGKvYFHnLojIbz6wSm6O7jkfpw==}
+  '@lightfastai/related-projects@0.1.12':
+    resolution: {integrity: sha512-AbtD2iU/iQzYTynO4cOxQqcbIxo/DEoI1ZF8Fzyt0ocIdUMsJ9NKsE5JfsAFmyqdWolNS6x11QxXvLxceXJfjg==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -17470,7 +17470,7 @@ snapshots:
     dependencies:
       '@lightfastai/dev-core': 0.1.0
 
-  '@lightfastai/related-projects@0.1.10':
+  '@lightfastai/related-projects@0.1.12':
     dependencies:
       '@lightfastai/dev-core': 0.1.0
       portless: 0.12.0

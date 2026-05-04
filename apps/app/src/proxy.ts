@@ -11,25 +11,6 @@ import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middlew
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-// Reconstruct the external URL the client actually hit. Under the
-// microfrontends mesh (`apps/app/microfrontends.json`) dev traffic arrives
-// via the 3024 proxy which forwards to the app at 4107; `req.nextUrl.href`
-// reflects the internal origin. Trust `x-forwarded-*` only in dev — in prod
-// Vercel strips/signs these at the edge and `req.nextUrl.href` is already the
-// public URL.
-function externalHref(req: NextRequest): string {
-  if (process.env.NODE_ENV !== "production") {
-    const forwardedHost = req.headers.get("x-forwarded-host");
-    const forwardedProto = req.headers.get("x-forwarded-proto");
-    const host = forwardedHost ?? req.headers.get("host");
-    if (host) {
-      const proto = forwardedProto ?? req.nextUrl.protocol.replace(":", "");
-      return `${proto}://${host}${req.nextUrl.pathname}${req.nextUrl.search}`;
-    }
-  }
-  return req.nextUrl.href;
-}
-
 const securityHeaders = securityMiddleware(
   {
     ...composeCspOptions(
@@ -106,7 +87,7 @@ export default clerkMiddleware(
       });
       if (!userId) {
         const url = new URL("/sign-in", req.url);
-        url.searchParams.set("redirect_url", externalHref(req));
+        url.searchParams.set("redirect_url", req.url);
         return NextResponse.redirect(url);
       }
       if (sessionStatus === "pending" && !isPendingAllowedRoute(req)) {
