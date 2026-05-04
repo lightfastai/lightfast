@@ -1,0 +1,5 @@
+in @apps/desktop/ i want to fix the sidebar trigger icon. basically right now when collapsed it's overlayed on the close min and max buttons. wwe need to position correctly.
+
+---
+
+a little bug where the sidebar closes first and it feels like the sidebar trigger icon kinda liek is slightly left behind than appears at the correct collapsed position

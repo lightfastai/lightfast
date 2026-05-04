@@ -3,7 +3,7 @@
   "checkpoint_id": "44b673d719c3",
   "strategy": "manual-commit",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 14,
+  "checkpoints_count": 16,
   "files_touched": [
     "api/app/package.json",
     "api/app/src/inngest/client/client.ts",
@@ -66,13 +66,19 @@
       "transcript": "/44/b673d719c3/4/full.jsonl",
       "content_hash": "/44/b673d719c3/4/content_hash.txt",
       "prompt": "/44/b673d719c3/4/prompt.txt"
+    },
+    {
+      "metadata": "/44/b673d719c3/5/metadata.json",
+      "transcript": "/44/b673d719c3/5/full.jsonl",
+      "content_hash": "/44/b673d719c3/5/content_hash.txt",
+      "prompt": "/44/b673d719c3/5/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 1479,
-    "cache_creation_tokens": 1974941,
-    "cache_read_tokens": 58535548,
-    "output_tokens": 292567,
-    "api_call_count": 503
+    "input_tokens": 1512,
+    "cache_creation_tokens": 2029006,
+    "cache_read_tokens": 59338848,
+    "output_tokens": 309777,
+    "api_call_count": 521
   }
 }
