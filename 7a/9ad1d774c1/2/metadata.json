@@ -1,12 +1,13 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "7a9ad1d774c1",
+  "session_id": "94c677c5-2330-43d1-b262-bdecf36f5060",
   "strategy": "manual-commit",
+  "created_at": "2026-05-04T10:31:48.196504Z",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 11,
+  "checkpoints_count": 3,
   "files_touched": [
     "api/platform/package.json",
-    "api/platform/src/lib/provider-configs.ts",
     "api/platform/src/lib/related-projects.ts",
     "apps/app/next.config.ts",
     "apps/app/package.json",
@@ -38,10 +39,7 @@
     "apps/desktop/tsconfig.json",
     "apps/desktop/vite.renderer.config.ts",
     "apps/platform/package.json",
-    "apps/platform/src/app/(trpc)/api/trpc/[trpc]/route.ts",
     "apps/platform/src/lib/related-projects.ts",
-    "apps/www/src/app/(app)/(content)/docs/(api)/layout.tsx",
-    "apps/www/src/app/(app)/(content)/docs/(general)/layout.tsx",
     "apps/www/src/lib/related-projects.ts",
     "pnpm-lock.yaml",
     "pnpm-workspace.yaml",
@@ -50,31 +48,31 @@
     "scripts/with-desktop-env.mjs",
     "scripts/with-dev-services-env.mjs"
   ],
-  "sessions": [
-    {
-      "metadata": "/7a/9ad1d774c1/0/metadata.json",
-      "transcript": "/7a/9ad1d774c1/0/full.jsonl",
-      "content_hash": "/7a/9ad1d774c1/0/content_hash.txt",
-      "prompt": "/7a/9ad1d774c1/0/prompt.txt"
-    },
-    {
-      "metadata": "/7a/9ad1d774c1/1/metadata.json",
-      "transcript": "/7a/9ad1d774c1/1/full.jsonl",
-      "content_hash": "/7a/9ad1d774c1/1/content_hash.txt",
-      "prompt": "/7a/9ad1d774c1/1/prompt.txt"
-    },
-    {
-      "metadata": "/7a/9ad1d774c1/2/metadata.json",
-      "transcript": "/7a/9ad1d774c1/2/full.jsonl",
-      "content_hash": "/7a/9ad1d774c1/2/content_hash.txt",
-      "prompt": "/7a/9ad1d774c1/2/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "37e815697042",
+  "checkpoint_transcript_start": 16,
+  "transcript_lines_at_start": 16,
   "token_usage": {
-    "input_tokens": 1197,
-    "cache_creation_tokens": 283730,
-    "cache_read_tokens": 5603628,
-    "output_tokens": 109810,
-    "api_call_count": 75
+    "input_tokens": 840,
+    "cache_creation_tokens": 133597,
+    "cache_read_tokens": 836193,
+    "output_tokens": 21962,
+    "api_call_count": 13
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-04T10:31:47.907403Z",
+    "agent_lines": 84,
+    "agent_removed": 259,
+    "human_added": 118,
+    "human_modified": 39,
+    "human_removed": 0,
+    "total_committed": 240,
+    "total_lines_changed": 504,
+    "agent_percentage": 68.05555555555556,
+    "metric_version": 2
   }
 }
