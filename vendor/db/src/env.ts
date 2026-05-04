@@ -14,13 +14,17 @@ export const dbEnv = createEnv({
           message: "DATABASE_HOST should be a hostname, not a credential",
         }
       ),
-    DATABASE_USERNAME: z.string().startsWith("pscale_api_"),
-    DATABASE_PASSWORD: z.string().startsWith("pscale_pw_"),
+    DATABASE_PORT: z.coerce.number().int().positive().optional(),
+    DATABASE_USERNAME: z.string().min(1),
+    DATABASE_PASSWORD: z.string().min(1),
+    DATABASE_NAME: z.string().min(1).optional(),
   },
   runtimeEnv: {
     DATABASE_HOST: process.env.DATABASE_HOST,
+    DATABASE_PORT: process.env.DATABASE_PORT,
     DATABASE_USERNAME: process.env.DATABASE_USERNAME,
     DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
+    DATABASE_NAME: process.env.DATABASE_NAME,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

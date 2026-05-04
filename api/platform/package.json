@@ -56,6 +56,7 @@
     "inngest": "catalog:",
     "jose": "catalog:",
     "nanoid": "catalog:",
+    "postgres": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

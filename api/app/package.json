@@ -52,6 +52,7 @@
     "@vendor/observability": "workspace:*",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
+    "postgres": "catalog:",
     "superjson": "catalog:",
     "yaml": "^2.8.3",
     "zod": "catalog:"

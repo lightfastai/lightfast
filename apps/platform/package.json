@@ -10,7 +10,7 @@
     "dev": "pnpm with-env next dev --port 4112 --turbo",
     "start": "pnpm with-env next start -p 4112",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.vercel/.env.development.local --"
+    "with-env": "dotenv -e ./.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --"
   },
   "dependencies": {
     "@api/platform": "workspace:*",

@@ -14,7 +14,7 @@
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.vercel/.env.development.local --"
+    "with-env": "dotenv -e ./.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --"
   },
   "dependencies": {
     "@ai-sdk/gateway": "catalog:",
@@ -72,6 +72,7 @@
     "lucide-react": "catalog:",
     "next": "catalog:next16",
     "nuqs": "^2.8.9",
+    "postgres": "catalog:",
     "react": "19.2.4",
     "react-confetti": "^6.4.0",
     "react-dom": "19.2.4",

@@ -37,7 +37,7 @@
     "db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
     "db:introspect": "pnpm with-env drizzle-kit introspect --config=./src/drizzle.config.ts",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
+    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --"
   },
   "dependencies": {
     "@neondatabase/serverless": "catalog:",
@@ -47,6 +47,7 @@
     "@vendor/db": "workspace:*",
     "@vendor/lib": "workspace:*",
     "drizzle-orm": "catalog:",
+    "postgres": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
