@@ -1,0 +1,5 @@
+i think i've decied to change how our settings page works.
+
+go investigate how Dia browser settings work. it's kinda like it's own small panel [Image #3]
+
+feels cleaner and simpler to manage.
