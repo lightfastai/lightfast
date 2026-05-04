@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "b0fff29396a2",
+  "session_id": "6f468c3d-a4e7-4175-a3da-ee59fe0a4b63",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-04T09:03:17.959242Z",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/app/package.json",
+    "apps/app/src/proxy.ts",
+    "lightfast.dev.json",
+    "package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "scripts/dev-services.mjs"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "6b4f03b2c17b",
+  "token_usage": {
+    "input_tokens": 40,
+    "cache_creation_tokens": 196313,
+    "cache_read_tokens": 3240197,
+    "output_tokens": 46359,
+    "api_call_count": 32
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-04T09:03:17.148368Z",
+    "agent_lines": 557,
+    "agent_removed": 1,
+    "human_added": 34,
+    "human_modified": 60,
+    "human_removed": 0,
+    "total_committed": 636,
+    "total_lines_changed": 658,
+    "agent_percentage": 84.80243161094225,
+    "metric_version": 2
+  }
+}
