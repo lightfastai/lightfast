@@ -35,6 +35,7 @@
   "dependencies": {
     "@ai-sdk/gateway": "catalog:",
     "@db/app": "workspace:*",
+    "@lightfastai/dev-core": "catalog:",
     "@repo/app-embed": "workspace:*",
     "@repo/app-encryption": "workspace:*",
     "@repo/app-pinecone": "workspace:*",

@@ -2,13 +2,18 @@ import { githubEnv } from "@repo/app-octokit-github/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
+import { env as inngestEnv } from "@vendor/inngest/env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv],
+  extends: [vercel(), clerkEnvBase, sentryEnv, githubEnv, inngestEnv],
   shared: {},
   server: {
+    VERCEL_ENV: z
+      .enum(["development", "preview", "production"])
+      .default("development"),
+
     /**
      * Encryption key for decrypting OAuth tokens from database
      * Must match the key used by apps/app to encrypt tokens

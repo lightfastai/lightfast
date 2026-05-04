@@ -14,7 +14,9 @@ catalog:
   '@clerk/nextjs': 7.2.3
   '@clerk/shared': 4.8.2
   '@hookform/resolvers': ^5.2.2
-  '@lightfastai/related-projects': ^0.1.6
+  '@lightfastai/dev-core': ^0.1.0
+  '@lightfastai/dev-services': ^0.1.2
+  '@lightfastai/related-projects': ^0.1.10
   '@neondatabase/serverless': ^1.1.0
   '@noble/ed25519': ^3.1.0
   '@noble/hashes': ^2.2.0
@@ -40,7 +42,7 @@ catalog:
   geist: ^1.7.0
   hono: ^4.12.14
   import-in-the-middle: ^3.0.1
-  inngest: ^3.52.6
+  inngest: ^3.54.2
   jose: ^6.2.2
   lucide-react: ^1.8.0
   nanoid: ^5.1.9

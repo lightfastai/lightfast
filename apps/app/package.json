@@ -11,7 +11,6 @@
     "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
     "dev": "pnpm with-env portless run next dev --turbo",
-    "dev:inngest": "npx inngest-cli@latest dev -u http://localhost:3024/api/inngest -u http://localhost:4112/api/inngest",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
