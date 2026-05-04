@@ -1,0 +1,21 @@
+create new branch for the changes in lcoal vs repo. note: we are omitting like stuff like skills, thougths folder, agents.md. just focusing on code stuff. also investigate what are the main changes
+
+---
+
+omit anything any related to the core dev-lifecycle changes
+
+---
+
+b
+
+---
+
+1.
+
+---
+
+1.
+
+---
+
+bro why tf are you reverting our functionality. keep it

@@ -1,0 +1,26 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "882bc13625fb",
+  "strategy": "manual-commit",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "packages/app-remotion/src/compositions/logo/logo.tsx",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/88/2bc13625fb/0/metadata.json",
+      "transcript": "/88/2bc13625fb/0/full.jsonl",
+      "content_hash": "/88/2bc13625fb/0/content_hash.txt",
+      "prompt": "/88/2bc13625fb/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 337,
+    "cache_creation_tokens": 231980,
+    "cache_read_tokens": 4053367,
+    "output_tokens": 51994,
+    "api_call_count": 52
+  }
+}
