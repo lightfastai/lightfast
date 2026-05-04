@@ -552,6 +552,34 @@ export const MANIFEST: CompositionManifest = {
         },
       ],
     },
+    "logo-1024-light": {
+      type: "still",
+      component: "Logo",
+      width: 1024,
+      height: 1024,
+      props: { variant: "light" },
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/logos",
+          filename: "logo-1024-light.png",
+        },
+      ],
+    },
+    "logo-1024-transparent-light": {
+      type: "still",
+      component: "Logo",
+      width: 1024,
+      height: 1024,
+      props: { transparent: true, variant: "light" },
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/logos",
+          filename: "logo-1024-transparent-light.png",
+        },
+      ],
+    },
 
     // ── Social Banners ─────────────────────────────────────────────
     "logo-linkedin-banner": {
