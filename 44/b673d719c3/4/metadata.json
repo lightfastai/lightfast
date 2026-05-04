@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "44b673d719c3",
+  "session_id": "88d7243c-e499-4ca1-8527-fa325e9f623c",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-04T10:10:47.945306Z",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "apps/desktop/src/main/auth-flow.ts",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/preload/preload.ts",
+    "apps/desktop/src/shared/ipc.ts",
+    "packages/app-remotion/src/compositions/logo/logo.tsx",
+    "packages/app-remotion/src/manifest.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "b99f25bc09eb",
+  "token_usage": {
+    "input_tokens": 461,
+    "cache_creation_tokens": 1301613,
+    "cache_read_tokens": 41835185,
+    "output_tokens": 189099,
+    "api_call_count": 333
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-04T10:10:45.673556Z",
+    "agent_lines": 56,
+    "agent_removed": 33,
+    "human_added": 420,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 476,
+    "total_lines_changed": 687,
+    "agent_percentage": 12.954876273653564,
+    "metric_version": 2
+  }
+}
