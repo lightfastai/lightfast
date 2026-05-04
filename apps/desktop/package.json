@@ -6,7 +6,7 @@
   "main": ".vite/build/bootstrap.js",
   "scripts": {
     "clean": "rm -rf out .vite .cache",
-    "dev": "pnpm with-env electron-forge start",
+    "dev": "pnpm with-env node ../../scripts/with-desktop-env.mjs -- electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
