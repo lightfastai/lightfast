@@ -1,0 +1,53 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "3ee76aa56115",
+  "session_id": "6f468c3d-a4e7-4175-a3da-ee59fe0a4b63",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-04T08:14:33.290502Z",
+  "branch": "main",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "api/app/package.json",
+    "api/platform/package.json",
+    "apps/app/package.json",
+    "apps/platform/package.json",
+    "db/app/package.json",
+    "db/app/src/client.ts",
+    "db/app/src/drizzle.config.ts",
+    "lightfast.dev.json",
+    "package.json",
+    "packages/app-test-data/package.json",
+    "packages/webhook-schemas/package.json",
+    "pnpm-lock.yaml",
+    "pnpm-workspace.yaml",
+    "scripts/dev-services.mjs",
+    "scripts/with-dev-services-env.mjs",
+    "vendor/db/package.json",
+    "vendor/db/src/env.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "f8d1702fb880",
+  "token_usage": {
+    "input_tokens": 32,
+    "cache_creation_tokens": 192513,
+    "cache_read_tokens": 2465220,
+    "output_tokens": 44506,
+    "api_call_count": 28
+  },
+  "session_metrics": {
+    "turn_count": 2
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-04T08:14:32.404732Z",
+    "agent_lines": 772,
+    "agent_removed": 18,
+    "human_added": 3,
+    "human_modified": 20,
+    "human_removed": 0,
+    "total_committed": 795,
+    "total_lines_changed": 813,
+    "agent_percentage": 97.17097170971711,
+    "metric_version": 2
+  }
+}
