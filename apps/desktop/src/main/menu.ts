@@ -3,10 +3,10 @@ import {
   BrowserWindow,
   Menu,
   type MenuItemConstructorOptions,
-  shell,
 } from "electron";
 import { ACCELERATORS, type AcceleratorName } from "../shared/accelerators";
 import { IpcChannels } from "../shared/ipc";
+import { openAppOrigin } from "./app-url";
 import enLocale from "./locales/en.json";
 
 type LocaleKeys = keyof typeof enLocale;
@@ -163,7 +163,7 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
       {
         label: t("help.learnMore"),
         click: () => {
-          void shell.openExternal("https://lightfast.ai");
+          void openAppOrigin();
         },
       },
     ],

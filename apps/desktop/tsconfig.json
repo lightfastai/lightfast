@@ -7,7 +7,6 @@
     "moduleResolution": "Bundler"
   },
   "include": [
-    "src/env/renderer.ts",
     "src/renderer/**/*.ts",
     "src/renderer/**/*.tsx",
     "src/shared/**/*.ts"

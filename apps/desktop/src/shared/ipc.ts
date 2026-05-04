@@ -5,7 +5,7 @@ const channel = (name: string) => `${IPC_NAMESPACE}:${name}` as const;
 export const IpcChannels = {
   getSystemThemeVariant: channel("get-system-theme-variant"),
   systemThemeVariantUpdated: channel("system-theme-variant-updated"),
-  openExternal: channel("open-external"),
+  openApp: channel("open-app"),
   openWindow: channel("open-window"),
   getBuildInfoSync: channel("get-build-info-sync"),
   getSentryInitOptionsSync: channel("get-sentry-init-options-sync"),
@@ -23,6 +23,7 @@ export const IpcChannels = {
   authSignIn: channel("auth-sign-in"),
   authSignOut: channel("auth-sign-out"),
   authChanged: channel("auth-changed"),
+  runtimeConfigSync: channel("runtime-config-sync"),
 } as const;
 
 export type IpcChannel = (typeof IpcChannels)[keyof typeof IpcChannels];
@@ -97,7 +98,12 @@ export interface AuthSnapshot {
   isSignedIn: boolean;
 }
 
+export interface RuntimeConfigSnapshot {
+  appOrigin: string;
+}
+
 export interface LightfastBridge {
+  appOrigin: string;
   auth: {
     snapshot: AuthSnapshot;
     getToken: () => Promise<string | null>;
@@ -117,7 +123,7 @@ export interface LightfastBridge {
   onUpdaterStatusChanged: (
     listener: (status: UpdaterStatusSnapshot) => void
   ) => () => void;
-  openExternal: (url: string) => Promise<void>;
+  openApp: () => Promise<void>;
   openWindow: (kind: WindowKind) => Promise<void>;
   platform: Platform;
   reportError: (payload: RendererErrorPayload) => void;

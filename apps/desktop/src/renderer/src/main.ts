@@ -108,7 +108,7 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  "[data-sidebar-trigger], [data-sidebar-trigger-collapsed]"
+  "[data-sidebar-trigger]"
 )) {
   button.addEventListener("click", () => sidebar.toggle());
 }

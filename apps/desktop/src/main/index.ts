@@ -8,8 +8,8 @@ import {
   shell,
 } from "electron";
 import contextMenu from "electron-context-menu";
-import { mainEnv } from "../env/main";
 import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
+import { openAppOrigin } from "./app-url";
 import { beginSignIn } from "./auth-flow";
 import {
   getAuthSnapshot,
@@ -19,6 +19,7 @@ import {
 } from "./auth-store";
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
+import { getRuntimeConfig } from "./runtime-config";
 import { getSentryInitOptions, initSentry } from "./sentry";
 import {
   getSettings,
@@ -43,43 +44,34 @@ function currentThemeVariant(): SystemThemeVariant {
   return nativeTheme.shouldUseDarkColors ? "dark" : "light";
 }
 
-function getApiOriginForCsp(): string {
-  return mainEnv.LIGHTFAST_API_URL;
+function rendererDevServerOrigin(): string | null {
+  return MAIN_WINDOW_VITE_DEV_SERVER_URL
+    ? new URL(MAIN_WINDOW_VITE_DEV_SERVER_URL).origin
+    : null;
 }
 
-function getClerkFrontendApi(): string | null {
-  const publishableKey = mainEnv.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
-  const base64Part = publishableKey.split("_")[2];
-  if (!base64Part) {
-    return null;
-  }
+function openAllowedExternalUrl(url: string): void {
   try {
-    const domain = Buffer.from(base64Part, "base64")
-      .toString("utf-8")
-      .replace(/\$$/, "");
-    if (!domain) {
-      return null;
+    const parsed = new URL(url);
+    if (ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) {
+      void shell.openExternal(url);
     }
-    return `https://${domain}`;
   } catch {
-    return null;
+    // ignore malformed urls
   }
 }
 
 function buildContentSecurityPolicy(): string {
-  const apiOrigin = getApiOriginForCsp();
-  const clerkOrigin = getClerkFrontendApi();
-  const extraConnect = [apiOrigin, clerkOrigin].filter(Boolean).join(" ");
+  const appOrigin = getRuntimeConfig().appOrigin;
 
-  const devServer = MAIN_WINDOW_VITE_DEV_SERVER_URL;
-  if (devServer) {
-    const origin = new URL(devServer).origin;
+  const origin = rendererDevServerOrigin();
+  if (origin) {
     const wsOrigin = origin.replace(/^http/, "ws");
     return [
       `default-src 'self' ${origin}`,
       `script-src 'self' 'unsafe-inline' ${origin}`,
       `style-src 'self' 'unsafe-inline' ${origin}`,
-      `connect-src 'self' ${origin} ${wsOrigin} ${extraConnect}`.trim(),
+      `connect-src 'self' ${origin} ${wsOrigin} ${appOrigin}`,
       `img-src 'self' data: blob: ${origin}`,
       `font-src 'self' data: ${origin}`,
     ].join("; ");
@@ -88,7 +80,7 @@ function buildContentSecurityPolicy(): string {
     "default-src 'self'",
     "script-src 'self'",
     "style-src 'self' 'unsafe-inline'",
-    `connect-src 'self' ${extraConnect}`.trim(),
+    `connect-src 'self' ${appOrigin}`,
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
   ].join("; ");
@@ -108,21 +100,12 @@ function applyContentSecurityPolicy(): void {
 
 function hardenContents(contents: Electron.WebContents): void {
   contents.setWindowOpenHandler(({ url }) => {
-    try {
-      const parsed = new URL(url);
-      if (ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) {
-        void shell.openExternal(url);
-      }
-    } catch {
-      // ignore malformed urls
-    }
+    openAllowedExternalUrl(url);
     return { action: "deny" };
   });
 
   contents.on("will-navigate", (event, url) => {
-    const rendererOrigin = MAIN_WINDOW_VITE_DEV_SERVER_URL
-      ? new URL(MAIN_WINDOW_VITE_DEV_SERVER_URL).origin
-      : null;
+    const rendererOrigin = rendererDevServerOrigin();
     try {
       const target = new URL(url);
       if (rendererOrigin && target.origin === rendererOrigin) {
@@ -132,9 +115,7 @@ function hardenContents(contents: Electron.WebContents): void {
         return;
       }
       event.preventDefault();
-      if (ALLOWED_EXTERNAL_PROTOCOLS.has(target.protocol)) {
-        void shell.openExternal(url);
-      }
+      openAllowedExternalUrl(url);
     } catch {
       event.preventDefault();
     }
@@ -152,6 +133,10 @@ function registerIpcHandlers(): void {
 
   ipcMain.on(IpcChannels.getSettingsSync, (event) => {
     event.returnValue = getSettings();
+  });
+
+  ipcMain.on(IpcChannels.runtimeConfigSync, (event) => {
+    event.returnValue = getRuntimeConfig();
   });
 
   ipcMain.handle(IpcChannels.updateSetting, (_event, payload: unknown) => {
@@ -173,18 +158,8 @@ function registerIpcHandlers(): void {
     (): SystemThemeVariant => currentThemeVariant()
   );
 
-  ipcMain.handle(IpcChannels.openExternal, async (_event, url: unknown) => {
-    if (typeof url !== "string") {
-      return;
-    }
-    try {
-      const parsed = new URL(url);
-      if (ALLOWED_EXTERNAL_PROTOCOLS.has(parsed.protocol)) {
-        await shell.openExternal(url);
-      }
-    } catch {
-      // ignore malformed urls
-    }
+  ipcMain.handle(IpcChannels.openApp, async () => {
+    await openAppOrigin();
   });
 
   ipcMain.on(IpcChannels.rendererError, (_event, payload: unknown) => {

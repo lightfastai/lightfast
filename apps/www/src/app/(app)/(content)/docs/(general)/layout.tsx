@@ -9,7 +9,7 @@ import { DocsMobileNav } from "~/app/(app)/(content)/docs/_components/docs-mobil
 import { DocsSidebar } from "~/app/(app)/(content)/docs/_components/docs-sidebar";
 import { Search } from "~/app/(app)/(content)/docs/_components/search";
 import { NavLink } from "~/components/nav-link";
-import { appUrl } from "~/lib/related-projects";
+import { appUrl } from "~/lib/project-urls";
 
 export default function GeneralDocsLayout({
   children,

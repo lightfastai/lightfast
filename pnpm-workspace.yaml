@@ -16,9 +16,8 @@ catalog:
   '@hookform/resolvers': ^5.2.2
   '@lightfastai/dev-cli': ^0.1.2
   '@lightfastai/dev-core': ^0.1.1
-  '@lightfastai/dev-proxy': ^0.1.22
+  '@lightfastai/dev-proxy': ^0.1.23
   '@lightfastai/dev-services': ^0.1.6
-  '@lightfastai/related-projects': ^0.1.18
   '@neondatabase/serverless': ^1.1.0
   '@noble/ed25519': ^3.1.0
   '@noble/hashes': ^2.2.0
@@ -32,7 +31,6 @@ catalog:
   '@trpc/tanstack-react-query': ^11.16.0
   '@types/node': ^24.9.1
   '@upstash/redis': ^1.37.0
-  '@vercel/related-projects': ^1.0.1
   '@vitest/coverage-v8': ^4.1.4
   '@vitest/expect': ^4.1.4
   ai: 5.0.52

@@ -63,7 +63,6 @@
     "@vendor/seo": "workspace:*",
     "@vendor/upstash": "workspace:^",
     "@vercel/microfrontends": "^2.3.2",
-    "@vercel/related-projects": "catalog:",
     "@vercel/toolbar": "^0.2.2",
     "ai": "catalog:",
     "date-fns": "^4.1.0",

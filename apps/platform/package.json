@@ -15,6 +15,7 @@
   "dependencies": {
     "@api/platform": "workspace:*",
     "@db/app": "workspace:*",
+    "@lightfastai/dev-proxy": "catalog:",
     "@logtail/next": "^0.3.1",
     "@repo/app-providers": "workspace:*",
     "@sentry/nextjs": "catalog:",
@@ -26,7 +27,6 @@
     "@vendor/observability": "workspace:*",
     "@vendor/security": "workspace:*",
     "@vendor/upstash": "workspace:*",
-    "@vercel/related-projects": "catalog:",
     "@vercel/toolbar": "^0.2.2",
     "lodash.merge": "^4.6.2",
     "next": "catalog:next16",

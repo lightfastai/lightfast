@@ -31,14 +31,11 @@ catalogs:
       specifier: ^0.1.1
       version: 0.1.1
     '@lightfastai/dev-proxy':
-      specifier: ^0.1.22
-      version: 0.1.22
+      specifier: ^0.1.23
+      version: 0.1.23
     '@lightfastai/dev-services':
       specifier: ^0.1.6
       version: 0.1.6
-    '@lightfastai/related-projects':
-      specifier: ^0.1.18
-      version: 0.1.18
     '@neondatabase/serverless':
       specifier: ^1.1.0
       version: 1.1.0
@@ -78,9 +75,6 @@ catalogs:
     '@upstash/redis':
       specifier: ^1.37.0
       version: 1.37.0
-    '@vercel/related-projects':
-      specifier: ^1.0.1
-      version: 1.0.1
     '@vitest/coverage-v8':
       specifier: ^4.1.4
       version: 4.1.4
@@ -211,7 +205,7 @@ importers:
         version: 0.1.1
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.1.22
+        version: 0.1.23
       '@lightfastai/dev-services':
         specifier: 'catalog:'
         version: 0.1.6
@@ -327,6 +321,9 @@ importers:
       '@lightfastai/dev-core':
         specifier: 'catalog:'
         version: 0.1.1
+      '@lightfastai/dev-proxy':
+        specifier: 'catalog:'
+        version: 0.1.23
       '@repo/app-embed':
         specifier: workspace:*
         version: link:../../packages/app-embed
@@ -369,9 +366,6 @@ importers:
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
-      '@vercel/related-projects':
-        specifier: 'catalog:'
-        version: 1.0.1
       ai:
         specifier: 'catalog:'
         version: 5.0.52(zod@4.3.6)
@@ -438,7 +432,7 @@ importers:
         version: link:../../core/ai-sdk
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.1.22
+        version: 0.1.23
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -553,9 +547,6 @@ importers:
       '@vercel/microfrontends':
         specifier: ^2.3.2
         version: 2.3.2(@vercel/analytics@2.0.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(@vercel/speed-insights@2.0.0(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vite@7.1.10(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-      '@vercel/related-projects':
-        specifier: 'catalog:'
-        version: 1.0.1
       '@vercel/toolbar':
         specifier: ^0.2.2
         version: 0.2.2(@vercel/analytics@2.0.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(@vercel/speed-insights@2.0.0(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vite@7.1.10(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -665,9 +656,9 @@ importers:
 
   apps/desktop:
     dependencies:
-      '@lightfastai/related-projects':
-        specifier: 'catalog:'
-        version: 0.1.18
+      '@radix-ui/react-dropdown-menu':
+        specifier: ^2.1.15
+        version: 2.1.16(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@repo/app-trpc':
         specifier: workspace:*
         version: link:../../packages/app-trpc
@@ -716,6 +707,9 @@ importers:
       electron-squirrel-startup:
         specifier: ^1.0.1
         version: 1.0.1
+      lucide-react:
+        specifier: 'catalog:'
+        version: 1.8.0(react@19.2.5)
       react:
         specifier: ^19.2.5
         version: 19.2.5
@@ -816,6 +810,9 @@ importers:
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
+      '@lightfastai/dev-proxy':
+        specifier: 'catalog:'
+        version: 0.1.23
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -849,9 +846,6 @@ importers:
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
-      '@vercel/related-projects':
-        specifier: 'catalog:'
-        version: 1.0.1
       '@vercel/toolbar':
         specifier: ^0.2.2
         version: 0.2.2(@vercel/analytics@2.0.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(@vercel/speed-insights@2.0.0(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vite@7.1.10(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
@@ -897,7 +891,7 @@ importers:
     dependencies:
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.1.22
+        version: 0.1.23
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -4775,26 +4769,17 @@ packages:
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  '@lightfastai/dev-core@0.1.0':
-    resolution: {integrity: sha512-96MJCbVJQc5qNZtYx7N0FyhupVCehZO/PcFGWel1yPmzRAI6Kv5ifTceGOzUOT9JTimX+6Wv7jepTQEVtR1rkw==}
-    engines: {node: '>=22.0.0'}
-
   '@lightfastai/dev-core@0.1.1':
     resolution: {integrity: sha512-y151EVoyxzroIl9buTHucPJuMxmbrTDnohu1lQbxpMFnlk9RiccEJxgFmTOwc+euTvPletjtlkzgUvpznznIAw==}
     engines: {node: '>=22.0.0'}
 
-  '@lightfastai/dev-proxy@0.1.22':
-    resolution: {integrity: sha512-lBAaVrSS70LaxAYAjeTuXk4LZLU9Xh4b1EDGrq4G4HATDTZrit0jReiuEwsq0UPfKXgFbjc9Yr6u257Mlh6B5w==}
+  '@lightfastai/dev-proxy@0.1.23':
+    resolution: {integrity: sha512-YaAmfyJqmLtzXlNNKNql0UrDVvqXpSeZwbxs4EJ+Y0O4lwtkIk+NJ25O/tOofJmLTBBni751RJy480HtOrhXJg==}
     engines: {node: '>=22.0.0'}
 
   '@lightfastai/dev-services@0.1.6':
     resolution: {integrity: sha512-P1Q+zz8Ck6VB3hA0VgoCc8QVbYKx42lpaiHPn0JMXsgbh0C2qJDI8kmrg7c1ql0SHReeb4ii05BhMORoGLmKDQ==}
     engines: {node: '>=22.0.0'}
-
-  '@lightfastai/related-projects@0.1.18':
-    resolution: {integrity: sha512-jrZcWrEPf2NmBwxhNIhTLXPVSOc6gVOQNOg8s9wWjQPWykBmPwnjkZMhLp7dMQDKX1P7BvZ8b58BBW1eBAC3UQ==}
-    engines: {node: '>=22.0.0'}
-    hasBin: true
 
   '@listr2/prompt-adapter-inquirer@2.0.22':
     resolution: {integrity: sha512-hV36ZoY+xKL6pYOt1nPNnkciFkn89KZwqLhAFzJvYysAvL5uBQdiADZx/8bIDXIukzzwG0QlPYolgMzQUtKgpQ==}
@@ -8991,9 +8976,6 @@ packages:
   '@vercel/redwood@2.4.12':
     resolution: {integrity: sha512-8kJ7eEerI4iMpKVRxQCsnxiIwRVsWtyirEbYb4erCqqsJymTu/xrjhsfAUuzeP8qkuYGP82MJVK+hpKlFtsjGw==}
 
-  '@vercel/related-projects@1.0.1':
-    resolution: {integrity: sha512-gCgaY/LHQXue7XaviZqbr1ZGQOhFmBL13fBYkt4Dr+fONyoHH/awH6steYfkwPQyi/479mZ0mQax84p0/bDs5A==}
-
   '@vercel/remix-builder@5.7.2':
     resolution: {integrity: sha512-bfStsDBQramYbWugelfyp1szTuDOLQ+ZELvgA9cpYc4FucgCrDy/bpvMMvsjiDACB9PoDzLrG//ZBgsic9yAhg==}
 
@@ -9254,9 +9236,6 @@ packages:
     resolution: {integrity: sha512-YCS/JNFAUyr5vAuhk1DWm1CBxRHW9LbJ2ozWeemrIqpbsqKjHVxYPyi5GC0rjZIT5JxJ3virVTS8wk4i/Z+krw==}
     peerDependencies:
       ajv: ^8.8.2
-
-  ajv@6.14.0:
-    resolution: {integrity: sha512-IWrosm/yrn43eiKqkfkHis7QioDleaXQHdDVPKg0FSwwd/DuvyX79TZnFOnYpB7dcsFAMmtFztZuXPDvSePkFw==}
 
   ajv@8.18.0:
     resolution: {integrity: sha512-PlXPeEWMXMZ7sPYOHqmDyCJzcfNrUr3fGNKtezX14ykXOEIvyK81d+qydx89KY5O71FKMPaQ2vBfBFI5NHR63A==}
@@ -10787,9 +10766,6 @@ packages:
     resolution: {integrity: sha512-7MptL8U0cqcFdzIzwOTHoilX9x5BrNqye7Z/LuC7kCMRio1EMSyqRK3BEAUD7sXRq4iT4AzTVuZdhgQ2TCvYLg==}
     engines: {node: '>=8.6.0'}
 
-  fast-json-stable-stringify@2.1.0:
-    resolution: {integrity: sha512-lhd/wF+Lk98HZoTCtlVraHtfh5XYijIjalXck7saUtuanSDyLMxnHhSXEDJqHxD7msR8D0uCmqlkwjCV8xvwHw==}
-
   fast-png@6.4.0:
     resolution: {integrity: sha512-kAqZq1TlgBjZcLr5mcN6NP5Rv4V2f22z00c3g8vRrwkcqjerx7BEhPbOnWCPqaHUl2XWQBJQvOT/FQhdMT7X/Q==}
 
@@ -11880,9 +11856,6 @@ packages:
 
   json-schema-to-ts@1.6.4:
     resolution: {integrity: sha512-pR4yQ9DHz6itqswtHCm26mw45FSNfQ9rEQjosaZErhn5J3J2sIViQiz8rDaezjKAhFGpmsoczYVBgGHzFw/stA==}
-
-  json-schema-traverse@0.4.1:
-    resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
 
   json-schema-traverse@1.0.0:
     resolution: {integrity: sha512-NM8/P9n3XjXhIZn1lLhkFaACTOURQXjWhV4BA/RnOv8xvgqtqpAX9IO4mRQxSx1Rlo4tqzeqb0sOlruaOy3dug==}
@@ -17518,14 +17491,12 @@ snapshots:
   '@lightfastai/dev-cli@0.1.2':
     dependencies:
       '@lightfastai/dev-core': 0.1.1
-      '@lightfastai/dev-proxy': 0.1.22
+      '@lightfastai/dev-proxy': 0.1.23
       '@lightfastai/dev-services': 0.1.6
-
-  '@lightfastai/dev-core@0.1.0': {}
 
   '@lightfastai/dev-core@0.1.1': {}
 
-  '@lightfastai/dev-proxy@0.1.22':
+  '@lightfastai/dev-proxy@0.1.23':
     dependencies:
       '@lightfastai/dev-core': 0.1.1
       portless: 0.12.0
@@ -17533,11 +17504,6 @@ snapshots:
   '@lightfastai/dev-services@0.1.6':
     dependencies:
       '@lightfastai/dev-core': 0.1.1
-
-  '@lightfastai/related-projects@0.1.18':
-    dependencies:
-      '@lightfastai/dev-core': 0.1.0
-      portless: 0.12.0
 
   '@listr2/prompt-adapter-inquirer@2.0.22(@inquirer/prompts@6.0.1)':
     dependencies:
@@ -22301,10 +22267,6 @@ snapshots:
       - rollup
       - supports-color
 
-  '@vercel/related-projects@1.0.1':
-    optionalDependencies:
-      ajv: 6.14.0
-
   '@vercel/remix-builder@5.7.2(encoding@0.1.13)(rollup@4.60.2)':
     dependencies:
       '@vercel/error-utils': 2.0.3
@@ -22631,14 +22593,6 @@ snapshots:
     dependencies:
       ajv: 8.18.0
       fast-deep-equal: 3.1.3
-
-  ajv@6.14.0:
-    dependencies:
-      fast-deep-equal: 3.1.3
-      fast-json-stable-stringify: 2.1.0
-      json-schema-traverse: 0.4.1
-      uri-js: 4.4.1
-    optional: true
 
   ajv@8.18.0:
     dependencies:
@@ -24287,9 +24241,6 @@ snapshots:
       merge2: 1.4.1
       micromatch: 4.0.8
 
-  fast-json-stable-stringify@2.1.0:
-    optional: true
-
   fast-png@6.4.0:
     dependencies:
       '@types/pako': 2.0.4
@@ -25543,9 +25494,6 @@ snapshots:
     dependencies:
       '@types/json-schema': 7.0.15
       ts-toolbelt: 6.15.5
-
-  json-schema-traverse@0.4.1:
-    optional: true
 
   json-schema-traverse@1.0.0: {}
 

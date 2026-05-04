@@ -99,11 +99,7 @@ function isDisabled(value) {
 }
 
 function findDefaultConfigPath() {
-  const devConfig = path.join(repoRoot, "lightfast.dev.json");
-  if (fs.existsSync(devConfig)) {
-    return devConfig;
-  }
-  return path.join(repoRoot, "related-projects.json");
+  return path.join(repoRoot, "lightfast.dev.json");
 }
 
 function printEnv(env) {

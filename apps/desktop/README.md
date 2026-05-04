@@ -12,28 +12,30 @@ pnpm -F @lightfast/desktop dev
 ## Local development
 
 The desktop app is a Clerk-authenticated tRPC client for the `apps/app` API.
-Signed-in requests go through the microfrontends proxy at
-`http://localhost:3024`, not directly to `apps/app` (4107) — the tRPC route's
-CORS only whitelists the 3024 origin in dev.
+Signed-in requests go through the portless microfrontends proxy, not directly
+to `apps/app`'s internal Next.js port. In the main worktree this is usually
+`https://lightfast.localhost`; run `node scripts/with-desktop-env.mjs --print`
+from the repo root to see the exact URL for the current worktree.
 
-### Required env vars
+### Environment
 
-Create `apps/desktop/.vercel/.env.development.local` (gitignored) by copying
-`apps/desktop/.env.example`:
+Desktop has no required env vars for normal local development. The `apps/app`
+dev server still needs its own `.vercel/.env.development.local`; desktop only
+opens the browser bridge served by `apps/app`.
+
+To set operational desktop-only values such as Sentry or remote debugging,
+create `apps/desktop/.vercel/.env.development.local` (gitignored) by copying
+`apps/desktop/.env.example`. Local dev injects `LIGHTFAST_APP_ORIGIN` through
+`scripts/with-desktop-env.mjs`; preview/prod use `https://lightfast.ai`.
 
 ```bash
 cp apps/desktop/.env.example apps/desktop/.vercel/.env.development.local
-# then set NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY to your dev Clerk key
 ```
 
 The `with-env` script (invoked by `pnpm dev:desktop`) loads this file via
-`dotenv-cli` so the main process gets `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` on
-`process.env` — required by the t3-env validator in `src/env/main.ts`. Every
-other var has a sensible default; see `.env.example` for the full surface.
-
-For the renderer, Vite reads `.env.development` at `apps/desktop/.env.development`
-for `VITE_`-prefixed vars (`VITE_LIGHTFAST_API_URL` defaults to
-`http://localhost:3024` via the renderer env schema).
+`dotenv-cli`. Normal desktop dev does not require the file. Set
+`LIGHTFAST_APP_ORIGIN` only when you need to override the local app origin
+manually.
 
 ### Clerk JWT template (one-time, per Clerk environment)
 
@@ -57,7 +59,7 @@ sign-in will fail with a 400 from Clerk.
 2. Main process starts an ephemeral HTTP listener on
    `127.0.0.1:<random-port>` and calls `shell.openExternal(...)` to open the
    user's default browser at
-   `http://localhost:3024/desktop/auth?state=<hex>&callback=http://127.0.0.1:<port>/callback`
+   `https://lightfast.localhost/desktop/auth?state=<hex>&callback=http://127.0.0.1:<port>/callback`
 3. Browser completes Clerk sign-in (instant if already signed in to
    lightfast.ai). The bridge page calls `getToken({ template: "lightfast-desktop" })`,
    then redirects the tab to the loopback callback with `?token=…&state=…`
@@ -73,16 +75,18 @@ anything else is rejected.
 ### Run the stack (two terminals)
 
 ```bash
-# Terminal 1 — app + www + platform + microfrontends proxy at 3024
-pnpm dev:full
+# Terminal 1 — app + www + portless microfrontends origin
+pnpm dev
 
 # Terminal 2 — Electron app
 pnpm dev:desktop
 ```
 
-`pnpm dev:full` boots all three Next.js apps (4107/4101/4112) and the
-microfrontends proxy at 3024 — Turbo 2.9's built-in microfrontends
-integration auto-injects the proxy task alongside `@lightfast/app#dev`.
+`pnpm dev` boots `apps/app`, `apps/www`, and the portless-backed
+microfrontends origin. `pnpm dev:desktop` passes that origin to Electron as
+`LIGHTFAST_APP_ORIGIN` through `scripts/with-desktop-env.mjs`;
+`node scripts/with-desktop-env.mjs --print` is the developer-visible source of
+truth. Run `pnpm dev:full` instead only when you also need platform services.
 
 ### Inspect the encrypted token store
 
@@ -115,11 +119,11 @@ Renderer (`src/renderer/src/styles.css`):
 
 ## Release
 
-Releases are cut by pushing a tag matching `desktop-v<version>`:
+Releases are cut by pushing a tag matching `@lightfast/desktop@<version>`:
 
 ```bash
-git tag desktop-v0.1.0
-git push origin desktop-v0.1.0
+git tag @lightfast/desktop@0.1.0
+git push origin @lightfast/desktop@0.1.0
 ```
 
 The `Release desktop` workflow then:

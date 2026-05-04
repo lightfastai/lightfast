@@ -1,3 +1,3 @@
-import { resolveRelatedProjectUrl } from "@lightfastai/dev-proxy/related-projects";
+import { resolveProjectUrl } from "@lightfastai/dev-proxy/projects";
 
-export const wwwUrl = resolveRelatedProjectUrl("lightfast-www");
+export const wwwUrl = resolveProjectUrl("lightfast-www");
