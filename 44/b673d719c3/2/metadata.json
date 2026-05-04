@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "44b673d719c3",
+  "session_id": "6f468c3d-a4e7-4175-a3da-ee59fe0a4b63",
   "strategy": "manual-commit",
+  "created_at": "2026-05-04T10:10:44.912761Z",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 8,
+  "checkpoints_count": 3,
   "files_touched": [
     "api/app/package.json",
     "api/app/src/inngest/client/client.ts",
@@ -14,18 +16,15 @@
     "apps/desktop/package.json",
     "apps/desktop/src/env/main.ts",
     "apps/desktop/src/env/renderer.ts",
-    "apps/desktop/src/main/app-origin.ts",
     "apps/desktop/src/main/auth-flow.ts",
     "apps/desktop/src/main/auth-store.ts",
     "apps/desktop/src/main/build-info.ts",
     "apps/desktop/src/main/index.ts",
-    "apps/desktop/src/main/runtime-config.ts",
     "apps/desktop/src/preload/preload.ts",
     "apps/desktop/src/renderer/index.html",
     "apps/desktop/src/renderer/src/react/app-shell.tsx",
     "apps/desktop/src/renderer/src/react/entry.tsx",
     "apps/desktop/src/renderer/src/react/signed-out-shell.tsx",
-    "apps/desktop/src/renderer/src/react/user-menu.tsx",
     "apps/desktop/src/renderer/src/styles.css",
     "apps/desktop/src/renderer/vite-env.d.ts",
     "apps/desktop/src/shared/ipc.ts",
@@ -36,31 +35,29 @@
     "pnpm-lock.yaml",
     "scripts/with-dev-services-env.mjs"
   ],
-  "sessions": [
-    {
-      "metadata": "/44/b673d719c3/0/metadata.json",
-      "transcript": "/44/b673d719c3/0/full.jsonl",
-      "content_hash": "/44/b673d719c3/0/content_hash.txt",
-      "prompt": "/44/b673d719c3/0/prompt.txt"
-    },
-    {
-      "metadata": "/44/b673d719c3/1/metadata.json",
-      "transcript": "/44/b673d719c3/1/full.jsonl",
-      "content_hash": "/44/b673d719c3/1/content_hash.txt",
-      "prompt": "/44/b673d719c3/1/prompt.txt"
-    },
-    {
-      "metadata": "/44/b673d719c3/2/metadata.json",
-      "transcript": "/44/b673d719c3/2/full.jsonl",
-      "content_hash": "/44/b673d719c3/2/content_hash.txt",
-      "prompt": "/44/b673d719c3/2/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "70f2957c2468",
   "token_usage": {
-    "input_tokens": 920,
-    "cache_creation_tokens": 575581,
-    "cache_read_tokens": 10769094,
-    "output_tokens": 80047,
-    "api_call_count": 86
+    "input_tokens": 633,
+    "cache_creation_tokens": 453296,
+    "cache_read_tokens": 10061332,
+    "output_tokens": 68616,
+    "api_call_count": 62
+  },
+  "session_metrics": {
+    "turn_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-04T10:10:44.057843Z",
+    "agent_lines": 343,
+    "agent_removed": 181,
+    "human_added": 64,
+    "human_modified": 41,
+    "human_removed": 0,
+    "total_committed": 448,
+    "total_lines_changed": 629,
+    "agent_percentage": 83.30683624801271,
+    "metric_version": 2
   }
 }

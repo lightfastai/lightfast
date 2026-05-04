@@ -1,0 +1,21 @@
+let's rework the @apps/desktop/src/renderer/src/react/signed-out-shell.tsx
+
+---
+
+alright firstly, go to codex app and copy 1:1 their logg in page ui. (seee applications folder)
+
+---
+
+is there anything else we need to do for consistency?
+
+---
+
+do we need pointer click?
+
+---
+
+okay now in the sidebar of the electron app, let's extract the same text + icon size as and spacing as seen in codex app. and impleemnt this.
+
+---
+
+perfect! proceed with adding sidebar items. all good
