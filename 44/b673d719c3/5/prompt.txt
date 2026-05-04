@@ -3,3 +3,7 @@ in @apps/desktop/ i want to fix the sidebar trigger icon. basically right now wh
 ---
 
 a little bug where the sidebar closes first and it feels like the sidebar trigger icon kinda liek is slightly left behind than appears at the correct collapsed position
+
+---
+
+nvm i decided to move the sidebar trigger icon to a static position next to the close/min/max
