@@ -1,0 +1,54 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "44b673d719c3",
+  "strategy": "manual-commit",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 1,
+  "files_touched": [
+    "api/app/package.json",
+    "api/app/src/inngest/client/client.ts",
+    "api/platform/package.json",
+    "api/platform/src/inngest/client.ts",
+    "apps/desktop/.env.example",
+    "apps/desktop/README.md",
+    "apps/desktop/package.json",
+    "apps/desktop/src/env/main.ts",
+    "apps/desktop/src/env/renderer.ts",
+    "apps/desktop/src/main/app-origin.ts",
+    "apps/desktop/src/main/auth-flow.ts",
+    "apps/desktop/src/main/auth-store.ts",
+    "apps/desktop/src/main/build-info.ts",
+    "apps/desktop/src/main/index.ts",
+    "apps/desktop/src/main/runtime-config.ts",
+    "apps/desktop/src/preload/preload.ts",
+    "apps/desktop/src/renderer/index.html",
+    "apps/desktop/src/renderer/src/react/app-shell.tsx",
+    "apps/desktop/src/renderer/src/react/entry.tsx",
+    "apps/desktop/src/renderer/src/react/signed-out-shell.tsx",
+    "apps/desktop/src/renderer/src/react/user-menu.tsx",
+    "apps/desktop/src/renderer/src/styles.css",
+    "apps/desktop/src/renderer/vite-env.d.ts",
+    "apps/desktop/src/shared/ipc.ts",
+    "apps/desktop/tsconfig.json",
+    "apps/desktop/vite.renderer.config.ts",
+    "packages/app-remotion/src/compositions/logo/logo.tsx",
+    "packages/app-remotion/src/manifest.ts",
+    "pnpm-lock.yaml",
+    "scripts/with-dev-services-env.mjs"
+  ],
+  "sessions": [
+    {
+      "metadata": "/44/b673d719c3/0/metadata.json",
+      "transcript": "/44/b673d719c3/0/full.jsonl",
+      "content_hash": "/44/b673d719c3/0/content_hash.txt",
+      "prompt": "/44/b673d719c3/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 263,
+    "cache_creation_tokens": 49728,
+    "cache_read_tokens": 255134,
+    "output_tokens": 7578,
+    "api_call_count": 8
+  }
+}
