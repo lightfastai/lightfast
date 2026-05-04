@@ -1,9 +1,11 @@
 {
   "cli_version": "0.5.3",
   "checkpoint_id": "44b673d719c3",
+  "session_id": "85501d26-d82a-431a-bb17-9ab3643262c2",
   "strategy": "manual-commit",
+  "created_at": "2026-05-04T10:10:45.523818Z",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 13,
+  "checkpoints_count": 5,
   "files_touched": [
     "api/app/package.json",
     "api/app/src/inngest/client/client.ts",
@@ -14,12 +16,10 @@
     "apps/desktop/package.json",
     "apps/desktop/src/env/main.ts",
     "apps/desktop/src/env/renderer.ts",
-    "apps/desktop/src/main/app-origin.ts",
     "apps/desktop/src/main/auth-flow.ts",
     "apps/desktop/src/main/auth-store.ts",
     "apps/desktop/src/main/build-info.ts",
     "apps/desktop/src/main/index.ts",
-    "apps/desktop/src/main/runtime-config.ts",
     "apps/desktop/src/preload/preload.ts",
     "apps/desktop/src/renderer/index.html",
     "apps/desktop/src/renderer/src/react/app-shell.tsx",
@@ -36,37 +36,29 @@
     "pnpm-lock.yaml",
     "scripts/with-dev-services-env.mjs"
   ],
-  "sessions": [
-    {
-      "metadata": "/44/b673d719c3/0/metadata.json",
-      "transcript": "/44/b673d719c3/0/full.jsonl",
-      "content_hash": "/44/b673d719c3/0/content_hash.txt",
-      "prompt": "/44/b673d719c3/0/prompt.txt"
-    },
-    {
-      "metadata": "/44/b673d719c3/1/metadata.json",
-      "transcript": "/44/b673d719c3/1/full.jsonl",
-      "content_hash": "/44/b673d719c3/1/content_hash.txt",
-      "prompt": "/44/b673d719c3/1/prompt.txt"
-    },
-    {
-      "metadata": "/44/b673d719c3/2/metadata.json",
-      "transcript": "/44/b673d719c3/2/full.jsonl",
-      "content_hash": "/44/b673d719c3/2/content_hash.txt",
-      "prompt": "/44/b673d719c3/2/prompt.txt"
-    },
-    {
-      "metadata": "/44/b673d719c3/3/metadata.json",
-      "transcript": "/44/b673d719c3/3/full.jsonl",
-      "content_hash": "/44/b673d719c3/3/content_hash.txt",
-      "prompt": "/44/b673d719c3/3/prompt.txt"
-    }
-  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-6[1m]",
+  "turn_id": "909b3480e33e",
   "token_usage": {
-    "input_tokens": 1018,
-    "cache_creation_tokens": 673328,
-    "cache_read_tokens": 16700363,
-    "output_tokens": 103468,
-    "api_call_count": 170
+    "input_tokens": 98,
+    "cache_creation_tokens": 97747,
+    "cache_read_tokens": 5931269,
+    "output_tokens": 23421,
+    "api_call_count": 84
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-04T10:10:45.126233Z",
+    "agent_lines": 401,
+    "agent_removed": 181,
+    "human_added": 6,
+    "human_modified": 41,
+    "human_removed": 0,
+    "total_committed": 448,
+    "total_lines_changed": 629,
+    "agent_percentage": 92.52782193958664,
+    "metric_version": 2
   }
 }

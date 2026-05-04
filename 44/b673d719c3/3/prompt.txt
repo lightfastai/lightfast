@@ -1,0 +1,33 @@
+let's work on @apps/desktop/ 
+
+firstly, in sidebar at bottom left, add a settings icon.
+
+use our shadcn layer so that on click it opesn a dropwon.
+
+in dropdown, we have profile icon + email
+
+settings button
+
+and log out.
+
+---
+
+perfect! proceed
+
+---
+
+<task-notification>
+<task-id>bwovgr0vj</task-id>
+<tool-use-id>REDACTED</tool-use-id>
+<output-file>/private/tmp/claude-501/-Users-jeevanpillay-Code--lightfastai-lightfast/85501d26-d82a-431a-bb17-9ab3643262c2/tasks/bwovgr0vj.output</output-file>
+<status>completed</status>
+<summary>Background command "Capture desktop app window screenshot" completed (exit code 0)</summary>
+</task-notification>
+
+---
+
+note: copy 1:1. meaning i dont want a JP box. i want settings icon + Settings.
+
+---
+
+nice. remove the border top line
