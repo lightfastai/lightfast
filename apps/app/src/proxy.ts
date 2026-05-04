@@ -87,7 +87,10 @@ export default clerkMiddleware(
       });
       if (!userId) {
         const url = new URL("/sign-in", req.url);
-        url.searchParams.set("redirect_url", req.url);
+        url.searchParams.set(
+          "redirect_url",
+          `${req.nextUrl.pathname}${req.nextUrl.search}`
+        );
         return NextResponse.redirect(url);
       }
       if (sessionStatus === "pending" && !isPendingAllowedRoute(req)) {

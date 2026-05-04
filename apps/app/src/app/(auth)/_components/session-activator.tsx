@@ -2,7 +2,7 @@
 
 import { Icons } from "@repo/ui/components/icons";
 import { addBreadcrumb, startSpan } from "@sentry/nextjs";
-import { useSignIn } from "@vendor/clerk/client";
+import { useAuth, useSignIn } from "@vendor/clerk/client";
 import Link from "next/link";
 import * as React from "react";
 
@@ -11,11 +11,23 @@ interface SessionActivatorProps {
 }
 
 export function SessionActivator({ token }: SessionActivatorProps) {
+  const { isLoaded } = useAuth();
   const { signIn } = useSignIn();
   const [error, setError] = React.useState<string | null>(null);
+  const hasActivatedRef = React.useRef(false);
 
   React.useEffect(() => {
+    if (!isLoaded || hasActivatedRef.current) {
+      return;
+    }
+    hasActivatedRef.current = true;
+
     async function activate() {
+      if (!signIn) {
+        setError("Sign-in failed. Please try again.");
+        return;
+      }
+
       addBreadcrumb({
         category: "auth",
         message: "Session activation via ticket",
@@ -47,7 +59,7 @@ export function SessionActivator({ token }: SessionActivatorProps) {
     activate().catch(() => {
       setError("Sign-in failed. Please try again.");
     });
-  }, [token, signIn]);
+  }, [isLoaded, token, signIn]);
 
   if (error) {
     return (

@@ -4,7 +4,7 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { addBreadcrumb, startSpan } from "@sentry/nextjs";
-import { useSignIn, useSignUp } from "@vendor/clerk/client";
+import { useAuth, useSignIn, useSignUp } from "@vendor/clerk/client";
 import type { OAuthStrategy } from "@vendor/clerk/types";
 import * as React from "react";
 import type { AuthErrorCode } from "../_lib/search-params";
@@ -12,15 +12,29 @@ import type { AuthErrorCode } from "../_lib/search-params";
 interface OAuthButtonProps {
   mode: "sign-in" | "sign-up";
   onError?: (errorCode: AuthErrorCode) => void;
+  redirectUrl?: string | null;
   ticket?: string | null;
 }
 
-export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
+export function OAuthButton({
+  mode,
+  redirectUrl,
+  ticket,
+  onError,
+}: OAuthButtonProps) {
+  const { isLoaded: isAuthLoaded } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const [loading, setLoading] = React.useState(false);
 
   async function handleTicketSignUp(strategy: OAuthStrategy) {
+    if (!signUp) {
+      toast.error(
+        "Authentication is unavailable. Please refresh and try again."
+      );
+      setLoading(false);
+      return;
+    }
     // Step 1: Apply the ticket to the sign-up resource.
     // signUp.sso() silently drops the `ticket` param — confirmed by clerk-js@5.125.3
     // source inspection. The only path that sends ticket to FAPI is signUp.create().
@@ -76,7 +90,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
         signUp.sso({
           strategy,
           redirectCallbackUrl: `/sign-up/sso-callback?__clerk_ticket=${encodeURIComponent(ticket!)}`,
-          redirectUrl: "/account/welcome",
+          redirectUrl: redirectUrl ?? "/account/welcome",
           legalAccepted: true,
         })
     );
@@ -104,6 +118,13 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   }
 
   async function handleSignIn(strategy: OAuthStrategy) {
+    if (!signIn) {
+      toast.error(
+        "Authentication is unavailable. Please refresh and try again."
+      );
+      setLoading(false);
+      return;
+    }
     const { error } = await startSpan(
       {
         name: "auth.oauth.initiate",
@@ -114,7 +135,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
         signIn.sso({
           strategy,
           redirectCallbackUrl: "/sign-in/sso-callback",
-          redirectUrl: "/account/welcome",
+          redirectUrl: redirectUrl ?? "/account/welcome",
         })
     );
     if (error) {
@@ -141,6 +162,13 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   }
 
   async function handleSignUp(strategy: OAuthStrategy) {
+    if (!signUp) {
+      toast.error(
+        "Authentication is unavailable. Please refresh and try again."
+      );
+      setLoading(false);
+      return;
+    }
     const { error } = await startSpan(
       {
         name: "auth.oauth.initiate",
@@ -151,7 +179,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
         signUp.sso({
           strategy,
           redirectCallbackUrl: "/sign-up/sso-callback",
-          redirectUrl: "/account/welcome",
+          redirectUrl: redirectUrl ?? "/account/welcome",
         })
     );
     if (error) {
@@ -178,6 +206,11 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   }
 
   async function handleOAuth(strategy: OAuthStrategy) {
+    if (!isAuthLoaded) {
+      toast.error("Authentication is still loading");
+      return;
+    }
+
     setLoading(true);
     addBreadcrumb({
       category: "auth",
@@ -205,7 +238,7 @@ export function OAuthButton({ mode, ticket, onError }: OAuthButtonProps) {
   return (
     <Button
       className="w-full"
-      disabled={loading}
+      disabled={loading || !isAuthLoaded}
       onClick={() => handleOAuth("oauth_github")}
       size="lg"
       variant="outline"

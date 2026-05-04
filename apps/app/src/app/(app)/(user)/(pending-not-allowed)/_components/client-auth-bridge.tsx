@@ -1,8 +1,8 @@
 "use client";
 
-import { useAuth } from "@vendor/clerk/client";
+import { useSession } from "@vendor/clerk/client";
 import { useSearchParams } from "next/navigation";
-import { type ReactNode, Suspense, useEffect, useState } from "react";
+import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";
 
 export interface ClientAuthBridgeProps {
   buildRedirectUrl: (args: {
@@ -16,19 +16,26 @@ export interface ClientAuthBridgeProps {
 }
 
 function BridgeContent(props: ClientAuthBridgeProps) {
-  const { getToken, isSignedIn, isLoaded } = useAuth();
+  const { isLoaded, session } = useSession();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<"loading" | "redirecting" | "error">(
     "loading"
   );
+  const hasStartedRef = useRef(false);
 
   useEffect(() => {
-    if (!(isLoaded && isSignedIn)) {
+    if (!isLoaded || hasStartedRef.current) {
       return;
     }
+    if (!session) {
+      setStatus("error");
+      return;
+    }
+    hasStartedRef.current = true;
+
     void (async () => {
       try {
-        const token = await getToken(
+        const token = await session.getToken(
           props.jwtTemplate ? { template: props.jwtTemplate } : undefined
         );
         if (!token) {
@@ -46,7 +53,7 @@ function BridgeContent(props: ClientAuthBridgeProps) {
         setStatus("error");
       }
     })();
-  }, [isLoaded, isSignedIn, getToken, props, searchParams]);
+  }, [isLoaded, session, props, searchParams]);
 
   if (status === "error") {
     return (

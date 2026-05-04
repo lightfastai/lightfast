@@ -10,7 +10,7 @@
     "build:dev": "pnpm with-env next build --turbopack",
     "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env portless run next dev --turbo",
+    "dev": "pnpm with-env portless-mfe app -- next dev --turbo",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",

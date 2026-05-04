@@ -55,4 +55,18 @@ describe("initiateSignIn", () => {
       "/sign-in?step=code&email=user%2Btest@example.com"
     );
   });
+
+  it("preserves redirect_url for desktop auth handoff", async () => {
+    const formData = new FormData();
+    formData.set("email", "user@example.com");
+    formData.set(
+      "redirect_url",
+      "https://lightfast.localhost/desktop/auth?state=abc&callback=http%3A%2F%2F127.0.0.1%3A1234%2Fcallback"
+    );
+
+    await expect(initiateSignIn(formData)).rejects.toThrow("REDIRECT:");
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/sign-in?step=code&email=user@example.com&redirect_url=https://lightfast.localhost/desktop/auth?state=abc%26callback=http%253A%252F%252F127.0.0.1%253A1234%252Fcallback"
+    );
+  });
 });
