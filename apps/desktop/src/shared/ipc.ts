@@ -43,7 +43,7 @@ export type Platform =
   | "cygwin"
   | "netbsd";
 
-export type WindowKind = "primary" | "secondary" | "hud";
+export type WindowKind = "primary" | "settings" | "hud";
 
 export interface BuildInfoSnapshot {
   buildFlavor: "dev" | "preview" | "prod";

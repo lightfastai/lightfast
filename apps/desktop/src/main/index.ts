@@ -168,8 +168,8 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.handle(IpcChannels.openWindow, async (_event, kind: unknown) => {
-    if (kind === "secondary") {
-      await openSecondaryWindow();
+    if (kind === "settings") {
+      showSettingsWindow();
     } else if (kind === "hud") {
       await openHudWindow();
     } else if (kind === "primary") {
@@ -197,7 +197,7 @@ function broadcastThemeUpdates(): void {
   });
 }
 
-type Kind = "primary" | "secondary" | "hud";
+type Kind = "primary" | "settings" | "hud";
 
 const windowsByKind = new Map<Kind, Set<BrowserWindow>>();
 
@@ -224,12 +224,22 @@ export function openPrimaryWindow(): Promise<BrowserWindow> {
   return openKind("primary");
 }
 
-export function openSecondaryWindow(): Promise<BrowserWindow> {
-  return openKind("secondary");
+export function openSettingsWindow(): Promise<BrowserWindow> {
+  return openKind("settings");
 }
 
 export function openHudWindow(): Promise<BrowserWindow> {
   return openKind("hud");
+}
+
+function showSettingsWindow(): void {
+  const existing = findWindow("settings");
+  if (existing) {
+    existing.show();
+    existing.focus();
+    return;
+  }
+  void openSettingsWindow();
 }
 
 function findWindow(kind: Kind): BrowserWindow | null {
@@ -309,9 +319,7 @@ app.whenReady().then(() => {
 
   Menu.setApplicationMenu(
     buildApplicationMenu({
-      openSecondary: () => {
-        void openSecondaryWindow();
-      },
+      openSettings: showSettingsWindow,
       openHud: () => {
         void openHudWindow();
       },

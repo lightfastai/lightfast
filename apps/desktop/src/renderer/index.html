@@ -36,7 +36,7 @@
       <aside class="sidebar" data-kind-primary>
         <div class="titlebar-drag"></div>
         <nav class="nav">
-          <button type="button" class="item active" data-route-to="home">
+          <button type="button" class="item active">
             <svg
               class="item__icon"
               viewBox="0 0 24 24"
@@ -99,22 +99,6 @@
             </svg>
             <span class="item__label">Runs</span>
           </button>
-          <button type="button" class="item" data-route-to="settings">
-            <svg
-              class="item__icon"
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-            <span class="item__label">Settings</span>
-          </button>
         </nav>
         <div class="sidebar-footer">
           <div id="user-menu-root"></div>
@@ -122,7 +106,7 @@
       </aside>
       <main class="content">
         <div class="titlebar-drag"></div>
-        <section class="content-inner" data-route-home data-kind-primary>
+        <section class="content-inner" data-kind-primary>
           <div id="react-root"></div>
           <h1>Primary window</h1>
           <p>
@@ -133,34 +117,18 @@
           </p>
           <p class="content-hint">
             Press <kbd data-kbd-hint="toggleSidebar"></kbd> to toggle the
-            sidebar,
-            <kbd data-kbd-hint="settings"></kbd>
-            for settings,
-            <kbd data-kbd-hint="newThread"></kbd>
-            for a new window.
+            sidebar, <kbd data-kbd-hint="settings"></kbd> for settings.
           </p>
           <div class="actions">
-            <button type="button" class="action" data-open-window="secondary">
-              Open Secondary
-            </button>
             <button type="button" class="action" data-open-window="hud">
               Open HUD
             </button>
           </div>
           <div class="build-badge" data-build-badge></div>
         </section>
-        <section
-          class="content-inner settings-root"
-          data-route-settings
-          data-kind-primary
-        ></section>
-        <section class="content-inner" data-kind-secondary>
-          <h1>Secondary window</h1>
-          <p>
-            Separate 720&times;540 window for settings/about flows. Same
-            vibrancy backing, no sidebar. Opened from the primary window's menu
-            or <code>Cmd+N</code>.
-          </p>
+        <section class="content-inner settings-window" data-kind-settings>
+          <div class="titlebar-drag"></div>
+          <div id="settings-root"></div>
         </section>
         <section class="content-inner" data-kind-hud>
           <h1>HUD</h1>

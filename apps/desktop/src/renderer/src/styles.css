@@ -276,39 +276,30 @@ body,
   color: var(--color-text-foreground-secondary);
 }
 
-.content-inner:not(.settings-root) {
+.content-inner:not(.settings-window) {
   max-width: var(--thread-content-max-width);
 }
 
-.settings-root {
-  max-width: none;
-  padding: 0;
-}
-
-:root[data-route="home"] [data-route-home],
-:root[data-route="settings"] [data-route-settings] {
-  display: revert;
-}
-
-:root[data-window-kind="primary"][data-route="home"]
-  [data-route-home][data-kind-primary],
-:root[data-window-kind="primary"][data-route="settings"]
-  [data-route-settings][data-kind-primary] {
-  display: revert;
-}
-
-:root[data-window-kind="secondary"] [data-kind-secondary],
+:root[data-window-kind="primary"] .content-inner[data-kind-primary],
+:root[data-window-kind="settings"] [data-kind-settings],
 :root[data-window-kind="hud"] [data-kind-hud] {
   display: revert;
 }
 
-:root[data-window-kind="primary"] [data-kind-secondary],
+:root[data-window-kind="primary"] [data-kind-settings],
 :root[data-window-kind="primary"] [data-kind-hud],
-:root[data-window-kind="secondary"] [data-kind-primary],
-:root[data-window-kind="secondary"] .sidebar,
+:root[data-window-kind="settings"] [data-kind-primary],
+:root[data-window-kind="settings"] .sidebar,
 :root[data-window-kind="hud"] [data-kind-primary],
 :root[data-window-kind="hud"] .sidebar {
   display: none;
+}
+
+.settings-window {
+  display: none;
+  height: 100vh;
+  padding: 0;
+  background: transparent;
 }
 
 .content-inner h1 {
@@ -459,50 +450,6 @@ kbd {
 }
 
 /* Settings */
-
-.settings-host {
-  display: grid;
-  grid-template-columns: 220px 1fr;
-  height: 100%;
-  min-height: 0;
-}
-
-.settings-nav {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: calc(var(--spacing) * 4);
-  overflow-y: auto;
-  border-right: 1px solid var(--color-border);
-}
-
-.settings-nav__item {
-  -webkit-app-region: no-drag;
-  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2.5);
-  font: inherit;
-  font-size: var(--text-sm);
-  text-align: left;
-  color: var(--color-text-foreground-secondary);
-  appearance: none;
-  cursor: default;
-  background: transparent;
-  border: 0;
-  border-radius: 6px;
-}
-
-.settings-nav__item:hover {
-  background: var(--color-background-button-tertiary-hover);
-}
-
-.settings-nav__item.active {
-  color: var(--color-text-foreground);
-  background: var(--color-background-button-tertiary-active);
-}
-
-.settings-content {
-  padding: calc(var(--spacing) * 6) calc(var(--spacing) * 8);
-  overflow-y: auto;
-}
 
 .settings-section {
   max-width: 640px;
@@ -814,4 +761,129 @@ kbd {
 .auth-gate__secondary-button:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
+}
+
+/* Settings window */
+
+.settings-window__inner {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: transparent;
+}
+
+.settings-toolbar {
+  -webkit-app-region: drag;
+  display: flex;
+  gap: calc(var(--spacing) * 1);
+  justify-content: center;
+  align-items: flex-end;
+  padding: 36px calc(var(--spacing) * 4) calc(var(--spacing) * 2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-toolbar__tab {
+  -webkit-app-region: no-drag;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 72px;
+  padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-foreground-tertiary);
+  appearance: none;
+  cursor: default;
+  background: transparent;
+  border: 0;
+  border-radius: 6px;
+}
+
+.settings-toolbar__tab:hover {
+  color: var(--color-text-foreground-secondary);
+  background: var(--color-background-button-tertiary-hover);
+}
+
+.settings-toolbar__tab.active {
+  color: var(--color-text-foreground);
+  background: var(--color-background-button-tertiary-active);
+}
+
+.settings-toolbar__icon {
+  width: 20px;
+  height: 20px;
+}
+
+.settings-toolbar__label {
+  font-size: var(--text-sm);
+}
+
+.settings-pane {
+  flex: 1;
+  min-height: 0;
+  padding: calc(var(--spacing) * 5) calc(var(--spacing) * 6);
+  overflow-y: auto;
+}
+
+.settings-pane .settings-section {
+  max-width: none;
+  margin: 0 0 calc(var(--spacing) * 4);
+}
+
+/* Account pane */
+
+.account-identity {
+  display: flex;
+  gap: calc(var(--spacing) * 3);
+  align-items: center;
+}
+
+.account-avatar {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  background-color: var(--color-background-elevated-secondary);
+  background-position: center;
+  background-size: cover;
+  border-radius: 50%;
+}
+
+.account-avatar--placeholder {
+  background: var(--color-background-elevated-primary-opaque);
+}
+
+.account-name {
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--color-text-foreground);
+}
+
+.account-email {
+  font-size: var(--text-sm);
+  color: var(--color-text-foreground-tertiary);
+}
+
+.settings-button {
+  -webkit-app-region: no-drag;
+  display: inline-flex;
+  gap: calc(var(--spacing) * 1.5);
+  align-items: center;
+  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--color-text-foreground);
+  appearance: none;
+  cursor: default;
+  background: var(--color-background-elevated-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: 6px;
+}
+
+.settings-button--destructive {
+  color: #ef4444;
+}
+
+.settings-button--destructive:hover {
+  background: rgba(239, 68, 68, 0.08);
 }

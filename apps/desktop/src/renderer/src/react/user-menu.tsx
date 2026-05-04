@@ -34,9 +34,7 @@ export function UserMenu() {
 
           <DropdownMenu.Item
             className="user-menu-item"
-            onSelect={() => {
-              window.location.hash = "#/settings";
-            }}
+            onSelect={() => void window.lightfastBridge.openWindow("settings")}
           >
             <Settings size={14} className="user-menu-icon" />
             Settings
