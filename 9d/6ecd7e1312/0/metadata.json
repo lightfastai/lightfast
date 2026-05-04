@@ -1,0 +1,38 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "9d6ecd7e1312",
+  "session_id": "88d7243c-e499-4ca1-8527-fa325e9f623c",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-04T07:28:48.616569Z",
+  "branch": "main",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "apps/app/src/app/(app)/(user)/(pending-not-allowed)/_components/client-auth-bridge.tsx"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "b99f25bc09eb",
+  "checkpoint_transcript_start": 1046,
+  "transcript_lines_at_start": 1046,
+  "token_usage": {
+    "input_tokens": 90,
+    "cache_creation_tokens": 483748,
+    "cache_read_tokens": 13181805,
+    "output_tokens": 45305,
+    "api_call_count": 65
+  },
+  "session_metrics": {
+    "turn_count": 5
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-04T07:28:46.148596Z",
+    "agent_lines": 0,
+    "agent_removed": 1,
+    "human_added": 26,
+    "human_modified": 172,
+    "human_removed": 0,
+    "total_committed": 110,
+    "total_lines_changed": 231,
+    "agent_percentage": 0.4329004329004329,
+    "metric_version": 2
+  }
+}
