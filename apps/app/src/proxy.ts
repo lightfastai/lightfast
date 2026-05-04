@@ -87,9 +87,6 @@ export default clerkMiddleware(
       });
       if (!userId) {
         const url = new URL("/sign-in", req.url);
-        // Keep redirects origin-relative. Behind the local MFE proxy, req.url can
-        // point at the internal app target, which would move Clerk sessions off
-        // the browser's aggregate/worktree origin after sign-in.
         url.searchParams.set(
           "redirect_url",
           `${req.nextUrl.pathname}${req.nextUrl.search}`

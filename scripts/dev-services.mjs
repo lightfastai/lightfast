@@ -354,7 +354,7 @@ async function resolveInngestTargets(services, options) {
     return explicitTargets;
   }
 
-  const relatedProjects = await import("@lightfastai/related-projects");
+  const relatedProjects = await import("@lightfastai/dev-proxy");
   const appUrls = Object.fromEntries(
     options.mfeApps.map((appName) => [
       appName,

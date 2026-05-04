@@ -1,7 +1,7 @@
 import {
   getPortlessMfeDevOrigins,
   withPortlessMfeDev,
-} from "@lightfastai/related-projects/next";
+} from "@lightfastai/dev-proxy/next";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
