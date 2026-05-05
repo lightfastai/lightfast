@@ -760,7 +760,7 @@ describe("getPortlessProxyOrigins (Lightfast fixtures)", () => {
 
 ---
 
-## Phase 5: CLAUDE.md documentation
+## Phase 5: CLAUDE.md documentation [DONE]
 
 ### Overview
 
@@ -808,8 +808,8 @@ The Electron renderer is a Vite SPA, not a Next app, and does not load any `next
 
 #### Automated Verification:
 
-- [ ] Markdown lints cleanly (if a markdown linter is wired): `pnpm check`
-- [ ] No broken file references in the new section: each path mentioned exists.
+- [~] ~~Markdown lints cleanly~~ — repo's `pnpm check` runs `ultracite` which doesn't lint Markdown; nothing to verify mechanically.
+- [x] No broken file references in the new section: `scripts/with-desktop-env.mjs`, `apps/{app,platform}/src/app/(trpc)/api/trpc/[trpc]/route.ts`, `apps/{app,platform}/src/lib/origin-allowlist.ts`, `lightfast.dev.json`, `microfrontends.json` all resolve.
 
 #### Human Review:
 
@@ -916,3 +916,13 @@ Driven by: deep audit of URL/CORS/origin surfaces across `apps/app`, `apps/www`,
 2. **Cold-start guard skips Next build phase**. As written, `if (isDev && canonicalAppOrigin === "https://lightfast.ai") throw …` fired during `next build`'s page-data collection (no portless running, but also no need for it). Added `isBuildPhase = process.env.NEXT_PHASE?.includes("build") ?? false` and gate the throw on `!isBuildPhase`. The guard still fires during `next dev` boot and at request time on the production server (where it's a no-op because `isDev` is false), preserving the intent: crash dev boot when portless is missing, silent in production.
 
 3. **Did not extract a test for `apps/platform/src/lib/origin-allowlist.ts`**. The two helpers are byte-identical (same code). Per the plan's note ("testing the helper from app side is sufficient since the code is the same"), the unit test lives only in `apps/app/src/lib/__tests__/origin-allowlist.test.ts`.
+
+---
+
+**2026-05-05 — Phase 5 deviations**
+
+1. **Dropped the `assertPortlessInvariants` paragraph** from the CLAUDE.md doc block (per Phase 2 deviation #2 — the assertion was removed mid-implementation). The "Invariants enforced inline at `apps/app/next.config.ts`" line in the plan's draft was omitted from the rendered section.
+
+2. **Added a build-phase note to the cold-start guard documentation** (per Phase 3 deviation #2). The CLAUDE.md section now states that the guard is skipped during `next build` so production builds don't need portless running — useful context for a future contributor debugging an unexpected throw.
+
+3. **Repo's `pnpm check` does not lint Markdown** (it runs `ultracite`, which is a JS/TS Biome wrapper). The plan's "Markdown lints cleanly" automated check is not mechanically enforceable here; verified manually that file references in the new section all resolve.

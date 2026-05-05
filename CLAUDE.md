@@ -39,6 +39,33 @@ App is default app (catch-all routes, sitemap.xml, robots.txt, auth routes).
 Auth routes (/sign-in, /sign-up, /early-access) are served directly by app (migrated from former apps/auth).
 Docs served via microfrontends mesh through `lightfast-www` (`/docs`, `/docs/:path*` routes in `apps/app/microfrontends.json`).
 
+### Local Origins Policy (`*.lightfast.localhost`)
+
+Local dev runs through Portless behind `*.lightfast.localhost:443`. Multi-worktree isolation is provided by the wildcard alone — branches resolve to `<prefix>.app.lightfast.localhost` automatically. Source-of-truth: `lightfast.dev.json` (portless config) + `microfrontends.json` (mesh members).
+
+**Next.js consumers** — helpers from `@lightfastai/dev-proxy/next`:
+
+| App | Wrapper | Surface | Server Actions |
+|---|---|---|---|
+| `apps/app` | `withPortlessProxy(..., { serverActions: isLocalDev })` | `allowedDevOrigins` + `experimental.serverActions.allowedOrigins` | yes |
+| `apps/www` | `withPortlessProxy(...)` | `allowedDevOrigins` only | n/a (no Server Actions) |
+| `apps/platform` | `withPortlessProxy(...)` | `allowedDevOrigins` only | n/a (no Server Actions) |
+
+**Non-Next consumer** — `apps/desktop`:
+
+The Electron renderer is a Vite SPA, not a Next app, and does not load any `next.config.ts`. It still participates in the origin world via `scripts/with-desktop-env.mjs`, which imports `resolvePortlessMfeUrl` from `@lightfastai/dev-proxy` (root export, not `/next`) and injects `LIGHTFAST_APP_ORIGIN` into the Electron main process at boot. The renderer reads that origin off `window.lightfastBridge.appOrigin` and aims its tRPC client at `${appOrigin}/api/trpc`. CORS is gated by `apps/app/.../route.ts` — the renderer's actual `Origin` header in dev is `http://localhost:<vite-port>`, admitted via an explicit desktop carve-out (Bearer-token auth, not cookies, so the broad localhost match doesn't weaken security).
+
+**tRPC CORS allowlists** (both apps share `~/lib/origin-allowlist.ts` — same code, copied per-app):
+
+| Surface | Dev (NEXT_PUBLIC_VERCEL_ENV=undefined) | Preview / Prod |
+|---|---|---|
+| `apps/app/.../route.ts` | portless wildcard set + `localhost:*` (desktop renderer) | canonical `appUrl` only |
+| `apps/platform/.../route.ts` | portless wildcard set | canonical `appUrl` only |
+
+`canonicalAppOrigin = new URL(appUrl).origin` strips the trailing slash that `resolvePortlessUrl` adds (the bug that made strict equality silently fail in dev pre-fix).
+
+**Cold-start guard**: in dev, if `appUrl` resolves to `https://lightfast.ai` (production fallback when portless daemon is down at module load), the origin-allowlist module throws at import time. Boot platform/app only after `portless start` (or via `pnpm dev:full`). The guard is skipped during `next build` (NEXT_PHASE includes `build`) so production builds don't require portless.
+
 ### Platform Service
 
 Standalone Next.js app (`apps/platform`, port 4112) that consolidates the former relay, gateway, and backfill Hono microservices into a single tRPC + Inngest service.
