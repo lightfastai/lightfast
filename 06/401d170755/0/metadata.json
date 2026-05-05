@@ -1,0 +1,43 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "06401d170755",
+  "session_id": "006d876d-5a37-47bd-a8c5-80cdc60f883e",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-05T05:40:41.572586Z",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 2,
+  "files_touched": [
+    "apps/app/next.config.ts",
+    "apps/app/src/app/(auth)/sign-in/page.tsx",
+    "apps/app/src/proxy.ts",
+    "apps/desktop/src/renderer/index.html",
+    "apps/desktop/src/renderer/src/react/user-menu.tsx",
+    "apps/desktop/src/renderer/src/styles.css",
+    "scripts/with-dev-services-env.mjs"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "c65159d28303",
+  "token_usage": {
+    "input_tokens": 11408,
+    "cache_creation_tokens": 159494,
+    "cache_read_tokens": 909857,
+    "output_tokens": 28403,
+    "api_call_count": 12
+  },
+  "session_metrics": {
+    "turn_count": 4
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-05T05:40:40.985476Z",
+    "agent_lines": 50,
+    "agent_removed": 39,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 50,
+    "total_lines_changed": 89,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
