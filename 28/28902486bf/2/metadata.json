@@ -1,0 +1,35 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "2828902486bf",
+  "session_id": "d13827c7-cfe5-475c-8a91-e72a5b1e0e3b",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-05T07:10:27.139343Z",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 0,
+  "files_touched": [
+    ".github/codeql/codeql-config.yml",
+    ".github/workflows/codeql.yml"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "7c4d833ea382",
+  "token_usage": {
+    "input_tokens": 6,
+    "cache_creation_tokens": 36585,
+    "cache_read_tokens": 16331,
+    "output_tokens": 3539,
+    "api_call_count": 1
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-05T07:10:26.703635Z",
+    "agent_lines": 52,
+    "agent_removed": 0,
+    "human_added": 0,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 52,
+    "total_lines_changed": 52,
+    "agent_percentage": 100,
+    "metric_version": 2
+  }
+}
