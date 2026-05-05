@@ -1,0 +1,6 @@
+/create_plan @thoughts/shared/research/2026-05-05-desktop-unsigned-beta-distribution.md
+
+---
+
+consider this: for now, im the only user.
+proceed with q5 spike
