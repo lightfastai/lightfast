@@ -62,14 +62,16 @@ function primaryOptions(): BrowserWindowConstructorOptions {
   };
 }
 
-function secondaryOptions(): BrowserWindowConstructorOptions {
+function settingsOptions(): BrowserWindowConstructorOptions {
   const isMac = process.platform === "darwin";
   return {
     ...baseWindowOptions(),
     width: 720,
-    height: 540,
-    minWidth: 480,
-    minHeight: 360,
+    height: 640,
+    resizable: false,
+    maximizable: false,
+    fullscreenable: false,
+    minimizable: true,
     ...(isMac && { trafficLightPosition: { x: 16, y: 16 } }),
   };
 }
@@ -89,8 +91,8 @@ function hudOptions(): BrowserWindowConstructorOptions {
 
 function optionsForKind(kind: WindowKind): BrowserWindowConstructorOptions {
   switch (kind) {
-    case "secondary":
-      return secondaryOptions();
+    case "settings":
+      return settingsOptions();
     case "hud":
       return hudOptions();
     default:

@@ -5,6 +5,7 @@ import {
   type BuildInfoSnapshot,
   IpcChannels,
   type LightfastBridge,
+  type RuntimeConfigSnapshot,
   type SentryInitSnapshot,
   type SettingsSnapshot,
   type SystemThemeVariant,
@@ -27,8 +28,12 @@ const settings = ipcRenderer.sendSync(
 const authSnapshot = ipcRenderer.sendSync(
   IpcChannels.authSnapshotSync
 ) as AuthSnapshot;
+const runtimeConfig = ipcRenderer.sendSync(
+  IpcChannels.runtimeConfigSync
+) as RuntimeConfigSnapshot;
 
 const bridge: LightfastBridge = {
+  appOrigin: runtimeConfig.appOrigin,
   auth: {
     snapshot: authSnapshot,
     getToken: () => ipcRenderer.invoke(IpcChannels.authGetToken),
@@ -71,7 +76,7 @@ const bridge: LightfastBridge = {
     ipcRenderer.on(IpcChannels.settingsChanged, handler);
     return () => ipcRenderer.off(IpcChannels.settingsChanged, handler);
   },
-  openExternal: (url) => ipcRenderer.invoke(IpcChannels.openExternal, url),
+  openApp: () => ipcRenderer.invoke(IpcChannels.openApp),
   openWindow: (kind) => ipcRenderer.invoke(IpcChannels.openWindow, kind),
   reportError: (payload) =>
     ipcRenderer.send(IpcChannels.rendererError, payload),

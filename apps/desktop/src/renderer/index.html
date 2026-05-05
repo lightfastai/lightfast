@@ -8,20 +8,38 @@
   </head>
   <body>
     <div id="app">
-      <aside class="sidebar" data-kind-primary>
-        <div class="titlebar-drag">
-          <button
-            type="button"
-            class="sidebar-trigger"
-            data-sidebar-trigger
-            aria-label="Collapse sidebar"
-            aria-expanded="true"
-            title="Toggle sidebar"
+      <div class="title-bar" data-kind-primary>
+        <button
+          type="button"
+          class="sidebar-trigger"
+          data-sidebar-trigger
+          aria-label="Collapse sidebar"
+          aria-expanded="true"
+          title="Toggle sidebar"
+        >
+          <svg
+            viewBox="0 0 16 16"
+            width="14"
+            height="14"
+            aria-hidden="true"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
           >
+            <rect x="2" y="3" width="12" height="10" rx="2" />
+            <line x1="6" y1="3" x2="6" y2="13" />
+          </svg>
+        </button>
+      </div>
+      <aside class="sidebar" data-kind-primary>
+        <div class="titlebar-drag"></div>
+        <nav class="nav">
+          <button type="button" class="item active">
             <svg
-              viewBox="0 0 16 16"
-              width="14"
-              height="14"
+              class="item__icon"
+              viewBox="0 0 24 24"
               aria-hidden="true"
               fill="none"
               stroke="currentColor"
@@ -29,49 +47,74 @@
               stroke-linecap="round"
               stroke-linejoin="round"
             >
-              <rect x="2" y="3" width="12" height="10" rx="2" />
-              <line x1="6" y1="3" x2="6" y2="13" />
+              <path d="M3 10.5L12 3l9 7.5" />
+              <path
+                d="M5 9.5V20a1 1 0 0 0 1 1h3.5v-6h5v6H18a1 1 0 0 0 1-1V9.5"
+              />
             </svg>
+            <span class="item__label">Home</span>
           </button>
-        </div>
-        <nav class="nav">
-          <button type="button" class="item active" data-route-to="home">
-            Home
+          <button type="button" class="item">
+            <svg
+              class="item__icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M4 5h5l2 2h9v11a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"
+              />
+            </svg>
+            <span class="item__label">Projects</span>
           </button>
-          <button type="button" class="item">Projects</button>
-          <button type="button" class="item">Agents</button>
-          <button type="button" class="item">Runs</button>
-          <button type="button" class="item" data-route-to="settings">
-            Settings
+          <button type="button" class="item">
+            <svg
+              class="item__icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <path
+                d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"
+              />
+              <path
+                d="M19 16l.75 2.25L22 19l-2.25.75L19 22l-.75-2.25L16 19l2.25-.75z"
+              />
+            </svg>
+            <span class="item__label">Agents</span>
+          </button>
+          <button type="button" class="item">
+            <svg
+              class="item__icon"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <circle cx="12" cy="12" r="9" />
+              <path d="M10 8.5L15.5 12 10 15.5z" />
+            </svg>
+            <span class="item__label">Runs</span>
           </button>
         </nav>
+        <div class="sidebar-footer">
+          <div id="user-menu-root"></div>
+        </div>
       </aside>
       <main class="content">
-        <div class="titlebar-drag">
-          <button
-            type="button"
-            class="content-sidebar-trigger"
-            data-sidebar-trigger-collapsed
-            aria-label="Expand sidebar"
-            title="Toggle sidebar"
-          >
-            <svg
-              viewBox="0 0 16 16"
-              width="14"
-              height="14"
-              aria-hidden="true"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <rect x="2" y="3" width="12" height="10" rx="2" />
-              <line x1="6" y1="3" x2="6" y2="13" />
-            </svg>
-          </button>
-        </div>
-        <section class="content-inner" data-route-home data-kind-primary>
+        <div class="titlebar-drag"></div>
+        <section class="content-inner" data-kind-primary>
           <div id="react-root"></div>
           <h1>Primary window</h1>
           <p>
@@ -82,34 +125,18 @@
           </p>
           <p class="content-hint">
             Press <kbd data-kbd-hint="toggleSidebar"></kbd> to toggle the
-            sidebar,
-            <kbd data-kbd-hint="settings"></kbd>
-            for settings,
-            <kbd data-kbd-hint="newThread"></kbd>
-            for a new window.
+            sidebar, <kbd data-kbd-hint="settings"></kbd> for settings.
           </p>
           <div class="actions">
-            <button type="button" class="action" data-open-window="secondary">
-              Open Secondary
-            </button>
             <button type="button" class="action" data-open-window="hud">
               Open HUD
             </button>
           </div>
           <div class="build-badge" data-build-badge></div>
         </section>
-        <section
-          class="content-inner settings-root"
-          data-route-settings
-          data-kind-primary
-        ></section>
-        <section class="content-inner" data-kind-secondary>
-          <h1>Secondary window</h1>
-          <p>
-            Separate 720&times;540 window for settings/about flows. Same
-            vibrancy backing, no sidebar. Opened from the primary window's menu
-            or <code>Cmd+N</code>.
-          </p>
+        <section class="content-inner settings-window" data-kind-settings>
+          <div class="titlebar-drag"></div>
+          <div id="settings-root"></div>
         </section>
         <section class="content-inner" data-kind-hud>
           <h1>HUD</h1>

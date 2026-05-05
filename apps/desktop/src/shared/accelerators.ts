@@ -1,5 +1,4 @@
 export const ACCELERATORS = {
-  newThread: "CmdOrCtrl+N",
   newWindow: "CmdOrCtrl+Shift+N",
   settings: "CmdOrCtrl+,",
   toggleSidebar: "CmdOrCtrl+B",

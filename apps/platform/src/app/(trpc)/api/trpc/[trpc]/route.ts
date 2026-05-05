@@ -1,14 +1,13 @@
 import { createPlatformTRPCContext, platformRouter } from "@api/platform";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
-import { appUrl } from "~/lib/related-projects";
+import { isAllowedOrigin } from "~/cors";
 
 export const runtime = "nodejs";
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
   const origin = req.headers.get("origin");
-  // Only the app calls platform tRPC — appUrl resolves per environment via VERCEL_RELATED_PROJECTS
-  if (origin !== appUrl) {
+  if (!isAllowedOrigin(origin)) {
     return res;
   }
 
@@ -16,7 +15,7 @@ const setCorsHeaders = (req: NextRequest, res: Response) => {
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.headers.set(
     "Access-Control-Allow-Headers",
-    "content-type,authorization,x-trpc-source"
+    "content-type,authorization,x-trpc-source,trpc-accept"
   );
   res.headers.set("Vary", "Origin");
   res.headers.set("Access-Control-Allow-Credentials", "true");

@@ -5,6 +5,7 @@
     "includes": [
       "**/*",
       "!.claude",
+      "!scripts",
       "!apps/codex-sidebar-demo/.vite",
       "!apps/codex-sidebar-demo/out",
       "!packages/ui/src/components/ui",

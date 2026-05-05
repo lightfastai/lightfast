@@ -35,6 +35,8 @@
   "dependencies": {
     "@ai-sdk/gateway": "catalog:",
     "@db/app": "workspace:*",
+    "@lightfastai/dev-core": "catalog:",
+    "@lightfastai/dev-proxy": "catalog:",
     "@repo/app-embed": "workspace:*",
     "@repo/app-encryption": "workspace:*",
     "@repo/app-pinecone": "workspace:*",
@@ -55,6 +57,7 @@
     "inngest": "catalog:",
     "jose": "catalog:",
     "nanoid": "catalog:",
+    "postgres": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

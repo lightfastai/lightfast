@@ -62,11 +62,7 @@
     },
     "dev": {
       "persistent": true,
-      "with": [
-        "@lightfast/app#dev:inngest",
-        "//#dev:ngrok",
-        "@db/app#dev:studio"
-      ]
+      "with": ["//#dev:ngrok"]
     },
     "transit": {}
   }

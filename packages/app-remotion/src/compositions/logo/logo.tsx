@@ -6,11 +6,13 @@ import { useMemo } from "react";
 interface LogoProps {
   strokeWidth?: number;
   transparent?: boolean;
+  variant?: "dark" | "light";
 }
 
 export const Logo: React.FC<LogoProps> = ({
   transparent = false,
   strokeWidth: swOverride,
+  variant = "dark",
 }) => {
   const { width, height } = useVideoConfig();
   const size = Math.min(width, height);
@@ -20,15 +22,18 @@ export const Logo: React.FC<LogoProps> = ({
 
   const path = useMemo(() => lissajousPath(size, padding), [size]);
 
+  const bgColor = variant === "light" ? "#ffffff" : "#000000";
+  const strokeColor = variant === "light" ? "#000000" : "#ffffff";
+
   return (
     <AbsoluteFill
-      style={transparent ? undefined : { backgroundColor: "#000000" }}
+      style={transparent ? undefined : { backgroundColor: bgColor }}
     >
       <svg height={height} viewBox={`0 0 ${width} ${height}`} width={width}>
         <path
           d={path}
           fill="none"
-          stroke="#ffffff"
+          stroke={strokeColor}
           strokeLinecap="round"
           strokeLinejoin="round"
           strokeWidth={sw}

@@ -48,6 +48,7 @@ function load(): string | null {
 }
 
 function persist(token: string): void {
+  memory = token;
   if (!safeStorage.isEncryptionAvailable()) {
     console.error(
       "[auth-store] safeStorage unavailable; refusing to write plaintext"
@@ -58,7 +59,6 @@ function persist(token: string): void {
     const payload: Persisted = { token, savedAt: Date.now() };
     const buf = safeStorage.encryptString(JSON.stringify(payload));
     writeFileSync(storePath(), buf);
-    memory = token;
   } catch (err) {
     console.error("[auth-store] failed to persist", err);
   }

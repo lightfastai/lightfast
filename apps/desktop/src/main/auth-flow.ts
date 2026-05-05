@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { createServer, type Server } from "node:http";
 import { shell } from "electron";
-import { mainEnv } from "../env/main";
+import { createAppUrl } from "./app-url";
 import { setToken } from "./auth-store";
 
 const SIGNIN_TIMEOUT_MS = 5 * 60_000;
@@ -119,7 +119,7 @@ export async function beginSignIn(): Promise<string | null> {
       settle(null);
     });
 
-    const signInUrl = new URL("/desktop/auth", mainEnv.LIGHTFAST_API_URL);
+    const signInUrl = createAppUrl("/desktop/auth");
     signInUrl.searchParams.set("state", state);
     signInUrl.searchParams.set("callback", callbackUrl);
 

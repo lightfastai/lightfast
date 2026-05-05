@@ -25,6 +25,7 @@ export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
 export const signInSearchParams = {
   step: parseAsStringLiteral(signInSteps).withDefault("email"),
   email: parseAsString,
+  redirect_url: parseAsString,
   error: parseAsString,
   token: parseAsString,
   errorCode: parseAsStringLiteral(authErrorCodes),

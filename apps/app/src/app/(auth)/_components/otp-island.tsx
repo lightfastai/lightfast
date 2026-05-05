@@ -2,7 +2,7 @@
 
 import { toast } from "@repo/ui/components/ui/sonner";
 import { addBreadcrumb, startSpan } from "@sentry/nextjs";
-import { useSignIn, useSignUp } from "@vendor/clerk/client";
+import { useAuth, useSignIn, useSignUp } from "@vendor/clerk/client";
 import * as React from "react";
 import { CodeVerificationUI } from "./shared/code-verification-ui";
 
@@ -10,10 +10,18 @@ interface OTPIslandProps {
   email: string | null;
   mode: "sign-in" | "sign-up";
   onError?: (message: string, isWaitlist?: boolean) => void;
+  redirectUrl?: string | null;
   ticket?: string | null;
 }
 
-export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
+export function OTPIsland({
+  email,
+  mode,
+  redirectUrl,
+  ticket,
+  onError,
+}: OTPIslandProps) {
+  const { isLoaded: isAuthLoaded } = useAuth();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
 
@@ -29,8 +37,8 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
   );
 
   const navigateToConsole = React.useCallback(() => {
-    window.location.href = "/account/welcome";
-  }, []);
+    window.location.href = redirectUrl ?? "/account/welcome";
+  }, [redirectUrl]);
 
   const handleClerkError = React.useCallback(
     (
@@ -75,13 +83,28 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
 
   // Send OTP on mount (or handle ticket)
   React.useEffect(() => {
+    if (!isAuthLoaded) {
+      return;
+    }
     if (hasInitRef.current) {
+      return;
+    }
+    // Wait for the relevant Clerk hook to populate before latching — otherwise
+    // a transient render with signIn/signUp still undefined would burn the
+    // one-shot guard and permanently brick OTP startup.
+    if (mode === "sign-in" && !signIn) {
+      return;
+    }
+    if ((mode === "sign-up" || ticket) && !signUp) {
       return;
     }
     hasInitRef.current = true;
 
     async function init() {
       if (mode === "sign-up" && ticket) {
+        if (!signUp) {
+          return;
+        }
         // Invitation ticket flow: create sign-up with ticket + email + legal in one call.
         // ticket bypasses waitlist; emailAddress is whatever the user wants (not required to
         // match the invited address); legalAccepted satisfies the legal_accepted requirement.
@@ -127,6 +150,9 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
       }
 
       if (mode === "sign-in") {
+        if (!signIn) {
+          return;
+        }
         const { error: sendError } = await startSpan(
           { name: "auth.otp.send", op: "auth", attributes: { mode } },
           () => signIn.emailCode.sendCode({ emailAddress: email ?? undefined })
@@ -148,6 +174,9 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
           });
         }
       } else {
+        if (!signUp) {
+          return;
+        }
         // Sign-up: create the account then send verification code
         const { error: createError } = await signUp.create({
           emailAddress: email ?? undefined,
@@ -190,6 +219,7 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
     email,
     mode,
     ticket,
+    isAuthLoaded,
     signIn,
     signUp,
     handleClerkError,
@@ -216,6 +246,13 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
       setIsVerifying(true);
       try {
         if (mode === "sign-in") {
+          if (!signIn) {
+            setError(
+              "Authentication is unavailable. Please refresh and try again."
+            );
+            setIsVerifying(false);
+            return;
+          }
           const { error: verifyError } = await startSpan(
             { name: "auth.otp.verify", op: "auth", attributes: { mode } },
             () => signIn.emailCode.verifyCode({ code })
@@ -249,6 +286,13 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
             setIsVerifying(false);
           }
         } else {
+          if (!signUp) {
+            setError(
+              "Authentication is unavailable. Please refresh and try again."
+            );
+            setIsVerifying(false);
+            return;
+          }
           const { error: verifyError } = await startSpan(
             { name: "auth.otp.verify", op: "auth", attributes: { mode } },
             () => signUp.verifications.verifyEmailCode({ code })
@@ -304,6 +348,12 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
     setError(null);
     try {
       if (mode === "sign-in") {
+        if (!signIn) {
+          setError(
+            "Authentication is unavailable. Please refresh and try again."
+          );
+          return;
+        }
         const { error: sendError } = await signIn.emailCode.sendCode({
           emailAddress: email ?? undefined,
         });
@@ -314,6 +364,12 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
           setCode("");
         }
       } else {
+        if (!signUp) {
+          setError(
+            "Authentication is unavailable. Please refresh and try again."
+          );
+          return;
+        }
         const { error: sendError } = await signUp.verifications.sendEmailCode();
         if (sendError) {
           handleClerkError(sendError);
@@ -324,8 +380,9 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
       }
     } catch {
       setError("An unexpected error occurred. Please try again.");
+    } finally {
+      setIsResending(false);
     }
-    setIsResending(false);
   }
 
   function handleCodeChange(value: string) {
@@ -338,7 +395,12 @@ export function OTPIsland({ email, mode, ticket, onError }: OTPIslandProps) {
 
   function handleReset() {
     if (mode === "sign-in") {
-      window.location.href = "/sign-in";
+      const params = new URLSearchParams();
+      if (redirectUrl) {
+        params.set("redirect_url", redirectUrl);
+      }
+      const query = params.toString();
+      window.location.href = query ? `/sign-in?${query}` : "/sign-in";
     } else {
       const ticketParam = ticket
         ? `?__clerk_ticket=${encodeURIComponent(ticket)}`

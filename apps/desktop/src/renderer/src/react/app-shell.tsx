@@ -1,7 +1,6 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import type { AuthSnapshot } from "../../../shared/ipc";
-import { AccountCard } from "./account-card";
 import { SignedOutShell } from "./signed-out-shell";
 
 export function AppShell() {
@@ -32,23 +31,11 @@ export function AppShell() {
   if (!auth.isSignedIn) {
     return (
       <SignedOutShell
-        onLearnMore={() =>
-          void window.lightfastBridge.openExternal("https://lightfast.ai")
-        }
+        onLearnMore={() => void window.lightfastBridge.openApp()}
         onSignIn={() => void window.lightfastBridge.auth.signIn()}
       />
     );
   }
 
-  return (
-    <div>
-      <AccountCard />
-      <button
-        onClick={() => void window.lightfastBridge.auth.signOut()}
-        type="button"
-      >
-        Sign out
-      </button>
-    </div>
-  );
+  return null;
 }
