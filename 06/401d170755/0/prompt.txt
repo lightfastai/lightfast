@@ -40,3 +40,14 @@ note: basically,
 3. apps/platform - apps/app is a related project
 
 vercel's related project will auto handle the linking in previews if im not mistaken. search the web for more info.
+
+---
+
+q1. b) but rename to related-projects.ts
+q2. dont care at all.
+q3. focus on project urls for now but denote the defer in the plan for follow up
+
+---
+
+sounds good.
+1 change: i dont want a related prject packge resolver. it should be in each app.
