@@ -1,0 +1,36 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "295481d60062",
+  "session_id": "0c828d1d-61aa-49f7-95c2-e58bf58c3739",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-05T06:51:35.829227Z",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "thoughts/shared/plans/2026-05-05-db-app-collapse-via-neon-http-proxy.md"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "10700613b34a",
+  "token_usage": {
+    "input_tokens": 2310,
+    "cache_creation_tokens": 107029,
+    "cache_read_tokens": 1362458,
+    "output_tokens": 30607,
+    "api_call_count": 15
+  },
+  "session_metrics": {
+    "turn_count": 6
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-05T06:51:35.133167Z",
+    "agent_lines": 439,
+    "agent_removed": 0,
+    "human_added": 12,
+    "human_modified": 0,
+    "human_removed": 0,
+    "total_committed": 451,
+    "total_lines_changed": 494,
+    "agent_percentage": 88.8663967611336,
+    "metric_version": 2
+  }
+}

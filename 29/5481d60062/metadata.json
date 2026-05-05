@@ -1,0 +1,25 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "295481d60062",
+  "strategy": "manual-commit",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 4,
+  "files_touched": [
+    "thoughts/shared/plans/2026-05-05-db-app-collapse-via-neon-http-proxy.md"
+  ],
+  "sessions": [
+    {
+      "metadata": "/29/5481d60062/0/metadata.json",
+      "transcript": "/29/5481d60062/0/full.jsonl",
+      "content_hash": "/29/5481d60062/0/content_hash.txt",
+      "prompt": "/29/5481d60062/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2310,
+    "cache_creation_tokens": 107029,
+    "cache_read_tokens": 1362458,
+    "output_tokens": 30607,
+    "api_call_count": 15
+  }
+}
