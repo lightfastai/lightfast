@@ -1,0 +1,29 @@
+/implement_plan @thoughts/shared/plans/2026-05-05-pr630-tier-b-cleanup.md
+
+---
+
+accept the new version. it's intentional.
+
+---
+
+keep as is. jsut continue working. stop overthinking
+
+---
+
+done! is it possible to "skip" scrips folder for code rabbit + github csecurity
+
+---
+
+proceed
+
+---
+
+yes commit + push
+
+---
+
+yes
+
+---
+
+perfect! done here?
