@@ -9,11 +9,16 @@ import { VitePlugin } from "@electron-forge/plugin-vite";
 import { PublisherGithub } from "@electron-forge/publisher-github";
 import type { ForgeConfig } from "@electron-forge/shared-types";
 
-const BUNDLE_ID = "ai.lightfast.desktop";
+const BUNDLE_ID = "ai.lightfast.lightfast";
 
 const osxSign =
   process.env.APPLE_SIGNING_IDENTITY && process.env.APPLE_TEAM_ID
-    ? {
+    ? // TODO(apple-cert): kebab-case keys below are silently dropped by
+      // @electron/osx-sign@1.3.3 (camelCase only). Notarization will fail
+      // when secrets land. Rename to camelCase + move per-file ones into
+      // optionsForFile before exercising the dev-id path. Out of scope here
+      // because verification needs Apple secrets we don't have yet.
+      {
         identity: process.env.APPLE_SIGNING_IDENTITY,
         "hardened-runtime": true,
         "gatekeeper-assess": false,
@@ -27,7 +32,21 @@ const osxSign =
         ),
         "signature-flags": "library",
       }
-    : undefined;
+    : // Ad-hoc fallback used while waiting on Apple Developer enrollment.
+      // identity:"-" alone produces an unsigned bundle: osx-sign defaults
+      // identityValidation:true, runs `security find-identity -v -`, finds
+      // nothing, throws, forge swallows. Bundle then SIGKILLs at launch
+      // (Code Signature Invalid) once FusesPlugin patches the binary.
+      // hardenedRuntime must go through optionsForFile — mergeOptionsForFile
+      // ignores top-level hardenedRuntime. Library validation rejects sibling
+      // frameworks under hardened runtime because ad-hoc DRs are content-bound.
+      {
+        identity: "-",
+        identityValidation: false,
+        optionsForFile: () => ({ hardenedRuntime: false }),
+        preAutoEntitlements: false,
+        preEmbedProvisioningProfile: false,
+      };
 
 const osxNotarize =
   process.env.APPLE_API_KEY &&

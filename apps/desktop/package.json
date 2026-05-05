@@ -68,5 +68,6 @@
   },
   "buildFlavor": "dev",
   "buildNumber": "1",
-  "sparkleFeedUrl": ""
+  "sparkleFeedUrl": "",
+  "signingMode": "ad-hoc"
 }
