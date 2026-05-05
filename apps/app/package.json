@@ -24,7 +24,7 @@
     "@clerk/nextjs": "catalog:",
     "@db/app": "workspace:*",
     "@hookform/resolvers": "catalog:",
-    "@lightfastai/ai-sdk": "workspace:*",
+    "@lightfastai/ai-sdk": "^0.3.0",
     "@lightfastai/related-projects": "catalog:",
     "@logtail/next": "^0.3.1",
     "@next/bundle-analyzer": "^16.2.4",

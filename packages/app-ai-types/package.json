@@ -15,7 +15,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@lightfastai/ai-sdk": "workspace:*",
+    "@lightfastai/ai-sdk": "^0.3.0",
     "@repo/app-validation": "workspace:*",
     "ai": "catalog:"
   },

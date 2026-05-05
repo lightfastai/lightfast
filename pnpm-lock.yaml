@@ -398,8 +398,8 @@ importers:
         specifier: 'catalog:'
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))(zod@4.3.6)
       '@lightfastai/ai-sdk':
-        specifier: workspace:*
-        version: link:../../core/ai-sdk
+        specifier: ^0.3.0
+        version: 0.3.0
       '@lightfastai/related-projects':
         specifier: 'catalog:'
         version: 0.1.6
@@ -1038,58 +1038,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.4(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0(bufferutil@4.1.0))(jsdom@27.0.1(bufferutil@4.1.0))(vite@7.1.10(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  core/ai-sdk:
-    dependencies:
-      '@upstash/redis':
-        specifier: ^1.37.0
-        version: 1.37.0
-      '@vendor/observability':
-        specifier: workspace:*
-        version: link:../../vendor/observability
-      ai:
-        specifier: 5.0.52
-        version: 5.0.52(zod@4.3.6)
-      redis:
-        specifier: ^4.7.0
-        version: 4.7.1
-      resumable-stream:
-        specifier: ^2.2.12
-        version: 2.2.12
-      uuid:
-        specifier: ^14.0.0
-        version: 14.0.0
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@repo/vitest-config':
-        specifier: workspace:*
-        version: link:../../internal/vitest-config
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.9.1
-      '@types/uuid':
-        specifier: ^11.0.0
-        version: 11.0.0
-      '@vitest/coverage-v8':
-        specifier: ^4.1.4
-        version: 4.1.4(vitest@4.1.4)
-      '@vitest/ui':
-        specifier: ^4.1.4
-        version: 4.1.4(vitest@4.1.4)
-      tsup:
-        specifier: ^8.5.1
-        version: 8.5.1(jiti@2.6.1)(postcss@8.5.10)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: ^4.1.4
-        version: 4.1.4(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0(bufferutil@4.1.0))(jsdom@27.0.1(bufferutil@4.1.0))(vite@7.1.10(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-
   core/cli:
     dependencies:
       commander:
@@ -1233,8 +1181,8 @@ importers:
   packages/app-ai:
     dependencies:
       '@lightfastai/ai-sdk':
-        specifier: workspace:*
-        version: link:../../core/ai-sdk
+        specifier: ^0.3.0
+        version: 0.3.0
       '@repo/app-ai-types':
         specifier: workspace:*
         version: link:../app-ai-types
@@ -1255,8 +1203,8 @@ importers:
   packages/app-ai-types:
     dependencies:
       '@lightfastai/ai-sdk':
-        specifier: workspace:*
-        version: link:../../core/ai-sdk
+        specifier: ^0.3.0
+        version: 0.3.0
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../app-validation
@@ -4718,6 +4666,10 @@ packages:
     resolution: {integrity: sha512-7pJzOWzPm6oJUxml+PCDRzYQ4A1hTMHAciTAHfFK4fkbDZX33nWPVG7Y3vqdKtslcwAzwmrNDc6sXy2nwWnbiw==}
     cpu: [x64]
     os: [win32]
+
+  '@lightfastai/ai-sdk@0.3.0':
+    resolution: {integrity: sha512-aRNcwsi1I5oKpd8u5izNbZewp96GLiTaXrH9C0+Oo3E6iBObJGrMHA4KQVH2MYAxJju8tQ1T7yXEpQSNgAWO9A==}
+    engines: {node: '>=18'}
 
   '@lightfastai/related-projects@0.1.6':
     resolution: {integrity: sha512-4zud3HFpHI9ZK+FfRM9fSC5tPCkFYshist0YUtmEXM4qii+ZHVkcxtJOZT7QGcNvB6qf0C/jxCmWh2RTydn4Gg==}
@@ -8690,10 +8642,6 @@ packages:
 
   '@types/unist@3.0.3':
     resolution: {integrity: sha512-ko/gIFJRv177XgZsZcBwnqJN5x/Gien8qNOn0D5bQU/zAzVf9Zt3BlcUiLqhV9y4ARk0GbT3tnUiPNgnTXzc/Q==}
-
-  '@types/uuid@11.0.0':
-    resolution: {integrity: sha512-HVyk8nj2m+jcFRNazzqyVKiZezyhDKrGUA3jlEcg/nZ6Ms+qHwocba1Y/AaVaznJTAM9xpdFSh+ptbNrhOGvZA==}
-    deprecated: This is a stub types definition. uuid provides its own type definitions, so you do not need this installed.
 
   '@types/whatwg-mimetype@3.0.2':
     resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
@@ -17445,6 +17393,15 @@ snapshots:
   '@libsql/win32-x64-msvc@0.4.7':
     optional: true
 
+  '@lightfastai/ai-sdk@0.3.0':
+    dependencies:
+      '@upstash/redis': 1.37.0
+      ai: 5.0.52(zod@4.3.6)
+      redis: 4.7.1
+      resumable-stream: 2.2.12
+      uuid: 14.0.0
+      zod: 4.3.6
+
   '@lightfastai/related-projects@0.1.6':
     dependencies:
       portless: 0.12.0
@@ -21859,10 +21816,6 @@ snapshots:
 
   '@types/unist@3.0.3': {}
 
-  '@types/uuid@11.0.0':
-    dependencies:
-      uuid: 14.0.0
-
   '@types/whatwg-mimetype@3.0.2': {}
 
   '@types/wrap-ansi@3.0.0': {}
@@ -22369,6 +22322,7 @@ snapshots:
       tinyglobby: 0.2.16
       tinyrainbow: 3.1.0
       vitest: 4.1.4(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0(bufferutil@4.1.0))(jsdom@27.0.1(bufferutil@4.1.0))(vite@7.1.10(@types/node@24.9.1)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+    optional: true
 
   '@vitest/utils@4.1.4':
     dependencies:
@@ -24315,7 +24269,8 @@ snapshots:
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
 
-  flatted@3.4.2: {}
+  flatted@3.4.2:
+    optional: true
 
   flora-colossus@2.0.0:
     dependencies:
@@ -28010,6 +27965,7 @@ snapshots:
       '@polka/url': 1.0.0-next.29
       mrmime: 2.0.1
       totalist: 3.0.1
+    optional: true
 
   sisteransi@1.0.5: {}
 
