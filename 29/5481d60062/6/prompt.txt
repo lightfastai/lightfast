@@ -1,0 +1,17 @@
+/implement_plan @thoughts/shared/plans/2026-05-05-db-app-collapse-via-neon-http-proxy.md
+
+---
+
+all good. now in subagent publish it. everythig is setup already. see check-pack and package.json in mfe-sandbox
+
+---
+
+nice. can you run all of these for us. we will work together. i will go trigger an org api key rotation.
+
+---
+
+just rotated. looks good on my side
+
+---
+
+use AskUserQuestion tool
