@@ -24,9 +24,12 @@ catalogs:
     '@hookform/resolvers':
       specifier: ^5.2.2
       version: 5.2.2
+    '@lightfastai/dev-proxy':
+      specifier: ^0.2.1
+      version: 0.2.1
     '@lightfastai/related-projects':
-      specifier: ^0.1.6
-      version: 0.1.6
+      specifier: ^0.1.18
+      version: 0.1.18
     '@neondatabase/serverless':
       specifier: ^1.1.0
       version: 1.1.0
@@ -190,7 +193,7 @@ importers:
         version: 2.31.0(@types/node@25.3.3)
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.6
+        version: 0.1.18
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -400,9 +403,12 @@ importers:
       '@lightfastai/ai-sdk':
         specifier: ^0.3.0
         version: 0.3.0
+      '@lightfastai/dev-proxy':
+        specifier: 'catalog:'
+        version: 0.2.1
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.6
+        version: 0.1.18
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -853,9 +859,12 @@ importers:
 
   apps/www:
     dependencies:
+      '@lightfastai/dev-proxy':
+        specifier: 'catalog:'
+        version: 0.2.1
       '@lightfastai/related-projects':
         specifier: 'catalog:'
-        version: 0.1.6
+        version: 0.1.18
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -4668,8 +4677,16 @@ packages:
     resolution: {integrity: sha512-aRNcwsi1I5oKpd8u5izNbZewp96GLiTaXrH9C0+Oo3E6iBObJGrMHA4KQVH2MYAxJju8tQ1T7yXEpQSNgAWO9A==}
     engines: {node: '>=18'}
 
-  '@lightfastai/related-projects@0.1.6':
-    resolution: {integrity: sha512-4zud3HFpHI9ZK+FfRM9fSC5tPCkFYshist0YUtmEXM4qii+ZHVkcxtJOZT7QGcNvB6qf0C/jxCmWh2RTydn4Gg==}
+  '@lightfastai/dev-core@0.1.1':
+    resolution: {integrity: sha512-y151EVoyxzroIl9buTHucPJuMxmbrTDnohu1lQbxpMFnlk9RiccEJxgFmTOwc+euTvPletjtlkzgUvpznznIAw==}
+    engines: {node: '>=22.0.0'}
+
+  '@lightfastai/dev-proxy@0.2.1':
+    resolution: {integrity: sha512-Gmr3lMhNcUgw3OQUPyYSyR5JjfLv5r1QSpBY6N8pz1PIC6haJ7mMLC1fGFIcuLJTlHG9b6+ULtcQg80RSRTmag==}
+    engines: {node: '>=22.0.0'}
+
+  '@lightfastai/related-projects@0.1.18':
+    resolution: {integrity: sha512-jrZcWrEPf2NmBwxhNIhTLXPVSOc6gVOQNOg8s9wWjQPWykBmPwnjkZMhLp7dMQDKX1P7BvZ8b58BBW1eBAC3UQ==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -17397,8 +17414,16 @@ snapshots:
       uuid: 14.0.0
       zod: 4.3.6
 
-  '@lightfastai/related-projects@0.1.6':
+  '@lightfastai/dev-core@0.1.1': {}
+
+  '@lightfastai/dev-proxy@0.2.1':
     dependencies:
+      '@lightfastai/dev-core': 0.1.1
+      portless: 0.12.0
+
+  '@lightfastai/related-projects@0.1.18':
+    dependencies:
+      '@lightfastai/dev-core': 0.1.1
       portless: 0.12.0
 
   '@listr2/prompt-adapter-inquirer@2.0.22(@inquirer/prompts@6.0.1)':
