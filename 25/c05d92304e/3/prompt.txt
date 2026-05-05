@@ -1,0 +1,7 @@
+/research_codebase we are implement allowedOrigins in @apps/app/next.config.ts 
+
+notice the portlessMfeDevOrigins.
+
+and also with withPortlessMfeDev.
+
+can you go to Code/mfe-sandbox and see whats actually happening in both of these and whether it's correctly structured for portless + multi worktress
