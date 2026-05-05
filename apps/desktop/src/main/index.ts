@@ -45,9 +45,14 @@ function currentThemeVariant(): SystemThemeVariant {
 }
 
 function rendererDevServerOrigin(): string | null {
-  return MAIN_WINDOW_VITE_DEV_SERVER_URL
-    ? new URL(MAIN_WINDOW_VITE_DEV_SERVER_URL).origin
-    : null;
+  if (!MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    return null;
+  }
+  try {
+    return new URL(MAIN_WINDOW_VITE_DEV_SERVER_URL).origin;
+  } catch {
+    return null;
+  }
 }
 
 function openAllowedExternalUrl(url: string): void {

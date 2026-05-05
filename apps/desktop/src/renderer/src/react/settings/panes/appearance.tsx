@@ -17,6 +17,7 @@ export function Appearance() {
           <div className="segmented">
             {THEME_OPTIONS.map((option) => (
               <button
+                aria-pressed={snapshot.themeSource === option.value}
                 className={
                   snapshot.themeSource === option.value
                     ? "segmented__button active"

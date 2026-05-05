@@ -48,6 +48,9 @@ catalogs:
     '@noble/hashes':
       specifier: ^2.2.0
       version: 2.2.0
+    '@radix-ui/react-dropdown-menu':
+      specifier: ^2.1.15
+      version: 2.1.16
     '@sentry/core':
       specifier: ^10.49.0
       version: 10.49.0
@@ -669,7 +672,7 @@ importers:
   apps/desktop:
     dependencies:
       '@radix-ui/react-dropdown-menu':
-        specifier: ^2.1.15
+        specifier: 'catalog:'
         version: 2.1.16(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@repo/app-trpc':
         specifier: workspace:*
