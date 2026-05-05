@@ -1,0 +1,42 @@
+/create_plan @thoughts/shared/research/2026-05-05-pr630-ghas-coderabbit-findings.md
+
+---
+
+1. let's do p0
+
+2. lightfast-app and lightfast-platform already linked. when you have the @apps/app/src/lib/project-urls.ts it auto does it.
+
+3. defer.
+4. cool dismess
+
+---
+
+/create_plan @thoughts/shared/research/2026-05-05-pr630-ghas-coderabbit-findings.md firstly, let's focus purely on the project urls allowlist stuff.
+
+basically, we introduce a new system that depends on @scripts/dev-services.mjs @scripts/with-dev-services-env.mjs @scripts/with-desktop-env.mjs 
+
+and based on @lightfast.dev.json and @microfrontends.json 
+
+given this, the blast radius as far as i know is:
+@apps/app/next.config.ts 
+@apps/www/next.config.ts 
+@apps/app/src/lib/microfrontends.ts 
+@apps/app/src/lib/project-urls.ts 
+@apps/www/src/lib/project-urls.ts 
+@api/platform/src/lib/project-urls.ts 
+@apps/platform/src/lib/project-urls.ts 
+
+and also in the background we have vercel portless that allows *.lightfast.localhost:<port> or something like that across multiple worktress (worktrees feature not fully implement but it will be soon)
+
+moreover, given this is a port thing, we should also consider things like
+1. @apps/app/src/app/(trpc)/api/trpc/[trpc]/route.ts 
+2. @apps/desktop/ (find the callers) but i think apps/desktop just uses the desktop env injector so it solves it self.
+
+given this, we need to think OF the most optimal and correct architecture that solves our projects.
+
+note: basically, 
+1. apps/www - apps/app is a microfrontend
+2. apps/www - apps/app needs to be a related project
+3. apps/platform - apps/app is a related project
+
+vercel's related project will auto handle the linking in previews if im not mistaken. search the web for more info.
