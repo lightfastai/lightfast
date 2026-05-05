@@ -1,0 +1,21 @@
+/create_plan @thoughts/shared/research/2026-05-05-pr630-ghas-coderabbit-findings.md we just implement the fix for related projects. now, next: let's dicsuss what other issues exists and which to solve. note: also go to pr and close the related projects issues. (see recent commits for example)
+
+---
+
+/create_plan @thoughts/shared/research/2026-05-05-pr630-ghas-coderabbit-findings.md we just implement the fix for related projects. now, next: let's dicsuss what other issues exists and which to solved note: also go to pr and close the related projects issues. (see recent commits for example) 
+we focus on 
+  Tier B — quick cleanup, same PR
+  - Theme 1.2 (sign-in/page.tsx) and Theme 1.8
+  (user-menu.tsx aria-label rename) — two small edits.
+  - Theme 4.2 — drop dead postgres dep from
+  api/app/package.json.
+  - Resolve threads that are already addressed by commits
+  but not marked resolved (#9, possibly #6/#7 depending on
+  what we decide).
+  - Theme 6.1 — dismiss the GHAS alert via UI (out-of-band).
+
+---
+
+skip the db pormise.all.
+
+focus on aesy and straight forward problmes
