@@ -1,0 +1,23 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "e0be9fff1dd6",
+  "strategy": "manual-commit",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 1,
+  "files_touched": null,
+  "sessions": [
+    {
+      "metadata": "/e0/be9fff1dd6/0/metadata.json",
+      "transcript": "/e0/be9fff1dd6/0/full.jsonl",
+      "content_hash": "/e0/be9fff1dd6/0/content_hash.txt",
+      "prompt": "/e0/be9fff1dd6/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 11408,
+    "cache_creation_tokens": 159494,
+    "cache_read_tokens": 909857,
+    "output_tokens": 28403,
+    "api_call_count": 12
+  }
+}
