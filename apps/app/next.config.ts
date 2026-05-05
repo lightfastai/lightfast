@@ -1,7 +1,4 @@
-import {
-  getPortlessMfeDevOrigins,
-  withPortlessMfeDev,
-} from "@lightfastai/dev-proxy/next";
+import { withPortlessProxy } from "@lightfastai/dev-proxy/next";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -12,11 +9,6 @@ import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
 import { platformUrl } from "./src/lib/related-projects";
-
-const portlessMfeDevOrigins = getPortlessMfeDevOrigins({
-  allowMissingConfig: true,
-  includePort: "both",
-});
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   typedRoutes: true,
@@ -87,7 +79,9 @@ const appConfig: NextConfig = merge({}, baseConfig, {
         if (vercelEnv === "preview") {
           return ["lightfast.ai", "*.lightfast.ai", "*.vercel.app"];
         }
-        return ["localhost:*", ...portlessMfeDevOrigins];
+        // localhost:* covers direct backend hits (raw 4107, desktop renderer, Inngest local).
+        // Browser-facing origins (*.app.lightfast.localhost etc.) are appended by withPortlessProxy below.
+        return ["localhost:*"];
       })(),
     },
   },
@@ -159,10 +153,12 @@ const config = withSentryConfig(
   sentryOptions
 );
 
-const baseExport = withPortlessMfeDev(
+const isLocalDev = !env.NEXT_PUBLIC_VERCEL_ENV;
+const baseExport = withPortlessProxy(
   withMicrofrontends(config, {
     debug: env.NODE_ENV !== "production",
-  })
+  }),
+  { serverActions: isLocalDev }
 );
 
 export default process.env.ANALYZE === "true"
