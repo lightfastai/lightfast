@@ -160,3 +160,7 @@ now, let's research into full setup to hoose dirty path 1 as we wait for 2 to wo
 ---
 
 would you say we should just skip this an just wait for apple to drop there thing but we just continuing developing?
+
+---
+
+how much overhead will this create in terms when apple confirms is it easy to get it working again?
