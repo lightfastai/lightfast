@@ -9,8 +9,18 @@ vi.mock("next/navigation", () => ({
   redirect: (...args: unknown[]) => mockRedirect(...(args as [string])),
 }));
 
+// Mock ~/cors so getRedirectUrl can validate absolute URLs without pulling in
+// the full origins/env stack at module load (cors.ts has a top-level throw if
+// portless isn't running). The allowlist mirrors the canonical app origin in
+// dev (portless aggregate) and prod.
+vi.mock("~/cors", () => ({
+  isAllowedOrigin: (origin: string | null) =>
+    origin === "https://lightfast.localhost" ||
+    origin === "https://lightfast.ai",
+}));
+
 // Import after mocks
-const { initiateSignIn } = await import("./sign-in");
+const { initiateSignIn } = await import("~/app/(auth)/_actions/sign-in");
 
 describe("initiateSignIn", () => {
   afterEach(() => {
@@ -68,5 +78,39 @@ describe("initiateSignIn", () => {
     expect(mockRedirect).toHaveBeenCalledWith(
       "/sign-in?step=code&email=user@example.com&redirect_url=https://lightfast.localhost/desktop/auth?state=abc%26callback=http%253A%252F%252F127.0.0.1%253A1234%252Fcallback"
     );
+  });
+
+  it("strips redirect_url pointing at an off-allowlist origin", async () => {
+    const formData = new FormData();
+    formData.set("email", "user@example.com");
+    formData.set("redirect_url", "https://evil.example.com/steal");
+
+    await expect(initiateSignIn(formData)).rejects.toThrow("REDIRECT:");
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/sign-in?step=code&email=user@example.com"
+    );
+  });
+
+  it("strips redirect_url with protocol-relative // prefix", async () => {
+    const formData = new FormData();
+    formData.set("email", "user@example.com");
+    formData.set("redirect_url", "//evil.example.com/steal");
+
+    await expect(initiateSignIn(formData)).rejects.toThrow("REDIRECT:");
+    expect(mockRedirect).toHaveBeenCalledWith(
+      "/sign-in?step=code&email=user@example.com"
+    );
+  });
+
+  it("preserves redirect_url through the validation-failure branch", async () => {
+    const formData = new FormData();
+    formData.set("email", "not-an-email");
+    formData.set("redirect_url", "/account/welcome");
+
+    await expect(initiateSignIn(formData)).rejects.toThrow("REDIRECT:");
+    const calledWith = mockRedirect.mock.calls[0]?.[0] as string;
+    expect(calledWith).toMatch(/^\/sign-in\?/);
+    expect(calledWith).toContain("error=");
+    expect(calledWith).toContain("redirect_url=/account/welcome");
   });
 });

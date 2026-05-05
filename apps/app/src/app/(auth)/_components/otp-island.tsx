@@ -89,14 +89,20 @@ export function OTPIsland({
     if (hasInitRef.current) {
       return;
     }
+    // Wait for the relevant Clerk hook to populate before latching — otherwise
+    // a transient render with signIn/signUp still undefined would burn the
+    // one-shot guard and permanently brick OTP startup.
+    if (mode === "sign-in" && !signIn) {
+      return;
+    }
+    if ((mode === "sign-up" || ticket) && !signUp) {
+      return;
+    }
     hasInitRef.current = true;
 
     async function init() {
       if (mode === "sign-up" && ticket) {
         if (!signUp) {
-          setError(
-            "Authentication is unavailable. Please refresh and try again."
-          );
           return;
         }
         // Invitation ticket flow: create sign-up with ticket + email + legal in one call.
@@ -145,10 +151,6 @@ export function OTPIsland({
 
       if (mode === "sign-in") {
         if (!signIn) {
-          setError(
-            "Authentication is unavailable. Please refresh and try again."
-          );
-          setIsResending(false);
           return;
         }
         const { error: sendError } = await startSpan(
@@ -173,10 +175,6 @@ export function OTPIsland({
         }
       } else {
         if (!signUp) {
-          setError(
-            "Authentication is unavailable. Please refresh and try again."
-          );
-          setIsResending(false);
           return;
         }
         // Sign-up: create the account then send verification code

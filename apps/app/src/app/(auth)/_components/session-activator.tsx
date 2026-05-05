@@ -17,14 +17,13 @@ export function SessionActivator({ token }: SessionActivatorProps) {
   const hasActivatedRef = React.useRef(false);
 
   React.useEffect(() => {
-    if (!isLoaded || hasActivatedRef.current) {
+    if (!(isLoaded && signIn) || hasActivatedRef.current) {
       return;
     }
     hasActivatedRef.current = true;
 
     async function activate() {
       if (!signIn) {
-        setError("Sign-in failed. Please try again.");
         return;
       }
 

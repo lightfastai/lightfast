@@ -19,6 +19,7 @@ export function General() {
             <div className="settings-row__label">{label}</div>
             <label className="switch">
               <input
+                aria-label={label}
                 checked={snapshot[key]}
                 onChange={(e) =>
                   void window.lightfastBridge.updateSetting(
