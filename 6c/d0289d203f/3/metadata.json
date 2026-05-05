@@ -1,0 +1,55 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6cd0289d203f",
+  "session_id": "d0c70466-132c-4f45-8803-cd086ccb5189",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-05T06:12:33.307499Z",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 5,
+  "files_touched": [
+    "api/platform/src/lib/oauth/authorize.ts",
+    "api/platform/src/lib/oauth/callback.ts",
+    "api/platform/src/lib/project-urls.ts",
+    "api/platform/src/lib/provider-configs.ts",
+    "api/platform/src/lib/related-projects.ts",
+    "apps/app/next.config.ts",
+    "apps/app/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/app/src/lib/microfrontends.ts",
+    "apps/app/src/lib/project-urls.ts",
+    "apps/app/src/lib/related-projects.ts",
+    "apps/platform/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/platform/src/lib/project-urls.ts",
+    "apps/platform/src/lib/related-projects.ts",
+    "apps/www/src/app/(app)/(content)/docs/(api)/layout.tsx",
+    "apps/www/src/app/(app)/(content)/docs/(general)/layout.tsx",
+    "apps/www/src/lib/project-urls.ts",
+    "apps/www/src/lib/related-projects.ts"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "e474e50046d7",
+  "checkpoint_transcript_start": 166,
+  "transcript_lines_at_start": 166,
+  "token_usage": {
+    "input_tokens": 38,
+    "cache_creation_tokens": 45445,
+    "cache_read_tokens": 1578326,
+    "output_tokens": 35825,
+    "api_call_count": 13
+  },
+  "session_metrics": {
+    "turn_count": 13
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-05T06:12:32.961872Z",
+    "agent_lines": 142,
+    "agent_removed": 89,
+    "human_added": 0,
+    "human_modified": 7,
+    "human_removed": 11,
+    "total_committed": 149,
+    "total_lines_changed": 249,
+    "agent_percentage": 92.7710843373494,
+    "metric_version": 2
+  }
+}
