@@ -3,7 +3,7 @@
   "checkpoint_id": "6cd0289d203f",
   "strategy": "manual-commit",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 11,
+  "checkpoints_count": 12,
   "files_touched": [
     "api/platform/src/lib/oauth/authorize.ts",
     "api/platform/src/lib/oauth/callback.ts",
@@ -47,13 +47,19 @@
       "transcript": "/6c/d0289d203f/3/full.jsonl",
       "content_hash": "/6c/d0289d203f/3/content_hash.txt",
       "prompt": "/6c/d0289d203f/3/prompt.txt"
+    },
+    {
+      "metadata": "/6c/d0289d203f/4/metadata.json",
+      "transcript": "/6c/d0289d203f/4/full.jsonl",
+      "content_hash": "/6c/d0289d203f/4/content_hash.txt",
+      "prompt": "/6c/d0289d203f/4/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 2386,
-    "cache_creation_tokens": 321097,
-    "cache_read_tokens": 4180966,
-    "output_tokens": 75840,
-    "api_call_count": 52
+    "input_tokens": 2449,
+    "cache_creation_tokens": 373399,
+    "cache_read_tokens": 9460026,
+    "output_tokens": 97810,
+    "api_call_count": 106
   }
 }
