@@ -21,7 +21,9 @@ if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
 const devOrigins = devOriginPatterns;
 
 export function isAllowedOrigin(origin: string | null): origin is string {
-  if (!origin) return false;
+  if (!origin) {
+    return false;
+  }
 
   let originUrl: URL;
   try {
@@ -31,8 +33,12 @@ export function isAllowedOrigin(origin: string | null): origin is string {
   }
   const originValue = originUrl.origin;
 
-  if (originValue === canonicalAppOrigin) return true;
-  if (!isDev) return false;
+  if (originValue === canonicalAppOrigin) {
+    return true;
+  }
+  if (!isDev) {
+    return false;
+  }
 
   return devOrigins.some((pattern) => {
     if (pattern.startsWith("*.")) {

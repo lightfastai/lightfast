@@ -21,7 +21,9 @@ if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
 const devOrigins = devOriginPatterns;
 
 export function isAllowedOrigin(origin: string | null): origin is string {
-  if (!origin) return false;
+  if (!origin) {
+    return false;
+  }
 
   let originUrl: URL;
   try {
@@ -31,8 +33,12 @@ export function isAllowedOrigin(origin: string | null): origin is string {
   }
   const originValue = originUrl.origin;
 
-  if (originValue === canonicalAppOrigin) return true;
-  if (!isDev) return false;
+  if (originValue === canonicalAppOrigin) {
+    return true;
+  }
+  if (!isDev) {
+    return false;
+  }
 
   return devOrigins.some((pattern) => {
     if (pattern.startsWith("*.")) {
@@ -49,8 +55,12 @@ export function isAllowedOrigin(origin: string | null): origin is string {
 // http://localhost:<vite-port> (not in the portless set). Auth is via Bearer
 // JWT, not cookies, so admitting localhost here doesn't weaken auth.
 export function isDesktopDevOrigin(origin: string | null): origin is string {
-  if (!origin) return false;
-  if (process.env.NODE_ENV !== "development") return false;
+  if (!origin) {
+    return false;
+  }
+  if (process.env.NODE_ENV !== "development") {
+    return false;
+  }
   try {
     const url = new URL(origin);
     return (
@@ -72,6 +82,8 @@ export function isPackagedDesktopRequest(
   origin: string | null,
   headers: Headers
 ): boolean {
-  if (headers.get("x-lightfast-desktop") !== "1") return false;
+  if (headers.get("x-lightfast-desktop") !== "1") {
+    return false;
+  }
   return origin === "null";
 }

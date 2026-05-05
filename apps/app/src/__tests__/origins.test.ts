@@ -12,8 +12,12 @@ const PORTLESS_PATTERNS = [
 function setupModuleMocks() {
   vi.doMock("@lightfastai/dev-proxy/projects", () => ({
     resolveProjectUrl: vi.fn((name: string) => {
-      if (name === "lightfast-app") return "https://app.lightfast.localhost";
-      if (name === "lightfast-www") return "https://www.lightfast.localhost";
+      if (name === "lightfast-app") {
+        return "https://app.lightfast.localhost";
+      }
+      if (name === "lightfast-www") {
+        return "https://www.lightfast.localhost";
+      }
       throw new Error(`unexpected project name: ${name}`);
     }),
   }));
@@ -22,7 +26,9 @@ function setupModuleMocks() {
   }));
 }
 
-function mockEnv(vercelEnv: "development" | "preview" | "production" | undefined) {
+function mockEnv(
+  vercelEnv: "development" | "preview" | "production" | undefined
+) {
   vi.doMock("~/env", () => ({
     env: { NEXT_PUBLIC_VERCEL_ENV: vercelEnv },
   }));
