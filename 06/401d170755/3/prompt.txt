@@ -133,3 +133,7 @@ Created (deliverable 2):
 Cleanup: all `electron-forge` / `Electron.app` / `tail -f /dev/null` processes I started have been killed; `pnpm dev:full` (PID 95126, 17 next dev processes) is still running.</result>
 <usage><total_tokens>136736</total_tokens><tool_uses>119</tool_uses><duration_ms>943154</duration_ms></usage>
 </task-notification>
+
+---
+
+skip skills. we'll do that later.
