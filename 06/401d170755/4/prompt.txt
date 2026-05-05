@@ -1,0 +1,37 @@
+can you investigate why withLocalBatch was introduced in @db/app/src/client.ts
+
+---
+
+what do you recommend in this case then? feels like we're adding extra overhead for no reason
+
+---
+
+im cool with keeps the polyfill, however, i personally think that we need to re-think the entire db organization structure given that we have introduce new primitives for local postgres.
+
+given this, i want to better encapsulate the folder structure to be distinctly identy prod vs dev or neon-http vs postgress.
+
+and then maybe have a polyfill folder hte things that need polyfill.
+
+---
+
+/create_plan this all makes sense.
+1. i think in cleint.ts is fine with explicit comments
+2. drivers are fine
+3. withBatchPolyfill is better. perfect proceed
+
+---
+
+is this truely the most optimal and efficient solution?
+
+---
+
+consider: https://neon.com/guides/local-development-with-neon
+
+---
+
+run search for 1.
+i understand the changes it actually maybe need to be made in Code/mfe-sandbox repo under packages/dev-services.
+
+---
+
+proced -- use agent / task /subagent for this research
