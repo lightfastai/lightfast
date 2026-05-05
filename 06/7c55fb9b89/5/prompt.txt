@@ -1,0 +1,9 @@
+/research_codebase can we go through @apps/desktop/ and let's figure what we need to do get this ready for prod. e.g envs
+
+---
+
+question, why is this tapping into keychain and shit? is this what other electron apps do?
+
+---
+
+question, consiering that we havent gotten apple dev account setup how can we deploy?
