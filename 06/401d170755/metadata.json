@@ -3,7 +3,7 @@
   "checkpoint_id": "06401d170755",
   "strategy": "manual-commit",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 4,
+  "checkpoints_count": 5,
   "files_touched": [
     "apps/app/next.config.ts",
     "apps/app/src/app/(auth)/sign-in/page.tsx",
@@ -25,13 +25,19 @@
       "transcript": "/06/401d170755/1/full.jsonl",
       "content_hash": "/06/401d170755/1/content_hash.txt",
       "prompt": "/06/401d170755/1/prompt.txt"
+    },
+    {
+      "metadata": "/06/401d170755/2/metadata.json",
+      "transcript": "/06/401d170755/2/full.jsonl",
+      "content_hash": "/06/401d170755/2/content_hash.txt",
+      "prompt": "/06/401d170755/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 13680,
-    "cache_creation_tokens": 253828,
-    "cache_read_tokens": 1351150,
-    "output_tokens": 47596,
-    "api_call_count": 19
+    "input_tokens": 13682,
+    "cache_creation_tokens": 255374,
+    "cache_read_tokens": 1473880,
+    "output_tokens": 47745,
+    "api_call_count": 21
   }
 }
