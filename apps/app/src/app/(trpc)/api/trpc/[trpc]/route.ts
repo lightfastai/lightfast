@@ -1,40 +1,34 @@
 import { appRouter, createTRPCContext } from "@api/app";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
-import { env } from "~/env";
-import { wwwUrl } from "~/lib/related-projects";
+import { isAllowedOrigin } from "~/lib/origin-allowlist";
 
 // Use Node.js runtime instead of Edge for GitHub App crypto operations
 // Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)
 export const runtime = "nodejs";
 
-// Production remains pinned to related-project origins. In development, allow
-// the portless mesh and local desktop/browser origins.
-const allowedOrigins = new Set<string>([wwwUrl]);
-
-const isDevelopmentLocalOrigin = (origin: string) => {
+// Desktop renderer carve-out: in dev, the Electron renderer loads from
+// http://localhost:<vite-port>. Not in the portless set; admitted explicitly.
+// Auth is via Authorization: Bearer (Clerk JWT from safeStorage), not cookies,
+// so we are not weakening security by accepting localhost — credentials are
+// gated by the token, not the origin.
+function isDesktopRendererOrigin(origin: string | null): origin is string {
+  if (!origin) return false;
+  if (process.env.NODE_ENV !== "development") return false;
   try {
     const url = new URL(origin);
     return (
       (url.protocol === "http:" || url.protocol === "https:") &&
-      (url.hostname === "localhost" || url.hostname.endsWith(".localhost"))
+      url.hostname === "localhost"
     );
   } catch {
     return false;
   }
-};
-
-const isAllowedOrigin = (origin: string) => {
-  if (allowedOrigins.has(origin)) {
-    return true;
-  }
-
-  return env.NODE_ENV === "development" && isDevelopmentLocalOrigin(origin);
-};
+}
 
 const setCorsHeaders = (req: NextRequest, res: Response) => {
   const origin = req.headers.get("origin");
-  if (!(origin && isAllowedOrigin(origin))) {
+  if (!(isAllowedOrigin(origin) || isDesktopRendererOrigin(origin))) {
     return res;
   }
 

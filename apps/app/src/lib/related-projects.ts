@@ -55,3 +55,9 @@ export const platformUrl = resolveStandalone(
   "https://lightfast-platform.vercel.app",
   "http://localhost:4112"
 );
+
+// Self-URL: in dev, the portless host (https://app.lightfast.localhost/);
+// in preview/prod, the production host (microfrontends serves under one domain).
+export const appUrl = isLocal
+  ? resolveProjectUrl("lightfast-app")
+  : "https://lightfast.ai";
