@@ -47,7 +47,6 @@
     "@vendor/db": "workspace:*",
     "@vendor/lib": "workspace:*",
     "drizzle-orm": "catalog:",
-    "postgres": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
