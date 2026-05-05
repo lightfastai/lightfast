@@ -3,7 +3,7 @@
   "checkpoint_id": "bf2172783d7d",
   "strategy": "manual-commit",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 5,
+  "checkpoints_count": 7,
   "files_touched": [
     "apps/app/vercel.json",
     "apps/platform/vercel.json",
@@ -21,13 +21,19 @@
       "transcript": "/bf/2172783d7d/1/full.jsonl",
       "content_hash": "/bf/2172783d7d/1/content_hash.txt",
       "prompt": "/bf/2172783d7d/1/prompt.txt"
+    },
+    {
+      "metadata": "/bf/2172783d7d/2/metadata.json",
+      "transcript": "/bf/2172783d7d/2/full.jsonl",
+      "content_hash": "/bf/2172783d7d/2/content_hash.txt",
+      "prompt": "/bf/2172783d7d/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 2451,
-    "cache_creation_tokens": 291909,
-    "cache_read_tokens": 8538889,
-    "output_tokens": 84316,
-    "api_call_count": 91
+    "input_tokens": 2486,
+    "cache_creation_tokens": 416067,
+    "cache_read_tokens": 9507320,
+    "output_tokens": 93303,
+    "api_call_count": 107
   }
 }
