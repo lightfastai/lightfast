@@ -51,6 +51,7 @@
     "@vendor/lib": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vendor/upstash": "workspace:*",
+    "@vercel/related-projects": "catalog:",
     "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",

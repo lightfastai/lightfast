@@ -8,8 +8,8 @@ import type { SourceType } from "@repo/app-providers";
 import { getProvider } from "@repo/app-providers";
 import { nanoid } from "@vendor/lib";
 import { log } from "@vendor/observability/log/next";
+import { appUrl } from "../../origins";
 import { providerConfigs } from "../provider-configs";
-import { appUrl } from "../related-projects";
 import { storeOAuthState } from "./state";
 
 // ── Types ──

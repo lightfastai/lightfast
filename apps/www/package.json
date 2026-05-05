@@ -42,6 +42,7 @@
     "@vendor/security": "workspace:*",
     "@vendor/seo": "workspace:*",
     "@vercel/microfrontends": "^2.3.2",
+    "@vercel/related-projects": "catalog:",
     "@vercel/toolbar": "^0.2.2",
     "feed": "^5.2.0",
     "framer-motion": "^11.18.2",

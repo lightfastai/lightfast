@@ -1,6 +1,5 @@
-import { getPortlessProxyOrigins } from "@lightfastai/dev-proxy/next";
 import { env } from "~/env";
-import { appUrl } from "~/lib/related-projects";
+import { appUrl, devOriginPatterns } from "~/origins";
 
 const isDev =
   env.NEXT_PUBLIC_VERCEL_ENV === undefined ||
@@ -12,14 +11,14 @@ const canonicalAppOrigin = new URL(appUrl).origin;
 
 if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
   throw new Error(
-    "[origin-allowlist] appUrl resolved to production URL in dev; portless daemon likely not running. " +
+    "[cors] appUrl resolved to production URL in dev; portless daemon likely not running. " +
       "Run `pnpm dev:full` (which starts portless) or `portless start` before the platform/app server."
   );
 }
 
-const devOrigins = isDev
-  ? getPortlessProxyOrigins({ allowMissingConfig: true })
-  : [];
+// devOriginPatterns is already [] when !isLocal (gated inside ~/origins).
+// No re-gate needed; the constant is the source of truth.
+const devOrigins = devOriginPatterns;
 
 export function isAllowedOrigin(origin: string | null): origin is string {
   if (!origin) return false;

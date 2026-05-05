@@ -1,7 +1,7 @@
 import { createPlatformTRPCContext, platformRouter } from "@api/platform";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
-import { isAllowedOrigin } from "~/lib/origin-allowlist";
+import { isAllowedOrigin } from "~/cors";
 
 export const runtime = "nodejs";
 

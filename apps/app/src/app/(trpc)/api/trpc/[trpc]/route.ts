@@ -1,42 +1,37 @@
 import { appRouter, createTRPCContext } from "@api/app";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
-import { isAllowedOrigin } from "~/lib/origin-allowlist";
+import {
+  isAllowedOrigin,
+  isDesktopDevOrigin,
+  isPackagedDesktopRequest,
+} from "~/cors";
 
 // Use Node.js runtime instead of Edge for GitHub App crypto operations
 // Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)
 export const runtime = "nodejs";
 
-// Desktop renderer carve-out: in dev, the Electron renderer loads from
-// http://localhost:<vite-port>. Not in the portless set; admitted explicitly.
-// Auth is via Authorization: Bearer (Clerk JWT from safeStorage), not cookies,
-// so we are not weakening security by accepting localhost — credentials are
-// gated by the token, not the origin.
-function isDesktopRendererOrigin(origin: string | null): origin is string {
-  if (!origin) return false;
-  if (process.env.NODE_ENV !== "development") return false;
-  try {
-    const url = new URL(origin);
-    return (
-      (url.protocol === "http:" || url.protocol === "https:") &&
-      url.hostname === "localhost"
-    );
-  } catch {
-    return false;
-  }
-}
-
 const setCorsHeaders = (req: NextRequest, res: Response) => {
   const origin = req.headers.get("origin");
-  if (!(isAllowedOrigin(origin) || isDesktopRendererOrigin(origin))) {
+
+  if (
+    !(
+      isAllowedOrigin(origin) ||
+      isDesktopDevOrigin(origin) ||
+      isPackagedDesktopRequest(origin, req.headers)
+    )
+  ) {
     return res;
   }
 
-  res.headers.set("Access-Control-Allow-Origin", origin);
+  // Echo the request Origin when present; absent headers fall back to the
+  // string "null" (Fetch-spec serialization for opaque origins, accepted by
+  // Chromium for file:// renderers).
+  res.headers.set("Access-Control-Allow-Origin", origin ?? "null");
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.headers.set(
     "Access-Control-Allow-Headers",
-    "content-type,authorization,x-trpc-source,trpc-accept"
+    "content-type,authorization,x-trpc-source,trpc-accept,x-lightfast-desktop"
   );
   res.headers.set("Vary", "Origin");
   res.headers.set("Access-Control-Allow-Credentials", "true");

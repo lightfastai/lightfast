@@ -8,7 +8,7 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
-import { platformUrl } from "./src/lib/related-projects";
+import { devOriginPatterns, platformUrl } from "./src/origins";
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   typedRoutes: true,
@@ -79,9 +79,9 @@ const appConfig: NextConfig = merge({}, baseConfig, {
         if (vercelEnv === "preview") {
           return ["lightfast.ai", "*.lightfast.ai", "*.vercel.app"];
         }
-        // localhost:* covers direct backend hits (raw 4107, desktop renderer, Inngest local).
-        // Browser-facing origins (*.app.lightfast.localhost etc.) are appended by withPortlessProxy below.
-        return ["localhost:*"];
+        // Dev: portless wildcards (lib/origins single seam) + raw localhost
+        // for direct backend hits (raw 4107, desktop renderer, Inngest local).
+        return [...devOriginPatterns, "localhost:*"];
       })(),
     },
   },
@@ -153,12 +153,10 @@ const config = withSentryConfig(
   sentryOptions
 );
 
-const isLocalDev = !env.NEXT_PUBLIC_VERCEL_ENV;
 const baseExport = withPortlessProxy(
   withMicrofrontends(config, {
     debug: env.NODE_ENV !== "production",
-  }),
-  { serverActions: isLocalDev }
+  })
 );
 
 export default process.env.ANALYZE === "true"

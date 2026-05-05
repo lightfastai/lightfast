@@ -27,6 +27,7 @@ export function DesktopTRPCProvider({
           const token = await bridge?.auth?.getToken?.();
           const headers: Record<string, string> = {
             "x-trpc-source": "desktop",
+            "x-lightfast-desktop": "1",
           };
           if (token) {
             headers.Authorization = `Bearer ${token}`;
