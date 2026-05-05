@@ -34,8 +34,8 @@ catalogs:
       specifier: ^0.1.24
       version: 0.1.24
     '@lightfastai/dev-services':
-      specifier: ^0.1.6
-      version: 0.1.6
+      specifier: ^0.2.0
+      version: 0.2.0
     '@neondatabase/serverless':
       specifier: ^1.1.0
       version: 1.1.0
@@ -208,7 +208,7 @@ importers:
         version: 0.1.24
       '@lightfastai/dev-services':
         specifier: 'catalog:'
-        version: 0.1.6
+        version: 0.2.0
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -281,9 +281,6 @@ importers:
       inngest:
         specifier: 'catalog:'
         version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.14)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
-      postgres:
-        specifier: 'catalog:'
-        version: 3.4.9
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
@@ -1235,9 +1232,6 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/pg@8.15.6)(@upstash/redis@1.37.0)(postgres@3.4.9)
-      postgres:
-        specifier: 'catalog:'
-        version: 3.4.9
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -4779,6 +4773,10 @@ packages:
 
   '@lightfastai/dev-services@0.1.6':
     resolution: {integrity: sha512-P1Q+zz8Ck6VB3hA0VgoCc8QVbYKx42lpaiHPn0JMXsgbh0C2qJDI8kmrg7c1ql0SHReeb4ii05BhMORoGLmKDQ==}
+    engines: {node: '>=22.0.0'}
+
+  '@lightfastai/dev-services@0.2.0':
+    resolution: {integrity: sha512-yadueWmKRRNo+76LmFaXzfLiMbGIxge8TGt3POKEgtnXEGbkTyV8gCJn+exVeFi4TpDzvG0OQC5mpJv2uLo6Jg==}
     engines: {node: '>=22.0.0'}
 
   '@listr2/prompt-adapter-inquirer@2.0.22':
@@ -17502,6 +17500,10 @@ snapshots:
       portless: 0.12.0
 
   '@lightfastai/dev-services@0.1.6':
+    dependencies:
+      '@lightfastai/dev-core': 0.1.1
+
+  '@lightfastai/dev-services@0.2.0':
     dependencies:
       '@lightfastai/dev-core': 0.1.1
 

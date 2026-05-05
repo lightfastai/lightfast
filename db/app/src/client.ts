@@ -1,25 +1,15 @@
-import {
-  createNeonHttpClient,
-  type NeonHttpDatabase,
-} from "./drivers/neon-http";
-import { createPostgresClient } from "./drivers/postgres";
+import { neon, neonConfig } from "@neondatabase/serverless";
+import { drizzle as drizzleNeonHttp } from "drizzle-orm/neon-http";
+import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { env } from "./env";
-import { withBatchPolyfill } from "./polyfills/batch";
+import * as schema from "./schema";
 
-// Canonical DB surface. Both drivers must satisfy this type — neon-http
-// does so natively; postgres-js + withBatchPolyfill is bridged by an
-// `as unknown as AppDatabase` cast in the local branch below.
-type AppDatabase = NeonHttpDatabase;
+type AppDatabase = ReturnType<typeof createNeonDatabase>;
 
 /**
- * Create a new database client.
- *
- * Routing:
- *   - Local dev (DATABASE_HOST is localhost / 127.0.0.1 / ::1)
- *       → postgres-js over TCP against the dev-services Docker Postgres,
- *         wrapped with `withBatchPolyfill` so `.batch()` call sites work.
- *   - Everything else
- *       → neon-http against PlanetScale's HTTP SQL endpoint.
+ * Create a new database client instance using Neon HTTP driver.
+ * Local dev uses the Docker Postgres TCP connection from dev-services.
  */
 export function createClient(): AppDatabase {
   const databaseUrl = resolveDatabaseUrl({
@@ -27,23 +17,35 @@ export function createClient(): AppDatabase {
   });
 
   if (isLocalDatabaseHost(env.DATABASE_HOST)) {
-    return withBatchPolyfill(
-      createPostgresClient(databaseUrl)
+    const sql = postgres(databaseUrl, { max: 10 });
+    return withLocalBatch(
+      drizzlePostgres(sql, { schema })
     ) as unknown as AppDatabase;
   }
 
-  return createNeonHttpClient(databaseUrl);
+  return createNeonDatabase(databaseUrl);
 }
 
 /**
- * Default database client instance.
+ * Default database client instance
  */
 export const db = createClient();
 
-// URL construction lives here (not in drivers/) because both drivers
-// take a connection URL and the build logic — including ssl=require for
-// remote hosts — is shared. Using URL/URL avoids string-interpolation
-// bugs with special characters in passwords.
+function createNeonDatabase(databaseUrl: string) {
+  // Required: point Neon driver at PlanetScale's HTTP SQL endpoint.
+  neonConfig.fetchEndpoint = (host) => `https://${host}/sql`;
+  const sql = neon(databaseUrl);
+
+  return drizzleNeonHttp({ client: sql, schema });
+}
+
+function withLocalBatch<T extends object>(database: T) {
+  return Object.assign(database, {
+    batch: async (queries: readonly PromiseLike<unknown>[]) =>
+      Promise.all(queries),
+  });
+}
+
 function resolveDatabaseUrl({ ssl }: { ssl: boolean }) {
   const url = new URL("postgresql://localhost");
   url.hostname = env.DATABASE_HOST;
@@ -54,15 +56,10 @@ function resolveDatabaseUrl({ ssl }: { ssl: boolean }) {
   if (ssl) {
     url.searchParams.set("sslmode", "require");
   }
+
   return url.toString();
 }
 
-// Driver-routing predicate lives here (not in env.ts, not in drivers/)
-// because picking a driver is the orchestrator's job. Drivers don't
-// know what "local" means — they just connect to the URL they're given.
-// Note: drizzle.config.ts intentionally duplicates this 3-line check
-// because drizzle-kit runs at build time with its own sync config and
-// shouldn't depend on the runtime client module.
 function isLocalDatabaseHost(value: string) {
   const hostname = value.toLowerCase();
   return (

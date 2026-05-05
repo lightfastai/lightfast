@@ -12,7 +12,7 @@ export function UserMenu() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button aria-label="Settings" className="item" type="button">
+        <button aria-label="Open user menu" className="item" type="button">
           <Settings className="item__icon" size={16} />
           <span className="item__label">Settings</span>
         </button>
