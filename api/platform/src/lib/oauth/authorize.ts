@@ -9,29 +9,8 @@ import { getProvider } from "@repo/app-providers";
 import { nanoid } from "@vendor/lib";
 import { log } from "@vendor/observability/log/next";
 import { providerConfigs } from "../provider-configs";
+import { appUrl } from "../related-projects";
 import { storeOAuthState } from "./state";
-
-// ── App URL ──
-
-/**
- * App URL for redirects.
- * Used to validate redirect_to parameters.
- */
-const appUrl = (() => {
-  const vercelEnv = process.env.VERCEL_ENV;
-  const vercelUrl = process.env.VERCEL_URL;
-  const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-
-  if (vercelEnv === "preview" && vercelUrl) {
-    return `https://${vercelUrl}`;
-  }
-
-  if (productionUrl) {
-    return `https://${productionUrl}`;
-  }
-
-  return "http://localhost:3024";
-})();
 
 // ── Types ──
 

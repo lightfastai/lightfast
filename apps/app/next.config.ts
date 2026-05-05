@@ -2,7 +2,6 @@ import {
   getPortlessMfeDevOrigins,
   withPortlessMfeDev,
 } from "@lightfastai/dev-proxy/next";
-import { withProject } from "@lightfastai/dev-proxy/projects";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -12,21 +11,11 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
+import { platformUrl } from "./src/lib/related-projects";
 
 const portlessMfeDevOrigins = getPortlessMfeDevOrigins({
   allowMissingConfig: true,
   includePort: "both",
-});
-
-const isDevelopment =
-  env.NEXT_PUBLIC_VERCEL_ENV !== "production" &&
-  env.NEXT_PUBLIC_VERCEL_ENV !== "preview";
-
-const platformUrl = withProject({
-  projectName: "lightfast-platform",
-  defaultHost: isDevelopment
-    ? "http://localhost:4112"
-    : "https://lightfast-platform.vercel.app",
 });
 
 const appConfig: NextConfig = merge({}, baseConfig, {
@@ -90,10 +79,16 @@ const appConfig: NextConfig = merge({}, baseConfig, {
     ],
     serverActions: {
       bodySizeLimit: "2mb",
-      allowedOrigins:
-        env.NODE_ENV === "development"
-          ? ["localhost:*", ...portlessMfeDevOrigins]
-          : ["lightfast.ai", "*.lightfast.ai"],
+      allowedOrigins: (() => {
+        const vercelEnv = env.NEXT_PUBLIC_VERCEL_ENV;
+        if (vercelEnv === "production") {
+          return ["lightfast.ai", "*.lightfast.ai"];
+        }
+        if (vercelEnv === "preview") {
+          return ["lightfast.ai", "*.lightfast.ai", "*.vercel.app"];
+        }
+        return ["localhost:*", ...portlessMfeDevOrigins];
+      })(),
     },
   },
   async rewrites() {

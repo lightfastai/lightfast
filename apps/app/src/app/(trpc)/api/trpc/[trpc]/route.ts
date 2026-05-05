@@ -2,7 +2,7 @@ import { appRouter, createTRPCContext } from "@api/app";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 import { env } from "~/env";
-import { wwwUrl } from "~/lib/microfrontends";
+import { wwwUrl } from "~/lib/related-projects";
 
 // Use Node.js runtime instead of Edge for GitHub App crypto operations
 // Octokit requires Node.js crypto APIs for RSA key signing (not available in Edge)

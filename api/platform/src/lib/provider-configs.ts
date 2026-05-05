@@ -9,7 +9,7 @@
  */
 import type { RuntimeConfig } from "@repo/app-providers";
 import { PROVIDERS } from "@repo/app-providers";
-import { appUrl } from "./project-urls";
+import { appUrl } from "./related-projects";
 
 let _providerConfigs: Record<string, unknown> | null = null;
 
