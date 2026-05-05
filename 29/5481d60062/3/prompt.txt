@@ -1,0 +1,212 @@
+/create_plan @thoughts/shared/research/2026-05-05-portless-mfe-dev-origins-allowedorigins.md  ▐▛███▜▌   Claude Code v2.1.128
+▝▜█████▛▘  Opus 4.7 · Claude Max
+  ▘▘ ▝▝    ~/Code/@lightfastai/lightfast
+  ⎿  SessionStart:startup says: 
+
+     Powered by Entire:
+       This conversation will be linked to your next commit.
+       5 other active conversation(s) in this workspace will also be included.
+       Use 'entire status' for more information.
+
+❯ /research_codebase we are implement allowedOrigins in                         
+@apps/app/next.config.ts                                                        
+                                                                                
+notice the portlessMfeDevOrigins.                                               
+                                                                                
+and also with withPortlessMfeDev.                                               
+                                                                                
+can you go to Code/mfe-sandbox and see whats actually happening in both of      
+these and whether it's correctly structured for portless + multi worktress      
+  ⎿  Read apps/app/next.config.ts (171 lines)
+
+  Searched for 1 pattern, read 1 file, listed 2 directories (ctrl+o to expand)
+
+⏺ Read the blockers doc — that establishes the multi-worktree context. Now let
+  me explore the actual dev-proxy package source to see exactly what
+  portlessMfeDevOrigins and withPortlessMfeDev do.
+
+  Searched for 5 patterns, read 4 files, listed 4 directories (ctrl+o to expand)
+
+⏺ Now let me confirm exactly how apps/app/next.config.ts uses these — I see
+  withPortlessMfeDev is imported but never wired into the config chain:
+
+  Searched for 2 patterns (ctrl+o to expand)
+
+⏺ Bash(sed -n '95,115p'
+      /Users/jeevanpillay/Code/@lightfastai/lightfast/apps/www/next.config.ts &&
+       echo "---PLATFORM---" && grep -n "withPortlessMfeDev\|allowedDevOrig…)
+  ⎿  if (process.env.ANALYZE === "true") {
+       config = withBundleAnalyzer()(config) as NextConfig;
+     }
+     … +11 lines (ctrl+o to expand)
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ Bash(git rev-parse HEAD && echo "---" && git branch --show-current && echo
+      "---" && date "+%Y-%m-%d")
+  ⎿  f9e6e688a65abf3a533b1049fe21fdfed9cf8d9a
+     ---
+     desktop-portless-runtime-batch
+     … +2 lines (ctrl+o to expand)
+
+  Searched for 2 patterns, read 1 file (ctrl+o to expand)
+
+⏺ I have enough to write the research document. Let me also confirm GitHub
+  permalink eligibility and then assemble.
+
+⏺ Bash(git status --short && echo "---" && git log -1 --pretty=format:"%H %s" &&
+       echo && git rev-list --count HEAD ^origin/main 2>/dev/null || echo "no
+      upstream")
+  ⎿   M .agents/skills/lightfast-clerk/SKILL.md
+      M .agents/skills/lightfast-clerk/lib/common.sh
+      M .agents/skills/lightfast-clerk/references/safety.md
+     … +36 lines (ctrl+o to expand)
+
+⏺ Write(thoughts/shared/research/2026-05-05-portless-mfe-dev-origins-allowedorig
+       ins.md)
+  ⎿  Wrote 318 lines to thoughts/shared/research/2026-05-05-portless-mfe-de
+     v-origins-allowedorigins.md
+       2 date: 2026-05-05T00:00:00-07:00
+       3 researcher: claude
+       4 git_commit: f9e6e688a65abf3a533b1049fe21fdfed9cf8d9a
+       6 topic: "How portlessMfeDevOrigins and withPortlessMfeDev power a
+         pps/app/next.config.ts allowedOrigins, and how that interacts wi
+         th portless + multi-worktree dev"
+         multi-worktree, next-config, server-actions]rontends, portless, 
+       8 status: complete
+       9 last_updated: 2026-05-05
+      10 ---
+     … +521 lines (ctrl+o to expand)
+
+⏺ Research document written to thoughts/shared/research/2026-05-05-portless-mfe-
+  dev-origins-allowedorigins.md.
+
+  Key findings:
+
+  What's wired in apps/app/next.config.ts:
+  - Line 16-19: getPortlessMfeDevOrigins({ allowMissingConfig: true, 
+  includePort: "both" }) → fed into experimental.serverActions.allowedOrigins at
+   line 90 (dev branch only, alongside "localhost:*").
+  - Line 162-166: withPortlessMfeDev(...) → outer wrapper that appends to Next's
+   top-level allowedDevOrigins. Uses default opts (includePort: false,
+  includeWildcard: true).
+
+  What they actually do (verified against 
+  ~/Code/mfe-sandbox/packages/dev-proxy/src):
+  - getPortlessMfeDevOrigins reads lightfast.dev.json + microfrontends.json,
+  builds [<portlessName>, <short>.<portlessName>, ...] (Lightfast: lightfast,
+  app.lightfast, www.lightfast), then expands across localhost TLD × wildcard ×
+  port suffix.
+  - withPortlessMfeDev is a thin wrapper that calls getPortlessMfeDevOrigins and
+   merges into allowedDevOrigins. With allowMissingConfig: true forced, so it's
+  a safe no-op in build environments.
+
+  Multi-worktree structural assessment:
+  - getPortlessMfeDevOrigins does NOT inject the worktree prefix (it doesn't
+  call detectWorktreePrefix at all). The only multi-worktree coverage is the
+  wildcard *.app.lightfast.localhost.
+  - Worktree prefixes only get applied by resolvePortlessHost at line 947-978 of
+   index.ts, which constructs <prefix>.<portlessName>.<tld> when the Portless
+  registry has no entry. The wildcard from getPortlessMfeDevOrigins is what
+  catches that prefixed host.
+  - The sandbox's own MULTI_WORKTREE_BLOCKERS.md flags this exact area under B3
+  (two-proxy-layer ports) and B5 (CORS/Server Actions narrowness). B5 calls out:
+   "Server Actions allow localhost:* in dev, which does not include
+  feature.lightfast.localhost" — the current Lightfast wiring addresses that
+  only via wildcard subdomain, not via per-worktree enumeration.
+  - apps/platform/next.config.ts doesn't use either helper at all (B10
+  territory).
+
+  The document includes the exact origins emitted today, the worktree-detection
+  rules from dev-core/src/worktree.ts, and three open questions about Next's
+  wildcard semantics, Portless registration shape, and platform's CORS path.
+
+✻ Crunched for 6m 35s
+
+❯ i dont exactly mean the worktree prefix but essential in this repo allows     
+  worktree with it's own ports. which means that *.lighfast.localhost works.    
+  thats all we care tbh.                                                        
+                                                                                
+  moreover, are there any steps to go about here improve developer experience   
+  and general tightness of ours specs                                           
+
+⏺ Got it — the wildcard *.lightfast.localhost is the whole point. Each worktree
+  binds different backend ports (4107/4101/4112 canonical, or generated), but
+  the browser only ever talks to the canonical Portless front on :443, so the
+  wildcard is the entire isolation primitive. That makes the current wiring
+  structurally correct — but there are a handful of cheap tightenings.
+
+  Punch list, ranked by impact
+
+  1. apps/platform/next.config.ts doesn't consume either helper. Its tRPC route
+  does its own CORS (strict-equality against appUrl per the blockers doc
+  B5/B10). If the design intent is "*.lightfast.localhost works everywhere,"
+  platform is the one app where it doesn't. Either pull withPortlessMfeDev into
+  apps/platform/next.config.ts and widen the tRPC CORS check, or formally spec
+  platform out of the wildcard policy.
+
+  2. The includePort: "both" on the Server Actions call is mostly dead weight.
+  With https: true, port: 443, browsers strip :443 from the Origin header for
+  HTTPS, so *.app.lightfast.localhost:443 never matches anything. The bare
+  *.app.lightfast.localhost entry already covers the real origin. Dropping
+  includePort: "both" halves the list and removes a footgun if/when the port
+  ever changes.
+
+  3. Two call sites recomputing the same set in one file.
+  apps/app/next.config.ts calls getPortlessMfeDevOrigins directly (line 16) and
+  gets it again via withPortlessMfeDev (line 162). Either:
+  - Extend withPortlessMfeDev to also populate
+  experimental.serverActions.allowedOrigins, or
+  - Add a sibling withPortlessServerActions and chain it.
+
+     Then apps/app/next.config.ts becomes one wrapper, no module-scope const, no
+   risk of drift between the two surfaces.
+
+  4. The lightfast.dev.json invariants aren't asserted anywhere. port: 443, 
+  https: true is the production-parity choice for Lightfast and changing it
+  silently breaks every browser-side origin assumption. Worth either a
+  JSON-schema const in the dev-proxy schema, or a runtime assertion in
+  withPortlessMfeDev when running locally.
+
+  5. No Lightfast-side test for the resolved origins. The dev-proxy unit tests
+  in ~/Code/mfe-sandbox/packages/dev-proxy/test/index.test.ts:163-265 use a
+  sandbox fixture (port: 1355, two apps). Lightfast has different inputs (port
+  443, https, three apps in MFE config) and zero coverage. A 20-line test in
+  apps/app that calls getPortlessMfeDevOrigins({ cwd: repoRoot }) and snapshots
+  the output would catch upstream dev-proxy regressions before they hit the dev
+  server.
+
+  6. localhost:* is doing more lifting than it looks. It's the only fallback
+  when somebody hits a backend directly (localhost:4107, desktop renderer
+  localhost:5173, Inngest local handlers). That's fine, but worth a one-line
+  comment in the config explaining "this covers direct backend access;
+  everything browser-facing goes through Portless and is matched by the
+  wildcards above" — otherwise future-you will wonder why both exist.
+
+  7. Spec gap on which surfaces participate in the wildcard policy. Today:
+  apps/app does Server Actions + dev origins, apps/www does dev origins only,
+  apps/platform does neither. That's a reasonable split (www has no Server
+  Actions, platform has its own auth model) but it's nowhere written down. A
+  short section in SPEC.md or CLAUDE.md listing "the three apps and what each
+  one does with *.lightfast.localhost" would make the next person's job much
+  easier.
+
+  What I'd touch first
+
+  Items 1, 3, and 7 — they're the structural ones. 1 closes the platform gap
+  that B5/B10 in the blockers doc already calls out. 3 removes the only place in
+   the repo where the same allowlist gets computed twice. 7 turns implicit
+  knowledge into spec.
+
+  2, 4, 5, 6 are polish — each is 5–30 minutes, but none of them block anything.
+
+  Want me to draft a plan for any of these? 1 + 3 + 7 together would be one
+  cohesive PR.
+
+✻ Baked for 2m 33s
+
+let's also rename the portless mfe to portless proxy or something that makes more sense
+
+---
+
+use AskUserQuestions
