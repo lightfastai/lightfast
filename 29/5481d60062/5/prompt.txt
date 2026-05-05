@@ -1,0 +1,3 @@
+i dont exactly mean the worktree prefix but essential in this repo allows worktree with it's own ports. which means that *.lighfast.localhost works. thats all we care tbh. 
+
+moreover, are there any steps to go about here improve developer experience and general tightness of ours specs
