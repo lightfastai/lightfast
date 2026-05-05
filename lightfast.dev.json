@@ -1,0 +1,11 @@
+{
+  "$schema": "./node_modules/@lightfastai/dev-proxy/schema/config.schema.json",
+  "portless": {
+    "name": "lightfast",
+    "port": 443,
+    "https": true
+  },
+  "microfrontends": {
+    "config": "apps/app/microfrontends.json"
+  }
+}
