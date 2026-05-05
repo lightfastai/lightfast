@@ -164,3 +164,13 @@ would you say we should just skip this an just wait for apple to drop there thin
 ---
 
 how much overhead will this create in terms when apple confirms is it easy to get it working again?
+
+---
+
+what is the standard for appBundleId and packagerConfig.name?
+
+---
+
+i think i'd rather use the com.lightfast.lightfast as bundle id.
+secondly package config looks good.
+executable name looks good.
