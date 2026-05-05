@@ -12,21 +12,21 @@ export function UserMenu() {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>
-        <button type="button" className="item" aria-label="Settings">
-          <Settings size={16} className="item__icon" />
+        <button aria-label="Settings" className="item" type="button">
+          <Settings className="item__icon" size={16} />
           <span className="item__label">Settings</span>
         </button>
       </DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
+          align="start"
           className="user-menu-content"
           side="top"
-          align="start"
           sideOffset={6}
         >
           <DropdownMenu.Label className="user-menu-label">
-            <User size={14} className="user-menu-icon" />
+            <User className="user-menu-icon" size={14} />
             <span className="user-menu-email">{email}</span>
           </DropdownMenu.Label>
 
@@ -36,7 +36,7 @@ export function UserMenu() {
             className="user-menu-item"
             onSelect={() => void window.lightfastBridge.openWindow("settings")}
           >
-            <Settings size={14} className="user-menu-icon" />
+            <Settings className="user-menu-icon" size={14} />
             Settings
           </DropdownMenu.Item>
 
@@ -46,7 +46,7 @@ export function UserMenu() {
             className="user-menu-item user-menu-item--destructive"
             onSelect={() => void window.lightfastBridge.auth.signOut()}
           >
-            <LogOut size={14} className="user-menu-icon" />
+            <LogOut className="user-menu-icon" size={14} />
             Log out
           </DropdownMenu.Item>
         </DropdownMenu.Content>

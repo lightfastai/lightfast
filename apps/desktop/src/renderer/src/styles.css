@@ -165,8 +165,8 @@ body,
 }
 
 .titlebar-drag {
-  height: var(--height-toolbar);
   flex-shrink: 0;
+  height: var(--height-toolbar);
 }
 
 .title-bar {
@@ -247,19 +247,19 @@ body,
 }
 
 .item:hover {
-  background: var(--color-background-button-tertiary-hover);
   color: var(--color-text-foreground);
+  background: var(--color-background-button-tertiary-hover);
 }
 
 .item.active {
-  background: var(--color-background-button-tertiary-active);
   color: var(--color-text-foreground);
+  background: var(--color-background-button-tertiary-active);
 }
 
 .item__icon {
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
-  flex-shrink: 0;
 }
 
 .item__label {
@@ -369,11 +369,12 @@ kbd {
 /* Sidebar footer / user menu */
 
 .sidebar-footer {
-  margin-top: auto;
   padding: calc(var(--spacing) * 2);
+  margin-top: auto;
 }
 
 .user-menu-content {
+  z-index: 100;
   min-width: 200px;
   padding: calc(var(--spacing) * 1);
   background: var(--color-background-elevated-primary-opaque);
@@ -383,7 +384,6 @@ kbd {
     0 4px 16px color-mix(in oklab, #000 30%, transparent),
     0 1px 4px color-mix(in oklab, #000 15%, transparent);
   animation: user-menu-enter 120ms ease;
-  z-index: 100;
 }
 
 @keyframes user-menu-enter {
@@ -399,8 +399,8 @@ kbd {
 
 .user-menu-label {
   display: flex;
-  align-items: center;
   gap: calc(var(--spacing) * 2);
+  align-items: center;
   padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
   font-size: var(--text-sm);
   color: var(--color-text-foreground-secondary);
@@ -426,15 +426,15 @@ kbd {
 
 .user-menu-item {
   display: flex;
-  align-items: center;
   gap: calc(var(--spacing) * 2);
+  align-items: center;
   padding: calc(var(--spacing) * 1.5) calc(var(--spacing) * 2);
   font-size: var(--text-sm);
   color: var(--color-text-foreground);
-  border-radius: 6px;
   cursor: default;
   user-select: none;
   outline: none;
+  border-radius: 6px;
 }
 
 .user-menu-item[data-highlighted] {
@@ -679,22 +679,22 @@ kbd {
 .auth-gate__hero {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: calc(var(--spacing) * 8);
+  align-items: center;
 }
 
 .auth-gate__logo {
+  flex-shrink: 0;
   width: 52px;
   height: 52px;
-  flex-shrink: 0;
   color: var(--color-text-foreground);
 }
 
 .auth-gate__title {
   margin: 0;
   font-size: 28px;
-  line-height: 36px;
   font-weight: 400;
+  line-height: 36px;
   color: var(--color-text-foreground);
   text-align: center;
   white-space: nowrap;
@@ -703,8 +703,8 @@ kbd {
 .auth-gate__actions {
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: calc(var(--spacing) * 3);
+  align-items: center;
   width: 100%;
   max-width: 340px;
   margin-top: calc(var(--spacing) * 8);
@@ -717,8 +717,8 @@ kbd {
   justify-content: center;
   width: 100%;
   font-size: 14px;
-  line-height: 20px;
   font-weight: 500;
+  line-height: 20px;
   appearance: none;
   cursor: pointer;
   border-radius: 9999px;

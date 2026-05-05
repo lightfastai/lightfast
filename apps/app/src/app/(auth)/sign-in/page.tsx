@@ -44,8 +44,14 @@ interface PageProps {
 }
 
 export default async function SignInPage({ searchParams }: PageProps) {
-  const { step, email, redirect_url: redirectUrl, error, token, errorCode } =
-    await loadSignInSearchParams(searchParams);
+  const {
+    step,
+    email,
+    redirect_url: redirectUrl,
+    error,
+    token,
+    errorCode,
+  } = await loadSignInSearchParams(searchParams);
 
   const hasError = !!(error ?? errorCode);
 

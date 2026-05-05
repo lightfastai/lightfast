@@ -2,12 +2,12 @@ import {
   getPortlessMfeDevOrigins,
   withPortlessMfeDev,
 } from "@lightfastai/dev-proxy/next";
+import { withProject } from "@lightfastai/dev-proxy/projects";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
 import { baseConfig, sentryOptions } from "@vendor/next/config";
 import { withMicrofrontends } from "@vercel/microfrontends/next/config";
-import { withProject } from "@lightfastai/dev-proxy/projects";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
