@@ -1,0 +1,41 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "067c55fb9b89",
+  "session_id": "39ab31d8-d458-4107-96a8-170987259d55",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-05T05:30:17.751077Z",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "db/app/src/client.ts",
+    "db/app/src/drivers/neon-http.ts",
+    "db/app/src/drivers/postgres.ts",
+    "db/app/src/polyfills/batch.ts",
+    "thoughts/shared/plans/2026-05-05-db-app-driver-polyfill-restructure.md"
+  ],
+  "agent": "Claude Code",
+  "model": "claude-opus-4-7[1m]",
+  "turn_id": "561db800c00b",
+  "token_usage": {
+    "input_tokens": 65,
+    "cache_creation_tokens": 76181,
+    "cache_read_tokens": 1463789,
+    "output_tokens": 9631,
+    "api_call_count": 31
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-05T05:30:17.601405Z",
+    "agent_lines": 366,
+    "agent_removed": 26,
+    "human_added": 0,
+    "human_modified": 3,
+    "human_removed": 0,
+    "total_committed": 369,
+    "total_lines_changed": 395,
+    "agent_percentage": 99.24050632911391,
+    "metric_version": 2
+  }
+}

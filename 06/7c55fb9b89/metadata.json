@@ -3,7 +3,7 @@
   "checkpoint_id": "067c55fb9b89",
   "strategy": "manual-commit",
   "branch": "desktop-portless-runtime-batch",
-  "checkpoints_count": 3,
+  "checkpoints_count": 6,
   "files_touched": [
     "db/app/src/client.ts",
     "db/app/src/drivers/neon-http.ts",
@@ -23,13 +23,19 @@
       "transcript": "/06/7c55fb9b89/1/full.jsonl",
       "content_hash": "/06/7c55fb9b89/1/content_hash.txt",
       "prompt": "/06/7c55fb9b89/1/prompt.txt"
+    },
+    {
+      "metadata": "/06/7c55fb9b89/2/metadata.json",
+      "transcript": "/06/7c55fb9b89/2/full.jsonl",
+      "content_hash": "/06/7c55fb9b89/2/content_hash.txt",
+      "prompt": "/06/7c55fb9b89/2/prompt.txt"
     }
   ],
   "token_usage": {
-    "input_tokens": 13672,
-    "cache_creation_tokens": 234650,
-    "cache_read_tokens": 1044562,
-    "output_tokens": 29934,
-    "api_call_count": 16
+    "input_tokens": 13737,
+    "cache_creation_tokens": 310831,
+    "cache_read_tokens": 2508351,
+    "output_tokens": 39565,
+    "api_call_count": 47
   }
 }
