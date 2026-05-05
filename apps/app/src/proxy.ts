@@ -30,17 +30,15 @@ function externalHref(req: NextRequest): string {
   return req.nextUrl.href;
 }
 
-const securityHeaders = securityMiddleware(
-  {
-    ...composeCspOptions(
-      createNextjsCspDirectives(),
-      createClerkCspDirectives(),
-      createAnalyticsCspDirectives(),
-      createSentryCspDirectives()
-    ),
-    referrerPolicy: { policy: ["strict-origin-when-cross-origin"] },
-  }
-);
+const securityHeaders = securityMiddleware({
+  ...composeCspOptions(
+    createNextjsCspDirectives(),
+    createClerkCspDirectives(),
+    createAnalyticsCspDirectives(),
+    createSentryCspDirectives()
+  ),
+  referrerPolicy: { policy: ["strict-origin-when-cross-origin"] },
+});
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
 // but auth is not enforced, so no JWKS fetch for unauthenticated visitors.

@@ -21,6 +21,7 @@
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "dependencies": {
+    "@lightfastai/dev-proxy": "catalog:",
     "@lightfastai/related-projects": "catalog:",
     "@logtail/next": "^0.3.1",
     "@mixedbread/sdk": "^0.46.0",
