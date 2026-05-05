@@ -1,0 +1,5 @@
+/improve_plan @thoughts/shared/plans/2026-05-05-portless-proxy-rename-and-tightening.md 
+
+we now need to deep find any more url/cors/etc issues that maybe arise across apps/app, apps/www, apps/platform and apps/desktop
+
+similarly, also focus on the dfiferent phases and validate if needed
