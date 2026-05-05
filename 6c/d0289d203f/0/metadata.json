@@ -1,0 +1,50 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6cd0289d203f",
+  "session_id": "0c828d1d-61aa-49f7-95c2-e58bf58c3739",
+  "strategy": "manual-commit",
+  "created_at": "2026-05-05T06:12:32.326773Z",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/lib/oauth/authorize.ts",
+    "api/platform/src/lib/oauth/callback.ts",
+    "api/platform/src/lib/project-urls.ts",
+    "api/platform/src/lib/provider-configs.ts",
+    "apps/app/next.config.ts",
+    "apps/app/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/app/src/lib/microfrontends.ts",
+    "apps/app/src/lib/project-urls.ts",
+    "apps/app/src/lib/related-projects.ts",
+    "apps/platform/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/platform/src/lib/project-urls.ts",
+    "apps/www/src/app/(app)/(content)/docs/(api)/layout.tsx",
+    "apps/www/src/app/(app)/(content)/docs/(general)/layout.tsx",
+    "apps/www/src/lib/project-urls.ts",
+    "apps/www/src/lib/related-projects.ts"
+  ],
+  "agent": "Claude Code",
+  "turn_id": "774500d01012",
+  "token_usage": {
+    "input_tokens": 2297,
+    "cache_creation_tokens": 103578,
+    "cache_read_tokens": 1003562,
+    "output_tokens": 28328,
+    "api_call_count": 12
+  },
+  "session_metrics": {
+    "turn_count": 3
+  },
+  "initial_attribution": {
+    "calculated_at": "2026-05-05T06:12:31.706571Z",
+    "agent_lines": 103,
+    "agent_removed": 106,
+    "human_added": 62,
+    "human_modified": 1,
+    "human_removed": 0,
+    "total_committed": 166,
+    "total_lines_changed": 272,
+    "agent_percentage": 76.83823529411765,
+    "metric_version": 2
+  }
+}

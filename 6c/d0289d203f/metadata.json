@@ -1,0 +1,39 @@
+{
+  "cli_version": "0.5.3",
+  "checkpoint_id": "6cd0289d203f",
+  "strategy": "manual-commit",
+  "branch": "desktop-portless-runtime-batch",
+  "checkpoints_count": 3,
+  "files_touched": [
+    "api/platform/src/lib/oauth/authorize.ts",
+    "api/platform/src/lib/oauth/callback.ts",
+    "api/platform/src/lib/project-urls.ts",
+    "api/platform/src/lib/provider-configs.ts",
+    "apps/app/next.config.ts",
+    "apps/app/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/app/src/lib/microfrontends.ts",
+    "apps/app/src/lib/project-urls.ts",
+    "apps/app/src/lib/related-projects.ts",
+    "apps/platform/src/app/(trpc)/api/trpc/[trpc]/route.ts",
+    "apps/platform/src/lib/project-urls.ts",
+    "apps/www/src/app/(app)/(content)/docs/(api)/layout.tsx",
+    "apps/www/src/app/(app)/(content)/docs/(general)/layout.tsx",
+    "apps/www/src/lib/project-urls.ts",
+    "apps/www/src/lib/related-projects.ts"
+  ],
+  "sessions": [
+    {
+      "metadata": "/6c/d0289d203f/0/metadata.json",
+      "transcript": "/6c/d0289d203f/0/full.jsonl",
+      "content_hash": "/6c/d0289d203f/0/content_hash.txt",
+      "prompt": "/6c/d0289d203f/0/prompt.txt"
+    }
+  ],
+  "token_usage": {
+    "input_tokens": 2297,
+    "cache_creation_tokens": 103578,
+    "cache_read_tokens": 1003562,
+    "output_tokens": 28328,
+    "api_call_count": 12
+  }
+}
