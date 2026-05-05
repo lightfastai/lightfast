@@ -11,3 +11,15 @@ keep as is. jsut continue working. stop overthinking
 ---
 
 done! is it possible to "skip" scrips folder for code rabbit + github csecurity
+
+---
+
+proceed
+
+---
+
+yes commit + push
+
+---
+
+yes
