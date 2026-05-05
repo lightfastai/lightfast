@@ -1,0 +1,176 @@
+/research_codebase alright so we've are backlogged into launch of @apps/desktop/ because apple hasn't verified our apple enrollment.
+
+see this from different convo:
+ ▐▛███▜▌   Claude Code v2.1.128
+▝▜█████▛▘  Opus 4.7 · Claude Max
+  ▘▘ ▝▝    ~/Code/@lightfastai/lightfast
+  ⎿  SessionStart:startup says: 
+
+     Powered by Entire:
+       This conversation will be linked to your next commit.
+       6 other active conversation(s) in this workspace will also be included.
+       Use 'entire status' for more information.
+
+❯ /research_codebase can we go through @apps/desktop/ and let's figure what we  
+need to do get this ready for prod. e.g envs                                    
+  ⎿  Listed directory apps/desktop/
+
+⏺ I'll research the current state of apps/desktop and what's needed for prod
+  readiness. Let me start by reading the directly relevant plan/memory files and
+   the key desktop config files in parallel.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ I have the key context from the pre-release plan. Let me read the rest and the
+   current state of key desktop files in parallel.
+
+  Read 1 file (ctrl+o to expand)
+
+⏺ I have full context on the pre-release plan. Now let me read the current state
+   of the key desktop files and the relevant memory files in parallel.
+
+  Recalled 1 memory (ctrl+o to expand)
+
+⏺ Let me now check the current state of key files in parallel — using the Bash
+  and Read tools.
+
+  Listed 1 directory (ctrl+o to expand)
+
+  Read 20 files, listed 4 directories (ctrl+o to expand)
+
+⏺ Now I'll spawn 4 parallel research agents to fill in the gaps — auth/sign-in
+  flow on the app side, renderer/IPC contracts, recent thoughts on desktop prod
+  work, and security/CSP/distribution coverage.
+
+⏺ 4 agents finished (ctrl+o to expand)
+   ├ codebase-analyzer (Map desktop sign-in app-side) · 32 tool uses · 32.1k tokens
+   │ ⎿  Done
+   ├ codebase-analyzer (Audit desktop renderer + IPC) · 16 tool uses · 19.1k tokens
+   │ ⎿  Done
+   ├ thoughts-locator (Find recent desktop prod-readiness thoughts) · 24 tool uses · 14.2k tokens
+   │ ⎿  Done
+   └ codebase-analyzer (Audit desktop security + distribution gaps) · 14 tool uses · 18.9k tokens
+     ⎿  Done
+⏺ Bash(git log --oneline --all -- apps/desktop/ | head -25)
+  ⎿  bbc2996d2 1. let's do p0 2. lightfast-app and lightfast-platform alrea
+     dy linked. w
+     5c30badaa |yes proceed with pnpm check --write. once done report with
+     … +18 lines (ctrl+o to expand)
+
+⏺ Bash(git rev-parse HEAD && git branch --show-current)
+  ⎿  2565270fac554cc02769ba6012eeb7c2cd9ae5d6
+     desktop-portless-runtime-batch
+
+  Searched for 1 pattern, read 1 file (ctrl+o to expand)
+
+⏺ Write(thoughts/shared/research/2026-05-05-desktop-prod-readiness.md)
+  ⎿  Wrote 307 lines to
+     thoughts/shared/research/2026-05-05-desktop-prod-readiness.md
+       2 date: 2026-05-05
+       3 researcher: claude
+       4 git_commit: 2565270fac554cc02769ba6012eeb7c2cd9ae5d6
+       5 branch: desktop-portless-runtime-batch
+       6 topic: "apps/desktop prod readiness — current state and gaps (es
+       7 tags: [research, desktop, electron, release, prod-readiness, env
+         , sentry, codesigning]
+       8 status: complete
+       9 last_updated: 2026-05-05
+      10 ---
+     … +545 lines (ctrl+o to expand)
+
+⏺ Research doc written to
+  thoughts/shared/research/2026-05-05-desktop-prod-readiness.md.
+
+  TL;DR — apps/desktop is code-complete; ship is gated on credentials, not code.
+
+  The release pipeline (signed/notarized arm64+x64 .dmg/.zip, Sentry source-map
+  upload, Squirrel.Mac feed, build provenance) is wired and active on main (PR
+  #621, 2026-04-24). The four package.json placeholders are stamped at CI time
+  by design.
+
+  What's actually needed for v0.1.0:
+
+  1. Provision 12 GitHub repo entries (Phase A from the pre-release plan):
+    - 8 Apple secrets: APPLE_SIGNING_IDENTITY, APPLE_TEAM_ID, APPLE_CERT_BASE64,
+   APPLE_CERT_PASSWORD, APPLE_API_KEY_ID, APPLE_API_ISSUER,
+  APPLE_API_KEY_CONTENT, KEYCHAIN_PASSWORD
+    - 2 Sentry secrets: SENTRY_DSN, SENTRY_AUTH_TOKEN
+    - 2 Sentry vars: SENTRY_ORG, SENTRY_PROJECT
+    - Prereq: Apple Developer Program enrollment + Developer ID cert + ASC API
+  key
+  2. Cut @lightfast/desktop@0.1.0-rc.1 tag to fire the workflow and verify
+  end-to-end.
+  3. Make Desktop CI / Typecheck + package (unsigned) a required check on main
+  (manual repo-settings).
+
+  Env layer (apps/desktop/src/env/main.ts) is 5 keys, all main-process:
+  SENTRY_DSN, SPARKLE_FEED_URL, SQUIRREL_FEED_URL, LIGHTFAST_APP_ORIGIN
+  (dev-only; prod hardcodes https://lightfast.ai), LIGHTFAST_REMOTE_DEBUG_PORT.
+  The renderer reads zero env vars — everything routes through
+  window.lightfastBridge from preload. LIGHTFAST_APP_ORIGIN is auto-injected in
+  dev by scripts/with-desktop-env.mjs.
+
+  Open questions worth surfacing before release (in the doc): (1) Clerk
+  lightfast-desktop JWT template expiry — the desktop persists the token but
+  never refreshes it; (2) CORS behavior from Electron's internal origin against
+  the prod tRPC route allowlist — needs a packaged-build smoke test; (3)
+  signed-out onboarding plan (2026-04-23-desktop-signed-out-onboarding.md) —
+  decide if v0.1.0 ships before or after.
+
+  Want me to surface the open questions for follow-up research, or move on?
+
+✻ Worked for 12m 14s
+
+❯ question, consiering that we havent gotten apple dev account setup how can we 
+   deploy?                                                                      
+
+⏺ Three realistic options:
+
+  1. Unsigned closed beta — forge.config.ts:14-41 already gates
+  osxSign/osxNotarize on env presence, so an unsigned build will pack cleanly;
+  users get a Gatekeeper "unidentified developer" warning that they bypass with
+  right-click → Open. The catch: Squirrel.Mac auto-update requires a signed app,
+   so users would be on manual .dmg reinstalls until Apple is sorted. Cheapest
+  path to "people are running it today" — fine for Discord/early-adopter beta,
+  painful for a public launch.
+  2. Start Apple enrollment in parallel — $99/yr; individual Apple Dev
+  enrollment is usually same-day to ~24h, but a D-U-N-S-verified org account
+  ("Lightfast AI Inc") takes 1-2 weeks. If the legal entity isn't load-bearing
+  yet, enroll personally now and migrate the cert later. This is the only path
+  to a real auto-updating macOS release.
+  3. Ship Windows first / stay web-only — MakerSquirrel is configured but also
+  unsigned (no Windows EV cert wired up); Windows SmartScreen is more forgiving
+  than Gatekeeper but still warns. Probably not worth the detour given
+  lightfast.ai already runs.
+
+  My take: option 1 + 2 in parallel — cut an unsigned
+  @lightfast/desktop@0.1.0-beta.1 for a tight closed beta this week (requires
+  either a desktop-release-unsigned.yml variant or making the Apple steps if: 
+  secrets.APPLE_SIGNING_IDENTITY != ''), while you start individual enrollment
+  so you can drop the unsigned hack within ~2 weeks. The main risk is people on
+  the unsigned build won't auto-receive the signed v0.1.0 — they'd need a
+  one-time manual reinstall.
+
+  Want me to spec the unsigned-build workflow tweaks?
+
+✻ Churned for 2m 4s
+
+now, let's research into full setup to hoose dirty path 1 as we wait for 2 to work.
+
+---
+
+would you say we should just skip this an just wait for apple to drop there thing but we just continuing developing?
+
+---
+
+how much overhead will this create in terms when apple confirms is it easy to get it working again?
+
+---
+
+what is the standard for appBundleId and packagerConfig.name?
+
+---
+
+i think i'd rather use the com.lightfast.lightfast as bundle id.
+secondly package config looks good.
+executable name looks good.
