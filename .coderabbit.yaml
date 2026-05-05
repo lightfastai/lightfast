@@ -127,13 +127,6 @@ reviews:
         - Review index coverage on new foreign key columns
         - No raw SQL queries — use Drizzle query builder
 
-    - path: "core/ai-sdk/**"
-      instructions: |
-        Core AI SDK package (@lightfastai/ai-sdk). Review for:
-        - Public API surface stability — breaking changes need justification
-        - Test coverage for primitives (agent, tool, server)
-        - Proper error handling and types
-
     - path: "**/*.test.ts"
       instructions: |
         Test files. Review for:
