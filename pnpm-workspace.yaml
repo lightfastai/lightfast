@@ -67,7 +67,7 @@ catalogs:
   tailwind4:
     '@tailwindcss/postcss': 4.2.2
     '@tailwindcss/typography': ^0.5.16
-    postcss: 8.5.10
+    postcss: 8.5.11
     tailwindcss: 4.2.2
 
 ignoredBuiltDependencies:
