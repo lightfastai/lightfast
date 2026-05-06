@@ -18,8 +18,14 @@ for (const name of required) {
   }
 }
 
-const release = `${pkg.name}@${pkg.version}+${pkg.buildNumber}`;
-const urlPrefix = "app:///";
+// Sentry release versions reject `/` and certain whitespace, so the scoped
+// package name (`@lightfast/desktop`) cannot be used verbatim. Strip the
+// leading `@` and replace the scope separator with `-` to yield
+// `lightfast-desktop@<version>+<buildNumber>` — matches the Sentry project
+// slug. Must produce the same string as `getSentryInitOptions` in
+// `apps/desktop/src/main/sentry.ts`; keep both in sync.
+const releaseName = pkg.name.replace(/^@/, "").replace("/", "-");
+const release = `${releaseName}@${pkg.version}+${pkg.buildNumber}`;
 const buildDir = resolve(desktopRoot, ".vite/build");
 const rendererDir = resolve(desktopRoot, ".vite/renderer/main_window");
 
@@ -31,33 +37,19 @@ function sentry(args) {
   });
 }
 
+// Modern artifact-bundle flow with debug-id matching. `sourcemaps inject`
+// runs in `forge.config.ts`'s `packageAfterCopy` hook so the injected
+// //# debugId= comments land in the asar; here we only `upload`. Stack
+// frames in Sentry resolve via debug-id, sidestepping URL-prefix mismatches
+// between the uploaded path (`assets/index-*.js`) and the runtime frame
+// (`app:///.vite/renderer/main_window/assets/index-*.js`).
+//
+// `sourcemaps upload --release` writes the artifact bundle but does NOT
+// create the release entity. `releases new` is required before finalize,
+// otherwise finalize errors with "Release not found".
 sentry(["releases", "new", release]);
-sentry([
-  "releases",
-  "files",
-  release,
-  "upload-sourcemaps",
-  "--url-prefix",
-  urlPrefix,
-  "--ext",
-  "js",
-  "--ext",
-  "map",
-  buildDir,
-]);
-sentry([
-  "releases",
-  "files",
-  release,
-  "upload-sourcemaps",
-  "--url-prefix",
-  urlPrefix,
-  "--ext",
-  "js",
-  "--ext",
-  "map",
-  rendererDir,
-]);
+sentry(["sourcemaps", "upload", "--release", release, buildDir]);
+sentry(["sourcemaps", "upload", "--release", release, rendererDir]);
 sentry(["releases", "finalize", release]);
 
 console.log(`Uploaded sourcemaps for release ${release}`);

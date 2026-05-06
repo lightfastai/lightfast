@@ -6,7 +6,6 @@ import {
   IpcChannels,
   type LightfastBridge,
   type RuntimeConfigSnapshot,
-  type SentryInitSnapshot,
   type SettingsSnapshot,
   type SystemThemeVariant,
   type UpdaterStatusSnapshot,
@@ -16,9 +15,6 @@ import {
 const buildInfo = ipcRenderer.sendSync(
   IpcChannels.getBuildInfoSync
 ) as BuildInfoSnapshot;
-const sentryInit = ipcRenderer.sendSync(
-  IpcChannels.getSentryInitOptionsSync
-) as SentryInitSnapshot;
 const updaterStatus = ipcRenderer.sendSync(
   IpcChannels.updaterStatusSync
 ) as UpdaterStatusSnapshot;
@@ -56,7 +52,6 @@ const bridge: LightfastBridge = {
     },
   },
   buildInfo,
-  sentryInit,
   platform: process.platform,
   getSystemThemeVariant: () =>
     ipcRenderer.invoke(IpcChannels.getSystemThemeVariant),

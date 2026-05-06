@@ -1,3 +1,5 @@
+import { execFileSync } from "node:child_process";
+import { cpSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { MakerDMG } from "@electron-forge/maker-dmg";
@@ -14,24 +16,21 @@ const URL_SCHEME = "lightfast";
 
 const osxSign =
   process.env.APPLE_SIGNING_IDENTITY && process.env.APPLE_TEAM_ID
-    ? // TODO(apple-cert): kebab-case keys below are silently dropped by
-      // @electron/osx-sign@1.3.3 (camelCase only). Notarization will fail
-      // when secrets land. Rename to camelCase + move per-file ones into
-      // optionsForFile before exercising the dev-id path. Out of scope here
-      // because verification needs Apple secrets we don't have yet.
-      {
+    ? {
         identity: process.env.APPLE_SIGNING_IDENTITY,
-        "hardened-runtime": true,
-        "gatekeeper-assess": false,
         entitlements: resolve(
           import.meta.dirname,
           "build/entitlements.mac.plist"
         ),
-        "entitlements-inherit": resolve(
+        entitlementsInherit: resolve(
           import.meta.dirname,
           "build/entitlements.mac.inherit.plist"
         ),
-        "signature-flags": "library",
+        optionsForFile: () => ({
+          hardenedRuntime: true,
+          gatekeeperAssess: false,
+          signatureFlags: "library",
+        }),
       }
     : // Ad-hoc fallback used while waiting on Apple Developer enrollment.
       // identity:"-" alone produces an unsigned bundle: osx-sign defaults
@@ -65,10 +64,51 @@ const githubPublisher = process.env.GITHUB_TOKEN
       repository: { owner: "lightfastai", name: "lightfast" },
       draft: true,
       prerelease: process.env.LIGHTFAST_DESKTOP_RELEASE_PRERELEASE === "true",
+      // Forge defaults tagPrefix to "v", which would create a parallel
+      // release at v<version>. The workflow's prepare job already created a
+      // draft at @lightfast/desktop@<version>; matching tagPrefix here makes
+      // Forge publish assets onto that release instead of a sibling.
+      tagPrefix: "@lightfast/desktop@",
     })
   : null;
 
+// Inject sentry debug-ids into the staged Vite output AFTER electron-packager
+// has copied it to its temp build path. We can't use prePackage because
+// Forge runs user hooks before plugin-vite's build, so .vite/ doesn't exist
+// yet. We can't use any earlier post-Vite hook because plugin-vite doesn't
+// expose one. packageAfterCopy fires once per platform/arch with `buildPath`
+// pointing at the staging dir whose contents will be sealed into the asar;
+// inject there, then mirror the modified files back to the source `.vite/`
+// so `scripts/upload-sourcemaps.mjs` uploads sourcemaps with debug-ids that
+// match what got packed.
+function injectSentryDebugIds(buildPath: string, sourceRoot: string): void {
+  if (!process.env.SENTRY_AUTH_TOKEN) {
+    return;
+  }
+  const targets = [".vite/build", ".vite/renderer/main_window"];
+  for (const t of targets) {
+    const stagingDir = resolve(buildPath, t);
+    const sourceDir = resolve(sourceRoot, t);
+    if (!existsSync(stagingDir)) {
+      continue;
+    }
+    execFileSync(
+      "pnpm",
+      ["exec", "sentry-cli", "sourcemaps", "inject", stagingDir],
+      { cwd: sourceRoot, stdio: "inherit" }
+    );
+    if (existsSync(sourceDir)) {
+      cpSync(stagingDir, sourceDir, { recursive: true, force: true });
+    }
+  }
+}
+
 const config: ForgeConfig = {
+  hooks: {
+    packageAfterCopy: async (_forgeConfig, buildPath) => {
+      injectSentryDebugIds(buildPath, import.meta.dirname);
+    },
+  },
   packagerConfig: {
     name: "Lightfast",
     executableName: "lightfast",

@@ -1,4 +1,3 @@
-import { init as initSentryBrowser } from "@vendor/observability/sentry-browser";
 import "./react/entry";
 import {
   ACCELERATORS,
@@ -18,21 +17,18 @@ declare global {
   }
 }
 
+// Renderer errors are forwarded over IPC to main, which calls
+// Sentry.captureException via the working `@sentry/electron/main` SDK. The
+// renderer-side `@sentry/electron/renderer` path was broken — `Sentry.init`
+// silently failed to register a client in the v10 carrier — so events never
+// reached the IPC transport regardless of CSP setup.
 installErrorBoundary(window.lightfastBridge.reportError);
 
-const { buildInfo, platform, sentryInit } = window.lightfastBridge;
+const { buildInfo, platform } = window.lightfastBridge;
 const formatPlatform: FormatPlatform =
   platform === "darwin" || platform === "linux" || platform === "win32"
     ? platform
     : "linux";
-
-if (sentryInit.enabled) {
-  initSentryBrowser({
-    dsn: sentryInit.dsn,
-    release: sentryInit.release,
-    environment: sentryInit.environment,
-  });
-}
 
 document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window.codexWindowType;
