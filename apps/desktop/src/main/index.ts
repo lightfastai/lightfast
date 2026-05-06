@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/electron/main";
 import {
   app,
   BrowserWindow,
@@ -8,7 +9,11 @@ import {
   shell,
 } from "electron";
 import contextMenu from "electron-context-menu";
-import { IpcChannels, type SystemThemeVariant } from "../shared/ipc";
+import {
+  IpcChannels,
+  type RendererErrorPayload,
+  type SystemThemeVariant,
+} from "../shared/ipc";
 import { openAppOrigin } from "./app-url";
 import { beginSignIn } from "./auth-flow";
 import {
@@ -20,7 +25,7 @@ import {
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
 import { getRuntimeConfig } from "./runtime-config";
-import { getSentryInitOptions, initSentry } from "./sentry";
+import { initSentry } from "./sentry";
 import {
   getSettings,
   onSettingsChanged,
@@ -53,6 +58,37 @@ function rendererDevServerOrigin(): string | null {
   } catch {
     return null;
   }
+}
+
+function isRendererErrorPayload(value: unknown): value is RendererErrorPayload {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const candidate = value as Partial<RendererErrorPayload>;
+  return (
+    (candidate.kind === "error" || candidate.kind === "unhandledrejection") &&
+    typeof candidate.message === "string"
+  );
+}
+
+function forwardRendererErrorToSentry(payload: unknown): void {
+  if (!isRendererErrorPayload(payload)) {
+    return;
+  }
+  // The renderer-side @sentry/electron/renderer SDK silently fails to register
+  // a client (v10 carrier shape). Bridge renderer errors through the working
+  // main-side SDK instead, preserving the renderer stack so debug-id-paired
+  // sourcemaps can still symbolicate it.
+  const error = new Error(payload.message);
+  error.name =
+    payload.kind === "unhandledrejection" ? "UnhandledRejection" : "Error";
+  if (payload.stack) {
+    error.stack = payload.stack;
+  }
+  Sentry.captureException(error, {
+    tags: { bundle: "renderer", rendererKind: payload.kind },
+    extra: { source: payload.source, url: payload.url },
+  });
 }
 
 function openAllowedExternalUrl(url: string): void {
@@ -132,10 +168,6 @@ function registerIpcHandlers(): void {
     event.returnValue = getBuildInfo();
   });
 
-  ipcMain.on(IpcChannels.getSentryInitOptionsSync, (event) => {
-    event.returnValue = getSentryInitOptions();
-  });
-
   ipcMain.on(IpcChannels.getSettingsSync, (event) => {
     event.returnValue = getSettings();
   });
@@ -170,6 +202,7 @@ function registerIpcHandlers(): void {
   ipcMain.on(IpcChannels.rendererError, (_event, payload: unknown) => {
     // eslint-disable-next-line no-console
     console.error("[renderer]", payload);
+    forwardRendererErrorToSentry(payload);
   });
 
   ipcMain.handle(IpcChannels.openWindow, async (_event, kind: unknown) => {

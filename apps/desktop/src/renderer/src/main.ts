@@ -1,9 +1,3 @@
-// @sentry/electron/renderer routes events through `sentry-ipc:` (CSP-bypass
-// scheme registered by @sentry/electron/main + bridged by the
-// `@sentry/electron/preload` import in src/preload/preload.ts). The plain
-// @sentry/browser SDK fetches the ingest URL directly, which the renderer
-// CSP blocks — events silently drop.
-import * as Sentry from "@sentry/electron/renderer";
 import "./react/entry";
 import {
   ACCELERATORS,
@@ -23,21 +17,18 @@ declare global {
   }
 }
 
+// Renderer errors are forwarded over IPC to main, which calls
+// Sentry.captureException via the working `@sentry/electron/main` SDK. The
+// renderer-side `@sentry/electron/renderer` path was broken — `Sentry.init`
+// silently failed to register a client in the v10 carrier — so events never
+// reached the IPC transport regardless of CSP setup.
 installErrorBoundary(window.lightfastBridge.reportError);
 
-const { buildInfo, platform, sentryInit } = window.lightfastBridge;
+const { buildInfo, platform } = window.lightfastBridge;
 const formatPlatform: FormatPlatform =
   platform === "darwin" || platform === "linux" || platform === "win32"
     ? platform
     : "linux";
-
-if (sentryInit.enabled) {
-  Sentry.init({
-    dsn: sentryInit.dsn,
-    release: sentryInit.release,
-    environment: sentryInit.environment,
-  });
-}
 
 document.documentElement.dataset.platform = platform;
 document.documentElement.dataset.windowKind = window.codexWindowType;
