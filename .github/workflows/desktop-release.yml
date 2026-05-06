@@ -67,7 +67,7 @@ jobs:
               --repo "${{ github.repository }}" \
               --draft \
               "${prerelease_flag[@]}" \
-              --title "Lightfast desktop v${{ steps.ver.outputs.version }}" \
+              --title "lightfast@${{ steps.ver.outputs.version }}" \
               "${notes_arg[@]}"
           fi
 
