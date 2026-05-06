@@ -38,11 +38,16 @@ function sentry(args) {
 }
 
 // Modern artifact-bundle flow with debug-id matching. `sourcemaps inject`
-// runs in `forge.config.ts`'s prePackage hook so the injected //# debugId=
-// comments land in the asar; here we only `upload`. Stack frames in Sentry
-// resolve via debug-id, which avoids URL-prefix mismatches between the
-// uploaded path (`assets/index-*.js`) and the runtime frame
+// runs in `forge.config.ts`'s `packageAfterCopy` hook so the injected
+// //# debugId= comments land in the asar; here we only `upload`. Stack
+// frames in Sentry resolve via debug-id, sidestepping URL-prefix mismatches
+// between the uploaded path (`assets/index-*.js`) and the runtime frame
 // (`app:///.vite/renderer/main_window/assets/index-*.js`).
+//
+// `sourcemaps upload --release` writes the artifact bundle but does NOT
+// create the release entity. `releases new` is required before finalize,
+// otherwise finalize errors with "Release not found".
+sentry(["releases", "new", release]);
 sentry(["sourcemaps", "upload", "--release", release, buildDir]);
 sentry(["sourcemaps", "upload", "--release", release, rendererDir]);
 sentry(["releases", "finalize", release]);
