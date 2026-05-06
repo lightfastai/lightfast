@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/electron/main";
 import {
   app,
   BrowserWindow,
@@ -7,7 +8,6 @@ import {
   session,
   shell,
 } from "electron";
-import * as Sentry from "@sentry/electron/main";
 import contextMenu from "electron-context-menu";
 import {
   IpcChannels,
@@ -66,8 +66,7 @@ function isRendererErrorPayload(value: unknown): value is RendererErrorPayload {
   }
   const candidate = value as Partial<RendererErrorPayload>;
   return (
-    (candidate.kind === "error" ||
-      candidate.kind === "unhandledrejection") &&
+    (candidate.kind === "error" || candidate.kind === "unhandledrejection") &&
     typeof candidate.message === "string"
   );
 }
