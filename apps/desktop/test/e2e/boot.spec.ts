@@ -1,0 +1,86 @@
+import { _electron, expect, test, type Page } from "@playwright/test";
+import { execFileSync } from "node:child_process";
+import { resolve } from "node:path";
+
+// `apps/desktop/package.json` has no `"type": "module"`, so Playwright's TS
+// loader compiles this spec as CJS. Use __dirname, not import.meta.url —
+// the latter throws ReferenceError under CJS. (Verified via spike 2026-05-06.)
+const desktopRoot = resolve(__dirname, "..", "..");
+const repoRoot = resolve(desktopRoot, "..", "..");
+
+// `pnpm dev:desktop` wraps Electron in `scripts/with-desktop-env.mjs`, which
+// derives LIGHTFAST_APP_ORIGIN from the workspace's Portless config. The
+// unpackaged main process treats that var as required (apps/desktop/src/main/
+// auth-flow.ts); without it the app aborts before the primary window opens.
+// Mirror the wrapper's `--print` output here so the spec works both locally
+// and on CI without re-implementing URL resolution.
+function loadDesktopEnv(): Record<string, string> {
+  const out = execFileSync(
+    "node",
+    [resolve(repoRoot, "scripts/with-desktop-env.mjs"), "--print"],
+    { encoding: "utf8" }
+  );
+  const env: Record<string, string> = {};
+  for (const line of out.split("\n")) {
+    const m = /^(\w+)=(.*)$/.exec(line);
+    if (m && m[1] !== undefined && m[2] !== undefined) {
+      env[m[1]] = m[2];
+    }
+  }
+  return env;
+}
+
+function stringEnv(source: NodeJS.ProcessEnv): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(source)) {
+    if (typeof v === "string") out[k] = v;
+  }
+  return out;
+}
+
+test("boots, renderer paints, quits cleanly", async () => {
+  const errors: string[] = [];
+
+  const electronApp = await _electron.launch({
+    args: ["."],
+    cwd: desktopRoot,
+    env: { ...stringEnv(process.env), ...loadDesktopEnv() },
+  });
+
+  // src/main/index.ts:259-261 auto-opens detached devtools when
+  // !app.isPackaged. `firstWindow()` races and can return the devtools
+  // BrowserWindow (URL `devtools://...`) — its body is non-empty too, which
+  // masks renderer failures. Drain `windows()` for any already-open
+  // non-devtools page first, then fall back to `waitForEvent("window")`
+  // for windows that open after launch resolves.
+  let window: Page | undefined = electronApp
+    .windows()
+    .find((w) => !w.url().startsWith("devtools://"));
+  if (!window) {
+    window = await electronApp.waitForEvent("window", {
+      predicate: (w) => !w.url().startsWith("devtools://"),
+      timeout: 30_000,
+    });
+  }
+
+  window.on("pageerror", (err) => errors.push(`pageerror: ${err.message}`));
+  window.on("console", (msg) => {
+    if (msg.type() === "error") errors.push(`console.error: ${msg.text()}`);
+  });
+
+  // Anchor on the React mount point, not just `body :not-empty` — chrome-error
+  // and devtools pages also have non-empty bodies. `#react-root` is the
+  // primary window's mount id (apps/desktop/src/renderer/index.html:118 +
+  // src/renderer/src/react/entry.tsx:34). Use `state: "attached"` because the
+  // first child is sonner's `<section aria-live="polite">` (always present,
+  // never visible). Attachment proves the React tree mounted, which is the
+  // smoke we care about.
+  await window.waitForSelector("#react-root *", {
+    state: "attached",
+    timeout: 30_000,
+  });
+
+  await electronApp.close();
+
+  expect(errors, errors.join("\n")).toEqual([]);
+});
