@@ -204,5 +204,5 @@ These features matter once we want session replay or a rich breadcrumb timeline.
 ### Follow-ups (non-blocking)
 
 - Bump `@sentry/electron` from 7.11.0 → 7.13.0 in a separate PR (two minor versions behind; small win, no behavior change for our usage).
-- Revisit the bridge architecture if/when we want session replay or rich renderer breadcrumbs in v0.2.0+ — the recipe is documented in this section.
+- Revisit the bridge architecture if/when we want session replay or rich renderer breadcrumbs in v0.2.0+. To restore the renderer SDK cleanly, add a `sentry-electron-renderer` re-export to `@vendor/observability` (mirroring the existing `sentry-electron-main` and `sentry-browser` wraps) so renderer code never imports `@sentry/electron/renderer` directly — that direct import would violate the repo's vendor-abstraction policy.
 - Update the `installErrorBoundary` comment in `apps/desktop/src/renderer/src/main.ts` to remove the inaccurate "renderer SDK was broken" rationale.
