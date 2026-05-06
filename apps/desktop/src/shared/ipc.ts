@@ -8,7 +8,6 @@ export const IpcChannels = {
   openApp: channel("open-app"),
   openWindow: channel("open-window"),
   getBuildInfoSync: channel("get-build-info-sync"),
-  getSentryInitOptionsSync: channel("get-sentry-init-options-sync"),
   rendererError: channel("renderer-error"),
   updaterCheck: channel("updater-check"),
   updaterInstall: channel("updater-install"),
@@ -51,13 +50,6 @@ export interface BuildInfoSnapshot {
   name: string;
   sparkleFeedUrl: string;
   version: string;
-}
-
-export interface SentryInitSnapshot {
-  dsn: string;
-  enabled: boolean;
-  environment: string;
-  release: string;
 }
 
 export interface RendererErrorPayload {
@@ -127,7 +119,6 @@ export interface LightfastBridge {
   openWindow: (kind: WindowKind) => Promise<void>;
   platform: Platform;
   reportError: (payload: RendererErrorPayload) => void;
-  sentryInit: SentryInitSnapshot;
   settings: SettingsSnapshot;
   updater: {
     status: UpdaterStatusSnapshot;

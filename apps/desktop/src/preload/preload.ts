@@ -1,8 +1,3 @@
-// Installs the @sentry/electron IPC bridge on the contextBridge so the
-// renderer-side SDK routes events through main via `sentry-ipc:` instead of
-// fetching the ingest URL directly (which the renderer CSP blocks). Pair:
-// src/main/sentry.ts (main init) and src/renderer/src/main.ts (renderer init).
-import "@sentry/electron/preload";
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
 import type { AcceleratorName } from "../shared/accelerators";
 import {
@@ -11,7 +6,6 @@ import {
   IpcChannels,
   type LightfastBridge,
   type RuntimeConfigSnapshot,
-  type SentryInitSnapshot,
   type SettingsSnapshot,
   type SystemThemeVariant,
   type UpdaterStatusSnapshot,
@@ -21,9 +15,6 @@ import {
 const buildInfo = ipcRenderer.sendSync(
   IpcChannels.getBuildInfoSync
 ) as BuildInfoSnapshot;
-const sentryInit = ipcRenderer.sendSync(
-  IpcChannels.getSentryInitOptionsSync
-) as SentryInitSnapshot;
 const updaterStatus = ipcRenderer.sendSync(
   IpcChannels.updaterStatusSync
 ) as UpdaterStatusSnapshot;
@@ -52,7 +43,6 @@ const bridge: LightfastBridge = {
     },
   },
   buildInfo,
-  sentryInit,
   platform: process.platform,
   getSystemThemeVariant: () =>
     ipcRenderer.invoke(IpcChannels.getSystemThemeVariant),
