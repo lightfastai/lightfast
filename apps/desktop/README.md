@@ -3,6 +3,30 @@
 Lightfast desktop app (Electron). Native-looking macOS sidebar via
 `NSVisualEffectView`, Mica on Windows 11, signed + notarized releases.
 
+## Install (beta)
+
+The desktop app is currently distributed as ad-hoc-signed pre-release builds
+while Apple Developer enrollment is in flight. macOS will show an "Apple cannot
+verify Lightfast is free of malware" dialog on first launch — this is expected.
+
+1. Download `Lightfast.dmg` from the latest [Pre-release](https://github.com/lightfastai/lightfast/releases?q=prerelease%3Atrue).
+   Use `arm64` for Apple Silicon, `x64` for Intel.
+2. Drag `Lightfast.app` to `/Applications`.
+3. Double-click the app. Click **Done** on the dialog.
+4. Open **System Settings → Privacy & Security**. Scroll to the Security
+   section and click **Open Anyway** next to Lightfast (visible for ~1 hour
+   after the blocked launch).
+5. Confirm with Touch ID or your login password.
+
+If the dialog instead reports "damaged and can't be opened", run
+`xattr -cr /Applications/Lightfast.app` and try again. (This shouldn't happen
+with ad-hoc builds, but is the recovery path if it does.)
+
+When the signed v0.1.0 release ships, beta users **must reinstall manually** —
+auto-update is disabled on ad-hoc builds because Squirrel.Mac requires the
+new build to match the running app's designated requirement, and ad-hoc DRs
+are content-bound (they change with every build).
+
 ## Run
 
 ```bash

@@ -80,6 +80,13 @@ export function initUpdater(): void {
   if (build.buildFlavor === "dev") {
     return;
   }
+  // Squirrel.Mac requires the new build to satisfy the running app's
+  // designated requirement. Ad-hoc DRs are content-bound — every build has
+  // a different DR, so swap-in always fails. Disable updater here; beta
+  // users (currently just jp) reinstall manually when v0.1.0 ships.
+  if (build.signingMode === "ad-hoc") {
+    return;
+  }
 
   const feedUrl = resolveFeedUrl();
   if (!feedUrl) {

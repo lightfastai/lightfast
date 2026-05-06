@@ -14,6 +14,7 @@ export function getBuildInfo(): BuildInfo {
     buildFlavor: packageJson.buildFlavor,
     buildNumber: packageJson.buildNumber,
     sparkleFeedUrl: mainEnv.SPARKLE_FEED_URL ?? packageJson.sparkleFeedUrl,
+    signingMode: packageJson.signingMode,
   };
   cachedBuildInfo = buildInfoSchema.parse(candidate);
   return cachedBuildInfo;
