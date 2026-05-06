@@ -22,6 +22,8 @@ export const IpcChannels = {
   authSignIn: channel("auth-sign-in"),
   authSignOut: channel("auth-sign-out"),
   authChanged: channel("auth-changed"),
+  authPendingSigninUrl: channel("auth-pending-signin-url"),
+  authPendingSigninUrlChanged: channel("auth-pending-signin-url-changed"),
   runtimeConfigSync: channel("runtime-config-sync"),
 } as const;
 
@@ -100,8 +102,12 @@ export interface LightfastBridge {
     snapshot: AuthSnapshot;
     getToken: () => Promise<string | null>;
     signIn: () => Promise<string | null>;
-    signOut: () => Promise<void>;
+    signOut: () => Promise<boolean>;
     onChanged: (listener: (snapshot: AuthSnapshot) => void) => () => void;
+    pendingSigninUrl: () => Promise<string | null>;
+    onPendingSigninUrlChanged: (
+      listener: (url: string | null) => void
+    ) => () => void;
   };
   buildInfo: BuildInfoSnapshot;
   getSystemThemeVariant: () => Promise<SystemThemeVariant>;

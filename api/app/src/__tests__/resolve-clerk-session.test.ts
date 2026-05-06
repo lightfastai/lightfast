@@ -89,6 +89,19 @@ describe("resolveClerkSession", () => {
     expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
   });
 
+  it("returns null when the Bearer JWT is invalid and no cookie session exists", async () => {
+    verifyTokenMock.mockRejectedValueOnce(new Error("jwt expired"));
+    authMock.mockResolvedValueOnce({ userId: null, orgId: null });
+
+    const session = await resolveClerkSession(
+      new Headers({ authorization: "Bearer expired.jwt" })
+    );
+
+    expect(session).toBeNull();
+    expect(verifyTokenMock).toHaveBeenCalledTimes(1);
+    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
+  });
+
   it("returns null when neither Bearer nor cookie produce a session", async () => {
     authMock.mockResolvedValueOnce({ userId: null, orgId: null });
 

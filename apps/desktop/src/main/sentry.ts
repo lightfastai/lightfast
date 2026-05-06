@@ -1,6 +1,8 @@
 import { randomUUID } from "node:crypto";
-import * as Sentry from "@sentry/electron/main";
-import { rewriteFramesIntegration } from "@sentry/electron/main";
+import {
+  init,
+  rewriteFramesIntegration,
+} from "@vendor/observability/sentry-electron-main";
 import { app } from "electron";
 import { mainEnv } from "../env/main";
 import { getBuildInfo } from "./build-info";
@@ -40,7 +42,7 @@ export function initSentry(): void {
     return;
   }
   const build = getBuildInfo();
-  Sentry.init({
+  init({
     dsn: options.dsn,
     release: options.release,
     environment: options.environment,

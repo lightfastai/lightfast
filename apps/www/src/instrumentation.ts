@@ -4,7 +4,7 @@ import {
   extraErrorDataIntegration,
   init,
   spotlightIntegration,
-} from "@sentry/nextjs";
+} from "@vendor/observability/sentry-nextjs";
 
 import { env } from "~/env";
 

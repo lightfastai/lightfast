@@ -15,7 +15,13 @@ import {
   type SystemThemeVariant,
 } from "../shared/ipc";
 import { openAppOrigin } from "./app-url";
-import { beginSignIn } from "./auth-flow";
+import {
+  beginSignIn,
+  getPendingSigninUrl,
+  maybeAutoBeginSignIn,
+  onPendingSigninUrl,
+} from "./auth-flow";
+import { createAuthFocusGate } from "./auth-focus-gate";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
@@ -24,6 +30,7 @@ import {
 } from "./auth-store";
 import { getBuildInfo } from "./build-info";
 import { buildApplicationMenu } from "./menu";
+import { registerProtocolHandler } from "./protocol";
 import { getRuntimeConfig } from "./runtime-config";
 import { initSentry } from "./sentry";
 import {
@@ -220,9 +227,8 @@ function registerIpcHandlers(): void {
   });
   ipcMain.handle(IpcChannels.authGetToken, () => getAuthToken());
   ipcMain.handle(IpcChannels.authSignIn, () => beginSignIn());
-  ipcMain.handle(IpcChannels.authSignOut, () => {
-    signOutAuth();
-  });
+  ipcMain.handle(IpcChannels.authSignOut, () => signOutAuth());
+  ipcMain.handle(IpcChannels.authPendingSigninUrl, () => getPendingSigninUrl());
 }
 
 function broadcastThemeUpdates(): void {
@@ -340,6 +346,11 @@ function broadcastSettings(snapshot: SettingsSnapshot): void {
 
 initSentry();
 
+// Register the custom-scheme handler synchronously, before app.whenReady().
+// macOS delivers cold-start `open-url` events between app launch and ready;
+// attaching the listener inside whenReady().then(...) loses those URLs.
+registerProtocolHandler(() => BrowserWindow.getAllWindows());
+
 contextMenu({
   showInspectElement: !app.isPackaged,
   showSaveImageAs: true,
@@ -378,11 +389,25 @@ app.whenReady().then(() => {
   });
   void openPrimaryWindow();
 
+  const focusGate = createAuthFocusGate({
+    initiallySignedIn: Boolean(getAuthSnapshot().isSignedIn),
+    getWindows: () => BrowserWindow.getAllWindows(),
+  });
   onAuthChanged((snapshot) => {
     for (const win of BrowserWindow.getAllWindows()) {
       win.webContents.send(IpcChannels.authChanged, snapshot);
     }
+    focusGate(snapshot);
   });
+  onPendingSigninUrl((url) => {
+    for (const win of BrowserWindow.getAllWindows()) {
+      win.webContents.send(IpcChannels.authPendingSigninUrlChanged, url);
+    }
+  });
+
+  // Agent-mode auto-trigger. No-op outside agent mode. Idempotent — emits
+  // auth_already_signed_in if a token is already persisted.
+  maybeAutoBeginSignIn();
 
   app.on("activate", () => {
     if (BrowserWindow.getAllWindows().length === 0) {

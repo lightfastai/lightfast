@@ -1,13 +1,13 @@
+import { TRPCError } from "@trpc/server";
+import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+import { NonRetriableError } from "@vendor/inngest";
 import {
   captureConsoleIntegration,
   captureRequestError,
   extraErrorDataIntegration,
   init,
   spotlightIntegration,
-} from "@sentry/nextjs";
-import { TRPCError } from "@trpc/server";
-import { getHTTPStatusCodeFromError } from "@trpc/server/http";
-import { NonRetriableError } from "@vendor/inngest";
+} from "@vendor/observability/sentry-nextjs";
 
 import { env } from "~/env";
 

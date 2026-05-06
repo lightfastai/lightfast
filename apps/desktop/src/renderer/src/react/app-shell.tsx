@@ -1,7 +1,12 @@
 import { useQueryClient } from "@tanstack/react-query";
+import { captureException } from "@vendor/observability/sentry-browser";
 import { useEffect, useState } from "react";
+import { Toaster, toast } from "sonner";
 import type { AuthSnapshot } from "../../../shared/ipc";
+import { AccountCard } from "./account-card";
 import { SignedOutShell } from "./signed-out-shell";
+
+let signoutFailureReported = false;
 
 export function AppShell() {
   const [auth, setAuth] = useState<AuthSnapshot>(
@@ -22,7 +27,14 @@ export function AppShell() {
       }
       const code = (err as { data?: { code?: string } }).data?.code;
       if (code === "UNAUTHORIZED") {
-        void window.lightfastBridge.auth.signOut();
+        void window.lightfastBridge.auth.signOut().then((ok) => {
+          if (!(ok || signoutFailureReported)) {
+            signoutFailureReported = true;
+            captureException(new Error("auto-sign-out failed"), {
+              tags: { scope: "app-shell.auto-sign-out" },
+            });
+          }
+        });
       }
     });
     return unsub;
@@ -30,12 +42,40 @@ export function AppShell() {
 
   if (!auth.isSignedIn) {
     return (
-      <SignedOutShell
-        onLearnMore={() => void window.lightfastBridge.openApp()}
-        onSignIn={() => void window.lightfastBridge.auth.signIn()}
-      />
+      <>
+        <Toaster />
+        <SignedOutShell
+          onLearnMore={() => void window.lightfastBridge.openApp()}
+          onSignIn={() => {
+            void window.lightfastBridge.auth.signIn().then((token) => {
+              if (token) {
+                signoutFailureReported = false;
+                return;
+              }
+              toast.error("Sign-in didn't complete — please try again");
+            });
+          }}
+        />
+      </>
     );
   }
 
-  return null;
+  return (
+    <div>
+      <Toaster />
+      <AccountCard />
+      <button
+        onClick={() => {
+          void window.lightfastBridge.auth.signOut().then((ok) => {
+            if (!ok) {
+              toast.error("Sign out failed — please try again");
+            }
+          });
+        }}
+        type="button"
+      >
+        Sign out
+      </button>
+    </div>
+  );
 }
