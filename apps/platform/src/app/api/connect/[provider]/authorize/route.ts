@@ -1,17 +1,14 @@
 /**
  * GET /api/connect/:provider/authorize
  *
- * Initiate OAuth flow. Ported from apps/gateway/src/routes/connections.ts (lines 79-141).
- *
- * NOT tRPC — returns authorize URL + state for browser OAuth.
- * The main flow uses tRPC `connections.getAuthorizeUrl` instead;
- * this route supports direct browser navigation as a fallback.
+ * Initiate OAuth flow. Returns authorize URL + state for browser OAuth.
+ * All business logic lives in platform.oauth.buildAuthorizeUrl().
  */
 
-import { buildAuthorizeUrl } from "@api/platform/lib/oauth/authorize";
-import type { SourceType } from "@repo/app-providers";
+import { TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
+import { platform } from "~/lib/internal-caller";
 
 export const runtime = "nodejs";
 
@@ -20,7 +17,6 @@ export async function GET(
   { params }: { params: Promise<{ provider: string }> }
 ) {
   const { provider } = await params;
-  const providerName = provider as SourceType;
 
   const orgId = req.nextUrl.searchParams.get("org_id");
   const connectedBy =
@@ -30,25 +26,24 @@ export async function GET(
   const redirectTo = req.nextUrl.searchParams.get("redirect_to") ?? undefined;
 
   if (!orgId) {
-    log.warn("[oauth/authorize] missing org_id", { provider: providerName });
+    log.warn("[oauth/authorize] missing org_id", { provider });
     return Response.json({ error: "missing_org_id" }, { status: 400 });
   }
 
-  const result = await buildAuthorizeUrl({
-    provider: providerName,
-    orgId,
-    connectedBy,
-    redirectTo,
-  });
-
-  if (!result.ok) {
-    log.warn("[oauth/authorize] failed to build authorize URL", {
-      provider: providerName,
-      error: result.error,
+  try {
+    const result = await platform.oauth.buildAuthorizeUrl({
+      provider,
+      orgId,
+      connectedBy,
+      redirectTo,
     });
-    return Response.json({ error: result.error }, { status: 400 });
-  }
 
-  log.info("[oauth/authorize] authorize URL built", { provider: providerName });
-  return Response.json({ url: result.url, state: result.state });
+    log.info("[oauth/authorize] authorize URL built", { provider });
+    return Response.json(result);
+  } catch (err) {
+    if (err instanceof TRPCError) {
+      return Response.json({ error: err.message }, { status: 400 });
+    }
+    throw err;
+  }
 }

@@ -1,16 +1,13 @@
 /**
  * GET /api/connect/oauth/poll
  *
- * Poll for OAuth completion. Ported from gateway connections.ts (lines 180-196).
- *
- * NOT tRPC — CLI polling with state token as auth.
- * The state token itself is the secret (cryptographically random nanoid,
- * known only to the initiator).
+ * Poll for OAuth completion. CLI polling with state token as auth.
+ * All business logic lives in platform.oauth.pollResult().
  */
 
-import { getOAuthResult } from "@api/platform/lib/oauth/state";
 import { log } from "@vendor/observability/log/next";
 import type { NextRequest } from "next/server";
+import { platform } from "~/lib/internal-caller";
 
 export const runtime = "nodejs";
 
@@ -22,7 +19,7 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "missing_state" }, { status: 400 });
   }
 
-  const result = await getOAuthResult(state);
+  const result = await platform.oauth.pollResult({ state });
 
   if (!result) {
     return Response.json({ status: "pending" });
