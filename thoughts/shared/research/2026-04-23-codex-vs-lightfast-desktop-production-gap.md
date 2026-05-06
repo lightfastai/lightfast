@@ -42,21 +42,19 @@ Plans:
 - [`thoughts/shared/plans/2026-04-23-desktop-codex-gap-quick-wins.md`](../plans/2026-04-23-desktop-codex-gap-quick-wins.md) — implemented 2026-04-23 (all 4 phases landed).
 - [`thoughts/shared/plans/2026-04-23-desktop-pre-release-batch.md`](../plans/2026-04-23-desktop-pre-release-batch.md) — drafted 2026-04-23; 6 phases closing the pre-v0.1.0-release gap (monorepo release host, tag convention `@lightfast/desktop@<version>`, Sentry source-map upload, signed workflow enablement, desktop CI coverage, contributor ergonomics).
 
-Legend: **DONE** = landed on `main` · **IN PROGRESS** = scoped into the pre-release batch plan · **DEFERRED** = intentionally out of scope right now · **RELEASE** = future release-pipeline work beyond v0.1.0.
-
-> **Update 2026-05-06.** All three **IN PROGRESS** rows in the table below (§2 source-map upload, §6 multi-arch matrix, §13 build-metadata stamping) landed via PR #621 (2026-04-24). The table preserves the 2026-04-23 snapshot as audit trail; current state is at §"Status Update 2026-05-06 (post-dry-run)" near the bottom of this document, and the live source of truth is the [dry-run final report](../2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md).
+Legend: **DONE** = landed on `main` · **DEFERRED** = intentionally out of scope right now · **RELEASE** = future release-pipeline work beyond v0.1.0. (The 2026-04-23 snapshot also used **IN PROGRESS** for rows scoped into the pre-release batch; all such rows have since closed.)
 
 | § | Finding | State | Notes |
 |---|---|---|---|
 | 1 | Auto-update: Sparkle + Ed25519 | **RELEASE** | Whole auto-update surface |
 | 2 | On-disk logging (file logger) | **DEFERRED** | Larger effort, no consumer yet |
 | 2 | Sentry tags + RewriteFrames (non-release subset) | **DONE** | Plan Phase 3 — `sentry.ts` adds `sessionId`, `bundle`, `host` tags, `dist=buildNumber`, `rewriteFramesIntegration({root: app.getAppPath(), prefix: "app:///"})`. DSN-gated end-to-end check still pending a real DSN. |
-| 2 | Source-map upload / `@sentry/cli` | **IN PROGRESS** | Pre-release batch Phase C — `scripts/upload-sourcemaps.mjs` uploads `.vite/build` + `.vite/renderer/main_window` with `--url-prefix "app:///"` matching `rewriteFramesIntegration`. |
+| 2 | Source-map upload / `@sentry/cli` | **DONE** | PR #621 wired `scripts/upload-sourcemaps.mjs`; PR #641 switched from `--url-prefix` to debug-id pairing (`sentry-cli sourcemaps inject` in Forge `packageAfterCopy` hook + `sentry-cli sourcemaps upload --release`). PR #642 restored explicit `releases new` before upload. Verified end-to-end on the rc.4 cut. |
 | 2 | Explicit `crashReporter.start({uploadToServer:false})` | **DEFERRED** | `@sentry/electron` already handles Crashpad; skip to avoid double-init |
 | 3 | Persistent SQLite storage | **DEFERRED** | No consumer yet |
 | 4 | Worker / utility-process tier | **DEFERRED** | No workload demands it yet |
 | 5 | Windows MSIX + Linux makers | **RELEASE** | Deferred past v0.1.0 (macOS only for first release) |
-| 6 | Multi-arch (arm64 + x64) | **IN PROGRESS** | Pre-release batch Phase D — workflow matrix builds both arches; published as separate artifacts, no universal merge. |
+| 6 | Multi-arch (arm64 + x64) | **DONE** | PR #621 — `desktop-release.yml` matrix builds both arches on `macos-14`, publishes as separate `.dmg`/`.zip` per arch with separate Sparkle feeds (`latest-mac-{arm64,x64}.json`). No universal merge. |
 | 6 | Universal binary merge | **DEFERRED** | `@electron/universal` not needed; two separate artifacts with `${arch}` feed template suffice. |
 | 7 | Per-surface preload isolation | **DEFERRED** | No third-party surfaces yet |
 | 8 | Menu + renderer i18n | **DEFERRED** | Policy decision pending |
@@ -65,7 +63,7 @@ Legend: **DONE** = landed on `main` · **IN PROGRESS** = scoped into the pre-rel
 | 11 | Entitlements diet (drop `disable-library-validation`, `device.camera`, `network.server`) | **DONE** | Plan Phase 1, commit `40b36bb56`. Source `entitlements.mac.plist` trimmed to 5 keys. |
 | 12 | Info.plist hygiene (`NSQuitAlwaysKeepsWindows=false`, `LSMinimumSystemVersion=12.0`, `MallocNanoZone=0`) | **DONE** | Plan Phase 2. Verified in packaged `Info.plist` via `plutil -p` 2026-04-23. |
 | 12 | `NSAppTransportSecurity` / `CFBundleDocumentTypes` / `SUPublicEDKey` / `ElectronAsarIntegrity` / `NSPrincipalClass` | **DEFERRED** / **RELEASE** | Not applicable, release-only, or already auto-set by Forge |
-| 13 | Non-empty `version`, `buildNumber`, `sparkleFeedUrl` | **IN PROGRESS** | Pre-release batch Phase D — workflow stamps via `npm pkg set` at build time. `sentryDsn` added to the same stamp path. |
+| 13 | Non-empty `version`, `buildNumber`, `sparkleFeedUrl` | **DONE** | PR #621 — workflow stamps via `npm pkg set` at build time. Placeholders in `package.json` (`version: "0.0.0"`, `buildNumber: "1"`, `sparkleFeedUrl: ""`, `signingMode: "ad-hoc"`) are intentional; the workflow is the source of truth, not the file. PR #639 added the slash-safe Sentry release-id transform shared between `main/sentry.ts` and `scripts/upload-sourcemaps.mjs`. |
 | 13 | `sparklePublicKey` | **DROPPED** | Pre-release batch Phase B — unused (Electron `autoUpdater` doesn't consume it). Field removed from `package.json`, `env.ts`, `build-info.ts`, `ipc.ts`. |
 | 14 | Dead `showContextMenu` IPC | **DONE** | Plan Phase 4 — removed from `src/shared/ipc.ts`. |
 | 14 | Unwired `silentRefresh` | **DONE** | Superseded by the `auth-flow.ts` loopback-HTTP-server rewrite which replaced the whole `BrowserWindow`/`runAuthWindow` flow; `silentRefresh` + `REFRESH_TIMEOUT_MS` no longer exist. |
