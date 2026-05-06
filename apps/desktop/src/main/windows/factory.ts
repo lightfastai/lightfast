@@ -1,5 +1,4 @@
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import {
   BrowserWindow,
   type BrowserWindowConstructorOptions,
@@ -12,7 +11,13 @@ import { loadWindowState, trackWindowState } from "../window-state";
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
 declare const MAIN_WINDOW_VITE_NAME: string;
 
-const factoryDir = dirname(fileURLToPath(import.meta.url));
+// Vite emits the main bundle as CJS and Rollup does not polyfill
+// `import.meta` — both `.url` and `.dirname` get stripped to `{}.<prop>` =
+// undefined, which crashes downstream `fileURLToPath(undefined)`. `__dirname`
+// is CJS-native and the only reliable way to get the bundle directory inside
+// the asar at runtime.
+// biome-ignore lint/correctness/noGlobalDirnameFilename: Vite CJS output strips import.meta.*; __dirname is the only working option here.
+const factoryDir = __dirname;
 const PRELOAD_PATH = join(factoryDir, "preload.js");
 const RENDERER_DIST = join(factoryDir, `../renderer/${MAIN_WINDOW_VITE_NAME}`);
 

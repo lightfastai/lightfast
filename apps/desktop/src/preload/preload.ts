@@ -1,3 +1,8 @@
+// Installs the @sentry/electron IPC bridge on the contextBridge so the
+// renderer-side SDK routes events through main via `sentry-ipc:` instead of
+// fetching the ingest URL directly (which the renderer CSP blocks). Pair:
+// src/main/sentry.ts (main init) and src/renderer/src/main.ts (renderer init).
+import "@sentry/electron/preload";
 import { contextBridge, type IpcRendererEvent, ipcRenderer } from "electron";
 import type { AcceleratorName } from "../shared/accelerators";
 import {

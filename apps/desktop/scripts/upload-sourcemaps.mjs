@@ -26,7 +26,6 @@ for (const name of required) {
 // `apps/desktop/src/main/sentry.ts`; keep both in sync.
 const releaseName = pkg.name.replace(/^@/, "").replace("/", "-");
 const release = `${releaseName}@${pkg.version}+${pkg.buildNumber}`;
-const urlPrefix = "app:///";
 const buildDir = resolve(desktopRoot, ".vite/build");
 const rendererDir = resolve(desktopRoot, ".vite/renderer/main_window");
 
@@ -38,33 +37,14 @@ function sentry(args) {
   });
 }
 
-sentry(["releases", "new", release]);
-sentry([
-  "releases",
-  "files",
-  release,
-  "upload-sourcemaps",
-  "--url-prefix",
-  urlPrefix,
-  "--ext",
-  "js",
-  "--ext",
-  "map",
-  buildDir,
-]);
-sentry([
-  "releases",
-  "files",
-  release,
-  "upload-sourcemaps",
-  "--url-prefix",
-  urlPrefix,
-  "--ext",
-  "js",
-  "--ext",
-  "map",
-  rendererDir,
-]);
+// Modern artifact-bundle flow with debug-id matching. `sourcemaps inject`
+// runs in `forge.config.ts`'s prePackage hook so the injected //# debugId=
+// comments land in the asar; here we only `upload`. Stack frames in Sentry
+// resolve via debug-id, which avoids URL-prefix mismatches between the
+// uploaded path (`assets/index-*.js`) and the runtime frame
+// (`app:///.vite/renderer/main_window/assets/index-*.js`).
+sentry(["sourcemaps", "upload", "--release", release, buildDir]);
+sentry(["sourcemaps", "upload", "--release", release, rendererDir]);
 sentry(["releases", "finalize", release]);
 
 console.log(`Uploaded sourcemaps for release ${release}`);

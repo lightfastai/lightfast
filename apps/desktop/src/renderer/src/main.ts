@@ -1,4 +1,9 @@
-import * as Sentry from "@sentry/browser";
+// @sentry/electron/renderer routes events through `sentry-ipc:` (CSP-bypass
+// scheme registered by @sentry/electron/main + bridged by the
+// `@sentry/electron/preload` import in src/preload/preload.ts). The plain
+// @sentry/browser SDK fetches the ingest URL directly, which the renderer
+// CSP blocks — events silently drop.
+import * as Sentry from "@sentry/electron/renderer";
 import "./react/entry";
 import {
   ACCELERATORS,
