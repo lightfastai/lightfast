@@ -13,24 +13,21 @@ const BUNDLE_ID = "ai.lightfast.lightfast";
 
 const osxSign =
   process.env.APPLE_SIGNING_IDENTITY && process.env.APPLE_TEAM_ID
-    ? // TODO(apple-cert): kebab-case keys below are silently dropped by
-      // @electron/osx-sign@1.3.3 (camelCase only). Notarization will fail
-      // when secrets land. Rename to camelCase + move per-file ones into
-      // optionsForFile before exercising the dev-id path. Out of scope here
-      // because verification needs Apple secrets we don't have yet.
-      {
+    ? {
         identity: process.env.APPLE_SIGNING_IDENTITY,
-        "hardened-runtime": true,
-        "gatekeeper-assess": false,
         entitlements: resolve(
           import.meta.dirname,
           "build/entitlements.mac.plist"
         ),
-        "entitlements-inherit": resolve(
+        entitlementsInherit: resolve(
           import.meta.dirname,
           "build/entitlements.mac.inherit.plist"
         ),
-        "signature-flags": "library",
+        optionsForFile: () => ({
+          hardenedRuntime: true,
+          gatekeeperAssess: false,
+          signatureFlags: "library",
+        }),
       }
     : // Ad-hoc fallback used while waiting on Apple Developer enrollment.
       // identity:"-" alone produces an unsigned bundle: osx-sign defaults
