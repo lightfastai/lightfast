@@ -3,22 +3,36 @@ import { drizzle } from "drizzle-orm/neon-http";
 import { env } from "./env";
 import * as schema from "./schema";
 
-// Required: point Neon driver at PlanetScale's HTTP SQL endpoint
-neonConfig.fetchEndpoint = (host) => `https://${host}/sql`;
+const NEON_HTTP_PROXY_PORT = 4444;
 
-/**
- * Create a new database client instance using Neon HTTP driver.
- * Edge-compatible — uses fetch() instead of TCP sockets.
- */
 export function createClient() {
-  const sql = neon(
-    `postgresql://${env.DATABASE_USERNAME}:${env.DATABASE_PASSWORD}@${env.DATABASE_HOST}/postgres?sslmode=require`
-  );
+  neonConfig.fetchEndpoint = (host) => {
+    if (isLocalDatabaseHost(host)) {
+      return `http://${host}:${NEON_HTTP_PROXY_PORT}/sql`;
+    }
+    return `https://${host}/sql`;
+  };
 
-  return drizzle({ client: sql, schema });
+  return drizzle({ client: neon(resolveDatabaseUrl()), schema });
 }
 
-/**
- * Default database client instance
- */
 export const db = createClient();
+
+function resolveDatabaseUrl() {
+  const url = new URL("postgresql://localhost");
+  url.hostname = env.DATABASE_HOST;
+  url.username = env.DATABASE_USERNAME;
+  url.password = env.DATABASE_PASSWORD;
+  url.pathname = `/${env.DATABASE_NAME ?? "postgres"}`;
+  if (!isLocalDatabaseHost(env.DATABASE_HOST)) {
+    url.searchParams.set("sslmode", "require");
+  }
+  return url.toString();
+}
+
+function isLocalDatabaseHost(value: string) {
+  const hostname = value.toLowerCase();
+  return (
+    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
+  );
+}

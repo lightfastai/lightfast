@@ -3,10 +3,10 @@ import {
   BrowserWindow,
   Menu,
   type MenuItemConstructorOptions,
-  shell,
 } from "electron";
 import { ACCELERATORS, type AcceleratorName } from "../shared/accelerators";
 import { IpcChannels } from "../shared/ipc";
+import { openAppOrigin } from "./app-url";
 import enLocale from "./locales/en.json";
 
 type LocaleKeys = keyof typeof enLocale;
@@ -51,7 +51,7 @@ function dispatchItem(
 
 export interface MenuActions {
   openHud: () => void;
-  openSecondary: () => void;
+  openSettings: () => void;
 }
 
 export function buildApplicationMenu(actions: MenuActions): Menu {
@@ -67,7 +67,11 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
     submenu: [
       { label: t("app.about"), role: "about" },
       { type: "separator" },
-      dispatchItem("settings", t("app.preferences")),
+      {
+        label: t("app.preferences"),
+        accelerator: ACCELERATORS.settings,
+        click: actions.openSettings,
+      },
       { type: "separator" },
       { label: t("app.services"), role: "services" },
       { type: "separator" },
@@ -83,11 +87,6 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
     label: t("file.name"),
     submenu: [
       {
-        label: t("file.newSecondary"),
-        accelerator: ACCELERATORS.newThread,
-        click: actions.openSecondary,
-      },
-      {
         label: t("file.newHud"),
         accelerator: "CmdOrCtrl+Shift+H",
         click: actions.openHud,
@@ -96,7 +95,11 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
       ...(isMac
         ? []
         : [
-            dispatchItem("settings", t("file.settings")),
+            {
+              label: t("file.settings"),
+              accelerator: ACCELERATORS.settings,
+              click: actions.openSettings,
+            },
             { type: "separator" as const },
           ]),
       { label: t("file.close"), role: "close" },
@@ -163,7 +166,7 @@ export function buildApplicationMenu(actions: MenuActions): Menu {
       {
         label: t("help.learnMore"),
         click: () => {
-          void shell.openExternal("https://lightfast.ai");
+          void openAppOrigin();
         },
       },
     ],

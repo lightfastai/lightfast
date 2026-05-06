@@ -9,8 +9,6 @@ import {
 import type { LightfastBridge, WindowKind } from "../../shared/ipc";
 import { installErrorBoundary } from "./error-boundary";
 import { createHotkeyManager } from "./hotkey";
-import { createRouter, type Route } from "./router";
-import { renderSettings } from "./settings";
 import { createSidebarController } from "./sidebar";
 
 declare global {
@@ -62,39 +60,6 @@ for (const el of document.querySelectorAll<HTMLElement>("[data-kbd-hint]")) {
 }
 
 const sidebar = createSidebarController();
-const router = createRouter();
-
-function renderForRoute(route: Route): void {
-  if (route === "settings") {
-    const root = document.querySelector<HTMLElement>("[data-route-settings]");
-    if (root && root.dataset.rendered !== "true") {
-      renderSettings(root, formatPlatform);
-      root.dataset.rendered = "true";
-    }
-  }
-  const items = document.querySelectorAll<HTMLButtonElement>(".sidebar .item");
-  for (const item of items) {
-    const target = item.dataset.routeTo as Route | undefined;
-    if (!target) {
-      continue;
-    }
-    item.classList.toggle("active", target === route);
-  }
-}
-
-renderForRoute(router.current());
-router.onChange(renderForRoute);
-
-for (const button of document.querySelectorAll<HTMLButtonElement>(
-  "[data-route-to]"
-)) {
-  button.addEventListener("click", () => {
-    const target = button.dataset.routeTo as Route | undefined;
-    if (target) {
-      router.navigate(target);
-    }
-  });
-}
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
   "[data-open-window]"
@@ -108,7 +73,7 @@ for (const button of document.querySelectorAll<HTMLButtonElement>(
 }
 
 for (const button of document.querySelectorAll<HTMLButtonElement>(
-  "[data-sidebar-trigger], [data-sidebar-trigger-collapsed]"
+  "[data-sidebar-trigger]"
 )) {
   button.addEventListener("click", () => sidebar.toggle());
 }
@@ -119,10 +84,7 @@ function dispatchAction(name: AcceleratorName): void {
       sidebar.toggle();
       break;
     case "settings":
-      router.navigate("settings");
-      break;
-    case "newThread":
-      void window.lightfastBridge.openWindow("secondary");
+      void window.lightfastBridge.openWindow("settings");
       break;
     case "newWindow":
       void window.lightfastBridge.openWindow("primary");

@@ -49,8 +49,7 @@
       ]
     },
     "dev": {
-      "persistent": true,
-      "with": ["@lightfast/app#dev:inngest"]
+      "persistent": true
     },
     "transit": {}
   }

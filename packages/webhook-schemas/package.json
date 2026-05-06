@@ -17,6 +17,7 @@
     "@db/app": "workspace:*",
     "@repo/app-providers": "workspace:*",
     "drizzle-orm": "catalog:",
+    "postgres": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

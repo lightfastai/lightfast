@@ -60,6 +60,14 @@ describe("string params", () => {
     expect(signInSearchParams.email.parse("")).toBe("");
   });
 
+  it("signInSearchParams.redirect_url parses strings", () => {
+    expect(
+      signInSearchParams.redirect_url.parse(
+        "https://lightfast.localhost/desktop/auth"
+      )
+    ).toBe("https://lightfast.localhost/desktop/auth");
+  });
+
   it("signUpSearchParams.__clerk_ticket parses strings", () => {
     expect(signUpSearchParams.__clerk_ticket.parse("ticket-123")).toBe(
       "ticket-123"

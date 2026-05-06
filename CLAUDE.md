@@ -11,64 +11,86 @@ See `SPEC.md` for business goals and product vision.
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────────┐
-│  Next.js Apps                                                                   │
-│  ┌──────────────────┐  ┌────────────────────────────────────┐                  │
-│  │ app (4107)       │  │ www (4101)                         │                  │
-│  │ @api/app     │  │ marketing + docs (fumadocs MDX)    │                  │
-│  │ tRPC + Inngest   │  │ CMS                                │                  │
-│  │ + auth routes    │  │                                    │                  │
-│  └───────┬──────────┘  └────────────────────────────────────┘                  │
-│          │                                                                      │
-│  ┌──────────────────┐                                                          │
-│  │ platform (4112)  │                                                          │
-│  │ @api/platform      │  Connections, webhooks, backfill, neural pipeline        │
-│  │ tRPC + Inngest   │  OAuth flows, token vault, event ingestion               │
-│  └──────────────────┘                                                          │
-│                          @db/app (Drizzle)                                  │
-│                          @vendor/upstash (Redis)                                │
-└─────────────────────────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│  Local dev — Portless HTTPS aggregate (port 443)                                 │
+│  https://[<wt>.]lightfast.localhost                                              │
+│      │                                                                           │
+│      ├─ app   https://[<wt>.]app.lightfast.localhost   (raw :4107)               │
+│      │       @api/app · tRPC + Inngest · auth + Server Actions · default MFE     │
+│      │       tRPC CORS dev: portless wildcard + localhost:* (desktop, Bearer)    │
+│      │                                                                           │
+│      └─ www   https://[<wt>.]www.lightfast.localhost   (raw :4101)               │
+│              marketing + docs (fumadocs MDX) · marketing-group MFE               │
+│                                                                                  │
+│  platform   http://localhost:4112   (raw; not on Portless / MFE)                 │
+│             @api/platform · OAuth, webhooks, backfill, neural pipeline           │
+│             tRPC CORS dev: portless wildcard                                     │
+│                                                                                  │
+│  desktop    Electron (Vite SPA) · LIGHTFAST_APP_ORIGIN → aggregate above         │
+│             renderer Origin = localhost:<vite>, admitted on app via Bearer       │
+│                                                                                  │
+│              @db/app (Drizzle)  ·  @vendor/upstash (Redis)                       │
+│                                                                                  │
+│  Source of truth                                                                 │
+│  ─────────────────                                                               │
+│  Mesh:       microfrontends.json (root)                                          │
+│  Portless:   lightfast.dev.json (root)  ·  per-app: package.json "portless"      │
+│  Wrap:       all 3 Next configs use withPortlessProxy(...)                       │
+│  Origins:    apps/{app,platform}/src/lib/origin-allowlist.ts                     │
+│              throws in dev if appUrl falls back to https://lightfast.ai          │
+│                                                                                  │
+│  Worktree    [<wt>.] = sanitized last branch segment in a secondary git          │
+│              worktree on a non-main branch; empty on primary / on main / master. │
+│              Print current value: node scripts/with-desktop-env.mjs --print      │
+└──────────────────────────────────────────────────────────────────────────────────┘
 
 Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 ```
 
-### Vercel Microfrontends (lightfast.ai)
+## tRPC Auth Boundaries
 
-2 apps (app, www) served through single domain via `apps/app/microfrontends.json`.
-App is default app (catch-all routes, sitemap.xml, robots.txt, auth routes).
-Auth routes (/sign-in, /sign-up, /early-access) are served directly by app (migrated from former apps/auth).
-Docs served via microfrontends mesh through `lightfast-www` (`/docs`, `/docs/:path*` routes in `apps/app/microfrontends.json`).
-
-### Platform Service
-
-Standalone Next.js app (`apps/platform`, port 4112) that consolidates the former relay, gateway, and backfill Hono microservices into a single tRPC + Inngest service.
-Handles: OAuth flows, token vault, connection lifecycle, webhook ingestion, backfill orchestration, and neural pipeline (event capture → entity upsert → graph).
-Domain: `platform.lightfast.ai`.
-
-### tRPC Auth Boundaries
 - **userRouter**: No org required (account, apiKeys, sources)
 - **orgRouter**: Org membership required (workspace, search, jobs)
 
 ## Development Commands
 
 ```bash
-# Dev servers (NEVER use global pnpm build)
-pnpm dev:full         # Full stack: app + www + platform (port 3024 via microfrontends)
-pnpm dev:app          # App only (4107)
-pnpm dev:www          # Marketing + docs site (4101)
-pnpm dev:platform     # Platform service (4112)
+# Dev servers (NEVER use global pnpm build).
+# Worktree-prefixed URLs: see Architecture diagram above.
+pnpm dev:full         # app + www + platform
+pnpm dev              # app + www only
+pnpm dev:app          # app only
+pnpm dev:www          # www only
+pnpm dev:platform     # platform only
+pnpm dev:desktop      # Electron (LIGHTFAST_APP_ORIGIN auto-points at aggregate)
 
-# Run dev server in background (for Claude Code sessions)
+# Optional dev services
+pnpm dev:inngest      # local Inngest dev server (dev:* sync MFE app URLs into it)
+pnpm dev:services     # Inngest + Drizzle Studio
+pnpm dev:studio       # Drizzle Studio (127.0.0.1:4983)
+pnpm dev:ngrok        # ngrok tunnel (port 3024, legacy)
+pnpm dev:email        # email template dev
+
+# Local containerized services (Docker)
+pnpm dev:setup        # provision Postgres + Redis containers, then db:migrate
+pnpm dev:doctor       # health-check dev services
+pnpm db:up            # start dev Postgres
+pnpm db:create        # create dev DB (idempotent)
+pnpm db:url           # print DATABASE_URL
+pnpm redis:up         # start dev Redis (with Upstash REST proxy)
+pnpm redis:ping
+pnpm redis:url
+
+# Background dev (Claude Code)
 pnpm dev:app > /tmp/console-dev.log 2>&1 &
-tail -f /tmp/console-dev.log  # Follow logs
-pkill -f "next dev"           # Kill all dev servers
+tail -f /tmp/console-dev.log
+pkill -f "next dev"
 
-# Environment variables (MUST run from apps/<app>/ directory)
+# Env (MUST run from apps/<app>/)
 cd apps/app && pnpm with-env <command>
 
-# Build & Quality
-pnpm build:app                            # Next.js build
-pnpm build:platform                       # Platform service build
+# Build & quality
+pnpm build:app && pnpm build:platform
 pnpm check && pnpm typecheck
 
 # Database (run from db/app/)
@@ -77,7 +99,7 @@ pnpm db:migrate
 pnpm db:studio
 ```
 
-Note: ngrok and inngest automatically runs with `pnpm dev:app`. You can test ngrok connection with `ps aux | grep ngrok | grep -v grep`
+`pnpm dev{,:app,:platform,:full}` register MFE app URLs with the local Inngest dev server (when running) via `scripts/dev-services.mjs inngest-sync`. They do not start Inngest or ngrok automatically.
 
 ## Key Rules
 
@@ -88,13 +110,21 @@ Note: ngrok and inngest automatically runs with `pnpm dev:app`. You can test ngr
 
 ## Environment
 
-- **Node.js** >= 22.0.0 | **pnpm** 10.32.1 (pinned via `packageManager` in root `package.json` — that's the source of truth)
+- **Node.js** ≥ 22.0.0 | **pnpm** 10.32.1 (pinned via `packageManager` in root `package.json`)
 - **Env files**: `apps/<app>/.vercel/.env.development.local`
+- **Dev-services scripts** (`scripts/`):
+  - `dev-services.mjs` — Postgres + Redis containers; Inngest MFE-URL sync.
+  - `with-dev-services-env.mjs` — injects DB/Redis env from those containers; bypass with `LIGHTFAST_DEV_SERVICES=0`.
+  - `with-desktop-env.mjs` — injects `LIGHTFAST_APP_ORIGIN`; `--print` echoes the current aggregate URL.
 
 ## Troubleshooting
 
 ```bash
 pkill -f "next dev"                    # Port in use
 pnpm clean:workspaces && pnpm install  # Module not found
-pnpm --filter @api/app build       # tRPC type errors (api layer stays @api/app)
+pnpm --filter @api/app build           # tRPC type errors (api layer stays @api/app)
+pnpm dev:doctor                        # local Postgres / Redis container health check
+docker ps | grep lightfast             # confirm dev-services containers are up
 ```
+
+If `https://lightfast.localhost` won't resolve, confirm Portless is running — check the `lightfast-dev proxy` process started by `pnpm dev:*`.

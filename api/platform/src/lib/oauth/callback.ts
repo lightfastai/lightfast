@@ -11,30 +11,10 @@ import type { SourceType } from "@repo/app-providers";
 import { getProvider, providerAccountInfoSchema } from "@repo/app-providers";
 import { and, eq } from "@vendor/db";
 import { log } from "@vendor/observability/log/next";
+import { appUrl } from "../../origins";
 import { providerConfigs } from "../provider-configs";
 import { writeTokenRecord } from "../token-store";
 import { consumeOAuthState, storeOAuthResult } from "./state";
-
-// ── App URL ──
-
-/**
- * App URL for redirects.
- */
-const appUrl = (() => {
-  const vercelEnv = process.env.VERCEL_ENV;
-  const vercelUrl = process.env.VERCEL_URL;
-  const productionUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-
-  if (vercelEnv === "preview" && vercelUrl) {
-    return `https://${vercelUrl}`;
-  }
-
-  if (productionUrl) {
-    return `https://${productionUrl}`;
-  }
-
-  return "http://localhost:3024";
-})();
 
 // ── Result Types ──
 

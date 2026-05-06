@@ -11,9 +11,10 @@ export function getBuildInfo(): BuildInfo {
   const candidate = {
     name: packageJson.name,
     version: packageJson.version,
-    buildFlavor: mainEnv.BUILD_FLAVOR ?? packageJson.buildFlavor,
+    buildFlavor: packageJson.buildFlavor,
     buildNumber: packageJson.buildNumber,
     sparkleFeedUrl: mainEnv.SPARKLE_FEED_URL ?? packageJson.sparkleFeedUrl,
+    signingMode: packageJson.signingMode,
   };
   cachedBuildInfo = buildInfoSchema.parse(candidate);
   return cachedBuildInfo;

@@ -1,3 +1,4 @@
+import { withPortlessProxy } from "@lightfastai/dev-proxy/next";
 import { withBetterStack } from "@logtail/next";
 import { withSentryConfig } from "@sentry/nextjs";
 import { baseConfig, sentryOptions } from "@vendor/next/config";
@@ -22,7 +23,9 @@ const platformConfig: NextConfig = merge({}, baseConfig, {
   },
 } satisfies NextConfig);
 
-export default withSentryConfig(
-  withBetterStack(withVercelToolbar()(platformConfig)),
-  sentryOptions
+export default withPortlessProxy(
+  withSentryConfig(
+    withBetterStack(withVercelToolbar()(platformConfig)),
+    sentryOptions
+  )
 );

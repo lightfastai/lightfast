@@ -1,3 +1,4 @@
+import { withPortlessProxy } from "@lightfastai/dev-proxy/next";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -7,7 +8,7 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
-import { platformUrl } from "./src/lib/related-projects";
+import { devOriginPatterns, platformUrl } from "./src/origins";
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   typedRoutes: true,
@@ -70,10 +71,18 @@ const appConfig: NextConfig = merge({}, baseConfig, {
     ],
     serverActions: {
       bodySizeLimit: "2mb",
-      allowedOrigins:
-        env.NODE_ENV === "development"
-          ? ["localhost:*"]
-          : ["lightfast.ai", "*.lightfast.ai"],
+      allowedOrigins: (() => {
+        const vercelEnv = env.NEXT_PUBLIC_VERCEL_ENV;
+        if (vercelEnv === "production") {
+          return ["lightfast.ai", "*.lightfast.ai"];
+        }
+        if (vercelEnv === "preview") {
+          return ["lightfast.ai", "*.lightfast.ai", "*.vercel.app"];
+        }
+        // Dev: portless wildcards (lib/origins single seam) + raw localhost
+        // for direct backend hits (raw 4107, desktop renderer, Inngest local).
+        return [...devOriginPatterns, "localhost:*"];
+      })(),
     },
   },
   async rewrites() {
@@ -144,9 +153,11 @@ const config = withSentryConfig(
   sentryOptions
 );
 
-const baseExport = withMicrofrontends(config, {
-  debug: env.NODE_ENV !== "production",
-});
+const baseExport = withPortlessProxy(
+  withMicrofrontends(config, {
+    debug: env.NODE_ENV !== "production",
+  })
+);
 
 export default process.env.ANALYZE === "true"
   ? withBundleAnalyzer()(baseExport)

@@ -45,9 +45,7 @@ export function AppShell() {
       <>
         <Toaster />
         <SignedOutShell
-          onLearnMore={() =>
-            void window.lightfastBridge.openExternal("https://lightfast.ai")
-          }
+          onLearnMore={() => void window.lightfastBridge.openApp()}
           onSignIn={() => {
             void window.lightfastBridge.auth.signIn().then((token) => {
               if (token) {

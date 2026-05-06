@@ -4,15 +4,13 @@
     "lightfast-app": {
       "packageName": "@lightfast/app",
       "development": {
-        "local": 4107,
-        "fallback": "lightfast-app.vercel.app"
+        "fallback": "https://lightfast.ai"
       }
     },
     "lightfast-www": {
       "packageName": "@lightfast/www",
       "development": {
-        "local": 4101,
-        "fallback": "lightfast-www.vercel.app"
+        "fallback": "https://lightfast.ai"
       },
       "routing": [
         {
@@ -32,7 +30,7 @@
             "/company",
             "/company/:path*",
             "/integrations",
-            "/integrations/:paht*",
+            "/integrations/:path*",
             "/careers",
             "/careers/:path",
             "/api/health",
@@ -42,6 +40,7 @@
             "/favicon.ico",
             "/favicon-16x16.png",
             "/favicon-32x32.png",
+            "/favicon-48x48.png",
             "/android-chrome-192x192.png",
             "/android-chrome-512x512.png",
             "/apple-touch-icon.png",
@@ -49,6 +48,7 @@
             "/docs/:path*",
             "/sitemap.xml",
             "/robots.txt",
+            "/manifest.webmanifest",
             "/manifest.json",
             "/llms.txt"
           ]

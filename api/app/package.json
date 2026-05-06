@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
+    "@lightfastai/dev-core": "catalog:",
     "@repo/app-api-key": "workspace:*",
     "@repo/app-encryption": "workspace:*",
     "@repo/app-octokit-github": "workspace:*",

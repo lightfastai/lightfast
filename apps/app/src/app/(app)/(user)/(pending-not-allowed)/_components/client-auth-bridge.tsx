@@ -43,7 +43,7 @@ const CODE_ENDPOINT = "/api/desktop/auth/code";
 const WINDOW_CLOSE_DELAY_MS = 250;
 
 function BridgeContent(props: ClientAuthBridgeProps) {
-  const { getToken, isSignedIn, isLoaded } = useAuth();
+  const { getToken, isLoaded, isSignedIn } = useAuth();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState<BridgeStatus>("loading");
   const didStart = useRef(false);

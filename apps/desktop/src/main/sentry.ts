@@ -49,6 +49,7 @@ export function initSentry(): void {
         sessionId: SESSION_ID,
         bundle: "electron",
         host: "app",
+        signingMode: build.signingMode,
       },
     },
   });

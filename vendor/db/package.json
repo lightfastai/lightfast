@@ -24,6 +24,7 @@
     "@t3-oss/env-core": "catalog:",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "catalog:",
+    "postgres": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

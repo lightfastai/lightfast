@@ -44,8 +44,14 @@ interface PageProps {
 }
 
 export default async function SignInPage({ searchParams }: PageProps) {
-  const { step, email, error, token, errorCode } =
-    await loadSignInSearchParams(searchParams);
+  const {
+    step,
+    email,
+    redirect_url: redirectUrl,
+    error,
+    token,
+    errorCode,
+  } = await loadSignInSearchParams(searchParams);
 
   const hasError = !!(error ?? errorCode);
 
@@ -73,15 +79,15 @@ export default async function SignInPage({ searchParams }: PageProps) {
         {/* Step: email — server component form + client OAuth island */}
         {!hasError && step === "email" && (
           <>
-            <EmailForm action="sign-in" />
+            <EmailForm action="sign-in" redirectUrl={redirectUrl} />
             <SeparatorWithText text="Or" />
-            <OAuthButton mode="sign-in" />
+            <OAuthButton mode="sign-in" redirectUrl={redirectUrl} />
           </>
         )}
 
         {/* Step: code — client island (irreducible: OTP + Clerk FAPI) */}
         {!hasError && step === "code" && email && (
-          <OTPIsland email={email} mode="sign-in" />
+          <OTPIsland email={email} mode="sign-in" redirectUrl={redirectUrl} />
         )}
 
         {/* Step: activate — thin client island for session creation */}

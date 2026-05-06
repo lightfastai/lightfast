@@ -6,7 +6,7 @@
   "main": ".vite/build/bootstrap.js",
   "scripts": {
     "clean": "rm -rf out .vite .cache",
-    "dev": "pnpm with-env electron-forge start",
+    "dev": "pnpm with-env node ../../scripts/with-desktop-env.mjs -- electron-forge start",
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
@@ -43,6 +43,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@radix-ui/react-dropdown-menu": "catalog:",
     "@repo/app-trpc": "workspace:*",
     "@sentry-internal/browser-utils": "^10.49.0",
     "@sentry-internal/feedback": "^10.49.0",
@@ -59,6 +60,7 @@
     "copy-anything": "^4.0.5",
     "electron-context-menu": "^4.1.1",
     "electron-squirrel-startup": "^1.0.1",
+    "lucide-react": "catalog:",
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "scheduler": "^0.27.0",
@@ -68,5 +70,6 @@
   },
   "buildFlavor": "dev",
   "buildNumber": "1",
-  "sparkleFeedUrl": ""
+  "sparkleFeedUrl": "",
+  "signingMode": "ad-hoc"
 }
