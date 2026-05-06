@@ -17,9 +17,13 @@ const SESSION_ID = randomUUID();
 export function getSentryInitOptions(): SentryInitOptions {
   const build = getBuildInfo();
   const dsn = mainEnv.SENTRY_DSN ?? "";
+  // Sentry release versions reject `/`. Mirror the transform in
+  // `apps/desktop/scripts/upload-sourcemaps.mjs` so the runtime release id
+  // matches the uploaded sourcemaps; both must stay in sync.
+  const releaseName = build.name.replace(/^@/, "").replace("/", "-");
   return {
     dsn,
-    release: `${build.name}@${build.version}+${build.buildNumber}`,
+    release: `${releaseName}@${build.version}+${build.buildNumber}`,
     environment: build.buildFlavor,
     enabled: Boolean(dsn) && build.buildFlavor !== "dev",
   };

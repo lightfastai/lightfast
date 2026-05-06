@@ -61,6 +61,11 @@ const githubPublisher = process.env.GITHUB_TOKEN
       repository: { owner: "lightfastai", name: "lightfast" },
       draft: true,
       prerelease: process.env.LIGHTFAST_DESKTOP_RELEASE_PRERELEASE === "true",
+      // Forge defaults tagPrefix to "v", which would create a parallel
+      // release at v<version>. The workflow's prepare job already created a
+      // draft at @lightfast/desktop@<version>; matching tagPrefix here makes
+      // Forge publish assets onto that release instead of a sibling.
+      tagPrefix: "@lightfast/desktop@",
     })
   : null;
 

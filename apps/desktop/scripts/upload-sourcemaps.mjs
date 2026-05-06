@@ -18,7 +18,14 @@ for (const name of required) {
   }
 }
 
-const release = `${pkg.name}@${pkg.version}+${pkg.buildNumber}`;
+// Sentry release versions reject `/` and certain whitespace, so the scoped
+// package name (`@lightfast/desktop`) cannot be used verbatim. Strip the
+// leading `@` and replace the scope separator with `-` to yield
+// `lightfast-desktop@<version>+<buildNumber>` — matches the Sentry project
+// slug. Must produce the same string as `getSentryInitOptions` in
+// `apps/desktop/src/main/sentry.ts`; keep both in sync.
+const releaseName = pkg.name.replace(/^@/, "").replace("/", "-");
+const release = `${releaseName}@${pkg.version}+${pkg.buildNumber}`;
 const urlPrefix = "app:///";
 const buildDir = resolve(desktopRoot, ".vite/build");
 const rendererDir = resolve(desktopRoot, ".vite/renderer/main_window");
