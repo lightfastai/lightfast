@@ -5,7 +5,8 @@ git_commit: ab634170e1eafdbb4e89fbd2255819cbe53178e3
 branch: main
 topic: "apps/desktop production-readiness: verification of Codex-gap Status Tracker"
 tags: [research, desktop, electron, production, codex-gap-verification, sparkle, signing, sentry, ci]
-status: complete
+status: superseded-by-dry-run-2026-05-06
+superseded_by: thoughts/shared/2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md
 last_updated: 2026-05-06
 based_on:
   - thoughts/shared/research/2026-04-23-codex-vs-lightfast-desktop-production-gap.md
@@ -36,6 +37,8 @@ What remains to ship the first signed v0.1.0:
 4. **First end-to-end dry run** — cut `@lightfast/desktop@0.1.0-rc.1` and verify codesign / notarize / attestation / Sparkle JSON feed end-to-end.
 
 Everything else in the Status Tracker that was marked DEFERRED or RELEASE remains intentionally out of scope for v0.1.0.
+
+> **Update 2026-05-06 (post-dry-run).** This document is **superseded** by the rc.1 → rc.4 dry-run, captured at [`thoughts/shared/2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md`](../2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md). Of the seven gaps listed in §"Gaps / Risks Still Blocking Prod" below: **G-2** (osxSign kebab-case) closed by PR #638; **G-3** (inherit plist `disable-library-validation`) closed by PR #638; **G-5** (first-release dry run) closed by rc.4 cut at `ac986f9a9` (workflow run [`25423025160`](https://github.com/lightfastai/lightfast/actions/runs/25423025160)); **G-7** (deep-link audit) closed in dry-run plan Phase 1. **G-1** is now Apple-half only — Sentry secrets fully provisioned. **G-4** and **G-6** unchanged. Seven additional gates surfaced and closed during the dry-run (PRs #639–#643); the gap research at [`2026-04-23-codex-vs-lightfast-desktop-production-gap.md`](2026-04-23-codex-vs-lightfast-desktop-production-gap.md) §"Status Update 2026-05-06 (post-dry-run)" enumerates them as G-8…G-14. The §"Open Questions" at the bottom of this doc are also resolved by the dry-run except for the Sparkle public-key follow-up.
 
 ## Verification Method
 

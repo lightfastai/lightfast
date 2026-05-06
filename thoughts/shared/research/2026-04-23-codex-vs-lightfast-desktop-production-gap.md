@@ -561,3 +561,40 @@ G-7 from the verification doc (custom URL scheme audit) is **closed** — verifi
 3. Cut `@lightfast/desktop@0.1.0-rc.1` ad-hoc dry-run (G-5 partial). Validates everything except codesign + notarize.
 4. When Apple unblocks: provision the remaining 8 secrets, cut `@lightfast/desktop@0.1.0-rc.2` (signed), verify codesign + notarize + stapled ticket. Promote to `@lightfast/desktop@0.1.0`.
 5. Branch protection (G-4) — repo Settings UI. Do this after rc.1 to confirm `Desktop CI` is the right check name to require.
+
+## Status Update 2026-05-06 (post-dry-run)
+
+The ad-hoc dry-run plan ([`thoughts/shared/plans/2026-05-06-desktop-rc1-ad-hoc-dry-run.md`](../plans/2026-05-06-desktop-rc1-ad-hoc-dry-run.md)) executed end-to-end. Final report: [`thoughts/shared/2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md`](../2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md). Four release candidates (`rc.1` → `rc.4`) cut against `main`; final tag `@lightfast/desktop@0.1.0-rc.4` at `ac986f9a9` produced a green workflow, six assets, and a Sentry release with paired-debug-id sourcemaps.
+
+### Gate closures
+
+| Gate | Prior state | Outcome |
+|---|---|---|
+| **G-1** Apple secrets + Sentry secrets | external blocker | **Sentry side closed** (`SENTRY_DSN`, `SENTRY_AUTH_TOKEN`, `SENTRY_ORG`, `SENTRY_PROJECT` provisioned via `sentry-cli` + `gh secret set`). Apple side still pending — workflow continues to flip to ad-hoc when `APPLE_SIGNING_IDENTITY` absent. |
+| **G-2** osxSign kebab-case | open | **Closed** by PR #638 — camelCase rename + per-file ones moved into `optionsForFile`. |
+| **G-3** inherit plist `disable-library-validation` | open | **Closed** by PR #638 — dropped from `entitlements.mac.inherit.plist`. Ad-hoc cut launches; signed-cut helper-validation behavior TBD on first developer-id tag. |
+| **G-4** Desktop CI branch protection | open (UI-only) | **Unchanged**. Worth doing after the first developer-id cut to confirm the check name remains `Desktop CI / Typecheck + package (unsigned)`. |
+| **G-5** First end-to-end dry run | open | **Closed** — rc.1 → rc.4 cut and verified. See report for the seven distinct pipeline bugs surfaced and fixed. |
+| **G-6** Auto-updater disabled for ad-hoc | by design | **Unchanged**. |
+| **G-7** Deep-link removal post-N-3 | unverified | **Closed** in dry-run plan Phase 1 — `grep` confirmed zero `setAsDefaultProtocolClient` / `onDeepLink` / `open-url` references in `apps/desktop/src/`. |
+
+### New gates surfaced and closed during the dry-run
+
+These were invisible to local `pnpm package`; only real tag pushes surfaced them. All seven are now closed.
+
+| Gate | Issue | Fix |
+|---|---|---|
+| **G-8** | `PublisherGithub` defaulted `tagPrefix: "v"`, creating a parallel `v0.1.0-rc.1` release alongside the workflow's `@lightfast/desktop@0.1.0-rc.1` draft (which stayed empty) | PR #639 — `tagPrefix: "@lightfast/desktop@"` |
+| **G-9** | sentry-cli rejects `/` in release id; `@lightfast/desktop@…` parsed as path | PR #639 — strip `@`, replace `/` with `-` in both `apps/desktop/scripts/upload-sourcemaps.mjs` and `apps/desktop/src/main/sentry.ts` |
+| **G-10** | Vite library mode emits no `.map` files by default | PR #640 — `build.sourcemap: true` in all three `vite.{main,preload,renderer}.config.ts` |
+| **G-11** | `sentry-cli sourcemaps inject` ran post-asar-pack; user-defined Forge `prePackage` hook fires *before* plugin-vite (opposite of expected) | PR #641 — switched to `packageAfterCopy` hook (runs after vite + after copy to staging, before asar pack); inject into staging dir, mirror back to source `.vite/` |
+| **G-12** | `@sentry/electron/renderer` `Sentry.init` is a silent no-op in v10 carrier — `__SENTRY__["10.47.0"]` never registers a client. Root cause not pinned | PR #643 — bridge renderer errors through main's `@sentry/electron/main` SDK via `IpcChannels.rendererError` → `Sentry.captureException`. Renderer-side init dropped; preload `@sentry/electron/preload` import dropped; v10 deps removed |
+| **G-13** | `sentry-cli sourcemaps upload --release X` does not auto-create release `X`; subsequent `releases finalize X` fails | PR #642 — restore explicit `sentry-cli releases new <release>` as first step before upload |
+| **G-14** | Vite CJS Rollup strips `import.meta` to literal `{}` (no polyfill); `import.meta.url` and `import.meta.dirname` both crash on access | PR #641 — use `__dirname` in `apps/desktop/src/main/windows/factory.ts` (CJS-native), with biome-ignore comment |
+
+### Remaining gates for first-class signed v0.1.0
+
+- **G-1 (Apple half)** — 8 Apple secrets still pending: `APPLE_SIGNING_IDENTITY`, `APPLE_TEAM_ID`, `APPLE_CERT_BASE64`, `APPLE_CERT_PASSWORD`, `APPLE_API_KEY_ID`, `APPLE_API_ISSUER`, `APPLE_API_KEY_CONTENT`, `KEYCHAIN_PASSWORD`. Workflow auto-flips `signingMode` to `developer-id` when `APPLE_SIGNING_IDENTITY` lands.
+- **G-4** — Branch protection still UI-only; do after first signed cut.
+- **G-6** — Auto-updater stays disabled until first signed cut (intentional).
+- **First signed cut** — once Apple secrets land, drop the `-rc.N` suffix and tag `@lightfast/desktop@0.1.0`. Smoke test: launch from Applications without quarantine clear; confirm Sparkle update feed serves the new build to existing rc.* installs (updater flips on automatically).
