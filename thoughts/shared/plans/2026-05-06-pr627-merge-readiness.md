@@ -476,13 +476,13 @@ const factoryDir = __dirname;
 
 ---
 
-## Phase 5: `createAppUrl()` adoption + live re-verification + push [in progress — code change applied + wrapper-files fix 2026-05-06]
+## Phase 5: `createAppUrl()` adoption + live re-verification + push [DONE — full E2E re-verification 2026-05-06]
 
 > **Post-push note (2026-05-06)**: Initial push (`cf4438a1f`) failed CI on `Typecheck + package (unsigned)` and `Quality` because the Phase 2 vendor wrapper files (`vendor/observability/src/sentry-{browser,electron-main,nextjs}.ts`) were never staged when Phase 4 was committed (38ac764dd). The package.json export entries pointed at files that didn't exist on the CI checkout. Fix-up commit `884a9eb97` adds the three missing files. Local typecheck always passed because the files existed on disk locally — only `git ls-files` and CI surfaced the gap.
 
 ### Overview
 
-The 2026-04-25 live verification is now stale w.r.t. main's Portless / `runtime-config` / `app-url` changes. Phase 5 (a) migrates the sign-in URL composition to `createAppUrl()` (the only behavioral change beyond bug fixes) and (b) re-runs the full happy path against the current branch tip with the existing skill.
+The 2026-04-25 live verification is now stale w.r.t. main's Portless / `runtime-config` / `app-url` changes. Phase 5 (a) migrates the sign-in URL composition AND the exchange POST to `createAppUrl()` (the only behavioral changes beyond bug fixes) and (b) re-runs the full happy path against the current branch tip with the existing skill. The exchange-POST migration was added during live re-verification on 2026-05-06 after observing that `getApiOrigin()` consumed `LIGHTFAST_API_URL` while `with-desktop-env.mjs` injects `LIGHTFAST_APP_ORIGIN`; consolidating both paths on `createAppUrl()` removes that mismatch.
 
 ### Changes Required
 
@@ -508,10 +508,11 @@ The remainder of this phase makes no further code changes. It is the final pre-p
 
 #### Human Review
 
-- [~] Run the `lightfast-desktop-signin` skill end-to-end against the rebased branch:
-  - **PARTIAL on 2026-05-06**: dev:app + dev:desktop in AGENT_MODE both started cleanly. Desktop emitted `auth_signin_url` with URL origin `https://lightfast.localhost` — **this is the Phase 5 behavioral observation: `createAppUrl()` correctly routes through `getRuntimeConfig().appOrigin` (Portless aggregate) rather than the legacy inline `getApiOrigin()` fallback.** Clerk sign-in via agent-browser succeeded; landed on `/desktop/auth` page which rendered "Opening Lightfast…" (the bridge stage). Beyond that, the `lightfast-dev://auth/callback` dispatch did not deliver to the running dev Electron — `lsregister -dump` confirms no app claims the `lightfast-dev:` scheme on this host. This is the well-known unpackaged-Electron URL-scheme limitation called out in `lightfast-desktop-signin/SKILL.md` ("unpackaged Electron registers `lightfast-dev://` against `com.github.electron`, not Lightfast's bundle id"), not a Phase 5 regression. Manual `open lightfast-dev://...` from the shell also produced no response, confirming OS-level registration absence.
-- [ ] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *no* persisted token: gated by URL-scheme-registration fix (or packaged build).
-- [ ] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *with* persisted token: gated by URL-scheme-registration fix (or packaged build).
+- [x] Run the `lightfast-desktop-signin` skill end-to-end against the rebased branch (re-verified 2026-05-06 16:46): full UI-driven happy path passed end-to-end. Sequence: dev:app on Portless aggregate (`https://lightfast.localhost`) + dev:desktop in AGENT_MODE → desktop emitted `auth_signin_url` with origin `https://lightfast.localhost` (**Phase 5 behavioral observation: `createAppUrl()` routes through `getRuntimeConfig().appOrigin`, not legacy inline `:3024`**) → agent-browser navigated → bridge `BridgeContent` POST'd `/api/desktop/auth/code` with `lightfast-desktop` JWT → received `code` → bridge set `window.location.href = "lightfast-dev://auth/callback?code=…&state=…"` → macOS LaunchServices routed to `com.github.electron` (the running dev Electron, post-`setAsDefaultProtocolClient` registration) → `app.on('open-url')` fired → state matched → `exchangeCode` POST `/api/desktop/auth/exchange` succeeded → token persisted via `safeStorage` (`auth.bin` 851 bytes, fresh) → `auth_signed_in` event emitted.
+- [x] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *no* persisted token (auth.bin removed prior to start): emitted `auth_signin_url` then `auth_signed_in` after agent-browser drove the bridge.
+- [x] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *with* persisted token (auth.bin from the prior cold-run): emitted `auth_already_signed_in` and skipped the sign-in flow (idempotent path verified).
+
+**Verification context (post-fix)**: initial cold-sign-in run required a manual `LIGHTFAST_API_URL=https://lightfast.localhost` because `auth-flow.ts` `getApiOrigin()` consumed a different env var (`LIGHTFAST_API_URL`) than what `with-desktop-env.mjs` injects (`LIGHTFAST_APP_ORIGIN`), so `exchangeCode`'s POST fell through to the legacy `http://localhost:3024` default and failed with `auth_signin_failed{reason:"exchange_failed"}`. **Resolved 2026-05-06 (this PR)**: dropped `getApiOrigin()` and migrated `exchangeCode` to `createAppUrl("/api/desktop/auth/exchange")`, so both the sign-in URL and the exchange POST consume the same `getRuntimeConfig().appOrigin` source. Re-verified end-to-end with no `LIGHTFAST_API_URL` set (only `LIGHTFAST_APP_ORIGIN` from `with-desktop-env.mjs`): emitted `auth_signin_url` → bridge → `lightfast-dev://...` → `app.on('open-url')` → exchange POST to Portless aggregate → `auth_signed_in`. Operational note: agent-browser's tab must be freshly opened — Chromium suppresses repeat external-protocol dispatches from the same origin within a short window, so close + restart the daemon between sign-in attempts.
 
 ---
 

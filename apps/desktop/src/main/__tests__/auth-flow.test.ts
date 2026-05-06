@@ -184,7 +184,6 @@ describe("auth-flow PKCE sign-in", () => {
   it("composes signin URL with state, S256 code_challenge, and lightfast-dev redirect_uri (unpackaged)", async () => {
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS: "100",
     });
     try {
@@ -211,7 +210,6 @@ describe("auth-flow PKCE sign-in", () => {
     testAppOrigin = "https://lightfast.ai";
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "production",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS: "100",
     });
     try {
@@ -235,7 +233,6 @@ describe("auth-flow PKCE sign-in", () => {
     );
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
     });
     try {
       const signIn = mod.beginSignIn();
@@ -272,7 +269,6 @@ describe("auth-flow PKCE sign-in", () => {
     const fetchSpy = vi.spyOn(globalThis, "fetch");
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
     });
     try {
       vi.useFakeTimers();
@@ -322,7 +318,6 @@ describe("auth-flow PKCE sign-in", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
     });
     try {
@@ -358,7 +353,6 @@ describe("auth-flow PKCE sign-in", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
     });
     try {
@@ -397,7 +391,6 @@ describe("auth-flow PKCE sign-in", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
     });
     try {
@@ -432,7 +425,6 @@ describe("auth-flow PKCE sign-in", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
       LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS: "100",
     });
@@ -470,7 +462,6 @@ describe("auth-flow PKCE sign-in", () => {
     );
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
     });
     try {
       const signIn = mod.beginSignIn();
@@ -512,7 +503,6 @@ describe("auth-flow PKCE sign-in", () => {
   it("inflight singleton: concurrent beginSignIn calls share a single promise", async () => {
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS: "100",
     });
     try {
@@ -538,7 +528,6 @@ describe("auth-flow LIGHTFAST_DESKTOP_AGENT_MODE", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
       LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS: "100",
     });
@@ -570,7 +559,6 @@ describe("auth-flow LIGHTFAST_DESKTOP_AGENT_MODE", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS: "100",
     });
     try {
@@ -590,7 +578,6 @@ describe("auth-flow maybeAutoBeginSignIn", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
     });
     try {
       mod.maybeAutoBeginSignIn();
@@ -608,7 +595,6 @@ describe("auth-flow maybeAutoBeginSignIn", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
     });
     try {
@@ -629,7 +615,6 @@ describe("auth-flow maybeAutoBeginSignIn", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
       LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS: "100",
     });
@@ -659,7 +644,6 @@ describe("auth-flow event grammar", () => {
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
-      LIGHTFAST_API_URL: undefined,
       LIGHTFAST_DESKTOP_AGENT_MODE: "1",
     });
     try {

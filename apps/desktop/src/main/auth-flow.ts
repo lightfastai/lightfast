@@ -37,15 +37,6 @@ function emitAgentEvent(payload: AuthEvent): void {
   process.stdout.write(`${JSON.stringify(payload)}\n`);
 }
 
-function getApiOrigin(): string {
-  return (
-    process.env.LIGHTFAST_API_URL ??
-    (process.env.NODE_ENV === "production"
-      ? "https://lightfast.ai"
-      : "http://localhost:3024")
-  );
-}
-
 const callbackSchema = z.object({
   code: z.string().min(32).max(128),
   state: z.string().min(16).max(256),
@@ -130,7 +121,6 @@ async function runSignIn(): Promise<string | null> {
   const scheme = getProtocolScheme();
   const redirectUri = `${scheme}://auth/callback`;
 
-  const apiOrigin = getApiOrigin();
   const signinUrl = createAppUrl("/desktop/auth");
   signinUrl.searchParams.set("state", state);
   signinUrl.searchParams.set("code_challenge", codeChallenge);
@@ -190,11 +180,7 @@ async function runSignIn(): Promise<string | null> {
           return;
         }
         callbackInFlight = true;
-        const token = await exchangeCode(
-          apiOrigin,
-          parsed.data.code,
-          codeVerifier
-        );
+        const token = await exchangeCode(parsed.data.code, codeVerifier);
         if (settled) {
           return;
         }
@@ -255,16 +241,18 @@ async function runSignIn(): Promise<string | null> {
 }
 
 async function exchangeCode(
-  apiOrigin: string,
   code: string,
   codeVerifier: string
 ): Promise<string | null> {
   try {
-    const response = await fetch(`${apiOrigin}/api/desktop/auth/exchange`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code, code_verifier: codeVerifier }),
-    });
+    const response = await fetch(
+      createAppUrl("/api/desktop/auth/exchange").toString(),
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code, code_verifier: codeVerifier }),
+      }
+    );
     if (!response.ok) {
       captureMessage("auth-flow: exchange non-ok", {
         level: "warning",
