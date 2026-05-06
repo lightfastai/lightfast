@@ -7,13 +7,15 @@ topic: "Codex.app vs apps/desktop — production-grade baseline gap analysis"
 tags: [research, desktop, electron, codex, packaging, sparkle, production]
 status: complete
 last_updated: 2026-05-06
-last_updated_note: "PR #621 + PR #637 landed; G-7 closed. Remaining gates G-1..G-6 enumerated for first-class signed v0.1.0."
+last_updated_note: "rc.1 → rc.4 dry-run complete; G-2/G-3/G-5/G-7 closed via PRs #638-#643, G-1 Sentry-half closed, G-8..G-14 surfaced and closed. Apple Developer enrollment is the only remaining gate."
 plans:
   - thoughts/shared/plans/2026-04-23-desktop-codex-gap-quick-wins.md
   - thoughts/shared/plans/2026-04-23-desktop-pre-release-batch.md
   - thoughts/shared/plans/2026-05-06-desktop-rc1-ad-hoc-dry-run.md
 verifications:
   - thoughts/shared/research/2026-05-06-desktop-prod-readiness-status-verification.md
+reports:
+  - thoughts/shared/2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md
 ---
 
 # Research: Codex.app vs `apps/desktop` — Production-Grade Baseline Gap
@@ -521,7 +523,7 @@ Sparkle-native Ed25519 auto-update, Windows MSIX + Linux makers, universal binar
 3. Land phases B–F in any order (no cross-phase blockers except B must precede D).
 4. Cut `@lightfast/desktop@0.1.0-rc.1` as the end-to-end dry run before the first public release.
 
-## Status Update 2026-05-06
+## Status Update 2026-05-06 (pre-dry-run / verification)
 
 Verification pass logged at [`thoughts/shared/research/2026-05-06-desktop-prod-readiness-status-verification.md`](2026-05-06-desktop-prod-readiness-status-verification.md). Every prior **DONE** / **DROPPED** Status Tracker row remains true. The three rows previously **IN PROGRESS** all landed.
 
