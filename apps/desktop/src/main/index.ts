@@ -313,6 +313,11 @@ function broadcastSettings(snapshot: SettingsSnapshot): void {
 
 initSentry();
 
+// Register the custom-scheme handler synchronously, before app.whenReady().
+// macOS delivers cold-start `open-url` events between app launch and ready;
+// attaching the listener inside whenReady().then(...) loses those URLs.
+registerProtocolHandler(() => BrowserWindow.getAllWindows());
+
 contextMenu({
   showInspectElement: !app.isPackaged,
   showSaveImageAs: true,
@@ -339,7 +344,6 @@ app.whenReady().then(() => {
 
   registerIpcHandlers();
   registerUpdaterIpc();
-  registerProtocolHandler(() => BrowserWindow.getAllWindows());
   broadcastThemeUpdates();
   registerGlobalShortcuts({ toggleHud: toggleHudWindow });
   applySettings(getSettings());

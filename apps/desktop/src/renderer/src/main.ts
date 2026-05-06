@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/browser";
+import { init as initSentryBrowser } from "@vendor/observability/sentry-browser";
 import "./react/entry";
 import {
   ACCELERATORS,
@@ -27,7 +27,7 @@ const formatPlatform: FormatPlatform =
     : "linux";
 
 if (sentryInit.enabled) {
-  Sentry.init({
+  initSentryBrowser({
     dsn: sentryInit.dsn,
     release: sentryInit.release,
     environment: sentryInit.environment,

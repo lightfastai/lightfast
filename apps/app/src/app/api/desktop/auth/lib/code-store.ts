@@ -9,11 +9,11 @@ const PREFIX = "desktop_auth_code:";
 const TTL_SECONDS = 30;
 
 export interface CodeRecord {
-  userId: string;
-  jwt: string;
-  state: string;
   codeChallenge: string;
+  jwt: string;
   redirectUri: string;
+  state: string;
+  userId: string;
 }
 
 export async function issueCode(record: CodeRecord): Promise<string> {

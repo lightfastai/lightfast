@@ -11,8 +11,9 @@ import { loadWindowState, trackWindowState } from "../window-state";
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
 declare const MAIN_WINDOW_VITE_NAME: string;
 
-// Vite 8 emits the main bundle as CJS, where `import.meta.url` resolves to
-// `undefined`. Use the CJS-native `__dirname` instead.
+// Vite 8 emits the main bundle as CJS, where `import.meta.url` and
+// `import.meta.dirname` resolve to `undefined`. Use the CJS-native `__dirname`.
+// biome-ignore lint/correctness/noGlobalDirnameFilename: CJS bundle output requires __dirname; import.meta is undefined here.
 const factoryDir = __dirname;
 const PRELOAD_PATH = join(factoryDir, "preload.js");
 const RENDERER_DIST = join(factoryDir, `../renderer/${MAIN_WINDOW_VITE_NAME}`);

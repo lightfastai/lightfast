@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const verifyCliJwtMock = vi.fn<(req: Request) => Promise<{ userId: string } | null>>();
+const verifyCliJwtMock =
+  vi.fn<(req: Request) => Promise<{ userId: string; jwt: string } | null>>();
 vi.mock("../../../cli/lib/verify-jwt", () => ({
   verifyCliJwt: (req: Request) => verifyCliJwtMock(req),
 }));
@@ -54,7 +55,7 @@ describe("POST /api/desktop/auth/code", () => {
   });
 
   it("returns 400 when body fails schema (missing fields)", async () => {
-    verifyCliJwtMock.mockResolvedValue({ userId: "user_123" });
+    verifyCliJwtMock.mockResolvedValue({ userId: "user_123", jwt: "fake-jwt" });
 
     const res = await POST(makeReq({ state: "x" }));
 
@@ -64,7 +65,7 @@ describe("POST /api/desktop/auth/code", () => {
   });
 
   it("returns 400 when redirect_uri is not in the allowlist", async () => {
-    verifyCliJwtMock.mockResolvedValue({ userId: "user_123" });
+    verifyCliJwtMock.mockResolvedValue({ userId: "user_123", jwt: "fake-jwt" });
 
     const res = await POST(
       makeReq({ ...VALID_BODY, redirect_uri: "https://evil.com/callback" })
@@ -76,7 +77,7 @@ describe("POST /api/desktop/auth/code", () => {
   });
 
   it("returns 400 when code_challenge_method is not S256", async () => {
-    verifyCliJwtMock.mockResolvedValue({ userId: "user_123" });
+    verifyCliJwtMock.mockResolvedValue({ userId: "user_123", jwt: "fake-jwt" });
 
     const res = await POST(
       makeReq({ ...VALID_BODY, code_challenge_method: "plain" })
@@ -87,7 +88,7 @@ describe("POST /api/desktop/auth/code", () => {
   });
 
   it("returns 400 when body is not valid JSON", async () => {
-    verifyCliJwtMock.mockResolvedValue({ userId: "user_123" });
+    verifyCliJwtMock.mockResolvedValue({ userId: "user_123", jwt: "fake-jwt" });
 
     const res = await POST(makeReq("not json"));
 
@@ -96,7 +97,7 @@ describe("POST /api/desktop/auth/code", () => {
   });
 
   it("issues a code and returns it on happy path with lightfast:// redirect", async () => {
-    verifyCliJwtMock.mockResolvedValue({ userId: "user_123" });
+    verifyCliJwtMock.mockResolvedValue({ userId: "user_123", jwt: "fake-jwt" });
 
     const res = await POST(
       makeReq({ ...VALID_BODY, redirect_uri: "lightfast://auth/callback" })
@@ -114,22 +115,28 @@ describe("POST /api/desktop/auth/code", () => {
     });
   });
 
-  it("strips Bearer prefix case-insensitively when storing the JWT", async () => {
-    verifyCliJwtMock.mockResolvedValue({ userId: "user_456" });
+  it("stores exactly the jwt that verifyCliJwt authenticated (single-parser invariant)", async () => {
+    // Whatever token verifyCliJwt verified must be the one that lands in
+    // issueCode — the route no longer parses the Authorization header itself,
+    // so there is no second normalizer that can disagree with the verifier.
+    verifyCliJwtMock.mockResolvedValue({
+      userId: "user_456",
+      jwt: "verified-token",
+    });
 
     await POST(
       new Request("http://localhost/api/desktop/auth/code", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "bearer alt-jwt",
+          Authorization: "Bearer some-other-string",
         },
         body: JSON.stringify(VALID_BODY),
       })
     );
 
     expect(issueCodeMock).toHaveBeenCalledWith(
-      expect.objectContaining({ jwt: "alt-jwt" })
+      expect.objectContaining({ jwt: "verified-token" })
     );
   });
 });

@@ -1,5 +1,5 @@
-import * as Sentry from "@sentry/browser";
 import { useQueryClient } from "@tanstack/react-query";
+import { captureException } from "@vendor/observability/sentry-browser";
 import { useEffect, useState } from "react";
 import { Toaster, toast } from "sonner";
 import type { AuthSnapshot } from "../../../shared/ipc";
@@ -30,7 +30,7 @@ export function AppShell() {
         void window.lightfastBridge.auth.signOut().then((ok) => {
           if (!(ok || signoutFailureReported)) {
             signoutFailureReported = true;
-            Sentry.captureException(new Error("auto-sign-out failed"), {
+            captureException(new Error("auto-sign-out failed"), {
               tags: { scope: "app-shell.auto-sign-out" },
             });
           }

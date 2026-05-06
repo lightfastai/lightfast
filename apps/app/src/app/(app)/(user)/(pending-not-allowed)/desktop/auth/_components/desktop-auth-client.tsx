@@ -15,7 +15,7 @@ export function DesktopAuthClient() {
         const codeChallenge = searchParams.get("code_challenge");
         const method = searchParams.get("code_challenge_method");
         const redirectUri = searchParams.get("redirect_uri");
-        if (!state || !codeChallenge || method !== "S256" || !redirectUri) {
+        if (!(state && codeChallenge) || method !== "S256" || !redirectUri) {
           return null;
         }
         if (!ALLOWED_REDIRECT_URIS.has(redirectUri)) {

@@ -13,6 +13,18 @@
       "types": "./src/sentry.ts",
       "default": "./src/sentry.ts"
     },
+    "./sentry-electron-main": {
+      "types": "./src/sentry-electron-main.ts",
+      "default": "./src/sentry-electron-main.ts"
+    },
+    "./sentry-browser": {
+      "types": "./src/sentry-browser.ts",
+      "default": "./src/sentry-browser.ts"
+    },
+    "./sentry-nextjs": {
+      "types": "./src/sentry-nextjs.ts",
+      "default": "./src/sentry-nextjs.ts"
+    },
     "./betterstack-env": {
       "types": "./src/env/betterstack.ts",
       "default": "./src/env/betterstack.ts"
@@ -63,7 +75,10 @@
   "dependencies": {
     "@logtail/next": "^0.3.1",
     "@orpc/client": "^1.13.14",
+    "@sentry/browser": "^10.49.0",
     "@sentry/core": "catalog:",
+    "@sentry/electron": "^7.11.0",
+    "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@trpc/server": "catalog:",
     "@vendor/inngest": "workspace:*",

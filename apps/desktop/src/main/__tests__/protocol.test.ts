@@ -31,6 +31,8 @@ async function loadProtocol(opts?: {
   isPackaged?: boolean;
   argv?: string[];
   platform?: NodeJS.Platform;
+  whenReady?: boolean;
+  defaultApp?: boolean;
 }) {
   vi.resetModules();
   eventHandlers.clear();
@@ -39,6 +41,7 @@ async function loadProtocol(opts?: {
 
   const prevArgv = process.argv;
   const prevPlatform = process.platform;
+  const prevDefaultApp = (process as { defaultApp?: boolean }).defaultApp;
   if (opts?.argv) {
     process.argv = opts.argv;
   }
@@ -48,7 +51,13 @@ async function loadProtocol(opts?: {
       configurable: true,
     });
   }
-  whenReadyResolved = true;
+  if (opts?.defaultApp !== undefined) {
+    Object.defineProperty(process, "defaultApp", {
+      value: opts.defaultApp,
+      configurable: true,
+    });
+  }
+  whenReadyResolved = opts?.whenReady ?? true;
 
   const mod = await import("../protocol");
   return {
@@ -59,14 +68,22 @@ async function loadProtocol(opts?: {
         value: prevPlatform,
         configurable: true,
       });
+      if (opts?.defaultApp !== undefined) {
+        if (prevDefaultApp === undefined) {
+          // biome-ignore lint/performance/noDelete: test cleanup must remove the property entirely; assigning `undefined` would leave a defined property where there was none.
+          delete (process as { defaultApp?: boolean }).defaultApp;
+        } else {
+          Object.defineProperty(process, "defaultApp", {
+            value: prevDefaultApp,
+            configurable: true,
+          });
+        }
+      }
     },
   };
 }
 
-function makeWindow(overrides?: {
-  destroyed?: boolean;
-  minimized?: boolean;
-}): {
+function makeWindow(overrides?: { destroyed?: boolean; minimized?: boolean }): {
   win: {
     isDestroyed: () => boolean;
     isMinimized: () => boolean;
@@ -123,6 +140,63 @@ describe("protocol", () => {
         expect(setAsDefaultProtocolClientMock).toHaveBeenCalledWith(
           "lightfast-dev"
         );
+      } finally {
+        restore();
+      }
+    });
+
+    it("attaches the open-url listener synchronously, before app.whenReady() resolves", async () => {
+      // Use a never-resolving whenReady so any whenReady-deferred work cannot
+      // run; assert the listener still exists immediately after the call.
+      const { mod, restore } = await loadProtocol({
+        isPackaged: false,
+        whenReady: false,
+      });
+      try {
+        expect(eventHandlers.has("open-url")).toBe(false);
+        mod.registerProtocolHandler(() => []);
+        expect(eventHandlers.has("open-url")).toBe(true);
+      } finally {
+        restore();
+      }
+    });
+
+    it("registers Windows three-arg form when running unpackaged on win32 dev", async () => {
+      const { mod, restore } = await loadProtocol({
+        isPackaged: false,
+        platform: "win32",
+        defaultApp: true,
+        argv: ["C:/electron.exe", "C:/lightfast/main.js"],
+      });
+      try {
+        mod.registerProtocolHandler(() => []);
+        expect(setAsDefaultProtocolClientMock).toHaveBeenCalledTimes(1);
+        const call = setAsDefaultProtocolClientMock.mock.calls[0] ?? [];
+        expect(call[0]).toBe("lightfast-dev");
+        expect(typeof call[1]).toBe("string");
+        expect(Array.isArray(call[2])).toBe(true);
+        const argvPath = (call[2] as unknown[])[0];
+        expect(typeof argvPath).toBe("string");
+        // resolve(argv[1]) must end with the script path.
+        expect(String(argvPath)).toContain("main.js");
+      } finally {
+        restore();
+      }
+    });
+
+    it("registers single-arg form on packaged win32 (process.defaultApp is false)", async () => {
+      const { mod, restore } = await loadProtocol({
+        isPackaged: true,
+        platform: "win32",
+        defaultApp: false,
+        argv: ["C:/Program Files/Lightfast/lightfast.exe"],
+      });
+      try {
+        mod.registerProtocolHandler(() => []);
+        expect(setAsDefaultProtocolClientMock).toHaveBeenCalledWith(
+          "lightfast"
+        );
+        expect(setAsDefaultProtocolClientMock.mock.calls[0]?.length).toBe(1);
       } finally {
         restore();
       }
@@ -202,14 +276,11 @@ describe("protocol", () => {
         if (!handler) {
           throw new Error("second-instance handler not registered");
         }
-        handler(
-          {},
-          [
-            "/path/to/electron",
-            "--some-flag",
-            "lightfast-dev://auth/callback?code=z",
-          ]
-        );
+        handler({}, [
+          "/path/to/electron",
+          "--some-flag",
+          "lightfast-dev://auth/callback?code=z",
+        ]);
 
         expect(listener).toHaveBeenCalledWith(
           "lightfast-dev://auth/callback?code=z"
@@ -244,10 +315,7 @@ describe("protocol", () => {
         mod.onProtocolUrl(vi.fn());
 
         const handler = eventHandlers.get("open-url");
-        handler?.(
-          { preventDefault: vi.fn() },
-          "lightfast-dev://auth/callback"
-        );
+        handler?.({ preventDefault: vi.fn() }, "lightfast-dev://auth/callback");
 
         expect(win.show).toHaveBeenCalled();
         expect(win.focus).toHaveBeenCalled();
@@ -264,10 +332,7 @@ describe("protocol", () => {
         mod.registerProtocolHandler(() => [win] as never);
 
         const handler = eventHandlers.get("open-url");
-        handler?.(
-          { preventDefault: vi.fn() },
-          "lightfast-dev://auth/callback"
-        );
+        handler?.({ preventDefault: vi.fn() }, "lightfast-dev://auth/callback");
 
         expect(win.restore).toHaveBeenCalled();
         expect(win.show).toHaveBeenCalled();

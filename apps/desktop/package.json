@@ -57,6 +57,7 @@
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
+    "@vendor/observability": "workspace:*",
     "copy-anything": "^4.0.5",
     "electron-context-menu": "^4.1.1",
     "electron-squirrel-startup": "^1.0.1",

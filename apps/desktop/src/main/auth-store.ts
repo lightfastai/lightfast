@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import * as Sentry from "@sentry/electron/main";
+import { captureException } from "@vendor/observability/sentry-electron-main";
 import { app, safeStorage } from "electron";
 import { z } from "zod";
 
@@ -21,6 +21,17 @@ function storePath(): string {
   return join(app.getPath("userData"), "auth.bin");
 }
 
+function purgePersisted(filePath: string, scope: string): boolean {
+  try {
+    rmSync(filePath, { force: true });
+    return true;
+  } catch (err) {
+    console.warn("[auth-store] purge failed", err);
+    captureException(err, { tags: { scope } });
+    return false;
+  }
+}
+
 function load(): string | null {
   if (memory) {
     return memory;
@@ -38,18 +49,18 @@ function load(): string | null {
     const parsed = persistedSchema.safeParse(JSON.parse(plain));
     if (!parsed.success) {
       console.error("[auth-store] invalid persisted payload", parsed.error);
-      Sentry.captureException(parsed.error, {
+      captureException(parsed.error, {
         tags: { scope: "auth-store.load.schema" },
       });
-      rmSync(path, { force: true });
+      purgePersisted(path, "auth-store.load.schema.purge");
       return null;
     }
     memory = parsed.data.token;
     return memory;
   } catch (err) {
     console.error("[auth-store] failed to load; purging", err);
-    Sentry.captureException(err, { tags: { scope: "auth-store.load" } });
-    rmSync(path, { force: true });
+    captureException(err, { tags: { scope: "auth-store.load" } });
+    purgePersisted(path, "auth-store.load.purge");
     return null;
   }
 }
@@ -69,21 +80,17 @@ function persist(token: string): boolean {
     return true;
   } catch (err) {
     console.error("[auth-store] failed to persist", err);
-    Sentry.captureException(err, { tags: { scope: "auth-store.persist" } });
+    captureException(err, { tags: { scope: "auth-store.persist" } });
     return false;
   }
 }
 
 function clearPersisted(): boolean {
-  try {
-    rmSync(storePath(), { force: true });
+  const ok = purgePersisted(storePath(), "auth-store.clear");
+  if (ok) {
     memory = null;
-    return true;
-  } catch (err) {
-    console.error("[auth-store] failed to remove", err);
-    Sentry.captureException(err, { tags: { scope: "auth-store.clear" } });
-    return false;
   }
+  return ok;
 }
 
 function emit(): void {

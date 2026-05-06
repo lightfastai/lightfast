@@ -27,12 +27,9 @@ export async function POST(req: Request) {
     return Response.json({ error: "bad_request" }, { status: 400 });
   }
 
-  const auth = req.headers.get("authorization") ?? "";
-  const jwt = auth.replace(/^Bearer\s+/i, "");
-
   const code = await issueCode({
     userId: session.userId,
-    jwt,
+    jwt: session.jwt,
     state: parsed.data.state,
     codeChallenge: parsed.data.code_challenge,
     redirectUri: parsed.data.redirect_uri,

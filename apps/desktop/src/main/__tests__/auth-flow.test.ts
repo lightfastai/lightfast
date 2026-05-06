@@ -23,7 +23,7 @@ vi.mock("electron", () => ({
   },
 }));
 
-vi.mock("@sentry/electron/main", () => ({
+vi.mock("@vendor/observability/sentry-electron-main", () => ({
   captureException: (error: unknown, options?: unknown) =>
     sentryCaptureExceptionMock(error, options),
   captureMessage: (message: string, options?: unknown) =>
@@ -81,10 +81,10 @@ async function loadAuthFlow(env?: Record<string, string | undefined>) {
 }
 
 interface CapturedSignin {
-  url: URL;
-  state: string;
   codeChallenge: string;
   redirectUri: string;
+  state: string;
+  url: URL;
 }
 
 async function captureSigninUrl(
@@ -141,7 +141,6 @@ function spyStdout(): { events: AuthLine[]; restore: () => void } {
             const parsed = JSON.parse(line);
             if (parsed && typeof parsed === "object" && "event" in parsed) {
               events.push(parsed as AuthLine);
-              continue;
             }
           } catch {
             // not JSON — fall through to original
@@ -307,13 +306,11 @@ describe("auth-flow PKCE sign-in", () => {
   });
 
   it("exchange 4xx returns null and emits auth_signin_failed{reason:exchange_failed} in agent mode", async () => {
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(
-        new Response(JSON.stringify({ error: "invalid_code" }), {
-          status: 400,
-        }) as unknown as Response
-      );
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(
+      new Response(JSON.stringify({ error: "invalid_code" }), {
+        status: 400,
+      }) as unknown as Response
+    );
     const { events, restore: restoreStdout } = spyStdout();
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "test",
@@ -449,7 +446,60 @@ describe("auth-flow PKCE sign-in", () => {
       restoreStdout();
       restore();
     }
-  }, 5_000);
+  }, 5000);
+
+  it("duplicate callbacks during exchange in-flight do not trigger a second exchangeCode", async () => {
+    const fetchGate: { resolve: (value: Response) => void } = {
+      resolve: () => {
+        // overwritten below
+      },
+    };
+    const fetchSpy = vi.spyOn(globalThis, "fetch").mockImplementation(
+      () =>
+        new Promise<Response>((r) => {
+          fetchGate.resolve = r;
+        })
+    );
+    const { mod, restore } = await loadAuthFlow({
+      NODE_ENV: "test",
+      LIGHTFAST_API_URL: undefined,
+    });
+    try {
+      const signIn = mod.beginSignIn();
+      const captured = await captureSigninUrl(true, []);
+      const cb = protocolListeners[0];
+      if (!cb) {
+        throw new Error("no protocol listener");
+      }
+      // Fire two valid callbacks back-to-back. The first enters exchange
+      // and awaits the paused fetch; the second must short-circuit on
+      // callbackInFlight before issuing a second fetch.
+      const url = `lightfast-dev://auth/callback?code=${"a".repeat(43)}&state=${captured.state}`;
+      cb(url);
+      cb(url);
+
+      // Yield once to let the first cb's microtasks run before resolving.
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+      // Now resolve the in-flight exchange so signIn settles.
+      fetchGate.resolve(
+        new Response(JSON.stringify({ token: "real-jwt" }), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }) as unknown as Response
+      );
+      const result = await signIn;
+      expect(result).toBe("real-jwt");
+      expect(setTokenMock).toHaveBeenCalledTimes(1);
+      // Confirm no late second fetch sneaks in after settle.
+      expect(fetchSpy).toHaveBeenCalledTimes(1);
+    } finally {
+      restore();
+      fetchSpy.mockRestore();
+    }
+  });
 
   it("inflight singleton: concurrent beginSignIn calls share a single promise", async () => {
     const { mod, restore } = await loadAuthFlow({
@@ -620,8 +670,7 @@ describe("auth-flow event grammar", () => {
         (e) => e.event === "auth_signin_url"
       ).length;
       const terminalCount = events.filter(
-        (e) =>
-          e.event === "auth_signed_in" || e.event === "auth_signin_failed"
+        (e) => e.event === "auth_signed_in" || e.event === "auth_signin_failed"
       ).length;
       expect(urlCount).toBe(1);
       expect(terminalCount).toBe(1);

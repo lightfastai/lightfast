@@ -1,3 +1,4 @@
+import path from "node:path";
 import { app, type BrowserWindow } from "electron";
 
 export type ProtocolUrlListener = (url: string) => void;
@@ -17,7 +18,21 @@ export function registerProtocolHandler(
   getWindows: () => BrowserWindow[]
 ): void {
   const scheme = getProtocolScheme();
-  app.setAsDefaultProtocolClient(scheme);
+  // Windows-dev: when launched as `electron .` (process.defaultApp === true)
+  // the OS records the Electron binary as the protocol target, not the script,
+  // so subsequent invocations open Electron with no app to run. Pass execPath
+  // + the resolved script path so the registered command-line is reproducible.
+  if (
+    process.platform === "win32" &&
+    (process as { defaultApp?: boolean }).defaultApp &&
+    process.argv.length >= 2
+  ) {
+    app.setAsDefaultProtocolClient(scheme, process.execPath, [
+      path.resolve(process.argv[1] ?? ""),
+    ]);
+  } else {
+    app.setAsDefaultProtocolClient(scheme);
+  }
 
   const dispatch = (rawUrl: string) => {
     if (!rawUrl.startsWith(`${scheme}://`)) {

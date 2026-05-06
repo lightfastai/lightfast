@@ -65,9 +65,7 @@ describe("POST /api/desktop/auth/exchange", () => {
     consumeCodeMock.mockResolvedValue(goodRecord);
 
     const tampered = "x".repeat(64);
-    const res = await POST(
-      makeReq({ code: CODE, code_verifier: tampered })
-    );
+    const res = await POST(makeReq({ code: CODE, code_verifier: tampered }));
 
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "invalid_verifier" });

@@ -1,5 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
-import * as Sentry from "@sentry/electron/main";
+import {
+  captureException,
+  captureMessage,
+} from "@vendor/observability/sentry-electron-main";
 import { shell } from "electron";
 import { z } from "zod";
 import { getToken, setToken } from "./auth-store";
@@ -135,6 +138,13 @@ async function runSignIn(): Promise<string | null> {
 
   return new Promise<string | null>((resolve) => {
     let settled = false;
+    // Two `open-url` events can race past `settled === false` while the
+    // first exchange is awaiting fetch. Both would call exchangeCode with
+    // the same single-use code; the second hits a 410 and emits Sentry
+    // noise. `callbackInFlight` short-circuits the duplicate before the
+    // network call. (settle() already unsubscribes synchronously, so the
+    // race is bounded to the await window of the first exchange.)
+    let callbackInFlight = false;
     const settle = (token: string | null) => {
       if (settled) {
         return;
@@ -146,7 +156,7 @@ async function runSignIn(): Promise<string | null> {
     };
 
     const timer = setTimeout(() => {
-      Sentry.captureMessage("auth-flow: sign-in timeout", {
+      captureMessage("auth-flow: sign-in timeout", {
         level: "warning",
         tags: { scope: "auth-flow.timeout" },
       });
@@ -156,7 +166,11 @@ async function runSignIn(): Promise<string | null> {
 
     const unsubscribe = onProtocolUrl(async (rawUrl) => {
       try {
-        if (!matchesAuthCallback(rawUrl, scheme)) {
+        if (
+          settled ||
+          callbackInFlight ||
+          !matchesAuthCallback(rawUrl, scheme)
+        ) {
           return;
         }
         const url = new URL(rawUrl);
@@ -168,17 +182,21 @@ async function runSignIn(): Promise<string | null> {
           return;
         }
         if (parsed.data.state !== state) {
-          Sentry.captureMessage("auth-flow: state mismatch", {
+          captureMessage("auth-flow: state mismatch", {
             level: "warning",
             tags: { scope: "auth-flow.state_mismatch" },
           });
           return;
         }
+        callbackInFlight = true;
         const token = await exchangeCode(
           apiOrigin,
           parsed.data.code,
           codeVerifier
         );
+        if (settled) {
+          return;
+        }
         if (!token) {
           emitAgentEvent({
             event: "auth_signin_failed",
@@ -189,7 +207,7 @@ async function runSignIn(): Promise<string | null> {
         }
         const persisted = setToken(token);
         if (!persisted) {
-          Sentry.captureException(new Error("auth-flow: persist failed"), {
+          captureException(new Error("auth-flow: persist failed"), {
             tags: { scope: "auth-flow.persist_failed" },
           });
           emitAgentEvent({
@@ -203,7 +221,7 @@ async function runSignIn(): Promise<string | null> {
         settle(token);
       } catch (error) {
         console.error("[auth-flow] callback handler error", error);
-        Sentry.captureException(error, {
+        captureException(error, {
           tags: { scope: "auth-flow.handler_error" },
         });
         emitAgentEvent({
@@ -227,7 +245,7 @@ async function runSignIn(): Promise<string | null> {
 
     shell.openExternal(signinUrl.toString()).catch((error) => {
       console.error("[auth-flow] shell.openExternal failed", error);
-      Sentry.captureException(error, {
+      captureException(error, {
         tags: { scope: "auth-flow.open_external" },
       });
       settle(null);
@@ -247,7 +265,7 @@ async function exchangeCode(
       body: JSON.stringify({ code, code_verifier: codeVerifier }),
     });
     if (!response.ok) {
-      Sentry.captureMessage("auth-flow: exchange non-ok", {
+      captureMessage("auth-flow: exchange non-ok", {
         level: "warning",
         tags: {
           scope: "auth-flow.exchange_non_ok",
@@ -259,7 +277,7 @@ async function exchangeCode(
     const json = exchangeResponseSchema.safeParse(await response.json());
     return json.success ? json.data.token : null;
   } catch (error) {
-    Sentry.captureException(error, {
+    captureException(error, {
       tags: { scope: "auth-flow.exchange_network" },
     });
     return null;
