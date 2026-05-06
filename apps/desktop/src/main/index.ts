@@ -1,4 +1,4 @@
-import * as Sentry from "@sentry/electron/main";
+import { captureException } from "@vendor/observability/sentry-electron-main";
 import {
   app,
   BrowserWindow,
@@ -82,17 +82,15 @@ function forwardRendererErrorToSentry(payload: unknown): void {
   if (!isRendererErrorPayload(payload)) {
     return;
   }
-  // The renderer-side @sentry/electron/renderer SDK silently fails to register
-  // a client (v10 carrier shape). Bridge renderer errors through the working
-  // main-side SDK instead, preserving the renderer stack so debug-id-paired
-  // sourcemaps can still symbolicate it.
+  // Bridge renderer errors through the main-side Sentry SDK, preserving the
+  // renderer stack so debug-id-paired sourcemaps still symbolicate.
   const error = new Error(payload.message);
   error.name =
     payload.kind === "unhandledrejection" ? "UnhandledRejection" : "Error";
   if (payload.stack) {
     error.stack = payload.stack;
   }
-  Sentry.captureException(error, {
+  captureException(error, {
     tags: { bundle: "renderer", rendererKind: payload.kind },
     extra: { source: payload.source, url: payload.url },
   });
