@@ -44,6 +44,8 @@ Plans:
 
 Legend: **DONE** = landed on `main` · **IN PROGRESS** = scoped into the pre-release batch plan · **DEFERRED** = intentionally out of scope right now · **RELEASE** = future release-pipeline work beyond v0.1.0.
 
+> **Update 2026-05-06.** All three **IN PROGRESS** rows in the table below (§2 source-map upload, §6 multi-arch matrix, §13 build-metadata stamping) landed via PR #621 (2026-04-24). The table preserves the 2026-04-23 snapshot as audit trail; current state is at §"Status Update 2026-05-06 (post-dry-run)" near the bottom of this document, and the live source of truth is the [dry-run final report](../2026-05-06-desktop-rc1-ad-hoc-dry-run-report.md).
+
 | § | Finding | State | Notes |
 |---|---|---|---|
 | 1 | Auto-update: Sparkle + Ed25519 | **RELEASE** | Whole auto-update surface |
