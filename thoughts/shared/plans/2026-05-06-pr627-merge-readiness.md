@@ -476,7 +476,7 @@ const factoryDir = __dirname;
 
 ---
 
-## Phase 5: `createAppUrl()` adoption + live re-verification + push
+## Phase 5: `createAppUrl()` adoption + live re-verification + push [in progress — code change applied 2026-05-06]
 
 ### Overview
 

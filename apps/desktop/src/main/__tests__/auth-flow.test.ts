@@ -11,6 +11,7 @@ const sentryCaptureMessageMock = vi.fn<(...args: unknown[]) => void>();
 
 let protocolListeners: Array<(url: string) => void> = [];
 let isPackagedFlag = false;
+let testAppOrigin = "http://localhost:3024";
 
 vi.mock("electron", () => ({
   shell: {
@@ -43,6 +44,11 @@ vi.mock("../protocol", () => ({
       protocolListeners = protocolListeners.filter((l) => l !== listener);
     };
   },
+}));
+
+vi.mock("../app-url", () => ({
+  createAppUrl: (path: string) => new URL(path, testAppOrigin),
+  openAppOrigin: () => Promise.resolve(),
 }));
 
 async function loadAuthFlow(env?: Record<string, string | undefined>) {
@@ -167,6 +173,7 @@ beforeEach(() => {
   sentryCaptureExceptionMock.mockClear();
   sentryCaptureMessageMock.mockClear();
   isPackagedFlag = false;
+  testAppOrigin = "http://localhost:3024";
 });
 
 afterEach(() => {
@@ -201,6 +208,7 @@ describe("auth-flow PKCE sign-in", () => {
 
   it("composes redirect_uri with the lightfast scheme when packaged", async () => {
     isPackagedFlag = true;
+    testAppOrigin = "https://lightfast.ai";
     const { mod, restore } = await loadAuthFlow({
       NODE_ENV: "production",
       LIGHTFAST_API_URL: undefined,

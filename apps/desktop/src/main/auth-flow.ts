@@ -5,6 +5,7 @@ import {
 } from "@vendor/observability/sentry-electron-main";
 import { shell } from "electron";
 import { z } from "zod";
+import { createAppUrl } from "./app-url";
 import { getToken, setToken } from "./auth-store";
 import { getProtocolScheme, onProtocolUrl } from "./protocol";
 
@@ -130,7 +131,7 @@ async function runSignIn(): Promise<string | null> {
   const redirectUri = `${scheme}://auth/callback`;
 
   const apiOrigin = getApiOrigin();
-  const signinUrl = new URL("/desktop/auth", apiOrigin);
+  const signinUrl = createAppUrl("/desktop/auth");
   signinUrl.searchParams.set("state", state);
   signinUrl.searchParams.set("code_challenge", codeChallenge);
   signinUrl.searchParams.set("code_challenge_method", "S256");
