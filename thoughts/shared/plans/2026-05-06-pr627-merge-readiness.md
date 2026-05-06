@@ -508,17 +508,10 @@ The remainder of this phase makes no further code changes. It is the final pre-p
 
 #### Human Review
 
-- [ ] Run the `lightfast-desktop-signin` skill end-to-end against the rebased branch:
-  - Start dev mesh on `:3024`, start desktop with no persisted token
-  - Sign into Clerk via `lightfast-clerk` skill (email + OTP `424242`)
-  - Confirm `/api/desktop/auth/code` issues a code, bridge does `window.location.href = lightfast-dev://auth/callback?code=…&state=…`
-  - Confirm macOS `app.on('open-url')` dispatches into the running desktop, exchange runs, `auth.bin` (~851 bytes) is persisted
-  - Expected observation: `auth_signed_in` event on stdout within ~14 seconds; renderer flips to signed-in
-- [ ] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *no* persisted token:
-  - Expected observation: stdout emits `{"event":"auth_signin_url","url":"..."}`
-  - Drive URL via `agent-browser`, expected observation: stdout emits `{"event":"auth_signed_in"}`
-- [ ] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *with* persisted token:
-  - Expected observation: stdout emits exactly one `{"event":"auth_already_signed_in"}` and nothing else; no signin URL, no `shell.openExternal`
+- [~] Run the `lightfast-desktop-signin` skill end-to-end against the rebased branch:
+  - **PARTIAL on 2026-05-06**: dev:app + dev:desktop in AGENT_MODE both started cleanly. Desktop emitted `auth_signin_url` with URL origin `https://lightfast.localhost` — **this is the Phase 5 behavioral observation: `createAppUrl()` correctly routes through `getRuntimeConfig().appOrigin` (Portless aggregate) rather than the legacy inline `getApiOrigin()` fallback.** Clerk sign-in via agent-browser succeeded; landed on `/desktop/auth` page which rendered "Opening Lightfast…" (the bridge stage). Beyond that, the `lightfast-dev://auth/callback` dispatch did not deliver to the running dev Electron — `lsregister -dump` confirms no app claims the `lightfast-dev:` scheme on this host. This is the well-known unpackaged-Electron URL-scheme limitation called out in `lightfast-desktop-signin/SKILL.md` ("unpackaged Electron registers `lightfast-dev://` against `com.github.electron`, not Lightfast's bundle id"), not a Phase 5 regression. Manual `open lightfast-dev://...` from the shell also produced no response, confirming OS-level registration absence.
+- [ ] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *no* persisted token: gated by URL-scheme-registration fix (or packaged build).
+- [ ] Re-run with `LIGHTFAST_DESKTOP_AGENT_MODE=1` and *with* persisted token: gated by URL-scheme-registration fix (or packaged build).
 
 ---
 
