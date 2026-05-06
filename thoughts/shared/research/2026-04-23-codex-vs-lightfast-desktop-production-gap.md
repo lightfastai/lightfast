@@ -498,7 +498,7 @@ Verified against current tree:
 - **Phase 1 (entitlements)**: `build/entitlements.mac.plist` has 5 keys — `disable-library-validation`, `device.camera`, `network.server` all gone. `NSCameraUsageDescription` removed from `forge.config.ts` extendInfo.
 - **Phase 2 (Info.plist)**: `forge.config.ts:67-78` carries `NSQuitAlwaysKeepsWindows=false`, `LSMinimumSystemVersion: "12.0"`, `LSEnvironment: { MallocNanoZone: "0" }`.
 - **Phase 3 (Sentry)**: `src/main/sentry.ts:14-55` has module-scoped `SESSION_ID`, `rewriteFramesIntegration({ root: app.getAppPath(), prefix: "app:///" })`, `dist: build.buildNumber`, tags `sessionId/bundle/host`.
-- **Phase 4 (dead code)**: `showContextMenu` removed from `ipc.ts`. `silentRefresh` + `REFRESH_TIMEOUT_MS` removed — superseded by a full `auth-flow.ts` rewrite (loopback HTTP server over `127.0.0.1:<port>/callback` with a per-signin CSRF state and cryptographic token). Deep-link `console.log` gone — in fact the entire deep-link dispatcher is gone: `src/main/protocol.ts` deleted, `onDeepLink` removed from `index.ts`, `CFBundleURLTypes` dropped from extendInfo. Research §10 is now moot — there is no deep-link surface to dispatch.
+- **Phase 4 (dead code)**: `showContextMenu` removed from `ipc.ts`. `silentRefresh` + `REFRESH_TIMEOUT_MS` removed — superseded by a full `auth-flow.ts` rewrite (loopback HTTP server over `127.0.0.1:<port>/callback` with a per-signin CSRF state and cryptographic token). Deep-link `console.log` gone; the original deep-link dispatcher was deleted (`src/main/protocol.ts`, `onDeepLink`, `CFBundleURLTypes`) — then PR #627 (2026-05-06) reintroduced `protocol.ts` and `CFBundleURLTypes` for the PKCE auth callback (`lightfast://auth/callback`) only. The general URL→renderer-route dispatcher §10 originally described is still absent.
 
 ### Pre-release batch plan: scope + external setup
 
@@ -532,7 +532,7 @@ Verification pass logged at [`thoughts/shared/research/2026-05-06-desktop-prod-r
 
 - **PR #621** (`aef1d3240`, 2026-04-24) — pre-release-batch phases B–F. Closes IN PROGRESS rows in §2 (Sentry source-map upload), §6 (multi-arch matrix), §13 (build-metadata stamping). Source artifacts: `apps/desktop/src/env/{main,renderer}.ts`, `apps/desktop/scripts/upload-sourcemaps.mjs`, `.github/workflows/desktop-{release,ci}.yml`, `apps/desktop/.env.example`, `apps/desktop/package.json` `clean` script, `.changeset/config.json` ignore.
 - **PR #637** (`ab634170e`, 2026-05-06) — unsigned-beta-distribution. Adds a `signingMode: "ad-hoc" | "developer-id"` enum threaded through `apps/desktop/package.json:72`, `apps/desktop/src/shared/build-info-schema.ts:6-7,15`, build-info, Sentry tags, updater. `forge.config.ts:14-49` carries a two-branch osxSign (developer-id when `APPLE_SIGNING_IDENTITY` + `APPLE_TEAM_ID` set, else ad-hoc fallback `identity: "-"`). `desktop-release.yml:32-40` auto-derives `prerelease=true` from any hyphen-suffix in the tag; `desktop-release.yml:120-124` flips `signingMode` based on whether `APPLE_SIGNING_IDENTITY` exists. `apps/desktop/src/main/updater.ts:87-89` disables the auto-updater entirely when `signingMode === "ad-hoc"` (Squirrel.Mac requires the new build to satisfy the running app's Designated Requirement; ad-hoc DRs are content-bound).
-- **Mid-flight** — `2565270fa` (floating settings panel), `b30d99975` (custom URL scheme + PKCE). The custom-URL-scheme work does **not** reintroduce a deep-link handler in main: `grep` for `setAsDefaultProtocolClient`, `onDeepLink`, `open-url` across `apps/desktop/src/` returns zero matches. The deletion of `protocol.ts` and the lack of `CFBundleURLTypes` in `forge.config.ts:81-92` extendInfo both still hold. **§10 deep-link surface is genuinely gone.**
+- **Mid-flight** — `2565270fa` (floating settings panel), `b30d99975` (custom URL scheme + PKCE). The 2026-04-25 deletion of `protocol.ts` was reversed by PR #627 (2026-05-06) for PKCE only: `setAsDefaultProtocolClient`, `open-url`, `second-instance`, `CFBundleURLTypes` all back in tree. **§10 surface is single-purpose (PKCE auth callback only); the general URL→route dispatcher remains absent.**
 
 ### Tracker rows state at 2026-05-06
 
@@ -542,7 +542,7 @@ Verification pass logged at [`thoughts/shared/research/2026-05-06-desktop-prod-r
 | 6 | Multi-arch arm64+x64 | IN PROGRESS | **DONE** (PR #621) |
 | 13 | Non-empty version / buildNumber / sparkleFeedUrl | IN PROGRESS | **DONE** (PR #621 — workflow stamps via `npm pkg set`; placeholders in `package.json` are intentional) |
 | 13 | `signingMode` (new) | n/a | **DONE** (PR #637) |
-| 10 | Deep-link `console.log` / dispatcher | DEFERRED | **N/A** — surface removed; was never reintroduced |
+| 10 | Deep-link `console.log` / dispatcher | DEFERRED | **PARTIAL** — PR #627 (2026-05-06) reintroduced `protocol.ts` + `CFBundleURLTypes` for PKCE auth callback (`lightfast://auth/callback`) only; general URL→route dispatcher still absent |
 
 All other DEFERRED / RELEASE rows from the 2026-04-24 tracker remain unchanged.
 
