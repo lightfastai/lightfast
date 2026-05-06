@@ -23,6 +23,7 @@ export default defineConfig({
     ],
   },
   build: {
+    sourcemap: true,
     outDir: resolve(import.meta.dirname, ".vite/renderer/main_window"),
     emptyOutDir: true,
     rollupOptions: {
