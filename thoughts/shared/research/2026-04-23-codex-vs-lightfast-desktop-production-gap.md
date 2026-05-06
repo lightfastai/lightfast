@@ -53,7 +53,8 @@ Legend: **DONE** = landed on `main` · **DEFERRED** = intentionally out of scope
 | 2 | Explicit `crashReporter.start({uploadToServer:false})` | **DEFERRED** | `@sentry/electron` already handles Crashpad; skip to avoid double-init |
 | 3 | Persistent SQLite storage | **DEFERRED** | No consumer yet |
 | 4 | Worker / utility-process tier | **DEFERRED** | No workload demands it yet |
-| 5 | Windows MSIX + Linux makers | **RELEASE** | Deferred past v0.1.0 (macOS only for first release) |
+| 5 | Linux makers (deb/rpm) + CI matrix | **DONE** | W3 — `MakerDeb`/`MakerRpm` registered with `["linux"]` gating in `forge.config.ts`; `desktop-ci.yml` runs `[macos-14, ubuntu-22.04]` matrix; `desktop-release.yml` adds `build_linux` job on `[ubuntu-22.04, ubuntu-22.04-arm]` for x64+arm64 with `.deb`/`.rpm` attestation. Linux Sparkle / `latest-linux-*.json` deferred to the macOS Sparkle PR (§1). |
+| 5 | Windows MSIX + EV-cert signing | **RELEASE** | Separate external-blocker track (Windows EV cert procurement); not part of W3. |
 | 6 | Multi-arch (arm64 + x64) | **DONE** | PR #621 — `desktop-release.yml` matrix builds both arches on `macos-14`, publishes as separate `.dmg`/`.zip` per arch with separate Sparkle feeds (`latest-mac-{arm64,x64}.json`). No universal merge. |
 | 6 | Universal binary merge | **DEFERRED** | `@electron/universal` not needed; two separate artifacts with `${arch}` feed template suffice. |
 | 7 | Per-surface preload isolation | **DEFERRED** | No third-party surfaces yet |
