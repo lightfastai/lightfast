@@ -5,7 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const captureExceptionMock = vi.fn();
 const captureMessageMock = vi.fn();
 
-vi.mock("@sentry/nextjs", () => ({
+vi.mock("@vendor/observability/sentry-nextjs", () => ({
   captureException: (...args: unknown[]) => captureExceptionMock(...args),
   captureMessage: (...args: unknown[]) => captureMessageMock(...args),
 }));
