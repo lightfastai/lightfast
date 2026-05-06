@@ -61,6 +61,16 @@ async function loadAuthFlow(env?: Record<string, string | undefined>) {
   for (const k of touchedKeys) {
     prev[k] = process.env[k];
   }
+  const restore = () => {
+    for (const k of touchedKeys) {
+      const original = prev[k];
+      if (original === undefined) {
+        delete process.env[k];
+      } else {
+        process.env[k] = original;
+      }
+    }
+  };
   if (env) {
     for (const [k, v] of Object.entries(env)) {
       if (v === undefined) {
@@ -70,20 +80,17 @@ async function loadAuthFlow(env?: Record<string, string | undefined>) {
       }
     }
   }
-  const mod = await import("../auth-flow");
-  return {
-    mod,
-    restore: () => {
-      for (const k of touchedKeys) {
-        const original = prev[k];
-        if (original === undefined) {
-          delete process.env[k];
-        } else {
-          process.env[k] = original;
-        }
-      }
-    },
-  };
+  // If `await import` throws, the env mutation above must be reverted
+  // before the rejection propagates — otherwise an import-time failure
+  // contaminates every subsequent test in the suite.
+  let mod: typeof import("../auth-flow");
+  try {
+    mod = await import("../auth-flow");
+  } catch (error) {
+    restore();
+    throw error;
+  }
+  return { mod, restore };
 }
 
 interface CapturedSignin {

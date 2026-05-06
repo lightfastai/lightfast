@@ -1,6 +1,9 @@
 "use client";
 
-import { captureException, captureMessage } from "@sentry/nextjs";
+import {
+  captureException,
+  captureMessage,
+} from "@vendor/observability/sentry-nextjs";
 import { useAuth } from "@vendor/clerk/client";
 import { useSearchParams } from "next/navigation";
 import { type ReactNode, Suspense, useEffect, useRef, useState } from "react";

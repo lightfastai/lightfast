@@ -1,5 +1,7 @@
 export {
   captureConsoleIntegration,
+  captureException,
+  captureMessage,
   captureRequestError,
   extraErrorDataIntegration,
   init,
