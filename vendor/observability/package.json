@@ -75,9 +75,9 @@
   "dependencies": {
     "@logtail/next": "^0.3.1",
     "@orpc/client": "^1.13.14",
-    "@sentry/browser": "^10.49.0",
+    "@sentry/browser": "catalog:",
     "@sentry/core": "catalog:",
-    "@sentry/electron": "^7.11.0",
+    "@sentry/electron": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@trpc/server": "catalog:",
