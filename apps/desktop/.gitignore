@@ -7,3 +7,4 @@ node_modules/
 .env
 .env.development
 .env.production
+THIRD_PARTY_NOTICES.txt

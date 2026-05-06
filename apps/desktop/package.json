@@ -7,12 +7,15 @@
   "scripts": {
     "clean": "rm -rf out .vite .cache",
     "dev": "pnpm with-env node ../../scripts/with-desktop-env.mjs -- electron-forge start",
-    "package": "electron-forge package",
+    "devtools:reset": "node scripts/devtools-reset.mjs",
     "make": "electron-forge make",
+    "metadata-probe": "node scripts/metadata-probe.mjs",
+    "notices:generate": "node scripts/generate-third-party-notices.mjs",
+    "package": "electron-forge package",
     "publish": "electron-forge publish",
     "sourcemaps:upload": "node scripts/upload-sourcemaps.mjs",
-    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "test": "vitest run",
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json",
     "with-env": "dotenv -e ./.vercel/.env.development.local --"
   },
   "devDependencies": {
