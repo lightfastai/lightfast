@@ -476,7 +476,9 @@ const factoryDir = __dirname;
 
 ---
 
-## Phase 5: `createAppUrl()` adoption + live re-verification + push [in progress — code change applied 2026-05-06]
+## Phase 5: `createAppUrl()` adoption + live re-verification + push [in progress — code change applied + wrapper-files fix 2026-05-06]
+
+> **Post-push note (2026-05-06)**: Initial push (`cf4438a1f`) failed CI on `Typecheck + package (unsigned)` and `Quality` because the Phase 2 vendor wrapper files (`vendor/observability/src/sentry-{browser,electron-main,nextjs}.ts`) were never staged when Phase 4 was committed (38ac764dd). The package.json export entries pointed at files that didn't exist on the CI checkout. Fix-up commit `884a9eb97` adds the three missing files. Local typecheck always passed because the files existed on disk locally — only `git ls-files` and CI surfaced the gap.
 
 ### Overview
 
@@ -500,8 +502,8 @@ The remainder of this phase makes no further code changes. It is the final pre-p
 
 #### Automated Verification
 
-- [ ] CI green on the latest commit: `gh pr view 627 --json statusCheckRollup --jq '.statusCheckRollup[] | select(.conclusion != "SUCCESS" and .state != "SUCCESS")'` returns empty
-- [ ] `gh pr view 627 --json mergeable --jq .mergeable` returns `"MERGEABLE"`
+- [x] CI green on the latest commit: `gh pr view 627 --json statusCheckRollup --jq '.statusCheckRollup[] | select(.conclusion != "SUCCESS" and .state != "SUCCESS")'` returns empty — confirmed on commit `884a9eb97` (2026-05-06). All 14 checks SUCCESS: Quality (CI + Core CI), Typecheck + package (unsigned), Test, Build, CI Success, Core CI Success, CodeQL, Analyze × 2, Vercel × 3, Vercel Preview Comments.
+- [x] `gh pr view 627 --json mergeable --jq .mergeable` returns `"MERGEABLE"` — confirmed MERGEABLE on `884a9eb97` (mergeStateStatus: BLOCKED — branch protection requires an approving review; this is the manual gate, not a CI failure).
 - [ ] All 8 CodeRabbit comments **explicitly resolved** in the GitHub UI: code-fixed comments → "Resolve conversation" after a brief reply pointing at the commit SHA; deliberate non-fixes → reply with rationale, then "Resolve conversation". Unresolved comments re-fire on next push.
 
 #### Human Review
