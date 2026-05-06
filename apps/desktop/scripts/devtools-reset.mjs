@@ -28,12 +28,18 @@ function resolveUserData() {
 // Only Chromium-managed *transient* caches. Excludes Local Storage, IndexedDB,
 // Cookies — those carry app state. App-written files (settings.json, auth.bin,
 // window-state.json) are at the root and untouched here.
+//
+// Names match Electron 41's userData layout. `Cache` is the HTTP cache;
+// `DawnGraphiteCache`/`DawnWebGPUCache` are the WebGPU/Graphite shader caches
+// (the plan-era `DawnGraphicsCache` does not exist on this version).
 const SUBDIRS = [
-  "Extensions",
-  "Service Worker",
+  "Cache",
   "Code Cache",
+  "DawnGraphiteCache",
+  "DawnWebGPUCache",
+  "Extensions",
   "GPUCache",
-  "DawnGraphicsCache",
+  "Service Worker",
 ];
 
 const userData = resolveUserData();
