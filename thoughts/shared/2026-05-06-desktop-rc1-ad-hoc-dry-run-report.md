@@ -22,6 +22,8 @@ prs:
 
 Cutting four release candidates uncovered seven distinct release-pipeline bugs that would have shipped silently on the first developer-id build. All seven are fixed and merged. The ad-hoc workflow now runs green end-to-end, produces a launchable signed-equivalent `.app`, and registers a Sentry release with paired-debug-id sourcemaps. The renderer-error → Sentry bridge is the only piece that's not directly observable today (Sentry org is over its free-tier quota), but every link in the chain up to and including `Sentry.captureException` execution is verified.
 
+> **Correction 2026-05-06.** Bug F's root-cause diagnosis below — "renderer-side `@sentry/electron/renderer` `Sentry.init` is a silent no-op in the v10 carrier" — is **wrong**. A follow-up experiment on `@sentry/electron@7.13.0` with the renderer SDK restored shows `Sentry.getClient()` returns a fully constructed client and `__SENTRY__["10.50.0"].defaultCurrentScope._client` carries the configured DSN/release/transport. The renderer SDK works fine — the v10 carrier just exposes the active client at `defaultCurrentScope._client` instead of the `slot.client` / `slot.defaultClient` paths I was inspecting (those are v8/v9 carrier shapes). The "zero events ingested" outcome on rc.1/rc.2/rc.3 was almost certainly the Sentry org quota exhaustion, not a broken SDK. **PR #643's main-side bridge still stands as the chosen architecture** — simpler, smaller bundle, single SDK init — but it's an architectural choice, not a workaround for an SDK bug. See §"Correction" near the end of this report for the full investigation.
+
 ## What this dry-run was for
 
 Per the plan: cut `@lightfast/desktop@0.1.0-rc.1` in ad-hoc mode to exercise ~90% of the release pipeline before Apple Developer enrollment unblocks. The bet was that latent bugs in the pipeline would surface on real tags, not on local `pnpm package` smoke-runs. That bet paid out — the local run was green for every fix that later shipped, but seven bugs only surfaced after pushing real tags.
@@ -134,8 +136,73 @@ Once Apple Developer enrollment lands:
 
 - **Sentry quota.** Org is on free tier and over quota. New events get accepted into stats but not into searchable issues until quota restores. Doesn't affect the release pipeline; affects observability of any error post-release.
 - **Bug D (`LIGHTFAST_REMOTE_DEBUG_PORT` in packaged builds).** Intentional `if (!app.isPackaged)` gate. CDP via CLI flag works as a manual workaround. Can revisit if a documented dev-friendly debug path becomes important.
-- **Bug F root cause.** Pinned the symptom (no client registered in v10 carrier) but not the underlying reason `Sentry.init` no-ops. Unblocked by the main-side bridge but worth filing upstream if it recurs in a future SDK upgrade.
+- **Bug F root cause.** ~~Pinned the symptom (no client registered in v10 carrier) but not the underlying reason `Sentry.init` no-ops. Unblocked by the main-side bridge but worth filing upstream if it recurs in a future SDK upgrade.~~ **See §Correction below — the renderer SDK was not broken; my carrier-shape inspection was looking at v8/v9 field paths.**
 
 ## Plan vs. reality
 
 Plan called for three phases (status update, codesign pre-fixes, rc.1 cut). Reality required four `rc.N` cuts to surface and fix everything. The plan's premise — that real tags surface bugs that local `pnpm package` doesn't — held: every one of the seven bugs above was invisible until a real tag pushed. The ad-hoc dry-run was the right call.
+
+## Correction (Bug F was misdiagnosed)
+
+After the dry-run wrapped, I ran a follow-up experiment on a throwaway branch to validate the upstream issue I was about to file. Bumped `@sentry/electron` to the latest 7.13.0, restored `@sentry/electron/renderer` + `@sentry/electron/preload` + `Sentry.init({...})` in the renderer, built locally, launched with CDP, and inspected the carrier. The result contradicted the dry-run diagnosis.
+
+### What the experiment showed
+
+```
+__SENTRY__["10.50.0"].defaultCurrentScope._client = {
+  constructor.name: 'Zb',                                  // minified Sentry browser client
+  _options: {
+    dsn: 'https://abc123def456@o4509.ingest.us.sentry.io/450...',
+    release: 'experiment-7.13',
+    environment: 'test',
+    transport: <fn>,
+    integrations: [...],
+    ipcNamespace: <set>,
+    enabled: true,
+    sendClientReports: true,
+    enableLogs: true
+  }
+}
+```
+
+`Sentry.getClient()` in the renderer returns the same fully-constructed client. `Sentry.init` did register a client. The renderer SDK was always working — both on 7.13.0 and (almost certainly) on 7.11.0 during the dry-run.
+
+### Where the misdiagnosis came from
+
+During rc.1/rc.2/rc.3 investigations I was inspecting `__SENTRY__[ver].client` and `__SENTRY__[ver].defaultClient` and concluding "no client registered" when both were `undefined`. Those are v8/v9 carrier field names. **In v10 the active client lives on `defaultCurrentScope._client`**, not those top-level slots. Looking at the wrong paths produced a wrong answer that was internally consistent across three RCs because the answer was wrong in the same way every time.
+
+### What actually caused "zero events" on rc.1/rc.2/rc.3
+
+The Sentry org's free-tier quota — the same one flagged late in the dry-run (§Open items above). Events were transporting from the renderer SDK (and, after PR #643, from the main-side bridge) but the receiving end was rejecting at ingest. I conflated "no issue visible in Sentry UI" with "no client registered in renderer."
+
+### Why PR #643's bridge still stands
+
+The architectural choice is defensible on its own merits:
+
+- **Smaller bundle** — renderer 421K vs ~525K with the renderer SDK; preload 2.5K vs ~30K with the IPC bridge.
+- **Single SDK configuration site** — release, environment, tags configured once in `apps/desktop/src/main/sentry.ts`; renderer doesn't need to know about Sentry at all.
+- **One source of truth for what gets transported** — `installErrorBoundary` already IPCs all uncaught errors and unhandled rejections to main; `forwardRendererErrorToSentry` captures them through the same code path that handles main-process errors.
+- **Insulated from v10/v11 carrier shape changes** — the bridge has no dependency on SDK internals.
+
+What we lose by not running the renderer SDK:
+
+- Automatic breadcrumbs from renderer `console.*` calls
+- Page-navigation tracking (irrelevant — the renderer is largely a shell over `app.lightfast.localhost`, which has its own Sentry)
+- `BrowserTracingIntegration` and session replay (impossible without renderer SDK)
+- Explicit `Sentry.captureMessage(...)` / `Sentry.setTag(...)` from renderer code (we don't currently use these; if needed later, route through IPC)
+
+These features matter once we want session replay or a rich breadcrumb timeline. Until then, the bridge is enough.
+
+### What changed in this correction
+
+- This report's TL;DR carries a Correction callout pointing here.
+- The Bug F entry's blanket claim "renderer SDK silently fails to register a client" is replaced by "we chose to bridge through main; the renderer SDK works."
+- The "Open items" entry "Bug F root cause" is struck through.
+- The corresponding G-12 row in [`thoughts/shared/research/2026-04-23-codex-vs-lightfast-desktop-production-gap.md`](research/2026-04-23-codex-vs-lightfast-desktop-production-gap.md) is amended with the same correction.
+- No upstream issue filed.
+
+### Follow-ups (non-blocking)
+
+- Bump `@sentry/electron` from 7.11.0 → 7.13.0 in a separate PR (two minor versions behind; small win, no behavior change for our usage).
+- Revisit the bridge architecture if/when we want session replay or rich renderer breadcrumbs in v0.2.0+ — the recipe is documented in this section.
+- Update the `installErrorBoundary` comment in `apps/desktop/src/renderer/src/main.ts` to remove the inaccurate "renderer SDK was broken" rationale.
