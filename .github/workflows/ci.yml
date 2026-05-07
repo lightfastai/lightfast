@@ -3,8 +3,24 @@ name: CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'core/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/ci.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'apps/**'
+      - 'packages/**'
+      - 'core/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/ci.yml'
 
 # Cancel previous runs on new pushes to the same PR
 concurrency:
@@ -55,10 +71,6 @@ jobs:
 
       - name: Check boundaries
         run: pnpm turbo boundaries
-
-      - name: Check dead code and unused dependencies
-        continue-on-error: true # Remove after initial cleanup sprint
-        run: pnpm turbo //#knip --summarize
 
       - name: Cache report
         if: always()
