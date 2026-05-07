@@ -29,6 +29,19 @@
       "cache": false,
       "persistent": true
     },
+    "//#check": {
+      "inputs": ["$TURBO_DEFAULT$", "biome.jsonc"],
+      "outputs": []
+    },
+    "//#knip": {
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "knip.json",
+        "package.json",
+        "pnpm-lock.yaml"
+      ],
+      "outputs": []
+    },
     "dev:studio": {
       "cache": false,
       "persistent": true

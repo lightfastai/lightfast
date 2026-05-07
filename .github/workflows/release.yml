@@ -15,6 +15,9 @@ jobs:
     name: Release
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     permissions:
       contents: write
       pull-requests: write
@@ -46,12 +49,19 @@ jobs:
       - name: Build packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter lightfast --filter @lightfastai/mcp --filter @lightfastai/cli
+        run: pnpm turbo build --filter lightfast --filter @lightfastai/mcp --filter @lightfastai/cli --summarize
 
       - name: Run tests
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm --filter lightfast test
+        run: pnpm turbo test --filter=lightfast --summarize
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Release lightfast'
+          artifact-name: turbo-cache-release-lightfast
 
       - name: Dry-run publish to validate packages
         run: |
