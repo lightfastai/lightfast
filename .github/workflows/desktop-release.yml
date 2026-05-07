@@ -71,8 +71,8 @@ jobs:
               "${notes_arg[@]}"
           fi
 
-  build:
-    name: Build ${{ matrix.arch }}
+  build_macos:
+    name: Build macOS ${{ matrix.arch }}
     needs: prepare
     runs-on: macos-14
     timeout-minutes: 60
@@ -166,11 +166,83 @@ jobs:
       - name: Attest build provenance
         uses: actions/attest-build-provenance@v2
         with:
-          subject-path: 'apps/desktop/out/make/**/*.zip'
+          subject-path: |
+            apps/desktop/out/make/**/*.zip
+            apps/desktop/out/make/**/*.dmg
+
+  build_linux:
+    name: Build Linux ${{ matrix.arch }}
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: x64
+            runner: ubuntu-22.04
+          - arch: arm64
+            runner: ubuntu-22.04-arm
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Intentionally no Sentry env vars: sourcemap upload runs on the mac
+      # leg only. Sentry's debug-id system dedupes server-side and the
+      # renderer/main JS source is identical across platforms, so a second
+      # upload would be duplicated work, not added coverage.
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Linux maker prerequisites
+        run: |
+          sudo apt-get update && sudo apt-get install -y rpm fakeroot
+          # Fail fast if the runner image (x64 or arm) is missing any tool
+          which dpkg-deb fakeroot rpm rpmbuild
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Stamp version, buildFlavor, buildNumber, signingMode, prerelease env
+        working-directory: apps/desktop
+        run: |
+          npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm pkg set buildFlavor=prod
+          npm pkg set buildNumber="$GITHUB_RUN_NUMBER"
+          # `signingMode=ad-hoc` keeps build-info shape platform-uniform.
+          # `updater.ts:32-42` returns null on Linux today, so this field is
+          # not yet load-bearing. The future Linux Sparkle PR will read it as
+          # the safe-default guard (same pattern as the mac path). Delete this
+          # line if/when Linux Sparkle introduces a Linux-specific signing scheme.
+          npm pkg set signingMode=ad-hoc
+          echo "LIGHTFAST_DESKTOP_RELEASE_PRERELEASE=${{ needs.prepare.outputs.prerelease }}" >> "$GITHUB_ENV"
+
+      - name: Publish (forge)
+        working-directory: apps/desktop
+        run: pnpm exec electron-forge publish --arch=${{ matrix.arch }} --platform=linux
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: |
+            apps/desktop/out/make/**/*.deb
+            apps/desktop/out/make/**/*.rpm
 
   finalize:
     name: Finalize release
-    needs: [prepare, build]
+    needs: [prepare, build_macos, build_linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
