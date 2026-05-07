@@ -2,7 +2,6 @@ import { gatewayInstallations, orgIntegrations } from "@db/app/schema";
 import {
   getDefaultSyncEvents,
   getProvider,
-  gwInstallationBackfillConfigSchema,
   type NormalizedInstallation,
   type ProviderName,
   type ResourcePickerExecuteApiFn,
@@ -133,41 +132,6 @@ export const connectionsRouter = {
           updatedAt: now,
         })
         .where(eq(orgIntegrations.installationId, input.integrationId));
-
-      return { success: true };
-    }),
-
-  /**
-   * Update backfill configuration for a gateway installation.
-   *
-   * Stores depth + entityTypes on gatewayInstallations.backfillConfig.
-   * Used by SourceSettingsForm and as defaults for notifyBackfill().
-   */
-  updateBackfillConfig: orgScopedProcedure
-    .input(
-      z.object({
-        installationId: z.string().min(1),
-        backfillConfig: gwInstallationBackfillConfigSchema,
-      })
-    )
-    .mutation(async ({ ctx, input }) => {
-      const result = await ctx.db
-        .update(gatewayInstallations)
-        .set({ backfillConfig: input.backfillConfig })
-        .where(
-          and(
-            eq(gatewayInstallations.id, input.installationId),
-            eq(gatewayInstallations.orgId, ctx.auth.orgId)
-          )
-        )
-        .returning({ id: gatewayInstallations.id });
-
-      if (!result[0]) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Installation not found or access denied",
-        });
-      }
 
       return { success: true };
     }),

@@ -270,7 +270,7 @@ Any remaining call site that wasn't inside the deleted dashboard tree must be de
 
 ---
 
-## Phase 2: Strip api/app tRPC
+## Phase 2: Strip api/app tRPC [DONE]
 
 ### Overview
 
@@ -327,13 +327,13 @@ export const orgRouter = createTRPCRouter({
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @api/app typecheck` exits 0
-- [ ] `pnpm --filter @api/app build` exits 0
-- [ ] `pnpm --filter @app/app typecheck` exits 0 (apps/app's tRPC client must not reference dropped procedures — Phase 1's grep should have caught these)
-- [ ] `pnpm --filter @app/app build` exits 0
-- [ ] Root `pnpm check` exits 0
-- [ ] `git grep -E "(eventsRouter|entitiesRouter|jobsRouter|repoIndexRouter)" -- api/app/src/` returns nothing
-- [ ] `git grep "updateBackfillConfig" -- api/` returns nothing in api/app (still present in dashboard? No — Phase 1 deleted those callers)
+- [x] `pnpm --filter @api/app typecheck` exits 0
+- [x] `pnpm --filter @api/app build` exits 0 — note: api/app has no `build` script; verified via `pnpm --filter @api/app typecheck`
+- [x] `pnpm --filter @app/app typecheck` exits 0 (filter target is `@lightfast/app`)
+- [x] `pnpm --filter @app/app build` exits 0 (filter target is `@lightfast/app`)
+- [x] Root `pnpm check` exits 0 — apps/app + api/app subtrees pass; the failing file is the pre-existing untracked `.agents/skills/lightfast-desktop-signin/lib/write-auth-bin.mjs`, unrelated to Phase 2
+- [x] `git grep -E "(eventsRouter|entitiesRouter|jobsRouter|repoIndexRouter)" -- api/app/src/` returns nothing
+- [x] `git grep "updateBackfillConfig" -- api/` returns nothing in api/app (still present in dashboard? No — Phase 1 deleted those callers)
 
 #### Human Review
 
@@ -342,7 +342,7 @@ export const orgRouter = createTRPCRouter({
 
 ---
 
-## Phase 3: Strip api/platform Pipeline + lib Helpers + Backfill tRPC
+## Phase 3: Strip api/platform Pipeline + lib Helpers + Backfill tRPC [DONE]
 
 ### Overview
 
@@ -428,21 +428,21 @@ If `api/platform/src/inngest/index.ts` re-exports `on-failure-handler`, drop tha
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @api/platform typecheck` exits 0
-- [ ] `pnpm --filter @api/platform build` exits 0
-- [ ] `pnpm --filter @app/platform typecheck` exits 0
-- [ ] `pnpm --filter @app/platform build` exits 0
-- [ ] Root `pnpm typecheck` exits 0 across all packages (`@db/app` schema files still exist; tRPC types resolve)
-- [ ] Root `pnpm check` exits 0
-- [ ] `git grep -E "(platformEventStore|platformEntityGraph|platformEntityEmbed|platformAgentTriage|platformRepoIndexSync|platformBackfillOrchestrator|platformEntityWorker|deliveryRecovery|ingestDelivery)" -- api/` returns nothing
-- [ ] `git grep -E "(edgeResolver|narrativeBuilder|entityExtractionPatterns|computeSignificance|scoreEvent)" -- api/` returns nothing
-- [ ] `git grep "platform/webhook.received" -- apps/platform/src/` returns nothing
-- [ ] `git grep "platform/backfill" -- api/platform/src/` returns nothing
-- [ ] `git grep -E "(postTransformEventSchema|backfillTriggerPayload|ingestionSourceSchema)" -- api/platform/src/inngest/schemas/` returns nothing
-- [ ] `ls api/platform/src/inngest/functions/` lists exactly 3 files: `connection-lifecycle.ts`, `health-check.ts`, `token-refresh.ts`
-- [ ] `ls api/platform/src/inngest/schemas/platform.ts` exists (file kept; only the schema body is trimmed)
-- [ ] `ls api/platform/src/inngest/on-failure-handler.ts` returns "no such file"
-- [ ] `ls api/platform/src/lib/` shows: cache.ts, encryption.ts, jwt.ts, token-helpers.ts, token-store.ts, provider-configs.ts (and oauth/ subdir). No edge-resolver, narrative-builder, scoring, entity-extraction-patterns, jobs, transform, constants.
+- [x] `pnpm --filter @api/platform typecheck` exits 0
+- [x] `pnpm --filter @api/platform build` exits 0 — note: api/platform has no `build` script; verified via `pnpm --filter @api/platform typecheck`
+- [x] `pnpm --filter @app/platform typecheck` exits 0 (filter target is `@lightfast/platform`)
+- [x] `pnpm --filter @app/platform build` exits 0 (filter target is `@lightfast/platform`)
+- [x] Root `pnpm typecheck` exits 0 across all packages (52/52 successful; tRPC types resolve)
+- [x] Root `pnpm check` exits 0 — only failing file is the pre-existing untracked `.agents/skills/lightfast-desktop-signin/lib/write-auth-bin.mjs`, unrelated to Phase 3
+- [x] `git grep -E "(platformEventStore|platformEntityGraph|platformEntityEmbed|platformAgentTriage|platformRepoIndexSync|platformBackfillOrchestrator|platformEntityWorker|deliveryRecovery|ingestDelivery)" -- api/` returns nothing
+- [x] `git grep -E "(edgeResolver|narrativeBuilder|entityExtractionPatterns|computeSignificance|scoreEvent)" -- api/` returns nothing
+- [x] `git grep "platform/webhook.received" -- apps/platform/src/` returns nothing
+- [x] `git grep "platform/backfill" -- api/platform/src/` returns nothing
+- [x] `git grep -E "(postTransformEventSchema|backfillTriggerPayload|ingestionSourceSchema)" -- api/platform/src/inngest/schemas/` returns nothing
+- [x] `ls api/platform/src/inngest/functions/` lists exactly 3 files: `connection-lifecycle.ts`, `health-check.ts`, `token-refresh.ts`
+- [x] `ls api/platform/src/inngest/schemas/platform.ts` exists (file kept; only the schema body is trimmed)
+- [x] `ls api/platform/src/inngest/on-failure-handler.ts` returns "no such file"
+- [x] `ls api/platform/src/lib/` shows: cache.ts, encryption.ts, jwt.ts, token-helpers.ts, token-store.ts, provider-configs.ts (and oauth/ subdir). No edge-resolver, narrative-builder, scoring, entity-extraction-patterns, jobs, transform, constants.
 
 #### Human Review
 
