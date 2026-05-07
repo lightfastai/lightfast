@@ -245,3 +245,4 @@ GITHUB_TOKEN=$(gh auth token) \
 pnpm -F @lightfast/desktop exec electron-forge publish \
   --arch=arm64 --platform=darwin
 ```
+
