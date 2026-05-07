@@ -1,0 +1,217 @@
+name: Merge Queue
+
+on:
+  merge_group:
+
+# NEVER cancel a queued merge run mid-flight — GitHub batches PRs into a
+# merge_group and cancelling would re-enqueue everything.
+concurrency:
+  group: merge-queue-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  quality:
+    name: Quality (full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: OpenAPI freshness
+        run: |
+          pnpm turbo generate:openapi --summarize
+          git diff --exit-code packages/app-api-contract/openapi.json || {
+            echo "::error::openapi.json is stale. Run 'pnpm turbo generate:openapi' and commit the result."
+            exit 1
+          }
+
+      - name: Lint (biome)
+        run: pnpm turbo //#check --summarize
+
+      - name: Typecheck (full, no --affected)
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo typecheck --continue --summarize
+
+      - name: Boundaries
+        run: pnpm turbo boundaries
+
+      - name: Knip dead-code
+        run: pnpm turbo //#knip --summarize
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Merge Queue / Quality'
+          artifact-name: turbo-cache-merge-queue-quality
+
+  core-build:
+    name: Core build + test (full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build core packages
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --summarize
+
+      - name: Test lightfast
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm turbo test --filter=lightfast --summarize
+
+      - name: Verify build outputs
+        run: |
+          ls -la core/lightfast/dist/
+          ls -la core/mcp/dist/
+          ls -la core/cli/dist/
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Merge Queue / Core build + test'
+          artifact-name: turbo-cache-merge-queue-core-build
+
+  desktop-package:
+    name: Desktop package + e2e (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-14, ubuntu-22.04]
+    env:
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install Linux maker prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update && sudo apt-get install -y rpm fakeroot
+          which dpkg-deb fakeroot rpm rpmbuild
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm turbo typecheck --filter=@lightfast/desktop --summarize
+
+      - name: Package (unsigned)
+        run: pnpm turbo package --filter=@lightfast/desktop --summarize
+
+      - name: E2E (Playwright Electron)
+        if: runner.os == 'macOS'
+        run: pnpm --filter @lightfast/desktop exec playwright test --config=playwright.config.ts
+
+      - name: Upload Playwright report on failure
+        if: failure() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report-merge-queue-${{ matrix.os }}
+          path: apps/desktop/playwright-report/
+          retention-days: 7
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Merge Queue / Desktop ${{ matrix.os }}'
+          artifact-name: turbo-cache-merge-queue-desktop-${{ matrix.os }}
+
+  codeql:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      security-events: write
+      packages: read
+      actions: read
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - language: actions
+            build-mode: none
+          - language: javascript-typescript
+            build-mode: none
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - uses: github/codeql-action/init@ed410739ba306e4ebe5e123421a6bd694e494a2b # v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: ${{ matrix.build-mode }}
+          config-file: ./.github/codeql/codeql-config.yml
+
+      - uses: github/codeql-action/analyze@ed410739ba306e4ebe5e123421a6bd694e494a2b # v4
+        with:
+          category: "/language:${{ matrix.language }}"
+
+  merge-queue-success:
+    name: merge-queue-success
+    if: always()
+    needs: [quality, core-build, desktop-package, codeql]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate gate
+        run: |
+          quality="${{ needs.quality.result }}"
+          core_build="${{ needs.core-build.result }}"
+          desktop_package="${{ needs.desktop-package.result }}"
+          codeql="${{ needs.codeql.result }}"
+          echo "quality=$quality core-build=$core_build desktop-package=$desktop_package codeql=$codeql"
+          if [[ "$quality" != "success" || \
+                "$core_build" != "success" || \
+                "$desktop_package" != "success" || \
+                "$codeql" != "success" ]]; then
+            echo "Merge queue gate failed."
+            exit 1
+          fi
+          echo "All merge-queue checks passed."

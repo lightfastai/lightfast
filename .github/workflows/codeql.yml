@@ -3,8 +3,7 @@ name: "CodeQL"
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
+  # PR trigger removed — CodeQL runs on merge-queue (see merge-queue.yml) + main push + weekly cron
   schedule:
     - cron: "30 3 * * 1"
 
