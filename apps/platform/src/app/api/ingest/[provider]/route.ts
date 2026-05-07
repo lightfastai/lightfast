@@ -7,7 +7,6 @@
  * NOT tRPC — external providers send raw HTTP with HMAC signatures.
  */
 
-import { inngest } from "@api/platform/inngest/client";
 import { getProviderConfigs } from "@api/platform/lib/provider-configs";
 import { db } from "@db/app/client";
 import { gatewayWebhookDeliveries } from "@db/app/schema";
@@ -176,29 +175,11 @@ async function handleStandardWebhook(
     })
     .onConflictDoNothing();
 
-  // Dispatch Inngest event
-  const correlationId = crypto.randomUUID();
-
-  await inngest.send({
-    id: `wh-${providerSlug}-${deliveryId}`,
-    name: "platform/webhook.received",
-    data: {
-      provider: providerSlug,
-      deliveryId,
-      eventType,
-      resourceId,
-      payload: parsedPayload,
-      receivedAt,
-      correlationId,
-    },
-  });
-
   log.info("[ingest] webhook received", {
     provider: providerSlug,
     deliveryId,
     eventType,
     resourceId,
-    correlationId,
   });
 
   return Response.json({ status: "accepted", deliveryId });
