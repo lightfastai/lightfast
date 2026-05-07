@@ -55,6 +55,31 @@ Linux auto-update is not yet wired — re-download manually for new versions.
 pnpm -F @lightfast/desktop dev
 ```
 
+## Native module ABI rebuilds
+
+`better-sqlite3` is a native module. Its `.node` binding must match the host's
+ABI:
+
+All commands below run from the repo root:
+
+- After `pnpm install` you have a Node-ABI prebuilt —
+  `pnpm -F @lightfast/desktop test` works.
+- `pnpm -F @lightfast/desktop dev` (electron-forge start) rebuilds in-tree to
+  Electron's ABI — `pnpm -F @lightfast/desktop test` will then fail with
+  `NODE_MODULE_VERSION` mismatch.
+- Run `pnpm -F @lightfast/desktop rebuild:sqlite:node` to flip back to Node ABI
+  before testing, `pnpm -F @lightfast/desktop rebuild:sqlite` to flip back to
+  Electron ABI before dev/package.
+
+CI runs `pnpm test` before `pnpm package`, so the ordering is already correct
+in `desktop-ci.yml`.
+
+If `app.db_v1` ever ends up corrupted between boots, `initDb()` logs and
+falls back to defaults; settings are not persisted until the file is removed.
+Schema upgrades flow through `PRAGMA user_version` migrations in-place, so
+the filename only bumps for ground-up rewrites — routine schema evolution
+preserves existing data.
+
 ## Local development
 
 The desktop app is a Clerk-authenticated tRPC client for the `apps/app` API.
@@ -225,3 +250,4 @@ GITHUB_TOKEN=$(gh auth token) \
 pnpm -F @lightfast/desktop exec electron-forge publish \
   --arch=arm64 --platform=darwin
 ```
+

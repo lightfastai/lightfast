@@ -36,7 +36,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14, ubuntu-22.04]
+        os: [macos-14]
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -62,13 +62,28 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: pnpm --filter @lightfast/desktop typecheck
+        run: pnpm turbo typecheck --filter=@lightfast/desktop --summarize
+
+      - name: Test
+        run: pnpm --filter @lightfast/desktop test
 
       - name: Package (unsigned)
         # electron-forge defaults to host platform: macOS leg packages darwin
         # via MakerZIP/MakerDMG, Linux leg packages linux via MakerDeb/MakerRpm.
         # Each maker's platform filter (forge.config.ts:143-152) does the routing.
-        run: pnpm --filter @lightfast/desktop package
+        run: pnpm turbo package --filter=@lightfast/desktop --summarize
+
+      - name: Upload packaged app
+        # Lets reviewers grab the packaged tree to verify native bindings ship
+        # under app.asar.unpacked/ (e.g. better_sqlite3.node on both legs).
+        # if-no-files-found=error catches a silent forge regression where out/
+        # doesn't materialize.
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-package-${{ runner.os }}
+          path: apps/desktop/out/
+          retention-days: 7
+          if-no-files-found: error
 
       - name: E2E (Playwright Electron)
         # macOS-only: Linux Electron e2e needs Xvfb/system deps that W5 didn't
@@ -84,3 +99,10 @@ jobs:
           name: playwright-report
           path: apps/desktop/playwright-report/
           retention-days: 7
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Desktop CI / ${{ matrix.os }}'
+          artifact-name: turbo-cache-desktop-ci-${{ matrix.os }}

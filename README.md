@@ -236,3 +236,4 @@ Lightfast is open source:
 - **SDKs and shared libraries** (`core/*`, `vendor/*`, UI kit, shared utilities): MIT License (see each package's `LICENSE` file or `package.json`).
 
 Contributions are accepted under the [Developer Certificate of Origin](https://developercertificate.org/) via `Signed-off-by:` on commits. See [CONTRIBUTING.md](CONTRIBUTING.md).
+

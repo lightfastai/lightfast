@@ -3,8 +3,18 @@ name: Core CI
 on:
   push:
     branches: [main]
+    paths:
+      - 'core/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/ci-core.yml'
   pull_request:
     branches: [main]
+    paths:
+      - 'core/**'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - '.github/workflows/ci-core.yml'
 
 # Cancel previous runs on new pushes to the same PR
 concurrency:
@@ -12,9 +22,10 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  quality:
-    name: Quality
+  core-ci:
+    name: core-ci
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
@@ -37,107 +48,17 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Lint (biome)
-        run: pnpm check
+        run: pnpm turbo //#check --summarize
 
-      - name: Type check packages
+      - name: Type check affected core packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo typecheck --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: pnpm turbo typecheck --affected --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue --summarize
 
-  # Test (simple test run on Node 22)
-  test:
-    name: Test
-    runs-on: ubuntu-latest
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
         with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Test lightfast
-        env:
-          SKIP_ENV_VALIDATION: "true"
-        run: pnpm --filter lightfast test
-
-  # Build check (runs on Node 22)
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    env:
-      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v4
-
-      - name: Setup Node.js 22
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: 'pnpm'
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Build packages
-        env:
-          SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli
-
-      - name: Check build outputs
-        run: |
-          echo "lightfast build outputs:"
-          ls -la core/lightfast/dist/
-          echo ""
-          echo "@lightfastai/mcp build outputs:"
-          ls -la core/mcp/dist/
-          echo ""
-          echo "@lightfastai/cli build outputs:"
-          ls -la core/cli/dist/
-          echo "All builds completed successfully"
-
-  # Summary job (required status check)
-  core-ci-success:
-    name: Core CI Success
-    if: always()
-    needs: [quality, test, build]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Evaluate results
-        run: |
-          quality="${{ needs.quality.result }}"
-          test="${{ needs.test.result }}"
-          build="${{ needs.build.result }}"
-
-          echo "quality.result   = $quality"
-          echo "test.result      = $test"
-          echo "build.result     = $build"
-
-          if [[ "$quality" != "success" || \
-                "$test" != "success" || \
-                "$build" != "success" ]]; then
-            echo "One or more Core CI jobs failed."
-            exit 1
-          fi
-
-          echo "All Core CI checks passed."
+          title: 'Turbo cache report — Core CI / core-ci'
+          artifact-name: turbo-cache-core-ci

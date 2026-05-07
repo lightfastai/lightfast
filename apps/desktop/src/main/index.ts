@@ -29,6 +29,7 @@ import {
   signOut as signOutAuth,
 } from "./auth-store";
 import { getBuildInfo } from "./build-info";
+import { closeDb, initDb } from "./db";
 import { initLogger, logger } from "./logger";
 import { buildApplicationMenu } from "./menu";
 import { registerProtocolHandler } from "./protocol";
@@ -344,6 +345,7 @@ function broadcastSettings(snapshot: SettingsSnapshot): void {
 
 initLogger();
 initSentry();
+initDb();
 
 // Register the custom-scheme handler synchronously, before app.whenReady().
 // macOS delivers cold-start `open-url` events between app launch and ready;
@@ -416,6 +418,7 @@ app.whenReady().then(() => {
 });
 
 app.on("will-quit", () => {
+  closeDb();
   unregisterGlobalShortcuts();
   destroyTray();
 });

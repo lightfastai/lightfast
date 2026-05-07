@@ -1,0 +1,30 @@
+name: 'Turbo cache summary'
+description: 'Summarize the latest .turbo/runs/*.json into the workflow summary, and upload as artifact.'
+inputs:
+  title:
+    description: 'Title shown in the workflow summary section'
+    required: true
+  artifact-name:
+    description: 'Artifact name (must be unique per job)'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Append cache report to workflow summary
+      shell: bash
+      run: |
+        if [ -d ".turbo/runs" ]; then
+          node scripts/turbo-cache-report.mjs .turbo/runs "${{ inputs.title }}" >> "$GITHUB_STEP_SUMMARY"
+        else
+          echo "### ${{ inputs.title }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "_Turbo wasn't run with \`--summarize\` in this job — no report available._" >> "$GITHUB_STEP_SUMMARY"
+        fi
+    - name: Upload .turbo/runs artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name }}
+        path: .turbo/runs/
+        if-no-files-found: ignore
+        retention-days: 7
