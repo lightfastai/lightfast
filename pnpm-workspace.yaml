@@ -92,6 +92,7 @@ onlyBuiltDependencies:
   - '@sentry/cli'
   - '@tailwindcss/oxide'
   - '@vercel/speed-insights'
+  - better-sqlite3
   - bufferutil
   - core-js
   - core-js-pure

@@ -64,11 +64,26 @@ jobs:
       - name: Typecheck
         run: pnpm turbo typecheck --filter=@lightfast/desktop --summarize
 
+      - name: Test
+        run: pnpm --filter @lightfast/desktop test
+
       - name: Package (unsigned)
         # electron-forge defaults to host platform: macOS leg packages darwin
         # via MakerZIP/MakerDMG, Linux leg packages linux via MakerDeb/MakerRpm.
         # Each maker's platform filter (forge.config.ts:143-152) does the routing.
         run: pnpm turbo package --filter=@lightfast/desktop --summarize
+
+      - name: Upload packaged app
+        # Lets reviewers grab the packaged tree to verify native bindings ship
+        # under app.asar.unpacked/ (e.g. better_sqlite3.node on both legs).
+        # if-no-files-found=error catches a silent forge regression where out/
+        # doesn't materialize.
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-package-${{ runner.os }}
+          path: apps/desktop/out/
+          retention-days: 7
+          if-no-files-found: error
 
       - name: E2E (Playwright Electron)
         # macOS-only: Linux Electron e2e needs Xvfb/system deps that W5 didn't

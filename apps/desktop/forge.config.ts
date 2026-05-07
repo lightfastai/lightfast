@@ -1,6 +1,7 @@
 import { execFileSync } from "node:child_process";
-import { cpSync, existsSync } from "node:fs";
-import { resolve } from "node:path";
+import { cpSync, existsSync, mkdirSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, resolve } from "node:path";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
 import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerDMG } from "@electron-forge/maker-dmg";
@@ -83,6 +84,44 @@ const githubPublisher = process.env.GITHUB_TOKEN
 // inject there, then mirror the modified files back to the source `.vite/`
 // so `scripts/upload-sourcemaps.mjs` uploads sourcemaps with debug-ids that
 // match what got packed.
+// plugin-vite's resolveForgeConfig defaults packagerConfig.ignore to allow
+// only `/.vite/...`, so node_modules is never copied. AutoUnpackNativesPlugin
+// then has no .node files to unpack. Copy better-sqlite3 + its runtime
+// transitive deps into <buildPath>/node_modules/ ourselves; AutoUnpack will
+// take it from there.
+const NATIVE_RUNTIME_MODULES = [
+  "better-sqlite3",
+  "bindings",
+  "file-uri-to-path",
+];
+
+function copyNativeRuntimeModules(buildPath: string, sourceRoot: string): void {
+  const requireFromSource = createRequire(resolve(sourceRoot, "package.json"));
+  const targetNodeModules = resolve(buildPath, "node_modules");
+  mkdirSync(targetNodeModules, { recursive: true });
+
+  // Resolve transitively: better-sqlite3 from sourceRoot; bindings from
+  // inside better-sqlite3; file-uri-to-path from inside bindings.
+  const resolveDir = (name: string, fromDir: string): string => {
+    const fromRequire = createRequire(resolve(fromDir, "package.json"));
+    return dirname(fromRequire.resolve(`${name}/package.json`));
+  };
+
+  let from = sourceRoot;
+  for (const name of NATIVE_RUNTIME_MODULES) {
+    const sourceDir =
+      name === "better-sqlite3"
+        ? dirname(requireFromSource.resolve(`${name}/package.json`))
+        : resolveDir(name, from);
+    const targetDir = resolve(targetNodeModules, name);
+    cpSync(sourceDir, targetDir, {
+      recursive: true,
+      dereference: true,
+    });
+    from = sourceDir;
+  }
+}
+
 function injectSentryDebugIds(buildPath: string, sourceRoot: string): void {
   if (!process.env.SENTRY_AUTH_TOKEN) {
     return;
@@ -108,6 +147,7 @@ function injectSentryDebugIds(buildPath: string, sourceRoot: string): void {
 const config: ForgeConfig = {
   hooks: {
     packageAfterCopy: async (_forgeConfig, buildPath) => {
+      copyNativeRuntimeModules(buildPath, import.meta.dirname);
       injectSentryDebugIds(buildPath, import.meta.dirname);
     },
   },
@@ -141,7 +181,9 @@ const config: ForgeConfig = {
     },
     protocols: [{ name: "Lightfast", schemes: [URL_SCHEME] }],
   },
-  rebuildConfig: {},
+  rebuildConfig: {
+    onlyModules: ["better-sqlite3"],
+  },
   makers: [
     new MakerSquirrel({
       name: "lightfast",
