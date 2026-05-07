@@ -10,7 +10,7 @@ See `SPEC.md` for business goals and product vision.
 
 ## Architecture
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │  Local dev — Portless HTTPS aggregate (port 443)                                 │
 │  https://[<wt>.]lightfast.localhost                                              │
@@ -75,7 +75,7 @@ pnpm db:migrate
 pnpm db:studio
 ```
 
-Note: ngrok and inngest automatically runs with `pnpm dev:app`. You can test ngrok connection with `ps aux | grep ngrok | grep -v grep`
+Note: `pnpm dev:app` does NOT auto-start ngrok or Inngest. Start them explicitly with `pnpm dev:ngrok` and `pnpm dev:inngest` (or `pnpm dev:services` for both). See `CLAUDE.md` for the canonical reference.
 
 ## Key Rules
 
