@@ -7,6 +7,7 @@ import { shell } from "electron";
 import { z } from "zod";
 import { createAppUrl } from "./app-url";
 import { getToken, setToken } from "./auth-store";
+import { logger } from "./logger";
 import { getProtocolScheme, onProtocolUrl } from "./protocol";
 
 const DEFAULT_SIGNIN_TIMEOUT_MS = 5 * 60_000;
@@ -207,7 +208,7 @@ async function runSignIn(): Promise<string | null> {
         emitAgentEvent({ event: "auth_signed_in" });
         settle(token);
       } catch (error) {
-        console.error("[auth-flow] callback handler error", error);
+        logger.error("[auth-flow] callback handler error", error);
         captureException(error, {
           tags: { scope: "auth-flow.handler_error" },
         });
@@ -231,7 +232,7 @@ async function runSignIn(): Promise<string | null> {
     }
 
     shell.openExternal(signinUrl.toString()).catch((error) => {
-      console.error("[auth-flow] shell.openExternal failed", error);
+      logger.error("[auth-flow] shell.openExternal failed", error);
       captureException(error, {
         tags: { scope: "auth-flow.open_external" },
       });
