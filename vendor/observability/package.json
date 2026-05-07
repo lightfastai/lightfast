@@ -17,6 +17,10 @@
       "types": "./src/sentry-electron-main.ts",
       "default": "./src/sentry-electron-main.ts"
     },
+    "./sentry-electron-renderer": {
+      "types": "./src/sentry-electron-renderer.ts",
+      "default": "./src/sentry-electron-renderer.ts"
+    },
     "./sentry-browser": {
       "types": "./src/sentry-browser.ts",
       "default": "./src/sentry-browser.ts"

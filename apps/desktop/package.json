@@ -45,7 +45,7 @@
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "catalog:",
     "@repo/app-trpc": "workspace:*",
-    "@sentry/electron": "^7.11.0",
+    "@sentry/electron": "catalog:",
     "@tanstack/query-core": "^5.99.1",
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
