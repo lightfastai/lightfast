@@ -2,10 +2,6 @@ import { relations } from "drizzle-orm";
 import { gatewayInstallations } from "./tables/gateway-installations";
 import { gatewayLifecycleLogs } from "./tables/gateway-lifecycle-log";
 import { gatewayTokens } from "./tables/gateway-tokens";
-import { orgEntities } from "./tables/org-entities";
-import { orgEntityEdges } from "./tables/org-entity-edges";
-import { orgEventEntities } from "./tables/org-event-entities";
-import { orgEvents } from "./tables/org-events";
 import { orgIntegrations } from "./tables/org-integrations";
 
 /**
@@ -51,38 +47,3 @@ export const orgIntegrationsRelations = relations(
     }),
   })
 );
-
-export const orgEventsRelations = relations(orgEvents, ({ many }) => ({
-  entityEvents: many(orgEventEntities),
-}));
-
-// Entity-event junction relations
-export const orgEventEntitiesRelations = relations(
-  orgEventEntities,
-  ({ one }) => ({
-    entity: one(orgEntities, {
-      fields: [orgEventEntities.entityId],
-      references: [orgEntities.id],
-    }),
-    event: one(orgEvents, {
-      fields: [orgEventEntities.eventId],
-      references: [orgEvents.id],
-    }),
-  })
-);
-
-// Entity↔entity edges relations
-export const orgEntityEdgesRelations = relations(orgEntityEdges, ({ one }) => ({
-  sourceEntity: one(orgEntities, {
-    fields: [orgEntityEdges.sourceEntityId],
-    references: [orgEntities.id],
-  }),
-  targetEntity: one(orgEntities, {
-    fields: [orgEntityEdges.targetEntityId],
-    references: [orgEntities.id],
-  }),
-  sourceEvent: one(orgEvents, {
-    fields: [orgEntityEdges.sourceEventId],
-    references: [orgEvents.id],
-  }),
-}));

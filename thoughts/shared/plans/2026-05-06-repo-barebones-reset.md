@@ -639,7 +639,7 @@ The package is kept (per "What We're NOT Doing"), but several schema files have 
 
 ---
 
-## Phase 5: Strip db/app Schema TS Files
+## Phase 5: Strip db/app Schema TS Files [DONE]
 
 ### Overview
 
@@ -700,16 +700,16 @@ This is documentation, not enforcement. The user is the only one who runs `pnpm 
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @db/app typecheck` exits 0
-- [ ] `pnpm --filter @db/app build` exits 0 (if @db/app has a build step)
-- [ ] Root `pnpm typecheck` exits 0
-- [ ] Root `pnpm check` exits 0
-- [ ] `pnpm --filter @api/platform typecheck` exits 0
-- [ ] `pnpm --filter @api/app typecheck` exits 0
-- [ ] `pnpm --filter @app/app typecheck` exits 0
-- [ ] `pnpm --filter @app/platform typecheck` exits 0
-- [ ] `git grep -E "(orgEvents|orgEntities|orgEventEntities|orgEntityEdges|orgIngestLogs|orgRepoIndexes|gatewayBackfillRuns)" -- '!*.md' '!thoughts/' '!*.sql'` returns nothing
-- [ ] `ls db/app/src/schema/tables/` lists exactly 8 files: `gateway-installations.ts`, `gateway-tokens.ts`, `gateway-lifecycle-log.ts`, `gateway-webhook-deliveries.ts`, `org-integrations.ts`, `org-workflow-runs.ts`, `org-user-activities.ts`, `org-api-keys.ts`, plus `index.ts`
+- [x] `pnpm --filter @db/app typecheck` exits 0
+- [x] `pnpm --filter @db/app build` exits 0 (if @db/app has a build step) — note: @db/app has no `build` script; verified via typecheck
+- [x] Root `pnpm typecheck` exits 0 (51/51 successful)
+- [x] Root `pnpm check` exits 0 — only failing file is the pre-existing untracked `.agents/skills/lightfast-desktop-signin/lib/write-auth-bin.mjs`, unrelated to Phase 5
+- [x] `pnpm --filter @api/platform typecheck` exits 0
+- [x] `pnpm --filter @api/app typecheck` exits 0
+- [x] `pnpm --filter @lightfast/app typecheck` exits 0 (filter target is `@lightfast/app`)
+- [x] `pnpm --filter @lightfast/platform typecheck` exits 0 (filter target is `@lightfast/platform`)
+- [x] `git grep -E "(orgEvents|orgEntities|orgEventEntities|orgEntityEdges|orgIngestLogs|orgRepoIndexes|gatewayBackfillRuns)" -- '!*.md' '!thoughts/' '!*.sql'` returns nothing — also rewrote stray consumer `packages/app-test-data/src/assert.ts` (dropped `orgIngestLogs` polling; the package was a sandbox tool for the now-deleted neural pipeline)
+- [x] `ls db/app/src/schema/tables/` lists exactly 8 files: `gateway-installations.ts`, `gateway-tokens.ts`, `gateway-lifecycle-log.ts`, `gateway-webhook-deliveries.ts`, `org-integrations.ts`, `org-workflow-runs.ts`, `org-user-activities.ts`, `org-api-keys.ts`, plus `index.ts`
 - [ ] `pnpm db:generate --check` (if such a flag exists) reports a non-empty diff (the dropped tables) — confirm the diff matches expectation. Do **NOT** apply the migration. If the flag doesn't exist, just confirm `pnpm db:generate` would generate a drop migration by inspecting the proposed SQL output.
 
 #### Human Review

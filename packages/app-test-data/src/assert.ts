@@ -1,5 +1,5 @@
 import { db } from "@db/app/client";
-import { gatewayWebhookDeliveries, orgIngestLogs } from "@db/app/schema";
+import { gatewayWebhookDeliveries } from "@db/app/schema";
 import type { ProviderSlug } from "@repo/app-providers";
 import { and, eq } from "drizzle-orm";
 import {
@@ -16,7 +16,6 @@ import type {
 interface AssertionTimeoutErrorFields {
   deliveryId: string;
   elapsedMs: number;
-  lastIngestLogs: number;
   lastStatus: string | null;
   provider: ProviderSlug;
   scenario: string;
@@ -26,7 +25,6 @@ interface AssertionTimeoutErrorFields {
 class AssertionTimeoutError extends Error {
   readonly deliveryId: string;
   readonly elapsedMs: number;
-  readonly lastIngestLogs: number;
   readonly lastStatus: string | null;
   readonly provider: ProviderSlug;
   readonly scenario: string;
@@ -37,7 +35,6 @@ class AssertionTimeoutError extends Error {
     this.name = "AssertionTimeoutError";
     this.deliveryId = fields.deliveryId;
     this.elapsedMs = fields.elapsedMs;
-    this.lastIngestLogs = fields.lastIngestLogs;
     this.lastStatus = fields.lastStatus;
     this.provider = fields.provider;
     this.scenario = fields.scenario;
@@ -68,7 +65,6 @@ async function assertReplayResult(
 
   const startedAt = Date.now();
   let lastStatus: string | null = null;
-  let lastIngestLogs = 0;
 
   while (Date.now() - startedAt < timeoutMs) {
     const [delivery] = await db
@@ -84,32 +80,16 @@ async function assertReplayResult(
       )
       .limit(1);
 
-    const ingestLogs = await db
-      .select({ id: orgIngestLogs.id })
-      .from(orgIngestLogs)
-      .where(
-        and(
-          eq(orgIngestLogs.clerkOrgId, scenario.clerkOrgId),
-          eq(orgIngestLogs.deliveryId, replayResult.deliveryId)
-        )
-      );
-
     lastStatus = delivery?.status ?? null;
-    lastIngestLogs = ingestLogs.length;
 
     const deliveryOk = step.expectedDeliveryStatus
       ? lastStatus === step.expectedDeliveryStatus
       : delivery !== undefined;
-    const ingestOk =
-      step.expectedIngestLogs === undefined
-        ? true
-        : lastIngestLogs >= step.expectedIngestLogs;
 
-    if (deliveryOk && ingestOk) {
+    if (deliveryOk) {
       return {
         deliveryId: replayResult.deliveryId,
         deliveryStatus: lastStatus,
-        ingestLogs: lastIngestLogs,
         provider: replayResult.provider,
       };
     }
@@ -119,11 +99,10 @@ async function assertReplayResult(
 
   throw new AssertionTimeoutError(
     `Timed out waiting for replay ${replayResult.deliveryId} ` +
-      `(status=${lastStatus ?? "missing"}, ingestLogs=${lastIngestLogs})`,
+      `(status=${lastStatus ?? "missing"})`,
     {
       deliveryId: replayResult.deliveryId,
       elapsedMs: Date.now() - startedAt,
-      lastIngestLogs,
       lastStatus,
       provider: replayResult.provider,
       scenario: scenario.name,

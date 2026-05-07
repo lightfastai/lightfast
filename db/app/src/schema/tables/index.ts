@@ -1,11 +1,6 @@
 // Platform-owned tables (gateway_* prefix is historical)
 
 export {
-  type GatewayBackfillRun,
-  gatewayBackfillRuns,
-  type InsertGatewayBackfillRun,
-} from "./gateway-backfill-runs";
-export {
   type GatewayInstallation,
   gatewayInstallations,
   type InsertGatewayInstallation,
@@ -31,47 +26,11 @@ export {
   type OrgApiKey,
   orgApiKeys,
 } from "./org-api-keys";
-// Org entities
-export {
-  type InsertOrgEntity,
-  type OrgEntity,
-  orgEntities,
-} from "./org-entities";
-// Entity↔entity edges
-export {
-  type InsertOrgEntityEdge,
-  type OrgEntityEdge,
-  orgEntityEdges,
-} from "./org-entity-edges";
-// Entity-event junction
-export {
-  type InsertOrgEventEntity,
-  type OrgEventEntity,
-  orgEventEntities,
-} from "./org-event-entities";
-// Org events (neural observations)
-export {
-  type InsertOrgEvent,
-  type OrgEvent,
-  orgEvents,
-} from "./org-events";
-// Org ingest log (raw webhook ingress log)
-export {
-  type InsertOrgIngestLog,
-  type OrgIngestLog,
-  orgIngestLogs,
-} from "./org-ingest-logs";
 export {
   type InsertOrgIntegration,
   type OrgIntegration,
   orgIntegrations,
 } from "./org-integrations";
-// Org repo indexes (.lightfast repo indexing)
-export {
-  type InsertOrgRepoIndex,
-  type OrgRepoIndex,
-  orgRepoIndexes,
-} from "./org-repo-indexes";
 export {
   type InsertOrgUserActivity,
   type OrgUserActivity,
