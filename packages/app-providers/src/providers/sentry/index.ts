@@ -18,7 +18,6 @@ import {
   sentryOAuthResponseSchema,
   sentryProviderConfigSchema,
 } from "./auth";
-import { sentryBackfill } from "./backfill";
 import {
   preTransformSentryErrorWebhookSchema,
   preTransformSentryEventAlertWebhookSchema,
@@ -26,12 +25,6 @@ import {
   preTransformSentryMetricAlertWebhookSchema,
   sentryWebhookPayloadSchema,
 } from "./schemas";
-import {
-  transformSentryError,
-  transformSentryEventAlert,
-  transformSentryIssue,
-  transformSentryMetricAlert,
-} from "./transformers";
 
 // ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
 
@@ -136,7 +129,6 @@ export const sentry = defineWebhookProvider({
       label: "Issues",
       weight: 55,
       schema: preTransformSentryIssueWebhookSchema,
-      transform: transformSentryIssue,
       actions: {
         created: { label: "Issue Created", weight: 55 },
         resolved: { label: "Issue Resolved", weight: 50 },
@@ -150,19 +142,16 @@ export const sentry = defineWebhookProvider({
       label: "Errors",
       weight: 45,
       schema: preTransformSentryErrorWebhookSchema,
-      transform: transformSentryError,
     }),
     event_alert: simpleEvent({
       label: "Event Alerts",
       weight: 65,
       schema: preTransformSentryEventAlertWebhookSchema,
-      transform: transformSentryEventAlert,
     }),
     metric_alert: simpleEvent({
       label: "Metric Alerts",
       weight: 70,
       schema: preTransformSentryMetricAlertWebhookSchema,
-      transform: transformSentryMetricAlert,
     }),
   },
 
@@ -190,7 +179,6 @@ export const sentry = defineWebhookProvider({
   deriveObservationType: (sourceType) => sourceType,
 
   api: sentryApi,
-  backfill: sentryBackfill,
 
   healthCheck: {
     check: async (config, externalId, _accessToken) => {
@@ -260,8 +248,6 @@ export const sentry = defineWebhookProvider({
       }));
     },
   },
-
-  edgeRules: [],
 
   webhook: {
     headersSchema: z.object({

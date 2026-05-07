@@ -2,10 +2,9 @@ import type { z } from "zod";
 import type { ProviderDisplayEntry } from "../client/display";
 import type { HealthCheckDef, ProviderApi, RuntimeConfig } from "./api";
 import type { AuthDef } from "./auth";
-import type { BackfillDef } from "./backfill";
 import type { EventDefinition } from "./events";
 import type { CategoryDef } from "./kinds";
-import type { BaseProviderAccountInfo, EdgeRule } from "./primitives";
+import type { BaseProviderAccountInfo } from "./primitives";
 import type { ResourcePickerDef } from "./resource-picker";
 import type {
   InboundWebhookDef,
@@ -41,8 +40,6 @@ interface BaseProviderFields<
   readonly defaultSyncEvents: readonly string[];
   /** Map sourceType to observation type string for storage. */
   readonly deriveObservationType: (sourceType: string) => string;
-  /** Declarative edge rules for entity-mediated relationship detection */
-  readonly edgeRules?: EdgeRule[];
   /** Pre-built createEnv() preset — for use in @t3-oss/env-core `extends` arrays.
    *  Lazy: only validates on first access. */
   readonly env: Record<string, string>;
@@ -104,8 +101,6 @@ export interface WebhookProvider<
   > {
   /** Auth strategy — inferred as the specific concrete auth type for this provider */
   readonly auth: TAuth;
-  /** Historical data import */
-  readonly backfill: BackfillDef;
   /** Discriminant — injected by defineWebhookProvider() */
   readonly kind: "webhook";
   /** HMAC verification + event extraction */
@@ -144,8 +139,6 @@ export interface ManagedProvider<
   > {
   /** Auth strategy — OAuth or API key */
   readonly auth: AuthDef<TConfig, TAccountInfo>;
-  /** Optional: historical data import */
-  readonly backfill?: BackfillDef;
   /** Programmatic webhook lifecycle + inbound event handling */
   readonly inbound: ManagedWebhookDef<TConfig>;
   /** Discriminant — injected by defineManagedProvider() */
@@ -179,8 +172,6 @@ export interface ApiProvider<
   > {
   /** Auth strategy — OAuth or API key */
   readonly auth: AuthDef<TConfig, TAccountInfo>;
-  /** Optional: historical data import */
-  readonly backfill?: BackfillDef;
   /** Optional inbound webhook reception — for API-key providers with manual webhook setup */
   readonly inbound?: InboundWebhookDef<TConfig>;
   /** Discriminant — injected by defineApiProvider() */

@@ -17,7 +17,6 @@ import {
   linearOAuthResponseSchema,
   linearProviderConfigSchema,
 } from "./auth";
-import { linearBackfill } from "./backfill";
 import {
   linearWebhookPayloadSchema,
   preTransformLinearCommentWebhookSchema,
@@ -26,13 +25,6 @@ import {
   preTransformLinearProjectUpdateWebhookSchema,
   preTransformLinearProjectWebhookSchema,
 } from "./schemas";
-import {
-  transformLinearComment,
-  transformLinearCycle,
-  transformLinearIssue,
-  transformLinearProject,
-  transformLinearProjectUpdate,
-} from "./transformers";
 
 // ── Linear-specific helpers ──
 
@@ -218,7 +210,6 @@ export const linear = defineWebhookProvider({
       label: "Issues",
       weight: 50,
       schema: preTransformLinearIssueWebhookSchema,
-      transform: transformLinearIssue,
       actions: {
         created: { label: "Issue Created", weight: 50 },
         updated: { label: "Issue Updated", weight: 35 },
@@ -229,7 +220,6 @@ export const linear = defineWebhookProvider({
       label: "Comments",
       weight: 25,
       schema: preTransformLinearCommentWebhookSchema,
-      transform: transformLinearComment,
       actions: {
         created: { label: "Comment Added", weight: 25 },
         updated: { label: "Comment Updated", weight: 20 },
@@ -240,7 +230,6 @@ export const linear = defineWebhookProvider({
       label: "Projects",
       weight: 45,
       schema: preTransformLinearProjectWebhookSchema,
-      transform: transformLinearProject,
       actions: {
         created: { label: "Project Created", weight: 45 },
         updated: { label: "Project Updated", weight: 35 },
@@ -251,7 +240,6 @@ export const linear = defineWebhookProvider({
       label: "Cycles",
       weight: 40,
       schema: preTransformLinearCycleWebhookSchema,
-      transform: transformLinearCycle,
       actions: {
         created: { label: "Cycle Created", weight: 40 },
         updated: { label: "Cycle Updated", weight: 30 },
@@ -262,7 +250,6 @@ export const linear = defineWebhookProvider({
       label: "Project Updates",
       weight: 45,
       schema: preTransformLinearProjectUpdateWebhookSchema,
-      transform: transformLinearProjectUpdate,
       actions: {
         created: { label: "Project Update Posted", weight: 45 },
         updated: { label: "Project Update Edited", weight: 30 },
@@ -300,7 +287,6 @@ export const linear = defineWebhookProvider({
   deriveObservationType: (sourceType) => sourceType,
 
   api: linearApi,
-  backfill: linearBackfill,
 
   healthCheck: {
     check: async (_config, _externalId, accessToken) => {
@@ -383,17 +369,6 @@ export const linear = defineWebhookProvider({
       }));
     },
   },
-
-  edgeRules: [
-    // Linear issue references another issue
-    {
-      refType: "issue",
-      matchProvider: "*",
-      matchRefType: "issue",
-      relationshipType: "references",
-      confidence: 0.8,
-    },
-  ],
 
   webhook: {
     headersSchema: z.object({

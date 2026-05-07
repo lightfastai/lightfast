@@ -8,10 +8,7 @@ export {
   providerSlugSchema,
 } from "./client/display";
 // ── Contracts (cross-service Zod schemas) ─────────────────────────────────────
-export * from "./contracts/backfill";
-export * from "./contracts/event";
 export * from "./contracts/gateway";
-export * from "./contracts/wire";
 // ── Factory Functions ─────────────────────────────────────────────────────────
 export {
   defineApiProvider,
@@ -97,15 +94,12 @@ export {
 export type {
   BaseProviderAccountInfo,
   CallbackResult,
-  EdgeRule,
   OAuthTokens,
-  TransformContext,
 } from "./provider/primitives";
 export {
   baseProviderAccountInfoSchema,
   callbackResultSchema,
   oAuthTokensSchema,
-  transformContextSchema,
 } from "./provider/primitives";
 // ── Apollo ────────────────────────────────────────────────────────────────────
 export type {
@@ -154,11 +148,6 @@ export {
   preTransformGitHubIssuesEventSchema,
   preTransformGitHubPullRequestEventSchema,
 } from "./providers/github/schemas";
-export {
-  transformGitHubIssue,
-  transformGitHubIssueComment,
-  transformGitHubPullRequest,
-} from "./providers/github/transformers";
 // ── Linear ────────────────────────────────────────────────────────────────────
 export {
   graphqlResponseSchema,
@@ -205,13 +194,6 @@ export {
   preTransformLinearProjectUpdateWebhookSchema,
   preTransformLinearProjectWebhookSchema,
 } from "./providers/linear/schemas";
-export {
-  transformLinearComment,
-  transformLinearCycle,
-  transformLinearIssue,
-  transformLinearProject,
-  transformLinearProjectUpdate,
-} from "./providers/linear/transformers";
 // ── Sentry ────────────────────────────────────────────────────────────────────
 export { parseSentryRateLimit } from "./providers/sentry/api";
 export type {
@@ -250,12 +232,6 @@ export {
   sentryWebhookEventTypeSchema,
   sentryWebhookPayloadSchema,
 } from "./providers/sentry/schemas";
-export {
-  transformSentryError,
-  transformSentryEventAlert,
-  transformSentryIssue,
-  transformSentryMetricAlert,
-} from "./providers/sentry/transformers";
 // ── Vercel ────────────────────────────────────────────────────────────────────
 export {
   parseVercelRateLimit,
@@ -286,7 +262,6 @@ export {
   vercelWebhookEventTypeSchema,
   vercelWebhookPayloadSchema,
 } from "./providers/vercel/schemas";
-export { transformVercelDeployment } from "./providers/vercel/transformers";
 // ── Registry ─────────────────────────────────────────────────────────────────
 export type {
   AccountInfoFor,
@@ -325,20 +300,7 @@ export {
   timingSafeEqual,
   timingSafeStringEqual,
 } from "./runtime/crypto";
-export { transformWebhookPayload } from "./runtime/dispatch";
 export { deriveObservationType, getBaseEventType } from "./runtime/event-norm";
 export { createRS256JWT } from "./runtime/jwt";
-export {
-  encodeHtmlEntities,
-  sanitizeBody,
-  sanitizeContent,
-  sanitizeTitle,
-  truncateWithEllipsis,
-} from "./runtime/sanitize";
-export {
-  logValidationErrors,
-  sanitizePostTransformEvent,
-  validatePostTransformEvent,
-} from "./runtime/validation";
 // ── Runtime Utilities ─────────────────────────────────────────────────────────
 export { deriveVerifySignature } from "./runtime/verify/index";

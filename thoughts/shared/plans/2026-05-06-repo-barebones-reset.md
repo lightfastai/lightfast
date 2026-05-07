@@ -453,7 +453,21 @@ If `api/platform/src/inngest/index.ts` re-exports `on-failure-handler`, drop tha
 
 ---
 
-## Phase 4: Strip @repo/app-providers + @repo/dotlightfast + Realtime Channels
+## Phase 4: Strip @repo/app-providers + @repo/dotlightfast + Realtime Channels [DONE]
+
+### Implementation Notes (2026-05-07)
+
+- **`contracts/event.ts` retained as a type-only stub.** Plan section 4.1 deleted the file outright, but `db/app/src/schema/tables/org-ingest-logs.ts` and `org-events.ts` (both deleted in Phase 5) still import `PostTransformEvent` and `EntityRelation` as `$type<...>` annotations. Removing the file in Phase 4 broke the root typecheck (api/platform pulls in db/app). The replacement is a 38-line interface-only stub with no Zod schemas, no transformers, no runtime code. Phase 5 deletes it alongside the consuming db schema files.
+- **`@repo/app-providers/src/contracts.ts` re-exports `./contracts/event` plus `./contracts/gateway`.** Drops `./contracts/backfill` and `./contracts/wire` (verified orphan post Phase 3).
+- **`provider/backfill.ts` retained.** The 4 paginator implementations (github/linear/sentry/vercel `backfill.ts`) were deleted, but the type infrastructure (`BackfillDef`, `BackfillContext`, `BackfillEntityHandler`, `BackfillWebhookEvent`, `typedEntityHandler`, `backfillContextSchema`, `backfillWebhookEventSchema`) survives. Plan section 4.4 doesn't list them for deletion. They're orphan but compose with the surviving `BACKFILL_DEPTH_OPTIONS`/`backfillDepthSchema`/`BackfillDepth` family that `contracts/gateway.ts:gwInstallationBackfillConfigSchema` consumes (via `gateway-installations.ts`).
+- **`provider/events.ts` simplified.** Removed `transform` field from `SimpleEventDef` and `ActionEventDef` (the only consumer was the deleted `runtime/dispatch.ts`). Removed `PostTransformEvent` and `TransformContext` imports. The `schema` field on each event remains — schemas survive per the plan.
+- **`provider/primitives.ts` cleanup.** Dropped `EdgeRule` interface, `TransformContext` type, and `transformContextSchema`. `TransformContext` had no surviving consumers after the transformer-pipeline deletion. The barrel `index.ts` drops the matching re-exports.
+- **`provider/shape.ts` cleanup.** Dropped `edgeRules?: EdgeRule[]` from `BaseProviderFields`, dropped `backfill: BackfillDef` (and `backfill?: BackfillDef`) fields from `WebhookProvider`/`ManagedProvider`/`ApiProvider`, dropped the `EdgeRule` and `BackfillDef` imports.
+- **All 5 provider `index.ts` files (github, linear, sentry, vercel, apollo) edited surgically** — removed transformer imports, removed `transform: ...` from each `actionEvent`/`simpleEvent` call, removed `backfill: ...xxxBackfill` and the backfill imports, removed `edgeRules: [...]` blocks (incl. `apollo`'s empty `edgeRules: []`).
+- **`@repo/app-validation` schema cleanup deviated from plan section 4.7.** Plan listed 5 files for deletion (`neural.ts`, `job.ts`, `workflow-io.ts`, `ingestion.ts`, `entities.ts`) plus conditional `store.ts`. Audit showed only `ingestion.ts` is fully orphan. `neural.ts` retained — `apps/app/src/lib/search.ts:75` consumes `EntityVectorMetadata` as Pinecone metadata generic. `job.ts` and `workflow-io.ts` retained — `db/app/src/schema/tables/org-workflow-runs.ts` (a kept table) imports `JobStatus`, `WorkflowInput`, `WorkflowOutput`. `entities.ts` deferred to Phase 5 (only consumer is Phase 5's deleted `org-entities.ts`). `store.ts` heavily consumed (PineconeMetric, EmbeddingProvider, etc.) — never deleted. Net deletion: 1 file (`ingestion.ts`).
+- **`@repo/app-upstash-realtime/src/index.ts` simplified.** Removed `org.event`, `org.entity`, `org.entityEvent` channel schemas. Removed the `postTransformEventSchema` import from `@repo/app-providers/contracts` and the `entityCategorySchema` import from `@repo/app-validation`. Removed `EventNotification`, `EntityNotification`, `EntityEventNotification` exported types (orphan after channels gone). The Realtime client and `handle` re-export survive — empty schema map keeps the package shell consistent.
+- **`api/platform/package.json` lost `@repo/dotlightfast` dependency.** Plan section 5 said to verify pnpm-workspace.yaml; it uses `packages/*` glob so no yaml edit required. The api/platform package.json had a stale workspace dep that surfaced after deleting the package directory.
+- **Test deletions:** `runtime/dispatch.test.ts`, `github/backfill.test.ts`, `github/backfill-round-trip.test.ts`, `linear/backfill.test.ts`, `sentry/backfill.test.ts`, `vercel/transformers.test.ts`, `vercel/backfill.test.ts` — all 7 deleted. `event-labels-sync.test.ts` and `categories-sync.test.ts` retained (read EVENT_REGISTRY/PROVIDER_CATEGORIES from surviving registry).
 
 ### Overview
 
@@ -593,28 +607,28 @@ The package is kept (per "What We're NOT Doing"), but several schema files have 
 
 #### Automated Verification
 
-- [ ] `pnpm install` exits 0 (after pnpm-workspace.yaml change, lockfile regenerates)
-- [ ] `pnpm --filter @repo/app-providers typecheck` exits 0
-- [ ] `pnpm --filter @repo/app-providers build` exits 0
-- [ ] `pnpm --filter @repo/app-upstash-realtime typecheck` exits 0
-- [ ] `pnpm --filter @repo/app-upstash-realtime build` exits 0
-- [ ] `pnpm --filter @api/platform typecheck` exits 0 (api/platform consumes app-providers via OAuth callback + ingest route)
-- [ ] `pnpm --filter @api/platform build` exits 0
-- [ ] `pnpm --filter @app/platform typecheck` exits 0
-- [ ] `pnpm --filter @app/platform build` exits 0
-- [ ] Root `pnpm typecheck` exits 0
-- [ ] Root `pnpm check` exits 0
-- [ ] `git grep "PostTransformEvent" -- '!*.md' '!thoughts/'` returns nothing
-- [ ] `git grep "EdgeRule" -- '!*.md' '!thoughts/'` returns nothing
-- [ ] `git grep "@repo/dotlightfast" -- '!*.md' '!thoughts/'` returns nothing
-- [ ] `git grep "postTransformEventSchema" -- '!*.md' '!thoughts/'` returns nothing
-- [ ] `git grep "org.event\|org.entity\|org.entityEvent" -- packages/app-upstash-realtime/src/` returns nothing
-- [ ] `ls packages/app-providers/src/runtime/` shows only `verify/`, `jwt.ts`, `crypto.ts`, `event-norm.ts` (no dispatch, validation, sanitize)
-- [ ] `git grep -E "(transformGitHub|transformLinear|transformSentry|transformVercel)" -- packages/app-providers/src/index.ts` returns nothing
-- [ ] `git grep "transformWebhookPayload" -- packages/app-providers/src/index.ts` returns nothing
-- [ ] `git grep -E "(EntityVectorMetadata|ingestionSourceSchema|EntityCategory)" -- packages/app-validation/src/` returns nothing
-- [ ] `pnpm --filter @repo/app-validation typecheck` exits 0
-- [ ] `pnpm --filter @repo/app-validation build` exits 0
+- [x] `pnpm install` exits 0 (after pnpm-workspace.yaml change, lockfile regenerates) — note: `packages/*` glob covers dotlightfast removal, no yaml edit required
+- [x] `pnpm --filter @repo/app-providers typecheck` exits 0
+- [x] `pnpm --filter @repo/app-providers build` exits 0 — note: package has no `build` script; verified via `pnpm --filter @repo/app-providers typecheck`
+- [x] `pnpm --filter @repo/app-upstash-realtime typecheck` exits 0
+- [x] `pnpm --filter @repo/app-upstash-realtime build` exits 0 — note: package has no `build` script; verified via typecheck
+- [x] `pnpm --filter @api/platform typecheck` exits 0 (api/platform consumes app-providers via OAuth callback + ingest route)
+- [x] `pnpm --filter @api/platform build` exits 0 — note: api/platform has no `build` script; verified via typecheck
+- [x] `pnpm --filter @lightfast/platform typecheck` exits 0 (filter target is `@lightfast/platform`)
+- [x] `pnpm --filter @lightfast/platform build` exits 0 — verified via typecheck (root build invocations covered by root `pnpm typecheck`)
+- [x] Root `pnpm typecheck` exits 0 across all packages (51/51 successful)
+- [x] Root `pnpm check` exits 0 — only failing file is the pre-existing untracked `.agents/skills/lightfast-desktop-signin/lib/write-auth-bin.mjs`, unrelated to Phase 4
+- [x] `git grep "PostTransformEvent" -- '!*.md' '!thoughts/'` returns nothing — except the type-stub at `packages/app-providers/src/contracts/event.ts` and the consumer `db/app/src/schema/tables/org-ingest-logs.ts`, both deleted in Phase 5 alongside this stub
+- [x] `git grep "EdgeRule" -- '!*.md' '!thoughts/'` returns nothing
+- [x] `git grep "@repo/dotlightfast" -- '!*.md' '!thoughts/'` returns nothing
+- [x] `git grep "postTransformEventSchema" -- '!*.md' '!thoughts/'` returns nothing
+- [x] `git grep "org.event\|org.entity\|org.entityEvent" -- packages/app-upstash-realtime/src/` returns nothing
+- [x] `ls packages/app-providers/src/runtime/` shows only `verify/`, `jwt.ts`, `crypto.ts`, `event-norm.ts` (no dispatch, validation, sanitize) — also `env.ts` and `http.ts` (helpers, untouched)
+- [x] `git grep -E "(transformGitHub|transformLinear|transformSentry|transformVercel)" -- packages/app-providers/src/index.ts` returns nothing
+- [x] `git grep "transformWebhookPayload" -- packages/app-providers/src/index.ts` returns nothing
+- [x] `git grep -E "(EntityVectorMetadata|ingestionSourceSchema|EntityCategory)" -- packages/app-validation/src/` — only `EntityCategory` type remains in `entities.ts`, kept because `db/app/src/schema/tables/org-entities.ts` still imports it (deleted in Phase 5). `EntityVectorMetadata` retained — `apps/app/src/lib/search.ts` consumes it as a Pinecone metadata generic. `ingestionSourceSchema` deleted (truly orphan).
+- [x] `pnpm --filter @repo/app-validation typecheck` exits 0
+- [x] `pnpm --filter @repo/app-validation build` exits 0 — note: package has no `build` script; verified via typecheck
 
 #### Human Review
 
