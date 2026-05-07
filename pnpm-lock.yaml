@@ -124,8 +124,8 @@ catalogs:
       specifier: ^20.9.0
       version: 20.9.0
     hono:
-      specifier: ^4.12.14
-      version: 4.12.14
+      specifier: ^4.12.16
+      version: 4.12.18
     import-in-the-middle:
       specifier: ^3.0.1
       version: 3.0.1
@@ -301,7 +301,7 @@ importers:
         version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/pg@8.15.6)(@upstash/redis@1.37.0)(postgres@3.4.9)
       inngest:
         specifier: 'catalog:'
-        version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.14)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
+        version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.18)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
@@ -395,7 +395,7 @@ importers:
         version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/pg@8.15.6)(@upstash/redis@1.37.0)(postgres@3.4.9)
       inngest:
         specifier: 'catalog:'
-        version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.14)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
+        version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.18)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
       jose:
         specifier: 'catalog:'
         version: 6.2.2
@@ -2243,10 +2243,10 @@ importers:
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       hono:
         specifier: 'catalog:'
-        version: 4.12.14
+        version: 4.12.18
       inngest:
         specifier: 'catalog:'
-        version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.14)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
+        version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.18)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -8764,6 +8764,7 @@ packages:
 
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
+    deprecated: Potential CWE-502 - Update to 1.3.1 or higher
 
   '@upstash/realtime@1.0.3':
     resolution: {integrity: sha512-cF5O0GqTW+yfb1PUzAQTvC0LZccLg8kgFHMc4MxTpQxSV5SKSHr3jl5xogLd772CCO0of9awZdWnbtyH2FHhQg==}
@@ -11421,6 +11422,10 @@ packages:
 
   hono@4.12.14:
     resolution: {integrity: sha512-am5zfg3yu6sqn5yjKBNqhnTX7Cv+m00ox+7jbaKkrLMRJ4rAdldd1xPd/JzbBWspqaQv6RSTrgFN95EsfhC+7w==}
+    engines: {node: '>=16.9.0'}
+
+  hono@4.12.18:
+    resolution: {integrity: sha512-RWzP96k/yv0PQfyXnWjs6zot20TqfpfsNXhOnev8d1InAxubW93L11/oNUc3tQqn2G0bSdAOBpX+2uDFHV7kdQ==}
     engines: {node: '>=16.9.0'}
 
   hosted-git-info@2.8.9:
@@ -25214,6 +25219,8 @@ snapshots:
 
   hono@4.12.14: {}
 
+  hono@4.12.18: {}
+
   hosted-git-info@2.8.9: {}
 
   html-encoding-sniffer@4.0.0:
@@ -25418,7 +25425,7 @@ snapshots:
 
   inline-style-parser@0.2.4: {}
 
-  inngest@3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.14)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6):
+  inngest@3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.18)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6):
     dependencies:
       '@bufbuild/protobuf': 2.11.0
       '@inngest/ai': 0.1.7
@@ -25450,7 +25457,7 @@ snapshots:
       '@vercel/node': 5.7.11(encoding@0.1.13)(rollup@4.60.2)
       express: 5.2.1
       h3: 1.15.4
-      hono: 4.12.14
+      hono: 4.12.18
       next: 16.2.4(@babel/core@7.28.4)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       typescript: 5.9.3
     transitivePeerDependencies:
