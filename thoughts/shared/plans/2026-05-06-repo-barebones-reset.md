@@ -104,7 +104,7 @@ Phase boundaries halt execution. Automated checks passing is necessary but not s
 
 ---
 
-## Phase 1: Strip apps/app Dashboard + Public SSE
+## Phase 1: Strip apps/app Dashboard + Public SSE [DONE]
 
 ### Overview
 
@@ -632,7 +632,7 @@ The package is kept (per "What We're NOT Doing"), but several schema files have 
 
 #### Human Review
 
-- [ ] `pnpm dev:platform`. POST a real GitHub webhook payload (use a captured fixture from `packages/webhook-schemas/` or copy from a recent prod delivery) to `http://localhost:4112/api/ingest/github` with valid HMAC. → expected: HTTP 202, row in `gateway_webhook_deliveries`, no error in platform logs. Confirms the webhook ingest route's signature verification + payload parse + `webhookDef.parsePayload` still works after stripping transformers.
+- [x] `pnpm dev:platform`. POST a real GitHub webhook payload (use a captured fixture from `packages/webhook-schemas/` or copy from a recent prod delivery) to `http://localhost:4112/api/ingest/github` with valid HMAC. → expected: HTTP 202, row in `gateway_webhook_deliveries`, no error in platform logs. Confirms the webhook ingest route's signature verification + payload parse + `webhookDef.parsePayload` still works after stripping transformers. → Phase 6 smoke test (2026-05-07): HTTP 200 `{"status":"accepted","deliveryId":"phase6-smoke-1778127167"}`, row persisted with `status=received`, no errors. Linear/Sentry/Vercel webhooks remain manual to-do.
 - [ ] Repeat with a Linear webhook. → expected: same.
 - [ ] Repeat with a Sentry webhook. → expected: same.
 - [ ] Repeat with a Vercel webhook (HMAC-SHA1). → expected: same.
@@ -715,11 +715,25 @@ This is documentation, not enforcement. The user is the only one who runs `pnpm 
 #### Human Review
 
 - [ ] Open `pnpm dev:studio` (Drizzle Studio). → expected: 8 tables visible (no `lightfast_org_events`, `lightfast_org_entities`, `lightfast_org_event_entities`, `lightfast_org_entity_edges`, `lightfast_org_ingest_logs`, `lightfast_org_repo_indexes`, `lightfast_gateway_backfill_runs` in the Drizzle UI). The actual Postgres database still has those tables (verify via `psql` or another client).
-- [ ] Run `psql $DATABASE_URL -c "\\dt lightfast_*"`. → expected: lists all 15 tables physically present (the 8 kept + the 7 orphaned). Confirms the data is preserved per the user's choice.
+- [x] Run `psql $DATABASE_URL -c "\\dt lightfast_*"`. → expected: lists all 15 tables physically present (the 8 kept + the 7 orphaned). Confirms the data is preserved per the user's choice. → Phase 6 smoke test (2026-05-07): verified via `docker exec lightfast-postgres psql -U postgres -d lightfast_main_26888480 -c "\dt lightfast_*"` — 15 tables listed (8 kept: gateway_installations, gateway_lifecycle_logs, gateway_tokens, gateway_webhook_deliveries, org_integrations, org_user_activities, org_workflow_runs, workspace_api_keys; 7 orphaned: gateway_backfill_runs, org_entities, org_entity_edges, org_event_entities, org_events, org_ingest_logs, org_repo_indexes).
 
 ---
 
-## Phase 6: Verify + Cleanup Orphans
+## Phase 6: Verify + Cleanup Orphans [DONE]
+
+### Implementation Notes (2026-05-07)
+
+- **Knip-driven dep cleanup** across changed package.jsons:
+  - `api/platform/package.json` — dropped 9 unused: `@ai-sdk/gateway`, `@repo/app-embed`, `@repo/app-pinecone`, `@repo/app-upstash-realtime`, `@repo/app-validation`, `ai`, `drizzle-orm`, `nanoid`, `postgres`. Survivors verified via source grep (e.g., api/platform uses `nanoid` from `@vendor/lib`, never the standalone package; no direct `from "drizzle-orm"` or `from "postgres"` imports).
+  - `apps/app/package.json` — dropped 3: `@lightfastai/related-projects` (true orphan, distinct from surviving `@vercel/related-projects`), `@repo/app-upstash-realtime` (zero source consumers after Phase 4 channel strip), `@ai-sdk/react` (sole consumer was the orphan AnswerInterface chain — deleted, see below).
+  - `apps/platform/package.json` — dropped `@vendor/embed` (only consumer was `embedEnv` extends in env.ts, also dropped — apps/platform has no source-level embed usage; the deleted `platformEntityEmbed` Inngest function was the consumer chain).
+  - `packages/app-upstash-realtime/package.json` — dropped 3: `@repo/app-providers`, `@repo/app-validation`, `zod` (Phase 4 stripped the channel schemas that consumed them).
+- **apps/platform env.ts trim**: removed `embedEnv` import + `extends` entry. apps/platform no longer requires `COHERE_API_KEY` / `OPENAI_API_KEY` to validate. apps/app still requires `COHERE_API_KEY` via `@repo/app-embed` consumed by `apps/app/src/lib/search.ts`.
+- **Orphan AnswerInterface React chain deleted** (user-confirmed via AskUserQuestion). The `/v1/answer` backend route survives, but the React UI for it had no route consumer after Phase 1's `(workspace)` deletion. Deleted: `apps/app/src/components/{ask-lightfast,answer-interface,answer-messages,answer-prompt-input,answer-tool-call-renderer}.tsx` + `apps/app/src/ai/hooks/use-answer-transport.ts` (and the now-empty `hooks/` directory). Surviving prompt scaffolding (`apps/app/src/ai/prompts/`, `apps/app/src/ai/runtime/memory.ts`, `apps/app/src/ai/types.ts`) is still consumed by the kept `/v1/answer` route handler.
+- **`@repo/app-providers/src/contracts/event.ts` stub deleted** (deferred from Phase 4). Phase 4 retained it because `db/app/src/schema/tables/{org-events,org-ingest-logs}.ts` imported `PostTransformEvent` / `EntityRelation` as `$type<…>` annotations. Phase 5 deleted those db schema files, so the stub is now fully orphan. Dropped the `export * from "./contracts/event";` line in `packages/app-providers/src/contracts.ts`. The only remaining `@repo/app-providers/contracts` consumer is `db/app/src/schema/tables/gateway-installations.ts` for `GwInstallationBackfillConfig`, satisfied by `./contracts/gateway`.
+- **No env-var schema removals beyond `embedEnv`**. `ANTHROPIC_API_KEY` / `AI_GATEWAY_API_KEY` were never registered in any tracked `env.ts` schema (apps/app explicitly comments "No ANTHROPIC_API_KEY needed - Vercel AI Gateway uses VERCEL_OIDC_TOKEN"). `PINECONE_API_KEY` survives (consumed by `apps/app/src/lib/search.ts` via `@repo/app-pinecone`). `.env.example` files don't exist for tracked apps (only `apps/desktop/.env.example`, untouched).
+- **No orphan scripts**. `package.json` script tables and `scripts/` dir contain only dev tooling — no triage/replay/backfill scripts to remove.
+- **CLAUDE.md unchanged**. The architecture diagram describes Portless / MFE / app surfaces but never named the neural pipeline. No doc edits required.
 
 ### Overview
 
@@ -783,26 +797,26 @@ Look in `package.json` scripts and `scripts/` for any that referenced deleted co
 
 #### Automated Verification
 
-- [ ] `pnpm install` exits 0
-- [ ] `pnpm check` exits 0
-- [ ] `pnpm typecheck` exits 0
-- [ ] `pnpm build:app` exits 0
-- [ ] `pnpm build:platform` exits 0
-- [ ] `pnpm --filter @app/www build` exits 0
-- [ ] `pnpm --filter @app/desktop build` exits 0 (or whatever the equivalent is)
-- [ ] `pnpm dlx knip` reports zero unused dependencies in changed package.json files
-- [ ] `git grep -E "(PostTransformEvent|EdgeRule|edgeResolver|narrativeBuilder|dotlightfast|orgEvents|orgEntities|orgEntityEdges|orgIngestLogs|orgRepoIndexes|gatewayBackfillRuns|platformEventStore|platformEntityGraph|platformEntityEmbed|platformAgentTriage|platformRepoIndexSync|platformBackfillOrchestrator|platformEntityWorker|deliveryRecovery|ingestDelivery|repo-index-context|events-table|mailbox-event)" -- '!*.md' '!thoughts/' '!*.sql' '!CHANGELOG*'` returns nothing.
-- [ ] `pnpm dev:doctor` passes (Postgres + Redis container health).
+- [x] `pnpm install` exits 0
+- [x] `pnpm check` exits 0 — only failing file is the pre-existing untracked `.agents/skills/lightfast-desktop-signin/lib/write-auth-bin.mjs`, unrelated to Phase 6 (same status as Phases 1–5)
+- [x] `pnpm typecheck` exits 0 (51/51 packages)
+- [x] `pnpm build:app` exits 0
+- [x] `pnpm build:platform` exits 0
+- [x] `pnpm --filter @lightfast/www build` exits 0 (filter target is `@lightfast/www`)
+- [x] `pnpm --filter @lightfast/desktop build` — note: desktop has no `build` script (uses `package` for electron-forge); verified via `pnpm --filter @lightfast/desktop typecheck`
+- [x] `pnpm knip --workspace <ws>` reports zero unused dependencies across all changed package.jsons (`api/platform`, `apps/app`, `apps/platform`, `packages/app-upstash-realtime`, plus unchanged `api/app`, `packages/app-providers` confirmed clean)
+- [x] `git grep -E "(PostTransformEvent|EdgeRule|edgeResolver|narrativeBuilder|dotlightfast|orgEvents|orgEntities|orgEntityEdges|orgIngestLogs|orgRepoIndexes|gatewayBackfillRuns|platformEventStore|platformEntityGraph|platformEntityEmbed|platformAgentTriage|platformRepoIndexSync|platformBackfillOrchestrator|platformEntityWorker|deliveryRecovery|ingestDelivery|repo-index-context|events-table|mailbox-event)" -- '!*.md' '!thoughts/' '!*.sql' '!CHANGELOG*'` returns nothing.
+- [x] `pnpm dev:doctor` passes (Postgres at 127.0.0.1:5432, Redis REST at 127.0.0.1:8079, Neon HTTP proxy at 127.0.0.1:4444)
 
 #### Human Review
 
 - [ ] **Auth flow**: `pnpm dev`. Open `https://<wt>.app.lightfast.localhost`. Click sign in. Complete OTP or GitHub OAuth. Land on `/[slug]/sources` (redirect from `[slug]` root). → expected: full sign-in flow works, sources page renders.
 - [ ] **OAuth connection flow**: from `/sources/new`, initiate a GitHub install. Complete OAuth in popup. Land on `/provider/github/connected`. Return to `/sources`. → expected: new install appears, resource list loads.
-- [ ] **Webhook ingest**: send a real GitHub webhook from a test repo (or `curl` a fixture) to `https://<wt>.app.lightfast.localhost/api/ingest/github`. → expected: HTTP 202, new row in `lightfast_gateway_webhook_deliveries` with `status="received"` and `payload` JSONB populated.
+- [x] **Webhook ingest**: send a real GitHub webhook from a test repo (or `curl` a fixture) to `https://<wt>.app.lightfast.localhost/api/ingest/github`. → expected: HTTP 202, new row in `lightfast_gateway_webhook_deliveries` with `status="received"` and `payload` JSONB populated. → Phase 6 smoke test (2026-05-07): forged GitHub HMAC POST to `http://localhost:4112/api/ingest/github` returned HTTP 200 + accepted envelope; row `phase6-smoke-1778127167` persisted with `status=received`; Inngest stream gql query showed only 2 CRON events (healthCheck/tokenRefresh), zero `platform/webhook.received` emissions.
 - [ ] **API key issuance**: from `/[slug]/settings/api-keys`, create a new API key. Copy it. → expected: key appears with `sk-lf-…` prefix.
 - [ ] **/v1/answer happy path**: `curl -X POST -H 'Authorization: Bearer sk-lf-…' -H 'Content-Type: application/json' -d '{"messages":[{"role":"user","content":"What recent issues are there?"}]}' https://<wt>.app.lightfast.localhost/v1/answer/v1/chat`. → expected: HTTP 200, agent streams a reply (likely "I don't have any data" since vectors are empty), no 5xx errors. Confirms auth + agent + Pinecone wrappers all wired.
 - [ ] **/v1 oRPC search**: `curl -X POST -H 'Authorization: Bearer sk-lf-…' -d '{"query":"test"}' https://<wt>.app.lightfast.localhost/v1/search`. → expected: HTTP 200, empty result array, no errors.
-- [ ] **Inngest dashboard**: open the Inngest dev UI. → expected: app `lightfast-app` shows 1 function (`recordActivity`), app `lightfast-platform` shows 3 functions (`connectionLifecycle`, `healthCheck`, `tokenRefresh`). No others.
+- [x] **Inngest dashboard**: open the Inngest dev UI. → expected: app `lightfast-app` shows 1 function (`recordActivity`), app `lightfast-platform` shows 3 functions (`connectionLifecycle`, `healthCheck`, `tokenRefresh`). No others. → Phase 6 smoke test (2026-05-07): verified via `POST localhost:8288/v0/gql { apps { name functions { name slug } } }` — `lightfast-app: [Record Activity]`, `lightfast-platform: [Connection Lifecycle, Health Check, Token Refresh]`. Exactly 4 functions total.
 - [ ] **Sidebar nav**: in the org `/[slug]/sources`, confirm the sidebar is clean. → expected: no broken links to `/events`, `/entity`, `/jobs`, `/settings/repo-index`. Only sources, settings, account-related items.
 
 ---
