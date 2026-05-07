@@ -24,10 +24,6 @@
     "./lib/activity": {
       "types": "./src/lib/activity.ts",
       "default": "./src/lib/activity.ts"
-    },
-    "./lib/token-vault": {
-      "types": "./src/lib/token-vault.ts",
-      "default": "./src/lib/token-vault.ts"
     }
   },
   "license": "Apache-2.0",
@@ -41,10 +37,7 @@
     "@lightfastai/dev-core": "catalog:",
     "@repo/app-api-key": "workspace:*",
     "@repo/app-encryption": "workspace:*",
-    "@repo/app-octokit-github": "workspace:*",
-    "@repo/app-providers": "workspace:*",
     "@repo/app-validation": "workspace:^",
-    "@repo/platform-trpc": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",

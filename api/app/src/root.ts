@@ -6,7 +6,6 @@
  * - orgScopedProcedure: clerk-active only (org operations)
  */
 
-import { connectionsRouter } from "./router/org/connections";
 import { orgApiKeysRouter } from "./router/org/org-api-keys";
 import { accountRouter } from "./router/user/account";
 import { organizationRouter } from "./router/user/organization";
@@ -17,7 +16,6 @@ export const appRouter = createTRPCRouter({
   organization: organizationRouter,
   account: accountRouter,
   // Org-scoped (clerk-active only)
-  connections: connectionsRouter,
   orgApiKeys: orgApiKeysRouter,
 });
 

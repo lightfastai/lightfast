@@ -263,18 +263,9 @@ importers:
       '@repo/app-encryption':
         specifier: workspace:*
         version: link:../../packages/app-encryption
-      '@repo/app-octokit-github':
-        specifier: workspace:*
-        version: link:../../packages/app-octokit-github
-      '@repo/app-providers':
-        specifier: workspace:*
-        version: link:../../packages/app-providers
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
-      '@repo/platform-trpc':
-        specifier: workspace:*
-        version: link:../../packages/platform-trpc
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
