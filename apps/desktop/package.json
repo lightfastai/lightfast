@@ -12,6 +12,7 @@
     "metadata-probe": "node scripts/metadata-probe.mjs",
     "notices:generate": "node scripts/generate-third-party-notices.mjs",
     "package": "electron-forge package",
+    "playwright:repl": "node scripts/playwright-electron-cdp.mjs",
     "pretest:e2e": "electron-forge package",
     "publish": "electron-forge publish",
     "sourcemaps:upload": "node scripts/upload-sourcemaps.mjs",
