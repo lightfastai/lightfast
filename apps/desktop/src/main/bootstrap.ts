@@ -11,6 +11,9 @@ const productName = app.isPackaged ? "Lightfast" : "Lightfast Dev";
 app.setName(productName);
 app.setPath("userData", join(app.getPath("appData"), productName));
 
+// Bootstrap runs before `./index` is dynamically imported, so the logger
+// module isn't loaded yet. These two console.* calls intentionally stay
+// pre-logger; everything inside ./index goes through src/main/logger.ts.
 if (!app.isPackaged) {
   const port = mainEnv.LIGHTFAST_REMOTE_DEBUG_PORT;
   if (port !== undefined) {

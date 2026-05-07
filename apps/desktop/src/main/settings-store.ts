@@ -2,6 +2,7 @@ import { readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { app } from "electron";
 import { z } from "zod";
+import { logger } from "./logger";
 
 export const themeSourceSchema = z.enum(["system", "light", "dark"]);
 export type ThemeSource = z.infer<typeof themeSourceSchema>;
@@ -48,7 +49,7 @@ function write(snapshot: SettingsSnapshot): void {
   try {
     writeFileSync(storePath(), JSON.stringify(snapshot, null, 2), "utf8");
   } catch (error) {
-    console.error("[settings] failed to write", error);
+    logger.error("[settings] failed to write", error);
   }
 }
 
