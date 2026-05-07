@@ -6,7 +6,12 @@ export default defineConfig({
   workers: 1,
   forbidOnly: !!process.env.CI,
   retries: 0,
-  reporter: process.env.CI ? "line" : "list",
+  // CI uses both reporters: line writes step output to the workflow log,
+  // html populates apps/desktop/playwright-report/ for the
+  // 'Upload Playwright report on failure' step in desktop-ci.yml.
+  reporter: process.env.CI
+    ? [["line"], ["html", { open: "never" }]]
+    : "list",
   timeout: 60_000,
   expect: { timeout: 10_000 },
 });
