@@ -83,4 +83,10 @@ test("boots, renderer paints, quits cleanly", async () => {
   await electronApp.close();
 
   expect(errors, errors.join("\n")).toEqual([]);
+
+  // FAULT INJECTION (chore/desktop-ci-e2e-failure-verify branch only) — forces
+  // the e2e step to fail to verify that desktop-ci.yml's
+  // `Upload Playwright report on failure` step runs and the artifact is
+  // downloadable. Revert before merge.
+  expect(false).toBe(true);
 });
