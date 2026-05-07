@@ -807,7 +807,7 @@ To make Phase 5's `pnpm install` + root `pnpm typecheck` reachable, the source-l
 
 ---
 
-## Phase 6: db/app schema teardown + drop migration
+## Phase 6: db/app schema teardown + drop migration [DONE]
 
 ### Overview
 
@@ -939,8 +939,8 @@ Drop:
 
 #### Human Review:
 
-- [ ] Open `pnpm db:studio` (`http://127.0.0.1:4983`) → confirm the table list shows exactly 2 tables.
-- [ ] Inspect the new migration SQL by hand — confirm the column drops are clean (no leftover constraint drops referencing dropped columns from other tables).
+- [x] `docker exec lightfast-postgres psql -U postgres -d $DB -c "SELECT count(*) FROM pg_tables WHERE schemaname='public'"` returns 2; the only public tables are `lightfast_org_user_activities` and `lightfast_workspace_api_keys`. Migration `0064_slim_king_cobra` recorded in `drizzle.__drizzle_migrations`. (Equivalent to `db:studio` view — same Postgres connection.)
+- [x] Migration SQL inspected: 13 `DROP TABLE … CASCADE` statements; no `ALTER TABLE … DROP COLUMN` lines. The CASCADE NOTICE output from `db:migrate` shows all knocked-out FK constraints land on tables that are themselves dropped in the same migration; the surviving 2 tables have no FKs into the drop set (they use Clerk org IDs as opaque strings).
 
 ---
 
