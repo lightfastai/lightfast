@@ -780,6 +780,9 @@ importers:
       '@electron/fuses':
         specifier: ^1.8.0
         version: 1.8.0
+      '@playwright/test':
+        specifier: 1.58.2
+        version: 1.58.2
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
@@ -19384,7 +19387,6 @@ snapshots:
   '@playwright/test@1.58.2':
     dependencies:
       playwright: 1.58.2
-    optional: true
 
   '@pnpm/tabtab@0.5.4':
     dependencies:
@@ -27180,15 +27182,13 @@ snapshots:
       exsolve: 1.0.7
       pathe: 2.0.3
 
-  playwright-core@1.58.2:
-    optional: true
+  playwright-core@1.58.2: {}
 
   playwright@1.58.2:
     dependencies:
       playwright-core: 1.58.2
     optionalDependencies:
       fsevents: 2.3.2
-    optional: true
 
   plist@3.1.0:
     dependencies:

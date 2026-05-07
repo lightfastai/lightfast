@@ -69,3 +69,18 @@ jobs:
         # via MakerZIP/MakerDMG, Linux leg packages linux via MakerDeb/MakerRpm.
         # Each maker's platform filter (forge.config.ts:143-152) does the routing.
         run: pnpm --filter @lightfast/desktop package
+
+      - name: E2E (Playwright Electron)
+        # macOS-only: Linux Electron e2e needs Xvfb/system deps that W5 didn't
+        # plan for (the matrix's Linux leg landed in a separate W3 worktree).
+        # Adding Linux e2e is a separate effort; keep W5's promise to macos-14.
+        if: runner.os == 'macOS'
+        run: pnpm --filter @lightfast/desktop exec playwright test --config=playwright.config.ts
+
+      - name: Upload Playwright report on failure
+        if: failure() && runner.os == 'macOS'
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/desktop/playwright-report/
+          retention-days: 7
