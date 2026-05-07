@@ -6,10 +6,14 @@ import {
   formatAccelerator,
 } from "../../shared/accelerators";
 import type { LightfastBridge, WindowKind } from "../../shared/ipc";
+import { WINDOW_KIND_GLOBAL } from "../../shared/window-globals";
 import { installErrorBoundary } from "./error-boundary";
 import { createHotkeyManager } from "./hotkey";
 import { createSidebarController } from "./sidebar";
 
+// Property names below are literal because TS global augmentation can't
+// reference value-level constants. The values themselves come from
+// `../../shared/window-globals` — that file is the single source of truth.
 declare global {
   interface Window {
     codexWindowType: WindowKind;
@@ -35,7 +39,7 @@ const formatPlatform: FormatPlatform =
     : "linux";
 
 document.documentElement.dataset.platform = platform;
-document.documentElement.dataset.windowKind = window.codexWindowType;
+document.documentElement.dataset.windowKind = window[WINDOW_KIND_GLOBAL];
 document.documentElement.dataset.buildFlavor = buildInfo.buildFlavor;
 
 function applyThemeVariant(variant: "light" | "dark"): void {
