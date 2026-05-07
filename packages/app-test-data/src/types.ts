@@ -67,7 +67,6 @@ export interface ReplayResult {
 export interface AssertionResult {
   deliveryId: string;
   deliveryStatus: string | null;
-  ingestLogs: number;
   provider: ProviderSlug;
 }
 

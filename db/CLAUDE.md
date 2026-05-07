@@ -1,5 +1,13 @@
 # Database Management
 
+> **2026-05-06 BAREBONES RESET**: 7 tables (`org_events`, `org_entities`,
+> `org_event_entities`, `org_entity_edges`, `org_ingest_logs`, `org_repo_indexes`,
+> `gateway_backfill_runs`) were intentionally orphaned in Postgres — schema TS
+> files were deleted but no migration was generated. The next `pnpm db:generate`
+> run will produce a drop migration for these tables. Inspect the generated SQL
+> before applying. Data persists physically until a future plan decides to apply
+> the drop.
+
 ## Commands
 
 ```bash
