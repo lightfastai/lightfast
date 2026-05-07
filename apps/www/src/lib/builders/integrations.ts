@@ -1,10 +1,10 @@
-import { PROVIDER_DISPLAY } from "~/lib/integrations-display";
 import type {
   GraphContext,
   SoftwareApplication,
   WebPage,
 } from "@vendor/seo/json-ld";
 import type { IntegrationPageData } from "~/lib/content-schemas";
+import { PROVIDER_DISPLAY } from "~/lib/integrations-display";
 import type { IntegrationUrl } from "~/lib/url-types";
 import {
   buildBreadcrumbList,

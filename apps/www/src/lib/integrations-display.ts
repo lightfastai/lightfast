@@ -13,10 +13,10 @@ const providerSlugs = [
 export type ProviderSlug = (typeof providerSlugs)[number];
 
 export interface ProviderDisplayEntry {
-  name: ProviderSlug;
-  displayName: string;
-  description: string;
   comingSoon?: true;
+  description: string;
+  displayName: string;
+  name: ProviderSlug;
 }
 
 export const PROVIDER_DISPLAY = {

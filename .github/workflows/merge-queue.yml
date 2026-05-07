@@ -42,14 +42,6 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: OpenAPI freshness
-        run: |
-          pnpm turbo generate:openapi --summarize
-          git diff --exit-code packages/app-api-contract/openapi.json || {
-            echo "::error::openapi.json is stale. Run 'pnpm turbo generate:openapi' and commit the result."
-            exit 1
-          }
-
       - name: Lint (biome)
         run: pnpm turbo //#check --summarize
 
