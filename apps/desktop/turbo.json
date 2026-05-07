@@ -1,0 +1,37 @@
+{
+  "$schema": "https://turborepo.dev/schema.json",
+  "extends": ["//"],
+  "tasks": {
+    "typecheck": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "scripts/**",
+        "tsconfig.json",
+        "tsconfig.node.json",
+        "vite.main.config.ts",
+        "vite.preload.config.ts",
+        "vite.renderer.config.ts",
+        "vitest.config.ts",
+        "package.json"
+      ],
+      "outputs": []
+    },
+    "package": {
+      "dependsOn": ["^build"],
+      "inputs": [
+        "src/**",
+        "scripts/**",
+        "build/**",
+        "forge.config.ts",
+        "vite.main.config.ts",
+        "vite.preload.config.ts",
+        "vite.renderer.config.ts",
+        "tsconfig.json",
+        "tsconfig.node.json",
+        "package.json"
+      ],
+      "outputs": ["out/**", ".vite/**"]
+    }
+  }
+}

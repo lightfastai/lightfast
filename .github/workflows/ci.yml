@@ -45,7 +45,7 @@ jobs:
           }
 
       - name: Lint (biome)
-        run: pnpm check
+        run: pnpm turbo //#check --summarize
 
       - name: Type check affected packages
         env:
@@ -58,7 +58,7 @@ jobs:
 
       - name: Check dead code and unused dependencies
         continue-on-error: true # Remove after initial cleanup sprint
-        run: pnpm knip
+        run: pnpm turbo //#knip --summarize
 
       - name: Cache report
         if: always()

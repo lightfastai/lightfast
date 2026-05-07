@@ -62,13 +62,13 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Typecheck
-        run: pnpm --filter @lightfast/desktop typecheck
+        run: pnpm turbo typecheck --filter=@lightfast/desktop --summarize
 
       - name: Package (unsigned)
         # electron-forge defaults to host platform: macOS leg packages darwin
         # via MakerZIP/MakerDMG, Linux leg packages linux via MakerDeb/MakerRpm.
         # Each maker's platform filter (forge.config.ts:143-152) does the routing.
-        run: pnpm --filter @lightfast/desktop package
+        run: pnpm turbo package --filter=@lightfast/desktop --summarize
 
       - name: E2E (Playwright Electron)
         # macOS-only: Linux Electron e2e needs Xvfb/system deps that W5 didn't
@@ -84,3 +84,10 @@ jobs:
           name: playwright-report
           path: apps/desktop/playwright-report/
           retention-days: 7
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Desktop CI / ${{ matrix.os }}'
+          artifact-name: turbo-cache-desktop-ci-${{ matrix.os }}
