@@ -69,7 +69,7 @@ export const sentryIssueSchema = z
 
 export type SentryIssue = z.infer<typeof sentryIssueSchema>;
 
-export const sentryErrorEventSchema = z
+const sentryErrorEventSchema = z
   .object({
     eventID: z.string(),
     title: z.string().optional(),
@@ -123,8 +123,6 @@ export const sentryErrorEventSchema = z
     web_url: z.string().optional(),
   })
   .loose();
-
-export type SentryErrorEvent = z.infer<typeof sentryErrorEventSchema>;
 
 // ── API Definition ──────────────────────────────────────────────────────────────
 
