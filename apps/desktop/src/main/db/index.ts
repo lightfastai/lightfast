@@ -50,4 +50,6 @@ export function closeDb(): void {
     }
     connection = null;
   }
+  // Allow re-init after close (tests, dev hot-reload).
+  initFailed = false;
 }

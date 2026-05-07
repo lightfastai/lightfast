@@ -146,8 +146,8 @@ export function updateSetting<K extends SettingsKey>(
   if (!parsed.success) {
     return getSettings();
   }
-  cached = parsed.data;
   writeKey(key, value);
+  cached = parsed.data;
   for (const listener of listeners) {
     listener(parsed.data);
   }

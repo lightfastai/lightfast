@@ -60,11 +60,16 @@ pnpm -F @lightfast/desktop dev
 `better-sqlite3` is a native module. Its `.node` binding must match the host's
 ABI:
 
-- After `pnpm install` you have a Node-ABI prebuilt — `pnpm test` works.
-- `pnpm dev` (electron-forge start) rebuilds in-tree to Electron's ABI —
-  `pnpm test` will then fail with `NODE_MODULE_VERSION` mismatch.
-- Run `pnpm rebuild:sqlite:node` to flip back to Node ABI before testing,
-  `pnpm rebuild:sqlite` to flip back to Electron ABI before dev/package.
+All commands below run from the repo root:
+
+- After `pnpm install` you have a Node-ABI prebuilt —
+  `pnpm -F @lightfast/desktop test` works.
+- `pnpm -F @lightfast/desktop dev` (electron-forge start) rebuilds in-tree to
+  Electron's ABI — `pnpm -F @lightfast/desktop test` will then fail with
+  `NODE_MODULE_VERSION` mismatch.
+- Run `pnpm -F @lightfast/desktop rebuild:sqlite:node` to flip back to Node ABI
+  before testing, `pnpm -F @lightfast/desktop rebuild:sqlite` to flip back to
+  Electron ABI before dev/package.
 
 CI runs `pnpm test` before `pnpm package`, so the ordering is already correct
 in `desktop-ci.yml`.
