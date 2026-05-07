@@ -16,7 +16,10 @@ export default defineConfig({
       fileName: () => "bootstrap.js",
     },
     rollupOptions: {
-      external: ["electron"],
+      // better-sqlite3 is a native module (.node binding); leaving it
+      // bundled would erase the require() call AutoUnpackNativesPlugin
+      // needs to see at package time.
+      external: ["electron", "better-sqlite3"],
     },
   },
 });
