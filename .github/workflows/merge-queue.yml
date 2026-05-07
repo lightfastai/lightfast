@@ -1,13 +1,19 @@
 name: Merge Queue
 
+# Dual-trigger pattern: the `merge-queue-success` status check is required by
+# the ruleset for both PR commits AND merge_group commits. So this workflow
+# must produce that check on both events. On `pull_request:` it's a no-op
+# stub (gates queue admission); on `merge_group:` it runs the real battery
+# (gates the actual merge).
 on:
+  pull_request:
   merge_group:
 
-# NEVER cancel a queued merge run mid-flight — GitHub batches PRs into a
-# merge_group and cancelling would re-enqueue everything.
+# Cancel mid-flight runs only for PR pushes; never cancel merge_group runs
+# (GitHub batches PRs into a merge_group and cancelling would re-enqueue all).
 concurrency:
-  group: merge-queue-${{ github.ref }}
-  cancel-in-progress: false
+  group: merge-queue-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 permissions:
   contents: read
@@ -16,6 +22,7 @@ permissions:
 jobs:
   quality:
     name: Quality (full)
+    if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -66,6 +73,7 @@ jobs:
 
   core-build:
     name: Core build + test (full)
+    if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
@@ -110,6 +118,7 @@ jobs:
 
   desktop-package:
     name: Desktop package + e2e (${{ matrix.os }})
+    if: github.event_name == 'merge_group'
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
@@ -166,6 +175,7 @@ jobs:
 
   codeql:
     name: CodeQL (${{ matrix.language }})
+    if: github.event_name == 'merge_group'
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
@@ -199,9 +209,14 @@ jobs:
     if: always()
     needs: [quality, core-build, desktop-package, codeql]
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Evaluate gate
         run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            echo "PR event — gating stub. Real battery runs on merge_group."
+            exit 0
+          fi
           quality="${{ needs.quality.result }}"
           core_build="${{ needs.core-build.result }}"
           desktop_package="${{ needs.desktop-package.result }}"
