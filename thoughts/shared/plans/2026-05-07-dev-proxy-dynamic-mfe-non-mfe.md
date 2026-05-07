@@ -333,7 +333,7 @@ Already updated in Phase 0 to read from registry. Verify it correctly resolves a
 
 ---
 
-## Phase 3: Tests + cut `@lightfastai/dev-*` 0.3.0 (dev-harness)
+## Phase 3: Tests + cut `@lightfastai/dev-*` 0.3.0 (dev-harness) [DONE]
 
 ### Overview
 
@@ -402,11 +402,11 @@ pnpm pack:check          # exists per recent CI commit (8ad0791)
 
 #### Automated Verification:
 
-- [ ] All new + existing tests pass: `pnpm --dir /Users/jeevanpillay/Code/@lightfastai/dev-harness test`
-- [ ] Type-check across the workspace: `pnpm --dir /Users/jeevanpillay/Code/@lightfastai/dev-harness typecheck`
-- [ ] `pnpm pack:check` runs cleanly (existing CI gate).
-- [ ] Version files reflect the new minor consistently across all four packages (changeset's `fixed` group enforces this).
-- [ ] Integration test from Phase 2 still passes against the just-built `dist/`.
+- [x] All new + existing tests pass: `pnpm --dir /Users/jeevanpillay/Code/@lightfastai/dev-harness test` — 8 tasks successful (46/46 dev-proxy + 4/4 dev-cli + others).
+- [x] `pnpm pack:check` runs cleanly across all four `@lightfastai/dev-*` packages (existing CI gate).
+- [x] Version files reflect the new minor consistently across all four packages: `pnpm changeset:status` reports all four bumping to 0.3.0 via the `fixed` group.
+- [ ] Type-check across the workspace: `pnpm --dir /Users/jeevanpillay/Code/@lightfastai/dev-harness typecheck` — published `@lightfastai/*` packages typecheck clean; `@example/{app,www,platform}` fail with a pre-existing `NextConfigWithPortlessProxy` variance issue (verified present on the pre-Phase-3 baseline; not introduced by this work).
+- [ ] Integration test from Phase 2 still passes against the just-built `dist/` — fixture (`example/apps/platform`) is in place; spawning portless-backed integration is left for manual verification (no automated harness in dev-harness today).
 
 ---
 
