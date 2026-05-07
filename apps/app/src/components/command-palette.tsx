@@ -11,14 +11,7 @@ import {
   CommandList,
 } from "@repo/ui/components/ui/command";
 import { isPlatformModifier } from "@repo/ui/lib/platform";
-import {
-  Briefcase,
-  Loader2,
-  MessageSquare,
-  Plug,
-  Settings,
-  X,
-} from "lucide-react";
+import { Loader2, MessageSquare, Plug, Settings, X } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -44,12 +37,6 @@ function getNavItems(orgSlug: string): NavItem[] {
       href: `/${orgSlug}/sources`,
       icon: Plug,
       keywords: ["integrations", "connections", "providers"],
-    },
-    {
-      title: "Jobs",
-      href: `/${orgSlug}/jobs`,
-      icon: Briefcase,
-      keywords: ["tasks", "background", "workers"],
     },
     {
       title: "Settings",
@@ -155,7 +142,7 @@ export function CommandPalette() {
 
   return (
     <CommandDialog
-      description="Search entities or navigate to a page"
+      description="Search or navigate to a page"
       onOpenChange={setOpen}
       open={open}
       shouldFilter={false}
@@ -163,7 +150,7 @@ export function CommandPalette() {
     >
       <CommandInput
         onValueChange={setQuery}
-        placeholder="Search entities or jump to..."
+        placeholder="Search or jump to..."
         showSearchIcon={false}
         value={query}
       >

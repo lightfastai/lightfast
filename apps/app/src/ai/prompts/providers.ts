@@ -3,7 +3,6 @@ import { answerCitationSection } from "./sections/citation";
 import { answerCoreBehaviorSection } from "./sections/core-behavior";
 import { answerIdentitySection } from "./sections/identity";
 import { answerOrgContextSection } from "./sections/org-context";
-import { answerRepoIndexSection } from "./sections/repo-index-context";
 import { answerSecuritySection } from "./sections/security";
 import { answerStyleSection } from "./sections/style";
 import { answerTemporalContextSection } from "./sections/temporal-context";
@@ -21,7 +20,6 @@ export const ANSWER_PROVIDERS: SectionProvider[] = [
   answerSecuritySection,
   answerToolGuidanceSection,
   answerOrgContextSection,
-  answerRepoIndexSection,
   answerTemporalContextSection,
   answerStyleSection,
   answerCitationSection,

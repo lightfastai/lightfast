@@ -42,7 +42,6 @@ import { ConfigTemplateDialog } from "~/components/config-template-dialog";
 import { ProviderIcon } from "~/lib/provider-icon";
 
 import type { Source } from "~/types";
-import { SourceSettingsForm } from "./source-settings-form";
 
 interface InstalledSourcesProps {
   clerkOrgSlug: string;
@@ -284,13 +283,6 @@ function ResourceRow({ integration }: { integration: Source }) {
             </div>
           </div>
         )}
-        <SourceSettingsForm
-          backfillConfig={integration.backfillConfig ?? null}
-          currentEvents={subscribedEvents}
-          installationId={integration.installationId}
-          integrationId={integration.id}
-          provider={metadata.provider}
-        />
       </CollapsibleContent>
     </Collapsible>
   );
