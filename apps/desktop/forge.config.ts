@@ -2,7 +2,9 @@ import { execFileSync } from "node:child_process";
 import { cpSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 import { FuseV1Options, FuseVersion } from "@electron/fuses";
+import { MakerDeb } from "@electron-forge/maker-deb";
 import { MakerDMG } from "@electron-forge/maker-dmg";
+import { MakerRpm } from "@electron-forge/maker-rpm";
 import { MakerSquirrel } from "@electron-forge/maker-squirrel";
 import { MakerZIP } from "@electron-forge/maker-zip";
 import { AutoUnpackNativesPlugin } from "@electron-forge/plugin-auto-unpack-natives";
@@ -149,6 +151,44 @@ const config: ForgeConfig = {
     new MakerDMG({
       format: "ULFO",
     }),
+    new MakerDeb(
+      {
+        options: {
+          name: "lightfast",
+          // electron-installer-common defaults `bin` to `pkg.name`, which
+          // becomes `@lightfast/desktop` after the release workflow runs
+          // `npm version`. The actual binary on disk is `lightfast` (set via
+          // `packagerConfig.executableName` above). Without this override the
+          // maker fails: "could not find the Electron app binary at
+          // .../Lightfast-linux-<arch>/@lightfast/desktop".
+          bin: "lightfast",
+          productName: "Lightfast",
+          genericName: "Developer Tool",
+          maintainer: "Lightfast <releases@lightfast.ai>",
+          homepage: "https://lightfast.ai",
+          categories: ["Development", "Utility"],
+          icon: resolve(import.meta.dirname, "build/icon.png"),
+        },
+      },
+      ["linux"]
+    ),
+    new MakerRpm(
+      {
+        options: {
+          name: "lightfast",
+          // Same `bin` override as MakerDeb above — electron-installer-redhat
+          // shares the same `getDefaultsFromPackageJSON` helper.
+          bin: "lightfast",
+          productName: "Lightfast",
+          genericName: "Developer Tool",
+          license: "MIT",
+          homepage: "https://lightfast.ai",
+          categories: ["Development", "Utility"],
+          icon: resolve(import.meta.dirname, "build/icon.png"),
+        },
+      },
+      ["linux"]
+    ),
   ],
   plugins: [
     new AutoUnpackNativesPlugin({}),

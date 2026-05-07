@@ -27,6 +27,28 @@ auto-update is disabled on ad-hoc builds because Squirrel.Mac requires the
 new build to match the running app's designated requirement, and ad-hoc DRs
 are content-bound (they change with every build).
 
+### Linux
+
+Download the artifact for your distribution and architecture from the latest
+[Pre-release](https://github.com/lightfastai/lightfast/releases?q=prerelease%3Atrue):
+
+- **Debian / Ubuntu**: `lightfast_<version>_amd64.deb` (Intel/AMD) or
+  `lightfast_<version>_arm64.deb` (ARM)
+- **Fedora / RHEL / openSUSE**: `lightfast-<version>.x86_64.rpm` (Intel/AMD) or
+  `lightfast-<version>.aarch64.rpm` (ARM)
+
+Install via your package manager:
+
+```bash
+# Debian/Ubuntu
+sudo apt install ./lightfast_<version>_amd64.deb
+
+# Fedora/RHEL
+sudo dnf install ./lightfast-<version>.x86_64.rpm
+```
+
+Linux auto-update is not yet wired — re-download manually for new versions.
+
 ## Run
 
 ```bash
@@ -155,10 +177,17 @@ The `Release desktop` workflow then:
 1. Creates a draft GitHub Release for the tag.
 2. Builds signed+notarized ZIP and DMG artifacts for both `arm64` and `x64`
    via `electron-forge publish` on `macos-14`.
-3. Generates `latest-mac-<arch>.json` (Squirrel.Mac feed format) and uploads
-   them to the release. The app's updater points at
-   `releases/latest/download/latest-mac-${arch}.json`.
-4. Undrafts the release.
+3. Builds `.deb` and `.rpm` artifacts for both `arm64` and `x64` via
+   `electron-forge publish` on `ubuntu-22.04` / `ubuntu-22.04-arm`.
+4. Generates `latest-mac-<arch>.json` (Squirrel.Mac feed). Linux auto-update
+   is deferred, so no Linux feed is emitted yet — Linux users re-download
+   manually for new versions.
+5. Undrafts the release.
+
+We ship per-arch artifacts (no universal-binary merge on macOS) — users pick
+the matching arch. Rationale: the merge doubles download size, Linux has no
+universal concept, and the per-arch `.deb`/`.rpm` packages already encode the
+right architecture for `apt`/`dnf`.
 
 ### Required GitHub secrets
 
