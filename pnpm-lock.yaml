@@ -9,9 +9,6 @@ catalogs:
     '@ai-sdk/gateway':
       specifier: 1.0.7
       version: 1.0.7
-    '@ai-sdk/react':
-      specifier: 2.0.15
-      version: 2.0.15
     '@clerk/backend':
       specifier: 3.2.14
       version: 3.2.14
@@ -327,9 +324,6 @@ importers:
 
   api/platform:
     dependencies:
-      '@ai-sdk/gateway':
-        specifier: 'catalog:'
-        version: 1.0.7(zod@4.3.6)
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
@@ -339,24 +333,12 @@ importers:
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
         version: 0.2.1
-      '@repo/app-embed':
-        specifier: workspace:*
-        version: link:../../packages/app-embed
       '@repo/app-encryption':
         specifier: workspace:*
         version: link:../../packages/app-encryption
-      '@repo/app-pinecone':
-        specifier: workspace:*
-        version: link:../../packages/app-pinecone
       '@repo/app-providers':
         specifier: workspace:*
         version: link:../../packages/app-providers
-      '@repo/app-upstash-realtime':
-        specifier: workspace:*
-        version: link:../../packages/app-upstash-realtime
-      '@repo/app-validation':
-        specifier: workspace:*
-        version: link:../../packages/app-validation
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
@@ -381,24 +363,12 @@ importers:
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.1.0
-      ai:
-        specifier: 'catalog:'
-        version: 5.0.52(zod@4.3.6)
-      drizzle-orm:
-        specifier: 'catalog:'
-        version: 0.45.2(@cloudflare/workers-types@4.20260301.1)(@electric-sql/pglite@0.3.15)(@libsql/client@0.14.0(bufferutil@4.1.0))(@neondatabase/serverless@1.1.0)(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/pg@8.15.6)(@upstash/redis@1.37.0)(postgres@3.4.9)
       inngest:
         specifier: 'catalog:'
         version: 3.54.2(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@vercel/node@5.7.11(encoding@0.1.13)(rollup@4.60.2))(encoding@0.1.13)(express@5.2.1)(h3@1.15.4)(hono@4.12.14)(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(typescript@5.9.3)(zod@4.3.6)
       jose:
         specifier: 'catalog:'
         version: 6.2.2
-      nanoid:
-        specifier: 'catalog:'
-        version: 5.1.9
-      postgres:
-        specifier: 'catalog:'
-        version: 3.4.9
       superjson:
         specifier: 'catalog:'
         version: 2.2.6
@@ -427,9 +397,6 @@ importers:
       '@ai-sdk/gateway':
         specifier: 'catalog:'
         version: 1.0.7(zod@4.3.6)
-      '@ai-sdk/react':
-        specifier: 'catalog:'
-        version: 2.0.15(react@19.2.5)(zod@4.3.6)
       '@api/app':
         specifier: workspace:*
         version: link:../../api/app
@@ -448,9 +415,6 @@ importers:
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
         version: 0.2.1
-      '@lightfastai/related-projects':
-        specifier: 'catalog:'
-        version: 0.1.18
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -502,9 +466,6 @@ importers:
       '@repo/app-trpc':
         specifier: workspace:^
         version: link:../../packages/app-trpc
-      '@repo/app-upstash-realtime':
-        specifier: workspace:*
-        version: link:../../packages/app-upstash-realtime
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
@@ -846,9 +807,6 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.16.0(typescript@5.9.3)
-      '@vendor/embed':
-        specifier: workspace:*
-        version: link:../../vendor/embed
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
@@ -1633,21 +1591,12 @@ importers:
 
   packages/app-upstash-realtime:
     dependencies:
-      '@repo/app-providers':
-        specifier: workspace:*
-        version: link:../app-providers
-      '@repo/app-validation':
-        specifier: workspace:*
-        version: link:../app-validation
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
       '@vendor/upstash-realtime':
         specifier: workspace:*
         version: link:../../vendor/upstash-realtime
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
@@ -2558,16 +2507,6 @@ packages:
   '@ai-sdk/provider@2.0.0':
     resolution: {integrity: sha512-6o7Y2SeO9vFKB8lArHXehNuusnpddKPk7xqL7T2/b+OvXMRIXUO1rR4wcv1hAFUAT9avGZshty3Wlua/XA7TvA==}
     engines: {node: '>=18'}
-
-  '@ai-sdk/react@2.0.15':
-    resolution: {integrity: sha512-6saQ4495OhxfmUHrR+HIk0/9S3n4I/ZR/G0mYr29ua4vqi5wOj1DbLO5zIFWiYiSvd/Ie1yFtXG4G9Cuglm+VA==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      react: ^19.2.5
-      zod: ^3.25.76 || ^4
-    peerDependenciesMeta:
-      zod:
-        optional: true
 
   '@alloc/quick-lru@5.2.0':
     resolution: {integrity: sha512-UrcABB+4bUrFABwbluTIBErXwvbsU/V7TZWfmbgJfbkwiBuziS9gxdODUyuiecfdGQ85jglMW6juS3+z5TsKLw==}
@@ -9181,12 +9120,6 @@ packages:
     resolution: {integrity: sha512-4I7Td01quW/RpocfNayFdFVk1qSuoh0E7JrbRJ16nH01HhKFQ88INq9Sd+nd72zqRySlr9BmDA8xlEJ6vJMrYA==}
     engines: {node: '>=8'}
 
-  ai@5.0.15:
-    resolution: {integrity: sha512-EX5hF+NVFm6R11mvdZRbg6eJEjyMlniI4/xOnyTh4VtDQ457lhIgi3kDGrHW3/qw9ELon9m2e7AK3g5z5sLwsQ==}
-    engines: {node: '>=18'}
-    peerDependencies:
-      zod: ^3.25.76 || ^4
-
   ai@5.0.52:
     resolution: {integrity: sha512-GLlRHjMlvN9+w7UYGxCpUQ8GgCRv5Z+JCprRH3Q8YbXJ/JyIc6EP9+YRUmQsyExX/qQsuehe7y/LLygarbSTOw==}
     engines: {node: '>=18'}
@@ -15114,16 +15047,6 @@ snapshots:
   '@ai-sdk/provider@2.0.0':
     dependencies:
       json-schema: 0.4.0
-
-  '@ai-sdk/react@2.0.15(react@19.2.5)(zod@4.3.6)':
-    dependencies:
-      '@ai-sdk/provider-utils': 3.0.3(zod@4.3.6)
-      ai: 5.0.15(zod@4.3.6)
-      react: 19.2.5
-      swr: 2.4.1(react@19.2.5)
-      throttleit: 2.1.0
-    optionalDependencies:
-      zod: 4.3.6
 
   '@alloc/quick-lru@5.2.0': {}
 
@@ -22670,14 +22593,6 @@ snapshots:
     dependencies:
       clean-stack: 2.2.0
       indent-string: 4.0.0
-
-  ai@5.0.15(zod@4.3.6):
-    dependencies:
-      '@ai-sdk/gateway': 1.0.7(zod@4.3.6)
-      '@ai-sdk/provider': 2.0.0
-      '@ai-sdk/provider-utils': 3.0.3(zod@4.3.6)
-      '@opentelemetry/api': 1.9.1
-      zod: 4.3.6
 
   ai@5.0.52(zod@4.3.6):
     dependencies:
