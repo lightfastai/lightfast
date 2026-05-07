@@ -61,7 +61,6 @@ export {
 } from "./schemas/api/search";
 
 export * from "./schemas/entities";
-export * from "./schemas/ingestion";
 export * from "./schemas/job";
 export * from "./schemas/neural";
 export * from "./schemas/org-api-key";

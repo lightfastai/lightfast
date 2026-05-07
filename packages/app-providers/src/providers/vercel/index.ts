@@ -17,12 +17,10 @@ import {
   vercelOAuthResponseSchema,
   vercelProviderConfigSchema,
 } from "./auth";
-import { vercelBackfill } from "./backfill";
 import {
   preTransformVercelWebhookPayloadSchema,
   vercelWebhookPayloadSchema,
 } from "./schemas";
-import { transformVercelDeployment } from "./transformers";
 
 // ── Standalone OAuth helpers (avoids circular self-reference in processCallback) ──
 
@@ -118,7 +116,6 @@ export const vercel = defineWebhookProvider({
       label: "Deployment",
       weight: 40,
       schema: preTransformVercelWebhookPayloadSchema,
-      transform: transformVercelDeployment,
       actions: {
         created: { label: "Deployment Started", weight: 30 },
         succeeded: { label: "Deployment Succeeded", weight: 40 },
@@ -161,7 +158,6 @@ export const vercel = defineWebhookProvider({
   deriveObservationType: (sourceType) => sourceType.replace(".", "_"),
 
   api: vercelApi,
-  backfill: vercelBackfill,
 
   healthCheck: {
     check: async (_config, _externalId, accessToken) => {
@@ -264,8 +260,6 @@ export const vercel = defineWebhookProvider({
       }));
     },
   },
-
-  edgeRules: [],
 
   webhook: {
     headersSchema: z.object({

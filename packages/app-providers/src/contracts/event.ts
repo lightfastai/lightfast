@@ -1,47 +1,37 @@
 /**
- * Post-Transform Event Schema
+ * Post-Transform Event types — stub.
  *
- * Canonical type definitions for webhook-derived events after transformation.
- * These are the shapes produced by provider transformers and stored
- * as JSONB in the org_ingest_logs table.
+ * The transformer pipeline was removed in the 2026-05-06 barebones reset.
+ * Only type aliases survive here so Phase 5 db schema files
+ * (`org-ingest-logs`, `org-events`) keep compiling until they are dropped
+ * alongside this file.
  */
 
-import { z } from "zod";
+export interface EntityRelation {
+  entityId: string;
+  entityType: string;
+  provider: string;
+  relationshipType: string;
+  title: string | null;
+  url: string | null;
+}
 
-export const entityRefSchema = z.object({
-  provider: z.string().min(1),
-  entityType: z.string().min(1),
-  entityId: z.string().min(1),
-  title: z.string(),
-  url: z.string().url().nullable(),
-  state: z.string().nullable(),
-});
-
-export const entityRelationSchema = z.object({
-  provider: z.string().min(1),
-  entityType: z.string().min(1),
-  entityId: z.string().min(1),
-  title: z.string().nullable(),
-  url: z.string().url().nullable(),
-  relationshipType: z.string().min(1),
-});
-
-export const postTransformEventSchema = z.object({
-  deliveryId: z.string().min(1),
-  sourceId: z.string().min(1),
-  provider: z.string().min(1),
-  eventType: z.string().min(1),
-  occurredAt: z.iso.datetime(),
-  entity: entityRefSchema,
-  relations: z.array(entityRelationSchema),
-  title: z.string().min(1).max(200),
-  body: z.string().max(50_000),
-  attributes: z.record(
-    z.string(),
-    z.union([z.string(), z.number(), z.boolean(), z.null()])
-  ),
-});
-
-export type EntityRef = z.infer<typeof entityRefSchema>;
-export type EntityRelation = z.infer<typeof entityRelationSchema>;
-export type PostTransformEvent = z.infer<typeof postTransformEventSchema>;
+export interface PostTransformEvent {
+  attributes: Record<string, string | number | boolean | null>;
+  body: string;
+  deliveryId: string;
+  entity: {
+    entityId: string;
+    entityType: string;
+    provider: string;
+    state: string | null;
+    title: string;
+    url: string | null;
+  };
+  eventType: string;
+  occurredAt: string;
+  provider: string;
+  relations: EntityRelation[];
+  sourceId: string;
+  title: string;
+}

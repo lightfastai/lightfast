@@ -7,7 +7,6 @@
 
 export * from "./activities";
 export * from "./entities";
-export * from "./ingestion";
 export * from "./job";
 export * from "./neural";
 export * from "./org-api-key";

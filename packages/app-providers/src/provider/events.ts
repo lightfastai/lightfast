@@ -1,18 +1,11 @@
 import type { z } from "zod";
-import type { PostTransformEvent } from "../contracts/event";
 import type { ActionDef } from "./kinds";
-import type { TransformContext } from "./primitives";
 
 /** Simple event — no sub-actions */
 export interface SimpleEventDef<S extends z.ZodType = z.ZodType> {
   readonly kind: "simple";
   readonly label: string;
   readonly schema: S;
-  readonly transform: (
-    payload: z.infer<S>,
-    ctx: TransformContext,
-    eventType: string
-  ) => PostTransformEvent;
   readonly weight: number;
 }
 
@@ -25,11 +18,6 @@ export interface ActionEventDef<
   readonly kind: "with-actions";
   readonly label: string;
   readonly schema: S;
-  readonly transform: (
-    payload: z.infer<S>,
-    ctx: TransformContext,
-    eventType: string
-  ) => PostTransformEvent;
   readonly weight: number;
 }
 

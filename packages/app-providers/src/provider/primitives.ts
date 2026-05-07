@@ -1,12 +1,5 @@
 import { z } from "zod";
 
-export const transformContextSchema = z.object({
-  deliveryId: z.string(),
-  receivedAt: z.number(),
-});
-
-export type TransformContext = z.infer<typeof transformContextSchema>;
-
 // ── Sync Settings ──
 
 /**
@@ -47,27 +40,6 @@ export const baseProviderAccountInfoSchema = z.object({
 export type BaseProviderAccountInfo = z.infer<
   typeof baseProviderAccountInfoSchema
 >;
-
-// ── Edge Rules ──
-
-/**
- * Declarative edge rule for entity-mediated relationship detection.
- * Co-located on ProviderDefinition so adding a new provider = defining its edges.
- */
-export interface EdgeRule {
-  /** Confidence score for the created edge */
-  confidence: number;
-  /** Provider to match against ("*" for any) */
-  matchProvider: string;
-  /** Entity type to match against on the OTHER observation */
-  matchRefType: string;
-  /** Reference type to match on THIS observation's entities (open string) */
-  refType: string;
-  /** Relationship type to create */
-  relationshipType: string;
-  /** Only match when this observation's reference has this label (e.g., "resolved_by", "fixes") */
-  selfLabel?: string;
-}
 
 export const callbackResultSchema = z.discriminatedUnion("status", [
   z.object({

@@ -88,6 +88,4 @@ export const apollo = defineApiProvider({
       },
     ],
   },
-
-  edgeRules: [],
 });

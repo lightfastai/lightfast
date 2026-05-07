@@ -16,18 +16,12 @@ import {
   githubConfigSchema,
   githubProviderConfigSchema,
 } from "./auth";
-import { githubBackfill } from "./backfill";
 import {
   githubWebhookPayloadSchema,
   preTransformGitHubIssueCommentEventSchema,
   preTransformGitHubIssuesEventSchema,
   preTransformGitHubPullRequestEventSchema,
 } from "./schemas";
-import {
-  transformGitHubIssue,
-  transformGitHubIssueComment,
-  transformGitHubPullRequest,
-} from "./transformers";
 
 // ── GitHub-Specific Capabilities ──
 
@@ -106,7 +100,6 @@ export const github = defineWebhookProvider({
       label: "Pull Requests",
       weight: 50,
       schema: preTransformGitHubPullRequestEventSchema,
-      transform: transformGitHubPullRequest,
       actions: {
         opened: { label: "PR Opened", weight: 50 },
         closed: { label: "PR Closed", weight: 45 },
@@ -119,7 +112,6 @@ export const github = defineWebhookProvider({
       label: "Issues",
       weight: 45,
       schema: preTransformGitHubIssuesEventSchema,
-      transform: transformGitHubIssue,
       actions: {
         opened: { label: "Issue Opened", weight: 45 },
         closed: { label: "Issue Closed", weight: 40 },
@@ -130,7 +122,6 @@ export const github = defineWebhookProvider({
       label: "Comments",
       weight: 25,
       schema: preTransformGitHubIssueCommentEventSchema,
-      transform: transformGitHubIssueComment,
       actions: {
         created: { label: "Comment Added", weight: 25 },
         edited: { label: "Comment Edited", weight: 20 },
@@ -270,7 +261,6 @@ export const github = defineWebhookProvider({
   deriveObservationType: (sourceType) => sourceType,
 
   api: githubApi,
-  backfill: githubBackfill,
 
   healthCheck: {
     check: async (config, externalId, _accessToken) => {
@@ -355,34 +345,6 @@ export const github = defineWebhookProvider({
       });
     },
   },
-
-  edgeRules: [
-    // GitHub commit deploys to Vercel deployment (entity co-occurrence)
-    {
-      refType: "commit",
-      matchProvider: "vercel",
-      matchRefType: "deployment",
-      relationshipType: "deploys",
-      confidence: 1.0,
-    },
-    // GitHub issue fixes another issue (self-referential, from extractLinkedIssues)
-    {
-      refType: "issue",
-      selfLabel: "fixes",
-      matchProvider: "*",
-      matchRefType: "issue",
-      relationshipType: "fixes",
-      confidence: 1.0,
-    },
-    // GitHub issue references another issue
-    {
-      refType: "issue",
-      matchProvider: "*",
-      matchRefType: "issue",
-      relationshipType: "references",
-      confidence: 0.8,
-    },
-  ],
 
   envSchema: {
     GITHUB_APP_SLUG: z.string().min(1),
