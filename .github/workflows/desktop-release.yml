@@ -178,6 +178,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
       - name: Generate Squirrel.Mac update feed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -185,6 +197,18 @@ jobs:
           RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
           RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
         run: node apps/desktop/scripts/generate-update-feed.mjs
+
+      - name: Generate third-party notices
+        run: pnpm --filter @lightfast/desktop notices:generate
+
+      - name: Attach third-party notices to release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ needs.prepare.outputs.tag }}" \
+            apps/desktop/THIRD_PARTY_NOTICES.txt \
+            --repo "${{ github.repository }}" \
+            --clobber
 
       - name: Publish release (undraft)
         env:
