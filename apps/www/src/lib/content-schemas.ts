@@ -1,8 +1,7 @@
 import { z } from "zod";
 
-// Mirror of providerSlugSchema from @repo/app-providers/client. Inlined because
-// fumadocs-mdx's build-time loader can't resolve the package's extensionless
-// re-exports under Node ESM. Keep in sync with packages/app-providers/src/client/display.ts.
+// Provider slug list, owned locally by apps/www after the v2 barebones reset.
+// Keep in sync with src/lib/integrations-display.ts.
 const providerSlugSchema = z.enum([
   "apollo",
   "github",

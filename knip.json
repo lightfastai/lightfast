@@ -23,7 +23,6 @@
       "project": ["src/**/*.ts"]
     },
     "api/platform": {
-      "entry": ["src/lib/oauth/callback.ts"],
       "project": ["src/**/*.ts"]
     },
     "core/*": {
@@ -36,27 +35,12 @@
     "packages/*": {
       "project": ["src/**/*.{ts,tsx}"]
     },
-    "packages/webhook-schemas": {
-      "entry": ["src/capture.ts"],
-      "project": ["src/**/*.ts"]
-    },
-    "packages/app-ai": {
-      "entry": ["src/org-*.ts"],
-      "project": ["src/**/*.ts"]
-    },
-    "packages/app-test-data": {
-      "entry": ["src/cli.ts"],
-      "project": ["src/**/*.ts"]
-    },
     "packages/app-trpc": {
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/og": {
       "project": ["src/**/*.{ts,tsx}"],
       "ignoreDependencies": ["react", "@types/react"]
-    },
-    "packages/app-upstash-realtime": {
-      "ignoreDependencies": ["@types/react"]
     },
     "packages/ui": {
       "project": ["src/**/*.{ts,tsx}"],

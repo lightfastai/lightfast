@@ -1,8 +1,8 @@
 /**
  * Source and Integration Type Schemas
  *
- * SourceType and sourceTypeSchema are now defined in @repo/app-providers
- * (derived from the PROVIDERS registry). Import them directly from there.
+ * Provider-derived source/integration types were removed in the v2 barebones
+ * reset; only the sync-status enum survives here.
  */
 
 import { z } from "zod";

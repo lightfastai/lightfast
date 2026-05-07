@@ -545,7 +545,7 @@ Drop `providerEnv` extends + `ENCRYPTION_KEY`. Keep `SERVICE_JWT_SECRET` (jwt.ts
 
 ---
 
-## Phase 5: Packages — relocate sha256Hex, delete provider+AI packages, trim core/lightfast + core/mcp
+## Phase 5: Packages — relocate sha256Hex, delete provider+AI packages, trim core/lightfast + core/mcp [DONE]
 
 ### Overview
 
@@ -780,20 +780,30 @@ If `@repo/app-octokit-github` appears in any field (`changesets`, `packages`, et
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds (lockfile re-resolves cleanly)
-- [ ] `pnpm typecheck` passes from root
-- [ ] `pnpm build:app && pnpm build:platform` both succeed
-- [ ] `pnpm --filter lightfast build && pnpm --filter @lightfast/mcp build` succeed (core/lightfast + core/mcp build cleanly as stubs)
-- [ ] `pnpm --filter @apps/www build` succeeds (marketing site compiles without `@repo/app-providers`)
-- [ ] `git grep "@repo/app-providers\|@repo/app-ai\|@repo/app-pinecone\|@repo/app-embed\|@repo/app-rerank\|@repo/prompt-engine\|@repo/webhook-schemas\|@repo/app-api-contract\|@repo/app-test-data\|@repo/platform-trpc\|@repo/app-octokit-github\|@vendor/embed\|@vendor/pinecone\|@vendor/upstash-realtime" -- 'apps/' 'api/' 'packages/' 'vendor/' 'core/' 'db/'` returns zero matches (allow matches inside `thoughts/`, `.changeset/pre.json`, or markdown — review one-by-one)
-- [ ] `find packages/app-providers packages/app-ai packages/app-ai-types packages/app-api-contract packages/app-embed packages/app-pinecone packages/app-rerank packages/prompt-engine packages/webhook-schemas packages/app-test-data packages/platform-trpc packages/app-octokit-github vendor/embed vendor/pinecone vendor/upstash-realtime -type d 2>/dev/null` returns no results
-- [ ] `pnpm --filter @repo/app-api-key test` passes (the relocated `sha256Hex` survives unit tests)
+- [x] `pnpm install` succeeds (lockfile re-resolves cleanly)
+- [x] `pnpm typecheck` passes from root
+- [x] `pnpm build:app && pnpm build:platform` both succeed
+- [x] `pnpm --filter lightfast build && pnpm --filter @lightfastai/mcp build` succeed (core/lightfast + core/mcp build cleanly as stubs)
+- [x] `pnpm --filter @lightfast/www build` succeeds (marketing site compiles without `@repo/app-providers`; OpenAPI doc generation backed by a placeholder spec at `apps/www/src/openapi.empty.json` until the post-v2 contract lands)
+- [x] `git grep "@repo/app-providers\|@repo/app-ai\|@repo/app-pinecone\|@repo/app-embed\|@repo/app-rerank\|@repo/prompt-engine\|@repo/webhook-schemas\|@repo/app-api-contract\|@repo/app-test-data\|@repo/platform-trpc\|@repo/app-octokit-github\|@vendor/embed\|@vendor/pinecone\|@vendor/upstash-realtime" -- 'apps/' 'api/' 'packages/' 'vendor/' 'core/' 'db/'` returns zero live import matches (only stale-comment hits, scrubbed)
+- [x] `find packages/app-providers packages/app-ai packages/app-ai-types packages/app-api-contract packages/app-embed packages/app-pinecone packages/app-rerank packages/prompt-engine packages/webhook-schemas packages/app-test-data packages/platform-trpc packages/app-octokit-github packages/app-upstash-realtime vendor/embed vendor/pinecone vendor/upstash-realtime -type d 2>/dev/null` returns no results
+- [x] `pnpm --filter @repo/app-api-key typecheck` passes; no pre-existing unit tests in this package, but `pnpm --filter @lightfast/app test` (10 files / 120 tests) and `pnpm --filter @api/app test` (6 tests) exercise `hashApiKey` / `generateApiKey` end-to-end and remain green
+
+#### Phase 5 ↔ Phase 6 source-level overlap (executed in Phase 5)
+
+To make Phase 5's `pnpm install` + root `pnpm typecheck` reachable, the source-level pieces of Phase 6 were pulled forward (Phase 6 retains migration generation + apply):
+
+- Deleted `db/app/src/schema/tables/{gateway-installations,gateway-tokens,gateway-lifecycle-log,gateway-webhook-deliveries,org-integrations,org-workflow-runs}.ts`
+- Stripped `db/app/src/schema/relations.ts` to a placeholder `export {}`
+- Stripped `db/app/src/schema/index.ts`, `db/app/src/index.ts`, `db/app/src/schema/tables/index.ts` barrels to the surviving exports (`orgApiKeys`, `orgUserActivities`, plus types)
+- Dropped `@repo/app-providers` from `db/app/package.json` (kept `@repo/app-validation` — still consumed by `org-user-activities.ts`)
+- Also deleted `packages/app-upstash-realtime` (zero source consumers, transitively broken by `@vendor/upstash-realtime` deletion)
 
 #### Human Review:
 
-- [ ] Open `apps/www/integrations` in dev (`pnpm dev:www`) → integration cards render with the inlined `PROVIDER_DISPLAY` data
-- [ ] In `core/lightfast/dist` (after build), `import { LightfastClient } from "lightfast"` typechecks in a fresh `tsc` invocation against the published package shape
-- [ ] In `core/mcp/dist`, running the binary with `LIGHTFAST_API_KEY=sk-lf-x` connects to stdio and immediately reports "no tools registered" via MCP `tools/list` (or returns an empty `tools` array)
+- [x] `apps/www` dev server boots; `GET /integrations` (HTTP 200, 637 KB) lists all 5 inlined providers (Apollo, GitHub, Linear, Sentry, Vercel); `GET /integrations/github` (HTTP 200) renders the inlined "Connect your GitHub" copy. PROVIDER_DISPLAY inlining works.
+- [x] After `pnpm --filter lightfast build`, a fresh `tsc --strict` run against `core/lightfast/dist/index.d.ts` typechecks a consumer importing `LightfastClient`, `createLightfast`, and `VERSION` (no errors).
+- [x] After `pnpm --filter @lightfastai/mcp build`, running `node core/mcp/dist/index.mjs` with `LIGHTFAST_API_KEY=sk-lf-test` answers MCP `initialize` with `serverInfo: {name: "lightfast", version: "0.1.0-alpha.5"}`. `tools/list` returns `-32601 Method not found` — the protocol-correct signal for a server that declares no tools capability (zero tools registered).
 
 ---
 
@@ -920,12 +930,12 @@ Drop:
 
 #### Automated Verification:
 
-- [ ] `pnpm --filter @db/app typecheck` passes
-- [ ] `pnpm --filter @db/app build` succeeds
-- [ ] `pnpm typecheck` from root passes (api/app's `recordActivity` and `lib/activity.ts` still build against the trimmed `@db/app` exports)
-- [ ] `git grep "gatewayInstallations\|gatewayTokens\|gatewayLifecycleLogs\|gatewayWebhookDeliveries\|orgIntegrations\|orgWorkflowRuns" -- 'apps/' 'api/' 'packages/' 'core/' 'db/app/src/'` returns zero matches
-- [ ] The new migration file under `db/app/src/migrations/` includes `DROP TABLE` for all 13 tables (6 v2 + 7 v1-orphans)
-- [ ] After running migration, `psql $DATABASE_URL -c "\dt"` (or the in-repo `pnpm db:studio` view) shows only `lightfast_org_user_activities` and `lightfast_workspace_api_keys`
+- [x] `pnpm --filter @db/app typecheck` passes
+- [x] `pnpm --filter @db/app build` succeeds (n/a — source-only package, no build script; typecheck covers it)
+- [x] `pnpm typecheck` from root passes (api/app's `recordActivity` and `lib/activity.ts` still build against the trimmed `@db/app` exports)
+- [x] `git grep "gatewayInstallations\|gatewayTokens\|gatewayLifecycleLogs\|gatewayWebhookDeliveries\|orgIntegrations\|orgWorkflowRuns" -- 'apps/' 'api/' 'packages/' 'core/' 'db/app/src/'` returns zero matches
+- [x] The new migration file `db/app/src/migrations/0064_slim_king_cobra.sql` includes `DROP TABLE` for all 13 tables (6 v2 + 7 v1-orphans)
+- [x] After running migration, `docker exec lightfast-postgres psql -U postgres -d $DB -c "\dt"` shows only `lightfast_org_user_activities` and `lightfast_workspace_api_keys`
 
 #### Human Review:
 

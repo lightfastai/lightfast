@@ -1,0 +1,10 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Lightfast API",
+    "version": "0.0.0",
+    "description": "Placeholder spec — endpoints will be populated post-v2."
+  },
+  "paths": {},
+  "components": {}
+}

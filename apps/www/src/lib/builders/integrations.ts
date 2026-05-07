@@ -1,4 +1,4 @@
-import { PROVIDER_DISPLAY } from "@repo/app-providers/client";
+import { PROVIDER_DISPLAY } from "~/lib/integrations-display";
 import type {
   GraphContext,
   SoftwareApplication,
