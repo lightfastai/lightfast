@@ -38,7 +38,7 @@ jobs:
 
       - name: Check OpenAPI spec is up to date
         run: |
-          pnpm turbo generate:openapi
+          pnpm turbo generate:openapi --summarize
           git diff --exit-code packages/app-api-contract/openapi.json || {
             echo "::error::openapi.json is stale. Run 'pnpm turbo generate:openapi' and commit the result."
             exit 1
@@ -51,7 +51,7 @@ jobs:
         env:
           SKIP_ENV_VALIDATION: "true"
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: pnpm turbo typecheck --affected --continue
+        run: pnpm turbo typecheck --affected --continue --summarize
 
       - name: Check boundaries
         run: pnpm turbo boundaries
@@ -59,6 +59,13 @@ jobs:
       - name: Check dead code and unused dependencies
         continue-on-error: true # Remove after initial cleanup sprint
         run: pnpm knip
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — CI / Quality'
+          artifact-name: turbo-cache-ci-quality
 
   # Summary job (required status check)
   ci-success:

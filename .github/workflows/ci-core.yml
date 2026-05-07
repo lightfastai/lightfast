@@ -42,7 +42,14 @@ jobs:
       - name: Type check packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo typecheck --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue
+        run: pnpm turbo typecheck --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue --summarize
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Core CI / Quality'
+          artifact-name: turbo-cache-core-ci-quality
 
   # Test (simple test run on Node 22)
   test:
@@ -102,7 +109,7 @@ jobs:
       - name: Build packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli
+        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --summarize
 
       - name: Check build outputs
         run: |
@@ -115,6 +122,13 @@ jobs:
           echo "@lightfastai/cli build outputs:"
           ls -la core/cli/dist/
           echo "All builds completed successfully"
+
+      - name: Cache report
+        if: always()
+        uses: ./.github/actions/turbo-summary
+        with:
+          title: 'Turbo cache report — Core CI / Build'
+          artifact-name: turbo-cache-core-ci-build
 
   # Summary job (required status check)
   core-ci-success:
