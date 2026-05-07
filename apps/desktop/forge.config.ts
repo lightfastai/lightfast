@@ -155,6 +155,13 @@ const config: ForgeConfig = {
       {
         options: {
           name: "lightfast",
+          // electron-installer-common defaults `bin` to `pkg.name`, which
+          // becomes `@lightfast/desktop` after the release workflow runs
+          // `npm version`. The actual binary on disk is `lightfast` (set via
+          // `packagerConfig.executableName` above). Without this override the
+          // maker fails: "could not find the Electron app binary at
+          // .../Lightfast-linux-<arch>/@lightfast/desktop".
+          bin: "lightfast",
           productName: "Lightfast",
           genericName: "Developer Tool",
           maintainer: "Lightfast <releases@lightfast.ai>",
@@ -169,6 +176,9 @@ const config: ForgeConfig = {
       {
         options: {
           name: "lightfast",
+          // Same `bin` override as MakerDeb above — electron-installer-redhat
+          // shares the same `getDefaultsFromPackageJSON` helper.
+          bin: "lightfast",
           productName: "Lightfast",
           genericName: "Developer Tool",
           license: "MIT",
