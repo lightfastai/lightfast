@@ -39,7 +39,9 @@ if (typeof info.buildNumber !== "string" || info.buildNumber.length === 0) {
 }
 
 if (errors.length > 0) {
-  for (const e of errors) console.error(e);
+  for (const e of errors) {
+    console.error(e);
+  }
   process.exit(1);
 }
 

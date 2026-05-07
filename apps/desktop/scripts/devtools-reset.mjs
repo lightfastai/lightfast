@@ -55,4 +55,6 @@ for (const sub of SUBDIRS) {
   console.log(`removed ${target}`);
   removed += 1;
 }
-console.log(`${removed}/${SUBDIRS.length} cache dirs cleared under ${userData}`);
+console.log(
+  `${removed}/${SUBDIRS.length} cache dirs cleared under ${userData}`
+);

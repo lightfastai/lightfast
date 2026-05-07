@@ -1,10 +1,13 @@
-import { _electron, expect, test, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { resolve } from "node:path";
+import { _electron, expect, type Page, test } from "@playwright/test";
 
 // `apps/desktop/package.json` has no `"type": "module"`, so Playwright's TS
-// loader compiles this spec as CJS. Use __dirname, not import.meta.url —
-// the latter throws ReferenceError under CJS. (Verified via spike 2026-05-06.)
+// loader compiles this spec as CJS. Use __dirname — both `import.meta.url`
+// and `import.meta.dirname` throw under CJS. (Verified via spike 2026-05-06
+// and re-verified when biome's auto-fix to `import.meta.dirname` broke the
+// spec.)
+// biome-ignore lint/correctness/noGlobalDirnameFilename: spec runs as CJS, see comment above.
 const desktopRoot = resolve(__dirname, "..", "..");
 const repoRoot = resolve(desktopRoot, "..", "..");
 
@@ -33,7 +36,9 @@ function loadDesktopEnv(): Record<string, string> {
 function stringEnv(source: NodeJS.ProcessEnv): Record<string, string> {
   const out: Record<string, string> = {};
   for (const [k, v] of Object.entries(source)) {
-    if (typeof v === "string") out[k] = v;
+    if (typeof v === "string") {
+      out[k] = v;
+    }
   }
   return out;
 }

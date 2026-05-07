@@ -4,7 +4,7 @@ import { chromium } from "@playwright/test";
 const port = Number(process.env.LIGHTFAST_REMOTE_DEBUG_PORT ?? 9222);
 if (!Number.isInteger(port) || port < 1 || port > 65_535) {
   console.error(
-    `LIGHTFAST_REMOTE_DEBUG_PORT must be an integer in [1, 65535], got ${process.env.LIGHTFAST_REMOTE_DEBUG_PORT}`,
+    `LIGHTFAST_REMOTE_DEBUG_PORT must be an integer in [1, 65535], got ${process.env.LIGHTFAST_REMOTE_DEBUG_PORT}`
   );
   process.exit(1);
 }
@@ -21,9 +21,7 @@ let browser;
 try {
   browser = await chromium.connectOverCDP(`http://127.0.0.1:${port}`);
 } catch (err) {
-  console.error(
-    `Could not attach to CDP at 127.0.0.1:${port}: ${err.message}`,
-  );
+  console.error(`Could not attach to CDP at 127.0.0.1:${port}: ${err.message}`);
   console.error("Hint: start the dev app with");
   console.error(`  LIGHTFAST_REMOTE_DEBUG_PORT=${port} pnpm dev:desktop`);
   process.exit(1);
