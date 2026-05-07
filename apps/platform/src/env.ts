@@ -1,4 +1,3 @@
-import { providerEnv } from "@repo/app-providers/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { env as inngestEnv } from "@vendor/inngest/env";
@@ -13,7 +12,6 @@ export const env = createEnv({
     sentryEnv,
     betterstackEnv,
     upstashEnv,
-    providerEnv,
     inngestEnv,
   ],
   shared: {
@@ -24,9 +22,6 @@ export const env = createEnv({
   server: {
     // Service auth — JWT shared secret for cross-service calls
     SERVICE_JWT_SECRET: z.string().min(32),
-
-    // Token vault encryption (32 bytes: 64 hex chars or 44 base64 chars)
-    ENCRYPTION_KEY: z.string().min(44),
   },
   client: {
     NEXT_PUBLIC_VERCEL_ENV: z

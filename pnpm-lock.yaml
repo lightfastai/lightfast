@@ -729,18 +729,12 @@ importers:
       '@api/platform':
         specifier: workspace:*
         version: link:../../api/platform
-      '@db/app':
-        specifier: workspace:*
-        version: link:../../db/app
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
         version: 0.2.1
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
-      '@repo/app-providers':
-        specifier: workspace:*
-        version: link:../../packages/app-providers
       '@sentry/nextjs':
         specifier: 'catalog:'
         version: 10.49.0(@opentelemetry/core@2.7.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.213.0(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@2.7.0(@opentelemetry/api@1.9.1))(encoding@0.1.13)(next@16.2.4(@babel/core@7.28.4)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)(webpack@5.105.4(esbuild@0.27.3))
