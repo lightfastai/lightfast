@@ -14,7 +14,7 @@ Re-architect `lightfastai/lightfast`'s eight GitHub Actions workflows around a t
 
 Two phases (plus Phase 0 worktree setup), all on GitHub-hosted runners. Depot migration is intentionally deferred to `thoughts/shared/plans/2026-05-07-ci-depot-runner-migration.md`. Turbo cache wrapping (originally drafted as Phase 3 here) is deferred to `thoughts/shared/plans/2026-05-07-turbo-cache-audit-and-wrap.md`, which scopes that work better and covers more bypasses (biome, knip, tests in addition to `electron-forge package`). Optimize architecture first so the future Depot bill sits on a structurally lower baseline (per `thoughts/shared/handoffs/general/2026-05-07_15-10-30_ci-cost-findings-pre-depot.md`).
 
-**Branch protection bootstrap**: as of plan time, `gh api repos/lightfastai/lightfast/branches/main/protection` returns 404 — `main` has no protection rule today. Phase 2 introduces the FIRST protection on `main`. This means direct push to main is currently allowed, which is what makes the merge-queue.yml bootstrap (push to main → enable queue → first smoke PR) feasible without disrupting any existing rule.
+**Branch protection bootstrap**: as of plan time, `gh api repos/lightfastai/lightfast/branches/main/protection` returns 404 — `main` has no _classic branch protection_ rule today. **However, during implementation we discovered main IS protected via a ruleset** (id `15254385`, name `"Protect main"`) with `required_linear_history`, `non_fast_forward`, blocked deletion, and `pull_request` rule with `required_review_thread_resolution: true`. The ruleset has NO `required_status_checks` rule. So the bootstrap actually requires: (a) ruleset blocks direct-push, so PR #664 itself was the bootstrap (`merge-queue.yml` was landed via admin-merged PR, not direct push), and (b) Phase 2 step 3's `gh api PUT branches/main/protection` would coexist with the ruleset (potentially conflicting) — better to extend the existing ruleset to add `required_status_checks` for `merge-queue-success` instead.
 
 ## Current State Analysis
 
@@ -123,7 +123,7 @@ Phase boundaries halt execution. Automated checks passing is necessary but not s
 
 ---
 
-## Phase 0: Isolate work in a dedicated worktree
+## Phase 0: Isolate work in a dedicated worktree [DONE 2026-05-07]
 
 ### Overview
 
@@ -175,7 +175,7 @@ The primary checkout's HEAD does not move when commits land in the worktree.
 
 ---
 
-## Phase 1: Slim PR-tier workflows (zero infra change, immediate dev win)
+## Phase 1: Slim PR-tier workflows (zero infra change, immediate dev win) [DONE 2026-05-07 via PR #664]
 
 ### Overview
 
@@ -334,9 +334,9 @@ Phase 1's branch protection update is **interim**. Phase 2 adds the merge-queue 
 - [x] `grep -n 'name: build' .github/workflows/ci-core.yml` returns no rows (build job removed)
 - [x] `grep -nE '^\s*os: \[macos-14\]\s*$' .github/workflows/desktop-ci.yml` returns one row (Linux dropped)
 - [x] `grep -n 'pull_request:' .github/workflows/codeql.yml` returns no rows
-- [ ] On a docs-only branch (touches only `thoughts/**`), `gh run list --branch <test-branch>` returns no `CI`, no `Core CI`, no `Desktop CI` rows (all three path filters excluded)
-- [ ] On a `core/lightfast/**` change, `ci-core.yml` runs and completes green
-- [ ] On a `apps/app/**` change, `ci.yml` runs (path filter activated) and completes green
+- [x] On a docs-only/non-source-only branch (smoke PR #665 changed only `README.md` which is in none of the path filters), `gh run list --branch chore/merge-queue-smoke` showed zero `CI` / `Core CI` / `Desktop CI` rows — only the dual-trigger `Merge Queue` workflow fired (1s no-op stub on PR event). Path filter validation complete.
+- [x] On a `core/lightfast/**` change (proxy: PR #664 touched `.github/workflows/ci-core.yml` matching the same filter), `ci-core.yml` runs and completes green — 65s wall-time on cold cache
+- [x] On a `apps/app/**` change (proxy: PR #664 touched `.github/workflows/ci.yml` matching the same filter), `ci.yml` runs (path filter activated) and completes green — 72s wall-time on cold cache
 
 #### Human Review
 
@@ -347,7 +347,7 @@ Phase 1's branch protection update is **interim**. Phase 2 adds the merge-queue 
 
 ---
 
-## Phase 2: Adopt merge queue + create full-battery merge-queue workflow
+## Phase 2: Adopt merge queue + create full-battery merge-queue workflow [DONE 2026-05-07 via PR #664 + ruleset update + smoke PR #665 verified end-to-end]
 
 ### Overview
 
@@ -608,12 +608,12 @@ If the merge-queue run fails or the workflow doesn't trigger:
 
 #### Automated Verification
 
-- [ ] `gh api repos/lightfastai/lightfast/branches/main/protection --jq '.required_status_checks.checks | map(.context)'` returns `["merge-queue-success"]` _(user-driven; runs after branch protection wired)_
-- [ ] `gh api repos/lightfastai/lightfast/branches/main/protection --jq '.allow_force_pushes.enabled'` returns `false` _(user-driven)_
-- [ ] `gh api repos/lightfastai/lightfast/branches/main/protection --jq '.required_linear_history.enabled'` returns `true` _(user-driven)_
-- [ ] First smoke PR's merge-queue run lands green: `gh run list --workflow=merge-queue.yml --limit 1 --json conclusion --jq '.[0].conclusion'` returns `success` _(user-driven; runs after smoke PR enqueued)_
-- [ ] All four merge-queue jobs reported success in that run: `gh run view <id> --json jobs --jq '.jobs | map({name, conclusion})'` shows `success` for `Quality (full)`, `Core build + test (full)`, `Desktop package + e2e (macos-14)`, `Desktop package + e2e (ubuntu-22.04)`, `CodeQL (actions)`, `CodeQL (javascript-typescript)`, and `merge-queue-success` _(user-driven)_
-- [ ] PR-tier and merge-queue separation confirmed: `gh run list --branch <smoke-pr-branch> --limit 20 --json workflowName --jq 'map(.workflowName) | unique'` shows both `CI` (PR-tier) AND `Merge Queue` (post-merge), not the same workflow twice _(user-driven)_
+- [x] **(adapted)** `gh api repos/lightfastai/lightfast/rules/branches/main` shows `merge_queue` + `required_status_checks` rule types active, with `merge-queue-success` as the required check. _(Plan claimed branch protection via `branches/main/protection` API — actual implementation uses ruleset id 15254385 instead because that's the existing protection mechanism on this repo. Confirmed via `gh api ruleset` output 2026-05-07.)_
+- [x] **(adapted)** Force-push and deletion blocked via `non_fast_forward` and `deletion` rules in the ruleset. _(Plan referenced `allow_force_pushes` field in classic protection; ruleset uses different field names with equivalent enforcement.)_
+- [x] **(adapted — pivoted)** Removed `required_linear_history` from the ruleset per user decision; merge queue uses `MERGE` method. _(Plan called for keeping linear history; pivoted because the user prefers merge commits and recent main history was already non-linear via admin bypass. The merge queue config is now consistent with stated repo style.)_
+- [x] First smoke PR's merge-queue run lands green: `gh run view 25485778897 --json conclusion` returns `success`. PR #665 merged via queue at `41047f8653a1add4c0087e143a252d7473b27c0a` on 2026-05-07T08:51:23Z. ~2 min wall-time on merge_group commit.
+- [x] All seven merge-queue jobs reported success: `Quality (full)` 68s, `Core build + test (full)` 47s, `Desktop package + e2e (macos-14)` 101s, `Desktop package + e2e (ubuntu-22.04)` 62s, `CodeQL (actions)` 49s, `CodeQL (javascript-typescript)` 89s, `merge-queue-success` 2s.
+- [x] PR-tier and merge-queue separation confirmed: same `Merge Queue` workflow runs on `pull_request` event (no-op stub, 1s) AND `merge_group` event (full battery, ~2 min). Smoke PR ran 0 PR-tier workflows (CI/Core CI/Desktop CI all path-filtered out for README change), proving the path-filter docs-only verification.
 
 #### Human Review
 
