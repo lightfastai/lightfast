@@ -1,7 +1,5 @@
 import { randomUUID } from "node:crypto";
 import { gateway } from "@ai-sdk/gateway";
-import { db } from "@db/app/client";
-import { orgRepoIndexes } from "@db/app/schema";
 import { createAgent } from "@lightfastai/ai-sdk/agent";
 import { fetchRequestHandler } from "@lightfastai/ai-sdk/server/adapters/fetch";
 import { orgSearchTool } from "@repo/app-ai/org-search";
@@ -10,7 +8,6 @@ import { auth, clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { smoothStream, stepCountIs } from "ai";
-import { and, eq } from "drizzle-orm";
 import type { NextRequest } from "next/server";
 import { buildAnswerSystemPrompt } from "~/ai/prompts/system-prompt";
 import { AnswerRedisMemory } from "~/ai/runtime/memory";
@@ -60,22 +57,9 @@ export async function POST(request: NextRequest) {
       return Response.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    // Fetch cached repo index content
-    const [repoIndex] = await db
-      .select({ cachedContent: orgRepoIndexes.cachedContent })
-      .from(orgRepoIndexes)
-      .where(
-        and(
-          eq(orgRepoIndexes.clerkOrgId, authData.clerkOrgId),
-          eq(orgRepoIndexes.isActive, true)
-        )
-      )
-      .limit(1);
-
     const systemPrompt = buildAnswerSystemPrompt({
       org: {
         name: clerkOrg.name,
-        repoIndex: repoIndex?.cachedContent ?? undefined,
       },
       modelId: MODEL_ID,
     });
@@ -168,22 +152,9 @@ export async function GET(request: NextRequest) {
       organizationId: authData.clerkOrgId,
     });
 
-    // Fetch cached repo index content
-    const [repoIndexGet] = await db
-      .select({ cachedContent: orgRepoIndexes.cachedContent })
-      .from(orgRepoIndexes)
-      .where(
-        and(
-          eq(orgRepoIndexes.clerkOrgId, authData.clerkOrgId),
-          eq(orgRepoIndexes.isActive, true)
-        )
-      )
-      .limit(1);
-
     const systemPrompt = buildAnswerSystemPrompt({
       org: {
         name: clerkOrg.name,
-        repoIndex: repoIndexGet?.cachedContent ?? undefined,
       },
       modelId: MODEL_ID,
     });

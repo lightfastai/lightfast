@@ -24,7 +24,6 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
 import {
   BookOpen,
-  Briefcase,
   HelpCircle,
   Mail,
   MessageSquare,
@@ -66,11 +65,6 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
       title: "Sources",
       href: `/${orgSlug}/sources`,
       icon: Plug,
-    },
-    {
-      title: "Jobs",
-      href: `/${orgSlug}/jobs`,
-      icon: Briefcase,
     },
     {
       title: "Settings",
