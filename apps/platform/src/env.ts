@@ -7,13 +7,7 @@ import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
 
 export const env = createEnv({
-  extends: [
-    vercel(),
-    sentryEnv,
-    betterstackEnv,
-    upstashEnv,
-    inngestEnv,
-  ],
+  extends: [vercel(), sentryEnv, betterstackEnv, upstashEnv, inngestEnv],
   shared: {
     NODE_ENV: z
       .enum(["development", "production", "test"])
