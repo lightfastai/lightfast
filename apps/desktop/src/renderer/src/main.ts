@@ -17,13 +17,15 @@ declare global {
   }
 }
 
-// Renderer errors are forwarded over IPC to main, which calls
-// captureException via `@vendor/observability/sentry-electron-main`. Single
-// SDK init in main keeps the bundle small and avoids per-process Sentry
-// config; the renderer doesn't need to know about Sentry. Trade-off: no
-// automatic renderer-side breadcrumbs / page-navigation tracking / future
-// replay — to add those, expose a `sentry-electron-renderer` re-export from
-// `@vendor/observability` and call `init` here.
+// Renderer errors are forwarded over IPC to main, which calls captureException
+// via `@vendor/observability/sentry-electron-main`. The renderer wrap at
+// `@vendor/observability/sentry-electron-renderer` exists as the canonical
+// import path for renderer-side Sentry; to enable a renderer Sentry SDK
+// (breadcrumbs, page-nav tracking, replay), call `init({ dsn, ... })` here.
+// Currently disabled to keep the renderer bundle small and Sentry config
+// single-source-of-truth in main. Note: the no-restricted-imports lint guard
+// against direct `@sentry/electron/renderer` imports is intentionally deferred
+// — there is currently no renderer Sentry usage to police.
 installErrorBoundary(window.lightfastBridge.reportError);
 
 const { buildInfo, platform } = window.lightfastBridge;
