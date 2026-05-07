@@ -18,8 +18,18 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 // the asar at runtime.
 // biome-ignore lint/correctness/noGlobalDirnameFilename: Vite CJS output strips import.meta.*; __dirname is the only working option here.
 const factoryDir = __dirname;
-const PRELOAD_PATH = join(factoryDir, "preload.js");
 const RENDERER_DIST = join(factoryDir, `../renderer/${MAIN_WINDOW_VITE_NAME}`);
+
+function preloadFileFor(kind: WindowKind): string {
+  switch (kind) {
+    case "settings":
+      return "settings.js";
+    case "hud":
+      return "hud.js";
+    default:
+      return "primary.js";
+  }
+}
 
 function titleBarOverlayColors(): Electron.TitleBarOverlayOptions {
   const isDark = nativeTheme.shouldUseDarkColors;
@@ -47,10 +57,9 @@ function baseWindowOptions(): BrowserWindowConstructorOptions {
 function preloadOptions(kind: WindowKind): BrowserWindowConstructorOptions {
   return {
     webPreferences: {
-      preload: PRELOAD_PATH,
+      preload: join(factoryDir, preloadFileFor(kind)),
       sandbox: true,
       contextIsolation: true,
-      additionalArguments: [`--window-kind=${kind}`],
     },
   };
 }

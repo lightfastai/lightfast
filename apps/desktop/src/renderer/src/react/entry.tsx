@@ -2,6 +2,7 @@ import { DesktopTRPCProvider } from "@repo/app-trpc/desktop";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import type { FormatPlatform } from "../../../shared/accelerators";
+import { WINDOW_KIND_GLOBAL } from "../../../shared/window-globals";
 import { AppShell } from "./app-shell";
 import { SettingsWindow } from "./settings/settings-window";
 import { UserMenu } from "./user-menu";
@@ -21,7 +22,7 @@ function Providers({ children }: { children: React.ReactNode }) {
   );
 }
 
-if (window.codexWindowType === "settings") {
+if (window[WINDOW_KIND_GLOBAL] === "settings") {
   const settingsContainer = document.getElementById("settings-root");
   if (settingsContainer) {
     createRoot(settingsContainer).render(
