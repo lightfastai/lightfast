@@ -18,54 +18,21 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
-import { platformModifierKey } from "@repo/ui/lib/platform";
 import { cn } from "@repo/ui/lib/utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
-import {
-  BookOpen,
-  HelpCircle,
-  Mail,
-  MessageSquare,
-  Plug,
-  Search,
-  Settings,
-} from "lucide-react";
+import { BookOpen, HelpCircle, Mail, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-/**
- * Navigation item types
- */
 interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   title: string;
 }
 
-/**
- * Build primary navigation items for org-level pages
- */
-function getOrgPrimaryItems(orgSlug: string): NavItem[] {
-  return [
-    {
-      title: "Explore",
-      href: `/${orgSlug}`,
-      icon: MessageSquare,
-    },
-  ];
-}
-
-/**
- * Build management navigation items for org-level pages
- */
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Sources",
-      href: `/${orgSlug}/sources`,
-      icon: Plug,
-    },
     {
       title: "Settings",
       href: `/${orgSlug}/settings`,
@@ -74,12 +41,8 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
   ];
 }
 
-/**
- * Render a set of navigation items as a proper component for correct reconciliation
- */
 function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   return items.map((item) => {
-    // For Settings, match any settings subpage (org or workspace level)
     const isActive =
       item.title === "Settings"
         ? pathname.startsWith(item.href)
@@ -108,9 +71,6 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   });
 }
 
-/**
- * PlanetScale-style sidebar component for the Console app
- */
 export function AppSidebar() {
   const pathname = usePathname();
   const trpc = useTRPC();
@@ -127,12 +87,9 @@ export function AppSidebar() {
     }
   };
 
-  // Extract orgSlug from pathname
-  // Pathname format: /[slug]/...
   const pathParts = pathname.split("/").filter(Boolean);
-  const orgSlug = pathParts[0] ?? ""; // [slug]
+  const orgSlug = pathParts[0] ?? "";
 
-  // Determine mode based on pathname
   const mode =
     pathname.startsWith("/account") || pathname.startsWith("/new")
       ? "account"
@@ -140,7 +97,6 @@ export function AppSidebar() {
 
   return (
     <Sidebar className="group/sidebar" collapsible="offcanvas" variant="inset">
-      {/* Org component header - only show if in org context */}
       {orgSlug && (
         <div className="flex h-14 items-center justify-between px-4">
           <TeamSwitcher
@@ -149,54 +105,20 @@ export function AppSidebar() {
             onOrgSelect={handleOrgSelect}
             organizations={organizations}
           />
-          <Button
-            className="h-6 w-6 rounded-full text-muted-foreground"
-            onClick={() => {
-              document.dispatchEvent(
-                new KeyboardEvent("keydown", {
-                  key: "k",
-                  ...platformModifierKey(),
-                  bubbles: true,
-                  cancelable: true,
-                  composed: true,
-                })
-              );
-            }}
-            size="icon"
-            title="Search (⌘K)"
-            variant="ghost"
-          >
-            <Search className="size-3.5" />
-          </Button>
         </div>
       )}
       <SidebarContent>
         {orgSlug && (
-          <>
-            {/* Primary Navigation - no label */}
-            <SidebarGroup className="pt-0">
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <NavItems
-                    items={getOrgPrimaryItems(orgSlug)}
-                    pathname={pathname}
-                  />
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-
-            {/* Manage Section */}
-            <SidebarGroup collapsible defaultOpen label="Manage">
-              <SidebarGroupContent>
-                <SidebarMenu>
-                  <NavItems
-                    items={getOrgManageItems(orgSlug)}
-                    pathname={pathname}
-                  />
-                </SidebarMenu>
-              </SidebarGroupContent>
-            </SidebarGroup>
-          </>
+          <SidebarGroup collapsible defaultOpen label="Manage">
+            <SidebarGroupContent>
+              <SidebarMenu>
+                <NavItems
+                  items={getOrgManageItems(orgSlug)}
+                  pathname={pathname}
+                />
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
         )}
       </SidebarContent>
       <SidebarFooter>

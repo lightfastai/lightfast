@@ -18,12 +18,7 @@ export default mergeConfig(
       passWithNoTests: true,
       server: {
         deps: {
-          inline: [
-            "@repo/ui",
-            "@repo/app-trpc",
-            "@repo/app-octokit-github",
-            "@repo/app-validation",
-          ],
+          inline: ["@repo/ui", "@repo/app-trpc", "@repo/app-validation"],
         },
       },
     },
@@ -33,10 +28,6 @@ export default mergeConfig(
         "next/image": resolve(
           import.meta.dirname,
           "src/__tests__/__mocks__/next-image.tsx"
-        ),
-        "@repo/app-octokit-github/env": resolve(
-          import.meta.dirname,
-          "src/__tests__/__mocks__/github-env.ts"
         ),
         "server-only": resolve(
           import.meta.dirname,

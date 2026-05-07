@@ -394,9 +394,6 @@ importers:
 
   apps/app:
     dependencies:
-      '@ai-sdk/gateway':
-        specifier: 'catalog:'
-        version: 1.0.7(zod@4.3.6)
       '@api/app':
         specifier: workspace:*
         version: link:../../api/app
@@ -409,9 +406,6 @@ importers:
       '@hookform/resolvers':
         specifier: 'catalog:'
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))(zod@4.3.6)
-      '@lightfastai/ai-sdk':
-        specifier: ^0.3.0
-        version: 0.3.0
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
         version: 0.2.1
@@ -421,60 +415,18 @@ importers:
       '@next/bundle-analyzer':
         specifier: ^16.2.4
         version: 16.2.4(bufferutil@4.1.0)
-      '@orpc/client':
-        specifier: ^1.13.14
-        version: 1.13.14(@opentelemetry/api@1.9.1)
-      '@orpc/contract':
-        specifier: ^1.13.14
-        version: 1.13.14(@opentelemetry/api@1.9.1)
-      '@orpc/openapi':
-        specifier: ^1.13.14
-        version: 1.13.14(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.20.0(bufferutil@4.1.0))
-      '@orpc/openapi-client':
-        specifier: ^1.13.14
-        version: 1.13.14(@opentelemetry/api@1.9.1)
       '@orpc/server':
         specifier: ^1.13.14
         version: 1.13.14(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.20.0(bufferutil@4.1.0))
-      '@repo/app-ai':
-        specifier: workspace:*
-        version: link:../../packages/app-ai
-      '@repo/app-ai-types':
-        specifier: workspace:*
-        version: link:../../packages/app-ai-types
-      '@repo/app-api-contract':
-        specifier: workspace:*
-        version: link:../../packages/app-api-contract
       '@repo/app-api-key':
         specifier: workspace:*
         version: link:../../packages/app-api-key
-      '@repo/app-embed':
-        specifier: workspace:*
-        version: link:../../packages/app-embed
-      '@repo/app-octokit-github':
-        specifier: workspace:*
-        version: link:../../packages/app-octokit-github
-      '@repo/app-pinecone':
-        specifier: workspace:*
-        version: link:../../packages/app-pinecone
-      '@repo/app-providers':
-        specifier: workspace:*
-        version: link:../../packages/app-providers
-      '@repo/app-rerank':
-        specifier: workspace:*
-        version: link:../../packages/app-rerank
       '@repo/app-trpc':
         specifier: workspace:^
         version: link:../../packages/app-trpc
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
-      '@repo/platform-trpc':
-        specifier: workspace:*
-        version: link:../../packages/platform-trpc
-      '@repo/prompt-engine':
-        specifier: workspace:*
-        version: link:../../packages/prompt-engine
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -532,9 +484,6 @@ importers:
       '@vercel/toolbar':
         specifier: ^0.2.2
         version: 0.2.2(@vercel/analytics@2.0.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(@vercel/speed-insights@2.0.0(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5))(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.27.3)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-      ai:
-        specifier: 'catalog:'
-        version: 5.0.52(zod@4.3.6)
       date-fns:
         specifier: ^4.1.0
         version: 4.1.0

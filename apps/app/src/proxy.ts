@@ -39,7 +39,6 @@ const isPublicRoute = createRouteMatcher([
 // else-branch makes middleware redirect OPTIONS requests to /sign-in, which
 // browsers reject with ERR_INVALID_REDIRECT on preflight.
 const isApiRoute = createRouteMatcher([
-  "/v1/(.*)",
   "/api/cli/(.*)",
   "/api/desktop/(.*)",
   "/api/inngest(.*)",
