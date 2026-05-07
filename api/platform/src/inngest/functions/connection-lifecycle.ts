@@ -41,11 +41,7 @@ export const connectionLifecycle = inngest.createFunction(
   },
   { event: "platform/connection.lifecycle" },
   async ({ event, step }) => {
-    const {
-      installationId,
-      provider: providerName,
-      correlationId,
-    } = event.data;
+    const { installationId, provider: providerName } = event.data;
 
     // Step 1: Close the ingress gate — all guards check status === 'active',
     // so setting 'revoked' immediately blocks new requests.
@@ -71,25 +67,7 @@ export const connectionLifecycle = inngest.createFunction(
       log.info("gate closed");
     });
 
-    // Step 2: Cancel any running backfill (best-effort, via Inngest event)
-    await step.run("cancel-backfill", async () => {
-      try {
-        await inngest.send({
-          name: "platform/backfill.run.cancelled",
-          data: {
-            installationId,
-            correlationId,
-          },
-        });
-        log.info("backfill cancellation sent");
-      } catch (err) {
-        log.warn("backfill cancellation failed (best-effort)", {
-          error: parseError(err),
-        });
-      }
-    });
-
-    // Step 3: Revoke token at provider (best-effort)
+    // Step 2: Revoke token at provider (best-effort)
     await step.run("revoke-token", async () => {
       if (providerName === "github") {
         log.info("skipping token revocation (github uses on-demand JWTs)");
@@ -133,7 +111,7 @@ export const connectionLifecycle = inngest.createFunction(
       }
     });
 
-    // Step 4: Disconnect org integrations and log resource disconnection.
+    // Step 3: Disconnect org integrations and log resource disconnection.
     // For user-initiated disconnects the app-layer cascade may have already
     // set orgIntegrations.status → 'disconnected', but for health-check
     // triggers no cascade runs. We update unconditionally (idempotent).

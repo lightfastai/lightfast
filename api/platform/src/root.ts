@@ -5,7 +5,6 @@
  * - platformRouter: Service-accessible procedures (store, retrieve, search)
  * - adminRouter: Admin-only procedures (reindex, purge, diagnostics)
  */
-import { backfillRouter } from "./router/platform/backfill";
 import { connectionsRouter } from "./router/platform/connections";
 import { proxyRouter } from "./router/platform/proxy";
 import { createTRPCRouter } from "./trpc";
@@ -17,14 +16,10 @@ import { createTRPCRouter } from "./trpc";
  * Sub-routers:
  * - connections.*: Connection lifecycle operations
  * - proxy.*: Authenticated API proxy operations
- * - backfill.*: Backfill orchestration operations
- * - ingest.*: Webhook ingestion operations (future)
- * - pipeline.*: Neural pipeline operations (future)
  */
 export const platformRouter = createTRPCRouter({
   connections: connectionsRouter,
   proxy: proxyRouter,
-  backfill: backfillRouter,
 });
 
 /**

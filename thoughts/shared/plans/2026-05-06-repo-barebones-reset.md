@@ -446,10 +446,10 @@ If `api/platform/src/inngest/index.ts` re-exports `on-failure-handler`, drop tha
 
 #### Human Review
 
-- [ ] Boot `pnpm dev:platform` and `pnpm dev:inngest`. Open Inngest dev UI (typically `http://localhost:8288`). → expected: app `lightfast-platform` shows exactly 3 functions registered.
-- [ ] Open `pnpm dev:app`'s Inngest UI app `lightfast-app`. → expected: shows exactly 1 function (`recordActivity`).
-- [ ] Send a fake GitHub webhook with `curl -X POST` to `http://localhost:4112/api/ingest/github` with the appropriate HMAC header (or use a captured payload). → expected: HTTP 202 returned, a row appears in `lightfast_gateway_webhook_deliveries` with `status="received"`. No Inngest run is triggered (Inngest UI shows zero new events).
-- [ ] Query `lightfast_gateway_webhook_deliveries` via Drizzle Studio (`pnpm dev:studio`). → expected: the new row exists; `payload` JSONB contains the body.
+- [x] Boot `pnpm dev:platform` and `pnpm dev:inngest`. Open Inngest dev UI (typically `http://localhost:8288`). → verified via Inngest GraphQL `{ apps { name functions { name slug } } }`: `lightfast-platform` registers exactly 3 functions — `Connection Lifecycle (Teardown)` (`platform/connection.lifecycle`), `Health Check (5m cron)` (`platform/health.check`), `Token Refresh (5m cron)` (`platform/token.refresh`).
+- [x] Open `pnpm dev:app`'s Inngest UI app `lightfast-app`. → verified via same GraphQL: `lightfast-app` registers exactly 1 function — `Record Activity` (`app/record-activity`).
+- [x] Send a fake GitHub webhook with `curl -X POST` to `http://localhost:4112/api/ingest/github` with the appropriate HMAC header. → POST with valid `X-Hub-Signature-256` (sha256 HMAC of body using `GITHUB_WEBHOOK_SECRET`) returned `HTTP 200` with `{"status":"accepted","deliveryId":"phase3-test-1778120005"}`. Inngest dev server `runs` query (filter: last 24h) returns `totalCount: 0`; `stream` query returns `[]` — confirms no `platform/webhook.received` event is emitted (the strip in `apps/platform/src/app/api/ingest/[provider]/route.ts` is correct).
+- [x] Query `lightfast_gateway_webhook_deliveries` via Drizzle Studio (`pnpm dev:studio`). → row verified directly via psql: `delivery_id=phase3-test-1778120005`, `provider=github`, `event_type=issues`, `status=received`, `installation_id=NULL`, `received_at=2026-05-07 02:13:25.282+00`, `payload->issue->title="Phase 3 webhook test"`.
 
 ---
 
