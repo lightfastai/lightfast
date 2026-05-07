@@ -2,7 +2,7 @@
 
 Status: Draft v0 (high-level, language-agnostic)
 
-Last Updated: 2026-04-15
+Last Updated: 2026-05-07
 
 Purpose: Define the operating infrastructure between agents and apps — the layer through which agents and teams observe, reason, and act across a product-development tool stack.
 
@@ -83,6 +83,7 @@ Lightfast is a pipeline: **Observe → Remember → Reason → Act.** Each layer
 
 1. `Connection Layer`
    - Manages OAuth flows, credential storage, webhook registration, and backfills per tool.
+   - Status: planned. The connection-layer scaffolding shipped in v0.1.0 was removed in the v2 barebones reset; this component will be rebuilt on top of the post-v2 aggregate model.
    - Further specification deferred.
 
 2. `Event Store`
@@ -117,21 +118,19 @@ Lightfast is a pipeline: **Observe → Remember → Reason → Act.** Each layer
 Entity field specifications are deferred to a future revision. This section lists the primary entity types and their present state.
 
 Status tags:
-- `(shipped v0.1.0)` — entity exists in the running system and is covered by the public API.
-- `(partial v0.1.0)` — entity exists in limited form; the role defined here is broader than what ships.
 - `(planned)` — entity is part of the designed system but has no implementation yet.
 
 ### 4.1 Entities
 
-#### 4.1.1 Event `(shipped v0.1.0)`
+#### 4.1.1 Event `(planned)`
 
 An immutable fact emitted by a connected tool and normalized into the Lightfast event model. Once recorded, an event is never modified.
 
-#### 4.1.2 Entity `(shipped v0.1.0)`
+#### 4.1.2 Entity `(planned)`
 
 A resolved object in the temporal graph — for example a commit, issue, deployment, incident, or person — synthesized from one or more events.
 
-#### 4.1.3 Connection `(shipped v0.1.0)`
+#### 4.1.3 Connection `(planned)`
 
 A binding between a tenant and a connected tool, including credentials, scopes, and lifecycle state.
 
@@ -147,9 +146,9 @@ An ordered composition of skills, triggered by events or schedules.
 
 A team-defined invariant continuously enforced against memory.
 
-#### 4.1.7 Agent `(partial v0.1.0)`
+#### 4.1.7 Agent `(planned)`
 
-A principal — human or automated — that interacts with Lightfast through an access surface. In `v0.1.0` an agent is any caller authenticated by an API key or session token; the expanded role (identity, permissions scoped per skill and rule) is planned.
+A principal — human or automated — that interacts with Lightfast through an access surface. The agent surface scaffolding shipped in v0.1.0 was removed in the v2 barebones reset; identity and per-skill permissions will land with the next domain model.
 
 ## 5. Principles
 

@@ -23,7 +23,7 @@ See `SPEC.md` for business goals and product vision.
 │              marketing + docs (fumadocs MDX) · marketing-group MFE               │
 │                                                                                  │
 │  platform   http://localhost:4112   (raw; not on Portless / MFE)                 │
-│             @api/platform · OAuth, webhooks, backfill, neural pipeline           │
+│             Empty Next.js host (post-v2 reset). /api/{health,inngest,trpc}.      │
 │             tRPC CORS dev: portless wildcard                                     │
 │                                                                                  │
 │  desktop    Electron (Vite SPA) · LIGHTFAST_APP_ORIGIN → aggregate above         │
@@ -49,8 +49,8 @@ Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 
 ## tRPC Auth Boundaries
 
-- **userRouter**: No org required (account, apiKeys, sources)
-- **orgRouter**: Org membership required (workspace, search, jobs)
+- **userScopedProcedure**: Clerk-pending or Clerk-active session (account, organization listing/create/rename)
+- **orgScopedProcedure**: Clerk-active org membership required (orgApiKeys list/create/revoke/delete/rotate)
 
 ## Development Commands
 

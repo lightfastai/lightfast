@@ -7,8 +7,12 @@
  * - Extracting key previews for display
  */
 
-import { sha256Hex } from "@repo/app-providers";
+import { createHash } from "node:crypto";
 import { nanoid } from "@vendor/lib";
+
+function sha256Hex(value: string): string {
+  return createHash("sha256").update(value).digest("hex");
+}
 
 /**
  * Unified API key prefix for all Lightfast keys

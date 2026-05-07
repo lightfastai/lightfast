@@ -20,7 +20,6 @@ export default mergeConfig(
         SKIP_ENV_VALIDATION: "1",
         SERVICE_JWT_SECRET:
           "test-service-jwt-secret-for-vitest-at-least-32-chars",
-        ENCRYPTION_KEY: "test-encryption-key-for-vitest-at-least-32-chars!!",
       },
     },
   })

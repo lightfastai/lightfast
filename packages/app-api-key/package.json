@@ -19,7 +19,6 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@repo/app-providers": "workspace:*",
     "@vendor/lib": "workspace:*"
   },
   "devDependencies": {

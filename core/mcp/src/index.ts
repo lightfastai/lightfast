@@ -1,10 +1,4 @@
-import { apiContract } from "@repo/app-api-contract";
-import {
-  McpServer,
-  registerContractTools,
-  StdioServerTransport,
-} from "@vendor/mcp";
-import { createLightfast } from "lightfast";
+import { McpServer, StdioServerTransport } from "@vendor/mcp";
 
 declare const __SDK_VERSION__: string;
 
@@ -14,19 +8,12 @@ if (!apiKey) {
   process.exit(1);
 }
 
-const lf = createLightfast(
-  apiKey,
-  process.env.LIGHTFAST_BASE_URL
-    ? { baseUrl: process.env.LIGHTFAST_BASE_URL }
-    : undefined
-);
-
 const server = new McpServer({
   name: "lightfast",
   version: __SDK_VERSION__,
 });
 
-registerContractTools(server, apiContract, lf, { prefix: "lightfast" });
+// Tools removed — pending post-v2 contract definition.
 
 async function main() {
   const transport = new StdioServerTransport();

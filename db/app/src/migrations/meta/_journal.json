@@ -449,6 +449,13 @@
       "when": 1775568962238,
       "tag": "0063_cooing_ultimatum",
       "breakpoints": true
+    },
+    {
+      "idx": 64,
+      "version": "7",
+      "when": 1778142316757,
+      "tag": "0064_slim_king_cobra",
+      "breakpoints": true
     }
   ]
 }

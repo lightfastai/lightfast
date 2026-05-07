@@ -40,11 +40,6 @@
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@orpc/client": "^1.13.14",
-    "@orpc/contract": "^1.13.14",
-    "@orpc/openapi-client": "^1.13.14",
-    "@repo/app-api-contract": "workspace:*",
-    "@repo/app-validation": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",

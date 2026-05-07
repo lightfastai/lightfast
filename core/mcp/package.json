@@ -49,11 +49,9 @@
     "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {
-    "@repo/app-api-contract": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "@vendor/mcp": "workspace:*",
-    "lightfast": "workspace:*",
     "tsup": "^8.5.1",
     "typescript": "catalog:"
   },

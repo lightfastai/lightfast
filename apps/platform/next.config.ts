@@ -9,8 +9,6 @@ import type { NextConfig } from "next";
 const platformConfig: NextConfig = merge({}, baseConfig, {
   transpilePackages: [
     "@api/platform",
-    "@db/app",
-    "@repo/app-providers",
     "@vendor/inngest",
     "@vendor/lib",
     "@vendor/next",

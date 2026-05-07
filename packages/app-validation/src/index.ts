@@ -46,24 +46,9 @@ export * from "./primitives/ids";
 export * from "./primitives/names";
 export * from "./primitives/slugs";
 export * from "./schemas/activities";
-// Canonical API schemas (versioning-free) — import from @repo/app-validation/api for subpath
-export type {
-  SearchMode,
-  SearchRequest,
-  SearchResponse,
-  SearchResult,
-} from "./schemas/api/search";
-export {
-  SearchModeSchema,
-  SearchRequestSchema,
-  SearchResponseSchema,
-  SearchResultSchema,
-} from "./schemas/api/search";
-
 export * from "./schemas/entities";
 export * from "./schemas/job";
 export * from "./schemas/neural";
 export * from "./schemas/org-api-key";
 export * from "./schemas/sources";
 export * from "./schemas/store";
-export * from "./schemas/workflow-io";

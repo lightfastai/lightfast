@@ -6,11 +6,8 @@
  *
  * **This is the single source of truth for embedding configuration defaults.**
  *
- * Used by:
- * - @db/app: Store creation
- * - @repo/app-pinecone: PINECONE_CONFIG
- * - @repo/app-embed: EMBEDDING_CONFIG
- * - Workflows: Embedding provider initialization
+ * The historical consumers (@repo/app-pinecone, @repo/app-embed) were removed
+ * in the v2 barebones reset. Defaults survive here pending a future rebuild.
  */
 
 /**
