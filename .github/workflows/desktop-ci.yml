@@ -64,6 +64,9 @@ jobs:
       - name: Typecheck
         run: pnpm turbo typecheck --filter=@lightfast/desktop --summarize
 
+      - name: Test
+        run: pnpm --filter @lightfast/desktop test
+
       - name: Package (unsigned)
         # electron-forge defaults to host platform: macOS leg packages darwin
         # via MakerZIP/MakerDMG, Linux leg packages linux via MakerDeb/MakerRpm.
