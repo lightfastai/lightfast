@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { captureException } from "@vendor/observability/sentry-electron-main";
 import { app, safeStorage } from "electron";
 import { z } from "zod";
+import { logger } from "./logger";
 
 const persistedSchema = z.object({
   token: z.string().min(1),
@@ -26,7 +27,7 @@ function purgePersisted(filePath: string, scope: string): boolean {
     rmSync(filePath, { force: true });
     return true;
   } catch (err) {
-    console.warn("[auth-store] purge failed", err);
+    logger.warn("[auth-store] purge failed", err);
     captureException(err, { tags: { scope } });
     return false;
   }
@@ -48,7 +49,7 @@ function load(): string | null {
     const plain = safeStorage.decryptString(buf);
     const parsed = persistedSchema.safeParse(JSON.parse(plain));
     if (!parsed.success) {
-      console.error("[auth-store] invalid persisted payload", parsed.error);
+      logger.error("[auth-store] invalid persisted payload", parsed.error);
       captureException(parsed.error, {
         tags: { scope: "auth-store.load.schema" },
       });
@@ -58,7 +59,7 @@ function load(): string | null {
     memory = parsed.data.token;
     return memory;
   } catch (err) {
-    console.error("[auth-store] failed to load; purging", err);
+    logger.error("[auth-store] failed to load; purging", err);
     captureException(err, { tags: { scope: "auth-store.load" } });
     purgePersisted(path, "auth-store.load.purge");
     return null;
@@ -67,7 +68,7 @@ function load(): string | null {
 
 function persist(token: string): boolean {
   if (!safeStorage.isEncryptionAvailable()) {
-    console.error(
+    logger.error(
       "[auth-store] safeStorage unavailable; refusing to write plaintext"
     );
     return false;
@@ -79,7 +80,7 @@ function persist(token: string): boolean {
     memory = token;
     return true;
   } catch (err) {
-    console.error("[auth-store] failed to persist", err);
+    logger.error("[auth-store] failed to persist", err);
     captureException(err, { tags: { scope: "auth-store.persist" } });
     return false;
   }

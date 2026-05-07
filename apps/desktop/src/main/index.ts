@@ -29,6 +29,7 @@ import {
   signOut as signOutAuth,
 } from "./auth-store";
 import { getBuildInfo } from "./build-info";
+import { initLogger, logger } from "./logger";
 import { buildApplicationMenu } from "./menu";
 import { registerProtocolHandler } from "./protocol";
 import { getRuntimeConfig } from "./runtime-config";
@@ -205,8 +206,7 @@ function registerIpcHandlers(): void {
   });
 
   ipcMain.on(IpcChannels.rendererError, (_event, payload: unknown) => {
-    // eslint-disable-next-line no-console
-    console.error("[renderer]", payload);
+    logger.error("renderer error", payload);
     forwardRendererErrorToSentry(payload);
   });
 
@@ -342,6 +342,7 @@ function broadcastSettings(snapshot: SettingsSnapshot): void {
   }
 }
 
+initLogger();
 initSentry();
 
 // Register the custom-scheme handler synchronously, before app.whenReady().
