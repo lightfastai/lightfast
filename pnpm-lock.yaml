@@ -315,42 +315,24 @@ importers:
 
   api/platform:
     dependencies:
-      '@db/app':
-        specifier: workspace:*
-        version: link:../../db/app
       '@lightfastai/dev-core':
         specifier: 'catalog:'
         version: 0.1.1
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
         version: 0.2.1
-      '@repo/app-encryption':
-        specifier: workspace:*
-        version: link:../../packages/app-encryption
-      '@repo/app-providers':
-        specifier: workspace:*
-        version: link:../../packages/app-providers
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.16.0(typescript@5.9.3)
-      '@vendor/db':
-        specifier: workspace:*
-        version: link:../../vendor/db
       '@vendor/inngest':
         specifier: workspace:*
         version: link:../../vendor/inngest
-      '@vendor/lib':
-        specifier: workspace:*
-        version: link:../../vendor/lib
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
-      '@vendor/upstash':
-        specifier: workspace:*
-        version: link:../../vendor/upstash
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.1.0

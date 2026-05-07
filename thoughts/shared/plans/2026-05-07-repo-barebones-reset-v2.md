@@ -410,7 +410,7 @@ Drop:
 
 ---
 
-## Phase 4: api/platform — drop Inngest functions + tRPC routers + lib/oauth + lib helpers
+## Phase 4: api/platform — drop Inngest functions + tRPC routers + lib/oauth + lib helpers [DONE]
 
 ### Overview
 
@@ -531,16 +531,17 @@ Drop `providerEnv` extends + `ENCRYPTION_KEY`. Keep `SERVICE_JWT_SECRET` (jwt.ts
 
 #### Automated Verification:
 
-- [ ] `pnpm --filter @api/platform build` succeeds
-- [ ] `pnpm --filter @api/platform typecheck` passes
-- [ ] `git grep "connectionLifecycle\|healthCheck\|tokenRefresh\|connectionsRouter\|proxyRouter" -- api/platform/src` returns zero matches
-- [ ] `git grep "@repo/app-providers" -- api/platform/src` returns zero matches
-- [ ] `pnpm --filter @apps/platform build` still succeeds (apps/platform consumes api/platform's empty router and zero-function Inngest array)
+- [x] `pnpm --filter @api/platform build` succeeds (n/a — source-only package, no build script; typecheck covers it)
+- [x] `pnpm --filter @api/platform typecheck` passes
+- [x] `pnpm --filter @api/platform test` passes (3 tests in lib/jwt.test.ts)
+- [x] `git grep "connectionLifecycle\|healthCheck\|tokenRefresh\|connectionsRouter\|proxyRouter" -- api/platform/src` returns zero matches
+- [x] `git grep "@repo/app-providers" -- api/platform/src` returns zero matches
+- [x] `pnpm --filter @lightfast/platform build` still succeeds (apps/platform consumes api/platform's empty router and zero-function Inngest array)
 
 #### Human Review:
 
-- [ ] Boot `pnpm dev:platform`. Visit `http://localhost:4112/api/inngest` — Inngest's introspection endpoint should report 0 registered functions (not 3).
-- [ ] `curl -X POST http://localhost:4112/api/trpc/connections.list` returns a tRPC "procedure not found" error (or 404, depending on tRPC config). The connections router truly is gone.
+- [x] Boot `pnpm dev:platform`. Visit `http://localhost:4112/api/inngest` — introspection reports `function_count: 0` (was 3 before Phase 4).
+- [x] `curl -X POST http://localhost:4112/api/trpc/connections.list` returns HTTP 404 with `"No procedure found on path \"connections.list\""`. The connections router is gone.
 
 ---
 

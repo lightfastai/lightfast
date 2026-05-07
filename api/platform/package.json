@@ -33,18 +33,12 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@db/app": "workspace:*",
     "@lightfastai/dev-core": "catalog:",
     "@lightfastai/dev-proxy": "catalog:",
-    "@repo/app-encryption": "workspace:*",
-    "@repo/app-providers": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
-    "@vendor/db": "workspace:*",
     "@vendor/inngest": "workspace:*",
-    "@vendor/lib": "workspace:*",
     "@vendor/observability": "workspace:*",
-    "@vendor/upstash": "workspace:*",
     "@vercel/related-projects": "catalog:",
     "inngest": "catalog:",
     "jose": "catalog:",
