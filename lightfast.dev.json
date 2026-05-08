@@ -8,19 +8,16 @@
   "apps": {
     "lightfast-app": {
       "packageName": "@lightfast/app",
-      "devPort": 5502,
       "fallback": "https://lightfast.ai",
       "mfe": true
     },
     "lightfast-www": {
       "packageName": "@lightfast/www",
-      "devPort": 6868,
       "fallback": "https://lightfast.ai",
       "mfe": true
     },
     "lightfast-platform": {
       "packageName": "@lightfast/platform",
-      "devPort": 4112,
       "fallback": "https://lightfast.ai",
       "mfe": false
     }

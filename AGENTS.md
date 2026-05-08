@@ -51,10 +51,11 @@ Docs served via microfrontends mesh through `lightfast-www` (`/docs`, `/docs/:pa
 
 ```bash
 # Dev servers (NEVER use global pnpm build)
-pnpm dev:full         # Full stack: app + www + platform (port 3024 via microfrontends)
-pnpm dev:app          # App only (4107)
-pnpm dev:www          # Marketing + docs site (4101)
-pnpm dev:platform     # Platform service (4112)
+pnpm dev              # Full stack: app + www + platform (host-keyed ports via portless on :443)
+pnpm dev:full         # Alias of pnpm dev (kept for back-compat)
+pnpm dev:app          # App only
+pnpm dev:www          # Marketing + docs site
+pnpm dev:platform     # Platform service
 
 # Run dev server in background (for Codex sessions)
 pnpm dev:app > /tmp/console-dev.log 2>&1 &

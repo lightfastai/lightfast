@@ -460,14 +460,14 @@ The `start` script (`next start -p 4112`) is for Vercel production builds, not l
 
 #### Automated Verification:
 
-- [ ] `pnpm install` completes; `pnpm-lock.yaml` updates only the four `@lightfastai/dev-*` entries.
-- [ ] `lightfast.dev.json` validates against the bundled JSON Schema (the schema now strictly rejects `devPort`, so the absence is required).
-- [ ] `pnpm typecheck` clean.
-- [ ] `pnpm build:app && pnpm build:platform` clean (no behavioral path is exercised here, but type/import wiring is).
+- [x] `pnpm install` completes; `pnpm-lock.yaml` updates only the four `@lightfastai/dev-*` entries.
+- [x] `lightfast.dev.json` validates against the bundled JSON Schema (the schema now strictly rejects `devPort`, so the absence is required).
+- [x] `pnpm typecheck` clean.
+- [x] `pnpm build:app && pnpm build:platform` clean (no behavioral path is exercised here, but type/import wiring is).
 
 ---
 
-## Phase 3: Multi-worktree verification (lightfast)
+## Phase 3: Multi-worktree verification (lightfast) [DONE]
 
 ### Overview
 
@@ -481,16 +481,19 @@ No code changes. This phase is the verification gate.
 
 #### Automated Verification:
 
-- [ ] In the primary worktree (current branch): `pnpm dev > /tmp/lf-primary.log 2>&1 &`. Within 60s, `curl -k -o /dev/null -w "%{http_code}\n" https://app.lightfast.localhost` returns 200/307. Capture the port from `microfrontends.local.json`'s `applications.lightfast-app.development.local`.
-- [ ] In a second worktree (e.g. `git worktree add /tmp/lf-wt2 -b test/multiwt-foo`, then `cp lightfast.dev.json apps/platform/package.json` from primary into the same paths on the worktree if those changes haven't been merged yet, and `pnpm install` inside the worktree): `pnpm dev > /tmp/lf-wt2.log 2>&1 &`. Within 60s, `curl -k -o /dev/null -w "%{http_code}\n" https://test-multiwt-foo.app.lightfast.localhost` returns 200/307. Capture the port from THAT worktree's `microfrontends.local.json`.
-- [ ] The two captured `app` ports differ (primary's vs worktree's). Same for `www`. Same for `platform`.
-- [ ] Neither log contains `EADDRINUSE`.
-- [ ] Both processes can be cleanly stopped (`pkill -f "next dev"`); restarting either reproduces the same ports (deterministic hash).
+- [x] In the primary worktree (current branch): `pnpm dev:full > /tmp/lf-primary.log 2>&1 &`. Within 60s, `curl -k -o /dev/null -w "%{http_code}\n" https://app.lightfast.localhost` returns 200/307. Captured ports from `microfrontends.local.json`: `lightfast-app=3119`, `lightfast-www=4481`, `lightfast-platform=7493`, `localProxyPort=9355`. (Used `dev:full` instead of `dev` because `pnpm dev` does not include platform; comparing platform requires it.)
+- [x] In a second worktree (`git worktree add /tmp/lf-wt2 -b test/multiwt-foo`, copied `lightfast.dev.json`/`pnpm-workspace.yaml`/`pnpm-lock.yaml` from primary plus the three `apps/<app>/.vercel/.env.development.local` files which are not in git, then `pnpm install`). `pnpm dev:full` came up; `curl -k https://multiwt-foo.app.lightfast.localhost` returns 307. Branch `test/multiwt-foo` produces prefix `multiwt-foo` (not `test-multiwt-foo`) — `defaultDetectWorktreePrefix` uses the branch's last segment. Worktree ports: `lightfast-app=3027`, `lightfast-www=6670`, `lightfast-platform=4068`, `localProxyPort=9372`.
+- [x] All four ports differ (primary 3119/4481/7493/9355 vs worktree 3027/6670/4068/9372). Eight distinct values, no overlap.
+- [x] Neither log contains `EADDRINUSE` (verified `grep -c EADDRINUSE` returned 0 for both).
+- [x] Both processes can be cleanly stopped (`pkill -f "next dev|lightfast-dev|@vercel/microfrontends"`); restarting primary reproduced the identical ports `3119/4481/7493/9355` (deterministic hash confirmed).
 
 #### Human Review:
 
-- [ ] Open `https://app.lightfast.localhost` in a browser → app loads (Clerk redirect ok). Open `https://test-multiwt-foo.app.lightfast.localhost` in another tab → the second worktree's app loads independently. Confirm neither tab is hijacking the other's traffic.
-- [ ] Visit `https://platform.lightfast.localhost` and `https://test-multiwt-foo.platform.lightfast.localhost`; both resolve to their respective platforms.
+- [x] Driven via `agent-browser` (URL prefix corrected: `multiwt-foo`, not `test-multiwt-foo`):
+  - `https://app.lightfast.localhost` → 307 → `/sign-in?redirect_url=%2F`, title "Sign In - Lightfast Auth".
+  - `https://multiwt-foo.app.lightfast.localhost` → 307 → `/sign-in?redirect_url=%2F` on the worktree host (prefix preserved through redirect, no cross-host leak), same title.
+  - `https://www.lightfast.localhost` and `https://multiwt-foo.www.lightfast.localhost` → both 200, title "Superintelligence Layer for Founders", host prefix preserved.
+- [x] `https://platform.lightfast.localhost/api/health` and `https://multiwt-foo.platform.lightfast.localhost/api/health` both return `{"status":"ok","service":"memory",...}` with **distinct timestamps** (28 ms apart) — independent Next.js processes, no shared backend.
 
 ---
 
@@ -545,8 +548,8 @@ Replace the three "fix options" block with a single line: "Resolved by `2026-05-
 
 #### Automated Verification:
 
-- [ ] `grep -rn "localhost:4112\|localhost:4107\|localhost:4101" CLAUDE.md` returns zero matches.
-- [ ] `grep -n "Status:" dev-harness/MULTI_WORKTREE_BLOCKERS.md | grep "B3\|partially resolved"` shows the updated status.
+- [x] `grep -rn "localhost:4112\|localhost:4107\|localhost:4101" CLAUDE.md` returns zero matches.
+- [x] `grep -n "Status:" dev-harness/MULTI_WORKTREE_BLOCKERS.md | grep "B3\|partially resolved"` shows the updated status.
 
 #### Human Review:
 
