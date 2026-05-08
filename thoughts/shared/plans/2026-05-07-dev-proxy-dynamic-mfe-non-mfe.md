@@ -1,9 +1,10 @@
 ---
 date: 2026-05-07
+last_revised: 2026-05-08
 author: claude
 git_commit: 4934a881efc6f02fc3b4bdac79c0a332c79ec138
 branch: refactor/repo-barebones-reset
-status: revised-after-improve
+status: revised-after-multiwt-regression
 tags: [plan, dev-proxy, portless, microfrontends, apps/platform, dev-harness]
 ---
 
@@ -11,7 +12,7 @@ tags: [plan, dev-proxy, portless, microfrontends, apps/platform, dev-harness]
 
 ## Overview
 
-Refactor `@lightfastai/dev-proxy` so the **apps registry in `lightfast.dev.json` is the single source of truth** for everything portless-aware. Each registry entry declares `packageName`, `devPort`, and a required `mfe: true|false` flag. The MFE proxy's `applications` map is **derived in-memory from `apps[mfe=true]` entries** — `microfrontends.json` retains only the `routing` rules (path-mapping for the marketing group). Non-MFE apps (today: `apps/platform`) get a portless subdomain (`platform.lightfast.localhost`) on the same aggregate as MFE apps; only MFE-flagged apps participate in the `@vercel/microfrontends` mesh. Both kinds are supervised by `lightfast-dev proxy turbo`. When zero MFE apps are local, the supervisor **skips spawning the MFE proxy and the aggregate-hostname route** entirely.
+Refactor `@lightfastai/dev-proxy` so the **apps registry in `lightfast.dev.json` is the single source of truth** for app *identity* — `packageName` and a required `mfe: true|false` flag per entry. **Physical ports are not declared in config**; dev-proxy allocates them per (worktree, app) via its existing worktree-aware `generateMicrofrontendsPort` (djb2 + linear probe), so multiple worktrees boot concurrently without `EADDRINUSE`. The MFE proxy's `applications` map is **derived in-memory from `apps[mfe=true]` entries** — `microfrontends.json` retains only the `routing` rules (path-mapping for the marketing group). Non-MFE apps (today: `apps/platform`) get a portless subdomain (`platform.lightfast.localhost`) on the same aggregate as MFE apps; only MFE-flagged apps participate in the `@vercel/microfrontends` mesh. Both kinds are supervised by `lightfast-dev proxy turbo`. When zero MFE apps are local, the supervisor **skips spawning the MFE proxy and the aggregate-hostname route** entirely.
 
 ## Current State Analysis
 
@@ -32,22 +33,22 @@ In the lightfast repo, `apps/platform` participates in the dev-origin allowlist 
 
 ## Desired End State
 
-A single registry in `lightfast.dev.json` describes every app the proxy routes to; the proxy treats MFE-ness as one flag among several rather than as the gatekeeper for portless registration:
+A single registry in `lightfast.dev.json` describes every app the proxy routes to; the proxy treats MFE-ness as one flag among several rather than as the gatekeeper for portless registration. **The registry is purely a declaration of identity — no physical ports.**
 
 ```json
 {
   "$schema": "./node_modules/@lightfastai/dev-proxy/schema/config.schema.json",
   "portless": { "name": "lightfast", "port": 443, "https": true },
   "apps": {
-    "lightfast-app":      { "packageName": "@lightfast/app",      "devPort": <verified>, "mfe": true },
-    "lightfast-www":      { "packageName": "@lightfast/www",      "devPort": <verified>, "mfe": true },
-    "lightfast-platform": { "packageName": "@lightfast/platform", "devPort": 4112,        "mfe": false }
+    "lightfast-app":      { "packageName": "@lightfast/app",      "mfe": true  },
+    "lightfast-www":      { "packageName": "@lightfast/www",      "mfe": true  },
+    "lightfast-platform": { "packageName": "@lightfast/platform", "mfe": false }
   },
   "microfrontends": { "config": "apps/app/microfrontends.json" }
 }
 ```
 
-The exact `<verified>` ports for `lightfast-app`/`lightfast-www` are the values currently produced by `generateMicrofrontendsPort` (djb2 + linear probe). Verified empirically in Phase 4 before committing the explicit values — see Phase 4.1 below.
+**Ports are allocated, not declared.** dev-proxy continues to use `generateMicrofrontendsPort` (djb2 + linear probe over a port range), seeded with `host === baseHost ? appName : '${host}:${appName}'`. In the primary worktree, seed is the bare app name; in a secondary worktree, the worktree-prefixed host is folded into the seed, so each worktree's apps land on distinct physical ports automatically. This is the 0.2.x behavior; the original Phase 0 of this plan accidentally replaced the seeded allocator with `entry.devPort` (regressing multi-worktree dev to `EADDRINUSE`), and is corrected in **Phase 3.5** below. Phase 3.5 also extends the same allocator to non-MFE entries so platform behaves identically.
 
 `apps/app/microfrontends.json` is reduced to **path-routing rules only** (per-app `routing` arrays for the marketing group). The dev-proxy synthesizes `applications` from the registry's `apps[mfe=true]` entries at load time, merged with each entry's `routing` array if present.
 
@@ -59,7 +60,7 @@ Verification at the end of the plan:
 - `apps/app/src/origins.ts` `platformUrl` resolves through `resolveProjectUrl("lightfast-platform")` (no hardcoded `localhost:4112`).
 - `apps/platform/src/cors.ts` startup guard fires only if portless is genuinely unreachable, not because platform is on a different mechanism.
 - Inngest sync registers all three apps via the registry; both the `--app-url` and `--mfe-app` flags are removed from dev scripts (with a deprecation warning during the migration window).
-- `dev-proxy@0.3.0` requires explicit `apps` in `lightfast.dev.json` — no back-compat fallback to deriving from `microfrontends.json applications`. Lightfast is the primary consumer; fail-loud is preferable to silent two-source drift.
+- `dev-proxy@0.4.0` requires explicit `apps` in `lightfast.dev.json` — no back-compat fallback to deriving from `microfrontends.json applications`, and **no `devPort` field** (Phase 3.5 drops it from the schema). Lightfast is the primary consumer; fail-loud is preferable to silent two-source drift.
 - Desktop's `LIGHTFAST_APP_ORIGIN` flow continues to work over portless TLS (Node fetch CA injection lands in this plan — see new Phase 5b).
 
 ### Key Discoveries:
@@ -90,7 +91,7 @@ Land everything in dev-harness first (Phases 0–3), cut a `@lightfastai/dev-*` 
 
 The registry's `mfe` flag is REQUIRED — an explicit boolean per app, no default. **There is no second registry** — `microfrontends.json applications` is no longer the source of truth for MFE app identity; only `routing` arrays remain there. The dev-proxy synthesizes the `applications` map from `apps[mfe=true]` entries at load time, merging in each entry's `routing` array if defined in `microfrontends.json`.
 
-No backward-compat fallback. If `lightfast.dev.json` has no top-level `apps` field, `loadAppRegistry` throws with: `"lightfast.dev.json must declare an 'apps' registry; deriving from microfrontends.json is no longer supported in dev-proxy@0.3.0+."`
+No backward-compat fallback. If `lightfast.dev.json` has no top-level `apps` field, `loadAppRegistry` throws with: `"lightfast.dev.json must declare an 'apps' registry; deriving from microfrontends.json is no longer supported in dev-proxy@0.3.0+."` (Phase 3.5 also rejects `apps[*].devPort` as an unknown property in 0.4.0+.)
 
 ## Execution Protocol
 
@@ -98,7 +99,9 @@ Phase boundaries halt execution. Automated checks passing is necessary but not s
 
 ---
 
-## Phase 0: Apps registry — schema, types, loader, applications synthesis (dev-harness)
+## Phase 0: Apps registry — schema, types, loader, applications synthesis (dev-harness) [DONE — partially superseded by Phase 3.5]
+
+> **Correction:** Phase 0 shipped with `devPort` as a required field on each `apps[*]` entry, and replaced dev-proxy's worktree-aware port allocator with `entry.devPort` at `index.ts:758`. This regressed multi-worktree dev (`EADDRINUSE`). Phase 3.5 drops `devPort` from the schema, restores the seeded `generateMicrofrontendsPort` call, and ships the correction as `dev-proxy@0.4.0`. The descriptions in this Phase 0 reflect what was originally shipped in `0.3.0`; cross-reference Phase 3.5 for what 0.4.0 actually looks like.
 
 ### Overview
 
@@ -189,7 +192,7 @@ function synthesizeApplicationsFromRegistry(registry: AppRegistry): Microfronten
 | Function | Current line | New behavior |
 |---|---|---|
 | `getPortlessProxyOrigins` | 517-572 | Iterate `registry.entries`, not `applications`. Include all entries (MFE + non-MFE). |
-| `createVercelMicrofrontendsDevConfig` | 574-688 | Build internal `applications` via `synthesizeApplicationsFromRegistry(registry)`. Use `entry.devPort` for `appPorts[entry.name]` directly — no hash-allocation. |
+| `createVercelMicrofrontendsDevConfig` | 574-688 | Build internal `applications` via `synthesizeApplicationsFromRegistry(registry)`. **0.3.0 used `entry.devPort` for `appPorts[entry.name]` directly — Phase 3.5 reverts this to the worktree-aware seeded `generateMicrofrontendsPort` callsite (so multi-worktree dev works).** |
 | `inferLocalAppNames` | 852 | Resolve from `registry.entries`, not `applications`. Both MFE and non-MFE app dirs are inferable. |
 | `resolveApplicationPortlessName` | 1206-1220 | Look up in `registry.byName` and return `entry.portlessName`. |
 | `resolvePortlessApplicationUrl` | 477-515 | Look up in `registry.byName`; works for any registered app regardless of `mfe`. Rename to `resolvePortlessAppUrl` (no deprecation alias — minor bump). |
@@ -410,43 +413,180 @@ pnpm pack:check          # exists per recent CI commit (8ad0791)
 
 ---
 
-## Phase 4: Verify ports + bump catalog + rewrite `lightfast.dev.json` + reduce `microfrontends.json` (lightfast)
+## Phase 3.5: Drop `devPort` + restore worktree-aware port allocation; cut dev-proxy 0.4.0 (dev-harness)
 
 ### Overview
 
-Pull the new dev-* minor into the lightfast catalog, verify the current hash-allocated ports for `lightfast-app`/`lightfast-www`, rewrite `lightfast.dev.json` to use the explicit `apps` registry, and reduce `apps/app/microfrontends.json` to routing-only.
+Phase 0 of this plan replaced dev-proxy's worktree-aware `generateMicrofrontendsPort(seed)` with `entry.devPort`, pinning each app to a single physical port. **Two worktrees both try to bind that one port and one fails with `EADDRINUSE`** (regression confirmed empirically against the in-progress Phase 4 lightfast.dev.json).
+
+This phase reverts that decision: `devPort` is dropped from the schema entirely, the registry becomes a pure identity declaration (`packageName` + `mfe`), and the seeded allocator is restored at the MFE callsite — and extended to the non-MFE branch in `startDevProxyAppCommand` so platform also gets per-worktree-distinct ports. Cut as `dev-proxy@0.4.0` (schema break vs. 0.3.x).
+
+The user-visible contract: contributors never read or pin raw ports; everything goes through portless URLs (`https://[<wt>.]<sub>.lightfast.localhost`). Whatever physical port Next.js binds is an implementation detail of dev-proxy and may differ across machines, sessions, and worktrees.
 
 ### Changes Required:
 
-#### 1. Verify current hash-allocated ports
+#### 1. Schema — drop `devPort`
 
-Before committing explicit `devPort` values for the MFE apps, confirm what the existing `generateMicrofrontendsPort` allocator produces. Two ways:
+**File**: `dev-harness/packages/dev-proxy/schema/config.schema.json`
 
-- Boot `pnpm dev` (pre-upgrade) and read the actual ports the MFE proxy assigns from the dev banner / startup logs.
-- Or compute via the dev-harness export: `node -e "console.log(require('@lightfastai/dev-proxy').generateMicrofrontendsPort('lightfast-app'), require('@lightfastai/dev-proxy').generateMicrofrontendsPort('lightfast-www'))"`.
+```diff
+ "additionalProperties": {
+   "type": "object",
+   "additionalProperties": false,
+-  "required": ["packageName", "devPort", "mfe"],
++  "required": ["packageName", "mfe"],
+   "properties": {
+     "packageName": { "type": "string", "minLength": 1 },
+-    "devPort":     { "type": "integer", "minimum": 1, "maximum": 65535 },
+     "portlessName":{ "type": "string", "minLength": 1 },
+     "fallback":    { "type": "string", "format": "uri" },
+     "mfe":         { "type": "boolean" }
+   }
+ }
+```
 
-Use the verified values in the registry (the plan's draft used 4107/4101; replace these with whatever the verification produces). Pinning the exact ports is required so contributors don't see surprise port changes after the upgrade.
+Schema's root `additionalProperties: false` continues to reject any `devPort` that sneaks through from a stale config — fail-loud per the plan's no-back-compat policy.
 
-#### 2. Catalog bump
+#### 2. `AppEntry` type and `loadAppRegistry`
+
+**File**: `dev-harness/packages/dev-proxy/src/index.ts`
+
+```diff
+ export interface AppEntry {
+   name: string;
+   packageName: string;
+-  devPort: number;
+   portlessName: string;
+   fallback: string;
+   mfe: boolean;
+   routing?: MicrofrontendRouting;
+ }
+```
+
+`loadAppRegistry` removes the `devPort` read and the corresponding runtime validation (the field's existence/range was checked there because the dev-harness has no AJV at runtime).
+
+#### 3. Restore worktree-aware allocation in MFE flow
+
+**File**: `dev-harness/packages/dev-proxy/src/index.ts:758`
+
+Replace the literal lookup with the seeded allocator (this is what 0.2.x did before the original Phase 0 regression):
+
+```diff
+-const appPorts = Object.fromEntries(mfeEntries.map((entry) => [entry.name, entry.devPort]));
++const baseHost = `${normalized.portless.name}.localhost`;
++const usedPorts = new Set<number>();
++const appPorts = Object.fromEntries(
++  mfeEntries.map((entry) => {
++    const seed = host === baseHost ? entry.name : `${host}:${entry.name}`;
++    const port = generateMicrofrontendsPort(seed, { usedPorts });
++    usedPorts.add(port);
++    return [entry.name, port];
++  }),
++);
+```
+
+The `host` variable is already in scope at this point (computed earlier in `createVercelMicrofrontendsDevConfig`). `usedPorts` deduplicates intra-host MFE collisions.
+
+#### 4. Apply the same allocator to the non-MFE branch
+
+**File**: `dev-harness/packages/dev-proxy/src/runtime.ts:367`
+
+```diff
+-const appPort = entry.devPort;
++const portlessUrl = resolvePortlessUrl({
++  name: portlessName,
++  cwd: config.root,
++  env: appEnv,
++  config,
++  getPortlessUrl,
++  detectWorktreePrefix,
++  preferCurrentPortlessUrl: false,
++});
++const host = new URL(portlessUrl).hostname;
++const baseHost = `${config.portless.name}.localhost`;
++const seed = host === baseHost ? entry.name : `${host}:${entry.name}`;
++const appPort = generateMicrofrontendsPort(seed);
+```
+
+For MFE entries, the `if (entry.mfe)` branch a few lines below still pulls from `result.appPorts[appName]`, which now reflects the corrected allocation from change #3 — no further edit needed there.
+
+`startDevProxyAppCommand` only ever runs for one local app, so the non-MFE branch doesn't need a `usedPorts` set.
+
+#### 5. Tests — worktree-distinctness + schema regression
+
+**File**: `dev-harness/packages/dev-proxy/src/__tests__/runtime.test.ts` (extend)
+
+- New: with two distinct hosts (`lightfast.localhost` vs. `wt2.lightfast.localhost`), `createVercelMicrofrontendsDevConfig`'s `appPorts` for the same app name differ.
+- New: `startDevProxyAppCommand` non-MFE path emits a different `--app-port` argument under a worktree-prefixed host than under the base host.
+
+**File**: `dev-harness/packages/dev-proxy/src/__tests__/registry.test.ts` (extend)
+
+- Schema rejects `apps[*].devPort` (the field was required in 0.3.x; in 0.4.0 it's an unknown property and `additionalProperties: false` fires).
+- `loadAppRegistry` returns entries without a `devPort` field.
+
+#### 6. Changeset — cut 0.4.0
+
+**File**: `dev-harness/.changeset/drop-devport-restore-allocator.md` (new)
+
+```md
+---
+"@lightfastai/dev-proxy": minor
+"@lightfastai/dev-cli": minor
+"@lightfastai/dev-core": minor
+"@lightfastai/dev-services": minor
+---
+
+feat(dev-proxy): drop devPort from app registry; restore worktree-aware port allocation
+
+BREAKING (vs 0.3.x): `apps[*].devPort` is no longer accepted in `lightfast.dev.json` (and is required-removed from the schema). Ports are allocated per (worktree, app) via `generateMicrofrontendsPort` (djb2 + linear probe), seeded with `host === baseHost ? appName : '${host}:${appName}'` — restoring the 0.2.x behavior where each worktree gets distinct ports automatically. 0.3.0's pinned-port allocation regressed multi-worktree dev with `EADDRINUSE` and is reverted.
+
+Non-MFE apps now use the same allocator as MFE apps (replacing the literal-port lookup added in 0.3.0). Their portless URL is unchanged; only the underlying physical port is now worktree-distinct.
+```
+
+### Success Criteria:
+
+#### Automated Verification:
+
+- [ ] `pnpm --dir /Users/jeevanpillay/Code/@lightfastai/dev-harness typecheck` passes.
+- [ ] `pnpm --dir /Users/jeevanpillay/Code/@lightfastai/dev-harness --filter @lightfastai/dev-proxy test` passes; the new worktree-distinctness tests assert distinct ports across two hosts for the same app name.
+- [ ] `pnpm --dir /Users/jeevanpillay/Code/@lightfastai/dev-harness changeset:status` reports all four `@lightfastai/dev-*` packages bumping to 0.4.0 via the existing `fixed` group.
+- [ ] `pnpm pack:check` is clean.
+- [ ] Schema regression test: `apps[*].devPort` is rejected.
+
+#### Human Review:
+
+- [ ] In `dev-harness/example/`, run two parallel `pnpm dev:full` invocations from two different worktrees → both boot, per-worktree subdomains both resolve, no `EADDRINUSE`.
+
+---
+
+## Phase 4: Bump catalog + rewrite `lightfast.dev.json` + reduce `microfrontends.json` (lightfast)
+
+### Overview
+
+Pull the new `0.4.0` dev-* minor into the lightfast catalog, rewrite `lightfast.dev.json` to use the identity-only `apps` registry (no `devPort`), and reduce `apps/app/microfrontends.json` to routing-only. dev-proxy allocates per-worktree-distinct physical ports automatically.
+
+### Changes Required:
+
+#### 1. Catalog bump
 
 **File**: `pnpm-workspace.yaml`
 
-Bump these four lines to the version cut in Phase 3 (e.g. `^0.3.0`):
+Bump these four lines to `^0.4.0` (cut in Phase 3.5):
 
 ```yaml
-'@lightfastai/dev-cli': ^0.3.0
-'@lightfastai/dev-core': ^0.3.0
-'@lightfastai/dev-proxy': ^0.3.0
-'@lightfastai/dev-services': ^0.3.0
+'@lightfastai/dev-cli': ^0.4.0
+'@lightfastai/dev-core': ^0.4.0
+'@lightfastai/dev-proxy': ^0.4.0
+'@lightfastai/dev-services': ^0.4.0
 ```
 
 Run `pnpm install` to update the lockfile.
 
-#### 3. `lightfast.dev.json`
+#### 2. `lightfast.dev.json`
 
 **File**: `lightfast.dev.json`
 
-Replace contents with (substitute `<verified-app-port>`/`<verified-www-port>` from step 1):
+Replace contents with the identity-only registry:
 
 ```json
 {
@@ -457,9 +597,9 @@ Replace contents with (substitute `<verified-app-port>`/`<verified-www-port>` fr
     "https": true
   },
   "apps": {
-    "lightfast-app":      { "packageName": "@lightfast/app",      "devPort": <verified-app-port>, "fallback": "https://lightfast.ai", "mfe": true },
-    "lightfast-www":      { "packageName": "@lightfast/www",      "devPort": <verified-www-port>, "fallback": "https://lightfast.ai", "mfe": true },
-    "lightfast-platform": { "packageName": "@lightfast/platform", "devPort": 4112,                "fallback": "https://lightfast.ai", "mfe": false }
+    "lightfast-app":      { "packageName": "@lightfast/app",      "fallback": "https://lightfast.ai", "mfe": true  },
+    "lightfast-www":      { "packageName": "@lightfast/www",      "fallback": "https://lightfast.ai", "mfe": true  },
+    "lightfast-platform": { "packageName": "@lightfast/platform", "fallback": "https://lightfast.ai", "mfe": false }
   },
   "microfrontends": {
     "config": "apps/app/microfrontends.json"
@@ -467,11 +607,11 @@ Replace contents with (substitute `<verified-app-port>`/`<verified-www-port>` fr
 }
 ```
 
-#### 4. Reduce `apps/app/microfrontends.json` to routing-only
+#### 3. Reduce `apps/app/microfrontends.json` to routing-only
 
 **File**: `apps/app/microfrontends.json`
 
-Drop `packageName` and `development.fallback` from each application (now in the registry). Keep only `routing` arrays, which `lightfast-www` uses for the marketing group:
+Drop `packageName` and `development.fallback` from each application (now in the registry, sans `devPort`). Keep only `routing` arrays, which `lightfast-www` uses for the marketing group:
 
 ```json
 {
@@ -487,9 +627,9 @@ Drop `packageName` and `development.fallback` from each application (now in the 
 }
 ```
 
-dev-proxy synthesizes the rest from the registry. (Note: if `@vercel/microfrontends`'s schema rejects empty application entries, leave a single inert key — the dev-proxy synthesizes everything anyway.)
+dev-proxy synthesizes the rest from the registry. (Note: Phase 4's verification confirmed the Vercel schema requires either `development.fallback` or `routing` per entry, so a minimal `development.fallback` may be needed on the otherwise-empty MFE entry — inert at runtime since dev-proxy now synthesizes `applications` from the registry.)
 
-#### 5. Add platform's `package.json` portless alias
+#### 4. Add platform's `package.json` portless alias
 
 **File**: `apps/platform/package.json:6`
 
@@ -499,12 +639,20 @@ Add `"portless": "platform.lightfast"` (mirror of `apps/app/package.json:7`, `ap
 
 #### Automated Verification:
 
-- [ ] `pnpm install` succeeds; `pnpm-lock.yaml` updates only the four dev-* entries.
+- [ ] `pnpm install` succeeds; `pnpm-lock.yaml` updates the four dev-* entries to `0.4.0`.
 - [ ] `pnpm typecheck` passes (no callers touched yet).
-- [ ] `node -e "console.log(JSON.stringify(require('@lightfastai/dev-proxy').loadAppRegistry(require('@lightfastai/dev-proxy').loadPortlessMfeConfigSync({ cwd: '.' })), null, 2))"` returns three entries with the expected shape (smoke check from repo root).
-- [ ] `lightfast.dev.json` validates against the bundled JSON Schema.
-- [ ] `apps/app/microfrontends.json` still validates against `https://openapi.vercel.sh/microfrontends.json`.
-- [ ] Booting `pnpm dev` (app+www only, MFE-only) and confirming the ports the MFE proxy assigns match the explicit values in the registry.
+- [ ] `loadAppRegistry` smoke check returns three entries without a `devPort` field (deep import via `dist/index.js`).
+- [ ] `lightfast.dev.json` validates against the bundled `0.4.0` JSON Schema; the prior `devPort`-bearing version of the file fails validation against the same schema (regression check).
+- [ ] `apps/app/microfrontends.json` still validates against `https://openapi.vercel.sh/microfrontends.json` (retain a minimal `development.fallback` on each MFE entry — inert at runtime since dev-proxy synthesizes `applications` from the registry).
+
+#### Human Review:
+
+- [ ] Boot `pnpm dev` (app+www only) on the **primary** worktree — both subdomains resolve, aggregate `lightfast.localhost` resolves; whatever physical ports Next bound to are visible in the dev banner but not pinned to specific numbers.
+- [ ] Boot `pnpm dev` again in a **secondary** worktree without stopping the primary — both worktrees' subdomains resolve; the secondary's `next dev` instances bind on different physical ports than the primary's; no `EADDRINUSE`. This is the regression Phase 3.5 fixes.
+
+#### Manual-verification gotcha (surfaced in Phase 7 docs)
+
+A merge from `main` mid-session can revert `pnpm-lock.yaml` to the pre-bump state while leaving `pnpm-workspace.yaml` at the new catalog version — `node_modules` then go stale. Mitigation: re-run `pnpm install` after any catalog change or merge that touches `pnpm-workspace.yaml`. Phase 7 mentions this in the migration notes.
 
 ---
 
@@ -702,7 +850,7 @@ const targets = options.registerApps.map(name => ({
 }));
 ```
 
-Remove the existing `options.mfeApps` and `options.appUrls` parsing and resolution. Add a `default:` arm in `parseOptions` that recognizes `--mfe-app` and `--app-url` and fails loudly with: `"--mfe-app and --app-url were removed in dev-proxy 0.3.0; use --register-app <name>."` — this surfaces immediately for anyone with stale local scripts.
+Remove the existing `options.mfeApps` and `options.appUrls` parsing and resolution. Add a `default:` arm in `parseOptions` that recognizes `--mfe-app` and `--app-url` and fails loudly with: `"--mfe-app and --app-url were removed in dev-proxy 0.4.0; use --register-app <name>."` — this surfaces immediately for anyone with stale local scripts.
 
 #### 3. `apps/platform/package.json` dev script
 
@@ -720,7 +868,7 @@ After (consistent with `apps/app/package.json:13` and `apps/www/package.json:17`
 "dev": "pnpm with-env lightfast-dev proxy app -- next dev --turbo",
 ```
 
-Drop the explicit `--port 4112` — portless injects `PORT=4112` (the `devPort` from the registry) via `buildPortlessAppCommands --app-port`. Next.js respects `PORT`.
+Drop the explicit `--port 4112`. portless injects `PORT=<allocated-port>` via `buildPortlessAppCommands --app-port`, where the allocated port is the worktree-aware hash output from Phase 3.5. Next.js respects `PORT`. The port differs across worktrees and across machines; consumers always navigate through `https://platform.lightfast.localhost` (or `https://<wt>.platform.lightfast.localhost`).
 
 ### Success Criteria:
 
@@ -769,16 +917,19 @@ Update the architecture box: platform moves from the "raw; not on Portless / MFE
 │  Local dev — Portless HTTPS aggregate (port 443)                                 │
 │  https://[<wt>.]lightfast.localhost                                              │
 │      │                                                                           │
-│      ├─ app       https://[<wt>.]app.lightfast.localhost       (raw :4107)       │
+│      ├─ app       https://[<wt>.]app.lightfast.localhost                         │
 │      │           @api/app · MFE · default group                                  │
-│      ├─ www       https://[<wt>.]www.lightfast.localhost       (raw :4101)       │
+│      ├─ www       https://[<wt>.]www.lightfast.localhost                         │
 │      │           marketing + docs · MFE · marketing group                        │
-│      └─ platform  https://[<wt>.]platform.lightfast.localhost  (raw :4112)       │
+│      └─ platform  https://[<wt>.]platform.lightfast.localhost                    │
 │                  @api/platform · NON-MFE · OAuth/webhooks/neural pipeline        │
+│                                                                                  │
+│  Physical ports are allocated per (worktree, app) by dev-proxy's hash + linear   │
+│  probe; never pinned in config. Always navigate via the portless URLs above.     │
 │                                                                                  │
 │  Source of truth                                                                 │
 │  ─────────────────                                                               │
-│  Apps registry:  lightfast.dev.json `apps` (per-app: packageName, devPort, mfe)  │
+│  Apps registry:  lightfast.dev.json `apps` (per-app: packageName, mfe)           │
 │  MFE mesh:       apps/app/microfrontends.json (path routing for mfe:true apps)   │
 │  ...                                                                             │
 └──────────────────────────────────────────────────────────────────────────────────┘
@@ -900,4 +1051,42 @@ Plan revised after `/improve_plan` review. Key changes:
 
 **Removed dead weight**
 - `TODO: automate via Playwright smoke` markers from Phase 5/6 success criteria.
+
+### 2026-05-07 — Phase 4 manual-verification findings
+
+**Single-worktree dev — PASSED.** `pnpm dev` boots both apps on the pinned registry ports; portless URLs resolve (HTTP 307/200/200); `MFE_CONFIG` is synthesized to match the registry. The "no surprise port changes after upgrade" goal is verified for the primary worktree.
+
+**Multi-worktree dev — REGRESSED. Deferred to a new Phase 4b.** Running `pnpm dev` in a secondary worktree fails with `EADDRINUSE :::5502 / :::6868`. Pre-Phase-4, `appPorts` were hash-allocated with `seed = host === baseHost ? appName : ${host}:${appName}`, giving each worktree distinct ports automatically. Phase 4's fixed `entry.devPort` shares one value across all worktrees, and portless's `--app-port <fixed>` skips per-worktree auto-assignment. portless still detects the worktree prefix correctly and routes `<wt>.app.lightfast.localhost` — the failure is purely the `next dev` port collision, not the URL/routing layer. Resolved by `2026-05-07-dev-proxy-host-keyed-ports.md` (Option 3 schema, Option 2 mechanism — host-keyed `choosePort`).
+
+**Releases produced during Phase 4**:
+- `@lightfastai/dev-* 0.3.0` — initial cut from Phase 3's changeset (registry + non-MFE supervisor work).
+- `@lightfastai/dev-* 0.3.1` — patch dropping `[key: string]: unknown` index signatures from `NextConfigWithPortlessProxy.experimental.{,serverActions}`. Required to pass `apps/app` typecheck against Next 16's `ExperimentalConfig` (which has no index signature). 0.3.0 was DOA for downstream Next-16 consumers; 0.3.1 is the practical floor.
+
+**Manual-verification gotcha worth surfacing in Phase 7 docs**: a mid-session merge from `main` reverted `pnpm-lock.yaml` to pre-bump state while leaving `pnpm-workspace.yaml` at `^0.3.1`; node_modules were stale at 0.2.1. The first `pnpm dev` failed cryptically (`Dev proxy app command must be run from exactly one configured app directory`) because the 0.2.1 runtime parsed our reduced `microfrontends.json` (no `packageName`) and lost the cwd-to-app mapping. **Mitigation**: always re-run `pnpm install` after any merge or rebase that touches the workspace catalog; document this in Phase 7's migration notes.
+
+### 2026-05-08 — multi-worktree regression: `devPort` removed; allocator restored
+
+The Phase 4b "decide between three fix options" block is closed. **Decision: drop `devPort` entirely from the registry** (option 3 from the prior log entry). New phase **Phase 3.5** lands the corrective dev-proxy work and cuts `dev-proxy@0.4.0`.
+
+**Why option 3 over options 1 and 2**
+- The user's stated requirement is "I don't care what ports are assigned on any worktree or main… all I care is they all start and have portless URLs." Pinning is not a goal; it was a misread of the SSoT principle. The registry is the SSoT for *identity*, not for the OS port namespace (which is a process-local resource).
+- Option 1 (hybrid pin-on-primary, auto-assign-on-secondary) introduces two code paths and asymmetric semantics; primary contributors would see different ports than CI, secondary worktrees, and other devs. More surface area for confusion.
+- Option 2 (keep `devPort` as docs-only) leaves a dead field in the schema that future readers will assume is load-bearing. Better to remove.
+- Option 3 unifies MFE and non-MFE handling under one allocator and matches the 0.2.x worktree-distinct behavior that already worked for MFE apps.
+
+**Plan deltas**
+- **Phase 0**: marked `[DONE — partially superseded by Phase 3.5]` with a callout explaining the regression. The schema/types/iteration-site descriptions in Phase 0 reflect what 0.3.0 shipped; the real behavior in 0.4.0 is in Phase 3.5.
+- **Phase 3.5 (new)**: drop `devPort` from schema + `AppEntry`; restore the seeded `generateMicrofrontendsPort(seed)` callsite at `index.ts:758`; apply the same allocator to the non-MFE branch in `runtime.ts:367`; cut `0.4.0` via the existing `fixed` changeset group.
+- **Phase 4**: catalog bumps to `^0.4.0`. `lightfast.dev.json` rewritten without `devPort`. The "verify ports" sub-step is deleted entirely — there are no ports to verify. Success criteria reset to unchecked since the registry shape changes.
+- **Phase 6**: `apps/platform/package.json` dev script still drops `--port 4112`; the prose now reflects that the injected port is hash-allocated, not the registry's `devPort`.
+- **Phase 7**: CLAUDE.md architecture diagram drops the `(raw :NNNN)` annotations and adds a one-line note that physical ports are allocated per (worktree, app), never pinned. The `apps registry` line is updated to `(per-app: packageName, mfe)`.
+
+**Why this is safe to ship as a `0.4.0` minor (not a `0.3.x` patch)**
+- `apps[*].devPort` was required in 0.3.x and is now rejected by the schema. That's a breaking config change — minor bump per semver.
+- Lightfast is the primary consumer; the catalog bump and the `lightfast.dev.json` rewrite ride together in Phase 4. No other downstream consumers exist today.
+
+**Verification gates added**
+- New automated test: with two distinct hosts (`lightfast.localhost` vs. `wt2.lightfast.localhost`), the same app name resolves to different ports.
+- New schema regression test: `apps[*].devPort` is rejected in 0.4.0.
+- New human-review item in Phase 4: boot two worktrees in parallel, both resolve, no `EADDRINUSE`. This is the gate that the original Phase 4 manual run failed.
 
