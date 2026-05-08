@@ -18,6 +18,9 @@ function setupModuleMocks() {
       if (name === "lightfast-www") {
         return "https://www.lightfast.localhost";
       }
+      if (name === "lightfast-platform") {
+        return "https://platform.lightfast.localhost";
+      }
       throw new Error(`unexpected project name: ${name}`);
     }),
   }));
@@ -61,9 +64,9 @@ describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV undefined)", () => {
     expect(wwwUrl).toBe("https://www.lightfast.localhost");
   });
 
-  it("platformUrl is the raw localhost backend (not on portless)", async () => {
+  it("platformUrl resolves to the portless self URL", async () => {
     const { platformUrl } = await import("../origins");
-    expect(platformUrl).toBe("http://localhost:4112");
+    expect(platformUrl).toBe("https://platform.lightfast.localhost");
   });
 
   it("devOriginPatterns is the portless origin set", async () => {

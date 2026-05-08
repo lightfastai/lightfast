@@ -4,10 +4,11 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
+  "portless": "platform.lightfast",
   "scripts": {
     "build": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env next dev --port 4112 --turbo",
+    "dev": "pnpm with-env lightfast-dev proxy app -- next dev --turbo",
     "start": "pnpm with-env next start -p 4112",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --"

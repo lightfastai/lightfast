@@ -25,12 +25,10 @@ export const wwwUrl = withRelatedProject({
     : "https://lightfast.ai",
 });
 
-// platform is intentionally not on portless (raw :4112 in dev) — see CLAUDE.md
-// "platform → http://localhost:4112 (raw backend; not yet on Portless / MFE)".
 export const platformUrl = withRelatedProject({
   projectName: "lightfast-platform",
   defaultHost: isLocal
-    ? "http://localhost:4112"
+    ? resolveProjectUrl("lightfast-platform")
     : "https://lightfast-platform.vercel.app",
 });
 

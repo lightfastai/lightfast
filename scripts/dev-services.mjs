@@ -340,42 +340,30 @@ async function handleInngestSync(args) {
 }
 
 async function resolveInngestTargets(services, options) {
-  const explicitTargets = services.buildInngestDevSyncTargets({
-    result: {
-      appUrls: Object.fromEntries(
-        options.appUrls.map(({ appName, url }) => [appName, url])
-      ),
-      localAppNames: options.appUrls.map(({ appName }) => appName),
-    },
-    servePath: options.servePath,
-  });
-
-  if (!options.mfeApps.length) {
-    return explicitTargets;
+  if (!options.registerApps.length) {
+    return [];
   }
 
-  const relatedProjects = await import("@lightfastai/dev-proxy");
+  const proxy = await import("@lightfastai/dev-proxy");
   const appUrls = Object.fromEntries(
-    options.mfeApps.map((appName) => [
+    options.registerApps.map((appName) => [
       appName,
-      relatedProjects.resolvePortlessApplicationUrl({
+      proxy.resolvePortlessAppUrl({
         app: appName,
         cwd: repoRoot,
         env: process.env,
+        configPath: options.configPath,
       }),
     ])
   );
 
-  return [
-    ...explicitTargets,
-    ...services.buildInngestDevSyncTargets({
-      result: {
-        appUrls,
-        localAppNames: options.mfeApps,
-      },
-      servePath: options.servePath,
-    }),
-  ];
+  return services.buildInngestDevSyncTargets({
+    result: {
+      appUrls,
+      localAppNames: options.registerApps,
+    },
+    servePath: options.servePath,
+  });
 }
 
 function resolveRedisConfig(services, options) {
@@ -409,17 +397,13 @@ function parseCommandArgs(args) {
 
 function parseOptions(args) {
   const options = {
-    appUrls: [],
     configPath: defaultConfigPath,
-    mfeApps: [],
+    registerApps: [],
   };
 
   for (let index = 0; index < args.length; index++) {
     const arg = args[index];
     switch (arg) {
-      case "--app-url":
-        options.appUrls.push(parseAppUrl(readOptionValue(args, ++index, arg)));
-        break;
       case "--config":
         options.configPath = path.resolve(
           process.cwd(),
@@ -429,14 +413,14 @@ function parseOptions(args) {
       case "--json":
         options.json = true;
         break;
-      case "--mfe-app":
-        options.mfeApps.push(readOptionValue(args, ++index, arg));
-        break;
       case "--no-inngest-sync":
         options.inngestSync = false;
         break;
       case "--postgres-table":
         options.postgresTable = readOptionValue(args, ++index, arg);
+        break;
+      case "--register-app":
+        options.registerApps.push(readOptionValue(args, ++index, arg));
         break;
       case "--serve-path":
         options.servePath = readOptionValue(args, ++index, arg);
@@ -446,28 +430,17 @@ function parseOptions(args) {
         printHelp();
         process.exit(0);
         break;
+      case "--app-url":
+      case "--mfe-app":
+        throw new Error(
+          `${arg} was removed in dev-proxy 0.4.0; use --register-app <name> (the app must be declared in lightfast.dev.json).`
+        );
       default:
         throw new Error(`Unknown option "${arg}".`);
     }
   }
 
   return options;
-}
-
-function parseAppUrl(value) {
-  const separatorIndex = value.indexOf("=");
-  if (separatorIndex > 0) {
-    return {
-      appName: value.slice(0, separatorIndex),
-      url: value.slice(separatorIndex + 1),
-    };
-  }
-
-  const hostname = new URL(value).hostname;
-  return {
-    appName: hostname.split(".")[0] || hostname,
-    url: value,
-  };
 }
 
 function readOptionValue(args, index, option) {
@@ -528,7 +501,7 @@ function printHelp() {
   console.log(`Usage:
   node scripts/dev-services.mjs setup [--json]
   node scripts/dev-services.mjs doctor [--postgres-table <name>] [--json]
-  node scripts/dev-services.mjs inngest-sync [--mfe-app <name>] [--app-url <name=url>] -- <command> [...args]
+  node scripts/dev-services.mjs inngest-sync [--register-app <name>]... -- <command> [...args]
 
   node scripts/dev-services.mjs postgres url [--json]
   node scripts/dev-services.mjs postgres up [--json]
@@ -539,11 +512,10 @@ function printHelp() {
   node scripts/dev-services.mjs redis ping [--json]
 
 Options:
-  --config <path>       Path to lightfast.dev.json
-  --mfe-app <name>      Resolve an MFE app URL for Inngest sync
-  --app-url <name=url>  Explicit app URL to sync into the Inngest Dev Server
-  --serve-path <path>   Inngest serve route path. Default: /api/inngest
-  --no-inngest-sync     Run wrapped command without Inngest endpoint sync
-  --json                Print JSON output where supported
+  --config <path>        Path to lightfast.dev.json
+  --register-app <name>  Resolve a registered app's portless URL for Inngest sync (must be declared in lightfast.dev.json)
+  --serve-path <path>    Inngest serve route path. Default: /api/inngest
+  --no-inngest-sync      Run wrapped command without Inngest endpoint sync
+  --json                 Print JSON output where supported
 `);
 }

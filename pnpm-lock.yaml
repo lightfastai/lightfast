@@ -19,17 +19,17 @@ catalogs:
       specifier: ^5.2.2
       version: 5.2.2
     '@lightfastai/dev-cli':
-      specifier: ^0.1.2
-      version: 0.1.2
+      specifier: ^0.3.1
+      version: 0.3.1
     '@lightfastai/dev-core':
-      specifier: ^0.1.1
-      version: 0.1.1
+      specifier: ^0.3.1
+      version: 0.3.1
     '@lightfastai/dev-proxy':
-      specifier: ^0.2.1
-      version: 0.2.1
+      specifier: ^0.3.1
+      version: 0.3.1
     '@lightfastai/dev-services':
-      specifier: ^0.2.0
-      version: 0.2.1
+      specifier: ^0.3.1
+      version: 0.3.1
     '@lightfastai/related-projects':
       specifier: ^0.1.18
       version: 0.1.18
@@ -205,16 +205,16 @@ importers:
         version: 2.31.0(@types/node@25.3.3)
       '@lightfastai/dev-cli':
         specifier: 'catalog:'
-        version: 0.1.2
+        version: 0.3.1
       '@lightfastai/dev-core':
         specifier: 'catalog:'
-        version: 0.1.1
+        version: 0.3.1
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.2.1
+        version: 0.3.1
       '@lightfastai/dev-services':
         specifier: 'catalog:'
-        version: 0.2.1
+        version: 0.3.1
       concurrently:
         specifier: ^9.2.1
         version: 9.2.1
@@ -247,7 +247,7 @@ importers:
         version: link:../../db/app
       '@lightfastai/dev-core':
         specifier: 'catalog:'
-        version: 0.1.1
+        version: 0.3.1
       '@repo/app-api-key':
         specifier: workspace:*
         version: link:../../packages/app-api-key
@@ -308,10 +308,10 @@ importers:
     dependencies:
       '@lightfastai/dev-core':
         specifier: 'catalog:'
-        version: 0.1.1
+        version: 0.3.1
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.2.1
+        version: 0.3.1
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
@@ -372,7 +372,7 @@ importers:
         version: 5.2.2(react-hook-form@7.72.1(react@19.2.5))(zod@4.3.6)
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.2.1
+        version: 0.3.1
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -713,7 +713,7 @@ importers:
         version: link:../../api/platform
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.2.1
+        version: 0.3.1
       '@logtail/next':
         specifier: ^0.3.1
         version: 0.3.1(next@16.2.4(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react@19.2.5)
@@ -789,7 +789,7 @@ importers:
     dependencies:
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
-        version: 0.2.1
+        version: 0.3.1
       '@lightfastai/related-projects':
         specifier: 'catalog:'
         version: 0.1.18
@@ -3940,8 +3940,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@lightfastai/dev-cli@0.1.2':
-    resolution: {integrity: sha512-p/g0xZG18porAah7FzMK0q5U0zgETD4P1BOgNN+21VfrIplv+pL55hkX4JwiHNecb4WxXNaYQynLkvnzxciTsg==}
+  '@lightfastai/dev-cli@0.3.1':
+    resolution: {integrity: sha512-tdGTdWn4MMYs55YETNqxVWwCF22IAnuDx6/SJSQ0Sgsde07rK61NeqyrVqNf5h3NQt7LmJ1LXT5WdSLoyrYMIw==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -3949,24 +3949,16 @@ packages:
     resolution: {integrity: sha512-y151EVoyxzroIl9buTHucPJuMxmbrTDnohu1lQbxpMFnlk9RiccEJxgFmTOwc+euTvPletjtlkzgUvpznznIAw==}
     engines: {node: '>=22.0.0'}
 
-  '@lightfastai/dev-core@0.2.1':
-    resolution: {integrity: sha512-GG730tW18RonkBNYCbHR9oBe0pjZ/U99G5uqL7ylvPYRUnOBodrffqVhRFxTCx87vPSTgYmMve8QFoEHxVQaKQ==}
+  '@lightfastai/dev-core@0.3.1':
+    resolution: {integrity: sha512-rK365l5TCc5ZcPF++RJF5X0v8ofHZzoduXWOj7uEZUYP/JeXh2v5+S42YpB3gAcXOLExiNrLDpBIJPiUvaTuyw==}
     engines: {node: '>=22.0.0'}
 
-  '@lightfastai/dev-proxy@0.1.24':
-    resolution: {integrity: sha512-WayU2svZwpbjuGKXuYA4uPTLa4pyx2AEYrIEUx2FqqInWrNgkFjOjVhrPYFHt26NMWv5gkmpy/Fx6xx4ErP+2g==}
+  '@lightfastai/dev-proxy@0.3.1':
+    resolution: {integrity: sha512-bhzJvkb2Ds0XQrPQ3rJQkJYTkdngXhczMrYxA+u9uYQS5MulzVO5D7hCeMDBGkr01S9SluL9EKz1HophIKJVrA==}
     engines: {node: '>=22.0.0'}
 
-  '@lightfastai/dev-proxy@0.2.1':
-    resolution: {integrity: sha512-Gmr3lMhNcUgw3OQUPyYSyR5JjfLv5r1QSpBY6N8pz1PIC6haJ7mMLC1fGFIcuLJTlHG9b6+ULtcQg80RSRTmag==}
-    engines: {node: '>=22.0.0'}
-
-  '@lightfastai/dev-services@0.1.6':
-    resolution: {integrity: sha512-P1Q+zz8Ck6VB3hA0VgoCc8QVbYKx42lpaiHPn0JMXsgbh0C2qJDI8kmrg7c1ql0SHReeb4ii05BhMORoGLmKDQ==}
-    engines: {node: '>=22.0.0'}
-
-  '@lightfastai/dev-services@0.2.1':
-    resolution: {integrity: sha512-uK4aL+4UjIvognjG/DTL93ejIbpadf0G7fnHUAptSVBPWfQOUplyCFSaZC2q9Af7zA/NPWhOgZarU2SXawZv5Q==}
+  '@lightfastai/dev-services@0.3.1':
+    resolution: {integrity: sha512-BwPkzPMu24cgCYcX++gxXiB72R/3qgFPFuLjTpjlqdFh90XxA1nOmOleTeFD119fv/MMyPRkrmp4FktVquQCag==}
     engines: {node: '>=22.0.0'}
 
   '@lightfastai/related-projects@0.1.18':
@@ -16382,33 +16374,24 @@ snapshots:
   '@libsql/win32-x64-msvc@0.4.7':
     optional: true
 
-  '@lightfastai/dev-cli@0.1.2':
+  '@lightfastai/dev-cli@0.3.1':
     dependencies:
-      '@lightfastai/dev-core': 0.1.1
-      '@lightfastai/dev-proxy': 0.1.24
-      '@lightfastai/dev-services': 0.1.6
+      '@lightfastai/dev-core': 0.3.1
+      '@lightfastai/dev-proxy': 0.3.1
+      '@lightfastai/dev-services': 0.3.1
 
   '@lightfastai/dev-core@0.1.1': {}
 
-  '@lightfastai/dev-core@0.2.1': {}
+  '@lightfastai/dev-core@0.3.1': {}
 
-  '@lightfastai/dev-proxy@0.1.24':
+  '@lightfastai/dev-proxy@0.3.1':
     dependencies:
-      '@lightfastai/dev-core': 0.1.1
+      '@lightfastai/dev-core': 0.3.1
       portless: 0.12.0
 
-  '@lightfastai/dev-proxy@0.2.1':
+  '@lightfastai/dev-services@0.3.1':
     dependencies:
-      '@lightfastai/dev-core': 0.1.1
-      portless: 0.12.0
-
-  '@lightfastai/dev-services@0.1.6':
-    dependencies:
-      '@lightfastai/dev-core': 0.1.1
-
-  '@lightfastai/dev-services@0.2.1':
-    dependencies:
-      '@lightfastai/dev-core': 0.2.1
+      '@lightfastai/dev-core': 0.3.1
 
   '@lightfastai/related-projects@0.1.18':
     dependencies:
