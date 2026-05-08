@@ -69,18 +69,6 @@ const appConfig: NextConfig = merge({}, baseConfig, {
       })(),
     },
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/connect/:path*",
-        destination: `${platformUrl}/api/connect/:path*`,
-      },
-      {
-        source: "/api/ingest/:path*",
-        destination: `${platformUrl}/api/ingest/:path*`,
-      },
-    ];
-  },
   async redirects() {
     return [
       {

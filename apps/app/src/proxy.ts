@@ -26,7 +26,6 @@ const securityHeaders = securityMiddleware({
 const isPublicRoute = createRouteMatcher([
   "/early-access(.*)",
   "/api/health(.*)",
-  "/api/ingest(.*)",
   "/docs(.*)",
   "/monitoring",
   "/ingest(.*)",

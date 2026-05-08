@@ -36,4 +36,45 @@ describe("service JWT", () => {
 
     await expect(verifyServiceJWT(token)).rejects.toThrow();
   });
+
+  it("rejects unknown caller (admin)", async () => {
+    const { SignJWT } = await import("jose");
+    const key = new TextEncoder().encode(process.env.SERVICE_JWT_SECRET);
+    const token = await new SignJWT({})
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuer("admin")
+      .setAudience("lightfast-platform")
+      .setIssuedAt()
+      .setExpirationTime("60s")
+      .sign(key);
+
+    await expect(verifyServiceJWT(token)).rejects.toThrow(
+      /Invalid service JWT issuer/
+    );
+  });
+
+  it("rejects unknown caller (webhook)", async () => {
+    const { SignJWT } = await import("jose");
+    const key = new TextEncoder().encode(process.env.SERVICE_JWT_SECRET);
+    const token = await new SignJWT({})
+      .setProtectedHeader({ alg: "HS256", typ: "JWT" })
+      .setIssuer("webhook")
+      .setAudience("lightfast-platform")
+      .setIssuedAt()
+      .setExpirationTime("60s")
+      .sign(key);
+
+    await expect(verifyServiceJWT(token)).rejects.toThrow(
+      /Invalid service JWT issuer/
+    );
+  });
+
+  it.each(["app", "inngest", "cron"] as const)(
+    "round-trips caller=%s",
+    async (caller) => {
+      const token = await signServiceJWT(caller);
+      const verified = await verifyServiceJWT(token);
+      expect(verified.caller).toBe(caller);
+    }
+  );
 });
