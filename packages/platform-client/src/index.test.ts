@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { createPlatformClient } from "./index";
 
 interface CapturedCall {
-  url: string;
   init: RequestInit;
+  url: string;
 }
 
 function installFetchMock(body: unknown): CapturedCall[] {

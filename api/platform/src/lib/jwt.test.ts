@@ -69,12 +69,13 @@ describe("service JWT", () => {
     );
   });
 
-  it.each(["app", "inngest", "cron"] as const)(
-    "round-trips caller=%s",
-    async (caller) => {
-      const token = await signServiceJWT(caller);
-      const verified = await verifyServiceJWT(token);
-      expect(verified.caller).toBe(caller);
-    }
-  );
+  it.each([
+    "app",
+    "inngest",
+    "cron",
+  ] as const)("round-trips caller=%s", async (caller) => {
+    const token = await signServiceJWT(caller);
+    const verified = await verifyServiceJWT(token);
+    expect(verified.caller).toBe(caller);
+  });
 });

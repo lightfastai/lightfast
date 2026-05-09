@@ -1,16 +1,16 @@
 // const platform = createPlatformClient({ caller: "app", baseUrl: env.PLATFORM_URL });
 // const health = await platform.system.health.query();
 import {
-  signServiceJWT,
   type PlatformRouter,
   type ServiceCaller,
+  signServiceJWT,
 } from "@api/platform";
 import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import superjson from "superjson";
 
 export interface CreatePlatformClientOptions {
-  caller: ServiceCaller;
   baseUrl: string;
+  caller: ServiceCaller;
 }
 
 export function createPlatformClient(options: CreatePlatformClientOptions) {
