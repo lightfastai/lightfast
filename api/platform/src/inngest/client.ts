@@ -1,13 +1,13 @@
 import { resolveWorktreeRuntimeName } from "@lightfastai/dev-core";
 import { EventSchemas, Inngest } from "@vendor/inngest";
-import { env } from "@vendor/inngest/env";
 import { createInngestObservabilityMiddleware } from "@vendor/observability/inngest";
 import type { GetEvents } from "inngest";
 
+import { env } from "../env";
 import { platformEvents } from "./schemas/platform";
 
 const appId =
-  process.env.NODE_ENV === "development"
+  env.VERCEL_ENV === "development"
     ? resolveWorktreeRuntimeName(env.INNGEST_APP_NAME)
     : env.INNGEST_APP_NAME;
 
