@@ -19,7 +19,7 @@ const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;
  * See `packages/app-trpc/src/desktop.tsx`.
  */
 async function tryBearer(headers: Headers): Promise<AuthContext | undefined> {
-  const match = /^Bearer\s+(.+)$/i.exec(headers.get("authorization") ?? "");
+  const match = /^Bearer\s+(\S+)\s*$/i.exec(headers.get("authorization") ?? "");
   const token = match?.[1];
   if (!token) {
     return;
