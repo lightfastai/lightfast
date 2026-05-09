@@ -3,92 +3,43 @@
  *
  * Auth model: service-to-service JWT (not Clerk).
  * All callers are internal services (app, platform, inngest, cron).
+ *
+ * Auth resolution lives in `./auth` — this file consumes the resolved
+ * `PlatformAuthContext` and wires it into tRPC middleware.
  */
 import { initTRPC, TRPCError } from "@trpc/server";
-import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type { ServiceCaller } from "./lib/jwt";
-import { verifyServiceJWT } from "./lib/jwt";
+import type { PlatformContext } from "./auth/context";
+import { UNAUTH } from "./auth/context";
+import { resolveAuth } from "./auth/resolve";
 
-// -- Auth Context -------------------------------------------------------------
-
-/**
- * Discriminated union for platform service authentication.
- * Every request resolves to exactly one variant.
- */
-export type PlatformAuthContext =
-  | { type: "service"; caller: ServiceCaller }
-  | { type: "internal"; source: string }
-  | { type: "unauthenticated" };
-
-/** Explicit context type for tRPC initialization.
- *
- * Must be used instead of `typeof createTRPCContext` because the
- * context factory only returns "service" | "unauthenticated" — but in-process
- * callers (createInternalCaller) provide other auth variants directly.
- *
- * If you add fields to createTRPCContext's return type, add them here too.
- */
-export interface PlatformContext {
-  auth: PlatformAuthContext;
-  headers: Headers;
-}
+export type { PlatformAuthContext, PlatformContext } from "./auth/context";
 
 // -- Context Creation ---------------------------------------------------------
 
 /**
  * Create tRPC context for platform service requests.
  *
- * Auth resolution order:
- * 1. Bearer JWT in Authorization header -> service auth
- * 2. x-trpc-source header for internal identification
- * 3. Unauthenticated fallback
+ * Auth resolution is delegated to `resolveAuth`; this layer adds the
+ * boundary log line and the unauth fallback.
  */
 export const createTRPCContext = async (opts: {
   headers: Headers;
 }): Promise<PlatformContext> => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";
+  const auth = (await resolveAuth(opts.headers, source)) ?? UNAUTH;
 
-  // Check for service JWT in Authorization header
-  const authHeader = opts.headers.get("authorization");
-  if (authHeader?.startsWith("Bearer ")) {
-    const token = authHeader.replace("Bearer ", "");
-
-    try {
-      const verified = await verifyServiceJWT(token);
-      log.info("[trpc] platform service request", {
-        source,
-        auth: "service",
-        caller: verified.caller,
-      });
-      return {
-        auth: {
-          type: "service" as const,
-          caller: verified.caller,
-        },
-        headers: opts.headers,
-      };
-    } catch (error) {
-      log.warn("[trpc] JWT verification error", {
-        source,
-        error: parseError(error),
-      });
-    }
-  }
-
-  // No authentication
   log.info("[trpc] platform service request", {
     source,
-    auth: "unauthenticated",
+    auth: auth.type,
+    ...(auth.type === "service" && { caller: auth.caller }),
   });
-  return {
-    auth: { type: "unauthenticated" as const },
-    headers: opts.headers,
-  };
+
+  return { auth, headers: opts.headers };
 };
 
 // -- tRPC Initialization ------------------------------------------------------
@@ -118,12 +69,36 @@ const t = initTRPC.context<PlatformContext>().create({
 const observabilityMiddleware = t.middleware(
   createObservabilityMiddleware({
     isDev: t._config.isDev,
-    extractAuth: (ctx) => ({
-      ...(ctx.auth.type === "service" && { caller: ctx.auth.caller }),
-      ...(ctx.auth.type === "internal" && { source: ctx.auth.source }),
-    }),
+    extractAuth: (ctx) => {
+      switch (ctx.auth.type) {
+        case "service":
+          return { caller: ctx.auth.caller };
+        case "internal":
+          return { source: ctx.auth.source };
+        case "unauthenticated":
+          return {};
+      }
+    },
   })
 );
+
+/**
+ * Service-auth gate — required by `serviceProcedure`.
+ *
+ * Mirrors the requireAuth / requireOrg pattern in api/app: the runtime
+ * type guard plus `{ ...ctx, auth: ctx.auth }` re-binding narrows
+ * downstream `ctx.auth` to the service variant without a manual cast.
+ */
+const requireService = t.middleware(({ ctx, next }) => {
+  if (ctx.auth.type !== "service") {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message:
+        "Service authentication required. Provide a valid service JWT in the Authorization header.",
+    });
+  }
+  return next({ ctx: { ...ctx, auth: ctx.auth } });
+});
 
 // -- Router & Procedure Exports -----------------------------------------------
 
@@ -144,22 +119,7 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
  */
 export const serviceProcedure = t.procedure
   .use(observabilityMiddleware)
-  .use(({ ctx, next }) => {
-    if (ctx.auth.type !== "service") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message:
-          "Service authentication required. Provide a valid service JWT in the Authorization header.",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        auth: ctx.auth as Extract<PlatformAuthContext, { type: "service" }>,
-      },
-    });
-  });
+  .use(requireService);
 
 /**
  * Internal procedure -- trusted in-process callers only.
