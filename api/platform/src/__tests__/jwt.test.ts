@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { signServiceJWT, verifyServiceJWT } from "./jwt";
+import { signServiceJWT, verifyServiceJWT } from "../lib/jwt";
 
 describe("service JWT", () => {
   it("signs and verifies a valid token", async () => {
