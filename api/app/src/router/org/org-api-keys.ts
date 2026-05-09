@@ -1,4 +1,3 @@
-import { db } from "@db/app/client";
 import { orgApiKeys } from "@db/app/schema";
 import { generateOrgApiKey, hashApiKey } from "@repo/app-api-key";
 import {
@@ -29,7 +28,7 @@ export const orgApiKeysRouter = {
    * Returns keys with preview only (never full key)
    */
   list: orgScopedProcedure.query(async ({ ctx }) => {
-    const keys = await db
+    const keys = await ctx.db
       .select({
         publicId: orgApiKeys.publicId,
         name: orgApiKeys.name,
@@ -67,7 +66,7 @@ export const orgApiKeysRouter = {
       const { key, prefix, suffix } = generateOrgApiKey();
       const keyHash = hashApiKey(key);
 
-      const [created] = await db
+      const [created] = await ctx.db
         .insert(orgApiKeys)
         .values({
           clerkOrgId: ctx.auth.orgId,
@@ -117,7 +116,7 @@ export const orgApiKeysRouter = {
   revoke: orgScopedProcedure
     .input(revokeOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
-      const [existingKey] = await db
+      const [existingKey] = await ctx.db
         .select({
           id: orgApiKeys.id,
           isActive: orgApiKeys.isActive,
@@ -145,7 +144,7 @@ export const orgApiKeysRouter = {
         });
       }
 
-      await db
+      await ctx.db
         .update(orgApiKeys)
         .set({ isActive: false, updatedAt: new Date().toISOString() })
         .where(eq(orgApiKeys.id, existingKey.id));
@@ -165,7 +164,7 @@ export const orgApiKeysRouter = {
   delete: orgScopedProcedure
     .input(deleteOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
-      const [existingKey] = await db
+      const [existingKey] = await ctx.db
         .select({ id: orgApiKeys.id })
         .from(orgApiKeys)
         .where(
@@ -183,7 +182,7 @@ export const orgApiKeysRouter = {
         });
       }
 
-      await db.delete(orgApiKeys).where(eq(orgApiKeys.id, existingKey.id));
+      await ctx.db.delete(orgApiKeys).where(eq(orgApiKeys.id, existingKey.id));
 
       log.info("[org-api-keys] deleted", {
         clerkOrgId: ctx.auth.orgId,
