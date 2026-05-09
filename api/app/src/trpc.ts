@@ -4,177 +4,43 @@
  * 2. You want to create a new middleware or type of procedure (see Part 3)
  *
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
- * The pieces you will need to use are documented accordingly near the end
+ * The pieces you will need to use are documented accordingly near the end.
+ *
+ * Auth resolution lives in `./auth` — this file consumes the resolved
+ * `AuthContext` and wires it into tRPC middleware.
  */
 
 import { db } from "@db/app/client";
 import { initTRPC, TRPCError } from "@trpc/server";
-import { clerkEnvBase } from "@vendor/clerk/env";
-import { auth, verifyToken } from "@vendor/clerk/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
-import { z, ZodError } from "zod";
+import { ZodError } from "zod";
 
-/**
- * Authentication Context - Discriminated Union
- * Represents exactly one authentication method per request.
- *
- * Exported so router helpers can type narrow against this union without
- * re-deriving the shape.
- */
-export type AuthContext =
-  | {
-      type: "clerk-pending";
-      userId: string;
-      // Authenticated but hasn't claimed an organization yet
-      // Only allowed for onboarding procedures
-    }
-  | {
-      type: "clerk-active";
-      userId: string;
-      orgId: string;
-      // Authenticated and has claimed an organization
-      // Can access all org-scoped resources
-    }
-  | {
-      type: "unauthenticated";
-    };
+import { resolveAuth } from "./auth/resolve";
 
-// Hoisted so config errors surface at boot, not per-request.
-const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;
-
-/**
- * Shape of the Clerk session JWT claims we depend on.
- * Validated at the system boundary so a Clerk claim rename fails loudly
- * instead of silently producing `unauthenticated` requests.
- */
-const ClerkJwtClaims = z.object({
-  sub: z.string(),
-  org_id: z.string().optional(),
-});
+// Re-exported for routers that want to pattern-match on `ctx.auth` directly.
+export type { AuthContext } from "./auth/context";
 
 /**
  * 1. CONTEXT
  *
- * This section defines the "contexts" that are available in the backend API.
- *
- * These allow you to access things when processing a request, like the database, the session, etc.
- *
- * This helper generates the "internals" for a tRPC context. The API handler and RSC clients each
- * wrap this and provides the required context.
+ * The "context" available to every procedure: resolved auth, the database
+ * client, and the raw request headers. Both transports (Bearer for desktop,
+ * cookie for web) are handled inside `resolveAuth`.
  *
  * @see https://trpc.io/docs/server/context
  */
-
-/**
- * Resolved Clerk session — minimal shape consumed by createTRPCContext.
- *
- * `null` means no valid session was found via either Bearer token or cookie.
- */
-type ResolvedSession = { userId: string; orgId: string | null } | null;
-
-/**
- * Resolve a Clerk session from one of two transports:
- *
- *   - `Authorization: Bearer <jwt>` — used by the Electron desktop renderer
- *     (cross-origin, can't carry the Clerk cookie). See
- *     `packages/app-trpc/src/desktop.tsx`.
- *   - Clerk session cookie — used by the Next.js web app (same-origin).
- *
- * If a Bearer header is present, it is the sole source of truth for that
- * request: success returns the session, failure returns `null`. We do not
- * fall through to the cookie path on bad-Bearer because the only Bearer
- * caller (desktop renderer) is cross-origin and its cookies are never sent
- * (`credentials: "omit"`), so cookies cannot rescue a rejected Bearer.
- *
- * Exported for unit testing — production callers should use `createTRPCContext`.
- */
-export async function resolveClerkSession(
-  headers: Headers
-): Promise<ResolvedSession> {
-  const authHeader = headers.get("authorization") ?? "";
-  const match = /^Bearer\s+(.+)$/i.exec(authHeader);
-  if (match?.[1]) {
-    try {
-      const claims = await verifyToken(match[1], {
-        secretKey: CLERK_SECRET_KEY,
-      });
-      const parsed = ClerkJwtClaims.safeParse(claims);
-      if (parsed.success) {
-        return {
-          userId: parsed.data.sub,
-          orgId: parsed.data.org_id ?? null,
-        };
-      }
-    } catch (err) {
-      // Expired/invalid Bearer is expected (e.g. desktop holds a stale JWT
-      // after sign-out). Log so genuinely suspicious failures (bad signature,
-      // key rotation, Clerk outage) surface in observability.
-      console.warn("[trpc] Bearer JWT verification failed", {
-        name: err instanceof Error ? err.name : "unknown",
-        message: err instanceof Error ? err.message : String(err),
-      });
-    }
-    return null;
-  }
-
-  const cookieSession = await auth({ treatPendingAsSignedOut: false });
-  if (!cookieSession.userId) {
-    return null;
-  }
-  return {
-    userId: cookieSession.userId,
-    orgId: cookieSession.orgId ?? null,
-  };
-}
-
-/**
- * Unified tRPC context factory (Clerk auth only)
- *
- * Accepts both the Clerk cookie (web) and `Authorization: Bearer <jwt>` (desktop).
- *
- * API key auth is handled by the REST layer (withApiKeyAuth, withDualAuth),
- * not tRPC. The CLI uses REST endpoints, not tRPC procedures.
- */
-export const createTRPCContext = async (opts: { headers: Headers }) => {
-  const session = await resolveClerkSession(opts.headers);
-
-  if (session) {
-    if (session.orgId) {
-      return {
-        auth: {
-          type: "clerk-active" as const,
-          userId: session.userId,
-          orgId: session.orgId,
-        },
-        db,
-        headers: opts.headers,
-      };
-    }
-    return {
-      auth: {
-        type: "clerk-pending" as const,
-        userId: session.userId,
-      },
-      db,
-      headers: opts.headers,
-    };
-  }
-
-  return {
-    auth: { type: "unauthenticated" as const },
-    db,
-    headers: opts.headers,
-  };
-};
+export const createTRPCContext = async (opts: { headers: Headers }) => ({
+  auth: await resolveAuth(opts.headers),
+  db,
+  headers: opts.headers,
+});
 
 /**
  * 2. INITIALIZATION
  *
  * This is where the trpc api is initialized, connecting the context and
- * transformer
- *
- * Uses the unified createTRPCContext factory (Clerk auth only).
+ * transformer.
  */
 const isProduction = process.env.NODE_ENV === "production";
 
