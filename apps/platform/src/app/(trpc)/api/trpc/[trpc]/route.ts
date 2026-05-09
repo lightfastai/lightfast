@@ -1,4 +1,4 @@
-import { createPlatformTRPCContext, platformRouter } from "@api/platform";
+import { createTRPCContext, platformRouter } from "@api/platform";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 import { isAllowedOrigin } from "~/cors";
@@ -34,7 +34,7 @@ const handler = async (req: NextRequest) => {
     router: platformRouter,
     req,
     createContext: () =>
-      createPlatformTRPCContext({
+      createTRPCContext({
         headers: req.headers,
       }),
   });

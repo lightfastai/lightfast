@@ -27,11 +27,11 @@ export type PlatformAuthContext =
 
 /** Explicit context type for tRPC initialization.
  *
- * Must be used instead of `typeof createPlatformTRPCContext` because the
+ * Must be used instead of `typeof createTRPCContext` because the
  * context factory only returns "service" | "unauthenticated" — but in-process
  * callers (createInternalCaller) provide other auth variants directly.
  *
- * If you add fields to createPlatformTRPCContext's return type, add them here too.
+ * If you add fields to createTRPCContext's return type, add them here too.
  */
 export interface PlatformContext {
   auth: PlatformAuthContext;
@@ -48,7 +48,7 @@ export interface PlatformContext {
  * 2. x-trpc-source header for internal identification
  * 3. Unauthenticated fallback
  */
-export const createPlatformTRPCContext = async (opts: {
+export const createTRPCContext = async (opts: {
   headers: Headers;
 }): Promise<PlatformContext> => {
   const source = opts.headers.get("x-trpc-source") ?? "unknown";

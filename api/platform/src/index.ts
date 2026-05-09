@@ -3,7 +3,7 @@ import type { PlatformRouter } from "./root";
 
 export type { PlatformRouter } from "./root";
 export { platformRouter } from "./root";
-export { createPlatformTRPCContext } from "./trpc";
+export { createTRPCContext } from "./trpc";
 
 // Type utilities
 export type PlatformRouterInputs = inferRouterInputs<PlatformRouter>;
