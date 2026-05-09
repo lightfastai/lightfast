@@ -10,19 +10,29 @@ const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;
 /**
  * Bearer transport — Electron desktop renderer.
  *
- *   undefined   → header absent; caller should try the next transport
- *   AuthContext → definitive answer (resolved session OR rejected → unauth)
+ *   undefined   → no Authorization header, or non-Bearer scheme; caller may
+ *                 try the next transport
+ *   AuthContext → definitive answer for Bearer requests:
+ *                   - valid JWT       → clerk-active / clerk-pending
+ *                   - malformed Bearer or rejected JWT → unauthenticated
  *
- * A rejected Bearer never falls through to the cookie path: the only
- * Bearer caller (desktop renderer) is cross-origin and ships
- * `credentials: "omit"`, so cookies physically can't reach this request.
- * See `packages/app-trpc/src/desktop.tsx`.
+ * A definitive Bearer answer (UNAUTH or AuthContext) never falls through
+ * to the cookie path: the only Bearer caller (desktop renderer) is
+ * cross-origin and ships `credentials: "omit"`, so cookies physically
+ * can't reach this request. See `packages/app-trpc/src/desktop.tsx`.
  */
 async function tryBearer(headers: Headers): Promise<AuthContext | undefined> {
-  const match = /^Bearer\s+(\S+)\s*$/i.exec(headers.get("authorization") ?? "");
+  const authorization = headers.get("authorization");
+  if (!authorization) {
+    return;
+  }
+  if (!/^Bearer\b/i.test(authorization)) {
+    return;
+  }
+  const match = /^Bearer\s+(\S+)\s*$/i.exec(authorization);
   const token = match?.[1];
   if (!token) {
-    return;
+    return UNAUTH;
   }
 
   try {

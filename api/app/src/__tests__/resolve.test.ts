@@ -99,4 +99,31 @@ describe("resolveAuth", () => {
     });
     expect(verifyTokenMock).not.toHaveBeenCalled();
   });
+
+  it("falls through to cookie when Authorization uses a non-Bearer scheme", async () => {
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie",
+      orgId: null,
+    });
+
+    const auth = await resolveAuth(
+      new Headers({ authorization: "Basic abc123" })
+    );
+
+    expect(auth).toEqual({ type: "clerk-pending", userId: "user_cookie" });
+    expect(verifyTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthenticated for a malformed Bearer (empty token), without consulting the cookie path", async () => {
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie",
+      orgId: "org_cookie",
+    });
+
+    const auth = await resolveAuth(new Headers({ authorization: "Bearer " }));
+
+    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(verifyTokenMock).not.toHaveBeenCalled();
+    expect(authMock).not.toHaveBeenCalled();
+  });
 });

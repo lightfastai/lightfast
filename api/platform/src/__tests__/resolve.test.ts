@@ -38,7 +38,7 @@ describe("resolveAuth", () => {
     expect(logWarnMock).not.toHaveBeenCalled();
   });
 
-  it("returns undefined when no Bearer header is present", async () => {
+  it("returns undefined when no Authorization header is present", async () => {
     const auth = await resolveAuth(new Headers(), "test-source");
 
     expect(auth).toBeUndefined();
@@ -46,7 +46,29 @@ describe("resolveAuth", () => {
     expect(logWarnMock).not.toHaveBeenCalled();
   });
 
-  it("returns undefined and logs warn when the JWT is invalid", async () => {
+  it("returns undefined when Authorization uses a non-Bearer scheme", async () => {
+    const auth = await resolveAuth(
+      new Headers({ authorization: "Basic abc123" }),
+      "test-source"
+    );
+
+    expect(auth).toBeUndefined();
+    expect(verifyServiceJWTMock).not.toHaveBeenCalled();
+    expect(logWarnMock).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthenticated for a malformed Bearer (empty token)", async () => {
+    const auth = await resolveAuth(
+      new Headers({ authorization: "Bearer " }),
+      "test-source"
+    );
+
+    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(verifyServiceJWTMock).not.toHaveBeenCalled();
+    expect(logWarnMock).not.toHaveBeenCalled();
+  });
+
+  it("returns unauthenticated and logs warn when the JWT is invalid", async () => {
     verifyServiceJWTMock.mockRejectedValueOnce(new Error("jwt expired"));
 
     const auth = await resolveAuth(
@@ -54,7 +76,7 @@ describe("resolveAuth", () => {
       "test-source"
     );
 
-    expect(auth).toBeUndefined();
+    expect(auth).toEqual({ type: "unauthenticated" });
     expect(verifyServiceJWTMock).toHaveBeenCalledTimes(1);
     expect(logWarnMock).toHaveBeenCalledWith(
       "[trpc] JWT verification error",

@@ -3,26 +3,36 @@ import { log } from "@vendor/observability/log/next";
 
 import { verifyServiceJWT } from "../lib/jwt";
 import type { PlatformAuthContext } from "./context";
-import { serviceAuth } from "./context";
+import { serviceAuth, UNAUTH } from "./context";
 
 /**
  * Service-JWT transport — internal-service callers (app, inngest, cron).
  *
- *   undefined           → no Bearer header; orchestrator falls back to UNAUTH
- *   PlatformAuthContext → resolved service auth
+ *   undefined           → no Authorization header, or non-Bearer scheme;
+ *                         orchestrator falls back to UNAUTH
+ *   PlatformAuthContext → definitive answer for Bearer requests:
+ *                           - valid JWT       → service auth
+ *                           - malformed Bearer or rejected JWT → unauthenticated
  *
- * On verification failure logs at warn level and returns undefined. We
- * don't return a "rejected" variant because there's currently only one
- * transport: rejected ≡ unauth.
+ * Mirrors the structural contract of api/app's tryBearer for parity, even
+ * though platform has only one transport today (so undefined and UNAUTH
+ * collapse to the same observable behavior at the orchestrator boundary).
  */
 async function tryServiceJWT(
   headers: Headers,
   source: string
 ): Promise<PlatformAuthContext | undefined> {
-  const match = /^Bearer\s+(\S+)\s*$/i.exec(headers.get("authorization") ?? "");
+  const authorization = headers.get("authorization");
+  if (!authorization) {
+    return;
+  }
+  if (!/^Bearer\b/i.test(authorization)) {
+    return;
+  }
+  const match = /^Bearer\s+(\S+)\s*$/i.exec(authorization);
   const token = match?.[1];
   if (!token) {
-    return;
+    return UNAUTH;
   }
 
   try {
@@ -33,7 +43,7 @@ async function tryServiceJWT(
       source,
       error: parseError(error),
     });
-    return;
+    return UNAUTH;
   }
 }
 
