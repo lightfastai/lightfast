@@ -245,9 +245,6 @@ importers:
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
-      '@lightfastai/dev-core':
-        specifier: 'catalog:'
-        version: 0.4.0
       '@repo/app-api-key':
         specifier: workspace:*
         version: link:../../packages/app-api-key
@@ -306,9 +303,6 @@ importers:
 
   api/platform:
     dependencies:
-      '@lightfastai/dev-core':
-        specifier: 'catalog:'
-        version: 0.4.0
       '@lightfastai/dev-proxy':
         specifier: 'catalog:'
         version: 0.4.0
