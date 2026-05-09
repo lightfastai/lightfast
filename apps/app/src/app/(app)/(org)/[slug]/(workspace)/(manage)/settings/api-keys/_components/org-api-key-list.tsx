@@ -43,7 +43,6 @@ import {
   Loader2,
   MoreHorizontal,
   Plus,
-  RefreshCw,
   ShieldOff,
   Trash2,
 } from "lucide-react";
@@ -67,7 +66,7 @@ export function OrgApiKeyList() {
 
   // Alert dialog state
   const [alertAction, setAlertAction] = useState<{
-    type: "revoke" | "rotate" | "delete";
+    type: "revoke" | "delete";
     keyId: string;
     keyName: string;
   } | null>(null);
@@ -98,18 +97,6 @@ export function OrgApiKeyList() {
     })
   );
 
-  const rotateMutation = useMutation(
-    trpc.orgApiKeys.rotate.mutationOptions({
-      meta: { errorTitle: "Failed to rotate API key" },
-      onSuccess: (data) => {
-        setCreatedKey(data.key);
-        setIsCreateOpen(true);
-        toast.success("API key rotated — copy your new key");
-      },
-      onSettled: () => void invalidateList(),
-    })
-  );
-
   const deleteMutation = useMutation(
     trpc.orgApiKeys.delete.mutationOptions({
       meta: { errorTitle: "Failed to delete API key" },
@@ -134,9 +121,6 @@ export function OrgApiKeyList() {
     switch (alertAction.type) {
       case "revoke":
         revokeMutation.mutate({ keyId: alertAction.keyId });
-        break;
-      case "rotate":
-        rotateMutation.mutate({ keyId: alertAction.keyId });
         break;
       case "delete":
         deleteMutation.mutate({ keyId: alertAction.keyId });
@@ -272,9 +256,7 @@ export function OrgApiKeyList() {
               (revokeMutation.isPending &&
                 revokeMutation.variables?.keyId === key.id) ||
               (deleteMutation.isPending &&
-                deleteMutation.variables?.keyId === key.id) ||
-              (rotateMutation.isPending &&
-                rotateMutation.variables?.keyId === key.id);
+                deleteMutation.variables?.keyId === key.id);
 
             return (
               <div
@@ -337,18 +319,6 @@ export function OrgApiKeyList() {
                         <DropdownMenuItem
                           onClick={() =>
                             setAlertAction({
-                              type: "rotate",
-                              keyId: key.id,
-                              keyName: key.name,
-                            })
-                          }
-                        >
-                          <RefreshCw className="mr-2 h-4 w-4" />
-                          Rotate
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setAlertAction({
                               type: "revoke",
                               keyId: key.id,
                               keyName: key.name,
@@ -395,14 +365,11 @@ export function OrgApiKeyList() {
           <AlertDialogHeader>
             <AlertDialogTitle>
               {alertAction?.type === "revoke" && "Revoke API Key?"}
-              {alertAction?.type === "rotate" && "Rotate API Key?"}
               {alertAction?.type === "delete" && "Delete API Key?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {alertAction?.type === "revoke" &&
                 `"${alertAction.keyName}" will be deactivated immediately. Any requests using this key will fail.`}
-              {alertAction?.type === "rotate" &&
-                `"${alertAction.keyName}" will be revoked and replaced with a new key. Update your integrations with the new key.`}
               {alertAction?.type === "delete" &&
                 `"${alertAction.keyName}" will be permanently deleted. This action cannot be undone.`}
             </AlertDialogDescription>
@@ -418,7 +385,6 @@ export function OrgApiKeyList() {
               onClick={handleConfirmAlert}
             >
               {alertAction?.type === "revoke" && "Revoke"}
-              {alertAction?.type === "rotate" && "Rotate"}
               {alertAction?.type === "delete" && "Delete"}
             </AlertDialogAction>
           </AlertDialogFooter>

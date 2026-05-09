@@ -29,16 +29,7 @@ export const deleteOrgApiKeySchema = z.object({
   keyId: z.string().min(1), // publicId
 });
 
-/**
- * Schema for rotating an API key (revoke old, create new)
- */
-export const rotateOrgApiKeySchema = z.object({
-  keyId: z.string().min(1), // publicId
-  expiresAt: z.coerce.date().optional(),
-});
-
 // Type exports
 export type CreateOrgApiKey = z.infer<typeof createOrgApiKeySchema>;
 export type RevokeOrgApiKey = z.infer<typeof revokeOrgApiKeySchema>;
 export type DeleteOrgApiKey = z.infer<typeof deleteOrgApiKeySchema>;
-export type RotateOrgApiKey = z.infer<typeof rotateOrgApiKeySchema>;
