@@ -13,7 +13,7 @@ vi.mock("@vendor/clerk/server", () => ({
   getUserOrgMemberships: vi.fn(),
 }));
 
-const { resolveAuth } = await import("../resolve");
+const { resolveAuth } = await import("../auth/resolve");
 
 beforeEach(() => {
   authMock.mockReset();

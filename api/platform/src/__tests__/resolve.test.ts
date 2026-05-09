@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const verifyServiceJWTMock = vi.fn();
 const logWarnMock = vi.fn();
 
-vi.mock("../../lib/jwt", () => ({
+vi.mock("../lib/jwt", () => ({
   verifyServiceJWT: (...args: unknown[]) => verifyServiceJWTMock(...args),
 }));
 
@@ -17,7 +17,7 @@ vi.mock("@vendor/observability/error/next", () => ({
   }),
 }));
 
-const { resolveAuth } = await import("../resolve");
+const { resolveAuth } = await import("../auth/resolve");
 
 beforeEach(() => {
   verifyServiceJWTMock.mockReset();
