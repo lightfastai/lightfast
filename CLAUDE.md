@@ -15,14 +15,14 @@ See `SPEC.md` for business goals and product vision.
 │  Local dev — Portless HTTPS aggregate (port 443)                                 │
 │  https://[<wt>.]lightfast.localhost                                              │
 │      │                                                                           │
-│      ├─ app   https://[<wt>.]app.lightfast.localhost   (raw :4107)               │
+│      ├─ app   https://[<wt>.]app.lightfast.localhost   (raw :auto, host-keyed)   │
 │      │       @api/app · tRPC + Inngest · auth + Server Actions · default MFE     │
 │      │       tRPC CORS dev: portless wildcard + localhost:* (desktop, Bearer)    │
 │      │                                                                           │
-│      └─ www   https://[<wt>.]www.lightfast.localhost   (raw :4101)               │
+│      └─ www   https://[<wt>.]www.lightfast.localhost   (raw :auto, host-keyed)   │
 │              marketing + docs (fumadocs MDX) · marketing-group MFE               │
 │                                                                                  │
-│  platform   http://localhost:4112   (raw; not on Portless / MFE)                 │
+│  platform   https://[<wt>.]platform.lightfast.localhost   (raw :auto, non-MFE)   │
 │             Empty Next.js host (post-v2 reset). /api/{health,inngest,trpc}.      │
 │             tRPC CORS dev: portless wildcard                                     │
 │                                                                                  │
@@ -35,6 +35,7 @@ See `SPEC.md` for business goals and product vision.
 │  ─────────────────                                                               │
 │  Mesh:       microfrontends.json (root)                                          │
 │  Portless:   lightfast.dev.json (root)  ·  per-app: package.json "portless"      │
+│  Ports:      derived per-worktree from (host, appName) — no manual pinning       │
 │  Wrap:       all 3 Next configs use withPortlessProxy(...)                       │
 │  Origins:    apps/{app,platform}/src/lib/origin-allowlist.ts                     │
 │              throws in dev if appUrl falls back to https://lightfast.ai          │
@@ -57,8 +58,8 @@ Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 ```bash
 # Dev servers (NEVER use global pnpm build).
 # Worktree-prefixed URLs: see Architecture diagram above.
-pnpm dev:full         # app + www + platform
-pnpm dev              # app + www only
+pnpm dev              # app + www + platform (full stack)
+pnpm dev:full         # alias of pnpm dev (kept for back-compat)
 pnpm dev:app          # app only
 pnpm dev:www          # www only
 pnpm dev:platform     # platform only

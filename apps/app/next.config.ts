@@ -8,7 +8,7 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
-import { devOriginPatterns, platformUrl } from "./src/origins";
+import { devOriginPatterns } from "./src/origins";
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   typedRoutes: true,
@@ -68,18 +68,6 @@ const appConfig: NextConfig = merge({}, baseConfig, {
         return [...devOriginPatterns, "localhost:*"];
       })(),
     },
-  },
-  async rewrites() {
-    return [
-      {
-        source: "/api/connect/:path*",
-        destination: `${platformUrl}/api/connect/:path*`,
-      },
-      {
-        source: "/api/ingest/:path*",
-        destination: `${platformUrl}/api/ingest/:path*`,
-      },
-    ];
   },
   async redirects() {
     return [

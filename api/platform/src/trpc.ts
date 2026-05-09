@@ -11,6 +11,7 @@ import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import type { ServiceCaller } from "./lib/jwt";
 import { verifyServiceJWT } from "./lib/jwt";
 
 // -- Auth Context -------------------------------------------------------------
@@ -20,11 +21,8 @@ import { verifyServiceJWT } from "./lib/jwt";
  * Every request resolves to exactly one variant.
  */
 export type PlatformAuthContext =
-  | { type: "service"; caller: string }
-  | { type: "webhook"; provider: string }
+  | { type: "service"; caller: ServiceCaller }
   | { type: "internal"; source: string }
-  | { type: "inngest" }
-  | { type: "cron" }
   | { type: "unauthenticated" };
 
 /** Explicit context type for tRPC initialization.
@@ -152,38 +150,6 @@ export const serviceProcedure = t.procedure
         code: "UNAUTHORIZED",
         message:
           "Service authentication required. Provide a valid service JWT in the Authorization header.",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        auth: ctx.auth as Extract<PlatformAuthContext, { type: "service" }>,
-      },
-    });
-  });
-
-/**
- * Admin procedure -- requires service JWT from an admin caller.
- * Used for administrative operations (reindex, purge, etc.).
- *
- * Restricts `ctx.auth.caller` to "admin" only.
- */
-export const adminProcedure = t.procedure
-  .use(observabilityMiddleware)
-  .use(({ ctx, next }) => {
-    if (ctx.auth.type !== "service") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Service authentication required.",
-      });
-    }
-
-    if (ctx.auth.caller !== "admin") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message:
-          "Admin access required. This endpoint is restricted to admin callers.",
       });
     }
 

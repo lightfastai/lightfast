@@ -5,6 +5,23 @@
     "port": 443,
     "https": true
   },
+  "apps": {
+    "lightfast-app": {
+      "packageName": "@lightfast/app",
+      "fallback": "https://lightfast.ai",
+      "mfe": true
+    },
+    "lightfast-www": {
+      "packageName": "@lightfast/www",
+      "fallback": "https://lightfast.ai",
+      "mfe": true
+    },
+    "lightfast-platform": {
+      "packageName": "@lightfast/platform",
+      "fallback": "https://lightfast.ai",
+      "mfe": false
+    }
+  },
   "microfrontends": {
     "config": "apps/app/microfrontends.json"
   }
