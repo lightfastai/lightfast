@@ -17,7 +17,7 @@ import { orgUserActivities } from "@db/app/schema";
 import type { ActivityMetadata } from "@repo/app-validation";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
-import { inngest } from "../../client/client";
+import { inngest } from "../client";
 
 /**
  * Record Activity Workflow

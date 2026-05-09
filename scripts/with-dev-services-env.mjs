@@ -3,6 +3,7 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { resolveWorktreeRuntimeName } from "@lightfastai/dev-core";
 import {
   resolveDevPostgresConfig,
   resolveDevRedisConfig,
@@ -62,6 +63,9 @@ function buildEnv() {
     configPath,
     env: resolverEnv,
   });
+  const inngestAppName = process.env.INNGEST_APP_NAME
+    ? resolveWorktreeRuntimeName(process.env.INNGEST_APP_NAME)
+    : undefined;
 
   return {
     ...process.env,
@@ -79,6 +83,7 @@ function buildEnv() {
     UPSTASH_REDIS_REST_TOKEN: redis.token,
     LIGHTFAST_DEV_REDIS_KEY_PREFIX: redis.keyPrefix,
     LIGHTFAST_DEV_SERVICES_ACTIVE: "1",
+    ...(inngestAppName ? { INNGEST_APP_NAME: inngestAppName } : {}),
   };
 }
 
@@ -110,6 +115,7 @@ function printEnv(env) {
     "KV_REST_API_URL",
     "KV_URL",
     "REDIS_URL",
+    "INNGEST_APP_NAME",
     "LIGHTFAST_DEV_REDIS_KEY_PREFIX",
     "LIGHTFAST_DEV_SERVICES_ACTIVE",
   ];
