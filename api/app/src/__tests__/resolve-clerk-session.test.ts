@@ -70,36 +70,23 @@ describe("resolveClerkSession", () => {
     expect(authMock).not.toHaveBeenCalled();
   });
 
-  it("falls through to the cookie path when the Bearer JWT is invalid", async () => {
+  it("returns null when the Bearer JWT is invalid, without consulting the cookie path", async () => {
+    // Even when a valid cookie session is staged, an offered-but-rejected Bearer
+    // is the sole source of truth: the only Bearer caller (desktop renderer) is
+    // cross-origin and never sends cookies, so cookies cannot rescue a bad token.
     verifyTokenMock.mockRejectedValueOnce(new Error("jwt expired"));
     authMock.mockResolvedValueOnce({
       userId: "user_cookie",
       orgId: "org_cookie",
     });
 
-    const headers = new Headers({ authorization: "Bearer broken.jwt" });
-
-    const session = await resolveClerkSession(headers);
-
-    expect(session).toEqual({
-      userId: "user_cookie",
-      orgId: "org_cookie",
-    });
-    expect(verifyTokenMock).toHaveBeenCalledTimes(1);
-    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
-  });
-
-  it("returns null when the Bearer JWT is invalid and no cookie session exists", async () => {
-    verifyTokenMock.mockRejectedValueOnce(new Error("jwt expired"));
-    authMock.mockResolvedValueOnce({ userId: null, orgId: null });
-
     const session = await resolveClerkSession(
-      new Headers({ authorization: "Bearer expired.jwt" })
+      new Headers({ authorization: "Bearer broken.jwt" })
     );
 
     expect(session).toBeNull();
     expect(verifyTokenMock).toHaveBeenCalledTimes(1);
-    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
+    expect(authMock).not.toHaveBeenCalled();
   });
 
   it("returns null when neither Bearer nor cookie produce a session", async () => {

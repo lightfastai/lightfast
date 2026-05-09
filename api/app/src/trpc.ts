@@ -13,13 +13,16 @@ import { clerkEnvBase } from "@vendor/clerk/env";
 import { auth, verifyToken } from "@vendor/clerk/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
-import { ZodError } from "zod";
+import { z, ZodError } from "zod";
 
 /**
  * Authentication Context - Discriminated Union
- * Represents exactly one authentication method per request
+ * Represents exactly one authentication method per request.
+ *
+ * Exported so router helpers can type narrow against this union without
+ * re-deriving the shape.
  */
-type AuthContext =
+export type AuthContext =
   | {
       type: "clerk-pending";
       userId: string;
@@ -36,6 +39,19 @@ type AuthContext =
   | {
       type: "unauthenticated";
     };
+
+// Hoisted so config errors surface at boot, not per-request.
+const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;
+
+/**
+ * Shape of the Clerk session JWT claims we depend on.
+ * Validated at the system boundary so a Clerk claim rename fails loudly
+ * instead of silently producing `unauthenticated` requests.
+ */
+const ClerkJwtClaims = z.object({
+  sub: z.string(),
+  org_id: z.string().optional(),
+});
 
 /**
  * 1. CONTEXT
@@ -58,12 +74,18 @@ type AuthContext =
 type ResolvedSession = { userId: string; orgId: string | null } | null;
 
 /**
- * Resolve a Clerk session from either an `Authorization: Bearer <jwt>` header
- * (used by desktop / non-browser clients) or the standard Clerk cookie
- * (used by the Next.js web app).
+ * Resolve a Clerk session from one of two transports:
  *
- * Bearer is tried first. Invalid/expired Bearer tokens fall through to the
- * cookie path so a stale token never blocks a still-valid cookie session.
+ *   - `Authorization: Bearer <jwt>` — used by the Electron desktop renderer
+ *     (cross-origin, can't carry the Clerk cookie). See
+ *     `packages/app-trpc/src/desktop.tsx`.
+ *   - Clerk session cookie — used by the Next.js web app (same-origin).
+ *
+ * If a Bearer header is present, it is the sole source of truth for that
+ * request: success returns the session, failure returns `null`. We do not
+ * fall through to the cookie path on bad-Bearer because the only Bearer
+ * caller (desktop renderer) is cross-origin and its cookies are never sent
+ * (`credentials: "omit"`), so cookies cannot rescue a rejected Bearer.
  *
  * Exported for unit testing — production callers should use `createTRPCContext`.
  */
@@ -72,23 +94,28 @@ export async function resolveClerkSession(
 ): Promise<ResolvedSession> {
   const authHeader = headers.get("authorization") ?? "";
   const match = /^Bearer\s+(.+)$/i.exec(authHeader);
-  if (match) {
-    const jwt = match[1];
-    if (jwt) {
-      try {
-        const claims = await verifyToken(jwt, {
-          secretKey: clerkEnvBase.CLERK_SECRET_KEY,
-        });
-        const userId = typeof claims.sub === "string" ? claims.sub : null;
-        if (userId) {
-          const orgIdClaim = (claims as { org_id?: unknown }).org_id;
-          const orgId = typeof orgIdClaim === "string" ? orgIdClaim : null;
-          return { userId, orgId };
-        }
-      } catch {
-        // Invalid/expired JWT — fall through to cookie path.
+  if (match?.[1]) {
+    try {
+      const claims = await verifyToken(match[1], {
+        secretKey: CLERK_SECRET_KEY,
+      });
+      const parsed = ClerkJwtClaims.safeParse(claims);
+      if (parsed.success) {
+        return {
+          userId: parsed.data.sub,
+          orgId: parsed.data.org_id ?? null,
+        };
       }
+    } catch (err) {
+      // Expired/invalid Bearer is expected (e.g. desktop holds a stale JWT
+      // after sign-out). Log so genuinely suspicious failures (bad signature,
+      // key rotation, Clerk outage) surface in observability.
+      console.warn("[trpc] Bearer JWT verification failed", {
+        name: err instanceof Error ? err.name : "unknown",
+        message: err instanceof Error ? err.message : String(err),
+      });
     }
+    return null;
   }
 
   const cookieSession = await auth({ treatPendingAsSignedOut: false });
@@ -200,17 +227,51 @@ export const createCallerFactory = t.createCallerFactory;
 const observabilityMiddleware = t.middleware(
   createObservabilityMiddleware({
     isDev: t._config.isDev,
-    extractAuth: (ctx) => ({
-      ...(ctx.auth.type === "clerk-active" && {
-        userId: ctx.auth.userId,
-        orgId: ctx.auth.orgId,
-      }),
-      ...(ctx.auth.type === "clerk-pending" && {
-        userId: ctx.auth.userId,
-      }),
-    }),
+    extractAuth: (ctx) => {
+      switch (ctx.auth.type) {
+        case "clerk-active":
+          return { userId: ctx.auth.userId, orgId: ctx.auth.orgId };
+        case "clerk-pending":
+          return { userId: ctx.auth.userId };
+        case "unauthenticated":
+          return {};
+      }
+    },
   })
 );
+
+/**
+ * Authentication gates, composed by user/org procedures below.
+ *
+ * Split out so the unauth check exists in exactly one place — adding a 4th
+ * auth state (e.g. service-account) only requires touching `requireAuth`.
+ */
+const requireAuth = t.middleware(({ ctx, next }) => {
+  if (ctx.auth.type === "unauthenticated") {
+    throw new TRPCError({
+      code: "UNAUTHORIZED",
+      message: "Authentication required. Please sign in.",
+    });
+  }
+  // ctx.auth is narrowed to clerk-pending | clerk-active for downstream use.
+  return next({ ctx: { ...ctx, auth: ctx.auth } });
+});
+
+const requireOrg = t.middleware(({ ctx, next }) => {
+  // requireAuth has already excluded "unauthenticated".
+  if (ctx.auth.type !== "clerk-active") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message:
+        "Organization required. Please create or join an organization first.",
+    });
+  }
+  return next({ ctx: { ...ctx, auth: ctx.auth } });
+});
+
+const authedProcedure = t.procedure
+  .use(observabilityMiddleware)
+  .use(requireAuth);
 
 /**
  * Public (unauthed) procedure
@@ -237,35 +298,7 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
  *
  * @see https://trpc.io/docs/procedures
  */
-export const userScopedProcedure = t.procedure
-  .use(observabilityMiddleware)
-  .use(({ ctx, next }) => {
-    if (ctx.auth.type === "unauthenticated") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Authentication required. Please sign in.",
-      });
-    }
-
-    // Allow both clerk-pending and clerk-active
-    if (ctx.auth.type !== "clerk-pending" && ctx.auth.type !== "clerk-active") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Clerk authentication required",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        // Type-safe: either clerk-pending or clerk-active
-        auth: ctx.auth as Extract<
-          AuthContext,
-          { type: "clerk-pending" | "clerk-active" }
-        >,
-      },
-    });
-  });
+export const userScopedProcedure = authedProcedure;
 
 /**
  * Org-Scoped Procedure
@@ -285,30 +318,4 @@ export const userScopedProcedure = t.procedure
  *
  * @see https://trpc.io/docs/procedures
  */
-export const orgScopedProcedure = t.procedure
-  .use(observabilityMiddleware)
-  .use(({ ctx, next }) => {
-    if (ctx.auth.type === "unauthenticated") {
-      throw new TRPCError({
-        code: "UNAUTHORIZED",
-        message: "Authentication required. Please sign in.",
-      });
-    }
-
-    // Only allow clerk-active (has org)
-    if (ctx.auth.type !== "clerk-active") {
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message:
-          "Organization required. Please create or join an organization first.",
-      });
-    }
-
-    return next({
-      ctx: {
-        ...ctx,
-        // Type-safe: orgId is guaranteed to exist
-        auth: ctx.auth as Extract<AuthContext, { type: "clerk-active" }>,
-      },
-    });
-  });
+export const orgScopedProcedure = authedProcedure.use(requireOrg);
