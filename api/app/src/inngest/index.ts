@@ -3,8 +3,8 @@
  */
 
 import { serve } from "inngest/next";
-import { inngest } from "./client/client";
-import { recordActivity } from "./workflow/infrastructure/record-activity";
+import { inngest } from "./client";
+import { recordActivity } from "./workflow/record-activity";
 
 export { inngest, recordActivity };
 

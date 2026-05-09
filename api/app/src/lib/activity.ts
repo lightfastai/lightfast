@@ -33,7 +33,7 @@ import type {
 import { activityTypeSchema } from "@repo/app-validation";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
-import { inngest } from "../inngest/client/client";
+import { inngest } from "../inngest/client";
 
 /**
  * Activity data interface with validated type information

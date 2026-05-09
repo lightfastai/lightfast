@@ -3,8 +3,8 @@ import { EventSchemas, Inngest } from "@vendor/inngest";
 import { createInngestObservabilityMiddleware } from "@vendor/observability/inngest";
 import type { GetEvents } from "inngest";
 
-import { env } from "../../env";
-import { appEvents } from "../schemas/app";
+import { env } from "../env";
+import { appEvents } from "./schemas/app";
 
 // Local development can run multiple git worktrees against one Inngest Dev
 // Server. Suffix the app id with the worktree identity so those registrations
