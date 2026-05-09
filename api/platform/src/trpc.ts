@@ -75,7 +75,7 @@ const observabilityMiddleware = t.middleware(
           return { caller: ctx.auth.caller };
         case "internal":
           return { source: ctx.auth.source };
-        case "unauthenticated":
+        default:
           return {};
       }
     },

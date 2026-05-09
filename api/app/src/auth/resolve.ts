@@ -2,7 +2,7 @@ import { clerkEnvBase } from "@vendor/clerk/env";
 import { auth, verifyToken } from "@vendor/clerk/server";
 
 import type { AuthContext } from "./context";
-import { ClerkJwtClaims, UNAUTH, clerkAuth } from "./context";
+import { ClerkJwtClaims, clerkAuth, UNAUTH } from "./context";
 
 // Hoisted so config errors surface at boot, not per-request.
 const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;
@@ -21,7 +21,9 @@ const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;
 async function tryBearer(headers: Headers): Promise<AuthContext | undefined> {
   const match = /^Bearer\s+(.+)$/i.exec(headers.get("authorization") ?? "");
   const token = match?.[1];
-  if (!token) return undefined;
+  if (!token) {
+    return;
+  }
 
   try {
     const claims = ClerkJwtClaims.parse(

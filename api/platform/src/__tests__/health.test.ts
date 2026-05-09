@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
-
-import { createCallerFactory } from "../trpc";
 import { systemRouter } from "../router/system/health";
+import { createCallerFactory } from "../trpc";
 
 const createCaller = createCallerFactory(systemRouter);
 

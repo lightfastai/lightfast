@@ -9,8 +9,7 @@ export { createTRPCContext } from "./trpc";
 export type PlatformRouterInputs = inferRouterInputs<PlatformRouter>;
 export type PlatformRouterOutputs = inferRouterOutputs<PlatformRouter>;
 
-export { createCallerFactory } from "./trpc";
-
 // Service JWT (for platform-client consumers)
 export type { ServiceCaller } from "./lib/jwt";
 export { signServiceJWT, verifyServiceJWT } from "./lib/jwt";
+export { createCallerFactory } from "./trpc";

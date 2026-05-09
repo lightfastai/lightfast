@@ -21,7 +21,9 @@ async function tryServiceJWT(
 ): Promise<PlatformAuthContext | undefined> {
   const match = /^Bearer\s+(.+)$/i.exec(headers.get("authorization") ?? "");
   const token = match?.[1];
-  if (!token) return undefined;
+  if (!token) {
+    return;
+  }
 
   try {
     const { caller } = await verifyServiceJWT(token);
@@ -31,7 +33,7 @@ async function tryServiceJWT(
       source,
       error: parseError(error),
     });
-    return undefined;
+    return;
   }
 }
 

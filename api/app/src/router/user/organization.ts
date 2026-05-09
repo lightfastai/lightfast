@@ -151,9 +151,7 @@ export const organizationRouter = {
         // Verify user has admin access to the organization.
         // User-centric lookup (cached) — typically 1-5 orgs per user vs 100+ members per org.
         const memberships = await getUserOrgMemberships(ctx.auth.userId);
-        const membership = memberships.find(
-          (m) => m.organizationId === org.id
-        );
+        const membership = memberships.find((m) => m.organizationId === org.id);
         if (!membership) {
           throw new TRPCError({
             code: "FORBIDDEN",

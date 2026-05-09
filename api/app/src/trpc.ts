@@ -99,7 +99,7 @@ const observabilityMiddleware = t.middleware(
           return { userId: ctx.auth.userId, orgId: ctx.auth.orgId };
         case "clerk-pending":
           return { userId: ctx.auth.userId };
-        case "unauthenticated":
+        default:
           return {};
       }
     },
