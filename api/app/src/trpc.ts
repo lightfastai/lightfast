@@ -10,7 +10,7 @@
 import { db } from "@db/app/client";
 import { initTRPC, TRPCError } from "@trpc/server";
 import { clerkEnvBase } from "@vendor/clerk/env";
-import { auth, getUserOrgMemberships, verifyToken } from "@vendor/clerk/server";
+import { auth, verifyToken } from "@vendor/clerk/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -312,67 +312,3 @@ export const orgScopedProcedure = t.procedure
       },
     });
   });
-
-/**
- * Helper: Verify organization membership
- *
- * Strategy: User-centric lookup with caching - fetches user's orgs (typically 1-5)
- * instead of org's members (could be 100+). This is O(user_orgs) vs O(org_size).
- *
- * This centralizes the pattern of:
- * 1. Fetching user's organization memberships (cached)
- * 2. Verifying user has access to the organization
- * 3. Optionally verifying user has admin role
- * 4. Returning the membership object for further processing
- *
- * Use this in procedures that need to verify organization-level access
- * (organization settings, member management, etc.)
- *
- * @throws {TRPCError} FORBIDDEN if user doesn't have access or doesn't have required role
- */
-export async function verifyOrgMembership(params: {
-  clerkOrgId: string;
-  userId: string;
-  requireAdmin?: boolean;
-}): Promise<{
-  role: string;
-  organization: {
-    id: string;
-    name: string;
-    slug: string | null;
-    imageUrl: string;
-  };
-}> {
-  // User-centric lookup: get user's orgs (cached)
-  const userMemberships = await getUserOrgMemberships(params.userId);
-
-  // Find membership in target org
-  const userMembership = userMemberships.find(
-    (m) => m.organizationId === params.clerkOrgId
-  );
-
-  if (!userMembership) {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Access denied to this organization",
-    });
-  }
-
-  // Check admin requirement if specified
-  if (params.requireAdmin && userMembership.role !== "org:admin") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message: "Only administrators can perform this action",
-    });
-  }
-
-  return {
-    role: userMembership.role,
-    organization: {
-      id: userMembership.organizationId,
-      name: userMembership.organizationName,
-      slug: userMembership.organizationSlug,
-      imageUrl: userMembership.imageUrl,
-    },
-  };
-}
