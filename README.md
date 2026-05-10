@@ -34,5 +34,3 @@ Lightfast is open source:
 
 - **Platform** (apps, API routers, database, internal packages): [Apache License 2.0](LICENSE).
 - **SDKs and shared libraries** (`core/*`, `vendor/*`, UI kit, shared utilities): MIT License (see each package's `LICENSE` file or `package.json`).
-
-Contributions are accepted under the [Developer Certificate of Origin](https://developercertificate.org/) via `Signed-off-by:` on commits.

@@ -9,8 +9,8 @@ By participating in this project, you agree to maintain a respectful and inclusi
 ## Development Setup
 
 ### Prerequisites
-- Node.js >= 20.16.0
-- pnpm 10.5.2 (enforced by packageManager)
+- Node.js >= 22.12.0
+- pnpm 10.32.1 (enforced by packageManager)
 
 ### Getting Started
 
@@ -32,13 +32,16 @@ By participating in this project, you agree to maintain a respectful and inclusi
 
 ## Project Structure
 
-This is a monorepo using pnpm workspaces with Turbo:
+This is a monorepo using pnpm workspaces with Turborepo:
 
-- **Apps**: `apps/` - Main applications
-  - `www` - Marketing site (port 4101)
-- **Packages**: `packages/` - Shared libraries  
-- **Vendor**: `vendor/` - Third-party integrations
-- **Internal**: `internal/` - Build tools and configurations
+- **Apps** (`apps/`):
+  - `app` — main application (tRPC + Inngest, auth, server actions)
+  - `platform` — platform host (tRPC, Inngest, health endpoints)
+  - `www` — marketing site + docs (fumadocs MDX)
+  - `desktop` — Electron desktop client
+- **Shared code**: `core/`, `api/`, `db/`, `packages/`, `vendor/`, `internal/` — SDKs, API routers, database, UI/utility packages, third-party integrations, and build tooling
+
+See `CLAUDE.md` for the full architecture diagram.
 
 ## Development Workflow
 
@@ -46,24 +49,26 @@ This is a monorepo using pnpm workspaces with Turbo:
 
 ```bash
 # Development
-pnpm dev            # Start all development servers
-pnpm dev:www        # Start www app only
+pnpm dev            # Start app + www + platform
+pnpm dev:app        # Start app only
+pnpm dev:www        # Start www only
+pnpm dev:platform   # Start platform only
+pnpm dev:desktop    # Start desktop (Electron)
 
 # Building (app-specific)
-pnpm build:www      # Build www app only
-pnpm build:auth     # Build auth app only
-pnpm build:cloud    # Build cloud app only
+pnpm build:app      # Build app
+pnpm build:platform # Build platform
+pnpm build:www      # Build www
 
 # Code Quality
-pnpm lint           # Lint all packages
-pnpm lint:fix       # Fix linting issues
-pnpm typecheck      # Run TypeScript type checking
-pnpm format         # Check formatting
-pnpm format:fix     # Fix formatting issues
+pnpm check          # Biome lint + format check
+pnpm typecheck      # TypeScript type checking
+pnpm lint:ws        # Workspace dependency boundary check
 
 # Database
-pnpm db:migrate     # Run database migrations
-pnpm db:studio      # Open database studio
+pnpm db:generate    # Generate Drizzle migrations (NEVER write manual .sql)
+pnpm db:migrate     # Apply migrations
+pnpm dev:studio     # Open Drizzle Studio
 
 # Cleanup
 pnpm clean          # Clean all build artifacts
@@ -127,22 +132,22 @@ The `-B` flag uses a saved browser session from `.auth/browser-session.json`, al
 
 2. Make your changes following our code conventions:
    - Use TypeScript with strict type checking
-   - Follow ESLint configuration from `@repo/eslint-config`
-   - Use Prettier configuration from `@repo/prettier-config`
-   - Maintain consistent code style with existing codebase
+   - Lint and format are enforced by Biome via `biome.jsonc`
+   - Maintain consistent code style with the existing codebase
 
 3. Test your changes:
    ```bash
+   pnpm check         # Biome lint + format check
    pnpm typecheck     # Ensure no type errors
-   pnpm lint          # Check code style
-   pnpm format        # Check formatting
    ```
 
-4. Commit your changes:
+4. Commit your changes using the scoped convention (`type(scope): subject`):
    ```bash
    git add .
-   git commit -m "feat: add new feature description"
+   git commit -m "feat(app): add new feature description"
    ```
+
+   Common scopes mirror the affected area: `app`, `platform`, `www`, `desktop`, `api`, `db`, `vendor`, `core`, `deps`, `dev`. Types include `feat`, `fix`, `refactor`, `chore`, `docs`, `revert`.
 
 ## Code Style Guidelines
 
@@ -151,16 +156,20 @@ The `-B` flag uses a saved browser session from `.auth/browser-session.json`, al
 - Prefer explicit types over `any`
 - Use proper error handling with Result patterns where applicable
 
-### React/Next.js (for www app)
+### React/Next.js
 - Use App Router patterns
 - Prefer server components when possible
 - Implement proper loading and error states
 - Use `"use client"` directive only when necessary
 
 ### Styling
-- Use Tailwind CSS v4 via `@repo/ui`
+- Use Tailwind CSS via `@repo/ui`
 - Follow utility-first approach
 - Use CSS variables for dynamic values
+
+### Formatting
+- Biome (`biome.jsonc`) handles both linting and formatting
+- Run `pnpm check` to verify before pushing
 
 ### Error Handling
 - Implement comprehensive error types
@@ -171,7 +180,7 @@ The `-B` flag uses a saved browser session from `.auth/browser-session.json`, al
 
 1. Ensure your code passes all checks:
    ```bash
-   pnpm typecheck && pnpm lint && pnpm format
+   pnpm check && pnpm typecheck
    ```
 
 2. Update documentation if needed
@@ -215,15 +224,5 @@ When reporting issues, please include:
 ## License
 
 Lightfast is Apache 2.0 for the platform and MIT for the SDKs and shared libraries. By contributing, you agree that your contribution is licensed under the same license as the file(s) you are modifying (as declared by the nearest `package.json` `license` field, or the repository-root `LICENSE` if none applies).
-
-### Developer Certificate of Origin (DCO)
-
-All commits must be signed off per the [Developer Certificate of Origin](https://developercertificate.org/). Add `Signed-off-by: Your Name <your.email@example.com>` to every commit:
-
-```bash
-git commit -s -m "your commit message"
-```
-
-The `-s` flag adds the trailer automatically using your `git config user.name` and `user.email`. PRs without DCO sign-off on every commit will be blocked by automation.
 
 Thank you for contributing to Lightfast!
