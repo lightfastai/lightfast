@@ -28,6 +28,7 @@
     "@repo/app-api-key": "workspace:*",
     "@repo/app-trpc": "workspace:^",
     "@repo/app-validation": "workspace:^",
+    "@repo/platform-client": "workspace:*",
     "@repo/ui": "workspace:*",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "^0.12.0",

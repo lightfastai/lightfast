@@ -23,6 +23,9 @@ export const env = createEnv({
   },
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
+    SERVICE_JWT_SECRET: z.string().min(32),
+    CRON_SECRET: z.string().min(16),
+    INTERNAL_PROBE_TOKEN: z.string().min(32),
   },
   client: {
     NEXT_PUBLIC_VERCEL_ENV: z
