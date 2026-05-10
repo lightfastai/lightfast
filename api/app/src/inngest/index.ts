@@ -1,14 +1,13 @@
 import { serve } from "inngest/next";
 import { inngest } from "./client";
-import { platformHeartbeat } from "./workflow/platform-heartbeat";
 import { recordActivity } from "./workflow/record-activity";
 
-export { inngest, platformHeartbeat, recordActivity };
+export { inngest, recordActivity };
 
 export function createInngestRouteContext() {
   return serve({
     client: inngest,
-    functions: [recordActivity, platformHeartbeat],
+    functions: [recordActivity],
     servePath: "/api/inngest",
   });
 }

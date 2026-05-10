@@ -16,12 +16,6 @@ export default mergeConfig(
     test: {
       globals: true,
       environment: "node",
-      env: {
-        SKIP_ENV_VALIDATION: "1",
-        SERVICE_JWT_SECRET:
-          "test-service-jwt-secret-for-vitest-at-least-32-chars",
-        INNGEST_APP_NAME: "lightfast-app-test",
-      },
     },
   })
 );
