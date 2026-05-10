@@ -38,53 +38,6 @@ export const activityCategorySchema = z.enum([
 export type ActivityCategory = z.infer<typeof activityCategorySchema>;
 
 /**
- * Common Activity Actions
- *
- * Standard verbs used across different activity types.
- * Not exhaustive - custom actions can be used for specific use cases.
- */
-export const activityActionSchema = z.string().min(1).max(100);
-
-export type ActivityAction = z.infer<typeof activityActionSchema>;
-
-// Common action values for reference (not enforced at schema level)
-export const ACTIVITY_ACTIONS = {
-  // CRUD operations
-  CREATED: "created",
-  UPDATED: "updated",
-  DELETED: "deleted",
-
-  // Connection/auth
-  CONNECTED: "connected",
-  DISCONNECTED: "disconnected",
-  AUTHENTICATED: "authenticated",
-  LOGGED_OUT: "logged_out",
-
-  // Execution
-  TRIGGERED: "triggered",
-  STARTED: "started",
-  COMPLETED: "completed",
-  FAILED: "failed",
-  CANCELLED: "cancelled",
-
-  // Access
-  VIEWED: "viewed",
-  ACCESSED: "accessed",
-  EXPORTED: "exported",
-
-  // Configuration
-  CONFIGURED: "configured",
-  ENABLED: "enabled",
-  DISABLED: "disabled",
-
-  // Permissions
-  GRANTED: "granted",
-  REVOKED: "revoked",
-  INVITED: "invited",
-  REMOVED: "removed",
-} as const;
-
-/**
  * Activity Metadata Schemas
  *
  * Strongly typed metadata schemas for different activity types.
@@ -99,7 +52,7 @@ export const ACTIVITY_ACTIONS = {
 /**
  * Metadata for integration.connected action
  */
-export const integrationConnectedMetadataSchema = z
+const integrationConnectedMetadataSchema = z
   .object({
     provider: z.string(),
     repoFullName: z.string(),
@@ -112,7 +65,7 @@ export const integrationConnectedMetadataSchema = z
 /**
  * Metadata for integration.status_updated action
  */
-export const integrationStatusUpdatedMetadataSchema = z
+const integrationStatusUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
     status: z.string(),
@@ -124,7 +77,7 @@ export const integrationStatusUpdatedMetadataSchema = z
 /**
  * Metadata for integration.config_updated action
  */
-export const integrationConfigUpdatedMetadataSchema = z
+const integrationConfigUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
     configStatus: z.string(),
@@ -139,7 +92,7 @@ export const integrationConfigUpdatedMetadataSchema = z
  * Disconnection can happen at repo level (githubRepoId) or
  * installation level (githubInstallationId), so both are optional.
  */
-export const integrationDisconnectedMetadataSchema = z
+const integrationDisconnectedMetadataSchema = z
   .object({
     provider: z.string(),
     reason: z.string(),
@@ -151,7 +104,7 @@ export const integrationDisconnectedMetadataSchema = z
 /**
  * Metadata for integration.deleted action
  */
-export const integrationDeletedMetadataSchema = z
+const integrationDeletedMetadataSchema = z
   .object({
     provider: z.string(),
     reason: z.string(),
@@ -165,7 +118,7 @@ export const integrationDeletedMetadataSchema = z
  * After stripping mutable display fields from providerConfig,
  * this action only records that a touch/timestamp update occurred.
  */
-export const integrationMetadataUpdatedMetadataSchema = z
+const integrationMetadataUpdatedMetadataSchema = z
   .object({
     provider: z.string(),
     githubRepoId: z.string(),
@@ -179,7 +132,7 @@ export const integrationMetadataUpdatedMetadataSchema = z
 /**
  * Metadata for store.created action
  */
-export const storeCreatedMetadataSchema = z
+const storeCreatedMetadataSchema = z
   .object({
     storeSlug: z.string(),
     embeddingDim: z.number(),
@@ -194,7 +147,7 @@ export const storeCreatedMetadataSchema = z
 /**
  * Metadata for job.cancelled action
  */
-export const jobCancelledMetadataSchema = z
+const jobCancelledMetadataSchema = z
   .object({
     jobName: z.string(),
     previousStatus: z.string(),
@@ -205,7 +158,7 @@ export const jobCancelledMetadataSchema = z
 /**
  * Metadata for job.restarted action
  */
-export const jobRestartedMetadataSchema = z
+const jobRestartedMetadataSchema = z
   .object({
     jobName: z.string(),
     originalStatus: z.string(),
@@ -220,7 +173,7 @@ export const jobRestartedMetadataSchema = z
 /**
  * Metadata for apikey.created action
  */
-export const apiKeyCreatedMetadataSchema = z
+const apiKeyCreatedMetadataSchema = z
   .object({
     keyId: z.string(),
     keyName: z.string(),
@@ -232,7 +185,7 @@ export const apiKeyCreatedMetadataSchema = z
 /**
  * Metadata for apikey.revoked action
  */
-export const apiKeyRevokedMetadataSchema = z
+const apiKeyRevokedMetadataSchema = z
   .object({
     keyId: z.string(),
     keyName: z.string(),
@@ -243,7 +196,7 @@ export const apiKeyRevokedMetadataSchema = z
 /**
  * Metadata for apikey.deleted action
  */
-export const apiKeyDeletedMetadataSchema = z
+const apiKeyDeletedMetadataSchema = z
   .object({
     keyId: z.string(),
     keyName: z.string(),
@@ -255,7 +208,7 @@ export const apiKeyDeletedMetadataSchema = z
 /**
  * Metadata for apikey.rotated action
  */
-export const apiKeyRotatedMetadataSchema = z
+const apiKeyRotatedMetadataSchema = z
   .object({
     oldKeyId: z.string(),
     newKeyId: z.string(),
@@ -271,7 +224,7 @@ export const apiKeyRotatedMetadataSchema = z
 /**
  * Metadata for search.query action
  */
-export const searchQueryMetadataSchema = z
+const searchQueryMetadataSchema = z
   .object({
     query: z.string(),
     limit: z.number(),
@@ -289,7 +242,7 @@ export const searchQueryMetadataSchema = z
 /**
  * Metadata for search.findsimilar action
  */
-export const searchFindSimilarMetadataSchema = z
+const searchFindSimilarMetadataSchema = z
   .object({
     sourceId: z.string(),
     sourceType: z.string(),
@@ -306,7 +259,7 @@ export const searchFindSimilarMetadataSchema = z
 /**
  * Metadata for search.contents action
  */
-export const searchContentsMetadataSchema = z
+const searchContentsMetadataSchema = z
   .object({
     requestedCount: z.number(),
     foundCount: z.number(),
@@ -324,7 +277,7 @@ export const searchContentsMetadataSchema = z
 /**
  * Integration Connected Activity
  */
-export const integrationConnectedActivitySchema = z.object({
+const integrationConnectedActivitySchema = z.object({
   category: z.literal("integration"),
   action: z.literal("integration.connected"),
   metadata: integrationConnectedMetadataSchema,
@@ -333,7 +286,7 @@ export const integrationConnectedActivitySchema = z.object({
 /**
  * Integration Status Updated Activity
  */
-export const integrationStatusUpdatedActivitySchema = z.object({
+const integrationStatusUpdatedActivitySchema = z.object({
   category: z.literal("integration"),
   action: z.literal("integration.status_updated"),
   metadata: integrationStatusUpdatedMetadataSchema,
@@ -342,7 +295,7 @@ export const integrationStatusUpdatedActivitySchema = z.object({
 /**
  * Integration Config Updated Activity
  */
-export const integrationConfigUpdatedActivitySchema = z.object({
+const integrationConfigUpdatedActivitySchema = z.object({
   category: z.literal("integration"),
   action: z.literal("integration.config_updated"),
   metadata: integrationConfigUpdatedMetadataSchema,
@@ -351,7 +304,7 @@ export const integrationConfigUpdatedActivitySchema = z.object({
 /**
  * Integration Disconnected Activity
  */
-export const integrationDisconnectedActivitySchema = z.object({
+const integrationDisconnectedActivitySchema = z.object({
   category: z.literal("integration"),
   action: z.literal("integration.disconnected"),
   metadata: integrationDisconnectedMetadataSchema,
@@ -360,7 +313,7 @@ export const integrationDisconnectedActivitySchema = z.object({
 /**
  * Integration Deleted Activity
  */
-export const integrationDeletedActivitySchema = z.object({
+const integrationDeletedActivitySchema = z.object({
   category: z.literal("integration"),
   action: z.literal("integration.deleted"),
   metadata: integrationDeletedMetadataSchema,
@@ -369,7 +322,7 @@ export const integrationDeletedActivitySchema = z.object({
 /**
  * Integration Metadata Updated Activity
  */
-export const integrationMetadataUpdatedActivitySchema = z.object({
+const integrationMetadataUpdatedActivitySchema = z.object({
   category: z.literal("integration"),
   action: z.literal("integration.metadata_updated"),
   metadata: integrationMetadataUpdatedMetadataSchema,
@@ -378,7 +331,7 @@ export const integrationMetadataUpdatedActivitySchema = z.object({
 /**
  * Store Created Activity
  */
-export const storeCreatedActivitySchema = z.object({
+const storeCreatedActivitySchema = z.object({
   category: z.literal("store"),
   action: z.literal("store.created"),
   metadata: storeCreatedMetadataSchema,
@@ -387,7 +340,7 @@ export const storeCreatedActivitySchema = z.object({
 /**
  * Job Cancelled Activity
  */
-export const jobCancelledActivitySchema = z.object({
+const jobCancelledActivitySchema = z.object({
   category: z.literal("job"),
   action: z.literal("job.cancelled"),
   metadata: jobCancelledMetadataSchema,
@@ -396,7 +349,7 @@ export const jobCancelledActivitySchema = z.object({
 /**
  * Job Restarted Activity
  */
-export const jobRestartedActivitySchema = z.object({
+const jobRestartedActivitySchema = z.object({
   category: z.literal("job"),
   action: z.literal("job.restarted"),
   metadata: jobRestartedMetadataSchema,
@@ -405,7 +358,7 @@ export const jobRestartedActivitySchema = z.object({
 /**
  * API Key Created Activity
  */
-export const apiKeyCreatedActivitySchema = z.object({
+const apiKeyCreatedActivitySchema = z.object({
   category: z.literal("api_key"),
   action: z.literal("apikey.created"),
   metadata: apiKeyCreatedMetadataSchema,
@@ -414,7 +367,7 @@ export const apiKeyCreatedActivitySchema = z.object({
 /**
  * API Key Revoked Activity
  */
-export const apiKeyRevokedActivitySchema = z.object({
+const apiKeyRevokedActivitySchema = z.object({
   category: z.literal("api_key"),
   action: z.literal("apikey.revoked"),
   metadata: apiKeyRevokedMetadataSchema,
@@ -423,7 +376,7 @@ export const apiKeyRevokedActivitySchema = z.object({
 /**
  * API Key Deleted Activity
  */
-export const apiKeyDeletedActivitySchema = z.object({
+const apiKeyDeletedActivitySchema = z.object({
   category: z.literal("api_key"),
   action: z.literal("apikey.deleted"),
   metadata: apiKeyDeletedMetadataSchema,
@@ -432,7 +385,7 @@ export const apiKeyDeletedActivitySchema = z.object({
 /**
  * API Key Rotated Activity
  */
-export const apiKeyRotatedActivitySchema = z.object({
+const apiKeyRotatedActivitySchema = z.object({
   category: z.literal("api_key"),
   action: z.literal("apikey.rotated"),
   metadata: apiKeyRotatedMetadataSchema,
@@ -441,7 +394,7 @@ export const apiKeyRotatedActivitySchema = z.object({
 /**
  * Search Query Activity
  */
-export const searchQueryActivitySchema = z.object({
+const searchQueryActivitySchema = z.object({
   category: z.literal("search"),
   action: z.literal("search.query"),
   metadata: searchQueryMetadataSchema,
@@ -450,7 +403,7 @@ export const searchQueryActivitySchema = z.object({
 /**
  * Search FindSimilar Activity
  */
-export const searchFindSimilarActivitySchema = z.object({
+const searchFindSimilarActivitySchema = z.object({
   category: z.literal("search"),
   action: z.literal("search.findsimilar"),
   metadata: searchFindSimilarMetadataSchema,
@@ -459,7 +412,7 @@ export const searchFindSimilarActivitySchema = z.object({
 /**
  * Search Contents Activity
  */
-export const searchContentsActivitySchema = z.object({
+const searchContentsActivitySchema = z.object({
   category: z.literal("search"),
   action: z.literal("search.contents"),
   metadata: searchContentsMetadataSchema,
@@ -508,70 +461,3 @@ export type ActivityType = z.infer<typeof activityTypeSchema>;
 
 // For backward compatibility with database schema
 export type ActivityMetadata = ActivityType["metadata"];
-
-// ============================================================================
-// Individual Metadata Types (for type-safe usage in code)
-// ============================================================================
-
-export type IntegrationConnectedMetadata = z.infer<
-  typeof integrationConnectedMetadataSchema
->;
-export type IntegrationStatusUpdatedMetadata = z.infer<
-  typeof integrationStatusUpdatedMetadataSchema
->;
-export type IntegrationConfigUpdatedMetadata = z.infer<
-  typeof integrationConfigUpdatedMetadataSchema
->;
-export type IntegrationDisconnectedMetadata = z.infer<
-  typeof integrationDisconnectedMetadataSchema
->;
-export type IntegrationDeletedMetadata = z.infer<
-  typeof integrationDeletedMetadataSchema
->;
-export type IntegrationMetadataUpdatedMetadata = z.infer<
-  typeof integrationMetadataUpdatedMetadataSchema
->;
-export type StoreCreatedMetadata = z.infer<typeof storeCreatedMetadataSchema>;
-export type JobCancelledMetadata = z.infer<typeof jobCancelledMetadataSchema>;
-export type JobRestartedMetadata = z.infer<typeof jobRestartedMetadataSchema>;
-export type ApiKeyCreatedMetadata = z.infer<typeof apiKeyCreatedMetadataSchema>;
-export type ApiKeyRevokedMetadata = z.infer<typeof apiKeyRevokedMetadataSchema>;
-export type ApiKeyDeletedMetadata = z.infer<typeof apiKeyDeletedMetadataSchema>;
-export type ApiKeyRotatedMetadata = z.infer<typeof apiKeyRotatedMetadataSchema>;
-export type SearchQueryMetadata = z.infer<typeof searchQueryMetadataSchema>;
-export type SearchFindSimilarMetadata = z.infer<
-  typeof searchFindSimilarMetadataSchema
->;
-export type SearchContentsMetadata = z.infer<
-  typeof searchContentsMetadataSchema
->;
-
-/**
- * Insert Activity Schema
- *
- * Validation for creating new activity records.
- */
-export const insertActivitySchema = z.object({
-  clerkOrgId: z.string(),
-
-  // Activity classification
-  category: activityCategorySchema,
-  action: activityActionSchema,
-
-  // Target entity
-  entityType: z.string().min(1).max(50),
-  entityId: z.string().min(1).max(191),
-  entityName: z.string().max(500).optional(),
-
-  // Context - metadata is strongly typed based on activity type
-  metadata: z.custom<ActivityMetadata>(),
-
-  // Request context
-  requestId: z.string().optional(),
-  userAgent: z.string().optional(),
-
-  // Relationships
-  relatedActivityId: z.string().optional(),
-});
-
-export type InsertActivity = z.infer<typeof insertActivitySchema>;

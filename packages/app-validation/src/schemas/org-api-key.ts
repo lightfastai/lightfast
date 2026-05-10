@@ -28,8 +28,3 @@ export const revokeOrgApiKeySchema = z.object({
 export const deleteOrgApiKeySchema = z.object({
   keyId: z.string().min(1), // publicId
 });
-
-// Type exports
-export type CreateOrgApiKey = z.infer<typeof createOrgApiKeySchema>;
-export type RevokeOrgApiKey = z.infer<typeof revokeOrgApiKeySchema>;
-export type DeleteOrgApiKey = z.infer<typeof deleteOrgApiKeySchema>;

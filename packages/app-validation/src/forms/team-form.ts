@@ -9,38 +9,10 @@ import { z } from "zod";
 import { clerkOrgSlugSchema } from "../primitives/slugs";
 
 /**
- * Team Creation Form Schema
- *
- * Used in:
- * - /apps/app/src/app/(app)/account/teams/new/page.tsx
- *
- * @example
- * ```typescript
- * const form = useForm<TeamFormValues>({
- *   resolver: zodResolver(teamFormSchema),
- *   defaultValues: { teamName: "" },
- * });
- * ```
- */
-export const teamFormSchema = z.object({
-  teamName: clerkOrgSlugSchema,
-});
-
-export type TeamFormValues = z.infer<typeof teamFormSchema>;
-
-/**
  * Team Settings Form Schema
  *
  * Used in:
- * - /apps/app/src/app/(app)/[slug]/settings/page.tsx
- *
- * @example
- * ```typescript
- * const form = useForm<TeamSettingsFormValues>({
- *   resolver: zodResolver(teamSettingsFormSchema),
- *   defaultValues: { teamName: currentOrg.slug },
- * });
- * ```
+ * - apps/app/src/app/(app)/(org)/[slug]/(workspace)/(manage)/settings/_components/team-general-settings-client.tsx
  */
 export const teamSettingsFormSchema = z.object({
   teamName: clerkOrgSlugSchema,

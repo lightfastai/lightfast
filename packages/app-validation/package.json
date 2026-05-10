@@ -10,10 +10,6 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./primitives": {
-      "types": "./src/primitives/index.ts",
-      "default": "./src/primitives/index.ts"
-    },
     "./schemas": {
       "types": "./src/schemas/index.ts",
       "default": "./src/schemas/index.ts"
@@ -21,10 +17,6 @@
     "./forms": {
       "types": "./src/forms/index.ts",
       "default": "./src/forms/index.ts"
-    },
-    "./constants": {
-      "types": "./src/constants/index.ts",
-      "default": "./src/constants/index.ts"
     }
   },
   "scripts": {

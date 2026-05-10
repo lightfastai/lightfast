@@ -5,6 +5,4 @@
  * Import these in form components and use with zodResolver.
  */
 
-export * from "./auth-form";
-export * from "./early-access-form";
 export * from "./team-form";
