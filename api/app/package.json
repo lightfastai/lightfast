@@ -34,6 +34,7 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
+    "@lightfastai/dev-proxy": "catalog:",
     "@repo/app-api-key": "workspace:*",
     "@repo/app-encryption": "workspace:*",
     "@repo/app-validation": "workspace:^",
@@ -42,6 +43,7 @@
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
     "superjson": "catalog:",
