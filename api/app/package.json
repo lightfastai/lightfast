@@ -34,14 +34,17 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
+    "@lightfastai/dev-proxy": "catalog:",
     "@repo/app-api-key": "workspace:*",
     "@repo/app-encryption": "workspace:*",
     "@repo/app-validation": "workspace:^",
+    "@repo/platform-client": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
     "superjson": "catalog:",
@@ -49,6 +52,7 @@
     "zod": "catalog:"
   },
   "devDependencies": {
+    "@api/platform": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
