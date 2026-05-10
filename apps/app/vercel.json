@@ -5,7 +5,5 @@
     "prj_fCNbgzrn0hHuJRVvM7EZuUvFyGgW",
     "prj_JRXRxBruTvB5Bs99JjA63TLek6GT"
   ],
-  "crons": [
-    { "path": "/api/cron/platform-heartbeat", "schedule": "0 * * * *" }
-  ]
+  "crons": [{ "path": "/api/cron/platform-heartbeat", "schedule": "0 * * * *" }]
 }
