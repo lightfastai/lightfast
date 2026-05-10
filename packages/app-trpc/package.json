@@ -18,9 +18,6 @@
     "./desktop": {
       "default": "./src/desktop.tsx"
     },
-    "./hooks": {
-      "default": "./src/hooks/use-active-org.ts"
-    },
     "./types": {
       "default": "./src/types.ts"
     }

@@ -16,11 +16,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -39,36 +35,21 @@ export function TeamGeneralSettingsClient({
   const { setActive } = useOrganizationList();
   const [isUpdating, setIsUpdating] = useState(false);
 
-  // Use cached organization list from app layout (avoids Clerk 404 timing issues)
-  const { data: organizations } = useSuspenseQuery(
-    trpc.organization.listUserOrganizations.queryOptions()
-  );
-
-  // Find current organization from cached list by slug
-  const organization = organizations.find((org) => org.slug === slug);
-
-  if (!organization) {
-    throw new Error(`Organization not found: ${slug}`);
-  }
-
-  // Initialize form with current organization name
   const form = useFormCompat<TeamSettingsFormValues>({
     resolver: zodResolver(teamSettingsFormSchema),
     defaultValues: {
-      teamName: organization.slug,
+      teamName: slug,
     },
     mode: "onChange",
   });
 
-  // Watch for changes
   const currentFormName = form.watch("teamName");
-  const hasChanges = currentFormName !== organization.slug;
+  const hasChanges = currentFormName !== slug;
 
   const orgListQueryKey =
     trpc.organization.listUserOrganizations.queryOptions().queryKey;
 
-  // Update organization name mutation — optimistic cache update
-  // so sidebar, header, and useActiveOrg all reflect the new name instantly
+  // Optimistic cache update so sidebar and header reflect the new name instantly
   const updateNameMutation = useMutation(
     trpc.organization.updateName.mutationOptions({
       meta: { errorTitle: "Failed to update team name" },
