@@ -35,6 +35,15 @@ const assetsJson = gh([
 ]);
 const { assets } = JSON.parse(assetsJson);
 
+// Don't use `match.url` from `gh release view`: the Finalize job runs this
+// step while the release is still a draft, and GitHub reports draft asset
+// URLs under a temporary `untagged-<hash>/` path that 404s after the
+// `Publish release (undraft)` step rebinds the release to its tag. Build
+// the URL deterministically from the tag instead. Slashes inside the tag
+// (e.g. `@lightfast/desktop@0.1.0`) are preserved literally — GitHub only
+// percent-encodes per path segment.
+const encodedTag = TAG.split("/").map(encodeURIComponent).join("/");
+
 const outDir = mkdtempSync(join(tmpdir(), "lightfast-update-feed-"));
 const outputs = [];
 for (const arch of ARCHES) {
@@ -45,8 +54,9 @@ for (const arch of ARCHES) {
     console.error(`No darwin-${arch} zip asset found on release ${TAG}`);
     process.exit(1);
   }
+  const downloadUrl = `https://github.com/${REPO}/releases/download/${encodedTag}/${encodeURIComponent(match.name)}`;
   const feed = {
-    url: match.url,
+    url: downloadUrl,
     name: VERSION,
     notes: NOTES,
     pub_date: new Date().toISOString(),
@@ -54,7 +64,7 @@ for (const arch of ARCHES) {
   const file = join(outDir, `latest-mac-${arch}.json`);
   writeFileSync(file, JSON.stringify(feed, null, 2), "utf8");
   outputs.push(file);
-  console.log(`wrote ${file} -> ${match.url}`);
+  console.log(`wrote ${file} -> ${downloadUrl}`);
 }
 
 gh(["release", "upload", TAG, "--repo", REPO, "--clobber", ...outputs], {
