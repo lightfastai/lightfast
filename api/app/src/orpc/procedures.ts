@@ -1,4 +1,5 @@
-import { type ContractProcedure, implement } from "@orpc/server";
+import type { AnyContractProcedure } from "@orpc/contract";
+import { implement } from "@orpc/server";
 
 import type { InitialContext } from "./context";
 import { authMiddleware } from "./middleware/auth";
@@ -9,10 +10,7 @@ import { observabilityMiddleware } from "./middleware/observability";
  * (observability + API-key auth). Returns a typed implementer whose
  * `.handler(...)` is checked against the contract's output schema.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any -- ContractProcedure<any,any,any,any> matches AnyContractProcedure; the implementer narrows ctx/output downstream.
-export const authed = <P extends ContractProcedure<any, any, any, any>>(
-  proc: P
-) =>
+export const authed = <P extends AnyContractProcedure>(proc: P) =>
   implement(proc)
     .$context<InitialContext>()
     .use(observabilityMiddleware)

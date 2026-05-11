@@ -1,6 +1,7 @@
 import "server-only";
 
 import { ORPCError } from "@orpc/client";
+import type { Meta, Middleware, ORPCErrorConstructorMap } from "@orpc/server";
 import {
   captureException,
   getActiveSpan,
@@ -12,6 +13,10 @@ import {
 
 import { log } from "./log/next";
 import { withRequestContext } from "./request";
+
+interface ObservabilityContext {
+  requestId: string;
+}
 
 /**
  * Create an oRPC observability middleware that consolidates:
@@ -31,11 +36,23 @@ import { withRequestContext } from "./request";
  * - Auth fields are enriched by downstream auth middleware via enrichContext(),
  *   then read back from the enriched ctx returned by withRequestContext
  */
-export function createORPCObservabilityMiddleware() {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- oRPC's Middleware generic is parameterized by the full procedure chain; the cast at the call site bridges the two type systems.
-  return async ({ context, next, path }: any) => {
-    const { requestId } = context as { requestId: string };
-    const procedurePath = (path as readonly string[]).join(".");
+export function createORPCObservabilityMiddleware<
+  TErrorConstructorMap extends
+    ORPCErrorConstructorMap<any> = ORPCErrorConstructorMap<
+    Record<never, never>
+  >,
+  TMeta extends Meta = Meta,
+>(): Middleware<
+  ObservabilityContext,
+  Record<never, never>,
+  unknown,
+  unknown,
+  TErrorConstructorMap,
+  TMeta
+> {
+  return async ({ context, next, path }) => {
+    const { requestId } = context;
+    const procedurePath = path.join(".");
 
     return withIsolationScope(async (scope) => {
       scope.setContext("orpc", { procedure_path: procedurePath });
