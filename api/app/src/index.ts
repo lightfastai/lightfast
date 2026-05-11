@@ -3,6 +3,7 @@ import type { AppRouter } from "./root";
 
 export type { AppRouter } from "./root";
 export { appRouter } from "./root";
+export { orpcRouter } from "./orpc";
 export { createTRPCContext } from "./trpc";
 
 // Type utilities

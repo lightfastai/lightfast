@@ -32,16 +32,21 @@ const isPublicRoute = createRouteMatcher([
   "/manifest.json",
 ]);
 
-// API routes that handle their own auth (withDualAuth at route level).
-// /api/trpc/(.*) handles auth in createTRPCContext (Bearer token or Clerk
-// cookie) and responds to CORS preflight directly. Leaving it in the
-// else-branch makes middleware redirect OPTIONS requests to /sign-in, which
-// browsers reject with ERR_INVALID_REDIRECT on preflight.
+// API routes that handle their own auth at the route handler level.
+// Each route is responsible for its own auth + CORS (the Clerk middleware
+// would otherwise redirect OPTIONS preflight to /sign-in, which browsers
+// reject as ERR_INVALID_REDIRECT).
+//   /api/cli/*       — Clerk JWT (verifyCliJwt)
+//   /api/desktop/*   — Clerk session (code) / PKCE verifier (exchange)
+//   /api/inngest     — Inngest signature
+//   /api/trpc/*      — Clerk Bearer or cookie via createTRPCContext
+//   /api/v1/*        — sk-lf- org API key via oRPC authMiddleware
 const isApiRoute = createRouteMatcher([
   "/api/cli/(.*)",
   "/api/desktop/(.*)",
   "/api/inngest(.*)",
   "/api/trpc/(.*)",
+  "/api/v1/(.*)",
 ]);
 
 // Auth routes — authenticated users should not see sign-in/sign-up forms.
