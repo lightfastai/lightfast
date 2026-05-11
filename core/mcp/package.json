@@ -3,7 +3,7 @@
   "version": "0.1.0-alpha.5",
   "description": "Lightfast Platform MCP Server - MCP for the Lightfast Platform API",
   "publishConfig": {
-    "tag": "latest",
+    "tag": "alpha",
     "access": "public"
   },
   "keywords": [
