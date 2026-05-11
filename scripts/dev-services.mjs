@@ -316,19 +316,28 @@ async function handleInngestSync(args) {
     cwd: process.cwd(),
     env: process.env,
     stdio: "inherit",
+    detached: process.platform !== "win32",
   });
 
   let shuttingDown = false;
   const shutdown = (signal) => {
+    if (shuttingDown) {
+      process.kill(process.pid, signal);
+      return;
+    }
     shuttingDown = true;
     syncRuntime.stop();
-    if (!child.killed) {
-      child.kill(signal);
+    if (child.pid && !child.killed) {
+      try {
+        process.kill(-child.pid, signal);
+      } catch {
+        child.kill(signal);
+      }
     }
   };
 
   for (const signal of signals) {
-    process.once(signal, () => shutdown(signal));
+    process.on(signal, () => shutdown(signal));
   }
 
   child.on("exit", (code, signal) => {
