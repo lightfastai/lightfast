@@ -1,10 +1,10 @@
-// POST /api/desktop/auth/exchange
+// POST /api/auth/token
 // Auth: none — the code itself proves possession of the in-flight sign-in.
 // Verifier check (PKCE S256) binds the exchange to the same client that
-// issued the code via /api/desktop/auth/code.
+// issued the code via /api/auth/code.
 import { createHash } from "node:crypto";
 import { z } from "zod";
-import { consumeCode } from "../lib/code-store";
+import { consumeCode } from "~/app/(auth-api)/_server/code-store";
 
 const bodySchema = z.object({
   code: z.string().min(32).max(128),

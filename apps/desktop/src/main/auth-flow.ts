@@ -246,14 +246,11 @@ async function exchangeCode(
   codeVerifier: string
 ): Promise<string | null> {
   try {
-    const response = await fetch(
-      createAppUrl("/api/desktop/auth/exchange").toString(),
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, code_verifier: codeVerifier }),
-      }
-    );
+    const response = await fetch(createAppUrl("/api/auth/token").toString(), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, code_verifier: codeVerifier }),
+    });
     if (!response.ok) {
       captureMessage("auth-flow: exchange non-ok", {
         level: "warning",

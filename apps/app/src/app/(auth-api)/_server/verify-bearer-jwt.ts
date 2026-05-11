@@ -2,7 +2,7 @@ import { verifyToken } from "@clerk/nextjs/server";
 
 import { env } from "~/env";
 
-export async function verifyCliJwt(
+export async function verifyBearerJwt(
   req: Request
 ): Promise<{ userId: string; jwt: string } | null> {
   const authHeader = req.headers.get("Authorization");
