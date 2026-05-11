@@ -2,8 +2,8 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "workspaces": {
     ".": {
-      "entry": ["scripts/*.{js,ts,sh}"],
-      "ignoreDependencies": ["turbo-ignore", "@biomejs/biome"]
+      "entry": ["scripts/**/*.{js,ts,sh,mjs}"],
+      "ignoreDependencies": ["turbo-ignore", "@biomejs/biome", "portless"]
     },
     "apps/app": {
       "entry": ["src/app/**/*.{ts,tsx}"],
@@ -20,13 +20,35 @@
       "project": ["src/**/*.{ts,tsx}"]
     },
     "api/app": {
+      "entry": ["src/origins.ts"],
       "project": ["src/**/*.ts"]
     },
     "api/platform": {
+      "entry": ["src/origins.ts"],
       "project": ["src/**/*.ts"]
+    },
+    "apps/desktop": {
+      "entry": [
+        "src/main/bootstrap.ts",
+        "src/main/index.ts",
+        "src/preload/**/*.ts",
+        "src/renderer/src/main.ts",
+        "src/renderer/src/react/**/*.{ts,tsx}",
+        "forge.config.ts",
+        "vite.main.config.ts",
+        "vite.preload.config.ts",
+        "vite.renderer.config.ts",
+        "scripts/**/*.mjs"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "vite.*.config.ts", "scripts/**/*.mjs"],
+      "ignoreDependencies": ["@sentry/electron", "@sentry/cli", "superjson"]
     },
     "core/*": {
       "project": ["src/**/*.ts"]
+    },
+    "core/mcp": {
+      "project": ["src/**/*.ts"],
+      "ignoreDependencies": ["@modelcontextprotocol/sdk"]
     },
     "db/*": {
       "entry": ["src/drizzle.config.ts"],

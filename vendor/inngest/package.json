@@ -8,10 +8,6 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./hono": {
-      "types": "./src/hono.ts",
-      "default": "./src/hono.ts"
-    },
     "./env": {
       "types": "./src/env.ts",
       "default": "./src/env.ts"
@@ -31,13 +27,5 @@
     "@t3-oss/env-core": "catalog:",
     "inngest": "catalog:",
     "zod": "catalog:"
-  },
-  "peerDependencies": {
-    "hono": "catalog:"
-  },
-  "peerDependenciesMeta": {
-    "hono": {
-      "optional": true
-    }
   }
 }

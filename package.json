@@ -36,7 +36,7 @@
     "test": "SKIP_ENV_VALIDATION=true turbo run test",
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
     "ui": "pnpm --filter @repo/ui ui",
-    "vercel:link": "vercel link --repo",
+    "vercel:link": "pnpm dlx vercel@latest link --repo",
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",
@@ -66,8 +66,7 @@
     "turbo": "2.9.6",
     "turbo-ignore": "2.9.6",
     "typescript": "^5.9.2",
-    "ultracite": "7.6.0",
-    "vercel": "^52.2.0"
+    "ultracite": "7.6.0"
   },
   "pnpm": {
     "overrides": {
