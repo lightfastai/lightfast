@@ -2,7 +2,6 @@ import { createNEMO } from "@rescale/nemo";
 import {
   composeCspOptions,
   createAnalyticsCspDirectives,
-  createClerkCspDirectives,
   createNextjsCspDirectives,
   createSentryCspDirectives,
 } from "@vendor/security/csp";
@@ -17,7 +16,6 @@ import { NextResponse } from "next/server";
 const securityHeaders = securityMiddleware(
   composeCspOptions(
     createNextjsCspDirectives(),
-    createClerkCspDirectives(), // Keep for other apps in microfrontends
     createAnalyticsCspDirectives(),
     createSentryCspDirectives(),
     // UnicornStudio
@@ -30,14 +28,6 @@ const securityHeaders = securityMiddleware(
     {
       scriptSrc: ["https://assets.apollo.io"],
       connectSrc: ["https://app.apollo.io"],
-    },
-    // BaseHub CMS (draft mode uses Pusher for real-time updates)
-    {
-      connectSrc: [
-        "https://pump-router.basehub.com",
-        "wss://ws-mt1.pusher.com",
-        "https://sockjs-mt1.pusher.com",
-      ],
     }
   )
 );
