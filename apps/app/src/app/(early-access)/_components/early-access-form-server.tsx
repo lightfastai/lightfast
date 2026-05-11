@@ -1,6 +1,5 @@
 import { Input } from "@repo/ui/components/ui/input";
-import type { Route } from "next";
-import Link from "next/link";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { joinEarlyAccessAction } from "../_actions/early-access";
 import { CompanySizeIsland } from "./company-size-island";
 import { SourcesIsland } from "./sources-island";
@@ -67,21 +66,25 @@ export function EarlyAccessFormServer({
           <SubmitButton />
         </div>
 
-        <p className="text-muted-foreground text-xs">
+        <p className="text-center text-muted-foreground text-sm">
           By continuing you acknowledge that you understand and agree to our{" "}
-          <Link
-            className="underline transition-colors hover:text-foreground"
-            href={"/legal/terms" as Route}
+          <MicrofrontendLink
+            className="text-foreground underline hover:text-foreground/80"
+            href="/legal/terms"
+            rel="noopener noreferrer"
+            target="_blank"
           >
-            Terms and Conditions
-          </Link>{" "}
+            Terms of Service
+          </MicrofrontendLink>{" "}
           and{" "}
-          <Link
-            className="underline transition-colors hover:text-foreground"
-            href={"/legal/privacy" as Route}
+          <MicrofrontendLink
+            className="text-foreground underline hover:text-foreground/80"
+            href="/legal/privacy"
+            rel="noopener noreferrer"
+            target="_blank"
           >
             Privacy Policy
-          </Link>
+          </MicrofrontendLink>
           .
         </p>
       </form>

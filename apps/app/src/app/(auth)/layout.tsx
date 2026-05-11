@@ -49,8 +49,31 @@ export default function AuthLayout({
       <main className="flex flex-1 items-center justify-center p-4">
         <div className="w-full max-w-xs">{children}</div>
       </main>
-      {/* Bottom spacer to mirror header height for perfect centering */}
-      <div aria-hidden className="h-16 shrink-0 md:h-20" />
+      {/* Footer — mirrors header height for perfect centering */}
+      <footer className="page-gutter flex h-16 shrink-0 items-center justify-center md:h-20">
+        <div className="flex items-center gap-3 text-muted-foreground text-sm">
+          <MicrofrontendLink
+            className="hover:text-foreground"
+            href="/legal/terms"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Terms
+          </MicrofrontendLink>
+          <span
+            aria-hidden
+            className="size-0.5 rounded-full bg-muted-foreground/60"
+          />
+          <MicrofrontendLink
+            className="hover:text-foreground"
+            href="/legal/privacy"
+            rel="noopener noreferrer"
+            target="_blank"
+          >
+            Privacy
+          </MicrofrontendLink>
+        </div>
+      </footer>
     </div>
   );
 }
