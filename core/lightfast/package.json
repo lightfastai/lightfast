@@ -3,7 +3,7 @@
   "version": "0.1.0-alpha.5",
   "description": "Lightfast Platform SDK - TypeScript client for the Lightfast Platform API",
   "publishConfig": {
-    "tag": "latest",
+    "tag": "alpha",
     "access": "public"
   },
   "keywords": [
@@ -39,10 +39,19 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@orpc/client": "^1.14.2",
+    "@orpc/contract": "^1.14.2",
+    "@orpc/openapi-client": "^1.14.2"
+  },
   "devDependencies": {
+    "@db/app": "workspace:*",
+    "@repo/api-contract": "workspace:*",
+    "@repo/app-api-key": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
+    "@vendor/db": "workspace:*",
     "@vitest/coverage-v8": "^4.1.4",
     "tsup": "^8.5.1",
     "typescript": "catalog:",

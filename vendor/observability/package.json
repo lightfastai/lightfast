@@ -78,7 +78,8 @@
   },
   "dependencies": {
     "@logtail/next": "^0.3.1",
-    "@orpc/client": "^1.13.14",
+    "@orpc/client": "^1.14.2",
+    "@orpc/server": "^1.14.2",
     "@sentry/browser": "catalog:",
     "@sentry/core": "catalog:",
     "@sentry/electron": "catalog:",

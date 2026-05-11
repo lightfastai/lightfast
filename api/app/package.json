@@ -35,6 +35,9 @@
   "dependencies": {
     "@db/app": "workspace:*",
     "@lightfastai/dev-proxy": "catalog:",
+    "@orpc/contract": "^1.14.2",
+    "@orpc/server": "^1.14.2",
+    "@repo/api-contract": "workspace:*",
     "@repo/app-api-key": "workspace:*",
     "@repo/app-encryption": "workspace:*",
     "@repo/app-validation": "workspace:^",

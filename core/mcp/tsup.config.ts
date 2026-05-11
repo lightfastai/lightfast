@@ -10,6 +10,7 @@ export default defineConfig({
   target: "node18",
   bundle: true,
   external: ["@modelcontextprotocol/sdk"],
+  noExternal: ["lightfast", "@repo/api-contract"],
   outExtension: () => ({ js: ".mjs" }),
   banner: {
     js: "#!/usr/bin/env node",

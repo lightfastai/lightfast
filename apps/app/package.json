@@ -24,7 +24,7 @@
     "@lightfastai/dev-proxy": "catalog:",
     "@logtail/next": "^0.3.1",
     "@next/bundle-analyzer": "^16.2.4",
-    "@orpc/server": "^1.13.14",
+    "@orpc/openapi": "^1.14.2",
     "@repo/app-api-key": "workspace:*",
     "@repo/app-trpc": "workspace:^",
     "@repo/app-validation": "workspace:^",

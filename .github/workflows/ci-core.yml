@@ -56,6 +56,12 @@ jobs:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: pnpm turbo typecheck --affected --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue --summarize
 
+      - name: Test affected core packages
+        env:
+          SKIP_ENV_VALIDATION: "true"
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: pnpm turbo test --affected --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue --summarize
+
       - name: Cache report
         if: always()
         uses: ./.github/actions/turbo-summary

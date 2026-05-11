@@ -3,7 +3,7 @@
   "version": "0.1.0-alpha.5",
   "description": "Lightfast Platform MCP Server - MCP for the Lightfast Platform API",
   "publishConfig": {
-    "tag": "latest",
+    "tag": "alpha",
     "access": "public"
   },
   "keywords": [
@@ -43,17 +43,22 @@
     "clean": "rm -rf dist .cache .turbo node_modules",
     "build": "tsup",
     "dev": "tsup --watch",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0"
   },
   "devDependencies": {
+    "@repo/api-contract": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "@vendor/mcp": "workspace:*",
+    "lightfast": "workspace:*",
     "tsup": "^8.5.1",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=18"
