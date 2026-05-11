@@ -13,7 +13,7 @@ const setCorsHeaders = (res: Response) => {
     "GET,POST,PUT,PATCH,DELETE,OPTIONS"
   );
   res.headers.set("Access-Control-Allow-Headers", "authorization,content-type");
-  res.headers.set("Vary", "Origin");
+  res.headers.set("Access-Control-Max-Age", "86400");
   return res;
 };
 

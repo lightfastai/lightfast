@@ -514,7 +514,7 @@ const setCorsHeaders = (res: Response) => {
   res.headers.set("Access-Control-Allow-Origin", "*");
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,PUT,PATCH,DELETE,OPTIONS");
   res.headers.set("Access-Control-Allow-Headers", "authorization,content-type");
-  res.headers.set("Vary", "Origin");
+  res.headers.set("Access-Control-Max-Age", "86400");
   return res;
 };
 
@@ -543,6 +543,10 @@ export {
 CORS is permissive (`*`) because:
 - Auth is `sk-lf-` API keys — never exposed to a browser. No cookie. No credential leak risk.
 - SDK / MCP / curl callers are server-side or stdio. No `Access-Control-Allow-Credentials` needed.
+- No `Vary: Origin` because the response doesn't vary by origin (wildcard returns the same headers for every caller). Including it with `*` is contradictory.
+- `Access-Control-Max-Age: 86400` caches the preflight for 24h so browser callers don't re-issue OPTIONS on every request.
+
+Note: this posture *enables* browser callers (with a valid key). The `sk-lf-` key is itself the credential, so embedding one in browser code is a leak even without cookies. If discouraging browser use becomes a goal later (Anthropic-style), drop the CORS headers entirely — server-to-server callers don't honor CORS.
 
 #### 9. Update proxy route matchers
 
@@ -1173,6 +1177,17 @@ Implemented per plan with the following corrections discovered during execution:
 - **`orgApiKeys` insert needs `name` field.** The schema marks it `notNull`. Plan's example insert omitted it; setup now inserts `name: "integration-test-system-health"`.
 - **`vitest.config.ts` `poolOptions: { forks: { singleFork: true } }` deprecated in vitest 4** — replaced with top-level `forks: { singleFork: true }`.
 - **Integration test setup also sets `NODE_TLS_REJECT_UNAUTHORIZED=0`** because portless serves the local aggregate (`https://app.lightfast.localhost`) over self-signed HTTPS. Without this, the test process's `fetch()` rejects the connection (`SELF_SIGNED_CERT_IN_CHAIN`) and `waitForReady` times out at 60s. Scoped to integration mode only.
+
+### CORS posture fix (2026-05-11)
+
+Post-implementation review of the `/api/v1` route handler caught two CORS issues:
+
+- **Removed `Vary: Origin`** — meaningless with `Access-Control-Allow-Origin: *`. The response doesn't vary by origin (wildcard returns the same headers for every caller), so `Vary: Origin` is a contradiction that confuses caches.
+- **Added `Access-Control-Max-Age: 86400`** — browsers were re-issuing OPTIONS preflight on every cross-origin call. 24h cache eliminates that round trip.
+
+Posture decision: kept permissive `*` with the understanding that this enables browser callers (with a valid key). Plan §"What We're NOT Doing" states no browser SDK use case exists, but the `sk-lf-` key is itself the credential — embedding one in browser code is a leak even without cookies. Logged as a future tightening lever (drop CORS entirely, Anthropic-style) if browser-misuse becomes a real signal. Not changing now to avoid breaking dev-tools / Postman / browser-based exploration.
+
+Applied to `apps/app/src/app/(api)/api/v1/[...rest]/route.ts`. No code path or test changes required.
 
 ### Phase 3 manual verification log (2026-05-11)
 
