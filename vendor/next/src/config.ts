@@ -30,7 +30,6 @@ export const baseConfig: NextConfig = {
     minimumCacheTTL: 31_536_000,
     remotePatterns: [
       { protocol: "https", hostname: "imagedelivery.net" },
-      { protocol: "https", hostname: "assets.basehub.com" },
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
   },

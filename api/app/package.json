@@ -39,7 +39,6 @@
     "@orpc/server": "^1.14.2",
     "@repo/api-contract": "workspace:*",
     "@repo/app-api-key": "workspace:*",
-    "@repo/app-encryption": "workspace:*",
     "@repo/app-validation": "workspace:^",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",
@@ -50,7 +49,6 @@
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
     "superjson": "catalog:",
-    "yaml": "^2.8.3",
     "zod": "catalog:"
   },
   "devDependencies": {

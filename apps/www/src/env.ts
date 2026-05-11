@@ -7,8 +7,6 @@ import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { env as securityEnv } from "@vendor/security/env";
 import { z } from "zod";
-// NOTE: Avoid importing TS files from vendor packages at config-load time.
-// Mirror the minimal BaseHub env schema here to prevent Node resolution issues.
 
 export const env = createEnv({
   extends: [
@@ -32,12 +30,6 @@ export const env = createEnv({
   server: {
     HEALTH_CHECK_AUTH_TOKEN: z.string().min(32).optional(),
     PORT: z.coerce.number().positive().optional().default(3000),
-    BASEHUB_TOKEN: z.string().min(1).startsWith("bshb_pk_"),
-    BASEHUB_CHANGELOG_TOKEN: z
-      .string()
-      .min(1)
-      .startsWith("bshb_pk_")
-      .optional(),
     MXBAI_API_KEY: z.string().min(1),
     MXBAI_STORE_ID: z.string().min(1),
   },
