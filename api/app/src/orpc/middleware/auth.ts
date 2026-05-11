@@ -16,14 +16,15 @@ async function resolveApiKey(
   requestId: string
 ): Promise<AuthContext> {
   const authHeader = headers.get("authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
+  const [scheme, token] = authHeader?.trim().split(/\s+/, 2) ?? [];
+  if (!scheme || scheme.toLowerCase() !== "bearer" || !token) {
     throw new ORPCError("UNAUTHORIZED", {
       message:
         "API key required. Provide 'Authorization: Bearer <api-key>' header.",
     });
   }
 
-  const apiKey = authHeader.slice("Bearer ".length);
+  const apiKey = token;
 
   if (!isValidApiKeyFormat(apiKey)) {
     throw new ORPCError("UNAUTHORIZED", {

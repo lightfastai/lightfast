@@ -93,6 +93,24 @@ describe("authMiddleware", () => {
     });
   });
 
+  it("accepts lowercase 'bearer' scheme (RFC 7235 case-insensitive)", async () => {
+    limitMock.mockResolvedValueOnce([
+      {
+        id: 1,
+        publicId: "akey_test",
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+        expiresAt: null,
+      },
+    ]);
+
+    const ctx = await invokeAuth(
+      new Headers({ authorization: `bearer ${validKey}` })
+    );
+
+    expect(ctx).toMatchObject({ apiKeyId: "akey_test" });
+  });
+
   it("resolves and exposes auth context when the key is valid", async () => {
     limitMock.mockResolvedValueOnce([
       {
