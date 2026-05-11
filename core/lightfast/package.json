@@ -42,17 +42,17 @@
   "dependencies": {
     "@orpc/client": "^1.14.2",
     "@orpc/contract": "^1.14.2",
-    "@orpc/openapi-client": "^1.14.2",
-    "@repo/api-contract": "workspace:*"
+    "@orpc/openapi-client": "^1.14.2"
   },
   "devDependencies": {
     "@db/app": "workspace:*",
+    "@repo/api-contract": "workspace:*",
     "@repo/app-api-key": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
+    "@vendor/db": "workspace:*",
     "@vitest/coverage-v8": "^4.1.4",
-    "drizzle-orm": "catalog:",
     "tsup": "^8.5.1",
     "typescript": "catalog:",
     "vitest": "^4.1.4"

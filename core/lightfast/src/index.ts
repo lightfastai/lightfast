@@ -23,9 +23,11 @@ export function createLightfast(
   }
 
   const baseUrl = options.baseUrl ?? "https://lightfast.ai";
+  // Strip trailing slash and any trailing /api/v1 so callers can pass either form.
+  const normalizedBase = baseUrl.replace(/\/$/, "").replace(/\/api\/v1$/, "");
 
   const link = new OpenAPILink(apiContract, {
-    url: `${baseUrl.replace(/\/$/, "")}/api/v1`,
+    url: `${normalizedBase}/api/v1`,
     headers: () => ({
       authorization: `Bearer ${apiKey}`,
     }),

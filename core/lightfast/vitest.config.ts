@@ -15,7 +15,9 @@ export default mergeConfig(
       globalSetup: ["./src/__tests__/integration/setup.ts"],
       // Run integration tests serially; they share a server.
       pool: "forks",
-      forks: { singleFork: true },
+      poolOptions: {
+        forks: { singleFork: true },
+      },
     },
   })
 );

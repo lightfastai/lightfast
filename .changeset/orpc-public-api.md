@@ -1,6 +1,6 @@
 ---
-"lightfast": minor
-"@lightfastai/mcp": minor
+"lightfast": major
+"@lightfastai/mcp": major
 ---
 
 Adopt oRPC for the public SDK and MCP surfaces.

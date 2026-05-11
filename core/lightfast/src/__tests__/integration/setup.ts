@@ -57,6 +57,12 @@ export async function setup() {
   const { db } = await import("@db/app/client");
   const { orgApiKeys } = await import("@db/app/schema");
   const { generateOrgApiKey, hashApiKey } = await import("@repo/app-api-key");
+  const { eq } = await import("@vendor/db");
+
+  // Pre-delete any leftover row from a prior interrupted run so the insert is idempotent.
+  await db
+    .delete(orgApiKeys)
+    .where(eq(orgApiKeys.publicId, "akey_test_integration_health"));
 
   const { key } = generateOrgApiKey();
   await db.insert(orgApiKeys).values({
@@ -81,7 +87,7 @@ export async function teardown() {
 
   const { db } = await import("@db/app/client");
   const { orgApiKeys } = await import("@db/app/schema");
-  const { eq } = await import("drizzle-orm");
+  const { eq } = await import("@vendor/db");
   await db
     .delete(orgApiKeys)
     .where(eq(orgApiKeys.publicId, "akey_test_integration_health"));

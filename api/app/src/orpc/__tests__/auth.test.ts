@@ -131,6 +131,9 @@ describe("authMiddleware", () => {
       clerkOrgId: "org_test",
       userId: "user_test",
     });
+    // lastUsedAt persistence: success path must call db.update once.
+    expect(updateMock).toHaveBeenCalledTimes(1);
+    expect(updateSetMock).toHaveBeenCalledTimes(1);
   });
 
   it("rethrows ORPCError instances (smoke check)", () => {
