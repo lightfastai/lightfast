@@ -43,7 +43,7 @@ const isPublicRoute = createRouteMatcher([
 //   /api/v1/*        — sk-lf- org API key via oRPC authMiddleware
 const isApiRoute = createRouteMatcher([
   "/api/cli/(.*)",
-  "/api/desktop/(.*)",
+  "/api/auth/(.*)",
   "/api/inngest(.*)",
   "/api/trpc/(.*)",
   "/api/v1/(.*)",

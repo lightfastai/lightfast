@@ -42,7 +42,7 @@ export type ClientAuthBridgeProps = ClientAuthBridgeBaseProps &
 
 type BridgeStatus = "loading" | "redirecting" | "success" | "error";
 
-const CODE_ENDPOINT = "/api/desktop/auth/code";
+const CODE_ENDPOINT = "/api/auth/code";
 const WINDOW_CLOSE_DELAY_MS = 250;
 
 function BridgeContent(props: ClientAuthBridgeProps) {

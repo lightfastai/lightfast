@@ -8,10 +8,10 @@ import { clerkClient } from "@clerk/nextjs/server";
 import { db } from "@db/app/client";
 import { orgApiKeys } from "@db/app/schema";
 import { generateOrgApiKey, hashApiKey } from "@repo/app-api-key";
-import { verifyCliJwt } from "../lib/verify-jwt";
+import { verifyBearerJwt } from "~/app/(auth-api)/_server/verify-bearer-jwt";
 
 export async function POST(req: Request) {
-  const session = await verifyCliJwt(req);
+  const session = await verifyBearerJwt(req);
   if (!session) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }

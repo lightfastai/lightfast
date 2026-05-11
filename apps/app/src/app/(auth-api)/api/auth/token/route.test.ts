@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import type { CodeRecord } from "../lib/code-store";
+import type { CodeRecord } from "~/app/(auth-api)/_server/code-store";
 
 const consumeCodeMock = vi.fn<(code: string) => Promise<CodeRecord | null>>();
-vi.mock("../lib/code-store", () => ({
+vi.mock("~/app/(auth-api)/_server/code-store", () => ({
   consumeCode: (code: string) => consumeCodeMock(code),
 }));
 
@@ -14,7 +14,7 @@ const CHALLENGE = createHash("sha256").update(VERIFIER).digest("base64url");
 const CODE = "c".repeat(43);
 
 function makeReq(body: unknown): Request {
-  return new Request("http://localhost/api/desktop/auth/exchange", {
+  return new Request("http://localhost/api/auth/token", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: typeof body === "string" ? body : JSON.stringify(body),
@@ -29,7 +29,7 @@ const goodRecord: CodeRecord = {
   redirectUri: "lightfast-dev://auth/callback",
 };
 
-describe("POST /api/desktop/auth/exchange", () => {
+describe("POST /api/auth/token", () => {
   beforeEach(() => {
     consumeCodeMock.mockReset();
   });

@@ -291,7 +291,7 @@ describe("ClientAuthBridge — code-redirect mode (desktop PKCE)", () => {
     cleanup();
   });
 
-  it("POSTs to /api/desktop/auth/code with PKCE body + Bearer auth, then redirects to redirectUri?code=…&state=…", async () => {
+  it("POSTs to /api/auth/code with PKCE body + Bearer auth, then redirects to redirectUri?code=…&state=…", async () => {
     mockSignedInWithToken("real-jwt");
     fetchSpy.mockResolvedValue(
       new Response(JSON.stringify({ code: "issued-code" }), { status: 200 })
@@ -319,7 +319,7 @@ describe("ClientAuthBridge — code-redirect mode (desktop PKCE)", () => {
       expect(fetchSpy).toHaveBeenCalled();
     });
     const [url, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-    expect(url).toBe("/api/desktop/auth/code");
+    expect(url).toBe("/api/auth/code");
     expect(init.method).toBe("POST");
     expect(init.credentials).toBe("omit");
     expect(init.headers).toEqual({
@@ -366,7 +366,7 @@ describe("ClientAuthBridge — code-redirect mode (desktop PKCE)", () => {
     );
   });
 
-  it("renders error and captures warning when /api/desktop/auth/code returns 4xx", async () => {
+  it("renders error and captures warning when /api/auth/code returns 4xx", async () => {
     mockSignedInWithToken("real-jwt");
     fetchSpy.mockResolvedValue(
       new Response(JSON.stringify({ error: "unauthorized" }), { status: 401 })
