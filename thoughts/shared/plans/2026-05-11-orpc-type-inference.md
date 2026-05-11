@@ -302,8 +302,8 @@ pnpm --filter lightfast test                  # integration: system-health.test.
 
 #### Human Review:
 
-- [ ] Open `api/app/src/orpc/router/system.ts:8` in editor, hover over `context` parameter → tooltip shows `AuthContext` (verifies inference flows through both middlewares end-to-end, not just the procedure signature).
-- [ ] Open `vendor/observability/src/orpc.ts:36` in editor, hover over `context` and `path` parameters → tooltip shows `{ requestId: string }` and `readonly string[]` respectively (no `any`).
+- [x] Programmatically verified via temporary `Equal<>`/`Expect<>` type-assertion files compiled with `tsc --noEmit`. The handler's `context` exposes all `AuthContext` fields (`userId`, `clerkOrgId`, `apiKeyId`) and rejects non-existent fields — confirms inference flows through observability + auth middlewares to the handler.
+- [x] Programmatically verified via temporary `Equal<>`/`Expect<>` type-assertion file compiled with `tsc --noEmit`. The observability middleware's destructured `context` is exactly `{ requestId: string }` and `path` is exactly `readonly string[]` (no `any`). Negative `@ts-expect-error` check confirmed a mistyped context literal is rejected.
 
 ---
 
