@@ -1202,3 +1202,14 @@ Ran end-to-end against a live `pnpm dev:app` (PID was 65177). Concrete evidence:
 7. **Vitest `LIGHTFAST_RUN_INTEGRATION=1 LIGHTFAST_INTEGRATION_SKIP_BOOT=1 pnpm test` (env-injected via `dotenv` + `with-dev-services-env.mjs`)** → `Test Files 2 passed (2), Tests 6 passed (6)` in 2.07s.
 
 API key for the manual flow was provisioned by inserting a real `generateOrgApiKey()` row into `lightfast_workspace_api_keys` (`public_id=akey_manual_verify`) and deleted on cleanup.
+
+### Publish system follow-up (2026-05-11)
+
+The "No npm publish in this plan" note (line 74) is being followed by `thoughts/shared/plans/2026-05-11-npm-publish-prep-for-orpc-merge.md`, which fixes four publish blockers discovered while preparing the merge:
+
+1. `@repo/api-contract` (private workspace package) appeared as a runtime dep on the published SDK and MCP packages — would have produced unresolvable `workspace:*` or literal `0.1.0` references on npm.
+2. `.github/workflows/release.yml`'s dry-run validation step used a `--dry-run` flag that doesn't exist on `pnpm changeset publish` — every release run since at least 2026-04-24 failed at this step.
+3. `core/lightfast/package.json` had no `files` field — tarball included `src/`, `.cache/`, `.turbo/`, config files.
+4. `publishConfig.tag: "latest"` on alpha pre-releases pinned `latest` to alpha versions, so `npm install lightfast` defaulted to alpha.
+
+Both packages will publish as `0.1.0-alpha.6` to the `alpha` dist-tag when that plan's changeset merges.
