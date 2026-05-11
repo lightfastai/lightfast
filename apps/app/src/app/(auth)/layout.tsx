@@ -60,7 +60,10 @@ export default function AuthLayout({
           >
             Terms
           </MicrofrontendLink>
-          <span aria-hidden className="size-0.5 rounded-full bg-muted-foreground/60" />
+          <span
+            aria-hidden
+            className="size-0.5 rounded-full bg-muted-foreground/60"
+          />
           <MicrofrontendLink
             className="hover:text-foreground"
             href="/legal/privacy"
