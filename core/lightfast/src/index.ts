@@ -1,39 +1,39 @@
+import { createORPCClient } from "@orpc/client";
+import type { ContractRouterClient } from "@orpc/contract";
+import { OpenAPILink } from "@orpc/openapi-client/fetch";
+import { apiContract, type Contract } from "@repo/api-contract";
+
 declare const __SDK_VERSION__: string;
 
 export interface LightfastOptions {
   /** API base URL. Defaults to `https://lightfast.ai`. */
   baseUrl?: string;
+  /** Custom fetch implementation (for testing or proxying). */
+  fetch?: typeof fetch;
 }
 
-/**
- * Lightfast SDK client (barebones).
- *
- * The full contract has been removed pending the post-v2 architecture.
- * The constructor still validates an API key; method registration
- * returns when concrete endpoints land.
- */
-export class LightfastClient {
-  readonly baseUrl: string;
-  readonly version: string = __SDK_VERSION__;
+export type LightfastClient = ContractRouterClient<Contract>;
 
-  constructor(
-    public readonly apiKey: string,
-    options: LightfastOptions = {}
-  ) {
-    if (!apiKey?.startsWith("sk-lf-")) {
-      throw new Error("Invalid Lightfast API key");
-    }
-    this.baseUrl = options.baseUrl ?? "https://lightfast.ai";
-  }
-}
-
-/** Backwards-compatible factory matching the old createLightfast() shape. */
 export function createLightfast(
   apiKey: string,
-  options?: LightfastOptions
+  options: LightfastOptions = {}
 ): LightfastClient {
-  return new LightfastClient(apiKey, options);
+  if (!apiKey?.startsWith("sk-lf-")) {
+    throw new Error("Invalid Lightfast API key");
+  }
+
+  const baseUrl = options.baseUrl ?? "https://lightfast.ai";
+
+  const link = new OpenAPILink(apiContract, {
+    url: `${baseUrl.replace(/\/$/, "")}/api/v1`,
+    headers: () => ({
+      authorization: `Bearer ${apiKey}`,
+    }),
+    ...(options.fetch && { fetch: options.fetch }),
+  });
+
+  return createORPCClient(link);
 }
 
-/** SDK version, injected at build time. */
 export const VERSION: string = __SDK_VERSION__;
+export type { Contract } from "@repo/api-contract";

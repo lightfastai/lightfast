@@ -1011,6 +1011,9 @@ importers:
       '@orpc/client':
         specifier: ^1.14.2
         version: 1.14.2(@opentelemetry/api@1.9.1)
+      '@orpc/contract':
+        specifier: ^1.14.2
+        version: 1.14.2(@opentelemetry/api@1.9.1)
       '@orpc/openapi-client':
         specifier: ^1.14.2
         version: 1.14.2(@opentelemetry/api@1.9.1)

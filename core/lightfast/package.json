@@ -39,11 +39,20 @@
     "test:coverage": "vitest run --coverage",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@orpc/client": "^1.14.2",
+    "@orpc/contract": "^1.14.2",
+    "@orpc/openapi-client": "^1.14.2",
+    "@repo/api-contract": "workspace:*"
+  },
   "devDependencies": {
+    "@db/app": "workspace:*",
+    "@repo/app-api-key": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "@vitest/coverage-v8": "^4.1.4",
+    "drizzle-orm": "catalog:",
     "tsup": "^8.5.1",
     "typescript": "catalog:",
     "vitest": "^4.1.4"

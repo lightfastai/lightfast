@@ -1060,22 +1060,22 @@ These power the integration globalSetup; they're not part of the SDK runtime sur
 
 #### Automated Verification
 
-- [ ] `pnpm install` succeeds; lockfile updates for new SDK + MCP deps.
-- [ ] `pnpm --filter lightfast typecheck` passes.
-- [ ] `pnpm --filter lightfast build` produces `dist/index.mjs` with bundled contract + oRPC client.
-- [ ] `pnpm --filter lightfast test` passes — mocked-fetch tests in `client.test.ts`.
-- [ ] `pnpm --filter @lightfastai/mcp typecheck` passes.
-- [ ] `pnpm --filter @lightfastai/mcp build` produces `dist/index.mjs`.
-- [ ] `pnpm --filter @lightfastai/mcp test` passes — registration test.
-- [ ] `pnpm typecheck` at repo root passes.
-- [ ] **Integration test**: with `pnpm db:up && pnpm redis:up` running, `pnpm --filter lightfast test` (which now picks up `src/__tests__/integration/`) passes — boots dev server, runs SDK round-trip, asserts 200 / 401 / 401.
+- [x] `pnpm install` succeeds; lockfile updates for new SDK + MCP deps.
+- [x] `pnpm --filter lightfast typecheck` passes.
+- [x] `pnpm --filter lightfast build` produces `dist/index.mjs` with bundled contract + oRPC client (564 KB self-contained bundle after adding `noExternal` for `@orpc/client`, `@orpc/contract`, `@orpc/openapi-client`, `@repo/api-contract`).
+- [x] `pnpm --filter lightfast test` passes — mocked-fetch tests in `client.test.ts` (3 passed, 3 integration tests skipped behind `LIGHTFAST_RUN_INTEGRATION=1`).
+- [x] `pnpm --filter @lightfastai/mcp typecheck` passes.
+- [x] `pnpm --filter @lightfastai/mcp build` produces `dist/index.mjs` (1.06 MB bundle with `lightfast` + `@repo/api-contract` bundled in via `noExternal`).
+- [x] `pnpm --filter @lightfastai/mcp test` passes — registration test (2 passed).
+- [x] `pnpm typecheck` at repo root passes (37/37 tasks).
+- [x] **Integration test**: with `pnpm db:up && pnpm redis:up` running, `LIGHTFAST_RUN_INTEGRATION=1 pnpm --filter lightfast test` passes — 6/6 (3 unit + 3 integration). Verified with dev server already running and `LIGHTFAST_INTEGRATION_SKIP_BOOT=1` (env injected via `dotenv -e apps/app/.vercel/.env.development.local` + `scripts/with-dev-services-env.mjs`). Note: integration setup sets `NODE_TLS_REJECT_UNAUTHORIZED=0` to accept portless's self-signed cert.
 
 #### Human Review
 
-- [ ] Run `pnpm dev:app`, then in another terminal: `LIGHTFAST_API_KEY=<test-key> node core/mcp/dist/index.mjs` (after `pnpm --filter @lightfastai/mcp build`). The MCP server should connect via stdio without errors. Send a `tools/list` JSON-RPC message manually (or via an MCP client) → response should include `lightfast_system_health` with input/output schemas.
-- [ ] Inside a Node REPL: `const { createLightfast } = await import("./core/lightfast/dist/index.mjs"); const lf = createLightfast("sk-lf-...", { baseUrl: "https://app.lightfast.localhost" }); console.log(await lf.system.health());` — expect `{ status: "ok", ... }`.
-- [ ] Open `core/lightfast/src/index.ts` → confirm there is no class `LightfastClient` definition; only the `type LightfastClient = RouterClient<Contract>` alias.
-- [ ] Confirm `core/mcp/src/index.ts` registers tools via `registerContractTools` with prefix `"lightfast"` — adding new procedures to `apiContract` would auto-register without further `core/mcp` changes.
+- [x] Run `pnpm dev:app`, then in another terminal: `LIGHTFAST_API_KEY=<test-key> node core/mcp/dist/index.mjs` (after `pnpm --filter @lightfastai/mcp build`). MCP server connects via stdio without errors. `tools/list` response includes `lightfast_system_health` with input/output schemas (verified with manual JSON-RPC pipe). `tools/call` round-trip returns `{"status":"ok","timestamp":"...","version":"0.1.0"}`.
+- [x] Inside a Node REPL: `const { createLightfast } = await import("./core/lightfast/dist/index.mjs"); const lf = createLightfast("sk-lf-...", { baseUrl: "https://app.lightfast.localhost" }); console.log(await lf.system.health());` — returns `{ status: "ok", timestamp: "...", version: "0.1.0" }`.
+- [x] Open `core/lightfast/src/index.ts` → confirms only the `type LightfastClient = ContractRouterClient<Contract>` alias (no class). (Note: type is `ContractRouterClient` not `RouterClient` — see implementation deltas below.)
+- [x] Confirm `core/mcp/src/index.ts` registers tools via `registerContractTools` with prefix `"lightfast"` — adding new procedures to `apiContract` would auto-register without further `core/mcp` changes (verified — 22-line file, single registration call).
 
 ---
 
@@ -1161,3 +1161,29 @@ implement(contractProcedure)
 ### Decisions deferred / kept as-is
 
 - **Integration test design (Phase 3) — kept**: User opted to retain the live-boot integration test rather than dropping it for an in-process caller test or fetch-mock-only verification. Tradeoff acknowledged: dev-server spawn cost, dev DB pollution risk on hard crash (mitigated by unique IDs + idempotent teardown), devDep additions to `core/lightfast` (`@db/app`, `@repo/app-api-key`, `drizzle-orm`).
+
+### Phase 3 implementation deltas (2026-05-11)
+
+Implemented per plan with the following corrections discovered during execution:
+
+- **Client type was `ContractRouterClient<Contract>` from `@orpc/contract`, not `RouterClient<Contract>` from `@orpc/client`.** `@orpc/client@1.14.2` does not export `RouterClient` — that name lives only in `@orpc/server`'s router-binding API. Contract-only typed clients use `ContractRouterClient<TContract>` from `@orpc/contract`. Required adding `@orpc/contract` as a direct dependency on `core/lightfast`.
+- **`OpenAPILink` constructor takes `(contract, options)`, not `<Contract>(options)`.** The link's generic `T extends ClientContext` parameter is independent from the contract; the contract is passed positionally.
+- **tsup `external: []` does not bundle deps — must use `noExternal`.** Plan's "Key Discoveries" claim that `external: []` "bundles everything" was wrong; tsup defaults to externalizing all `dependencies`. Added `noExternal: ["@orpc/client", "@orpc/contract", "@orpc/openapi-client", "@repo/api-contract"]` on `core/lightfast/tsup.config.ts` (564 KB self-contained bundle) and `noExternal: ["lightfast", "@repo/api-contract"]` on `core/mcp/tsup.config.ts` (1.06 MB binary). Without this, `@repo/api-contract` (private, never published) would be a broken dangling import in the published npm packages.
+- **`globalSetup` gated by `LIGHTFAST_RUN_INTEGRATION=1`**, and integration `describe` block uses `describe.skipIf(...)`. Plan's setup ran unconditionally, which would have broken `pnpm --filter lightfast test` for any developer/CI run without `pnpm db:up && pnpm redis:up` already invoked. The new gate keeps the unit-only path fast and runnable without containers, while opt-in integration runs work as designed.
+- **`orgApiKeys` insert needs `name` field.** The schema marks it `notNull`. Plan's example insert omitted it; setup now inserts `name: "integration-test-system-health"`.
+- **`vitest.config.ts` `poolOptions: { forks: { singleFork: true } }` deprecated in vitest 4** — replaced with top-level `forks: { singleFork: true }`.
+- **Integration test setup also sets `NODE_TLS_REJECT_UNAUTHORIZED=0`** because portless serves the local aggregate (`https://app.lightfast.localhost`) over self-signed HTTPS. Without this, the test process's `fetch()` rejects the connection (`SELF_SIGNED_CERT_IN_CHAIN`) and `waitForReady` times out at 60s. Scoped to integration mode only.
+
+### Phase 3 manual verification log (2026-05-11)
+
+Ran end-to-end against a live `pnpm dev:app` (PID was 65177). Concrete evidence:
+
+1. **`curl /api/v1/system/health` (no key) → 401** with body `{"defined":false,"code":"UNAUTHORIZED","status":401,"message":"API key required. Provide 'Authorization: Bearer <api-key>' header."}` — proves `authMiddleware` rejects unauthenticated requests with the oRPC error envelope.
+2. **`curl /api/v1/system/health` (valid `sk-lf-` key) → 200** with body `{"status":"ok","timestamp":"2026-05-11T03:38:44.021Z","version":"0.1.0"}`.
+3. **`curl -X OPTIONS /api/v1/system/health` → 204** with `access-control-allow-origin: *`, `access-control-allow-methods: GET,POST,PUT,PATCH,DELETE,OPTIONS`, `access-control-allow-headers: authorization,content-type`. No 307/308 redirect to `/sign-in`, confirming the `proxy.ts` `isApiRoute` matcher entry from Phase 2 takes effect.
+4. **SDK round-trip via `dist/index.mjs` bundle** — `node -e "..."` against `https://app.lightfast.localhost` returned `{"status":"ok","timestamp":"2026-05-11T03:38:54.027Z","version":"0.1.0"}`. Confirms the bundled `OpenAPILink` + `createORPCClient` work end-to-end with no source-map / unbundled-import surprises.
+5. **MCP `tools/list` over stdio** returned a single tool `lightfast_system_health` with full input/output JSON Schema (derived from `apiContract.system.health` via `~orpc.inputSchema`/`~orpc.outputSchema`).
+6. **MCP `tools/call` over stdio** returned `{"content":[],"structuredContent":{"status":"ok","timestamp":"2026-05-11T03:39:08.638Z","version":"0.1.0"}}` — full path MCP client → MCP server → SDK → oRPC link → app `/api/v1` → DB lookup → response.
+7. **Vitest `LIGHTFAST_RUN_INTEGRATION=1 LIGHTFAST_INTEGRATION_SKIP_BOOT=1 pnpm test` (env-injected via `dotenv` + `with-dev-services-env.mjs`)** → `Test Files 2 passed (2), Tests 6 passed (6)` in 2.07s.
+
+API key for the manual flow was provisioned by inserting a real `generateOrgApiKey()` row into `lightfast_workspace_api_keys` (`public_id=akey_manual_verify`) and deleted on cleanup.
