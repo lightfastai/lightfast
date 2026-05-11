@@ -39,9 +39,7 @@ describe("createLightfast", () => {
       version: "test",
     });
     expect(lastRequest?.authHeader).toBe("Bearer sk-lf-test-key");
-    expect(lastRequest?.url).toBe(
-      "https://example.test/api/v1/system/health"
-    );
+    expect(lastRequest?.url).toBe("https://example.test/api/v1/system/health");
   });
 
   it("strips trailing slash from baseUrl", async () => {

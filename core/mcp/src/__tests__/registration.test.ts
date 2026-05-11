@@ -13,7 +13,9 @@ describe("MCP tool registration", () => {
     };
 
     expect(() =>
-      registerContractTools(server, apiContract, client, { prefix: "lightfast" })
+      registerContractTools(server, apiContract, client, {
+        prefix: "lightfast",
+      })
     ).not.toThrow();
   });
 

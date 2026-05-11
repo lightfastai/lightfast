@@ -1,4 +1,4 @@
-import { spawn, type ChildProcess } from "node:child_process";
+import { type ChildProcess, spawn } from "node:child_process";
 import { setTimeout as sleep } from "node:timers/promises";
 
 const POLL_INTERVAL_MS = 250;
@@ -11,7 +11,9 @@ async function waitForReady(url: string, timeoutMs: number) {
   while (Date.now() < deadline) {
     try {
       const res = await fetch(url);
-      if (res.ok) return;
+      if (res.ok) {
+        return;
+      }
     } catch {
       // not yet up
     }

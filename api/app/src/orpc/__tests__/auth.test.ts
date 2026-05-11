@@ -1,4 +1,4 @@
-import { ORPCError, call } from "@orpc/server";
+import { call, ORPCError } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const limitMock = vi.fn();

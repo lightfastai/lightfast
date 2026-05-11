@@ -1,5 +1,9 @@
 import { apiContract } from "@repo/api-contract";
-import { McpServer, registerContractTools, StdioServerTransport } from "@vendor/mcp";
+import {
+  McpServer,
+  registerContractTools,
+  StdioServerTransport,
+} from "@vendor/mcp";
 import { createLightfast } from "lightfast";
 
 declare const __SDK_VERSION__: string;

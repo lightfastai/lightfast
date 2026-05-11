@@ -1,4 +1,4 @@
-import { implement, type ContractProcedure } from "@orpc/server";
+import { type ContractProcedure, implement } from "@orpc/server";
 
 import type { InitialContext } from "./context";
 import { authMiddleware } from "./middleware/auth";
