@@ -1,8 +1,8 @@
-// POST /api/desktop/auth/code
+// POST /api/auth/code
 // Auth: Clerk JWT (lightfast-desktop template) in Authorization header.
 import { z } from "zod";
-import { verifyCliJwt } from "../../../cli/lib/verify-jwt";
-import { issueCode } from "../lib/code-store";
+import { issueCode } from "~/app/(auth-api)/_server/code-store";
+import { verifyBearerJwt } from "~/app/(auth-api)/_server/verify-bearer-jwt";
 
 const ALLOWED_REDIRECT_URIS = new Set([
   "lightfast://auth/callback",
@@ -17,7 +17,7 @@ const bodySchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const session = await verifyCliJwt(req);
+  const session = await verifyBearerJwt(req);
   if (!session) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }

@@ -247,7 +247,7 @@ async function exchangeCode(
 ): Promise<string | null> {
   try {
     const response = await fetch(
-      createAppUrl("/api/desktop/auth/exchange").toString(),
+      createAppUrl("/api/auth/token").toString(),
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },

@@ -258,7 +258,7 @@ describe("auth-flow PKCE sign-in", () => {
       expect(setTokenMock).toHaveBeenCalledWith("real-jwt");
       // Verify exchange POST was made with correct body shape.
       const [exchUrl, init] = fetchSpy.mock.calls[0] as [string, RequestInit];
-      expect(exchUrl).toBe("http://localhost:3024/api/desktop/auth/exchange");
+      expect(exchUrl).toBe("http://localhost:3024/api/auth/token");
       const body = JSON.parse(init.body as string);
       expect(body.code).toBe("a".repeat(43));
       // verifier must match the captured challenge under SHA256.

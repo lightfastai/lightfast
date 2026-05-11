@@ -39,7 +39,7 @@ const isPublicRoute = createRouteMatcher([
 // browsers reject with ERR_INVALID_REDIRECT on preflight.
 const isApiRoute = createRouteMatcher([
   "/api/cli/(.*)",
-  "/api/desktop/(.*)",
+  "/api/auth/(.*)",
   "/api/inngest(.*)",
   "/api/trpc/(.*)",
 ]);

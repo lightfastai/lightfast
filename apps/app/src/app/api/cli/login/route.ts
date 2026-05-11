@@ -4,10 +4,10 @@
 // Response: { organizations: [{ id, slug, name, role }] }
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { verifyCliJwt } from "../lib/verify-jwt";
+import { verifyBearerJwt } from "~/app/(auth-api)/_server/verify-bearer-jwt";
 
 export async function POST(req: Request) {
-  const session = await verifyCliJwt(req);
+  const session = await verifyBearerJwt(req);
   if (!session) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
