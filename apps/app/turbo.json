@@ -27,8 +27,6 @@
         "DATABASE_PASSWORD",
         "KV_REST_API_URL",
         "KV_REST_API_TOKEN",
-        "BASEHUB_TOKEN",
-        "BASEHUB_ADMIN_TOKEN",
         "HEALTH_CHECK_AUTH_TOKEN",
         "ARCJET_KEY",
         "INNGEST_APP_NAME",
