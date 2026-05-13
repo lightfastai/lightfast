@@ -182,18 +182,12 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
           }
 
           try {
-            // PHASE-2-SWAP candidate #1 (Bug D): Future-API signUp.sso. Type
-            // signal: SignUpFutureSSOParams in @clerk/shared@4.10.2 accepts
-            // legalAccepted (inherited from SignUpFutureAdditionalParams) but
-            // does NOT accept redirectUrlComplete or continueSignUp. Required
-            // shape: { strategy, redirectUrl, redirectCallbackUrl, ... }.
-            // Single redirectUrl is the IdP return; redirectCallbackUrl is the
-            // post-FAPI finalize destination.
             await authSpan("auth.oauth.initiate", { mode, strategy }, () =>
-              signUp.sso({
+              clerk.client.signUp.authenticateWithRedirect({
                 strategy,
                 redirectUrl: `/sign-up/sso-callback?__clerk_ticket=${encodeURIComponent(ticket)}`,
-                redirectCallbackUrl: SUCCESS_REDIRECT,
+                redirectUrlComplete: SUCCESS_REDIRECT,
+                continueSignUp: true,
                 legalAccepted: true,
               })
             );

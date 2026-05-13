@@ -180,3 +180,49 @@ Not exercised. Phase-4 follow-up if any production reports.
 - 2 deferred buckets documented: OAuth happy paths (5-7) and state-leak/multi-tab/network (19-26).
 - 159 unit tests pass; typecheck clean; biome clean on `apps/app/src/app/(auth)`.
 
+## Post-bump Future API verification (2026-05-13)
+
+Catalog post-bump: `@clerk/nextjs@7.3.3`, `@clerk/shared@4.10.2`, `@clerk/backend@3.4.7`.
+
+**Runtime clerk-js version observed: `6.8.0`** — unchanged from pre-bump. The Clerk dev tenant's CDN dist-tag `@clerk/clerk-js@6` resolves to `6.8.0` (verified via 307 redirect from `https://charmed-shark-52.clerk.accounts.dev/npm/@clerk/clerk-js@6/dist/clerk.browser.js`). The npm-registry `latest` for `@clerk/clerk-js` is `6.10.1`, but the per-tenant CDN serves `6.8.0`. **The catalog bump moved types only; the runtime SDK is unchanged.** Pinning via `NEXT_PUBLIC_CLERK_JS_VERSION` was explicitly dropped from the upgrade plan, so this gap is by design.
+
+### Candidate #1 — Bug D (`signUp.sso` ticket-OAuth) — ❌
+
+Already committed pre-Phase-2 in `e497c403f` ("refactor(app): submit email inline so OTP UI never flashes before banner") based on type signal alone. Commit verification covered OTP paths but **not** Row 7 (OAuth + ticket).
+
+Row 7 test (`oauth-row7-1778666819@example.com`, fresh invitation `inv_3DfgomUC6VbClZvqUSBawBHbA9F`):
+- Browser: agent-browser opens `/sign-up?__clerk_ticket=…`, "Accept Your Invitation" heading renders, "Continue with Test IdP" button present at `@e5`.
+- Network interceptor installed on `window.fetch` for `/v1/client/sign_{ups,ins}`.
+- Click "Continue with Test IdP": `__signUpsLog` stays `[]`. `performance.getEntriesByType("resource")` shows zero `/v1/client/sign_ups` traffic after the click. The bootstrap fetches (`/v1/environment` and `/v1/client`) fire at ~1.5s of Clerk init; no further FAPI traffic after the OAuth button click.
+- Post-click state: `window.Clerk.client.signUp.status = null`, `…signUp.emailAddress = null`. The "Test IdP" button is `disabled = true` (oauthLoading stayed true).
+- URL stays at `/sign-up?__clerk_ticket=…`. No navigation to ngrok / emulator / IdP.
+
+**Diagnosis**: Silent no-op — exact failure mode the existing comment block at `use-auth-flow.ts:160-168` warned about (`Future API signIn.sso() / signUp.sso() silently no-op against a resource that already has a terminal verification state. Zero network traffic, the spinner just hangs.`). The bumped 4.10.2 types now compile the call (`legalAccepted` + `redirectCallbackUrl` both type-supported), but the underlying runtime is still 6.8.0 and the Future-API SSO path still doesn't construct the resource-URL PATCH.
+
+**Implication**: HEAD currently has a regression on the OAuth-ticket flow. Users with invitations who pick an OAuth provider will see a spinner that never resolves. Recommend reverting Candidate #1 swap to the legacy `clerk.client.signUp.authenticateWithRedirect({…, continueSignUp:true, legalAccepted:true})` workaround until Clerk's CDN `@6` dist-tag advances to a build that ships the runtime fix.
+
+**Legacy revert verified — 2026-05-13 23:35 AEST**: After reverting Candidate #1 in `use-auth-flow.ts:184-192` back to `clerk.client.signUp.authenticateWithRedirect({continueSignUp:true, legalAccepted:true, redirectUrlComplete})`, Row 7 was driven end-to-end in a pristine `agent-browser` profile against the same Test IdP emulator + fresh invitation:
+
+- Click "Continue with Test IdP" → navigates to `https://molecularly-nonevincible-erlene.ngrok-free.dev/o/oauth2/v2/auth?...` (the emulator).
+- ngrok interstitial → "Visit Site" → emulator consent page renders with three seeded users.
+- Click the row for `oauth-row7-1778666819@example.com` → redirect chain settles at `/account/teams/new`.
+- `Clerk.user.id = "user_3DfiKtJV2jM1aMKo3nWPVtYkkUZ"`, `Clerk.user.legalAcceptedAt = "2026-05-13T13:36:58.381Z"`, `externalAccounts[0].provider = "custom_test_idp"` with `verification.status = "verified"`.
+- Invitation `inv_3Dfhl0YDqUim5kwBOfu3LmdwnaB` shows `status: "accepted"` via Backend API.
+
+The legacy workaround is the only path that exercises the resource-URL PATCH against `clerk-js@6.8.0`. The user created during verification was deleted; the profile dir was removed.
+
+### Candidates #2, #3, #4 — not yet tested
+
+Phase 2 verification paused after the Candidate #1 finding because the same root cause (runtime SDK still 6.8.0) makes the remaining swaps unlikely to succeed:
+- #2 (`signIn.create({strategy:"ticket"})` for ticket activate) — plan's Key Discoveries already noted `SignInFutureResource.ticket` shape was *unchanged* in 4.10.2; with the runtime also unchanged, the static signal is "do not expect a fix".
+- #3 (`signUp.update({legalAccepted})` in sso-callback) — existing in-file comment at `sso-callback/page.tsx:36-38` documents this as already a known Future-API no-op on `6.8.0`; runtime hasn't moved.
+- #4 (`signIn.sso()`/`signUp.sso()` for sticky-verification escape hatch) — `SignInFutureSSOParams` in 4.10.2 has no `continueSignIn` field. Type-level no-go regardless of runtime.
+
+### Type-surface findings (informational)
+
+`@clerk/shared@4.10.2` `dist/types/index.d.ts`:
+- `SignUpFutureSSOParams` requires `{strategy, redirectUrl, redirectCallbackUrl}` (no `redirectUrlComplete`, no `continueSignUp`). Inherits `legalAccepted?: boolean` from `SignUpFutureAdditionalParams`.
+- `SignInFutureSSOParams` requires `{strategy, redirectUrl, redirectCallbackUrl}` (no `continueSignIn`). Does NOT extend any additional-params interface — no `legalAccepted` on sign-in SSO.
+- `SignInFutureResource` exposes both `create(params: SignInFutureCreateParams)` (accepts `strategy: …|TicketStrategy`) and a dedicated `ticket(params: SignInFutureTicketParams)` method.
+- `SignUpFutureUpdateParams` extends `SignUpFutureAdditionalParams` → `legalAccepted?: boolean` is type-accepted on `signUp.update()`.
+
