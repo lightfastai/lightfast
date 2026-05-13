@@ -45,6 +45,14 @@ interface SignInStub {
     verifyCode: Mock;
   };
   finalize: Mock;
+  // Identifier + firstFactorVerification mirror the post-create state Clerk
+  // exposes on clerk.client.signIn. Used by the init-skip detection in
+  // useAuthFlow when EmailForm has already primed the resource.
+  firstFactorVerification?: {
+    status: "unverified" | "verified";
+    strategy: "email_code" | "password";
+  } | null;
+  identifier?: string | null;
   status: "needs_first_factor" | "complete";
 }
 
@@ -70,6 +78,10 @@ interface SignUpStub {
   finalize: Mock;
   status: "missing_requirements" | "complete";
   verifications: {
+    emailAddress?: {
+      status: "unverified" | "verified";
+      strategy: "email_code";
+    } | null;
     sendEmailCode: Mock;
     verifyEmailCode: Mock;
   };
@@ -416,6 +428,91 @@ describe("useAuthFlow — init effect (sign-up + ticket)", () => {
     expect(onWaitlistError).not.toHaveBeenCalled();
     const url = new URL(hrefValue, "https://x");
     expect(url.searchParams.get("error")).toBe("The invitation was revoked.");
+  });
+});
+
+describe("useAuthFlow — init effect skips when resource is pre-primed", () => {
+  // EmailForm now calls create + sendCode before pushing to ?step=code.
+  // useAuthFlow's init must detect the primed state and skip its own send
+  // so a second OTP email doesn't go out / trip too_many_requests.
+  it("sign-in: skips sendCode when clerk.client.signIn is already prepared for this email", async () => {
+    signInStub.identifier = "u@example.com";
+    signInStub.firstFactorVerification = {
+      status: "unverified",
+      strategy: "email_code",
+    };
+
+    renderHook(() =>
+      useAuthFlow({ mode: "sign-in", step: "code", email: "u@example.com" })
+    );
+
+    // Give any scheduled effects a chance to run; sendCode should still be
+    // untouched once isInitializing has flipped to false.
+    await waitFor(() => {
+      // No reliable observable other than the absence of the call — assert it.
+      expect(signInStub.emailCode.sendCode).not.toHaveBeenCalled();
+    });
+  });
+
+  it("sign-in: case-insensitive email match (Clerk normalizes identifier to lowercase)", async () => {
+    signInStub.identifier = "user@example.com";
+    signInStub.firstFactorVerification = {
+      status: "unverified",
+      strategy: "email_code",
+    };
+
+    renderHook(() =>
+      useAuthFlow({ mode: "sign-in", step: "code", email: "User@Example.com" })
+    );
+
+    await waitFor(() => {
+      expect(signInStub.emailCode.sendCode).not.toHaveBeenCalled();
+    });
+  });
+
+  it("sign-in: falls through to sendCode when identifier doesn't match (cold load)", async () => {
+    // No identifier on the resource — simulate direct navigation to
+    // /sign-in?step=code&email=foo with no prior EmailForm submit.
+    renderHook(() =>
+      useAuthFlow({ mode: "sign-in", step: "code", email: "u@example.com" })
+    );
+
+    await waitFor(() => {
+      expect(signInStub.emailCode.sendCode).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it("sign-up: skips create + sendEmailCode when signUp is already prepared for this email", async () => {
+    signUpStub.emailAddress = "u@example.com";
+    signUpStub.verifications.emailAddress = {
+      status: "unverified",
+      strategy: "email_code",
+    };
+
+    renderHook(() =>
+      useAuthFlow({ mode: "sign-up", step: "code", email: "u@example.com" })
+    );
+
+    await waitFor(() => {
+      expect(signUpStub.create).not.toHaveBeenCalled();
+      expect(signUpStub.verifications.sendEmailCode).not.toHaveBeenCalled();
+    });
+  });
+
+  it("sign-up: falls through to create when emailAddress doesn't match", async () => {
+    signUpStub.emailAddress = "different@example.com";
+    signUpStub.verifications.emailAddress = {
+      status: "unverified",
+      strategy: "email_code",
+    };
+
+    renderHook(() =>
+      useAuthFlow({ mode: "sign-up", step: "code", email: "u@example.com" })
+    );
+
+    await waitFor(() => {
+      expect(signUpStub.create).toHaveBeenCalledTimes(1);
+    });
   });
 });
 

@@ -182,12 +182,18 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
           }
 
           try {
+            // PHASE-2-SWAP candidate #1 (Bug D): Future-API signUp.sso. Type
+            // signal: SignUpFutureSSOParams in @clerk/shared@4.10.2 accepts
+            // legalAccepted (inherited from SignUpFutureAdditionalParams) but
+            // does NOT accept redirectUrlComplete or continueSignUp. Required
+            // shape: { strategy, redirectUrl, redirectCallbackUrl, ... }.
+            // Single redirectUrl is the IdP return; redirectCallbackUrl is the
+            // post-FAPI finalize destination.
             await authSpan("auth.oauth.initiate", { mode, strategy }, () =>
-              clerk.client.signUp.authenticateWithRedirect({
+              signUp.sso({
                 strategy,
                 redirectUrl: `/sign-up/sso-callback?__clerk_ticket=${encodeURIComponent(ticket)}`,
-                redirectUrlComplete: SUCCESS_REDIRECT,
-                continueSignUp: true,
+                redirectCallbackUrl: SUCCESS_REDIRECT,
                 legalAccepted: true,
               })
             );
@@ -300,6 +306,14 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
 
   // Init effect: send the OTP (or apply the invitation ticket) exactly once
   // when step === "code".
+  //
+  // EmailForm now calls create + sendCode on submit (so the user never sees
+  // OTP UI flash before bouncing to an error banner). On the happy path the
+  // Clerk in-flight resource is already primed for this email by the time
+  // we get here — we detect that and skip the send so a second OTP email
+  // doesn't go out / trip too_many_requests. The cold path (direct nav to
+  // ?step=code, cookie-cleared refresh, etc.) falls through to the regular
+  // send.
   React.useEffect(() => {
     if (step !== "code" || hasInitRef.current) {
       return;
@@ -308,6 +322,38 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
 
     if (mode === "sign-in" && !email) {
       setOtpError("Missing email. Please start over.");
+      setIsInitializing(false);
+      return;
+    }
+
+    const sameEmail = (
+      a: string | null | undefined,
+      b: string | null | undefined
+    ) => !!a && !!b && a.toLowerCase() === b.toLowerCase();
+
+    const signInPrimed =
+      mode === "sign-in" &&
+      signIn.status === "needs_first_factor" &&
+      sameEmail(signIn.identifier, email) &&
+      signIn.firstFactorVerification?.status === "unverified" &&
+      signIn.firstFactorVerification?.strategy === "email_code";
+
+    const signUpPrimed =
+      mode === "sign-up" &&
+      signUp.status === "missing_requirements" &&
+      sameEmail(signUp.emailAddress, email) &&
+      signUp.verifications?.emailAddress?.status === "unverified" &&
+      signUp.verifications?.emailAddress?.strategy === "email_code";
+
+    if (signInPrimed || signUpPrimed) {
+      authBreadcrumb("OTP init skipped — resource pre-primed", "info", {
+        mode,
+      });
+      setResolvedEmail(
+        mode === "sign-in"
+          ? (signIn.identifier ?? email ?? null)
+          : (signUp.emailAddress ?? email ?? null)
+      );
       setIsInitializing(false);
       return;
     }
