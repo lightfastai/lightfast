@@ -4,20 +4,18 @@ import {
   AuthenticateWithRedirectCallback,
   useSignUp,
 } from "@vendor/clerk/client";
-import { useSearchParams } from "next/navigation";
 import * as React from "react";
 
 function SSOCallback() {
   const { signUp } = useSignUp();
-  const searchParams = useSearchParams();
-  const clerkTicket = searchParams.get("__clerk_ticket");
   const updateStarted = React.useRef(false);
 
-  // Effect 1: After AuthenticateWithRedirectCallback processes the OAuth callback,
-  // if only legal_accepted is missing (expected for invite + GitHub flow), apply it
-  // inline without navigating away. continueSignUpUrl={null} keeps this page mounted.
+  // After AuthenticateWithRedirectCallback processes the OAuth callback, if only
+  // legal_accepted is missing (the expected state for OAuth sign-up — Clerk
+  // derives email from the external account), apply it inline.
+  // continueSignUpUrl={null} keeps this page mounted so the effect runs.
   React.useEffect(() => {
-    if (!(clerkTicket && signUp) || updateStarted.current) {
+    if (!signUp || updateStarted.current) {
       return;
     }
     if (signUp.status !== "missing_requirements") {
@@ -37,10 +35,10 @@ function SSOCallback() {
     signUp.update({ legalAccepted: true }).catch(() => {
       updateStarted.current = false;
     });
-  }, [signUp, clerkTicket]);
+  }, [signUp]);
 
-  // Effect 2: Finalize once the sign-up reaches "complete" after our update.
-  // Runs in a separate cycle so it reads the fresh reactive signUp from Core 3 Signals.
+  // Finalize once the sign-up reaches "complete" after our update. Runs in a
+  // separate cycle so it reads the fresh reactive signUp from Core 3 Signals.
   React.useEffect(() => {
     if (!(updateStarted.current && signUp) || signUp.status !== "complete") {
       return;
@@ -58,10 +56,12 @@ function SSOCallback() {
 
   return (
     <AuthenticateWithRedirectCallback
-      // Invite flow: continueSignUpUrl={null} prevents Clerk from navigating away
-      // when status is missing_requirements. Our effects handle legal_accepted inline.
-      // Non-invite flow: not reached (no ticket → no sign-up callback here).
-      continueSignUpUrl={clerkTicket ? null : "/sign-up"}
+      // continueSignUpUrl={null} prevents Clerk from navigating away to
+      // /sign-up when status is missing_requirements. Without this, non-ticket
+      // OAuth sign-ups dead-end on /sign-up (no UI handles the in-flight
+      // signUp resource there). Our effects apply legal_accepted + finalize.
+      // Applies to both invitation-ticket and no-ticket OAuth sign-up.
+      continueSignUpUrl={null}
       signInFallbackRedirectUrl={"/account/welcome"}
       signUpFallbackRedirectUrl={"/account/welcome"}
     />
