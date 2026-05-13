@@ -14,6 +14,21 @@ type: handoff
 
 # Handoff: auth-flow latent Clerk integration bugs
 
+## Resolution (verified 2026-05-13 evening, post-handoff)
+
+End-to-end re-verification under fresh dev profiles + fresh invitations, post-restart of `pnpm dev:app`, established the actual state:
+
+- **Bug A — RESOLVED in HEAD.** The `clerk.client.signIn.create({strategy:"ticket", ticket})` workaround at `use-auth-flow.ts:553-572` works as written. Magic-link activate URL → `setActive` → `/account/welcome` → `/account/teams/new` succeeds. The earlier handoff text "still failed... Reverted" referred to a *Future-API* `signIn.create({strategy:"ticket"})` swap, not the legacy `clerk.client.signIn` call that actually shipped.
+- **Bug B — NEVER A BUG with the shipped code.** `signUp.create({strategy:"ticket", ticket, emailAddress, legalAccepted})` returns `status:"complete"` immediately (skipping OTP entirely), exactly as commit `98278477b`'s message describes. The `form_identifier_exists` symptom came from an earlier code state without `strategy:"ticket"`. UI flow: form submit → `?step=code` → init effect → finalize → `/account/teams/new`.
+- **Bug D — FIXED 2026-05-13 (this session).** `signUp.sso()` Future API in clerk-js@6.8.0 POSTs to the collection URL `/v1/client/sign_ups?_method=PATCH` instead of `/v1/client/sign_ups/{id}?_method=PATCH` after a prior `signUp.create({ticket})`. **Fix:** swap `signUp.sso(...)` → `clerk.client.signUp.authenticateWithRedirect({...args, continueSignUp:true})` in the OAuth-ticket branch (`use-auth-flow.ts:135-170`). The legacy method routes through `SignUp.update()` (`update` source: `e=>this._basePatch({body:r2(e)})`) which PATCHes the resource URL correctly. Same workaround pattern as Bug A. End-to-end verified: invitation → `/sign-up?__clerk_ticket=...` → click "Continue with Test IdP" → navigates to IdP authorization URL.
+- **Constraint C — unchanged** (waitlist still ON; allowlist API does not bypass).
+
+Verification artifacts deleted (test users, invitations, profiles). All 162 tests pass; biome clean on `use-auth-flow.ts`.
+
+Diagnostic narrative below is preserved as the historical record of the investigation; the bug entries reflect what was true *as of the morning of 2026-05-13*.
+
+---
+
 ## Task(s)
 
 End-to-end verification of the auth unified-hook refactor (plan: `thoughts/shared/plans/2026-05-13-auth-unified-hook.md`) surfaced **two latent pre-existing bugs** in the Clerk client integration and **one tenant-config constraint** that block three of the four manual-review paths. The refactor itself preserves behavior verbatim — these bugs predate this PR and were invisible before because the manual verification items were listed as `TODO: automate via Playwright` and never actually exercised.
@@ -165,6 +180,35 @@ In priority order:
 3. **Investigate Bug A** via CDP-level network capture. Hypothesis to test first: `signIn.ticket()` in the Future API requires `signIn.create({ strategy: "ticket", ticket })` to prime the state first. If that's the case, the hook needs both calls.
 4. **Resume Phase 5 of the plan** (cleanup & full-stack verification). With Bug A unfixed, Phase 5's "magic-link activate" smoke step is blocked — note that explicitly in the PR description.
 5. **Open Clerk support ticket** documenting the Future API vs legacy divergence, attaching debug evidence from Bug A. Useful regardless of which fix path is chosen.
+
+## Bug D — `signUp.sso()` after `signUp.create({ticket})` POSTs to collection URL (clerk-js@6.8.0)
+
+**Surfaced by:** OAuth deep-test replay (see `thoughts/shared/research/2026-05-13-oauth-deep-test-findings.md`, row 7). Sign-up via custom OAuth + invitation ticket. **Blocks the entire row-7 path** (invitation acceptance via OAuth).
+
+**Symptom:** clicking "Continue with Test IdP" (or any OAuth strategy) on `/sign-up?__clerk_ticket=...` causes:
+1. `POST /v1/client/sign_ups` → 200 (`signUp.create({ticket})` succeeds; resource has missing email_address + legal_accepted, as expected).
+2. `POST /v1/client/sign_ups?_method=PATCH` → **405 Method Not Allowed**. This is `signUp.sso()` and it hits the *collection* URL — should be `/v1/client/sign_ups/{id}?_method=PATCH`.
+
+**Result:** browser never redirects to the IdP. Button stuck in disabled (loading) state. No error toast — `setOauthLoading(false)` is gated on `signUp.sso()` returning an `error`, and the SDK doesn't surface a 405 as one.
+
+**Why the existing workaround comment is stale:** `apps/app/src/app/(auth)/_hooks/use-auth-flow.ts:127-134` says "signUp.sso() silently drops the ticket param (clerk-js@5.125.3); only signUp.create() forwards it to FAPI". That was true for v5. With v6.8.0 the bug has *changed shape* — `signUp.sso()` now silently drops the **resource id** from the URL after `signUp.create({ticket})`. The Future API proxy and the underlying client are out of sync (same family as Bug A's `signIn.ticket()` no-op).
+
+**Validated NOT caused by waitlist mode** (2026-05-13): toggled `auth_access_control.sign_up_mode` from `waitlist` → `public` via `clerk config patch` and re-ran row 7 with a fresh invitation+profile. Same 405 on PATCH. The bug is independent of the tenant's sign-up gating; do not waste time bisecting against waitlist config.
+
+**Recommended fix path (to spike in an isolated worktree):**
+1. Try `signUp.authenticateWithRedirect()` (legacy API surface) in place of `signUp.sso()` in the ticket branch only. The Future API's `signUp.sso()` is broken here; the legacy method may not be.
+2. Alternatively, hand-build the request: after `signUp.create({ticket})`, call `clerk.client.signUp` directly (matching the Bug A workaround pattern at `use-auth-flow.ts:558-572`).
+3. Re-run the row-7 replay (`thoughts/shared/research/2026-05-13-oauth-deep-test-findings.md`) and confirm `signUp.missingFields === ["legal_accepted"]` mid-flow at `/sign-up/sso-callback`.
+
+**Open Clerk support ticket** alongside Bug A — same Future API divergence root cause.
+
+## OAuth emulator coverage gap (2026-05-13)
+
+The emulator-backed OAuth E2E setup (see `thoughts/shared/plans/2026-05-13-oauth-e2e-testing.md`) does not exercise:
+- GitHub's actual OAuth response shape (emulate has no GitHub OAuth provider — Google-shaped claims only).
+- Clerk's GitHub-specific provider config (claim mapping, scopes, account linking rules).
+
+If a regression surfaces here, click **"Continue with GitHub"** (not "Continue with Test IdP") under `pnpm dev:app` — both buttons render in dev. The GitHub button hits real GitHub OAuth end-to-end; no env juggling required. Bisect against the last known green.
 
 ## Other Notes
 

@@ -124,14 +124,18 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
 
       try {
         if (mode === "sign-up" && ticket) {
-          // Ticket flow: signUp.create({ ticket }) THEN signUp.sso(...).
-          // signUp.sso() silently drops the ticket param (clerk-js@5.125.3);
-          // only signUp.create() forwards it to FAPI.
+          // Ticket-OAuth flow: signUp.create({ ticket }) creates the resource;
+          // a follow-up call PATCHes it with the OAuth strategy + legal_accepted
+          // and gets the IdP redirect URL.
           //
-          // legalAccepted is passed to sso() (not create()) because Clerk's
-          // ticket-OAuth flow uses sso() to carry legal acceptance through the
-          // redirect. The OTP-ticket path differs — it passes legalAccepted
-          // to create() directly. Do not unify.
+          // The Future API's signUp.sso() is broken in clerk-js@6.8.0 when
+          // called after signUp.create({ticket}): it POSTs to the *collection*
+          // URL /v1/client/sign_ups (with ?_method=PATCH) instead of the
+          // resource URL /v1/client/sign_ups/{id}, returning 405. Drop to the
+          // legacy clerk.client.signUp.authenticateWithRedirect with
+          // continueSignUp:true, which routes through SignUp.update() and
+          // PATCHes /v1/client/sign_ups/{id} correctly. Mirrors the activate
+          // slice workaround at use-auth-flow.ts:553.
           const { error: createError } = await authSpan(
             "auth.ticket.create",
             { mode, strategy },
@@ -147,18 +151,17 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
             return;
           }
 
-          const { error: ssoError } = await authSpan(
-            "auth.oauth.initiate",
-            { mode, strategy },
-            () =>
-              signUp.sso({
+          try {
+            await authSpan("auth.oauth.initiate", { mode, strategy }, () =>
+              clerk.client.signUp.authenticateWithRedirect({
                 strategy,
-                redirectCallbackUrl: `/sign-up/sso-callback?__clerk_ticket=${encodeURIComponent(ticket)}`,
-                redirectUrl: SUCCESS_REDIRECT,
+                redirectUrl: `/sign-up/sso-callback?__clerk_ticket=${encodeURIComponent(ticket)}`,
+                redirectUrlComplete: SUCCESS_REDIRECT,
+                continueSignUp: true,
                 legalAccepted: true,
               })
-          );
-          if (ssoError) {
+            );
+          } catch (ssoError) {
             handleOAuthMapped(
               mapOAuthClerkError(ssoError),
               strategy,
@@ -197,7 +200,7 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
         setOauthLoading(false);
       }
     },
-    [mode, ticket, signIn, signUp, handleOAuthMapped]
+    [mode, ticket, clerk, signIn, signUp, handleOAuthMapped]
   );
 
   // --- OTP slice ---

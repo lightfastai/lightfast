@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs/server";
+import { env } from "~/env";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
@@ -86,7 +87,18 @@ export default async function SignInPage({ searchParams }: PageProps) {
           <>
             <EmailForm action="sign-in" />
             <SeparatorWithText text="Or" />
-            <OAuthButton mode="sign-in" />
+            <OAuthButton
+              label="Continue with GitHub"
+              mode="sign-in"
+              strategy="oauth_github"
+            />
+            {env.NEXT_PUBLIC_VERCEL_ENV === "development" ? (
+              <OAuthButton
+                label="Continue with Test IdP"
+                mode="sign-in"
+                strategy="oauth_custom_test_idp"
+              />
+            ) : null}
           </>
         )}
 

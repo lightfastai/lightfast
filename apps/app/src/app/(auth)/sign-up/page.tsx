@@ -6,6 +6,7 @@ import dynamic from "next/dynamic";
 import NextLink from "next/link";
 import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs/server";
+import { env } from "~/env";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
@@ -117,7 +118,20 @@ export default async function SignUpPage({ searchParams }: PageProps) {
           (invitationTicket ? (
             // Invitation flow — GitHub primary, email form secondary
             <>
-              <OAuthButton mode="sign-up" ticket={invitationTicket} />
+              <OAuthButton
+                label="Continue with GitHub"
+                mode="sign-up"
+                strategy="oauth_github"
+                ticket={invitationTicket}
+              />
+              {env.NEXT_PUBLIC_VERCEL_ENV === "development" ? (
+                <OAuthButton
+                  label="Continue with Test IdP"
+                  mode="sign-up"
+                  strategy="oauth_custom_test_idp"
+                  ticket={invitationTicket}
+                />
+              ) : null}
               <SeparatorWithText text="Or" />
               <EmailForm action="sign-up" ticket={invitationTicket} />
               {invitationExpiry && (
@@ -159,7 +173,20 @@ export default async function SignUpPage({ searchParams }: PageProps) {
               </p>
 
               <SeparatorWithText text="Or" />
-              <OAuthButton mode="sign-up" ticket={null} />
+              <OAuthButton
+                label="Continue with GitHub"
+                mode="sign-up"
+                strategy="oauth_github"
+                ticket={null}
+              />
+              {env.NEXT_PUBLIC_VERCEL_ENV === "development" ? (
+                <OAuthButton
+                  label="Continue with Test IdP"
+                  mode="sign-up"
+                  strategy="oauth_custom_test_idp"
+                  ticket={null}
+                />
+              ) : null}
             </>
           ))}
 

@@ -91,13 +91,12 @@ template concern, not a Lightfast concern. What this verifies is that
 *our* activate URL contract is honored end to end (token → `signIn.ticket()`
 → finalize → redirect).
 
-⚠️ **Known bug as of 2026-05-13**: `signIn.ticket({ ticket })` on the
-Clerk Core 3 Future API silently no-ops on sign-in tokens (status stays
-`needs_identifier`, returns `{ error: null }`). See
-[`thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md`](../../../../thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md)
-(Bug A) for the diagnosis. Legacy
-`window.Clerk.client.signIn.create({ strategy: 'ticket', ticket })`
-works and proves the token is valid.
+✅ **Resolved 2026-05-13**: this flow works in HEAD via the legacy
+`clerk.client.signIn.create({strategy:"ticket", ticket})` workaround at
+`use-auth-flow.ts:553-572`. The Future API `signIn.ticket()` no-op
+(documented in Bug A of the [handoff](../../../../thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md))
+remains an upstream clerk-js issue worth a Clerk support ticket, but
+the app routes around it.
 
 ## Flow 2 — Invitation (ticket sign-up)
 
@@ -128,10 +127,11 @@ node .agents/skills/lightfast-clerk/lib/clerk-backend.mjs revoke-invitation "$IN
 node .agents/skills/lightfast-clerk/lib/clerk-backend.mjs delete-user-by-email "$EMAIL"
 ```
 
-⚠️ **Known bug as of 2026-05-13**: `signUp.create({ ticket, emailAddress, legalAccepted })`
-rejects with `form_identifier_exists` because the invitation pre-claims
-the email. See handoff above (Bug B). Suspected fix: omit the
-`emailAddress` param when `ticket` is present.
+✅ **Resolved 2026-05-13**: `signUp.create({strategy:"ticket", ticket, emailAddress, legalAccepted})`
+returns `status:"complete"` immediately (no OTP needed). The earlier
+`form_identifier_exists` symptom (Bug B in the [handoff](../../../../thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md))
+came from a code state without `strategy:"ticket"` and is no longer
+reachable.
 
 > **Constraint: don't combine `ensure-user` + `create-invitation` on the
 > same email.** Clerk rejects invitations for any email that already has
