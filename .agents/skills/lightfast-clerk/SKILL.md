@@ -33,7 +33,10 @@ What do you need?
 ├── A live browser session (cookie persisted) -> drive references/sign-in-playbook.md
 ├── Sign out                                  -> drive the sign-out section of that playbook
 ├── Wipe local profile state                  -> command/reset.sh <profile>
-└── Delete the Clerk user entirely            -> command/delete-user.sh <profile>
+├── Delete the Clerk user entirely            -> command/delete-user.sh <profile>
+├── Test the real-email round-trip            -> drive references/real-email-testing.md
+│   (magic-link, OTP, or invitation/ticket — i.e. emails ACTUALLY get sent)
+└── Backend Clerk op (token, invite, lookup)  -> node lib/clerk-backend.mjs <subcommand>
 ```
 
 **Most common workflow** (testing a tRPC procedure):
@@ -53,11 +56,32 @@ step. No browser needed — pure Clerk Backend API.
 | `reset.sh <profile>` | Wipe profile dir + meta | No | `rm -rf` profile |
 | `delete-user.sh <profile>` | Delete Clerk user + reset | No | Clerk user permanently removed |
 
+## Backend API subcommands
+
+`node lib/clerk-backend.mjs <subcommand> [args]` — thin wrapper around
+the [Clerk Backend API](https://clerk.com/docs/reference/backend-api).
+All subcommands refuse non-`sk_test_` keys. Exit code `3` = "not found"
+so callers can branch without parsing stderr.
+
+| Subcommand | Purpose | Output |
+|---|---|---|
+| `ensure-user <email>` | Idempotent create. Skips waitlist, sets `legal_accepted_at` | userId on stdout |
+| `find-user <email>` | Look up by email | JSON, or exit 3 |
+| `get-user <userId>` | Fetch by id | JSON, or exit 3 |
+| `delete-user <userId>` | Hard delete | — |
+| `delete-user-by-email <email>` | find+delete convenience | deleted userId, or exit 3 |
+| `mint-session-token <userId> [template]` | Session JWT (used by `token.sh`) | JWT on stdout |
+| `create-sign-in-token <userId> [expires_in_seconds]` | Magic-link token. No email sent | JSON `{ id, token, url, status, ... }` — expiry is in the JWT `exp` claim, not a separate field |
+| `create-invitation <email> [redirect_url] [--no-notify]` | Ticket sign-up. Clerk emails the recipient unless `--no-notify` | JSON `{ id, url, expires_at, ... }` |
+| `find-invitation <id>` | List-filter across all statuses (the `GET /v1/invitations/<id>` route 404s; default list omits revoked/accepted/expired) | JSON, or exit 3 |
+| `revoke-invitation <id>` | Cancel a pending invitation | — |
+
 ## References
 
 | File | Purpose |
 |---|---|
 | `references/sign-in-playbook.md` | Goal-driven recipe for browser sign-in / sign-out via `agent-browser`. Read + execute from your own prompt — do not shell out to a one-shot script. |
+| `references/real-email-testing.md` | Real-email round-trip with plus-addressing (magic-link, invitation, OTP sign-up). Inbox polling via Superhuman MCP. Known auth bugs. |
 | `references/safety.md` | Layered guardrails |
 | `references/test-mode.md` | Clerk test-mode primer (`+clerk_test@`, OTP `424242`) |
 | `references/jwt-templates.md` | Template names and claims |
@@ -137,8 +161,9 @@ See `references/test-mode.md`.
 ## See also
 
 - `references/sign-in-playbook.md` — browser sign-in / sign-out waypoints
+- `references/real-email-testing.md` — real-delivery flows + plus-addressing + inbox polling
 - `references/safety.md` — guardrails in detail
 - `references/test-mode.md` — Clerk test-mode primer
 - `references/jwt-templates.md` — template names + claims
 - `lib/common.sh` — shared bash helpers (sourced by all scripts; bash-only)
-- `lib/clerk-backend.mjs` — Backend API wrapper (ensure-user, get-user, delete-user, mint-session-token)
+- `lib/clerk-backend.mjs` — Backend API wrapper (users, sign-in tokens, invitations, session tokens)
