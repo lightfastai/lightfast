@@ -45,7 +45,6 @@ interface SignInStub {
     verifyCode: Mock;
   };
   finalize: Mock;
-  sso: Mock;
   status: "needs_first_factor" | "complete";
 }
 
@@ -69,7 +68,6 @@ interface SignUpStub {
   create: Mock;
   emailAddress: string | null;
   finalize: Mock;
-  sso: Mock;
   status: "missing_requirements" | "complete";
   verifications: {
     sendEmailCode: Mock;
@@ -109,7 +107,6 @@ function makeSignInStub(): SignInStub {
       sendCode: vi.fn().mockResolvedValue({ error: null }),
       verifyCode: vi.fn().mockResolvedValue({ error: null }),
     },
-    sso: vi.fn().mockResolvedValue({ error: null }),
     finalize: vi.fn(
       async (opts?: {
         navigate?: (a: {
@@ -129,7 +126,6 @@ function makeSignUpStub(): SignUpStub {
     status: "missing_requirements",
     emailAddress: null,
     create: vi.fn().mockResolvedValue({ error: null }),
-    sso: vi.fn().mockResolvedValue({ error: null }),
     verifications: {
       sendEmailCode: vi.fn().mockResolvedValue({ error: null }),
       verifyEmailCode: vi.fn().mockResolvedValue({ error: null }),
@@ -157,7 +153,9 @@ vi.mock("@vendor/clerk/client", () => ({
 
 // Install a single, persistent fake `window.location` once for the whole file
 // to avoid the cross-test pollution that happens when each `beforeEach`
-// redefines the property.
+// redefines the property. `hrefValue` captures both `.href = ...` and
+// `.replace(...)` — production code uses .replace for error/recovery
+// redirects (to keep the back-button clean) and .href for success.
 let hrefValue = "";
 Object.defineProperty(window, "location", {
   configurable: true,
@@ -169,6 +167,9 @@ Object.defineProperty(window, "location", {
       hrefValue = v;
     },
     assign: (v: string) => {
+      hrefValue = v;
+    },
+    replace: (v: string) => {
       hrefValue = v;
     },
   },
@@ -559,7 +560,12 @@ describe("useAuthFlow — auto-verify (sign-in)", () => {
     });
   });
 
-  it("does NOT verify until isInitializing flips to false (paste race)", async () => {
+  it("does NOT verify while isInitializing is true (paste before sendCode resolves)", async () => {
+    // We dropped the auto-rescheduling behavior when init flips false with a
+    // pre-existing code in the input: the moved-out-of-useEffect verify runs
+    // from onCodeChange, so a paste BEFORE init resolves never triggers verify.
+    // This is acceptable — the user can't read an OTP that hasn't been emailed
+    // yet, and recovery is to re-paste once they have the code.
     let resolveSend: (v: { error: null }) => void = () => undefined;
     signInStub.emailCode.sendCode.mockImplementation(
       () =>
@@ -582,6 +588,14 @@ describe("useAuthFlow — auto-verify (sign-in)", () => {
     await waitFor(() => {
       expect(result.current.otp.isInitializing).toBe(false);
     });
+
+    // Verify still NOT called — the paste was lost. User must re-paste once
+    // they actually have the code from email.
+    expect(signInStub.emailCode.verifyCode).not.toHaveBeenCalled();
+
+    // User clears (length<5) and re-pastes — verify fires.
+    act(() => result.current.otp.onCodeChange(""));
+    act(() => result.current.otp.onCodeChange("123456"));
 
     await waitFor(() => {
       expect(signInStub.emailCode.verifyCode).toHaveBeenCalledTimes(1);
@@ -717,17 +731,19 @@ describe("useAuthFlow — bfcache reset for OAuth loading", () => {
     resolveSso(undefined);
   });
 
-  // Placeholder so the persisted=false branch is also covered.
-  it("does NOT reset oauth.loading on initial pageshow (persisted=false)", async () => {
+  it("resets oauth.loading on every pageshow regardless of persisted flag", async () => {
+    // Defense-in-depth: dropped the persisted=true guard so partial OAuth
+    // flows (user backs out of the IdP picker) reliably re-enable the buttons
+    // across browser/SDK combinations that don't always set persisted.
     const { result } = renderHook(() =>
       useAuthFlow({ mode: "sign-in", step: "email" })
     );
 
-    let resolveSso: (v: { error: null }) => void = () => {
+    let resolveAuth: (v: undefined) => void = () => {
       /* set in mock */
     };
-    signInStub.sso.mockImplementation(
-      () => new Promise((r) => (resolveSso = r))
+    clerkStub.client.signIn.authenticateWithRedirect.mockImplementation(
+      () => new Promise<undefined>((r) => (resolveAuth = r))
     );
 
     await act(async () => {
@@ -740,9 +756,34 @@ describe("useAuthFlow — bfcache reset for OAuth loading", () => {
       Object.defineProperty(ev, "persisted", { value: false });
       window.dispatchEvent(ev);
     });
+    expect(result.current.oauth.loading).toBe(false);
+
+    resolveAuth(undefined);
+  });
+
+  it("resets oauth.loading on pagehide (clean bfcache snapshot)", async () => {
+    const { result } = renderHook(() =>
+      useAuthFlow({ mode: "sign-in", step: "email" })
+    );
+
+    let resolveAuth: (v: undefined) => void = () => {
+      /* set in mock */
+    };
+    clerkStub.client.signIn.authenticateWithRedirect.mockImplementation(
+      () => new Promise<undefined>((r) => (resolveAuth = r))
+    );
+
+    await act(async () => {
+      void result.current.oauth.initiate("oauth_github");
+    });
     expect(result.current.oauth.loading).toBe(true);
 
-    resolveSso(undefined);
+    await act(async () => {
+      window.dispatchEvent(new Event("pagehide"));
+    });
+    expect(result.current.oauth.loading).toBe(false);
+
+    resolveAuth(undefined);
   });
 });
 

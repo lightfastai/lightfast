@@ -1,5 +1,6 @@
 "use client";
 
+import { Icons } from "@repo/ui/components/icons";
 import { useAuth, useClerk } from "@vendor/clerk/client";
 import * as React from "react";
 import { mapOAuthClerkError } from "../../_hooks/auth-errors";
@@ -61,31 +62,37 @@ function SSOCallback() {
       if (!err) {
         // No error and no navigation happened — unexpected. Bail to a clean
         // sign-in form rather than leave the user on a blank callback page.
-        window.location.href = "/sign-in";
+        // .replace() so back-button doesn't re-enter the (terminal) callback.
+        window.location.replace("/sign-in");
         return;
       }
 
       const mapped = mapOAuthClerkError(err);
       if (mapped.kind === "redirect") {
-        window.location.href = mapped.target;
+        window.location.replace(mapped.target);
         return;
       }
       if (mapped.kind === "code") {
-        window.location.href = `/sign-in?errorCode=${mapped.errorCode}`;
+        window.location.replace(`/sign-in?errorCode=${mapped.errorCode}`);
         return;
       }
       if (mapped.kind === "inline") {
         const params = new URLSearchParams({ error: mapped.message });
-        window.location.href = `/sign-in?${params.toString()}`;
+        window.location.replace(`/sign-in?${params.toString()}`);
         return;
       }
-      window.location.href = "/sign-in";
+      window.location.replace("/sign-in");
     };
 
     void run();
   }, [isLoaded, clerk]);
 
-  return null;
+  return (
+    <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
+      <Icons.spinner className="h-4 w-4 animate-spin" />
+      <span>Signing in...</span>
+    </div>
+  );
 }
 
 export default function Page() {

@@ -85,26 +85,40 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
       return;
     }
     const target = mode === "sign-in" ? "/sign-in" : "/sign-up";
-    window.location.href = `${target}?errorCode=waitlist`;
+    // .replace() not .href: the user came from /sign-{in,up}?step=code (OTP)
+    // or from /sign-{in,up}/sso-callback. Both terminal — back-button should
+    // skip them, not re-enter (which would re-fire create() / handleRedirect-
+    // Callback() and bounce forward again).
+    window.location.replace(`${target}?errorCode=waitlist`);
   }, [onWaitlistError, mode]);
 
   // --- OAuth slice ---
   const [oauthLoading, setOauthLoading] = React.useState(false);
 
   // When the user clicks an OAuth button, we flip oauthLoading→true and the
-  // Clerk SDK navigates the tab to the IdP. If the user then hits Back, modern
-  // Chrome restores /sign-in from the bfcache with the React tree intact —
-  // oauthLoading stays true and every OAuth button on the page is left
-  // disabled. pageshow with persisted=true is the canonical bfcache-restore
-  // signal; reset here so the page is usable again.
+  // Clerk SDK navigates the tab to the IdP. If the user then hits Back without
+  // picking an account, modern Chrome restores /sign-in from the bfcache with
+  // the React tree intact — oauthLoading stays true and every OAuth button on
+  // the page is left disabled, so subsequent clicks land on a disabled button
+  // and do nothing.
+  //
+  // Defense in depth:
+  // 1. pagehide: reset oauthLoading→false BEFORE the page is bfcached, so the
+  //    snapshot itself has the correct state. The user never sees the
+  //    transition (page is unloading).
+  // 2. pageshow: also reset on every page-show event (initial load, bfcache
+  //    restore, plain back-nav). We drop the persisted=true guard because
+  //    setting to false when already false is a no-op, and some browser/SDK
+  //    combinations don't deliver persisted=true reliably for partial OAuth
+  //    flows. Cheaper to just always reset.
   React.useEffect(() => {
-    const handlePageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) {
-        setOauthLoading(false);
-      }
+    const reset = () => setOauthLoading(false);
+    window.addEventListener("pagehide", reset);
+    window.addEventListener("pageshow", reset);
+    return () => {
+      window.removeEventListener("pagehide", reset);
+      window.removeEventListener("pageshow", reset);
     };
-    window.addEventListener("pageshow", handlePageShow);
-    return () => window.removeEventListener("pageshow", handlePageShow);
   }, []);
 
   const handleOAuthMapped = React.useCallback(
@@ -265,7 +279,9 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
         return { success: true };
       }
       if (mapped.kind === "redirect") {
-        window.location.href = mapped.target;
+        // session_exists → /account/welcome. .replace so back-button doesn't
+        // re-enter the verify step.
+        window.location.replace(mapped.target);
         return { success: false };
       }
       if (mapped.kind === "code") {
@@ -316,8 +332,11 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
           // surfacing them inline would layer the error over the "We sent a
           // verification code" UI — confusing copy. Reset to the email step
           // with ErrorBanner instead. The ticket is no longer usable; drop it.
+          // .replace on all error paths: the user is on /sign-up?step=code
+          // (terminal in this branch — ticket already consumed). Back-button
+          // should bypass it, not re-fire signUp.create.
           if (mapped.kind === "redirect") {
-            window.location.href = mapped.target;
+            window.location.replace(mapped.target);
             return;
           }
           if (mapped.kind === "code") {
@@ -325,12 +344,12 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
               handleWaitlist();
               return;
             }
-            window.location.href = `/sign-up?errorCode=${mapped.errorCode}`;
+            window.location.replace(`/sign-up?errorCode=${mapped.errorCode}`);
             return;
           }
           if (mapped.kind === "inline") {
             const params = new URLSearchParams({ error: mapped.message });
-            window.location.href = `/sign-up?${params.toString()}`;
+            window.location.replace(`/sign-up?${params.toString()}`);
             return;
           }
           // mapped.kind === "success" — fall through to the status check.
@@ -419,20 +438,11 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
     navigateToSuccess,
   ]);
 
-  // Auto-verify effect: fires on code.length === 6, guarded by verifyingCodeRef.
-  React.useEffect(() => {
-    if (step !== "code") {
-      return;
-    }
-    if (code.length !== 6 || otpError || isInitializing) {
-      return;
-    }
-    if (verifyingCodeRef.current === code) {
-      return;
-    }
-    verifyingCodeRef.current = code;
-
-    async function verify() {
+  // Verify the OTP code. Triggered from onCodeChange when the input reaches
+  // length 6 — no effect needed. verifyingCodeRef deduplicates concurrent
+  // submissions of the same code (e.g. re-render mid-flight).
+  const verifyOtp = React.useCallback(
+    async (codeValue: string) => {
       authBreadcrumb("OTP verification attempt", "info", { mode });
       setIsVerifying(true);
       try {
@@ -440,7 +450,7 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
           const { error: verifyError } = await authSpan(
             "auth.otp.verify",
             { mode },
-            () => signIn.emailCode.verifyCode({ code })
+            () => signIn.emailCode.verifyCode({ code: codeValue })
           );
           if (verifyError) {
             authBreadcrumb("OTP verification failed", "warning", {
@@ -471,7 +481,7 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
         const { error: verifyError } = await authSpan(
           "auth.otp.verify",
           { mode },
-          () => signUp.verifications.verifyEmailCode({ code })
+          () => signUp.verifications.verifyEmailCode({ code: codeValue })
         );
         if (verifyError) {
           authBreadcrumb("OTP verification failed", "warning", {
@@ -501,28 +511,33 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
         setOtpError("An unexpected error occurred. Please try again.");
         setIsVerifying(false);
       }
-    }
+    },
+    [mode, signIn, signUp, handleOtpClerkError, navigateToSuccess]
+  );
 
-    verify();
-  }, [
-    step,
-    code,
-    otpError,
-    isInitializing,
-    mode,
-    signIn,
-    signUp,
-    handleOtpClerkError,
-    navigateToSuccess,
-  ]);
+  const onCodeChange = React.useCallback(
+    (value: string) => {
+      setOtpError(null);
+      if (value.length < 6) {
+        verifyingCodeRef.current = null;
+      }
+      setCode(value);
 
-  const onCodeChange = React.useCallback((value: string) => {
-    setOtpError(null);
-    if (value.length < 6) {
-      verifyingCodeRef.current = null;
-    }
-    setCode(value);
-  }, []);
+      // Auto-fire verify when the user reaches a full 6-digit code. Gated on
+      // !isInitializing so a paste during the initial sendCode() doesn't try
+      // to verify against a not-yet-ready resource. verifyingCodeRef prevents
+      // the same code from being submitted twice (e.g. React batching).
+      if (value.length !== 6 || isInitializing) {
+        return;
+      }
+      if (verifyingCodeRef.current === value) {
+        return;
+      }
+      verifyingCodeRef.current = value;
+      void verifyOtp(value);
+    },
+    [isInitializing, verifyOtp]
+  );
 
   const onResend = React.useCallback(async () => {
     // Don't race the init effect's initial sendCode — Clerk will return
@@ -561,14 +576,16 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
   }, [isInitializing, mode, email, signIn, signUp, handleOtpClerkError]);
 
   const onReset = React.useCallback(() => {
+    // .replace because user pressed "Back" — they want to start over, not
+    // build a history loop.
     if (mode === "sign-in") {
-      window.location.href = "/sign-in";
+      window.location.replace("/sign-in");
       return;
     }
     const ticketParam = ticket
       ? `?__clerk_ticket=${encodeURIComponent(ticket)}`
       : "";
-    window.location.href = `/sign-up${ticketParam}`;
+    window.location.replace(`/sign-up${ticketParam}`);
   }, [mode, ticket]);
 
   // --- Activate slice ---

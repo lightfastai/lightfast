@@ -11,7 +11,6 @@ import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
 import { OAuthButton } from "../_components/oauth-button";
 import { SeparatorWithText } from "../_components/separator-with-text";
-import { SignUpReconciler } from "../_components/sign-up-reconciler";
 import { loadSignUpSearchParams } from "../_lib/search-params";
 
 const OTPIsland = dynamic(() =>
@@ -112,11 +111,6 @@ export default async function SignUpPage({ searchParams }: PageProps) {
             message={error}
           />
         )}
-
-        {/* Reconcile in-flight signUp resource (legal_accepted) after Clerk
-            redirects post-OAuth callback back to /sign-up. No-op when no
-            in-flight signUp exists. */}
-        {!hasError && step === "email" && <SignUpReconciler />}
 
         {/* Step: email */}
         {!hasError &&
