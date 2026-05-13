@@ -10,10 +10,10 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-background">
-      {/* Top Navbar aligned with marketing header structure */}
-      <header className="page-gutter fixed top-0 right-0 left-0 z-50 shrink-0 bg-background py-4">
-        <div className="flex items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
+    <div className="grid min-h-screen grid-rows-[4rem_1fr_4rem] bg-background md:grid-rows-[5rem_1fr_5rem]">
+      {/* Top Navbar — sticky so it occupies its grid row (matching footer height) */}
+      <header className="page-gutter sticky top-0 z-50 flex h-16 items-center bg-background md:h-20">
+        <div className="flex w-full items-center justify-between gap-4 md:grid md:grid-cols-[1fr_auto_1fr]">
           {/* Left: Logo — routes to www via microfrontend */}
           <div className="-ml-2 flex items-center md:justify-self-start">
             <MicrofrontendLink
@@ -42,15 +42,14 @@ export default function AuthLayout({
         </div>
       </header>
 
-      {/* Spacer to offset fixed navbar height */}
-      <div aria-hidden className="h-16 shrink-0 md:h-20" />
-
-      {/* Main Content */}
-      <main className="flex flex-1 items-center justify-center p-4">
+      {/* Main Content — row 2 (1fr). Extra bottom padding shifts the card up
+          so the heavy primary CTA sits at the optical center (eye perceives
+          geometric center as low when visual weight is bottom-loaded). */}
+      <main className="grid place-items-center px-4 pb-8 md:pb-12">
         <div className="w-full max-w-xs">{children}</div>
       </main>
-      {/* Footer — mirrors header height for perfect centering */}
-      <footer className="page-gutter flex h-16 shrink-0 items-center justify-center md:h-20">
+      {/* Footer — same height as header row for exact top/bottom symmetry */}
+      <footer className="page-gutter flex h-16 items-center justify-center md:h-20">
         <div className="flex items-center gap-3 text-muted-foreground text-sm">
           <MicrofrontendLink
             className="hover:text-foreground"
