@@ -4,6 +4,7 @@ import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
 import NextLink from "next/link";
+import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs/server";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
@@ -66,6 +67,16 @@ export default async function SignUpPage({ searchParams }: PageProps) {
 
   // Support both ?ticket= (nuqs) and ?__clerk_ticket= (Clerk invitation URL)
   const invitationTicket = ticket ?? __clerk_ticket ?? null;
+
+  // Required-param guard: a `?step=code` URL without `email` renders an empty
+  // page (`<OTPIsland>` is gated on email). Reset to the email step.
+  if (step === "code" && !email) {
+    redirect(
+      invitationTicket
+        ? `/sign-up?__clerk_ticket=${encodeURIComponent(invitationTicket)}`
+        : "/sign-up"
+    );
+  }
 
   const signUpBaseUrl = invitationTicket
     ? `/sign-up?__clerk_ticket=${encodeURIComponent(invitationTicket)}`

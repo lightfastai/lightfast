@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { signInSearchParams, signUpSearchParams } from "./search-params";
+import {
+  signInSearchParams,
+  signUpSearchParams,
+} from "~/app/(auth)/_lib/search-params";
 
 describe("signInSearchParams.step", () => {
   const parser = signInSearchParams.step;
@@ -58,14 +61,6 @@ describe("string params", () => {
 
   it("signInSearchParams.email returns empty string for empty input", () => {
     expect(signInSearchParams.email.parse("")).toBe("");
-  });
-
-  it("signInSearchParams.redirect_url parses strings", () => {
-    expect(
-      signInSearchParams.redirect_url.parse(
-        "https://lightfast.localhost/desktop/auth"
-      )
-    ).toBe("https://lightfast.localhost/desktop/auth");
   });
 
   it("signUpSearchParams.__clerk_ticket parses strings", () => {

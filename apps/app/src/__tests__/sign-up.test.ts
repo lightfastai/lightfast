@@ -8,7 +8,7 @@ vi.mock("next/navigation", () => ({
   redirect: (...args: unknown[]) => mockRedirect(...(args as [string])),
 }));
 
-const { initiateSignUp } = await import("./sign-up");
+const { initiateSignUp } = await import("~/app/(auth)/_actions/sign-up");
 
 describe("initiateSignUp", () => {
   afterEach(() => {

@@ -1,6 +1,7 @@
 import { createMetadata } from "@vendor/seo/metadata";
 import type { Metadata } from "next";
 import dynamic from "next/dynamic";
+import { redirect } from "next/navigation";
 import type { SearchParams } from "nuqs/server";
 import { EmailForm } from "../_components/email-form";
 import { ErrorBanner } from "../_components/error-banner";
@@ -44,14 +45,18 @@ interface PageProps {
 }
 
 export default async function SignInPage({ searchParams }: PageProps) {
-  const {
-    step,
-    email,
-    redirect_url: redirectUrl,
-    error,
-    token,
-    errorCode,
-  } = await loadSignInSearchParams(searchParams);
+  const { step, email, error, token, errorCode } =
+    await loadSignInSearchParams(searchParams);
+
+  // Required-param guards: a stepped URL without its companion param renders
+  // an empty page (`<OTPIsland>` / `<SessionActivator>` are gated on the
+  // companion). Reset to the email step instead of stranding the user.
+  if (step === "code" && !email) {
+    redirect("/sign-in");
+  }
+  if (step === "activate" && !token) {
+    redirect("/sign-in");
+  }
 
   const hasError = !!(error ?? errorCode);
 
@@ -79,15 +84,15 @@ export default async function SignInPage({ searchParams }: PageProps) {
         {/* Step: email — server component form + client OAuth island */}
         {!hasError && step === "email" && (
           <>
-            <EmailForm action="sign-in" redirectUrl={redirectUrl} />
+            <EmailForm action="sign-in" />
             <SeparatorWithText text="Or" />
-            <OAuthButton mode="sign-in" redirectUrl={redirectUrl} />
+            <OAuthButton mode="sign-in" />
           </>
         )}
 
         {/* Step: code — client island (irreducible: OTP + Clerk FAPI) */}
         {!hasError && step === "code" && email && (
-          <OTPIsland email={email} mode="sign-in" redirectUrl={redirectUrl} />
+          <OTPIsland email={email} mode="sign-in" />
         )}
 
         {/* Step: activate — thin client island for session creation */}
