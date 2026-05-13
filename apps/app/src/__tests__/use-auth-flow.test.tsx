@@ -51,8 +51,14 @@ interface SignInStub {
 
 interface ClerkStub {
   client: {
+    resetSignIn: Mock;
+    resetSignUp: Mock;
     signIn: {
+      authenticateWithRedirect: Mock;
       create: Mock;
+    };
+    signUp: {
+      authenticateWithRedirect: Mock;
     };
   };
   session: { id: string } | null;
@@ -78,11 +84,17 @@ let clerkStub: ClerkStub;
 function makeClerkStub(): ClerkStub {
   return {
     client: {
+      resetSignIn: vi.fn(),
+      resetSignUp: vi.fn(),
       signIn: {
+        authenticateWithRedirect: vi.fn().mockResolvedValue(undefined),
         create: vi.fn().mockResolvedValue({
           status: "complete",
           createdSessionId: "sess_test_123",
         }),
+      },
+      signUp: {
+        authenticateWithRedirect: vi.fn().mockResolvedValue(undefined),
       },
     },
     setActive: vi.fn().mockResolvedValue(undefined),
@@ -670,6 +682,67 @@ describe("useAuthFlow — mode-aware waitlist redirect", () => {
     await waitFor(() => {
       expect(hrefValue).toBe("/sign-up?errorCode=waitlist");
     });
+  });
+});
+
+describe("useAuthFlow — bfcache reset for OAuth loading", () => {
+  it("flips oauth.loading back to false on bfcache restore (pageshow persisted=true)", async () => {
+    const { result } = renderHook(() =>
+      useAuthFlow({ mode: "sign-in", step: "email" })
+    );
+
+    // Block the SDK resolution so loading stays true after initiate().
+    // Production code uses clerk.client.signIn.authenticateWithRedirect for
+    // the non-ticket OAuth path (sso() Future API silently no-ops against a
+    // sticky verification state) — stub that instead of signInStub.sso.
+    let resolveSso: (v: undefined) => void = () => {
+      /* set in mock */
+    };
+    clerkStub.client.signIn.authenticateWithRedirect.mockImplementation(
+      () => new Promise<undefined>((r) => (resolveSso = r))
+    );
+
+    await act(async () => {
+      void result.current.oauth.initiate("oauth_github");
+    });
+    expect(result.current.oauth.loading).toBe(true);
+
+    await act(async () => {
+      const ev = new Event("pageshow");
+      Object.defineProperty(ev, "persisted", { value: true });
+      window.dispatchEvent(ev);
+    });
+    expect(result.current.oauth.loading).toBe(false);
+
+    resolveSso(undefined);
+  });
+
+  // Placeholder so the persisted=false branch is also covered.
+  it("does NOT reset oauth.loading on initial pageshow (persisted=false)", async () => {
+    const { result } = renderHook(() =>
+      useAuthFlow({ mode: "sign-in", step: "email" })
+    );
+
+    let resolveSso: (v: { error: null }) => void = () => {
+      /* set in mock */
+    };
+    signInStub.sso.mockImplementation(
+      () => new Promise((r) => (resolveSso = r))
+    );
+
+    await act(async () => {
+      void result.current.oauth.initiate("oauth_github");
+    });
+    expect(result.current.oauth.loading).toBe(true);
+
+    await act(async () => {
+      const ev = new Event("pageshow");
+      Object.defineProperty(ev, "persisted", { value: false });
+      window.dispatchEvent(ev);
+    });
+    expect(result.current.oauth.loading).toBe(true);
+
+    resolveSso(undefined);
   });
 });
 

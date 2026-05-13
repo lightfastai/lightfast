@@ -91,6 +91,22 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
   // --- OAuth slice ---
   const [oauthLoading, setOauthLoading] = React.useState(false);
 
+  // When the user clicks an OAuth button, we flip oauthLoading→true and the
+  // Clerk SDK navigates the tab to the IdP. If the user then hits Back, modern
+  // Chrome restores /sign-in from the bfcache with the React tree intact —
+  // oauthLoading stays true and every OAuth button on the page is left
+  // disabled. pageshow with persisted=true is the canonical bfcache-restore
+  // signal; reset here so the page is usable again.
+  React.useEffect(() => {
+    const handlePageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        setOauthLoading(false);
+      }
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
+
   const handleOAuthMapped = React.useCallback(
     (
       mapped: ReturnType<typeof mapOAuthClerkError>,
@@ -176,23 +192,45 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
           mode === "sign-in"
             ? "/sign-in/sso-callback"
             : "/sign-up/sso-callback";
-        const resource = mode === "sign-in" ? signIn : signUp;
 
+        // Future API's signIn.sso() / signUp.sso() silently no-op against a
+        // resource that already has a terminal verification state (e.g. a
+        // sticky sign_up_restricted_waitlist on signIn.firstFactorVerification
+        // after a prior OAuth round). Zero network traffic, the spinner just
+        // hangs. The Future API exposes no `continueSign{In,Up}` escape hatch
+        // and reset() doesn't clear the cookie-encoded state — only the legacy
+        // authenticateWithRedirect with continueSign{In,Up}:false forces
+        // clerk-js to POST a fresh /v1/client/sign_{ins,ups} resource rather
+        // than PATCH the stale one. Mirrors the existing Bug D workaround for
+        // the ticket flow above (legacy authenticateWithRedirect there too).
+        //
         // Standard sign-up SSO intentionally omits legalAccepted —
         // sign-up/sso-callback/page.tsx runs a patch effect that applies it
         // post-callback. Adding legalAccepted here would race that patch.
-        const { error } = await authSpan(
-          "auth.oauth.initiate",
-          { mode, strategy },
-          () =>
-            resource.sso({
-              strategy,
-              redirectCallbackUrl: callbackUrl,
-              redirectUrl: SUCCESS_REDIRECT,
-            })
-        );
-        if (error) {
-          handleOAuthMapped(mapOAuthClerkError(error), strategy, "sso");
+        try {
+          if (mode === "sign-in") {
+            clerk.client?.resetSignIn?.();
+            await authSpan("auth.oauth.initiate", { mode, strategy }, () =>
+              clerk.client.signIn.authenticateWithRedirect({
+                strategy,
+                redirectUrl: callbackUrl,
+                redirectUrlComplete: SUCCESS_REDIRECT,
+                continueSignIn: false,
+              })
+            );
+          } else {
+            clerk.client?.resetSignUp?.();
+            await authSpan("auth.oauth.initiate", { mode, strategy }, () =>
+              clerk.client.signUp.authenticateWithRedirect({
+                strategy,
+                redirectUrl: callbackUrl,
+                redirectUrlComplete: SUCCESS_REDIRECT,
+                continueSignUp: false,
+              })
+            );
+          }
+        } catch (ssoError) {
+          handleOAuthMapped(mapOAuthClerkError(ssoError), strategy, "sso");
           setOauthLoading(false);
         }
       } catch {
@@ -200,7 +238,7 @@ export function useAuthFlow(input: UseAuthFlowInput): UseAuthFlowReturn {
         setOauthLoading(false);
       }
     },
-    [mode, ticket, clerk, signIn, signUp, handleOAuthMapped]
+    [mode, ticket, clerk, signUp, handleOAuthMapped]
   );
 
   // --- OTP slice ---
