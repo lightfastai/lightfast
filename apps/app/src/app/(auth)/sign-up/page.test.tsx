@@ -225,7 +225,7 @@ describe("sign-up — OAuth", () => {
     expect(signUpStub.sso).toHaveBeenCalledWith({
       strategy: "oauth_github",
       legalAccepted: true,
-      redirectCallbackUrl: "/sign-up/sso-callback",
+      redirectCallbackUrl: "/sso-callback",
       redirectUrl: "/account/welcome",
     });
   });

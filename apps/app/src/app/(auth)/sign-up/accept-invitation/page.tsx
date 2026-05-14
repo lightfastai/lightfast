@@ -208,15 +208,14 @@ export default function AcceptInvitationPage() {
         // of PATCHing /v1/client/sign_ups/{id}, returning 405. Drop to the
         // legacy clerk.client.signUp.authenticateWithRedirect with
         // continueSignUp:true so PATCH /v1/client/sign_ups/{id} fires
-        // against the now-ticket-bound resource. Mirrors the workaround at
-        // _hooks/use-auth-flow.ts:184-193.
+        // against the now-ticket-bound resource.
         await authSpan(
           "auth.oauth.initiate",
           { mode: "sign-up", strategy },
           () =>
             clerk.client.signUp.authenticateWithRedirect({
               strategy,
-              redirectUrl: `/sign-up/sso-callback?__clerk_ticket=${encodeURIComponent(ticket)}`,
+              redirectUrl: `/sso-callback?__clerk_ticket=${encodeURIComponent(ticket)}`,
               redirectUrlComplete: SUCCESS_REDIRECT,
               continueSignUp: true,
               legalAccepted: true,

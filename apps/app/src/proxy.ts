@@ -30,6 +30,12 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring",
   "/ingest(.*)",
   "/manifest.json",
+  // Unified OAuth callback. Must be reachable both unauthenticated (normal
+  // OAuth roundtrip) and authenticated (existingSession branch — Clerk swaps
+  // the active session inside the page). If we listed it under isAuthRoute,
+  // authenticated users would get bounced to /account/welcome before the
+  // setActive can run.
+  "/sso-callback(.*)",
 ]);
 
 // API routes that handle their own auth at the route handler level.
@@ -58,9 +64,9 @@ const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 const isPendingAllowedRoute = createRouteMatcher([
   "/account/(.*)",
   // tRPC mutations that must be callable before an org exists (e.g. creating the first org).
-  // The tRPC handler's userScopedProcedure enforces its own auth; the middleware must not
+  // The tRPC handler's pendingAllowedProcedure enforces its own auth; the middleware must not
   // intercept these with auth.protect() before they reach the handler.
-  "/api/trpc/organization.create(.*)",
+  "/api/trpc/pendingAllowed.organization.create(.*)",
   // Token-handoff routes for CLI / desktop must be reachable during a pending session
   // so first-time users can finish issuing a bearer token before they've picked an org.
   "/cli/auth(.*)",

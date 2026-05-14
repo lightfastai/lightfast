@@ -324,7 +324,7 @@ export default function SignUpPage() {
             signUp.sso({
               strategy,
               legalAccepted: true,
-              redirectCallbackUrl: "/sign-up/sso-callback",
+              redirectCallbackUrl: "/sso-callback",
               redirectUrl: SUCCESS_REDIRECT,
             })
         );

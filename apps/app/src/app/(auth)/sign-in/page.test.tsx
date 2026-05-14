@@ -203,7 +203,7 @@ describe("sign-in — OAuth", () => {
 
     expect(signInStub.sso).toHaveBeenCalledWith({
       strategy: "oauth_github",
-      redirectCallbackUrl: "/sign-in/sso-callback",
+      redirectCallbackUrl: "/sso-callback",
       redirectUrl: "/account/welcome",
     });
   });

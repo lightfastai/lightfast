@@ -257,7 +257,7 @@ describe("accept-invitation — OAuth path (Bug D workaround)", () => {
       clerkStub.client.signUp.authenticateWithRedirect
     ).toHaveBeenCalledWith({
       strategy: "oauth_github",
-      redirectUrl: "/sign-up/sso-callback?__clerk_ticket=tok_abc123",
+      redirectUrl: "/sso-callback?__clerk_ticket=tok_abc123",
       redirectUrlComplete: "/account/welcome",
       continueSignUp: true,
       legalAccepted: true,

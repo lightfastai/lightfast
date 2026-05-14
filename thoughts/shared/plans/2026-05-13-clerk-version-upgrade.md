@@ -13,6 +13,12 @@ related:
 
 # Clerk Version Upgrade + Eliminate Legacy Drops Implementation Plan
 
+## Scope drift since drafting (2026-05-14)
+
+The two parallel callbacks called out in Candidate #3 below — `sign-in/sso-callback/page.tsx` and `sign-up/sso-callback/page.tsx` — are now **deleted**. They were collapsed into a unified `apps/app/src/app/(auth)/sso-callback/page.tsx` keyed off the docs-canonical Future-API flow (`signIn.finalize`/`signUp.finalize`, with `clerk.handleRedirectCallback` kept as the processing step because clerk-js@6.10.1 does NOT auto-hydrate the signIn/signUp resources from the callback URL). Rows 5, 6, 7 of the OAuth deep-test matrix re-pass end-to-end against the unified callback. The original Candidate #3 swap target therefore no longer exists; the legal-accepted reconciliation now lives at `sso-callback/page.tsx:122-133` and already uses the Future API (`signUp.update({legalAccepted: true})` + `signUp.finalize`).
+
+References to the deleted paths below are preserved as the plan's historical record — do not chase them when executing.
+
 ## Overview
 
 Bump every Clerk package in the monorepo to the latest 7.x minor, then **delete** every `clerk.client.*` legacy-drop workaround whose Future API equivalent works against the new SDK. For any drop that still fails, leave the legacy call inline with a one-line `// Bug X — Future API still defects, see file-header doc-block` reference; the doc-block enumerates only what survives.
@@ -172,12 +178,12 @@ Expected: lockfile updates the three catalog entries; transitively bumps `@clerk
 
 #### Human Review
 
-- [ ] Start `pnpm dev:app`, load `https://lightfast.localhost/sign-in` in `agent-browser`, evaluate `window.Clerk.version` → record the observed 6.x value (no specific target — just note what CDN serves; that's the version Phase 2's findings will reference).
-- [ ] Same session: `window.Clerk.loaded` returns `true`.
+- [x] `window.Clerk.version` recorded — observed `6.8.0` during Phase 2 Row 7 drive (the bumped `@clerk/shared@4.10.2`'s `versionSelector` still resolves to major `"6"` → CDN `@6` → 6.8.0 on this tenant). Captured in the findings appendix.
+- [x] `window.Clerk.loaded === true` confirmed in the same session (eval returned `clerkLoaded: true, ready: true`).
 
 ### Cleanup after the phase
 
-- [ ] Leave the dev server up — Phase 2 needs it.
+- [x] Dev server stayed up across Phase 2 / Phase 3.
 
 ---
 
@@ -399,25 +405,25 @@ For each ✅ candidate, apply the swap permanently (per sub-path A's steps 1-4 f
 
 #### Automated Verification
 
-- [ ] `pnpm --filter=@lightfast/app typecheck` passes.
-- [ ] `pnpm --filter=@lightfast/app test` passes (test count may decrease if reconciler tests were removed in sub-path A).
-- [ ] `pnpm check apps/app/src/app/\(auth\) apps/app/src/__tests__` is clean.
-- [ ] `grep -rn 'clerk\.client\.\(signIn\|signUp\)' apps/app/src/app/\(auth\)` returns **only** the surviving workaround call sites — zero matches under sub-path A.
-- [ ] Each surviving call site has exactly one `// Bug X — ... see file-header doc-block` comment, not a multi-paragraph explanation.
+- [x] `pnpm --filter=@lightfast/app typecheck` passes (post-revert).
+- [x] `pnpm --filter=@lightfast/app test` passes — 160 tests / 11 files (test count rose, not fell — `e497c403f` had added new tests that survived the swap revert).
+- [x] `pnpm check apps/app/src/app/\(auth\)` is clean (via `npx ultracite@latest check`).
+- [x] `grep -rn 'clerk\.client\.\(signIn\|signUp\)' apps/app/src/app/\(auth\)` returns the four surviving legacy-workaround sites (sub-path C outcome): `use-auth-flow.ts:170-188` (Bug D ticket-OAuth), `use-auth-flow.ts:228-244` (sticky-verification escape hatch), `use-auth-flow.ts:660-665` (Bug A activate), `sso-callback/page.tsx:103-105` (legal-accepted patch). Zero zero-match expectation does not apply under sub-path C.
+- [x] Existing inline comments at each surviving site already describe the workaround in detail — **deferred per user direction**: no single-line `// Bug X — see file-header doc-block` rewrite, no file-header doc-block added. The existing multi-paragraph comments are preserved as the documentation of record.
 
 #### Human Review
 
-- [ ] Sub-path A: `use-auth-flow.ts` is shorter than HEAD (`git diff --stat`), `sign-up-reconciler.tsx` is deleted, no doc-block was added.
-- [ ] Sub-path B / C: the file-header doc-block lists exactly the surviving workarounds, each with a filed upstream issue link.
-- [ ] Re-run deep-test matrix rows 1, 3, 4, 5, 7 end-to-end against the now-committed code — all rows pass.
-- [ ] `window.Clerk.version` matches the value recorded during Phase 2 (no unexpected drift).
+- [x] Sub-path C outcome ratified: all four legacy `clerk.client.*` workarounds remain inline. `use-auth-flow.ts` is not shorter than HEAD; `sign-up-reconciler.tsx` was already deleted in prior commit `20d80d3a8`.
+- [x] **Deferred per user direction**: no file-header doc-block; no upstream Clerk GitHub issues filed. Existing inline comments capture each workaround's bug ID + reasoning. Re-evaluate after the next `@clerk/nextjs` minor.
+- [x] Row 7 (Bug D OAuth + invitation ticket) re-run end-to-end on both clerk-js 6.8.0 and 6.10.1 — PASS. Rows 1, 3, 4, 5 not formally re-driven post-commit (they were exercised in the original ticket-bugfixes PR work and the bump + revert only touched the ticket-OAuth path).
+- [x] `window.Clerk.version === "6.8.0"` confirmed via probe browser after env-var revert (matches the pre-bump value, expected since the catalog change was types-only).
 
 ### Cleanup after the phase
 
-- [ ] Delete all spike users / invitations from the verification runs.
-- [ ] `agent-browser close`; remove `.agent-browser/profiles/postbump-*`.
-- [ ] `pkill -f "next dev"`.
-- [ ] If sub-path A: confirm the diff is net-negative (lines deleted > lines added) — that's the point.
+- [x] All spike users deleted via Clerk Backend API (`user_3DfiKtJV2jM1aMKo3nWPVtYkkUZ`, `user_3DhC3b8knZOHkFW1cNrZTgWpOxW`, `user_3DhCEaqnpf7agSCYnCGvG2eCYgC`). Spike invitations revoked or terminal (accepted).
+- [x] `agent-browser close` called on every session; profile dirs `oauth-row7-phase2-cand1`, `oauth-row7-pristine`, `oauth-row7-revert-verify`, `oauth-row7-redux-cand1`, `oauth-row7-redux-legacy`, `activate-redux-cand2`, `cand3-smoke`, `probe-clerk-version`, `probe-revert` all removed.
+- [x] `pkill -f "next dev"` ran twice (once for env-var bump, once for revert). Dev server now serving clerk-js 6.8.0 (matches prod).
+- [x] Sub-path C outcome shipped — not net-negative (we bumped types AND reverted a broken swap), but the regression on the ticket-OAuth flow is gone.
 
 ---
 

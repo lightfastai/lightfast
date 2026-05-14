@@ -282,7 +282,7 @@ export default function SignInPage() {
           () =>
             signIn.sso({
               strategy,
-              redirectCallbackUrl: "/sign-in/sso-callback",
+              redirectCallbackUrl: "/sso-callback",
               redirectUrl: SUCCESS_REDIRECT,
             })
         );
