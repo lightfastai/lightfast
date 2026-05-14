@@ -15,23 +15,23 @@ vi.mock("@sentry/nextjs", () => ({
 }));
 
 interface ClerkStub {
-  user: { id: string } | null;
   handleRedirectCallback: Mock;
+  user: { id: string } | null;
 }
 
 interface SignInStub {
-  firstFactorVerification: { error: unknown } | null;
   finalize: Mock;
+  firstFactorVerification: { error: unknown } | null;
 }
 
 interface SignUpStub {
-  status: "missing_requirements" | "complete";
+  finalize: Mock;
   missingFields: string[];
+  status: "missing_requirements" | "complete";
+  update: Mock;
   verifications: {
     externalAccount: { status: "verified" | "unverified"; error: unknown };
   };
-  update: Mock;
-  finalize: Mock;
 }
 
 let clerkStub: ClerkStub;

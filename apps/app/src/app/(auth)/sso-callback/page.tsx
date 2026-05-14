@@ -53,7 +53,7 @@ function SSOCallback() {
     if (started.current) {
       return;
     }
-    if (!isLoaded || !signIn || !signUp) {
+    if (!(isLoaded && signIn && signUp)) {
       return;
     }
     started.current = true;
@@ -90,17 +90,6 @@ function SSOCallback() {
       }
       window.location.replace(buildErrorUrl(""));
     };
-
-    const finalizeSignIn = () =>
-      signIn.finalize({
-        navigate: async ({ session, decorateUrl }) => {
-          if (session?.currentTask) {
-            return;
-          }
-          const url = decorateUrl("/account/welcome");
-          window.location.href = url;
-        },
-      });
 
     const finalizeSignUp = () =>
       signUp.finalize({
@@ -190,10 +179,11 @@ function SSOCallback() {
       // Step 4: legal_accepted reconciliation for sign-ups that landed here
       // with everything except legal_accepted (sso() init patch didn't stick
       // — bug family with in-flight resources).
-      if (needsLegalAcceptedOnly()) {
-        if (await reconcileLegalAcceptedThenFinalize()) {
-          return;
-        }
+      if (
+        needsLegalAcceptedOnly() &&
+        (await reconcileLegalAcceptedThenFinalize())
+      ) {
+        return;
       }
 
       // Nothing matched — bail to a clean form.
