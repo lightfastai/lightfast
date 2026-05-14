@@ -23,19 +23,6 @@ function SSOCallback() {
   const { signUp } = useSignUp();
   const hasRun = React.useRef(false);
 
-  // bfcache restore would re-mount the React tree with hasRun.current=true and
-  // (on some pages) clerk.loaded=false, leaving the state walk frozen on the
-  // "Signing in..." spinner. Reload to start fresh.
-  React.useEffect(() => {
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) {
-        window.location.reload();
-      }
-    };
-    window.addEventListener("pageshow", onPageShow);
-    return () => window.removeEventListener("pageshow", onPageShow);
-  }, []);
-
   React.useEffect(() => {
     if (!(clerk.loaded && signIn && signUp) || hasRun.current) {
       return;

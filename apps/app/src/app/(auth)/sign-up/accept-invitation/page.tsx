@@ -71,10 +71,25 @@ export default function AcceptInvitationPage() {
 
   React.useEffect(() => {
     const reset = () => setOauthLoading(false);
+    // bfcache restore on this page leaves window.Clerk.loaded === false and
+    // window.Clerk.client === undefined; the React closures hold a dead
+    // signUp/clerk and OAuth/email clicks silently no-op. This combination is
+    // unique to /sign-up/accept-invitation because the OAuth handler below
+    // drops to legacy clerk.client.signUp.authenticateWithRedirect() — that
+    // codepath leaves Clerk's singleton in an unrecoverable state after
+    // bfcache restore. /sign-in and /sign-up (no ticket) use signUp.sso() /
+    // signIn.sso() and hydrate cleanly after restore.
+    //
+    // The legacy escape hatch exists because clerk-js@6.10.1's signUp.sso()
+    // POSTs to the sign_ups collection URL after signUp.create({strategy:
+    // 'ticket'}) instead of the resource URL → 405. Filed upstream: see
+    // thoughts/shared/handoffs/general/2026-05-14_clerk-bug-reports.md.
+    // Bfcache eligibility itself is intentional — clerk/javascript#7775
+    // removed the SafeLock beforeunload listener that previously blocked it.
+    //
+    // Reload on bfcache restore to force fresh Clerk init. Drop this once
+    // either upstream bug is fixed.
     const onPageShow = (e: PageTransitionEvent) => {
-      // bfcache restore on this page leaves Clerk.loaded === false and the
-      // React closures pointing at a torn-down signUp/clerk. OAuth/email
-      // clicks then silently no-op. Reload to start with fresh Clerk state.
       if (e.persisted) {
         window.location.reload();
         return;

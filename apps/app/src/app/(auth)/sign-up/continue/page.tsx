@@ -17,18 +17,6 @@ function SignUpContinue() {
   const hasRun = React.useRef(false);
   const [error, setError] = React.useState<string | null>(null);
 
-  // bfcache restore would re-mount with hasRun.current=true, freezing the
-  // "Finishing sign-up..." spinner. Reload to start fresh.
-  React.useEffect(() => {
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) {
-        window.location.reload();
-      }
-    };
-    window.addEventListener("pageshow", onPageShow);
-    return () => window.removeEventListener("pageshow", onPageShow);
-  }, []);
-
   React.useEffect(() => {
     if (!(clerk.loaded && signUp) || hasRun.current) {
       return;
