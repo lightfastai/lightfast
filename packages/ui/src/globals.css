@@ -114,7 +114,7 @@
   --input: oklch(0.922 0 0);
   --input-bg: oklch(1 0 0); /* Same as background by default */
   --ring: oklch(0.708 0 0);
-  --sidebar: var(--background);
+  --sidebar: oklch(0.97 0 0);
   --sidebar-foreground: var(--foreground);
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);
@@ -159,7 +159,7 @@
     0.24 0 0
   ); /* Very subtle, slightly lighter than background */
   --ring: oklch(0.7058 0 0);
-  --sidebar: var(--background);
+  --sidebar: oklch(0.2 0 0);
   --sidebar-foreground: var(--foreground);
   --sidebar-accent: var(--accent);
   --sidebar-accent-foreground: var(--accent-foreground);

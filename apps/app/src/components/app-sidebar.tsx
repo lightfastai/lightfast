@@ -12,6 +12,7 @@ import {
   SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -20,6 +21,11 @@ import { cn } from "@repo/ui/lib/utils";
 import { BookOpen, HelpCircle, Mail, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
+import {
+  TeamSwitcher,
+  TeamSwitcherSkeleton,
+} from "~/components/team-switcher";
 
 interface NavItem {
   href: string;
@@ -74,11 +80,13 @@ export function AppSidebar() {
   const orgSlug = pathParts[0] ?? "";
 
   return (
-    <Sidebar
-      className="group/sidebar top-14 !h-[calc(100svh-3.5rem)]"
-      collapsible="offcanvas"
-    >
-      <SidebarContent className="pt-2">
+    <Sidebar collapsible="offcanvas">
+      <SidebarHeader className="h-14 flex-row items-center px-4 py-0">
+        <Suspense fallback={<TeamSwitcherSkeleton />}>
+          <TeamSwitcher />
+        </Suspense>
+      </SidebarHeader>
+      <SidebarContent>
         {orgSlug && (
           <SidebarGroup collapsible defaultOpen label="Manage">
             <SidebarGroupContent>
