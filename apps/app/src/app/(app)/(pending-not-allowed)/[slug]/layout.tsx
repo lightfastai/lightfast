@@ -1,6 +1,5 @@
 import { HydrateClient } from "@repo/app-trpc/server";
 import {
-  SidebarInset,
   SidebarProvider,
   SidebarTrigger,
 } from "@repo/ui/components/ui/sidebar";
@@ -9,7 +8,6 @@ import { log } from "@vendor/observability/log/next";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { AppHeader } from "~/components/app-header";
 import { AppSidebar } from "~/components/app-sidebar";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
@@ -20,21 +18,10 @@ interface OrgLayoutProps {
 }
 
 /**
- * Organization layout - prefetches org data using user-scoped endpoint
- *
- * Flow:
- * 1. Layout verifies org access via requireOrgAccess (fetches org directly from Clerk by slug)
- * 2. Validates org access and sets up org context
- * 3. Procedure manually verifies user has access to the org
- * 4. Middleware's organizationSyncOptions syncs org from URL (happens in parallel)
- * 5. Data is hydrated to client → fast render
- * 6. Failure → error boundary catches → proper error UI
- *
  * Why we use requireOrgAccess instead of auth().orgSlug:
- * - After org name changes, setActive() updates cookies but there's propagation delay
- * - auth().orgSlug might return old slug or null during RSC request
- * - requireOrgAccess fetches org directly from Clerk by slug and verifies membership
- * - This avoids race conditions with Clerk cookie propagation
+ * After org name changes, setActive() updates cookies but there's propagation delay,
+ * so auth().orgSlug might return old slug or null during RSC. requireOrgAccess fetches
+ * org directly from Clerk by slug and verifies membership, avoiding the race.
  */
 export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   const { slug } = await params;
@@ -53,22 +40,15 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   return (
     <HydrateClient>
       <OrgPageErrorBoundary orgSlug={slug}>
-        <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-sidebar">
+        <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
           <AppSidebar />
-          {/* Right column: header (outside inset) + inset content below */}
-          {/* pr-2 pb-2 creates the gap for the inset card — margin on SidebarInset doesn't work because w-full overflows */}
-          <div className="flex min-h-0 flex-1 flex-col overflow-hidden lg:pr-2 lg:pb-2">
-            {/* h-14 header — same visual level as sidebar's team-switcher row */}
-            <div className="flex h-14 shrink-0 items-center px-4">
-              <SidebarTrigger className="lg:hidden" />
-              <Suspense fallback={<div className="h-8 w-8" />}>
-                <AppHeader />
-              </Suspense>
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex h-10 shrink-0 items-center px-4 lg:hidden">
+              <SidebarTrigger />
             </div>
-            {/* Inset panel: 100% - h-14, rounded card floating in bg-sidebar */}
-            <SidebarInset className="overflow-hidden lg:rounded-xl lg:shadow-sm">
+            <div className="min-h-0 flex-1 overflow-y-auto">
               <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
-            </SidebarInset>
+            </div>
           </div>
         </SidebarProvider>
       </OrgPageErrorBoundary>

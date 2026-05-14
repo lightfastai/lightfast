@@ -1,7 +1,5 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
-import { TeamSwitcher } from "@repo/ui/components/app-header/team-switcher";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Popover,
@@ -19,8 +17,6 @@ import {
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
-import { useSuspenseQuery } from "@tanstack/react-query";
-import { useOrganizationList } from "@vendor/clerk/client";
 import { BookOpen, HelpCircle, Mail, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -73,41 +69,16 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
 
 export function AppSidebar() {
   const pathname = usePathname();
-  const trpc = useTRPC();
-  const { setActive } = useOrganizationList();
-
-  const { data: organizations = [] } = useSuspenseQuery({
-    ...trpc.pendingAllowed.organization.listUserOrganizations.queryOptions(),
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const handleOrgSelect = async (orgId: string) => {
-    if (setActive) {
-      await setActive({ organization: orgId });
-    }
-  };
 
   const pathParts = pathname.split("/").filter(Boolean);
   const orgSlug = pathParts[0] ?? "";
 
-  const mode =
-    pathname.startsWith("/account") || pathname.startsWith("/new")
-      ? "account"
-      : "organization";
-
   return (
-    <Sidebar className="group/sidebar" collapsible="offcanvas" variant="inset">
-      {orgSlug && (
-        <div className="flex h-14 items-center justify-between px-4">
-          <TeamSwitcher
-            createTeamHref="/account/teams/new"
-            mode={mode}
-            onOrgSelect={handleOrgSelect}
-            organizations={organizations}
-          />
-        </div>
-      )}
-      <SidebarContent>
+    <Sidebar
+      className="group/sidebar top-14 !h-[calc(100svh-3.5rem)]"
+      collapsible="offcanvas"
+    >
+      <SidebarContent className="pt-2">
         {orgSlug && (
           <SidebarGroup collapsible defaultOpen label="Manage">
             <SidebarGroupContent>

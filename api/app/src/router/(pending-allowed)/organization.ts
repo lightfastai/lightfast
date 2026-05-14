@@ -8,6 +8,15 @@ import { z } from "zod";
 
 import { pendingAllowedProcedure } from "../../trpc";
 
+function orgInitials(name: string): string {
+  return name
+    .split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+}
+
 /**
  * Organization router - Clerk-based organization management
  *
@@ -40,6 +49,7 @@ export const organizationRouter = {
         id: clerkOrg.id, // Clerk org ID
         slug: clerkOrg.slug,
         name: clerkOrg.name,
+        initials: orgInitials(clerkOrg.name),
         role: membership.role,
         imageUrl: clerkOrg.imageUrl,
       };
