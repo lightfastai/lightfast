@@ -13,22 +13,11 @@ import {
 } from "@repo/ui/components/ui/alert-dialog";
 import { Button } from "@repo/ui/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@repo/ui/components/ui/dialog";
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import {
   useMutation,
@@ -37,12 +26,8 @@ import {
 } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Check,
-  Copy,
   Key,
-  Loader2,
   MoreHorizontal,
-  Plus,
   ShieldOff,
   Trash2,
 } from "lucide-react";
@@ -59,13 +44,6 @@ export function OrgApiKeyList() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Create dialog state
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [newKeyName, setNewKeyName] = useState("");
-  const [createdKey, setCreatedKey] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  // Alert dialog state
   const [alertAction, setAlertAction] = useState<{
     type: "revoke" | "delete";
     keyId: string;
@@ -75,19 +53,6 @@ export function OrgApiKeyList() {
   const invalidateList = useCallback(
     () => queryClient.invalidateQueries({ queryKey: listQueryKey }),
     [queryClient, listQueryKey]
-  );
-
-  // --- Mutations ---
-
-  const createMutation = useMutation(
-    trpc.pendingNotAllowed.orgApiKeys.create.mutationOptions({
-      meta: { errorTitle: "Failed to create API key" },
-      onSuccess: (data) => {
-        setCreatedKey(data.key);
-        setNewKeyName("");
-        void invalidateList();
-      },
-    })
   );
 
   const revokeMutation = useMutation(
@@ -106,15 +71,6 @@ export function OrgApiKeyList() {
     })
   );
 
-  // --- Handlers ---
-
-  function handleCreate() {
-    if (!newKeyName.trim()) {
-      return;
-    }
-    createMutation.mutate({ name: newKeyName.trim() });
-  }
-
   function handleConfirmAlert() {
     if (!alertAction) {
       return;
@@ -132,113 +88,8 @@ export function OrgApiKeyList() {
     setAlertAction(null);
   }
 
-  function handleCopy() {
-    if (!createdKey) {
-      return;
-    }
-    navigator.clipboard.writeText(createdKey);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  }
-
-  function handleDialogClose(open: boolean) {
-    if (open) {
-      setIsCreateOpen(true);
-    } else {
-      setIsCreateOpen(false);
-      setCreatedKey(null);
-      setNewKeyName("");
-      setCopied(false);
-      createMutation.reset();
-    }
-  }
-
-  // --- Render ---
-
   return (
     <>
-      {/* Header + Create Button */}
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">
-          {keys.length} {keys.length === 1 ? "key" : "keys"}
-        </p>
-        <Dialog onOpenChange={handleDialogClose} open={isCreateOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" variant="secondary">
-              <Plus className="mr-1.5 h-4 w-4" />
-              Create Key
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>
-                {createdKey ? "Copy Your API Key" : "Create API Key"}
-              </DialogTitle>
-              <DialogDescription>
-                {createdKey
-                  ? "This key will only be shown once. Copy it now and store it securely."
-                  : "Give your key a descriptive name to identify its purpose."}
-              </DialogDescription>
-            </DialogHeader>
-
-            {createdKey ? (
-              <div className="space-y-3">
-                <div className="flex items-center gap-2 rounded-lg bg-muted/50 p-3">
-                  <code className="flex-1 break-all font-mono text-sm">
-                    {createdKey}
-                  </code>
-                  <Button
-                    className="h-8 w-8 shrink-0"
-                    onClick={handleCopy}
-                    size="icon"
-                    variant="ghost"
-                  >
-                    {copied ? (
-                      <Check className="h-4 w-4 text-green-500" />
-                    ) : (
-                      <Copy className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <Input
-                  autoFocus
-                  maxLength={100}
-                  onChange={(e) => setNewKeyName(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleCreate();
-                    }
-                  }}
-                  placeholder="e.g. Production API, CI/CD Pipeline"
-                  value={newKeyName}
-                />
-                <DialogFooter>
-                  <Button
-                    disabled={!newKeyName.trim() || createMutation.isPending}
-                    onClick={handleCreate}
-                    variant="secondary"
-                  >
-                    {createMutation.isPending ? (
-                      <>
-                        <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
-                        Creating...
-                      </>
-                    ) : (
-                      "Create"
-                    )}
-                  </Button>
-                </DialogFooter>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {/* Key List */}
       {keys.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="mb-4 rounded-full bg-muted/20 p-3">
@@ -258,43 +109,49 @@ export function OrgApiKeyList() {
                 revokeMutation.variables?.keyId === key.id) ||
               (deleteMutation.isPending &&
                 deleteMutation.variables?.keyId === key.id);
+            const isActive = !key.revoked && !key.expired;
 
             return (
               <div
                 className={`flex items-center justify-between border-border/60 border-b px-4 py-4 last:border-b-0 ${
                   isPending ? "opacity-60" : ""
-                } ${key.isActive ? "" : "opacity-50"}`}
+                } ${isActive ? "" : "opacity-50"}`}
                 key={key.id}
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
                     <p className="font-medium text-sm">{key.name}</p>
-                    {!key.isActive && (
+                    {key.revoked && (
                       <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
                         Revoked
                       </span>
                     )}
+                    {key.expired && !key.revoked && (
+                      <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
+                        Expired
+                      </span>
+                    )}
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground text-xs">
-                    <code className="font-mono">{key.keyPreview}</code>
+                    <code className="font-mono">{`${key.id.slice(0, 11)}…`}</code>
                     <span>
                       Created{" "}
-                      {formatDistanceToNow(new Date(key.createdAt), {
+                      {formatDistanceToNow(key.createdAt, {
                         addSuffix: true,
                       })}
                     </span>
                     {key.lastUsedAt && (
                       <span>
                         Last used{" "}
-                        {formatDistanceToNow(new Date(key.lastUsedAt), {
+                        {formatDistanceToNow(key.lastUsedAt, {
                           addSuffix: true,
                         })}
                       </span>
                     )}
-                    {key.expiresAt && (
+                    {key.expiration && (
                       <span>
                         Expires{" "}
-                        {formatDistanceToNow(new Date(key.expiresAt), {
+                        {formatDistanceToNow(key.expiration, {
                           addSuffix: true,
                         })}
                       </span>
@@ -305,35 +162,33 @@ export function OrgApiKeyList() {
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
-                      className="h-8 w-8 shrink-0 p-0"
+                      className="text-muted-foreground hover:text-foreground"
                       onClick={(e) => e.stopPropagation()}
-                      size="sm"
+                      size="icon-sm"
                       variant="ghost"
                     >
-                      <MoreHorizontal className="h-4 w-4" />
+                      <MoreHorizontal className="size-3.5" />
                       <span className="sr-only">Actions</span>
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {key.isActive && (
-                      <>
-                        <DropdownMenuItem
-                          onClick={() =>
-                            setAlertAction({
-                              type: "revoke",
-                              keyId: key.id,
-                              keyName: key.name,
-                            })
-                          }
-                        >
-                          <ShieldOff className="mr-2 h-4 w-4" />
-                          Revoke
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                      </>
+                  <DropdownMenuContent align="end" className="space-y-1">
+                    {isActive && (
+                      <DropdownMenuItem
+                        className="cursor-pointer rounded-xl px-2"
+                        onClick={() =>
+                          setAlertAction({
+                            type: "revoke",
+                            keyId: key.id,
+                            keyName: key.name,
+                          })
+                        }
+                      >
+                        <ShieldOff />
+                        Revoke
+                      </DropdownMenuItem>
                     )}
                     <DropdownMenuItem
-                      className="text-destructive"
+                      className="cursor-pointer rounded-xl px-2"
                       onClick={() =>
                         setAlertAction({
                           type: "delete",
@@ -341,8 +196,9 @@ export function OrgApiKeyList() {
                           keyName: key.name,
                         })
                       }
+                      variant="destructive"
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
+                      <Trash2 />
                       Delete
                     </DropdownMenuItem>
                   </DropdownMenuContent>
@@ -353,7 +209,6 @@ export function OrgApiKeyList() {
         </div>
       )}
 
-      {/* Confirmation AlertDialog */}
       <AlertDialog
         onOpenChange={(open) => {
           if (!open) {
