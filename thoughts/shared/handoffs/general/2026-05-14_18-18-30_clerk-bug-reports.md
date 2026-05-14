@@ -1,7 +1,9 @@
 ---
 date: 2026-05-14
 author: Jeevan Pillay (with Claude)
-status: draft — paste into https://github.com/clerk/javascript/issues/new
+status: filed — clerk/javascript#8551 (Bug 1), clerk/javascript#8552 (Bug 2)
+filed_at: 2026-05-14
+minimal_repro: https://github.com/jeevanpillay/clerk-bug-repros
 related:
   - thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md
   - apps/app/src/app/(auth)/sign-up/accept-invitation/page.tsx
@@ -12,7 +14,12 @@ related:
 
 Two reports to file against `clerk/javascript`. Bug 1 is the load-bearing one; Bug 2 is the downstream symptom that lands on our auth pages because Bug 1 forces us off the documented API surface.
 
-Both verified empirically against `@clerk/clerk-js@6.10.1` (via `@clerk/nextjs@7.3.3`) on 2026-05-13 / 2026-05-14 with agent-browser driving the flow against a Clerk dev instance + Google-emulator IdP.
+Both originally observed against `@clerk/clerk-js@6.8.0` (the version Clerk's CDN serves to our dev tenant by default) and **re-verified against `@clerk/clerk-js@6.10.1` on 2026-05-14 — both still present**. Override applied via `NEXT_PUBLIC_CLERK_JS_VERSION=6.10.1` env var to force the CDN to serve `clerk.browser.js@6.10.1`. `window.Clerk.version` confirmed `"6.10.1"` at runtime.
+
+| Bug | 6.8.0 | 6.10.1 |
+|---|---|---|
+| 1. signUp.sso() 405 on ticket-bound resource | broken | broken |
+| 2. Clerk.loaded false after bfcache restore on legacy authenticateWithRedirect | broken | broken |
 
 ---
 
@@ -93,12 +100,23 @@ Note: this workaround introduces Bug 2 below — `clerk.client.signUp.authentica
 
 ### Environment
 
-- `@clerk/clerk-js@6.10.1` (Core 3)
+- `@clerk/clerk-js@6.10.1` (Core 3) — re-verified 2026-05-14 by forcing the runtime SDK via `NEXT_PUBLIC_CLERK_JS_VERSION=6.10.1`; `window.Clerk.version === "6.10.1"` confirmed in browser. Originally observed at 6.8.0 (the CDN's default for this tenant).
 - `@clerk/nextjs@7.3.3`
 - `@clerk/shared@4.10.2`
 - Next.js App Router
 - Chromium 124 + Safari 17 (browser-agnostic — it's an SDK URL-construction bug)
 - Tenant: dev instance, `sign_up_mode` toggled across `waitlist` and `public` — identical behavior in both.
+
+### 2026-05-14 re-verification trace at 6.10.1
+
+```
+window.Clerk.version === "6.10.1"  ✓
+performance.getEntriesByType("resource").filter(e => e.name.includes("/sign_ups")):
+  /v1/client/sign_ups?... → 200  (signUp.create({strategy:'ticket',…}))
+  /v1/client/sign_ups?...&_method=PATCH → 405  (signUp.sso({strategy:'oauth_custom_test_idp',…}))
+```
+
+Identical to the 6.8.0 trace. UI freezes — OAuth button stays disabled, no error path, no IdP redirect.
 
 ---
 
@@ -169,11 +187,27 @@ This defeats the bfcache-eligibility win from #7775 on this specific page.
 
 ### Environment
 
-- `@clerk/clerk-js@6.10.1` (includes #7775)
+- `@clerk/clerk-js@6.10.1` (includes #7775) — re-verified 2026-05-14 by forcing the runtime SDK via `NEXT_PUBLIC_CLERK_JS_VERSION=6.10.1`. Originally observed at 6.8.0.
 - `@clerk/nextjs@7.3.3`
 - Next.js App Router
 - Confirmed: Chromium 124+, WebKit (Safari 17)
 - The pre-#7775 SDK never exhibited this because pages with Clerk were ineligible for bfcache entirely — restore couldn't happen. So this is a latent bug newly exposed by #7775, not a regression in #7775 itself.
+
+### 2026-05-14 re-verification trace at 6.10.1
+
+```
+1. Open /sign-up/accept-invitation?__clerk_ticket=<jwt>
+2. window.Clerk.loaded === true, window.Clerk.version === "6.10.1"  ✓
+3. Click "Continue with Test IdP" → lands on IdP consent page  ✓
+4. Browser Back → returns to /sign-up/accept-invitation  ✓
+5. performance.getEntriesByType("navigation")[0].type === "back_forward"
+6. Repeated polling at t+0s, t+5s, t+10s:
+     window.Clerk.loaded     === false  ✗  (never recovers)
+     window.Clerk.client     === undefined  ✗
+     window.Clerk.client?.signUp === undefined
+```
+
+The page's React component still mounts (it has stale references), but every action that touches `signUp` / `clerk.client` is a silent no-op. Identical to the 6.8.0 behavior. Workaround (`pageshow` event.persisted → `window.location.reload()`) is the only known recovery.
 
 ### Suggested fix shape
 
@@ -185,7 +219,9 @@ Either:
 
 ## Posting checklist
 
-- [ ] Bug 1 filed → record number here:
-- [ ] Bug 2 filed → record number here, and link Bug 1
-- [ ] Add the two issue numbers to the comment block in `apps/app/src/app/(auth)/sign-up/accept-invitation/page.tsx` (replace the doc-file pointer with the GitHub URLs)
-- [ ] Add to `thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md` so the latent-bugs ledger references the upstream tickets
+- [x] Bug 1 filed → [clerk/javascript#8551](https://github.com/clerk/javascript/issues/8551)
+- [x] Bug 2 filed → [clerk/javascript#8552](https://github.com/clerk/javascript/issues/8552), cross-references #8551
+- [x] Minimal repro published → [github.com/jeevanpillay/clerk-bug-repros](https://github.com/jeevanpillay/clerk-bug-repros) (Bug 1 verified end-to-end against clerk-js@6.10.1; Bug 2 driven manually per README)
+- [x] Comment block in `apps/app/src/app/(auth)/sign-up/accept-invitation/page.tsx` updated to link #8551 and #8552
+- [ ] Append issue numbers to `thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md` latent-bugs ledger
+- [ ] Drop the bfcache `pageshow` reload workaround when either #8551 or #8552 ships a fix in the tenant-pinned SDK version

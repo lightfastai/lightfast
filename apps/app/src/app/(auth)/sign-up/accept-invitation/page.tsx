@@ -82,13 +82,13 @@ export default function AcceptInvitationPage() {
     //
     // The legacy escape hatch exists because clerk-js@6.10.1's signUp.sso()
     // POSTs to the sign_ups collection URL after signUp.create({strategy:
-    // 'ticket'}) instead of the resource URL → 405. Filed upstream: see
-    // thoughts/shared/handoffs/general/2026-05-14_clerk-bug-reports.md.
-    // Bfcache eligibility itself is intentional — clerk/javascript#7775
-    // removed the SafeLock beforeunload listener that previously blocked it.
+    // 'ticket'}) instead of the resource URL → 405. Filed upstream as
+    // clerk/javascript#8551. The bfcache state-corruption itself is tracked
+    // as clerk/javascript#8552 — a latent bug exposed when #7775 (re-enable
+    // bfcache by removing SafeLock's beforeunload listener) shipped.
     //
     // Reload on bfcache restore to force fresh Clerk init. Drop this once
-    // either upstream bug is fixed.
+    // either upstream issue is closed with a fix in our pinned SDK version.
     const onPageShow = (e: PageTransitionEvent) => {
       if (e.persisted) {
         window.location.reload();
