@@ -1,13 +1,4 @@
-import type { Route } from "next";
-import {
-  createLoader,
-  createSerializer,
-  parseAsString,
-  parseAsStringLiteral,
-} from "nuqs/server";
-
-const signInSteps = ["email", "code", "activate"] as const;
-const signUpSteps = ["email", "code"] as const;
+import { createLoader, parseAsString, parseAsStringLiteral } from "nuqs/server";
 
 // Typed error codes — the authoritative discriminant for error rendering.
 // Known errors carry their canonical message here; `error` is for dynamic
@@ -22,33 +13,20 @@ export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
     "No Lightfast account is linked to this GitHub account. Sign up to create one.",
 };
 
-export const signInSearchParams = {
-  step: parseAsStringLiteral(signInSteps).withDefault("email"),
-  email: parseAsString,
+// Shared error-only schema for sign-in and sign-up.
+export const authErrorSearchParams = {
   error: parseAsString,
-  token: parseAsString,
   errorCode: parseAsStringLiteral(authErrorCodes),
 };
 
-export const signUpSearchParams = {
-  step: parseAsStringLiteral(signUpSteps).withDefault("email"),
-  email: parseAsString,
+// Accept-invitation schema includes the ticket.
+export const acceptInvitationSearchParams = {
+  __clerk_ticket: parseAsString,
   error: parseAsString,
-  ticket: parseAsString,
-  __clerk_ticket: parseAsString, // Clerk invitation URL parameter
   errorCode: parseAsStringLiteral(authErrorCodes),
 };
 
-export const loadSignInSearchParams = createLoader(signInSearchParams);
-export const loadSignUpSearchParams = createLoader(signUpSearchParams);
-
-export const serializeSignInParams = createSerializer<
-  typeof signInSearchParams,
-  Route<string>,
-  Route<string>
->(signInSearchParams);
-export const serializeSignUpParams = createSerializer<
-  typeof signUpSearchParams,
-  Route<string>,
-  Route<string>
->(signUpSearchParams);
+export const loadAuthErrorSearchParams = createLoader(authErrorSearchParams);
+export const loadAcceptInvitationSearchParams = createLoader(
+  acceptInvitationSearchParams
+);

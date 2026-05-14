@@ -25,12 +25,6 @@ import { mapOAuthClerkError } from "../../_hooks/auth-errors";
 //    navigates and our post-await code never runs (page unmounts). So we
 //    inspect resource state after the await — the only execution path that
 //    reaches it is the rejection case.
-//
-// The sticky-no-op recovery (calling reset() before the *next* sso() attempt
-// so it actually issues network traffic) lives in useAuthFlow — it has to
-// happen at the point of retry, not here, because a full page navigation
-// re-hydrates the signIn resource from cookies and wipes any in-memory reset
-// we'd do on this page.
 function SSOCallback() {
   const clerk = useClerk();
   const { isLoaded } = useAuth();

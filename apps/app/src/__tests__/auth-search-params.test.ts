@@ -1,71 +1,55 @@
 import { describe, expect, it } from "vitest";
 import {
-  signInSearchParams,
-  signUpSearchParams,
+  AUTH_ERROR_MESSAGES,
+  acceptInvitationSearchParams,
+  authErrorCodes,
+  authErrorSearchParams,
 } from "~/app/(auth)/_lib/search-params";
 
-describe("signInSearchParams.step", () => {
-  const parser = signInSearchParams.step;
-
-  it("parses valid step values", () => {
-    expect(parser.parse("email")).toBe("email");
-    expect(parser.parse("code")).toBe("code");
-    expect(parser.parse("activate")).toBe("activate");
+describe("authErrorCodes", () => {
+  it("exports the expected canonical error codes", () => {
+    expect(authErrorCodes).toEqual(["waitlist", "account_not_found"]);
   });
 
-  it("rejects invalid step values", () => {
-    expect(parser.parse("invalid")).toBe(null);
-    expect(parser.parse("")).toBe(null);
-    expect(parser.parse("signup")).toBe(null);
-  });
-
-  it("serializes valid step values", () => {
-    expect(parser.serialize("email")).toBe("email");
-    expect(parser.serialize("code")).toBe("code");
-    expect(parser.serialize("activate")).toBe("activate");
-  });
-
-  it("defaults to email", () => {
-    expect(parser.defaultValue).toBe("email");
+  it("has a canonical message for each error code", () => {
+    for (const code of authErrorCodes) {
+      expect(AUTH_ERROR_MESSAGES[code]).toBeTypeOf("string");
+      expect(AUTH_ERROR_MESSAGES[code].length).toBeGreaterThan(0);
+    }
   });
 });
 
-describe("signUpSearchParams.step", () => {
-  const parser = signUpSearchParams.step;
-
-  it("parses valid step values", () => {
-    expect(parser.parse("email")).toBe("email");
-    expect(parser.parse("code")).toBe("code");
+describe("authErrorSearchParams", () => {
+  it("parses valid errorCode values", () => {
+    expect(authErrorSearchParams.errorCode.parse("waitlist")).toBe("waitlist");
+    expect(authErrorSearchParams.errorCode.parse("account_not_found")).toBe(
+      "account_not_found"
+    );
   });
 
-  it("rejects activate (sign-up has no activate step)", () => {
-    expect(parser.parse("activate")).toBe(null);
+  it("rejects invalid errorCode values", () => {
+    expect(authErrorSearchParams.errorCode.parse("invalid")).toBe(null);
+    expect(authErrorSearchParams.errorCode.parse("")).toBe(null);
   });
 
-  it("rejects invalid step values", () => {
-    expect(parser.parse("invalid")).toBe(null);
-    expect(parser.parse("")).toBe(null);
-  });
-
-  it("defaults to email", () => {
-    expect(parser.defaultValue).toBe("email");
+  it("parses arbitrary error strings", () => {
+    expect(
+      authErrorSearchParams.error.parse("Please enter a valid email")
+    ).toBe("Please enter a valid email");
   });
 });
 
-describe("string params", () => {
-  it("signInSearchParams.email parses strings", () => {
-    expect(signInSearchParams.email.parse("user@example.com")).toBe(
-      "user@example.com"
+describe("acceptInvitationSearchParams", () => {
+  it("parses __clerk_ticket strings", () => {
+    expect(acceptInvitationSearchParams.__clerk_ticket.parse("tok_abc")).toBe(
+      "tok_abc"
     );
   });
 
-  it("signInSearchParams.email returns empty string for empty input", () => {
-    expect(signInSearchParams.email.parse("")).toBe("");
-  });
-
-  it("signUpSearchParams.__clerk_ticket parses strings", () => {
-    expect(signUpSearchParams.__clerk_ticket.parse("ticket-123")).toBe(
-      "ticket-123"
+  it("shares the same errorCode parser as authErrorSearchParams", () => {
+    expect(acceptInvitationSearchParams.errorCode.parse("waitlist")).toBe(
+      "waitlist"
     );
+    expect(acceptInvitationSearchParams.errorCode.parse("invalid")).toBe(null);
   });
 });
