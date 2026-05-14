@@ -226,3 +226,48 @@ Phase 2 verification paused after the Candidate #1 finding because the same root
 - `SignInFutureResource` exposes both `create(params: SignInFutureCreateParams)` (accepts `strategy: …|TicketStrategy`) and a dedicated `ticket(params: SignInFutureTicketParams)` method.
 - `SignUpFutureUpdateParams` extends `SignUpFutureAdditionalParams` → `legalAccepted?: boolean` is type-accepted on `signUp.update()`.
 
+## Phase 2 redux — runtime actually bumped to clerk-js@6.10.1 (2026-05-14)
+
+Set `NEXT_PUBLIC_CLERK_JS_VERSION="6.10.1"` in `apps/app/.vercel/.env.development.local`, restarted `pnpm dev:app`. Confirmed `window.Clerk.version === "6.10.1"` and `<script src>` now points at `…/npm/@clerk/clerk-js@6.10.1/dist/clerk.browser.js` instead of `@6` (which resolves to 6.8.0).
+
+Also discovered while wiring this up:
+- `display_config.clerk_js_version` in the FAPI `/v1/environment` response was already `"6.10.1"` BEFORE the env-var change. That field is not the actual lever — `@clerk/nextjs@7.3.3`'s `versionSelector()` (in `@clerk/shared/runtime/loadClerkJsScript.mjs`) only reads `__internal_clerkJSVersion` (from `NEXT_PUBLIC_CLERK_JS_VERSION`). Without that env var, it falls back to the *major* of `JS_PACKAGE_VERSION = "6.10.1"` → `"6"` → CDN `@6` redirect → 6.8.0.
+- Backend API endpoints `PATCH /instance`, `PATCH /beta_features/instance_settings`, and `clerk config patch` all silently ignore `clerk_js_version` keys — there is no documented Backend route to manipulate it. The dashboard's "Clerk JS Version" selector is the only path apart from the env var.
+- The emulator's seed at `/tmp/emulate-seed.yaml` only has `testuser@example.com` after `dev:emulate` regenerates it; previous test users that were manually appended (e.g. `oauth-row7-1778666819@example.com`) are wiped on next restart. Added `oauth-row7-1778724458@example.com` to the seed and HUP-restarted emulator process directly to pick it up.
+
+### Candidate #1 redux — Bug D `signUp.sso({legalAccepted, redirectCallbackUrl})` on 6.10.1 — ❌
+
+Re-applied the swap. Fresh invitation `inv_3DhBlyUJocU8WLFdzdBPjugluQ9` for `oauth-row7-1778724458@example.com`. Pristine agent-browser profile.
+- Page loaded, `window.Clerk.version = "6.10.1"`. Network interceptor installed before click.
+- Clicked "Continue with Test IdP" (`@e5`). Button transitioned `disabled = true`.
+- 35 s of URL polling: stayed on `/sign-up?__clerk_ticket=…`. Never reached IdP / sso-callback / account.
+- Post-click state: `__signUpsLog: []`, `performance.getEntriesByType("resource")` filtered for `/v1/client/sign_*` was empty, `clerk.client.signUp.status: null`, `…signUp.id: undefined`.
+
+**Identical failure mode to 6.8.0.** Bumping runtime to 6.10.1 did not change anything for Candidate #1. Structural cause: `SignUpFutureSSOParams` has no `continueSignUp` field; the SDK doesn't know to PATCH the in-flight resource created by `signUp.create({ticket})`. Reverted to legacy and re-drove Row 7 end-to-end on 6.10.1 — pass: `user_3DhC3b8knZOHkFW1cNrZTgWpOxW`, `legalAcceptedAt: "2026-05-14T02:11:28.365Z"`, externalAccount provider `custom_test_idp` verified, lands at `/account/teams/new`. Test user deleted.
+
+### Candidate #2 redux — Bug A `signIn.create({strategy:"ticket"})` on 6.10.1 — ❌
+
+Provisioned user `user_3DhCEaqnpf7agSCYnCGvG2eCYgC` via `ensure-user`. Minted sign-in token `sit_3DhCEisd7v4GokfkdicoTtpVvNf`. Applied swap (Future-API proxy + read result via `clerk.client.signIn` post-await).
+
+- Navigated to `/sign-in?step=activate&token=…`.
+- After activate effect ran: `clerk.client.signIn.status = null`, `…createdSessionId = null`, `clerk.session = null`. UI rendered "Sign-in failed. Please try again."
+- `performance.getEntriesByType("resource")` showed `POST /v1/client/sign_ins` at t=3239ms with `_clerk_js_version=6.10.1` — network traffic DID fire, the call resolved with `error: null`, but the proxy didn't expose `status: "complete"` + `createdSessionId` to the React side.
+
+**Identical failure mode to 6.8.0.** Plan's prediction was correct: "static type unchanged in 4.10.2 so requires runtime verification" — runtime verification also ❌. The Future-API proxy's state propagation for ticket-based create is broken on 6.10.1 too. Reverted swap.
+
+### Candidates #3 and #4 — smoke-test attempted, not actionable
+
+Candidate #3 (sso-callback `signUp.update({legalAccepted: true})`): tried `Clerk.client.signUp.__internal_future.update({legalAccepted: true})` directly from console after `Clerk.client.signUp.create({emailAddress})`. The first `signUp.create` was rejected by the tenant's waitlist (403 `sign_up_restricted_waitlist`), preventing us from reaching the missing-`legal_accepted` state without driving a full invitation flow. Skipped — would have required temporarily dropping `legalAccepted: true` from the legacy ticket-OAuth call and a full Row 7 drive (out of scope for smoke).
+
+Candidate #4 (sticky-verification escape hatch at `use-auth-flow.ts:228-244`): not exercised. The reproducer needs two attempts where the first ends in a sticky terminal verification state (`sign_up_restricted_waitlist`), and the type surface confirms `SignInFutureSSOParams` has no `continueSignIn` field on 4.10.2 — so even with a runtime fix, the type-level no-go remains.
+
+### Phase 2 redux conclusion
+
+**The runtime bump (6.8.0 → 6.10.1) does not fix Bug A or Bug D.** Both failure modes reproduce on 6.10.1 with identical signatures to 6.8.0:
+- Bug D: silent no-op (no network traffic, button stuck `disabled`)
+- Bug A: network traffic fires but proxy state propagation broken (`status: null` after a `{error:null}` response)
+
+These are not runtime regressions in 6.8.0 that 6.10.1 patches — they're structural gaps in the Future-API surface (`SignUpFutureSSOParams` missing `continueSignUp`; ticket-based `signIn.create` not propagating proxy state). The empirical answer is **disposition unchanged from the original Phase 2 conclusion** — all four candidates ❌, all four legacy workarounds remain inline at their current sites.
+
+The `NEXT_PUBLIC_CLERK_JS_VERSION="6.10.1"` env var change in `apps/app/.vercel/.env.development.local` is local dev state only (gitignored under `.vercel`). Disposition is open: keep for closer parity with future Clerk versions, or revert for parity with prod (which serves 6.8.0).
+
