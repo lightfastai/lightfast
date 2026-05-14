@@ -14,73 +14,110 @@ vi.mock("@sentry/nextjs", () => ({
   startSpan: <T,>(_opts: unknown, fn: () => Promise<T>) => fn(),
 }));
 
+type SignUpStatus = "missing_requirements" | "complete" | "abandoned";
+type SignInStatus =
+  | "complete"
+  | "needs_first_factor"
+  | "needs_second_factor"
+  | "needs_new_password"
+  | "needs_identifier";
+
+interface FirstFactor {
+  strategy: string;
+}
+
+interface ExistingSession {
+  sessionId: string;
+}
+
 interface ClerkStub {
-  handleRedirectCallback: Mock;
-  user: { id: string } | null;
+  loaded: boolean;
+  setActive: Mock;
 }
 
 interface SignInStub {
+  create: Mock;
+  existingSession: ExistingSession | null;
   finalize: Mock;
   firstFactorVerification: { error: unknown } | null;
+  isTransferable: boolean;
+  status: SignInStatus;
+  supportedFirstFactors: FirstFactor[] | null;
 }
 
 interface SignUpStub {
+  create: Mock;
+  existingSession: ExistingSession | null;
   finalize: Mock;
+  isTransferable: boolean;
   missingFields: string[];
-  status: "missing_requirements" | "complete";
+  status: SignUpStatus;
   update: Mock;
   verifications: {
-    externalAccount: { status: "verified" | "unverified"; error: unknown };
+    externalAccount: { error: unknown; status: "verified" | "unverified" };
   };
 }
 
 let clerkStub: ClerkStub;
 let signInStub: SignInStub;
 let signUpStub: SignUpStub;
-let isLoadedValue: boolean;
+
+function navigateInvoker(opts?: {
+  navigate?: (a: {
+    decorateUrl: (u: string) => string;
+    session: { currentTask: unknown } | null;
+  }) => undefined | Promise<unknown>;
+}) {
+  if (!opts?.navigate) {
+    return;
+  }
+  return opts.navigate({
+    decorateUrl: (u) => u,
+    session: { currentTask: null },
+  });
+}
 
 function makeClerkStub(): ClerkStub {
   return {
-    user: null,
-    handleRedirectCallback: vi.fn().mockResolvedValue(undefined),
+    loaded: true,
+    setActive: vi.fn(async (opts?: Parameters<typeof navigateInvoker>[0]) => {
+      await navigateInvoker(opts);
+    }),
   };
 }
 
 function makeSignInStub(): SignInStub {
   return {
+    create: vi.fn().mockResolvedValue({ error: null }),
+    existingSession: null,
+    finalize: vi.fn(async (opts?: Parameters<typeof navigateInvoker>[0]) => {
+      await navigateInvoker(opts);
+    }),
     firstFactorVerification: null,
-    finalize: vi.fn(),
+    isTransferable: false,
+    status: "needs_identifier",
+    supportedFirstFactors: null,
   };
 }
 
 function makeSignUpStub(): SignUpStub {
   return {
-    status: "missing_requirements",
+    create: vi.fn().mockResolvedValue({ error: null }),
+    existingSession: null,
+    finalize: vi.fn(async (opts?: Parameters<typeof navigateInvoker>[0]) => {
+      await navigateInvoker(opts);
+    }),
+    isTransferable: false,
     missingFields: [],
+    status: "missing_requirements",
+    update: vi.fn().mockResolvedValue({ error: null }),
     verifications: {
       externalAccount: { status: "unverified", error: null },
     },
-    update: vi.fn().mockResolvedValue({ error: null }),
-    finalize: vi.fn(
-      async (opts?: {
-        navigate?: (a: {
-          session: { currentTask: unknown } | null;
-          decorateUrl: (u: string) => string;
-        }) => undefined | Promise<unknown>;
-      }) => {
-        if (opts?.navigate) {
-          await opts.navigate({
-            session: { currentTask: null },
-            decorateUrl: (u) => u,
-          });
-        }
-      }
-    ),
   };
 }
 
 vi.mock("@vendor/clerk/client", () => ({
-  useAuth: () => ({ isLoaded: isLoadedValue }),
   useClerk: () => clerkStub,
   useSignIn: () => ({ signIn: signInStub }),
   useSignUp: () => ({ signUp: signUpStub }),
@@ -113,7 +150,6 @@ beforeEach(() => {
   clerkStub = makeClerkStub();
   signInStub = makeSignInStub();
   signUpStub = makeSignUpStub();
-  isLoadedValue = true;
   hrefValue = "";
   searchValue = "";
 });
@@ -125,37 +161,175 @@ afterEach(() => {
 const { default: SSOCallbackPage } = await import("./page");
 
 describe("sso-callback — gating", () => {
-  it("does not call handleRedirectCallback until isLoaded is true", async () => {
-    isLoadedValue = false;
-    render(<SSOCallbackPage />);
-    expect(clerkStub.handleRedirectCallback).not.toHaveBeenCalled();
+  it("does not run state walk until clerk.loaded is true", async () => {
+    clerkStub.loaded = false;
+    signInStub.status = "complete";
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    expect(signInStub.finalize).not.toHaveBeenCalled();
   });
+});
 
-  it("calls handleRedirectCallback once gates pass", async () => {
-    clerkStub.user = { id: "user_abc" };
+describe("sso-callback — branch 1: signIn complete", () => {
+  it("finalizes sign-in and navigates to /account/welcome", async () => {
+    signInStub.status = "complete";
     await act(async () => {
       render(<SSOCallbackPage />);
     });
     await waitFor(() => {
-      expect(clerkStub.handleRedirectCallback).toHaveBeenCalledTimes(1);
+      expect(signInStub.finalize).toHaveBeenCalledTimes(1);
     });
-    expect(clerkStub.handleRedirectCallback).toHaveBeenCalledWith({
-      signInFallbackRedirectUrl: "/account/welcome",
-      signUpFallbackRedirectUrl: "/account/welcome",
-      continueSignUpUrl: "/sign-in?errorCode=account_not_found",
+    expect(hrefValue).toBe("/account/welcome");
+  });
+});
+
+describe("sso-callback — branch 2: signUp.isTransferable", () => {
+  it("transfers to sign-in then finalizes when complete", async () => {
+    signUpStub.isTransferable = true;
+    signInStub.create.mockImplementation(async () => {
+      signInStub.status = "complete";
+      return { error: null };
+    });
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(signInStub.create).toHaveBeenCalledWith({ transfer: true });
+    });
+    await waitFor(() => {
+      expect(signInStub.finalize).toHaveBeenCalledTimes(1);
+    });
+    expect(hrefValue).toBe("/account/welcome");
+  });
+
+  it("bails to /sign-in when transferred sign-in stays incomplete", async () => {
+    signUpStub.isTransferable = true;
+    signInStub.create.mockImplementation(async () => {
+      signInStub.status = "needs_first_factor";
+      return { error: null };
+    });
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(hrefValue).toBe("/sign-in");
     });
   });
 });
 
-describe("sso-callback — happy path", () => {
-  it("navigates to /account/welcome when clerk.user is populated", async () => {
-    clerkStub.user = { id: "user_abc" };
+describe("sso-callback — branch 3: needs_first_factor (non-SSO)", () => {
+  it("bails to /sign-in when first factor isn't enterprise SSO", async () => {
+    signInStub.status = "needs_first_factor";
+    signInStub.supportedFirstFactors = [{ strategy: "password" }];
     await act(async () => {
       render(<SSOCallbackPage />);
     });
     await waitFor(() => {
-      expect(hrefValue).toBe("/account/welcome");
+      expect(hrefValue).toBe("/sign-in");
     });
+    expect(signInStub.finalize).not.toHaveBeenCalled();
+  });
+});
+
+describe("sso-callback — branch 4: signIn.isTransferable", () => {
+  it("transfers to sign-up then finalizes when complete", async () => {
+    signInStub.isTransferable = true;
+    signUpStub.create.mockImplementation(async () => {
+      signUpStub.status = "complete";
+      return { error: null };
+    });
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(signUpStub.create).toHaveBeenCalledWith({
+        transfer: true,
+        legalAccepted: true,
+      });
+    });
+    await waitFor(() => {
+      expect(signUpStub.finalize).toHaveBeenCalledTimes(1);
+    });
+    expect(hrefValue).toBe("/account/welcome");
+  });
+
+  it("routes to /sign-up/continue when transferred sign-up has missing requirements", async () => {
+    signInStub.isTransferable = true;
+    signUpStub.create.mockImplementation(async () => {
+      signUpStub.status = "missing_requirements";
+      signUpStub.missingFields = ["legal_accepted"];
+      return { error: null };
+    });
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(hrefValue).toBe("/sign-up/continue");
+    });
+  });
+});
+
+describe("sso-callback — branch 5: signUp complete", () => {
+  it("finalizes sign-up when signUp.status is already complete", async () => {
+    signUpStub.status = "complete";
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(signUpStub.finalize).toHaveBeenCalledTimes(1);
+    });
+    expect(hrefValue).toBe("/account/welcome");
+  });
+});
+
+describe("sso-callback — branch 6: MFA / new password", () => {
+  it("bails to /sign-in on needs_second_factor", async () => {
+    signInStub.status = "needs_second_factor";
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(hrefValue).toBe("/sign-in");
+    });
+  });
+
+  it("bails to /sign-in on needs_new_password", async () => {
+    signInStub.status = "needs_new_password";
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(hrefValue).toBe("/sign-in");
+    });
+  });
+});
+
+describe("sso-callback — branch 7: existingSession", () => {
+  it("activates an existing signIn session and navigates", async () => {
+    signInStub.existingSession = { sessionId: "sess_abc" };
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(clerkStub.setActive).toHaveBeenCalledWith(
+        expect.objectContaining({ session: "sess_abc" })
+      );
+    });
+    expect(hrefValue).toBe("/account/welcome");
+  });
+
+  it("activates an existing signUp session when signIn is empty", async () => {
+    signUpStub.existingSession = { sessionId: "sess_xyz" };
+    await act(async () => {
+      render(<SSOCallbackPage />);
+    });
+    await waitFor(() => {
+      expect(clerkStub.setActive).toHaveBeenCalledWith(
+        expect.objectContaining({ session: "sess_xyz" })
+      );
+    });
+    expect(hrefValue).toBe("/account/welcome");
   });
 });
 
@@ -186,33 +360,6 @@ describe("sso-callback — inbound errors", () => {
         "/sign-up/accept-invitation?__clerk_ticket=tok_abc123&errorCode=waitlist"
       );
     });
-  });
-});
-
-describe("sso-callback — legal_accepted reconciliation", () => {
-  it("calls signUp.update({legalAccepted}) then finalize when only legal_accepted is missing", async () => {
-    signUpStub.status = "missing_requirements";
-    signUpStub.missingFields = ["legal_accepted"];
-    signUpStub.verifications.externalAccount = {
-      status: "verified",
-      error: null,
-    };
-    signUpStub.update.mockImplementation(async () => {
-      signUpStub.status = "complete";
-      return { error: null };
-    });
-
-    await act(async () => {
-      render(<SSOCallbackPage />);
-    });
-
-    await waitFor(() => {
-      expect(signUpStub.update).toHaveBeenCalledWith({ legalAccepted: true });
-    });
-    await waitFor(() => {
-      expect(signUpStub.finalize).toHaveBeenCalledTimes(1);
-    });
-    expect(hrefValue).toBe("/account/welcome");
   });
 });
 

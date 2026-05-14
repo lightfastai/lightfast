@@ -1,62 +1,32 @@
 "use client";
 
 import { Icons } from "@repo/ui/components/icons";
-import { useAuth, useClerk, useSignIn, useSignUp } from "@vendor/clerk/client";
+import { useClerk, useSignIn, useSignUp } from "@vendor/clerk/client";
 import * as React from "react";
 import { mapOAuthClerkError } from "../_hooks/auth-errors";
 
-// Unified OAuth callback. Replaces the parallel sign-in/sso-callback and
-// sign-up/sso-callback pages.
+const SUCCESS_REDIRECT = "/account/welcome";
+
+// Unified OAuth callback. Mirrors Clerk's Future-API reference:
+// https://clerk.com/docs/guides/development/custom-flows/authentication/oauth-connections
 //
-// Architecture: hybrid. We tried to follow Clerk's docs example which uses a
-// pure Future-API state-machine walk (no clerk.handleRedirectCallback). On
-// clerk-js@6.10.1 that pattern does NOT work — Clerk's hooks do NOT auto-
-// hydrate signIn/signUp resources from the IdP callback URL, so the state
-// walk runs on empty resources and bails to /sign-in. Verified empirically
-// against Row 5 of the OAuth deep-test matrix (testuser@example.com via Test
-// IdP). So we keep clerk.handleRedirectCallback as the processing step, and
-// run the state walk only for cases it doesn't cover.
+// The effect re-runs as signIn/signUp resources hydrate from the IdP callback
+// URL; hasRun gates the state machine to one pass.
 //
-// Two Clerk quirks shape what comes after:
-//
-// 1. handleRedirectCallback does NOT throw on rejections. clerk-react wraps
-//    the underlying call in `.catch(() => {})` (see @clerk/react@6.5.0 dist
-//    line 3258). Rejections are pinned to
-//    clerk.client.signIn.firstFactorVerification.error or
-//    clerk.client.signUp.verifications.externalAccount.error — inspect after
-//    the await. On success it navigates internally and our post-await code
-//    never runs.
-//
-// 2. We pass legalAccepted:true to signUp.sso() at init, but if the IdP
-//    roundtrip returns with status=missing_requirements + missing=[legal_
-//    accepted], the patch didn't stick — likely the in-flight resource patch
-//    bug family. We reconcile via Future API signUp.update({legalAccepted})
-//    here; if that no-ops in practice we'll see a Row 7 dead-end and fall
-//    back to clerk.client.signUp.update.
-//
-// __clerk_ticket preservation: /sign-up/accept-invitation uses legacy
-// authenticateWithRedirect and tags __clerk_ticket on the callback URL. On
-// error we route back to /sign-up/accept-invitation so the ticket UI
-// re-mounts with a banner rather than dropping into /sign-in.
+// __clerk_ticket preservation: /sign-up/accept-invitation appends the ticket
+// to its callback URL. On error we route back to accept-invitation so the
+// ticket UI re-mounts with a banner instead of dropping into /sign-in.
 function SSOCallback() {
   const clerk = useClerk();
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
-  // useAuth().isLoaded is the reactive load signal. useSignIn/useSignUp on
-  // the Future API don't expose isLoaded; clerk.loaded is not reactive
-  // (useClerk returns a stable singleton ref). useAuth IS reactive and
-  // matches the legacy callback's gating pattern.
-  const { isLoaded } = useAuth();
-  const started = React.useRef(false);
+  const hasRun = React.useRef(false);
 
   React.useEffect(() => {
-    if (started.current) {
+    if (!(clerk.loaded && signIn && signUp) || hasRun.current) {
       return;
     }
-    if (!(isLoaded && signIn && signUp)) {
-      return;
-    }
-    started.current = true;
+    hasRun.current = true;
 
     const callbackTicket = new URLSearchParams(window.location.search).get(
       "__clerk_ticket"
@@ -91,75 +61,25 @@ function SSOCallback() {
       window.location.replace(buildErrorUrl(""));
     };
 
-    const finalizeSignUp = () =>
-      signUp.finalize({
-        navigate: async ({ session, decorateUrl }) => {
-          if (session?.currentTask) {
-            return;
-          }
-          const url = decorateUrl("/account/welcome");
-          window.location.href = url;
-        },
-      });
-
-    // Future API reconciliation. signUp.update mutates the in-flight
-    // resource; signUp.finalize then runs setActive + navigate for us.
-    // Returns true if it closed the resource and navigated; false if caller
-    // should fall through. If this no-ops in practice (suspected per
-    // pre-strip notes — the in-flight resource patch bug family), Row 7 will
-    // dead-end and we'll re-introduce clerk.client.signUp.update here.
-    const reconcileLegalAcceptedThenFinalize = async (): Promise<boolean> => {
-      try {
-        await signUp.update({ legalAccepted: true });
-        if (signUp.status === "complete") {
-          await finalizeSignUp();
-          return true;
-        }
-      } catch {
-        // fall through
+    const navigateAfterSession = (params: {
+      session?: { currentTask?: unknown } | null;
+      decorateUrl: (u: string) => string;
+    }) => {
+      if (params.session?.currentTask) {
+        return;
       }
-      return false;
+      window.location.href = params.decorateUrl(SUCCESS_REDIRECT);
     };
 
-    const needsLegalAcceptedOnly = () =>
-      signUp.status === "missing_requirements" &&
-      signUp.missingFields?.length === 1 &&
-      signUp.missingFields[0] === "legal_accepted" &&
-      signUp.verifications?.externalAccount?.status === "verified";
+    const finalizeSignIn = () =>
+      signIn.finalize({ navigate: navigateAfterSession });
+
+    const finalizeSignUp = () =>
+      signUp.finalize({ navigate: navigateAfterSession });
 
     const run = async () => {
-      // Step 1: process the IdP callback. Two empirical quirks shape this:
-      //
-      //   a. handleRedirectCallback never resolves in scenarios where Clerk
-      //      has nothing to navigate to (e.g. a pending session post-
-      //      completion, or a reload with no IdP params on the URL). The
-      //      old callbacks didn't see this because they sat under
-      //      isAuthRoute middleware which redirected authenticated users to
-      //      /account/welcome before the page could re-enter handleRedirect.
-      //      Our /sso-callback is isPublicRoute, so we race the await against
-      //      a timeout and drive nav ourselves below.
-      //   b. handleRedirectCallback swallows rejections in clerk-react@6 (see
-      //      docstring at top of file). Errors are pinned to resource state
-      //      and inspected post-await.
-      //
-      // Resources still hydrate even when the promise hangs — Clerk's
-      // /v1/client/sign_ins POST fires immediately and updates state via
-      // its event bus. So by the time the timeout fires, clerk.user,
-      // signIn.status, etc. are populated.
-      await Promise.race([
-        clerk
-          .handleRedirectCallback({
-            signInFallbackRedirectUrl: "/account/welcome",
-            signUpFallbackRedirectUrl: "/account/welcome",
-            continueSignUpUrl: "/sign-in?errorCode=account_not_found",
-          })
-          .catch(() => {
-            // Per quirk b, .catch() rarely fires anyway.
-          }),
-        new Promise<void>((resolve) => setTimeout(resolve, 4000)),
-      ]);
-
-      // Step 2: surface waitlist / inline rejections.
+      // Resource-level rejections (waitlist, etc.) land on the verification
+      // objects rather than throwing — inspect before walking happy branches.
       const inboundErr =
         signIn.firstFactorVerification?.error ??
         signUp.verifications?.externalAccount?.error;
@@ -168,30 +88,88 @@ function SSOCallback() {
         return;
       }
 
-      // Step 3: if user is signed in (any session status), drive nav to
-      // /account/welcome. Onboarding handles pending sessions (currentTask)
-      // there. Hard nav via .href because we want a fresh page load.
-      if (clerk.user) {
-        window.location.href = "/account/welcome";
+      if (signIn.status === "complete") {
+        await finalizeSignIn();
         return;
       }
 
-      // Step 4: legal_accepted reconciliation for sign-ups that landed here
-      // with everything except legal_accepted (sso() init patch didn't stick
-      // — bug family with in-flight resources).
+      // Sign-up's external account matched an existing user — transfer it
+      // back into a sign-in.
+      if (signUp.isTransferable) {
+        try {
+          await signIn.create({ transfer: true });
+        } catch (err) {
+          handleMappedError(err);
+          return;
+        }
+        // signIn.create() can flip status to "complete", but the static type
+        // doesn't widen after the await. Cast per Clerk's reference.
+        const signInStatus = signIn.status as typeof signIn.status | "complete";
+        if (signInStatus === "complete") {
+          await finalizeSignIn();
+          return;
+        }
+        window.location.replace("/sign-in");
+        return;
+      }
+
       if (
-        needsLegalAcceptedOnly() &&
-        (await reconcileLegalAcceptedThenFinalize())
+        signIn.status === "needs_first_factor" &&
+        !signIn.supportedFirstFactors?.every(
+          (f) => f.strategy === "enterprise_sso"
+        )
       ) {
+        window.location.replace("/sign-in");
         return;
       }
 
-      // Nothing matched — bail to a clean form.
+      // Sign-in's external account isn't tied to a user — transfer it into
+      // a sign-up.
+      if (signIn.isTransferable) {
+        try {
+          await signUp.create({ transfer: true, legalAccepted: true });
+        } catch (err) {
+          handleMappedError(err);
+          return;
+        }
+        if (signUp.status === "complete") {
+          await finalizeSignUp();
+          return;
+        }
+        window.location.replace("/sign-up/continue");
+        return;
+      }
+
+      if (signUp.status === "complete") {
+        await finalizeSignUp();
+        return;
+      }
+
+      if (
+        signIn.status === "needs_second_factor" ||
+        signIn.status === "needs_new_password"
+      ) {
+        window.location.replace("/sign-in");
+        return;
+      }
+
+      // External account already active on this client — switch the session
+      // instead of finalizing a sign-in/up.
+      const existingSessionId =
+        signIn.existingSession?.sessionId ?? signUp.existingSession?.sessionId;
+      if (existingSessionId) {
+        await clerk.setActive({
+          session: existingSessionId,
+          navigate: navigateAfterSession,
+        });
+        return;
+      }
+
       window.location.replace(buildErrorUrl(""));
     };
 
     void run();
-  }, [isLoaded, signIn, signUp, clerk]);
+  }, [clerk, signIn, signUp]);
 
   return (
     <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
