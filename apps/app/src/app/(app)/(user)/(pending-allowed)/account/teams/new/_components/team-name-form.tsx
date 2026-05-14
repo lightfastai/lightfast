@@ -26,7 +26,7 @@ export function TeamNameForm() {
   const router = useRouter();
 
   const mutation = useMutation(
-    trpc.organization.create.mutationOptions({
+    trpc.pendingAllowed.organization.create.mutationOptions({
       meta: { suppressErrorToast: true },
       onSuccess: async (data) => {
         if (setActive) {
@@ -34,9 +34,10 @@ export function TeamNameForm() {
         }
         void queryClient.invalidateQueries({
           queryKey:
-            trpc.organization.listUserOrganizations.queryOptions().queryKey,
+            trpc.pendingAllowed.organization.listUserOrganizations.queryOptions()
+              .queryKey,
         });
-        router.push(`/account/teams/invite?teamSlug=${data.slug}`);
+        router.push(`/${data.slug}`);
       },
       onError: (err) => {
         setError(err.message ?? "Failed to create team. Please try again.");

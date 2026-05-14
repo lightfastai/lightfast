@@ -13,7 +13,7 @@ export function AppHeader() {
   const { signOut } = useClerk();
 
   const { data: profile } = useSuspenseQuery({
-    ...trpc.account.get.queryOptions(),
+    ...trpc.pendingAllowed.account.get.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 

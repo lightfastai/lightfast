@@ -5,9 +5,11 @@ import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { PageErrorBoundary } from "~/components/errors/page-error-boundary";
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   // Prefetch user's organizations for the org switcher (shared across all authenticated pages)
-  prefetch(trpc.organization.listUserOrganizations.queryOptions());
+  prefetch(
+    trpc.pendingAllowed.organization.listUserOrganizations.queryOptions()
+  );
   // Prefetch user profile for header + notifications (shared across all authenticated pages)
-  prefetch(trpc.account.get.queryOptions());
+  prefetch(trpc.pendingAllowed.account.get.queryOptions());
 
   return (
     <NuqsAdapter>

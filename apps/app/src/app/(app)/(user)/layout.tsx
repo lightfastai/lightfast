@@ -7,12 +7,12 @@ export default function UserLayout({
 }: {
   children: React.ReactNode;
 }) {
-  prefetch(trpc.account.get.queryOptions());
+  prefetch(trpc.pendingAllowed.account.get.queryOptions());
 
   return (
     <HydrateClient>
       <div className="relative flex flex-1 flex-col bg-background">
-        <Suspense fallback={<div className="h-14 border-border border-b" />}>
+        <Suspense fallback={<div className="h-14" />}>
           <UserPageHeader />
         </Suspense>
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">

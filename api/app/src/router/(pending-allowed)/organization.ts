@@ -6,7 +6,7 @@ import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
-import { userScopedProcedure } from "../../trpc";
+import { pendingAllowedProcedure } from "../../trpc";
 
 /**
  * Organization router - Clerk-based organization management
@@ -21,8 +21,8 @@ export const organizationRouter = {
    * Returns all organizations the authenticated user belongs to.
    * Used by org-switcher component in the header.
    */
-  listUserOrganizations: userScopedProcedure.query(async ({ ctx }) => {
-    // userScopedProcedure guarantees clerk-pending or clerk-active
+  listUserOrganizations: pendingAllowedProcedure.query(async ({ ctx }) => {
+    // pendingAllowedProcedure guarantees clerk-pending or clerk-active
     const userId = ctx.auth.userId;
     const clerk = await clerkClient();
 
@@ -53,14 +53,14 @@ export const organizationRouter = {
    * Used by team creation flow at /account/teams/new
    * Does NOT create a default project - user sets up integrations separately
    */
-  create: userScopedProcedure
+  create: pendingAllowedProcedure
     .input(
       z.object({
         slug: clerkOrgSlugSchema,
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // userScopedProcedure guarantees clerk-pending or clerk-active
+      // pendingAllowedProcedure guarantees clerk-pending or clerk-active
       log.info("[organization] create", {
         slug: input.slug,
         userId: ctx.auth.userId,
@@ -131,7 +131,7 @@ export const organizationRouter = {
    *
    * Only organization admins can update the organization name
    */
-  updateName: userScopedProcedure
+  updateName: pendingAllowedProcedure
     .input(
       z.object({
         slug: z.string().min(1, "Organization slug is required"),
@@ -139,7 +139,7 @@ export const organizationRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // userScopedProcedure guarantees clerk-pending or clerk-active
+      // pendingAllowedProcedure guarantees clerk-pending or clerk-active
       const clerk = await clerkClient();
 
       try {

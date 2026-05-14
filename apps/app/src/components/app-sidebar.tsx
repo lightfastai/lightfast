@@ -77,7 +77,7 @@ export function AppSidebar() {
   const { setActive } = useOrganizationList();
 
   const { data: organizations = [] } = useSuspenseQuery({
-    ...trpc.organization.listUserOrganizations.queryOptions(),
+    ...trpc.pendingAllowed.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 

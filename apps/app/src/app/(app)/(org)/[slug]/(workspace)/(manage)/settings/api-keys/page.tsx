@@ -7,7 +7,7 @@ import { SecurityNotice } from "./_components/security-notice";
 export const dynamic = "force-dynamic";
 
 export default function OrgApiKeysPage() {
-  prefetch(trpc.orgApiKeys.list.queryOptions());
+  prefetch(trpc.pendingNotAllowed.orgApiKeys.list.queryOptions());
 
   return (
     <div className="space-y-8">

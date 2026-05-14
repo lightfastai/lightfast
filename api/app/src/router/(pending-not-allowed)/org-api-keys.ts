@@ -9,7 +9,7 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
 import { and, desc, eq } from "drizzle-orm";
-import { orgScopedProcedure } from "../../trpc";
+import { pendingNotAllowedProcedure } from "../../trpc";
 
 /**
  * Organization API Keys Router
@@ -27,7 +27,7 @@ export const orgApiKeysRouter = {
    * List all API keys for the org
    * Returns keys with preview only (never full key)
    */
-  list: orgScopedProcedure.query(async ({ ctx }) => {
+  list: pendingNotAllowedProcedure.query(async ({ ctx }) => {
     const keys = await ctx.db
       .select({
         publicId: orgApiKeys.publicId,
@@ -60,7 +60,7 @@ export const orgApiKeysRouter = {
    * Create a new organization API key
    * Returns the full key ONLY on creation (never again)
    */
-  create: orgScopedProcedure
+  create: pendingNotAllowedProcedure
     .input(createOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const { key, prefix, suffix } = generateOrgApiKey();
@@ -113,7 +113,7 @@ export const orgApiKeysRouter = {
    * Revoke (soft delete) an API key
    * Key remains in database but becomes inactive
    */
-  revoke: orgScopedProcedure
+  revoke: pendingNotAllowedProcedure
     .input(revokeOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const [existingKey] = await ctx.db
@@ -161,7 +161,7 @@ export const orgApiKeysRouter = {
    * Permanently delete an API key
    * Key is removed from database entirely
    */
-  delete: orgScopedProcedure
+  delete: pendingNotAllowedProcedure
     .input(deleteOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const [existingKey] = await ctx.db

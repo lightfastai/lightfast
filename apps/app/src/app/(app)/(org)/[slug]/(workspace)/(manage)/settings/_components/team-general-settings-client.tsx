@@ -47,11 +47,12 @@ export function TeamGeneralSettingsClient({
   const hasChanges = currentFormName !== slug;
 
   const orgListQueryKey =
-    trpc.organization.listUserOrganizations.queryOptions().queryKey;
+    trpc.pendingAllowed.organization.listUserOrganizations.queryOptions()
+      .queryKey;
 
   // Optimistic cache update so sidebar and header reflect the new name instantly
   const updateNameMutation = useMutation(
-    trpc.organization.updateName.mutationOptions({
+    trpc.pendingAllowed.organization.updateName.mutationOptions({
       meta: { errorTitle: "Failed to update team name" },
 
       onMutate: async (input) => {

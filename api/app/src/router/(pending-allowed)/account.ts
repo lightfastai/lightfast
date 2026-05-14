@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
-import { userScopedProcedure } from "../../trpc";
+import { pendingAllowedProcedure } from "../../trpc";
 
 /**
  * Account Router
@@ -26,7 +26,7 @@ export const accountRouter = {
    * - Username
    * - Profile image
    */
-  get: userScopedProcedure.query(async ({ ctx }) => {
+  get: pendingAllowedProcedure.query(async ({ ctx }) => {
     try {
       const clerk = await clerkClient();
       const user = await clerk.users.getUser(ctx.auth.userId);

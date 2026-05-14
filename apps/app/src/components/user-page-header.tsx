@@ -12,12 +12,12 @@ export function UserPageHeader() {
   const { setActive } = useOrganizationList();
 
   const { data: profile } = useSuspenseQuery({
-    ...trpc.account.get.queryOptions(),
+    ...trpc.pendingAllowed.account.get.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 
   const { data: organizations = [] } = useSuspenseQuery({
-    ...trpc.organization.listUserOrganizations.queryOptions(),
+    ...trpc.pendingAllowed.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 

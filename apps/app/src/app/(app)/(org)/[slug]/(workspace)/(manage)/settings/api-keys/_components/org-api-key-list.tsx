@@ -51,10 +51,11 @@ import { useCallback, useState } from "react";
 export function OrgApiKeyList() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryKey = trpc.orgApiKeys.list.queryOptions().queryKey;
+  const listQueryKey =
+    trpc.pendingNotAllowed.orgApiKeys.list.queryOptions().queryKey;
 
   const { data: keys } = useSuspenseQuery({
-    ...trpc.orgApiKeys.list.queryOptions(),
+    ...trpc.pendingNotAllowed.orgApiKeys.list.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -79,7 +80,7 @@ export function OrgApiKeyList() {
   // --- Mutations ---
 
   const createMutation = useMutation(
-    trpc.orgApiKeys.create.mutationOptions({
+    trpc.pendingNotAllowed.orgApiKeys.create.mutationOptions({
       meta: { errorTitle: "Failed to create API key" },
       onSuccess: (data) => {
         setCreatedKey(data.key);
@@ -90,7 +91,7 @@ export function OrgApiKeyList() {
   );
 
   const revokeMutation = useMutation(
-    trpc.orgApiKeys.revoke.mutationOptions({
+    trpc.pendingNotAllowed.orgApiKeys.revoke.mutationOptions({
       meta: { errorTitle: "Failed to revoke API key" },
       onSuccess: () => toast.success("API key revoked"),
       onSettled: () => void invalidateList(),
@@ -98,7 +99,7 @@ export function OrgApiKeyList() {
   );
 
   const deleteMutation = useMutation(
-    trpc.orgApiKeys.delete.mutationOptions({
+    trpc.pendingNotAllowed.orgApiKeys.delete.mutationOptions({
       meta: { errorTitle: "Failed to delete API key" },
       onSuccess: () => toast.success("API key deleted"),
       onSettled: () => void invalidateList(),
