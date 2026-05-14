@@ -104,12 +104,11 @@ export default function AcceptInvitationPage() {
     authBreadcrumb("Invitation accept initiated", "info", { mode: "sign-up" });
 
     try {
-      // signUp.ticket({ ticket, legalAccepted }) leaves emailAddress null on
-      // clerk-js@6.10.1 (status stays "missing_requirements"). signUp.create
-      // with explicit strategy:'ticket' is the working shape — auto-populates
-      // emailAddress from the invitation and reaches status:'complete' in one
-      // call. signUp.create({ ticket, legalAccepted }) without the explicit
-      // strategy ALSO leaves emailAddress null. Bug A family for sign-up.
+      // strategy:"ticket" is required when passing `ticket` — per
+      // SignUpFutureCreateParams. Verified empirically (2026-05-14): without
+      // it, signUp.create returns no error but leaves emailAddress null and
+      // status stuck at "missing_requirements". signUp.ticket({ticket,…})
+      // has the same problem.
       const { error: ticketError } = await authSpan(
         "auth.ticket.consume",
         { mode: "sign-up" },
@@ -202,13 +201,19 @@ export default function AcceptInvitationPage() {
           }
         }
 
-        // Bug D (clerk-js@6.10.1, unfixed per docs commit b6d805c9a):
-        // signUp.sso() called after signUp.create({ticket}) POSTs to the
-        // collection URL /v1/client/sign_ups (with ?_method=PATCH) instead
-        // of PATCHing /v1/client/sign_ups/{id}, returning 405. Drop to the
-        // legacy clerk.client.signUp.authenticateWithRedirect with
-        // continueSignUp:true so PATCH /v1/client/sign_ups/{id} fires
-        // against the now-ticket-bound resource.
+        // Future API gap on clerk-js@6.10.1: there's no clean OAuth-with-ticket
+        // primitive. Verified empirically (2026-05-14):
+        //   - signUp.create({strategy:'ticket',ticket,legalAccepted}) auto-
+        //     completes the signUp via the ticket verification, so signUp.sso()
+        //     becomes a no-op on an already-finalized resource (user created,
+        //     no external account, no session).
+        //   - signUp.ticket({ticket,legalAccepted}) binds the resource but
+        //     leaves emailAddress null (missing_requirements stays).
+        //     signUp.sso() then 405s — sends POST /v1/client/sign_ups?_method=
+        //     PATCH instead of PATCH /v1/client/sign_ups/{id}.
+        //   - signUp.sso({strategy,…}) alone (no prior call) fails the same way.
+        // The legacy authenticateWithRedirect({continueSignUp:true,legalAccepted})
+        // sends the correct PATCH against the ticket-bound resource above.
         await authSpan(
           "auth.oauth.initiate",
           { mode: "sign-up", strategy },
