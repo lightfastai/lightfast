@@ -3,6 +3,7 @@
 import { Icons } from "@repo/ui/components/icons";
 import { useClerk, useSignUp } from "@vendor/clerk/client";
 import * as React from "react";
+import { makeFinalizeNavigate } from "../../_hooks/auth-navigate";
 
 const SUCCESS_REDIRECT = "/account/welcome";
 
@@ -16,21 +17,25 @@ function SignUpContinue() {
   const hasRun = React.useRef(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // bfcache restore would re-mount with hasRun.current=true, freezing the
+  // "Finishing sign-up..." spinner. Reload to start fresh.
+  React.useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
+
   React.useEffect(() => {
     if (!(clerk.loaded && signUp) || hasRun.current) {
       return;
     }
     hasRun.current = true;
 
-    const navigateAfterSession = (params: {
-      session?: { currentTask?: unknown } | null;
-      decorateUrl: (u: string) => string;
-    }) => {
-      if (params.session?.currentTask) {
-        return;
-      }
-      window.location.href = params.decorateUrl(SUCCESS_REDIRECT);
-    };
+    const navigateAfterSession = makeFinalizeNavigate(SUCCESS_REDIRECT);
 
     const run = async () => {
       if (signUp.status === "complete") {

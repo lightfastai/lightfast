@@ -4,6 +4,7 @@ import { Icons } from "@repo/ui/components/icons";
 import { useClerk, useSignIn, useSignUp } from "@vendor/clerk/client";
 import * as React from "react";
 import { mapOAuthClerkError } from "../_hooks/auth-errors";
+import { makeFinalizeNavigate } from "../_hooks/auth-navigate";
 
 const SUCCESS_REDIRECT = "/account/welcome";
 
@@ -21,6 +22,19 @@ function SSOCallback() {
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const hasRun = React.useRef(false);
+
+  // bfcache restore would re-mount the React tree with hasRun.current=true and
+  // (on some pages) clerk.loaded=false, leaving the state walk frozen on the
+  // "Signing in..." spinner. Reload to start fresh.
+  React.useEffect(() => {
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) {
+        window.location.reload();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, []);
 
   React.useEffect(() => {
     if (!(clerk.loaded && signIn && signUp) || hasRun.current) {
@@ -61,15 +75,7 @@ function SSOCallback() {
       window.location.replace(buildErrorUrl(""));
     };
 
-    const navigateAfterSession = (params: {
-      session?: { currentTask?: unknown } | null;
-      decorateUrl: (u: string) => string;
-    }) => {
-      if (params.session?.currentTask) {
-        return;
-      }
-      window.location.href = params.decorateUrl(SUCCESS_REDIRECT);
-    };
+    const navigateAfterSession = makeFinalizeNavigate(SUCCESS_REDIRECT);
 
     const finalizeSignIn = () =>
       signIn.finalize({ navigate: navigateAfterSession });

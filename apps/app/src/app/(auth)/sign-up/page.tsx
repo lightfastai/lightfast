@@ -20,6 +20,7 @@ import {
   mapOAuthClerkError,
   mapOtpClerkError,
 } from "../_hooks/auth-errors";
+import { makeFinalizeNavigate } from "../_hooks/auth-navigate";
 import { authBreadcrumb, authSpan } from "../_hooks/auth-telemetry";
 import { type AuthErrorCode, authErrorCodes } from "../_lib/search-params";
 
@@ -137,7 +138,7 @@ export default function SignUpPage() {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = email.trim();
-    if (!trimmed || submitting) {
+    if (!trimmed || submitting || oauthLoading) {
       return;
     }
     if (!legalAccepted) {
@@ -170,9 +171,7 @@ export default function SignUpPage() {
 
       if (signUp.status === "complete") {
         await signUp.finalize({
-          navigate: ({ decorateUrl }) => {
-            window.location.href = decorateUrl(SUCCESS_REDIRECT);
-          },
+          navigate: makeFinalizeNavigate(SUCCESS_REDIRECT),
         });
         return;
       }
@@ -228,9 +227,7 @@ export default function SignUpPage() {
           authBreadcrumb("OTP verified", "info", { mode: "sign-up" });
           setIsRedirecting(true);
           await signUp.finalize({
-            navigate: ({ decorateUrl }) => {
-              window.location.href = decorateUrl(SUCCESS_REDIRECT);
-            },
+            navigate: makeFinalizeNavigate(SUCCESS_REDIRECT),
           });
         } else {
           verifyingCodeRef.current = null;
@@ -301,7 +298,7 @@ export default function SignUpPage() {
 
   const handleOAuth = React.useCallback(
     async (strategy: OAuthStrategy) => {
-      if (oauthLoading) {
+      if (oauthLoading || submitting) {
         return;
       }
       if (!legalAccepted) {
@@ -353,7 +350,7 @@ export default function SignUpPage() {
         setOauthLoading(false);
       }
     },
-    [oauthLoading, legalAccepted, signUp, handleWaitlist]
+    [oauthLoading, submitting, legalAccepted, signUp, handleWaitlist]
   );
 
   return (
@@ -435,7 +432,7 @@ export default function SignUpPage() {
               )}
               <Button
                 className="w-full"
-                disabled={submitting}
+                disabled={submitting || oauthLoading}
                 size="lg"
                 type="submit"
               >
@@ -449,7 +446,7 @@ export default function SignUpPage() {
             <SeparatorWithText text="Or" />
             <Button
               className="w-full"
-              disabled={oauthLoading}
+              disabled={oauthLoading || submitting}
               onClick={() => handleOAuth("oauth_github")}
               size="lg"
               variant="outline"
@@ -464,7 +461,7 @@ export default function SignUpPage() {
             {env.NEXT_PUBLIC_VERCEL_ENV === "development" ? (
               <Button
                 className="w-full"
-                disabled={oauthLoading}
+                disabled={oauthLoading || submitting}
                 onClick={() => handleOAuth("oauth_custom_test_idp")}
                 size="lg"
                 variant="outline"

@@ -16,6 +16,7 @@ import {
   mapOAuthClerkError,
   mapOtpClerkError,
 } from "../../_hooks/auth-errors";
+import { makeFinalizeNavigate } from "../../_hooks/auth-navigate";
 import { authBreadcrumb, authSpan } from "../../_hooks/auth-telemetry";
 import { type AuthErrorCode, authErrorCodes } from "../../_lib/search-params";
 
@@ -70,11 +71,21 @@ export default function AcceptInvitationPage() {
 
   React.useEffect(() => {
     const reset = () => setOauthLoading(false);
+    const onPageShow = (e: PageTransitionEvent) => {
+      // bfcache restore on this page leaves Clerk.loaded === false and the
+      // React closures pointing at a torn-down signUp/clerk. OAuth/email
+      // clicks then silently no-op. Reload to start with fresh Clerk state.
+      if (e.persisted) {
+        window.location.reload();
+        return;
+      }
+      reset();
+    };
     window.addEventListener("pagehide", reset);
-    window.addEventListener("pageshow", reset);
+    window.addEventListener("pageshow", onPageShow);
     return () => {
       window.removeEventListener("pagehide", reset);
-      window.removeEventListener("pageshow", reset);
+      window.removeEventListener("pageshow", onPageShow);
     };
   }, []);
 
@@ -146,9 +157,7 @@ export default function AcceptInvitationPage() {
       if (signUp.status === "complete") {
         authBreadcrumb("Invitation accepted", "info", { mode: "sign-up" });
         await signUp.finalize({
-          navigate: ({ decorateUrl }) => {
-            window.location.href = decorateUrl(SUCCESS_REDIRECT);
-          },
+          navigate: makeFinalizeNavigate(SUCCESS_REDIRECT),
         });
         return;
       }
