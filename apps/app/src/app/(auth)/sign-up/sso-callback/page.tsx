@@ -71,21 +71,44 @@ function SSOCallback() {
       // .replace() on error paths so browser-back from the destination
       // doesn't re-enter the terminal sso-callback and bounce forward again.
       if (err) {
+        // Preserve the invitation ticket across the IdP roundtrip: when the
+        // OAuth-with-ticket flow lands here on error, route the user back to
+        // /sign-up/accept-invitation (the canonical ticket route) instead of
+        // /sign-up so the ticket UI re-mounts with the error banner.
+        const callbackTicket = new URLSearchParams(window.location.search).get(
+          "__clerk_ticket"
+        );
+        const buildErrorUrl = (qs: string) => {
+          if (callbackTicket) {
+            const search = new URLSearchParams({
+              __clerk_ticket: callbackTicket,
+            });
+            const extra = new URLSearchParams(qs);
+            extra.forEach((value, key) => {
+              search.set(key, value);
+            });
+            return `/sign-up/accept-invitation?${search.toString()}`;
+          }
+          return `/sign-up${qs ? `?${qs}` : ""}`;
+        };
+
         const mapped = mapOAuthClerkError(err);
         if (mapped.kind === "redirect") {
           window.location.replace(mapped.target);
           return;
         }
         if (mapped.kind === "code") {
-          window.location.replace(`/sign-up?errorCode=${mapped.errorCode}`);
+          window.location.replace(
+            buildErrorUrl(`errorCode=${mapped.errorCode}`)
+          );
           return;
         }
         if (mapped.kind === "inline") {
           const params = new URLSearchParams({ error: mapped.message });
-          window.location.replace(`/sign-up?${params.toString()}`);
+          window.location.replace(buildErrorUrl(params.toString()));
           return;
         }
-        window.location.replace("/sign-up");
+        window.location.replace(buildErrorUrl(""));
         return;
       }
 
