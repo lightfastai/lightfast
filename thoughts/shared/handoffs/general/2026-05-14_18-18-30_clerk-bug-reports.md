@@ -1,7 +1,12 @@
 ---
 date: 2026-05-14
 author: Jeevan Pillay (with Claude)
-status: filed — clerk/javascript#8551 (Bug 1), clerk/javascript#8552 (Bug 2)
+status: |
+  Bug 1 (#8551): filed and open. Minimal repro confirmed.
+  Bug 2 (#8552): filed 2026-05-14, self-closed same-day as premature — minimal repo
+  does not reproduce the bfcache failure (Clerk re-hydrates cleanly there).
+  Lightfast reproduces reliably but the differentiating ingredient was not
+  isolated within time-box. To refile when a minimal repro is built.
 filed_at: 2026-05-14
 minimal_repro: https://github.com/jeevanpillay/clerk-bug-repros
 related:
@@ -217,11 +222,15 @@ Either:
 
 ---
 
-## Posting checklist
+## Posting outcome
 
-- [x] Bug 1 filed → [clerk/javascript#8551](https://github.com/clerk/javascript/issues/8551)
-- [x] Bug 2 filed → [clerk/javascript#8552](https://github.com/clerk/javascript/issues/8552), cross-references #8551
-- [x] Minimal repro published → [github.com/jeevanpillay/clerk-bug-repros](https://github.com/jeevanpillay/clerk-bug-repros) (Bug 1 verified end-to-end against clerk-js@6.10.1; Bug 2 driven manually per README)
-- [x] Comment block in `apps/app/src/app/(auth)/sign-up/accept-invitation/page.tsx` updated to link #8551 and #8552
-- [ ] Append issue numbers to `thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md` latent-bugs ledger
-- [ ] Drop the bfcache `pageshow` reload workaround when either #8551 or #8552 ships a fix in the tenant-pinned SDK version
+- [x] Bug 1 filed → [clerk/javascript#8551](https://github.com/clerk/javascript/issues/8551). Minimal repro confirmed end-to-end at clerk-js@6.10.1. Open.
+- [x] Bug 2 filed → [clerk/javascript#8552](https://github.com/clerk/javascript/issues/8552). **Self-closed same-day as premature** — verification of the linked minimal repro found the bug does NOT reproduce there (Clerk hydrates cleanly after bfcache restore on the bare repo). Lightfast still reproduces reliably. Differentiating ingredient was not isolated within the 30-min time-box (suspects: clerkMiddleware, MFE-proxy chain, HTTPS-cookie behavior).
+- [x] Minimal repro published → [github.com/jeevanpillay/clerk-bug-repros](https://github.com/jeevanpillay/clerk-bug-repros). README updated to note Bug 1 is solid, Bug 2 page is exploratory.
+- [x] Comment block in `apps/app/src/app/(auth)/sign-up/accept-invitation/page.tsx` updated to link only #8551 (the load-bearing root cause) and describe Bug 2 as an in-app-only observation pending isolation.
+
+## Next steps
+
+- Drop the bfcache `pageshow` reload workaround when #8551 closes — that eliminates the legacy `authenticateWithRedirect` path that Bug 2 surfaces on, so Bug 2 becomes moot regardless of whether it's ever filed.
+- If #8551 stalls and the workaround becomes load-bearing for >2 months, time-box another 1–2 hours to isolate the Bug 2 trigger (try adding clerkMiddleware to the minimal repo first, then HTTPS via portless) and refile.
+- Append both issue numbers (open + closed) to `thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md` ledger.
