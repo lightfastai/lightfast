@@ -11,12 +11,16 @@ import { log } from "@vendor/observability/log/next";
 import { pendingNotAllowedProcedure } from "../../trpc";
 
 function isClerkNotFound(err: unknown): boolean {
-  if (!err || typeof err !== "object") return false;
+  if (!err || typeof err !== "object") {
+    return false;
+  }
   if ("status" in err && (err as { status?: number }).status === 404) {
     return true;
   }
   const errs = (err as { errors?: { code?: string }[] }).errors;
-  return Array.isArray(errs) && errs.some((e) => e.code === "resource_not_found");
+  return (
+    Array.isArray(errs) && errs.some((e) => e.code === "resource_not_found")
+  );
 }
 
 /**
@@ -33,7 +37,9 @@ export const orgApiKeysRouter = {
       subject: ctx.auth.orgId,
       includeInvalid: true,
     });
-    return data;
+    // Spread Clerk's APIKey class instances into plain objects — RSC props
+    // serialization rejects class instances at the prefetch → hydrate boundary.
+    return data.map((k) => ({ ...k }));
   }),
 
   create: pendingNotAllowedProcedure
@@ -51,8 +57,9 @@ export const orgApiKeysRouter = {
         keyId: key.id,
         name: input.name,
       });
-      // key.secret is only present on create.
-      return key;
+      // key.secret is only present on create. Spread into a plain object so
+      // the mutation result survives RSC serialization on the way to the UI.
+      return { ...key };
     }),
 
   revoke: pendingNotAllowedProcedure

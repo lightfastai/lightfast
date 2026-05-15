@@ -25,12 +25,7 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import {
-  Key,
-  MoreHorizontal,
-  ShieldOff,
-  Trash2,
-} from "lucide-react";
+import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 
 export function OrgApiKeyList() {
@@ -109,7 +104,7 @@ export function OrgApiKeyList() {
                 revokeMutation.variables?.keyId === key.id) ||
               (deleteMutation.isPending &&
                 deleteMutation.variables?.keyId === key.id);
-            const isActive = !key.revoked && !key.expired;
+            const isActive = !(key.revoked || key.expired);
 
             return (
               <div
