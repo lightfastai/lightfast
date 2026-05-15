@@ -456,6 +456,13 @@
       "when": 1778142316757,
       "tag": "0064_slim_king_cobra",
       "breakpoints": true
+    },
+    {
+      "idx": 65,
+      "version": "7",
+      "when": 1778748823521,
+      "tag": "0065_brave_ghost_rider",
+      "breakpoints": true
     }
   ]
 }

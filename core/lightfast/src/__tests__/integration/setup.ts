@@ -5,6 +5,7 @@ const POLL_INTERVAL_MS = 250;
 const READY_TIMEOUT_MS = 60_000;
 
 let serverProcess: ChildProcess | undefined;
+let createdKeyId: string | undefined;
 
 async function waitForReady(url: string, timeoutMs: number) {
   const deadline = Date.now() + timeoutMs;
@@ -20,6 +21,16 @@ async function waitForReady(url: string, timeoutMs: number) {
     await sleep(POLL_INTERVAL_MS);
   }
   throw new Error(`Server not ready at ${url} within ${timeoutMs}ms`);
+}
+
+function requireEnv(name: string): string {
+  const v = process.env[name];
+  if (!v) {
+    throw new Error(
+      `[integration] missing required env var: ${name}. Set it in the test runner before invoking integration tests.`
+    );
+  }
+  return v;
 }
 
 export async function setup() {
@@ -54,29 +65,27 @@ export async function setup() {
 
   await waitForReady(healthUrl, READY_TIMEOUT_MS);
 
-  const { db } = await import("@db/app/client");
-  const { orgApiKeys } = await import("@db/app/schema");
-  const { generateOrgApiKey, hashApiKey } = await import("@repo/app-api-key");
-  const { eq } = await import("@vendor/db");
+  const secretKey = requireEnv("CLERK_SECRET_KEY");
+  const orgId = requireEnv("LIGHTFAST_TEST_CLERK_ORG_ID");
+  const userId = requireEnv("LIGHTFAST_TEST_CLERK_USER_ID");
 
-  // Pre-delete any leftover row from a prior interrupted run so the insert is idempotent.
-  await db
-    .delete(orgApiKeys)
-    .where(eq(orgApiKeys.publicId, "akey_test_integration_health"));
+  const { createClerkClient } = await import("@vendor/clerk/backend");
+  const clerk = createClerkClient({ secretKey });
 
-  const { key } = generateOrgApiKey();
-  await db.insert(orgApiKeys).values({
-    publicId: "akey_test_integration_health",
-    name: "integration-test-system-health",
-    keyHash: hashApiKey(key),
-    keyPrefix: key.slice(0, 6),
-    keySuffix: key.slice(-4),
-    clerkOrgId: "org_test_integration_health",
-    createdByUserId: "user_test_integration_health",
-    isActive: true,
+  const key = await clerk.apiKeys.create({
+    name: `integration-test-${Date.now()}`,
+    subject: orgId,
+    createdBy: userId,
   });
 
-  process.env.__INTEGRATION_API_KEY__ = key;
+  if (!key.secret) {
+    throw new Error(
+      "[integration] Clerk apiKeys.create did not return a secret"
+    );
+  }
+
+  createdKeyId = key.id;
+  process.env.__INTEGRATION_API_KEY__ = key.secret;
   process.env.__INTEGRATION_BASE_URL__ = baseUrl;
 }
 
@@ -85,12 +94,17 @@ export async function teardown() {
     return;
   }
 
-  const { db } = await import("@db/app/client");
-  const { orgApiKeys } = await import("@db/app/schema");
-  const { eq } = await import("@vendor/db");
-  await db
-    .delete(orgApiKeys)
-    .where(eq(orgApiKeys.publicId, "akey_test_integration_health"));
+  if (createdKeyId) {
+    try {
+      const { createClerkClient } = await import("@vendor/clerk/backend");
+      const clerk = createClerkClient({
+        secretKey: process.env.CLERK_SECRET_KEY,
+      });
+      await clerk.apiKeys.delete(createdKeyId);
+    } catch (err) {
+      console.warn("[integration] failed to delete Clerk API key", err);
+    }
+  }
 
   if (serverProcess && !serverProcess.killed) {
     serverProcess.kill("SIGTERM");

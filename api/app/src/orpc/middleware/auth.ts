@@ -1,11 +1,8 @@
-import { db } from "@db/app/client";
-import { orgApiKeys } from "@db/app/schema";
 import { ORPCError, os } from "@orpc/server";
-import { hashApiKey, isValidApiKeyFormat } from "@repo/app-api-key";
+import { clerkClient } from "@vendor/clerk/server";
 import { enrichContext } from "@vendor/observability/context";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
-import { and, eq, sql } from "drizzle-orm";
 
 import type { AuthContext, InitialContext } from "../context";
 
@@ -24,65 +21,53 @@ async function resolveApiKey(
     });
   }
 
-  const apiKey = token;
-
-  if (!isValidApiKeyFormat(apiKey)) {
+  // Every Clerk API key starts with `ak_`. Reject other shapes (session
+  // JWTs, legacy custom tokens) without a network round-trip.
+  if (!token.startsWith("ak_")) {
     throw new ORPCError("UNAUTHORIZED", {
       message: "Invalid API key format.",
     });
   }
 
-  const keyHash = hashApiKey(apiKey);
-
-  const [foundKey] = await db
-    .select({
-      id: orgApiKeys.id,
-      publicId: orgApiKeys.publicId,
-      clerkOrgId: orgApiKeys.clerkOrgId,
-      createdByUserId: orgApiKeys.createdByUserId,
-      expiresAt: orgApiKeys.expiresAt,
-    })
-    .from(orgApiKeys)
-    .where(and(eq(orgApiKeys.keyHash, keyHash), eq(orgApiKeys.isActive, true)))
-    .limit(1);
-
-  if (!foundKey) {
+  let key;
+  try {
+    const clerk = await clerkClient();
+    key = await clerk.apiKeys.verify(token);
+  } catch (err) {
+    log.warn("API key verification failed", {
+      requestId,
+      error: parseError(err),
+    });
     throw new ORPCError("UNAUTHORIZED", { message: "Invalid API key" });
   }
 
-  if (foundKey.expiresAt && new Date(foundKey.expiresAt) < new Date()) {
+  if (key.revoked) {
+    throw new ORPCError("UNAUTHORIZED", { message: "API key revoked" });
+  }
+  if (key.expired) {
     throw new ORPCError("UNAUTHORIZED", { message: "API key expired" });
   }
-
-  const clientIp =
-    headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
-    headers.get("x-real-ip") ??
-    "unknown";
-
-  void db
-    .update(orgApiKeys)
-    .set({
-      lastUsedAt: sql`CURRENT_TIMESTAMP`,
-      lastUsedFromIp: clientIp.slice(0, 45),
-    })
-    .where(eq(orgApiKeys.id, foundKey.id))
-    .catch((err: unknown) => {
-      log.error("Failed to update API key lastUsedAt", {
-        error: parseError(err),
-        apiKeyId: foundKey.publicId,
-      });
+  if (!key.subject.startsWith("org_")) {
+    throw new ORPCError("FORBIDDEN", {
+      message: "API key is not org-scoped",
     });
+  }
+  if (!key.createdBy) {
+    throw new ORPCError("FORBIDDEN", {
+      message: "API key is missing creator metadata",
+    });
+  }
 
   log.info("API key verified", {
     requestId,
-    apiKeyId: foundKey.publicId,
-    orgId: foundKey.clerkOrgId,
+    apiKeyId: key.id,
+    orgId: key.subject,
   });
 
   return {
-    apiKeyId: foundKey.publicId,
-    clerkOrgId: foundKey.clerkOrgId,
-    userId: foundKey.createdByUserId,
+    apiKeyId: key.id,
+    clerkOrgId: key.subject,
+    userId: key.createdBy,
   };
 }
 

@@ -18,7 +18,7 @@ export function createLightfast(
   apiKey: string,
   options: LightfastOptions = {}
 ): LightfastClient {
-  if (!apiKey?.startsWith("sk-lf-")) {
+  if (!apiKey?.startsWith("ak_")) {
     throw new Error("Invalid Lightfast API key");
   }
 

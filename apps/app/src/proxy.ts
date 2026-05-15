@@ -46,7 +46,7 @@ const isPublicRoute = createRouteMatcher([
 //   /api/desktop/*   — Clerk session (code) / PKCE verifier (exchange)
 //   /api/inngest     — Inngest signature
 //   /api/trpc/*      — Clerk Bearer or cookie via createTRPCContext
-//   /api/v1/*        — sk-lf- org API key via oRPC authMiddleware
+//   /api/v1/*        — Clerk ak_ org API key via oRPC authMiddleware
 const isApiRoute = createRouteMatcher([
   "/api/cli/(.*)",
   "/api/auth/(.*)",
