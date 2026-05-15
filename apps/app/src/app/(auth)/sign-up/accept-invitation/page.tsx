@@ -49,6 +49,14 @@ function decodeTicketExpiry(ticket: string): Date | null {
 }
 
 export default function AcceptInvitationPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <AcceptInvitationView />
+    </React.Suspense>
+  );
+}
+
+function AcceptInvitationView() {
   const { isSignedIn, isLoaded: isUserLoaded } = useUser();
   const { signUp } = useSignUp();
   const clerk = useClerk();

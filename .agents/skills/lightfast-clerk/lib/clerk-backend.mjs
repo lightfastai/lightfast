@@ -162,7 +162,9 @@ async function findInvitation(invitationId) {
     params.append("status", status);
   }
   const list = await clerk("GET", `/invitations?${params}`);
-  if (!Array.isArray(list)) return null;
+  if (!Array.isArray(list)) {
+    return null;
+  }
   return list.find((inv) => inv.id === invitationId) ?? null;
 }
 
@@ -261,7 +263,7 @@ try {
         );
       }
       const expiresInSeconds =
-        expiresArg !== undefined ? Number(expiresArg) : undefined;
+        expiresArg === undefined ? undefined : Number(expiresArg);
       if (expiresInSeconds !== undefined && Number.isNaN(expiresInSeconds)) {
         throw new Error(`invalid expires_in_seconds: ${expiresArg}`);
       }

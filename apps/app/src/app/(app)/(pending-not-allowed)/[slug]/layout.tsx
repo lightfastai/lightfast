@@ -4,9 +4,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@repo/ui/components/ui/sidebar";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
+import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
