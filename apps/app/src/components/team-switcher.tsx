@@ -114,7 +114,7 @@ export function TeamSwitcher() {
               asChild
               className={cn(
                 "cursor-pointer rounded-xl px-2",
-                isSelected && "bg-muted/50",
+                isSelected && "bg-muted/50"
               )}
               key={org.id}
             >

@@ -116,7 +116,7 @@
   --ring: oklch(0.708 0 0);
   --sidebar: oklch(0.97 0 0);
   --sidebar-foreground: var(--foreground);
-  --sidebar-accent: var(--accent);
+  --sidebar-accent: var(--border);
   --sidebar-accent-foreground: var(--accent-foreground);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);

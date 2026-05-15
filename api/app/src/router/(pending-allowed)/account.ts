@@ -14,7 +14,8 @@ function deriveInitials(input: {
   const { firstName, lastName, fullName, username } = input;
   if (fullName) {
     return fullName
-      .split(" ")
+      .split(/\s+/)
+      .filter(Boolean)
       .map((n) => n[0])
       .join("")
       .toUpperCase()

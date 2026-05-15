@@ -10,7 +10,8 @@ import { pendingAllowedProcedure } from "../../trpc";
 
 function orgInitials(name: string): string {
   return name
-    .split(" ")
+    .split(/\s+/)
+    .filter(Boolean)
     .map((n) => n[0])
     .join("")
     .toUpperCase()

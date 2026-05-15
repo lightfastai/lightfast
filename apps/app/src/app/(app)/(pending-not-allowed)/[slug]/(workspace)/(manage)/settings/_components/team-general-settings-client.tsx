@@ -17,7 +17,11 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useMutation, useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk/client";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";

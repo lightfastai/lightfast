@@ -22,10 +22,7 @@ import { BookOpen, HelpCircle, Mail, Settings } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
-import {
-  TeamSwitcher,
-  TeamSwitcherSkeleton,
-} from "~/components/team-switcher";
+import { TeamSwitcher, TeamSwitcherSkeleton } from "~/components/team-switcher";
 
 interface NavItem {
   href: string;

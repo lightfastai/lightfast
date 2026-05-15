@@ -1,9 +1,6 @@
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Suspense } from "react";
-import {
-  TeamSwitcher,
-  TeamSwitcherSkeleton,
-} from "~/components/team-switcher";
+import { TeamSwitcher, TeamSwitcherSkeleton } from "~/components/team-switcher";
 import { UserMenu, UserMenuSkeleton } from "~/components/user-menu";
 
 export default function UserLayout({
