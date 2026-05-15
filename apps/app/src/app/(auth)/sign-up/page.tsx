@@ -38,6 +38,14 @@ function parseErrorCode(value: string | null): AuthErrorCode | null {
 }
 
 export default function SignUpPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <SignUpView />
+    </React.Suspense>
+  );
+}
+
+function SignUpView() {
   const { signUp } = useSignUp();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");

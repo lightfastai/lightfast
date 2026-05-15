@@ -35,6 +35,14 @@ function parseErrorCode(value: string | null): AuthErrorCode | null {
 }
 
 export default function SignInPage() {
+  return (
+    <React.Suspense fallback={null}>
+      <SignInView />
+    </React.Suspense>
+  );
+}
+
+function SignInView() {
   const { signIn } = useSignIn();
   const searchParams = useSearchParams();
   const errorParam = searchParams.get("error");
