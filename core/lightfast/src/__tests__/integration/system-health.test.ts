@@ -29,7 +29,7 @@ describe.skipIf(process.env.LIGHTFAST_RUN_INTEGRATION !== "1")(
       }
 
       const res = await fetch(`${baseUrl}/api/v1/system/health`, {
-        headers: { authorization: "Bearer sk-lf-not-a-real-key" },
+        headers: { authorization: "Bearer ak_not_a_real_key" },
       });
       expect(res.status).toBe(401);
     });

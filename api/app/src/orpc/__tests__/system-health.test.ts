@@ -1,38 +1,38 @@
 import { call } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const limitMock = vi.fn();
-const whereMock = vi.fn(() => ({ limit: limitMock }));
-const fromMock = vi.fn(() => ({ where: whereMock }));
-const selectMock = vi.fn(() => ({ from: fromMock }));
+const verifyMock = vi.fn();
 
-const updateWhereMock = vi.fn(() => Promise.resolve());
-const updateSetMock = vi.fn(() => ({ where: updateWhereMock }));
-const updateMock = vi.fn(() => ({ set: updateSetMock }));
-
-vi.mock("@db/app/client", () => ({
-  db: {
-    select: () => selectMock(),
-    update: () => updateMock(),
-  },
+vi.mock("@vendor/clerk/server", () => ({
+  clerkClient: () =>
+    Promise.resolve({
+      apiKeys: { verify: verifyMock },
+    }),
 }));
 
 const { orpcRouter } = await import("../router");
 
-const validKey = `sk-lf-${"a".repeat(43)}`;
+const validKey = `ak_${"a".repeat(40)}`;
 
 beforeEach(() => {
-  limitMock.mockReset();
-  // Default: API key resolves successfully.
-  limitMock.mockResolvedValue([
-    {
-      id: 1,
-      publicId: "akey_test",
-      clerkOrgId: "org_test",
-      createdByUserId: "user_test",
-      expiresAt: null,
-    },
-  ]);
+  verifyMock.mockReset();
+  verifyMock.mockResolvedValue({
+    id: "apk_test",
+    type: "api_key",
+    name: "test",
+    subject: "org_test",
+    scopes: [],
+    claims: null,
+    revoked: false,
+    revocationReason: null,
+    expired: false,
+    expiration: null,
+    createdBy: "user_test",
+    description: null,
+    lastUsedAt: null,
+    createdAt: 0,
+    updatedAt: 0,
+  });
 });
 
 describe("orpcRouter.system.health", () => {

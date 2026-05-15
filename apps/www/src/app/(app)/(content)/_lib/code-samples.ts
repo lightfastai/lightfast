@@ -17,7 +17,7 @@ type OperationId = "search" | "proxy.search" | "proxy.call";
 const sdkSamples: Record<OperationId, string> = {
   search: `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk-lf-..." });
+const client = new Lightfast({ apiKey: "ak_..." });
 
 const results = await client.search({
   query: "authentication implementation",
@@ -31,7 +31,7 @@ console.log(results.total);`,
 
   "proxy.search": `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk-lf-..." });
+const client = new Lightfast({ apiKey: "ak_..." });
 
 const { connections } = await client.proxySearch();
 
@@ -43,7 +43,7 @@ for (const conn of connections) {
 
   "proxy.call": `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "sk-lf-..." });
+const client = new Lightfast({ apiKey: "ak_..." });
 
 const result = await client.proxyCall({
   action: "github.list-pull-requests",

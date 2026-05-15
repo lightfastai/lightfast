@@ -1,5 +1,6 @@
 import "server-only";
 
+export type { APIKey } from "@clerk/backend";
 export type {
   AllowlistIdentifier,
   ClerkMiddlewareAuth,

@@ -3,8 +3,14 @@ import { describe, expect, it, vi } from "vitest";
 import { createLightfast } from "../index";
 
 describe("createLightfast", () => {
-  it("rejects non-sk-lf- keys", () => {
+  it("rejects keys without the ak_ prefix", () => {
     expect(() => createLightfast("not-a-key")).toThrow(
+      /Invalid Lightfast API key/
+    );
+  });
+
+  it("rejects legacy sk-lf- keys", () => {
+    expect(() => createLightfast("sk-lf-legacy")).toThrow(
       /Invalid Lightfast API key/
     );
   });
@@ -26,7 +32,7 @@ describe("createLightfast", () => {
       );
     });
 
-    const lf = createLightfast("sk-lf-test-key", {
+    const lf = createLightfast("ak_test-key", {
       baseUrl: "https://example.test",
       fetch: fetchMock as unknown as typeof fetch,
     });
@@ -38,7 +44,7 @@ describe("createLightfast", () => {
       timestamp: "2026-05-10T00:00:00Z",
       version: "test",
     });
-    expect(lastRequest?.authHeader).toBe("Bearer sk-lf-test-key");
+    expect(lastRequest?.authHeader).toBe("Bearer ak_test-key");
     expect(lastRequest?.url).toBe("https://example.test/api/v1/system/health");
   });
 
@@ -52,7 +58,7 @@ describe("createLightfast", () => {
       );
     });
 
-    const lf = createLightfast("sk-lf-test", {
+    const lf = createLightfast("ak_test", {
       baseUrl: "https://example.test/",
       fetch: fetchMock as unknown as typeof fetch,
     });

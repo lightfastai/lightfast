@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 
 export function AccountCard() {
   const trpc = useTRPC();
-  const query = useQuery(trpc.account.get.queryOptions());
+  const query = useQuery(trpc.pendingAllowed.account.get.queryOptions());
 
   if (query.isLoading) {
     return <p>Loading account…</p>;

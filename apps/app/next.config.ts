@@ -23,7 +23,6 @@ const appConfig: NextConfig = merge({}, baseConfig, {
   transpilePackages: [
     "@api/app",
     "@db/app",
-    "@repo/app-api-key",
     "@repo/app-trpc",
     "@repo/app-validation",
     "@repo/ui",
@@ -42,7 +41,6 @@ const appConfig: NextConfig = merge({}, baseConfig, {
       "recharts",
       "shiki",
       "date-fns",
-      "@repo/app-api-key",
       "@repo/app-trpc",
       "@repo/app-validation",
       "@repo/url-utils",

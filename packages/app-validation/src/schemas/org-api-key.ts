@@ -1,30 +1,15 @@
 import { z } from "zod";
 
-/**
- * Organization API Key Validation Schemas
- *
- * These schemas are used for organization-scoped API key management.
- * Keys are scoped to the org and can access all resources within it.
- */
-
-/**
- * Schema for creating a new organization API key
- */
 export const createOrgApiKeySchema = z.object({
   name: z.string().min(1).max(100),
-  expiresAt: z.coerce.date().optional(),
+  secondsUntilExpiration: z.number().int().positive().optional(),
 });
 
-/**
- * Schema for revoking (soft delete) an API key
- */
 export const revokeOrgApiKeySchema = z.object({
-  keyId: z.string().min(1), // publicId
+  keyId: z.string().min(1),
+  revocationReason: z.string().max(200).optional(),
 });
 
-/**
- * Schema for permanently deleting an API key
- */
 export const deleteOrgApiKeySchema = z.object({
-  keyId: z.string().min(1), // publicId
+  keyId: z.string().min(1),
 });

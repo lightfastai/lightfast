@@ -5,9 +5,6 @@
 // Response: { apiKey, orgId, orgSlug, orgName }
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { db } from "@db/app/client";
-import { orgApiKeys } from "@db/app/schema";
-import { generateOrgApiKey, hashApiKey } from "@repo/app-api-key";
 import { verifyBearerJwt } from "~/app/(auth-api)/_server/verify-bearer-jwt";
 
 export async function POST(req: Request) {
@@ -32,21 +29,19 @@ export async function POST(req: Request) {
     return Response.json({ error: "not_a_member" }, { status: 403 });
   }
 
-  // Generate org API key
-  const { key, prefix, suffix } = generateOrgApiKey();
-  const keyHash = hashApiKey(key);
-
-  await db.insert(orgApiKeys).values({
-    clerkOrgId: orgId,
-    createdByUserId: session.userId,
+  const key = await clerk.apiKeys.create({
     name: "CLI (auto-generated)",
-    keyHash,
-    keyPrefix: prefix,
-    keySuffix: suffix,
+    subject: orgId,
+    createdBy: session.userId,
   });
 
+  if (!key.secret) {
+    // create() returns secret on success; absence indicates Clerk SDK contract drift.
+    return Response.json({ error: "missing_secret" }, { status: 500 });
+  }
+
   return Response.json({
-    apiKey: key,
+    apiKey: key.secret,
     orgId: membership.organization.id,
     orgSlug: membership.organization.slug,
     orgName: membership.organization.name,

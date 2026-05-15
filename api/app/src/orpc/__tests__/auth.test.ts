@@ -1,30 +1,41 @@
 import { call, ORPCError } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const limitMock = vi.fn();
-const whereMock = vi.fn(() => ({ limit: limitMock }));
-const fromMock = vi.fn(() => ({ where: whereMock }));
-const selectMock = vi.fn(() => ({ from: fromMock }));
+const verifyMock = vi.fn();
 
-const updateWhereMock = vi.fn(() => Promise.resolve());
-const updateSetMock = vi.fn(() => ({ where: updateWhereMock }));
-const updateMock = vi.fn(() => ({ set: updateSetMock }));
-
-vi.mock("@db/app/client", () => ({
-  db: {
-    select: () => selectMock(),
-    update: () => updateMock(),
-  },
+vi.mock("@vendor/clerk/server", () => ({
+  clerkClient: () =>
+    Promise.resolve({
+      apiKeys: { verify: verifyMock },
+    }),
 }));
 
 const { authMiddleware } = await import("../middleware/auth");
 
-const SK_LF_PREFIX = "sk-lf-";
-// API key secret is 43 chars; prefix + 43 = 49-char total format.
-const validKey = `${SK_LF_PREFIX}${"a".repeat(43)}`;
+const validKey = `ak_${"a".repeat(40)}`;
+
+function apiKey(overrides: Partial<Record<string, unknown>> = {}) {
+  return {
+    id: "apk_test",
+    type: "api_key",
+    name: "test",
+    subject: "org_test",
+    scopes: [],
+    claims: null,
+    revoked: false,
+    revocationReason: null,
+    expired: false,
+    expiration: null,
+    createdBy: "user_test",
+    description: null,
+    lastUsedAt: null,
+    createdAt: 0,
+    updatedAt: 0,
+    ...overrides,
+  };
+}
 
 async function invokeAuth(headers: Headers) {
-  // Build a tiny test proc that runs authMiddleware and returns ctx.
   const { os } = await import("@orpc/server");
   const proc = os
     .$context<{ headers: Headers; requestId: string }>()
@@ -37,13 +48,7 @@ async function invokeAuth(headers: Headers) {
 }
 
 beforeEach(() => {
-  limitMock.mockReset();
-  whereMock.mockClear();
-  fromMock.mockClear();
-  selectMock.mockClear();
-  updateWhereMock.mockClear();
-  updateSetMock.mockClear();
-  updateMock.mockClear();
+  verifyMock.mockReset();
 });
 
 describe("authMiddleware", () => {
@@ -52,19 +57,31 @@ describe("authMiddleware", () => {
       code: "UNAUTHORIZED",
       message: expect.stringContaining("API key required"),
     });
+    expect(verifyMock).not.toHaveBeenCalled();
   });
 
-  it("throws UNAUTHORIZED when token is not sk-lf- format", async () => {
+  it("throws UNAUTHORIZED when scheme is not Bearer", async () => {
     await expect(
-      invokeAuth(new Headers({ authorization: "Bearer not-an-api-key" }))
+      invokeAuth(new Headers({ authorization: `Basic ${validKey}` }))
+    ).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      message: expect.stringContaining("API key required"),
+    });
+    expect(verifyMock).not.toHaveBeenCalled();
+  });
+
+  it("throws UNAUTHORIZED when token is not ak_ prefixed (no network call)", async () => {
+    await expect(
+      invokeAuth(new Headers({ authorization: "Bearer not-a-clerk-key" }))
     ).rejects.toMatchObject({
       code: "UNAUTHORIZED",
       message: expect.stringContaining("Invalid API key format"),
     });
+    expect(verifyMock).not.toHaveBeenCalled();
   });
 
-  it("throws UNAUTHORIZED when no DB row matches the key", async () => {
-    limitMock.mockResolvedValueOnce([]);
+  it("throws UNAUTHORIZED when clerk.apiKeys.verify throws", async () => {
+    verifyMock.mockRejectedValueOnce(new Error("clerk down"));
 
     await expect(
       invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
@@ -72,18 +89,22 @@ describe("authMiddleware", () => {
       code: "UNAUTHORIZED",
       message: "Invalid API key",
     });
+    expect(verifyMock).toHaveBeenCalledWith(validKey);
   });
 
-  it("throws UNAUTHORIZED when the key is expired", async () => {
-    limitMock.mockResolvedValueOnce([
-      {
-        id: 1,
-        publicId: "akey_test",
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        expiresAt: new Date(Date.now() - 1000),
-      },
-    ]);
+  it("throws UNAUTHORIZED when key is revoked", async () => {
+    verifyMock.mockResolvedValueOnce(apiKey({ revoked: true }));
+
+    await expect(
+      invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
+    ).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      message: "API key revoked",
+    });
+  });
+
+  it("throws UNAUTHORIZED when key is expired", async () => {
+    verifyMock.mockResolvedValueOnce(apiKey({ expired: true }));
 
     await expect(
       invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
@@ -93,47 +114,56 @@ describe("authMiddleware", () => {
     });
   });
 
+  it("throws FORBIDDEN when subject is not org-scoped", async () => {
+    verifyMock.mockResolvedValueOnce(apiKey({ subject: "user_personal" }));
+
+    await expect(
+      invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "API key is not org-scoped",
+    });
+  });
+
+  it("throws FORBIDDEN when createdBy is missing", async () => {
+    verifyMock.mockResolvedValueOnce(apiKey({ createdBy: null }));
+
+    await expect(
+      invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+      message: "API key is missing creator metadata",
+    });
+  });
+
   it("accepts lowercase 'bearer' scheme (RFC 7235 case-insensitive)", async () => {
-    limitMock.mockResolvedValueOnce([
-      {
-        id: 1,
-        publicId: "akey_test",
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        expiresAt: null,
-      },
-    ]);
+    verifyMock.mockResolvedValueOnce(apiKey());
 
     const ctx = await invokeAuth(
       new Headers({ authorization: `bearer ${validKey}` })
     );
 
-    expect(ctx).toMatchObject({ apiKeyId: "akey_test" });
+    expect(ctx).toMatchObject({
+      apiKeyId: "apk_test",
+      clerkOrgId: "org_test",
+      userId: "user_test",
+    });
   });
 
   it("resolves and exposes auth context when the key is valid", async () => {
-    limitMock.mockResolvedValueOnce([
-      {
-        id: 1,
-        publicId: "akey_test",
-        clerkOrgId: "org_test",
-        createdByUserId: "user_test",
-        expiresAt: null,
-      },
-    ]);
+    verifyMock.mockResolvedValueOnce(apiKey());
 
     const ctx = await invokeAuth(
       new Headers({ authorization: `Bearer ${validKey}` })
     );
 
     expect(ctx).toMatchObject({
-      apiKeyId: "akey_test",
+      apiKeyId: "apk_test",
       clerkOrgId: "org_test",
       userId: "user_test",
     });
-    // lastUsedAt persistence: success path must call db.update once.
-    expect(updateMock).toHaveBeenCalledTimes(1);
-    expect(updateSetMock).toHaveBeenCalledTimes(1);
+    expect(verifyMock).toHaveBeenCalledTimes(1);
+    expect(verifyMock).toHaveBeenCalledWith(validKey);
   });
 
   it("rethrows ORPCError instances (smoke check)", () => {

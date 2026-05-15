@@ -149,39 +149,43 @@ const authedProcedure = t.procedure
 export const publicProcedure = t.procedure.use(observabilityMiddleware);
 
 /**
- * User-Scoped Procedure
+ * Pending-Allowed Procedure
  *
- * For user-level operations: account settings, profile, list orgs, create org.
- * Accepts both clerk-pending (no org) and clerk-active (has org) users.
+ * Admits both `clerk-pending` and `clerk-active` sessions. Use this for any
+ * operation that must remain reachable while a user is still completing
+ * onboarding (i.e. has not yet claimed/created an organization).
  *
- * Use cases:
- * - User profile and settings
+ * The gate name describes the auth admission rule — *which* Clerk session
+ * types are allowed — not the operation's target. That way, adding a new
+ * onboarding-time procedure does not require renaming the gate.
+ *
+ * Typical use cases:
+ * - User profile and settings (`account.get`)
  * - List user's organizations
- * - Create new organization
- * - User-level integrations (GitHub account connection)
+ * - Create the first organization
  *
- * For org-scoped operations (repos, integrations), use `orgScopedProcedure`.
+ * For procedures that must reject `clerk-pending` sessions, use
+ * `pendingNotAllowedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const userScopedProcedure = authedProcedure;
+export const pendingAllowedProcedure = authedProcedure;
 
 /**
- * Org-Scoped Procedure
+ * Pending-Not-Allowed Procedure
  *
- * For org-level operations: repositories, members, integrations.
- * Only accepts clerk-active users (authenticated + has claimed org).
+ * Admits `clerk-active` sessions only. `clerk-pending` is rejected by the
+ * composed `requireOrg` middleware with `FORBIDDEN`.
  *
- * Type-safe: `ctx.auth.orgId` is guaranteed to exist.
+ * `ctx.auth.orgId` is guaranteed to be present in handlers.
  *
- * Use cases:
- * - Repositories (connect, sync)
- * - Org members (invite, remove)
- * - Org integrations (GitHub org, Slack)
- * - Org settings
+ * Typical use cases:
+ * - Org API keys (list / create / revoke / delete)
+ * - Org members, repositories, integrations, settings
  *
- * For user-level operations (profile, create org), use `userScopedProcedure`.
+ * For procedures that must remain callable during onboarding, use
+ * `pendingAllowedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const orgScopedProcedure = authedProcedure.use(requireOrg);
+export const pendingNotAllowedProcedure = authedProcedure.use(requireOrg);

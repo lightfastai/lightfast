@@ -7,14 +7,14 @@ settings:
 catalogs:
   default:
     '@clerk/backend':
-      specifier: 3.2.14
-      version: 3.2.14
+      specifier: 3.4.7
+      version: 3.4.7
     '@clerk/nextjs':
-      specifier: 7.2.4
-      version: 7.2.4
+      specifier: 7.3.3
+      version: 7.3.3
     '@clerk/shared':
-      specifier: 4.8.3
-      version: 4.8.3
+      specifier: 4.10.2
+      version: 4.10.2
     '@hookform/resolvers':
       specifier: ^5.2.2
       version: 5.2.2
@@ -245,9 +245,6 @@ importers:
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
-      '@repo/app-api-key':
-        specifier: workspace:*
-        version: link:../../packages/app-api-key
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
@@ -354,7 +351,7 @@ importers:
         version: link:../../api/app
       '@clerk/nextjs':
         specifier: 'catalog:'
-        version: 7.2.4(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 7.3.3(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
@@ -373,9 +370,6 @@ importers:
       '@orpc/openapi':
         specifier: ^1.14.2
         version: 1.14.2(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.20.0(bufferutil@4.1.0))
-      '@repo/app-api-key':
-        specifier: workspace:*
-        version: link:../../packages/app-api-key
       '@repo/app-trpc':
         specifier: workspace:^
         version: link:../../packages/app-trpc
@@ -973,15 +967,9 @@ importers:
         specifier: ^1.14.2
         version: 1.14.2(@opentelemetry/api@1.9.1)
     devDependencies:
-      '@db/app':
-        specifier: workspace:*
-        version: link:../../db/app
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
-      '@repo/app-api-key':
-        specifier: workspace:*
-        version: link:../../packages/app-api-key
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
@@ -991,9 +979,9 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.9.1
-      '@vendor/db':
+      '@vendor/clerk':
         specifier: workspace:*
-        version: link:../../vendor/db
+        version: link:../../vendor/clerk
       '@vitest/coverage-v8':
         specifier: ^4.1.4
         version: 4.1.4(vitest@4.1.4)
@@ -1116,22 +1104,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.4(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0(bufferutil@4.1.0))(jsdom@27.0.1(bufferutil@4.1.0))(vite@8.0.10(@types/node@24.9.1)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
-
-  packages/app-api-key:
-    dependencies:
-      '@vendor/lib':
-        specifier: workspace:*
-        version: link:../../vendor/lib
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.9.1
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   packages/app-encryption:
     devDependencies:
@@ -1603,13 +1575,13 @@ importers:
     dependencies:
       '@clerk/backend':
         specifier: 'catalog:'
-        version: 3.2.14(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 3.4.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@clerk/nextjs':
         specifier: 'catalog:'
-        version: 7.2.4(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 7.3.3(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@clerk/shared':
         specifier: 'catalog:'
-        version: 4.8.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
@@ -2406,39 +2378,27 @@ packages:
   '@clack/prompts@1.2.0':
     resolution: {integrity: sha512-4jmztR9fMqPMjz6H/UZXj0zEmE43ha1euENwkckKKel4XpSfokExPo5AiVStdHSAlHekz4d0CA/r45Ok1E4D3w==}
 
-  '@clerk/backend@3.2.14':
-    resolution: {integrity: sha512-IkePG8vufU+pq8ylQMBJxeyc3ELXxHkrZ0z2lddj8RFq6nwUT03H7u7unKNBERuV4b7FzTqDv8LKyZ4jrVvUqA==}
+  '@clerk/backend@3.4.7':
+    resolution: {integrity: sha512-zAELfaYtrlxlxxB6PT3EHPsHck6IPuyTQSKm7hWQqXp9GoFOM6wKOflFZgI0Q2M1C5SgrkDcrMNchkWXRwbsQw==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/nextjs@7.2.4':
-    resolution: {integrity: sha512-b6ptd1hP+B9/m0AJDC6zVpguCW2Op7mTOFXnx85PSpsiRFE68FcCtKp4s7YmIES+LNMahkuJalFWPxaSNv1kfA==}
+  '@clerk/nextjs@7.3.3':
+    resolution: {integrity: sha512-MvDczhXM5v9H/a6qd7O52Ydj6CNtgSSPBrpC6HzlfB+nkP8GrsRl/sH+jFrGmRnLsT7Q7A9TESXkrbuHoeGAeQ==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       next: ^15.2.8 || ^15.3.8 || ^15.4.10 || ^15.5.9 || ^15.6.0-0 || ^16.0.10 || ^16.1.0-0
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@clerk/react@6.5.0':
-    resolution: {integrity: sha512-TXYxlJ9EvPvJo6NKTy//RlqoZ4nhvmIjlU9cp9KG3buHD7UCby0It9dtaPHbAu5h4s426C7F6GID47LolaLEbg==}
+  '@clerk/react@6.6.2':
+    resolution: {integrity: sha512-eLev3C21yh2vqyvEBfXpc1QHa4q+wxbtRdTtBG0fCI+tMQUim8TIS300AJAciM6ox8tgInTWwIeIxr5jiYsvtw==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@clerk/shared@4.8.3':
-    resolution: {integrity: sha512-HZViZBCTfOR2OreSBDMXcIRPgYiiYCE+GCCPrpjq/ZPcA6OsGiRCIQgUoGgGdAoFgr6Hk0TT00hnVK7g0qRKqQ==}
-    engines: {node: '>=20.9.0'}
-    peerDependencies:
-      react: ^19.2.5
-      react-dom: ^19.2.5
-    peerDependenciesMeta:
-      react:
-        optional: true
-      react-dom:
-        optional: true
-
-  '@clerk/shared@4.9.0':
-    resolution: {integrity: sha512-YU9Fv6FK1EwxM7uz1hGPrLpvcHRhHm8Quuh5RL343oXakE+/JHtYy4OhwVgqYVA+j63pw+7lpghL3CYQTgk0hA==}
+  '@clerk/shared@4.10.2':
+    resolution: {integrity: sha512-2RXGaCV94U2wYWaMQZA/AhVkqjcSx8f+oVjh6wgr4yXDmZ24BQRjPJ+K4L6IHiB/agoaXtKWJ0GI8InRZjo9/g==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^19.2.5
@@ -7114,9 +7074,6 @@ packages:
 
   '@tanstack/query-core@5.100.9':
     resolution: {integrity: sha512-SJSFw1S8+kQ0+knv/XGfrbocWoAlT7vDKsSImtLx3ZPQmEcR46hkDjLSvynSy25N8Ms4tIEini1FuBd5k7IscQ==}
-
-  '@tanstack/query-core@5.90.16':
-    resolution: {integrity: sha512-MvtWckSVufs/ja463/K4PyJeqT+HMlJWtw6PrCpywznd2NSgO3m4KwO9RqbFqGg6iDE8vVMFWMeQI4Io3eEYww==}
 
   '@tanstack/query-core@5.99.1':
     resolution: {integrity: sha512-5E8xwxyWvr22yt7zvzP3KOZ5TUElOdVA45NP3/Ao1m9mvc9i18NLTDe9m3M00BH2DR5J20cv7xckMPlhKNs+vQ==}
@@ -14135,45 +14092,34 @@ snapshots:
       fast-wrap-ansi: 0.1.6
       sisteransi: 1.0.5
 
-  '@clerk/backend@3.2.14(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/backend@3.4.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@clerk/shared': 4.9.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/shared': 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       standardwebhooks: 1.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - react
       - react-dom
 
-  '@clerk/nextjs@7.2.4(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/nextjs@7.3.3(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@clerk/backend': 3.2.14(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@clerk/react': 6.5.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@clerk/shared': 4.9.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/backend': 3.4.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/react': 6.6.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/shared': 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       next: 16.2.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
       server-only: 0.0.1
       tslib: 2.8.1
 
-  '@clerk/react@6.5.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/react@6.6.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@clerk/shared': 4.9.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/shared': 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
       tslib: 2.8.1
 
-  '@clerk/shared@4.8.3(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
-    dependencies:
-      '@tanstack/query-core': 5.90.16
-      dequal: 2.0.3
-      glob-to-regexp: 0.4.1
-      js-cookie: 3.0.5
-      std-env: 3.10.0
-    optionalDependencies:
-      react: 19.2.5
-      react-dom: 19.2.5(react@19.2.5)
-
-  '@clerk/shared@4.9.0(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/shared@4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@tanstack/query-core': 5.100.9
       dequal: 2.0.3
@@ -19271,8 +19217,6 @@ snapshots:
     optional: true
 
   '@tanstack/query-core@5.100.9': {}
-
-  '@tanstack/query-core@5.90.16': {}
 
   '@tanstack/query-core@5.99.1': {}
 

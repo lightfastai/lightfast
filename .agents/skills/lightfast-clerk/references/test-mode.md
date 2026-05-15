@@ -46,8 +46,25 @@ sidesteps this by:
 Without backend provisioning, only invited users can complete sign-up. The
 skill makes that requirement transparent.
 
+## When NOT to use this
+
+`+clerk_test@` skips real delivery — useful for fast/automated runs, but
+useless when you need to verify the actual email *contents*, the URL
+Clerk embeds in a magic link, or the OTP digits Clerk generates. For
+those, see [`real-email-testing.md`](real-email-testing.md), which
+documents the plus-addressing pattern that triggers real delivery into
+your own inbox.
+
+| You need | Use |
+|---|---|
+| Fast, repeatable sign-in for tRPC/auth scaffolding | `+clerk_test@` (this doc) |
+| Verify the actual email body / URL / OTP digits | real-email-testing.md |
+| Verify invitation/ticket sign-up end to end | real-email-testing.md |
+| Reproduce waitlist gating against a fresh email | real-email-testing.md |
+
 ## Reading
 
 - Clerk Testing docs: https://clerk.com/docs/testing/test-emails-and-phones
 - Clerk Backend API reference: https://clerk.com/docs/reference/backend-api
 - The skill's wrapper: `.agents/skills/lightfast-clerk/lib/clerk-backend.mjs`
+- Companion doc: [`real-email-testing.md`](real-email-testing.md)
