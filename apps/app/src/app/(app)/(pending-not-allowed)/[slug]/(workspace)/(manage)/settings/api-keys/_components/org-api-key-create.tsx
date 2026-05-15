@@ -14,7 +14,7 @@ import {
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Check, Copy, Loader2, Plus } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 export function OrgApiKeyCreate() {
   const trpc = useTRPC();
@@ -26,11 +26,18 @@ export function OrgApiKeyCreate() {
   const [name, setName] = useState("");
   const [createdKey, setCreatedKey] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  // Guards onSuccess against re-populating a stale secret after the dialog
+  // has been closed (and createMutation.reset() called) but before the
+  // in-flight mutation resolved.
+  const isOpenRef = useRef(false);
 
   const createMutation = useMutation(
     trpc.pendingNotAllowed.orgApiKeys.create.mutationOptions({
       meta: { errorTitle: "Failed to create API key" },
       onSuccess: (data) => {
+        if (!isOpenRef.current) {
+          return;
+        }
         if (data.secret) {
           setCreatedKey(data.secret);
         }
@@ -41,10 +48,11 @@ export function OrgApiKeyCreate() {
   );
 
   function handleCreate() {
-    if (!name.trim()) {
+    const trimmed = name.trim();
+    if (!trimmed || createMutation.isPending) {
       return;
     }
-    createMutation.mutate({ name: name.trim() });
+    createMutation.mutate({ name: trimmed });
   }
 
   function handleCopy() {
@@ -57,6 +65,7 @@ export function OrgApiKeyCreate() {
   }
 
   function handleOpenChange(open: boolean) {
+    isOpenRef.current = open;
     if (open) {
       setIsOpen(true);
     } else {
