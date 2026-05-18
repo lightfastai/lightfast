@@ -42,9 +42,12 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_ENV: z
       .enum(["development", "preview", "production"])
       .default("development"),
-    NEXT_PUBLIC_APP_URL: z.string().url().optional(),
-    NEXT_PUBLIC_WWW_URL: z.string().url().optional(),
-    NEXT_PUBLIC_PLATFORM_URL: z.string().url().optional(),
+    NEXT_PUBLIC_APP_URL: z.string().url().default("https://lightfast.ai"),
+    NEXT_PUBLIC_WWW_URL: z.string().url().default("https://lightfast.ai"),
+    NEXT_PUBLIC_PLATFORM_URL: z
+      .string()
+      .url()
+      .default("https://lightfast-platform.vercel.app"),
   },
   /**
    * Destructure all variables from `process.env` to make sure they aren't tree-shaken away.

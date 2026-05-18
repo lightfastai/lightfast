@@ -7,13 +7,16 @@ interface Env {
   wwwUrl?: string;
 }
 
+// Mirror the zod defaults declared in src/env.ts so the mock acts like the
+// real env wrapper (which fills in defaults when the var is unset).
 function mockEnv(opts: Env) {
   vi.doMock("~/env", () => ({
     env: {
       NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv,
-      NEXT_PUBLIC_APP_URL: opts.appUrl,
-      NEXT_PUBLIC_WWW_URL: opts.wwwUrl,
-      NEXT_PUBLIC_PLATFORM_URL: opts.platformUrl,
+      NEXT_PUBLIC_APP_URL: opts.appUrl ?? "https://lightfast.ai",
+      NEXT_PUBLIC_WWW_URL: opts.wwwUrl ?? "https://lightfast.ai",
+      NEXT_PUBLIC_PLATFORM_URL:
+        opts.platformUrl ?? "https://lightfast-platform.vercel.app",
     },
   }));
 }
