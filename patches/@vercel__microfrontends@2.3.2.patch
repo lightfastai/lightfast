@@ -1,0 +1,100 @@
+diff --git a/dist/bin/cli.cjs b/dist/bin/cli.cjs
+index e1e59c0269c917ad30e575d12794030b6aa0743a..d3c99fd4a04dbc165ec06f63c193796dd00deb1d 100644
+--- a/dist/bin/cli.cjs
++++ b/dist/bin/cli.cjs
+@@ -888,6 +888,12 @@ var LocalHost = class extends Host {
+       host = local.host;
+       port = local.port;
+     }
++    const override = getLocalAppUrlOverride(appName);
++    if (override) {
++      protocol = protocol ?? override.protocol;
++      host = host ?? override.host ?? "localhost";
++      port = port ?? override.port;
++    }
+     super({
+       protocol: protocol ?? "http",
+       host: host ?? "localhost",
+@@ -902,6 +908,21 @@ function generateAutomationBypassEnvVarName({
+ }) {
+   return `AUTOMATION_BYPASS_${name.toUpperCase().replace(/[^a-zA-Z0-9]/g, "_")}`;
+ }
++const localAppUrlOverrides = new Map();
++function getLocalAppUrlOverride(appName) {
++  const raw = localAppUrlOverrides.get(appName);
++  if (!raw) return undefined;
++  try {
++    const url = new URL(raw);
++    return {
++      protocol: url.protocol.replace(/:$/, ""),
++      host: url.hostname,
++      port: url.port ? Number(url.port) : url.protocol === "https:" ? 443 : 80,
++    };
++  } catch {
++    return undefined;
++  }
++}
+ 
+ // src/config/microfrontends-config/isomorphic/validation.ts
+ var import_path_to_regexp2 = require("path-to-regexp");
+@@ -2686,7 +2707,7 @@ var LocalProxy = class {
+     this.router = new ProxyRequestRouter(config, { localApps });
+     this.proxyPort = proxyPort ?? this.router.config.getLocalProxyPort();
+     this.configFilePath = configFilePath;
+-    this.proxy = import_http_proxy.default.createProxyServer({ secure: true });
++    this.proxy = import_http_proxy.default.createProxyServer({ secure: false });
+     this.proxy.on("error", (err, req, res) => {
+       if (res instanceof http.ServerResponse) {
+         res.writeHead(500, {
+@@ -2755,6 +2776,7 @@ var LocalProxy = class {
+         headers[MFE_LOCAL_PROXY_HEADER] = "1";
+         this.proxy.ws(req, socket, head, {
+           target: target.url,
++          changeOrigin: true,
+           headers
+         });
+       } catch (err) {
+@@ -2795,7 +2817,7 @@ var LocalProxy = class {
+     }
+     const target = this.router.getTarget(req);
+     const { req: strippedReq, mfeFlagValue } = removeMfeFlagQuery(req);
+-    if (target.protocol === "https") {
++    if (target.protocol === "https" && !target.hostname.endsWith(".localhost")) {
+       const { hostname, port, path: path7 } = target;
+       const app = this.router.config.getApplication(target.application);
+       const perAppEnvVarName = app.getAutomationBypassEnvVarName();
+@@ -2871,6 +2893,7 @@ var LocalProxy = class {
+       }
+       this.proxy.web(strippedReq, res, {
+         target: target.url,
++        changeOrigin: true,
+         headers
+       });
+     }
+@@ -3087,7 +3110,11 @@ function main() {
+     "--local-apps <names...>",
+     "List of locally running applications",
+     []
+-  ).addOption(new import_commander.Option("--names <names...>").hideHelp()).option("--port <port>", "Port proxy will use", (value) => {
++  ).addOption(new import_commander.Option("--names <names...>").hideHelp()).option(
++    "--local-app-url <pairs...>",
++    "Per-app upstream URL override, format: <name>=<url>. Repeatable or space-separated.",
++    []
++  ).option("--port <port>", "Port proxy will use", (value) => {
+     const parsedValue = Number.parseInt(value, 10);
+     if (Number.isNaN(parsedValue) || parsedValue <= 0) {
+       throw new Error(
+@@ -3101,6 +3128,13 @@ function main() {
+         "Both --names and --local-apps are set. --names is deprecated and has been replaced with --local-apps, which functions exactly the same. Please only set --local-apps."
+       );
+     }
++    for (const pair of options.localAppUrl ?? []) {
++      const eq = pair.indexOf("=");
++      if (eq <= 0) {
++        throw new Error(`Invalid --local-app-url value "${pair}": expected NAME=URL.`);
++      }
++      localAppUrlOverrides.set(pair.slice(0, eq), pair.slice(eq + 1));
++    }
+     const localProxy = LocalProxy.fromFile(filePath, {
+       localApps: options.names ?? options.localApps,
+       proxyPort: options.port
