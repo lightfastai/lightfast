@@ -1,5 +1,5 @@
 import { withRelatedProject } from "@vercel/related-projects";
-import { env } from "~/env";
+import { env } from "./env";
 
 // Edge-safe cross-app URL helpers. dev:app injects NEXT_PUBLIC_<APP>_URL via
 // portless; preview/prod resolve through @vercel/related-projects.

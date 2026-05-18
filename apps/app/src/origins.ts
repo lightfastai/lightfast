@@ -1,5 +1,5 @@
 import { withRelatedProject } from "@vercel/related-projects";
-import { env } from "~/env";
+import { env } from "./env";
 
 const vercelEnv = env.NEXT_PUBLIC_VERCEL_ENV;
 const isLocal = vercelEnv !== "production" && vercelEnv !== "preview";
