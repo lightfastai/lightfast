@@ -24,6 +24,22 @@
     "./lib/activity": {
       "types": "./src/lib/activity.ts",
       "default": "./src/lib/activity.ts"
+    },
+    "./auth/identity": {
+      "types": "./src/auth/identity/types.ts",
+      "default": "./src/auth/identity/types.ts"
+    },
+    "./auth/readiness": {
+      "types": "./src/auth/readiness/types.ts",
+      "default": "./src/auth/readiness/types.ts"
+    },
+    "./auth/lightfast-tasks": {
+      "types": "./src/auth/lightfast-tasks/registry.ts",
+      "default": "./src/auth/lightfast-tasks/registry.ts"
+    },
+    "./auth/lightfast-tasks/repo": {
+      "types": "./src/auth/lightfast-tasks/repo.ts",
+      "default": "./src/auth/lightfast-tasks/repo.ts"
     }
   },
   "license": "Apache-2.0",
