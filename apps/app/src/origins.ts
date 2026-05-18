@@ -26,7 +26,9 @@ export const platformUrl = withRelatedProject({
 
 // Dev-only CORS allowlist: hostnames of the injected sibling URLs. Each entry
 // is an exact host (no wildcards) — the running worktree is the only one we
-// admit. Edge-safe: pure URL parsing.
+// admit. Edge-safe: pure URL parsing. We restrict to `.localhost` hosts so the
+// production fallbacks (lightfast.ai, *.vercel.app) never sneak into the dev
+// allowlist when NEXT_PUBLIC_*_URL is unset.
 export const devOriginPatterns: readonly string[] = isLocal
   ? Array.from(
       new Set(
@@ -38,7 +40,9 @@ export const devOriginPatterns: readonly string[] = isLocal
               return "";
             }
           })
-          .filter((host) => host && host !== "lightfast.ai")
+          .filter(
+            (host) => host && (host === "localhost" || host.endsWith(".localhost"))
+          )
       )
     )
   : [];

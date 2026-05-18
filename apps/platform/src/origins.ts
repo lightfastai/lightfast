@@ -23,6 +23,7 @@ export const platformUrl = withRelatedProject({
 });
 
 // Dev-only CORS allowlist: hostnames of the injected sibling URLs. Edge-safe.
+// Restricted to `.localhost` so production fallbacks never sneak in.
 export const devOriginPatterns: readonly string[] = isLocal
   ? Array.from(
       new Set(
@@ -34,7 +35,9 @@ export const devOriginPatterns: readonly string[] = isLocal
               return "";
             }
           })
-          .filter((host) => host && host !== "lightfast.ai")
+          .filter(
+            (host) => host && (host === "localhost" || host.endsWith(".localhost"))
+          )
       )
     )
   : [];
