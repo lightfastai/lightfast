@@ -12,7 +12,7 @@ interface Env {
 function mockEnv(opts: Env) {
   vi.doMock("~/env", () => ({
     env: {
-      NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv,
+      NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv ?? "development",
       NEXT_PUBLIC_APP_URL: opts.appUrl ?? "https://lightfast.ai",
       NEXT_PUBLIC_WWW_URL: opts.wwwUrl ?? "https://lightfast.ai",
       NEXT_PUBLIC_PLATFORM_URL:
@@ -30,7 +30,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
-describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV undefined)", () => {
+describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV defaults to development)", () => {
   beforeEach(() => {
     mockEnv({
       appUrl: "https://app.lightfast.localhost",
