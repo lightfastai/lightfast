@@ -8,38 +8,36 @@ const isLocal = vercelEnv !== "production" && vercelEnv !== "preview";
 // portless; preview/prod resolve through @vercel/related-projects.
 export const appUrl = withRelatedProject({
   projectName: "lightfast-app",
-  defaultHost: process.env.NEXT_PUBLIC_APP_URL ?? "https://lightfast.ai",
+  defaultHost: env.NEXT_PUBLIC_APP_URL ?? "https://lightfast.ai",
 });
 
 export const wwwUrl = withRelatedProject({
   projectName: "lightfast-www",
-  defaultHost: process.env.NEXT_PUBLIC_WWW_URL ?? "https://lightfast.ai",
+  defaultHost: env.NEXT_PUBLIC_WWW_URL ?? "https://lightfast.ai",
 });
 
 export const platformUrl = withRelatedProject({
   projectName: "lightfast-platform",
   defaultHost:
-    process.env.NEXT_PUBLIC_PLATFORM_URL ??
-    "https://lightfast-platform.vercel.app",
+    env.NEXT_PUBLIC_PLATFORM_URL ?? "https://lightfast-platform.vercel.app",
 });
 
-// Dev-only CORS allowlist: hostnames of the injected sibling URLs. Edge-safe.
-// Restricted to `.localhost` so production fallbacks never sneak in.
+// Dev-only CORS allowlist: the full host (port included) of each sibling URL.
+// Filter on `hostname` (port-stripped) so values like `http://localhost:3000`
+// still match; production fallbacks never sneak in.
 export const devOriginPatterns: readonly string[] = isLocal
   ? Array.from(
       new Set(
-        [appUrl, wwwUrl, platformUrl]
-          .map((u) => {
-            try {
-              return new URL(u).host;
-            } catch {
-              return "";
-            }
-          })
-          .filter(
-            (host) =>
-              host && (host === "localhost" || host.endsWith(".localhost"))
-          )
+        [appUrl, wwwUrl, platformUrl].flatMap((u) => {
+          try {
+            const { host, hostname } = new URL(u);
+            return hostname === "localhost" || hostname.endsWith(".localhost")
+              ? [host]
+              : [];
+          } catch {
+            return [];
+          }
+        })
       )
     )
   : [];

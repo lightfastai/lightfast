@@ -1,10 +1,20 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-function mockEnv(
-  vercelEnv: "development" | "preview" | "production" | undefined
-) {
+interface Env {
+  appUrl?: string;
+  platformUrl?: string;
+  vercelEnv?: "development" | "preview" | "production";
+  wwwUrl?: string;
+}
+
+function mockEnv(opts: Env) {
   vi.doMock("~/env", () => ({
-    env: { NEXT_PUBLIC_VERCEL_ENV: vercelEnv },
+    env: {
+      NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv,
+      NEXT_PUBLIC_APP_URL: opts.appUrl,
+      NEXT_PUBLIC_WWW_URL: opts.wwwUrl,
+      NEXT_PUBLIC_PLATFORM_URL: opts.platformUrl,
+    },
   }));
 }
 
@@ -19,13 +29,11 @@ afterEach(() => {
 
 describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV undefined)", () => {
   beforeEach(() => {
-    mockEnv(undefined);
-    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://app.lightfast.localhost");
-    vi.stubEnv("NEXT_PUBLIC_WWW_URL", "https://www.lightfast.localhost");
-    vi.stubEnv(
-      "NEXT_PUBLIC_PLATFORM_URL",
-      "https://platform.lightfast.localhost"
-    );
+    mockEnv({
+      appUrl: "https://app.lightfast.localhost",
+      wwwUrl: "https://www.lightfast.localhost",
+      platformUrl: "https://platform.lightfast.localhost",
+    });
   });
 
   it("appUrl resolves to the injected portless self URL", async () => {
@@ -55,7 +63,7 @@ describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV undefined)", () => {
 
 describe("origins (dev — NEXT_PUBLIC_<APP>_URL unset)", () => {
   beforeEach(() => {
-    mockEnv(undefined);
+    mockEnv({});
   });
 
   it("appUrl falls back to the production literal", async () => {
@@ -69,9 +77,28 @@ describe("origins (dev — NEXT_PUBLIC_<APP>_URL unset)", () => {
   });
 });
 
+describe("origins (dev — NEXT_PUBLIC_<APP>_URL with port)", () => {
+  beforeEach(() => {
+    mockEnv({
+      appUrl: "http://localhost:3000",
+      wwwUrl: "http://localhost:3001",
+      platformUrl: "http://localhost:3002",
+    });
+  });
+
+  it("devOriginPatterns keeps the port in the host string", async () => {
+    const { devOriginPatterns } = await import("../origins");
+    expect(devOriginPatterns).toEqual([
+      "localhost:3000",
+      "localhost:3001",
+      "localhost:3002",
+    ]);
+  });
+});
+
 describe("origins (production — VRP unset)", () => {
   beforeEach(() => {
-    mockEnv("production");
+    mockEnv({ vercelEnv: "production" });
     vi.stubEnv("VERCEL_ENV", "production");
   });
 
@@ -98,7 +125,7 @@ describe("origins (production — VRP unset)", () => {
 
 describe("origins (production — VRP populated)", () => {
   beforeEach(() => {
-    mockEnv("production");
+    mockEnv({ vercelEnv: "production" });
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv(
       "VERCEL_RELATED_PROJECTS",

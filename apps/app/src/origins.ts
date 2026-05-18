@@ -1,5 +1,5 @@
 import { withRelatedProject } from "@vercel/related-projects";
-import { env } from "./env";
+import { env } from "~/env";
 
 const vercelEnv = env.NEXT_PUBLIC_VERCEL_ENV;
 const isLocal = vercelEnv !== "production" && vercelEnv !== "preview";
@@ -10,41 +10,36 @@ const isLocal = vercelEnv !== "production" && vercelEnv !== "preview";
 // VERCEL_RELATED_PROJECTS and returns the matched alias.
 export const appUrl = withRelatedProject({
   projectName: "lightfast-app",
-  defaultHost: process.env.NEXT_PUBLIC_APP_URL ?? "https://lightfast.ai",
+  defaultHost: env.NEXT_PUBLIC_APP_URL ?? "https://lightfast.ai",
 });
 
 export const wwwUrl = withRelatedProject({
   projectName: "lightfast-www",
-  defaultHost: process.env.NEXT_PUBLIC_WWW_URL ?? "https://lightfast.ai",
+  defaultHost: env.NEXT_PUBLIC_WWW_URL ?? "https://lightfast.ai",
 });
 
 export const platformUrl = withRelatedProject({
   projectName: "lightfast-platform",
   defaultHost:
-    process.env.NEXT_PUBLIC_PLATFORM_URL ??
-    "https://lightfast-platform.vercel.app",
+    env.NEXT_PUBLIC_PLATFORM_URL ?? "https://lightfast-platform.vercel.app",
 });
 
-// Dev-only CORS allowlist: hostnames of the injected sibling URLs. Each entry
-// is an exact host (no wildcards) — the running worktree is the only one we
-// admit. Edge-safe: pure URL parsing. We restrict to `.localhost` hosts so the
-// production fallbacks (lightfast.ai, *.vercel.app) never sneak into the dev
-// allowlist when NEXT_PUBLIC_*_URL is unset.
+// Dev-only CORS allowlist: the full host (port included) of each sibling URL.
+// We filter on `hostname` (port-stripped) so values like `http://localhost:3000`
+// still match; production fallbacks never sneak in.
 export const devOriginPatterns: readonly string[] = isLocal
   ? Array.from(
       new Set(
-        [appUrl, wwwUrl, platformUrl]
-          .map((u) => {
-            try {
-              return new URL(u).host;
-            } catch {
-              return "";
-            }
-          })
-          .filter(
-            (host) =>
-              host && (host === "localhost" || host.endsWith(".localhost"))
-          )
+        [appUrl, wwwUrl, platformUrl].flatMap((u) => {
+          try {
+            const { host, hostname } = new URL(u);
+            return hostname === "localhost" || hostname.endsWith(".localhost")
+              ? [host]
+              : [];
+          } catch {
+            return [];
+          }
+        })
       )
     )
   : [];
