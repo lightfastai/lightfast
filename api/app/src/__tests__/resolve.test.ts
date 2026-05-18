@@ -13,15 +13,25 @@ vi.mock("@vendor/clerk/server", () => ({
   getUserOrgMemberships: vi.fn(),
 }));
 
+const listClearedTasksMock = vi.fn<(orgId: string) => Promise<Set<string>>>();
+
+vi.mock("../auth/lightfast-tasks/repo", () => ({
+  listClearedTasks: (orgId: string) => listClearedTasksMock(orgId),
+  markTaskCleared: vi.fn(),
+}));
+
 const { resolveAuth } = await import("../auth/resolve");
 
 beforeEach(() => {
   authMock.mockReset();
   verifyTokenMock.mockReset();
+  listClearedTasksMock.mockReset();
+  // Default: no cleared tasks unless a test overrides.
+  listClearedTasksMock.mockResolvedValue(new Set());
 });
 
-describe("resolveAuth", () => {
-  it("returns clerk-active when a valid Bearer JWT carries org_id", async () => {
+describe("resolveAuth — identity dimension", () => {
+  it("returns active identity when a valid Bearer JWT carries org_id", async () => {
     verifyTokenMock.mockResolvedValueOnce({
       sub: "user_bearer_active",
       org_id: "org_active",
@@ -31,8 +41,8 @@ describe("resolveAuth", () => {
       new Headers({ authorization: "Bearer valid.jwt.token" })
     );
 
-    expect(auth).toEqual({
-      type: "clerk-active",
+    expect(auth.identity).toEqual({
+      type: "active",
       userId: "user_bearer_active",
       orgId: "org_active",
     });
@@ -42,15 +52,15 @@ describe("resolveAuth", () => {
     expect(authMock).not.toHaveBeenCalled();
   });
 
-  it("returns clerk-pending when a valid Bearer JWT lacks org_id", async () => {
+  it("returns pending identity when a valid Bearer JWT lacks org_id", async () => {
     verifyTokenMock.mockResolvedValueOnce({ sub: "user_bearer_pending" });
 
     const auth = await resolveAuth(
       new Headers({ authorization: "Bearer valid.jwt.token" })
     );
 
-    expect(auth).toEqual({
-      type: "clerk-pending",
+    expect(auth.identity).toEqual({
+      type: "pending",
       userId: "user_bearer_pending",
     });
     expect(authMock).not.toHaveBeenCalled();
@@ -70,7 +80,7 @@ describe("resolveAuth", () => {
       new Headers({ authorization: "Bearer broken.jwt" })
     );
 
-    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(auth.identity).toEqual({ type: "unauthenticated" });
     expect(verifyTokenMock).toHaveBeenCalledTimes(1);
     expect(authMock).not.toHaveBeenCalled();
   });
@@ -80,7 +90,7 @@ describe("resolveAuth", () => {
 
     const auth = await resolveAuth(new Headers());
 
-    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(auth.identity).toEqual({ type: "unauthenticated" });
     expect(verifyTokenMock).not.toHaveBeenCalled();
     expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
   });
@@ -93,8 +103,8 @@ describe("resolveAuth", () => {
 
     const auth = await resolveAuth(new Headers());
 
-    expect(auth).toEqual({
-      type: "clerk-pending",
+    expect(auth.identity).toEqual({
+      type: "pending",
       userId: "user_cookie_only",
     });
     expect(verifyTokenMock).not.toHaveBeenCalled();
@@ -110,7 +120,7 @@ describe("resolveAuth", () => {
       new Headers({ authorization: "Basic abc123" })
     );
 
-    expect(auth).toEqual({ type: "clerk-pending", userId: "user_cookie" });
+    expect(auth.identity).toEqual({ type: "pending", userId: "user_cookie" });
     expect(verifyTokenMock).not.toHaveBeenCalled();
   });
 
@@ -122,8 +132,65 @@ describe("resolveAuth", () => {
 
     const auth = await resolveAuth(new Headers({ authorization: "Bearer " }));
 
-    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(auth.identity).toEqual({ type: "unauthenticated" });
     expect(verifyTokenMock).not.toHaveBeenCalled();
     expect(authMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveAuth — readiness composition", () => {
+  it("emits readiness n/a and skips the DB read when identity is unauthenticated", async () => {
+    authMock.mockResolvedValueOnce({ userId: null, orgId: null });
+
+    const auth = await resolveAuth(new Headers());
+
+    expect(auth.readiness).toEqual({ type: "n/a" });
+    expect(listClearedTasksMock).not.toHaveBeenCalled();
+  });
+
+  it("emits readiness n/a and skips the DB read when identity is pending", async () => {
+    authMock.mockResolvedValueOnce({
+      userId: "user_pending",
+      orgId: null,
+    });
+
+    const auth = await resolveAuth(new Headers());
+
+    expect(auth.readiness).toEqual({ type: "n/a" });
+    expect(listClearedTasksMock).not.toHaveBeenCalled();
+  });
+
+  it("emits readiness pending when active identity has no cleared rows", async () => {
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_active",
+      org_id: "org_active",
+    });
+    listClearedTasksMock.mockResolvedValueOnce(new Set());
+
+    const auth = await resolveAuth(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(auth.readiness).toEqual({
+      type: "pending",
+      current: "connect-github",
+      remaining: ["connect-github"],
+    });
+    expect(listClearedTasksMock).toHaveBeenCalledWith("org_active");
+  });
+
+  it("emits readiness cleared when connect-github is in the cleared set", async () => {
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_active",
+      org_id: "org_active",
+    });
+    listClearedTasksMock.mockResolvedValueOnce(new Set(["connect-github"]));
+
+    const auth = await resolveAuth(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(auth.readiness).toEqual({ type: "cleared" });
+    expect(listClearedTasksMock).toHaveBeenCalledWith("org_active");
   });
 });

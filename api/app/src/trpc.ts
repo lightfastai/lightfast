@@ -94,11 +94,14 @@ const observabilityMiddleware = t.middleware(
   createObservabilityMiddleware({
     isDev: t._config.isDev,
     extractAuth: (ctx) => {
-      switch (ctx.auth.type) {
-        case "clerk-active":
-          return { userId: ctx.auth.userId, orgId: ctx.auth.orgId };
-        case "clerk-pending":
-          return { userId: ctx.auth.userId };
+      switch (ctx.auth.identity.type) {
+        case "active":
+          return {
+            userId: ctx.auth.identity.userId,
+            orgId: ctx.auth.identity.orgId,
+          };
+        case "pending":
+          return { userId: ctx.auth.identity.userId };
         default:
           return {};
       }
@@ -110,29 +113,33 @@ const observabilityMiddleware = t.middleware(
  * Authentication gates, composed by user/org procedures below.
  *
  * Split out so the unauth check exists in exactly one place — adding a 4th
- * auth state (e.g. service-account) only requires touching `requireAuth`.
+ * identity state (e.g. service-account) only requires touching `requireAuth`.
  */
 const requireAuth = t.middleware(({ ctx, next }) => {
-  if (ctx.auth.type === "unauthenticated") {
+  if (ctx.auth.identity.type === "unauthenticated") {
     throw new TRPCError({
       code: "UNAUTHORIZED",
       message: "Authentication required. Please sign in.",
     });
   }
-  // ctx.auth is narrowed to clerk-pending | clerk-active for downstream use.
-  return next({ ctx: { ...ctx, auth: ctx.auth } });
+  // ctx.auth.identity is narrowed to pending | active for downstream use.
+  return next({
+    ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
+  });
 });
 
 const requireOrg = t.middleware(({ ctx, next }) => {
   // requireAuth has already excluded "unauthenticated".
-  if (ctx.auth.type !== "clerk-active") {
+  if (ctx.auth.identity.type !== "active") {
     throw new TRPCError({
       code: "FORBIDDEN",
       message:
         "Organization required. Please create or join an organization first.",
     });
   }
-  return next({ ctx: { ...ctx, auth: ctx.auth } });
+  return next({
+    ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
+  });
 });
 
 const authedProcedure = t.procedure
@@ -151,12 +158,12 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
 /**
  * Pending-Allowed Procedure
  *
- * Admits both `clerk-pending` and `clerk-active` sessions. Use this for any
- * operation that must remain reachable while a user is still completing
- * onboarding (i.e. has not yet claimed/created an organization).
+ * Admits both `pending` and `active` identities. Use this for any operation
+ * that must remain reachable while a user is still completing onboarding
+ * (i.e. has not yet claimed/created an organization).
  *
- * The gate name describes the auth admission rule — *which* Clerk session
- * types are allowed — not the operation's target. That way, adding a new
+ * The gate name describes the identity admission rule — *which* identity
+ * states are allowed — not the operation's target. That way, adding a new
  * onboarding-time procedure does not require renaming the gate.
  *
  * Typical use cases:
@@ -164,7 +171,7 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
  * - List user's organizations
  * - Create the first organization
  *
- * For procedures that must reject `clerk-pending` sessions, use
+ * For procedures that must reject `pending` identities, use
  * `pendingNotAllowedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
@@ -174,10 +181,10 @@ export const pendingAllowedProcedure = authedProcedure;
 /**
  * Pending-Not-Allowed Procedure
  *
- * Admits `clerk-active` sessions only. `clerk-pending` is rejected by the
- * composed `requireOrg` middleware with `FORBIDDEN`.
+ * Admits only sessions with `active` identity. `pending` identity is rejected
+ * by the composed `requireOrg` middleware with `FORBIDDEN`.
  *
- * `ctx.auth.orgId` is guaranteed to be present in handlers.
+ * `ctx.auth.identity.orgId` is guaranteed to be present in handlers.
  *
  * Typical use cases:
  * - Org API keys (list / create / revoke / delete)

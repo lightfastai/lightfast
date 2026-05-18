@@ -32,8 +32,8 @@ export const organizationRouter = {
    * Used by org-switcher component in the header.
    */
   listUserOrganizations: pendingAllowedProcedure.query(async ({ ctx }) => {
-    // pendingAllowedProcedure guarantees clerk-pending or clerk-active
-    const userId = ctx.auth.userId;
+    // pendingAllowedProcedure guarantees pending or active identity
+    const userId = ctx.auth.identity.userId;
     const clerk = await clerkClient();
 
     // Get all organizations the user belongs to from Clerk
@@ -71,11 +71,11 @@ export const organizationRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees clerk-pending or clerk-active
+      // pendingAllowedProcedure guarantees pending or active identity
       log.info("[organization] create", {
         slug: input.slug,
-        userId: ctx.auth.userId,
-        authType: ctx.auth.type,
+        userId: ctx.auth.identity.userId,
+        authType: ctx.auth.identity.type,
       });
 
       const clerk = await clerkClient();
@@ -85,7 +85,7 @@ export const organizationRouter = {
         const clerkOrg = await clerk.organizations.createOrganization({
           name: input.slug,
           slug: input.slug,
-          createdBy: ctx.auth.userId,
+          createdBy: ctx.auth.identity.userId,
         });
 
         log.info("[organization] create success", {
@@ -100,7 +100,7 @@ export const organizationRouter = {
       } catch (error: unknown) {
         log.error("[organization] create failed", {
           slug: input.slug,
-          userId: ctx.auth.userId,
+          userId: ctx.auth.identity.userId,
           error: parseError(error),
           errorDetails: error,
         });
@@ -150,7 +150,7 @@ export const organizationRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees clerk-pending or clerk-active
+      // pendingAllowedProcedure guarantees pending or active identity
       const clerk = await clerkClient();
 
       try {
@@ -161,7 +161,9 @@ export const organizationRouter = {
 
         // Verify user has admin access to the organization.
         // User-centric lookup (cached) — typically 1-5 orgs per user vs 100+ members per org.
-        const memberships = await getUserOrgMemberships(ctx.auth.userId);
+        const memberships = await getUserOrgMemberships(
+          ctx.auth.identity.userId
+        );
         const membership = memberships.find((m) => m.organizationId === org.id);
         if (!membership) {
           throw new TRPCError({
@@ -185,7 +187,7 @@ export const organizationRouter = {
         log.info("[organization] updateName success", {
           organizationId: org.id,
           slug: input.name,
-          userId: ctx.auth.userId,
+          userId: ctx.auth.identity.userId,
         });
 
         return {
@@ -201,7 +203,7 @@ export const organizationRouter = {
 
         log.error("[organization] updateName failed", {
           slug: input.slug,
-          userId: ctx.auth.userId,
+          userId: ctx.auth.identity.userId,
           error: parseError(error),
         });
 

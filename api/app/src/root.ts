@@ -4,9 +4,9 @@
  * Sub-routers are nested by the auth admission rule they enforce, *not* by
  * the operation's target:
  * - `pendingAllowed`: composed of `pendingAllowedProcedure` — admits both
- *   `clerk-pending` and `clerk-active` sessions (onboarding-safe surface).
+ *   `pending` and `active` identities (onboarding-safe surface).
  * - `pendingNotAllowed`: composed of `pendingNotAllowedProcedure` — admits
- *   only `clerk-active` (requires a claimed organization).
+ *   only `active` identity (requires a claimed organization).
  *
  * Naming the boundary by the gate lets us add procedures without renaming
  * the grouping when an operation's target evolves.

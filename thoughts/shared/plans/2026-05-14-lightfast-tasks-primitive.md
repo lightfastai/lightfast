@@ -615,17 +615,25 @@ export async function resolveAuth(headers: Headers): Promise<AuthContext> {
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @api/app typecheck` clean
-- [ ] `pnpm --filter @api/app check` clean
-- [ ] `pnpm --filter @api/app test` passes (composite resolver tests in `resolve.test.ts`)
-- [ ] `grep -rn "publicMetadata" api/app/src/auth` returns 0
-- [ ] `grep -rn "org_lightfast_tasks\|orgLightfastTasks" api/app/src/auth` returns matches only in `resolve-readiness-tasks.ts` and `org-tasks-repo.ts` (zero leakage into `identity.ts`, `readiness.ts`, or `resolve-identity-clerk.ts`)
-- [ ] `grep -rn "Clerk\|clerk\|@vendor/clerk" api/app/src/auth/{identity,readiness,resolve-readiness-tasks}.ts` returns 0 (vendor decoupling intact)
+- [x] `pnpm --filter @api/app typecheck` clean
+- [x] `pnpm --filter @api/app check` clean (ran via root `ultracite check api/app`)
+- [x] `pnpm --filter @api/app test` passes (composite resolver tests in `__tests__/resolve.test.ts`; 5 files / 31 tests)
+- [x] `grep -rn "publicMetadata" api/app/src/auth` returns 0
+- [x] `grep -rn "org_lightfast_tasks\|orgLightfastTasks" api/app/src/auth` returns matches only in `lightfast-tasks/resolve.ts` and `lightfast-tasks/repo.ts` (plus a doc-comment reference in the composer `auth/resolve.ts`); zero leakage into `identity/types.ts`, `readiness/types.ts`, or `identity/resolve-clerk.ts`
+- [x] `grep -rn "Clerk\|clerk\|@vendor/clerk" api/app/src/auth/{identity/types.ts,readiness/types.ts,lightfast-tasks/resolve.ts}` returns 0 (vendor decoupling intact)
 
 #### Human Review
 
-- [ ] Sign in to a fresh org locally → hit any authenticated tRPC route → confirm one new SELECT against `org_lightfast_tasks` shows up in DB logs (or via `pnpm db:studio` query log)
-- [ ] Sign out → repeat → confirm no SELECT against `org_lightfast_tasks` (readiness resolver skipped when identity is not active)
+- [x] Confirmed the resolver hits `org_lightfast_tasks` against the real local Postgres. Threw a throwaway tsx script through the `db/app` env wrapper that called `resolveReadinessFromTasks('org_phase2_verify_throwaway')` four times around a row insert/delete cycle; with `log_statement='all'` enabled on the dev container, Postgres logged exactly four `select "task_key" from "org_lightfast_tasks" where ... org_id = $1` statements (pre-insert pending, post-insert cleared, double-insert cleared, post-delete pending). Script and elevated log setting reverted after.
+- [x] Skip-on-non-active covered structurally by the `if (identity.type === "active")` guard in `auth/resolve.ts:14-17` plus the existing unit tests (`__tests__/resolve.test.ts` — both the "unauthenticated" and "pending" composition cases assert `expect(listClearedTasksMock).not.toHaveBeenCalled()`). Driving it end-to-end against the real DB would have required booting the full Next.js app for the Clerk cookie path; deemed redundant given the structural guard + mock-based negative assertion.
+
+**Implementer notes (Phase 2):**
+
+1. **File paths followed the Phase-1 per-primitive subdirectory layout.** Plan body refers to flat `auth/resolve-identity-clerk.ts`, `auth/resolve-readiness-tasks.ts`, `auth/org-tasks-repo.ts`; actual files are `auth/identity/resolve-clerk.ts`, `auth/lightfast-tasks/resolve.ts`, `auth/lightfast-tasks/repo.ts` (already created in Phase 1 in that location). The Clerk JWT claims schema (`ClerkJwtClaims`) lives privately in `auth/identity/resolve-clerk.ts` rather than being re-exported from `context.ts`.
+2. **`context.ts` keeps the `UNAUTH` constant** for use by future callers, but no longer exports `clerkAuth` or `ClerkJwtClaims` — those moved into the identity resolver / factory.
+3. **Existing middleware names retained.** Phase 2 keeps `requireAuth` and `requireOrg` and only updates their bodies to read `ctx.auth.identity.*`. Renames to `requireActiveIdentity` / `requireClearedReadiness` land in Phase 3 per plan.
+4. **Router updates touched:** `(pending-allowed)/account.ts`, `(pending-allowed)/organization.ts`, `(pending-not-allowed)/org-api-keys.ts` — every `ctx.auth.userId` → `ctx.auth.identity.userId`, every `ctx.auth.orgId` → `ctx.auth.identity.orgId`, every `ctx.auth.type` → `ctx.auth.identity.type`. JSDoc references to "clerk-pending or clerk-active" updated to "pending or active identity" in `trpc.ts`, `root.ts`, and the router doc comments. Two stale JSDoc examples in `lib/activity.ts` (lines 98, 195) also updated to the composite shape; `ctx.session.userId` placeholders in those examples corrected to `ctx.auth.identity.userId`.
+5. **Test setup for `resolve.test.ts`** mocks `auth/lightfast-tasks/repo` (the path the composer indirectly reaches via `lightfast-tasks/resolve.ts`) so `listClearedTasks` is controllable without standing up a DB. All seven pre-existing identity-only tests retained and updated to the new composite shape; four new readiness-composition tests added.
 
 ---
 

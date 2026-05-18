@@ -34,7 +34,7 @@ export const orgApiKeysRouter = {
   list: pendingNotAllowedProcedure.query(async ({ ctx }) => {
     const clerk = await clerkClient();
     const { data } = await clerk.apiKeys.list({
-      subject: ctx.auth.orgId,
+      subject: ctx.auth.identity.orgId,
       includeInvalid: true,
     });
     // Spread Clerk's APIKey class instances into plain objects — RSC props
@@ -48,12 +48,12 @@ export const orgApiKeysRouter = {
       const clerk = await clerkClient();
       const key = await clerk.apiKeys.create({
         name: input.name,
-        subject: ctx.auth.orgId,
-        createdBy: ctx.auth.userId,
+        subject: ctx.auth.identity.orgId,
+        createdBy: ctx.auth.identity.userId,
         secondsUntilExpiration: input.secondsUntilExpiration ?? null,
       });
       log.info("[org-api-keys] created", {
-        clerkOrgId: ctx.auth.orgId,
+        clerkOrgId: ctx.auth.identity.orgId,
         keyId: key.id,
         name: input.name,
       });
@@ -81,7 +81,7 @@ export const orgApiKeysRouter = {
         }
         throw err;
       }
-      if (key.subject !== ctx.auth.orgId) {
+      if (key.subject !== ctx.auth.identity.orgId) {
         // Defense-in-depth: Clerk doesn't scope revoke by subject. Reject so
         // org A cannot revoke org B's keys by guessing IDs.
         throw new TRPCError({
@@ -90,7 +90,7 @@ export const orgApiKeysRouter = {
         });
       }
       log.info("[org-api-keys] revoked", {
-        clerkOrgId: ctx.auth.orgId,
+        clerkOrgId: ctx.auth.identity.orgId,
         keyId: key.id,
       });
       return { success: true };
@@ -112,7 +112,7 @@ export const orgApiKeysRouter = {
         }
         throw err;
       }
-      if (existing.subject !== ctx.auth.orgId) {
+      if (existing.subject !== ctx.auth.identity.orgId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "API key not found",
@@ -120,7 +120,7 @@ export const orgApiKeysRouter = {
       }
       await clerk.apiKeys.delete(input.keyId);
       log.info("[org-api-keys] deleted", {
-        clerkOrgId: ctx.auth.orgId,
+        clerkOrgId: ctx.auth.identity.orgId,
         keyId: input.keyId,
       });
       return { success: true };

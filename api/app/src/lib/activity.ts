@@ -95,15 +95,15 @@ export interface ActivityData {
  * @example
  * ```typescript
  * await recordCriticalActivity({
- *   clerkOrgId: ctx.auth.orgId,
+ *   clerkOrgId: ctx.auth.identity.orgId,
  *   actorType: "user",
- *   actorUserId: ctx.session.userId,
+ *   actorUserId: ctx.auth.identity.userId,
  *   category: "org",
  *   action: "integration.connected",
  *   entityType: "org",
  *   entityId: org.id,
  *   metadata: {
- *     orgSlug: ctx.auth.orgSlug,
+ *     orgSlug: org.slug,
  *     clerkOrgId: org.clerkOrgId,
  *   },
  * });
@@ -192,9 +192,9 @@ export async function recordCriticalActivity(
  * @example
  * ```typescript
  * await recordActivity({
- *   clerkOrgId: ctx.auth.orgId,
+ *   clerkOrgId: ctx.auth.identity.orgId,
  *   actorType: "user",
- *   actorUserId: ctx.session.userId,
+ *   actorUserId: ctx.auth.identity.userId,
  *   category: "org",
  *   action: "org.updated",
  *   entityType: "org",
