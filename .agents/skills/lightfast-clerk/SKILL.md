@@ -36,6 +36,8 @@ What do you need?
 ├── Delete the Clerk user entirely            -> command/delete-user.sh <profile>
 ├── Test the real-email round-trip            -> drive references/real-email-testing.md
 │   (magic-link, OTP, or invitation/ticket — i.e. emails ACTUALLY get sent)
+├── Drive an OAuth round-trip (Test IdP)      -> drive references/oauth-playbook.md
+│   (rows 5-7 of the OAuth deep-test matrix; needs `pnpm dev:emulate`)
 └── Backend Clerk op (token, invite, lookup)  -> node lib/clerk-backend.mjs <subcommand>
 ```
 
@@ -82,6 +84,7 @@ so callers can branch without parsing stderr.
 |---|---|
 | `references/sign-in-playbook.md` | Goal-driven recipe for browser sign-in / sign-out via `agent-browser`. Read + execute from your own prompt — do not shell out to a one-shot script. |
 | `references/real-email-testing.md` | Real-email round-trip with plus-addressing (magic-link, invitation, OTP sign-up). Inbox polling via Superhuman MCP. Known auth bugs. |
+| `references/oauth-playbook.md` | OAuth round-trip via the Test IdP custom provider (emulator-backed). Rows 5-7 of the OAuth deep-test matrix. Requires `pnpm dev:emulate`. |
 | `references/safety.md` | Layered guardrails |
 | `references/test-mode.md` | Clerk test-mode primer (`+clerk_test@`, OTP `424242`) |
 | `references/jwt-templates.md` | Template names and claims |
@@ -148,6 +151,10 @@ that's enforced by Clerk test mode, not by a script.
    - Name: `lightfast-desktop`
    - Expiry: 3600s
    - Claims: `{ "org_id": "{{org.id}}" }`
+5. **For `oauth-playbook.md` only**: `pnpm dev:emulate` running in a separate terminal
+   (emulator + ngrok static-domain tunnel for the Test IdP custom OAuth provider).
+   Tunnel is pinned to a reserved static domain — Clerk dashboard `discovery_url` is
+   configured once and stays valid across restarts; no per-cold-start reconfig needed.
 
 ## Background — Clerk test mode
 
@@ -158,10 +165,16 @@ The `pk_test_` / `sk_test_` Clerk keys enable test mode:
 
 See `references/test-mode.md`.
 
+**OAuth note**: the emulator-backed Test IdP (`references/oauth-playbook.md`) does
+*not* exercise real-GitHub OAuth — it only matches Google-shaped claims. For
+real-GitHub regression coverage, click "Continue with GitHub" manually under
+`pnpm dev:app` (both buttons render in dev).
+
 ## See also
 
 - `references/sign-in-playbook.md` — browser sign-in / sign-out waypoints
 - `references/real-email-testing.md` — real-delivery flows + plus-addressing + inbox polling
+- `references/oauth-playbook.md` — OAuth via the Test IdP custom provider (rows 5-7)
 - `references/safety.md` — guardrails in detail
 - `references/test-mode.md` — Clerk test-mode primer
 - `references/jwt-templates.md` — template names + claims

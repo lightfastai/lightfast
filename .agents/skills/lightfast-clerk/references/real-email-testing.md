@@ -94,7 +94,6 @@ template concern, not a Lightfast concern. What this verifies is that
 ✅ **Resolved 2026-05-13**: this flow works in HEAD via the legacy
 `clerk.client.signIn.create({strategy:"ticket", ticket})` workaround at
 `use-auth-flow.ts:553-572`. The Future API `signIn.ticket()` no-op
-(documented in Bug A of the [handoff](../../../../thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md))
 remains an upstream clerk-js issue worth a Clerk support ticket, but
 the app routes around it.
 
@@ -129,9 +128,8 @@ node .agents/skills/lightfast-clerk/lib/clerk-backend.mjs delete-user-by-email "
 
 ✅ **Resolved 2026-05-13**: `signUp.create({strategy:"ticket", ticket, emailAddress, legalAccepted})`
 returns `status:"complete"` immediately (no OTP needed). The earlier
-`form_identifier_exists` symptom (Bug B in the [handoff](../../../../thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md))
-came from a code state without `strategy:"ticket"` and is no longer
-reachable.
+`form_identifier_exists` symptom came from a code state without
+`strategy:"ticket"` and is no longer reachable.
 
 > **Constraint: don't combine `ensure-user` + `create-invitation` on the
 > same email.** Clerk rejects invitations for any email that already has
@@ -294,5 +292,3 @@ via the dashboard.
 - `test-mode.md` — the `+clerk_test@` shortcut for when you don't need real delivery
 - `sign-in-playbook.md` — agent-browser waypoints, equally applicable here
 - `safety.md` — the underlying guardrails (still in force)
-- [`thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md`](../../../../thoughts/shared/handoffs/general/2026-05-13_15-37-19_auth-clerk-latent-bugs.md)
-  — current known bugs surfaced via this approach

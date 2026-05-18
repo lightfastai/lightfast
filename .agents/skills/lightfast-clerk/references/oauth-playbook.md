@@ -12,11 +12,13 @@ diagnostics live in the sister playbook and the parent skill.
 
 ## Preconditions
 
-1. **`pnpm dev:emulate` running.** Prints the Clerk-dashboard discovery URL on
-   startup. If `connections_oauth_custom.test_idp.discovery_url` doesn't
-   already match, paste the printed URL into Clerk (or pipe the `clerk config
-   patch` command from the script's banner). Refusing this step = silent 404s
-   inside Clerk's token exchange.
+1. **`pnpm dev:emulate` running.** Tunnel uses a reserved static ngrok
+   domain (`oauth-jp.local.lghtfst.com`), so the Clerk Test IdP
+   `discovery_url` is configured once and stays valid across restarts.
+   Fresh Clerk tenant? Patch once:
+   ```bash
+   npx clerk config patch --json '{"connections_oauth_custom":{"test_idp":{"discovery_url":"https://oauth-jp.local.lghtfst.com/.well-known/openid-configuration"}}}'
+   ```
 2. **`pnpm dev:app` running.** Sign-in/sign-up render *both* OAuth buttons when
    `NEXT_PUBLIC_VERCEL_ENV === "development"`. Without dev env, the Test IdP
    button does not render and the playbook has nothing to click.
@@ -35,15 +37,6 @@ diagnostics live in the sister playbook and the parent skill.
 
 If any of those breaks, the SDK / tenant / hook is wrong — not the playbook.
 
-## ngrok interstitial (once per profile)
-
-The first cross-domain navigation in a fresh agent-browser profile lands on
-ngrok's free-tier "You are about to visit..." page. Click "Visit Site" once;
-ngrok writes a 24h cookie scoped to the profile and subsequent navigations
-skip it. **Do not** try to set the `ngrok-skip-browser-warning` header
-globally via `agent-browser set headers` — it trips Clerk JS CDN preflight
-and breaks the whole flow.
-
 ## Row 5 — Sign-in via OAuth (existing user)
 
 ```bash
@@ -58,12 +51,10 @@ agent-browser --profile .agent-browser/profiles/oauth-row5 \
               --session oauth-row5 \
               open https://app.lightfast.localhost/sign-in
 
-# 3. Click "Continue with Test IdP" → ngrok interstitial (first time) →
-#    emulator consent → click the seeded email button.
+# 3. Click "Continue with Test IdP" → emulator consent → click the seeded email button.
 agent-browser ... snapshot
 agent-browser ... click '@<ref-of-Continue-with-Test-IdP>'
-# (one-shot click "Visit Site" if interstitial appears, then click the
-# email row on the emulator consent page)
+# (click the email row on the emulator consent page)
 
 # 4. Wait for redirect chain to settle.
 for _ in $(seq 1 30); do
@@ -93,8 +84,10 @@ redirects to `/sign-up?errorCode=waitlist`. Verify the redirect happened and
 the ErrorBanner copy mentions the waitlist.
 
 If the tenant ever ships waitlist-off as the default, this row's expected
-result changes — `/sso-callback` would dead-end (see the side-finding
-in `thoughts/shared/research/2026-05-13-oauth-deep-test-findings.md`).
+result changes — `/sso-callback` would dead-end (the SSO callback page
+checks `signUp.status === "missing_requirements"` and routes to the bare
+sign-up; with waitlist gating off, that route accepts the user instead of
+rejecting, so the dead-end becomes an unintended sign-up success).
 
 ## Row 7 — Sign-up via OAuth + invitation ticket
 
@@ -126,8 +119,7 @@ agent-browser --profile .agent-browser/profiles/oauth-row7 \
               --session oauth-row7 \
               open "https://app.lightfast.localhost/sign-up/accept-invitation?__clerk_ticket=$TICKET"
 
-# 3. Click "Continue with Test IdP". Click "Visit Site" on the ngrok
-#    interstitial (first time), then the email button on the consent page.
+# 3. Click "Continue with Test IdP", then the email button on the consent page.
 #    No Terms checkbox on this route — handleOAuth passes legalAccepted:true.
 agent-browser ... snapshot
 agent-browser ... click '@<ref-of-Continue-with-Test-IdP>'
@@ -158,9 +150,9 @@ has regressed back to `signUp.sso()` — file as a re-occurrence of Bug D.
 | Click does nothing; button stays in disabled state | Bug D regression — `handleOAuth` is calling `signUp.sso()` again. Check `sign-up/accept-invitation/page.tsx:170-246`. |
 | Ticket-bearing URL lands on `/sign-up?errorCode=waitlist` | URL hit bare `/sign-up` instead of `/sign-up/accept-invitation`. The bare page ignores `__clerk_ticket` and falls through to the Row 6 path. Re-open the same ticket at `/sign-up/accept-invitation?__clerk_ticket=…` — invitation stays `pending` until consumed. |
 | OAuth button on `/sign-up` is a no-op with inline "Terms of Service" message | Working as intended — bare `/sign-up` gates OAuth on the Terms checkbox. This is *not* a Bug D regression. Check the checkbox first. |
-| Browser redirects to ngrok 404 | `dev:emulate` not running, or its tunnel URL rotated and Clerk's discovery_url is stale. Restart and re-patch. |
+| Browser redirects to ngrok 404 | `dev:emulate` not running, or the static domain is unreachable (check `ngrok api endpoints`). |
 | Emulator returns `redirect_uri_mismatch` | Seed file's `redirect_uris` doesn't match Clerk's frontend API `/v1/oauth_callback`. Regenerate via `dev:emulate` (it derives from `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`). |
-| Clerk dashboard "Diagnostics" shows discovery 404 | ngrok URL rotated since the last patch. `pnpm dev:emulate` prints the new URL — copy or pipe. |
+| Clerk dashboard "Diagnostics" shows discovery 404 | ngrok process down, or the static-domain reservation in your ngrok account has lapsed. Check `ngrok api reserved-domains list`. |
 | OAuth completes but `externalAccount.provider !== "custom_test_idp"` | Clerk slug drift. The strategy literal in the page must equal `oauth_custom_<clerk-slug>`. |
 
 Generic auth failure modes (Clerk JS not loading, profile dir cross-contamination, tenant-config issues) live in `sign-in-playbook.md` — don't duplicate diagnostics here.
