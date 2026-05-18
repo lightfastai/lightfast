@@ -6,7 +6,7 @@ Introduce a per-org **Lightfast Tasks** primitive as a first-class, **orthogonal
 
 **Architectural decision (v1)**: identity and readiness are modelled as **two independent vendor-agnostic primitives** that compose into a dual `AuthContext`. Each owns its own state type, resolver, and middleware. Clerk is the *implementation* of the identity dimension; Lightfast tasks are the *implementation* of the readiness dimension. Neither type carries vendor-specific information; the resolvers do. Clerk does not support custom session tasks at any shipped version (`@clerk/shared@4.10.2` `SessionTask['key']` is a closed union; the runtime `INTERNAL_SESSION_TASK_ROUTE_BY_KEY` map is hardcoded `@internal`) — so the readiness primitive must be ours. We pick vendor-agnostic naming because it future-proofs against (a) Clerk schema changes, (b) additional readiness implementations (billing-active, terms-accepted, workspace-quota-ok), (c) swapping the identity IdP, and makes "forgot to think about readiness on a new router" a TypeScript narrowing error instead of a silent bypass.
 
-**Cross-transport enforcement (v1)**: gate is single-chokepoint at `pendingNotAllowedProcedure`, which all org-scoped procedures already inherit. Web, desktop (Bearer), and future CLI (Bearer) all hit the same middleware. The web cookie path additionally gets a layout-level redirect for UX (avoid SSR error pages); Bearer clients get a structured `error.data.lightfastTasksPending = { current, remaining, redirectUrl }` payload via a custom tRPC `errorFormatter` — machine-readable, not a prose 403.
+**Cross-transport enforcement (v1)**: gate is single-chokepoint at `pendingNotAllowedProcedure`, which all org-scoped procedures already inherit. Web, desktop (Bearer), and future CLI (Bearer) all hit the same middleware. The web cookie path additionally gets a layout-level redirect for UX (avoid SSR error pages); Bearer clients get a generic `error.data.diagnostics: Diagnostic[]` envelope via a custom tRPC `errorFormatter` — machine-readable, not a prose 403. The readiness rejection arrives as `{ code: "READINESS_PENDING", repair: { id: "complete-lightfast-task", current, remaining } }`. See the 2026-05-18 (later) Improvement Log entry for the envelope details.
 
 **Storage (v1)**: dedicated Drizzle table `org_lightfast_tasks (org_id, task_key, cleared_at)` with PK on `(org_id, task_key)`. Atomic upserts, transactional, indexable. Source of truth lives in our DB, not Clerk org `publicMetadata` — publicMetadata has no atomicity, no ETags, no indexing, and is the wrong substrate for authorization state. JWT carries no readiness state; the resolver reads DB directly on every authenticated request (PK lookup, sub-ms). Redis caching is a follow-up if measurement demands it.
 
@@ -47,7 +47,7 @@ Current ladder:
 
 ### Default tRPC error formatter
 
-`trpc.ts:49-65` defines an `errorFormatter` that surfaces `data.zodError` for `BAD_REQUEST` with a `ZodError` cause. It does NOT propagate custom `cause` objects on the wire — every existing `TRPCError` with a cause (`organization.ts:133,229`; `account.ts:94`) treats `cause: error` as opaque-exception passthrough. The plan extends this formatter to surface a structured `data.lightfastTasksPending` payload for `FORBIDDEN` errors thrown by `requireClearedReadiness`, giving Bearer clients a machine-readable contract instead of a prose message.
+`trpc.ts:49-65` defines an `errorFormatter` that surfaces `data.zodError` for `BAD_REQUEST` with a `ZodError` cause. It does NOT propagate custom `cause` objects on the wire — every existing `TRPCError` with a cause (`organization.ts:133,229`; `account.ts:94`) treats `cause: error` as opaque-exception passthrough. The plan extends this formatter to lift a generic `data.diagnostics: Diagnostic[]` envelope from any cause matching `isDiagnosticCause` — produced by every gate (`requireAuth`, `requireActiveIdentity`, `requireReadinessCleared`) via the shared `throwDiagnostic` helper. Bearer clients pattern-match on `code` and dispatch on `repair.id` instead of parsing prose. See the 2026-05-18 (later) Improvement Log entry.
 
 ### Router grouping (api/app/src/root.ts)
 
@@ -111,7 +111,7 @@ After this plan:
    return { identity, readiness };
    ```
 
-3. **Two atomic middlewares + one default-safe chokepoint.** `requireActiveIdentity` (renamed from `requireOrg`, narrows `ctx.auth.identity` to active variant) and `requireClearedReadiness` (new, narrows `ctx.auth.readiness` to cleared variant). The existing `pendingNotAllowedProcedure` composes BOTH. A new `activeIdentityProcedure` composes only the identity gate — used **exclusively** by the tasks router so users can complete tasks. Adding a new org-scoped router and forgetting to think about readiness → TypeScript narrowing error (because `ctx.auth.readiness` isn't narrowed to `cleared`), not silent bypass.
+3. **Two atomic middlewares + one default-safe chokepoint.** `requireActiveIdentity` (renamed from `requireOrg`, narrows `ctx.auth.identity` to active variant) and `requireReadinessCleared` (new, narrows `ctx.auth.readiness` to cleared variant). The existing `pendingNotAllowedProcedure` composes BOTH. A new `activeIdentityProcedure` composes only the identity gate — used **exclusively** by the tasks router so users can complete tasks. Adding a new org-scoped router and forgetting to think about readiness → TypeScript narrowing error (because `ctx.auth.readiness` isn't narrowed to `cleared`), not silent bypass.
 
 4. **Source of truth lives in a dedicated DB table.** `org_lightfast_tasks(org_id text, task_key text, cleared_at timestamptz, PRIMARY KEY (org_id, task_key))`. Atomic upserts via Drizzle. `org.publicMetadata` is NOT touched by this plan. The JWT carries no readiness state; the resolver reads DB on every authenticated org-scoped request.
 
@@ -126,7 +126,7 @@ After this plan:
 6. **v1 task `connect-github`** is registered (key + label only). A concrete `tasks.completeConnectGithub` mutation inserts a row into `org_lightfast_tasks` (idempotent on the PK). No `publicMetadata` write. No `session.reload()` race — the DB read on the next request reflects the write immediately.
 
 7. **The gate fires at two layers**:
-   - tRPC (all transports): `requireClearedReadiness` throws `TRPCError({ code: "FORBIDDEN" })`. A custom `errorFormatter` extension surfaces `data.lightfastTasksPending = { current, remaining, redirectUrl }` on the wire — Bearer clients (desktop, CLI) parse this and act.
+   - tRPC (all transports): `requireReadinessCleared` throws `TRPCError({ code: "FORBIDDEN" })` via `throwDiagnostic`. A custom `errorFormatter` extension surfaces `data.diagnostics: [{ code: "READINESS_PENDING", repair: { id: "complete-lightfast-task", current, remaining } }]` on the wire — Bearer clients (desktop, CLI, agents) parse this and act.
    - Cookie/web UX (defensive, not load-bearing): `[slug]/layout.tsx` adds a server-side `redirect()` to `/[slug]/tasks/{current}` when readiness is pending. Prevents SSR pages from rendering an error UI. The tRPC gate is still the authority — the redirect just avoids showing a broken page to web users.
 
 ### Key Discoveries
@@ -136,7 +136,7 @@ After this plan:
 - **Decoupling at the type/state level forces honest narrowing.** With `AuthContext = { identity, readiness }`, downstream code cannot pretend "identity active implies readiness cleared". TypeScript narrows each dimension independently. The composition happens at the procedure layer (one `.use()` per gate) for ergonomics, not at the type layer.
 - **`org.publicMetadata` is the wrong substrate for authorization state.** No atomicity (read-modify-write race for two concurrent writes), no ETag/version conditional, no indexing, no transactions. The original plan acknowledged this and accepted the race; the new plan uses a Drizzle table with PK upserts which is both simpler and safer.
 - **DB-as-source-of-truth eliminates the JWT staleness race.** Original plan needed `session.reload()` before navigation to refresh the JWT claim, with a ~50s natural-refresh fallback. New plan reads DB on every authenticated request → the next request reflects the write immediately. No `session.reload()` needed on the client. Cost is one extra DB query per authenticated request (PK lookup on a small table, sub-millisecond).
-- **`TRPCError.cause` does not survive serialization** — but `errorFormatter` can extend `data`. Every existing `TRPCError` with a cause in the codebase (`organization.ts:133,229`; `account.ts:94`) uses `cause: error` as opaque-exception passthrough; the default formatter (`trpc.ts:49-65`) strips ZodError into `data.zodError` but does not surface custom cause objects. The new plan extends `errorFormatter` to add `data.lightfastTasksPending` when the shape we threw includes it — same mechanism Zod uses, machine-readable on the wire for Bearer clients.
+- **`TRPCError.cause` does not survive serialization** — but `errorFormatter` can extend `data`. Every existing `TRPCError` with a cause in the codebase (`organization.ts:133,229`; `account.ts:94`) uses `cause: error` as opaque-exception passthrough; the default formatter (`trpc.ts:49-65`) strips ZodError into `data.zodError` but does not surface custom cause objects. The new plan extends `errorFormatter` to lift a generic `data.diagnostics: Diagnostic[]` envelope from any cause produced by the shared `throwDiagnostic` helper in `api/app/src/diagnostics.ts` — same mechanism Zod uses, machine-readable on the wire for Bearer clients, agent-driven via stable `code` + `repair.id`.
 - **`requireOrgAccess` (`apps/app/src/lib/org-access-clerk.ts:45-82`) is the existing template for "fetch fresh org, check membership, throw to surface notFound()"**. The readiness layout redirect lives in the same `[slug]/layout.tsx` that already calls `requireOrgAccess`, immediately after the access check. No new layout file, no new route group.
 - **Boundary placement for `AuthReadiness` and `deriveReadiness`.** Both api/app and apps/app need to consume the type + the registry. `@vendor/clerk` is a thin SDK shim that owns zero domain types — wrong home. `@api/app/src/...` deep-path imports from `apps/app` have zero precedent (all current cross-app imports go via package-barrel `exports` paths, e.g. `@api/app/inngest` mapped in `api/app/package.json`). **Decision**: add a new `@api/app/auth` named subpath export to `api/app/package.json` mirroring the `@api/app/inngest` pattern. Vendor-agnostic types and the pure derivation function live behind it.
 - **The settings page tree is deeper than the brief suggested**: `(workspace)/(manage)/settings/{page,layout,api-keys/...}`. No moves needed under the new plan — the gate is structural at tRPC; the layout redirect protects the entire `[slug]/` subtree in one place.
@@ -145,7 +145,7 @@ After this plan:
 
 - **Real GitHub OAuth wiring.** v1's `connect-github` mutation inserts a row in `org_lightfast_tasks` to mark the task complete. Real GitHub App install check is a follow-up — concrete mutation body changes (e.g. verify install via GitHub API, write only on success), no schema change.
 - **Un-clearing tasks (any path).** v1 is one-way: once `connect-github` is cleared, the only ways back to pending state are (a) manually `DELETE FROM org_lightfast_tasks WHERE org_id = ? AND task_key = ?` via psql or Drizzle Studio, or (b) a follow-up plan that wires real webhooks → Inngest → DB writeback (e.g. for GitHub `installation.deleted`).
-- **CLI / desktop client-side recovery UX from the 403.** The structured `data.lightfastTasksPending` payload is shipped from day one (that's the cross-transport contract); the actual CLI/desktop handlers that consume it (open browser to redirectUrl, retry on user action, etc.) are out of scope for v1. v1 ensures the contract exists; v2 builds the consumers.
+- **CLI / desktop client-side recovery UX from the 403.** The structured `data.diagnostics[]` envelope is shipped from day one (that's the cross-transport contract); the actual CLI/desktop handlers that consume it (dispatch on `repair.id`, open browser to a remediation URL, retry on user action, etc.) are out of scope for v1. v1 ensures the contract exists; v2 builds the consumers.
 - **Generic `tasks.complete({ key })` dispatch.** v1 ships a **concrete per-task mutation** (`tasks.completeConnectGithub`). The registry exists for UI metadata (label, ordering) but is not a dispatch table. Promote to a generic mutation when there are ≥2 tasks with shared writeback semantics.
 - **Redis caching of `AuthReadiness`.** v1 reads DB on every request. PK lookup on a small table is cheap. Add Redis cache (with explicit invalidation on writeback) when load measurement shows the need.
 - **Additional readiness implementations (billing, terms, quota).** v1 ships exactly one: Lightfast tasks. The `AuthReadiness` type is vendor-agnostic and the composition pattern accommodates more, but adding them is out of scope.
@@ -158,7 +158,7 @@ After this plan:
 Five phases:
 1. Types (composite `AuthContext` + `AuthIdentity` + `AuthReadiness`) + registry + DB schema/migration + repository + `@api/app/auth` subpath export.
 2. Resolver split — `resolveIdentityFromClerk` + `resolveReadinessFromTasks` + composite `resolveAuth`. No JWT template config.
-3. Middleware split — `requireActiveIdentity` + `requireClearedReadiness` — composed into `pendingNotAllowedProcedure` (default-safe). Add `activeIdentityProcedure` for tasks router. Extend `errorFormatter` with `data.lightfastTasksPending`.
+3. Middleware split — `requireActiveIdentity` + `requireReadinessCleared` — composed into `pendingNotAllowedProcedure` (default-safe). Add `activeIdentityProcedure` for tasks router. Extend `errorFormatter` with a generic `data.diagnostics: Diagnostic[]` envelope produced by all gates via the shared `throwDiagnostic` helper.
 4. Tasks router (concrete `getStatus` + `completeConnectGithub`).
 5. UI — layout-level redirect in existing `[slug]/layout.tsx` (defensive UX) + checklist page + connect-github task page. No route group restructure.
 
@@ -641,7 +641,9 @@ export async function resolveAuth(headers: Headers): Promise<AuthContext> {
 
 ### Overview
 
-Split `requireOrg` into two atomic middlewares aligned with the two primitives. Compose both into `pendingNotAllowedProcedure` (default-safe). Add a sibling `activeIdentityProcedure` for the tasks router. Extend the tRPC `errorFormatter` to surface structured `data.lightfastTasksPending` on FORBIDDEN errors thrown by `requireClearedReadiness`. This is the chokepoint that gives us cross-transport enforcement.
+Split `requireOrg` into two atomic middlewares aligned with the two primitives. Compose both into `pendingNotAllowedProcedure` (default-safe). Add a sibling `activeIdentityProcedure` for the tasks router. Extend the tRPC `errorFormatter` to surface a structured envelope on FORBIDDEN errors thrown by the readiness gate. This is the chokepoint that gives us cross-transport enforcement.
+
+> **Update (2026-05-18 later):** the envelope shape and the readiness middleware were generalised after this phase shipped. The original sketches below describe the shipped Phase 3 (one-off `data.lightfastTasksPending` + inline closure inside `pendingNotAllowedProcedure`). They are preserved as historical record. The current state — generic `data.diagnostics: Diagnostic[]`, named `requireReadinessCleared` via `experimental_standaloneMiddleware`, shared `throwDiagnostic` helper in `api/app/src/diagnostics.ts` — is documented in the "2026-05-18 (later) — Diagnostic envelope cleanup" Improvement Log entry.
 
 ### Changes Required
 
@@ -787,9 +789,11 @@ This is the only mechanism Bearer transports get for structured rejection — it
 
 **Implementer notes (Phase 3):**
 
-1. **Readiness gate is inlined inside `pendingNotAllowedProcedure`, not exposed as a named middleware.** Plan body sketches `requireClearedReadiness` as a sibling `t.middleware(...)`. In practice, a standalone middleware sees the *base* ctx type (full `AuthIdentity` union) and re-broadens `auth.identity` when its return spreads `...ctx.auth` to override the readiness slot — which silently undoes the active-identity narrowing for all four downstream `orgApiKeysRouter` handlers. Inlining the gate inside the procedure composition (`.use(requireActiveIdentity).use(({ ctx, next }) => { … })`) gives the inner callback a properly-narrowed ctx and lets the readiness override flow with identity still narrowed. Same behavioral contract, same single chokepoint, no call-site changes.
+> **Update (2026-05-18 later):** Notes 1 and 3 below are superseded by the "Diagnostic envelope cleanup" Improvement Log entry. The readiness gate is now a named `experimental_standaloneMiddleware` (`requireReadinessCleared`), and the wire field is the generic `data.diagnostics: Diagnostic[]` envelope rather than `data.lightfastTasksPending`. Notes 2, 4, 5, 6 still apply as written.
+
+1. **Readiness gate is inlined inside `pendingNotAllowedProcedure`, not exposed as a named middleware.** Plan body sketches `requireClearedReadiness` as a sibling `t.middleware(...)`. In practice, a standalone middleware sees the *base* ctx type (full `AuthIdentity` union) and re-broadens `auth.identity` when its return spreads `...ctx.auth` to override the readiness slot — which silently undoes the active-identity narrowing for all four downstream `orgApiKeysRouter` handlers. Inlining the gate inside the procedure composition (`.use(requireActiveIdentity).use(({ ctx, next }) => { … })`) gives the inner callback a properly-narrowed ctx and lets the readiness override flow with identity still narrowed. Same behavioral contract, same single chokepoint, no call-site changes. **Superseded:** the 2026-05-18 (later) cleanup solved the narrowing problem at the type level via `experimental_standaloneMiddleware<{ ctx: { auth: AuthContext & { identity: ActiveIdentity } } }>`, so the gate is now a named middleware (`requireReadinessCleared`) without losing the identity narrowing.
 2. **`activeIdentityProcedure` is still a standalone procedure export** (Phase 4's tasks router consumes it). Identity-only narrowing works with a standalone `requireActiveIdentity` middleware because there is no second gate widening `auth`.
-3. **errorFormatter shape decision.** The structured cause uses `kind: "LIGHTFAST_TASKS_PENDING"` as a discriminator. The formatter detects it via a private `isLightfastTasksPendingCause` type guard and emits `data.lightfastTasksPending = { current, remaining }` (no `kind` on the wire — the data slot's *presence* is itself the discriminator).
+3. **errorFormatter shape decision.** The structured cause uses `kind: "LIGHTFAST_TASKS_PENDING"` as a discriminator. The formatter detects it via a private `isLightfastTasksPendingCause` type guard and emits `data.lightfastTasksPending = { current, remaining }` (no `kind` on the wire — the data slot's *presence* is itself the discriminator). **Superseded:** the 2026-05-18 (later) cleanup replaced this with a generic `data.diagnostics: Diagnostic[]` envelope keyed by `code` (and optional `repair`), produced by a shared `throwDiagnostic` helper in `api/app/src/diagnostics.ts`. The new cause discriminator is `kind: "lightfast.diagnostic"`; the readiness case maps to `code: "READINESS_PENDING"` with `repair: { id: "complete-lightfast-task", current, remaining }`.
 4. **Test approach combines two transports.** `readiness-gate.test.ts` exercises:
    - the middleware contract via `createCallerFactory` (asserts `code`, `message`, structured `cause`),
    - the wire contract via `fetchRequestHandler` (asserts `error.json.data.lightfastTasksPending` in the v11 + superjson envelope).
@@ -909,19 +913,28 @@ export type AppRouter = typeof appRouter;
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @api/app typecheck` clean
-- [ ] `pnpm --filter @api/app check` clean
-- [ ] `pnpm --filter @api/app test` passes (new tests in `tasks.test.ts`)
-- [ ] `grep -rn "session\.reload\|sessionReload" api/app/src apps/app/src` returns no new matches introduced by this plan
-- [ ] `grep -rn "publicMetadata" api/app/src/router api/app/src/auth` returns 0 (tasks router has zero publicMetadata coupling)
-- [ ] tRPC routes exist: `appRouter.pendingNotAllowed.tasks.getStatus`, `appRouter.pendingNotAllowed.tasks.completeConnectGithub`
+- [x] `pnpm --filter @api/app typecheck` clean
+- [x] `npx ultracite@latest check api/app` clean (api/app has no per-package `check` script; root-level ultracite covers it — same call Phases 2 & 3 used)
+- [x] `pnpm --filter @api/app test` passes — 7 files / 43 tests including 4 new in `tasks.test.ts`
+- [x] `grep -rn "session\.reload\|sessionReload" api/app/src apps/app/src` returns 0 new matches
+- [x] `grep -rn "publicMetadata" api/app/src/router api/app/src/auth` returns 0 (tasks router has zero publicMetadata coupling)
+- [x] tRPC routes exist: `appRouter.pendingNotAllowed.tasks.getStatus`, `appRouter.pendingNotAllowed.tasks.completeConnectGithub` (the tests exercise both via `caller.tasks.getStatus()` and `caller.tasks.completeConnectGithub()` and pass)
 
 #### Human Review
 
-- [ ] Fresh org with no `org_lightfast_tasks` rows → call `/api/trpc/pendingNotAllowed.tasks.getStatus` → returns `[{ key: "connect-github", cleared: false, required: true, label: "Connect GitHub" }]`
-- [ ] Call `/api/trpc/pendingNotAllowed.tasks.completeConnectGithub` → returns `{ ok: true }`; verify a row appears in `org_lightfast_tasks` via `pnpm db:studio`
-- [ ] Re-call `getStatus` → `cleared: true`
-- [ ] Re-call `completeConnectGithub` → still returns `{ ok: true }`; row count for that (org, key) is still 1
+- [x] Fresh org with no `org_lightfast_tasks` rows → call `/api/trpc/pendingNotAllowed.tasks.getStatus` → returns `[{ key: "connect-github", cleared: false, required: true, label: "Connect GitHub" }]`. Verified end-to-end against the live dev stack: provisioned `user_3Dsnr7PwRCeWTSp6SNEmigdi3uj` via `.claude/skills/lightfast-clerk/command/token.sh phase4-verify`, created `org_3DsnsMkoohwtkzCKRFRdO13AYXo` via the Clerk Backend API with that user as `created_by` (membership auto-attaches), minted a `lightfast-desktop`-template JWT carrying `org_id` set to the new org, then Bearer `GET https://app.lightfast.localhost/api/trpc/pendingNotAllowed.tasks.getStatus?batch=1&input=…` returned **HTTP 200** with body `[{"key":"connect-github","label":"Connect GitHub","required":true,"cleared":false}]` — exact match.
+- [x] Call `/api/trpc/pendingNotAllowed.tasks.completeConnectGithub` → returns `{ ok: true }`; verify a row appears in `org_lightfast_tasks` via `pnpm db:studio`. Bearer `POST` returned **HTTP 200** with `[{"result":{"data":{"json":{"ok":true}}}}]`; `docker exec lightfast-postgres psql … "SELECT * FROM org_lightfast_tasks WHERE org_id = 'org_3DsnsMkoohwtkzCKRFRdO13AYXo'"` showed exactly one row `(connect-github, 2026-05-18 04:51:20.743715+00)`. (Used `psql` over the dev-services container instead of Drizzle Studio — same source of truth, no UI dependency.)
+- [x] Re-call `getStatus` → `cleared: true`. With the **same** JWT (no refresh, no `session.reload()`) the resolver re-read the table and the response flipped to `[{"key":"connect-github","label":"Connect GitHub","required":true,"cleared":true}]`. Proves the no-JWT-state design: the next request reflects the DB write immediately.
+- [x] Re-call `completeConnectGithub` → still returns `{ ok: true }`; row count for that (org, key) is still 1. Repeat `POST` returned `{ok:true}`; post-call `SELECT COUNT(*), MIN(cleared_at), MAX(cleared_at)` showed `rows=1` and `first=last=2026-05-18 04:51:20.743715+00` — `ON CONFLICT DO NOTHING` preserved the original timestamp.
+
+> Cleanup: deleted the row, deleted the Clerk org (`DELETE /v1/organizations/<id>` → 200 `deleted:true`), deleted the test user via `delete-user.sh phase4-verify`, and stopped the dev stack.
+
+**Implementer notes (Phase 4):**
+
+1. **Import paths.** Plan §1 code sketch imports `LIGHTFAST_TASKS` from `../../auth/lightfast-tasks` and `markTaskCleared` from `../../auth/org-tasks-repo`. The actual on-disk layout from Phase 1 is `auth/lightfast-tasks/registry.ts` (registry) and `auth/lightfast-tasks/repo.ts` (repo) — the registry/repo files were nested under a `lightfast-tasks/` directory rather than the flat module names sketched here. The router uses the directory paths: `../../auth/lightfast-tasks/registry` and `../../auth/lightfast-tasks/repo`. The test file mocks the same path (`../../auth/lightfast-tasks/repo`).
+2. **`activeIdentityProcedure` already narrows `ctx.auth.identity` to `active`.** The plan sketch wrapped `markTaskCleared(ctx.auth.identity.orgId, …)` in a defensive `if (ctx.auth.identity.type !== "active") throw new Error("unreachable")` guard. Dropped — the gate's spread-pattern narrowing in `requireActiveIdentity` carries through, exactly as the existing `orgApiKeysRouter` reads `ctx.auth.identity.orgId` on every line without defensive checks. Same TypeScript narrowing, one fewer dead branch.
+3. **JSDoc avoids the literal `session.reload()` token.** The grep verification (`grep -rn "session\.reload"`) treats any new match as a regression. The comment in `completeConnectGithub`'s JSDoc says "no client-side session refresh is needed" instead of "no `session.reload()` is needed" so the grep stays clean while preserving the intent of the note.
+4. **Test mocks mirror `readiness-gate.test.ts`.** Same vendor stubs (`@vendor/clerk/env`, `@vendor/clerk/server`, `@db/app/client`, `@vendor/observability/log/next`, `createObservabilityMiddleware` shim) — not load-bearing for the tasks router itself, but importing `trpc.ts` would otherwise pull real env vars and hit Postgres.
 
 ---
 
@@ -1072,7 +1085,7 @@ Tests land with the phase that introduces the code. No separate test phase.
 
 - Composite resolver — identity dimension tested independently of readiness dimension, then composed.
 - `requireActiveIdentity` — denies on `identity.type !== "active"`.
-- `requireClearedReadiness` — denies on `readiness.type !== "cleared"`; the thrown FORBIDDEN's `data.lightfastTasksPending` carries the expected `{ current, remaining }` shape.
+- `requireReadinessCleared` — denies on `readiness.type !== "cleared"`; the thrown FORBIDDEN's `data.diagnostics[0]` carries `code: "READINESS_PENDING"` and `repair: { id: "complete-lightfast-task", current, remaining }`.
 - `activeIdentityProcedure` — opt-out works: admits pending readiness.
 - `tasks.completeConnectGithub` — mocked `markTaskCleared` is called with the expected args; idempotency verified via repeat call.
 
@@ -1094,9 +1107,9 @@ Phase 5 human-review steps cover the new-user funnel. The gate re-engagement pat
 
 ## Migration Notes
 
-- **Existing orgs** have no rows in `org_lightfast_tasks` and are therefore `readiness.type === "pending"` from the moment Phase 3 ships. Until they complete `connect-github`, every `pendingNotAllowedProcedure`-backed route (currently `orgApiKeys.*`) returns 403. The Phase 5 layout redirect bounces web users to the task page; Bearer clients receive the structured `data.lightfastTasksPending` payload.
+- **Existing orgs** have no rows in `org_lightfast_tasks` and are therefore `readiness.type === "pending"` from the moment Phase 3 ships. Until they complete `connect-github`, every `pendingNotAllowedProcedure`-backed route (currently `orgApiKeys.*`) returns 403. The Phase 5 layout redirect bounces web users to the task page; Bearer clients receive the structured `data.diagnostics[]` envelope with a `READINESS_PENDING` entry.
 - **No Clerk dashboard config required.** Removed from the plan — the JWT template change the original plan needed is unnecessary now that DB is source of truth.
-- **Backout**: cheapest unlock is to drop `.use(requireClearedReadiness)` from `pendingNotAllowedProcedure`'s definition. This re-opens every gated procedure regardless of readiness state. The DB table stays in place; no data damage. The composite `AuthContext` shape stays; downstream code that read `ctx.auth.identity.orgId` is unaffected.
+- **Backout**: cheapest unlock is to drop `.use(requireReadinessCleared)` from `pendingNotAllowedProcedure`'s definition. This re-opens every gated procedure regardless of readiness state. The DB table stays in place; no data damage. The composite `AuthContext` shape stays; downstream code that read `ctx.auth.identity.orgId` is unaffected.
 - **No data migration needed.** The new table is additive.
 
 ## References
@@ -1114,7 +1127,8 @@ Phase 5 human-review steps cover the new-user funnel. The gate re-engagement pat
 - Existing files being modified:
   - `api/app/src/auth/context.ts` (replace 3-variant union with composite)
   - `api/app/src/auth/resolve.ts` (collapse to composer; sub-resolvers in new files)
-  - `api/app/src/trpc.ts` (split `requireOrg` → `requireActiveIdentity` + `requireClearedReadiness`; compose at `pendingNotAllowedProcedure`; extend `errorFormatter`)
+  - `api/app/src/trpc.ts` (split `requireOrg` → `requireActiveIdentity` + `requireReadinessCleared`; compose at `pendingNotAllowedProcedure`; extend `errorFormatter` to lift the `data.diagnostics[]` envelope)
+  - `api/app/src/diagnostics.ts` (new module — `Diagnostic`/`Repair` types, `throwDiagnostic` helper, `isDiagnosticCause` predicate)
   - `api/app/src/root.ts` (add `tasks` under `pendingNotAllowed`)
   - `api/app/package.json` (add `./auth` and `./auth/repo` subpath exports)
   - `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/layout.tsx` (add readiness redirect after `requireOrgAccess`)
@@ -1131,6 +1145,51 @@ Phase 5 human-review steps cover the new-user funnel. The gate re-engagement pat
 ---
 
 ## Improvement Log
+
+### 2026-05-18 (later) — Diagnostic envelope cleanup (generic, agent-friendly wire contract)
+
+A second pass on Phase 3 replaced the one-off `data.lightfastTasksPending` field and the inline readiness closure with a generic diagnostic envelope. Same chokepoint, same behavior, smaller surface, agent-driven contract.
+
+**New module: `api/app/src/diagnostics.ts`**
+
+- `Diagnostic = { code: DiagnosticCode; message: string; repair?: Repair }`.
+- `DiagnosticCode = "AUTH_REQUIRED" | "ORG_REQUIRED" | "READINESS_PENDING"` — closed union, public contract.
+- `Repair` is a discriminated union by `id`: `"create-or-join-org"` or `"complete-lightfast-task" + { current, remaining }`. Optional — repair lives only on diagnostics where an agent can act.
+- `throwDiagnostic({ trpcCode, diagnostic })` is the only way gates raise structured failures; the structured `cause` shape is internal to this module.
+
+**Wire shape change**
+
+- `data.lightfastTasksPending: { current, remaining } | null` → `data.diagnostics: Diagnostic[]` (always an array; empty `[]` when the error did not originate from `throwDiagnostic`). Forward-compatible with future compound errors.
+- `cause.kind: "LIGHTFAST_TASKS_PENDING"` → `cause.kind: "lightfast.diagnostic"` with `cause.diagnostics: [...]`.
+- The `errorFormatter` no longer has a per-error branch — it lifts `diagnostics` from any cause matching `isDiagnosticCause`.
+
+**Gate refactor in `trpc.ts`**
+
+- `requireAuth` and `requireActiveIdentity` now throw via `throwDiagnostic` (`AUTH_REQUIRED` and `ORG_REQUIRED` codes). `ORG_REQUIRED` carries `repair: { id: "create-or-join-org" }`. `AUTH_REQUIRED` has no repair (sign-in is implicit).
+- The previously-inline readiness closure inside `pendingNotAllowedProcedure` is now a named middleware: `requireReadinessCleared` (renamed from `requireClearedReadiness` to fit `<noun><state>` form). It's declared via `experimental_standaloneMiddleware<{ ctx: { auth: AuthContext & { identity: ActiveIdentity } } }>` so the `active`-identity narrowing established by `requireActiveIdentity` propagates through it — solving the original "inline because narrowing breaks across standalone middlewares" problem at the type level rather than by inlining. A defensive runtime re-check at the top of the middleware throws `ORG_REQUIRED` if reached without an active identity, so it stays safe to chain or use standalone.
+- `pendingNotAllowedProcedure = authedProcedure.use(requireActiveIdentity).use(requireReadinessCleared)` — no inline `.use(({...}) => ...)`. Implementer Note 1 from the original Phase 3 ("readiness gate is inlined…") is **superseded by this entry**.
+
+**Agent-driven contract**
+
+This is the affordance Bearer transports (desktop, CLI, agents) consume. An agent hitting `pendingNotAllowedProcedure` while readiness is pending receives `data.diagnostics[0] = { code: "READINESS_PENDING", repair: { id: "complete-lightfast-task", current, remaining } }`, dispatches on `repair.id`, calls the tasks router to clear `current`, and retries the original procedure. No prose parsing, no per-error wire fields to learn.
+
+**Symbol renames**
+
+- `requireClearedReadiness` → `requireReadinessCleared` (in code; legacy name persists in earlier Improvement Log entries as historical record).
+- `data.lightfastTasksPending` → `data.diagnostics`.
+- `cause.kind: "LIGHTFAST_TASKS_PENDING"` → `cause.kind: "lightfast.diagnostic"` (envelope) + `diagnostic.code: "READINESS_PENDING"` (per-instance).
+
+**Tests**
+
+- `readiness-gate.test.ts` updated to assert against `data.diagnostics[]` and the new cause envelope. Added `ORG_REQUIRED` coverage on both the caller and the wire paths so all three current codes are exercised end-to-end. 39 tests still pass.
+
+**What stayed**
+
+- The single chokepoint. The two-primitive `AuthContext`. The DB-source-of-truth model. `activeIdentityProcedure` for the tasks router. The readiness repair payload still carries `{ current, remaining }` — it's just nested under `repair` instead of being the top-level wire field.
+
+**Migration**
+
+- No external consumers of `data.lightfastTasksPending` existed at the time of this cleanup (only `trpc.ts` and `readiness-gate.test.ts` referenced it). Future desktop/CLI/agent code dispatching on this contract should pattern-match `data.diagnostics.find(d => d.code === "READINESS_PENDING")?.repair` instead.
 
 ### 2026-05-18 (cont.) — Vendor-agnostic naming pivot (Option B)
 

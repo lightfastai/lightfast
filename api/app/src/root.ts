@@ -3,10 +3,12 @@
  *
  * Sub-routers are nested by the auth admission rule they enforce, *not* by
  * the operation's target:
- * - `pendingAllowed`: composed of `pendingAllowedProcedure` — admits both
- *   `pending` and `active` identities (onboarding-safe surface).
- * - `pendingNotAllowed`: composed of `pendingNotAllowedProcedure` — admits
- *   only `active` identity (requires a claimed organization).
+ * - `pendingAllowed`:    admits identity `pending` OR `active` (any
+ *                        readiness). Onboarding-safe surface.
+ * - `pendingNotAllowed`: admits identity `active` AND readiness `cleared`
+ *                        (default for org work). The `tasks` router under
+ *                        here uses `activeIdentityProcedure` so users with
+ *                        pending readiness can complete the gating tasks.
  *
  * Naming the boundary by the gate lets us add procedures without renaming
  * the grouping when an operation's target evolves.
@@ -15,6 +17,7 @@
 import { accountRouter } from "./router/(pending-allowed)/account";
 import { organizationRouter } from "./router/(pending-allowed)/organization";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
+import { tasksRouter } from "./router/(pending-not-allowed)/tasks";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -24,6 +27,7 @@ export const appRouter = createTRPCRouter({
   }),
   pendingNotAllowed: createTRPCRouter({
     orgApiKeys: orgApiKeysRouter,
+    tasks: tasksRouter,
   }),
 });
 
