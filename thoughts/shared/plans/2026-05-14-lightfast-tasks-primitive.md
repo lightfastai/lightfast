@@ -773,17 +773,29 @@ This is the only mechanism Bearer transports get for structured rejection — it
 
 #### Automated Verification
 
-- [ ] `pnpm --filter @api/app typecheck` clean (composite ctx narrowing carries through all 4 existing `pendingNotAllowedProcedure` callers in `orgApiKeysRouter` without modification)
-- [ ] `pnpm --filter @apps/app typecheck` clean (zero client call-site changes required)
-- [ ] `pnpm --filter @api/app check` clean
-- [ ] `pnpm --filter @api/app test` passes (new tests in `readiness-gate.test.ts`)
-- [ ] `grep -rn "requireOrg\b" api/app/src` returns 0 (rename complete)
-- [ ] `grep -rn "requireActiveIdentity\|requireClearedReadiness" api/app/src` returns matches in `trpc.ts` only
+- [x] `pnpm --filter @api/app typecheck` clean (composite ctx narrowing carries through all 4 existing `pendingNotAllowedProcedure` callers in `orgApiKeysRouter` without modification)
+- [x] `pnpm --filter @lightfast/app typecheck` clean (zero client call-site changes required) — package is `@lightfast/app`, not `@apps/app`
+- [x] `npx ultracite@latest check api/app` clean (api/app has no per-package `check` script; root-level ultracite covers it)
+- [x] `pnpm --filter @api/app test` passes — 6 files / 39 tests including 8 new in `readiness-gate.test.ts`
+- [x] `grep -rn "requireOrg\b" api/app/src` returns 0 (rename complete)
+- [x] `grep -rn "requireActiveIdentity\|requireClearedReadiness" api/app/src` returns matches in `trpc.ts` only
 
 #### Human Review
 
-- [ ] Local DB with no `org_lightfast_tasks` rows for the current org → fetch `/api/trpc/pendingNotAllowed.orgApiKeys.list` from browser DevTools while signed in → 403 returned; verify `response.error.data.lightfastTasksPending` matches `{ current: "connect-github", remaining: ["connect-github"] }`
-- [ ] Insert a row manually (`INSERT INTO org_lightfast_tasks (org_id, task_key) VALUES ('<orgId>', 'connect-github')`) → same fetch returns the keys list
+- [x] Verified end-to-end against the live dev stack. Provisioned a throwaway Clerk test user via `.claude/skills/lightfast-clerk/command/token.sh`, created `org_3DskVlVFW1YztObXnPdI75qehGt` via the Clerk Backend API with that user as `created_by` (membership auto-attaches), and minted a `lightfast-desktop`-template JWT carrying `org_id` set to the new org. Bearer `GET https://app.lightfast.localhost/api/trpc/pendingNotAllowed.orgApiKeys.list?batch=1&input=…` returned **HTTP 403** with `data.code = "FORBIDDEN"` and `data.lightfastTasksPending = { current: "connect-github", remaining: ["connect-github"] }` — exactly the wire contract the readiness gate promises. Skipped DevTools-in-browser since the structured payload is the cross-transport contract and Bearer is the harder (desktop/CLI) path; cookie-on-web inherits the same `errorFormatter`.
+- [x] `INSERT INTO org_lightfast_tasks (org_id, task_key) VALUES ('org_3DskVlVFW1YztObXnPdI75qehGt', 'connect-github')` → re-ran the same Bearer fetch (with a freshly-minted JWT to avoid the previous session's expiry) and got **HTTP 200** with `result.data.json = []` (empty list because no API keys exist yet — gate passed, which is what the test asserts). Confirms the resolver re-reads `org_lightfast_tasks` on every request and flips `readiness` to `cleared` without a session refresh. Cleaned up afterwards: deleted the row, deleted the Clerk org (`DELETE /v1/organizations/<id>` → 200), and deleted the test user via the skill (`delete-user.sh phase3-verify`).
+
+**Implementer notes (Phase 3):**
+
+1. **Readiness gate is inlined inside `pendingNotAllowedProcedure`, not exposed as a named middleware.** Plan body sketches `requireClearedReadiness` as a sibling `t.middleware(...)`. In practice, a standalone middleware sees the *base* ctx type (full `AuthIdentity` union) and re-broadens `auth.identity` when its return spreads `...ctx.auth` to override the readiness slot — which silently undoes the active-identity narrowing for all four downstream `orgApiKeysRouter` handlers. Inlining the gate inside the procedure composition (`.use(requireActiveIdentity).use(({ ctx, next }) => { … })`) gives the inner callback a properly-narrowed ctx and lets the readiness override flow with identity still narrowed. Same behavioral contract, same single chokepoint, no call-site changes.
+2. **`activeIdentityProcedure` is still a standalone procedure export** (Phase 4's tasks router consumes it). Identity-only narrowing works with a standalone `requireActiveIdentity` middleware because there is no second gate widening `auth`.
+3. **errorFormatter shape decision.** The structured cause uses `kind: "LIGHTFAST_TASKS_PENDING"` as a discriminator. The formatter detects it via a private `isLightfastTasksPendingCause` type guard and emits `data.lightfastTasksPending = { current, remaining }` (no `kind` on the wire — the data slot's *presence* is itself the discriminator).
+4. **Test approach combines two transports.** `readiness-gate.test.ts` exercises:
+   - the middleware contract via `createCallerFactory` (asserts `code`, `message`, structured `cause`),
+   - the wire contract via `fetchRequestHandler` (asserts `error.json.data.lightfastTasksPending` in the v11 + superjson envelope).
+   The wire test confirms the formatter actually runs in the HTTP path — `createCaller` skips `errorFormatter`, so a caller-only test would not have caught a regression in the formatter.
+5. **Vendor mock surface for `readiness-gate.test.ts`.** Imports `trpc.ts` directly, so the test file mocks `@vendor/clerk/env`, `@vendor/clerk/server`, `@db/app/client`, `@vendor/observability/log/next`, and stubs out `createObservabilityMiddleware` (so its config shim is not required). The mocks are not load-bearing for the gates themselves; they exist solely so importing `trpc.ts` does not pull real env vars or hit Postgres.
+6. **Drift versus plan text.** Plan §3 success criteria say `pnpm --filter @apps/app typecheck` — the package is actually `@lightfast/app`. Plan also lists `pnpm --filter @api/app check`; api/app has no per-package `check` script. Used `npx ultracite@latest check api/app` (the same command Phase 2 used) to satisfy the lint check. Checkboxes above reflect the actual commands run.
 
 ---
 

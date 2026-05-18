@@ -12,6 +12,7 @@
 
 import { db } from "@db/app/client";
 import { initTRPC, TRPCError } from "@trpc/server";
+import { log } from "@vendor/observability/log/next";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
@@ -44,6 +45,32 @@ export const createTRPCContext = async (opts: { headers: Headers }) => ({
  */
 const isProduction = process.env.NODE_ENV === "production";
 
+/**
+ * Structured `cause` shape thrown by the readiness gate inside
+ * `pendingNotAllowedProcedure` and surfaced to the wire as
+ * `data.lightfastTasksPending`. Bearer clients (desktop, CLI) pattern-match
+ * on the discriminator `kind` and act on `current`/`remaining` instead of
+ * parsing a prose 403 message.
+ */
+const LIGHTFAST_TASKS_PENDING_CAUSE = "LIGHTFAST_TASKS_PENDING" as const;
+
+interface LightfastTasksPendingCause {
+  current: string | null;
+  kind: typeof LIGHTFAST_TASKS_PENDING_CAUSE;
+  remaining: string[];
+}
+
+function isLightfastTasksPendingCause(
+  cause: unknown
+): cause is LightfastTasksPendingCause {
+  return (
+    !!cause &&
+    typeof cause === "object" &&
+    "kind" in cause &&
+    (cause as { kind?: unknown }).kind === LIGHTFAST_TASKS_PENDING_CAUSE
+  );
+}
+
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => {
@@ -53,6 +80,13 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     const shouldSanitize =
       isProduction && error.code === "INTERNAL_SERVER_ERROR";
 
+    const lightfastTasksPending = isLightfastTasksPendingCause(error.cause)
+      ? {
+          current: error.cause.current,
+          remaining: error.cause.remaining,
+        }
+      : null;
+
     return {
       ...shape,
       message: shouldSanitize ? "An unexpected error occurred" : shape.message,
@@ -60,6 +94,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
         ...shape.data,
         zodError:
           error.cause instanceof ZodError ? error.cause.flatten() : null,
+        lightfastTasksPending,
       },
     };
   },
@@ -128,7 +163,16 @@ const requireAuth = t.middleware(({ ctx, next }) => {
   });
 });
 
-const requireOrg = t.middleware(({ ctx, next }) => {
+/**
+ * Active-identity gate. Narrows `ctx.auth.identity` to the `active` variant
+ * so downstream middleware (and handlers) can read `orgId` without
+ * re-discriminating.
+ *
+ * Atomic — does not consult the readiness dimension. Composed with the
+ * inline readiness gate inside `pendingNotAllowedProcedure` so each gate
+ * stays single-purpose: identity first, readiness second.
+ */
+const requireActiveIdentity = t.middleware(({ ctx, next }) => {
   // requireAuth has already excluded "unauthenticated".
   if (ctx.auth.identity.type !== "active") {
     throw new TRPCError({
@@ -181,18 +225,78 @@ export const pendingAllowedProcedure = authedProcedure;
 /**
  * Pending-Not-Allowed Procedure
  *
- * Admits only sessions with `active` identity. `pending` identity is rejected
- * by the composed `requireOrg` middleware with `FORBIDDEN`.
+ * Admits sessions that are **fully ready**: identity `active` AND readiness
+ * `cleared`. Both gates compose here so the safe default for every
+ * org-scoped router is one chokepoint, not N opt-ins. The name still reads
+ * correctly under the dual-gate semantics: this procedure does not admit
+ * any pending state — pending identity OR pending readiness both throw
+ * `FORBIDDEN`.
  *
- * `ctx.auth.identity.orgId` is guaranteed to be present in handlers.
+ * `ctx.auth.identity.orgId` is guaranteed in handlers, and
+ * `ctx.auth.readiness.type` is narrowed to `"cleared"`.
+ *
+ * Readiness rejections include a structured `data.lightfastTasksPending`
+ * payload on the wire (see `errorFormatter`) so Bearer transports can act
+ * programmatically.
  *
  * Typical use cases:
  * - Org API keys (list / create / revoke / delete)
  * - Org members, repositories, integrations, settings
  *
  * For procedures that must remain callable during onboarding, use
- * `pendingAllowedProcedure`.
+ * `pendingAllowedProcedure`. For the tasks router itself (the only
+ * org-scoped surface that must remain reachable while readiness is
+ * pending), use `activeIdentityProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const pendingNotAllowedProcedure = authedProcedure.use(requireOrg);
+export const pendingNotAllowedProcedure = authedProcedure
+  .use(requireActiveIdentity)
+  // Inline rather than a standalone `t.middleware(...)` so the inner ctx
+  // inherits identity narrowing from `requireActiveIdentity`. A standalone
+  // middleware would see the base ctx and re-broaden `auth.identity` when
+  // it spreads `...ctx.auth` to override the readiness slot.
+  .use(({ ctx, next }) => {
+    if (ctx.auth.readiness.type !== "cleared") {
+      const pending =
+        ctx.auth.readiness.type === "pending" ? ctx.auth.readiness : null;
+      log.info("[readiness] denied", {
+        orgId: ctx.auth.identity.orgId,
+        current: pending?.current,
+        remaining: pending?.remaining,
+      });
+      const cause: LightfastTasksPendingCause = {
+        kind: LIGHTFAST_TASKS_PENDING_CAUSE,
+        current: pending?.current ?? null,
+        remaining: pending?.remaining ?? [],
+      };
+      throw new TRPCError({
+        code: "FORBIDDEN",
+        message: `Complete required Lightfast tasks. Pending: ${
+          pending?.current ?? "(unknown)"
+        }`,
+        cause,
+      });
+    }
+    return next({
+      ctx: { ...ctx, auth: { ...ctx.auth, readiness: ctx.auth.readiness } },
+    });
+  });
+
+/**
+ * Active-Identity Procedure (explicit opt-out from the readiness gate)
+ *
+ * Admits sessions with an `active` identity regardless of readiness state.
+ * Use this **only** for the tasks router — every other org-scoped surface
+ * must compose the readiness gate via `pendingNotAllowedProcedure`. The
+ * name documents the deliberate decision: this procedure only requires
+ * an active identity, with no readiness assertion.
+ *
+ * `ctx.auth.identity.orgId` is guaranteed in handlers; `ctx.auth.readiness`
+ * may be `"pending"`, `"cleared"`, or (defensively) `"n/a"`.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const activeIdentityProcedure = authedProcedure.use(
+  requireActiveIdentity
+);
