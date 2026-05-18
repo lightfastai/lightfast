@@ -8,9 +8,9 @@ index e1e59c0269c917ad30e575d12794030b6aa0743a..d3c99fd4a04dbc165ec06f63c193796d
      }
 +    const override = getLocalAppUrlOverride(appName);
 +    if (override) {
-+      protocol = protocol ?? override.protocol;
-+      host = host ?? override.host ?? "localhost";
-+      port = port ?? override.port;
++      protocol = override.protocol ?? protocol;
++      host = override.host ?? host ?? "localhost";
++      port = override.port ?? port;
 +    }
      super({
        protocol: protocol ?? "http",
@@ -84,7 +84,7 @@ index e1e59c0269c917ad30e575d12794030b6aa0743a..d3c99fd4a04dbc165ec06f63c193796d
      const parsedValue = Number.parseInt(value, 10);
      if (Number.isNaN(parsedValue) || parsedValue <= 0) {
        throw new Error(
-@@ -3101,6 +3128,13 @@ function main() {
+@@ -3101,6 +3128,24 @@ function main() {
          "Both --names and --local-apps are set. --names is deprecated and has been replaced with --local-apps, which functions exactly the same. Please only set --local-apps."
        );
      }
@@ -93,7 +93,18 @@ index e1e59c0269c917ad30e575d12794030b6aa0743a..d3c99fd4a04dbc165ec06f63c193796d
 +      if (eq <= 0) {
 +        throw new Error(`Invalid --local-app-url value "${pair}": expected NAME=URL.`);
 +      }
-+      localAppUrlOverrides.set(pair.slice(0, eq), pair.slice(eq + 1));
++      const name = pair.slice(0, eq);
++      const rawUrl = pair.slice(eq + 1);
++      let parsedUrl;
++      try {
++        parsedUrl = new URL(rawUrl);
++      } catch {
++        throw new Error(`Invalid --local-app-url value "${pair}": URL must be absolute.`);
++      }
++      if (parsedUrl.protocol !== "http:" && parsedUrl.protocol !== "https:") {
++        throw new Error(`Invalid --local-app-url value "${pair}": only http(s) URLs are supported.`);
++      }
++      localAppUrlOverrides.set(name, parsedUrl.toString());
 +    }
      const localProxy = LocalProxy.fromFile(filePath, {
        localApps: options.names ?? options.localApps,
