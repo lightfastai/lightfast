@@ -1,83 +1,107 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const PORTLESS_PATTERNS = [
-  "lightfast.localhost",
-  "*.lightfast.localhost",
-  "app.lightfast.localhost",
-  "*.app.lightfast.localhost",
-  "www.lightfast.localhost",
-  "*.www.lightfast.localhost",
-];
-
-function setupModuleMocks() {
-  vi.doMock("@lightfastai/dev-proxy/projects", () => ({
-    resolveProjectUrl: vi.fn((name: string) => {
-      if (name === "lightfast-app") {
-        return "https://app.lightfast.localhost";
-      }
-      if (name === "lightfast-www") {
-        return "https://www.lightfast.localhost";
-      }
-      if (name === "lightfast-platform") {
-        return "https://platform.lightfast.localhost";
-      }
-      throw new Error(`unexpected project name: ${name}`);
-    }),
-  }));
-  vi.doMock("@lightfastai/dev-proxy/next", () => ({
-    getPortlessProxyOrigins: vi.fn(() => PORTLESS_PATTERNS),
-  }));
+interface Env {
+  appUrl?: string;
+  platformUrl?: string;
+  vercelEnv?: "development" | "preview" | "production";
+  wwwUrl?: string;
 }
 
-function mockEnv(
-  vercelEnv: "development" | "preview" | "production" | undefined
-) {
+// Mirror the zod defaults declared in src/env.ts so the mock acts like the
+// real env wrapper (which fills in defaults when the var is unset).
+function mockEnv(opts: Env) {
   vi.doMock("~/env", () => ({
-    env: { NEXT_PUBLIC_VERCEL_ENV: vercelEnv },
+    env: {
+      NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv ?? "development",
+      NEXT_PUBLIC_APP_URL: opts.appUrl ?? "https://lightfast.ai",
+      NEXT_PUBLIC_WWW_URL: opts.wwwUrl ?? "https://lightfast.ai",
+      NEXT_PUBLIC_PLATFORM_URL:
+        opts.platformUrl ?? "https://lightfast-platform.vercel.app",
+    },
   }));
 }
 
 beforeEach(() => {
   vi.resetModules();
-  setupModuleMocks();
 });
 
 afterEach(() => {
-  vi.doUnmock("@lightfastai/dev-proxy/projects");
-  vi.doUnmock("@lightfastai/dev-proxy/next");
   vi.doUnmock("~/env");
   vi.unstubAllEnvs();
 });
 
-describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV undefined)", () => {
+describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV defaults to development)", () => {
   beforeEach(() => {
-    mockEnv(undefined);
+    mockEnv({
+      appUrl: "https://app.lightfast.localhost",
+      wwwUrl: "https://www.lightfast.localhost",
+      platformUrl: "https://platform.lightfast.localhost",
+    });
   });
 
-  it("appUrl resolves to the portless self URL", async () => {
+  it("appUrl resolves to the injected portless self URL", async () => {
     const { appUrl } = await import("../origins");
     expect(appUrl).toBe("https://app.lightfast.localhost");
   });
 
-  it("wwwUrl resolves to the portless sibling URL", async () => {
+  it("wwwUrl resolves to the injected portless sibling URL", async () => {
     const { wwwUrl } = await import("../origins");
     expect(wwwUrl).toBe("https://www.lightfast.localhost");
   });
 
-  it("platformUrl resolves to the portless self URL", async () => {
+  it("platformUrl resolves to the injected portless sibling URL", async () => {
     const { platformUrl } = await import("../origins");
     expect(platformUrl).toBe("https://platform.lightfast.localhost");
   });
 
-  it("devOriginPatterns is the portless origin set", async () => {
+  it("devOriginPatterns is the host set of the injected URLs", async () => {
     const { devOriginPatterns } = await import("../origins");
-    expect(devOriginPatterns).toEqual(PORTLESS_PATTERNS);
+    expect(devOriginPatterns).toEqual([
+      "app.lightfast.localhost",
+      "www.lightfast.localhost",
+      "platform.lightfast.localhost",
+    ]);
+  });
+});
+
+describe("origins (dev — NEXT_PUBLIC_<APP>_URL unset)", () => {
+  beforeEach(() => {
+    mockEnv({});
+  });
+
+  it("appUrl falls back to the production literal", async () => {
+    const { appUrl } = await import("../origins");
+    expect(appUrl).toBe("https://lightfast.ai");
+  });
+
+  it("devOriginPatterns excludes lightfast.ai (the prod fallback)", async () => {
+    const { devOriginPatterns } = await import("../origins");
+    expect(devOriginPatterns).toEqual([]);
+  });
+});
+
+describe("origins (dev — NEXT_PUBLIC_<APP>_URL with port)", () => {
+  beforeEach(() => {
+    mockEnv({
+      appUrl: "http://localhost:3000",
+      wwwUrl: "http://localhost:3001",
+      platformUrl: "http://localhost:3002",
+    });
+  });
+
+  it("devOriginPatterns keeps the port in the host string", async () => {
+    const { devOriginPatterns } = await import("../origins");
+    expect(devOriginPatterns).toEqual([
+      "localhost:3000",
+      "localhost:3001",
+      "localhost:3002",
+    ]);
   });
 });
 
 describe("origins (production — VRP unset)", () => {
   beforeEach(() => {
-    mockEnv("production");
+    mockEnv({ vercelEnv: "production" });
     vi.stubEnv("VERCEL_ENV", "production");
   });
 
@@ -104,7 +128,7 @@ describe("origins (production — VRP unset)", () => {
 
 describe("origins (production — VRP populated)", () => {
   beforeEach(() => {
-    mockEnv("production");
+    mockEnv({ vercelEnv: "production" });
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv(
       "VERCEL_RELATED_PROJECTS",

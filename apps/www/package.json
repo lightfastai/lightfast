@@ -14,11 +14,13 @@
     "search:sync": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY",
     "search:sync:ci": "mxbai store sync $MXBAI_STORE_ID \"./src/content/**/*.mdx\" --api-key $MXBAI_API_KEY -y",
     "clean": "git clean -xdf .cache .clerk .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env lightfast-dev proxy app -- next dev --turbopack",
+    "dev": "portless run",
+    "dev:app": "pnpm with-related-projects pnpm with-env next dev --turbopack",
     "start": "pnpm with-env next start -p 4101",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.vercel/.env.development.local --"
+    "with-env": "dotenv -e ./.vercel/.env.development.local --",
+    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
   },
   "dependencies": {
     "@lightfastai/dev-proxy": "catalog:",

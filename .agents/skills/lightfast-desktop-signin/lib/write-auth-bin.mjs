@@ -22,9 +22,10 @@ import { app, safeStorage } from "electron";
 function parseArgs() {
   const out = { product: null };
   const argv = process.argv.slice(2);
-  for (let i = 0; i < argv.length; i++) {
-    if (argv[i] === "--product") {
-      out.product = argv[++i];
+  const iter = argv[Symbol.iterator]();
+  for (const arg of iter) {
+    if (arg === "--product") {
+      out.product = iter.next().value ?? null;
     }
   }
   return out;
