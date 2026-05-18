@@ -19,7 +19,8 @@ export const wwwUrl = withRelatedProject({
 export const platformUrl = withRelatedProject({
   projectName: "lightfast-platform",
   defaultHost:
-    process.env.NEXT_PUBLIC_PLATFORM_URL ?? "https://lightfast-platform.vercel.app",
+    process.env.NEXT_PUBLIC_PLATFORM_URL ??
+    "https://lightfast-platform.vercel.app",
 });
 
 // Dev-only CORS allowlist: hostnames of the injected sibling URLs. Edge-safe.
@@ -36,7 +37,8 @@ export const devOriginPatterns: readonly string[] = isLocal
             }
           })
           .filter(
-            (host) => host && (host === "localhost" || host.endsWith(".localhost"))
+            (host) =>
+              host && (host === "localhost" || host.endsWith(".localhost"))
           )
       )
     )

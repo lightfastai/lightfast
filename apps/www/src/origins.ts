@@ -15,5 +15,6 @@ export const wwwUrl = withRelatedProject({
 export const platformUrl = withRelatedProject({
   projectName: "lightfast-platform",
   defaultHost:
-    process.env.NEXT_PUBLIC_PLATFORM_URL ?? "https://lightfast-platform.vercel.app",
+    process.env.NEXT_PUBLIC_PLATFORM_URL ??
+    "https://lightfast-platform.vercel.app",
 });
