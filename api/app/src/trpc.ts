@@ -7,17 +7,23 @@
  * The pieces you will need to use are documented accordingly near the end.
  *
  * Auth resolution lives in `./auth` — this file consumes the resolved
- * `AuthContext` and wires it into tRPC middleware.
+ * `AuthContext` and wires it into tRPC middleware. Structured failure
+ * payloads (codes + repair hints) live in `./diagnostics`.
  */
 
 import { db } from "@db/app/client";
-import { initTRPC, TRPCError } from "@trpc/server";
+import { experimental_standaloneMiddleware, initTRPC } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
+import type { AuthContext } from "./auth/context";
+import type { AuthIdentity } from "./auth/identity/types";
 import { resolveAuth } from "./auth/resolve";
+import { isDiagnosticCause, throwDiagnostic } from "./diagnostics";
+
+type ActiveIdentity = Extract<AuthIdentity, { type: "active" }>;
 
 // Re-exported for routers that want to pattern-match on `ctx.auth` directly.
 export type { AuthContext } from "./auth/context";
@@ -45,32 +51,6 @@ export const createTRPCContext = async (opts: { headers: Headers }) => ({
  */
 const isProduction = process.env.NODE_ENV === "production";
 
-/**
- * Structured `cause` shape thrown by the readiness gate inside
- * `pendingNotAllowedProcedure` and surfaced to the wire as
- * `data.lightfastTasksPending`. Bearer clients (desktop, CLI) pattern-match
- * on the discriminator `kind` and act on `current`/`remaining` instead of
- * parsing a prose 403 message.
- */
-const LIGHTFAST_TASKS_PENDING_CAUSE = "LIGHTFAST_TASKS_PENDING" as const;
-
-interface LightfastTasksPendingCause {
-  current: string | null;
-  kind: typeof LIGHTFAST_TASKS_PENDING_CAUSE;
-  remaining: string[];
-}
-
-function isLightfastTasksPendingCause(
-  cause: unknown
-): cause is LightfastTasksPendingCause {
-  return (
-    !!cause &&
-    typeof cause === "object" &&
-    "kind" in cause &&
-    (cause as { kind?: unknown }).kind === LIGHTFAST_TASKS_PENDING_CAUSE
-  );
-}
-
 const t = initTRPC.context<typeof createTRPCContext>().create({
   transformer: superjson,
   errorFormatter: ({ shape, error }) => {
@@ -80,12 +60,12 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     const shouldSanitize =
       isProduction && error.code === "INTERNAL_SERVER_ERROR";
 
-    const lightfastTasksPending = isLightfastTasksPendingCause(error.cause)
-      ? {
-          current: error.cause.current,
-          remaining: error.cause.remaining,
-        }
-      : null;
+    // Generic diagnostic envelope. Any gate (or future router) that throws via
+    // `throwDiagnostic` lands its structured payload here — no per-error
+    // branches in this formatter.
+    const diagnostics = isDiagnosticCause(error.cause)
+      ? error.cause.diagnostics
+      : [];
 
     return {
       ...shape,
@@ -94,7 +74,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
         ...shape.data,
         zodError:
           error.cause instanceof ZodError ? error.cause.flatten() : null,
-        lightfastTasksPending,
+        diagnostics,
       },
     };
   },
@@ -152,9 +132,12 @@ const observabilityMiddleware = t.middleware(
  */
 const requireAuth = t.middleware(({ ctx, next }) => {
   if (ctx.auth.identity.type === "unauthenticated") {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Authentication required. Please sign in.",
+    throwDiagnostic({
+      trpcCode: "UNAUTHORIZED",
+      diagnostic: {
+        code: "AUTH_REQUIRED",
+        message: "Authentication required. Please sign in.",
+      },
     });
   }
   // ctx.auth.identity is narrowed to pending | active for downstream use.
@@ -168,21 +151,66 @@ const requireAuth = t.middleware(({ ctx, next }) => {
  * so downstream middleware (and handlers) can read `orgId` without
  * re-discriminating.
  *
- * Atomic — does not consult the readiness dimension. Composed with the
- * inline readiness gate inside `pendingNotAllowedProcedure` so each gate
+ * Atomic — does not consult the readiness dimension. Composed with
+ * `requireReadinessCleared` inside `pendingNotAllowedProcedure` so each gate
  * stays single-purpose: identity first, readiness second.
  */
 const requireActiveIdentity = t.middleware(({ ctx, next }) => {
   // requireAuth has already excluded "unauthenticated".
   if (ctx.auth.identity.type !== "active") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message:
-        "Organization required. Please create or join an organization first.",
+    throwDiagnostic({
+      trpcCode: "FORBIDDEN",
+      diagnostic: {
+        code: "ORG_REQUIRED",
+        message:
+          "Organization required. Please create or join an organization first.",
+        repair: { id: "create-or-join-org" },
+      },
     });
   }
   return next({
     ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
+  });
+});
+
+/**
+ * Readiness gate. Throws unless `ctx.auth.readiness.type === "cleared"`.
+ *
+ * Declared via `experimental_standaloneMiddleware` with an
+ * `identity: active` ctx requirement so the narrowing established by
+ * `requireActiveIdentity` propagates through this middleware into the
+ * handler. Without that requirement, `next({ ctx: { ...ctx.auth } })`
+ * would re-broaden `auth.identity` to the full `AuthIdentity` union and
+ * downstream handlers would lose access to `orgId`.
+ */
+const requireReadinessCleared = experimental_standaloneMiddleware<{
+  ctx: { auth: AuthContext & { identity: ActiveIdentity } };
+}>().create(({ ctx, next }) => {
+  if (ctx.auth.readiness.type !== "cleared") {
+    const pending =
+      ctx.auth.readiness.type === "pending" ? ctx.auth.readiness : null;
+    log.info("[readiness] denied", {
+      orgId: ctx.auth.identity.orgId,
+      current: pending?.current,
+      remaining: pending?.remaining,
+    });
+    throwDiagnostic({
+      trpcCode: "FORBIDDEN",
+      diagnostic: {
+        code: "READINESS_PENDING",
+        message: `Complete required Lightfast tasks. Pending: ${
+          pending?.current ?? "(unknown)"
+        }`,
+        repair: {
+          id: "complete-lightfast-task",
+          current: pending?.current ?? null,
+          remaining: pending?.remaining ?? [],
+        },
+      },
+    });
+  }
+  return next({
+    ctx: { ...ctx, auth: { ...ctx.auth, readiness: ctx.auth.readiness } },
   });
 });
 
@@ -230,14 +258,11 @@ export const pendingAllowedProcedure = authedProcedure;
  * org-scoped router is one chokepoint, not N opt-ins. The name still reads
  * correctly under the dual-gate semantics: this procedure does not admit
  * any pending state — pending identity OR pending readiness both throw
- * `FORBIDDEN`.
+ * `FORBIDDEN` with a `data.diagnostics[]` entry (`ORG_REQUIRED` or
+ * `READINESS_PENDING` respectively).
  *
  * `ctx.auth.identity.orgId` is guaranteed in handlers, and
  * `ctx.auth.readiness.type` is narrowed to `"cleared"`.
- *
- * Readiness rejections include a structured `data.lightfastTasksPending`
- * payload on the wire (see `errorFormatter`) so Bearer transports can act
- * programmatically.
  *
  * Typical use cases:
  * - Org API keys (list / create / revoke / delete)
@@ -252,36 +277,7 @@ export const pendingAllowedProcedure = authedProcedure;
  */
 export const pendingNotAllowedProcedure = authedProcedure
   .use(requireActiveIdentity)
-  // Inline rather than a standalone `t.middleware(...)` so the inner ctx
-  // inherits identity narrowing from `requireActiveIdentity`. A standalone
-  // middleware would see the base ctx and re-broaden `auth.identity` when
-  // it spreads `...ctx.auth` to override the readiness slot.
-  .use(({ ctx, next }) => {
-    if (ctx.auth.readiness.type !== "cleared") {
-      const pending =
-        ctx.auth.readiness.type === "pending" ? ctx.auth.readiness : null;
-      log.info("[readiness] denied", {
-        orgId: ctx.auth.identity.orgId,
-        current: pending?.current,
-        remaining: pending?.remaining,
-      });
-      const cause: LightfastTasksPendingCause = {
-        kind: LIGHTFAST_TASKS_PENDING_CAUSE,
-        current: pending?.current ?? null,
-        remaining: pending?.remaining ?? [],
-      };
-      throw new TRPCError({
-        code: "FORBIDDEN",
-        message: `Complete required Lightfast tasks. Pending: ${
-          pending?.current ?? "(unknown)"
-        }`,
-        cause,
-      });
-    }
-    return next({
-      ctx: { ...ctx, auth: { ...ctx.auth, readiness: ctx.auth.readiness } },
-    });
-  });
+  .use(requireReadinessCleared);
 
 /**
  * Active-Identity Procedure (explicit opt-out from the readiness gate)

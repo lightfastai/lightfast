@@ -87,7 +87,7 @@ beforeEach(() => {
 });
 
 describe("pendingNotAllowedProcedure readiness gate (middleware contract)", () => {
-  it("throws FORBIDDEN with the structured lightfast-tasks cause when readiness is pending", async () => {
+  it("throws FORBIDDEN with a READINESS_PENDING diagnostic when readiness is pending", async () => {
     const caller = createCaller(
       makeCtx({ identity: ACTIVE_IDENTITY, readiness: READINESS_PENDING })
     );
@@ -95,9 +95,17 @@ describe("pendingNotAllowedProcedure readiness gate (middleware contract)", () =
     await expect(caller.fullyReady()).rejects.toMatchObject({
       code: "FORBIDDEN",
       cause: {
-        kind: "LIGHTFAST_TASKS_PENDING",
-        current: "connect-github",
-        remaining: ["connect-github"],
+        kind: "lightfast.diagnostic",
+        diagnostics: [
+          {
+            code: "READINESS_PENDING",
+            repair: {
+              id: "complete-lightfast-task",
+              current: "connect-github",
+              remaining: ["connect-github"],
+            },
+          },
+        ],
       },
     });
 
@@ -121,7 +129,7 @@ describe("pendingNotAllowedProcedure readiness gate (middleware contract)", () =
     expect(logInfoMock).not.toHaveBeenCalled();
   });
 
-  it("emits a null `current` cause when readiness somehow reaches n/a on an active identity (defensive)", async () => {
+  it("emits a null `current` repair when readiness somehow reaches n/a on an active identity (defensive)", async () => {
     const caller = createCaller(
       makeCtx({
         identity: ACTIVE_IDENTITY,
@@ -132,9 +140,17 @@ describe("pendingNotAllowedProcedure readiness gate (middleware contract)", () =
     await expect(caller.fullyReady()).rejects.toMatchObject({
       code: "FORBIDDEN",
       cause: {
-        kind: "LIGHTFAST_TASKS_PENDING",
-        current: null,
-        remaining: [],
+        kind: "lightfast.diagnostic",
+        diagnostics: [
+          {
+            code: "READINESS_PENDING",
+            repair: {
+              id: "complete-lightfast-task",
+              current: null,
+              remaining: [],
+            },
+          },
+        ],
       },
     });
   });
@@ -150,31 +166,38 @@ describe("activeIdentityProcedure (readiness opt-out)", () => {
     expect(logInfoMock).not.toHaveBeenCalled();
   });
 
-  it("still rejects pending identity (the identity gate is independent)", async () => {
+  it("still rejects pending identity with an ORG_REQUIRED diagnostic", async () => {
     const caller = createCaller(
       makeCtx({ identity: PENDING_IDENTITY, readiness: { type: "n/a" } })
     );
 
     await expect(caller.activeOnly()).rejects.toMatchObject({
       code: "FORBIDDEN",
-      message: expect.stringContaining("Organization required"),
+      cause: {
+        kind: "lightfast.diagnostic",
+        diagnostics: [
+          {
+            code: "ORG_REQUIRED",
+            repair: { id: "create-or-join-org" },
+          },
+        ],
+      },
     });
   });
 });
 
 describe("identity gate fires before readiness gate", () => {
-  it("throws the identity-shaped FORBIDDEN (not a tasks-pending payload) when identity is pending", async () => {
+  it("throws ORG_REQUIRED (not READINESS_PENDING) when identity is pending", async () => {
     const caller = createCaller(
       makeCtx({ identity: PENDING_IDENTITY, readiness: READINESS_PENDING })
     );
 
     await expect(caller.fullyReady()).rejects.toMatchObject({
       code: "FORBIDDEN",
-      message: expect.stringContaining("Organization required"),
-    });
-    // The readiness middleware never ran — no LIGHTFAST_TASKS_PENDING cause.
-    await expect(caller.fullyReady()).rejects.toMatchObject({
-      cause: undefined,
+      cause: {
+        kind: "lightfast.diagnostic",
+        diagnostics: [{ code: "ORG_REQUIRED" }],
+      },
     });
   });
 });
@@ -200,25 +223,27 @@ describe("errorFormatter wire shape (HTTP transport)", () => {
   }
 
   // tRPC v11 + superjson serializes the error envelope as
-  // `{ error: { json: { code, message, data: { ..., lightfastTasksPending } } } }`.
-  // Bearer clients reach `lightfastTasksPending` via the same path; the assertion
+  // `{ error: { json: { code, message, data: { ..., diagnostics } } } }`.
+  // Bearer clients reach `diagnostics` via the same path; the assertion
   // mirrors that contract.
+  interface WireDiagnostic {
+    code: string;
+    message?: string;
+    repair?: { id: string; [k: string]: unknown };
+  }
   interface BatchWireError {
     error?: {
       json?: {
         data?: {
           code?: string;
           httpStatus?: number;
-          lightfastTasksPending?: {
-            current: string | null;
-            remaining: string[];
-          } | null;
+          diagnostics?: WireDiagnostic[];
         };
       };
     };
   }
 
-  it("surfaces data.lightfastTasksPending on the wire when readiness is pending", async () => {
+  it("surfaces a READINESS_PENDING diagnostic on the wire when readiness is pending", async () => {
     const { status, body } = await fetchProcedure("fullyReady", {
       identity: ACTIVE_IDENTITY,
       readiness: READINESS_PENDING,
@@ -227,17 +252,21 @@ describe("errorFormatter wire shape (HTTP transport)", () => {
     expect(status).toBe(403);
     const batch = body as BatchWireError[];
     const errorData = batch[0]?.error?.json?.data;
-    expect(errorData).toMatchObject({
-      code: "FORBIDDEN",
-      httpStatus: 403,
-      lightfastTasksPending: {
-        current: "connect-github",
-        remaining: ["connect-github"],
-      },
-    });
+    expect(errorData?.code).toBe("FORBIDDEN");
+    expect(errorData?.httpStatus).toBe(403);
+    expect(errorData?.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "READINESS_PENDING",
+        repair: {
+          id: "complete-lightfast-task",
+          current: "connect-github",
+          remaining: ["connect-github"],
+        },
+      }),
+    ]);
   });
 
-  it("emits lightfastTasksPending: null on unrelated errors (e.g. identity gate)", async () => {
+  it("emits an ORG_REQUIRED diagnostic when the identity gate fires first", async () => {
     const { status, body } = await fetchProcedure("fullyReady", {
       identity: PENDING_IDENTITY,
       readiness: READINESS_PENDING,
@@ -245,6 +274,11 @@ describe("errorFormatter wire shape (HTTP transport)", () => {
 
     expect(status).toBe(403);
     const batch = body as BatchWireError[];
-    expect(batch[0]?.error?.json?.data?.lightfastTasksPending).toBeNull();
+    expect(batch[0]?.error?.json?.data?.diagnostics).toEqual([
+      expect.objectContaining({
+        code: "ORG_REQUIRED",
+        repair: { id: "create-or-join-org" },
+      }),
+    ]);
   });
 });
