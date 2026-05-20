@@ -7,7 +7,7 @@ vi.mock("~/app/(auth-api)/_server/code-store", () => ({
   consumeCode: (code: string) => consumeCodeMock(code),
 }));
 
-const { POST } = await import("./route");
+const { POST } = await import("~/app/(auth-api)/api/auth/token/route");
 
 const VERIFIER = "v".repeat(64);
 const CHALLENGE = createHash("sha256").update(VERIFIER).digest("base64url");

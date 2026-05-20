@@ -99,7 +99,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const { default: SignInPage } = await import("./page");
+const { default: SignInPage } = await import("~/app/(auth)/sign-in/page");
 
 describe("sign-in — email submit", () => {
   it("calls signIn.emailCode.sendCode and transitions to OTP view on success", async () => {
@@ -187,7 +187,7 @@ describe("sign-in — OTP verify", () => {
     await waitFor(() => {
       expect(signInStub.finalize).toHaveBeenCalledTimes(1);
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 });
 
@@ -204,7 +204,7 @@ describe("sign-in — OAuth", () => {
     expect(signInStub.sso).toHaveBeenCalledWith({
       strategy: "oauth_github",
       redirectCallbackUrl: "/sso-callback",
-      redirectUrl: "/account/welcome",
+      redirectUrl: "/",
     });
   });
 

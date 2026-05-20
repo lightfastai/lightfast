@@ -21,7 +21,7 @@ vi.mock("@clerk/nextjs/server", () => ({
     }),
 }));
 
-const { POST } = await import("./route");
+const { POST } = await import("~/app/api/cli/setup/route");
 
 function makeReq(body: unknown): Request {
   return new Request("http://localhost/api/cli/setup", {

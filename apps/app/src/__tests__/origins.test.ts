@@ -55,22 +55,22 @@ describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV undefined)", () => {
   });
 
   it("appUrl resolves to the portless self URL", async () => {
-    const { appUrl } = await import("../origins");
+    const { appUrl } = await import("~/origins");
     expect(appUrl).toBe("https://app.lightfast.localhost");
   });
 
   it("wwwUrl resolves to the portless sibling URL", async () => {
-    const { wwwUrl } = await import("../origins");
+    const { wwwUrl } = await import("~/origins");
     expect(wwwUrl).toBe("https://www.lightfast.localhost");
   });
 
   it("platformUrl resolves to the portless self URL", async () => {
-    const { platformUrl } = await import("../origins");
+    const { platformUrl } = await import("~/origins");
     expect(platformUrl).toBe("https://platform.lightfast.localhost");
   });
 
   it("devOriginPatterns is the portless origin set", async () => {
-    const { devOriginPatterns } = await import("../origins");
+    const { devOriginPatterns } = await import("~/origins");
     expect(devOriginPatterns).toEqual(PORTLESS_PATTERNS);
   });
 });
@@ -82,22 +82,22 @@ describe("origins (production — VRP unset)", () => {
   });
 
   it("appUrl is the production literal", async () => {
-    const { appUrl } = await import("../origins");
+    const { appUrl } = await import("~/origins");
     expect(appUrl).toBe("https://lightfast.ai");
   });
 
   it("wwwUrl falls back to its production literal when VRP is empty", async () => {
-    const { wwwUrl } = await import("../origins");
+    const { wwwUrl } = await import("~/origins");
     expect(wwwUrl).toBe("https://lightfast.ai");
   });
 
   it("platformUrl falls back to its production literal when VRP is empty", async () => {
-    const { platformUrl } = await import("../origins");
+    const { platformUrl } = await import("~/origins");
     expect(platformUrl).toBe("https://lightfast-platform.vercel.app");
   });
 
   it("devOriginPatterns is empty", async () => {
-    const { devOriginPatterns } = await import("../origins");
+    const { devOriginPatterns } = await import("~/origins");
     expect(devOriginPatterns).toEqual([]);
   });
 });
@@ -122,17 +122,17 @@ describe("origins (production — VRP populated)", () => {
   });
 
   it("appUrl is defaultHost (lightfast-app is not in its own VRP)", async () => {
-    const { appUrl } = await import("../origins");
+    const { appUrl } = await import("~/origins");
     expect(appUrl).toBe("https://lightfast.ai");
   });
 
   it("wwwUrl uses the matched VRP alias", async () => {
-    const { wwwUrl } = await import("../origins");
+    const { wwwUrl } = await import("~/origins");
     expect(wwwUrl).toBe("https://lightfast.ai");
   });
 
   it("platformUrl uses the matched VRP url", async () => {
-    const { platformUrl } = await import("../origins");
+    const { platformUrl } = await import("~/origins");
     expect(platformUrl).toBe("https://lightfast-platform-prod.vercel.app");
   });
 });

@@ -144,7 +144,9 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const { default: AcceptInvitationPage } = await import("./page");
+const { default: AcceptInvitationPage } = await import(
+  "~/app/(auth)/sign-up/accept-invitation/page"
+);
 
 describe("accept-invitation — no ticket guard", () => {
   it("renders 'No Invitation Found' when __clerk_ticket is missing", () => {
@@ -190,7 +192,7 @@ describe("accept-invitation — Accept Invitation button", () => {
     await waitFor(() => {
       expect(signUpStub.finalize).toHaveBeenCalledTimes(1);
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 
   it("redirects to accept-invitation?errorCode=waitlist on waitlist rejection", async () => {
@@ -258,7 +260,7 @@ describe("accept-invitation — OAuth path (Bug D workaround)", () => {
     ).toHaveBeenCalledWith({
       strategy: "oauth_github",
       redirectUrl: "/sso-callback?__clerk_ticket=tok_abc123",
-      redirectUrlComplete: "/account/welcome",
+      redirectUrlComplete: "/",
       continueSignUp: true,
       legalAccepted: true,
     });
@@ -290,13 +292,13 @@ describe("accept-invitation — OAuth path (Bug D workaround)", () => {
 });
 
 describe("accept-invitation — signed-in redirect", () => {
-  it("redirects signed-in users to /account/welcome", () => {
+  it("redirects signed-in users to the post-auth resolver", () => {
     searchParamsValue = new URLSearchParams("__clerk_ticket=tok_abc123");
     isSignedInValue = true;
 
     render(<AcceptInvitationPage />);
 
-    expect(routerPushMock).toHaveBeenCalledWith("/account/welcome");
+    expect(routerPushMock).toHaveBeenCalledWith("/");
   });
 });
 

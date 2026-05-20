@@ -1,12 +1,28 @@
 import React from "react";
-import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 interface Kids {
   children?: React.ReactNode;
 }
 
+const fetchQueryMock = vi.fn();
+const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
+  queryKey: [["pendingAllowed", "organization", "getBySlug"], input],
+}));
+const notFoundMock = vi.fn(() => {
+  throw new Error("NEXT_NOT_FOUND");
+});
+
 vi.mock("@repo/app-trpc/server", () => ({
+  getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   HydrateClient: ({ children }: Kids) => <>{children}</>,
+  trpc: {
+    pendingAllowed: {
+      organization: {
+        getBySlug: { queryOptions: getBySlugQueryOptionsMock },
+      },
+    },
+  },
 }));
 
 vi.mock("@repo/ui/components/ui/sidebar", () => ({
@@ -45,23 +61,13 @@ vi.mock("~/components/errors/org-page-error-boundary", () => ({
   OrgPageErrorBoundary: ({ children }: Kids) => <>{children}</>,
 }));
 
-vi.mock("~/components/team-switcher", () => ({
-  TeamSwitcher: () => null,
-  TeamSwitcherSkeleton: () => null,
-}));
-
-vi.mock("~/lib/org-access-clerk", () => ({
-  requireOrgAccess: vi.fn(),
-}));
-
 vi.mock("next/navigation", () => ({
-  notFound: () => {
-    throw new Error("NEXT_NOT_FOUND");
-  },
+  notFound: notFoundMock,
 }));
 
-const { requireOrgAccess } = await import("~/lib/org-access-clerk");
-const { default: OrgLayout } = await import("./layout");
+const { default: OrgLayout } = await import(
+  "~/app/(app)/(pending-not-allowed)/[slug]/layout"
+);
 
 function containsComponentNamed(node: unknown, componentName: string): boolean {
   if (!React.isValidElement(node)) {
@@ -89,34 +95,29 @@ function invoke(slug = "acme") {
 describe("[slug]/layout — membership/slug access gate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    fetchQueryMock.mockReset();
+    getBySlugQueryOptionsMock.mockClear();
   });
 
-  it("returns the authenticated 404 shell when org access is denied", async () => {
-    (requireOrgAccess as Mock).mockRejectedValue(
-      new Error("Access denied to this organization.")
-    );
+  it("sends denied org access to the route not-found boundary", async () => {
+    fetchQueryMock.mockRejectedValue(new Error("Organization not found"));
 
-    const element = await invoke("acme");
+    await expect(invoke("acme")).rejects.toThrow("NEXT_NOT_FOUND");
 
-    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
-    expect(containsComponentNamed(element, "OrgAccessNotFound")).toBe(true);
-    expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
+    expect(notFoundMock).toHaveBeenCalledOnce();
   });
 
-  it("returns the authenticated 404 shell when the org slug does not exist", async () => {
-    (requireOrgAccess as Mock).mockRejectedValue(
-      new Error("Organization not found: acme")
-    );
+  it("sends nonexistent org slugs to the route not-found boundary", async () => {
+    fetchQueryMock.mockRejectedValue(new Error("Organization not found"));
 
-    const element = await invoke("acme");
+    await expect(invoke("acme")).rejects.toThrow("NEXT_NOT_FOUND");
 
-    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
-    expect(containsComponentNamed(element, "OrgAccessNotFound")).toBe(true);
-    expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
+    expect(notFoundMock).toHaveBeenCalledOnce();
   });
 
-  it("returns the org sidebar shell when org access is allowed", async () => {
-    (requireOrgAccess as Mock).mockResolvedValue({
+  it("returns a UI-less membership boundary when org access is allowed", async () => {
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "unbound",
       org: {
         id: "org_123",
         imageUrl: "",
@@ -128,8 +129,8 @@ describe("[slug]/layout — membership/slug access gate", () => {
 
     const element = await invoke("acme");
 
-    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
-    expect(containsComponentNamed(element, "AppSidebar")).toBe(true);
-    expect(containsComponentNamed(element, "OrgAccessNotFound")).toBe(false);
+    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(false);
+    expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
+    expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "acme" });
   });
 });

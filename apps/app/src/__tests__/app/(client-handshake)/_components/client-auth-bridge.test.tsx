@@ -21,7 +21,9 @@ vi.mock("next/navigation", () => ({
 }));
 
 // Import under test AFTER mocks
-const { ClientAuthBridge } = await import("./client-auth-bridge");
+const { ClientAuthBridge } = await import(
+  "~/app/(client-handshake)/_components/client-auth-bridge"
+);
 
 function mockSignedInWithToken(token: string | null) {
   useAuthMock.mockReturnValue({

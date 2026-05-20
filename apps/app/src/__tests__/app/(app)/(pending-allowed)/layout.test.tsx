@@ -1,6 +1,6 @@
 import React from "react";
 import { describe, expect, it } from "vitest";
-import UserLayout from "./layout";
+import UserLayout from "~/app/(app)/(pending-allowed)/layout";
 
 function containsComponentNamed(node: unknown, componentName: string): boolean {
   if (!React.isValidElement(node)) {

@@ -41,35 +41,35 @@ describe("isAllowedOrigin (dev)", () => {
   });
 
   it("admits the canonical app origin (matches even though appUrl has trailing slash)", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://app.lightfast.localhost")).toBe(true);
   });
 
   it("admits the bare wildcard host", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://www.lightfast.localhost")).toBe(true);
   });
 
   it("admits a worktree-prefixed app origin via *.app.lightfast.localhost", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://feature.app.lightfast.localhost")).toBe(
       true
     );
   });
 
   it("rejects an unrelated origin", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://evil.com")).toBe(false);
   });
 
   it("rejects null/empty", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin(null)).toBe(false);
     expect(isAllowedOrigin("")).toBe(false);
   });
 
   it("rejects malformed origin strings", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("not-a-url")).toBe(false);
   });
 });
@@ -83,12 +83,12 @@ describe("isAllowedOrigin (production)", () => {
   });
 
   it("admits only the canonical appUrl in non-dev", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://lightfast.ai")).toBe(true);
   });
 
   it("rejects portless wildcard origins in non-dev", async () => {
-    const { isAllowedOrigin } = await import("../cors");
+    const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://app.lightfast.localhost")).toBe(false);
     expect(isAllowedOrigin("https://feature.app.lightfast.localhost")).toBe(
       false
@@ -102,7 +102,7 @@ describe("cold-start guard", () => {
       appUrl: "https://lightfast.ai",
       vercelEnv: undefined,
     });
-    await expect(import("../cors")).rejects.toThrow(
+    await expect(import("~/cors")).rejects.toThrow(
       /portless daemon likely not running/
     );
   });
@@ -115,7 +115,7 @@ describe("isDesktopDevOrigin", () => {
       appUrl: "https://app.lightfast.localhost/",
       vercelEnv: undefined,
     });
-    const { isDesktopDevOrigin } = await import("../cors");
+    const { isDesktopDevOrigin } = await import("~/cors");
     expect(isDesktopDevOrigin("http://localhost:5173")).toBe(true);
     expect(isDesktopDevOrigin("https://localhost:5173")).toBe(true);
     vi.unstubAllEnvs();
@@ -124,7 +124,7 @@ describe("isDesktopDevOrigin", () => {
   it("rejects localhost outside dev", async () => {
     vi.stubEnv("NODE_ENV", "production");
     setupMocks({ appUrl: "https://lightfast.ai", vercelEnv: "production" });
-    const { isDesktopDevOrigin } = await import("../cors");
+    const { isDesktopDevOrigin } = await import("~/cors");
     expect(isDesktopDevOrigin("http://localhost:5173")).toBe(false);
     vi.unstubAllEnvs();
   });
@@ -135,7 +135,7 @@ describe("isDesktopDevOrigin", () => {
       appUrl: "https://app.lightfast.localhost/",
       vercelEnv: undefined,
     });
-    const { isDesktopDevOrigin } = await import("../cors");
+    const { isDesktopDevOrigin } = await import("~/cors");
     expect(isDesktopDevOrigin(null)).toBe(false);
     expect(isDesktopDevOrigin("https://evil.com")).toBe(false);
     vi.unstubAllEnvs();
@@ -145,14 +145,14 @@ describe("isDesktopDevOrigin", () => {
 describe("isPackagedDesktopRequest", () => {
   it("admits Origin: 'null' (string) + marker header == '1'", async () => {
     setupMocks({ appUrl: "https://lightfast.ai", vercelEnv: "production" });
-    const { isPackagedDesktopRequest } = await import("../cors");
+    const { isPackagedDesktopRequest } = await import("~/cors");
     const headers = new Headers({ "x-lightfast-desktop": "1" });
     expect(isPackagedDesktopRequest("null", headers)).toBe(true);
   });
 
   it("rejects when Origin is a real URL even with marker", async () => {
     setupMocks({ appUrl: "https://lightfast.ai", vercelEnv: "production" });
-    const { isPackagedDesktopRequest } = await import("../cors");
+    const { isPackagedDesktopRequest } = await import("~/cors");
     const headers = new Headers({ "x-lightfast-desktop": "1" });
     expect(isPackagedDesktopRequest("https://lightfast.ai", headers)).toBe(
       false
@@ -162,14 +162,14 @@ describe("isPackagedDesktopRequest", () => {
 
   it("rejects absent Origin header (JS null) — only string 'null' qualifies", async () => {
     setupMocks({ appUrl: "https://lightfast.ai", vercelEnv: "production" });
-    const { isPackagedDesktopRequest } = await import("../cors");
+    const { isPackagedDesktopRequest } = await import("~/cors");
     const headers = new Headers({ "x-lightfast-desktop": "1" });
     expect(isPackagedDesktopRequest(null, headers)).toBe(false);
   });
 
   it("rejects when marker header is missing or not exactly '1'", async () => {
     setupMocks({ appUrl: "https://lightfast.ai", vercelEnv: "production" });
-    const { isPackagedDesktopRequest } = await import("../cors");
+    const { isPackagedDesktopRequest } = await import("~/cors");
     expect(isPackagedDesktopRequest("null", new Headers())).toBe(false);
     expect(
       isPackagedDesktopRequest(

@@ -11,7 +11,7 @@ vi.mock("~/app/(auth-api)/_server/code-store", () => ({
   issueCode: (record: unknown) => issueCodeMock(record),
 }));
 
-const { POST } = await import("./route");
+const { POST } = await import("~/app/(auth-api)/api/auth/code/route");
 
 const VALID_BODY = {
   state: "a".repeat(32),

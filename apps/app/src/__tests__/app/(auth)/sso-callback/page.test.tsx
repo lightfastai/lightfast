@@ -158,7 +158,9 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const { default: SSOCallbackPage } = await import("./page");
+const { default: SSOCallbackPage } = await import(
+  "~/app/(auth)/sso-callback/page"
+);
 
 describe("sso-callback — gating", () => {
   it("does not run state walk until clerk.loaded is true", async () => {
@@ -172,7 +174,7 @@ describe("sso-callback — gating", () => {
 });
 
 describe("sso-callback — branch 1: signIn complete", () => {
-  it("finalizes sign-in and navigates to /account/welcome", async () => {
+  it("finalizes sign-in and navigates to the post-auth resolver", async () => {
     signInStub.status = "complete";
     await act(async () => {
       render(<SSOCallbackPage />);
@@ -180,7 +182,7 @@ describe("sso-callback — branch 1: signIn complete", () => {
     await waitFor(() => {
       expect(signInStub.finalize).toHaveBeenCalledTimes(1);
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 });
 
@@ -200,7 +202,7 @@ describe("sso-callback — branch 2: signUp.isTransferable", () => {
     await waitFor(() => {
       expect(signInStub.finalize).toHaveBeenCalledTimes(1);
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 
   it("bails to /sign-in when transferred sign-in stays incomplete", async () => {
@@ -251,7 +253,7 @@ describe("sso-callback — branch 4: signIn.isTransferable", () => {
     await waitFor(() => {
       expect(signUpStub.finalize).toHaveBeenCalledTimes(1);
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 
   it("routes to /sign-up/continue when transferred sign-up has missing requirements", async () => {
@@ -279,7 +281,7 @@ describe("sso-callback — branch 5: signUp complete", () => {
     await waitFor(() => {
       expect(signUpStub.finalize).toHaveBeenCalledTimes(1);
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 });
 
@@ -316,7 +318,7 @@ describe("sso-callback — branch 7: existingSession", () => {
         expect.objectContaining({ session: "sess_abc" })
       );
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 
   it("activates an existing signUp session when signIn is empty", async () => {
@@ -329,7 +331,7 @@ describe("sso-callback — branch 7: existingSession", () => {
         expect.objectContaining({ session: "sess_xyz" })
       );
     });
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 });
 

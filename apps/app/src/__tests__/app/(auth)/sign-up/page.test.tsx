@@ -118,7 +118,7 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-const { default: SignUpPage } = await import("./page");
+const { default: SignUpPage } = await import("~/app/(auth)/sign-up/page");
 
 function checkLegalAccepted() {
   const checkbox = screen.getByRole("checkbox", {
@@ -207,7 +207,7 @@ describe("sign-up — email submit", () => {
       expect(signUpStub.finalize).toHaveBeenCalled();
     });
     expect(signUpStub.verifications.sendEmailCode).not.toHaveBeenCalled();
-    expect(hrefValue).toBe("/account/welcome");
+    expect(hrefValue).toBe("/");
   });
 });
 
@@ -226,7 +226,7 @@ describe("sign-up — OAuth", () => {
       strategy: "oauth_github",
       legalAccepted: true,
       redirectCallbackUrl: "/sso-callback",
-      redirectUrl: "/account/welcome",
+      redirectUrl: "/",
     });
   });
 });

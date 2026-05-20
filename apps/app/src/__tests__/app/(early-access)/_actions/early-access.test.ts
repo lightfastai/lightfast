@@ -68,7 +68,9 @@ vi.mock("~/env", () => ({
 
 // ── Import after mocks ─────────────────────────────────────────────
 
-const { joinEarlyAccessAction } = await import("./early-access");
+const { joinEarlyAccessAction } = await import(
+  "~/app/(early-access)/_actions/early-access"
+);
 
 // ── Helpers ─────────────────────────────────────────────────────────
 

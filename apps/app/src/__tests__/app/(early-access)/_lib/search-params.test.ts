@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { earlyAccessSearchParams } from "./search-params";
+import { earlyAccessSearchParams } from "~/app/(early-access)/_lib/search-params";
 
 describe("earlyAccessSearchParams", () => {
   describe("email", () => {
