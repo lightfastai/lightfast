@@ -1,4 +1,6 @@
+import { Button } from "@repo/ui/components/ui/button";
 import { currentUser } from "@vendor/clerk/server";
+import Link from "next/link";
 import { SignOutButton } from "./sign-out-button";
 
 /**
@@ -12,7 +14,7 @@ import { SignOutButton } from "./sign-out-button";
  *
  * Triggered by notFound() in [slug]/layout.tsx when requireOrgAccess fails
  */
-export default async function OrganizationNotFound() {
+export default async function AuthenticatedRouteNotFound() {
   const user = await currentUser();
 
   const emailAddress =
@@ -22,30 +24,32 @@ export default async function OrganizationNotFound() {
     "";
 
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-background">
-      <div className="rounded-sm border border-border border-dashed p-32 text-center">
-        {/* Geometric icon - circle and triangle */}
+    <div className="flex min-h-full w-full items-center justify-center bg-background px-6 py-16">
+      <div className="w-full max-w-xl rounded-sm border border-border border-dashed p-10 text-center sm:p-16">
         <div className="mb-8 flex justify-center">
-          <div className="relative h-24 w-24">
-            {/* Outer circle */}
-            <div className="h-24 w-24 rounded-full border-2 border-border" />
-            {/* Inner filled circle */}
-            <div className="absolute top-1/2 left-1/2 h-12 w-12 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
+          <div className="relative h-20 w-20">
+            <div className="h-20 w-20 rounded-full border-2 border-border" />
+            <div className="absolute top-1/2 left-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 rounded-full bg-foreground" />
           </div>
         </div>
 
-        {/* 404 text */}
-        <h1 className="mb-6 font-bold text-8xl text-foreground">404</h1>
+        <h1 className="mb-5 font-bold text-7xl text-foreground">404</h1>
+        <p className="mx-auto mb-6 max-w-sm text-muted-foreground text-sm">
+          Sorry, we couldn't find the page you're looking for.
+        </p>
 
-        {/* User info */}
         {emailAddress && (
-          <p className="mb-8 text-lg text-muted-foreground">
+          <p className="mb-8 text-muted-foreground text-sm">
             You are logged in as {emailAddress}
           </p>
         )}
 
-        {/* Action button */}
-        <SignOutButton />
+        <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
+          <Button asChild className="rounded-full" size="lg" variant="outline">
+            <Link href="/account/welcome">Return Home</Link>
+          </Button>
+          <SignOutButton />
+        </div>
       </div>
     </div>
   );

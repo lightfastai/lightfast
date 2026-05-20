@@ -6,13 +6,13 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
-import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import { Loader2 } from "lucide-react";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AppSidebar } from "~/components/app-sidebar";
+import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
-import { UserMenu, UserMenuSkeleton } from "~/components/user-menu";
+import { TeamSwitcher, TeamSwitcherSkeleton } from "~/components/team-switcher";
 import { requireOrgAccess } from "~/lib/org-access-clerk";
 
 interface OrgLayoutProps {
@@ -36,8 +36,24 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
     log.debug("[org-layout] access denied", { slug, error: parseError(error) });
     hasAccess = false;
   }
+
   if (!hasAccess) {
-    notFound();
+    return (
+      <HydrateClient>
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <AuthenticatedTopbar
+            left={
+              <Suspense fallback={<TeamSwitcherSkeleton />}>
+                <TeamSwitcher />
+              </Suspense>
+            }
+          />
+          <div className="relative flex flex-1 flex-col overflow-y-auto bg-background">
+            <OrgAccessNotFound />
+          </div>
+        </div>
+      </HydrateClient>
+    );
   }
 
   return (
@@ -46,30 +62,9 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
         <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
           <AppSidebar />
           <SidebarInset className="min-h-0 overflow-hidden">
-            <header className="flex h-14 shrink-0 items-center gap-3 px-4">
-              <SidebarTrigger className="lg:hidden" />
-              <div className="ml-auto flex items-center gap-3">
-                <MicrofrontendLink
-                  className="text-muted-foreground text-sm hover:text-foreground"
-                  href="/docs/get-started/overview"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  Docs
-                </MicrofrontendLink>
-                <MicrofrontendLink
-                  className="text-muted-foreground text-sm hover:text-foreground"
-                  href="/docs/api-reference"
-                  rel="noopener noreferrer"
-                  target="_blank"
-                >
-                  API Reference
-                </MicrofrontendLink>
-                <Suspense fallback={<UserMenuSkeleton />}>
-                  <UserMenu />
-                </Suspense>
-              </div>
-            </header>
+            <AuthenticatedTopbar
+              left={<SidebarTrigger className="lg:hidden" />}
+            />
             <div className="min-h-0 flex-1 overflow-y-auto">
               <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
             </div>
@@ -78,6 +73,11 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
       </OrgPageErrorBoundary>
     </HydrateClient>
   );
+}
+
+function OrgAccessNotFound(): React.ReactNode {
+  notFound();
+  return null;
 }
 
 function PageLoadingSkeleton() {

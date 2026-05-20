@@ -21,11 +21,15 @@ import { app, safeStorage } from "electron";
 
 function parseArgs() {
   const out = { product: null };
-  const argv = process.argv.slice(2);
-  const iter = argv[Symbol.iterator]();
-  for (const arg of iter) {
+  let isProductValue = false;
+  for (const arg of process.argv.slice(2)) {
+    if (isProductValue) {
+      out.product = arg;
+      isProductValue = false;
+      continue;
+    }
     if (arg === "--product") {
-      out.product = iter.next().value ?? null;
+      isProductValue = true;
     }
   }
   return out;
