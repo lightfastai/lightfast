@@ -6,32 +6,42 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end.
  *
- * Auth resolution lives in `./auth` — this file consumes the resolved
- * `AuthContext` and wires it into tRPC middleware.
+ * Identity resolution lives in `./auth/identity`. Structured failure payloads
+ * (codes + repair hints) live in `./diagnostics`.
  */
 
 import { db } from "@db/app/client";
-import { initTRPC, TRPCError } from "@trpc/server";
+import { initTRPC } from "@trpc/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { resolveAuth } from "./auth/resolve";
+import type { AuthIdentity } from "./auth/identity";
+import { resolveIdentityFromClerk } from "./auth/identity";
+import { isDiagnosticCause, throwDiagnostic } from "./diagnostics";
 
-// Re-exported for routers that want to pattern-match on `ctx.auth` directly.
-export type { AuthContext } from "./auth/context";
+/**
+ * Authentication context — identity is the only auth dimension: "who is this
+ * request from?". Resolved once per request in `createTRPCContext` and
+ * narrowed at the procedure layer by the middleware below.
+ */
+export interface AuthContext {
+  identity: AuthIdentity;
+}
 
 /**
  * 1. CONTEXT
  *
  * The "context" available to every procedure: resolved auth, the database
  * client, and the raw request headers. Both transports (Bearer for desktop,
- * cookie for web) are handled inside `resolveAuth`.
+ * cookie for web) are handled inside `resolveIdentityFromClerk`.
  *
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => ({
-  auth: await resolveAuth(opts.headers),
+  auth: {
+    identity: await resolveIdentityFromClerk({ db, headers: opts.headers }),
+  } satisfies AuthContext,
   db,
   headers: opts.headers,
 });
@@ -53,6 +63,13 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
     const shouldSanitize =
       isProduction && error.code === "INTERNAL_SERVER_ERROR";
 
+    // Generic diagnostic envelope. Any gate (or future router) that throws via
+    // `throwDiagnostic` lands its structured payload here — no per-error
+    // branches in this formatter.
+    const diagnostics = isDiagnosticCause(error.cause)
+      ? error.cause.diagnostics
+      : [];
+
     return {
       ...shape,
       message: shouldSanitize ? "An unexpected error occurred" : shape.message,
@@ -60,6 +77,7 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
         ...shape.data,
         zodError:
           error.cause instanceof ZodError ? error.cause.flatten() : null,
+        diagnostics,
       },
     };
   },
@@ -69,36 +87,38 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
  *
  * These are the pieces you use to build your tRPC API. You should import these
- * a lot in the /src/server/api/routers folder
+ * a lot in the /src/router folder.
  */
 
 /**
- * This is how you create new routers and subrouters in your tRPC API
+ * This is how you create new routers and subrouters in your tRPC API.
  * @see https://trpc.io/docs/router
  */
 export const createTRPCRouter = t.router;
 
 /**
- * Create a server-side caller
+ * Create a server-side caller.
  * @see https://trpc.io/docs/server/server-side-calls
  */
 export const createCallerFactory = t.createCallerFactory;
 
 /**
- * Middleware for timing procedure execution and adding an artificial delay in development.
- *
- * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
- * network latency that would occur in production but not in local development.
+ * Times procedure execution and adds an artificial delay in development to
+ * surface waterfalls that would otherwise only appear under production
+ * network latency.
  */
 const observabilityMiddleware = t.middleware(
   createObservabilityMiddleware({
     isDev: t._config.isDev,
     extractAuth: (ctx) => {
-      switch (ctx.auth.type) {
-        case "clerk-active":
-          return { userId: ctx.auth.userId, orgId: ctx.auth.orgId };
-        case "clerk-pending":
-          return { userId: ctx.auth.userId };
+      switch (ctx.auth.identity.type) {
+        case "active":
+          return {
+            userId: ctx.auth.identity.userId,
+            orgId: ctx.auth.identity.orgId,
+          };
+        case "pending":
+          return { userId: ctx.auth.identity.userId };
         default:
           return {};
       }
@@ -107,32 +127,51 @@ const observabilityMiddleware = t.middleware(
 );
 
 /**
- * Authentication gates, composed by user/org procedures below.
+ * Authentication gate. Rejects `unauthenticated` identities; narrows
+ * `ctx.auth.identity` to `pending | active` for downstream use.
  *
  * Split out so the unauth check exists in exactly one place — adding a 4th
- * auth state (e.g. service-account) only requires touching `requireAuth`.
+ * identity state (e.g. service-account) only requires touching `requireAuth`.
  */
 const requireAuth = t.middleware(({ ctx, next }) => {
-  if (ctx.auth.type === "unauthenticated") {
-    throw new TRPCError({
-      code: "UNAUTHORIZED",
-      message: "Authentication required. Please sign in.",
+  if (ctx.auth.identity.type === "unauthenticated") {
+    throwDiagnostic({
+      trpcCode: "UNAUTHORIZED",
+      diagnostic: {
+        code: "AUTH_REQUIRED",
+        message: "Authentication required. Please sign in.",
+      },
     });
   }
-  // ctx.auth is narrowed to clerk-pending | clerk-active for downstream use.
-  return next({ ctx: { ...ctx, auth: ctx.auth } });
+  // ctx.auth.identity is narrowed to pending | active for downstream use.
+  return next({
+    ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
+  });
 });
 
-const requireOrg = t.middleware(({ ctx, next }) => {
+/**
+ * Active-identity gate. Narrows `ctx.auth.identity` to the `active` variant
+ * so downstream handlers can read `orgId` without re-discriminating.
+ *
+ * Composed into `pendingNotAllowedProcedure` — the default gate for every
+ * org-scoped router.
+ */
+const requireActiveIdentity = t.middleware(({ ctx, next }) => {
   // requireAuth has already excluded "unauthenticated".
-  if (ctx.auth.type !== "clerk-active") {
-    throw new TRPCError({
-      code: "FORBIDDEN",
-      message:
-        "Organization required. Please create or join an organization first.",
+  if (ctx.auth.identity.type !== "active") {
+    throwDiagnostic({
+      trpcCode: "FORBIDDEN",
+      diagnostic: {
+        code: "ORG_REQUIRED",
+        message:
+          "Organization required. Please create or join an organization first.",
+        repair: { id: "create-or-join-org" },
+      },
     });
   }
-  return next({ ctx: { ...ctx, auth: ctx.auth } });
+  return next({
+    ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
+  });
 });
 
 const authedProcedure = t.procedure
@@ -144,19 +183,19 @@ const authedProcedure = t.procedure
  *
  * This is the base piece you use to build new queries and mutations on your
  * tRPC API. It does not guarantee that a user querying is authorized, but you
- * can still access user session data if they are logged in
+ * can still access user session data if they are logged in.
  */
 export const publicProcedure = t.procedure.use(observabilityMiddleware);
 
 /**
  * Pending-Allowed Procedure
  *
- * Admits both `clerk-pending` and `clerk-active` sessions. Use this for any
- * operation that must remain reachable while a user is still completing
- * onboarding (i.e. has not yet claimed/created an organization).
+ * Admits both `pending` and `active` identities. Use this for any operation
+ * that must remain reachable while a user is still completing onboarding
+ * (i.e. has not yet claimed/created an organization).
  *
- * The gate name describes the auth admission rule — *which* Clerk session
- * types are allowed — not the operation's target. That way, adding a new
+ * The gate name describes the identity admission rule — *which* identity
+ * states are allowed — not the operation's target. That way, adding a new
  * onboarding-time procedure does not require renaming the gate.
  *
  * Typical use cases:
@@ -164,7 +203,7 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
  * - List user's organizations
  * - Create the first organization
  *
- * For procedures that must reject `clerk-pending` sessions, use
+ * For procedures that must reject `pending` identities, use
  * `pendingNotAllowedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
@@ -174,18 +213,95 @@ export const pendingAllowedProcedure = authedProcedure;
 /**
  * Pending-Not-Allowed Procedure
  *
- * Admits `clerk-active` sessions only. `clerk-pending` is rejected by the
- * composed `requireOrg` middleware with `FORBIDDEN`.
+ * Admits sessions with an `active` identity, *regardless of binding status*. A
+ * `pending` identity throws `FORBIDDEN` with an `ORG_REQUIRED` entry in
+ * `data.diagnostics[]`.
  *
- * `ctx.auth.orgId` is guaranteed to be present in handlers.
+ * `ctx.auth.identity.orgId` is guaranteed in handlers.
  *
- * Typical use cases:
- * - Org API keys (list / create / revoke / delete)
- * - Org members, repositories, integrations, settings
+ * This is no longer the default for org work — it does not enforce that the
+ * org has completed setup. Use it only for active-org settings/setup surfaces
+ * that must stay reachable before an org is bound. New product features should
+ * use `boundOrgProcedure`; the v1 setup surface uses `setupProcedure`.
  *
  * For procedures that must remain callable during onboarding, use
  * `pendingAllowedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const pendingNotAllowedProcedure = authedProcedure.use(requireOrg);
+export const pendingNotAllowedProcedure = authedProcedure.use(
+  requireActiveIdentity
+);
+
+/**
+ * Setup Procedure
+ *
+ * The pre-bind setup surface. Identical gate to `pendingNotAllowedProcedure` —
+ * admits any `active` identity without checking binding status — but the
+ * distinct name marks procedures that must stay callable *before* an org is
+ * bound: `task.status` and `task.bind`.
+ *
+ * Product features should use `boundOrgProcedure` instead.
+ */
+export const setupProcedure = pendingNotAllowedProcedure;
+
+/**
+ * Bound-org gate. Composed after `requireActiveIdentity`; rejects an active
+ * identity whose authoritative DB binding status is not `bound` with
+ * `FORBIDDEN` + an `ORG_SETUP_REQUIRED` entry in `data.diagnostics[]`.
+ *
+ * Identity resolution reads the Lightfast DB once per request to derive this
+ * compact gate. Procedures that additionally need binding details (provider
+ * ids, installation) should load the DB binding row inside the handler.
+ */
+const requireBoundOrg = t.middleware(({ ctx, next }) => {
+  // requireActiveIdentity (composed before this) has already excluded
+  // unauthenticated/pending identities; this guard only re-narrows the type
+  // so `orgGate` is reachable. The non-active branch is unreachable here.
+  if (ctx.auth.identity.type !== "active") {
+    throwDiagnostic({
+      trpcCode: "FORBIDDEN",
+      diagnostic: {
+        code: "ORG_REQUIRED",
+        message:
+          "Organization required. Please create or join an organization first.",
+        repair: { id: "create-or-join-org" },
+      },
+    });
+  }
+  if (ctx.auth.identity.orgGate.bindingStatus !== "bound") {
+    throwDiagnostic({
+      trpcCode: "FORBIDDEN",
+      diagnostic: {
+        code: "ORG_SETUP_REQUIRED",
+        message:
+          "Organization setup required. Connect a source-control organization before using Lightfast features.",
+        repair: { id: "bind-source-control" },
+      },
+    });
+  }
+  return next({
+    ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
+  });
+});
+
+/**
+ * Bound-Org Procedure
+ *
+ * The default gate for org-scoped product features. Admits an `active`
+ * identity whose org has completed source-control setup
+ * (`bindingStatus === "bound"`). An active but unbound/revoked org throws
+ * `FORBIDDEN` with an `ORG_SETUP_REQUIRED` entry in `data.diagnostics[]`.
+ *
+ * `ctx.auth.identity.orgId` is guaranteed in handlers.
+ *
+ * Typical use cases:
+ * - Bound-only org product features
+ * - Future workspace operations that require completed source-control setup
+ *
+ * For the pre-bind setup surface, use `setupProcedure`.
+ *
+ * @see https://trpc.io/docs/procedures
+ */
+export const boundOrgProcedure =
+  pendingNotAllowedProcedure.use(requireBoundOrg);

@@ -6,17 +6,13 @@ import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
+import { isClerkConflictError } from "../../auth/clerk-errors";
+import {
+  getOrgAccessBySlug,
+  isOrgAccessError,
+  orgInitials,
+} from "../../auth/organization-access";
 import { pendingAllowedProcedure } from "../../trpc";
-
-function orgInitials(name: string): string {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
 
 /**
  * Organization router - Clerk-based organization management
@@ -32,30 +28,47 @@ export const organizationRouter = {
    * Used by org-switcher component in the header.
    */
   listUserOrganizations: pendingAllowedProcedure.query(async ({ ctx }) => {
-    // pendingAllowedProcedure guarantees clerk-pending or clerk-active
-    const userId = ctx.auth.userId;
-    const clerk = await clerkClient();
-
-    // Get all organizations the user belongs to from Clerk
-    const { data: memberships } =
-      await clerk.users.getOrganizationMembershipList({
-        userId,
-      });
+    // pendingAllowedProcedure guarantees pending or active identity
+    const userId = ctx.auth.identity.userId;
+    const memberships = await getUserOrgMemberships(userId);
 
     // Return Clerk organization data directly
     return memberships.map((membership) => {
-      const clerkOrg = membership.organization;
-
       return {
-        id: clerkOrg.id, // Clerk org ID
-        slug: clerkOrg.slug,
-        name: clerkOrg.name,
-        initials: orgInitials(clerkOrg.name),
+        id: membership.organizationId, // Clerk org ID
+        slug: membership.organizationSlug,
+        name: membership.organizationName,
+        initials: orgInitials(membership.organizationName),
         role: membership.role,
-        imageUrl: clerkOrg.imageUrl,
+        imageUrl: membership.imageUrl,
       };
     });
   }),
+
+  getBySlug: pendingAllowedProcedure
+    .input(
+      z.object({
+        slug: clerkOrgSlugSchema,
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      try {
+        return await getOrgAccessBySlug({
+          db: ctx.db,
+          slug: input.slug,
+          userId: ctx.auth.identity.userId,
+        });
+      } catch (error) {
+        if (isOrgAccessError(error)) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Organization not found",
+            cause: error,
+          });
+        }
+        throw error;
+      }
+    }),
 
   /**
    * Create organization
@@ -71,11 +84,11 @@ export const organizationRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees clerk-pending or clerk-active
+      // pendingAllowedProcedure guarantees pending or active identity
       log.info("[organization] create", {
         slug: input.slug,
-        userId: ctx.auth.userId,
-        authType: ctx.auth.type,
+        userId: ctx.auth.identity.userId,
+        authType: ctx.auth.identity.type,
       });
 
       const clerk = await clerkClient();
@@ -85,7 +98,7 @@ export const organizationRouter = {
         const clerkOrg = await clerk.organizations.createOrganization({
           name: input.slug,
           slug: input.slug,
-          createdBy: ctx.auth.userId,
+          createdBy: ctx.auth.identity.userId,
         });
 
         log.info("[organization] create success", {
@@ -100,32 +113,16 @@ export const organizationRouter = {
       } catch (error: unknown) {
         log.error("[organization] create failed", {
           slug: input.slug,
-          userId: ctx.auth.userId,
+          userId: ctx.auth.identity.userId,
           error: parseError(error),
           errorDetails: error,
         });
 
-        // Check for specific Clerk errors
-        if (error && typeof error === "object" && "errors" in error) {
-          const clerkError = error as {
-            errors?: { code: string; message: string }[];
-          };
-
-          log.error("[organization] clerk error details", {
-            errors: clerkError.errors,
+        if (isClerkConflictError(error)) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `An organization with the name "${input.slug}" already exists`,
           });
-
-          if (
-            clerkError.errors?.[0]?.code === "duplicate_record" ||
-            clerkError.errors?.[0]?.code === "form_identifier_exists" ||
-            clerkError.errors?.[0]?.message.includes("already exists") ||
-            clerkError.errors?.[0]?.message.includes("slug is taken")
-          ) {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: `An organization with the name "${input.slug}" already exists`,
-            });
-          }
         }
 
         throw new TRPCError({
@@ -150,7 +147,7 @@ export const organizationRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees clerk-pending or clerk-active
+      // pendingAllowedProcedure guarantees pending or active identity
       const clerk = await clerkClient();
 
       try {
@@ -161,7 +158,9 @@ export const organizationRouter = {
 
         // Verify user has admin access to the organization.
         // User-centric lookup (cached) — typically 1-5 orgs per user vs 100+ members per org.
-        const memberships = await getUserOrgMemberships(ctx.auth.userId);
+        const memberships = await getUserOrgMemberships(
+          ctx.auth.identity.userId
+        );
         const membership = memberships.find((m) => m.organizationId === org.id);
         if (!membership) {
           throw new TRPCError({
@@ -185,7 +184,7 @@ export const organizationRouter = {
         log.info("[organization] updateName success", {
           organizationId: org.id,
           slug: input.name,
-          userId: ctx.auth.userId,
+          userId: ctx.auth.identity.userId,
         });
 
         return {
@@ -201,27 +200,15 @@ export const organizationRouter = {
 
         log.error("[organization] updateName failed", {
           slug: input.slug,
-          userId: ctx.auth.userId,
+          userId: ctx.auth.identity.userId,
           error: parseError(error),
         });
 
-        // Check for specific Clerk errors
-        if (error && typeof error === "object" && "errors" in error) {
-          const clerkError = error as {
-            errors?: { code: string; message: string }[];
-          };
-
-          if (
-            clerkError.errors?.[0]?.code === "duplicate_record" ||
-            clerkError.errors?.[0]?.code === "form_identifier_exists" ||
-            clerkError.errors?.[0]?.message.includes("already exists") ||
-            clerkError.errors?.[0]?.message.includes("slug is taken")
-          ) {
-            throw new TRPCError({
-              code: "CONFLICT",
-              message: `An organization with the name "${input.name}" already exists`,
-            });
-          }
+        if (isClerkConflictError(error)) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: `An organization with the name "${input.name}" already exists`,
+          });
         }
 
         throw new TRPCError({

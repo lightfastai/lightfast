@@ -470,6 +470,13 @@
       "when": 1779267695206,
       "tag": "0066_sturdy_black_bolt",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1779281707858,
+      "tag": "0067_typical_masked_marvel",
+      "breakpoints": true
     }
   ]
 }

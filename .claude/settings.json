@@ -1,5 +1,9 @@
 {
-  "enabledPlugins": {},
+  "permissions": {
+    "deny": [
+      "Read(./.entire/metadata/**)"
+    ]
+  },
   "hooks": {
     "PostToolUse": [
       {
@@ -13,9 +17,7 @@
       }
     ]
   },
-  "permissions": {
-    "deny": [
-      "Read(./.entire/metadata/**)"
-    ]
+  "enabledPlugins": {
+    "superpowers@claude-plugins-official": true
   }
 }

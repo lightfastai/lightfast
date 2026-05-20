@@ -5,7 +5,7 @@ import { useClerk, useSignUp } from "@vendor/clerk/client";
 import * as React from "react";
 import { makeFinalizeNavigate } from "../../_hooks/auth-navigate";
 
-const SUCCESS_REDIRECT = "/account/welcome";
+const SUCCESS_REDIRECT = "/";
 
 // Landing for /sso-callback's `signIn.isTransferable` branch when the
 // transferred sign-up surfaces missing_requirements. We only expect

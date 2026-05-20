@@ -48,7 +48,7 @@ export function UserMenu() {
         <DropdownMenuItem asChild className="cursor-pointer rounded-xl">
           <Link href={{ pathname: SETTINGS_HREF }} prefetch={true}>
             <Settings className="h-3 w-3" />
-            Your Profile
+            Your Account
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem

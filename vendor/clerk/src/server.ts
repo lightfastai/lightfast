@@ -62,3 +62,7 @@ export {
 } from "@clerk/nextjs/server";
 export type { UserOrgMembership } from "./membership";
 export { getUserOrgMemberships } from "./membership";
+export type {
+  LightfastLastActiveOrg,
+  LightfastSessionClaims,
+} from "./types";

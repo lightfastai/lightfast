@@ -1,4 +1,9 @@
-import { clerkMiddleware, createRouteMatcher } from "@vendor/clerk/server";
+import type { LightfastLastActiveOrg } from "@vendor/clerk/server";
+import {
+  clerkClient,
+  clerkMiddleware,
+  createRouteMatcher,
+} from "@vendor/clerk/server";
 import {
   composeCspOptions,
   createAnalyticsCspDirectives,
@@ -8,8 +13,10 @@ import {
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
 import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
-import type { NextRequest } from "next/server";
+import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+
+const POST_AUTH_FALLBACK_PATH = "/account/teams/new";
 
 const securityHeaders = securityMiddleware({
   ...composeCspOptions(
@@ -33,8 +40,7 @@ const isPublicRoute = createRouteMatcher([
   // Unified OAuth callback. Must be reachable both unauthenticated (normal
   // OAuth roundtrip) and authenticated (existingSession branch — Clerk swaps
   // the active session inside the page). If we listed it under isAuthRoute,
-  // authenticated users would get bounced to /account/welcome before the
-  // setActive can run.
+  // authenticated users would get bounced before the setActive can run.
   "/sso-callback(.*)",
 ]);
 
@@ -60,7 +66,7 @@ const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 
 // Routes accessible during a pending session (signed in but has outstanding tasks
 // like choosing an org). Pending users on these routes pass through to complete
-// onboarding; on all other protected routes they're sent to /account/welcome.
+// onboarding; on all other protected routes they're sent to the post-auth resolver.
 const isPendingAllowedRoute = createRouteMatcher([
   "/account/(.*)",
   // tRPC mutations that must be callable before an org exists (e.g. creating the first org).
@@ -73,8 +79,94 @@ const isPendingAllowedRoute = createRouteMatcher([
   "/desktop/auth(.*)",
 ]);
 
+const isBoundOrgProductRoute = createRouteMatcher(["/:slug"]);
+
+const RESERVED_ORG_ROUTE_SEGMENTS = new Set([
+  "account",
+  "api",
+  "cli",
+  "desktop",
+  "docs",
+  "early-access",
+  "ingest",
+  "manifest.json",
+  "monitoring",
+  "sign-in",
+  "sign-up",
+  "sso-callback",
+]);
+
+function getPostAuthPath({
+  orgSlug,
+  sessionClaims,
+  sessionStatus,
+}: {
+  orgSlug?: string | null;
+  sessionClaims?: CustomJwtSessionClaims | null;
+  sessionStatus?: string | null;
+}) {
+  if (orgSlug) {
+    return `/${orgSlug}`;
+  }
+
+  const lastActiveOrg = sessionClaims?.last_active_org;
+  if (
+    sessionStatus !== "pending" &&
+    lastActiveOrg &&
+    typeof lastActiveOrg.slug === "string" &&
+    lastActiveOrg.slug.length > 0
+  ) {
+    return `/${lastActiveOrg.slug}`;
+  }
+
+  return POST_AUTH_FALLBACK_PATH;
+}
+
+function redirectToPostAuth(
+  req: NextRequest,
+  authState: Parameters<typeof getPostAuthPath>[0]
+) {
+  return NextResponse.redirect(new URL(getPostAuthPath(authState), req.url));
+}
+
+function getOrgRouteSlug(req: NextRequest) {
+  const slug = req.nextUrl.pathname.split("/").filter(Boolean)[0];
+  if (!slug || RESERVED_ORG_ROUTE_SEGMENTS.has(slug)) {
+    return null;
+  }
+  return slug;
+}
+
+function isSameLastActiveOrg(
+  current: CustomJwtSessionClaims["last_active_org"],
+  next: LightfastLastActiveOrg
+) {
+  return current?.id === next.id && current.slug === next.slug;
+}
+
+async function persistLastActiveOrg(
+  userId: string,
+  lastActiveOrg: LightfastLastActiveOrg
+) {
+  try {
+    const clerk = await clerkClient();
+    await clerk.users.updateUserMetadata(userId, {
+      publicMetadata: {
+        last_active_org: lastActiveOrg,
+      },
+    });
+  } catch (err) {
+    console.warn("[proxy] Failed to persist last active org", {
+      lastActiveOrg,
+      message: err instanceof Error ? err.message : String(err),
+      name: err instanceof Error ? err.name : "unknown",
+      userId,
+    });
+  }
+}
+
 export default clerkMiddleware(
-  async (auth, req: NextRequest) => {
+  async (auth, req: NextRequest, event: NextFetchEvent) => {
     const mfeResponse = await runMicrofrontendsMiddleware({
       request: req,
       flagValues: {},
@@ -83,16 +175,23 @@ export default clerkMiddleware(
       return mfeResponse;
     }
 
-    // Auth routes: authenticated users → /account/welcome; unauthenticated → pass through.
+    // Auth routes: authenticated users go through post-auth routing; unauthenticated users pass through.
     if (isAuthRoute(req)) {
-      const { userId } = await auth({ treatPendingAsSignedOut: false });
-      if (userId) {
-        return NextResponse.redirect(new URL("/account/welcome", req.url));
-      }
-    } else if (!(isPublicRoute(req) || isApiRoute(req))) {
-      const { userId, sessionStatus } = await auth({
+      const { orgSlug, sessionClaims, sessionStatus, userId } = await auth({
         treatPendingAsSignedOut: false,
       });
+      if (userId) {
+        return redirectToPostAuth(req, {
+          orgSlug,
+          sessionClaims,
+          sessionStatus,
+        });
+      }
+    } else if (!(isPublicRoute(req) || isApiRoute(req))) {
+      const { orgId, orgSlug, sessionClaims, sessionStatus, userId } =
+        await auth({
+          treatPendingAsSignedOut: false,
+        });
       if (!userId) {
         const url = new URL("/sign-in", req.url);
         url.searchParams.set(
@@ -101,8 +200,37 @@ export default clerkMiddleware(
         );
         return NextResponse.redirect(url);
       }
+      if (req.nextUrl.pathname === "/") {
+        return redirectToPostAuth(req, {
+          orgSlug,
+          sessionClaims,
+          sessionStatus,
+        });
+      }
       if (sessionStatus === "pending" && !isPendingAllowedRoute(req)) {
-        return NextResponse.redirect(new URL("/account/welcome", req.url));
+        return redirectToPostAuth(req, {
+          orgSlug,
+          sessionClaims,
+          sessionStatus,
+        });
+      }
+      const orgRouteSlug = getOrgRouteSlug(req);
+      if (orgId && orgRouteSlug) {
+        const nextLastActiveOrg = { id: orgId, slug: orgRouteSlug };
+        if (
+          !isSameLastActiveOrg(
+            sessionClaims?.last_active_org,
+            nextLastActiveOrg
+          )
+        ) {
+          event.waitUntil(persistLastActiveOrg(userId, nextLastActiveOrg));
+        }
+      }
+      const bindingStatus = sessionClaims?.lf_binding_status;
+      if (orgId && isBoundOrgProductRoute(req) && bindingStatus !== "bound") {
+        return NextResponse.redirect(
+          new URL(`/${req.nextUrl.pathname.split("/")[1]}/tasks/bind`, req.url)
+        );
       }
     }
 
@@ -116,8 +244,8 @@ export default clerkMiddleware(
   {
     signInUrl: "/sign-in",
     signUpUrl: "/sign-up",
-    afterSignInUrl: "/account/welcome",
-    afterSignUpUrl: "/account/welcome",
+    afterSignInUrl: "/",
+    afterSignUpUrl: "/",
     organizationSyncOptions: {
       organizationPatterns: ["/:slug", "/:slug/(.*)"],
     },

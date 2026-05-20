@@ -18,6 +18,12 @@ export function createClient() {
 
 export const db = createClient();
 
+/**
+ * The Drizzle database client type. Repository helpers accept this so they
+ * stay testable and transport-agnostic — callers pass `ctx.db`.
+ */
+export type Database = typeof db;
+
 function resolveDatabaseUrl() {
   const url = new URL("postgresql://localhost");
   url.hostname = env.DATABASE_HOST;

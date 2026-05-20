@@ -1,3 +1,4 @@
+import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -5,7 +6,12 @@ vi.mock("@vendor/clerk/env", () => ({
 }));
 
 const authMock = vi.fn();
+const isOrgBoundMock = vi.fn();
 const verifyTokenMock = vi.fn();
+
+vi.mock("@db/app", () => ({
+  isOrgBound: (...args: unknown[]) => isOrgBoundMock(...args),
+}));
 
 vi.mock("@vendor/clerk/server", () => ({
   auth: (...args: unknown[]) => authMock(...args),
@@ -13,46 +19,56 @@ vi.mock("@vendor/clerk/server", () => ({
   getUserOrgMemberships: vi.fn(),
 }));
 
-const { resolveAuth } = await import("../auth/resolve");
+const { resolveIdentityFromClerk } = await import("../auth/identity");
+const db = {} as Database;
 
 beforeEach(() => {
   authMock.mockReset();
+  isOrgBoundMock.mockReset();
   verifyTokenMock.mockReset();
 });
 
-describe("resolveAuth", () => {
-  it("returns clerk-active when a valid Bearer JWT carries org_id", async () => {
+function resolve(headers = new Headers()) {
+  return resolveIdentityFromClerk({ headers, db });
+}
+
+describe("resolveIdentityFromClerk — transports", () => {
+  it("returns bound active identity when a valid Bearer JWT carries org_id and the DB has an active binding", async () => {
+    isOrgBoundMock.mockResolvedValueOnce(true);
     verifyTokenMock.mockResolvedValueOnce({
       sub: "user_bearer_active",
       org_id: "org_active",
     });
 
-    const auth = await resolveAuth(
+    const identity = await resolve(
       new Headers({ authorization: "Bearer valid.jwt.token" })
     );
 
-    expect(auth).toEqual({
-      type: "clerk-active",
+    expect(identity).toEqual({
+      type: "active",
       userId: "user_bearer_active",
       orgId: "org_active",
+      orgGate: { bindingStatus: "bound" },
     });
+    expect(isOrgBoundMock).toHaveBeenCalledWith(db, "org_active");
     expect(verifyTokenMock).toHaveBeenCalledWith("valid.jwt.token", {
       secretKey: "sk_test_fake-secret-key-for-tests",
     });
     expect(authMock).not.toHaveBeenCalled();
   });
 
-  it("returns clerk-pending when a valid Bearer JWT lacks org_id", async () => {
+  it("returns pending identity when a valid Bearer JWT lacks org_id", async () => {
     verifyTokenMock.mockResolvedValueOnce({ sub: "user_bearer_pending" });
 
-    const auth = await resolveAuth(
+    const identity = await resolve(
       new Headers({ authorization: "Bearer valid.jwt.token" })
     );
 
-    expect(auth).toEqual({
-      type: "clerk-pending",
+    expect(identity).toEqual({
+      type: "pending",
       userId: "user_bearer_pending",
     });
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(authMock).not.toHaveBeenCalled();
   });
 
@@ -66,21 +82,23 @@ describe("resolveAuth", () => {
       orgId: "org_cookie",
     });
 
-    const auth = await resolveAuth(
+    const identity = await resolve(
       new Headers({ authorization: "Bearer broken.jwt" })
     );
 
-    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(identity).toEqual({ type: "unauthenticated" });
     expect(verifyTokenMock).toHaveBeenCalledTimes(1);
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(authMock).not.toHaveBeenCalled();
   });
 
   it("returns unauthenticated when neither Bearer nor cookie produce a session", async () => {
     authMock.mockResolvedValueOnce({ userId: null, orgId: null });
 
-    const auth = await resolveAuth(new Headers());
+    const identity = await resolve();
 
-    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(identity).toEqual({ type: "unauthenticated" });
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(verifyTokenMock).not.toHaveBeenCalled();
     expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
   });
@@ -91,12 +109,13 @@ describe("resolveAuth", () => {
       orgId: null,
     });
 
-    const auth = await resolveAuth(new Headers());
+    const identity = await resolve();
 
-    expect(auth).toEqual({
-      type: "clerk-pending",
+    expect(identity).toEqual({
+      type: "pending",
       userId: "user_cookie_only",
     });
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(verifyTokenMock).not.toHaveBeenCalled();
   });
 
@@ -106,11 +125,12 @@ describe("resolveAuth", () => {
       orgId: null,
     });
 
-    const auth = await resolveAuth(
+    const identity = await resolve(
       new Headers({ authorization: "Basic abc123" })
     );
 
-    expect(auth).toEqual({ type: "clerk-pending", userId: "user_cookie" });
+    expect(identity).toEqual({ type: "pending", userId: "user_cookie" });
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(verifyTokenMock).not.toHaveBeenCalled();
   });
 
@@ -120,10 +140,138 @@ describe("resolveAuth", () => {
       orgId: "org_cookie",
     });
 
-    const auth = await resolveAuth(new Headers({ authorization: "Bearer " }));
+    const identity = await resolve(new Headers({ authorization: "Bearer " }));
 
-    expect(auth).toEqual({ type: "unauthenticated" });
+    expect(identity).toEqual({ type: "unauthenticated" });
     expect(verifyTokenMock).not.toHaveBeenCalled();
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(authMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("resolveIdentityFromClerk — DB binding gate", () => {
+  it("Bearer with org_id and no lf_binding_status claim resolves binding from the DB", async () => {
+    isOrgBoundMock.mockResolvedValueOnce(true);
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_bound",
+      org_id: "org_bound",
+    });
+
+    const identity = await resolve(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_bearer_bound",
+      orgId: "org_bound",
+      orgGate: { bindingStatus: "bound" },
+    });
+    expect(isOrgBoundMock).toHaveBeenCalledWith(db, "org_bound");
+  });
+
+  it("Bearer with org_id and no active DB binding resolves active unbound", async () => {
+    isOrgBoundMock.mockResolvedValueOnce(false);
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_unbound",
+      org_id: "org_unbound",
+    });
+
+    const identity = await resolve(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_bearer_unbound",
+      orgId: "org_unbound",
+      orgGate: { bindingStatus: "unbound" },
+    });
+    expect(isOrgBoundMock).toHaveBeenCalledWith(db, "org_unbound");
+  });
+
+  it("Bearer ignores stale lf_binding_status and resolves binding from the DB", async () => {
+    isOrgBoundMock.mockResolvedValueOnce(true);
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_stale",
+      org_id: "org_stale",
+      lf_binding_status: "definitely-not-a-status",
+    });
+
+    const identity = await resolve(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_bearer_stale",
+      orgId: "org_stale",
+      orgGate: { bindingStatus: "bound" },
+    });
+  });
+
+  it("propagates DB binding lookup failures instead of granting access", async () => {
+    isOrgBoundMock.mockRejectedValueOnce(new Error("database unavailable"));
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_db_error",
+      org_id: "org_db_error",
+    });
+
+    await expect(
+      resolve(new Headers({ authorization: "Bearer valid.jwt.token" }))
+    ).rejects.toThrow("database unavailable");
+  });
+
+  it("Cookie auth with a stale missing claim resolves binding from the DB", async () => {
+    isOrgBoundMock.mockResolvedValueOnce(true);
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie_bound",
+      orgId: "org_cookie_bound",
+      sessionClaims: {},
+    });
+
+    const identity = await resolve();
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_cookie_bound",
+      orgId: "org_cookie_bound",
+      orgGate: { bindingStatus: "bound" },
+    });
+    expect(isOrgBoundMock).toHaveBeenCalledWith(db, "org_cookie_bound");
+  });
+
+  it("Cookie auth with a stale bound claim but no active DB binding resolves active unbound", async () => {
+    isOrgBoundMock.mockResolvedValueOnce(false);
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie_unknown",
+      orgId: "org_cookie_unknown",
+      sessionClaims: { lf_binding_status: "bound" },
+    });
+
+    const identity = await resolve();
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_cookie_unknown",
+      orgId: "org_cookie_unknown",
+      orgGate: { bindingStatus: "unbound" },
+    });
+  });
+
+  it("Cookie auth with a bound claim but no org_id stays pending (gate ignored)", async () => {
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie_pending",
+      orgId: null,
+      sessionClaims: { lf_binding_status: "bound" },
+    });
+
+    const identity = await resolve();
+
+    expect(identity).toEqual({
+      type: "pending",
+      userId: "user_cookie_pending",
+    });
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 });
