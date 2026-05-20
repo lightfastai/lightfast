@@ -10,7 +10,7 @@ export const AUTH_ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   waitlist:
     "Sign-ups are currently unavailable. Join the waitlist to be notified when access becomes available.",
   account_not_found:
-    "No Lightfast account is linked to this GitHub account. Sign up to create one.",
+    "We couldn't find a Lightfast account for that email. Join the waitlist to request access.",
 };
 
 // Shared error-only schema for sign-in and sign-up.

@@ -37,7 +37,7 @@ export function ErrorBanner({ message, errorCode, backUrl }: ErrorBannerProps) {
           <p className="text-foreground text-sm">{displayMessage}</p>
         </div>
         <Button asChild className="w-full" size="lg">
-          <a href="/sign-up">Sign Up</a>
+          <Link href="/early-access">Join the Waitlist</Link>
         </Button>
         <Button asChild className="w-full" size="lg" variant="outline">
           <a href={backUrl}>Try again</a>

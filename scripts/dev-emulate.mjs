@@ -20,7 +20,7 @@ const repoRoot = path.resolve(
   "..",
 );
 const EMULATOR_PORT = 4000;
-const NGROK_LOCAL_API = "http://127.0.0.1:4040/api/tunnels";
+const NGROK_LOCAL_API_PORTS = Array.from({ length: 11 }, (_, i) => 4040 + i);
 const ENV_FILE = path.join(repoRoot, "apps/app/.vercel/.env.development.local");
 const SEED_FILE = path.join(repoRoot, "scripts/dev-emulate.seed.yaml");
 // ngrok reserved static domain under the *.local.lghtfst.com wildcard.
@@ -126,7 +126,7 @@ async function ensureNgrokForStaticDomain(port) {
   log(`starting ngrok for port ${port} → ${expectedUrl}…`);
   const child = spawn(
     "ngrok",
-    ["http", `--domain=${NGROK_STATIC_DOMAIN}`, String(port)],
+    ["http", `--url=${NGROK_STATIC_DOMAIN}`, String(port)],
     {
       cwd: repoRoot,
       stdio: ["ignore", "ignore", "inherit"],
@@ -143,14 +143,22 @@ async function ensureNgrokForStaticDomain(port) {
 }
 
 async function fetchNgrokTunnels() {
-  try {
-    const res = await fetch(NGROK_LOCAL_API);
-    if (!res.ok) return null;
-    const data = await res.json();
-    return Array.isArray(data?.tunnels) ? data.tunnels : null;
-  } catch {
-    return null;
+  const allTunnels = [];
+  for (const port of NGROK_LOCAL_API_PORTS) {
+    try {
+      const res = await fetch(`http://127.0.0.1:${port}/api/tunnels`);
+      if (!res.ok) {
+        continue;
+      }
+      const data = await res.json();
+      if (Array.isArray(data?.tunnels)) {
+        allTunnels.push(...data.tunnels);
+      }
+    } catch {
+      // ngrok picks the next available API port when 4040 is occupied.
+    }
   }
+  return allTunnels.length ? allTunnels : null;
 }
 
 async function fetchNgrokUrlForPort(port) {
