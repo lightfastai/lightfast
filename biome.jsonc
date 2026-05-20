@@ -4,6 +4,7 @@
   "files": {
     "includes": [
       "**/*",
+      "!.agents",
       "!.claude",
       "!scripts",
       "!apps/codex-sidebar-demo/.vite",
