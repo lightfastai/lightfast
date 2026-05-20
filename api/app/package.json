@@ -20,6 +20,10 @@
     "./inngest/client": {
       "types": "./src/inngest/client/client.ts",
       "default": "./src/inngest/client/client.ts"
+    },
+    "./auth/identity": {
+      "types": "./src/auth/identity.ts",
+      "default": "./src/auth/identity.ts"
     }
   },
   "license": "Apache-2.0",

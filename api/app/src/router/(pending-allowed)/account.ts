@@ -60,7 +60,7 @@ export const accountRouter = {
   get: pendingAllowedProcedure.query(async ({ ctx }) => {
     try {
       const clerk = await clerkClient();
-      const user = await clerk.users.getUser(ctx.auth.userId);
+      const user = await clerk.users.getUser(ctx.auth.identity.userId);
 
       const fullName =
         user.firstName && user.lastName
@@ -85,7 +85,7 @@ export const accountRouter = {
       };
     } catch (error: unknown) {
       log.error("[account] get profile failed", {
-        userId: ctx.auth.userId,
+        userId: ctx.auth.identity.userId,
         error: parseError(error),
       });
 

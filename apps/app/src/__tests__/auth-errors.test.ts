@@ -45,10 +45,10 @@ describe("mapOtpClerkError — unwrapped runtime shape (current clerk-js Future 
     );
   });
 
-  it("maps session_exists to redirect to /account/welcome", () => {
+  it("maps session_exists to redirect to the post-auth resolver", () => {
     expect(mapOtpClerkError({ code: "session_exists" })).toEqual({
       kind: "redirect",
-      target: "/account/welcome",
+      target: "/",
     });
   });
 
@@ -170,7 +170,7 @@ describe("mapOAuthClerkError", () => {
   it("maps session_exists to redirect", () => {
     expect(mapOAuthClerkError({ code: "session_exists" })).toEqual({
       kind: "redirect",
-      target: "/account/welcome",
+      target: "/",
     });
   });
 

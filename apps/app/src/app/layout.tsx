@@ -68,9 +68,9 @@ export default function RootLayout({
         <ClerkProvider
           afterSignOutUrl="/sign-in"
           publishableKey={env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
-          signInFallbackRedirectUrl="/account/welcome"
+          signInFallbackRedirectUrl="/"
           signInUrl="/sign-in"
-          signUpFallbackRedirectUrl="/account/welcome"
+          signUpFallbackRedirectUrl="/"
           signUpUrl="/sign-up"
           waitlistUrl="/early-access"
         >

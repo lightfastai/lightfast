@@ -2,6 +2,10 @@ import { call, ORPCError } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
+const isOrgBoundMock = vi.fn();
+
+vi.mock("@db/app/client", () => ({ db: {} }));
+vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
 
 vi.mock("@vendor/clerk/server", () => ({
   clerkClient: () =>
@@ -49,6 +53,8 @@ async function invokeAuth(headers: Headers) {
 
 beforeEach(() => {
   verifyMock.mockReset();
+  isOrgBoundMock.mockReset();
+  isOrgBoundMock.mockResolvedValue(true);
 });
 
 describe("authMiddleware", () => {
@@ -58,6 +64,7 @@ describe("authMiddleware", () => {
       message: expect.stringContaining("API key required"),
     });
     expect(verifyMock).not.toHaveBeenCalled();
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when scheme is not Bearer", async () => {
@@ -68,6 +75,7 @@ describe("authMiddleware", () => {
       message: expect.stringContaining("API key required"),
     });
     expect(verifyMock).not.toHaveBeenCalled();
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when token is not ak_ prefixed (no network call)", async () => {
@@ -78,6 +86,7 @@ describe("authMiddleware", () => {
       message: expect.stringContaining("Invalid API key format"),
     });
     expect(verifyMock).not.toHaveBeenCalled();
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when clerk.apiKeys.verify throws", async () => {
@@ -90,6 +99,7 @@ describe("authMiddleware", () => {
       message: "Invalid API key",
     });
     expect(verifyMock).toHaveBeenCalledWith(validKey);
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when key is revoked", async () => {
@@ -145,12 +155,18 @@ describe("authMiddleware", () => {
 
     expect(ctx).toMatchObject({
       apiKeyId: "apk_test",
-      clerkOrgId: "org_test",
-      userId: "user_test",
+      auth: {
+        identity: {
+          orgGate: { bindingStatus: "bound" },
+          orgId: "org_test",
+          type: "active",
+          userId: "user_test",
+        },
+      },
     });
   });
 
-  it("resolves and exposes auth context when the key is valid", async () => {
+  it("resolves and exposes the shared auth identity context when the key is valid", async () => {
     verifyMock.mockResolvedValueOnce(apiKey());
 
     const ctx = await invokeAuth(
@@ -159,11 +175,37 @@ describe("authMiddleware", () => {
 
     expect(ctx).toMatchObject({
       apiKeyId: "apk_test",
-      clerkOrgId: "org_test",
-      userId: "user_test",
+      auth: {
+        identity: {
+          orgGate: { bindingStatus: "bound" },
+          orgId: "org_test",
+          type: "active",
+          userId: "user_test",
+        },
+      },
     });
     expect(verifyMock).toHaveBeenCalledTimes(1);
     expect(verifyMock).toHaveBeenCalledWith(validKey);
+    expect(isOrgBoundMock).toHaveBeenCalledWith(expect.anything(), "org_test");
+  });
+
+  it("keeps the API key authenticated but marks the org gate unbound", async () => {
+    verifyMock.mockResolvedValueOnce(apiKey());
+    isOrgBoundMock.mockResolvedValueOnce(false);
+
+    const ctx = await invokeAuth(
+      new Headers({ authorization: `Bearer ${validKey}` })
+    );
+
+    expect(ctx).toMatchObject({
+      auth: {
+        identity: {
+          orgGate: { bindingStatus: "unbound" },
+          orgId: "org_test",
+          type: "active",
+        },
+      },
+    });
   });
 
   it("rethrows ORPCError instances (smoke check)", () => {

@@ -116,7 +116,9 @@ In the Clerk Dashboard, create a JWT template named exactly `lightfast-desktop`:
 - **Expiry**: `86400` seconds (24 hours) — users re-sign-in daily. There is no
   silent refresh; when the token expires the renderer's 401 handler clears
   local state and the user clicks "Sign in" again.
-- **Claims**: include `org_id: {{org.id}}` so `orgRouter` procedures work
+- **Claims**: include only `org_id: {{org.id}}` so org-scoped API requests can
+  identify the active Clerk organization. API authorization derives setup state
+  from the authoritative Lightfast DB binding, not from desktop JWT claims.
 - **Signing**: default (symmetric — the server verifies via `CLERK_SECRET_KEY`)
 
 This must be done once in each Clerk environment (dev and prod). The web
@@ -250,4 +252,3 @@ GITHUB_TOKEN=$(gh auth token) \
 pnpm -F @lightfast/desktop exec electron-forge publish \
   --arch=arm64 --platform=darwin
 ```
-

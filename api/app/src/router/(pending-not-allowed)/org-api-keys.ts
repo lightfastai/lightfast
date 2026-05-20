@@ -8,20 +8,8 @@ import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 
+import { isClerkResourceNotFound } from "../../auth/clerk-errors";
 import { pendingNotAllowedProcedure } from "../../trpc";
-
-function isClerkNotFound(err: unknown): boolean {
-  if (!err || typeof err !== "object") {
-    return false;
-  }
-  if ("status" in err && (err as { status?: number }).status === 404) {
-    return true;
-  }
-  const errs = (err as { errors?: { code?: string }[] }).errors;
-  return (
-    Array.isArray(errs) && errs.some((e) => e.code === "resource_not_found")
-  );
-}
 
 /**
  * Organization API Keys Router (Clerk-backed)
@@ -34,7 +22,7 @@ export const orgApiKeysRouter = {
   list: pendingNotAllowedProcedure.query(async ({ ctx }) => {
     const clerk = await clerkClient();
     const { data } = await clerk.apiKeys.list({
-      subject: ctx.auth.orgId,
+      subject: ctx.auth.identity.orgId,
       includeInvalid: true,
     });
     // Spread Clerk's APIKey class instances into plain objects — RSC props
@@ -48,12 +36,12 @@ export const orgApiKeysRouter = {
       const clerk = await clerkClient();
       const key = await clerk.apiKeys.create({
         name: input.name,
-        subject: ctx.auth.orgId,
-        createdBy: ctx.auth.userId,
+        subject: ctx.auth.identity.orgId,
+        createdBy: ctx.auth.identity.userId,
         secondsUntilExpiration: input.secondsUntilExpiration ?? null,
       });
       log.info("[org-api-keys] created", {
-        clerkOrgId: ctx.auth.orgId,
+        clerkOrgId: ctx.auth.identity.orgId,
         keyId: key.id,
         name: input.name,
       });
@@ -73,7 +61,7 @@ export const orgApiKeysRouter = {
           revocationReason: input.revocationReason ?? null,
         });
       } catch (err) {
-        if (isClerkNotFound(err)) {
+        if (isClerkResourceNotFound(err)) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "API key not found",
@@ -81,7 +69,7 @@ export const orgApiKeysRouter = {
         }
         throw err;
       }
-      if (key.subject !== ctx.auth.orgId) {
+      if (key.subject !== ctx.auth.identity.orgId) {
         // Defense-in-depth: Clerk doesn't scope revoke by subject. Reject so
         // org A cannot revoke org B's keys by guessing IDs.
         throw new TRPCError({
@@ -90,7 +78,7 @@ export const orgApiKeysRouter = {
         });
       }
       log.info("[org-api-keys] revoked", {
-        clerkOrgId: ctx.auth.orgId,
+        clerkOrgId: ctx.auth.identity.orgId,
         keyId: key.id,
       });
       return { success: true };
@@ -104,7 +92,7 @@ export const orgApiKeysRouter = {
       try {
         existing = await clerk.apiKeys.get(input.keyId);
       } catch (err) {
-        if (isClerkNotFound(err)) {
+        if (isClerkResourceNotFound(err)) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "API key not found",
@@ -112,7 +100,7 @@ export const orgApiKeysRouter = {
         }
         throw err;
       }
-      if (existing.subject !== ctx.auth.orgId) {
+      if (existing.subject !== ctx.auth.identity.orgId) {
         throw new TRPCError({
           code: "NOT_FOUND",
           message: "API key not found",
@@ -120,7 +108,7 @@ export const orgApiKeysRouter = {
       }
       await clerk.apiKeys.delete(input.keyId);
       log.info("[org-api-keys] deleted", {
-        clerkOrgId: ctx.auth.orgId,
+        clerkOrgId: ctx.auth.identity.orgId,
         keyId: input.keyId,
       });
       return { success: true };

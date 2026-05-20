@@ -2,6 +2,7 @@ import { call } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
+const isOrgBoundMock = vi.fn();
 
 vi.mock("@vendor/clerk/server", () => ({
   clerkClient: () =>
@@ -10,12 +11,17 @@ vi.mock("@vendor/clerk/server", () => ({
     }),
 }));
 
+vi.mock("@db/app/client", () => ({ db: {} }));
+vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
+
 const { orpcRouter } = await import("../router");
 
 const validKey = `ak_${"a".repeat(40)}`;
 
 beforeEach(() => {
   verifyMock.mockReset();
+  isOrgBoundMock.mockReset();
+  isOrgBoundMock.mockResolvedValue(true);
   verifyMock.mockResolvedValue({
     id: "apk_test",
     type: "api_key",
