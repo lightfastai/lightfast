@@ -7,14 +7,14 @@ settings:
 catalogs:
   default:
     '@clerk/backend':
-      specifier: 3.4.7
-      version: 3.4.7
+      specifier: 3.4.11
+      version: 3.4.11
     '@clerk/nextjs':
-      specifier: 7.3.3
-      version: 7.3.3
+      specifier: 7.3.7
+      version: 7.3.7
     '@clerk/shared':
-      specifier: 4.10.2
-      version: 4.10.2
+      specifier: 4.12.2
+      version: 4.12.2
     '@hookform/resolvers':
       specifier: ^5.2.2
       version: 5.2.2
@@ -351,7 +351,7 @@ importers:
         version: link:../../api/app
       '@clerk/nextjs':
         specifier: 'catalog:'
-        version: 7.3.3(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 7.3.7(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
@@ -1572,13 +1572,13 @@ importers:
     dependencies:
       '@clerk/backend':
         specifier: 'catalog:'
-        version: 3.4.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 3.4.11(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@clerk/nextjs':
         specifier: 'catalog:'
-        version: 7.3.3(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 7.3.7(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@clerk/shared':
         specifier: 'catalog:'
-        version: 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        version: 4.12.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@t3-oss/env-nextjs':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
@@ -2375,27 +2375,27 @@ packages:
   '@clack/prompts@1.2.0':
     resolution: {integrity: sha512-4jmztR9fMqPMjz6H/UZXj0zEmE43ha1euENwkckKKel4XpSfokExPo5AiVStdHSAlHekz4d0CA/r45Ok1E4D3w==}
 
-  '@clerk/backend@3.4.7':
-    resolution: {integrity: sha512-zAELfaYtrlxlxxB6PT3EHPsHck6IPuyTQSKm7hWQqXp9GoFOM6wKOflFZgI0Q2M1C5SgrkDcrMNchkWXRwbsQw==}
+  '@clerk/backend@3.4.11':
+    resolution: {integrity: sha512-WT+4FrcMMofxe+irQYUkawoRWaHHXT9/wiRYhRbSb30cOPjN95ViydqPhAyp8ZWAHInHg4mILynQQRJH14SKZQ==}
     engines: {node: '>=20.9.0'}
 
-  '@clerk/nextjs@7.3.3':
-    resolution: {integrity: sha512-MvDczhXM5v9H/a6qd7O52Ydj6CNtgSSPBrpC6HzlfB+nkP8GrsRl/sH+jFrGmRnLsT7Q7A9TESXkrbuHoeGAeQ==}
+  '@clerk/nextjs@7.3.7':
+    resolution: {integrity: sha512-CLG63zKPHditk52Z/+c6BJ47V1Q68ACjeps0xHDRW3X/Yv/FZdM+IUKu9Egb5PJ/TkRFxsI1nU5SOY2B8o/WxA==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       next: ^15.2.8 || ^15.3.8 || ^15.4.10 || ^15.5.9 || ^15.6.0-0 || ^16.0.10 || ^16.1.0-0
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@clerk/react@6.6.2':
-    resolution: {integrity: sha512-eLev3C21yh2vqyvEBfXpc1QHa4q+wxbtRdTtBG0fCI+tMQUim8TIS300AJAciM6ox8tgInTWwIeIxr5jiYsvtw==}
+  '@clerk/react@6.6.6':
+    resolution: {integrity: sha512-MVHLDZeGobSbGSZgAdb4G1BbB8ZU5XAmBBdIVLXiPOLEst2TYM5bP137WRA76y9GlmVmKYdKzph/TUi87P/JOA==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^19.2.5
       react-dom: ^19.2.5
 
-  '@clerk/shared@4.10.2':
-    resolution: {integrity: sha512-2RXGaCV94U2wYWaMQZA/AhVkqjcSx8f+oVjh6wgr4yXDmZ24BQRjPJ+K4L6IHiB/agoaXtKWJ0GI8InRZjo9/g==}
+  '@clerk/shared@4.12.2':
+    resolution: {integrity: sha512-jDkip8tKTzYz/cPKMCsjOoACH3Xh37zcbCrssMRTYOq3GZypIpZ6WAs4m4G82URL0WY+yz5frrHVjRrHyAb6LA==}
     engines: {node: '>=20.9.0'}
     peerDependencies:
       react: ^19.2.5
@@ -14089,34 +14089,34 @@ snapshots:
       fast-wrap-ansi: 0.1.6
       sisteransi: 1.0.5
 
-  '@clerk/backend@3.4.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/backend@3.4.11(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@clerk/shared': 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/shared': 4.12.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       standardwebhooks: 1.0.0
       tslib: 2.8.1
     transitivePeerDependencies:
       - react
       - react-dom
 
-  '@clerk/nextjs@7.3.3(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/nextjs@7.3.7(next@16.2.6(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@clerk/backend': 3.4.7(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@clerk/react': 6.6.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
-      '@clerk/shared': 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/backend': 3.4.11(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/react': 6.6.6(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/shared': 4.12.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       next: 16.2.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
       server-only: 0.0.1
       tslib: 2.8.1
 
-  '@clerk/react@6.6.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/react@6.6.6(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
-      '@clerk/shared': 4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+      '@clerk/shared': 4.12.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       react: 19.2.5
       react-dom: 19.2.5(react@19.2.5)
       tslib: 2.8.1
 
-  '@clerk/shared@4.10.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@clerk/shared@4.12.2(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@tanstack/query-core': 5.100.9
       dequal: 2.0.3
