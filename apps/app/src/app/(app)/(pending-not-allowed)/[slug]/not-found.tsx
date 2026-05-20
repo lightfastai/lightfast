@@ -1,20 +1,9 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { currentUser } from "@vendor/clerk/server";
 import Link from "next/link";
-import { SignOutButton } from "./sign-out-button";
+import { SignOutButton } from "../sign-out-button";
 
-/**
- * Organization Not Found page
- *
- * Shown when:
- * - User tries to access an organization that doesn't exist
- * - User doesn't have access to the organization (not a member)
- * - Organization slug is invalid
- * - User's org membership was removed while they were viewing the org
- *
- * Triggered by notFound() in [slug]/layout.tsx when requireOrgAccess fails
- */
-export default async function AuthenticatedRouteNotFound() {
+export default async function OrganizationNotFound() {
   const user = await currentUser();
 
   const emailAddress =
@@ -35,7 +24,7 @@ export default async function AuthenticatedRouteNotFound() {
 
         <h1 className="mb-5 font-bold text-7xl text-foreground">404</h1>
         <p className="mx-auto mb-6 max-w-sm text-muted-foreground text-sm">
-          Sorry, we couldn't find the page you're looking for.
+          This team doesn't exist, or you don't have access to it.
         </p>
 
         {emailAddress && (
