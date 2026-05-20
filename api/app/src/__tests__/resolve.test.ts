@@ -35,6 +35,8 @@ describe("resolveIdentityFromClerk — transports", () => {
       type: "active",
       userId: "user_bearer_active",
       orgId: "org_active",
+      // No `lf_binding_status` claim was minted → fail-closed `unbound`.
+      orgGate: { bindingStatus: "unbound" },
     });
     expect(verifyTokenMock).toHaveBeenCalledWith("valid.jwt.token", {
       secretKey: "sk_test_fake-secret-key-for-tests",
