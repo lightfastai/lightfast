@@ -8,7 +8,7 @@ export type MappedAuthError =
   | { kind: "success" }
   | { kind: "redirect"; target: string };
 
-const SUCCESS_REDIRECT = "/account/welcome";
+const SUCCESS_REDIRECT = "/";
 
 // Future API types say ClerkError, but clerk-js currently returns an
 // unwrapped ClerkAPIError-shaped object at runtime (not a ClerkAPIResponseError

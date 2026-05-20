@@ -24,7 +24,7 @@ import { makeFinalizeNavigate } from "../_hooks/auth-navigate";
 import { authBreadcrumb, authSpan } from "../_hooks/auth-telemetry";
 import { type AuthErrorCode, authErrorCodes } from "../_lib/search-params";
 
-const SUCCESS_REDIRECT = "/account/welcome";
+const SUCCESS_REDIRECT = "/";
 
 type View = "email" | "code";
 

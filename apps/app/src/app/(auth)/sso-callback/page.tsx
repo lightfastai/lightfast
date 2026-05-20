@@ -6,7 +6,7 @@ import * as React from "react";
 import { mapOAuthClerkError } from "../_hooks/auth-errors";
 import { makeFinalizeNavigate } from "../_hooks/auth-navigate";
 
-const SUCCESS_REDIRECT = "/account/welcome";
+const SUCCESS_REDIRECT = "/";
 
 // Unified OAuth callback. Mirrors Clerk's Future-API reference:
 // https://clerk.com/docs/guides/development/custom-flows/authentication/oauth-connections
