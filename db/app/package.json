@@ -41,7 +41,6 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "catalog:",
-    "@repo/app-validation": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "@vendor/db": "workspace:*",
     "@vendor/lib": "workspace:*",
