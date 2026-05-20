@@ -21,10 +21,6 @@
       "types": "./src/inngest/client/client.ts",
       "default": "./src/inngest/client/client.ts"
     },
-    "./lib/activity": {
-      "types": "./src/lib/activity.ts",
-      "default": "./src/lib/activity.ts"
-    },
     "./auth/identity": {
       "types": "./src/auth/identity.ts",
       "default": "./src/auth/identity.ts"

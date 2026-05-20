@@ -1,0 +1,1 @@
+DROP TABLE "lightfast_org_user_activities" CASCADE;

@@ -1,11 +1,11 @@
 {
-  "id": "e49336ba-2664-4b1a-a5b9-348afcd2a2d2",
-  "prevId": "8f64a2fa-cfa2-4ff6-ab74-58c213ceb811",
+  "id": "0afe71c0-ee69-4f75-9120-e320a8faddd2",
+  "prevId": "479a72a5-35ef-4fe4-ba9b-a6074de9f2b6",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
-    "public.lightfast_org_user_activities": {
-      "name": "lightfast_org_user_activities",
+    "public.lightfast_org_source_control_bindings": {
+      "name": "lightfast_org_source_control_bindings",
       "schema": "",
       "columns": {
         "id": {
@@ -15,7 +15,7 @@
           "notNull": true,
           "identity": {
             "type": "always",
-            "name": "lightfast_org_user_activities_id_seq",
+            "name": "lightfast_org_source_control_bindings_id_seq",
             "schema": "public",
             "increment": "1",
             "startWith": "1",
@@ -31,33 +31,52 @@
           "primaryKey": false,
           "notNull": true
         },
-        "category": {
-          "name": "category",
+        "provider": {
+          "name": "provider",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
-        "action": {
-          "name": "action",
-          "type": "varchar(100)",
+        "provider_account_id": {
+          "name": "provider_account_id",
+          "type": "varchar(191)",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
-        "entity_type": {
-          "name": "entity_type",
+        "provider_account_login": {
+          "name": "provider_account_login",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "provider_installation_id": {
+          "name": "provider_installation_id",
+          "type": "varchar(191)",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "status": {
+          "name": "status",
           "type": "varchar(50)",
           "primaryKey": false,
           "notNull": true
         },
-        "entity_id": {
-          "name": "entity_id",
+        "connected_by_user_id": {
+          "name": "connected_by_user_id",
           "type": "varchar(191)",
           "primaryKey": false,
           "notNull": true
         },
-        "entity_name": {
-          "name": "entity_name",
-          "type": "varchar(500)",
+        "connected_at": {
+          "name": "connected_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": false
         },
@@ -65,32 +84,8 @@
           "name": "metadata",
           "type": "jsonb",
           "primaryKey": false,
-          "notNull": true
-        },
-        "request_id": {
-          "name": "request_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "user_agent": {
-          "name": "user_agent",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "related_activity_id": {
-          "name": "related_activity_id",
-          "type": "varchar(191)",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "timestamp": {
-          "name": "timestamp",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
           "notNull": true,
-          "default": "CURRENT_TIMESTAMP"
+          "default": "'{}'::jsonb"
         },
         "created_at": {
           "name": "created_at",
@@ -98,11 +93,50 @@
           "primaryKey": false,
           "notNull": true,
           "default": "CURRENT_TIMESTAMP"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {
-        "org_activity_timestamp_idx": {
-          "name": "org_activity_timestamp_idx",
+        "org_source_control_bindings_active_per_org_uq": {
+          "name": "org_source_control_bindings_active_per_org_uq",
+          "columns": [
+            {
+              "expression": "clerk_org_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"lightfast_org_source_control_bindings\".\"status\" = 'active'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "org_source_control_bindings_installation_uq": {
+          "name": "org_source_control_bindings_installation_uq",
+          "columns": [
+            {
+              "expression": "provider_installation_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "where": "\"lightfast_org_source_control_bindings\".\"provider_installation_id\" is not null",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "org_source_control_bindings_org_status_idx": {
+          "name": "org_source_control_bindings_org_status_idx",
           "columns": [
             {
               "expression": "clerk_org_id",
@@ -111,7 +145,7 @@
               "nulls": "last"
             },
             {
-              "expression": "timestamp",
+              "expression": "status",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -122,110 +156,17 @@
           "method": "btree",
           "with": {}
         },
-        "org_activity_category_idx": {
-          "name": "org_activity_category_idx",
+        "org_source_control_bindings_provider_account_idx": {
+          "name": "org_source_control_bindings_provider_account_idx",
           "columns": [
             {
-              "expression": "category",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "org_activity_entity_idx": {
-          "name": "org_activity_entity_idx",
-          "columns": [
-            {
-              "expression": "entity_type",
+              "expression": "provider",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
             },
             {
-              "expression": "entity_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "org_activity_category_timestamp_idx": {
-          "name": "org_activity_category_timestamp_idx",
-          "columns": [
-            {
-              "expression": "category",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "timestamp",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "org_activity_related_idx": {
-          "name": "org_activity_related_idx",
-          "columns": [
-            {
-              "expression": "related_activity_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "org_activity_ts_idx": {
-          "name": "org_activity_ts_idx",
-          "columns": [
-            {
-              "expression": "timestamp",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        },
-        "org_activity_org_category_timestamp_idx": {
-          "name": "org_activity_org_category_timestamp_idx",
-          "columns": [
-            {
-              "expression": "clerk_org_id",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "category",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            },
-            {
-              "expression": "timestamp",
+              "expression": "provider_account_id",
               "isExpression": false,
               "asc": true,
               "nulls": "last"

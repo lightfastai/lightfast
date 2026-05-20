@@ -1,1 +1,0 @@
-DROP TABLE "org_lightfast_tasks" CASCADE;

@@ -2,17 +2,10 @@
 
 // Client
 export { type Database, db } from "./client";
-// Re-exported types from schema
-export {
-  type InsertOrgSourceControlBinding,
-  type InsertOrgUserActivity,
-  type OrgSourceControlBinding,
-  type OrgSourceControlBindingProvider,
-  type OrgSourceControlBindingStatus,
-  type OrgUserActivity,
-  orgSourceControlBindings,
-  orgUserActivities,
-} from "./schema";
+
+// Re-exported schema definitions
+export * from "./schema";
+
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
 // Org source-control binding repository helpers
