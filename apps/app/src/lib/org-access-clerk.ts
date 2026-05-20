@@ -1,5 +1,6 @@
 import "server-only";
 import { auth, clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
+import { cache } from "react";
 
 /**
  * Organization access utilities using Clerk RBAC
@@ -41,42 +42,48 @@ interface OrgWithAccess {
  * Note: We fetch the org by slug and verify the user has access to it.
  * We don't check if it matches auth().orgSlug because middleware's
  * organizationSyncOptions may not have synced yet during RSC fetches.
+ *
+ * Wrapped in React `cache()` so the parent `[slug]/layout.tsx` and the
+ * `(bound)/layout.tsx` (and pages under them) can each resolve the same slug
+ * within one RSC render without re-hitting Clerk.
  */
-export async function requireOrgAccess(slug: string): Promise<OrgWithAccess> {
-  const { userId } = await auth();
+export const requireOrgAccess = cache(
+  async (slug: string): Promise<OrgWithAccess> => {
+    const { userId } = await auth();
 
-  // User must be authenticated
-  if (!userId) {
-    throw new Error("Authentication required.");
+    // User must be authenticated
+    if (!userId) {
+      throw new Error("Authentication required.");
+    }
+
+    // Get organization by slug from URL (needed for org metadata like name, imageUrl)
+    const clerk = await clerkClient();
+    let clerkOrg;
+    try {
+      clerkOrg = await clerk.organizations.getOrganization({ slug });
+    } catch {
+      throw new Error(`Organization not found: ${slug}`);
+    }
+
+    // User-centric membership check (cached)
+    const userMemberships = await getUserOrgMemberships(userId);
+
+    const userMembership = userMemberships.find(
+      (m) => m.organizationId === clerkOrg.id
+    );
+
+    if (!userMembership) {
+      throw new Error("Access denied to this organization.");
+    }
+
+    return {
+      org: {
+        id: clerkOrg.id,
+        name: clerkOrg.name,
+        slug: clerkOrg.slug,
+        imageUrl: clerkOrg.imageUrl,
+      },
+      role: userMembership.role,
+    };
   }
-
-  // Get organization by slug from URL (needed for org metadata like name, imageUrl)
-  const clerk = await clerkClient();
-  let clerkOrg;
-  try {
-    clerkOrg = await clerk.organizations.getOrganization({ slug });
-  } catch {
-    throw new Error(`Organization not found: ${slug}`);
-  }
-
-  // User-centric membership check (cached)
-  const userMemberships = await getUserOrgMemberships(userId);
-
-  const userMembership = userMemberships.find(
-    (m) => m.organizationId === clerkOrg.id
-  );
-
-  if (!userMembership) {
-    throw new Error("Access denied to this organization.");
-  }
-
-  return {
-    org: {
-      id: clerkOrg.id,
-      name: clerkOrg.name,
-      slug: clerkOrg.slug,
-      imageUrl: clerkOrg.imageUrl,
-    },
-    role: userMembership.role,
-  };
-}
+);
