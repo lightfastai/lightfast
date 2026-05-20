@@ -10,6 +10,12 @@ vi.mock("@vendor/clerk/server", () => ({
     }),
 }));
 
+// `procedures.ts` exports `boundOrg`, which pulls in `org-gate.ts` ->
+// `@db/app/client` (eager DB-env validation). `system.health` is `authed`,
+// so the gate never runs here — these stubs only keep module import green.
+vi.mock("@db/app/client", () => ({ db: {} }));
+vi.mock("@db/app", () => ({ isOrgBound: vi.fn() }));
+
 const { orpcRouter } = await import("../router");
 
 const validKey = `ak_${"a".repeat(40)}`;
