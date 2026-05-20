@@ -1,16 +1,26 @@
 // Schema exports
 
 // Client
-export { db } from "./client";
+export { type Database, db } from "./client";
 // Re-exported types from schema
 export {
-  type InsertOrgLightfastTask,
+  type InsertOrgSourceControlBinding,
   type InsertOrgUserActivity,
-  type OrgLightfastTask,
+  type OrgSourceControlBinding,
+  type OrgSourceControlBindingProvider,
+  type OrgSourceControlBindingStatus,
   type OrgUserActivity,
-  orgLightfastTasks,
+  orgSourceControlBindings,
   orgUserActivities,
 } from "./schema";
-
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
+// Org source-control binding repository helpers
+export {
+  getActiveOrgBinding,
+  isOrgBound,
+  type MarkOrgBindingRevokedInput,
+  markOrgBindingRevoked,
+  type UpsertActiveOrgBindingInput,
+  upsertActiveOrgBinding,
+} from "./utils/org-binding";

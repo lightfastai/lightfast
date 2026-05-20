@@ -477,6 +477,13 @@
       "when": 1779254179665,
       "tag": "0067_little_ted_forrester",
       "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1779258614088,
+      "tag": "0068_cute_gamora",
+      "breakpoints": true
     }
   ]
 }
