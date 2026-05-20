@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@db/app";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -140,9 +140,7 @@ describe("resolveIdentityFromClerk — transports", () => {
       orgId: "org_cookie",
     });
 
-    const identity = await resolve(
-      new Headers({ authorization: "Bearer " })
-    );
+    const identity = await resolve(new Headers({ authorization: "Bearer " }));
 
     expect(identity).toEqual({ type: "unauthenticated" });
     expect(verifyTokenMock).not.toHaveBeenCalled();

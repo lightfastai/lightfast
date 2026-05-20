@@ -25,10 +25,10 @@ export interface LightfastLastActiveOrg {
 }
 
 export interface LightfastSessionClaims {
-  /** Org binding-gate mirror. Absent/empty for orgs that have not bound. */
-  lf_binding_status?: string;
   /** Last org Lightfast observed for post-auth routing. */
   last_active_org?: LightfastLastActiveOrg | null;
+  /** Org binding-gate mirror. Absent/empty for orgs that have not bound. */
+  lf_binding_status?: string;
 }
 
 /**

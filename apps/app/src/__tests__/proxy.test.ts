@@ -1,8 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type LastActiveOrg = { id: string; slug: string };
+interface LastActiveOrg {
+  id: string;
+  slug: string;
+}
 
-type AuthResult = {
+interface AuthResult {
   orgId?: string | null;
   orgSlug?: string | null;
   sessionClaims?: {
@@ -11,7 +14,7 @@ type AuthResult = {
   } | null;
   sessionStatus?: "active" | "pending";
   userId?: string | null;
-};
+}
 
 const authMock = vi.fn<() => Promise<AuthResult>>();
 const updateUserMetadataMock = vi.fn();
@@ -50,11 +53,9 @@ vi.mock("@vendor/clerk/server", () => ({
     ) =>
     (req: RequestLike, event: EventLike) =>
       handler(authMock, req, event),
-  createRouteMatcher: (patterns: string[]) => {
-    return (req: RequestLike) => {
-      const pathname = req.nextUrl.pathname;
-      return patterns.some((pattern) => matchesPattern(pattern, pathname));
-    };
+  createRouteMatcher: (patterns: string[]) => (req: RequestLike) => {
+    const pathname = req.nextUrl.pathname;
+    return patterns.some((pattern) => matchesPattern(pattern, pathname));
   },
 }));
 

@@ -1,9 +1,9 @@
+import type { LightfastLastActiveOrg } from "@vendor/clerk/server";
 import {
   clerkClient,
   clerkMiddleware,
   createRouteMatcher,
 } from "@vendor/clerk/server";
-import type { LightfastLastActiveOrg } from "@vendor/clerk/server";
 import {
   composeCspOptions,
   createAnalyticsCspDirectives,
@@ -227,11 +227,7 @@ export default clerkMiddleware(
         }
       }
       const bindingStatus = sessionClaims?.lf_binding_status;
-      if (
-        orgId &&
-        isBoundOrgProductRoute(req) &&
-        bindingStatus !== "bound"
-      ) {
+      if (orgId && isBoundOrgProductRoute(req) && bindingStatus !== "bound") {
         return NextResponse.redirect(
           new URL(`/${req.nextUrl.pathname.split("/")[1]}/tasks/bind`, req.url)
         );
