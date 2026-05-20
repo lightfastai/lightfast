@@ -2,8 +2,29 @@ import { clerkEnvBase } from "@vendor/clerk/env";
 import { auth, verifyToken } from "@vendor/clerk/server";
 import { z } from "zod";
 
-import type { AuthIdentity } from "./types";
-import { authIdentity, UNAUTH_IDENTITY } from "./types";
+/**
+ * Authorization identity — the answer to "who is this request from?".
+ * Vendor-agnostic — specific transports (Bearer JWT, cookie session, future
+ * IdPs) construct one of these variants via the `authIdentity` factory.
+ */
+export type AuthIdentity =
+  | { type: "unauthenticated" }
+  | { type: "pending"; userId: string }
+  | { type: "active"; userId: string; orgId: string };
+
+export const UNAUTH_IDENTITY = {
+  type: "unauthenticated",
+} as const satisfies AuthIdentity;
+
+export function authIdentity(
+  userId: string,
+  orgId: string | null | undefined
+): AuthIdentity {
+  if (!orgId) {
+    return { type: "pending", userId };
+  }
+  return { type: "active", userId, orgId };
+}
 
 // Hoisted so config errors surface at boot, not per-request.
 const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;

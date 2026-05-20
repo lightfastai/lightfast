@@ -6,9 +6,8 @@
  * tl;dr - this is where all the tRPC server stuff is created and plugged in.
  * The pieces you will need to use are documented accordingly near the end.
  *
- * Auth resolution lives in `./auth` — this file consumes the resolved
- * `AuthContext` and wires it into tRPC middleware. Structured failure
- * payloads (codes + repair hints) live in `./diagnostics`.
+ * Identity resolution lives in `./auth/identity`. Structured failure payloads
+ * (codes + repair hints) live in `./diagnostics`.
  */
 
 import { db } from "@db/app/client";
@@ -17,11 +16,18 @@ import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import { resolveIdentityFromClerk } from "./auth/identity/resolve-clerk";
+import type { AuthIdentity } from "./auth/identity";
+import { resolveIdentityFromClerk } from "./auth/identity";
 import { isDiagnosticCause, throwDiagnostic } from "./diagnostics";
 
-// Re-exported for routers that want to pattern-match on `ctx.auth` directly.
-export type { AuthContext } from "./auth/context";
+/**
+ * Authentication context — identity is the only auth dimension: "who is this
+ * request from?". Resolved once per request in `createTRPCContext` and
+ * narrowed at the procedure layer by the middleware below.
+ */
+export interface AuthContext {
+  identity: AuthIdentity;
+}
 
 /**
  * 1. CONTEXT
@@ -33,7 +39,9 @@ export type { AuthContext } from "./auth/context";
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => ({
-  auth: { identity: await resolveIdentityFromClerk(opts.headers) },
+  auth: {
+    identity: await resolveIdentityFromClerk(opts.headers),
+  } satisfies AuthContext,
   db,
   headers: opts.headers,
 });
@@ -79,26 +87,25 @@ const t = initTRPC.context<typeof createTRPCContext>().create({
  * 3. ROUTER & PROCEDURE (THE IMPORTANT BIT)
  *
  * These are the pieces you use to build your tRPC API. You should import these
- * a lot in the /src/server/api/routers folder
+ * a lot in the /src/router folder.
  */
 
 /**
- * This is how you create new routers and subrouters in your tRPC API
+ * This is how you create new routers and subrouters in your tRPC API.
  * @see https://trpc.io/docs/router
  */
 export const createTRPCRouter = t.router;
 
 /**
- * Create a server-side caller
+ * Create a server-side caller.
  * @see https://trpc.io/docs/server/server-side-calls
  */
 export const createCallerFactory = t.createCallerFactory;
 
 /**
- * Middleware for timing procedure execution and adding an artificial delay in development.
- *
- * You can remove this if you don't like it, but it can help catch unwanted waterfalls by simulating
- * network latency that would occur in production but not in local development.
+ * Times procedure execution and adds an artificial delay in development to
+ * surface waterfalls that would otherwise only appear under production
+ * network latency.
  */
 const observabilityMiddleware = t.middleware(
   createObservabilityMiddleware({
@@ -120,7 +127,8 @@ const observabilityMiddleware = t.middleware(
 );
 
 /**
- * Authentication gates, composed by user/org procedures below.
+ * Authentication gate. Rejects `unauthenticated` identities; narrows
+ * `ctx.auth.identity` to `pending | active` for downstream use.
  *
  * Split out so the unauth check exists in exactly one place — adding a 4th
  * identity state (e.g. service-account) only requires touching `requireAuth`.
@@ -175,7 +183,7 @@ const authedProcedure = t.procedure
  *
  * This is the base piece you use to build new queries and mutations on your
  * tRPC API. It does not guarantee that a user querying is authorized, but you
- * can still access user session data if they are logged in
+ * can still access user session data if they are logged in.
  */
 export const publicProcedure = t.procedure.use(observabilityMiddleware);
 

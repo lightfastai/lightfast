@@ -13,9 +13,7 @@ vi.mock("@vendor/clerk/server", () => ({
   getUserOrgMemberships: vi.fn(),
 }));
 
-const { resolveIdentityFromClerk } = await import(
-  "../auth/identity/resolve-clerk"
-);
+const { resolveIdentityFromClerk } = await import("../auth/identity");
 
 beforeEach(() => {
   authMock.mockReset();

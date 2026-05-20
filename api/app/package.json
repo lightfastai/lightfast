@@ -26,8 +26,8 @@
       "default": "./src/lib/activity.ts"
     },
     "./auth/identity": {
-      "types": "./src/auth/identity/types.ts",
-      "default": "./src/auth/identity/types.ts"
+      "types": "./src/auth/identity.ts",
+      "default": "./src/auth/identity.ts"
     }
   },
   "license": "Apache-2.0",
