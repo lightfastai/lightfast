@@ -6,7 +6,6 @@ import type { AuthIdentity } from "../auth/identity";
 const authMock = vi.fn();
 const cancelSubscriptionItemMock = vi.fn();
 const getOrganizationBillingSubscriptionMock = vi.fn();
-const getPlanListMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: vi.fn() }));
@@ -23,7 +22,6 @@ vi.mock("@vendor/clerk/server", () => ({
         cancelSubscriptionItem: cancelSubscriptionItemMock,
         getOrganizationBillingSubscription:
           getOrganizationBillingSubscriptionMock,
-        getPlanList: getPlanListMock,
       },
     }),
   verifyToken: vi.fn(),
@@ -115,6 +113,15 @@ const teamSubscriptionItem = {
   updatedAt: 1_700_000_001_000,
 };
 
+const starterSubscriptionItem = {
+  ...teamSubscriptionItem,
+  amount: null,
+  id: "sub_item_starter",
+  lifetimePaid: null,
+  plan: starterPlan,
+  planId: "cplan_free",
+};
+
 function caller(identity = activeIdentity) {
   return createCaller({
     auth: { identity },
@@ -127,7 +134,6 @@ beforeEach(() => {
   authMock.mockReset();
   cancelSubscriptionItemMock.mockReset();
   getOrganizationBillingSubscriptionMock.mockReset();
-  getPlanListMock.mockReset();
 
   authMock.mockResolvedValue({
     has: () => true,
@@ -150,65 +156,12 @@ beforeEach(() => {
     subscriptionItems: [teamSubscriptionItem],
     updatedAt: 1_700_000_001_000,
   });
-  getPlanListMock.mockResolvedValue({
-    data: [
-      starterPlan,
-      teamPlan,
-      { ...teamPlan, id: "cplan_business", slug: "business" },
-    ],
-    totalCount: 3,
-  });
 });
 
-describe("orgBilling.overview", () => {
-  it("returns organization subscription and starter/team plans from Clerk", async () => {
-    await expect(caller().orgBilling.overview()).resolves.toMatchObject({
-      businessContact: {
-        email: "sales@lightfast.ai",
-        href: "mailto:sales@lightfast.ai",
-        label: "Contact Sales",
-      },
-      plans: [
-        {
-          id: "cplan_free",
-          name: "Starter",
-          slug: "free_org",
-          tier: "starter",
-        },
-        {
-          amount: {
-            amount: 6000,
-            amountFormatted: "60.00",
-            currency: "usd",
-            currencySymbol: "$",
-          },
-          id: "cplan_team",
-          name: "Team",
-          slug: "team",
-          tier: "team",
-        },
-      ],
-      subscription: {
-        currentItem: {
-          id: "sub_item_team",
-          plan: { id: "cplan_team", name: "Team", slug: "team", tier: "team" },
-          status: "active",
-        },
-        id: "sub_org_acme",
-        payerId: "org_acme",
-        status: "active",
-        upcomingItem: null,
-      },
-    });
-
-    expect(getOrganizationBillingSubscriptionMock).toHaveBeenCalledWith(
-      "org_acme"
-    );
-    expect(getPlanListMock).toHaveBeenCalledWith({
-      limit: 100,
-      offset: 0,
-      payerType: "org",
-    });
+describe("orgBillingRouter public surface", () => {
+  it("exposes only the privileged cancellation mutation", () => {
+    expect(orgBillingRouter).not.toHaveProperty("overview");
+    expect(orgBillingRouter).toHaveProperty("cancelSubscriptionItem");
   });
 });
 
@@ -249,6 +202,28 @@ describe("orgBilling.cancelSubscriptionItem", () => {
         subscriptionItemId: "sub_item_other",
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(cancelSubscriptionItemMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses to cancel non-Team subscription items", async () => {
+    getOrganizationBillingSubscriptionMock.mockResolvedValue({
+      activeAt: 1_700_000_000_000,
+      createdAt: 1_700_000_000_000,
+      eligibleForFreeTrial: false,
+      id: "sub_org_acme",
+      nextPayment: null,
+      pastDueAt: null,
+      payerId: "org_acme",
+      status: "active",
+      subscriptionItems: [starterSubscriptionItem],
+      updatedAt: 1_700_000_001_000,
+    });
+
+    await expect(
+      caller().orgBilling.cancelSubscriptionItem({
+        subscriptionItemId: "sub_item_starter",
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(cancelSubscriptionItemMock).not.toHaveBeenCalled();
   });
 

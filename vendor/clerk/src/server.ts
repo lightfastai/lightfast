@@ -1,6 +1,12 @@
 import "server-only";
 
-export type { APIKey } from "@clerk/backend";
+export type {
+  APIKey,
+  BillingPlan,
+  BillingSubscription,
+  BillingSubscriptionItem,
+} from "@clerk/backend";
+export type { BillingMoneyAmount } from "@clerk/shared/types";
 export type {
   AllowlistIdentifier,
   ClerkMiddlewareAuth,

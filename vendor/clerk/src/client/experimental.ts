@@ -13,3 +13,13 @@ export {
   useStatements,
   useSubscription,
 } from "@clerk/nextjs/experimental";
+export type {
+  BillingCheckoutResource,
+  BillingMoneyAmount,
+  BillingPaymentMethodResource,
+  BillingPlanResource,
+  BillingStatementResource,
+  BillingSubscriptionItemResource,
+  BillingSubscriptionResource,
+  CheckoutErrors,
+} from "@clerk/shared/types";

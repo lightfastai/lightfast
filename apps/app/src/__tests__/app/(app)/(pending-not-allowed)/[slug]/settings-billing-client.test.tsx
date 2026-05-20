@@ -10,17 +10,16 @@ const checkoutStartMock = vi.fn();
 const makeDefaultPaymentMethodMock = vi.fn();
 const paymentSubmitMock = vi.fn();
 const removePaymentMethodMock = vi.fn();
+const revalidatePaymentMethodsMock = vi.fn();
+const revalidateSubscriptionMock = vi.fn();
 const useAuthMock = vi.fn();
 const useCheckoutMock = vi.fn();
 const useOrganizationMock = vi.fn();
 const usePaymentElementMock = vi.fn();
 const usePaymentMethodsMock = vi.fn();
+const usePlansMock = vi.fn();
 const useStatementsMock = vi.fn();
-const useSuspenseQueryMock = vi.fn();
-
-const overviewQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["orgBilling", "overview"],
-}));
+const useSubscriptionMock = vi.fn();
 
 vi.mock("@repo/app-trpc/react", () => ({
   useTRPC: () => ({
@@ -29,22 +28,20 @@ vi.mock("@repo/app-trpc/react", () => ({
         cancelSubscriptionItem: {
           mutationOptions: (options: unknown) => options,
         },
-        overview: {
-          queryOptions: overviewQueryOptionsMock,
-        },
       },
     },
   }),
 }));
 
 vi.mock("@tanstack/react-query", () => ({
-  useMutation: () => ({
+  useMutation: (options?: { onSettled?: () => void }) => ({
     isPending: false,
-    mutate: cancelMutateMock,
+    mutate: (input: unknown) => {
+      cancelMutateMock(input);
+      options?.onSettled?.();
+    },
     variables: undefined,
   }),
-  useQueryClient: () => ({ invalidateQueries: vi.fn() }),
-  useSuspenseQuery: useSuspenseQueryMock,
 }));
 
 vi.mock("@vendor/clerk/client", () => ({
@@ -99,72 +96,82 @@ vi.mock("@vendor/clerk/client/experimental", () => ({
   useCheckout: useCheckoutMock,
   usePaymentElement: usePaymentElementMock,
   usePaymentMethods: usePaymentMethodsMock,
+  usePlans: usePlansMock,
   useStatements: useStatementsMock,
+  useSubscription: useSubscriptionMock,
 }));
 
 const { BillingSettingsClient } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/billing/_components/billing-settings-client"
 );
 
+const teamAmount = {
+  amount: 6000,
+  amountFormatted: "60.00",
+  currency: "usd",
+  currencySymbol: "$",
+};
+
 const starterPlan = {
-  amount: null,
+  annualFee: null,
+  annualMonthlyFee: null,
+  avatarUrl: null,
   description: "Starter plan",
+  fee: null,
+  features: [],
+  forPayerType: "org",
+  freeTrialDays: null,
+  freeTrialEnabled: false,
+  hasBaseFee: false,
   id: "cplan_free",
   isDefault: true,
+  isRecurring: true,
   name: "Starter",
+  publiclyVisible: true,
   slug: "free_org",
-  tier: "starter",
 };
 
 const teamPlan = {
-  amount: {
-    amount: 6000,
-    amountFormatted: "60.00",
-    currency: "usd",
-    currencySymbol: "$",
-  },
+  ...starterPlan,
   description: "Team plan",
+  fee: teamAmount,
+  hasBaseFee: true,
   id: "cplan_team",
   isDefault: false,
   name: "Team",
   slug: "team",
-  tier: "team",
 };
 
 const teamItem = {
-  amount: teamPlan.amount,
+  amount: teamAmount,
   canceledAt: null,
+  createdAt: new Date("2023-11-14T00:00:00Z"),
   id: "sub_item_team",
   isFreeTrial: false,
   nextPayment: {
-    amount: teamPlan.amount,
-    date: 1_700_086_400_000,
+    amount: teamAmount,
+    date: new Date("2023-11-15T00:00:00Z"),
   },
-  periodEnd: 1_700_086_400_000,
+  pastDueAt: null,
+  periodEnd: new Date("2023-11-15T00:00:00Z"),
+  periodStart: new Date("2023-11-14T00:00:00Z"),
   plan: teamPlan,
   planId: "cplan_team",
   planPeriod: "month",
   status: "active",
 };
 
-function overview(currentItem: typeof teamItem | null = teamItem) {
+function subscription(currentItem: typeof teamItem | null = teamItem) {
   return {
-    businessContact: {
-      email: "sales@lightfast.ai",
-      href: "mailto:sales@lightfast.ai",
-      label: "Contact Sales",
-    },
-    plans: [starterPlan, teamPlan],
-    subscription: {
-      currentItem,
-      eligibleForFreeTrial: false,
-      id: "sub_org_acme",
-      nextPayment: currentItem?.nextPayment ?? null,
-      payerId: "org_acme",
-      status: "active",
-      subscriptionItems: currentItem ? [currentItem] : [],
-      upcomingItem: null,
-    },
+    activeAt: new Date("2023-11-14T00:00:00Z"),
+    createdAt: new Date("2023-11-14T00:00:00Z"),
+    eligibleForFreeTrial: false,
+    id: "sub_org_acme",
+    nextPayment: currentItem?.nextPayment ?? null,
+    pastDueAt: null,
+    status: "active",
+    subscriptionItems: currentItem ? [currentItem] : [],
+    updatedAt: new Date("2023-11-14T00:00:01Z"),
   };
 }
 
@@ -195,16 +202,18 @@ beforeEach(() => {
   checkoutFinalizeMock.mockReset();
   checkoutStartMock.mockReset();
   makeDefaultPaymentMethodMock.mockReset();
-  overviewQueryOptionsMock.mockClear();
   paymentSubmitMock.mockReset();
   removePaymentMethodMock.mockReset();
+  revalidatePaymentMethodsMock.mockReset();
+  revalidateSubscriptionMock.mockReset();
   useAuthMock.mockReset();
   useCheckoutMock.mockReset();
   useOrganizationMock.mockReset();
   usePaymentElementMock.mockReset();
   usePaymentMethodsMock.mockReset();
+  usePlansMock.mockReset();
   useStatementsMock.mockReset();
-  useSuspenseQueryMock.mockReset();
+  useSubscriptionMock.mockReset();
 
   addPaymentMethodMock.mockResolvedValue({});
   checkoutConfirmMock.mockResolvedValue({ error: null });
@@ -215,6 +224,8 @@ beforeEach(() => {
     error: null,
   });
   removePaymentMethodMock.mockResolvedValue({ deleted: true });
+  revalidatePaymentMethodsMock.mockResolvedValue(undefined);
+  revalidateSubscriptionMock.mockResolvedValue(undefined);
 
   useAuthMock.mockReturnValue({
     has: ({ role }: { role?: string }) => role === "org:admin",
@@ -235,10 +246,10 @@ beforeEach(() => {
       start: checkoutStartMock,
       status: "needs_confirmation",
       totals: {
-        totalDueNow: teamPlan.amount,
+        totalDueNow: teamAmount,
       },
     },
-    errors: { global: null },
+    errors: { global: null, raw: null },
     fetchStatus: "idle",
   });
   usePaymentElementMock.mockReturnValue({
@@ -273,6 +284,11 @@ beforeEach(() => {
       },
     ],
     isLoading: false,
+    revalidate: revalidatePaymentMethodsMock,
+  });
+  usePlansMock.mockReturnValue({
+    data: [starterPlan, teamPlan],
+    isLoading: false,
   });
   useStatementsMock.mockReturnValue({
     data: [
@@ -282,18 +298,40 @@ beforeEach(() => {
         status: "closed",
         timestamp: new Date("2026-05-01T00:00:00Z"),
         totals: {
-          grandTotal: teamPlan.amount,
-          subtotal: teamPlan.amount,
+          grandTotal: teamAmount,
+          subtotal: teamAmount,
           taxTotal: null,
         },
       },
     ],
     isLoading: false,
   });
-  useSuspenseQueryMock.mockReturnValue({ data: overview() });
+  useSubscriptionMock.mockReturnValue({
+    data: subscription(),
+    isLoading: false,
+    revalidate: revalidateSubscriptionMock,
+  });
 });
 
 describe("billing settings client", () => {
+  it("loads billing data from Clerk billing hooks", () => {
+    renderBilling();
+
+    expect(usePlansMock).toHaveBeenCalledWith({
+      for: "organization",
+      pageSize: 100,
+    });
+    expect(useSubscriptionMock).toHaveBeenCalledWith({ for: "organization" });
+    expect(usePaymentMethodsMock).toHaveBeenCalledWith({
+      for: "organization",
+      pageSize: 20,
+    });
+    expect(useStatementsMock).toHaveBeenCalledWith({
+      for: "organization",
+      pageSize: 10,
+    });
+  });
+
   it("renders OpenAI-style billing sections without inline plan cards or Clerk managed components", () => {
     renderBilling();
 
@@ -389,10 +427,15 @@ describe("billing settings client", () => {
     expect(cancelMutateMock).toHaveBeenCalledWith({
       subscriptionItemId: "sub_item_team",
     });
+    expect(revalidateSubscriptionMock).toHaveBeenCalled();
   });
 
   it("confirms Team selection before opening checkout", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: overview(null) });
+    useSubscriptionMock.mockReturnValue({
+      data: subscription(null),
+      isLoading: false,
+      revalidate: revalidateSubscriptionMock,
+    });
 
     renderBilling();
     fireEvent.click(screen.getByRole("button", { name: "Adjust plan" }));
@@ -485,6 +528,7 @@ describe("billing settings client", () => {
         paymentToken: "pm_token_new",
       })
     );
+    expect(revalidatePaymentMethodsMock).toHaveBeenCalled();
   });
 
   it("opens statement details from the invoices table", () => {
