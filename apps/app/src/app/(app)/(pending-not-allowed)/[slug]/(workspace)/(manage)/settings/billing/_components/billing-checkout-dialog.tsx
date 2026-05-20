@@ -1,4 +1,3 @@
-import type { BillingPlanResource } from "@vendor/clerk/client/experimental";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -15,8 +14,8 @@ import {
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
+import type { BillingPlan } from "./billing-utils";
 import { formatMoney, planAmountLabel } from "./billing-utils";
-import { LoadingLine } from "./loading-line";
 import { NewPaymentCheckout } from "./new-payment-checkout";
 import { SavedPaymentCheckout } from "./saved-payment-checkout";
 
@@ -29,7 +28,7 @@ export function BillingCheckoutDialog({
   onComplete: () => void;
   onOpenChange: (open: boolean) => void;
   open: boolean;
-  plan: BillingPlanResource;
+  plan: BillingPlan;
 }) {
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -122,6 +121,14 @@ function CheckoutSummary() {
       <p className="mt-1 text-muted-foreground text-sm">
         Due now {formatMoney(checkout.totals.totalDueNow)}
       </p>
+    </div>
+  );
+}
+
+function LoadingLine({ label }: { label: string }) {
+  return (
+    <div className="h-5 animate-pulse rounded bg-muted/40">
+      <span className="sr-only">{label}</span>
     </div>
   );
 }

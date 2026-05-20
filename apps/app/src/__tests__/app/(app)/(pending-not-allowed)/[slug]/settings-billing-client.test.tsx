@@ -4,14 +4,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const addPaymentMethodMock = vi.fn();
 const cancelMutateMock = vi.fn();
+const cancelQueriesMock = vi.fn();
 const checkoutConfirmMock = vi.fn();
 const checkoutFinalizeMock = vi.fn();
 const checkoutStartMock = vi.fn();
+const getQueryDataMock = vi.fn();
+const invalidateQueriesMock = vi.fn();
 const makeDefaultPaymentMethodMock = vi.fn();
+const overviewQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+}));
 const paymentSubmitMock = vi.fn();
 const removePaymentMethodMock = vi.fn();
 const revalidatePaymentMethodsMock = vi.fn();
-const revalidateSubscriptionMock = vi.fn();
+const setQueryDataMock = vi.fn();
+const suspenseQueryOptionsMock = vi.fn();
 const useAuthMock = vi.fn();
 const useCheckoutMock = vi.fn();
 const useOrganizationMock = vi.fn();
@@ -20,11 +27,15 @@ const usePaymentMethodsMock = vi.fn();
 const usePlansMock = vi.fn();
 const useStatementsMock = vi.fn();
 const useSubscriptionMock = vi.fn();
+let overviewData: ReturnType<typeof overview>;
 
 vi.mock("@repo/app-trpc/react", () => ({
   useTRPC: () => ({
     pendingNotAllowed: {
       orgBilling: {
+        overview: {
+          queryOptions: overviewQueryOptionsMock,
+        },
         cancelSubscriptionItem: {
           mutationOptions: (options: unknown) => options,
         },
@@ -34,14 +45,34 @@ vi.mock("@repo/app-trpc/react", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
-  useMutation: (options?: { onSettled?: () => void }) => ({
+  useMutation: (options?: {
+    onMutate?: (input: unknown) => unknown;
+    onSettled?: (
+      data: unknown,
+      error: unknown,
+      input: unknown,
+      context: unknown
+    ) => void;
+  }) => ({
     isPending: false,
     mutate: (input: unknown) => {
       cancelMutateMock(input);
-      options?.onSettled?.();
+      void Promise.resolve(options?.onMutate?.(input)).then((context) => {
+        options?.onSettled?.(undefined, null, input, context);
+      });
     },
     variables: undefined,
   }),
+  useQueryClient: () => ({
+    cancelQueries: cancelQueriesMock,
+    getQueryData: getQueryDataMock,
+    invalidateQueries: invalidateQueriesMock,
+    setQueryData: setQueryDataMock,
+  }),
+  useSuspenseQuery: (options: unknown) => {
+    suspenseQueryOptionsMock(options);
+    return { data: overviewData };
+  },
 }));
 
 vi.mock("@vendor/clerk/client", () => ({
@@ -175,6 +206,18 @@ function subscription(currentItem: typeof teamItem | null = teamItem) {
   };
 }
 
+function overview(
+  currentItem: typeof teamItem | null = teamItem,
+  isAdmin = true
+) {
+  return {
+    isAdmin,
+    orgId: "org_acme",
+    plans: [starterPlan, teamPlan],
+    subscription: subscription(currentItem),
+  };
+}
+
 function renderBilling() {
   return render(<BillingSettingsClient />);
 }
@@ -198,14 +241,19 @@ function expectDialogsToUseShadcnColors() {
 beforeEach(() => {
   addPaymentMethodMock.mockReset();
   cancelMutateMock.mockReset();
+  cancelQueriesMock.mockReset();
   checkoutConfirmMock.mockReset();
   checkoutFinalizeMock.mockReset();
   checkoutStartMock.mockReset();
+  getQueryDataMock.mockReset();
+  invalidateQueriesMock.mockReset();
   makeDefaultPaymentMethodMock.mockReset();
+  overviewQueryOptionsMock.mockClear();
   paymentSubmitMock.mockReset();
   removePaymentMethodMock.mockReset();
   revalidatePaymentMethodsMock.mockReset();
-  revalidateSubscriptionMock.mockReset();
+  setQueryDataMock.mockReset();
+  suspenseQueryOptionsMock.mockClear();
   useAuthMock.mockReset();
   useCheckoutMock.mockReset();
   useOrganizationMock.mockReset();
@@ -225,7 +273,12 @@ beforeEach(() => {
   });
   removePaymentMethodMock.mockResolvedValue({ deleted: true });
   revalidatePaymentMethodsMock.mockResolvedValue(undefined);
-  revalidateSubscriptionMock.mockResolvedValue(undefined);
+  overviewData = overview();
+  getQueryDataMock.mockImplementation(() => overviewData);
+  setQueryDataMock.mockImplementation((_queryKey, value) => {
+    overviewData =
+      typeof value === "function" ? value(overviewData) : value;
+  });
 
   useAuthMock.mockReturnValue({
     has: ({ role }: { role?: string }) => role === "org:admin",
@@ -309,19 +362,21 @@ beforeEach(() => {
   useSubscriptionMock.mockReturnValue({
     data: subscription(),
     isLoading: false,
-    revalidate: revalidateSubscriptionMock,
   });
 });
 
 describe("billing settings client", () => {
-  it("loads billing data from Clerk billing hooks", () => {
+  it("loads SSR billing overview from tRPC and keeps Clerk client hooks for client-only data", () => {
     renderBilling();
 
-    expect(usePlansMock).toHaveBeenCalledWith({
-      for: "organization",
-      pageSize: 100,
-    });
-    expect(useSubscriptionMock).toHaveBeenCalledWith({ for: "organization" });
+    expect(overviewQueryOptionsMock).toHaveBeenCalledOnce();
+    expect(suspenseQueryOptionsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+      })
+    );
+    expect(usePlansMock).not.toHaveBeenCalled();
+    expect(useSubscriptionMock).not.toHaveBeenCalled();
     expect(usePaymentMethodsMock).toHaveBeenCalledWith({
       for: "organization",
       pageSize: 20,
@@ -381,11 +436,7 @@ describe("billing settings client", () => {
   });
 
   it("renders read-only billing status for non-admin members", () => {
-    useAuthMock.mockReturnValue({
-      has: ({ role }: { role?: string }) => role !== "org:admin",
-      isLoaded: true,
-      orgId: "org_acme",
-    });
+    overviewData = overview(teamItem, false);
 
     renderBilling();
 
@@ -400,8 +451,8 @@ describe("billing settings client", () => {
     expect(screen.queryByText("Cancel plan")).not.toBeInTheDocument();
   });
 
-  it("opens a full-screen plan modal and confirms a starter downgrade", () => {
-    renderBilling();
+  it("optimistically schedules a starter downgrade from the plan modal", async () => {
+    const view = renderBilling();
 
     fireEvent.click(screen.getByRole("button", { name: "Adjust plan" }));
 
@@ -427,15 +478,22 @@ describe("billing settings client", () => {
     expect(cancelMutateMock).toHaveBeenCalledWith({
       subscriptionItemId: "sub_item_team",
     });
-    expect(revalidateSubscriptionMock).toHaveBeenCalled();
+    await waitFor(() => expect(setQueryDataMock).toHaveBeenCalled());
+    view.rerender(<BillingSettingsClient />);
+    expect(screen.getAllByText(/Team plan is scheduled to end/i)).toHaveLength(
+      2
+    );
+    expect(screen.queryByRole("button", { name: "Cancel plan" })).toBeNull();
+    expect(cancelQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+    });
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+    });
   });
 
   it("confirms Team selection before opening checkout", () => {
-    useSubscriptionMock.mockReturnValue({
-      data: subscription(null),
-      isLoading: false,
-      revalidate: revalidateSubscriptionMock,
-    });
+    overviewData = overview(null);
 
     renderBilling();
     fireEvent.click(screen.getByRole("button", { name: "Adjust plan" }));

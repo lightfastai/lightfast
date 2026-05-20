@@ -1,10 +1,12 @@
+import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   useCheckout,
   usePaymentMethods,
 } from "@vendor/clerk/client/experimental";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 
 import {
@@ -12,8 +14,6 @@ import {
   checkoutErrorMessage,
   getDefaultPaymentMethod,
 } from "./billing-utils";
-import { CheckoutErrors } from "./checkout-errors";
-import { LoadingLine } from "./loading-line";
 
 export function SavedPaymentCheckout({
   onComplete,
@@ -90,6 +90,43 @@ export function SavedPaymentCheckout({
         )}
         Complete Purchase
       </Button>
+    </div>
+  );
+}
+
+function CheckoutErrors({
+  errorMessage,
+  errors,
+}: {
+  errorMessage: string | null;
+  errors: ClerkCheckoutErrors["global"];
+}) {
+  const messages = [
+    ...(errorMessage ? [errorMessage] : []),
+    ...(errors ?? []).map(
+      (error) => error.longMessage ?? error.message ?? "Checkout failed"
+    ),
+  ];
+  if (messages.length === 0) {
+    return null;
+  }
+
+  return (
+    <Alert variant="destructive">
+      <AlertCircle className="size-4" />
+      <AlertDescription>
+        {messages.map((message) => (
+          <p key={message}>{message}</p>
+        ))}
+      </AlertDescription>
+    </Alert>
+  );
+}
+
+function LoadingLine({ label }: { label: string }) {
+  return (
+    <div className="h-5 animate-pulse rounded bg-muted/40">
+      <span className="sr-only">{label}</span>
     </div>
   );
 }

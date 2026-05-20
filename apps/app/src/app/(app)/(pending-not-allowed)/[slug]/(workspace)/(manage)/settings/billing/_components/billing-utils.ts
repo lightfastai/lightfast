@@ -1,9 +1,19 @@
+import type { AppRouterOutputs } from "@api/app";
 import type {
-  BillingMoneyAmount,
   BillingPaymentMethodResource,
-  BillingPlanResource,
-  BillingSubscriptionResource,
 } from "@vendor/clerk/client/experimental";
+
+export type BillingOverview =
+  AppRouterOutputs["pendingNotAllowed"]["orgBilling"]["overview"];
+export type BillingPlan = BillingOverview["plans"][number];
+export type BillingSubscription = BillingOverview["subscription"];
+export type BillingSubscriptionItem =
+  BillingSubscription["subscriptionItems"][number];
+
+export type BillingMoneyAmount = {
+  amountFormatted: string;
+  currencySymbol: string;
+};
 
 export const businessContact = {
   email: "sales@lightfast.ai",
@@ -38,7 +48,7 @@ export function statementStatusLabel(status: string) {
 }
 
 export function tierForPlan(
-  plan?: Pick<BillingPlanResource, "isDefault" | "slug"> | null
+  plan?: Pick<BillingPlan, "isDefault" | "slug"> | null
 ) {
   if (!plan) {
     return null;
@@ -52,7 +62,9 @@ export function tierForPlan(
   return null;
 }
 
-export function planAmountLabel(plan?: BillingPlanResource | null) {
+export function planAmountLabel(
+  plan?: Pick<BillingPlan, "fee"> | { fee?: BillingMoneyAmount | null } | null
+) {
   if (!plan?.fee) {
     return "Free";
   }
@@ -107,16 +119,16 @@ export function paymentErrorMessage(error: unknown) {
   return "Payment method could not be updated";
 }
 
-export function getStarterPlan(plans: BillingPlanResource[]) {
+export function getStarterPlan(plans: BillingPlan[]) {
   return plans.find((plan) => tierForPlan(plan) === "starter") ?? null;
 }
 
-export function getTeamPlan(plans: BillingPlanResource[]) {
+export function getTeamPlan(plans: BillingPlan[]) {
   return plans.find((plan) => tierForPlan(plan) === "team") ?? null;
 }
 
 export function getCurrentSubscriptionItem(
-  subscription?: BillingSubscriptionResource | null
+  subscription?: BillingSubscription | null
 ) {
   const activeItems =
     subscription?.subscriptionItems.filter(

@@ -5,6 +5,7 @@ import type { AuthIdentity } from "../auth/identity";
 
 const authMock = vi.fn();
 const cancelSubscriptionItemMock = vi.fn();
+const getPlanListMock = vi.fn();
 const getOrganizationBillingSubscriptionMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -20,6 +21,7 @@ vi.mock("@vendor/clerk/server", () => ({
     Promise.resolve({
       billing: {
         cancelSubscriptionItem: cancelSubscriptionItemMock,
+        getPlanList: getPlanListMock,
         getOrganizationBillingSubscription:
           getOrganizationBillingSubscriptionMock,
       },
@@ -133,6 +135,7 @@ function caller(identity = activeIdentity) {
 beforeEach(() => {
   authMock.mockReset();
   cancelSubscriptionItemMock.mockReset();
+  getPlanListMock.mockReset();
   getOrganizationBillingSubscriptionMock.mockReset();
 
   authMock.mockResolvedValue({
@@ -156,12 +159,63 @@ beforeEach(() => {
     subscriptionItems: [teamSubscriptionItem],
     updatedAt: 1_700_000_001_000,
   });
+  getPlanListMock.mockResolvedValue({
+    data: [starterPlan, teamPlan],
+  });
 });
 
 describe("orgBillingRouter public surface", () => {
-  it("exposes only the privileged cancellation mutation", () => {
-    expect(orgBillingRouter).not.toHaveProperty("overview");
+  it("exposes overview reads and the privileged cancellation mutation", () => {
+    expect(orgBillingRouter).toHaveProperty("overview");
     expect(orgBillingRouter).toHaveProperty("cancelSubscriptionItem");
+  });
+});
+
+describe("orgBilling.overview", () => {
+  it("returns normalized organization billing data for SSR", async () => {
+    await expect(caller().orgBilling.overview()).resolves.toMatchObject({
+      isAdmin: true,
+      orgId: "org_acme",
+      plans: [
+        { id: "cplan_free", name: "Starter", slug: "free_org" },
+        { id: "cplan_team", name: "Team", slug: "team" },
+      ],
+      subscription: {
+        id: "sub_org_acme",
+        nextPayment: {
+          amount: teamPlan.fee,
+          date: 1_700_086_400_000,
+        },
+        subscriptionItems: [
+          {
+            canceledAt: null,
+            id: "sub_item_team",
+            plan: { id: "cplan_team", slug: "team" },
+          },
+        ],
+      },
+    });
+
+    expect(getPlanListMock).toHaveBeenCalledWith({
+      limit: 100,
+      payerType: "org",
+    });
+    expect(getOrganizationBillingSubscriptionMock).toHaveBeenCalledWith(
+      "org_acme"
+    );
+  });
+
+  it("marks non-admin members as read-only", async () => {
+    authMock.mockResolvedValue({
+      has: ({ role }: { role?: string }) => role !== "org:admin",
+      orgId: "org_acme",
+      userId: "user_current",
+    });
+
+    await expect(caller().orgBilling.overview()).resolves.toMatchObject({
+      isAdmin: false,
+      orgId: "org_acme",
+    });
   });
 });
 
@@ -237,7 +291,11 @@ describe("orgBilling.cancelSubscriptionItem", () => {
       caller().orgBilling.cancelSubscriptionItem({
         subscriptionItemId: "sub_item_team",
       })
-    ).resolves.toEqual({ success: true });
+    ).resolves.toMatchObject({
+      canceledAt: 1_700_000_002_000,
+      id: "sub_item_team",
+      plan: { id: "cplan_team", slug: "team" },
+    });
     expect(cancelSubscriptionItemMock).toHaveBeenCalledWith("sub_item_team", {
       endNow: false,
     });

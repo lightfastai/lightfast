@@ -1,4 +1,3 @@
-import type { BillingPlanResource } from "@vendor/clerk/client/experimental";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -12,10 +11,12 @@ import { cn } from "@repo/ui/lib/utils";
 import { Building2, Check, CreditCard, Sparkles, X } from "lucide-react";
 import type { ReactNode } from "react";
 
+import type { BillingPlan } from "./billing-utils";
 import { businessContact, planAmountLabel } from "./billing-utils";
 
 export function PlanSelectionDialog({
   currentTier,
+  isStarterSelectionDisabled = false,
   isConfirming,
   onOpenChange,
   onSelectBusiness,
@@ -26,14 +27,15 @@ export function PlanSelectionDialog({
   teamPlan,
 }: {
   currentTier: "starter" | "team" | null;
+  isStarterSelectionDisabled?: boolean;
   isConfirming: boolean;
   onOpenChange: (open: boolean) => void;
   onSelectBusiness: () => void;
   onSelectStarter: () => void;
   onSelectTeam: () => void;
   open: boolean;
-  starterPlan: BillingPlanResource | null;
-  teamPlan: BillingPlanResource | null;
+  starterPlan: BillingPlan | null;
+  teamPlan: BillingPlan | null;
 }) {
   const starterAmount = starterPlan ? planAmountLabel(starterPlan) : "Free";
   const teamAmount = teamPlan ? planAmountLabel(teamPlan) : "$60.00/month";
@@ -73,6 +75,8 @@ export function PlanSelectionDialog({
                 buttonLabel={
                   currentTier === "starter"
                     ? "Your current plan"
+                    : isStarterSelectionDisabled
+                      ? "Scheduled"
                     : "Switch to Starter"
                 }
                 description="A free organization workspace for getting started."
@@ -82,7 +86,9 @@ export function PlanSelectionDialog({
                   "Basic access",
                 ]}
                 icon={<Sparkles className="size-5" />}
-                isCurrent={currentTier === "starter"}
+                isDisabled={
+                  currentTier === "starter" || isStarterSelectionDisabled
+                }
                 onSelect={onSelectStarter}
                 title="Starter"
               />
@@ -101,7 +107,7 @@ export function PlanSelectionDialog({
                   "Team workspace billing",
                 ]}
                 icon={<CreditCard className="size-5" />}
-                isCurrent={currentTier === "team"}
+                isDisabled={currentTier === "team"}
                 onSelect={onSelectTeam}
                 title="Team"
               />
@@ -115,7 +121,7 @@ export function PlanSelectionDialog({
                   "Dedicated support",
                 ]}
                 icon={<Building2 className="size-5" />}
-                isCurrent={false}
+                isDisabled={false}
                 onSelect={onSelectBusiness}
                 title="Business"
               />
@@ -133,7 +139,7 @@ function PlanChoiceCard({
   description,
   features,
   icon,
-  isCurrent,
+  isDisabled,
   onSelect,
   title,
 }: {
@@ -142,7 +148,7 @@ function PlanChoiceCard({
   description: string;
   features: string[];
   icon: ReactNode;
-  isCurrent: boolean;
+  isDisabled: boolean;
   onSelect: () => void;
   title: string;
 }) {
@@ -156,9 +162,9 @@ function PlanChoiceCard({
       <p className="mt-6 font-medium text-lg">{description}</p>
       <Button
         className="mt-8 w-full rounded-full"
-        disabled={isCurrent}
+        disabled={isDisabled}
         onClick={onSelect}
-        variant={isCurrent ? "secondary" : "default"}
+        variant={isDisabled ? "secondary" : "default"}
       >
         {buttonLabel}
       </Button>

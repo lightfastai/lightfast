@@ -12,7 +12,6 @@ import { AlertCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 import { cardLabel, paymentErrorMessage } from "./billing-utils";
-import { LoadingLine } from "./loading-line";
 import { NewPaymentMethodForm } from "./new-payment-method-form";
 
 export function PaymentMethodDialog({
@@ -150,5 +149,13 @@ export function PaymentMethodDialog({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function LoadingLine({ label }: { label: string }) {
+  return (
+    <div className="h-5 animate-pulse rounded bg-muted/40">
+      <span className="sr-only">{label}</span>
+    </div>
   );
 }

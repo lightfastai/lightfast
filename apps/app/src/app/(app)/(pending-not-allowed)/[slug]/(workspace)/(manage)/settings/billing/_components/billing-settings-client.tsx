@@ -1,53 +1,54 @@
 "use client";
 
-import type {
-  BillingPlanResource,
-  BillingStatementResource,
-  BillingSubscriptionItemResource,
-} from "@vendor/clerk/client/experimental";
 import { useTRPC } from "@repo/app-trpc/react";
-import { useMutation } from "@tanstack/react-query";
-import { useAuth } from "@vendor/clerk/client";
 import {
   usePaymentMethods,
-  usePlans,
   useStatements,
-  useSubscription,
 } from "@vendor/clerk/client/experimental";
+import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
 import { useState } from "react";
 
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
+import {
+  CancellationSection,
+  InvoicesSection,
+  PaymentSection,
+  PlanSection,
+} from "./billing-sections";
 import {
   getCurrentSubscriptionItem,
   getDefaultPaymentMethod,
   getStarterPlan,
   getTeamPlan,
   tierForPlan,
+  type BillingOverview,
+  type BillingPlan,
+  type BillingSubscriptionItem,
 } from "./billing-utils";
-import { CancellationSection } from "./cancellation-section";
-import { ConfirmBusinessDialog } from "./confirm-business-dialog";
-import { ConfirmDowngradeDialog } from "./confirm-downgrade-dialog";
-import { ConfirmUpgradeDialog } from "./confirm-upgrade-dialog";
-import { InvoicesSection } from "./invoices-section";
-import { LoadingLine } from "./loading-line";
 import { PaymentMethodDialog } from "./payment-method-dialog";
-import { PaymentSection } from "./payment-section";
-import { PlanSection } from "./plan-section";
+import {
+  ConfirmBusinessDialog,
+  ConfirmDowngradeDialog,
+  ConfirmUpgradeDialog,
+} from "./plan-dialogs";
 import { PlanSelectionDialog } from "./plan-selection-dialog";
 import { StatementDetailsDialog } from "./statement-details-dialog";
 
 export function BillingSettingsClient() {
-  const { has, isLoaded, orgId } = useAuth();
-  const isAdmin = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const overviewQueryOptions =
+    trpc.pendingNotAllowed.orgBilling.overview.queryOptions();
+  const { data: overview } = useSuspenseQuery({
+    ...overviewQueryOptions,
+    staleTime: 5 * 60 * 1000,
+  });
 
-  const plansQuery = usePlans({
-    for: "organization",
-    pageSize: 100,
-  });
-  const subscriptionQuery = useSubscription({
-    for: "organization",
-  });
   const paymentMethodsQuery = usePaymentMethods({
     for: "organization",
     pageSize: 20,
@@ -57,8 +58,7 @@ export function BillingSettingsClient() {
     pageSize: 10,
   });
 
-  const plans = plansQuery.data ?? [];
-  const subscription = subscriptionQuery.data ?? null;
+  const { isAdmin, orgId, plans, subscription } = overview;
   const paymentMethods = paymentMethodsQuery.data ?? [];
   const statements = statementsQuery.data ?? [];
   const starterPlan = getStarterPlan(plans);
@@ -75,29 +75,91 @@ export function BillingSettingsClient() {
     !currentItem.canceledAt
       ? currentItem
       : null;
+  const canceledTeamItem =
+    currentItem &&
+    tierForPlan(currentItem.plan) === "team" &&
+    currentItem.canceledAt
+      ? currentItem
+      : null;
 
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
   const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const [downgradeItem, setDowngradeItem] =
-    useState<BillingSubscriptionItemResource | null>(null);
-  const [upgradePlan, setUpgradePlan] = useState<BillingPlanResource | null>(
-    null
-  );
+    useState<BillingSubscriptionItem | null>(null);
+  const [upgradePlan, setUpgradePlan] = useState<BillingPlan | null>(null);
   const [isBusinessConfirmOpen, setIsBusinessConfirmOpen] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState<BillingPlanResource | null>(
-    null
-  );
+  const [checkoutPlan, setCheckoutPlan] = useState<BillingPlan | null>(null);
   const [selectedStatement, setSelectedStatement] =
     useState<BillingStatementResource | null>(null);
 
   const cancelMutation = useMutation(
     trpc.pendingNotAllowed.orgBilling.cancelSubscriptionItem.mutationOptions({
       meta: { errorTitle: "Failed to schedule cancellation" },
-      onSettled: () => void subscriptionQuery.revalidate(),
+      onMutate: async (input) => {
+        await queryClient.cancelQueries({
+          queryKey: overviewQueryOptions.queryKey,
+        });
+
+        const previousOverview = queryClient.getQueryData<BillingOverview>(
+          overviewQueryOptions.queryKey
+        );
+        const canceledAt = Date.now();
+
+        queryClient.setQueryData(
+          overviewQueryOptions.queryKey,
+          (old: BillingOverview | undefined) =>
+            old
+              ? {
+                  ...old,
+                  subscription: {
+                    ...old.subscription,
+                    subscriptionItems: old.subscription.subscriptionItems.map(
+                      (item) =>
+                        item.id === input.subscriptionItemId
+                          ? { ...item, canceledAt }
+                          : item
+                    ),
+                  },
+                }
+              : old
+        );
+
+        return { previousOverview };
+      },
+      onError: (_err, _input, context) => {
+        if (context?.previousOverview) {
+          queryClient.setQueryData(
+            overviewQueryOptions.queryKey,
+            context.previousOverview
+          );
+        }
+      },
+      onSuccess: (updatedItem) => {
+        queryClient.setQueryData(
+          overviewQueryOptions.queryKey,
+          (old: BillingOverview | undefined) =>
+            old
+              ? {
+                  ...old,
+                  subscription: {
+                    ...old.subscription,
+                    subscriptionItems: old.subscription.subscriptionItems.map(
+                      (item) =>
+                        item.id === updatedItem.id ? updatedItem : item
+                    ),
+                  },
+                }
+              : old
+        );
+      },
+      onSettled: () =>
+        void queryClient.invalidateQueries({
+          queryKey: overviewQueryOptions.queryKey,
+        }),
     })
   );
 
-  function confirmDowngrade(item: BillingSubscriptionItemResource) {
+  function confirmDowngrade(item: BillingSubscriptionItem) {
     cancelMutation.mutate({
       subscriptionItemId: item.id,
     });
@@ -105,7 +167,7 @@ export function BillingSettingsClient() {
     setIsPlanDialogOpen(false);
   }
 
-  function confirmUpgrade(plan: BillingPlanResource) {
+  function confirmUpgrade(plan: BillingPlan) {
     setCheckoutPlan(plan);
     setUpgradePlan(null);
     setIsPlanDialogOpen(false);
@@ -123,44 +185,44 @@ export function BillingSettingsClient() {
         </p>
       </div>
 
-      {plansQuery.isLoading || subscriptionQuery.isLoading ? (
-        <LoadingLine label="Loading billing" />
-      ) : (
-        <div className="space-y-10">
-          <PlanSection
-            currentAmount={currentAmount}
-            currentPlanName={currentPlanName}
-            currentTier={currentTier}
-            isAdmin={isAdmin}
-            nextPayment={subscription?.nextPayment ?? null}
-            onAdjustPlan={() => setIsPlanDialogOpen(true)}
-            status={subscription?.status ?? "active"}
-          />
+      <div className="space-y-10">
+        <PlanSection
+          canceledAt={currentItem?.canceledAt ?? null}
+          currentAmount={currentAmount}
+          currentPlanName={currentPlanName}
+          currentTier={currentTier}
+          isAdmin={isAdmin}
+          nextPayment={subscription?.nextPayment ?? null}
+          onAdjustPlan={() => setIsPlanDialogOpen(true)}
+          periodEnd={currentItem?.periodEnd ?? null}
+          status={subscription?.status ?? "active"}
+        />
 
-          <PaymentSection
-            defaultPaymentMethod={defaultPaymentMethod}
-            isAdmin={isAdmin}
-            isLoading={paymentMethodsQuery.isLoading}
-            onUpdate={() => setIsPaymentDialogOpen(true)}
-          />
+        <PaymentSection
+          defaultPaymentMethod={defaultPaymentMethod}
+          isAdmin={isAdmin}
+          isLoading={paymentMethodsQuery.isLoading}
+          onUpdate={() => setIsPaymentDialogOpen(true)}
+        />
 
-          <InvoicesSection
-            isLoading={statementsQuery.isLoading}
-            onViewStatement={setSelectedStatement}
-            statements={statements}
-          />
+        <InvoicesSection
+          isLoading={statementsQuery.isLoading}
+          onViewStatement={setSelectedStatement}
+          statements={statements}
+        />
 
-          <CancellationSection
-            canCancel={!!cancelableTeamItem}
-            isAdmin={isAdmin}
-            onCancelPlan={() => {
-              if (cancelableTeamItem) {
-                setDowngradeItem(cancelableTeamItem);
-              }
-            }}
-          />
-        </div>
-      )}
+        <CancellationSection
+          canceledAt={canceledTeamItem?.canceledAt ?? null}
+          canCancel={!!cancelableTeamItem}
+          isAdmin={isAdmin}
+          onCancelPlan={() => {
+            if (cancelableTeamItem) {
+              setDowngradeItem(cancelableTeamItem);
+            }
+          }}
+          periodEnd={canceledTeamItem?.periodEnd ?? null}
+        />
+      </div>
 
       {!isAdmin && (
         <div className="rounded-lg border border-border/60 px-4 py-4">
@@ -175,6 +237,7 @@ export function BillingSettingsClient() {
 
       <PlanSelectionDialog
         currentTier={currentTier}
+        isStarterSelectionDisabled={!!canceledTeamItem}
         isConfirming={
           !!downgradeItem || !!upgradePlan || isBusinessConfirmOpen
         }
@@ -235,7 +298,9 @@ export function BillingSettingsClient() {
         <BillingCheckoutDialog
           onComplete={() => {
             setCheckoutPlan(null);
-            void subscriptionQuery.revalidate();
+            void queryClient.invalidateQueries({
+              queryKey: overviewQueryOptions.queryKey,
+            });
           }}
           onOpenChange={(open) => {
             if (!open) {

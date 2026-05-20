@@ -1,15 +1,16 @@
+import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
+import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   PaymentElement,
   useCheckout,
   usePaymentElement,
 } from "@vendor/clerk/client/experimental";
-import { Loader2 } from "lucide-react";
+import { AlertCircle, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useState } from "react";
 
 import { checkoutErrorMessage } from "./billing-utils";
-import { CheckoutErrors } from "./checkout-errors";
 
 export function NewPaymentCheckout({
   onComplete,
@@ -67,5 +68,34 @@ export function NewPaymentCheckout({
         Pay with new card
       </Button>
     </form>
+  );
+}
+
+function CheckoutErrors({
+  errorMessage,
+  errors,
+}: {
+  errorMessage: string | null;
+  errors: ClerkCheckoutErrors["global"];
+}) {
+  const messages = [
+    ...(errorMessage ? [errorMessage] : []),
+    ...(errors ?? []).map(
+      (error) => error.longMessage ?? error.message ?? "Checkout failed"
+    ),
+  ];
+  if (messages.length === 0) {
+    return null;
+  }
+
+  return (
+    <Alert variant="destructive">
+      <AlertCircle className="size-4" />
+      <AlertDescription>
+        {messages.map((message) => (
+          <p key={message}>{message}</p>
+        ))}
+      </AlertDescription>
+    </Alert>
   );
 }
