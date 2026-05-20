@@ -1,7 +1,6 @@
+import { getQueryClient, trpc } from "@repo/app-trpc/server";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
-import { requireOrgAccess } from "~/lib/org-access-clerk";
-import { getOrgBindingGate } from "~/lib/org-binding-gate";
 import { BindGithubCard } from "./_components/bind-github-card";
 
 interface BindTaskPageProps {
@@ -11,14 +10,16 @@ interface BindTaskPageProps {
 /**
  * v1 org setup page — reachable before the org is bound.
  *
- * It sits outside the `(bound)` route group so its own gate never redirects to
- * itself; a bound org that lands here is sent back to the workspace root.
- * Membership/slug access is already enforced by the parent `[slug]/layout.tsx`.
+ * It sits under the task layout so setup does not render the workspace sidebar.
+ * The proxy allows this route through for unbound orgs; a bound org that lands
+ * here is sent back to the workspace root. Membership/slug access is already
+ * enforced by the parent `[slug]/layout.tsx`.
  */
 export default async function BindTaskPage({ params }: BindTaskPageProps) {
   const { slug } = await params;
-  const { org } = await requireOrgAccess(slug);
-  const gate = await getOrgBindingGate(org.id);
+  const gate = await getQueryClient().fetchQuery(
+    trpc.pendingAllowed.organization.getBySlug.queryOptions({ slug })
+  );
 
   if (gate.bindingStatus === "bound") {
     redirect(`/${slug}` as Route);
