@@ -88,6 +88,9 @@ packages/console-types/openapi.json
 # clerk
 .clerk/tmp/
 
+# dev:emulate generated seed (Clerk frontend API URL baked in per-tenant)
+scripts/dev-emulate.seed.yaml
+
 # temporary files
 *.tmp
 *.temp
@@ -158,3 +161,4 @@ worktrees/
 
 # agent-browser profiles (Clerk test sessions, cookies, meta sidecars)
 .agent-browser/
+.worktrees/
