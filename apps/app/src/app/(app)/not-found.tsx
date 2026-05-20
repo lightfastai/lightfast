@@ -1,4 +1,5 @@
 import { Button } from "@repo/ui/components/ui/button";
+import type { Route } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
@@ -35,7 +36,7 @@ export default function AppNotFound() {
               size="lg"
               variant="outline"
             >
-              <Link href="/">Return Home</Link>
+              <Link href={"/" as Route}>Return Home</Link>
             </Button>
           </div>
         </div>

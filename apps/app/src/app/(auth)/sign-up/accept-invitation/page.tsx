@@ -6,6 +6,7 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useClerk, useSignUp, useUser } from "@vendor/clerk/client";
 import type { OAuthStrategy } from "@vendor/clerk/types";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
+import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { env } from "~/env";
@@ -20,7 +21,7 @@ import { makeFinalizeNavigate } from "../../_hooks/auth-navigate";
 import { authBreadcrumb, authSpan } from "../../_hooks/auth-telemetry";
 import { type AuthErrorCode, authErrorCodes } from "../../_lib/search-params";
 
-const SUCCESS_REDIRECT = "/";
+const SUCCESS_REDIRECT = "/" as Route;
 
 function parseErrorCode(value: string | null): AuthErrorCode | null {
   if (!value) {
