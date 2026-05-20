@@ -8,20 +8,8 @@ import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 
-import { boundOrgProcedure } from "../../trpc";
-
-function isClerkNotFound(err: unknown): boolean {
-  if (!err || typeof err !== "object") {
-    return false;
-  }
-  if ("status" in err && (err as { status?: number }).status === 404) {
-    return true;
-  }
-  const errs = (err as { errors?: { code?: string }[] }).errors;
-  return (
-    Array.isArray(errs) && errs.some((e) => e.code === "resource_not_found")
-  );
-}
+import { isClerkResourceNotFound } from "../../auth/clerk-errors";
+import { pendingNotAllowedProcedure } from "../../trpc";
 
 /**
  * Organization API Keys Router (Clerk-backed)
@@ -31,7 +19,7 @@ function isClerkNotFound(err: unknown): boolean {
  * only present on `create` — surface it once and never read it again.
  */
 export const orgApiKeysRouter = {
-  list: boundOrgProcedure.query(async ({ ctx }) => {
+  list: pendingNotAllowedProcedure.query(async ({ ctx }) => {
     const clerk = await clerkClient();
     const { data } = await clerk.apiKeys.list({
       subject: ctx.auth.identity.orgId,
@@ -42,7 +30,7 @@ export const orgApiKeysRouter = {
     return data.map((k) => ({ ...k }));
   }),
 
-  create: boundOrgProcedure
+  create: pendingNotAllowedProcedure
     .input(createOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
@@ -62,7 +50,7 @@ export const orgApiKeysRouter = {
       return { ...key };
     }),
 
-  revoke: boundOrgProcedure
+  revoke: pendingNotAllowedProcedure
     .input(revokeOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
@@ -73,7 +61,7 @@ export const orgApiKeysRouter = {
           revocationReason: input.revocationReason ?? null,
         });
       } catch (err) {
-        if (isClerkNotFound(err)) {
+        if (isClerkResourceNotFound(err)) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "API key not found",
@@ -96,7 +84,7 @@ export const orgApiKeysRouter = {
       return { success: true };
     }),
 
-  delete: boundOrgProcedure
+  delete: pendingNotAllowedProcedure
     .input(deleteOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
@@ -104,7 +92,7 @@ export const orgApiKeysRouter = {
       try {
         existing = await clerk.apiKeys.get(input.keyId);
       } catch (err) {
-        if (isClerkNotFound(err)) {
+        if (isClerkResourceNotFound(err)) {
           throw new TRPCError({
             code: "NOT_FOUND",
             message: "API key not found",

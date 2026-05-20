@@ -5,10 +5,10 @@
  * the operation's target:
  * - `pendingAllowed`:    admits identity `pending` OR `active`.
  *                        Onboarding-safe surface.
- * - `pendingNotAllowed`: requires identity `active`. Procedures inside refine
- *                        further by binding status: `setupProcedure` stays
- *                        reachable before an org is bound (`task`), while
- *                        `boundOrgProcedure` requires a bound org (`orgApiKeys`).
+ * - `pendingNotAllowed`: requires identity `active`. Settings/setup surfaces
+ *                        that must stay reachable before binding live here;
+ *                        bound-only product procedures opt into
+ *                        `boundOrgProcedure`.
  *
  * Naming the boundary by the gate lets us add procedures without renaming
  * the grouping when an operation's target evolves.

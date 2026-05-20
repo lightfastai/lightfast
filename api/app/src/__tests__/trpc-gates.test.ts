@@ -16,6 +16,11 @@ vi.mock("@vendor/clerk/env", () => ({
 
 const getOrganizationMock = vi.fn();
 const updateOrganizationMock = vi.fn();
+const apiKeysCreateMock = vi.fn();
+const apiKeysDeleteMock = vi.fn();
+const apiKeysGetMock = vi.fn();
+const apiKeysListMock = vi.fn();
+const apiKeysRevokeMock = vi.fn();
 
 vi.mock("@vendor/clerk/server", () => ({
   clerkClient: () =>
@@ -23,6 +28,13 @@ vi.mock("@vendor/clerk/server", () => ({
       organizations: {
         getOrganization: getOrganizationMock,
         updateOrganization: updateOrganizationMock,
+      },
+      apiKeys: {
+        create: apiKeysCreateMock,
+        delete: apiKeysDeleteMock,
+        get: apiKeysGetMock,
+        list: apiKeysListMock,
+        revoke: apiKeysRevokeMock,
       },
     }),
   auth: vi.fn(),
@@ -140,6 +152,21 @@ beforeEach(() => {
   getOrganizationMock.mockResolvedValue({ publicMetadata: {} });
   updateOrganizationMock.mockReset();
   updateOrganizationMock.mockResolvedValue(undefined);
+  apiKeysCreateMock.mockReset();
+  apiKeysCreateMock.mockResolvedValue({
+    id: "ak_test",
+    name: "Test key",
+    secret: "lf_test_secret",
+    subject: "org_test",
+  });
+  apiKeysDeleteMock.mockReset();
+  apiKeysDeleteMock.mockResolvedValue(undefined);
+  apiKeysGetMock.mockReset();
+  apiKeysGetMock.mockResolvedValue({ id: "ak_test", subject: "org_test" });
+  apiKeysListMock.mockReset();
+  apiKeysListMock.mockResolvedValue({ data: [] });
+  apiKeysRevokeMock.mockReset();
+  apiKeysRevokeMock.mockResolvedValue({ id: "ak_test", subject: "org_test" });
 });
 
 // ----- boundOrgProcedure -----------------------------------------------------
@@ -212,27 +239,41 @@ describe("setupProcedure", () => {
   });
 });
 
-// ----- orgApiKeys is gated by boundOrgProcedure ------------------------------
+// ----- orgApiKeys is active-org settings surface -----------------------------
 
 describe("orgApiKeys", () => {
-  it.each([
-    "list",
-    "create",
-    "revoke",
-    "delete",
-  ] as const)("%s rejects an unbound active org before reaching its handler", async (op) => {
+  it("allows an unbound active org to list keys", async () => {
     const caller = makeCaller(active("unbound"));
-    // The gate runs before input parsing, so an empty payload still rejects.
-    const ops = caller.orgApiKeys as unknown as Record<
-      string,
-      (input?: unknown) => Promise<unknown>
-    >;
-    const invoke = ops[op];
-    if (!invoke) {
-      throw new Error(`orgApiKeys.${op} is not callable`);
-    }
+    await expect(caller.orgApiKeys.list()).resolves.toEqual([]);
+    expect(apiKeysListMock).toHaveBeenCalledWith({
+      includeInvalid: true,
+      subject: "org_test",
+    });
+  });
 
-    await expect(invoke({})).rejects.toMatchObject({ code: "FORBIDDEN" });
+  it("allows an unbound active org to create keys", async () => {
+    const caller = makeCaller(active("unbound"));
+    await expect(
+      caller.orgApiKeys.create({ name: "Test key" })
+    ).resolves.toMatchObject({
+      id: "ak_test",
+      secret: "lf_test_secret",
+      subject: "org_test",
+    });
+  });
+
+  it("allows an unbound active org to revoke keys", async () => {
+    const caller = makeCaller(active("unbound"));
+    await expect(
+      caller.orgApiKeys.revoke({ keyId: "ak_test" })
+    ).resolves.toEqual({ success: true });
+  });
+
+  it("allows an unbound active org to delete keys", async () => {
+    const caller = makeCaller(active("unbound"));
+    await expect(
+      caller.orgApiKeys.delete({ keyId: "ak_test" })
+    ).resolves.toEqual({ success: true });
   });
 });
 

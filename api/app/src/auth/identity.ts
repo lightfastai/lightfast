@@ -1,56 +1,24 @@
+import { isOrgBound, type Database } from "@db/app";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { auth, verifyToken } from "@vendor/clerk/server";
 import { z } from "zod";
 
 /**
- * Lightfast-owned Clerk session claims.
- *
- * Augments Clerk's global `CustomJwtSessionClaims` so `auth()`'s typed
- * `sessionClaims` exposes `lf_binding_status`. The claim is minted by Clerk
- * from `org.public_metadata.lightfast.binding.status` (see the Phase 0 Clerk
- * configuration). It is read here, never written — the binding mirror service
- * owns the org metadata that backs it.
- */
-declare global {
-  interface CustomJwtSessionClaims {
-    /** Org binding-gate mirror. Absent/empty for orgs that have not bound. */
-    lf_binding_status?: string;
-  }
-}
-
-/**
  * Org binding gate — has the active org completed source-control setup?
  *
  *   bound   → at least one active Binding; product features are reachable.
- *   unbound → no Binding yet (also the fail-closed default for missing claims).
+ *   unbound → no active Binding yet.
  *   revoked → a Binding existed and was revoked; treated as not usable.
  */
 export type BindingStatus = "bound" | "unbound" | "revoked";
 
 /**
  * Org-level gate signal carried on an `active` identity. Resolved from the
- * verified Clerk `lf_binding_status` claim via `parseBindingStatus`; enforced
- * server-side by tRPC's `boundOrgProcedure`.
+ * authoritative Lightfast DB binding; enforced server-side by tRPC's
+ * `boundOrgProcedure`.
  */
 export interface OrgGate {
   bindingStatus: BindingStatus;
-}
-
-/**
- * Normalises the raw `lf_binding_status` claim into a `BindingStatus`.
- *
- * Only the exact strings `"bound"` and `"revoked"` are honoured. Everything
- * else — missing, null, empty, or any unknown value — collapses to `unbound`
- * so a misconfigured or stale token fails closed.
- */
-export function parseBindingStatus(value: unknown): BindingStatus {
-  if (value === "bound") {
-    return "bound";
-  }
-  if (value === "revoked") {
-    return "revoked";
-  }
-  return "unbound";
 }
 
 /**
@@ -81,11 +49,23 @@ export function authIdentity(
   return { type: "active", userId, orgId, orgGate: { bindingStatus } };
 }
 
+async function authIdentityFromDb(
+  db: Database,
+  userId: string,
+  orgId: string | null | undefined
+): Promise<AuthIdentity> {
+  if (!orgId) {
+    return { type: "pending", userId };
+  }
+  const bound = await isOrgBound(db, orgId);
+  return authIdentity(userId, orgId, bound ? "bound" : "unbound");
+}
+
 // Hoisted so config errors surface at boot, not per-request.
 const CLERK_SECRET_KEY = clerkEnvBase.CLERK_SECRET_KEY;
 
 /**
- * Shape of the Clerk session JWT claims we depend on.
+ * Shape of the Clerk bearer JWT claims we depend on.
  * Validated at the system boundary so a Clerk claim rename fails loudly
  * instead of silently producing `unauthenticated` requests.
  */
@@ -98,11 +78,6 @@ const ClerkJwtClaims = z.object({
    * never fail parsing into `unauthenticated`.
    */
   org_id: z.string().nullish(),
-  /**
-   * Org binding-gate mirror. Typed as `unknown` so a missing, null, or empty
-   * claim never fails JWT parsing — `parseBindingStatus` normalises it.
-   */
-  lf_binding_status: z.unknown(),
 });
 
 /**
@@ -119,7 +94,10 @@ const ClerkJwtClaims = z.object({
  * cross-origin and ships `credentials: "omit"`, so cookies physically
  * can't reach this request. See `packages/app-trpc/src/desktop.tsx`.
  */
-async function tryBearer(headers: Headers): Promise<AuthIdentity | undefined> {
+async function tryBearer({
+  db,
+  headers,
+}: ResolveIdentityInput): Promise<AuthIdentity | undefined> {
   const authorization = headers.get("authorization");
   if (!authorization) {
     return;
@@ -133,14 +111,10 @@ async function tryBearer(headers: Headers): Promise<AuthIdentity | undefined> {
     return UNAUTH_IDENTITY;
   }
 
+  let claims: z.infer<typeof ClerkJwtClaims>;
   try {
-    const claims = ClerkJwtClaims.parse(
+    claims = ClerkJwtClaims.parse(
       await verifyToken(token, { secretKey: CLERK_SECRET_KEY })
-    );
-    return authIdentity(
-      claims.sub,
-      claims.org_id,
-      parseBindingStatus(claims.lf_binding_status)
     );
   } catch (err) {
     // Expired/invalid Bearer is expected (e.g. desktop holds a stale JWT
@@ -152,19 +126,16 @@ async function tryBearer(headers: Headers): Promise<AuthIdentity | undefined> {
     });
     return UNAUTH_IDENTITY;
   }
+  return authIdentityFromDb(db, claims.sub, claims.org_id);
 }
 
 /** Cookie transport — Next.js web app (same-origin). */
-async function tryCookie(): Promise<AuthIdentity> {
+async function tryCookie(db: Database): Promise<AuthIdentity> {
   const session = await auth({ treatPendingAsSignedOut: false });
   if (!session.userId) {
     return UNAUTH_IDENTITY;
   }
-  return authIdentity(
-    session.userId,
-    session.orgId,
-    parseBindingStatus(session.sessionClaims?.lf_binding_status)
-  );
+  return authIdentityFromDb(db, session.userId, session.orgId);
 }
 
 /**
@@ -175,9 +146,15 @@ async function tryCookie(): Promise<AuthIdentity> {
  * If a Bearer header is present, it is the sole source of truth for that
  * request — see `tryBearer`.
  */
-export async function resolveIdentityFromClerk(
-  headers: Headers
-): Promise<AuthIdentity> {
-  const bearer = await tryBearer(headers);
-  return bearer ?? (await tryCookie());
+export interface ResolveIdentityInput {
+  db: Database;
+  headers: Headers;
+}
+
+export async function resolveIdentityFromClerk({
+  db,
+  headers,
+}: ResolveIdentityInput): Promise<AuthIdentity> {
+  const bearer = await tryBearer({ db, headers });
+  return bearer ?? (await tryCookie(db));
 }

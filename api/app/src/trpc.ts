@@ -40,7 +40,7 @@ export interface AuthContext {
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => ({
   auth: {
-    identity: await resolveIdentityFromClerk(opts.headers),
+    identity: await resolveIdentityFromClerk({ db, headers: opts.headers }),
   } satisfies AuthContext,
   db,
   headers: opts.headers,
@@ -220,9 +220,9 @@ export const pendingAllowedProcedure = authedProcedure;
  * `ctx.auth.identity.orgId` is guaranteed in handlers.
  *
  * This is no longer the default for org work — it does not enforce that the
- * org has completed setup. Use it only for the rare active-org surface that
- * must stay reachable before an org is bound. New product features should use
- * `boundOrgProcedure`; the v1 setup surface uses `setupProcedure`.
+ * org has completed setup. Use it only for active-org settings/setup surfaces
+ * that must stay reachable before an org is bound. New product features should
+ * use `boundOrgProcedure`; the v1 setup surface uses `setupProcedure`.
  *
  * For procedures that must remain callable during onboarding, use
  * `pendingAllowedProcedure`.
@@ -247,12 +247,12 @@ export const setupProcedure = pendingNotAllowedProcedure;
 
 /**
  * Bound-org gate. Composed after `requireActiveIdentity`; rejects an active
- * identity whose verified `lf_binding_status` claim is not `bound` with
+ * identity whose authoritative DB binding status is not `bound` with
  * `FORBIDDEN` + an `ORG_SETUP_REQUIRED` entry in `data.diagnostics[]`.
  *
- * The Clerk-minted claim is the fast global gate. Procedures that additionally
- * need binding details (provider ids, installation) should load the DB binding
- * row inside the handler — the claim gates, the DB row is operational truth.
+ * Identity resolution reads the Lightfast DB once per request to derive this
+ * compact gate. Procedures that additionally need binding details (provider
+ * ids, installation) should load the DB binding row inside the handler.
  */
 const requireBoundOrg = t.middleware(({ ctx, next }) => {
   // requireActiveIdentity (composed before this) has already excluded
@@ -296,8 +296,8 @@ const requireBoundOrg = t.middleware(({ ctx, next }) => {
  * `ctx.auth.identity.orgId` is guaranteed in handlers.
  *
  * Typical use cases:
- * - Org API keys (list / create / revoke / delete)
- * - All org-scoped product features
+ * - Bound-only org product features
+ * - Future workspace operations that require completed source-control setup
  *
  * For the pre-bind setup surface, use `setupProcedure`.
  *

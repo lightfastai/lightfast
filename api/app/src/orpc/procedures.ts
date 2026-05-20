@@ -20,8 +20,8 @@ export const authed = <P extends AnyContractProcedure>(proc: P) =>
 /**
  * Like `authed`, but additionally requires the API key's org to be *bound* —
  * i.e. to have completed source-control setup. Clerk API keys carry no session
- * claims, so the org gate is re-derived server-side from the authoritative DB
- * binding (`orgGateMiddleware`).
+ * claims, so `authMiddleware` derives the org gate server-side from the
+ * authoritative DB binding and `orgGateMiddleware` enforces it.
  *
  * Use this for product API features that need a usable Lightfast org. Pure
  * connectivity/diagnostic endpoints (e.g. `system.health`) stay on `authed`.

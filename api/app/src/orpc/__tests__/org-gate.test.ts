@@ -1,70 +1,66 @@
 import { call } from "@orpc/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
-const isOrgBoundMock = vi.fn();
-
-// `org-gate.ts` imports `db` from `@db/app/client` (eager DB-env validation)
-// and `isOrgBound` from `@db/app`. Stub both — the middleware is the SUT.
-vi.mock("@db/app/client", () => ({ db: {} }));
-vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
+import { describe, expect, it } from "vitest";
 
 const { orgGateMiddleware } = await import("../middleware/org-gate");
 
 /**
  * Invoke the gate as it runs in production: after `authMiddleware` has resolved
- * a Clerk API key into `context.clerkOrgId`. The middleware is the only thing
- * standing between an API-key request and the handler.
+ * a Clerk API key into the shared `context.auth.identity` contract.
  */
-async function invokeGate(clerkOrgId: string) {
+async function invokeGate(bindingStatus: "bound" | "unbound" | "revoked") {
   const { os } = await import("@orpc/server");
   const proc = os
     .$context<{
+      apiKeyId: string;
+      auth: {
+        identity: {
+          orgGate: { bindingStatus: "bound" | "unbound" | "revoked" };
+          orgId: string;
+          type: "active";
+          userId: string;
+        };
+      };
       headers: Headers;
       requestId: string;
-      apiKeyId: string;
-      clerkOrgId: string;
-      userId: string;
     }>()
     .use(orgGateMiddleware)
     .handler(() => "handler-reached");
 
   return call(proc, undefined, {
     context: {
+      apiKeyId: "apk_test",
+      auth: {
+        identity: {
+          orgGate: { bindingStatus },
+          orgId: "org_test",
+          type: "active",
+          userId: "user_test",
+        },
+      },
       headers: new Headers(),
       requestId: "test-req",
-      apiKeyId: "apk_test",
-      clerkOrgId,
-      userId: "user_test",
     },
   });
 }
 
-beforeEach(() => {
-  isOrgBoundMock.mockReset();
-});
-
 describe("orgGateMiddleware", () => {
-  it("accepts a bound org API key subject — reaches the handler", async () => {
-    isOrgBoundMock.mockResolvedValueOnce(true);
-
-    await expect(invokeGate("org_bound")).resolves.toBe("handler-reached");
-    expect(isOrgBoundMock).toHaveBeenCalledWith(expect.anything(), "org_bound");
+  it("accepts a bound org API key identity — reaches the handler", async () => {
+    await expect(invokeGate("bound")).resolves.toBe("handler-reached");
   });
 
-  it("rejects an unbound org API key subject with FORBIDDEN", async () => {
-    isOrgBoundMock.mockResolvedValueOnce(false);
-
-    await expect(invokeGate("org_unbound")).rejects.toMatchObject({
+  it("rejects an unbound org API key identity with FORBIDDEN", async () => {
+    await expect(invokeGate("unbound")).rejects.toMatchObject({
       code: "FORBIDDEN",
+      data: {
+        diagnostics: [expect.objectContaining({ code: "ORG_SETUP_REQUIRED" })],
+      },
       message: expect.stringContaining("has not completed setup"),
     });
   });
 
-  it("does not reach the handler when the org is unbound", async () => {
-    isOrgBoundMock.mockResolvedValueOnce(false);
-
-    await expect(invokeGate("org_unbound")).rejects.toBeDefined();
-    // `isOrgBound` is consulted exactly once; the handler never runs.
-    expect(isOrgBoundMock).toHaveBeenCalledTimes(1);
+  it("rejects a revoked org API key identity with FORBIDDEN", async () => {
+    await expect(invokeGate("revoked")).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
   });
 });

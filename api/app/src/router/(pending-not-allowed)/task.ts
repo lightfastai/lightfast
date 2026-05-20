@@ -10,10 +10,10 @@ import { setupProcedure } from "../../trpc";
 /**
  * Bind service — the single place that turns an org "bound".
  *
- * Write ordering is fail-closed (plan Phase 2.2): the authoritative DB binding
- * is written first, then the Clerk metadata mirror. If `mirrorOrgBinding`
- * throws, the DB row still stands and the org stays blocked by stale/missing
- * claims until retry — a partial write never grants access.
+ * Write ordering keeps the DB authoritative: the binding is written first, then
+ * the Clerk metadata mirror is updated for web-session routing UX. If
+ * `mirrorOrgBinding` throws, the DB row still stands and API authorization can
+ * resolve the org as bound; the mirror can be retried or repaired separately.
  *
  * v1 callers only pass placeholder metadata (see `task.bind`); the real GitHub
  * App installation callback will call this with concrete provider details.
@@ -32,8 +32,8 @@ async function bindOrg(input: {
     metadata: input.metadata,
   });
 
-  // 2. Mirror `bound` into Clerk org public metadata so web/CLI/desktop tokens
-  //    carry `lf_binding_status: "bound"`.
+  // 2. Mirror `bound` into Clerk org public metadata so the web session token
+  //    can carry `lf_binding_status: "bound"` for proxy routing UX.
   await mirrorOrgBinding({
     clerkOrgId: input.clerkOrgId,
     status: "bound",

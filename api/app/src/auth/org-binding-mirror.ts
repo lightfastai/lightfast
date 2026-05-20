@@ -4,21 +4,21 @@
  * The `lightfast_org_source_control_bindings` DB row is the authoritative
  * source of truth for whether an org is bound. This service writes a compact,
  * non-sensitive *mirror* of that state into Clerk organization `publicMetadata`
- * so Clerk can mint it into the `lf_binding_status` session/JWT claim that web,
- * CLI, and desktop clients all read.
+ * so Clerk can mint it into the web session token's `lf_binding_status` claim.
+ * The proxy uses that claim for routing UX; API authorization still reads the
+ * authoritative DB binding.
  *
- * Caller write ordering (see plan Phase 2.2) — both orders fail closed, so a
- * partial failure leaves the org blocked, never granted, until retry/repair:
+ * Caller write ordering keeps the DB authoritative and the mirror repairable:
  *
  *  - Bind:   write the DB active binding first, then call this with `bound`.
- *            If this fails, the org stays blocked by stale/missing claims; the
- *            DB row remains authoritative for repair.
+ *            If this fails, API authorization still uses the DB row; web proxy
+ *            routing may stay stale until the mirror is repaired.
  *  - Revoke: call this with `revoked` first, then mark the DB row revoked.
  *            If the DB write fails afterwards, the org is blocked until repair —
  *            safer than granting access after revocation.
  *
- * This service therefore never swallows Clerk failures: it throws so the caller
- * can apply the fail-closed ordering above.
+ * This service therefore never swallows Clerk failures: callers decide whether
+ * stale web-session routing UX should fail or be repaired asynchronously.
  */
 
 import { clerkClient } from "@vendor/clerk/server";
@@ -30,8 +30,8 @@ type OrgBinding = NonNullable<
 >;
 
 /**
- * Statuses the mirror writes. Missing metadata is read as `unbound` by every
- * consumer, so the mirror never needs to write `"unbound"` explicitly.
+ * Statuses the mirror writes. Missing metadata is read as `unbound` by the web
+ * proxy, so the mirror never needs to write `"unbound"` explicitly.
  */
 export type OrgBindingMirrorStatus = Extract<
   OrgBinding["status"],
