@@ -17,6 +17,8 @@
 import { accountRouter } from "./router/(pending-allowed)/account";
 import { organizationRouter } from "./router/(pending-allowed)/organization";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
+import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
+import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { createTRPCRouter } from "./trpc";
 
@@ -27,6 +29,8 @@ export const appRouter = createTRPCRouter({
   }),
   pendingNotAllowed: createTRPCRouter({
     orgApiKeys: orgApiKeysRouter,
+    orgBilling: orgBillingRouter,
+    orgMembers: orgMembersRouter,
     task: taskRouter,
   }),
 });

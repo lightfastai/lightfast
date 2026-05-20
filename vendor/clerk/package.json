@@ -29,6 +29,10 @@
       "types": "./src/client/index.ts",
       "default": "./src/client/index.ts"
     },
+    "./client/experimental": {
+      "types": "./src/client/experimental.ts",
+      "default": "./src/client/experimental.ts"
+    },
     "./backend": {
       "types": "./src/backend.ts",
       "default": "./src/backend.ts"

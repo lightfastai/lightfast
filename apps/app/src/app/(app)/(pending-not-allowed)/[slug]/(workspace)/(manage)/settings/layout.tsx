@@ -16,8 +16,8 @@ export default async function SettingsLayout({
     <div className="flex w-full flex-col">
       <div className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
         {/* Header */}
-        <div className="pb-8">
-          <h1 className="font-medium font-pp text-3xl text-foreground tracking-tight">
+        <div className="pt-2 pb-8">
+          <h1 className="pl-3 font-medium font-pp text-3xl text-foreground tracking-tight">
             Settings
           </h1>
         </div>
@@ -28,6 +28,8 @@ export default async function SettingsLayout({
             basePath={`/${slug}/settings`}
             items={[
               { name: "General", path: "" },
+              { name: "Members", path: "members" },
+              { name: "Billing", path: "billing" },
               { name: "API Keys", path: "api-keys" },
             ]}
           />

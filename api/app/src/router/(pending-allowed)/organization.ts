@@ -1,7 +1,7 @@
 import { clerkOrgSlugSchema } from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
+import { auth, clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
@@ -156,19 +156,14 @@ export const organizationRouter = {
           slug: input.slug,
         });
 
-        // Verify user has admin access to the organization.
-        // User-centric lookup (cached) — typically 1-5 orgs per user vs 100+ members per org.
-        const memberships = await getUserOrgMemberships(
-          ctx.auth.identity.userId
-        );
-        const membership = memberships.find((m) => m.organizationId === org.id);
-        if (!membership) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Access denied to this organization",
-          });
-        }
-        if (membership.role !== "org:admin") {
+        const session = await auth({ treatPendingAsSignedOut: false });
+        if (
+          ctx.auth.identity.type !== "active" ||
+          !session.userId ||
+          session.orgId !== ctx.auth.identity.orgId ||
+          session.orgId !== org.id ||
+          !session.has({ role: "org:admin" })
+        ) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Only administrators can perform this action",

@@ -5,6 +5,9 @@ import type { AuthIdentity } from "../auth/identity";
 
 const getUserOrgMembershipsMock = vi.fn();
 const isOrgBoundMock = vi.fn();
+const authMock = vi.fn();
+const getOrganizationMock = vi.fn();
+const updateOrganizationMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
@@ -14,13 +17,13 @@ vi.mock("@vendor/clerk/env", () => ({
 }));
 
 vi.mock("@vendor/clerk/server", () => ({
-  auth: vi.fn(),
+  auth: authMock,
   clerkClient: () =>
     Promise.resolve({
       organizations: {
         createOrganization: vi.fn(),
-        getOrganization: vi.fn(),
-        updateOrganization: vi.fn(),
+        getOrganization: getOrganizationMock,
+        updateOrganization: updateOrganizationMock,
       },
       users: { getOrganizationMembershipList: vi.fn() },
     }),
@@ -63,8 +66,17 @@ function caller(identity = pendingIdentity) {
 }
 
 beforeEach(() => {
+  authMock.mockReset();
+  getOrganizationMock.mockReset();
   getUserOrgMembershipsMock.mockReset();
   isOrgBoundMock.mockReset();
+  updateOrganizationMock.mockReset();
+
+  authMock.mockResolvedValue({
+    has: () => true,
+    orgId: "org_acme",
+    userId: "user_test",
+  });
 });
 
 describe("organization.getBySlug", () => {
@@ -124,5 +136,69 @@ describe("organization.getBySlug", () => {
       message: "Organization not found",
     });
     expect(isOrgBoundMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("organization.updateName", () => {
+  it("renames the active organization when Clerk has the admin role", async () => {
+    getOrganizationMock.mockResolvedValue({ id: "org_acme" });
+    updateOrganizationMock.mockResolvedValue({});
+
+    await expect(
+      caller({
+        type: "active",
+        userId: "user_test",
+        orgId: "org_acme",
+        orgGate: { bindingStatus: "bound" },
+      }).organization.updateName({ slug: "acme", name: "acme-inc" })
+    ).resolves.toEqual({
+      id: "org_acme",
+      name: "acme-inc",
+      success: true,
+    });
+
+    expect(getUserOrgMembershipsMock).not.toHaveBeenCalled();
+    expect(updateOrganizationMock).toHaveBeenCalledWith("org_acme", {
+      name: "acme-inc",
+      slug: "acme-inc",
+    });
+  });
+
+  it("rejects organization rename when Clerk active org differs from the target org", async () => {
+    getOrganizationMock.mockResolvedValue({ id: "org_acme" });
+    authMock.mockResolvedValue({
+      has: ({ role }: { role?: string }) => role === "org:admin",
+      orgId: "org_other",
+      userId: "user_test",
+    });
+
+    await expect(
+      caller({
+        type: "active",
+        userId: "user_test",
+        orgId: "org_acme",
+        orgGate: { bindingStatus: "bound" },
+      }).organization.updateName({ slug: "acme", name: "acme-inc" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(updateOrganizationMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects organization rename without the admin role", async () => {
+    getOrganizationMock.mockResolvedValue({ id: "org_acme" });
+    authMock.mockResolvedValue({
+      has: ({ role }: { role?: string }) => role !== "org:admin",
+      orgId: "org_acme",
+      userId: "user_test",
+    });
+
+    await expect(
+      caller({
+        type: "active",
+        userId: "user_test",
+        orgId: "org_acme",
+        orgGate: { bindingStatus: "bound" },
+      }).organization.updateName({ slug: "acme", name: "acme-inc" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(updateOrganizationMock).not.toHaveBeenCalled();
   });
 });
