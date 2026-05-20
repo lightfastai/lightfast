@@ -1,10 +1,18 @@
 import React from "react";
 import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
+interface Kids {
+  children?: React.ReactNode;
+}
+
 vi.mock("@repo/app-trpc/server", () => ({
-  HydrateClient: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
+  HydrateClient: ({ children }: Kids) => <>{children}</>,
+}));
+
+vi.mock("@repo/ui/components/ui/sidebar", () => ({
+  SidebarInset: ({ children }: Kids) => <>{children}</>,
+  SidebarProvider: ({ children }: Kids) => <>{children}</>,
+  SidebarTrigger: () => null,
 }));
 
 vi.mock("@vendor/observability/error/next", () => ({
@@ -24,6 +32,23 @@ vi.mock("~/components/app-sidebar", () => {
 
   return { AppSidebar };
 });
+
+vi.mock("~/components/authenticated-topbar", () => {
+  function AuthenticatedTopbar({ left }: { left?: React.ReactNode }) {
+    return <header>{left}</header>;
+  }
+
+  return { AuthenticatedTopbar };
+});
+
+vi.mock("~/components/errors/org-page-error-boundary", () => ({
+  OrgPageErrorBoundary: ({ children }: Kids) => <>{children}</>,
+}));
+
+vi.mock("~/components/team-switcher", () => ({
+  TeamSwitcher: () => null,
+  TeamSwitcherSkeleton: () => null,
+}));
 
 vi.mock("~/lib/org-access-clerk", () => ({
   requireOrgAccess: vi.fn(),
@@ -54,20 +79,39 @@ function containsComponentNamed(node: unknown, componentName: string): boolean {
   );
 }
 
-describe("org layout", () => {
+function invoke(slug = "acme") {
+  return OrgLayout({
+    children: <div>Workspace</div>,
+    params: Promise.resolve({ slug }),
+  });
+}
+
+describe("[slug]/layout — membership/slug access gate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("returns the authenticated header shell when org access is denied", async () => {
-    (requireOrgAccess as Mock).mockRejectedValue(new Error("denied"));
+  it("returns the authenticated 404 shell when org access is denied", async () => {
+    (requireOrgAccess as Mock).mockRejectedValue(
+      new Error("Access denied to this organization.")
+    );
 
-    const element = await OrgLayout({
-      children: <div>Workspace</div>,
-      params: Promise.resolve({ slug: "missing-team" }),
-    });
+    const element = await invoke("acme");
 
     expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
+    expect(containsComponentNamed(element, "OrgAccessNotFound")).toBe(true);
+    expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
+  });
+
+  it("returns the authenticated 404 shell when the org slug does not exist", async () => {
+    (requireOrgAccess as Mock).mockRejectedValue(
+      new Error("Organization not found: acme")
+    );
+
+    const element = await invoke("acme");
+
+    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
+    expect(containsComponentNamed(element, "OrgAccessNotFound")).toBe(true);
     expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
   });
 
@@ -82,12 +126,10 @@ describe("org layout", () => {
       role: "org:member",
     });
 
-    const element = await OrgLayout({
-      children: <div>Workspace</div>,
-      params: Promise.resolve({ slug: "acme" }),
-    });
+    const element = await invoke("acme");
 
     expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
     expect(containsComponentNamed(element, "AppSidebar")).toBe(true);
+    expect(containsComponentNamed(element, "OrgAccessNotFound")).toBe(false);
   });
 });

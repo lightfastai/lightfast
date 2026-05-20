@@ -131,3 +131,129 @@ describe("resolveIdentityFromClerk — transports", () => {
     expect(authMock).not.toHaveBeenCalled();
   });
 });
+
+describe("resolveIdentityFromClerk — binding-status gate", () => {
+  it("Bearer with org_id and lf_binding_status 'bound' → active bound", async () => {
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_bound",
+      org_id: "org_bound",
+      lf_binding_status: "bound",
+    });
+
+    const identity = await resolveIdentityFromClerk(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_bearer_bound",
+      orgId: "org_bound",
+      orgGate: { bindingStatus: "bound" },
+    });
+  });
+
+  it("Bearer with org_id and lf_binding_status 'revoked' → active revoked", async () => {
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_revoked",
+      org_id: "org_revoked",
+      lf_binding_status: "revoked",
+    });
+
+    const identity = await resolveIdentityFromClerk(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_bearer_revoked",
+      orgId: "org_revoked",
+      orgGate: { bindingStatus: "revoked" },
+    });
+  });
+
+  it("Bearer with org_id but missing lf_binding_status → active unbound (fail closed)", async () => {
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_missing",
+      org_id: "org_missing",
+    });
+
+    const identity = await resolveIdentityFromClerk(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_bearer_missing",
+      orgId: "org_missing",
+      orgGate: { bindingStatus: "unbound" },
+    });
+  });
+
+  it("Bearer with org_id and an unknown lf_binding_status value → active unbound", async () => {
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_unknown",
+      org_id: "org_unknown",
+      lf_binding_status: "definitely-not-a-status",
+    });
+
+    const identity = await resolveIdentityFromClerk(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_bearer_unknown",
+      orgId: "org_unknown",
+      orgGate: { bindingStatus: "unbound" },
+    });
+  });
+
+  it("Cookie auth with a bound claim → active bound", async () => {
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie_bound",
+      orgId: "org_cookie_bound",
+      sessionClaims: { lf_binding_status: "bound" },
+    });
+
+    const identity = await resolveIdentityFromClerk(new Headers());
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_cookie_bound",
+      orgId: "org_cookie_bound",
+      orgGate: { bindingStatus: "bound" },
+    });
+  });
+
+  it("Cookie auth with an unknown claim → active unbound (fail closed)", async () => {
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie_unknown",
+      orgId: "org_cookie_unknown",
+      sessionClaims: { lf_binding_status: "??? stale ???" },
+    });
+
+    const identity = await resolveIdentityFromClerk(new Headers());
+
+    expect(identity).toEqual({
+      type: "active",
+      userId: "user_cookie_unknown",
+      orgId: "org_cookie_unknown",
+      orgGate: { bindingStatus: "unbound" },
+    });
+  });
+
+  it("Cookie auth with a bound claim but no org_id stays pending (gate ignored)", async () => {
+    authMock.mockResolvedValueOnce({
+      userId: "user_cookie_pending",
+      orgId: null,
+      sessionClaims: { lf_binding_status: "bound" },
+    });
+
+    const identity = await resolveIdentityFromClerk(new Headers());
+
+    expect(identity).toEqual({
+      type: "pending",
+      userId: "user_cookie_pending",
+    });
+  });
+});
