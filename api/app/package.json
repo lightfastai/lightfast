@@ -20,10 +20,6 @@
     "./inngest/client": {
       "types": "./src/inngest/client/client.ts",
       "default": "./src/inngest/client/client.ts"
-    },
-    "./lib/activity": {
-      "types": "./src/lib/activity.ts",
-      "default": "./src/lib/activity.ts"
     }
   },
   "license": "Apache-2.0",
