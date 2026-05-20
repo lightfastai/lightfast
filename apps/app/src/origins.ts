@@ -1,37 +1,44 @@
-import { getPortlessProxyOrigins } from "@lightfastai/dev-proxy/next";
-import { resolveProjectUrl } from "@lightfastai/dev-proxy/projects";
 import { withRelatedProject } from "@vercel/related-projects";
 import { env } from "./env";
 
 const vercelEnv = env.NEXT_PUBLIC_VERCEL_ENV;
 const isLocal = vercelEnv !== "production" && vercelEnv !== "preview";
 
-// Self-URL: lightfast-app is not in its own apps/app/vercel.json relatedProjects,
-// so withRelatedProject returns defaultHost in every environment. The isLocal
-// branch swaps the dev portless URL for the prod literal.
+// Cross-app URLs. Edge-safe: no fs access, no NodeJS-only deps. In dev, the
+// dev:app script injects NEXT_PUBLIC_<APP>_URL=$(portless get <name>.lightfast)
+// — those become defaultHost. In preview/prod, withRelatedProject reads
+// VERCEL_RELATED_PROJECTS and returns the matched alias.
 export const appUrl = withRelatedProject({
   projectName: "lightfast-app",
-  defaultHost: isLocal
-    ? resolveProjectUrl("lightfast-app")
-    : "https://lightfast.ai",
+  defaultHost: env.NEXT_PUBLIC_APP_URL,
 });
 
-// Sibling URLs: VRP is populated on Vercel deploys, so withRelatedProject returns
-// the matched URL; in dev VRP is empty, so defaultHost (portless) wins.
 export const wwwUrl = withRelatedProject({
   projectName: "lightfast-www",
-  defaultHost: isLocal
-    ? resolveProjectUrl("lightfast-www")
-    : "https://lightfast.ai",
+  defaultHost: env.NEXT_PUBLIC_WWW_URL,
 });
 
 export const platformUrl = withRelatedProject({
   projectName: "lightfast-platform",
-  defaultHost: isLocal
-    ? resolveProjectUrl("lightfast-platform")
-    : "https://lightfast-platform.vercel.app",
+  defaultHost: env.NEXT_PUBLIC_PLATFORM_URL,
 });
 
+// Dev-only CORS allowlist: the full host (port included) of each sibling URL.
+// We filter on `hostname` (port-stripped) so values like `http://localhost:3000`
+// still match; production fallbacks never sneak in.
 export const devOriginPatterns: readonly string[] = isLocal
-  ? getPortlessProxyOrigins({ allowMissingConfig: true })
+  ? Array.from(
+      new Set(
+        [appUrl, wwwUrl, platformUrl].flatMap((u) => {
+          try {
+            const { host, hostname } = new URL(u);
+            return hostname === "localhost" || hostname.endsWith(".localhost")
+              ? [host]
+              : [];
+          } catch {
+            return [];
+          }
+        })
+      )
+    )
   : [];

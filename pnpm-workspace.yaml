@@ -14,7 +14,6 @@ catalog:
   '@clerk/nextjs': 7.3.7
   '@clerk/shared': 4.12.2
   '@hookform/resolvers': ^5.2.2
-  '@lightfastai/dev-cli': ^0.4.2
   '@lightfastai/dev-core': ^0.4.2
   '@lightfastai/dev-proxy': ^0.4.2
   '@lightfastai/dev-services': ^0.4.2
