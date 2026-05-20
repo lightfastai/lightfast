@@ -116,7 +116,13 @@ In the Clerk Dashboard, create a JWT template named exactly `lightfast-desktop`:
 - **Expiry**: `86400` seconds (24 hours) — users re-sign-in daily. There is no
   silent refresh; when the token expires the renderer's 401 handler clears
   local state and the user clicks "Sign in" again.
-- **Claims**: include `org_id: {{org.id}}` so `orgRouter` procedures work
+- **Claims**: include both:
+  - `org_id: {{org.id}}` so `orgRouter` procedures work
+  - `lf_binding_status: {{org.public_metadata.lightfast.binding.status}}` so the
+    org-binding gate (`boundOrgProcedure`) reads org setup state straight from
+    the token. Desktop can still sign in before setup is complete; feature calls
+    then fail with `ORG_SETUP_REQUIRED`, and the renderer can surface a repair
+    action pointing the user at `/<orgSlug>/tasks/bind`.
 - **Signing**: default (symmetric — the server verifies via `CLERK_SECRET_KEY`)
 
 This must be done once in each Clerk environment (dev and prod). The web
