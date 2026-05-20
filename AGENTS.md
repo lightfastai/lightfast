@@ -10,7 +10,7 @@ See `SPEC.md` for business goals and product vision.
 
 ## Architecture
 
-```
+```text
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │  Local dev — Portless HTTPS aggregate (port 443)                                 │
 │  https://[<wt>.]lightfast.localhost                                              │

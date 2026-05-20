@@ -68,6 +68,16 @@ beforeEach(() => {
 });
 
 describe("organization.getBySlug", () => {
+  it("throws UNAUTHORIZED when the caller is unauthenticated", async () => {
+    await expect(
+      caller({ type: "unauthenticated" }).organization.getBySlug({
+        slug: "acme",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(getUserOrgMembershipsMock).not.toHaveBeenCalled();
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
+  });
+
   it("returns the user's matching Clerk org and DB binding gate", async () => {
     getUserOrgMembershipsMock.mockResolvedValue([
       {
