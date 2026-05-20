@@ -1,18 +1,18 @@
 /**
  * Diagnostic envelope for tRPC errors.
  *
- * Every gate-style failure (auth, identity, readiness, …) attaches a
- * structured `cause` here so the `errorFormatter` in `./trpc.ts` can flatten
- * it onto `data.diagnostics` generically. Bearer transports (desktop, CLI,
- * agents) pattern-match on `code` and dispatch on `repair.id` instead of
- * parsing prose messages.
+ * Every gate-style failure (auth, identity, …) attaches a structured `cause`
+ * here so the `errorFormatter` in `./trpc.ts` can flatten it onto
+ * `data.diagnostics` generically. Bearer transports (desktop, CLI, agents)
+ * pattern-match on `code` and dispatch on `repair.id` instead of parsing
+ * prose messages.
  *
  * Wire shape (inside the existing tRPC `data` envelope):
  *
  *   data: {
  *     ...,
  *     diagnostics: [
- *       { code: "READINESS_PENDING", message: "...", repair: { id: "complete-lightfast-task", ... } }
+ *       { code: "ORG_REQUIRED", message: "...", repair: { id: "create-or-join-org" } }
  *     ]
  *   }
  *
@@ -24,18 +24,11 @@ import { type TRPC_ERROR_CODE_KEY, TRPCError } from "@trpc/server";
 
 export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
 
-export type DiagnosticCode =
-  | "AUTH_REQUIRED"
-  | "ORG_REQUIRED"
-  | "READINESS_PENDING";
+export type DiagnosticCode = "AUTH_REQUIRED" | "ORG_REQUIRED";
 
-export type Repair =
-  | { id: "create-or-join-org" }
-  | {
-      id: "complete-lightfast-task";
-      current: string | null;
-      remaining: string[];
-    };
+export interface Repair {
+  id: "create-or-join-org";
+}
 
 export interface Diagnostic {
   code: DiagnosticCode;

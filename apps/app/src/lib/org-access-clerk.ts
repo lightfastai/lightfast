@@ -80,27 +80,3 @@ export async function requireOrgAccess(slug: string): Promise<OrgWithAccess> {
     role: userMembership.role,
   };
 }
-
-/**
- * Check if user has a specific role in their active organization
- *
- * @param role - Role to check for ("admin" or "member")
- * @returns True if user has the role
- */
-export async function hasOrgRole(role: "admin" | "member"): Promise<boolean> {
-  const { orgRole } = await auth();
-
-  if (!orgRole) {
-    return false;
-  }
-
-  // Map our simple roles to Clerk roles
-  const clerkRole = role === "admin" ? "org:admin" : "org:member";
-
-  // Admin has access to everything
-  if (orgRole === "org:admin") {
-    return true;
-  }
-
-  return orgRole === clerkRole;
-}

@@ -12,18 +12,13 @@
  */
 
 import { db } from "@db/app/client";
-import { experimental_standaloneMiddleware, initTRPC } from "@trpc/server";
-import { log } from "@vendor/observability/log/next";
+import { initTRPC } from "@trpc/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type { AuthContext } from "./auth/context";
-import type { AuthIdentity } from "./auth/identity/types";
-import { resolveAuth } from "./auth/resolve";
+import { resolveIdentityFromClerk } from "./auth/identity/resolve-clerk";
 import { isDiagnosticCause, throwDiagnostic } from "./diagnostics";
-
-type ActiveIdentity = Extract<AuthIdentity, { type: "active" }>;
 
 // Re-exported for routers that want to pattern-match on `ctx.auth` directly.
 export type { AuthContext } from "./auth/context";
@@ -33,12 +28,12 @@ export type { AuthContext } from "./auth/context";
  *
  * The "context" available to every procedure: resolved auth, the database
  * client, and the raw request headers. Both transports (Bearer for desktop,
- * cookie for web) are handled inside `resolveAuth`.
+ * cookie for web) are handled inside `resolveIdentityFromClerk`.
  *
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => ({
-  auth: await resolveAuth(opts.headers),
+  auth: { identity: await resolveIdentityFromClerk(opts.headers) },
   db,
   headers: opts.headers,
 });
@@ -148,12 +143,10 @@ const requireAuth = t.middleware(({ ctx, next }) => {
 
 /**
  * Active-identity gate. Narrows `ctx.auth.identity` to the `active` variant
- * so downstream middleware (and handlers) can read `orgId` without
- * re-discriminating.
+ * so downstream handlers can read `orgId` without re-discriminating.
  *
- * Atomic — does not consult the readiness dimension. Composed with
- * `requireReadinessCleared` inside `pendingNotAllowedProcedure` so each gate
- * stays single-purpose: identity first, readiness second.
+ * Composed into `pendingNotAllowedProcedure` — the default gate for every
+ * org-scoped router.
  */
 const requireActiveIdentity = t.middleware(({ ctx, next }) => {
   // requireAuth has already excluded "unauthenticated".
@@ -170,47 +163,6 @@ const requireActiveIdentity = t.middleware(({ ctx, next }) => {
   }
   return next({
     ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
-  });
-});
-
-/**
- * Readiness gate. Throws unless `ctx.auth.readiness.type === "cleared"`.
- *
- * Declared via `experimental_standaloneMiddleware` with an
- * `identity: active` ctx requirement so the narrowing established by
- * `requireActiveIdentity` propagates through this middleware into the
- * handler. Without that requirement, `next({ ctx: { ...ctx.auth } })`
- * would re-broaden `auth.identity` to the full `AuthIdentity` union and
- * downstream handlers would lose access to `orgId`.
- */
-const requireReadinessCleared = experimental_standaloneMiddleware<{
-  ctx: { auth: AuthContext & { identity: ActiveIdentity } };
-}>().create(({ ctx, next }) => {
-  if (ctx.auth.readiness.type !== "cleared") {
-    const pending =
-      ctx.auth.readiness.type === "pending" ? ctx.auth.readiness : null;
-    log.info("[readiness] denied", {
-      orgId: ctx.auth.identity.orgId,
-      current: pending?.current,
-      remaining: pending?.remaining,
-    });
-    throwDiagnostic({
-      trpcCode: "FORBIDDEN",
-      diagnostic: {
-        code: "READINESS_PENDING",
-        message: `Complete required Lightfast tasks. Pending: ${
-          pending?.current ?? "(unknown)"
-        }`,
-        repair: {
-          id: "complete-lightfast-task",
-          current: pending?.current ?? null,
-          remaining: pending?.remaining ?? [],
-        },
-      },
-    });
-  }
-  return next({
-    ctx: { ...ctx, auth: { ...ctx.auth, readiness: ctx.auth.readiness } },
   });
 });
 
@@ -253,46 +205,21 @@ export const pendingAllowedProcedure = authedProcedure;
 /**
  * Pending-Not-Allowed Procedure
  *
- * Admits sessions that are **fully ready**: identity `active` AND readiness
- * `cleared`. Both gates compose here so the safe default for every
- * org-scoped router is one chokepoint, not N opt-ins. The name still reads
- * correctly under the dual-gate semantics: this procedure does not admit
- * any pending state — pending identity OR pending readiness both throw
- * `FORBIDDEN` with a `data.diagnostics[]` entry (`ORG_REQUIRED` or
- * `READINESS_PENDING` respectively).
+ * Admits sessions with an `active` identity — the safe default for every
+ * org-scoped router. A `pending` identity throws `FORBIDDEN` with an
+ * `ORG_REQUIRED` entry in `data.diagnostics[]`.
  *
- * `ctx.auth.identity.orgId` is guaranteed in handlers, and
- * `ctx.auth.readiness.type` is narrowed to `"cleared"`.
+ * `ctx.auth.identity.orgId` is guaranteed in handlers.
  *
  * Typical use cases:
  * - Org API keys (list / create / revoke / delete)
  * - Org members, repositories, integrations, settings
  *
  * For procedures that must remain callable during onboarding, use
- * `pendingAllowedProcedure`. For the tasks router itself (the only
- * org-scoped surface that must remain reachable while readiness is
- * pending), use `activeIdentityProcedure`.
+ * `pendingAllowedProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const pendingNotAllowedProcedure = authedProcedure
-  .use(requireActiveIdentity)
-  .use(requireReadinessCleared);
-
-/**
- * Active-Identity Procedure (explicit opt-out from the readiness gate)
- *
- * Admits sessions with an `active` identity regardless of readiness state.
- * Use this **only** for the tasks router — every other org-scoped surface
- * must compose the readiness gate via `pendingNotAllowedProcedure`. The
- * name documents the deliberate decision: this procedure only requires
- * an active identity, with no readiness assertion.
- *
- * `ctx.auth.identity.orgId` is guaranteed in handlers; `ctx.auth.readiness`
- * may be `"pending"`, `"cleared"`, or (defensively) `"n/a"`.
- *
- * @see https://trpc.io/docs/procedures
- */
-export const activeIdentityProcedure = authedProcedure.use(
+export const pendingNotAllowedProcedure = authedProcedure.use(
   requireActiveIdentity
 );
