@@ -24,6 +24,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk/client";
 import { Loader2, UserPlus } from "lucide-react";
 import { useState } from "react";
+import {
+  createOptimisticInvitation,
+  insertInvitation,
+  removeInvitation,
+  replaceInvitation,
+  type OrgMembersData,
+  type OrgRole,
+} from "./org-member-cache";
 
 export function OrgMemberInvite() {
   const { has, isLoaded } = useAuth();
@@ -35,16 +43,64 @@ export function OrgMemberInvite() {
 
   const [isOpen, setIsOpen] = useState(false);
   const [emailAddress, setEmailAddress] = useState("");
-  const [role, setRole] = useState<"org:admin" | "org:member">("org:member");
+  const [role, setRole] = useState<OrgRole>("org:member");
 
   const inviteMutation = useMutation(
     trpc.pendingNotAllowed.orgMembers.invite.mutationOptions({
       meta: { errorTitle: "Failed to send invitation" },
-      onSuccess: () => {
-        toast.success("Invitation sent");
+      onMutate: async (input) => {
+        await queryClient.cancelQueries({ queryKey: listQueryKey });
+
+        const inputRole = input.role ?? "org:member";
+        const optimisticInvitation = createOptimisticInvitation({
+          emailAddress: input.emailAddress,
+          role: inputRole,
+        });
+        queryClient.setQueryData(
+          listQueryKey,
+          (old: OrgMembersData | undefined) =>
+            insertInvitation(old, optimisticInvitation)
+        );
+
         setEmailAddress("");
         setRole("org:member");
         setIsOpen(false);
+
+        return {
+          emailAddress: input.emailAddress,
+          optimisticInvitationId: optimisticInvitation.id,
+          role: inputRole,
+        };
+      },
+      onError: (_err, _input, context) => {
+        if (!context) {
+          return;
+        }
+
+        queryClient.setQueryData(
+          listQueryKey,
+          (old: OrgMembersData | undefined) =>
+            removeInvitation(old, context.optimisticInvitationId)
+        );
+        setEmailAddress(context.emailAddress);
+        setRole(context.role);
+        setIsOpen(true);
+      },
+      onSuccess: (invitation, _input, context) => {
+        if (context) {
+          queryClient.setQueryData(
+            listQueryKey,
+            (old: OrgMembersData | undefined) =>
+              replaceInvitation(
+                old,
+                context.optimisticInvitationId,
+                invitation
+              )
+          );
+        }
+        toast.success("Invitation sent");
+      },
+      onSettled: () => {
         void queryClient.invalidateQueries({ queryKey: listQueryKey });
       },
     })
@@ -93,9 +149,7 @@ export function OrgMemberInvite() {
             value={emailAddress}
           />
           <Select
-            onValueChange={(value) =>
-              setRole(value as "org:admin" | "org:member")
-            }
+            onValueChange={(value) => setRole(value as OrgRole)}
             value={role}
           >
             <SelectTrigger className="w-full">

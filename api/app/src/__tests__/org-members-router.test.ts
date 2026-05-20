@@ -220,7 +220,16 @@ describe("orgMembers mutations", () => {
 
     await expect(
       caller().orgMembers.invite({ emailAddress: "new@example.com" })
-    ).resolves.toEqual({ success: true });
+    ).resolves.toEqual({
+      createdAt: 1_700_000_000_000,
+      emailAddress: "new@example.com",
+      expiresAt: 1_700_086_400_000,
+      id: "inv_new",
+      role: "org:member",
+      roleName: "Member",
+      status: "pending",
+      updatedAt: 1_700_000_001_000,
+    });
     expect(createOrganizationInvitationMock).toHaveBeenCalledWith({
       emailAddress: "new@example.com",
       inviterUserId: "user_current",

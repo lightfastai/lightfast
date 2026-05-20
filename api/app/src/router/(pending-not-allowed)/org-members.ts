@@ -95,13 +95,14 @@ export const orgMembersRouter = {
 
       const clerk = await clerkClient();
       try {
-        await clerk.organizations.createOrganizationInvitation({
-          emailAddress: input.emailAddress,
-          inviterUserId: session.userId,
-          organizationId: ctx.auth.identity.orgId,
-          role: input.role,
-        });
-        return { success: true };
+        const invitation =
+          await clerk.organizations.createOrganizationInvitation({
+            emailAddress: input.emailAddress,
+            inviterUserId: session.userId,
+            organizationId: ctx.auth.identity.orgId,
+            role: input.role,
+          });
+        return toInvitationDto(invitation);
       } catch (error) {
         if (isClerkConflictError(error)) {
           throw new TRPCError({
