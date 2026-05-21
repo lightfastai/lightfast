@@ -19,7 +19,9 @@ vi.mock("@vendor/clerk/server", () => ({
   getUserOrgMemberships: vi.fn(),
 }));
 
-const { resolveIdentityFromClerk } = await import("../auth/identity");
+const { resolveAuthContextFromClerk, resolveIdentityFromClerk } = await import(
+  "../auth/identity"
+);
 const db = {} as Database;
 
 beforeEach(() => {
@@ -30,6 +32,10 @@ beforeEach(() => {
 
 function resolve(headers = new Headers()) {
   return resolveIdentityFromClerk({ headers, db });
+}
+
+function resolveAuth(headers = new Headers()) {
+  return resolveAuthContextFromClerk({ headers, db });
 }
 
 describe("resolveIdentityFromClerk — transports", () => {
@@ -104,19 +110,49 @@ describe("resolveIdentityFromClerk — transports", () => {
   });
 
   it("falls through to the cookie path when no authorization header is present", async () => {
+    const has = vi.fn(() => true);
     authMock.mockResolvedValueOnce({
       userId: "user_cookie_only",
       orgId: null,
+      has,
     });
 
-    const identity = await resolve();
+    const result = await resolveAuth();
 
-    expect(identity).toEqual({
+    expect(result.identity).toEqual({
       type: "pending",
       userId: "user_cookie_only",
     });
+    expect(result.access).toMatchObject({
+      kind: "clerk-session",
+      userId: "user_cookie_only",
+      orgId: null,
+    });
+    expect(result.access?.has({ role: "org:admin" })).toBe(true);
+    expect(has).toHaveBeenCalledWith({ role: "org:admin" });
     expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(verifyTokenMock).not.toHaveBeenCalled();
+  });
+
+  it("does not attach Clerk session access for Bearer identities", async () => {
+    isOrgBoundMock.mockResolvedValueOnce(true);
+    verifyTokenMock.mockResolvedValueOnce({
+      sub: "user_bearer_active",
+      org_id: "org_active",
+    });
+
+    const result = await resolveAuth(
+      new Headers({ authorization: "Bearer valid.jwt.token" })
+    );
+
+    expect(result.identity).toEqual({
+      type: "active",
+      userId: "user_bearer_active",
+      orgId: "org_active",
+      orgGate: { bindingStatus: "bound" },
+    });
+    expect(result.access).toBeUndefined();
+    expect(authMock).not.toHaveBeenCalled();
   });
 
   it("falls through to cookie when Authorization uses a non-Bearer scheme", async () => {

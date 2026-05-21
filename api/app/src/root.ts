@@ -1,21 +1,19 @@
 /**
- * App router — gate-based grouping of tRPC procedures.
+ * App router — product-shaped grouping of tRPC procedures.
  *
- * Sub-routers are nested by the auth admission rule they enforce, *not* by
- * the operation's target:
- * - `pendingAllowed`:    admits identity `pending` OR `active`.
- *                        Onboarding-safe surface.
- * - `pendingNotAllowed`: requires identity `active`. Settings/setup surfaces
- *                        that must stay reachable before binding live here;
- *                        bound-only product procedures opt into
- *                        `boundOrgProcedure`.
- *
- * Naming the boundary by the gate lets us add procedures without renaming
- * the grouping when an operation's target evolves.
+ * Auth, org setup, and permission gates live in procedure builders. Public
+ * router paths stay small and product-oriented:
+ * - `viewer`: signed-in user surface, active org optional.
+ * - `org.setup`: active org setup surface, binding optional.
+ * - `org.settings`: active org settings surface, binding optional.
+ * - `org.workspace`: future bound-org product surface.
  */
 
 import { accountRouter } from "./router/(pending-allowed)/account";
-import { organizationRouter } from "./router/(pending-allowed)/organization";
+import {
+  organizationRouter,
+  orgSettingsOrganizationRouter,
+} from "./router/(pending-allowed)/organization";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
@@ -23,15 +21,21 @@ import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
-  pendingAllowed: createTRPCRouter({
+  viewer: createTRPCRouter({
     organization: organizationRouter,
     account: accountRouter,
   }),
-  pendingNotAllowed: createTRPCRouter({
-    orgApiKeys: orgApiKeysRouter,
-    orgBilling: orgBillingRouter,
-    orgMembers: orgMembersRouter,
-    task: taskRouter,
+  org: createTRPCRouter({
+    setup: createTRPCRouter({
+      task: taskRouter,
+    }),
+    settings: createTRPCRouter({
+      organization: orgSettingsOrganizationRouter,
+      orgApiKeys: orgApiKeysRouter,
+      orgBilling: orgBillingRouter,
+      orgMembers: orgMembersRouter,
+    }),
+    workspace: createTRPCRouter({}),
   }),
 });
 

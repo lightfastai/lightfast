@@ -60,8 +60,12 @@ vi.mock("../env", () => ({ env: { VERCEL_ENV: "development" } }));
 const {
   createTRPCRouter,
   createCallerFactory,
+  viewerProcedure,
+  orgProcedure,
   setupProcedure,
   boundOrgProcedure,
+  orgAdminProcedure,
+  boundOrgAdminProcedure,
 } = await import("../trpc");
 const { taskRouter } = await import("../router/(pending-not-allowed)/task");
 const { orgApiKeysRouter } = await import(
@@ -74,8 +78,12 @@ const testRouter = createTRPCRouter({
   task: taskRouter,
   orgApiKeys: orgApiKeysRouter,
   // Bare probes: the gate is the only thing between the call and the handler.
+  viewerProbe: viewerProcedure.query(() => "viewer-ok"),
+  orgProbe: orgProcedure.query(() => "org-ok"),
   setupProbe: setupProcedure.query(() => "setup-ok"),
   boundProbe: boundOrgProcedure.query(() => "bound-ok"),
+  orgAdminProbe: orgAdminProcedure.query(() => "org-admin-ok"),
+  boundOrgAdminProbe: boundOrgAdminProcedure.query(() => "bound-org-admin-ok"),
 });
 
 const createCaller = createCallerFactory(testRouter);
@@ -139,9 +147,31 @@ function active(bindingStatus: "bound" | "unbound" | "revoked"): AuthIdentity {
 
 const pending: AuthIdentity = { type: "pending", userId: "user_pending" };
 
-function makeCaller(identity: AuthIdentity, db: Database = {} as Database) {
+function adminAccess(overrides: { orgId?: string; userId?: string } = {}) {
+  return {
+    kind: "clerk-session" as const,
+    userId: overrides.userId ?? "user_test",
+    orgId: overrides.orgId ?? "org_test",
+    has: ({ role }: { role?: string }) => role === "org:admin",
+  };
+}
+
+function nonAdminAccess() {
+  return {
+    kind: "clerk-session" as const,
+    userId: "user_test",
+    orgId: "org_test",
+    has: () => false,
+  };
+}
+
+function makeCaller(
+  identity: AuthIdentity,
+  db: Database = {} as Database,
+  access?: ReturnType<typeof adminAccess> | ReturnType<typeof nonAdminAccess>
+) {
   return createCaller({
-    auth: { identity },
+    auth: access ? { identity, access } : { identity },
     db,
     headers: new Headers(),
   });
@@ -167,6 +197,47 @@ beforeEach(() => {
   apiKeysListMock.mockResolvedValue({ data: [] });
   apiKeysRevokeMock.mockReset();
   apiKeysRevokeMock.mockResolvedValue({ id: "ak_test", subject: "org_test" });
+});
+
+// ----- viewerProcedure --------------------------------------------------------
+
+describe("viewerProcedure", () => {
+  it("allows a pending identity", async () => {
+    const caller = makeCaller(pending);
+    await expect(caller.viewerProbe()).resolves.toBe("viewer-ok");
+  });
+
+  it("allows an active identity", async () => {
+    const caller = makeCaller(active("unbound"));
+    await expect(caller.viewerProbe()).resolves.toBe("viewer-ok");
+  });
+
+  it("rejects unauthenticated callers", async () => {
+    const caller = makeCaller({ type: "unauthenticated" });
+    await expect(caller.viewerProbe()).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+    });
+  });
+});
+
+// ----- orgProcedure -----------------------------------------------------------
+
+describe("orgProcedure", () => {
+  it("allows an active org even before binding", async () => {
+    const caller = makeCaller(active("unbound"));
+    await expect(caller.orgProbe()).resolves.toBe("org-ok");
+  });
+
+  it("rejects pending identities with ORG_REQUIRED", async () => {
+    const caller = makeCaller(pending);
+    const err = await caller.orgProbe().catch((e: unknown) => e);
+    expect(err).toMatchObject({ code: "FORBIDDEN" });
+    if (!isDiagnosticCause((err as { cause: unknown }).cause)) {
+      throw new Error("expected a diagnostic cause");
+    }
+    const cause = (err as { cause: { diagnostics: { code: string }[] } }).cause;
+    expect(cause.diagnostics[0]?.code).toBe("ORG_REQUIRED");
+  });
 });
 
 // ----- boundOrgProcedure -----------------------------------------------------
@@ -239,6 +310,60 @@ describe("setupProcedure", () => {
   });
 });
 
+// ----- orgAdminProcedure ------------------------------------------------------
+
+describe("orgAdminProcedure", () => {
+  it("allows a matching Clerk org admin session", async () => {
+    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
+    await expect(caller.orgAdminProbe()).resolves.toBe("org-admin-ok");
+  });
+
+  it("fails closed when the caller has no Clerk session access", async () => {
+    const caller = makeCaller(active("unbound"));
+    await expect(caller.orgAdminProbe()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("rejects a non-admin Clerk session", async () => {
+    const caller = makeCaller(
+      active("unbound"),
+      {} as Database,
+      nonAdminAccess()
+    );
+    await expect(caller.orgAdminProbe()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("rejects a Clerk session for a different active org", async () => {
+    const caller = makeCaller(
+      active("unbound"),
+      {} as Database,
+      adminAccess({ orgId: "org_other" })
+    );
+    await expect(caller.orgAdminProbe()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+});
+
+describe("boundOrgAdminProcedure", () => {
+  it("requires both a bound org and matching admin session", async () => {
+    const caller = makeCaller(active("bound"), {} as Database, adminAccess());
+    await expect(caller.boundOrgAdminProbe()).resolves.toBe(
+      "bound-org-admin-ok"
+    );
+  });
+
+  it("rejects matching admins before org setup is complete", async () => {
+    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
+    await expect(caller.boundOrgAdminProbe()).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+  });
+});
+
 // ----- orgApiKeys is active-org settings surface -----------------------------
 
 describe("orgApiKeys", () => {
@@ -252,7 +377,7 @@ describe("orgApiKeys", () => {
   });
 
   it("allows an unbound active org to create keys", async () => {
-    const caller = makeCaller(active("unbound"));
+    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
     await expect(
       caller.orgApiKeys.create({ name: "Test key" })
     ).resolves.toMatchObject({
@@ -263,7 +388,7 @@ describe("orgApiKeys", () => {
   });
 
   it("allows an unbound active org to revoke keys", async () => {
-    const caller = makeCaller(active("unbound"));
+    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
     await expect(
       caller.orgApiKeys.revoke({ keyId: "ak_test" })
     ).resolves.toEqual({ success: true });
@@ -278,7 +403,7 @@ describe("orgApiKeys", () => {
       id: "ak_other",
       subject: "org_other",
     });
-    const caller = makeCaller(active("unbound"));
+    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
 
     await expect(
       caller.orgApiKeys.revoke({ keyId: "ak_other" })
@@ -287,10 +412,18 @@ describe("orgApiKeys", () => {
   });
 
   it("allows an unbound active org to delete keys", async () => {
-    const caller = makeCaller(active("unbound"));
+    const caller = makeCaller(active("unbound"), {} as Database, adminAccess());
     await expect(
       caller.orgApiKeys.delete({ keyId: "ak_test" })
     ).resolves.toEqual({ success: true });
+  });
+
+  it("rejects API key writes without a matching admin session", async () => {
+    const caller = makeCaller(active("unbound"));
+    await expect(
+      caller.orgApiKeys.create({ name: "Test key" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(apiKeysCreateMock).not.toHaveBeenCalled();
   });
 });
 

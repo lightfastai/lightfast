@@ -34,6 +34,21 @@ export type AuthIdentity =
   | { type: "pending"; userId: string }
   | { type: "active"; userId: string; orgId: string; orgGate: OrgGate };
 
+type ClerkAuthSession = Awaited<ReturnType<typeof auth>>;
+type ClerkHas = ClerkAuthSession["has"];
+
+export interface AuthAccess {
+  kind: "clerk-session";
+  userId: string;
+  orgId: string | null;
+  has: ClerkHas;
+}
+
+export interface ResolvedAuthContext {
+  access?: AuthAccess;
+  identity: AuthIdentity;
+}
+
 export const UNAUTH_IDENTITY = {
   type: "unauthenticated",
 } as const satisfies AuthIdentity;
@@ -130,12 +145,20 @@ async function tryBearer({
 }
 
 /** Cookie transport — Next.js web app (same-origin). */
-async function tryCookie(db: Database): Promise<AuthIdentity> {
+async function tryCookie(db: Database): Promise<ResolvedAuthContext> {
   const session = await auth({ treatPendingAsSignedOut: false });
   if (!session.userId) {
-    return UNAUTH_IDENTITY;
+    return { identity: UNAUTH_IDENTITY };
   }
-  return authIdentityFromDb(db, session.userId, session.orgId);
+  return {
+    identity: await authIdentityFromDb(db, session.userId, session.orgId),
+    access: {
+      kind: "clerk-session",
+      userId: session.userId,
+      orgId: session.orgId ?? null,
+      has: ((params) => session.has(params)) satisfies ClerkHas,
+    },
+  };
 }
 
 /**
@@ -155,6 +178,13 @@ export async function resolveIdentityFromClerk({
   db,
   headers,
 }: ResolveIdentityInput): Promise<AuthIdentity> {
+  return (await resolveAuthContextFromClerk({ db, headers })).identity;
+}
+
+export async function resolveAuthContextFromClerk({
+  db,
+  headers,
+}: ResolveIdentityInput): Promise<ResolvedAuthContext> {
   const bearer = await tryBearer({ db, headers });
-  return bearer ?? (await tryCookie(db));
+  return bearer ? { identity: bearer } : await tryCookie(db);
 }

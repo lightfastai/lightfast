@@ -1,7 +1,7 @@
 import { clerkOrgSlugSchema } from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { auth, clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
+import { clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
@@ -12,7 +12,7 @@ import {
   isOrgAccessError,
   orgInitials,
 } from "../../auth/organization-access";
-import { pendingAllowedProcedure } from "../../trpc";
+import { orgAdminProcedure, viewerProcedure } from "../../trpc";
 
 /**
  * Organization router - Clerk-based organization management
@@ -27,8 +27,8 @@ export const organizationRouter = {
    * Returns all organizations the authenticated user belongs to.
    * Used by org-switcher component in the header.
    */
-  listUserOrganizations: pendingAllowedProcedure.query(async ({ ctx }) => {
-    // pendingAllowedProcedure guarantees pending or active identity
+  listUserOrganizations: viewerProcedure.query(async ({ ctx }) => {
+    // viewerProcedure guarantees pending or active identity
     const userId = ctx.auth.identity.userId;
     const memberships = await getUserOrgMemberships(userId);
 
@@ -45,7 +45,7 @@ export const organizationRouter = {
     });
   }),
 
-  getBySlug: pendingAllowedProcedure
+  getBySlug: viewerProcedure
     .input(
       z.object({
         slug: clerkOrgSlugSchema,
@@ -77,14 +77,14 @@ export const organizationRouter = {
    * Used by team creation flow at /account/teams/new
    * Does NOT create a default project - user sets up integrations separately
    */
-  create: pendingAllowedProcedure
+  create: viewerProcedure
     .input(
       z.object({
         slug: clerkOrgSlugSchema,
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees pending or active identity
+      // viewerProcedure guarantees pending or active identity
       log.info("[organization] create", {
         slug: input.slug,
         userId: ctx.auth.identity.userId,
@@ -132,14 +132,16 @@ export const organizationRouter = {
         });
       }
     }),
+} satisfies TRPCRouterRecord;
 
+export const orgSettingsOrganizationRouter = {
   /**
    * Update organization name
    * Used by team settings page to update the organization name/slug in Clerk
    *
    * Only organization admins can update the organization name
    */
-  updateName: pendingAllowedProcedure
+  updateName: orgAdminProcedure
     .input(
       z.object({
         slug: z.string().min(1, "Organization slug is required"),
@@ -147,7 +149,6 @@ export const organizationRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees pending or active identity
       const clerk = await clerkClient();
 
       try {
@@ -156,14 +157,7 @@ export const organizationRouter = {
           slug: input.slug,
         });
 
-        const session = await auth({ treatPendingAsSignedOut: false });
-        if (
-          ctx.auth.identity.type !== "active" ||
-          !session.userId ||
-          session.orgId !== ctx.auth.identity.orgId ||
-          session.orgId !== org.id ||
-          !session.has({ role: "org:admin" })
-        ) {
+        if (org.id !== ctx.auth.identity.orgId) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Only administrators can perform this action",

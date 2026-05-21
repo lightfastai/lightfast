@@ -27,7 +27,8 @@ export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
 export type DiagnosticCode =
   | "AUTH_REQUIRED"
   | "ORG_REQUIRED"
-  | "ORG_SETUP_REQUIRED";
+  | "ORG_SETUP_REQUIRED"
+  | "PERMISSION_REQUIRED";
 
 export interface Repair {
   /**

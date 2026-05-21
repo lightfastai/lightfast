@@ -43,12 +43,19 @@ vi.mock("@vendor/observability/trpc", () => ({
 }));
 
 const { createCallerFactory, createTRPCRouter } = await import("../trpc");
-const { organizationRouter } = await import(
+const { organizationRouter, orgSettingsOrganizationRouter } = await import(
   "../router/(pending-allowed)/organization"
 );
 
 const testRouter = createTRPCRouter({
-  organization: organizationRouter,
+  viewer: createTRPCRouter({
+    organization: organizationRouter,
+  }),
+  org: createTRPCRouter({
+    settings: createTRPCRouter({
+      organization: orgSettingsOrganizationRouter,
+    }),
+  }),
 });
 const createCaller = createCallerFactory(testRouter);
 
@@ -57,9 +64,30 @@ const pendingIdentity: AuthIdentity = {
   userId: "user_test",
 };
 
-function caller(identity = pendingIdentity) {
+function adminAccess(overrides: { orgId?: string; userId?: string } = {}) {
+  return {
+    kind: "clerk-session" as const,
+    userId: overrides.userId ?? "user_test",
+    orgId: overrides.orgId ?? "org_acme",
+    has: ({ role }: { role?: string }) => role === "org:admin",
+  };
+}
+
+function nonAdminAccess() {
+  return {
+    kind: "clerk-session" as const,
+    userId: "user_test",
+    orgId: "org_acme",
+    has: () => false,
+  };
+}
+
+function caller(
+  identity = pendingIdentity,
+  access?: ReturnType<typeof adminAccess> | ReturnType<typeof nonAdminAccess>
+) {
   return createCaller({
-    auth: { identity },
+    auth: access ? { identity, access } : { identity },
     db: {} as Database,
     headers: new Headers(),
   });
@@ -82,7 +110,7 @@ beforeEach(() => {
 describe("organization.getBySlug", () => {
   it("throws UNAUTHORIZED when the caller is unauthenticated", async () => {
     await expect(
-      caller({ type: "unauthenticated" }).organization.getBySlug({
+      caller({ type: "unauthenticated" }).viewer.organization.getBySlug({
         slug: "acme",
       })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
@@ -103,7 +131,7 @@ describe("organization.getBySlug", () => {
     isOrgBoundMock.mockResolvedValue(true);
 
     await expect(
-      caller().organization.getBySlug({ slug: "acme" })
+      caller().viewer.organization.getBySlug({ slug: "acme" })
     ).resolves.toEqual({
       bindingStatus: "bound",
       org: {
@@ -130,7 +158,7 @@ describe("organization.getBySlug", () => {
     ]);
 
     await expect(
-      caller().organization.getBySlug({ slug: "acme" })
+      caller().viewer.organization.getBySlug({ slug: "acme" })
     ).rejects.toMatchObject({
       code: "NOT_FOUND",
       message: "Organization not found",
@@ -145,12 +173,15 @@ describe("organization.updateName", () => {
     updateOrganizationMock.mockResolvedValue({});
 
     await expect(
-      caller({
-        type: "active",
-        userId: "user_test",
-        orgId: "org_acme",
-        orgGate: { bindingStatus: "bound" },
-      }).organization.updateName({ slug: "acme", name: "acme-inc" })
+      caller(
+        {
+          type: "active",
+          userId: "user_test",
+          orgId: "org_acme",
+          orgGate: { bindingStatus: "bound" },
+        },
+        adminAccess()
+      ).org.settings.organization.updateName({ slug: "acme", name: "acme-inc" })
     ).resolves.toEqual({
       id: "org_acme",
       name: "acme-inc",
@@ -166,38 +197,32 @@ describe("organization.updateName", () => {
 
   it("rejects organization rename when Clerk active org differs from the target org", async () => {
     getOrganizationMock.mockResolvedValue({ id: "org_acme" });
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role === "org:admin",
-      orgId: "org_other",
-      userId: "user_test",
-    });
-
     await expect(
-      caller({
-        type: "active",
-        userId: "user_test",
-        orgId: "org_acme",
-        orgGate: { bindingStatus: "bound" },
-      }).organization.updateName({ slug: "acme", name: "acme-inc" })
+      caller(
+        {
+          type: "active",
+          userId: "user_test",
+          orgId: "org_acme",
+          orgGate: { bindingStatus: "bound" },
+        },
+        adminAccess({ orgId: "org_other" })
+      ).org.settings.organization.updateName({ slug: "acme", name: "acme-inc" })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(updateOrganizationMock).not.toHaveBeenCalled();
   });
 
   it("rejects organization rename without the admin role", async () => {
     getOrganizationMock.mockResolvedValue({ id: "org_acme" });
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role !== "org:admin",
-      orgId: "org_acme",
-      userId: "user_test",
-    });
-
     await expect(
-      caller({
-        type: "active",
-        userId: "user_test",
-        orgId: "org_acme",
-        orgGate: { bindingStatus: "bound" },
-      }).organization.updateName({ slug: "acme", name: "acme-inc" })
+      caller(
+        {
+          type: "active",
+          userId: "user_test",
+          orgId: "org_acme",
+          orgGate: { bindingStatus: "bound" },
+        },
+        nonAdminAccess()
+      ).org.settings.organization.updateName({ slug: "acme", name: "acme-inc" })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(updateOrganizationMock).not.toHaveBeenCalled();
   });
