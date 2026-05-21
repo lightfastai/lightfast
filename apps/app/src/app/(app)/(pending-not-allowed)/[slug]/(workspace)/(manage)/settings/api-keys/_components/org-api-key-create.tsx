@@ -13,10 +13,13 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@vendor/clerk";
 import { Check, Copy, Loader2, Plus } from "lucide-react";
 import { useRef, useState } from "react";
 
 export function OrgApiKeyCreate() {
+  const { has, isLoaded } = useAuth();
+  const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const listQueryKey =
@@ -46,6 +49,10 @@ export function OrgApiKeyCreate() {
       },
     })
   );
+
+  if (!canManageApiKeys) {
+    return null;
+  }
 
   function handleCreate() {
     const trimmed = name.trim();

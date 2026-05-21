@@ -1,8 +1,8 @@
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type MutationName = "delete" | "revoke";
+type MutationName = "create" | "delete" | "revoke";
 interface CapturedMutationOptions {
   mutationName?: MutationName;
   onError?: (error: unknown, input: unknown, context: unknown) => unknown;
@@ -15,12 +15,14 @@ const capturedMutationOptions: Partial<
   Record<MutationName, CapturedMutationOptions>
 > = {};
 const cancelQueriesMock = vi.fn();
+const createMutateMock = vi.fn();
 const deleteMutateMock = vi.fn();
 const getQueryDataMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
 const revokeMutateMock = vi.fn();
 const setQueryDataMock = vi.fn();
 const toastSuccessMock = vi.fn();
+const useAuthMock = vi.fn();
 const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
 
@@ -33,6 +35,12 @@ vi.mock("@repo/app-trpc/react", () => ({
     org: {
       settings: {
         orgApiKeys: {
+          create: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "create",
+            }),
+          },
           delete: {
             mutationOptions: (options: unknown) => ({
               ...(options as object),
@@ -65,10 +73,38 @@ vi.mock("@tanstack/react-query", () => ({
   useSuspenseQuery: useSuspenseQueryMock,
 }));
 
+vi.mock("@vendor/clerk", () => ({
+  useAuth: useAuthMock,
+}));
+
 vi.mock("@repo/ui/components/ui/sonner", () => ({
   toast: {
     success: toastSuccessMock,
   },
+}));
+
+vi.mock("@repo/ui/components/ui/dialog", () => ({
+  Dialog: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogDescription: ({ children }: { children?: ReactNode }) => (
+    <p>{children}</p>
+  ),
+  DialogFooter: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogHeader: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
+  DialogTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
+}));
+
+vi.mock("@repo/ui/components/ui/input", () => ({
+  Input: (props: React.InputHTMLAttributes<HTMLInputElement>) => (
+    <input {...props} />
+  ),
 }));
 
 vi.mock("@repo/ui/components/ui/alert-dialog", () => ({
@@ -142,6 +178,9 @@ vi.mock("@repo/ui/components/ui/dropdown-menu", () => ({
 const { OrgApiKeyList } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/api-keys/_components/org-api-key-list"
 );
+const { OrgApiKeyCreate } = await import(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/api-keys/_components/org-api-key-create"
+);
 
 const apiKeys = [
   {
@@ -170,6 +209,8 @@ const apiKeys = [
 
 function mutationResult(name: MutationName) {
   switch (name) {
+    case "create":
+      return { isPending: false, mutate: createMutateMock, reset: vi.fn() };
     case "delete":
       return { isPending: false, mutate: deleteMutateMock };
     case "revoke":
@@ -184,15 +225,21 @@ beforeEach(() => {
     delete capturedMutationOptions[key as MutationName];
   }
   cancelQueriesMock.mockReset();
+  createMutateMock.mockReset();
   deleteMutateMock.mockReset();
   getQueryDataMock.mockReset();
   invalidateQueriesMock.mockReset();
   revokeMutateMock.mockReset();
   setQueryDataMock.mockReset();
   toastSuccessMock.mockReset();
+  useAuthMock.mockReset();
   useMutationMock.mockReset();
   useSuspenseQueryMock.mockReset();
 
+  useAuthMock.mockReturnValue({
+    has: ({ role }: { role?: string }) => role === "org:admin",
+    isLoaded: true,
+  });
   useMutationMock.mockImplementation(
     (options: CapturedMutationOptions & { mutationName: MutationName }) => {
       capturedMutationOptions[options.mutationName] = options;
@@ -200,6 +247,66 @@ beforeEach(() => {
     }
   );
   useSuspenseQueryMock.mockReturnValue({ data: apiKeys });
+});
+
+describe("api key settings admin controls", () => {
+  it("shows create and row management controls to admins", () => {
+    render(
+      <>
+        <OrgApiKeyCreate />
+        <OrgApiKeyList />
+      </>
+    );
+
+    expect(screen.getByRole("button", { name: /create key/i })).toBeVisible();
+    expect(screen.getAllByRole("button", { name: /actions/i })).toHaveLength(
+      2
+    );
+    expect(screen.getAllByRole("button", { name: /^revoke$/i })).toHaveLength(
+      2
+    );
+    expect(screen.getAllByRole("button", { name: /^delete$/i })).toHaveLength(
+      2
+    );
+  });
+
+  it("hides create and row management controls from non-admin members", () => {
+    useAuthMock.mockReturnValue({
+      has: () => false,
+      isLoaded: true,
+    });
+
+    render(
+      <>
+        <OrgApiKeyCreate />
+        <OrgApiKeyList />
+      </>
+    );
+
+    expect(screen.queryByRole("button", { name: /create key/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /actions/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^revoke$/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /^delete$/i })).toBeNull();
+  });
+
+  it("uses admin-managed empty-state copy for non-admin members", () => {
+    useAuthMock.mockReturnValue({
+      has: () => false,
+      isLoaded: true,
+    });
+    useSuspenseQueryMock.mockReturnValue({ data: [] });
+
+    render(<OrgApiKeyList />);
+
+    expect(
+      screen.getByText("Ask an organization admin to create API keys.")
+    ).toBeVisible();
+    expect(
+      screen.queryByText(
+        "Create an API key to access your organization's resources programmatically."
+      )
+    ).toBeNull();
+  });
 });
 
 describe("api key settings list optimistic mutations", () => {

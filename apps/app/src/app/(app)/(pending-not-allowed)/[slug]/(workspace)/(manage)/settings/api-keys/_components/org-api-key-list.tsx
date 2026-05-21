@@ -24,6 +24,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { useAuth } from "@vendor/clerk";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
@@ -35,6 +36,8 @@ import {
 } from "./org-api-key-cache";
 
 export function OrgApiKeyList() {
+  const { has, isLoaded } = useAuth();
+  const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const listQueryOptions = trpc.org.settings.orgApiKeys.list.queryOptions();
@@ -154,8 +157,9 @@ export function OrgApiKeyList() {
           </div>
           <p className="font-semibold text-sm">No API keys yet</p>
           <p className="mt-1 max-w-sm text-muted-foreground text-sm">
-            Create an API key to access your organization's resources
-            programmatically.
+            {canManageApiKeys
+              ? "Create an API key to access your organization's resources programmatically."
+              : "Ask an organization admin to create API keys."}
           </p>
         </div>
       ) : (
@@ -216,51 +220,55 @@ export function OrgApiKeyList() {
                   </div>
                 </div>
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button
-                      className="text-muted-foreground hover:text-foreground"
-                      disabled={actionsDisabled}
-                      onClick={(e) => e.stopPropagation()}
-                      size="icon-sm"
-                      variant="ghost"
-                    >
-                      <MoreHorizontal className="size-3.5" />
-                      <span className="sr-only">Actions</span>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="space-y-1">
-                    {isActive && (
+                {canManageApiKeys ? (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        className="text-muted-foreground hover:text-foreground"
+                        disabled={actionsDisabled}
+                        onClick={(e) => e.stopPropagation()}
+                        size="icon-sm"
+                        variant="ghost"
+                      >
+                        <MoreHorizontal className="size-3.5" />
+                        <span className="sr-only">Actions</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="space-y-1">
+                      {isActive && (
+                        <DropdownMenuItem
+                          className="cursor-pointer rounded-xl px-2"
+                          onClick={() =>
+                            setAlertAction({
+                              type: "revoke",
+                              keyId: key.id,
+                              keyName: key.name,
+                            })
+                          }
+                        >
+                          <ShieldOff />
+                          Revoke
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         className="cursor-pointer rounded-xl px-2"
                         onClick={() =>
                           setAlertAction({
-                            type: "revoke",
+                            type: "delete",
                             keyId: key.id,
                             keyName: key.name,
                           })
                         }
+                        variant="destructive"
                       >
-                        <ShieldOff />
-                        Revoke
+                        <Trash2 />
+                        Delete
                       </DropdownMenuItem>
-                    )}
-                    <DropdownMenuItem
-                      className="cursor-pointer rounded-xl px-2"
-                      onClick={() =>
-                        setAlertAction({
-                          type: "delete",
-                          keyId: key.id,
-                          keyName: key.name,
-                        })
-                      }
-                      variant="destructive"
-                    >
-                      <Trash2 />
-                      Delete
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                ) : (
+                  <div className="size-6" />
+                )}
               </div>
             );
           })}
