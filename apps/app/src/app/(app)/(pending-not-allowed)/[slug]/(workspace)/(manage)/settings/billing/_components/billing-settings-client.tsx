@@ -2,15 +2,15 @@
 
 import { useTRPC } from "@repo/app-trpc/react";
 import {
-  usePaymentMethods,
-  useStatements,
-} from "@vendor/clerk/client/experimental";
-import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
-import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
+import {
+  usePaymentMethods,
+  useStatements,
+} from "@vendor/clerk/client/experimental";
 import { useState } from "react";
 
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
@@ -21,14 +21,14 @@ import {
   PlanSection,
 } from "./billing-sections";
 import {
+  type BillingOverview,
+  type BillingPlan,
+  type BillingSubscriptionItem,
   getCurrentSubscriptionItem,
   getDefaultPaymentMethod,
   getStarterPlan,
   getTeamPlan,
   tierForPlan,
-  type BillingOverview,
-  type BillingPlan,
-  type BillingSubscriptionItem,
 } from "./billing-utils";
 import { PaymentMethodDialog } from "./payment-method-dialog";
 import {
@@ -212,8 +212,8 @@ export function BillingSettingsClient() {
         />
 
         <CancellationSection
-          canceledAt={canceledTeamItem?.canceledAt ?? null}
           canCancel={!!cancelableTeamItem}
+          canceledAt={canceledTeamItem?.canceledAt ?? null}
           isAdmin={isAdmin}
           onCancelPlan={() => {
             if (cancelableTeamItem) {
@@ -237,10 +237,8 @@ export function BillingSettingsClient() {
 
       <PlanSelectionDialog
         currentTier={currentTier}
+        isConfirming={!!downgradeItem || !!upgradePlan || isBusinessConfirmOpen}
         isStarterSelectionDisabled={!!canceledTeamItem}
-        isConfirming={
-          !!downgradeItem || !!upgradePlan || isBusinessConfirmOpen
-        }
         onOpenChange={setIsPlanDialogOpen}
         onSelectBusiness={() => setIsBusinessConfirmOpen(true)}
         onSelectStarter={() => {

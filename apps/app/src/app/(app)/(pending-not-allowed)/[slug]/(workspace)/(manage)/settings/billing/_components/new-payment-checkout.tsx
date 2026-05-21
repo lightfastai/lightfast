@@ -1,6 +1,6 @@
-import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
+import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
 import {
   PaymentElement,
   useCheckout,
@@ -12,11 +12,7 @@ import { useState } from "react";
 
 import { checkoutErrorMessage } from "./billing-utils";
 
-export function NewPaymentCheckout({
-  onComplete,
-}: {
-  onComplete: () => void;
-}) {
+export function NewPaymentCheckout({ onComplete }: { onComplete: () => void }) {
   const { checkout, errors, fetchStatus } = useCheckout();
   const { isFormReady, submit } = usePaymentElement();
   const [isProcessing, setIsProcessing] = useState(false);

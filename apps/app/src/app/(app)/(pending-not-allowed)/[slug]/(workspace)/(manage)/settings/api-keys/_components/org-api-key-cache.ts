@@ -53,7 +53,7 @@ export function restoreApiKey(
   apiKey: OrgApiKey | undefined,
   index: number
 ): OrgApiKeyListData | undefined {
-  if (!data || !apiKey) {
+  if (!(data && apiKey)) {
     return data;
   }
 

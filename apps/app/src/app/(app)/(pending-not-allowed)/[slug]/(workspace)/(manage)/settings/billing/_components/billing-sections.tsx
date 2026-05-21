@@ -1,7 +1,3 @@
-import type {
-  BillingPaymentMethodResource,
-  BillingStatementResource,
-} from "@vendor/clerk/client/experimental";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -12,6 +8,10 @@ import {
   TableHeader,
   TableRow,
 } from "@repo/ui/components/ui/table";
+import type {
+  BillingPaymentMethodResource,
+  BillingStatementResource,
+} from "@vendor/clerk/client/experimental";
 import { CreditCard } from "lucide-react";
 
 import type { BillingMoneyAmount, BillingSubscription } from "./billing-utils";

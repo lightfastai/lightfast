@@ -282,8 +282,7 @@ beforeEach(() => {
   overviewData = overview();
   getQueryDataMock.mockImplementation(() => overviewData);
   setQueryDataMock.mockImplementation((_queryKey, value) => {
-    overviewData =
-      typeof value === "function" ? value(overviewData) : value;
+    overviewData = typeof value === "function" ? value(overviewData) : value;
   });
 
   useAuthMock.mockReturnValue({

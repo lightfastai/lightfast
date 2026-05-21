@@ -1,7 +1,7 @@
-import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
+import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
 import {
   useCheckout,
   usePaymentMethods,
@@ -26,7 +26,10 @@ export function SavedPaymentCheckout({
     pageSize: 20,
   });
   const methods = paymentMethods.data ?? [];
-  const defaultMethod = useMemo(() => getDefaultPaymentMethod(methods), [methods]);
+  const defaultMethod = useMemo(
+    () => getDefaultPaymentMethod(methods),
+    [methods]
+  );
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const selectedMethod = methods.find(

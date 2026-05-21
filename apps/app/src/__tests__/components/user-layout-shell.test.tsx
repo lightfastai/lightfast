@@ -62,17 +62,17 @@ describe("UserLayoutShell", () => {
     render(
       <UserLayoutShell>
         <div>Account settings</div>
-      </UserLayoutShell>,
+      </UserLayoutShell>
     );
 
     expect(screen.getByTestId("sidebar-provider")).toBeInTheDocument();
     expect(screen.getByTestId("app-sidebar").parentElement).toHaveClass(
-      "lg:hidden",
+      "lg:hidden"
     );
     expect(screen.getByTestId("sidebar-trigger")).toHaveClass("lg:hidden");
     expect(screen.getByTestId("team-switcher").parentElement).toHaveClass(
       "hidden",
-      "lg:block",
+      "lg:block"
     );
   });
 
@@ -82,7 +82,7 @@ describe("UserLayoutShell", () => {
     render(
       <UserLayoutShell>
         <div>Create team</div>
-      </UserLayoutShell>,
+      </UserLayoutShell>
     );
 
     expect(screen.queryByTestId("sidebar-provider")).not.toBeInTheDocument();

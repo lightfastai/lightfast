@@ -144,8 +144,8 @@ export function ConfirmBusinessDialog({
         <DialogHeader>
           <DialogTitle className="text-2xl">Confirm plan changes</DialogTitle>
           <DialogDescription className="pt-6 text-xl leading-relaxed">
-            We will open an email to sales@lightfast.ai to continue the
-            Business plan conversation.
+            We will open an email to sales@lightfast.ai to continue the Business
+            plan conversation.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-4 rounded-xl border px-5 py-5">

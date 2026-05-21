@@ -3,13 +3,13 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type MutationName = "invite" | "remove" | "revokeInvitation" | "updateRole";
-type CapturedMutationOptions = {
+interface CapturedMutationOptions {
   mutationName?: MutationName;
   onError?: (error: unknown, input: unknown, context: unknown) => unknown;
   onMutate?: (input: unknown) => unknown;
   onSettled?: () => unknown;
   onSuccess?: (data: unknown, input: unknown, context: unknown) => unknown;
-};
+}
 
 const capturedMutationOptions: Partial<
   Record<MutationName, CapturedMutationOptions>
@@ -177,9 +177,7 @@ vi.mock("@repo/ui/components/ui/dialog", () => ({
   DialogHeader: ({ children }: { children?: ReactNode }) => (
     <div>{children}</div>
   ),
-  DialogTitle: ({ children }: { children?: ReactNode }) => (
-    <h2>{children}</h2>
-  ),
+  DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
   DialogTrigger: ({ children }: { children?: ReactNode }) => <>{children}</>,
 }));
 
@@ -249,6 +247,8 @@ function mutationResult(name: MutationName) {
       return { isPending: false, mutate: revokeInvitationMutateMock };
     case "updateRole":
       return { isPending: false, mutate: updateRoleMutateMock };
+    default:
+      throw new Error(`Unhandled mutation: ${name}`);
   }
 }
 
@@ -408,8 +408,7 @@ describe("members settings client components", () => {
       { role: "org:admin", userId: "user_grace" },
       roleContext
     );
-    const rollbackRoleData =
-      setQueryDataMock.mock.calls.at(-1)?.[1](roleData);
+    const rollbackRoleData = setQueryDataMock.mock.calls.at(-1)?.[1](roleData);
     expect(
       rollbackRoleData.members.find(
         (member: { userId: string }) => member.userId === "user_grace"

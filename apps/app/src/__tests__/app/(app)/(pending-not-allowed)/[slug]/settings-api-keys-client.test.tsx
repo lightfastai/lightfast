@@ -3,13 +3,13 @@ import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 type MutationName = "delete" | "revoke";
-type CapturedMutationOptions = {
+interface CapturedMutationOptions {
   mutationName?: MutationName;
   onError?: (error: unknown, input: unknown, context: unknown) => unknown;
   onMutate?: (input: unknown) => unknown;
   onSettled?: () => unknown;
   onSuccess?: () => unknown;
-};
+}
 
 const capturedMutationOptions: Partial<
   Record<MutationName, CapturedMutationOptions>
@@ -70,7 +70,9 @@ vi.mock("@repo/ui/components/ui/sonner", () => ({
 }));
 
 vi.mock("@repo/ui/components/ui/alert-dialog", () => ({
-  AlertDialog: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  AlertDialog: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   AlertDialogAction: ({ children }: { children?: ReactNode }) => (
     <button type="button">{children}</button>
   ),
@@ -170,6 +172,8 @@ function mutationResult(name: MutationName) {
       return { isPending: false, mutate: deleteMutateMock };
     case "revoke":
       return { isPending: false, mutate: revokeMutateMock };
+    default:
+      throw new Error(`Unhandled mutation: ${name}`);
   }
 }
 

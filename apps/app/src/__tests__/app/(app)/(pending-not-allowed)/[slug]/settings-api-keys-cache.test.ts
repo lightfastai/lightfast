@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  type OrgApiKeyListData,
   removeApiKey,
   restoreApiKey,
   revokeApiKey,
-  type OrgApiKeyListData,
 } from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/api-keys/_components/org-api-key-cache";
 
 const activeKey: OrgApiKeyListData[number] = {

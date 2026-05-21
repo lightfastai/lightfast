@@ -33,15 +33,15 @@ import { Mail, MoreHorizontal, Trash2, UserRoundX, Users } from "lucide-react";
 import { useCallback } from "react";
 import {
   isOptimisticInvitation,
+  type OrgInvitation,
+  type OrgMember,
+  type OrgMembersData,
+  type OrgRole,
   removeInvitation,
   removeMember,
   restoreInvitation,
   restoreMember,
   updateMemberRole,
-  type OrgInvitation,
-  type OrgMember,
-  type OrgMembersData,
-  type OrgRole,
 } from "./org-member-cache";
 
 type OrgMembersOutput =
@@ -77,7 +77,7 @@ export function OrgMemberList() {
   const invalidateList = useCallback(
     () =>
       queryClient.invalidateQueries({ queryKey: listQueryOptions.queryKey }),
-    [queryClient, listQueryOptions.queryKey],
+    [queryClient, listQueryOptions.queryKey]
   );
 
   const updateRoleMutation = useMutation(
@@ -89,16 +89,16 @@ export function OrgMemberList() {
         });
 
         const previous = queryClient.getQueryData<OrgMembersOutput>(
-          listQueryOptions.queryKey,
+          listQueryOptions.queryKey
         );
         const previousRole = previous?.members.find(
-          (member) => member.userId === input.userId,
+          (member) => member.userId === input.userId
         )?.role as OrgRole | undefined;
 
         queryClient.setQueryData(
           listQueryOptions.queryKey,
           (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, input.role),
+            updateMemberRole(old, input.userId, input.role)
         );
 
         return { previousRole };
@@ -112,12 +112,12 @@ export function OrgMemberList() {
         queryClient.setQueryData(
           listQueryOptions.queryKey,
           (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, previousRole),
+            updateMemberRole(old, input.userId, previousRole)
         );
       },
       onSuccess: () => toast.success("Role updated"),
       onSettled: () => void invalidateList(),
-    }),
+    })
   );
 
   const removeMutation = useMutation(
@@ -129,17 +129,17 @@ export function OrgMemberList() {
         });
 
         const previous = queryClient.getQueryData<OrgMembersOutput>(
-          listQueryOptions.queryKey,
+          listQueryOptions.queryKey
         );
         const { removedIndex, removedMember } = removeMember(
           previous,
-          input.userId,
+          input.userId
         );
 
         queryClient.setQueryData(
           listQueryOptions.queryKey,
           (old: OrgMembersData | undefined) =>
-            removeMember(old, input.userId).data,
+            removeMember(old, input.userId).data
         );
 
         return { removedIndex, removedMember };
@@ -152,12 +152,12 @@ export function OrgMemberList() {
         queryClient.setQueryData(
           listQueryOptions.queryKey,
           (old: OrgMembersData | undefined) =>
-            restoreMember(old, context.removedMember, context.removedIndex),
+            restoreMember(old, context.removedMember, context.removedIndex)
         );
       },
       onSuccess: () => toast.success("Member removed"),
       onSettled: () => void invalidateList(),
-    }),
+    })
   );
 
   const revokeInvitationMutation = useMutation(
@@ -169,11 +169,11 @@ export function OrgMemberList() {
         });
 
         const previous = queryClient.getQueryData<OrgMembersOutput>(
-          listQueryOptions.queryKey,
+          listQueryOptions.queryKey
         );
         const removedIndex =
           previous?.invitations.findIndex(
-            (invitation) => invitation.id === input.invitationId,
+            (invitation) => invitation.id === input.invitationId
           ) ?? -1;
         const removedInvitation =
           removedIndex >= 0 ? previous?.invitations[removedIndex] : undefined;
@@ -181,7 +181,7 @@ export function OrgMemberList() {
         queryClient.setQueryData(
           listQueryOptions.queryKey,
           (old: OrgMembersData | undefined) =>
-            removeInvitation(old, input.invitationId),
+            removeInvitation(old, input.invitationId)
         );
 
         return { removedIndex, removedInvitation };
@@ -197,13 +197,13 @@ export function OrgMemberList() {
             restoreInvitation(
               old,
               context.removedInvitation,
-              context.removedIndex,
-            ),
+              context.removedIndex
+            )
         );
       },
       onSuccess: () => toast.success("Invitation revoked"),
       onSettled: () => void invalidateList(),
-    }),
+    })
   );
 
   const hasNoRows = data.members.length === 0 && data.invitations.length === 0;

@@ -77,7 +77,7 @@ export function PlanSelectionDialog({
                     ? "Your current plan"
                     : isStarterSelectionDisabled
                       ? "Scheduled"
-                    : "Switch to Starter"
+                      : "Switch to Starter"
                 }
                 description="A free organization workspace for getting started."
                 features={[

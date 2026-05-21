@@ -27,10 +27,10 @@ import { useState } from "react";
 import {
   createOptimisticInvitation,
   insertInvitation,
-  removeInvitation,
-  replaceInvitation,
   type OrgMembersData,
   type OrgRole,
+  removeInvitation,
+  replaceInvitation,
 } from "./org-member-cache";
 
 export function OrgMemberInvite() {
@@ -91,11 +91,7 @@ export function OrgMemberInvite() {
           queryClient.setQueryData(
             listQueryKey,
             (old: OrgMembersData | undefined) =>
-              replaceInvitation(
-                old,
-                context.optimisticInvitationId,
-                invitation
-              )
+              replaceInvitation(old, context.optimisticInvitationId, invitation)
           );
         }
         toast.success("Invitation sent");

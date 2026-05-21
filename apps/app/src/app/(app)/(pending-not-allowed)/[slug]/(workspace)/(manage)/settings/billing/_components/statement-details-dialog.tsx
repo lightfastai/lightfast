@@ -1,4 +1,3 @@
-import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
 import {
   Dialog,
   DialogContent,
@@ -6,12 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
+import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
 
-import {
-  formatDate,
-  formatMoney,
-  statementStatusLabel,
-} from "./billing-utils";
+import { formatDate, formatMoney, statementStatusLabel } from "./billing-utils";
 
 export function StatementDetailsDialog({
   onOpenChange,

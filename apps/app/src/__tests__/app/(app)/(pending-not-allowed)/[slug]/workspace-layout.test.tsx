@@ -8,7 +8,7 @@ interface Kids {
 vi.mock("@repo/ui/components/ui/sidebar", () => ({
   SidebarInset: ({ children }: Kids) => <>{children}</>,
   SidebarProvider: ({ children }: Kids) => <>{children}</>,
-  SidebarTrigger: function SidebarTrigger() {
+  SidebarTrigger() {
     return <button data-testid="sidebar-trigger" type="button" />;
   },
 }));

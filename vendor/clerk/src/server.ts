@@ -6,7 +6,6 @@ export type {
   BillingSubscription,
   BillingSubscriptionItem,
 } from "@clerk/backend";
-export type { BillingMoneyAmount } from "@clerk/shared/types";
 export type {
   AllowlistIdentifier,
   ClerkMiddlewareAuth,
@@ -66,6 +65,7 @@ export {
   reverificationErrorResponse,
   verifyToken,
 } from "@clerk/nextjs/server";
+export type { BillingMoneyAmount } from "@clerk/shared/types";
 export type { UserOrgMembership } from "./membership";
 export { getUserOrgMemberships } from "./membership";
 export type {

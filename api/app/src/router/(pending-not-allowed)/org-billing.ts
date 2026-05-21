@@ -1,10 +1,10 @@
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
 import type {
   BillingPlan,
   BillingSubscription,
   BillingSubscriptionItem,
 } from "@vendor/clerk/server";
-import type { TRPCRouterRecord } from "@trpc/server";
-import { TRPCError } from "@trpc/server";
 import { auth, clerkClient } from "@vendor/clerk/server";
 import { z } from "zod";
 

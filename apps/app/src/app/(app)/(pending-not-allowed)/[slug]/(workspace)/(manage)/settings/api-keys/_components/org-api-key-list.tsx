@@ -28,10 +28,10 @@ import { formatDistanceToNow } from "date-fns";
 import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import {
+  type OrgApiKeyListData,
   removeApiKey,
   restoreApiKey,
   revokeApiKey,
-  type OrgApiKeyListData,
 } from "./org-api-key-cache";
 
 export function OrgApiKeyList() {
@@ -54,7 +54,7 @@ export function OrgApiKeyList() {
 
   const invalidateList = useCallback(
     () => queryClient.invalidateQueries({ queryKey: listQueryKey }),
-    [queryClient, listQueryKey],
+    [queryClient, listQueryKey]
   );
 
   const revokeMutation = useMutation(
@@ -69,8 +69,7 @@ export function OrgApiKeyList() {
 
         queryClient.setQueryData(
           listQueryKey,
-          (old: OrgApiKeyListData | undefined) =>
-            revokeApiKey(old, input.keyId),
+          (old: OrgApiKeyListData | undefined) => revokeApiKey(old, input.keyId)
         );
 
         return { previousApiKey };
@@ -83,12 +82,12 @@ export function OrgApiKeyList() {
         queryClient.setQueryData(
           listQueryKey,
           (old: OrgApiKeyListData | undefined) =>
-            restoreApiKey(old, context.previousApiKey, -1),
+            restoreApiKey(old, context.previousApiKey, -1)
         );
       },
       onSuccess: () => toast.success("API key revoked"),
       onSettled: () => void invalidateList(),
-    }),
+    })
   );
 
   const deleteMutation = useMutation(
@@ -101,13 +100,13 @@ export function OrgApiKeyList() {
           queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
         const { removedApiKey, removedIndex } = removeApiKey(
           previous,
-          input.keyId,
+          input.keyId
         );
 
         queryClient.setQueryData(
           listQueryKey,
           (old: OrgApiKeyListData | undefined) =>
-            removeApiKey(old, input.keyId).data,
+            removeApiKey(old, input.keyId).data
         );
 
         return { removedApiKey, removedIndex };
@@ -120,12 +119,12 @@ export function OrgApiKeyList() {
         queryClient.setQueryData(
           listQueryKey,
           (old: OrgApiKeyListData | undefined) =>
-            restoreApiKey(old, context.removedApiKey, context.removedIndex),
+            restoreApiKey(old, context.removedApiKey, context.removedIndex)
         );
       },
       onSuccess: () => toast.success("API key deleted"),
       onSettled: () => void invalidateList(),
-    }),
+    })
   );
 
   function handleConfirmAlert() {
@@ -150,7 +149,7 @@ export function OrgApiKeyList() {
   return (
     <>
       {keys.length === 0 ? (
-        <div className="flex flex-col items-center justify-center border rounded-xl py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-xl border py-16 text-center">
           <div className="mb-4 rounded-full bg-muted/20 p-3">
             <Key className="h-6 w-6 text-muted-foreground" />
           </div>

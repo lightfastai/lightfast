@@ -1,7 +1,5 @@
 import type { AppRouterOutputs } from "@api/app";
-import type {
-  BillingPaymentMethodResource,
-} from "@vendor/clerk/client/experimental";
+import type { BillingPaymentMethodResource } from "@vendor/clerk/client/experimental";
 
 export type BillingOverview =
   AppRouterOutputs["pendingNotAllowed"]["orgBilling"]["overview"];
@@ -10,10 +8,10 @@ export type BillingSubscription = BillingOverview["subscription"];
 export type BillingSubscriptionItem =
   BillingSubscription["subscriptionItems"][number];
 
-export type BillingMoneyAmount = {
+export interface BillingMoneyAmount {
   amountFormatted: string;
   currencySymbol: string;
-};
+}
 
 export const businessContact = {
   email: "sales@lightfast.ai",

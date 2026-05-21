@@ -1,4 +1,3 @@
-import type { BillingPaymentMethodResource } from "@vendor/clerk/client/experimental";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -8,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
+import type { BillingPaymentMethodResource } from "@vendor/clerk/client/experimental";
 import { AlertCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
 

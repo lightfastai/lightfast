@@ -100,7 +100,7 @@ export function restoreInvitation(
   invitation: OrgInvitation | undefined,
   index: number
 ): OrgMembersData | undefined {
-  if (!data || !invitation) {
+  if (!(data && invitation)) {
     return data;
   }
   if (data.invitations.some((item) => item.id === invitation.id)) {
@@ -165,7 +165,7 @@ export function restoreMember(
   member: OrgMember | undefined,
   index: number
 ): OrgMembersData | undefined {
-  if (!data || !member) {
+  if (!(data && member)) {
     return data;
   }
   if (data.members.some((item) => item.userId === member.userId)) {
