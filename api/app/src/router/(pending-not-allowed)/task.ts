@@ -1,4 +1,4 @@
-import { type Database, isOrgBound, upsertActiveOrgBinding } from "@db/app";
+import { isOrgBound, upsertActiveOrgBinding } from "@db/app";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { log } from "@vendor/observability/log/next";
@@ -6,43 +6,6 @@ import { log } from "@vendor/observability/log/next";
 import { mirrorOrgBinding } from "../../auth/org-binding-mirror";
 import { env } from "../../env";
 import { setupProcedure } from "../../trpc";
-
-/**
- * Bind service — the single place that turns an org "bound".
- *
- * Write ordering keeps the DB authoritative: the binding is written first, then
- * the Clerk metadata mirror is updated for web-session routing UX. If
- * `mirrorOrgBinding` throws, the DB row still stands and API authorization can
- * resolve the org as bound; the mirror can be retried or repaired separately.
- *
- * v1 callers only pass placeholder metadata (see `task.bind`); the real GitHub
- * App installation callback will call this with concrete provider details.
- */
-async function bindOrg(input: {
-  db: Database;
-  clerkOrgId: string;
-  connectedByUserId: string;
-  metadata?: Record<string, unknown>;
-}): Promise<{ ok: true; bindingStatus: "bound" }> {
-  // 1. Create or confirm the active DB binding (authoritative, idempotent).
-  await upsertActiveOrgBinding(input.db, {
-    clerkOrgId: input.clerkOrgId,
-    connectedByUserId: input.connectedByUserId,
-    provider: "github",
-    metadata: input.metadata,
-  });
-
-  // 2. Mirror `bound` into Clerk org public metadata so the web session token
-  //    can carry `lf_binding_status: "bound"` for proxy routing UX.
-  await mirrorOrgBinding({
-    clerkOrgId: input.clerkOrgId,
-    status: "bound",
-    provider: "github",
-  });
-
-  // 3. Report the resolved gate state.
-  return { ok: true, bindingStatus: "bound" };
-}
 
 /**
  * Task Router — the v1 org setup surface.
@@ -79,10 +42,12 @@ export const taskRouter = {
       });
     }
 
-    const result = await bindOrg({
-      db: ctx.db,
+    // Keep the DB authoritative: the binding is written first, then the Clerk
+    // metadata mirror is updated for web-session routing UX.
+    await upsertActiveOrgBinding(ctx.db, {
       clerkOrgId: ctx.auth.identity.orgId,
       connectedByUserId: ctx.auth.identity.userId,
+      provider: "github",
       metadata: {
         placeholder: true,
         reason:
@@ -90,11 +55,17 @@ export const taskRouter = {
       },
     });
 
+    await mirrorOrgBinding({
+      clerkOrgId: ctx.auth.identity.orgId,
+      status: "bound",
+      provider: "github",
+    });
+
     log.info("[task] org bound", {
       clerkOrgId: ctx.auth.identity.orgId,
       userId: ctx.auth.identity.userId,
     });
 
-    return result;
+    return { ok: true, bindingStatus: "bound" as const };
   }),
 } satisfies TRPCRouterRecord;
