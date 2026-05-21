@@ -33,6 +33,7 @@ Preserve uncertainty.
 Field rules:
 - title: short, human-readable, max 80 characters.
 - summary: one sentence describing the signal.
+- kind: the kind of signal — one of "engage", "follow_up", "review", "fix", "investigate", "remember", or "other".
 - nextAction: one concrete action the user could take next.
 - rationale: brief explanation of why this classification was chosen.
 - confidence: number from 0 to 1.
@@ -56,6 +57,13 @@ export function buildSignalClassificationRequest(
   };
 }
 
+// `schemaVersion` is a fixed, code-owned literal — the model must not be asked
+// to generate it. Classify against the model-owned fields only, then stamp the
+// version server-side.
+const signalClassificationModelSchema = signalClassificationSchema.omit({
+  schemaVersion: true,
+});
+
 export async function classifySignalInput({
   model,
   prompt,
@@ -63,12 +71,12 @@ export async function classifySignalInput({
 }: SignalClassificationRequest): Promise<SignalClassification> {
   const { output } = await generateText({
     model,
-    output: Output.object({ schema: signalClassificationSchema }),
+    output: Output.object({ schema: signalClassificationModelSchema }),
     system,
     prompt,
   });
 
-  return output;
+  return { schemaVersion: "signal.classification.v1", ...output };
 }
 
 function getErrorMessage(error: unknown): string {
