@@ -27,15 +27,22 @@ import {
 import { formatDistanceToNow } from "date-fns";
 import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
+import {
+  removeApiKey,
+  restoreApiKey,
+  revokeApiKey,
+  type OrgApiKeyListData,
+} from "./org-api-key-cache";
 
 export function OrgApiKeyList() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryKey =
-    trpc.pendingNotAllowed.orgApiKeys.list.queryOptions().queryKey;
+  const listQueryOptions =
+    trpc.pendingNotAllowed.orgApiKeys.list.queryOptions();
+  const listQueryKey = listQueryOptions.queryKey;
 
   const { data: keys } = useSuspenseQuery({
-    ...trpc.pendingNotAllowed.orgApiKeys.list.queryOptions(),
+    ...listQueryOptions,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -47,23 +54,78 @@ export function OrgApiKeyList() {
 
   const invalidateList = useCallback(
     () => queryClient.invalidateQueries({ queryKey: listQueryKey }),
-    [queryClient, listQueryKey]
+    [queryClient, listQueryKey],
   );
 
   const revokeMutation = useMutation(
     trpc.pendingNotAllowed.orgApiKeys.revoke.mutationOptions({
       meta: { errorTitle: "Failed to revoke API key" },
+      onMutate: async (input) => {
+        await queryClient.cancelQueries({ queryKey: listQueryKey });
+
+        const previous =
+          queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
+        const previousApiKey = previous?.find((key) => key.id === input.keyId);
+
+        queryClient.setQueryData(
+          listQueryKey,
+          (old: OrgApiKeyListData | undefined) =>
+            revokeApiKey(old, input.keyId),
+        );
+
+        return { previousApiKey };
+      },
+      onError: (_err, _input, context) => {
+        if (!context?.previousApiKey) {
+          return;
+        }
+
+        queryClient.setQueryData(
+          listQueryKey,
+          (old: OrgApiKeyListData | undefined) =>
+            restoreApiKey(old, context.previousApiKey, -1),
+        );
+      },
       onSuccess: () => toast.success("API key revoked"),
       onSettled: () => void invalidateList(),
-    })
+    }),
   );
 
   const deleteMutation = useMutation(
     trpc.pendingNotAllowed.orgApiKeys.delete.mutationOptions({
       meta: { errorTitle: "Failed to delete API key" },
+      onMutate: async (input) => {
+        await queryClient.cancelQueries({ queryKey: listQueryKey });
+
+        const previous =
+          queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
+        const { removedApiKey, removedIndex } = removeApiKey(
+          previous,
+          input.keyId,
+        );
+
+        queryClient.setQueryData(
+          listQueryKey,
+          (old: OrgApiKeyListData | undefined) =>
+            removeApiKey(old, input.keyId).data,
+        );
+
+        return { removedApiKey, removedIndex };
+      },
+      onError: (_err, _input, context) => {
+        if (!context?.removedApiKey) {
+          return;
+        }
+
+        queryClient.setQueryData(
+          listQueryKey,
+          (old: OrgApiKeyListData | undefined) =>
+            restoreApiKey(old, context.removedApiKey, context.removedIndex),
+        );
+      },
       onSuccess: () => toast.success("API key deleted"),
       onSettled: () => void invalidateList(),
-    })
+    }),
   );
 
   function handleConfirmAlert() {
@@ -83,10 +145,12 @@ export function OrgApiKeyList() {
     setAlertAction(null);
   }
 
+  const actionsDisabled = revokeMutation.isPending || deleteMutation.isPending;
+
   return (
     <>
       {keys.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
+        <div className="flex flex-col items-center justify-center border rounded-xl py-16 text-center">
           <div className="mb-4 rounded-full bg-muted/20 p-3">
             <Key className="h-6 w-6 text-muted-foreground" />
           </div>
@@ -158,6 +222,7 @@ export function OrgApiKeyList() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       className="text-muted-foreground hover:text-foreground"
+                      disabled={actionsDisabled}
                       onClick={(e) => e.stopPropagation()}
                       size="icon-sm"
                       variant="ghost"
