@@ -74,6 +74,8 @@ const isPendingAllowedRoute = createRouteMatcher([
   "/desktop/auth(.*)",
 ]);
 
+const isBoundOrgProductRoute = createRouteMatcher(["/:slug"]);
+
 const RESERVED_ORG_ROUTE_SEGMENTS = new Set([
   "account",
   "api",
@@ -218,6 +220,12 @@ export default clerkMiddleware(
         ) {
           event.waitUntil(persistLastActiveOrg(userId, nextLastActiveOrg));
         }
+      }
+      const bindingStatus = sessionClaims?.lf_binding_status;
+      if (orgId && isBoundOrgProductRoute(req) && bindingStatus !== "bound") {
+        return NextResponse.redirect(
+          new URL(`/${req.nextUrl.pathname.split("/")[1]}/tasks/bind`, req.url)
+        );
       }
     }
 

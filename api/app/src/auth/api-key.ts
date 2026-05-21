@@ -1,7 +1,10 @@
+import type { Database } from "@db/app";
+import { isOrgBound } from "@db/app";
+import { db as appDb } from "@db/app/client";
 import { clerkClient } from "@vendor/clerk/server";
 
 import type { Diagnostic } from "../diagnostics";
-import type { AuthIdentity } from "./identity";
+import type { AuthIdentity, BindingStatus } from "./identity";
 
 export type ApiKeyAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
 
@@ -68,6 +71,7 @@ function parseBearerApiKey(headers: Headers): string {
 }
 
 export async function resolveApiKeyAuth(input: {
+  db?: Database;
   headers: Headers;
 }): Promise<ApiKeyAuthResult> {
   const token = parseBearerApiKey(input.headers);
@@ -101,10 +105,13 @@ export async function resolveApiKeyAuth(input: {
     );
   }
 
+  const bound = await isOrgBound(input.db ?? appDb, key.subject);
+  const bindingStatus = (bound ? "bound" : "unbound") satisfies BindingStatus;
   const identity: ApiKeyAuthIdentity = {
     type: "active",
     userId: key.createdBy,
     orgId: key.subject,
+    orgGate: { bindingStatus },
   };
 
   return { apiKeyId: key.id, identity };

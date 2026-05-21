@@ -24,7 +24,10 @@ import { type TRPC_ERROR_CODE_KEY, TRPCError } from "@trpc/server";
 
 export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
 
-export type DiagnosticCode = "AUTH_REQUIRED" | "ORG_REQUIRED";
+export type DiagnosticCode =
+  | "AUTH_REQUIRED"
+  | "ORG_REQUIRED"
+  | "ORG_SETUP_REQUIRED";
 
 export interface Repair {
   /**
@@ -34,9 +37,11 @@ export interface Repair {
    */
   href?: string;
   /**
-   * - `create-or-join-org` — no active org; the user must create or join one.
+   * - `create-or-join-org`   — no active org; the user must create or join one.
+   * - `bind-source-control` — the active org has not connected a source-control
+   *   organization yet; product features stay locked until it is bound.
    */
-  id: "create-or-join-org";
+  id: "create-or-join-org" | "bind-source-control";
 }
 
 export interface Diagnostic {

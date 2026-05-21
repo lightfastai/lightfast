@@ -4,8 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const getUserOrgMembershipsMock = vi.fn();
+const isOrgBoundMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
+vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
 
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -62,6 +64,7 @@ function caller(identity = pendingIdentity) {
 
 beforeEach(() => {
   getUserOrgMembershipsMock.mockReset();
+  isOrgBoundMock.mockReset();
 });
 
 describe("organization.getBySlug", () => {
@@ -72,9 +75,10 @@ describe("organization.getBySlug", () => {
       })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     expect(getUserOrgMembershipsMock).not.toHaveBeenCalled();
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
-  it("returns the user's matching Clerk org", async () => {
+  it("returns the user's matching Clerk org and DB binding gate", async () => {
     getUserOrgMembershipsMock.mockResolvedValue([
       {
         imageUrl: "https://img.test/acme.png",
@@ -84,9 +88,12 @@ describe("organization.getBySlug", () => {
         role: "org:admin",
       },
     ]);
+    isOrgBoundMock.mockResolvedValue(true);
+
     await expect(
       caller().organization.getBySlug({ slug: "acme" })
     ).resolves.toEqual({
+      bindingStatus: "bound",
       org: {
         id: "org_acme",
         imageUrl: "https://img.test/acme.png",
@@ -96,6 +103,7 @@ describe("organization.getBySlug", () => {
       },
       role: "org:admin",
     });
+    expect(isOrgBoundMock).toHaveBeenCalledWith(expect.anything(), "org_acme");
   });
 
   it("throws NOT_FOUND when the slug is not in the user's memberships", async () => {
@@ -115,5 +123,6 @@ describe("organization.getBySlug", () => {
       code: "NOT_FOUND",
       message: "Organization not found",
     });
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 });

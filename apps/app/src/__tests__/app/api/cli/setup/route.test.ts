@@ -5,6 +5,8 @@ vi.mock("~/app/(auth-api)/_server/verify-bearer-jwt", () => ({
   verifyBearerJwt: verifyBearerJwtMock,
 }));
 
+const isOrgBoundMock = vi.fn();
+vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 const getOrganizationMembershipListMock = vi.fn();
@@ -35,6 +37,7 @@ function membership(org: { id: string; slug: string | null; name: string }) {
 
 beforeEach(() => {
   verifyBearerJwtMock.mockReset();
+  isOrgBoundMock.mockReset();
   getOrganizationMembershipListMock.mockReset();
   apiKeysCreateMock.mockReset();
 });
@@ -57,13 +60,47 @@ describe("POST /api/cli/setup", () => {
 
     expect(res.status).toBe(403);
     expect(await res.json()).toEqual({ error: "not_a_member" });
+    expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
-  it("mints an org API key for any member org", async () => {
+  it("returns 403 org_setup_required for an unbound org — no key minted", async () => {
     verifyBearerJwtMock.mockResolvedValue({ userId: "user_1" });
     getOrganizationMembershipListMock.mockResolvedValue({
       data: [membership({ id: "org_1", slug: "acme", name: "Acme" })],
     });
+    isOrgBoundMock.mockResolvedValue(false);
+
+    const res = await POST(makeReq({ orgId: "org_1" }));
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({
+      error: "org_setup_required",
+      repair: { id: "bind-source-control", href: "/acme/tasks/bind" },
+    });
+    expect(apiKeysCreateMock).not.toHaveBeenCalled();
+  });
+
+  it("omits the repair href when the org has no slug", async () => {
+    verifyBearerJwtMock.mockResolvedValue({ userId: "user_1" });
+    getOrganizationMembershipListMock.mockResolvedValue({
+      data: [membership({ id: "org_1", slug: null, name: "Acme" })],
+    });
+    isOrgBoundMock.mockResolvedValue(false);
+
+    const res = await POST(makeReq({ orgId: "org_1" }));
+
+    expect(await res.json()).toEqual({
+      error: "org_setup_required",
+      repair: { id: "bind-source-control" },
+    });
+  });
+
+  it("mints an org API key for a bound org", async () => {
+    verifyBearerJwtMock.mockResolvedValue({ userId: "user_1" });
+    getOrganizationMembershipListMock.mockResolvedValue({
+      data: [membership({ id: "org_1", slug: "acme", name: "Acme" })],
+    });
+    isOrgBoundMock.mockResolvedValue(true);
     apiKeysCreateMock.mockResolvedValue({ secret: "ak_secret_value" });
 
     const res = await POST(makeReq({ orgId: "org_1" }));

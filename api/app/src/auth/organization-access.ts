@@ -1,3 +1,5 @@
+import type { Database } from "@db/app";
+import { isOrgBound } from "@db/app";
 import { getUserOrgMemberships } from "@vendor/clerk/server";
 
 export class OrgAccessError extends Error {
@@ -22,6 +24,7 @@ export function orgInitials(name: string): string {
 }
 
 export interface OrgAccess {
+  bindingStatus: "bound" | "unbound";
   org: {
     id: string;
     imageUrl: string;
@@ -33,6 +36,7 @@ export interface OrgAccess {
 }
 
 export async function getOrgAccessBySlug(input: {
+  db: Database;
   slug: string;
   userId: string;
 }): Promise<OrgAccess> {
@@ -45,7 +49,10 @@ export async function getOrgAccessBySlug(input: {
     throw new OrgAccessError();
   }
 
+  const bound = await isOrgBound(input.db, membership.organizationId);
+
   return {
+    bindingStatus: bound ? "bound" : "unbound",
     org: {
       id: membership.organizationId,
       imageUrl: membership.imageUrl,

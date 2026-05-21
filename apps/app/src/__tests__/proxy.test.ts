@@ -10,6 +10,7 @@ interface AuthResult {
   orgSlug?: string | null;
   sessionClaims?: {
     last_active_org?: LastActiveOrg | null;
+    lf_binding_status?: unknown;
   } | null;
   sessionStatus?: "active" | "pending";
   userId?: string | null;
@@ -100,7 +101,7 @@ beforeEach(() => {
   authMock.mockResolvedValue({
     orgId: "org_123",
     orgSlug: "acme",
-    sessionClaims: {},
+    sessionClaims: { lf_binding_status: "bound" },
     sessionStatus: "active",
     userId: "user_123",
   });
@@ -122,6 +123,7 @@ describe("proxy post-auth routing", () => {
       orgSlug: null,
       sessionClaims: {
         last_active_org: { id: "org_last", slug: "last-team" },
+        lf_binding_status: "bound",
       },
       sessionStatus: "active",
       userId: "user_123",
@@ -139,7 +141,7 @@ describe("proxy post-auth routing", () => {
     authMock.mockResolvedValue({
       orgId: null,
       orgSlug: null,
-      sessionClaims: {},
+      sessionClaims: { lf_binding_status: "bound" },
       sessionStatus: "active",
       userId: "user_123",
     });
@@ -158,6 +160,7 @@ describe("proxy post-auth routing", () => {
       orgSlug: null,
       sessionClaims: {
         last_active_org: { id: "org_old", slug: "old-team" },
+        lf_binding_status: "bound",
       },
       sessionStatus: "pending",
       userId: "user_123",
@@ -172,32 +175,56 @@ describe("proxy post-auth routing", () => {
   });
 });
 
-describe("proxy org product routes", () => {
-  it("passes active orgs through on the workspace root without a source-control binding claim", async () => {
+describe("proxy bound org product route gate", () => {
+  it("redirects unbound orgs from the workspace root to the bind task", async () => {
     authMock.mockResolvedValue({
       orgId: "org_123",
       orgSlug: "acme",
-      sessionClaims: {},
+      sessionClaims: { lf_binding_status: "unbound" },
       sessionStatus: "active",
       userId: "user_123",
     });
 
     const { response } = await invoke("/acme");
 
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/acme/tasks/bind"
+    );
+  });
+
+  it("passes bound orgs through on the workspace root", async () => {
+    const { response } = await invoke("/acme");
+
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("passes org settings routes through", async () => {
+  it("does not gate org settings routes", async () => {
     authMock.mockResolvedValue({
       orgId: "org_123",
       orgSlug: "acme",
-      sessionClaims: {},
+      sessionClaims: { lf_binding_status: "unbound" },
       sessionStatus: "active",
       userId: "user_123",
     });
 
     const { response } = await invoke("/acme/settings");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("does not gate task setup routes", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: { lf_binding_status: "unbound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/acme/tasks/bind");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
@@ -211,6 +238,7 @@ describe("proxy last active org persistence", () => {
       orgSlug: "acme",
       sessionClaims: {
         last_active_org: { id: "org_old", slug: "old-team" },
+        lf_binding_status: "bound",
       },
       sessionStatus: "active",
       userId: "user_123",
@@ -234,6 +262,7 @@ describe("proxy last active org persistence", () => {
       orgSlug: "acme",
       sessionClaims: {
         last_active_org: { id: "org_123", slug: "acme" },
+        lf_binding_status: "bound",
       },
       sessionStatus: "active",
       userId: "user_123",

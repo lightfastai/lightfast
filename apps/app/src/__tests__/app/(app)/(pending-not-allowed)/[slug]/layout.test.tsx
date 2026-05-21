@@ -117,6 +117,7 @@ describe("[slug]/layout — membership/slug access gate", () => {
 
   it("returns a UI-less membership boundary when org access is allowed", async () => {
     fetchQueryMock.mockResolvedValue({
+      bindingStatus: "unbound",
       org: {
         id: "org_123",
         imageUrl: "",

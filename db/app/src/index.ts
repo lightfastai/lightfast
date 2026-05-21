@@ -8,3 +8,12 @@ export * from "./schema";
 
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
+// Org source-control binding repository helpers
+export {
+  getActiveOrgBinding,
+  isOrgBound,
+  type MarkOrgBindingRevokedInput,
+  markOrgBindingRevoked,
+  type UpsertActiveOrgBindingInput,
+  upsertActiveOrgBinding,
+} from "./utils/org-binding";

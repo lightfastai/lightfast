@@ -1,17 +1,38 @@
-import type { Database } from "@db/app";
+import { type Database, isOrgBound } from "@db/app";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { auth, verifyToken } from "@vendor/clerk/server";
 import { z } from "zod";
 
 /**
+ * Org binding gate — has the active org completed source-control setup?
+ *
+ *   bound   → at least one active Binding; product features are reachable.
+ *   unbound → no active Binding yet.
+ *   revoked → a Binding existed and was revoked; treated as not usable.
+ */
+export type BindingStatus = "bound" | "unbound" | "revoked";
+
+/**
+ * Org-level gate signal carried on an `active` identity. Resolved from the
+ * authoritative Lightfast DB binding; enforced server-side by tRPC's
+ * `boundOrgProcedure`.
+ */
+export interface OrgGate {
+  bindingStatus: BindingStatus;
+}
+
+/**
  * Authorization identity — the answer to "who is this request from?".
  * Vendor-agnostic — specific transports (Bearer JWT, cookie session, future
  * IdPs) construct one of these variants via the `authIdentity` factory.
+ *
+ * The `active` variant additionally carries `orgGate` — the org-level setup
+ * signal — so org-scoped procedures can gate without a second round-trip.
  */
 export type AuthIdentity =
   | { type: "unauthenticated" }
   | { type: "pending"; userId: string }
-  | { type: "active"; userId: string; orgId: string };
+  | { type: "active"; userId: string; orgId: string; orgGate: OrgGate };
 
 export const UNAUTH_IDENTITY = {
   type: "unauthenticated",
@@ -19,16 +40,25 @@ export const UNAUTH_IDENTITY = {
 
 export function authIdentity(
   userId: string,
-  orgId: string | null | undefined
+  orgId: string | null | undefined,
+  bindingStatus: BindingStatus
 ): AuthIdentity {
   if (!orgId) {
     return { type: "pending", userId };
   }
-  return { type: "active", userId, orgId };
+  return { type: "active", userId, orgId, orgGate: { bindingStatus } };
 }
 
-function authIdentityFromOrg(userId: string, orgId: string | null | undefined) {
-  return authIdentity(userId, orgId);
+async function authIdentityFromDb(
+  db: Database,
+  userId: string,
+  orgId: string | null | undefined
+): Promise<AuthIdentity> {
+  if (!orgId) {
+    return { type: "pending", userId };
+  }
+  const bound = await isOrgBound(db, orgId);
+  return authIdentity(userId, orgId, bound ? "bound" : "unbound");
 }
 
 // Hoisted so config errors surface at boot, not per-request.
@@ -64,7 +94,10 @@ const ClerkJwtClaims = z.object({
  * cross-origin and ships `credentials: "omit"`, so cookies physically
  * can't reach this request. See `packages/app-trpc/src/desktop.tsx`.
  */
-async function tryBearer(headers: Headers): Promise<AuthIdentity | undefined> {
+async function tryBearer({
+  db,
+  headers,
+}: ResolveIdentityInput): Promise<AuthIdentity | undefined> {
   const authorization = headers.get("authorization");
   if (!authorization) {
     return;
@@ -93,16 +126,16 @@ async function tryBearer(headers: Headers): Promise<AuthIdentity | undefined> {
     });
     return UNAUTH_IDENTITY;
   }
-  return authIdentityFromOrg(claims.sub, claims.org_id);
+  return authIdentityFromDb(db, claims.sub, claims.org_id);
 }
 
 /** Cookie transport — Next.js web app (same-origin). */
-async function tryCookie(): Promise<AuthIdentity> {
+async function tryCookie(db: Database): Promise<AuthIdentity> {
   const session = await auth({ treatPendingAsSignedOut: false });
   if (!session.userId) {
     return UNAUTH_IDENTITY;
   }
-  return authIdentityFromOrg(session.userId, session.orgId);
+  return authIdentityFromDb(db, session.userId, session.orgId);
 }
 
 /**
@@ -119,8 +152,9 @@ export interface ResolveIdentityInput {
 }
 
 export async function resolveIdentityFromClerk({
+  db,
   headers,
 }: ResolveIdentityInput): Promise<AuthIdentity> {
-  const bearer = await tryBearer(headers);
-  return bearer ?? (await tryCookie());
+  const bearer = await tryBearer({ db, headers });
+  return bearer ?? (await tryCookie(db));
 }
