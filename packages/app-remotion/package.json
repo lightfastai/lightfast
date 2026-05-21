@@ -22,8 +22,8 @@
   "dependencies": {
     "@vendor/remotion": "workspace:*",
     "clsx": "catalog:",
-    "react": "19.2.6",
-    "react-dom": "19.2.6",
+    "react": "catalog:react19",
+    "react-dom": "catalog:react19",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
@@ -32,7 +32,7 @@
     "@repo/ui": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@types/node": "catalog:",
-    "@types/react": "catalog:",
+    "@types/react": "catalog:react19",
     "css-loader": "^7.1.4",
     "postcss": "catalog:tailwind4",
     "postcss-loader": "^8.1.1",

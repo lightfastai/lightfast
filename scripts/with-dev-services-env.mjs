@@ -46,7 +46,7 @@ child.on("exit", (code, signal) => {
 });
 
 function buildEnv() {
-  if (isDisabled(process.env.LIGHTFAST_DEV_SERVICES)) {
+  if (isDisabled(process.env.LIGHTFAST_DEV_SERVICES) || isVercel(process.env)) {
     return process.env;
   }
 
@@ -101,6 +101,10 @@ function localServiceResolverEnv() {
 
 function isDisabled(value) {
   return ["0", "false", "off"].includes(String(value ?? "").toLowerCase());
+}
+
+function isVercel(env) {
+  return env.VERCEL === "1";
 }
 
 function findDefaultConfigPath() {

@@ -73,7 +73,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "@types/react": "catalog:",
+    "@types/react": "catalog:react19",
     "typescript": "catalog:"
   },
   "dependencies": {
