@@ -62,7 +62,7 @@
     "concurrently": "^9.2.1",
     "knip": "^6.4.1",
     "portless": "catalog:",
-    "turbo": "2.9.6",
+    "turbo": "2.9.14",
     "turbo-ignore": "2.9.6",
     "typescript": "^5.9.2",
     "ultracite": "7.6.0"
