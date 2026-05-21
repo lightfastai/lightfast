@@ -8,6 +8,15 @@ const db = createDatabase({
   username: env.DATABASE_USERNAME,
 });
 
-await migrate(db, { migrationsFolder: "./src/migrations" });
+console.log(`Applying migrations against ${env.DATABASE_HOST} ...`);
 
-console.log("Drizzle migrations applied.");
+try {
+  await migrate(db, { migrationsFolder: "./src/migrations" });
+  console.log("Drizzle migrations applied.");
+} catch (error) {
+  console.error(
+    "Migration failed:",
+    error instanceof Error ? error.message : error
+  );
+  process.exit(1);
+}

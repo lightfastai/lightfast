@@ -7,10 +7,6 @@ on:
         description: 'Type "migrate" to open and deploy a PlanetScale deploy request'
         required: true
         type: string
-      branch:
-        description: "Optional PlanetScale branch name. Defaults to db-<run id>."
-        required: false
-        type: string
 
 concurrency:
   group: db-migration
@@ -27,6 +23,7 @@ jobs:
       PLANETSCALE_ORG_NAME: ${{ secrets.PLANETSCALE_ORG_NAME }}
       PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
       PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
+      PSCALE_BRANCH_NAME: staging
 
     steps:
       - name: Checkout code
@@ -47,30 +44,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Resolve PlanetScale branch
+      - name: Assert staging branch exists
         run: |
-          raw_branch="${{ github.event.inputs.branch }}"
-          if [ -z "$raw_branch" ]; then
-            raw_branch="db-${GITHUB_RUN_ID}"
-          fi
-          branch_name=$(printf '%s' "$raw_branch" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]-')
-          if [ -z "$branch_name" ]; then
-            echo "Could not derive a valid PlanetScale branch name." >&2
+          if ! pscale branch show "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" >/dev/null; then
+            echo "staging branch missing - run the one-time bootstrap documented in db/CLAUDE.md" >&2
             exit 1
-          fi
-          echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
-
-      - name: Create or reuse PlanetScale branch
-        run: |
-          set +e
-          pscale branch show "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" >/dev/null
-          exit_code=$?
-          set -e
-
-          if [ "$exit_code" -eq 0 ]; then
-            echo "PlanetScale branch $PLANETSCALE_DATABASE_NAME/$PSCALE_BRANCH_NAME already exists."
-          else
-            pscale branch create "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --from main --wait --org "$PLANETSCALE_ORG_NAME"
           fi
 
       - name: Create branch password
@@ -105,22 +83,66 @@ jobs:
         run: |
           set +e
           existing=$(pscale deploy-request show "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" -f json 2>/dev/null)
-          exit_code=$?
+          show_exit=$?
           set -e
 
-          if [ "$exit_code" -eq 0 ]; then
+          if [ "$show_exit" -eq 0 ]; then
             deploy_request_number=$(echo "$existing" | jq -r '.number')
-          else
-            response=$(pscale deploy-request create "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --into main --notes "GitHub Actions run ${GITHUB_RUN_ID}" --org "$PLANETSCALE_ORG_NAME" -f json)
-            deploy_request_number=$(echo "$response" | jq -r '.number')
+            echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> "$GITHUB_ENV"
+            echo "HAS_SCHEMA_CHANGES=true" >> "$GITHUB_ENV"
+            echo "Using existing deploy request $deploy_request_number."
+            exit 0
           fi
 
+          set +e
+          response=$(pscale deploy-request create "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --into main --notes "GitHub Actions run ${GITHUB_RUN_ID}" --org "$PLANETSCALE_ORG_NAME" -f json 2>&1)
+          create_exit=$?
+          set -e
+
+          if [ "$create_exit" -ne 0 ]; then
+            if echo "$response" | grep -Eiq "no schema changes|no changes|nothing to deploy|identical|not different"; then
+              echo "No schema changes detected between staging and main; skipping deploy."
+              echo "HAS_SCHEMA_CHANGES=false" >> "$GITHUB_ENV"
+              exit 0
+            fi
+
+            echo "$response" >&2
+            exit "$create_exit"
+          fi
+
+          deploy_request_number=$(echo "$response" | jq -r '.number')
           echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> "$GITHUB_ENV"
+          echo "HAS_SCHEMA_CHANGES=true" >> "$GITHUB_ENV"
           echo "Opened deploy request $deploy_request_number."
 
-      - name: Deploy schema changes
+      - name: Check schema lint
+        if: env.HAS_SCHEMA_CHANGES == 'true'
         run: |
-          pscale deploy-request deploy "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" --wait
+          deploy_request=$(pscale deploy-request show "$PLANETSCALE_DATABASE_NAME" "$DEPLOY_REQUEST_NUMBER" --org "$PLANETSCALE_ORG_NAME" -f json)
+          echo "$deploy_request" | jq .
+
+          lint_errors=$(echo "$deploy_request" | jq -c '
+            [
+              .. | objects
+              | select(
+                  ((has("type") and (.type | tostring | ascii_downcase | contains("error"))) or
+                   (has("severity") and (.severity | tostring | ascii_downcase == "error")) or
+                   (has("state") and (.state | tostring | ascii_downcase == "error")) or
+                   (has("status") and (.status | tostring | ascii_downcase == "error")))
+                )
+            ]
+          ')
+
+          if [ "$lint_errors" != "[]" ]; then
+            echo "Schema lint errors detected:" >&2
+            echo "$lint_errors" | jq . >&2
+            exit 1
+          fi
+
+      - name: Deploy schema changes
+        if: env.HAS_SCHEMA_CHANGES == 'true'
+        run: |
+          pscale deploy-request deploy "$PLANETSCALE_DATABASE_NAME" "$DEPLOY_REQUEST_NUMBER" --org "$PLANETSCALE_ORG_NAME" --wait
 
       - name: Delete branch password
         if: always() && env.PSCALE_PASSWORD_ID != ''
@@ -129,7 +151,11 @@ jobs:
 
       - name: Summary
         run: |
-          echo "Database migrations deployed through PlanetScale deploy request ${DEPLOY_REQUEST_NUMBER}."
+          if [ "$HAS_SCHEMA_CHANGES" = "true" ]; then
+            echo "Database migrations deployed through PlanetScale deploy request ${DEPLOY_REQUEST_NUMBER}."
+          else
+            echo "Database migrations applied to staging; no schema deploy was needed."
+          fi
 
   no-confirmation:
     name: Migration Not Confirmed

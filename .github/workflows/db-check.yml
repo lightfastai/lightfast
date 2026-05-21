@@ -1,0 +1,36 @@
+name: DB Schema Drift
+
+on:
+  pull_request:
+    paths: ["db/app/**"]
+
+jobs:
+  drift:
+    name: DB Schema Drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: "pnpm"
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Regenerate migrations
+        run: pnpm --filter @db/app db:generate
+
+      - name: Assert no uncommitted migration drift
+        run: |
+          # git diff is blind to untracked files; intent-to-add makes new
+          # generated migrations and snapshots visible to the diff.
+          git add -N db/app/src/migrations
+          git diff --exit-code db/app/src/migrations

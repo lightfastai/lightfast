@@ -1,9 +1,9 @@
 import type { Config } from "drizzle-kit";
 
 export const createDrizzleConfig = (opts: {
-  host: string;
-  username: string;
-  password: string;
+  host?: string;
+  username?: string;
+  password?: string;
   database?: string;
   port?: number;
   schema: string;
@@ -11,38 +11,32 @@ export const createDrizzleConfig = (opts: {
 }): Config => {
   const database =
     (opts.database?.trim() === "" ? undefined : opts.database) ?? "lightfast";
-  const cleanHost = stripQuotes(requiredCredential("DATABASE_HOST", opts.host));
-  const cleanUsername = stripQuotes(
-    requiredCredential("DATABASE_USERNAME", opts.username)
-  );
-  const cleanPassword = stripQuotes(
-    requiredCredential("DATABASE_PASSWORD", opts.password)
-  );
+  const host = stripQuotes(opts.host);
+  const username = stripQuotes(opts.username);
+  const password = stripQuotes(opts.password);
+  const hasCredentials = Boolean(host && username && password);
 
   return {
     schema: opts.schema,
     out: opts.out,
     dialect: "mysql",
-    dbCredentials: {
-      database,
-      host: cleanHost,
-      password: cleanPassword,
-      ...(opts.port ? { port: opts.port } : {}),
-      user: cleanUsername,
-    },
+    ...(hasCredentials
+      ? {
+          dbCredentials: {
+            database,
+            host: host!,
+            password: password!,
+            ...(opts.port ? { port: opts.port } : {}),
+            user: username!,
+          },
+        }
+      : {}),
     verbose: true,
     strict: true,
     tablesFilter: ["lightfast_*"],
   } satisfies Config;
 };
 
-function stripQuotes(value: string) {
-  return value.replace(/^["']|["']$/g, "");
-}
-
-function requiredCredential(name: string, value: string | undefined) {
-  if (!value) {
-    throw new Error(`${name} is required for Drizzle MySQL configuration.`);
-  }
-  return value;
+function stripQuotes(value: string | undefined) {
+  return value?.replace(/^["']|["']$/g, "");
 }

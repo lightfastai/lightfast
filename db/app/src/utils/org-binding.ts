@@ -17,10 +17,8 @@ import type {
 } from "../schema";
 import { orgSourceControlBindings } from "../schema";
 
-const {
-  activeClerkOrgId: _activeClerkOrgId,
-  ...bindingSelection
-} = getTableColumns(orgSourceControlBindings);
+const { activeClerkOrgId: _activeClerkOrgId, ...bindingSelection } =
+  getTableColumns(orgSourceControlBindings);
 
 /**
  * Returns the org's single active source-control binding, or `undefined` when

@@ -9,6 +9,7 @@ import {
 
 const DEFAULT_DATABASE_NAME = "lightfast";
 const DEFAULT_BASE_BRANCH = "main";
+const PROTECTED_BRANCHES = new Set(["main", "staging"]);
 
 export function resolveDevPscaleIdentity({
   cwd = process.cwd(),
@@ -82,7 +83,10 @@ export async function ensureDevPscaleBranch(options = {}) {
 
 export async function deleteDevPscaleBranch(options = {}) {
   const identity = resolveDevPscaleIdentity(options);
-  if (identity.branchName === identity.baseBranch || identity.branchName === "main") {
+  if (
+    identity.branchName === identity.baseBranch ||
+    PROTECTED_BRANCHES.has(identity.branchName)
+  ) {
     throw new Error(`Refusing to delete PlanetScale branch "${identity.branchName}".`);
   }
 

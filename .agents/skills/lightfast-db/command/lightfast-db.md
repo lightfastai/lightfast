@@ -1,12 +1,12 @@
 ---
-description: Query or inspect the Postgres database — schema, tables, columns, data. Triggers on "database", "table", "schema", "query", "SELECT", "rows", "columns", "what tables", "show me the data", "count", "how many".
+description: Inspect the Lightfast PlanetScale MySQL database — schema, tables, columns, data. Triggers on "database", "table", "schema", "query", "SELECT", "rows", "columns", "what tables", "show me the data", "count", "how many".
 ---
 
-Use the Postgres MCP tools to help with the user's request.
+Inspect the Lightfast database (PlanetScale MySQL / Vitess) to help with the user's request.
 
 ## Workflow
 
-### Step 1: Load lightfast-db skill
+### Step 1: Load the lightfast-db skill
 
 ```
 skill({ name: 'lightfast-db' })
@@ -14,19 +14,23 @@ skill({ name: 'lightfast-db' })
 
 ### Step 2: Determine intent from $ARGUMENTS
 
-- **Schema inspection** ("what tables", "show schema", "describe table"): Query `information_schema`
-- **Data query** ("show rows", "count", "find records"): Run a SELECT query with appropriate filters
-- **Relationship inspection** ("foreign keys", "references", "joins"): Query constraint metadata
+- **Schema inspection** ("what tables", "show schema", "describe table"): query `information_schema`
+- **Data query** ("show rows", "count", "find records"): run a read-only `SELECT`
+- **Data model** ("how is X stored", "relationships"): cross-check `db/app/src/schema/tables/`
 
-### Step 3: Execute
+### Step 3: Execute (read-only)
 
-Use the `query` tool from the `postgres` MCP server. All queries are read-only.
+Inspect via Drizzle Studio (`cd db/app && pnpm db:studio`) or `pscale shell lightfast <branch>`.
+In Claude Code with the PlanetScale plugin enabled, the `planetscale` MCP server can also run
+the query as a tool call. Never mutate data — schema changes go through `pnpm db:generate` +
+`pnpm db:migrate`.
 
-If the user asks about a table by its Drizzle name (camelCase), convert to the actual SQL table name (snake_case with hyphens as underscores).
+If the user names a table by its Drizzle symbol (camelCase), translate to the
+`lightfast_`-prefixed snake_case SQL name.
 
 ### Step 4: Summarize
 
-Present results clearly. For schema queries, format as a table. For data queries, highlight relevant patterns.
+Present results clearly. Format schema results as a table; highlight patterns in data results.
 
 <user-request>
 $ARGUMENTS

@@ -1,79 +1,85 @@
 ---
 name: lightfast-db
 description: |
-  Query and inspect the Postgres database schema and data. Triggers when the user asks about
-  tables, columns, rows, database schema, wants to run a SELECT query, or needs to understand
-  the data model. Read-only — cannot modify data.
+  Inspect the Lightfast application database — PlanetScale MySQL (Vitess). Triggers when the
+  user asks about tables, columns, rows, schema, wants to run a SELECT, or needs to understand
+  the data model. Read-only inspection of THIS repo's database; for generic MySQL/Vitess
+  engine guidance use the `mysql` and `vitess` skills.
 ---
 
-# Database Skill
+# Lightfast Database
 
-Inspect the Postgres database through the `postgres` MCP server. All queries are read-only.
+`@db/app` runs on **PlanetScale MySQL (Vitess)** through the single
+`drizzle-orm/planetscale-serverless` driver — the same code path in local dev and production
+(`db/app/src/client.ts`). Local dev uses a **per-worktree PlanetScale dev branch**; production
+is the `main` branch of the `lightfast` database.
 
-## Tools
+This skill covers inspecting *this repo's* database. For engine-level depth — index design,
+query tuning, locking, Vitess sharding / VTGate behavior — load the `mysql` and `vitess` skills.
 
-The `postgres` MCP server provides:
+## Where things live
 
-| Tool | Purpose | When to Use |
-|------|---------|-------------|
-| `query` | Execute a read-only SQL query | SELECT queries, counting rows, inspecting data |
+| What | Where |
+|------|-------|
+| Drizzle schema (source of truth) | `db/app/src/schema/tables/` — `mysqlTable(...)` definitions |
+| Migrations | `db/app/src/migrations/` — generated SQL, never hand-written |
+| Client | `db/app/src/client.ts` — `createDatabase()` from `@vendor/db` |
+| Table naming | `lightfast_`-prefixed snake_case (`tablesFilter: ["lightfast_*"]`); Drizzle uses camelCase symbols |
 
-Table schemas are also exposed as MCP resources at `postgres://<host>/<table>/schema`.
+## Inspecting the database
 
-## Workflow
+**Drizzle Studio — browser UI for the current worktree's branch:**
 
-### Inspecting schema
+```bash
+cd db/app && pnpm db:studio
+```
+
+**`pscale` CLI — cross-harness, ad-hoc SQL:**
+
+```bash
+pnpm db:status                    # this worktree's branch + credential cache
+pscale shell lightfast <branch>   # interactive MySQL shell against a branch
+```
+
+**PlanetScale MCP — Claude Code only.** When the PlanetScale plugin is enabled, its MCP server
+exposes branches, schema, and Insights as tool calls. Not available in Codex — for anything
+that must work cross-harness, prefer the Studio / CLI paths above.
+
+## Schema inspection (MySQL)
 
 ```sql
--- List all tables
+-- List tables
 SELECT table_name FROM information_schema.tables
-WHERE table_schema = 'public' ORDER BY table_name;
+WHERE table_schema = DATABASE() ORDER BY table_name;
 
--- Describe a table's columns
-SELECT column_name, data_type, is_nullable, column_default
+-- Describe columns
+SELECT column_name, column_type, is_nullable, column_default
 FROM information_schema.columns
-WHERE table_name = '<table>' ORDER BY ordinal_position;
+WHERE table_schema = DATABASE() AND table_name = '<table>'
+ORDER BY ordinal_position;
 
--- Show indexes
-SELECT indexname, indexdef FROM pg_indexes
-WHERE tablename = '<table>';
+-- Indexes
+SHOW INDEX FROM `<table>`;
 
--- Show foreign keys
-SELECT tc.constraint_name, tc.table_name, kcu.column_name,
-       ccu.table_name AS foreign_table, ccu.column_name AS foreign_column
-FROM information_schema.table_constraints tc
-JOIN information_schema.key_column_usage kcu ON tc.constraint_name = kcu.constraint_name
-JOIN information_schema.constraint_column_usage ccu ON tc.constraint_name = ccu.constraint_name
-WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_name = '<table>';
+-- Full DDL
+SHOW CREATE TABLE `<table>`;
 ```
 
-### Querying data
+## Querying data
 
 ```sql
--- Sample rows
-SELECT * FROM <table> LIMIT 10;
-
--- Count
-SELECT COUNT(*) FROM <table>;
-
--- Filter
-SELECT * FROM <table> WHERE <condition> LIMIT 20;
-```
-
-## Quick Decision Tree
-
-```
-What do you need?
-|- List all tables -> query information_schema.tables
-|- See table columns -> query information_schema.columns
-|- Sample data -> SELECT * FROM <table> LIMIT 10
-|- Count rows -> SELECT COUNT(*) FROM <table>
-|- Check relationships -> query information_schema foreign keys
+SELECT * FROM `<table>` LIMIT 10;
+SELECT COUNT(*) FROM `<table>`;
+SELECT * FROM `<table>` WHERE <condition> LIMIT 20;
 ```
 
 ## Notes
 
-- All queries run inside a READ ONLY transaction — INSERT/UPDATE/DELETE will fail
-- The database is Postgres (PlanetScale Postgres-compatible) accessed via SSL
-- Drizzle schema definitions live in `db/app/src/schema/` — cross-reference with actual DB state
-- For migrations, use `pnpm db:generate` and `pnpm db:migrate` (never write SQL manually)
+- **Read-only by discipline** — this skill inspects, it never mutates. Schema changes go
+  through `pnpm db:generate` + `pnpm db:migrate` from `db/app/` (never hand-write `.sql`).
+- If the user names a table by its Drizzle symbol (camelCase), translate to the
+  `lightfast_`-prefixed snake_case SQL name.
+- **Vitess caveats apply** — no stored procedures / triggers through VTGate, limited foreign
+  key support, cross-shard joins are expensive. See the `vitess` skill.
+- Cross-check the Drizzle schema in `db/app/src/schema/` against live DB state when the two
+  might disagree.

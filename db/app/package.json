@@ -32,10 +32,10 @@
     "clean": "git clean -xdf .cache .turbo node_modules",
     "dev:studio": "pnpm db:studio",
     "db:push": "pnpm with-env drizzle-kit push --config=./src/drizzle.config.ts",
-    "db:generate": "pnpm with-env drizzle-kit generate --config=./src/drizzle.config.ts",
-    "db:migrate": "pnpm with-env tsx ./src/migrate.ts",
+    "db:generate": "SKIP_ENV_VALIDATION=1 drizzle-kit generate --config=./src/drizzle.config.ts",
+    "db:migrate": "tsx ./src/migrate.ts",
+    "db:baseline": "tsx ./src/baseline.ts",
     "db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
-    "db:introspect": "pnpm with-env drizzle-kit introspect --config=./src/drizzle.config.ts",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --"
   },
