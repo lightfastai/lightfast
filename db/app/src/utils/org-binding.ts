@@ -9,7 +9,7 @@
  * `ctx.db` and the helpers stay independently testable.
  */
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, getTableColumns } from "drizzle-orm";
 import type { Database } from "../client";
 import type {
   OrgSourceControlBinding,
@@ -17,21 +17,10 @@ import type {
 } from "../schema";
 import { orgSourceControlBindings } from "../schema";
 
-const bindingSelection = {
-  id: orgSourceControlBindings.id,
-  clerkOrgId: orgSourceControlBindings.clerkOrgId,
-  provider: orgSourceControlBindings.provider,
-  providerAccountId: orgSourceControlBindings.providerAccountId,
-  providerAccountLogin: orgSourceControlBindings.providerAccountLogin,
-  providerInstallationId: orgSourceControlBindings.providerInstallationId,
-  status: orgSourceControlBindings.status,
-  connectedByUserId: orgSourceControlBindings.connectedByUserId,
-  connectedAt: orgSourceControlBindings.connectedAt,
-  revokedAt: orgSourceControlBindings.revokedAt,
-  metadata: orgSourceControlBindings.metadata,
-  createdAt: orgSourceControlBindings.createdAt,
-  updatedAt: orgSourceControlBindings.updatedAt,
-};
+const {
+  activeClerkOrgId: _activeClerkOrgId,
+  ...bindingSelection
+} = getTableColumns(orgSourceControlBindings);
 
 /**
  * Returns the org's single active source-control binding, or `undefined` when
@@ -61,7 +50,17 @@ export async function isOrgBound(
   db: Database,
   clerkOrgId: string
 ): Promise<boolean> {
-  return (await getActiveOrgBinding(db, clerkOrgId)) !== undefined;
+  const [row] = await db
+    .select({ id: orgSourceControlBindings.id })
+    .from(orgSourceControlBindings)
+    .where(
+      and(
+        eq(orgSourceControlBindings.clerkOrgId, clerkOrgId),
+        eq(orgSourceControlBindings.status, "active")
+      )
+    )
+    .limit(1);
+  return row !== undefined;
 }
 
 export interface UpsertActiveOrgBindingInput {

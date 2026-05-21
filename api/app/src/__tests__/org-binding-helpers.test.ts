@@ -26,7 +26,7 @@ const {
 interface FakeDbConfig {
   insertId?: number;
   /** One result array per `select()` chain, consumed in order. */
-  selectResults?: OrgSourceControlBinding[][];
+  selectResults?: Record<string, unknown>[][];
   updateResult?: OrgSourceControlBinding[];
 }
 
@@ -40,8 +40,8 @@ function makeFakeDb(cfg: FakeDbConfig = {}) {
     updateSet: vi.fn(),
   };
   const db = {
-    select: () => {
-      spies.select();
+    select: (fields?: unknown) => {
+      spies.select(fields);
       return {
         from: () => ({
           where: () => ({
@@ -76,6 +76,15 @@ function makeFakeDb(cfg: FakeDbConfig = {}) {
   return { db: db as unknown as Database, spies };
 }
 
+function selectedKeys(
+  spies: ReturnType<typeof makeFakeDb>["spies"],
+  callIndex = 0
+) {
+  const fields = spies.select.mock.calls[callIndex]?.[0];
+  expect(fields).toBeDefined();
+  return Object.keys(fields as Record<string, unknown>);
+}
+
 function binding(
   overrides: Partial<OrgSourceControlBinding> = {}
 ): OrgSourceControlBinding {
@@ -108,8 +117,16 @@ describe("isOrgBound", () => {
   });
 
   it("is true when the org has an active binding", async () => {
-    const { db } = makeFakeDb({ selectResults: [[binding()]] });
+    const { db } = makeFakeDb({ selectResults: [[{ id: 1 }]] });
     expect(await isOrgBound(db, "org_bound")).toBe(true);
+  });
+
+  it("selects only the binding id for the hot auth gate", async () => {
+    const { db, spies } = makeFakeDb({ selectResults: [[{ id: 1 }]] });
+
+    expect(await isOrgBound(db, "org_bound")).toBe(true);
+
+    expect(selectedKeys(spies)).toEqual(["id"]);
   });
 
   it("is false for an org whose only binding is revoked", async () => {
@@ -123,8 +140,10 @@ describe("isOrgBound", () => {
 describe("getActiveOrgBinding", () => {
   it("returns the active binding row when one exists", async () => {
     const row = binding({ clerkOrgId: "org_x" });
-    const { db } = makeFakeDb({ selectResults: [[row]] });
+    const { db, spies } = makeFakeDb({ selectResults: [[row]] });
+
     expect(await getActiveOrgBinding(db, "org_x")).toEqual(row);
+    expect(selectedKeys(spies)).not.toContain("activeClerkOrgId");
   });
 
   it("returns undefined when the org is not bound", async () => {
@@ -145,6 +164,7 @@ describe("upsertActiveOrgBinding", () => {
     });
 
     expect(result).toEqual(existing);
+    expect(selectedKeys(spies)).not.toContain("activeClerkOrgId");
     // The application-level half of "one active binding per org": a second
     // bind never inserts a competing active row.
     expect(spies.insert).not.toHaveBeenCalled();
@@ -164,6 +184,8 @@ describe("upsertActiveOrgBinding", () => {
     });
 
     expect(result).toEqual(inserted);
+    expect(selectedKeys(spies, 0)).not.toContain("activeClerkOrgId");
+    expect(selectedKeys(spies, 1)).not.toContain("activeClerkOrgId");
     expect(spies.insert).toHaveBeenCalledTimes(1);
     expect(spies.insertValues).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -211,6 +233,7 @@ describe("markOrgBindingRevoked", () => {
         updatedAt: expect.any(String),
       }),
     ]);
+    expect(selectedKeys(spies)).not.toContain("activeClerkOrgId");
     expect(spies.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
         activeClerkOrgId: null,
