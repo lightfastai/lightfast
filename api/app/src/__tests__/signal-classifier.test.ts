@@ -10,14 +10,25 @@ vi.mock("ai", () => ({
   },
 }));
 
+vi.mock("@db/app/client", () => ({
+  db: {},
+}));
+
+vi.mock("../inngest/client", () => ({
+  inngest: {
+    createFunction: vi.fn(() => ({ id: "classify-signal" })),
+  },
+}));
+
 const {
-  OPPORTUNITY_CLASSIFIER_MODEL,
-  OPPORTUNITY_CLASSIFIER_SYSTEM_PROMPT,
-  classifyOpportunityInput,
-} = await import("../opportunities/classifier");
+  SIGNAL_CLASSIFIER_MODEL,
+  SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+  buildSignalClassificationRequest,
+  classifySignalInput,
+} = await import("../inngest/workflow/classify-signal");
 
 const classification = {
-  schemaVersion: "opportunity.classification.v1",
+  schemaVersion: "signal.classification.v1",
   disposition: "actionable",
   title: "Run the test plan",
   summary: "The user needs to finish a validation task.",
@@ -35,13 +46,21 @@ beforeEach(() => {
   generateTextMock.mockResolvedValue({ output: classification });
 });
 
-describe("classifyOpportunityInput", () => {
+describe("classifySignalInput", () => {
   it("uses Kimi K2.6 through AI Gateway with structured output", async () => {
-    await expect(
-      classifyOpportunityInput("Run the test plan")
-    ).resolves.toEqual(classification);
+    const request = buildSignalClassificationRequest("Run the test plan");
 
-    expect(OPPORTUNITY_CLASSIFIER_MODEL).toBe("moonshotai/kimi-k2.6");
+    expect(request).toEqual({
+      model: SIGNAL_CLASSIFIER_MODEL,
+      prompt: expect.stringContaining("Run the test plan"),
+      system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+    });
+
+    await expect(classifySignalInput(request)).resolves.toEqual(
+      classification
+    );
+
+    expect(SIGNAL_CLASSIFIER_MODEL).toBe("moonshotai/kimi-k2.6");
     expect(outputObjectMock).toHaveBeenCalledWith({
       schema: expect.any(Object),
     });
@@ -50,15 +69,15 @@ describe("classifyOpportunityInput", () => {
         model: "moonshotai/kimi-k2.6",
         output: { type: "object-output" },
         prompt: expect.stringContaining("Run the test plan"),
-        system: OPPORTUNITY_CLASSIFIER_SYSTEM_PROMPT,
+        system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
       })
     );
   });
 
   it("instructs the model not to browse or invent facts", () => {
-    expect(OPPORTUNITY_CLASSIFIER_SYSTEM_PROMPT).toContain("Do not browse");
-    expect(OPPORTUNITY_CLASSIFIER_SYSTEM_PROMPT).toContain("Do not invent");
-    expect(OPPORTUNITY_CLASSIFIER_SYSTEM_PROMPT).toContain(
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("Do not browse");
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("Do not invent");
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain(
       "Preserve uncertainty"
     );
   });

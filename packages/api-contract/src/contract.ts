@@ -1,11 +1,11 @@
 import { oc } from "@orpc/contract";
 
 import {
-  createOpportunityInput,
-  createOpportunityOutput,
-  getOpportunityInput,
-  getOpportunityOutput,
-} from "./schemas/opportunities";
+  createSignalInput,
+  createSignalOutput,
+  getSignalInput,
+  getSignalOutput,
+} from "./schemas/signals";
 import { systemHealthOutput } from "./schemas/system";
 
 const system = {
@@ -20,31 +20,31 @@ const system = {
     .output(systemHealthOutput),
 };
 
-const opportunities = {
+const signals = {
   create: oc
     .route({
       method: "POST",
-      path: "/opportunities",
+      path: "/signals",
       successStatus: 202,
-      summary: "Create opportunity",
+      summary: "Create signal",
       description:
-        "Creates an org-scoped opportunity from raw text and queues asynchronous classification.",
+        "Creates an org-scoped signal from raw text and queues asynchronous classification.",
     })
-    .input(createOpportunityInput)
-    .output(createOpportunityOutput),
+    .input(createSignalInput)
+    .output(createSignalOutput),
 
   get: oc
     .route({
       method: "GET",
-      path: "/opportunities/{id}",
-      summary: "Get opportunity",
+      path: "/signals/{id}",
+      summary: "Get signal",
       description:
-        "Returns a single org-scoped opportunity and its current classification state.",
+        "Returns a single org-scoped signal and its current classification state.",
     })
-    .input(getOpportunityInput)
-    .output(getOpportunityOutput),
+    .input(getSignalInput)
+    .output(getSignalOutput),
 };
 
-export const apiContract = { opportunities, system };
+export const apiContract = { signals, system };
 
 export type Contract = typeof apiContract;

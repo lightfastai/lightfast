@@ -8,12 +8,12 @@ describe("apiContract", () => {
     expect(isContractProcedure(apiContract.system.health)).toBe(true);
   });
 
-  it("exposes opportunities.create as a contract procedure", () => {
-    expect(isContractProcedure(apiContract.opportunities.create)).toBe(true);
+  it("exposes signals.create as a contract procedure", () => {
+    expect(isContractProcedure(apiContract.signals.create)).toBe(true);
   });
 
-  it("exposes opportunities.get as a contract procedure", () => {
-    expect(isContractProcedure(apiContract.opportunities.get)).toBe(true);
+  it("exposes signals.get as a contract procedure", () => {
+    expect(isContractProcedure(apiContract.signals.get)).toBe(true);
   });
 
   it("system.health declares GET /system/health", () => {
@@ -35,26 +35,26 @@ describe("apiContract", () => {
     expect(def.outputSchema).toBeDefined();
   });
 
-  it("opportunities.create declares POST /opportunities with 202 success", () => {
+  it("signals.create declares POST /signals with 202 success", () => {
     const def = (
-      apiContract.opportunities.create as {
+      apiContract.signals.create as {
         "~orpc": {
           route?: { method?: string; path?: string; successStatus?: number };
         };
       }
     )["~orpc"];
     expect(def.route?.method).toBe("POST");
-    expect(def.route?.path).toBe("/opportunities");
+    expect(def.route?.path).toBe("/signals");
     expect(def.route?.successStatus).toBe(202);
   });
 
-  it("opportunities.get declares GET /opportunities/{id}", () => {
+  it("signals.get declares GET /signals/{id}", () => {
     const def = (
-      apiContract.opportunities.get as {
+      apiContract.signals.get as {
         "~orpc": { route?: { method?: string; path?: string } };
       }
     )["~orpc"];
     expect(def.route?.method).toBe("GET");
-    expect(def.route?.path).toBe("/opportunities/{id}");
+    expect(def.route?.path).toBe("/signals/{id}");
   });
 });

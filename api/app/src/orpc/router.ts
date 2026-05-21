@@ -1,8 +1,8 @@
-import { opportunitiesRouter } from "./router/opportunities";
+import { signalsRouter } from "./router/signals";
 import { systemRouter } from "./router/system";
 
 export const orpcRouter = {
-  opportunities: opportunitiesRouter,
+  signals: signalsRouter,
   system: systemRouter,
 };
 

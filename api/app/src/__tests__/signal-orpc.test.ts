@@ -3,9 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
 const isOrgBoundMock = vi.fn();
-const createOpportunityMock = vi.fn();
-const getOpportunityByIdMock = vi.fn();
-const markOpportunityFailedMock = vi.fn();
+const createSignalMock = vi.fn();
+const getSignalByPublicIdMock = vi.fn();
+const markSignalFailedMock = vi.fn();
 const sendMock = vi.fn();
 
 vi.mock("@vendor/clerk/server", () => ({
@@ -17,10 +17,10 @@ vi.mock("@vendor/clerk/server", () => ({
 
 vi.mock("@db/app/client", () => ({ db: { kind: "mock-db" } }));
 vi.mock("@db/app", () => ({
-  createOpportunity: createOpportunityMock,
-  getOpportunityById: getOpportunityByIdMock,
+  createSignal: createSignalMock,
+  getSignalByPublicId: getSignalByPublicIdMock,
   isOrgBound: isOrgBoundMock,
-  markOpportunityFailed: markOpportunityFailedMock,
+  markSignalFailed: markSignalFailedMock,
 }));
 
 vi.mock("../inngest/client", () => ({
@@ -62,95 +62,97 @@ function context() {
 beforeEach(() => {
   verifyMock.mockReset();
   isOrgBoundMock.mockReset();
-  createOpportunityMock.mockReset();
-  getOpportunityByIdMock.mockReset();
-  markOpportunityFailedMock.mockReset();
+  createSignalMock.mockReset();
+  getSignalByPublicIdMock.mockReset();
+  markSignalFailedMock.mockReset();
   sendMock.mockReset();
 
   verifyMock.mockResolvedValue(apiKey());
   isOrgBoundMock.mockResolvedValue(true);
-  createOpportunityMock.mockResolvedValue({
-    id: "opp_123e4567-e89b-12d3-a456-426614174000",
+  createSignalMock.mockResolvedValue({
+    publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
     clerkOrgId: "org_test",
     status: "queued",
   });
+  markSignalFailedMock.mockResolvedValue(true);
   sendMock.mockResolvedValue(undefined);
 });
 
-describe("orpcRouter.opportunities", () => {
-  it("creates a queued opportunity and sends an Inngest event", async () => {
+describe("orpcRouter.signals", () => {
+  it("creates a queued signal and sends an Inngest event", async () => {
     const result = await call(
-      orpcRouter.opportunities.create,
+      orpcRouter.signals.create,
       { input: "  Reply to this relevant post  " },
       { context: context() }
     );
 
     expect(result).toEqual({
-      id: "opp_123e4567-e89b-12d3-a456-426614174000",
+      id: "sig_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
     });
-    expect(createOpportunityMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createSignalMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       createdByApiKeyId: "apk_test",
       createdByUserId: "user_test",
       input: "Reply to this relevant post",
     });
     expect(sendMock).toHaveBeenCalledWith({
-      name: "app/opportunity.created",
+      name: "app/signal.created",
       data: {
         clerkOrgId: "org_test",
-        opportunityId: "opp_123e4567-e89b-12d3-a456-426614174000",
+        signalId: "sig_123e4567-e89b-12d3-a456-426614174000",
       },
     });
   });
 
-  it("marks the opportunity failed when enqueueing the Inngest event fails", async () => {
+  it("marks the signal failed when enqueueing the Inngest event fails", async () => {
     sendMock.mockRejectedValueOnce(new Error("inngest unavailable"));
 
     await expect(
       call(
-        orpcRouter.opportunities.create,
+        orpcRouter.signals.create,
         { input: "Run the test plan" },
         { context: context() }
       )
     ).rejects.toMatchObject({
       code: "INTERNAL_SERVER_ERROR",
-      message: expect.stringContaining("Failed to queue opportunity"),
+      message: expect.stringContaining("Failed to queue signal"),
     });
-    expect(markOpportunityFailedMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(markSignalFailedMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       errorCode: "INNGEST_ENQUEUE_FAILED",
       errorMessage: "inngest unavailable",
-      id: "opp_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
     });
   });
 
-  it("requires a bound org API key to create opportunities", async () => {
+  it("requires a bound org API key to create signals", async () => {
     isOrgBoundMock.mockResolvedValueOnce(false);
 
     await expect(
       call(
-        orpcRouter.opportunities.create,
+        orpcRouter.signals.create,
         { input: "Run the test plan" },
         { context: context() }
       )
     ).rejects.toMatchObject({
       code: "FORBIDDEN",
     });
-    expect(createOpportunityMock).not.toHaveBeenCalled();
+    expect(createSignalMock).not.toHaveBeenCalled();
     expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it("reads a same-org opportunity by id", async () => {
-    getOpportunityByIdMock.mockResolvedValueOnce({
-      id: "opp_123e4567-e89b-12d3-a456-426614174000",
+  it("reads a same-org signal by id", async () => {
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      id: 1,
+      publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       createdByApiKeyId: "apk_test",
       input: "Run the test plan",
       status: "classified",
       classification: {
-        schemaVersion: "opportunity.classification.v1",
+        schemaVersion: "signal.classification.v1",
         disposition: "actionable",
         title: "Run the test plan",
         summary: "The user needs to finish a validation task.",
@@ -167,30 +169,30 @@ describe("orpcRouter.opportunities", () => {
     });
 
     const result = await call(
-      orpcRouter.opportunities.get,
-      { id: "opp_123e4567-e89b-12d3-a456-426614174000" },
+      orpcRouter.signals.get,
+      { id: "sig_123e4567-e89b-12d3-a456-426614174000" },
       { context: context() }
     );
 
-    expect(getOpportunityByIdMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(getSignalByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
-      id: "opp_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
     });
     expect(result).toMatchObject({
-      id: "opp_123e4567-e89b-12d3-a456-426614174000",
+      id: "sig_123e4567-e89b-12d3-a456-426614174000",
       input: "Run the test plan",
       status: "classified",
       classification: { kind: "review" },
     });
   });
 
-  it("returns NOT_FOUND for missing or wrong-org opportunities", async () => {
-    getOpportunityByIdMock.mockResolvedValueOnce(undefined);
+  it("returns NOT_FOUND for missing or wrong-org signals", async () => {
+    getSignalByPublicIdMock.mockResolvedValueOnce(undefined);
 
     await expect(
       call(
-        orpcRouter.opportunities.get,
-        { id: "opp_123e4567-e89b-12d3-a456-426614174000" },
+        orpcRouter.signals.get,
+        { id: "sig_123e4567-e89b-12d3-a456-426614174000" },
         { context: context() }
       )
     ).rejects.toMatchObject({

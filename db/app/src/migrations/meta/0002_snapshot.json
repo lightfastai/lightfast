@@ -1,123 +1,9 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "795f9aa0-cf4c-4e32-9210-cc511457cb10",
+  "id": "bf5cf2c7-a8c4-4d8a-9233-75b9e6869522",
   "prevId": "32ae99b2-bf42-4232-b152-0d883632ec22",
   "tables": {
-    "lightfast_opportunities": {
-      "name": "lightfast_opportunities",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_by_user_id": {
-          "name": "created_by_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "created_by_api_key_id": {
-          "name": "created_by_api_key_id",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "input": {
-          "name": "input",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "classification": {
-          "name": "classification",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_code": {
-          "name": "error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "onUpdate": true,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "opportunities_org_created_idx": {
-          "name": "opportunities_org_created_idx",
-          "columns": [
-            "clerk_org_id",
-            "created_at"
-          ],
-          "isUnique": false
-        },
-        "opportunities_org_status_idx": {
-          "name": "opportunities_org_status_idx",
-          "columns": [
-            "clerk_org_id",
-            "status"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_opportunities_id": {
-          "name": "lightfast_opportunities_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
     "lightfast_org_source_control_bindings": {
       "name": "lightfast_org_source_control_bindings",
       "columns": {
@@ -260,6 +146,136 @@
       "compositePrimaryKeys": {
         "lightfast_org_source_control_bindings_id": {
           "name": "lightfast_org_source_control_bindings_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_signals": {
+      "name": "lightfast_signals",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_by_api_key_id": {
+          "name": "created_by_api_key_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "input": {
+          "name": "input",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "classification": {
+          "name": "classification",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "error_code": {
+          "name": "error_code",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "error_message": {
+          "name": "error_message",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "datetime(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "signals_public_id_uq": {
+          "name": "signals_public_id_uq",
+          "columns": [
+            "public_id"
+          ],
+          "isUnique": true
+        },
+        "signals_org_created_idx": {
+          "name": "signals_org_created_idx",
+          "columns": [
+            "clerk_org_id",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        },
+        "signals_org_status_created_idx": {
+          "name": "signals_org_status_created_idx",
+          "columns": [
+            "clerk_org_id",
+            "status",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_signals_id": {
+          "name": "lightfast_signals_id",
           "columns": [
             "id"
           ]

@@ -6,17 +6,17 @@ export { type Database, db } from "./client";
 // Re-exported schema definitions
 export * from "./schema";
 export {
-  type CreateOpportunityInput,
-  createOpportunity,
-  type GetOpportunityByIdInput,
-  getOpportunityById,
-  type MarkOpportunityClassifiedInput,
-  type MarkOpportunityFailedInput,
-  type MarkOpportunityProcessingInput,
-  markOpportunityClassified,
-  markOpportunityFailed,
-  markOpportunityProcessing,
-} from "./utils/opportunities";
+  type ClaimSignalForClassificationParams,
+  claimSignalForClassification,
+  type CreateSignalRecordInput,
+  createSignal,
+  type GetSignalByPublicIdParams,
+  getSignalByPublicId,
+  type MarkSignalClassifiedParams,
+  markSignalClassified,
+  type MarkSignalFailedParams,
+  markSignalFailed,
+} from "./utils/signals";
 
 // Utilities
 export { buildOrgNamespace } from "./utils/org";

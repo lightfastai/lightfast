@@ -1,9 +1,9 @@
 export {
-  createOpportunityId,
-  type InsertOpportunity,
-  type Opportunity,
-  opportunities,
-} from "./opportunities";
+  createSignalId,
+  type InsertSignal,
+  type Signal,
+  signals,
+} from "./signals";
 export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,

@@ -13,10 +13,10 @@ vi.mock("@vendor/clerk/server", () => ({
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
-  createOpportunity: vi.fn(),
-  getOpportunityById: vi.fn(),
+  createSignal: vi.fn(),
+  getSignalByPublicId: vi.fn(),
   isOrgBound: isOrgBoundMock,
-  markOpportunityFailed: vi.fn(),
+  markSignalFailed: vi.fn(),
 }));
 
 const { orpcRouter } = await import("../router");
