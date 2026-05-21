@@ -10,11 +10,14 @@
     "build:dev": "pnpm with-env next build --turbopack",
     "build:prod": "pnpm with-env next build --turbopack",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
-    "dev": "pnpm with-env lightfast-dev proxy app -- next dev --turbo",
+    "dev": "portless run",
+    "dev:app": "pnpm with-related-projects pnpm with-env next dev --turbo",
+    "mfe:proxy": "microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app lightfast-www --local-app-url lightfast-app=$(portless get app.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --"
+    "with-env": "dotenv -e ./.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --",
+    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
   },
   "dependencies": {
     "@api/app": "workspace:*",

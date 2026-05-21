@@ -8,15 +8,8 @@ import { makeFinalizeNavigate } from "../_hooks/auth-navigate";
 
 const SUCCESS_REDIRECT = "/";
 
-// Unified OAuth callback. Mirrors Clerk's Future-API reference:
+// Unified OAuth callback for custom sign-in and sign-up flows:
 // https://clerk.com/docs/guides/development/custom-flows/authentication/oauth-connections
-//
-// The effect re-runs as signIn/signUp resources hydrate from the IdP callback
-// URL; hasRun gates the state machine to one pass.
-//
-// __clerk_ticket preservation: /sign-up/accept-invitation appends the ticket
-// to its callback URL. On error we route back to accept-invitation so the
-// ticket UI re-mounts with a banner instead of dropping into /sign-in.
 function SSOCallback() {
   const clerk = useClerk();
   const { signIn } = useSignIn();
@@ -71,8 +64,6 @@ function SSOCallback() {
       signUp.finalize({ navigate: navigateAfterSession });
 
     const run = async () => {
-      // Resource-level rejections (waitlist, etc.) land on the verification
-      // objects rather than throwing — inspect before walking happy branches.
       const inboundErr =
         signIn.firstFactorVerification?.error ??
         signUp.verifications?.externalAccount?.error;
@@ -86,8 +77,6 @@ function SSOCallback() {
         return;
       }
 
-      // Sign-up's external account matched an existing user — transfer it
-      // back into a sign-in.
       if (signUp.isTransferable) {
         try {
           await signIn.create({ transfer: true });
@@ -95,8 +84,6 @@ function SSOCallback() {
           handleMappedError(err);
           return;
         }
-        // signIn.create() can flip status to "complete", but the static type
-        // doesn't widen after the await. Cast per Clerk's reference.
         const signInStatus = signIn.status as typeof signIn.status | "complete";
         if (signInStatus === "complete") {
           await finalizeSignIn();
@@ -116,8 +103,6 @@ function SSOCallback() {
         return;
       }
 
-      // Sign-in's external account isn't tied to a user — transfer it into
-      // a sign-up.
       if (signIn.isTransferable) {
         try {
           await signUp.create({ transfer: true, legalAccepted: true });
@@ -146,8 +131,6 @@ function SSOCallback() {
         return;
       }
 
-      // External account already active on this client — switch the session
-      // instead of finalizing a sign-in/up.
       const existingSessionId =
         signIn.existingSession?.sessionId ?? signUp.existingSession?.sessionId;
       if (existingSessionId) {
@@ -168,8 +151,6 @@ function SSOCallback() {
     <div className="flex items-center justify-center gap-2 text-muted-foreground text-sm">
       <Icons.spinner className="h-4 w-4 animate-spin" />
       <span>Signing in...</span>
-      {/* Required when a sign-in transfers to a sign-up — Clerk renders the
-          bot-protection captcha here. */}
       <div id="clerk-captcha" />
     </div>
   );

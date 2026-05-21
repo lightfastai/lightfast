@@ -30,8 +30,6 @@ afterAll(() => {
 
 describe("getClerkFrontendApi", () => {
   it("derives the frontend API from the validated Clerk env", () => {
-    expect(getClerkFrontendApi()).toBe(
-      "https://test-clerk.lightfast.example"
-    );
+    expect(getClerkFrontendApi()).toBe("https://test-clerk.lightfast.example");
   });
 });

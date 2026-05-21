@@ -41,7 +41,7 @@ vi.mock("@vendor/clerk/server", () => ({
         list: apiKeysListMock,
         revoke: apiKeysRevokeMock,
       },
-  }),
+    }),
   auth: vi.fn(),
   verifyToken: vi.fn(),
 }));

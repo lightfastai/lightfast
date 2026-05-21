@@ -69,7 +69,7 @@ export async function setup() {
   const orgId = requireEnv("LIGHTFAST_TEST_CLERK_ORG_ID");
   const userId = requireEnv("LIGHTFAST_TEST_CLERK_USER_ID");
 
-  const { createClerkClient } = await import("@vendor/clerk/backend");
+  const { createClerkClient } = await import("@vendor/clerk/server");
   const clerk = createClerkClient({ secretKey });
 
   const key = await clerk.apiKeys.create({
@@ -96,7 +96,7 @@ export async function teardown() {
 
   if (createdKeyId) {
     try {
-      const { createClerkClient } = await import("@vendor/clerk/backend");
+      const { createClerkClient } = await import("@vendor/clerk/server");
       const clerk = createClerkClient({
         secretKey: process.env.CLERK_SECRET_KEY,
       });

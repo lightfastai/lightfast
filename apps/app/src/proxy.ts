@@ -1,5 +1,5 @@
-import type { NextMiddleware as NemoMiddleware } from "@rescale/nemo";
 import type { LightfastLastActiveOrg } from "@repo/app-clerk-claim";
+import type { NextMiddleware as NemoMiddleware } from "@rescale/nemo";
 import { createNEMO } from "@rescale/nemo";
 import {
   clerkClient,

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { formatUtcCalendarDate } from "@vendor/lib/time";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -150,14 +151,11 @@ const teamAmount = {
   currencySymbol: "$",
 };
 
-// UTC-anchored calendar date for the mock statement. The test derives the
-// expected display string independently so it stays independent of the host
-// machine's locale and timezone.
+// UTC-anchored calendar date for the mock statement. The expected display
+// string is derived through the same formatter the component uses, so the
+// assertion stays independent of the host machine's locale and timezone.
 const STATEMENT_TIMESTAMP = new Date("2026-05-01T00:00:00Z");
-const UTC_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
-  dateStyle: "long",
-  timeZone: "UTC",
-});
+const STATEMENT_DISPLAY = formatUtcCalendarDate(STATEMENT_TIMESTAMP) ?? "";
 
 const starterPlan = {
   annualFee: null,
@@ -814,9 +812,7 @@ describe("billing settings client", () => {
     expect(
       screen.getByRole("heading", { name: "Invoice details" })
     ).toBeInTheDocument();
-    expect(
-      screen.getAllByText(UTC_DATE_FORMATTER.format(STATEMENT_TIMESTAMP))[0]
-    ).toBeInTheDocument();
+    expect(screen.getAllByText(STATEMENT_DISPLAY)[0]).toBeInTheDocument();
     expect(screen.getAllByText("$60.00")[0]).toBeInTheDocument();
   });
 });

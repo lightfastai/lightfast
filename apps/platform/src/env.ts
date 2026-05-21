@@ -21,10 +21,19 @@ export const env = createEnv({
     NEXT_PUBLIC_VERCEL_ENV: z
       .enum(["development", "preview", "production"])
       .default("development"),
+    NEXT_PUBLIC_APP_URL: z.string().url().default("https://lightfast.ai"),
+    NEXT_PUBLIC_WWW_URL: z.string().url().default("https://lightfast.ai"),
+    NEXT_PUBLIC_PLATFORM_URL: z
+      .string()
+      .url()
+      .default("https://lightfast-platform.vercel.app"),
   },
   experimental__runtimeEnv: {
     NODE_ENV: process.env.NODE_ENV,
     NEXT_PUBLIC_VERCEL_ENV: process.env.NEXT_PUBLIC_VERCEL_ENV,
+    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
+    NEXT_PUBLIC_WWW_URL: process.env.NEXT_PUBLIC_WWW_URL,
+    NEXT_PUBLIC_PLATFORM_URL: process.env.NEXT_PUBLIC_PLATFORM_URL,
   },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||

@@ -259,9 +259,7 @@ describe("api key settings admin controls", () => {
     );
 
     expect(screen.getByRole("button", { name: /create key/i })).toBeVisible();
-    expect(screen.getAllByRole("button", { name: /actions/i })).toHaveLength(
-      2
-    );
+    expect(screen.getAllByRole("button", { name: /actions/i })).toHaveLength(2);
     expect(screen.getAllByRole("button", { name: /^revoke$/i })).toHaveLength(
       2
     );

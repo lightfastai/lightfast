@@ -145,6 +145,29 @@ describe("sign-in — email submit", () => {
       expect(hrefValue).toBe("/sign-in?errorCode=waitlist");
     });
   });
+
+  it("redirects to account_not_found when the submitted email has no account", async () => {
+    signInStub.emailCode.sendCode.mockResolvedValue({
+      error: {
+        code: "form_identifier_not_found",
+        message: "No account found",
+      },
+    });
+    render(<SignInPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/email address/i), {
+      target: { value: "unknown@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /continue with email/i })
+      );
+    });
+
+    await waitFor(() => {
+      expect(hrefValue).toBe("/sign-in?errorCode=account_not_found");
+    });
+  });
 });
 
 describe("sign-in — OTP verify", () => {
@@ -238,5 +261,16 @@ describe("sign-in — error banner", () => {
     expect(
       screen.getByRole("link", { name: /join the waitlist/i })
     ).toBeInTheDocument();
+  });
+
+  it("renders the waitlist CTA when ?errorCode=account_not_found is present", () => {
+    searchParamsValue = new URLSearchParams("errorCode=account_not_found");
+    render(<SignInPage />);
+    expect(
+      screen.getByText(/couldn't find a lightfast account/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: /join the waitlist/i })
+    ).toHaveAttribute("href", "/early-access");
   });
 });
