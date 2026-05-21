@@ -1,7 +1,7 @@
 import { clerkOrgSlugSchema } from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
+import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
@@ -12,7 +12,7 @@ import {
   isOrgAccessError,
   orgInitials,
 } from "../../auth/organization-access";
-import { pendingAllowedProcedure } from "../../trpc";
+import { orgAdminProcedure, viewerProcedure } from "../../trpc";
 
 /**
  * Organization router - Clerk-based organization management
@@ -27,25 +27,28 @@ export const organizationRouter = {
    * Returns all organizations the authenticated user belongs to.
    * Used by org-switcher component in the header.
    */
-  listUserOrganizations: pendingAllowedProcedure.query(async ({ ctx }) => {
-    // pendingAllowedProcedure guarantees pending or active identity
+  listUserOrganizations: viewerProcedure.query(async ({ ctx }) => {
+    // viewerProcedure guarantees pending or active identity
     const userId = ctx.auth.identity.userId;
-    const memberships = await getUserOrgMemberships(userId);
+    const clerk = await clerkClient();
+    const memberships = await clerk.users.getOrganizationMembershipList({
+      userId,
+    });
 
     // Return Clerk organization data directly
-    return memberships.map((membership) => {
+    return memberships.data.map((membership) => {
       return {
-        id: membership.organizationId, // Clerk org ID
-        slug: membership.organizationSlug,
-        name: membership.organizationName,
-        initials: orgInitials(membership.organizationName),
+        id: membership.organization.id, // Clerk org ID
+        slug: membership.organization.slug,
+        name: membership.organization.name,
+        initials: orgInitials(membership.organization.name),
         role: membership.role,
-        imageUrl: membership.imageUrl,
+        imageUrl: membership.organization.imageUrl,
       };
     });
   }),
 
-  getBySlug: pendingAllowedProcedure
+  getBySlug: viewerProcedure
     .input(
       z.object({
         slug: clerkOrgSlugSchema,
@@ -77,14 +80,14 @@ export const organizationRouter = {
    * Used by team creation flow at /account/teams/new
    * Does NOT create a default project - user sets up integrations separately
    */
-  create: pendingAllowedProcedure
+  create: viewerProcedure
     .input(
       z.object({
         slug: clerkOrgSlugSchema,
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees pending or active identity
+      // viewerProcedure guarantees pending or active identity
       log.info("[organization] create", {
         slug: input.slug,
         userId: ctx.auth.identity.userId,
@@ -132,14 +135,16 @@ export const organizationRouter = {
         });
       }
     }),
+} satisfies TRPCRouterRecord;
 
+export const orgSettingsOrganizationRouter = {
   /**
    * Update organization name
    * Used by team settings page to update the organization name/slug in Clerk
    *
    * Only organization admins can update the organization name
    */
-  updateName: pendingAllowedProcedure
+  updateName: orgAdminProcedure
     .input(
       z.object({
         slug: z.string().min(1, "Organization slug is required"),
@@ -147,7 +152,6 @@ export const organizationRouter = {
       })
     )
     .mutation(async ({ ctx, input }) => {
-      // pendingAllowedProcedure guarantees pending or active identity
       const clerk = await clerkClient();
 
       try {
@@ -156,19 +160,7 @@ export const organizationRouter = {
           slug: input.slug,
         });
 
-        // Verify user has admin access to the organization.
-        // User-centric lookup (cached) — typically 1-5 orgs per user vs 100+ members per org.
-        const memberships = await getUserOrgMemberships(
-          ctx.auth.identity.userId
-        );
-        const membership = memberships.find((m) => m.organizationId === org.id);
-        if (!membership) {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Access denied to this organization",
-          });
-        }
-        if (membership.role !== "org:admin") {
+        if (org.id !== ctx.auth.identity.orgId) {
           throw new TRPCError({
             code: "FORBIDDEN",
             message: "Only administrators can perform this action",

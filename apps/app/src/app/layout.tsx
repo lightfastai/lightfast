@@ -5,7 +5,7 @@ import "~/styles/globals.css";
 import { fonts as geistFonts } from "@repo/ui/lib/fonts";
 import { cn } from "@repo/ui/lib/utils";
 import { SpeedInsights, VercelAnalytics } from "@vendor/analytics/vercel";
-import { ClerkProvider } from "@vendor/clerk/client";
+import { ClerkProvider } from "@vendor/clerk";
 import { createMetadata } from "@vendor/seo/metadata";
 import {
   PrefetchCrossZoneLinks,

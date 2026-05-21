@@ -4,7 +4,7 @@ import { useTRPC } from "@repo/app-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useOrganizationList } from "@vendor/clerk/client";
+import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -26,7 +26,7 @@ export function TeamNameForm() {
   const router = useRouter();
 
   const mutation = useMutation(
-    trpc.pendingAllowed.organization.create.mutationOptions({
+    trpc.viewer.organization.create.mutationOptions({
       meta: { suppressErrorToast: true },
       onSuccess: async (data) => {
         if (setActive) {
@@ -34,7 +34,7 @@ export function TeamNameForm() {
         }
         void queryClient.invalidateQueries({
           queryKey:
-            trpc.pendingAllowed.organization.listUserOrganizations.queryOptions()
+            trpc.viewer.organization.listUserOrganizations.queryOptions()
               .queryKey,
         });
         router.push(`/${data.slug}`);

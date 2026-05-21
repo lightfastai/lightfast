@@ -71,7 +71,9 @@ function makeClerkStub(): ClerkStub {
   };
 }
 
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
+  isClerkAPIResponseError: (err: unknown) =>
+    typeof err === "object" && err !== null && "errors" in err,
   useClerk: () => clerkStub,
   useUser: () => ({
     isLoaded: isUserLoadedValue,

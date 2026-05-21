@@ -28,7 +28,7 @@ export function ThinkingMessage({
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <ThinkingAnimation />
-      <span className="text-2xs text-muted-foreground">{statusText}</span>
+      <span className="text-muted-foreground text-xs">{statusText}</span>
     </div>
   );
 }

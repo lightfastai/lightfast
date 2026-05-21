@@ -7,10 +7,12 @@ const replaceMock = vi.fn();
 
 vi.mock("@repo/app-trpc/react", () => ({
   useTRPC: () => ({
-    pendingNotAllowed: {
-      task: {
-        bind: {
-          mutationOptions: (options: unknown) => options,
+    org: {
+      setup: {
+        task: {
+          bind: {
+            mutationOptions: (options: unknown) => options,
+          },
         },
       },
     },
@@ -24,7 +26,7 @@ vi.mock("@tanstack/react-query", () => ({
   }),
 }));
 
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
   useSession: () => ({ session: { reload: reloadMock } }),
 }));
 

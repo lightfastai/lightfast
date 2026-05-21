@@ -1,7 +1,7 @@
 "use client";
 
 import { Icons } from "@repo/ui/components/icons";
-import { useClerk, useSignIn, useSignUp } from "@vendor/clerk/client";
+import { useClerk, useSignIn, useSignUp } from "@vendor/clerk";
 import * as React from "react";
 import { mapOAuthClerkError } from "../_hooks/auth-errors";
 import { makeFinalizeNavigate } from "../_hooks/auth-navigate";

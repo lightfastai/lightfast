@@ -23,7 +23,7 @@ export function UseCaseGrid({ items }: UseCaseGridProps) {
               className="rounded-xs border border-border/40 bg-accent/40 px-6 py-9"
               key={itemIndex}
             >
-              <h3 className="mb-2 font-medium text-foreground text-md">
+              <h3 className="mb-2 font-medium text-base text-foreground">
                 {item.title}
               </h3>
               <p className="text-muted-foreground text-sm leading-relaxed">

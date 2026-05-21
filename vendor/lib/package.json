@@ -8,6 +8,10 @@
     ".": {
       "types": "./src/index.ts",
       "default": "./src/index.ts"
+    },
+    "./time": {
+      "types": "./src/time.ts",
+      "default": "./src/time.ts"
     }
   },
   "license": "MIT",
@@ -17,6 +21,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "date-fns": "catalog:",
     "nanoid": "catalog:"
   },
   "devDependencies": {

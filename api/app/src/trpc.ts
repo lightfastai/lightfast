@@ -16,8 +16,8 @@ import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-import type { AuthIdentity } from "./auth/identity";
-import { resolveIdentityFromClerk } from "./auth/identity";
+import type { AuthAccess, AuthIdentity } from "./auth/identity";
+import { resolveAuthContextFromClerk } from "./auth/identity";
 import { isDiagnosticCause, throwDiagnostic } from "./diagnostics";
 
 /**
@@ -26,6 +26,7 @@ import { isDiagnosticCause, throwDiagnostic } from "./diagnostics";
  * narrowed at the procedure layer by the middleware below.
  */
 export interface AuthContext {
+  access?: AuthAccess;
   identity: AuthIdentity;
 }
 
@@ -39,9 +40,10 @@ export interface AuthContext {
  * @see https://trpc.io/docs/server/context
  */
 export const createTRPCContext = async (opts: { headers: Headers }) => ({
-  auth: {
-    identity: await resolveIdentityFromClerk({ db, headers: opts.headers }),
-  } satisfies AuthContext,
+  auth: (await resolveAuthContextFromClerk({
+    db,
+    headers: opts.headers,
+  })) satisfies AuthContext,
   db,
   headers: opts.headers,
 });
@@ -153,8 +155,7 @@ const requireAuth = t.middleware(({ ctx, next }) => {
  * Active-identity gate. Narrows `ctx.auth.identity` to the `active` variant
  * so downstream handlers can read `orgId` without re-discriminating.
  *
- * Composed into `pendingNotAllowedProcedure` — the default gate for every
- * org-scoped router.
+ * Composed into `orgProcedure` — the default gate for active-org surfaces.
  */
 const requireActiveIdentity = t.middleware(({ ctx, next }) => {
   // requireAuth has already excluded "unauthenticated".
@@ -174,7 +175,7 @@ const requireActiveIdentity = t.middleware(({ ctx, next }) => {
   });
 });
 
-const authedProcedure = t.procedure
+const signedInProcedure = t.procedure
   .use(observabilityMiddleware)
   .use(requireAuth);
 
@@ -204,11 +205,11 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
  * - Create the first organization
  *
  * For procedures that must reject `pending` identities, use
- * `pendingNotAllowedProcedure`.
+ * `orgProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const pendingAllowedProcedure = authedProcedure;
+export const viewerProcedure = signedInProcedure;
 
 /**
  * Pending-Not-Allowed Procedure
@@ -225,25 +226,23 @@ export const pendingAllowedProcedure = authedProcedure;
  * use `boundOrgProcedure`; the v1 setup surface uses `setupProcedure`.
  *
  * For procedures that must remain callable during onboarding, use
- * `pendingAllowedProcedure`.
+ * `viewerProcedure`.
  *
  * @see https://trpc.io/docs/procedures
  */
-export const pendingNotAllowedProcedure = authedProcedure.use(
-  requireActiveIdentity
-);
+export const orgProcedure = signedInProcedure.use(requireActiveIdentity);
 
 /**
  * Setup Procedure
  *
- * The pre-bind setup surface. Identical gate to `pendingNotAllowedProcedure` —
+ * The pre-bind setup surface. Identical gate to `orgProcedure` —
  * admits any `active` identity without checking binding status — but the
  * distinct name marks procedures that must stay callable *before* an org is
  * bound: `task.status` and `task.bind`.
  *
  * Product features should use `boundOrgProcedure` instead.
  */
-export const setupProcedure = pendingNotAllowedProcedure;
+export const setupProcedure = orgProcedure;
 
 /**
  * Bound-org gate. Composed after `requireActiveIdentity`; rejects an active
@@ -303,5 +302,48 @@ const requireBoundOrg = t.middleware(({ ctx, next }) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const boundOrgProcedure =
-  pendingNotAllowedProcedure.use(requireBoundOrg);
+export const boundOrgProcedure = orgProcedure.use(requireBoundOrg);
+
+/**
+ * Org-admin gate. Requires a web Clerk session for the active org whose
+ * `has({ role: "org:admin" })` check succeeds. Bearer callers currently carry
+ * identity only, not role/permission claims, so they fail closed here.
+ */
+const requireOrgAdmin = t.middleware(({ ctx, next }) => {
+  if (ctx.auth.identity.type !== "active") {
+    throwDiagnostic({
+      trpcCode: "FORBIDDEN",
+      diagnostic: {
+        code: "ORG_REQUIRED",
+        message:
+          "Organization required. Please create or join an organization first.",
+        repair: { id: "create-or-join-org" },
+      },
+    });
+  }
+
+  const access = ctx.auth.access;
+  const isMatchingAdmin =
+    access?.kind === "clerk-session" &&
+    access.userId === ctx.auth.identity.userId &&
+    access.orgId === ctx.auth.identity.orgId &&
+    access.has({ role: "org:admin" });
+
+  if (!isMatchingAdmin) {
+    throwDiagnostic({
+      trpcCode: "FORBIDDEN",
+      diagnostic: {
+        code: "PERMISSION_REQUIRED",
+        message: "Only organization administrators can perform this action.",
+      },
+    });
+  }
+
+  return next({
+    ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
+  });
+});
+
+export const orgAdminProcedure = orgProcedure.use(requireOrgAdmin);
+
+export const boundOrgAdminProcedure = boundOrgProcedure.use(requireOrgAdmin);
