@@ -42,7 +42,7 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-54">
         <div className="px-2 py-1.5">
-          <p className="text-muted-foreground text-sm truncate">
+          <p className="truncate text-muted-foreground text-sm">
             {email || "User"}
           </p>
         </div>

@@ -58,8 +58,7 @@ export function TeamGeneralSettingsClient({
   const hasChanges = currentFormName !== slug;
 
   const orgListQueryKey =
-    trpc.viewer.organization.listUserOrganizations.queryOptions()
-      .queryKey;
+    trpc.viewer.organization.listUserOrganizations.queryOptions().queryKey;
 
   // Optimistic cache update so sidebar and header reflect the new name instantly
   const updateNameMutation = useMutation(

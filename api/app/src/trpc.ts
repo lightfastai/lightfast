@@ -302,8 +302,7 @@ const requireBoundOrg = t.middleware(({ ctx, next }) => {
  *
  * @see https://trpc.io/docs/procedures
  */
-export const boundOrgProcedure =
-  orgProcedure.use(requireBoundOrg);
+export const boundOrgProcedure = orgProcedure.use(requireBoundOrg);
 
 /**
  * Org-admin gate. Requires a web Clerk session for the active org whose
@@ -347,5 +346,4 @@ const requireOrgAdmin = t.middleware(({ ctx, next }) => {
 
 export const orgAdminProcedure = orgProcedure.use(requireOrgAdmin);
 
-export const boundOrgAdminProcedure =
-  boundOrgProcedure.use(requireOrgAdmin);
+export const boundOrgAdminProcedure = boundOrgProcedure.use(requireOrgAdmin);

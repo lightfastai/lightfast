@@ -1,3 +1,5 @@
+import type { NextMiddleware as NemoMiddleware } from "@rescale/nemo";
+import { createNEMO } from "@rescale/nemo";
 import type { LightfastLastActiveOrg } from "@vendor/clerk/server";
 import {
   clerkClient,
@@ -13,8 +15,6 @@ import {
   createStripeCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
-import type { NextMiddleware as NemoMiddleware } from "@rescale/nemo";
-import { createNEMO } from "@rescale/nemo";
 import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -203,7 +203,7 @@ const microfrontendsMiddleware: NemoMiddleware = async (req) => {
   if (mfeResponse) {
     return applySecurityHeaders(mfeResponse);
   }
-  return undefined;
+  return;
 };
 
 const clerkProxyMiddleware = clerkMiddleware(

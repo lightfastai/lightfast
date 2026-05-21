@@ -38,10 +38,10 @@ type ClerkAuthSession = Awaited<ReturnType<typeof auth>>;
 type ClerkHas = ClerkAuthSession["has"];
 
 export interface AuthAccess {
-  kind: "clerk-session";
-  userId: string;
-  orgId: string | null;
   has: ClerkHas;
+  kind: "clerk-session";
+  orgId: string | null;
+  userId: string;
 }
 
 export interface ResolvedAuthContext {

@@ -86,17 +86,17 @@ export function PlanSelectionDialog({
                 title="Starter"
               />
               <PlanChoiceCard
+                addOns={[
+                  "+$10 per additional source",
+                  "+$5 per 1K extra searches",
+                  "+$20/mo for 180-day retention",
+                ]}
                 amountLabel={teamAmount}
                 buttonLabel={
                   currentTier === "team"
                     ? "Your current plan"
                     : "Switch to Team"
                 }
-                addOns={[
-                  "+$10 per additional source",
-                  "+$5 per 1K extra searches",
-                  "+$20/mo for 180-day retention",
-                ]}
                 className="md:col-span-2 lg:col-span-1"
                 description="Everything you need to scale"
                 features={[

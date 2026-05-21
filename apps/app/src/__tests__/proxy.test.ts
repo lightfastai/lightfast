@@ -19,7 +19,10 @@ interface AuthResult {
 const authMock = vi.fn<() => Promise<AuthResult>>();
 const createNEMOMock = vi.fn(
   (
-    middlewares: Record<string, (req: RequestLike, event: EventLike) => unknown>,
+    middlewares: Record<
+      string,
+      (req: RequestLike, event: EventLike) => unknown
+    >,
     globalMiddleware?: {
       before?:
         | ((req: RequestLike, event: EventLike) => unknown)
@@ -246,15 +249,16 @@ describe("proxy pending-session route handling", () => {
     });
   });
 
-  it.each(["/account/settings", "/cli/auth", "/desktop/auth"])(
-    "allows pending sessions through %s",
-    async (pathname) => {
-      const { response } = await invoke(pathname);
+  it.each([
+    "/account/settings",
+    "/cli/auth",
+    "/desktop/auth",
+  ])("allows pending sessions through %s", async (pathname) => {
+    const { response } = await invoke(pathname);
 
-      expect(response.status).toBe(200);
-      expect(response.headers.get("location")).toBeNull();
-    }
-  );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
 
   it("leaves tRPC auth to the API handler instead of pending-page routing", async () => {
     const { response } = await invoke(
@@ -292,25 +296,25 @@ describe("proxy bound org product route gate", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it.each(["/acme/workspace", "/acme/runs/123"])(
-    "redirects unbound org product routes from %s to the bind task",
-    async (pathname) => {
-      authMock.mockResolvedValue({
-        orgId: "org_123",
-        orgSlug: "acme",
-        sessionClaims: { lf_binding_status: "unbound" },
-        sessionStatus: "active",
-        userId: "user_123",
-      });
+  it.each([
+    "/acme/workspace",
+    "/acme/runs/123",
+  ])("redirects unbound org product routes from %s to the bind task", async (pathname) => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: { lf_binding_status: "unbound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
 
-      const { response } = await invoke(pathname);
+    const { response } = await invoke(pathname);
 
-      expect(response.status).toBe(307);
-      expect(response.headers.get("location")).toBe(
-        "https://app.lightfast.localhost/acme/tasks/bind"
-      );
-    }
-  );
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/acme/tasks/bind"
+    );
+  });
 
   it("does not gate org settings routes", async () => {
     authMock.mockResolvedValue({

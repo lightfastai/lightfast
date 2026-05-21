@@ -259,7 +259,10 @@ export const mdxComponents = {
   // Paragraph with proper spacing
   p({ children, ...props }: MarkdownComponentProps) {
     return (
-      <p className="break-words text-base [&:not(:first-child)]:mt-6" {...props}>
+      <p
+        className="break-words text-base [&:not(:first-child)]:mt-6"
+        {...props}
+      >
         {children}
       </p>
     );

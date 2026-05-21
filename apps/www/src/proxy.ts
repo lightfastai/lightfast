@@ -67,10 +67,7 @@ const composedMiddleware = createNEMO(
 // Main Proxy
 // =============================================================================
 
-export default async function proxy(
-  req: NextRequest,
-  event: NextFetchEvent
-) {
+export default async function proxy(req: NextRequest, event: NextFetchEvent) {
   // Run NEMO middleware chain (sets x-pathname, etc.)
   const nemoResponse = await composedMiddleware(req, event);
 
