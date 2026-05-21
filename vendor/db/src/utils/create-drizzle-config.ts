@@ -1,33 +1,42 @@
 import type { Config } from "drizzle-kit";
 
 export const createDrizzleConfig = (opts: {
-  host: string;
-  username: string;
-  password: string;
+  host?: string;
+  username?: string;
+  password?: string;
   database?: string;
+  port?: number;
   schema: string;
   out: string;
 }): Config => {
-  // Construct DATABASE_URL for PlanetScale
   const database =
     (opts.database?.trim() === "" ? undefined : opts.database) ?? "lightfast";
-  // Remove any quotes from all values if they exist
-  const cleanHost = opts.host.replace(/^["']|["']$/g, "");
-  const cleanUsername = opts.username.replace(/^["']|["']$/g, "");
-  const cleanPassword = opts.password.replace(/^["']|["']$/g, "");
-
-  // Use URL format for PlanetScale compatibility
-  const url = `mysql://${cleanUsername}:${cleanPassword}@${cleanHost}/${database}?sslaccept=strict`;
+  const host = stripQuotes(opts.host);
+  const username = stripQuotes(opts.username);
+  const password = stripQuotes(opts.password);
+  const hasCredentials = Boolean(host && username && password);
 
   return {
     schema: opts.schema,
     out: opts.out,
     dialect: "mysql",
-    dbCredentials: {
-      url,
-    },
+    ...(hasCredentials
+      ? {
+          dbCredentials: {
+            database,
+            host: host!,
+            password: password!,
+            ...(opts.port ? { port: opts.port } : {}),
+            user: username!,
+          },
+        }
+      : {}),
     verbose: true,
     strict: true,
-    tablesFilter: ["lightfast_*"], // Optional: filter tables by prefix
+    tablesFilter: ["lightfast_*"],
   } satisfies Config;
 };
+
+function stripQuotes(value: string | undefined) {
+  return value?.replace(/^["']|["']$/g, "");
+}

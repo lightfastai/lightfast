@@ -1,9 +1,20 @@
 /**
  * Lightweight database SDK for Lightfast infrastructure
- * Provides common database utilities and PlanetScale integration
+ * Provides common database utilities and PlanetScale MySQL integration
  */
 
-export { alias } from "drizzle-orm/pg-core";
+export {
+  alias,
+  bigint,
+  index,
+  json,
+  mysqlTable,
+  primaryKey,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/mysql-core";
 // Export Drizzle ORM SQL utilities — type-only exports
 export type {
   BinaryOperator,

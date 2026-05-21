@@ -1,1 +1,0 @@
-ALTER TABLE "lightfast_gw_installations" ADD COLUMN "backfill_config" jsonb;

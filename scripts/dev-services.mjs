@@ -5,6 +5,13 @@ import fs from "node:fs";
 import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import {
+  deleteDevPscaleBranch,
+  ensureDevPscaleBranch,
+  readDevPscaleCache,
+  redactPscaleConfig,
+  resolveDevPscaleConfig,
+} from "./pscale-dev.mjs";
 
 const require = createRequire(import.meta.url);
 const repoRoot = path.resolve(
@@ -28,8 +35,8 @@ try {
     case "inngest-sync":
       await handleInngestSync(args);
       break;
-    case "postgres":
-      await handlePostgres(args);
+    case "pscale":
+      await handlePscale(args);
       break;
     case "redis":
       await handleRedis(args);
@@ -49,87 +56,146 @@ try {
 }
 
 async function handleSetup(args) {
-  const services = await import("@lightfastai/dev-services");
-  if (typeof services.runDevServicesSetup !== "function") {
-    runLegacyDevServicesCli(["setup", ...withDefaultConfig(args)]);
-    return;
-  }
-
   const options = parseOptions(args);
-  const report = await services.runDevServicesSetup({
+  const services = await import("@lightfastai/dev-services");
+  const redis = resolveRedisConfig(services, options);
+  await services.ensureRedisServices(redis);
+  const pscale = await ensureDevPscaleBranch({
+    cwd: repoRoot,
     configPath: options.configPath,
     env: localServiceResolverEnv(),
   });
-  printReport(services, "printSetupReport", report, options.json);
-  process.exit(report.status === "fail" ? 1 : 0);
+
+  const report = {
+    status: "ok",
+    pscale: redactPscaleConfig(pscale),
+    redis: {
+      restUrl: services.redactRedisRestUrl(redis.restUrl),
+      redisUrl: redis.redisUrl,
+      keyPrefix: redis.keyPrefix,
+    },
+  };
+  printReport(services, undefined, report, options.json);
 }
 
 async function handleDoctor(args) {
-  const services = await import("@lightfastai/dev-services");
-  if (typeof services.runDevServicesDoctor !== "function") {
-    runLegacyDevServicesCli(["doctor", ...withDefaultConfig(args)]);
-    return;
-  }
-
   const options = parseOptions(args);
-  const report = await services.runDevServicesDoctor({
+  const services = await import("@lightfastai/dev-services");
+  const checks = [];
+
+  const pscale = readDevPscaleCache({
+    cwd: repoRoot,
     configPath: options.configPath,
     env: localServiceResolverEnv(),
-    postgresTable: options.postgresTable,
   });
-  printReport(services, "printDoctorReport", report, options.json);
+  checks.push({
+    name: "PlanetScale branch credentials",
+    status: pscale.cached ? "ok" : "fail",
+    ...redactPscaleConfig(pscale),
+    message: pscale.cached ? undefined : "Run pnpm db:up.",
+  });
+
+  try {
+    const redis = resolveRedisConfig(services, options);
+    const pong = await services.pingRedisRest(redis);
+    checks.push({
+      name: "Redis REST",
+      status: "ok",
+      keyPrefix: redis.keyPrefix,
+      pong,
+      restUrl: services.redactRedisRestUrl(redis.restUrl),
+    });
+  } catch (error) {
+    checks.push({
+      name: "Redis REST",
+      status: "fail",
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  const report = {
+    status: checks.every((check) => check.status === "ok") ? "ok" : "fail",
+    checks,
+  };
+  printReport(services, undefined, report, options.json);
   process.exit(report.status === "fail" ? 1 : 0);
 }
 
-async function handlePostgres(args) {
+async function handlePscale(args) {
   const subcommand = args.shift();
-  const services = await import("@lightfastai/dev-services");
 
   switch (subcommand) {
-    case "url": {
+    case "env": {
       const options = parseOptions(args);
-      const config = services.resolveDevPostgresConfig({
+      const config = resolveDevPscaleConfig({
         cwd: repoRoot,
         configPath: options.configPath,
         env: localServiceResolverEnv(),
       });
       if (options.json) {
-        console.log(
-          JSON.stringify({
-            databaseName: config.databaseName,
-            databaseUrl: config.databaseUrl,
-            redactedDatabaseUrl: services.redactPostgresUrl(config.databaseUrl),
-            source: config.source,
-            host: config.host,
-            port: config.port,
-            containerName: config.containerName,
-          })
-        );
-      } else {
-        console.log(config.databaseUrl);
+        console.log(JSON.stringify(redactPscaleConfig(config)));
+        return;
       }
+
+      console.log(`DATABASE_HOST=${shellQuote(config.host)}`);
+      console.log(`DATABASE_USERNAME=${shellQuote(config.username)}`);
+      console.log(`DATABASE_PASSWORD=${shellQuote(config.password)}`);
+      console.log(`DATABASE_NAME=${shellQuote(config.databaseName)}`);
       return;
     }
-    case "up":
-      if (typeof services.ensurePostgresContainer !== "function") {
-        runLegacyDevServicesCli(["postgres-up", ...args]);
+    case "up": {
+      const options = parseOptions(args);
+      const config = await ensureDevPscaleBranch({
+        cwd: repoRoot,
+        configPath: options.configPath,
+        env: localServiceResolverEnv(),
+      });
+      if (options.json) {
+        console.log(JSON.stringify(redactPscaleConfig(config)));
         return;
       }
-      await handlePostgresUp(services, args);
+
+      console.log(
+        `PlanetScale branch ${config.databaseName}/${config.branchName} is ready.`
+      );
       return;
-    case "create":
-      if (
-        typeof services.ensurePostgresContainer !== "function" ||
-        typeof services.ensurePostgresDatabase !== "function"
-      ) {
-        runLegacyDevServicesCli([
-          "postgres-create",
-          ...withDefaultConfig(args),
-        ]);
+    }
+    case "down": {
+      const options = parseOptions(args);
+      const identity = await deleteDevPscaleBranch({
+        cwd: repoRoot,
+        configPath: options.configPath,
+        env: localServiceResolverEnv(),
+      });
+      if (options.json) {
+        console.log(JSON.stringify(redactPscaleConfig(identity)));
         return;
       }
-      await handlePostgresCreate(services, args);
+
+      console.log(
+        `Deleted PlanetScale branch ${identity.databaseName}/${identity.branchName}.`
+      );
       return;
+    }
+    case "status": {
+      const options = parseOptions(args);
+      const config = readDevPscaleCache({
+        cwd: repoRoot,
+        configPath: options.configPath,
+        env: localServiceResolverEnv(),
+      });
+      if (options.json) {
+        console.log(JSON.stringify(redactPscaleConfig(config)));
+        return;
+      }
+
+      console.log(
+        `${config.databaseName}/${config.branchName}: ${
+          config.cached ? `cached at ${config.cachePath}` : "not cached"
+        }`
+      );
+      return;
+    }
     case "-h":
     case "--help":
     case undefined:
@@ -137,58 +203,8 @@ async function handlePostgres(args) {
       process.exit(subcommand ? 0 : 1);
       break;
     default:
-      throw new Error(`Unknown postgres command "${subcommand}".`);
+      throw new Error(`Unknown pscale command "${subcommand}".`);
   }
-}
-
-async function handlePostgresUp(services, args) {
-  const options = parseOptions(args);
-  const service = services.resolveDevPostgresServiceConfig(process.env);
-  await services.ensurePostgresContainer(service);
-
-  if (options.json) {
-    console.log(
-      JSON.stringify({
-        containerName: service.containerName,
-        image: service.image,
-        host: service.host,
-        port: service.port,
-        volumeName: service.volumeName,
-      })
-    );
-    return;
-  }
-
-  console.log(
-    `Postgres is running at ${service.host}:${service.port} (${service.containerName})`
-  );
-}
-
-async function handlePostgresCreate(services, args) {
-  const options = parseOptions(args);
-  const config = services.resolveDevPostgresConfig({
-    cwd: repoRoot,
-    configPath: options.configPath,
-    env: localServiceResolverEnv(),
-  });
-  await services.ensurePostgresContainer(config);
-  const created = await services.ensurePostgresDatabase(config);
-
-  if (options.json) {
-    console.log(
-      JSON.stringify({
-        databaseName: config.databaseName,
-        databaseUrl: config.databaseUrl,
-        redactedDatabaseUrl: services.redactPostgresUrl(config.databaseUrl),
-        created,
-      })
-    );
-    return;
-  }
-
-  console.log(
-    `${created ? "Created" : "Reused"} dev Postgres database ${config.databaseName}`
-  );
 }
 
 async function handleRedis(args) {
@@ -385,7 +401,11 @@ function resolveRedisConfig(services, options) {
 
 function localServiceResolverEnv() {
   const env = { ...process.env };
-  env.DATABASE_URL = undefined;
+  env.DATABASE_HOST = undefined;
+  env.DATABASE_PORT = undefined;
+  env.DATABASE_USERNAME = undefined;
+  env.DATABASE_PASSWORD = undefined;
+  env.DATABASE_NAME = undefined;
   env.KV_REST_API_URL = undefined;
   env.KV_REST_API_TOKEN = undefined;
   env.UPSTASH_REDIS_REST_URL = undefined;
@@ -425,8 +445,8 @@ function parseOptions(args) {
       case "--no-inngest-sync":
         options.inngestSync = false;
         break;
-      case "--postgres-table":
-        options.postgresTable = readOptionValue(args, ++index, arg);
+      case "--force":
+        options.force = true;
         break;
       case "--register-app":
         options.registerApps.push(readOptionValue(args, ++index, arg));
@@ -458,6 +478,10 @@ function readOptionValue(args, index, option) {
     throw new Error(`${option} requires a value.`);
   }
   return value;
+}
+
+function shellQuote(value) {
+  return `'${String(value).replaceAll("'", "'\\''")}'`;
 }
 
 function withDefaultConfig(args) {
@@ -509,12 +533,13 @@ function signalExitCode(signal) {
 function printHelp() {
   console.log(`Usage:
   node scripts/dev-services.mjs setup [--json]
-  node scripts/dev-services.mjs doctor [--postgres-table <name>] [--json]
+  node scripts/dev-services.mjs doctor [--json]
   node scripts/dev-services.mjs inngest-sync [--register-app <name>]... -- <command> [...args]
 
-  node scripts/dev-services.mjs postgres url [--json]
-  node scripts/dev-services.mjs postgres up [--json]
-  node scripts/dev-services.mjs postgres create [--json]
+  node scripts/dev-services.mjs pscale env [--json]
+  node scripts/dev-services.mjs pscale up [--json]
+  node scripts/dev-services.mjs pscale down [--json]
+  node scripts/dev-services.mjs pscale status [--json]
 
   node scripts/dev-services.mjs redis url [--json]
   node scripts/dev-services.mjs redis up [--json]

@@ -1,1 +1,0 @@
-DROP TABLE "lightfast_user_api_keys" CASCADE;

@@ -1,1 +1,0 @@
-CREATE INDEX "workspace_event_date_idx" ON "lightfast_workspace_events" USING btree ("workspace_id","received_at");

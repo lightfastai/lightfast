@@ -102,9 +102,11 @@ export const sentryOptions: Parameters<typeof withSentryConfig>[1] = {
   authToken: env.SENTRY_AUTH_TOKEN,
   silent: !env.CI,
   widenClientFileUpload: env.VERCEL_ENV === "production",
-  reactComponentAnnotation: { enabled: false },
   tunnelRoute: "/monitoring",
-  disableLogger: true,
   bundleSizeOptimizations: { excludeDebugStatements: true },
-  automaticVercelMonitors: false,
+  webpack: {
+    reactComponentAnnotation: { enabled: false },
+    treeshake: { removeDebugLogging: true },
+    automaticVercelMonitors: false,
+  },
 };

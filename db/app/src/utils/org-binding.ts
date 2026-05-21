@@ -9,13 +9,16 @@
  * `ctx.db` and the helpers stay independently testable.
  */
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, getTableColumns } from "drizzle-orm";
 import type { Database } from "../client";
 import type {
   OrgSourceControlBinding,
   OrgSourceControlBindingProvider,
 } from "../schema";
 import { orgSourceControlBindings } from "../schema";
+
+const { activeClerkOrgId: _activeClerkOrgId, ...bindingSelection } =
+  getTableColumns(orgSourceControlBindings);
 
 /**
  * Returns the org's single active source-control binding, or `undefined` when
@@ -26,7 +29,7 @@ export async function getActiveOrgBinding(
   clerkOrgId: string
 ): Promise<OrgSourceControlBinding | undefined> {
   const [row] = await db
-    .select()
+    .select(bindingSelection)
     .from(orgSourceControlBindings)
     .where(
       and(
@@ -45,7 +48,17 @@ export async function isOrgBound(
   db: Database,
   clerkOrgId: string
 ): Promise<boolean> {
-  return (await getActiveOrgBinding(db, clerkOrgId)) !== undefined;
+  const [row] = await db
+    .select({ id: orgSourceControlBindings.id })
+    .from(orgSourceControlBindings)
+    .where(
+      and(
+        eq(orgSourceControlBindings.clerkOrgId, clerkOrgId),
+        eq(orgSourceControlBindings.status, "active")
+      )
+    )
+    .limit(1);
+  return row !== undefined;
 }
 
 export interface UpsertActiveOrgBindingInput {
@@ -78,6 +91,7 @@ export async function upsertActiveOrgBinding(
   const [row] = await db
     .insert(orgSourceControlBindings)
     .values({
+      activeClerkOrgId: input.clerkOrgId,
       clerkOrgId: input.clerkOrgId,
       provider: input.provider,
       connectedByUserId: input.connectedByUserId,
@@ -87,14 +101,21 @@ export async function upsertActiveOrgBinding(
       metadata: input.metadata ?? {},
       status: "active",
     })
-    .returning();
+    .$returningId();
 
-  if (!row) {
+  if (!row?.id) {
     throw new Error(
       `Failed to insert active binding for org ${input.clerkOrgId}`
     );
   }
-  return row;
+
+  const inserted = await getActiveOrgBinding(db, input.clerkOrgId);
+  if (!inserted) {
+    throw new Error(
+      `Failed to insert active binding for org ${input.clerkOrgId}`
+    );
+  }
+  return inserted;
 }
 
 export interface MarkOrgBindingRevokedInput {
@@ -109,15 +130,40 @@ export async function markOrgBindingRevoked(
   db: Database,
   input: MarkOrgBindingRevokedInput
 ): Promise<OrgSourceControlBinding[]> {
-  const now = new Date().toISOString();
-  return await db
-    .update(orgSourceControlBindings)
-    .set({ status: "revoked", revokedAt: now, updatedAt: now })
+  const activeRows = await db
+    .select(bindingSelection)
+    .from(orgSourceControlBindings)
     .where(
       and(
         eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId),
         eq(orgSourceControlBindings.status, "active")
       )
     )
-    .returning();
+    .limit(100);
+  if (!activeRows.length) {
+    return [];
+  }
+
+  const now = new Date().toISOString();
+  await db
+    .update(orgSourceControlBindings)
+    .set({
+      activeClerkOrgId: null,
+      status: "revoked",
+      revokedAt: now,
+      updatedAt: now,
+    })
+    .where(
+      and(
+        eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId),
+        eq(orgSourceControlBindings.status, "active")
+      )
+    );
+
+  return activeRows.map((row) => ({
+    ...row,
+    revokedAt: now,
+    status: "revoked",
+    updatedAt: now,
+  }));
 }

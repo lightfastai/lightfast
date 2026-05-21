@@ -1,1 +1,0 @@
-ALTER TABLE "lightfast_workspace_edges" DROP CONSTRAINT "lightfast_workspace_edges_external_id_unique";

@@ -1,53 +1,54 @@
 # @db/app
 
-Database schemas and client for Lightfast console application.
+Database schema, Drizzle client, and repository helpers for the Lightfast app.
 
-## Purpose
+## Driver
 
-Provides Drizzle ORM schemas for the Lightfast data model, including:
-- Store identity and configuration
-- Document state and metadata
-- Vector entry mappings for idempotent operations
-- Ingestion commit audit trail
+`@db/app` targets PlanetScale MySQL. Runtime connections use `@vendor/db`,
+`@planetscale/database`, and `drizzle-orm/planetscale-serverless` over HTTP.
 
-## Installation
-
-This is an internal workspace package. Install dependencies from the monorepo root:
+Required runtime vars:
 
 ```bash
-pnpm install
+DATABASE_HOST
+DATABASE_USERNAME
+DATABASE_PASSWORD
 ```
 
-## Usage
-
-```typescript
-import { db } from "@db/app/client";
-import { stores, docsDocuments, vectorEntries, ingestionCommits } from "@db/app/schema";
-
-// Query documents
-const docs = await db.select().from(docsDocuments).limit(10);
-```
-
-## Database Commands
+Optional runtime var:
 
 ```bash
-# Generate migration
-pnpm db:generate
-
-# Apply migrations
-pnpm db:migrate
-
-# Open database studio
-pnpm db:studio
+DATABASE_NAME
 ```
 
-## Schema Structure
+## Local Development
 
-- `lf_stores` - Store identity and config per `(workspaceId, store)`
-- `lf_docs_documents` - Document state per repo-relative file path
-- `lf_vector_entries` - Chunk → vector ID mapping for idempotent upsert/delete
-- `lf_ingestion_commits` - Idempotency and audit trail for push deliveries
+Local development uses PlanetScale branches. There is no Docker MySQL service.
 
-## Documentation
+```bash
+pscale auth login
+pnpm db:up      # create/reuse branch and cache credentials under .lightfast/
+pnpm db:migrate # apply migrations to the cached branch
+pnpm db:down    # tear down this worktree's branch/password/cache
+```
 
-For detailed schema definitions, see [docs/architecture/phase1/data-model.md](../../docs/architecture/phase1/data-model.md).
+Control-plane vars:
+
+```bash
+PLANETSCALE_DATABASE_NAME # defaults to lightfast locally
+PLANETSCALE_ORG_NAME
+PLANETSCALE_SERVICE_TOKEN_ID
+PLANETSCALE_SERVICE_TOKEN
+PSCALE_BRANCH_NAME
+```
+
+## Commands
+
+```bash
+pnpm db:generate  # Generate migration SQL from src/schema
+pnpm db:migrate   # Apply migrations
+pnpm db:studio    # Open Drizzle Studio
+```
+
+Do not hand-write migration SQL. Change schema TypeScript and run
+`pnpm db:generate`.

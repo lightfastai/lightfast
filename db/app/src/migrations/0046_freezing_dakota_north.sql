@@ -1,1 +1,0 @@
-DROP TABLE "lightfast_workspace_observation_relationships" CASCADE;

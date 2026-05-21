@@ -18,6 +18,11 @@
     "inngest": {
       "type": "http",
       "url": "http://127.0.0.1:8288/mcp"
+    },
+    "next-devtools": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "next-devtools-mcp@latest"]
     }
   }
 }

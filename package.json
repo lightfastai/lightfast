@@ -3,10 +3,10 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=22.12.0",
-    "pnpm": "10.32.1"
+    "node": ">=22.13.0",
+    "pnpm": "11.1.3"
   },
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@11.1.3",
   "scripts": {
     "build": "turbo run build",
     "build:app": "turbo run build -F @lightfast/app",
@@ -14,7 +14,7 @@
     "build:platform": "turbo run build -F @lightfast/platform",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
-    "dev": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-app --register-app lightfast-platform -- concurrently -n apps,mfe -c cyan,magenta 'turbo run dev --concurrency=15 -F @lightfast/www -F @lightfast/app -F @lightfast/platform --continue' 'portless run --name lightfast pnpm --filter @lightfast/app run mfe:proxy'",
+    "dev": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-app --register-app lightfast-platform -- turbo run dev @lightfast/app#mfe:proxy --concurrency=15 -F @lightfast/www -F @lightfast/app -F @lightfast/platform --continue",
     "dev:app": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-app -- turbo run dev -F @lightfast/app --continue",
     "dev:www": "portless proxy start && turbo run dev -F @lightfast/www",
     "dev:platform": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-platform -- turbo run dev -F @lightfast/platform",
@@ -24,8 +24,8 @@
     "dev:inngest": "npx inngest-cli@latest dev",
     "dev:services": "concurrently -n inngest,studio -c blue,green \"pnpm dev:inngest\" \"pnpm dev:studio\"",
     "dev:studio": "pnpm --filter @db/app with-env drizzle-kit studio --config=./src/drizzle.config.ts --host 127.0.0.1 --port 4983",
-    "dev:setup": "node scripts/dev-services.mjs setup && pnpm db:migrate",
-    "dev:doctor": "node scripts/dev-services.mjs doctor --postgres-table lightfast_gateway_installations",
+    "dev:setup": "node scripts/dev-services.mjs setup && pnpm db:push",
+    "dev:doctor": "node scripts/dev-services.mjs doctor",
     "dev:ngrok": "./scripts/ngrok 3024",
     "dev:email": "turbo run dev:email -F @lightfast/www",
     "brain": "turbo run eval",
@@ -40,14 +40,16 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",
-    "claude": "./scripts/c",
     "remotion:studio": "pnpm --filter @repo/app-remotion studio",
     "remotion:render": "pnpm --filter @repo/app-remotion render:all",
-    "db:url": "node scripts/dev-services.mjs postgres url",
-    "db:up": "node scripts/dev-services.mjs postgres up",
-    "db:create": "node scripts/dev-services.mjs postgres create",
+    "db:env": "node scripts/dev-services.mjs pscale env",
+    "db:up": "node scripts/dev-services.mjs pscale up",
+    "db:down": "node scripts/dev-services.mjs pscale down",
+    "db:status": "node scripts/dev-services.mjs pscale status",
     "db:generate": "pnpm --filter @db/app db:generate",
+    "db:push": "pnpm --filter @db/app db:push",
     "db:migrate": "pnpm --filter @db/app db:migrate",
+    "db:baseline": "pnpm --filter @db/app db:baseline",
     "redis:url": "node scripts/dev-services.mjs redis url",
     "redis:up": "node scripts/dev-services.mjs redis up",
     "redis:ping": "node scripts/dev-services.mjs redis ping",
@@ -62,28 +64,9 @@
     "concurrently": "^9.2.1",
     "knip": "^6.4.1",
     "portless": "catalog:",
-    "turbo": "2.9.6",
-    "turbo-ignore": "2.9.6",
+    "turbo": "2.9.14",
+    "turbo-ignore": "2.9.14",
     "typescript": "^5.9.2",
     "ultracite": "7.6.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "react": "^19.2.5",
-      "react-dom": "^19.2.5",
-      "@types/react": "^19.2.14",
-      "@types/react-dom": "^19.2.3",
-      "@opentelemetry/api": "1.9.1",
-      "tar": "^7.5.13",
-      "basic-ftp": "^5.3.0",
-      "undici": "^6.25.0",
-      "lodash": "^4.18.1",
-      "lodash-es": "^4.18.1",
-      "path-to-regexp": "^6.3.0",
-      "fast-xml-parser": "^5.5.6"
-    },
-    "patchedDependencies": {
-      "@vercel/microfrontends@2.3.2": "patches/@vercel__microfrontends@2.3.2.patch"
-    }
   }
 }

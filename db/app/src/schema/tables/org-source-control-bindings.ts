@@ -12,20 +12,21 @@
  * details (installation ids, provider payloads) live here and never in Clerk.
  *
  * The v1 gate means "the org has at least one `active` binding". The schema
- * keeps historical rows, but a partial unique index permits only one active
- * binding per org for v1.
+ * keeps historical rows. MySQL has no partial unique indexes, so an internal
+ * nullable `active_clerk_org_id` mirror enforces one active binding per org:
+ * active rows set it to `clerk_org_id`, inactive rows set it to `NULL`.
  */
 
 import { sql } from "drizzle-orm";
 import {
   bigint,
   index,
-  jsonb,
-  pgTable,
+  json,
+  mysqlTable,
   timestamp,
   uniqueIndex,
   varchar,
-} from "drizzle-orm/pg-core";
+} from "drizzle-orm/mysql-core";
 
 /**
  * Source-control provider. v1 ships `github` only; the column is widened as
@@ -42,49 +43,69 @@ export type OrgSourceControlBindingProvider = "github";
  */
 export type OrgSourceControlBindingStatus = "active" | "revoked" | "error";
 
-export const orgSourceControlBindings = pgTable(
+/** Clerk identifiers (org / user ids) — short, ASCII, prefix + 27-char base. */
+const CLERK_ID_LENGTH = 64;
+/** External provider-side identifiers — vary across GitHub / GitLab / Bitbucket. */
+const PROVIDER_REF_LENGTH = 128;
+/** Short controlled-vocabulary codes (provider name, lifecycle status). */
+const CODE_LENGTH = 32;
+
+export const orgSourceControlBindings = mysqlTable(
   "lightfast_org_source_control_bindings",
   {
     /**
      * Internal BIGINT primary key.
      */
-    id: bigint("id", { mode: "number" })
-      .primaryKey()
-      .generatedAlwaysAsIdentity(),
+    id: bigint("id", { mode: "number" }).primaryKey().autoincrement(),
 
     /**
      * Clerk org ID (no FK — Clerk is the source of truth for orgs).
      */
-    clerkOrgId: varchar("clerk_org_id", { length: 191 }).notNull(),
+    clerkOrgId: varchar("clerk_org_id", { length: CLERK_ID_LENGTH }).notNull(),
+
+    /**
+     * Internal MySQL-compatible uniqueness mirror for active rows only.
+     *
+     * Active rows store `clerk_org_id`; revoked/error rows store NULL. MySQL
+     * permits multiple NULLs in a unique index, matching the previous
+     * active-row-only uniqueness behavior.
+     */
+    activeClerkOrgId: varchar("active_clerk_org_id", {
+      length: CLERK_ID_LENGTH,
+    }),
 
     /**
      * Source-control provider. v1 value: `github`.
      */
-    provider: varchar("provider", { length: 50 })
+    provider: varchar("provider", { length: CODE_LENGTH })
       .$type<OrgSourceControlBindingProvider>()
       .notNull(),
 
     /**
      * Provider-side org/account id, once the real install flow lands.
      */
-    providerAccountId: varchar("provider_account_id", { length: 191 }),
+    providerAccountId: varchar("provider_account_id", {
+      length: PROVIDER_REF_LENGTH,
+    }),
 
     /**
      * Human-readable provider org login (e.g. the GitHub org slug).
      */
-    providerAccountLogin: varchar("provider_account_login", { length: 191 }),
+    providerAccountLogin: varchar("provider_account_login", {
+      length: PROVIDER_REF_LENGTH,
+    }),
 
     /**
      * GitHub App installation id (or the provider equivalent).
      */
     providerInstallationId: varchar("provider_installation_id", {
-      length: 191,
+      length: PROVIDER_REF_LENGTH,
     }),
 
     /**
      * Lifecycle status — see {@link OrgSourceControlBindingStatus}.
      */
-    status: varchar("status", { length: 50 })
+    status: varchar("status", { length: CODE_LENGTH })
       .$type<OrgSourceControlBindingStatus>()
       .notNull(),
 
@@ -92,62 +113,56 @@ export const orgSourceControlBindings = pgTable(
      * Clerk user id that completed the bind.
      */
     connectedByUserId: varchar("connected_by_user_id", {
-      length: 191,
+      length: CLERK_ID_LENGTH,
     }).notNull(),
 
     /**
      * When the binding was established.
      */
-    connectedAt: timestamp("connected_at", {
-      mode: "string",
-      withTimezone: true,
-    })
-      .default(sql`CURRENT_TIMESTAMP`)
+    connectedAt: timestamp("connected_at", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     /**
      * When the provider binding was removed; null while active.
      */
-    revokedAt: timestamp("revoked_at", { mode: "string", withTimezone: true }),
+    revokedAt: timestamp("revoked_at", { mode: "string", fsp: 3 }),
 
     /**
-     * Provider-specific details. Default `{}`.
+     * Provider-specific details.
      */
-    metadata: jsonb("metadata")
-      .$type<Record<string, unknown>>()
-      .default({})
-      .notNull(),
+    metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
 
     /**
      * Row creation timestamp.
      */
-    createdAt: timestamp("created_at", { mode: "string", withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
+    createdAt: timestamp("created_at", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     /**
      * Row last-update timestamp. Maintained by the repository helpers.
      */
-    updatedAt: timestamp("updated_at", { mode: "string", withTimezone: true })
-      .default(sql`CURRENT_TIMESTAMP`)
+    updatedAt: timestamp("updated_at", { mode: "string", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .onUpdateNow()
       .notNull(),
   },
   (table) => ({
     /**
-     * v1 invariant: at most one `active` binding per org. Partial unique index
-     * so historical `revoked`/`error` rows do not collide.
+     * v1 invariant: at most one `active` binding per org.
      */
-    activePerOrgUq: uniqueIndex("org_source_control_bindings_active_per_org_uq")
-      .on(table.clerkOrgId)
-      .where(sql`${table.status} = 'active'`),
+    activePerOrgUq: uniqueIndex(
+      "org_source_control_bindings_active_per_org_uq"
+    ).on(table.activeClerkOrgId),
 
     /**
      * One binding per provider installation. Partial so rows without an
      * installation id (placeholders, pre-install state) do not collide.
      */
-    installationUq: uniqueIndex("org_source_control_bindings_installation_uq")
-      .on(table.providerInstallationId)
-      .where(sql`${table.providerInstallationId} is not null`),
+    installationUq: uniqueIndex(
+      "org_source_control_bindings_installation_uq"
+    ).on(table.providerInstallationId),
 
     /**
      * Primary lookup: the gate query (`clerkOrgId` + `status`).
@@ -167,7 +182,10 @@ export const orgSourceControlBindings = pgTable(
 );
 
 // TypeScript types
-export type OrgSourceControlBinding =
-  typeof orgSourceControlBindings.$inferSelect;
+type OrgSourceControlBindingRow = typeof orgSourceControlBindings.$inferSelect;
+export type OrgSourceControlBinding = Omit<
+  OrgSourceControlBindingRow,
+  "activeClerkOrgId"
+>;
 export type InsertOrgSourceControlBinding =
   typeof orgSourceControlBindings.$inferInsert;

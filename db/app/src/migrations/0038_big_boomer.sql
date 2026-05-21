@@ -1,1 +1,0 @@
-ALTER TABLE "lightfast_workspace_integrations" RENAME COLUMN "source_config" TO "provider_config";

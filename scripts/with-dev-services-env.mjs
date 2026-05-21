@@ -4,10 +4,8 @@ import { spawn } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveWorktreeRuntimeName } from "@lightfastai/dev-core";
-import {
-  resolveDevPostgresConfig,
-  resolveDevRedisConfig,
-} from "@lightfastai/dev-services";
+import { resolveDevRedisConfig } from "@lightfastai/dev-services";
+import { resolveDevPscaleConfig } from "./pscale-dev.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -53,7 +51,7 @@ function buildEnv() {
   }
 
   const resolverEnv = localServiceResolverEnv();
-  const postgres = resolveDevPostgresConfig({
+  const pscale = resolveDevPscaleConfig({
     cwd: repoRoot,
     configPath,
     env: resolverEnv,
@@ -69,11 +67,10 @@ function buildEnv() {
 
   return {
     ...process.env,
-    DATABASE_HOST: postgres.host,
-    DATABASE_PORT: String(postgres.port),
-    DATABASE_USERNAME: postgres.username,
-    DATABASE_PASSWORD: postgres.password,
-    DATABASE_NAME: postgres.databaseName,
+    DATABASE_HOST: pscale.host,
+    DATABASE_USERNAME: pscale.username,
+    DATABASE_PASSWORD: pscale.password,
+    DATABASE_NAME: pscale.databaseName,
     KV_REST_API_URL: redis.restUrl,
     KV_REST_API_TOKEN: redis.token,
     KV_REST_API_READ_ONLY_TOKEN: redis.token,
@@ -89,7 +86,11 @@ function buildEnv() {
 
 function localServiceResolverEnv() {
   const env = { ...process.env };
-  env.DATABASE_URL = undefined;
+  env.DATABASE_HOST = undefined;
+  env.DATABASE_PORT = undefined;
+  env.DATABASE_USERNAME = undefined;
+  env.DATABASE_PASSWORD = undefined;
+  env.DATABASE_NAME = undefined;
   env.KV_REST_API_URL = undefined;
   env.KV_REST_API_TOKEN = undefined;
   env.KV_REST_API_READ_ONLY_TOKEN = undefined;
@@ -109,7 +110,6 @@ function findDefaultConfigPath() {
 function printEnv(env) {
   const keys = [
     "DATABASE_HOST",
-    "DATABASE_PORT",
     "DATABASE_USERNAME",
     "DATABASE_NAME",
     "KV_REST_API_URL",
