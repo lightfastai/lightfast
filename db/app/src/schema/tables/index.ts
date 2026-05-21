@@ -1,4 +1,10 @@
 export {
+  createOpportunityId,
+  type InsertOpportunity,
+  type Opportunity,
+  opportunities,
+} from "./opportunities";
+export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
