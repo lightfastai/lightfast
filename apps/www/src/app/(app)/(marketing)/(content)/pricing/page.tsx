@@ -363,10 +363,10 @@ export default function PricingPage() {
                     key={plan.plan}
                   >
                     <div className="space-y-1">
-                      <h3 className="font-bold text-foreground text-md">
+                      <h3 className="font-bold text-base text-foreground">
                         {plan.name}
                       </h3>
-                      <p className="text-md text-muted-foreground">
+                      <p className="text-base text-muted-foreground">
                         {plan.description}
                       </p>
                     </div>

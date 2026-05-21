@@ -29,7 +29,7 @@
     "@radix-ui/react-popover": "^1.1.14",
     "@repo/og": "workspace:*",
     "@repo/ui": "workspace:*",
-    "@rescale/nemo": "^2.1.1",
+    "@rescale/nemo": "catalog:",
     "@sentry/nextjs": "catalog:",
     "@t3-oss/env-nextjs": "catalog:",
     "@vendor/aeo": "workspace:*",

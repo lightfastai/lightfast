@@ -64,10 +64,10 @@ const composedMiddleware = createNEMO(
 );
 
 // =============================================================================
-// Main Middleware
+// Main Proxy
 // =============================================================================
 
-export default async function middleware(
+export default async function proxy(
   req: NextRequest,
   event: NextFetchEvent
 ) {

@@ -11,7 +11,7 @@ export function WaitlistCTA() {
         </h2>
 
         {/* CTA Button */}
-        <Button asChild className="rounded-full text-md" size="xl">
+        <Button asChild className="rounded-full text-base" size="xl">
           <MicrofrontendLink href="/early-access" prefetch={true}>
             Join Early Access
           </MicrofrontendLink>
