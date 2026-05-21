@@ -1,7 +1,7 @@
 import type { AppRouterOutputs } from "@api/app";
 
 export type OrgMembersData =
-  AppRouterOutputs["pendingNotAllowed"]["orgMembers"]["list"];
+  AppRouterOutputs["org"]["settings"]["orgMembers"]["list"];
 export type OrgMember = OrgMembersData["members"][number];
 export type OrgInvitation = OrgMembersData["invitations"][number];
 export type OrgRole = "org:admin" | "org:member";

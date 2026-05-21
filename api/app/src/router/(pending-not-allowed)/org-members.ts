@@ -7,14 +7,13 @@ import {
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import {
-  auth,
   clerkClient,
   type OrganizationInvitation,
   type OrganizationMembership,
 } from "@vendor/clerk/server";
 
 import { isClerkConflictError } from "../../auth/clerk-errors";
-import { pendingNotAllowedProcedure } from "../../trpc";
+import { orgAdminProcedure, orgProcedure } from "../../trpc";
 
 function memberName(member: OrganizationMembership) {
   const firstName = member.publicUserData?.firstName ?? "";
@@ -54,7 +53,7 @@ function toInvitationDto(invitation: OrganizationInvitation) {
 }
 
 export const orgMembersRouter = {
-  list: pendingNotAllowedProcedure.query(async ({ ctx }) => {
+  list: orgProcedure.query(async ({ ctx }) => {
     const clerk = await clerkClient();
     const [memberships, invitations] = await Promise.all([
       clerk.organizations.getOrganizationMembershipList({
@@ -78,27 +77,15 @@ export const orgMembersRouter = {
     };
   }),
 
-  invite: pendingNotAllowedProcedure
+  invite: orgAdminProcedure
     .input(inviteOrgMemberSchema)
     .mutation(async ({ ctx, input }) => {
-      const session = await auth({ treatPendingAsSignedOut: false });
-      if (
-        !session.userId ||
-        session.orgId !== ctx.auth.identity.orgId ||
-        !session.has({ role: "org:admin" })
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only administrators can perform this action",
-        });
-      }
-
       const clerk = await clerkClient();
       try {
         const invitation =
           await clerk.organizations.createOrganizationInvitation({
             emailAddress: input.emailAddress,
-            inviterUserId: session.userId,
+            inviterUserId: ctx.auth.identity.userId,
             organizationId: ctx.auth.identity.orgId,
             role: input.role,
           });
@@ -115,21 +102,9 @@ export const orgMembersRouter = {
       }
     }),
 
-  updateRole: pendingNotAllowedProcedure
+  updateRole: orgAdminProcedure
     .input(updateOrgMemberRoleSchema)
     .mutation(async ({ ctx, input }) => {
-      const session = await auth({ treatPendingAsSignedOut: false });
-      if (
-        !session.userId ||
-        session.orgId !== ctx.auth.identity.orgId ||
-        !session.has({ role: "org:admin" })
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only administrators can perform this action",
-        });
-      }
-
       const clerk = await clerkClient();
       await clerk.organizations.updateOrganizationMembership({
         organizationId: ctx.auth.identity.orgId,
@@ -139,21 +114,10 @@ export const orgMembersRouter = {
       return { success: true };
     }),
 
-  remove: pendingNotAllowedProcedure
+  remove: orgAdminProcedure
     .input(removeOrgMemberSchema)
     .mutation(async ({ ctx, input }) => {
-      const session = await auth({ treatPendingAsSignedOut: false });
-      if (
-        !session.userId ||
-        session.orgId !== ctx.auth.identity.orgId ||
-        !session.has({ role: "org:admin" })
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only administrators can perform this action",
-        });
-      }
-      if (input.userId === session.userId) {
+      if (input.userId === ctx.auth.identity.userId) {
         throw new TRPCError({
           code: "BAD_REQUEST",
           message: "Administrators cannot remove themselves",
@@ -168,26 +132,14 @@ export const orgMembersRouter = {
       return { success: true };
     }),
 
-  revokeInvitation: pendingNotAllowedProcedure
+  revokeInvitation: orgAdminProcedure
     .input(revokeOrgInvitationSchema)
     .mutation(async ({ ctx, input }) => {
-      const session = await auth({ treatPendingAsSignedOut: false });
-      if (
-        !session.userId ||
-        session.orgId !== ctx.auth.identity.orgId ||
-        !session.has({ role: "org:admin" })
-      ) {
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only administrators can perform this action",
-        });
-      }
-
       const clerk = await clerkClient();
       await clerk.organizations.revokeOrganizationInvitation({
         invitationId: input.invitationId,
         organizationId: ctx.auth.identity.orgId,
-        requestingUserId: session.userId,
+        requestingUserId: ctx.auth.identity.userId,
       });
       return { success: true };
     }),

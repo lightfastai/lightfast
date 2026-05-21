@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchQueryMock = vi.fn();
 const listQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["pendingNotAllowed", "orgMembers", "list"],
+  queryKey: ["org", "settings", "orgMembers", "list"],
 }));
 const prefetchMock = vi.fn();
 
@@ -15,10 +15,12 @@ vi.mock("@repo/app-trpc/server", () => ({
   ),
   prefetch: prefetchMock,
   trpc: {
-    pendingNotAllowed: {
-      orgMembers: {
-        list: {
-          queryOptions: listQueryOptionsMock,
+    org: {
+      settings: {
+        orgMembers: {
+          list: {
+            queryOptions: listQueryOptionsMock,
+          },
         },
       },
     },
@@ -68,7 +70,7 @@ describe("members settings page", () => {
 
     expect(listQueryOptionsMock).toHaveBeenCalledOnce();
     expect(fetchQueryMock).toHaveBeenCalledWith({
-      queryKey: ["pendingNotAllowed", "orgMembers", "list"],
+      queryKey: ["org", "settings", "orgMembers", "list"],
     });
     expect(prefetchMock).not.toHaveBeenCalled();
     expect(screen.getByTestId("hydrated-members")).toContainElement(

@@ -2,11 +2,8 @@
 
 import type { AppRouterOutputs } from "@api/app";
 import { useTRPC } from "@repo/app-trpc/react";
-import {
-  Avatar,
-  AvatarFallback,
-  AvatarImage,
-} from "@repo/ui/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
+import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
@@ -22,15 +19,23 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { toast } from "@repo/ui/components/ui/sonner";
+import { cn } from "@repo/ui/lib/utils";
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk/client";
-import { formatDistanceToNow } from "date-fns";
-import { Mail, MoreHorizontal, Trash2, UserRoundX, Users } from "lucide-react";
-import { useCallback } from "react";
+import { formatRelativeTimeToNow } from "@vendor/lib/time";
+import {
+  Mail,
+  MoreHorizontal,
+  Search,
+  Trash2,
+  UserRoundX,
+  Users,
+} from "lucide-react";
+import { useCallback, useMemo } from "react";
 import {
   isOptimisticInvitation,
   type OrgInvitation,
@@ -45,7 +50,7 @@ import {
 } from "./org-member-cache";
 
 type OrgMembersOutput =
-  AppRouterOutputs["pendingNotAllowed"]["orgMembers"]["list"];
+  AppRouterOutputs["org"]["settings"]["orgMembers"]["list"];
 
 function initials(name: string) {
   const letters = name
@@ -61,13 +66,12 @@ function roleLabel(role: string) {
   return role === "org:admin" ? "Admin" : "Member";
 }
 
-export function OrgMemberList() {
+export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
   const { has, isLoaded } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryOptions =
-    trpc.pendingNotAllowed.orgMembers.list.queryOptions();
+  const listQueryOptions = trpc.org.settings.orgMembers.list.queryOptions();
 
   const { data } = useSuspenseQuery({
     ...listQueryOptions,
@@ -81,7 +85,7 @@ export function OrgMemberList() {
   );
 
   const updateRoleMutation = useMutation(
-    trpc.pendingNotAllowed.orgMembers.updateRole.mutationOptions({
+    trpc.org.settings.orgMembers.updateRole.mutationOptions({
       meta: { errorTitle: "Failed to update role" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({
@@ -121,7 +125,7 @@ export function OrgMemberList() {
   );
 
   const removeMutation = useMutation(
-    trpc.pendingNotAllowed.orgMembers.remove.mutationOptions({
+    trpc.org.settings.orgMembers.remove.mutationOptions({
       meta: { errorTitle: "Failed to remove member" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({
@@ -161,7 +165,7 @@ export function OrgMemberList() {
   );
 
   const revokeInvitationMutation = useMutation(
-    trpc.pendingNotAllowed.orgMembers.revokeInvitation.mutationOptions({
+    trpc.org.settings.orgMembers.revokeInvitation.mutationOptions({
       meta: { errorTitle: "Failed to revoke invitation" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({
@@ -206,7 +210,37 @@ export function OrgMemberList() {
     })
   );
 
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+
+  const visibleMembers = useMemo(() => {
+    const sorted = [...data.members].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+    if (!normalizedQuery) {
+      return sorted;
+    }
+    return sorted.filter(
+      (member) =>
+        member.name.toLowerCase().includes(normalizedQuery) ||
+        member.emailAddress.toLowerCase().includes(normalizedQuery)
+    );
+  }, [data.members, normalizedQuery]);
+
+  const visibleInvitations = useMemo(() => {
+    const sorted = [...data.invitations].sort(
+      (a, b) => b.createdAt - a.createdAt
+    );
+    if (!normalizedQuery) {
+      return sorted;
+    }
+    return sorted.filter((invitation) =>
+      invitation.emailAddress.toLowerCase().includes(normalizedQuery)
+    );
+  }, [data.invitations, normalizedQuery]);
+
   const hasNoRows = data.members.length === 0 && data.invitations.length === 0;
+  const hasNoMatches =
+    visibleMembers.length === 0 && visibleInvitations.length === 0;
   const actionsDisabled =
     updateRoleMutation.isPending ||
     removeMutation.isPending ||
@@ -214,7 +248,7 @@ export function OrgMemberList() {
 
   if (hasNoRows) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 py-16 text-center">
         <div className="mb-4 rounded-full bg-muted/20 p-3">
           <Users className="h-6 w-6 text-muted-foreground" />
         </div>
@@ -226,43 +260,45 @@ export function OrgMemberList() {
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <div className="overflow-hidden rounded-lg border border-border/60">
-        {data.members.map((member) => (
-          <MemberRow
-            actionsDisabled={actionsDisabled}
-            canManageMembers={canManageMembers}
-            key={member.id}
-            member={member}
-            onRemove={(userId) => removeMutation.mutate({ userId })}
-            onUpdateRole={(userId, role) =>
-              updateRoleMutation.mutate({ role, userId })
-            }
-          />
-        ))}
-      </div>
-
-      {data.invitations.length > 0 && (
-        <div className="space-y-3">
-          <h3 className="font-semibold text-foreground text-sm">
-            Pending Invitations
-          </h3>
-          <div className="overflow-hidden rounded-lg border border-border/60">
-            {data.invitations.map((invitation) => (
-              <InvitationRow
-                actionsDisabled={actionsDisabled}
-                canManageMembers={canManageMembers}
-                invitation={invitation}
-                key={invitation.id}
-                onRevoke={(invitationId) =>
-                  revokeInvitationMutation.mutate({ invitationId })
-                }
-              />
-            ))}
-          </div>
+  if (hasNoMatches) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-lg border border-border/60 py-16 text-center">
+        <div className="mb-4 rounded-full bg-muted/20 p-3">
+          <Search className="h-6 w-6 text-muted-foreground" />
         </div>
-      )}
+        <p className="font-semibold text-sm">No members found</p>
+        <p className="mt-1 max-w-sm text-muted-foreground text-sm">
+          No members or invitations match your search.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-hidden rounded-lg border border-border/60">
+      {visibleMembers.map((member) => (
+        <MemberRow
+          actionsDisabled={actionsDisabled}
+          canManageMembers={canManageMembers}
+          key={member.id}
+          member={member}
+          onRemove={(userId) => removeMutation.mutate({ userId })}
+          onUpdateRole={(userId, role) =>
+            updateRoleMutation.mutate({ role, userId })
+          }
+        />
+      ))}
+      {visibleInvitations.map((invitation) => (
+        <InvitationRow
+          actionsDisabled={actionsDisabled}
+          canManageMembers={canManageMembers}
+          invitation={invitation}
+          key={invitation.id}
+          onRevoke={(invitationId) =>
+            revokeInvitationMutation.mutate({ invitationId })
+          }
+        />
+      ))}
     </div>
   );
 }
@@ -280,30 +316,29 @@ function MemberRow({
   onRemove: (userId: string) => void;
   onUpdateRole: (userId: string, role: OrgRole) => void;
 }) {
+  const canManage = canManageMembers && !member.isCurrentUser;
+
   return (
-    <div className="flex items-center justify-between gap-4 border-border/60 border-b px-4 py-4 last:border-b-0">
+    <div className="flex items-center justify-between gap-4 border-border/60 border-b px-4 py-3 last:border-b-0">
       <div className="flex min-w-0 items-center gap-3">
         <Avatar className="size-9">
-          <AvatarImage alt="" src={member.imageUrl} />
-          <AvatarFallback>{initials(member.name)}</AvatarFallback>
+          <AvatarFallback className="bg-foreground text-background text-xs">
+            {initials(member.name)}
+          </AvatarFallback>
         </Avatar>
         <div className="min-w-0 space-y-1">
           <div className="flex items-center gap-2">
             <p className="truncate font-medium text-sm">{member.name}</p>
-            {member.isCurrentUser && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
-                You
-              </span>
-            )}
+            {member.isCurrentUser && <Badge variant="secondary">You</Badge>}
           </div>
-          <p className="truncate text-muted-foreground text-xs">
+          <p className="truncate text-muted-foreground text-sm">
             {member.emailAddress}
           </p>
         </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-2">
-        {canManageMembers && !member.isCurrentUser ? (
+        {canManage ? (
           <Select
             disabled={actionsDisabled}
             onValueChange={(role) =>
@@ -320,12 +355,12 @@ function MemberRow({
             </SelectContent>
           </Select>
         ) : (
-          <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground text-xs">
+          <span className="text-muted-foreground text-sm">
             {roleLabel(member.role)}
           </span>
         )}
 
-        {canManageMembers && !member.isCurrentUser && (
+        {canManage ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -345,10 +380,12 @@ function MemberRow({
                 variant="destructive"
               >
                 <UserRoundX />
-                Remove
+                Remove member
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+        ) : (
+          <div className="size-6" />
         )}
       </div>
     </div>
@@ -367,46 +404,64 @@ function InvitationRow({
   onRevoke: (invitationId: string) => void;
 }) {
   const isOptimistic = isOptimisticInvitation(invitation);
+  const canManage = canManageMembers && !isOptimistic;
 
   return (
     <div
-      className={`flex items-center justify-between gap-4 border-border/60 border-b px-4 py-4 last:border-b-0 ${
-        isOptimistic ? "opacity-60" : ""
-      }`}
+      className={cn(
+        "flex items-center justify-between gap-4 border-border/60 border-b px-4 py-3 last:border-b-0",
+        isOptimistic && "opacity-60"
+      )}
     >
       <div className="flex min-w-0 items-center gap-3">
-        <div className="flex size-9 items-center justify-center rounded-full bg-muted/40">
+        <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-muted/40">
           <Mail className="size-4 text-muted-foreground" />
         </div>
-        <div className="min-w-0 space-y-1">
+        <div className="min-w-0 space-y-0.5">
           <p className="truncate font-medium text-sm">
             {invitation.emailAddress}
           </p>
-          <div className="flex items-center gap-3 text-muted-foreground text-xs">
-            <span>{roleLabel(invitation.role)}</span>
-            <span>
-              Invited{" "}
-              {formatDistanceToNow(invitation.createdAt, { addSuffix: true })}
-            </span>
-          </div>
+          <p className="truncate text-muted-foreground text-xs">
+            Invited{" "}
+            {formatRelativeTimeToNow(invitation.createdAt, { addSuffix: true })}
+          </p>
         </div>
       </div>
 
-      {canManageMembers && !isOptimistic ? (
-        <Button
-          disabled={actionsDisabled}
-          onClick={() => onRevoke(invitation.id)}
-          size="sm"
-          variant="ghost"
-        >
-          <Trash2 className="mr-1.5 h-4 w-4" />
-          Revoke
-        </Button>
-      ) : (
-        <span className="rounded-full bg-muted px-2 py-1 text-muted-foreground text-xs">
-          Pending
+      <div className="flex shrink-0 items-center gap-2">
+        <span className="text-muted-foreground text-sm">
+          {roleLabel(invitation.role)}
         </span>
-      )}
+        <Badge variant="secondary">Pending</Badge>
+
+        {canManage ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                className="text-muted-foreground hover:text-foreground"
+                disabled={actionsDisabled}
+                size="icon-sm"
+                variant="ghost"
+              >
+                <MoreHorizontal className="size-3.5" />
+                <span className="sr-only">Invitation actions</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="space-y-1">
+              <DropdownMenuItem
+                className="cursor-pointer rounded-xl px-2"
+                onClick={() => onRevoke(invitation.id)}
+                variant="destructive"
+              >
+                <Trash2 />
+                Revoke invitation
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="size-6" />
+        )}
+      </div>
     </div>
   );
 }

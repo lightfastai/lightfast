@@ -63,8 +63,33 @@ const activeIdentity: AuthIdentity = {
 };
 
 function caller(identity = activeIdentity) {
+  return callerWithAccess(identity, adminAccess());
+}
+
+function adminAccess(overrides: { orgId?: string; userId?: string } = {}) {
+  return {
+    kind: "clerk-session" as const,
+    userId: overrides.userId ?? "user_current",
+    orgId: overrides.orgId ?? "org_acme",
+    has: ({ role }: { role?: string }) => role === "org:admin",
+  };
+}
+
+function nonAdminAccess() {
+  return {
+    kind: "clerk-session" as const,
+    userId: "user_current",
+    orgId: "org_acme",
+    has: () => false,
+  };
+}
+
+function callerWithAccess(
+  identity = activeIdentity,
+  access?: ReturnType<typeof adminAccess> | ReturnType<typeof nonAdminAccess>
+) {
   return createCaller({
-    auth: { identity },
+    auth: access ? { identity, access } : { identity },
     db: {} as Database,
     headers: new Headers(),
   });
@@ -176,37 +201,25 @@ describe("orgMembers.list", () => {
 
 describe("orgMembers mutations", () => {
   it("rejects direct mutation attempts from non-admin members", async () => {
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role !== "org:admin",
-      orgId: "org_acme",
-      userId: "user_current",
-    });
-
     await expect(
-      caller().orgMembers.invite({ emailAddress: "new@example.com" })
+      callerWithAccess(activeIdentity, nonAdminAccess()).orgMembers.invite({
+        emailAddress: "new@example.com",
+      })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(createOrganizationInvitationMock).not.toHaveBeenCalled();
   });
 
   it("rejects privileged mutations when Clerk active org differs from tRPC context", async () => {
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role === "org:admin",
-      orgId: "org_other",
-      userId: "user_current",
-    });
-
     await expect(
-      caller().orgMembers.invite({ emailAddress: "new@example.com" })
+      callerWithAccess(
+        activeIdentity,
+        adminAccess({ orgId: "org_other" })
+      ).orgMembers.invite({ emailAddress: "new@example.com" })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(createOrganizationInvitationMock).not.toHaveBeenCalled();
   });
 
   it("sends an organization invitation as an admin", async () => {
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role === "org:admin",
-      orgId: "org_acme",
-      userId: "user_current",
-    });
     createOrganizationInvitationMock.mockResolvedValue({
       createdAt: 1_700_000_000_000,
       emailAddress: "new@example.com",

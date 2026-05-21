@@ -4,9 +4,11 @@ import { useTRPC } from "@repo/app-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
+  DialogActionButton,
+  DialogActions,
+  DialogClose,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -39,14 +41,14 @@ export function OrgMemberInvite() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const listQueryKey =
-    trpc.pendingNotAllowed.orgMembers.list.queryOptions().queryKey;
+    trpc.org.settings.orgMembers.list.queryOptions().queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [emailAddress, setEmailAddress] = useState("");
   const [role, setRole] = useState<OrgRole>("org:member");
 
   const inviteMutation = useMutation(
-    trpc.pendingNotAllowed.orgMembers.invite.mutationOptions({
+    trpc.org.settings.orgMembers.invite.mutationOptions({
       meta: { errorTitle: "Failed to send invitation" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({ queryKey: listQueryKey });
@@ -117,7 +119,7 @@ export function OrgMemberInvite() {
   return (
     <Dialog onOpenChange={setIsOpen} open={isOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" variant="secondary">
+        <Button variant="secondary">
           <UserPlus className="mr-1.5 h-4 w-4" />
           Invite
         </Button>
@@ -158,22 +160,25 @@ export function OrgMemberInvite() {
           </Select>
         </div>
 
-        <DialogFooter>
-          <Button
+        <DialogActions>
+          <DialogClose asChild>
+            <DialogActionButton>Cancel</DialogActionButton>
+          </DialogClose>
+          <DialogActionButton
             disabled={!emailAddress.trim() || inviteMutation.isPending}
             onClick={handleInvite}
-            variant="secondary"
+            variant="primary"
           >
             {inviteMutation.isPending ? (
               <>
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
                 Sending...
               </>
             ) : (
               "Send Invite"
             )}
-          </Button>
-        </DialogFooter>
+          </DialogActionButton>
+        </DialogActions>
       </DialogContent>
     </Dialog>
   );

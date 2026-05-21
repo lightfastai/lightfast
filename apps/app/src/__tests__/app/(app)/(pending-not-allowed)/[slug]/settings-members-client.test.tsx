@@ -28,39 +28,41 @@ const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
 
 const listQueryOptions = {
-  queryKey: ["pendingNotAllowed", "orgMembers", "list"],
+  queryKey: ["org", "settings", "orgMembers", "list"],
 };
 
 vi.mock("@repo/app-trpc/react", () => ({
   useTRPC: () => ({
-    pendingNotAllowed: {
-      orgMembers: {
-        invite: {
-          mutationOptions: (options: unknown) => ({
-            ...(options as object),
-            mutationName: "invite",
-          }),
-        },
-        list: {
-          queryOptions: () => listQueryOptions,
-        },
-        remove: {
-          mutationOptions: (options: unknown) => ({
-            ...(options as object),
-            mutationName: "remove",
-          }),
-        },
-        revokeInvitation: {
-          mutationOptions: (options: unknown) => ({
-            ...(options as object),
-            mutationName: "revokeInvitation",
-          }),
-        },
-        updateRole: {
-          mutationOptions: (options: unknown) => ({
-            ...(options as object),
-            mutationName: "updateRole",
-          }),
+    org: {
+      settings: {
+        orgMembers: {
+          invite: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "invite",
+            }),
+          },
+          list: {
+            queryOptions: () => listQueryOptions,
+          },
+          remove: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "remove",
+            }),
+          },
+          revokeInvitation: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "revokeInvitation",
+            }),
+          },
+          updateRole: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "updateRole",
+            }),
+          },
         },
       },
     },
@@ -165,14 +167,27 @@ vi.mock("@repo/ui/components/ui/select", () => ({
 
 vi.mock("@repo/ui/components/ui/dialog", () => ({
   Dialog: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogActionButton: ({
+    children,
+    variant: _variant,
+    ...props
+  }: {
+    children?: ReactNode;
+    variant?: "default" | "primary" | "destructive";
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+    <button type="button" {...props}>
+      {children}
+    </button>
+  ),
+  DialogActions: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogClose: ({ children }: { children?: ReactNode }) => <>{children}</>,
   DialogContent: ({ children }: { children?: ReactNode }) => (
     <div>{children}</div>
   ),
   DialogDescription: ({ children }: { children?: ReactNode }) => (
     <p>{children}</p>
-  ),
-  DialogFooter: ({ children }: { children?: ReactNode }) => (
-    <div>{children}</div>
   ),
   DialogHeader: ({ children }: { children?: ReactNode }) => (
     <div>{children}</div>
@@ -192,6 +207,9 @@ const { OrgMemberInvite } = await import(
 );
 const { OrgMemberList } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/members/_components/org-member-list"
+);
+const { OrgMembersClient } = await import(
+  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/members/_components/org-members-client"
 );
 
 const membersData = {
@@ -439,5 +457,45 @@ describe("members settings client components", () => {
     capturedMutationOptions.remove?.onSettled?.();
     capturedMutationOptions.revokeInvitation?.onSettled?.();
     expect(invalidateQueriesMock).toHaveBeenCalledTimes(3);
+  });
+});
+
+describe("members settings search", () => {
+  it("filters members by name via the OrgMemberList searchQuery prop", () => {
+    render(<OrgMemberList searchQuery="grace" />);
+
+    expect(screen.getByText("Grace Hopper")).toBeTruthy();
+    expect(screen.queryByText("Ada Lovelace")).toBeNull();
+    expect(screen.queryByText("invite@example.com")).toBeNull();
+  });
+
+  it("matches pending invitations by email", () => {
+    render(<OrgMemberList searchQuery="invite@" />);
+
+    expect(screen.getByText("invite@example.com")).toBeTruthy();
+    expect(screen.queryByText("Ada Lovelace")).toBeNull();
+    expect(screen.queryByText("Grace Hopper")).toBeNull();
+  });
+
+  it("shows an empty state when nothing matches the search", () => {
+    render(<OrgMemberList searchQuery="no-such-person" />);
+
+    expect(screen.getByText("No members found")).toBeTruthy();
+    expect(screen.queryByText("Ada Lovelace")).toBeNull();
+    expect(screen.queryByText("invite@example.com")).toBeNull();
+  });
+
+  it("filters the list as the user types in the toolbar search input", () => {
+    render(<OrgMembersClient />);
+
+    expect(screen.getByText("Ada Lovelace")).toBeTruthy();
+    expect(screen.getByText("Grace Hopper")).toBeTruthy();
+
+    fireEvent.change(screen.getByLabelText("Search members"), {
+      target: { value: "ada" },
+    });
+
+    expect(screen.getByText("Ada Lovelace")).toBeTruthy();
+    expect(screen.queryByText("Grace Hopper")).toBeNull();
   });
 });
