@@ -54,6 +54,24 @@ export const orgApiKeysRouter = {
     .input(revokeOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
+      let existing;
+      try {
+        existing = await clerk.apiKeys.get(input.keyId);
+      } catch (err) {
+        if (isClerkResourceNotFound(err)) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "API key not found",
+          });
+        }
+        throw err;
+      }
+      if (existing.subject !== ctx.auth.identity.orgId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "API key not found",
+        });
+      }
       let key;
       try {
         key = await clerk.apiKeys.revoke({
@@ -68,14 +86,6 @@ export const orgApiKeysRouter = {
           });
         }
         throw err;
-      }
-      if (key.subject !== ctx.auth.identity.orgId) {
-        // Defense-in-depth: Clerk doesn't scope revoke by subject. Reject so
-        // org A cannot revoke org B's keys by guessing IDs.
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "API key not found",
-        });
       }
       log.info("[org-api-keys] revoked", {
         clerkOrgId: ctx.auth.identity.orgId,

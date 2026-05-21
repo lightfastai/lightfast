@@ -269,6 +269,23 @@ describe("orgApiKeys", () => {
     ).resolves.toEqual({ success: true });
   });
 
+  it("does not revoke another org's key", async () => {
+    apiKeysGetMock.mockResolvedValueOnce({
+      id: "ak_other",
+      subject: "org_other",
+    });
+    apiKeysRevokeMock.mockResolvedValueOnce({
+      id: "ak_other",
+      subject: "org_other",
+    });
+    const caller = makeCaller(active("unbound"));
+
+    await expect(
+      caller.orgApiKeys.revoke({ keyId: "ak_other" })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(apiKeysRevokeMock).not.toHaveBeenCalled();
+  });
+
   it("allows an unbound active org to delete keys", async () => {
     const caller = makeCaller(active("unbound"));
     await expect(
