@@ -9,7 +9,7 @@ import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 
 import { isClerkResourceNotFound } from "../../auth/clerk-errors";
-import { pendingNotAllowedProcedure } from "../../trpc";
+import { orgAdminProcedure, orgProcedure } from "../../trpc";
 
 /**
  * Organization API Keys Router (Clerk-backed)
@@ -19,7 +19,7 @@ import { pendingNotAllowedProcedure } from "../../trpc";
  * only present on `create` — surface it once and never read it again.
  */
 export const orgApiKeysRouter = {
-  list: pendingNotAllowedProcedure.query(async ({ ctx }) => {
+  list: orgProcedure.query(async ({ ctx }) => {
     const clerk = await clerkClient();
     const { data } = await clerk.apiKeys.list({
       subject: ctx.auth.identity.orgId,
@@ -30,7 +30,7 @@ export const orgApiKeysRouter = {
     return data.map((k) => ({ ...k }));
   }),
 
-  create: pendingNotAllowedProcedure
+  create: orgAdminProcedure
     .input(createOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
@@ -50,7 +50,7 @@ export const orgApiKeysRouter = {
       return { ...key };
     }),
 
-  revoke: pendingNotAllowedProcedure
+  revoke: orgAdminProcedure
     .input(revokeOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
@@ -94,7 +94,7 @@ export const orgApiKeysRouter = {
       return { success: true };
     }),
 
-  delete: pendingNotAllowedProcedure
+  delete: orgAdminProcedure
     .input(deleteOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();

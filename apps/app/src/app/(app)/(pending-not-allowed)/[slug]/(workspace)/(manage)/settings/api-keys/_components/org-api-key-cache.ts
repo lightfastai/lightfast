@@ -1,7 +1,7 @@
 import type { AppRouterOutputs } from "@api/app";
 
 export type OrgApiKeyListData =
-  AppRouterOutputs["pendingNotAllowed"]["orgApiKeys"]["list"];
+  AppRouterOutputs["org"]["settings"]["orgApiKeys"]["list"];
 export type OrgApiKey = OrgApiKeyListData[number];
 
 function insertAt<T>(items: T[], item: T, index: number) {

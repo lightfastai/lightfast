@@ -24,7 +24,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { formatDistanceToNow } from "date-fns";
+import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
 import {
@@ -37,8 +37,7 @@ import {
 export function OrgApiKeyList() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryOptions =
-    trpc.pendingNotAllowed.orgApiKeys.list.queryOptions();
+  const listQueryOptions = trpc.org.settings.orgApiKeys.list.queryOptions();
   const listQueryKey = listQueryOptions.queryKey;
 
   const { data: keys } = useSuspenseQuery({
@@ -58,7 +57,7 @@ export function OrgApiKeyList() {
   );
 
   const revokeMutation = useMutation(
-    trpc.pendingNotAllowed.orgApiKeys.revoke.mutationOptions({
+    trpc.org.settings.orgApiKeys.revoke.mutationOptions({
       meta: { errorTitle: "Failed to revoke API key" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({ queryKey: listQueryKey });
@@ -91,7 +90,7 @@ export function OrgApiKeyList() {
   );
 
   const deleteMutation = useMutation(
-    trpc.pendingNotAllowed.orgApiKeys.delete.mutationOptions({
+    trpc.org.settings.orgApiKeys.delete.mutationOptions({
       meta: { errorTitle: "Failed to delete API key" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({ queryKey: listQueryKey });
@@ -149,7 +148,7 @@ export function OrgApiKeyList() {
   return (
     <>
       {keys.length === 0 ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border py-16 text-center">
+        <div className="flex flex-col items-center justify-center rounded-md border border-border/50 py-16 text-center">
           <div className="mb-4 rounded-full bg-muted/20 p-3">
             <Key className="h-6 w-6 text-muted-foreground" />
           </div>
@@ -194,14 +193,14 @@ export function OrgApiKeyList() {
                     <code className="font-mono">{`${key.id.slice(0, 11)}…`}</code>
                     <span>
                       Created{" "}
-                      {formatDistanceToNow(key.createdAt, {
+                      {formatRelativeTimeToNow(key.createdAt, {
                         addSuffix: true,
                       })}
                     </span>
                     {key.lastUsedAt && (
                       <span>
                         Last used{" "}
-                        {formatDistanceToNow(key.lastUsedAt, {
+                        {formatRelativeTimeToNow(key.lastUsedAt, {
                           addSuffix: true,
                         })}
                       </span>
@@ -209,7 +208,7 @@ export function OrgApiKeyList() {
                     {key.expiration && (
                       <span>
                         Expires{" "}
-                        {formatDistanceToNow(key.expiration, {
+                        {formatRelativeTimeToNow(key.expiration, {
                           addSuffix: true,
                         })}
                       </span>

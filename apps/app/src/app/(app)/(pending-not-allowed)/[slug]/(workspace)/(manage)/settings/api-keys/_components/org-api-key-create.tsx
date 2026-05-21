@@ -20,7 +20,7 @@ export function OrgApiKeyCreate() {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const listQueryKey =
-    trpc.pendingNotAllowed.orgApiKeys.list.queryOptions().queryKey;
+    trpc.org.settings.orgApiKeys.list.queryOptions().queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
@@ -32,7 +32,7 @@ export function OrgApiKeyCreate() {
   const isOpenRef = useRef(false);
 
   const createMutation = useMutation(
-    trpc.pendingNotAllowed.orgApiKeys.create.mutationOptions({
+    trpc.org.settings.orgApiKeys.create.mutationOptions({
       meta: { errorTitle: "Failed to create API key" },
       onSuccess: (data) => {
         if (!isOpenRef.current) {

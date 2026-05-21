@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchQueryMock = vi.fn();
 const listQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["pendingNotAllowed", "orgApiKeys", "list"],
+  queryKey: ["org", "settings", "orgApiKeys", "list"],
 }));
 const prefetchMock = vi.fn();
 
@@ -15,10 +15,12 @@ vi.mock("@repo/app-trpc/server", () => ({
   ),
   prefetch: prefetchMock,
   trpc: {
-    pendingNotAllowed: {
-      orgApiKeys: {
-        list: {
-          queryOptions: listQueryOptionsMock,
+    org: {
+      settings: {
+        orgApiKeys: {
+          list: {
+            queryOptions: listQueryOptionsMock,
+          },
         },
       },
     },
@@ -65,7 +67,7 @@ describe("api keys settings page", () => {
 
     expect(listQueryOptionsMock).toHaveBeenCalledOnce();
     expect(fetchQueryMock).toHaveBeenCalledWith({
-      queryKey: ["pendingNotAllowed", "orgApiKeys", "list"],
+      queryKey: ["org", "settings", "orgApiKeys", "list"],
     });
     expect(prefetchMock).not.toHaveBeenCalled();
     expect(screen.getByTestId("hydrated-api-keys")).toContainElement(

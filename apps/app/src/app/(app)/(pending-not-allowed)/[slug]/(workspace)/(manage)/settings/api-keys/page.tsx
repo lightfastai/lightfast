@@ -8,7 +8,7 @@ export const dynamic = "force-dynamic";
 
 export default async function OrgApiKeysPage() {
   await getQueryClient().fetchQuery(
-    trpc.pendingNotAllowed.orgApiKeys.list.queryOptions()
+    trpc.org.settings.orgApiKeys.list.queryOptions()
   );
 
   return (

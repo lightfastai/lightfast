@@ -25,27 +25,29 @@ const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
 
 const listQueryOptions = {
-  queryKey: ["pendingNotAllowed", "orgApiKeys", "list"],
+  queryKey: ["org", "settings", "orgApiKeys", "list"],
 };
 
 vi.mock("@repo/app-trpc/react", () => ({
   useTRPC: () => ({
-    pendingNotAllowed: {
-      orgApiKeys: {
-        delete: {
-          mutationOptions: (options: unknown) => ({
-            ...(options as object),
-            mutationName: "delete",
-          }),
-        },
-        list: {
-          queryOptions: () => listQueryOptions,
-        },
-        revoke: {
-          mutationOptions: (options: unknown) => ({
-            ...(options as object),
-            mutationName: "revoke",
-          }),
+    org: {
+      settings: {
+        orgApiKeys: {
+          delete: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "delete",
+            }),
+          },
+          list: {
+            queryOptions: () => listQueryOptions,
+          },
+          revoke: {
+            mutationOptions: (options: unknown) => ({
+              ...(options as object),
+              mutationName: "revoke",
+            }),
+          },
         },
       },
     },
