@@ -2,7 +2,7 @@
 
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { useSignUp, useUser } from "@vendor/clerk/client";
+import { useClerk, useUser } from "@vendor/clerk/client";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -51,7 +51,7 @@ export default function AcceptInvitationPage() {
 
 function AcceptInvitationView() {
   const { isSignedIn, isLoaded: isUserLoaded } = useUser();
-  const { signUp } = useSignUp();
+  const clerk = useClerk();
   const router = useRouter();
   const searchParams = useSearchParams();
   const ticket = searchParams.get("__clerk_ticket");
@@ -86,7 +86,7 @@ function AcceptInvitationView() {
   );
 
   const handleAccept = React.useCallback(async () => {
-    if (!ticket || submitting) {
+    if (!ticket || submitting || !clerk.loaded) {
       return;
     }
     setSubmitting(true);
@@ -94,65 +94,65 @@ function AcceptInvitationView() {
     authBreadcrumb("Invitation accept initiated", "info", { mode: "sign-up" });
 
     try {
-      // strategy:"ticket" is required when passing `ticket` — per
-      // SignUpFutureCreateParams. Verified empirically (2026-05-14): without
-      // it, signUp.create returns no error but leaves emailAddress null and
-      // status stuck at "missing_requirements". signUp.ticket({ticket,…})
-      // has the same problem.
-      const { error: ticketError } = await authSpan(
+      const signUpAttempt = await authSpan(
         "auth.ticket.consume",
         { mode: "sign-up" },
         () =>
-          signUp.create({
+          clerk.client.signUp.create({
             strategy: "ticket",
             ticket,
             legalAccepted: true,
           })
       );
-
-      if (ticketError) {
-        authBreadcrumb("Invitation accept rejected", "warning", {
-          mode: "sign-up",
-          code: ticketError.code,
-        });
-        const mapped = mapOtpClerkError(ticketError);
-        if (mapped.kind === "redirect") {
-          window.location.replace(mapped.target);
-          return;
-        }
-        if (mapped.kind === "code") {
-          window.location.replace(
-            ticketErrorPath({ errorCode: mapped.errorCode })
-          );
-          return;
-        }
-        if (mapped.kind === "inline") {
-          setPageError(mapped.message);
-          setSubmitting(false);
-          return;
-        }
-      }
-
-      if (signUp.status === "complete") {
+      if (signUpAttempt.status === "complete") {
         authBreadcrumb("Invitation accepted", "info", { mode: "sign-up" });
-        await signUp.finalize({
-          navigate: makeFinalizeNavigate(SUCCESS_REDIRECT),
+        let navigationBlocked = false;
+        const navigateAfterSession = makeFinalizeNavigate(SUCCESS_REDIRECT, {
+          onBlockedTask: () => {
+            navigationBlocked = true;
+          },
         });
+        await clerk.setActive({
+          session: signUpAttempt.createdSessionId,
+          navigate: navigateAfterSession,
+        });
+        if (navigationBlocked) {
+          setPageError(
+            "Additional authentication setup is required before continuing."
+          );
+          setSubmitting(false);
+        }
         return;
       }
 
       authBreadcrumb("Invitation accept incomplete", "error", {
         mode: "sign-up",
-        status: signUp.status,
-        missingFields: signUp.missingFields,
+        status: signUpAttempt.status,
+        missingFields: signUpAttempt.missingFields,
       });
       setPageError("Couldn't accept invitation. Please try again.");
       setSubmitting(false);
-    } catch {
-      setPageError("An unexpected error occurred. Please try again.");
+    } catch (err) {
+      const mapped = mapOtpClerkError(err);
+      if (mapped.kind === "redirect") {
+        window.location.replace(mapped.target);
+        return;
+      }
+      if (mapped.kind === "code") {
+        window.location.replace(
+          ticketErrorPath({ errorCode: mapped.errorCode })
+        );
+        return;
+      }
+      if (mapped.kind === "inline") {
+        setPageError(mapped.message);
+        setSubmitting(false);
+        return;
+      }
+      setPageError("Authentication failed");
       setSubmitting(false);
     }
-  }, [ticket, submitting, signUp, ticketErrorPath]);
+  }, [clerk, ticket, submitting, ticketErrorPath]);
 
   if (!ticket) {
     return (
@@ -199,7 +199,7 @@ function AcceptInvitationView() {
           <>
             <Button
               className="w-full"
-              disabled={submitting}
+              disabled={submitting || !clerk.loaded}
               onClick={handleAccept}
               size="lg"
             >

@@ -3,12 +3,27 @@ interface FinalizeNavigateParams {
   session?: { currentTask?: unknown } | null;
 }
 
-// Clerk's signIn/signUp/setActive `navigate` callback. If the new session has
-// a currentTask (force-MFA, accept-org-invite, etc.), let Clerk handle the
-// task navigation by returning early. Otherwise route to `target`.
-export function makeFinalizeNavigate(target: string) {
+interface FinalizeNavigateOptions {
+  onBlockedTask?: (taskKey: string) => void;
+}
+
+function currentTaskKey(task: unknown): string | null {
+  return typeof task === "object" &&
+    task !== null &&
+    "key" in task &&
+    typeof task.key === "string"
+    ? task.key
+    : null;
+}
+
+export function makeFinalizeNavigate(
+  target: string,
+  options?: FinalizeNavigateOptions
+) {
   return (params: FinalizeNavigateParams) => {
-    if (params.session?.currentTask) {
+    const taskKey = currentTaskKey(params.session?.currentTask);
+    if (taskKey && taskKey !== "choose-organization") {
+      options?.onBlockedTask?.(taskKey);
       return;
     }
     window.location.href = params.decorateUrl(target);
