@@ -26,7 +26,7 @@ export function TeamNameForm() {
   const router = useRouter();
 
   const mutation = useMutation(
-    trpc.pendingAllowed.organization.create.mutationOptions({
+    trpc.viewer.organization.create.mutationOptions({
       meta: { suppressErrorToast: true },
       onSuccess: async (data) => {
         if (setActive) {
@@ -34,7 +34,7 @@ export function TeamNameForm() {
         }
         void queryClient.invalidateQueries({
           queryKey:
-            trpc.pendingAllowed.organization.listUserOrganizations.queryOptions()
+            trpc.viewer.organization.listUserOrganizations.queryOptions()
               .queryKey,
         });
         router.push(`/${data.slug}`);

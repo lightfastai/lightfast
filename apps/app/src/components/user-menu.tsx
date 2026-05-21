@@ -23,7 +23,7 @@ export function UserMenu() {
   const { signOut } = useClerk();
 
   const { data: profile } = useSuspenseQuery({
-    ...trpc.pendingAllowed.account.get.queryOptions(),
+    ...trpc.viewer.account.get.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -42,7 +42,9 @@ export function UserMenu() {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-54">
         <div className="px-2 py-1.5">
-          <p className="text-muted-foreground text-sm">{email || "User"}</p>
+          <p className="text-muted-foreground text-sm truncate">
+            {email || "User"}
+          </p>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild className="cursor-pointer rounded-xl">

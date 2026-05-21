@@ -10,7 +10,7 @@ export function ProfileDataDisplay() {
   const trpc = useTRPC();
 
   const { data: profile } = useSuspenseQuery({
-    ...trpc.pendingAllowed.account.get.queryOptions(),
+    ...trpc.viewer.account.get.queryOptions(),
     staleTime: 10 * 60 * 1000,
   });
 

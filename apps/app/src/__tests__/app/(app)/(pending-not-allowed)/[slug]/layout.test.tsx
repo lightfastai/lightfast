@@ -7,7 +7,7 @@ interface Kids {
 
 const fetchQueryMock = vi.fn();
 const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
-  queryKey: [["pendingAllowed", "organization", "getBySlug"], input],
+  queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
 const notFoundMock = vi.fn(() => {
   throw new Error("NEXT_NOT_FOUND");
@@ -17,7 +17,7 @@ vi.mock("@repo/app-trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   HydrateClient: ({ children }: Kids) => <>{children}</>,
   trpc: {
-    pendingAllowed: {
+    viewer: {
       organization: {
         getBySlug: { queryOptions: getBySlugQueryOptionsMock },
       },

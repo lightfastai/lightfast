@@ -35,7 +35,7 @@ export function TeamSwitcher() {
   const [open, setOpen] = useState(false);
 
   const { data: organizations = [] } = useSuspenseQuery({
-    ...trpc.pendingAllowed.organization.listUserOrganizations.queryOptions(),
+    ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 

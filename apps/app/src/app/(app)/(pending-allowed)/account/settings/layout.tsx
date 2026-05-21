@@ -7,7 +7,7 @@ export default function AccountSettingsLayout({
 }) {
   return (
     <div className="flex w-full flex-col">
-      <div className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
+      <div className="mx-auto w-full max-w-7xl pl-3 pr-6 pb-16 lg:px-8">
         {/* Header */}
         <div className="pt-2 pb-8">
           <h1 className="pl-3 font-medium font-pp text-3xl text-foreground tracking-tight">

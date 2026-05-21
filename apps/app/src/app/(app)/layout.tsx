@@ -6,9 +6,9 @@ import { PageErrorBoundary } from "~/components/errors/page-error-boundary";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   prefetch(
-    trpc.pendingAllowed.organization.listUserOrganizations.queryOptions()
+    trpc.viewer.organization.listUserOrganizations.queryOptions()
   );
-  prefetch(trpc.pendingAllowed.account.get.queryOptions());
+  prefetch(trpc.viewer.account.get.queryOptions());
 
   return (
     <NuqsAdapter>
