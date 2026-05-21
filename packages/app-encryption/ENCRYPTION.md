@@ -203,12 +203,13 @@ await db.insert(secrets).values({
 import { decrypt } from "@repo/app-encryption";
 import { env } from "../env";
 
-const storedSecret = await db
+const [storedSecret] = await db
   .select()
   .from(secrets)
   .where(eq(secrets.userId, userId))
   .limit(1);
 
+if (!storedSecret) throw new Error("Secret not found");
 const plaintext = decrypt(storedSecret.value, env.ENCRYPTION_KEY);
 ```
 
