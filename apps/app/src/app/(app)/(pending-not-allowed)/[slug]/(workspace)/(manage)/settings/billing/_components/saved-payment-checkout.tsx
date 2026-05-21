@@ -1,3 +1,8 @@
+import {
+  cardLabel,
+  checkoutErrorMessage,
+  getDefaultPaymentMethod,
+} from "@repo/app-billing";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -7,13 +12,9 @@ import {
   usePaymentMethods,
 } from "@vendor/clerk/client/experimental";
 import { AlertCircle, Loader2 } from "lucide-react";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import { useMemo, useState } from "react";
-
-import {
-  cardLabel,
-  checkoutErrorMessage,
-  getDefaultPaymentMethod,
-} from "./billing-utils";
 
 export function SavedPaymentCheckout({
   onComplete,
@@ -21,6 +22,7 @@ export function SavedPaymentCheckout({
   onComplete: () => void;
 }) {
   const { checkout, errors, fetchStatus } = useCheckout();
+  const router = useRouter();
   const paymentMethods = usePaymentMethods({
     for: "organization",
     pageSize: 20,
@@ -48,8 +50,12 @@ export function SavedPaymentCheckout({
       return;
     }
     await checkout.finalize({
+      // Soft client-side navigation: lets the dialog's onComplete (close +
+      // invalidate the billing overview) run and the route re-render in place.
+      // A hard window.location.href reload here would unmount the dialog
+      // before onComplete and white-flash the whole page.
       navigate: ({ decorateUrl }) => {
-        window.location.href = decorateUrl(window.location.pathname);
+        router.replace(decorateUrl(window.location.pathname) as Route);
       },
     });
     onComplete();

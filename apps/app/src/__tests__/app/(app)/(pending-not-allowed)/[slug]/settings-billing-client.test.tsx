@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { formatDate } from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/billing/_components/billing-utils";
 
 const addPaymentMethodMock = vi.fn();
 const cancelMutateMock = vi.fn();
@@ -13,7 +13,7 @@ const getQueryDataMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
 const makeDefaultPaymentMethodMock = vi.fn();
 const overviewQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+  queryKey: ["org", "settings", "orgBilling", "overview"],
 }));
 const paymentSubmitMock = vi.fn();
 const removePaymentMethodMock = vi.fn();
@@ -32,13 +32,15 @@ let overviewData: ReturnType<typeof overview>;
 
 vi.mock("@repo/app-trpc/react", () => ({
   useTRPC: () => ({
-    pendingNotAllowed: {
-      orgBilling: {
-        overview: {
-          queryOptions: overviewQueryOptionsMock,
-        },
-        cancelSubscriptionItem: {
-          mutationOptions: (options: unknown) => options,
+    org: {
+      settings: {
+        orgBilling: {
+          overview: {
+            queryOptions: overviewQueryOptionsMock,
+          },
+          cancelSubscriptionItem: {
+            mutationOptions: (options: unknown) => options,
+          },
         },
       },
     },
@@ -133,6 +135,19 @@ vi.mock("@vendor/clerk/client/experimental", () => ({
   useSubscription: useSubscriptionMock,
 }));
 
+// The checkout components call useRouter() for the post-finalize soft
+// navigation; without a mock it throws "app router to be mounted" in jsdom.
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
+  }),
+}));
+
 const { BillingSettingsClient } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/billing/_components/billing-settings-client"
 );
@@ -212,13 +227,8 @@ function subscription(currentItem: typeof teamItem | null = teamItem) {
   };
 }
 
-function overview(
-  currentItem: typeof teamItem | null = teamItem,
-  isAdmin = true
-) {
+function overview(currentItem: typeof teamItem | null = teamItem) {
   return {
-    isAdmin,
-    orgId: "org_acme",
     plans: [starterPlan, teamPlan],
     subscription: subscription(currentItem),
   };
@@ -244,7 +254,18 @@ function expectDialogsToUseShadcnColors() {
   expect(customColorClasses).toEqual([]);
 }
 
+function getPlanChoiceCard(planName: string) {
+  const heading = screen.getByRole("heading", { name: planName });
+  const card = heading.parentElement?.parentElement;
+
+  expect(card).toBeInstanceOf(HTMLElement);
+
+  return card as HTMLElement;
+}
+
 beforeEach(() => {
+  window.history.replaceState(null, "", "/somerandomteam/settings/billing");
+
   addPaymentMethodMock.mockReset();
   cancelMutateMock.mockReset();
   cancelQueriesMock.mockReset();
@@ -377,7 +398,7 @@ describe("billing settings client", () => {
     expect(overviewQueryOptionsMock).toHaveBeenCalledOnce();
     expect(suspenseQueryOptionsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+        queryKey: ["org", "settings", "orgBilling", "overview"],
       })
     );
     expect(usePlansMock).not.toHaveBeenCalled();
@@ -440,8 +461,84 @@ describe("billing settings client", () => {
     expect(planSection?.querySelector("svg")).toBeNull();
   });
 
+  it("renders the plan chooser with pricing-page card treatment", () => {
+    renderBilling();
+
+    fireEvent.click(screen.getByRole("button", { name: "Adjust plan" }));
+
+    const dialog = screen.getByRole("dialog");
+    const leanShell = dialog.querySelector(".max-w-6xl");
+    const starterHeading = screen.getByRole("heading", { name: "Starter" });
+    const teamHeading = screen.getByRole("heading", { name: "Team" });
+    const starterCard = getPlanChoiceCard("Starter");
+    const teamCard = getPlanChoiceCard("Team");
+    const businessCard = getPlanChoiceCard("Business");
+
+    expect(dialog).toHaveClass("h-dvh", "p-0");
+    expect(dialog).not.toHaveClass("p-6", "md:p-10");
+    expect(leanShell).toBeInstanceOf(HTMLElement);
+    expect(leanShell).toHaveClass("max-w-6xl", "px-4", "py-10");
+    expect(dialog.querySelector(".max-w-7xl")).toBeNull();
+    expect(dialog.querySelector('[class*="min-h-"]')).toBeNull();
+    expect(starterCard).toHaveClass("h-full", "rounded-sm", "bg-card", "p-6");
+    expect(starterCard.className).not.toMatch(/min-h-\[/);
+    expect(teamCard).toHaveClass(
+      "h-full",
+      "rounded-sm",
+      "bg-card",
+      "border-foreground",
+      "shadow-lg"
+    );
+    expect(businessCard).toHaveClass("rounded-sm", "bg-card", "p-6");
+    expect(starterHeading).toHaveClass("font-bold", "text-base");
+    expect(teamHeading).toHaveClass("font-bold", "text-base");
+    expect(teamHeading.parentElement?.querySelector("svg")).toBeNull();
+    expect(screen.getByText("Up to 3 users")).toBeInTheDocument();
+    expect(screen.getByText("2,500 searches/month total")).toBeInTheDocument();
+    expect(
+      screen.getByText("Semantic search (AI-powered)")
+    ).toBeInTheDocument();
+    expect(screen.getByText("Basic Decision Surfacing")).toBeInTheDocument();
+    expect(screen.getByText("Minimum 3 users")).toBeInTheDocument();
+    expect(screen.getByText("Scale as needed:")).toBeInTheDocument();
+    expect(screen.getByText("+$10 per additional source")).toBeInTheDocument();
+    expect(screen.getByText("Unlimited searches")).toBeInTheDocument();
+    expect(screen.getByText("Advanced Decision Surfacing")).toBeInTheDocument();
+    expect(screen.getByText("Temporal state tracking")).toBeInTheDocument();
+  });
+
+  it("opens the plan chooser from the pricing hash", async () => {
+    window.history.replaceState(
+      null,
+      "",
+      "/somerandomteam/settings/billing#pricing"
+    );
+
+    renderBilling();
+
+    expect(
+      await screen.findByRole("heading", { name: "Choose your plan" })
+    ).toBeInTheDocument();
+  });
+
+  it("syncs the plan chooser open state to the pricing hash", () => {
+    renderBilling();
+
+    fireEvent.click(screen.getByRole("button", { name: "Adjust plan" }));
+
+    expect(window.location.hash).toBe("#pricing");
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+
+    expect(window.location.hash).toBe("");
+  });
+
   it("renders read-only billing status for non-admin members", () => {
-    overviewData = overview(teamItem, false);
+    useAuthMock.mockReturnValue({
+      has: () => false,
+      isLoaded: true,
+      orgId: "org_acme",
+    });
 
     renderBilling();
 
@@ -478,6 +575,16 @@ describe("billing settings client", () => {
     expect(
       screen.getByRole("heading", { name: "Confirm plan changes" })
     ).toBeInTheDocument();
+    const confirmDialog = screen
+      .getByRole("heading", { name: "Confirm plan changes" })
+      .closest('[role="dialog"]');
+    const summaryCard =
+      confirmDialog?.querySelector("h3")?.parentElement?.parentElement;
+
+    expect(confirmDialog).toHaveClass("sm:max-w-xl", "p-6");
+    expect(summaryCard).toBeInstanceOf(HTMLElement);
+    expect(summaryCard).toHaveClass("mt-4", "p-5");
+    expect(summaryCard).not.toHaveClass("mt-6", "p-6");
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
 
     expect(cancelMutateMock).toHaveBeenCalledWith({
@@ -490,10 +597,10 @@ describe("billing settings client", () => {
     );
     expect(screen.queryByRole("button", { name: "Cancel plan" })).toBeNull();
     expect(cancelQueriesMock).toHaveBeenCalledWith({
-      queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+      queryKey: ["org", "settings", "orgBilling", "overview"],
     });
     expect(invalidateQueriesMock).toHaveBeenCalledWith({
-      queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+      queryKey: ["org", "settings", "orgBilling", "overview"],
     });
   });
 
@@ -542,7 +649,7 @@ describe("billing settings client", () => {
     expectDialogsToUseShadcnColors();
 
     fireEvent.click(screen.getByRole("button", { name: "Cancel" }));
-    fireEvent.click(screen.getByRole("button", { name: "Close plan chooser" }));
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
     fireEvent.click(screen.getByRole("button", { name: "Update" }));
     expectDialogsToUseShadcnColors();
 

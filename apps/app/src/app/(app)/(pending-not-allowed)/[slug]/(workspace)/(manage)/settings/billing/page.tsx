@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 
 export default async function BillingPage() {
   await getQueryClient().fetchQuery(
-    trpc.pendingNotAllowed.orgBilling.overview.queryOptions()
+    trpc.org.settings.orgBilling.overview.queryOptions()
   );
 
   return (

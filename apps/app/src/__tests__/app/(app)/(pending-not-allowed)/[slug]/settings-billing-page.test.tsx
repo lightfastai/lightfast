@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const fetchQueryMock = vi.fn();
 const overviewQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+  queryKey: ["org", "settings", "orgBilling", "overview"],
 }));
 
 vi.mock("@repo/app-trpc/server", () => ({
@@ -13,10 +13,12 @@ vi.mock("@repo/app-trpc/server", () => ({
     <div data-testid="hydrated-billing">{children}</div>
   ),
   trpc: {
-    pendingNotAllowed: {
-      orgBilling: {
-        overview: {
-          queryOptions: overviewQueryOptionsMock,
+    org: {
+      settings: {
+        orgBilling: {
+          overview: {
+            queryOptions: overviewQueryOptionsMock,
+          },
         },
       },
     },
@@ -42,8 +44,6 @@ beforeEach(() => {
 describe("billing settings page", () => {
   it("awaits the billing overview query before rendering the hydrated client island", async () => {
     fetchQueryMock.mockResolvedValue({
-      isAdmin: true,
-      orgId: "org_acme",
       plans: [],
       subscription: null,
     });
@@ -53,7 +53,7 @@ describe("billing settings page", () => {
 
     expect(overviewQueryOptionsMock).toHaveBeenCalledOnce();
     expect(fetchQueryMock).toHaveBeenCalledWith({
-      queryKey: ["pendingNotAllowed", "orgBilling", "overview"],
+      queryKey: ["org", "settings", "orgBilling", "overview"],
     });
     expect(screen.getByTestId("hydrated-billing")).toHaveTextContent(
       "Billing client island"

@@ -1,3 +1,4 @@
+import { checkoutErrorMessage } from "@repo/app-billing";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
@@ -7,14 +8,15 @@ import {
   usePaymentElement,
 } from "@vendor/clerk/client/experimental";
 import { AlertCircle, Loader2 } from "lucide-react";
+import type { Route } from "next";
+import { useRouter } from "next/navigation";
 import type { FormEvent } from "react";
 import { useState } from "react";
-
-import { checkoutErrorMessage } from "./billing-utils";
 
 export function NewPaymentCheckout({ onComplete }: { onComplete: () => void }) {
   const { checkout, errors, fetchStatus } = useCheckout();
   const { isFormReady, submit } = usePaymentElement();
+  const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const isSubmitting = isProcessing || fetchStatus === "fetching";
@@ -39,8 +41,12 @@ export function NewPaymentCheckout({ onComplete }: { onComplete: () => void }) {
         return;
       }
       await checkout.finalize({
+        // Soft client-side navigation: lets the dialog's onComplete (close +
+        // invalidate the billing overview) run and the route re-render in
+        // place. A hard window.location.href reload here would unmount the
+        // dialog before onComplete and white-flash the whole page.
         navigate: ({ decorateUrl }) => {
-          window.location.href = decorateUrl(window.location.pathname);
+          router.replace(decorateUrl(window.location.pathname) as Route);
         },
       });
       onComplete();

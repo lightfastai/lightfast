@@ -1,3 +1,4 @@
+import { cardLabel, paymentErrorMessage } from "@repo/app-billing";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -11,7 +12,6 @@ import type { BillingPaymentMethodResource } from "@vendor/clerk/client/experime
 import { AlertCircle, Trash2 } from "lucide-react";
 import { useState } from "react";
 
-import { cardLabel, paymentErrorMessage } from "./billing-utils";
 import { NewPaymentMethodForm } from "./new-payment-method-form";
 
 export function PaymentMethodDialog({

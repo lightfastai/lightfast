@@ -1,3 +1,4 @@
+import { formatMoney, statementStatusLabel } from "@repo/app-billing";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +7,7 @@ import {
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
-
-import { formatDate, formatMoney, statementStatusLabel } from "./billing-utils";
+import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 
 export function StatementDetailsDialog({
   onOpenChange,

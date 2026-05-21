@@ -1,3 +1,9 @@
+import type { AppRouterOutputs } from "@api/app";
+import {
+  billingStripeAppearance,
+  formatMoney,
+  planAmountLabel,
+} from "@repo/app-billing";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -14,10 +20,11 @@ import {
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 
-import type { BillingPlan } from "./billing-utils";
-import { formatMoney, planAmountLabel } from "./billing-utils";
 import { NewPaymentCheckout } from "./new-payment-checkout";
 import { SavedPaymentCheckout } from "./saved-payment-checkout";
+
+type BillingPlan =
+  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["plans"][number];
 
 export function BillingCheckoutDialog({
   onComplete,
@@ -98,7 +105,16 @@ function CheckoutFlow({ onComplete }: { onComplete: () => void }) {
       {paymentMode === "saved" ? (
         <SavedPaymentCheckout onComplete={onComplete} />
       ) : (
-        <PaymentElementProvider checkout={checkout}>
+        <PaymentElementProvider
+          checkout={checkout}
+          // Without `for`, PaymentElementProvider defaults to `for: "user"` and
+          // initializes B2C user billing — which is disabled on this instance,
+          // so the PaymentElement never gets an externalClientSecret and hangs
+          // on its fallback. Org checkout must scope the payment element to the
+          // organization, matching the CheckoutProvider above.
+          for="organization"
+          stripeAppearance={billingStripeAppearance}
+        >
           <NewPaymentCheckout onComplete={onComplete} />
         </PaymentElementProvider>
       )}

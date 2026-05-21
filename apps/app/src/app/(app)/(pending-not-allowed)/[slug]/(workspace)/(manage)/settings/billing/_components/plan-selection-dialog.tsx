@@ -1,18 +1,18 @@
+import type { AppRouterOutputs } from "@api/app";
+import { businessContact, planAmountLabel } from "@repo/app-billing";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogDescription,
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
 import { cn } from "@repo/ui/lib/utils";
-import { Building2, Check, CreditCard, Sparkles, X } from "lucide-react";
-import type { ReactNode } from "react";
+import { Check } from "lucide-react";
 
-import type { BillingPlan } from "./billing-utils";
-import { businessContact, planAmountLabel } from "./billing-utils";
+type BillingPlan =
+  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["plans"][number];
 
 export function PlanSelectionDialog({
   currentTier,
@@ -42,15 +42,15 @@ export function PlanSelectionDialog({
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
-      <DialogContent
-        className="fixed inset-0 top-0 left-0 z-50 h-dvh max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none border-0 p-6 shadow-none sm:max-w-none md:p-10"
-        showCloseButton={false}
-      >
+      <DialogContent className="fixed inset-0 top-0 left-0 z-50 h-dvh max-w-none translate-x-0 translate-y-0 overflow-y-auto rounded-none border-0 p-0 shadow-none sm:max-w-none">
         <div
-          className={cn("mx-auto w-full max-w-7xl", isConfirming && "blur-sm")}
+          className={cn(
+            "mx-auto w-full max-w-6xl px-4 py-10",
+            isConfirming && "blur-sm"
+          )}
         >
-          <div className="relative flex min-h-[calc(100dvh-5rem)] flex-col">
-            <DialogHeader className="items-center gap-6 text-center">
+          <div className="relative">
+            <DialogHeader className="items-center text-center">
               <DialogTitle className="font-medium text-3xl">
                 Choose your plan
               </DialogTitle>
@@ -58,18 +58,7 @@ export function PlanSelectionDialog({
                 Compare organization plans and choose a billing plan.
               </DialogDescription>
             </DialogHeader>
-            <DialogClose asChild>
-              <Button
-                aria-label="Close plan chooser"
-                className="absolute top-0 right-0 size-11 rounded-xl"
-                size="icon"
-                variant="outline"
-              >
-                <X className="size-5" />
-              </Button>
-            </DialogClose>
-
-            <div className="mt-10 grid flex-1 gap-6 lg:grid-cols-3">
+            <div className="mt-10 grid w-full grid-cols-1 gap-8 md:grid-cols-4 lg:grid-cols-3">
               <PlanChoiceCard
                 amountLabel={starterAmount}
                 buttonLabel={
@@ -79,13 +68,17 @@ export function PlanSelectionDialog({
                       ? "Scheduled"
                       : "Switch to Starter"
                 }
-                description="A free organization workspace for getting started."
+                className="md:col-span-2 lg:col-span-1"
+                description="Try Lightfast with your team"
                 features={[
-                  "3 seats included",
-                  "Free organization workspace",
-                  "Basic access",
+                  "Up to 3 users",
+                  "2 sources included",
+                  "2,500 searches/month total",
+                  "14-day retention",
+                  "Basic keyword search",
+                  "REST API access",
+                  "Community support",
                 ]}
-                icon={<Sparkles className="size-5" />}
                 isDisabled={
                   currentTier === "starter" || isStarterSelectionDisabled
                 }
@@ -99,14 +92,25 @@ export function PlanSelectionDialog({
                     ? "Your current plan"
                     : "Switch to Team"
                 }
-                description="More usage and collaboration for active teams."
-                features={[
-                  "3 seats included",
-                  "Priority product limits",
-                  "Email support",
-                  "Team workspace billing",
+                addOns={[
+                  "+$10 per additional source",
+                  "+$5 per 1K extra searches",
+                  "+$20/mo for 180-day retention",
                 ]}
-                icon={<CreditCard className="size-5" />}
+                className="md:col-span-2 lg:col-span-1"
+                description="Everything you need to scale"
+                features={[
+                  "1,500 searches per user/month",
+                  "5 sources included",
+                  "60-day retention",
+                  "Semantic search (AI-powered)",
+                  "Basic Decision Surfacing",
+                  "Identity tracking (email-based)",
+                  "API access (25K calls/day)",
+                  "Email support",
+                  "Minimum 3 users",
+                ]}
+                highlighted
                 isDisabled={currentTier === "team"}
                 onSelect={onSelectTeam}
                 title="Team"
@@ -114,13 +118,22 @@ export function PlanSelectionDialog({
               <PlanChoiceCard
                 amountLabel="Custom"
                 buttonLabel={businessContact.label}
-                description="Sales-led onboarding for larger teams."
+                className="md:col-span-2 md:col-start-2 lg:col-span-1 lg:col-start-auto"
+                description="Unlimited everything. Let's talk."
                 features={[
-                  "SSO/SAML",
+                  "Unlimited searches",
+                  "Unlimited sources",
+                  "1-year retention (configurable)",
+                  "Advanced Decision Surfacing",
+                  "Auto-summaries (daily/weekly)",
+                  "Actor expertise profiles",
+                  "Full identity mapping (OAuth/SSO)",
+                  "Temporal state tracking",
                   "Priority API access",
+                  "SSO/SAML",
+                  "SLA guarantees",
                   "Dedicated support",
                 ]}
-                icon={<Building2 className="size-5" />}
                 isDisabled={false}
                 onSelect={onSelectBusiness}
                 title="Business"
@@ -134,47 +147,78 @@ export function PlanSelectionDialog({
 }
 
 function PlanChoiceCard({
+  addOns,
   amountLabel,
   buttonLabel,
+  className,
   description,
   features,
-  icon,
+  highlighted = false,
   isDisabled,
   onSelect,
   title,
 }: {
+  addOns?: string[];
   amountLabel: string;
   buttonLabel: string;
+  className?: string;
   description: string;
   features: string[];
-  icon: ReactNode;
+  highlighted?: boolean;
   isDisabled: boolean;
   onSelect: () => void;
   title: string;
 }) {
   return (
-    <div className="flex min-h-[520px] flex-col rounded-xl border bg-card px-7 py-8 text-card-foreground shadow-sm">
-      <div className="flex items-start justify-between gap-4">
-        <h3 className="font-semibold text-2xl">{title}</h3>
-        <span className="text-muted-foreground">{icon}</span>
+    <div
+      className={cn(
+        "flex h-full flex-col rounded-sm bg-card p-6 text-card-foreground",
+        highlighted && "border border-foreground shadow-lg",
+        className
+      )}
+    >
+      <div className="space-y-1">
+        <h3 className="font-bold text-base text-foreground">{title}</h3>
+        <p className="text-base text-muted-foreground">{description}</p>
       </div>
-      <p className="mt-14 font-semibold text-5xl">{amountLabel}</p>
-      <p className="mt-6 font-medium text-lg">{description}</p>
-      <Button
-        className="mt-8 w-full rounded-full"
-        disabled={isDisabled}
-        onClick={onSelect}
-        variant={isDisabled ? "secondary" : "default"}
-      >
-        {buttonLabel}
-      </Button>
-      <div className="mt-8 space-y-5 text-muted-foreground text-sm">
+      <div className="mt-6 flex-1 space-y-3">
         {features.map((feature) => (
-          <div className="flex items-center gap-3" key={feature}>
-            <Check className="size-4" />
-            <span>{feature}</span>
+          <div className="flex items-start gap-3" key={feature}>
+            <Check className="mt-0.5 h-4 w-4 flex-shrink-0 text-foreground" />
+            <span className="text-foreground text-sm">{feature}</span>
           </div>
         ))}
+        {addOns && (
+          <div className="mt-3 border-border/50 border-t pt-3">
+            <p className="mb-2 font-semibold text-foreground text-xs">
+              Scale as needed:
+            </p>
+            {addOns.map((addOn) => (
+              <div className="flex items-start gap-3" key={addOn}>
+                <span className="text-muted-foreground text-sm">{addOn}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="mt-12 space-y-4">
+        <div className="flex items-baseline gap-2">
+          <span className="font-bold text-4xl text-foreground">
+            {amountLabel}
+          </span>
+        </div>
+        <div className="flex justify-start">
+          <Button
+            className="rounded-full"
+            disabled={isDisabled}
+            onClick={onSelect}
+            variant={
+              isDisabled ? "secondary" : highlighted ? "default" : "outline"
+            }
+          >
+            {buttonLabel}
+          </Button>
+        </div>
       </div>
     </div>
   );

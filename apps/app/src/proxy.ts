@@ -10,8 +10,11 @@ import {
   createClerkCspDirectives,
   createNextjsCspDirectives,
   createSentryCspDirectives,
+  createStripeCspDirectives,
 } from "@vendor/security/csp";
 import { securityMiddleware } from "@vendor/security/middleware";
+import type { NextMiddleware as NemoMiddleware } from "@rescale/nemo";
+import { createNEMO } from "@rescale/nemo";
 import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
@@ -22,10 +25,19 @@ const securityHeaders = securityMiddleware({
   ...composeCspOptions(
     createNextjsCspDirectives(),
     createClerkCspDirectives(),
+    // Stripe domains — required by Clerk billing, which embeds Stripe Elements.
+    createStripeCspDirectives(),
     createAnalyticsCspDirectives(),
     createSentryCspDirectives()
   ),
   referrerPolicy: { policy: ["strict-origin-when-cross-origin"] },
+  // Stripe Elements (embedded by Clerk billing) cannot load on a
+  // cross-origin-isolated page: js.stripe.com / hooks.stripe.com send no
+  // Cross-Origin-Resource-Policy header, so COEP `require-corp` (Nosecone's
+  // default, inherited via composeCspOptions) blocks the Stripe iframe before
+  // CSP is even evaluated. The app uses no crossOriginIsolated-only APIs
+  // (SharedArrayBuffer, high-res timers), so COEP is safe to disable.
+  crossOriginEmbedderPolicy: false,
 });
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
@@ -64,22 +76,20 @@ const isApiRoute = createRouteMatcher([
 // Auth routes — authenticated users should not see sign-in/sign-up forms.
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 
-// Routes accessible during a pending session (signed in but has outstanding tasks
-// like choosing an org). Pending users on these routes pass through to complete
-// onboarding; on all other protected routes they're sent to the post-auth resolver.
-const isPendingAllowedRoute = createRouteMatcher([
+// Browser routes accessible during a pending session (signed in but has
+// outstanding tasks like choosing an org). API auth remains owned by route
+// handlers / tRPC procedure builders, not by proxy path allowlisting.
+const isPendingSessionAllowedRoute = createRouteMatcher([
   "/account/(.*)",
-  // tRPC mutations that must be callable before an org exists (e.g. creating the first org).
-  // The tRPC handler's pendingAllowedProcedure enforces its own auth; the middleware must not
-  // intercept these with auth.protect() before they reach the handler.
-  "/api/trpc/pendingAllowed.organization.create(.*)",
   // Token-handoff routes for CLI / desktop must be reachable during a pending session
   // so first-time users can finish issuing a bearer token before they've picked an org.
   "/cli/auth(.*)",
   "/desktop/auth(.*)",
 ]);
 
-const isBoundOrgProductRoute = createRouteMatcher(["/:slug"]);
+const isOrgProductRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
+const isOrgSettingsRoute = createRouteMatcher(["/:slug/settings(.*)"]);
+const isOrgBindTaskRoute = createRouteMatcher(["/:slug/tasks/bind(.*)"]);
 
 const RESERVED_ORG_ROUTE_SEGMENTS = new Set([
   "account",
@@ -165,16 +175,39 @@ async function persistLastActiveOrg(
   }
 }
 
-export default clerkMiddleware(
-  async (auth, req: NextRequest, event: NextFetchEvent) => {
-    const mfeResponse = await runMicrofrontendsMiddleware({
-      request: req,
-      flagValues: {},
-    });
-    if (mfeResponse) {
-      return mfeResponse;
+async function applySecurityHeaders(response: Response) {
+  const headersResponse = await securityHeaders();
+  try {
+    for (const [key, value] of headersResponse.headers.entries()) {
+      response.headers.set(key, value);
     }
+    return response;
+  } catch {
+    const headers = new Headers(response.headers);
+    for (const [key, value] of headersResponse.headers.entries()) {
+      headers.set(key, value);
+    }
+    return new NextResponse(response.body, {
+      headers,
+      status: response.status,
+      statusText: response.statusText,
+    });
+  }
+}
 
+const microfrontendsMiddleware: NemoMiddleware = async (req) => {
+  const mfeResponse = await runMicrofrontendsMiddleware({
+    request: req,
+    flagValues: {},
+  });
+  if (mfeResponse) {
+    return applySecurityHeaders(mfeResponse);
+  }
+  return undefined;
+};
+
+const clerkProxyMiddleware = clerkMiddleware(
+  async (auth, req: NextRequest, event: NextFetchEvent) => {
     // Auth routes: authenticated users go through post-auth routing; unauthenticated users pass through.
     if (isAuthRoute(req)) {
       const { orgSlug, sessionClaims, sessionStatus, userId } = await auth({
@@ -207,7 +240,7 @@ export default clerkMiddleware(
           sessionStatus,
         });
       }
-      if (sessionStatus === "pending" && !isPendingAllowedRoute(req)) {
+      if (sessionStatus === "pending" && !isPendingSessionAllowedRoute(req)) {
         return redirectToPostAuth(req, {
           orgSlug,
           sessionClaims,
@@ -215,8 +248,8 @@ export default clerkMiddleware(
         });
       }
       const orgRouteSlug = getOrgRouteSlug(req);
-      if (orgId && orgRouteSlug) {
-        const nextLastActiveOrg = { id: orgId, slug: orgRouteSlug };
+      if (orgId && orgSlug && orgRouteSlug && orgSlug === orgRouteSlug) {
+        const nextLastActiveOrg = { id: orgId, slug: orgSlug };
         if (
           !isSameLastActiveOrg(
             sessionClaims?.last_active_org,
@@ -227,19 +260,22 @@ export default clerkMiddleware(
         }
       }
       const bindingStatus = sessionClaims?.lf_binding_status;
-      if (orgId && isBoundOrgProductRoute(req) && bindingStatus !== "bound") {
+      if (
+        orgId &&
+        orgRouteSlug &&
+        isOrgProductRoute(req) &&
+        !isOrgSettingsRoute(req) &&
+        !isOrgBindTaskRoute(req) &&
+        bindingStatus !== "bound"
+      ) {
         return NextResponse.redirect(
-          new URL(`/${req.nextUrl.pathname.split("/")[1]}/tasks/bind`, req.url)
+          new URL(`/${orgRouteSlug}/tasks/bind`, req.url)
         );
       }
     }
 
-    const headersResponse = await securityHeaders();
     const response = NextResponse.next();
-    for (const [key, value] of headersResponse.headers.entries()) {
-      response.headers.set(key, value);
-    }
-    return response;
+    return applySecurityHeaders(response);
   },
   {
     signInUrl: "/sign-in",
@@ -249,6 +285,18 @@ export default clerkMiddleware(
     organizationSyncOptions: {
       organizationPatterns: ["/:slug", "/:slug/(.*)"],
     },
+  }
+);
+
+const nemoClerkProxyMiddleware: NemoMiddleware = (req, event) =>
+  clerkProxyMiddleware(req, event as unknown as NextFetchEvent);
+
+export default createNEMO(
+  {
+    "/:path*": nemoClerkProxyMiddleware,
+  },
+  {
+    before: [microfrontendsMiddleware],
   }
 );
 

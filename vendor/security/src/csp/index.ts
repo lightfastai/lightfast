@@ -37,6 +37,7 @@ export { createClerkCspDirectives } from "./clerk";
 export { composeCspDirectives, composeCspOptions } from "./compose";
 export { createNextjsCspDirectives } from "./nextjs";
 export { createSentryCspDirectives } from "./sentry";
+export { createStripeCspDirectives } from "./stripe";
 export type {
   CspDirective,
   CspDirectives,

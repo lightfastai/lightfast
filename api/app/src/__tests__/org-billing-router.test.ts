@@ -101,7 +101,7 @@ const teamSubscriptionItem = {
   isFreeTrial: false,
   lifetimePaid: teamPlan.fee,
   nextPayment: {
-    amount: 6000,
+    amount: teamPlan.fee,
     date: 1_700_086_400_000,
   },
   pastDueAt: null,
@@ -124,9 +124,43 @@ const starterSubscriptionItem = {
   planId: "cplan_free",
 };
 
-function caller(identity = activeIdentity) {
+class ClerkResourceFixture<T extends object> {
+  constructor(fields: T) {
+    Object.assign(this, fields);
+  }
+}
+
+function clerkResource<T extends object>(fields: T): T {
+  return new ClerkResourceFixture(fields) as T;
+}
+
+function adminAccess(overrides: { orgId?: string; userId?: string } = {}) {
+  return {
+    kind: "clerk-session" as const,
+    userId: overrides.userId ?? "user_current",
+    orgId: overrides.orgId ?? "org_acme",
+    has: ({ role }: { role?: string }) => role === "org:admin",
+  };
+}
+
+function nonAdminAccess() {
+  return {
+    kind: "clerk-session" as const,
+    userId: "user_current",
+    orgId: "org_acme",
+    has: () => false,
+  };
+}
+
+function caller(
+  identity = activeIdentity,
+  access?: ReturnType<typeof adminAccess> | ReturnType<typeof nonAdminAccess>
+) {
   return createCaller({
-    auth: { identity },
+    auth:
+      access === undefined
+        ? { identity, access: adminAccess() }
+        : { identity, access },
     db: {} as Database,
     headers: new Headers(),
   });
@@ -172,29 +206,29 @@ describe("orgBillingRouter public surface", () => {
 });
 
 describe("orgBilling.overview", () => {
-  it("returns normalized organization billing data for SSR", async () => {
-    await expect(caller().orgBilling.overview()).resolves.toMatchObject({
-      isAdmin: true,
-      orgId: "org_acme",
-      plans: [
-        { id: "cplan_free", name: "Starter", slug: "free_org" },
-        { id: "cplan_team", name: "Team", slug: "team" },
-      ],
+  it("returns Clerk-native organization billing data for SSR", async () => {
+    const result = await caller().orgBilling.overview();
+
+    expect(result).toEqual({
+      plans: [starterPlan, teamPlan],
       subscription: {
+        activeAt: 1_700_000_000_000,
+        createdAt: 1_700_000_000_000,
+        eligibleForFreeTrial: false,
         id: "sub_org_acme",
         nextPayment: {
           amount: teamPlan.fee,
           date: 1_700_086_400_000,
         },
-        subscriptionItems: [
-          {
-            canceledAt: null,
-            id: "sub_item_team",
-            plan: { id: "cplan_team", slug: "team" },
-          },
-        ],
+        pastDueAt: null,
+        payerId: "org_acme",
+        status: "active",
+        subscriptionItems: [teamSubscriptionItem],
+        updatedAt: 1_700_000_001_000,
       },
     });
+    expect(result).not.toHaveProperty("isAdmin");
+    expect(result).not.toHaveProperty("orgId");
 
     expect(getPlanListMock).toHaveBeenCalledWith({
       limit: 100,
@@ -205,30 +239,67 @@ describe("orgBilling.overview", () => {
     );
   });
 
-  it("marks non-admin members as read-only", async () => {
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role !== "org:admin",
-      orgId: "org_acme",
-      userId: "user_current",
-    });
+  it("does not derive client admin state in the overview response", async () => {
+    const result = await caller(
+      activeIdentity,
+      nonAdminAccess()
+    ).orgBilling.overview();
 
-    await expect(caller().orgBilling.overview()).resolves.toMatchObject({
-      isAdmin: false,
-      orgId: "org_acme",
+    expect(result).not.toHaveProperty("isAdmin");
+    expect(result).not.toHaveProperty("orgId");
+  });
+
+  it("strips Clerk resource prototypes before SSR hydration", async () => {
+    const classBackedTeamPlan = clerkResource(teamPlan);
+    const classBackedSubscriptionItem = clerkResource({
+      ...teamSubscriptionItem,
+      plan: classBackedTeamPlan,
+    });
+    getPlanListMock.mockResolvedValue({
+      data: [clerkResource(starterPlan), classBackedTeamPlan],
+    });
+    getOrganizationBillingSubscriptionMock.mockResolvedValue(
+      clerkResource({
+        activeAt: 1_700_000_000_000,
+        createdAt: 1_700_000_000_000,
+        eligibleForFreeTrial: false,
+        id: "sub_org_acme",
+        nextPayment: {
+          amount: teamPlan.fee,
+          date: 1_700_086_400_000,
+        },
+        pastDueAt: null,
+        payerId: "org_acme",
+        status: "active",
+        subscriptionItems: [classBackedSubscriptionItem],
+        updatedAt: 1_700_000_001_000,
+      })
+    );
+
+    const result = await caller().orgBilling.overview();
+
+    expect(Object.getPrototypeOf(result.plans[0])).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(result.subscription)).toBe(Object.prototype);
+    expect(
+      Object.getPrototypeOf(result.subscription.subscriptionItems[0])
+    ).toBe(Object.prototype);
+    expect(
+      Object.getPrototypeOf(result.subscription.subscriptionItems[0]?.plan)
+    ).toBe(Object.prototype);
+    expect(result.subscription.subscriptionItems[0]?.plan).toMatchObject({
+      id: "cplan_team",
+      slug: "team",
     });
   });
 });
 
 describe("orgBilling.cancelSubscriptionItem", () => {
   it("rejects direct cancellation attempts from non-admin members", async () => {
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role !== "org:admin",
-      orgId: "org_acme",
-      userId: "user_current",
-    });
-
     await expect(
-      caller().orgBilling.cancelSubscriptionItem({
+      caller(
+        activeIdentity,
+        nonAdminAccess()
+      ).orgBilling.cancelSubscriptionItem({
         subscriptionItemId: "sub_item_team",
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -236,14 +307,11 @@ describe("orgBilling.cancelSubscriptionItem", () => {
   });
 
   it("rejects cancellation when Clerk active org differs from tRPC context", async () => {
-    authMock.mockResolvedValue({
-      has: ({ role }: { role?: string }) => role === "org:admin",
-      orgId: "org_other",
-      userId: "user_current",
-    });
-
     await expect(
-      caller().orgBilling.cancelSubscriptionItem({
+      caller(
+        activeIdentity,
+        adminAccess({ orgId: "org_other" })
+      ).orgBilling.cancelSubscriptionItem({
         subscriptionItemId: "sub_item_team",
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
@@ -282,22 +350,35 @@ describe("orgBilling.cancelSubscriptionItem", () => {
   });
 
   it("schedules team cancellation at the end of the current period", async () => {
-    cancelSubscriptionItemMock.mockResolvedValue({
-      ...teamSubscriptionItem,
-      canceledAt: 1_700_000_002_000,
+    cancelSubscriptionItemMock.mockResolvedValue(
+      clerkResource({
+        ...teamSubscriptionItem,
+        canceledAt: 1_700_000_002_000,
+      })
+    );
+
+    const result = await caller().orgBilling.cancelSubscriptionItem({
+      subscriptionItemId: "sub_item_team",
     });
 
-    await expect(
-      caller().orgBilling.cancelSubscriptionItem({
-        subscriptionItemId: "sub_item_team",
-      })
-    ).resolves.toMatchObject({
+    expect(result).toMatchObject({
       canceledAt: 1_700_000_002_000,
       id: "sub_item_team",
       plan: { id: "cplan_team", slug: "team" },
     });
+    expect(Object.getPrototypeOf(result)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(result.plan)).toBe(Object.prototype);
     expect(cancelSubscriptionItemMock).toHaveBeenCalledWith("sub_item_team", {
       endNow: false,
     });
+  });
+
+  it("validates cancellation input inline", async () => {
+    await expect(
+      caller().orgBilling.cancelSubscriptionItem({
+        subscriptionItemId: "",
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(cancelSubscriptionItemMock).not.toHaveBeenCalled();
   });
 });

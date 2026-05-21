@@ -1,3 +1,10 @@
+import type { AppRouterOutputs } from "@api/app";
+import {
+  cardLabel,
+  formatMoney,
+  statementStatusLabel,
+  statusLabel,
+} from "@repo/app-billing";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -9,19 +16,15 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import type {
+  BillingMoneyAmount,
   BillingPaymentMethodResource,
   BillingStatementResource,
 } from "@vendor/clerk/client/experimental";
+import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import { CreditCard } from "lucide-react";
 
-import type { BillingMoneyAmount, BillingSubscription } from "./billing-utils";
-import {
-  cardLabel,
-  formatDate,
-  formatMoney,
-  statementStatusLabel,
-  statusLabel,
-} from "./billing-utils";
+type BillingSubscription =
+  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["subscription"];
 
 export function LoadingLine({ label }: { label: string }) {
   return (
@@ -43,7 +46,7 @@ export function PlanSection({
   status,
 }: {
   canceledAt?: Date | number | null;
-  currentAmount: BillingMoneyAmount | null;
+  currentAmount?: BillingMoneyAmount | null;
   currentPlanName: string;
   currentTier: "starter" | "team" | null;
   isAdmin: boolean;

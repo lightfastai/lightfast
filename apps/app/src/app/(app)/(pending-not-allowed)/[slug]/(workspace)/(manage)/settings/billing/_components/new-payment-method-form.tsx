@@ -1,3 +1,7 @@
+import {
+  billingStripeAppearance,
+  paymentErrorMessage,
+} from "@repo/app-billing";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import { DialogFooter } from "@repo/ui/components/ui/dialog";
@@ -10,8 +14,6 @@ import {
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 
-import { paymentErrorMessage } from "./billing-utils";
-
 export function NewPaymentMethodForm({
   onCancel,
   onSaved,
@@ -20,7 +22,10 @@ export function NewPaymentMethodForm({
   onSaved: () => void;
 }) {
   return (
-    <PaymentElementProvider for="organization">
+    <PaymentElementProvider
+      for="organization"
+      stripeAppearance={billingStripeAppearance}
+    >
       <NewPaymentMethodFields onCancel={onCancel} onSaved={onSaved} />
     </PaymentElementProvider>
   );

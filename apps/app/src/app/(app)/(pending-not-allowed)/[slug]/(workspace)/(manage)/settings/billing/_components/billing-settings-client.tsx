@@ -1,17 +1,26 @@
 "use client";
 
+import type { AppRouterOutputs } from "@api/app";
+import {
+  getCurrentSubscriptionItem,
+  getDefaultPaymentMethod,
+  getStarterPlan,
+  getTeamPlan,
+  tierForPlan,
+} from "@repo/app-billing";
 import { useTRPC } from "@repo/app-trpc/react";
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
+import { useAuth } from "@vendor/clerk/client";
 import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
 import {
   usePaymentMethods,
   useStatements,
 } from "@vendor/clerk/client/experimental";
-import { useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
 import {
@@ -20,16 +29,6 @@ import {
   PaymentSection,
   PlanSection,
 } from "./billing-sections";
-import {
-  type BillingOverview,
-  type BillingPlan,
-  type BillingSubscriptionItem,
-  getCurrentSubscriptionItem,
-  getDefaultPaymentMethod,
-  getStarterPlan,
-  getTeamPlan,
-  tierForPlan,
-} from "./billing-utils";
 import { PaymentMethodDialog } from "./payment-method-dialog";
 import {
   ConfirmBusinessDialog,
@@ -39,11 +38,28 @@ import {
 import { PlanSelectionDialog } from "./plan-selection-dialog";
 import { StatementDetailsDialog } from "./statement-details-dialog";
 
+type BillingOverview =
+  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"];
+type BillingPlan = BillingOverview["plans"][number];
+type BillingSubscriptionItem =
+  BillingOverview["subscription"]["subscriptionItems"][number];
+
+const PRICING_HASH = "#pricing";
+
+function pricingHashUrl() {
+  return `${window.location.pathname}${window.location.search}${PRICING_HASH}`;
+}
+
+function billingUrlWithoutHash() {
+  return `${window.location.pathname}${window.location.search}`;
+}
+
 export function BillingSettingsClient() {
   const trpc = useTRPC();
+  const auth = useAuth();
   const queryClient = useQueryClient();
   const overviewQueryOptions =
-    trpc.pendingNotAllowed.orgBilling.overview.queryOptions();
+    trpc.org.settings.orgBilling.overview.queryOptions();
   const { data: overview } = useSuspenseQuery({
     ...overviewQueryOptions,
     staleTime: 5 * 60 * 1000,
@@ -58,7 +74,8 @@ export function BillingSettingsClient() {
     pageSize: 10,
   });
 
-  const { isAdmin, orgId, plans, subscription } = overview;
+  const { plans, subscription } = overview;
+  const isAdmin = auth.isLoaded && !!auth.has?.({ role: "org:admin" });
   const paymentMethods = paymentMethodsQuery.data ?? [];
   const statements = statementsQuery.data ?? [];
   const starterPlan = getStarterPlan(plans);
@@ -92,8 +109,38 @@ export function BillingSettingsClient() {
   const [selectedStatement, setSelectedStatement] =
     useState<BillingStatementResource | null>(null);
 
+  const setPlanDialogOpen = useCallback((open: boolean) => {
+    setIsPlanDialogOpen(open);
+
+    if (open) {
+      if (window.location.hash !== PRICING_HASH) {
+        window.history.pushState(null, "", pricingHashUrl());
+      }
+      return;
+    }
+
+    if (window.location.hash === PRICING_HASH) {
+      window.history.replaceState(null, "", billingUrlWithoutHash());
+    }
+  }, []);
+
+  useEffect(() => {
+    function syncPlanDialogToHash() {
+      setIsPlanDialogOpen(window.location.hash === PRICING_HASH);
+    }
+
+    syncPlanDialogToHash();
+    window.addEventListener("hashchange", syncPlanDialogToHash);
+    window.addEventListener("popstate", syncPlanDialogToHash);
+
+    return () => {
+      window.removeEventListener("hashchange", syncPlanDialogToHash);
+      window.removeEventListener("popstate", syncPlanDialogToHash);
+    };
+  }, []);
+
   const cancelMutation = useMutation(
-    trpc.pendingNotAllowed.orgBilling.cancelSubscriptionItem.mutationOptions({
+    trpc.org.settings.orgBilling.cancelSubscriptionItem.mutationOptions({
       meta: { errorTitle: "Failed to schedule cancellation" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({
@@ -164,13 +211,13 @@ export function BillingSettingsClient() {
       subscriptionItemId: item.id,
     });
     setDowngradeItem(null);
-    setIsPlanDialogOpen(false);
+    setPlanDialogOpen(false);
   }
 
   function confirmUpgrade(plan: BillingPlan) {
     setCheckoutPlan(plan);
     setUpgradePlan(null);
-    setIsPlanDialogOpen(false);
+    setPlanDialogOpen(false);
   }
 
   return (
@@ -193,7 +240,7 @@ export function BillingSettingsClient() {
           currentTier={currentTier}
           isAdmin={isAdmin}
           nextPayment={subscription?.nextPayment ?? null}
-          onAdjustPlan={() => setIsPlanDialogOpen(true)}
+          onAdjustPlan={() => setPlanDialogOpen(true)}
           periodEnd={currentItem?.periodEnd ?? null}
           status={subscription?.status ?? "active"}
         />
@@ -239,7 +286,7 @@ export function BillingSettingsClient() {
         currentTier={currentTier}
         isConfirming={!!downgradeItem || !!upgradePlan || isBusinessConfirmOpen}
         isStarterSelectionDisabled={!!canceledTeamItem}
-        onOpenChange={setIsPlanDialogOpen}
+        onOpenChange={setPlanDialogOpen}
         onSelectBusiness={() => setIsBusinessConfirmOpen(true)}
         onSelectStarter={() => {
           if (cancelableTeamItem) {
@@ -289,7 +336,7 @@ export function BillingSettingsClient() {
         onOpenChange={setIsPaymentDialogOpen}
         onUpdated={() => void paymentMethodsQuery.revalidate()}
         open={isPaymentDialogOpen}
-        orgId={orgId ?? undefined}
+        orgId={auth.orgId ?? undefined}
       />
 
       {checkoutPlan && (
