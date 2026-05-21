@@ -7,10 +7,12 @@ const replaceMock = vi.fn();
 
 vi.mock("@repo/app-trpc/react", () => ({
   useTRPC: () => ({
-    pendingNotAllowed: {
-      task: {
-        bind: {
-          mutationOptions: (options: unknown) => options,
+    org: {
+      setup: {
+        task: {
+          bind: {
+            mutationOptions: (options: unknown) => options,
+          },
         },
       },
     },

@@ -31,7 +31,7 @@ export function BindGithubCard({ orgSlug }: BindGithubCardProps) {
   const [isFinishing, setIsFinishing] = useState(false);
 
   const bindMutation = useMutation(
-    trpc.pendingNotAllowed.task.bind.mutationOptions({
+    trpc.org.setup.task.bind.mutationOptions({
       meta: { errorTitle: "Failed to connect GitHub" },
     })
   );

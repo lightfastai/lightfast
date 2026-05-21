@@ -8,12 +8,12 @@ vi.mock("next/navigation", () => ({ redirect: redirectMock }));
 
 const fetchQueryMock = vi.fn();
 const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
-  queryKey: [["pendingAllowed", "organization", "getBySlug"], input],
+  queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
 vi.mock("@repo/app-trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   trpc: {
-    pendingAllowed: {
+    viewer: {
       organization: {
         getBySlug: { queryOptions: getBySlugQueryOptionsMock },
       },
