@@ -19,6 +19,7 @@ describe("SettingsSidebar", () => {
     const nav = link.closest("nav");
 
     expect(link).toHaveClass("px-3");
-    expect(nav).not.toHaveClass("-ml-3", "w-[calc(100%+0.75rem)]");
+    expect(nav).not.toHaveClass("-ml-3");
+    expect(nav).not.toHaveClass("w-[calc(100%+0.75rem)]");
   });
 });

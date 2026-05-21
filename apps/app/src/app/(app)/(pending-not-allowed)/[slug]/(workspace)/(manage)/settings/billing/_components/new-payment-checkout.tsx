@@ -1,12 +1,8 @@
 import { checkoutErrorMessage } from "@repo/app-billing";
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
-import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
-import {
-  PaymentElement,
-  useCheckout,
-  usePaymentElement,
-} from "@vendor/clerk/client/experimental";
+import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk";
+import { PaymentElement, useCheckout, usePaymentElement } from "@vendor/clerk";
 import { AlertCircle, Loader2 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
@@ -94,8 +90,8 @@ function CheckoutErrors({
     <Alert variant="destructive">
       <AlertCircle className="size-4" />
       <AlertDescription>
-        {messages.map((message) => (
-          <p key={message}>{message}</p>
+        {messages.map((message, index) => (
+          <p key={index}>{message}</p>
         ))}
       </AlertDescription>
     </Alert>

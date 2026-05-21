@@ -4,7 +4,7 @@ import { useTRPC } from "@repo/app-trpc/react";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import { useSession } from "@vendor/clerk/client";
+import { useSession } from "@vendor/clerk";
 import { ArrowRight, Loader2 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";

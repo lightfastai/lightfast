@@ -90,4 +90,19 @@ describe("UserLayoutShell", () => {
     expect(screen.queryByTestId("sidebar-trigger")).not.toBeInTheDocument();
     expect(screen.getByTestId("team-switcher")).toBeInTheDocument();
   });
+
+  it("keeps account routes with a settings prefix segment on the regular topbar shell", () => {
+    pathname = "/account/settings-archive";
+
+    render(
+      <UserLayoutShell>
+        <div>Archived settings</div>
+      </UserLayoutShell>
+    );
+
+    expect(screen.queryByTestId("sidebar-provider")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("app-sidebar")).not.toBeInTheDocument();
+    expect(screen.queryByTestId("sidebar-trigger")).not.toBeInTheDocument();
+    expect(screen.getByTestId("team-switcher")).toBeInTheDocument();
+  });
 });

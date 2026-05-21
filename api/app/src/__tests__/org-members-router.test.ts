@@ -14,11 +14,8 @@ const updateOrganizationMembershipMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: vi.fn() }));
 
-vi.mock("@vendor/clerk/env", () => ({
-  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
-}));
-
 vi.mock("@vendor/clerk/server", () => ({
+  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
   auth: authMock,
   clerkClient: () =>
     Promise.resolve({
@@ -61,6 +58,13 @@ const activeIdentity: AuthIdentity = {
   orgId: "org_acme",
   orgGate: { bindingStatus: "bound" },
 };
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_current",
+};
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
+};
 
 function caller(identity = activeIdentity) {
   return callerWithAccess(identity, adminAccess());
@@ -93,6 +97,13 @@ function callerWithAccess(
     db: {} as Database,
     headers: new Headers(),
   });
+}
+
+function expectMutationMocksNotCalled() {
+  expect(createOrganizationInvitationMock).not.toHaveBeenCalled();
+  expect(updateOrganizationMembershipMock).not.toHaveBeenCalled();
+  expect(deleteOrganizationMembershipMock).not.toHaveBeenCalled();
+  expect(revokeOrganizationInvitationMock).not.toHaveBeenCalled();
 }
 
 beforeEach(() => {
@@ -200,6 +211,52 @@ describe("orgMembers.list", () => {
 });
 
 describe("orgMembers mutations", () => {
+  it("rejects privileged mutations when caller has no active organization", async () => {
+    const noOrgCaller = caller(pendingIdentity);
+
+    await expect(
+      noOrgCaller.orgMembers.invite({ emailAddress: "new@example.com" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      noOrgCaller.orgMembers.updateRole({
+        role: "org:admin",
+        userId: "user_target",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      noOrgCaller.orgMembers.remove({ userId: "user_target" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      noOrgCaller.orgMembers.revokeInvitation({ invitationId: "inv_1" })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expectMutationMocksNotCalled();
+  });
+
+  it("rejects privileged mutations when caller is unauthenticated", async () => {
+    const unauthenticatedCaller = caller(unauthenticatedIdentity);
+
+    await expect(
+      unauthenticatedCaller.orgMembers.invite({
+        emailAddress: "new@example.com",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(
+      unauthenticatedCaller.orgMembers.updateRole({
+        role: "org:admin",
+        userId: "user_target",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(
+      unauthenticatedCaller.orgMembers.remove({ userId: "user_target" })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    await expect(
+      unauthenticatedCaller.orgMembers.revokeInvitation({
+        invitationId: "inv_1",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expectMutationMocksNotCalled();
+  });
+
   it("rejects direct mutation attempts from non-admin members", async () => {
     await expect(
       callerWithAccess(activeIdentity, nonAdminAccess()).orgMembers.invite({

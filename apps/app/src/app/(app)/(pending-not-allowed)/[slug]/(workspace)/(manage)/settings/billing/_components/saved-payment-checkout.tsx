@@ -6,15 +6,12 @@ import {
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
-import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk/client/experimental";
-import {
-  useCheckout,
-  usePaymentMethods,
-} from "@vendor/clerk/client/experimental";
+import type { CheckoutErrors as ClerkCheckoutErrors } from "@vendor/clerk";
+import { useCheckout, usePaymentMethods } from "@vendor/clerk";
 import { AlertCircle, Loader2 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 export function SavedPaymentCheckout({
   onComplete,
@@ -34,31 +31,44 @@ export function SavedPaymentCheckout({
   );
   const [selectedMethodId, setSelectedMethodId] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const isSubmittingRef = useRef(false);
+  const paymentMethodId = selectedMethodId ?? defaultMethod?.id;
   const selectedMethod = methods.find(
-    (method) => method.id === (selectedMethodId ?? defaultMethod?.id)
+    (method) => method.id === paymentMethodId
   );
 
   async function submitSelectedMethod() {
-    const paymentMethodId = selectedMethodId ?? defaultMethod?.id;
-    if (!paymentMethodId || fetchStatus === "fetching") {
+    if (
+      !paymentMethodId ||
+      fetchStatus === "fetching" ||
+      isSubmittingRef.current
+    ) {
       return;
     }
+    isSubmittingRef.current = true;
+    setIsSubmitting(true);
     setErrorMessage(null);
-    const result = await checkout.confirm({ paymentMethodId });
-    if (result.error) {
-      setErrorMessage(checkoutErrorMessage(result.error));
-      return;
+    try {
+      const result = await checkout.confirm({ paymentMethodId });
+      if (result.error) {
+        setErrorMessage(checkoutErrorMessage(result.error));
+        return;
+      }
+      await checkout.finalize({
+        // Soft client-side navigation: lets the dialog's onComplete (close +
+        // invalidate the billing overview) run and the route re-render in place.
+        // A hard window.location.href reload here would unmount the dialog
+        // before onComplete and white-flash the whole page.
+        navigate: ({ decorateUrl }) => {
+          router.replace(decorateUrl(window.location.pathname) as Route);
+        },
+      });
+      onComplete();
+    } finally {
+      isSubmittingRef.current = false;
+      setIsSubmitting(false);
     }
-    await checkout.finalize({
-      // Soft client-side navigation: lets the dialog's onComplete (close +
-      // invalidate the billing overview) run and the route re-render in place.
-      // A hard window.location.href reload here would unmount the dialog
-      // before onComplete and white-flash the whole page.
-      navigate: ({ decorateUrl }) => {
-        router.replace(decorateUrl(window.location.pathname) as Route);
-      },
-    });
-    onComplete();
   }
 
   return (
@@ -90,11 +100,13 @@ export function SavedPaymentCheckout({
       )}
       <CheckoutErrors errorMessage={errorMessage} errors={errors.global} />
       <Button
-        disabled={!defaultMethod || fetchStatus === "fetching"}
+        disabled={
+          !paymentMethodId || fetchStatus === "fetching" || isSubmitting
+        }
         onClick={() => void submitSelectedMethod()}
         size="sm"
       >
-        {fetchStatus === "fetching" && (
+        {(fetchStatus === "fetching" || isSubmitting) && (
           <Loader2 className="size-4 animate-spin" />
         )}
         Complete Purchase
@@ -124,8 +136,8 @@ function CheckoutErrors({
     <Alert variant="destructive">
       <AlertCircle className="size-4" />
       <AlertDescription>
-        {messages.map((message) => (
-          <p key={message}>{message}</p>
+        {messages.map((message, index) => (
+          <p key={index}>{message}</p>
         ))}
       </AlertDescription>
     </Alert>

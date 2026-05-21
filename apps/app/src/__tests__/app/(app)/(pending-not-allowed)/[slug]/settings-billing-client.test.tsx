@@ -1,5 +1,4 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -78,20 +77,8 @@ vi.mock("@tanstack/react-query", () => ({
   },
 }));
 
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
   CheckoutButton: () => <div data-testid="checkout-button" />,
-  PlanDetailsButton: () => <div data-testid="plan-details-button" />,
-  PricingTable: () => <div data-testid="pricing-table" />,
-  Show: ({ children }: { children: ReactNode }) => <>{children}</>,
-  SubscriptionDetailsButton: () => (
-    <div data-testid="subscription-details-button" />
-  ),
-  useAuth: useAuthMock,
-  useOrganization: useOrganizationMock,
-}));
-
-vi.mock("@vendor/clerk/client/experimental", () => ({
-  CheckoutButton: () => <div data-testid="experimental-checkout-button" />,
   CheckoutProvider: ({
     children,
     for: payerType,
@@ -109,6 +96,7 @@ vi.mock("@vendor/clerk/client/experimental", () => ({
       {children}
     </div>
   ),
+  PlanDetailsButton: () => <div data-testid="plan-details-button" />,
   PaymentElement: ({ fallback }: { fallback?: ReactNode }) => (
     <div data-testid="payment-element">{fallback}</div>
   ),
@@ -123,11 +111,14 @@ vi.mock("@vendor/clerk/client/experimental", () => ({
       {children}
     </div>
   ),
-  PlanDetailsButton: () => <div data-testid="experimental-plan-details" />,
+  PricingTable: () => <div data-testid="pricing-table" />,
+  Show: ({ children }: { children: ReactNode }) => <>{children}</>,
   SubscriptionDetailsButton: () => (
-    <div data-testid="experimental-subscription-details" />
+    <div data-testid="subscription-details-button" />
   ),
+  useAuth: useAuthMock,
   useCheckout: useCheckoutMock,
+  useOrganization: useOrganizationMock,
   usePaymentElement: usePaymentElementMock,
   usePaymentMethods: usePaymentMethodsMock,
   usePlans: usePlansMock,
@@ -160,9 +151,13 @@ const teamAmount = {
 };
 
 // UTC-anchored calendar date for the mock statement. The test derives the
-// expected display string via formatDate so it stays independent of the host
+// expected display string independently so it stays independent of the host
 // machine's locale and timezone.
 const STATEMENT_TIMESTAMP = new Date("2026-05-01T00:00:00Z");
+const UTC_DATE_FORMATTER = new Intl.DateTimeFormat("en-US", {
+  dateStyle: "long",
+  timeZone: "UTC",
+});
 
 const starterPlan = {
   annualFee: null,
@@ -701,6 +696,116 @@ describe("billing settings client", () => {
     expect(revalidatePaymentMethodsMock).toHaveBeenCalled();
   });
 
+  it("does not report a saved card when organization context is unavailable", async () => {
+    useOrganizationMock.mockReturnValue({ organization: undefined });
+
+    renderBilling();
+
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add new card" }));
+    fireEvent.click(screen.getByRole("button", { name: "Save card" }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText("Organization is unavailable. Please try again.")
+      ).toBeInTheDocument()
+    );
+    expect(paymentSubmitMock).not.toHaveBeenCalled();
+    expect(addPaymentMethodMock).not.toHaveBeenCalled();
+    expect(revalidatePaymentMethodsMock).not.toHaveBeenCalled();
+  });
+
+  it("resets payment method dialog mode when the dialog closes", () => {
+    renderBilling();
+
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add new card" }));
+
+    expect(screen.getByTestId("payment-element-provider")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    fireEvent.click(screen.getByRole("button", { name: "Update" }));
+
+    expect(
+      screen.queryByTestId("payment-element-provider")
+    ).not.toBeInTheDocument();
+    expect(screen.getAllByText(/Visa.*4242/i)[0]).toBeInTheDocument();
+    expect(screen.getByText(/Mastercard.*1111/i)).toBeInTheDocument();
+  });
+
+  it("allows checkout with a selected non-default saved payment method", async () => {
+    usePaymentMethodsMock.mockReturnValue({
+      data: [
+        {
+          cardType: "mastercard",
+          expiryMonth: 1,
+          expiryYear: 2031,
+          id: "pm_2",
+          isDefault: false,
+          isRemovable: true,
+          last4: "1111",
+          makeDefault: makeDefaultPaymentMethodMock,
+          remove: removePaymentMethodMock,
+          status: "active",
+        },
+      ],
+      isLoading: false,
+      revalidate: revalidatePaymentMethodsMock,
+    });
+    overviewData = overview(null);
+
+    renderBilling();
+    fireEvent.click(screen.getByRole("button", { name: "Adjust plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Team" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+    const completePurchase = screen.getByRole("button", {
+      name: "Complete Purchase",
+    });
+    const mastercardOption = screen.getAllByText(/Mastercard.*1111/i)[0];
+    if (!mastercardOption) {
+      throw new Error("expected a saved Mastercard option");
+    }
+
+    fireEvent.click(mastercardOption);
+    expect(completePurchase).not.toBeDisabled();
+
+    fireEvent.click(completePurchase);
+
+    await waitFor(() =>
+      expect(checkoutConfirmMock).toHaveBeenCalledWith({
+        paymentMethodId: "pm_2",
+      })
+    );
+  });
+
+  it("does not submit saved-card checkout more than once while confirmation is in flight", async () => {
+    let resolveConfirm!: (value: { error: null }) => void;
+    checkoutConfirmMock.mockReturnValue(
+      new Promise<{ error: null }>((resolve) => {
+        resolveConfirm = resolve;
+      })
+    );
+    overviewData = overview(null);
+
+    renderBilling();
+    fireEvent.click(screen.getByRole("button", { name: "Adjust plan" }));
+    fireEvent.click(screen.getByRole("button", { name: "Switch to Team" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+
+    const completePurchase = screen.getByRole("button", {
+      name: "Complete Purchase",
+    });
+
+    fireEvent.click(completePurchase);
+    expect(completePurchase).toBeDisabled();
+    fireEvent.click(completePurchase);
+
+    expect(checkoutConfirmMock).toHaveBeenCalledTimes(1);
+    resolveConfirm({ error: null });
+    await waitFor(() => expect(checkoutFinalizeMock).toHaveBeenCalled());
+  });
+
   it("opens statement details from the invoices table", () => {
     renderBilling();
 
@@ -709,9 +814,9 @@ describe("billing settings client", () => {
     expect(
       screen.getByRole("heading", { name: "Invoice details" })
     ).toBeInTheDocument();
-    const statementDate = formatDate(STATEMENT_TIMESTAMP);
-    expect(statementDate).toBeTruthy();
-    expect(screen.getAllByText(statementDate ?? "")[0]).toBeInTheDocument();
+    expect(
+      screen.getAllByText(UTC_DATE_FORMATTER.format(STATEMENT_TIMESTAMP))[0]
+    ).toBeInTheDocument();
     expect(screen.getAllByText("$60.00")[0]).toBeInTheDocument();
   });
 });

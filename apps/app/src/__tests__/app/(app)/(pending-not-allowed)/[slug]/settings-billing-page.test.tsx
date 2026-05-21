@@ -2,16 +2,16 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const fetchQueryMock = vi.fn();
 const overviewQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "orgBilling", "overview"],
 }));
+const prefetchMock = vi.fn();
 
 vi.mock("@repo/app-trpc/server", () => ({
-  getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   HydrateClient: ({ children }: { children?: ReactNode }) => (
     <div data-testid="hydrated-billing">{children}</div>
   ),
+  prefetch: prefetchMock,
   trpc: {
     org: {
       settings: {
@@ -37,22 +37,17 @@ const { default: BillingPage } = await import(
 );
 
 beforeEach(() => {
-  fetchQueryMock.mockReset();
   overviewQueryOptionsMock.mockClear();
+  prefetchMock.mockClear();
 });
 
 describe("billing settings page", () => {
-  it("awaits the billing overview query before rendering the hydrated client island", async () => {
-    fetchQueryMock.mockResolvedValue({
-      plans: [],
-      subscription: null,
-    });
-
+  it("prefetches the billing overview before rendering the hydrated client island", async () => {
     const element = await BillingPage();
     render(element);
 
     expect(overviewQueryOptionsMock).toHaveBeenCalledOnce();
-    expect(fetchQueryMock).toHaveBeenCalledWith({
+    expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "settings", "orgBilling", "overview"],
     });
     expect(screen.getByTestId("hydrated-billing")).toHaveTextContent(

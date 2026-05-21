@@ -12,7 +12,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useClerk } from "@vendor/clerk/client";
+import { useClerk } from "@vendor/clerk";
 import { Settings } from "lucide-react";
 import Link from "next/link";
 

@@ -14,12 +14,8 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { useAuth } from "@vendor/clerk/client";
-import type { BillingStatementResource } from "@vendor/clerk/client/experimental";
-import {
-  usePaymentMethods,
-  useStatements,
-} from "@vendor/clerk/client/experimental";
+import type { BillingStatementResource } from "@vendor/clerk";
+import { useAuth, usePaymentMethods, useStatements } from "@vendor/clerk";
 import { useCallback, useEffect, useState } from "react";
 
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";

@@ -8,7 +8,7 @@ export function formatUtcCalendarDate(
   value?: Date | number | null,
   locales?: Intl.LocalesArgument
 ) {
-  if (!value) {
+  if (value == null) {
     return null;
   }
   return new Date(value).toLocaleDateString(locales, {

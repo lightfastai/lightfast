@@ -1,4 +1,4 @@
-import type { BillingMoneyAmount } from "@vendor/clerk/client/experimental";
+import type { BillingMoneyAmount } from "@vendor/clerk";
 import type {
   BillingPlan as ClerkBillingPlan,
   BillingSubscriptionItem as ClerkBillingSubscriptionItem,

@@ -12,7 +12,7 @@ import {
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { cn } from "@repo/ui/lib/utils";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useOrganizationList } from "@vendor/clerk/client";
+import { useOrganizationList } from "@vendor/clerk";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";

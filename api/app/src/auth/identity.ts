@@ -1,6 +1,5 @@
 import { type Database, isOrgBound } from "@db/app";
-import { clerkEnvBase } from "@vendor/clerk/env";
-import { auth, verifyToken } from "@vendor/clerk/server";
+import { auth, clerkEnvBase, verifyToken } from "@vendor/clerk/server";
 import { z } from "zod";
 
 /**

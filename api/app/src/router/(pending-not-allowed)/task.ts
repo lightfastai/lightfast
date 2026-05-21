@@ -55,11 +55,19 @@ export const taskRouter = {
       },
     });
 
-    await mirrorOrgBinding({
-      clerkOrgId: ctx.auth.identity.orgId,
-      status: "bound",
-      provider: "github",
-    });
+    try {
+      await mirrorOrgBinding({
+        clerkOrgId: ctx.auth.identity.orgId,
+        status: "bound",
+        provider: "github",
+      });
+    } catch (error) {
+      log.warn("[task] org binding mirror failed", {
+        clerkOrgId: ctx.auth.identity.orgId,
+        userId: ctx.auth.identity.userId,
+        error,
+      });
+    }
 
     log.info("[task] org bound", {
       clerkOrgId: ctx.auth.identity.orgId,

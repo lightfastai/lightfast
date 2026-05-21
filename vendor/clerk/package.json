@@ -9,29 +9,9 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
-    "./env": {
-      "types": "./src/env.ts",
-      "default": "./src/env.ts"
-    },
     "./server": {
       "types": "./src/server.ts",
       "default": "./src/server.ts"
-    },
-    "./types": {
-      "types": "./src/types.ts",
-      "default": "./src/types.ts"
-    },
-    "./webhooks": {
-      "types": "./src/webhooks.ts",
-      "default": "./src/webhooks.ts"
-    },
-    "./client": {
-      "types": "./src/client/index.ts",
-      "default": "./src/client/index.ts"
-    },
-    "./client/experimental": {
-      "types": "./src/client/experimental.ts",
-      "default": "./src/client/experimental.ts"
     },
     "./backend": {
       "types": "./src/backend.ts",
@@ -53,7 +33,6 @@
     "react": "catalog:react19",
     "react-dom": "catalog:react19",
     "server-only": "^0.0.1",
-    "svix": "^1.90.0",
     "zod": "catalog:"
   },
   "devDependencies": {

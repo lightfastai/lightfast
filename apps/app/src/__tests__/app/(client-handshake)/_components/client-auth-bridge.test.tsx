@@ -11,7 +11,7 @@ vi.mock("@vendor/observability/sentry-nextjs", () => ({
 }));
 
 const useAuthMock = vi.fn();
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
   useAuth: () => useAuthMock(),
 }));
 

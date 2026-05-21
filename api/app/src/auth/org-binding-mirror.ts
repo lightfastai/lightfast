@@ -22,8 +22,17 @@
  */
 
 import { clerkClient } from "@vendor/clerk/server";
-import type { LightfastOrgPublicMetadata } from "@vendor/clerk/types";
 import { log } from "@vendor/observability/log/next";
+
+interface LightfastOrgPublicMetadata {
+  lightfast?: {
+    binding?: {
+      status?: "bound" | "unbound" | "revoked";
+      provider?: "github";
+      updatedAt?: string;
+    };
+  };
+}
 
 type OrgBinding = NonNullable<
   NonNullable<LightfastOrgPublicMetadata["lightfast"]>["binding"]

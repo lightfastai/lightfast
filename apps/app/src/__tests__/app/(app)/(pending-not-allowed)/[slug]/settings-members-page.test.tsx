@@ -2,14 +2,12 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const fetchQueryMock = vi.fn();
 const listQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "orgMembers", "list"],
 }));
 const prefetchMock = vi.fn();
 
 vi.mock("@repo/app-trpc/server", () => ({
-  getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   HydrateClient: ({ children }: { children?: ReactNode }) => (
     <div data-testid="hydrated-members">{children}</div>
   ),
@@ -53,26 +51,19 @@ const { default: MembersPage } = await import(
 );
 
 beforeEach(() => {
-  fetchQueryMock.mockReset();
   listQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
 });
 
 describe("members settings page", () => {
-  it("awaits the org members list query before rendering hydrated client islands", async () => {
-    fetchQueryMock.mockResolvedValue({
-      invitations: [],
-      members: [],
-    });
-
+  it("prefetches the org members list before rendering hydrated client islands", async () => {
     const element = await MembersPage();
     render(element);
 
     expect(listQueryOptionsMock).toHaveBeenCalledOnce();
-    expect(fetchQueryMock).toHaveBeenCalledWith({
+    expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "settings", "orgMembers", "list"],
     });
-    expect(prefetchMock).not.toHaveBeenCalled();
     expect(screen.getByTestId("hydrated-members")).toContainElement(
       screen.getByRole("button", { name: "Invite" })
     );

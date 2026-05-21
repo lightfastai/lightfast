@@ -85,7 +85,7 @@ function makeClerkStub(): ClerkStub {
   };
 }
 
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
   useSignUp: () => ({ signUp: signUpStub }),
   useClerk: () => clerkStub,
   useUser: () => ({

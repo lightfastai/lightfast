@@ -8,9 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@repo/ui/components/ui/dialog";
-import type { BillingPaymentMethodResource } from "@vendor/clerk/client/experimental";
+import type { BillingPaymentMethodResource } from "@vendor/clerk";
 import { AlertCircle, Trash2 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { NewPaymentMethodForm } from "./new-payment-method-form";
 
@@ -34,6 +34,14 @@ export function PaymentMethodDialog({
   const [mode, setMode] = useState("saved");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      setMode("saved");
+      setErrorMessage(null);
+      setIsUpdating(false);
+    }
+  }, [open]);
 
   async function updateMethod(action: () => Promise<unknown>) {
     setIsUpdating(true);

@@ -22,7 +22,9 @@ function TeamSwitcherSlot() {
 
 export function UserLayoutShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const useAccountSettingsSidebar = pathname.startsWith("/account/settings");
+  const useAccountSettingsSidebar =
+    pathname === "/account/settings" ||
+    pathname.startsWith("/account/settings/");
 
   if (!useAccountSettingsSidebar) {
     return (

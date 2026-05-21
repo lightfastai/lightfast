@@ -26,7 +26,7 @@ vi.mock("@tanstack/react-query", () => ({
   }),
 }));
 
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
   useSession: () => ({ session: { reload: reloadMock } }),
 }));
 

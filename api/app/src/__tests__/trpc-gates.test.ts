@@ -10,10 +10,6 @@ import { isDiagnosticCause } from "../diagnostics";
 // fake `db` injected via tRPC context, never this stub.
 vi.mock("@db/app/client", () => ({ db: {} }));
 
-vi.mock("@vendor/clerk/env", () => ({
-  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
-}));
-
 const getOrganizationMock = vi.fn();
 const updateOrganizationMock = vi.fn();
 const apiKeysCreateMock = vi.fn();
@@ -21,8 +17,13 @@ const apiKeysDeleteMock = vi.fn();
 const apiKeysGetMock = vi.fn();
 const apiKeysListMock = vi.fn();
 const apiKeysRevokeMock = vi.fn();
+const logDebugMock = vi.fn();
+const logErrorMock = vi.fn();
+const logInfoMock = vi.fn();
+const logWarnMock = vi.fn();
 
 vi.mock("@vendor/clerk/server", () => ({
+  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
   toPlainClerkResource: structuredClone,
   clerkClient: () =>
     Promise.resolve({
@@ -44,7 +45,12 @@ vi.mock("@vendor/clerk/server", () => ({
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
-  log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
+  log: {
+    debug: logDebugMock,
+    error: logErrorMock,
+    info: logInfoMock,
+    warn: logWarnMock,
+  },
 }));
 
 // Pass-through the observability middleware — the gates are the SUT, not timing.
@@ -198,6 +204,10 @@ beforeEach(() => {
   apiKeysListMock.mockResolvedValue({ data: [] });
   apiKeysRevokeMock.mockReset();
   apiKeysRevokeMock.mockResolvedValue({ id: "ak_test", subject: "org_test" });
+  logDebugMock.mockReset();
+  logErrorMock.mockReset();
+  logInfoMock.mockReset();
+  logWarnMock.mockReset();
 });
 
 // ----- viewerProcedure --------------------------------------------------------
@@ -409,6 +419,7 @@ describe("orgApiKeys", () => {
     await expect(
       caller.orgApiKeys.revoke({ keyId: "ak_other" })
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
+    expect(apiKeysGetMock).toHaveBeenCalledWith("ak_other");
     expect(apiKeysRevokeMock).not.toHaveBeenCalled();
   });
 
@@ -483,5 +494,30 @@ describe("task.bind", () => {
       arg as { publicMetadata: { lightfast: { binding: { status: string } } } }
     ).publicMetadata.lightfast.binding;
     expect(binding.status).toBe("bound");
+  });
+
+  it("returns success when the Clerk metadata mirror fails after the DB write", async () => {
+    const { db, spies } = makeStatefulDb();
+    const caller = makeCaller(active("unbound"), db);
+    const mirrorError = new Error("clerk unavailable");
+    updateOrganizationMock.mockRejectedValueOnce(mirrorError);
+
+    await expect(caller.task.bind()).resolves.toEqual({
+      ok: true,
+      bindingStatus: "bound",
+    });
+
+    expect(spies.insert).toHaveBeenCalledTimes(1);
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[task] org binding mirror failed",
+      expect.objectContaining({
+        clerkOrgId: "org_test",
+        error: mirrorError,
+        userId: "user_test",
+      })
+    );
+    await expect(caller.task.status()).resolves.toEqual({
+      bindingStatus: "bound",
+    });
   });
 });

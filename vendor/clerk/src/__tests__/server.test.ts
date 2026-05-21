@@ -1,6 +1,32 @@
-import { describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, it, vi } from "vitest";
 
-import { toPlainClerkResource } from "../resources";
+vi.mock("server-only", () => ({}));
+
+let toPlainClerkResource: typeof import("../server").toPlainClerkResource;
+
+const originalClerkSecretKey = process.env.CLERK_SECRET_KEY;
+const originalClerkPublishableKey =
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+
+beforeAll(async () => {
+  process.env.CLERK_SECRET_KEY = "sk_test_fixture";
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = "pk_test_fixture";
+
+  ({ toPlainClerkResource } = await import("../server"));
+});
+
+afterAll(() => {
+  if (originalClerkSecretKey === undefined) {
+    delete process.env.CLERK_SECRET_KEY;
+  } else {
+    process.env.CLERK_SECRET_KEY = originalClerkSecretKey;
+  }
+  if (originalClerkPublishableKey === undefined) {
+    delete process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
+  } else {
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY = originalClerkPublishableKey;
+  }
+});
 
 class ClerkResourceFixture<T extends object> {
   constructor(fields: T) {

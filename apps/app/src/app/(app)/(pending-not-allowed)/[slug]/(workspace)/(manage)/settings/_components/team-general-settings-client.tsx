@@ -22,7 +22,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { useOrganizationList } from "@vendor/clerk/client";
+import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";

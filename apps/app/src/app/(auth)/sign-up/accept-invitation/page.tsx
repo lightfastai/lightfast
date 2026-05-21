@@ -3,8 +3,8 @@
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useClerk, useSignUp, useUser } from "@vendor/clerk/client";
-import type { OAuthStrategy } from "@vendor/clerk/types";
+import type { OAuthStrategy } from "@vendor/clerk";
+import { useClerk, useSignUp, useUser } from "@vendor/clerk";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";

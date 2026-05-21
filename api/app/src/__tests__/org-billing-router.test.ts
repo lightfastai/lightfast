@@ -11,11 +11,8 @@ const getOrganizationBillingSubscriptionMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: vi.fn() }));
 
-vi.mock("@vendor/clerk/env", () => ({
-  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
-}));
-
 vi.mock("@vendor/clerk/server", () => ({
+  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
   auth: authMock,
   toPlainClerkResource: structuredClone,
   clerkClient: () =>
@@ -56,6 +53,13 @@ const activeIdentity: AuthIdentity = {
   userId: "user_current",
   orgId: "org_acme",
   orgGate: { bindingStatus: "bound" },
+};
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_current",
+};
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
 };
 
 const teamPlan = {
@@ -207,6 +211,24 @@ describe("orgBillingRouter public surface", () => {
 });
 
 describe("orgBilling.overview", () => {
+  it("rejects overview reads when caller has no active organization", async () => {
+    await expect(
+      caller(pendingIdentity).orgBilling.overview()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getPlanListMock).not.toHaveBeenCalled();
+    expect(getOrganizationBillingSubscriptionMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects overview reads when caller is unauthenticated", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).orgBilling.overview()
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getPlanListMock).not.toHaveBeenCalled();
+    expect(getOrganizationBillingSubscriptionMock).not.toHaveBeenCalled();
+  });
+
   it("returns Clerk-native organization billing data for SSR", async () => {
     const result = await caller().orgBilling.overview();
 
@@ -295,6 +317,28 @@ describe("orgBilling.overview", () => {
 });
 
 describe("orgBilling.cancelSubscriptionItem", () => {
+  it("rejects cancellation when caller has no active organization", async () => {
+    await expect(
+      caller(pendingIdentity).orgBilling.cancelSubscriptionItem({
+        subscriptionItemId: "sub_item_team",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getOrganizationBillingSubscriptionMock).not.toHaveBeenCalled();
+    expect(cancelSubscriptionItemMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects cancellation when caller is unauthenticated", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).orgBilling.cancelSubscriptionItem({
+        subscriptionItemId: "sub_item_team",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getOrganizationBillingSubscriptionMock).not.toHaveBeenCalled();
+    expect(cancelSubscriptionItemMock).not.toHaveBeenCalled();
+  });
+
   it("rejects direct cancellation attempts from non-admin members", async () => {
     await expect(
       caller(

@@ -62,7 +62,7 @@ function makeSignInStub(): SignInStub {
   };
 }
 
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
   useSignIn: () => ({ signIn: signInStub }),
 }));
 

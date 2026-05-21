@@ -19,7 +19,7 @@ import type {
   BillingMoneyAmount,
   BillingPaymentMethodResource,
   BillingStatementResource,
-} from "@vendor/clerk/client/experimental";
+} from "@vendor/clerk";
 import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import { CreditCard } from "lucide-react";
 

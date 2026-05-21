@@ -23,7 +23,7 @@ import {
 } from "@repo/ui/components/ui/select";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuth } from "@vendor/clerk/client";
+import { useAuth } from "@vendor/clerk";
 import { Loader2, UserPlus } from "lucide-react";
 import { useState } from "react";
 import {

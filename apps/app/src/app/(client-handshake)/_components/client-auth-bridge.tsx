@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@vendor/clerk/client";
+import { useAuth } from "@vendor/clerk";
 import {
   captureException,
   captureMessage,

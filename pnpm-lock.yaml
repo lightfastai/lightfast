@@ -377,13 +377,13 @@ importers:
         specifier: ^1.14.2
         version: 1.14.2(@opentelemetry/api@1.9.1)(crossws@0.3.5)(ws@8.20.0(bufferutil@4.1.0))
       '@repo/app-billing':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/app-billing
       '@repo/app-trpc':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/app-trpc
       '@repo/app-validation':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../packages/app-validation
       '@repo/platform-client':
         specifier: workspace:*
@@ -428,13 +428,13 @@ importers:
         specifier: workspace:*
         version: link:../../vendor/observability
       '@vendor/security':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../vendor/security
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
       '@vendor/upstash':
-        specifier: workspace:^
+        specifier: workspace:*
         version: link:../../vendor/upstash
       '@vercel/microfrontends':
         specifier: ^2.3.2
@@ -1625,9 +1625,6 @@ importers:
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
-      svix:
-        specifier: ^1.90.0
-        version: 1.90.0
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -12647,9 +12644,6 @@ packages:
   svg-pathdata@6.0.3:
     resolution: {integrity: sha512-qsjeeq5YjBZ5eMdFuUa4ZosMLxgr5RZ+F+Y1OrDhuOCEInRMA3x74XdBtggJcj9kOeInz0WE+LgCPDkZFlBYJw==}
     engines: {node: '>=12.0.0'}
-
-  svix@1.90.0:
-    resolution: {integrity: sha512-ljkZuyy2+IBEoESkIpn8sLM+sxJHQcPxlZFxU+nVDhltNfUMisMBzWX/UR8SjEnzoI28ZjCzMbmYAPwSTucoMw==}
 
   swr@2.4.1:
     resolution: {integrity: sha512-2CC6CiKQtEwaEeNiqWTAw9PGykW8SR5zZX8MZk6TeAvEAnVS7Visz8WzphqgtQ8v2xz/4Q5K+j+SeMaKXeeQIA==}
@@ -25698,11 +25692,6 @@ snapshots:
 
   svg-pathdata@6.0.3:
     optional: true
-
-  svix@1.90.0:
-    dependencies:
-      standardwebhooks: 1.0.0
-      uuid: 10.0.0
 
   swr@2.4.1(react@19.2.5):
     dependencies:

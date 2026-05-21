@@ -16,7 +16,7 @@ import {
   CheckoutProvider,
   PaymentElementProvider,
   useCheckout,
-} from "@vendor/clerk/client/experimental";
+} from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 

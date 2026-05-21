@@ -2,13 +2,18 @@ import {
   formatRelativeTimeToNow,
   formatUtcCalendarDate,
 } from "@vendor/lib/time";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 describe("time helpers", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("formats UTC-anchored calendar dates without local timezone shifts", () => {
     const date = new Date("2026-05-01T00:00:00Z");
 
     expect(formatUtcCalendarDate(date, "en-US")).toBe("May 1, 2026");
+    expect(formatUtcCalendarDate(0, "en-US")).toBe("Jan 1, 1970");
     expect(formatUtcCalendarDate(null, "en-US")).toBeNull();
   });
 
@@ -20,7 +25,5 @@ describe("time helpers", () => {
         addSuffix: true,
       })
     ).toBe("1 day ago");
-
-    vi.useRealTimers();
   });
 });

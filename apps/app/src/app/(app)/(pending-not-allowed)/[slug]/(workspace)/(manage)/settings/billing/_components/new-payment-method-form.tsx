@@ -5,12 +5,12 @@ import {
 import { Alert, AlertDescription } from "@repo/ui/components/ui/alert";
 import { Button } from "@repo/ui/components/ui/button";
 import { DialogFooter } from "@repo/ui/components/ui/dialog";
-import { useOrganization } from "@vendor/clerk/client";
 import {
   PaymentElement,
   PaymentElementProvider,
+  useOrganization,
   usePaymentElement,
-} from "@vendor/clerk/client/experimental";
+} from "@vendor/clerk";
 import { AlertCircle, Loader2 } from "lucide-react";
 import { useState } from "react";
 
@@ -50,12 +50,16 @@ function NewPaymentMethodFields({
     setIsSaving(true);
     setErrorMessage(null);
     try {
+      if (!organization) {
+        setErrorMessage("Organization is unavailable. Please try again.");
+        return;
+      }
       const result = await submit();
       if (result.error) {
         setErrorMessage(paymentErrorMessage(result.error));
         return;
       }
-      await organization?.addPaymentMethod({
+      await organization.addPaymentMethod({
         gateway: result.data.gateway,
         paymentToken: result.data.paymentToken,
       });

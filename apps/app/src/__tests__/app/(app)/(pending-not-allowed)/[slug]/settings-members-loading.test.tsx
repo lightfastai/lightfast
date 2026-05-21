@@ -14,6 +14,6 @@ describe("members settings loading", () => {
 
     expect(status).toHaveClass("flex");
     expect(spinner).toHaveClass("animate-spin");
-    expect(status).toHaveTextContent("");
+    expect(status).toHaveTextContent(/^$/);
   });
 });

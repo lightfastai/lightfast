@@ -25,7 +25,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { useAuth } from "@vendor/clerk/client";
+import { useAuth } from "@vendor/clerk";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
   Mail,

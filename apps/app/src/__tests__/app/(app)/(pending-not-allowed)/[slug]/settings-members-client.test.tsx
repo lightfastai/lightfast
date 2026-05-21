@@ -80,7 +80,7 @@ vi.mock("@tanstack/react-query", () => ({
   useSuspenseQuery: useSuspenseQueryMock,
 }));
 
-vi.mock("@vendor/clerk/client", () => ({
+vi.mock("@vendor/clerk", () => ({
   useAuth: useAuthMock,
 }));
 

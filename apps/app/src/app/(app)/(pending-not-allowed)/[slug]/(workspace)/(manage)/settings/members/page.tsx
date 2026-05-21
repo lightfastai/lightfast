@@ -1,14 +1,12 @@
-import { getQueryClient, HydrateClient, trpc } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
 import { OrgMemberListLoading } from "./_components/org-member-list-loading";
 import { OrgMembersClient } from "./_components/org-members-client";
 
 export const dynamic = "force-dynamic";
 
-export default async function MembersPage() {
-  await getQueryClient().fetchQuery(
-    trpc.org.settings.orgMembers.list.queryOptions()
-  );
+export default function MembersPage() {
+  prefetch(trpc.org.settings.orgMembers.list.queryOptions());
 
   return (
     <HydrateClient>

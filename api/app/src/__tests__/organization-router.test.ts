@@ -12,11 +12,8 @@ const updateOrganizationMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
 
-vi.mock("@vendor/clerk/env", () => ({
-  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
-}));
-
 vi.mock("@vendor/clerk/server", () => ({
+  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
   auth: authMock,
   clerkClient: () =>
     Promise.resolve({
@@ -62,6 +59,9 @@ const createCaller = createCallerFactory(testRouter);
 const pendingIdentity: AuthIdentity = {
   type: "pending",
   userId: "user_test",
+};
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
 };
 
 function adminAccess(overrides: { orgId?: string; userId?: string } = {}) {
@@ -168,6 +168,30 @@ describe("organization.getBySlug", () => {
 });
 
 describe("organization.updateName", () => {
+  it("rejects organization rename when caller has no active organization", async () => {
+    await expect(
+      caller().org.settings.organization.updateName({
+        slug: "acme",
+        name: "acme-inc",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getOrganizationMock).not.toHaveBeenCalled();
+    expect(updateOrganizationMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects organization rename when caller is unauthenticated", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).org.settings.organization.updateName({
+        slug: "acme",
+        name: "acme-inc",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getOrganizationMock).not.toHaveBeenCalled();
+    expect(updateOrganizationMock).not.toHaveBeenCalled();
+  });
+
   it("renames the active organization when Clerk has the admin role", async () => {
     getOrganizationMock.mockResolvedValue({ id: "org_acme" });
     updateOrganizationMock.mockResolvedValue({});

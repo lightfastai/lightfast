@@ -1,10 +1,6 @@
 import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@vendor/clerk/env", () => ({
-  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
-}));
-
 const authMock = vi.fn();
 const isOrgBoundMock = vi.fn();
 const verifyTokenMock = vi.fn();
@@ -14,6 +10,7 @@ vi.mock("@db/app", () => ({
 }));
 
 vi.mock("@vendor/clerk/server", () => ({
+  clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
   auth: (...args: unknown[]) => authMock(...args),
   verifyToken: (...args: unknown[]) => verifyTokenMock(...args),
   getUserOrgMemberships: vi.fn(),
