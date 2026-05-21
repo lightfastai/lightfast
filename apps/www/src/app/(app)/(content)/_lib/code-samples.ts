@@ -8,11 +8,11 @@ interface CodeSample {
 }
 
 /**
- * Union of operationIds defined in packages/app-api-contract/src/contract.ts.
+ * Union of operationIds defined in packages/api-contract/src/contract.ts.
  * Must stay in sync with the OpenAPI spec — add/remove entries here when
  * endpoints are added/removed from the contract.
  */
-type OperationId = "search" | "proxy.search" | "proxy.call";
+type OperationId = "search";
 
 const sdkSamples: Record<OperationId, string> = {
   search: `import { Lightfast } from "lightfast";
@@ -23,35 +23,10 @@ const results = await client.search({
   query: "authentication implementation",
   limit: 10,
   mode: "balanced",
-  sources: ["github"],
 });
 
 console.log(results.results);
 console.log(results.total);`,
-
-  "proxy.search": `import { Lightfast } from "lightfast";
-
-const client = new Lightfast({ apiKey: "ak_..." });
-
-const { connections } = await client.proxySearch();
-
-for (const conn of connections) {
-  console.log(conn.provider);    // e.g., "github"
-  console.log(conn.resources);   // Connected repos/projects with params
-  console.log(conn.actions);     // Available actions
-}`,
-
-  "proxy.call": `import { Lightfast } from "lightfast";
-
-const client = new Lightfast({ apiKey: "ak_..." });
-
-const result = await client.proxyCall({
-  action: "github.list-pull-requests",
-  params: { owner: "acme", repo: "web", state: "open" },
-});
-
-console.log(result.data);    // Raw provider API response
-console.log(result.status);  // HTTP status code`,
 };
 
 const mcpSamples: Partial<Record<OperationId, string>> = {
@@ -60,15 +35,7 @@ const mcpSamples: Partial<Record<OperationId, string>> = {
   "arguments": {
     "query": "how does authentication work",
     "limit": 5,
-    "mode": "balanced",
-    "sources": ["github"]
-  }
-}`,
-  "proxy.call": `{
-  "name": "lightfast_proxy_call",
-  "arguments": {
-    "action": "github.list-pull-requests",
-    "params": { "owner": "acme", "repo": "web", "state": "open" }
+    "mode": "balanced"
   }
 }`,
 };

@@ -18,17 +18,17 @@ export const faqs = [
   {
     question: "What does 'operating layer' mean?",
     answer:
-      "Think of Lightfast like an OS for your tool stack. Instead of agents making individual API calls to GitHub, Linear, Sentry, and Slack, they operate through Lightfast — express intent, get context, take action. One integration point for every tool, every team, every workflow.",
+      "Think of Lightfast like an OS for your organization's working memory. Agents and people query a shared substrate, get grounded context, and take action through the APIs you control.",
   },
   {
-    question: "What tools do you integrate with?",
+    question: "How do teams use Lightfast?",
     answer:
-      "Today we support GitHub (pushes, PRs, issues, reviews), Vercel (deployments, project activity), Sentry (errors, issues, alerts), and Linear (issues, comments, projects, cycles). Slack, Notion, Confluence, and PagerDuty are coming soon. Each integration ingests events automatically and continuously.",
+      "Teams create an organization, invite members by email, add API keys, and query workspace memory through the REST API, TypeScript SDK, and MCP server.",
   },
   {
     question: "How does the event system work?",
     answer:
-      "Lightfast ingests structured events from your connected tools in real time. Every push, pull request, deployment, error, and issue becomes a normalized event you can subscribe to, filter, and act on. Events are immutable and causally ordered — facts your agents and workflows can rely on.",
+      "Lightfast stores structured observations and decisions as normalized events you can subscribe to, filter, and act on. Events are immutable and causally ordered — facts your agents and workflows can rely on.",
   },
   {
     question: "How do agents and AI assistants use Lightfast?",
@@ -38,7 +38,7 @@ export const faqs = [
   {
     question: "What's coming after events?",
     answer:
-      "Next is Memory — semantic search and cited answers across your entire tool stack. Everything from the event system gets indexed, connected, and made searchable by meaning. After that, full orchestration: agents express what they want in natural language, and Lightfast resolves it to the right tool, enforces your rules, and tracks everything.",
+      "Next is Memory — semantic search and cited answers across your organization's working context. After that, full orchestration: agents express what they want in natural language, and Lightfast enforces your rules, routes work through your systems, and tracks everything.",
   },
   {
     question: "Is our data secure and private?",
@@ -48,12 +48,12 @@ export const faqs = [
   {
     question: "How quickly can we get started?",
     answer:
-      "Minutes. Connect your first source, and events start flowing immediately. Our TypeScript SDK installs with a single command, and MCP tools let AI assistants connect directly. No complex setup, no schema mapping, no custom pipelines.",
+      "Minutes. Sign in with email, create an organization, issue an API key, and connect AI assistants through MCP. Newly created organizations are usable immediately.",
   },
   {
     question: "How does pricing work?",
     answer:
-      "We offer a free Starter plan for up to 3 users with 2 sources. Team plan is $20/user/month with full event access and semantic search. Business plan includes unlimited sources and advanced features. Check our pricing page for full details.",
+      "We offer a free Starter plan for small teams. Team plan is $20/user/month with full event access and semantic search. Business plan includes advanced security and support. Check our pricing page for full details.",
   },
 ];
 

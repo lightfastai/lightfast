@@ -57,11 +57,9 @@ The MCP server exposes the following tool to AI assistants.
 
 ### lightfast_search
 
-Search through connected tools for relevant decisions and observations.
+Search workspace memory for relevant decisions and observations.
 
 #### Parameters
-
-<EmbeddedOperation operationId="search" />
 
 | Parameter | Type | Required | Default | Description |
 |-----------|------|----------|---------|-------------|
@@ -69,8 +67,7 @@ Search through connected tools for relevant decisions and observations.
 | `limit` | `number` | No | `10` | Max results (1–100) |
 | `offset` | `number` | No | `0` | Pagination offset |
 | `mode` | `"fast" \| "balanced"` | No | `"balanced"` | `fast` = vector scores only, `balanced` = Cohere rerank |
-| `sources` | `string[]` | No | — | Filter by provider (e.g. `["github", "linear"]`) |
-| `types` | `string[]` | No | — | Filter by entity type (e.g. `["pull_request", "issue"]`) |
+| `types` | `string[]` | No | — | Filter by entity type (e.g. `["decision", "incident"]`) |
 | `after` | `string` | No | — | ISO 8601 datetime lower bound |
 | `before` | `string` | No | — | ISO 8601 datetime upper bound |
 
@@ -82,7 +79,7 @@ Search through connected tools for relevant decisions and observations.
     "query": "how does authentication work",
     "limit": 5,
     "mode": "balanced",
-    "sources": ["github"],
+    "types": ["decision"],
     "after": "2024-01-01T00:00:00Z"
   }
 }

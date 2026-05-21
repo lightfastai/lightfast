@@ -5,8 +5,6 @@
 // Response: { apiKey, orgId, orgSlug, orgName }
 
 import { clerkClient } from "@clerk/nextjs/server";
-import { isOrgBound } from "@db/app";
-import { db } from "@db/app/client";
 import { verifyBearerJwt } from "~/app/(auth-api)/_server/verify-bearer-jwt";
 
 export async function POST(req: Request) {
@@ -29,23 +27,6 @@ export async function POST(req: Request) {
   const membership = memberships.data.find((m) => m.organization.id === orgId);
   if (!membership) {
     return Response.json({ error: "not_a_member" }, { status: 403 });
-  }
-
-  // Org setup gate — refuse to mint a long-lived org API key for an org that
-  // has not completed source-control setup. Mirrors the tRPC
-  // `boundOrgProcedure` / oRPC org gate; fail-closed.
-  if (!(await isOrgBound(db, orgId))) {
-    const slug = membership.organization.slug;
-    return Response.json(
-      {
-        error: "org_setup_required",
-        repair: {
-          id: "bind-source-control",
-          ...(slug ? { href: `/${slug}/tasks/bind` } : {}),
-        },
-      },
-      { status: 403 }
-    );
   }
 
   const key = await clerk.apiKeys.create({

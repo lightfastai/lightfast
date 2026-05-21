@@ -102,7 +102,7 @@ Reserved to prevent conflicts with top-level routes (`/{orgSlug}`):
 - **Protocol reserved**: `.well-known` (SSL, ACME, OpenID)
 - **Framework internals**: `_next`, `_vercel`, `middleware`, `instrumentation`, `proxy`
 - **Metadata files**: `robots.txt`, `sitemap.xml`, `sitemap`, `manifest.json`, `manifest`, `favicon.ico`, `icon`, `opengraph-image`
-- **Authentication**: `auth`, `authorization`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
+- **Authentication and legacy auth paths**: `auth`, `authorization`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
 - **API routes**: `api`, `trpc`, `webhooks`, `health`, `inngest`, `github`, `functions`, `serverless`, `edge`, `services`
 - **User management**: `account`, `user`, `users`, `username`, `staff`, `onboarding`, `profile`, `identity`, `anonymous`, `suspended`
 - **Organization**: `organizations`, `orgs`, `teams`, `workspace`, `workspaces`, `members`, `network`
@@ -147,15 +147,15 @@ Reserved to prevent conflicts with organization-level routes under `/{orgSlug}/{
 - **Security & access**: `security`, `audit`, `api-keys`, `tokens`, `secrets`, `variables`, `authorization`
 - **Development**: `api`, `api-reference`, `trpc`, `webhooks`, `environments`, `deployments`, `functions`, `serverless`, `edge`
 - **Code hosting** (GitHub-style): `blob`, `raw`, `branches`, `commits`, `compare`, `pull`, `pulls`, `releases`, `issues`, `wiki`, `code`, `repos`, `repositories`
-- **GitHub integration**: `github`, `install-app`, `user-authorized`, `connected`
-- **Integrations**: `integrations`, `apps`, `inngest`, `sources`
+- **Reserved provider-style paths**: `github`, `install-app`, `user-authorized`, `connected`
+- **App surfaces**: `integrations`, `apps`, `inngest`, `sources`
 - **Monitoring**: `logs`, `metrics`, `monitoring`, `analytics`, `reports`, `status`, `health`, `eval`
 - **Financial**: `billing`, `checkout`, `cancelled`, `success`, `upgrade`, `pricing`, `subscribe`
 - **Content**: `docs`, `documentation`, `blog`, `changelog`, `search`, `files`, `library`, `archive`, `feed`
 - **Communication**: `chat`, `comments`, `discussions`, `notifications`, `inbox`, `feedback`
 - **Actions**: `new`, `upload`, `share`, `join`, `actions`, `deploy`, `deployment`
 - **Infrastructure**: `static`, `public`, `cdn`, `cache`, `storage`, `assets`, `images`, `data`
-- **Auth**: `auth`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
+- **Auth and legacy auth paths**: `auth`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
 - **Navigation**: `home`, `about`, `contact`, `help`, `support`, `events`, `explore`, `info`
 - **User management**: `account`, `user`, `staff`, `onboarding`
 - **Organization**: `organizations`, `orgs`, `workspace`, `workspaces`
@@ -167,7 +167,7 @@ Reserved to prevent conflicts with organization-level routes under `/{orgSlug}/{
 
 **Philosophy:** Comprehensive protection. Reserve all routes that:
 1. Exist in current console app structure (`/{orgSlug}/{workspaceName}/...`)
-2. Match GitHub integration routes (`install-app`, `user-authorized`, `connected`)
+2. Match provider-style reserved routes (`install-app`, `user-authorized`, `connected`)
 3. Are standard in developer platforms (GitHub, GitLab, Bitbucket)
 4. Are HTTP status codes (prevent confusing URLs)
 5. Are Next.js 15 and Vercel platform conventions

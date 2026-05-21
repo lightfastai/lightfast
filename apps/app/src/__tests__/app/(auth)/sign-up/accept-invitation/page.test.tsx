@@ -33,21 +33,11 @@ interface SignUpStub {
   emailAddress: string | null;
   finalize: Mock;
   missingFields: string[];
-  sso: Mock;
   status: "missing_requirements" | "complete";
   ticket: Mock;
 }
 
-interface ClerkStub {
-  client: {
-    signUp: {
-      authenticateWithRedirect: Mock;
-    };
-  };
-}
-
 let signUpStub: SignUpStub;
-let clerkStub: ClerkStub;
 let searchParamsValue: URLSearchParams;
 let isSignedInValue: boolean;
 let isUserLoadedValue: boolean;
@@ -71,23 +61,11 @@ function makeSignUpStub(): SignUpStub {
         }
       }
     ),
-    sso: vi.fn().mockResolvedValue({ error: null }),
-  };
-}
-
-function makeClerkStub(): ClerkStub {
-  return {
-    client: {
-      signUp: {
-        authenticateWithRedirect: vi.fn().mockResolvedValue(undefined),
-      },
-    },
   };
 }
 
 vi.mock("@vendor/clerk/client", () => ({
   useSignUp: () => ({ signUp: signUpStub }),
-  useClerk: () => clerkStub,
   useUser: () => ({
     isLoaded: isUserLoadedValue,
     isSignedIn: isSignedInValue,
@@ -132,7 +110,6 @@ Object.defineProperty(window, "location", {
 
 beforeEach(() => {
   signUpStub = makeSignUpStub();
-  clerkStub = makeClerkStub();
   searchParamsValue = new URLSearchParams();
   isSignedInValue = false;
   isUserLoadedValue = true;
@@ -237,57 +214,20 @@ describe("accept-invitation — Accept Invitation button", () => {
   });
 });
 
-describe("accept-invitation — OAuth path (Bug D workaround)", () => {
+describe("accept-invitation — email-only auth", () => {
   beforeEach(() => {
     searchParamsValue = new URLSearchParams("__clerk_ticket=tok_abc123");
   });
 
-  it("calls signUp.create({ticket,legalAccepted}) then legacy authenticateWithRedirect", async () => {
+  it("does not render social or test-provider invitation buttons", () => {
     render(<AcceptInvitationPage />);
 
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /continue with github/i })
-      );
-    });
-
-    expect(signUpStub.create).toHaveBeenCalledWith({
-      ticket: "tok_abc123",
-      legalAccepted: true,
-    });
     expect(
-      clerkStub.client.signUp.authenticateWithRedirect
-    ).toHaveBeenCalledWith({
-      strategy: "oauth_github",
-      redirectUrl: "/sso-callback?__clerk_ticket=tok_abc123",
-      redirectUrlComplete: "/",
-      continueSignUp: true,
-      legalAccepted: true,
-    });
-    expect(signUpStub.sso).not.toHaveBeenCalled();
-  });
-
-  it("redirects to accept-invitation?errorCode=waitlist when create rejects with waitlist", async () => {
-    signUpStub.create.mockResolvedValue({
-      error: { code: "sign_up_restricted_waitlist", message: "waitlist" },
-    });
-
-    render(<AcceptInvitationPage />);
-
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /continue with github/i })
-      );
-    });
-
-    await waitFor(() => {
-      expect(hrefValue).toBe(
-        "/sign-up/accept-invitation?__clerk_ticket=tok_abc123&errorCode=waitlist"
-      );
-    });
+      screen.queryByRole("button", { name: /continue with github/i })
+    ).not.toBeInTheDocument();
     expect(
-      clerkStub.client.signUp.authenticateWithRedirect
-    ).not.toHaveBeenCalled();
+      screen.queryByRole("button", { name: /continue with test idp/i })
+    ).not.toBeInTheDocument();
   });
 });
 

@@ -38,12 +38,12 @@ After install, re-run the *installed* probe.
 coderabbit auth login
 ```
 
-Uses GitHub OAuth (coderabbit's own flow — does NOT depend on `gh` being authed).
+Uses GitHub browser sign-in through coderabbit's own flow — it does NOT depend on `gh` being authed.
 
 **Non-TTY mode (verified 2026-05-14)**: coderabbit ships a first-class agent flag:
 
 ```
-coderabbit auth login --agent          # JSON output for agent-driven OAuth login
+coderabbit auth login --agent          # JSON output for agent-driven browser sign-in
 coderabbit auth login --api-key <key>  # paste a pre-minted API key, no browser
 ```
 
@@ -68,7 +68,7 @@ Built-in self-update subcommand at v0.4.5 (verified via `coderabbit --help`). Af
 ## Known gotchas
 
 - **`coderabbit auth status` writes cursor controls into stdout** even with `--no-color` (verified: there is no such flag at v0.4.5). The ANSI strip + grep pattern above is the practical workaround. Do NOT try to set `TERM=dumb` — the CLI emits the codes unconditionally.
-- **GitHub OAuth is the only auth flow.** The user must have an active GitHub identity *separate from `gh`*; the two CLIs don't share tokens. If the user has no GitHub account, halt — the doctor cannot create one.
+- **GitHub browser sign-in is the only auth flow.** The user must have an active GitHub identity *separate from `gh`*; the two CLIs don't share tokens. If the user has no GitHub account, halt — the doctor cannot create one.
 - **`gh` ordering is for human cognition, not technical dependency.** The dispatcher runs `coderabbit` after `gh` so the user has already done the "log into GitHub" mental work; coderabbit's flow is then a recognizable repeat.
 - **Two orgs available** on this host (`lightfastai`, plus one other). If `coderabbit auth status` doesn't show `Name: lightfastai`, run `coderabbit auth org` and pick `lightfastai`.
 - **There is no `coderabbit upgrade` subcommand** — it's `coderabbit update` (consistent with `clerk update`, not with `sentry cli upgrade`).

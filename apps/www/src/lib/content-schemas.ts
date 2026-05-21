@@ -1,15 +1,5 @@
 import { z } from "zod";
 
-// Provider slug list, owned locally by apps/www after the v2 barebones reset.
-// Keep in sync with src/lib/integrations-display.ts.
-const providerSlugSchema = z.enum([
-  "apollo",
-  "github",
-  "vercel",
-  "linear",
-  "sentry",
-]);
-
 const AuthorSchema = z.object({
   name: z.string().min(1),
   url: z.url(),
@@ -85,101 +75,6 @@ export const LegalPageSchema = BasePageSchema.extend({
   effectiveAt: z.iso.datetime(),
 });
 
-const IntegrationCategorySchema = z.enum([
-  "dev-tools",
-  "monitoring",
-  "comms",
-  "data",
-  "project-management",
-]);
-
-// Mirror of IntegrationLogoIcons keys from @repo/ui/integration-icons. Inlined
-// because fumadocs-mdx's build-time loader can't resolve TSX component exports
-// under Node ESM. Keep in sync with packages/ui/src/components/integration-icons.tsx.
-const integrationIconKeySchema = z.enum([
-  "apollo",
-  "airtable",
-  "claude",
-  "codex",
-  "datadog",
-  "discord",
-  "github",
-  "linear",
-  "notion",
-  "posthog",
-  "sentry",
-  "slack",
-  "vercel",
-  "circleci",
-  "pagerduty",
-  "intercom",
-  "hubspot",
-  "stripe",
-  "grafana",
-  "clerk",
-  "jira",
-  "mixpanel",
-  "zendesk",
-  "cloudflare",
-  "supabase",
-  "resend",
-  "typeform",
-  "cal-com",
-  "better-stack",
-  "loops",
-  "segment",
-  "statsig",
-  "launchdarkly",
-  "amplitude",
-  "gong",
-  "outreach",
-  "instantly",
-  "incident-io",
-  "plain",
-  "attio",
-  "neon",
-  "customer-io",
-  "fireflies",
-  "workos",
-]);
-
-const BaseIntegrationSchema = BasePageSchema.extend({
-  canonicalUrl: z
-    .url()
-    .refine((val) => val.startsWith("https://lightfast.ai/integrations/"))
-    .optional(),
-  iconKey: integrationIconKeySchema,
-  tagline: z.string().min(10).max(120),
-  category: IntegrationCategorySchema,
-  faq: z.array(FaqItemSchema).min(1).optional(),
-  updatedAt: z.iso.datetime(),
-});
-
-const IntegrationPageLiveSchema = BaseIntegrationSchema.extend({
-  status: z.literal("live"),
-  providerId: providerSlugSchema,
-  featuredImage: z.string().startsWith("/images/"),
-  docsUrl: z.string().startsWith("/docs/"),
-});
-
-const IntegrationPageBetaSchema = BaseIntegrationSchema.extend({
-  status: z.literal("beta"),
-  providerId: providerSlugSchema,
-  featuredImage: z.string().startsWith("/images/").optional(),
-  docsUrl: z.string().startsWith("/docs/").optional(),
-});
-
-const IntegrationPagePlannedSchema = BaseIntegrationSchema.extend({
-  status: z.literal("planned"),
-  featuredImage: z.string().startsWith("/images/").optional(),
-});
-
-export const IntegrationPageSchema = z.discriminatedUnion("status", [
-  IntegrationPageLiveSchema,
-  IntegrationPageBetaSchema,
-  IntegrationPagePlannedSchema,
-]);
-
 export const DocsPageSchema = BasePageSchema.extend({
   canonicalUrl: z
     .url()
@@ -198,9 +93,6 @@ export type BlogPostData = z.infer<typeof BlogPostSchema>;
 export type ChangelogEntryData = z.infer<typeof ChangelogEntrySchema>;
 export type LegalPageData = z.infer<typeof LegalPageSchema>;
 export type DocsPageData = z.infer<typeof DocsPageSchema>;
-export type IntegrationPageData = z.infer<typeof IntegrationPageSchema>;
-export type IntegrationCategory = IntegrationPageData["category"];
-export type IntegrationStatus = IntegrationPageData["status"];
 
 // Fields required by the SEO layer — satisfied structurally by BlogPostData,
 // ChangelogEntryData, and DocsPageData. Derived from BlogPostData so schema

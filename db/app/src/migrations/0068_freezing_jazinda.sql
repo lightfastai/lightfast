@@ -1,0 +1,1 @@
+DROP TABLE "lightfast_org_source_control_bindings" CASCADE;

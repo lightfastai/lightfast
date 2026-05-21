@@ -4,7 +4,7 @@
 
 - PR review, issue triage, release ops (`gh release create` in the desktop release pipeline).
 - `gh auth status` token is what makes `git push` over HTTPS work without password prompts (via `gh` as a credential helper, when configured).
-- Indirect dependency for human-cognitive ordering: `coderabbit` uses its own GitHub OAuth, but devs associate "the GitHub login" with `gh`.
+- Indirect dependency for human-cognitive ordering: `coderabbit` uses its own GitHub browser sign-in, but devs associate "the GitHub login" with `gh`.
 
 ## Probe (read-only)
 

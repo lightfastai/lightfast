@@ -37,11 +37,6 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring",
   "/ingest(.*)",
   "/manifest.json",
-  // Unified OAuth callback. Must be reachable both unauthenticated (normal
-  // OAuth roundtrip) and authenticated (existingSession branch — Clerk swaps
-  // the active session inside the page). If we listed it under isAuthRoute,
-  // authenticated users would get bounced before the setActive can run.
-  "/sso-callback(.*)",
 ]);
 
 // API routes that handle their own auth at the route handler level.
@@ -78,8 +73,6 @@ const isPendingAllowedRoute = createRouteMatcher([
   "/cli/auth(.*)",
   "/desktop/auth(.*)",
 ]);
-
-const isBoundOrgProductRoute = createRouteMatcher(["/:slug"]);
 
 const RESERVED_ORG_ROUTE_SEGMENTS = new Set([
   "account",
@@ -225,12 +218,6 @@ export default clerkMiddleware(
         ) {
           event.waitUntil(persistLastActiveOrg(userId, nextLastActiveOrg));
         }
-      }
-      const bindingStatus = sessionClaims?.lf_binding_status;
-      if (orgId && isBoundOrgProductRoute(req) && bindingStatus !== "bound") {
-        return NextResponse.redirect(
-          new URL(`/${req.nextUrl.pathname.split("/")[1]}/tasks/bind`, req.url)
-        );
       }
     }
 

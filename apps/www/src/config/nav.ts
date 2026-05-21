@@ -41,7 +41,6 @@ export const SOCIAL_NAV = defineNavItems([
 export const RESOURCES_NAV = defineNavItems([
   { title: "Blog", href: "/blog" },
   { title: "Changelog", href: "/changelog" },
-  { title: "Integrations", href: "/integrations" },
 ]);
 
 // Navigation for the pitch-deck pages

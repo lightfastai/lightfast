@@ -31,8 +31,8 @@ export const PITCH_SLIDES = [
     gridTitle: "Solution",
     leftText: "THE MEMORY LAYER",
     rightText: [
-      "60+ connectors across your stack — GitHub, Vercel, Linear, Sentry, and more. Lightfast captures everything automatically.",
-      "Every event is classified, linked, and cited — so you search by meaning, not by tool.",
+      "API-first team memory. Lightfast captures structured context from your own services and agent workflows.",
+      "Every artifact is classified, linked, and cited — so you search by meaning, not by tool.",
       "People and agents get the same API. Four routes. Full context. Always cited.",
     ],
     bgColor: "bg-[#F5F5F0]",
@@ -83,7 +83,7 @@ export const PITCH_SLIDES = [
         header: "EXPANSION",
         items: [
           "Product & Engineering today. Revenue & Growth, Customer Experience, and Business Operations next.",
-          "60+ connectors across 4 verticals.",
+          "API and MCP workflows across 4 verticals.",
         ],
       },
     ],
@@ -144,7 +144,7 @@ export const PITCH_SLIDES = [
         header: "ENRICHMENT",
         items: [
           "Auto-classify, embed, extract",
-          "Cross-source relationships",
+          "Cross-context relationships",
           "Significance gating",
         ],
       },
@@ -152,7 +152,7 @@ export const PITCH_SLIDES = [
         header: "ROADMAP",
         items: [
           "Expand beyond engineering",
-          "Slack, Zendesk, CRM connectors",
+          "Agent and workflow context",
           "Agent-to-agent context passing",
         ],
       },
@@ -169,19 +169,19 @@ export const PITCH_SLIDES = [
     columns: [
       {
         header: "FREE",
-        items: ["Up to 3 users", "2 integrations", "Core search"],
+        items: ["Up to 3 users", "Core search", "API access"],
       },
       {
         header: "TEAM — $20/USER/MONTH",
         items: [
-          "Unlimited users + integrations",
+          "Unlimited team usage",
           "MCP tools + advanced search",
           "95%+ gross margin at scale",
         ],
       },
       {
         header: "ENTERPRISE",
-        items: ["Custom deployment", "SSO/SAML + SLA", "Dedicated support"],
+        items: ["Custom deployment", "SLA guarantees", "Dedicated support"],
       },
     ],
     bgColor: "bg-[#F5F5F0]",

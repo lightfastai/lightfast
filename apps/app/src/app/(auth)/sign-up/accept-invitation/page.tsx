@@ -2,21 +2,13 @@
 
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { toast } from "@repo/ui/components/ui/sonner";
-import { useClerk, useSignUp, useUser } from "@vendor/clerk/client";
-import type { OAuthStrategy } from "@vendor/clerk/types";
+import { useSignUp, useUser } from "@vendor/clerk/client";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { env } from "~/env";
 import { ErrorBanner } from "../../_components/error-banner";
-import { SeparatorWithText } from "../../_components/separator-with-text";
-import {
-  authErrorMessage,
-  mapOAuthClerkError,
-  mapOtpClerkError,
-} from "../../_hooks/auth-errors";
+import { authErrorMessage, mapOtpClerkError } from "../../_hooks/auth-errors";
 import { makeFinalizeNavigate } from "../../_hooks/auth-navigate";
 import { authBreadcrumb, authSpan } from "../../_hooks/auth-telemetry";
 import { type AuthErrorCode, authErrorCodes } from "../../_lib/search-params";
@@ -60,7 +52,6 @@ export default function AcceptInvitationPage() {
 function AcceptInvitationView() {
   const { isSignedIn, isLoaded: isUserLoaded } = useUser();
   const { signUp } = useSignUp();
-  const clerk = useClerk();
   const router = useRouter();
   const searchParams = useSearchParams();
   const ticket = searchParams.get("__clerk_ticket");
@@ -69,7 +60,6 @@ function AcceptInvitationView() {
   const hasError = !!(errorParam ?? errorCode);
 
   const [submitting, setSubmitting] = React.useState(false);
-  const [oauthLoading, setOauthLoading] = React.useState(false);
   const [pageError, setPageError] = React.useState<string | null>(null);
 
   React.useEffect(() => {
@@ -77,49 +67,6 @@ function AcceptInvitationView() {
       router.push(SUCCESS_REDIRECT);
     }
   }, [isUserLoaded, isSignedIn, router]);
-
-  React.useEffect(() => {
-    const reset = () => setOauthLoading(false);
-    // bfcache restore on this page leaves window.Clerk.loaded === false and
-    // window.Clerk.client === undefined; the React closures hold a dead
-    // signUp/clerk and OAuth/email clicks silently no-op. This combination is
-    // unique to /sign-up/accept-invitation because the OAuth handler below
-    // drops to legacy clerk.client.signUp.authenticateWithRedirect() — that
-    // codepath leaves Clerk's singleton in an unrecoverable state after
-    // bfcache restore. /sign-in and /sign-up (no ticket) use signUp.sso() /
-    // signIn.sso() and hydrate cleanly after restore.
-    //
-    // The legacy escape hatch exists because clerk-js@6.10.1's signUp.sso()
-    // POSTs to the sign_ups collection URL after signUp.create({strategy:
-    // 'ticket'}) instead of the resource URL → 405. Filed upstream as
-    // clerk/javascript#8551.
-    //
-    // The bfcache state-corruption itself (Clerk.loaded === false after Back
-    // from IdP on this page) appears to be a latent bug newly exposed by
-    // clerk/javascript#7775 (which intentionally re-enabled bfcache
-    // eligibility by removing SafeLock's beforeunload listener). Verified
-    // empirically in this app at clerk-js@6.10.1, but could not isolate to
-    // a minimal Next.js + @clerk/nextjs repro — the missing ingredient
-    // appears to be clerkMiddleware / MFE-proxy / HTTPS-cookie related.
-    // Not currently filed upstream.
-    //
-    // Reload on bfcache restore to force fresh Clerk init. Drop this once
-    // either #8551 is closed (eliminating the legacy path entirely) or a
-    // minimal repro reveals the bfcache trigger.
-    const onPageShow = (e: PageTransitionEvent) => {
-      if (e.persisted) {
-        window.location.reload();
-        return;
-      }
-      reset();
-    };
-    window.addEventListener("pagehide", reset);
-    window.addEventListener("pageshow", onPageShow);
-    return () => {
-      window.removeEventListener("pagehide", reset);
-      window.removeEventListener("pageshow", onPageShow);
-    };
-  }, []);
 
   const ticketErrorPath = React.useCallback(
     (params: { errorCode?: string; error?: string }) => {
@@ -207,89 +154,6 @@ function AcceptInvitationView() {
     }
   }, [ticket, submitting, signUp, ticketErrorPath]);
 
-  const handleOAuth = React.useCallback(
-    async (strategy: OAuthStrategy) => {
-      if (!ticket || oauthLoading) {
-        return;
-      }
-      setOauthLoading(true);
-      setPageError(null);
-      authBreadcrumb("OAuth sign-in initiated", "info", {
-        strategy,
-        mode: "sign-up",
-      });
-
-      try {
-        const { error: createError } = await authSpan(
-          "auth.ticket.create",
-          { mode: "sign-up", strategy },
-          () => signUp.create({ ticket, legalAccepted: true })
-        );
-        if (createError) {
-          const mapped = mapOAuthClerkError(createError);
-          if (mapped.kind === "code" && mapped.errorCode === "waitlist") {
-            window.location.replace(ticketErrorPath({ errorCode: "waitlist" }));
-            return;
-          }
-          if (mapped.kind === "redirect") {
-            window.location.href = mapped.target;
-            return;
-          }
-          if (mapped.kind === "inline") {
-            setPageError(mapped.message);
-            setOauthLoading(false);
-            return;
-          }
-        }
-
-        // Future API gap on clerk-js@6.10.1: there's no clean OAuth-with-ticket
-        // primitive. Verified empirically (2026-05-14):
-        //   - signUp.create({strategy:'ticket',ticket,legalAccepted}) auto-
-        //     completes the signUp via the ticket verification, so signUp.sso()
-        //     becomes a no-op on an already-finalized resource (user created,
-        //     no external account, no session).
-        //   - signUp.ticket({ticket,legalAccepted}) binds the resource but
-        //     leaves emailAddress null (missing_requirements stays).
-        //     signUp.sso() then 405s — sends POST /v1/client/sign_ups?_method=
-        //     PATCH instead of PATCH /v1/client/sign_ups/{id}.
-        //   - signUp.sso({strategy,…}) alone (no prior call) fails the same way.
-        // The legacy authenticateWithRedirect({continueSignUp:true,legalAccepted})
-        // sends the correct PATCH against the ticket-bound resource above.
-        await authSpan(
-          "auth.oauth.initiate",
-          { mode: "sign-up", strategy },
-          () =>
-            clerk.client.signUp.authenticateWithRedirect({
-              strategy,
-              redirectUrl: `/sso-callback?__clerk_ticket=${encodeURIComponent(ticket)}`,
-              redirectUrlComplete: SUCCESS_REDIRECT,
-              continueSignUp: true,
-              legalAccepted: true,
-            })
-        );
-        // On success, Clerk navigates to the IdP — control doesn't return.
-      } catch (err) {
-        const mapped = mapOAuthClerkError(err);
-        if (mapped.kind === "code" && mapped.errorCode === "waitlist") {
-          window.location.replace(ticketErrorPath({ errorCode: "waitlist" }));
-          return;
-        }
-        if (mapped.kind === "redirect") {
-          window.location.href = mapped.target;
-          return;
-        }
-        if (mapped.kind === "inline") {
-          toast.error(mapped.message);
-          setOauthLoading(false);
-          return;
-        }
-        toast.error("An unexpected error occurred");
-        setOauthLoading(false);
-      }
-    },
-    [ticket, oauthLoading, signUp, clerk, ticketErrorPath]
-  );
-
   if (!ticket) {
     return (
       <div className="w-full max-w-md space-y-4 text-center">
@@ -335,40 +199,7 @@ function AcceptInvitationView() {
           <>
             <Button
               className="w-full"
-              disabled={oauthLoading || submitting}
-              onClick={() => handleOAuth("oauth_github")}
-              size="lg"
-              variant="outline"
-            >
-              {oauthLoading ? (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Icons.gitHub className="mr-2 h-4 w-4" />
-              )}
-              Continue with GitHub
-            </Button>
-            {env.NEXT_PUBLIC_VERCEL_ENV === "development" ? (
-              <Button
-                className="w-full"
-                disabled={oauthLoading || submitting}
-                onClick={() => handleOAuth("oauth_custom_test_idp")}
-                size="lg"
-                variant="outline"
-              >
-                {oauthLoading ? (
-                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Icons.gitHub className="mr-2 h-4 w-4" />
-                )}
-                Continue with Test IdP
-              </Button>
-            ) : null}
-
-            <SeparatorWithText text="Or" />
-
-            <Button
-              className="w-full"
-              disabled={submitting || oauthLoading}
+              disabled={submitting}
               onClick={handleAccept}
               size="lg"
             >

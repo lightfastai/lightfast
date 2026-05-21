@@ -44,7 +44,7 @@ const RESULT_ITEMS = [
     timestamp: "1 week ago",
   },
   {
-    title: "OAuth2 provider comparison notes",
+    title: "API key rotation notes",
     domain: "notion.so/acme/docs",
     timestamp: "2 weeks ago",
   },

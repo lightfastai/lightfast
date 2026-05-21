@@ -84,7 +84,7 @@ Unlike keyword search, Lightfast understands **intent and context**:
 ```
 
 Finds:
-- PRs titled "Update auth flow for OAuth2"
+- Pull requests titled "Email login refactor"
 - Issues about "login security improvements"
 - Discussions on "user session management"
 
@@ -108,7 +108,7 @@ Control quality vs. latency with the `mode` parameter:
 
 ## Filtering
 
-Filter results by source, type, contributor, or date:
+Filter results by type, contributor, entity, or date:
 
 ```typescript
 const results = await fetch('https://lightfast.ai/api/v1/search', {
@@ -120,8 +120,8 @@ const results = await fetch('https://lightfast.ai/api/v1/search', {
   body: JSON.stringify({
     query: 'authentication',
     filters: {
-      sourceTypes: ['github'],
       observationTypes: ['pull_request', 'issue'],
+      entityTypes: ['repository', 'service'],
       actorNames: ['@alice'],
       dateRange: {
         start: '2024-01-01T00:00:00Z'
@@ -157,14 +157,14 @@ All errors follow a consistent format:
 
 See [Error Reference](/api/getting-started/errors) for complete list and handling strategies.
 
-## What Gets Indexed?
+## What Can Be Searched?
 
-Lightfast indexes content from connected sources:
-- **GitHub**: PRs, issues, commits, discussions
-- **Linear**: Issues, comments, projects
-- **Vercel**: Deployments, logs
+Lightfast searches workspace memory that your organization has loaded into the platform:
+- Decision records, runbooks, and documentation
+- Engineering observations and incident notes
+- Entities such as services, repositories, projects, and people
 
-Connect sources in the [Console](https://lightfast.ai) settings.
+Create an organization, add an API key, and use the API or MCP server to query the memory available to that organization.
 
 ## Next Steps
 

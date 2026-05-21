@@ -65,21 +65,6 @@ export function mapOtpClerkError(err: unknown): MappedAuthError {
   }
 }
 
-export function mapOAuthClerkError(err: unknown): MappedAuthError {
-  const e = asClerkAPIError(err);
-  if (!e) {
-    return { kind: "inline", message: "Authentication failed" };
-  }
-
-  if (e.code === "sign_up_restricted_waitlist") {
-    return { kind: "code", errorCode: "waitlist" };
-  }
-  if (e.code === "session_exists") {
-    return { kind: "redirect", target: SUCCESS_REDIRECT };
-  }
-  return { kind: "inline", message: e.longMessage ?? e.message };
-}
-
 export function authErrorMessage(code: AuthErrorCode): string {
   return AUTH_ERROR_MESSAGES[code];
 }

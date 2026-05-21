@@ -54,7 +54,6 @@ export const organizationRouter = {
     .query(async ({ ctx, input }) => {
       try {
         return await getOrgAccessBySlug({
-          db: ctx.db,
           slug: input.slug,
           userId: ctx.auth.identity.userId,
         });

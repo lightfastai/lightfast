@@ -29,11 +29,6 @@ import {
   ValidationErrorList,
   ValidationExample,
 } from "~/app/(app)/(content)/docs/_components/validation-error";
-import {
-  IntegrationFeature,
-  IntegrationFeatureGrid,
-} from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-feature-grid";
-import { IntegrationScreenshot } from "~/app/(app)/(marketing)/(content)/integrations/_components/integration-screenshot";
 
 // Properly typed component props based on react-markdown's actual types
 type MarkdownComponentProps = React.HTMLAttributes<HTMLElement> & {
@@ -400,11 +395,6 @@ export const mdxComponents = {
       </div>
     );
   },
-
-  // Integration components
-  IntegrationFeatureGrid,
-  IntegrationFeature,
-  IntegrationScreenshot,
 
   // Custom components
   FeatureList,

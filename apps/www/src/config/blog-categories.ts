@@ -72,7 +72,7 @@ export const BLOG_CATEGORY_META: Record<BlogCategory, BlogCategoryMeta> = {
       {
         question: "What product updates are covered here?",
         answer:
-          "Feature launches, new surfaces in the Lightfast console, integrations with providers like GitHub and Linear, and the reasoning behind product decisions we've shipped.",
+          "Feature launches, new surfaces in the Lightfast console, API and MCP improvements, and the reasoning behind product decisions we've shipped.",
       },
       {
         question: "How do product posts differ from the changelog?",
@@ -130,7 +130,7 @@ export const BLOG_CATEGORY_META: Record<BlogCategory, BlogCategoryMeta> = {
     tagline:
       "Step-by-step guides for building with Lightfast, MCP tools, and agent orchestration.",
     description:
-      "Step-by-step tutorials from Lightfast on building with the platform, wiring up MCP tools, orchestrating AI agents, and integrating with GitHub, Linear, and more.",
+      "Step-by-step tutorials from Lightfast on building with the platform, wiring up MCP tools, orchestrating AI agents, and using the API in production.",
     ogTitle: "Blog — Tutorials",
     keywords: [
       "lightfast tutorial",
@@ -139,14 +139,14 @@ export const BLOG_CATEGORY_META: Record<BlogCategory, BlogCategoryMeta> = {
       "agent orchestration tutorial",
       "lightfast sdk examples",
       "how to build ai agents",
-      "github integration tutorial",
-      "linear integration tutorial",
+      "api key tutorial",
+      "mcp server tutorial",
     ],
     faq: [
       {
         question: "What kind of tutorials are published here?",
         answer:
-          "Hands-on guides for building with Lightfast: SDK usage, MCP tool authoring, agent orchestration patterns, provider integrations, and operational playbooks for production.",
+          "Hands-on guides for building with Lightfast: SDK usage, MCP tool authoring, agent orchestration patterns, and operational playbooks for production.",
       },
       {
         question: "Are the tutorials kept up to date?",

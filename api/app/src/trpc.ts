@@ -213,95 +213,11 @@ export const pendingAllowedProcedure = authedProcedure;
 /**
  * Pending-Not-Allowed Procedure
  *
- * Admits sessions with an `active` identity, *regardless of binding status*. A
- * `pending` identity throws `FORBIDDEN` with an `ORG_REQUIRED` entry in
- * `data.diagnostics[]`.
+ * Requires an active organization. A `pending` identity throws `FORBIDDEN`
+ * with an `ORG_REQUIRED` entry in `data.diagnostics[]`.
  *
  * `ctx.auth.identity.orgId` is guaranteed in handlers.
- *
- * This is no longer the default for org work — it does not enforce that the
- * org has completed setup. Use it only for active-org settings/setup surfaces
- * that must stay reachable before an org is bound. New product features should
- * use `boundOrgProcedure`; the v1 setup surface uses `setupProcedure`.
- *
- * For procedures that must remain callable during onboarding, use
- * `pendingAllowedProcedure`.
- *
- * @see https://trpc.io/docs/procedures
  */
 export const pendingNotAllowedProcedure = authedProcedure.use(
   requireActiveIdentity
 );
-
-/**
- * Setup Procedure
- *
- * The pre-bind setup surface. Identical gate to `pendingNotAllowedProcedure` —
- * admits any `active` identity without checking binding status — but the
- * distinct name marks procedures that must stay callable *before* an org is
- * bound: `task.status` and `task.bind`.
- *
- * Product features should use `boundOrgProcedure` instead.
- */
-export const setupProcedure = pendingNotAllowedProcedure;
-
-/**
- * Bound-org gate. Composed after `requireActiveIdentity`; rejects an active
- * identity whose authoritative DB binding status is not `bound` with
- * `FORBIDDEN` + an `ORG_SETUP_REQUIRED` entry in `data.diagnostics[]`.
- *
- * Identity resolution reads the Lightfast DB once per request to derive this
- * compact gate. Procedures that additionally need binding details (provider
- * ids, installation) should load the DB binding row inside the handler.
- */
-const requireBoundOrg = t.middleware(({ ctx, next }) => {
-  // requireActiveIdentity (composed before this) has already excluded
-  // unauthenticated/pending identities; this guard only re-narrows the type
-  // so `orgGate` is reachable. The non-active branch is unreachable here.
-  if (ctx.auth.identity.type !== "active") {
-    throwDiagnostic({
-      trpcCode: "FORBIDDEN",
-      diagnostic: {
-        code: "ORG_REQUIRED",
-        message:
-          "Organization required. Please create or join an organization first.",
-        repair: { id: "create-or-join-org" },
-      },
-    });
-  }
-  if (ctx.auth.identity.orgGate.bindingStatus !== "bound") {
-    throwDiagnostic({
-      trpcCode: "FORBIDDEN",
-      diagnostic: {
-        code: "ORG_SETUP_REQUIRED",
-        message:
-          "Organization setup required. Connect a source-control organization before using Lightfast features.",
-        repair: { id: "bind-source-control" },
-      },
-    });
-  }
-  return next({
-    ctx: { ...ctx, auth: { ...ctx.auth, identity: ctx.auth.identity } },
-  });
-});
-
-/**
- * Bound-Org Procedure
- *
- * The default gate for org-scoped product features. Admits an `active`
- * identity whose org has completed source-control setup
- * (`bindingStatus === "bound"`). An active but unbound/revoked org throws
- * `FORBIDDEN` with an `ORG_SETUP_REQUIRED` entry in `data.diagnostics[]`.
- *
- * `ctx.auth.identity.orgId` is guaranteed in handlers.
- *
- * Typical use cases:
- * - Bound-only org product features
- * - Future workspace operations that require completed source-control setup
- *
- * For the pre-bind setup surface, use `setupProcedure`.
- *
- * @see https://trpc.io/docs/procedures
- */
-export const boundOrgProcedure =
-  pendingNotAllowedProcedure.use(requireBoundOrg);

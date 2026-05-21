@@ -27,7 +27,7 @@ The database schema includes several core tables:
 - `workspace`: Organizes nodes into user workspaces
 - `user`: Manages user accounts and authentication
 - `session`: Handles user sessions
-- `account`: Stores OAuth provider information
+- `account`: Stores account identity metadata
 
 ### Edge Constraints
 
