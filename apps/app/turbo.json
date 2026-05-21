@@ -48,6 +48,10 @@
       "persistent": true,
       "with": ["//#dev:ngrok"]
     },
+    "mfe:proxy": {
+      "cache": false,
+      "persistent": true
+    },
     "transit": {}
   }
 }
