@@ -5,7 +5,7 @@ import { LogOut, Settings, User } from "lucide-react";
 
 export function UserMenu() {
   const trpc = useTRPC();
-  const query = useQuery(trpc.pendingAllowed.account.get.queryOptions());
+  const query = useQuery(trpc.viewer.account.get.queryOptions());
 
   const email = query.data?.primaryEmailAddress ?? "";
 
