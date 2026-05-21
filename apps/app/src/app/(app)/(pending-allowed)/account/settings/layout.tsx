@@ -9,8 +9,8 @@ export default function AccountSettingsLayout({
     <div className="flex w-full flex-col">
       <div className="mx-auto w-full max-w-7xl px-6 pb-16 lg:px-8">
         {/* Header */}
-        <div className="py-8">
-          <h1 className="font-medium font-pp text-3xl text-foreground tracking-tight">
+        <div className="pt-2 pb-8">
+          <h1 className="pl-3 font-medium font-pp text-3xl text-foreground tracking-tight">
             Your Account
           </h1>
         </div>

@@ -8,7 +8,9 @@ interface Kids {
 vi.mock("@repo/ui/components/ui/sidebar", () => ({
   SidebarInset: ({ children }: Kids) => <>{children}</>,
   SidebarProvider: ({ children }: Kids) => <>{children}</>,
-  SidebarTrigger: () => null,
+  SidebarTrigger: function SidebarTrigger() {
+    return <button data-testid="sidebar-trigger" type="button" />;
+  },
 }));
 
 vi.mock("~/components/app-sidebar", () => {
@@ -63,13 +65,14 @@ function containsComponentNamed(node: unknown, componentName: string): boolean {
 }
 
 describe("[slug]/(workspace)/layout", () => {
-  it("renders the workspace sidebar shell", async () => {
+  it("renders the workspace sidebar shell with the mobile trigger in the topbar", async () => {
     const element = await WorkspaceLayout({
       children: <div>Workspace</div>,
     });
 
     expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
     expect(containsComponentNamed(element, "AppSidebar")).toBe(true);
-    expect(containsComponentNamed(element, "TeamSwitcher")).toBe(true);
+    expect(containsComponentNamed(element, "SidebarTrigger")).toBe(true);
+    expect(containsComponentNamed(element, "TeamSwitcher")).toBe(false);
   });
 });
