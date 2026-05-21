@@ -1,4 +1,4 @@
-// Short-lived (~30s TTL) one-shot store for in-flight desktop OAuth-style codes.
+// Short-lived (~30s TTL) one-shot store for in-flight desktop PKCE handoff codes.
 // Holds a Clerk JWT briefly while the desktop app exchanges code+verifier for it.
 // Upstash provides at-rest encryption + TLS in transit; the entry is consumed
 // atomically via GETDEL on first read.

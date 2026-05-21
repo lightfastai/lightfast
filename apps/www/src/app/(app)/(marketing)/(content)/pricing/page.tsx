@@ -25,11 +25,11 @@ import { createMetadata } from "~/lib/content-seo";
 export const metadata: Metadata = createMetadata({
   title: "Lightfast Pricing – Scales With Your Team",
   description:
-    "Start free for up to 3 users. Scale your operating layer as your team grows — connect more tools, ingest more events, give more agents access.",
+    "Start free for up to 3 users. Scale your operating layer as your team grows — add more teammates, search more context, give more agents access.",
   openGraph: {
     title: "Lightfast Pricing – Scales With Your Team",
     description:
-      "Pricing for Lightfast. Start free and scale with simple per-user pricing. Connect more tools, ingest more events, give more agents access.",
+      "Pricing for Lightfast. Start free and scale with simple per-user pricing, team search, and API access.",
     url: "https://lightfast.ai/pricing",
     type: "website",
   },
@@ -37,7 +37,7 @@ export const metadata: Metadata = createMetadata({
     card: "summary_large_image",
     title: "Lightfast Pricing",
     description:
-      "For every size team. Start free, scale transparently. Events, semantic search, and unlimited sources available.",
+      "For every size team. Start free, scale transparently. Semantic search and API access available.",
   },
   alternates: {
     canonical: "https://lightfast.ai/pricing",
@@ -62,7 +62,7 @@ const featureExplanations = {
     "Correlates the same person across different platforms using email matching. Links 'john@company.com' on GitHub with 'John Smith' on Linear automatically.",
 
   fullIdentityMapping:
-    "Advanced identity correlation using OAuth connections, email matching, and name similarity. Manually map identities. 100% confidence when users connect accounts.",
+    "Advanced identity correlation using email matching, name similarity, and manual mapping for teams with complex account history.",
 
   temporalStateTracking:
     "Track how entities evolve over time. Answer questions like 'What was the status last week?' or 'Show me deployments from Q3'. Full historical accuracy.",
@@ -110,7 +110,7 @@ const pricingPlans: PricingPlan[] = [
     description: "Try Lightfast with your team",
     features: [
       "Up to 3 users",
-      "2 sources included",
+      "1 organization",
       "2,500 searches/month total",
       "14-day retention",
       "Basic keyword search",
@@ -127,7 +127,7 @@ const pricingPlans: PricingPlan[] = [
     description: "Everything you need to scale",
     features: [
       "1,500 searches per user/month",
-      "5 sources included",
+      "Unlimited organization members",
       "60-day retention",
       <FeatureTooltip
         explanation={featureExplanations.semanticSearch}
@@ -148,11 +148,7 @@ const pricingPlans: PricingPlan[] = [
       "Email support",
       "Minimum 3 users",
     ],
-    addOns: [
-      "+$10 per additional source",
-      "+$5 per 1K extra searches",
-      "+$20/mo for 180-day retention",
-    ],
+    addOns: ["+$5 per 1K extra searches", "+$20/mo for 180-day retention"],
     monthlyPrice: 20,
     interval: "user/month",
     buttonText: "Start Trial",
@@ -164,7 +160,7 @@ const pricingPlans: PricingPlan[] = [
     description: "Unlimited everything. Let's talk.",
     features: [
       "Unlimited searches",
-      "Unlimited sources",
+      "Unlimited organization members",
       "1-year retention (configurable)",
       <FeatureTooltip
         explanation={featureExplanations.advancedNeuralMemory}
@@ -180,7 +176,7 @@ const pricingPlans: PricingPlan[] = [
       <FeatureTooltip
         explanation={featureExplanations.fullIdentityMapping}
         key="full-identity"
-        term="Full identity mapping (OAuth/SSO)"
+        term="Full identity mapping"
       />,
       <FeatureTooltip
         explanation={featureExplanations.temporalStateTracking}
@@ -188,7 +184,6 @@ const pricingPlans: PricingPlan[] = [
         term="Temporal state tracking"
       />,
       "Priority API access",
-      "SSO/SAML",
       "SLA guarantees",
       "Dedicated support",
     ],
@@ -207,12 +202,12 @@ const faqs = [
   {
     question: "What's included in the search allowance?",
     answer:
-      "Each user on Team plan gets 1,500 searches/month. A search is any query across your connected sources—semantic search, similar content, or AI-generated answers. For a 10-person team, that's 15,000 searches included. Most teams use 200-500 searches per user monthly. Extra searches are just $5 per 1,000. Business plan includes unlimited searches.",
+      "Each user on Team plan gets 1,500 searches/month. A search is any query through Lightfast search, similar content, or AI-generated answers. For a 10-person team, that's 15,000 searches included. Most teams use 200-500 searches per user monthly. Extra searches are just $5 per 1,000. Business plan includes unlimited searches.",
   },
   {
-    question: "How do sources and add-ons work?",
+    question: "How do add-ons work?",
     answer:
-      "Starter includes 2 sources, Team includes 5 sources (e.g., GitHub, Linear, Slack, Notion, Confluence). Business includes unlimited sources. Additional sources are $10 each on Team plan. A source is an entire workspace or organization—a GitHub org with 100 repos counts as one source. You can also add 180-day retention (+$20/mo) or extra searches as needed.",
+      "Team plans can add extra searches and longer retention as needed. You can also add 180-day retention (+$20/mo) or extra searches at $5 per 1,000 searches.",
   },
   {
     question: "What's included in decision surfacing?",
@@ -232,17 +227,17 @@ const faqs = [
   {
     question: "Can small teams use the Starter plan?",
     answer:
-      "Yes! Starter plan is free forever for up to 3 users with 2 sources and 2,500 searches/month total. Perfect for small teams, open source projects, or trying Lightfast. You get basic keyword search and 14-day retention. Upgrade to Team when you need semantic search, decision surfacing, and more sources.",
+      "Yes! Starter plan is free forever for up to 3 users with 2,500 searches/month total. Perfect for small teams, open source projects, or trying Lightfast. You get basic keyword search and 14-day retention. Upgrade to Team when you need semantic search, decision surfacing, and more team capacity.",
   },
   {
     question: "How does Business plan differ from Team?",
     answer:
-      "Business includes unlimited searches and sources, 1-year retention, advanced decision surfacing with auto-summaries, actor expertise profiles, full identity mapping (OAuth/SSO), temporal state tracking, and dedicated support. It's designed for larger organizations that need everything unlimited. Contact sales for custom pricing.",
+      "Business includes unlimited searches, 1-year retention, advanced decision surfacing with auto-summaries, actor expertise profiles, full identity mapping, temporal state tracking, SLA guarantees, and dedicated support. It's designed for larger organizations that need custom terms. Contact sales for custom pricing.",
   },
   {
     question: "How do we estimate which plan we need?",
     answer:
-      "Start with Starter if you're 1-3 people just trying Lightfast. Choose Team if you're 3-50 people and need semantic search and decision surfacing. Most teams use 200-500 searches per user monthly, well within the 1,500 included. If you need unlimited everything, SSO, or advanced features, choose Business. You can always start small and upgrade as you grow.",
+      "Start with Starter if you're 1-3 people just trying Lightfast. Choose Team if you're 3-50 people and need semantic search and decision surfacing. Most teams use 200-500 searches per user monthly, well within the 1,500 included. If you need custom retention, SLA guarantees, or advanced features, choose Business. You can always start small and upgrade as you grow.",
   },
 ];
 
@@ -277,8 +272,7 @@ export default function PricingPage() {
         price: "0",
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
-        description:
-          "Up to 3 users, 2 sources, 2,500 searches/month, 14-day retention",
+        description: "Up to 3 users, 2,500 searches/month, 14-day retention",
       },
       {
         "@type": "Offer",
@@ -287,7 +281,7 @@ export default function PricingPage() {
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "$20 per user/month. 1,500 searches per user, 5 sources, semantic search, decision surfacing included",
+          "$20 per user/month. 1,500 searches per user, semantic search, decision surfacing included",
       },
       {
         "@type": "Offer",
@@ -296,7 +290,7 @@ export default function PricingPage() {
         priceCurrency: "USD",
         availability: "https://schema.org/InStock",
         description:
-          "Contact us for enterprise pricing. Unlimited searches and sources, advanced decision surfacing, SSO",
+          "Contact us for enterprise pricing. Unlimited searches, advanced decision surfacing, SLA guarantees",
       },
     ],
     isAccessibleForFree: true,

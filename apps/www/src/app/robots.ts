@@ -39,7 +39,6 @@ export default function robots(): MetadataRoute.Robots {
 
           // Organization/workspace private routes (console app: /[orgSlug]/...)
           "/*/settings/", // Org and workspace settings
-          "/*/sources/", // Source integrations management
           "/*/insights/", // Analytics and insights
           "/*/jobs/", // Background jobs
           "/*/search/", // Authenticated workspace search
@@ -47,8 +46,7 @@ export default function robots(): MetadataRoute.Robots {
           // Internal/preview/test content (www app)
           "/pitch-deck", // Internal pitch deck
 
-          // OAuth and sensitive flows
-          "/oauth/", // OAuth callback routes (GitHub, Vercel)
+          // Sensitive flows
           "/confirm/", // Email confirmations
         ],
       },

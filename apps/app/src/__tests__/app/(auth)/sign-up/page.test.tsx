@@ -32,7 +32,6 @@ interface SignUpStub {
   create: Mock;
   emailAddress: string | null;
   finalize: Mock;
-  sso: Mock;
   status: "missing_requirements" | "complete";
   verifications: {
     sendEmailCode: Mock;
@@ -63,7 +62,6 @@ function makeSignUpStub(): SignUpStub {
         }
       }
     ),
-    sso: vi.fn().mockResolvedValue({ error: null }),
   };
 }
 
@@ -148,19 +146,15 @@ describe("sign-up — legal acceptance gate", () => {
     ).toBeInTheDocument();
   });
 
-  it("blocks OAuth click when checkbox is unchecked", async () => {
+  it("does not render social or test-provider sign-up buttons", () => {
     render(<SignUpPage />);
 
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /continue with github/i })
-      );
-    });
-
-    expect(signUpStub.sso).not.toHaveBeenCalled();
     expect(
-      screen.getByText(/you must accept the terms of service/i)
-    ).toBeInTheDocument();
+      screen.queryByRole("button", { name: /continue with github/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /continue with test idp/i })
+    ).not.toBeInTheDocument();
   });
 });
 
@@ -210,26 +204,6 @@ describe("sign-up — email submit", () => {
     });
     expect(signUpStub.verifications.sendEmailCode).not.toHaveBeenCalled();
     expect(hrefValue).toBe("/");
-  });
-});
-
-describe("sign-up — OAuth", () => {
-  it("forwards GitHub strategy to signUp.sso with legalAccepted=true and Future API shape", async () => {
-    render(<SignUpPage />);
-
-    checkLegalAccepted();
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /continue with github/i })
-      );
-    });
-
-    expect(signUpStub.sso).toHaveBeenCalledWith({
-      strategy: "oauth_github",
-      legalAccepted: true,
-      redirectCallbackUrl: "/sso-callback",
-      redirectUrl: "/",
-    });
   });
 });
 

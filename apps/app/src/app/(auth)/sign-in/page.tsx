@@ -4,19 +4,12 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import type { OAuthStrategy } from "@vendor/clerk";
 import { useSignIn } from "@vendor/clerk";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
-import { env } from "~/env";
 import { ErrorBanner } from "../_components/error-banner";
-import { SeparatorWithText } from "../_components/separator-with-text";
 import { CodeVerificationUI } from "../_components/shared/code-verification-ui";
-import {
-  authErrorMessage,
-  mapOAuthClerkError,
-  mapOtpClerkError,
-} from "../_hooks/auth-errors";
+import { authErrorMessage, mapOtpClerkError } from "../_hooks/auth-errors";
 import { makeFinalizeNavigate } from "../_hooks/auth-navigate";
 import { authBreadcrumb, authSpan } from "../_hooks/auth-telemetry";
 import { type AuthErrorCode, authErrorCodes } from "../_lib/search-params";
@@ -60,22 +53,8 @@ function SignInView() {
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [isRedirecting, setIsRedirecting] = React.useState(false);
   const [isResending, setIsResending] = React.useState(false);
-  const [oauthLoading, setOauthLoading] = React.useState(false);
 
   const verifyingCodeRef = React.useRef<string | null>(null);
-
-  // bfcache reset: when user clicks GitHub then hits Back without picking an
-  // account, Chrome restores the page from the bfcache with React state intact.
-  // Without this, oauthLoading stays true and the button is left disabled.
-  React.useEffect(() => {
-    const reset = () => setOauthLoading(false);
-    window.addEventListener("pagehide", reset);
-    window.addEventListener("pageshow", reset);
-    return () => {
-      window.removeEventListener("pagehide", reset);
-      window.removeEventListener("pageshow", reset);
-    };
-  }, []);
 
   const handleWaitlist = React.useCallback(() => {
     window.location.replace("/sign-in?errorCode=waitlist");
@@ -144,7 +123,7 @@ function SignInView() {
   const onSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const trimmed = email.trim();
-    if (!trimmed || submitting || oauthLoading) {
+    if (!trimmed || submitting) {
       return;
     }
     setSubmitting(true);
@@ -272,55 +251,6 @@ function SignInView() {
     window.location.replace("/sign-in");
   }, []);
 
-  const handleOAuth = React.useCallback(
-    async (strategy: OAuthStrategy) => {
-      if (oauthLoading || submitting) {
-        return;
-      }
-      setOauthLoading(true);
-      authBreadcrumb("OAuth sign-in initiated", "info", {
-        strategy,
-        mode: "sign-in",
-      });
-      try {
-        const { error: ssoError } = await authSpan(
-          "auth.oauth.initiate",
-          { mode: "sign-in", strategy },
-          () =>
-            signIn.sso({
-              strategy,
-              redirectCallbackUrl: "/sso-callback",
-              redirectUrl: SUCCESS_REDIRECT,
-            })
-        );
-        if (ssoError) {
-          const mapped = mapOAuthClerkError(ssoError);
-          if (mapped.kind === "code" && mapped.errorCode === "waitlist") {
-            authBreadcrumb("OAuth blocked by waitlist (sso)", "warning", {
-              strategy,
-            });
-            handleWaitlist();
-            return;
-          }
-          if (mapped.kind === "redirect") {
-            window.location.href = mapped.target;
-            return;
-          }
-          if (mapped.kind === "inline") {
-            toast.error(mapped.message);
-            setOauthLoading(false);
-            return;
-          }
-        }
-        // On success, Clerk navigates to the IdP — control doesn't return.
-      } catch {
-        toast.error("An unexpected error occurred");
-        setOauthLoading(false);
-      }
-    },
-    [oauthLoading, submitting, signIn, handleWaitlist]
-  );
-
   return (
     <div className="w-full space-y-8">
       {view === "email" && !hasError && (
@@ -341,65 +271,32 @@ function SignInView() {
         )}
 
         {!hasError && view === "email" && (
-          <>
-            <form className="space-y-4" onSubmit={onSubmit}>
-              <Input
-                autoComplete="email"
-                className="bg-background dark:bg-background"
-                disabled={submitting}
-                name="email"
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder="Email Address"
-                required
-                size="lg"
-                type="email"
-                value={email}
-              />
-              <Button
-                className="w-full"
-                disabled={submitting || oauthLoading}
-                size="lg"
-                type="submit"
-              >
-                {submitting ? (
-                  <Icons.spinner className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Continue with Email"
-                )}
-              </Button>
-            </form>
-            <SeparatorWithText text="Or" />
+          <form className="space-y-4" onSubmit={onSubmit}>
+            <Input
+              autoComplete="email"
+              className="bg-background dark:bg-background"
+              disabled={submitting}
+              name="email"
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder="Email Address"
+              required
+              size="lg"
+              type="email"
+              value={email}
+            />
             <Button
               className="w-full"
-              disabled={oauthLoading || submitting}
-              onClick={() => handleOAuth("oauth_github")}
+              disabled={submitting}
               size="lg"
-              variant="outline"
+              type="submit"
             >
-              {oauthLoading ? (
-                <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
+              {submitting ? (
+                <Icons.spinner className="h-4 w-4 animate-spin" />
               ) : (
-                <Icons.gitHub className="mr-2 h-4 w-4" />
+                "Continue with Email"
               )}
-              Continue with GitHub
             </Button>
-            {env.NEXT_PUBLIC_VERCEL_ENV === "development" ? (
-              <Button
-                className="w-full"
-                disabled={oauthLoading || submitting}
-                onClick={() => handleOAuth("oauth_custom_test_idp")}
-                size="lg"
-                variant="outline"
-              >
-                {oauthLoading ? (
-                  <Icons.spinner className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Icons.gitHub className="mr-2 h-4 w-4" />
-                )}
-                Continue with Test IdP
-              </Button>
-            ) : null}
-          </>
+          </form>
         )}
 
         {!hasError && view === "code" && (

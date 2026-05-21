@@ -27,7 +27,6 @@
     "dev:setup": "node scripts/dev-services.mjs setup && pnpm db:migrate",
     "dev:doctor": "node scripts/dev-services.mjs doctor --postgres-table lightfast_gateway_installations",
     "dev:ngrok": "./scripts/ngrok 3024",
-    "dev:emulate": "node scripts/dev-emulate.mjs",
     "dev:email": "turbo run dev:email -F @lightfast/www",
     "brain": "turbo run eval",
     "check": "npx ultracite@latest check",

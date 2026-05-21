@@ -1,6 +1,6 @@
 ---
 title: MCP Server
-description: Connect AI assistants to your workspace memory via Model Context Protocol for real-time semantic search across your tools.
+description: Connect AI assistants to your workspace memory via Model Context Protocol for semantic search.
 keywords:
   - MCP
   - Model Context Protocol
@@ -131,15 +131,14 @@ Once configured, your AI assistant has access to the `lightfast_search` tool.
 
 ### lightfast_search
 
-Search through connected tools for relevant decisions and observations.
+Search workspace memory for relevant decisions and observations.
 
 **Parameters:**
 - `query` (required): Natural language search query
 - `limit`: Max results, 1–100 (default: 10)
 - `offset`: Pagination offset (default: 0)
 - `mode`: `"fast"` (vector scores only) or `"balanced"` (Cohere rerank, default)
-- `sources`: Filter by provider (e.g. `["github", "linear"]`)
-- `types`: Filter by entity type (e.g. `["pull_request", "issue"]`)
+- `types`: Filter by entity type (e.g. `["decision", "incident"]`)
 - `after`: ISO 8601 datetime lower bound
 - `before`: ISO 8601 datetime upper bound
 
@@ -210,11 +209,11 @@ This is especially useful in MCP configurations where you don't want to hardcode
 
 ### Permission errors
 
-1. Lightfast respects your GitHub permissions
-2. Ensure your workspace has the repositories you're searching
-3. Check that your API key has access to the workspace
+1. Check that your API key has access to the workspace
+2. Confirm the organization has searchable memory available
+3. Regenerate the API key if it was revoked or rotated
 
 ## Next Steps
 
-- <NextLink href="/docs/integrate/sdk">Use the SDK for custom integrations</NextLink>
+- <NextLink href="/docs/integrate/sdk">Use the SDK in your application</NextLink>
 - [View MCP source on GitHub](https://github.com/lightfastai/lightfast/tree/main/core/mcp)

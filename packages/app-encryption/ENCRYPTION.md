@@ -1,6 +1,6 @@
 # Encryption Utility
 
-Secure AES-256-GCM encryption for storing sensitive data like OAuth tokens and API keys.
+Secure AES-256-GCM encryption for storing sensitive application secrets.
 
 ## Overview
 
@@ -45,7 +45,7 @@ node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 ```typescript
 import { encrypt } from "@repo/app-encryption";
 
-const token = "ghp_1234567890abcdefghijklmnopqrstuvwxyz";
+const token = "secret_1234567890abcdefghijklmnopqrstuvwxyz";
 const key = process.env.ENCRYPTION_KEY!;
 
 const encrypted = encrypt(token, key);
@@ -61,7 +61,7 @@ const encrypted = "W78VnVQxfrv3zFfcLbiMkFt/FG+iWFNgnEHi6AwbzUHZ...";
 const key = process.env.ENCRYPTION_KEY!;
 
 const decrypted = decrypt(encrypted, key);
-// Returns: "ghp_1234567890abcdefghijklmnopqrstuvwxyz"
+// Returns: "secret_1234567890abcdefghijklmnopqrstuvwxyz"
 ```
 
 ## Encryption Format
@@ -77,7 +77,7 @@ The encrypted string is a base64-encoded combination of:
 - **Ciphertext**: Encrypted data (same length as plaintext)
 
 **Example breakdown:**
-- Plaintext: `"ghp_1234567890"` (14 chars = 14 bytes)
+- Plaintext: `"secret_1234567890"` (17 chars = 17 bytes)
 - IV: 12 bytes
 - Auth Tag: 16 bytes
 - Ciphertext: 14 bytes
@@ -180,50 +180,37 @@ export const env = createEnv({
 
 ## Implementation Details
 
-### OAuth Token Flow
+### Secret Storage Flow
 
-**1. User completes GitHub OAuth** (`apps/app/src/app/(github)/api/github/callback/route.ts`):
+**1. Encrypt a sensitive value before storage**:
 
 ```typescript
 import { encrypt } from "@repo/app-encryption";
 import { env } from "~/env";
 
-// Exchange OAuth code for access token
-const tokenResponse = await fetch("https://github.com/login/oauth/access_token", {
-  method: "POST",
-  body: JSON.stringify({ client_id, client_secret, code }),
-});
+const secret = "sensitive application value";
+const encryptedSecret = encrypt(secret, env.ENCRYPTION_KEY);
 
-const { access_token } = await tokenResponse.json();
-
-// Encrypt token before storing
-const encryptedToken = encrypt(access_token, env.ENCRYPTION_KEY);
-
-await db.insert(integrations).values({
+await db.insert(secrets).values({
   userId: clerkUserId,
-  provider: "github",
-  accessToken: encryptedToken, // ✓ Stored encrypted
+  value: encryptedSecret, // Stored encrypted
 });
 ```
 
-**2. API uses token** (`api/app/src/router/integration.ts`):
+**2. Decrypt only at the point of use**:
 
 ```typescript
 import { decrypt } from "@repo/app-encryption";
 import { env } from "../env";
 
-// Fetch integration from database
-const integration = await db
+const [storedSecret] = await db
   .select()
-  .from(integrations)
-  .where(eq(integrations.userId, userId))
+  .from(secrets)
+  .where(eq(secrets.userId, userId))
   .limit(1);
 
-// Decrypt token before use
-const accessToken = decrypt(integration.accessToken, env.ENCRYPTION_KEY);
-
-// Use decrypted token
-const { installations } = await getUserInstallations(accessToken);
+if (!storedSecret) throw new Error("Secret not found");
+const plaintext = decrypt(storedSecret.value, env.ENCRYPTION_KEY);
 ```
 
 ### Security Considerations
@@ -256,20 +243,20 @@ To rotate encryption keys:
    import { encrypt, decrypt } from "@repo/app-encryption";
 
    // Migration script
-   const integrations = await db.select().from(integrations);
+   const rows = await db.select().from(secrets);
 
-   for (const integration of integrations) {
+   for (const row of rows) {
      // Decrypt with old key
-     const plaintext = decrypt(integration.accessToken, OLD_KEY);
+     const plaintext = decrypt(row.value, OLD_KEY);
 
      // Encrypt with new key
      const newEncrypted = encrypt(plaintext, NEW_KEY);
 
      // Update record
      await db
-       .update(integrations)
-       .set({ accessToken: newEncrypted })
-       .where(eq(integrations.id, integration.id));
+       .update(secrets)
+       .set({ value: newEncrypted })
+       .where(eq(secrets.id, row.id));
    }
    ```
 

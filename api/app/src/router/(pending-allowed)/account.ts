@@ -44,7 +44,7 @@ function deriveInitials(input: {
  *
  * Table-based operations have been moved to:
  * - API Keys: org-api-keys router (org-scoped)
- * - Integrations: user-sources router
+ * - Workspace memory: query and ingestion routers
  */
 
 export const accountRouter = {

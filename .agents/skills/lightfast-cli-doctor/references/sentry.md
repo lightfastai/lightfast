@@ -27,14 +27,14 @@ After install, re-run the *installed* probe.
 sentry auth login
 ```
 
-Device-code OAuth — prints a code + URL, waits for the callback. Because device-code reads stdin only for the timeout-confirmation step, this flow works under Claude Code's `!` shell prefix (output streams in; user opens the printed URL in a separate browser).
+Device-code browser sign-in — prints a code + URL, waits for the callback. Because device-code reads stdin only for the timeout-confirmation step, this flow works under Claude Code's `!` shell prefix (output streams in; user opens the printed URL in a separate browser).
 
 **Non-TTY alternatives (verified 2026-05-14)**:
 
 ```
-sentry auth login --token <api-token>   # skip OAuth entirely; uses a pre-minted token
+sentry auth login --token <api-token>   # skip browser sign-in entirely; uses a pre-minted token
 sentry auth login --json                # JSON output (parseable in agent harness)
-sentry auth login --timeout 1800        # override default 900s OAuth timeout
+sentry auth login --timeout 1800        # override default 900s browser sign-in timeout
 ```
 
 For headless automation, set `--token` or the `SENTRY_AUTH_TOKEN` env var. For developer onboarding, the bare `! sentry auth login` works.

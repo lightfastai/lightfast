@@ -1,7 +1,7 @@
 ---
 title: "Engineering Intelligence, Shipped"
-description: "The first Lightfast release: a neural pipeline, AI chat, four source integrations, a public API, TypeScript SDK, and MCP server."
-keywords: ["lightfast", "engineering intelligence", "neural pipeline", "entity extraction", "ai chat", "github integration", "vercel integration", "linear integration", "sentry integration", "developer tools", "api", "sdk", "mcp"]
+description: "The first Lightfast release: a neural pipeline, AI chat, a public API, TypeScript SDK, and MCP server."
+keywords: ["lightfast", "engineering intelligence", "neural pipeline", "entity extraction", "ai chat", "developer tools", "api", "sdk", "mcp"]
 canonicalUrl: "https://lightfast.ai/changelog/2026-03-26-lightfast-engineering-intelligence-shipped"
 ogTitle: "Engineering Intelligence, Shipped"
 ogDescription: "A neural pipeline that turns engineering events into searchable, connected knowledge you can query with AI."
@@ -17,12 +17,10 @@ updatedAt: "2026-04-08T12:00:00Z"
 version: "v0.1.0"
 type: "feature"
 featuredImage: "/images/changelog/v010-featured.png"
-tldr: "Lightfast v0.1.0 ships a neural pipeline that extracts entities and relationships from GitHub, Vercel, Linear, and Sentry — then lets you query it all with AI."
+tldr: "Lightfast v0.1.0 ships a neural pipeline for extracting entities and relationships, then lets you query them with AI."
 faq:
   - question: "What is Lightfast and what does it do?"
-    answer: "Lightfast is an engineering intelligence platform. It connects to your developer tools, processes events through a neural pipeline that extracts entities and relationships, and lets you query everything with AI."
-  - question: "What sources does Lightfast connect to in v0.1.0?"
-    answer: "Lightfast connects to GitHub, Vercel, Linear, and Sentry via OAuth. Events flow in real-time through webhooks and are automatically processed by the neural pipeline."
+    answer: "Lightfast is an engineering intelligence platform. It processes team knowledge through a neural pipeline that extracts entities and relationships, and lets you query everything with AI."
   - question: "How does the Lightfast neural pipeline work?"
     answer: "Every incoming event is validated, scored for significance, and decomposed into entities like PRs, deployments, issues, and endpoints. Entities are linked into a relationship graph and embedded into a vector store for semantic search."
   - question: "Can I access Lightfast programmatically?"
@@ -41,7 +39,7 @@ improvements:
   - "Command palette — navigate anywhere or search entities with Cmd+K"
 ---
 
-Lightfast v0.1.0 introduces a neural pipeline that extracts entities and relationships from GitHub, Vercel, Linear, and Sentry events, an AI chat interface for querying your engineering data, a public REST API, a TypeScript SDK, and an MCP server for AI agent integration.
+Lightfast v0.1.0 introduces a neural pipeline that extracts entities and relationships from team knowledge, an AI chat interface for querying your engineering data, a public REST API, a TypeScript SDK, and an MCP server for AI agent workflows.
 
 ## How does the neural pipeline process events?
 
@@ -52,7 +50,7 @@ The neural pipeline is the core of Lightfast. Every webhook event flows through 
 3. **Graph** — resolves relationships between co-occurring entities and inserts edges with confidence scores. Entities that appear together in the same events become connected.
 4. **Embed** — builds a narrative summary for each entity (identity, recent activity, relationships), generates a vector embedding, and upserts it into the search index.
 
-Connect a source, and the pipeline handles everything from there.
+Send Lightfast structured context, and the pipeline handles the rest.
 
 ## How does Explore use AI to answer engineering questions?
 
@@ -61,26 +59,17 @@ Explore is a streaming AI interface that searches your entity graph, retrieves r
 Ask questions about your infrastructure and get answers with full provenance. Collapsible reasoning traces and tool call cards show exactly which entities and events informed each response.
 
 - Semantic search across all extracted entities
-- Cited answers with source attribution
+- Cited answers with source references
 - Streaming responses with reasoning visibility
 - Markdown-formatted output
 
-## What sources can I connect to Lightfast?
+## How does Lightfast receive context?
 
-![Connected sources](/images/changelog/v010-sources.png)
+Lightfast v0.1.0 focuses on API-first access. Teams can create organization API keys and send application context to Lightfast from their own backend services, scripts, and agent workflows.
 
-Lightfast v0.1.0 supports four source integrations: GitHub, Vercel, Linear, and Sentry. Each integration uses OAuth with secure token storage — GitHub via App installation tokens, the others via standard OAuth 2.0 flows.
+## How does Lightfast track entities?
 
-Once connected, events flow in real-time through webhooks. Each source shows its connection status, active resources, and event subscriptions. You choose which repos, projects, and resources to track.
-
-- **GitHub** — repositories, pull requests, pushes, issues, reviews, and more via GitHub App installation
-- **Vercel** — deployments, projects, and domain events via OAuth
-- **Linear** — issues, projects, and workflow events via OAuth
-- **Sentry** — errors, issues, and alert events via OAuth
-
-## How does Lightfast track entities across sources?
-
-The Entities view is a real-time browser for every entity extracted from your engineering events — repositories, pull requests, deployments, issues, users, endpoints, and more.
+The Entities view is a real-time browser for every entity extracted from your engineering context — repositories, pull requests, deployments, issues, users, endpoints, and more.
 
 Filter by category, search by name, and watch new entities appear live as events are processed. Each entity links to a detail view showing its full metadata and event timeline.
 
@@ -90,7 +79,7 @@ Powered by server-sent events — no polling, no refresh.
 
 ![Events feed](/images/changelog/v010-events.png)
 
-The Events view is a real-time feed of every event from your connected sources. New events stream in as they arrive via server-sent events.
+The Events view is a real-time feed of activity processed by Lightfast. New data streams in via server-sent events.
 
 Filter by provider, search by content, and scope by time range to find the events you need.
 
@@ -113,7 +102,7 @@ The TypeScript SDK (`lightfast` on npm) gives you typed access to the full Light
 npm install lightfast
 ```
 
-- [**SDK**](https://www.npmjs.com/package/lightfast) — typed methods for entity search, event retrieval, and source management
+- [**SDK**](https://www.npmjs.com/package/lightfast) — typed methods for entity search, event retrieval, and API workflows
 - [**MCP server**](https://www.npmjs.com/package/@lightfastai/mcp) — tool definitions for AI agents to search entities, retrieve events, and query the knowledge graph
 
 ## How do API keys work in Lightfast?
@@ -122,4 +111,3 @@ API keys in Lightfast are org-scoped and managed from the dashboard. Keys are ha
 
 - Create and revoke keys from the settings page
 - All keys are scoped to the organization that created them
-

@@ -1,11 +1,10 @@
 # `ngrok` — doctor playbook
 
-The only CLI in the doctor that does **not** use browser OAuth. ngrok auth is a static authtoken pasted from the dashboard, written to `~/Library/Application Support/ngrok/ngrok.yml` (macOS) by `ngrok config add-authtoken`.
+The only CLI in the doctor that does **not** use browser sign-in. ngrok auth is a static authtoken pasted from the dashboard, written to `~/Library/Application Support/ngrok/ngrok.yml` (macOS) by `ngrok config add-authtoken`.
 
 ## What Lightfast uses it for
 
 - `pnpm dev:ngrok` (port 3024) — see root `package.json` scripts.
-- The Test IdP OAuth playbook in `lightfast-clerk` (`references/oauth-playbook.md`) — the emulator-backed Test IdP needs a publicly reachable callback URL.
 - `scripts/ngrok:18-25` already encodes the auth-add contract for new devs; this playbook is the doctor-side mirror.
 
 ## Probe (read-only)
@@ -49,6 +48,5 @@ N/A — single-account model.
 
 ## Known gotchas
 
-- **Free-tier ngrok URLs rotate on every restart.** That is a *runtime* concern of `pnpm dev:emulate`, not a doctor concern. The doctor must NOT try to "fix" the URL drift here. The `lightfast-clerk` skill's `references/oauth-playbook.md` handles the rotation.
 - **`ngrok config check` returns 0 even with an expired or revoked token** — it only validates the file is well-formed, not that the token is live. If `pnpm dev:ngrok` later fails with 401, re-run the token-paste flow.
 - **The config file path is macOS-specific** in the probe message. On Linux the path will be `~/.config/ngrok/ngrok.yml`. The doctor does not need to handle this — `ngrok config check`'s output is informational.

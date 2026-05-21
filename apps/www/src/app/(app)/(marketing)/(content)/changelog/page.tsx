@@ -28,17 +28,12 @@ const FAQ = [
   {
     question: "What is Lightfast?",
     answer:
-      "Lightfast is an engineering intelligence platform that connects to your developer tools, processes events through a neural pipeline, and lets you query your engineering knowledge with AI.",
+      "Lightfast is an engineering intelligence platform that processes team knowledge through a neural pipeline and lets you query engineering context with AI.",
   },
   {
     question: "How often does Lightfast ship updates?",
     answer:
       "Lightfast ships continuously. Each release is documented here with a version number, change type (feature, improvement, fix, or breaking change), and detailed release notes.",
-  },
-  {
-    question: "What integrations does Lightfast support?",
-    answer:
-      "Lightfast integrates with GitHub, Vercel, Linear, and Sentry via OAuth. Events flow in real-time through webhooks and are processed by the neural pipeline.",
   },
   {
     question: "Does Lightfast have an API?",

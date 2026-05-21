@@ -31,7 +31,7 @@ export interface RegisterContractToolsOptions {
  * @example
  * ```ts
  * registerContractTools(server, apiContract, client, { prefix: "lightfast" });
- * // Registers: lightfast_search, lightfast_proxy_search, lightfast_proxy_execute
+ * // Registers: lightfast_system_health
  * ```
  */
 export function registerContractTools(

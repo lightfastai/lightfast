@@ -49,11 +49,6 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring",
   "/ingest(.*)",
   "/manifest.json",
-  // Unified OAuth callback. Must be reachable both unauthenticated (normal
-  // OAuth roundtrip) and authenticated (existingSession branch — Clerk swaps
-  // the active session inside the page). If we listed it under isAuthRoute,
-  // authenticated users would get bounced before the setActive can run.
-  "/sso-callback(.*)",
 ]);
 
 // API routes that handle their own auth at the route handler level.

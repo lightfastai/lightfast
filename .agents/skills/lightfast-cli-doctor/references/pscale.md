@@ -28,7 +28,7 @@ After install, re-run the *installed* probe.
 pscale auth login
 ```
 
-Browser OAuth — prints a confirmation code, opens the browser, waits for the callback.
+Browser sign-in — prints a confirmation code, opens the browser, waits for the callback.
 
 **Non-TTY gotcha (verified 2026-05-14)**: `pscale auth login` refuses to run via Claude Code's `!` shell prefix — it errors with `Error: the 'login' command requires an interactive shell`. pscale at v0.283.0 has no `--device-code` or analogous flag. The agent must instruct the user to:
 

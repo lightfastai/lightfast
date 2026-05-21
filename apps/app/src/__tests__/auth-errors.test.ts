@@ -1,9 +1,6 @@
 import { ClerkAPIResponseError } from "@clerk/nextjs/errors";
 import { describe, expect, it } from "vitest";
-import {
-  mapOAuthClerkError,
-  mapOtpClerkError,
-} from "~/app/(auth)/_hooks/auth-errors";
+import { mapOtpClerkError } from "~/app/(auth)/_hooks/auth-errors";
 
 // Helper: synthesize a real ClerkAPIResponseError so isClerkAPIResponseError
 // (which checks `constructor.kind === "ClerkAPIResponseError"`) returns true.
@@ -146,61 +143,5 @@ describe("mapOtpClerkError — ClerkAPIResponseError instance (documented contra
       kind: "inline",
       message: "Long form message.",
     });
-  });
-});
-
-describe("mapOAuthClerkError", () => {
-  it("maps waitlist to waitlist code (unwrapped shape)", () => {
-    expect(mapOAuthClerkError({ code: "sign_up_restricted_waitlist" })).toEqual(
-      {
-        kind: "code",
-        errorCode: "waitlist",
-      }
-    );
-  });
-
-  it("maps waitlist to waitlist code (ClerkAPIResponseError shape)", () => {
-    const err = makeApiResponseError({ code: "sign_up_restricted_waitlist" });
-    expect(mapOAuthClerkError(err)).toEqual({
-      kind: "code",
-      errorCode: "waitlist",
-    });
-  });
-
-  it("maps session_exists to redirect", () => {
-    expect(mapOAuthClerkError({ code: "session_exists" })).toEqual({
-      kind: "redirect",
-      target: "/",
-    });
-  });
-
-  it("preserves verbatim longMessage for too_many_requests (OAuth keeps Clerk-localized copy)", () => {
-    expect(
-      mapOAuthClerkError({
-        code: "too_many_requests",
-        longMessage: "Veuillez patienter avant de réessayer.",
-      })
-    ).toEqual({
-      kind: "inline",
-      message: "Veuillez patienter avant de réessayer.",
-    });
-  });
-
-  it("preserves verbatim longMessage for user_locked", () => {
-    expect(
-      mapOAuthClerkError({
-        code: "user_locked",
-        longMessage: "Account locked — Clerk localized.",
-      })
-    ).toEqual({
-      kind: "inline",
-      message: "Account locked — Clerk localized.",
-    });
-  });
-
-  it("never returns kind: success for OAuth errors", () => {
-    expect(
-      mapOAuthClerkError({ code: "verification_already_verified" }).kind
-    ).not.toBe("success");
   });
 });

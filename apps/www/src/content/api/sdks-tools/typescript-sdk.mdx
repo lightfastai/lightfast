@@ -58,16 +58,14 @@ const response = await client.search(input: SearchInput): Promise<SearchResponse
 
 #### SearchInput & Response
 
-<EmbeddedOperation operationId="search" />
+`SearchInput` accepts a natural-language `query`, optional pagination, optional search `mode`, and optional filters. `SearchResponse` returns ranked results, metadata, and a request id for support.
 
 #### SearchFilters
 
 | Property | Type | Description |
 |----------|------|-------------|
-| `sourceTypes` | `string[]` | Source types to include (e.g., `["github", "linear"]`) |
-| `observationTypes` | `string[]` | Observation types to include (e.g., `["commit", "issue"]`) |
-| `sources` | `string[]` | Source identifiers to filter by |
-| `entityTypes` | `string[]` | Entity types to filter by |
+| `observationTypes` | `string[]` | Observation types to include (e.g., `["decision", "incident"]`) |
+| `entityTypes` | `string[]` | Entity types to filter by (e.g., `["service", "repository"]`) |
 | `dateRange` | `{ start?: string; end?: string }` | Date range filter with ISO datetime strings |
 
 #### Example
@@ -78,7 +76,7 @@ const results = await client.search({
   limit: 10,
   mode: "balanced",
   filters: {
-    sourceTypes: ["github"],
+    entityTypes: ["service", "repository"],
     dateRange: {
       start: "2024-01-01T00:00:00Z",
       end: "2024-12-31T23:59:59Z",
@@ -88,58 +86,6 @@ const results = await client.search({
 
 console.log(results.data); // Array of search results
 console.log(results.meta.total); // Total matching documents
-```
-
----
-
-### proxySearch()
-
-Discover connected providers, their resources, and available actions. Returns connection IDs, resource names with pre-computed action params, and the full action catalog.
-
-```typescript
-const response = await client.proxySearch(): Promise<ProxySearchResponse>
-```
-
-#### Example
-
-```typescript
-const { connections } = await client.proxySearch();
-
-for (const conn of connections) {
-  console.log(conn.provider);    // e.g., "github"
-  console.log(conn.resources);   // Connected repos/projects with params
-  console.log(conn.actions);     // Available actions
-}
-```
-
----
-
-### proxyCall()
-
-Execute a provider API action. Use action strings from `proxySearch()` and pass a flat params object — resource params from the search response can be spread directly into the call. Auth is handled automatically.
-
-```typescript
-const response = await client.proxyCall(input: ProxyCall): Promise<ProxyCallResponse>
-```
-
-#### ProxyCall
-
-| Property | Type | Required | Description |
-|----------|------|----------|-------------|
-| `action` | `string` | Yes | Action to execute (e.g. `github.list-pull-requests`) |
-| `params` | `Record<string, unknown>` | No | Action parameters — spread resource params and add extras |
-| `connection` | `string` | No | Connection ID (optional, for future multi-connection support) |
-
-#### Example
-
-```typescript
-const result = await client.proxyCall({
-  action: "github.list-pull-requests",
-  params: { owner: "acme", repo: "web", state: "open" },
-});
-
-console.log(result.data);    // Raw provider API response
-console.log(result.status);  // HTTP status code
 ```
 
 ---

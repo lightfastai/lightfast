@@ -39,11 +39,6 @@ const wwwConfig: NextConfig = merge({}, baseConfig, {
         permanent: true,
       },
       {
-        source: "/docs/connectors",
-        destination: "/docs/connectors/github",
-        permanent: true,
-      },
-      {
         source: "/docs/integrate",
         destination: "/docs/integrate/sdk",
         permanent: true,

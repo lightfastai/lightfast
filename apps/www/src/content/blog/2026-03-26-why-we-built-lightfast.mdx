@@ -37,7 +37,7 @@ faq:
   - question: "What does 'every company is a Program' mean?"
     answer: "A company is the sum of what it decides, remembers, and does. We believe that should be expressible as text — diffable, versionable, executable. The runtime executes the Program. Lightfast itself runs this way, with its own Program committed to GitHub and executed on the runtime we ship."
   - question: "What has Lightfast shipped so far?"
-    answer: "Lightfast v0.1.0 ships a neural pipeline that extracts entities and relationships from GitHub, Vercel, Linear, and Sentry events, plus an AI chat interface (Explore), a REST API, a TypeScript SDK, and an MCP server for agent integration. The substrate is live and in production."
+    answer: "Lightfast v0.1.0 ships a neural pipeline for extracting entities and relationships from workspace memory, plus an AI chat interface (Explore), a REST API, a TypeScript SDK, and an MCP server for agent access. The substrate is live and in production."
 ---
 
 ## The connecting tissue
@@ -66,7 +66,7 @@ The gap between *I know what needs to happen* and *it happens* is supposed to cl
 
 The industry's reflex to fragmentation has been to ship another tool to manage the fragmentation.
 
-A dashboard on top of dashboards. An integration to unify your integrations. An agent to orchestrate your agents. Each one arrives promising to be the one. Each one adds its own surface area, its own auth model, its own event schema, its own way of being wrong.
+A dashboard on top of dashboards. A workflow layer to hide the workflow layers underneath it. An agent to orchestrate your agents. Each one arrives promising to be the one. Each one adds its own surface area, its own auth model, its own event schema, its own way of being wrong.
 
 We stopped believing the fix was one more app. If every app reinvents the connecting tissue, the answer isn't a better app. The answer is moving the connecting tissue out of the apps entirely.
 
@@ -74,9 +74,9 @@ We stopped believing the fix was one more app. If every app reinvents the connec
 
 An operating layer isn't a product. It's a position.
 
-It sits between every tool and everyone — agents and people — who needs to act across them. Instead of agents calling the Vercel API, the GitHub API, the Linear API, they express intent: *ship this*, *triage this*, *find out what broke*. The runtime resolves where and how. Tools stay. Teams stay. What changes is the substrate underneath.
+It sits between every system and everyone — agents and people — who needs to act across them. Instead of agents learning every product API one by one, they express intent: *ship this*, *triage this*, *find out what broke*. The runtime resolves where and how. Tools stay. Teams stay. What changes is the substrate underneath.
 
-We organised the work around four verbs. **Observe** every event across every connected tool — pushes, deployments, incidents, issues — as structured, immutable facts. **Remember** them in a graph that preserves what happened, who was involved, and how things relate. **Reason** across that graph — detect patterns, compute truth when sources conflict, enforce the invariants a team defines. **Act** on it — resolve intent to the right tool, trace every action back to the event that triggered it.
+We organised the work around four verbs. **Observe** every important event and decision as structured, immutable facts. **Remember** them in a graph that preserves what happened, who was involved, and how things relate. **Reason** across that graph — detect patterns, compute truth when records conflict, enforce the invariants a team defines. **Act** on it — resolve intent through controlled APIs, trace every action back to the event that triggered it.
 
 This was a vision paper a year ago. It isn't now. MCP landed. Embeddings got cheap enough to index everything. Webhook-first SaaS became the default. Agents got good enough to reason over structured memory when you hand it to them properly. The primitives finally exist. The substrate is the last thing left to build.
 
@@ -84,7 +84,7 @@ This was a vision paper a year ago. It isn't now. MCP landed. Embeddings got che
 
 v0.1.0 is out. The runtime is real, and it does real work.
 
-The neural pipeline ingests events from GitHub, Vercel, Linear, and Sentry in real time. Every webhook is validated, scored for significance, and decomposed into entities — pull requests, deployments, issues, endpoints, branches, users — up to fifty types per event. Entities get deduplicated, linked into a graph, and embedded for semantic search. Connect a source, and the pipeline handles the rest.
+The neural pipeline turns workspace context into structured memory. Every event is validated, scored for significance, and decomposed into entities — services, endpoints, branches, users, incidents, decisions — up to fifty types per event. Entities get deduplicated, linked into a graph, and embedded for semantic search. Once memory is loaded, the pipeline handles the rest.
 
 Explore is the first thing you can do with that substrate. Ask a question in natural language, get a streaming answer grounded in your actual events, with citations back to the source. Every response shows which entities it pulled and why. No black boxes. No summarisation without verification.
 

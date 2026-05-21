@@ -8,7 +8,6 @@ import {
   buildBlogPostJsonLd,
   buildChangelogEntryJsonLd,
   buildDocsJsonLd,
-  buildIntegrationJsonLd,
   buildLegalJsonLd,
 } from "./builders";
 import type {
@@ -16,7 +15,6 @@ import type {
   ChangelogEntryData,
   ContentSeoData,
   DocsPageData,
-  IntegrationPageData,
   LegalPageData,
 } from "./content-schemas";
 import { createArticleMetadata, createMetadata } from "./content-seo";
@@ -25,7 +23,6 @@ import type {
   BlogPostUrl,
   ChangelogUrl,
   DocsUrl,
-  IntegrationUrl,
   LegalUrl,
 } from "./url-types";
 
@@ -242,55 +239,6 @@ export function emitLegalSeo(data: LegalPageData, url: LegalUrl): SeoBundle {
       },
     }),
     jsonLd: buildLegalJsonLd(data, url),
-  };
-}
-
-export function emitIntegrationSeo(
-  data: IntegrationPageData,
-  url: IntegrationUrl
-): SeoBundle {
-  const canonicalUrl = data.canonicalUrl ?? url;
-  const ogImageUrl = `${url}/opengraph-image`;
-  return {
-    metadata: createMetadata({
-      title: `${data.title} – Lightfast Integrations`,
-      description: data.description,
-      keywords: data.keywords,
-      creator: "Lightfast",
-      publisher: "Lightfast",
-      robots: {
-        index: !data.noindex,
-        follow: !data.nofollow,
-        googleBot: {
-          index: !data.noindex,
-          follow: !data.nofollow,
-          "max-video-preview": -1,
-          "max-image-preview": "large",
-          "max-snippet": -1,
-        },
-      },
-      alternates: { canonical: canonicalUrl },
-      openGraph: {
-        title: data.ogTitle,
-        description: data.ogDescription,
-        type: "website",
-        url: canonicalUrl,
-        siteName: "Lightfast Integrations",
-        locale: "en_US",
-        images: [
-          { url: ogImageUrl, width: 1200, height: 630, alt: data.ogTitle },
-        ],
-      },
-      twitter: {
-        card: "summary_large_image",
-        title: data.ogTitle,
-        description: data.ogDescription,
-        site: "@lightfastai",
-        creator: "@lightfastai",
-        images: [ogImageUrl],
-      },
-    }),
-    jsonLd: buildIntegrationJsonLd(data, url),
   };
 }
 

@@ -26,12 +26,12 @@ After install, re-run the *installed* probe.
 vercel login
 ```
 
-Picks an email, then opens the browser for OAuth. `vercel login` already auto-detects agent harnesses and forces `--non-interactive` — verified via `vercel login --help` showing `"when an agent is detected this is the default"`.
+Picks an email, then opens the browser for sign-in. `vercel login` already auto-detects agent harnesses and forces `--non-interactive` — verified via `vercel login --help` showing `"when an agent is detected this is the default"`.
 
 **Non-TTY alternatives (verified 2026-05-14)**:
 
 ```
-vercel login --token <token>          # pre-minted token; skip browser OAuth
+vercel login --token <token>          # pre-minted token; skip browser sign-in
 VERCEL_TOKEN=<token> vercel <cmd>     # env var; per-command auth, no profile write
 ```
 

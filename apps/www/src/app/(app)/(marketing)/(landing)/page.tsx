@@ -129,7 +129,7 @@ export default async function HomePage() {
     description:
       "The superintelligence layer for founders. Built on a unified operating layer — observe events, build memory, and orchestrate action across your entire tool stack through a single system.",
     featureList: [
-      "Real-time event ingestion from connected tools",
+      "Real-time event ingestion through controlled APIs",
       "Semantic search with cited sources",
       "MCP tools for AI agents",
       "REST API and TypeScript SDK",

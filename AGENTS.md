@@ -80,7 +80,6 @@ pnpm dev:inngest      # local Inngest dev server (dev:* sync MFE app URLs into i
 pnpm dev:services     # Inngest + Drizzle Studio
 pnpm dev:studio       # Drizzle Studio (127.0.0.1:4983)
 pnpm dev:ngrok        # ngrok tunnel (port 3024, legacy)
-pnpm dev:emulate      # emulator + ngrok static-domain tunnel for Test IdP OAuth E2E
 pnpm dev:email        # email template dev
 
 # Local containerized services (Docker)

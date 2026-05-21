@@ -2,12 +2,12 @@
 name: lightfast-cli-doctor
 description: |
   Bring a developer's CLI toolchain to a known-good state for Lightfast work.
-  Probes ten host-level binaries (portless, emulate, inngest-cli, vercel, gh,
+  Probes nine host-level binaries (portless, inngest-cli, vercel, gh,
   ngrok, clerk, sentry, pscale, coderabbit) plus a docker daemon liveness
-  check; installs what's missing, kicks off browser OAuth or token-paste
+  check; installs what's missing, kicks off browser sign-in or token-paste
   flows, links each CLI to the right org, and only halts when human input is
   required. Triggers on "set up CLIs", "onboard me", "log in to vercel / gh /
-  clerk / sentry / pscale / coderabbit / ngrok / emulate / inngest", "fix my
+  clerk / sentry / pscale / coderabbit / ngrok / inngest", "fix my
   dev environment", "doctor". Same flow services first-time setup, re-auth
   after token expiry, and upgrade-to-latest.
 ---
@@ -18,7 +18,7 @@ A pure-playbook skill that an agent reads + executes to bring a developer's
 CLI toolchain to a known-good state for Lightfast work. Default mode is
 *fix-all*: probe everything in parallel, install what's missing, kick off
 the required login flows, halt only when a human is genuinely needed (paste
-a token, confirm an OAuth browser tab), then re-probe and print the final
+a token, confirm a browser sign-in tab), then re-probe and print the final
 status table.
 
 Same skill handles cold-start, re-auth after token expiry, and upgrades. There
@@ -26,7 +26,7 @@ is no separate "init" mode.
 
 ## What this skill does
 
-Ten host-level CLIs plus a Docker daemon liveness preflight. Every `pnpm dev*`
+Nine host-level CLIs plus a Docker daemon liveness preflight. Every `pnpm dev*`
 script depends on Portless's CA cert at `~/.portless/ca.pem`; `pnpm dev:setup`
 silently fails when the Docker daemon is down; the rest are authed CLIs needed
 for deploys, issue triage, observability, schema migrations, and PR reviews.
@@ -35,15 +35,14 @@ for deploys, issue triage, observability, schema migrations, and PR reviews.
 |---|---|---|
 | _preflight_: docker daemon | `pnpm dev:setup` provisions Postgres + Redis containers via `scripts/dev-services.mjs:51-65`; without the daemon the setup silently 404s | daemon liveness only |
 | `portless` | HTTPS aggregate at `https://*.lightfast.localhost:443` for the local microfrontends mesh; CA cert at `~/.portless/ca.pem` is the load-bearing artifact | no auth (cert only) |
-| `emulate` | Local OAuth provider emulator (Google, GitHub) for Clerk e2e auth flows in `scripts/dev-emulate.mjs` | no auth (config seed only) |
 | `inngest-cli` | `pnpm dev:inngest` runs the local Inngest dev server (events, steps, workflows) | no auth (env-var production credentials) |
-| `gh` | PR review, issue triage, release ops, gh-cli-driven workflows | browser OAuth |
-| `vercel` | Deploys (`apps/{app,platform,www}` linked projects), `vercel env pull` to produce `.vercel/.env.development.local` | browser OAuth |
-| `ngrok` | `pnpm dev:ngrok` (port 3024) and the Test IdP OAuth playbook in `lightfast-clerk` | **token paste** (the only one) |
-| `clerk` | Bundled skill ops, `clerk doctor`, app linking; global install is what `lightfast-clerk` and human ops use | browser OAuth |
-| `sentry` | Issue triage, source map upload context. v0.32+ agent CLI (not legacy `@sentry/cli`) | browser OAuth |
-| `pscale` | Per-worktree PlanetScale branches per the 2026-05-08 migration plan (`thoughts/shared/plans/2026-05-08-db-app-rework-planetscale-mysql.md`) | browser OAuth |
-| `coderabbit` | PR review automation; org `lightfastai` (configured at `.coderabbit.yaml`) | GitHub OAuth via coderabbit's own flow |
+| `gh` | PR review, issue triage, release ops, gh-cli-driven workflows | browser sign-in |
+| `vercel` | Deploys (`apps/{app,platform,www}` linked projects), `vercel env pull` to produce `.vercel/.env.development.local` | browser sign-in |
+| `ngrok` | `pnpm dev:ngrok` (port 3024) for local tunnel work | **token paste** (the only one) |
+| `clerk` | Bundled skill ops, `clerk doctor`, app linking; global install is what `lightfast-clerk` and human ops use | browser sign-in |
+| `sentry` | Issue triage, source map upload context. v0.32+ agent CLI (not legacy `@sentry/cli`) | browser sign-in |
+| `pscale` | Per-worktree PlanetScale branches per the 2026-05-08 migration plan (`thoughts/shared/plans/2026-05-08-db-app-rework-planetscale-mysql.md`) | browser sign-in |
+| `coderabbit` | PR review automation; org `lightfastai` (configured at `.coderabbit.yaml`) | GitHub browser sign-in via coderabbit's own flow |
 
 ## Boundary table
 
@@ -52,11 +51,10 @@ Other doctors / skills own adjacent surfaces. This one does not duplicate them.
 | Surface | Covered by | Probes |
 |---|---|---|
 | Docker daemon liveness | `lightfast-cli-doctor` (preflight) | `docker info` |
-| Host-level CLI auth (10 binaries) | `lightfast-cli-doctor` | per-CLI playbooks |
+| Host-level CLI auth (9 binaries) | `lightfast-cli-doctor` | per-CLI playbooks |
 | Postgres + Redis containers + migrations | `pnpm dev:doctor` / `pnpm dev:setup` | `scripts/dev-services.mjs:67-82` |
 | Clerk test-user provisioning + JWT mint | `lightfast-clerk` skill | `references/sign-in-playbook.md` |
 | Portless cert wiring into Electron renderer | `scripts/with-desktop-env.mjs:74-93` | `~/.portless/ca.pem` existence |
-| `dev-emulate.mjs` runtime (ngrok tunnel + Clerk seed) | `pnpm dev:emulate` | `scripts/dev-emulate.mjs` |
 | Workspace bootstrap (`vercel env pull`, `clerk env pull` per app) | (v2 — not yet) | — |
 
 ## Decision tree
@@ -76,7 +74,6 @@ agent reads it standalone):
 | CLI | Reference |
 |---|---|
 | `portless` | `references/portless.md` |
-| `emulate` | `references/emulate.md` |
 | `inngest-cli` | `references/inngest-cli.md` |
 | `gh` | `references/gh.md` |
 | `vercel` | `references/vercel.md` |
@@ -95,11 +92,11 @@ parallel**. Do not reorder.
    If non-zero, **halt immediately** with the "start Docker Desktop" message
    from *Halting rules*. Do NOT proceed to step 2 — the rest of the doctor is
    meaningless if `pnpm dev:setup` can't run downstream.
-2. **Parallel probe.** For each of the ten CLIs, run its *Probe* commands
+2. **Parallel probe.** For each of the nine CLIs, run its *Probe* commands
    from the matching reference file in parallel. Collect per CLI:
    `{ installed: bool, version: str, authed: bool, identity: str|null, org_correct: bool }`.
-   `portless`, `emulate`, and `inngest-cli` are exceptions — `portless`
-   additionally reports `{ cert_present: bool }`; all three have no `authed` /
+   `portless` and `inngest-cli` are exceptions — `portless`
+   additionally reports `{ cert_present: bool }`; both have no `authed` /
    `identity` / `org_correct` dimensions.
 3. **Render status table.** One row per CLI plus the preflight row. ✓ / ✗
    per dimension. If everything is green and the caller did not request
@@ -108,15 +105,14 @@ parallel**. Do not reorder.
    may need human input, and serializing keeps the prompts unambiguous:
    ```
    portless                 → every dev URL depends on the CA at ~/.portless/ca.pem
-   emulate                  → no auth; install-only, sets up Clerk e2e tooling
    inngest-cli              → no auth; install-only, local dev server for events/steps
-   gh                       → simplest browser OAuth, also a coderabbit cognitive dep
-   vercel                   → browser OAuth
+   gh                       → simplest browser sign-in, also a coderabbit cognitive dep
+   vercel                   → browser sign-in
    ngrok                    → token paste (only CLI of its shape)
-   clerk                    → browser OAuth
-   sentry                   → browser OAuth (v0.32+ agent CLI)
+   clerk                    → browser sign-in
+   sentry                   → browser sign-in (v0.32+ agent CLI)
    pscale                   → may require install on most machines
-   coderabbit               → last; uses its own GitHub OAuth flow
+   coderabbit               → last; uses its own GitHub browser sign-in flow
    ```
 5. **Per-CLI fix loop.** For each CLI not green:
    - **If not installed** → run install command from its reference file. Re-probe `installed`.
@@ -141,10 +137,10 @@ parallel**. Do not reorder.
 - `portless` first because *every* dev URL (`https://*.lightfast.localhost`)
   depends on its CA cert; if portless is broken, debugging anything else is
   noise.
-- `emulate` and `inngest-cli` next because they have no auth dimension —
-  handle the install-only CLIs before the human-input ones so the easy work
-  is out of the way.
-- `gh` before `coderabbit` because coderabbit's UX is GitHub OAuth — devs
+- `inngest-cli` next because it has no auth dimension — handle the
+  install-only CLI before the human-input ones so the easy work is out of the
+  way.
+- `gh` before `coderabbit` because coderabbit's UX is GitHub-based — devs
   cognitively associate "the GitHub login" with `gh`, even though
   coderabbit's flow doesn't actually depend on `gh`'s token.
 - `pscale` second-to-last because it's the only CLI likely to require a
@@ -170,14 +166,6 @@ command -v portless
 portless --version                             # ≥ 0.12.0
 test -f ~/.portless/ca.pem && test -s ~/.portless/ca.pem   # cert present + non-empty
 # Fix when cert is red: `portless trust` (creates ~/.portless/ca.pem and adds it to OS trust store).
-# No auth dimension.
-```
-
-**`emulate`** — local OAuth provider emulator. Note: `emulate` is a zsh built-in that shadows the npm binary; use `command emulate` to bypass.
-```
-command -v emulate                             # zsh built-in always matches; check npm install separately
-npm ls -g emulate                              # confirms `emulate@<ver>` resolved at npm global root
-command emulate --version                      # bypasses zsh builtin; ≥ 0.5.0
 # No auth dimension.
 ```
 
@@ -253,8 +241,8 @@ do not judge.
    the parallel probe. Message: "Docker Desktop is not running. Start Docker
    Desktop (from Applications or `open -a Docker`), wait for the daemon to
    come up, then re-run `/lightfast-cli-doctor`."
-2. **Browser OAuth callback in flight.** A `<cli> auth login` is running.
-   Print: "Complete the OAuth flow in your browser. I'll resume once the
+2. **Browser sign-in callback in flight.** A `<cli> auth login` is running.
+   Print: "Complete the browser sign-in flow. I'll resume once the
    callback lands." Do not poll — wait for the CLI process to exit, then re-probe.
    **Per-CLI non-TTY mode differs — consult `references/<cli>.md` before assuming `! <cli> auth login` works.** Verified 2026-05-14: `pscale auth login` errors `requires an interactive shell` under Claude Code's `!` prefix and must be run in a separate terminal. `coderabbit auth login --agent`, `sentry auth login --token`, `gh auth login --with-token` / `GH_TOKEN`, and `vercel login --token` / `VERCEL_TOKEN` are the agent-friendly alternatives; `clerk auth login` has no token flag at v1.2.0.
 3. **Token paste needed (ngrok only).** Print:
@@ -288,9 +276,8 @@ do not judge.
   because `pnpm dev:setup` is silent when it's down.
 - **No npx-managed tools** (`knip`, `sherif`, `ultracite`, `changeset` via
   `pnpm dlx`). They resolve per-invocation; no host-level surface to repair.
-  (`emulate` and `inngest-cli` were previously in this list but are now
-  first-class doctor entries with global installs — see `references/emulate.md`
-  and `references/inngest-cli.md`.)
+  (`inngest-cli` was previously in this list but is now a first-class doctor
+  entry with a global install — see `references/inngest-cli.md`.)
 - **No CI-only release tooling** (`codesign`, `security` keychain, `electron-forge publish`,
   `changeset publish`). Run only in GitHub Actions with vault-supplied secrets.
 - **No Node / pnpm runtime version probing.** Root `package.json` pins

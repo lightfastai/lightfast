@@ -262,16 +262,19 @@ describe("accept-invitation — Accept Invitation button", () => {
   });
 });
 
-describe("accept-invitation — OAuth path", () => {
+describe("accept-invitation — email-only auth", () => {
   beforeEach(() => {
     searchParamsValue = new URLSearchParams("__clerk_ticket=tok_abc123");
   });
 
-  it("does not offer OAuth because invitation acceptance is ticket-only", () => {
+  it("does not render social or test-provider invitation buttons", () => {
     render(<AcceptInvitationPage />);
 
     expect(
       screen.queryByRole("button", { name: /continue with github/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /continue with test idp/i })
     ).not.toBeInTheDocument();
     expect(clerkStub.client.signUp.create).not.toHaveBeenCalled();
   });

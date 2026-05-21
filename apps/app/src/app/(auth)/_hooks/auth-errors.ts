@@ -10,6 +10,10 @@ export type MappedAuthError =
 
 const SUCCESS_REDIRECT = "/";
 
+// Future API types say ClerkError, but clerk-js currently returns an
+// unwrapped ClerkAPIError-shaped object at runtime (not a ClerkAPIResponseError
+// instance). Native guards like isUserLockedError gate on constructor.kind and
+// would silently return false against the unwrapped shape. This handles both.
 function asClerkAPIError(err: unknown): ClerkAPIError | null {
   if (!err) {
     return null;
@@ -63,28 +67,6 @@ export function mapOtpClerkError(err: unknown): MappedAuthError {
     default:
       return { kind: "inline", message: e.longMessage ?? e.message };
   }
-}
-
-export function mapOAuthClerkError(err: unknown): MappedAuthError {
-  const e = asClerkAPIError(err);
-  if (!e) {
-    return { kind: "inline", message: "Authentication failed" };
-  }
-
-  if (e.code === "sign_up_restricted_waitlist") {
-    return { kind: "code", errorCode: "waitlist" };
-  }
-  if (
-    e.code === "form_identifier_not_found" ||
-    e.code === "identifier_not_found" ||
-    e.code === "user_not_found"
-  ) {
-    return { kind: "code", errorCode: "account_not_found" };
-  }
-  if (e.code === "session_exists") {
-    return { kind: "redirect", target: SUCCESS_REDIRECT };
-  }
-  return { kind: "inline", message: e.longMessage ?? e.message };
 }
 
 export function authErrorMessage(code: AuthErrorCode): string {

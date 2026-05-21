@@ -33,7 +33,6 @@ interface SignInStub {
     verifyCode: Mock;
   };
   finalize: Mock;
-  sso: Mock;
   status: "needs_first_factor" | "complete";
 }
 
@@ -58,7 +57,6 @@ function makeSignInStub(): SignInStub {
         }
       }
     ),
-    sso: vi.fn().mockResolvedValue({ error: null }),
   };
 }
 
@@ -216,38 +214,16 @@ describe("sign-in — OTP verify", () => {
   });
 });
 
-describe("sign-in — OAuth", () => {
-  it("forwards GitHub strategy to signIn.sso with Future API redirect shape", async () => {
+describe("sign-in — email-only auth", () => {
+  it("does not render social or test-provider sign-in buttons", () => {
     render(<SignInPage />);
 
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /continue with github/i })
-      );
-    });
-
-    expect(signInStub.sso).toHaveBeenCalledWith({
-      strategy: "oauth_github",
-      redirectCallbackUrl: "/sso-callback",
-      redirectUrl: "/",
-    });
-  });
-
-  it("redirects to /sign-in?errorCode=waitlist when sso returns waitlist error", async () => {
-    signInStub.sso.mockResolvedValue({
-      error: { code: "sign_up_restricted_waitlist", message: "waitlist" },
-    });
-    render(<SignInPage />);
-
-    await act(async () => {
-      fireEvent.click(
-        screen.getByRole("button", { name: /continue with github/i })
-      );
-    });
-
-    await waitFor(() => {
-      expect(hrefValue).toBe("/sign-in?errorCode=waitlist");
-    });
+    expect(
+      screen.queryByRole("button", { name: /continue with github/i })
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /continue with test idp/i })
+    ).not.toBeInTheDocument();
   });
 });
 
