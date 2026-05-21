@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { formatDate } from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/billing/_components/billing-utils";
 
 const addPaymentMethodMock = vi.fn();
 const cancelMutateMock = vi.fn();
@@ -142,6 +143,11 @@ const teamAmount = {
   currency: "usd",
   currencySymbol: "$",
 };
+
+// UTC-anchored calendar date for the mock statement. The test derives the
+// expected display string via formatDate so it stays independent of the host
+// machine's locale and timezone.
+const STATEMENT_TIMESTAMP = new Date("2026-05-01T00:00:00Z");
 
 const starterPlan = {
   annualFee: null,
@@ -349,7 +355,7 @@ beforeEach(() => {
         groups: [],
         id: "stmt_1",
         status: "closed",
-        timestamp: new Date("2026-05-01T00:00:00Z"),
+        timestamp: STATEMENT_TIMESTAMP,
         totals: {
           grandTotal: teamAmount,
           subtotal: teamAmount,
@@ -597,7 +603,9 @@ describe("billing settings client", () => {
     expect(
       screen.getByRole("heading", { name: "Invoice details" })
     ).toBeInTheDocument();
-    expect(screen.getAllByText("May 1, 2026")[0]).toBeInTheDocument();
+    const statementDate = formatDate(STATEMENT_TIMESTAMP);
+    expect(statementDate).toBeTruthy();
+    expect(screen.getAllByText(statementDate ?? "")[0]).toBeInTheDocument();
     expect(screen.getAllByText("$60.00")[0]).toBeInTheDocument();
   });
 });

@@ -32,10 +32,15 @@ export function formatDate(value?: Date | number | null) {
   if (!value) {
     return null;
   }
+  // Billing dates (statement date, period end, next payment) are calendar
+  // dates anchored to UTC. Render them in UTC so an invoice shows the same
+  // day to every viewer — otherwise `toLocaleDateString` shifts a
+  // UTC-midnight date to the previous day for anyone behind UTC.
   return new Date(value).toLocaleDateString(undefined, {
     day: "numeric",
     month: "short",
     year: "numeric",
+    timeZone: "UTC",
   });
 }
 
