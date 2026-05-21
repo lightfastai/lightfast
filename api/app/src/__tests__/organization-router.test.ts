@@ -3,17 +3,20 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 
-const getUserOrgMembershipsMock = vi.fn();
 const isOrgBoundMock = vi.fn();
 const authMock = vi.fn();
 const getOrganizationMock = vi.fn();
+const getOrganizationMembershipListMock = vi.fn();
 const updateOrganizationMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
 
-vi.mock("@vendor/clerk/server", () => ({
+vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
+}));
+
+vi.mock("@vendor/clerk/server", () => ({
   auth: authMock,
   clerkClient: () =>
     Promise.resolve({
@@ -22,9 +25,10 @@ vi.mock("@vendor/clerk/server", () => ({
         getOrganization: getOrganizationMock,
         updateOrganization: updateOrganizationMock,
       },
-      users: { getOrganizationMembershipList: vi.fn() },
+      users: {
+        getOrganizationMembershipList: getOrganizationMembershipListMock,
+      },
     }),
-  getUserOrgMemberships: getUserOrgMembershipsMock,
   verifyToken: vi.fn(),
 }));
 
@@ -96,7 +100,7 @@ function caller(
 beforeEach(() => {
   authMock.mockReset();
   getOrganizationMock.mockReset();
-  getUserOrgMembershipsMock.mockReset();
+  getOrganizationMembershipListMock.mockReset();
   isOrgBoundMock.mockReset();
   updateOrganizationMock.mockReset();
 
@@ -114,20 +118,24 @@ describe("organization.getBySlug", () => {
         slug: "acme",
       })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
-    expect(getUserOrgMembershipsMock).not.toHaveBeenCalled();
+    expect(getOrganizationMembershipListMock).not.toHaveBeenCalled();
     expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
   it("returns the user's matching Clerk org and DB binding gate", async () => {
-    getUserOrgMembershipsMock.mockResolvedValue([
-      {
-        imageUrl: "https://img.test/acme.png",
-        organizationId: "org_acme",
-        organizationName: "Acme Inc",
-        organizationSlug: "acme",
-        role: "org:admin",
-      },
-    ]);
+    getOrganizationMembershipListMock.mockResolvedValue({
+      data: [
+        {
+          organization: {
+            id: "org_acme",
+            imageUrl: "https://img.test/acme.png",
+            name: "Acme Inc",
+            slug: "acme",
+          },
+          role: "org:admin",
+        },
+      ],
+    });
     isOrgBoundMock.mockResolvedValue(true);
 
     await expect(
@@ -147,15 +155,19 @@ describe("organization.getBySlug", () => {
   });
 
   it("throws NOT_FOUND when the slug is not in the user's memberships", async () => {
-    getUserOrgMembershipsMock.mockResolvedValue([
-      {
-        imageUrl: "",
-        organizationId: "org_other",
-        organizationName: "Other",
-        organizationSlug: "other",
-        role: "org:member",
-      },
-    ]);
+    getOrganizationMembershipListMock.mockResolvedValue({
+      data: [
+        {
+          organization: {
+            id: "org_other",
+            imageUrl: "",
+            name: "Other",
+            slug: "other",
+          },
+          role: "org:member",
+        },
+      ],
+    });
 
     await expect(
       caller().viewer.organization.getBySlug({ slug: "acme" })
@@ -212,7 +224,7 @@ describe("organization.updateName", () => {
       success: true,
     });
 
-    expect(getUserOrgMembershipsMock).not.toHaveBeenCalled();
+    expect(getOrganizationMembershipListMock).not.toHaveBeenCalled();
     expect(updateOrganizationMock).toHaveBeenCalledWith("org_acme", {
       name: "acme-inc",
       slug: "acme-inc",

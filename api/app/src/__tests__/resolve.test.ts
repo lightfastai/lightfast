@@ -9,11 +9,13 @@ vi.mock("@db/app", () => ({
   isOrgBound: (...args: unknown[]) => isOrgBoundMock(...args),
 }));
 
-vi.mock("@vendor/clerk/server", () => ({
+vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
+}));
+
+vi.mock("@vendor/clerk/server", () => ({
   auth: (...args: unknown[]) => authMock(...args),
   verifyToken: (...args: unknown[]) => verifyTokenMock(...args),
-  getUserOrgMemberships: vi.fn(),
 }));
 
 const { resolveAuthContextFromClerk, resolveIdentityFromClerk } = await import(

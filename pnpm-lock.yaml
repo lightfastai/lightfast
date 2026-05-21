@@ -251,6 +251,9 @@ importers:
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
+      '@repo/app-clerk-claim':
+        specifier: workspace:*
+        version: link:../../packages/app-clerk-claim
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
@@ -379,6 +382,9 @@ importers:
       '@repo/app-billing':
         specifier: workspace:*
         version: link:../../packages/app-billing
+      '@repo/app-clerk-claim':
+        specifier: workspace:*
+        version: link:../../packages/app-clerk-claim
       '@repo/app-trpc':
         specifier: workspace:*
         version: link:../../packages/app-trpc
@@ -1132,6 +1138,15 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.4(@edge-runtime/vm@3.2.0)(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(@vitest/ui@4.1.4)(happy-dom@20.9.0(bufferutil@4.1.0))(jsdom@27.0.1(bufferutil@4.1.0))(vite@8.0.10(@types/node@24.9.1)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/app-clerk-claim:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/app-encryption:
     devDependencies:

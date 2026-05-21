@@ -9,13 +9,13 @@
       "types": "./src/index.ts",
       "default": "./src/index.ts"
     },
+    "./env": {
+      "types": "./src/env.ts",
+      "default": "./src/env.ts"
+    },
     "./server": {
       "types": "./src/server.ts",
       "default": "./src/server.ts"
-    },
-    "./backend": {
-      "types": "./src/backend.ts",
-      "default": "./src/backend.ts"
     }
   },
   "license": "MIT",

@@ -21,8 +21,12 @@
  * stale web-session routing UX should fail or be repaired asynchronously.
  */
 
+import type { LightfastSessionClaims } from "@repo/app-clerk-claim";
 import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
+
+const BINDING_STATUS_CLAIM =
+  "lf_binding_status" satisfies keyof LightfastSessionClaims;
 
 interface LightfastOrgPublicMetadata {
   lightfast?: {
@@ -98,6 +102,7 @@ export async function mirrorOrgBinding(
 
   log.info("[org-binding-mirror] mirrored binding status to Clerk", {
     clerkOrgId,
+    claim: BINDING_STATUS_CLAIM,
     status,
     provider,
   });

@@ -1,7 +1,7 @@
 import { clerkOrgSlugSchema } from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { clerkClient, getUserOrgMemberships } from "@vendor/clerk/server";
+import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
@@ -30,17 +30,20 @@ export const organizationRouter = {
   listUserOrganizations: viewerProcedure.query(async ({ ctx }) => {
     // viewerProcedure guarantees pending or active identity
     const userId = ctx.auth.identity.userId;
-    const memberships = await getUserOrgMemberships(userId);
+    const clerk = await clerkClient();
+    const memberships = await clerk.users.getOrganizationMembershipList({
+      userId,
+    });
 
     // Return Clerk organization data directly
-    return memberships.map((membership) => {
+    return memberships.data.map((membership) => {
       return {
-        id: membership.organizationId, // Clerk org ID
-        slug: membership.organizationSlug,
-        name: membership.organizationName,
-        initials: orgInitials(membership.organizationName),
+        id: membership.organization.id, // Clerk org ID
+        slug: membership.organization.slug,
+        name: membership.organization.name,
+        initials: orgInitials(membership.organization.name),
         role: membership.role,
-        imageUrl: membership.imageUrl,
+        imageUrl: membership.organization.imageUrl,
       };
     });
   }),

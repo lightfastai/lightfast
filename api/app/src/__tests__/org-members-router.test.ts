@@ -14,8 +14,11 @@ const updateOrganizationMembershipMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: vi.fn() }));
 
-vi.mock("@vendor/clerk/server", () => ({
+vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
+}));
+
+vi.mock("@vendor/clerk/server", () => ({
   auth: authMock,
   clerkClient: () =>
     Promise.resolve({

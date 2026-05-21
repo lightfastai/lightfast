@@ -26,6 +26,7 @@
     "@next/bundle-analyzer": "^16.2.4",
     "@orpc/openapi": "^1.14.2",
     "@repo/app-billing": "workspace:*",
+    "@repo/app-clerk-claim": "workspace:*",
     "@repo/app-trpc": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/platform-client": "workspace:*",

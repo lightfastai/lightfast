@@ -1,4 +1,4 @@
-import { getClerkFrontendApi } from "@vendor/clerk/server";
+import { getClerkFrontendApi } from "@vendor/clerk/env";
 import type { Source } from "nosecone";
 import type { PartialCspDirectives } from "./types";
 

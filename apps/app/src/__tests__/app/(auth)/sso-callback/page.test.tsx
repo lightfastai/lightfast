@@ -118,6 +118,8 @@ function makeSignUpStub(): SignUpStub {
 }
 
 vi.mock("@vendor/clerk", () => ({
+  isClerkAPIResponseError: (err: unknown) =>
+    typeof err === "object" && err !== null && "errors" in err,
   useClerk: () => clerkStub,
   useSignIn: () => ({ signIn: signInStub }),
   useSignUp: () => ({ signUp: signUpStub }),

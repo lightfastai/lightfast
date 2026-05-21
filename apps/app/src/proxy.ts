@@ -1,4 +1,5 @@
 import type { NextMiddleware as NemoMiddleware } from "@rescale/nemo";
+import type { LightfastLastActiveOrg } from "@repo/app-clerk-claim";
 import { createNEMO } from "@rescale/nemo";
 import {
   clerkClient,
@@ -17,20 +18,6 @@ import { securityMiddleware } from "@vendor/security/middleware";
 import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-interface LightfastLastActiveOrg {
-  id: string;
-  slug: string;
-}
-
-interface LightfastSessionClaims {
-  last_active_org?: LightfastLastActiveOrg | null;
-  lf_binding_status?: string;
-}
-
-declare global {
-  interface CustomJwtSessionClaims extends LightfastSessionClaims {}
-}
 
 const POST_AUTH_FALLBACK_PATH = "/account/teams/new";
 

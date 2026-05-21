@@ -22,8 +22,11 @@ const logErrorMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
 
-vi.mock("@vendor/clerk/server", () => ({
+vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
+}));
+
+vi.mock("@vendor/clerk/server", () => ({
   toPlainClerkResource: structuredClone,
   clerkClient: () =>
     Promise.resolve({
@@ -38,10 +41,9 @@ vi.mock("@vendor/clerk/server", () => ({
         list: apiKeysListMock,
         revoke: apiKeysRevokeMock,
       },
-    }),
+  }),
   auth: vi.fn(),
   verifyToken: vi.fn(),
-  getUserOrgMemberships: vi.fn(),
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
