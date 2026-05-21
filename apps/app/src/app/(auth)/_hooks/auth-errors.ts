@@ -1,5 +1,5 @@
+import type { ClerkAPIError } from "@vendor/clerk";
 import { isClerkAPIResponseError } from "@vendor/clerk";
-import type { ClerkAPIError } from "@vendor/clerk/types";
 import { AUTH_ERROR_MESSAGES, type AuthErrorCode } from "../_lib/search-params";
 
 export type MappedAuthError =

@@ -54,7 +54,7 @@ export function LightfastErrorPage({
         <h1 className="mb-4 font-bold text-8xl tracking-tighter">{code}</h1>
 
         {/* Error description */}
-        <p className="mb-8 text-md text-muted-foreground">{description}</p>
+        <p className="mb-8 text-base text-muted-foreground">{description}</p>
 
         {/* Error ID if available */}
         {errorId && (

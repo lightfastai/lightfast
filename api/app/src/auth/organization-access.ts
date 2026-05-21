@@ -1,6 +1,6 @@
 import type { Database } from "@db/app";
 import { isOrgBound } from "@db/app";
-import { getUserOrgMemberships } from "@vendor/clerk/server";
+import { clerkClient } from "@vendor/clerk/server";
 
 export class OrgAccessError extends Error {
   constructor(message = "Organization not found") {
@@ -40,25 +40,28 @@ export async function getOrgAccessBySlug(input: {
   slug: string;
   userId: string;
 }): Promise<OrgAccess> {
-  const memberships = await getUserOrgMemberships(input.userId);
-  const membership = memberships.find(
-    (entry) => entry.organizationSlug === input.slug
+  const clerk = await clerkClient();
+  const memberships = await clerk.users.getOrganizationMembershipList({
+    userId: input.userId,
+  });
+  const membership = memberships.data.find(
+    (entry) => entry.organization.slug === input.slug
   );
 
-  if (!membership?.organizationSlug) {
+  if (!membership?.organization.slug) {
     throw new OrgAccessError();
   }
 
-  const bound = await isOrgBound(input.db, membership.organizationId);
+  const bound = await isOrgBound(input.db, membership.organization.id);
 
   return {
     bindingStatus: bound ? "bound" : "unbound",
     org: {
-      id: membership.organizationId,
-      imageUrl: membership.imageUrl,
-      initials: orgInitials(membership.organizationName),
-      name: membership.organizationName,
-      slug: membership.organizationSlug,
+      id: membership.organization.id,
+      imageUrl: membership.organization.imageUrl,
+      initials: orgInitials(membership.organization.name),
+      name: membership.organization.name,
+      slug: membership.organization.slug,
     },
     role: membership.role,
   };

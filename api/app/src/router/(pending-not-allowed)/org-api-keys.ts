@@ -5,11 +5,11 @@ import {
 } from "@repo/app-validation/schemas";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { clerkClient } from "@vendor/clerk/server";
+import { clerkClient, toPlainClerkResource } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 
 import { isClerkResourceNotFound } from "../../auth/clerk-errors";
-import { pendingNotAllowedProcedure } from "../../trpc";
+import { orgAdminProcedure, orgProcedure } from "../../trpc";
 
 /**
  * Organization API Keys Router (Clerk-backed)
@@ -19,18 +19,16 @@ import { pendingNotAllowedProcedure } from "../../trpc";
  * only present on `create` — surface it once and never read it again.
  */
 export const orgApiKeysRouter = {
-  list: pendingNotAllowedProcedure.query(async ({ ctx }) => {
+  list: orgProcedure.query(async ({ ctx }) => {
     const clerk = await clerkClient();
     const { data } = await clerk.apiKeys.list({
       subject: ctx.auth.identity.orgId,
       includeInvalid: true,
     });
-    // Spread Clerk's APIKey class instances into plain objects — RSC props
-    // serialization rejects class instances at the prefetch → hydrate boundary.
-    return data.map((k) => ({ ...k }));
+    return data.map((key) => toPlainClerkResource(key));
   }),
 
-  create: pendingNotAllowedProcedure
+  create: orgAdminProcedure
     .input(createOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
@@ -45,15 +43,31 @@ export const orgApiKeysRouter = {
         keyId: key.id,
         name: input.name,
       });
-      // key.secret is only present on create. Spread into a plain object so
-      // the mutation result survives RSC serialization on the way to the UI.
-      return { ...key };
+      return toPlainClerkResource(key);
     }),
 
-  revoke: pendingNotAllowedProcedure
+  revoke: orgAdminProcedure
     .input(revokeOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
+      let existing;
+      try {
+        existing = await clerk.apiKeys.get(input.keyId);
+      } catch (err) {
+        if (isClerkResourceNotFound(err)) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "API key not found",
+          });
+        }
+        throw err;
+      }
+      if (existing.subject !== ctx.auth.identity.orgId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "API key not found",
+        });
+      }
       let key;
       try {
         key = await clerk.apiKeys.revoke({
@@ -69,14 +83,6 @@ export const orgApiKeysRouter = {
         }
         throw err;
       }
-      if (key.subject !== ctx.auth.identity.orgId) {
-        // Defense-in-depth: Clerk doesn't scope revoke by subject. Reject so
-        // org A cannot revoke org B's keys by guessing IDs.
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "API key not found",
-        });
-      }
       log.info("[org-api-keys] revoked", {
         clerkOrgId: ctx.auth.identity.orgId,
         keyId: key.id,
@@ -84,7 +90,7 @@ export const orgApiKeysRouter = {
       return { success: true };
     }),
 
-  delete: pendingNotAllowedProcedure
+  delete: orgAdminProcedure
     .input(deleteOrgApiKeySchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();

@@ -13,14 +13,17 @@ import {
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useAuth } from "@vendor/clerk";
 import { Check, Copy, Loader2, Plus } from "lucide-react";
 import { useRef, useState } from "react";
 
 export function OrgApiKeyCreate() {
+  const { has, isLoaded } = useAuth();
+  const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const listQueryKey =
-    trpc.pendingNotAllowed.orgApiKeys.list.queryOptions().queryKey;
+    trpc.org.settings.orgApiKeys.list.queryOptions().queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
@@ -32,7 +35,7 @@ export function OrgApiKeyCreate() {
   const isOpenRef = useRef(false);
 
   const createMutation = useMutation(
-    trpc.pendingNotAllowed.orgApiKeys.create.mutationOptions({
+    trpc.org.settings.orgApiKeys.create.mutationOptions({
       meta: { errorTitle: "Failed to create API key" },
       onSuccess: (data) => {
         if (!isOpenRef.current) {
@@ -46,6 +49,10 @@ export function OrgApiKeyCreate() {
       },
     })
   );
+
+  if (!canManageApiKeys) {
+    return null;
+  }
 
   function handleCreate() {
     const trimmed = name.trim();

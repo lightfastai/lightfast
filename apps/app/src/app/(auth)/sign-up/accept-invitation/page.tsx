@@ -2,7 +2,7 @@
 
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { useClerk, useUser } from "@vendor/clerk/client";
+import { useClerk, useUser } from "@vendor/clerk";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";

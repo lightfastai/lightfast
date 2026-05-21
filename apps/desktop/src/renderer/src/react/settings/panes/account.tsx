@@ -4,7 +4,7 @@ import { LogOut } from "lucide-react";
 
 export function Account() {
   const trpc = useTRPC();
-  const query = useQuery(trpc.pendingAllowed.account.get.queryOptions());
+  const query = useQuery(trpc.viewer.account.get.queryOptions());
   const data = query.data;
 
   return (

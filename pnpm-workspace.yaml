@@ -21,6 +21,7 @@ catalog:
   '@noble/ed25519': ^3.1.0
   '@noble/hashes': ^2.2.0
   '@radix-ui/react-dropdown-menu': ^2.1.15
+  '@rescale/nemo': ^2.2.0
   '@sentry/browser': ^10.49.0
   '@sentry/core': ^10.49.0
   '@sentry/electron': ^7.13.0
@@ -39,6 +40,7 @@ catalog:
   ai: 5.0.52
   babel-plugin-react-compiler: ^1.0.0
   clsx: ^2.1.1
+  date-fns: ^4.1.0
   dotenv-cli: ^11.0.0
   drizzle-orm: ^0.45.2
   drizzle-zod: ^0.8.3

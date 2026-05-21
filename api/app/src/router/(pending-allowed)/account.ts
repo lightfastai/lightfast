@@ -3,7 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { clerkClient } from "@vendor/clerk/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
-import { pendingAllowedProcedure } from "../../trpc";
+import { viewerProcedure } from "../../trpc";
 
 function deriveInitials(input: {
   firstName: string | null;
@@ -57,7 +57,7 @@ export const accountRouter = {
    * - Username
    * - Profile image
    */
-  get: pendingAllowedProcedure.query(async ({ ctx }) => {
+  get: viewerProcedure.query(async ({ ctx }) => {
     try {
       const clerk = await clerkClient();
       const user = await clerk.users.getUser(ctx.auth.identity.userId);

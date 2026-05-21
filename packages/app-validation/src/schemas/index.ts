@@ -7,3 +7,10 @@
 
 export * from "./activities";
 export * from "./org-api-key";
+export {
+  inviteOrgMemberSchema,
+  orgMemberRoleSchema,
+  removeOrgMemberSchema,
+  revokeOrgInvitationSchema,
+  updateOrgMemberRoleSchema,
+} from "./org-member";

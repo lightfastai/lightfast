@@ -4,7 +4,7 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useSignIn } from "@vendor/clerk/client";
+import { useSignIn } from "@vendor/clerk";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { ErrorBanner } from "../_components/error-banner";

@@ -1,7 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+interface VerifiedSession {
+  jwt: string;
+  orgId?: null | string;
+  userId: string;
+}
+
 const verifyBearerJwtMock =
-  vi.fn<(req: Request) => Promise<{ userId: string; jwt: string } | null>>();
+  vi.fn<(req: Request) => Promise<VerifiedSession | null>>();
 vi.mock("~/app/(auth-api)/_server/verify-bearer-jwt", () => ({
   verifyBearerJwt: (req: Request) => verifyBearerJwtMock(req),
 }));
@@ -9,6 +15,24 @@ vi.mock("~/app/(auth-api)/_server/verify-bearer-jwt", () => ({
 const issueCodeMock = vi.fn<(record: unknown) => Promise<string>>();
 vi.mock("~/app/(auth-api)/_server/code-store", () => ({
   issueCode: (record: unknown) => issueCodeMock(record),
+}));
+
+const isOrgBoundMock = vi.fn();
+vi.mock("@db/app", () => ({
+  isOrgBound: isOrgBoundMock,
+}));
+vi.mock("@db/app/client", () => ({
+  db: {},
+}));
+
+const getOrganizationMembershipListMock = vi.fn();
+vi.mock("@clerk/nextjs/server", () => ({
+  clerkClient: () =>
+    Promise.resolve({
+      users: {
+        getOrganizationMembershipList: getOrganizationMembershipListMock,
+      },
+    }),
 }));
 
 const { POST } = await import("~/app/(auth-api)/api/auth/code/route");
@@ -37,6 +61,8 @@ describe("POST /api/auth/code", () => {
   beforeEach(() => {
     verifyBearerJwtMock.mockReset();
     issueCodeMock.mockReset();
+    isOrgBoundMock.mockReset();
+    getOrganizationMembershipListMock.mockReset();
     issueCodeMock.mockResolvedValue("issued-code");
   });
 
@@ -128,6 +154,35 @@ describe("POST /api/auth/code", () => {
       codeChallenge: VALID_BODY.code_challenge,
       redirectUri: "lightfast://auth/callback",
     });
+  });
+
+  it("returns 403 org_setup_required with repair href for an unbound active org", async () => {
+    verifyBearerJwtMock.mockResolvedValue({
+      userId: "user_123",
+      jwt: "fake-jwt",
+      orgId: "org_123",
+    });
+    isOrgBoundMock.mockResolvedValue(false);
+    getOrganizationMembershipListMock.mockResolvedValue({
+      data: [
+        {
+          organization: {
+            id: "org_123",
+            slug: "acme",
+          },
+        },
+      ],
+    });
+
+    const res = await POST(makeReq(VALID_BODY));
+
+    expect(res.status).toBe(403);
+    expect(await res.json()).toEqual({
+      error: "org_setup_required",
+      repair: { id: "bind-source-control", href: "/acme/tasks/bind" },
+    });
+    expect(isOrgBoundMock).toHaveBeenCalledWith({}, "org_123");
+    expect(issueCodeMock).not.toHaveBeenCalled();
   });
 
   it("stores exactly the jwt that verifyBearerJwt authenticated (single-parser invariant)", async () => {

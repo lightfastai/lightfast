@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@vendor/clerk/client";
+import { useAuth } from "@vendor/clerk";
 import {
   captureException,
   captureMessage,
@@ -44,6 +44,40 @@ type BridgeStatus = "loading" | "redirecting" | "success" | "error";
 
 const CODE_ENDPOINT = "/api/auth/code";
 const WINDOW_CLOSE_DELAY_MS = 250;
+
+function orgSetupRepairHrefFromBody(body: unknown): null | string {
+  if (!body || typeof body !== "object") {
+    return null;
+  }
+  const candidate = body as {
+    error?: unknown;
+    repair?: { href?: unknown; id?: unknown };
+  };
+  if (
+    candidate.error !== "org_setup_required" ||
+    candidate.repair?.id !== "bind-source-control" ||
+    typeof candidate.repair.href !== "string"
+  ) {
+    return null;
+  }
+  const href = candidate.repair.href;
+  if (!href.startsWith("/") || href.startsWith("//")) {
+    return null;
+  }
+  return href;
+}
+
+async function readOrgSetupRepairHref(
+  response: Response
+): Promise<null | string> {
+  let body: unknown;
+  try {
+    body = await response.clone().json();
+  } catch {
+    return null;
+  }
+  return orgSetupRepairHrefFromBody(body);
+}
 
 function BridgeContent(props: ClientAuthBridgeProps) {
   const { getToken, isLoaded, isSignedIn } = useAuth();
@@ -144,6 +178,12 @@ function BridgeContent(props: ClientAuthBridgeProps) {
             return;
           }
           if (!response.ok) {
+            const repairHref = await readOrgSetupRepairHref(response);
+            if (repairHref) {
+              setStatus("redirecting");
+              window.location.href = repairHref;
+              return;
+            }
             captureMessage("auth-bridge: code endpoint non-ok", {
               level: "warning",
               tags: {
@@ -191,6 +231,12 @@ function BridgeContent(props: ClientAuthBridgeProps) {
         setStatus("redirecting");
         window.location.href = url;
       } catch (error) {
+        const repairHref = orgSetupRepairHrefFromBody(error);
+        if (repairHref) {
+          setStatus("redirecting");
+          window.location.href = repairHref;
+          return;
+        }
         captureException(error, {
           tags: { scope: "auth-bridge.unexpected_error" },
         });

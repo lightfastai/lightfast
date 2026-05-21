@@ -1,6 +1,11 @@
 import "server-only";
 
-export type { APIKey } from "@clerk/backend";
+export type {
+  APIKey,
+  BillingPlan,
+  BillingSubscription,
+  BillingSubscriptionItem,
+} from "@clerk/backend";
 export type {
   AllowlistIdentifier,
   ClerkMiddlewareAuth,
@@ -58,9 +63,8 @@ export {
   reverificationErrorResponse,
   verifyToken,
 } from "@clerk/nextjs/server";
-export type { UserOrgMembership } from "./membership";
-export { getUserOrgMemberships } from "./membership";
-export type {
-  LightfastLastActiveOrg,
-  LightfastSessionClaims,
-} from "./types";
+export type { BillingMoneyAmount } from "@clerk/shared/types";
+
+export function toPlainClerkResource<T>(resource: T): T {
+  return structuredClone(resource);
+}

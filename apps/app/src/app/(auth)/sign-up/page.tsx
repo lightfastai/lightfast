@@ -5,7 +5,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useSignUp } from "@vendor/clerk/client";
+import { useSignUp } from "@vendor/clerk";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import NextLink from "next/link";
 import { useSearchParams } from "next/navigation";

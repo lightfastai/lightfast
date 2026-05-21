@@ -18,7 +18,7 @@ interface BindTaskPageProps {
 export default async function BindTaskPage({ params }: BindTaskPageProps) {
   const { slug } = await params;
   const gate = await getQueryClient().fetchQuery(
-    trpc.pendingAllowed.organization.getBySlug.queryOptions({ slug })
+    trpc.viewer.organization.getBySlug.queryOptions({ slug })
   );
 
   if (gate.bindingStatus === "bound") {

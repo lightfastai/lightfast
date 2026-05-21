@@ -19,9 +19,9 @@ function containsComponentNamed(node: unknown, componentName: string): boolean {
 }
 
 describe("user layout", () => {
-  it("uses the shared authenticated topbar", () => {
+  it("uses the shared user layout shell", () => {
     const element = UserLayout({ children: <div>Account page</div> });
 
-    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
+    expect(containsComponentNamed(element, "UserLayoutShell")).toBe(true);
   });
 });

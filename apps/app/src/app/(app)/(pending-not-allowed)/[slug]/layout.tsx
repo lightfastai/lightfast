@@ -20,7 +20,7 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
   try {
     await getQueryClient().fetchQuery(
-      trpc.pendingAllowed.organization.getBySlug.queryOptions({ slug })
+      trpc.viewer.organization.getBySlug.queryOptions({ slug })
     );
   } catch (error) {
     log.debug("[org-layout] access denied", { slug, error: parseError(error) });

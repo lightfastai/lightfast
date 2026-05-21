@@ -22,7 +22,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import { useOrganizationList } from "@vendor/clerk/client";
+import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -41,7 +41,7 @@ export function TeamGeneralSettingsClient({
   const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: organizations } = useSuspenseQuery({
-    ...trpc.pendingAllowed.organization.listUserOrganizations.queryOptions(),
+    ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
   const currentOrg = organizations.find((org) => org.slug === slug);
@@ -58,12 +58,11 @@ export function TeamGeneralSettingsClient({
   const hasChanges = currentFormName !== slug;
 
   const orgListQueryKey =
-    trpc.pendingAllowed.organization.listUserOrganizations.queryOptions()
-      .queryKey;
+    trpc.viewer.organization.listUserOrganizations.queryOptions().queryKey;
 
   // Optimistic cache update so sidebar and header reflect the new name instantly
   const updateNameMutation = useMutation(
-    trpc.pendingAllowed.organization.updateName.mutationOptions({
+    trpc.org.settings.organization.updateName.mutationOptions({
       meta: { errorTitle: "Failed to update team name" },
 
       onMutate: async (input) => {
