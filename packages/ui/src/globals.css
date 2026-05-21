@@ -70,8 +70,6 @@
   --text-sm--line-height: 1rem;
   --text-base: 0.875rem; /* was 1rem, now sm */
   --text-base--line-height: 1.25rem;
-  --text-md: 0.9375rem; /* 15px - bridge between base and lg */
-  --text-md--line-height: 1.375rem;
   --text-lg: 1rem; /* was 1.125rem, now base */
   --text-lg--line-height: 1.5rem;
   --text-xl: 1.125rem; /* was 1.25rem, now lg */
