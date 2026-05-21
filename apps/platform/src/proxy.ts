@@ -1,8 +1,8 @@
 /**
- * Platform service middleware.
+ * Platform service proxy.
  *
  * No Clerk auth — platform uses JWT service tokens.
- * Middleware handles security headers only via @vendor/security (nosecone).
+ * Proxy handles security headers only via @vendor/security (nosecone).
  * CORS is handled per-endpoint (e.g. /api/trpc/[trpc]/route.ts).
  */
 import {
@@ -13,7 +13,7 @@ import type { NextRequest } from "next/server";
 
 const securityHeaders = securityMiddleware(noseconeOptions);
 
-export default async function middleware(_req: NextRequest) {
+export default async function proxy(_req: NextRequest) {
   return await securityHeaders();
 }
 
