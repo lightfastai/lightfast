@@ -5,7 +5,7 @@ import {
 } from "@repo/app-validation/schemas";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { clerkClient } from "@vendor/clerk/server";
+import { clerkClient, toPlainClerkResource } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 
 import { isClerkResourceNotFound } from "../../auth/clerk-errors";
@@ -25,9 +25,7 @@ export const orgApiKeysRouter = {
       subject: ctx.auth.identity.orgId,
       includeInvalid: true,
     });
-    // Spread Clerk's APIKey class instances into plain objects — RSC props
-    // serialization rejects class instances at the prefetch → hydrate boundary.
-    return data.map((k) => ({ ...k }));
+    return data.map((key) => toPlainClerkResource(key));
   }),
 
   create: orgAdminProcedure
@@ -45,9 +43,7 @@ export const orgApiKeysRouter = {
         keyId: key.id,
         name: input.name,
       });
-      // key.secret is only present on create. Spread into a plain object so
-      // the mutation result survives RSC serialization on the way to the UI.
-      return { ...key };
+      return toPlainClerkResource(key);
     }),
 
   revoke: orgAdminProcedure

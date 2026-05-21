@@ -1,5 +1,6 @@
 import "server-only";
 
+export { toPlainClerkResource } from "./resources";
 export type {
   APIKey,
   BillingPlan,

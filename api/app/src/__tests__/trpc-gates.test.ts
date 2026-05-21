@@ -23,6 +23,7 @@ const apiKeysListMock = vi.fn();
 const apiKeysRevokeMock = vi.fn();
 
 vi.mock("@vendor/clerk/server", () => ({
+  toPlainClerkResource: structuredClone,
   clerkClient: () =>
     Promise.resolve({
       organizations: {

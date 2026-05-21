@@ -17,6 +17,7 @@ vi.mock("@vendor/clerk/env", () => ({
 
 vi.mock("@vendor/clerk/server", () => ({
   auth: authMock,
+  toPlainClerkResource: structuredClone,
   clerkClient: () =>
     Promise.resolve({
       billing: {

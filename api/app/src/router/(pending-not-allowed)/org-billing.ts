@@ -1,47 +1,9 @@
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
-import { clerkClient } from "@vendor/clerk/server";
+import { clerkClient, toPlainClerkResource } from "@vendor/clerk/server";
 import { z } from "zod";
 
 import { orgAdminProcedure, orgProcedure } from "../../trpc";
-
-function stripClerkResourcePrototypes<T>(value: T): T {
-  return stripClerkResourcePrototypesInner(value, new WeakMap()) as T;
-}
-
-function stripClerkResourcePrototypesInner(
-  value: unknown,
-  seen: WeakMap<object, unknown>
-): unknown {
-  if (value === null || typeof value !== "object") {
-    return value;
-  }
-  if (value instanceof Date) {
-    return value;
-  }
-
-  if (seen.has(value)) {
-    return seen.get(value);
-  }
-
-  if (Array.isArray(value)) {
-    const array: unknown[] = [];
-    seen.set(value, array);
-    for (const item of value) {
-      array.push(stripClerkResourcePrototypesInner(item, seen));
-    }
-    return array;
-  }
-
-  const plain: Record<string, unknown> = {};
-  seen.set(value, plain);
-  for (const [key, nestedValue] of Object.entries(value)) {
-    if (typeof nestedValue !== "function") {
-      plain[key] = stripClerkResourcePrototypesInner(nestedValue, seen);
-    }
-  }
-  return plain;
-}
 
 export const orgBillingRouter = {
   overview: orgProcedure.query(async ({ ctx }) => {
@@ -52,8 +14,8 @@ export const orgBillingRouter = {
     ]);
 
     return {
-      plans: stripClerkResourcePrototypes(plans.data),
-      subscription: stripClerkResourcePrototypes(subscription),
+      plans: toPlainClerkResource(plans.data),
+      subscription: toPlainClerkResource(subscription),
     };
   }),
 
@@ -87,6 +49,6 @@ export const orgBillingRouter = {
           endNow: false,
         }
       );
-      return stripClerkResourcePrototypes(canceledItem);
+      return toPlainClerkResource(canceledItem);
     }),
 } satisfies TRPCRouterRecord;
