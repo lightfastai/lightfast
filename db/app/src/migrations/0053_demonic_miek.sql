@@ -1,1 +1,0 @@
-ALTER TABLE "lightfast_workspace_events" ADD COLUMN "significance_score" integer;

@@ -1,2 +1,0 @@
-ALTER TABLE "lightfast_workspace_neural_observations" ADD COLUMN "ingestion_source" varchar(20) DEFAULT 'webhook' NOT NULL;--> statement-breakpoint
-ALTER TABLE "lightfast_workspace_webhook_payloads" ADD COLUMN "ingestion_source" varchar(20) DEFAULT 'webhook' NOT NULL;

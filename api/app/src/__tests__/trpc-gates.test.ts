@@ -5,7 +5,7 @@ import { isDiagnosticCause } from "../diagnostics";
 
 // ----- module mocks (must precede the dynamic imports below) -----------------
 
-// `@db/app`'s barrel re-exports the eager Neon `db`; stub the client module so
+// `@db/app`'s barrel re-exports the eager database client; stub it so
 // the binding *helpers* used by `task.*` load without DB env. Handlers read the
 // fake `db` injected via tRPC context, never this stub.
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -124,7 +124,7 @@ function makeStatefulDb(seedActive = false) {
     }),
     insert: () => ({
       values: (v: Record<string, unknown>) => ({
-        returning: () => {
+        $returningId: () => {
           spies.insert(v);
           const row = {
             id: rows.length + 1,
@@ -135,7 +135,7 @@ function makeStatefulDb(seedActive = false) {
             ...v,
           };
           rows.push(row);
-          return Promise.resolve([row]);
+          return Promise.resolve([{ id: row.id }]);
         },
       }),
     }),

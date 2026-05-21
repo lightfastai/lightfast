@@ -1,1 +1,0 @@
-ALTER TABLE "lightfast_workspace_workflow_runs" ALTER COLUMN "store_id" SET NOT NULL;

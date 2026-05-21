@@ -1,19 +1,12 @@
-import { neon, neonConfig } from "@neondatabase/serverless";
-import { drizzle } from "drizzle-orm/neon-http";
+import { createDatabase } from "@vendor/db";
 import { env } from "./env";
 import * as schema from "./schema";
 
-const NEON_HTTP_PROXY_PORT = 4444;
-
 export function createClient() {
-  neonConfig.fetchEndpoint = (host) => {
-    if (isLocalDatabaseHost(host)) {
-      return `http://${host}:${NEON_HTTP_PROXY_PORT}/sql`;
-    }
-    return `https://${host}/sql`;
-  };
-
-  return drizzle({ client: neon(resolveDatabaseUrl()), schema });
+  const host = requireEnv("DATABASE_HOST", env.DATABASE_HOST);
+  const username = requireEnv("DATABASE_USERNAME", env.DATABASE_USERNAME);
+  const password = requireEnv("DATABASE_PASSWORD", env.DATABASE_PASSWORD);
+  return createDatabase({ host, password, username }, schema);
 }
 
 export const db = createClient();
@@ -24,21 +17,9 @@ export const db = createClient();
  */
 export type Database = typeof db;
 
-function resolveDatabaseUrl() {
-  const url = new URL("postgresql://localhost");
-  url.hostname = env.DATABASE_HOST;
-  url.username = env.DATABASE_USERNAME;
-  url.password = env.DATABASE_PASSWORD;
-  url.pathname = `/${env.DATABASE_NAME ?? "postgres"}`;
-  if (!isLocalDatabaseHost(env.DATABASE_HOST)) {
-    url.searchParams.set("sslmode", "require");
+function requireEnv(name: string, value: string | undefined): string {
+  if (!value) {
+    throw new Error(`${name} is required to create the PlanetScale client.`);
   }
-  return url.toString();
-}
-
-function isLocalDatabaseHost(value: string) {
-  const hostname = value.toLowerCase();
-  return (
-    hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1"
-  );
+  return value;
 }

@@ -4,22 +4,29 @@ on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type "migrate" to confirm you want to run migrations against production'
+        description: 'Type "migrate" to open and deploy a PlanetScale deploy request'
         required: true
         type: string
+      branch:
+        description: "Optional PlanetScale branch name. Defaults to db-<run id>."
+        required: false
+        type: string
 
-# Only allow one migration at a time
 concurrency:
   group: db-migration
   cancel-in-progress: false
 
 jobs:
   migrate:
-    name: Run Database Migrations
+    name: Run PlanetScale MySQL Migrations
     runs-on: ubuntu-latest
-    # Only run if user typed "migrate" as confirmation
     if: github.event.inputs.confirm == 'migrate'
-    timeout-minutes: 10
+    timeout-minutes: 20
+    env:
+      PLANETSCALE_DATABASE_NAME: ${{ secrets.PLANETSCALE_DATABASE_NAME }}
+      PLANETSCALE_ORG_NAME: ${{ secrets.PLANETSCALE_ORG_NAME }}
+      PLANETSCALE_SERVICE_TOKEN_ID: ${{ secrets.PLANETSCALE_SERVICE_TOKEN_ID }}
+      PLANETSCALE_SERVICE_TOKEN: ${{ secrets.PLANETSCALE_SERVICE_TOKEN }}
 
     steps:
       - name: Checkout code
@@ -32,42 +39,98 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'pnpm'
+          cache: "pnpm"
+
+      - name: Setup pscale
+        uses: planetscale/setup-pscale-action@v1
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Resolve PlanetScale branch
+        run: |
+          raw_branch="${{ github.event.inputs.branch }}"
+          if [ -z "$raw_branch" ]; then
+            raw_branch="db-${GITHUB_RUN_ID}"
+          fi
+          branch_name=$(printf '%s' "$raw_branch" | tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]-')
+          if [ -z "$branch_name" ]; then
+            echo "Could not derive a valid PlanetScale branch name." >&2
+            exit 1
+          fi
+          echo "PSCALE_BRANCH_NAME=$branch_name" >> "$GITHUB_ENV"
+
+      - name: Create or reuse PlanetScale branch
+        run: |
+          set +e
+          pscale branch show "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" >/dev/null
+          exit_code=$?
+          set -e
+
+          if [ "$exit_code" -eq 0 ]; then
+            echo "PlanetScale branch $PLANETSCALE_DATABASE_NAME/$PSCALE_BRANCH_NAME already exists."
+          else
+            pscale branch create "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --from main --wait --org "$PLANETSCALE_ORG_NAME"
+          fi
+
+      - name: Create branch password
+        run: |
+          response=$(pscale password create "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" "github-actions-${GITHUB_RUN_ID}" -f json --org "$PLANETSCALE_ORG_NAME")
+          password_id=$(echo "$response" | jq -r '.id')
+          host=$(echo "$response" | jq -r '.access_host_url')
+          username=$(echo "$response" | jq -r '.username')
+          password=$(echo "$response" | jq -r '.plain_text')
+
+          echo "::add-mask::$password"
+          echo "PSCALE_PASSWORD_ID=$password_id" >> "$GITHUB_ENV"
+          echo "DATABASE_HOST=$host" >> "$GITHUB_ENV"
+          echo "DATABASE_USERNAME=$username" >> "$GITHUB_ENV"
+          echo "DATABASE_PASSWORD=$password" >> "$GITHUB_ENV"
+          echo "DATABASE_NAME=$PLANETSCALE_DATABASE_NAME" >> "$GITHUB_ENV"
+
       - name: Show pending migrations
         working-directory: db/app
-        env:
-          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
         run: |
-          echo "Checking for pending migrations..."
-          echo "---"
-          ls -la src/migrations/*.sql | tail -10
+          echo "Pending migration files:"
+          ls -la src/migrations/*.sql
           echo "---"
           echo "Migration journal:"
-          cat src/migrations/meta/_journal.json | tail -30
+          cat src/migrations/meta/_journal.json
 
-      - name: Run migrations
+      - name: Run migrations on branch
         working-directory: db/app
-        env:
-          DATABASE_HOST: ${{ secrets.DATABASE_HOST }}
-          DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
-          DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+        run: pnpm db:migrate
+
+      - name: Open deploy request
         run: |
-          echo "Running database migrations..."
-          pnpm drizzle-kit migrate --config=./src/drizzle.config.ts
-          echo "Migrations completed successfully!"
+          set +e
+          existing=$(pscale deploy-request show "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" -f json 2>/dev/null)
+          exit_code=$?
+          set -e
+
+          if [ "$exit_code" -eq 0 ]; then
+            deploy_request_number=$(echo "$existing" | jq -r '.number')
+          else
+            response=$(pscale deploy-request create "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --into main --notes "GitHub Actions run ${GITHUB_RUN_ID}" --org "$PLANETSCALE_ORG_NAME" -f json)
+            deploy_request_number=$(echo "$response" | jq -r '.number')
+          fi
+
+          echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> "$GITHUB_ENV"
+          echo "Opened deploy request $deploy_request_number."
+
+      - name: Deploy schema changes
+        run: |
+          pscale deploy-request deploy "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" --wait
+
+      - name: Delete branch password
+        if: always() && env.PSCALE_PASSWORD_ID != ''
+        run: |
+          pscale password delete "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" "$PSCALE_PASSWORD_ID" --force --org "$PLANETSCALE_ORG_NAME"
 
       - name: Summary
         run: |
-          echo "Database migration completed successfully."
-          echo "Check the 'Run migrations' step above for details on what was applied."
+          echo "Database migrations deployed through PlanetScale deploy request ${DEPLOY_REQUEST_NUMBER}."
 
-  # Job that runs if confirmation was not provided
   no-confirmation:
     name: Migration Not Confirmed
     runs-on: ubuntu-latest
@@ -76,6 +139,5 @@ jobs:
       - name: Show error
         run: |
           echo "Migration was not confirmed."
-          echo "You must type 'migrate' in the confirmation input to run migrations."
-          echo "This is a safety measure to prevent accidental database changes."
+          echo "You must type 'migrate' in the confirmation input."
           exit 1
