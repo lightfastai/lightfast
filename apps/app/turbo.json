@@ -25,6 +25,7 @@
         "DATABASE_HOST",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",
+        "DATABASE_NAME",
         "KV_REST_API_URL",
         "KV_REST_API_TOKEN",
         "HEALTH_CHECK_AUTH_TOKEN",

@@ -18,6 +18,7 @@
         "DATABASE_HOST",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",
+        "DATABASE_NAME",
         "SERVICE_JWT_SECRET",
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
