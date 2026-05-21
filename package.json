@@ -3,10 +3,10 @@
   "license": "MIT",
   "private": true,
   "engines": {
-    "node": ">=22.12.0",
-    "pnpm": "10.32.1"
+    "node": ">=22.13.0",
+    "pnpm": "11.1.3"
   },
-  "packageManager": "pnpm@10.32.1",
+  "packageManager": "pnpm@11.1.3",
   "scripts": {
     "build": "turbo run build",
     "build:app": "turbo run build -F @lightfast/app",
@@ -14,7 +14,7 @@
     "build:platform": "turbo run build -F @lightfast/platform",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
-    "dev": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-app --register-app lightfast-platform -- concurrently -n apps,mfe -c cyan,magenta 'turbo run dev --concurrency=15 -F @lightfast/www -F @lightfast/app -F @lightfast/platform --continue' 'portless run --name lightfast pnpm --filter @lightfast/app run mfe:proxy'",
+    "dev": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-app --register-app lightfast-platform -- turbo run dev @lightfast/app#mfe:proxy --concurrency=15 -F @lightfast/www -F @lightfast/app -F @lightfast/platform --continue",
     "dev:app": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-app -- turbo run dev -F @lightfast/app --continue",
     "dev:www": "portless proxy start && turbo run dev -F @lightfast/www",
     "dev:platform": "portless proxy start && node scripts/dev-services.mjs inngest-sync --register-app lightfast-platform -- turbo run dev -F @lightfast/platform",
@@ -41,7 +41,6 @@
     "changeset": "changeset",
     "version-packages": "changeset version",
     "release": "changeset publish",
-    "claude": "./scripts/c",
     "remotion:studio": "pnpm --filter @repo/app-remotion studio",
     "remotion:render": "pnpm --filter @repo/app-remotion render:all",
     "db:url": "node scripts/dev-services.mjs postgres url",
@@ -67,24 +66,5 @@
     "turbo-ignore": "2.9.14",
     "typescript": "^5.9.2",
     "ultracite": "7.6.0"
-  },
-  "pnpm": {
-    "overrides": {
-      "react": "^19.2.5",
-      "react-dom": "^19.2.5",
-      "@types/react": "^19.2.14",
-      "@types/react-dom": "^19.2.3",
-      "@opentelemetry/api": "1.9.1",
-      "tar": "^7.5.13",
-      "basic-ftp": "^5.3.0",
-      "undici": "^6.25.0",
-      "lodash": "^4.18.1",
-      "lodash-es": "^4.18.1",
-      "path-to-regexp": "^6.3.0",
-      "fast-xml-parser": "^5.5.6"
-    },
-    "patchedDependencies": {
-      "@vercel/microfrontends@2.3.2": "patches/@vercel__microfrontends@2.3.2.patch"
-    }
   }
 }
