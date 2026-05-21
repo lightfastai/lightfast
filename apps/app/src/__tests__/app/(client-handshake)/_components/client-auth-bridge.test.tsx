@@ -33,6 +33,14 @@ function mockSignedInWithToken(token: string | null) {
   });
 }
 
+function mockSignedInWithGetToken(getToken: () => Promise<string | null>) {
+  useAuthMock.mockReturnValue({
+    isLoaded: true,
+    isSignedIn: true,
+    getToken: vi.fn(getToken),
+  });
+}
+
 function mockSignedOut() {
   useAuthMock.mockReturnValue({
     isLoaded: true,
@@ -402,6 +410,46 @@ describe("ClientAuthBridge — code-redirect mode (desktop PKCE)", () => {
     );
   });
 
+  it("routes to the bind repair href when /api/auth/code returns org_setup_required", async () => {
+    mockSignedInWithToken("real-jwt");
+    fetchSpy.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          error: "org_setup_required",
+          repair: { id: "bind-source-control", href: "/acme/tasks/bind" },
+        }),
+        { status: 403 }
+      )
+    );
+    const locationSpy = vi.spyOn(
+      window.location,
+      "href",
+      "set"
+    ) as unknown as ReturnType<typeof vi.fn>;
+
+    render(
+      <ClientAuthBridge
+        buildExchangeRequest={() => ({
+          state: "S1",
+          codeChallenge: "CHAL",
+          redirectUri: "lightfast-dev://auth/callback",
+        })}
+        mode="code-redirect"
+        subtitle="sub"
+        title="title"
+      />
+    );
+
+    await waitFor(() => {
+      expect(locationSpy).toHaveBeenCalledWith("/acme/tasks/bind");
+    });
+    expect(captureMessageMock).not.toHaveBeenCalledWith(
+      expect.stringContaining("code endpoint non-ok"),
+      expect.anything()
+    );
+    locationSpy.mockRestore();
+  });
+
   it("renders error when fetch throws a network error during exchange POST", async () => {
     mockSignedInWithToken("real-jwt");
     fetchSpy.mockRejectedValue(new TypeError("Failed to fetch"));
@@ -511,5 +559,38 @@ describe("ClientAuthBridge — redirect mode (CLI parity)", () => {
     await waitFor(() => {
       expect(screen.getByText("Authentication Failed")).toBeTruthy();
     });
+  });
+
+  it("routes to the bind repair href when token minting returns org_setup_required", async () => {
+    mockSignedInWithGetToken(async () => {
+      const error = new Error("org_setup_required") as Error & {
+        error: string;
+        repair: { href: string; id: string };
+      };
+      error.error = "org_setup_required";
+      error.repair = { id: "bind-source-control", href: "/acme/tasks/bind" };
+      throw error;
+    });
+    const buildRedirectUrl = vi.fn(() => "http://localhost:55555/callback");
+    const locationSpy = vi.spyOn(
+      window.location,
+      "href",
+      "set"
+    ) as unknown as ReturnType<typeof vi.fn>;
+
+    render(
+      <ClientAuthBridge
+        buildRedirectUrl={buildRedirectUrl}
+        mode="redirect"
+        subtitle="sub"
+        title="title"
+      />
+    );
+
+    await waitFor(() => {
+      expect(locationSpy).toHaveBeenCalledWith("/acme/tasks/bind");
+    });
+    expect(buildRedirectUrl).not.toHaveBeenCalled();
+    locationSpy.mockRestore();
   });
 });

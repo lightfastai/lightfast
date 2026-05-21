@@ -1,5 +1,8 @@
 // POST /api/auth/code
 // Auth: Clerk JWT (lightfast-desktop template) in Authorization header.
+import { clerkClient } from "@clerk/nextjs/server";
+import { isOrgBound } from "@db/app";
+import { db } from "@db/app/client";
 import { z } from "zod";
 import { issueCode } from "~/app/(auth-api)/_server/code-store";
 import { verifyBearerJwt } from "~/app/(auth-api)/_server/verify-bearer-jwt";
@@ -16,6 +19,21 @@ const bodySchema = z.object({
   redirect_uri: z.string().refine((u) => ALLOWED_REDIRECT_URIS.has(u)),
 });
 
+async function getBindRepairHref(args: {
+  orgId: string;
+  userId: string;
+}): Promise<string | undefined> {
+  const clerk = await clerkClient();
+  const memberships = await clerk.users.getOrganizationMembershipList({
+    userId: args.userId,
+  });
+  const membership = memberships.data.find(
+    (m) => m.organization.id === args.orgId
+  );
+  const slug = membership?.organization.slug;
+  return slug ? `/${slug}/tasks/bind` : undefined;
+}
+
 export async function POST(req: Request) {
   const session = await verifyBearerJwt(req);
   if (!session) {
@@ -25,6 +43,23 @@ export async function POST(req: Request) {
   const parsed = bodySchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) {
     return Response.json({ error: "bad_request" }, { status: 400 });
+  }
+
+  if (session.orgId && !(await isOrgBound(db, session.orgId))) {
+    const href = await getBindRepairHref({
+      orgId: session.orgId,
+      userId: session.userId,
+    });
+    return Response.json(
+      {
+        error: "org_setup_required",
+        repair: {
+          id: "bind-source-control",
+          ...(href ? { href } : {}),
+        },
+      },
+      { status: 403 }
+    );
   }
 
   const code = await issueCode({
