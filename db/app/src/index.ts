@@ -6,6 +6,12 @@ export { type Database, db } from "./client";
 // Re-exported schema definitions
 export * from "./schema";
 export {
+  getPersonByIdentityKey,
+  type UpsertPeopleCandidate,
+  type UpsertPeopleFromCandidatesInput,
+  upsertPeopleFromCandidates,
+} from "./utils/people";
+export {
   type ClaimSignalForClassificationParams,
   claimSignalForClassification,
   type CreateSignalRecordInput,
