@@ -19,7 +19,8 @@
   "dependencies": {
     "@repo/api-contract": "workspace:*",
     "ai": "catalog:",
-    "server-only": "^0.0.1"
+    "server-only": "^0.0.1",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
