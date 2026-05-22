@@ -28,8 +28,15 @@ export const peopleClassificationSchema = z.object({
   candidates: z.array(peopleCandidateSchema).max(10),
 });
 
-export const peopleClassificationModelSchema = peopleClassificationSchema.omit({
-  schemaVersion: true,
+// OpenAI strict structured outputs require every object property to be listed in
+// `required`. The persisted classifier output keeps displayName optional, so the
+// model-facing schema uses explicit null and classify.ts normalizes it away.
+export const peopleCandidateModelSchema = peopleCandidateSchema.extend({
+  displayName: z.string().trim().min(1).max(120).nullable(),
+});
+
+export const peopleClassificationModelSchema = z.object({
+  candidates: z.array(peopleCandidateModelSchema).max(10),
 });
 
 export type PeopleIdentityProvider = z.infer<
@@ -38,3 +45,6 @@ export type PeopleIdentityProvider = z.infer<
 export type PeopleIdentityType = z.infer<typeof peopleIdentityTypeSchema>;
 export type PeopleCandidate = z.infer<typeof peopleCandidateSchema>;
 export type PeopleClassification = z.infer<typeof peopleClassificationSchema>;
+export type PeopleClassificationModelOutput = z.infer<
+  typeof peopleClassificationModelSchema
+>;

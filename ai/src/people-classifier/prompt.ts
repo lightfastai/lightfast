@@ -33,5 +33,5 @@ Rules:
 - Prefer email and profile_url over loose handles when both appear.
 - Profile URLs and handles must identify a person profile, not a company page or generic domain.
 - identityValue should preserve the raw durable value from the input.
-- displayName is optional and must only be included when present or strongly implied by the signal text.
+- displayName must be a non-empty string when present or strongly implied by the signal text; otherwise use null.
 - confidence is a number from 0 to 1.`;

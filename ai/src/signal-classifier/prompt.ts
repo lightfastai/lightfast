@@ -18,6 +18,7 @@ Field rules:
 - nextAction: one concrete action the user could take next.
 - rationale: brief explanation of why this classification was chosen.
 - confidence: number from 0 to 1.
+- Always include routing.classifyPeople, even when shouldRun is false.
 - routing.classifyPeople.shouldRun: true only when the input plausibly contains durable social or contact identity material worth a dedicated people extraction pass.
 - routing.classifyPeople.rationale: brief reason for the routing decision.
 - Do not extract people, emails, handles, or profile URLs yourself. Only decide whether the dedicated people classifier should run.

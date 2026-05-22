@@ -32,12 +32,7 @@ export const signalKindSchema = z.enum([
   "other",
 ]);
 
-export const signalPrioritySchema = z.enum([
-  "low",
-  "normal",
-  "high",
-  "urgent",
-]);
+export const signalPrioritySchema = z.enum(["low", "normal", "high", "urgent"]);
 
 export const signalClassificationRoutingSchema = z.object({
   classifyPeople: z

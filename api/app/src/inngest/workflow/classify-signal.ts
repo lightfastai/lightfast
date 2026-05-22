@@ -16,7 +16,9 @@ import { env } from "../../env";
 import { inngest } from "../client";
 
 function shouldClassifyPeople(
-  classification: { routing?: { classifyPeople?: { shouldRun?: boolean } } } | null
+  classification: {
+    routing?: { classifyPeople?: { shouldRun?: boolean } };
+  } | null
 ): boolean {
   return classification?.routing?.classifyPeople?.shouldRun === true;
 }

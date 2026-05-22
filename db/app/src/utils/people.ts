@@ -2,10 +2,10 @@ import { and, eq, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
-  people,
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  people,
 } from "../schema";
 import {
   createPersonIdentityKey,
@@ -21,8 +21,8 @@ export interface UpsertPeopleCandidate {
 }
 
 export interface UpsertPeopleFromCandidatesInput {
-  clerkOrgId: string;
   candidates: UpsertPeopleCandidate[];
+  clerkOrgId: string;
   sourceSignalId: string;
 }
 

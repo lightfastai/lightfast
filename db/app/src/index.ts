@@ -5,24 +5,6 @@ export { type Database, db } from "./client";
 
 // Re-exported schema definitions
 export * from "./schema";
-export {
-  getPersonByIdentityKey,
-  type UpsertPeopleCandidate,
-  type UpsertPeopleFromCandidatesInput,
-  upsertPeopleFromCandidates,
-} from "./utils/people";
-export {
-  type ClaimSignalForClassificationParams,
-  claimSignalForClassification,
-  type CreateSignalRecordInput,
-  createSignal,
-  type GetSignalByPublicIdParams,
-  getSignalByPublicId,
-  type MarkSignalClassifiedParams,
-  markSignalClassified,
-  type MarkSignalFailedParams,
-  markSignalFailed,
-} from "./utils/signals";
 
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
@@ -35,3 +17,21 @@ export {
   type UpsertActiveOrgBindingInput,
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
+export {
+  getPersonByIdentityKey,
+  type UpsertPeopleCandidate,
+  type UpsertPeopleFromCandidatesInput,
+  upsertPeopleFromCandidates,
+} from "./utils/people";
+export {
+  type ClaimSignalForClassificationParams,
+  type CreateSignalRecordInput,
+  claimSignalForClassification,
+  createSignal,
+  type GetSignalByPublicIdParams,
+  getSignalByPublicId,
+  type MarkSignalClassifiedParams,
+  type MarkSignalFailedParams,
+  markSignalClassified,
+  markSignalFailed,
+} from "./utils/signals";

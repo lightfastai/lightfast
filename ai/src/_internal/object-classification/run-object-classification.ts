@@ -1,11 +1,7 @@
 import { generateText, type LanguageModel, Output } from "ai";
 import type { ZodType } from "zod";
 
-import {
-  formatFinishReason,
-  formatUsage,
-  getModelName,
-} from "./telemetry";
+import { formatFinishReason, formatUsage, getModelName } from "./telemetry";
 
 type LogMetadata = Record<string, unknown>;
 

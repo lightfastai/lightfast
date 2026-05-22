@@ -36,7 +36,7 @@ export function normalizePersonIdentityCandidate(
     return normalizeProfileUrl(input.identityProvider, input.identityValue);
   }
 
-  return undefined;
+  return;
 }
 
 export function createPersonIdentityKey(
@@ -65,12 +65,12 @@ function normalizeHandle(
   value: string
 ): NormalizedPersonIdentity | undefined {
   if (!["x", "github"].includes(provider)) {
-    return undefined;
+    return;
   }
 
   const normalized = value.trim().replace(/^@/, "").toLowerCase();
   if (!normalized || normalized.includes("/") || normalized.includes(" ")) {
-    return undefined;
+    return;
   }
 
   return {
@@ -88,7 +88,7 @@ function normalizeProfileUrl(
   try {
     url = new URL(value.trim());
   } catch {
-    return undefined;
+    return;
   }
 
   url.hash = "";
@@ -125,5 +125,5 @@ function normalizeProfileUrl(
     };
   }
 
-  return undefined;
+  return;
 }

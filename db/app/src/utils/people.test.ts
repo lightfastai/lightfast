@@ -1,12 +1,12 @@
 import type { Database, Person } from "@db/app";
 import { describe, expect, it, vi } from "vitest";
 
+import { upsertPeopleFromCandidates } from "./people";
 import {
   createPersonIdentityKey,
   normalizePersonIdentityCandidate,
   shouldIncrementSeenCount,
 } from "./people-identities";
-import { upsertPeopleFromCandidates } from "./people";
 
 describe("people identity normalization", () => {
   it("normalizes email identities", () => {

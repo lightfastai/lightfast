@@ -73,8 +73,7 @@ function isProviderError(error: unknown): boolean {
 
 function hasErrorName(error: unknown, name: string): boolean {
   return (
-    error instanceof Error &&
-    (error.name === name || error.name.includes(name))
+    error instanceof Error && (error.name === name || error.name.includes(name))
   );
 }
 
@@ -82,7 +81,7 @@ function hasCauseMatching(
   error: unknown,
   predicate: (error: unknown) => boolean
 ): boolean {
-  if (!(error instanceof Error) || !("cause" in error)) {
+  if (!(error instanceof Error && "cause" in error)) {
     return false;
   }
 

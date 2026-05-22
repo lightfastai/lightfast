@@ -4,8 +4,8 @@ import type { SignalClassification } from "@repo/api-contract";
 import type { LanguageModel } from "ai";
 
 import {
-  runObjectClassification,
   type ObjectClassificationLogger,
+  runObjectClassification,
 } from "../_internal/object-classification/run-object-classification";
 import {
   SIGNAL_CLASSIFICATION_SCHEMA_VERSION,
@@ -35,9 +35,9 @@ export interface SignalClassificationRequest {
   deploymentEnvironment: DeploymentEnvironment;
   inputLength: number;
   model: LanguageModel;
+  prompt: string;
   signalId: string;
   system: string;
-  prompt: string;
 }
 
 export interface BuildSignalClassificationRequestInput {

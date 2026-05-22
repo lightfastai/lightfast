@@ -8,9 +8,9 @@ import {
 
 describe("signal schemas", () => {
   it("trims and accepts non-empty signal input", () => {
-    expect(createSignalInput.parse({ input: "  Run the PR test plan  " })).toEqual(
-      { input: "Run the PR test plan" }
-    );
+    expect(
+      createSignalInput.parse({ input: "  Run the PR test plan  " })
+    ).toEqual({ input: "Run the PR test plan" });
   });
 
   it("rejects empty signal input", () => {
@@ -18,7 +18,9 @@ describe("signal schemas", () => {
   });
 
   it("rejects signal input over 4000 characters", () => {
-    expect(() => createSignalInput.parse({ input: "a".repeat(4001) })).toThrow();
+    expect(() =>
+      createSignalInput.parse({ input: "a".repeat(4001) })
+    ).toThrow();
   });
 
   it("accepts generated signal ids", () => {

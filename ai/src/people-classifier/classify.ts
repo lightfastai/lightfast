@@ -4,8 +4,8 @@ import type { SignalClassification } from "@repo/api-contract";
 import type { LanguageModel } from "ai";
 
 import {
-  runObjectClassification,
   type ObjectClassificationLogger,
+  runObjectClassification,
 } from "../_internal/object-classification/run-object-classification";
 import {
   PEOPLE_CLASSIFICATION_SCHEMA_VERSION,
@@ -20,8 +20,8 @@ import {
 import { getPeopleClassificationFailure } from "./errors";
 import { PEOPLE_CLASSIFIER_SYSTEM_PROMPT } from "./prompt";
 import {
-  peopleClassificationModelSchema,
   type PeopleClassification,
+  peopleClassificationModelSchema,
 } from "./schema";
 
 const noopLogger: ObjectClassificationLogger = {
@@ -117,5 +117,11 @@ export async function classifyPeopleFromSignal(
     timeoutMs: PEOPLE_CLASSIFIER_TIMEOUT_MS,
   });
 
-  return { ...output, schemaVersion: PEOPLE_CLASSIFICATION_SCHEMA_VERSION };
+  return {
+    candidates: output.candidates.map(({ displayName, ...candidate }) => ({
+      ...candidate,
+      ...(displayName ? { displayName } : {}),
+    })),
+    schemaVersion: PEOPLE_CLASSIFICATION_SCHEMA_VERSION,
+  };
 }

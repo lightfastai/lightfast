@@ -3,18 +3,19 @@ import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
-  SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
-  SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
-  SIGNAL_CLASSIFIER_MODEL,
-  SIGNAL_CLASSIFIER_BRAINTRUST_PARENT,
-  SIGNAL_CLASSIFIER_FEATURE,
-  SIGNAL_CLASSIFIER_PROMPT_ID,
-  SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
-  SIGNAL_CLASSIFIER_WORKFLOW,
-  type SignalClassificationFailureCode,
   buildSignalClassificationRequest,
   classifySignalInput,
   getSignalClassificationFailure,
+  SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
+  SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
+  SIGNAL_CLASSIFIER_BRAINTRUST_PARENT,
+  SIGNAL_CLASSIFIER_FEATURE,
+  SIGNAL_CLASSIFIER_MODEL,
+  SIGNAL_CLASSIFIER_PROMPT_ID,
+  SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+  SIGNAL_CLASSIFIER_WORKFLOW,
+  signalClassificationModelSchema,
+  type SignalClassificationFailureCode,
 } from "./index";
 
 const logger = {
@@ -106,7 +107,9 @@ describe("classifySignalInput", () => {
   });
 
   it("uses AI SDK structured output with metadata-only telemetry", async () => {
-    const model = createClassifierModel(JSON.stringify(modelOwnedClassification));
+    const model = createClassifierModel(
+      JSON.stringify(modelOwnedClassification)
+    );
     const request = {
       ...buildSignalClassificationRequest({
         clerkOrgId: "org_test",
@@ -178,7 +181,9 @@ describe("classifySignalInput", () => {
         errorCode: SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
       })
     );
-    expect(typedErrorCode).toBe(SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE);
+    expect(typedErrorCode).toBe(
+      SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE
+    );
     expect(logger.warn).toHaveBeenCalledWith(
       "[signals] classification failed",
       expect.objectContaining({
@@ -209,10 +214,23 @@ describe("classifySignalInput", () => {
 
   it("instructs the model to route people classification without extracting people", () => {
     expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain(
-      "routing.classifyPeople"
+      "Always include routing.classifyPeople"
     );
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("routing.classifyPeople");
     expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("shouldRun");
     expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("Do not extract people");
+  });
+
+  it("requires model-owned routing for strict structured output", () => {
+    expect(
+      signalClassificationModelSchema.parse(modelOwnedClassification)
+    ).toEqual(modelOwnedClassification);
+    expect(() =>
+      signalClassificationModelSchema.parse({
+        ...modelOwnedClassification,
+        routing: undefined,
+      })
+    ).toThrow();
   });
 
   it.skipIf(process.env.RUN_SIGNAL_CLASSIFIER_AI_E2E !== "1")(

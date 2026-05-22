@@ -1,13 +1,16 @@
-export const SIGNAL_CLASSIFICATION_SCHEMA_VERSION =
-  "signal.classification.v1";
+export const SIGNAL_CLASSIFICATION_SCHEMA_VERSION = "signal.classification.v1";
 export const SIGNAL_CLASSIFIER_MAX_OUTPUT_TOKENS = 512;
 export const SIGNAL_CLASSIFIER_MODEL = "openai/gpt-5.4-nano";
+export const SIGNAL_CLASSIFIER_BRAINTRUST_PARENT =
+  "project_name:lightfast-signals";
+export const SIGNAL_CLASSIFIER_FEATURE = "signals";
+export const SIGNAL_CLASSIFIER_PROMPT_ID = "signal-classifier";
+export const SIGNAL_CLASSIFIER_WORKFLOW = "classify-signal";
 export const SIGNAL_CLASSIFIER_TELEMETRY_FUNCTION_ID =
   "app.inngest.classify-signal";
 export const SIGNAL_CLASSIFIER_TIMEOUT_MS = 30_000;
 
-export const SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE =
-  "CLASSIFICATION_FAILED";
+export const SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE = "CLASSIFICATION_FAILED";
 export const SIGNAL_CLASSIFICATION_PROVIDER_ERROR_CODE =
   "CLASSIFICATION_PROVIDER_ERROR";
 export const SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE =

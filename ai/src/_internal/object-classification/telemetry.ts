@@ -55,5 +55,5 @@ function readTokenTotal(value: unknown): number | undefined {
     return value.total;
   }
 
-  return undefined;
+  return;
 }
