@@ -1,38 +1,38 @@
 import "server-only";
 
 import type { SignalClassification } from "@repo/api-contract";
-import {
-  generateText,
-  type LanguageModel,
-  type LanguageModelUsage,
-  Output,
-} from "ai";
+import type { LanguageModel } from "ai";
 
 import {
+  runObjectClassification,
+  type ObjectClassificationLogger,
+} from "../_internal/object-classification/run-object-classification";
+import {
   SIGNAL_CLASSIFICATION_SCHEMA_VERSION,
+  SIGNAL_CLASSIFIER_FEATURE,
   SIGNAL_CLASSIFIER_MAX_OUTPUT_TOKENS,
   SIGNAL_CLASSIFIER_MODEL,
+  SIGNAL_CLASSIFIER_PROMPT_ID,
   SIGNAL_CLASSIFIER_TELEMETRY_FUNCTION_ID,
   SIGNAL_CLASSIFIER_TIMEOUT_MS,
+  SIGNAL_CLASSIFIER_WORKFLOW,
 } from "./constants";
 import { getSignalClassificationFailure } from "./errors";
 import { SIGNAL_CLASSIFIER_SYSTEM_PROMPT } from "./prompt";
 import { signalClassificationModelSchema } from "./schema";
 
-type LogMetadata = Record<string, unknown>;
-
-export interface SignalClassifierLogger {
-  info(message: string, metadata: LogMetadata): void;
-  warn(message: string, metadata: LogMetadata): void;
-}
+export type SignalClassifierLogger = ObjectClassificationLogger;
 
 const noopLogger: SignalClassifierLogger = {
   info: () => undefined,
   warn: () => undefined,
 };
 
+export type DeploymentEnvironment = "development" | "preview" | "production";
+
 export interface SignalClassificationRequest {
   clerkOrgId: string;
+  deploymentEnvironment: DeploymentEnvironment;
   inputLength: number;
   model: LanguageModel;
   signalId: string;
@@ -42,6 +42,7 @@ export interface SignalClassificationRequest {
 
 export interface BuildSignalClassificationRequestInput {
   clerkOrgId: string;
+  deploymentEnvironment: DeploymentEnvironment;
   input: string;
   signalId: string;
 }
@@ -52,11 +53,13 @@ export interface ClassifySignalInputOptions {
 
 export function buildSignalClassificationRequest({
   clerkOrgId,
+  deploymentEnvironment,
   input,
   signalId,
 }: BuildSignalClassificationRequestInput): SignalClassificationRequest {
   return {
     clerkOrgId,
+    deploymentEnvironment,
     inputLength: input.length,
     model: SIGNAL_CLASSIFIER_MODEL,
     signalId,
@@ -68,6 +71,7 @@ export function buildSignalClassificationRequest({
 export async function classifySignalInput(
   {
     clerkOrgId,
+    deploymentEnvironment,
     inputLength,
     model,
     prompt,
@@ -76,112 +80,29 @@ export async function classifySignalInput(
   }: SignalClassificationRequest,
   { logger = noopLogger }: ClassifySignalInputOptions = {}
 ): Promise<SignalClassification> {
-  const modelName = getModelName(model);
-
-  try {
-    const { finishReason, output, usage, warnings } = await generateText({
-      model,
-      output: Output.object({ schema: signalClassificationModelSchema }),
-      system,
-      prompt,
-      maxOutputTokens: SIGNAL_CLASSIFIER_MAX_OUTPUT_TOKENS,
-      maxRetries: 0,
-      timeout: { totalMs: SIGNAL_CLASSIFIER_TIMEOUT_MS },
-      experimental_telemetry: {
-        functionId: SIGNAL_CLASSIFIER_TELEMETRY_FUNCTION_ID,
-        isEnabled: true,
-        metadata: {
-          clerkOrgId,
-          inputLength,
-          schemaVersion: SIGNAL_CLASSIFICATION_SCHEMA_VERSION,
-          signalId,
-        },
-        recordInputs: false,
-        recordOutputs: false,
-      },
-    });
-
-    logger.info("[signals] classification completed", {
+  const output = await runObjectClassification({
+    failureMessage: "[signals] classification failed",
+    getFailure: getSignalClassificationFailure,
+    logger,
+    maxOutputTokens: SIGNAL_CLASSIFIER_MAX_OUTPUT_TOKENS,
+    metadata: {
       clerkOrgId,
-      finishReason: formatFinishReason(finishReason),
+      deploymentEnvironment,
+      feature: SIGNAL_CLASSIFIER_FEATURE,
       inputLength,
-      model: modelName,
+      promptId: SIGNAL_CLASSIFIER_PROMPT_ID,
+      schemaVersion: SIGNAL_CLASSIFICATION_SCHEMA_VERSION,
       signalId,
-      usage: formatUsage(usage),
-      warnings: warnings?.length ?? 0,
-    });
+      workflow: SIGNAL_CLASSIFIER_WORKFLOW,
+    },
+    model,
+    prompt,
+    schema: signalClassificationModelSchema,
+    successMessage: "[signals] classification completed",
+    system,
+    telemetryFunctionId: SIGNAL_CLASSIFIER_TELEMETRY_FUNCTION_ID,
+    timeoutMs: SIGNAL_CLASSIFIER_TIMEOUT_MS,
+  });
 
-    return { ...output, schemaVersion: SIGNAL_CLASSIFICATION_SCHEMA_VERSION };
-  } catch (error) {
-    const failure = getSignalClassificationFailure(error);
-
-    logger.warn("[signals] classification failed", {
-      clerkOrgId,
-      errorCode: failure.errorCode,
-      errorMessage: failure.errorMessage,
-      inputLength,
-      model: modelName,
-      signalId,
-    });
-
-    throw error;
-  }
-}
-
-function getModelName(model: LanguageModel): string {
-  if (typeof model === "string") {
-    return model;
-  }
-
-  return `${model.provider}/${model.modelId}`;
-}
-
-function formatFinishReason(finishReason: unknown): string {
-  if (typeof finishReason === "string") {
-    return finishReason;
-  }
-
-  if (
-    finishReason &&
-    typeof finishReason === "object" &&
-    "unified" in finishReason &&
-    typeof finishReason.unified === "string"
-  ) {
-    return finishReason.unified;
-  }
-
-  return String(finishReason);
-}
-
-function formatUsage(usage: LanguageModelUsage): Record<string, number> {
-  const inputTokens = readTokenTotal(usage.inputTokens);
-  const outputTokens = readTokenTotal(usage.outputTokens);
-
-  return Object.fromEntries(
-    Object.entries({
-      inputTokens,
-      outputTokens,
-      totalTokens:
-        typeof inputTokens === "number" && typeof outputTokens === "number"
-          ? inputTokens + outputTokens
-          : usage.totalTokens,
-    }).filter(([, value]) => typeof value === "number")
-  ) as Record<string, number>;
-}
-
-function readTokenTotal(value: unknown): number | undefined {
-  if (typeof value === "number") {
-    return value;
-  }
-
-  if (
-    value &&
-    typeof value === "object" &&
-    "total" in value &&
-    typeof value.total === "number"
-  ) {
-    return value.total;
-  }
-
-  return undefined;
+  return { ...output, schemaVersion: SIGNAL_CLASSIFICATION_SCHEMA_VERSION };
 }

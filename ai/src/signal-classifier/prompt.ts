@@ -18,6 +18,9 @@ Field rules:
 - nextAction: one concrete action the user could take next.
 - rationale: brief explanation of why this classification was chosen.
 - confidence: number from 0 to 1.
+- routing.classifyPeople.shouldRun: true only when the input plausibly contains durable social or contact identity material worth a dedicated people extraction pass.
+- routing.classifyPeople.rationale: brief reason for the routing decision.
+- Do not extract people, emails, handles, or profile URLs yourself. Only decide whether the dedicated people classifier should run.
 - Use disposition "needs_context" when the input might be useful but lacks enough detail.
 - Use disposition "not_actionable" when the input is noise, spam, purely descriptive, or has no plausible user action.
 - Use priority "urgent" only when the input implies immediate time sensitivity or blocking impact.`;

@@ -6,7 +6,11 @@ import {
   SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
   SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
   SIGNAL_CLASSIFIER_MODEL,
+  SIGNAL_CLASSIFIER_BRAINTRUST_PARENT,
+  SIGNAL_CLASSIFIER_FEATURE,
+  SIGNAL_CLASSIFIER_PROMPT_ID,
   SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+  SIGNAL_CLASSIFIER_WORKFLOW,
   type SignalClassificationFailureCode,
   buildSignalClassificationRequest,
   classifySignalInput,
@@ -22,13 +26,19 @@ const signalId = "sig_123e4567-e89b-12d3-a456-426614174000";
 
 const modelOwnedClassification = {
   disposition: "actionable",
-  title: "Run the test plan",
-  summary: "The user needs to finish a validation task.",
-  kind: "review",
-  nextAction: "Run the PR test plan.",
-  priority: "high",
-  rationale: "The input describes unfinished validation work.",
+  title: "Review X profile",
+  summary: "The user found an X profile worth engaging.",
+  kind: "engage",
+  nextAction: "Review the profile and decide whether to reply.",
+  priority: "normal",
+  rationale: "The input contains a durable social identity.",
   confidence: 0.95,
+  routing: {
+    classifyPeople: {
+      shouldRun: true,
+      rationale: "The input includes https://x.com/jeevanp.",
+    },
+  },
 } satisfies Omit<SignalClassification, "schemaVersion">;
 
 const classification = {
@@ -72,13 +82,21 @@ describe("classifySignalInput", () => {
   it("builds an OpenAI GPT-5.4 nano classification request with metadata", () => {
     const request = buildSignalClassificationRequest({
       clerkOrgId: "org_test",
+      deploymentEnvironment: "development",
       input: "Run the test plan",
       signalId,
     });
 
     expect(SIGNAL_CLASSIFIER_MODEL).toBe("openai/gpt-5.4-nano");
+    expect(SIGNAL_CLASSIFIER_BRAINTRUST_PARENT).toBe(
+      "project_name:lightfast-signals"
+    );
+    expect(SIGNAL_CLASSIFIER_FEATURE).toBe("signals");
+    expect(SIGNAL_CLASSIFIER_WORKFLOW).toBe("classify-signal");
+    expect(SIGNAL_CLASSIFIER_PROMPT_ID).toBe("signal-classifier");
     expect(request).toEqual({
       clerkOrgId: "org_test",
+      deploymentEnvironment: "development",
       inputLength: "Run the test plan".length,
       model: SIGNAL_CLASSIFIER_MODEL,
       prompt: expect.stringContaining("Run the test plan"),
@@ -92,6 +110,7 @@ describe("classifySignalInput", () => {
     const request = {
       ...buildSignalClassificationRequest({
         clerkOrgId: "org_test",
+        deploymentEnvironment: "production",
         input: "Run the test plan",
         signalId,
       }),
@@ -113,10 +132,14 @@ describe("classifySignalInput", () => {
       "[signals] classification completed",
       expect.objectContaining({
         clerkOrgId: "org_test",
+        deploymentEnvironment: "production",
+        feature: "signals",
         finishReason: "stop",
         inputLength: "Run the test plan".length,
         model: "openai/gpt-5.4-nano",
+        promptId: "signal-classifier",
         signalId,
+        workflow: "classify-signal",
         usage: expect.objectContaining({
           inputTokens: 18,
           outputTokens: 42,
@@ -136,6 +159,7 @@ describe("classifySignalInput", () => {
     const request = {
       ...buildSignalClassificationRequest({
         clerkOrgId: "org_test",
+        deploymentEnvironment: "preview",
         input: "Run the test plan",
         signalId,
       }),
@@ -159,9 +183,13 @@ describe("classifySignalInput", () => {
       "[signals] classification failed",
       expect.objectContaining({
         clerkOrgId: "org_test",
+        deploymentEnvironment: "preview",
         errorCode: SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
+        feature: "signals",
         model: "openai/gpt-5.4-nano",
+        promptId: "signal-classifier",
         signalId,
+        workflow: "classify-signal",
       })
     );
   });
@@ -179,11 +207,20 @@ describe("classifySignalInput", () => {
     expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("Preserve uncertainty");
   });
 
+  it("instructs the model to route people classification without extracting people", () => {
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain(
+      "routing.classifyPeople"
+    );
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("shouldRun");
+    expect(SIGNAL_CLASSIFIER_SYSTEM_PROMPT).toContain("Do not extract people");
+  });
+
   it.skipIf(process.env.RUN_SIGNAL_CLASSIFIER_AI_E2E !== "1")(
     "classifies through the live Vercel AI Gateway/OpenAI path",
     async () => {
       const request = buildSignalClassificationRequest({
         clerkOrgId: "org_live_e2e",
+        deploymentEnvironment: "development",
         input: "Follow up with Sam tomorrow about the launch checklist.",
         signalId,
       });
