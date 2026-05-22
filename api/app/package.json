@@ -47,7 +47,6 @@
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",
     "@vercel/related-projects": "catalog:",
-    "ai": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
     "superjson": "catalog:",
