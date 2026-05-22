@@ -1,4 +1,12 @@
 export {
+  createPersonId,
+  type InsertPerson,
+  type Person,
+  type PersonIdentityProvider,
+  type PersonIdentityType,
+  people,
+} from "./people";
+export {
   createSignalId,
   type InsertSignal,
   type Signal,

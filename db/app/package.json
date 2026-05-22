@@ -36,6 +36,7 @@
     "db:migrate": "tsx ./src/migrate.ts",
     "db:baseline": "tsx ./src/baseline.ts",
     "db:studio": "pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts",
+    "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --"
   },
@@ -50,10 +51,12 @@
   "devDependencies": {
     "@planetscale/database": "^1.20.1",
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "dotenv-cli": "catalog:",
     "drizzle-kit": "^0.31.10",
     "tsx": "^4.21.0",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }
