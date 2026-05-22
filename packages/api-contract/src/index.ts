@@ -10,6 +10,8 @@ export {
   getSignalOutput,
   SIGNAL_INPUT_MAX_LENGTH,
   type SignalClassification,
+  type SignalClassificationRouting,
+  signalClassificationRoutingSchema,
   type SignalStatus,
   signalClassificationSchema,
   signalDispositionSchema,

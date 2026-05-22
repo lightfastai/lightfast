@@ -39,6 +39,15 @@ export const signalPrioritySchema = z.enum([
   "urgent",
 ]);
 
+export const signalClassificationRoutingSchema = z.object({
+  classifyPeople: z
+    .object({
+      shouldRun: z.boolean(),
+      rationale: z.string().trim().min(1),
+    })
+    .optional(),
+});
+
 export const signalClassificationSchema = z.object({
   schemaVersion: z.literal("signal.classification.v1"),
   disposition: signalDispositionSchema,
@@ -49,6 +58,7 @@ export const signalClassificationSchema = z.object({
   priority: signalPrioritySchema,
   rationale: z.string().trim().min(1),
   confidence: z.number().min(0).max(1),
+  routing: signalClassificationRoutingSchema.optional(),
 });
 
 export const createSignalInput = z.object({
@@ -74,6 +84,9 @@ export const getSignalOutput = z.object({
 });
 
 export type SignalClassification = z.infer<typeof signalClassificationSchema>;
+export type SignalClassificationRouting = z.infer<
+  typeof signalClassificationRoutingSchema
+>;
 export type SignalStatus = z.infer<typeof signalStatusSchema>;
 export type CreateSignalInput = z.infer<typeof createSignalInput>;
 export type CreateSignalOutput = z.infer<typeof createSignalOutput>;

@@ -45,4 +45,54 @@ describe("signal schemas", () => {
       kind: "review",
     });
   });
+
+  it("accepts a signal classification routing hint for people classification", () => {
+    expect(
+      signalClassificationSchema.parse({
+        schemaVersion: "signal.classification.v1",
+        disposition: "actionable",
+        title: "Talk to Jeevan",
+        summary: "The signal mentions an X profile worth engaging.",
+        kind: "engage",
+        nextAction: "Review the profile and decide whether to reply.",
+        priority: "normal",
+        rationale: "The input contains a durable social identity.",
+        confidence: 0.86,
+        routing: {
+          classifyPeople: {
+            shouldRun: true,
+            rationale: "The input includes https://x.com/jeevanp.",
+          },
+        },
+      })
+    ).toMatchObject({
+      routing: {
+        classifyPeople: {
+          shouldRun: true,
+        },
+      },
+    });
+  });
+
+  it("rejects an empty people routing rationale", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        schemaVersion: "signal.classification.v1",
+        disposition: "actionable",
+        title: "Talk to Jeevan",
+        summary: "The signal mentions an X profile worth engaging.",
+        kind: "engage",
+        nextAction: "Review the profile and decide whether to reply.",
+        priority: "normal",
+        rationale: "The input contains a durable social identity.",
+        confidence: 0.86,
+        routing: {
+          classifyPeople: {
+            shouldRun: true,
+            rationale: "   ",
+          },
+        },
+      })
+    ).toThrow();
+  });
 });
