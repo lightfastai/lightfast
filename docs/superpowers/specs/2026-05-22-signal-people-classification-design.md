@@ -31,13 +31,14 @@ organization.
 ## Durable Identity Rule
 
 A Person may be auto-created only when the people classifier finds at least one
-durable identity from the signal context. Supported v1 identity shapes:
+durable identity from the signal context. Supported v1 identity shapes and
+constraints:
 
 - Email address, such as `jeevan@somedomain.com`.
 - Social handle, such as `@jeevanp` on X.
 - Profile URL, such as `https://x.com/jeevanp` or a LinkedIn profile URL.
-- Domain, only when the signal clearly presents the domain as the durable
-  contact identity.
+- Profile URL or social handle identities must identify a person profile, not
+  only a company page or generic domain.
 
 The workflow must not create a Person from a display name alone.
 
@@ -46,12 +47,14 @@ The workflow must not create a Person from a display name alone.
 The pipeline has two AI stages.
 
 1. `classify-signal` remains responsible for signal triage. Its structured
-   output gains an optional persisted routing hint named `people`:
+   output gains an optional persisted routing hint:
 
    ```ts
-   people?: {
-     shouldClassify: boolean;
-     rationale: string;
+   routing?: {
+     classifyPeople?: {
+       shouldRun: boolean;
+       rationale: string;
+     };
    }
    ```
 
@@ -59,7 +62,8 @@ The pipeline has two AI stages.
    optional on the stored `signal.classification.v1` schema so existing
    classified signal rows keep validating.
 
-2. When the signal classification is persisted and `shouldClassify` is true,
+2. When the signal classification is persisted and
+   `classification.routing?.classifyPeople?.shouldRun` is true,
    `classify-signal` emits `app/people.classification.requested`.
 
 3. `classify-people` loads the signal, runs a dedicated people classifier, and
@@ -86,10 +90,11 @@ Target layout:
 
 ```text
 ai/src/
-- classification/
-  - run-object-classification.ts
-  - telemetry.ts
-- signal-classify/
+- _internal/
+  - object-classification/
+    - run-object-classification.ts
+    - telemetry.ts
+- signal-classifier/
   - classify.ts
   - constants.ts
   - errors.ts
@@ -97,7 +102,7 @@ ai/src/
   - prompt.ts
   - schema.ts
   - classify.test.ts
-- people-classify/
+- people-classifier/
   - classify.ts
   - constants.ts
   - errors.ts
@@ -107,8 +112,8 @@ ai/src/
   - classify.test.ts
 ```
 
-`classification/` is internal only. It is not added to `ai/package.json`
-exports. It should contain the reusable AI SDK call mechanics:
+`_internal/object-classification/` is internal only. It is not added to
+`ai/package.json` exports. It should contain the reusable AI SDK call mechanics:
 
 - `Output.object({ schema })`.
 - `maxRetries: 0`.
@@ -127,52 +132,49 @@ Update `ai/package.json` to expose explicit capability subpaths:
 ```json
 {
   "exports": {
-    "./signal-classify": {
-      "types": "./src/signal-classify/index.ts",
-      "default": "./src/signal-classify/index.ts"
+    "./signal-classifier": {
+      "types": "./src/signal-classifier/index.ts",
+      "default": "./src/signal-classifier/index.ts"
     },
-    "./people-classify": {
-      "types": "./src/people-classify/index.ts",
-      "default": "./src/people-classify/index.ts"
+    "./people-classifier": {
+      "types": "./src/people-classifier/index.ts",
+      "default": "./src/people-classifier/index.ts"
     }
   }
 }
 ```
 
-Use `signal-classify` and `people-classify` rather than `signal-classifier` so
-the package names line up with the Inngest workflow names and describe the
-operation being performed.
+Use noun-based package names for developer ergonomics. `signal-classifier` and
+`people-classifier` read as AI capabilities, while the Inngest function names
+stay verb-based: `classify-signal` and `classify-people`.
 
-The old `@repo/ai/signal-classifier` subpath should be migrated away in this
-work. Internal import sites should move to `@repo/ai/signal-classify`. If a
-compatibility re-export is needed during implementation, it should be temporary
-and tracked explicitly; the preferred end state is two clear capability
-subpaths and no ambiguous `signal-classifier` export.
+Keep the existing `@repo/ai/signal-classifier` subpath and add
+`@repo/ai/people-classifier`. This avoids avoidable churn in existing app and
+instrumentation imports.
 
-### Signal Classify Capability
+### Signal Classifier Capability
 
-`@repo/ai/signal-classify` owns the existing signal classification behavior.
-It should keep the current request-building pattern, but with names that match
-the new capability:
+`@repo/ai/signal-classifier` owns the existing signal classification behavior.
+It should keep the current public names:
 
-- `buildSignalClassifyRequest`
+- `buildSignalClassificationRequest`
 - `classifySignalInput`
-- `getSignalClassifyFailure`
+- `getSignalClassificationFailure`
 
 The output schema remains `signal.classification.v1`, with the optional
-`people` routing hint. The prompt should instruct the model to set
-`people.shouldClassify` to true only when the signal plausibly contains durable
-social or contact identity material worth a dedicated extraction pass. It should
-not extract people itself.
+`routing.classifyPeople` hint. The prompt should instruct the model to set
+`routing.classifyPeople.shouldRun` to true only when the signal plausibly
+contains durable social or contact identity material worth a dedicated
+extraction pass. It should not extract people itself.
 
 `api/app/src/inngest/workflow/classify-signal.ts` should import this capability,
 persist the signal classification, and then send
-`app/people.classification.requested` when `classification.people?.shouldClassify`
-is true.
+`app/people.classification.requested` when
+`classification.routing?.classifyPeople?.shouldRun` is true.
 
-### People Classify Capability
+### People Classifier Capability
 
-`@repo/ai/people-classify` owns extraction of durable people candidates from a
+`@repo/ai/people-classifier` owns extraction of durable people candidates from a
 classified signal and its raw input.
 
 Its output schema should be internal to the AI package for v1:
@@ -182,8 +184,8 @@ Its output schema should be internal to the AI package for v1:
   schemaVersion: "people.classification.v1";
   candidates: Array<{
     displayName?: string;
-    identityProvider: "email" | "x" | "linkedin" | "github" | "website" | "unknown";
-    identityType: "email" | "handle" | "profile_url" | "domain";
+    identityProvider: "email" | "x" | "linkedin" | "github" | "website";
+    identityType: "email" | "handle" | "profile_url";
     identityValue: string;
     rationale: string;
     confidence: number;
@@ -200,6 +202,8 @@ The people prompt should be stricter than the signal prompt:
 - Extract only candidates with durable identity values.
 - Do not create name-only candidates.
 - Prefer profile URLs and emails over loose handles when both appear.
+- Return no candidate when the model cannot assign a supported provider and
+  identity type.
 - Preserve uncertainty in `rationale` and `confidence`.
 - Do not browse or infer identities that are not present in the signal input or
   persisted signal classification.
@@ -207,10 +211,10 @@ The people prompt should be stricter than the signal prompt:
 ### Schema Ownership
 
 `@repo/api-contract` owns schemas that are persisted on `lightfast_signals` or
-returned through public API routes. The optional signal `people` routing hint
-belongs there because it is stored inside `signals.classification`.
+returned through public API routes. The optional signal `routing` hint belongs
+there because it is stored inside `signals.classification`.
 
-The people classifier candidate schema can live inside `@repo/ai/people-classify`
+The people classifier candidate schema can live inside `@repo/ai/people-classifier`
 for v1 because it is an internal model output, not an API response. `@db/app`
 owns the durable `lightfast_people` table types and the controlled values used
 for persisted `identityProvider` and `identityType`.
@@ -224,12 +228,12 @@ privacy posture:
   schema version, model, signal id, and input length.
 - Prompt text and model output are not recorded.
 - Signal telemetry uses `workflow: "classify-signal"` and
-  `promptId: "signal-classify"`.
+  `promptId: "signal-classifier"`.
 - People telemetry uses `workflow: "classify-people"` and
-  `promptId: "people-classify"`.
+  `promptId: "people-classifier"`.
 
 The shared Braintrust parent constant can be defined in the internal telemetry
-module and re-exported from `@repo/ai/signal-classify` for the existing app
+module and re-exported from `@repo/ai/signal-classifier` for the existing app
 instrumentation import. It does not need its own public package subpath in v1.
 
 ## Data Model
@@ -247,7 +251,9 @@ people
 - identityValue text not null
 - normalizedIdentityValue varchar not null
 - identityKey varchar not null
-- sourceSignalId varchar nullable
+- firstSeenSignalId varchar nullable
+- lastSeenSignalId varchar nullable
+- seenCount int not null default 1
 - metadata json not null
 - createdAt timestamp not null
 - updatedAt timestamp not null
@@ -255,8 +261,8 @@ people
 
 Controlled values:
 
-- `identityProvider`: `email`, `x`, `linkedin`, `github`, `website`, `unknown`.
-- `identityType`: `email`, `handle`, `profile_url`, `domain`.
+- `identityProvider`: `email`, `x`, `linkedin`, `github`, `website`.
+- `identityType`: `email`, `handle`, `profile_url`.
 
 Indexes:
 
@@ -276,20 +282,35 @@ The workflow normalizes identities in application code before writing:
 - Handle: trim, remove a leading `@`, lowercase.
 - Profile URL: parse URL, lowercase host, remove query and fragment, normalize
   trailing slash.
-- Domain: lowercase host/domain value.
 
 If normalization fails, the candidate is skipped. The people classifier can
 suggest identities, but application code owns final validation and persistence.
+Candidates with unsupported or unknown providers are skipped rather than
+persisted with an `unknown` provider.
+
+Provider-specific normalizers may collapse equivalent forms into one persisted
+identity when the rule is deterministic. For example, `https://x.com/jeevanp`
+and `@jeevanp` can both persist as `identityProvider: "x"`,
+`identityType: "handle"`, and `normalizedIdentityValue: "jeevanp"`. If a
+profile URL cannot be safely collapsed, persist it as
+`identityType: "profile_url"`.
 
 ## Upsert Behavior
 
 For each valid candidate:
 
 1. Compute `identityKey`.
-2. Look up an existing row by `(clerkOrgId, identityKey)`.
-3. If found, update lightweight fields such as `displayName`, `metadata`, and
-   `updatedAt` without replacing the durable identity fields.
-4. If not found, insert a new Person.
+2. Perform a race-safe MySQL upsert on `(clerkOrgId, identityKey)`, or handle a
+   duplicate-key insert failure by selecting the existing row.
+3. For existing rows, update lightweight fields such as `displayName`,
+   `metadata`, `lastSeenSignalId`, `seenCount`, and `updatedAt` without
+   replacing the durable identity fields or `firstSeenSignalId`.
+4. For new rows, insert the durable identity fields and set both
+   `firstSeenSignalId` and `lastSeenSignalId` to the source signal public ID.
+
+`seenCount` increments only when the source signal differs from the existing
+`lastSeenSignalId`. Repeated Inngest retries for the same signal must not inflate
+the count.
 
 The operation is idempotent for repeated Inngest events and retries.
 
@@ -322,16 +343,17 @@ the database to avoid trusting event payloads for signal content.
 Follow red-green TDD during implementation:
 
 - Contract tests for the signal classification routing hint.
-- AI package tests for the `signal-classify` refactor, including the unchanged
-  signal classification behavior and the new routing hint.
+- AI package tests for the `signal-classifier` shared-runner extraction,
+  including the unchanged signal classification behavior and the new routing
+  hint.
 - AI package tests for the private structured-classification runner so telemetry
   privacy and usage formatting do not drift between capabilities.
-- AI package tests for the `people-classify` output schema and prompt rules.
+- AI package tests for the `people-classifier` output schema and prompt rules.
 - DB helper tests for identity normalization, identity key generation, and
   idempotent upsert behavior.
 - Inngest workflow tests verifying:
-  - `classify-signal` imports `@repo/ai/signal-classify` rather than the old
-    `@repo/ai/signal-classifier` subpath.
+  - `classify-signal` imports `@repo/ai/signal-classifier`.
+  - `classify-people` imports `@repo/ai/people-classifier`.
   - `classify-signal` emits `app/people.classification.requested` only when the
     routing hint is true.
   - `classify-people` loads the signal and upserts People.
