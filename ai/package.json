@@ -6,6 +6,10 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
+    "./people-classifier": {
+      "types": "./src/people-classifier/index.ts",
+      "default": "./src/people-classifier/index.ts"
+    },
     "./signal-classifier": {
       "types": "./src/signal-classifier/index.ts",
       "default": "./src/signal-classifier/index.ts"
