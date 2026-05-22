@@ -5,8 +5,9 @@ const getSignalByPublicIdMock = vi.fn();
 const claimSignalForClassificationMock = vi.fn();
 const markSignalClassifiedMock = vi.fn();
 const markSignalFailedMock = vi.fn();
-const generateTextMock = vi.fn();
-const outputObjectMock = vi.fn();
+const buildSignalClassificationRequestMock = vi.fn();
+const classifySignalInputMock = vi.fn();
+const getSignalClassificationFailureMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
 const db = { kind: "mock-db" } as unknown as Database;
@@ -57,23 +58,14 @@ vi.mock("@db/app", () => ({
   markSignalFailed: markSignalFailedMock,
 }));
 
-vi.mock("ai", () => ({
-  APICallError: {
-    isInstance: (error: unknown) =>
-      error instanceof Error && error.name.includes("APICallError"),
-  },
-  generateText: generateTextMock,
-  NoObjectGeneratedError: {
-    isInstance: (error: unknown) =>
-      error instanceof Error && error.name.includes("NoObjectGeneratedError"),
-  },
-  Output: {
-    object: outputObjectMock,
-  },
-  RetryError: {
-    isInstance: (error: unknown) =>
-      error instanceof Error && error.name.includes("RetryError"),
-  },
+vi.mock("@repo/ai/signal-classifier", () => ({
+  SIGNAL_CLASSIFIER_MODEL: "openai/gpt-5.4-nano",
+  SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE: "CLASSIFICATION_FAILED",
+  SIGNAL_CLASSIFICATION_PROVIDER_ERROR_CODE: "CLASSIFICATION_PROVIDER_ERROR",
+  SIGNAL_CLASSIFIER_SYSTEM_PROMPT: "You are the Lightfast signal classifier.",
+  buildSignalClassificationRequest: buildSignalClassificationRequestMock,
+  classifySignalInput: classifySignalInputMock,
+  getSignalClassificationFailure: getSignalClassificationFailureMock,
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
@@ -114,14 +106,7 @@ const classification = {
   rationale: "The input describes unfinished validation work.",
   confidence: 0.95,
 };
-const {
-  SIGNAL_CLASSIFIER_MODEL,
-  SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
-  SIGNAL_CLASSIFICATION_PROVIDER_ERROR_CODE,
-  SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
-  classifySignal,
-  classifySignalInput,
-} = await import("../inngest/workflow/classify-signal");
+const { classifySignal } = await import("../inngest/workflow/classify-signal");
 
 function createStep() {
   const step = {
@@ -130,9 +115,8 @@ function createStep() {
       wrap: vi.fn(
         <T>(
           _name: string,
-          fn: (request: Parameters<typeof classifySignalInput>[0]) =>
-            T | Promise<T>,
-          request: Parameters<typeof classifySignalInput>[0]
+          fn: (request: Record<string, unknown>) => T | Promise<T>,
+          request: Record<string, unknown>
         ) => fn(request)
       ),
     },
@@ -182,8 +166,9 @@ beforeEach(() => {
   claimSignalForClassificationMock.mockReset();
   markSignalClassifiedMock.mockReset();
   markSignalFailedMock.mockReset();
-  generateTextMock.mockReset();
-  outputObjectMock.mockReset();
+  buildSignalClassificationRequestMock.mockReset();
+  classifySignalInputMock.mockReset();
+  getSignalClassificationFailureMock.mockReset();
   logInfoMock.mockReset();
   logWarnMock.mockReset();
 
@@ -191,17 +176,22 @@ beforeEach(() => {
   claimSignalForClassificationMock.mockResolvedValue(true);
   markSignalClassifiedMock.mockResolvedValue(true);
   markSignalFailedMock.mockResolvedValue(true);
-  outputObjectMock.mockReturnValue({ type: "object-output" });
-  generateTextMock.mockResolvedValue({
-    finishReason: "stop",
-    output: classification,
-    usage: {
-      inputTokens: 18,
-      outputTokens: 42,
-      totalTokens: 60,
-    },
-    warnings: [],
+  buildSignalClassificationRequestMock.mockReturnValue({
+    clerkOrgId: "org_test",
+    inputLength: "Run the PR test plan".length,
+    model: "openai/gpt-5.4-nano",
+    prompt: "Classify this signal input:\n\nRun the PR test plan",
+    signalId,
+    system: "You are the Lightfast signal classifier.",
   });
+  classifySignalInputMock.mockResolvedValue(classification);
+  getSignalClassificationFailureMock.mockImplementation((error: unknown) => ({
+    errorCode:
+      error instanceof Error && error.name === "AI_APICallError"
+        ? "CLASSIFICATION_PROVIDER_ERROR"
+        : "CLASSIFICATION_FAILED",
+    errorMessage: error instanceof Error ? error.message : String(error),
+  }));
 });
 
 describe("classifySignal", () => {
@@ -232,39 +222,30 @@ describe("classifySignal", () => {
       clerkOrgId: "org_test",
       publicId: signalId,
     });
+    expect(buildSignalClassificationRequestMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_test",
+      input: "Run the PR test plan",
+      signalId,
+    });
     expect(step.ai.wrap).toHaveBeenCalledWith(
       "classify signal",
-      classifySignalInput,
+      expect.any(Function),
       {
         clerkOrgId: "org_test",
         inputLength: "Run the PR test plan".length,
-        model: SIGNAL_CLASSIFIER_MODEL,
+        model: "openai/gpt-5.4-nano",
         prompt: expect.stringContaining("Run the PR test plan"),
         signalId,
-        system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+        system: "You are the Lightfast signal classifier.",
       }
     );
-    expect(generateTextMock).toHaveBeenCalledWith(
+    expect(classifySignalInputMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        model: SIGNAL_CLASSIFIER_MODEL,
-        maxOutputTokens: 512,
-        maxRetries: 0,
-        output: { type: "object-output" },
-        prompt: expect.stringContaining("Run the PR test plan"),
-        system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
-        timeout: { totalMs: 30_000 },
-        experimental_telemetry: {
-          functionId: "app.inngest.classify-signal",
-          isEnabled: true,
-          metadata: {
-            clerkOrgId: "org_test",
-            inputLength: "Run the PR test plan".length,
-            schemaVersion: "signal.classification.v1",
-            signalId,
-          },
-          recordInputs: false,
-          recordOutputs: false,
-        },
+        clerkOrgId: "org_test",
+        signalId,
+      }),
+      expect.objectContaining({
+        logger: expect.any(Object),
       })
     );
     expect(markSignalClassifiedMock).toHaveBeenCalledWith(db, {
@@ -289,7 +270,9 @@ describe("classifySignal", () => {
 
   it("lets wrapped AI classification failures bubble for Inngest retries", async () => {
     const step = createStep();
-    generateTextMock.mockRejectedValueOnce(new Error("model unavailable"));
+    classifySignalInputMock.mockRejectedValueOnce(
+      new Error("model unavailable")
+    );
 
     await expect(runWorkflow(step)).rejects.toThrow("model unavailable");
 
@@ -305,7 +288,7 @@ describe("classifySignal", () => {
 
     expect(markSignalFailedMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
-      errorCode: SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
+      errorCode: "CLASSIFICATION_FAILED",
       errorMessage: "model unavailable",
       publicId: signalId,
     });
@@ -324,7 +307,7 @@ describe("classifySignal", () => {
 
     expect(markSignalFailedMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
-      errorCode: SIGNAL_CLASSIFICATION_PROVIDER_ERROR_CODE,
+      errorCode: "CLASSIFICATION_PROVIDER_ERROR",
       errorMessage: "rate limited",
       publicId: signalId,
     });
@@ -346,7 +329,7 @@ describe("classifySignal", () => {
     await expect(runWorkflow(step)).resolves.toEqual({ status: "skipped" });
 
     expect(step.ai.wrap).not.toHaveBeenCalled();
-    expect(generateTextMock).not.toHaveBeenCalled();
+    expect(classifySignalInputMock).not.toHaveBeenCalled();
     expect(markSignalClassifiedMock).not.toHaveBeenCalled();
     expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
