@@ -1,6 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { NonRetriableError } from "@vendor/inngest";
+import { registerBraintrustOTel } from "@vendor/observability/braintrust-otel";
 import {
   captureConsoleIntegration,
   captureRequestError,
@@ -36,6 +37,8 @@ const beforeSend: NonNullable<Parameters<typeof init>[0]["beforeSend"]> = (
 
 const register = () => {
   if (process.env.NEXT_RUNTIME === "nodejs") {
+    registerBraintrustOTel({ serviceName: "lightfast-app" });
+
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,
       environment: env.NEXT_PUBLIC_VERCEL_ENV,

@@ -10,6 +10,7 @@ packages:
 catalog:
   '@ai-sdk/gateway': 3.0.118
   '@ai-sdk/react': 3.0.190
+  '@braintrust/otel': 0.2.0
   '@clerk/backend': 3.4.11
   '@clerk/nextjs': 7.3.7
   '@clerk/shared': 4.12.2
@@ -19,6 +20,16 @@ catalog:
   '@lightfastai/dev-services': ^0.4.2
   '@noble/ed25519': ^3.1.0
   '@noble/hashes': ^2.2.0
+  '@opentelemetry/api': 1.9.1
+  '@opentelemetry/api-logs': 0.218.0
+  '@opentelemetry/core': 2.7.1
+  '@opentelemetry/exporter-trace-otlp-http': 0.218.0
+  '@opentelemetry/instrumentation': 0.218.0
+  '@opentelemetry/resources': 2.7.1
+  '@opentelemetry/sdk-logs': 0.218.0
+  '@opentelemetry/sdk-metrics': 2.7.1
+  '@opentelemetry/sdk-node': 0.218.0
+  '@opentelemetry/sdk-trace-base': 2.7.1
   '@radix-ui/react-dropdown-menu': ^2.1.15
   '@rescale/nemo': ^2.2.0
   '@sentry/browser': ^10.49.0
@@ -32,12 +43,14 @@ catalog:
   '@trpc/server': ^11.16.0
   '@trpc/tanstack-react-query': ^11.16.0
   '@types/node': ^24.9.1
+  '@vercel/otel': 2.1.2
   '@vercel/related-projects': ^1.1.0
   '@vitejs/plugin-react': ^6.0.1
   '@vitest/coverage-v8': ^4.1.4
   '@vitest/expect': ^4.1.4
   ai: 6.0.188
   babel-plugin-react-compiler: ^1.0.0
+  braintrust: 3.11.0
   clsx: ^2.1.1
   date-fns: ^4.1.0
   dotenv-cli: ^11.0.0

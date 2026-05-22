@@ -7,6 +7,8 @@ const markSignalClassifiedMock = vi.fn();
 const markSignalFailedMock = vi.fn();
 const generateTextMock = vi.fn();
 const outputObjectMock = vi.fn();
+const logInfoMock = vi.fn();
+const logWarnMock = vi.fn();
 const db = { kind: "mock-db" } as unknown as Database;
 
 type WorkflowCallback = (input: {
@@ -19,14 +21,31 @@ type WorkflowCallback = (input: {
   step: ReturnType<typeof createStep>;
 }) => Promise<unknown>;
 
+type WorkflowFailureCallback = (input: {
+  error: Error;
+  event: {
+    data: {
+      event: {
+        data: {
+          clerkOrgId: string;
+          signalId: string;
+        };
+      };
+    };
+  };
+  step: ReturnType<typeof createStep>;
+}) => Promise<unknown>;
+
 let workflowCallback: WorkflowCallback | undefined;
+let workflowFailureCallback: WorkflowFailureCallback | undefined;
 const createFunctionMock = vi.fn(
   (
-    _config: unknown,
+    config: { onFailure?: WorkflowFailureCallback },
     _trigger: unknown,
     handler: WorkflowCallback
   ): { id: string } => {
     workflowCallback = handler;
+    workflowFailureCallback = config.onFailure;
     return { id: "classify-signal" };
   }
 );
@@ -39,9 +58,30 @@ vi.mock("@db/app", () => ({
 }));
 
 vi.mock("ai", () => ({
+  APICallError: {
+    isInstance: (error: unknown) =>
+      error instanceof Error && error.name.includes("APICallError"),
+  },
   generateText: generateTextMock,
+  NoObjectGeneratedError: {
+    isInstance: (error: unknown) =>
+      error instanceof Error && error.name.includes("NoObjectGeneratedError"),
+  },
   Output: {
     object: outputObjectMock,
+  },
+  RetryError: {
+    isInstance: (error: unknown) =>
+      error instanceof Error && error.name.includes("RetryError"),
+  },
+}));
+
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    info: logInfoMock,
+    warn: logWarnMock,
+    error: vi.fn(),
+    debug: vi.fn(),
   },
 }));
 
@@ -77,6 +117,7 @@ const classification = {
 const {
   SIGNAL_CLASSIFIER_MODEL,
   SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
+  SIGNAL_CLASSIFICATION_PROVIDER_ERROR_CODE,
   SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
   classifySignal,
   classifySignalInput,
@@ -115,6 +156,27 @@ function runWorkflow(step: ReturnType<typeof createStep>) {
   });
 }
 
+function runWorkflowFailure(step: ReturnType<typeof createStep>, error: Error) {
+  if (!workflowFailureCallback) {
+    throw new Error("workflow failure callback was not registered");
+  }
+
+  return workflowFailureCallback({
+    error,
+    event: {
+      data: {
+        event: {
+          data: {
+            clerkOrgId: "org_test",
+            signalId,
+          },
+        },
+      },
+    },
+    step,
+  });
+}
+
 beforeEach(() => {
   getSignalByPublicIdMock.mockReset();
   claimSignalForClassificationMock.mockReset();
@@ -122,20 +184,36 @@ beforeEach(() => {
   markSignalFailedMock.mockReset();
   generateTextMock.mockReset();
   outputObjectMock.mockReset();
+  logInfoMock.mockReset();
+  logWarnMock.mockReset();
 
   getSignalByPublicIdMock.mockResolvedValue(signal);
   claimSignalForClassificationMock.mockResolvedValue(true);
   markSignalClassifiedMock.mockResolvedValue(true);
   markSignalFailedMock.mockResolvedValue(true);
   outputObjectMock.mockReturnValue({ type: "object-output" });
-  generateTextMock.mockResolvedValue({ output: classification });
+  generateTextMock.mockResolvedValue({
+    finishReason: "stop",
+    output: classification,
+    usage: {
+      inputTokens: 18,
+      outputTokens: 42,
+      totalTokens: 60,
+    },
+    warnings: [],
+  });
 });
 
 describe("classifySignal", () => {
   it("registers the signal classifier function", () => {
     expect(classifySignal).toEqual({ id: "classify-signal" });
     expect(createFunctionMock).toHaveBeenCalledWith(
-      { id: "classify-signal" },
+      {
+        id: "classify-signal",
+        idempotency: 'event.data.clerkOrgId + "-" + event.data.signalId',
+        onFailure: expect.any(Function),
+        retries: 3,
+      },
       { event: "app/signal.created" },
       expect.any(Function)
     );
@@ -158,17 +236,35 @@ describe("classifySignal", () => {
       "classify signal",
       classifySignalInput,
       {
+        clerkOrgId: "org_test",
+        inputLength: "Run the PR test plan".length,
         model: SIGNAL_CLASSIFIER_MODEL,
         prompt: expect.stringContaining("Run the PR test plan"),
+        signalId,
         system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
       }
     );
     expect(generateTextMock).toHaveBeenCalledWith(
       expect.objectContaining({
         model: SIGNAL_CLASSIFIER_MODEL,
+        maxOutputTokens: 512,
+        maxRetries: 0,
         output: { type: "object-output" },
         prompt: expect.stringContaining("Run the PR test plan"),
         system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+        timeout: { totalMs: 30_000 },
+        experimental_telemetry: {
+          functionId: "app.inngest.classify-signal",
+          isEnabled: true,
+          metadata: {
+            clerkOrgId: "org_test",
+            inputLength: "Run the PR test plan".length,
+            schemaVersion: "signal.classification.v1",
+            signalId,
+          },
+          recordInputs: false,
+          recordOutputs: false,
+        },
       })
     );
     expect(markSignalClassifiedMock).toHaveBeenCalledWith(db, {
@@ -191,16 +287,45 @@ describe("classifySignal", () => {
     expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
-  it("marks the signal failed when the wrapped AI classification fails", async () => {
+  it("lets wrapped AI classification failures bubble for Inngest retries", async () => {
     const step = createStep();
     generateTextMock.mockRejectedValueOnce(new Error("model unavailable"));
 
-    await expect(runWorkflow(step)).resolves.toEqual({ status: "failed" });
+    await expect(runWorkflow(step)).rejects.toThrow("model unavailable");
+
+    expect(markSignalFailedMock).not.toHaveBeenCalled();
+  });
+
+  it("marks the signal failed from onFailure after retries are exhausted", async () => {
+    const step = createStep();
+
+    await expect(
+      runWorkflowFailure(step, new Error("model unavailable"))
+    ).resolves.toEqual({ status: "failed" });
 
     expect(markSignalFailedMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
       errorCode: SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
       errorMessage: "model unavailable",
+      publicId: signalId,
+    });
+  });
+
+  it("persists provider failure codes from onFailure", async () => {
+    const step = createStep();
+    const error = Object.assign(new Error("rate limited"), {
+      isRetryable: true,
+      name: "AI_APICallError",
+    });
+
+    await expect(runWorkflowFailure(step, error)).resolves.toEqual({
+      status: "failed",
+    });
+
+    expect(markSignalFailedMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      errorCode: SIGNAL_CLASSIFICATION_PROVIDER_ERROR_CODE,
+      errorMessage: "rate limited",
       publicId: signalId,
     });
   });

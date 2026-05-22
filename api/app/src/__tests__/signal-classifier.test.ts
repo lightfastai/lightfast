@@ -1,17 +1,21 @@
+import type { SignalClassification } from "@repo/api-contract";
+import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const generateTextMock = vi.fn();
-const outputObjectMock = vi.fn();
-
-vi.mock("ai", () => ({
-  generateText: generateTextMock,
-  Output: {
-    object: outputObjectMock,
-  },
-}));
+const logInfoMock = vi.fn();
+const logWarnMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({
   db: {},
+}));
+
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    info: logInfoMock,
+    warn: logWarnMock,
+    error: vi.fn(),
+    debug: vi.fn(),
+  },
 }));
 
 vi.mock("../inngest/client", () => ({
@@ -23,12 +27,16 @@ vi.mock("../inngest/client", () => ({
 const {
   SIGNAL_CLASSIFIER_MODEL,
   SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+  SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
+  SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
   buildSignalClassificationRequest,
   classifySignalInput,
+  getSignalClassificationFailure,
 } = await import("../inngest/workflow/classify-signal");
 
-const classification = {
-  schemaVersion: "signal.classification.v1",
+const signalId = "sig_123e4567-e89b-12d3-a456-426614174000";
+
+const modelOwnedClassification = {
   disposition: "actionable",
   title: "Run the test plan",
   summary: "The user needs to finish a validation task.",
@@ -37,41 +45,144 @@ const classification = {
   priority: "high",
   rationale: "The input describes unfinished validation work.",
   confidence: 0.95,
+} satisfies Omit<SignalClassification, "schemaVersion">;
+
+const classification = {
+  schemaVersion: "signal.classification.v1",
+  ...modelOwnedClassification,
+} satisfies SignalClassification;
+
+const usage = {
+  inputTokens: {
+    total: 18,
+    noCache: 18,
+    cacheRead: undefined,
+    cacheWrite: undefined,
+  },
+  outputTokens: {
+    total: 42,
+    text: 42,
+    reasoning: undefined,
+  },
 };
 
+function createClassifierModel(text: string) {
+  return new MockLanguageModelV3({
+    provider: "openai",
+    modelId: "gpt-5.4-nano",
+    doGenerate: async () => ({
+      content: [{ type: "text", text }],
+      finishReason: { unified: "stop", raw: "stop" },
+      usage,
+      warnings: [],
+    }),
+  });
+}
+
 beforeEach(() => {
-  generateTextMock.mockReset();
-  outputObjectMock.mockReset();
-  outputObjectMock.mockReturnValue({ type: "object-output" });
-  generateTextMock.mockResolvedValue({ output: classification });
+  logInfoMock.mockReset();
+  logWarnMock.mockReset();
 });
 
 describe("classifySignalInput", () => {
-  it("uses Kimi K2.6 through AI Gateway with structured output", async () => {
-    const request = buildSignalClassificationRequest("Run the test plan");
+  it("builds an OpenAI GPT-5.4 nano classification request with metadata", () => {
+    const request = buildSignalClassificationRequest({
+      clerkOrgId: "org_test",
+      input: "Run the test plan",
+      signalId,
+    });
 
+    expect(SIGNAL_CLASSIFIER_MODEL).toBe("openai/gpt-5.4-nano");
     expect(request).toEqual({
+      clerkOrgId: "org_test",
+      inputLength: "Run the test plan".length,
       model: SIGNAL_CLASSIFIER_MODEL,
       prompt: expect.stringContaining("Run the test plan"),
+      signalId,
       system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
     });
+  });
 
-    await expect(classifySignalInput(request)).resolves.toEqual(
-      classification
-    );
+  it("uses AI SDK structured output with metadata-only telemetry", async () => {
+    const model = createClassifierModel(JSON.stringify(modelOwnedClassification));
+    const request = {
+      ...buildSignalClassificationRequest({
+        clerkOrgId: "org_test",
+        input: "Run the test plan",
+        signalId,
+      }),
+      model,
+    };
 
-    expect(SIGNAL_CLASSIFIER_MODEL).toBe("moonshotai/kimi-k2.6");
-    expect(outputObjectMock).toHaveBeenCalledWith({
-      schema: expect.any(Object),
-    });
-    expect(generateTextMock).toHaveBeenCalledWith(
+    await expect(classifySignalInput(request)).resolves.toEqual(classification);
+
+    expect(model.doGenerateCalls).toHaveLength(1);
+    expect(model.doGenerateCalls[0]).toEqual(
       expect.objectContaining({
-        model: "moonshotai/kimi-k2.6",
-        output: { type: "object-output" },
-        prompt: expect.stringContaining("Run the test plan"),
-        system: SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
+        maxOutputTokens: 512,
+        responseFormat: expect.objectContaining({ type: "json" }),
       })
     );
+    expect(logInfoMock).toHaveBeenCalledWith(
+      "[signals] classification completed",
+      expect.objectContaining({
+        clerkOrgId: "org_test",
+        finishReason: "stop",
+        inputLength: "Run the test plan".length,
+        model: "openai/gpt-5.4-nano",
+        signalId,
+        usage: expect.objectContaining({
+          inputTokens: 18,
+          outputTokens: 42,
+          totalTokens: 60,
+        }),
+        warnings: 0,
+      })
+    );
+    expect(logInfoMock.mock.calls[0]?.[1]).not.toHaveProperty("prompt");
+    expect(logInfoMock.mock.calls[0]?.[1]).not.toHaveProperty("output");
+  });
+
+  it("maps invalid structured output to a durable failure code", async () => {
+    const model = createClassifierModel(
+      JSON.stringify({ title: "Missing required fields" })
+    );
+    const request = {
+      ...buildSignalClassificationRequest({
+        clerkOrgId: "org_test",
+        input: "Run the test plan",
+        signalId,
+      }),
+      model,
+    };
+
+    await expect(classifySignalInput(request)).rejects.toThrow();
+
+    const failure = await classifySignalInput(request).catch((error) =>
+      getSignalClassificationFailure(error)
+    );
+
+    expect(failure).toEqual(
+      expect.objectContaining({
+        errorCode: SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
+      })
+    );
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[signals] classification failed",
+      expect.objectContaining({
+        clerkOrgId: "org_test",
+        errorCode: SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
+        model: "openai/gpt-5.4-nano",
+        signalId,
+      })
+    );
+  });
+
+  it("falls back to the generic failure code for unknown errors", () => {
+    expect(getSignalClassificationFailure(new Error("unknown"))).toEqual({
+      errorCode: SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
+      errorMessage: "unknown",
+    });
   });
 
   it("instructs the model not to browse or invent facts", () => {
@@ -81,4 +192,24 @@ describe("classifySignalInput", () => {
       "Preserve uncertainty"
     );
   });
+
+  it.skipIf(process.env.RUN_SIGNAL_CLASSIFIER_AI_E2E !== "1")(
+    "classifies through the live Vercel AI Gateway/OpenAI path",
+    async () => {
+      const request = buildSignalClassificationRequest({
+        clerkOrgId: "org_live_e2e",
+        input: "Follow up with Sam tomorrow about the launch checklist.",
+        signalId,
+      });
+
+      await expect(classifySignalInput(request)).resolves.toEqual(
+        expect.objectContaining({
+          schemaVersion: "signal.classification.v1",
+          disposition: expect.any(String),
+          title: expect.any(String),
+          confidence: expect.any(Number),
+        })
+      );
+    }
+  );
 });

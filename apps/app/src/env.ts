@@ -3,6 +3,7 @@ import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
 import { clerkEnvBase } from "@vendor/clerk/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
+import { braintrustEnv } from "@vendor/observability/braintrust-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
 import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
@@ -14,6 +15,7 @@ export const env = createEnv({
     dbEnv,
     sentryEnv,
     betterstackEnv,
+    braintrustEnv,
     upstashEnv,
   ],
   shared: {
