@@ -10,6 +10,7 @@ const classifySignalInputMock = vi.fn();
 const getSignalClassificationFailureMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
+const sendMock = vi.fn();
 const db = { kind: "mock-db" } as unknown as Database;
 
 type WorkflowCallback = (input: {
@@ -81,9 +82,16 @@ vi.mock("@db/app/client", () => ({
   db,
 }));
 
+vi.mock("../env", () => ({
+  env: {
+    VERCEL_ENV: "development",
+  },
+}));
+
 vi.mock("../inngest/client", () => ({
   inngest: {
     createFunction: createFunctionMock,
+    send: sendMock,
   },
 }));
 
@@ -105,6 +113,12 @@ const classification = {
   priority: "high",
   rationale: "The input describes unfinished validation work.",
   confidence: 0.95,
+  routing: {
+    classifyPeople: {
+      shouldRun: true,
+      rationale: "The signal contains a durable social identity.",
+    },
+  },
 };
 const { classifySignal } = await import("../inngest/workflow/classify-signal");
 
@@ -171,13 +185,16 @@ beforeEach(() => {
   getSignalClassificationFailureMock.mockReset();
   logInfoMock.mockReset();
   logWarnMock.mockReset();
+  sendMock.mockReset();
 
   getSignalByPublicIdMock.mockResolvedValue(signal);
   claimSignalForClassificationMock.mockResolvedValue(true);
   markSignalClassifiedMock.mockResolvedValue(true);
   markSignalFailedMock.mockResolvedValue(true);
+  sendMock.mockResolvedValue(undefined);
   buildSignalClassificationRequestMock.mockReturnValue({
     clerkOrgId: "org_test",
+    deploymentEnvironment: "development",
     inputLength: "Run the PR test plan".length,
     model: "openai/gpt-5.4-nano",
     prompt: "Classify this signal input:\n\nRun the PR test plan",
@@ -212,7 +229,10 @@ describe("classifySignal", () => {
   it("transitions a queued signal through an Inngest AI wrapper to classified", async () => {
     const step = createStep();
 
-    await expect(runWorkflow(step)).resolves.toEqual({ status: "classified" });
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      routedPeople: true,
+    });
 
     expect(getSignalByPublicIdMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
@@ -224,6 +244,7 @@ describe("classifySignal", () => {
     });
     expect(buildSignalClassificationRequestMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
+      deploymentEnvironment: "development",
       input: "Run the PR test plan",
       signalId,
     });
@@ -232,6 +253,7 @@ describe("classifySignal", () => {
       expect.any(Function),
       {
         clerkOrgId: "org_test",
+        deploymentEnvironment: "development",
         inputLength: "Run the PR test plan".length,
         model: "openai/gpt-5.4-nano",
         prompt: expect.stringContaining("Run the PR test plan"),
@@ -253,7 +275,52 @@ describe("classifySignal", () => {
       clerkOrgId: "org_test",
       publicId: signalId,
     });
+    expect(sendMock).toHaveBeenCalledWith({
+      name: "app/people.classification.requested",
+      data: {
+        clerkOrgId: "org_test",
+        signalId,
+      },
+    });
     expect(markSignalFailedMock).not.toHaveBeenCalled();
+  });
+
+  it("does not queue people classification when routing is absent", async () => {
+    const step = createStep();
+    classifySignalInputMock.mockResolvedValueOnce({
+      ...classification,
+      routing: undefined,
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      routedPeople: false,
+    });
+
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("queues people classification when a retry sees an already classified signal", async () => {
+    const step = createStep();
+    getSignalByPublicIdMock.mockResolvedValueOnce({
+      ...signal,
+      status: "classified",
+      classification,
+    });
+
+    await expect(runWorkflow(step)).resolves.toEqual({
+      status: "classified",
+      routedPeople: true,
+    });
+
+    expect(claimSignalForClassificationMock).not.toHaveBeenCalled();
+    expect(sendMock).toHaveBeenCalledWith({
+      name: "app/people.classification.requested",
+      data: {
+        clerkOrgId: "org_test",
+        signalId,
+      },
+    });
   });
 
   it("returns missing when the event references a signal that no longer exists", async () => {

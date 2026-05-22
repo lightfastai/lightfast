@@ -12,7 +12,14 @@ import {
 } from "@repo/ai/signal-classifier";
 import { log } from "@vendor/observability/log/next";
 
+import { env } from "../../env";
 import { inngest } from "../client";
+
+function shouldClassifyPeople(
+  classification: { routing?: { classifyPeople?: { shouldRun?: boolean } } } | null
+): boolean {
+  return classification?.routing?.classifyPeople?.shouldRun === true;
+}
 
 export const classifySignal = inngest.createFunction(
   {
@@ -50,6 +57,23 @@ export const classifySignal = inngest.createFunction(
       return { status: "missing" };
     }
 
+    if (signal.status === "classified" && signal.classification) {
+      if (shouldClassifyPeople(signal.classification)) {
+        await step.run("queue people classification", () =>
+          inngest.send({
+            name: "app/people.classification.requested",
+            data: {
+              clerkOrgId,
+              signalId,
+            },
+          })
+        );
+        return { status: "classified", routedPeople: true };
+      }
+
+      return { status: "classified", routedPeople: false };
+    }
+
     const claimed = await step.run("claim signal", () =>
       claimSignalForClassification(db, {
         clerkOrgId,
@@ -63,6 +87,7 @@ export const classifySignal = inngest.createFunction(
 
     const classificationRequest = buildSignalClassificationRequest({
       clerkOrgId,
+      deploymentEnvironment: env.VERCEL_ENV,
       input: signal.input,
       signalId,
     });
@@ -84,6 +109,20 @@ export const classifySignal = inngest.createFunction(
       return { status: "skipped" };
     }
 
-    return { status: "classified" };
+    if (shouldClassifyPeople(classification)) {
+      await step.run("queue people classification", () =>
+        inngest.send({
+          name: "app/people.classification.requested",
+          data: {
+            clerkOrgId,
+            signalId,
+          },
+        })
+      );
+
+      return { status: "classified", routedPeople: true };
+    }
+
+    return { status: "classified", routedPeople: false };
   }
 );
