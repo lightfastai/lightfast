@@ -42,6 +42,7 @@
     "@trpc/client": "catalog:",
     "@trpc/server": "catalog:",
     "@vendor/analytics": "workspace:*",
+    "@vendor/braintrust": "workspace:*",
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/lib": "workspace:*",

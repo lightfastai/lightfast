@@ -3,7 +3,7 @@ import "server-only";
 import { BraintrustExporter } from "@braintrust/otel";
 import { registerOTel } from "@vercel/otel";
 
-import { braintrustEnv } from "./env/braintrust";
+import { braintrustEnv } from "./env";
 
 interface RegisterBraintrustOTelOptions {
   serviceName: string;

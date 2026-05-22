@@ -1,7 +1,7 @@
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
+import { registerBraintrustOTel } from "@vendor/braintrust/otel";
 import { NonRetriableError } from "@vendor/inngest";
-import { registerBraintrustOTel } from "@vendor/observability/braintrust-otel";
 import {
   captureConsoleIntegration,
   captureRequestError,
