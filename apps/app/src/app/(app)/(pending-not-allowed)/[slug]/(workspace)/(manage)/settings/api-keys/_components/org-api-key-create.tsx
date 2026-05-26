@@ -41,8 +41,8 @@ export function OrgApiKeyCreate() {
         if (!isOpenRef.current) {
           return;
         }
-        if (data.secret) {
-          setCreatedKey(data.secret);
+        if (data.key) {
+          setCreatedKey(data.key);
         }
         setName("");
         void queryClient.invalidateQueries({ queryKey: listQueryKey });

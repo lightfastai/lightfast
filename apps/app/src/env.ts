@@ -1,10 +1,11 @@
 import { env as dbEnv } from "@db/app/env";
 import { createEnv } from "@t3-oss/env-nextjs";
 import { vercel } from "@t3-oss/env-nextjs/presets-zod";
-import { clerkEnvBase } from "@vendor/clerk/env";
 import { braintrustEnv } from "@vendor/braintrust/env";
+import { clerkEnvBase } from "@vendor/clerk/env";
 import { betterstackEnv } from "@vendor/observability/betterstack-env";
 import { sentryEnv } from "@vendor/observability/sentry-env";
+import { unkeyEnv } from "@vendor/unkey/env";
 import { upstashEnv } from "@vendor/upstash/env";
 import { z } from "zod";
 
@@ -17,6 +18,7 @@ export const env = createEnv({
     betterstackEnv,
     braintrustEnv,
     upstashEnv,
+    unkeyEnv,
   ],
   shared: {
     NODE_ENV: z

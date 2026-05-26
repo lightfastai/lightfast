@@ -46,6 +46,7 @@
     "@vendor/clerk": "workspace:*",
     "@vendor/inngest": "workspace:*",
     "@vendor/observability": "workspace:*",
+    "@vendor/unkey": "workspace:*",
     "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",

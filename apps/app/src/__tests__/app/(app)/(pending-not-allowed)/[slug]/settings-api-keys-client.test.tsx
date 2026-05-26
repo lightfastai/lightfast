@@ -185,24 +185,18 @@ const { OrgApiKeyCreate } = await import(
 const apiKeys = [
   {
     createdAt: 1_700_000_000_000,
-    createdBy: "user_ada",
-    expired: false,
-    id: "ak_active",
-    lastUsedAt: null,
+    enabled: true,
+    keyId: "key_active",
     name: "Production",
-    revoked: false,
-    subject: "org_acme",
+    start: "ak_active",
     updatedAt: 1_700_000_000_000,
   },
   {
     createdAt: 1_700_000_001_000,
-    createdBy: "user_ada",
-    expired: false,
-    id: "ak_other",
-    lastUsedAt: null,
+    enabled: true,
+    keyId: "key_other",
     name: "Other",
-    revoked: false,
-    subject: "org_acme",
+    start: "ak_other",
     updatedAt: 1_700_000_001_000,
   },
 ];
@@ -313,7 +307,7 @@ describe("api key settings list optimistic mutations", () => {
     getQueryDataMock.mockReturnValue(apiKeys);
 
     const context = await capturedMutationOptions.revoke?.onMutate?.({
-      keyId: "ak_active",
+      keyId: "key_active",
     });
 
     expect(cancelQueriesMock).toHaveBeenCalledWith({
@@ -321,19 +315,19 @@ describe("api key settings list optimistic mutations", () => {
     });
     const revokedData = setQueryDataMock.mock.calls.at(-1)?.[1](apiKeys);
     expect(revokedData[0]).toMatchObject({
-      id: "ak_active",
-      revoked: true,
+      enabled: false,
+      keyId: "key_active",
     });
 
     capturedMutationOptions.revoke?.onError?.(
       new Error("failed"),
-      { keyId: "ak_active" },
+      { keyId: "key_active" },
       context
     );
     const rollbackData = setQueryDataMock.mock.calls.at(-1)?.[1](revokedData);
     expect(rollbackData[0]).toMatchObject({
-      id: "ak_active",
-      revoked: false,
+      enabled: true,
+      keyId: "key_active",
     });
 
     capturedMutationOptions.revoke?.onSettled?.();
@@ -347,23 +341,23 @@ describe("api key settings list optimistic mutations", () => {
     getQueryDataMock.mockReturnValue(apiKeys);
 
     const context = await capturedMutationOptions.delete?.onMutate?.({
-      keyId: "ak_active",
+      keyId: "key_active",
     });
 
     const deletedData = setQueryDataMock.mock.calls.at(-1)?.[1](apiKeys);
-    expect(deletedData.map((key: { id: string }) => key.id)).toEqual([
-      "ak_other",
+    expect(deletedData.map((key: { keyId: string }) => key.keyId)).toEqual([
+      "key_other",
     ]);
 
     capturedMutationOptions.delete?.onError?.(
       new Error("failed"),
-      { keyId: "ak_active" },
+      { keyId: "key_active" },
       context
     );
     const restoredData = setQueryDataMock.mock.calls.at(-1)?.[1](deletedData);
-    expect(restoredData.map((key: { id: string }) => key.id)).toEqual([
-      "ak_active",
-      "ak_other",
+    expect(restoredData.map((key: { keyId: string }) => key.keyId)).toEqual([
+      "key_active",
+      "key_other",
     ]);
 
     capturedMutationOptions.delete?.onSettled?.();

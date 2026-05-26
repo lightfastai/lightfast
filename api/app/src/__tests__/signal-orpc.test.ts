@@ -8,11 +8,10 @@ const getSignalByPublicIdMock = vi.fn();
 const markSignalFailedMock = vi.fn();
 const sendMock = vi.fn();
 
-vi.mock("@vendor/clerk/server", () => ({
-  clerkClient: () =>
-    Promise.resolve({
-      apiKeys: { verify: verifyMock },
-    }),
+vi.mock("@vendor/unkey/server", () => ({
+  getUnkeyClient: () => ({
+    keys: { verifyKey: verifyMock },
+  }),
 }));
 
 vi.mock("@db/app/client", () => ({ db: { kind: "mock-db" } }));
@@ -31,24 +30,17 @@ const { orpcRouter } = await import("../orpc/router");
 
 const validKey = `ak_${"a".repeat(40)}`;
 
-function apiKey(overrides: Partial<Record<string, unknown>> = {}) {
+function verifyResult(overrides: Partial<Record<string, unknown>> = {}) {
   return {
-    id: "apk_test",
-    type: "api_key",
-    name: "test",
-    subject: "org_test",
-    scopes: [],
-    claims: null,
-    revoked: false,
-    revocationReason: null,
-    expired: false,
-    expiration: null,
-    createdBy: "user_test",
-    description: null,
-    lastUsedAt: null,
-    createdAt: 0,
-    updatedAt: 0,
-    ...overrides,
+    data: {
+      code: "VALID",
+      identity: { externalId: "org_test", id: "identity_test" },
+      keyId: "key_test",
+      meta: { createdByUserId: "user_test" },
+      valid: true,
+      ...overrides,
+    },
+    meta: { requestId: "req_test" },
   };
 }
 
@@ -67,7 +59,7 @@ beforeEach(() => {
   markSignalFailedMock.mockReset();
   sendMock.mockReset();
 
-  verifyMock.mockResolvedValue(apiKey());
+  verifyMock.mockResolvedValue(verifyResult());
   isOrgBoundMock.mockResolvedValue(true);
   createSignalMock.mockResolvedValue({
     publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
@@ -92,7 +84,7 @@ describe("orpcRouter.signals", () => {
     });
     expect(createSignalMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
-      createdByApiKeyId: "apk_test",
+      createdByApiKeyId: "key_test",
       createdByUserId: "user_test",
       input: "Reply to this relevant post",
     });
@@ -148,7 +140,7 @@ describe("orpcRouter.signals", () => {
       publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
-      createdByApiKeyId: "apk_test",
+      createdByApiKeyId: "key_test",
       input: "Run the test plan",
       status: "classified",
       classification: {

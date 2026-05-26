@@ -67,7 +67,9 @@ export function OrgApiKeyList() {
 
         const previous =
           queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
-        const previousApiKey = previous?.find((key) => key.id === input.keyId);
+        const previousApiKey = previous?.find(
+          (key) => key.keyId === input.keyId
+        );
 
         queryClient.setQueryData(
           listQueryKey,
@@ -165,36 +167,39 @@ export function OrgApiKeyList() {
       ) : (
         <div className="overflow-hidden rounded-lg border border-border/60">
           {keys.map((key) => {
+            const isExpired =
+              typeof key.expires === "number" && key.expires <= Date.now();
             const isPending =
               (revokeMutation.isPending &&
-                revokeMutation.variables?.keyId === key.id) ||
+                revokeMutation.variables?.keyId === key.keyId) ||
               (deleteMutation.isPending &&
-                deleteMutation.variables?.keyId === key.id);
-            const isActive = !(key.revoked || key.expired);
+                deleteMutation.variables?.keyId === key.keyId);
+            const isActive = key.enabled && !isExpired;
+            const keyName = key.name ?? key.start;
 
             return (
               <div
                 className={`flex items-center justify-between border-border/60 border-b px-4 py-4 last:border-b-0 ${
                   isPending ? "opacity-60" : ""
                 } ${isActive ? "" : "opacity-50"}`}
-                key={key.id}
+                key={key.keyId}
               >
                 <div className="min-w-0 space-y-1">
                   <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">{key.name}</p>
-                    {key.revoked && (
+                    <p className="font-medium text-sm">{keyName}</p>
+                    {!key.enabled && (
                       <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
                         Revoked
                       </span>
                     )}
-                    {key.expired && !key.revoked && (
+                    {isExpired && key.enabled && (
                       <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
                         Expired
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-3 text-muted-foreground text-xs">
-                    <code className="font-mono">{`${key.id.slice(0, 11)}…`}</code>
+                    <code className="font-mono">{key.start}</code>
                     <span>
                       Created{" "}
                       {formatRelativeTimeToNow(key.createdAt, {
@@ -209,10 +214,10 @@ export function OrgApiKeyList() {
                         })}
                       </span>
                     )}
-                    {key.expiration && (
+                    {key.expires && (
                       <span>
                         Expires{" "}
-                        {formatRelativeTimeToNow(key.expiration, {
+                        {formatRelativeTimeToNow(key.expires, {
                           addSuffix: true,
                         })}
                       </span>
@@ -241,8 +246,8 @@ export function OrgApiKeyList() {
                           onClick={() =>
                             setAlertAction({
                               type: "revoke",
-                              keyId: key.id,
-                              keyName: key.name,
+                              keyId: key.keyId,
+                              keyName,
                             })
                           }
                         >
@@ -255,8 +260,8 @@ export function OrgApiKeyList() {
                         onClick={() =>
                           setAlertAction({
                             type: "delete",
-                            keyId: key.id,
-                            keyName: key.name,
+                            keyId: key.keyId,
+                            keyName,
                           })
                         }
                         variant="destructive"

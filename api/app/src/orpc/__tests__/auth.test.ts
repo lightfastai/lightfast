@@ -7,35 +7,35 @@ const isOrgBoundMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
 
-vi.mock("@vendor/clerk/server", () => ({
-  clerkClient: () =>
-    Promise.resolve({
-      apiKeys: { verify: verifyMock },
-    }),
+vi.mock("@vendor/unkey/server", () => ({
+  getUnkeyClient: () => ({
+    keys: { verifyKey: verifyMock },
+  }),
 }));
 
 const { authMiddleware } = await import("../middleware/auth");
 
 const validKey = `ak_${"a".repeat(40)}`;
 
-function apiKey(overrides: Partial<Record<string, unknown>> = {}) {
+function verifyResult(
+  overrides: Partial<{
+    code: string;
+    identity: { externalId?: string; id: string } | undefined;
+    keyId: string | undefined;
+    meta: Record<string, unknown> | undefined;
+    valid: boolean;
+  }> = {}
+) {
   return {
-    id: "apk_test",
-    type: "api_key",
-    name: "test",
-    subject: "org_test",
-    scopes: [],
-    claims: null,
-    revoked: false,
-    revocationReason: null,
-    expired: false,
-    expiration: null,
-    createdBy: "user_test",
-    description: null,
-    lastUsedAt: null,
-    createdAt: 0,
-    updatedAt: 0,
-    ...overrides,
+    data: {
+      code: "VALID",
+      identity: { externalId: "org_test", id: "identity_test" },
+      keyId: "key_test",
+      meta: { createdByUserId: "user_test" },
+      valid: true,
+      ...overrides,
+    },
+    meta: { requestId: "req_test" },
   };
 }
 
@@ -80,7 +80,7 @@ describe("authMiddleware", () => {
 
   it("throws UNAUTHORIZED when token is not ak_ prefixed (no network call)", async () => {
     await expect(
-      invokeAuth(new Headers({ authorization: "Bearer not-a-clerk-key" }))
+      invokeAuth(new Headers({ authorization: "Bearer not-an-unkey-key" }))
     ).rejects.toMatchObject({
       code: "UNAUTHORIZED",
       message: expect.stringContaining("Invalid API key format"),
@@ -89,8 +89,8 @@ describe("authMiddleware", () => {
     expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
-  it("throws UNAUTHORIZED when clerk.apiKeys.verify throws", async () => {
-    verifyMock.mockRejectedValueOnce(new Error("clerk down"));
+  it("throws UNAUTHORIZED when Unkey verification throws", async () => {
+    verifyMock.mockRejectedValueOnce(new Error("unkey down"));
 
     await expect(
       invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
@@ -98,23 +98,27 @@ describe("authMiddleware", () => {
       code: "UNAUTHORIZED",
       message: "Invalid API key",
     });
-    expect(verifyMock).toHaveBeenCalledWith(validKey);
+    expect(verifyMock).toHaveBeenCalledWith({ key: validKey });
     expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
-  it("throws UNAUTHORIZED when key is revoked", async () => {
-    verifyMock.mockResolvedValueOnce(apiKey({ revoked: true }));
+  it("throws UNAUTHORIZED when Unkey marks the key disabled", async () => {
+    verifyMock.mockResolvedValueOnce(
+      verifyResult({ code: "DISABLED", valid: false })
+    );
 
     await expect(
       invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
     ).rejects.toMatchObject({
       code: "UNAUTHORIZED",
-      message: "API key revoked",
+      message: "API key disabled",
     });
   });
 
-  it("throws UNAUTHORIZED when key is expired", async () => {
-    verifyMock.mockResolvedValueOnce(apiKey({ expired: true }));
+  it("throws UNAUTHORIZED when Unkey marks the key expired", async () => {
+    verifyMock.mockResolvedValueOnce(
+      verifyResult({ code: "EXPIRED", valid: false })
+    );
 
     await expect(
       invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
@@ -124,8 +128,21 @@ describe("authMiddleware", () => {
     });
   });
 
-  it("throws FORBIDDEN when subject is not org-scoped", async () => {
-    verifyMock.mockResolvedValueOnce(apiKey({ subject: "user_personal" }));
+  it("throws UNAUTHORIZED when Unkey cannot find the key", async () => {
+    verifyMock.mockResolvedValueOnce(
+      verifyResult({ code: "NOT_FOUND", keyId: undefined, valid: false })
+    );
+
+    await expect(
+      invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
+    ).rejects.toMatchObject({
+      code: "UNAUTHORIZED",
+      message: "Invalid API key",
+    });
+  });
+
+  it("throws FORBIDDEN when Unkey identity is missing", async () => {
+    verifyMock.mockResolvedValueOnce(verifyResult({ identity: undefined }));
 
     await expect(
       invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
@@ -135,8 +152,8 @@ describe("authMiddleware", () => {
     });
   });
 
-  it("throws FORBIDDEN when createdBy is missing", async () => {
-    verifyMock.mockResolvedValueOnce(apiKey({ createdBy: null }));
+  it("throws FORBIDDEN when creator metadata is missing", async () => {
+    verifyMock.mockResolvedValueOnce(verifyResult({ meta: {} }));
 
     await expect(
       invokeAuth(new Headers({ authorization: `Bearer ${validKey}` }))
@@ -147,14 +164,14 @@ describe("authMiddleware", () => {
   });
 
   it("accepts lowercase 'bearer' scheme (RFC 7235 case-insensitive)", async () => {
-    verifyMock.mockResolvedValueOnce(apiKey());
+    verifyMock.mockResolvedValueOnce(verifyResult());
 
     const ctx = await invokeAuth(
       new Headers({ authorization: `bearer ${validKey}` })
     );
 
     expect(ctx).toMatchObject({
-      apiKeyId: "apk_test",
+      apiKeyId: "key_test",
       auth: {
         identity: {
           orgGate: { bindingStatus: "bound" },
@@ -167,14 +184,14 @@ describe("authMiddleware", () => {
   });
 
   it("resolves and exposes the shared auth identity context when the key is valid", async () => {
-    verifyMock.mockResolvedValueOnce(apiKey());
+    verifyMock.mockResolvedValueOnce(verifyResult());
 
     const ctx = await invokeAuth(
       new Headers({ authorization: `Bearer ${validKey}` })
     );
 
     expect(ctx).toMatchObject({
-      apiKeyId: "apk_test",
+      apiKeyId: "key_test",
       auth: {
         identity: {
           orgGate: { bindingStatus: "bound" },
@@ -185,12 +202,12 @@ describe("authMiddleware", () => {
       },
     });
     expect(verifyMock).toHaveBeenCalledTimes(1);
-    expect(verifyMock).toHaveBeenCalledWith(validKey);
+    expect(verifyMock).toHaveBeenCalledWith({ key: validKey });
     expect(isOrgBoundMock).toHaveBeenCalledWith(expect.anything(), "org_test");
   });
 
   it("keeps the API key authenticated but marks the org gate unbound", async () => {
-    verifyMock.mockResolvedValueOnce(apiKey());
+    verifyMock.mockResolvedValueOnce(verifyResult());
     isOrgBoundMock.mockResolvedValueOnce(false);
 
     const ctx = await invokeAuth(

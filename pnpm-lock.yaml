@@ -69,6 +69,9 @@ catalogs:
     '@types/node':
       specifier: ^24.9.1
       version: 24.9.1
+    '@unkey/api':
+      specifier: 2.3.4
+      version: 2.3.4
     '@vercel/otel':
       specifier: 2.1.2
       version: 2.1.2
@@ -307,6 +310,9 @@ importers:
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
+      '@vendor/unkey':
+        specifier: workspace:*
+        version: link:../../vendor/unkey
       '@vercel/related-projects':
         specifier: 'catalog:'
         version: 1.1.0
@@ -480,6 +486,9 @@ importers:
       '@vendor/seo':
         specifier: workspace:*
         version: link:../../vendor/seo
+      '@vendor/unkey':
+        specifier: workspace:*
+        version: link:../../vendor/unkey
       '@vendor/upstash':
         specifier: workspace:*
         version: link:../../vendor/upstash
@@ -2051,6 +2060,31 @@ importers:
       next:
         specifier: catalog:next16
         version: 16.2.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  vendor/unkey:
+    dependencies:
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      '@unkey/api':
+        specifier: 'catalog:'
+        version: 2.3.4
+      server-only:
+        specifier: ^0.0.1
+        version: 0.0.1
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.9.1
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -7317,6 +7351,9 @@ packages:
   '@ungap/structured-clone@1.3.0':
     resolution: {integrity: sha512-WmoN8qaIAo7WTYWbAZuG8PYEhn5fkz7dZrqTBZ7dtt//lL2Gwms1IcnQ5yHqjDfX8Ft5j4YzDM23f87zBfDe9g==}
     deprecated: Potential CWE-502 - Update to 1.3.1 or higher
+
+  '@unkey/api@2.3.4':
+    resolution: {integrity: sha512-irQCkLIlGedXU0cON4zbfNjGjxWaBr0XdW7JxHl9Hi4M0kAthQ8ZOLX+EYyKO4SS6kmFkfIlq96nDhaMziqtSw==}
 
   '@upstash/redis@1.37.0':
     resolution: {integrity: sha512-LqOJ3+XWPLSZ2rGSed5DYG3ixybxb8EhZu3yQqF7MdZX1wLBG/FRcI6xcUZXHy/SS7mmXWyadrud0HJHkOc+uw==}
@@ -18662,6 +18699,10 @@ snapshots:
     optional: true
 
   '@ungap/structured-clone@1.3.0': {}
+
+  '@unkey/api@2.3.4':
+    dependencies:
+      zod: 4.3.6
 
   '@upstash/redis@1.37.0':
     dependencies:

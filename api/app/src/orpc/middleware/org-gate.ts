@@ -5,7 +5,7 @@ import type { AuthContext, InitialContext } from "../context";
 /**
  * Org setup gate for API-key authenticated oRPC procedures.
  *
- * API-key auth resolves the same active `auth.identity` shape as tRPC. Clerk
+ * API-key auth resolves the same active `auth.identity` shape as tRPC. Unkey
  * API keys carry no session claims, so `authMiddleware` attaches the org gate
  * after reading the authoritative DB binding. This middleware only enforces
  * the already-resolved gate.
