@@ -12,10 +12,17 @@ const organizationListQueryOptions = vi.fn(() => ({
   queryKey: ["viewer", "organization", "listUserOrganizations"],
 }));
 const prefetch = vi.fn();
+const events: string[] = [];
 
 vi.mock("~/trpc/server", () => ({
-  HydrateClient: hydrateClient,
-  prefetch,
+  HydrateClient: ({ children }: { children?: ReactNode }) => {
+    events.push("hydrate");
+    return hydrateClient({ children });
+  },
+  prefetch: (queryOptions: unknown) => {
+    events.push("prefetch");
+    return prefetch(queryOptions);
+  },
   trpc: {
     viewer: {
       account: {
@@ -37,6 +44,7 @@ beforeEach(() => {
   hydrateClient.mockClear();
   organizationListQueryOptions.mockClear();
   prefetch.mockClear();
+  events.length = 0;
 });
 
 describe("ShellDataBoundary", () => {
@@ -55,6 +63,7 @@ describe("ShellDataBoundary", () => {
     expect(prefetch).toHaveBeenCalledWith({
       queryKey: ["viewer", "account", "get"],
     });
+    expect(events.indexOf("prefetch")).toBeLessThan(events.indexOf("hydrate"));
     expect(screen.getByTestId("shell-hydration")).toHaveTextContent(
       "Shell child"
     );

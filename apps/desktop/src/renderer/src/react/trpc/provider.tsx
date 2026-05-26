@@ -27,7 +27,12 @@ export function DesktopTRPCProvider({
               lightfastBridge?: { auth?: DesktopBridgeAuth };
             }
           ).lightfastBridge;
-          return (await bridge?.auth?.getRequestHeaders?.()) ?? {};
+          const headers = (await bridge?.auth?.getRequestHeaders?.()) ?? {};
+          return Object.fromEntries(
+            Object.entries(headers).filter(
+              (entry): entry is [string, string] => typeof entry[1] === "string"
+            )
+          );
         },
       }}
     >

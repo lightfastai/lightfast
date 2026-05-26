@@ -1,4 +1,5 @@
-import React from "react";
+import { render, screen } from "@testing-library/react";
+import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 interface Kids {
@@ -50,7 +51,7 @@ vi.mock("~/components/app-sidebar", () => {
 
 vi.mock("~/components/authenticated-topbar", () => {
   function AuthenticatedTopbar({ left }: { left?: React.ReactNode }) {
-    return <header>{left}</header>;
+    return <header data-testid="authenticated-topbar">{left}</header>;
   }
 
   return { AuthenticatedTopbar };
@@ -73,22 +74,6 @@ vi.mock("next/navigation", () => ({
 const { default: OrgLayout } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/layout"
 );
-
-function containsComponentNamed(node: unknown, componentName: string): boolean {
-  if (!React.isValidElement(node)) {
-    return false;
-  }
-
-  const type = node.type;
-  if (typeof type === "function" && type.name === componentName) {
-    return true;
-  }
-
-  const props = node.props as { children?: React.ReactNode };
-  return React.Children.toArray(props.children).some((child) =>
-    containsComponentNamed(child, componentName)
-  );
-}
 
 function invoke(slug = "acme") {
   return OrgLayout({
@@ -134,9 +119,15 @@ describe("[slug]/layout — membership/slug access gate", () => {
 
     const element = await invoke("acme");
 
-    expect(containsComponentNamed(element, "ShellDataBoundary")).toBe(true);
-    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(false);
-    expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
+    render(element);
+
+    expect(screen.getByTestId("shell-data-boundary")).toHaveTextContent(
+      "Workspace"
+    );
+    expect(
+      screen.queryByTestId("authenticated-topbar")
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("app-sidebar")).not.toBeInTheDocument();
     expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "acme" });
   });
 });

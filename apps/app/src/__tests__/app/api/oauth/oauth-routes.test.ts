@@ -177,6 +177,38 @@ describe("native OAuth facade routes", () => {
     expect(res.status).toBe(401);
   });
 
+  it("maps expired native bearer token to UNAUTHORIZED", async () => {
+    finalize.mockRejectedValueOnce(
+      new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Lightfast native OAuth token expired.",
+      })
+    );
+
+    const { POST } = await import(
+      "../../../../app/(app)/(oauth)/api/oauth/finalize/route"
+    );
+    const res = await POST(
+      new Request("https://app.test/api/oauth/finalize", {
+        method: "POST",
+        headers: { authorization: "Bearer expired_token" },
+        body: JSON.stringify({
+          attemptId: "attempt_123456789",
+          client: "cli",
+          state: "state_1234567890123",
+        }),
+      })
+    );
+
+    await expect(res.json()).resolves.toEqual({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Lightfast native OAuth token expired.",
+      },
+    });
+    expect(res.status).toBe(401);
+  });
+
   it("does not expose raw tRPC messages for server errors", async () => {
     finalize.mockRejectedValueOnce(
       new TRPCError({

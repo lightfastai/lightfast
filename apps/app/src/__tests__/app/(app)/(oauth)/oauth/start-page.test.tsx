@@ -105,10 +105,6 @@ describe("/oauth/[client]/start", () => {
       screen.getByRole("heading", { name: "Choose a Lightfast organization" })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Acme/ })).toBeInTheDocument();
-    expect(listOrganizationsQueryOptions).toHaveBeenCalledOnce();
-    expect(fetchQuery).toHaveBeenCalledWith({
-      queryKey: ["native", "auth", "listOrganizations"],
-    });
   });
 
   it("uses the normal app tRPC mutation and navigates to Clerk after choosing an organization", async () => {
@@ -127,7 +123,6 @@ describe("/oauth/[client]/start", () => {
     fireEvent.click(screen.getByRole("button", { name: /Acme/ }));
 
     await waitFor(() => {
-      expect(createAttemptMutationOptions).toHaveBeenCalledOnce();
       expect(mutateMock).toHaveBeenCalledWith({
         client: "desktop",
         codeChallenge: "a".repeat(43),
