@@ -149,6 +149,32 @@ describe("desktop native auth flow", () => {
     expect(close).toHaveBeenCalledOnce();
   });
 
+  it("returns null when token exchange yields an expired token", async () => {
+    const state = Buffer.from(
+      JSON.stringify({
+        attemptId: "attempt_123456789",
+        nonce: "nonce_1234567890",
+      }),
+      "utf8"
+    ).toString("base64url");
+    const close = vi.fn(async () => undefined);
+    startLoopbackServerMock.mockResolvedValueOnce({
+      close,
+      port: 54_321,
+      waitForCallback: vi.fn(async () => ({ code: "code_123", state })),
+    });
+    exchangeAuthorizationCodeMock.mockResolvedValueOnce({
+      accessToken: "expired",
+      expiresAt: 0,
+      refreshToken: "refresh",
+      tokenType: "Bearer",
+    });
+
+    await expect(beginSignIn()).resolves.toBeNull();
+    expect(setSessionMock).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledOnce();
+  });
+
   it("does not let loopback close failures escape sign-in", async () => {
     const state = Buffer.from(
       JSON.stringify({

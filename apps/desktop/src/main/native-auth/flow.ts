@@ -81,6 +81,10 @@ function buildNativeAuthStartUrl(input: {
   return url.toString();
 }
 
+function isExpiredToken(expiresAt: number): boolean {
+  return expiresAt <= Date.now();
+}
+
 export function beginSignIn(): Promise<string | null> {
   if (inflight) {
     return inflight;
@@ -144,6 +148,9 @@ async function runSignIn(): Promise<string | null> {
       config,
       redirectUri,
     });
+    if (isExpiredToken(tokens.expiresAt)) {
+      throw new Error("Native auth token expired");
+    }
     const metadata = await client.finalize({
       accessToken: tokens.accessToken,
       attemptId: envelope.attemptId,

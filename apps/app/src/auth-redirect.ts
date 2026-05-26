@@ -43,8 +43,8 @@ export function isClerkOAuthContinuationUrl(url: URL) {
   );
 }
 
-export function parseSafeAuthRedirectTarget(value: string | null) {
-  if (!value) {
+export function parseSafeAuthRedirectTarget(value: unknown) {
+  if (typeof value !== "string" || value.length === 0) {
     return null;
   }
 
