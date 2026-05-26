@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import {
   chmod,
   mkdir,
@@ -40,7 +41,7 @@ export class SessionStore {
   async set(session: NativeSession): Promise<void> {
     const parsed = nativeSessionSchema.parse(session);
     await mkdir(dirname(this.filePath), { recursive: true, mode: 0o700 });
-    const tempPath = `${this.filePath}.${process.pid}.${Date.now()}.tmp`;
+    const tempPath = `${this.filePath}.${process.pid}.${Date.now()}.${randomUUID()}.tmp`;
     await writeFile(tempPath, `${JSON.stringify(parsed, null, 2)}\n`, {
       mode: 0o600,
     });

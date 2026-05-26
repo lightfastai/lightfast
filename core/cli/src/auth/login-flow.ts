@@ -40,6 +40,14 @@ interface Loopback {
   waitForCallback: () => Promise<{ code: string; state: string }>;
 }
 
+async function closeLoopbackQuietly(loopback: Loopback): Promise<void> {
+  try {
+    await loopback.close();
+  } catch {
+    // Preserve the primary login failure; cleanup failures are secondary here.
+  }
+}
+
 export interface LoginFlowDeps {
   buildCodeChallenge?: (verifier: string) => string;
   createAppClient?: (input: { appUrl: string }) => LightfastAuthClient;
@@ -80,6 +88,7 @@ export async function login(
     expectedStateNonce: stateNonce,
     successHtmlTitle: "Lightfast CLI",
   });
+  let closeAttempted = false;
 
   try {
     const redirectUri = buildLoopbackRedirectUri(loopback.port);
@@ -122,9 +131,14 @@ export async function login(
       user: metadata.user,
     };
     await store.set(storedSession);
-    return storedSession;
-  } finally {
+    closeAttempted = true;
     await loopback.close();
+    return storedSession;
+  } catch (error) {
+    if (!closeAttempted) {
+      await closeLoopbackQuietly(loopback);
+    }
+    throw error;
   }
 }
 

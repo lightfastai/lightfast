@@ -140,4 +140,50 @@ describe("CLI native auth login flow", () => {
       })
     ).rejects.toMatchObject({ code: "OAUTH_STATE_MISMATCH" });
   });
+
+  it("preserves the primary login error when loopback cleanup fails", async () => {
+    const state = Buffer.from(
+      JSON.stringify({
+        attemptId: "attempt_123456789",
+        nonce: "other_nonce_12345",
+      }),
+      "utf8"
+    ).toString("base64url");
+
+    await expect(
+      login({
+        deps: {
+          buildCodeChallenge: () => "challenge",
+          createAppClient: () => ({
+            finalizeNativeAuth: vi.fn(),
+            getOAuthConfig: vi.fn(async () => ({
+              authorizationEndpoint:
+                "https://clerk.example.com/oauth/authorize",
+              client: "cli" as const,
+              clientId: "cli_client_test",
+              issuer: "https://clerk.example.com",
+              scopes: ["openid", "profile", "email", "offline_access"],
+              supportsDynamicLoopbackPort: true as const,
+              tokenEndpoint: "https://clerk.example.com/oauth/token",
+            })),
+          }),
+          createCodeVerifier: () => "verifier",
+          createStateNonce: () => "nonce_1234567890",
+          getAppUrl: () => "https://app.lightfast.test",
+          openBrowser: vi.fn(),
+          startLoopbackServer: vi.fn(async () => ({
+            close: vi.fn(async () => {
+              throw new Error("close failed");
+            }),
+            port: 54_321,
+            waitForCallback: vi.fn(async () => ({
+              code: "callback-code",
+              state,
+            })),
+          })),
+          store: { clear: vi.fn(), get: vi.fn(), set: vi.fn() },
+        },
+      })
+    ).rejects.toMatchObject({ code: "OAUTH_STATE_MISMATCH" });
+  });
 });

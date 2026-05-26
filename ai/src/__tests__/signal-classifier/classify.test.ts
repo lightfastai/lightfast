@@ -1,5 +1,5 @@
 import type { SignalClassification } from "@repo/api-contract";
-import { MockLanguageModelV3 } from "ai/test";
+import { MockLanguageModelV3 } from "@vendor/ai/test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -171,11 +171,12 @@ describe("classifySignalInput", () => {
       model,
     };
 
-    await expect(classifySignalInput(request, { logger })).rejects.toThrow();
-
-    const failure = await classifySignalInput(request, { logger }).catch(
-      (error) => getSignalClassificationFailure(error)
+    const thrown = await classifySignalInput(request, { logger }).catch(
+      (error) => error
     );
+    expect(thrown).toBeInstanceOf(Error);
+
+    const failure = getSignalClassificationFailure(thrown);
     const typedErrorCode: SignalClassificationFailureCode = failure.errorCode;
 
     expect(failure).toEqual(

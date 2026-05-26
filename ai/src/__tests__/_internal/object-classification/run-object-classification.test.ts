@@ -1,4 +1,4 @@
-import { MockLanguageModelV3 } from "ai/test";
+import { MockLanguageModelV3 } from "@vendor/ai/test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 

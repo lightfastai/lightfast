@@ -69,6 +69,16 @@ describe("people identity normalization", () => {
     });
   });
 
+  it("rejects LinkedIn profile URLs without a slug", () => {
+    expect(
+      normalizePersonIdentityCandidate({
+        identityProvider: "linkedin",
+        identityType: "profile_url",
+        identityValue: "https://www.linkedin.com/in//",
+      })
+    ).toBeUndefined();
+  });
+
   it("returns undefined for unsupported or non-durable identities", () => {
     expect(
       normalizePersonIdentityCandidate({

@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 
 import type { NativeSession } from "@repo/native-auth-contract";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { SessionStore } from "../store";
 
@@ -39,6 +39,20 @@ describe("SessionStore", () => {
 
     await store.clear();
     await expect(store.get()).resolves.toBe(null);
+  });
+
+  it("uses collision-safe temp paths for concurrent writes", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "lightfast-cli-"));
+    const store = new SessionStore(join(dir, "auth.json"));
+    const nowSpy = vi.spyOn(Date, "now").mockReturnValue(1);
+
+    try {
+      await expect(
+        Promise.all([store.set(session), store.set(session)])
+      ).resolves.toHaveLength(2);
+    } finally {
+      nowSpy.mockRestore();
+    }
   });
 
   it("throws for invalid stored JSON", async () => {

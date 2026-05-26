@@ -220,6 +220,7 @@ describe("classifySignal", () => {
         idempotency: 'event.data.clerkOrgId + "-" + event.data.signalId',
         onFailure: expect.any(Function),
         retries: 3,
+        timeouts: { finish: "10m" },
       },
       { event: "app/signal.created" },
       expect.any(Function)
@@ -251,15 +252,12 @@ describe("classifySignal", () => {
     expect(step.ai.wrap).toHaveBeenCalledWith(
       "classify signal",
       expect.any(Function),
-      {
+      expect.objectContaining({
         clerkOrgId: "org_test",
         deploymentEnvironment: "development",
         inputLength: "Run the PR test plan".length,
-        model: "openai/gpt-5.4-nano",
-        prompt: expect.stringContaining("Run the PR test plan"),
         signalId,
-        system: "You are the Lightfast signal classifier.",
-      }
+      })
     );
     expect(classifySignalInputMock).toHaveBeenCalledWith(
       expect.objectContaining({

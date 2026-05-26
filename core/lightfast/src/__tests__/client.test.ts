@@ -15,6 +15,10 @@ describe("createLightfast", () => {
     );
   });
 
+  it("rejects bare lf_ keys", () => {
+    expect(() => createLightfast("lf_")).toThrow(/Invalid Lightfast API key/);
+  });
+
   it("attaches Authorization: Bearer <apiKey>", async () => {
     let lastRequest: { url: string; authHeader: string | null } | undefined;
     const fetchMock = vi.fn(async (input: Request) => {

@@ -108,13 +108,15 @@ function normalizeProfileUrl(
 
   if (provider === "linkedin" && host === "linkedin.com") {
     const normalizedPath = pathname || "/";
-    return normalizedPath.startsWith("/in/")
-      ? {
-          identityProvider: "linkedin",
-          identityType: "profile_url",
-          normalizedIdentityValue: `https://www.linkedin.com${normalizedPath}`,
-        }
-      : undefined;
+    const match = /^\/in\/([^/\s]+)$/.exec(normalizedPath);
+    if (!match) {
+      return;
+    }
+    return {
+      identityProvider: "linkedin",
+      identityType: "profile_url",
+      normalizedIdentityValue: `https://www.linkedin.com/in/${match[1]}`,
+    };
   }
 
   if (provider === "website" && url.protocol.startsWith("http")) {
