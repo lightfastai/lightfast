@@ -63,7 +63,7 @@ describe("ShellDataBoundary", () => {
     expect(prefetch).toHaveBeenCalledWith({
       queryKey: ["viewer", "account", "get"],
     });
-    expect(events.indexOf("prefetch")).toBeLessThan(events.indexOf("hydrate"));
+    expect(events).toEqual(["prefetch", "prefetch", "hydrate"]);
     expect(screen.getByTestId("shell-hydration")).toHaveTextContent(
       "Shell child"
     );

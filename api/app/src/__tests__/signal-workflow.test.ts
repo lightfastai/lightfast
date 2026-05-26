@@ -220,7 +220,7 @@ describe("classifySignal", () => {
         idempotency: 'event.data.clerkOrgId + "-" + event.data.signalId',
         onFailure: expect.any(Function),
         retries: 3,
-        timeouts: { finish: "10m" },
+        timeouts: { finish: "10m", start: "10m" },
       },
       { event: "app/signal.created" },
       expect.any(Function)

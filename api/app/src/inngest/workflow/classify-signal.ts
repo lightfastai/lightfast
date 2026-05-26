@@ -30,6 +30,7 @@ export const classifySignal = inngest.createFunction(
     retries: 3,
     timeouts: {
       finish: "10m",
+      start: "10m",
     },
     onFailure: async ({ event, error, step }) => {
       const { clerkOrgId, signalId } = event.data.event.data;

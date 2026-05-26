@@ -88,7 +88,6 @@ export async function login(
     expectedStateNonce: stateNonce,
     successHtmlTitle: "Lightfast CLI",
   });
-  let closeAttempted = false;
 
   try {
     const redirectUri = buildLoopbackRedirectUri(loopback.port);
@@ -131,13 +130,10 @@ export async function login(
       user: metadata.user,
     };
     await store.set(storedSession);
-    closeAttempted = true;
-    await loopback.close();
+    await closeLoopbackQuietly(loopback);
     return storedSession;
   } catch (error) {
-    if (!closeAttempted) {
-      await closeLoopbackQuietly(loopback);
-    }
+    await closeLoopbackQuietly(loopback);
     throw error;
   }
 }
