@@ -55,6 +55,7 @@ catalog:
   babel-plugin-react-compiler: ^1.0.0
   braintrust: 3.11.0
   clsx: ^2.1.1
+  commander: ^14.0.3
   date-fns: ^4.1.0
   dotenv-cli: ^11.0.0
   drizzle-orm: ^0.45.2
@@ -69,8 +70,10 @@ catalog:
   portless: ^0.12.0
   react-hook-form: ^7.72.1
   require-in-the-middle: ^8.0.1
+  server-only: ^0.0.1
   superjson: ^2.2.6
   tailwind-merge: ^3.5.0
+  tsup: ^8.5.1
   typescript: ^5.9.2
   vitest: ^4.1.4
   zod: ^4.3.6

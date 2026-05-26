@@ -169,6 +169,10 @@ async function runSignIn(): Promise<string | null> {
     emitAgentEvent({ event: "auth_signin_failed", reason: "handler_error" });
     return null;
   } finally {
-    await loopback.close();
+    try {
+      await loopback.close();
+    } catch (error) {
+      logger.warn("[native-auth] loopback close failed", error);
+    }
   }
 }

@@ -2,7 +2,7 @@ import "server-only";
 
 import { createAgentNodeMetadata } from "@repo/ai/telemetry";
 import type { SignalClassification } from "@repo/api-contract";
-import type { LanguageModel } from "ai";
+import type { LanguageModel } from "@vendor/ai";
 
 import { signalIntakeAgentGraph } from "../_internal/agent-graphs/signal-intake";
 import {

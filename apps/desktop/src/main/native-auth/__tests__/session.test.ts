@@ -70,4 +70,53 @@ describe("desktop native auth session", () => {
       })
     );
   });
+
+  it("serializes concurrent refreshes for the active session", async () => {
+    let resolveRefresh!: (value: typeof session.tokens) => void;
+    const refreshAccessToken = vi.fn(
+      () =>
+        new Promise<typeof session.tokens>((resolve) => {
+          resolveRefresh = resolve;
+        })
+    );
+    const getSession = vi.fn(() => ({
+      ...session,
+      tokens: { ...session.tokens, expiresAt: 1 },
+    }));
+    const setSession = vi.fn();
+
+    const first = getValidAuthRequestHeaders({
+      getSession,
+      now: () => 60_000,
+      refreshAccessToken,
+      setSession,
+    });
+    const second = getValidAuthRequestHeaders({
+      getSession,
+      now: () => 60_000,
+      refreshAccessToken,
+      setSession,
+    });
+
+    resolveRefresh({
+      accessToken: "shared-access",
+      expiresAt: 4_102_444_800_000,
+      refreshToken: "shared-refresh",
+      tokenType: "Bearer",
+    });
+
+    await expect(Promise.all([first, second])).resolves.toEqual([
+      {
+        Authorization: "Bearer shared-access",
+        "x-lightfast-native-client": "desktop",
+        "x-lightfast-organization-id": "org_1",
+      },
+      {
+        Authorization: "Bearer shared-access",
+        "x-lightfast-native-client": "desktop",
+        "x-lightfast-organization-id": "org_1",
+      },
+    ]);
+    expect(refreshAccessToken).toHaveBeenCalledOnce();
+  });
 });

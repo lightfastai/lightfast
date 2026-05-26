@@ -9,6 +9,7 @@ import type { DesktopNativeSession } from "./store";
 import { getSession, setSession, signOut } from "./store";
 
 const EXPIRY_SKEW_MS = 60_000;
+let refreshInFlight: Promise<AuthRequestHeaders> | null = null;
 
 export interface AuthRequestHeaders {
   Authorization?: string;
@@ -37,6 +38,33 @@ function headersForSession(session: DesktopNativeSession): AuthRequestHeaders {
   };
 }
 
+async function refreshSessionHeaders(
+  session: DesktopNativeSession,
+  input: {
+    refreshAccessToken?: (args: {
+      config: NativeOAuthConfig;
+      refreshToken: string;
+    }) => Promise<TokenSet>;
+    setSession?: (session: DesktopNativeSession) => boolean;
+    signOut?: () => boolean;
+  }
+): Promise<AuthRequestHeaders> {
+  try {
+    const tokens = await (
+      input.refreshAccessToken ?? defaultRefreshAccessToken
+    )({
+      config: configFromSession(session),
+      refreshToken: session.tokens.refreshToken,
+    });
+    const next = { ...session, tokens };
+    (input.setSession ?? setSession)(next);
+    return headersForSession(next);
+  } catch {
+    (input.signOut ?? signOut)();
+    return {};
+  }
+}
+
 export async function getValidAuthRequestHeaders(
   input: {
     getSession?: () => DesktopNativeSession | null;
@@ -59,18 +87,10 @@ export async function getValidAuthRequestHeaders(
     return headersForSession(session);
   }
 
-  try {
-    const tokens = await (
-      input.refreshAccessToken ?? defaultRefreshAccessToken
-    )({
-      config: configFromSession(session),
-      refreshToken: session.tokens.refreshToken,
+  if (!refreshInFlight) {
+    refreshInFlight = refreshSessionHeaders(session, input).finally(() => {
+      refreshInFlight = null;
     });
-    const next = { ...session, tokens };
-    (input.setSession ?? setSession)(next);
-    return headersForSession(next);
-  } catch {
-    (input.signOut ?? signOut)();
-    return {};
   }
+  return await refreshInFlight;
 }

@@ -15,6 +15,9 @@ export const classifyPeople = inngest.createFunction(
     id: "classify-people",
     idempotency: 'event.data.clerkOrgId + "-" + event.data.signalId',
     retries: 3,
+    timeouts: {
+      finish: "10m",
+    },
     onFailure: async ({ event, error }) => {
       const { clerkOrgId, signalId } = event.data.event.data;
       const failure = getPeopleClassificationFailure(error);

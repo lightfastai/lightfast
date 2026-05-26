@@ -11,9 +11,15 @@ export function jsonResponse(data: unknown, init: ResponseInit = {}) {
 
 export function errorResponse(error: unknown) {
   if (error instanceof TRPCError) {
+    const status = getHTTPStatusCodeFromError(error);
     return jsonResponse(
-      { error: { code: error.code, message: error.message } },
-      { status: getHTTPStatusCodeFromError(error) }
+      {
+        error: {
+          code: error.code,
+          message: status >= 500 ? "Unexpected auth error" : error.message,
+        },
+      },
+      { status }
     );
   }
 

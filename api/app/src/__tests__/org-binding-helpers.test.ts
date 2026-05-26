@@ -38,17 +38,24 @@ function makeFakeDb(cfg: FakeDbConfig = {}) {
     select: vi.fn(),
     insert: vi.fn(),
     insertValues: vi.fn(),
+    limit: vi.fn(),
     update: vi.fn(),
     updateSet: vi.fn(),
   };
   const db = {
     select: (fields?: unknown) => {
       spies.select(fields);
+      const result = selectQueue.shift() ?? [];
+      const query = Promise.resolve(result) as Promise<unknown[]> & {
+        limit: (n: number) => Promise<unknown[]>;
+      };
+      query.limit = (n: number) => {
+        spies.limit(n);
+        return Promise.resolve(result.slice(0, n));
+      };
       return {
         from: () => ({
-          where: () => ({
-            limit: () => Promise.resolve(selectQueue.shift() ?? []),
-          }),
+          where: () => query,
         }),
       };
     },
@@ -275,6 +282,29 @@ describe("markOrgBindingRevoked", () => {
         updatedAt: updateSet.revokedAt,
       })
     );
+  });
+
+  it("revokes every active binding when drift exceeds 100 rows", async () => {
+    const activeRows = Array.from({ length: 101 }, (_, index) =>
+      binding({ id: index + 1, clerkOrgId: "org_drift" })
+    );
+    const revokedRows = activeRows.map((row) =>
+      binding({
+        ...row,
+        revokedAt: "2026-05-26 06:45:00.123",
+        status: "revoked",
+        updatedAt: "2026-05-26 06:45:00.123",
+      })
+    );
+    const { db, spies } = makeFakeDb({
+      selectResults: [activeRows, revokedRows],
+      updateResult: activeRows,
+    });
+
+    await expect(
+      markOrgBindingRevoked(db, { clerkOrgId: "org_drift" })
+    ).resolves.toHaveLength(101);
+    expect(spies.limit).not.toHaveBeenCalledWith(100);
   });
 
   it("returns an empty array when the org had no active binding", async () => {

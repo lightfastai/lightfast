@@ -1,5 +1,5 @@
-import { existsSync } from "node:fs";
-import { mkdtemp, writeFile } from "node:fs/promises";
+import { existsSync, rmSync } from "node:fs";
+import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -58,5 +58,29 @@ describe("desktop native auth store", () => {
     store.clearMemory();
     expect(store.getSession()).toBeNull();
     expect(existsSync(file)).toBe(false);
+  });
+
+  it("returns false instead of throwing for invalid sessions", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "lightfast-desktop-auth-"));
+    const file = join(dir, "auth.bin");
+    const store = createNativeSessionStore(file);
+
+    expect(store.setSession({ ...session, client: "cli" } as never)).toBe(
+      false
+    );
+    expect(store.getSession()).toBeNull();
+  });
+
+  it("clears in-memory auth even when persisted session purge fails", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "lightfast-desktop-auth-"));
+    const file = join(dir, "auth.bin");
+    const store = createNativeSessionStore(file);
+
+    expect(store.setSession(session)).toBe(true);
+    rmSync(file);
+    await mkdir(file);
+
+    expect(store.signOut()).toBe(false);
+    expect(store.getSession()).toBeNull();
   });
 });

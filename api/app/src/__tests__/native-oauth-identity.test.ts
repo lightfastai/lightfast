@@ -40,6 +40,7 @@ describe("native OAuth identity resolution", () => {
     isOrgBoundMock.mockResolvedValue(true);
     clerkGetOrganizationMembershipListMock.mockResolvedValue({
       data: [{ organization: { id: "org_1", name: "Acme", slug: "acme" } }],
+      totalCount: 1,
     });
   });
 
@@ -120,5 +121,71 @@ describe("native OAuth identity resolution", () => {
         }),
       })
     ).resolves.toEqual({ identity: { type: "unauthenticated" } });
+  });
+
+  it("treats expired native OAuth bearer tokens as unauthenticated", async () => {
+    authMock.mockResolvedValueOnce({
+      clientId: "desktop_client_test",
+      isAuthenticated: false,
+      scopes: ["openid", "profile", "email"],
+      tokenType: "oauth_token",
+      userId: "user_1",
+    });
+
+    await expect(
+      resolveAuthContextFromClerk({
+        db: {} as Database,
+        headers: new Headers({
+          authorization: "Bearer expired",
+          "x-lightfast-native-client": "desktop",
+          "x-lightfast-organization-id": "org_1",
+        }),
+      })
+    ).resolves.toEqual({ identity: { type: "unauthenticated" } });
+    expect(clerkGetOrganizationMembershipListMock).not.toHaveBeenCalled();
+  });
+
+  it("finds native OAuth org memberships beyond Clerk's first page", async () => {
+    authMock.mockResolvedValueOnce({
+      clientId: "desktop_client_test",
+      isAuthenticated: true,
+      scopes: ["openid", "profile", "email"],
+      tokenType: "oauth_token",
+      userId: "user_1",
+    });
+    clerkGetOrganizationMembershipListMock
+      .mockResolvedValueOnce({
+        data: Array.from({ length: 100 }, (_, index) => ({
+          organization: { id: `org_other_${index}` },
+        })),
+        totalCount: 101,
+      })
+      .mockResolvedValueOnce({
+        data: [{ organization: { id: "org_2" } }],
+        totalCount: 101,
+      });
+
+    await expect(
+      resolveAuthContextFromClerk({
+        db: {} as Database,
+        headers: new Headers({
+          authorization: "Bearer access",
+          "x-lightfast-native-client": "desktop",
+          "x-lightfast-organization-id": "org_2",
+        }),
+      })
+    ).resolves.toMatchObject({
+      identity: { orgId: "org_2", type: "active" },
+    });
+    expect(clerkGetOrganizationMembershipListMock).toHaveBeenNthCalledWith(1, {
+      limit: 100,
+      offset: 0,
+      userId: "user_1",
+    });
+    expect(clerkGetOrganizationMembershipListMock).toHaveBeenNthCalledWith(2, {
+      limit: 100,
+      offset: 100,
+      userId: "user_1",
+    });
   });
 });

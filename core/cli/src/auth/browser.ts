@@ -21,5 +21,8 @@ export function openBrowser(
     detached: true,
     stdio: "ignore",
   });
+  child.on("error", () => {
+    // Browser launch failure is handled by the auth timeout/user retry path.
+  });
   child.unref();
 }

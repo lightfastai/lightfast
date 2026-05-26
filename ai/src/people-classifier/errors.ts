@@ -1,4 +1,4 @@
-import { APICallError, NoObjectGeneratedError, RetryError } from "ai";
+import { APICallError, NoObjectGeneratedError, RetryError } from "@vendor/ai";
 
 import {
   PEOPLE_CLASSIFICATION_FAILED_ERROR_CODE,

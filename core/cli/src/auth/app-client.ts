@@ -26,11 +26,24 @@ export class LightfastAppClientError extends Error {
   }
 }
 
+const DEFAULT_REQUEST_TIMEOUT_MS = 30_000;
+
+async function readResponseBody(response: Response): Promise<unknown> {
+  try {
+    return (await response.json()) as unknown;
+  } catch (error) {
+    if (!response.ok) {
+      return;
+    }
+    throw error;
+  }
+}
+
 async function readJson<T>(
   response: Response,
   schema: z.ZodType<T>
 ): Promise<T> {
-  const body = (await response.json()) as unknown;
+  const body = await readResponseBody(response);
 
   if (!response.ok) {
     const parsed = appErrorSchema.safeParse(body);
@@ -45,18 +58,40 @@ async function readJson<T>(
   return schema.parse(body);
 }
 
+async function fetchWithTimeout(
+  fetchImpl: typeof fetch,
+  input: Parameters<typeof fetch>[0],
+  init: RequestInit,
+  timeoutMs: number
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    return await fetchImpl(input, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export function createLightfastAppClient(input: {
   appUrl: string;
   fetchImpl?: typeof fetch;
+  requestTimeoutMs?: number;
 }) {
   const baseUrl = input.appUrl.replace(/\/$/, "");
   const fetchImpl = input.fetchImpl ?? fetch;
+  const requestTimeoutMs = input.requestTimeoutMs ?? DEFAULT_REQUEST_TIMEOUT_MS;
 
   return {
     async getOAuthConfig(): Promise<NativeOAuthConfig> {
-      const response = await fetchImpl(
+      const response = await fetchWithTimeout(
+        fetchImpl,
         `${baseUrl}/api/native-auth/cli/oauth-config`,
-        { headers: { accept: "application/json" } }
+        { headers: { accept: "application/json" } },
+        requestTimeoutMs
       );
       return readJson(response, nativeOAuthConfigSchema);
     },
@@ -66,19 +101,24 @@ export function createLightfastAppClient(input: {
       attemptId: string;
       state: string;
     }): Promise<NativeSessionMetadata> {
-      const response = await fetchImpl(`${baseUrl}/api/native-auth/finalize`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          authorization: `Bearer ${input.accessToken}`,
-          "content-type": "application/json",
+      const response = await fetchWithTimeout(
+        fetchImpl,
+        `${baseUrl}/api/native-auth/finalize`,
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            authorization: `Bearer ${input.accessToken}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            attemptId: input.attemptId,
+            client: "cli",
+            state: input.state,
+          }),
         },
-        body: JSON.stringify({
-          attemptId: input.attemptId,
-          client: "cli",
-          state: input.state,
-        }),
-      });
+        requestTimeoutMs
+      );
       return readJson(response, nativeSessionMetadataSchema);
     },
   };

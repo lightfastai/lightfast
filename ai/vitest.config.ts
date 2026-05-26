@@ -1,3 +1,4 @@
+import { fileURLToPath } from "node:url";
 import sharedConfig from "@repo/vitest-config";
 import { defineConfig, mergeConfig } from "vitest/config";
 
@@ -6,10 +7,9 @@ export default mergeConfig(
   defineConfig({
     resolve: {
       alias: {
-        "server-only": new URL(
-          "./src/__mocks__/server-only.ts",
-          import.meta.url
-        ).pathname,
+        "server-only": fileURLToPath(
+          new URL("./src/__mocks__/server-only.ts", import.meta.url)
+        ),
       },
     },
     test: {

@@ -101,12 +101,31 @@ async function isNativeOrgMember(input: {
   userId: string;
 }): Promise<boolean> {
   const clerk = await clerkClient();
-  const memberships = await clerk.users.getOrganizationMembershipList({
-    userId: input.userId,
-  });
-  return memberships.data.some(
-    (membership) => membership.organization.id === input.organizationId
-  );
+  const limit = 100;
+  let offset = 0;
+
+  while (true) {
+    const memberships = await clerk.users.getOrganizationMembershipList({
+      limit,
+      offset,
+      userId: input.userId,
+    });
+    if (
+      memberships.data.some(
+        (membership) => membership.organization.id === input.organizationId
+      )
+    ) {
+      return true;
+    }
+    offset += limit;
+    if (
+      !memberships.data.length ||
+      (typeof memberships.totalCount === "number" &&
+        offset >= memberships.totalCount)
+    ) {
+      return false;
+    }
+  }
 }
 
 async function tryNativeOAuthBearer({

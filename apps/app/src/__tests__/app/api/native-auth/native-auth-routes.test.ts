@@ -140,4 +140,67 @@ describe("native auth facade routes", () => {
     });
     expect(res.status).toBe(403);
   });
+
+  it("maps missing native bearer auth to UNAUTHORIZED", async () => {
+    finalize.mockRejectedValueOnce(
+      new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Lightfast native OAuth authentication required.",
+      })
+    );
+
+    const { POST } = await import(
+      "../../../../app/api/native-auth/finalize/route"
+    );
+    const res = await POST(
+      new Request("https://app.test/api/native-auth/finalize", {
+        method: "POST",
+        body: JSON.stringify({
+          attemptId: "attempt_123456789",
+          client: "cli",
+          state: "state_1234567890123",
+        }),
+      })
+    );
+
+    await expect(res.json()).resolves.toEqual({
+      error: {
+        code: "UNAUTHORIZED",
+        message: "Lightfast native OAuth authentication required.",
+      },
+    });
+    expect(res.status).toBe(401);
+  });
+
+  it("does not expose raw tRPC messages for server errors", async () => {
+    finalize.mockRejectedValueOnce(
+      new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "database password leaked in error text",
+      })
+    );
+
+    const { POST } = await import(
+      "../../../../app/api/native-auth/finalize/route"
+    );
+    const res = await POST(
+      new Request("https://app.test/api/native-auth/finalize", {
+        method: "POST",
+        headers: { authorization: "Bearer access" },
+        body: JSON.stringify({
+          attemptId: "attempt_123456789",
+          client: "cli",
+          state: "state_1234567890123",
+        }),
+      })
+    );
+
+    await expect(res.json()).resolves.toEqual({
+      error: {
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Unexpected auth error",
+      },
+    });
+    expect(res.status).toBe(500);
+  });
 });

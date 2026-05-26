@@ -71,8 +71,8 @@ export function createNativeSessionStore(filePath = defaultStorePath()) {
         );
         return false;
       }
-      const parsed = desktopNativeSessionSchema.parse(session);
       try {
+        const parsed = desktopNativeSessionSchema.parse(session);
         writeFileSync(
           filePath,
           safeStorage.encryptString(JSON.stringify(parsed))
@@ -86,9 +86,7 @@ export function createNativeSessionStore(filePath = defaultStorePath()) {
     },
     signOut(): boolean {
       const ok = purgePersisted(filePath);
-      if (ok) {
-        memory = null;
-      }
+      memory = null;
       return ok;
     },
   };
@@ -134,8 +132,9 @@ export function setSession(session: NativeSession): boolean {
 }
 
 export function signOut(): boolean {
+  const wasSignedIn = snapshot().isSignedIn;
   const ok = globalStore.signOut();
-  if (ok) {
+  if (ok || wasSignedIn) {
     emit();
   }
   return ok;

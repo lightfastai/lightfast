@@ -1,4 +1,4 @@
-import type { LanguageModel, LanguageModelUsage } from "ai";
+import type { LanguageModel, LanguageModelUsage } from "@vendor/ai";
 
 export function getModelName(model: LanguageModel): string {
   if (typeof model === "string") {

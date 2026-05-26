@@ -149,8 +149,7 @@ export async function markOrgBindingRevoked(
         eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId),
         eq(orgSourceControlBindings.status, "active")
       )
-    )
-    .limit(100);
+    );
   if (!activeRows.length) {
     return [];
   }
@@ -182,8 +181,7 @@ export async function markOrgBindingRevoked(
         inArray(orgSourceControlBindings.id, activeIds),
         eq(orgSourceControlBindings.status, "revoked")
       )
-    )
-    .limit(100);
+    );
 }
 
 function isDuplicateKeyError(error: unknown): boolean {

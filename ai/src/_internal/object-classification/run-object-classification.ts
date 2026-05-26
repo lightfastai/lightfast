@@ -1,4 +1,4 @@
-import { generateText, type LanguageModel, Output } from "ai";
+import { generateText, type LanguageModel, Output } from "@vendor/ai";
 import type { ZodType } from "zod";
 
 import { formatFinishReason, formatUsage, getModelName } from "./telemetry";

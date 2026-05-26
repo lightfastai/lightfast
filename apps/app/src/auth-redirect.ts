@@ -1,3 +1,5 @@
+import { env } from "./env";
+
 const CLERK_OAUTH_CONTINUATION_HOST_SUFFIXES = [
   ".accounts.dev",
   ".clerk.accounts.dev",
@@ -11,12 +13,32 @@ function isRelativeAppPath(value: string) {
   return value.startsWith("/") && !value.startsWith("//");
 }
 
+function clerkHostForAppUrl(value: string): string | null {
+  try {
+    const { hostname } = new URL(value);
+    const registrableHost = hostname.startsWith("app.")
+      ? hostname.slice("app.".length)
+      : hostname;
+    return `clerk.${registrableHost}`;
+  } catch {
+    return null;
+  }
+}
+
+function isAllowedProductionClerkHost(hostname: string) {
+  return [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_WWW_URL].some((origin) => {
+    const clerkHost = clerkHostForAppUrl(origin);
+    return clerkHost !== null && hostname === clerkHost;
+  });
+}
+
 export function isClerkOAuthContinuationUrl(url: URL) {
   return (
     url.protocol === "https:" &&
-    CLERK_OAUTH_CONTINUATION_HOST_SUFFIXES.some((suffix) =>
+    (CLERK_OAUTH_CONTINUATION_HOST_SUFFIXES.some((suffix) =>
       url.hostname.endsWith(suffix)
-    ) &&
+    ) ||
+      isAllowedProductionClerkHost(url.hostname)) &&
     CLERK_OAUTH_CONTINUATION_PATHS.has(url.pathname)
   );
 }
