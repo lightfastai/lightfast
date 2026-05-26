@@ -16,7 +16,7 @@ vi.mock("@api/app", () => ({
   createTRPCContext: createContext,
 }));
 
-describe("native auth facade routes", () => {
+describe("native OAuth facade routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -33,10 +33,10 @@ describe("native auth facade routes", () => {
     });
 
     const { GET } = await import(
-      "../../../../app/api/native-auth/[client]/oauth-config/route"
+      "../../../../app/(app)/(oauth)/api/oauth/[client]/config/route"
     );
     const res = await GET(
-      new Request("https://app.test/api/native-auth/cli/oauth-config"),
+      new Request("https://app.test/api/oauth/cli/config"),
       { params: Promise.resolve({ client: "cli" }) }
     );
 
@@ -60,10 +60,10 @@ describe("native auth facade routes", () => {
     });
 
     const { GET } = await import(
-      "../../../../app/api/native-auth/[client]/oauth-config/route"
+      "../../../../app/(app)/(oauth)/api/oauth/[client]/config/route"
     );
     const res = await GET(
-      new Request("https://app.test/api/native-auth/desktop/oauth-config"),
+      new Request("https://app.test/api/oauth/desktop/config"),
       { params: Promise.resolve({ client: "desktop" }) }
     );
 
@@ -83,10 +83,10 @@ describe("native auth facade routes", () => {
     });
 
     const { POST } = await import(
-      "../../../../app/api/native-auth/finalize/route"
+      "../../../../app/(app)/(oauth)/api/oauth/finalize/route"
     );
     const res = await POST(
-      new Request("https://app.test/api/native-auth/finalize", {
+      new Request("https://app.test/api/oauth/finalize", {
         method: "POST",
         headers: { authorization: "Bearer access" },
         body: JSON.stringify({
@@ -122,10 +122,10 @@ describe("native auth facade routes", () => {
     );
 
     const { POST } = await import(
-      "../../../../app/api/native-auth/finalize/route"
+      "../../../../app/(app)/(oauth)/api/oauth/finalize/route"
     );
     const res = await POST(
-      new Request("https://app.test/api/native-auth/finalize", {
+      new Request("https://app.test/api/oauth/finalize", {
         method: "POST",
         body: JSON.stringify({
           attemptId: "attempt_123456789",
@@ -150,10 +150,10 @@ describe("native auth facade routes", () => {
     );
 
     const { POST } = await import(
-      "../../../../app/api/native-auth/finalize/route"
+      "../../../../app/(app)/(oauth)/api/oauth/finalize/route"
     );
     const res = await POST(
-      new Request("https://app.test/api/native-auth/finalize", {
+      new Request("https://app.test/api/oauth/finalize", {
         method: "POST",
         body: JSON.stringify({
           attemptId: "attempt_123456789",
@@ -181,10 +181,10 @@ describe("native auth facade routes", () => {
     );
 
     const { POST } = await import(
-      "../../../../app/api/native-auth/finalize/route"
+      "../../../../app/(app)/(oauth)/api/oauth/finalize/route"
     );
     const res = await POST(
-      new Request("https://app.test/api/native-auth/finalize", {
+      new Request("https://app.test/api/oauth/finalize", {
         method: "POST",
         headers: { authorization: "Bearer access" },
         body: JSON.stringify({

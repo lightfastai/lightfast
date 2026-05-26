@@ -16,7 +16,7 @@ describe("OAuth primitives", () => {
     ).toBe("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM");
   });
 
-  it("builds an app native-auth start URL with PKCE parameters", () => {
+  it("builds an app OAuth start URL with PKCE parameters", () => {
     const url = new URL(
       buildNativeAuthStartUrl({
         appUrl: "https://app.lightfast.test",
@@ -27,7 +27,7 @@ describe("OAuth primitives", () => {
       })
     );
 
-    expect(url.pathname).toBe("/native-auth/cli/start");
+    expect(url.pathname).toBe("/oauth/cli/start");
     expect(url.searchParams.get("redirect_uri")).toBe(
       "http://127.0.0.1:54321/callback"
     );

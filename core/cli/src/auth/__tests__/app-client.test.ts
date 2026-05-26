@@ -31,7 +31,7 @@ describe("Lightfast app auth client", () => {
       supportsDynamicLoopbackPort: true,
     });
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
-      "https://app.lightfast.test/api/native-auth/cli/oauth-config"
+      "https://app.lightfast.test/api/oauth/cli/config"
     );
   });
 
@@ -62,7 +62,7 @@ describe("Lightfast app auth client", () => {
 
     const init = fetchMock.mock.calls[0]?.[1] as RequestInit;
     expect(String(fetchMock.mock.calls[0]?.[0])).toBe(
-      "https://app.lightfast.test/api/native-auth/finalize"
+      "https://app.lightfast.test/api/oauth/finalize"
     );
     expect(init.headers).toMatchObject({
       authorization: "Bearer access",

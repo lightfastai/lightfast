@@ -112,12 +112,12 @@ manually.
 
 1. User clicks **Sign in with Lightfast** in the desktop app
 2. Main process creates PKCE values, starts an ephemeral HTTP listener on
-   `127.0.0.1:<random-port>`, and opens `/native-auth/desktop/start`
+   `127.0.0.1:<random-port>`, and opens `/oauth/desktop/start`
 3. Browser completes Clerk sign-in and the Lightfast web app prompts for the
    organization to bind to the desktop session
 4. Clerk redirects to the loopback callback with an authorization code; the main
    process exchanges it at Clerk, finalizes the org binding through
-   `/api/native-auth/finalize`, and stores the full native session with
+   `/api/oauth/finalize`, and stores the full native session with
    `safeStorage`
 5. Main process broadcasts the new auth snapshot to the renderer; UI flips to
    signed-in

@@ -38,7 +38,7 @@ export function createDesktopNativeAuthClient(
   return {
     async getOAuthConfig() {
       const response = await fetchImpl(
-        createAppUrl("/api/native-auth/desktop/oauth-config").toString(),
+        createAppUrl("/api/oauth/desktop/config").toString(),
         { headers: { accept: "application/json" } }
       );
       return readJson(response, nativeOAuthConfigSchema);
@@ -49,7 +49,7 @@ export function createDesktopNativeAuthClient(
       state: string;
     }) {
       const response = await fetchImpl(
-        createAppUrl("/api/native-auth/finalize").toString(),
+        createAppUrl("/api/oauth/finalize").toString(),
         {
           method: "POST",
           headers: {

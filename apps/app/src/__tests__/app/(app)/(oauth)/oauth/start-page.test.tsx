@@ -17,7 +17,7 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
-vi.mock("~/app/api/native-auth/_server/native-auth-caller", () => ({
+vi.mock("~/app/(app)/(oauth)/api/oauth/_server/native-auth-caller", () => ({
   createNativeAuthCaller: vi.fn(async () => ({
     native: {
       auth: {
@@ -29,13 +29,13 @@ vi.mock("~/app/api/native-auth/_server/native-auth-caller", () => ({
 }));
 
 const Page = (
-  await import("~/app/(client-handshake)/native-auth/[client]/start/page")
+  await import("~/app/(app)/(oauth)/oauth/[client]/start/page")
 ).default;
 const { continueNativeAuth } = await import(
-  "~/app/(client-handshake)/native-auth/[client]/start/actions"
+  "~/app/(app)/(oauth)/oauth/[client]/start/actions"
 );
 
-describe("/native-auth/[client]/start", () => {
+describe("/oauth/[client]/start", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     listOrganizations.mockResolvedValue([

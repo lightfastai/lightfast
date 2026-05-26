@@ -47,7 +47,7 @@ const securityHeaders = securityMiddleware({
 // which requires clerkMiddleware context; auth enforcement remains in procedures.
 const isPublicRoute = createRouteMatcher([
   "/early-access(.*)",
-  "/api/native-auth/(.*)",
+  "/api/oauth/(.*)",
   "/api/trpc/(.*)",
   "/api/health(.*)",
   "/docs(.*)",
@@ -85,40 +85,14 @@ const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 // Browser routes accessible during a pending session (signed in but has
 // outstanding tasks like choosing an org). API auth remains owned by route
 // handlers / tRPC procedure builders, not by proxy path allowlisting.
-const isPendingSessionAllowedRoute = createRouteMatcher([
+const isAppOwnedSignedInRoute = createRouteMatcher([
   "/account/(.*)",
-  "/native-auth(.*)",
+  "/oauth(.*)",
 ]);
 
 const isOrgProductRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 const isOrgSettingsRoute = createRouteMatcher(["/:slug/settings(.*)"]);
 const isOrgBindTaskRoute = createRouteMatcher(["/:slug/tasks/bind(.*)"]);
-
-const RESERVED_ORG_ROUTE_SEGMENTS = [
-  "account",
-  "api",
-  "cli",
-  "desktop",
-  "docs",
-  "early-access",
-  "ingest",
-  "legal",
-  "manifest.json",
-  "monitoring",
-  "native-auth",
-  "sign-in",
-  "sign-up",
-  "sso-callback",
-] as const;
-
-const RESERVED_ORG_ROUTE_SEGMENT_SET = new Set<string>(
-  RESERVED_ORG_ROUTE_SEGMENTS
-);
-
-const RESERVED_ORG_ROUTE_PATTERN = RESERVED_ORG_ROUTE_SEGMENTS.map((segment) =>
-  segment.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
-).join("|");
-const ORGANIZATION_SLUG_PATTERN = `:slug((?!(?:${RESERVED_ORG_ROUTE_PATTERN})(?:/|$))[^/]+)`;
 
 function getPostAuthPath({
   orgSlug,
@@ -164,12 +138,12 @@ function getClerkOAuthContinuationUrl(req: NextRequest) {
   return new URL(redirectTarget);
 }
 
-function getOrgRouteSlug(req: NextRequest) {
-  const slug = req.nextUrl.pathname.split("/").filter(Boolean)[0];
-  if (!slug || RESERVED_ORG_ROUTE_SEGMENT_SET.has(slug)) {
-    return null;
-  }
-  return slug;
+function isActiveOrgPath(req: NextRequest, orgSlug: string) {
+  const prefix = `/${orgSlug}`;
+  return (
+    req.nextUrl.pathname === prefix ||
+    req.nextUrl.pathname.startsWith(`${prefix}/`)
+  );
 }
 
 function isSameLastActiveOrg(
@@ -269,15 +243,21 @@ const clerkProxyMiddleware = clerkMiddleware(
           sessionStatus,
         });
       }
-      if (sessionStatus === "pending" && !isPendingSessionAllowedRoute(req)) {
+      if (sessionStatus === "pending" && !isAppOwnedSignedInRoute(req)) {
         return redirectToPostAuth(req, {
           orgSlug,
           sessionClaims,
           sessionStatus,
         });
       }
-      const orgRouteSlug = getOrgRouteSlug(req);
-      if (orgId && orgSlug && orgRouteSlug && orgSlug === orgRouteSlug) {
+      const isActiveOrgProductRoute =
+        !!orgSlug && isActiveOrgPath(req, orgSlug) && isOrgProductRoute(req);
+      if (
+        !isAppOwnedSignedInRoute(req) &&
+        orgId &&
+        orgSlug &&
+        isActiveOrgProductRoute
+      ) {
         const nextLastActiveOrg = { id: orgId, slug: orgSlug };
         if (
           !isSameLastActiveOrg(
@@ -290,15 +270,16 @@ const clerkProxyMiddleware = clerkMiddleware(
       }
       const bindingStatus = sessionClaims?.lf_binding_status;
       if (
+        !isAppOwnedSignedInRoute(req) &&
         orgId &&
-        orgRouteSlug &&
-        isOrgProductRoute(req) &&
+        orgSlug &&
+        isActiveOrgProductRoute &&
         !isOrgSettingsRoute(req) &&
         !isOrgBindTaskRoute(req) &&
         bindingStatus !== "bound"
       ) {
         return NextResponse.redirect(
-          new URL(`/${orgRouteSlug}/tasks/bind`, req.url)
+          new URL(`/${orgSlug}/tasks/bind`, req.url)
         );
       }
     }
@@ -312,10 +293,7 @@ const clerkProxyMiddleware = clerkMiddleware(
     afterSignInUrl: "/",
     afterSignUpUrl: "/",
     organizationSyncOptions: {
-      organizationPatterns: [
-        `/${ORGANIZATION_SLUG_PATTERN}`,
-        `/${ORGANIZATION_SLUG_PATTERN}/(.*)`,
-      ],
+      organizationPatterns: ["/:slug", "/:slug/(.*)"],
     },
   }
 );

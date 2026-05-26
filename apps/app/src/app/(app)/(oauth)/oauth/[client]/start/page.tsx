@@ -5,7 +5,7 @@ import {
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";
 
-import { createNativeAuthCaller } from "~/app/api/native-auth/_server/native-auth-caller";
+import { createNativeAuthCaller } from "~/app/(app)/(oauth)/api/oauth/_server/native-auth-caller";
 
 import { NativeAuthOrgSelect } from "./_components/native-auth-org-select";
 import { nativeAuthStartSearchSchema } from "./validators";

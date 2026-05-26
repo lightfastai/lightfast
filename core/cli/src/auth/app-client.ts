@@ -89,7 +89,7 @@ export function createLightfastAppClient(input: {
     async getOAuthConfig(): Promise<NativeOAuthConfig> {
       const response = await fetchWithTimeout(
         fetchImpl,
-        `${baseUrl}/api/native-auth/cli/oauth-config`,
+        `${baseUrl}/api/oauth/cli/config`,
         { headers: { accept: "application/json" } },
         requestTimeoutMs
       );
@@ -103,7 +103,7 @@ export function createLightfastAppClient(input: {
     }): Promise<NativeSessionMetadata> {
       const response = await fetchWithTimeout(
         fetchImpl,
-        `${baseUrl}/api/native-auth/finalize`,
+        `${baseUrl}/api/oauth/finalize`,
         {
           method: "POST",
           headers: {

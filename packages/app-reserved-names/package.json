@@ -21,6 +21,7 @@
   ],
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [
@@ -32,6 +33,8 @@
   ],
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
-    "typescript": "catalog:"
+    "@repo/vitest-config": "workspace:*",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

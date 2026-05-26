@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 import { login } from "../login-flow";
 
 describe("CLI native auth login flow", () => {
-  it("opens app native-auth start, exchanges code, finalizes metadata, and persists org-bound auth.json", async () => {
+  it("opens app OAuth start, exchanges code, finalizes metadata, and persists org-bound auth.json", async () => {
     const getOAuthConfig = vi.fn(async () => ({
       authorizationEndpoint: "https://clerk.example.com/oauth/authorize",
       client: "cli" as const,
@@ -70,7 +70,7 @@ describe("CLI native auth login flow", () => {
     });
 
     const startUrl = new URL(String(openBrowser.mock.calls[0]?.[0]));
-    expect(startUrl.pathname).toBe("/native-auth/cli/start");
+    expect(startUrl.pathname).toBe("/oauth/cli/start");
     expect(startUrl.searchParams.get("redirect_uri")).toBe(
       "http://127.0.0.1:54321/callback"
     );

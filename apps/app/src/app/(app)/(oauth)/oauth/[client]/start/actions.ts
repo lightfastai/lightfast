@@ -4,7 +4,7 @@ import type { Route } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { createNativeAuthCaller } from "~/app/api/native-auth/_server/native-auth-caller";
+import { createNativeAuthCaller } from "~/app/(app)/(oauth)/api/oauth/_server/native-auth-caller";
 import {
   nativeCreateAttemptFormSchema,
   toCreateAttemptInput,

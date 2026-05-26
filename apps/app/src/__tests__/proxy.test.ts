@@ -17,6 +17,13 @@ interface AuthResult {
 }
 
 const authMock = vi.fn<() => Promise<AuthResult>>();
+let clerkMiddlewareOptions:
+  | {
+      organizationSyncOptions?: {
+        organizationPatterns?: string[];
+      };
+    }
+  | undefined;
 const clerkProxyRequestMock = vi.fn();
 const createNEMOMock = vi.fn(
   (
@@ -92,11 +99,18 @@ vi.mock("@vendor/clerk/server", () => ({
         auth: typeof authMock,
         req: RequestLike,
         event: EventLike
-      ) => Promise<Response>
-    ) =>
-    (req: RequestLike, event: EventLike) => {
-      clerkProxyRequestMock(req.nextUrl.pathname);
-      return handler(authMock, req, event);
+      ) => Promise<Response>,
+      options?: {
+        organizationSyncOptions?: {
+          organizationPatterns?: string[];
+        };
+      }
+    ) => {
+      clerkMiddlewareOptions = options;
+      return (req: RequestLike, event: EventLike) => {
+        clerkProxyRequestMock(req.nextUrl.pathname);
+        return handler(authMock, req, event);
+      };
     },
   createRouteMatcher: (patterns: string[]) => (req: RequestLike) => {
     const pathname = req.nextUrl.pathname;
@@ -171,6 +185,12 @@ describe("proxy Nemo composition", () => {
       { "/:path*": expect.any(Function) },
       { before: [expect.any(Function)] }
     );
+  });
+
+  it("keeps Clerk organization route patterns broad and readable", () => {
+    expect(clerkMiddlewareOptions?.organizationSyncOptions).toEqual({
+      organizationPatterns: ["/:slug", "/:slug/(.*)"],
+    });
   });
 });
 
@@ -281,7 +301,7 @@ describe("proxy pending-session route handling", () => {
 
   it.each([
     "/account/settings",
-    "/native-auth/desktop/start",
+    "/oauth/desktop/start",
   ])("allows pending sessions through %s", async (pathname) => {
     const { response } = await invoke(pathname);
 
@@ -302,8 +322,8 @@ describe("proxy pending-session route handling", () => {
     expect(authMock).not.toHaveBeenCalled();
   });
 
-  it("leaves native auth facade routes to their route handlers", async () => {
-    const { response } = await invoke("/api/native-auth/finalize");
+  it("leaves native OAuth facade routes to their route handlers", async () => {
+    const { response } = await invoke("/api/oauth/finalize");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
@@ -410,7 +430,10 @@ describe("proxy bound org product route gate", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("does not treat reserved routes as org product routes", async () => {
+  it.each([
+    "/account/settings",
+    "/oauth/desktop/start",
+  ])("does not gate app-owned signed-in route %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: "org_123",
       orgSlug: "acme",
@@ -419,7 +442,41 @@ describe("proxy bound org product route gate", () => {
       userId: "user_123",
     });
 
-    const { response } = await invoke("/account/settings");
+    const { response } = await invoke(pathname);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it.each([
+    "/docs",
+    "/docs/get-started",
+  ])("does not gate public docs route %s", async (pathname) => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: { lf_binding_status: "unbound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke(pathname);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("does not gate a different org slug when Clerk has another active org", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: { lf_binding_status: "unbound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/different-team/workspace");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();

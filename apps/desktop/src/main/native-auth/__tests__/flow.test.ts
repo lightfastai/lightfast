@@ -71,7 +71,7 @@ describe("desktop native auth flow", () => {
     });
   });
 
-  it("opens /native-auth/desktop/start and persists full org-bound session", async () => {
+  it("opens /oauth/desktop/start and persists full org-bound session", async () => {
     const state = Buffer.from(
       JSON.stringify({
         attemptId: "attempt_123456789",
@@ -90,7 +90,7 @@ describe("desktop native auth flow", () => {
 
     const openCalls = openExternalMock.mock.calls as unknown as [string][];
     const signinUrl = new URL(openCalls[0]?.[0] ?? "");
-    expect(signinUrl.pathname).toBe("/native-auth/desktop/start");
+    expect(signinUrl.pathname).toBe("/oauth/desktop/start");
     expect(signinUrl.searchParams.get("redirect_uri")).toBe(
       "http://127.0.0.1:54321/callback"
     );

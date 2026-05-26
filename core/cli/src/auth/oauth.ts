@@ -17,7 +17,7 @@ export function buildNativeAuthStartUrl(input: {
   stateNonce: string;
 }): string {
   const baseUrl = input.appUrl.replace(/\/$/, "");
-  const url = new URL(`/native-auth/${input.client}/start`, baseUrl);
+  const url = new URL(`/oauth/${input.client}/start`, baseUrl);
   url.searchParams.set("redirect_uri", input.redirectUri);
   url.searchParams.set("state", input.stateNonce);
   url.searchParams.set("code_challenge", input.codeChallenge);

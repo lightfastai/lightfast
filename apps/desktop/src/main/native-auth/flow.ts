@@ -73,7 +73,7 @@ function buildNativeAuthStartUrl(input: {
   redirectUri: string;
   stateNonce: string;
 }): string {
-  const url = new URL("/native-auth/desktop/start", input.appUrl);
+  const url = new URL("/oauth/desktop/start", input.appUrl);
   url.searchParams.set("redirect_uri", input.redirectUri);
   url.searchParams.set("state", input.stateNonce);
   url.searchParams.set("code_challenge", input.codeChallenge);
