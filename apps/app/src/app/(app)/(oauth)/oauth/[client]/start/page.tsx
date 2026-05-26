@@ -2,13 +2,13 @@ import {
   type NativeClient,
   nativeClientSchema,
 } from "@repo/native-auth-contract";
-import { headers } from "next/headers";
+import { getQueryClient, trpc } from "@repo/app-trpc/server";
 import { notFound } from "next/navigation";
-
-import { createNativeAuthCaller } from "~/app/(app)/(oauth)/api/oauth/_server/native-auth-caller";
 
 import { NativeAuthOrgSelect } from "./_components/native-auth-org-select";
 import { nativeAuthStartSearchSchema } from "./validators";
+
+export const dynamic = "force-dynamic";
 
 export default async function NativeAuthStartPage({
   params,
@@ -27,11 +27,9 @@ export default async function NativeAuthStartPage({
   }
 
   const client: NativeClient = parsedClient.data;
-  const caller = await createNativeAuthCaller({
-    headers: await headers(),
-    source: client,
-  });
-  const organizations = await caller.native.auth.listOrganizations();
+  const organizations = await getQueryClient().fetchQuery(
+    trpc.native.auth.listOrganizations.queryOptions()
+  );
 
   return (
     <NativeAuthOrgSelect

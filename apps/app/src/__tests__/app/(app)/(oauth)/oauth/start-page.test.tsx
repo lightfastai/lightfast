@@ -1,10 +1,26 @@
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const listOrganizations = vi.fn();
 const createAttempt = vi.fn();
+const fetchQuery = vi.fn();
+const listOrganizationsQueryOptions = vi.fn(() => ({
+  queryKey: ["native", "auth", "listOrganizations"],
+}));
 const redirectMock = vi.fn();
 const headersMock = vi.fn(async () => new Headers());
+
+vi.mock("@repo/app-trpc/server", () => ({
+  getQueryClient: () => ({ fetchQuery }),
+  trpc: {
+    native: {
+      auth: {
+        listOrganizations: {
+          queryOptions: listOrganizationsQueryOptions,
+        },
+      },
+    },
+  },
+}));
 
 vi.mock("next/headers", () => ({
   headers: headersMock,
@@ -17,12 +33,11 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
-vi.mock("~/app/(app)/(oauth)/api/oauth/_server/native-auth-caller", () => ({
+vi.mock("~/app/(app)/(oauth)/_server/native-auth-caller", () => ({
   createNativeAuthCaller: vi.fn(async () => ({
     native: {
       auth: {
         createAttempt,
-        listOrganizations,
       },
     },
   })),
@@ -38,7 +53,9 @@ const { continueNativeAuth } = await import(
 describe("/oauth/[client]/start", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    listOrganizations.mockResolvedValue([
+    fetchQuery.mockReset();
+    listOrganizationsQueryOptions.mockClear();
+    fetchQuery.mockResolvedValue([
       {
         bindingStatus: "bound",
         id: "org_1",
@@ -66,6 +83,10 @@ describe("/oauth/[client]/start", () => {
       screen.getByRole("heading", { name: "Choose a Lightfast organization" })
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /Acme/ })).toBeInTheDocument();
+    expect(listOrganizationsQueryOptions).toHaveBeenCalledOnce();
+    expect(fetchQuery).toHaveBeenCalledWith({
+      queryKey: ["native", "auth", "listOrganizations"],
+    });
   });
 
   it("redirects to the Clerk authorize URL after choosing an organization", async () => {

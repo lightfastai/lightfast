@@ -3,7 +3,7 @@ import {
   nativeOAuthConfigSchema,
 } from "@repo/native-auth-contract";
 
-import { createNativeAuthCaller } from "../../_server/native-auth-caller";
+import { createNativeAuthCaller } from "../../../../_server/native-auth-caller";
 import { errorResponse, jsonResponse } from "../../_server/response";
 
 export const runtime = "nodejs";
