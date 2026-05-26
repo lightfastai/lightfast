@@ -1,8 +1,9 @@
-import { getQueryClient, HydrateClient, trpc } from "@repo/app-trpc/server";
+import { getQueryClient, trpc } from "@repo/app-trpc/server";
 import { parseError } from "@vendor/observability/error/next";
 import { log } from "@vendor/observability/log/next";
 import { notFound } from "next/navigation";
 import { OrgPageErrorBoundary } from "~/components/errors/org-page-error-boundary";
+import { ShellDataBoundary } from "~/components/shell-data-boundary";
 
 interface OrgLayoutProps {
   children: React.ReactNode;
@@ -28,8 +29,8 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
   }
 
   return (
-    <HydrateClient>
+    <ShellDataBoundary>
       <OrgPageErrorBoundary orgSlug={slug}>{children}</OrgPageErrorBoundary>
-    </HydrateClient>
+    </ShellDataBoundary>
   );
 }

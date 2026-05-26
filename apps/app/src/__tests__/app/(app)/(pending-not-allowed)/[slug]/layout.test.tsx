@@ -15,7 +15,6 @@ const notFoundMock = vi.fn(() => {
 
 vi.mock("@repo/app-trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
-  HydrateClient: ({ children }: Kids) => <>{children}</>,
   trpc: {
     viewer: {
       organization: {
@@ -59,6 +58,12 @@ vi.mock("~/components/authenticated-topbar", () => {
 
 vi.mock("~/components/errors/org-page-error-boundary", () => ({
   OrgPageErrorBoundary: ({ children }: Kids) => <>{children}</>,
+}));
+
+vi.mock("~/components/shell-data-boundary", () => ({
+  ShellDataBoundary: ({ children }: Kids) => (
+    <section data-testid="shell-data-boundary">{children}</section>
+  ),
 }));
 
 vi.mock("next/navigation", () => ({
@@ -115,7 +120,7 @@ describe("[slug]/layout — membership/slug access gate", () => {
     expect(notFoundMock).toHaveBeenCalledOnce();
   });
 
-  it("returns a UI-less membership boundary when org access is allowed", async () => {
+  it("returns a UI-less membership boundary with shell data when org access is allowed", async () => {
     fetchQueryMock.mockResolvedValue({
       bindingStatus: "unbound",
       org: {
@@ -129,6 +134,7 @@ describe("[slug]/layout — membership/slug access gate", () => {
 
     const element = await invoke("acme");
 
+    expect(containsComponentNamed(element, "ShellDataBoundary")).toBe(true);
     expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(false);
     expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
     expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "acme" });
