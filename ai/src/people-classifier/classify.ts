@@ -1,21 +1,20 @@
 import "server-only";
 
 import type { SignalClassification } from "@repo/api-contract";
+import { createAgentNodeMetadata } from "@repo/ai/telemetry";
 import type { LanguageModel } from "ai";
 
+import { signalIntakeAgentGraph } from "../_internal/agent-graphs/signal-intake";
 import {
   type ObjectClassificationLogger,
   runObjectClassification,
 } from "../_internal/object-classification/run-object-classification";
 import {
   PEOPLE_CLASSIFICATION_SCHEMA_VERSION,
-  PEOPLE_CLASSIFIER_FEATURE,
   PEOPLE_CLASSIFIER_MAX_OUTPUT_TOKENS,
   PEOPLE_CLASSIFIER_MODEL,
-  PEOPLE_CLASSIFIER_PROMPT_ID,
   PEOPLE_CLASSIFIER_TELEMETRY_FUNCTION_ID,
   PEOPLE_CLASSIFIER_TIMEOUT_MS,
-  PEOPLE_CLASSIFIER_WORKFLOW,
 } from "./constants";
 import { getPeopleClassificationFailure } from "./errors";
 import { PEOPLE_CLASSIFIER_SYSTEM_PROMPT } from "./prompt";
@@ -28,6 +27,8 @@ const noopLogger: ObjectClassificationLogger = {
   info: () => undefined,
   warn: () => undefined,
 };
+
+const peopleClassifierNode = signalIntakeAgentGraph.nodes.peopleClassifier;
 
 export type DeploymentEnvironment = "development" | "preview" | "production";
 
@@ -99,14 +100,13 @@ export async function classifyPeopleFromSignal(
     logger,
     maxOutputTokens: PEOPLE_CLASSIFIER_MAX_OUTPUT_TOKENS,
     metadata: {
-      clerkOrgId,
-      deploymentEnvironment,
-      feature: PEOPLE_CLASSIFIER_FEATURE,
-      inputLength,
-      promptId: PEOPLE_CLASSIFIER_PROMPT_ID,
-      schemaVersion: PEOPLE_CLASSIFICATION_SCHEMA_VERSION,
+      ...createAgentNodeMetadata(signalIntakeAgentGraph, peopleClassifierNode, {
+        agentRunId: signalId,
+        clerkOrgId,
+        deploymentEnvironment,
+        inputLength,
+      }),
       signalId,
-      workflow: PEOPLE_CLASSIFIER_WORKFLOW,
     },
     model,
     prompt,

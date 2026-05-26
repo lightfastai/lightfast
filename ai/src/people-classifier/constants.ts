@@ -1,9 +1,14 @@
-export const PEOPLE_CLASSIFICATION_SCHEMA_VERSION = "people.classification.v1";
+import { signalIntakeAgentGraph } from "../_internal/agent-graphs/signal-intake";
+
+const peopleClassifierNode = signalIntakeAgentGraph.nodes.peopleClassifier;
+
+export const PEOPLE_CLASSIFICATION_SCHEMA_VERSION =
+  peopleClassifierNode.schemaVersion;
 export const PEOPLE_CLASSIFIER_MAX_OUTPUT_TOKENS = 768;
 export const PEOPLE_CLASSIFIER_MODEL = "openai/gpt-5.4-nano";
-export const PEOPLE_CLASSIFIER_FEATURE = "people";
-export const PEOPLE_CLASSIFIER_PROMPT_ID = "people-classifier";
-export const PEOPLE_CLASSIFIER_WORKFLOW = "classify-people";
+export const PEOPLE_CLASSIFIER_FEATURE = peopleClassifierNode.feature;
+export const PEOPLE_CLASSIFIER_PROMPT_ID = peopleClassifierNode.promptId;
+export const PEOPLE_CLASSIFIER_WORKFLOW = peopleClassifierNode.workflow;
 export const PEOPLE_CLASSIFIER_TELEMETRY_FUNCTION_ID =
   "app.inngest.classify-people";
 export const PEOPLE_CLASSIFIER_TIMEOUT_MS = 30_000;

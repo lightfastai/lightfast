@@ -2,7 +2,7 @@ import { MockLanguageModelV3 } from "ai/test";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { z } from "zod";
 
-import { runObjectClassification } from "./run-object-classification";
+import { runObjectClassification } from "../../../_internal/object-classification/run-object-classification";
 
 const logger = {
   info: vi.fn(),

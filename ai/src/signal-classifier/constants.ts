@@ -1,11 +1,14 @@
-export const SIGNAL_CLASSIFICATION_SCHEMA_VERSION = "signal.classification.v1";
+import { signalIntakeAgentGraph } from "../_internal/agent-graphs/signal-intake";
+
+const signalClassifierNode = signalIntakeAgentGraph.nodes.signalClassifier;
+
+export const SIGNAL_CLASSIFICATION_SCHEMA_VERSION =
+  signalClassifierNode.schemaVersion;
 export const SIGNAL_CLASSIFIER_MAX_OUTPUT_TOKENS = 512;
 export const SIGNAL_CLASSIFIER_MODEL = "openai/gpt-5.4-nano";
-export const SIGNAL_CLASSIFIER_BRAINTRUST_PARENT =
-  "project_name:lightfast-signals";
-export const SIGNAL_CLASSIFIER_FEATURE = "signals";
-export const SIGNAL_CLASSIFIER_PROMPT_ID = "signal-classifier";
-export const SIGNAL_CLASSIFIER_WORKFLOW = "classify-signal";
+export const SIGNAL_CLASSIFIER_FEATURE = signalClassifierNode.feature;
+export const SIGNAL_CLASSIFIER_PROMPT_ID = signalClassifierNode.promptId;
+export const SIGNAL_CLASSIFIER_WORKFLOW = signalClassifierNode.workflow;
 export const SIGNAL_CLASSIFIER_TELEMETRY_FUNCTION_ID =
   "app.inngest.classify-signal";
 export const SIGNAL_CLASSIFIER_TIMEOUT_MS = 30_000;

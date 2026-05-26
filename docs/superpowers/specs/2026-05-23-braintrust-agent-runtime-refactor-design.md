@@ -107,7 +107,9 @@ Proposed files:
 
 - `ai/src/telemetry/index.ts`
 - `ai/src/telemetry/braintrust.ts`
-- `ai/src/telemetry/metadata.ts` if the metadata helper grows beyond constants.
+- `ai/src/telemetry/metadata.ts` for generic graph/node metadata helpers.
+- `ai/src/_internal/agent-graphs/signal-intake.ts` for the signal-intake graph
+  topology shared by signal and people classifiers.
 
 Proposed package export:
 
@@ -139,7 +141,40 @@ metadata.
 ## Metadata Taxonomy
 
 Use metadata as the main way to separate prompts and routes inside the shared
-Braintrust project.
+Braintrust project, but do not make each classifier assemble this metadata from
+loose constants. Define each agent graph once, then derive node metadata from
+that graph registry.
+
+The signal-intake graph should look like:
+
+```ts
+defineAgentGraph({
+  id: "signal-intake",
+  routerId: "signals",
+  version: "v1",
+  nodes: {
+    signalClassifier: {
+      feature: "signals",
+      id: "signal-classifier",
+      kind: "llm",
+      promptId: "signal-classifier",
+      role: "router",
+      schemaVersion: "signal.classification.v1",
+      workflow: "classify-signal",
+    },
+    peopleClassifier: {
+      feature: "people",
+      id: "people-classifier",
+      kind: "llm",
+      promptId: "people-classifier",
+      role: "extractor",
+      schemaVersion: "people.classification.v1",
+      upstreamNodeIds: ["signal-classifier"],
+      workflow: "classify-people",
+    },
+  },
+});
+```
 
 Required metadata for every Lightfast AI span:
 
@@ -152,8 +187,9 @@ Required metadata for every Lightfast AI span:
   inputLength: number;
   model: string;
   nodeId: string;
+  nodeKind: "llm" | "function" | "router" | "tool" | "workflow" | "other";
+  nodeRole: "classifier" | "router" | "extractor" | "summarizer" | "tool" | "other";
   promptId: string;
-  promptRole: "classifier" | "router" | "extractor" | "summarizer" | "tool" | "other";
   schemaVersion: string;
   workflow: string;
 }
@@ -190,8 +226,9 @@ Signal classifier metadata:
   agentRunId: signalId,
   routerId: "signals",
   nodeId: "signal-classifier",
+  nodeKind: "llm",
+  nodeRole: "router",
   promptId: "signal-classifier",
-  promptRole: "router",
   workflow: "classify-signal",
   schemaVersion: "signal.classification.v1"
 }
@@ -206,8 +243,9 @@ People classifier metadata:
   routerId: "signals",
   nodeId: "people-classifier",
   upstreamNodeId: "signal-classifier",
+  nodeKind: "llm",
+  nodeRole: "extractor",
   promptId: "people-classifier",
-  promptRole: "extractor",
   workflow: "classify-people",
   schemaVersion: "people.classification.v1"
 }
@@ -281,9 +319,10 @@ Update unit tests to lock the new boundaries:
 - Add telemetry tests for `@repo/ai/telemetry` asserting the parent is
   `project_name:lightfast-agent-runtime`.
 - Signal classifier tests should assert `agentGraphId`, `agentRunId`,
-  `routerId`, `nodeId`, and `promptRole` metadata.
+  `routerId`, `nodeId`, `nodeKind`, and `nodeRole` metadata.
 - People classifier tests should assert the same plus
   `upstreamNodeId: "signal-classifier"`.
+- Add an internal graph topology test for `signalIntakeAgentGraph`.
 - App instrumentation tests, if present or added, should assert that the app
   imports the parent from `@repo/ai/telemetry`.
 - Existing `@vendor/braintrust` tests should continue to assert that the vendor
@@ -306,22 +345,25 @@ or package lockfile boundaries.
 ## Migration Steps
 
 1. Add `@repo/ai/telemetry` with the shared Braintrust project parent and
-   metadata types/helpers.
-2. Change `apps/app/src/instrumentation.ts` to import the parent from
+   generic graph/node metadata types/helpers.
+2. Add an internal `signalIntakeAgentGraph` registry.
+3. Change `apps/app/src/instrumentation.ts` to import the parent from
    `@repo/ai/telemetry`.
-3. Remove `SIGNAL_CLASSIFIER_BRAINTRUST_PARENT` from the signal classifier
+4. Remove `SIGNAL_CLASSIFIER_BRAINTRUST_PARENT` from the signal classifier
    public surface.
-4. Add graph/node metadata to signal classification spans.
-5. Add graph/node/upstream metadata to people classification spans.
-6. Update tests that encoded the old project name.
-7. Run focused package tests and typechecks.
+5. Derive graph/node metadata for signal classification spans from the graph
+   registry.
+6. Derive graph/node/upstream metadata for people classification spans from the
+   graph registry.
+7. Update tests that encoded the old project name or prompt-centric role.
+8. Run focused package tests and typechecks.
 
 ## Decisions
 
 - Keep existing prompt ids for this refactor to avoid mixing naming migration
   with project boundary cleanup.
-- Add a small typed metadata helper now, because future prompts will otherwise
-  drift.
+- Add a typed graph registry and node metadata builder now, because future
+  prompts and tools will otherwise drift.
 - Leave Braintrust enabled behavior unchanged in this refactor. A separate
   enable/disable flag can be added if local development or preview deploys need
   softer env requirements.

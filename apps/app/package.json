@@ -29,6 +29,7 @@
     "@logtail/next": "^0.3.1",
     "@next/bundle-analyzer": "^16.2.6",
     "@orpc/openapi": "^1.14.2",
+    "@repo/ai": "workspace:*",
     "@repo/app-billing": "workspace:*",
     "@repo/app-clerk-claim": "workspace:*",
     "@repo/app-trpc": "workspace:*",

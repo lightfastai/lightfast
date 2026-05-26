@@ -13,6 +13,10 @@
     "./signal-classifier": {
       "types": "./src/signal-classifier/index.ts",
       "default": "./src/signal-classifier/index.ts"
+    },
+    "./telemetry": {
+      "types": "./src/telemetry/index.ts",
+      "default": "./src/telemetry/index.ts"
     }
   },
   "scripts": {

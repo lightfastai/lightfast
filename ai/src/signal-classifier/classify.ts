@@ -1,21 +1,20 @@
 import "server-only";
 
 import type { SignalClassification } from "@repo/api-contract";
+import { createAgentNodeMetadata } from "@repo/ai/telemetry";
 import type { LanguageModel } from "ai";
 
+import { signalIntakeAgentGraph } from "../_internal/agent-graphs/signal-intake";
 import {
   type ObjectClassificationLogger,
   runObjectClassification,
 } from "../_internal/object-classification/run-object-classification";
 import {
   SIGNAL_CLASSIFICATION_SCHEMA_VERSION,
-  SIGNAL_CLASSIFIER_FEATURE,
   SIGNAL_CLASSIFIER_MAX_OUTPUT_TOKENS,
   SIGNAL_CLASSIFIER_MODEL,
-  SIGNAL_CLASSIFIER_PROMPT_ID,
   SIGNAL_CLASSIFIER_TELEMETRY_FUNCTION_ID,
   SIGNAL_CLASSIFIER_TIMEOUT_MS,
-  SIGNAL_CLASSIFIER_WORKFLOW,
 } from "./constants";
 import { getSignalClassificationFailure } from "./errors";
 import { SIGNAL_CLASSIFIER_SYSTEM_PROMPT } from "./prompt";
@@ -27,6 +26,8 @@ const noopLogger: SignalClassifierLogger = {
   info: () => undefined,
   warn: () => undefined,
 };
+
+const signalClassifierNode = signalIntakeAgentGraph.nodes.signalClassifier;
 
 export type DeploymentEnvironment = "development" | "preview" | "production";
 
@@ -86,14 +87,13 @@ export async function classifySignalInput(
     logger,
     maxOutputTokens: SIGNAL_CLASSIFIER_MAX_OUTPUT_TOKENS,
     metadata: {
-      clerkOrgId,
-      deploymentEnvironment,
-      feature: SIGNAL_CLASSIFIER_FEATURE,
-      inputLength,
-      promptId: SIGNAL_CLASSIFIER_PROMPT_ID,
-      schemaVersion: SIGNAL_CLASSIFICATION_SCHEMA_VERSION,
+      ...createAgentNodeMetadata(signalIntakeAgentGraph, signalClassifierNode, {
+        agentRunId: signalId,
+        clerkOrgId,
+        deploymentEnvironment,
+        inputLength,
+      }),
       signalId,
-      workflow: SIGNAL_CLASSIFIER_WORKFLOW,
     },
     model,
     prompt,

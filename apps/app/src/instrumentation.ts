@@ -1,3 +1,4 @@
+import { LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PARENT } from "@repo/ai/telemetry";
 import { TRPCError } from "@trpc/server";
 import { getHTTPStatusCodeFromError } from "@trpc/server/http";
 import { registerBraintrustOTel } from "@vendor/braintrust/otel";
@@ -37,7 +38,10 @@ const beforeSend: NonNullable<Parameters<typeof init>[0]["beforeSend"]> = (
 
 const register = () => {
   if (process.env.NEXT_RUNTIME === "nodejs") {
-    registerBraintrustOTel({ serviceName: "lightfast-app" });
+    registerBraintrustOTel({
+      parent: LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PARENT,
+      serviceName: "lightfast-app",
+    });
 
     init({
       dsn: env.NEXT_PUBLIC_SENTRY_DSN,

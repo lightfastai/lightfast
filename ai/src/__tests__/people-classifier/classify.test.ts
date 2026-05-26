@@ -12,7 +12,7 @@ import {
   PEOPLE_CLASSIFIER_WORKFLOW,
   peopleClassificationModelSchema,
   peopleClassificationSchema,
-} from "./index";
+} from "../../people-classifier";
 
 const logger = {
   info: vi.fn(),
@@ -142,11 +142,18 @@ describe("classifyPeopleFromSignal", () => {
     expect(logger.info).toHaveBeenCalledWith(
       "[people] classification completed",
       expect.objectContaining({
+        agentGraphId: "signal-intake",
+        agentRunId: signalId,
         clerkOrgId: "org_test",
         deploymentEnvironment: "production",
         feature: "people",
+        nodeId: "people-classifier",
+        nodeKind: "llm",
+        nodeRole: "extractor",
         promptId: "people-classifier",
+        routerId: "signals",
         signalId,
+        upstreamNodeId: "signal-classifier",
         workflow: "classify-people",
       })
     );

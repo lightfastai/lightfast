@@ -8,7 +8,6 @@ import {
   getSignalClassificationFailure,
   SIGNAL_CLASSIFICATION_FAILED_ERROR_CODE,
   SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
-  SIGNAL_CLASSIFIER_BRAINTRUST_PARENT,
   SIGNAL_CLASSIFIER_FEATURE,
   SIGNAL_CLASSIFIER_MODEL,
   SIGNAL_CLASSIFIER_PROMPT_ID,
@@ -16,7 +15,7 @@ import {
   SIGNAL_CLASSIFIER_WORKFLOW,
   signalClassificationModelSchema,
   type SignalClassificationFailureCode,
-} from "./index";
+} from "../../signal-classifier";
 
 const logger = {
   info: vi.fn(),
@@ -89,9 +88,6 @@ describe("classifySignalInput", () => {
     });
 
     expect(SIGNAL_CLASSIFIER_MODEL).toBe("openai/gpt-5.4-nano");
-    expect(SIGNAL_CLASSIFIER_BRAINTRUST_PARENT).toBe(
-      "project_name:lightfast-signals"
-    );
     expect(SIGNAL_CLASSIFIER_FEATURE).toBe("signals");
     expect(SIGNAL_CLASSIFIER_WORKFLOW).toBe("classify-signal");
     expect(SIGNAL_CLASSIFIER_PROMPT_ID).toBe("signal-classifier");
@@ -134,13 +130,19 @@ describe("classifySignalInput", () => {
     expect(logger.info).toHaveBeenCalledWith(
       "[signals] classification completed",
       expect.objectContaining({
+        agentGraphId: "signal-intake",
+        agentRunId: signalId,
         clerkOrgId: "org_test",
         deploymentEnvironment: "production",
         feature: "signals",
         finishReason: "stop",
         inputLength: "Run the test plan".length,
         model: "openai/gpt-5.4-nano",
+        nodeId: "signal-classifier",
+        nodeKind: "llm",
+        nodeRole: "router",
         promptId: "signal-classifier",
+        routerId: "signals",
         signalId,
         workflow: "classify-signal",
         usage: expect.objectContaining({
@@ -187,12 +189,18 @@ describe("classifySignalInput", () => {
     expect(logger.warn).toHaveBeenCalledWith(
       "[signals] classification failed",
       expect.objectContaining({
+        agentGraphId: "signal-intake",
+        agentRunId: signalId,
         clerkOrgId: "org_test",
         deploymentEnvironment: "preview",
         errorCode: SIGNAL_CLASSIFICATION_INVALID_OUTPUT_ERROR_CODE,
         feature: "signals",
         model: "openai/gpt-5.4-nano",
+        nodeId: "signal-classifier",
+        nodeKind: "llm",
+        nodeRole: "router",
         promptId: "signal-classifier",
+        routerId: "signals",
         signalId,
         workflow: "classify-signal",
       })
