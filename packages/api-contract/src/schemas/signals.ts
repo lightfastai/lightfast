@@ -1,11 +1,12 @@
 import { z } from "zod";
 
 export const SIGNAL_INPUT_MAX_LENGTH = 4000;
+export const SIGNAL_ID_PREFIX = "signal_";
 
 export const signalIdSchema = z
   .string()
   .regex(
-    /^sig_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
+    /^signal_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
     "Invalid signal id"
   );
 

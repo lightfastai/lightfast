@@ -1,6 +1,10 @@
 import type { Database, Person } from "@db/app";
 import { describe, expect, it, vi } from "vitest";
 
+import {
+  PERSON_DISPLAY_NAME_LENGTH,
+  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
+} from "../schema";
 import { upsertPeopleFromCandidates } from "./people";
 import {
   createPersonIdentityKey,
@@ -94,14 +98,14 @@ describe("people identity normalization", () => {
   it("increments seen count only for a new source signal", () => {
     expect(
       shouldIncrementSeenCount({
-        existingLastSeenSignalId: "sig_a",
-        sourceSignalId: "sig_b",
+        existingLastSeenSignalId: "signal_a",
+        sourceSignalId: "signal_b",
       })
     ).toBe(true);
     expect(
       shouldIncrementSeenCount({
-        existingLastSeenSignalId: "sig_a",
-        sourceSignalId: "sig_a",
+        existingLastSeenSignalId: "signal_a",
+        sourceSignalId: "signal_a",
       })
     ).toBe(false);
   });
@@ -122,8 +126,8 @@ function makePerson(overrides: Partial<Person> = {}): Person {
       identityType: "handle",
       normalizedIdentityValue: "jeevanp",
     }),
-    firstSeenSignalId: "sig_first",
-    lastSeenSignalId: "sig_first",
+    firstSeenSignalId: "signal_first",
+    lastSeenSignalId: "signal_first",
     seenCount: 1,
     metadata: {},
     createdAt: "2026-05-22 00:00:00.000",
@@ -178,7 +182,7 @@ describe("upsertPeopleFromCandidates", () => {
             metadata: { confidence: 0.91 },
           },
         ],
-        sourceSignalId: "sig_source",
+        sourceSignalId: "signal_source",
       })
     ).resolves.toEqual([existing]);
 
@@ -190,14 +194,14 @@ describe("upsertPeopleFromCandidates", () => {
         identityType: "handle",
         identityValue: "https://x.com/JeevanP",
         normalizedIdentityValue: "jeevanp",
-        firstSeenSignalId: "sig_source",
-        lastSeenSignalId: "sig_source",
+        firstSeenSignalId: "signal_source",
+        lastSeenSignalId: "signal_source",
         seenCount: 1,
       })
     );
     expect(spies.duplicateSet).toHaveBeenCalledWith(
       expect.objectContaining({
-        lastSeenSignalId: "sig_source",
+        lastSeenSignalId: "signal_source",
       })
     );
   });
@@ -216,7 +220,80 @@ describe("upsertPeopleFromCandidates", () => {
             metadata: { confidence: 0.1 },
           },
         ],
-        sourceSignalId: "sig_source",
+        sourceSignalId: "signal_source",
+      })
+    ).resolves.toEqual([]);
+
+    expect(spies.insertValues).not.toHaveBeenCalled();
+  });
+
+  it("deduplicates candidates that normalize to the same identity", async () => {
+    const existing = makePerson();
+    const { db, spies } = makePeopleDb([[existing]]);
+
+    await expect(
+      upsertPeopleFromCandidates(db, {
+        clerkOrgId: "org_test",
+        candidates: [
+          {
+            displayName: "Jeevan Pillay",
+            identityProvider: "x",
+            identityType: "profile_url",
+            identityValue: "https://x.com/JeevanP",
+          },
+          {
+            displayName: "Jeevan Pillay",
+            identityProvider: "x",
+            identityType: "handle",
+            identityValue: "@jeevanp",
+          },
+        ],
+        sourceSignalId: "signal_source",
+      })
+    ).resolves.toEqual([existing]);
+
+    expect(spies.insertValues).toHaveBeenCalledTimes(1);
+  });
+
+  it("bounds AI-provided display names to the table column length", async () => {
+    const existing = makePerson();
+    const { db, spies } = makePeopleDb([[existing]]);
+    const longDisplayName = "J".repeat(PERSON_DISPLAY_NAME_LENGTH + 20);
+
+    await upsertPeopleFromCandidates(db, {
+      clerkOrgId: "org_test",
+      candidates: [
+        {
+          displayName: longDisplayName,
+          identityProvider: "x",
+          identityType: "handle",
+          identityValue: "@jeevanp",
+        },
+      ],
+      sourceSignalId: "signal_source",
+    });
+
+    expect(spies.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        displayName: "J".repeat(PERSON_DISPLAY_NAME_LENGTH),
+      })
+    );
+  });
+
+  it("skips candidates whose normalized identity exceeds the table column length", async () => {
+    const { db, spies } = makePeopleDb([]);
+
+    await expect(
+      upsertPeopleFromCandidates(db, {
+        clerkOrgId: "org_test",
+        candidates: [
+          {
+            identityProvider: "website",
+            identityType: "profile_url",
+            identityValue: `https://example.com/${"a".repeat(PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH + 1)}`,
+          },
+        ],
+        sourceSignalId: "signal_source",
       })
     ).resolves.toEqual([]);
 

@@ -5,6 +5,8 @@ import {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
+  PERSON_DISPLAY_NAME_LENGTH,
+  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
   people,
 } from "../schema";
 import {
@@ -31,15 +33,27 @@ export async function upsertPeopleFromCandidates(
   input: UpsertPeopleFromCandidatesInput
 ): Promise<Person[]> {
   const rows: Person[] = [];
+  const seenIdentityKeys = new Set<string>();
 
   for (const candidate of input.candidates) {
     const normalized = normalizePersonIdentityCandidate(candidate);
     if (!normalized) {
       continue;
     }
+    if (
+      normalized.normalizedIdentityValue.length >
+      PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH
+    ) {
+      continue;
+    }
 
     const identityKey = createPersonIdentityKey(normalized);
-    const displayName = candidate.displayName?.trim() || null;
+    if (seenIdentityKeys.has(identityKey)) {
+      continue;
+    }
+    seenIdentityKeys.add(identityKey);
+
+    const displayName = normalizeDisplayName(candidate.displayName);
     const metadata = candidate.metadata ?? {};
 
     await db
@@ -94,4 +108,12 @@ export async function getPersonByIdentityKey(
     )
     .limit(1);
   return row;
+}
+
+function normalizeDisplayName(value: string | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) {
+    return null;
+  }
+  return trimmed.slice(0, PERSON_DISPLAY_NAME_LENGTH);
 }

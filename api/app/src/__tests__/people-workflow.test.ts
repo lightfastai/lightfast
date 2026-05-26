@@ -81,7 +81,7 @@ vi.mock("../inngest/client", () => ({
   },
 }));
 
-const signalId = "sig_123e4567-e89b-12d3-a456-426614174000";
+const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
 const signalClassification = {
   schemaVersion: "signal.classification.v1",
   disposition: "actionable",

@@ -9,7 +9,7 @@
  * `ctx.db` and the helpers stay independently testable.
  */
 
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray, sql } from "drizzle-orm";
 import type { Database } from "../client";
 import type {
   OrgSourceControlBinding,
@@ -88,6 +88,7 @@ export async function upsertActiveOrgBinding(
     return existing;
   }
 
+  let insertError: unknown;
   const [row] = await db
     .insert(orgSourceControlBindings)
     .values({
@@ -101,16 +102,28 @@ export async function upsertActiveOrgBinding(
       metadata: input.metadata ?? {},
       status: "active",
     })
-    .$returningId();
+    .$returningId()
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      insertError = error;
+      return [];
+    });
 
   if (!row?.id) {
-    throw new Error(
-      `Failed to insert active binding for org ${input.clerkOrgId}`
-    );
+    if (!insertError) {
+      throw new Error(
+        `Failed to insert active binding for org ${input.clerkOrgId}`
+      );
+    }
   }
 
   const inserted = await getActiveOrgBinding(db, input.clerkOrgId);
   if (!inserted) {
+    if (insertError) {
+      throw insertError;
+    }
     throw new Error(
       `Failed to insert active binding for org ${input.clerkOrgId}`
     );
@@ -144,7 +157,8 @@ export async function markOrgBindingRevoked(
     return [];
   }
 
-  const now = new Date().toISOString();
+  const activeIds = activeRows.map((row) => row.id);
+  const now = sql`CURRENT_TIMESTAMP(3)`;
   await db
     .update(orgSourceControlBindings)
     .set({
@@ -156,14 +170,38 @@ export async function markOrgBindingRevoked(
     .where(
       and(
         eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId),
+        inArray(orgSourceControlBindings.id, activeIds),
         eq(orgSourceControlBindings.status, "active")
       )
     );
 
-  return activeRows.map((row) => ({
-    ...row,
-    revokedAt: now,
-    status: "revoked",
-    updatedAt: now,
-  }));
+  return await db
+    .select(bindingSelection)
+    .from(orgSourceControlBindings)
+    .where(
+      and(
+        eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId),
+        inArray(orgSourceControlBindings.id, activeIds),
+        eq(orgSourceControlBindings.status, "revoked")
+      )
+    )
+    .limit(100);
+}
+
+function isDuplicateKeyError(error: unknown): boolean {
+  if (error === null || typeof error !== "object") {
+    return false;
+  }
+
+  const { body, code, message } = error as {
+    body?: { code?: unknown };
+    code?: unknown;
+    message?: unknown;
+  };
+
+  return (
+    body?.code === "ER_DUP_ENTRY" ||
+    code === "ER_DUP_ENTRY" ||
+    (typeof message === "string" && message.includes("Duplicate entry"))
+  );
 }

@@ -8,6 +8,7 @@ export {
   type GetSignalOutput,
   getSignalInput,
   getSignalOutput,
+  SIGNAL_ID_PREFIX,
   SIGNAL_INPUT_MAX_LENGTH,
   type SignalClassification,
   type SignalClassificationRouting,

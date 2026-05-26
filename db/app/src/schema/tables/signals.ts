@@ -1,5 +1,9 @@
 import { randomUUID } from "node:crypto";
-import type { SignalClassification, SignalStatus } from "@repo/api-contract";
+import {
+  SIGNAL_ID_PREFIX,
+  type SignalClassification,
+  type SignalStatus,
+} from "@repo/api-contract";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -19,7 +23,7 @@ const CODE_LENGTH = 32;
 const ERROR_CODE_LENGTH = 64;
 
 export function createSignalId() {
-  return `sig_${randomUUID()}`;
+  return `${SIGNAL_ID_PREFIX}${randomUUID()}`;
 }
 
 export const signals = mysqlTable(

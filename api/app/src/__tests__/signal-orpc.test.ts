@@ -62,7 +62,7 @@ beforeEach(() => {
   verifyMock.mockResolvedValue(verifyResult());
   isOrgBoundMock.mockResolvedValue(true);
   createSignalMock.mockResolvedValue({
-    publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
+    publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     clerkOrgId: "org_test",
     status: "queued",
   });
@@ -79,7 +79,7 @@ describe("orpcRouter.signals", () => {
     );
 
     expect(result).toEqual({
-      id: "sig_123e4567-e89b-12d3-a456-426614174000",
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
     });
     expect(createSignalMock).toHaveBeenCalledWith(expect.anything(), {
@@ -92,7 +92,7 @@ describe("orpcRouter.signals", () => {
       name: "app/signal.created",
       data: {
         clerkOrgId: "org_test",
-        signalId: "sig_123e4567-e89b-12d3-a456-426614174000",
+        signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
       },
     });
   });
@@ -114,7 +114,7 @@ describe("orpcRouter.signals", () => {
       clerkOrgId: "org_test",
       errorCode: "INNGEST_ENQUEUE_FAILED",
       errorMessage: "inngest unavailable",
-      publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     });
   });
 
@@ -137,7 +137,7 @@ describe("orpcRouter.signals", () => {
   it("reads a same-org signal by id", async () => {
     getSignalByPublicIdMock.mockResolvedValueOnce({
       id: 1,
-      publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       createdByApiKeyId: "key_test",
@@ -162,16 +162,16 @@ describe("orpcRouter.signals", () => {
 
     const result = await call(
       orpcRouter.signals.get,
-      { id: "sig_123e4567-e89b-12d3-a456-426614174000" },
+      { id: "signal_123e4567-e89b-12d3-a456-426614174000" },
       { context: context() }
     );
 
     expect(getSignalByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
-      publicId: "sig_123e4567-e89b-12d3-a456-426614174000",
+      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     });
     expect(result).toMatchObject({
-      id: "sig_123e4567-e89b-12d3-a456-426614174000",
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
       input: "Run the test plan",
       status: "classified",
       classification: { kind: "review" },
@@ -184,7 +184,7 @@ describe("orpcRouter.signals", () => {
     await expect(
       call(
         orpcRouter.signals.get,
-        { id: "sig_123e4567-e89b-12d3-a456-426614174000" },
+        { id: "signal_123e4567-e89b-12d3-a456-426614174000" },
         { context: context() }
       )
     ).rejects.toMatchObject({

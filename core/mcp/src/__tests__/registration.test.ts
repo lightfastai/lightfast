@@ -7,6 +7,16 @@ describe("MCP tool registration", () => {
     const server = new McpServer({ name: "test", version: "0.0.0" });
 
     const client = {
+      signals: {
+        create: async () => ({
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+          status: "queued",
+        }),
+        get: async () => ({
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+          status: "queued",
+        }),
+      },
       system: {
         health: async () => ({ status: "ok", timestamp: "x", version: "x" }),
       },

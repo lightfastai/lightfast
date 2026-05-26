@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createSignalInput,
+  SIGNAL_ID_PREFIX,
   signalClassificationSchema,
   signalIdSchema,
 } from "../schemas/signals";
@@ -25,8 +26,15 @@ describe("signal schemas", () => {
 
   it("accepts generated signal ids", () => {
     expect(
+      signalIdSchema.parse("signal_123e4567-e89b-12d3-a456-426614174000")
+    ).toBe("signal_123e4567-e89b-12d3-a456-426614174000");
+    expect(SIGNAL_ID_PREFIX).toBe("signal_");
+  });
+
+  it("rejects legacy sig-prefixed ids", () => {
+    expect(() =>
       signalIdSchema.parse("sig_123e4567-e89b-12d3-a456-426614174000")
-    ).toBe("sig_123e4567-e89b-12d3-a456-426614174000");
+    ).toThrow("Invalid signal id");
   });
 
   it("validates signal classification v1", () => {
