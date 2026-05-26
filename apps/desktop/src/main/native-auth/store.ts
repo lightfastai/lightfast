@@ -46,7 +46,7 @@ export function createNativeSessionStore(filePath = defaultStorePath()) {
       if (memory) {
         return memory;
       }
-      if (!existsSync(filePath) || !safeStorage.isEncryptionAvailable()) {
+      if (!(existsSync(filePath) && safeStorage.isEncryptionAvailable())) {
         return null;
       }
       try {
@@ -73,7 +73,10 @@ export function createNativeSessionStore(filePath = defaultStorePath()) {
       }
       const parsed = desktopNativeSessionSchema.parse(session);
       try {
-        writeFileSync(filePath, safeStorage.encryptString(JSON.stringify(parsed)));
+        writeFileSync(
+          filePath,
+          safeStorage.encryptString(JSON.stringify(parsed))
+        );
         memory = parsed;
         return true;
       } catch (err) {

@@ -15,24 +15,24 @@ import {
   type SystemThemeVariant,
 } from "../shared/ipc";
 import { openAppOrigin } from "./app-url";
+import { createAuthFocusGate } from "./auth-focus-gate";
+import { getBuildInfo } from "./build-info";
+import { closeDb, initDb } from "./db";
+import { initLogger, logger } from "./logger";
+import { buildApplicationMenu } from "./menu";
 import {
   beginSignIn,
   getPendingSigninUrl,
   maybeAutoBeginSignIn,
   onPendingSigninUrl,
 } from "./native-auth/flow";
-import { createAuthFocusGate } from "./auth-focus-gate";
+import { getValidAuthRequestHeaders } from "./native-auth/session";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
   onAuthChanged,
   signOut as signOutAuth,
 } from "./native-auth/store";
-import { getValidAuthRequestHeaders } from "./native-auth/session";
-import { getBuildInfo } from "./build-info";
-import { closeDb, initDb } from "./db";
-import { initLogger, logger } from "./logger";
-import { buildApplicationMenu } from "./menu";
 import { getRuntimeConfig } from "./runtime-config";
 import { initSentry } from "./sentry";
 import {

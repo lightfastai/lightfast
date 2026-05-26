@@ -93,14 +93,14 @@ export const people = mysqlTable(
     publicIdUq: uniqueIndex("people_public_id_uq").on(table.publicId),
     orgIdentityKeyUq: uniqueIndex("people_org_identity_key_uq").on(
       table.clerkOrgId,
-      table.identityKey,
+      table.identityKey
     ),
     orgCreatedIdx: index("people_org_created_idx").on(
       table.clerkOrgId,
       table.createdAt,
-      table.id,
+      table.id
     ),
-  }),
+  })
 );
 
 export type Person = typeof people.$inferSelect;

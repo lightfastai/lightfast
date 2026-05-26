@@ -96,7 +96,9 @@ describe("nativeAuthRouter", () => {
       async (_db: Database, orgId: string) => orgId === "org_1"
     );
     clerkGetUserMock.mockResolvedValue({
-      emailAddresses: [{ emailAddress: "dev@example.com", id: "email_primary" }],
+      emailAddresses: [
+        { emailAddress: "dev@example.com", id: "email_primary" },
+      ],
       primaryEmailAddressId: "email_primary",
     });
     clerkGetOrganizationMembershipListMock.mockResolvedValue({
@@ -137,30 +139,36 @@ describe("nativeAuthRouter", () => {
     });
 
     await expect(
-      makeCaller({ kind: "clerk-session", orgId: null, userId: "user_1" })
-        .native.auth.createAttempt({
-          client: "cli",
-          codeChallenge: "a".repeat(43),
-          codeChallengeMethod: "S256",
-          organizationId: "org_1",
-          redirectUri: "http://127.0.0.1:51010/callback",
-          stateNonce: "nonce_1234567890",
-        })
+      makeCaller({
+        kind: "clerk-session",
+        orgId: null,
+        userId: "user_1",
+      }).native.auth.createAttempt({
+        client: "cli",
+        codeChallenge: "a".repeat(43),
+        codeChallengeMethod: "S256",
+        organizationId: "org_1",
+        redirectUri: "http://127.0.0.1:51010/callback",
+        stateNonce: "nonce_1234567890",
+      })
     ).resolves.toMatchObject({
       attemptId: "attempt_123456789",
       authorizationUrl: expect.stringContaining("code_challenge="),
     });
 
     await expect(
-      makeCaller({ kind: "clerk-session", orgId: null, userId: "user_1" })
-        .native.auth.createAttempt({
-          client: "cli",
-          codeChallenge: "a".repeat(43),
-          codeChallengeMethod: "S256",
-          organizationId: "org_missing",
-          redirectUri: "http://127.0.0.1:51010/callback",
-          stateNonce: "nonce_1234567890",
-        })
+      makeCaller({
+        kind: "clerk-session",
+        orgId: null,
+        userId: "user_1",
+      }).native.auth.createAttempt({
+        client: "cli",
+        codeChallenge: "a".repeat(43),
+        codeChallengeMethod: "S256",
+        organizationId: "org_missing",
+        redirectUri: "http://127.0.0.1:51010/callback",
+        stateNonce: "nonce_1234567890",
+      })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 

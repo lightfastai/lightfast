@@ -147,7 +147,9 @@ async function tryNativeOAuthBearer({
     return { identity: UNAUTH_IDENTITY };
   }
   const scopes = Array.isArray(result.scopes)
-    ? result.scopes.filter((scope): scope is string => typeof scope === "string")
+    ? result.scopes.filter(
+        (scope): scope is string => typeof scope === "string"
+      )
     : [];
 
   if (

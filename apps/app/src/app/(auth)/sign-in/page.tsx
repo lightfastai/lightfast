@@ -62,7 +62,7 @@ function SignInView() {
   const verifyingCodeRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    if (!isUserLoaded || !isSignedIn || isRedirecting) {
+    if (!(isUserLoaded && isSignedIn) || isRedirecting) {
       return;
     }
     setIsRedirecting(true);

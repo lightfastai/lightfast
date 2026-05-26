@@ -21,7 +21,11 @@ import {
   buildClerkAuthorizeUrl,
   getNativeOAuthConfig,
 } from "../../auth/native-oauth";
-import { nativeOAuthProcedure, publicProcedure, viewerProcedure } from "../../trpc";
+import {
+  nativeOAuthProcedure,
+  publicProcedure,
+  viewerProcedure,
+} from "../../trpc";
 
 function primaryEmail(user: {
   emailAddresses?: Array<{ emailAddress?: string; id?: string }>;

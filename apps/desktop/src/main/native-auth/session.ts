@@ -5,9 +5,8 @@ import {
   type TokenSet,
 } from "@repo/native-auth-contract";
 import { refreshAccessToken as defaultRefreshAccessToken } from "@repo/native-auth-node";
-
-import { getSession, setSession, signOut } from "./store";
 import type { DesktopNativeSession } from "./store";
+import { getSession, setSession, signOut } from "./store";
 
 const EXPIRY_SKEW_MS = 60_000;
 
@@ -38,16 +37,18 @@ function headersForSession(session: DesktopNativeSession): AuthRequestHeaders {
   };
 }
 
-export async function getValidAuthRequestHeaders(input: {
-  getSession?: () => DesktopNativeSession | null;
-  now?: () => number;
-  refreshAccessToken?: (args: {
-    config: NativeOAuthConfig;
-    refreshToken: string;
-  }) => Promise<TokenSet>;
-  setSession?: (session: DesktopNativeSession) => boolean;
-  signOut?: () => boolean;
-} = {}): Promise<AuthRequestHeaders> {
+export async function getValidAuthRequestHeaders(
+  input: {
+    getSession?: () => DesktopNativeSession | null;
+    now?: () => number;
+    refreshAccessToken?: (args: {
+      config: NativeOAuthConfig;
+      refreshToken: string;
+    }) => Promise<TokenSet>;
+    setSession?: (session: DesktopNativeSession) => boolean;
+    signOut?: () => boolean;
+  } = {}
+): Promise<AuthRequestHeaders> {
   const session = (input.getSession ?? getSession)();
   if (!session) {
     return {};
@@ -59,12 +60,12 @@ export async function getValidAuthRequestHeaders(input: {
   }
 
   try {
-    const tokens = await (input.refreshAccessToken ?? defaultRefreshAccessToken)(
-      {
-        config: configFromSession(session),
-        refreshToken: session.tokens.refreshToken,
-      }
-    );
+    const tokens = await (
+      input.refreshAccessToken ?? defaultRefreshAccessToken
+    )({
+      config: configFromSession(session),
+      refreshToken: session.tokens.refreshToken,
+    });
     const next = { ...session, tokens };
     (input.setSession ?? setSession)(next);
     return headersForSession(next);

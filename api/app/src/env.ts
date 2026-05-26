@@ -18,8 +18,7 @@ export const env = createEnv({
   client: {},
   experimental__runtimeEnv: {
     CLERK_CLI_OAUTH_CLIENT_ID: process.env.CLERK_CLI_OAUTH_CLIENT_ID,
-    CLERK_DESKTOP_OAUTH_CLIENT_ID:
-      process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
+    CLERK_DESKTOP_OAUTH_CLIENT_ID: process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
     VERCEL_ENV: process.env.VERCEL_ENV ?? "development",
   },
   skipValidation:

@@ -31,9 +31,9 @@ async function readJson<T>(
   return schema.parse(body);
 }
 
-export function createDesktopNativeAuthClient(input: {
-  fetchImpl?: typeof fetch;
-} = {}) {
+export function createDesktopNativeAuthClient(
+  input: { fetchImpl?: typeof fetch } = {}
+) {
   const fetchImpl = input.fetchImpl ?? fetch;
   return {
     async getOAuthConfig() {

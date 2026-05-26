@@ -113,7 +113,8 @@ describe("CLI native auth login flow", () => {
           createAppClient: () => ({
             finalizeNativeAuth: vi.fn(),
             getOAuthConfig: vi.fn(async () => ({
-              authorizationEndpoint: "https://clerk.example.com/oauth/authorize",
+              authorizationEndpoint:
+                "https://clerk.example.com/oauth/authorize",
               client: "cli" as const,
               clientId: "cli_client_test",
               issuer: "https://clerk.example.com",

@@ -11,15 +11,14 @@ export type NativeOAuthStateEnvelope = z.infer<
   typeof nativeOAuthStateEnvelopeSchema
 >;
 
-export function decodeNativeOAuthState(state: string): NativeOAuthStateEnvelope {
+export function decodeNativeOAuthState(
+  state: string
+): NativeOAuthStateEnvelope {
   try {
     const json = Buffer.from(state, "base64url").toString("utf8");
     return nativeOAuthStateEnvelopeSchema.parse(JSON.parse(json));
-  } catch (error) {
-    throw new NativeAuthError(
-      "OAUTH_STATE_INVALID",
-      "OAuth state is invalid."
-    );
+  } catch {
+    throw new NativeAuthError("OAUTH_STATE_INVALID", "OAuth state is invalid.");
   }
 }
 

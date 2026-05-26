@@ -1,0 +1,29 @@
+{
+  "name": "@lightfast/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "sdk": "pnpm --dir ../core/lightfast build && pnpm with-env vitest run src/sdk/system-health.e2e.test.ts",
+    "signals": "pnpm with-env vitest run src/signals/signal-pipeline.e2e.test.ts",
+    "test": "vitest run src/helpers/*.test.ts --passWithNoTests",
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../apps/app/.vercel/.env.development.local -- node ../scripts/with-dev-services-env.mjs --"
+  },
+  "dependencies": {
+    "@db/app": "workspace:*",
+    "@repo/api-contract": "workspace:*",
+    "lightfast": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "@types/node": "catalog:",
+    "dotenv-cli": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

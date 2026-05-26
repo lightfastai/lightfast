@@ -14,9 +14,9 @@ import { openBrowser as defaultOpenBrowser } from "./browser";
 import { getAppUrl as defaultGetAppUrl } from "./config";
 import {
   assertNativeOAuthState,
-  buildCodeChallenge as defaultBuildCodeChallenge,
   buildLoopbackRedirectUri,
   buildNativeAuthStartUrl,
+  buildCodeChallenge as defaultBuildCodeChallenge,
   createCodeVerifier as defaultCreateCodeVerifier,
   createStateNonce as defaultCreateStateNonce,
   startLoopbackServer as defaultStartLoopbackServer,

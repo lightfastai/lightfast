@@ -33,9 +33,7 @@ describe("@repo/native-auth-node token client", () => {
       redirectUri: "http://127.0.0.1:51010/callback",
     });
 
-    const calls = fetchImpl.mock.calls as unknown as Array<
-      [string, RequestInit]
-    >;
+    const calls = fetchImpl.mock.calls as unknown as [string, RequestInit][];
     const body = calls[0]?.[1].body as URLSearchParams;
     expect(fetchImpl).toHaveBeenCalledWith(
       config.tokenEndpoint,

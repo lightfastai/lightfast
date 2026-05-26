@@ -4,6 +4,7 @@ packages:
   - apps/*
   - core/*
   - db/*
+  - e2e
   - packages/*
   - internal/*
   - vendor/*

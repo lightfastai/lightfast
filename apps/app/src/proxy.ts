@@ -67,10 +67,7 @@ const isApiRouteMatcher = createRouteMatcher([
   "/api/v1/(.*)",
 ]);
 
-const APP_OWNED_API_PREFIXES = [
-  "/api/inngest",
-  "/api/v1",
-];
+const APP_OWNED_API_PREFIXES = ["/api/inngest", "/api/v1"];
 
 function isApiRoute(req: NextRequest) {
   return (

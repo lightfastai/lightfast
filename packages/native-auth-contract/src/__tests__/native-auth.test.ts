@@ -1,14 +1,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  hasRequiredNativeOAuthScopes,
   NATIVE_AUTH_HEADERS,
   NATIVE_AUTH_SCHEMA_VERSION,
   NATIVE_OAUTH_SCOPES,
-  hasRequiredNativeOAuthScopes,
   nativeClientSchema,
   nativeOAuthConfigSchema,
-  nativeSessionSchema,
   nativeSessionMetadataSchema,
+  nativeSessionSchema,
   oauthTokenResponseSchema,
 } from "../native-auth";
 

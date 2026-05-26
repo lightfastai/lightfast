@@ -39,11 +39,12 @@ describe("native auth attempts", () => {
     });
 
     expect(issued.attemptId).toBe("attempt_123456789012345678901234");
-    expect(JSON.parse(Buffer.from(issued.state, "base64url").toString("utf8")))
-      .toEqual({
-        attemptId: "attempt_123456789012345678901234",
-        nonce: "nonce_1234567890",
-      });
+    expect(
+      JSON.parse(Buffer.from(issued.state, "base64url").toString("utf8"))
+    ).toEqual({
+      attemptId: "attempt_123456789012345678901234",
+      nonce: "nonce_1234567890",
+    });
     expect(redisSetMock).toHaveBeenCalledWith(
       "native-auth-attempt:attempt_123456789012345678901234",
       expect.objectContaining({
@@ -85,7 +86,10 @@ describe("native auth attempts", () => {
       consumeNativeAuthAttempt({
         attemptId: issued.attemptId,
         state: Buffer.from(
-          JSON.stringify({ attemptId: issued.attemptId, nonce: "tampered_nonce" })
+          JSON.stringify({
+            attemptId: issued.attemptId,
+            nonce: "tampered_nonce",
+          })
         ).toString("base64url"),
       })
     ).resolves.toBeNull();

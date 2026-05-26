@@ -1,6 +1,6 @@
 import {
-  nativeClientSchema,
   type NativeClient,
+  nativeClientSchema,
 } from "@repo/native-auth-contract";
 import { headers } from "next/headers";
 import { notFound } from "next/navigation";

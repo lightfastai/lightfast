@@ -1,1 +1,4 @@
-export { exchangeAuthorizationCode, refreshAccessToken } from "@repo/native-auth-node";
+export {
+  exchangeAuthorizationCode,
+  refreshAccessToken,
+} from "@repo/native-auth-node";

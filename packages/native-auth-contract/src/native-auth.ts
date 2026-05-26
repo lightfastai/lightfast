@@ -101,9 +101,7 @@ export const nativeSessionSchema = z.object({
 
 export type NativeOAuthConfig = z.infer<typeof nativeOAuthConfigSchema>;
 export type NativeOrganization = z.infer<typeof nativeOrganizationSchema>;
-export type NativeSessionMetadata = z.infer<
-  typeof nativeSessionMetadataSchema
->;
+export type NativeSessionMetadata = z.infer<typeof nativeSessionMetadataSchema>;
 export type NativeSession = z.infer<typeof nativeSessionSchema>;
 export type NativeCreateAttemptInput = z.infer<
   typeof nativeCreateAttemptInputSchema

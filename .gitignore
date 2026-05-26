@@ -130,6 +130,9 @@ mastra.db-wal
 # Sentry
 .sentryclirc
 
+# Braintrust local docs/cache
+.bt/
+
 # Storybook
 storybook-static
 

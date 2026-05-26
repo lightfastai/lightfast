@@ -13,8 +13,8 @@ import {
   SIGNAL_CLASSIFIER_PROMPT_ID,
   SIGNAL_CLASSIFIER_SYSTEM_PROMPT,
   SIGNAL_CLASSIFIER_WORKFLOW,
-  signalClassificationModelSchema,
   type SignalClassificationFailureCode,
+  signalClassificationModelSchema,
 } from "../../signal-classifier";
 
 const logger = {

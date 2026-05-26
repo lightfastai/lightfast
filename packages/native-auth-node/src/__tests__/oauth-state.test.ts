@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  NativeAuthError,
   assertNativeOAuthState,
   decodeNativeOAuthState,
+  NativeAuthError,
 } from "..";
 
 function encode(value: unknown): string {

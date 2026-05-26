@@ -1,8 +1,8 @@
 import {
   hasRequiredNativeOAuthScopes,
+  NATIVE_OAUTH_SCOPES,
   type NativeClient,
   type NativeOAuthConfig,
-  NATIVE_OAUTH_SCOPES,
   nativeOAuthConfigSchema,
 } from "@repo/native-auth-contract";
 import { getClerkFrontendApi } from "@vendor/clerk/env";
@@ -15,6 +15,8 @@ export function getNativeOAuthClientId(client: NativeClient): string | null {
       return env.CLERK_CLI_OAUTH_CLIENT_ID ?? null;
     case "desktop":
       return env.CLERK_DESKTOP_OAUTH_CLIENT_ID ?? null;
+    default:
+      return null;
   }
 }
 

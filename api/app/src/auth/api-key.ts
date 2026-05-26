@@ -4,8 +4,8 @@ import { db as appDb } from "@db/app/client";
 import { getUnkeyClient } from "@vendor/unkey/server";
 
 import type { Diagnostic } from "../diagnostics";
-import type { AuthIdentity, BindingStatus } from "./identity";
 import { LIGHTFAST_API_KEY_PREFIX } from "./api-key-prefix";
+import type { AuthIdentity, BindingStatus } from "./identity";
 
 export type ApiKeyAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
 
@@ -88,18 +88,10 @@ export async function resolveApiKeyAuth(input: {
   const key = verification.data;
   if (!key.valid) {
     if (key.code === "DISABLED") {
-      throw new ApiKeyAuthError(
-        "disabled",
-        "API key disabled",
-        "UNAUTHORIZED"
-      );
+      throw new ApiKeyAuthError("disabled", "API key disabled", "UNAUTHORIZED");
     }
     if (key.code === "EXPIRED") {
-      throw new ApiKeyAuthError(
-        "expired",
-        "API key expired",
-        "UNAUTHORIZED"
-      );
+      throw new ApiKeyAuthError("expired", "API key expired", "UNAUTHORIZED");
     }
     throw new ApiKeyAuthError("invalid", "Invalid API key", "UNAUTHORIZED");
   }

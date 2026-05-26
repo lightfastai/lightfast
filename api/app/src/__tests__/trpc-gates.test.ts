@@ -35,7 +35,7 @@ vi.mock("@vendor/clerk/server", () => ({
         getOrganization: getOrganizationMock,
         updateOrganization: updateOrganizationMock,
       },
-  }),
+    }),
   auth: vi.fn(),
 }));
 

@@ -195,20 +195,20 @@ describe("classifyPeopleFromSignal", () => {
       model,
     };
 
-    await expect(classifyPeopleFromSignal(request, { logger })).resolves.toEqual(
-      {
-        schemaVersion: "people.classification.v1",
-        candidates: [
-          {
-            identityProvider: "x",
-            identityType: "handle",
-            identityValue: "@jeevanp",
-            rationale: "The signal includes a durable X handle.",
-            confidence: 0.91,
-          },
-        ],
-      }
-    );
+    await expect(
+      classifyPeopleFromSignal(request, { logger })
+    ).resolves.toEqual({
+      schemaVersion: "people.classification.v1",
+      candidates: [
+        {
+          identityProvider: "x",
+          identityType: "handle",
+          identityValue: "@jeevanp",
+          rationale: "The signal includes a durable X handle.",
+          confidence: 0.91,
+        },
+      ],
+    });
   });
 
   it("uses explicit null display names for strict structured output", () => {

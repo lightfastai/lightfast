@@ -39,9 +39,7 @@ describe("native OAuth identity resolution", () => {
     clerkGetOrganizationMembershipListMock.mockReset();
     isOrgBoundMock.mockResolvedValue(true);
     clerkGetOrganizationMembershipListMock.mockResolvedValue({
-      data: [
-        { organization: { id: "org_1", name: "Acme", slug: "acme" } },
-      ],
+      data: [{ organization: { id: "org_1", name: "Acme", slug: "acme" } }],
     });
   });
 

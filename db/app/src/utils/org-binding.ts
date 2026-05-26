@@ -111,12 +111,10 @@ export async function upsertActiveOrgBinding(
       return [];
     });
 
-  if (!row?.id) {
-    if (!insertError) {
-      throw new Error(
-        `Failed to insert active binding for org ${input.clerkOrgId}`
-      );
-    }
+  if (!(row?.id || insertError)) {
+    throw new Error(
+      `Failed to insert active binding for org ${input.clerkOrgId}`
+    );
   }
 
   const inserted = await getActiveOrgBinding(db, input.clerkOrgId);

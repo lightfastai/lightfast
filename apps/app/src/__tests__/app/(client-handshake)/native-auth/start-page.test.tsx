@@ -17,24 +17,19 @@ vi.mock("next/navigation", () => ({
   redirect: redirectMock,
 }));
 
-vi.mock(
-  "~/app/api/native-auth/_server/native-auth-caller",
-  () => ({
-    createNativeAuthCaller: vi.fn(async () => ({
-      native: {
-        auth: {
-          createAttempt,
-          listOrganizations,
-        },
+vi.mock("~/app/api/native-auth/_server/native-auth-caller", () => ({
+  createNativeAuthCaller: vi.fn(async () => ({
+    native: {
+      auth: {
+        createAttempt,
+        listOrganizations,
       },
-    })),
-  })
-);
+    },
+  })),
+}));
 
 const Page = (
-  await import(
-    "~/app/(client-handshake)/native-auth/[client]/start/page"
-  )
+  await import("~/app/(client-handshake)/native-auth/[client]/start/page")
 ).default;
 const { continueNativeAuth } = await import(
   "~/app/(client-handshake)/native-auth/[client]/start/actions"

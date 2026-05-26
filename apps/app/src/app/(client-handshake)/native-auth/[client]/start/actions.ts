@@ -5,6 +5,7 @@ import {
   nativeClientSchema,
   nativeCreateAttemptInputSchema,
 } from "@repo/native-auth-contract";
+import type { Route } from "next";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -64,5 +65,5 @@ export async function continueNativeAuth(formData: FormData) {
     source: input.client,
   });
   const result = await caller.native.auth.createAttempt(input);
-  redirect(result.authorizationUrl);
+  redirect(result.authorizationUrl as Route);
 }

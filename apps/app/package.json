@@ -12,6 +12,7 @@
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
     "dev": "portless run",
     "dev:app": "pnpm with-related-projects pnpm with-env next dev",
+    "dev:e2e": "INNGEST_SERVE_HOST=http://localhost:$PORT MFE_DISABLE_LOCAL_PROXY_REWRITE=1 TURBO_TASK_HAS_MFE_PROXY=false pnpm dev:app",
     "mfe:proxy": "portless run --name lightfast pnpm run mfe:proxy:serve",
     "mfe:proxy:serve": "microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app lightfast-www --local-app-url lightfast-app=$(portless get app.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)",
     "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",

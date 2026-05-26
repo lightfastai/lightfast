@@ -14,7 +14,10 @@ const { getValidAuthRequestHeaders } = await import("../session");
 const session = {
   appUrl: "https://app.lightfast.test",
   client: "desktop" as const,
-  oauth: { clientId: "desktop_client_test", issuer: "https://clerk.example.com" },
+  oauth: {
+    clientId: "desktop_client_test",
+    issuer: "https://clerk.example.com",
+  },
   organization: { id: "org_1", name: "Acme", slug: "acme" },
   schemaVersion: 2 as const,
   tokens: {

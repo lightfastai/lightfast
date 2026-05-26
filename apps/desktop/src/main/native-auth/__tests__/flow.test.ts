@@ -85,7 +85,7 @@ describe("desktop native auth flow", () => {
 
     await expect(beginSignIn()).resolves.toBe("access");
 
-    const openCalls = openExternalMock.mock.calls as unknown as Array<[string]>;
+    const openCalls = openExternalMock.mock.calls as unknown as [string][];
     const signinUrl = new URL(openCalls[0]?.[0] ?? "");
     expect(signinUrl.pathname).toBe("/native-auth/desktop/start");
     expect(signinUrl.searchParams.get("redirect_uri")).toBe(

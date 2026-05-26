@@ -2,11 +2,11 @@ import { and, eq, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
+  PERSON_DISPLAY_NAME_LENGTH,
+  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
-  PERSON_DISPLAY_NAME_LENGTH,
-  PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
   people,
 } from "../schema";
 import {
