@@ -15,7 +15,7 @@ vi.mock("@vendor/unkey/server", () => ({
 
 const { authMiddleware } = await import("../middleware/auth");
 
-const validKey = `ak_${"a".repeat(40)}`;
+const validKey = `lf_${"a".repeat(40)}`;
 
 function verifyResult(
   overrides: Partial<{
@@ -78,9 +78,9 @@ describe("authMiddleware", () => {
     expect(isOrgBoundMock).not.toHaveBeenCalled();
   });
 
-  it("throws UNAUTHORIZED when token is not ak_ prefixed (no network call)", async () => {
+  it("throws UNAUTHORIZED when token is not lf_ prefixed (no network call)", async () => {
     await expect(
-      invokeAuth(new Headers({ authorization: "Bearer not-an-unkey-key" }))
+      invokeAuth(new Headers({ authorization: "Bearer ak_legacy_key" }))
     ).rejects.toMatchObject({
       code: "UNAUTHORIZED",
       message: expect.stringContaining("Invalid API key format"),

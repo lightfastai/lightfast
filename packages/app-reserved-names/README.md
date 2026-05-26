@@ -102,7 +102,7 @@ Reserved to prevent conflicts with top-level routes (`/{orgSlug}`):
 - **Protocol reserved**: `.well-known` (SSL, ACME, OpenID)
 - **Framework internals**: `_next`, `_vercel`, `middleware`, `instrumentation`, `proxy`
 - **Metadata files**: `robots.txt`, `sitemap.xml`, `sitemap`, `manifest.json`, `manifest`, `favicon.ico`, `icon`, `opengraph-image`
-- **Authentication and legacy auth paths**: `auth`, `authorization`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
+- **Authentication paths**: `auth`, `authorization`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
 - **API routes**: `api`, `trpc`, `webhooks`, `health`, `inngest`, `github`, `functions`, `serverless`, `edge`, `services`
 - **User management**: `account`, `user`, `users`, `username`, `staff`, `onboarding`, `profile`, `identity`, `anonymous`, `suspended`
 - **Organization**: `organizations`, `orgs`, `teams`, `workspace`, `workspaces`, `members`, `network`
@@ -155,7 +155,7 @@ Reserved to prevent conflicts with organization-level routes under `/{orgSlug}/{
 - **Communication**: `chat`, `comments`, `discussions`, `notifications`, `inbox`, `feedback`
 - **Actions**: `new`, `upload`, `share`, `join`, `actions`, `deploy`, `deployment`
 - **Infrastructure**: `static`, `public`, `cdn`, `cache`, `storage`, `assets`, `images`, `data`
-- **Auth and legacy auth paths**: `auth`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
+- **Auth paths**: `auth`, `login`, `logout`, `sign-in`, `sign-up`, `signin`, `signout`, `signup`, `oauth`, `sso`, `sso-callback`, `callback`, `sessions`, `register`
 - **Navigation**: `home`, `about`, `contact`, `help`, `support`, `events`, `explore`, `info`
 - **User management**: `account`, `user`, `staff`, `onboarding`
 - **Organization**: `organizations`, `orgs`, `workspace`, `workspaces`

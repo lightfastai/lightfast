@@ -1,0 +1,70 @@
+import {
+  nativeOAuthConfigSchema,
+  nativeSessionMetadataSchema,
+} from "@repo/native-auth-contract";
+import { z } from "zod";
+
+import { createAppUrl } from "../app-url";
+
+const appErrorSchema = z
+  .object({
+    error: z.object({
+      code: z.string().min(1),
+      message: z.string().min(1).optional(),
+    }),
+  })
+  .passthrough();
+
+async function readJson<T>(
+  response: Response,
+  schema: z.ZodType<T>
+): Promise<T> {
+  const body = (await response.json()) as unknown;
+  if (!response.ok) {
+    const parsed = appErrorSchema.safeParse(body);
+    const message =
+      parsed.success && parsed.data.error.message
+        ? parsed.data.error.message
+        : `Lightfast app request failed with status ${response.status}`;
+    throw new Error(message);
+  }
+  return schema.parse(body);
+}
+
+export function createDesktopNativeAuthClient(input: {
+  fetchImpl?: typeof fetch;
+} = {}) {
+  const fetchImpl = input.fetchImpl ?? fetch;
+  return {
+    async getOAuthConfig() {
+      const response = await fetchImpl(
+        createAppUrl("/api/native-auth/desktop/oauth-config").toString(),
+        { headers: { accept: "application/json" } }
+      );
+      return readJson(response, nativeOAuthConfigSchema);
+    },
+    async finalize(input: {
+      accessToken: string;
+      attemptId: string;
+      state: string;
+    }) {
+      const response = await fetchImpl(
+        createAppUrl("/api/native-auth/finalize").toString(),
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            authorization: `Bearer ${input.accessToken}`,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            attemptId: input.attemptId,
+            client: "desktop",
+            state: input.state,
+          }),
+        }
+      );
+      return readJson(response, nativeSessionMetadataSchema);
+    },
+  };
+}

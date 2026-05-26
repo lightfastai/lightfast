@@ -34,6 +34,7 @@
     "@repo/app-clerk-claim": "workspace:*",
     "@repo/app-trpc": "workspace:*",
     "@repo/app-validation": "workspace:*",
+    "@repo/native-auth-contract": "workspace:*",
     "@repo/platform-client": "workspace:*",
     "@repo/ui": "workspace:*",
     "@rescale/nemo": "catalog:",

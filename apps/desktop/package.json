@@ -59,6 +59,8 @@
   "dependencies": {
     "@radix-ui/react-dropdown-menu": "catalog:",
     "@repo/app-trpc": "workspace:*",
+    "@repo/native-auth-contract": "workspace:*",
+    "@repo/native-auth-node": "workspace:*",
     "@sentry/electron": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@vendor/observability": "workspace:*",

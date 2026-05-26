@@ -28,7 +28,7 @@ vi.mock("../inngest/client", () => ({
 
 const { orpcRouter } = await import("../orpc/router");
 
-const validKey = `ak_${"a".repeat(40)}`;
+const validKey = `lf_${"a".repeat(40)}`;
 
 function verifyResult(overrides: Partial<Record<string, unknown>> = {}) {
   return {

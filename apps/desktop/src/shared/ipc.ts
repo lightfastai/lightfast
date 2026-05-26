@@ -19,6 +19,7 @@ export const IpcChannels = {
   settingsChanged: channel("settings-changed"),
   authSnapshotSync: channel("auth-snapshot-sync"),
   authGetToken: channel("auth-get-token"),
+  authGetRequestHeaders: channel("auth-get-request-headers"),
   authSignIn: channel("auth-sign-in"),
   authSignOut: channel("auth-sign-out"),
   authChanged: channel("auth-changed"),
@@ -90,6 +91,15 @@ export interface SettingsSnapshot {
 
 export interface AuthSnapshot {
   isSignedIn: boolean;
+  organizationName?: string;
+  organizationSlug?: string | null;
+  userEmail?: string | null;
+}
+
+export interface AuthRequestHeaders {
+  Authorization?: string;
+  "x-lightfast-native-client"?: "desktop";
+  "x-lightfast-organization-id"?: string;
 }
 
 export interface RuntimeConfigSnapshot {
@@ -101,6 +111,7 @@ export interface LightfastBridge {
   auth: {
     snapshot: AuthSnapshot;
     getToken: () => Promise<string | null>;
+    getRequestHeaders: () => Promise<AuthRequestHeaders>;
     signIn: () => Promise<string | null>;
     signOut: () => Promise<boolean>;
     onChanged: (listener: (snapshot: AuthSnapshot) => void) => () => void;

@@ -33,16 +33,23 @@
     "build": "tsup",
     "clean": "rm -rf dist .cache .turbo node_modules",
     "dev": "tsup --watch",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "commander": "^14.0.3"
+    "@repo/native-auth-contract": "workspace:*",
+    "@repo/native-auth-node": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
+    "commander": "^14.0.3",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
     "tsup": "^8.5.1",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "engines": {
     "node": ">=22"

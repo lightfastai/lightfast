@@ -12,7 +12,7 @@ const activeKey: OrgApiKeyListData[number] = {
   enabled: true,
   keyId: "key_active",
   name: "Production",
-  start: "ak_active",
+  start: "lf_active",
   updatedAt: 1_700_000_000_000,
 };
 
@@ -21,7 +21,7 @@ const revokedKey: OrgApiKeyListData[number] = {
   enabled: false,
   keyId: "key_revoked",
   name: "Revoked",
-  start: "ak_revoked",
+  start: "lf_revoked",
 };
 
 function keys(): OrgApiKeyListData {

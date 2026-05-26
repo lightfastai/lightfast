@@ -31,7 +31,7 @@ const setCorsHeaders = (req: NextRequest, res: Response) => {
   res.headers.set("Access-Control-Allow-Methods", "GET,POST,OPTIONS");
   res.headers.set(
     "Access-Control-Allow-Headers",
-    "content-type,authorization,x-trpc-source,trpc-accept,x-lightfast-desktop"
+    "content-type,authorization,x-trpc-source,trpc-accept,x-lightfast-desktop,x-lightfast-native-client,x-lightfast-organization-id"
   );
   res.headers.set("Vary", "Origin");
   res.headers.set("Access-Control-Allow-Credentials", "true");

@@ -188,7 +188,7 @@ const apiKeys = [
     enabled: true,
     keyId: "key_active",
     name: "Production",
-    start: "ak_active",
+    start: "lf_active",
     updatedAt: 1_700_000_000_000,
   },
   {
@@ -196,7 +196,7 @@ const apiKeys = [
     enabled: true,
     keyId: "key_other",
     name: "Other",
-    start: "ak_other",
+    start: "lf_other",
     updatedAt: 1_700_000_001_000,
   },
 ];

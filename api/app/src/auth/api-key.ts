@@ -5,6 +5,7 @@ import { getUnkeyClient } from "@vendor/unkey/server";
 
 import type { Diagnostic } from "../diagnostics";
 import type { AuthIdentity, BindingStatus } from "./identity";
+import { LIGHTFAST_API_KEY_PREFIX } from "./api-key-prefix";
 
 export type ApiKeyAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
 
@@ -57,9 +58,9 @@ function parseBearerApiKey(headers: Headers): string {
     );
   }
 
-  // Lightfast public API keys use Unkey's `ak_` prefix. Keep this as a cheap
+  // Lightfast public API keys use Unkey's `lf_` prefix. Keep this as a cheap
   // shape check before making a network request to Unkey.
-  if (!token.startsWith("ak_")) {
+  if (!token.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
     throw new ApiKeyAuthError(
       "invalid-format",
       "Invalid API key format.",

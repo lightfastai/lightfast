@@ -9,6 +9,7 @@ import { log } from "@vendor/observability/log/next";
 import type { KeyResponseData, UnkeyClient } from "@vendor/unkey";
 import { getUnkeyClient, unkeyEnv } from "@vendor/unkey/server";
 
+import { UNKEY_API_KEY_PREFIX } from "../../auth/api-key-prefix";
 import { orgAdminProcedure, orgProcedure } from "../../trpc";
 
 /**
@@ -115,7 +116,7 @@ export const orgApiKeysRouter = {
           source: "dashboard",
         },
         name: input.name,
-        prefix: "ak",
+        prefix: UNKEY_API_KEY_PREFIX,
         recoverable: false,
       });
       const key = response.data;

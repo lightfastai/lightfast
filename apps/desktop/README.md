@@ -108,42 +108,21 @@ The `with-env` script (invoked by `pnpm dev:desktop`) loads this file via
 `LIGHTFAST_APP_ORIGIN` only when you need to override the local app origin
 manually.
 
-### Clerk JWT template (one-time, per Clerk environment)
-
-In the Clerk Dashboard, create a JWT template named exactly `lightfast-desktop`:
-
-- **Name**: `lightfast-desktop`
-- **Expiry**: `86400` seconds (24 hours) — users re-sign-in daily. There is no
-  silent refresh; when the token expires the renderer's 401 handler clears
-  local state and the user clicks "Sign in" again.
-- **Claims**: include only `org_id: {{org.id}}` so org-scoped API requests can
-  identify the active Clerk organization. API authorization derives setup state
-  from the authoritative Lightfast DB binding, not from desktop JWT claims.
-- **Signing**: default (symmetric — the server verifies via `CLERK_SECRET_KEY`)
-
-This must be done once in each Clerk environment (dev and prod). The web
-bridge page (`apps/app/src/app/(app)/(user)/(pending-not-allowed)/desktop/auth/page.tsx`)
-calls `getToken({ template: "lightfast-desktop" })` — without the template,
-sign-in will fail with a 400 from Clerk.
-
-### Sign-in flow (OS browser + loopback callback)
+### Sign-in flow (OAuth + loopback callback)
 
 1. User clicks **Sign in with Lightfast** in the desktop app
-2. Main process starts an ephemeral HTTP listener on
-   `127.0.0.1:<random-port>` and calls `shell.openExternal(...)` to open the
-   user's default browser at
-   `https://lightfast.localhost/desktop/auth?state=<hex>&callback=http://127.0.0.1:<port>/callback`
-3. Browser completes Clerk sign-in (instant if already signed in to
-   lightfast.ai). The bridge page calls `getToken({ template: "lightfast-desktop" })`,
-   then redirects the tab to the loopback callback with `?token=…&state=…`
-4. The loopback server validates `state`, persists the token via `safeStorage`,
-   responds with a "You can close this tab" HTML page, and shuts down
+2. Main process creates PKCE values, starts an ephemeral HTTP listener on
+   `127.0.0.1:<random-port>`, and opens `/native-auth/desktop/start`
+3. Browser completes Clerk sign-in and the Lightfast web app prompts for the
+   organization to bind to the desktop session
+4. Clerk redirects to the loopback callback with an authorization code; the main
+   process exchanges it at Clerk, finalizes the org binding through
+   `/api/native-auth/finalize`, and stores the full native session with
+   `safeStorage`
 5. Main process broadcasts the new auth snapshot to the renderer; UI flips to
    signed-in
 
-The bridge page only honours `callback` values of the form
-`http://127.0.0.1:<port>/callback` or `http://localhost:<port>/callback` —
-anything else is rejected.
+No Lightfast API keys or Clerk JWT templates are created for desktop login.
 
 ### Run the stack (two terminals)
 
@@ -161,10 +140,10 @@ microfrontends origin. `pnpm dev:desktop` passes that origin to Electron as
 `node scripts/with-desktop-env.mjs --print` is the developer-visible source of
 truth. Run `pnpm dev:full` instead only when you also need platform services.
 
-### Inspect the encrypted token store
+### Inspect the encrypted session store
 
-The main process persists the Clerk JWT + refresh cookie via `safeStorage`
-into a keychain-backed file:
+The main process persists the Clerk OAuth token set, user metadata, and selected
+organization via `safeStorage` into a keychain-backed file:
 
 ```bash
 # macOS

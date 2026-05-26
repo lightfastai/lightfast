@@ -14,7 +14,7 @@ const repoRoot = resolve(desktopRoot, "..", "..");
 // `pnpm dev:desktop` wraps Electron in `scripts/with-desktop-env.mjs`, which
 // derives LIGHTFAST_APP_ORIGIN from the workspace's Portless config. The
 // unpackaged main process treats that var as required (apps/desktop/src/main/
-// auth-flow.ts); without it the app aborts before the primary window opens.
+// app-origin.ts); without it the app aborts before the primary window opens.
 // Mirror the wrapper's `--print` output here so the spec works both locally
 // and on CI without re-implementing URL resolution.
 function loadDesktopEnv(): Record<string, string> {

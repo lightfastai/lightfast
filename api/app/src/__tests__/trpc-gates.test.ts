@@ -208,7 +208,7 @@ beforeEach(() => {
   keysCreateKeyMock.mockReset();
   keysCreateKeyMock.mockResolvedValue({
     data: {
-      key: "ak_secret_value",
+      key: "lf_secret_value",
       keyId: "key_test",
     },
     meta: { requestId: "req_create" },
@@ -225,7 +225,7 @@ beforeEach(() => {
       lastUsedAt: undefined,
       meta: { createdByUserId: "user_test" },
       name: "Test key",
-      start: "ak_live",
+      start: "lf_live",
       updatedAt: 1_700_000_000_000,
     },
     meta: { requestId: "req_get" },
@@ -239,7 +239,7 @@ beforeEach(() => {
       keyId: "key_test",
       meta: { createdByUserId: "user_test" },
       name: "Test key",
-      start: "ak_live",
+      start: "lf_live",
       updatedAt: 1_700_000_000_000,
     },
     meta: { requestId: "req_update" },
@@ -434,7 +434,7 @@ describe("orgApiKeys", () => {
     await expect(
       caller.orgApiKeys.create({ name: "Test key" })
     ).resolves.toMatchObject({
-      key: "ak_secret_value",
+      key: "lf_secret_value",
       keyId: "key_test",
     });
     expect(identitiesCreateIdentityMock).toHaveBeenCalledWith({
@@ -446,7 +446,7 @@ describe("orgApiKeys", () => {
       externalId: "org_test",
       meta: { createdByUserId: "user_test", source: "dashboard" },
       name: "Test key",
-      prefix: "ak",
+      prefix: "lf",
       recoverable: false,
     });
   });
@@ -462,7 +462,7 @@ describe("orgApiKeys", () => {
     await expect(
       caller.orgApiKeys.create({ name: "Test key" })
     ).resolves.toMatchObject({
-      key: "ak_secret_value",
+      key: "lf_secret_value",
       keyId: "key_test",
     });
     expect(keysCreateKeyMock).toHaveBeenCalledWith(
@@ -492,7 +492,7 @@ describe("orgApiKeys", () => {
         identity: { externalId: "org_other", id: "identity_other" },
         keyId: "key_other",
         name: "Other key",
-        start: "ak_other",
+        start: "lf_other",
       },
       meta: { requestId: "req_get" },
     });

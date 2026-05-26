@@ -20,7 +20,7 @@ vi.mock("@db/app", () => ({
 
 const { orpcRouter } = await import("../router");
 
-const validKey = `ak_${"a".repeat(40)}`;
+const validKey = `lf_${"a".repeat(40)}`;
 
 beforeEach(() => {
   verifyMock.mockReset();

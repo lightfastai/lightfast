@@ -32,7 +32,7 @@ export default defineClientConfig({
      * Enhances the UX for bearer token authentication with Lightfast-specific context
      *
      * Future enhancements could include:
-     * - Validation for ak_ prefix
+     * - Validation for lf_ prefix
      * - Link to lightfast.ai/settings/api-keys
      * - Visual feedback for valid/invalid tokens
      */

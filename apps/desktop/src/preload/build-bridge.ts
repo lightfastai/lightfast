@@ -35,6 +35,8 @@ export function buildBridge(): LightfastBridge {
     auth: {
       snapshot: authSnapshot,
       getToken: () => ipcRenderer.invoke(IpcChannels.authGetToken),
+      getRequestHeaders: () =>
+        ipcRenderer.invoke(IpcChannels.authGetRequestHeaders),
       signIn: () => ipcRenderer.invoke(IpcChannels.authSignIn),
       signOut: () => ipcRenderer.invoke(IpcChannels.authSignOut),
       onChanged: (listener) => {

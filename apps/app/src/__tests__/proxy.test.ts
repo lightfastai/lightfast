@@ -17,6 +17,7 @@ interface AuthResult {
 }
 
 const authMock = vi.fn<() => Promise<AuthResult>>();
+const clerkProxyRequestMock = vi.fn();
 const createNEMOMock = vi.fn(
   (
     middlewares: Record<
@@ -93,8 +94,10 @@ vi.mock("@vendor/clerk/server", () => ({
         event: EventLike
       ) => Promise<Response>
     ) =>
-    (req: RequestLike, event: EventLike) =>
-      handler(authMock, req, event),
+    (req: RequestLike, event: EventLike) => {
+      clerkProxyRequestMock(req.nextUrl.pathname);
+      return handler(authMock, req, event);
+    },
   createRouteMatcher: (patterns: string[]) => (req: RequestLike) => {
     const pathname = req.nextUrl.pathname;
     return patterns.some((pattern) => matchesPattern(pattern, pathname));
@@ -147,6 +150,7 @@ async function invoke(pathname: string, event = { waitUntil: vi.fn() }) {
 
 beforeEach(() => {
   authMock.mockReset();
+  clerkProxyRequestMock.mockReset();
   runMicrofrontendsMiddlewareMock.mockReset();
   runMicrofrontendsMiddlewareMock.mockResolvedValue(null);
   updateUserMetadataMock.mockReset();
@@ -197,6 +201,32 @@ describe("proxy post-auth routing", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
       "https://app.lightfast.localhost/last-team"
+    );
+  });
+
+  it("continues signed-in Clerk OAuth auth routes to the OAuth consent URL", async () => {
+    const redirectUrl = new URL(
+      "https://charmed-shark-52.accounts.dev/oauth-consent"
+    );
+    redirectUrl.searchParams.set("__clerk_db_jwt", "jwt");
+    redirectUrl.searchParams.set("client_id", "cli_client");
+
+    const { response } = await invoke(
+      `/sign-in?redirect_url=${encodeURIComponent(redirectUrl.toString())}`
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(redirectUrl.toString());
+  });
+
+  it("does not continue signed-in auth routes to arbitrary external redirect URLs", async () => {
+    const { response } = await invoke(
+      "/sign-in?redirect_url=https%3A%2F%2Fevil.example%2Foauth-consent"
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/acme"
     );
   });
 
@@ -251,8 +281,7 @@ describe("proxy pending-session route handling", () => {
 
   it.each([
     "/account/settings",
-    "/cli/auth",
-    "/desktop/auth",
+    "/native-auth/desktop/start",
   ])("allows pending sessions through %s", async (pathname) => {
     const { response } = await invoke(pathname);
 
@@ -260,14 +289,34 @@ describe("proxy pending-session route handling", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("leaves tRPC auth to the API handler instead of pending-page routing", async () => {
+  it("runs Clerk middleware for tRPC without pending-page routing", async () => {
     const { response } = await invoke(
       "/api/trpc/viewer.organization.create?batch=1"
     );
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
+    expect(clerkProxyRequestMock).toHaveBeenCalledWith(
+      "/api/trpc/viewer.organization.create"
+    );
     expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves native auth facade routes to their route handlers", async () => {
+    const { response } = await invoke("/api/native-auth/finalize");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("does not run microfrontend routing for app-owned API routes", async () => {
+    const { response } = await invoke("/api/v1/system/health");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+    expect(runMicrofrontendsMiddlewareMock).not.toHaveBeenCalled();
   });
 });
 
