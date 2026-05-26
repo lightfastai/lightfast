@@ -4,6 +4,7 @@ import { createRoot } from "react-dom/client";
 import type { FormatPlatform } from "../../../shared/accelerators";
 import { WINDOW_KIND_GLOBAL } from "../../../shared/window-globals";
 import { AppShell } from "./app-shell";
+import { AuthQueryCacheBoundary } from "./auth-query-cache-boundary";
 import { SettingsWindow } from "./settings/settings-window";
 import { UserMenu } from "./user-menu";
 
@@ -17,7 +18,10 @@ const formatPlatform: FormatPlatform =
 function Providers({ children }: { children: React.ReactNode }) {
   return (
     <StrictMode>
-      <DesktopTRPCProvider baseUrl={appOrigin}>{children}</DesktopTRPCProvider>
+      <DesktopTRPCProvider baseUrl={appOrigin}>
+        <AuthQueryCacheBoundary />
+        {children}
+      </DesktopTRPCProvider>
     </StrictMode>
   );
 }

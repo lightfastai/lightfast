@@ -16,6 +16,7 @@ export type DesktopNativeSession = z.infer<typeof desktopNativeSessionSchema>;
 
 export interface AuthSnapshot {
   isSignedIn: boolean;
+  organizationId?: string;
   organizationName?: string;
   organizationSlug?: string | null;
   userEmail?: string | null;
@@ -98,6 +99,7 @@ const listeners = new Set<(snapshot: AuthSnapshot) => void>();
 function snapshot(session = globalStore.getSession()): AuthSnapshot {
   return {
     isSignedIn: !!session,
+    organizationId: session?.organization.id,
     organizationName: session?.organization.name,
     organizationSlug: session?.organization.slug,
     userEmail: session?.user.email,

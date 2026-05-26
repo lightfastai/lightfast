@@ -9,6 +9,7 @@ import {
   createCodeVerifier,
   createStateNonce,
   exchangeAuthorizationCode,
+  NativeAuthError,
   startLoopbackServer,
 } from "@repo/native-auth-node";
 import { shell } from "electron";
@@ -36,7 +37,16 @@ type AuthEvent =
   | { event: "auth_already_signed_in" }
   | { event: "auth_signin_url"; url: string }
   | { event: "auth_signed_in" }
-  | { event: "auth_signin_failed"; reason: string };
+  | { event: "auth_signin_failed"; reason: AgentAuthFailureReason };
+
+type AgentAuthFailureReason =
+  | "exchange_failed"
+  | "handler_error"
+  | "loopback_failed"
+  | "oauth_error"
+  | "persist_failed"
+  | "state_mismatch"
+  | "timeout";
 
 function emitAgentEvent(payload: AuthEvent): void {
   if (!isAgentMode()) {
@@ -83,6 +93,28 @@ function buildNativeAuthStartUrl(input: {
 
 function isExpiredToken(expiresAt: number): boolean {
   return expiresAt <= Date.now();
+}
+
+function agentFailureReason(error: unknown): AgentAuthFailureReason {
+  if (!(error instanceof NativeAuthError)) {
+    return "handler_error";
+  }
+  switch (error.code) {
+    case "LOOPBACK_BIND_FAILED":
+      return "loopback_failed";
+    case "OAUTH_ERROR":
+      return "oauth_error";
+    case "OAUTH_STATE_INVALID":
+    case "OAUTH_STATE_MISMATCH":
+      return "state_mismatch";
+    case "OAUTH_TIMEOUT":
+      return "timeout";
+    case "TOKEN_REQUEST_FAILED":
+    case "TOKEN_RESPONSE_INVALID":
+      return "exchange_failed";
+    default:
+      return "handler_error";
+  }
 }
 
 export function beginSignIn(): Promise<string | null> {
@@ -173,7 +205,10 @@ async function runSignIn(): Promise<string | null> {
     return tokens.accessToken;
   } catch (error) {
     logger.error("[native-auth] sign-in failed", error);
-    emitAgentEvent({ event: "auth_signin_failed", reason: "handler_error" });
+    emitAgentEvent({
+      event: "auth_signin_failed",
+      reason: agentFailureReason(error),
+    });
     return null;
   } finally {
     try {

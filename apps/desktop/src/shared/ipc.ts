@@ -91,6 +91,7 @@ export interface SettingsSnapshot {
 
 export interface AuthSnapshot {
   isSignedIn: boolean;
+  organizationId?: string;
   organizationName?: string;
   organizationSlug?: string | null;
   userEmail?: string | null;

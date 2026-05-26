@@ -1,10 +1,18 @@
 import { useTRPC } from "@repo/app-trpc/react";
 import { useQuery } from "@tanstack/react-query";
+import { useAuthSnapshot } from "./use-auth-snapshot";
 
 export function AccountCard() {
+  const auth = useAuthSnapshot();
   const trpc = useTRPC();
-  const query = useQuery(trpc.viewer.account.get.queryOptions());
+  const query = useQuery({
+    ...trpc.viewer.account.get.queryOptions(),
+    enabled: auth.isSignedIn,
+  });
 
+  if (!auth.isSignedIn) {
+    return null;
+  }
   if (query.isLoading) {
     return <p>Loading account…</p>;
   }

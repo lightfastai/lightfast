@@ -146,7 +146,10 @@ The main process persists the Clerk OAuth token set, user metadata, and selected
 organization via `safeStorage` into a keychain-backed file:
 
 ```bash
-# macOS
+# macOS dev build
+ls ~/Library/Application\ Support/Lightfast\ Dev/auth.bin
+
+# macOS packaged build
 ls ~/Library/Application\ Support/Lightfast/auth.bin
 ```
 

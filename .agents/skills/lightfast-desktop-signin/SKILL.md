@@ -12,36 +12,34 @@ description: |
 # Lightfast Desktop Sign-In Skill
 
 End-to-end agent runbook for getting the Electron desktop app signed in via
-a custom URL scheme + PKCE flow. Replaces the older "log-grep loopback URL,
-attach CDP to renderer" choreography with a single line of stdout JSON in,
-single agent-browser session, structured completion event out.
+a loopback PKCE flow. Desktop emits a structured stdout URL, the browser
+completes Clerk sign-in and org selection, and Clerk redirects back to the
+desktop-owned `127.0.0.1` callback server.
 
 ## When to use
 
-You need the desktop app to hold a real Clerk JWT — to drive tRPC procedures
-that require `authedProcedure`, run E2E flows against signed-in renderer
-surfaces, or smoke-test the auth mesh end-to-end. If you only need a JWT for
-HTTP calls (not the desktop), use `lightfast-clerk` instead — it's faster.
+You need the desktop app to hold a real Clerk OAuth access token and selected
+organization — to drive tRPC procedures that require `authedProcedure`, run
+E2E flows against signed-in renderer surfaces, or smoke-test the auth mesh
+end-to-end. If you only need a token for HTTP calls, use `lightfast-clerk`
+instead.
 
 ## Preconditions
 
-- Local dev mesh up on `:3024` (`pnpm dev:full` or `pnpm dev:app`).
+- Local app dev mesh is running (`pnpm dev` recommended; `pnpm dev:app` is
+  enough when the current worktree's app origin resolves).
 - Clerk publishable key is `pk_test_*` (refuse `pk_live_*`).
 - `LIGHTFAST_API_URL` either unset or pointing at `http://localhost:*` (refuse
   any non-localhost host).
 - `agent-browser` installed and reachable on PATH.
-- The desktop app must already be running before you trigger the redirect.
-  Cold-launching via OS dispatch is unreliable in dev (unpackaged Electron
-  registers `lightfast-dev://` against `com.github.electron`, not Lightfast's
-  bundle id, so LaunchServices relaunches bare Electron without our entrypoint).
-  Packaged builds are fine; agents run unpackaged dev builds.
+- The desktop app must already be running before opening the sign-in URL,
+  because it owns the ephemeral loopback callback server.
 
 ## Required environment
 
 | Var | Value | Why |
 | --- | --- | --- |
 | `LIGHTFAST_DESKTOP_AGENT_MODE` | `1` | Skips `shell.openExternal` (Dia never opens) and emits structured stdout JSON instead. Without this, the flow opens the user's default browser and the agent has no way to read the URL. |
-| `AGENT_BROWSER_HEADED` | `true` | **Mandatory.** Headless Chrome for Testing silently drops `lightfast-dev://` navigations — no prompt, no error, no fallback browser hand-off. The desktop's `app.on('open-url')` never fires and the agent times out with no diagnostic signal. Validated 2026-04-25 spike. |
 | `LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS` | `30000` (recommended) | Default is 5 minutes for human users; agents want fast CI feedback. |
 
 ## Stdout event grammar
@@ -75,10 +73,11 @@ case "$(echo "$EVENT" | jq -r .event)" in
   *) echo "Unexpected event: $EVENT"; exit 1 ;;
 esac
 
-# 3. Headed agent-browser navigates to the URL. Clerk completes, browser
-#    dispatches lightfast-dev://auth/callback?code=…&state=…, OS routes to
-#    the running desktop, exchange runs, token persists.
-AGENT_BROWSER_HEADED=true agent-browser open "$SIGNIN_URL"
+# 3. agent-browser navigates to the URL. Clerk completes, then redirects to
+#    http://127.0.0.1:<ephemeral>/callback?code=...&state=...
+#    The running desktop loopback server captures it, exchanges the code,
+#    finalizes org binding, and persists the full native session.
+agent-browser open "$SIGNIN_URL"
 
 # 4. Block on completion event.
 RESULT=$(timeout 30 sh -c "tail -F /tmp/desktop.log | jq -rcM --unbuffered 'select(.event==\"auth_signed_in\" or .event==\"auth_signin_failed\")' | head -1")
@@ -92,11 +91,14 @@ with `pgrep -l Dia` before/after that no Dia process was spawned.
 
 | Symptom | Most likely cause |
 | --- | --- |
-| `auth_signin_failed{reason:"timeout"}` | **Forgot `AGENT_BROWSER_HEADED=true`.** Headless Chromium dropped the `lightfast-dev://` navigation silently. This is the #1 cause. |
-| `auth_signin_failed{reason:"exchange_failed"}` | API unreachable, or the code expired (30s TTL). Check `pnpm dev:full` is running and Upstash Redis env is configured. |
+| `auth_signin_failed{reason:"timeout"}` | Browser did not reach the loopback callback before `LIGHTFAST_DESKTOP_AUTH_TIMEOUT_MS`. Check that the Clerk flow completed and the desktop process stayed running. |
+| `auth_signin_failed{reason:"exchange_failed"}` | Clerk token exchange failed or returned an unexpected response. The authorization code may have expired. |
 | `auth_signin_failed{reason:"persist_failed"}` | Electron `safeStorage` unavailable on this host (rare; usually macOS Keychain access denied). |
-| `auth_signin_failed{reason:"handler_error"}` | Custom-scheme URL parsing or unexpected callback shape. Check the desktop log; surface to engineering. |
-| No event at all within 30s | Desktop didn't start in agent mode, or `pnpm dev:full` mesh is down on `:3024`. Check the bootstrap line in stdout. |
+| `auth_signin_failed{reason:"loopback_failed"}` | Desktop could not bind an ephemeral `127.0.0.1` callback server. |
+| `auth_signin_failed{reason:"oauth_error"}` | Clerk returned an OAuth error to the callback URL. |
+| `auth_signin_failed{reason:"state_mismatch"}` | Callback state was missing, invalid, or did not match the in-flight sign-in. |
+| `auth_signin_failed{reason:"handler_error"}` | Unexpected callback or finalization error. Check the desktop log; surface to engineering. |
+| No event at all within 30s | Desktop did not start in agent mode, or the local app origin is unreachable. Check the bootstrap line in stdout and `node scripts/with-desktop-env.mjs --print`. |
 
 ## Hygiene
 
@@ -105,6 +107,15 @@ with `pgrep -l Dia` before/after that no Dia process was spawned.
   will short-circuit through Clerk silently — fine if that's what you want.
 - Sign-out: dispatch the existing IPC `auth:sign-out` from the renderer, or
   delete `~/Library/Application Support/Lightfast Dev/auth.bin` (macOS).
+
+## Commands
+
+- `command/status.sh` reports whether the dev `auth.bin` exists.
+- `command/sign-out.sh` removes the dev `auth.bin` so the next desktop launch
+  starts signed out.
+
+There is no sign-in command. Sign-in must run through the loopback OAuth flow
+above so the desktop persists a complete org-bound native session.
 
 ## Refusal conditions
 

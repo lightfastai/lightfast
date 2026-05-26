@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const openExternalMock = vi.fn(async () => undefined);
 const setSessionMock = vi.fn(() => true);
@@ -42,8 +42,14 @@ vi.mock("../../runtime-config", () => ({
 }));
 
 const { beginSignIn } = await import("../flow");
+const { NativeAuthError } = await import("@repo/native-auth-node");
 
 describe("desktop native auth flow", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     getSessionMock.mockReturnValue(null);
@@ -172,6 +178,35 @@ describe("desktop native auth flow", () => {
 
     await expect(beginSignIn()).resolves.toBeNull();
     expect(setSessionMock).not.toHaveBeenCalled();
+    expect(close).toHaveBeenCalledOnce();
+  });
+
+  it("emits structured agent failure reasons for loopback timeouts", async () => {
+    const stdout = vi
+      .spyOn(process.stdout, "write")
+      .mockImplementation(() => true);
+    vi.stubEnv("LIGHTFAST_DESKTOP_AGENT_MODE", "1");
+    const close = vi.fn(async () => undefined);
+    startLoopbackServerMock.mockResolvedValueOnce({
+      close,
+      port: 54_321,
+      waitForCallback: vi.fn(async () => {
+        throw new NativeAuthError(
+          "OAUTH_TIMEOUT",
+          "Timed out waiting for the browser authentication callback."
+        );
+      }),
+    });
+
+    await expect(beginSignIn()).resolves.toBeNull();
+
+    const events = stdout.mock.calls.map(([line]) =>
+      JSON.parse(String(line))
+    ) as Array<{ event: string; reason?: string }>;
+    expect(events).toContainEqual({
+      event: "auth_signin_failed",
+      reason: "timeout",
+    });
     expect(close).toHaveBeenCalledOnce();
   });
 

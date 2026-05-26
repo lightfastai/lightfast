@@ -1,14 +1,13 @@
 #!/usr/bin/env bash
-# Remove auth.bin so the desktop boots in the signed-out state. Idempotent.
+# Remove the persisted native session so the desktop boots signed out.
+# Idempotent.
 #
 # Usage:
 #   sign-out.sh
 #
 # Does NOT touch:
-#   - The Clerk user (use lightfast-clerk's delete-user.sh)
-#   - The lightfast-clerk profile dir (use lightfast-clerk's reset.sh)
 #   - The desktop process (it must be restarted to pick up the change —
-#     auth-store.ts only re-reads on launch)
+#     native-auth/store.ts keeps the loaded session in memory)
 
 set -euo pipefail
 
