@@ -3,7 +3,7 @@ import {
   nativeSessionMetadataSchema,
 } from "@repo/native-auth-contract";
 
-import { createNativeAuthCaller } from "../../../_server/native-auth-caller";
+import { createNativeOAuthFacadeCaller } from "../../../_server/native-oauth-facade-caller";
 import { errorResponse, jsonResponse } from "../_server/response";
 
 export const runtime = "nodejs";
@@ -13,7 +13,7 @@ export async function POST(req: Request) {
     const body = nativeFinalizeRequestSchema.parse(
       await req.json().catch(() => null)
     );
-    const caller = await createNativeAuthCaller({
+    const caller = await createNativeOAuthFacadeCaller({
       headers: req.headers,
       source: body.client,
     });

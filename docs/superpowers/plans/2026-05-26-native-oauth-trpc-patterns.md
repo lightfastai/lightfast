@@ -8,6 +8,14 @@
 
 **Tech Stack:** Next.js App Router, React Server Components, `@repo/app-trpc`, `@trpc/server`, `@trpc/tanstack-react-query`, TanStack Query hydration, Clerk cookie auth, Zod, Vitest, Testing Library.
 
+**Implementation revision:** After architecture review, the browser OAuth org
+selection flow should use normal app tRPC end to end. The final implementation
+removes `continueNativeAuth`, makes `NativeAuthOrgSelect` a client component,
+calls `trpc.native.auth.createAttempt.mutationOptions(...)`, and navigates to
+the returned Clerk authorization URL in the browser. Direct server-side tRPC
+caller usage is limited to the native HTTP facade routes under `/api/oauth/*`,
+via `createNativeOAuthFacadeCaller`.
+
 ---
 
 ## Scope

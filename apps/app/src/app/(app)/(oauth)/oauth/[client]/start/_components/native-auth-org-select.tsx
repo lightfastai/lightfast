@@ -1,12 +1,14 @@
+"use client";
+
 import type {
   NativeClient,
   NativeOrganization,
 } from "@repo/native-auth-contract";
+import { useTRPC } from "@repo/app-trpc/react";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
-import { ArrowRight } from "lucide-react";
-
-import { continueNativeAuth } from "../actions";
+import { useMutation } from "@tanstack/react-query";
+import { ArrowRight, Loader2 } from "lucide-react";
 
 const clientLabels = {
   cli: "Lightfast CLI",
@@ -35,6 +37,26 @@ export function NativeAuthOrgSelect({
   redirectUri: string;
   state: string;
 }) {
+  const trpc = useTRPC();
+  const createAttemptMutation = useMutation(
+    trpc.native.auth.createAttempt.mutationOptions({
+      onSuccess: (result) => {
+        window.location.assign(result.authorizationUrl);
+      },
+    })
+  );
+
+  function continueWithOrganization(organizationId: string) {
+    createAttemptMutation.mutate({
+      client,
+      codeChallenge,
+      codeChallengeMethod: "S256",
+      organizationId,
+      redirectUri,
+      stateNonce: state,
+    });
+  }
+
   return (
     <main className="w-full max-w-md space-y-4">
       <div className="w-fit rounded-sm bg-card p-3">
@@ -51,13 +73,7 @@ export function NativeAuthOrgSelect({
           </h1>
         </div>
 
-        <form action={continueNativeAuth} className="space-y-4">
-          <input name="client" type="hidden" value={client} />
-          <input name="redirect_uri" type="hidden" value={redirectUri} />
-          <input name="state" type="hidden" value={state} />
-          <input name="code_challenge" type="hidden" value={codeChallenge} />
-          <input name="code_challenge_method" type="hidden" value="S256" />
-
+        <div className="space-y-4">
           <fieldset className="space-y-2">
             <legend className="font-medium text-muted-foreground text-sm">
               Organization
@@ -67,10 +83,10 @@ export function NativeAuthOrgSelect({
                 <Button
                   aria-label={`Continue with ${org.name}`}
                   className="h-auto min-h-14 w-full justify-between whitespace-normal px-3 py-3 text-left"
+                  disabled={createAttemptMutation.isPending}
                   key={org.id}
-                  name="organization_id"
-                  type="submit"
-                  value={org.id}
+                  onClick={() => continueWithOrganization(org.id)}
+                  type="button"
                   variant="outline"
                 >
                   <span className="flex min-w-0 items-center gap-3">
@@ -96,12 +112,16 @@ export function NativeAuthOrgSelect({
                       )}
                     </span>
                   </span>
-                  <ArrowRight className="size-4 text-muted-foreground" />
+                  {createAttemptMutation.isPending ? (
+                    <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  ) : (
+                    <ArrowRight className="size-4 text-muted-foreground" />
+                  )}
                 </Button>
               ))}
             </div>
           </fieldset>
-        </form>
+        </div>
       </div>
     </main>
   );

@@ -3,7 +3,7 @@ import {
   nativeOAuthConfigSchema,
 } from "@repo/native-auth-contract";
 
-import { createNativeAuthCaller } from "../../../../_server/native-auth-caller";
+import { createNativeOAuthFacadeCaller } from "../../../../_server/native-oauth-facade-caller";
 import { errorResponse, jsonResponse } from "../../_server/response";
 
 export const runtime = "nodejs";
@@ -14,7 +14,7 @@ export async function GET(
 ) {
   try {
     const parsedClient = nativeClientSchema.parse((await params).client);
-    const caller = await createNativeAuthCaller({
+    const caller = await createNativeOAuthFacadeCaller({
       headers: req.headers,
       source: parsedClient,
     });

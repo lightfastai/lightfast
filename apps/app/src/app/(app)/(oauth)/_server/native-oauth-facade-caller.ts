@@ -8,7 +8,7 @@ import {
 
 const createCaller = createCallerFactory(appRouter);
 
-export async function createNativeAuthCaller(input: {
+export async function createNativeOAuthFacadeCaller(input: {
   headers: Headers;
   source: NativeClient;
 }) {

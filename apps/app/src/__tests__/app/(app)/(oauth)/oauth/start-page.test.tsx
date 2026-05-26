@@ -1,13 +1,25 @@
-import { render, screen } from "@testing-library/react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const createAttempt = vi.fn();
+const createAttemptMutationOptions = vi.fn((options: unknown) => options);
 const fetchQuery = vi.fn();
 const listOrganizationsQueryOptions = vi.fn(() => ({
   queryKey: ["native", "auth", "listOrganizations"],
 }));
-const redirectMock = vi.fn();
-const headersMock = vi.fn(async () => new Headers());
+const mutateMock = vi.fn();
+const useMutationMock = vi.fn();
+
+vi.mock("@repo/app-trpc/react", () => ({
+  useTRPC: () => ({
+    native: {
+      auth: {
+        createAttempt: {
+          mutationOptions: createAttemptMutationOptions,
+        },
+      },
+    },
+  }),
+}));
 
 vi.mock("@repo/app-trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery }),
@@ -22,39 +34,33 @@ vi.mock("@repo/app-trpc/server", () => ({
   },
 }));
 
-vi.mock("next/headers", () => ({
-  headers: headersMock,
+vi.mock("@tanstack/react-query", () => ({
+  useMutation: useMutationMock,
 }));
 
 vi.mock("next/navigation", () => ({
   notFound: vi.fn(() => {
     throw new Error("not-found");
   }),
-  redirect: redirectMock,
-}));
-
-vi.mock("~/app/(app)/(oauth)/_server/native-auth-caller", () => ({
-  createNativeAuthCaller: vi.fn(async () => ({
-    native: {
-      auth: {
-        createAttempt,
-      },
-    },
-  })),
 }));
 
 const Page = (
   await import("~/app/(app)/(oauth)/oauth/[client]/start/page")
 ).default;
-const { continueNativeAuth } = await import(
-  "~/app/(app)/(oauth)/oauth/[client]/start/actions"
-);
 
 describe("/oauth/[client]/start", () => {
+  let assignSpy: ReturnType<typeof vi.spyOn>;
+
   beforeEach(() => {
     vi.clearAllMocks();
+    assignSpy = vi.spyOn(window.location, "assign").mockImplementation(() => {
+      // Avoid navigating the test environment.
+    });
     fetchQuery.mockReset();
+    mutateMock.mockReset();
+    createAttemptMutationOptions.mockClear();
     listOrganizationsQueryOptions.mockClear();
+    useMutationMock.mockReset();
     fetchQuery.mockResolvedValue([
       {
         bindingStatus: "bound",
@@ -64,6 +70,23 @@ describe("/oauth/[client]/start", () => {
         slug: "acme",
       },
     ]);
+    useMutationMock.mockImplementation(
+      (options?: {
+        onSuccess?: (result: { authorizationUrl: string }) => void;
+      }) => ({
+        isPending: false,
+        mutate: (input: unknown) => {
+          mutateMock(input);
+          options?.onSuccess?.({
+            authorizationUrl: "https://clerk.example.com/oauth/authorize?x=1",
+          });
+        },
+      })
+    );
+  });
+
+  afterEach(() => {
+    assignSpy.mockRestore();
   });
 
   it("renders organizations returned by native auth tRPC", async () => {
@@ -89,31 +112,35 @@ describe("/oauth/[client]/start", () => {
     });
   });
 
-  it("redirects to the Clerk authorize URL after choosing an organization", async () => {
-    createAttempt.mockResolvedValueOnce({
-      authorizationUrl: "https://clerk.example.com/oauth/authorize?x=1",
-    });
-    const formData = new FormData();
-    formData.set("client", "desktop");
-    formData.set("organization_id", "org_1");
-    formData.set("redirect_uri", "http://127.0.0.1:51010/callback");
-    formData.set("state", "nonce_1234567890");
-    formData.set("code_challenge", "a".repeat(43));
-    formData.set("code_challenge_method", "S256");
-
-    await continueNativeAuth(formData);
-
-    expect(createAttempt).toHaveBeenCalledWith({
-      client: "desktop",
-      codeChallenge: "a".repeat(43),
-      codeChallengeMethod: "S256",
-      organizationId: "org_1",
-      redirectUri: "http://127.0.0.1:51010/callback",
-      stateNonce: "nonce_1234567890",
-    });
-    expect(redirectMock).toHaveBeenCalledWith(
-      "https://clerk.example.com/oauth/authorize?x=1"
+  it("uses the normal app tRPC mutation and navigates to Clerk after choosing an organization", async () => {
+    render(
+      await Page({
+        params: Promise.resolve({ client: "desktop" }),
+        searchParams: Promise.resolve({
+          code_challenge: "a".repeat(43),
+          code_challenge_method: "S256",
+          redirect_uri: "http://127.0.0.1:51010/callback",
+          state: "nonce_1234567890",
+        }),
+      })
     );
+
+    fireEvent.click(screen.getByRole("button", { name: /Acme/ }));
+
+    await waitFor(() => {
+      expect(createAttemptMutationOptions).toHaveBeenCalledOnce();
+      expect(mutateMock).toHaveBeenCalledWith({
+        client: "desktop",
+        codeChallenge: "a".repeat(43),
+        codeChallengeMethod: "S256",
+        organizationId: "org_1",
+        redirectUri: "http://127.0.0.1:51010/callback",
+        stateNonce: "nonce_1234567890",
+      });
+      expect(assignSpy).toHaveBeenCalledWith(
+        "https://clerk.example.com/oauth/authorize?x=1"
+      );
+    });
   });
 
   it("rejects invalid loopback redirect URIs", async () => {
