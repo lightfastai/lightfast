@@ -1,7 +1,6 @@
 "use client";
 
 import type { AppRouterOutputs } from "@api/app";
-import { useTRPC } from "@repo/app-trpc/react";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -36,6 +35,7 @@ import {
   Users,
 } from "lucide-react";
 import { useCallback, useMemo } from "react";
+import { useTRPC } from "~/trpc/react";
 import {
   isOptimisticInvitation,
   type OrgInvitation,

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
-import { TRPCReactProvider } from "./react";
+
+import { DesktopTRPCReactProvider } from "./react";
 
 interface DesktopBridgeAuth {
   getRequestHeaders?: () =>
@@ -17,7 +18,7 @@ export function DesktopTRPCProvider({
   baseUrl,
 }: DesktopTRPCProviderProps) {
   return (
-    <TRPCReactProvider
+    <DesktopTRPCReactProvider
       options={{
         baseUrl,
         getAuthHeaders: async () => {
@@ -26,16 +27,11 @@ export function DesktopTRPCProvider({
               lightfastBridge?: { auth?: DesktopBridgeAuth };
             }
           ).lightfastBridge;
-          const nativeHeaders = await bridge?.auth?.getRequestHeaders?.();
-          return {
-            "x-trpc-source": "desktop",
-            "x-lightfast-desktop": "1",
-            ...nativeHeaders,
-          };
+          return (await bridge?.auth?.getRequestHeaders?.()) ?? {};
         },
       }}
     >
       {children}
-    </TRPCReactProvider>
+    </DesktopTRPCReactProvider>
   );
 }

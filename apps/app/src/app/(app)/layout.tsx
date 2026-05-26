@@ -1,7 +1,7 @@
-import { TRPCReactProvider } from "@repo/app-trpc/react";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { PageErrorBoundary } from "~/components/errors/page-error-boundary";
+import { TRPCReactProvider } from "~/trpc/react";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

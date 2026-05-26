@@ -8,7 +8,6 @@ import {
   getTeamPlan,
   tierForPlan,
 } from "@repo/app-billing";
-import { useTRPC } from "@repo/app-trpc/react";
 import {
   useMutation,
   useQueryClient,
@@ -17,6 +16,7 @@ import {
 import type { BillingStatementResource } from "@vendor/clerk";
 import { useAuth, usePaymentMethods, useStatements } from "@vendor/clerk";
 import { useCallback, useEffect, useState } from "react";
+import { useTRPC } from "~/trpc/react";
 
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
 import {

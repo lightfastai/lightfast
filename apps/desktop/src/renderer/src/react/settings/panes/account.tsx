@@ -1,6 +1,6 @@
-import { useTRPC } from "@repo/app-trpc/react";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut } from "lucide-react";
+import { useTRPC } from "../../trpc/react";
 import { useAuthSnapshot } from "../../use-auth-snapshot";
 
 export function Account() {

@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -26,6 +25,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Loader2, UserPlus } from "lucide-react";
 import { useState } from "react";
+import { useTRPC } from "~/trpc/react";
 import {
   createOptimisticInvitation,
   insertInvitation,

@@ -30,7 +30,7 @@ const listQueryOptions = {
   queryKey: ["org", "settings", "orgApiKeys", "list"],
 };
 
-vi.mock("@repo/app-trpc/react", () => ({
+vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     org: {
       settings: {

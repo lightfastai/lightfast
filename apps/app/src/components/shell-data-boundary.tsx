@@ -1,10 +1,6 @@
-import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 
-export function ShellDataBoundary({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export function ShellDataBoundary({ children }: { children: React.ReactNode }) {
   prefetch(trpc.viewer.organization.listUserOrganizations.queryOptions());
   prefetch(trpc.viewer.account.get.queryOptions());
 

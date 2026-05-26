@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -15,6 +14,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { useClerk } from "@vendor/clerk";
 import { Settings } from "lucide-react";
 import Link from "next/link";
+import { useTRPC } from "~/trpc/react";
 
 const SETTINGS_HREF = "/account/settings/general";
 

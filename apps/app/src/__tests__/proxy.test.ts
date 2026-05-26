@@ -93,25 +93,24 @@ vi.mock("@vendor/clerk/server", () => ({
       },
     })
   ),
-  clerkMiddleware:
-    (
-      handler: (
-        auth: typeof authMock,
-        req: RequestLike,
-        event: EventLike
-      ) => Promise<Response>,
-      options?: {
-        organizationSyncOptions?: {
-          organizationPatterns?: string[];
-        };
-      }
-    ) => {
-      clerkMiddlewareOptions = options;
-      return (req: RequestLike, event: EventLike) => {
-        clerkProxyRequestMock(req.nextUrl.pathname);
-        return handler(authMock, req, event);
+  clerkMiddleware: (
+    handler: (
+      auth: typeof authMock,
+      req: RequestLike,
+      event: EventLike
+    ) => Promise<Response>,
+    options?: {
+      organizationSyncOptions?: {
+        organizationPatterns?: string[];
       };
-    },
+    }
+  ) => {
+    clerkMiddlewareOptions = options;
+    return (req: RequestLike, event: EventLike) => {
+      clerkProxyRequestMock(req.nextUrl.pathname);
+      return handler(authMock, req, event);
+    };
+  },
   createRouteMatcher: (patterns: string[]) => (req: RequestLike) => {
     const pathname = req.nextUrl.pathname;
     return patterns.some((pattern) => matchesPattern(pattern, pathname));

@@ -1,4 +1,3 @@
-import { DesktopTRPCProvider } from "@repo/app-trpc/desktop";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import type { FormatPlatform } from "../../../shared/accelerators";
@@ -6,6 +5,7 @@ import { WINDOW_KIND_GLOBAL } from "../../../shared/window-globals";
 import { AppShell } from "./app-shell";
 import { AuthQueryCacheBoundary } from "./auth-query-cache-boundary";
 import { SettingsWindow } from "./settings/settings-window";
+import { DesktopTRPCProvider } from "./trpc/provider";
 import { UserMenu } from "./user-menu";
 
 const appOrigin = window.lightfastBridge.appOrigin;

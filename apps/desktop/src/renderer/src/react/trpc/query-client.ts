@@ -10,11 +10,7 @@ export const createQueryClient = (opts?: { mutationCache?: MutationCache }) =>
     mutationCache: opts?.mutationCache,
     defaultOptions: {
       queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client
         staleTime: 30 * 1000,
-        // All data is server-prefetched via RSC — suppress automatic refetches
-        // on mount and window focus. Individual queries can opt back in.
         refetchOnMount: false,
         refetchOnWindowFocus: false,
       },
@@ -23,14 +19,7 @@ export const createQueryClient = (opts?: { mutationCache?: MutationCache }) =>
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) ||
           query.state.status === "pending",
-        shouldRedactErrors: () => {
-          // We should not catch Next.js server errors
-          // as that's how Next.js detects dynamic pages
-          // so we cannot redact them.
-          // Next.js also automatically redacts errors for us
-          // with better digests.
-          return false;
-        },
+        shouldRedactErrors: () => false,
       },
       hydrate: {
         deserializeData: SuperJSON.deserialize,

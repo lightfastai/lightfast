@@ -10,7 +10,7 @@ const fetchQueryMock = vi.fn();
 const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
   queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
-vi.mock("@repo/app-trpc/server", () => ({
+vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   trpc: {
     viewer: {

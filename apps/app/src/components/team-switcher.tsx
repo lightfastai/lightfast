@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -17,6 +16,7 @@ import { Check, ChevronsUpDown, Plus } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTRPC } from "~/trpc/react";
 
 const RESERVED_ROUTES = new Set([
   "new",

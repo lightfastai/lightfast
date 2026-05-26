@@ -1,7 +1,7 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { useTRPC } from "@repo/app-trpc/react";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, Settings, User } from "lucide-react";
+import { useTRPC } from "./trpc/react";
 import { useAuthSnapshot } from "./use-auth-snapshot";
 
 export function UserMenu() {

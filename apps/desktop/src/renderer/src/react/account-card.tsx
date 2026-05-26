@@ -1,5 +1,5 @@
-import { useTRPC } from "@repo/app-trpc/react";
 import { useQuery } from "@tanstack/react-query";
+import { useTRPC } from "./trpc/react";
 import { useAuthSnapshot } from "./use-auth-snapshot";
 
 export function AccountCard() {

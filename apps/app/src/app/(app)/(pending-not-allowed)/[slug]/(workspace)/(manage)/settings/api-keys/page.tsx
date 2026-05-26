@@ -1,5 +1,5 @@
-import { getQueryClient, HydrateClient, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
+import { getQueryClient, HydrateClient, trpc } from "~/trpc/server";
 import { OrgApiKeyCreate } from "./_components/org-api-key-create";
 import { OrgApiKeyList } from "./_components/org-api-key-list";
 import { OrgApiKeyListLoading } from "./_components/org-api-key-list-loading";

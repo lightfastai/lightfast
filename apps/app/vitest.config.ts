@@ -18,7 +18,7 @@ export default mergeConfig(
       passWithNoTests: true,
       server: {
         deps: {
-          inline: ["@repo/ui", "@repo/app-trpc", "@repo/app-validation"],
+          inline: ["@repo/ui", "@repo/app-validation"],
         },
       },
     },

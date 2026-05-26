@@ -13,7 +13,7 @@ const notFoundMock = vi.fn(() => {
   throw new Error("NEXT_NOT_FOUND");
 });
 
-vi.mock("@repo/app-trpc/server", () => ({
+vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   trpc: {
     viewer: {

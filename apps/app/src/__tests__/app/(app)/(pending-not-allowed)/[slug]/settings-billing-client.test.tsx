@@ -30,7 +30,7 @@ const useStatementsMock = vi.fn();
 const useSubscriptionMock = vi.fn();
 let overviewData: ReturnType<typeof overview>;
 
-vi.mock("@repo/app-trpc/react", () => ({
+vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     org: {
       settings: {

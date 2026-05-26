@@ -2,8 +2,8 @@ import {
   type NativeClient,
   nativeClientSchema,
 } from "@repo/native-auth-contract";
-import { getQueryClient, trpc } from "@repo/app-trpc/server";
 import { notFound } from "next/navigation";
+import { getQueryClient, trpc } from "~/trpc/server";
 
 import { NativeAuthOrgSelect } from "./_components/native-auth-org-select";
 import { nativeAuthStartSearchSchema } from "./validators";

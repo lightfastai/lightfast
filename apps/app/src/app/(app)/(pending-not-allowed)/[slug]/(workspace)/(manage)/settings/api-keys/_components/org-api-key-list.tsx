@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +27,7 @@ import { useAuth } from "@vendor/clerk";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useTRPC } from "~/trpc/react";
 import {
   type OrgApiKeyListData,
   removeApiKey,

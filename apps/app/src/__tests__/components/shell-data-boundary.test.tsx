@@ -13,7 +13,7 @@ const organizationListQueryOptions = vi.fn(() => ({
 }));
 const prefetch = vi.fn();
 
-vi.mock("@repo/app-trpc/server", () => ({
+vi.mock("~/trpc/server", () => ({
   HydrateClient: hydrateClient,
   prefetch,
   trpc: {

@@ -9,7 +9,7 @@ const listOrganizationsQueryOptions = vi.fn(() => ({
 const mutateMock = vi.fn();
 const useMutationMock = vi.fn();
 
-vi.mock("@repo/app-trpc/react", () => ({
+vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     native: {
       auth: {
@@ -21,7 +21,7 @@ vi.mock("@repo/app-trpc/react", () => ({
   }),
 }));
 
-vi.mock("@repo/app-trpc/server", () => ({
+vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery }),
   trpc: {
     native: {
@@ -44,9 +44,8 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-const Page = (
-  await import("~/app/(app)/(oauth)/oauth/[client]/start/page")
-).default;
+const Page = (await import("~/app/(app)/(oauth)/oauth/[client]/start/page"))
+  .default;
 
 describe("/oauth/[client]/start", () => {
   let assignSpy: ReturnType<typeof vi.spyOn>;

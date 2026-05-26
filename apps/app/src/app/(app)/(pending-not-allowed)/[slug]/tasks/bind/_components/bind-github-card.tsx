@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
@@ -9,6 +8,7 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import type { Route } from "next";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTRPC } from "~/trpc/react";
 
 interface BindGithubCardProps {
   orgSlug: string;

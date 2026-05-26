@@ -3,7 +3,7 @@ import {
   nativeOAuthConfigSchema,
 } from "@repo/native-auth-contract";
 
-import { createNativeOAuthFacadeCaller } from "../../../../_server/native-oauth-facade-caller";
+import { createNativeOAuthFacadeCaller } from "~/trpc/callers/oauth";
 import { errorResponse, jsonResponse } from "../../_server/response";
 
 export const runtime = "nodejs";

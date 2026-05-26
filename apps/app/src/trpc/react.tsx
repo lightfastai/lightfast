@@ -13,15 +13,9 @@ import { createTRPCContext } from "@trpc/tanstack-react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import SuperJSON from "superjson";
-import { createQueryClient } from "./client";
-import "./types";
 
-export interface CreateTRPCReactProviderOptions {
-  baseUrl?: string;
-  getAuthHeaders?: () =>
-    | Record<string, string>
-    | Promise<Record<string, string>>;
-}
+import { createQueryClient } from "./query-client";
+import "./react-query-meta";
 
 const trpcContext = createTRPCContext<AppRouter>();
 
@@ -51,7 +45,7 @@ const mutationCache = new MutationCache({
 
 let clientQueryClientSingleton: QueryClient | undefined;
 
-function getQueryClient() {
+function getBrowserQueryClient() {
   if (typeof window === "undefined") {
     return createQueryClient();
   }
@@ -69,17 +63,11 @@ function defaultGetBaseUrl() {
   return `http://localhost:${process.env.PORT ?? 4104}`;
 }
 
-export function TRPCReactProvider({
-  children,
-  options,
-}: {
-  children: React.ReactNode;
-  options?: CreateTRPCReactProviderOptions;
-}) {
-  const queryClient = getQueryClient();
+export function TRPCReactProvider({ children }: { children: React.ReactNode }) {
+  const queryClient = getBrowserQueryClient();
 
   const [trpcClient] = useState(() => {
-    const baseUrl = options?.baseUrl ?? defaultGetBaseUrl();
+    const baseUrl = defaultGetBaseUrl();
 
     return createTRPCClient<AppRouter>({
       links: [
@@ -91,9 +79,8 @@ export function TRPCReactProvider({
         httpBatchStreamLink({
           transformer: SuperJSON,
           url: `${baseUrl}/api/trpc`,
-          headers: async () => ({
+          headers: () => ({
             "x-trpc-source": "client",
-            ...((await options?.getAuthHeaders?.()) ?? {}),
           }),
           fetch(url, init) {
             const sameOrigin =

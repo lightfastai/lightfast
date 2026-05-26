@@ -1,6 +1,5 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Dialog,
@@ -16,6 +15,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Check, Copy, Loader2, Plus } from "lucide-react";
 import { useRef, useState } from "react";
+import { useTRPC } from "~/trpc/react";
 
 export function OrgApiKeyCreate() {
   const { has, isLoaded } = useAuth();

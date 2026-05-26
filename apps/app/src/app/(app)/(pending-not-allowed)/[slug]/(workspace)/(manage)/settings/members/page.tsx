@@ -1,5 +1,5 @@
-import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
 import { Suspense } from "react";
+import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { OrgMemberListLoading } from "./_components/org-member-list-loading";
 import { OrgMembersClient } from "./_components/org-members-client";
 

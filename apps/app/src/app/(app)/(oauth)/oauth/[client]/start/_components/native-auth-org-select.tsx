@@ -4,11 +4,11 @@ import type {
   NativeClient,
   NativeOrganization,
 } from "@repo/native-auth-contract";
-import { useTRPC } from "@repo/app-trpc/react";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { ArrowRight, Loader2 } from "lucide-react";
+import { useTRPC } from "~/trpc/react";
 
 const clientLabels = {
   cli: "Lightfast CLI",

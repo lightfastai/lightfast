@@ -447,18 +447,12 @@ importers:
       '@repo/app-clerk-claim':
         specifier: workspace:*
         version: link:../../packages/app-clerk-claim
-      '@repo/app-trpc':
-        specifier: workspace:*
-        version: link:../../packages/app-trpc
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
-      '@repo/platform-client':
-        specifier: workspace:*
-        version: link:../../packages/platform-client
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
@@ -480,6 +474,9 @@ importers:
       '@trpc/server':
         specifier: 'catalog:'
         version: 11.16.0(typescript@5.9.3)
+      '@trpc/tanstack-react-query':
+        specifier: 'catalog:'
+        version: 11.16.0(@tanstack/react-query@5.99.1(react@19.2.6))(@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.16.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
       '@vendor/analytics':
         specifier: workspace:*
         version: link:../../vendor/analytics
@@ -549,6 +546,12 @@ importers:
       server-only:
         specifier: ^0.0.1
         version: 0.0.1
+      sonner:
+        specifier: ^2.0.6
+        version: 2.0.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      superjson:
+        specifier: 'catalog:'
+        version: 2.2.6
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -622,12 +625,12 @@ importers:
 
   apps/desktop:
     dependencies:
+      '@api/app':
+        specifier: workspace:*
+        version: link:../../api/app
       '@radix-ui/react-dropdown-menu':
         specifier: 'catalog:'
         version: 2.1.16(@types/react-dom@19.2.3(@types/react@19.2.15))(@types/react@19.2.15)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      '@repo/app-trpc':
-        specifier: workspace:*
-        version: link:../../packages/app-trpc
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
@@ -640,6 +643,12 @@ importers:
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.99.1(react@19.2.6)
+      '@trpc/client':
+        specifier: 'catalog:'
+        version: 11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3)
+      '@trpc/tanstack-react-query':
+        specifier: 'catalog:'
+        version: 11.16.0(@tanstack/react-query@5.99.1(react@19.2.6))(@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.16.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
@@ -1371,49 +1380,6 @@ importers:
         specifier: 'catalog:'
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@25.3.3)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@25.3.3)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
-  packages/app-trpc:
-    dependencies:
-      '@api/app':
-        specifier: workspace:*
-        version: link:../../api/app
-      '@tanstack/react-query':
-        specifier: 'catalog:'
-        version: 5.99.1(react@19.2.6)
-      '@trpc/client':
-        specifier: 'catalog:'
-        version: 11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3)
-      '@trpc/server':
-        specifier: 'catalog:'
-        version: 11.16.0(typescript@5.9.3)
-      '@trpc/tanstack-react-query':
-        specifier: 'catalog:'
-        version: 11.16.0(@tanstack/react-query@5.99.1(react@19.2.6))(@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.16.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
-      next:
-        specifier: catalog:next16
-        version: 16.2.6(@babel/core@7.28.4)(@opentelemetry/api@1.9.1)(@playwright/test@1.58.2)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      react:
-        specifier: ^19.2.6
-        version: 19.2.6
-      sonner:
-        specifier: ^2.0.6
-        version: 2.0.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
-      superjson:
-        specifier: 'catalog:'
-        version: 2.2.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.9.1
-      '@types/react':
-        specifier: ^19.2.15
-        version: 19.2.15
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
   packages/app-validation:
     dependencies:
       '@repo/app-reserved-names':
@@ -1504,34 +1470,6 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
-
-  packages/platform-client:
-    dependencies:
-      '@api/platform':
-        specifier: workspace:*
-        version: link:../../api/platform
-      '@trpc/client':
-        specifier: 'catalog:'
-        version: 11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3)
-      superjson:
-        specifier: 'catalog:'
-        version: 2.2.6
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../internal/typescript
-      '@repo/vitest-config':
-        specifier: workspace:*
-        version: link:../../internal/vitest-config
-      '@types/node':
-        specifier: 'catalog:'
-        version: 24.9.1
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-      vitest:
-        specifier: 'catalog:'
-        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   packages/ui:
     dependencies:

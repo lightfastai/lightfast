@@ -9,11 +9,11 @@ const prefetch = vi.fn(() => {
   throw new Error("root app layout must not prefetch shell data");
 });
 
-vi.mock("@repo/app-trpc/react", () => ({
+vi.mock("~/trpc/react", () => ({
   TRPCReactProvider: ({ children }: Kids) => <>{children}</>,
 }));
 
-vi.mock("@repo/app-trpc/server", () => ({
+vi.mock("~/trpc/server", () => ({
   HydrateClient: ({ children }: Kids) => <>{children}</>,
   prefetch,
   trpc: {

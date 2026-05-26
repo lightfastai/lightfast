@@ -1,6 +1,6 @@
-import { getQueryClient, trpc } from "@repo/app-trpc/server";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
+import { getQueryClient, trpc } from "~/trpc/server";
 import { BindGithubCard } from "./_components/bind-github-card";
 
 interface BindTaskPageProps {

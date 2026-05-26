@@ -1,19 +1,21 @@
 import { TRPCError } from "@trpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+interface NativeOAuthFacadeInput {
+  headers: Headers;
+  source: "cli" | "desktop";
+}
+
 const oauthConfig = vi.fn();
 const finalize = vi.fn();
-const createContext = vi.fn(async ({ headers }: { headers: Headers }) => ({
-  headers,
-}));
-const createCaller = vi.fn(() => ({
-  native: { auth: { finalize, oauthConfig } },
-}));
+const createNativeOAuthFacadeCaller = vi.fn(
+  async (_input: NativeOAuthFacadeInput) => ({
+    native: { auth: { finalize, oauthConfig } },
+  })
+);
 
-vi.mock("@api/app", () => ({
-  appRouter: {},
-  createCallerFactory: () => createCaller,
-  createTRPCContext: createContext,
+vi.mock("~/trpc/callers/oauth", () => ({
+  createNativeOAuthFacadeCaller,
 }));
 
 describe("native OAuth facade routes", () => {
@@ -107,10 +109,13 @@ describe("native OAuth facade routes", () => {
       client: "desktop",
       state: "state_1234567890123",
     });
-    const headers = createContext.mock.calls[0]?.[0].headers as Headers;
+    expect(createNativeOAuthFacadeCaller).toHaveBeenCalledWith({
+      headers: expect.any(Headers),
+      source: "desktop",
+    });
+    const headers = createNativeOAuthFacadeCaller.mock.calls[0]?.[0]
+      .headers as Headers;
     expect(headers.get("authorization")).toBe("Bearer access");
-    expect(headers.get("x-lightfast-native-client")).toBe("desktop");
-    expect(headers.get("x-trpc-source")).toBe("desktop");
   });
 
   it("maps tRPC errors to JSON responses", async () => {
