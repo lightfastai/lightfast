@@ -6,6 +6,10 @@ Lightfast already has the core org binding gate:
 
 - `lightfast_org_source_control_bindings` is the authoritative DB table for
   source-control bindings.
+- The table is defined in
+  `db/app/src/schema/tables/org-source-control-bindings.ts`; all GitHub binding
+  work in this plan must write through that model rather than introducing a
+  GitHub-specific binding table.
 - Clerk organization `publicMetadata.lightfast.binding` mirrors only a compact
   `lf_binding_status` session claim for proxy routing.
 - Unbound active orgs are redirected from product routes to
@@ -139,6 +143,10 @@ The flow has seven boundaries.
 
    This owns bind attempts, GitHub App config, GitHub API calls, DB binding
    writes, webhook processing, and Clerk metadata mirroring.
+
+   It uses `db/app/src/utils/org-binding.ts` and any focused helpers added next
+   to that file. It should not define a second durable binding type that
+   competes with `OrgSourceControlBinding`.
 
 4. `@repo/github-app-contract`
 
@@ -348,7 +356,10 @@ access to it.
 
 ## DB Writes
 
-The existing table is sufficient for v1.
+The existing table in
+`db/app/src/schema/tables/org-source-control-bindings.ts` is the binding model
+for v1. Do not add `github_installations`, `github_org_bindings`, or another
+GitHub-specific durable binding table for this flow.
 
 `lightfast_org_source_control_bindings` should store:
 
@@ -406,6 +417,19 @@ Status semantics:
 - `error`: Lightfast cannot use the installation but the state may be
   recoverable, such as a reconciliation failure or future suspended/missing
   permission state.
+
+Type ownership:
+
+- `db/app` owns `OrgSourceControlBinding`,
+  `OrgSourceControlBindingProvider`, and
+  `OrgSourceControlBindingStatus`.
+- `@repo/github-app-contract` may define normalized GitHub installation and
+  webhook payload types, but it must not define a competing persisted binding
+  interface.
+- `@repo/github-app-node` returns normalized GitHub data; `api/app` maps that
+  data into `UpsertActiveOrgBindingInput` or the new DB helper inputs.
+- `apps/app` consumes only client-safe tRPC outputs and bind error codes. It
+  never imports DB binding types.
 
 ## Webhooks
 
