@@ -15,11 +15,7 @@ DATABASE_USERNAME
 DATABASE_PASSWORD
 ```
 
-Optional runtime var:
-
-```bash
-DATABASE_NAME
-```
+The database name is fixed as `lightfast`.
 
 ## Local Development
 
@@ -30,16 +26,6 @@ pscale auth login
 pnpm db:up      # create/reuse branch and cache credentials under .lightfast/
 pnpm db:migrate # apply migrations to the cached branch
 pnpm db:down    # tear down this worktree's branch/password/cache
-```
-
-Control-plane vars:
-
-```bash
-PLANETSCALE_DATABASE_NAME # defaults to lightfast locally
-PLANETSCALE_ORG_NAME
-PLANETSCALE_SERVICE_TOKEN_ID
-PLANETSCALE_SERVICE_TOKEN
-PSCALE_BRANCH_NAME
 ```
 
 ## Commands

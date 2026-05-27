@@ -5,13 +5,13 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { resolveWorktreeRuntimeName } from "@lightfastai/dev-core";
 import { resolveDevRedisConfig } from "@lightfastai/dev-services";
+import { resolveLocalDevProjectIdentity } from "./dev-identity.mjs";
 import { resolveDevPscaleConfig } from "./pscale-dev.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   ".."
 );
-const configPath = findDefaultConfigPath();
 const args = process.argv.slice(2);
 
 if (args[0] === "--") {
@@ -51,14 +51,15 @@ function buildEnv() {
   }
 
   const resolverEnv = localServiceResolverEnv();
+  const identity = resolveLocalDevProjectIdentity({ root: repoRoot });
   const pscale = resolveDevPscaleConfig({
     cwd: repoRoot,
-    configPath,
+    identity,
     env: resolverEnv,
   });
   const redis = resolveDevRedisConfig({
     cwd: repoRoot,
-    configPath,
+    identity,
     env: resolverEnv,
   });
   const inngestAppName = process.env.INNGEST_APP_NAME
@@ -70,7 +71,6 @@ function buildEnv() {
     DATABASE_HOST: pscale.host,
     DATABASE_USERNAME: pscale.username,
     DATABASE_PASSWORD: pscale.password,
-    DATABASE_NAME: pscale.databaseName,
     KV_REST_API_URL: redis.restUrl,
     KV_REST_API_TOKEN: redis.token,
     KV_REST_API_READ_ONLY_TOKEN: redis.token,
@@ -87,10 +87,8 @@ function buildEnv() {
 function localServiceResolverEnv() {
   const env = { ...process.env };
   env.DATABASE_HOST = undefined;
-  env.DATABASE_PORT = undefined;
   env.DATABASE_USERNAME = undefined;
   env.DATABASE_PASSWORD = undefined;
-  env.DATABASE_NAME = undefined;
   env.KV_REST_API_URL = undefined;
   env.KV_REST_API_TOKEN = undefined;
   env.KV_REST_API_READ_ONLY_TOKEN = undefined;
@@ -107,15 +105,10 @@ function isVercel(env) {
   return env.VERCEL === "1";
 }
 
-function findDefaultConfigPath() {
-  return path.join(repoRoot, "lightfast.dev.json");
-}
-
 function printEnv(env) {
   const keys = [
     "DATABASE_HOST",
     "DATABASE_USERNAME",
-    "DATABASE_NAME",
     "KV_REST_API_URL",
     "KV_URL",
     "REDIS_URL",

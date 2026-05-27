@@ -2,10 +2,8 @@ import { spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
-import {
-  resolveDevProjectIdentity,
-  sanitizeWorktreePrefix,
-} from "@lightfastai/dev-core";
+import { sanitizeWorktreePrefix } from "@lightfastai/dev-core";
+import { resolveLocalDevProjectIdentity } from "./dev-identity.mjs";
 
 const DEFAULT_DATABASE_NAME = "lightfast";
 const DEFAULT_BASE_BRANCH = "main";
@@ -13,12 +11,12 @@ const PROTECTED_BRANCHES = new Set(["main", "staging"]);
 
 export function resolveDevPscaleIdentity({
   cwd = process.cwd(),
-  configPath,
   env = process.env,
+  identity,
 } = {}) {
-  const identity = resolveDevProjectIdentity({ cwd, configPath });
-  const databaseName =
-    cleanEnvValue(env.PLANETSCALE_DATABASE_NAME) ?? DEFAULT_DATABASE_NAME;
+  const projectIdentity =
+    identity ?? resolveLocalDevProjectIdentity({ root: cwd });
+  const databaseName = DEFAULT_DATABASE_NAME;
   const orgName = cleanEnvValue(env.PLANETSCALE_ORG_NAME);
   const baseBranch =
     cleanEnvValue(env.PSCALE_BASE_BRANCH_NAME) ?? DEFAULT_BASE_BRANCH;
@@ -28,12 +26,12 @@ export function resolveDevPscaleIdentity({
   return {
     baseBranch,
     branchName,
-    cachePath: pscaleCachePath(identity.root, databaseName, branchName),
+    cachePath: pscaleCachePath(projectIdentity.root, databaseName, branchName),
     databaseName,
     orgName,
-    root: identity.root,
-    rootHash: identity.rootHash,
-    worktreePrefix: identity.worktreePrefix,
+    root: projectIdentity.root,
+    rootHash: projectIdentity.rootHash,
+    worktreePrefix: projectIdentity.worktreePrefix,
   };
 }
 
@@ -55,8 +53,7 @@ export function resolveDevPscaleConfig(options = {}) {
     fileEnv.DATABASE_PASSWORD,
     "DATABASE_PASSWORD"
   );
-  const databaseName =
-    cleanEnvValue(fileEnv.DATABASE_NAME) ?? identity.databaseName;
+  const databaseName = identity.databaseName;
 
   return {
     ...identity,
@@ -142,7 +139,7 @@ export function readDevPscaleCache(options = {}) {
   return {
     ...identity,
     cached: true,
-    databaseName: cleanEnvValue(fileEnv.DATABASE_NAME) ?? identity.databaseName,
+    databaseName: identity.databaseName,
     host: cleanEnvValue(fileEnv.DATABASE_HOST),
     source: identity.cachePath,
     username: cleanEnvValue(fileEnv.DATABASE_USERNAME),
@@ -215,7 +212,7 @@ async function ensurePscaleBranch(identity) {
     throw new Error(
       `PlanetScale database "${identity.databaseName}" was not found${
         identity.orgName ? ` in org "${identity.orgName}"` : ""
-      }. Set PLANETSCALE_DATABASE_NAME/PLANETSCALE_ORG_NAME or create the database first.`
+      }. Create the database first or set PLANETSCALE_ORG_NAME if the current org is wrong.`
     );
   }
 
@@ -259,9 +256,7 @@ function writeCredentialCache(identity, password) {
       `DATABASE_HOST=${quoteEnv(password.host)}`,
       `DATABASE_USERNAME=${quoteEnv(password.username)}`,
       `DATABASE_PASSWORD=${quoteEnv(password.password)}`,
-      `DATABASE_NAME=${quoteEnv(identity.databaseName)}`,
       `PSCALE_BRANCH_NAME=${quoteEnv(identity.branchName)}`,
-      `PLANETSCALE_DATABASE_NAME=${quoteEnv(identity.databaseName)}`,
       identity.orgName
         ? `PLANETSCALE_ORG_NAME=${quoteEnv(identity.orgName)}`
         : undefined,

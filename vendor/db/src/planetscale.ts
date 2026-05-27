@@ -1,5 +1,5 @@
 /**
- * Lightweight PlanetScale database SDK for Lightfast infrastructure
+ * Lightweight PlanetScale database SDK
  * Provides a thin wrapper around drizzle-orm and @planetscale/database
  */
 

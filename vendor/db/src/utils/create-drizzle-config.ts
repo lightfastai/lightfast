@@ -1,20 +1,22 @@
 import type { Config } from "drizzle-kit";
 
 export const createDrizzleConfig = (opts: {
+  database: string;
   host?: string;
   username?: string;
   password?: string;
-  database?: string;
-  port?: number;
   schema: string;
   out: string;
+  tablesFilter?: string | string[];
 }): Config => {
-  const database =
-    (opts.database?.trim() === "" ? undefined : opts.database) ?? "lightfast";
+  const database = stripQuotes(opts.database);
   const host = stripQuotes(opts.host);
   const username = stripQuotes(opts.username);
   const password = stripQuotes(opts.password);
   const hasCredentials = Boolean(host && username && password);
+  if (hasCredentials && !database) {
+    throw new Error("Drizzle database name is required when credentials exist.");
+  }
 
   return {
     schema: opts.schema,
@@ -23,17 +25,16 @@ export const createDrizzleConfig = (opts: {
     ...(hasCredentials
       ? {
           dbCredentials: {
-            database,
+            database: database!,
             host: host!,
             password: password!,
-            ...(opts.port ? { port: opts.port } : {}),
             user: username!,
           },
         }
       : {}),
     verbose: true,
     strict: true,
-    tablesFilter: ["lightfast_*"],
+    ...(opts.tablesFilter ? { tablesFilter: opts.tablesFilter } : {}),
   } satisfies Config;
 };
 

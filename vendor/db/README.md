@@ -1,34 +1,37 @@
-# Database Package
+# @vendor/db
 
-This package provides the database layer for the application, using Drizzle ORM with PostgreSQL (via Neon).
+Standalone vendor wrapper for PlanetScale and Drizzle.
 
-## Architecture
+This package owns third-party integration details only:
 
-The database package is structured around several key components:
+- `@planetscale/database` client construction.
+- `drizzle-orm/planetscale-serverless` database construction.
+- shared Drizzle config shaping for MySQL.
+- low-level database env validation for host, username, and password.
 
-- **Schema**: Defines the database structure using Drizzle ORM
-- **Migrations**: Handles database schema changes
-- **Edge Constraints**: Implements business rules for node connections
-- **Client**: Provides database connection and query interface
+Application schema, migration paths, database names, and table filters belong in
+the caller package, such as `@db/app`.
 
-### Key Features
+## Runtime Env
 
-- Type-safe database operations with Drizzle ORM
-- Automated migrations using DrizzleKit
-- Database-level constraints for graph edge validation
-- Connection pooling optimization for serverless environments
+```bash
+DATABASE_HOST
+DATABASE_USERNAME
+DATABASE_PASSWORD
+```
 
-## Schema
+## Drizzle Config
 
-The database schema includes several core tables:
+Callers must provide app-owned values:
 
-- `node`: Stores graph nodes (geometry, material, texture)
-- `edge`: Manages connections between nodes with constraint enforcement
-- `workspace`: Organizes nodes into user workspaces
-- `user`: Manages user accounts and authentication
-- `session`: Handles user sessions
-- `account`: Stores account identity metadata
-
-### Edge Constraints
-
-The database implements a trigger-based constraint system for edges:
+```ts
+createDrizzleConfig({
+  database: "app_database",
+  host: env.DATABASE_HOST,
+  out: "./src/migrations",
+  password: env.DATABASE_PASSWORD,
+  schema: "./src/schema/index.ts",
+  tablesFilter: ["app_*"],
+  username: env.DATABASE_USERNAME,
+});
+```

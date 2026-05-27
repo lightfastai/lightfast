@@ -44,7 +44,7 @@ See `SPEC.md` for business goals and product vision.
 │  Source of truth                                                                 │
 │  ─────────────────                                                               │
 │  Mesh:       microfrontends.json (root)                                          │
-│  Portless:   lightfast.dev.json (root)  ·  per-app: package.json "portless"      │
+│  Portless:   per-app portless.json + package.json "portless" names               │
 │  Ports:      derived per-worktree from (host, appName) — no manual pinning       │
 │  Wrap:       all 3 Next configs use withPortlessProxy(...)                       │
 │  Origins:    apps/{app,platform}/src/lib/origin-allowlist.ts                     │
@@ -76,7 +76,7 @@ pnpm dev:platform     # platform only
 pnpm dev:desktop      # Electron (LIGHTFAST_APP_ORIGIN auto-points at aggregate)
 
 # Optional dev services
-pnpm dev:inngest      # local Inngest dev server (dev:* sync MFE app URLs into it)
+pnpm dev:inngest      # local Inngest dev server (dev:* sync app URLs into it)
 pnpm dev:services     # Inngest + Drizzle Studio
 pnpm dev:studio       # Drizzle Studio (127.0.0.1:4983)
 pnpm dev:ngrok        # ngrok tunnel (port 3024, legacy)
@@ -110,7 +110,7 @@ pnpm db:migrate
 pnpm db:studio
 ```
 
-`pnpm dev{,:app,:platform,:full}` register MFE app URLs with the local Inngest dev server (when running) via `scripts/dev-services.mjs inngest-sync`. They do not start Inngest or ngrok automatically.
+`pnpm dev{,:app,:platform,:full}` register app URLs with the local Inngest dev server (when running) via `scripts/inngest-portless-sync.mjs`. They do not start Inngest or ngrok automatically.
 
 ## Key Rules
 
@@ -124,7 +124,7 @@ pnpm db:studio
 - **Node.js** ≥ 22.0.0 | **pnpm** 10.32.1 (pinned via `packageManager` in root `package.json`)
 - **Env files**: `apps/<app>/.vercel/.env.development.local`
 - **Dev-services scripts** (`scripts/`):
-  - `dev-services.mjs` — Postgres + Redis containers; Inngest MFE-URL sync.
+  - `dev-services.mjs` — Postgres + Redis containers.
   - `with-dev-services-env.mjs` — injects DB/Redis env from those containers; bypass with `LIGHTFAST_DEV_SERVICES=0`.
   - `with-desktop-env.mjs` — injects `LIGHTFAST_APP_ORIGIN`; `--print` echoes the current aggregate URL.
 

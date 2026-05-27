@@ -219,9 +219,6 @@ importers:
       '@lightfastai/dev-core':
         specifier: 'catalog:'
         version: 0.4.2
-      '@lightfastai/dev-proxy':
-        specifier: 'catalog:'
-        version: 0.4.2
       '@lightfastai/dev-services':
         specifier: 'catalog:'
         version: 0.4.2
@@ -283,9 +280,6 @@ importers:
       '@db/app':
         specifier: workspace:*
         version: link:../../db/app
-      '@lightfastai/dev-proxy':
-        specifier: 'catalog:'
-        version: 0.4.2
       '@orpc/contract':
         specifier: ^1.14.2
         version: 1.14.2(@opentelemetry/api@1.9.1)
@@ -365,9 +359,6 @@ importers:
 
   api/platform:
     dependencies:
-      '@lightfastai/dev-proxy':
-        specifier: 'catalog:'
-        version: 0.4.2
       '@t3-oss/env-nextjs':
         specifier: ^0.12.0
         version: 0.12.0(typescript@5.9.3)(zod@4.3.6)
@@ -1862,9 +1853,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.9.1
-      dotenv-cli:
-        specifier: 'catalog:'
-        version: 11.0.0
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
