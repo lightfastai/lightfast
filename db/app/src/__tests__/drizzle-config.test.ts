@@ -24,9 +24,8 @@ describe("Drizzle config", () => {
       tablesFilter: ["caller_*"],
       username: "username",
     });
-    const credentials = (
-      config as { dbCredentials?: Record<string, unknown> }
-    ).dbCredentials;
+    const credentials = (config as { dbCredentials?: Record<string, unknown> })
+      .dbCredentials;
 
     expect(credentials).toMatchObject({
       database: "caller_database",
@@ -43,9 +42,8 @@ describe("Drizzle config", () => {
     process.env.DATABASE_USERNAME = "username";
 
     const { default: config } = await import("../drizzle.config");
-    const credentials = (
-      config as { dbCredentials?: Record<string, unknown> }
-    ).dbCredentials;
+    const credentials = (config as { dbCredentials?: Record<string, unknown> })
+      .dbCredentials;
 
     expect(credentials).toMatchObject({
       database: "lightfast",

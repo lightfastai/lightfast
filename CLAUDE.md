@@ -72,15 +72,9 @@ pnpm dev:studio       # Drizzle Studio (127.0.0.1:4983)
 pnpm dev:ngrok        # ngrok tunnel (port 3024, legacy)
 pnpm dev:email        # email template dev
 
-# Local containerized services (Docker)
-pnpm dev:setup        # provision Postgres + Redis containers, then db:migrate
-pnpm dev:doctor       # health-check dev services
-pnpm db:up            # start dev Postgres
-pnpm db:create        # create dev DB (idempotent)
-pnpm db:url           # print DATABASE_URL
-pnpm redis:up         # start dev Redis (with Upstash REST proxy)
-pnpm redis:ping
-pnpm redis:url
+# Local infrastructure setup
+# Load the lightfast-local-infra skill for PlanetScale DB / Upstash Redis setup.
+# It writes durable credentials to apps/*/.vercel/.env.development.local.
 
 # Background dev (Claude Code)
 pnpm dev:app > /tmp/console-dev.log 2>&1 &
@@ -111,12 +105,10 @@ pnpm db:studio
 
 ## Environment
 
-- **Node.js** ≥ 22.0.0 | **pnpm** 10.32.1 (pinned via `packageManager` in root `package.json`)
+- **Node.js** ≥ 22.13.0 | **pnpm** 11.1.3 (pinned via `packageManager` in root `package.json`)
 - **Env files**: `apps/<app>/.vercel/.env.development.local`
-- **Dev-services scripts** (`scripts/`):
-  - `dev-services.mjs` — Postgres + Redis containers.
-  - `with-dev-services-env.mjs` — injects DB/Redis env from those containers; bypass with `LIGHTFAST_DEV_SERVICES=0`.
-  - `with-desktop-env.mjs` — injects `LIGHTFAST_APP_ORIGIN`; `--print` echoes the current aggregate URL.
+- **Local DB/Redis**: skill-driven via `.agents/skills/lightfast-local-infra`; no root `db:up`, `redis:up`, `dev:setup`, or `dev:doctor` scripts.
+- **Desktop env**: `scripts/with-desktop-env.mjs` injects `LIGHTFAST_APP_ORIGIN`; `--print` echoes the current aggregate URL.
 
 ## Troubleshooting
 
@@ -124,8 +116,7 @@ pnpm db:studio
 pkill -f "next dev"                    # Port in use
 pnpm clean:workspaces && pnpm install  # Module not found
 pnpm --filter @api/app build           # tRPC type errors (api layer stays @api/app)
-pnpm dev:doctor                        # local Postgres / Redis container health check
-docker ps | grep lightfast             # confirm dev-services containers are up
+# DB/Redis setup: load the lightfast-local-infra skill and run the relevant runbook
 ```
 
 If `https://lightfast.localhost` won't resolve, confirm Portless is running — check the `lightfast-dev proxy` process started by `pnpm dev:*`.

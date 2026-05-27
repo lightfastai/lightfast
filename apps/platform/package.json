@@ -12,7 +12,7 @@
     "dev:app": "pnpm with-related-projects pnpm with-env next dev",
     "start": "pnpm with-env next start -p 4112",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --",
+    "with-env": "dotenv -e ./.vercel/.env.development.local --",
     "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
   },
   "dependencies": {

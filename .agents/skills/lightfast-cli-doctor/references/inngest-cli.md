@@ -50,9 +50,9 @@ npm i -g inngest-cli@latest
 
 Same command upgrades in place. After upgrade, re-run the *version* probe.
 
-Note: `scripts/dev-services.mjs` doesn't pin a version — `pnpm dev:inngest`
-uses `npx inngest-cli@latest`, which resolves the latest at invocation time.
-Bumping the global install is independent of what `npx` resolves.
+Note: `pnpm dev:inngest` uses `npx inngest-cli@latest`, which resolves the
+latest at invocation time. Bumping the global install is independent of what
+`npx` resolves.
 
 ## Known gotchas
 

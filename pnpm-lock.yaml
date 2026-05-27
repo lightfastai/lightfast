@@ -27,9 +27,6 @@ catalogs:
     '@lightfastai/dev-proxy':
       specifier: ^0.4.2
       version: 0.4.2
-    '@lightfastai/dev-services':
-      specifier: ^0.4.2
-      version: 0.4.2
     '@radix-ui/react-dropdown-menu':
       specifier: ^2.1.15
       version: 2.1.16
@@ -217,9 +214,6 @@ importers:
         specifier: ^2.31.0
         version: 2.31.0(@types/node@25.3.3)
       '@lightfastai/dev-core':
-        specifier: 'catalog:'
-        version: 0.4.2
-      '@lightfastai/dev-services':
         specifier: 'catalog:'
         version: 0.4.2
       concurrently:
@@ -3992,10 +3986,6 @@ packages:
 
   '@lightfastai/dev-proxy@0.4.2':
     resolution: {integrity: sha512-nebVBBsy18RX4GyZorbkqrtndQbain3PCqTF0BS5cmY6HGboxz9fyb7ZxPLKyQ6bUQduuvwHeXDZB679RkfoJw==}
-    engines: {node: '>=22.0.0'}
-
-  '@lightfastai/dev-services@0.4.2':
-    resolution: {integrity: sha512-PuxKziHRYtVvir8nkpYcrOotIoaI1AoURd+V3q/ZNLPy6XCt1gQ2eq5mNjmPiQo/KEGpd9rugp7I5/xulughmQ==}
     engines: {node: '>=22.0.0'}
 
   '@listr2/prompt-adapter-inquirer@2.0.22':
@@ -14919,10 +14909,6 @@ snapshots:
     dependencies:
       '@lightfastai/dev-core': 0.4.2
       portless: 0.12.0
-
-  '@lightfastai/dev-services@0.4.2':
-    dependencies:
-      '@lightfastai/dev-core': 0.4.2
 
   '@listr2/prompt-adapter-inquirer@2.0.22(@inquirer/prompts@6.0.1)':
     dependencies:

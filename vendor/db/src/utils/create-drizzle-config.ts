@@ -15,7 +15,9 @@ export const createDrizzleConfig = (opts: {
   const password = stripQuotes(opts.password);
   const hasCredentials = Boolean(host && username && password);
   if (hasCredentials && !database) {
-    throw new Error("Drizzle database name is required when credentials exist.");
+    throw new Error(
+      "Drizzle database name is required when credentials exist."
+    );
   }
 
   return {

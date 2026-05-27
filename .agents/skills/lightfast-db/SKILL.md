@@ -37,7 +37,7 @@ cd db/app && pnpm db:studio
 **`pscale` CLI — cross-harness, ad-hoc SQL:**
 
 ```bash
-pnpm db:status                    # this worktree's branch + credential cache
+# Load lightfast-local-infra to compute this checkout's branch name when needed.
 pscale shell lightfast <branch>   # interactive MySQL shell against a branch
 ```
 

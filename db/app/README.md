@@ -23,9 +23,9 @@ Local development uses PlanetScale branches. There is no Docker MySQL service.
 
 ```bash
 pscale auth login
-pnpm db:up      # create/reuse branch and cache credentials under .lightfast/
-pnpm db:migrate # apply migrations to the cached branch
-pnpm db:down    # tear down this worktree's branch/password/cache
+# Load the lightfast-local-infra skill and run its db up runbook.
+pnpm db:push    # apply schema diff to the env-configured local branch
+pnpm db:studio  # inspect the env-configured local branch
 ```
 
 ## Commands
@@ -33,6 +33,7 @@ pnpm db:down    # tear down this worktree's branch/password/cache
 ```bash
 pnpm db:generate  # Generate migration SQL from src/schema
 pnpm db:migrate   # Apply migrations
+pnpm db:push      # Apply schema diff
 pnpm db:studio    # Open Drizzle Studio
 ```
 

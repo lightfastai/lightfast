@@ -11,7 +11,7 @@
     "signals": "pnpm with-env vitest run src/signals/signal-pipeline.e2e.test.ts",
     "test": "vitest run src/helpers/*.test.ts --passWithNoTests",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ../apps/app/.vercel/.env.development.local -- node ../scripts/with-dev-services-env.mjs --"
+    "with-env": "dotenv -e ../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@db/app": "workspace:*",
