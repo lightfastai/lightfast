@@ -8,8 +8,6 @@ import { useAuth } from "@vendor/clerk";
 import {
   ArrowLeft,
   CheckCircle,
-  Circle,
-  CirclePause,
   Clock,
   Loader2,
   Play,
@@ -20,6 +18,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTRPC } from "~/trpc/react";
+import { AutomationStatusChip } from "./automation-status-chip";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 type AutomationRun =
@@ -72,8 +71,6 @@ export function AutomationDetailClient({
     staleTime: 30_000,
   });
 
-  const StatusIcon = automation.status === "paused" ? CirclePause : Circle;
-
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
       <Link
@@ -95,18 +92,7 @@ export function AutomationDetailClient({
 
         {/* Right rail */}
         <div className="space-y-6 lg:w-80">
-          <RailSection label="Status">
-            <div className="flex items-center gap-2">
-              <StatusIcon
-                aria-hidden="true"
-                className="size-4 shrink-0 text-muted-foreground"
-                strokeWidth={2}
-              />
-              <span className="text-foreground text-sm capitalize">
-                {automation.status}
-              </span>
-            </div>
-          </RailSection>
+          <AutomationStatusChip automation={automation} />
 
           <RailSection label="Next run">
             <p className="text-foreground text-sm">
