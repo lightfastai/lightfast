@@ -1,7 +1,6 @@
 "use client";
 
 import type { AppRouterOutputs } from "@api/app";
-import { formatAutomationSchedule } from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
@@ -19,6 +18,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTRPC } from "~/trpc/react";
 import { AutomationNameEditor } from "./automation-name-editor";
+import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
@@ -106,16 +106,7 @@ export function AutomationDetailClient({
             </p>
           </RailSection>
 
-          <RailSection label="Details">
-            {/* replaced in Task 6 — AutomationScheduleEditor */}
-            <div className="space-y-1">
-              <DetailRow
-                label="Repeats"
-                value={formatAutomationSchedule(automation)}
-              />
-              <DetailRow label="Timezone" value={automation.timezone} />
-            </div>
-          </RailSection>
+          <AutomationScheduleEditor automation={automation} />
 
           <div className="space-y-2 border-border border-t pt-4">
             {/* replaced in Task 8 — wired run-now + delete */}
