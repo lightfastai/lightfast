@@ -18,6 +18,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTRPC } from "~/trpc/react";
 import { AutomationNameEditor } from "./automation-name-editor";
+import { AutomationPromptEditor } from "./automation-prompt-editor";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
 
@@ -86,8 +87,7 @@ export function AutomationDetailClient({
         {/* Left column */}
         <div className="space-y-4">
           <AutomationNameEditor automation={automation} />
-          {/* replaced in Task 7 — AutomationPromptEditor */}
-          <AutomationPromptPlaceholder prompt={automation.prompt} />
+          <AutomationPromptEditor automation={automation} />
         </div>
 
         {/* Right rail */}
@@ -185,13 +185,4 @@ function RunRow({ run }: { run: AutomationRun }) {
       </span>
     </div>
   );
-}
-
-// replaced in Task 7 — AutomationPromptEditor
-function AutomationPromptPlaceholder({
-  prompt,
-}: {
-  prompt: Automation["prompt"];
-}) {
-  return <p className="text-muted-foreground text-sm">{prompt}</p>;
 }
