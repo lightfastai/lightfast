@@ -243,6 +243,93 @@ People:
 - Error state should preserve the page layout and explain that people could not
   be loaded.
 
+## React Performance
+
+The v1 pages should be designed so they stay responsive as automations create
+more signals and people.
+
+### Server And Client Boundaries
+
+Keep pages and layouts as Server Components by default. Use Client Components
+only for interactive islands:
+
+- Signals list controls, filters, search, dev capture, and row interactions.
+- People search and table interactions.
+
+Do not move the workspace layout or sidebar into a larger client boundary just
+to support these pages. Server pages should prefetch tRPC queries before
+hydration using the existing `HydrateClient` pattern.
+
+### Query And Pagination
+
+Do not fetch unbounded lists into the browser.
+
+- Use cursor pagination in the tRPC routers and DB helpers.
+- Default page size should be small enough for fast initial render, such as
+  50 rows.
+- If v1 adds load-more or infinite scrolling, use React Query infinite-query
+  semantics through the tRPC options layer and derive the next page from
+  `nextCursor`.
+- Use React Query's existing structural sharing and tracked-property behavior:
+  avoid object-rest destructuring query results and avoid expensive inline
+  `select` functions.
+- Use a stable `select` function only when a component needs a smaller view of
+  cached data, such as a row count.
+
+### Search And URL State
+
+Search should not refetch on every keystroke.
+
+- Keep immediate input state local so typing stays responsive.
+- Use a deferred or debounced value for server-backed search query keys.
+- Use `nuqs` for shareable filter/search URL state. Prefer shallow URL updates
+  for client-only state. If a future implementation uses URL changes to
+  re-render Server Components, use `shallow: false` with `limitUrlUpdates:
+  debounce(...)` and a transition.
+
+### List And Table Rendering
+
+Signals should be implemented as a fixed-row-height list. People can start as a
+simple table or table-like list.
+
+Recommended package additions:
+
+- Add `@tanstack/react-virtual` if Signals renders more than the first page, if
+  infinite scrolling is implemented, or if expected row counts exceed roughly
+  100 visible/cacheable rows. It is headless, so it preserves the custom
+  Linear-like row styling.
+- Use `@tanstack/react-table` only if People needs table-state features such as
+  sorting, column visibility, or more complex filtering. The package already
+  exists in `@repo/ui`; add it as a direct dependency to `@lightfast/app` only
+  if app code imports it directly.
+
+Avoid adding `react-window` or `react-virtuoso` for v1 unless
+`@tanstack/react-virtual` proves insufficient. TanStack Virtual fits the
+existing TanStack stack and gives the most control over markup and styling.
+
+### Memoization
+
+Do not blanket-wrap components in `memo`, `useMemo`, or `useCallback`.
+
+- Keep row components pure and give them primitive/stable props.
+- Memoize row components only if React Profiler shows repeated row renders from
+  unrelated filter/input state.
+- Use `useDeferredValue` for expensive list filtering/rendering work that would
+  otherwise block typing.
+- The repo includes `babel-plugin-react-compiler`, but the app config does not
+  currently enable React Compiler. Do not rely on compiler-driven memoization
+  until it is explicitly configured and verified.
+
+### Bundle Size
+
+Keep rendering helpers page-local unless they become shared patterns.
+
+- Do not import heavy table or virtualizer code into the global workspace shell.
+- If the dev capture UI grows beyond a small dialog, lazy-load it and keep it
+  development-only.
+- Use the existing bundle analyzer path when validating any new rendering
+  dependency.
+
 ## Testing
 
 Use focused tests at the changed boundaries:
@@ -257,6 +344,8 @@ Use focused tests at the changed boundaries:
   dev capture visibility.
 - People component tests for directory rendering, search, empty states, and
   no-results behavior.
+- Performance-oriented component tests should verify that virtualized lists
+  render only a bounded number of DOM rows when virtualization is enabled.
 
 ## Implementation Notes
 
