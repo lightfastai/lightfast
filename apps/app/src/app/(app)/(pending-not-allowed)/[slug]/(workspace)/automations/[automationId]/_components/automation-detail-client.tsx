@@ -1,18 +1,8 @@
 "use client";
 
 import type { AppRouterOutputs } from "@api/app";
-import { Button } from "@repo/ui/components/ui/button";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useAuth } from "@vendor/clerk";
-import {
-  ArrowLeft,
-  CheckCircle,
-  Clock,
-  Loader2,
-  Play,
-  Trash,
-  XCircle,
-} from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,22 +11,10 @@ import { AutomationNameEditor } from "./automation-name-editor";
 import { AutomationPromptEditor } from "./automation-prompt-editor";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
+import { AutomationActions } from "./automation-actions";
+import { AutomationRunsList } from "./automation-runs-list";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
-type AutomationRun =
-  AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
-
-const RUN_STATUS_ICONS: Record<
-  AutomationRun["status"],
-  { icon: React.ElementType; className: string }
-> = {
-  completed: { icon: CheckCircle, className: "text-emerald-500" },
-  failed: { icon: XCircle, className: "text-destructive" },
-  cancelled: { icon: XCircle, className: "text-destructive" },
-  running: { icon: Loader2, className: "animate-spin text-muted-foreground" },
-  pending: { icon: Clock, className: "text-muted-foreground" },
-  skipped: { icon: Clock, className: "text-muted-foreground" },
-};
 
 function getSlug(pathname: string) {
   return pathname.split("/").filter(Boolean)[0] ?? "workspace";
@@ -55,21 +33,11 @@ export function AutomationDetailClient({
 }: {
   automationId: string;
 }) {
-  const { has, isLoaded } = useAuth();
-  const canManage = isLoaded && !!has?.({ role: "org:admin" });
   const slug = getSlug(usePathname());
   const trpc = useTRPC();
 
   const { data: automation } = useSuspenseQuery({
     ...trpc.org.workspace.automations.get.queryOptions({ id: automationId }),
-    staleTime: 30_000,
-  });
-
-  const { data: runs } = useSuspenseQuery({
-    ...trpc.org.workspace.automations.listRuns.queryOptions({
-      id: automationId,
-      limit: 20,
-    }),
     staleTime: 30_000,
   });
 
@@ -108,40 +76,9 @@ export function AutomationDetailClient({
 
           <AutomationScheduleEditor automation={automation} />
 
-          <div className="space-y-2 border-border border-t pt-4">
-            {/* replaced in Task 8 — wired run-now + delete */}
-            <Button
-              className="w-full justify-start gap-2"
-              disabled={!canManage}
-              size="sm"
-              variant="secondary"
-            >
-              <Play className="size-4" />
-              Run now
-            </Button>
-            <Button
-              className="w-full justify-start gap-2"
-              disabled={!canManage}
-              size="sm"
-              variant="secondary"
-            >
-              <Trash className="size-4" />
-              Delete
-            </Button>
-          </div>
+          <AutomationActions automation={automation} />
 
-          <RailSection label="Previous runs">
-            {runs.length === 0 ? (
-              <p className="text-muted-foreground text-sm">No runs yet.</p>
-            ) : (
-              <div className="space-y-2">
-                {runs.map((run) => (
-                  <RunRow key={run.publicId} run={run} />
-                ))}
-                {/* replaced in Task 8 — load more */}
-              </div>
-            )}
-          </RailSection>
+          <AutomationRunsList automationId={automationId} />
         </div>
       </div>
     </div>
@@ -161,28 +98,6 @@ function RailSection({
         {label}
       </p>
       {children}
-    </div>
-  );
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-foreground text-sm">{value}</span>
-    </div>
-  );
-}
-
-function RunRow({ run }: { run: AutomationRun }) {
-  const { icon: Icon, className } = RUN_STATUS_ICONS[run.status];
-  return (
-    <div className="flex items-center gap-2">
-      <Icon className={`size-3.5 shrink-0 ${className}`} />
-      <span className="text-foreground text-sm capitalize">{run.status}</span>
-      <span className="ml-auto text-muted-foreground text-xs capitalize">
-        {run.trigger}
-      </span>
     </div>
   );
 }
