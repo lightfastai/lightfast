@@ -128,7 +128,12 @@ function AutomationRow({
   const Icon = isPaused ? CirclePause : Circle;
 
   return (
-    <div className="flex min-h-12 items-center justify-between gap-4 border-border border-b py-3">
+    <Link
+      className="flex min-h-12 items-center justify-between gap-4 border-border border-b py-3 hover:bg-muted/40"
+      href={
+        `/${workspaceSlug}/automations/${automation.publicId}` as Route
+      }
+    >
       <div className="flex min-w-0 items-center gap-3">
         <Icon
           aria-hidden="true"
@@ -147,6 +152,6 @@ function AutomationRow({
       <p className="shrink-0 text-muted-foreground text-sm">
         {formatAutomationSchedule(automation)}
       </p>
-    </div>
+    </Link>
   );
 }
