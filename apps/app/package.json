@@ -15,7 +15,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --",
-    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
+    "with-related-projects": "INNGEST_SERVE_HOST=$(portless get app.lightfast) NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast) INNGEST_DEV=$(portless get inngest.lightfast)"
   },
   "dependencies": {
     "@api/app": "workspace:*",

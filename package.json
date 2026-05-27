@@ -15,7 +15,7 @@
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
     "dev": "portless proxy start && turbo run dev:next @lightfast/app#mfe:proxy //#_inngest --concurrency=15 -F @lightfast/www -F @lightfast/app -F @lightfast/platform --continue",
-    "_inngest": "npx inngest-cli@latest dev --no-discovery -u \"$(portless get app.lightfast)/api/inngest\" -u \"$(portless get platform.lightfast)/api/inngest\"",
+    "_inngest": "portless run --name inngest.lightfast sh -c 'npx inngest-cli@latest dev --no-discovery --host \"$HOST\" --port \"$PORT\" -u \"$(portless get app.lightfast)/api/inngest\" -u \"$(portless get platform.lightfast)/api/inngest\"'",
     "brain": "turbo run eval",
     "e2e": "pnpm --filter @lightfast/e2e test",
     "e2e:sdk": "pnpm --filter @lightfast/e2e sdk",
