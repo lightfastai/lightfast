@@ -13,11 +13,7 @@
       ],
       "env": ["NEXT_PUBLIC_*", "SENTRY_*", "VERCEL_ENV"]
     },
-    "dev": {
-      "cache": false,
-      "persistent": true
-    },
-    "//#_mfe": {
+    "dev:next": {
       "cache": false,
       "persistent": true
     },
