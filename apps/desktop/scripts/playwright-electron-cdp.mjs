@@ -23,7 +23,9 @@ try {
 } catch (err) {
   console.error(`Could not attach to CDP at 127.0.0.1:${port}: ${err.message}`);
   console.error("Hint: start the dev app with");
-  console.error(`  LIGHTFAST_REMOTE_DEBUG_PORT=${port} pnpm dev:desktop`);
+  console.error(
+    `  LIGHTFAST_REMOTE_DEBUG_PORT=${port} pnpm --filter @lightfast/desktop dev`
+  );
   process.exit(1);
 }
 

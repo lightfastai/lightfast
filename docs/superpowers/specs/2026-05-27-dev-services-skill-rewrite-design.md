@@ -79,7 +79,10 @@ has to remember the framework exists.
   where docs mention the deleted dev-services scripts.
 - Make `db up` and `redis up` reproducible by a human or agent without reading
   repo JS scripts.
-- Defer destructive teardown semantics until a later `drop` design.
+- Define the future `down` cleanup model for stale local PlanetScale and
+  Upstash resources without reintroducing root package scripts.
+- Document the day-1 database migration model clearly, including the parts that
+  still need proof before anyone treats the pipeline as reliable.
 
 ## Non-Goals
 
@@ -91,7 +94,9 @@ has to remember the framework exists.
 - Do not solve production or preview Vercel env management.
 - Do not add Redis key-prefix isolation unless we choose to share one Redis DB
   across worktrees. V1 avoids that by using separate Upstash databases.
-- Do not implement branch/database deletion in this phase.
+- Do not execute destructive provider deletion in this phase. This spec defines
+  the target cleanup behavior, but the actual `down` runbooks must be
+  implemented and tested in a follow-up.
 
 ## Decision
 
@@ -327,6 +332,197 @@ V1 uses one Upstash Redis database per checkout/worktree. That avoids adding
 runtime key-prefix behavior to `@vendor/upstash` and avoids accidental key
 sharing between worktrees.
 
+### Down / Cleanup Model
+
+`down` is the inverse lifecycle for local-only provider resources. It is a
+skill runbook, not a package script. The repo should not add back root cleanup
+scripts such as `pnpm db:down` or `pnpm redis:down`, or a hidden JS
+orchestration layer.
+
+The cleanup target is always the resource identity derived from the checkout:
+
+```text
+PlanetScale branch: wt-<worktree-prefix-or-local>-<root-hash>
+Upstash Redis DB:  lightfast-<worktree-prefix-or-local>-<root-hash>
+```
+
+The runbook must be deliberately conservative:
+
+1. Recompute identity from the current checkout.
+2. Probe auth and provider access with the same CLI checks used by `up`.
+3. Show the exact PlanetScale branch and Upstash Redis database that would be
+   removed.
+4. Refuse to touch protected names:
+   - PlanetScale `main`, `staging`, `production`, or any branch not matching
+     `^wt-[a-z0-9-]+-[0-9a-f]{8}$`.
+   - Upstash databases not matching
+     `^lightfast-[a-z0-9-]+-[0-9a-f]{8}$`.
+5. Require explicit human confirmation before provider deletion.
+6. After successful provider deletion, remove only the managed env keys from
+   ignored local env files and leave unrelated env lines intact.
+
+Managed env cleanup:
+
+```text
+apps/app/.vercel/.env.development.local
+  remove DATABASE_HOST
+  remove DATABASE_USERNAME
+  remove DATABASE_PASSWORD
+  remove KV_REST_API_URL
+  remove KV_REST_API_TOKEN
+
+apps/platform/.vercel/.env.development.local
+  remove KV_REST_API_URL
+  remove KV_REST_API_TOKEN
+```
+
+The cleanup helper should be a small sibling to `write-env.mjs`, for example
+`remove-env.mjs`. It should parse env files line-by-line, remove exact managed
+keys, preserve comments and unrelated values, and print a before/after key
+summary without printing secrets.
+
+#### PlanetScale Down
+
+`db down` deletes only the computed local development branch.
+
+Provider command surface from local `pscale 0.283.0`:
+
+```bash
+pscale branch show "$database_name" "$pscale_branch" --format json
+pscale password list "$database_name" "$pscale_branch" --format json
+pscale password delete "$database_name" "$pscale_branch" --name "$pscale_credential_name" --force
+pscale branch delete "$database_name" "$pscale_branch" --force
+```
+
+Password deletion is useful when rotating or partially cleaning up, but branch
+deletion is the terminal cleanup for local worktree branches. The runbook should
+attempt password deletion first only for the credential name it created. If the
+password is already gone, continue. If the branch is already gone, skip env
+cleanup only after verifying the branch is absent and the user confirms the env
+file is stale.
+
+The runbook must never use `--delete-descendants` by default. A local worktree
+branch should not have descendants; if it does, that is a separate inspection
+case.
+
+#### Redis Down
+
+`redis down` deletes only the computed Upstash Redis database.
+
+Provider command surface from local `upstash v0.3.0`:
+
+```bash
+upstash redis list --json
+upstash redis get --id "$redis_id" --json
+upstash redis delete --id "$redis_id" --json
+```
+
+The runbook should discover the database ID by exact name match, fetch details
+by ID, verify the returned name still equals the computed name, then delete by
+ID only after confirmation. If more than one database has the same name, abort
+and require manual provider cleanup.
+
+#### Stale Resource Sweeps
+
+The normal path is to run `down` from the same checkout before removing a git
+worktree. If the worktree was already deleted, identity can no longer be
+computed safely from local filesystem state. The fallback should be a sweep
+runbook that lists candidates and asks the human to choose:
+
+```bash
+pscale branch list lightfast --format json
+upstash redis list --json
+```
+
+The sweep is read-only until the human gives an exact branch name and Redis ID.
+It should prefer candidates that include the known branch slug and root hash,
+but it must not infer deletion from name shape alone.
+
+### Branch / Worktree Close Loop
+
+The intended branch lifecycle is:
+
+1. Create or enter a git worktree for the feature branch.
+2. Run the `lightfast-local-infra` `db up` and `redis up` runbooks.
+3. Develop against the per-worktree PlanetScale branch and per-worktree Upstash
+   database.
+4. Commit code, generated migrations, and tests. Provider resources are never
+   the source of truth.
+5. Merge or abandon the code branch.
+6. Before deleting the local worktree, run the `down` runbook from that same
+   worktree.
+7. Remove the git worktree after provider cleanup succeeds.
+
+Important boundary: deleting the local PlanetScale branch does not deploy
+schema to production or staging. Schema changes survive only because generated
+Drizzle migration files are committed to the repo. The provider branch is a
+scratch target for local verification.
+
+### Migration Model
+
+The app database is `@db/app` on PlanetScale MySQL (Vitess) through
+`@vendor/db`, `@planetscale/database`, and
+`drizzle-orm/planetscale-serverless`.
+
+Source of truth:
+
+```text
+db/app/src/schema/**            TypeScript Drizzle schema
+db/app/src/migrations/**        generated SQL, snapshots, and journal
+db/app/src/drizzle.config.ts    app-owned database name and tablesFilter
+```
+
+Commands:
+
+```bash
+pnpm --filter @db/app db:generate   # offline SQL generation from schema
+pnpm --filter @db/app db:push       # local branch schema sync
+pnpm --filter @db/app db:migrate    # apply generated migrations to a target branch
+pnpm --filter @db/app db:baseline   # seed __drizzle_migrations only
+pnpm --filter @db/app db:studio     # inspect env-configured branch
+```
+
+Day-1 target workflow:
+
+1. Local feature work uses the per-worktree PlanetScale branch.
+2. During iteration, use `db:push` against the worktree branch to make the live
+   scratch schema match TypeScript quickly.
+3. When the schema is ready, run `db:generate` and commit the generated SQL,
+   snapshots, journal update, schema changes, and tests.
+4. The persistent `staging` PlanetScale branch is the integration branch for
+   generated migrations.
+5. CI or a release operator runs `db:migrate` against `staging` credentials.
+6. PlanetScale deploy requests move schema from `staging` to `main`.
+7. `main` is production schema. Do not run the Drizzle migrator directly
+   against `main`.
+
+`db:baseline` exists because the current schema may already exist in
+PlanetScale before Drizzle's migration journal is trustworthy. It creates or
+updates `__drizzle_migrations` rows for generated migrations without executing
+their SQL. It is only for bootstrapping or rebuilding the persistent `staging`
+branch from a known live schema. It must not become a casual local-development
+command.
+
+Known day-1 gaps:
+
+- The `staging` branch bootstrap and `db:baseline --through=<tag>` path need a
+  real dry run against a disposable branch before anyone uses it on the shared
+  integration branch.
+- The current "last migration already deployed to main" tag is not formally
+  recorded anywhere. The release process needs an explicit record, probably in
+  a small checked-in note or release checklist, before staging rebuilds are
+  safe.
+- `db:migrate` against PlanetScale branch credentials passed in tests locally,
+  but the complete CI path from migration execution to PlanetScale deploy
+  request has not been proven in this rewrite.
+- PlanetScale deploy requests move schema, not Drizzle journal rows. The
+  persistent `staging` branch owns the authoritative migration journal. If
+  `staging` is deleted or rebuilt, it must be baselined through the last schema
+  version already present on `main`.
+- Rollback and revert behavior is not specified yet. Until it is, schema
+  changes should be small, forward-only, and reviewed against PlanetScale/Vitess
+  safe-migration rules.
+
 ### Package Scripts
 
 After the setup skill exists and is verified, remove script indirection:
@@ -363,20 +559,14 @@ Keep normal application scripts:
 
 ```text
 dev
-dev:app
-dev:www
-dev:platform
-dev:desktop
-dev:inngest
-dev:studio
 db:generate
 db:push
 db:migrate
 db:baseline
 ```
 
-`dev:studio` remains useful because it launches a local developer tool against
-the persisted PlanetScale env file.
+`pnpm dev` is the only root local-dev entrypoint. It starts the full MFE dev
+stack, local Inngest, and the concrete app/www/platform hosts.
 
 ### Turborepo Env Pruning
 
@@ -444,7 +634,8 @@ three references. The skill should support:
 - `redis up`
 - env-file verification
 
-It should explicitly defer `drop`.
+It should explicitly defer destructive `down` cleanup until the cleanup runbooks
+are designed and tested.
 
 ### Phase 2: Prove The Runbook
 
@@ -508,6 +699,62 @@ If `pnpm check` fails on unrelated dirty automation work, record that as an
 unrelated pre-existing failure and verify the touched files with the narrowest
 available formatter/check command.
 
+### Future Phase 6: Add Down Runbooks
+
+Extend `.agents/skills/lightfast-local-infra` with cleanup references:
+
+```text
+.agents/skills/lightfast-local-infra/
+  references/
+    planetscale-down.md
+    upstash-down.md
+    env-files.md
+  lib/
+    remove-env.mjs
+```
+
+Implementation requirements:
+
+- Reuse `compute-identity.mjs` for default target names.
+- Add exact-name provider lookups before every delete.
+- Add protected-name guards for PlanetScale branches and Upstash databases.
+- Require human confirmation before any provider delete command.
+- Remove managed env keys only after provider cleanup succeeds or the provider
+  resource is verified absent and the human confirms the env is stale.
+- Keep this as skill documentation plus tiny env-file helpers; do not add root
+  scripts.
+
+Verification requirements:
+
+```bash
+node .agents/skills/lightfast-local-infra/lib/compute-identity.mjs
+pscale branch show lightfast "$pscale_branch" --format json
+upstash redis list --json
+```
+
+Use disposable test resources first. Do not test deletion on a real branch that
+contains unmerged schema work.
+
+### Future Phase 7: Prove Migrations
+
+Validate the database migration pipeline separately from local infra cleanup.
+
+Required proof:
+
+- Identify the migration tag that matches the current `main` schema.
+- Bootstrap a disposable PlanetScale branch from `main`.
+- Run `db:baseline --through=<last-deployed-tag>` against that disposable
+  branch and inspect `__drizzle_migrations`.
+- Create a tiny reversible schema change in a throwaway branch, run
+  `db:generate`, and verify the generated SQL is acceptable for Vitess.
+- Run `db:migrate` against a disposable integration branch.
+- Open a PlanetScale deploy request from the disposable integration branch to a
+  disposable target branch, not production `main`.
+- Document the exact CI/release command shape only after the dry run succeeds.
+
+Until this phase is complete, treat the migration pipeline as specified but not
+operationally proven.
+
 ## Testing And Verification
 
 The rewrite is complete when these pass:
@@ -516,6 +763,7 @@ The rewrite is complete when these pass:
 test ! -e scripts/dev-services.mjs
 test ! -e scripts/pscale-dev.mjs
 test ! -e scripts/with-dev-services-env.mjs
+test ! -e scripts/inngest-portless-sync.mjs
 rg -n "with-dev-services-env|@lightfastai/dev-services" package.json apps api db scripts pnpm-lock.yaml
 pnpm --filter @db/app db:migrate
 pnpm --filter @db/app typecheck
@@ -528,9 +776,19 @@ Manual verification:
 
 - `apps/app/.vercel/.env.development.local` contains DB and Redis credentials.
 - `apps/platform/.vercel/.env.development.local` contains Redis credentials.
-- `pnpm dev:app` starts without `with-dev-services-env.mjs`.
-- `pnpm dev:platform` starts without `with-dev-services-env.mjs`.
+- `pnpm dev` starts without `with-dev-services-env.mjs`.
 - Drizzle Studio reads PlanetScale credentials from the app env file.
+
+Future `down` verification:
+
+- A computed local PlanetScale branch can be found, shown, and deleted only
+  after confirmation.
+- A computed local Upstash Redis database can be found, shown, and deleted only
+  after confirmation.
+- Managed env keys are removed from app/platform env files without printing
+  secrets and without touching unrelated keys.
+- Running `down` twice is safe: the second run reports resources absent and does
+  not fail after confirmation of stale env cleanup.
 
 ## Risks
 
@@ -546,13 +804,29 @@ Manual verification:
 - Existing unrelated dirty files can make broad verification commands fail. The
   implementation must distinguish slice failures from unrelated workspace
   failures without reverting user changes.
+- Destructive cleanup is easy to get wrong. The first `down` implementation must
+  be exact-name, confirmation-gated, and tested only with disposable resources.
+- If a git worktree is deleted before `down`, deterministic naming is weaker
+  because the root path hash may no longer be easy to recompute. The stale
+  sweep path must stay read-only until a human provides exact target names.
+- The migration pipeline currently mixes a local `db:push` workflow with a
+  future `staging` migrator workflow. Until Phase 7 is proven, generated
+  migrations should be reviewed as artifacts, not treated as evidence that the
+  provider deploy path is healthy.
 
 ## Deferred Work
 
-- `db drop`: delete PlanetScale branch/password safely, with protected branch
-  guards.
-- `redis drop`: delete the Upstash Redis database only after confirming the
-  computed name and database ID.
+- `db down`: implement the PlanetScale branch/password cleanup runbook with
+  protected branch guards.
+- `redis down`: implement the Upstash Redis database cleanup runbook after exact
+  database-name and ID confirmation.
+- Stale resource sweep: list orphaned `wt-*` PlanetScale branches and
+  `lightfast-*` Upstash databases for manual selection after a worktree has
+  already been removed.
+- Migration proof: validate `staging` baseline, `db:migrate`, and PlanetScale
+  deploy requests against disposable branches.
+- Release record: persist the last migration tag known to be deployed to `main`
+  so `staging` rebuilds do not depend on memory.
 - Optional Redis prefixing wrapper in `@vendor/upstash` if the team later wants
   shared Redis databases instead of per-worktree databases.
 - Optional installation of the official Upstash skill once the team decides

@@ -9,7 +9,7 @@
     "build": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
     "dev": "portless run",
-    "dev:app": "pnpm with-related-projects pnpm with-env next dev",
+    "_dev": "pnpm with-related-projects pnpm with-env next dev",
     "start": "pnpm with-env next start -p 4112",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ./.vercel/.env.development.local --",

@@ -12,7 +12,7 @@ const canonicalAppOrigin = new URL(appUrl).origin;
 if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
   throw new Error(
     "[cors] appUrl resolved to production URL in dev; portless daemon likely not running. " +
-      "Run `pnpm dev:full` or `pnpm dev:platform` (which start portless) before the platform server."
+      "Run `pnpm dev` before the platform server."
   );
 }
 

@@ -68,26 +68,14 @@ Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 ```bash
 # Dev servers (NEVER use global pnpm build).
 # Worktree-prefixed URLs: see Architecture diagram above.
-pnpm dev              # app + www + platform (full stack)
-pnpm dev:full         # alias of pnpm dev (kept for back-compat)
-pnpm dev:app          # app only
-pnpm dev:www          # www only
-pnpm dev:platform     # platform only
-pnpm dev:desktop      # Electron (LIGHTFAST_APP_ORIGIN auto-points at aggregate)
-
-# Optional dev services
-pnpm dev:inngest      # local Inngest dev server (dev:* sync app URLs into it)
-pnpm dev:services     # Inngest + Drizzle Studio
-pnpm dev:studio       # Drizzle Studio (127.0.0.1:4983)
-pnpm dev:ngrok        # ngrok tunnel (port 3024, legacy)
-pnpm dev:email        # email template dev
+pnpm dev              # app + www + platform + local Inngest + MFE proxy
 
 # Local infrastructure setup
 # Load the lightfast-local-infra skill for PlanetScale DB / Upstash Redis setup.
 # It writes durable credentials to apps/*/.vercel/.env.development.local.
 
 # Background dev (Claude Code)
-pnpm dev:app > /tmp/console-dev.log 2>&1 &
+pnpm dev > /tmp/console-dev.log 2>&1 &
 tail -f /tmp/console-dev.log
 pkill -f "next dev"
 
@@ -104,7 +92,7 @@ pnpm db:migrate
 pnpm db:studio
 ```
 
-`pnpm dev{,:app,:platform,:full}` register app URLs with the local Inngest dev server (when running) via `scripts/inngest-portless-sync.mjs`. They do not start Inngest or ngrok automatically.
+`pnpm dev` is the only root local-dev entrypoint. It starts app, www, platform, local Inngest, and the Portless-backed Vercel microfrontends proxy for `https://lightfast.localhost`. Inngest uses explicit concrete serve URLs from `portless get app.lightfast` and `portless get platform.lightfast`; it does not sync through the aggregate MFE URL. It does not start ngrok automatically.
 
 ## Key Rules
 
@@ -129,4 +117,4 @@ pnpm --filter @api/app build           # tRPC type errors (api layer stays @api/
 # DB/Redis setup: load the lightfast-local-infra skill and run the relevant runbook
 ```
 
-If `https://lightfast.localhost` won't resolve, confirm Portless is running — check the `lightfast-dev proxy` process started by `pnpm dev:*`.
+If `https://lightfast.localhost` won't resolve, confirm Portless is running — check the `lightfast-dev proxy` process started by `pnpm dev`.

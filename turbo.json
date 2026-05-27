@@ -17,15 +17,11 @@
       "cache": false,
       "persistent": true
     },
-    "dev:inngest": {
+    "//#_mfe": {
       "cache": false,
       "persistent": true
     },
-    "dev:ngrok": {
-      "cache": false,
-      "persistent": true
-    },
-    "//#dev:ngrok": {
+    "//#_inngest": {
       "cache": false,
       "persistent": true
     },
@@ -41,10 +37,6 @@
         "pnpm-lock.yaml"
       ],
       "outputs": []
-    },
-    "dev:studio": {
-      "cache": false,
-      "persistent": true
     },
     "transit": {
       "dependsOn": ["^transit"]
@@ -73,10 +65,6 @@
       "outputs": ["openapi.json"]
     },
     "studio": {
-      "cache": false,
-      "persistent": true
-    },
-    "dev:email": {
       "cache": false,
       "persistent": true
     },

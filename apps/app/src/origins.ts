@@ -4,9 +4,9 @@ import { env } from "./env";
 const vercelEnv = env.NEXT_PUBLIC_VERCEL_ENV;
 const isLocal = vercelEnv !== "production" && vercelEnv !== "preview";
 
-// Cross-app URLs. Edge-safe: no fs access, no NodeJS-only deps. In dev, the
-// dev:app script injects NEXT_PUBLIC_<APP>_URL=$(portless get <name>.lightfast)
-// — those become defaultHost. In preview/prod, withRelatedProject reads
+// Cross-app URLs. Edge-safe: no fs access, no NodeJS-only deps. In dev,
+// portless injects NEXT_PUBLIC_<APP>_URL=$(portless get <name>.lightfast).
+// Those values become defaultHost. In preview/prod, withRelatedProject reads
 // VERCEL_RELATED_PROJECTS and returns the matched alias.
 export const appUrl = withRelatedProject({
   projectName: "lightfast-app",

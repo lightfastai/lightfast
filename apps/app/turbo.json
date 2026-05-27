@@ -52,11 +52,10 @@
     },
     "dev": {
       "persistent": true,
-      "with": ["//#dev:ngrok"]
-    },
-    "mfe:proxy": {
-      "cache": false,
-      "persistent": true
+      "passThroughEnv": [
+        "MFE_DISABLE_LOCAL_PROXY_REWRITE",
+        "TURBO_TASK_HAS_MFE_PROXY"
+      ]
     },
     "transit": {}
   }

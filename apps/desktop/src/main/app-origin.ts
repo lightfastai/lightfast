@@ -22,7 +22,7 @@ export function resolveDesktopAppOrigin(buildFlavor: BuildFlavor): string {
   if (parsedBuildFlavor === "dev") {
     if (!mainEnv.LIGHTFAST_APP_ORIGIN) {
       throw new Error(
-        "LIGHTFAST_APP_ORIGIN must be set for desktop dev. Run pnpm dev:desktop or wrap the command with scripts/with-desktop-env.mjs."
+        "LIGHTFAST_APP_ORIGIN must be set for desktop dev. Run pnpm --filter @lightfast/desktop dev or wrap the command with scripts/with-desktop-env.mjs."
       );
     }
 
