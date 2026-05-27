@@ -21,18 +21,6 @@ export function upsertInList(
   });
 }
 
-export function removeFromList(
-  qc: QueryClient,
-  trpc: TRPCClient,
-  id: string,
-): void {
-  const key = trpc.org.workspace.automations.list.queryOptions().queryKey;
-  qc.setQueryData(key, (old: Automation[] | undefined) => {
-    if (!old) return old;
-    return old.filter((a) => a.publicId !== id);
-  });
-}
-
 export function setOne(
   qc: QueryClient,
   trpc: TRPCClient,
