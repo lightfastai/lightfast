@@ -5,12 +5,12 @@ import {
   PERSON_DISPLAY_NAME_LENGTH,
   PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
 } from "../schema";
-import { upsertPeopleFromCandidates } from "./people";
+import { upsertPeopleFromCandidates } from "../utils/people";
 import {
   createPersonIdentityKey,
   normalizePersonIdentityCandidate,
   shouldIncrementSeenCount,
-} from "./people-identities";
+} from "../utils/people-identities";
 
 describe("people identity normalization", () => {
   it("normalizes email identities", () => {

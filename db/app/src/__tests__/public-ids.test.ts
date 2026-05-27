@@ -1,8 +1,8 @@
 import { SIGNAL_ID_PREFIX } from "@repo/api-contract";
 import { describe, expect, it } from "vitest";
 
-import { createPersonId, PERSON_ID_PREFIX } from "./people";
-import { createSignalId } from "./signals";
+import { createPersonId, PERSON_ID_PREFIX } from "../schema/tables/people";
+import { createSignalId } from "../schema/tables/signals";
 
 const PUBLIC_ID_COLUMN_LENGTH = 64;
 
