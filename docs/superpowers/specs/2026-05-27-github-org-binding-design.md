@@ -44,6 +44,10 @@ page.
   procedures/helpers.
 - Keep the UI setup path small and compatible with the existing
   `lf_binding_status` session reload behavior.
+- Keep the public tRPC surface minimal: browser callbacks and webhooks should
+  not become generally callable tRPC procedures unless the UI needs them.
+- Keep GitHub API/crypto code out of app routers by moving reusable contracts
+  and Node helpers into dedicated packages.
 
 ## Non-Goals
 
@@ -69,6 +73,9 @@ The implementation must account for these GitHub-specific constraints:
   "Request user authorization during installation" option. Start a separate
   GitHub App OAuth web flow from the Lightfast setup callback and pass an exact
   `redirect_uri`.
+- Use GitHub App OAuth `state` and PKCE. GitHub strongly recommends `state`,
+  exact `redirect_uri`, and PKCE for the web application flow. The PKCE
+  verifier is an ephemeral Redis secret and must not be logged.
 - GitHub App user access tokens have fine-grained permissions rather than
   classic OAuth scopes. The token's reachable installations are the
   intersection of app access and user access.
@@ -91,6 +98,11 @@ The implementation must account for these GitHub-specific constraints:
   longer work asynchronously.
 - GitHub App webhooks are configured once per app, not per installed org. The
   endpoint must dispatch by `X-GitHub-Event` and payload `action`.
+- GitHub's webhook event docs list default GitHub App lifecycle events such as
+  `installation`, `installation_repositories`,
+  `installation_target`, and `github_app_authorization`. Some action lists are
+  sparse in the rendered docs, so implementation must validate against real
+  delivery payloads from a dev app before production rollout.
 - Local webhook testing needs a public HTTPS URL; `localhost` is not sufficient
   for GitHub delivery.
 
@@ -109,7 +121,7 @@ Reference docs:
 
 ## Architecture
 
-The flow has five boundaries.
+The flow has seven boundaries.
 
 1. `apps/app` setup UI
 
@@ -128,15 +140,51 @@ The flow has five boundaries.
    This owns bind attempts, GitHub App config, GitHub API calls, DB binding
    writes, webhook processing, and Clerk metadata mirroring.
 
-4. GitHub
+4. `@repo/github-app-contract`
+
+   A new package for isomorphic constants and Zod schemas:
+
+   - public route constants,
+   - bind error-code vocabulary,
+   - normalized GitHub installation metadata schemas,
+   - webhook event/action payload schemas used by the handler,
+   - client-safe output schemas for `org.setup.github.start`.
+
+   This package has no secrets, no DB, no Clerk, no Redis, no `server-only`, and
+   no Node-only crypto. It depends only on `zod`.
+
+5. `@repo/github-app-node`
+
+   A new Node-only helper package for GitHub-specific mechanics:
+
+   - build installation and OAuth authorization URLs,
+   - generate PKCE verifier/challenge pairs,
+   - exchange GitHub OAuth codes for user access tokens,
+   - list user-accessible installations with pagination,
+   - create GitHub App JWTs,
+   - mint short-lived installation access tokens,
+   - verify webhook HMAC signatures,
+   - parse and normalize GitHub REST/webhook payloads through the contract
+     schemas.
+
+   This package accepts config objects from callers. It must not read
+   `process.env` directly, and it must not know about Clerk, Redis, or the
+   Lightfast database.
+
+6. GitHub
 
    GitHub owns installation UI, app OAuth, installation metadata, installation
    tokens, and webhook delivery.
 
-5. Clerk
+7. Clerk
 
    Clerk owns Lightfast user/org membership and mirrors non-sensitive binding
    status into the session token.
+
+Boundary rule: `api/app` orchestrates DB/Clerk/Redis and imports the two
+GitHub packages. `apps/app` route handlers call `api/app` exported helpers or
+public tRPC procedures; they do not call GitHub, DB, Clerk admin APIs, or Redis
+directly.
 
 ## Route Surface
 
@@ -157,16 +205,23 @@ listed as public app routes in `apps/app/src/proxy.ts`.
 GitHub webhook signature verification. It should be listed with the app-owned
 API prefixes, like `/api/inngest` and `/api/v1`.
 
-New tRPC surface:
+Public tRPC surface:
 
 ```text
 org.setup.github.start
-org.setup.github.completeInstallationSetup
-org.setup.github.completeOAuthVerification
+org.setup.github.syncBindingClaim
 ```
 
-`start` is called by the client. The two completion procedures are called only
-from server route handlers through an app-owned caller.
+`start` is called by the bind card and returns the GitHub installation URL.
+`syncBindingClaim` is called by the completion page; it reads the authoritative
+DB binding for the active Lightfast org, mirrors `bound` into Clerk when the DB
+is active-bound, and is safe to call repeatedly.
+
+The GitHub setup callback, OAuth callback, and webhook handler should be
+exported `api/app` server helpers, not public tRPC procedures. This keeps
+security-sensitive callback logic out of the browser-callable router while
+preserving the same ownership rule: app route handlers stay thin and delegate
+business logic to `api/app`.
 
 `task.status` remains as the generic setup status query. The placeholder
 `task.bind` should be removed from the product UI path. Production must not
@@ -177,17 +232,20 @@ mark an org bound without a verified GitHub installation.
 Use Redis, following the native OAuth attempt pattern.
 
 ```ts
-type GitHubOrgBindAttempt = {
-  attemptId: string;
-  phase: "installing" | "oauth_pending";
+type GitHubBindInstallAttemptRecord = {
   clerkOrgId: string;
   orgSlug: string;
   lightfastUserId: string;
   stateHash: string;
-  createdAt: string;
-  expiresAt: string;
-  providerInstallationId?: string;
-  oauthStateHash?: string;
+};
+
+type GitHubBindOAuthAttemptRecord = {
+  clerkOrgId: string;
+  orgSlug: string;
+  lightfastUserId: string;
+  providerInstallationId: string;
+  stateHash: string;
+  codeVerifier: string;
 };
 ```
 
@@ -196,15 +254,21 @@ Attempt rules:
 - TTL: 15 minutes.
 - State: base64url JSON containing `attemptId` and a random nonce; store only a
   SHA-256 hash in Redis.
+- The Redis key already contains the attempt id, and Redis owns expiry. Do not
+  duplicate `attemptId`, `createdAt`, or `expiresAt` inside the record unless a
+  later UI needs to display them.
 - Single active start per click; a second click may create a fresh attempt.
 - `start` requires the current Lightfast user to be an admin of the active
   Lightfast org.
 - Callback procedures must verify the current Clerk user matches
   `lightfastUserId` and is still an admin of `clerkOrgId`.
-- The setup callback does not write the DB binding. It only records the
-  candidate `providerInstallationId` and starts GitHub App OAuth.
-- The OAuth callback consumes the attempt. Success writes the DB binding; any
-  failure returns the user to setup with an error.
+- The setup callback consumes the install-attempt key with `GETDEL`, records no
+  DB state, and issues a separate OAuth-attempt key containing the candidate
+  `providerInstallationId` and PKCE verifier.
+- The OAuth callback consumes the OAuth-attempt key. Success writes the DB
+  binding; any failure returns the user to setup with an error.
+- `orgSlug` is stored only for safe local redirects. Never accept a redirect
+  target from GitHub callback query parameters.
 
 ## Primary Flow
 
@@ -220,27 +284,37 @@ sequenceDiagram
 
   U->>A: Click Connect GitHub organization
   A->>T: org.setup.github.start
-  T->>R: Store bind attempt
+  T->>R: Store install attempt
   T-->>A: GitHub installation URL with state
   A->>G: Navigate to installation URL
   G->>U: Install GitHub App on an org
   G->>A: GET /api/github/setup?installation_id&state
-  A->>T: completeInstallationSetup
-  T->>R: Validate state and record installation candidate
+  A->>T: completeGitHubInstallationSetup helper
+  T->>R: Consume install attempt and store OAuth attempt
   T-->>A: GitHub OAuth authorize URL
   A->>G: Redirect to GitHub OAuth authorize
   G->>A: GET /api/github/oauth/callback?code&state
-  A->>T: completeOAuthVerification
+  A->>T: completeGitHubOAuthVerification helper
+  T->>R: Consume OAuth attempt
   T->>G: Exchange code for user access token
   T->>G: List installations accessible to user token
   T->>T: Confirm candidate installation is present and org-owned
   T->>D: Insert active source-control binding
-  T->>C: Mirror binding status = bound
   T-->>A: Completion redirect target
   A->>U: Redirect to /:slug/tasks/bind/github/complete
+  U->>A: Client page calls syncBindingClaim
+  A->>T: org.setup.github.syncBindingClaim
+  T->>D: Read active binding
+  T->>C: Mirror binding status = bound
   U->>A: Client page reloads Clerk session
   A->>U: router.replace("/:slug")
 ```
+
+The OAuth callback helper may also attempt the Clerk mirror immediately after
+the DB write as an optimization. The completion page must still call
+`syncBindingClaim` because a DB-active/Clerk-stale state otherwise creates a
+proxy loop: the DB says the org is bound, but the session token still routes the
+user back to the bind task.
 
 ## GitHub Verification
 
@@ -249,7 +323,8 @@ The verifier should perform these checks before the DB write:
 - GitHub OAuth callback `state` matches the Redis attempt and consumes it.
 - GitHub OAuth `code` exchanges successfully using
   `GITHUB_APP_CLIENT_ID`, `GITHUB_APP_CLIENT_SECRET`, and the exact callback
-  URL configured on the GitHub App.
+  URL configured on the GitHub App. The exchange includes the Redis-stored PKCE
+  verifier.
 - The user access token can list the candidate `installation_id` through
   `GET /user/installations`.
 - The installation has `target_type: "Organization"`.
@@ -260,6 +335,16 @@ The verifier should perform these checks before the DB write:
 - No other active Lightfast org is already bound to that installation.
 
 The GitHub user access token is discarded after verification.
+
+The verifier should not require the GitHub user's email to match the Clerk
+user's email. The security proof is that the same browser session holds a
+Lightfast org-admin session and can authorize a GitHub user token that can see
+the target installation.
+
+If the GitHub App is installed but the user abandons the OAuth verification
+step, Lightfast stores no DB binding. A later start from the same Lightfast org
+may bind the existing installation after the GitHub user-token verifier proves
+access to it.
 
 ## DB Writes
 
@@ -293,9 +378,14 @@ Repository helper changes:
     installation,
   - throws `CONFLICT` if another Lightfast org is active-bound to this
     installation,
+  - reactivates a revoked/error row for the same Lightfast org and same
+    installation when the GitHub verifier proves the installation is currently
+    valid,
   - inserts the active binding otherwise.
 - Keep DB write before Clerk mirror on bind.
-- Keep Clerk mirror before DB status transition on revocation.
+- For provider revocation, do not leave the DB active just because Clerk
+  mirroring failed. The DB is the API authorization source of truth; mark the
+  binding revoked/error and record a mirror repair need if Clerk is stale.
 
 The current unique indexes remain useful:
 
@@ -303,10 +393,19 @@ The current unique indexes remain useful:
 - `providerInstallationId` prevents the same installation from being bound to
   multiple rows.
 
-If implementation finds that revoked historical rows block valid rebinds of the
-same installation id, handle that explicitly in the helper by updating/reviving
-the historical row instead of creating a duplicate. Do not hand-edit migration
-SQL.
+The `providerInstallationId` unique index applies to historical rows too.
+Therefore rebind of the same installation id must update/reactivate the
+existing row; it cannot insert a duplicate. Do not hand-edit migration SQL.
+
+Status semantics:
+
+- `active`: GitHub verifier or webhook reconciliation says the installation is
+  live and usable.
+- `revoked`: GitHub uninstall/delete or Lightfast disconnect is terminal for
+  this active binding.
+- `error`: Lightfast cannot use the installation but the state may be
+  recoverable, such as a reconciliation failure or future suspended/missing
+  permission state.
 
 ## Webhooks
 
@@ -323,22 +422,26 @@ Security requirements:
   2xx without reprocessing.
 - Return 2xx quickly. If processing grows beyond simple binding updates, move
   work behind Inngest or another queue.
+- Mark delivery ids as processed only after successful handling. A failed DB
+  update must not poison idempotency.
+- Parse known event/action combinations through
+  `@repo/github-app-contract`. Unknown signed event/action combinations should
+  be logged and acknowledged with 2xx unless they indicate a security-sensitive
+  provider removal.
 
 Events for v1:
 
+- `installation.created`
+  - Treat as informational. The Lightfast-initiated callback, not this webhook,
+    creates the DB binding.
+  - If there is no DB row, return 2xx and log enough metadata to debug
+    GitHub-first installs or abandoned setup flows.
 - `installation.deleted`
   - Find active/error binding by `providerInstallationId`.
-  - Mirror Clerk status to `revoked` first.
   - Mark DB binding `revoked`.
+  - Mirror Clerk status to `revoked`; if mirroring fails, keep the DB revoked
+    and record/log a repair need.
   - Treat missing binding as successful no-op.
-- `installation.suspend`
-  - Find active binding by installation id.
-  - Mirror Clerk status to `revoked`.
-  - Mark DB binding `error` with metadata reason `github_installation_suspended`.
-- `installation.unsuspend`
-  - Find existing `error` binding by installation id.
-  - Re-verify the installation as the GitHub App if needed.
-  - Mark DB binding active and mirror Clerk status to `bound`.
 - `installation.new_permissions_accepted`
   - Update stored permissions/events metadata.
   - Do not change bound status unless the installation was previously in an
@@ -348,15 +451,24 @@ Events for v1:
   - Do not change bound status.
 - `installation_target.renamed`
   - Update `providerAccountLogin` and metadata.
+- `github_app_authorization.revoked`
+  - Acknowledge and log in v1. Lightfast does not store GitHub user access
+    tokens, so this event does not change installation binding state.
+  - This is the future GitHub revoke-app webhook callback hook: once Lightfast
+    stores user-scoped GitHub tokens, the handler must clear those user-scoped
+    records and stop calling GitHub as that user while leaving installation
+    bindings intact unless the installation itself is deleted.
 
-Future webhook note requested by product:
+Future webhook/reconciliation work:
 
-- Add explicit `github_app_authorization` handling for GitHub user
-  authorization revocation. V1 does not store GitHub user access tokens, so this
-  event does not affect binding state. When Lightfast stores user-scoped GitHub
-  tokens or audit trails, this callback should clear those user-scoped records
-  and keep installation-level bindings intact unless the installation itself is
-  deleted.
+- Add explicit handling for installation suspension/unsuspension only after it
+  is verified against real GitHub App payloads for the configured app. GitHub's
+  public docs and REST APIs acknowledge suspended installations, but the
+  rendered webhook action list is not complete enough to use as the sole source
+  of truth for v1.
+- Add scheduled reconciliation that mints an app JWT, checks active bindings
+  against GitHub's installation API, and repairs DB/Clerk drift caused by missed
+  webhooks or failed delivery handling.
 
 Operational note:
 
@@ -382,10 +494,14 @@ Add a completion client page under:
 
 This page:
 
+- calls `org.setup.github.syncBindingClaim`,
 - calls `session.reload()`,
 - redirects to `/:slug`,
 - shows a compact "Finishing connection..." loading state while the session is
   refreshing.
+- shows a retryable error state if the DB is bound but the Clerk mirror update
+  fails. The retry button calls `syncBindingClaim` again; it does not restart
+  the GitHub installation.
 
 Error redirects should return to `/:slug/tasks/bind` with a compact error code
 that the bind card can render or toast, for example:
@@ -396,10 +512,17 @@ that the bind card can render or toast, for example:
 ?github_error=personal_account_not_supported
 ?github_error=permission_required
 ?github_error=installation_already_bound
+?github_error=saml_session_required
+?github_error=github_authorization_denied
 ```
 
 Do not display provider secrets, installation tokens, raw GitHub OAuth errors,
 or internal exception messages.
+
+If the user lands on the bind page after a successful DB bind but before a
+fresh session claim exists, the page must not immediately redirect to the
+workspace root and trigger a proxy loop. It should render the completion/repair
+state or redirect to `/:slug/tasks/bind/github/complete`.
 
 ## Environment
 
@@ -408,6 +531,7 @@ Add server-only env values to `api/app/src/env.ts`:
 ```text
 GITHUB_APP_ID
 GITHUB_APP_SLUG
+GITHUB_API_VERSION
 GITHUB_APP_CLIENT_ID
 GITHUB_APP_CLIENT_SECRET
 GITHUB_APP_PRIVATE_KEY
@@ -415,6 +539,8 @@ GITHUB_APP_WEBHOOK_SECRET
 ```
 
 Implementation should normalize private keys that arrive with escaped newlines.
+`GITHUB_API_VERSION` should default to the currently documented API version in
+`@repo/github-app-node` and be overrideable for controlled upgrades.
 
 Derived URLs should use the current app origin:
 
@@ -433,6 +559,55 @@ GitHub App configuration:
 - Disable automatic "Request user authorization during installation" for v1 so
   Lightfast controls the OAuth callback URL and state.
 - Subscribe only to the webhook events needed for binding lifecycle.
+- Enable "Redirect on update" only if we want repository-access updates to
+  bounce through the Lightfast setup flow. V1 should leave it disabled and rely
+  on `installation_repositories` webhooks for metadata updates.
+
+## Package Layout
+
+Create:
+
+```text
+packages/github-app-contract/
+packages/github-app-node/
+```
+
+`@repo/github-app-contract` exports:
+
+- `GITHUB_BIND_ERROR_CODES`
+- `githubBindErrorCodeSchema`
+- `githubBindStartOutputSchema`
+- `githubNormalizedInstallationSchema`
+- `githubInstallationMetadataSchema`
+- `githubWebhookEventSchema`
+- known route path constants:
+  - `/api/github/setup`
+  - `/api/github/oauth/callback`
+  - `/api/github/webhook`
+
+`@repo/github-app-node` exports:
+
+- `createGitHubPkcePair()`
+- `buildGitHubInstallationUrl()`
+- `buildGitHubOAuthAuthorizeUrl()`
+- `exchangeGitHubOAuthCode()`
+- `listUserAccessibleInstallations()`
+- `createGitHubAppJwt()`
+- `createGitHubInstallationToken()`
+- `verifyGitHubWebhookSignature()`
+- `parseGitHubWebhookPayload()`
+
+Do not create a package for Redis attempts or DB binding orchestration. Those
+are Lightfast app domain workflows and should stay in `api/app`.
+
+Dependency rules:
+
+- `@repo/github-app-contract`: `zod` only.
+- `@repo/github-app-node`: `@repo/github-app-contract`, `zod`, and a crypto/JWT
+  dependency only if native Node APIs are not enough. If a dependency is added,
+  add it through the workspace catalog.
+- `api/app`: depends on both packages and owns env, Clerk, Redis, and DB.
+- `apps/app`: should not depend on `@repo/github-app-node`.
 
 ## Error Handling
 
@@ -444,12 +619,21 @@ GitHub App configuration:
 - Lightfast user no longer admin: redirect with `permission_required`.
 - Existing binding conflict: redirect with `installation_already_bound` or
   `org_already_bound`.
-- Clerk mirror failure after DB bind: log warning and still redirect to
-  completion. Product API authorization reads the DB; the session claim may
-  self-repair through a later mirror repair task.
-- Webhook Clerk mirror failure during revocation: return non-2xx so GitHub
-  records a failed delivery. This is safer than leaving a revoked installation
-  with a `bound` session mirror.
+- Clerk mirror failure after DB bind: redirect to the completion page, where
+  `syncBindingClaim` can retry the mirror before session reload/navigation.
+- Webhook Clerk mirror failure during revocation: keep the DB revoked/error,
+  log with `X-GitHub-Delivery`, and record a repair need. Return non-2xx only
+  if the authoritative DB update failed.
+- GitHub API rate limit or transient 5xx during OAuth verification: redirect
+  with a retryable error and do not write a binding.
+- User changes active Clerk organization during the GitHub flow: ignore the
+  active org and use the signed Redis attempt's `clerkOrgId`; still require the
+  current Clerk user to be an admin of that org at callback time.
+- Clerk org renamed during the GitHub flow: redirect by stored org slug if it
+  still resolves; otherwise redirect to the account team list with a generic
+  setup-expired error.
+- GitHub setup callback arrives without a Clerk session: send the user through
+  Clerk sign-in with a safe same-origin return URL. State TTL still applies.
 
 ## Testing
 
@@ -466,13 +650,19 @@ Focused unit tests:
 - OAuth callback writes provider ids and non-sensitive metadata on success.
 - User access token is not persisted.
 - Clerk mirror receives `bound` only after DB bind succeeds.
+- Completion page repairs stale Clerk binding claims and avoids a bind/root
+  proxy loop.
 - Webhook signature validation uses raw body and rejects invalid signatures.
-- `installation.deleted` mirrors `revoked` before DB revocation.
+- `installation.deleted` revokes/errors the authoritative DB binding even when
+  Clerk mirror repair fails.
 - Webhook delivery idempotency handles repeated `X-GitHub-Delivery`.
+- Unknown signed webhook event/action combinations are acknowledged and logged.
 - Proxy tests cover `/api/github/webhook` bypass and GitHub setup/callback
   route admission.
 - Bind card starts external navigation instead of calling placeholder bind.
 - Completion page reloads Clerk session and redirects to workspace.
+- Package boundary tests prove `@repo/github-app-contract` has no Node-only
+  imports and `apps/app` does not import `@repo/github-app-node`.
 
 Integration/manual checks:
 
@@ -484,30 +674,51 @@ Integration/manual checks:
 - Confirm product route no longer redirects to bind page.
 - Uninstall the GitHub App and confirm binding becomes revoked/unbound.
 - Redeliver the uninstall webhook and confirm idempotent success.
+- Start setup, install the app, abandon before OAuth verification, then restart
+  from Lightfast and confirm the existing GitHub installation can be bound.
+- Try a personal-account install and confirm Lightfast rejects it without a DB
+  binding.
+- Test with a GitHub org that requires SAML SSO if available, and confirm the
+  user-facing error is actionable.
 
 ## Rollout
 
-1. Add env schema and GitHub App config helper.
-2. Add Redis bind attempt helpers.
-3. Add GitHub API helper functions.
-4. Add DB binding finalization/revocation helper changes.
-5. Add tRPC setup GitHub router.
-6. Add app route handlers.
-7. Update proxy route admission.
-8. Update bind UI and completion page.
-9. Add webhook handler.
-10. Remove or disable production placeholder binding.
-11. Configure GitHub App URLs/secrets per environment.
-12. Verify against a dev GitHub App before production rollout.
+1. Add `@repo/github-app-contract`.
+2. Add `@repo/github-app-node`.
+3. Add env schema and GitHub App config helper in `api/app`.
+4. Add Redis bind attempt helpers in `api/app`.
+5. Add DB binding finalization/revocation/reactivation helper changes in
+   `db/app`.
+6. Add `api/app` GitHub binding orchestration helpers.
+7. Add public `org.setup.github.start` and `syncBindingClaim` tRPC procedures.
+8. Add app route handlers.
+9. Update proxy route admission.
+10. Update bind UI and completion page.
+11. Add webhook handler.
+12. Remove production placeholder binding from the UI path.
+13. Configure GitHub App URLs/secrets per environment.
+14. Verify against a dev GitHub App before production rollout.
 
 ## Open Implementation Notes
 
-- Prefer native `fetch` plus narrow Zod response schemas for GitHub's few API
-  calls. Add Octokit only if implementation complexity grows beyond these
-  endpoints.
+- Prefer native `fetch` plus narrow Zod response schemas in
+  `@repo/github-app-node` for GitHub's few API calls. Add Octokit only if
+  implementation complexity grows beyond these endpoints; if Octokit is added,
+  wrap it in a vendor/package boundary and do not leak Octokit types into
+  `api/app`.
 - The tRPC route already runs on the Node.js runtime for GitHub App crypto.
   GitHub callback/webhook route handlers must also use `runtime = "nodejs"`.
 - Use `catalog:` for any new external dependency, and keep internal dependencies
   on `workspace:*`.
 - If schema changes become necessary, use `pnpm db:generate`; never write SQL by
   hand.
+- Use tRPC server-side callers only from route handlers or tests. Do not call
+  tRPC callers from inside other tRPC procedures; share plain `api/app` helper
+  functions instead.
+- Add `.output()` schemas to public GitHub setup procedures so client-visible
+  responses cannot drift from `@repo/github-app-contract`.
+- Keep server-only imports out of client components. Client code should only
+  import `AppRouter` as a type and should not import `api/app` values.
+- Treat GitHub webhook payloads and CodeRabbit/reviewer suggestions as
+  untrusted input. Validate data before use and never execute payload-provided
+  commands.
