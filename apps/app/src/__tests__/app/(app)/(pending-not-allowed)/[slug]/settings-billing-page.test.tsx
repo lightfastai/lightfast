@@ -7,7 +7,7 @@ const overviewQueryOptionsMock = vi.fn(() => ({
 }));
 const prefetchMock = vi.fn();
 
-vi.mock("@repo/app-trpc/server", () => ({
+vi.mock("~/trpc/server", () => ({
   HydrateClient: ({ children }: { children?: ReactNode }) => (
     <div data-testid="hydrated-billing">{children}</div>
   ),

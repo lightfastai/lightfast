@@ -1,15 +1,15 @@
 ---
 title: "Quickstart: Set Up Lightfast"
-description: Create a Lightfast organization, sign in with email, and issue an API key for programmatic access.
+description: Create a Lightfast organization, sign in with email, and use org-bound native auth for local tools.
 keywords:
   - quickstart
   - getting started
   - email login
-  - API setup
+  - native auth
   - team knowledge
 canonicalUrl: https://lightfast.ai/docs/get-started/quickstart
 ogTitle: Lightfast Quickstart
-ogDescription: Create an organization and start using Lightfast with email login and API keys.
+ogDescription: Create an organization and start using Lightfast with email login and org-bound native auth.
 authors:
   - name: Lightfast Team
     url: https://lightfast.ai
@@ -19,7 +19,7 @@ updatedAt: "2026-05-21T00:00:00Z"
 proficiencyLevel: Beginner
 ---
 
-Lightfast is the memory layer for software teams and AI agents. This guide walks through the current setup path: email-based account access, organization creation, and API access.
+Lightfast is the memory layer for software teams and AI agents. This guide walks through the current setup path: email-based account access, organization creation, and native app sign-in.
 
 ## Step 1 — Sign in with email
 
@@ -29,7 +29,7 @@ New users can create an account from the sign-up page. Invited users should use 
 
 ## Step 2 — Create an organization
 
-Create an organization for your team. An organization is the shared workspace where team membership, API keys, and product access are managed.
+Create an organization for your team. An organization is the shared workspace where team membership and product access are managed.
 
 Choose a short, stable slug for the organization, such as `acme-platform` or `frontend`. You can rename the organization later from team settings.
 
@@ -37,15 +37,11 @@ Choose a short, stable slug for the organization, such as `acme-platform` or `fr
 
 Add the people who should have access to the organization. Invitations are accepted through email, so teammates do not need a social account or an external identity provider to join.
 
-## Step 4 — Create an API key
+## Step 4 — Sign in from native tools
 
-For programmatic access, create an organization API key from team settings or use the CLI setup flow. API keys are scoped to the organization that created them.
+For local developer workflows, use `lightfast login` or the desktop sign-in button. Both use Clerk OAuth Authorization Code + PKCE, open the Lightfast web app for organization selection, and store an org-bound native session locally.
 
-Use the [TypeScript SDK](/docs/integrate/sdk), [REST API](/docs/api-reference/getting-started/overview), or [MCP server](/docs/integrate/mcp) to connect Lightfast to your own workflows and agents.
-
-<Alert>
-Keep API keys server-side. Do not expose organization API keys in browser code, mobile apps, or public repositories.
-</Alert>
+Native login does not create Lightfast API keys.
 
 ## FAQ
 
@@ -60,6 +56,6 @@ Keep API keys server-side. Do not expose organization API keys in browser code, 
     Lightfast currently supports email-based login only.
   </FAQItem>
   <FAQItem value="how-do-agents-access-lightfast" question="How do agents access Lightfast?">
-    Agents should use an organization API key through the REST API, TypeScript SDK, or MCP server.
+    Local tools should use native sign-in. Server-side integrations can use the REST API, TypeScript SDK, or MCP server.
   </FAQItem>
 </FAQAccordion>

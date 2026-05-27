@@ -7,11 +7,13 @@ export const env = createEnv({
   server: {
     INNGEST_APP_NAME: z.string().min(1).startsWith("lightfast-"),
     INNGEST_EVENT_KEY: z.string().min(1).optional(),
+    INNGEST_SERVE_HOST: z.string().url().optional(),
     INNGEST_SIGNING_KEY: z.string().min(1).startsWith("signkey-").optional(),
   },
   runtimeEnv: {
     INNGEST_APP_NAME: process.env.INNGEST_APP_NAME,
     INNGEST_EVENT_KEY: process.env.INNGEST_EVENT_KEY,
+    INNGEST_SERVE_HOST: process.env.INNGEST_SERVE_HOST,
     INNGEST_SIGNING_KEY: process.env.INNGEST_SIGNING_KEY,
   },
   skipValidation:

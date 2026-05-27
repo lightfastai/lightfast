@@ -1,9 +1,10 @@
 import type { Database } from "@db/app";
 import { isOrgBound } from "@db/app";
 import { db as appDb } from "@db/app/client";
-import { clerkClient } from "@vendor/clerk/server";
+import { getUnkeyClient } from "@vendor/unkey/server";
 
 import type { Diagnostic } from "../diagnostics";
+import { LIGHTFAST_API_KEY_PREFIX } from "./api-key-prefix";
 import type { AuthIdentity, BindingStatus } from "./identity";
 
 export type ApiKeyAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
@@ -17,7 +18,7 @@ export type ApiKeyAuthFailure =
   | "missing"
   | "invalid-format"
   | "invalid"
-  | "revoked"
+  | "disabled"
   | "expired"
   | "not-org-scoped"
   | "missing-creator";
@@ -57,9 +58,9 @@ function parseBearerApiKey(headers: Headers): string {
     );
   }
 
-  // Clerk org API keys currently use the `ak_` prefix. Keep this as a cheap
-  // shape check before making a network request to Clerk.
-  if (!token.startsWith("ak_")) {
+  // Lightfast public API keys use Unkey's `lf_` prefix. Keep this as a cheap
+  // shape check before making a network request to Unkey.
+  if (!token.startsWith(LIGHTFAST_API_KEY_PREFIX)) {
     throw new ApiKeyAuthError(
       "invalid-format",
       "Invalid API key format.",
@@ -75,29 +76,37 @@ export async function resolveApiKeyAuth(input: {
   headers: Headers;
 }): Promise<ApiKeyAuthResult> {
   const token = parseBearerApiKey(input.headers);
-  const clerk = await clerkClient();
-  let key;
+  const unkey = getUnkeyClient();
+  let verification;
 
   try {
-    key = await clerk.apiKeys.verify(token);
+    verification = await unkey.keys.verifyKey({ key: token });
   } catch {
     throw new ApiKeyAuthError("invalid", "Invalid API key", "UNAUTHORIZED");
   }
 
-  if (key.revoked) {
-    throw new ApiKeyAuthError("revoked", "API key revoked", "UNAUTHORIZED");
+  const key = verification.data;
+  if (!key.valid) {
+    if (key.code === "DISABLED") {
+      throw new ApiKeyAuthError("disabled", "API key disabled", "UNAUTHORIZED");
+    }
+    if (key.code === "EXPIRED") {
+      throw new ApiKeyAuthError("expired", "API key expired", "UNAUTHORIZED");
+    }
+    throw new ApiKeyAuthError("invalid", "Invalid API key", "UNAUTHORIZED");
   }
-  if (key.expired) {
-    throw new ApiKeyAuthError("expired", "API key expired", "UNAUTHORIZED");
-  }
-  if (!key.subject.startsWith("org_")) {
+
+  const orgId = key.identity?.externalId;
+  if (!orgId) {
     throw new ApiKeyAuthError(
       "not-org-scoped",
       "API key is not org-scoped",
       "FORBIDDEN"
     );
   }
-  if (!key.createdBy) {
+
+  const createdByUserId = key.meta?.createdByUserId;
+  if (typeof createdByUserId !== "string") {
     throw new ApiKeyAuthError(
       "missing-creator",
       "API key is missing creator metadata",
@@ -105,14 +114,18 @@ export async function resolveApiKeyAuth(input: {
     );
   }
 
-  const bound = await isOrgBound(input.db ?? appDb, key.subject);
+  const bound = await isOrgBound(input.db ?? appDb, orgId);
   const bindingStatus = (bound ? "bound" : "unbound") satisfies BindingStatus;
   const identity: ApiKeyAuthIdentity = {
     type: "active",
-    userId: key.createdBy,
-    orgId: key.subject,
+    userId: createdByUserId,
+    orgId,
     orgGate: { bindingStatus },
   };
 
-  return { apiKeyId: key.id, identity };
+  if (!key.keyId) {
+    throw new ApiKeyAuthError("invalid", "Invalid API key", "UNAUTHORIZED");
+  }
+
+  return { apiKeyId: key.keyId, identity };
 }

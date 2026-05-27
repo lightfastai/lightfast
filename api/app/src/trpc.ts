@@ -179,6 +179,32 @@ const signedInProcedure = t.procedure
   .use(observabilityMiddleware)
   .use(requireAuth);
 
+const requireNativeOAuth = t.middleware(({ ctx, next }) => {
+  if (
+    ctx.auth.identity.type === "unauthenticated" ||
+    ctx.auth.access?.kind !== "clerk-oauth"
+  ) {
+    throwDiagnostic({
+      trpcCode: "UNAUTHORIZED",
+      diagnostic: {
+        code: "NATIVE_OAUTH_REQUIRED",
+        message: "Lightfast native OAuth authentication required.",
+      },
+    });
+  }
+
+  return next({
+    ctx: {
+      ...ctx,
+      auth: {
+        ...ctx.auth,
+        access: ctx.auth.access,
+        identity: ctx.auth.identity,
+      },
+    },
+  });
+});
+
 /**
  * Public (unauthed) procedure
  *
@@ -210,6 +236,8 @@ export const publicProcedure = t.procedure.use(observabilityMiddleware);
  * @see https://trpc.io/docs/procedures
  */
 export const viewerProcedure = signedInProcedure;
+
+export const nativeOAuthProcedure = signedInProcedure.use(requireNativeOAuth);
 
 /**
  * Pending-Not-Allowed Procedure

@@ -17,3 +17,21 @@ export {
   type UpsertActiveOrgBindingInput,
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
+export {
+  getPersonByIdentityKey,
+  type UpsertPeopleCandidate,
+  type UpsertPeopleFromCandidatesInput,
+  upsertPeopleFromCandidates,
+} from "./utils/people";
+export {
+  type ClaimSignalForClassificationParams,
+  type CreateSignalRecordInput,
+  claimSignalForClassification,
+  createSignal,
+  type GetSignalByPublicIdParams,
+  getSignalByPublicId,
+  type MarkSignalClassifiedParams,
+  type MarkSignalFailedParams,
+  markSignalClassified,
+  markSignalFailed,
+} from "./utils/signals";

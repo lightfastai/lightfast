@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChatStatus, FileUIPart, JSONValue } from "ai";
+import type { ChatStatus, FileUIPart, JSONValue } from "@vendor/ai";
 import {
   ImageIcon,
   Loader2Icon,

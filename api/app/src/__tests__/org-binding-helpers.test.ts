@@ -1,4 +1,5 @@
 import type { Database, OrgSourceControlBinding } from "@db/app";
+import { isSQLWrapper } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // `@db/app`'s barrel re-exports `db` from `./client`, which eagerly builds a
@@ -24,6 +25,7 @@ const {
  * are schema concerns, verified by `pnpm --filter @db/app db:generate`.
  */
 interface FakeDbConfig {
+  insertError?: unknown;
   insertId?: number;
   /** One result array per `select()` chain, consumed in order. */
   selectResults?: Record<string, unknown>[][];
@@ -36,17 +38,24 @@ function makeFakeDb(cfg: FakeDbConfig = {}) {
     select: vi.fn(),
     insert: vi.fn(),
     insertValues: vi.fn(),
+    limit: vi.fn(),
     update: vi.fn(),
     updateSet: vi.fn(),
   };
   const db = {
     select: (fields?: unknown) => {
       spies.select(fields);
+      const result = selectQueue.shift() ?? [];
+      const query = Promise.resolve(result) as Promise<unknown[]> & {
+        limit: (n: number) => Promise<unknown[]>;
+      };
+      query.limit = (n: number) => {
+        spies.limit(n);
+        return Promise.resolve(result.slice(0, n));
+      };
       return {
         from: () => ({
-          where: () => ({
-            limit: () => Promise.resolve(selectQueue.shift() ?? []),
-          }),
+          where: () => query,
         }),
       };
     },
@@ -56,7 +65,10 @@ function makeFakeDb(cfg: FakeDbConfig = {}) {
         values: (v: unknown) => {
           spies.insertValues(v);
           return {
-            $returningId: () => Promise.resolve([{ id: cfg.insertId ?? 1 }]),
+            $returningId: () =>
+              cfg.insertError
+                ? Promise.reject(cfg.insertError)
+                : Promise.resolve([{ id: cfg.insertId ?? 1 }]),
           };
         },
       };
@@ -213,35 +225,86 @@ describe("upsertActiveOrgBinding", () => {
       })
     ).rejects.toThrow(/Failed to insert active binding/);
   });
+
+  it("returns the active binding when a concurrent bind wins the unique race", async () => {
+    const existing = binding({ clerkOrgId: "org_race" });
+    const duplicateError = Object.assign(
+      new Error(
+        "Duplicate entry 'org_race' for key 'org_source_control_bindings_active_per_org_uq'"
+      ),
+      { body: { code: "ER_DUP_ENTRY" } }
+    );
+    const { db, spies } = makeFakeDb({
+      insertError: duplicateError,
+      selectResults: [[], [existing]],
+    });
+
+    await expect(
+      upsertActiveOrgBinding(db, {
+        clerkOrgId: "org_race",
+        connectedByUserId: "user_race",
+        provider: "github",
+      })
+    ).resolves.toEqual(existing);
+    expect(spies.insert).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("markOrgBindingRevoked", () => {
   it("returns the rows transitioned to revoked", async () => {
     const active = binding({ clerkOrgId: "org_rev" });
+    const revoked = binding({
+      ...active,
+      revokedAt: "2026-05-26 06:45:00.123",
+      status: "revoked",
+      updatedAt: "2026-05-26 06:45:00.123",
+    });
     const { db, spies } = makeFakeDb({
-      selectResults: [[active]],
+      selectResults: [[active], [revoked]],
       updateResult: [active],
     });
 
     const result = await markOrgBindingRevoked(db, { clerkOrgId: "org_rev" });
 
-    expect(result).toEqual([
-      expect.objectContaining({
-        clerkOrgId: "org_rev",
-        revokedAt: expect.any(String),
-        status: "revoked",
-        updatedAt: expect.any(String),
-      }),
-    ]);
+    expect(result).toEqual([revoked]);
     expect(selectedKeys(spies)).not.toContain("activeClerkOrgId");
+    const updateSet = spies.updateSet.mock.calls[0]?.[0] as {
+      revokedAt?: unknown;
+      updatedAt?: unknown;
+    };
+    expect(isSQLWrapper(updateSet.revokedAt)).toBe(true);
+    expect(updateSet.updatedAt).toBe(updateSet.revokedAt);
     expect(spies.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
         activeClerkOrgId: null,
         status: "revoked",
-        revokedAt: expect.any(String),
-        updatedAt: expect.any(String),
+        revokedAt: updateSet.revokedAt,
+        updatedAt: updateSet.revokedAt,
       })
     );
+  });
+
+  it("revokes every active binding when drift exceeds 100 rows", async () => {
+    const activeRows = Array.from({ length: 101 }, (_, index) =>
+      binding({ id: index + 1, clerkOrgId: "org_drift" })
+    );
+    const revokedRows = activeRows.map((row) =>
+      binding({
+        ...row,
+        revokedAt: "2026-05-26 06:45:00.123",
+        status: "revoked",
+        updatedAt: "2026-05-26 06:45:00.123",
+      })
+    );
+    const { db, spies } = makeFakeDb({
+      selectResults: [activeRows, revokedRows],
+      updateResult: activeRows,
+    });
+
+    await expect(
+      markOrgBindingRevoked(db, { clerkOrgId: "org_drift" })
+    ).resolves.toHaveLength(101);
+    expect(spies.limit).not.toHaveBeenCalledWith(100);
   });
 
   it("returns an empty array when the org had no active binding", async () => {

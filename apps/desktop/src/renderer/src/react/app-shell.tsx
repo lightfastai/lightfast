@@ -1,20 +1,16 @@
 import { useQueryClient } from "@tanstack/react-query";
 import { captureException } from "@vendor/observability/sentry-browser";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Toaster, toast } from "sonner";
-import type { AuthSnapshot } from "../../../shared/ipc";
 import { AccountCard } from "./account-card";
 import { SignedOutShell } from "./signed-out-shell";
+import { useAuthSnapshot } from "./use-auth-snapshot";
 
 let signoutFailureReported = false;
 
 export function AppShell() {
-  const [auth, setAuth] = useState<AuthSnapshot>(
-    () => window.lightfastBridge.auth.snapshot
-  );
+  const auth = useAuthSnapshot();
   const queryClient = useQueryClient();
-
-  useEffect(() => window.lightfastBridge.auth.onChanged(setAuth), []);
 
   useEffect(() => {
     const unsub = queryClient.getQueryCache().subscribe((event) => {

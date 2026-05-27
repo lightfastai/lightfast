@@ -38,6 +38,7 @@ interface SignInStub {
 
 let signInStub: SignInStub;
 let searchParamsValue: URLSearchParams;
+let userStub: { isLoaded: boolean; isSignedIn: boolean };
 
 function makeSignInStub(): SignInStub {
   return {
@@ -64,6 +65,7 @@ vi.mock("@vendor/clerk", () => ({
   isClerkAPIResponseError: (err: unknown) =>
     typeof err === "object" && err !== null && "errors" in err,
   useSignIn: () => ({ signIn: signInStub }),
+  useUser: () => userStub,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -92,6 +94,7 @@ Object.defineProperty(window, "location", {
 beforeEach(() => {
   signInStub = makeSignInStub();
   searchParamsValue = new URLSearchParams();
+  userStub = { isLoaded: true, isSignedIn: false };
   hrefValue = "";
 });
 
@@ -102,6 +105,21 @@ afterEach(() => {
 const { default: SignInPage } = await import("~/app/(auth)/sign-in/page");
 
 describe("sign-in — email submit", () => {
+  it("continues already-signed-in users to a safe redirect target", async () => {
+    const redirectUrl =
+      "https://charmed-shark-52.accounts.dev/oauth-consent?client_id=cli";
+    searchParamsValue = new URLSearchParams({
+      redirect_url: redirectUrl,
+    });
+    userStub = { isLoaded: true, isSignedIn: true };
+
+    render(<SignInPage />);
+
+    await waitFor(() => {
+      expect(hrefValue).toBe(redirectUrl);
+    });
+  });
+
   it("calls signIn.emailCode.sendCode and transitions to OTP view on success", async () => {
     render(<SignInPage />);
 
@@ -207,6 +225,88 @@ describe("sign-in — OTP verify", () => {
         code: "123456",
       });
     });
+    await waitFor(() => {
+      expect(signInStub.finalize).toHaveBeenCalledTimes(1);
+    });
+    expect(hrefValue).toBe("/");
+  });
+
+  it("finalizes to a safe Clerk OAuth redirect URL", async () => {
+    const redirectUrl =
+      "https://charmed-shark-52.accounts.dev/oauth-consent?client_id=cli";
+    searchParamsValue = new URLSearchParams({
+      redirect_url: redirectUrl,
+    });
+    render(<SignInPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/email address/i), {
+      target: { value: "u@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /continue with email/i })
+      );
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: /verification/i })
+      ).toBeInTheDocument()
+    );
+
+    signInStub.status = "complete";
+    const otpInput = document.querySelector(
+      'input[data-input-otp="true"], input[autocomplete="one-time-code"]'
+    ) as HTMLInputElement | null;
+    expect(otpInput).not.toBeNull();
+    if (!otpInput) {
+      return;
+    }
+
+    await act(async () => {
+      fireEvent.change(otpInput, { target: { value: "123456" } });
+    });
+
+    await waitFor(() => {
+      expect(signInStub.finalize).toHaveBeenCalledTimes(1);
+    });
+    expect(hrefValue).toBe(redirectUrl);
+  });
+
+  it("falls back to root for unsafe external redirect URLs", async () => {
+    searchParamsValue = new URLSearchParams({
+      redirect_url: "https://evil.example/oauth-consent",
+    });
+    render(<SignInPage />);
+
+    fireEvent.change(screen.getByPlaceholderText(/email address/i), {
+      target: { value: "u@example.com" },
+    });
+    await act(async () => {
+      fireEvent.click(
+        screen.getByRole("button", { name: /continue with email/i })
+      );
+    });
+
+    await waitFor(() =>
+      expect(
+        screen.getByRole("heading", { name: /verification/i })
+      ).toBeInTheDocument()
+    );
+
+    signInStub.status = "complete";
+    const otpInput = document.querySelector(
+      'input[data-input-otp="true"], input[autocomplete="one-time-code"]'
+    ) as HTMLInputElement | null;
+    expect(otpInput).not.toBeNull();
+    if (!otpInput) {
+      return;
+    }
+
+    await act(async () => {
+      fireEvent.change(otpInput, { target: { value: "123456" } });
+    });
+
     await waitFor(() => {
       expect(signInStub.finalize).toHaveBeenCalledTimes(1);
     });

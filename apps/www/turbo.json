@@ -13,7 +13,8 @@
         "NEXT_PUBLIC_BETTER_STACK_INGESTING_URL",
         "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY",
         "NEXT_PUBLIC_POSTHOG_KEY",
-        "NEXT_PUBLIC_POSTHOG_HOST"
+        "NEXT_PUBLIC_POSTHOG_HOST",
+        "VERCEL_ENV"
       ],
       "passThroughEnv": [
         "SENTRY_AUTH_TOKEN",
@@ -24,7 +25,6 @@
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
         "INNGEST_SIGNING_KEY",
-        "ARCJET_ENV",
         "ARCJET_KEY",
         "KV_REST_API_URL",
         "KV_REST_API_TOKEN",

@@ -5,7 +5,7 @@ const mutateAsyncMock = vi.fn();
 const reloadMock = vi.fn();
 const replaceMock = vi.fn();
 
-vi.mock("@repo/app-trpc/react", () => ({
+vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     org: {
       setup: {

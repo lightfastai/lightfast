@@ -28,7 +28,7 @@ For external API clients, use an API key in the `Authorization` header:
 
 ```bash
 curl -X POST https://lightfast.ai/api/v1/search \
-  -H "Authorization: Bearer ak_your-api-key" \
+  -H "Authorization: Bearer lf_your-api-key" \
   -H "Content-Type: application/json" \
   -d '{"query": "authentication implementation"}'
 ```
@@ -37,7 +37,7 @@ curl -X POST https://lightfast.ai/api/v1/search \
 
 | Header | Description |
 |--------|-------------|
-| `Authorization` | `Bearer <api-key>` — Your API key (prefixed with `ak_`) |
+| `Authorization` | `Bearer <api-key>` — Your API key (prefixed with `lf_`) |
 | `Content-Type` | `application/json` |
 
 The organization is resolved automatically from the API key's database record — no additional headers are needed.
@@ -74,14 +74,14 @@ Never hardcode API keys in your source code:
 const apiKey = process.env.LIGHTFAST_API_KEY
 
 // Bad - hardcoded credentials
-const apiKey = 'ak_abc123...'
+const apiKey = 'lf_abc123...'
 ```
 
 ### Environment Setup
 
 ```bash
 # .env.local
-LIGHTFAST_API_KEY=ak_your-api-key
+LIGHTFAST_API_KEY=lf_your-api-key
 ```
 
 ### Never Commit Keys

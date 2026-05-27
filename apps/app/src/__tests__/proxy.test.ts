@@ -17,6 +17,14 @@ interface AuthResult {
 }
 
 const authMock = vi.fn<() => Promise<AuthResult>>();
+let clerkMiddlewareOptions:
+  | {
+      organizationSyncOptions?: {
+        organizationPatterns?: string[];
+      };
+    }
+  | undefined;
+const clerkProxyRequestMock = vi.fn();
 const createNEMOMock = vi.fn(
   (
     middlewares: Record<
@@ -85,16 +93,24 @@ vi.mock("@vendor/clerk/server", () => ({
       },
     })
   ),
-  clerkMiddleware:
-    (
-      handler: (
-        auth: typeof authMock,
-        req: RequestLike,
-        event: EventLike
-      ) => Promise<Response>
-    ) =>
-    (req: RequestLike, event: EventLike) =>
-      handler(authMock, req, event),
+  clerkMiddleware: (
+    handler: (
+      auth: typeof authMock,
+      req: RequestLike,
+      event: EventLike
+    ) => Promise<Response>,
+    options?: {
+      organizationSyncOptions?: {
+        organizationPatterns?: string[];
+      };
+    }
+  ) => {
+    clerkMiddlewareOptions = options;
+    return (req: RequestLike, event: EventLike) => {
+      clerkProxyRequestMock(req.nextUrl.pathname);
+      return handler(authMock, req, event);
+    };
+  },
   createRouteMatcher: (patterns: string[]) => (req: RequestLike) => {
     const pathname = req.nextUrl.pathname;
     return patterns.some((pattern) => matchesPattern(pattern, pathname));
@@ -147,6 +163,7 @@ async function invoke(pathname: string, event = { waitUntil: vi.fn() }) {
 
 beforeEach(() => {
   authMock.mockReset();
+  clerkProxyRequestMock.mockReset();
   runMicrofrontendsMiddlewareMock.mockReset();
   runMicrofrontendsMiddlewareMock.mockResolvedValue(null);
   updateUserMetadataMock.mockReset();
@@ -167,6 +184,12 @@ describe("proxy Nemo composition", () => {
       { "/:path*": expect.any(Function) },
       { before: [expect.any(Function)] }
     );
+  });
+
+  it("keeps Clerk organization route patterns broad and readable", () => {
+    expect(clerkMiddlewareOptions?.organizationSyncOptions).toEqual({
+      organizationPatterns: ["/:slug", "/:slug/(.*)"],
+    });
   });
 });
 
@@ -197,6 +220,32 @@ describe("proxy post-auth routing", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
       "https://app.lightfast.localhost/last-team"
+    );
+  });
+
+  it("continues signed-in Clerk OAuth auth routes to the OAuth consent URL", async () => {
+    const redirectUrl = new URL(
+      "https://charmed-shark-52.accounts.dev/oauth-consent"
+    );
+    redirectUrl.searchParams.set("__clerk_db_jwt", "jwt");
+    redirectUrl.searchParams.set("client_id", "cli_client");
+
+    const { response } = await invoke(
+      `/sign-in?redirect_url=${encodeURIComponent(redirectUrl.toString())}`
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(redirectUrl.toString());
+  });
+
+  it("does not continue signed-in auth routes to arbitrary external redirect URLs", async () => {
+    const { response } = await invoke(
+      "/sign-in?redirect_url=https%3A%2F%2Fevil.example%2Foauth-consent"
+    );
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/acme"
     );
   });
 
@@ -251,8 +300,7 @@ describe("proxy pending-session route handling", () => {
 
   it.each([
     "/account/settings",
-    "/cli/auth",
-    "/desktop/auth",
+    "/oauth/desktop/start",
   ])("allows pending sessions through %s", async (pathname) => {
     const { response } = await invoke(pathname);
 
@@ -260,14 +308,34 @@ describe("proxy pending-session route handling", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("leaves tRPC auth to the API handler instead of pending-page routing", async () => {
+  it("runs Clerk middleware for tRPC without pending-page routing", async () => {
     const { response } = await invoke(
       "/api/trpc/viewer.organization.create?batch=1"
     );
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();
+    expect(clerkProxyRequestMock).toHaveBeenCalledWith(
+      "/api/trpc/viewer.organization.create"
+    );
     expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("leaves native OAuth facade routes to their route handlers", async () => {
+    const { response } = await invoke("/api/oauth/finalize");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("does not run microfrontend routing for app-owned API routes", async () => {
+    const { response } = await invoke("/api/v1/system/health");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+    expect(runMicrofrontendsMiddlewareMock).not.toHaveBeenCalled();
   });
 });
 
@@ -361,7 +429,10 @@ describe("proxy bound org product route gate", () => {
     expect(response.headers.get("location")).toBeNull();
   });
 
-  it("does not treat reserved routes as org product routes", async () => {
+  it.each([
+    "/account/settings",
+    "/oauth/desktop/start",
+  ])("does not gate app-owned signed-in route %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: "org_123",
       orgSlug: "acme",
@@ -370,7 +441,41 @@ describe("proxy bound org product route gate", () => {
       userId: "user_123",
     });
 
-    const { response } = await invoke("/account/settings");
+    const { response } = await invoke(pathname);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it.each([
+    "/docs",
+    "/docs/get-started",
+  ])("does not gate public docs route %s", async (pathname) => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: { lf_binding_status: "unbound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke(pathname);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("does not gate a different org slug when Clerk has another active org", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: { lf_binding_status: "unbound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/different-team/workspace");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();

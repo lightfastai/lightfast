@@ -1,5 +1,11 @@
 import { oc } from "@orpc/contract";
 
+import {
+  createSignalInput,
+  createSignalOutput,
+  getSignalInput,
+  getSignalOutput,
+} from "./schemas/signals";
 import { systemHealthOutput } from "./schemas/system";
 
 const system = {
@@ -14,6 +20,31 @@ const system = {
     .output(systemHealthOutput),
 };
 
-export const apiContract = { system };
+const signals = {
+  create: oc
+    .route({
+      method: "POST",
+      path: "/signals",
+      successStatus: 202,
+      summary: "Create signal",
+      description:
+        "Creates an org-scoped signal from raw text and queues asynchronous classification.",
+    })
+    .input(createSignalInput)
+    .output(createSignalOutput),
+
+  get: oc
+    .route({
+      method: "GET",
+      path: "/signals/{id}",
+      summary: "Get signal",
+      description:
+        "Returns a single org-scoped signal and its current classification state.",
+    })
+    .input(getSignalInput)
+    .output(getSignalOutput),
+};
+
+export const apiContract = { signals, system };
 
 export type Contract = typeof apiContract;

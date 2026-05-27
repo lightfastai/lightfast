@@ -15,6 +15,20 @@
       "when": 1779349139098,
       "tag": "0001_third_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1779359086402,
+      "tag": "0002_grey_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1779430119437,
+      "tag": "0003_zippy_stardust",
+      "breakpoints": true
     }
   ]
 }

@@ -1,3 +1,4 @@
+import { ShellDataBoundary } from "~/components/shell-data-boundary";
 import { UserLayoutShell } from "~/components/user-layout-shell";
 
 export default function UserLayout({
@@ -5,5 +6,9 @@ export default function UserLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return <UserLayoutShell>{children}</UserLayoutShell>;
+  return (
+    <ShellDataBoundary>
+      <UserLayoutShell>{children}</UserLayoutShell>
+    </ShellDataBoundary>
+  );
 }

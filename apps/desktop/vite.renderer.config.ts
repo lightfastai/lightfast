@@ -14,8 +14,6 @@ export default defineConfig({
   },
   optimizeDeps: {
     include: [
-      "@repo/app-trpc/desktop",
-      "@repo/app-trpc/react",
       "@radix-ui/react-dropdown-menu",
       "lucide-react",
       "superjson",

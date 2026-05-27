@@ -26,6 +26,7 @@ export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
 
 export type DiagnosticCode =
   | "AUTH_REQUIRED"
+  | "NATIVE_OAUTH_REQUIRED"
   | "ORG_REQUIRED"
   | "ORG_SETUP_REQUIRED"
   | "PERMISSION_REQUIRED";
@@ -33,7 +34,7 @@ export type DiagnosticCode =
 export interface Repair {
   /**
    * Optional client-navigable repair target. Set when the throwing surface
-   * knows the concrete URL (e.g. the CLI setup route, which has the org slug);
+   * knows the concrete URL (e.g. a route handler with the active org slug);
    * omitted by transport-agnostic gates that only know the Clerk org id.
    */
   href?: string;

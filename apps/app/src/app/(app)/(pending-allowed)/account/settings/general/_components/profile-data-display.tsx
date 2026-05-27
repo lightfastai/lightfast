@@ -1,10 +1,10 @@
 "use client";
 
-import { useTRPC } from "@repo/app-trpc/react";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { useSuspenseQuery } from "@tanstack/react-query";
+import { useTRPC } from "~/trpc/react";
 
 export function ProfileDataDisplay() {
   const trpc = useTRPC();

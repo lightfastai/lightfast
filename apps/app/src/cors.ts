@@ -76,7 +76,7 @@ export function isDesktopDevOrigin(origin: string | null): origin is string {
 // opaque origin as the ASCII string "null" (Fetch spec), so the Origin header
 // arrives as the literal string "null" — not the JS null of an absent header.
 // The renderer also sets x-lightfast-desktop: 1; we admit only the conjunction.
-// Auth is still gated on the Bearer JWT (packages/app-trpc/src/desktop.tsx);
+// Auth is still gated on the Bearer JWT (apps/desktop renderer tRPC provider);
 // the marker is signal, not an auth boundary.
 export function isPackagedDesktopRequest(
   origin: string | null,

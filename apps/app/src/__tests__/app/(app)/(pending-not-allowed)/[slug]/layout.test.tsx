@@ -1,4 +1,5 @@
-import React from "react";
+import { render, screen } from "@testing-library/react";
+import type React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 interface Kids {
@@ -13,9 +14,8 @@ const notFoundMock = vi.fn(() => {
   throw new Error("NEXT_NOT_FOUND");
 });
 
-vi.mock("@repo/app-trpc/server", () => ({
+vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
-  HydrateClient: ({ children }: Kids) => <>{children}</>,
   trpc: {
     viewer: {
       organization: {
@@ -51,7 +51,7 @@ vi.mock("~/components/app-sidebar", () => {
 
 vi.mock("~/components/authenticated-topbar", () => {
   function AuthenticatedTopbar({ left }: { left?: React.ReactNode }) {
-    return <header>{left}</header>;
+    return <header data-testid="authenticated-topbar">{left}</header>;
   }
 
   return { AuthenticatedTopbar };
@@ -61,6 +61,12 @@ vi.mock("~/components/errors/org-page-error-boundary", () => ({
   OrgPageErrorBoundary: ({ children }: Kids) => <>{children}</>,
 }));
 
+vi.mock("~/components/shell-data-boundary", () => ({
+  ShellDataBoundary: ({ children }: Kids) => (
+    <section data-testid="shell-data-boundary">{children}</section>
+  ),
+}));
+
 vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
 }));
@@ -68,22 +74,6 @@ vi.mock("next/navigation", () => ({
 const { default: OrgLayout } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/layout"
 );
-
-function containsComponentNamed(node: unknown, componentName: string): boolean {
-  if (!React.isValidElement(node)) {
-    return false;
-  }
-
-  const type = node.type;
-  if (typeof type === "function" && type.name === componentName) {
-    return true;
-  }
-
-  const props = node.props as { children?: React.ReactNode };
-  return React.Children.toArray(props.children).some((child) =>
-    containsComponentNamed(child, componentName)
-  );
-}
 
 function invoke(slug = "acme") {
   return OrgLayout({
@@ -115,7 +105,7 @@ describe("[slug]/layout — membership/slug access gate", () => {
     expect(notFoundMock).toHaveBeenCalledOnce();
   });
 
-  it("returns a UI-less membership boundary when org access is allowed", async () => {
+  it("returns a UI-less membership boundary with shell data when org access is allowed", async () => {
     fetchQueryMock.mockResolvedValue({
       bindingStatus: "unbound",
       org: {
@@ -129,8 +119,15 @@ describe("[slug]/layout — membership/slug access gate", () => {
 
     const element = await invoke("acme");
 
-    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(false);
-    expect(containsComponentNamed(element, "AppSidebar")).toBe(false);
+    render(element);
+
+    expect(screen.getByTestId("shell-data-boundary")).toHaveTextContent(
+      "Workspace"
+    );
+    expect(
+      screen.queryByTestId("authenticated-topbar")
+    ).not.toBeInTheDocument();
+    expect(screen.queryByTestId("app-sidebar")).not.toBeInTheDocument();
     expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "acme" });
   });
 });

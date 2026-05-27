@@ -4,40 +4,37 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const verifyMock = vi.fn();
 const isOrgBoundMock = vi.fn();
 
-vi.mock("@vendor/clerk/server", () => ({
-  clerkClient: () =>
-    Promise.resolve({
-      apiKeys: { verify: verifyMock },
-    }),
+vi.mock("@vendor/unkey/server", () => ({
+  getUnkeyClient: () => ({
+    keys: { verifyKey: verifyMock },
+  }),
 }));
 
 vi.mock("@db/app/client", () => ({ db: {} }));
-vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
+vi.mock("@db/app", () => ({
+  createSignal: vi.fn(),
+  getSignalByPublicId: vi.fn(),
+  isOrgBound: isOrgBoundMock,
+  markSignalFailed: vi.fn(),
+}));
 
 const { orpcRouter } = await import("../router");
 
-const validKey = `ak_${"a".repeat(40)}`;
+const validKey = `lf_${"a".repeat(40)}`;
 
 beforeEach(() => {
   verifyMock.mockReset();
   isOrgBoundMock.mockReset();
   isOrgBoundMock.mockResolvedValue(true);
   verifyMock.mockResolvedValue({
-    id: "apk_test",
-    type: "api_key",
-    name: "test",
-    subject: "org_test",
-    scopes: [],
-    claims: null,
-    revoked: false,
-    revocationReason: null,
-    expired: false,
-    expiration: null,
-    createdBy: "user_test",
-    description: null,
-    lastUsedAt: null,
-    createdAt: 0,
-    updatedAt: 0,
+    data: {
+      code: "VALID",
+      identity: { externalId: "org_test", id: "identity_test" },
+      keyId: "key_test",
+      meta: { createdByUserId: "user_test" },
+      valid: true,
+    },
+    meta: { requestId: "req_test" },
   });
 });
 

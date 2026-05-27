@@ -1,4 +1,4 @@
-import { HydrateClient, prefetch, trpc } from "@repo/app-trpc/server";
+import { HydrateClient, prefetch, trpc } from "~/trpc/server";
 import { BillingSettingsClient } from "./_components/billing-settings-client";
 
 export const dynamic = "force-dynamic";

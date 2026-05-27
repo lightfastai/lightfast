@@ -1,0 +1,12 @@
+{
+  "extends": ["//"],
+  "tags": ["app"],
+  "tasks": {
+    "sdk": {
+      "cache": false
+    },
+    "signals": {
+      "cache": false
+    }
+  }
+}

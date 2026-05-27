@@ -5,7 +5,7 @@ const { orgGateMiddleware } = await import("../middleware/org-gate");
 
 /**
  * Invoke the gate as it runs in production: after `authMiddleware` has resolved
- * a Clerk API key into the shared `context.auth.identity` contract.
+ * an Unkey API key into the shared `context.auth.identity` contract.
  */
 async function invokeGate(bindingStatus: "bound" | "unbound" | "revoked") {
   const { os } = await import("@orpc/server");

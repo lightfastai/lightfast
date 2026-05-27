@@ -4,9 +4,10 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { useSignIn } from "@vendor/clerk";
+import { useSignIn, useUser } from "@vendor/clerk";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
+import { parseSafeAuthRedirectTarget } from "~/auth-redirect";
 import { ErrorBanner } from "../_components/error-banner";
 import { CodeVerificationUI } from "../_components/shared/code-verification-ui";
 import { authErrorMessage, mapOtpClerkError } from "../_hooks/auth-errors";
@@ -37,7 +38,11 @@ export default function SignInPage() {
 
 function SignInView() {
   const { signIn } = useSignIn();
+  const { isLoaded: isUserLoaded, isSignedIn } = useUser();
   const searchParams = useSearchParams();
+  const successRedirect =
+    parseSafeAuthRedirectTarget(searchParams.get("redirect_url")) ??
+    SUCCESS_REDIRECT;
   const errorParam = searchParams.get("error");
   const errorCode = parseErrorCode(searchParams.get("errorCode"));
   const hasError = !!(errorParam ?? errorCode);
@@ -55,6 +60,14 @@ function SignInView() {
   const [isResending, setIsResending] = React.useState(false);
 
   const verifyingCodeRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    if (!(isUserLoaded && isSignedIn) || isRedirecting) {
+      return;
+    }
+    setIsRedirecting(true);
+    window.location.replace(successRedirect);
+  }, [isRedirecting, isSignedIn, isUserLoaded, successRedirect]);
 
   const handleWaitlist = React.useCallback(() => {
     window.location.replace("/sign-in?errorCode=waitlist");
@@ -179,7 +192,7 @@ function SignInView() {
           authBreadcrumb("OTP verified", "info", { mode: "sign-in" });
           setIsRedirecting(true);
           await signIn.finalize({
-            navigate: makeFinalizeNavigate(SUCCESS_REDIRECT),
+            navigate: makeFinalizeNavigate(successRedirect),
           });
         } else {
           verifyingCodeRef.current = null;
@@ -194,7 +207,7 @@ function SignInView() {
         setIsVerifying(false);
       }
     },
-    [signIn, handleOtpClerkError]
+    [signIn, handleOtpClerkError, successRedirect]
   );
 
   const onCodeChange = React.useCallback(

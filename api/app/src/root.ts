@@ -10,6 +10,7 @@
  */
 
 import { accountRouter } from "./router/(pending-allowed)/account";
+import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
 import {
   organizationRouter,
   orgSettingsOrganizationRouter,
@@ -21,6 +22,9 @@ import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
+  native: createTRPCRouter({
+    auth: nativeAuthRouter,
+  }),
   viewer: createTRPCRouter({
     organization: organizationRouter,
     account: accountRouter,

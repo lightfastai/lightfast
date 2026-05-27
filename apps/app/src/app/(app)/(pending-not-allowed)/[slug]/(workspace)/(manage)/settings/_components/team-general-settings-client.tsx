@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useTRPC } from "@repo/app-trpc/react";
 import type { TeamSettingsFormValues } from "@repo/app-validation/forms";
 import { teamSettingsFormSchema } from "@repo/app-validation/forms";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
@@ -26,6 +25,7 @@ import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useTRPC } from "~/trpc/react";
 
 interface TeamGeneralSettingsClientProps {
   slug: string;

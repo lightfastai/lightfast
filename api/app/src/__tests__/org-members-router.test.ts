@@ -31,7 +31,6 @@ vi.mock("@vendor/clerk/server", () => ({
         updateOrganizationMembership: updateOrganizationMembershipMock,
       },
     }),
-  verifyToken: vi.fn(),
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({

@@ -17,7 +17,7 @@ type OperationId = "search";
 const sdkSamples: Record<OperationId, string> = {
   search: `import { Lightfast } from "lightfast";
 
-const client = new Lightfast({ apiKey: "ak_..." });
+const client = new Lightfast({ apiKey: "lf_..." });
 
 const results = await client.search({
   query: "authentication implementation",

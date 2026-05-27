@@ -1,13 +1,13 @@
 # @lightfastai/cli
 
-CLI for local testing and validation of Lightfast configuration.
+CLI for signing in to Lightfast from local developer workflows.
 
 ## Purpose
 
 Provides command-line tools for:
-- Validating `lightfast.yml` configuration
-- Testing search queries locally
-- Manual ingestion (future)
+- Signing in with Clerk OAuth Authorization Code + PKCE
+- Binding the native session to a Lightfast organization selected in the browser
+- Inspecting and clearing the stored CLI session
 
 ## Installation
 
@@ -25,39 +25,50 @@ pnpm --filter @lightfastai/cli build
 
 ## Usage
 
-**Validate Config:**
+### Sign in
 
 ```bash
-lightfast validate [--config lightfast.yml]
+lightfast login
 ```
 
-Checks:
-- Config file exists
-- Valid YAML syntax
-- Schema validation
-- Workspace resolution
-- Include globs match at least one file
+The CLI starts a temporary loopback listener on `127.0.0.1`, opens your browser, and signs in with Clerk OAuth Authorization Code + PKCE. Organization selection happens in the Lightfast web app during sign-in, and the stored native session is bound to that selected organization.
 
-**Test Search (Future):**
+### Show current session
 
 ```bash
-lightfast test-search "query" [--store docs-site]
+lightfast whoami
 ```
 
-Queries local Pinecone index for testing.
+### Sign out
+
+```bash
+lightfast logout
+```
 
 ## Commands
 
-### validate
+### login
 
-Validates the `lightfast.yml` configuration file.
+Signs in with Clerk OAuth Authorization Code + PKCE and stores the org-bound native CLI session in `auth.json`. The browser callback uses an ephemeral loopback port.
 
 ```bash
-lightfast validate [options]
+lightfast login
+```
 
-Options:
-  --config <path>  Path to lightfast.yml (default: ./lightfast.yml)
-  -h, --help       Display help
+### whoami
+
+Shows the currently stored CLI session.
+
+```bash
+lightfast whoami
+```
+
+### logout
+
+Removes the stored CLI session.
+
+```bash
+lightfast logout
 ```
 
 ## Development

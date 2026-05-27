@@ -15,24 +15,24 @@ import {
   type SystemThemeVariant,
 } from "../shared/ipc";
 import { openAppOrigin } from "./app-url";
+import { createAuthFocusGate } from "./auth-focus-gate";
+import { getBuildInfo } from "./build-info";
+import { closeDb, initDb } from "./db";
+import { initLogger, logger } from "./logger";
+import { buildApplicationMenu } from "./menu";
 import {
   beginSignIn,
   getPendingSigninUrl,
   maybeAutoBeginSignIn,
   onPendingSigninUrl,
-} from "./auth-flow";
-import { createAuthFocusGate } from "./auth-focus-gate";
+} from "./native-auth/flow";
+import { getValidAuthRequestHeaders } from "./native-auth/session";
 import {
   getAuthSnapshot,
   getToken as getAuthToken,
   onAuthChanged,
   signOut as signOutAuth,
-} from "./auth-store";
-import { getBuildInfo } from "./build-info";
-import { closeDb, initDb } from "./db";
-import { initLogger, logger } from "./logger";
-import { buildApplicationMenu } from "./menu";
-import { registerProtocolHandler } from "./protocol";
+} from "./native-auth/store";
 import { getRuntimeConfig } from "./runtime-config";
 import { initSentry } from "./sentry";
 import {
@@ -225,6 +225,9 @@ function registerIpcHandlers(): void {
     event.returnValue = getAuthSnapshot();
   });
   ipcMain.handle(IpcChannels.authGetToken, () => getAuthToken());
+  ipcMain.handle(IpcChannels.authGetRequestHeaders, () =>
+    getValidAuthRequestHeaders()
+  );
   ipcMain.handle(IpcChannels.authSignIn, () => beginSignIn());
   ipcMain.handle(IpcChannels.authSignOut, () => signOutAuth());
   ipcMain.handle(IpcChannels.authPendingSigninUrl, () => getPendingSigninUrl());
@@ -346,11 +349,6 @@ function broadcastSettings(snapshot: SettingsSnapshot): void {
 initLogger();
 initSentry();
 initDb();
-
-// Register the custom-scheme handler synchronously, before app.whenReady().
-// macOS delivers cold-start `open-url` events between app launch and ready;
-// attaching the listener inside whenReady().then(...) loses those URLs.
-registerProtocolHandler(() => BrowserWindow.getAllWindows());
 
 contextMenu({
   showInspectElement: !app.isPackaged,

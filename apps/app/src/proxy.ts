@@ -18,6 +18,7 @@ import { securityMiddleware } from "@vendor/security/middleware";
 import { runMicrofrontendsMiddleware } from "@vercel/microfrontends/next/middleware";
 import type { NextFetchEvent, NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { parseSafeAuthRedirectTarget } from "~/auth-redirect";
 
 const POST_AUTH_FALLBACK_PATH = "/account/teams/new";
 
@@ -42,8 +43,12 @@ const securityHeaders = securityMiddleware({
 
 // Public routes — clerkMiddleware still runs (required for ClerkProvider server-side context),
 // but auth is not enforced, so no JWKS fetch for unauthenticated visitors.
+// tRPC stays here because native OAuth Bearer resolution calls auth({ acceptsToken }),
+// which requires clerkMiddleware context; auth enforcement remains in procedures.
 const isPublicRoute = createRouteMatcher([
   "/early-access(.*)",
+  "/api/oauth/(.*)",
+  "/api/trpc/(.*)",
   "/api/health(.*)",
   "/docs(.*)",
   "/monitoring",
@@ -55,18 +60,24 @@ const isPublicRoute = createRouteMatcher([
 // Each route is responsible for its own auth + CORS (the Clerk middleware
 // would otherwise redirect OPTIONS preflight to /sign-in, which browsers
 // reject as ERR_INVALID_REDIRECT).
-//   /api/cli/*       — Clerk JWT (verifyCliJwt)
-//   /api/desktop/*   — Clerk session (code) / PKCE verifier (exchange)
 //   /api/inngest     — Inngest signature
-//   /api/trpc/*      — Clerk Bearer or cookie via createTRPCContext
-//   /api/v1/*        — Clerk ak_ org API key via oRPC authMiddleware
-const isApiRoute = createRouteMatcher([
-  "/api/cli/(.*)",
-  "/api/auth/(.*)",
+//   /api/v1/*        — Unkey lf_ org API key via oRPC authMiddleware
+const isApiRouteMatcher = createRouteMatcher([
   "/api/inngest(.*)",
-  "/api/trpc/(.*)",
   "/api/v1/(.*)",
 ]);
+
+const APP_OWNED_API_PREFIXES = ["/api/inngest", "/api/v1"];
+
+function isApiRoute(req: NextRequest) {
+  return (
+    APP_OWNED_API_PREFIXES.some(
+      (prefix) =>
+        req.nextUrl.pathname === prefix ||
+        req.nextUrl.pathname.startsWith(`${prefix}/`)
+    ) || isApiRouteMatcher(req)
+  );
+}
 
 // Auth routes — authenticated users should not see sign-in/sign-up forms.
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
@@ -74,32 +85,14 @@ const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 // Browser routes accessible during a pending session (signed in but has
 // outstanding tasks like choosing an org). API auth remains owned by route
 // handlers / tRPC procedure builders, not by proxy path allowlisting.
-const isPendingSessionAllowedRoute = createRouteMatcher([
+const isAppOwnedSignedInRoute = createRouteMatcher([
   "/account/(.*)",
-  // Token-handoff routes for CLI / desktop must be reachable during a pending session
-  // so first-time users can finish issuing a bearer token before they've picked an org.
-  "/cli/auth(.*)",
-  "/desktop/auth(.*)",
+  "/oauth(.*)",
 ]);
 
 const isOrgProductRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 const isOrgSettingsRoute = createRouteMatcher(["/:slug/settings(.*)"]);
 const isOrgBindTaskRoute = createRouteMatcher(["/:slug/tasks/bind(.*)"]);
-
-const RESERVED_ORG_ROUTE_SEGMENTS = new Set([
-  "account",
-  "api",
-  "cli",
-  "desktop",
-  "docs",
-  "early-access",
-  "ingest",
-  "manifest.json",
-  "monitoring",
-  "sign-in",
-  "sign-up",
-  "sso-callback",
-]);
 
 function getPostAuthPath({
   orgSlug,
@@ -134,12 +127,23 @@ function redirectToPostAuth(
   return NextResponse.redirect(new URL(getPostAuthPath(authState), req.url));
 }
 
-function getOrgRouteSlug(req: NextRequest) {
-  const slug = req.nextUrl.pathname.split("/").filter(Boolean)[0];
-  if (!slug || RESERVED_ORG_ROUTE_SEGMENTS.has(slug)) {
+function getClerkOAuthContinuationUrl(req: NextRequest) {
+  const redirectTarget = parseSafeAuthRedirectTarget(
+    req.nextUrl.searchParams.get("redirect_url")
+  );
+  if (!redirectTarget?.startsWith("https://")) {
     return null;
   }
-  return slug;
+
+  return new URL(redirectTarget);
+}
+
+function isActiveOrgPath(req: NextRequest, orgSlug: string) {
+  const prefix = `/${orgSlug}`;
+  return (
+    req.nextUrl.pathname === prefix ||
+    req.nextUrl.pathname.startsWith(`${prefix}/`)
+  );
 }
 
 function isSameLastActiveOrg(
@@ -209,6 +213,10 @@ const clerkProxyMiddleware = clerkMiddleware(
         treatPendingAsSignedOut: false,
       });
       if (userId) {
+        const clerkOAuthContinuationUrl = getClerkOAuthContinuationUrl(req);
+        if (clerkOAuthContinuationUrl) {
+          return NextResponse.redirect(clerkOAuthContinuationUrl);
+        }
         return redirectToPostAuth(req, {
           orgSlug,
           sessionClaims,
@@ -235,15 +243,21 @@ const clerkProxyMiddleware = clerkMiddleware(
           sessionStatus,
         });
       }
-      if (sessionStatus === "pending" && !isPendingSessionAllowedRoute(req)) {
+      if (sessionStatus === "pending" && !isAppOwnedSignedInRoute(req)) {
         return redirectToPostAuth(req, {
           orgSlug,
           sessionClaims,
           sessionStatus,
         });
       }
-      const orgRouteSlug = getOrgRouteSlug(req);
-      if (orgId && orgSlug && orgRouteSlug && orgSlug === orgRouteSlug) {
+      const isActiveOrgProductRoute =
+        !!orgSlug && isActiveOrgPath(req, orgSlug) && isOrgProductRoute(req);
+      if (
+        !isAppOwnedSignedInRoute(req) &&
+        orgId &&
+        orgSlug &&
+        isActiveOrgProductRoute
+      ) {
         const nextLastActiveOrg = { id: orgId, slug: orgSlug };
         if (
           !isSameLastActiveOrg(
@@ -256,15 +270,16 @@ const clerkProxyMiddleware = clerkMiddleware(
       }
       const bindingStatus = sessionClaims?.lf_binding_status;
       if (
+        !isAppOwnedSignedInRoute(req) &&
         orgId &&
-        orgRouteSlug &&
-        isOrgProductRoute(req) &&
+        orgSlug &&
+        isActiveOrgProductRoute &&
         !isOrgSettingsRoute(req) &&
         !isOrgBindTaskRoute(req) &&
         bindingStatus !== "bound"
       ) {
         return NextResponse.redirect(
-          new URL(`/${orgRouteSlug}/tasks/bind`, req.url)
+          new URL(`/${orgSlug}/tasks/bind`, req.url)
         );
       }
     }
@@ -286,7 +301,7 @@ const clerkProxyMiddleware = clerkMiddleware(
 const nemoClerkProxyMiddleware: NemoMiddleware = (req, event) =>
   clerkProxyMiddleware(req, event as unknown as NextFetchEvent);
 
-export default createNEMO(
+const nemoProxy = createNEMO(
   {
     "/:path*": nemoClerkProxyMiddleware,
   },
@@ -294,6 +309,14 @@ export default createNEMO(
     before: [microfrontendsMiddleware],
   }
 );
+
+export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (isApiRoute(req)) {
+    return applySecurityHeaders(NextResponse.next());
+  }
+
+  return nemoProxy(req, event);
+}
 
 export const config = {
   matcher: [

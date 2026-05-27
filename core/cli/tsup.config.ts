@@ -5,6 +5,13 @@ export default defineConfig({
   entry: ["src/bin.ts"],
   format: ["esm"],
   target: "node22",
+  bundle: true,
+  noExternal: [
+    "@repo/native-auth-contract",
+    "@repo/native-auth-node",
+    "@t3-oss/env-core",
+    "zod",
+  ],
   outExtension: () => ({ js: ".mjs" }),
   sourcemap: true,
   dts: false,

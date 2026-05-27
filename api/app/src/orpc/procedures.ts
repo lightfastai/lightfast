@@ -19,7 +19,7 @@ export const authed = <P extends AnyContractProcedure>(proc: P) =>
 
 /**
  * Like `authed`, but additionally requires the API key's org to be *bound* —
- * i.e. to have completed source-control setup. Clerk API keys carry no session
+ * i.e. to have completed source-control setup. Unkey API keys carry no session
  * claims, so `authMiddleware` derives the org gate server-side from the
  * authoritative DB binding and `orgGateMiddleware` enforces it.
  *

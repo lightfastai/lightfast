@@ -57,10 +57,14 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@api/app": "workspace:*",
     "@radix-ui/react-dropdown-menu": "catalog:",
-    "@repo/app-trpc": "workspace:*",
+    "@repo/native-auth-contract": "workspace:*",
+    "@repo/native-auth-node": "workspace:*",
     "@sentry/electron": "catalog:",
     "@tanstack/react-query": "catalog:",
+    "@trpc/client": "catalog:",
+    "@trpc/tanstack-react-query": "catalog:",
     "@vendor/observability": "workspace:*",
     "better-sqlite3": "^12.4.1",
     "electron-context-menu": "^4.1.1",

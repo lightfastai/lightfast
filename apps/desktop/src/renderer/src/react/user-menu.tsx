@@ -1,13 +1,18 @@
 import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
-import { useTRPC } from "@repo/app-trpc/react";
 import { useQuery } from "@tanstack/react-query";
 import { LogOut, Settings, User } from "lucide-react";
+import { useTRPC } from "./trpc/react";
+import { useAuthSnapshot } from "./use-auth-snapshot";
 
 export function UserMenu() {
+  const auth = useAuthSnapshot();
   const trpc = useTRPC();
-  const query = useQuery(trpc.viewer.account.get.queryOptions());
+  const query = useQuery({
+    ...trpc.viewer.account.get.queryOptions(),
+    enabled: auth.isSignedIn,
+  });
 
-  const email = query.data?.primaryEmailAddress ?? "";
+  const email = query.data?.primaryEmailAddress ?? auth.userEmail ?? "";
 
   return (
     <DropdownMenu.Root>
@@ -25,12 +30,16 @@ export function UserMenu() {
           side="top"
           sideOffset={6}
         >
-          <DropdownMenu.Label className="user-menu-label">
-            <User className="user-menu-icon" size={14} />
-            <span className="user-menu-email">{email}</span>
-          </DropdownMenu.Label>
+          {auth.isSignedIn && (
+            <>
+              <DropdownMenu.Label className="user-menu-label">
+                <User className="user-menu-icon" size={14} />
+                <span className="user-menu-email">{email}</span>
+              </DropdownMenu.Label>
 
-          <DropdownMenu.Separator className="user-menu-separator" />
+              <DropdownMenu.Separator className="user-menu-separator" />
+            </>
+          )}
 
           <DropdownMenu.Item
             className="user-menu-item"
@@ -40,15 +49,19 @@ export function UserMenu() {
             Settings
           </DropdownMenu.Item>
 
-          <DropdownMenu.Separator className="user-menu-separator" />
+          {auth.isSignedIn && (
+            <>
+              <DropdownMenu.Separator className="user-menu-separator" />
 
-          <DropdownMenu.Item
-            className="user-menu-item user-menu-item--destructive"
-            onSelect={() => void window.lightfastBridge.auth.signOut()}
-          >
-            <LogOut className="user-menu-icon" size={14} />
-            Log out
-          </DropdownMenu.Item>
+              <DropdownMenu.Item
+                className="user-menu-item user-menu-item--destructive"
+                onSelect={() => void window.lightfastBridge.auth.signOut()}
+              >
+                <LogOut className="user-menu-icon" size={14} />
+                Log out
+              </DropdownMenu.Item>
+            </>
+          )}
         </DropdownMenu.Content>
       </DropdownMenu.Portal>
     </DropdownMenu.Root>

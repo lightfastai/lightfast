@@ -30,14 +30,14 @@ The `@lightfastai/mcp` package connects AI assistants like Claude, Cursor, and C
 No installation required — run directly with npx:
 
 ```bash
-npx @lightfastai/mcp --api-key ak_...
+npx @lightfastai/mcp --api-key lf_...
 ```
 
 Or install globally:
 
 ```bash
 npm install -g @lightfastai/mcp
-lightfast-mcp --api-key ak_...
+lightfast-mcp --api-key lf_...
 ```
 
 ## Configuration
@@ -58,7 +58,7 @@ Add to your `claude_desktop_config.json`:
       "command": "npx",
       "args": ["-y", "@lightfastai/mcp"],
       "env": {
-        "LIGHTFAST_API_KEY": "ak_..."
+        "LIGHTFAST_API_KEY": "lf_..."
       }
     }
   }
@@ -79,7 +79,7 @@ Add to `.mcp.json` in your project root:
       "command": "npx",
       "args": ["-y", "@lightfastai/mcp"],
       "env": {
-        "LIGHTFAST_API_KEY": "ak_..."
+        "LIGHTFAST_API_KEY": "lf_..."
       }
     }
   }
@@ -105,7 +105,7 @@ Add to `.cursor/mcp.json` in your project root:
       "command": "npx",
       "args": ["-y", "@lightfastai/mcp"],
       "env": {
-        "LIGHTFAST_API_KEY": "ak_..."
+        "LIGHTFAST_API_KEY": "lf_..."
       }
     }
   }
@@ -122,7 +122,7 @@ command = "npx"
 args = ["-y", "@lightfastai/mcp"]
 
 [mcp_servers.lightfast.env]
-LIGHTFAST_API_KEY = "ak_..."
+LIGHTFAST_API_KEY = "lf_..."
 ```
 
 ## Available Tools
@@ -173,7 +173,7 @@ Options:
 Instead of passing `--api-key`, you can set the environment variable:
 
 ```bash
-export LIGHTFAST_API_KEY=ak_...
+export LIGHTFAST_API_KEY=lf_...
 npx @lightfastai/mcp
 ```
 
@@ -197,7 +197,7 @@ This is especially useful in MCP configurations where you don't want to hardcode
 
 ### Server not connecting
 
-1. Verify your API key is valid and starts with `ak_`
+1. Verify your API key is valid and starts with `lf_`
 2. Check that Node.js >= 18 is installed
 3. Restart your AI assistant after configuration changes
 
