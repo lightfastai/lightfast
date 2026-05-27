@@ -18,6 +18,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTRPC } from "~/trpc/react";
+import { AutomationNameEditor } from "./automation-name-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
@@ -84,8 +85,7 @@ export function AutomationDetailClient({
       <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_20rem]">
         {/* Left column */}
         <div className="space-y-4">
-          {/* replaced in Task 5 — AutomationNameEditor */}
-          <AutomationNamePlaceholder name={automation.name} />
+          <AutomationNameEditor automation={automation} />
           {/* replaced in Task 7 — AutomationPromptEditor */}
           <AutomationPromptPlaceholder prompt={automation.prompt} />
         </div>
@@ -193,13 +193,6 @@ function RunRow({ run }: { run: AutomationRun }) {
         {run.trigger}
       </span>
     </div>
-  );
-}
-
-// replaced in Task 5 — AutomationNameEditor
-function AutomationNamePlaceholder({ name }: { name: Automation["name"] }) {
-  return (
-    <h1 className="font-medium font-pp text-2xl text-foreground">{name}</h1>
   );
 }
 
