@@ -133,6 +133,9 @@ mastra.db-wal
 # Braintrust local docs/cache
 .bt/
 
+# Brainstorming visual companion
+.superpowers/
+
 # Storybook
 storybook-static
 
