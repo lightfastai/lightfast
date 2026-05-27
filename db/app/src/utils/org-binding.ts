@@ -9,7 +9,7 @@
  * `ctx.db` and the helpers stay independently testable.
  */
 
-import { and, eq, getTableColumns, inArray, sql } from "drizzle-orm";
+import { and, eq, getTableColumns, inArray } from "drizzle-orm";
 import type { Database } from "../client";
 import type {
   OrgSourceControlBinding,
@@ -155,14 +155,12 @@ export async function markOrgBindingRevoked(
   }
 
   const activeIds = activeRows.map((row) => row.id);
-  const now = sql`CURRENT_TIMESTAMP(3)`;
   await db
     .update(orgSourceControlBindings)
     .set({
       activeClerkOrgId: null,
       status: "revoked",
-      revokedAt: now,
-      updatedAt: now,
+      revokedAt: new Date(),
     })
     .where(
       and(

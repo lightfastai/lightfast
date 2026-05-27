@@ -2,12 +2,12 @@ import { randomUUID } from "node:crypto";
 import { sql } from "drizzle-orm";
 import {
   bigint,
-  datetime,
   index,
   int,
   json,
   mysqlTable,
   text,
+  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -81,12 +81,13 @@ export const people = mysqlTable(
 
     metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
 
-    createdAt: datetime("created_at", { mode: "string", fsp: 3 })
+    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: datetime("updated_at", { mode: "string", fsp: 3 })
+    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
+      .onUpdateNow()
       .notNull(),
   },
   (table) => ({

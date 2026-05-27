@@ -135,10 +135,10 @@ function makeStatefulDb(seedActive = false) {
           spies.insert(v);
           const row = {
             id: rows.length + 1,
-            connectedAt: "2026-05-20T00:00:00.000Z",
+            connectedAt: new Date("2026-05-20T00:00:00.000Z"),
             revokedAt: null,
-            createdAt: "2026-05-20T00:00:00.000Z",
-            updatedAt: "2026-05-20T00:00:00.000Z",
+            createdAt: new Date("2026-05-20T00:00:00.000Z"),
+            updatedAt: new Date("2026-05-20T00:00:00.000Z"),
             ...v,
           };
           rows.push(row);

@@ -140,8 +140,8 @@ function makePerson(overrides: Partial<Person> = {}): Person {
     lastSeenSignalId: "signal_first",
     seenCount: 1,
     metadata: {},
-    createdAt: "2026-05-22 00:00:00.000",
-    updatedAt: "2026-05-22 00:00:00.000",
+    createdAt: new Date("2026-05-22T00:00:00.000Z"),
+    updatedAt: new Date("2026-05-22T00:00:00.000Z"),
     ...overrides,
   };
 }

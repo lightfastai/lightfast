@@ -1,5 +1,5 @@
 import type { SignalClassification } from "@repo/api-contract";
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
@@ -73,7 +73,6 @@ export async function claimSignalForClassification(
       status: "processing",
       errorCode: null,
       errorMessage: null,
-      updatedAt: sql`CURRENT_TIMESTAMP(3)`,
     })
     .where(
       and(
@@ -102,7 +101,6 @@ export async function markSignalClassified(
       classification: input.classification,
       errorCode: null,
       errorMessage: null,
-      updatedAt: sql`CURRENT_TIMESTAMP(3)`,
     })
     .where(
       and(
@@ -131,7 +129,6 @@ export async function markSignalFailed(
       status: "failed",
       errorCode: input.errorCode,
       errorMessage: input.errorMessage,
-      updatedAt: sql`CURRENT_TIMESTAMP(3)`,
     })
     .where(
       and(

@@ -77,7 +77,6 @@ export async function upsertPeopleFromCandidates(
           lastSeenSignalId: input.sourceSignalId,
           metadata,
           seenCount: sql`CASE WHEN ${people.lastSeenSignalId} = ${input.sourceSignalId} THEN ${people.seenCount} ELSE ${people.seenCount} + 1 END`,
-          updatedAt: sql`CURRENT_TIMESTAMP(3)`,
         },
       });
 

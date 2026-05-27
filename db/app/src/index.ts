@@ -59,8 +59,6 @@ export {
   type NormalizedAutomationSchedule,
   normalizeAutomationSchedule,
   setAutomationStatus,
-  toDate,
-  toMysqlDateTime,
   type UpdateAutomationInput,
   updateAutomation,
 } from "./utils/automations";
