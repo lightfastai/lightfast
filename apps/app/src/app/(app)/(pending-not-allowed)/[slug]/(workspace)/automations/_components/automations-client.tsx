@@ -129,7 +129,7 @@ function AutomationRow({
 
   return (
     <Link
-      className="flex min-h-12 items-center justify-between gap-4 border-border border-b py-3 hover:bg-muted/40"
+      className="-mx-3 flex min-h-12 items-center justify-between gap-4 rounded-md border-border border-b px-3 py-3 hover:bg-muted/40"
       href={
         `/${workspaceSlug}/automations/${automation.publicId}` as Route
       }
