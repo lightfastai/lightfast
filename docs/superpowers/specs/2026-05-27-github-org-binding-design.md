@@ -33,6 +33,25 @@ from GitHub without first starting from Lightfast, the setup callback should
 show a recoverable error and direct them to start from the Lightfast org setup
 page.
 
+## Glossary
+
+- **Lightfast org**: Clerk organization selected in the Lightfast web app.
+- **GitHub organization**: GitHub account with `target_type: "Organization"`.
+  Personal account installations are rejected in v1.
+- **GitHub App installation**: Provider-side installation identified by
+  `installation_id`. This becomes `providerInstallationId` in
+  `lightfast_org_source_control_bindings`.
+- **Binding**: One row in `lightfast_org_source_control_bindings`. This is the
+  durable source of truth for whether a Lightfast org is bound.
+- **Binding claim**: Clerk session/JWT mirror claim `lf_binding_status`. This is
+  routing UX only, not the source of truth for API authorization.
+- **GitHub user access token**: Short-lived OAuth proof that the signed-in
+  browser user can see the candidate installation. Lightfast discards it after
+  verification.
+- **GitHub installation access token**: Short-lived app token minted
+  just-in-time for future installation-scoped GitHub API calls. Lightfast does
+  not persist it.
+
 ## Goals
 
 - Bind one GitHub organization installation to one Lightfast organization.
@@ -234,6 +253,20 @@ business logic to `api/app`.
 `task.status` remains as the generic setup status query. The placeholder
 `task.bind` should be removed from the product UI path. Production must not
 mark an org bound without a verified GitHub installation.
+
+## Implementation Map
+
+| Area | Responsibility | Must Not Own |
+| --- | --- | --- |
+| `db/app/src/schema/tables/org-source-control-bindings.ts` | Durable binding schema and DB-owned binding types. | GitHub API response types. |
+| `db/app/src/utils/org-binding.ts` | Binding read/write helpers, conflict handling, revoke/reactivate transitions. | Clerk metadata mirroring or GitHub fetches. |
+| `packages/github-app-contract` | Isomorphic route constants, error codes, normalized GitHub payload schemas, client-safe output schemas. | Secrets, DB types, Redis, Clerk, Node-only crypto. |
+| `packages/github-app-node` | GitHub URL building, PKCE, OAuth exchange, app JWTs, installation tokens, webhook signature verification, GitHub REST pagination. | Env loading, Lightfast authorization, DB writes, Clerk writes. |
+| `api/app/src/auth` or `api/app/src/github` | GitHub binding orchestration: env config, Redis attempts, GitHub verification, DB helper calls, Clerk mirror calls. | UI rendering. |
+| `api/app/src/router/(pending-not-allowed)` | Public setup procedures: `start` and `syncBindingClaim`. | GitHub setup/OAuth/webhook callback logic. |
+| `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/tasks/bind` | Bind card, completion/repair page, user-facing error state. | GitHub secrets, DB access, provider verification. |
+| `apps/app/src/app/(app)/(github)/api/github` or equivalent colocated route group | Thin setup/OAuth/webhook route handlers. | Business logic beyond parsing, delegation, and redirect/response shaping. |
+| `apps/app/src/proxy.ts` | Admit GitHub setup/OAuth routes and bypass webhook route from Clerk auth enforcement. | Source-control binding decisions. |
 
 ## Bind Attempt State
 
@@ -704,6 +737,28 @@ Integration/manual checks:
   binding.
 - Test with a GitHub org that requires SAML SSO if available, and confirm the
   user-facing error is actionable.
+
+## Definition Of Done
+
+- Starting from `/:slug/tasks/bind` installs or selects the GitHub App
+  installation and returns to Lightfast.
+- A verified GitHub organization installation creates or reactivates exactly one
+  row in `lightfast_org_source_control_bindings`.
+- The row stores GitHub org id/login/installation id in provider columns and
+  non-sensitive metadata in `metadata`.
+- A personal GitHub account installation never creates a binding.
+- A spoofed or inaccessible `installation_id` never creates a binding.
+- The completion page repairs a stale Clerk `lf_binding_status` mirror before
+  navigating to the workspace.
+- Product routes stop redirecting to the bind page after session reload.
+- GitHub uninstall/delete webhook revokes the authoritative DB binding even if
+  Clerk mirror repair fails.
+- Webhook signature verification uses the raw body and rejects invalid
+  signatures.
+- Replayed successful webhook deliveries are idempotent.
+- No GitHub user access token or installation access token is persisted.
+- `apps/app` has no import path to `@repo/github-app-node`.
+- No new durable GitHub-specific binding table exists.
 
 ## Rollout
 
