@@ -17,7 +17,7 @@ export default function AutomationDetailError({
   reset,
 }: AutomationDetailErrorProps) {
   const pathname = usePathname();
-  const slug = pathname.split("/").filter(Boolean)[0] ?? "";
+  const slug = pathname.split("/").filter(Boolean)[0] ?? "workspace";
 
   useEffect(() => {
     captureException(error, {

@@ -127,7 +127,7 @@ export function AutomationScheduleEditor({
   const parsedHours = Number.parseInt(intervalHours, 10);
   const hoursValid =
     Number.isInteger(parsedHours) && parsedHours >= 1 && parsedHours <= 24;
-  const timeValid = /^[0-2]\d:[0-5]\d$/.test(time);
+  const timeValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
   const fieldValid = kind === "hourly" ? hoursValid : timeValid;
 
   const currentConfig = automation.scheduleConfig as

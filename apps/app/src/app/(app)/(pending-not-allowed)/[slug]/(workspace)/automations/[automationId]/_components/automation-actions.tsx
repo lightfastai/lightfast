@@ -82,6 +82,8 @@ function AutomationActionsInner({ automation }: { automation: Automation }) {
         if (ctx?.prevGet) qc.setQueryData(getKey, ctx.prevGet);
       },
       onSuccess: () => {
+        qc.removeQueries({ queryKey: getKey });
+        qc.removeQueries({ queryKey: trpc.org.workspace.automations.listRuns.queryOptions({ id, limit: 20 }).queryKey });
         router.push(`/${slug}/automations` as Route);
       },
     }),

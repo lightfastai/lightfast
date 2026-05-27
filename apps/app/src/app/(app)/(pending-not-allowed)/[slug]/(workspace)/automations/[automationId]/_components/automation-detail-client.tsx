@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Suspense } from "react";
 import { useTRPC } from "~/trpc/react";
 import { AutomationNameEditor } from "./automation-name-editor";
 import { AutomationPromptEditor } from "./automation-prompt-editor";
@@ -78,7 +79,9 @@ export function AutomationDetailClient({
 
           <AutomationActions automation={automation} />
 
-          <AutomationRunsList automationId={automationId} />
+          <Suspense fallback={<RailSection label="Previous runs"><p className="text-muted-foreground text-sm">Loading…</p></RailSection>}>
+            <AutomationRunsList automationId={automationId} />
+          </Suspense>
         </div>
       </div>
     </div>

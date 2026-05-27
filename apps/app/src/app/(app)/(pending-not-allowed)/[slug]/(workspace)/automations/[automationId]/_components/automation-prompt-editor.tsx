@@ -102,7 +102,7 @@ export function AutomationPromptEditor({
       <p
         className={`text-xs ${isTooLong ? "text-destructive" : "text-muted-foreground"}`}
       >
-        {value.length} / {AUTOMATION_PROMPT_MAX_LENGTH}
+        {trimmed.length} / {AUTOMATION_PROMPT_MAX_LENGTH}
       </p>
       <div className="flex gap-2">
         <Button onClick={handleCancel} size="sm" type="button" variant="ghost">
