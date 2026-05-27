@@ -11,20 +11,30 @@
 
 import { createHash } from "node:crypto";
 import { execFileSync } from "node:child_process";
-import { realpathSync } from "node:fs";
+import { realpathSync, statSync } from "node:fs";
+import { join } from "node:path";
 
-const root = execFileSync("git", ["rev-parse", "--show-toplevel"], { encoding: "utf8" }).trim();
-const realRoot = realpathSync(root);
+// Single git call returns "<root>\n<branch>"; branch is "HEAD" when detached.
+const [rawRoot, rawBranch] = execFileSync(
+	"git",
+	["rev-parse", "--show-toplevel", "--abbrev-ref", "HEAD"],
+	{ encoding: "utf8" },
+)
+	.trim()
+	.split("\n");
+
+const realRoot = realpathSync(rawRoot);
 const rootHash = createHash("sha1").update(realRoot).digest("hex").slice(0, 8);
-const branch = execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim();
-const worktreeOutput = execFileSync("git", ["worktree", "list", "--porcelain"], { encoding: "utf8" });
-const worktrees = worktreeOutput
-	.split(/\n(?=worktree )/)
-	.map((chunk) => chunk.match(/^worktree (.+)$/m)?.[1])
-	.filter(Boolean)
-	.map((path) => realpathSync(path));
-const primary = worktrees[0] ?? realRoot;
-const isPrimary = realRoot === primary;
+const branch = rawBranch === "HEAD" ? "" : rawBranch;
+// Primary worktree has .git as a directory; secondaries have it as a file
+// containing `gitdir: <path>`. Avoids spawning `git worktree list`.
+const isPrimary = (() => {
+	try {
+		return statSync(join(realRoot, ".git")).isDirectory();
+	} catch {
+		return false;
+	}
+})();
 const lastSegment = branch.split("/").filter(Boolean).at(-1) ?? "";
 const sanitize = (s) =>
 	s.toLowerCase().replace(/\./g, "-").replace(/[^a-z0-9-]/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
