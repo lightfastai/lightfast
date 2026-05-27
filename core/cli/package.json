@@ -36,20 +36,18 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
-  "dependencies": {
+  "devDependencies": {
     "@repo/native-auth-contract": "workspace:*",
     "@repo/native-auth-node": "workspace:*",
-    "@t3-oss/env-core": "catalog:",
-    "commander": "catalog:",
-    "zod": "catalog:"
-  },
-  "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
+    "@t3-oss/env-core": "catalog:",
     "@types/node": "catalog:",
+    "commander": "catalog:",
     "tsup": "catalog:",
     "typescript": "catalog:",
-    "vitest": "catalog:"
+    "vitest": "catalog:",
+    "zod": "catalog:"
   },
   "engines": {
     "node": ">=22"

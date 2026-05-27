@@ -1038,32 +1038,28 @@ importers:
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
   core/cli:
-    dependencies:
+    devDependencies:
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
       '@repo/native-auth-node':
         specifier: workspace:*
         version: link:../../packages/native-auth-node
-      '@t3-oss/env-core':
-        specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
-      commander:
-        specifier: 'catalog:'
-        version: 14.0.3
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
-    devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
       '@repo/vitest-config':
         specifier: workspace:*
         version: link:../../internal/vitest-config
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
       '@types/node':
         specifier: 'catalog:'
         version: 24.9.1
+      commander:
+        specifier: 'catalog:'
+        version: 14.0.3
       tsup:
         specifier: 'catalog:'
         version: 8.5.1(jiti@2.6.1)(postcss@8.5.11)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
@@ -1073,6 +1069,9 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
 
   core/lightfast:
     dependencies:

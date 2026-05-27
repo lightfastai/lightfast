@@ -1,6 +1,6 @@
 # @lightfastai/cli
 
-CLI for signing in to Lightfast from local developer workflows.
+Command-line tools for signing in to Lightfast from local developer workflows.
 
 ## Purpose
 
@@ -11,16 +11,16 @@ Provides command-line tools for:
 
 ## Installation
 
-This is an internal workspace package. Install dependencies from the monorepo root:
+Install the published CLI package:
 
 ```bash
-pnpm install
+npm install -g @lightfastai/cli
 ```
 
-Build the CLI:
+Run without a global install:
 
 ```bash
-pnpm --filter @lightfastai/cli build
+pnpm dlx @lightfastai/cli --help
 ```
 
 ## Usage
@@ -43,6 +43,42 @@ lightfast whoami
 
 ```bash
 lightfast logout
+```
+
+## Environment
+
+| Variable | Description |
+| --- | --- |
+| `LIGHTFAST_APP_URL` | Overrides the Lightfast app URL. Defaults to `https://lightfast.ai`. |
+| `LIGHTFAST_CLI_CONFIG_DIR` | Overrides where the CLI stores `auth.json`. |
+
+## Development
+
+Install dependencies from the monorepo root:
+
+```bash
+pnpm install
+```
+
+Build and test the CLI:
+
+```bash
+pnpm --filter @lightfastai/cli build
+pnpm --filter @lightfastai/cli test
+pnpm --filter @lightfastai/cli typecheck
+```
+
+Pack the npm tarball for inspection:
+
+```bash
+SCRATCH=$(mktemp -d)
+pnpm --dir core/cli pack --pack-destination "$SCRATCH"
+```
+
+Run in watch mode:
+
+```bash
+pnpm --filter @lightfastai/cli dev
 ```
 
 ## Commands
@@ -69,14 +105,6 @@ Removes the stored CLI session.
 
 ```bash
 lightfast logout
-```
-
-## Development
-
-Run in development mode:
-
-```bash
-pnpm --filter @lightfastai/cli dev
 ```
 
 ## Documentation
