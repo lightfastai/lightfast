@@ -19,96 +19,34 @@ runtime code for this V1 setup.
 
 ```bash
 redis_region=${redis_region:-ap-southeast-2}
-
-eval "$(
-node <<'NODE'
-import { createHash } from "node:crypto";
-import { execFileSync } from "node:child_process";
-import { realpathSync } from "node:fs";
-
-const root = execFileSync("git", ["rev-parse", "--show-toplevel"], {
-  encoding: "utf8",
-}).trim();
-const realRoot = realpathSync(root);
-const rootHash = createHash("sha1").update(realRoot).digest("hex").slice(0, 8);
-const branch = execFileSync("git", ["branch", "--show-current"], {
-  encoding: "utf8",
-}).trim();
-const worktreeOutput = execFileSync("git", ["worktree", "list", "--porcelain"], {
-  encoding: "utf8",
-});
-const worktrees = worktreeOutput
-  .split(/\n(?=worktree )/)
-  .map((chunk) => chunk.match(/^worktree (.+)$/m)?.[1])
-  .filter(Boolean)
-  .map((path) => realpathSync(path));
-const primary = worktrees[0] ?? realRoot;
-const lastSegment = branch.split("/").filter(Boolean).at(-1) ?? "";
-const sanitized = lastSegment
-  .toLowerCase()
-  .replace(/\./g, "-")
-  .replace(/[^a-z0-9-]/g, "-")
-  .replace(/-+/g, "-")
-  .replace(/^-|-$/g, "");
-const isPrimary = realRoot === primary;
-const prefix =
-  !branch || branch === "main" || branch === "master" || isPrimary
-    ? "local"
-    : sanitized || "local";
-const redisName = `lightfast-${prefix}-${rootHash}`
-  .toLowerCase()
-  .replace(/[^a-z0-9-]/g, "-")
-  .replace(/-+/g, "-")
-  .replace(/^-|-$/g, "");
-
-console.log(`redis_name=${redisName}`);
-NODE
-)"
+eval "$(node .claude/skills/lightfast-local-infra/lib/compute-identity.mjs)"
 ```
 
-## Probe
+This sets `redis_name` (and pscale fields that are unused here).
 
-```bash
-command -v upstash
-upstash --version
-upstash auth whoami
-upstash redis --help
-```
+## Probe Remediation
 
-For `upstash v0.3.x`, login is:
+`SKILL.md` already ran the basic probes. If login is needed for `upstash v0.3.x`:
 
 ```bash
 upstash auth login --email "<email>" --api-key "<api-key>"
 ```
 
-If a newer CLI changes flags, follow the installed `upstash --help` and
-`upstash redis --help` output instead of guessing.
+If a newer CLI changes flags, follow `upstash --help` and `upstash redis --help`
+output instead of guessing.
 
 ## Create Or Reuse Database
-
-For `upstash v0.3.x`:
 
 ```bash
 upstash redis list --json > /tmp/lightfast-upstash-list.json
 
-redis_id=$(REDIS_NAME="$redis_name" node <<'NODE'
-const fs = require("node:fs");
-const name = process.env.REDIS_NAME;
-const data = JSON.parse(fs.readFileSync("/tmp/lightfast-upstash-list.json", "utf8"));
-const list = Array.isArray(data) ? data : data.databases ?? data.data ?? [];
-const match = list.find((item) => item.database_name === name || item.name === name);
-console.log(match?.database_id ?? match?.id ?? "");
-NODE
-)
+eval "$(node .claude/skills/lightfast-local-infra/lib/upstash-extract.mjs \
+  --mode id --file /tmp/lightfast-upstash-list.json --name "$redis_name")"
 
 if [ -z "$redis_id" ]; then
   upstash redis create --name "$redis_name" --region "$redis_region" --json > /tmp/lightfast-upstash-create.json
-  redis_id=$(node <<'NODE'
-const fs = require("node:fs");
-const data = JSON.parse(fs.readFileSync("/tmp/lightfast-upstash-create.json", "utf8"));
-console.log(data.database_id ?? data.id ?? "");
-NODE
-)
+  eval "$(node .claude/skills/lightfast-local-infra/lib/upstash-extract.mjs \
+    --mode id --file /tmp/lightfast-upstash-create.json)"
 fi
 
 test -n "$redis_id"
@@ -119,23 +57,10 @@ Fetch details:
 ```bash
 upstash redis get --id "$redis_id" --json > /tmp/lightfast-upstash-db.json
 
-kv_rest_api_url=$(node <<'NODE'
-const fs = require("node:fs");
-const data = JSON.parse(fs.readFileSync("/tmp/lightfast-upstash-db.json", "utf8"));
-let value = data.rest_url ?? data.endpoint ?? "";
-if (value && !/^https?:\/\//.test(value)) value = `https://${value}`;
-console.log(value);
-NODE
-)
-kv_rest_api_token=$(node <<'NODE'
-const fs = require("node:fs");
-const data = JSON.parse(fs.readFileSync("/tmp/lightfast-upstash-db.json", "utf8"));
-console.log(data.rest_token ?? data.token ?? data.password ?? "");
-NODE
-)
+eval "$(node .claude/skills/lightfast-local-infra/lib/upstash-extract.mjs \
+  --mode rest --file /tmp/lightfast-upstash-db.json)"
 
-test -n "$kv_rest_api_url"
-test -n "$kv_rest_api_token"
+test -n "$kv_rest_api_url" && test -n "$kv_rest_api_token"
 ```
 
 Then write app and platform env files with `references/env-files.md`.
