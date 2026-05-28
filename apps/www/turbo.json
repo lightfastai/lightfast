@@ -41,7 +41,7 @@
         "next-env.d.ts"
       ]
     },
-    "dev": {
+    "dev:next": {
       "persistent": true
     },
     "transit": {}

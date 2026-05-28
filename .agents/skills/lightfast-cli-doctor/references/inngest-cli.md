@@ -12,7 +12,7 @@ disambiguated name).
 
 - `pnpm dev:inngest` runs `npx inngest-cli@latest dev` — the local Inngest event/step dev server.
 - `pnpm dev:services` boots `dev:inngest` + `dev:studio` (drizzle) in parallel.
-- `pnpm dev{,:app,:platform,:full}` register MFE app URLs with the local Inngest dev server via `scripts/dev-services.mjs inngest-sync` (does NOT start the dev server — it only registers endpoints with an already-running one).
+- `pnpm dev{,:app,:platform,:full}` register app URLs with the local Inngest dev server via `scripts/inngest-portless-sync.mjs` (does NOT start the dev server — it only registers endpoints with an already-running one).
 
 ## Probe (read-only)
 
@@ -50,9 +50,9 @@ npm i -g inngest-cli@latest
 
 Same command upgrades in place. After upgrade, re-run the *version* probe.
 
-Note: `scripts/dev-services.mjs` doesn't pin a version — `pnpm dev:inngest`
-uses `npx inngest-cli@latest`, which resolves the latest at invocation time.
-Bumping the global install is independent of what `npx` resolves.
+Note: `pnpm dev:inngest` uses `npx inngest-cli@latest`, which resolves the
+latest at invocation time. Bumping the global install is independent of what
+`npx` resolves.
 
 ## Known gotchas
 
@@ -61,12 +61,12 @@ Bumping the global install is independent of what `npx` resolves.
 - **`pnpm dev:inngest` uses `npx`, not the global install.** The global install is for the doctor's verification path and for ad-hoc human use (e.g. `inngest dev --port 8288`). The script intentionally pulls latest via npx; the doctor's "installed globally" probe is independent of what the script runs at invocation time.
 - **No auth, no org binding.** Don't expect `inngest auth status`, `inngest org list`, or similar — they don't exist. Production auth is env-var-based.
 - **Dev server port collision.** `inngest dev` defaults to `:8288`; a stale dev server (from a previous `pnpm dev:inngest`) holds the port. Symptom: `pnpm dev:services` fails to start the inngest leg. The doctor does NOT probe port availability — that's a runtime concern, not a setup concern. Use `lsof -i :8288` to diagnose.
-- **`pnpm dev` MFE sync ≠ dev server.** `scripts/dev-services.mjs inngest-sync` registers MFE URLs with an already-running dev server. It does NOT start one. If `dev:inngest` isn't running, `inngest-sync` is a no-op.
+- **`pnpm dev` app URL sync ≠ dev server.** `scripts/inngest-portless-sync.mjs` registers app URLs with an already-running dev server. It does NOT start one. If `dev:inngest` isn't running, sync is a no-op.
 
 ## References
 
 - Upstream: https://github.com/inngest/inngest
 - npm: https://www.npmjs.com/package/inngest-cli
-- Lightfast usage: `package.json` script `dev:inngest`, `scripts/dev-services.mjs` (inngest-sync subcommand)
+- Lightfast usage: `package.json` script `dev:inngest`, `scripts/inngest-portless-sync.mjs`
 - Vendor env layer: `vendor/inngest/src/env.ts` (production credentials live here)
 - Related skill: `lightfast-inngest` (workflow run inspection — separate concern from this doctor entry).

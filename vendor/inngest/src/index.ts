@@ -1,7 +1,9 @@
 export {
-  EventSchemas,
+  cron,
+  eventType,
   Inngest,
-  InngestMiddleware,
+  Middleware,
   NonRetriableError,
   RetryAfterError,
+  staticSchema,
 } from "inngest";

@@ -1,13 +1,17 @@
 import { randomUUID } from "node:crypto";
+import type {
+  PersonIdentityProvider,
+  PersonIdentityType,
+} from "@repo/app-validation/schemas";
 import { sql } from "drizzle-orm";
 import {
   bigint,
-  datetime,
   index,
   int,
   json,
   mysqlTable,
   text,
+  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -20,15 +24,7 @@ const IDENTITY_KEY_LENGTH = 64;
 export const PERSON_ID_PREFIX = "person_";
 export const PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH = 512;
 export const PERSON_DISPLAY_NAME_LENGTH = 160;
-
-export type PersonIdentityProvider =
-  | "email"
-  | "x"
-  | "linkedin"
-  | "github"
-  | "website";
-
-export type PersonIdentityType = "email" | "handle" | "profile_url";
+export type { PersonIdentityProvider, PersonIdentityType };
 
 export function createPersonId() {
   return `${PERSON_ID_PREFIX}${randomUUID()}`;
@@ -81,12 +77,13 @@ export const people = mysqlTable(
 
     metadata: json("metadata").$type<Record<string, unknown>>().notNull(),
 
-    createdAt: datetime("created_at", { mode: "string", fsp: 3 })
+    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: datetime("updated_at", { mode: "string", fsp: 3 })
+    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
+      .onUpdateNow()
       .notNull(),
   },
   (table) => ({

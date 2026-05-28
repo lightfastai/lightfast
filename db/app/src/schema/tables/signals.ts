@@ -7,11 +7,11 @@ import {
 import { sql } from "drizzle-orm";
 import {
   bigint,
-  datetime,
   index,
   json,
   mysqlTable,
   text,
+  timestamp,
   uniqueIndex,
   varchar,
 } from "drizzle-orm/mysql-core";
@@ -59,12 +59,13 @@ export const signals = mysqlTable(
 
     errorMessage: text("error_message"),
 
-    createdAt: datetime("created_at", { mode: "string", fsp: 3 })
+    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: datetime("updated_at", { mode: "string", fsp: 3 })
+    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
+      .onUpdateNow()
       .notNull(),
   },
   (table) => ({

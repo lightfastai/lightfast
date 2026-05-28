@@ -49,11 +49,7 @@ See `CLAUDE.md` for the full architecture diagram.
 
 ```bash
 # Development
-pnpm dev            # Start app + www + platform
-pnpm dev:app        # Start app only
-pnpm dev:www        # Start www only
-pnpm dev:platform   # Start platform only
-pnpm dev:desktop    # Start desktop (Electron)
+pnpm dev            # Start app + www + platform + local Inngest + MFE proxy
 
 # Building (app-specific)
 pnpm build:app      # Build app
@@ -68,7 +64,7 @@ pnpm lint:ws        # Workspace dependency boundary check
 # Database
 pnpm db:generate    # Generate Drizzle migrations (NEVER write manual .sql)
 pnpm db:migrate     # Apply migrations
-pnpm dev:studio     # Open Drizzle Studio
+pnpm --filter @db/app db:studio # Open Drizzle Studio
 
 # Cleanup
 pnpm clean          # Clean all build artifacts

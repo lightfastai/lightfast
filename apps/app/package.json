@@ -10,16 +10,12 @@
     "build:dev": "pnpm with-env next build",
     "build:prod": "pnpm with-env next build",
     "clean": "git clean -xdf .cache .next .turbo .vercel node_modules",
-    "dev": "portless run",
-    "dev:app": "pnpm with-related-projects pnpm with-env next dev",
-    "dev:e2e": "INNGEST_SERVE_HOST=http://localhost:$PORT MFE_DISABLE_LOCAL_PROXY_REWRITE=1 TURBO_TASK_HAS_MFE_PROXY=false pnpm dev:app",
-    "mfe:proxy": "portless run --name lightfast pnpm run mfe:proxy:serve",
-    "mfe:proxy:serve": "microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app lightfast-www --local-app-url lightfast-app=$(portless get app.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)",
-    "start": "pnpm with-env next start -p ${NEXT_PUBLIC_CONSOLE_PORT:-4107}",
+    "dev:next": "portless run pnpm with-related-projects pnpm with-env next dev",
+    "mfe:proxy": "portless run --name lightfast sh -c 'pnpm exec microfrontends proxy ./microfrontends.json --port \"$PORT\" --local-apps lightfast-app lightfast-www --local-app-url lightfast-app=$(portless get app.lightfast) --local-app-url lightfast-www=$(portless get www.lightfast)'",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.vercel/.env.development.local -- node ../../scripts/with-dev-services-env.mjs --",
-    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
+    "with-env": "dotenv -e ./.vercel/.env.development.local --",
+    "with-related-projects": "INNGEST_SERVE_ORIGIN=$(portless get app.lightfast) NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast) INNGEST_DEV=$(portless get inngest.lightfast) QSTASH_URL=$(portless get qstash.lightfast)"
   },
   "dependencies": {
     "@api/app": "workspace:*",

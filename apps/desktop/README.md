@@ -103,8 +103,8 @@ create `apps/desktop/.vercel/.env.development.local` (gitignored) by copying
 cp apps/desktop/.env.example apps/desktop/.vercel/.env.development.local
 ```
 
-The `with-env` script (invoked by `pnpm dev:desktop`) loads this file via
-`dotenv-cli`. Normal desktop dev does not require the file. Set
+The `with-env` script (invoked by `pnpm --filter @lightfast/desktop dev`) loads
+this file via `dotenv-cli`. Normal desktop dev does not require the file. Set
 `LIGHTFAST_APP_ORIGIN` only when you need to override the local app origin
 manually.
 
@@ -131,14 +131,14 @@ No Lightfast API keys or Clerk JWT templates are created for desktop login.
 pnpm dev
 
 # Terminal 2 — Electron app
-pnpm dev:desktop
+pnpm --filter @lightfast/desktop dev
 ```
 
 `pnpm dev` boots `apps/app`, `apps/www`, and the portless-backed
-microfrontends origin. `pnpm dev:desktop` passes that origin to Electron as
-`LIGHTFAST_APP_ORIGIN` through `scripts/with-desktop-env.mjs`;
+microfrontends origin. The desktop package dev script passes that origin to
+Electron as `LIGHTFAST_APP_ORIGIN` through `scripts/with-desktop-env.mjs`;
 `node scripts/with-desktop-env.mjs --print` is the developer-visible source of
-truth. Run `pnpm dev:full` instead only when you also need platform services.
+truth. `pnpm dev` is the root local stack, including platform services.
 
 ### Inspect the encrypted session store
 

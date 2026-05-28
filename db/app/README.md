@@ -15,11 +15,7 @@ DATABASE_USERNAME
 DATABASE_PASSWORD
 ```
 
-Optional runtime var:
-
-```bash
-DATABASE_NAME
-```
+The database name is fixed as `lightfast`.
 
 ## Local Development
 
@@ -27,28 +23,23 @@ Local development uses PlanetScale branches. There is no Docker MySQL service.
 
 ```bash
 pscale auth login
-pnpm db:up      # create/reuse branch and cache credentials under .lightfast/
-pnpm db:migrate # apply migrations to the cached branch
-pnpm db:down    # tear down this worktree's branch/password/cache
-```
-
-Control-plane vars:
-
-```bash
-PLANETSCALE_DATABASE_NAME # defaults to lightfast locally
-PLANETSCALE_ORG_NAME
-PLANETSCALE_SERVICE_TOKEN_ID
-PLANETSCALE_SERVICE_TOKEN
-PSCALE_BRANCH_NAME
+# Load the lightfast-local-infra skill and run its db up runbook.
+pnpm db:push    # apply schema diff to the env-configured local branch
+pnpm db:studio  # inspect the env-configured local branch
 ```
 
 ## Commands
 
 ```bash
 pnpm db:generate  # Generate migration SQL from src/schema
-pnpm db:migrate   # Apply migrations
+pnpm db:migrate   # Apply migrations to the persistent staging branch only
+pnpm db:push      # Apply schema diff
 pnpm db:studio    # Open Drizzle Studio
 ```
+
+`pnpm db:migrate` is only for the persistent `staging` PlanetScale branch with
+explicit `DATABASE_*` migration credentials. Never run it against the `main`
+production branch.
 
 Do not hand-write migration SQL. Change schema TypeScript and run
 `pnpm db:generate`.

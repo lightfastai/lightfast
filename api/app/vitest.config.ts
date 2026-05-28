@@ -14,6 +14,7 @@ export default mergeConfig(
       },
     },
     test: {
+      setupFiles: ["./src/__tests__/setup-env.ts"],
       globals: true,
       environment: "node",
     },

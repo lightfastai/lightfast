@@ -23,7 +23,7 @@ database: load `lightfast-db`. Canonical commands: `db/CLAUDE.md`.
 | drizzle-kit | `dialect: "mysql"` (via `createDrizzleConfig` in `@vendor/db`) — **not** `"planetscale"`, which isn't a valid value. `tablesFilter: ["lightfast_*"]`. |
 | No `RETURNING` | MySQL has none. Use `.$returningId()` (returns `{ id }` only). Need other columns? Pre-compute client-side (e.g. `nanoid()` in a `$defaultFn`) or follow with a `SELECT`. Example: `db/app/src/utils/org-binding.ts`. |
 | Migrations | `pnpm db:generate` runs offline from `db/app/`; local dev applies schema with `pnpm db:push` to the worktree branch; CI runs `pnpm db:migrate` against persistent `staging`, then deploys `staging` → `main`. **Never hand-write or edit `.sql`.** |
-| Local dev | Per-worktree PlanetScale branch: `pnpm db:up` / `db:status` / `db:down` / `db:env`. Run `pscale auth login` first. |
+| Local dev | Per-worktree PlanetScale branch provisioned by `lightfast-local-infra` (`db up`). Runtime credentials live in `apps/app/.vercel/.env.development.local`. |
 | Foreign keys | Vitess FK support is limited; the repo avoids `references()`. Prefer application-level referential integrity. |
 
 ## Official PlanetScale docs — fetch when relevant

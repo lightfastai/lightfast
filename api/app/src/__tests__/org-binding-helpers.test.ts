@@ -1,5 +1,4 @@
 import type { Database, OrgSourceControlBinding } from "@db/app";
-import { isSQLWrapper } from "drizzle-orm";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // `@db/app`'s barrel re-exports `db` from `./client`, which eagerly builds a
@@ -109,11 +108,11 @@ function binding(
     providerInstallationId: null,
     status: "active",
     connectedByUserId: "user_test",
-    connectedAt: new Date().toISOString(),
+    connectedAt: new Date(),
     revokedAt: null,
     metadata: {},
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
+    createdAt: new Date(),
+    updatedAt: new Date(),
     ...overrides,
   } as OrgSourceControlBinding;
 }
@@ -255,9 +254,9 @@ describe("markOrgBindingRevoked", () => {
     const active = binding({ clerkOrgId: "org_rev" });
     const revoked = binding({
       ...active,
-      revokedAt: "2026-05-26 06:45:00.123",
+      revokedAt: new Date("2026-05-26T06:45:00.123Z"),
       status: "revoked",
-      updatedAt: "2026-05-26 06:45:00.123",
+      updatedAt: new Date("2026-05-26T06:45:00.123Z"),
     });
     const { db, spies } = makeFakeDb({
       selectResults: [[active], [revoked]],
@@ -272,14 +271,13 @@ describe("markOrgBindingRevoked", () => {
       revokedAt?: unknown;
       updatedAt?: unknown;
     };
-    expect(isSQLWrapper(updateSet.revokedAt)).toBe(true);
-    expect(updateSet.updatedAt).toBe(updateSet.revokedAt);
+    expect(updateSet.revokedAt).toBeInstanceOf(Date);
+    expect(updateSet.updatedAt).toBeUndefined();
     expect(spies.updateSet).toHaveBeenCalledWith(
       expect.objectContaining({
         activeClerkOrgId: null,
         status: "revoked",
         revokedAt: updateSet.revokedAt,
-        updatedAt: updateSet.revokedAt,
       })
     );
   });
@@ -291,9 +289,9 @@ describe("markOrgBindingRevoked", () => {
     const revokedRows = activeRows.map((row) =>
       binding({
         ...row,
-        revokedAt: "2026-05-26 06:45:00.123",
+        revokedAt: new Date("2026-05-26T06:45:00.123Z"),
         status: "revoked",
-        updatedAt: "2026-05-26 06:45:00.123",
+        updatedAt: new Date("2026-05-26T06:45:00.123Z"),
       })
     );
     const { db, spies } = makeFakeDb({

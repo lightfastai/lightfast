@@ -1,11 +1,11 @@
 #!/usr/bin/env node
 
-import { spawn } from "node:child_process";
+import { execFileSync, spawn } from "node:child_process";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { resolvePortlessMfeUrl } from "@lightfastai/dev-proxy";
+import { defaultDetectWorktreePrefix } from "@lightfastai/dev-core";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -13,6 +13,7 @@ const repoRoot = path.resolve(
 );
 
 const PORTLESS_CA_PATH = path.join(homedir(), ".portless", "ca.pem");
+const AGGREGATE_PORTLESS_NAME = "lightfast";
 const args = process.argv.slice(2);
 
 if (args[0] === "--") {
@@ -59,10 +60,8 @@ function buildEnv() {
 // global, and Node's CA bundle does not include portless's local root
 // (~/.portless/ca.pem). Any HTTPS request from main against the dev
 // aggregate (https://*.localhost) therefore fails the TLS handshake
-// with SELF_SIGNED_CERT_IN_CHAIN. lightfast-dev's `proxy app-runtime`
-// already injects NODE_EXTRA_CA_CERTS for the next-dev child for the
-// same reason — mirror that here so a fresh contributor shell doesn't
-// need the env var pre-exported in shellrc.
+// with SELF_SIGNED_CERT_IN_CHAIN. Inject the Portless CA here so a fresh
+// contributor shell doesn't need the env var pre-exported in shellrc.
 //
 // Longer-term, the more architecturally correct fix is to switch the
 // main-process fetch in apps/desktop/src/main/auth-flow.ts (and any
@@ -98,12 +97,53 @@ function resolveDesktopAppOrigin(env) {
   }
 
   return toOrigin(
-    resolvePortlessMfeUrl({
-      cwd: repoRoot,
-      env,
-    }),
+    readPortlessUrl(AGGREGATE_PORTLESS_NAME) ?? localAggregateUrl(env),
     "Portless MFE URL"
   );
+}
+
+function readPortlessUrl(name) {
+  try {
+    return execFileSync("portless", ["get", name], {
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "ignore"],
+    }).trim();
+  } catch {
+    return undefined;
+  }
+}
+
+function localAggregateUrl(env) {
+  const protocol = isHttpsEnabled(env) ? "https" : "http";
+  const port = parsePort(env.PORTLESS_PORT) ?? (protocol === "https" ? 443 : 80);
+  const portSuffix = shouldIncludePort(protocol, port) ? `:${port}` : "";
+  const tld = env.PORTLESS_TLD || "localhost";
+  const prefix = defaultDetectWorktreePrefix(repoRoot);
+  const host = prefix
+    ? `${prefix}.${AGGREGATE_PORTLESS_NAME}.${tld}`
+    : `${AGGREGATE_PORTLESS_NAME}.${tld}`;
+
+  return `${protocol}://${host}${portSuffix}`;
+}
+
+function isHttpsEnabled(env) {
+  return env.PORTLESS_HTTPS !== "0" && env.PORTLESS_HTTPS !== "false";
+}
+
+function parsePort(value) {
+  if (!value) {
+    return undefined;
+  }
+  const port = Number.parseInt(String(value), 10);
+  return Number.isInteger(port) && port > 0 && port < 65_536
+    ? port
+    : undefined;
+}
+
+function shouldIncludePort(protocol, port) {
+  return Boolean(port) &&
+    !((protocol === "https" && port === 443) ||
+      (protocol === "http" && port === 80));
 }
 
 function toOrigin(rawUrl, label) {

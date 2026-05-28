@@ -1,5 +1,5 @@
 /**
- * Lightweight database SDK for Lightfast infrastructure
+ * Lightweight database SDK
  * Provides common database utilities and PlanetScale MySQL integration
  */
 

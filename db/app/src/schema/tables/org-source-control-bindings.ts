@@ -119,14 +119,14 @@ export const orgSourceControlBindings = mysqlTable(
     /**
      * When the binding was established.
      */
-    connectedAt: timestamp("connected_at", { mode: "string", fsp: 3 })
+    connectedAt: timestamp("connected_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     /**
      * When the provider binding was removed; null while active.
      */
-    revokedAt: timestamp("revoked_at", { mode: "string", fsp: 3 }),
+    revokedAt: timestamp("revoked_at", { mode: "date", fsp: 3 }),
 
     /**
      * Provider-specific details.
@@ -136,14 +136,14 @@ export const orgSourceControlBindings = mysqlTable(
     /**
      * Row creation timestamp.
      */
-    createdAt: timestamp("created_at", { mode: "string", fsp: 3 })
+    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
     /**
      * Row last-update timestamp. Maintained by the repository helpers.
      */
-    updatedAt: timestamp("updated_at", { mode: "string", fsp: 3 })
+    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .onUpdateNow()
       .notNull(),

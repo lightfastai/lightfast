@@ -18,8 +18,8 @@
       "default": "./src/inngest/index.ts"
     },
     "./inngest/client": {
-      "types": "./src/inngest/client/client.ts",
-      "default": "./src/inngest/client/client.ts"
+      "types": "./src/inngest/client.ts",
+      "default": "./src/inngest/client.ts"
     },
     "./auth/identity": {
       "types": "./src/auth/identity.ts",
@@ -34,7 +34,6 @@
   },
   "dependencies": {
     "@db/app": "workspace:*",
-    "@lightfastai/dev-proxy": "catalog:",
     "@orpc/contract": "^1.14.2",
     "@orpc/server": "^1.14.2",
     "@repo/ai": "workspace:*",

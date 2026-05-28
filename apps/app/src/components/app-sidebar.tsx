@@ -18,7 +18,15 @@ import {
   SidebarMenuItem,
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
-import { BookOpen, HelpCircle, Mail, Settings } from "lucide-react";
+import {
+  BookOpen,
+  CalendarClock,
+  HelpCircle,
+  Mail,
+  Settings,
+  Signal,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -30,8 +38,28 @@ interface NavItem {
   title: string;
 }
 
+function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
+  return [
+    {
+      title: "Signals",
+      href: `/${orgSlug}/signals`,
+      icon: Signal,
+    },
+    {
+      title: "People",
+      href: `/${orgSlug}/people`,
+      icon: UsersRound,
+    },
+  ];
+}
+
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
+    {
+      title: "Automations",
+      href: `/${orgSlug}/automations`,
+      icon: CalendarClock,
+    },
     {
       title: "Settings",
       href: `/${orgSlug}/settings`,
@@ -40,12 +68,16 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
   ];
 }
 
+function isActiveNavItem(item: NavItem, pathname: string) {
+  if (item.title === "Settings") {
+    return pathname.startsWith(item.href);
+  }
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}
+
 function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
   return items.map((item) => {
-    const isActive =
-      item.title === "Settings"
-        ? pathname.startsWith(item.href)
-        : pathname === item.href;
+    const isActive = isActiveNavItem(item, pathname);
 
     return (
       <SidebarMenuItem key={item.title}>
@@ -85,16 +117,28 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         {orgSlug && (
-          <SidebarGroup collapsible defaultOpen label="Manage">
-            <SidebarGroupContent>
-              <SidebarMenu>
-                <NavItems
-                  items={getOrgManageItems(orgSlug)}
-                  pathname={pathname}
-                />
-              </SidebarMenu>
-            </SidebarGroupContent>
-          </SidebarGroup>
+          <>
+            <SidebarGroup collapsible defaultOpen label="Workspace">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NavItems
+                    items={getOrgWorkspaceItems(orgSlug)}
+                    pathname={pathname}
+                  />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+            <SidebarGroup collapsible defaultOpen label="Manage">
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NavItems
+                    items={getOrgManageItems(orgSlug)}
+                    pathname={pathname}
+                  />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
+          </>
         )}
       </SidebarContent>
       <SidebarFooter>

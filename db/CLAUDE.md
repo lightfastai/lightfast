@@ -17,12 +17,14 @@ pnpm db:studio    # Open Drizzle Studio for this worktree's branch
 From the repo root:
 
 ```bash
-pnpm db:up      # Create/reuse this worktree's PlanetScale branch/password
-pnpm db:down    # Delete this worktree's PlanetScale branch/password/cache
-pnpm db:status  # Show local branch credential cache status
-pnpm db:env     # Print cached DATABASE_* values
-pnpm db:push    # Apply schema diff to this worktree's branch
+pnpm db:push    # Apply schema diff to the env-configured branch
+pnpm db:migrate # Apply generated migrations to the env-configured branch
 ```
+
+Local PlanetScale branch/password setup is skill-driven. Load
+`.agents/skills/lightfast-local-infra` and use its `db up` runbook to create or
+reuse a branch and write `DATABASE_HOST`, `DATABASE_USERNAME`, and
+`DATABASE_PASSWORD` to `apps/app/.vercel/.env.development.local`.
 
 ## Branch Model & Deploy Pipeline
 
@@ -70,4 +72,5 @@ DATABASE_PASSWORD=<password> \
   `pnpm db:push`.
 - Run `pnpm db:migrate` only against the persistent `staging` branch with
   explicit `DATABASE_*` credentials.
-- Run `pscale auth login` before `pnpm db:up`.
+- Run `pscale auth login` before using the `lightfast-local-infra` `db up`
+  runbook.

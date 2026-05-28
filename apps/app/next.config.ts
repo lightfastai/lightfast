@@ -1,4 +1,7 @@
-import { withPortlessProxy } from "@lightfastai/dev-proxy/next";
+import {
+  getPortlessProxyOrigins,
+  withPortlessProxy,
+} from "@lightfastai/dev-proxy/next";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -9,6 +12,15 @@ import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
 import { devOriginPatterns } from "./src/origins";
+
+const portlessDevOrigins = [
+  "lightfast",
+  "app.lightfast",
+  "www.lightfast",
+  "platform.lightfast",
+].flatMap((name) =>
+  getPortlessProxyOrigins({ name, allowMissingConfig: true })
+);
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   typedRoutes: true,
@@ -125,7 +137,8 @@ const config = withSentryConfig(
 const baseExport = withPortlessProxy(
   withMicrofrontends(config, {
     debug: env.NODE_ENV !== "production",
-  })
+  }),
+  { origins: portlessDevOrigins }
 );
 
 export default process.env.ANALYZE === "true"

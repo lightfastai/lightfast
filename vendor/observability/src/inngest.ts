@@ -1,20 +1,21 @@
 import "server-only";
 
-import {
-  flush,
-  SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN,
-  SEMANTIC_ATTRIBUTE_SENTRY_SOURCE,
-  startSpanManual,
-  withActiveSpan,
-  withIsolationScope,
-} from "@sentry/core";
-import { InngestMiddleware, NonRetriableError } from "@vendor/inngest";
+import { flush, withIsolationScope } from "@sentry/core";
+import { Middleware, NonRetriableError } from "@vendor/inngest";
 
-import type { JournalEntry } from "./context";
+import type { JournalEntry, RequestStore } from "./context";
 import { createStore, requestStore } from "./context";
 import { log } from "./log/next";
 
 const MAX_JOURNAL_ENTRIES = 50;
+
+interface RunContext {
+  correlationId: string;
+  eventName?: string;
+  fnId: string;
+  startTime: number;
+  store: RequestStore;
+}
 
 /**
  * Extracts common context fields from Inngest event data.
@@ -39,222 +40,217 @@ function extractEventContext(
   );
 }
 
-/**
- * Creates the unified Inngest observability middleware.
- *
- * Consolidates three capabilities into a single middleware:
- * 1. ALS context seeding — auto-enriches all `log.*` calls
- * 2. Sentry integration — isolation scope, manual spans, selective error capture
- * 3. Step journal — records executed steps via beforeExecution/afterExecution hooks
- *
- * Replaces `@inngest/middleware-sentry`.
- *
- * Architecture notes:
- * - Uses `startSpanManual` (not `startSpan`) because the span must live across
- *   multiple lifecycle hooks. `startSpan` auto-ends when its callback returns,
- *   which would close the span immediately after hook registration (~0ms).
- *   `startSpanManual` requires explicit `.end()` in `beforeResponse`.
- *   (Matches the pattern in `@inngest/middleware-sentry`.)
- *
- * - Hooks access `store` via closure, NOT via ALS (`getJournal`/`pushJournal`).
- *   Inngest wraps hooks in `waterfall`/`cacheFn` which creates promise chains
- *   that break `AsyncLocalStorage` propagation. `getStore()` returns undefined
- *   inside hooks even after `enterWith`. Direct store access via closure is
- *   reliable regardless of async context boundaries.
- *
- * - ALS is seeded in `beforeMemoization` via `requestStore.enterWith()` for
- *   the benefit of USER function code — `log.*` calls inside Inngest functions
- *   automatically get context enrichment. The middleware hooks themselves don't
- *   depend on ALS.
- *
- * - Hooks run outside `withIsolationScope`'s async context, so we use
- *   `scope.captureException()` (via closure) instead of the global
- *   `captureException` to ensure errors are captured in the correct
- *   isolation scope. (Matches `@inngest/middleware-sentry`'s pattern.)
- */
-export function createInngestObservabilityMiddleware() {
-  return new InngestMiddleware({
-    name: "lightfast:observability",
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
-    init() {
-      return {
-        onFunctionRun({ ctx, fn }) {
-          const fnId = fn.id();
-          const eventData = (ctx.event?.data as Record<string, unknown>) ?? {};
-          const eventContext = extractEventContext(eventData);
+function getEventData(ctx: Middleware.OnRunStartArgs["ctx"]) {
+  return typeof ctx.event?.data === "object" && ctx.event.data !== null
+    ? (ctx.event.data as Record<string, unknown>)
+    : undefined;
+}
 
-          // Generate correlationId from runId for cron functions with no event data
-          const correlationId =
-            (eventContext.correlationId as string | undefined) ?? ctx.runId;
+function getStepName(stepInfo: {
+  options: { id: string; name?: string | undefined };
+}): string {
+  return stepInfo.options.name ?? stepInfo.options.id;
+}
 
-          const alsContext = {
-            requestId: ctx.runId,
-            inngestFunctionId: fnId,
-            inngestEventName: ctx.event?.name,
-            ...eventContext,
-            correlationId,
-          };
+class LightfastInngestObservabilityMiddleware extends Middleware.BaseMiddleware {
+  readonly id = "lightfast:observability";
 
-          const startTime = Date.now();
-          let execStartTime: number | undefined;
+  private runContext?: RunContext;
+  private readonly stepStartTimes = new Map<string, number>();
 
-          // Create store eagerly; ALS is seeded in beforeMemoization for user code.
-          // Hooks access store via closure (see architecture note above).
-          const store = createStore(
-            alsContext as { requestId: string } & Record<string, unknown>
-          );
+  private ensureRunContext(
+    ctx: Middleware.OnRunStartArgs["ctx"],
+    fn: Middleware.OnRunStartArgs["fn"]
+  ): RunContext {
+    if (this.runContext) {
+      return this.runContext;
+    }
 
-          /** Push a journal entry directly to the store (bypasses ALS). */
-          function journal(
-            level: JournalEntry["level"],
-            msg: string,
-            meta?: Record<string, unknown>
-          ) {
-            if (store.journal.length < MAX_JOURNAL_ENTRIES) {
-              store.journal.push({ ts: Date.now(), level, msg, meta });
-            }
-          }
+    const fnId = fn.id();
+    const eventData = getEventData(ctx);
+    const eventContext = extractEventContext(eventData);
+    const correlationId =
+      (eventContext.correlationId as string | undefined) ?? ctx.runId;
+    const eventName =
+      typeof ctx.event?.name === "string" ? ctx.event.name : undefined;
 
-          journal("info", "function:start");
+    const store = createStore({
+      requestId: ctx.runId,
+      inngestFunctionId: fnId,
+      ...(eventName && { inngestEventName: eventName }),
+      ...eventContext,
+      correlationId,
+    });
 
-          // Wrap in Sentry isolation scope (synchronous — matches sentryMiddleware)
-          return withIsolationScope((scope) => {
-            scope.setTag("inngest.function.id", fnId);
-            scope.setTag("inngest.run.id", ctx.runId);
-            if (ctx.event?.name) {
-              scope.setTag("inngest.event.name", ctx.event.name);
-            }
+    this.runContext = {
+      correlationId,
+      eventName,
+      fnId,
+      startTime: Date.now(),
+      store,
+    };
+    this.journal("info", "function:start");
 
-            // startSpanManual: span lives until explicit .end() in beforeResponse
-            return startSpanManual(
-              {
-                name: `inngest/${fnId}`,
-                op: "function.inngest",
-                attributes: {
-                  [SEMANTIC_ATTRIBUTE_SENTRY_SOURCE]: "route",
-                  [SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN]:
-                    "auto.function.inngest.middleware",
-                  "inngest.run.id": ctx.runId,
-                  "inngest.event.name": ctx.event?.name ?? "unknown",
-                },
-                scope,
-              },
-              (reqSpan) => {
-                // Add Sentry trace ID to store for log correlation
-                const traceId = reqSpan.spanContext().traceId;
-                if (traceId) {
-                  store.ctx = { ...store.ctx, traceId };
-                }
+    return this.runContext;
+  }
 
-                return {
-                  // Seed ALS for user function code. enterWith may not propagate
-                  // to hooks (due to waterfall/cacheFn promise chains) but it
-                  // DOES propagate to the user function executed via runAsPromise.
-                  beforeMemoization() {
-                    requestStore.enterWith(store);
-                  },
+  private journal(
+    level: JournalEntry["level"],
+    msg: string,
+    meta?: Record<string, unknown>
+  ) {
+    const store = this.runContext?.store;
+    if (!store || store.journal.length >= MAX_JOURNAL_ENTRIES) {
+      return;
+    }
+    store.journal.push({ ts: Date.now(), level, msg, meta });
+  }
 
-                  beforeExecution() {
-                    execStartTime = Date.now();
-                    journal("info", "execution:start");
-                  },
+  private emitJournal(durationMs: number) {
+    const store = this.runContext?.store;
+    const fnId = this.runContext?.fnId;
+    if (!(store && fnId) || store.journal.length === 0) {
+      return;
+    }
 
-                  afterExecution() {
-                    const execMs = execStartTime
-                      ? Date.now() - execStartTime
-                      : undefined;
-                    journal("info", "execution:done", {
-                      ...(execMs !== undefined && { durationMs: execMs }),
-                    });
-                  },
+    log.info(`[inngest] ${fnId} journal`, {
+      durationMs,
+      entryCount: store.journal.length,
+      entries: store.journal,
+    });
+  }
 
-                  transformOutput({ result, step: stepInfo }) {
-                    const durationMs = Date.now() - startTime;
-                    const err = result.error;
+  onMemoizationEnd({ ctx, fn }: Middleware.OnMemoizationEndArgs) {
+    const { store } = this.ensureRunContext(ctx, fn);
+    requestStore.enterWith(store);
+  }
 
-                    if (err) {
-                      const isBusinessError = err instanceof NonRetriableError;
-                      const errorMessage =
-                        err instanceof Error ? err.message : String(err);
+  async wrapFunctionHandler({
+    ctx,
+    fn,
+    next,
+  }: Middleware.WrapFunctionHandlerArgs) {
+    const { store } = this.ensureRunContext(ctx, fn);
+    return requestStore.run(store, () => next());
+  }
 
-                      journal("error", "function:error", {
-                        error: errorMessage,
-                        durationMs,
-                        isBusinessError,
-                      });
+  onStepStart({ ctx, fn, stepInfo }: Middleware.OnStepStartArgs) {
+    this.ensureRunContext(ctx, fn);
+    const stepName = getStepName(stepInfo);
+    this.stepStartTimes.set(stepInfo.hashedId, Date.now());
+    this.journal("info", "step:start", {
+      stepName,
+      stepType: stepInfo.stepType,
+    });
+  }
 
-                      reqSpan.setStatus({ code: 2 }); // error
+  onStepComplete({ ctx, fn, stepInfo }: Middleware.OnStepCompleteArgs) {
+    this.ensureRunContext(ctx, fn);
+    const startedAt = this.stepStartTimes.get(stepInfo.hashedId);
+    const durationMs = startedAt ? Date.now() - startedAt : undefined;
+    this.journal("info", "step:done", {
+      ...(durationMs !== undefined && { durationMs }),
+      stepName: getStepName(stepInfo),
+      stepType: stepInfo.stepType,
+    });
+  }
 
-                      if (isBusinessError) {
-                        // Business rejections (filtered event, no connection, etc.)
-                        // are expected outcomes — log at info level, skip Sentry.
-                        log.info(`[inngest] ${fnId} rejected`, {
-                          durationMs,
-                          error: errorMessage,
-                          ...(stepInfo && { stepName: stepInfo.name }),
-                        });
-                      } else {
-                        // Unexpected errors: capture to Sentry with enriched context
-                        withActiveSpan(reqSpan, () => {
-                          scope.setTag("inngest.function.id", fnId);
-                          scope.setTag("inngest.run.id", ctx.runId);
-                          scope.setTransactionName(`inngest:${fnId}`);
-                        });
+  onStepError({
+    ctx,
+    error,
+    fn,
+    isFinalAttempt,
+    stepInfo,
+  }: Middleware.OnStepErrorArgs) {
+    this.ensureRunContext(ctx, fn);
+    const startedAt = this.stepStartTimes.get(stepInfo.hashedId);
+    const durationMs = startedAt ? Date.now() - startedAt : undefined;
+    this.journal("error", "step:error", {
+      ...(durationMs !== undefined && { durationMs }),
+      error: getErrorMessage(error),
+      isFinalAttempt,
+      stepName: getStepName(stepInfo),
+      stepType: stepInfo.stepType,
+    });
+  }
 
-                        scope.setExtra("durationMs", durationMs);
-                        scope.setExtra("correlationId", correlationId);
+  onRunComplete({ ctx, fn }: Middleware.OnRunCompleteArgs) {
+    const runContext = this.ensureRunContext(ctx, fn);
+    const durationMs = Date.now() - runContext.startTime;
 
-                        // Unwrap cause for better Sentry grouping
-                        const reportedError =
-                          err instanceof Error && err.cause instanceof Error
-                            ? err.cause
-                            : err;
+    this.journal("info", "function:done", { durationMs });
+    log.info(`[inngest] ${runContext.fnId} completed`, {
+      durationMs,
+      steps: runContext.store.journal.length,
+    });
+    this.emitJournal(durationMs);
+  }
 
-                        // Use scope.captureException (not global) — hooks run
-                        // outside withIsolationScope's async context
-                        scope.captureException(reportedError, {
-                          mechanism: {
-                            handled: false,
-                            type: "auto.function.inngest.middleware",
-                          },
-                        });
+  async onRunError({
+    ctx,
+    error,
+    fn,
+    isFinalAttempt,
+  }: Middleware.OnRunErrorArgs) {
+    const runContext = this.ensureRunContext(ctx, fn);
+    const durationMs = Date.now() - runContext.startTime;
+    const isBusinessError = error instanceof NonRetriableError;
+    const errorMessage = getErrorMessage(error);
 
-                        log.error(`[inngest] ${fnId} failed`, {
-                          durationMs,
-                          error: errorMessage,
-                          ...(stepInfo && { stepName: stepInfo.name }),
-                        });
-                      }
-                    } else {
-                      reqSpan.setStatus({ code: 1 }); // ok
+    this.journal("error", "function:error", {
+      durationMs,
+      error: errorMessage,
+      isBusinessError,
+      isFinalAttempt,
+    });
 
-                      journal("info", "function:done", { durationMs });
-                      log.info(`[inngest] ${fnId} completed`, {
-                        durationMs,
-                        steps: store.journal.length,
-                      });
-                    }
+    if (isBusinessError) {
+      log.info(`[inngest] ${runContext.fnId} rejected`, {
+        durationMs,
+        error: errorMessage,
+        isFinalAttempt,
+      });
+    } else {
+      withIsolationScope((scope) => {
+        scope.setTag("inngest.function.id", runContext.fnId);
+        scope.setTag("inngest.run.id", ctx.runId);
+        if (runContext.eventName) {
+          scope.setTag("inngest.event.name", runContext.eventName);
+        }
+        scope.setTransactionName(`inngest:${runContext.fnId}`);
+        scope.setExtra("correlationId", runContext.correlationId);
+        scope.setExtra("durationMs", durationMs);
+        scope.setExtra("isFinalAttempt", isFinalAttempt);
 
-                    // Emit full journal as single structured log
-                    if (store.journal.length > 0) {
-                      log.info(`[inngest] ${fnId} journal`, {
-                        durationMs,
-                        entryCount: store.journal.length,
-                        entries: store.journal,
-                      });
-                    }
-                  },
+        const reportedError =
+          error instanceof Error && error.cause instanceof Error
+            ? error.cause
+            : error;
 
-                  async beforeResponse() {
-                    reqSpan.end();
-                    await flush(2000);
-                  },
-                };
-              }
-            );
-          });
-        },
-      };
-    },
-  });
+        scope.captureException(reportedError, {
+          mechanism: {
+            handled: false,
+            type: "auto.function.inngest.middleware",
+          },
+        });
+      });
+
+      log.error(`[inngest] ${runContext.fnId} failed`, {
+        durationMs,
+        error: errorMessage,
+        isFinalAttempt,
+      });
+    }
+
+    this.emitJournal(durationMs);
+    await flush(2000);
+  }
+}
+
+export function createInngestObservabilityMiddleware(): Middleware.Class {
+  return LightfastInngestObservabilityMiddleware;
 }

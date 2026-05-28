@@ -27,17 +27,15 @@
         "CLERK_CLI_OAUTH_CLIENT_ID",
         "CLERK_DESKTOP_OAUTH_CLIENT_ID",
         "DATABASE_HOST",
-        "DATABASE_PORT",
         "DATABASE_USERNAME",
         "DATABASE_PASSWORD",
-        "DATABASE_NAME",
         "KV_REST_API_URL",
         "KV_REST_API_TOKEN",
         "HEALTH_CHECK_AUTH_TOKEN",
         "ARCJET_KEY",
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
-        "INNGEST_SERVE_HOST",
+        "INNGEST_SERVE_ORIGIN",
         "INNGEST_SIGNING_KEY",
         "UNKEY_API_ID",
         "UNKEY_ROOT_KEY",
@@ -52,9 +50,12 @@
         "next-env.d.ts"
       ]
     },
-    "dev": {
+    "dev:next": {
       "persistent": true,
-      "with": ["//#dev:ngrok"]
+      "passThroughEnv": [
+        "MFE_DISABLE_LOCAL_PROXY_REWRITE",
+        "TURBO_TASK_HAS_MFE_PROXY"
+      ]
     },
     "mfe:proxy": {
       "cache": false,
