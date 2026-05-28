@@ -1,5 +1,5 @@
 import { env } from "~/env";
-import { appUrl, devOriginPatterns } from "~/origins";
+import { appUrl, platformUrl, wwwUrl } from "~/origins";
 
 const isDev =
   env.NEXT_PUBLIC_VERCEL_ENV === undefined ||
@@ -16,9 +16,23 @@ if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
   );
 }
 
-// devOriginPatterns is already [] when !isLocal (gated inside ~/origins).
-// No re-gate needed; the constant is the source of truth.
-const devOrigins = devOriginPatterns;
+function toLocalOrigin(value: string): string | null {
+  try {
+    const url = new URL(value);
+    const isLocalhost =
+      url.hostname === "localhost" || url.hostname.endsWith(".localhost");
+    return isLocalhost ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+const localDevOrigins = new Set(
+  [appUrl, wwwUrl, platformUrl].flatMap((value) => {
+    const origin = toLocalOrigin(value);
+    return origin ? [origin] : [];
+  })
+);
 
 export function isAllowedOrigin(origin: string | null): origin is string {
   if (!origin) {
@@ -40,15 +54,7 @@ export function isAllowedOrigin(origin: string | null): origin is string {
     return false;
   }
 
-  return devOrigins.some((pattern) => {
-    if (pattern.startsWith("*.")) {
-      const suffix = pattern.slice(1);
-      return (
-        originUrl.host.endsWith(suffix) && originUrl.host.length > suffix.length
-      );
-    }
-    return originUrl.host === pattern;
-  });
+  return localDevOrigins.has(originValue);
 }
 
 // Dev-only carve-out: the Electron renderer in dev loads from

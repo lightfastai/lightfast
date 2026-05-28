@@ -1,22 +1,15 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const PORTLESS_ORIGINS = [
-  "lightfast.localhost",
-  "*.lightfast.localhost",
-  "app.lightfast.localhost",
-  "*.app.lightfast.localhost",
-  "www.lightfast.localhost",
-  "*.www.lightfast.localhost",
-];
-
 function setupMocks(opts: {
   appUrl: string;
+  platformUrl?: string;
   vercelEnv: "development" | "preview" | "production" | undefined;
-  origins?: string[];
+  wwwUrl?: string;
 }) {
   vi.doMock("~/origins", () => ({
     appUrl: opts.appUrl,
-    devOriginPatterns: opts.origins ?? PORTLESS_ORIGINS,
+    platformUrl: opts.platformUrl ?? "https://platform.lightfast.localhost",
+    wwwUrl: opts.wwwUrl ?? "https://www.lightfast.localhost",
   }));
   vi.doMock("~/env", () => ({
     env: { NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv },
@@ -36,7 +29,9 @@ describe("isAllowedOrigin (dev)", () => {
   beforeEach(() => {
     setupMocks({
       appUrl: "https://app.lightfast.localhost/",
+      platformUrl: "https://platform.lightfast.localhost",
       vercelEnv: undefined,
+      wwwUrl: "https://www.lightfast.localhost",
     });
   });
 
@@ -45,15 +40,20 @@ describe("isAllowedOrigin (dev)", () => {
     expect(isAllowedOrigin("https://app.lightfast.localhost")).toBe(true);
   });
 
-  it("admits the bare wildcard host", async () => {
+  it("admits the exact local www origin from wwwUrl", async () => {
     const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://www.lightfast.localhost")).toBe(true);
   });
 
-  it("admits a worktree-prefixed app origin via *.app.lightfast.localhost", async () => {
+  it("admits the exact local platform origin from platformUrl", async () => {
+    const { isAllowedOrigin } = await import("~/cors");
+    expect(isAllowedOrigin("https://platform.lightfast.localhost")).toBe(true);
+  });
+
+  it("rejects a worktree-prefixed app origin that is not an exact env URL", async () => {
     const { isAllowedOrigin } = await import("~/cors");
     expect(isAllowedOrigin("https://feature.app.lightfast.localhost")).toBe(
-      true
+      false
     );
   });
 

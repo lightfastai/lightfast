@@ -11,7 +11,6 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
-import { devOriginPatterns } from "./src/origins";
 
 const portlessDevOrigins = [
   "lightfast",
@@ -21,6 +20,32 @@ const portlessDevOrigins = [
 ].flatMap((name) =>
   getPortlessProxyOrigins({ name, allowMissingConfig: true })
 );
+
+function localHostFromUrl(value: string): string | null {
+  try {
+    const url = new URL(value);
+    const isLocalhost =
+      url.hostname === "localhost" || url.hostname.endsWith(".localhost");
+    return isLocalhost ? url.host : null;
+  } catch {
+    return null;
+  }
+}
+
+function localServerActionHosts(): string[] {
+  return Array.from(
+    new Set(
+      [
+        env.NEXT_PUBLIC_APP_URL,
+        env.NEXT_PUBLIC_WWW_URL,
+        env.NEXT_PUBLIC_PLATFORM_URL,
+      ].flatMap((value) => {
+        const host = localHostFromUrl(value);
+        return host ? [host] : [];
+      })
+    )
+  );
+}
 
 const appConfig: NextConfig = merge({}, baseConfig, {
   typedRoutes: true,
@@ -72,9 +97,7 @@ const appConfig: NextConfig = merge({}, baseConfig, {
         if (vercelEnv === "preview") {
           return ["lightfast.ai", "*.lightfast.ai", "*.vercel.app"];
         }
-        // Dev: portless wildcards (lib/origins single seam) + raw localhost
-        // for direct backend hits (raw 4107, desktop renderer, Inngest local).
-        return [...devOriginPatterns, "localhost:*"];
+        return localServerActionHosts();
       })(),
     },
   },
