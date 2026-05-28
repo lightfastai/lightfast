@@ -8,7 +8,7 @@ export const mainEnv = createEnv({
     SENTRY_DSN: z.string().url().optional(),
     SPARKLE_FEED_URL: z.string().url().optional(),
     SQUIRREL_FEED_URL: z.string().url().optional(),
-    LIGHTFAST_APP_ORIGIN: z.string().url().optional(),
+    APP_URL: z.string().url().optional(),
     LIGHTFAST_REMOTE_DEBUG_PORT: z.coerce
       .number()
       .int()
@@ -23,7 +23,7 @@ export const mainEnv = createEnv({
         : process.env.SENTRY_DSN,
     SPARKLE_FEED_URL: process.env.SPARKLE_FEED_URL,
     SQUIRREL_FEED_URL: process.env.SQUIRREL_FEED_URL,
-    LIGHTFAST_APP_ORIGIN: process.env.LIGHTFAST_APP_ORIGIN,
+    APP_URL: process.env.APP_URL,
     LIGHTFAST_REMOTE_DEBUG_PORT: process.env.LIGHTFAST_REMOTE_DEBUG_PORT,
   },
   isServer: true,

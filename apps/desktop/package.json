@@ -6,7 +6,7 @@
   "main": ".vite/build/bootstrap.js",
   "scripts": {
     "clean": "rm -rf out .vite .cache",
-    "dev": "pnpm with-env node ../../scripts/with-desktop-env.mjs -- electron-forge start",
+    "dev": "APP_URL=$(portless get lightfast) pnpm with-env electron-forge start",
     "devtools:reset": "node scripts/devtools-reset.mjs",
     "make": "electron-forge make",
     "metadata-probe": "node scripts/metadata-probe.mjs",
