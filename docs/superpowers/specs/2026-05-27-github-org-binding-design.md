@@ -71,6 +71,8 @@ page.
   not become generally callable tRPC procedures unless the UI needs them.
 - Keep GitHub API/crypto code out of app routers by moving reusable contracts
   and Node helpers into dedicated packages.
+- Provide a fast local-dev path for the already-installed happy path without
+  treating local emulation as a replacement for real GitHub App setup testing.
 
 ## Non-Goals
 
@@ -82,6 +84,10 @@ page.
 - No GitHub Enterprise Server support in v1.
 - No broader source-control abstraction beyond the current provider column.
 - No complete GitHub event ingestion pipeline in this binding work.
+- No fork of `vercel-labs/emulate` for v1.
+- No local reimplementation of GitHub's full App installation UI. Local dev may
+  use a Lightfast-owned shim that simulates only GitHub's redirect back to the
+  setup URL.
 
 ## GitHub Docs Caveats
 
@@ -128,6 +134,15 @@ The implementation must account for these GitHub-specific constraints:
   delivery payloads from a dev app before production rollout.
 - Local webhook testing needs a public HTTPS URL; `localhost` is not sufficient
   for GitHub delivery.
+- `vercel-labs/emulate@0.6.0` is useful for local OAuth, seeded GitHub App
+  installations, org membership checks, repo events, and app webhook delivery,
+  but it does not implement GitHub's App installation UI/setup redirect route,
+  `GET /user/installations`, installation lifecycle webhooks, or PKCE
+  enforcement.
+- `vercel-labs/emulate@0.6.0` currently rejects valid GitHub App JWTs because
+  its auth middleware verifies with a private key rather than a derived public
+  key. Lightfast's local emulator harness should carry a narrow `pnpm patch`
+  until the fix is accepted upstream.
 
 Reference docs:
 
@@ -144,7 +159,7 @@ Reference docs:
 
 ## Architecture
 
-The flow has seven boundaries.
+The flow has eight boundaries.
 
 1. `apps/app` setup UI
 
@@ -208,6 +223,13 @@ The flow has seven boundaries.
    Clerk owns Lightfast user/org membership and mirrors non-sensitive binding
    status into the session token.
 
+8. Local GitHub emulator harness
+
+   A dev-only package starts `vercel-labs/emulate` with deterministic GitHub
+   fixture data. It supports local development and integration tests for the
+   already-installed flow. It must not be imported by production app/runtime
+   code.
+
 Boundary rule: `api/app` orchestrates DB/Clerk/Redis and imports the two
 GitHub packages. `apps/app` route handlers call `api/app` exported helpers or
 public tRPC procedures; they do not call GitHub, DB, Clerk admin APIs, or Redis
@@ -223,6 +245,19 @@ GET  /api/github/oauth/callback
 POST /api/github/webhook
 GET  /:slug/tasks/bind/github/complete
 ```
+
+Dev-only route:
+
+```text
+GET /api/dev/github/install
+```
+
+`/api/dev/github/install` exists only for local emulator flows. It validates
+that `GITHUB_INSTALL_URL_OVERRIDE` is enabled in a non-production environment,
+preserves the bind `state`, and redirects to `/api/github/setup` with the
+fixture `installation_id` and `setup_action=install`. It does not write DB
+state and does not mutate the emulator; the installation must already exist in
+the emulator seed.
 
 `/api/github/setup` and `/api/github/oauth/callback` need Clerk middleware
 context but should not be proxy-enforced as product routes. They should be
@@ -266,7 +301,9 @@ mark an org bound without a verified GitHub installation.
 | `api/app/src/router/(pending-not-allowed)` | Public setup procedures: `start` and `syncBindingClaim`. | GitHub setup/OAuth/webhook callback logic. |
 | `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/tasks/bind` | Bind card, completion/repair page, user-facing error state. | GitHub secrets, DB access, provider verification. |
 | `apps/app/src/app/(app)/(github)/api/github` or equivalent colocated route group | Thin setup/OAuth/webhook route handlers. | Business logic beyond parsing, delegation, and redirect/response shaping. |
+| `apps/app/src/app/api/dev/github/install` or equivalent route | Local-only redirect shim for emulator installs. | Production GitHub behavior, DB writes, emulator state mutation. |
 | `apps/app/src/proxy.ts` | Admit GitHub setup/OAuth routes and bypass webhook route from Clerk auth enforcement. | Source-control binding decisions. |
+| `internal/github-emulator` | Dev-only emulator seed, startup scripts, and fixture constants. | Production runtime config or production dependencies. |
 
 ## Bind Attempt State
 
@@ -386,6 +423,91 @@ If the GitHub App is installed but the user abandons the OAuth verification
 step, Lightfast stores no DB binding. A later start from the same Lightfast org
 may bind the existing installation after the GitHub user-token verifier proves
 access to it.
+
+## Local GitHub Emulation
+
+Local emulation is an implementation aid, not a production contract. The
+emulator flow exercises Lightfast's setup/OAuth/callback/DB/Clerk code after
+the GitHub install redirect boundary, while real GitHub remains required for
+final validation of the install UI and lifecycle webhooks.
+
+Use `vercel-labs/emulate` through a workspace dev package:
+
+```text
+internal/github-emulator/
+```
+
+The package owns:
+
+- deterministic seed generation for:
+  - one GitHub organization,
+  - one GitHub user,
+  - one GitHub repository,
+  - one OAuth app,
+  - one GitHub App,
+  - one pre-existing organization installation;
+- a fixed local origin for the GitHub emulator, such as
+  `http://127.0.0.1:4567`;
+- a non-secret fixture private key for local JWT and webhook tests;
+- scripts for starting the emulator with the seed;
+- local integration tests that prove the emulator behaves as expected.
+
+The emulator package should depend on `emulate`, `@emulators/github`, and
+`@emulators/core` as dev dependencies. It should use `pnpm` patched
+dependencies for the narrow JWT verification fix. It should not be a dependency
+of `apps/app`, `api/app`, `packages/github-app-contract`, or
+`packages/github-app-node`.
+
+The private package name should follow existing internal package convention,
+for example `@repo/github-emulator`, even though the directory lives under
+`internal/github-emulator`.
+
+Local install behavior:
+
+- `org.setup.github.start` normally builds GitHub's real installation URL.
+- When `GITHUB_INSTALL_URL_OVERRIDE` is present in a non-production
+  environment, `start` uses that full URL as the base installation target and
+  appends the signed Lightfast `state`.
+- The local emulator runbook sets `GITHUB_INSTALL_URL_OVERRIDE` to the
+  Lightfast dev shim route, for example
+  `https://app.lightfast.localhost/api/dev/github/install`.
+- The override URL may include non-secret local query parameters such as
+  `emulator_origin`, `installation_id`, and `provider_account_login`. These
+  values are part of the single override URL, not separate environment
+  variables.
+- `start` should parse the allowed dev-shim override and store any resolved
+  emulator context in the Redis install attempt. The setup/OAuth helpers then
+  use that attempt context for emulator authorize/token/API endpoints.
+- The dev shim redirects to `/api/github/setup` with the seeded
+  `installation_id` and original `state`.
+- The setup callback then runs the normal Lightfast callback code and redirects
+  to the emulator OAuth authorize URL.
+
+Emulator verifier behavior:
+
+- Production verification uses GitHub's user-token installation API.
+- Local emulator verification must be selected only from non-production runtime
+  context and the presence of `GITHUB_INSTALL_URL_OVERRIDE`; no additional env
+  switch is needed for v1.
+- The local verifier proves the same useful conditions with emulator-supported
+  endpoints:
+  - `GET /user` identifies the OAuth user,
+  - `GET /user/orgs` or `GET /orgs/:org/memberships/:username` proves org
+    access,
+  - `GET /orgs/:org/installation` proves the GitHub App installation exists,
+  - the returned installation id matches the callback `installation_id`,
+  - the returned target is an organization.
+
+The local verifier must never run in production. If `GITHUB_INSTALL_URL_OVERRIDE`
+is set when `VERCEL_ENV=production`, startup should fail or the GitHub setup
+procedure should reject the configuration before issuing an external URL.
+
+Do not add separate base-url environment variables for emulator API, web, or
+OAuth endpoints in v1. The local emulator package owns the fixed local origin,
+and production code defaults to GitHub's documented URLs. Do not introduce
+`GITHUB_PROVIDER_MODE` in v1; add it only if a future workflow needs to run real
+GitHub with an installation URL override or local emulation without the
+override.
 
 ## DB Writes
 
@@ -593,11 +715,18 @@ GITHUB_APP_CLIENT_ID
 GITHUB_APP_CLIENT_SECRET
 GITHUB_APP_PRIVATE_KEY
 GITHUB_APP_WEBHOOK_SECRET
+GITHUB_INSTALL_URL_OVERRIDE
 ```
 
 Implementation should normalize private keys that arrive with escaped newlines.
 `GITHUB_API_VERSION` should default to the currently documented API version in
 `@repo/github-app-node` and be overrideable for controlled upgrades.
+
+`GITHUB_INSTALL_URL_OVERRIDE` is dev-only. It is optional, must not be set in
+production, and is the only new environment variable for local emulation in
+v1. The implementation should use existing runtime context such as
+`VERCEL_ENV`, `NODE_ENV`, and the current app origin to decide whether the
+override is allowed.
 
 Derived URLs should use the current app origin:
 
@@ -627,6 +756,7 @@ Create:
 ```text
 packages/github-app-contract/
 packages/github-app-node/
+internal/github-emulator/
 ```
 
 `@repo/github-app-contract` exports:
@@ -657,12 +787,20 @@ packages/github-app-node/
 Do not create a package for Redis attempts or DB binding orchestration. Those
 are Lightfast app domain workflows and should stay in `api/app`.
 
+`internal/github-emulator` exports no production API contract. It provides
+scripts and fixtures for local development only. It may include a small README
+with the local runbook and the upstream emulator caveats discovered during
+evaluation.
+
 Dependency rules:
 
 - `@repo/github-app-contract`: `zod` only.
 - `@repo/github-app-node`: `@repo/github-app-contract`, `zod`, and a crypto/JWT
   dependency only if native Node APIs are not enough. If a dependency is added,
   add it through the workspace catalog.
+- `internal/github-emulator`: dev dependencies on `emulate`,
+  `@emulators/github`, and `@emulators/core`; not imported by production
+  packages.
 - `api/app`: depends on both packages and owns env, Clerk, Redis, and DB.
 - `apps/app`: should not depend on `@repo/github-app-node`.
 
@@ -720,6 +858,26 @@ Focused unit tests:
 - Completion page reloads Clerk session and redirects to workspace.
 - Package boundary tests prove `@repo/github-app-contract` has no Node-only
   imports and `apps/app` does not import `@repo/github-app-node`.
+- Env/config tests reject `GITHUB_INSTALL_URL_OVERRIDE` in production and allow
+  it only in local/test contexts.
+- Dev install shim tests preserve `state`, inject only the seeded
+  `installation_id`, and reject access outside local/test contexts.
+- Emulator verifier tests accept matching seeded org/install data and reject
+  mismatched installation ids, personal/user targets, and missing org access.
+
+Local emulator checks:
+
+- Patched `@emulators/core` accepts a valid GitHub App JWT and returns
+  `GET /app`.
+- Patched emulator mints a `POST /app/installations/:id/access_tokens`
+  response.
+- Emulator OAuth user picker and token exchange work against the seeded OAuth
+  app.
+- Emulator repo event delivery reaches the seeded app webhook with
+  `installation.id` and a valid `X-Hub-Signature-256`.
+- The full local flow binds through
+  `GITHUB_INSTALL_URL_OVERRIDE -> /api/dev/github/install -> /api/github/setup
+  -> emulator OAuth -> /api/github/oauth/callback`.
 
 Integration/manual checks:
 
@@ -764,19 +922,25 @@ Integration/manual checks:
 
 1. Add `@repo/github-app-contract`.
 2. Add `@repo/github-app-node`.
-3. Add env schema and GitHub App config helper in `api/app`.
-4. Add Redis bind attempt helpers in `api/app`.
-5. Add DB binding finalization/revocation/reactivation helper changes in
+3. Add `internal/github-emulator` with deterministic seed fixtures.
+4. Add the narrow `@emulators/core` patch for GitHub App JWT verification and
+   track the upstream PR/issue.
+5. Add env schema and GitHub App config helper in `api/app`, including
+   dev-only `GITHUB_INSTALL_URL_OVERRIDE`.
+6. Add Redis bind attempt helpers in `api/app`.
+7. Add DB binding finalization/revocation/reactivation helper changes in
    `db/app`.
-6. Add `api/app` GitHub binding orchestration helpers.
-7. Add public `org.setup.github.start` and `syncBindingClaim` tRPC procedures.
-8. Add app route handlers.
-9. Update proxy route admission.
-10. Update bind UI and completion page.
-11. Add webhook handler.
-12. Remove production placeholder binding from the UI path.
-13. Configure GitHub App URLs/secrets per environment.
-14. Verify against a dev GitHub App before production rollout.
+8. Add `api/app` GitHub binding orchestration helpers.
+9. Add public `org.setup.github.start` and `syncBindingClaim` tRPC procedures.
+10. Add app route handlers.
+11. Add the dev-only install shim.
+12. Update proxy route admission.
+13. Update bind UI and completion page.
+14. Add webhook handler.
+15. Remove production placeholder binding from the UI path.
+16. Configure GitHub App URLs/secrets per environment.
+17. Verify the local emulator flow.
+18. Verify against a dev GitHub App before production rollout.
 
 ## Open Implementation Notes
 
@@ -801,3 +965,6 @@ Integration/manual checks:
 - Treat GitHub webhook payloads and CodeRabbit/reviewer suggestions as
   untrusted input. Validate data before use and never execute payload-provided
   commands.
+- Prefer an upstream PR plus `pnpm` patch for emulator fixes. Fork
+  `vercel-labs/emulate` only if Lightfast later needs long-lived private
+  lifecycle emulation and upstream release cadence blocks the team.
