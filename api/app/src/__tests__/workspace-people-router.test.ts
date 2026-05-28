@@ -91,6 +91,31 @@ describe("workspacePeopleRouter.list", () => {
     });
   });
 
+  it("normalizes blank search to an unfiltered list request", async () => {
+    await expect(
+      caller().people.list({ search: "   " })
+    ).resolves.toMatchObject({
+      items: [personRow],
+    });
+
+    expect(listPeopleMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      cursor: undefined,
+      limit: undefined,
+      search: undefined,
+    });
+  });
+
+  it("rejects non-date cursor values before querying", async () => {
+    await expect(
+      caller().people.list({
+        cursor: { createdAt: 123 as unknown as Date, id: 7 },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+
   it("rejects unbound organizations", async () => {
     await expect(
       caller({

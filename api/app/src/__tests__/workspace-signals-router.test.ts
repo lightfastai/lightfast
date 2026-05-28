@@ -100,6 +100,32 @@ describe("workspaceSignalsRouter.list", () => {
     });
   });
 
+  it("normalizes blank search to an unfiltered list request", async () => {
+    await expect(
+      caller().signals.list({ search: "   " })
+    ).resolves.toMatchObject({
+      items: [signalRow],
+    });
+
+    expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      cursor: undefined,
+      limit: undefined,
+      search: undefined,
+      status: undefined,
+    });
+  });
+
+  it("rejects non-date cursor values before querying", async () => {
+    await expect(
+      caller().signals.list({
+        cursor: { createdAt: null as unknown as Date, id: 7 },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(listSignalsMock).not.toHaveBeenCalled();
+  });
+
   it("rejects unbound organizations", async () => {
     await expect(
       caller({

@@ -3,16 +3,16 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
 import { boundOrgProcedure } from "../../trpc";
+import {
+  workspaceListCursorInput,
+  workspaceListLimitInput,
+  workspaceListSearchInput,
+} from "./workspace-list-input";
 
 const listPeopleInput = z.object({
-  cursor: z
-    .object({
-      createdAt: z.coerce.date(),
-      id: z.number().int().positive(),
-    })
-    .nullish(),
-  limit: z.number().int().min(1).max(100).optional(),
-  search: z.string().trim().min(1).max(200).optional(),
+  cursor: workspaceListCursorInput,
+  limit: workspaceListLimitInput,
+  search: workspaceListSearchInput,
 });
 
 export const workspacePeopleRouter = {
