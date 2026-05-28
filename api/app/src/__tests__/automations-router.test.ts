@@ -216,4 +216,21 @@ describe("automationsRouter", () => {
       },
     });
   });
+
+  it("rejects manual runs for paused automations", async () => {
+    getAutomationByPublicIdMock.mockResolvedValueOnce({
+      ...automation,
+      status: "paused",
+    });
+
+    await expect(
+      caller().automations.runNow({ id: automation.publicId })
+    ).rejects.toMatchObject({
+      code: "BAD_REQUEST",
+      message: "Automation is paused.",
+    });
+
+    expect(createAutomationRunMock).not.toHaveBeenCalled();
+    expect(sendMock).not.toHaveBeenCalled();
+  });
 });

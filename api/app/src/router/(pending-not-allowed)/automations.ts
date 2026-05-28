@@ -105,6 +105,12 @@ export const automationsRouter = {
       if (!automation) {
         notFound();
       }
+      if (automation.status !== "active") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Automation is paused.",
+        });
+      }
 
       const run = await createAutomationRun(ctx.db, {
         automation,
