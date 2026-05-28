@@ -37,6 +37,8 @@ See `SPEC.md` for business goals and product vision.
 │                tRPC CORS dev: exact env origins                                  │
 │      inngest   https://[<wt>.]inngest.lightfast.localhost                        │
 │      qstash    https://[<wt>.]qstash.lightfast.localhost                         │
+│      db        https://[<wt>.]db.lightfast.localhost                             │
+│                Drizzle Studio local API via @db/app#db:studio                    │
 │                                                                                  │
 │  desktop    Electron (Vite SPA) · APP_URL=$(portless get lightfast)              │
 │             opens the aggregate MFE URL in dev                                   │
@@ -88,13 +90,15 @@ cd apps/app && pnpm with-env <command>
 pnpm build:app && pnpm build:platform
 pnpm check && pnpm typecheck
 
-# Database (run from db/app/)
+# Database
 pnpm db:generate      # NEVER write manual .sql files
 pnpm db:migrate
-pnpm db:studio
+pnpm db:studio        # prints the Portless-backed Drizzle Studio URL
 ```
 
 `pnpm dev` is the only root local-dev entrypoint. It starts app, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, and `QSTASH_URL` values use the concrete service URLs. It does not start ngrok automatically.
+
+Drizzle Studio is started on demand with `pnpm db:studio`. Its local API is routed through Portless at `https://[<wt>.]db.lightfast.localhost`; open the printed `https://local.drizzle.studio?host=...&port=443` URL.
 
 ## Next Dev Origin Handling
 

@@ -11,7 +11,7 @@ pnpm db:generate  # Generate migration SQL from schema, offline
 pnpm db:push      # Apply schema diff to this worktree's PlanetScale branch
 pnpm db:migrate   # Apply generated migrations to staging (requires DATABASE_*)
 pnpm db:baseline  # Seed staging's __drizzle_migrations journal
-pnpm db:studio    # Open Drizzle Studio for this worktree's branch
+pnpm db:studio    # Open the printed Portless-backed Drizzle Studio URL
 ```
 
 From the repo root:
@@ -19,6 +19,7 @@ From the repo root:
 ```bash
 pnpm db:push    # Apply schema diff to the env-configured branch
 pnpm db:migrate # Apply generated migrations to the env-configured branch
+pnpm db:studio  # Open Drizzle Studio through Portless
 ```
 
 Local PlanetScale branch/password setup is skill-driven. Load

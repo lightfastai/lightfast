@@ -64,7 +64,7 @@ pnpm lint:ws        # Workspace dependency boundary check
 # Database
 pnpm db:generate    # Generate Drizzle migrations (NEVER write manual .sql)
 pnpm db:migrate     # Apply migrations
-pnpm --filter @db/app db:studio # Open Drizzle Studio
+pnpm db:studio      # Open Drizzle Studio via Portless
 
 # Cleanup
 pnpm clean          # Clean all build artifacts
