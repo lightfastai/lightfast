@@ -34,6 +34,18 @@ describe("resolveDesktopAppOrigin", () => {
       "https://lightfast.localhost"
     );
 
-    expect(resolveDesktopAppOrigin("production")).toBe("https://lightfast.ai");
+    expect(resolveDesktopAppOrigin("prod")).toBe("https://lightfast.ai");
+  });
+
+  it("rejects unsupported build flavors", async () => {
+    const { resolveDesktopAppOrigin } = await importWithAppUrl(
+      "https://lightfast.localhost"
+    );
+
+    expect(() =>
+      resolveDesktopAppOrigin(
+        "production" as Parameters<typeof resolveDesktopAppOrigin>[0]
+      )
+    ).toThrow();
   });
 });

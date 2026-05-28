@@ -5,7 +5,6 @@ import {
 } from "../shared/build-info-schema";
 
 const PRODUCTION_APP_ORIGIN = "https://lightfast.ai";
-type DesktopAppOriginBuildFlavor = BuildFlavor | "production";
 
 function toOrigin(rawUrl: string, label: string): string {
   try {
@@ -17,13 +16,8 @@ function toOrigin(rawUrl: string, label: string): string {
   }
 }
 
-export function resolveDesktopAppOrigin(
-  buildFlavor: DesktopAppOriginBuildFlavor
-): string {
-  const parsedBuildFlavor =
-    buildFlavor === "production"
-      ? "prod"
-      : buildFlavorSchema.parse(buildFlavor);
+export function resolveDesktopAppOrigin(buildFlavor: BuildFlavor): string {
+  const parsedBuildFlavor = buildFlavorSchema.parse(buildFlavor);
 
   if (parsedBuildFlavor === "dev") {
     if (!mainEnv.APP_URL) {
