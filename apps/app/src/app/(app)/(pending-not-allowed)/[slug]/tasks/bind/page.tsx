@@ -12,8 +12,9 @@ interface BindTaskPageProps {
  *
  * It sits under the task layout so setup does not render the workspace sidebar.
  * The proxy allows this route through for unbound orgs; a bound org that lands
- * here is sent back to the workspace root. Membership/slug access is already
- * enforced by the parent `[slug]/layout.tsx`.
+ * here is sent through the completion page so a stale Clerk session claim can
+ * be refreshed before the workspace gate runs again. Membership/slug access is
+ * already enforced by the parent `[slug]/layout.tsx`.
  */
 export default async function BindTaskPage({ params }: BindTaskPageProps) {
   const { slug } = await params;
@@ -22,7 +23,7 @@ export default async function BindTaskPage({ params }: BindTaskPageProps) {
   );
 
   if (gate.bindingStatus === "bound") {
-    redirect(`/${slug}` as Route);
+    redirect(`/${slug}/tasks/bind/github/complete` as Route);
   }
 
   return <BindGithubCard orgSlug={slug} />;

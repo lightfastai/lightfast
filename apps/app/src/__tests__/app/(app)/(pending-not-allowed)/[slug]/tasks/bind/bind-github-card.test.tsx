@@ -4,14 +4,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const mutateAsyncMock = vi.fn();
 const reloadMock = vi.fn();
 const replaceMock = vi.fn();
+const startMutationOptionsMock = vi.fn((options: unknown) => options);
+const assignMock = vi.fn();
+
+Object.defineProperty(window, "location", {
+  value: { assign: assignMock },
+  writable: true,
+});
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     org: {
       setup: {
-        task: {
-          bind: {
-            mutationOptions: (options: unknown) => options,
+        github: {
+          start: {
+            mutationOptions: startMutationOptionsMock,
           },
         },
       },
@@ -42,6 +49,8 @@ beforeEach(() => {
   mutateAsyncMock.mockReset();
   reloadMock.mockReset();
   replaceMock.mockReset();
+  startMutationOptionsMock.mockClear();
+  assignMock.mockReset();
 });
 
 describe("BindGithubCard", () => {
@@ -68,9 +77,11 @@ describe("BindGithubCard", () => {
     expect(connectButton).toBeInTheDocument();
   });
 
-  it("keeps the existing bind mutation flow", async () => {
-    mutateAsyncMock.mockResolvedValue({ ok: true, bindingStatus: "bound" });
-    reloadMock.mockResolvedValue(undefined);
+  it("starts the GitHub installation flow and navigates externally", async () => {
+    mutateAsyncMock.mockResolvedValue({
+      installationUrl:
+        "https://app.lightfast.localhost/api/dev/github/install?state=abc",
+    });
 
     render(<BindGithubCard orgSlug="acme" />);
 
@@ -81,9 +92,15 @@ describe("BindGithubCard", () => {
     );
 
     await waitFor(() => {
-      expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
-      expect(reloadMock).toHaveBeenCalledTimes(1);
-      expect(replaceMock).toHaveBeenCalledWith("/acme");
+      expect(startMutationOptionsMock).toHaveBeenCalledWith({
+        meta: { errorTitle: "Failed to connect GitHub" },
+      });
+      expect(mutateAsyncMock).toHaveBeenCalledWith({ orgSlug: "acme" });
+      expect(assignMock).toHaveBeenCalledWith(
+        "https://app.lightfast.localhost/api/dev/github/install?state=abc"
+      );
     });
+    expect(reloadMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
   });
 });

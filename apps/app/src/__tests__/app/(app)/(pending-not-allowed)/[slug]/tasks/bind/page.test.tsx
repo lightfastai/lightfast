@@ -57,11 +57,15 @@ describe("tasks/bind/page — setup page", () => {
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it("redirects a bound org back to the workspace root", async () => {
+  it("redirects a bound org to the GitHub completion page", async () => {
     fetchQueryMock.mockResolvedValue({ bindingStatus: "bound" });
 
-    await expect(invoke("acme")).rejects.toThrow("NEXT_REDIRECT:/acme");
-    expect(redirectMock).toHaveBeenCalledWith("/acme");
+    await expect(invoke("acme")).rejects.toThrow(
+      "NEXT_REDIRECT:/acme/tasks/bind/github/complete"
+    );
+    expect(redirectMock).toHaveBeenCalledWith(
+      "/acme/tasks/bind/github/complete"
+    );
   });
 
   it("loads setup status through the tRPC organization slug access query", async () => {

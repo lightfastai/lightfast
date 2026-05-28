@@ -3,11 +3,7 @@
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
-import { useSession } from "@vendor/clerk";
 import { ArrowRight, Loader2 } from "lucide-react";
-import type { Route } from "next";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 interface BindGithubCardProps {
@@ -15,44 +11,28 @@ interface BindGithubCardProps {
 }
 
 /**
- * v1 setup surface — binds the active org to a source-control provider.
- *
- * Flow: `task.bind` writes the authoritative DB binding and mirrors `bound`
- * into Clerk org metadata; `session.reload()` then forces Clerk to re-mint the
- * session token so the fresh `lf_binding_status: "bound"` claim is present
- * before the proxy setup gate runs on the next navigation.
+ * v1 setup surface — starts the GitHub App installation flow for this org.
  */
 export function BindGithubCard({ orgSlug }: BindGithubCardProps) {
   const trpc = useTRPC();
-  const router = useRouter();
-  const { session } = useSession();
-  // Held true across session.reload() + navigation, after the mutation itself
-  // has settled, so the button stays disabled until the workspace renders.
-  const [isFinishing, setIsFinishing] = useState(false);
 
   const bindMutation = useMutation(
-    trpc.org.setup.task.bind.mutationOptions({
+    trpc.org.setup.github.start.mutationOptions({
       meta: { errorTitle: "Failed to connect GitHub" },
     })
   );
 
-  const isBusy = bindMutation.isPending || isFinishing;
-
   async function handleConnect() {
-    if (isBusy) {
+    if (bindMutation.isPending) {
       return;
     }
+
     try {
-      await bindMutation.mutateAsync();
+      const result = await bindMutation.mutateAsync({ orgSlug });
+      window.location.assign(result.installationUrl);
     } catch {
       // Surfaced to the user by the useMutation meta.errorTitle handler.
-      return;
     }
-    setIsFinishing(true);
-    // Refresh the Clerk session so the new lf_binding_status claim is minted
-    // before the proxy setup gate runs on the next navigation.
-    await session?.reload();
-    router.replace(`/${orgSlug}` as Route);
   }
 
   return (
@@ -94,10 +74,10 @@ export function BindGithubCard({ orgSlug }: BindGithubCardProps) {
 
             <Button
               className="w-full"
-              disabled={isBusy}
+              disabled={bindMutation.isPending}
               onClick={() => void handleConnect()}
             >
-              {isBusy ? (
+              {bindMutation.isPending ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   Connecting...
