@@ -43,7 +43,6 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.12",
     "@changesets/cli": "^2.31.0",
-    "@lightfastai/dev-core": "catalog:",
     "knip": "^6.4.1",
     "portless": "catalog:",
     "turbo": "2.9.14",

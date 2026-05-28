@@ -22,7 +22,6 @@
     "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) NEXT_PUBLIC_WWW_URL=$(portless get www.lightfast) NEXT_PUBLIC_PLATFORM_URL=$(portless get platform.lightfast)"
   },
   "dependencies": {
-    "@lightfastai/dev-proxy": "catalog:",
     "@logtail/next": "^0.3.1",
     "@mixedbread/sdk": "^0.46.0",
     "@next/bundle-analyzer": "^16.2.6",
