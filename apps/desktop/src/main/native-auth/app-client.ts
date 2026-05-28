@@ -2,9 +2,15 @@ import {
   nativeOAuthConfigSchema,
   nativeSessionMetadataSchema,
 } from "@repo/native-auth-contract";
+import { net } from "electron";
 import { z } from "zod";
 
 import { createAppUrl } from "../app-url";
+
+type FetchLike = (
+  input: Parameters<typeof fetch>[0],
+  init?: Parameters<typeof fetch>[1]
+) => Promise<Response>;
 
 const appErrorSchema = z
   .object({
@@ -32,9 +38,11 @@ async function readJson<T>(
 }
 
 export function createDesktopNativeAuthClient(
-  input: { fetchImpl?: typeof fetch } = {}
+  input: { fetchImpl?: FetchLike } = {}
 ) {
-  const fetchImpl = input.fetchImpl ?? fetch;
+  const fetchImpl: FetchLike =
+    input.fetchImpl ??
+    ((url, init) => net.fetch(url instanceof URL ? url.toString() : url, init));
   return {
     async getOAuthConfig() {
       const response = await fetchImpl(
