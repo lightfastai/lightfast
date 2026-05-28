@@ -29,11 +29,22 @@ const { workspacePeopleRouter } = await import(
 const testRouter = createTRPCRouter({ people: workspacePeopleRouter });
 const createCaller = createCallerFactory(testRouter);
 
-const activeIdentity: AuthIdentity = {
+type ActiveAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
+
+const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_test",
   orgId: "org_test",
   orgGate: { bindingStatus: "bound" },
+};
+
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_test",
+};
+
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
 };
 
 const personRow: Person = {
@@ -60,6 +71,13 @@ function caller(identity: AuthIdentity = activeIdentity) {
     db: {} as Database,
     headers: new Headers(),
   });
+}
+
+function activeIdentityForOrg(orgId: string): ActiveAuthIdentity {
+  return {
+    ...activeIdentity,
+    orgId,
+  };
 }
 
 beforeEach(() => {
@@ -124,5 +142,44 @@ describe("workspacePeopleRouter.list", () => {
       }).people.list({})
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects when no active org is selected", async () => {
+    await expect(caller(pendingIdentity).people.list({})).rejects.toMatchObject(
+      {
+        code: "FORBIDDEN",
+      }
+    );
+    expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated callers", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).people.list({})
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects revoked organizations", async () => {
+    await expect(
+      caller({
+        ...activeIdentity,
+        orgGate: { bindingStatus: "revoked" },
+      }).people.list({})
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+
+  it("scopes list queries to the authenticated organization", async () => {
+    await expect(
+      caller(activeIdentityForOrg("org_other")).people.list({})
+    ).resolves.toMatchObject({ items: [personRow] });
+
+    expect(listPeopleMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_other",
+      cursor: undefined,
+      limit: undefined,
+      search: undefined,
+    });
   });
 });

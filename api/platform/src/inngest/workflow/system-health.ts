@@ -4,7 +4,8 @@ import { inngest } from "../client";
 export const systemHealth = inngest.createFunction(
   {
     id: "system-health",
-    retries: 0,
+    idempotency: "event.id",
+    retries: 2,
     triggers: { cron: "* * * * *" },
     timeouts: {
       finish: "30s",

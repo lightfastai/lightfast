@@ -6,7 +6,8 @@ import { inngest } from "../client";
 export const automationScheduler = inngest.createFunction(
   {
     id: "automation-scheduler",
-    retries: 0,
+    idempotency: "event.id",
+    retries: 2,
     triggers: { cron: "* * * * *" },
     timeouts: {
       finish: "2m",

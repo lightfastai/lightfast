@@ -5,9 +5,11 @@ import {
   AUTOMATION_RUN_ID_PREFIX,
   automationIdSchema,
   automationRunIdSchema,
+  createAutomationSchema,
   formatAutomationSchedule,
   formatClockTime,
   normalizeAutomationSchedule,
+  updateAutomationSchema,
 } from "../schemas/automations";
 
 describe("automation id schemas", () => {
@@ -105,6 +107,33 @@ describe("normalizeAutomationSchedule", () => {
   });
 });
 
+describe("automation schemas", () => {
+  it("accepts a valid IANA timezone when creating an automation", () => {
+    expect(
+      createAutomationSchema.parse({
+        name: "Daily summary",
+        prompt: "Summarize my day",
+        schedule: {
+          kind: "daily",
+          config: { time: "09:00" },
+        },
+        timezone: "Australia/Melbourne",
+      })
+    ).toMatchObject({
+      timezone: "Australia/Melbourne",
+    });
+  });
+
+  it("rejects an invalid IANA timezone when updating an automation", () => {
+    expect(() =>
+      updateAutomationSchema.parse({
+        id: `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`,
+        timezone: "Mars/Olympus_Mons",
+      })
+    ).toThrow();
+  });
+});
+
 describe("formatClockTime", () => {
   it("formats midnight as 12:00 AM", () => {
     expect(formatClockTime("00:00")).toBe("12:00 AM");
@@ -124,6 +153,16 @@ describe("formatClockTime", () => {
 });
 
 describe("formatAutomationSchedule", () => {
+  it("returns 'Deleted' for deleted automations regardless of schedule", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "deleted",
+        scheduleKind: "daily",
+        scheduleConfig: { time: "09:00" },
+      })
+    ).toBe("Deleted");
+  });
+
   it("returns 'Paused' for paused automations regardless of schedule", () => {
     expect(
       formatAutomationSchedule({

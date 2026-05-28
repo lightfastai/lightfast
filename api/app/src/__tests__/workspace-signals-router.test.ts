@@ -29,11 +29,22 @@ const { workspaceSignalsRouter } = await import(
 const testRouter = createTRPCRouter({ signals: workspaceSignalsRouter });
 const createCaller = createCallerFactory(testRouter);
 
-const activeIdentity: AuthIdentity = {
+type ActiveAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
+
+const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_test",
   orgId: "org_test",
   orgGate: { bindingStatus: "bound" },
+};
+
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_test",
+};
+
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
 };
 
 const signalRow: Signal = {
@@ -67,6 +78,13 @@ function caller(identity: AuthIdentity = activeIdentity) {
     db: {} as Database,
     headers: new Headers(),
   });
+}
+
+function activeIdentityForOrg(orgId: string): ActiveAuthIdentity {
+  return {
+    ...activeIdentity,
+    orgId,
+  };
 }
 
 beforeEach(() => {
@@ -134,5 +152,45 @@ describe("workspaceSignalsRouter.list", () => {
       }).signals.list({})
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(listSignalsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects when no active org is selected", async () => {
+    await expect(
+      caller(pendingIdentity).signals.list({})
+    ).rejects.toMatchObject({
+      code: "FORBIDDEN",
+    });
+    expect(listSignalsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated callers", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).signals.list({})
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(listSignalsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects revoked organizations", async () => {
+    await expect(
+      caller({
+        ...activeIdentity,
+        orgGate: { bindingStatus: "revoked" },
+      }).signals.list({})
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(listSignalsMock).not.toHaveBeenCalled();
+  });
+
+  it("scopes list queries to the authenticated organization", async () => {
+    await expect(
+      caller(activeIdentityForOrg("org_other")).signals.list({})
+    ).resolves.toMatchObject({ items: [signalRow] });
+
+    expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_other",
+      cursor: undefined,
+      limit: undefined,
+      search: undefined,
+      status: undefined,
+    });
   });
 });

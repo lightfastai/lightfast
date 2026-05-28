@@ -8,6 +8,22 @@ export const AUTOMATION_RUN_ID_PREFIX = "automation_run_";
 const UUID_PATTERN =
   "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}";
 
+function isValidIanaTimeZone(value: string): boolean {
+  try {
+    Intl.DateTimeFormat(undefined, { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+const timezoneSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(64)
+  .refine(isValidIanaTimeZone, "Invalid IANA timezone");
+
 export const automationIdSchema = z
   .string()
   .regex(
@@ -32,9 +48,7 @@ const hourlyScheduleSchema = z.object({
 const dailyScheduleSchema = z.object({
   kind: z.literal("daily"),
   config: z.object({
-    time: z
-      .string()
-      .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use UTC time in HH:mm format"),
+    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm format"),
   }),
 });
 
@@ -47,7 +61,7 @@ export const createAutomationSchema = z.object({
   name: z.string().trim().min(1).max(AUTOMATION_NAME_MAX_LENGTH),
   prompt: z.string().trim().min(1).max(AUTOMATION_PROMPT_MAX_LENGTH),
   schedule: automationScheduleSchema,
-  timezone: z.string().trim().min(1).max(64).default("UTC"),
+  timezone: timezoneSchema.default("UTC"),
 });
 
 export const updateAutomationSchema = z
@@ -61,7 +75,7 @@ export const updateAutomationSchema = z
       .max(AUTOMATION_PROMPT_MAX_LENGTH)
       .optional(),
     schedule: automationScheduleSchema.optional(),
-    timezone: z.string().trim().min(1).max(64).optional(),
+    timezone: timezoneSchema.optional(),
   })
   .refine(
     ({ name, prompt, schedule, timezone }) =>
@@ -120,6 +134,10 @@ export interface AutomationScheduleSummary {
 export function formatAutomationSchedule(
   automation: AutomationScheduleSummary
 ): string {
+  if (automation.status === "deleted") {
+    return "Deleted";
+  }
+
   if (automation.status === "paused") {
     return "Paused";
   }

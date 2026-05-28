@@ -1,11 +1,16 @@
 import type { Database, Person } from "@db/app";
+import { MySqlDialect } from "drizzle-orm/mysql-core";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   PERSON_DISPLAY_NAME_LENGTH,
   PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
 } from "../schema";
-import { listPeople, upsertPeopleFromCandidates } from "../utils/people";
+import {
+  escapeLikePattern,
+  listPeople,
+  upsertPeopleFromCandidates,
+} from "../utils/people";
 import {
   createPersonIdentityKey,
   normalizePersonIdentityCandidate,
@@ -338,6 +343,12 @@ function makePeopleListDb(rows: Person[]) {
 }
 
 describe("listPeople", () => {
+  it("escapes MySQL LIKE wildcard characters in search input", () => {
+    expect(escapeLikePattern(String.raw`50%_done\soon`)).toBe(
+      String.raw`50\%\_done\\soon`
+    );
+  });
+
   it("returns people rows with cursor pagination", async () => {
     const rows = [
       makePerson({
@@ -372,5 +383,20 @@ describe("listPeople", () => {
     await listPeople(db, { clerkOrgId: "org_test", limit: 500 });
 
     expect(spies.limit).toHaveBeenCalledWith(101);
+  });
+
+  it("searches for literal wildcard characters", async () => {
+    const { db, spies } = makePeopleListDb([]);
+
+    await listPeople(db, {
+      clerkOrgId: "org_test",
+      search: String.raw`50%_done\soon`,
+    });
+
+    const condition = spies.where.mock.calls[0]?.[0];
+    const query = new MySqlDialect().sqlToQuery(condition);
+
+    expect(query.sql).toContain("like ? escape '\\\\'");
+    expect(query.params).toContain(String.raw`%50\%\_done\\soon%`);
   });
 });

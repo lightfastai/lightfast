@@ -1,4 +1,4 @@
-import { and, desc, eq, like, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -31,6 +31,10 @@ function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
 }
 
+export function escapeLikePattern(value: string): string {
+  return value.replace(/[\\%_]/g, "\\$&");
+}
+
 export interface ListPeopleParams {
   clerkOrgId: string;
   cursor?: ListCursor | null;
@@ -44,14 +48,15 @@ export async function listPeople(
 ): Promise<ListResult<Person>> {
   const limit = normalizeLimit(input.limit);
   const search = input.search?.trim();
+  const searchPattern = search ? `%${escapeLikePattern(search)}%` : undefined;
   const conditions = [
     eq(people.clerkOrgId, input.clerkOrgId),
-    search
+    searchPattern
       ? or(
-          like(people.displayName, `%${search}%`),
-          like(people.identityProvider, `%${search}%`),
-          like(people.identityValue, `%${search}%`),
-          like(people.normalizedIdentityValue, `%${search}%`)
+          sql`${people.displayName} like ${searchPattern} escape '\\\\'`,
+          sql`${people.identityProvider} like ${searchPattern} escape '\\\\'`,
+          sql`${people.identityValue} like ${searchPattern} escape '\\\\'`,
+          sql`${people.normalizedIdentityValue} like ${searchPattern} escape '\\\\'`
         )
       : undefined,
     input.cursor

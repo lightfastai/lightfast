@@ -197,7 +197,8 @@ describe("automation Inngest workflows", () => {
     expect(createFunctionMock).toHaveBeenCalledWith(
       {
         id: "automation-scheduler",
-        retries: 0,
+        idempotency: "event.id",
+        retries: 2,
         timeouts: { finish: "2m", start: "1m" },
         triggers: { cron: "* * * * *" },
       },

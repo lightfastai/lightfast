@@ -47,7 +47,8 @@ describe("systemHealth", () => {
     expect(createFunctionMock).toHaveBeenCalledWith(
       {
         id: "system-health",
-        retries: 0,
+        idempotency: "event.id",
+        retries: 2,
         timeouts: { finish: "30s", start: "30s" },
         triggers: { cron: "* * * * *" },
       },

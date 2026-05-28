@@ -32,10 +32,14 @@ pnpm db:studio  # inspect the env-configured local branch
 
 ```bash
 pnpm db:generate  # Generate migration SQL from src/schema
-pnpm db:migrate   # Apply migrations
+pnpm db:migrate   # Apply migrations to the persistent staging branch only
 pnpm db:push      # Apply schema diff
 pnpm db:studio    # Open Drizzle Studio
 ```
+
+`pnpm db:migrate` is only for the persistent `staging` PlanetScale branch with
+explicit `DATABASE_*` migration credentials. Never run it against the `main`
+production branch.
 
 Do not hand-write migration SQL. Change schema TypeScript and run
 `pnpm db:generate`.

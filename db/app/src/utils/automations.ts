@@ -4,7 +4,7 @@ import {
   type NormalizedSchedule,
   normalizeAutomationSchedule,
 } from "@repo/app-validation/schemas";
-import { and, asc, desc, eq, lte, ne, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lte, ne, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -24,10 +24,85 @@ export {
   normalizeAutomationSchedule,
 };
 
+interface LocalDate {
+  day: number;
+  month: number;
+  year: number;
+}
+
+interface LocalDateTime extends LocalDate {
+  hour: number;
+  minute: number;
+  second: number;
+}
+
+function getZonedParts(date: Date, timezone: string): LocalDateTime {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    day: "2-digit",
+    hour: "2-digit",
+    hour12: false,
+    minute: "2-digit",
+    month: "2-digit",
+    second: "2-digit",
+    timeZone: timezone,
+    year: "numeric",
+  }).formatToParts(date);
+  const value = (type: Intl.DateTimeFormatPartTypes) =>
+    Number(parts.find((part) => part.type === type)?.value);
+
+  return {
+    day: value("day"),
+    hour: value("hour") % 24,
+    minute: value("minute"),
+    month: value("month"),
+    second: value("second"),
+    year: value("year"),
+  };
+}
+
+function getTimezoneOffsetMs(date: Date, timezone: string): number {
+  const parts = getZonedParts(date, timezone);
+  const asUtc = Date.UTC(
+    parts.year,
+    parts.month - 1,
+    parts.day,
+    parts.hour,
+    parts.minute,
+    parts.second,
+    0
+  );
+  return asUtc - date.getTime();
+}
+
+function zonedTimeToUtc(
+  parts: LocalDate & { hour: number; minute: number },
+  timezone: string
+): Date {
+  const utcGuess = new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day, parts.hour, parts.minute)
+  );
+  const firstOffset = getTimezoneOffsetMs(utcGuess, timezone);
+  const firstResult = new Date(utcGuess.getTime() - firstOffset);
+  const secondOffset = getTimezoneOffsetMs(firstResult, timezone);
+  return new Date(utcGuess.getTime() - secondOffset);
+}
+
+function addLocalDays(parts: LocalDate, days: number): LocalDate {
+  const date = new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day + days)
+  );
+  return {
+    day: date.getUTCDate(),
+    month: date.getUTCMonth() + 1,
+    year: date.getUTCFullYear(),
+  };
+}
+
 export function calculateNextRunAt(input: {
   after: Date;
   from?: Date;
   schedule: NormalizedSchedule;
+  timezone?: string;
 }): Date {
   if (input.schedule.kind === "hourly") {
     const intervalMs = input.schedule.config.intervalHours * 60 * 60 * 1000;
@@ -41,20 +116,23 @@ export function calculateNextRunAt(input: {
   const [hours = 0, minutes = 0] = input.schedule.config.time
     .split(":")
     .map(Number);
-  const after = input.after;
-  let next = new Date(
-    Date.UTC(
-      after.getUTCFullYear(),
-      after.getUTCMonth(),
-      after.getUTCDate(),
-      hours,
-      minutes,
-      0,
-      0
-    )
+  const timezone = input.timezone ?? "UTC";
+  const afterParts = getZonedParts(input.after, timezone);
+  let dateParts = {
+    day: afterParts.day,
+    month: afterParts.month,
+    year: afterParts.year,
+  };
+  let next = zonedTimeToUtc(
+    { ...dateParts, hour: hours, minute: minutes },
+    timezone
   );
-  if (next <= after) {
-    next = new Date(next.getTime() + 24 * 60 * 60 * 1000);
+  if (next <= input.after) {
+    dateParts = addLocalDays(dateParts, 1);
+    next = zonedTimeToUtc(
+      { ...dateParts, hour: hours, minute: minutes },
+      timezone
+    );
   }
   return next;
 }
@@ -76,6 +154,7 @@ export async function createAutomation(
   const now = options.now ?? new Date();
   const schedule = normalizeAutomationSchedule(input.schedule);
   const publicId = createAutomationId();
+  const timezone = input.timezone ?? "UTC";
 
   await db.insert(automations).values({
     publicId,
@@ -85,9 +164,9 @@ export async function createAutomation(
     prompt: input.prompt,
     scheduleKind: schedule.kind,
     scheduleConfig: schedule.config,
-    timezone: input.timezone ?? "UTC",
+    timezone,
     status: "active",
-    nextRunAt: calculateNextRunAt({ after: now, schedule }),
+    nextRunAt: calculateNextRunAt({ after: now, schedule, timezone }),
   });
 
   const inserted = await getAutomationByPublicId(db, {
@@ -165,16 +244,21 @@ export async function updateAutomation(
   if (input.prompt !== undefined) {
     nextValues.prompt = input.prompt;
   }
-  if (input.timezone !== undefined) {
-    nextValues.timezone = input.timezone;
-  }
-  if (input.schedule) {
-    const schedule = normalizeAutomationSchedule(input.schedule);
+  if (input.schedule || input.timezone !== undefined) {
+    const schedule = input.schedule
+      ? normalizeAutomationSchedule(input.schedule)
+      : normalizeAutomationSchedule({
+          kind: existing.scheduleKind,
+          config: existing.scheduleConfig,
+        });
+    const timezone = input.timezone ?? existing.timezone;
     nextValues.scheduleKind = schedule.kind;
     nextValues.scheduleConfig = schedule.config;
+    nextValues.timezone = timezone;
     nextValues.nextRunAt = calculateNextRunAt({
       after: options.now ?? new Date(),
       schedule,
+      timezone,
     });
     nextValues.scheduleVersion =
       sql`${automations.scheduleVersion} + 1` as unknown as number | undefined;
@@ -337,6 +421,7 @@ export async function claimDueAutomationRuns(
       after: now,
       from: dueAt,
       schedule,
+      timezone: automation.timezone,
     });
     const idempotencyKey = [
       "scheduled",
@@ -444,7 +529,8 @@ export async function markAutomationRunFailed(
     .where(
       and(
         eq(automationRuns.clerkOrgId, input.clerkOrgId),
-        eq(automationRuns.publicId, input.publicId)
+        eq(automationRuns.publicId, input.publicId),
+        inArray(automationRuns.status, ["pending", "running"])
       )
     );
   return getRowsAffected(result) > 0;

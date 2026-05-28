@@ -52,11 +52,22 @@ const testRouter = createTRPCRouter({
 });
 const createCaller = createCallerFactory(testRouter);
 
-const activeIdentity: AuthIdentity = {
+type ActiveAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
+
+const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_current",
   orgId: "org_acme",
   orgGate: { bindingStatus: "bound" },
+};
+
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_current",
+};
+
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
 };
 
 function adminAccess() {
@@ -65,6 +76,22 @@ function adminAccess() {
     userId: "user_current",
     orgId: "org_acme",
     has: ({ role }: { role?: string }) => role === "org:admin",
+  };
+}
+
+function activeIdentityWithOrgGate(
+  bindingStatus: "bound" | "unbound" | "revoked"
+): ActiveAuthIdentity {
+  return {
+    ...activeIdentity,
+    orgGate: { bindingStatus },
+  };
+}
+
+function adminAccessForOrg(orgId: string) {
+  return {
+    ...adminAccess(),
+    orgId,
   };
 }
 
@@ -78,8 +105,12 @@ function nonAdminAccess() {
 }
 
 function caller(access = adminAccess()) {
+  return callerWithIdentity(activeIdentity, access);
+}
+
+function callerWithIdentity(identity: AuthIdentity, access = adminAccess()) {
   return createCaller({
-    auth: { identity: activeIdentity, access },
+    auth: { identity, access },
     db: {} as Database,
     headers: new Headers(),
   });
@@ -155,6 +186,29 @@ describe("automationsRouter", () => {
     });
   });
 
+  it("rejects list when no active org is selected", async () => {
+    await expect(
+      callerWithIdentity(pendingIdentity).automations.list()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(listAutomationsMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects list for unbound and revoked organizations", async () => {
+    await expect(
+      callerWithIdentity(
+        activeIdentityWithOrgGate("unbound")
+      ).automations.list()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    await expect(
+      callerWithIdentity(
+        activeIdentityWithOrgGate("revoked")
+      ).automations.list()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(listAutomationsMock).not.toHaveBeenCalled();
+  });
+
   it("creates an automation for org admins", async () => {
     await expect(
       caller().automations.create({
@@ -196,6 +250,30 @@ describe("automationsRouter", () => {
     expect(createAutomationMock).not.toHaveBeenCalled();
   });
 
+  it("rejects create when the auth identity is unauthenticated", async () => {
+    await expect(
+      callerWithIdentity(unauthenticatedIdentity).automations.create({
+        name: "Morning check",
+        prompt: "Check the workspace",
+        schedule: { kind: "hourly", config: { intervalHours: 1 } },
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(createAutomationMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects create when Clerk session access belongs to another org", async () => {
+    await expect(
+      caller(adminAccessForOrg("org_other")).automations.create({
+        name: "Morning check",
+        prompt: "Check the workspace",
+        schedule: { kind: "hourly", config: { intervalHours: 1 } },
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(createAutomationMock).not.toHaveBeenCalled();
+  });
+
   it("creates and enqueues a manual run", async () => {
     await expect(
       caller().automations.runNow({ id: automation.publicId })
@@ -230,6 +308,18 @@ describe("automationsRouter", () => {
       message: "Automation is paused.",
     });
 
+    expect(createAutomationRunMock).not.toHaveBeenCalled();
+    expect(sendMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects manual runs before hitting DB when no active org is selected", async () => {
+    await expect(
+      callerWithIdentity(pendingIdentity).automations.runNow({
+        id: automation.publicId,
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getAutomationByPublicIdMock).not.toHaveBeenCalled();
     expect(createAutomationRunMock).not.toHaveBeenCalled();
     expect(sendMock).not.toHaveBeenCalled();
   });
