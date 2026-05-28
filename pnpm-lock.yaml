@@ -285,6 +285,12 @@ importers:
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
+      '@repo/github-app-contract':
+        specifier: workspace:*
+        version: link:../../packages/github-app-contract
+      '@repo/github-app-node':
+        specifier: workspace:*
+        version: link:../../packages/github-app-node
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
