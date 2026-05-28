@@ -28,11 +28,10 @@ describe("Drizzle config", () => {
       .dbCredentials;
 
     expect(credentials).toMatchObject({
-      database: "caller_database",
-      host: "example.planetscale.com",
-      password: "password",
-      user: "username",
+      url: "mysql://username:password@example.planetscale.com/caller_database",
     });
+    expect(credentials).not.toHaveProperty("host");
+    expect(credentials).not.toHaveProperty("user");
     expect(config.tablesFilter).toEqual(["caller_*"]);
   });
 
@@ -46,11 +45,10 @@ describe("Drizzle config", () => {
       .dbCredentials;
 
     expect(credentials).toMatchObject({
-      database: "lightfast",
-      host: "example.planetscale.com",
-      password: "password",
-      user: "username",
+      url: "mysql://username:password@example.planetscale.com/lightfast",
     });
+    expect(credentials).not.toHaveProperty("host");
+    expect(credentials).not.toHaveProperty("user");
     expect(config.tablesFilter).toEqual(["lightfast_*"]);
   });
 });
