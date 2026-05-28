@@ -6,10 +6,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 const {
+  finalizeActiveOrgProviderBinding,
   getActiveOrgBinding,
+  getOrgBindingByProviderInstallation,
   isOrgBound,
   upsertActiveOrgBinding,
   markOrgBindingRevoked,
+  OrgSourceControlBindingConflictError,
 } = await import("@db/app");
 
 /**
@@ -116,6 +119,12 @@ function binding(
   } as OrgSourceControlBinding;
 }
 
+function duplicateBindingError(key: string) {
+  return Object.assign(new Error(`Duplicate entry for key '${key}'`), {
+    body: { code: "ER_DUP_ENTRY" },
+  });
+}
+
 beforeEach(() => {
   vi.clearAllMocks();
 });
@@ -159,6 +168,23 @@ describe("getActiveOrgBinding", () => {
   it("returns undefined when the org is not bound", async () => {
     const { db } = makeFakeDb({ selectResults: [[]] });
     expect(await getActiveOrgBinding(db, "org_x")).toBeUndefined();
+  });
+});
+
+describe("getOrgBindingByProviderInstallation", () => {
+  it("returns the binding for a provider installation", async () => {
+    const row = binding({
+      providerInstallationId: "1001",
+      providerAccountLogin: "lightfast-emulated",
+    });
+    const { db } = makeFakeDb({ selectResults: [[row]] });
+
+    await expect(
+      getOrgBindingByProviderInstallation(db, {
+        provider: "github",
+        providerInstallationId: "1001",
+      })
+    ).resolves.toEqual(row);
   });
 });
 
@@ -245,6 +271,229 @@ describe("upsertActiveOrgBinding", () => {
       })
     ).resolves.toEqual(existing);
     expect(spies.insert).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("finalizeActiveOrgProviderBinding", () => {
+  it("inserts a verified provider binding when no binding exists", async () => {
+    const inserted = binding({
+      id: 100,
+      clerkOrgId: "org_new",
+      providerAccountId: "20",
+      providerAccountLogin: "lightfast-emulated",
+      providerInstallationId: "1001",
+      metadata: { verifiedBy: "github_emulator" },
+    });
+    const { db, spies } = makeFakeDb({
+      insertId: 100,
+      selectResults: [[], [], [inserted]],
+    });
+
+    await expect(
+      finalizeActiveOrgProviderBinding(db, {
+        clerkOrgId: "org_new",
+        connectedByUserId: "user_1",
+        metadata: { verifiedBy: "github_emulator" },
+        provider: "github",
+        providerAccountId: "20",
+        providerAccountLogin: "lightfast-emulated",
+        providerInstallationId: "1001",
+      })
+    ).resolves.toEqual(inserted);
+
+    expect(spies.insertValues).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeClerkOrgId: "org_new",
+        clerkOrgId: "org_new",
+        provider: "github",
+        providerAccountId: "20",
+        providerAccountLogin: "lightfast-emulated",
+        providerInstallationId: "1001",
+        status: "active",
+      })
+    );
+  });
+
+  it("returns an existing exact active binding idempotently", async () => {
+    const existing = binding({
+      clerkOrgId: "org_existing",
+      providerInstallationId: "1001",
+    });
+    const { db, spies } = makeFakeDb({ selectResults: [[existing]] });
+
+    await expect(
+      finalizeActiveOrgProviderBinding(db, {
+        clerkOrgId: "org_existing",
+        connectedByUserId: "user_1",
+        provider: "github",
+        providerInstallationId: "1001",
+      })
+    ).resolves.toEqual(existing);
+
+    expect(spies.insert).not.toHaveBeenCalled();
+  });
+
+  it("throws when the Lightfast org is already bound to another installation", async () => {
+    const existing = binding({
+      clerkOrgId: "org_existing",
+      providerInstallationId: "2002",
+    });
+    const { db } = makeFakeDb({ selectResults: [[existing]] });
+
+    const error = await finalizeActiveOrgProviderBinding(db, {
+      clerkOrgId: "org_existing",
+      connectedByUserId: "user_1",
+      provider: "github",
+      providerInstallationId: "1001",
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(OrgSourceControlBindingConflictError);
+    expect(error).toEqual(
+      expect.objectContaining({
+        code: "ORG_ALREADY_BOUND",
+      })
+    );
+  });
+
+  it("throws when another Lightfast org already owns the installation", async () => {
+    const existingInstallation = binding({
+      clerkOrgId: "org_other",
+      providerInstallationId: "1001",
+    });
+    const { db } = makeFakeDb({
+      selectResults: [[], [existingInstallation]],
+    });
+
+    const error = await finalizeActiveOrgProviderBinding(db, {
+      clerkOrgId: "org_new",
+      connectedByUserId: "user_1",
+      provider: "github",
+      providerInstallationId: "1001",
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(OrgSourceControlBindingConflictError);
+    expect(error).toEqual(
+      expect.objectContaining({
+        code: "INSTALLATION_ALREADY_BOUND",
+      })
+    );
+  });
+
+  it("reactivates a revoked binding for the same org and installation", async () => {
+    const inactive = binding({
+      clerkOrgId: "org_existing",
+      providerInstallationId: "1001",
+      providerAccountLogin: null,
+      revokedAt: new Date("2026-05-26T06:45:00.123Z"),
+      status: "revoked",
+    });
+    const reactivated = binding({
+      clerkOrgId: "org_existing",
+      providerInstallationId: "1001",
+      providerAccountLogin: "lightfast-emulated",
+    });
+    const { db, spies } = makeFakeDb({
+      selectResults: [[], [inactive], [reactivated]],
+    });
+
+    await expect(
+      finalizeActiveOrgProviderBinding(db, {
+        clerkOrgId: "org_existing",
+        connectedByUserId: "user_1",
+        provider: "github",
+        providerAccountLogin: "lightfast-emulated",
+        providerInstallationId: "1001",
+      })
+    ).resolves.toEqual(reactivated);
+
+    expect(spies.updateSet).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeClerkOrgId: "org_existing",
+        connectedByUserId: "user_1",
+        providerAccountLogin: "lightfast-emulated",
+        revokedAt: null,
+        status: "active",
+      })
+    );
+    expect(spies.insert).not.toHaveBeenCalled();
+  });
+
+  it("throws ORG_ALREADY_BOUND when duplicate recovery finds a different active installation", async () => {
+    const existing = binding({
+      clerkOrgId: "org_existing",
+      providerInstallationId: "2002",
+    });
+    const { db } = makeFakeDb({
+      insertError: duplicateBindingError(
+        "org_source_control_bindings_active_per_org_uq"
+      ),
+      selectResults: [[], [], [existing], []],
+    });
+
+    const error = await finalizeActiveOrgProviderBinding(db, {
+      clerkOrgId: "org_existing",
+      connectedByUserId: "user_1",
+      provider: "github",
+      providerInstallationId: "1001",
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(OrgSourceControlBindingConflictError);
+    expect(error).toEqual(
+      expect.objectContaining({
+        code: "ORG_ALREADY_BOUND",
+      })
+    );
+  });
+
+  it("throws INSTALLATION_ALREADY_BOUND when duplicate recovery finds another org owns the installation", async () => {
+    const existingInstallation = binding({
+      clerkOrgId: "org_other",
+      providerInstallationId: "1001",
+    });
+    const { db } = makeFakeDb({
+      insertError: duplicateBindingError(
+        "org_source_control_bindings_installation_uq"
+      ),
+      selectResults: [[], [], [], [existingInstallation]],
+    });
+
+    const error = await finalizeActiveOrgProviderBinding(db, {
+      clerkOrgId: "org_new",
+      connectedByUserId: "user_1",
+      provider: "github",
+      providerInstallationId: "1001",
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(OrgSourceControlBindingConflictError);
+    expect(error).toEqual(
+      expect.objectContaining({
+        code: "INSTALLATION_ALREADY_BOUND",
+      })
+    );
+  });
+
+  it("returns the exact binding when duplicate recovery finds the same org and installation", async () => {
+    const existing = binding({
+      clerkOrgId: "org_existing",
+      providerInstallationId: "1001",
+    });
+    const { db, spies } = makeFakeDb({
+      insertError: duplicateBindingError(
+        "org_source_control_bindings_active_per_org_uq"
+      ),
+      selectResults: [[], [], [existing], [existing]],
+    });
+
+    await expect(
+      finalizeActiveOrgProviderBinding(db, {
+        clerkOrgId: "org_existing",
+        connectedByUserId: "user_1",
+        provider: "github",
+        providerInstallationId: "1001",
+      })
+    ).resolves.toEqual(existing);
+
+    expect(spies.select).toHaveBeenCalledTimes(4);
   });
 });
 

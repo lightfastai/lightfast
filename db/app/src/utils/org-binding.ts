@@ -61,6 +61,48 @@ export async function isOrgBound(
   return row !== undefined;
 }
 
+export type OrgSourceControlBindingConflictCode =
+  | "ORG_ALREADY_BOUND"
+  | "INSTALLATION_ALREADY_BOUND";
+
+export class OrgSourceControlBindingConflictError extends Error {
+  constructor(
+    public readonly code: OrgSourceControlBindingConflictCode,
+    message: string
+  ) {
+    super(message);
+    this.name = "OrgSourceControlBindingConflictError";
+  }
+}
+
+export interface GetOrgBindingByProviderInstallationInput {
+  provider: OrgSourceControlBindingProvider;
+  providerInstallationId: string;
+}
+
+/**
+ * Returns the binding row associated with a provider installation id.
+ */
+export async function getOrgBindingByProviderInstallation(
+  db: Database,
+  input: GetOrgBindingByProviderInstallationInput
+): Promise<OrgSourceControlBinding | undefined> {
+  const [row] = await db
+    .select(bindingSelection)
+    .from(orgSourceControlBindings)
+    .where(
+      and(
+        eq(orgSourceControlBindings.provider, input.provider),
+        eq(
+          orgSourceControlBindings.providerInstallationId,
+          input.providerInstallationId
+        )
+      )
+    )
+    .limit(1);
+  return row;
+}
+
 export interface UpsertActiveOrgBindingInput {
   clerkOrgId: string;
   /** Clerk user id that completed the bind. */
@@ -81,52 +123,103 @@ export interface UpsertActiveOrgBindingInput {
  */
 export async function upsertActiveOrgBinding(
   db: Database,
-  input: UpsertActiveOrgBindingInput
+  input: UpsertActiveOrgBindingInput,
+  options: { skipExistingCheck?: boolean } = {}
 ): Promise<OrgSourceControlBinding> {
-  const existing = await getActiveOrgBinding(db, input.clerkOrgId);
-  if (existing) {
-    return existing;
-  }
-
-  let insertError: unknown;
-  const [row] = await db
-    .insert(orgSourceControlBindings)
-    .values({
-      activeClerkOrgId: input.clerkOrgId,
-      clerkOrgId: input.clerkOrgId,
-      provider: input.provider,
-      connectedByUserId: input.connectedByUserId,
-      providerAccountId: input.providerAccountId ?? null,
-      providerAccountLogin: input.providerAccountLogin ?? null,
-      providerInstallationId: input.providerInstallationId ?? null,
-      metadata: input.metadata ?? {},
-      status: "active",
-    })
-    .$returningId()
-    .catch((error: unknown) => {
-      if (!isDuplicateKeyError(error)) {
-        throw error;
-      }
-      insertError = error;
-      return [];
-    });
-
-  if (!(row?.id || insertError)) {
-    throw new Error(
-      `Failed to insert active binding for org ${input.clerkOrgId}`
-    );
-  }
-
-  const inserted = await getActiveOrgBinding(db, input.clerkOrgId);
-  if (!inserted) {
-    if (insertError) {
-      throw insertError;
+  if (!options.skipExistingCheck) {
+    const existing = await getActiveOrgBinding(db, input.clerkOrgId);
+    if (existing) {
+      return existing;
     }
-    throw new Error(
-      `Failed to insert active binding for org ${input.clerkOrgId}`
+  }
+
+  return await insertActiveOrgBinding(db, input);
+}
+
+export interface FinalizeActiveOrgProviderBindingInput
+  extends UpsertActiveOrgBindingInput {
+  providerInstallationId: string;
+}
+
+/**
+ * Finalizes a verified provider installation for a Lightfast org.
+ *
+ * Provider installation ids are unique across historical binding rows, so a
+ * revoked/error row for the same org+installation is reactivated instead of
+ * inserting a replacement row.
+ */
+export async function finalizeActiveOrgProviderBinding(
+  db: Database,
+  input: FinalizeActiveOrgProviderBindingInput
+): Promise<OrgSourceControlBinding> {
+  const activeBinding = await getActiveOrgBinding(db, input.clerkOrgId);
+  if (activeBinding) {
+    if (
+      activeBinding.provider === input.provider &&
+      activeBinding.providerInstallationId === input.providerInstallationId
+    ) {
+      return activeBinding;
+    }
+
+    throw new OrgSourceControlBindingConflictError(
+      "ORG_ALREADY_BOUND",
+      `Org ${input.clerkOrgId} is already bound to another provider installation`
     );
   }
-  return inserted;
+
+  const installationBinding = await getOrgBindingByProviderInstallation(db, {
+    provider: input.provider,
+    providerInstallationId: input.providerInstallationId,
+  });
+
+  if (installationBinding) {
+    if (installationBinding.clerkOrgId !== input.clerkOrgId) {
+      throw new OrgSourceControlBindingConflictError(
+        "INSTALLATION_ALREADY_BOUND",
+        `Provider installation ${input.providerInstallationId} is already bound to another org`
+      );
+    }
+
+    if (installationBinding.status === "active") {
+      return installationBinding;
+    }
+
+    await db
+      .update(orgSourceControlBindings)
+      .set({
+        activeClerkOrgId: input.clerkOrgId,
+        connectedByUserId: input.connectedByUserId,
+        providerAccountId:
+          input.providerAccountId ?? installationBinding.providerAccountId,
+        providerAccountLogin:
+          input.providerAccountLogin ?? installationBinding.providerAccountLogin,
+        providerInstallationId: input.providerInstallationId,
+        metadata: input.metadata ?? installationBinding.metadata,
+        revokedAt: null,
+        status: "active",
+      })
+      .where(
+        and(
+          eq(orgSourceControlBindings.id, installationBinding.id),
+          eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId),
+          eq(orgSourceControlBindings.provider, input.provider),
+          eq(
+            orgSourceControlBindings.providerInstallationId,
+            input.providerInstallationId
+          )
+        )
+      );
+
+    const reactivated = await getActiveOrgBinding(db, input.clerkOrgId);
+    if (!reactivated) {
+      throw new Error(
+        `Failed to reactivate provider binding for org ${input.clerkOrgId}`
+      );
+    }
+    return reactivated;
+  }
+
+  return await insertFinalizedActiveOrgProviderBinding(db, input);
 }
 
 export interface MarkOrgBindingRevokedInput {
@@ -197,5 +290,159 @@ function isDuplicateKeyError(error: unknown): boolean {
     body?.code === "ER_DUP_ENTRY" ||
     code === "ER_DUP_ENTRY" ||
     (typeof message === "string" && message.includes("Duplicate entry"))
+  );
+}
+
+async function insertActiveOrgBinding(
+  db: Database,
+  input: UpsertActiveOrgBindingInput
+): Promise<OrgSourceControlBinding> {
+  let insertError: unknown;
+  const [row] = await db
+    .insert(orgSourceControlBindings)
+    .values({
+      activeClerkOrgId: input.clerkOrgId,
+      clerkOrgId: input.clerkOrgId,
+      provider: input.provider,
+      connectedByUserId: input.connectedByUserId,
+      providerAccountId: input.providerAccountId ?? null,
+      providerAccountLogin: input.providerAccountLogin ?? null,
+      providerInstallationId: input.providerInstallationId ?? null,
+      metadata: input.metadata ?? {},
+      status: "active",
+    })
+    .$returningId()
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      insertError = error;
+      return [];
+    });
+
+  if (!(row?.id || insertError)) {
+    throw new Error(
+      `Failed to insert active binding for org ${input.clerkOrgId}`
+    );
+  }
+
+  const inserted = await getActiveOrgBinding(db, input.clerkOrgId);
+  if (!inserted) {
+    if (insertError) {
+      throw insertError;
+    }
+    throw new Error(
+      `Failed to insert active binding for org ${input.clerkOrgId}`
+    );
+  }
+  return inserted;
+}
+
+async function insertFinalizedActiveOrgProviderBinding(
+  db: Database,
+  input: FinalizeActiveOrgProviderBindingInput
+): Promise<OrgSourceControlBinding> {
+  let duplicateError: unknown;
+  const [row] = await db
+    .insert(orgSourceControlBindings)
+    .values({
+      activeClerkOrgId: input.clerkOrgId,
+      clerkOrgId: input.clerkOrgId,
+      provider: input.provider,
+      connectedByUserId: input.connectedByUserId,
+      providerAccountId: input.providerAccountId ?? null,
+      providerAccountLogin: input.providerAccountLogin ?? null,
+      providerInstallationId: input.providerInstallationId,
+      metadata: input.metadata ?? {},
+      status: "active",
+    })
+    .$returningId()
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      duplicateError = error;
+      return [];
+    });
+
+  if (duplicateError) {
+    return await recoverFinalizedActiveOrgProviderBindingDuplicate(
+      db,
+      input,
+      duplicateError
+    );
+  }
+
+  if (!row?.id) {
+    throw new Error(
+      `Failed to insert active provider binding for org ${input.clerkOrgId}`
+    );
+  }
+
+  const inserted = await getActiveOrgBinding(db, input.clerkOrgId);
+  if (!inserted) {
+    throw new Error(
+      `Failed to insert active provider binding for org ${input.clerkOrgId}`
+    );
+  }
+  if (isExactProviderBinding(inserted, input)) {
+    return inserted;
+  }
+  throw new OrgSourceControlBindingConflictError(
+    "ORG_ALREADY_BOUND",
+    `Org ${input.clerkOrgId} is already bound to another provider installation`
+  );
+}
+
+async function recoverFinalizedActiveOrgProviderBindingDuplicate(
+  db: Database,
+  input: FinalizeActiveOrgProviderBindingInput,
+  duplicateError: unknown
+): Promise<OrgSourceControlBinding> {
+  const activeBinding = await getActiveOrgBinding(db, input.clerkOrgId);
+  const installationBinding = await getOrgBindingByProviderInstallation(db, {
+    provider: input.provider,
+    providerInstallationId: input.providerInstallationId,
+  });
+
+  if (activeBinding && !isExactProviderBinding(activeBinding, input)) {
+    throw new OrgSourceControlBindingConflictError(
+      "ORG_ALREADY_BOUND",
+      `Org ${input.clerkOrgId} is already bound to another provider installation`
+    );
+  }
+
+  if (
+    installationBinding &&
+    installationBinding.clerkOrgId !== input.clerkOrgId
+  ) {
+    throw new OrgSourceControlBindingConflictError(
+      "INSTALLATION_ALREADY_BOUND",
+      `Provider installation ${input.providerInstallationId} is already bound to another org`
+    );
+  }
+
+  if (activeBinding && isExactProviderBinding(activeBinding, input)) {
+    return activeBinding;
+  }
+
+  if (
+    installationBinding?.status === "active" &&
+    isExactProviderBinding(installationBinding, input)
+  ) {
+    return installationBinding;
+  }
+
+  throw duplicateError;
+}
+
+function isExactProviderBinding(
+  binding: OrgSourceControlBinding,
+  input: FinalizeActiveOrgProviderBindingInput
+): boolean {
+  return (
+    binding.clerkOrgId === input.clerkOrgId &&
+    binding.provider === input.provider &&
+    binding.providerInstallationId === input.providerInstallationId
   );
 }
