@@ -1,5 +1,5 @@
 import { env } from "~/env";
-import { appUrl, devOriginPatterns } from "~/origins";
+import { appUrl, platformUrl, wwwUrl } from "~/origins";
 
 const isDev =
   env.NEXT_PUBLIC_VERCEL_ENV === undefined ||
@@ -7,7 +7,30 @@ const isDev =
 
 const isBuildPhase = process.env.NEXT_PHASE?.includes("build") ?? false;
 
-const canonicalAppOrigin = new URL(appUrl).origin;
+function toOrigin(value: string): string | null {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return null;
+  }
+}
+
+function toLocalOrigin(value: string): string | null {
+  try {
+    const url = new URL(value);
+    const isLocalhost =
+      url.hostname === "localhost" || url.hostname.endsWith(".localhost");
+    return isLocalhost ? url.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+const canonicalAppOrigin = toOrigin(appUrl);
+
+if (!canonicalAppOrigin) {
+  throw new Error(`[cors] appUrl must be a valid URL. Received: ${appUrl}`);
+}
 
 if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
   throw new Error(
@@ -16,11 +39,16 @@ if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
   );
 }
 
-// devOriginPatterns is already [] when !isLocal (gated inside ~/origins).
-// No re-gate needed; the constant is the source of truth.
-const devOrigins = devOriginPatterns;
+const localWebOrigins = isDev
+  ? new Set(
+      [appUrl, wwwUrl, platformUrl].flatMap((value) => {
+        const origin = toLocalOrigin(value);
+        return origin ? [origin] : [];
+      })
+    )
+  : new Set<string>();
 
-export function isAllowedOrigin(origin: string | null): origin is string {
+export function isAllowedWebOrigin(origin: string | null): origin is string {
   if (!origin) {
     return false;
   }
@@ -31,22 +59,10 @@ export function isAllowedOrigin(origin: string | null): origin is string {
   } catch {
     return false;
   }
-  const originValue = originUrl.origin;
 
-  if (originValue === canonicalAppOrigin) {
+  if (originUrl.origin === canonicalAppOrigin) {
     return true;
   }
-  if (!isDev) {
-    return false;
-  }
 
-  return devOrigins.some((pattern) => {
-    if (pattern.startsWith("*.")) {
-      const suffix = pattern.slice(1);
-      return (
-        originUrl.host.endsWith(suffix) && originUrl.host.length > suffix.length
-      );
-    }
-    return originUrl.host === pattern;
-  });
+  return isDev && localWebOrigins.has(originUrl.origin);
 }
