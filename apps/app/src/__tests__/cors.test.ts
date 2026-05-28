@@ -40,14 +40,16 @@ describe("isAllowedWebOrigin (dev)", () => {
     expect(isAllowedWebOrigin("https://app.lightfast.localhost")).toBe(true);
   });
 
-  it("admits the exact local www origin from wwwUrl", async () => {
+  it("rejects the direct local www origin; browser app traffic uses the MFE root", async () => {
     const { isAllowedWebOrigin } = await import("~/cors");
-    expect(isAllowedWebOrigin("https://www.lightfast.localhost")).toBe(true);
+    expect(isAllowedWebOrigin("https://www.lightfast.localhost")).toBe(false);
   });
 
-  it("admits the exact local platform origin from platformUrl", async () => {
+  it("rejects the direct local platform origin", async () => {
     const { isAllowedWebOrigin } = await import("~/cors");
-    expect(isAllowedWebOrigin("https://platform.lightfast.localhost")).toBe(true);
+    expect(isAllowedWebOrigin("https://platform.lightfast.localhost")).toBe(
+      false
+    );
   });
 
   it("rejects a worktree-prefixed app origin that is not an exact env URL", async () => {

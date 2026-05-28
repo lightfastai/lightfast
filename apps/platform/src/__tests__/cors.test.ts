@@ -33,7 +33,7 @@ describe("platform isAllowedWebOrigin", () => {
     expect(isAllowedWebOrigin("https://lightfast.ai")).toBe(true);
   });
 
-  it("admits exact direct local service origins in dev", async () => {
+  it("admits the exact direct local app origin in dev", async () => {
     setupMocks({
       appUrl: "https://app.lightfast.localhost",
       wwwUrl: "https://www.lightfast.localhost",
@@ -42,9 +42,19 @@ describe("platform isAllowedWebOrigin", () => {
     });
     const { isAllowedWebOrigin } = await import("~/cors");
     expect(isAllowedWebOrigin("https://app.lightfast.localhost")).toBe(true);
-    expect(isAllowedWebOrigin("https://www.lightfast.localhost")).toBe(true);
+  });
+
+  it("rejects direct local www and platform origins in dev", async () => {
+    setupMocks({
+      appUrl: "https://app.lightfast.localhost",
+      wwwUrl: "https://www.lightfast.localhost",
+      platformUrl: "https://platform.lightfast.localhost",
+      vercelEnv: undefined,
+    });
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://www.lightfast.localhost")).toBe(false);
     expect(isAllowedWebOrigin("https://platform.lightfast.localhost")).toBe(
-      true
+      false
     );
   });
 

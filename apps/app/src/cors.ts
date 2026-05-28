@@ -1,5 +1,5 @@
 import { env } from "~/env";
-import { appUrl, platformUrl, wwwUrl } from "~/origins";
+import { appUrl } from "~/origins";
 
 const isDev =
   env.NEXT_PUBLIC_VERCEL_ENV === undefined ||
@@ -15,24 +15,6 @@ if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
       "Run `pnpm dev` before the platform/app server."
   );
 }
-
-function toLocalOrigin(value: string): string | null {
-  try {
-    const url = new URL(value);
-    const isLocalhost =
-      url.hostname === "localhost" || url.hostname.endsWith(".localhost");
-    return isLocalhost ? url.origin : null;
-  } catch {
-    return null;
-  }
-}
-
-const localDevOrigins = new Set(
-  [appUrl, wwwUrl, platformUrl].flatMap((value) => {
-    const origin = toLocalOrigin(value);
-    return origin ? [origin] : [];
-  })
-);
 
 export function isAllowedWebOrigin(origin: string | null): origin is string {
   if (!origin) {
@@ -50,11 +32,7 @@ export function isAllowedWebOrigin(origin: string | null): origin is string {
   if (originValue === canonicalAppOrigin) {
     return true;
   }
-  if (!isDev) {
-    return false;
-  }
-
-  return localDevOrigins.has(originValue);
+  return false;
 }
 
 // Dev-only carve-out: the Electron renderer in dev loads from
