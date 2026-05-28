@@ -83,10 +83,11 @@ preserves existing data.
 ## Local development
 
 The desktop app is a Clerk-authenticated tRPC client for the `apps/app` API.
-Signed-in requests go through the portless microfrontends proxy, not directly
-to `apps/app`'s internal Next.js port. In the main worktree this is usually
-`https://lightfast.localhost`; run `node scripts/with-desktop-env.mjs --print`
-from the repo root to see the exact URL for the current worktree.
+Local desktop dev uses `APP_URL=$(portless get lightfast)`, which points to
+`https://lightfast.localhost`. The direct app route remains
+`https://app.lightfast.localhost` for service wiring and `NEXT_PUBLIC_APP_URL`.
+Signed-in requests go through the Portless Microfrontends aggregate, not
+directly to `apps/app`'s internal Next.js port.
 
 ### Environment
 
@@ -96,8 +97,8 @@ opens the browser bridge served by `apps/app`.
 
 To set operational desktop-only values such as Sentry or remote debugging,
 create `apps/desktop/.vercel/.env.development.local` (gitignored) by copying
-`apps/desktop/.env.example`. Local dev injects `LIGHTFAST_APP_ORIGIN` through
-`scripts/with-desktop-env.mjs`; preview/prod use `https://lightfast.ai`.
+`apps/desktop/.env.example`. Local dev sets `APP_URL=$(portless get lightfast)`;
+preview/prod use `https://lightfast.ai`.
 
 ```bash
 cp apps/desktop/.env.example apps/desktop/.vercel/.env.development.local
@@ -105,8 +106,7 @@ cp apps/desktop/.env.example apps/desktop/.vercel/.env.development.local
 
 The `with-env` script (invoked by `pnpm --filter @lightfast/desktop dev`) loads
 this file via `dotenv-cli`. Normal desktop dev does not require the file. Set
-`LIGHTFAST_APP_ORIGIN` only when you need to override the local app origin
-manually.
+`APP_URL` only when you need to override the local aggregate URL manually.
 
 ### Sign-in flow (OAuth + loopback callback)
 
@@ -127,18 +127,18 @@ No Lightfast API keys or Clerk JWT templates are created for desktop login.
 ### Run the stack (two terminals)
 
 ```bash
-# Terminal 1 — app + www + portless microfrontends origin
+# Terminal 1 — app + www + platform + local services + MFE aggregate
 pnpm dev
 
 # Terminal 2 — Electron app
 pnpm --filter @lightfast/desktop dev
 ```
 
-`pnpm dev` boots `apps/app`, `apps/www`, and the portless-backed
-microfrontends origin. The desktop package dev script passes that origin to
-Electron as `LIGHTFAST_APP_ORIGIN` through `scripts/with-desktop-env.mjs`;
-`node scripts/with-desktop-env.mjs --print` is the developer-visible source of
-truth. `pnpm dev` is the root local stack, including platform services.
+`pnpm dev` boots `apps/app`, `apps/www`, `apps/platform`, local Inngest, local
+QStash, and the Portless-backed Microfrontends aggregate. The desktop package
+dev script passes `APP_URL=$(portless get lightfast)` to Electron so dev opens
+the aggregate URL. The direct app route remains `https://app.lightfast.localhost`
+for service wiring and `NEXT_PUBLIC_APP_URL`.
 
 ### Inspect the encrypted session store
 

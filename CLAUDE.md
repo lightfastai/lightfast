@@ -12,21 +12,24 @@ See `SPEC.md` for business goals and product vision.
 
 ```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
-│  Local dev — Portless HTTPS aggregate (port 443)                                 │
+│  Canonical local browser URL (port 443)                                          │
 │  https://[<wt>.]lightfast.localhost                                              │
-│      │                                                                           │
-│      ├─ app   https://[<wt>.]app.lightfast.localhost   (raw :auto, host-keyed)   │
-│      │       @api/app · tRPC + Inngest · auth + Server Actions · default MFE     │
-│      │       tRPC CORS dev: portless wildcard + localhost:* (desktop, Bearer)    │
-│      │                                                                           │
-│      └─ www   https://[<wt>.]www.lightfast.localhost   (raw :auto, host-keyed)   │
-│              marketing + docs (fumadocs MDX) · marketing-group MFE               │
+│  Vercel Microfrontends aggregate served by @lightfast/app#mfe:proxy              │
 │                                                                                  │
-│  platform   https://[<wt>.]platform.lightfast.localhost   (raw :auto, non-MFE)   │
-│             Empty Next.js host (post-v2 reset). /api/{health,inngest,trpc}.      │
-│             tRPC CORS dev: portless wildcard                                     │
+│  Direct Portless service routes                                                  │
+│      app       https://[<wt>.]app.lightfast.localhost                            │
+│                @api/app · tRPC + Inngest · auth + Server Actions · default MFE   │
+│                tRPC CORS dev: portless wildcard + localhost:* (desktop, Bearer)  │
+│      www       https://[<wt>.]www.lightfast.localhost                            │
+│                marketing + docs (fumadocs MDX) · marketing-group MFE             │
+│      platform  https://[<wt>.]platform.lightfast.localhost                       │
+│                Empty Next.js host (post-v2 reset). /api/{health,inngest,trpc}.   │
+│                tRPC CORS dev: portless wildcard                                  │
+│      inngest   https://[<wt>.]inngest.lightfast.localhost                        │
+│      qstash    https://[<wt>.]qstash.lightfast.localhost                         │
 │                                                                                  │
-│  desktop    Electron (Vite SPA) · LIGHTFAST_APP_ORIGIN → aggregate above         │
+│  desktop    Electron (Vite SPA) · APP_URL=$(portless get lightfast)              │
+│             opens the aggregate MFE URL in dev                                   │
 │             renderer Origin = localhost:<vite>, admitted on app via Bearer       │
 │                                                                                  │
 │              @db/app (Drizzle)  ·  @vendor/upstash (Redis)                       │
@@ -36,13 +39,11 @@ See `SPEC.md` for business goals and product vision.
 │  Mesh:       microfrontends.json (root)                                          │
 │  Portless:   per-app portless.json + package.json "portless" names               │
 │  Ports:      derived per-worktree from (host, appName) — no manual pinning       │
-│  Wrap:       all 3 Next configs use withPortlessProxy(...)                       │
 │  Origins:    apps/{app,platform}/src/lib/origin-allowlist.ts                     │
 │              throws in dev if appUrl falls back to https://lightfast.ai          │
 │                                                                                  │
 │  Worktree    [<wt>.] = sanitized last branch segment in a secondary git          │
 │              worktree on a non-main branch; empty on primary / on main / master. │
-│              Print current value: node scripts/with-desktop-env.mjs --print      │
 └──────────────────────────────────────────────────────────────────────────────────┘
 
 Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
@@ -58,7 +59,7 @@ Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 ```bash
 # Dev servers (NEVER use global pnpm build).
 # Worktree-prefixed URLs: see Architecture diagram above.
-pnpm dev              # app + www + platform + local Inngest + MFE proxy
+pnpm dev              # app + www + platform + local Inngest + local QStash + MFE aggregate
 
 # Local infrastructure setup
 # Load the lightfast-local-infra skill for PlanetScale DB / Upstash Redis setup.
@@ -82,7 +83,15 @@ pnpm db:migrate
 pnpm db:studio
 ```
 
-`pnpm dev` is the only root local-dev entrypoint. It starts app, www, platform, local Inngest, and the Portless-backed Vercel microfrontends proxy for `https://lightfast.localhost`. Inngest uses explicit concrete serve URLs from `portless get app.lightfast` and `portless get platform.lightfast`; it does not sync through the aggregate MFE URL. It does not start ngrok automatically.
+`pnpm dev` is the only root local-dev entrypoint. It starts app, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, and `QSTASH_URL` values use the concrete service URLs. It does not start ngrok automatically.
+
+## Next Dev Origin Handling
+
+`.localhost` routes are handled directly by Next/Portless. Do not reintroduce the legacy Next dev proxy for local dev origins. Use direct env URLs at the boundary that needs them:
+
+- **CORS**: `new URL(url).origin`
+- **Server Actions**: `new URL(url).host`
+- **Links/redirects**: URL string
 
 ## Key Rules
 
@@ -96,7 +105,7 @@ pnpm db:studio
 - **Node.js** ≥ 22.13.0 | **pnpm** 11.1.3 (pinned via `packageManager` in root `package.json`)
 - **Env files**: `apps/<app>/.vercel/.env.development.local`
 - **Local DB/Redis**: skill-driven via `.agents/skills/lightfast-local-infra`; no root `db:up`, `redis:up`, `dev:setup`, or `dev:doctor` scripts.
-- **Desktop env**: `scripts/with-desktop-env.mjs` injects `LIGHTFAST_APP_ORIGIN`; `--print` echoes the current aggregate URL.
+- **Desktop env**: `APP_URL=$(portless get lightfast)` opens the aggregate MFE URL in dev.
 
 ## Troubleshooting
 
