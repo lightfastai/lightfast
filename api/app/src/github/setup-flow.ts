@@ -27,6 +27,8 @@ import {
   consumeGitHubInstallAttempt,
   consumeGitHubOAuthAttempt,
   issueGitHubOAuthAttempt,
+  lookupGitHubInstallAttempt,
+  lookupGitHubOAuthAttempt,
 } from "./bind-attempts";
 import { getGitHubEmulatorConfig } from "./config";
 
@@ -113,17 +115,30 @@ export async function completeGitHubInstallationSetup(input: {
     return missingAttemptRedirect(input);
   }
 
+  const pendingAttempt = await lookupGitHubInstallAttempt({ state });
+  if (!pendingAttempt) {
+    return missingAttemptRedirect(input);
+  }
+
+  try {
+    await assertCurrentUserIsOrgAdmin({
+      clerkOrgId: pendingAttempt.clerkOrgId,
+      expectedUserId: pendingAttempt.lightfastUserId,
+    });
+  } catch (error) {
+    return errorRedirect({
+      appOrigin: input.appOrigin,
+      code: mapError(error),
+      orgSlug: pendingAttempt.orgSlug,
+    });
+  }
+
   const attempt = await consumeGitHubInstallAttempt({ state });
   if (!attempt) {
     return missingAttemptRedirect(input);
   }
 
   try {
-    await assertCurrentUserIsOrgAdmin({
-      clerkOrgId: attempt.clerkOrgId,
-      expectedUserId: attempt.lightfastUserId,
-    });
-
     if (installationId !== attempt.emulator.installationId) {
       return errorRedirect({
         appOrigin: input.appOrigin,
@@ -183,6 +198,22 @@ export async function completeGitHubOAuthVerification(input: {
     if (!state) {
       return missingAttemptRedirect(input);
     }
+    const pendingAttempt = await lookupGitHubOAuthAttempt({ state });
+    if (!pendingAttempt) {
+      return missingAttemptRedirect(input);
+    }
+    try {
+      await assertCurrentUserIsOrgAdmin({
+        clerkOrgId: pendingAttempt.clerkOrgId,
+        expectedUserId: pendingAttempt.lightfastUserId,
+      });
+    } catch (error) {
+      return errorRedirect({
+        appOrigin: input.appOrigin,
+        code: mapError(error),
+        orgSlug: pendingAttempt.orgSlug,
+      });
+    }
     const attempt = await consumeGitHubOAuthAttempt({ state });
     return attempt
       ? errorRedirect({
@@ -196,17 +227,30 @@ export async function completeGitHubOAuthVerification(input: {
     return missingAttemptRedirect(input);
   }
 
+  const pendingAttempt = await lookupGitHubOAuthAttempt({ state });
+  if (!pendingAttempt) {
+    return missingAttemptRedirect(input);
+  }
+
+  try {
+    await assertCurrentUserIsOrgAdmin({
+      clerkOrgId: pendingAttempt.clerkOrgId,
+      expectedUserId: pendingAttempt.lightfastUserId,
+    });
+  } catch (error) {
+    return errorRedirect({
+      appOrigin: input.appOrigin,
+      code: mapError(error),
+      orgSlug: pendingAttempt.orgSlug,
+    });
+  }
+
   const attempt = await consumeGitHubOAuthAttempt({ state });
   if (!attempt) {
     return missingAttemptRedirect(input);
   }
 
   try {
-    await assertCurrentUserIsOrgAdmin({
-      clerkOrgId: attempt.clerkOrgId,
-      expectedUserId: attempt.lightfastUserId,
-    });
-
     const config = getGitHubEmulatorConfig({ appOrigin: input.appOrigin });
     const token = await exchangeGitHubOAuthCode({
       clientId: config.clientId,

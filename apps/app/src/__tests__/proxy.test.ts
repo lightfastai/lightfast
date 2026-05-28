@@ -348,6 +348,7 @@ describe("proxy pending-session route handling", () => {
 
       expect(response.status).toBe(200);
       expect(response.headers.get("location")).toBeNull();
+      expect(clerkProxyRequestMock).toHaveBeenCalledWith(pathname);
       expect(authMock).not.toHaveBeenCalled();
     }
   );

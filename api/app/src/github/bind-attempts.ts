@@ -50,6 +50,26 @@ function hashState(state: string): string {
   return createHash("sha256").update(state).digest("hex");
 }
 
+async function readGitHubAttempt<T extends { stateHash: string }>(input: {
+  consume: boolean;
+  prefix: string;
+  state: string;
+}): Promise<T | null> {
+  const envelope = decodeState(input.state);
+  if (!envelope) {
+    return null;
+  }
+
+  const key = `${input.prefix}${envelope.attemptId}`;
+  const record = input.consume
+    ? await redis.getdel<T>(key)
+    : await redis.get<T>(key);
+  if (!record || record.stateHash !== hashState(input.state)) {
+    return null;
+  }
+  return record;
+}
+
 export async function issueGitHubInstallAttempt(input: {
   clerkOrgId: string;
   emulator: GitHubEmulatorAttemptContext;
@@ -72,17 +92,21 @@ export async function issueGitHubInstallAttempt(input: {
 export async function consumeGitHubInstallAttempt(input: {
   state: string;
 }): Promise<GitHubBindInstallAttemptRecord | null> {
-  const envelope = decodeState(input.state);
-  if (!envelope) {
-    return null;
-  }
-  const record = await redis.getdel<GitHubBindInstallAttemptRecord>(
-    `${INSTALL_PREFIX}${envelope.attemptId}`
-  );
-  if (!record || record.stateHash !== hashState(input.state)) {
-    return null;
-  }
-  return record;
+  return readGitHubAttempt<GitHubBindInstallAttemptRecord>({
+    consume: true,
+    prefix: INSTALL_PREFIX,
+    state: input.state,
+  });
+}
+
+export async function lookupGitHubInstallAttempt(input: {
+  state: string;
+}): Promise<GitHubBindInstallAttemptRecord | null> {
+  return readGitHubAttempt<GitHubBindInstallAttemptRecord>({
+    consume: false,
+    prefix: INSTALL_PREFIX,
+    state: input.state,
+  });
 }
 
 export async function issueGitHubOAuthAttempt(input: {
@@ -111,15 +135,19 @@ export async function issueGitHubOAuthAttempt(input: {
 export async function consumeGitHubOAuthAttempt(input: {
   state: string;
 }): Promise<GitHubBindOAuthAttemptRecord | null> {
-  const envelope = decodeState(input.state);
-  if (!envelope) {
-    return null;
-  }
-  const record = await redis.getdel<GitHubBindOAuthAttemptRecord>(
-    `${OAUTH_PREFIX}${envelope.attemptId}`
-  );
-  if (!record || record.stateHash !== hashState(input.state)) {
-    return null;
-  }
-  return record;
+  return readGitHubAttempt<GitHubBindOAuthAttemptRecord>({
+    consume: true,
+    prefix: OAUTH_PREFIX,
+    state: input.state,
+  });
+}
+
+export async function lookupGitHubOAuthAttempt(input: {
+  state: string;
+}): Promise<GitHubBindOAuthAttemptRecord | null> {
+  return readGitHubAttempt<GitHubBindOAuthAttemptRecord>({
+    consume: false,
+    prefix: OAUTH_PREFIX,
+    state: input.state,
+  });
 }

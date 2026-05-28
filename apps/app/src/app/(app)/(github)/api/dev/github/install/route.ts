@@ -6,16 +6,29 @@ export const runtime = "nodejs";
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const state = url.searchParams.get("state");
-  const installationId = url.searchParams.get("installation_id");
+  const installUrlOverride = process.env.GITHUB_INSTALL_URL_OVERRIDE;
 
   if (
     process.env.VERCEL_ENV === "production" ||
-    !process.env.GITHUB_INSTALL_URL_OVERRIDE
+    !installUrlOverride
   ) {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
 
-  if (!(state && installationId)) {
+  let installationId: string | null;
+  try {
+    installationId = new URL(installUrlOverride).searchParams.get(
+      "installation_id"
+    );
+  } catch {
+    return Response.json({ error: "Not Found" }, { status: 404 });
+  }
+
+  if (!installationId) {
+    return Response.json({ error: "Not Found" }, { status: 404 });
+  }
+
+  if (!state) {
     return Response.json(
       { error: "Invalid GitHub install shim request" },
       { status: 400 }

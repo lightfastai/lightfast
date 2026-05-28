@@ -73,7 +73,7 @@ describe("GitHub app route handlers", () => {
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://app.lightfast.localhost/api/dev/github/install"
+      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
     );
     const { GET } = await import(
       "~/app/(app)/(github)/api/dev/github/install/route"
@@ -105,26 +105,21 @@ describe("GitHub app route handlers", () => {
     await expect(res.json()).resolves.toEqual({ error: "Not Found" });
   });
 
-  it.each([
-    [
-      "missing state",
-      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001",
-    ],
-    [
-      "missing installation id",
-      "https://app.lightfast.localhost/api/dev/github/install?state=abc",
-    ],
-  ])("rejects dev install shim requests with %s", async (_name, requestUrl) => {
+  it("rejects dev install shim requests with missing state", async () => {
     vi.stubEnv("VERCEL_ENV", "development");
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://app.lightfast.localhost/api/dev/github/install"
+      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
     );
     const { GET } = await import(
       "~/app/(app)/(github)/api/dev/github/install/route"
     );
 
-    const res = await GET(new Request(requestUrl));
+    const res = await GET(
+      new Request(
+        "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+      )
+    );
 
     expect(res.status).toBe(400);
     await expect(res.json()).resolves.toEqual({
@@ -132,7 +127,7 @@ describe("GitHub app route handlers", () => {
     });
   });
 
-  it("redirects dev install shim requests to the GitHub setup callback", async () => {
+  it("rejects dev install shim requests when the override has no installation id", async () => {
     vi.stubEnv("VERCEL_ENV", "development");
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
@@ -145,6 +140,26 @@ describe("GitHub app route handlers", () => {
     const res = await GET(
       new Request(
         "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001&state=abc"
+      )
+    );
+
+    expect(res.status).toBe(404);
+    await expect(res.json()).resolves.toEqual({ error: "Not Found" });
+  });
+
+  it("redirects dev install shim requests using the configured installation id", async () => {
+    vi.stubEnv("VERCEL_ENV", "development");
+    vi.stubEnv(
+      "GITHUB_INSTALL_URL_OVERRIDE",
+      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+    );
+    const { GET } = await import(
+      "~/app/(app)/(github)/api/dev/github/install/route"
+    );
+
+    const res = await GET(
+      new Request(
+        "https://app.lightfast.localhost/api/dev/github/install?installation_id=attacker&state=abc"
       )
     );
 

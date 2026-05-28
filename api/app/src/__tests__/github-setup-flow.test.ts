@@ -6,6 +6,8 @@ const createGitHubPkcePairMock = vi.fn();
 const exchangeGitHubOAuthCodeMock = vi.fn();
 const finalizeActiveOrgProviderBindingMock = vi.fn();
 const issueGitHubOAuthAttemptMock = vi.fn();
+const lookupGitHubInstallAttemptMock = vi.fn();
+const lookupGitHubOAuthAttemptMock = vi.fn();
 const mirrorOrgBindingMock = vi.fn();
 const verifyGitHubEmulatorInstallationMock = vi.fn();
 const assertOrgAdminMock = vi.fn();
@@ -90,6 +92,8 @@ vi.mock("../github/bind-attempts", () => ({
   consumeGitHubInstallAttempt: consumeGitHubInstallAttemptMock,
   consumeGitHubOAuthAttempt: consumeGitHubOAuthAttemptMock,
   issueGitHubOAuthAttempt: issueGitHubOAuthAttemptMock,
+  lookupGitHubInstallAttempt: lookupGitHubInstallAttemptMock,
+  lookupGitHubOAuthAttempt: lookupGitHubOAuthAttemptMock,
 }));
 
 vi.mock("../github/config", () => ({
@@ -127,6 +131,18 @@ function oauthAttempt() {
   };
 }
 
+function mockInstallAttempt(record = installAttempt()) {
+  lookupGitHubInstallAttemptMock.mockResolvedValue(record);
+  consumeGitHubInstallAttemptMock.mockResolvedValue(record);
+  return record;
+}
+
+function mockOAuthAttempt(record = oauthAttempt()) {
+  lookupGitHubOAuthAttemptMock.mockResolvedValue(record);
+  consumeGitHubOAuthAttemptMock.mockResolvedValue(record);
+  return record;
+}
+
 describe("github setup flow", () => {
   beforeEach(() => {
     consumeGitHubInstallAttemptMock.mockReset();
@@ -135,6 +151,8 @@ describe("github setup flow", () => {
     exchangeGitHubOAuthCodeMock.mockReset();
     finalizeActiveOrgProviderBindingMock.mockReset();
     issueGitHubOAuthAttemptMock.mockReset();
+    lookupGitHubInstallAttemptMock.mockReset();
+    lookupGitHubOAuthAttemptMock.mockReset();
     mirrorOrgBindingMock.mockReset();
     verifyGitHubEmulatorInstallationMock.mockReset();
     assertOrgAdminMock.mockReset();
@@ -171,7 +189,7 @@ describe("github setup flow", () => {
   });
 
   it("redirects installation setup to the emulator OAuth authorize URL", async () => {
-    consumeGitHubInstallAttemptMock.mockResolvedValue(installAttempt());
+    mockInstallAttempt();
 
     const result = await completeGitHubInstallationSetup({
       appOrigin: "https://app.lightfast.localhost",
@@ -193,7 +211,7 @@ describe("github setup flow", () => {
   });
 
   it("redirects a successful OAuth callback to the completion page", async () => {
-    consumeGitHubOAuthAttemptMock.mockResolvedValue(oauthAttempt());
+    mockOAuthAttempt();
 
     const result = await completeGitHubOAuthVerification({
       appOrigin: "https://app.lightfast.localhost",
@@ -236,8 +254,8 @@ describe("github setup flow", () => {
     });
   });
 
-  it("maps admin/session mismatch on consumed install attempts to permission_required", async () => {
-    consumeGitHubInstallAttemptMock.mockResolvedValue(installAttempt());
+  it("does not consume install attempts when admin verification fails", async () => {
+    mockInstallAttempt();
     assertOrgAdminMock.mockRejectedValue(new TestGitHubSetupAdminAccessError());
 
     await expect(
@@ -250,10 +268,14 @@ describe("github setup flow", () => {
       redirectUrl:
         "https://app.lightfast.localhost/acme/tasks/bind?github_error=permission_required",
     });
+    expect(lookupGitHubInstallAttemptMock).toHaveBeenCalledWith({
+      state: "install_state_123",
+    });
+    expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
   });
 
   it("maps installation id mismatch to installation_not_verified", async () => {
-    consumeGitHubInstallAttemptMock.mockResolvedValue(installAttempt());
+    mockInstallAttempt();
 
     await expect(
       completeGitHubInstallationSetup({
@@ -268,7 +290,7 @@ describe("github setup flow", () => {
   });
 
   it("maps OAuth denial with a consumable attempt to github_authorization_denied", async () => {
-    consumeGitHubOAuthAttemptMock.mockResolvedValue(oauthAttempt());
+    mockOAuthAttempt();
 
     await expect(
       completeGitHubOAuthVerification({
@@ -282,8 +304,48 @@ describe("github setup flow", () => {
     });
   });
 
+  it("does not consume denied OAuth attempts when admin verification fails", async () => {
+    mockOAuthAttempt();
+    assertOrgAdminMock.mockRejectedValue(new TestGitHubSetupAdminAccessError());
+
+    await expect(
+      completeGitHubOAuthVerification({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/tasks/bind?github_error=permission_required",
+    });
+    expect(lookupGitHubOAuthAttemptMock).toHaveBeenCalledWith({
+      state: "oauth_state_123",
+    });
+    expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
+  });
+
+  it("does not consume OAuth attempts when admin verification fails", async () => {
+    mockOAuthAttempt();
+    assertOrgAdminMock.mockRejectedValue(new TestGitHubSetupAdminAccessError());
+
+    await expect(
+      completeGitHubOAuthVerification({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/tasks/bind?github_error=permission_required",
+    });
+    expect(lookupGitHubOAuthAttemptMock).toHaveBeenCalledWith({
+      state: "oauth_state_123",
+    });
+    expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
+  });
+
   it("maps personal account verification failures to personal_account_not_supported", async () => {
-    consumeGitHubOAuthAttemptMock.mockResolvedValue(oauthAttempt());
+    mockOAuthAttempt();
     verifyGitHubEmulatorInstallationMock.mockRejectedValue(
       new GitHubAppNodeError(
         "PERSONAL_ACCOUNT_NOT_SUPPORTED",
@@ -304,7 +366,7 @@ describe("github setup flow", () => {
   });
 
   it("maps provider installation conflicts to installation_already_bound", async () => {
-    consumeGitHubOAuthAttemptMock.mockResolvedValue(oauthAttempt());
+    mockOAuthAttempt();
     finalizeActiveOrgProviderBindingMock.mockRejectedValue(
       new OrgSourceControlBindingConflictError(
         "INSTALLATION_ALREADY_BOUND",
@@ -325,7 +387,7 @@ describe("github setup flow", () => {
   });
 
   it("tolerates mirror failure after DB bind and still redirects to completion", async () => {
-    consumeGitHubOAuthAttemptMock.mockResolvedValue(oauthAttempt());
+    mockOAuthAttempt();
     mirrorOrgBindingMock.mockRejectedValue(new Error("mirror unavailable"));
 
     await expect(
