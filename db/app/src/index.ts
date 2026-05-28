@@ -18,6 +18,8 @@ export {
   automations,
   createAutomationId,
   createAutomationRunId,
+  createPersonId,
+  createSignalId,
   type InsertAutomation,
   type InsertAutomationRun,
   type InsertOrgSourceControlBinding,
@@ -33,10 +35,8 @@ export {
   type Person,
   type PersonIdentityProvider,
   type PersonIdentityType,
-  createPersonId,
   people,
   type Signal,
-  createSignalId,
   signals,
 } from "./schema";
 export {
@@ -75,6 +75,8 @@ export {
 } from "./utils/org-binding";
 export {
   getPersonByIdentityKey,
+  type ListPeopleParams,
+  listPeople,
   type UpsertPeopleCandidate,
   type UpsertPeopleFromCandidatesInput,
   upsertPeopleFromCandidates,
@@ -86,6 +88,8 @@ export {
   createSignal,
   type GetSignalByPublicIdParams,
   getSignalByPublicId,
+  type ListSignalsParams,
+  listSignals,
   type MarkSignalClassifiedParams,
   type MarkSignalFailedParams,
   markSignalClassified,

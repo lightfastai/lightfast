@@ -45,7 +45,6 @@ let runFailureCallback: WorkflowFailureCallback | undefined;
 const createFunctionMock = vi.fn(
   (
     config: { id: string; onFailure?: WorkflowFailureCallback },
-    _trigger: unknown,
     handler: SchedulerCallback | WorkflowCallback
   ): { id: string } => {
     if (config.id === "automation-scheduler") {
@@ -200,8 +199,8 @@ describe("automation Inngest workflows", () => {
         id: "automation-scheduler",
         retries: 0,
         timeouts: { finish: "2m", start: "1m" },
+        triggers: { cron: "* * * * *" },
       },
-      { cron: "* * * * *" },
       expect.any(Function)
     );
     expect(createFunctionMock).toHaveBeenCalledWith(
@@ -211,8 +210,10 @@ describe("automation Inngest workflows", () => {
         onFailure: expect.any(Function),
         retries: 2,
         timeouts: { finish: "5m", start: "5m" },
+        triggers: expect.objectContaining({
+          event: "app/automation.run.requested",
+        }),
       },
-      { event: "app/automation.run.requested" },
       expect.any(Function)
     );
   });

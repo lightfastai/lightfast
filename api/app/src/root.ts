@@ -6,7 +6,7 @@
  * - `viewer`: signed-in user surface, active org optional.
  * - `org.setup`: active org setup surface, binding optional.
  * - `org.settings`: active org settings surface, binding optional.
- * - `org.workspace`: future bound-org product surface.
+ * - `org.workspace`: bound-org product surface.
  */
 
 import { accountRouter } from "./router/(pending-allowed)/account";
@@ -15,10 +15,13 @@ import {
   organizationRouter,
   orgSettingsOrganizationRouter,
 } from "./router/(pending-allowed)/organization";
+import { automationsRouter } from "./router/(pending-not-allowed)/automations";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
+import { workspacePeopleRouter } from "./router/(pending-not-allowed)/workspace-people";
+import { workspaceSignalsRouter } from "./router/(pending-not-allowed)/workspace-signals";
 import { createTRPCRouter } from "./trpc";
 
 export const appRouter = createTRPCRouter({
@@ -39,7 +42,11 @@ export const appRouter = createTRPCRouter({
       orgBilling: orgBillingRouter,
       orgMembers: orgMembersRouter,
     }),
-    workspace: createTRPCRouter({}),
+    workspace: createTRPCRouter({
+      automations: automationsRouter,
+      people: workspacePeopleRouter,
+      signals: workspaceSignalsRouter,
+    }),
   }),
 });
 

@@ -14,15 +14,13 @@ import { useTRPC } from "~/trpc/react";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
-export function AutomationActions({
-  automation,
-}: {
-  automation: Automation;
-}) {
+export function AutomationActions({ automation }: { automation: Automation }) {
   const { has, isLoaded } = useAuth();
   const canManage = isLoaded && !!has?.({ role: "org:admin" });
 
-  if (!canManage) return null;
+  if (!canManage) {
+    return null;
+  }
 
   return <AutomationActionsInner automation={automation} />;
 }
@@ -43,7 +41,7 @@ function AutomationActionsInner({ automation }: { automation: Automation }) {
       onSuccess: () => {
         void qc.invalidateQueries({ queryKey: listRunsKey });
       },
-    }),
+    })
   );
 
   return (
@@ -64,18 +62,16 @@ function AutomationActionsInner({ automation }: { automation: Automation }) {
       </Button>
       <Tooltip>
         <TooltipTrigger asChild>
-          <span className="block w-full" tabIndex={0}>
-            <Button
-              aria-disabled
-              className="pointer-events-none w-full justify-start gap-2"
-              size="sm"
-              tabIndex={-1}
-              variant="secondary"
-            >
-              <Trash className="size-4" />
-              Delete
-            </Button>
-          </span>
+          <Button
+            aria-disabled
+            className="w-full cursor-not-allowed justify-start gap-2 opacity-50"
+            size="sm"
+            type="button"
+            variant="secondary"
+          >
+            <Trash className="size-4" />
+            Delete
+          </Button>
         </TooltipTrigger>
         <TooltipContent>
           Delete isn&apos;t available yet — pause the automation instead.

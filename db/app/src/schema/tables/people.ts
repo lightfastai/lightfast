@@ -1,4 +1,8 @@
 import { randomUUID } from "node:crypto";
+import type {
+  PersonIdentityProvider,
+  PersonIdentityType,
+} from "@repo/app-validation/schemas";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -20,15 +24,7 @@ const IDENTITY_KEY_LENGTH = 64;
 export const PERSON_ID_PREFIX = "person_";
 export const PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH = 512;
 export const PERSON_DISPLAY_NAME_LENGTH = 160;
-
-export type PersonIdentityProvider =
-  | "email"
-  | "x"
-  | "linkedin"
-  | "github"
-  | "website";
-
-export type PersonIdentityType = "email" | "handle" | "profile_url";
+export type { PersonIdentityProvider, PersonIdentityType };
 
 export function createPersonId() {
   return `${PERSON_ID_PREFIX}${randomUUID()}`;

@@ -30,11 +30,15 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { z } from "zod";
-import { upsertInList } from "../../_components/automations-cache";
 import { useTRPC } from "~/trpc/react";
+import { upsertInList } from "../../_components/automations-cache";
 
 const formSchema = z.object({
-  name: z.string().trim().min(1, "Name is required").max(AUTOMATION_NAME_MAX_LENGTH),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Name is required")
+    .max(AUTOMATION_NAME_MAX_LENGTH),
   prompt: z
     .string()
     .trim()
@@ -82,8 +86,10 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
       onSuccess: (automation) => {
         upsertInList(queryClient, trpc, automation.publicId, () => automation);
         queryClient.setQueryData(
-          trpc.org.workspace.automations.get.queryOptions({ id: automation.publicId }).queryKey,
-          automation,
+          trpc.org.workspace.automations.get.queryOptions({
+            id: automation.publicId,
+          }).queryKey,
+          automation
         );
         toast.success("Automation created", {
           description: `"${automation.name}" is now scheduled.`,
@@ -114,7 +120,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
   const isSubmitting = createMutation.isPending;
 
-  if (!isLoaded || !canManageAutomations) {
+  if (!(isLoaded && canManageAutomations)) {
     return null;
   }
 
@@ -129,10 +135,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
         </Button>
 
         <Form {...form}>
-          <form
-            className="space-y-8"
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
+          <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="name"
@@ -206,11 +209,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                     <FormItem>
                       <FormLabel>At (UTC)</FormLabel>
                       <FormControl>
-                        <Input
-                          {...field}
-                          className="w-40"
-                          type="time"
-                        />
+                        <Input {...field} className="w-40" type="time" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

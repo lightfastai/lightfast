@@ -1,4 +1,4 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, like, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -9,6 +9,80 @@ import {
   type PersonIdentityType,
   people,
 } from "../schema";
+
+export interface ListCursor {
+  createdAt: Date;
+  id: number;
+}
+
+export interface ListResult<T> {
+  items: T[];
+  nextCursor: ListCursor | null;
+}
+
+function normalizeLimit(limit: number | undefined): number {
+  if (typeof limit !== "number" || !Number.isFinite(limit)) {
+    return 50;
+  }
+  return Math.max(1, Math.min(Math.trunc(limit), 100));
+}
+
+function isDefined<T>(value: T | undefined): value is T {
+  return value !== undefined;
+}
+
+export interface ListPeopleParams {
+  clerkOrgId: string;
+  cursor?: ListCursor | null;
+  limit?: number;
+  search?: string;
+}
+
+export async function listPeople(
+  db: Database,
+  input: ListPeopleParams
+): Promise<ListResult<Person>> {
+  const limit = normalizeLimit(input.limit);
+  const search = input.search?.trim();
+  const conditions = [
+    eq(people.clerkOrgId, input.clerkOrgId),
+    search
+      ? or(
+          like(people.displayName, `%${search}%`),
+          like(people.identityProvider, `%${search}%`),
+          like(people.identityValue, `%${search}%`),
+          like(people.normalizedIdentityValue, `%${search}%`)
+        )
+      : undefined,
+    input.cursor
+      ? or(
+          lt(people.createdAt, input.cursor.createdAt),
+          and(
+            eq(people.createdAt, input.cursor.createdAt),
+            lt(people.id, input.cursor.id)
+          )
+        )
+      : undefined,
+  ].filter(isDefined);
+
+  const rows = await db
+    .select()
+    .from(people)
+    .where(and(...conditions))
+    .orderBy(desc(people.createdAt), desc(people.id))
+    .limit(limit + 1);
+
+  const items = rows.slice(0, limit);
+  const lastItem = items.at(-1);
+  return {
+    items,
+    nextCursor:
+      rows.length > limit && lastItem
+        ? { createdAt: lastItem.createdAt, id: lastItem.id }
+        : null,
+  };
+}
+
 import {
   createPersonIdentityKey,
   normalizePersonIdentityCandidate,

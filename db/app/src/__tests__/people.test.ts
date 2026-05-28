@@ -5,7 +5,7 @@ import {
   PERSON_DISPLAY_NAME_LENGTH,
   PERSON_NORMALIZED_IDENTITY_VALUE_LENGTH,
 } from "../schema";
-import { upsertPeopleFromCandidates } from "../utils/people";
+import { listPeople, upsertPeopleFromCandidates } from "../utils/people";
 import {
   createPersonIdentityKey,
   normalizePersonIdentityCandidate,
@@ -308,5 +308,69 @@ describe("upsertPeopleFromCandidates", () => {
     ).resolves.toEqual([]);
 
     expect(spies.insertValues).not.toHaveBeenCalled();
+  });
+});
+
+function makePeopleListDb(rows: Person[]) {
+  const spies = {
+    limit: vi.fn((value: number) => Promise.resolve(rows.slice(0, value))),
+    orderBy: vi.fn(),
+    where: vi.fn(),
+  };
+  const db = {
+    select: () => ({
+      from: () => ({
+        where: (condition: unknown) => {
+          spies.where(condition);
+          return {
+            orderBy: (...order: unknown[]) => {
+              spies.orderBy(...order);
+              return {
+                limit: spies.limit,
+              };
+            },
+          };
+        },
+      }),
+    }),
+  };
+  return { db: db as unknown as Database, spies };
+}
+
+describe("listPeople", () => {
+  it("returns people rows with cursor pagination", async () => {
+    const rows = [
+      makePerson({
+        id: 3,
+        publicId: "person_333e4567-e89b-12d3-a456-426614174000",
+      }),
+      makePerson({
+        id: 2,
+        publicId: "person_222e4567-e89b-12d3-a456-426614174000",
+      }),
+      makePerson({
+        id: 1,
+        publicId: "person_111e4567-e89b-12d3-a456-426614174000",
+      }),
+    ];
+    const { db, spies } = makePeopleListDb(rows);
+
+    await expect(
+      listPeople(db, { clerkOrgId: "org_test", limit: 2 })
+    ).resolves.toEqual({
+      items: rows.slice(0, 2),
+      nextCursor: { createdAt: rows[1]!.createdAt, id: rows[1]!.id },
+    });
+    expect(spies.limit).toHaveBeenCalledWith(3);
+    expect(spies.where).toHaveBeenCalledOnce();
+    expect(spies.orderBy).toHaveBeenCalled();
+  });
+
+  it("bounds people list limits to 100 rows", async () => {
+    const { db, spies } = makePeopleListDb([]);
+
+    await listPeople(db, { clerkOrgId: "org_test", limit: 500 });
+
+    expect(spies.limit).toHaveBeenCalledWith(101);
   });
 });

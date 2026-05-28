@@ -1,0 +1,166 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  AUTOMATION_ID_PREFIX,
+  AUTOMATION_RUN_ID_PREFIX,
+  automationIdSchema,
+  automationRunIdSchema,
+  formatAutomationSchedule,
+  formatClockTime,
+  normalizeAutomationSchedule,
+} from "../schemas/automations";
+
+describe("automation id schemas", () => {
+  it("accepts ids using the shared automation prefixes", () => {
+    expect(
+      automationIdSchema.parse(
+        `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`
+      )
+    ).toBe(`${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`);
+
+    expect(
+      automationRunIdSchema.parse(
+        `${AUTOMATION_RUN_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`
+      )
+    ).toBe(`${AUTOMATION_RUN_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`);
+  });
+
+  it("rejects ids with the wrong automation prefix", () => {
+    expect(() =>
+      automationIdSchema.parse(
+        `${AUTOMATION_RUN_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`
+      )
+    ).toThrow();
+
+    expect(() =>
+      automationRunIdSchema.parse(
+        `${AUTOMATION_ID_PREFIX}123e4567-e89b-12d3-a456-426614174000`
+      )
+    ).toThrow();
+  });
+});
+
+describe("normalizeAutomationSchedule", () => {
+  it("normalizes hourly schedules into a bounded interval", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "hourly",
+        config: { intervalHours: 6 },
+      })
+    ).toEqual({
+      kind: "hourly",
+      config: { intervalHours: 6 },
+    });
+  });
+
+  it("normalizes daily schedules into a UTC HH:mm time", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "daily",
+        config: { time: "09:30" },
+      })
+    ).toEqual({
+      kind: "daily",
+      config: { time: "09:30" },
+    });
+  });
+
+  it("rejects hourly intervals outside 1..24", () => {
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "hourly",
+        config: { intervalHours: 0 },
+      })
+    ).toThrow();
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "hourly",
+        config: { intervalHours: 25 },
+      })
+    ).toThrow();
+  });
+
+  it("rejects daily times that aren't HH:mm", () => {
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "daily",
+        config: { time: "9:30" },
+      })
+    ).toThrow();
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "daily",
+        config: { time: "24:00" },
+      })
+    ).toThrow();
+  });
+
+  it("rejects mismatched kind/config pairs", () => {
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "hourly",
+        config: { time: "09:00" },
+      })
+    ).toThrow();
+  });
+});
+
+describe("formatClockTime", () => {
+  it("formats midnight as 12:00 AM", () => {
+    expect(formatClockTime("00:00")).toBe("12:00 AM");
+  });
+
+  it("formats noon as 12:00 PM", () => {
+    expect(formatClockTime("12:00")).toBe("12:00 PM");
+  });
+
+  it("pads single-digit minutes", () => {
+    expect(formatClockTime("09:05")).toBe("9:05 AM");
+  });
+
+  it("converts 24h afternoons to 12h with PM suffix", () => {
+    expect(formatClockTime("17:30")).toBe("5:30 PM");
+  });
+});
+
+describe("formatAutomationSchedule", () => {
+  it("returns 'Paused' for paused automations regardless of schedule", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "paused",
+        scheduleKind: "daily",
+        scheduleConfig: { time: "09:00" },
+      })
+    ).toBe("Paused");
+  });
+
+  it("formats hourly intervals as 'Every N hours'", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "hourly",
+        scheduleConfig: { intervalHours: 6 },
+      })
+    ).toBe("Every 6 hours");
+  });
+
+  it("uses the bare 'Hourly' label when interval is 1", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "hourly",
+        scheduleConfig: { intervalHours: 1 },
+      })
+    ).toBe("Hourly");
+  });
+
+  it("formats daily schedules with the 12h clock time", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "daily",
+        scheduleConfig: { time: "09:00" },
+      })
+    ).toBe("Daily at 9:00 AM");
+  });
+});

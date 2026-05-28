@@ -43,7 +43,6 @@ let workflowFailureCallback: WorkflowFailureCallback | undefined;
 const createFunctionMock = vi.fn(
   (
     config: { onFailure?: WorkflowFailureCallback },
-    _trigger: unknown,
     handler: WorkflowCallback
   ): { id: string } => {
     workflowCallback = handler;
@@ -221,8 +220,8 @@ describe("classifySignal", () => {
         onFailure: expect.any(Function),
         retries: 3,
         timeouts: { finish: "10m", start: "10m" },
+        triggers: expect.objectContaining({ event: "app/signal.created" }),
       },
-      { event: "app/signal.created" },
       expect.any(Function)
     );
   });

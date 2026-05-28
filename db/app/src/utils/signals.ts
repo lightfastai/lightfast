@@ -1,8 +1,81 @@
 import type { SignalClassification } from "@repo/api-contract";
-import { and, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, like, lt, or } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
+
+export interface ListCursor {
+  createdAt: Date;
+  id: number;
+}
+
+export interface ListResult<T> {
+  items: T[];
+  nextCursor: ListCursor | null;
+}
+
+function normalizeLimit(limit: number | undefined): number {
+  if (typeof limit !== "number" || !Number.isFinite(limit)) {
+    return 50;
+  }
+  return Math.max(1, Math.min(Math.trunc(limit), 100));
+}
+
+function isDefined<T>(value: T | undefined): value is T {
+  return value !== undefined;
+}
+
+export interface ListSignalsParams {
+  clerkOrgId: string;
+  cursor?: ListCursor | null;
+  limit?: number;
+  search?: string;
+  status?: Signal["status"];
+}
+
+export async function listSignals(
+  db: Database,
+  input: ListSignalsParams
+): Promise<ListResult<Signal>> {
+  const limit = normalizeLimit(input.limit);
+  const search = input.search?.trim();
+  const conditions = [
+    eq(signals.clerkOrgId, input.clerkOrgId),
+    input.status ? eq(signals.status, input.status) : undefined,
+    search
+      ? or(
+          like(signals.publicId, `%${search}%`),
+          like(signals.input, `%${search}%`)
+        )
+      : undefined,
+    input.cursor
+      ? or(
+          lt(signals.createdAt, input.cursor.createdAt),
+          and(
+            eq(signals.createdAt, input.cursor.createdAt),
+            lt(signals.id, input.cursor.id)
+          )
+        )
+      : undefined,
+  ].filter(isDefined);
+
+  const rows = await db
+    .select()
+    .from(signals)
+    .where(and(...conditions))
+    .orderBy(desc(signals.createdAt), desc(signals.id))
+    .limit(limit + 1);
+
+  const items = rows.slice(0, limit);
+  const lastItem = items.at(-1);
+  return {
+    items,
+    nextCursor:
+      rows.length > limit && lastItem
+        ? { createdAt: lastItem.createdAt, id: lastItem.id }
+        : null,
+  };
+}
 
 export interface CreateSignalRecordInput {
   clerkOrgId: string;

@@ -1,4 +1,8 @@
 import { randomUUID } from "node:crypto";
+import {
+  AUTOMATION_ID_PREFIX,
+  AUTOMATION_RUN_ID_PREFIX,
+} from "@repo/app-validation/schemas";
 import { sql } from "drizzle-orm";
 import {
   bigint,
@@ -13,8 +17,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 
-export const AUTOMATION_ID_PREFIX = "automation_";
-export const AUTOMATION_RUN_ID_PREFIX = "automation_run_";
+export { AUTOMATION_ID_PREFIX, AUTOMATION_RUN_ID_PREFIX };
 
 const PUBLIC_ID_LENGTH = 80;
 const CLERK_ID_LENGTH = 64;

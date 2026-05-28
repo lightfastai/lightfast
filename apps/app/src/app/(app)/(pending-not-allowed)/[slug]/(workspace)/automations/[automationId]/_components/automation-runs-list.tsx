@@ -44,13 +44,12 @@ function RunRow({ run }: { run: AutomationRun }) {
   const { icon: Icon, className } = RUN_STATUS_ICONS[run.status];
 
   const hasError = !!run.errorMessage || !!run.errorCode;
-  const hasOutput =
-    run.output !== null && run.output !== undefined;
+  const hasOutput = run.output !== null && run.output !== undefined;
 
   return (
     <div>
       <button
-        className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left hover:bg-accent/50 transition-colors"
+        className="flex w-full items-center gap-2 rounded px-1 py-0.5 text-left transition-colors hover:bg-accent/50"
         onClick={() => setExpanded((v) => !v)}
         type="button"
       >
@@ -65,7 +64,7 @@ function RunRow({ run }: { run: AutomationRun }) {
       </button>
 
       {expanded && (
-        <div className="mt-1 ml-5 rounded bg-muted/50 px-2 py-1.5 text-xs text-muted-foreground">
+        <div className="mt-1 ml-5 rounded bg-muted/50 px-2 py-1.5 text-muted-foreground text-xs">
           {hasError ? (
             <div className="space-y-0.5">
               {run.errorCode && (
@@ -88,11 +87,7 @@ function RunRow({ run }: { run: AutomationRun }) {
   );
 }
 
-export function AutomationRunsList({
-  automationId,
-}: {
-  automationId: string;
-}) {
+export function AutomationRunsList({ automationId }: { automationId: string }) {
   const trpc = useTRPC();
 
   const { data: runs } = useSuspenseQuery({
@@ -100,7 +95,7 @@ export function AutomationRunsList({
       id: automationId,
       limit: 20,
     }),
-    staleTime: 5_000,
+    staleTime: 5000,
     refetchOnWindowFocus: true,
   });
 

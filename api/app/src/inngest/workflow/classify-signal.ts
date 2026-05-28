@@ -14,6 +14,7 @@ import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../env";
 import { inngest } from "../client";
+import { appEvents } from "../schemas/app";
 
 function shouldClassifyPeople(
   classification: {
@@ -32,6 +33,7 @@ export const classifySignal = inngest.createFunction(
       finish: "10m",
       start: "10m",
     },
+    triggers: appEvents["app/signal.created"],
     onFailure: async ({ event, error, step }) => {
       const { clerkOrgId, signalId } = event.data.event.data;
       const failure = getSignalClassificationFailure(error);
@@ -48,7 +50,6 @@ export const classifySignal = inngest.createFunction(
       return { status: "failed" };
     },
   },
-  { event: "app/signal.created" },
   async ({ event, step }) => {
     const { clerkOrgId, signalId } = event.data;
 

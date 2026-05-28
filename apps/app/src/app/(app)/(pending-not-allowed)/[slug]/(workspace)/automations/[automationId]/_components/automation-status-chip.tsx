@@ -12,10 +12,7 @@ import { useAuth } from "@vendor/clerk";
 import { Check, Circle, CirclePause } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
-import {
-  setOne,
-  upsertInList,
-} from "../../_components/automations-cache";
+import { setOne, upsertInList } from "../../_components/automations-cache";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
@@ -68,8 +65,9 @@ export function AutomationStatusChip({
     trpc.org.workspace.automations.pause.mutationOptions({
       meta: { errorTitle: "Failed to pause" },
       onMutate: async () => {
-        const getKey =
-          trpc.org.workspace.automations.get.queryOptions({ id }).queryKey;
+        const getKey = trpc.org.workspace.automations.get.queryOptions({
+          id,
+        }).queryKey;
         const listKey =
           trpc.org.workspace.automations.list.queryOptions().queryKey;
         await Promise.all([
@@ -83,26 +81,32 @@ export function AutomationStatusChip({
         return { prevGet, prevList };
       },
       onError: (_e, _v, ctx) => {
-        const getKey =
-          trpc.org.workspace.automations.get.queryOptions({ id }).queryKey;
+        const getKey = trpc.org.workspace.automations.get.queryOptions({
+          id,
+        }).queryKey;
         const listKey =
           trpc.org.workspace.automations.list.queryOptions().queryKey;
-        if (ctx?.prevGet) qc.setQueryData(getKey, ctx.prevGet);
-        if (ctx?.prevList) qc.setQueryData(listKey, ctx.prevList);
+        if (ctx?.prevGet) {
+          qc.setQueryData(getKey, ctx.prevGet);
+        }
+        if (ctx?.prevList) {
+          qc.setQueryData(listKey, ctx.prevList);
+        }
       },
       onSuccess: (updated) => {
         setOne(qc, trpc, id, () => updated);
         upsertInList(qc, trpc, id, () => updated);
       },
-    }),
+    })
   );
 
   const resumeMutation = useMutation(
     trpc.org.workspace.automations.resume.mutationOptions({
       meta: { errorTitle: "Failed to resume" },
       onMutate: async () => {
-        const getKey =
-          trpc.org.workspace.automations.get.queryOptions({ id }).queryKey;
+        const getKey = trpc.org.workspace.automations.get.queryOptions({
+          id,
+        }).queryKey;
         const listKey =
           trpc.org.workspace.automations.list.queryOptions().queryKey;
         await Promise.all([
@@ -116,18 +120,23 @@ export function AutomationStatusChip({
         return { prevGet, prevList };
       },
       onError: (_e, _v, ctx) => {
-        const getKey =
-          trpc.org.workspace.automations.get.queryOptions({ id }).queryKey;
+        const getKey = trpc.org.workspace.automations.get.queryOptions({
+          id,
+        }).queryKey;
         const listKey =
           trpc.org.workspace.automations.list.queryOptions().queryKey;
-        if (ctx?.prevGet) qc.setQueryData(getKey, ctx.prevGet);
-        if (ctx?.prevList) qc.setQueryData(listKey, ctx.prevList);
+        if (ctx?.prevGet) {
+          qc.setQueryData(getKey, ctx.prevGet);
+        }
+        if (ctx?.prevList) {
+          qc.setQueryData(listKey, ctx.prevList);
+        }
       },
       onSuccess: (updated) => {
         setOne(qc, trpc, id, () => updated);
         upsertInList(qc, trpc, id, () => updated);
       },
-    }),
+    })
   );
 
   const isMutating = pauseMutation.isPending || resumeMutation.isPending;
@@ -163,7 +172,7 @@ export function AutomationStatusChip({
             }}
             type="button"
           >
-            <span className={!isPaused ? "font-semibold" : ""}>Active</span>
+            <span className={isPaused ? "" : "font-semibold"}>Active</span>
             {!isPaused && <Check className="size-3.5" />}
           </button>
           <button

@@ -1,6 +1,5 @@
 "use client";
 
-import type { AppRouterOutputs } from "@api/app";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { ArrowLeft } from "lucide-react";
 import type { Route } from "next";
@@ -8,21 +7,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { useTRPC } from "~/trpc/react";
+import { AutomationActions } from "./automation-actions";
 import { AutomationNameEditor } from "./automation-name-editor";
 import { AutomationPromptEditor } from "./automation-prompt-editor";
+import { AutomationRunsList } from "./automation-runs-list";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
-import { AutomationActions } from "./automation-actions";
-import { AutomationRunsList } from "./automation-runs-list";
-
-type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
 function getSlug(pathname: string) {
   return pathname.split("/").filter(Boolean)[0] ?? "workspace";
 }
 
 function formatDate(date: Date | null | undefined): string {
-  if (!date) return "—";
+  if (!date) {
+    return "—";
+  }
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: "medium",
     timeStyle: "short",
@@ -79,7 +78,13 @@ export function AutomationDetailClient({
 
           <AutomationActions automation={automation} />
 
-          <Suspense fallback={<RailSection label="Previous runs"><p className="text-muted-foreground text-sm">Loading…</p></RailSection>}>
+          <Suspense
+            fallback={
+              <RailSection label="Previous runs">
+                <p className="text-muted-foreground text-sm">Loading…</p>
+              </RailSection>
+            }
+          >
             <AutomationRunsList automationId={automationId} />
           </Suspense>
         </div>

@@ -1,4 +1,21 @@
 export {
+  AUTOMATION_ID_PREFIX,
+  AUTOMATION_RUN_ID_PREFIX,
+  type Automation,
+  type AutomationRun,
+  type AutomationRunStatus,
+  type AutomationRunTrigger,
+  type AutomationScheduleConfig,
+  type AutomationScheduleKind,
+  type AutomationStatus,
+  automationRuns,
+  automations,
+  createAutomationId,
+  createAutomationRunId,
+  type InsertAutomation,
+  type InsertAutomationRun,
+} from "./automations";
+export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,

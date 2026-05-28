@@ -4,8 +4,8 @@ import { Button } from "@repo/ui/components/ui/button";
 import { captureException } from "@sentry/nextjs";
 import type { Route } from "next";
 import Link from "next/link";
-import { useEffect } from "react";
 import { usePathname } from "next/navigation";
+import { useEffect } from "react";
 
 interface AutomationDetailErrorProps {
   error: Error & { digest?: string };
@@ -38,7 +38,7 @@ export default function AutomationDetailError({
         </div>
         <div className="flex items-center gap-3">
           <Link
-            className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+            className="text-muted-foreground text-sm underline-offset-4 hover:underline"
             href={`/${slug}/automations` as Route}
           >
             ← Back to automations

@@ -42,7 +42,7 @@ export function AutomationPromptEditor({
         upsertInList(qc, trpc, id, () => updated);
         setIsEditing(false);
       },
-    }),
+    })
   );
 
   const trimmed = value.trim();
@@ -53,7 +53,9 @@ export function AutomationPromptEditor({
     update.isPending || isEmpty || isUnchanged || isTooLong;
 
   function handleSave() {
-    if (isSaveDisabled) return;
+    if (isSaveDisabled) {
+      return;
+    }
     update.mutate({ id, prompt: trimmed });
   }
 
@@ -63,7 +65,7 @@ export function AutomationPromptEditor({
   }
 
   const displayBlock = (
-    <p className="text-muted-foreground text-sm whitespace-pre-wrap">
+    <p className="whitespace-pre-wrap text-muted-foreground text-sm">
       {automation.prompt}
     </p>
   );
@@ -77,7 +79,7 @@ export function AutomationPromptEditor({
       <div className="group">
         {displayBlock}
         <button
-          className="mt-1 text-muted-foreground text-xs hover:text-foreground transition-colors"
+          className="mt-1 text-muted-foreground text-xs transition-colors hover:text-foreground"
           onClick={() => {
             setValue(automation.prompt);
             setIsEditing(true);

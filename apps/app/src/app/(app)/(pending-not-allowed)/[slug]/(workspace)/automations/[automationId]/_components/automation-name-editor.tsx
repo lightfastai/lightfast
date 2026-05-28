@@ -13,10 +13,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
-import {
-  setOne,
-  upsertInList,
-} from "../../_components/automations-cache";
+import { setOne, upsertInList } from "../../_components/automations-cache";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
@@ -34,7 +31,9 @@ export function AutomationNameEditor({
   const trpc = useTRPC();
   const id = automation.publicId;
 
-  const getKey = trpc.org.workspace.automations.get.queryOptions({ id }).queryKey;
+  const getKey = trpc.org.workspace.automations.get.queryOptions({
+    id,
+  }).queryKey;
   const listKey = trpc.org.workspace.automations.list.queryOptions().queryKey;
 
   const updateMutation = useMutation(
@@ -52,26 +51,33 @@ export function AutomationNameEditor({
         return { prevGet, prevList };
       },
       onError: (_e, _v, ctx) => {
-        if (ctx?.prevGet) qc.setQueryData(getKey, ctx.prevGet);
-        if (ctx?.prevList) qc.setQueryData(listKey, ctx.prevList);
+        if (ctx?.prevGet) {
+          qc.setQueryData(getKey, ctx.prevGet);
+        }
+        if (ctx?.prevList) {
+          qc.setQueryData(listKey, ctx.prevList);
+        }
       },
       onSuccess: (updated) => {
         setOne(qc, trpc, id, () => updated);
         upsertInList(qc, trpc, id, () => updated);
         setOpen(false);
       },
-    }),
+    })
   );
 
   const trimmed = value.trim();
   const isTooLong = trimmed.length > AUTOMATION_NAME_MAX_LENGTH;
   const isUnchanged = trimmed === automation.name;
   const isEmpty = trimmed.length === 0;
-  const isSaveDisabled = isEmpty || isUnchanged || isTooLong || updateMutation.isPending;
+  const isSaveDisabled =
+    isEmpty || isUnchanged || isTooLong || updateMutation.isPending;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (isSaveDisabled) return;
+    if (isSaveDisabled) {
+      return;
+    }
     updateMutation.mutate({ id, name: trimmed });
   }
 
@@ -96,7 +102,7 @@ export function AutomationNameEditor({
     <Popover onOpenChange={handleOpenChange} open={open}>
       <PopoverTrigger asChild>
         <button
-          className="rounded px-1 -mx-1 text-left hover:bg-accent/50 transition-colors"
+          className="-mx-1 rounded px-1 text-left transition-colors hover:bg-accent/50"
           type="button"
         >
           {heading}
@@ -124,11 +130,7 @@ export function AutomationNameEditor({
             >
               Cancel
             </Button>
-            <Button
-              disabled={isSaveDisabled}
-              size="sm"
-              type="submit"
-            >
+            <Button disabled={isSaveDisabled} size="sm" type="submit">
               Save
             </Button>
           </div>

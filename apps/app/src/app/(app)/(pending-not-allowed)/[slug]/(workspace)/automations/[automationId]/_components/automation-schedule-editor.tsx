@@ -110,7 +110,7 @@ export function AutomationScheduleEditor({
         upsertInList(qc, trpc, id, () => updated);
         setOpen(false);
       },
-    }),
+    })
   );
 
   function handleOpenChange(next: boolean) {
@@ -141,11 +141,12 @@ export function AutomationScheduleEditor({
         parsedHours === currentConfig.intervalHours
       : "time" in currentConfig && time === currentConfig.time);
 
-  const isSaveDisabled =
-    update.isPending || isUnchanged || !fieldValid;
+  const isSaveDisabled = update.isPending || isUnchanged || !fieldValid;
 
   function handleSave() {
-    if (isSaveDisabled) return;
+    if (isSaveDisabled) {
+      return;
+    }
     const schedule =
       kind === "hourly"
         ? { kind: "hourly" as const, config: { intervalHours: parsedHours } }
@@ -155,10 +156,7 @@ export function AutomationScheduleEditor({
 
   const display = (
     <div className="space-y-1">
-      <DetailRow
-        label="Repeats"
-        value={formatAutomationSchedule(automation)}
-      />
+      <DetailRow label="Repeats" value={formatAutomationSchedule(automation)} />
       <DetailRow label="Timezone" value={automation.timezone} />
     </div>
   );
@@ -183,7 +181,9 @@ export function AutomationScheduleEditor({
             <p className="font-medium text-sm">Schedule</p>
             <ToggleGroup
               onValueChange={(v) => {
-                if (v === "hourly" || v === "daily") setKind(v);
+                if (v === "hourly" || v === "daily") {
+                  setKind(v);
+                }
               }}
               type="single"
               value={kind}

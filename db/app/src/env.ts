@@ -6,7 +6,11 @@ export const env = createEnv({
   clientPrefix: "" as const,
   client: {},
   server: {},
-  runtimeEnv: {},
+  runtimeEnv: {
+    DATABASE_HOST: process.env.DATABASE_HOST,
+    DATABASE_USERNAME: process.env.DATABASE_USERNAME,
+    DATABASE_PASSWORD: process.env.DATABASE_PASSWORD,
+  },
   skipValidation:
     !!process.env.SKIP_ENV_VALIDATION ||
     process.env.npm_lifecycle_event === "lint",

@@ -6,6 +6,7 @@
  */
 
 export * from "./activities";
+export * from "./automations";
 export * from "./org-api-key";
 export {
   inviteOrgMemberSchema,
@@ -14,3 +15,4 @@ export {
   revokeOrgInvitationSchema,
   updateOrgMemberRoleSchema,
 } from "./org-member";
+export * from "./people";

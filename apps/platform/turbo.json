@@ -18,6 +18,7 @@
         "SERVICE_JWT_SECRET",
         "INNGEST_APP_NAME",
         "INNGEST_EVENT_KEY",
+        "INNGEST_SERVE_ORIGIN",
         "INNGEST_SIGNING_KEY",
         "KV_REST_API_URL",
         "KV_REST_API_TOKEN",
