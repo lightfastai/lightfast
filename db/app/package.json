@@ -34,7 +34,7 @@
     "db:generate": "SKIP_ENV_VALIDATION=1 drizzle-kit generate --config=./src/drizzle.config.ts",
     "db:migrate": "tsx ./src/migrate.ts",
     "db:baseline": "tsx ./src/baseline.ts",
-    "db:studio": "portless run --name db.lightfast sh -c 'node ./scripts/print-portless-studio-url.mjs && pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts --host \"$HOST\" --port \"$PORT\"'",
+    "db:studio": "portless run --name db.lightfast sh -c 'pnpm with-env drizzle-kit studio --config=./src/drizzle.config.ts --host \"$HOST\" --port \"$PORT\"'",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --"

@@ -83,12 +83,12 @@ pnpm check && pnpm typecheck
 # Database
 pnpm db:generate      # NEVER write manual .sql files
 pnpm db:migrate
-pnpm db:studio        # prints the Portless-backed Drizzle Studio URL
+pnpm db:studio        # starts Drizzle Studio through Portless
 ```
 
 `pnpm dev` is the only root local-dev entrypoint. It starts app, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, and `QSTASH_URL` values use the concrete service URLs. It does not start ngrok automatically.
 
-Drizzle Studio is started on demand with `pnpm db:studio`. Its local API is routed through Portless at `https://[<wt>.]db.lightfast.localhost`; open the printed `https://local.drizzle.studio?host=...&port=443` URL.
+Drizzle Studio is started on demand with `pnpm db:studio`. Its local API is routed through Portless at `https://[<wt>.]db.lightfast.localhost`; Drizzle's printed `https://local.drizzle.studio?port=...` URL uses the Portless-injected backend port for that process.
 
 ## Next Dev Origin Handling
 

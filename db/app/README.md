@@ -34,12 +34,13 @@ pnpm db:studio  # inspect the env-configured local branch via Portless
 pnpm db:generate  # Generate migration SQL from src/schema
 pnpm db:migrate   # Apply migrations to the persistent staging branch only
 pnpm db:push      # Apply schema diff
-pnpm db:studio    # Open the printed Portless-backed Drizzle Studio URL
+pnpm db:studio    # Open Drizzle Studio through Portless
 ```
 
-`pnpm db:studio` registers the local Studio API at
-`https://[<wt>.]db.lightfast.localhost` and prints the matching
-`https://local.drizzle.studio?host=...&port=443` browser URL.
+`pnpm db:studio` registers the local Studio API through Portless at
+`https://[<wt>.]db.lightfast.localhost`. Drizzle Studio prints a
+`https://local.drizzle.studio?port=...` browser URL using that process's
+Portless-injected backend port.
 
 `pnpm db:migrate` is only for the persistent `staging` PlanetScale branch with
 explicit `DATABASE_*` migration credentials. Never run it against the `main`
