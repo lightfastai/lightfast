@@ -9,28 +9,19 @@ import { _electron, expect, type Page, test } from "@playwright/test";
 // spec.)
 // biome-ignore lint/correctness/noGlobalDirnameFilename: spec runs as CJS, see comment above.
 const desktopRoot = resolve(__dirname, "..", "..");
-const repoRoot = resolve(desktopRoot, "..", "..");
 
-// The desktop package dev script wraps Electron in scripts/with-desktop-env.mjs,
-// which derives LIGHTFAST_APP_ORIGIN from the workspace's Portless config. The
-// unpackaged main process treats that var as required (apps/desktop/src/main/
-// app-origin.ts); without it the app aborts before the primary window opens.
-// Mirror the wrapper's `--print` output here so the spec works both locally
-// and on CI without re-implementing URL resolution.
+// The desktop dev script injects APP_URL with `portless get lightfast`. Mirror
+// that lookup here so the spec works both locally and on CI.
 function loadDesktopEnv(): Record<string, string> {
-  const out = execFileSync(
-    "node",
-    [resolve(repoRoot, "scripts/with-desktop-env.mjs"), "--print"],
-    { encoding: "utf8" }
-  );
-  const env: Record<string, string> = {};
-  for (const line of out.split("\n")) {
-    const m = /^(\w+)=(.*)$/.exec(line);
-    if (m && m[1] !== undefined && m[2] !== undefined) {
-      env[m[1]] = m[2];
-    }
+  if (process.env.APP_URL) {
+    return { APP_URL: process.env.APP_URL };
   }
-  return env;
+
+  const appUrl = execFileSync("portless", ["get", "lightfast"], {
+    encoding: "utf8",
+  }).trim();
+
+  return { APP_URL: appUrl };
 }
 
 function stringEnv(source: NodeJS.ProcessEnv): Record<string, string> {
