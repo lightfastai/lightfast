@@ -29,12 +29,12 @@ See `SPEC.md` for business goals and product vision.
 │  Direct Portless service routes                                                  │
 │      app       https://[<wt>.]app.lightfast.localhost                            │
 │                @api/app · tRPC + Inngest · auth + Server Actions · default MFE   │
-│                tRPC CORS dev: portless wildcard + localhost:* (desktop, Bearer)  │
+│                tRPC CORS dev: exact env origins + desktop localhost via Bearer   │
 │      www       https://[<wt>.]www.lightfast.localhost                            │
 │                marketing + docs (fumadocs MDX) · marketing-group MFE             │
 │      platform  https://[<wt>.]platform.lightfast.localhost                       │
 │                Empty Next.js host (post-v2 reset). /api/{health,inngest,trpc}.   │
-│                tRPC CORS dev: portless wildcard                                  │
+│                tRPC CORS dev: exact env origins                                  │
 │      inngest   https://[<wt>.]inngest.lightfast.localhost                        │
 │      qstash    https://[<wt>.]qstash.lightfast.localhost                         │
 │                                                                                  │
@@ -46,10 +46,11 @@ See `SPEC.md` for business goals and product vision.
 │                                                                                  │
 │  Source of truth                                                                 │
 │  ─────────────────                                                               │
-│  Mesh:       microfrontends.json (root)                                          │
+│  Mesh:       apps/app/microfrontends.json                                        │
 │  Portless:   per-app portless.json + package.json "portless" names               │
 │  Ports:      derived per-worktree from (host, appName) — no manual pinning       │
-│  Origins:    apps/{app,platform}/src/lib/origin-allowlist.ts                     │
+│  Origins:    apps/{app,www,platform}/src/origins.ts                              │
+│  CORS:       apps/{app,platform}/src/cors.ts                                     │
 │              throws in dev if appUrl falls back to https://lightfast.ai          │
 │                                                                                  │
 │  Worktree    [<wt>.] = sanitized last branch segment in a secondary git          │
@@ -97,7 +98,7 @@ pnpm db:studio
 
 ## Next Dev Origin Handling
 
-`.localhost` routes are handled directly by Next/Portless. Do not reintroduce the legacy Next dev proxy for local dev origins. Use direct env URLs at the boundary that needs them:
+`.localhost` routes are handled directly by Next/Portless. Do not reintroduce the legacy dev-proxy wrapper for local dev origins. Use direct env URLs at the boundary that needs them:
 
 - **CORS**: `new URL(url).origin`
 - **Server Actions**: `new URL(url).host`
@@ -126,4 +127,4 @@ pnpm --filter @api/app build           # tRPC type errors (api layer stays @api/
 # DB/Redis setup: load the lightfast-local-infra skill and run the relevant runbook
 ```
 
-If `https://lightfast.localhost` won't resolve, confirm Portless is running — check the `lightfast-dev proxy` process started by `pnpm dev`.
+If `https://lightfast.localhost` won't resolve, confirm Portless is running — check the `portless proxy` process started by `pnpm dev`.
