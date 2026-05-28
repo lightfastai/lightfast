@@ -13,6 +13,10 @@
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
+    "./github": {
+      "types": "./src/github/index.ts",
+      "default": "./src/github/index.ts"
+    },
     "./inngest": {
       "types": "./src/inngest/index.ts",
       "default": "./src/inngest/index.ts"
