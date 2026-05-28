@@ -1,22 +1,9 @@
-import {
-  getPortlessProxyOrigins,
-  withPortlessProxy,
-} from "@lightfastai/dev-proxy/next";
 import { withBetterStack } from "@logtail/next";
 import { withSentryConfig } from "@sentry/nextjs";
 import { baseConfig, sentryOptions } from "@vendor/next/config";
 import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
-
-const portlessDevOrigins = [
-  "lightfast",
-  "app.lightfast",
-  "www.lightfast",
-  "platform.lightfast",
-].flatMap((name) =>
-  getPortlessProxyOrigins({ name, allowMissingConfig: true })
-);
 
 const platformConfig: NextConfig = merge({}, baseConfig, {
   transpilePackages: [
@@ -33,10 +20,7 @@ const platformConfig: NextConfig = merge({}, baseConfig, {
   },
 } satisfies NextConfig);
 
-export default withPortlessProxy(
-  withSentryConfig(
-    withBetterStack(withVercelToolbar()(platformConfig)),
-    sentryOptions
-  ),
-  { origins: portlessDevOrigins }
+export default withSentryConfig(
+  withBetterStack(withVercelToolbar()(platformConfig)),
+  sentryOptions
 );

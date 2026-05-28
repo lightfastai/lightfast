@@ -1,7 +1,3 @@
-import {
-  getPortlessProxyOrigins,
-  withPortlessProxy,
-} from "@lightfastai/dev-proxy/next";
 import { withBetterStack } from "@logtail/next";
 import withBundleAnalyzer from "@next/bundle-analyzer";
 import { withSentryConfig } from "@sentry/nextjs";
@@ -13,15 +9,6 @@ import merge from "lodash.merge";
 import type { NextConfig } from "next";
 
 import { env } from "~/env";
-
-const portlessDevOrigins = [
-  "lightfast",
-  "app.lightfast",
-  "www.lightfast",
-  "platform.lightfast",
-].flatMap((name) =>
-  getPortlessProxyOrigins({ name, allowMissingConfig: true })
-);
 
 const wwwConfig: NextConfig = merge({}, baseConfig, {
   images: {
@@ -107,9 +94,6 @@ const withMDX = createMDX({
   configPath: "source.config.ts",
 });
 
-export default withPortlessProxy(
-  withMicrofrontends(withMDX(config), {
-    debug: process.env.NODE_ENV === "development",
-  }),
-  { origins: portlessDevOrigins }
-);
+export default withMicrofrontends(withMDX(config), {
+  debug: process.env.NODE_ENV === "development",
+});
