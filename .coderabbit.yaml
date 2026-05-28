@@ -107,8 +107,6 @@ reviews:
     - "!.claude/**"
     - "!.agents/**"
     - "!.codex/**"
-    - "!.devcontainer/**"
-    - "!.dual/**"
     - "!.entire/**"
     - "!.mcp/**"
     - "!.mcp.json"
@@ -117,7 +115,6 @@ reviews:
     - "!.env.mcp.example"
     - "!.github/ISSUE_TEMPLATE/**"
     - "!.vscode/**"
-    - "!sub/**"
     - "!skills-lock.json"
 
   # ── Path-specific review instructions ──
