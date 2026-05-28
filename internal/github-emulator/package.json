@@ -1,0 +1,26 @@
+{
+  "name": "@repo/github-emulator",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "dev": "tsx ./src/start.ts",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@emulators/core": "0.6.0",
+    "@emulators/github": "0.6.0",
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "@types/node": "catalog:",
+    "emulate": "0.6.0",
+    "jose": "catalog:",
+    "tsx": "^4.21.0",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

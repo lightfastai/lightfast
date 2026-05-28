@@ -1,0 +1,23 @@
+diff --git a/dist/index.js b/dist/index.js
+index 5ea4233e7ea76ff966bc9ae8b68351e5ee21a7fb..aea216bdd9f4b1de13b29ef61a318b644177b7dc 100644
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -792,7 +792,8 @@ async function parseJsonBody(c) {
+ }
+ 
+ // src/middleware/auth.ts
+-import { jwtVerify, importPKCS8 } from "jose";
++import { createPublicKey } from "node:crypto";
++import { jwtVerify } from "jose";
+ 
+ // src/debug.ts
+ var isDebug = typeof process !== "undefined" && (process.env.DEBUG === "1" || process.env.DEBUG === "true" || process.env.EMULATE_DEBUG === "1");
+@@ -830,7 +831,7 @@ function authMiddleware(tokens, appKeyResolver, fallbackUser) {
+           if (typeof appId === "number" && !isNaN(appId)) {
+             const appInfo = appKeyResolver(appId);
+             if (appInfo) {
+-              const key = await importPKCS8(appInfo.privateKey, "RS256");
++              const key = createPublicKey(appInfo.privateKey);
+               await jwtVerify(token, key, { algorithms: ["RS256"] });
+               c.set("authApp", {
+                 appId,
