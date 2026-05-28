@@ -13,7 +13,11 @@ const verifyGitHubEmulatorInstallationMock = vi.fn();
 const assertOrgAdminMock = vi.fn();
 
 class TestGitHubSetupAdminAccessError extends Error {
-  constructor(message = "Organization administrator access required.") {
+  constructor(
+    readonly code: "PERMISSION_REQUIRED" | "UNAUTHENTICATED" =
+      "PERMISSION_REQUIRED",
+    message = "Organization administrator access required."
+  ) {
     super(message);
     this.name = "GitHubSetupAdminAccessError";
   }
@@ -274,6 +278,25 @@ describe("github setup flow", () => {
     expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
   });
 
+  it("redirects unauthenticated install callbacks to sign-in without consuming the attempt", async () => {
+    mockInstallAttempt();
+    assertOrgAdminMock.mockRejectedValue(
+      new TestGitHubSetupAdminAccessError("UNAUTHENTICATED")
+    );
+
+    await expect(
+      completeGitHubInstallationSetup({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=install_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fsetup%3Finstallation_id%3D1001%26state%3Dinstall_state_123",
+    });
+    expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
+  });
+
   it("maps installation id mismatch to installation_not_verified", async () => {
     mockInstallAttempt();
 
@@ -287,6 +310,7 @@ describe("github setup flow", () => {
       redirectUrl:
         "https://app.lightfast.localhost/acme/tasks/bind?github_error=installation_not_verified",
     });
+    expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
   });
 
   it("maps OAuth denial with a consumable attempt to github_authorization_denied", async () => {
@@ -324,6 +348,25 @@ describe("github setup flow", () => {
     expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
   });
 
+  it("redirects unauthenticated denied OAuth callbacks to sign-in without consuming the attempt", async () => {
+    mockOAuthAttempt();
+    assertOrgAdminMock.mockRejectedValue(
+      new TestGitHubSetupAdminAccessError("UNAUTHENTICATED")
+    );
+
+    await expect(
+      completeGitHubOAuthVerification({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Foauth%2Fcallback%3Ferror%3Daccess_denied%26state%3Doauth_state_123",
+    });
+    expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
+  });
+
   it("does not consume OAuth attempts when admin verification fails", async () => {
     mockOAuthAttempt();
     assertOrgAdminMock.mockRejectedValue(new TestGitHubSetupAdminAccessError());
@@ -340,6 +383,25 @@ describe("github setup flow", () => {
     });
     expect(lookupGitHubOAuthAttemptMock).toHaveBeenCalledWith({
       state: "oauth_state_123",
+    });
+    expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
+  });
+
+  it("redirects unauthenticated OAuth callbacks to sign-in without consuming the attempt", async () => {
+    mockOAuthAttempt();
+    assertOrgAdminMock.mockRejectedValue(
+      new TestGitHubSetupAdminAccessError("UNAUTHENTICATED")
+    );
+
+    await expect(
+      completeGitHubOAuthVerification({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Foauth%2Fcallback%3Fcode%3Dcode_123%26state%3Doauth_state_123",
     });
     expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
   });

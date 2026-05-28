@@ -47,6 +47,7 @@ describe("github bind attempts", () => {
       orgSlug: "acme",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock.mockResolvedValueOnce(record);
     redisGetdelMock.mockResolvedValueOnce(record);
 
     await expect(
@@ -94,7 +95,7 @@ describe("github bind attempts", () => {
     expect(redisGetdelMock).not.toHaveBeenCalled();
   });
 
-  it("rejects tampered OAuth state", async () => {
+  it("rejects tampered OAuth state without deleting the stored attempt", async () => {
     const issued = await issueGitHubOAuthAttempt({
       clerkOrgId: "org_1",
       codeVerifier: "verifier",
@@ -108,17 +109,44 @@ describe("github bind attempts", () => {
       providerInstallationId: "1001",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
-    redisGetdelMock.mockResolvedValueOnce(record);
+    redisGetMock.mockResolvedValueOnce(record);
 
     await expect(
       consumeGitHubOAuthAttempt({
         state: Buffer.from(
           JSON.stringify({
             attemptId: issued.attemptId,
-            nonce: "tampered_nonce",
+            nonce: "tampered_nonce_1234567890",
           })
         ).toString("base64url"),
       })
+    ).resolves.toBeNull();
+
+    expect(redisGetMock).toHaveBeenCalledWith(
+      "github-bind-oauth-attempt:attempt_123456789012345678901234"
+    );
+    expect(redisGetdelMock).not.toHaveBeenCalled();
+  });
+
+  it("returns null when a matching attempt is already consumed by another callback", async () => {
+    const issued = await issueGitHubOAuthAttempt({
+      clerkOrgId: "org_1",
+      codeVerifier: "verifier",
+      emulator: {
+        emulatorOrigin: "http://127.0.0.1:4567",
+        installationId: "1001",
+        providerAccountLogin: "lightfast-emulated",
+      },
+      lightfastUserId: "user_1",
+      orgSlug: "acme",
+      providerInstallationId: "1001",
+    });
+    const record = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock.mockResolvedValueOnce(record);
+    redisGetdelMock.mockResolvedValueOnce(null);
+
+    await expect(
+      consumeGitHubOAuthAttempt({ state: issued.state })
     ).resolves.toBeNull();
   });
 

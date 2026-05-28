@@ -5,6 +5,10 @@ const mutateAsyncMock = vi.fn();
 const reloadMock = vi.fn();
 const replaceMock = vi.fn();
 const syncMutationOptionsMock = vi.fn((options: unknown) => options);
+let sessionState: {
+  isLoaded: boolean;
+  session: { reload: typeof reloadMock } | null;
+};
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
@@ -28,7 +32,7 @@ vi.mock("@tanstack/react-query", () => ({
 }));
 
 vi.mock("@vendor/clerk", () => ({
-  useSession: () => ({ session: { reload: reloadMock } }),
+  useSession: () => sessionState,
 }));
 
 vi.mock("next/navigation", () => ({
@@ -44,6 +48,7 @@ beforeEach(() => {
   reloadMock.mockReset();
   replaceMock.mockReset();
   syncMutationOptionsMock.mockClear();
+  sessionState = { isLoaded: true, session: { reload: reloadMock } };
 });
 
 describe("GitHubBindCompleteClient", () => {
@@ -79,6 +84,26 @@ describe("GitHubBindCompleteClient", () => {
 
     await waitFor(() => {
       expect(mutateAsyncMock).toHaveBeenCalledTimes(2);
+      expect(reloadMock).toHaveBeenCalledTimes(1);
+      expect(replaceMock).toHaveBeenCalledWith("/acme");
+    });
+  });
+
+  it("waits for the Clerk session to load before syncing and redirecting", async () => {
+    sessionState = { isLoaded: false, session: null };
+    mutateAsyncMock.mockResolvedValue({ bindingStatus: "bound" });
+    reloadMock.mockResolvedValue(undefined);
+
+    const { rerender } = render(<GitHubBindCompleteClient orgSlug="acme" />);
+
+    expect(mutateAsyncMock).not.toHaveBeenCalled();
+    expect(replaceMock).not.toHaveBeenCalled();
+
+    sessionState = { isLoaded: true, session: { reload: reloadMock } };
+    rerender(<GitHubBindCompleteClient orgSlug="acme" />);
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
       expect(reloadMock).toHaveBeenCalledTimes(1);
       expect(replaceMock).toHaveBeenCalledWith("/acme");
     });

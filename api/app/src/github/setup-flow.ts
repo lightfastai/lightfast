@@ -102,6 +102,26 @@ function mapError(error: unknown): GitHubBindErrorCode {
   return "github_transient_error";
 }
 
+function isUnauthenticatedSetupError(error: unknown) {
+  return (
+    error instanceof GitHubSetupAdminAccessError &&
+    error.code === "UNAUTHENTICATED"
+  );
+}
+
+function signInRedirect(input: {
+  appOrigin: string;
+  requestUrl: string;
+}): GitHubRedirectResult {
+  const callbackUrl = new URL(input.requestUrl);
+  const signInUrl = new URL("/sign-in", input.appOrigin);
+  signInUrl.searchParams.set(
+    "redirect_url",
+    `${callbackUrl.pathname}${callbackUrl.search}`
+  );
+  return { redirectUrl: signInUrl.toString() };
+}
+
 export async function completeGitHubInstallationSetup(input: {
   appOrigin: string;
   requestUrl: string;
@@ -126,9 +146,20 @@ export async function completeGitHubInstallationSetup(input: {
       expectedUserId: pendingAttempt.lightfastUserId,
     });
   } catch (error) {
+    if (isUnauthenticatedSetupError(error)) {
+      return signInRedirect(input);
+    }
     return errorRedirect({
       appOrigin: input.appOrigin,
       code: mapError(error),
+      orgSlug: pendingAttempt.orgSlug,
+    });
+  }
+
+  if (installationId !== pendingAttempt.emulator.installationId) {
+    return errorRedirect({
+      appOrigin: input.appOrigin,
+      code: "installation_not_verified",
       orgSlug: pendingAttempt.orgSlug,
     });
   }
@@ -139,14 +170,6 @@ export async function completeGitHubInstallationSetup(input: {
   }
 
   try {
-    if (installationId !== attempt.emulator.installationId) {
-      return errorRedirect({
-        appOrigin: input.appOrigin,
-        code: "installation_not_verified",
-        orgSlug: attempt.orgSlug,
-      });
-    }
-
     const config = getGitHubEmulatorConfig({ appOrigin: input.appOrigin });
     const pkce = createGitHubPkcePair();
     const oauthAttempt = await issueGitHubOAuthAttempt({
@@ -208,6 +231,9 @@ export async function completeGitHubOAuthVerification(input: {
         expectedUserId: pendingAttempt.lightfastUserId,
       });
     } catch (error) {
+      if (isUnauthenticatedSetupError(error)) {
+        return signInRedirect(input);
+      }
       return errorRedirect({
         appOrigin: input.appOrigin,
         code: mapError(error),
@@ -238,6 +264,9 @@ export async function completeGitHubOAuthVerification(input: {
       expectedUserId: pendingAttempt.lightfastUserId,
     });
   } catch (error) {
+    if (isUnauthenticatedSetupError(error)) {
+      return signInRedirect(input);
+    }
     return errorRedirect({
       appOrigin: input.appOrigin,
       code: mapError(error),

@@ -18,7 +18,7 @@ export function GitHubBindCompleteClient({
 }: GitHubBindCompleteClientProps) {
   const trpc = useTRPC();
   const router = useRouter();
-  const { session } = useSession();
+  const { isLoaded: isSessionLoaded, session } = useSession();
   const [failed, setFailed] = useState(false);
   const hasStartedRef = useRef(false);
 
@@ -32,6 +32,11 @@ export function GitHubBindCompleteClient({
   const finish = useCallback(async () => {
     setFailed(false);
 
+    if (!session) {
+      setFailed(true);
+      return;
+    }
+
     try {
       const result = await mutateAsync();
       if (result.bindingStatus !== "bound") {
@@ -39,7 +44,7 @@ export function GitHubBindCompleteClient({
         return;
       }
 
-      await session?.reload();
+      await session.reload();
       router.replace(`/${orgSlug}` as Route);
     } catch {
       setFailed(true);
@@ -47,13 +52,18 @@ export function GitHubBindCompleteClient({
   }, [mutateAsync, orgSlug, router, session]);
 
   useEffect(() => {
-    if (hasStartedRef.current) {
+    if (!isSessionLoaded || hasStartedRef.current) {
+      return;
+    }
+
+    if (!session) {
+      setFailed(true);
       return;
     }
 
     hasStartedRef.current = true;
     void finish();
-  }, [finish]);
+  }, [finish, isSessionLoaded, session]);
 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">

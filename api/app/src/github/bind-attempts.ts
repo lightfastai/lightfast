@@ -50,24 +50,54 @@ function hashState(state: string): string {
   return createHash("sha256").update(state).digest("hex");
 }
 
-async function readGitHubAttempt<T extends { stateHash: string }>(input: {
-  consume: boolean;
-  prefix: string;
-  state: string;
-}): Promise<T | null> {
+function getAttemptKey(input: { prefix: string; state: string }) {
   const envelope = decodeState(input.state);
   if (!envelope) {
     return null;
   }
 
-  const key = `${input.prefix}${envelope.attemptId}`;
-  const record = input.consume
-    ? await redis.getdel<T>(key)
-    : await redis.get<T>(key);
-  if (!record || record.stateHash !== hashState(input.state)) {
+  return `${input.prefix}${envelope.attemptId}`;
+}
+
+function isMatchingAttempt<T extends { stateHash: string }>(
+  record: T | null,
+  state: string
+) {
+  if (!record || record.stateHash !== hashState(state)) {
+    return false;
+  }
+  return true;
+}
+
+async function lookupGitHubAttempt<T extends { stateHash: string }>(input: {
+  prefix: string;
+  state: string;
+}): Promise<T | null> {
+  const key = getAttemptKey(input);
+  if (!key) {
     return null;
   }
-  return record;
+
+  const record = await redis.get<T>(key);
+  return isMatchingAttempt(record, input.state) ? record : null;
+}
+
+async function consumeGitHubAttempt<T extends { stateHash: string }>(input: {
+  prefix: string;
+  state: string;
+}): Promise<T | null> {
+  const key = getAttemptKey(input);
+  if (!key) {
+    return null;
+  }
+
+  const pendingRecord = await redis.get<T>(key);
+  if (!isMatchingAttempt(pendingRecord, input.state)) {
+    return null;
+  }
+
+  const consumedRecord = await redis.getdel<T>(key);
+  return isMatchingAttempt(consumedRecord, input.state) ? consumedRecord : null;
 }
 
 export async function issueGitHubInstallAttempt(input: {
@@ -92,8 +122,7 @@ export async function issueGitHubInstallAttempt(input: {
 export async function consumeGitHubInstallAttempt(input: {
   state: string;
 }): Promise<GitHubBindInstallAttemptRecord | null> {
-  return readGitHubAttempt<GitHubBindInstallAttemptRecord>({
-    consume: true,
+  return consumeGitHubAttempt<GitHubBindInstallAttemptRecord>({
     prefix: INSTALL_PREFIX,
     state: input.state,
   });
@@ -102,8 +131,7 @@ export async function consumeGitHubInstallAttempt(input: {
 export async function lookupGitHubInstallAttempt(input: {
   state: string;
 }): Promise<GitHubBindInstallAttemptRecord | null> {
-  return readGitHubAttempt<GitHubBindInstallAttemptRecord>({
-    consume: false,
+  return lookupGitHubAttempt<GitHubBindInstallAttemptRecord>({
     prefix: INSTALL_PREFIX,
     state: input.state,
   });
@@ -135,8 +163,7 @@ export async function issueGitHubOAuthAttempt(input: {
 export async function consumeGitHubOAuthAttempt(input: {
   state: string;
 }): Promise<GitHubBindOAuthAttemptRecord | null> {
-  return readGitHubAttempt<GitHubBindOAuthAttemptRecord>({
-    consume: true,
+  return consumeGitHubAttempt<GitHubBindOAuthAttemptRecord>({
     prefix: OAUTH_PREFIX,
     state: input.state,
   });
@@ -145,8 +172,7 @@ export async function consumeGitHubOAuthAttempt(input: {
 export async function lookupGitHubOAuthAttempt(input: {
   state: string;
 }): Promise<GitHubBindOAuthAttemptRecord | null> {
-  return readGitHubAttempt<GitHubBindOAuthAttemptRecord>({
-    consume: false,
+  return lookupGitHubAttempt<GitHubBindOAuthAttemptRecord>({
     prefix: OAUTH_PREFIX,
     state: input.state,
   });

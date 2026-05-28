@@ -103,4 +103,14 @@ describe("BindGithubCard", () => {
     expect(reloadMock).not.toHaveBeenCalled();
     expect(replaceMock).not.toHaveBeenCalled();
   });
+
+  it("surfaces GitHub callback errors", () => {
+    render(
+      <BindGithubCard githubError="github_authorization_denied" orgSlug="acme" />
+    );
+
+    expect(screen.getByRole("alert")).toHaveTextContent(
+      "GitHub authorization was cancelled. Start the connection again when you are ready."
+    );
+  });
 });

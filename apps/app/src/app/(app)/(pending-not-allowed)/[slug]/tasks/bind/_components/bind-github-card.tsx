@@ -1,5 +1,6 @@
 "use client";
 
+import type { GitHubBindErrorCode } from "@repo/github-app-contract";
 import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
@@ -7,13 +8,34 @@ import { ArrowRight, Loader2 } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
 
 interface BindGithubCardProps {
+  githubError?: GitHubBindErrorCode;
   orgSlug: string;
 }
+
+const GITHUB_ERROR_MESSAGES: Record<GitHubBindErrorCode, string> = {
+  expired_state: "The GitHub connection expired. Start the connection again.",
+  github_authorization_denied:
+    "GitHub authorization was cancelled. Start the connection again when you are ready.",
+  github_transient_error:
+    "GitHub could not finish the connection. Try again in a moment.",
+  installation_already_bound:
+    "That GitHub installation is already connected to another Lightfast team.",
+  installation_not_verified:
+    "Lightfast could not verify that GitHub installation.",
+  org_already_bound:
+    "This Lightfast team is already connected to a GitHub organization.",
+  permission_required:
+    "You need to be a Lightfast team admin to connect GitHub.",
+  personal_account_not_supported:
+    "Connect a GitHub organization instead of a personal account.",
+  saml_session_required:
+    "Refresh your GitHub organization session, then try again.",
+};
 
 /**
  * v1 setup surface — starts the GitHub App installation flow for this org.
  */
-export function BindGithubCard({ orgSlug }: BindGithubCardProps) {
+export function BindGithubCard({ githubError, orgSlug }: BindGithubCardProps) {
   const trpc = useTRPC();
 
   const bindMutation = useMutation(
@@ -52,6 +74,15 @@ export function BindGithubCard({ orgSlug }: BindGithubCardProps) {
               Bind one GitHub organization to this Lightfast team so the
               workspace has an org-level source-control connection.
             </p>
+
+            {githubError ? (
+              <div
+                className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-destructive text-sm"
+                role="alert"
+              >
+                {GITHUB_ERROR_MESSAGES[githubError]}
+              </div>
+            ) : null}
 
             <div className="rounded-lg border border-border bg-muted/30 p-4">
               <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">

@@ -1,7 +1,11 @@
 import { auth, clerkClient } from "@vendor/clerk/server";
 
 export class GitHubSetupAdminAccessError extends Error {
-  constructor(message = "Organization administrator access required.") {
+  constructor(
+    readonly code: "PERMISSION_REQUIRED" | "UNAUTHENTICATED" =
+      "PERMISSION_REQUIRED",
+    message = "Organization administrator access required."
+  ) {
     super(message);
     this.name = "GitHubSetupAdminAccessError";
   }
@@ -13,7 +17,11 @@ export async function assertCurrentUserIsOrgAdmin(input: {
 }): Promise<{ userId: string }> {
   const session = await auth();
   const userId = session.userId;
-  if (!userId || (input.expectedUserId && input.expectedUserId !== userId)) {
+  if (!userId) {
+    throw new GitHubSetupAdminAccessError("UNAUTHENTICATED");
+  }
+
+  if (input.expectedUserId && input.expectedUserId !== userId) {
     throw new GitHubSetupAdminAccessError();
   }
 

@@ -1,3 +1,4 @@
+import { githubBindErrorCodeSchema } from "@repo/github-app-contract";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 import { getQueryClient, trpc } from "~/trpc/server";
@@ -5,6 +6,7 @@ import { BindGithubCard } from "./_components/bind-github-card";
 
 interface BindTaskPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ github_error?: string | string[] }>;
 }
 
 /**
@@ -16,15 +18,28 @@ interface BindTaskPageProps {
  * be refreshed before the workspace gate runs again. Membership/slug access is
  * already enforced by the parent `[slug]/layout.tsx`.
  */
-export default async function BindTaskPage({ params }: BindTaskPageProps) {
+export default async function BindTaskPage({
+  params,
+  searchParams,
+}: BindTaskPageProps) {
   const { slug } = await params;
+  const { github_error: githubErrorParam } = await searchParams;
   const gate = await getQueryClient().fetchQuery(
     trpc.viewer.organization.getBySlug.queryOptions({ slug })
   );
 
-  if (gate.bindingStatus === "bound") {
+  const parsedError = githubBindErrorCodeSchema.safeParse(
+    Array.isArray(githubErrorParam) ? githubErrorParam[0] : githubErrorParam
+  );
+
+  if (gate.bindingStatus === "bound" && !parsedError.success) {
     redirect(`/${slug}/tasks/bind/github/complete` as Route);
   }
 
-  return <BindGithubCard orgSlug={slug} />;
+  return (
+    <BindGithubCard
+      githubError={parsedError.success ? parsedError.data : undefined}
+      orgSlug={slug}
+    />
+  );
 }
