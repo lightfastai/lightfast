@@ -686,7 +686,7 @@ The Phase 5 Human Review items each carry a `— TODO: automate via …` suffix.
 ## Migration Notes
 
 - The dev-cli/dev-proxy changes are backwards-compatible at the public API level (`startDevProxyTurboCommand`, `waitForRuntime`, etc. keep the same signatures). The behavioral change is "shutdown waits longer and is more thorough" — no consumer should need to update call sites.
-- The `scripts/dev-services.mjs` change in Phase 5 changes the spawning shape (`detached: true`). Anything that wraps `node scripts/dev-services.mjs ...` externally (CI, devcontainer scripts) keeps working because Node still has the controlling terminal and stdio is inherited.
+- The `scripts/dev-services.mjs` change in Phase 5 changes the spawning shape (`detached: true`). Anything that wraps `node scripts/dev-services.mjs ...` externally keeps working because Node still has the controlling terminal and stdio is inherited.
 - Windows note: the POSIX-only path is gated on `process.platform !== "win32"`; the win32 branch keeps the existing `child.kill(signal)` behavior. We do not ship a Windows fix here.
 
 ## References
