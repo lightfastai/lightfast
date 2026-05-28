@@ -93,13 +93,9 @@ reviews:
     - "!**/CHANGELOG.md"
     - "!README.md"
     - "!**/README.md"
-    - "!SECURITY.md"
-    - "!**/SECURITY.md"
     - "!SPEC.md"
     - "!**/SPEC.md"
     - "!**/ENCRYPTION.md"
-    - "!LICENSE"
-    - "!**/LICENSE"
     - "!.changeset/*.md"
     # Non-code directories
     - "!thoughts/**"
