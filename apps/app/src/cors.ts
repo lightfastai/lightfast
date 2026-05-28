@@ -34,7 +34,7 @@ const localDevOrigins = new Set(
   })
 );
 
-export function isAllowedOrigin(origin: string | null): origin is string {
+export function isAllowedWebOrigin(origin: string | null): origin is string {
   if (!origin) {
     return false;
   }

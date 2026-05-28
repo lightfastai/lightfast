@@ -25,7 +25,7 @@ afterEach(() => {
   vi.doUnmock("~/env");
 });
 
-describe("isAllowedOrigin (dev)", () => {
+describe("isAllowedWebOrigin (dev)", () => {
   beforeEach(() => {
     setupMocks({
       appUrl: "https://app.lightfast.localhost/",
@@ -36,45 +36,45 @@ describe("isAllowedOrigin (dev)", () => {
   });
 
   it("admits the canonical app origin (matches even though appUrl has trailing slash)", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://app.lightfast.localhost")).toBe(true);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://app.lightfast.localhost")).toBe(true);
   });
 
   it("admits the exact local www origin from wwwUrl", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://www.lightfast.localhost")).toBe(true);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://www.lightfast.localhost")).toBe(true);
   });
 
   it("admits the exact local platform origin from platformUrl", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://platform.lightfast.localhost")).toBe(true);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://platform.lightfast.localhost")).toBe(true);
   });
 
   it("rejects a worktree-prefixed app origin that is not an exact env URL", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://feature.app.lightfast.localhost")).toBe(
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://feature.app.lightfast.localhost")).toBe(
       false
     );
   });
 
   it("rejects an unrelated origin", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://evil.com")).toBe(false);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://evil.com")).toBe(false);
   });
 
   it("rejects null/empty", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin(null)).toBe(false);
-    expect(isAllowedOrigin("")).toBe(false);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin(null)).toBe(false);
+    expect(isAllowedWebOrigin("")).toBe(false);
   });
 
   it("rejects malformed origin strings", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("not-a-url")).toBe(false);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("not-a-url")).toBe(false);
   });
 });
 
-describe("isAllowedOrigin (production)", () => {
+describe("isAllowedWebOrigin (production)", () => {
   beforeEach(() => {
     setupMocks({
       appUrl: "https://lightfast.ai",
@@ -83,14 +83,14 @@ describe("isAllowedOrigin (production)", () => {
   });
 
   it("admits only the canonical appUrl in non-dev", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://lightfast.ai")).toBe(true);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://lightfast.ai")).toBe(true);
   });
 
   it("rejects portless wildcard origins in non-dev", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://app.lightfast.localhost")).toBe(false);
-    expect(isAllowedOrigin("https://feature.app.lightfast.localhost")).toBe(
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://app.lightfast.localhost")).toBe(false);
+    expect(isAllowedWebOrigin("https://feature.app.lightfast.localhost")).toBe(
       false
     );
   });
