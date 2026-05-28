@@ -48,6 +48,9 @@ const securityHeaders = securityMiddleware({
 const isPublicRoute = createRouteMatcher([
   "/early-access(.*)",
   "/api/oauth/(.*)",
+  "/api/github/setup",
+  "/api/github/oauth/callback",
+  "/api/dev/github/install",
   "/api/trpc/(.*)",
   "/api/health(.*)",
   "/docs(.*)",

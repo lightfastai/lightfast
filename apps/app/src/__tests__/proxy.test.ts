@@ -329,6 +329,29 @@ describe("proxy pending-session route handling", () => {
     expect(authMock).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "/api/github/setup",
+    "/api/github/oauth/callback",
+    "/api/dev/github/install",
+  ])(
+    "runs Clerk middleware but does not enforce signed-in routing for %s",
+    async (pathname) => {
+      authMock.mockResolvedValue({
+        orgId: null,
+        orgSlug: null,
+        sessionClaims: null,
+        sessionStatus: "pending",
+        userId: null,
+      });
+
+      const { response } = await invoke(pathname);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("location")).toBeNull();
+      expect(authMock).not.toHaveBeenCalled();
+    }
+  );
+
   it("does not run microfrontend routing for app-owned API routes", async () => {
     const { response } = await invoke("/api/v1/system/health");
 
