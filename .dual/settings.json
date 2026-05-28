@@ -1,6 +1,0 @@
-{
-  "devcontainer": ".devcontainer/devcontainer.json",
-  "extra_commands": [],
-  "anonymous_volumes": ["node_modules"],
-  "shared": ["apps/app/.vercel", "apps/platform/.vercel", "apps/www/.vercel"]
-}
