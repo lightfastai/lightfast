@@ -38,12 +38,6 @@ This runs the raw server process. The root `pnpm dev` flow is responsible for
 wrapping it in `portless run --name github.lightfast`, matching the Inngest and
 QStash dev service pattern.
 
-The emulator is routed at:
-
-```text
-https://github.lightfast.localhost
-```
-
 The app and API receive `GITHUB_APP_ENDPOINT_ORIGIN` from
 `pnpm --filter @repo/github-emulator env:sh`. Local setup starts at:
 
