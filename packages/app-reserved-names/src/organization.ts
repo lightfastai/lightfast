@@ -10,7 +10,7 @@ import organizationNames from "../data/organization-names.json" with {
 };
 
 /**
- * All reserved organization names (sorted alphabetically)
+ * All reserved organization names.
  */
 export const all: readonly string[] = organizationNames;
 

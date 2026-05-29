@@ -1,5 +1,5 @@
 /**
- * Main export for organization reserved names
+ * Main export for reserved names
  */
 
 import organization from "./organization";
