@@ -1,4 +1,5 @@
-name: Database Migration
+name: db-migrate
+run-name: db-migrate / ${{ github.actor }} / ${{ github.run_number }}
 
 on:
   workflow_dispatch:
@@ -12,9 +13,12 @@ concurrency:
   group: db-migration
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
-  migrate:
-    name: Run PlanetScale MySQL Migrations
+  db-migrate-planetscale:
+    name: db-migrate-planetscale
     runs-on: ubuntu-latest
     if: github.event.inputs.confirm == 'migrate'
     timeout-minutes: 20
@@ -26,32 +30,32 @@ jobs:
       PSCALE_BRANCH_NAME: staging
 
     steps:
-      - name: Checkout code
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: "pnpm"
 
-      - name: Setup pscale
+      - name: setup-pscale
         uses: planetscale/setup-pscale-action@v1
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Assert staging branch exists
+      - name: assert-staging-branch-exists
         run: |
           if ! pscale branch show "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" >/dev/null; then
             echo "staging branch missing - run the one-time bootstrap documented in db/CLAUDE.md" >&2
             exit 1
           fi
 
-      - name: Create branch password
+      - name: create-branch-password
         run: |
           response=$(pscale password create "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" "github-actions-${GITHUB_RUN_ID}" -f json --org "$PLANETSCALE_ORG_NAME")
           password_id=$(echo "$response" | jq -r '.id')
@@ -66,7 +70,7 @@ jobs:
           echo "DATABASE_PASSWORD=$password" >> "$GITHUB_ENV"
           echo "DATABASE_NAME=$PLANETSCALE_DATABASE_NAME" >> "$GITHUB_ENV"
 
-      - name: Show pending migrations
+      - name: show-pending-migrations
         working-directory: db/app
         run: |
           echo "Pending migration files:"
@@ -75,11 +79,11 @@ jobs:
           echo "Migration journal:"
           cat src/migrations/meta/_journal.json
 
-      - name: Run migrations on branch
+      - name: run-migrations-on-branch
         working-directory: db/app
         run: pnpm db:migrate
 
-      - name: Open deploy request
+      - name: open-deploy-request
         run: |
           set +e
           existing=$(pscale deploy-request show "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" --org "$PLANETSCALE_ORG_NAME" -f json 2>/dev/null)
@@ -115,7 +119,7 @@ jobs:
           echo "HAS_SCHEMA_CHANGES=true" >> "$GITHUB_ENV"
           echo "Opened deploy request $deploy_request_number."
 
-      - name: Check schema lint
+      - name: check-schema-lint
         if: env.HAS_SCHEMA_CHANGES == 'true'
         run: |
           deploy_request=$(pscale deploy-request show "$PLANETSCALE_DATABASE_NAME" "$DEPLOY_REQUEST_NUMBER" --org "$PLANETSCALE_ORG_NAME" -f json)
@@ -139,17 +143,17 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy schema changes
+      - name: deploy-schema-changes
         if: env.HAS_SCHEMA_CHANGES == 'true'
         run: |
           pscale deploy-request deploy "$PLANETSCALE_DATABASE_NAME" "$DEPLOY_REQUEST_NUMBER" --org "$PLANETSCALE_ORG_NAME" --wait
 
-      - name: Delete branch password
+      - name: delete-branch-password
         if: always() && env.PSCALE_PASSWORD_ID != ''
         run: |
           pscale password delete "$PLANETSCALE_DATABASE_NAME" "$PSCALE_BRANCH_NAME" "$PSCALE_PASSWORD_ID" --force --org "$PLANETSCALE_ORG_NAME"
 
-      - name: Summary
+      - name: summarize-migration
         run: |
           if [ "$HAS_SCHEMA_CHANGES" = "true" ]; then
             echo "Database migrations deployed through PlanetScale deploy request ${DEPLOY_REQUEST_NUMBER}."
@@ -157,12 +161,13 @@ jobs:
             echo "Database migrations applied to staging; no schema deploy was needed."
           fi
 
-  no-confirmation:
-    name: Migration Not Confirmed
+  db-migrate-confirmation-required:
+    name: db-migrate-confirmation-required
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     if: github.event.inputs.confirm != 'migrate'
     steps:
-      - name: Show error
+      - name: show-confirmation-error
         run: |
           echo "Migration was not confirmed."
           echo "You must type 'migrate' in the confirmation input."

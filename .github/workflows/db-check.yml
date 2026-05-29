@@ -1,34 +1,44 @@
-name: DB Schema Drift
+name: db-schema-drift
+run-name: db-schema-drift / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
+# Runs only when DB app schema or migration sources change, then checks that
+# generated migrations are committed.
 on:
   pull_request:
     paths: ["db/app/**"]
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
 jobs:
-  drift:
-    name: DB Schema Drift
+  db-schema-drift:
+    name: db-schema-drift
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Checkout code
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: "pnpm"
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Regenerate migrations
+      - name: regenerate-migrations
         run: pnpm --filter @db/app db:generate
 
-      - name: Assert no uncommitted migration drift
+      - name: assert-no-uncommitted-migration-drift
         run: |
           # git diff is blind to untracked files; intent-to-add makes new
           # generated migrations and snapshots visible to the diff.

@@ -1,4 +1,5 @@
-name: Publish SDK + MCP
+name: sdk-mcp-publish
+run-name: sdk-mcp-publish / ${{ github.event_name }} / ${{ github.ref_name }}
 
 on:
   push:
@@ -11,8 +12,8 @@ on:
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  publish:
-    name: Publish SDK + MCP
+  sdk-mcp-publish:
+    name: sdk-mcp-publish
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -23,30 +24,30 @@ jobs:
       pull-requests: write
       id-token: write
     steps:
-      - name: Configure git user
+      - name: configure-git-user
         run: |
           git config --global user.name 'lightfast-release-bot'
           git config --global user.email 'releases@lightfast.ai'
 
-      - name: Checkout Repo
+      - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           registry-url: 'https://registry.npmjs.org'
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Reject CLI changesets
+      - name: reject-cli-changesets
         run: |
           CLI_CHANGESETS="$(grep -R -n '"@lightfastai/cli"' .changeset/*.md 2>/dev/null || true)"
           if [ -n "$CLI_CHANGESETS" ]; then
@@ -55,24 +56,24 @@ jobs:
             exit 1
           fi
 
-      - name: Build SDK + MCP packages
+      - name: build-sdk-mcp-packages
         env:
           SKIP_ENV_VALIDATION: "true"
         run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --summarize
 
-      - name: Run tests
+      - name: test-sdk-mcp-packages
         env:
           SKIP_ENV_VALIDATION: "true"
         run: pnpm turbo test --filter=@repo/api-contract --filter=lightfast --filter=@lightfastai/mcp --summarize
 
-      - name: Cache report
+      - name: turbo-cache-report
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report — Publish SDK + MCP'
-          artifact-name: turbo-cache-publish-sdk-mcp
+          title: 'Turbo cache report - sdk-mcp-publish / sdk-mcp-publish'
+          artifact-name: turbo-cache-sdk-mcp-publish
 
-      - name: Validate package tarballs
+      - name: validate-package-tarballs
         run: |
           echo "Packing tarballs to validate manifests..."
           SCRATCH=$(mktemp -d)
@@ -86,7 +87,7 @@ jobs:
             || (echo "❌ @lightfastai/mcp has unexpected runtime deps"; tar -xzOf "$SCRATCH"/lightfastai-mcp-*.tgz package/package.json | jq '.dependencies'; exit 1)
           echo "✅ Tarball manifests valid"
 
-      - name: Create SDK/MCP Version PR or Publish to npm
+      - name: create-sdk-mcp-version-pr-or-publish-npm
         id: changesets
         uses: changesets/action@v1
         with:
@@ -97,7 +98,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
-      - name: Verify SDK/MCP latest versions match
+      - name: verify-sdk-mcp-latest-versions-match
         if: steps.changesets.outputs.published == 'true'
         run: |
           echo "Verifying SDK/MCP packages published successfully to latest tag..."
@@ -123,7 +124,7 @@ jobs:
 
           echo "✅ Both packages at $LIGHTFAST_VERSION on latest tag"
 
-      - name: Send a Slack notification if a publish happens
+      - name: notify-slack-on-publish
         if: steps.changesets.outputs.published == 'true'
         # TODO: First users are through Slack/Discord channels. Notify via Pylon + Lightfast
         # integration to post release notes to each team's custom channel.
