@@ -5,6 +5,7 @@ on:
     paths:
       - '.changeset/**'
       - '.github/workflows/release.yml'
+      - 'scripts/publish-lightfast-alpha.mjs'
     branches: [main]
   workflow_dispatch:
 
