@@ -32,6 +32,7 @@ type GitHubConfigEnv = {
   GITHUB_APP_ID?: string;
   GITHUB_APP_PRIVATE_KEY?: string;
   GITHUB_APP_SLUG?: string;
+  GITHUB_INSTALL_URL_OVERRIDE?: string;
   VERCEL_ENV?: "development" | "preview" | "production";
 };
 
@@ -52,8 +53,10 @@ export function resolveGitHubAppOrigin(
   return new URL(appUrl).origin;
 }
 
-function assertNoLegacyInstallOverride() {
-  if (process.env.GITHUB_INSTALL_URL_OVERRIDE) {
+function assertNoLegacyInstallOverride(input: {
+  legacyInstallUrlOverride?: string;
+}) {
+  if (input.legacyInstallUrlOverride) {
     throw new Error(
       "GITHUB_INSTALL_URL_OVERRIDE is no longer supported. Use GITHUB_APP_ENDPOINT_ORIGIN for local GitHub-compatible endpoints."
     );
@@ -73,10 +76,17 @@ function resolveOriginUrls(originValue: string): GitHubAppEndpoints {
 export function resolveGitHubAppEndpoints(
   input: {
     endpointOrigin?: string;
+    legacyInstallUrlOverride?: string;
     vercelEnv?: "development" | "preview" | "production";
   } = {}
 ): GitHubAppEndpoints {
-  assertNoLegacyInstallOverride();
+  const legacyInstallUrlOverride = Object.prototype.hasOwnProperty.call(
+    input,
+    "legacyInstallUrlOverride"
+  )
+    ? input.legacyInstallUrlOverride
+    : process.env.GITHUB_INSTALL_URL_OVERRIDE;
+  assertNoLegacyInstallOverride({ legacyInstallUrlOverride });
 
   const endpointOrigin =
     input.endpointOrigin ?? runtimeEnv.GITHUB_APP_ENDPOINT_ORIGIN;
@@ -127,6 +137,7 @@ export function getGitHubAppConfig(
     clientSecret: required.clientSecret,
     endpoints: resolveGitHubAppEndpoints({
       endpointOrigin: configEnv.GITHUB_APP_ENDPOINT_ORIGIN,
+      legacyInstallUrlOverride: configEnv.GITHUB_INSTALL_URL_OVERRIDE,
       vercelEnv: configEnv.VERCEL_ENV,
     }),
     privateKey: normalizeGitHubPrivateKey(required.privateKey),
