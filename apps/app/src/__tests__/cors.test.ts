@@ -1,3 +1,4 @@
+import type { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 function setupMocks(opts: {
@@ -23,7 +24,29 @@ beforeEach(() => {
 afterEach(() => {
   vi.doUnmock("~/origins");
   vi.doUnmock("~/env");
+  vi.doUnmock("@api/app");
+  vi.doUnmock("@trpc/server/adapters/fetch");
+  vi.unstubAllEnvs();
 });
+
+function mockRouteDependencies() {
+  vi.doMock("@api/app", () => ({
+    appRouter: {},
+    createTRPCContext: vi.fn(),
+  }));
+  vi.doMock("@trpc/server/adapters/fetch", () => ({
+    fetchRequestHandler: vi.fn(async () => new Response(null, { status: 204 })),
+  }));
+}
+
+function optionsRequest(
+  origin: string,
+  headers: HeadersInit = {}
+): NextRequest {
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set("origin", origin);
+  return { headers: requestHeaders } as NextRequest;
+}
 
 describe("isAllowedWebOrigin (dev)", () => {
   beforeEach(() => {
@@ -185,5 +208,65 @@ describe("isPackagedDesktopRequest", () => {
         new Headers({ "x-lightfast-desktop": "true" })
       )
     ).toBe(false);
+  });
+});
+
+describe("tRPC OPTIONS route CORS headers", () => {
+  beforeEach(() => {
+    setupMocks({
+      appUrl: "https://app.lightfast.localhost/",
+      platformUrl: "https://platform.lightfast.localhost",
+      vercelEnv: undefined,
+      wwwUrl: "https://www.lightfast.localhost",
+    });
+    mockRouteDependencies();
+  });
+
+  it("echoes the direct app origin", async () => {
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(optionsRequest("https://app.lightfast.localhost"));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://app.lightfast.localhost"
+    );
+    expect(response.headers.get("access-control-allow-methods")).toBe(
+      "GET,POST,OPTIONS"
+    );
+    expect(response.headers.get("access-control-allow-credentials")).toBe(
+      "true"
+    );
+    expect(response.headers.get("vary")).toBe("Origin");
+  });
+
+  it("omits CORS headers for the direct www origin", async () => {
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(optionsRequest("https://www.lightfast.localhost"));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+    expect(response.headers.get("access-control-allow-credentials")).toBeNull();
+    expect(response.headers.get("vary")).toBeNull();
+  });
+
+  it("echoes the desktop dev localhost origin", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(optionsRequest("http://localhost:5173"));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "http://localhost:5173"
+    );
+  });
+
+  it("echoes packaged desktop Origin null only with the marker header", async () => {
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(
+      optionsRequest("null", { "x-lightfast-desktop": "1" })
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("null");
   });
 });
