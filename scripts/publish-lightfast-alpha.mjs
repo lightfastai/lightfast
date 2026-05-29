@@ -97,11 +97,15 @@ for (const pkg of packageJsons) {
   }
 
   if (dryRun) {
-    console.log(`[dry-run] npm publish --tag alpha --access public (${pkg.dir})`);
+    console.log(
+      `[dry-run] pnpm publish --tag alpha --access public --no-git-checks (${pkg.dir})`,
+    );
   } else {
-    run("npm", ["publish", "--tag", "alpha", "--access", "public"], {
-      cwd: pkg.dir,
-    });
+    run(
+      "pnpm",
+      ["publish", "--tag", "alpha", "--access", "public", "--no-git-checks"],
+      { cwd: pkg.dir },
+    );
   }
 
   if (!hasTag(tag)) {
