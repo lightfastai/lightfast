@@ -104,6 +104,22 @@ describe("GitHub config", () => {
     );
   });
 
+  it("rejects ambient legacy install override before required app env validation", async () => {
+    vi.stubEnv(
+      "GITHUB_INSTALL_URL_OVERRIDE",
+      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+    );
+    vi.resetModules();
+
+    const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
+      "../github/config"
+    );
+
+    expect(() => getRuntimeGitHubAppConfig()).toThrow(
+      /GITHUB_INSTALL_URL_OVERRIDE is no longer supported/
+    );
+  });
+
   it("uses explicit config env instead of ambient legacy install override", () => {
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
@@ -127,6 +143,27 @@ describe("GitHub config", () => {
     expect(config.endpoints.apiBaseUrl).toBe(
       "https://github.lightfast.localhost"
     );
+  });
+
+  it("uses real GitHub endpoints when explicit config env omits endpoint origin", () => {
+    vi.stubEnv(
+      "GITHUB_APP_ENDPOINT_ORIGIN",
+      "https://github.lightfast.localhost"
+    );
+
+    const config = getGitHubAppConfig({
+      env: {
+        GITHUB_API_VERSION: "2022-11-28",
+        GITHUB_APP_CLIENT_ID: "github_client_test",
+        GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+        GITHUB_APP_ID: "12345",
+        GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+        GITHUB_APP_SLUG: "lightfast-test",
+        VERCEL_ENV: "development",
+      },
+    });
+
+    expect(config.endpoints).toEqual(DEFAULT_GITHUB_APP_ENDPOINTS);
   });
 
   it.each(["preview", "production"] as const)(

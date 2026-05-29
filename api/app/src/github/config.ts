@@ -88,8 +88,12 @@ export function resolveGitHubAppEndpoints(
     : process.env.GITHUB_INSTALL_URL_OVERRIDE;
   assertNoLegacyInstallOverride({ legacyInstallUrlOverride });
 
-  const endpointOrigin =
-    input.endpointOrigin ?? runtimeEnv.GITHUB_APP_ENDPOINT_ORIGIN;
+  const endpointOrigin = Object.prototype.hasOwnProperty.call(
+    input,
+    "endpointOrigin"
+  )
+    ? input.endpointOrigin
+    : runtimeEnv.GITHUB_APP_ENDPOINT_ORIGIN;
   if (!endpointOrigin) {
     return DEFAULT_GITHUB_APP_ENDPOINTS;
   }
@@ -109,6 +113,18 @@ export function getGitHubAppConfig(
 ): GitHubAppConfig {
   const hasExplicitEnv = Object.prototype.hasOwnProperty.call(input, "env");
   const configEnv = input.env ?? runtimeEnv;
+  const endpointsInput: Parameters<typeof resolveGitHubAppEndpoints>[0] = {
+    vercelEnv: configEnv.VERCEL_ENV,
+  };
+  if (hasExplicitEnv) {
+    endpointsInput.endpointOrigin = configEnv.GITHUB_APP_ENDPOINT_ORIGIN;
+    endpointsInput.legacyInstallUrlOverride =
+      configEnv.GITHUB_INSTALL_URL_OVERRIDE;
+  } else {
+    endpointsInput.endpointOrigin = configEnv.GITHUB_APP_ENDPOINT_ORIGIN;
+  }
+  const endpoints = resolveGitHubAppEndpoints(endpointsInput);
+
   const required = {
     apiVersion: configEnv.GITHUB_API_VERSION ?? "2022-11-28",
     appId: configEnv.GITHUB_APP_ID,
@@ -130,22 +146,13 @@ export function getGitHubAppConfig(
     throw new Error("GitHub App environment is incomplete.");
   }
 
-  const endpointsInput: Parameters<typeof resolveGitHubAppEndpoints>[0] = {
-    endpointOrigin: configEnv.GITHUB_APP_ENDPOINT_ORIGIN,
-    vercelEnv: configEnv.VERCEL_ENV,
-  };
-  if (hasExplicitEnv) {
-    endpointsInput.legacyInstallUrlOverride =
-      configEnv.GITHUB_INSTALL_URL_OVERRIDE;
-  }
-
   return {
     apiVersion: required.apiVersion,
     appId: required.appId,
     appSlug: required.appSlug,
     clientId: required.clientId,
     clientSecret: required.clientSecret,
-    endpoints: resolveGitHubAppEndpoints(endpointsInput),
+    endpoints,
     privateKey: normalizeGitHubPrivateKey(required.privateKey),
   };
 }
