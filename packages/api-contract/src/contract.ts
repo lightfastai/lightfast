@@ -18,6 +18,16 @@ const system = {
         "Returns service status, server timestamp, and API version. Requires a valid org API key.",
     })
     .output(systemHealthOutput),
+
+  __ciProbe: oc
+    .route({
+      method: "GET",
+      path: "/system/__ci-probe",
+      summary: "CI probe",
+      description:
+        "Temporary contract-only route used to prove GitHub CI catches oRPC drift.",
+    })
+    .output(systemHealthOutput),
 };
 
 const signals = {
