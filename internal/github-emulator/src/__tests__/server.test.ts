@@ -1,45 +1,61 @@
 import { createPrivateKey } from "node:crypto";
-import { createServer as createNodeServer } from "node:net";
 import { SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
-  formatGitHubEmulatorEnvShell,
+  formatGitHubEmulatorEnvString,
   GITHUB_EMULATOR_FIXTURES,
   getGitHubEmulatorEnv,
 } from "../fixtures";
-import { type StartedGitHubEmulator, startGitHubEmulator } from "../server";
+import {
+  type StartedGitHubEmulator,
+  type StartGitHubEmulatorInput,
+  startGitHubEmulator,
+} from "../server";
 
 let emulator: StartedGitHubEmulator | undefined;
 let emulatorPort: number;
 
-async function getAvailablePort() {
-  const server = createNodeServer();
+const TEST_PORT_MIN = 40_000;
+const TEST_PORT_SPAN = 10_000;
+const TEST_PORT_ATTEMPTS = 20;
 
-  await new Promise<void>((resolve, reject) => {
-    server.once("error", reject);
-    server.listen(0, "127.0.0.1", () => {
-      server.off("error", reject);
-      resolve();
-    });
-  });
+function getRandomTestPort() {
+  return TEST_PORT_MIN + Math.floor(Math.random() * TEST_PORT_SPAN);
+}
 
-  const address = server.address();
-  if (!address || typeof address === "string") {
-    throw new Error("Failed to allocate an available local port");
+function isAddrInUse(error: unknown): error is NodeJS.ErrnoException {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    (error as NodeJS.ErrnoException).code === "EADDRINUSE"
+  );
+}
+
+async function startGitHubEmulatorOnAvailablePort(
+  input: Omit<StartGitHubEmulatorInput, "port"> = {}
+) {
+  let lastAddrInUseError: NodeJS.ErrnoException | undefined;
+
+  for (let attempt = 0; attempt < TEST_PORT_ATTEMPTS; attempt += 1) {
+    try {
+      return await startGitHubEmulator({
+        ...input,
+        port: getRandomTestPort(),
+      });
+    } catch (error) {
+      if (!isAddrInUse(error)) {
+        throw error;
+      }
+      lastAddrInUseError = error;
+    }
   }
 
-  await new Promise<void>((resolve, reject) => {
-    server.close((error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-
-  return address.port;
+  throw (
+    lastAddrInUseError ??
+    new Error("Failed to start GitHub emulator on an available local port")
+  );
 }
 
 async function createAppJwt() {
@@ -54,8 +70,8 @@ async function createAppJwt() {
 }
 
 beforeAll(async () => {
-  emulatorPort = await getAvailablePort();
-  emulator = await startGitHubEmulator({ port: emulatorPort });
+  emulator = await startGitHubEmulatorOnAvailablePort();
+  emulatorPort = Number(new URL(emulator.url).port);
 });
 
 afterAll(async () => {
@@ -150,12 +166,11 @@ describe("@repo/github-emulator", () => {
   });
 
   it("starts with a distinct Portless public origin", async () => {
-    const portlessPort = await getAvailablePort();
-    const portlessEmulator = await startGitHubEmulator({
+    const portlessEmulator = await startGitHubEmulatorOnAvailablePort({
       appOrigin: "https://feature.lightfast.localhost",
-      port: portlessPort,
       publicOrigin: "https://feature.github.lightfast.localhost",
     });
+    const portlessPort = Number(new URL(portlessEmulator.url).port);
 
     try {
       expect(portlessEmulator.url).toBe(`http://127.0.0.1:${portlessPort}`);
@@ -178,21 +193,35 @@ describe("@repo/github-emulator", () => {
     }
   });
 
-  it("formats shell-safe env exports for runtime injection", () => {
+  it("formats quoted env assignments for eval-free runtime injection", () => {
     expect(
-      formatGitHubEmulatorEnvShell({
+      formatGitHubEmulatorEnvString({
         GITHUB_APP_ID: "424242",
-        GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+        GITHUB_APP_PRIVATE_KEY: "line1 line2\\nline3",
         GITHUB_INSTALL_URL_OVERRIDE:
           "https://lightfast.localhost/api/dev/github/install?emulator_origin=https%3A%2F%2Fgithub.lightfast.localhost&installation_id=1001",
       })
     ).toBe(
       [
-        "export GITHUB_APP_ID='424242'",
-        "export GITHUB_APP_PRIVATE_KEY='line1\\nline2'",
-        "export GITHUB_INSTALL_URL_OVERRIDE='https://lightfast.localhost/api/dev/github/install?emulator_origin=https%3A%2F%2Fgithub.lightfast.localhost&installation_id=1001'",
+        "GITHUB_APP_ID='424242'",
+        "GITHUB_APP_PRIVATE_KEY='line1 line2\\nline3'",
+        "GITHUB_INSTALL_URL_OVERRIDE='https://lightfast.localhost/api/dev/github/install?emulator_origin=https%3A%2F%2Fgithub.lightfast.localhost&installation_id=1001'",
       ].join("\n")
     );
+  });
+
+  it("rejects env assignments that cannot be safely passed through env -S", () => {
+    expect(() =>
+      formatGitHubEmulatorEnvString({
+        "GITHUB APP ID": "424242",
+      })
+    ).toThrow(/Invalid environment variable name/);
+
+    expect(() =>
+      formatGitHubEmulatorEnvString({
+        GITHUB_APP_PRIVATE_KEY: "line1\0line2",
+      })
+    ).toThrow(/contains a NUL byte/);
   });
 
   it("rejects when the requested port is already in use", async () => {

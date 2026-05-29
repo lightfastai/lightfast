@@ -1,7 +1,7 @@
-export { parseGitHubInstallOverride } from "./config";
+export { parseGitHubInstallOverride, resolveGitHubAppOrigin } from "./config";
 export {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,
-  syncGitHubBindingClaim,
   type GitHubRedirectResult,
+  syncGitHubBindingClaim,
 } from "./setup-flow";

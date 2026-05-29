@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
-  parseGitHubInstallOverride,
   normalizeGitHubPrivateKey,
+  parseGitHubInstallOverride,
+  resolveGitHubAppOrigin,
 } from "../github/config";
 
 describe("GitHub config", () => {
@@ -23,6 +24,25 @@ describe("GitHub config", () => {
       providerAccountLogin: "lightfast-emulated",
       url: expect.stringContaining("/api/dev/github/install"),
     });
+  });
+
+  it("resolves the canonical app origin from an install override before appUrl", () => {
+    expect(
+      resolveGitHubAppOrigin({
+        appUrl: "https://app.lightfast.localhost",
+        installUrlOverride:
+          "https://lightfast.localhost/api/dev/github/install?installation_id=1001",
+      })
+    ).toBe("https://lightfast.localhost");
+  });
+
+  it("falls back to the canonical appUrl when no install override is present", () => {
+    expect(
+      resolveGitHubAppOrigin({
+        appUrl: "https://app.lightfast.localhost",
+        installUrlOverride: undefined,
+      })
+    ).toBe("https://app.lightfast.localhost");
   });
 
   it("rejects the install override in production", () => {

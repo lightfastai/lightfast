@@ -1,5 +1,8 @@
 import { createGitHubEmulatorRuntimeEnv } from "./env";
-import { formatGitHubEmulatorEnvShell, getGitHubEmulatorEnv } from "./fixtures";
+import {
+  formatGitHubEmulatorEnvString,
+  getGitHubEmulatorEnv,
+} from "./fixtures";
 
 function readOption(name: string) {
   const index = process.argv.indexOf(name);
@@ -29,7 +32,7 @@ function createRuntimeEnvWithOptions(): NodeJS.ProcessEnv {
 const env = createGitHubEmulatorRuntimeEnv(createRuntimeEnvWithOptions());
 
 console.log(
-  formatGitHubEmulatorEnvShell(
+  formatGitHubEmulatorEnvString(
     getGitHubEmulatorEnv(env.appOrigin, env.emulatorOrigin)
   )
 );

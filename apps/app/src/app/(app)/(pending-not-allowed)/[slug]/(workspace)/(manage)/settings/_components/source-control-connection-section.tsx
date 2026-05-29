@@ -51,10 +51,10 @@ export function SourceControlConnectionSection({
               </div>
               <div className="min-w-0">
                 <p className="truncate font-medium text-foreground text-sm">
-                  {displayValue(connection.providerAccountLogin)}
+                  {displayValue(connection.accountLogin)}
                 </p>
                 <p className="text-muted-foreground text-xs">
-                  GitHub organization
+                  {connection.providerLabel} organization
                 </p>
               </div>
             </div>
@@ -63,25 +63,13 @@ export function SourceControlConnectionSection({
             </span>
           </div>
 
-          <dl className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div>
-              <dt className="text-muted-foreground text-xs">Installation ID</dt>
-              <dd className="mt-1 break-all font-mono text-foreground text-sm">
-                {displayValue(connection.providerInstallationId)}
-              </dd>
-            </div>
+          <dl className="mt-5 grid gap-4">
             <div>
               <dt className="text-muted-foreground text-xs">Connected at</dt>
               <dd className="mt-1 text-foreground text-sm">
                 <time dateTime={connection.connectedAt.toISOString()}>
                   {connectionDateFormatter.format(connection.connectedAt)}
                 </time>
-              </dd>
-            </div>
-            <div className="sm:col-span-2">
-              <dt className="text-muted-foreground text-xs">Connected by</dt>
-              <dd className="mt-1 break-all font-mono text-foreground text-sm">
-                {connection.connectedByUserId}
               </dd>
             </div>
           </dl>

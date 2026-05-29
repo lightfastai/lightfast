@@ -35,13 +35,12 @@ describe("GitHub app route handlers", () => {
       "http://127.0.0.1:4567/login/oauth/authorize?state=abc"
     );
     expect(completeSetupMock).toHaveBeenCalledWith({
-      appOrigin: "https://app.lightfast.localhost",
       requestUrl:
         "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=abc",
     });
   });
 
-  it("uses the configured app origin for raw-port setup callbacks", async () => {
+  it("delegates raw-port setup callbacks without deriving app origin in the route", async () => {
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
       "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
@@ -58,7 +57,6 @@ describe("GitHub app route handlers", () => {
     );
 
     expect(completeSetupMock).toHaveBeenCalledWith({
-      appOrigin: "https://lightfast.localhost",
       requestUrl:
         "https://localhost:4293/api/github/setup?installation_id=1001&state=abc",
     });
@@ -84,13 +82,12 @@ describe("GitHub app route handlers", () => {
       "https://app.lightfast.localhost/acme/tasks/bind/github/complete"
     );
     expect(completeOAuthMock).toHaveBeenCalledWith({
-      appOrigin: "https://app.lightfast.localhost",
       requestUrl:
         "https://app.lightfast.localhost/api/github/oauth/callback?code=abc&state=def",
     });
   });
 
-  it("uses the configured app origin for raw-port OAuth callbacks", async () => {
+  it("delegates raw-port OAuth callbacks without deriving app origin in the route", async () => {
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
       "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
@@ -110,7 +107,6 @@ describe("GitHub app route handlers", () => {
     );
 
     expect(completeOAuthMock).toHaveBeenCalledWith({
-      appOrigin: "https://lightfast.localhost",
       requestUrl:
         "https://localhost:4293/api/github/oauth/callback?code=abc&state=def",
     });

@@ -9,7 +9,6 @@ import {
   getOrgAccessBySlug,
   isOrgAccessError,
 } from "../../auth/organization-access";
-import { env } from "../../env";
 import { issueGitHubInstallAttempt } from "../../github/bind-attempts";
 import { getGitHubEmulatorConfig } from "../../github/config";
 import { syncGitHubBindingClaim } from "../../github/setup-flow";
@@ -37,11 +36,7 @@ export const githubSetupRouter = {
           });
         }
 
-        const config = getGitHubEmulatorConfig({
-          appOrigin: env.GITHUB_INSTALL_URL_OVERRIDE
-            ? new URL(env.GITHUB_INSTALL_URL_OVERRIDE).origin
-            : "https://app.lightfast.localhost",
-        });
+        const config = getGitHubEmulatorConfig();
         const issued = await issueGitHubInstallAttempt({
           clerkOrgId: orgAccess.org.id,
           emulator: config.installOverride,
@@ -71,7 +66,7 @@ export const githubSetupRouter = {
       }
     }),
 
-  syncBindingClaim: setupProcedure.mutation(async ({ ctx }) => {
-    return syncGitHubBindingClaim({ clerkOrgId: ctx.auth.identity.orgId });
-  }),
+  syncBindingClaim: setupProcedure.mutation(async ({ ctx }) =>
+    syncGitHubBindingClaim({ clerkOrgId: ctx.auth.identity.orgId })
+  ),
 } satisfies TRPCRouterRecord;

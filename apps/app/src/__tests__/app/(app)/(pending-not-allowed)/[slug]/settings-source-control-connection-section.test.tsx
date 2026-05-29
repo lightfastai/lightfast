@@ -10,13 +10,10 @@ describe("SourceControlConnectionSection", () => {
     render(
       <SourceControlConnectionSection
         connection={{
+          accountLogin: "lightfast-emulated",
           connectedAt: new Date("2026-05-29T01:02:03.000Z"),
-          connectedByUserId: "user_admin",
           provider: "github",
-          providerAccountId: "987654",
-          providerAccountLogin: "lightfast-emulated",
-          providerInstallationId: "1001",
-          status: "active",
+          providerLabel: "GitHub",
         }}
         orgSlug="acme"
       />
@@ -27,8 +24,10 @@ describe("SourceControlConnectionSection", () => {
     ).toBeInTheDocument();
     expect(screen.getByText("Connected")).toBeInTheDocument();
     expect(screen.getByText("lightfast-emulated")).toBeInTheDocument();
-    expect(screen.getByText("1001")).toBeInTheDocument();
-    expect(screen.getByText("user_admin")).toBeInTheDocument();
+    expect(screen.queryByText("Installation ID")).not.toBeInTheDocument();
+    expect(screen.queryByText("Connected by")).not.toBeInTheDocument();
+    expect(screen.queryByText("1001")).not.toBeInTheDocument();
+    expect(screen.queryByText("user_admin")).not.toBeInTheDocument();
     expect(screen.queryByRole("button")).not.toBeInTheDocument();
   });
 

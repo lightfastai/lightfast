@@ -70,11 +70,11 @@ vi.mock(
       connection,
       orgSlug,
     }: {
-      connection: { providerAccountLogin: string | null } | null;
+      connection: { accountLogin: string | null } | null;
       orgSlug: string;
     }) => (
       <div data-testid="source-control-section">
-        {orgSlug}:{connection?.providerAccountLogin ?? "unbound"}
+        {orgSlug}:{connection?.accountLogin ?? "unbound"}
       </div>
     ),
   })
@@ -100,13 +100,10 @@ beforeEach(() => {
       return {
         data: {
           binding: {
+            accountLogin: "lightfast-emulated",
             connectedAt: new Date("2026-05-29T01:02:03.000Z"),
-            connectedByUserId: "user_admin",
             provider: "github",
-            providerAccountId: "987654",
-            providerAccountLogin: "lightfast-emulated",
-            providerInstallationId: "1001",
-            status: "active",
+            providerLabel: "GitHub",
           },
           status: "bound",
         },

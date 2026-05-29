@@ -100,13 +100,10 @@ describe("org.settings.sourceControl.get", () => {
 
     await expect(caller().org.settings.sourceControl.get()).resolves.toEqual({
       binding: {
+        accountLogin: "lightfast-emulated",
         connectedAt,
-        connectedByUserId: "user_admin",
         provider: "github",
-        providerAccountId: "987654",
-        providerAccountLogin: "lightfast-emulated",
-        providerInstallationId: "1001",
-        status: "active",
+        providerLabel: "GitHub",
       },
       status: "bound",
     });

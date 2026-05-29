@@ -1,13 +1,13 @@
-import { db } from "@db/app/client";
 import {
   finalizeActiveOrgProviderBinding,
   isOrgBound,
   OrgSourceControlBindingConflictError,
 } from "@db/app";
+import { db } from "@db/app/client";
 import {
   GITHUB_OAUTH_CALLBACK_PATH,
-  githubInstallationMetadataSchema,
   type GitHubBindErrorCode,
+  githubInstallationMetadataSchema,
 } from "@repo/github-app-contract";
 import {
   buildGitHubOAuthAuthorizeUrl,
@@ -30,7 +30,7 @@ import {
   lookupGitHubInstallAttempt,
   lookupGitHubOAuthAttempt,
 } from "./bind-attempts";
-import { getGitHubEmulatorConfig } from "./config";
+import { getGitHubEmulatorConfig, resolveGitHubAppOrigin } from "./config";
 
 function bindPageUrl(input: {
   appOrigin: string;
@@ -96,6 +96,8 @@ function mapError(error: unknown): GitHubBindErrorCode {
         return "personal_account_not_supported";
       case "GITHUB_OAUTH_EXCHANGE_FAILED":
         return "github_transient_error";
+      default:
+        return "github_transient_error";
     }
   }
 
@@ -123,21 +125,23 @@ function signInRedirect(input: {
 }
 
 export async function completeGitHubInstallationSetup(input: {
-  appOrigin: string;
+  appOrigin?: string;
   requestUrl: string;
 }): Promise<GitHubRedirectResult> {
+  const appOrigin = input.appOrigin ?? resolveGitHubAppOrigin();
+  const redirectInput = { appOrigin, requestUrl: input.requestUrl };
   const requestUrl = new URL(input.requestUrl);
   const state = requestUrl.searchParams.get("state");
   const installationId = requestUrl.searchParams.get("installation_id");
   const setupAction = requestUrl.searchParams.get("setup_action") ?? undefined;
 
   if (!(state && installationId)) {
-    return missingAttemptRedirect(input);
+    return missingAttemptRedirect(redirectInput);
   }
 
   const pendingAttempt = await lookupGitHubInstallAttempt({ state });
   if (!pendingAttempt) {
-    return missingAttemptRedirect(input);
+    return missingAttemptRedirect(redirectInput);
   }
 
   try {
@@ -147,10 +151,10 @@ export async function completeGitHubInstallationSetup(input: {
     });
   } catch (error) {
     if (isUnauthenticatedSetupError(error)) {
-      return signInRedirect(input);
+      return signInRedirect(redirectInput);
     }
     return errorRedirect({
-      appOrigin: input.appOrigin,
+      appOrigin,
       code: mapError(error),
       orgSlug: pendingAttempt.orgSlug,
     });
@@ -158,7 +162,7 @@ export async function completeGitHubInstallationSetup(input: {
 
   if (installationId !== pendingAttempt.emulator.installationId) {
     return errorRedirect({
-      appOrigin: input.appOrigin,
+      appOrigin,
       code: "installation_not_verified",
       orgSlug: pendingAttempt.orgSlug,
     });
@@ -166,11 +170,11 @@ export async function completeGitHubInstallationSetup(input: {
 
   const attempt = await consumeGitHubInstallAttempt({ state });
   if (!attempt) {
-    return missingAttemptRedirect(input);
+    return missingAttemptRedirect(redirectInput);
   }
 
   try {
-    const config = getGitHubEmulatorConfig({ appOrigin: input.appOrigin });
+    const config = getGitHubEmulatorConfig({ appOrigin });
     const pkce = createGitHubPkcePair();
     const oauthAttempt = await issueGitHubOAuthAttempt({
       clerkOrgId: attempt.clerkOrgId,
@@ -185,10 +189,7 @@ export async function completeGitHubInstallationSetup(input: {
       authorizationBaseUrl: `${attempt.emulator.emulatorOrigin}/login/oauth/authorize`,
       clientId: config.clientId,
       codeChallenge: pkce.codeChallenge,
-      redirectUri: new URL(
-        GITHUB_OAUTH_CALLBACK_PATH,
-        input.appOrigin
-      ).toString(),
+      redirectUri: new URL(GITHUB_OAUTH_CALLBACK_PATH, appOrigin).toString(),
       state: oauthAttempt.state,
     });
 
@@ -201,7 +202,7 @@ export async function completeGitHubInstallationSetup(input: {
     return { redirectUrl: authorizeUrl };
   } catch (error) {
     return errorRedirect({
-      appOrigin: input.appOrigin,
+      appOrigin,
       code: mapError(error),
       orgSlug: attempt.orgSlug,
     });
@@ -209,9 +210,11 @@ export async function completeGitHubInstallationSetup(input: {
 }
 
 export async function completeGitHubOAuthVerification(input: {
-  appOrigin: string;
+  appOrigin?: string;
   requestUrl: string;
 }): Promise<GitHubRedirectResult> {
+  const appOrigin = input.appOrigin ?? resolveGitHubAppOrigin();
+  const redirectInput = { appOrigin, requestUrl: input.requestUrl };
   const requestUrl = new URL(input.requestUrl);
   const code = requestUrl.searchParams.get("code");
   const state = requestUrl.searchParams.get("state");
@@ -219,11 +222,11 @@ export async function completeGitHubOAuthVerification(input: {
 
   if (denied) {
     if (!state) {
-      return missingAttemptRedirect(input);
+      return missingAttemptRedirect(redirectInput);
     }
     const pendingAttempt = await lookupGitHubOAuthAttempt({ state });
     if (!pendingAttempt) {
-      return missingAttemptRedirect(input);
+      return missingAttemptRedirect(redirectInput);
     }
     try {
       await assertCurrentUserIsOrgAdmin({
@@ -232,10 +235,10 @@ export async function completeGitHubOAuthVerification(input: {
       });
     } catch (error) {
       if (isUnauthenticatedSetupError(error)) {
-        return signInRedirect(input);
+        return signInRedirect(redirectInput);
       }
       return errorRedirect({
-        appOrigin: input.appOrigin,
+        appOrigin,
         code: mapError(error),
         orgSlug: pendingAttempt.orgSlug,
       });
@@ -243,19 +246,19 @@ export async function completeGitHubOAuthVerification(input: {
     const attempt = await consumeGitHubOAuthAttempt({ state });
     return attempt
       ? errorRedirect({
-          appOrigin: input.appOrigin,
+          appOrigin,
           code: "github_authorization_denied",
           orgSlug: attempt.orgSlug,
         })
-      : missingAttemptRedirect(input);
+      : missingAttemptRedirect(redirectInput);
   }
   if (!(code && state)) {
-    return missingAttemptRedirect(input);
+    return missingAttemptRedirect(redirectInput);
   }
 
   const pendingAttempt = await lookupGitHubOAuthAttempt({ state });
   if (!pendingAttempt) {
-    return missingAttemptRedirect(input);
+    return missingAttemptRedirect(redirectInput);
   }
 
   try {
@@ -265,10 +268,10 @@ export async function completeGitHubOAuthVerification(input: {
     });
   } catch (error) {
     if (isUnauthenticatedSetupError(error)) {
-      return signInRedirect(input);
+      return signInRedirect(redirectInput);
     }
     return errorRedirect({
-      appOrigin: input.appOrigin,
+      appOrigin,
       code: mapError(error),
       orgSlug: pendingAttempt.orgSlug,
     });
@@ -276,20 +279,17 @@ export async function completeGitHubOAuthVerification(input: {
 
   const attempt = await consumeGitHubOAuthAttempt({ state });
   if (!attempt) {
-    return missingAttemptRedirect(input);
+    return missingAttemptRedirect(redirectInput);
   }
 
   try {
-    const config = getGitHubEmulatorConfig({ appOrigin: input.appOrigin });
+    const config = getGitHubEmulatorConfig({ appOrigin });
     const token = await exchangeGitHubOAuthCode({
       clientId: config.clientId,
       clientSecret: config.clientSecret,
       code,
       codeVerifier: attempt.codeVerifier,
-      redirectUri: new URL(
-        GITHUB_OAUTH_CALLBACK_PATH,
-        input.appOrigin
-      ).toString(),
+      redirectUri: new URL(GITHUB_OAUTH_CALLBACK_PATH, appOrigin).toString(),
       tokenUrl: `${attempt.emulator.emulatorOrigin}/login/oauth/access_token`,
     });
 
@@ -304,7 +304,8 @@ export async function completeGitHubOAuthVerification(input: {
       events: installation.events,
       githubAppId: installation.appId,
       githubAppSlug: installation.appSlug,
-      githubSetupAction: requestUrl.searchParams.get("setup_action") ?? undefined,
+      githubSetupAction:
+        requestUrl.searchParams.get("setup_action") ?? undefined,
       permissions: installation.permissions,
       repositorySelection: installation.repositorySelection,
       verifiedBy: "github_emulator",
@@ -335,13 +336,13 @@ export async function completeGitHubOAuthVerification(input: {
 
     return {
       redirectUrl: completionPageUrl({
-        appOrigin: input.appOrigin,
+        appOrigin,
         orgSlug: attempt.orgSlug,
       }),
     };
   } catch (error) {
     return errorRedirect({
-      appOrigin: input.appOrigin,
+      appOrigin,
       code: mapError(error),
       orgSlug: attempt.orgSlug,
     });

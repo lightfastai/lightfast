@@ -3,6 +3,10 @@ import type { TRPCRouterRecord } from "@trpc/server";
 
 import { orgProcedure } from "../../trpc";
 
+function providerLabel(provider: string) {
+  return provider === "github" ? "GitHub" : provider;
+}
+
 export const orgSourceControlRouter = {
   get: orgProcedure.query(async ({ ctx }) => {
     const binding = await getActiveOrgBinding(ctx.db, ctx.auth.identity.orgId);
@@ -16,13 +20,10 @@ export const orgSourceControlRouter = {
 
     return {
       binding: {
+        accountLogin: binding.providerAccountLogin,
         connectedAt: binding.connectedAt,
-        connectedByUserId: binding.connectedByUserId,
         provider: binding.provider,
-        providerAccountId: binding.providerAccountId,
-        providerAccountLogin: binding.providerAccountLogin,
-        providerInstallationId: binding.providerInstallationId,
-        status: binding.status,
+        providerLabel: providerLabel(binding.provider),
       },
       status: "bound" as const,
     };

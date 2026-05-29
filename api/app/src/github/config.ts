@@ -12,6 +12,25 @@ export function normalizeGitHubPrivateKey(value: string): string {
   return value.replace(/\\n/g, "\n");
 }
 
+export function resolveGitHubAppOrigin(
+  input: { appUrl?: string; installUrlOverride?: string | undefined } = {}
+) {
+  const installUrlOverride =
+    input.installUrlOverride ?? env.GITHUB_INSTALL_URL_OVERRIDE;
+  if (installUrlOverride) {
+    return new URL(installUrlOverride).origin;
+  }
+
+  const appUrl = input.appUrl ?? process.env.NEXT_PUBLIC_APP_URL;
+  if (!appUrl) {
+    throw new Error(
+      "NEXT_PUBLIC_APP_URL is required for GitHub app origin resolution."
+    );
+  }
+
+  return new URL(appUrl).origin;
+}
+
 export function parseGitHubInstallOverride(input: {
   appOrigin: string;
   rawUrl: string | undefined;
@@ -21,7 +40,9 @@ export function parseGitHubInstallOverride(input: {
     return null;
   }
   if (input.vercelEnv === "production") {
-    throw new Error("GITHUB_INSTALL_URL_OVERRIDE is not allowed in production.");
+    throw new Error(
+      "GITHUB_INSTALL_URL_OVERRIDE is not allowed in production."
+    );
   }
 
   const url = new URL(input.rawUrl);
@@ -50,9 +71,10 @@ export function parseGitHubInstallOverride(input: {
   };
 }
 
-export function getGitHubEmulatorConfig(input: { appOrigin: string }) {
+export function getGitHubEmulatorConfig(input: { appOrigin?: string } = {}) {
+  const appOrigin = input.appOrigin ?? resolveGitHubAppOrigin();
   const override = parseGitHubInstallOverride({
-    appOrigin: input.appOrigin,
+    appOrigin,
     rawUrl: env.GITHUB_INSTALL_URL_OVERRIDE,
     vercelEnv: env.VERCEL_ENV,
   });
