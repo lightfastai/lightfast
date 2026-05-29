@@ -32,8 +32,6 @@ import {
 } from "./bind-attempts";
 import { getGitHubAppConfig, resolveGitHubAppOrigin } from "./config";
 
-const providerLoginField = `providerAccount${"Login"}` as const;
-
 function bindPageUrl(input: {
   appOrigin: string;
   code?: GitHubBindErrorCode;
@@ -309,7 +307,7 @@ export async function completeGitHubOAuthVerification(input: {
       metadata,
       provider: "github",
       providerAccountId: installation.account.id,
-      [providerLoginField]: installation.account.login,
+      providerAccountLogin: installation.account.login,
       providerInstallationId: installation.id,
     });
 

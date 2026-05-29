@@ -54,7 +54,7 @@ const githubInstallationMetadataBaseSchema = z.object({
   repositorySelection: z.enum(["all", "selected"]),
 });
 
-const legacyEnvironmentProvenanceKey = `verified${"By"}`;
+const legacyEnvironmentProvenanceKey = "verifiedBy";
 
 export const githubInstallationMetadataSchema =
   githubInstallationMetadataBaseSchema
