@@ -27,10 +27,12 @@ export const createDrizzleConfig = (opts: {
     ...(hasCredentials
       ? {
           dbCredentials: {
-            database: database!,
-            host: host!,
-            password: password!,
-            user: username!,
+            url: createDatabaseUrl({
+              database: database!,
+              host: host!,
+              password: password!,
+              username: username!,
+            }),
           },
         }
       : {}),
@@ -42,4 +44,25 @@ export const createDrizzleConfig = (opts: {
 
 function stripQuotes(value: string | undefined) {
   return value?.replace(/^["']|["']$/g, "");
+}
+
+function createDatabaseUrl(opts: {
+  database: string;
+  host: string;
+  username: string;
+  password: string;
+}) {
+  const username = encodeURIComponent(opts.username);
+  const password = encodeURIComponent(opts.password);
+  const host = validateDatabaseHost(opts.host);
+  const database = encodeURIComponent(opts.database);
+
+  return `mysql://${username}:${password}@${host}/${database}`;
+}
+
+function validateDatabaseHost(host: string) {
+  if (/[@/?#\s]/.test(host)) {
+    throw new Error("Drizzle database host contains URL-unsafe characters.");
+  }
+  return host;
 }

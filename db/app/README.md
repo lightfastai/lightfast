@@ -25,7 +25,7 @@ Local development uses PlanetScale branches. There is no Docker MySQL service.
 pscale auth login
 # Load the lightfast-local-infra skill and run its db up runbook.
 pnpm db:push    # apply schema diff to the env-configured local branch
-pnpm db:studio  # inspect the env-configured local branch
+pnpm db:studio  # inspect the env-configured local branch via Portless
 ```
 
 ## Commands
@@ -34,8 +34,13 @@ pnpm db:studio  # inspect the env-configured local branch
 pnpm db:generate  # Generate migration SQL from src/schema
 pnpm db:migrate   # Apply migrations to the persistent staging branch only
 pnpm db:push      # Apply schema diff
-pnpm db:studio    # Open Drizzle Studio
+pnpm db:studio    # Open Drizzle Studio through Portless
 ```
+
+`pnpm db:studio` registers the local Studio API through Portless at
+`https://[<wt>.]db.lightfast.localhost`. Drizzle Studio prints a
+`https://local.drizzle.studio?port=...` browser URL using that process's
+Portless-injected backend port.
 
 `pnpm db:migrate` is only for the persistent `staging` PlanetScale branch with
 explicit `DATABASE_*` migration credentials. Never run it against the `main`

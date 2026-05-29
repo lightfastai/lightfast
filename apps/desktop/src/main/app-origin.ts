@@ -20,13 +20,13 @@ export function resolveDesktopAppOrigin(buildFlavor: BuildFlavor): string {
   const parsedBuildFlavor = buildFlavorSchema.parse(buildFlavor);
 
   if (parsedBuildFlavor === "dev") {
-    if (!mainEnv.LIGHTFAST_APP_ORIGIN) {
+    if (!mainEnv.APP_URL) {
       throw new Error(
-        "LIGHTFAST_APP_ORIGIN must be set for desktop dev. Run pnpm --filter @lightfast/desktop dev or wrap the command with scripts/with-desktop-env.mjs."
+        "APP_URL must be set for desktop dev. Run pnpm --filter @lightfast/desktop dev so package scripts inject APP_URL=$(portless get lightfast)."
       );
     }
 
-    return toOrigin(mainEnv.LIGHTFAST_APP_ORIGIN, "Lightfast app origin");
+    return toOrigin(mainEnv.APP_URL, "APP_URL");
   }
 
   return toOrigin(PRODUCTION_APP_ORIGIN, "Production app origin");

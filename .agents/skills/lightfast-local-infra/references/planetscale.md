@@ -70,6 +70,52 @@ test -n "$database_host" && test -n "$database_username" && test -n "$database_p
 
 Then write the app env file with `references/env-files.md`.
 
+## Baseline Inherited Schema
+
+A branch created from `main` may inherit app tables without matching rows in
+`__drizzle_migrations`. In that state, the migration runner tries to replay
+`0000` against existing tables. Detect the state after the env file contains the
+fresh branch credentials:
+
+```bash
+schema_state=$(
+  cd db/app &&
+    pnpm with-env node --input-type=module <<'NODE'
+import { connect } from "@planetscale/database";
+
+const conn = connect({
+  host: process.env.DATABASE_HOST,
+  password: process.env.DATABASE_PASSWORD,
+  username: process.env.DATABASE_USERNAME,
+});
+
+const tableResult = await conn.execute("show tables");
+const tables = tableResult.rows
+  .map((row) => Object.values(row)[0])
+  .filter((name) => typeof name === "string");
+
+const hasAppTables = tables.some((name) => name !== "__drizzle_migrations");
+let migrationCount = 0;
+
+if (tables.includes("__drizzle_migrations")) {
+  const migrationResult = await conn.execute(
+    "select count(*) as count from __drizzle_migrations"
+  );
+  migrationCount = Number(migrationResult.rows[0]?.count ?? 0);
+}
+
+console.log(hasAppTables && migrationCount === 0 ? "baseline" : "migrate");
+NODE
+)
+
+if [ "$schema_state" = "baseline" ]; then
+  pnpm --filter @db/app db:baseline
+fi
+```
+
+`db:baseline` marks the repository migrations as applied. Run it only when the
+branch already contains the app schema and the migration journal is empty.
+
 ## Verify
 
 ```bash

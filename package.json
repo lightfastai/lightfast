@@ -37,13 +37,13 @@
     "db:generate": "pnpm --filter @db/app db:generate",
     "db:push": "pnpm --filter @db/app db:push",
     "db:migrate": "pnpm --filter @db/app db:migrate",
+    "db:studio": "pnpm --filter @db/app db:studio",
     "db:baseline": "pnpm --filter @db/app db:baseline",
     "knip": "knip"
   },
   "devDependencies": {
     "@biomejs/biome": "2.4.12",
     "@changesets/cli": "^2.31.0",
-    "@lightfastai/dev-core": "catalog:",
     "knip": "^6.4.1",
     "portless": "catalog:",
     "turbo": "2.9.14",

@@ -1,5 +1,5 @@
 import { env } from "~/env";
-import { appUrl, devOriginPatterns } from "~/origins";
+import { appUrl } from "~/origins";
 
 const isDev =
   env.NEXT_PUBLIC_VERCEL_ENV === undefined ||
@@ -16,11 +16,7 @@ if (isDev && !isBuildPhase && canonicalAppOrigin === "https://lightfast.ai") {
   );
 }
 
-// devOriginPatterns is already [] when !isLocal (gated inside ~/origins).
-// No re-gate needed; the constant is the source of truth.
-const devOrigins = devOriginPatterns;
-
-export function isAllowedOrigin(origin: string | null): origin is string {
+export function isAllowedWebOrigin(origin: string | null): origin is string {
   if (!origin) {
     return false;
   }
@@ -36,19 +32,7 @@ export function isAllowedOrigin(origin: string | null): origin is string {
   if (originValue === canonicalAppOrigin) {
     return true;
   }
-  if (!isDev) {
-    return false;
-  }
-
-  return devOrigins.some((pattern) => {
-    if (pattern.startsWith("*.")) {
-      const suffix = pattern.slice(1);
-      return (
-        originUrl.host.endsWith(suffix) && originUrl.host.length > suffix.length
-      );
-    }
-    return originUrl.host === pattern;
-  });
+  return false;
 }
 
 // Dev-only carve-out: the Electron renderer in dev loads from

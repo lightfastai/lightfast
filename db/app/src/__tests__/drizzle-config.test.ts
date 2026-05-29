@@ -28,12 +28,41 @@ describe("Drizzle config", () => {
       .dbCredentials;
 
     expect(credentials).toMatchObject({
-      database: "caller_database",
-      host: "example.planetscale.com",
-      password: "password",
-      user: "username",
+      url: "mysql://username:password@example.planetscale.com/caller_database",
     });
+    expect(credentials).not.toHaveProperty("host");
+    expect(credentials).not.toHaveProperty("user");
     expect(config.tablesFilter).toEqual(["caller_*"]);
+  });
+
+  it("encodes credential and database URL components without rewriting the host", () => {
+    const config = createDrizzleConfig({
+      database: "caller/database ?#",
+      host: "localhost:3306",
+      out: "./src/migrations",
+      password: "p/a?#",
+      schema: "./src/schema/index.ts",
+      username: "user@example.com",
+    });
+    const credentials = (config as { dbCredentials?: Record<string, unknown> })
+      .dbCredentials;
+
+    expect(credentials).toMatchObject({
+      url: "mysql://user%40example.com:p%2Fa%3F%23@localhost:3306/caller%2Fdatabase%20%3F%23",
+    });
+  });
+
+  it("rejects URL-unsafe database hosts instead of rewriting authority syntax", () => {
+    expect(() =>
+      createDrizzleConfig({
+        database: "caller_database",
+        host: "bad@host",
+        out: "./src/migrations",
+        password: "password",
+        schema: "./src/schema/index.ts",
+        username: "username",
+      })
+    ).toThrow("Drizzle database host contains URL-unsafe characters.");
   });
 
   it("keeps the app database fixed as lightfast", async () => {
@@ -46,11 +75,10 @@ describe("Drizzle config", () => {
       .dbCredentials;
 
     expect(credentials).toMatchObject({
-      database: "lightfast",
-      host: "example.planetscale.com",
-      password: "password",
-      user: "username",
+      url: "mysql://username:password@example.planetscale.com/lightfast",
     });
+    expect(credentials).not.toHaveProperty("host");
+    expect(credentials).not.toHaveProperty("user");
     expect(config.tablesFilter).toEqual(["lightfast_*"]);
   });
 });

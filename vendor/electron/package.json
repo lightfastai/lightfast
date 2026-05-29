@@ -1,0 +1,26 @@
+{
+  "name": "@vendor/electron",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    "./net": {
+      "types": "./src/net.ts",
+      "default": "./src/net.ts"
+    }
+  },
+  "license": "MIT",
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "electron": "^41.3.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "electron": "^41.3.0",
+    "typescript": "catalog:"
+  }
+}

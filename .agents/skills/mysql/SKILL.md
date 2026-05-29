@@ -3,8 +3,6 @@ name: mysql
 description: Plan and review MySQL/InnoDB schema, indexing, query tuning, transactions, and operations. Use when creating or modifying MySQL tables, indexes, or queries; diagnosing slow/locking behavior; planning migrations; or troubleshooting replication and connection issues. Load when using a MySQL database.
 ---
 
-<!-- Vendored from planetscale/database-skills@b156f4c · skills/mysql · MIT. Re-sync from upstream; reference links rewritten to local paths. -->
-
 # MySQL
 
 Use this skill to make safe, measurable MySQL/InnoDB changes.
@@ -25,10 +23,10 @@ Use this skill to make safe, measurable MySQL/InnoDB changes.
 - Lookup tables over `ENUM`. Normalize to 3NF; denormalize only for measured hot paths.
 
 References:
-- [primary-keys](references/primary-keys.md)
-- [data-types](references/data-types.md)
-- [character-sets](references/character-sets.md)
-- [json-column-patterns](references/json-column-patterns.md)
+- [primary-keys](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/primary-keys.md)
+- [data-types](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/data-types.md)
+- [character-sets](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/character-sets.md)
+- [json-column-patterns](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/json-column-patterns.md)
 
 ## Indexing
 - Composite order: equality first, then range/sort (leftmost prefix rule).
@@ -37,17 +35,17 @@ References:
 - Audit via `performance_schema` — drop indexes with `count_read = 0`.
 
 References:
-- [composite-indexes](references/composite-indexes.md)
-- [covering-indexes](references/covering-indexes.md)
-- [fulltext-indexes](references/fulltext-indexes.md)
-- [index-maintenance](references/index-maintenance.md)
+- [composite-indexes](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/composite-indexes.md)
+- [covering-indexes](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/covering-indexes.md)
+- [fulltext-indexes](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/fulltext-indexes.md)
+- [index-maintenance](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/index-maintenance.md)
 
 ## Partitioning
 - Partition time-series (>50M rows) or large tables (>100M rows). Plan early — retrofit = full rebuild.
 - Include partition column in every unique/PK. Always add a `MAXVALUE` catch-all.
 
 References:
-- [partitioning](references/partitioning.md)
+- [partitioning](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/partitioning.md)
 
 ## Query Optimization
 - Check `EXPLAIN` — red flags: `type: ALL`, `Using filesort`, `Using temporary`.
@@ -55,9 +53,9 @@ References:
 - Batch inserts (500–5000 rows). `UNION ALL` over `UNION` when dedup unnecessary.
 
 References:
-- [explain-analysis](references/explain-analysis.md)
-- [query-optimization-pitfalls](references/query-optimization-pitfalls.md)
-- [n-plus-one](references/n-plus-one.md)
+- [explain-analysis](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/explain-analysis.md)
+- [query-optimization-pitfalls](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/query-optimization-pitfalls.md)
+- [n-plus-one](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/n-plus-one.md)
 
 ## Transactions & Locking
 - Default: `REPEATABLE READ` (gap locks). Use `READ COMMITTED` for high contention.
@@ -65,9 +63,9 @@ References:
 - Do I/O outside transactions. Use `SELECT ... FOR UPDATE` sparingly.
 
 References:
-- [isolation-levels](references/isolation-levels.md)
-- [deadlocks](references/deadlocks.md)
-- [row-locking-gotchas](references/row-locking-gotchas.md)
+- [isolation-levels](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/isolation-levels.md)
+- [deadlocks](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/deadlocks.md)
+- [row-locking-gotchas](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/row-locking-gotchas.md)
 
 ## Operations
 - Use online DDL (`ALGORITHM=INPLACE`) when possible; test on replicas first.
@@ -75,9 +73,9 @@ References:
 - Monitor replication lag; avoid stale reads from replicas during writes.
 
 References:
-- [online-ddl](references/online-ddl.md)
-- [connection-management](references/connection-management.md)
-- [replication-lag](references/replication-lag.md)
+- [online-ddl](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/online-ddl.md)
+- [connection-management](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/connection-management.md)
+- [replication-lag](https://raw.githubusercontent.com/planetscale/database-skills/main/skills/mysql/references/replication-lag.md)
 
 ## Guardrails
 - Prefer measured evidence over blanket rules of thumb.

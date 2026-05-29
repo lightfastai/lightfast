@@ -119,7 +119,7 @@
       "source": "getsentry/cli",
       "sourceType": "github",
       "skillPath": "plugins/sentry-cli/skills/sentry-cli/SKILL.md",
-      "computedHash": "0a9263d91600a85aeb006b75e67e2733946315258a6b5331c78c971f2ffabf82"
+      "computedHash": "2de41d6ab06014582517707d7c50db01873309096c7d73910effb9d3b1cbfc08"
     },
     "subagent-driven-development": {
       "source": "obra/superpowers",
@@ -142,7 +142,8 @@
     "turborepo": {
       "source": "vercel/turborepo",
       "sourceType": "github",
-      "computedHash": "50b2e094d431894a350b15ac41cd8a5a78dda490140667dc0b9407c438b11881"
+      "skillPath": "skills/turborepo/SKILL.md",
+      "computedHash": "2251726f273c1b4c8cab2010c221b61c5f572524411fc5a7d2d2de88dca786c4"
     },
     "using-git-worktrees": {
       "source": "obra/superpowers",
@@ -160,7 +161,7 @@
       "source": "vercel/vercel",
       "sourceType": "github",
       "skillPath": "skills/vercel-cli/SKILL.md",
-      "computedHash": "c84063e620245370062f39471f3a2dc6452542a0b49ba0ed926751be30b08b62"
+      "computedHash": "78ef2c595ba67928e77505a6eba469e3d3f6c6eb273c1b4a6ceaf93e16671496"
     },
     "vercel-microfrontends": {
       "source": "vercel/microfrontends",

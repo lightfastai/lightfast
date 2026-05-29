@@ -2,7 +2,7 @@ import { appRouter, createTRPCContext } from "@api/app";
 import { fetchRequestHandler } from "@trpc/server/adapters/fetch";
 import type { NextRequest } from "next/server";
 import {
-  isAllowedOrigin,
+  isAllowedWebOrigin,
   isDesktopDevOrigin,
   isPackagedDesktopRequest,
 } from "~/cors";
@@ -16,7 +16,7 @@ const setCorsHeaders = (req: NextRequest, res: Response) => {
 
   if (
     !(
-      isAllowedOrigin(origin) ||
+      isAllowedWebOrigin(origin) ||
       isDesktopDevOrigin(origin) ||
       isPackagedDesktopRequest(origin, req.headers)
     )

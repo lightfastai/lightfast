@@ -1,22 +1,16 @@
+import type { NextRequest } from "next/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-
-const PORTLESS_ORIGINS = [
-  "lightfast.localhost",
-  "*.lightfast.localhost",
-  "app.lightfast.localhost",
-  "*.app.lightfast.localhost",
-  "www.lightfast.localhost",
-  "*.www.lightfast.localhost",
-];
 
 function setupMocks(opts: {
   appUrl: string;
+  platformUrl?: string;
   vercelEnv: "development" | "preview" | "production" | undefined;
-  origins?: string[];
+  wwwUrl?: string;
 }) {
   vi.doMock("~/origins", () => ({
     appUrl: opts.appUrl,
-    devOriginPatterns: opts.origins ?? PORTLESS_ORIGINS,
+    platformUrl: opts.platformUrl ?? "https://platform.lightfast.localhost",
+    wwwUrl: opts.wwwUrl ?? "https://www.lightfast.localhost",
   }));
   vi.doMock("~/env", () => ({
     env: { NEXT_PUBLIC_VERCEL_ENV: opts.vercelEnv },
@@ -30,51 +24,82 @@ beforeEach(() => {
 afterEach(() => {
   vi.doUnmock("~/origins");
   vi.doUnmock("~/env");
+  vi.doUnmock("@api/app");
+  vi.doUnmock("@trpc/server/adapters/fetch");
+  vi.unstubAllEnvs();
 });
 
-describe("isAllowedOrigin (dev)", () => {
+function mockRouteDependencies() {
+  vi.doMock("@api/app", () => ({
+    appRouter: {},
+    createTRPCContext: vi.fn(),
+  }));
+  vi.doMock("@trpc/server/adapters/fetch", () => ({
+    fetchRequestHandler: vi.fn(async () => new Response(null, { status: 204 })),
+  }));
+}
+
+function optionsRequest(
+  origin: string,
+  headers: HeadersInit = {}
+): NextRequest {
+  const requestHeaders = new Headers(headers);
+  requestHeaders.set("origin", origin);
+  return { headers: requestHeaders } as NextRequest;
+}
+
+describe("isAllowedWebOrigin (dev)", () => {
   beforeEach(() => {
     setupMocks({
       appUrl: "https://app.lightfast.localhost/",
+      platformUrl: "https://platform.lightfast.localhost",
       vercelEnv: undefined,
+      wwwUrl: "https://www.lightfast.localhost",
     });
   });
 
   it("admits the canonical app origin (matches even though appUrl has trailing slash)", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://app.lightfast.localhost")).toBe(true);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://app.lightfast.localhost")).toBe(true);
   });
 
-  it("admits the bare wildcard host", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://www.lightfast.localhost")).toBe(true);
+  it("rejects the direct local www origin; browser app traffic uses the MFE root", async () => {
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://www.lightfast.localhost")).toBe(false);
   });
 
-  it("admits a worktree-prefixed app origin via *.app.lightfast.localhost", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://feature.app.lightfast.localhost")).toBe(
-      true
+  it("rejects the direct local platform origin", async () => {
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://platform.lightfast.localhost")).toBe(
+      false
+    );
+  });
+
+  it("rejects a worktree-prefixed app origin that is not an exact env URL", async () => {
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://feature.app.lightfast.localhost")).toBe(
+      false
     );
   });
 
   it("rejects an unrelated origin", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://evil.com")).toBe(false);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://evil.com")).toBe(false);
   });
 
   it("rejects null/empty", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin(null)).toBe(false);
-    expect(isAllowedOrigin("")).toBe(false);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin(null)).toBe(false);
+    expect(isAllowedWebOrigin("")).toBe(false);
   });
 
   it("rejects malformed origin strings", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("not-a-url")).toBe(false);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("not-a-url")).toBe(false);
   });
 });
 
-describe("isAllowedOrigin (production)", () => {
+describe("isAllowedWebOrigin (production)", () => {
   beforeEach(() => {
     setupMocks({
       appUrl: "https://lightfast.ai",
@@ -83,14 +108,14 @@ describe("isAllowedOrigin (production)", () => {
   });
 
   it("admits only the canonical appUrl in non-dev", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://lightfast.ai")).toBe(true);
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://lightfast.ai")).toBe(true);
   });
 
   it("rejects portless wildcard origins in non-dev", async () => {
-    const { isAllowedOrigin } = await import("~/cors");
-    expect(isAllowedOrigin("https://app.lightfast.localhost")).toBe(false);
-    expect(isAllowedOrigin("https://feature.app.lightfast.localhost")).toBe(
+    const { isAllowedWebOrigin } = await import("~/cors");
+    expect(isAllowedWebOrigin("https://app.lightfast.localhost")).toBe(false);
+    expect(isAllowedWebOrigin("https://feature.app.lightfast.localhost")).toBe(
       false
     );
   });
@@ -183,5 +208,65 @@ describe("isPackagedDesktopRequest", () => {
         new Headers({ "x-lightfast-desktop": "true" })
       )
     ).toBe(false);
+  });
+});
+
+describe("tRPC OPTIONS route CORS headers", () => {
+  beforeEach(() => {
+    setupMocks({
+      appUrl: "https://app.lightfast.localhost/",
+      platformUrl: "https://platform.lightfast.localhost",
+      vercelEnv: undefined,
+      wwwUrl: "https://www.lightfast.localhost",
+    });
+    mockRouteDependencies();
+  });
+
+  it("echoes the direct app origin", async () => {
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(optionsRequest("https://app.lightfast.localhost"));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "https://app.lightfast.localhost"
+    );
+    expect(response.headers.get("access-control-allow-methods")).toBe(
+      "GET,POST,OPTIONS"
+    );
+    expect(response.headers.get("access-control-allow-credentials")).toBe(
+      "true"
+    );
+    expect(response.headers.get("vary")).toBe("Origin");
+  });
+
+  it("omits CORS headers for the direct www origin", async () => {
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(optionsRequest("https://www.lightfast.localhost"));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBeNull();
+    expect(response.headers.get("access-control-allow-credentials")).toBeNull();
+    expect(response.headers.get("vary")).toBeNull();
+  });
+
+  it("echoes the desktop dev localhost origin", async () => {
+    vi.stubEnv("NODE_ENV", "development");
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(optionsRequest("http://localhost:5173"));
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe(
+      "http://localhost:5173"
+    );
+  });
+
+  it("echoes packaged desktop Origin null only with the marker header", async () => {
+    const { OPTIONS } = await import("~/app/(trpc)/api/trpc/[trpc]/route");
+    const response = OPTIONS(
+      optionsRequest("null", { "x-lightfast-desktop": "1" })
+    );
+
+    expect(response.status).toBe(204);
+    expect(response.headers.get("access-control-allow-origin")).toBe("null");
   });
 });

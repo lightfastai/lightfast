@@ -54,13 +54,9 @@ describe("origins (dev — NEXT_PUBLIC_VERCEL_ENV defaults to development)", () 
     expect(platformUrl).toBe("https://platform.lightfast.localhost");
   });
 
-  it("devOriginPatterns is the host set of the injected URLs", async () => {
-    const { devOriginPatterns } = await import("../origins");
-    expect(devOriginPatterns).toEqual([
-      "app.lightfast.localhost",
-      "www.lightfast.localhost",
-      "platform.lightfast.localhost",
-    ]);
+  it("does not export a generic dev origin pattern list", async () => {
+    const origins = await import("../origins");
+    expect("devOriginPatterns" in origins).toBe(false);
   });
 });
 
@@ -73,11 +69,6 @@ describe("origins (dev — NEXT_PUBLIC_<APP>_URL unset)", () => {
     const { appUrl } = await import("../origins");
     expect(appUrl).toBe("https://lightfast.ai");
   });
-
-  it("devOriginPatterns excludes lightfast.ai (the prod fallback)", async () => {
-    const { devOriginPatterns } = await import("../origins");
-    expect(devOriginPatterns).toEqual([]);
-  });
 });
 
 describe("origins (dev — NEXT_PUBLIC_<APP>_URL with port)", () => {
@@ -89,13 +80,19 @@ describe("origins (dev — NEXT_PUBLIC_<APP>_URL with port)", () => {
     });
   });
 
-  it("devOriginPatterns keeps the port in the host string", async () => {
-    const { devOriginPatterns } = await import("../origins");
-    expect(devOriginPatterns).toEqual([
-      "localhost:3000",
-      "localhost:3001",
-      "localhost:3002",
-    ]);
+  it("appUrl resolves to the injected localhost URL", async () => {
+    const { appUrl } = await import("../origins");
+    expect(appUrl).toBe("http://localhost:3000");
+  });
+
+  it("wwwUrl resolves to the injected localhost URL", async () => {
+    const { wwwUrl } = await import("../origins");
+    expect(wwwUrl).toBe("http://localhost:3001");
+  });
+
+  it("platformUrl resolves to the injected localhost URL", async () => {
+    const { platformUrl } = await import("../origins");
+    expect(platformUrl).toBe("http://localhost:3002");
   });
 });
 
@@ -118,11 +115,6 @@ describe("origins (production — VRP unset)", () => {
   it("platformUrl falls back to its production literal when VRP is empty", async () => {
     const { platformUrl } = await import("../origins");
     expect(platformUrl).toBe("https://lightfast-platform.vercel.app");
-  });
-
-  it("devOriginPatterns is empty", async () => {
-    const { devOriginPatterns } = await import("../origins");
-    expect(devOriginPatterns).toEqual([]);
   });
 });
 
