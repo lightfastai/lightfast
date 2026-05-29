@@ -7,6 +7,7 @@ import {
 } from "@emulators/github";
 
 import { createGitHubEmulatorSeed, GITHUB_EMULATOR_FIXTURES } from "./fixtures";
+import { createGitHubCompatibleFetch } from "./github-compatible-routes";
 
 export interface StartGitHubEmulatorInput {
   appOrigin?: string;
@@ -180,7 +181,13 @@ export async function startGitHubEmulator(
   seed();
 
   const httpServer: Server = serve({
-    fetch: server.app.fetch,
+    fetch: createGitHubCompatibleFetch({
+      appOrigin,
+      fallbackFetch: server.app.fetch,
+      publicOrigin,
+      store: server.store,
+      tokenMap: server.tokenMap,
+    }),
     hostname: host,
     port,
   });

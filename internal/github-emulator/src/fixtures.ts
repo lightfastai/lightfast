@@ -115,30 +115,19 @@ export function createGitHubEmulatorSeed(
 }
 
 export function getGitHubEmulatorEnv(
-  appOrigin: string,
+  _appOrigin: string,
   emulatorOrigin: string = GITHUB_EMULATOR_FIXTURES.origin
 ) {
-  const installUrl = new URL("/api/dev/github/install", appOrigin);
-  installUrl.searchParams.set("emulator_origin", emulatorOrigin);
-  installUrl.searchParams.set(
-    "installation_id",
-    String(GITHUB_EMULATOR_FIXTURES.installationId)
-  );
-  installUrl.searchParams.set(
-    "provider_account_login",
-    GITHUB_EMULATOR_FIXTURES.githubOrgLogin
-  );
-
   return {
     GITHUB_APP_ID: String(GITHUB_EMULATOR_FIXTURES.githubAppId),
     GITHUB_APP_SLUG: GITHUB_EMULATOR_FIXTURES.githubAppSlug,
     GITHUB_API_VERSION: "2022-11-28",
     GITHUB_APP_CLIENT_ID: GITHUB_EMULATOR_FIXTURES.oauthClientId,
     GITHUB_APP_CLIENT_SECRET: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
+    GITHUB_APP_ENDPOINT_ORIGIN: emulatorOrigin,
     GITHUB_APP_PRIVATE_KEY:
       GITHUB_EMULATOR_FIXTURES.githubAppPrivateKey.replace(/\n/g, "\\n"),
     GITHUB_APP_WEBHOOK_SECRET: GITHUB_EMULATOR_FIXTURES.githubWebhookSecret,
-    GITHUB_INSTALL_URL_OVERRIDE: installUrl.toString(),
   };
 }
 

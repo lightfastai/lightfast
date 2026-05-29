@@ -1,4 +1,4 @@
-import { createPrivateKey } from "node:crypto";
+import { createHash, createPrivateKey } from "node:crypto";
 import { SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -67,6 +67,14 @@ async function createAppJwt() {
     .setExpirationTime(now + 9 * 60)
     .setIssuer(String(GITHUB_EMULATOR_FIXTURES.githubAppId))
     .sign(key);
+}
+
+function createCodeChallenge(verifier: string) {
+  return createHash("sha256").update(verifier).digest("base64url");
+}
+
+function appCallbackUrl(path = "/api/github/oauth/callback") {
+  return new URL(path, "https://lightfast.localhost").toString();
 }
 
 beforeAll(async () => {
@@ -140,28 +148,115 @@ describe("@repo/github-emulator", () => {
     });
   });
 
-  it("prints the env values consumed by app and api packages", () => {
-    expect(getGitHubEmulatorEnv("https://lightfast.localhost")).toEqual(
-      expect.objectContaining({
-        GITHUB_APP_ID: String(GITHUB_EMULATOR_FIXTURES.githubAppId),
-        GITHUB_APP_SLUG: GITHUB_EMULATOR_FIXTURES.githubAppSlug,
-        GITHUB_INSTALL_URL_OVERRIDE:
-          "https://lightfast.localhost/api/dev/github/install?emulator_origin=http%3A%2F%2F127.0.0.1%3A4567&installation_id=1001&provider_account_login=lightfast-emulated",
-      })
+  it("redirects GitHub App install requests to the Lightfast setup callback", async () => {
+    const res = await fetch(
+      `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_123`,
+      { redirect: "manual" }
+    );
+
+    expect(res.status).toBe(302);
+    expect(res.headers.get("location")).toBe(
+      "https://lightfast.localhost/api/github/setup?installation_id=1001&setup_action=install&state=install_state_123"
     );
   });
 
-  it("prints install overrides for a custom emulator origin", () => {
-    expect(
-      getGitHubEmulatorEnv(
-        "https://lightfast.localhost",
-        "http://127.0.0.1:4568"
-      )
-    ).toEqual(
+  it("rejects install requests for an unknown GitHub App slug", async () => {
+    const res = await fetch(
+      `${emulator?.url}/apps/unknown/installations/new?state=install_state_123`,
+      { redirect: "manual" }
+    );
+
+    expect(res.status).toBe(404);
+    await expect(res.json()).resolves.toEqual({ message: "Not Found" });
+  });
+
+  it("performs OAuth authorize and token exchange with PKCE", async () => {
+    const codeVerifier = "verifier_123456789012345678901234567890";
+    const authorizeUrl = new URL(`${emulator?.url}/login/oauth/authorize`);
+    authorizeUrl.searchParams.set(
+      "client_id",
+      GITHUB_EMULATOR_FIXTURES.oauthClientId
+    );
+    authorizeUrl.searchParams.set("redirect_uri", appCallbackUrl());
+    authorizeUrl.searchParams.set("state", "oauth_state_123");
+    authorizeUrl.searchParams.set(
+      "code_challenge",
+      createCodeChallenge(codeVerifier)
+    );
+    authorizeUrl.searchParams.set("code_challenge_method", "S256");
+
+    const authorizeRes = await fetch(authorizeUrl, { redirect: "manual" });
+    expect(authorizeRes.status).toBe(302);
+    const callback = new URL(authorizeRes.headers.get("location") ?? "");
+    expect(callback.origin + callback.pathname).toBe(appCallbackUrl());
+    expect(callback.searchParams.get("state")).toBe("oauth_state_123");
+
+    const tokenRes = await fetch(`${emulator?.url}/login/oauth/access_token`, {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
+        client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
+        code: callback.searchParams.get("code"),
+        code_verifier: codeVerifier,
+        redirect_uri: appCallbackUrl(),
+      }),
+    });
+
+    expect(tokenRes.status).toBe(200);
+    await expect(tokenRes.json()).resolves.toMatchObject({
+      access_token: expect.stringMatching(/^gho_/),
+      token_type: "bearer",
+    });
+  });
+
+  it("returns the OAuth user and accessible app installations", async () => {
+    const userRes = await fetch(`${emulator?.url}/user`, {
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+
+    expect(userRes.status).toBe(200);
+    await expect(userRes.json()).resolves.toMatchObject({
+      login: GITHUB_EMULATOR_FIXTURES.githubUserLogin,
+    });
+
+    const installationsRes = await fetch(`${emulator?.url}/user/installations`, {
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+
+    expect(installationsRes.status).toBe(200);
+    await expect(installationsRes.json()).resolves.toMatchObject({
+      total_count: 1,
+      installations: [
+        expect.objectContaining({
+          id: GITHUB_EMULATOR_FIXTURES.installationId,
+          account: expect.objectContaining({
+            login: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+            type: "Organization",
+          }),
+          target_type: "Organization",
+        }),
+      ],
+    });
+  });
+
+  it("prints the env values consumed by app and api packages", () => {
+    expect(getGitHubEmulatorEnv("https://lightfast.localhost")).toEqual(
       expect.objectContaining({
-        GITHUB_INSTALL_URL_OVERRIDE:
-          "https://lightfast.localhost/api/dev/github/install?emulator_origin=http%3A%2F%2F127.0.0.1%3A4568&installation_id=1001&provider_account_login=lightfast-emulated",
+        GITHUB_APP_ENDPOINT_ORIGIN: GITHUB_EMULATOR_FIXTURES.origin,
+        GITHUB_APP_ID: String(GITHUB_EMULATOR_FIXTURES.githubAppId),
+        GITHUB_APP_SLUG: GITHUB_EMULATOR_FIXTURES.githubAppSlug,
       })
+    );
+    expect(getGitHubEmulatorEnv("https://lightfast.localhost")).not.toHaveProperty(
+      "GITHUB_INSTALL_URL_OVERRIDE"
     );
   });
 
@@ -198,14 +293,13 @@ describe("@repo/github-emulator", () => {
       formatGitHubEmulatorEnvString({
         GITHUB_APP_ID: "424242",
         GITHUB_APP_PRIVATE_KEY: "line1 line2\\nline3",
-        GITHUB_INSTALL_URL_OVERRIDE:
-          "https://lightfast.localhost/api/dev/github/install?emulator_origin=https%3A%2F%2Fgithub.lightfast.localhost&installation_id=1001",
+        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
       })
     ).toBe(
       [
         "GITHUB_APP_ID='424242'",
         "GITHUB_APP_PRIVATE_KEY='line1 line2\\nline3'",
-        "GITHUB_INSTALL_URL_OVERRIDE='https://lightfast.localhost/api/dev/github/install?emulator_origin=https%3A%2F%2Fgithub.lightfast.localhost&installation_id=1001'",
+        "GITHUB_APP_ENDPOINT_ORIGIN='https://github.lightfast.localhost'",
       ].join("\n")
     );
   });
