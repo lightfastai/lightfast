@@ -80,7 +80,7 @@ describe("BindGithubCard", () => {
   it("starts the GitHub installation flow and navigates externally", async () => {
     mutateAsyncMock.mockResolvedValue({
       installationUrl:
-        "https://app.lightfast.localhost/api/dev/github/install?state=abc",
+        "https://github.lightfast.localhost/apps/lightfast-local/installations/new?state=abc",
     });
 
     render(<BindGithubCard orgSlug="acme" />);
@@ -97,7 +97,7 @@ describe("BindGithubCard", () => {
       });
       expect(mutateAsyncMock).toHaveBeenCalledWith({ orgSlug: "acme" });
       expect(assignMock).toHaveBeenCalledWith(
-        "https://app.lightfast.localhost/api/dev/github/install?state=abc"
+        "https://github.lightfast.localhost/apps/lightfast-local/installations/new?state=abc"
       );
     });
     expect(reloadMock).not.toHaveBeenCalled();
