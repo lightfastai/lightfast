@@ -6,12 +6,20 @@ import { GITHUB_SETUP_PATH } from "@repo/github-app-contract";
 import { GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 
 interface PendingOAuthCode {
+  appId: number;
   clientId: string;
   codeChallenge: string;
   codeChallengeMethod: string;
   expiresAt: number;
   login: string;
   redirectUri: string;
+}
+
+interface OAuthUserToken {
+  appId: number;
+  clientId: string;
+  login: string;
+  scopes: string[];
 }
 
 interface GitHubCompatibleFetchInput {
@@ -23,6 +31,7 @@ interface GitHubCompatibleFetchInput {
 }
 
 const PENDING_CODES_KEY = "lightfast.github.oauth.pendingCodes";
+const OAUTH_USER_TOKENS_KEY = "lightfast.github.oauth.userTokens";
 const CODE_TTL_MS = 5 * 60 * 1000;
 
 function json(data: unknown, status = 200) {
@@ -42,6 +51,17 @@ function getPendingCodes(store: Store) {
   return codes;
 }
 
+function getOAuthUserTokens(store: Store) {
+  let tokens = store.getData<Map<string, OAuthUserToken>>(
+    OAUTH_USER_TOKENS_KEY
+  );
+  if (!tokens) {
+    tokens = new Map();
+    store.setData(OAUTH_USER_TOKENS_KEY, tokens);
+  }
+  return tokens;
+}
+
 function getBearerToken(request: Request) {
   const header = request.headers.get("authorization") ?? "";
   const match = /^Bearer\s+(.+)$/i.exec(header);
@@ -51,18 +71,21 @@ function getBearerToken(request: Request) {
 function authenticateUser(input: {
   request: Request;
   store: Store;
-  tokenMap: TokenMap;
 }) {
   const token = getBearerToken(input.request);
   if (!token) {
     return null;
   }
-  const authUser = input.tokenMap.get(token);
-  if (!authUser) {
+  const oauthToken = getOAuthUserTokens(input.store).get(token);
+  if (!oauthToken) {
     return null;
   }
   const gh = getGitHubStore(input.store);
-  return gh.users.findOneBy("login", authUser.login) ?? null;
+  const user = gh.users.findOneBy("login", oauthToken.login);
+  if (!user) {
+    return null;
+  }
+  return { oauthToken, user };
 }
 
 function validatePkce(input: { codeChallenge: string; codeVerifier: string }) {
@@ -203,6 +226,7 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
 
       const code = randomBytes(20).toString("hex");
       getPendingCodes(input.store).set(code, {
+        appId: GITHUB_EMULATOR_FIXTURES.githubAppId,
         clientId,
         codeChallenge,
         codeChallengeMethod,
@@ -229,7 +253,11 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       const codeVerifier = String(body.code_verifier ?? "");
       const redirectUri = String(body.redirect_uri ?? "");
       const oauthApp = gh.oauthApps.findOneBy("client_id", clientId);
-      const pending = getPendingCodes(input.store).get(code);
+      const pendingCodes = getPendingCodes(input.store);
+      const pending = pendingCodes.get(code);
+      if (pending?.expiresAt && pending.expiresAt < Date.now()) {
+        pendingCodes.delete(code);
+      }
       if (
         !oauthApp ||
         oauthApp.client_secret !== clientSecret ||
@@ -239,13 +267,16 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         pending.redirectUri !== redirectUri ||
         !validatePkce({ codeChallenge: pending.codeChallenge, codeVerifier })
       ) {
+        if (pending) {
+          pendingCodes.delete(code);
+        }
         return json({
           error: "bad_verification_code",
           error_description: "The code passed is incorrect or expired.",
         });
       }
 
-      getPendingCodes(input.store).delete(code);
+      pendingCodes.delete(code);
       const user = gh.users.findOneBy("login", pending.login);
       if (!user) {
         return json({
@@ -254,6 +285,12 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         });
       }
       const token = `gho_${randomBytes(20).toString("base64url")}`;
+      getOAuthUserTokens(input.store).set(token, {
+        appId: pending.appId,
+        clientId: pending.clientId,
+        login: user.login,
+        scopes: ["repo", "user", "read:org"],
+      });
       input.tokenMap.set(token, {
         id: user.id,
         login: user.login,
@@ -270,18 +307,17 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       const user = authenticateUser({
         request,
         store: input.store,
-        tokenMap: input.tokenMap,
       });
-      if (!user) {
+      if (!user?.user) {
         return json({ message: "Bad credentials" }, 401);
       }
       return json({
-        id: user.id,
-        login: user.login,
-        node_id: user.node_id,
-        type: user.type,
-        name: user.name,
-        email: user.email,
+        id: user.user.id,
+        login: user.user.login,
+        node_id: user.user.node_id,
+        type: user.user.type,
+        name: user.user.name,
+        email: user.user.email,
       });
     }
 
@@ -289,21 +325,25 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       const user = authenticateUser({
         request,
         store: input.store,
-        tokenMap: input.tokenMap,
       });
-      if (!user) {
+      if (!user?.user) {
         return json({ message: "Bad credentials" }, 401);
       }
-      const orgIds = userOrgIds({ store: input.store, userId: user.id });
+      const orgIds = userOrgIds({ store: input.store, userId: user.user.id });
       const installations = gh.appInstallations
         .all()
-        .filter(
-          (installation) =>
-            (installation.account_type === "Organization" &&
-              orgIds.has(installation.account_id)) ||
-            (installation.account_type === "User" &&
-              installation.account_id === user.id)
-        )
+        .filter((installation) => {
+          if (installation.app_id !== user.oauthToken.appId) {
+            return false;
+          }
+          if (installation.account_type === "Organization") {
+            return orgIds.has(installation.account_id);
+          }
+          return (
+            installation.account_type === "User" &&
+            installation.account_id === user.user.id
+          );
+        })
         .map((installation) =>
           formatInstallation({
             installationId: installation.installation_id,
