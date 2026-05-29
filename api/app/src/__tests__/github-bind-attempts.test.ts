@@ -38,15 +38,18 @@ describe("github bind attempts", () => {
   it("issues and consumes an install attempt with hashed state", async () => {
     const issued = await issueGitHubInstallAttempt({
       clerkOrgId: "org_1",
-      emulator: {
-        emulatorOrigin: "http://127.0.0.1:4567",
-        installationId: "1001",
-        providerAccountLogin: "lightfast-emulated",
-      },
       lightfastUserId: "user_1",
       orgSlug: "acme",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
+    expect(record).toEqual({
+      clerkOrgId: "org_1",
+      lightfastUserId: "user_1",
+      orgSlug: "acme",
+      stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(record).not.toHaveProperty("emulator");
+
     redisGetMock.mockResolvedValueOnce(record);
     redisGetdelMock.mockResolvedValueOnce(record);
 
@@ -55,14 +58,11 @@ describe("github bind attempts", () => {
     ).resolves.toMatchObject({
       clerkOrgId: "org_1",
       orgSlug: "acme",
-      emulator: { installationId: "1001" },
     });
 
     expect(redisSetMock).toHaveBeenCalledWith(
       "github-bind-install-attempt:attempt_123456789012345678901234",
-      expect.objectContaining({
-        stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
-      }),
+      record,
       { ex: 900 }
     );
   });
@@ -70,15 +70,18 @@ describe("github bind attempts", () => {
   it("looks up an install attempt without deleting it", async () => {
     const issued = await issueGitHubInstallAttempt({
       clerkOrgId: "org_1",
-      emulator: {
-        emulatorOrigin: "http://127.0.0.1:4567",
-        installationId: "1001",
-        providerAccountLogin: "lightfast-emulated",
-      },
       lightfastUserId: "user_1",
       orgSlug: "acme",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
+    expect(record).toEqual({
+      clerkOrgId: "org_1",
+      lightfastUserId: "user_1",
+      orgSlug: "acme",
+      stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(record).not.toHaveProperty("emulator");
+
     redisGetMock.mockResolvedValueOnce(record);
 
     await expect(
@@ -86,7 +89,6 @@ describe("github bind attempts", () => {
     ).resolves.toMatchObject({
       clerkOrgId: "org_1",
       orgSlug: "acme",
-      emulator: { installationId: "1001" },
     });
 
     expect(redisGetMock).toHaveBeenCalledWith(
@@ -99,16 +101,21 @@ describe("github bind attempts", () => {
     const issued = await issueGitHubOAuthAttempt({
       clerkOrgId: "org_1",
       codeVerifier: "verifier",
-      emulator: {
-        emulatorOrigin: "http://127.0.0.1:4567",
-        installationId: "1001",
-        providerAccountLogin: "lightfast-emulated",
-      },
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
+    expect(record).toEqual({
+      clerkOrgId: "org_1",
+      codeVerifier: "verifier",
+      lightfastUserId: "user_1",
+      orgSlug: "acme",
+      providerInstallationId: "1001",
+      stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(record).not.toHaveProperty("emulator");
+
     redisGetMock.mockResolvedValueOnce(record);
 
     await expect(
@@ -132,16 +139,21 @@ describe("github bind attempts", () => {
     const issued = await issueGitHubOAuthAttempt({
       clerkOrgId: "org_1",
       codeVerifier: "verifier",
-      emulator: {
-        emulatorOrigin: "http://127.0.0.1:4567",
-        installationId: "1001",
-        providerAccountLogin: "lightfast-emulated",
-      },
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
+    expect(record).toEqual({
+      clerkOrgId: "org_1",
+      codeVerifier: "verifier",
+      lightfastUserId: "user_1",
+      orgSlug: "acme",
+      providerInstallationId: "1001",
+      stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(record).not.toHaveProperty("emulator");
+
     redisGetMock.mockResolvedValueOnce(record);
     redisGetdelMock.mockResolvedValueOnce(null);
 
@@ -154,16 +166,21 @@ describe("github bind attempts", () => {
     const issued = await issueGitHubOAuthAttempt({
       clerkOrgId: "org_1",
       codeVerifier: "verifier",
-      emulator: {
-        emulatorOrigin: "http://127.0.0.1:4567",
-        installationId: "1001",
-        providerAccountLogin: "lightfast-emulated",
-      },
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
+    expect(record).toEqual({
+      clerkOrgId: "org_1",
+      codeVerifier: "verifier",
+      lightfastUserId: "user_1",
+      orgSlug: "acme",
+      providerInstallationId: "1001",
+      stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+    });
+    expect(record).not.toHaveProperty("emulator");
+
     redisGetMock.mockResolvedValueOnce(record);
 
     await expect(

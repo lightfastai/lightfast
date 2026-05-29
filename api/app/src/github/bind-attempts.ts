@@ -12,15 +12,8 @@ const stateEnvelopeSchema = z.object({
   nonce: z.string().min(16),
 });
 
-export interface GitHubEmulatorAttemptContext {
-  emulatorOrigin: string;
-  installationId: string;
-  providerAccountLogin: string;
-}
-
 export interface GitHubBindInstallAttemptRecord {
   clerkOrgId: string;
-  emulator: GitHubEmulatorAttemptContext;
   lightfastUserId: string;
   orgSlug: string;
   stateHash: string;
@@ -102,7 +95,6 @@ async function consumeGitHubAttempt<T extends { stateHash: string }>(input: {
 
 export async function issueGitHubInstallAttempt(input: {
   clerkOrgId: string;
-  emulator: GitHubEmulatorAttemptContext;
   lightfastUserId: string;
   orgSlug: string;
 }) {
@@ -110,7 +102,6 @@ export async function issueGitHubInstallAttempt(input: {
   const state = encodeState({ attemptId, nonce: nanoid(32) });
   const record: GitHubBindInstallAttemptRecord = {
     clerkOrgId: input.clerkOrgId,
-    emulator: input.emulator,
     lightfastUserId: input.lightfastUserId,
     orgSlug: input.orgSlug,
     stateHash: hashState(state),
@@ -140,7 +131,6 @@ export async function lookupGitHubInstallAttempt(input: {
 export async function issueGitHubOAuthAttempt(input: {
   clerkOrgId: string;
   codeVerifier: string;
-  emulator: GitHubEmulatorAttemptContext;
   lightfastUserId: string;
   orgSlug: string;
   providerInstallationId: string;
@@ -150,7 +140,6 @@ export async function issueGitHubOAuthAttempt(input: {
   const record: GitHubBindOAuthAttemptRecord = {
     clerkOrgId: input.clerkOrgId,
     codeVerifier: input.codeVerifier,
-    emulator: input.emulator,
     lightfastUserId: input.lightfastUserId,
     orgSlug: input.orgSlug,
     providerInstallationId: input.providerInstallationId,
