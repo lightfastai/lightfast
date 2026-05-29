@@ -20,6 +20,19 @@ export interface RegisterContractToolsOptions {
   separator?: string;
 }
 
+function toStructuredContent(result: unknown): Record<string, unknown> {
+  if (result && typeof result === "object" && !Array.isArray(result)) {
+    return result as Record<string, unknown>;
+  }
+
+  return { result };
+}
+
+function stringifyResult(result: unknown): string {
+  const json = JSON.stringify(result, null, 2);
+  return json ?? String(result);
+}
+
 /**
  * Walk an oRPC contract router and register each procedure as an MCP tool.
  *
@@ -74,8 +87,15 @@ export function registerContractTools(
           // Without inputSchema: args = [extra]
           const input = def.inputSchema ? args[0] : undefined;
           const result = input === undefined ? await fn() : await fn(input);
+          const structuredContent = toStructuredContent(result);
           return {
-            structuredContent: result as Record<string, unknown>,
+            content: [
+              {
+                type: "text" as const,
+                text: stringifyResult(result),
+              },
+            ],
+            structuredContent,
           };
         } catch (error) {
           return {

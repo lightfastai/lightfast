@@ -62,6 +62,12 @@ jobs:
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: pnpm turbo typecheck --affected --continue --summarize
 
+      - name: Test affected public oRPC surface
+        env:
+          SKIP_ENV_VALIDATION: "true"
+          TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: pnpm turbo test --affected --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@vendor/mcp --continue --summarize
+
       - name: Check boundaries
         run: pnpm turbo boundaries
 

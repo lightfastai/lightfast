@@ -70,4 +70,76 @@ describe("createLightfast", () => {
 
     expect(capturedUrl).toBe("https://example.test/api/v1/system/health");
   });
+
+  it("posts signal creation requests to the contract route", async () => {
+    let lastRequest: { body: unknown; method: string; url: string } | undefined;
+    const fetchMock = vi.fn(async (input: Request) => {
+      lastRequest = {
+        body: await input.json(),
+        method: input.method,
+        url: input.url,
+      };
+      return new Response(
+        JSON.stringify({
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+          status: "queued",
+        }),
+        { status: 202, headers: { "content-type": "application/json" } }
+      );
+    });
+
+    const lf = createLightfast("lf_test", {
+      baseUrl: "https://example.test",
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+    const result = await lf.signals.create({ input: "Classify this" });
+
+    expect(result).toEqual({
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      status: "queued",
+    });
+    expect(lastRequest).toEqual({
+      body: { input: "Classify this" },
+      method: "POST",
+      url: "https://example.test/api/v1/signals",
+    });
+  });
+
+  it("interpolates signal ids into contract paths", async () => {
+    let lastRequest: { method: string; url: string } | undefined;
+    const fetchMock = vi.fn(async (input: Request) => {
+      lastRequest = {
+        method: input.method,
+        url: input.url,
+      };
+      return new Response(
+        JSON.stringify({
+          classification: null,
+          createdAt: "2026-05-21T00:00:00.000Z",
+          id: "signal_123e4567-e89b-12d3-a456-426614174000",
+          input: "Classify this",
+          status: "queued",
+          updatedAt: "2026-05-21T00:01:00.000Z",
+        }),
+        { status: 200, headers: { "content-type": "application/json" } }
+      );
+    });
+
+    const lf = createLightfast("lf_test", {
+      baseUrl: "https://example.test/api/v1",
+      fetch: fetchMock as unknown as typeof fetch,
+    });
+    const result = await lf.signals.get({
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+    });
+
+    expect(result).toMatchObject({
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      status: "queued",
+    });
+    expect(lastRequest).toEqual({
+      method: "GET",
+      url: "https://example.test/api/v1/signals/signal_123e4567-e89b-12d3-a456-426614174000",
+    });
+  });
 });

@@ -4,14 +4,24 @@ on:
   push:
     branches: [main]
     paths:
+      - 'api/app/src/orpc/**'
+      - 'api/app/src/__tests__/signal-orpc.test.ts'
+      - 'apps/app/src/app/(api)/api/v1/**'
       - 'core/**'
+      - 'packages/api-contract/**'
+      - 'vendor/mcp/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - '.github/workflows/ci-core.yml'
   pull_request:
     branches: [main]
     paths:
+      - 'api/app/src/orpc/**'
+      - 'api/app/src/__tests__/signal-orpc.test.ts'
+      - 'apps/app/src/app/(api)/api/v1/**'
       - 'core/**'
+      - 'packages/api-contract/**'
+      - 'vendor/mcp/**'
       - 'pnpm-lock.yaml'
       - 'pnpm-workspace.yaml'
       - '.github/workflows/ci-core.yml'
@@ -50,17 +60,17 @@ jobs:
       - name: Lint (biome)
         run: pnpm turbo //#check --summarize
 
-      - name: Type check affected core packages
+      - name: Type check affected public oRPC surface
         env:
           SKIP_ENV_VALIDATION: "true"
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: pnpm turbo typecheck --affected --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue --summarize
+        run: pnpm turbo typecheck --affected --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --filter=@vendor/mcp --continue --summarize
 
-      - name: Test affected core packages
+      - name: Test affected public oRPC surface
         env:
           SKIP_ENV_VALIDATION: "true"
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: pnpm turbo test --affected --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --continue --summarize
+        run: pnpm turbo test --affected --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --filter=@vendor/mcp --continue --summarize
 
       - name: Cache report
         if: always()
