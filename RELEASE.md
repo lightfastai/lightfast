@@ -10,25 +10,85 @@ This repo publishes three npm packages from `core/`:
 
 ### SDK + MCP
 
-`lightfast` and `@lightfastai/mcp` are one release unit.
+`lightfast` and `@lightfastai/mcp` are one fixed release unit.
 
-- They are fixed together in `.changeset/config.json`.
-- They are currently released through the root Changesets prerelease flow.
-- A changeset for either package must include both packages.
-- GitHub Actions creates the Version Packages PR and publishes after that PR is merged.
+- Workflow: `.github/workflows/publish-sdk-mcp.yml`
+- npm tag: `latest`
+- Versioning: root Changesets, fixed together in `.changeset/config.json`
+- Rule: a changeset for either package must include both packages
+- Guardrail: the workflow rejects `@lightfastai/cli` changesets
+
+The repo is not in Changesets prerelease mode. The next Version Packages PR promotes SDK/MCP from the checked-in `0.2.1` burned-version baseline to stable `0.3.0`.
 
 ### CLI
 
 `@lightfastai/cli` is independent from SDK/MCP.
 
-- It is not in the SDK/MCP fixed version group.
-- It should ship as a stable CLI package on the `latest` npm tag.
-- The first CLI release is intentionally local/manual and must not happen until explicitly approved.
-- After the first package is published and smoke-tested, add a dedicated CLI GitHub workflow for the second release.
+- Workflow: `.github/workflows/publish-cli.yml`
+- npm tag: `latest`
+- Versioning: manual `core/cli/package.json` and `core/cli/CHANGELOG.md` changes through a normal PR
+- Rule: do not create CLI changesets
+- Guardrail: the workflow rejects prerelease versions, already-published versions, and CLI changesets
 
-Root Changesets is currently in prerelease mode, so do not add CLI to the existing root Changesets release flow unless the intent changes to alpha CLI releases.
+## SDK + MCP Stable Promotion
 
-## SDK + MCP Workflow
+Use this once to put SDK/MCP on the npm `latest` tag at `0.3.0`.
+
+1. Merge the release automation PR.
+2. In npm trusted publishing, configure both packages to trust `.github/workflows/publish-sdk-mcp.yml`.
+3. Let `Publish SDK + MCP` run on `main`. It should open or update the Version Packages PR.
+4. Review the Version Packages PR before queueing it:
+   - `lightfast` and `@lightfastai/mcp` versions are both `0.3.0`.
+   - Neither version contains a prerelease suffix.
+   - Both package manifests have `publishConfig.tag` set to `latest`.
+   - No `@lightfastai/cli` version or changelog change is present.
+5. Merge the Version Packages PR through merge queue.
+6. Confirm `Publish SDK + MCP` publishes both packages to npm `latest`.
+
+Verify npm:
+
+```bash
+npm view lightfast@latest version
+npm view @lightfastai/mcp@latest version
+npm view lightfast dist-tags
+npm view @lightfastai/mcp dist-tags
+```
+
+Smoke-test the SDK from a clean temporary project:
+
+```bash
+TMPDIR=$(mktemp -d)
+cd "$TMPDIR"
+npm init -y
+npm install lightfast@latest
+node -e "import('lightfast').then(m => console.log(typeof m.createLightfast, m.VERSION))"
+```
+
+Expected output:
+
+```text
+function 0.3.0
+```
+
+Smoke-test the MCP binary without an API key:
+
+```bash
+npm exec --yes --package @lightfastai/mcp@latest -- lightfast-mcp
+```
+
+Expected output with non-zero exit:
+
+```text
+LIGHTFAST_API_KEY environment variable is required
+```
+
+If a bound `lf_` key is available, run the optional live API smoke:
+
+```bash
+LIGHTFAST_E2E_API_KEY=lf_... LIGHTFAST_E2E_APP_URL=https://app.lightfast.localhost pnpm --filter @lightfast/e2e sdk
+```
+
+## Routine SDK + MCP Releases
 
 ### 1. Make oRPC or Package Changes
 
@@ -86,7 +146,7 @@ Add the implementation PR to GitHub merge queue. Do not admin-merge or bypass br
 The `merge_group` run for `.github/workflows/merge-queue.yml` is the real gate. It must pass:
 
 - Full quality checks: lint, typecheck, boundaries, and Knip.
-- Core build/test for `lightfast`, `@lightfastai/mcp`, and CLI.
+- Core build/test passes. Merge queue verifies CLI build output as repo health, but CLI is not part of the SDK/MCP release unit.
 - Public oRPC package tests for `@repo/api-contract`, `@api/app`, `lightfast`, and `@lightfastai/mcp`.
 - Desktop package/e2e jobs.
 - CodeQL.
@@ -113,93 +173,60 @@ Describe the SDK and MCP change.
 
 ### 5. Merge the Version Packages PR
 
-When the changeset lands on `main`, `.github/workflows/release.yml` creates or updates the Version Packages PR. Review the generated versions and changelogs, then merge that PR to publish.
+When the changeset lands on `main`, `.github/workflows/publish-sdk-mcp.yml` creates or updates the Version Packages PR. Review the generated versions and changelogs, then merge that PR to publish.
 
 Before queueing the Version Packages PR, confirm:
 
 - `lightfast` and `@lightfastai/mcp` versions match.
-- `@lightfastai/cli` does not change unless explicitly intended.
+- No changeset or generated version/changelog change for `@lightfastai/cli` is present.
 - Changelogs accurately describe the SDK/MCP change.
 - No private workspace package is included in packed manifests.
-- `.changeset/pre.json` is formatted by `pnpm check`.
+- Changesets output is formatted by `pnpm check`.
 
 Release PRs created by `GITHUB_TOKEN` may not trigger required PR checks. If checks do not appear, push a no-op or formatting commit to the release branch, or replace `GITHUB_TOKEN` with an approved release bot token/App that is allowed to trigger workflows.
 
-Merge the Version Packages PR through merge queue. The merge to `main` triggers `.github/workflows/release.yml` again.
+Merge the Version Packages PR through merge queue. The merge to `main` triggers `.github/workflows/publish-sdk-mcp.yml` again.
 
-### 6. Publish the SDK + MCP Alpha
+### 6. Publish SDK + MCP
 
-After the Version Packages PR merges, `Release lightfast` runs on `main`.
+After the Version Packages PR merges, `Publish SDK + MCP` runs on `main`.
 
-The release workflow:
+The workflow:
 
 1. Installs with `pnpm install --frozen-lockfile`.
-2. Builds publishable core packages.
-3. Tests the contract, SDK, and MCP package surfaces.
-4. Packs `core/lightfast` and `core/mcp`.
-5. Validates tarball manifests to catch private workspace dependency leaks.
-6. Publishes unpublished alpha packages with `scripts/publish-lightfast-alpha.mjs`.
-7. Verifies `lightfast@alpha` and `@lightfastai/mcp@alpha` resolve to the same version.
+2. Rejects changesets that include `@lightfastai/cli`.
+3. Builds `lightfast` and `@lightfastai/mcp`.
+4. Tests the contract, SDK, and MCP package surfaces.
+5. Packs `core/lightfast` and `core/mcp`.
+6. Validates tarball manifests to catch private workspace dependency leaks.
+7. Publishes unpublished stable packages with `pnpm changeset publish`.
+8. Verifies `lightfast@latest` and `@lightfastai/mcp@latest` resolve to the same stable version.
 
-SDK/MCP publishing uses npm trusted publishing through GitHub Actions OIDC. Configure npm trusted publisher automation for both packages before publishing:
+SDK/MCP publishing uses npm trusted publishing through GitHub Actions OIDC. Configure npm trusted publisher automation for both packages:
 
 - Package: `lightfast`
 - Package: `@lightfastai/mcp`
 - Repository: `lightfastai/lightfast`
-- Workflow file: `.github/workflows/release.yml`
+- Workflow file: `.github/workflows/publish-sdk-mcp.yml`
 
-The alpha publish script intentionally uses `pnpm publish --tag alpha --access public --no-git-checks`. Changesets still creates Version Packages PRs and GitHub releases, but direct pnpm publish avoids Changesets CLI's prerelease-mode restriction on custom `--tag`.
+## CLI Workflow
 
-### 7. Verify npm and Smoke-Test Published Packages
+Use `.github/workflows/publish-cli.yml` for CLI releases after a normal PR updates `core/cli/package.json` and `core/cli/CHANGELOG.md`.
 
-Verify npm tags:
+Do not:
 
-```bash
-npm view lightfast@alpha version
-npm view @lightfastai/mcp@alpha version
-npm view lightfast dist-tags
-npm view @lightfastai/mcp dist-tags
-```
+- Add a `.changeset/*.md` entry for `@lightfastai/cli`.
+- Use `.github/workflows/publish-sdk-mcp.yml` for CLI.
+- Run `pnpm changeset publish` for CLI.
 
-Smoke-test the SDK from a clean temporary project:
+### 1. Prepare the CLI Release PR
 
-```bash
-TMPDIR=$(mktemp -d)
-cd "$TMPDIR"
-npm init -y
-npm install lightfast@alpha
-node -e "import('lightfast').then(m => console.log(typeof m.createLightfast, m.VERSION))"
-```
+Update:
 
-Expected output:
+- `core/cli/package.json`
+- `core/cli/CHANGELOG.md`
 
-```text
-function <alpha-version>
-```
-
-Smoke-test the MCP binary without an API key:
-
-```bash
-npm exec --yes --package @lightfastai/mcp@alpha -- lightfast-mcp
-```
-
-Expected output with non-zero exit:
-
-```text
-LIGHTFAST_API_KEY environment variable is required
-```
-
-If a bound `lf_` key is available, run the optional live API smoke:
-
-```bash
-LIGHTFAST_E2E_API_KEY=lf_... LIGHTFAST_E2E_APP_URL=https://app.lightfast.localhost pnpm --filter @lightfast/e2e sdk
-```
-
-## CLI First Release Workflow
-
-The first `@lightfastai/cli` publish is local/manual. Do not run the publish command until the release owner gives explicit approval.
-
-### 1. Preflight
+Before opening the PR, run:
 
 ```bash
 pnpm --filter @lightfastai/cli build
@@ -212,30 +239,37 @@ Pack and inspect the tarball:
 ```bash
 SCRATCH=$(mktemp -d)
 pnpm --dir core/cli pack --pack-destination "$SCRATCH"
-tar -tzf "$SCRATCH"/lightfastai-cli-*.tgz
-tar -xzOf "$SCRATCH"/lightfastai-cli-*.tgz package/package.json | jq '{name, version, bin, files, dependencies, publishConfig}'
-npm exec --yes --package "$SCRATCH"/lightfastai-cli-*.tgz -- lightfast --version
-npm exec --yes --package "$SCRATCH"/lightfastai-cli-*.tgz -- lightfast --help
+CLI_TARBALL="$(find "$SCRATCH" -name 'lightfastai-cli-*.tgz' -print -quit)"
+tar -tzf "$CLI_TARBALL"
+tar -xzOf "$CLI_TARBALL" package/package.json | jq '{name, version, bin, files, dependencies, publishConfig}'
+npm exec --yes --package "$CLI_TARBALL" -- lightfast --version
+npm exec --yes --package "$CLI_TARBALL" -- lightfast --help
 ```
 
-### 2. Publish After Approval
+### 2. Publish CLI
 
-Publish the exact tarball inspected above. This avoids repacking different contents.
+After the CLI release PR merges to `main`, run `Publish CLI` manually with the expected version from `core/cli/package.json`.
 
-```bash
-npm publish "$SCRATCH"/lightfastai-cli-0.1.0.tgz --access public --tag latest
-```
+The workflow:
 
-Local publishing will not include npm provenance. The second release workflow should publish from GitHub Actions with OIDC provenance.
+1. Rejects prerelease CLI versions.
+2. Rejects versions that already exist on npm.
+3. Rejects CLI changesets.
+4. Builds, tests, and typechecks `@lightfastai/cli`.
+5. Packs `core/cli`.
+6. Validates the packed manifest and file list.
+7. Smoke-runs `lightfast --version` and `lightfast --help` from the tarball.
+8. Publishes that exact tarball to npm `latest` with provenance.
+9. Verifies `@lightfastai/cli@latest`.
 
-### 3. Verify npm
+### 3. Verify CLI
 
 ```bash
 npm view @lightfastai/cli version
 npm view @lightfastai/cli dist-tags
-npm exec --yes --package @lightfastai/cli -- lightfast --version
-npm exec --yes --package @lightfastai/cli -- lightfast --help
-npm exec --yes --package @lightfastai/cli -- lightfast whoami
+npm exec --yes --package @lightfastai/cli@latest -- lightfast --version
+npm exec --yes --package @lightfastai/cli@latest -- lightfast --help
+npm exec --yes --package @lightfastai/cli@latest -- lightfast whoami
 ```
 
 `whoami` should fail cleanly when no session exists:
@@ -244,28 +278,17 @@ npm exec --yes --package @lightfastai/cli -- lightfast whoami
 Not signed in. Run `lightfast login`.
 ```
 
-## CLI Second Release Workflow
-
-After `@lightfastai/cli@0.1.0` is published and verified, add a dedicated workflow such as `.github/workflows/release-cli.yml`.
-
-Recommended workflow shape:
-
-1. Trigger manually with `workflow_dispatch` inputs for version bump and npm tag, or trigger on CLI release tags like `@lightfastai/cli@0.1.1`.
-2. Check out the repo and install with `pnpm install --frozen-lockfile`.
-3. Run `pnpm --filter @lightfastai/cli build`.
-4. Run `pnpm --filter @lightfastai/cli test`.
-5. Run `pnpm --filter @lightfastai/cli typecheck`.
-6. Pack with `pnpm --dir core/cli pack --pack-destination "$RUNNER_TEMP/cli-pack"`.
-7. Inspect the packed manifest and smoke-run `lightfast --version` plus `lightfast --help` from the tarball.
-8. Publish the inspected tarball with `NPM_CONFIG_PROVENANCE=true`.
-9. Verify `npm view @lightfastai/cli@latest version`.
-10. Smoke-run the published package with `npm exec --yes --package @lightfastai/cli -- lightfast --version`.
-
-Keep this workflow separate from `.github/workflows/release.yml` while SDK/MCP remain in prerelease mode.
-
 ## Package Validation
 
-The CLI package is intended to be self-contained:
+### SDK + MCP
+
+- `core/lightfast/package.json` must not include private workspace runtime dependencies.
+- `core/mcp/package.json` must not include private workspace runtime dependencies.
+- The SDK packed manifest should only expose approved `@orpc/*` runtime dependencies.
+- The MCP packed manifest should only expose `@modelcontextprotocol/sdk` as a runtime dependency.
+- Neither SDK nor MCP stable package versions may contain a prerelease suffix.
+
+### CLI
 
 - `core/cli/package.json` should not have runtime `dependencies`.
 - `core/cli/tsup.config.ts` should bundle CLI runtime libraries with `noExternal`.
@@ -275,54 +298,38 @@ The CLI package is intended to be self-contained:
 - `dist/bin.mjs` must start with `#!/usr/bin/env node` and be executable.
 - The packed manifest must not include private workspace packages or unresolved `workspace:` / `catalog:` ranges.
 
-Run:
-
-```bash
-SCRATCH=$(mktemp -d)
-pnpm --filter @lightfastai/cli build
-pnpm --dir core/cli pack --pack-destination "$SCRATCH"
-tar -xzOf "$SCRATCH"/lightfastai-cli-*.tgz package/package.json | jq '{name, version, bin, files, dependencies, publishConfig}'
-```
-
 ## Troubleshooting
 
-### oRPC contract coverage fails
+### SDK/MCP latest still points at an alpha
 
-`api/app/src/orpc/__tests__/contract-coverage.test.ts` fails when the public contract exposes a procedure that the API router does not implement. Add the API router implementation, or remove/rename the contract route if it was not intended to ship.
+Do not repair this by moving `latest` to another alpha. Publish the stable SDK/MCP Version Packages PR through `.github/workflows/publish-sdk-mcp.yml`. After stable publish, verify:
 
-### SDK/MCP tarball manifest validation fails
+```bash
+npm view lightfast@latest version
+npm view @lightfastai/mcp@latest version
+```
 
-The release workflow packs `core/lightfast` and `core/mcp` before publishing. A failure usually means a private workspace dependency, unresolved `workspace:` range, or unexpected runtime dependency leaked into a public package. Move private internals to dev dependencies, bundle them, or expose only approved public runtime dependencies.
+### SDK/MCP stable publish is rejected
+
+If the Version Packages PR is not producing stable `latest` package manifests, inspect:
+
+```bash
+jq '{name, version, publishConfig}' core/lightfast/package.json core/mcp/package.json
+```
 
 ### SDK/MCP npm publish fails
 
-If the log says `No NPM_TOKEN found, but OIDC is available`, the workflow is using npm trusted publishing. A registry `404` during publish means npm does not consider the workflow authorized for that package or the publish command path is not using the same toolchain as the trusted-publishing path.
+If the log says `No NPM_TOKEN found, but OIDC is available`, the workflow is using npm trusted publishing. A registry `404` during publish usually means npm does not consider the workflow authorized for that package.
 
-Use the current publish script path:
+Confirm npm trusted publisher settings:
 
-```bash
-node scripts/publish-lightfast-alpha.mjs
-```
+- Repository: `lightfastai/lightfast`
+- Workflow file: `.github/workflows/publish-sdk-mcp.yml`
+- Packages: `lightfast`, `@lightfastai/mcp`
 
-Do not use `pnpm changeset publish --tag alpha` while Changesets is in prerelease mode. Changesets rejects custom tags in pre mode, so the workflow publishes with the focused pnpm shim instead.
+### CLI publish fails with an already-published version
 
-### SDK/MCP alpha tags drift
-
-Check live npm tags:
-
-```bash
-npm view lightfast dist-tags
-npm view @lightfastai/mcp dist-tags
-```
-
-The release workflow fails if `lightfast@alpha` and `@lightfastai/mcp@alpha` resolve to different versions. Repair tags explicitly only after confirming the intended version:
-
-```bash
-npm dist-tag add lightfast@<version> alpha
-npm dist-tag add @lightfastai/mcp@<version> alpha
-```
-
-An earlier failed alpha setup may leave `latest` pointing at an alpha version. Do not rely on `latest` for SDK/MCP prereleases; verify the `alpha` tag directly until a stable release intentionally repoints `latest`.
+Do not retry with the same version. Bump `core/cli/package.json`, update `core/cli/CHANGELOG.md`, rerun validation, and publish the new version after approval.
 
 ### CLI tarball contains `@repo/*` dependencies
 
@@ -332,19 +339,14 @@ Move private workspace packages from `dependencies` to `devDependencies` and bun
 
 Use `pnpm pack`, not `npm pack`, for local validation. `pnpm pack` understands workspace and catalog protocols.
 
-### CLI publish fails with an already-published version
-
-Do not retry with the same version. Bump `core/cli/package.json`, update `core/cli/CHANGELOG.md`, rerun validation, and publish the new version after approval.
-
 ## Command Reference
 
 ```bash
 # SDK/MCP
 pnpm verify:orpc
 pnpm changeset
-pnpm changeset pre enter alpha
-pnpm changeset pre exit
 pnpm turbo run build --filter lightfast --filter @lightfastai/mcp
+pnpm publish:sdk-mcp
 
 # CLI
 pnpm --filter @lightfastai/cli test
@@ -354,7 +356,7 @@ SCRATCH=$(mktemp -d)
 pnpm --dir core/cli pack --pack-destination "$SCRATCH"
 
 # npm inspection
-npm view lightfast versions
+npm view lightfast dist-tags
 npm view @lightfastai/mcp dist-tags
-npm view @lightfastai/cli version
+npm view @lightfastai/cli dist-tags
 ```

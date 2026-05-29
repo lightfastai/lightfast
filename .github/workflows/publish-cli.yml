@@ -1,0 +1,169 @@
+name: Publish CLI
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Expected @lightfastai/cli version from core/cli/package.json
+        required: true
+        type: string
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  publish:
+    name: Publish CLI
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      EXPECTED_VERSION: ${{ inputs.version }}
+      TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
+      TURBO_TEAM: ${{ vars.TURBO_TEAM }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Check CLI release input
+        run: |
+          PACKAGE_VERSION="$(jq -r '.version' core/cli/package.json)"
+          PACKAGE_TAG="$(jq -r '.publishConfig.tag' core/cli/package.json)"
+          CLI_CHANGESETS="$(grep -R -n '"@lightfastai/cli"' .changeset/*.md 2>/dev/null || true)"
+
+          if [ "$PACKAGE_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "::error::Expected @lightfastai/cli@$EXPECTED_VERSION, but core/cli/package.json has $PACKAGE_VERSION"
+            exit 1
+          fi
+
+          if [[ "$PACKAGE_VERSION" == *-* ]]; then
+            echo "::error::Publish CLI only publishes stable versions to latest, got $PACKAGE_VERSION"
+            exit 1
+          fi
+
+          if [ "$PACKAGE_TAG" != "latest" ]; then
+            echo "::error::@lightfastai/cli must publish with publishConfig.tag=latest"
+            exit 1
+          fi
+
+          if [ -n "$CLI_CHANGESETS" ]; then
+            echo "$CLI_CHANGESETS"
+            echo "::error::@lightfastai/cli releases are independent and must not use root changesets."
+            exit 1
+          fi
+
+          if npm view "@lightfastai/cli@$PACKAGE_VERSION" version >/dev/null 2>&1; then
+            echo "::error::@lightfastai/cli@$PACKAGE_VERSION is already published. Bump core/cli/package.json before publishing."
+            exit 1
+          fi
+
+      - name: Build CLI
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm --filter @lightfastai/cli build
+
+      - name: Test CLI
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm --filter @lightfastai/cli test
+
+      - name: Typecheck CLI
+        env:
+          SKIP_ENV_VALIDATION: "true"
+        run: pnpm --filter @lightfastai/cli typecheck
+
+      - name: Pack CLI
+        id: pack
+        run: |
+          PACK_DIR="$RUNNER_TEMP/cli-pack"
+          mkdir -p "$PACK_DIR"
+          pnpm --dir core/cli pack --pack-destination "$PACK_DIR"
+          CLI_TARBALL="$(find "$PACK_DIR" -name 'lightfastai-cli-*.tgz' -print -quit)"
+
+          if [ -z "$CLI_TARBALL" ]; then
+            echo "::error::CLI tarball was not created"
+            exit 1
+          fi
+
+          echo "tarball=$CLI_TARBALL" >> "$GITHUB_OUTPUT"
+
+      - name: Validate CLI tarball
+        run: |
+          CLI_TARBALL="${{ steps.pack.outputs.tarball }}"
+          MANIFEST="$RUNNER_TEMP/cli-package.json"
+
+          tar -tzf "$CLI_TARBALL" | sort
+          tar -xzOf "$CLI_TARBALL" package/package.json > "$MANIFEST"
+
+          jq -e '
+            .name == "@lightfastai/cli" and
+            .version == env.EXPECTED_VERSION and
+            .bin.lightfast == "./dist/bin.mjs" and
+            (.dependencies // {}) == {} and
+            .publishConfig.tag == "latest" and
+            .publishConfig.access == "public"
+          ' "$MANIFEST"
+
+          tar -tzf "$CLI_TARBALL" | grep -qx 'package/dist/bin.mjs'
+          tar -tzf "$CLI_TARBALL" | grep -qx 'package/README.md'
+          tar -tzf "$CLI_TARBALL" | grep -qx 'package/LICENSE'
+          tar -tzf "$CLI_TARBALL" | grep -qx 'package/package.json'
+
+          if tar -tzf "$CLI_TARBALL" | grep -q '^package/src/'; then
+            echo "::error::CLI tarball must not include src/"
+            exit 1
+          fi
+
+          if tar -tzf "$CLI_TARBALL" | grep -q '\.map$'; then
+            echo "::error::CLI tarball must not include source maps"
+            exit 1
+          fi
+
+          SHEBANG="$(tar -xzOf "$CLI_TARBALL" package/dist/bin.mjs | sed -n '1p')"
+          if [ "$SHEBANG" != "#!/usr/bin/env node" ]; then
+            echo "::error::CLI bin must start with #!/usr/bin/env node"
+            exit 1
+          fi
+          tar -tvzf "$CLI_TARBALL" package/dist/bin.mjs | awk '{print $1}' | grep -q 'x'
+
+      - name: Smoke-test packed CLI
+        run: |
+          CLI_TARBALL="${{ steps.pack.outputs.tarball }}"
+          npm exec --yes --package "$CLI_TARBALL" -- lightfast --version
+          npm exec --yes --package "$CLI_TARBALL" -- lightfast --help
+
+      - name: Publish CLI to npm
+        env:
+          NPM_CONFIG_PROVENANCE: true
+        run: npm publish "${{ steps.pack.outputs.tarball }}" --access public --tag latest
+
+      - name: Verify published CLI
+        run: |
+          sleep 10
+          PUBLISHED_VERSION="$(npm view @lightfastai/cli@latest version)"
+          echo "@lightfastai/cli@latest: $PUBLISHED_VERSION"
+
+          if [ "$PUBLISHED_VERSION" != "$EXPECTED_VERSION" ]; then
+            echo "::error::Expected @lightfastai/cli@latest to be $EXPECTED_VERSION, got $PUBLISHED_VERSION"
+            exit 1
+          fi
+
+          npm exec --yes --package @lightfastai/cli@latest -- lightfast --version
+          npm exec --yes --package @lightfastai/cli@latest -- lightfast --help

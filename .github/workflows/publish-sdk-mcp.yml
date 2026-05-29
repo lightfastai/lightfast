@@ -1,19 +1,18 @@
-name: Release lightfast
+name: Publish SDK + MCP
 
 on:
   push:
     paths:
       - '.changeset/**'
-      - '.github/workflows/release.yml'
-      - 'scripts/publish-lightfast-alpha.mjs'
+      - '.github/workflows/publish-sdk-mcp.yml'
     branches: [main]
   workflow_dispatch:
 
 concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
-  release:
-    name: Release
+  publish:
+    name: Publish SDK + MCP
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -47,10 +46,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build packages
+      - name: Reject CLI changesets
+        run: |
+          CLI_CHANGESETS="$(grep -R -n '"@lightfastai/cli"' .changeset/*.md 2>/dev/null || true)"
+          if [ -n "$CLI_CHANGESETS" ]; then
+            echo "$CLI_CHANGESETS"
+            echo "::error::@lightfastai/cli releases must not use the SDK/MCP workflow. Follow RELEASE.md#cli-workflow instead."
+            exit 1
+          fi
+
+      - name: Build SDK + MCP packages
         env:
           SKIP_ENV_VALIDATION: "true"
-        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --filter=@lightfastai/cli --summarize
+        run: pnpm turbo build --filter=lightfast --filter=@lightfastai/mcp --summarize
 
       - name: Run tests
         env:
@@ -61,8 +69,8 @@ jobs:
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report — Release lightfast'
-          artifact-name: turbo-cache-release-lightfast
+          title: 'Turbo cache report — Publish SDK + MCP'
+          artifact-name: turbo-cache-publish-sdk-mcp
 
       - name: Validate package tarballs
         run: |
@@ -78,42 +86,45 @@ jobs:
             || (echo "❌ @lightfastai/mcp has unexpected runtime deps"; tar -xzOf "$SCRATCH"/lightfastai-mcp-*.tgz package/package.json | jq '.dependencies'; exit 1)
           echo "✅ Tarball manifests valid"
 
-      - name: Create Release Pull Request or Publish to npm
+      - name: Create SDK/MCP Version PR or Publish to npm
         id: changesets
         uses: changesets/action@v1
         with:
           version: pnpm changeset version
-          publish: node scripts/publish-lightfast-alpha.mjs
+          publish: pnpm changeset publish
           setupGitUser: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_CONFIG_PROVENANCE: true
 
-      - name: Verify published versions match
+      - name: Verify SDK/MCP latest versions match
         if: steps.changesets.outputs.published == 'true'
         run: |
-          echo "Verifying both packages published successfully to alpha tag..."
+          echo "Verifying SDK/MCP packages published successfully to latest tag..."
           sleep 10
 
-          LIGHTFAST_VERSION=$(npm view lightfast@alpha version)
-          MCP_VERSION=$(npm view @lightfastai/mcp@alpha version)
-          CLI_VERSION=$(npm view @lightfastai/cli@alpha version 2>/dev/null || echo "not-published")
+          LIGHTFAST_VERSION=$(npm view lightfast@latest version)
+          MCP_VERSION=$(npm view @lightfastai/mcp@latest version)
 
-          echo "lightfast@alpha: $LIGHTFAST_VERSION"
-          echo "@lightfastai/mcp@alpha: $MCP_VERSION"
-          echo "@lightfastai/cli@alpha: $CLI_VERSION"
+          echo "lightfast@latest: $LIGHTFAST_VERSION"
+          echo "@lightfastai/mcp@latest: $MCP_VERSION"
 
           if [ "$LIGHTFAST_VERSION" != "$MCP_VERSION" ]; then
-            echo "❌ ERROR: Version drift detected on alpha tag!"
+            echo "❌ ERROR: Version drift detected on latest tag!"
             echo "lightfast@$LIGHTFAST_VERSION != @lightfastai/mcp@$MCP_VERSION"
             echo "Manual intervention required - publish the missing package"
             exit 1
           fi
 
-          echo "✅ Both packages at $LIGHTFAST_VERSION on alpha tag"
+          if [[ "$LIGHTFAST_VERSION" == *-* ]]; then
+            echo "❌ ERROR: latest must point at a stable SDK/MCP version, got $LIGHTFAST_VERSION"
+            exit 1
+          fi
+
+          echo "✅ Both packages at $LIGHTFAST_VERSION on latest tag"
 
       - name: Send a Slack notification if a publish happens
         if: steps.changesets.outputs.published == 'true'
         # TODO: First users are through Slack/Discord channels. Notify via Pylon + Lightfast
         # integration to post release notes to each team's custom channel.
-        run: echo "A new version of lightfast was published!"
+        run: echo "A new stable SDK/MCP version was published!"

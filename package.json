@@ -32,7 +32,7 @@
     "vercel:link": "pnpm dlx vercel@latest link --repo",
     "changeset": "changeset",
     "version-packages": "changeset version",
-    "release": "changeset publish",
+    "publish:sdk-mcp": "changeset publish",
     "remotion:studio": "pnpm --filter @repo/app-remotion studio",
     "remotion:render": "pnpm --filter @repo/app-remotion render:all",
     "db:generate": "pnpm --filter @db/app db:generate",
