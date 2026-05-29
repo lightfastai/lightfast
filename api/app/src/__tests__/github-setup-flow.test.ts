@@ -9,13 +9,14 @@ const issueGitHubOAuthAttemptMock = vi.fn();
 const lookupGitHubInstallAttemptMock = vi.fn();
 const lookupGitHubOAuthAttemptMock = vi.fn();
 const mirrorOrgBindingMock = vi.fn();
-const verifyGitHubEmulatorInstallationMock = vi.fn();
+const verifyGitHubUserInstallationMock = vi.fn();
 const assertOrgAdminMock = vi.fn();
 
 class TestGitHubSetupAdminAccessError extends Error {
   constructor(
-    readonly code: "PERMISSION_REQUIRED" | "UNAUTHENTICATED" =
-      "PERMISSION_REQUIRED",
+    readonly code:
+      | "PERMISSION_REQUIRED"
+      | "UNAUTHENTICATED" = "PERMISSION_REQUIRED",
     message = "Organization administrator access required."
   ) {
     super(message);
@@ -39,23 +40,29 @@ vi.mock("@db/app", () => ({
 }));
 
 vi.mock("@repo/github-app-node", () => ({
-  buildGitHubOAuthAuthorizeUrl: (input: {
-    authorizationBaseUrl?: string;
-    clientId: string;
-    codeChallenge: string;
-    redirectUri: string;
-    state: string;
-  }) => {
-    const url = new URL(
-      input.authorizationBaseUrl ?? "https://github.com/login/oauth/authorize"
-    );
-    url.searchParams.set("client_id", input.clientId);
-    url.searchParams.set("redirect_uri", input.redirectUri);
-    url.searchParams.set("state", input.state);
-    url.searchParams.set("code_challenge", input.codeChallenge);
-    url.searchParams.set("code_challenge_method", "S256");
-    return url.toString();
-  },
+  buildGitHubOAuthAuthorizeUrl: vi.fn(
+    ({
+      clientId,
+      codeChallenge,
+      oauthAuthorizeUrl = "https://github.com/login/oauth/authorize",
+      redirectUri,
+      state,
+    }: {
+      clientId: string;
+      codeChallenge: string;
+      oauthAuthorizeUrl?: string;
+      redirectUri: string;
+      state: string;
+    }) => {
+      const url = new URL(oauthAuthorizeUrl);
+      url.searchParams.set("client_id", clientId);
+      url.searchParams.set("redirect_uri", redirectUri);
+      url.searchParams.set("state", state);
+      url.searchParams.set("code_challenge", codeChallenge);
+      url.searchParams.set("code_challenge_method", "S256");
+      return url.toString();
+    }
+  ),
   createGitHubPkcePair: createGitHubPkcePairMock,
   exchangeGitHubOAuthCode: exchangeGitHubOAuthCodeMock,
   GitHubAppNodeError: class GitHubAppNodeError extends Error {
@@ -67,7 +74,7 @@ vi.mock("@repo/github-app-node", () => ({
       this.name = "GitHubAppNodeError";
     }
   },
-  verifyGitHubEmulatorInstallation: verifyGitHubEmulatorInstallationMock,
+  verifyGitHubUserInstallation: verifyGitHubUserInstallationMock,
 }));
 
 vi.mock("@vendor/clerk/server", () => ({
@@ -101,27 +108,30 @@ vi.mock("../github/bind-attempts", () => ({
 }));
 
 vi.mock("../github/config", () => ({
-  getGitHubEmulatorConfig: () => ({
+  getGitHubAppConfig: () => ({
+    apiVersion: "2022-11-28",
     clientId: "github_client_test",
     clientSecret: "github_secret_test",
+    endpoints: {
+      apiBaseUrl: "https://github.lightfast.localhost",
+      oauthAuthorizeUrl:
+        "https://github.lightfast.localhost/login/oauth/authorize",
+      oauthTokenUrl:
+        "https://github.lightfast.localhost/login/oauth/access_token",
+      webBaseUrl: "https://github.lightfast.localhost",
+    },
   }),
+  resolveGitHubAppOrigin: () => "https://app.lightfast.localhost",
 }));
 
-const {
-  completeGitHubInstallationSetup,
-  completeGitHubOAuthVerification,
-} = await import("../github/setup-flow");
+const { completeGitHubInstallationSetup, completeGitHubOAuthVerification } =
+  await import("../github/setup-flow");
 const { GitHubAppNodeError } = await import("@repo/github-app-node");
 const { OrgSourceControlBindingConflictError } = await import("@db/app");
 
 function installAttempt() {
   return {
     clerkOrgId: "org_1",
-    emulator: {
-      emulatorOrigin: "http://127.0.0.1:4567",
-      installationId: "1001",
-      providerAccountLogin: "lightfast-emulated",
-    },
     lightfastUserId: "user_1",
     orgSlug: "acme",
   };
@@ -158,7 +168,7 @@ describe("github setup flow", () => {
     lookupGitHubInstallAttemptMock.mockReset();
     lookupGitHubOAuthAttemptMock.mockReset();
     mirrorOrgBindingMock.mockReset();
-    verifyGitHubEmulatorInstallationMock.mockReset();
+    verifyGitHubUserInstallationMock.mockReset();
     assertOrgAdminMock.mockReset();
 
     assertOrgAdminMock.mockResolvedValue({ userId: "user_1" });
@@ -175,10 +185,10 @@ describe("github setup flow", () => {
       accessToken: "github_user_token",
       tokenType: "bearer",
     });
-    verifyGitHubEmulatorInstallationMock.mockResolvedValue({
+    verifyGitHubUserInstallationMock.mockResolvedValue({
       account: {
-        id: "2001",
-        login: "lightfast-emulated",
+        id: "9001",
+        login: "acme",
         type: "Organization",
       },
       appId: "12345",
@@ -187,12 +197,11 @@ describe("github setup flow", () => {
       id: "1001",
       permissions: { contents: "read" },
       repositorySelection: "all",
-      suspendedAt: null,
       targetType: "Organization",
     });
   });
 
-  it("redirects installation setup to the emulator OAuth authorize URL", async () => {
+  it("redirects installation setup to the configured OAuth authorize URL", async () => {
     mockInstallAttempt();
 
     const result = await completeGitHubInstallationSetup({
@@ -203,15 +212,15 @@ describe("github setup flow", () => {
 
     expect(result).toEqual({
       redirectUrl:
-        "http://127.0.0.1:4567/login/oauth/authorize?client_id=github_client_test&redirect_uri=https%3A%2F%2Fapp.lightfast.localhost%2Fapi%2Fgithub%2Foauth%2Fcallback&state=oauth_state_123&code_challenge=challenge_123&code_challenge_method=S256",
+        "https://github.lightfast.localhost/login/oauth/authorize?client_id=github_client_test&redirect_uri=https%3A%2F%2Fapp.lightfast.localhost%2Fapi%2Fgithub%2Foauth%2Fcallback&state=oauth_state_123&code_challenge=challenge_123&code_challenge_method=S256",
     });
-    expect(issueGitHubOAuthAttemptMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        clerkOrgId: "org_1",
-        codeVerifier: "verifier_123",
-        providerInstallationId: "1001",
-      })
-    );
+    expect(issueGitHubOAuthAttemptMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_1",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_1",
+      orgSlug: "acme",
+      providerInstallationId: "1001",
+    });
   });
 
   it("redirects a successful OAuth callback to the completion page", async () => {
@@ -233,11 +242,34 @@ describe("github setup flow", () => {
         clerkOrgId: "org_1",
         connectedByUserId: "user_1",
         provider: "github",
-        providerAccountId: "2001",
-        providerAccountLogin: "lightfast-emulated",
+        providerAccountId: "9001",
+        providerAccountLogin: "acme",
         providerInstallationId: "1001",
       })
     );
+    expect(exchangeGitHubOAuthCodeMock).toHaveBeenCalledWith({
+      clientId: "github_client_test",
+      clientSecret: "github_secret_test",
+      code: "code_123",
+      codeVerifier: "verifier_123",
+      redirectUri: "https://app.lightfast.localhost/api/github/oauth/callback",
+      tokenUrl: "https://github.lightfast.localhost/login/oauth/access_token",
+    });
+    expect(verifyGitHubUserInstallationMock).toHaveBeenCalledWith({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      apiVersion: "2022-11-28",
+      expectedInstallationId: "1001",
+      userAccessToken: "github_user_token",
+    });
+    expect(
+      finalizeActiveOrgProviderBindingMock.mock.calls[0]?.[1].metadata
+    ).toEqual({
+      events: ["push"],
+      githubAppId: "12345",
+      githubAppSlug: "lightfast-test",
+      permissions: { contents: "read" },
+      repositorySelection: "all",
+    });
     expect(mirrorOrgBindingMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",
       provider: "github",
@@ -297,20 +329,18 @@ describe("github setup flow", () => {
     expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
   });
 
-  it("maps installation id mismatch to installation_not_verified", async () => {
+  it("carries the callback installation id into the OAuth attempt", async () => {
     mockInstallAttempt();
 
-    await expect(
-      completeGitHubInstallationSetup({
-        appOrigin: "https://app.lightfast.localhost",
-        requestUrl:
-          "https://app.lightfast.localhost/api/github/setup?installation_id=9999&state=install_state_123",
-      })
-    ).resolves.toEqual({
-      redirectUrl:
-        "https://app.lightfast.localhost/acme/tasks/bind?github_error=installation_not_verified",
+    await completeGitHubInstallationSetup({
+      appOrigin: "https://app.lightfast.localhost",
+      requestUrl:
+        "https://app.lightfast.localhost/api/github/setup?installation_id=7777&setup_action=install&state=install_state_123",
     });
-    expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
+
+    expect(issueGitHubOAuthAttemptMock).toHaveBeenCalledWith(
+      expect.objectContaining({ providerInstallationId: "7777" })
+    );
   });
 
   it("maps OAuth denial with a consumable attempt to github_authorization_denied", async () => {
@@ -408,7 +438,7 @@ describe("github setup flow", () => {
 
   it("maps personal account verification failures to personal_account_not_supported", async () => {
     mockOAuthAttempt();
-    verifyGitHubEmulatorInstallationMock.mockRejectedValue(
+    verifyGitHubUserInstallationMock.mockRejectedValue(
       new GitHubAppNodeError(
         "PERSONAL_ACCOUNT_NOT_SUPPORTED",
         "Only GitHub organization installations are supported."

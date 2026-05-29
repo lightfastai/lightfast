@@ -14,7 +14,7 @@ import {
   createGitHubPkcePair,
   exchangeGitHubOAuthCode,
   GitHubAppNodeError,
-  verifyGitHubEmulatorInstallation,
+  verifyGitHubUserInstallation,
 } from "@repo/github-app-node";
 import { log } from "@vendor/observability/log/next";
 
@@ -30,7 +30,7 @@ import {
   lookupGitHubInstallAttempt,
   lookupGitHubOAuthAttempt,
 } from "./bind-attempts";
-import { getGitHubEmulatorConfig, resolveGitHubAppOrigin } from "./config";
+import { getGitHubAppConfig, resolveGitHubAppOrigin } from "./config";
 
 function bindPageUrl(input: {
   appOrigin: string;
@@ -160,35 +160,26 @@ export async function completeGitHubInstallationSetup(input: {
     });
   }
 
-  if (installationId !== pendingAttempt.emulator.installationId) {
-    return errorRedirect({
-      appOrigin,
-      code: "installation_not_verified",
-      orgSlug: pendingAttempt.orgSlug,
-    });
-  }
-
   const attempt = await consumeGitHubInstallAttempt({ state });
   if (!attempt) {
     return missingAttemptRedirect(redirectInput);
   }
 
   try {
-    const config = getGitHubEmulatorConfig({ appOrigin });
+    const config = getGitHubAppConfig();
     const pkce = createGitHubPkcePair();
     const oauthAttempt = await issueGitHubOAuthAttempt({
       clerkOrgId: attempt.clerkOrgId,
       codeVerifier: pkce.codeVerifier,
-      emulator: attempt.emulator,
       lightfastUserId: attempt.lightfastUserId,
       orgSlug: attempt.orgSlug,
       providerInstallationId: installationId,
     });
 
     const authorizeUrl = buildGitHubOAuthAuthorizeUrl({
-      authorizationBaseUrl: `${attempt.emulator.emulatorOrigin}/login/oauth/authorize`,
       clientId: config.clientId,
       codeChallenge: pkce.codeChallenge,
+      oauthAuthorizeUrl: config.endpoints.oauthAuthorizeUrl,
       redirectUri: new URL(GITHUB_OAUTH_CALLBACK_PATH, appOrigin).toString(),
       state: oauthAttempt.state,
     });
@@ -283,20 +274,20 @@ export async function completeGitHubOAuthVerification(input: {
   }
 
   try {
-    const config = getGitHubEmulatorConfig({ appOrigin });
+    const config = getGitHubAppConfig();
     const token = await exchangeGitHubOAuthCode({
       clientId: config.clientId,
       clientSecret: config.clientSecret,
       code,
       codeVerifier: attempt.codeVerifier,
       redirectUri: new URL(GITHUB_OAUTH_CALLBACK_PATH, appOrigin).toString(),
-      tokenUrl: `${attempt.emulator.emulatorOrigin}/login/oauth/access_token`,
+      tokenUrl: config.endpoints.oauthTokenUrl,
     });
 
-    const installation = await verifyGitHubEmulatorInstallation({
-      emulatorOrigin: attempt.emulator.emulatorOrigin,
+    const installation = await verifyGitHubUserInstallation({
+      apiBaseUrl: config.endpoints.apiBaseUrl,
+      apiVersion: config.apiVersion,
       expectedInstallationId: attempt.providerInstallationId,
-      expectedOrgLogin: attempt.emulator.providerAccountLogin,
       userAccessToken: token.accessToken,
     });
 
@@ -308,7 +299,6 @@ export async function completeGitHubOAuthVerification(input: {
         requestUrl.searchParams.get("setup_action") ?? undefined,
       permissions: installation.permissions,
       repositorySelection: installation.repositorySelection,
-      verifiedBy: "github_emulator",
     });
 
     await finalizeActiveOrgProviderBinding(db, {
