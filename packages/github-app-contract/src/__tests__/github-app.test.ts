@@ -80,4 +80,17 @@ describe("@repo/github-app-contract", () => {
       }).success
     ).toBe(false);
   });
+
+  it("does not reject unknown non-provenance installation metadata keys", () => {
+    expect(
+      githubInstallationMetadataSchema.safeParse({
+        events: ["push"],
+        githubAppId: "424242",
+        githubAppSlug: "lightfast-local",
+        permissions: { contents: "read" },
+        repositorySelection: "all",
+        source: "future_metadata",
+      }).success
+    ).toBe(true);
+  });
 });

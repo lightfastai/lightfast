@@ -45,16 +45,28 @@ export type GitHubNormalizedInstallation = z.infer<
   typeof githubNormalizedInstallationSchema
 >;
 
-export const githubInstallationMetadataSchema = z
-  .object({
-    events: z.array(z.string()),
-    githubAppId: z.string().min(1),
-    githubAppSlug: z.string().min(1).nullable(),
-    githubSetupAction: z.string().min(1).optional(),
-    permissions: z.record(z.string(), z.string()),
-    repositorySelection: z.enum(["all", "selected"]),
-  })
-  .strict();
+const githubInstallationMetadataBaseSchema = z.object({
+  events: z.array(z.string()),
+  githubAppId: z.string().min(1),
+  githubAppSlug: z.string().min(1).nullable(),
+  githubSetupAction: z.string().min(1).optional(),
+  permissions: z.record(z.string(), z.string()),
+  repositorySelection: z.enum(["all", "selected"]),
+});
+
+export const githubInstallationMetadataSchema =
+  githubInstallationMetadataBaseSchema
+    .catchall(z.unknown())
+    .superRefine((value, ctx) => {
+      if ("verifiedBy" in value) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Environment provenance is not supported",
+          path: ["verifiedBy"],
+        });
+      }
+    })
+    .transform((value) => githubInstallationMetadataBaseSchema.parse(value));
 export type GitHubInstallationMetadata = z.infer<
   typeof githubInstallationMetadataSchema
 >;
