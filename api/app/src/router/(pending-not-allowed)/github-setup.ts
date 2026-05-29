@@ -10,7 +10,7 @@ import {
   isOrgAccessError,
 } from "../../auth/organization-access";
 import { issueGitHubInstallAttempt } from "../../github/bind-attempts";
-import { getGitHubEmulatorConfig } from "../../github/config";
+import { getGitHubAppConfig } from "../../github/config";
 import { syncGitHubBindingClaim } from "../../github/setup-flow";
 import { orgAdminProcedure, setupProcedure } from "../../trpc";
 
@@ -36,10 +36,9 @@ export const githubSetupRouter = {
           });
         }
 
-        const config = getGitHubEmulatorConfig();
+        const config = getGitHubAppConfig();
         const issued = await issueGitHubInstallAttempt({
           clerkOrgId: orgAccess.org.id,
-          emulator: config.installOverride,
           lightfastUserId: ctx.auth.identity.userId,
           orgSlug: orgAccess.org.slug,
         });
@@ -47,8 +46,8 @@ export const githubSetupRouter = {
         return {
           installationUrl: buildGitHubInstallationUrl({
             appSlug: config.appSlug,
-            installUrlOverride: config.installOverride.url,
             state: issued.state,
+            webBaseUrl: config.endpoints.webBaseUrl,
           }),
         };
       } catch (error) {

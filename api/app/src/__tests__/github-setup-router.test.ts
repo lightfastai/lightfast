@@ -56,11 +56,10 @@ vi.mock("../env", () => ({
     GITHUB_API_VERSION: "2022-11-28",
     GITHUB_APP_CLIENT_ID: "github_client_test",
     GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+    GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
     GITHUB_APP_ID: "12345",
     GITHUB_APP_PRIVATE_KEY: "test-private-key",
     GITHUB_APP_SLUG: "lightfast-test",
-    GITHUB_INSTALL_URL_OVERRIDE:
-      "https://app.lightfast.localhost/api/dev/github/install?emulator_origin=http%3A%2F%2F127.0.0.1%3A4567&installation_id=1001&provider_account_login=lightfast-emulated",
     VERCEL_ENV: "development",
   },
 }));
@@ -144,18 +143,18 @@ describe("githubSetupRouter", () => {
       "state"
     );
 
-    expect(result).toEqual({
-      installationUrl:
-        "https://app.lightfast.localhost/api/dev/github/install?emulator_origin=http%3A%2F%2F127.0.0.1%3A4567&installation_id=1001&provider_account_login=lightfast-emulated&state=" +
-        issuedState,
-    });
+    expect(result.installationUrl).toBe(
+      "https://github.lightfast.localhost/apps/lightfast-test/installations/new?state=" +
+        issuedState
+    );
     expect(redisSetMock).toHaveBeenCalledWith(
       "github-bind-install-attempt:attempt_123456789012345678901234",
-      expect.objectContaining({
+      {
         clerkOrgId: "org_1",
         lightfastUserId: "user_1",
         orgSlug: "acme",
-      }),
+        stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
+      },
       { ex: 900 }
     );
   });
