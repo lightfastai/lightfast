@@ -107,6 +107,7 @@ export function resolveGitHubAppEndpoints(
 export function getGitHubAppConfig(
   input: { env?: GitHubConfigEnv } = {}
 ): GitHubAppConfig {
+  const hasExplicitEnv = Object.prototype.hasOwnProperty.call(input, "env");
   const configEnv = input.env ?? runtimeEnv;
   const required = {
     apiVersion: configEnv.GITHUB_API_VERSION ?? "2022-11-28",
@@ -129,17 +130,22 @@ export function getGitHubAppConfig(
     throw new Error("GitHub App environment is incomplete.");
   }
 
+  const endpointsInput: Parameters<typeof resolveGitHubAppEndpoints>[0] = {
+    endpointOrigin: configEnv.GITHUB_APP_ENDPOINT_ORIGIN,
+    vercelEnv: configEnv.VERCEL_ENV,
+  };
+  if (hasExplicitEnv) {
+    endpointsInput.legacyInstallUrlOverride =
+      configEnv.GITHUB_INSTALL_URL_OVERRIDE;
+  }
+
   return {
     apiVersion: required.apiVersion,
     appId: required.appId,
     appSlug: required.appSlug,
     clientId: required.clientId,
     clientSecret: required.clientSecret,
-    endpoints: resolveGitHubAppEndpoints({
-      endpointOrigin: configEnv.GITHUB_APP_ENDPOINT_ORIGIN,
-      legacyInstallUrlOverride: configEnv.GITHUB_INSTALL_URL_OVERRIDE,
-      vercelEnv: configEnv.VERCEL_ENV,
-    }),
+    endpoints: resolveGitHubAppEndpoints(endpointsInput),
     privateKey: normalizeGitHubPrivateKey(required.privateKey),
   };
 }

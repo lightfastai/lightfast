@@ -77,6 +77,33 @@ describe("GitHub config", () => {
     ).toThrow(/GITHUB_INSTALL_URL_OVERRIDE is no longer supported/);
   });
 
+  it("rejects ambient legacy install override for default config", async () => {
+    vi.stubEnv("GITHUB_API_VERSION", "2022-11-28");
+    vi.stubEnv("GITHUB_APP_CLIENT_ID", "github_client_test");
+    vi.stubEnv("GITHUB_APP_CLIENT_SECRET", "github_secret_test");
+    vi.stubEnv(
+      "GITHUB_APP_ENDPOINT_ORIGIN",
+      "https://github.lightfast.localhost"
+    );
+    vi.stubEnv("GITHUB_APP_ID", "12345");
+    vi.stubEnv("GITHUB_APP_PRIVATE_KEY", "line1\\nline2");
+    vi.stubEnv("GITHUB_APP_SLUG", "lightfast-test");
+    vi.stubEnv(
+      "GITHUB_INSTALL_URL_OVERRIDE",
+      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+    );
+    vi.stubEnv("VERCEL_ENV", "development");
+    vi.resetModules();
+
+    const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
+      "../github/config"
+    );
+
+    expect(() => getRuntimeGitHubAppConfig()).toThrow(
+      /GITHUB_INSTALL_URL_OVERRIDE is no longer supported/
+    );
+  });
+
   it("uses explicit config env instead of ambient legacy install override", () => {
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
