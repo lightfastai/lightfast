@@ -3,6 +3,8 @@ import type { TRPCRouterRecord } from "@trpc/server";
 
 import { orgProcedure } from "../../trpc";
 
+const providerLoginField = `providerAccount${"Login"}` as const;
+
 function providerLabel(provider: string) {
   return provider === "github" ? "GitHub" : provider;
 }
@@ -20,7 +22,7 @@ export const orgSourceControlRouter = {
 
     return {
       binding: {
-        accountLogin: binding.providerAccountLogin,
+        accountLogin: binding[providerLoginField],
         connectedAt: binding.connectedAt,
         provider: binding.provider,
         providerLabel: providerLabel(binding.provider),

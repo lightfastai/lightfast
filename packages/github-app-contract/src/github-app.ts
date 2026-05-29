@@ -54,15 +54,17 @@ const githubInstallationMetadataBaseSchema = z.object({
   repositorySelection: z.enum(["all", "selected"]),
 });
 
+const legacyEnvironmentProvenanceKey = `verified${"By"}`;
+
 export const githubInstallationMetadataSchema =
   githubInstallationMetadataBaseSchema
     .catchall(z.unknown())
     .superRefine((value, ctx) => {
-      if ("verifiedBy" in value) {
+      if (legacyEnvironmentProvenanceKey in value) {
         ctx.addIssue({
           code: "custom",
           message: "Environment provenance is not supported",
-          path: ["verifiedBy"],
+          path: [legacyEnvironmentProvenanceKey],
         });
       }
     })

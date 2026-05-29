@@ -282,7 +282,10 @@ describe("finalizeActiveOrgProviderBinding", () => {
       providerAccountId: "20",
       providerAccountLogin: "lightfast-emulated",
       providerInstallationId: "1001",
-      metadata: { verifiedBy: "github_emulator" },
+      metadata: {
+        githubAppId: "424242",
+        repositorySelection: "all",
+      },
     });
     const { db, spies } = makeFakeDb({
       insertId: 100,
@@ -293,7 +296,10 @@ describe("finalizeActiveOrgProviderBinding", () => {
       finalizeActiveOrgProviderBinding(db, {
         clerkOrgId: "org_new",
         connectedByUserId: "user_1",
-        metadata: { verifiedBy: "github_emulator" },
+        metadata: {
+          githubAppId: "424242",
+          repositorySelection: "all",
+        },
         provider: "github",
         providerAccountId: "20",
         providerAccountLogin: "lightfast-emulated",

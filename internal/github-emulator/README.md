@@ -36,9 +36,24 @@ pnpm --filter @repo/github-emulator dev
 
 This runs the raw server process. The root `pnpm dev` flow is responsible for
 wrapping it in `portless run --name github.lightfast`, matching the Inngest and
-QStash dev service pattern. The printed `GITHUB_INSTALL_URL_OVERRIDE` points at
-the app dev install shim and includes the deterministic emulator origin,
-installation id, and provider account login.
+QStash dev service pattern.
+
+The emulator is routed at:
+
+```text
+https://github.lightfast.localhost
+```
+
+The app and API receive `GITHUB_APP_ENDPOINT_ORIGIN` from
+`pnpm --filter @repo/github-emulator env:sh`. Local setup starts at:
+
+```text
+https://github.lightfast.localhost/apps/lightfast-local/installations/new
+```
+
+The emulator redirects to `/api/github/setup`, completes OAuth through
+`/login/oauth/authorize` and `/login/oauth/access_token`, and returns
+user-accessible installations from `/user/installations`.
 
 ## Configuration
 
