@@ -72,8 +72,8 @@ export const signalsRouter = {
       input: signal.input,
       status: signal.status,
       classification: signal.classification,
-      createdAt: signal.createdAt,
-      updatedAt: signal.updatedAt,
+      createdAt: signal.createdAt.toISOString(),
+      updatedAt: signal.updatedAt.toISOString(),
     };
   }),
 };
