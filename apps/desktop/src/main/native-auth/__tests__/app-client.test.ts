@@ -4,10 +4,8 @@ const { netFetchMock } = vi.hoisted(() => ({
   netFetchMock: vi.fn(),
 }));
 
-vi.mock("electron", () => ({
-  net: {
-    fetch: netFetchMock,
-  },
+vi.mock("@vendor/electron/net", () => ({
+  electronNetFetch: netFetchMock,
 }));
 
 vi.mock("../../app-url", () => ({
@@ -21,7 +19,7 @@ afterEach(() => {
 });
 
 describe("createDesktopNativeAuthClient", () => {
-  it("uses Electron net.fetch by default", async () => {
+  it("uses the vendor Electron fetch wrapper by default", async () => {
     netFetchMock.mockResolvedValueOnce(
       Response.json({
         authorizationEndpoint: "https://clerk.example.com/oauth/authorize",
@@ -59,6 +57,79 @@ describe("createDesktopNativeAuthClient", () => {
       state: "state_123",
     });
 
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(netFetchMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects finalize responses without organization metadata", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      Response.json({
+        client: "desktop",
+        user: { email: "dev@example.com", id: "user_1" },
+      })
+    );
+
+    const client = createDesktopNativeAuthClient({ fetchImpl });
+
+    await expect(
+      client.finalize({
+        accessToken: "access",
+        attemptId: "attempt_123",
+        state: "state_123",
+      })
+    ).rejects.toThrow();
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(netFetchMock).not.toHaveBeenCalled();
+  });
+
+  it("surfaces organization mismatch errors from finalize", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      Response.json(
+        {
+          error: {
+            code: "NATIVE_AUTH_ORGANIZATION_MISMATCH",
+            message: "Native auth organization mismatch",
+          },
+        },
+        { status: 403 }
+      )
+    );
+
+    const client = createDesktopNativeAuthClient({ fetchImpl });
+
+    await expect(
+      client.finalize({
+        accessToken: "access",
+        attemptId: "attempt_123",
+        state: "state_123",
+      })
+    ).rejects.toThrow("Native auth organization mismatch");
+    expect(fetchImpl).toHaveBeenCalledOnce();
+    expect(netFetchMock).not.toHaveBeenCalled();
+  });
+
+  it("surfaces expired token errors from finalize", async () => {
+    const fetchImpl = vi.fn().mockResolvedValueOnce(
+      Response.json(
+        {
+          error: {
+            code: "NATIVE_AUTH_TOKEN_EXPIRED",
+            message: "Native auth token expired",
+          },
+        },
+        { status: 401 }
+      )
+    );
+
+    const client = createDesktopNativeAuthClient({ fetchImpl });
+
+    await expect(
+      client.finalize({
+        accessToken: "expired",
+        attemptId: "attempt_123",
+        state: "state_123",
+      })
+    ).rejects.toThrow("Native auth token expired");
     expect(fetchImpl).toHaveBeenCalledOnce();
     expect(netFetchMock).not.toHaveBeenCalled();
   });

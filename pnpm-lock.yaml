@@ -622,6 +622,9 @@ importers:
       '@trpc/tanstack-react-query':
         specifier: 'catalog:'
         version: 11.16.0(@tanstack/react-query@5.99.1(react@19.2.6))(@trpc/client@11.16.0(@trpc/server@11.16.0(typescript@5.9.3))(typescript@5.9.3))(@trpc/server@11.16.0(typescript@5.9.3))(react@19.2.6)(typescript@5.9.3)
+      '@vendor/electron':
+        specifier: workspace:*
+        version: link:../../vendor/electron
       '@vendor/observability':
         specifier: workspace:*
         version: link:../../vendor/observability
@@ -1841,6 +1844,18 @@ importers:
       drizzle-kit:
         specifier: ^0.31.10
         version: 0.31.10
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
+  vendor/electron:
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      electron:
+        specifier: ^41.3.0
+        version: 41.5.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

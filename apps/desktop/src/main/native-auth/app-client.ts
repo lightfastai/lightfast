@@ -2,7 +2,7 @@ import {
   nativeOAuthConfigSchema,
   nativeSessionMetadataSchema,
 } from "@repo/native-auth-contract";
-import { net } from "electron";
+import { electronNetFetch } from "@vendor/electron/net";
 import { z } from "zod";
 
 import { createAppUrl } from "../app-url";
@@ -40,9 +40,7 @@ async function readJson<T>(
 export function createDesktopNativeAuthClient(
   input: { fetchImpl?: FetchLike } = {}
 ) {
-  const fetchImpl: FetchLike =
-    input.fetchImpl ??
-    ((url, init) => net.fetch(url instanceof URL ? url.toString() : url, init));
+  const fetchImpl: FetchLike = input.fetchImpl ?? electronNetFetch;
   return {
     async getOAuthConfig() {
       const response = await fetchImpl(

@@ -65,6 +65,7 @@
     "@tanstack/react-query": "catalog:",
     "@trpc/client": "catalog:",
     "@trpc/tanstack-react-query": "catalog:",
+    "@vendor/electron": "workspace:*",
     "@vendor/observability": "workspace:*",
     "better-sqlite3": "^12.4.1",
     "electron-context-menu": "^4.1.1",

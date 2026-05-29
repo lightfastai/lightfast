@@ -35,6 +35,36 @@ describe("Drizzle config", () => {
     expect(config.tablesFilter).toEqual(["caller_*"]);
   });
 
+  it("encodes credential and database URL components without rewriting the host", () => {
+    const config = createDrizzleConfig({
+      database: "caller/database ?#",
+      host: "localhost:3306",
+      out: "./src/migrations",
+      password: "p/a?#",
+      schema: "./src/schema/index.ts",
+      username: "user@example.com",
+    });
+    const credentials = (config as { dbCredentials?: Record<string, unknown> })
+      .dbCredentials;
+
+    expect(credentials).toMatchObject({
+      url: "mysql://user%40example.com:p%2Fa%3F%23@localhost:3306/caller%2Fdatabase%20%3F%23",
+    });
+  });
+
+  it("rejects URL-unsafe database hosts instead of rewriting authority syntax", () => {
+    expect(() =>
+      createDrizzleConfig({
+        database: "caller_database",
+        host: "bad@host",
+        out: "./src/migrations",
+        password: "password",
+        schema: "./src/schema/index.ts",
+        username: "username",
+      })
+    ).toThrow("Drizzle database host contains URL-unsafe characters.");
+  });
+
   it("keeps the app database fixed as lightfast", async () => {
     process.env.DATABASE_HOST = "example.planetscale.com";
     process.env.DATABASE_PASSWORD = "password";
