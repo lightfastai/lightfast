@@ -27,6 +27,8 @@ import {
   useTeamNameUpdate,
 } from "./team-general-settings-actions";
 
+import { SourceControlConnectionSection } from "./source-control-connection-section";
+
 interface TeamGeneralSettingsClientProps {
   slug: string;
 }
@@ -42,6 +44,9 @@ export function TeamGeneralSettingsClient({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
+  const { data: sourceControlConnection } = useSuspenseQuery(
+    trpc.org.settings.sourceControl.get.queryOptions()
+  );
   const currentOrg = useMemo(
     () => organizations.find((org) => org.slug === slug),
     [organizations, slug]
@@ -189,6 +194,11 @@ export function TeamGeneralSettingsClient({
           </div>
         </form>
       </Form>
+
+      <SourceControlConnectionSection
+        connection={sourceControlConnection.binding}
+        orgSlug={slug}
+      />
     </div>
   );
 }

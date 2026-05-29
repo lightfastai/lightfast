@@ -1,30 +1,40 @@
 import type { Server } from "node:http";
 import { createServer, serve } from "@emulators/core";
-import { getGitHubStore, githubPlugin, seedFromConfig } from "@emulators/github";
+import {
+  getGitHubStore,
+  githubPlugin,
+  seedFromConfig,
+} from "@emulators/github";
 
 import { createGitHubEmulatorSeed, GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 
 export interface StartGitHubEmulatorInput {
+  appOrigin?: string;
+  host?: string;
   port?: number;
+  publicOrigin?: string;
 }
 
 export interface StartedGitHubEmulator {
   close(): Promise<void>;
+  listenUrl: string;
+  publicOrigin: string;
   reset(): void;
   url: string;
 }
 
-export function addOrgMembership(
-  store: Parameters<typeof getGitHubStore>[0]
-) {
+export function addOrgMembership(store: Parameters<typeof getGitHubStore>[0]) {
   const gh = getGitHubStore(store);
-  const org = gh.orgs.findOneBy("login", GITHUB_EMULATOR_FIXTURES.githubOrgLogin);
+  const org = gh.orgs.findOneBy(
+    "login",
+    GITHUB_EMULATOR_FIXTURES.githubOrgLogin
+  );
   const user = gh.users.findOneBy(
     "login",
     GITHUB_EMULATOR_FIXTURES.githubUserLogin
   );
 
-  if (!org || !user) {
+  if (!(org && user)) {
     throw new Error("GitHub emulator seed did not create org and user");
   }
 
@@ -107,11 +117,20 @@ function closeServer(httpServer: Server) {
   });
 }
 
+function formatListenUrl(host: string, port: number) {
+  const urlHost = host === "0.0.0.0" || host === "::" ? "127.0.0.1" : host;
+  const formattedHost = urlHost.includes(":") ? `[${urlHost}]` : urlHost;
+  return `http://${formattedHost}:${port}`;
+}
+
 export async function startGitHubEmulator(
   input: StartGitHubEmulatorInput = {}
 ): Promise<StartedGitHubEmulator> {
+  const appOrigin = input.appOrigin ?? "https://lightfast.localhost";
+  const host = input.host ?? "127.0.0.1";
   const port = input.port ?? 4567;
-  const url = `http://127.0.0.1:${port}`;
+  const listenUrl = formatListenUrl(host, port);
+  const publicOrigin = input.publicOrigin ?? listenUrl;
   let storeRef: ReturnType<typeof createServer>["store"] | undefined;
 
   const appKeyResolver = (appId: number) => {
@@ -135,7 +154,7 @@ export async function startGitHubEmulator(
 
   const server = createServer(githubPlugin, {
     appKeyResolver,
-    baseUrl: url,
+    baseUrl: publicOrigin,
     port,
     tokens: {
       [GITHUB_EMULATOR_FIXTURES.userToken]: {
@@ -149,8 +168,12 @@ export async function startGitHubEmulator(
 
   function seed() {
     server.store.reset();
-    githubPlugin.seed?.(server.store, url);
-    seedFromConfig(server.store, url, createGitHubEmulatorSeed());
+    githubPlugin.seed?.(server.store, publicOrigin);
+    seedFromConfig(
+      server.store,
+      publicOrigin,
+      createGitHubEmulatorSeed(appOrigin)
+    );
     addOrgMembership(server.store);
   }
 
@@ -158,19 +181,21 @@ export async function startGitHubEmulator(
 
   const httpServer: Server = serve({
     fetch: server.app.fetch,
-    hostname: "127.0.0.1",
+    hostname: host,
     port,
   });
 
   await waitForListening(httpServer).catch(async (error: unknown) => {
-    await closeServer(httpServer).catch(() => {});
+    await closeServer(httpServer).catch(() => undefined);
     throw error;
   });
 
   let closed = false;
 
   return {
-    url,
+    listenUrl,
+    publicOrigin,
+    url: listenUrl,
     reset: seed,
     close: async () => {
       if (closed) {

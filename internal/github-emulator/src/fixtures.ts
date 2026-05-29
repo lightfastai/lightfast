@@ -36,7 +36,7 @@ export const GITHUB_EMULATOR_FIXTURES = {
   githubRepoName: "workspace",
   oauthClientId: "Iv1.lightfastlocal",
   oauthClientSecret: "lightfast-local-secret",
-  githubAppId: 424242,
+  githubAppId: 424_242,
   githubAppSlug: "lightfast-local",
   githubAppName: "Lightfast Local",
   githubAppPrivateKey: githubAppPrivateKey.trim(),
@@ -45,7 +45,11 @@ export const GITHUB_EMULATOR_FIXTURES = {
   userToken: "test_token_lightfast",
 } as const;
 
-export function createGitHubEmulatorSeed(): GitHubSeedConfig {
+export function createGitHubEmulatorSeed(
+  appOrigin = "https://lightfast.localhost"
+): GitHubSeedConfig {
+  const oauthCallbackUrl = new URL("/api/github/oauth/callback", appOrigin);
+
   return {
     users: [
       {
@@ -81,9 +85,7 @@ export function createGitHubEmulatorSeed(): GitHubSeedConfig {
         client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
         client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
         name: "Lightfast Local OAuth",
-        redirect_uris: [
-          "https://app.lightfast.localhost/api/github/oauth/callback",
-        ],
+        redirect_uris: [oauthCallbackUrl.toString()],
       },
     ],
     apps: [
@@ -138,4 +140,14 @@ export function getGitHubEmulatorEnv(
     GITHUB_APP_WEBHOOK_SECRET: GITHUB_EMULATOR_FIXTURES.githubWebhookSecret,
     GITHUB_INSTALL_URL_OVERRIDE: installUrl.toString(),
   };
+}
+
+function shellQuote(value: string) {
+  return `'${value.replace(/'/g, "'\\''")}'`;
+}
+
+export function formatGitHubEmulatorEnvShell(env: Record<string, string>) {
+  return Object.entries(env)
+    .map(([key, value]) => `export ${key}=${shellQuote(value)}`)
+    .join("\n");
 }

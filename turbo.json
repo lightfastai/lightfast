@@ -25,6 +25,10 @@
       "cache": false,
       "persistent": true
     },
+    "//#_github_emulator": {
+      "cache": false,
+      "persistent": true
+    },
     "//#check": {
       "inputs": ["$TURBO_DEFAULT$", "biome.jsonc"],
       "outputs": []

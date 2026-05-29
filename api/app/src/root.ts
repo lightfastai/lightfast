@@ -16,10 +16,11 @@ import {
   orgSettingsOrganizationRouter,
 } from "./router/(pending-allowed)/organization";
 import { automationsRouter } from "./router/(pending-not-allowed)/automations";
+import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
 import { orgApiKeysRouter } from "./router/(pending-not-allowed)/org-api-keys";
 import { orgBillingRouter } from "./router/(pending-not-allowed)/org-billing";
 import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
-import { githubSetupRouter } from "./router/(pending-not-allowed)/github-setup";
+import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { workspacePeopleRouter } from "./router/(pending-not-allowed)/workspace-people";
 import { workspaceSignalsRouter } from "./router/(pending-not-allowed)/workspace-signals";
@@ -43,6 +44,7 @@ export const appRouter = createTRPCRouter({
       orgApiKeys: orgApiKeysRouter,
       orgBilling: orgBillingRouter,
       orgMembers: orgMembersRouter,
+      sourceControl: orgSourceControlRouter,
     }),
     workspace: createTRPCRouter({
       automations: automationsRouter,

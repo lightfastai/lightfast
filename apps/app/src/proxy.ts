@@ -45,12 +45,23 @@ const securityHeaders = securityMiddleware({
 // but auth is not enforced, so no JWKS fetch for unauthenticated visitors.
 // tRPC stays here because native OAuth Bearer resolution calls auth({ acceptsToken }),
 // which requires clerkMiddleware context; auth enforcement remains in procedures.
-const isPublicRoute = createRouteMatcher([
+const isGitHubInstallRoute = createRouteMatcher(["/api/dev/github/install"]);
+const isGitHubSetupRoute = createRouteMatcher(["/api/github/setup"]);
+const isGitHubOAuthCallbackRoute = createRouteMatcher([
+  "/api/github/oauth/callback",
+]);
+
+function isGitHubBindingRoute(req: NextRequest) {
+  return (
+    isGitHubInstallRoute(req) ||
+    isGitHubSetupRoute(req) ||
+    isGitHubOAuthCallbackRoute(req)
+  );
+}
+
+const isPublicRouteMatcher = createRouteMatcher([
   "/early-access(.*)",
   "/api/oauth/(.*)",
-  "/api/github/setup",
-  "/api/github/oauth/callback",
-  "/api/dev/github/install",
   "/api/trpc/(.*)",
   "/api/health(.*)",
   "/docs(.*)",
@@ -58,6 +69,10 @@ const isPublicRoute = createRouteMatcher([
   "/ingest(.*)",
   "/manifest.json",
 ]);
+
+function isPublicRoute(req: NextRequest) {
+  return isPublicRouteMatcher(req) || isGitHubBindingRoute(req);
+}
 
 // API routes that handle their own auth at the route handler level.
 // Each route is responsible for its own auth + CORS (the Clerk middleware
@@ -96,6 +111,16 @@ const isAppOwnedSignedInRoute = createRouteMatcher([
 const isOrgProductRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
 const isOrgSettingsRoute = createRouteMatcher(["/:slug/settings(.*)"]);
 const isOrgBindTaskRoute = createRouteMatcher(["/:slug/tasks/bind(.*)"]);
+const organizationSyncOptions = {
+  organizationPatterns: [
+    "/:slug",
+    "/:slug/signals(.*)",
+    "/:slug/people(.*)",
+    "/:slug/automations(.*)",
+    "/:slug/settings(.*)",
+    "/:slug/tasks/bind(.*)",
+  ],
+};
 
 function getPostAuthPath({
   orgSlug,
@@ -295,9 +320,7 @@ const clerkProxyMiddleware = clerkMiddleware(
     signUpUrl: "/sign-up",
     afterSignInUrl: "/",
     afterSignUpUrl: "/",
-    organizationSyncOptions: {
-      organizationPatterns: ["/:slug", "/:slug/(.*)"],
-    },
+    organizationSyncOptions,
   }
 );
 

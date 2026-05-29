@@ -5,30 +5,40 @@ dev-only; production runtime code must not import it.
 
 ## Run
 
-Start the emulator:
-
-```bash
-pnpm --filter @repo/github-emulator dev
-```
-
-The server listens on `http://127.0.0.1:4567` by default and prints the
-environment values consumed by the app and API packages.
-
-Copy the printed `GITHUB_*` values into:
-
-```text
-apps/app/.vercel/.env.development.local
-```
-
-Then start the full local stack from the repository root:
+From the repository root, `pnpm dev` starts the emulator through Portless
+alongside app, www, platform, Inngest, QStash, and the MFE proxy:
 
 ```bash
 pnpm dev
 ```
 
-The printed `GITHUB_INSTALL_URL_OVERRIDE` points at the app dev install shim and
-includes the deterministic emulator origin, installation id, and provider
-account login.
+The emulator is routed at:
+
+```text
+https://github.lightfast.localhost
+```
+
+Linked worktrees receive the usual Portless branch prefix, for example:
+
+```text
+https://feature-x.github.lightfast.localhost
+```
+
+The app dev process receives the deterministic `GITHUB_*` values at runtime
+from `@lightfast/app`'s `with-related-projects` wrapper. Do not copy
+worktree-specific emulator URLs into `.vercel/.env.development.local`.
+
+To run only the emulator:
+
+```bash
+pnpm --filter @repo/github-emulator dev
+```
+
+This runs the raw server process. The root `pnpm dev` flow is responsible for
+wrapping it in `portless run --name github.lightfast`, matching the Inngest and
+QStash dev service pattern. The printed `GITHUB_INSTALL_URL_OVERRIDE` points at
+the app dev install shim and includes the deterministic emulator origin,
+installation id, and provider account login.
 
 ## Configuration
 
@@ -36,7 +46,9 @@ Optional environment variables:
 
 ```bash
 PORT=4567
-LIGHTFAST_APP_ORIGIN=https://app.lightfast.localhost
+HOST=127.0.0.1
+LIGHTFAST_APP_ORIGIN=https://lightfast.localhost
+GITHUB_EMULATOR_ORIGIN=https://github.lightfast.localhost
 ```
 
 The deterministic seed creates:

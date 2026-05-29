@@ -8,22 +8,18 @@ export async function GET(req: Request) {
   const state = url.searchParams.get("state");
   const installUrlOverride = process.env.GITHUB_INSTALL_URL_OVERRIDE;
 
-  if (
-    process.env.VERCEL_ENV === "production" ||
-    !installUrlOverride
-  ) {
+  if (process.env.VERCEL_ENV === "production" || !installUrlOverride) {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
 
-  let installationId: string | null;
+  let installUrl: URL;
   try {
-    installationId = new URL(installUrlOverride).searchParams.get(
-      "installation_id"
-    );
+    installUrl = new URL(installUrlOverride);
   } catch {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
 
+  const installationId = installUrl.searchParams.get("installation_id");
   if (!installationId) {
     return Response.json({ error: "Not Found" }, { status: 404 });
   }
@@ -35,7 +31,7 @@ export async function GET(req: Request) {
     );
   }
 
-  const redirectUrl = new URL(GITHUB_SETUP_PATH, url.origin);
+  const redirectUrl = new URL(GITHUB_SETUP_PATH, installUrl.origin);
   redirectUrl.searchParams.set("installation_id", installationId);
   redirectUrl.searchParams.set("setup_action", "install");
   redirectUrl.searchParams.set("state", state);

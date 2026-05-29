@@ -1,15 +1,20 @@
+import { createGitHubEmulatorRuntimeEnv } from "./env";
 import { getGitHubEmulatorEnv } from "./fixtures";
 import { startGitHubEmulator } from "./server";
 
-const port = Number(process.env.PORT ?? 4567);
-const appOrigin =
-  process.env.LIGHTFAST_APP_ORIGIN ?? "https://app.lightfast.localhost";
+const env = createGitHubEmulatorRuntimeEnv();
 
-const emulator = await startGitHubEmulator({ port });
+const emulator = await startGitHubEmulator({
+  appOrigin: env.appOrigin,
+  host: env.host,
+  port: env.port,
+  publicOrigin: env.emulatorOrigin,
+});
 
-console.log(`[github-emulator] listening on ${emulator.url}`);
+console.log(`[github-emulator] listening on ${emulator.listenUrl}`);
+console.log(`[github-emulator] public origin ${emulator.publicOrigin}`);
 for (const [key, value] of Object.entries(
-  getGitHubEmulatorEnv(appOrigin, emulator.url)
+  getGitHubEmulatorEnv(env.appOrigin, emulator.publicOrigin)
 )) {
   console.log(`${key}=${JSON.stringify(value)}`);
 }

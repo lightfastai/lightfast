@@ -22,9 +22,7 @@ describe("GitHub app route handlers", () => {
     completeSetupMock.mockResolvedValue({
       redirectUrl: "http://127.0.0.1:4567/login/oauth/authorize?state=abc",
     });
-    const { GET } = await import(
-      "~/app/(app)/(github)/api/github/setup/route"
-    );
+    const { GET } = await import("~/app/(app)/(github)/api/github/setup/route");
 
     const res = await GET(
       new Request(
@@ -40,6 +38,29 @@ describe("GitHub app route handlers", () => {
       appOrigin: "https://app.lightfast.localhost",
       requestUrl:
         "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=abc",
+    });
+  });
+
+  it("uses the configured app origin for raw-port setup callbacks", async () => {
+    vi.stubEnv(
+      "GITHUB_INSTALL_URL_OVERRIDE",
+      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
+    );
+    completeSetupMock.mockResolvedValue({
+      redirectUrl: "https://lightfast.localhost/sign-in",
+    });
+    const { GET } = await import("~/app/(app)/(github)/api/github/setup/route");
+
+    await GET(
+      new Request(
+        "https://localhost:4293/api/github/setup?installation_id=1001&state=abc"
+      )
+    );
+
+    expect(completeSetupMock).toHaveBeenCalledWith({
+      appOrigin: "https://lightfast.localhost",
+      requestUrl:
+        "https://localhost:4293/api/github/setup?installation_id=1001&state=abc",
     });
   });
 
@@ -69,11 +90,37 @@ describe("GitHub app route handlers", () => {
     });
   });
 
+  it("uses the configured app origin for raw-port OAuth callbacks", async () => {
+    vi.stubEnv(
+      "GITHUB_INSTALL_URL_OVERRIDE",
+      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
+    );
+    completeOAuthMock.mockResolvedValue({
+      redirectUrl:
+        "https://lightfast.localhost/acme/tasks/bind/github/complete",
+    });
+    const { GET } = await import(
+      "~/app/(app)/(github)/api/github/oauth/callback/route"
+    );
+
+    await GET(
+      new Request(
+        "https://localhost:4293/api/github/oauth/callback?code=abc&state=def"
+      )
+    );
+
+    expect(completeOAuthMock).toHaveBeenCalledWith({
+      appOrigin: "https://lightfast.localhost",
+      requestUrl:
+        "https://localhost:4293/api/github/oauth/callback?code=abc&state=def",
+    });
+  });
+
   it("rejects dev install shim requests in production", async () => {
     vi.stubEnv("VERCEL_ENV", "production");
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
     );
     const { GET } = await import(
       "~/app/(app)/(github)/api/dev/github/install/route"
@@ -109,7 +156,7 @@ describe("GitHub app route handlers", () => {
     vi.stubEnv("VERCEL_ENV", "development");
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
     );
     const { GET } = await import(
       "~/app/(app)/(github)/api/dev/github/install/route"
@@ -151,7 +198,7 @@ describe("GitHub app route handlers", () => {
     vi.stubEnv("VERCEL_ENV", "development");
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
     );
     const { GET } = await import(
       "~/app/(app)/(github)/api/dev/github/install/route"
@@ -159,13 +206,13 @@ describe("GitHub app route handlers", () => {
 
     const res = await GET(
       new Request(
-        "https://app.lightfast.localhost/api/dev/github/install?installation_id=attacker&state=abc"
+        "https://localhost:4110/api/dev/github/install?installation_id=attacker&state=abc"
       )
     );
 
     expect(res.status).toBe(307);
     expect(res.headers.get("location")).toBe(
-      "https://app.lightfast.localhost/api/github/setup?installation_id=1001&setup_action=install&state=abc"
+      "https://lightfast.localhost/api/github/setup?installation_id=1001&setup_action=install&state=abc"
     );
   });
 });
