@@ -113,15 +113,15 @@ export function getGitHubAppConfig(
 ): GitHubAppConfig {
   const hasExplicitEnv = input.env !== undefined;
   const configEnv = input.env ?? runtimeEnv;
-  const endpointsInput: Parameters<typeof resolveGitHubAppEndpoints>[0] = {
-    vercelEnv: configEnv.VERCEL_ENV,
-  };
+  const endpointsInput: Parameters<typeof resolveGitHubAppEndpoints>[0] = {};
   if (hasExplicitEnv) {
     endpointsInput.endpointOrigin = configEnv.GITHUB_APP_ENDPOINT_ORIGIN;
     endpointsInput.legacyInstallUrlOverride =
       configEnv.GITHUB_INSTALL_URL_OVERRIDE;
+    endpointsInput.vercelEnv = configEnv.VERCEL_ENV ?? "development";
   } else {
     endpointsInput.endpointOrigin = configEnv.GITHUB_APP_ENDPOINT_ORIGIN;
+    endpointsInput.vercelEnv = configEnv.VERCEL_ENV;
   }
   const endpoints = resolveGitHubAppEndpoints(endpointsInput);
 

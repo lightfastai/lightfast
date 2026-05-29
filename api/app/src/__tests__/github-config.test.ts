@@ -182,6 +182,26 @@ describe("GitHub config", () => {
     expect(config.endpoints).toEqual(DEFAULT_GITHUB_APP_ENDPOINTS);
   });
 
+  it("defaults omitted explicit VERCEL_ENV to development", () => {
+    vi.stubEnv("VERCEL_ENV", "production");
+
+    const config = getGitHubAppConfig({
+      env: {
+        GITHUB_API_VERSION: "2022-11-28",
+        GITHUB_APP_CLIENT_ID: "github_client_test",
+        GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+        GITHUB_APP_ID: "12345",
+        GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+        GITHUB_APP_SLUG: "lightfast-test",
+      },
+    });
+
+    expect(config.endpoints.apiBaseUrl).toBe(
+      "https://github.lightfast.localhost"
+    );
+  });
+
   it("rejects incomplete explicit config env", () => {
     expect(() =>
       getGitHubAppConfig({
