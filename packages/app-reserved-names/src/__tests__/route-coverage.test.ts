@@ -158,7 +158,7 @@ function addMetaPageSegment(segments: Set<string>, page: unknown): void {
     addContentPathSegments(segments, markdownHref);
     return;
   }
-  segments.add(page);
+  addContentPathSegments(segments, page.startsWith("/") ? page : `/${page}`);
 }
 
 function collectContentSourceSegments(): Set<string> {
