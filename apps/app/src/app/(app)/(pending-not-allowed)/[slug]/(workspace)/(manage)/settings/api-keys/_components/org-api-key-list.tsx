@@ -19,6 +19,7 @@ import {
 } from "@repo/ui/components/ui/dropdown-menu";
 import { toast } from "@repo/ui/components/ui/sonner";
 import {
+  type QueryKey,
   useMutation,
   useQueryClient,
   useSuspenseQuery,
@@ -26,34 +27,26 @@ import {
 import { useAuth } from "@vendor/clerk";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
-import { useCallback, useState } from "react";
+import { memo, useCallback, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
+  type OrgApiKey,
   type OrgApiKeyListData,
   removeApiKey,
   restoreApiKey,
   revokeApiKey,
 } from "./org-api-key-cache";
+import { getOrgApiKeyRowModel } from "./org-api-key-row-model";
 
-export function OrgApiKeyList() {
-  const { has, isLoaded } = useAuth();
-  const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
+interface AlertAction {
+  keyId: string;
+  keyName: string;
+  type: "revoke" | "delete";
+}
+
+function useOrgApiKeyListActions(listQueryKey: QueryKey) {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryOptions = trpc.org.settings.orgApiKeys.list.queryOptions();
-  const listQueryKey = listQueryOptions.queryKey;
-
-  const { data: keys } = useSuspenseQuery({
-    ...listQueryOptions,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const [alertAction, setAlertAction] = useState<{
-    type: "revoke" | "delete";
-    keyId: string;
-    keyName: string;
-  } | null>(null);
-
   const invalidateList = useCallback(
     () => queryClient.invalidateQueries({ queryKey: listQueryKey }),
     [queryClient, listQueryKey]
@@ -131,24 +124,72 @@ export function OrgApiKeyList() {
     })
   );
 
-  function handleConfirmAlert() {
+  const revokeKey = useCallback(
+    (keyId: string) => revokeMutation.mutate({ keyId }),
+    [revokeMutation.mutate]
+  );
+  const deleteKey = useCallback(
+    (keyId: string) => deleteMutation.mutate({ keyId }),
+    [deleteMutation.mutate]
+  );
+
+  return {
+    actionsDisabled: revokeMutation.isPending || deleteMutation.isPending,
+    deleteKey,
+    pendingDeleteKeyId: deleteMutation.variables?.keyId,
+    pendingRevokeKeyId: revokeMutation.variables?.keyId,
+    revokeKey,
+  };
+}
+
+export function OrgApiKeyList() {
+  const { has, isLoaded } = useAuth();
+  const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
+  const trpc = useTRPC();
+  const listQueryOptions = useMemo(
+    () => trpc.org.settings.orgApiKeys.list.queryOptions(),
+    [trpc]
+  );
+  const listQueryKey = listQueryOptions.queryKey;
+
+  const { data: keys } = useSuspenseQuery({
+    ...listQueryOptions,
+    staleTime: 5 * 60 * 1000,
+  });
+  const {
+    actionsDisabled,
+    deleteKey,
+    pendingDeleteKeyId,
+    pendingRevokeKeyId,
+    revokeKey,
+  } = useOrgApiKeyListActions(listQueryKey);
+
+  const [alertAction, setAlertAction] = useState<AlertAction | null>(null);
+
+  const handleRequestRevoke = useCallback((keyId: string, keyName: string) => {
+    setAlertAction({ keyId, keyName, type: "revoke" });
+  }, []);
+
+  const handleRequestDelete = useCallback((keyId: string, keyName: string) => {
+    setAlertAction({ keyId, keyName, type: "delete" });
+  }, []);
+
+  const handleConfirmAlert = useCallback(() => {
     if (!alertAction) {
       return;
     }
     switch (alertAction.type) {
       case "revoke":
-        revokeMutation.mutate({ keyId: alertAction.keyId });
+        revokeKey(alertAction.keyId);
         break;
       case "delete":
-        deleteMutation.mutate({ keyId: alertAction.keyId });
+        deleteKey(alertAction.keyId);
         break;
       default:
         break;
     }
     setAlertAction(null);
-  }
-
-  const actionsDisabled = revokeMutation.isPending || deleteMutation.isPending;
+  }, [alertAction, deleteKey, revokeKey]);
 
   return (
     <>
@@ -166,117 +207,18 @@ export function OrgApiKeyList() {
         </div>
       ) : (
         <div className="overflow-hidden rounded-lg border border-border/60">
-          {keys.map((key) => {
-            const isExpired =
-              typeof key.expires === "number" && key.expires <= Date.now();
-            const isPending =
-              (revokeMutation.isPending &&
-                revokeMutation.variables?.keyId === key.keyId) ||
-              (deleteMutation.isPending &&
-                deleteMutation.variables?.keyId === key.keyId);
-            const isActive = key.enabled && !isExpired;
-            const keyName = key.name ?? key.start;
-
-            return (
-              <div
-                className={`flex items-center justify-between border-border/60 border-b px-4 py-4 last:border-b-0 ${
-                  isPending ? "opacity-60" : ""
-                } ${isActive ? "" : "opacity-50"}`}
-                key={key.keyId}
-              >
-                <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm">{keyName}</p>
-                    {!key.enabled && (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
-                        Revoked
-                      </span>
-                    )}
-                    {isExpired && key.enabled && (
-                      <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
-                        Expired
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 text-muted-foreground text-xs">
-                    <code className="font-mono">{key.start}</code>
-                    <span>
-                      Created{" "}
-                      {formatRelativeTimeToNow(key.createdAt, {
-                        addSuffix: true,
-                      })}
-                    </span>
-                    {key.lastUsedAt && (
-                      <span>
-                        Last used{" "}
-                        {formatRelativeTimeToNow(key.lastUsedAt, {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    )}
-                    {key.expires && (
-                      <span>
-                        Expires{" "}
-                        {formatRelativeTimeToNow(key.expires, {
-                          addSuffix: true,
-                        })}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {canManageApiKeys ? (
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        className="text-muted-foreground hover:text-foreground"
-                        disabled={actionsDisabled}
-                        onClick={(e) => e.stopPropagation()}
-                        size="icon-sm"
-                        variant="ghost"
-                      >
-                        <MoreHorizontal className="size-3.5" />
-                        <span className="sr-only">Actions</span>
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="space-y-1">
-                      {isActive && (
-                        <DropdownMenuItem
-                          className="cursor-pointer rounded-xl px-2"
-                          onClick={() =>
-                            setAlertAction({
-                              type: "revoke",
-                              keyId: key.keyId,
-                              keyName,
-                            })
-                          }
-                        >
-                          <ShieldOff />
-                          Revoke
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        className="cursor-pointer rounded-xl px-2"
-                        onClick={() =>
-                          setAlertAction({
-                            type: "delete",
-                            keyId: key.keyId,
-                            keyName,
-                          })
-                        }
-                        variant="destructive"
-                      >
-                        <Trash2 />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                ) : (
-                  <div className="size-6" />
-                )}
-              </div>
-            );
-          })}
+          {keys.map((key) => (
+            <OrgApiKeyRow
+              actionsDisabled={actionsDisabled}
+              canManageApiKeys={canManageApiKeys}
+              key={key.keyId}
+              keyItem={key}
+              onRequestDelete={handleRequestDelete}
+              onRequestRevoke={handleRequestRevoke}
+              pendingDeleteKeyId={pendingDeleteKeyId}
+              pendingRevokeKeyId={pendingRevokeKeyId}
+            />
+          ))}
         </div>
       )}
 
@@ -320,3 +262,116 @@ export function OrgApiKeyList() {
     </>
   );
 }
+
+const OrgApiKeyRow = memo(function OrgApiKeyRow({
+  actionsDisabled,
+  canManageApiKeys,
+  keyItem,
+  onRequestDelete,
+  onRequestRevoke,
+  pendingDeleteKeyId,
+  pendingRevokeKeyId,
+}: {
+  actionsDisabled: boolean;
+  canManageApiKeys: boolean;
+  keyItem: OrgApiKey;
+  onRequestDelete: (keyId: string, keyName: string) => void;
+  onRequestRevoke: (keyId: string, keyName: string) => void;
+  pendingDeleteKeyId?: string;
+  pendingRevokeKeyId?: string;
+}) {
+  const { isActive, isExpired, isPending, keyName } = getOrgApiKeyRowModel(
+    keyItem,
+    {
+      pendingDeleteKeyId,
+      pendingRevokeKeyId,
+    }
+  );
+
+  return (
+    <div
+      className={`flex items-center justify-between border-border/60 border-b px-4 py-4 last:border-b-0 ${
+        isPending ? "opacity-60" : ""
+      } ${isActive ? "" : "opacity-50"}`}
+    >
+      <div className="min-w-0 space-y-1">
+        <div className="flex items-center gap-2">
+          <p className="font-medium text-sm">{keyName}</p>
+          {!keyItem.enabled && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
+              Revoked
+            </span>
+          )}
+          {isExpired && keyItem.enabled && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-muted-foreground text-xs">
+              Expired
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-muted-foreground text-xs">
+          <code className="font-mono">{keyItem.start}</code>
+          <span>
+            Created{" "}
+            {formatRelativeTimeToNow(keyItem.createdAt, {
+              addSuffix: true,
+            })}
+          </span>
+          {keyItem.lastUsedAt && (
+            <span>
+              Last used{" "}
+              {formatRelativeTimeToNow(keyItem.lastUsedAt, {
+                addSuffix: true,
+              })}
+            </span>
+          )}
+          {keyItem.expires && (
+            <span>
+              Expires{" "}
+              {formatRelativeTimeToNow(keyItem.expires, {
+                addSuffix: true,
+              })}
+            </span>
+          )}
+        </div>
+      </div>
+
+      {canManageApiKeys ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              className="text-muted-foreground hover:text-foreground"
+              disabled={actionsDisabled}
+              onClick={(e) => e.stopPropagation()}
+              size="icon-sm"
+              variant="ghost"
+            >
+              <MoreHorizontal className="size-3.5" />
+              <span className="sr-only">Actions</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="space-y-1">
+            {isActive && (
+              <DropdownMenuItem
+                className="cursor-pointer rounded-xl px-2"
+                onClick={() => onRequestRevoke(keyItem.keyId, keyName)}
+              >
+                <ShieldOff />
+                Revoke
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem
+              className="cursor-pointer rounded-xl px-2"
+              onClick={() => onRequestDelete(keyItem.keyId, keyName)}
+              variant="destructive"
+            >
+              <Trash2 />
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <div className="size-6" />
+      )}
+    </div>
+  );
+});

@@ -24,7 +24,7 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Loader2, UserPlus } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
   createOptimisticInvitation,
@@ -40,8 +40,11 @@ export function OrgMemberInvite() {
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryKey =
-    trpc.org.settings.orgMembers.list.queryOptions().queryKey;
+  const listQueryOptions = useMemo(
+    () => trpc.org.settings.orgMembers.list.queryOptions(),
+    [trpc]
+  );
+  const listQueryKey = listQueryOptions.queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [emailAddress, setEmailAddress] = useState("");
@@ -104,16 +107,16 @@ export function OrgMemberInvite() {
     })
   );
 
-  if (!canManageMembers) {
-    return null;
-  }
-
-  function handleInvite() {
+  const handleInvite = useCallback(() => {
     const trimmed = emailAddress.trim();
     if (!trimmed || inviteMutation.isPending) {
       return;
     }
     inviteMutation.mutate({ emailAddress: trimmed, role });
+  }, [emailAddress, inviteMutation.isPending, inviteMutation.mutate, role]);
+
+  if (!canManageMembers) {
+    return null;
   }
 
   return (

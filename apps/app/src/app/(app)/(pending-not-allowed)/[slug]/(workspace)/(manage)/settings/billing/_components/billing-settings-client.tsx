@@ -1,21 +1,17 @@
 "use client";
 
-import type { AppRouterOutputs } from "@api/app";
 import {
-  getCurrentSubscriptionItem,
-  getDefaultPaymentMethod,
-  getStarterPlan,
-  getTeamPlan,
-  tierForPlan,
-} from "@repo/app-billing";
-import {
+  type QueryKey,
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from "@tanstack/react-query";
-import type { BillingStatementResource } from "@vendor/clerk";
+import type {
+  BillingPaymentMethodResource,
+  BillingStatementResource,
+} from "@vendor/clerk";
 import { useAuth, usePaymentMethods, useStatements } from "@vendor/clerk";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
@@ -25,6 +21,10 @@ import {
   PaymentSection,
   PlanSection,
 } from "./billing-sections";
+import {
+  type BillingOverview,
+  deriveBillingViewModel,
+} from "./billing-view-model";
 import { PaymentMethodDialog } from "./payment-method-dialog";
 import {
   ConfirmBusinessDialog,
@@ -34,13 +34,13 @@ import {
 import { PlanSelectionDialog } from "./plan-selection-dialog";
 import { StatementDetailsDialog } from "./statement-details-dialog";
 
-type BillingOverview =
-  AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"];
 type BillingPlan = BillingOverview["plans"][number];
 type BillingSubscriptionItem =
   BillingOverview["subscription"]["subscriptionItems"][number];
 
 const PRICING_HASH = "#pricing";
+const EMPTY_PAYMENT_METHODS: BillingPaymentMethodResource[] = [];
+const EMPTY_STATEMENTS: BillingStatementResource[] = [];
 
 function pricingHashUrl() {
   return `${window.location.pathname}${window.location.search}${PRICING_HASH}`;
@@ -50,60 +50,8 @@ function billingUrlWithoutHash() {
   return `${window.location.pathname}${window.location.search}`;
 }
 
-export function BillingSettingsClient() {
-  const trpc = useTRPC();
-  const auth = useAuth();
-  const queryClient = useQueryClient();
-  const overviewQueryOptions =
-    trpc.org.settings.orgBilling.overview.queryOptions();
-  const { data: overview } = useSuspenseQuery({
-    ...overviewQueryOptions,
-    staleTime: 5 * 60 * 1000,
-  });
-
-  const paymentMethodsQuery = usePaymentMethods({
-    for: "organization",
-    pageSize: 20,
-  });
-  const statementsQuery = useStatements({
-    for: "organization",
-    pageSize: 10,
-  });
-
-  const { plans, subscription } = overview;
-  const isAdmin = auth.isLoaded && !!auth.has?.({ role: "org:admin" });
-  const paymentMethods = paymentMethodsQuery.data ?? [];
-  const statements = statementsQuery.data ?? [];
-  const starterPlan = getStarterPlan(plans);
-  const teamPlan = getTeamPlan(plans);
-  const currentItem = getCurrentSubscriptionItem(subscription);
-  const currentPlan = currentItem?.plan ?? starterPlan;
-  const currentTier = tierForPlan(currentPlan) ?? "starter";
-  const currentPlanName = currentPlan?.name ?? "Starter";
-  const currentAmount = currentItem?.amount ?? currentPlan?.fee ?? null;
-  const defaultPaymentMethod = getDefaultPaymentMethod(paymentMethods);
-  const cancelableTeamItem =
-    currentItem &&
-    tierForPlan(currentItem.plan) === "team" &&
-    !currentItem.canceledAt
-      ? currentItem
-      : null;
-  const canceledTeamItem =
-    currentItem &&
-    tierForPlan(currentItem.plan) === "team" &&
-    currentItem.canceledAt
-      ? currentItem
-      : null;
-
+function usePricingHashDialogState() {
   const [isPlanDialogOpen, setIsPlanDialogOpen] = useState(false);
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
-  const [downgradeItem, setDowngradeItem] =
-    useState<BillingSubscriptionItem | null>(null);
-  const [upgradePlan, setUpgradePlan] = useState<BillingPlan | null>(null);
-  const [isBusinessConfirmOpen, setIsBusinessConfirmOpen] = useState(false);
-  const [checkoutPlan, setCheckoutPlan] = useState<BillingPlan | null>(null);
-  const [selectedStatement, setSelectedStatement] =
-    useState<BillingStatementResource | null>(null);
 
   const setPlanDialogOpen = useCallback((open: boolean) => {
     setIsPlanDialogOpen(open);
@@ -135,21 +83,27 @@ export function BillingSettingsClient() {
     };
   }, []);
 
-  const cancelMutation = useMutation(
+  return [isPlanDialogOpen, setPlanDialogOpen] as const;
+}
+
+function useCancelSubscriptionItemMutation(overviewQueryKey: QueryKey) {
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+
+  return useMutation(
     trpc.org.settings.orgBilling.cancelSubscriptionItem.mutationOptions({
       meta: { errorTitle: "Failed to schedule cancellation" },
       onMutate: async (input) => {
         await queryClient.cancelQueries({
-          queryKey: overviewQueryOptions.queryKey,
+          queryKey: overviewQueryKey,
         });
 
-        const previousOverview = queryClient.getQueryData<BillingOverview>(
-          overviewQueryOptions.queryKey
-        );
+        const previousOverview =
+          queryClient.getQueryData<BillingOverview>(overviewQueryKey);
         const canceledAt = Date.now();
 
         queryClient.setQueryData(
-          overviewQueryOptions.queryKey,
+          overviewQueryKey,
           (old: BillingOverview | undefined) =>
             old
               ? {
@@ -171,15 +125,12 @@ export function BillingSettingsClient() {
       },
       onError: (_err, _input, context) => {
         if (context?.previousOverview) {
-          queryClient.setQueryData(
-            overviewQueryOptions.queryKey,
-            context.previousOverview
-          );
+          queryClient.setQueryData(overviewQueryKey, context.previousOverview);
         }
       },
       onSuccess: (updatedItem) => {
         queryClient.setQueryData(
-          overviewQueryOptions.queryKey,
+          overviewQueryKey,
           (old: BillingOverview | undefined) =>
             old
               ? {
@@ -197,24 +148,134 @@ export function BillingSettingsClient() {
       },
       onSettled: () =>
         void queryClient.invalidateQueries({
-          queryKey: overviewQueryOptions.queryKey,
+          queryKey: overviewQueryKey,
         }),
     })
   );
+}
 
-  function confirmDowngrade(item: BillingSubscriptionItem) {
-    cancelMutation.mutate({
-      subscriptionItemId: item.id,
+export function BillingSettingsClient() {
+  const trpc = useTRPC();
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  const overviewQueryOptions = useMemo(
+    () => trpc.org.settings.orgBilling.overview.queryOptions(),
+    [trpc]
+  );
+  const { data: overview } = useSuspenseQuery({
+    ...overviewQueryOptions,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const paymentMethodsQuery = usePaymentMethods({
+    for: "organization",
+    pageSize: 20,
+  });
+  const statementsQuery = useStatements({
+    for: "organization",
+    pageSize: 10,
+  });
+
+  const isAdmin = auth.isLoaded && !!auth.has?.({ role: "org:admin" });
+  const paymentMethods = paymentMethodsQuery.data ?? EMPTY_PAYMENT_METHODS;
+  const statements = statementsQuery.data ?? EMPTY_STATEMENTS;
+  const billingModel = useMemo(
+    () => deriveBillingViewModel({ overview, paymentMethods }),
+    [overview, paymentMethods]
+  );
+  const {
+    cancelableTeamItem,
+    canceledTeamItem,
+    currentAmount,
+    currentItem,
+    currentPlanName,
+    currentTier,
+    defaultPaymentMethod,
+    starterPlan,
+    subscription,
+    teamPlan,
+  } = billingModel;
+
+  const [isPlanDialogOpen, setPlanDialogOpen] = usePricingHashDialogState();
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [downgradeItem, setDowngradeItem] =
+    useState<BillingSubscriptionItem | null>(null);
+  const [upgradePlan, setUpgradePlan] = useState<BillingPlan | null>(null);
+  const [isBusinessConfirmOpen, setIsBusinessConfirmOpen] = useState(false);
+  const [checkoutPlan, setCheckoutPlan] = useState<BillingPlan | null>(null);
+  const [selectedStatement, setSelectedStatement] =
+    useState<BillingStatementResource | null>(null);
+
+  const cancelMutation = useCancelSubscriptionItemMutation(
+    overviewQueryOptions.queryKey
+  );
+
+  const confirmDowngrade = useCallback(
+    (item: BillingSubscriptionItem) => {
+      cancelMutation.mutate({
+        subscriptionItemId: item.id,
+      });
+      setDowngradeItem(null);
+      setPlanDialogOpen(false);
+    },
+    [cancelMutation.mutate, setPlanDialogOpen]
+  );
+
+  const confirmUpgrade = useCallback(
+    (plan: BillingPlan) => {
+      setCheckoutPlan(plan);
+      setUpgradePlan(null);
+      setPlanDialogOpen(false);
+    },
+    [setPlanDialogOpen]
+  );
+
+  const openPlanDialog = useCallback(
+    () => setPlanDialogOpen(true),
+    [setPlanDialogOpen]
+  );
+  const openPaymentDialog = useCallback(() => setIsPaymentDialogOpen(true), []);
+  const selectBusiness = useCallback(() => setIsBusinessConfirmOpen(true), []);
+  const selectStarter = useCallback(() => {
+    if (cancelableTeamItem) {
+      setDowngradeItem(cancelableTeamItem);
+    }
+  }, [cancelableTeamItem]);
+  const selectTeam = useCallback(() => {
+    if (teamPlan) {
+      setUpgradePlan(teamPlan);
+    }
+  }, [teamPlan]);
+  const closeDowngradeDialog = useCallback((open: boolean) => {
+    if (!open) {
+      setDowngradeItem(null);
+    }
+  }, []);
+  const closeUpgradeDialog = useCallback((open: boolean) => {
+    if (!open) {
+      setUpgradePlan(null);
+    }
+  }, []);
+  const handlePaymentUpdated = useCallback(
+    () => void paymentMethodsQuery.revalidate(),
+    [paymentMethodsQuery]
+  );
+  const completeCheckout = useCallback(() => {
+    setCheckoutPlan(null);
+    void queryClient.invalidateQueries({
+      queryKey: overviewQueryOptions.queryKey,
     });
-    setDowngradeItem(null);
-    setPlanDialogOpen(false);
-  }
-
-  function confirmUpgrade(plan: BillingPlan) {
-    setCheckoutPlan(plan);
-    setUpgradePlan(null);
-    setPlanDialogOpen(false);
-  }
+  }, [overviewQueryOptions.queryKey, queryClient]);
+  const setCheckoutDialogOpen = useCallback((open: boolean) => {
+    if (!open) {
+      setCheckoutPlan(null);
+    }
+  }, []);
+  const setStatementDialogOpen = useCallback((open: boolean) => {
+    if (!open) {
+      setSelectedStatement(null);
+    }
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -236,7 +297,7 @@ export function BillingSettingsClient() {
           currentTier={currentTier}
           isAdmin={isAdmin}
           nextPayment={subscription?.nextPayment ?? null}
-          onAdjustPlan={() => setPlanDialogOpen(true)}
+          onAdjustPlan={openPlanDialog}
           periodEnd={currentItem?.periodEnd ?? null}
           status={subscription?.status ?? "active"}
         />
@@ -245,7 +306,7 @@ export function BillingSettingsClient() {
           defaultPaymentMethod={defaultPaymentMethod}
           isAdmin={isAdmin}
           isLoading={paymentMethodsQuery.isLoading}
-          onUpdate={() => setIsPaymentDialogOpen(true)}
+          onUpdate={openPaymentDialog}
         />
 
         <InvoicesSection
@@ -258,11 +319,7 @@ export function BillingSettingsClient() {
           canCancel={!!cancelableTeamItem}
           canceledAt={canceledTeamItem?.canceledAt ?? null}
           isAdmin={isAdmin}
-          onCancelPlan={() => {
-            if (cancelableTeamItem) {
-              setDowngradeItem(cancelableTeamItem);
-            }
-          }}
+          onCancelPlan={selectStarter}
           periodEnd={canceledTeamItem?.periodEnd ?? null}
         />
       </div>
@@ -283,17 +340,9 @@ export function BillingSettingsClient() {
         isConfirming={!!downgradeItem || !!upgradePlan || isBusinessConfirmOpen}
         isStarterSelectionDisabled={!!canceledTeamItem}
         onOpenChange={setPlanDialogOpen}
-        onSelectBusiness={() => setIsBusinessConfirmOpen(true)}
-        onSelectStarter={() => {
-          if (cancelableTeamItem) {
-            setDowngradeItem(cancelableTeamItem);
-          }
-        }}
-        onSelectTeam={() => {
-          if (teamPlan) {
-            setUpgradePlan(teamPlan);
-          }
-        }}
+        onSelectBusiness={selectBusiness}
+        onSelectStarter={selectStarter}
+        onSelectTeam={selectTeam}
         open={isPlanDialogOpen}
         starterPlan={starterPlan}
         teamPlan={teamPlan}
@@ -303,20 +352,12 @@ export function BillingSettingsClient() {
         currentPlanName={currentPlanName}
         item={downgradeItem}
         onConfirm={confirmDowngrade}
-        onOpenChange={(open) => {
-          if (!open) {
-            setDowngradeItem(null);
-          }
-        }}
+        onOpenChange={closeDowngradeDialog}
       />
 
       <ConfirmUpgradeDialog
         onConfirm={confirmUpgrade}
-        onOpenChange={(open) => {
-          if (!open) {
-            setUpgradePlan(null);
-          }
-        }}
+        onOpenChange={closeUpgradeDialog}
         plan={upgradePlan}
       />
 
@@ -330,35 +371,22 @@ export function BillingSettingsClient() {
         isLoading={paymentMethodsQuery.isLoading}
         methods={paymentMethods}
         onOpenChange={setIsPaymentDialogOpen}
-        onUpdated={() => void paymentMethodsQuery.revalidate()}
+        onUpdated={handlePaymentUpdated}
         open={isPaymentDialogOpen}
         orgId={auth.orgId ?? undefined}
       />
 
       {checkoutPlan && (
         <BillingCheckoutDialog
-          onComplete={() => {
-            setCheckoutPlan(null);
-            void queryClient.invalidateQueries({
-              queryKey: overviewQueryOptions.queryKey,
-            });
-          }}
-          onOpenChange={(open) => {
-            if (!open) {
-              setCheckoutPlan(null);
-            }
-          }}
+          onComplete={completeCheckout}
+          onOpenChange={setCheckoutDialogOpen}
           open={!!checkoutPlan}
           plan={checkoutPlan}
         />
       )}
 
       <StatementDetailsDialog
-        onOpenChange={(open) => {
-          if (!open) {
-            setSelectedStatement(null);
-          }
-        }}
+        onOpenChange={setStatementDialogOpen}
         statement={selectedStatement}
       />
     </div>

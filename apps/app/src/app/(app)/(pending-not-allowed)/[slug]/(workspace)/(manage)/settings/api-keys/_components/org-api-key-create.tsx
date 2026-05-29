@@ -14,7 +14,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Check, Copy, Loader2, Plus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 export function OrgApiKeyCreate() {
@@ -22,8 +22,11 @@ export function OrgApiKeyCreate() {
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const listQueryKey =
-    trpc.org.settings.orgApiKeys.list.queryOptions().queryKey;
+  const listQueryOptions = useMemo(
+    () => trpc.org.settings.orgApiKeys.list.queryOptions(),
+    [trpc]
+  );
+  const listQueryKey = listQueryOptions.queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
@@ -50,38 +53,41 @@ export function OrgApiKeyCreate() {
     })
   );
 
-  if (!canManageApiKeys) {
-    return null;
-  }
-
-  function handleCreate() {
+  const handleCreate = useCallback(() => {
     const trimmed = name.trim();
     if (!trimmed || createMutation.isPending) {
       return;
     }
     createMutation.mutate({ name: trimmed });
-  }
+  }, [createMutation.isPending, createMutation.mutate, name]);
 
-  function handleCopy() {
+  const handleCopy = useCallback(() => {
     if (!createdKey) {
       return;
     }
     navigator.clipboard.writeText(createdKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
+  }, [createdKey]);
 
-  function handleOpenChange(open: boolean) {
-    isOpenRef.current = open;
-    if (open) {
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
-      setCreatedKey(null);
-      setName("");
-      setCopied(false);
-      createMutation.reset();
-    }
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      isOpenRef.current = open;
+      if (open) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+        setCreatedKey(null);
+        setName("");
+        setCopied(false);
+        createMutation.reset();
+      }
+    },
+    [createMutation.reset]
+  );
+
+  if (!canManageApiKeys) {
+    return null;
   }
 
   return (

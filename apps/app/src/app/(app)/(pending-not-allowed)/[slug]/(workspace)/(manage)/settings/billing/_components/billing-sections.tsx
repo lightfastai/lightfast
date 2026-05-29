@@ -22,6 +22,7 @@ import type {
 } from "@vendor/clerk";
 import { formatUtcCalendarDate as formatDate } from "@vendor/lib/time";
 import { CreditCard } from "lucide-react";
+import { memo } from "react";
 
 type BillingSubscription =
   AppRouterOutputs["org"]["settings"]["orgBilling"]["overview"]["subscription"];
@@ -34,17 +35,7 @@ export function LoadingLine({ label }: { label: string }) {
   );
 }
 
-export function PlanSection({
-  canceledAt,
-  currentAmount,
-  currentPlanName,
-  currentTier,
-  isAdmin,
-  nextPayment,
-  onAdjustPlan,
-  periodEnd,
-  status,
-}: {
+interface PlanSectionProps {
   canceledAt?: Date | number | null;
   currentAmount?: BillingMoneyAmount | null;
   currentPlanName: string;
@@ -54,7 +45,19 @@ export function PlanSection({
   onAdjustPlan: () => void;
   periodEnd?: Date | number | null;
   status: BillingSubscription["status"] | "active";
-}) {
+}
+
+export const PlanSection = memo(function PlanSection({
+  canceledAt,
+  currentAmount,
+  currentPlanName,
+  currentTier,
+  isAdmin,
+  nextPayment,
+  onAdjustPlan,
+  periodEnd,
+  status,
+}: PlanSectionProps) {
   const nextPaymentDate = formatDate(nextPayment?.date);
   const periodEndDate = formatDate(periodEnd);
   const renewalCopy =
@@ -85,19 +88,21 @@ export function PlanSection({
       )}
     </section>
   );
-}
+});
 
-export function PaymentSection({
-  defaultPaymentMethod,
-  isAdmin,
-  isLoading,
-  onUpdate,
-}: {
+interface PaymentSectionProps {
   defaultPaymentMethod: BillingPaymentMethodResource | null;
   isAdmin: boolean;
   isLoading: boolean;
   onUpdate: () => void;
-}) {
+}
+
+export const PaymentSection = memo(function PaymentSection({
+  defaultPaymentMethod,
+  isAdmin,
+  isLoading,
+  onUpdate,
+}: PaymentSectionProps) {
   return (
     <section className="grid gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
       <div>
@@ -120,17 +125,19 @@ export function PaymentSection({
       )}
     </section>
   );
-}
+});
 
-export function InvoicesSection({
-  isLoading,
-  onViewStatement,
-  statements,
-}: {
+interface InvoicesSectionProps {
   isLoading: boolean;
   onViewStatement: (statement: BillingStatementResource) => void;
   statements: BillingStatementResource[];
-}) {
+}
+
+export const InvoicesSection = memo(function InvoicesSection({
+  isLoading,
+  onViewStatement,
+  statements,
+}: InvoicesSectionProps) {
   return (
     <section>
       <h3 className="font-semibold text-foreground text-lg">Invoices</h3>
@@ -179,21 +186,23 @@ export function InvoicesSection({
       )}
     </section>
   );
+});
+
+interface CancellationSectionProps {
+  canCancel: boolean;
+  canceledAt?: Date | number | null;
+  isAdmin: boolean;
+  onCancelPlan: () => void;
+  periodEnd?: Date | number | null;
 }
 
-export function CancellationSection({
+export const CancellationSection = memo(function CancellationSection({
   canceledAt,
   canCancel,
   isAdmin,
   onCancelPlan,
   periodEnd,
-}: {
-  canceledAt?: Date | number | null;
-  canCancel: boolean;
-  isAdmin: boolean;
-  onCancelPlan: () => void;
-  periodEnd?: Date | number | null;
-}) {
+}: CancellationSectionProps) {
   const periodEndDate = formatDate(periodEnd);
   const copy = canceledAt
     ? periodEndDate
@@ -218,4 +227,4 @@ export function CancellationSection({
       )}
     </section>
   );
-}
+});

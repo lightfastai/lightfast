@@ -2,12 +2,19 @@
 
 import { Input } from "@repo/ui/components/ui/input";
 import { Search } from "lucide-react";
-import { useState } from "react";
+import { useCallback, useDeferredValue, useState } from "react";
 import { OrgMemberInvite } from "./org-member-invite";
 import { OrgMemberList } from "./org-member-list";
 
 export function OrgMembersClient() {
   const [search, setSearch] = useState("");
+  const deferredSearch = useDeferredValue(search);
+  const handleSearchChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setSearch(event.target.value);
+    },
+    []
+  );
 
   return (
     <div className="space-y-4">
@@ -17,7 +24,7 @@ export function OrgMembersClient() {
           <Input
             aria-label="Search members"
             className="pl-8"
-            onChange={(event) => setSearch(event.target.value)}
+            onChange={handleSearchChange}
             placeholder="Search members..."
             value={search}
           />
@@ -25,7 +32,7 @@ export function OrgMembersClient() {
         <OrgMemberInvite />
       </div>
 
-      <OrgMemberList searchQuery={search} />
+      <OrgMemberList searchQuery={deferredSearch} />
     </div>
   );
 }

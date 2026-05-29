@@ -24,8 +24,12 @@ import {
 import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
+import {
+  normalizeTeamSlugInput,
+  renameOrganizationSlug,
+} from "./team-general-settings-model";
 
 interface TeamGeneralSettingsClientProps {
   slug: string;
@@ -40,11 +44,20 @@ export function TeamGeneralSettingsClient({
   const { setActive } = useOrganizationList();
   const [isUpdating, setIsUpdating] = useState(false);
 
+  const orgListQueryOptions = useMemo(
+    () => trpc.viewer.organization.listUserOrganizations.queryOptions(),
+    [trpc]
+  );
+  const orgListQueryKey = orgListQueryOptions.queryKey;
+
   const { data: organizations } = useSuspenseQuery({
-    ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
+    ...orgListQueryOptions,
     staleTime: 5 * 60 * 1000,
   });
-  const currentOrg = organizations.find((org) => org.slug === slug);
+  const currentOrg = useMemo(
+    () => organizations.find((org) => org.slug === slug),
+    [organizations, slug]
+  );
 
   const form = useFormCompat<TeamSettingsFormValues>({
     resolver: zodResolver(teamSettingsFormSchema),
@@ -57,9 +70,6 @@ export function TeamGeneralSettingsClient({
   const currentFormName = form.watch("teamName");
   const hasChanges = currentFormName !== slug;
 
-  const orgListQueryKey =
-    trpc.viewer.organization.listUserOrganizations.queryOptions().queryKey;
-
   // Optimistic cache update so sidebar and header reflect the new name instantly
   const updateNameMutation = useMutation(
     trpc.org.settings.organization.updateName.mutationOptions({
@@ -69,9 +79,7 @@ export function TeamGeneralSettingsClient({
         await queryClient.cancelQueries({ queryKey: orgListQueryKey });
         const previousOrgs = queryClient.getQueryData(orgListQueryKey);
         queryClient.setQueryData(orgListQueryKey, (old: typeof previousOrgs) =>
-          old?.map((org) =>
-            org.slug === input.slug ? { ...org, slug: input.name } : org
-          )
+          renameOrganizationSlug(old, input)
         );
         return { previousOrgs };
       },
@@ -114,23 +122,36 @@ export function TeamGeneralSettingsClient({
     })
   );
 
-  const onSubmit = async (values: TeamSettingsFormValues) => {
-    // Trigger validation
-    const isValid = await form.trigger();
-    if (!isValid) {
-      toast.error("Validation failed", {
-        description: "Please fix the errors in the form before submitting.",
+  const onSubmit = useCallback(
+    async (values: TeamSettingsFormValues) => {
+      // Trigger validation
+      const isValid = await form.trigger();
+      if (!isValid) {
+        toast.error("Validation failed", {
+          description: "Please fix the errors in the form before submitting.",
+        });
+        return;
+      }
+
+      setIsUpdating(true);
+
+      updateNameMutation.mutate({
+        slug,
+        name: values.teamName,
       });
-      return;
-    }
+    },
+    [form, slug, updateNameMutation.mutate]
+  );
 
-    setIsUpdating(true);
-
-    updateNameMutation.mutate({
-      slug,
-      name: values.teamName,
-    });
-  };
+  const handleTeamNameChange = useCallback(
+    (
+      fieldOnChange: (...event: unknown[]) => void,
+      event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+      fieldOnChange(normalizeTeamSlugInput(event.target.value));
+    },
+    []
+  );
 
   return (
     <div className="space-y-8">
@@ -181,15 +202,9 @@ export function TeamGeneralSettingsClient({
                       <FormControl>
                         <Input
                           {...field}
-                          onChange={(e) => {
-                            // Normalize: lowercase, alphanumeric + hyphens only
-                            const normalized = e.target.value
-                              .toLowerCase()
-                              .replace(/[^a-z0-9-]/g, "")
-                              .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
-
-                            field.onChange(normalized);
-                          }}
+                          onChange={(event) =>
+                            handleTeamNameChange(field.onChange, event)
+                          }
                           placeholder="acme-inc"
                           type="text"
                         />
