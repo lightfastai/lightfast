@@ -7,7 +7,12 @@ import { env } from "~/env";
 
 export const runtime = "edge";
 
-const mxbaiClient = new Mixedbread({ apiKey: env.MXBAI_API_KEY });
+let mxbaiClient: Mixedbread | undefined;
+
+function getMxbaiClient() {
+  mxbaiClient ??= new Mixedbread({ apiKey: env.MXBAI_API_KEY });
+  return mxbaiClient;
+}
 
 // --- Types ---
 
@@ -159,7 +164,7 @@ export async function GET(request: NextRequest) {
       return Response.json([]);
     }
 
-    const response = await mxbaiClient.stores.search({
+    const response = await getMxbaiClient().stores.search({
       query,
       store_identifiers: [env.MXBAI_STORE_ID],
       top_k: 10,

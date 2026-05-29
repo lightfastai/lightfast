@@ -5,9 +5,9 @@ import { isDiagnosticCause } from "../diagnostics";
 
 // ----- module mocks (must precede the dynamic imports below) -----------------
 
-// `@db/app`'s barrel re-exports the eager database client; stub it so
-// the binding *helpers* used by `task.*` load without DB env. Handlers read the
-// fake `db` injected via tRPC context, never this stub.
+// Stub the shared db export so the binding helpers used by `task.*` stay
+// isolated from runtime DB env. Handlers read the fake `db` injected via tRPC
+// context, never this stub.
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 const getOrganizationMock = vi.fn();

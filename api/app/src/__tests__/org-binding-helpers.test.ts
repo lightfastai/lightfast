@@ -1,9 +1,8 @@
 import type { Database, OrgSourceControlBinding } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// `@db/app`'s barrel re-exports `db` from `./client`, which eagerly builds a
-// database client and validates DB env at import. Stub the client module so the
-// real binding *helpers* (which only type-import `Database`) load env-free.
+// Stub the shared client so the real binding helpers load env-free while the
+// tests keep using fake DB objects.
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 const {

@@ -1,7 +1,7 @@
 // Schema exports
 
 // Client
-export { type Database, db } from "./client";
+export { type Database, db, getClient } from "./client";
 
 // Re-exported schema definitions
 export {
