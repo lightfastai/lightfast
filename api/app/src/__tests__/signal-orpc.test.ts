@@ -156,8 +156,8 @@ describe("orpcRouter.signals", () => {
       },
       errorCode: null,
       errorMessage: null,
-      createdAt: "2026-05-21T00:00:00.000Z",
-      updatedAt: "2026-05-21T00:01:00.000Z",
+      createdAt: new Date("2026-05-21T00:00:00.000Z"),
+      updatedAt: new Date("2026-05-21T00:01:00.000Z"),
     });
 
     const result = await call(
@@ -175,6 +175,8 @@ describe("orpcRouter.signals", () => {
       input: "Run the test plan",
       status: "classified",
       classification: { kind: "review" },
+      createdAt: "2026-05-21T00:00:00.000Z",
+      updatedAt: "2026-05-21T00:01:00.000Z",
     });
   });
 

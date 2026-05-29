@@ -1,5 +1,5 @@
 {
-  "name": "lightfast",
+  "name": "@lightfastai/workspace",
   "license": "MIT",
   "private": true,
   "engines": {
@@ -27,6 +27,7 @@
     "postinstall": "pnpm lint:ws",
     "test": "SKIP_ENV_VALIDATION=true turbo run test",
     "typecheck": "SKIP_ENV_VALIDATION=true turbo run typecheck",
+    "verify:orpc": "SKIP_ENV_VALIDATION=true turbo run typecheck test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@vendor/mcp --continue --summarize",
     "ui": "pnpm --filter @repo/ui ui",
     "vercel:link": "pnpm dlx vercel@latest link --repo",
     "changeset": "changeset",
