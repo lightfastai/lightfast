@@ -55,8 +55,5 @@
     "@vendor/unkey": "0.1.0",
     "@vendor/vercel-flags": "0.1.0"
   },
-  "changesets": [
-    "alpha-dist-tag",
-    "orpc-public-api"
-  ]
+  "changesets": ["alpha-dist-tag", "orpc-public-api"]
 }
