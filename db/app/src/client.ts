@@ -9,13 +9,26 @@ export function createClient() {
   return createDatabase({ host, password, username }, schema);
 }
 
-export const db = createClient();
-
 /**
  * The Drizzle database client type. Repository helpers accept this so they
  * stay testable and transport-agnostic — callers pass `ctx.db`.
  */
-export type Database = typeof db;
+export type Database = ReturnType<typeof createClient>;
+
+let client: Database | undefined;
+
+export function getClient(): Database {
+  client ??= createClient();
+  return client;
+}
+
+export const db = new Proxy({} as Database, {
+  get(_target, prop) {
+    const database = getClient();
+    const value = Reflect.get(database as object, prop, database);
+    return typeof value === "function" ? value.bind(database) : value;
+  },
+});
 
 function requireEnv(name: string, value: string | undefined): string {
   if (!value) {

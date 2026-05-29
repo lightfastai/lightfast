@@ -9,6 +9,8 @@ import { PitchDeckMobileNav } from "./_components/pitch-deck-mobile-nav";
 import { PitchDeckNavbar } from "./_components/pitch-deck-navbar";
 import { PrefaceToggle } from "./_components/preface-toggle";
 
+export const dynamic = "force-dynamic";
+
 export default async function PitchDeckLayout({
   children,
 }: {

@@ -113,7 +113,6 @@ pnpm db:studio        # starts Drizzle Studio through Portless
 cd apps/app && pnpm with-env next typegen
 cd apps/app && pnpm with-env next build --debug
 cd apps/app && pnpm with-env next build --debug-prerender
-cd apps/app && pnpm with-env next build --debug-build-paths "app/**/page.tsx"
 cd apps/app && pnpm with-env next experimental-analyze --output
 cd apps/app && pnpm with-env next dev --experimental-cpu-prof
 cd apps/app && NEXT_TURBOPACK_TRACING=1 pnpm with-env next dev
