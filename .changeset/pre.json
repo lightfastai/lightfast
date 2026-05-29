@@ -30,7 +30,32 @@
     "@vendor/security": "0.1.0",
     "@vendor/seo": "0.1.0",
     "@vendor/storage": "0.1.0",
-    "@vendor/upstash": "0.1.0"
+    "@vendor/upstash": "0.1.0",
+    "@repo/ai": "0.1.0",
+    "@api/platform": "0.1.0",
+    "@lightfast/desktop": "0.0.0",
+    "@lightfast/platform": "0.1.0",
+    "@lightfast/e2e": "0.1.0",
+    "@repo/vitest-config": "0.0.0",
+    "@repo/api-contract": "0.1.0",
+    "@repo/app-billing": "0.1.0",
+    "@repo/app-clerk-claim": "0.1.0",
+    "@repo/app-encryption": "0.1.0",
+    "@repo/app-remotion": "0.1.0",
+    "@repo/native-auth-contract": "0.1.0",
+    "@repo/native-auth-node": "0.1.0",
+    "@repo/og": "0.0.0",
+    "@vendor/aeo": "0.1.0",
+    "@vendor/ai": "0.1.0",
+    "@vendor/braintrust": "0.1.0",
+    "@vendor/electron": "0.1.0",
+    "@vendor/forms": "0.1.0",
+    "@vendor/mcp": "0.1.0",
+    "@vendor/remotion": "0.1.0",
+    "@vendor/unkey": "0.1.0",
+    "@vendor/vercel-flags": "0.1.0"
   },
-  "changesets": []
+  "changesets": [
+    "orpc-public-api"
+  ]
 }
