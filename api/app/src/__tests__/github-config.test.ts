@@ -120,6 +120,22 @@ describe("GitHub config", () => {
     );
   });
 
+  it("treats env undefined as runtime config for legacy guard resolution", async () => {
+    vi.stubEnv(
+      "GITHUB_INSTALL_URL_OVERRIDE",
+      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+    );
+    vi.resetModules();
+
+    const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
+      "../github/config"
+    );
+
+    expect(() => getRuntimeGitHubAppConfig({ env: undefined })).toThrow(
+      /GITHUB_INSTALL_URL_OVERRIDE is no longer supported/
+    );
+  });
+
   it("uses explicit config env instead of ambient legacy install override", () => {
     vi.stubEnv(
       "GITHUB_INSTALL_URL_OVERRIDE",
@@ -164,6 +180,17 @@ describe("GitHub config", () => {
     });
 
     expect(config.endpoints).toEqual(DEFAULT_GITHUB_APP_ENDPOINTS);
+  });
+
+  it("rejects incomplete explicit config env", () => {
+    expect(() =>
+      getGitHubAppConfig({
+        env: {
+          GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+          VERCEL_ENV: "development",
+        },
+      })
+    ).toThrow("GitHub App environment is incomplete.");
   });
 
   it.each(["preview", "production"] as const)(

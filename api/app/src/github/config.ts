@@ -111,7 +111,7 @@ export function resolveGitHubAppEndpoints(
 export function getGitHubAppConfig(
   input: { env?: GitHubConfigEnv } = {}
 ): GitHubAppConfig {
-  const hasExplicitEnv = Object.prototype.hasOwnProperty.call(input, "env");
+  const hasExplicitEnv = input.env !== undefined;
   const configEnv = input.env ?? runtimeEnv;
   const endpointsInput: Parameters<typeof resolveGitHubAppEndpoints>[0] = {
     vercelEnv: configEnv.VERCEL_ENV,
