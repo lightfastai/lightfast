@@ -1,5 +1,11 @@
 # @lightfastai/mcp
 
+## 1.0.0-alpha.7
+
+### Patch Changes
+
+- 7a6122e: Publish prerelease packages through the npm alpha dist-tag.
+
 ## 1.0.0-alpha.6
 
 ### Major Changes
