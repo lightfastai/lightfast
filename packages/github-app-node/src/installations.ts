@@ -44,6 +44,14 @@ function normalizeApiBaseUrl(value: string | undefined) {
   return (value ?? "https://api.github.com").replace(/\/+$/, "");
 }
 
+function normalizePerPage(value: number | undefined) {
+  if (value === undefined || !Number.isFinite(value)) {
+    return 100;
+  }
+
+  return Math.min(100, Math.max(1, Math.trunc(value)));
+}
+
 function normalizeInstallation(
   installation: z.infer<typeof rawInstallationSchema>
 ): GitHubNormalizedInstallation {
@@ -71,6 +79,21 @@ function normalizeInstallation(
   }
 
   return parsed.data;
+}
+
+function hasNextInstallationsPage(input: {
+  currentCount: number;
+  pageCount: number;
+  perPage: number;
+  totalCount?: number;
+}) {
+  const totalCount = input.totalCount ?? input.currentCount;
+
+  return (
+    input.pageCount > 0 &&
+    input.pageCount >= input.perPage &&
+    input.currentCount < totalCount
+  );
 }
 
 async function fetchInstallationsPage(input: {
@@ -120,7 +143,7 @@ export async function listGitHubUserAccessibleInstallations(
 ): Promise<GitHubNormalizedInstallation[]> {
   const requestFetch = input.fetch ?? fetch;
   const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
-  const perPage = input.perPage ?? 100;
+  const perPage = normalizePerPage(input.perPage);
   const installations: GitHubNormalizedInstallation[] = [];
   let page = 1;
 
@@ -136,11 +159,13 @@ export async function listGitHubUserAccessibleInstallations(
 
     installations.push(...data.installations.map(normalizeInstallation));
 
-    const totalCount = data.total_count ?? installations.length;
     if (
-      data.installations.length === 0 ||
-      data.installations.length < perPage ||
-      installations.length >= totalCount
+      !hasNextInstallationsPage({
+        currentCount: installations.length,
+        pageCount: data.installations.length,
+        perPage,
+        totalCount: data.total_count,
+      })
     ) {
       break;
     }
@@ -154,27 +179,59 @@ export async function listGitHubUserAccessibleInstallations(
 export async function verifyGitHubUserInstallation(
   input: VerifyGitHubUserInstallationInput
 ): Promise<GitHubNormalizedInstallation> {
-  const installations = await listGitHubUserAccessibleInstallations(input);
-  const installation = installations.find(
-    (candidate) => candidate.id === input.expectedInstallationId
+  const requestFetch = input.fetch ?? fetch;
+  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
+  const perPage = normalizePerPage(input.perPage);
+  let page = 1;
+  let installationCount = 0;
+
+  for (;;) {
+    const data = await fetchInstallationsPage({
+      apiBaseUrl,
+      apiVersion: input.apiVersion,
+      fetch: requestFetch,
+      page,
+      perPage,
+      userAccessToken: input.userAccessToken,
+    });
+
+    const normalizedInstallations = data.installations.map(normalizeInstallation);
+    const installation = normalizedInstallations.find(
+      (candidate) => candidate.id === input.expectedInstallationId
+    );
+
+    if (installation) {
+      if (
+        installation.targetType !== "Organization" ||
+        installation.account.type !== "Organization"
+      ) {
+        throw new GitHubAppNodeError(
+          "PERSONAL_ACCOUNT_NOT_SUPPORTED",
+          "Only GitHub organization installations are supported."
+        );
+      }
+
+      return installation;
+    }
+
+    installationCount += normalizedInstallations.length;
+
+    if (
+      !hasNextInstallationsPage({
+        currentCount: installationCount,
+        pageCount: data.installations.length,
+        perPage,
+        totalCount: data.total_count,
+      })
+    ) {
+      break;
+    }
+
+    page += 1;
+  }
+
+  throw new GitHubAppNodeError(
+    "INSTALLATION_NOT_VERIFIED",
+    "GitHub user cannot access the expected installation."
   );
-
-  if (!installation) {
-    throw new GitHubAppNodeError(
-      "INSTALLATION_NOT_VERIFIED",
-      "GitHub user cannot access the expected installation."
-    );
-  }
-
-  if (
-    installation.targetType !== "Organization" ||
-    installation.account.type !== "Organization"
-  ) {
-    throw new GitHubAppNodeError(
-      "PERSONAL_ACCOUNT_NOT_SUPPORTED",
-      "Only GitHub organization installations are supported."
-    );
-  }
-
-  return installation;
 }

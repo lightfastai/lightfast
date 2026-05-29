@@ -62,6 +62,59 @@ describe("GitHub user-accessible installation verification", () => {
     );
   });
 
+  it("sends the configured GitHub API version header", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ total_count: 0, installations: [] })
+    );
+
+    await listGitHubUserAccessibleInstallations({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      apiVersion: "2022-11-28",
+      fetch: fetchMock,
+      userAccessToken: "gho_test",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://github.lightfast.localhost/user/installations?per_page=100&page=1",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          "x-github-api-version": "2022-11-28",
+        }),
+      })
+    );
+  });
+
+  it("clamps perPage to GitHub's supported range", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ total_count: 0, installations: [] })
+    );
+
+    await listGitHubUserAccessibleInstallations({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      fetch: fetchMock,
+      perPage: 0,
+      userAccessToken: "gho_test",
+    });
+
+    await listGitHubUserAccessibleInstallations({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      fetch: fetchMock,
+      perPage: 250,
+      userAccessToken: "gho_test",
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://github.lightfast.localhost/user/installations?per_page=1&page=1",
+      expect.any(Object)
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://github.lightfast.localhost/user/installations?per_page=100&page=1",
+      expect.any(Object)
+    );
+  });
+
   it("finds an expected installation on a later page", async () => {
     const fetchMock = vi.fn(async (url: Parameters<typeof fetch>[0]) => {
       if (pageNumberFor(url) === "1") {
@@ -111,6 +164,45 @@ describe("GitHub user-accessible installation verification", () => {
       account: { login: "lightfast-emulated", type: "Organization" },
       id: "1001",
     });
+  });
+
+  it("returns as soon as the expected installation is found", async () => {
+    const fetchMock = vi.fn(async (url: Parameters<typeof fetch>[0]) => {
+      if (pageNumberFor(url) === "1") {
+        return Response.json({
+          total_count: 2,
+          installations: [
+            {
+              id: 1001,
+              account: {
+                id: 20,
+                login: "lightfast-emulated",
+                type: "Organization",
+              },
+              app_id: 424242,
+              app_slug: "lightfast-local",
+              target_type: "Organization",
+            },
+          ],
+        });
+      }
+
+      throw new Error("Verifier should not request page 2");
+    });
+
+    await expect(
+      verifyGitHubUserInstallation({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        expectedInstallationId: "1001",
+        fetch: fetchMock,
+        perPage: 1,
+        userAccessToken: "gho_test",
+      })
+    ).resolves.toMatchObject({
+      account: { login: "lightfast-emulated", type: "Organization" },
+      id: "1001",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 
   it("rejects missing installations with a typed verification error", async () => {
