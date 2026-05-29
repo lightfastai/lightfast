@@ -1,24 +1,27 @@
+function trimTrailingSlash(value: string) {
+  return value.replace(/\/+$/, "");
+}
+
 export function buildGitHubInstallationUrl(input: {
   appSlug: string;
-  installUrlOverride?: string | null;
   state: string;
+  webBaseUrl?: string;
 }): string {
-  const url = input.installUrlOverride
-    ? new URL(input.installUrlOverride)
-    : new URL(`https://github.com/apps/${input.appSlug}/installations/new`);
+  const baseUrl = trimTrailingSlash(input.webBaseUrl ?? "https://github.com");
+  const url = new URL(`/apps/${input.appSlug}/installations/new`, baseUrl);
   url.searchParams.set("state", input.state);
   return url.toString();
 }
 
 export function buildGitHubOAuthAuthorizeUrl(input: {
-  authorizationBaseUrl?: string;
   clientId: string;
   codeChallenge: string;
+  oauthAuthorizeUrl?: string;
   redirectUri: string;
   state: string;
 }): string {
   const url = new URL(
-    input.authorizationBaseUrl ?? "https://github.com/login/oauth/authorize"
+    input.oauthAuthorizeUrl ?? "https://github.com/login/oauth/authorize"
   );
   url.searchParams.set("client_id", input.clientId);
   url.searchParams.set("redirect_uri", input.redirectUri);

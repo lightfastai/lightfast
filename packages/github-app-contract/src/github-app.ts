@@ -3,7 +3,6 @@ import { z } from "zod";
 export const GITHUB_SETUP_PATH = "/api/github/setup";
 export const GITHUB_OAUTH_CALLBACK_PATH = "/api/github/oauth/callback";
 export const GITHUB_WEBHOOK_PATH = "/api/github/webhook";
-export const GITHUB_DEV_INSTALL_PATH = "/api/dev/github/install";
 
 export const GITHUB_BIND_ERROR_CODES = [
   "expired_state",
@@ -46,15 +45,16 @@ export type GitHubNormalizedInstallation = z.infer<
   typeof githubNormalizedInstallationSchema
 >;
 
-export const githubInstallationMetadataSchema = z.object({
-  events: z.array(z.string()),
-  githubAppId: z.string().min(1),
-  githubAppSlug: z.string().min(1).nullable(),
-  githubSetupAction: z.string().min(1).optional(),
-  permissions: z.record(z.string(), z.string()),
-  repositorySelection: z.enum(["all", "selected"]),
-  verifiedBy: z.enum(["github_emulator", "github_user_installations"]),
-});
+export const githubInstallationMetadataSchema = z
+  .object({
+    events: z.array(z.string()),
+    githubAppId: z.string().min(1),
+    githubAppSlug: z.string().min(1).nullable(),
+    githubSetupAction: z.string().min(1).optional(),
+    permissions: z.record(z.string(), z.string()),
+    repositorySelection: z.enum(["all", "selected"]),
+  })
+  .strict();
 export type GitHubInstallationMetadata = z.infer<
   typeof githubInstallationMetadataSchema
 >;

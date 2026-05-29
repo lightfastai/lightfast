@@ -4,24 +4,25 @@ import {
   GITHUB_OAUTH_CALLBACK_PATH,
   GITHUB_SETUP_PATH,
   githubBindStartOutputSchema,
+  githubInstallationMetadataSchema,
   githubNormalizedInstallationSchema,
 } from "../github-app";
 
 describe("@repo/github-app-contract", () => {
-  it("exports stable callback route constants", () => {
+  it("exports stable product callback route constants", () => {
     expect(GITHUB_SETUP_PATH).toBe("/api/github/setup");
     expect(GITHUB_OAUTH_CALLBACK_PATH).toBe("/api/github/oauth/callback");
   });
 
-  it("validates client-safe start output", () => {
+  it("validates client-safe start output for a GitHub App install URL", () => {
     expect(
       githubBindStartOutputSchema.parse({
         installationUrl:
-          "https://app.lightfast.localhost/api/dev/github/install?state=abc",
+          "https://github.com/apps/lightfast-local/installations/new?state=abc",
       })
     ).toEqual({
       installationUrl:
-        "https://app.lightfast.localhost/api/dev/github/install?state=abc",
+        "https://github.com/apps/lightfast-local/installations/new?state=abc",
     });
   });
 
@@ -52,5 +53,31 @@ describe("@repo/github-app-contract", () => {
       id: "1001",
       targetType: "Organization",
     });
+  });
+
+  it("stores GitHub installation metadata without environment provenance", () => {
+    const metadata = githubInstallationMetadataSchema.parse({
+      events: ["push"],
+      githubAppId: "424242",
+      githubAppSlug: "lightfast-local",
+      githubSetupAction: "install",
+      permissions: { contents: "read" },
+      repositorySelection: "all",
+    });
+
+    expect(metadata).toEqual({
+      events: ["push"],
+      githubAppId: "424242",
+      githubAppSlug: "lightfast-local",
+      githubSetupAction: "install",
+      permissions: { contents: "read" },
+      repositorySelection: "all",
+    });
+    expect(
+      githubInstallationMetadataSchema.safeParse({
+        ...metadata,
+        verifiedBy: "github_emulator",
+      }).success
+    ).toBe(false);
   });
 });
