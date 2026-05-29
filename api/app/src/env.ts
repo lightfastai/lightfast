@@ -18,7 +18,7 @@ export const env = createEnv({
     GITHUB_APP_PRIVATE_KEY: z.string().min(1).optional(),
     GITHUB_APP_SLUG: z.string().min(1).optional(),
     GITHUB_APP_WEBHOOK_SECRET: z.string().min(1).optional(),
-    GITHUB_INSTALL_URL_OVERRIDE: z.string().url().optional(),
+    GITHUB_APP_ENDPOINT_ORIGIN: z.string().url().optional(),
     VERCEL_ENV: z
       .enum(["development", "preview", "production"])
       .default("development"),
@@ -34,7 +34,7 @@ export const env = createEnv({
     GITHUB_APP_PRIVATE_KEY: process.env.GITHUB_APP_PRIVATE_KEY,
     GITHUB_APP_SLUG: process.env.GITHUB_APP_SLUG,
     GITHUB_APP_WEBHOOK_SECRET: process.env.GITHUB_APP_WEBHOOK_SECRET,
-    GITHUB_INSTALL_URL_OVERRIDE: process.env.GITHUB_INSTALL_URL_OVERRIDE,
+    GITHUB_APP_ENDPOINT_ORIGIN: process.env.GITHUB_APP_ENDPOINT_ORIGIN,
     VERCEL_ENV: process.env.VERCEL_ENV ?? "development",
   },
   skipValidation:

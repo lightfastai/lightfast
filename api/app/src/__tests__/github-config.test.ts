@@ -1,58 +1,101 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  DEFAULT_GITHUB_APP_ENDPOINTS,
+  getGitHubAppConfig,
   normalizeGitHubPrivateKey,
-  parseGitHubInstallOverride,
+  resolveGitHubAppEndpoints,
   resolveGitHubAppOrigin,
 } from "../github/config";
 
 describe("GitHub config", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("normalizes escaped private key newlines", () => {
     expect(normalizeGitHubPrivateKey("a\\nb\\n")).toBe("a\nb\n");
   });
 
-  it("parses the local dev install override context", () => {
-    const override = parseGitHubInstallOverride({
-      appOrigin: "https://app.lightfast.localhost",
-      rawUrl:
-        "https://app.lightfast.localhost/api/dev/github/install?emulator_origin=http%3A%2F%2F127.0.0.1%3A4567&installation_id=1001&provider_account_login=lightfast-emulated",
-      vercelEnv: "development",
-    });
-
-    expect(override).toMatchObject({
-      emulatorOrigin: "http://127.0.0.1:4567",
-      installationId: "1001",
-      providerAccountLogin: "lightfast-emulated",
-      url: expect.stringContaining("/api/dev/github/install"),
-    });
-  });
-
-  it("resolves the canonical app origin from an install override before appUrl", () => {
+  it("resolves the app origin from NEXT_PUBLIC_APP_URL", () => {
     expect(
       resolveGitHubAppOrigin({
         appUrl: "https://app.lightfast.localhost",
-        installUrlOverride:
-          "https://lightfast.localhost/api/dev/github/install?installation_id=1001",
-      })
-    ).toBe("https://lightfast.localhost");
-  });
-
-  it("falls back to the canonical appUrl when no install override is present", () => {
-    expect(
-      resolveGitHubAppOrigin({
-        appUrl: "https://app.lightfast.localhost",
-        installUrlOverride: undefined,
       })
     ).toBe("https://app.lightfast.localhost");
   });
 
-  it("rejects the install override in production", () => {
-    expect(() =>
-      parseGitHubInstallOverride({
-        appOrigin: "https://app.lightfast.ai",
-        rawUrl:
-          "https://app.lightfast.ai/api/dev/github/install?emulator_origin=http%3A%2F%2F127.0.0.1%3A4567&installation_id=1001&provider_account_login=lightfast-emulated",
-        vercelEnv: "production",
+  it("defaults to real GitHub endpoints", () => {
+    expect(resolveGitHubAppEndpoints({ endpointOrigin: undefined })).toEqual(
+      DEFAULT_GITHUB_APP_ENDPOINTS
+    );
+  });
+
+  it("resolves a local combined endpoint origin", () => {
+    expect(
+      resolveGitHubAppEndpoints({
+        endpointOrigin: "https://github.lightfast.localhost",
+        vercelEnv: "development",
       })
-    ).toThrow(/not allowed in production/);
+    ).toEqual({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      oauthAuthorizeUrl:
+        "https://github.lightfast.localhost/login/oauth/authorize",
+      oauthTokenUrl:
+        "https://github.lightfast.localhost/login/oauth/access_token",
+      webBaseUrl: "https://github.lightfast.localhost",
+    });
+  });
+
+  it.each(["preview", "production"] as const)(
+    "rejects custom endpoint origins in %s",
+    (vercelEnv) => {
+      expect(() =>
+        resolveGitHubAppEndpoints({
+          endpointOrigin: "https://github.lightfast.localhost",
+          vercelEnv,
+        })
+      ).toThrow(/custom GitHub endpoints are allowed only in local development/);
+    }
+  );
+
+  it("rejects legacy install overrides even in development", () => {
+    vi.stubEnv(
+      "GITHUB_INSTALL_URL_OVERRIDE",
+      "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
+    );
+
+    expect(() =>
+      resolveGitHubAppEndpoints({
+        endpointOrigin: undefined,
+        vercelEnv: "development",
+      })
+    ).toThrow(/GITHUB_INSTALL_URL_OVERRIDE is no longer supported/);
+  });
+
+  it("returns complete GitHub App config when required values are present", () => {
+    const config = getGitHubAppConfig({
+      env: {
+        GITHUB_API_VERSION: "2022-11-28",
+        GITHUB_APP_CLIENT_ID: "github_client_test",
+        GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+        GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+        GITHUB_APP_ID: "12345",
+        GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+        GITHUB_APP_SLUG: "lightfast-test",
+        VERCEL_ENV: "development",
+      },
+    });
+
+    expect(config).toMatchObject({
+      apiVersion: "2022-11-28",
+      appId: "12345",
+      appSlug: "lightfast-test",
+      clientId: "github_client_test",
+      clientSecret: "github_secret_test",
+      endpoints: {
+        apiBaseUrl: "https://github.lightfast.localhost",
+      },
+      privateKey: "line1\nline2",
+    });
   });
 });
