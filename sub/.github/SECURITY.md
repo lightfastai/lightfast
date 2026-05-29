@@ -1,6 +1,6 @@
 ## Reporting Security Issues to Lightfast
 
-At Lightfast, we prioritize the security of our software products and services, which includes maintaining the security of our open source code repositories hosted on GitHub.
+At Lightfast, we prioritize the security of our software products and services, which includes maintaining the security of our open-source code repositories hosted on GitHub.
 
 If you discover a potential security vulnerability in any of the repositories owned by Lightfast, we kindly request that you report it to us through coordinated disclosure.
 
