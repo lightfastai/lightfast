@@ -46,7 +46,6 @@ const securityHeaders = securityMiddleware({
 // tRPC stays here because native OAuth Bearer resolution calls auth({ acceptsToken }),
 // which requires clerkMiddleware context; auth enforcement remains in procedures.
 const GITHUB_BINDING_ROUTE_PATTERNS = [
-  "/api/dev/github/install",
   "/api/github/setup",
   "/api/github/oauth/callback",
 ] as const;

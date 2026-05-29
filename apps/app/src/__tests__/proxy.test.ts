@@ -355,7 +355,6 @@ describe("proxy pending-session route handling", () => {
   it.each([
     "/api/github/setup",
     "/api/github/oauth/callback",
-    "/api/dev/github/install",
   ])("runs Clerk middleware but does not enforce signed-in routing for %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: null,
@@ -371,6 +370,23 @@ describe("proxy pending-session route handling", () => {
     expect(response.headers.get("location")).toBeNull();
     expect(clerkProxyRequestMock).toHaveBeenCalledWith(pathname);
     expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("does not admit the old dev GitHub install shim as a public route", async () => {
+    authMock.mockResolvedValue({
+      orgId: null,
+      orgSlug: null,
+      sessionClaims: null,
+      sessionStatus: "pending",
+      userId: null,
+    });
+
+    const { response } = await invoke("/api/dev/github/install");
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fdev%2Fgithub%2Finstall"
+    );
   });
 
   it("does not run microfrontend routing for app-owned API routes", async () => {

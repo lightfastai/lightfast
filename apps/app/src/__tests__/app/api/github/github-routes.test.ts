@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const completeSetupMock = vi.fn();
 const completeOAuthMock = vi.fn();
@@ -14,11 +14,7 @@ describe("GitHub app route handlers", () => {
     completeOAuthMock.mockReset();
   });
 
-  afterEach(() => {
-    vi.unstubAllEnvs();
-  });
-
-  it("redirects setup callback to the delegated setup result", async () => {
+  it("delegates setup callbacks without deriving app origin in the route", async () => {
     completeSetupMock.mockResolvedValue({
       redirectUrl: "http://127.0.0.1:4567/login/oauth/authorize?state=abc",
     });
@@ -26,7 +22,7 @@ describe("GitHub app route handlers", () => {
 
     const res = await GET(
       new Request(
-        "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=abc"
+        "https://localhost:4293/api/github/setup?installation_id=1001&state=abc"
       )
     );
 
@@ -36,33 +32,11 @@ describe("GitHub app route handlers", () => {
     );
     expect(completeSetupMock).toHaveBeenCalledWith({
       requestUrl:
-        "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=abc",
-    });
-  });
-
-  it("delegates raw-port setup callbacks without deriving app origin in the route", async () => {
-    vi.stubEnv(
-      "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
-    );
-    completeSetupMock.mockResolvedValue({
-      redirectUrl: "https://lightfast.localhost/sign-in",
-    });
-    const { GET } = await import("~/app/(app)/(github)/api/github/setup/route");
-
-    await GET(
-      new Request(
         "https://localhost:4293/api/github/setup?installation_id=1001&state=abc"
-      )
-    );
-
-    expect(completeSetupMock).toHaveBeenCalledWith({
-      requestUrl:
-        "https://localhost:4293/api/github/setup?installation_id=1001&state=abc",
     });
   });
 
-  it("redirects OAuth callback to the delegated OAuth result", async () => {
+  it("delegates OAuth callbacks without deriving app origin in the route", async () => {
     completeOAuthMock.mockResolvedValue({
       redirectUrl:
         "https://app.lightfast.localhost/acme/tasks/bind/github/complete",
@@ -73,7 +47,7 @@ describe("GitHub app route handlers", () => {
 
     const res = await GET(
       new Request(
-        "https://app.lightfast.localhost/api/github/oauth/callback?code=abc&state=def"
+        "https://localhost:4293/api/github/oauth/callback?code=abc&state=def"
       )
     );
 
@@ -83,132 +57,7 @@ describe("GitHub app route handlers", () => {
     );
     expect(completeOAuthMock).toHaveBeenCalledWith({
       requestUrl:
-        "https://app.lightfast.localhost/api/github/oauth/callback?code=abc&state=def",
-    });
-  });
-
-  it("delegates raw-port OAuth callbacks without deriving app origin in the route", async () => {
-    vi.stubEnv(
-      "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
-    );
-    completeOAuthMock.mockResolvedValue({
-      redirectUrl:
-        "https://lightfast.localhost/acme/tasks/bind/github/complete",
-    });
-    const { GET } = await import(
-      "~/app/(app)/(github)/api/github/oauth/callback/route"
-    );
-
-    await GET(
-      new Request(
         "https://localhost:4293/api/github/oauth/callback?code=abc&state=def"
-      )
-    );
-
-    expect(completeOAuthMock).toHaveBeenCalledWith({
-      requestUrl:
-        "https://localhost:4293/api/github/oauth/callback?code=abc&state=def",
     });
-  });
-
-  it("rejects dev install shim requests in production", async () => {
-    vi.stubEnv("VERCEL_ENV", "production");
-    vi.stubEnv(
-      "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
-    );
-    const { GET } = await import(
-      "~/app/(app)/(github)/api/dev/github/install/route"
-    );
-
-    const res = await GET(
-      new Request(
-        "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001&state=abc"
-      )
-    );
-
-    expect(res.status).toBe(404);
-    await expect(res.json()).resolves.toEqual({ error: "Not Found" });
-  });
-
-  it("rejects dev install shim requests when the override is missing", async () => {
-    vi.stubEnv("VERCEL_ENV", "development");
-    const { GET } = await import(
-      "~/app/(app)/(github)/api/dev/github/install/route"
-    );
-
-    const res = await GET(
-      new Request(
-        "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001&state=abc"
-      )
-    );
-
-    expect(res.status).toBe(404);
-    await expect(res.json()).resolves.toEqual({ error: "Not Found" });
-  });
-
-  it("rejects dev install shim requests with missing state", async () => {
-    vi.stubEnv("VERCEL_ENV", "development");
-    vi.stubEnv(
-      "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
-    );
-    const { GET } = await import(
-      "~/app/(app)/(github)/api/dev/github/install/route"
-    );
-
-    const res = await GET(
-      new Request(
-        "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001"
-      )
-    );
-
-    expect(res.status).toBe(400);
-    await expect(res.json()).resolves.toEqual({
-      error: "Invalid GitHub install shim request",
-    });
-  });
-
-  it("rejects dev install shim requests when the override has no installation id", async () => {
-    vi.stubEnv("VERCEL_ENV", "development");
-    vi.stubEnv(
-      "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://app.lightfast.localhost/api/dev/github/install"
-    );
-    const { GET } = await import(
-      "~/app/(app)/(github)/api/dev/github/install/route"
-    );
-
-    const res = await GET(
-      new Request(
-        "https://app.lightfast.localhost/api/dev/github/install?installation_id=1001&state=abc"
-      )
-    );
-
-    expect(res.status).toBe(404);
-    await expect(res.json()).resolves.toEqual({ error: "Not Found" });
-  });
-
-  it("redirects dev install shim requests using the configured installation id", async () => {
-    vi.stubEnv("VERCEL_ENV", "development");
-    vi.stubEnv(
-      "GITHUB_INSTALL_URL_OVERRIDE",
-      "https://lightfast.localhost/api/dev/github/install?installation_id=1001"
-    );
-    const { GET } = await import(
-      "~/app/(app)/(github)/api/dev/github/install/route"
-    );
-
-    const res = await GET(
-      new Request(
-        "https://localhost:4110/api/dev/github/install?installation_id=attacker&state=abc"
-      )
-    );
-
-    expect(res.status).toBe(307);
-    expect(res.headers.get("location")).toBe(
-      "https://lightfast.localhost/api/github/setup?installation_id=1001&setup_action=install&state=abc"
-    );
   });
 });
