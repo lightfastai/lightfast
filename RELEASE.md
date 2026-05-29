@@ -121,7 +121,7 @@ Expected PR behavior:
 
 - Affected PR CI stays fast and only runs jobs for touched surfaces.
 - `merge-queue-success` passes as the required branch-protection stub.
-- oRPC contract/API changes trigger Core CI and include the public oRPC package test scope.
+- oRPC contract/API changes trigger `core-public-api-ci` and include the public oRPC package test scope.
 
 For oRPC propagation changes, inspect CI logs for:
 
@@ -189,7 +189,7 @@ Merge the Version Packages PR through merge queue. The merge to `main` triggers 
 
 ### 6. Publish SDK + MCP
 
-After the Version Packages PR merges, `Publish SDK + MCP` runs on `main`.
+After the Version Packages PR merges, `sdk-mcp-publish` runs on `main`.
 
 The workflow:
 

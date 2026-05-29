@@ -1,4 +1,5 @@
-name: Release desktop
+name: desktop-release
+run-name: desktop-release / ${{ github.ref_name }}
 
 on:
   push:
@@ -10,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  prepare:
-    name: Prepare draft release
+  desktop-release-prepare:
+    name: desktop-release-prepare
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.ver.outputs.version }}
@@ -20,12 +21,12 @@ jobs:
     permissions:
       contents: write
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Resolve version
+      - name: resolve-version
         id: ver
         run: |
           tag="${{ github.ref_name }}"
@@ -39,7 +40,7 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Create draft release if missing
+      - name: create-draft-release-if-missing
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -71,9 +72,9 @@ jobs:
               "${notes_arg[@]}"
           fi
 
-  build_macos:
-    name: Build macOS ${{ matrix.arch }}
-    needs: prepare
+  desktop-release-macos:
+    name: desktop-release-macos-${{ matrix.arch }}
+    needs: desktop-release-prepare
     runs-on: macos-14
     timeout-minutes: 60
     strategy:
@@ -95,25 +96,25 @@ jobs:
       SENTRY_PROJECT: ${{ vars.SENTRY_PROJECT }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Stamp version, feed URL, signing mode, prerelease env
+      - name: stamp-version-feed-url-signing-mode-prerelease-env
         working-directory: apps/desktop
         run: |
-          npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm version "${{ needs['desktop-release-prepare'].outputs.version }}" --no-git-tag-version --allow-same-version
           npm pkg set buildFlavor=prod
           npm pkg set buildNumber="$GITHUB_RUN_NUMBER"
           npm pkg set sparkleFeedUrl='https://github.com/${{ github.repository }}/releases/latest/download/latest-mac-${arch}.json'
@@ -126,9 +127,9 @@ jobs:
           # publisher's createRelease fallback path. The prepare job already
           # set --prerelease at draft creation (the load-bearing path); this
           # is belt-and-suspenders.
-          echo "LIGHTFAST_DESKTOP_RELEASE_PRERELEASE=${{ needs.prepare.outputs.prerelease }}" >> "$GITHUB_ENV"
+          echo "LIGHTFAST_DESKTOP_RELEASE_PRERELEASE=${{ needs['desktop-release-prepare'].outputs.prerelease }}" >> "$GITHUB_ENV"
 
-      - name: Import Apple signing certificate
+      - name: import-apple-signing-certificate
         if: env.APPLE_SIGNING_IDENTITY != ''
         env:
           APPLE_CERT_BASE64: ${{ secrets.APPLE_CERT_BASE64 }}
@@ -144,7 +145,7 @@ jobs:
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" build.keychain
           rm /tmp/cert.p12
 
-      - name: Write notarize API key
+      - name: write-notarize-api-key
         if: env.APPLE_SIGNING_IDENTITY != ''
         env:
           APPLE_API_KEY_CONTENT: ${{ secrets.APPLE_API_KEY_CONTENT }}
@@ -155,24 +156,24 @@ jobs:
           printf '%s' "$APPLE_API_KEY_CONTENT" > "$key_file"
           echo "APPLE_API_KEY=$key_file" >> "$GITHUB_ENV"
 
-      - name: Publish (forge)
+      - name: publish-forge
         working-directory: apps/desktop
         run: pnpm exec electron-forge publish --arch=${{ matrix.arch }} --platform=darwin
 
-      - name: Upload source maps to Sentry
+      - name: upload-source-maps-to-sentry
         working-directory: apps/desktop
         run: pnpm sourcemaps:upload
 
-      - name: Attest build provenance
+      - name: attest-build-provenance
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
             apps/desktop/out/make/**/*.zip
             apps/desktop/out/make/**/*.dmg
 
-  build_linux:
-    name: Build Linux ${{ matrix.arch }}
-    needs: prepare
+  desktop-release-linux:
+    name: desktop-release-linux-${{ matrix.arch }}
+    needs: desktop-release-prepare
     runs-on: ${{ matrix.runner }}
     timeout-minutes: 60
     strategy:
@@ -194,31 +195,31 @@ jobs:
       # renderer/main JS source is identical across platforms, so a second
       # upload would be duplicated work, not added coverage.
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install Linux maker prerequisites
+      - name: install-linux-maker-prerequisites
         run: |
           sudo apt-get update && sudo apt-get install -y rpm fakeroot
           # Fail fast if the runner image (x64 or arm) is missing any tool
           which dpkg-deb fakeroot rpm rpmbuild
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Stamp version, buildFlavor, buildNumber, signingMode, prerelease env
+      - name: stamp-version-build-flavor-build-number-signing-mode-prerelease-env
         working-directory: apps/desktop
         run: |
-          npm version "${{ needs.prepare.outputs.version }}" --no-git-tag-version --allow-same-version
+          npm version "${{ needs['desktop-release-prepare'].outputs.version }}" --no-git-tag-version --allow-same-version
           npm pkg set buildFlavor=prod
           npm pkg set buildNumber="$GITHUB_RUN_NUMBER"
           # `signingMode=ad-hoc` keeps build-info shape platform-uniform.
@@ -227,65 +228,65 @@ jobs:
           # the safe-default guard (same pattern as the mac path). Delete this
           # line if/when Linux Sparkle introduces a Linux-specific signing scheme.
           npm pkg set signingMode=ad-hoc
-          echo "LIGHTFAST_DESKTOP_RELEASE_PRERELEASE=${{ needs.prepare.outputs.prerelease }}" >> "$GITHUB_ENV"
+          echo "LIGHTFAST_DESKTOP_RELEASE_PRERELEASE=${{ needs['desktop-release-prepare'].outputs.prerelease }}" >> "$GITHUB_ENV"
 
-      - name: Publish (forge)
+      - name: publish-forge
         working-directory: apps/desktop
         run: pnpm exec electron-forge publish --arch=${{ matrix.arch }} --platform=linux
 
-      - name: Attest build provenance
+      - name: attest-build-provenance
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: |
             apps/desktop/out/make/**/*.deb
             apps/desktop/out/make/**/*.rpm
 
-  finalize:
-    name: Finalize release
-    needs: [prepare, build_macos, build_linux]
+  desktop-release-finalize:
+    name: desktop-release-finalize
+    needs: [desktop-release-prepare, desktop-release-macos, desktop-release-linux]
     runs-on: ubuntu-latest
     permissions:
       contents: write
     steps:
-      - name: Checkout
+      - name: checkout
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Generate Squirrel.Mac update feed
+      - name: generate-squirrel-mac-update-feed
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_REPO: ${{ github.repository }}
-          RELEASE_TAG: ${{ needs.prepare.outputs.tag }}
-          RELEASE_VERSION: ${{ needs.prepare.outputs.version }}
+          RELEASE_TAG: ${{ needs['desktop-release-prepare'].outputs.tag }}
+          RELEASE_VERSION: ${{ needs['desktop-release-prepare'].outputs.version }}
         run: node apps/desktop/scripts/generate-update-feed.mjs
 
-      - name: Generate third-party notices
+      - name: generate-third-party-notices
         run: pnpm --filter @lightfast/desktop notices:generate
 
-      - name: Attach third-party notices to release
+      - name: attach-third-party-notices-to-release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ needs.prepare.outputs.tag }}" \
+          gh release upload "${{ needs['desktop-release-prepare'].outputs.tag }}" \
             apps/desktop/THIRD_PARTY_NOTICES.txt \
             --repo "${{ github.repository }}" \
             --clobber
 
-      - name: Publish release (undraft)
+      - name: publish-release-undraft
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release edit "${{ needs.prepare.outputs.tag }}" \
+          gh release edit "${{ needs['desktop-release-prepare'].outputs.tag }}" \
             --repo "${{ github.repository }}" \
             --draft=false

@@ -1,5 +1,8 @@
-name: Desktop CI
+name: desktop-ci
+run-name: desktop-ci / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
+# Runs on PRs touching the desktop app or shared renderer/runtime dependencies
+# that can affect Electron typecheck, tests, packaging, or e2e.
 on:
   pull_request:
     paths:
@@ -29,51 +32,57 @@ permissions:
   contents: read
 
 jobs:
-  package:
-    name: Typecheck + package (unsigned, ${{ matrix.os }})
+  desktop-typecheck-test-package-e2e:
+    name: ${{ matrix.check_name }}
     runs-on: ${{ matrix.os }}
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        os: [macos-14]
+        include:
+          - os: macos-14
+            check_name: desktop-typecheck-test-package-e2e-macos-14
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
-      - uses: actions/checkout@v4
+      - name: checkout
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
+      - name: setup-pnpm
+        uses: pnpm/action-setup@b906affcce14559ad1aafd4ab0e942779e9f58b1 # v4
 
-      - uses: actions/setup-node@v4
+      - name: setup-node-22
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install Linux maker prerequisites
+      - name: install-linux-maker-prerequisites
         if: runner.os == 'Linux'
         run: |
           sudo apt-get update && sudo apt-get install -y rpm fakeroot
           # Fail fast if the runner image (x64 or arm) is missing any tool
           which dpkg-deb fakeroot rpm rpmbuild
 
-      - run: pnpm install --frozen-lockfile
+      - name: install-dependencies
+        run: pnpm install --frozen-lockfile
 
-      - name: Typecheck
+      - name: typecheck-desktop
         run: pnpm turbo typecheck --filter=@lightfast/desktop --summarize
 
-      - name: Test
+      - name: test-desktop
         run: pnpm --filter @lightfast/desktop test
 
-      - name: Package (unsigned)
+      - name: package-desktop-unsigned
         # electron-forge defaults to host platform: macOS leg packages darwin
         # via MakerZIP/MakerDMG, Linux leg packages linux via MakerDeb/MakerRpm.
         # Each maker's platform filter (forge.config.ts:143-152) does the routing.
         run: pnpm turbo package --filter=@lightfast/desktop --summarize
 
-      - name: Upload packaged app
+      - name: upload-packaged-app
         # Lets reviewers grab the packaged tree to verify native bindings ship
         # under app.asar.unpacked/ (e.g. better_sqlite3.node on both legs).
         # if-no-files-found=error catches a silent forge regression where out/
@@ -85,14 +94,14 @@ jobs:
           retention-days: 7
           if-no-files-found: error
 
-      - name: E2E (Playwright Electron)
+      - name: e2e-playwright-electron
         # macOS-only: Linux Electron e2e needs Xvfb/system deps that W5 didn't
         # plan for (the matrix's Linux leg landed in a separate W3 worktree).
         # Adding Linux e2e is a separate effort; keep W5's promise to macos-14.
         if: runner.os == 'macOS'
         run: pnpm --filter @lightfast/desktop exec playwright test --config=playwright.config.ts
 
-      - name: Upload Playwright report on failure
+      - name: upload-playwright-report-on-failure
         if: failure() && runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
@@ -100,9 +109,9 @@ jobs:
           path: apps/desktop/playwright-report/
           retention-days: 7
 
-      - name: Cache report
+      - name: turbo-cache-report
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report — Desktop CI / ${{ matrix.os }}'
-          artifact-name: turbo-cache-desktop-ci-${{ matrix.os }}
+          title: 'Turbo cache report - desktop-ci / ${{ matrix.check_name }}'
+          artifact-name: turbo-cache-${{ matrix.check_name }}

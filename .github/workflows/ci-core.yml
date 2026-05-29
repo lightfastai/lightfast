@@ -1,5 +1,8 @@
-name: Core CI
+name: core-public-api-ci
+run-name: core-public-api-ci / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
+# Runs on PRs touching the public oRPC/API/SDK/MCP surface that need the
+# focused core public API lint/typecheck/test suite.
 on:
   push:
     branches: [main]
@@ -31,48 +34,51 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  core-ci:
-    name: core-ci
+  core-public-api-lint-typecheck-test:
+    name: core-public-api-lint-typecheck-test
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
-      - name: Checkout code
+      - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint (biome)
+      - name: lint-biome
         run: pnpm turbo //#check --summarize
 
-      - name: Type check public oRPC surface
+      - name: typecheck-public-orpc-surface
         env:
           SKIP_ENV_VALIDATION: "true"
         run: pnpm turbo typecheck --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@vendor/mcp --continue --summarize
 
-      - name: Test public oRPC surface
+      - name: test-public-orpc-surface
         env:
           SKIP_ENV_VALIDATION: "true"
         run: pnpm turbo test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@vendor/mcp --continue --summarize
 
-      - name: Cache report
+      - name: turbo-cache-report
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report — Core CI / core-ci'
-          artifact-name: turbo-cache-core-ci
+          title: 'Turbo cache report - core-public-api-ci / core-public-api-lint-typecheck-test'
+          artifact-name: turbo-cache-core-public-api-ci-lint-typecheck-test

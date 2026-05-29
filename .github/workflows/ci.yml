@@ -1,5 +1,8 @@
-name: CI
+name: repo-ci
+run-name: repo-ci / ${{ github.event_name }} / ${{ github.head_ref || github.ref_name }}
 
+# Runs on PRs touching app, package, core, or workspace files that need the
+# affected lint/typecheck/test/boundary suite.
 on:
   push:
     branches: [main]
@@ -27,71 +30,74 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  quality:
-    name: Quality
+  repo-lint-typecheck-test-boundaries:
+    name: repo-lint-typecheck-test-boundaries
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
       TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
       TURBO_TEAM: ${{ vars.TURBO_TEAM }}
     steps:
-      - name: Checkout code
+      - name: checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Setup pnpm
+      - name: setup-pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js 22
+      - name: setup-node-22
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'pnpm'
 
-      - name: Install dependencies
+      - name: install-dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Lint (biome)
+      - name: lint-biome
         run: pnpm turbo //#check --summarize
 
-      - name: Type check affected packages
+      - name: typecheck-affected-packages
         env:
           SKIP_ENV_VALIDATION: "true"
           TURBO_SCM_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: pnpm turbo typecheck --affected --continue --summarize
 
-      - name: Test public oRPC surface
+      - name: test-public-orpc-surface
         env:
           SKIP_ENV_VALIDATION: "true"
         run: pnpm turbo test --filter=@repo/api-contract --filter=@api/app --filter=lightfast --filter=@lightfastai/mcp --filter=@vendor/mcp --continue --summarize
 
-      - name: Check boundaries
+      - name: check-boundaries
         run: pnpm turbo boundaries
 
-      - name: Cache report
+      - name: turbo-cache-report
         if: always()
         uses: ./.github/actions/turbo-summary
         with:
-          title: 'Turbo cache report — CI / Quality'
-          artifact-name: turbo-cache-ci-quality
+          title: 'Turbo cache report - repo-ci / repo-lint-typecheck-test-boundaries'
+          artifact-name: turbo-cache-repo-ci-lint-typecheck-test-boundaries
 
-  # Summary job (required status check)
-  ci-success:
-    name: CI Success
+  # Summary job
+  repo-ci-success:
+    name: repo-ci-success
     if: always()
-    needs: [quality]
+    needs: [repo-lint-typecheck-test-boundaries]
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - name: Evaluate results
+      - name: evaluate-results
         run: |
-          quality="${{ needs.quality.result }}"
+          repo_checks="${{ needs['repo-lint-typecheck-test-boundaries'].result }}"
 
-          echo "quality.result = $quality"
+          echo "repo-lint-typecheck-test-boundaries.result = $repo_checks"
 
-          if [[ "$quality" != "success" ]]; then
+          if [[ "$repo_checks" != "success" ]]; then
             echo "CI quality checks failed."
             exit 1
           fi
