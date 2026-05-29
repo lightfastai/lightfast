@@ -20,7 +20,7 @@ See `SPEC.md` for business goals and product vision.
 
 ## Architecture
 
-```text
+```
 ┌──────────────────────────────────────────────────────────────────────────────────┐
 │  Canonical local browser URL (port 443)                                          │
 │  https://[<wt>.]lightfast.localhost                                              │
@@ -78,9 +78,13 @@ pnpm dev              # app + www + platform + local Inngest + local QStash + MF
 # Load the lightfast-local-infra skill for PlanetScale DB / Upstash Redis setup.
 # It writes durable credentials to apps/*/.vercel/.env.development.local.
 
-# Background dev (Claude Code)
-pnpm dev > /tmp/console-dev.log 2>&1 &
-tail -f /tmp/console-dev.log
+# Agent dev (preferred; logs stay in the active terminal/session, no tail needed)
+pnpm dev --ui=stream --log-order=stream --log-prefix=task --no-color
+
+# Background dev (only when you need the prompt back; tail is optional)
+pnpm dev --ui=stream --log-order=stream --log-prefix=task --no-color > /tmp/console-dev.log 2>&1 &
+tail -n 200 /tmp/console-dev.log  # inspect recent logs
+tail -f /tmp/console-dev.log      # follow live logs when needed
 pkill -f "next dev"
 
 # Env (MUST run from apps/<app>/)
@@ -97,6 +101,25 @@ pnpm db:studio        # starts Drizzle Studio through Portless
 ```
 
 `pnpm dev` is the only root local-dev entrypoint. It starts app, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, and `QSTASH_URL` values use the concrete service URLs. It does not start ngrok automatically.
+
+## Next.js Agent Diagnostics
+
+- Next.js DevTools MCP is configured in `.mcp.json` as `next-devtools`. With `pnpm dev` running, prefer MCP queries for current build/runtime errors, logs, route metadata, and project metadata before guessing from terminal output alone.
+- `logging.browserToTerminal` is enabled in `@vendor/next/config`, so browser console output is forwarded into dev-server logs with source locations. Prefer the foreground `pnpm dev --ui=stream ...` command above when an agent needs live browser and server context.
+- Next.js 16 writes dev output to `.next/dev`, so agents can run `next build`-backed validation while `next dev` is still running without clobbering the dev server output.
+- Run focused Next.js diagnostics from the relevant app directory with `pnpm with-env`; replace `apps/app` with `apps/www` or `apps/platform` as needed:
+
+```bash
+cd apps/app && pnpm with-env next typegen
+cd apps/app && pnpm with-env next build --debug
+cd apps/app && pnpm with-env next build --debug-prerender
+cd apps/app && pnpm with-env next build --debug-build-paths "app/**/page.tsx"
+cd apps/app && pnpm with-env next experimental-analyze --output
+cd apps/app && pnpm with-env next dev --experimental-cpu-prof
+cd apps/app && NEXT_TURBOPACK_TRACING=1 pnpm with-env next dev
+```
+
+Use `next dev --inspect` only for focused single-app server debugging; avoid adding it to the root `pnpm dev` flow because multiple Next apps can collide on inspector ports.
 
 Drizzle Studio is started on demand with `pnpm db:studio`. Its local API is routed through Portless at `https://[<wt>.]db.lightfast.localhost`; Drizzle's printed `https://local.drizzle.studio?port=...` URL uses the Portless-injected backend port for that process.
 
