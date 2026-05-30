@@ -9,6 +9,7 @@ import {
 export const personProviderParser = parseAsString.withDefault("");
 export const personTypeParser = parseAsString.withDefault("");
 export const personParser = parseAsString;
+export const personQueryParser = parseAsString.withDefault("");
 
 function parseValues<T extends string>(
   value: string,

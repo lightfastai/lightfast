@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const useInfiniteQueryMock = vi.fn();
@@ -9,10 +9,14 @@ const infiniteQueryOptionsMock = vi.fn((input: unknown) => ({
 const getQueryOptionsMock = vi.fn();
 
 const queryStates: Record<string, string | null> = {
+  peopleQuery: "",
+  person: null,
   provider: "",
   type: "",
-  person: null,
 };
+const setQuery = vi.fn((value: string | null) => {
+  queryStates.peopleQuery = value;
+});
 const setProvider = vi.fn();
 const setType = vi.fn();
 const setPerson = vi.fn();
@@ -48,9 +52,10 @@ vi.mock("nuqs", () => ({
   parseAsString: { withDefault: () => "parser" },
   useQueryState: (key: string) => {
     const setters: Record<string, (value: string | null) => void> = {
+      peopleQuery: setQuery,
+      person: setPerson,
       provider: setProvider,
       type: setType,
-      person: setPerson,
     };
     return [queryStates[key] ?? null, setters[key] ?? vi.fn()];
   },
@@ -87,9 +92,11 @@ function mockRows(items: unknown[]) {
 }
 
 beforeEach(() => {
+  queryStates.peopleQuery = "";
   queryStates.provider = "";
   queryStates.type = "";
   queryStates.person = null;
+  setQuery.mockClear();
   setProvider.mockClear();
   setType.mockClear();
   setPerson.mockClear();
@@ -122,6 +129,41 @@ describe("PeopleClient", () => {
     queryStates.provider = "email";
     mockRows([]);
     render(<PeopleClient />);
+    expect(screen.getByText("No matching people")).toBeInTheDocument();
+  });
+
+  it("passes deferred search text into the people list query", () => {
+    queryStates.peopleQuery = " jeevan ";
+
+    render(<PeopleClient />);
+
+    expect(infiniteQueryOptionsMock).toHaveBeenCalledWith(
+      {
+        limit: 50,
+        providers: undefined,
+        search: "jeevan",
+        types: undefined,
+      },
+      expect.anything()
+    );
+  });
+
+  it("writes search input changes to the people query param", () => {
+    render(<PeopleClient />);
+
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search people" }), {
+      target: { value: "alice" },
+    });
+
+    expect(setQuery).toHaveBeenCalledWith("alice");
+  });
+
+  it("renders the no-results state when search excludes all people", () => {
+    queryStates.peopleQuery = "missing";
+    mockRows([]);
+
+    render(<PeopleClient />);
+
     expect(screen.getByText("No matching people")).toBeInTheDocument();
   });
 });

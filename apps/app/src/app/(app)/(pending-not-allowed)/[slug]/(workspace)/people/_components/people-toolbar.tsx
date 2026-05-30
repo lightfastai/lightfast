@@ -13,11 +13,13 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import { Input } from "@repo/ui/components/ui/input";
 import {
   AtSign,
   Check,
   List,
   ListFilter,
+  Search,
   SlidersHorizontal,
   Tag,
   X,
@@ -46,13 +48,17 @@ interface FilterGroup {
 export function PeopleToolbar({
   filters,
   onClearFilterGroup,
+  onQueryChange,
   onToggleProvider,
   onToggleType,
+  query,
 }: {
   filters: PeopleClassificationFilters;
   onClearFilterGroup: (group: FilterGroupId) => void;
+  onQueryChange: (value: string) => void;
   onToggleProvider: (value: PersonProvider) => void;
   onToggleType: (value: PersonType) => void;
+  query: string;
 }) {
   const filterGroups: FilterGroup[] = [
     {
@@ -139,6 +145,17 @@ export function PeopleToolbar({
       </div>
 
       <div className="ml-auto flex min-w-0 items-center justify-end gap-1.5">
+        <div className="flex h-6 w-56 items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-2 text-muted-foreground">
+          <Search aria-hidden="true" className="size-3" />
+          <Input
+            aria-label="Search people"
+            className="h-5 border-0 bg-transparent px-0 py-0 text-sm shadow-none focus-visible:ring-0"
+            onChange={(event) => onQueryChange(event.currentTarget.value)}
+            placeholder="Search people"
+            role="searchbox"
+            value={query}
+          />
+        </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
