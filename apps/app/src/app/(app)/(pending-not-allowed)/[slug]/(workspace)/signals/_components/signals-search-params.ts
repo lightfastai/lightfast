@@ -17,8 +17,13 @@ export const signalPeopleParser = parseAsStringLiteral([
 ] as const).withDefault("all");
 export const signalPriorityParser = parseAsString.withDefault("");
 
-export const signalViewParser =
+// Layout (list | board). Was keyed "view"; now lives under "layout" so the
+// "view" param can carry the active saved-view publicId.
+export const signalLayoutParser =
   parseAsStringLiteral(signalViewValues).withDefault("list");
+
+// "view" now holds the active saved-view publicId (null when on All signals).
+export const signalSavedViewParser = parseAsString;
 
 export const signalParser = parseAsString;
 

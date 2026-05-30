@@ -22,7 +22,8 @@ let dispositionState = "";
 let kindState = "";
 let peopleState = "all";
 let priorityState = "";
-let viewState = "list";
+let layoutState = "list";
+let savedViewState: string | null = null;
 let signalState: string | null = null;
 
 const setDispositionMock = vi.fn((value: string) => {
@@ -37,8 +38,11 @@ const setPeopleMock = vi.fn((value: string) => {
 const setPriorityMock = vi.fn((value: string) => {
   priorityState = value;
 });
-const setViewMock = vi.fn((value: string) => {
-  viewState = value;
+const setLayoutMock = vi.fn((value: string) => {
+  layoutState = value;
+});
+const setSavedViewMock = vi.fn((value: string | null) => {
+  savedViewState = value;
 });
 const setSignalMock = vi.fn((value: string | null) => {
   signalState = value;
@@ -117,8 +121,11 @@ vi.mock("nuqs", () => ({
     if (key === "priority") {
       return [priorityState, setPriorityMock];
     }
+    if (key === "layout") {
+      return [layoutState, setLayoutMock];
+    }
     if (key === "view") {
-      return [viewState, setViewMock];
+      return [savedViewState, setSavedViewMock];
     }
     return [signalState, setSignalMock];
   },
@@ -213,7 +220,8 @@ beforeEach(() => {
   kindState = "";
   peopleState = "all";
   priorityState = "";
-  viewState = "list";
+  layoutState = "list";
+  savedViewState = null;
   signalState = null;
   workingSetData = {
     items: [followUpSignal, fixSignal],
@@ -326,7 +334,7 @@ describe("SignalsClient", () => {
   });
 
   it("groups classified board cards by kind", () => {
-    viewState = "board";
+    layoutState = "board";
 
     render(<SignalsClient />);
 
@@ -370,7 +378,7 @@ describe("SignalsClient", () => {
     ).toBeInTheDocument();
   });
 
-  it("keeps view state in the url", () => {
+  it("keeps layout state in the url", () => {
     render(<SignalsClient />);
 
     fireEvent.pointerDown(
@@ -378,6 +386,6 @@ describe("SignalsClient", () => {
     );
     fireEvent.click(screen.getByRole("menuitem", { name: /Board/ }));
 
-    expect(setViewMock).toHaveBeenCalledWith("board");
+    expect(setLayoutMock).toHaveBeenCalledWith("board");
   });
 });

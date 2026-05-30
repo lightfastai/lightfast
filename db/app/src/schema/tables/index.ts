@@ -34,12 +34,6 @@ export {
   people,
 } from "./people";
 export {
-  createSignalId,
-  type InsertSignal,
-  type Signal,
-  signals,
-} from "./signals";
-export {
   createSignalViewId,
   type InsertSignalView,
   SIGNAL_VIEW_ID_PREFIX,
@@ -48,3 +42,9 @@ export {
   type SignalViewLayout,
   signalViews,
 } from "./signal-views";
+export {
+  createSignalId,
+  type InsertSignal,
+  type Signal,
+  signals,
+} from "./signals";

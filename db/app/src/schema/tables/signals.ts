@@ -45,7 +45,7 @@ export const signals = mysqlTable(
 
     createdByApiKeyId: varchar("created_by_api_key_id", {
       length: API_KEY_ID_LENGTH,
-    }).notNull(),
+    }),
 
     input: text("input").notNull(),
 

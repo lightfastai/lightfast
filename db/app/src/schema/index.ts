@@ -33,11 +33,11 @@ export {
   type PersonIdentityProvider,
   type PersonIdentityType,
   people,
-  type Signal,
   SIGNAL_VIEW_ID_PREFIX,
-  signals,
+  type Signal,
   type SignalView,
   type SignalViewConfig,
   type SignalViewLayout,
+  signals,
   signalViews,
 } from "./tables";

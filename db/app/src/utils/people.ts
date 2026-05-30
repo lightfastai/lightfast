@@ -64,9 +64,7 @@ export async function listPeople(
     input.providers?.length
       ? inArray(people.identityProvider, input.providers)
       : undefined,
-    input.types?.length
-      ? inArray(people.identityType, input.types)
-      : undefined,
+    input.types?.length ? inArray(people.identityType, input.types) : undefined,
     input.cursor
       ? or(
           lt(people.createdAt, input.cursor.createdAt),

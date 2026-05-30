@@ -87,7 +87,10 @@ function PersonSignalLink({
       className="flex items-center gap-2 rounded-md border border-border/60 px-3 py-2 hover:bg-muted/30"
       href={`/${slug}/signals?signal=${signalId}`}
     >
-      <SignalIcon aria-hidden="true" className="size-3.5 text-muted-foreground" />
+      <SignalIcon
+        aria-hidden="true"
+        className="size-3.5 text-muted-foreground"
+      />
       <span className="font-mono text-muted-foreground text-xs">
         {formatPersonSignalRef(signalId)}
       </span>
@@ -164,7 +167,7 @@ export function PeopleDetailContent({
           <PropertyRow icon={<Hash className={iconClass} />} label="Identity">
             <span className="font-mono">{person.identityValue}</span>
           </PropertyRow>
-          {person.normalizedIdentityValue !== person.identityValue ? (
+          {person.normalizedIdentityValue === person.identityValue ? null : (
             <PropertyRow
               icon={<Hash className={iconClass} />}
               label="Normalized"
@@ -173,10 +176,9 @@ export function PeopleDetailContent({
                 {person.normalizedIdentityValue}
               </span>
             </PropertyRow>
-          ) : null}
+          )}
           <PropertyRow icon={<SignalIcon className={iconClass} />} label="Seen">
-            {person.seenCount}{" "}
-            {person.seenCount === 1 ? "signal" : "signals"}
+            {person.seenCount} {person.seenCount === 1 ? "signal" : "signals"}
           </PropertyRow>
           {typeof metadata.confidence === "number" ? (
             <PropertyRow

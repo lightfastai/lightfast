@@ -95,6 +95,7 @@ describe("orpcRouter.signals", () => {
         signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
       },
     });
+    expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
   it("marks the signal failed when enqueueing the Inngest event fails", async () => {

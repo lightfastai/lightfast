@@ -43,6 +43,20 @@
       "when": 1779863972492,
       "tag": "0005_long_screwball",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1780126986850,
+      "tag": "0006_dizzy_wong",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1780149234590,
+      "tag": "0007_high_charles_xavier",
+      "breakpoints": true
     }
   ]
 }

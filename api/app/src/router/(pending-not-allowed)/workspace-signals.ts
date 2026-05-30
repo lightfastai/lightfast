@@ -1,4 +1,8 @@
-import { getSignalByPublicId, listSignals, listWorkspaceSignals } from "@db/app";
+import {
+  getSignalByPublicId,
+  listSignals,
+  listWorkspaceSignals,
+} from "@db/app";
 import {
   createSignalInput,
   signalDispositionSchema,

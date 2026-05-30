@@ -19,10 +19,11 @@ import {
   serializeSignalValues,
   signalDispositionParser,
   signalKindParser,
+  signalLayoutParser,
   signalParser,
   signalPeopleParser,
   signalPriorityParser,
-  signalViewParser,
+  signalSavedViewParser,
   toggleSignalValue,
 } from "./signals-search-params";
 import { SignalsToolbar } from "./signals-toolbar";
@@ -47,7 +48,11 @@ export function SignalsClient() {
     "priority",
     signalPriorityParser
   );
-  const [view, setView] = useQueryState("view", signalViewParser);
+  const [layout, setLayout] = useQueryState("layout", signalLayoutParser);
+  // Editing any filter/layout in the toolbar drops the active saved view: you
+  // are now on an ad-hoc selection. Selecting a view (in the topbar switcher)
+  // writes these same params directly, so it does not pass through here.
+  const [, setSavedViewId] = useQueryState("view", signalSavedViewParser);
   const [selectedSignalId, setSelectedSignalId] = useQueryState(
     "signal",
     signalParser
@@ -122,6 +127,7 @@ export function SignalsClient() {
         filters={filters}
         onAddSignal={openCreateSignal}
         onClearFilterGroup={(group) => {
+          void setSavedViewId(null);
           if (group === "disposition") {
             void setDispositionState("");
           } else if (group === "kind") {
@@ -132,33 +138,40 @@ export function SignalsClient() {
             void setPriorityState("");
           }
         }}
-        onPeopleRoutedChange={(value) =>
-          void setPeopleState(value ? "routed" : "all")
-        }
-        onToggleDisposition={(value) =>
+        onPeopleRoutedChange={(value) => {
+          void setSavedViewId(null);
+          void setPeopleState(value ? "routed" : "all");
+        }}
+        onToggleDisposition={(value) => {
+          void setSavedViewId(null);
           void setDispositionState(
             serializeSignalValues(
               toggleSignalValue(filters.dispositions, value)
             )
-          )
-        }
-        onToggleKind={(value) =>
+          );
+        }}
+        onToggleKind={(value) => {
+          void setSavedViewId(null);
           void setKindState(
             serializeSignalValues(toggleSignalValue(filters.kinds, value))
-          )
-        }
-        onTogglePriority={(value) =>
+          );
+        }}
+        onTogglePriority={(value) => {
+          void setSavedViewId(null);
           void setPriorityState(
             serializeSignalValues(toggleSignalValue(filters.priorities, value))
-          )
-        }
-        onViewChange={(value) => void setView(value)}
-        view={view}
+          );
+        }}
+        onViewChange={(value) => {
+          void setSavedViewId(null);
+          void setLayout(value);
+        }}
+        view={layout}
       />
 
       <SignalsTruncationBanner truncated={truncated} />
 
-      {view === "board" ? (
+      {layout === "board" ? (
         <SignalsBoardView
           emptyAction={emptyCreateAction}
           hasActiveSearch={hasActiveFilters}

@@ -26,7 +26,9 @@ vi.mock("~/trpc/react", () => ({
           get: { queryOptions: getQueryOptionsMock },
         },
         signals: {
-          get: { queryOptions: vi.fn(() => ({ queryKey: ["signals", "get"] })) },
+          get: {
+            queryOptions: vi.fn(() => ({ queryKey: ["signals", "get"] })),
+          },
         },
       },
     },
