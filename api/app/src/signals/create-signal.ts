@@ -50,17 +50,22 @@ export async function createAndQueueSignal(
       },
     });
   } catch (error) {
-    await markSignalFailed(db, {
-      publicId: signal.publicId,
-      clerkOrgId: signal.clerkOrgId,
-      errorCode: SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
-      errorMessage: getErrorMessage(error),
-    });
+    try {
+      await markSignalFailed(db, {
+        publicId: signal.publicId,
+        clerkOrgId: signal.clerkOrgId,
+        errorCode: SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
+        errorMessage: getErrorMessage(error),
+      });
+    } catch {
+      // Preserve the queueing failure as the primary error for API translation.
+    }
     throw new SignalCreateQueueError(error);
   }
 
   return {
     id: signal.publicId,
     status: "queued",
+    visibilityScope: "user",
   };
 }

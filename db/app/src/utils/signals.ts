@@ -30,6 +30,7 @@ function isDefined<T>(value: T | undefined): value is T {
 
 export interface ListSignalsParams {
   clerkOrgId: string;
+  createdByUserId: string;
   cursor?: ListCursor | null;
   limit?: number;
   statuses?: Signal["status"][];
@@ -42,6 +43,10 @@ export async function listSignals(
   const limit = normalizeLimit(input.limit);
   const conditions = [
     eq(signals.clerkOrgId, input.clerkOrgId),
+    or(
+      eq(signals.visibilityScope, "team"),
+      eq(signals.createdByUserId, input.createdByUserId)
+    ),
     input.statuses?.length
       ? inArray(signals.status, input.statuses)
       : undefined,
@@ -96,6 +101,7 @@ export interface WorkspaceSignalsResult {
 
 export interface ListWorkspaceSignalsParams {
   clerkOrgId: string;
+  createdByUserId: string;
 }
 
 function projectSignalClassification(
@@ -113,6 +119,7 @@ function projectSignalClassification(
 async function countClassifiedSince(
   db: Database,
   clerkOrgId: string,
+  createdByUserId: string,
   cutoff: Date
 ): Promise<number> {
   const [row] = await db
@@ -122,6 +129,10 @@ async function countClassifiedSince(
       and(
         eq(signals.clerkOrgId, clerkOrgId),
         eq(signals.status, "classified"),
+        or(
+          eq(signals.visibilityScope, "team"),
+          eq(signals.createdByUserId, createdByUserId)
+        ),
         gte(signals.createdAt, cutoff)
       )
     );
@@ -158,6 +169,10 @@ export async function listWorkspaceSignals(
       and(
         eq(signals.clerkOrgId, input.clerkOrgId),
         eq(signals.status, "classified"),
+        or(
+          eq(signals.visibilityScope, "team"),
+          eq(signals.createdByUserId, input.createdByUserId)
+        ),
         gte(signals.createdAt, cutoff)
       )
     )
@@ -171,7 +186,12 @@ export async function listWorkspaceSignals(
     classification: projectSignalClassification(row.classification),
   }));
   const totalCount = truncated
-    ? await countClassifiedSince(db, input.clerkOrgId, cutoff)
+    ? await countClassifiedSince(
+        db,
+        input.clerkOrgId,
+        input.createdByUserId,
+        cutoff
+      )
     : items.length;
 
   return {
@@ -200,6 +220,7 @@ export async function createSignal(
     clerkOrgId: input.clerkOrgId,
     createdByUserId: input.createdByUserId,
     createdByApiKeyId: input.createdByApiKeyId,
+    visibilityScope: "user",
     input: input.input,
     status: "queued",
     classification: null,
@@ -231,6 +252,32 @@ export async function getSignalByPublicId(
       and(
         eq(signals.publicId, input.publicId),
         eq(signals.clerkOrgId, input.clerkOrgId)
+      )
+    )
+    .limit(1);
+  return row;
+}
+
+export interface GetVisibleSignalByPublicIdParams
+  extends GetSignalByPublicIdParams {
+  createdByUserId: string;
+}
+
+export async function getVisibleSignalByPublicId(
+  db: Database,
+  input: GetVisibleSignalByPublicIdParams
+): Promise<Signal | undefined> {
+  const [row] = await db
+    .select()
+    .from(signals)
+    .where(
+      and(
+        eq(signals.publicId, input.publicId),
+        eq(signals.clerkOrgId, input.clerkOrgId),
+        or(
+          eq(signals.visibilityScope, "team"),
+          eq(signals.createdByUserId, input.createdByUserId)
+        )
       )
     )
     .limit(1);
@@ -278,6 +325,7 @@ export async function markSignalClassified(
     .set({
       status: "classified",
       classification: input.classification,
+      visibilityScope: input.classification.routing.visibility.scope,
       errorCode: null,
       errorMessage: null,
     })

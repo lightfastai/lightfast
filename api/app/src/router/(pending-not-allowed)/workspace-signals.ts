@@ -1,5 +1,5 @@
 import {
-  getSignalByPublicId,
+  getVisibleSignalByPublicId,
   listSignals,
   listWorkspaceSignals,
 } from "@db/app";
@@ -35,6 +35,7 @@ export const workspaceSignalsRouter = {
   list: boundOrgProcedure.input(listSignalsInput).query(({ ctx, input }) =>
     listSignals(ctx.db, {
       clerkOrgId: ctx.auth.identity.orgId,
+      createdByUserId: ctx.auth.identity.userId,
       cursor: input.cursor,
       limit: input.limit,
       statuses: input.statuses?.length ? input.statuses : undefined,
@@ -43,14 +44,16 @@ export const workspaceSignalsRouter = {
   workingSet: boundOrgProcedure.query(({ ctx }) =>
     listWorkspaceSignals(ctx.db, {
       clerkOrgId: ctx.auth.identity.orgId,
+      createdByUserId: ctx.auth.identity.userId,
     })
   ),
   get: boundOrgProcedure
     .input(z.object({ publicId: signalIdSchema }))
     .query(async ({ ctx, input }) => {
-      const signal = await getSignalByPublicId(ctx.db, {
+      const signal = await getVisibleSignalByPublicId(ctx.db, {
         publicId: input.publicId,
         clerkOrgId: ctx.auth.identity.orgId,
+        createdByUserId: ctx.auth.identity.userId,
       });
 
       if (!signal) {

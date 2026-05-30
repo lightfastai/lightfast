@@ -86,11 +86,11 @@ export function SignalsClient() {
   const {
     boardSections,
     hasAnyRows,
+    limit,
     signalsByPublicId,
     truncated,
     visibleListSections,
     windowDays,
-    workingSetLimit,
   } = useSignalsWorkspaceData({ filters: deferredFilters });
 
   const prefetchSignal = useCallback(
@@ -172,7 +172,7 @@ export function SignalsClient() {
       />
 
       <SignalsTruncationBanner
-        limit={workingSetLimit}
+        limit={limit}
         truncated={truncated}
         windowDays={windowDays}
       />

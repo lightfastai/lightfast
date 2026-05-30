@@ -33,11 +33,25 @@ vi.mock("./signals-creator-avatar", () => ({
 function row(id: number): SignalListItem {
   return {
     classification: {
-      schemaVersion: "signal.classification.v1",
+      schemaVersion: "signal.classification.v2",
       confidence: 0.9,
       disposition: "actionable",
       kind: "follow_up",
       priority: "high",
+      routing: {
+        review: { required: false, reason: null, rationale: null },
+        routes: {
+          people: {
+            confidence: 0.8,
+            rationale: "No people routing is needed.",
+            shouldRun: false,
+          },
+        },
+        visibility: {
+          rationale: "This is shared customer work.",
+          scope: "team",
+        },
+      },
       summary: "s",
       title: `Signal ${id}`,
     },

@@ -117,13 +117,13 @@ export function useSignalsWorkspaceData({
   return {
     boardSections,
     hasAnyRows: classifiedRows.length + processingRows.length > 0,
+    limit: workingSetQuery.data?.limit ?? 2000,
     processingQueryKey,
     signalsByPublicId,
     totalCount: workingSetQuery.data?.totalCount ?? classifiedRows.length,
     truncated: workingSetQuery.data?.truncated ?? false,
     visibleListSections,
-    windowDays: workingSetQuery.data?.windowDays ?? 0,
-    workingSetLimit: workingSetQuery.data?.limit ?? 0,
+    windowDays: workingSetQuery.data?.windowDays ?? 30,
     workingSetQueryKey,
   };
 }

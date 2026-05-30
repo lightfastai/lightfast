@@ -1,4 +1,4 @@
-import { getSignalByPublicId } from "@db/app";
+import { getVisibleSignalByPublicId } from "@db/app";
 import { db } from "@db/app/client";
 import { ORPCError } from "@orpc/server";
 import {
@@ -17,7 +17,6 @@ export const signalsRouter = {
   create: boundOrg(apiContract.signals.create).handler(
     async ({ context, input }) => {
       const createInput = input as CreateSignalInput;
-
       try {
         return await createAndQueueSignal(db, {
           clerkOrgId: context.auth.identity.orgId,
@@ -26,21 +25,23 @@ export const signalsRouter = {
           input: createInput.input,
         });
       } catch (error) {
-        if (isSignalCreateQueueError(error)) {
-          throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: error.message,
-          });
+        if (!isSignalCreateQueueError(error)) {
+          throw error;
         }
-        throw error;
+        throw new ORPCError("INTERNAL_SERVER_ERROR", {
+          message: error.message,
+          cause: error,
+        });
       }
     }
   ),
 
   get: boundOrg(apiContract.signals.get).handler(async ({ context, input }) => {
     const getInput = input as GetSignalInput;
-    const signal = await getSignalByPublicId(db, {
+    const signal = await getVisibleSignalByPublicId(db, {
       publicId: getInput.id,
       clerkOrgId: context.auth.identity.orgId,
+      createdByUserId: context.auth.identity.userId,
     });
 
     if (!signal) {
@@ -54,6 +55,7 @@ export const signalsRouter = {
       input: signal.input,
       status: signal.status,
       classification: signal.classification,
+      visibilityScope: signal.visibilityScope,
       createdAt: signal.createdAt.toISOString(),
       updatedAt: signal.updatedAt.toISOString(),
     };

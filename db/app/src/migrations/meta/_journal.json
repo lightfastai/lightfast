@@ -57,6 +57,13 @@
       "when": 1780149234590,
       "tag": "0007_high_charles_xavier",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1780146179723,
+      "tag": "0008_clumsy_hex",
+      "breakpoints": true
     }
   ]
 }

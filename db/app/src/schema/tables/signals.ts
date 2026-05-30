@@ -3,6 +3,7 @@ import {
   SIGNAL_ID_PREFIX,
   type SignalClassification,
   type SignalStatus,
+  type SignalVisibilityScope,
 } from "@repo/api-contract";
 import { sql } from "drizzle-orm";
 import {
@@ -47,6 +48,11 @@ export const signals = mysqlTable(
       length: API_KEY_ID_LENGTH,
     }),
 
+    visibilityScope: varchar("visibility_scope", { length: CODE_LENGTH })
+      .$type<SignalVisibilityScope>()
+      .notNull()
+      .default("user"),
+
     input: text("input").notNull(),
 
     status: varchar("status", { length: CODE_LENGTH })
@@ -78,6 +84,12 @@ export const signals = mysqlTable(
     orgStatusCreatedIdx: index("signals_org_status_created_idx").on(
       table.clerkOrgId,
       table.status,
+      table.createdAt,
+      table.id
+    ),
+    orgVisibilityCreatedIdx: index("signals_org_visibility_created_idx").on(
+      table.clerkOrgId,
+      table.visibilityScope,
       table.createdAt,
       table.id
     ),

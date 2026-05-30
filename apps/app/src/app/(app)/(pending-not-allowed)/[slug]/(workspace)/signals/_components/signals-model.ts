@@ -133,7 +133,7 @@ export function signalMatchesFilters(
   }
   if (
     filters.peopleRouted &&
-    classification.routing?.classifyPeople?.shouldRun !== true
+    classification.routing.routes.people.shouldRun !== true
   ) {
     return false;
   }

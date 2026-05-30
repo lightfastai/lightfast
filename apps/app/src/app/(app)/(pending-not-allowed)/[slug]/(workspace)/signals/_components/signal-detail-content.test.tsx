@@ -5,11 +5,25 @@ import type { SignalDetailRow, SignalListItem } from "./signals-model";
 
 const headerItem: SignalListItem = {
   classification: {
-    schemaVersion: "signal.classification.v1",
+    schemaVersion: "signal.classification.v2",
     confidence: 0.91,
     disposition: "actionable",
     kind: "follow_up",
     priority: "high",
+    routing: {
+      review: { required: false, reason: null, rationale: null },
+      routes: {
+        people: {
+          confidence: 0.8,
+          rationale: "No people routing is needed.",
+          shouldRun: false,
+        },
+      },
+      visibility: {
+        rationale: "This is shared customer work.",
+        scope: "team",
+      },
+    },
     summary: "Customer wants migration help.",
     title: "Follow up on migration",
   },
@@ -23,13 +37,27 @@ const headerItem: SignalListItem = {
 
 const detail: SignalDetailRow = {
   classification: {
-    schemaVersion: "signal.classification.v1",
+    schemaVersion: "signal.classification.v2",
     confidence: 0.91,
     disposition: "actionable",
     kind: "follow_up",
     nextAction: "Reply with migration plan",
     priority: "high",
     rationale: "The customer is asking for help.",
+    routing: {
+      review: { required: false, reason: null, rationale: null },
+      routes: {
+        people: {
+          confidence: 0.8,
+          rationale: "No people routing is needed.",
+          shouldRun: false,
+        },
+      },
+      visibility: {
+        rationale: "This is shared customer work.",
+        scope: "team",
+      },
+    },
     summary: "Customer wants migration help.",
     title: "Follow up on migration",
   },

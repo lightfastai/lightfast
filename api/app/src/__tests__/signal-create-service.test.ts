@@ -32,6 +32,7 @@ beforeEach(() => {
     publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     clerkOrgId: "org_test",
     status: "queued",
+    visibilityScope: "user",
   });
   markSignalFailedMock.mockResolvedValue(true);
   sendMock.mockResolvedValue(undefined);
@@ -49,6 +50,7 @@ describe("createAndQueueSignal", () => {
     ).resolves.toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
+      visibilityScope: "user",
     });
 
     expect(createSignalMock).toHaveBeenCalledWith(db, {
@@ -99,6 +101,28 @@ describe("createAndQueueSignal", () => {
       errorCode: SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
       errorMessage: "inngest unavailable",
       publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+    });
+  });
+
+  it("preserves the queue error when marking the signal failed also fails", async () => {
+    const enqueueError = new Error("inngest unavailable");
+    sendMock.mockRejectedValueOnce(enqueueError);
+    markSignalFailedMock.mockRejectedValueOnce(
+      new Error("database unavailable")
+    );
+
+    const error = await createAndQueueSignal(db, {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByUserId: "user_test",
+      input: "Create from app UI",
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(SignalCreateQueueError);
+    expect(isSignalCreateQueueError(error)).toBe(true);
+    expect(error).toMatchObject({
+      cause: enqueueError,
+      message: "Failed to queue signal for classification.",
     });
   });
 });

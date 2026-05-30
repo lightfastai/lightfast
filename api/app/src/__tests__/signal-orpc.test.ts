@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const verifyMock = vi.fn();
 const isOrgBoundMock = vi.fn();
 const createSignalMock = vi.fn();
-const getSignalByPublicIdMock = vi.fn();
+const getVisibleSignalByPublicIdMock = vi.fn();
 const markSignalFailedMock = vi.fn();
 const sendMock = vi.fn();
 
@@ -17,7 +17,7 @@ vi.mock("@vendor/unkey/server", () => ({
 vi.mock("@db/app/client", () => ({ db: { kind: "mock-db" } }));
 vi.mock("@db/app", () => ({
   createSignal: createSignalMock,
-  getSignalByPublicId: getSignalByPublicIdMock,
+  getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
   isOrgBound: isOrgBoundMock,
   markSignalFailed: markSignalFailedMock,
 }));
@@ -55,7 +55,7 @@ beforeEach(() => {
   verifyMock.mockReset();
   isOrgBoundMock.mockReset();
   createSignalMock.mockReset();
-  getSignalByPublicIdMock.mockReset();
+  getVisibleSignalByPublicIdMock.mockReset();
   markSignalFailedMock.mockReset();
   sendMock.mockReset();
 
@@ -65,6 +65,7 @@ beforeEach(() => {
     publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     clerkOrgId: "org_test",
     status: "queued",
+    visibilityScope: "user",
   });
   markSignalFailedMock.mockResolvedValue(true);
   sendMock.mockResolvedValue(undefined);
@@ -81,6 +82,7 @@ describe("orpcRouter.signals", () => {
     expect(result).toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
+      visibilityScope: "user",
     });
     expect(createSignalMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
@@ -136,7 +138,7 @@ describe("orpcRouter.signals", () => {
   });
 
   it("reads a same-org signal by id", async () => {
-    getSignalByPublicIdMock.mockResolvedValueOnce({
+    getVisibleSignalByPublicIdMock.mockResolvedValueOnce({
       id: 1,
       publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
       clerkOrgId: "org_test",
@@ -144,8 +146,9 @@ describe("orpcRouter.signals", () => {
       createdByApiKeyId: "key_test",
       input: "Run the test plan",
       status: "classified",
+      visibilityScope: "team",
       classification: {
-        schemaVersion: "signal.classification.v1",
+        schemaVersion: "signal.classification.v2",
         disposition: "actionable",
         title: "Run the test plan",
         summary: "The user needs to finish a validation task.",
@@ -154,6 +157,24 @@ describe("orpcRouter.signals", () => {
         priority: "high",
         rationale: "The input describes unfinished validation work.",
         confidence: 0.95,
+        routing: {
+          visibility: {
+            scope: "team",
+            rationale: "Relevant to the team.",
+          },
+          review: {
+            required: false,
+            reason: null,
+            rationale: null,
+          },
+          routes: {
+            people: {
+              shouldRun: false,
+              confidence: 0.8,
+              rationale: "No specific person needs routing.",
+            },
+          },
+        },
       },
       errorCode: null,
       errorMessage: null,
@@ -167,14 +188,19 @@ describe("orpcRouter.signals", () => {
       { context: context() }
     );
 
-    expect(getSignalByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_test",
-      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
-    });
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+        publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+      }
+    );
     expect(result).toMatchObject({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       input: "Run the test plan",
       status: "classified",
+      visibilityScope: "team",
       classification: { kind: "review" },
       createdAt: "2026-05-21T00:00:00.000Z",
       updatedAt: "2026-05-21T00:01:00.000Z",
@@ -182,7 +208,7 @@ describe("orpcRouter.signals", () => {
   });
 
   it("returns NOT_FOUND for missing or wrong-org signals", async () => {
-    getSignalByPublicIdMock.mockResolvedValueOnce(undefined);
+    getVisibleSignalByPublicIdMock.mockResolvedValueOnce(undefined);
 
     await expect(
       call(
