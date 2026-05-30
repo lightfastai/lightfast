@@ -124,6 +124,8 @@ vi.mock("../services/github/config", () => ({
   resolveGitHubAppOrigin: () => "https://app.lightfast.localhost",
 }));
 
+const { parseGitHubInstallationSetupCallback, parseGitHubOAuthCallback } =
+  await import("../services/github/setup/callbacks");
 const { completeGitHubInstallationSetup, completeGitHubOAuthVerification } =
   await import("../github/setup-flow");
 const { GitHubAppNodeError } = await import("@repo/github-app-node");
@@ -198,6 +200,50 @@ describe("github setup flow", () => {
       permissions: { contents: "read" },
       repositorySelection: "all",
       targetType: "Organization",
+    });
+  });
+
+  it("parses installation setup callback query data", () => {
+    expect(
+      parseGitHubInstallationSetupCallback(
+        "https://app.lightfast.localhost/api/github/setup?installation_id=1001&setup_action=install&state=install_state"
+      )
+    ).toEqual({
+      installationId: "1001",
+      setupAction: "install",
+      state: "install_state",
+    });
+  });
+
+  it("returns null for incomplete installation setup callback query data", () => {
+    expect(
+      parseGitHubInstallationSetupCallback(
+        "https://app.lightfast.localhost/api/github/setup?installation_id=1001"
+      )
+    ).toBeNull();
+  });
+
+  it("parses successful OAuth callback query data", () => {
+    expect(
+      parseGitHubOAuthCallback(
+        "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state"
+      )
+    ).toEqual({
+      code: "code_123",
+      denied: null,
+      state: "oauth_state",
+    });
+  });
+
+  it("parses denied OAuth callback query data", () => {
+    expect(
+      parseGitHubOAuthCallback(
+        "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state"
+      )
+    ).toEqual({
+      code: null,
+      denied: "access_denied",
+      state: "oauth_state",
     });
   });
 
