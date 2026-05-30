@@ -1,4 +1,8 @@
-import { getSignalByPublicId, listSignals, listWorkspaceSignals } from "@db/app";
+import {
+  getVisibleSignalByPublicId,
+  listSignals,
+  listWorkspaceSignals,
+} from "@db/app";
 import {
   createSignalInput,
   signalDispositionSchema,
@@ -6,6 +10,7 @@ import {
   signalKindSchema,
   signalPrioritySchema,
   signalStatusSchema,
+  signalVisibilityScopeSchema,
 } from "@repo/api-contract";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
@@ -32,6 +37,7 @@ const listSignalsInput = z.object({
   search: workspaceListSearchInput,
   status: signalStatusSchema.optional(),
   statuses: z.array(signalStatusSchema).max(4).optional(),
+  visibilityScopes: z.array(signalVisibilityScopeSchema).max(3).optional(),
 });
 
 export const workspaceSignalsRouter = {
@@ -40,6 +46,7 @@ export const workspaceSignalsRouter = {
 
     return listSignals(ctx.db, {
       clerkOrgId: ctx.auth.identity.orgId,
+      createdByUserId: ctx.auth.identity.userId,
       cursor: input.cursor,
       dispositions: input.dispositions?.length ? input.dispositions : undefined,
       kinds: input.kinds?.length ? input.kinds : undefined,
@@ -48,20 +55,25 @@ export const workspaceSignalsRouter = {
       priorities: input.priorities?.length ? input.priorities : undefined,
       search: input.search,
       status: input.status,
+      visibilityScopes: input.visibilityScopes?.length
+        ? input.visibilityScopes
+        : undefined,
       ...(statuses ? { statuses } : {}),
     });
   }),
   workingSet: boundOrgProcedure.query(({ ctx }) =>
     listWorkspaceSignals(ctx.db, {
       clerkOrgId: ctx.auth.identity.orgId,
+      createdByUserId: ctx.auth.identity.userId,
     })
   ),
   get: boundOrgProcedure
     .input(z.object({ publicId: signalIdSchema }))
     .query(async ({ ctx, input }) => {
-      const signal = await getSignalByPublicId(ctx.db, {
+      const signal = await getVisibleSignalByPublicId(ctx.db, {
         publicId: input.publicId,
         clerkOrgId: ctx.auth.identity.orgId,
+        createdByUserId: ctx.auth.identity.userId,
       });
 
       if (!signal) {

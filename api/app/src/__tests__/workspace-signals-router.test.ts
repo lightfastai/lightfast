@@ -3,13 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const listSignalsMock = vi.fn();
-const getSignalByPublicIdMock = vi.fn();
+const listWorkspaceSignalsMock = vi.fn();
+const getVisibleSignalByPublicIdMock = vi.fn();
 const createAndQueueSignalMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   listSignals: listSignalsMock,
-  getSignalByPublicId: getSignalByPublicIdMock,
+  listWorkspaceSignals: listWorkspaceSignalsMock,
+  getVisibleSignalByPublicId: getVisibleSignalByPublicIdMock,
 }));
 vi.mock("../signals/create-signal", () => ({
   createAndQueueSignal: createAndQueueSignalMock,
@@ -63,8 +65,9 @@ const signalRow: Signal = {
   createdByUserId: "user_test",
   input: "Customer asked for migration help",
   status: "classified",
+  visibilityScope: "team",
   classification: {
-    schemaVersion: "signal.classification.v1",
+    schemaVersion: "signal.classification.v2",
     confidence: 0.91,
     disposition: "actionable",
     kind: "follow_up",
@@ -73,6 +76,24 @@ const signalRow: Signal = {
     rationale: "The customer is asking for help.",
     summary: "Customer asked for migration help.",
     title: "Follow up on migration",
+    routing: {
+      visibility: {
+        scope: "team",
+        rationale: "Relevant to the team.",
+      },
+      review: {
+        required: false,
+        reason: null,
+        rationale: null,
+      },
+      routes: {
+        people: {
+          shouldRun: false,
+          confidence: 0.82,
+          rationale: "No person routing is needed.",
+        },
+      },
+    },
   },
   errorCode: null,
   errorMessage: null,
@@ -97,16 +118,38 @@ function activeIdentityForOrg(orgId: string): ActiveAuthIdentity {
 
 beforeEach(() => {
   listSignalsMock.mockReset();
-  getSignalByPublicIdMock.mockReset();
+  listWorkspaceSignalsMock.mockReset();
+  getVisibleSignalByPublicIdMock.mockReset();
   createAndQueueSignalMock.mockReset();
   listSignalsMock.mockResolvedValue({
     items: [signalRow],
     nextCursor: { createdAt: signalRow.createdAt, id: signalRow.id },
   });
-  getSignalByPublicIdMock.mockResolvedValue(signalRow);
+  listWorkspaceSignalsMock.mockResolvedValue({
+    items: [signalRow],
+    totalCount: 1,
+    truncated: false,
+  });
+  getVisibleSignalByPublicIdMock.mockResolvedValue(signalRow);
   createAndQueueSignalMock.mockResolvedValue({
     id: "signal_123e4567-e89b-12d3-a456-426614174000",
     status: "queued",
+    visibilityScope: "user",
+  });
+});
+
+describe("workspaceSignalsRouter.workingSet", () => {
+  it("forwards the active organization and user to the working-set query", async () => {
+    await expect(caller().signals.workingSet()).resolves.toEqual({
+      items: [signalRow],
+      totalCount: 1,
+      truncated: false,
+    });
+
+    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+    });
   });
 });
 
@@ -122,6 +165,7 @@ describe("workspaceSignalsRouter.list", () => {
         priorities: ["high", "urgent"],
         search: "migration",
         status: "classified",
+        visibilityScopes: ["team"],
       })
     ).resolves.toEqual({
       items: [signalRow],
@@ -130,6 +174,7 @@ describe("workspaceSignalsRouter.list", () => {
 
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
+      createdByUserId: "user_test",
       cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
       dispositions: ["actionable"],
       kinds: ["follow_up", "fix"],
@@ -138,6 +183,7 @@ describe("workspaceSignalsRouter.list", () => {
       priorities: ["high", "urgent"],
       search: "migration",
       status: "classified",
+      visibilityScopes: ["team"],
     });
   });
 
@@ -150,6 +196,7 @@ describe("workspaceSignalsRouter.list", () => {
 
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
+      createdByUserId: "user_test",
       cursor: undefined,
       dispositions: undefined,
       kinds: undefined,
@@ -158,6 +205,7 @@ describe("workspaceSignalsRouter.list", () => {
       priorities: undefined,
       search: undefined,
       status: undefined,
+      visibilityScopes: undefined,
     });
   });
 
@@ -173,6 +221,7 @@ describe("workspaceSignalsRouter.list", () => {
 
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
+      createdByUserId: "user_test",
       cursor: undefined,
       dispositions: undefined,
       kinds: undefined,
@@ -182,6 +231,7 @@ describe("workspaceSignalsRouter.list", () => {
       search: undefined,
       status: undefined,
       statuses: ["queued", "processing"],
+      visibilityScopes: undefined,
     });
   });
 
@@ -238,6 +288,7 @@ describe("workspaceSignalsRouter.list", () => {
 
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_other",
+      createdByUserId: "user_test",
       cursor: undefined,
       dispositions: undefined,
       kinds: undefined,
@@ -246,6 +297,7 @@ describe("workspaceSignalsRouter.list", () => {
       priorities: undefined,
       search: undefined,
       status: undefined,
+      visibilityScopes: undefined,
     });
   });
 });
@@ -257,6 +309,7 @@ describe("workspaceSignalsRouter.create", () => {
     ).resolves.toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
       status: "queued",
+      visibilityScope: "user",
     });
 
     expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
@@ -331,10 +384,14 @@ describe("workspaceSignalsRouter.get", () => {
       caller().signals.get({ publicId: signalRow.publicId })
     ).resolves.toEqual(signalRow);
 
-    expect(getSignalByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
-      publicId: signalRow.publicId,
-      clerkOrgId: "org_test",
-    });
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        publicId: signalRow.publicId,
+        clerkOrgId: "org_test",
+        createdByUserId: "user_test",
+      }
+    );
   });
 
   it("scopes the lookup to the authenticated organization", async () => {
@@ -342,14 +399,18 @@ describe("workspaceSignalsRouter.get", () => {
       publicId: signalRow.publicId,
     });
 
-    expect(getSignalByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
-      publicId: signalRow.publicId,
-      clerkOrgId: "org_other",
-    });
+    expect(getVisibleSignalByPublicIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        publicId: signalRow.publicId,
+        clerkOrgId: "org_other",
+        createdByUserId: "user_test",
+      }
+    );
   });
 
   it("throws NOT_FOUND when the signal does not exist", async () => {
-    getSignalByPublicIdMock.mockResolvedValueOnce(undefined);
+    getVisibleSignalByPublicIdMock.mockResolvedValueOnce(undefined);
 
     await expect(
       caller().signals.get({
@@ -363,7 +424,7 @@ describe("workspaceSignalsRouter.get", () => {
       caller().signals.get({ publicId: "not-a-signal-id" })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
 
-    expect(getSignalByPublicIdMock).not.toHaveBeenCalled();
+    expect(getVisibleSignalByPublicIdMock).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -384,6 +445,6 @@ describe("workspaceSignalsRouter.get", () => {
       caller(identity).signals.get({ publicId: signalRow.publicId })
     ).rejects.toMatchObject({ code });
 
-    expect(getSignalByPublicIdMock).not.toHaveBeenCalled();
+    expect(getVisibleSignalByPublicIdMock).not.toHaveBeenCalled();
   });
 });
