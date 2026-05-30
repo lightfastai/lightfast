@@ -80,13 +80,18 @@ export type GitHubWebhookHeaders = z.infer<
   typeof githubWebhookHeadersSchema
 >;
 
+const githubWebhookProviderIdSchema = z.union([
+  z.number().int().positive().safe(),
+  z.string().min(1),
+]);
+
 export const githubWebhookInstallationSchema = z.object({
-  id: z.union([z.number(), z.string().min(1)]),
+  id: githubWebhookProviderIdSchema,
 });
 
 export const githubWebhookRepositorySchema = z.object({
   full_name: z.string().min(1),
-  id: z.union([z.number(), z.string().min(1)]),
+  id: githubWebhookProviderIdSchema,
   name: z.string().min(1),
   owner: z.object({
     login: z.string().min(1),
@@ -94,7 +99,7 @@ export const githubWebhookRepositorySchema = z.object({
 });
 
 export const githubPingWebhookPayloadSchema = z.object({
-  hook_id: z.union([z.number(), z.string().min(1)]).optional(),
+  hook_id: githubWebhookProviderIdSchema.optional(),
   installation: githubWebhookInstallationSchema.optional(),
   repository: githubWebhookRepositorySchema.optional(),
   zen: z.string().optional(),

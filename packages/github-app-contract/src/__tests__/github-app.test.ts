@@ -113,6 +113,22 @@ describe("GitHub webhook schemas", () => {
     });
   });
 
+  it("rejects missing or empty required webhook headers", () => {
+    expect(
+      githubWebhookHeadersSchema.safeParse({
+        deliveryId: "delivery-1",
+        event: "push",
+      }).success
+    ).toBe(false);
+    expect(
+      githubWebhookHeadersSchema.safeParse({
+        deliveryId: "",
+        event: "push",
+        signature256: "sha256=abc",
+      }).success
+    ).toBe(false);
+  });
+
   it("normalizes push payload routing fields", () => {
     const payload = githubPushWebhookPayloadSchema.parse({
       after: "a".repeat(40),
@@ -135,5 +151,39 @@ describe("GitHub webhook schemas", () => {
       ref: "refs/heads/main",
       repositoryFullName: "lightfast-emulated/workspace",
     });
+  });
+
+  it("rejects negative numeric installation ids in push payloads", () => {
+    expect(
+      githubPushWebhookPayloadSchema.safeParse({
+        after: "a".repeat(40),
+        before: "b".repeat(40),
+        installation: { id: -1 },
+        ref: "refs/heads/main",
+        repository: {
+          full_name: "lightfast-emulated/workspace",
+          id: 2002,
+          name: "workspace",
+          owner: { login: "lightfast-emulated" },
+        },
+      }).success
+    ).toBe(false);
+  });
+
+  it("rejects fractional numeric repository ids in push payloads", () => {
+    expect(
+      githubPushWebhookPayloadSchema.safeParse({
+        after: "a".repeat(40),
+        before: "b".repeat(40),
+        installation: { id: 1001 },
+        ref: "refs/heads/main",
+        repository: {
+          full_name: "lightfast-emulated/workspace",
+          id: 2002.5,
+          name: "workspace",
+          owner: { login: "lightfast-emulated" },
+        },
+      }).success
+    ).toBe(false);
   });
 });
