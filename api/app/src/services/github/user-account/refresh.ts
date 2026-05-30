@@ -1,7 +1,4 @@
-import {
-  getActiveUserSourceControlAccount,
-  type Database,
-} from "@db/app";
+import { type Database, getActiveUserSourceControlAccount } from "@db/app";
 import { userSourceControlAccounts } from "@db/app/schema";
 import { decrypt, encrypt } from "@repo/app-encryption";
 import { refreshGitHubUserAccessToken } from "@repo/github-app-node";
@@ -45,7 +42,10 @@ export async function getFreshGitHubUserAccessToken(input: {
 
   const now = input.now?.() ?? new Date();
   const refreshWindowMs = input.refreshWindowMs ?? DEFAULT_REFRESH_WINDOW_MS;
-  if (account.accessTokenExpiresAt.getTime() - now.getTime() > refreshWindowMs) {
+  if (
+    account.accessTokenExpiresAt.getTime() - now.getTime() >
+    refreshWindowMs
+  ) {
     return {
       accessToken: await decrypt(
         account.encryptedAccessToken,

@@ -8,8 +8,7 @@ import { z } from "zod";
 const encryptionKeySchema = z
   .string()
   .refine(
-    (key) =>
-      /^[0-9a-f]{64}$/i.test(key) || /^[A-Za-z0-9+/]{43}=$/.test(key),
+    (key) => /^[0-9a-f]{64}$/i.test(key) || /^[A-Za-z0-9+/]{43}=$/.test(key),
     "ENCRYPTION_KEY must be 32 bytes as 64 hex chars or 44 base64 chars"
   );
 

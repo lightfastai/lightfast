@@ -16,8 +16,7 @@ const DEFAULT_RETURN_TO = "/account/tasks/github";
 
 function normalizeReturnTo(returnTo: string | undefined): Route {
   if (
-    !returnTo ||
-    !returnTo.startsWith("/") ||
+    !returnTo?.startsWith("/") ||
     returnTo.startsWith("//") ||
     returnTo.startsWith("/\\")
   ) {

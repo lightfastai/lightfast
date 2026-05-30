@@ -2,8 +2,8 @@ import { sql } from "drizzle-orm";
 import {
   bigint,
   index,
-  text,
   mysqlTable,
+  text,
   timestamp,
   uniqueIndex,
   varchar,
@@ -68,9 +68,9 @@ export const userSourceControlAccounts = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    activeUserUq: uniqueIndex(
-      "user_source_control_accounts_active_user_uq"
-    ).on(table.activeClerkUserId),
+    activeUserUq: uniqueIndex("user_source_control_accounts_active_user_uq").on(
+      table.activeClerkUserId
+    ),
     activeProviderUserUq: uniqueIndex(
       "user_source_control_accounts_active_provider_user_uq"
     ).on(table.activeProviderUserKey),
@@ -78,9 +78,10 @@ export const userSourceControlAccounts = mysqlTable(
       table.clerkUserId,
       table.status
     ),
-    providerUserIdx: index(
-      "user_source_control_accounts_provider_user_idx"
-    ).on(table.provider, table.providerUserId),
+    providerUserIdx: index("user_source_control_accounts_provider_user_idx").on(
+      table.provider,
+      table.providerUserId
+    ),
   })
 );
 

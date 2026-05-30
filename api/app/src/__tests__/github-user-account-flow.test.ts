@@ -115,11 +115,13 @@ const {
   startGitHubUserAccountBinding,
 } = await import("../services/github/user-account/flow");
 
-function attempt(overrides: Partial<{
-  codeVerifier: string;
-  lightfastUserId: string;
-  returnTo: string;
-}> = {}) {
+function attempt(
+  overrides: Partial<{
+    codeVerifier: string;
+    lightfastUserId: string;
+    returnTo: string;
+  }> = {}
+) {
   return {
     codeVerifier: "verifier_123",
     lightfastUserId: "user_1",

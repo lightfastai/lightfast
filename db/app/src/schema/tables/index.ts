@@ -23,13 +23,6 @@ export {
   orgSourceControlBindings,
 } from "./org-source-control-bindings";
 export {
-  type InsertUserSourceControlAccount,
-  type UserSourceControlAccount,
-  type UserSourceControlAccountProvider,
-  type UserSourceControlAccountStatus,
-  userSourceControlAccounts,
-} from "./user-source-control-accounts";
-export {
   createPersonId,
   type InsertPerson,
   PERSON_DISPLAY_NAME_LENGTH,
@@ -46,3 +39,10 @@ export {
   type Signal,
   signals,
 } from "./signals";
+export {
+  type InsertUserSourceControlAccount,
+  type UserSourceControlAccount,
+  type UserSourceControlAccountProvider,
+  type UserSourceControlAccountStatus,
+  userSourceControlAccounts,
+} from "./user-source-control-accounts";

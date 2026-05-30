@@ -1,5 +1,5 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { Database } from "@db/app";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const decryptMock = vi.fn();
 const encryptMock = vi.fn();

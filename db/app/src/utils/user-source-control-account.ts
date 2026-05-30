@@ -155,7 +155,7 @@ export async function finalizeActiveUserSourceControlAccount(
           throw error;
         }
         duplicateError = error;
-        return undefined;
+        return;
       });
 
     if (duplicateError) {
@@ -204,7 +204,7 @@ export async function markUserSourceControlAccountRevoked(
     input.clerkUserId
   );
   if (!activeAccount) {
-    return undefined;
+    return;
   }
 
   const result = await db
@@ -223,7 +223,7 @@ export async function markUserSourceControlAccountRevoked(
     );
 
   if (getRowsAffected(result) === 0) {
-    return undefined;
+    return;
   }
 
   return await getUserSourceControlAccountById(db, activeAccount.id);
@@ -242,7 +242,7 @@ export async function markUserSourceControlAccountExpired(
     input.clerkUserId
   );
   if (!activeAccount) {
-    return undefined;
+    return;
   }
 
   const result = await db
@@ -261,7 +261,7 @@ export async function markUserSourceControlAccountExpired(
     );
 
   if (getRowsAffected(result) === 0) {
-    return undefined;
+    return;
   }
 
   return await getUserSourceControlAccountById(db, activeAccount.id);
@@ -388,11 +388,7 @@ async function insertActiveUserSourceControlAccount(
     });
 
   if (duplicateError) {
-    return await recoverUserSourceControlAccountRace(
-      db,
-      input,
-      duplicateError
-    );
+    return await recoverUserSourceControlAccountRace(db, input, duplicateError);
   }
 
   if (!row?.id) {

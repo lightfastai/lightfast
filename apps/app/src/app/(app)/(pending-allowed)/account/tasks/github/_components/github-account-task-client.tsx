@@ -75,8 +75,8 @@ export function GithubAccountTaskClient({
 
           <div className="space-y-4">
             <p className="text-muted-foreground text-sm">
-              Link your personal GitHub identity so Lightfast can use
-              user-level source-control access when a workflow needs it.
+              Link your personal GitHub identity so Lightfast can use user-level
+              source-control access when a workflow needs it.
             </p>
 
             {githubError ? (

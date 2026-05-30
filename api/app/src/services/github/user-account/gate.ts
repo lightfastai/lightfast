@@ -1,4 +1,4 @@
-import { getActiveUserSourceControlAccount, type Database } from "@db/app";
+import { type Database, getActiveUserSourceControlAccount } from "@db/app";
 
 import { throwDiagnostic } from "../../../diagnostics";
 

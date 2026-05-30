@@ -27,9 +27,7 @@ describe("@repo/github-app-contract", () => {
       githubUserAccountBindErrorCodeSchema.parse("missing_refresh_token")
     ).toBe("missing_refresh_token");
     expect(
-      githubUserAccountBindErrorCodeSchema.parse(
-        "github_account_already_bound"
-      )
+      githubUserAccountBindErrorCodeSchema.parse("github_account_already_bound")
     ).toBe("github_account_already_bound");
     expect(() =>
       githubUserAccountBindErrorCodeSchema.parse("installation_not_verified")

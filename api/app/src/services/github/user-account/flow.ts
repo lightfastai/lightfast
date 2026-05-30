@@ -15,18 +15,18 @@ import { auth } from "@vendor/clerk/server";
 import { getGitHubAppConfig, resolveGitHubAppOrigin } from "../config";
 import {
   consumeGitHubUserAccountOAuthAttempt,
+  type GitHubUserAccountOAuthAttemptRecord,
   issueGitHubUserAccountOAuthAttempt,
   lookupGitHubUserAccountOAuthAttempt,
-  type GitHubUserAccountOAuthAttemptRecord,
 } from "./attempts";
 import { parseGitHubUserAccountOAuthCallback } from "./callbacks";
 import { mapGitHubUserAccountError } from "./errors";
 import { finalizeGitHubUserAccountBinding } from "./finalize-account";
 import {
   accountTaskErrorRedirect,
+  type GitHubUserAccountRedirectResult,
   missingUserAccountAttemptRedirect,
   userAccountCompleteUrl,
-  type GitHubUserAccountRedirectResult,
   userAccountSignInRedirect,
 } from "./redirects";
 
@@ -139,9 +139,7 @@ export async function completeGitHubUserAccountOAuth(input: {
       clerkUserId: attempt.lightfastUserId,
       providerUserId: user.id,
       refreshToken: token.refreshToken,
-      refreshTokenExpiresAt: new Date(
-        now + token.refreshTokenExpiresIn * 1000
-      ),
+      refreshTokenExpiresAt: new Date(now + token.refreshTokenExpiresIn * 1000),
     });
 
     return {
@@ -165,7 +163,7 @@ function optionalReturnTo(returnTo: string | undefined): { returnTo?: string } {
 
 function normalizeReturnTo(returnTo: string | undefined): string | undefined {
   if (!returnTo) {
-    return undefined;
+    return;
   }
 
   if (
@@ -173,7 +171,7 @@ function normalizeReturnTo(returnTo: string | undefined): string | undefined {
     returnTo.startsWith("//") ||
     returnTo.startsWith("/\\")
   ) {
-    return undefined;
+    return;
   }
 
   return returnTo;

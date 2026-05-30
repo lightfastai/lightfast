@@ -78,7 +78,7 @@ export async function issueGitHubUserAccountOAuthAttempt(input: {
   const record: GitHubUserAccountOAuthAttemptRecord = {
     codeVerifier: input.codeVerifier,
     lightfastUserId: input.lightfastUserId,
-    ...(input.returnTo !== undefined ? { returnTo: input.returnTo } : {}),
+    ...(input.returnTo === undefined ? {} : { returnTo: input.returnTo }),
     stateHash: hashState(state),
   };
   await redis.set(`${USER_ACCOUNT_OAUTH_PREFIX}${attemptId}`, record, {

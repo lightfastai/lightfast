@@ -80,21 +80,6 @@ export {
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
 export {
-  activeProviderUserKey,
-  type FinalizeActiveUserSourceControlAccountInput,
-  finalizeActiveUserSourceControlAccount,
-  getActiveUserSourceControlAccount,
-  type GetUserSourceControlAccountByProviderUserInput,
-  getUserSourceControlAccountByProviderUser,
-  isUserSourceControlBound,
-  type MarkUserSourceControlAccountExpiredInput,
-  markUserSourceControlAccountExpired,
-  type MarkUserSourceControlAccountRevokedInput,
-  markUserSourceControlAccountRevoked,
-  type UserSourceControlAccountConflictCode,
-  UserSourceControlAccountConflictError,
-} from "./utils/user-source-control-account";
-export {
   getPersonByIdentityKey,
   type ListPeopleParams,
   listPeople,
@@ -116,3 +101,18 @@ export {
   markSignalClassified,
   markSignalFailed,
 } from "./utils/signals";
+export {
+  activeProviderUserKey,
+  type FinalizeActiveUserSourceControlAccountInput,
+  finalizeActiveUserSourceControlAccount,
+  type GetUserSourceControlAccountByProviderUserInput,
+  getActiveUserSourceControlAccount,
+  getUserSourceControlAccountByProviderUser,
+  isUserSourceControlBound,
+  type MarkUserSourceControlAccountExpiredInput,
+  type MarkUserSourceControlAccountRevokedInput,
+  markUserSourceControlAccountExpired,
+  markUserSourceControlAccountRevoked,
+  type UserSourceControlAccountConflictCode,
+  UserSourceControlAccountConflictError,
+} from "./utils/user-source-control-account";

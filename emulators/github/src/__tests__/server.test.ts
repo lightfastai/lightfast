@@ -302,19 +302,22 @@ describe("@repo/github-emulator", () => {
       refresh_token: expect.stringMatching(/^ghr_/),
     });
 
-    const refreshRes = await fetch(`${emulator?.url}/login/oauth/access_token`, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        "content-type": "application/json",
-      },
-      body: JSON.stringify({
-        client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
-        client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
-        grant_type: "refresh_token",
-        refresh_token: tokenBody.refresh_token,
-      }),
-    });
+    const refreshRes = await fetch(
+      `${emulator?.url}/login/oauth/access_token`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
+          client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
+          grant_type: "refresh_token",
+          refresh_token: tokenBody.refresh_token,
+        }),
+      }
+    );
 
     expect(refreshRes.status).toBe(200);
     const refreshBody = (await refreshRes.json()) as {

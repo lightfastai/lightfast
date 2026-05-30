@@ -1,5 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
 import { getTableConfig } from "drizzle-orm/mysql-core";
+import { describe, expect, it, vi } from "vitest";
 import type { Database } from "../client";
 import type { UserSourceControlAccount } from "../schema";
 import { userSourceControlAccounts } from "../schema";
@@ -67,9 +67,7 @@ describe("userSourceControlAccounts schema", () => {
       unique: true,
     });
     expect(
-      indexColumnNames(
-        "user_source_control_accounts_active_provider_user_uq"
-      )
+      indexColumnNames("user_source_control_accounts_active_provider_user_uq")
     ).toEqual(["active_provider_user_key"]);
 
     expect(
@@ -398,7 +396,9 @@ it("reactivates historical inactive rows for the same Clerk and provider user", 
     encryptedAccessToken: "encrypted_access_next",
     encryptedRefreshToken: "encrypted_refresh_next",
   });
-  const set = vi.fn(() => ({ where: () => Promise.resolve({ affectedRows: 1 }) }));
+  const set = vi.fn(() => ({
+    where: () => Promise.resolve({ affectedRows: 1 }),
+  }));
   const update = vi.fn(() => ({ set }));
   const select = vi
     .fn()
@@ -665,7 +665,9 @@ it("recovers duplicate inserts for exact active accounts by updating tokens", as
   const returningId = vi.fn(() => Promise.reject(duplicateKeyError()));
   const values = vi.fn(() => ({ $returningId: returningId }));
   const insert = vi.fn(() => ({ values }));
-  const set = vi.fn(() => ({ where: () => Promise.resolve({ affectedRows: 1 }) }));
+  const set = vi.fn(() => ({
+    where: () => Promise.resolve({ affectedRows: 1 }),
+  }));
   const update = vi.fn(() => ({ set }));
   const select = vi
     .fn()
