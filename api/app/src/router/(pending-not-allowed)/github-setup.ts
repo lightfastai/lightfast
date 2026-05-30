@@ -9,8 +9,8 @@ import {
   getOrgAccessBySlug,
   isOrgAccessError,
 } from "../../auth/organization-access";
-import { issueGitHubInstallAttempt } from "../../github/bind-attempts";
-import { getGitHubAppConfig } from "../../github/config";
+import { getGitHubAppConfig } from "../../services/github/config";
+import { issueGitHubInstallAttempt } from "../../services/github/setup/attempts";
 import { syncGitHubBindingClaim } from "../../github/setup-flow";
 import { orgAdminProcedure, setupProcedure } from "../../trpc";
 

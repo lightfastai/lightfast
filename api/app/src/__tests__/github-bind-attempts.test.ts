@@ -24,7 +24,7 @@ const {
   issueGitHubOAuthAttempt,
   lookupGitHubInstallAttempt,
   lookupGitHubOAuthAttempt,
-} = await import("../github/bind-attempts");
+} = await import("../services/github/setup/attempts");
 
 beforeEach(() => {
   redisSetMock.mockReset();

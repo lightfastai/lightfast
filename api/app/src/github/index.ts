@@ -6,7 +6,7 @@ export {
   normalizeGitHubPrivateKey,
   resolveGitHubAppEndpoints,
   resolveGitHubAppOrigin,
-} from "./config";
+} from "../services/github/config";
 export {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,

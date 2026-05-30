@@ -99,7 +99,7 @@ vi.mock("../github/admin-access", () => ({
   GitHubSetupAdminAccessError: TestGitHubSetupAdminAccessError,
 }));
 
-vi.mock("../github/bind-attempts", () => ({
+vi.mock("../services/github/setup/attempts", () => ({
   consumeGitHubInstallAttempt: consumeGitHubInstallAttemptMock,
   consumeGitHubOAuthAttempt: consumeGitHubOAuthAttemptMock,
   issueGitHubOAuthAttempt: issueGitHubOAuthAttemptMock,
@@ -107,7 +107,7 @@ vi.mock("../github/bind-attempts", () => ({
   lookupGitHubOAuthAttempt: lookupGitHubOAuthAttemptMock,
 }));
 
-vi.mock("../github/config", () => ({
+vi.mock("../services/github/config", () => ({
   getGitHubAppConfig: () => ({
     apiVersion: "2022-11-28",
     clientId: "github_client_test",

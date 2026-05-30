@@ -1,4 +1,4 @@
-import { env as runtimeEnv } from "../env";
+import { env as runtimeEnv } from "../../env";
 
 export interface GitHubAppEndpoints {
   apiBaseUrl: string;

@@ -29,8 +29,11 @@ import {
   issueGitHubOAuthAttempt,
   lookupGitHubInstallAttempt,
   lookupGitHubOAuthAttempt,
-} from "./bind-attempts";
-import { getGitHubAppConfig, resolveGitHubAppOrigin } from "./config";
+} from "../services/github/setup/attempts";
+import {
+  getGitHubAppConfig,
+  resolveGitHubAppOrigin,
+} from "../services/github/config";
 
 function bindPageUrl(input: {
   appOrigin: string;

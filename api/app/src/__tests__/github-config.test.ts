@@ -5,7 +5,7 @@ import {
   normalizeGitHubPrivateKey,
   resolveGitHubAppEndpoints,
   resolveGitHubAppOrigin,
-} from "../github/config";
+} from "../services/github/config";
 
 describe("GitHub config", () => {
   afterEach(() => {
@@ -96,7 +96,7 @@ describe("GitHub config", () => {
     vi.resetModules();
 
     const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
-      "../github/config"
+      "../services/github/config"
     );
 
     expect(() => getRuntimeGitHubAppConfig()).toThrow(
@@ -112,7 +112,7 @@ describe("GitHub config", () => {
     vi.resetModules();
 
     const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
-      "../github/config"
+      "../services/github/config"
     );
 
     expect(() => getRuntimeGitHubAppConfig()).toThrow(
@@ -128,7 +128,7 @@ describe("GitHub config", () => {
     vi.resetModules();
 
     const { getGitHubAppConfig: getRuntimeGitHubAppConfig } = await import(
-      "../github/config"
+      "../services/github/config"
     );
 
     expect(() => getRuntimeGitHubAppConfig({ env: undefined })).toThrow(
