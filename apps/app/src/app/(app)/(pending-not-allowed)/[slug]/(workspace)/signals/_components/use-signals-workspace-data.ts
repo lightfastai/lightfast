@@ -2,188 +2,115 @@
 
 import { useMemo } from "react";
 import {
-  flattenSignalPages,
+  adaptProcessingRow,
   getSignalKindLabel,
   type SignalClassificationFilters,
-  type SignalKind,
+  type SignalListItem,
   type SignalRow,
   type SignalSection,
   signalKindOptions,
-  signalProcessingStatuses,
 } from "./signals-model";
-import { useSignalsListQuery } from "./use-classified-signals-query";
+import { useSignalsFiltering } from "./use-signals-filtering";
+import {
+  useProcessingSignalsQuery,
+  useWorkingSetQuery,
+} from "./use-classified-signals-query";
 
 export function useSignalsWorkspaceData({
   filters,
-  search,
 }: {
   filters: SignalClassificationFilters;
-  search: string;
 }) {
+  const { query: workingSetQuery, queryKey: workingSetQueryKey } =
+    useWorkingSetQuery();
   const { query: processingQuery, queryKey: processingQueryKey } =
-    useSignalsListQuery({
-      refetchInterval: 5_000,
-      search,
-      staleTime: 5_000,
-      statuses: signalProcessingStatuses,
-    });
-  const {
-    data: processingData,
-    fetchNextPage: fetchNextProcessingPage,
-    hasNextPage: hasNextProcessingPage,
-    isError: isProcessingError,
-    isFetching: isProcessingFetching,
-    isFetchingNextPage: isFetchingNextProcessingPage,
-    refetch: refetchProcessing,
-  } = processingQuery;
+    useProcessingSignalsQuery();
 
-  const processingRows = useMemo(
-    () => flattenSignalPages(processingData),
-    [processingData]
+  const classifiedRows = useMemo<SignalListItem[]>(
+    () => workingSetQuery.data?.items ?? [],
+    [workingSetQuery.data]
+  );
+  const processingFullRows = useMemo<SignalRow[]>(
+    () => processingQuery.data?.items ?? [],
+    [processingQuery.data]
+  );
+  const processingRows = useMemo<SignalListItem[]>(
+    () => processingFullRows.map(adaptProcessingRow),
+    [processingFullRows]
   );
 
-  const { query: classifiedQuery, queryKey: classifiedQueryKey } =
-    useSignalsListQuery({
-      filters,
-      refetchInterval: processingRows.length > 0 ? 5_000 : false,
-      search,
-      status: "classified",
-    });
-  const {
-    data: classifiedData,
-    fetchNextPage: fetchNextClassifiedPage,
-    hasNextPage: hasNextClassifiedPage,
-    isError: isClassifiedError,
-    isFetching: isClassifiedFetching,
-    isFetchingNextPage: isFetchingNextClassifiedPage,
-    refetch: refetchClassified,
-  } = classifiedQuery;
+  const { byKind, classified, processing } = useSignalsFiltering({
+    classifiedRows,
+    filters,
+    processingRows,
+  });
 
-  const classifiedRows = useMemo(
-    () => flattenSignalPages(classifiedData),
-    [classifiedData]
-  );
-
-  const classifiedSection = useMemo<SignalSection>(
-    () => ({
-      fetchNextPage: () => void fetchNextClassifiedPage(),
-      hasNextPage: !!hasNextClassifiedPage,
-      id: "classified",
-      isError: isClassifiedError,
-      isFetching: isClassifiedFetching,
-      isFetchingNextPage: isFetchingNextClassifiedPage,
-      label: "Classified",
-      refetch: () => void refetchClassified(),
-      rows: classifiedRows,
-    }),
-    [
-      classifiedRows,
-      fetchNextClassifiedPage,
-      hasNextClassifiedPage,
-      isClassifiedError,
-      isClassifiedFetching,
-      isFetchingNextClassifiedPage,
-      refetchClassified,
-    ]
-  );
-
-  const processingSection = useMemo<SignalSection>(
-    () => ({
-      fetchNextPage: () => void fetchNextProcessingPage(),
-      hasNextPage: !!hasNextProcessingPage,
-      id: "processing",
-      isError: isProcessingError,
-      isFetching: isProcessingFetching,
-      isFetchingNextPage: isFetchingNextProcessingPage,
-      label: "Processing",
-      refetch: () => void refetchProcessing(),
-      rows: processingRows,
-    }),
-    [
-      fetchNextProcessingPage,
-      hasNextProcessingPage,
-      isFetchingNextProcessingPage,
-      isProcessingError,
-      isProcessingFetching,
-      processingRows,
-      refetchProcessing,
-    ]
-  );
-
-  const rowsByKind = useMemo(
-    () => groupRowsByKind(classifiedRows),
-    [classifiedRows]
+  const visibleListSections = useMemo<SignalSection[]>(
+    () => [
+      {
+        id: "classified",
+        isError: workingSetQuery.isError,
+        isFetching: workingSetQuery.isFetching,
+        label: "Classified",
+        refetch: () => void workingSetQuery.refetch(),
+        rows: classified,
+      },
+      {
+        id: "processing",
+        isError: processingQuery.isError,
+        isFetching: processingQuery.isFetching,
+        label: "Processing",
+        refetch: () => void processingQuery.refetch(),
+        rows: processing,
+      },
+    ],
+    [classified, processing, workingSetQuery, processingQuery]
   );
 
   const boardSections = useMemo<SignalSection[]>(
     () => [
-      processingSection,
+      {
+        id: "processing",
+        isError: processingQuery.isError,
+        isFetching: processingQuery.isFetching,
+        label: "Processing",
+        refetch: () => void processingQuery.refetch(),
+        rows: processing,
+      },
       ...signalKindOptions.map((option) => ({
-        fetchNextPage: () => void fetchNextClassifiedPage(),
-        hasNextPage: !!hasNextClassifiedPage,
         id: option.value,
-        isError: isClassifiedError,
-        isFetching: isClassifiedFetching,
-        isFetchingNextPage: isFetchingNextClassifiedPage,
+        isError: workingSetQuery.isError,
+        isFetching: workingSetQuery.isFetching,
         kind: option.value,
         label: getSignalKindLabel(option.value),
-        refetch: () => void refetchClassified(),
-        rows: rowsByKind.get(option.value) ?? [],
+        refetch: () => void workingSetQuery.refetch(),
+        rows: byKind.get(option.value) ?? [],
       })),
     ],
-    [
-      fetchNextClassifiedPage,
-      hasNextClassifiedPage,
-      isClassifiedError,
-      isClassifiedFetching,
-      isFetchingNextClassifiedPage,
-      processingSection,
-      refetchClassified,
-      rowsByKind,
-    ]
-  );
-  const visibleListSections = useMemo(
-    () => [classifiedSection, processingSection],
-    [classifiedSection, processingSection]
+    [byKind, processing, processingQuery, workingSetQuery]
   );
 
+  // Classified rows (projection, no body) seed the detail header; processing
+  // rows are retained full (they carry `input`) so their detail needs no `get`.
   const signalsByPublicId = useMemo(() => {
-    const map = new Map<string, SignalRow>();
-    for (const row of processingRows) {
-      map.set(row.publicId, row);
-    }
+    const map = new Map<string, SignalListItem | SignalRow>();
     for (const row of classifiedRows) {
       map.set(row.publicId, row);
     }
+    for (const row of processingFullRows) {
+      map.set(row.publicId, row);
+    }
     return map;
-  }, [classifiedRows, processingRows]);
+  }, [classifiedRows, processingFullRows]);
 
   return {
     boardSections,
-    classifiedListQueryKey: classifiedQueryKey,
     hasAnyRows: classifiedRows.length + processingRows.length > 0,
-    isFetchingAny: isClassifiedFetching || isProcessingFetching,
-    processingListQueryKey: processingQueryKey,
+    processingQueryKey,
     signalsByPublicId,
+    totalCount: workingSetQuery.data?.totalCount ?? classifiedRows.length,
+    truncated: workingSetQuery.data?.truncated ?? false,
     visibleListSections,
+    workingSetQueryKey,
   };
-}
-
-function groupRowsByKind(rows: SignalRow[]) {
-  const rowsByKind = new Map<SignalKind, SignalRow[]>();
-
-  for (const row of rows) {
-    const kind = row.classification?.kind;
-    if (!kind) {
-      continue;
-    }
-    const kindRows = rowsByKind.get(kind);
-    if (kindRows) {
-      kindRows.push(row);
-    } else {
-      rowsByKind.set(kind, [row]);
-    }
-  }
-
-  return rowsByKind;
 }
