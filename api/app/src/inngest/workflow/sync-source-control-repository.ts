@@ -41,11 +41,6 @@ export const syncSourceControlRepository = inngest.createFunction(
     triggers: appEvents["app/source-control.repository.push.received"],
   },
   async ({ event, step }) => {
-    const config = getGitHubAppConfig();
-    const { owner, repo } = splitRepositoryFullName(
-      event.data.repositoryFullName
-    );
-
     const watch = await step.run("load watched source control repository", () =>
       getWatchedSourceControlRepositoryById(db, {
         id: event.data.repositoryWatchId,
@@ -54,6 +49,11 @@ export const syncSourceControlRepository = inngest.createFunction(
     if (!watch) {
       return { status: "missing-watch" as const };
     }
+
+    const config = getGitHubAppConfig();
+    const { owner, repo } = splitRepositoryFullName(
+      event.data.repositoryFullName
+    );
 
     const appJwt = await step.run("create github app jwt", () =>
       createGitHubAppJwt({

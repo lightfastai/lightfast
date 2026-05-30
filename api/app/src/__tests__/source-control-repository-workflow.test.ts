@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createJwtMock = vi.fn();
 const createTokenMock = vi.fn();
@@ -12,7 +12,10 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("../inngest/client", () => ({
   inngest: {
-    createFunction: (_config: unknown, handler: unknown) => ({ handler }),
+    createFunction: (config: { onFailure?: unknown }, handler: unknown) => ({
+      handler,
+      onFailure: config.onFailure,
+    }),
   },
 }));
 
@@ -43,6 +46,11 @@ vi.mock("../env", () => ({
 }));
 
 describe("source control repository sync workflow", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.resetModules();
+  });
+
   it("fetches repository state and updates cursors", async () => {
     createJwtMock.mockResolvedValue("jwt");
     createTokenMock.mockResolvedValue({ token: "ghs_installation" });
@@ -61,6 +69,12 @@ describe("source control repository sync workflow", () => {
           mode: "100644",
           path: "skills/demo/SKILL.md",
           sha: "blob-sha",
+          type: "blob",
+        },
+        {
+          mode: "100644",
+          path: "docs/demo.md",
+          sha: "docs-blob-sha",
           type: "blob",
         },
       ],
@@ -111,6 +125,79 @@ describe("source control repository sync workflow", () => {
       {
         deliveryId: "delivery-1",
         status: "processed",
+      }
+    );
+  });
+
+  it("returns missing-watch before fetching GitHub repository state", async () => {
+    getWatchByIdMock.mockResolvedValue(undefined);
+
+    const { syncSourceControlRepository } = await import(
+      "../inngest/workflow/sync-source-control-repository"
+    );
+    const workflow = syncSourceControlRepository as unknown as {
+      handler: (input: unknown) => Promise<unknown>;
+    };
+
+    const result = await workflow.handler({
+      event: {
+        data: {
+          afterSha: "a".repeat(40),
+          beforeSha: "b".repeat(40),
+          deliveryId: "delivery-2",
+          orgSourceControlBindingId: 1,
+          providerInstallationId: "1001",
+          providerRepositoryId: "2002",
+          ref: "refs/heads/main",
+          repositoryFullName: "invalid-repository-name",
+          repositoryWatchId: 10,
+        },
+      },
+      step: {
+        run: async (_name: string, fn: () => unknown) => await fn(),
+      },
+    } as never);
+
+    expect(result).toEqual({ status: "missing-watch" });
+    expect(createJwtMock).not.toHaveBeenCalled();
+    expect(createTokenMock).not.toHaveBeenCalled();
+    expect(getCommitMock).not.toHaveBeenCalled();
+    expect(getTreeMock).not.toHaveBeenCalled();
+    expect(updateProcessedMock).not.toHaveBeenCalled();
+    expect(markDeliveryMock).not.toHaveBeenCalled();
+  });
+
+  it("marks source control delivery failed from onFailure", async () => {
+    markDeliveryMock.mockResolvedValue(true);
+
+    const { syncSourceControlRepository } = await import(
+      "../inngest/workflow/sync-source-control-repository"
+    );
+    const workflow = syncSourceControlRepository as unknown as {
+      onFailure: (input: unknown) => Promise<unknown>;
+    };
+
+    const result = await workflow.onFailure({
+      event: {
+        data: {
+          event: {
+            data: {
+              deliveryId: "delivery-3",
+            },
+          },
+        },
+      },
+      step: {
+        run: async (_name: string, fn: () => unknown) => await fn(),
+      },
+    } as never);
+
+    expect(result).toEqual({ status: "failed" });
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-3",
+        status: "failed",
       }
     );
   });
