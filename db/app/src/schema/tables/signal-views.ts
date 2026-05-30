@@ -63,15 +63,15 @@ export const signalViews = mysqlTable(
       .onUpdateNow()
       .notNull(),
   },
-  (table) => ({
-    publicIdUq: uniqueIndex("signal_views_public_id_uq").on(table.publicId),
-    orgUserCreatedIdx: index("signal_views_org_user_created_idx").on(
+  (table) => [
+    uniqueIndex("signal_views_public_id_uq").on(table.publicId),
+    index("signal_views_org_user_created_idx").on(
       table.clerkOrgId,
       table.createdByUserId,
       table.createdAt,
       table.id
     ),
-  })
+  ]
 );
 
 export type SignalView = typeof signalViews.$inferSelect;
