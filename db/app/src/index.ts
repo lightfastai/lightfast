@@ -104,10 +104,14 @@ export {
   getSignalByPublicId,
   type ListSignalsParams,
   listSignals,
+  type ListWorkspaceSignalsParams,
+  listWorkspaceSignals,
   type MarkSignalClassifiedParams,
   type MarkSignalFailedParams,
   markSignalClassified,
   markSignalFailed,
+  type WorkspaceSignalListItem,
+  type WorkspaceSignalsResult,
 } from "./utils/signals";
 export {
   type CreateSignalViewParams,
