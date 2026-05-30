@@ -101,7 +101,7 @@ describe("signalMatchesFilters", () => {
     const routed = classified({
       classification: {
         ...classified().classification!,
-        routing: { classifyPeople: { shouldRun: true } },
+        routing: { classifyPeople: { shouldRun: true, rationale: "routed" } },
       },
     });
     expect(signalMatchesFilters(routed, { ...NO_FILTERS, peopleRouted: true })).toBe(
