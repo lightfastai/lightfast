@@ -20,6 +20,8 @@ export {
   type InsertOrgSourceControlBinding,
   type InsertPerson,
   type InsertSignal,
+  type InsertSourceControlRepository,
+  type InsertSourceControlWebhookDelivery,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
@@ -33,4 +35,8 @@ export {
   people,
   type Signal,
   signals,
+  type SourceControlRepository,
+  sourceControlRepositories,
+  type SourceControlWebhookDelivery,
+  sourceControlWebhookDeliveries,
 } from "./tables";

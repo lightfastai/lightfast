@@ -1151,6 +1151,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
+      '@repo/source-control-contract':
+        specifier: workspace:*
+        version: link:../../packages/source-control-contract
       '@t3-oss/env-core':
         specifier: 'catalog:'
         version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
