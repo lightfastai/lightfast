@@ -8,6 +8,7 @@ export default mergeConfig(
       globals: true,
       environment: "node",
       include: ["src/**/*.{test,spec}.ts"],
+      pool: "forks",
     },
   })
 );
