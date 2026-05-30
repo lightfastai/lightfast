@@ -20,92 +20,39 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { toast } from "@repo/ui/components/ui/sonner";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Loader2, UserPlus } from "lucide-react";
-import { useCallback, useMemo, useState } from "react";
-import { useTRPC } from "~/trpc/react";
-import {
-  createOptimisticInvitation,
-  insertInvitation,
-  type OrgMembersData,
-  type OrgRole,
-  removeInvitation,
-  replaceInvitation,
-} from "./org-member-cache";
+import { useCallback, useState } from "react";
+import type { OrgRole } from "./org-member-cache";
+import { useOrgMemberInviteAction } from "./org-member-invite-actions";
 
 export function OrgMemberInvite() {
   const { has, isLoaded } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const listQueryOptions = useMemo(
-    () => trpc.org.settings.orgMembers.list.queryOptions(),
-    [trpc]
-  );
-  const listQueryKey = listQueryOptions.queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [emailAddress, setEmailAddress] = useState("");
   const [role, setRole] = useState<OrgRole>("org:member");
 
-  const inviteMutation = useMutation(
-    trpc.org.settings.orgMembers.invite.mutationOptions({
-      meta: { errorTitle: "Failed to send invitation" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({ queryKey: listQueryKey });
-
-        const inputRole = input.role ?? "org:member";
-        const optimisticInvitation = createOptimisticInvitation({
-          emailAddress: input.emailAddress,
-          role: inputRole,
-        });
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            insertInvitation(old, optimisticInvitation)
-        );
-
-        setEmailAddress("");
-        setRole("org:member");
-        setIsOpen(false);
-
-        return {
-          emailAddress: input.emailAddress,
-          optimisticInvitationId: optimisticInvitation.id,
-          role: inputRole,
-        };
-      },
-      onError: (_err, _input, context) => {
-        if (!context) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            removeInvitation(old, context.optimisticInvitationId)
-        );
-        setEmailAddress(context.emailAddress);
-        setRole(context.role);
-        setIsOpen(true);
-      },
-      onSuccess: (invitation, _input, context) => {
-        if (context) {
-          queryClient.setQueryData(
-            listQueryKey,
-            (old: OrgMembersData | undefined) =>
-              replaceInvitation(old, context.optimisticInvitationId, invitation)
-          );
-        }
-        toast.success("Invitation sent");
-      },
-      onSettled: () => {
-        void queryClient.invalidateQueries({ queryKey: listQueryKey });
-      },
-    })
+  const restoreInviteForm = useCallback(
+    (input: { emailAddress: string; role: OrgRole }) => {
+      setEmailAddress(input.emailAddress);
+      setRole(input.role);
+      setIsOpen(true);
+    },
+    []
   );
+
+  const resetInviteForm = useCallback(() => {
+    setEmailAddress("");
+    setRole("org:member");
+    setIsOpen(false);
+  }, []);
+
+  const inviteMutation = useOrgMemberInviteAction({
+    onErrorRestore: restoreInviteForm,
+    onOptimisticInvite: resetInviteForm,
+  });
 
   const handleInvite = useCallback(() => {
     const trimmed = emailAddress.trim();

@@ -11,22 +11,14 @@ import {
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Check, Copy, Loader2, Plus } from "lucide-react";
-import { useCallback, useMemo, useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import { useCallback, useRef, useState } from "react";
+import { useOrgApiKeyCreateAction } from "./org-api-key-create-action";
 
 export function OrgApiKeyCreate() {
   const { has, isLoaded } = useAuth();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const listQueryOptions = useMemo(
-    () => trpc.org.settings.orgApiKeys.list.queryOptions(),
-    [trpc]
-  );
-  const listQueryKey = listQueryOptions.queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
@@ -37,21 +29,20 @@ export function OrgApiKeyCreate() {
   // in-flight mutation resolved.
   const isOpenRef = useRef(false);
 
-  const createMutation = useMutation(
-    trpc.org.settings.orgApiKeys.create.mutationOptions({
-      meta: { errorTitle: "Failed to create API key" },
-      onSuccess: (data) => {
-        if (!isOpenRef.current) {
-          return;
-        }
-        if (data.key) {
-          setCreatedKey(data.key);
-        }
-        setName("");
-        void queryClient.invalidateQueries({ queryKey: listQueryKey });
-      },
-    })
-  );
+  const handleCreated = useCallback((key: string | null) => {
+    if (!isOpenRef.current) {
+      return false;
+    }
+    if (key) {
+      setCreatedKey(key);
+    }
+    setName("");
+    return true;
+  }, []);
+
+  const createMutation = useOrgApiKeyCreateAction({
+    onCreated: handleCreated,
+  });
 
   const handleCreate = useCallback(() => {
     const trimmed = name.trim();

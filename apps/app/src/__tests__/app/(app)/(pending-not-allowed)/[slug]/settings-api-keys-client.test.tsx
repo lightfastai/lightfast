@@ -25,6 +25,9 @@ const toastSuccessMock = vi.fn();
 const useAuthMock = vi.fn();
 const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
+let pendingMutationState: Partial<
+  Record<MutationName, { isPending: boolean; variables?: { keyId: string } }>
+> = {};
 
 const listQueryOptions = {
   queryKey: ["org", "settings", "orgApiKeys", "list"],
@@ -48,6 +51,8 @@ vi.mock("~/trpc/react", () => ({
             }),
           },
           list: {
+            queryFilter: () => ({ queryKey: listQueryOptions.queryKey }),
+            queryKey: () => listQueryOptions.queryKey,
             queryOptions: () => listQueryOptions,
           },
           revoke: {
@@ -202,13 +207,22 @@ const apiKeys = [
 ];
 
 function mutationResult(name: MutationName) {
+  const pendingState = pendingMutationState[name];
   switch (name) {
     case "create":
       return { isPending: false, mutate: createMutateMock, reset: vi.fn() };
     case "delete":
-      return { isPending: false, mutate: deleteMutateMock };
+      return {
+        isPending: pendingState?.isPending ?? false,
+        mutate: deleteMutateMock,
+        variables: pendingState?.variables,
+      };
     case "revoke":
-      return { isPending: false, mutate: revokeMutateMock };
+      return {
+        isPending: pendingState?.isPending ?? false,
+        mutate: revokeMutateMock,
+        variables: pendingState?.variables,
+      };
     default:
       throw new Error(`Unhandled mutation: ${name}`);
   }
@@ -229,6 +243,7 @@ beforeEach(() => {
   useAuthMock.mockReset();
   useMutationMock.mockReset();
   useSuspenseQueryMock.mockReset();
+  pendingMutationState = {};
 
   useAuthMock.mockReturnValue({
     has: ({ role }: { role?: string }) => role === "org:admin",
@@ -279,6 +294,21 @@ describe("api key settings admin controls", () => {
     expect(screen.queryByRole("button", { name: /actions/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /^revoke$/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /^delete$/i })).toBeNull();
+  });
+
+  it("keeps non-target API key rows interactive while another key is pending", () => {
+    pendingMutationState = {
+      revoke: {
+        isPending: true,
+        variables: { keyId: "key_active" },
+      },
+    };
+
+    render(<OrgApiKeyList />);
+
+    const actionButtons = screen.getAllByRole("button", { name: /actions/i });
+    expect(actionButtons[0]).toBeDisabled();
+    expect(actionButtons[1]).not.toBeDisabled();
   });
 
   it("uses admin-managed empty-state copy for non-admin members", () => {

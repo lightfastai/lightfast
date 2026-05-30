@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  type QueryKey,
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import type {
   BillingPaymentMethodResource,
   BillingStatementResource,
@@ -14,7 +9,9 @@ import { useAuth, usePaymentMethods, useStatements } from "@vendor/clerk";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
+import { useCancelSubscriptionItemMutation } from "./billing-cancellation-mutation";
 import { BillingCheckoutDialog } from "./billing-checkout-dialog";
+import { useBillingOverviewRefresh } from "./billing-overview-actions";
 import {
   CancellationSection,
   InvoicesSection,
@@ -86,84 +83,12 @@ function usePricingHashDialogState() {
   return [isPlanDialogOpen, setPlanDialogOpen] as const;
 }
 
-function useCancelSubscriptionItemMutation(overviewQueryKey: QueryKey) {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-
-  return useMutation(
-    trpc.org.settings.orgBilling.cancelSubscriptionItem.mutationOptions({
-      meta: { errorTitle: "Failed to schedule cancellation" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({
-          queryKey: overviewQueryKey,
-        });
-
-        const previousOverview =
-          queryClient.getQueryData<BillingOverview>(overviewQueryKey);
-        const canceledAt = Date.now();
-
-        queryClient.setQueryData(
-          overviewQueryKey,
-          (old: BillingOverview | undefined) =>
-            old
-              ? {
-                  ...old,
-                  subscription: {
-                    ...old.subscription,
-                    subscriptionItems: old.subscription.subscriptionItems.map(
-                      (item) =>
-                        item.id === input.subscriptionItemId
-                          ? { ...item, canceledAt }
-                          : item
-                    ),
-                  },
-                }
-              : old
-        );
-
-        return { previousOverview };
-      },
-      onError: (_err, _input, context) => {
-        if (context?.previousOverview) {
-          queryClient.setQueryData(overviewQueryKey, context.previousOverview);
-        }
-      },
-      onSuccess: (updatedItem) => {
-        queryClient.setQueryData(
-          overviewQueryKey,
-          (old: BillingOverview | undefined) =>
-            old
-              ? {
-                  ...old,
-                  subscription: {
-                    ...old.subscription,
-                    subscriptionItems: old.subscription.subscriptionItems.map(
-                      (item) =>
-                        item.id === updatedItem.id ? updatedItem : item
-                    ),
-                  },
-                }
-              : old
-        );
-      },
-      onSettled: () =>
-        void queryClient.invalidateQueries({
-          queryKey: overviewQueryKey,
-        }),
-    })
-  );
-}
-
 export function BillingSettingsClient() {
   const trpc = useTRPC();
   const auth = useAuth();
-  const queryClient = useQueryClient();
-  const overviewQueryOptions = useMemo(
-    () => trpc.org.settings.orgBilling.overview.queryOptions(),
-    [trpc]
-  );
+  const refreshBillingOverview = useBillingOverviewRefresh();
   const { data: overview } = useSuspenseQuery({
-    ...overviewQueryOptions,
+    ...trpc.org.settings.orgBilling.overview.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -206,9 +131,7 @@ export function BillingSettingsClient() {
   const [selectedStatement, setSelectedStatement] =
     useState<BillingStatementResource | null>(null);
 
-  const cancelMutation = useCancelSubscriptionItemMutation(
-    overviewQueryOptions.queryKey
-  );
+  const cancelMutation = useCancelSubscriptionItemMutation();
 
   const confirmDowngrade = useCallback(
     (item: BillingSubscriptionItem) => {
@@ -262,10 +185,8 @@ export function BillingSettingsClient() {
   );
   const completeCheckout = useCallback(() => {
     setCheckoutPlan(null);
-    void queryClient.invalidateQueries({
-      queryKey: overviewQueryOptions.queryKey,
-    });
-  }, [overviewQueryOptions.queryKey, queryClient]);
+    void refreshBillingOverview();
+  }, [refreshBillingOverview]);
   const setCheckoutDialogOpen = useCallback((open: boolean) => {
     if (!open) {
       setCheckoutPlan(null);

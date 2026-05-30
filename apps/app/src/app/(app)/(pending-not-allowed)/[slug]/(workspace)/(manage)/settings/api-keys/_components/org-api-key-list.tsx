@@ -17,26 +17,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { toast } from "@repo/ui/components/ui/sonner";
-import {
-  type QueryKey,
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { Key, MoreHorizontal, ShieldOff, Trash2 } from "lucide-react";
-import { memo, useCallback, useMemo, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useTRPC } from "~/trpc/react";
-import {
-  type OrgApiKey,
-  type OrgApiKeyListData,
-  removeApiKey,
-  restoreApiKey,
-  revokeApiKey,
-} from "./org-api-key-cache";
-import { getOrgApiKeyRowModel } from "./org-api-key-row-model";
+import type { OrgApiKey } from "./org-api-key-cache";
+import { useOrgApiKeyListActions } from "./org-api-key-list-actions";
 
 interface AlertAction {
   keyId: string;
@@ -44,125 +32,17 @@ interface AlertAction {
   type: "revoke" | "delete";
 }
 
-function useOrgApiKeyListActions(listQueryKey: QueryKey) {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const invalidateList = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: listQueryKey }),
-    [queryClient, listQueryKey]
-  );
-
-  const revokeMutation = useMutation(
-    trpc.org.settings.orgApiKeys.revoke.mutationOptions({
-      meta: { errorTitle: "Failed to revoke API key" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({ queryKey: listQueryKey });
-
-        const previous =
-          queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
-        const previousApiKey = previous?.find(
-          (key) => key.keyId === input.keyId
-        );
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgApiKeyListData | undefined) => revokeApiKey(old, input.keyId)
-        );
-
-        return { previousApiKey };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.previousApiKey) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgApiKeyListData | undefined) =>
-            restoreApiKey(old, context.previousApiKey, -1)
-        );
-      },
-      onSuccess: () => toast.success("API key revoked"),
-      onSettled: () => void invalidateList(),
-    })
-  );
-
-  const deleteMutation = useMutation(
-    trpc.org.settings.orgApiKeys.delete.mutationOptions({
-      meta: { errorTitle: "Failed to delete API key" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({ queryKey: listQueryKey });
-
-        const previous =
-          queryClient.getQueryData<OrgApiKeyListData>(listQueryKey);
-        const { removedApiKey, removedIndex } = removeApiKey(
-          previous,
-          input.keyId
-        );
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgApiKeyListData | undefined) =>
-            removeApiKey(old, input.keyId).data
-        );
-
-        return { removedApiKey, removedIndex };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.removedApiKey) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgApiKeyListData | undefined) =>
-            restoreApiKey(old, context.removedApiKey, context.removedIndex)
-        );
-      },
-      onSuccess: () => toast.success("API key deleted"),
-      onSettled: () => void invalidateList(),
-    })
-  );
-
-  const revokeKey = useCallback(
-    (keyId: string) => revokeMutation.mutate({ keyId }),
-    [revokeMutation.mutate]
-  );
-  const deleteKey = useCallback(
-    (keyId: string) => deleteMutation.mutate({ keyId }),
-    [deleteMutation.mutate]
-  );
-
-  return {
-    actionsDisabled: revokeMutation.isPending || deleteMutation.isPending,
-    deleteKey,
-    pendingDeleteKeyId: deleteMutation.variables?.keyId,
-    pendingRevokeKeyId: revokeMutation.variables?.keyId,
-    revokeKey,
-  };
-}
-
 export function OrgApiKeyList() {
   const { has, isLoaded } = useAuth();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
-  const listQueryOptions = useMemo(
-    () => trpc.org.settings.orgApiKeys.list.queryOptions(),
-    [trpc]
-  );
-  const listQueryKey = listQueryOptions.queryKey;
 
   const { data: keys } = useSuspenseQuery({
-    ...listQueryOptions,
+    ...trpc.org.settings.orgApiKeys.list.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
-  const {
-    actionsDisabled,
-    deleteKey,
-    pendingDeleteKeyId,
-    pendingRevokeKeyId,
-    revokeKey,
-  } = useOrgApiKeyListActions(listQueryKey);
+  const { deleteKey, pendingDeleteKeyId, pendingRevokeKeyId, revokeKey } =
+    useOrgApiKeyListActions();
 
   const [alertAction, setAlertAction] = useState<AlertAction | null>(null);
 
@@ -209,14 +89,15 @@ export function OrgApiKeyList() {
         <div className="overflow-hidden rounded-lg border border-border/60">
           {keys.map((key) => (
             <OrgApiKeyRow
-              actionsDisabled={actionsDisabled}
               canManageApiKeys={canManageApiKeys}
+              isPending={
+                pendingRevokeKeyId === key.keyId ||
+                pendingDeleteKeyId === key.keyId
+              }
               key={key.keyId}
               keyItem={key}
               onRequestDelete={handleRequestDelete}
               onRequestRevoke={handleRequestRevoke}
-              pendingDeleteKeyId={pendingDeleteKeyId}
-              pendingRevokeKeyId={pendingRevokeKeyId}
             />
           ))}
         </div>
@@ -264,29 +145,22 @@ export function OrgApiKeyList() {
 }
 
 const OrgApiKeyRow = memo(function OrgApiKeyRow({
-  actionsDisabled,
   canManageApiKeys,
+  isPending,
   keyItem,
   onRequestDelete,
   onRequestRevoke,
-  pendingDeleteKeyId,
-  pendingRevokeKeyId,
 }: {
-  actionsDisabled: boolean;
   canManageApiKeys: boolean;
+  isPending: boolean;
   keyItem: OrgApiKey;
   onRequestDelete: (keyId: string, keyName: string) => void;
   onRequestRevoke: (keyId: string, keyName: string) => void;
-  pendingDeleteKeyId?: string;
-  pendingRevokeKeyId?: string;
 }) {
-  const { isActive, isExpired, isPending, keyName } = getOrgApiKeyRowModel(
-    keyItem,
-    {
-      pendingDeleteKeyId,
-      pendingRevokeKeyId,
-    }
-  );
+  const isExpired =
+    typeof keyItem.expires === "number" && keyItem.expires <= Date.now();
+  const isActive = keyItem.enabled && !isExpired;
+  const keyName = keyItem.name ?? keyItem.start;
 
   return (
     <div
@@ -340,7 +214,7 @@ const OrgApiKeyRow = memo(function OrgApiKeyRow({
           <DropdownMenuTrigger asChild>
             <Button
               className="text-muted-foreground hover:text-foreground"
-              disabled={actionsDisabled}
+              disabled={isPending}
               onClick={(e) => e.stopPropagation()}
               size="icon-sm"
               variant="ghost"

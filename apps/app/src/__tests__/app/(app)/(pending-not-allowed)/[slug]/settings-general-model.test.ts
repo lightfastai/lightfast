@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   normalizeTeamSlugInput,
   renameOrganizationSlug,
-} from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/_components/team-general-settings-model";
+} from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/_components/team-general-settings-actions";
 
 describe("team general settings model", () => {
   it("normalizes team slug input once before form state updates", () => {

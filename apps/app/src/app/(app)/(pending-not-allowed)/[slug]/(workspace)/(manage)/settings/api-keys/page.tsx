@@ -7,8 +7,9 @@ import { OrgApiKeyListLoading } from "./_components/org-api-key-list-loading";
 export const dynamic = "force-dynamic";
 
 export default async function OrgApiKeysPage() {
-  const listQueryOptions = trpc.org.settings.orgApiKeys.list.queryOptions();
-  await getQueryClient().fetchQuery(listQueryOptions);
+  await getQueryClient().fetchQuery(
+    trpc.org.settings.orgApiKeys.list.queryOptions()
+  );
 
   return (
     <HydrateClient>

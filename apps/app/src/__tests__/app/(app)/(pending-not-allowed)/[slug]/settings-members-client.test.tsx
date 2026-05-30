@@ -26,6 +26,15 @@ const updateRoleMutateMock = vi.fn();
 const useAuthMock = vi.fn();
 const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
+let pendingMutationState: Partial<
+  Record<
+    MutationName,
+    {
+      isPending: boolean;
+      variables?: { invitationId?: string; userId?: string };
+    }
+  >
+> = {};
 
 const listQueryOptions = {
   queryKey: ["org", "settings", "orgMembers", "list"],
@@ -43,6 +52,8 @@ vi.mock("~/trpc/react", () => ({
             }),
           },
           list: {
+            queryFilter: () => ({ queryKey: listQueryOptions.queryKey }),
+            queryKey: () => listQueryOptions.queryKey,
             queryOptions: () => listQueryOptions,
           },
           remove: {
@@ -256,15 +267,28 @@ const membersData = {
 };
 
 function mutationResult(name: MutationName) {
+  const pendingState = pendingMutationState[name];
   switch (name) {
     case "invite":
       return { isPending: false, mutate: inviteMutateMock };
     case "remove":
-      return { isPending: false, mutate: removeMutateMock };
+      return {
+        isPending: pendingState?.isPending ?? false,
+        mutate: removeMutateMock,
+        variables: pendingState?.variables,
+      };
     case "revokeInvitation":
-      return { isPending: false, mutate: revokeInvitationMutateMock };
+      return {
+        isPending: pendingState?.isPending ?? false,
+        mutate: revokeInvitationMutateMock,
+        variables: pendingState?.variables,
+      };
     case "updateRole":
-      return { isPending: false, mutate: updateRoleMutateMock };
+      return {
+        isPending: pendingState?.isPending ?? false,
+        mutate: updateRoleMutateMock,
+        variables: pendingState?.variables,
+      };
     default:
       throw new Error(`Unhandled mutation: ${name}`);
   }
@@ -286,6 +310,7 @@ beforeEach(() => {
   useAuthMock.mockReset();
   useMutationMock.mockReset();
   useSuspenseQueryMock.mockReset();
+  pendingMutationState = {};
 
   useAuthMock.mockReturnValue({
     has: ({ role }: { role?: string }) => role === "org:admin",
@@ -337,6 +362,24 @@ describe("members settings client components", () => {
     expect(screen.queryByLabelText("Role")).toBeNull();
     expect(screen.queryByRole("button", { name: /remove/i })).toBeNull();
     expect(screen.queryByRole("button", { name: /revoke/i })).toBeNull();
+  });
+
+  it("keeps non-target member rows interactive while another row is pending", () => {
+    pendingMutationState = {
+      remove: {
+        isPending: true,
+        variables: { userId: "user_grace" },
+      },
+    };
+
+    render(<OrgMemberList />);
+
+    expect(
+      screen.getByRole("button", { name: /member actions/i })
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: /invitation actions/i })
+    ).not.toBeDisabled();
   });
 
   it("configures invite with optimistic insert, replacement, rollback, and invalidation", async () => {

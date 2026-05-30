@@ -6,8 +6,7 @@ import { OrgMembersClient } from "./_components/org-members-client";
 export const dynamic = "force-dynamic";
 
 export default function MembersPage() {
-  const listQueryOptions = trpc.org.settings.orgMembers.list.queryOptions();
-  prefetch(listQueryOptions);
+  prefetch(trpc.org.settings.orgMembers.list.queryOptions());
 
   return (
     <HydrateClient>

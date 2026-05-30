@@ -1,6 +1,5 @@
 "use client";
 
-import type { AppRouterOutputs } from "@api/app";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -17,14 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  type QueryKey,
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
@@ -35,29 +28,15 @@ import {
   UserRoundX,
   Users,
 } from "lucide-react";
-import { memo, useCallback, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
   isOptimisticInvitation,
   type OrgInvitation,
   type OrgMember,
-  type OrgMembersData,
   type OrgRole,
-  removeInvitation,
-  removeMember,
-  restoreInvitation,
-  restoreMember,
-  updateMemberRole,
 } from "./org-member-cache";
-
-type OrgMembersOutput =
-  AppRouterOutputs["org"]["settings"]["orgMembers"]["list"];
-interface OrgMemberActions {
-  actionsDisabled: boolean;
-  removeOrgMember: (userId: string) => void;
-  revokeInvitation: (invitationId: string) => void;
-  updateRole: (userId: string, role: OrgRole) => void;
-}
+import { useOrgMemberListActions } from "./org-member-list-actions";
 
 function initials(name: string) {
   const letters = name
@@ -73,177 +52,23 @@ function roleLabel(role: string) {
   return role === "org:admin" ? "Admin" : "Member";
 }
 
-function useOrgMemberListActions(listQueryKey: QueryKey): OrgMemberActions {
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const invalidateList = useCallback(
-    () => queryClient.invalidateQueries({ queryKey: listQueryKey }),
-    [queryClient, listQueryKey]
-  );
-
-  const updateRoleMutation = useMutation(
-    trpc.org.settings.orgMembers.updateRole.mutationOptions({
-      meta: { errorTitle: "Failed to update role" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({
-          queryKey: listQueryKey,
-        });
-
-        const previous =
-          queryClient.getQueryData<OrgMembersOutput>(listQueryKey);
-        const previousRole = previous?.members.find(
-          (member) => member.userId === input.userId
-        )?.role as OrgRole | undefined;
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, input.role)
-        );
-
-        return { previousRole };
-      },
-      onError: (_err, input, context) => {
-        const previousRole = context?.previousRole;
-        if (!previousRole) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, previousRole)
-        );
-      },
-      onSuccess: () => toast.success("Role updated"),
-      onSettled: () => void invalidateList(),
-    })
-  );
-
-  const removeMutation = useMutation(
-    trpc.org.settings.orgMembers.remove.mutationOptions({
-      meta: { errorTitle: "Failed to remove member" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({
-          queryKey: listQueryKey,
-        });
-
-        const previous =
-          queryClient.getQueryData<OrgMembersOutput>(listQueryKey);
-        const { removedIndex, removedMember } = removeMember(
-          previous,
-          input.userId
-        );
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            removeMember(old, input.userId).data
-        );
-
-        return { removedIndex, removedMember };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.removedMember) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            restoreMember(old, context.removedMember, context.removedIndex)
-        );
-      },
-      onSuccess: () => toast.success("Member removed"),
-      onSettled: () => void invalidateList(),
-    })
-  );
-
-  const revokeInvitationMutation = useMutation(
-    trpc.org.settings.orgMembers.revokeInvitation.mutationOptions({
-      meta: { errorTitle: "Failed to revoke invitation" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({
-          queryKey: listQueryKey,
-        });
-
-        const previous =
-          queryClient.getQueryData<OrgMembersOutput>(listQueryKey);
-        const removedIndex =
-          previous?.invitations.findIndex(
-            (invitation) => invitation.id === input.invitationId
-          ) ?? -1;
-        const removedInvitation =
-          removedIndex >= 0 ? previous?.invitations[removedIndex] : undefined;
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            removeInvitation(old, input.invitationId)
-        );
-
-        return { removedIndex, removedInvitation };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.removedInvitation) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryKey,
-          (old: OrgMembersData | undefined) =>
-            restoreInvitation(
-              old,
-              context.removedInvitation,
-              context.removedIndex
-            )
-        );
-      },
-      onSuccess: () => toast.success("Invitation revoked"),
-      onSettled: () => void invalidateList(),
-    })
-  );
-
-  const updateRole = useCallback(
-    (userId: string, role: OrgRole) =>
-      updateRoleMutation.mutate({ role, userId }),
-    [updateRoleMutation.mutate]
-  );
-  const removeOrgMember = useCallback(
-    (userId: string) => removeMutation.mutate({ userId }),
-    [removeMutation.mutate]
-  );
-  const revokeInvitation = useCallback(
-    (invitationId: string) => revokeInvitationMutation.mutate({ invitationId }),
-    [revokeInvitationMutation.mutate]
-  );
-
-  return {
-    actionsDisabled:
-      updateRoleMutation.isPending ||
-      removeMutation.isPending ||
-      revokeInvitationMutation.isPending,
-    removeOrgMember,
-    revokeInvitation,
-    updateRole,
-  };
-}
-
 export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
   const { has, isLoaded } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
-  const listQueryOptions = useMemo(
-    () => trpc.org.settings.orgMembers.list.queryOptions(),
-    [trpc]
-  );
 
   const { data } = useSuspenseQuery({
-    ...listQueryOptions,
+    ...trpc.org.settings.orgMembers.list.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
-  const { actionsDisabled, removeOrgMember, revokeInvitation, updateRole } =
-    useOrgMemberListActions(listQueryOptions.queryKey);
+  const {
+    pendingInvitationId,
+    pendingRemoveUserId,
+    pendingRoleUserId,
+    removeOrgMember,
+    revokeInvitation,
+    updateRole,
+  } = useOrgMemberListActions();
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -309,8 +134,11 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
     <div className="overflow-hidden rounded-lg border border-border/60">
       {visibleMembers.map((member) => (
         <MemberRow
-          actionsDisabled={actionsDisabled}
           canManageMembers={canManageMembers}
+          isPending={
+            pendingRoleUserId === member.userId ||
+            pendingRemoveUserId === member.userId
+          }
           key={member.id}
           member={member}
           onRemove={removeOrgMember}
@@ -319,9 +147,9 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
       ))}
       {visibleInvitations.map((invitation) => (
         <InvitationRow
-          actionsDisabled={actionsDisabled}
           canManageMembers={canManageMembers}
           invitation={invitation}
+          isPending={pendingInvitationId === invitation.id}
           key={invitation.id}
           onRevoke={revokeInvitation}
         />
@@ -331,14 +159,14 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
 }
 
 const MemberRow = memo(function MemberRow({
-  actionsDisabled,
   canManageMembers,
+  isPending,
   member,
   onRemove,
   onUpdateRole,
 }: {
-  actionsDisabled: boolean;
   canManageMembers: boolean;
+  isPending: boolean;
   member: OrgMember;
   onRemove: (userId: string) => void;
   onUpdateRole: (userId: string, role: OrgRole) => void;
@@ -367,7 +195,7 @@ const MemberRow = memo(function MemberRow({
       <div className="flex shrink-0 items-center gap-2">
         {canManage ? (
           <Select
-            disabled={actionsDisabled}
+            disabled={isPending}
             onValueChange={(role) =>
               onUpdateRole(member.userId, role as OrgRole)
             }
@@ -392,7 +220,7 @@ const MemberRow = memo(function MemberRow({
             <DropdownMenuTrigger asChild>
               <Button
                 className="text-muted-foreground hover:text-foreground"
-                disabled={actionsDisabled}
+                disabled={isPending}
                 size="icon-sm"
                 variant="ghost"
               >
@@ -420,14 +248,14 @@ const MemberRow = memo(function MemberRow({
 });
 
 const InvitationRow = memo(function InvitationRow({
-  actionsDisabled,
   canManageMembers,
   invitation,
+  isPending,
   onRevoke,
 }: {
-  actionsDisabled: boolean;
   canManageMembers: boolean;
   invitation: OrgInvitation;
+  isPending: boolean;
   onRevoke: (invitationId: string) => void;
 }) {
   const isOptimistic = isOptimisticInvitation(invitation);
@@ -466,7 +294,7 @@ const InvitationRow = memo(function InvitationRow({
             <DropdownMenuTrigger asChild>
               <Button
                 className="text-muted-foreground hover:text-foreground"
-                disabled={actionsDisabled}
+                disabled={isPending}
                 size="icon-sm"
                 variant="ghost"
               >
