@@ -45,7 +45,12 @@ const securityHeaders = securityMiddleware({
 // but auth is not enforced, so no JWKS fetch for unauthenticated visitors.
 // tRPC stays here because native OAuth Bearer resolution calls auth({ acceptsToken }),
 // which requires clerkMiddleware context; auth enforcement remains in procedures.
-const isPublicRoute = createRouteMatcher([
+const GITHUB_BINDING_ROUTE_PATTERNS = [
+  "/api/github/setup",
+  "/api/github/oauth/callback",
+] as const;
+
+const PUBLIC_ROUTE_PATTERNS = [
   "/early-access(.*)",
   "/api/oauth/(.*)",
   "/api/trpc/(.*)",
@@ -54,7 +59,10 @@ const isPublicRoute = createRouteMatcher([
   "/monitoring",
   "/ingest(.*)",
   "/manifest.json",
-]);
+  ...GITHUB_BINDING_ROUTE_PATTERNS,
+] as const;
+
+const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
 
 // API routes that handle their own auth at the route handler level.
 // Each route is responsible for its own auth + CORS (the Clerk middleware
@@ -90,9 +98,29 @@ const isAppOwnedSignedInRoute = createRouteMatcher([
   "/oauth(.*)",
 ]);
 
-const isOrgProductRoute = createRouteMatcher(["/:slug", "/:slug/(.*)"]);
-const isOrgSettingsRoute = createRouteMatcher(["/:slug/settings(.*)"]);
-const isOrgBindTaskRoute = createRouteMatcher(["/:slug/tasks/bind(.*)"]);
+const ORG_ROUTE_POLICIES = [
+  { clerkSync: true, pattern: "/:slug", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/signals(.*)", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/people(.*)", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/automations(.*)", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/settings(.*)", setupExempt: true },
+  { clerkSync: true, pattern: "/:slug/tasks/bind(.*)", setupExempt: true },
+] as const;
+
+const ORG_PRODUCT_ROUTE_PATTERNS = ["/:slug", "/:slug/(.*)"] as const;
+const ORG_SETUP_EXEMPT_ROUTE_PATTERNS = ORG_ROUTE_POLICIES.filter(
+  (policy) => policy.setupExempt
+).map((policy) => policy.pattern);
+
+const isOrgProductRoute = createRouteMatcher([...ORG_PRODUCT_ROUTE_PATTERNS]);
+const isOrgSetupExemptRoute = createRouteMatcher([
+  ...ORG_SETUP_EXEMPT_ROUTE_PATTERNS,
+]);
+const organizationSyncOptions = {
+  organizationPatterns: ORG_ROUTE_POLICIES.filter(
+    (policy) => policy.clerkSync
+  ).map((policy) => policy.pattern),
+};
 
 function getPostAuthPath({
   orgSlug,
@@ -274,8 +302,7 @@ const clerkProxyMiddleware = clerkMiddleware(
         orgId &&
         orgSlug &&
         isActiveOrgProductRoute &&
-        !isOrgSettingsRoute(req) &&
-        !isOrgBindTaskRoute(req) &&
+        !isOrgSetupExemptRoute(req) &&
         bindingStatus !== "bound"
       ) {
         return NextResponse.redirect(
@@ -292,9 +319,7 @@ const clerkProxyMiddleware = clerkMiddleware(
     signUpUrl: "/sign-up",
     afterSignInUrl: "/",
     afterSignUpUrl: "/",
-    organizationSyncOptions: {
-      organizationPatterns: ["/:slug", "/:slug/(.*)"],
-    },
+    organizationSyncOptions,
   }
 );
 

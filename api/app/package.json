@@ -13,6 +13,10 @@
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
+    "./services/github": {
+      "types": "./src/services/github/index.ts",
+      "default": "./src/services/github/index.ts"
+    },
     "./inngest": {
       "types": "./src/inngest/index.ts",
       "default": "./src/inngest/index.ts"
@@ -40,6 +44,8 @@
     "@repo/api-contract": "workspace:*",
     "@repo/app-clerk-claim": "workspace:*",
     "@repo/app-validation": "workspace:^",
+    "@repo/github-app-contract": "workspace:*",
+    "@repo/github-app-node": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@t3-oss/env-nextjs": "^0.12.0",
     "@trpc/server": "catalog:",

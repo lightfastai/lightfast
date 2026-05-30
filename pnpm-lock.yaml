@@ -18,6 +18,12 @@ catalogs:
     '@clerk/shared':
       specifier: 4.12.2
       version: 4.12.2
+    '@emulators/core':
+      specifier: 0.6.0
+      version: 0.6.0
+    '@emulators/github':
+      specifier: 0.6.0
+      version: 0.6.0
     '@hookform/resolvers':
       specifier: ^5.2.2
       version: 5.2.2
@@ -105,6 +111,9 @@ catalogs:
     drizzle-zod:
       specifier: ^0.8.3
       version: 0.8.3
+    emulate:
+      specifier: 0.6.0
+      version: 0.6.0
     geist:
       specifier: ^1.7.0
       version: 1.7.0
@@ -147,6 +156,9 @@ catalogs:
     tsup:
       specifier: ^8.5.1
       version: 8.5.1
+    tsx:
+      specifier: ^4.21.0
+      version: 4.21.0
     typescript:
       specifier: ^5.9.2
       version: 5.9.3
@@ -195,7 +207,9 @@ overrides:
 packageExtensionsChecksum: sha256-2FPZBw94MFNppirrJdB4qikbdLGsOF45SnJk4YB2rYM=
 
 patchedDependencies:
+  '@emulators/core@0.6.0': 58dc489c3bc2516b1c59ec2aa00ff2a11c32f0a14aabd89ad79e9af6197c9a40
   '@vercel/microfrontends@2.3.2': dfd1e0948197c7c01d7901af510e6d7d508a91d95d28b530932e16f8cd03f658
+  emulate@0.6.0: 9b1bca014d273d163a85be7b5a851ad65506563dc95730f4d030e59d1335cd1c
 
 importers:
 
@@ -283,6 +297,12 @@ importers:
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
+      '@repo/github-app-contract':
+        specifier: workspace:*
+        version: link:../../packages/github-app-contract
+      '@repo/github-app-node':
+        specifier: workspace:*
+        version: link:../../packages/github-app-node
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
@@ -423,6 +443,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
+      '@repo/github-app-contract':
+        specifier: workspace:*
+        version: link:../../packages/github-app-contract
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
@@ -1203,6 +1226,49 @@ importers:
         specifier: 'catalog:'
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  emulators/github:
+    dependencies:
+      '@repo/github-app-contract':
+        specifier: workspace:*
+        version: link:../../packages/github-app-contract
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@emulators/core':
+        specifier: 'catalog:'
+        version: 0.6.0(patch_hash=58dc489c3bc2516b1c59ec2aa00ff2a11c32f0a14aabd89ad79e9af6197c9a40)
+      '@emulators/github':
+        specifier: 'catalog:'
+        version: 0.6.0
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.9.1
+      emulate:
+        specifier: 'catalog:'
+        version: 0.6.0(patch_hash=9b1bca014d273d163a85be7b5a851ad65506563dc95730f4d030e59d1335cd1c)
+      jose:
+        specifier: 'catalog:'
+        version: 6.2.2
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+
   internal/typescript: {}
 
   internal/vitest-config:
@@ -1366,6 +1432,56 @@ importers:
       '@repo/app-reserved-names':
         specifier: workspace:^
         version: link:../app-reserved-names
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.9.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/github-app-contract:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.9.1
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+
+  packages/github-app-node:
+    dependencies:
+      '@repo/github-app-contract':
+        specifier: workspace:*
+        version: link:../github-app-contract
+      jose:
+        specifier: 'catalog:'
+        version: 6.2.2
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -2759,6 +2875,12 @@ packages:
 
   '@emnapi/wasi-threads@1.2.1':
     resolution: {integrity: sha512-uTII7OYF+/Mes/MrcIOYp5yOtSMLBWSIoLPpcgwipoiKbli6k322tcoFsxoIIxPDqW01SQGAgko4EzZi2BNv2w==}
+
+  '@emulators/core@0.6.0':
+    resolution: {integrity: sha512-HFGyF4yA3NoUCYq/5lg7YNXx5Cfaz8oMUz5gfJ/8X+tFdZbi2oKAmQoAzfXV9kiAUWvXlkiahZ1EZDpxeC36gA==}
+
+  '@emulators/github@0.6.0':
+    resolution: {integrity: sha512-12mpVv8gUrYcAAfohFDLlPWA4y2OoZVWgPbLCabULL9P6D6dzRi4Ik/JyZ1Kc3ryLwUSWmCm6VqVjY1YvVnOvQ==}
 
   '@esbuild-kit/core-utils@3.3.2':
     resolution: {integrity: sha512-sPRAnw9CdSsRmEtnsl2WXWdyquogVpB3yZ3dgwJfe8zrOzTsV7cJvmwrKVa+0ma5BoiGJ+BoqkMvawbayKUsqQ==}
@@ -8867,6 +8989,10 @@ packages:
     resolution: {integrity: sha512-/kyM18EfinwXZbno9FyUGeFh87KC8HRQBQGildHZbEuRyWFOmv1U10o9BBp8XVZDVNNuQKyIGIu5ZYAAXJ0V2Q==}
     engines: {node: '>= 4'}
 
+  emulate@0.6.0:
+    resolution: {integrity: sha512-UcuKgskLUCD4TnqMw/EHJRUw8y3E11ks4lzx5MkAq0jJbfl3031aFgJeR3AArl4xB0aABC9Q9RZw00srZbcHgw==}
+    hasBin: true
+
   encode-utf8@1.0.3:
     resolution: {integrity: sha512-ucAnuBEhUK4boH2HjVYG5Q2mQyPorvv0u/ocS+zhdw0S8AlHYY+GOFhP1Gio5z4icpP2ivFSvhtFjQi8+T9ppw==}
 
@@ -14028,6 +14154,14 @@ snapshots:
     dependencies:
       tslib: 2.8.1
     optional: true
+
+  '@emulators/core@0.6.0(patch_hash=58dc489c3bc2516b1c59ec2aa00ff2a11c32f0a14aabd89ad79e9af6197c9a40)':
+    dependencies:
+      jose: 6.2.2
+
+  '@emulators/github@0.6.0':
+    dependencies:
+      '@emulators/core': 0.6.0(patch_hash=58dc489c3bc2516b1c59ec2aa00ff2a11c32f0a14aabd89ad79e9af6197c9a40)
 
   '@esbuild-kit/core-utils@3.3.2':
     dependencies:
@@ -20176,6 +20310,12 @@ snapshots:
   emoji-regex@9.2.2: {}
 
   emojis-list@3.0.0: {}
+
+  emulate@0.6.0(patch_hash=9b1bca014d273d163a85be7b5a851ad65506563dc95730f4d030e59d1335cd1c):
+    dependencies:
+      commander: 14.0.3
+      picocolors: 1.1.1
+      yaml: 2.8.3
 
   encode-utf8@1.0.3:
     optional: true

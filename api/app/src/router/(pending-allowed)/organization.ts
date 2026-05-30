@@ -7,6 +7,7 @@ import { log } from "@vendor/observability/log/next";
 import { z } from "zod";
 
 import { isClerkConflictError } from "../../auth/clerk-errors";
+import { listUserOrganizationMemberships } from "../../auth/clerk-org-membership";
 import {
   getOrgAccessBySlug,
   isOrgAccessError,
@@ -30,13 +31,10 @@ export const organizationRouter = {
   listUserOrganizations: viewerProcedure.query(async ({ ctx }) => {
     // viewerProcedure guarantees pending or active identity
     const userId = ctx.auth.identity.userId;
-    const clerk = await clerkClient();
-    const memberships = await clerk.users.getOrganizationMembershipList({
-      userId,
-    });
+    const memberships = await listUserOrganizationMemberships({ userId });
 
     // Return Clerk organization data directly
-    return memberships.data.map((membership) => {
+    return memberships.map((membership) => {
       return {
         id: membership.organization.id, // Clerk org ID
         slug: membership.organization.slug,

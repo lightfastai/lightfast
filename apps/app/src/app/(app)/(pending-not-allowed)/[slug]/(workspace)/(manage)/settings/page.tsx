@@ -1,3 +1,5 @@
+import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+
 import { TeamGeneralSettingsClient } from "./_components/team-general-settings-client";
 
 export default async function SettingsPage({
@@ -5,14 +7,16 @@ export default async function SettingsPage({
 }: {
   params: Promise<{ slug: string }>;
 }) {
-  // Settings layout already verified admin role; no additional checks needed here
+  // Settings layout already verified org access; no additional checks needed here
   const { slug } = await params;
 
-  // Note: We rely on listUserOrganizations cache from (app)/layout.tsx
-  // No separate prefetch needed - avoids Clerk propagation timing issues
-  // The client component will find the org from the cached list by slug
+  prefetch(trpc.org.settings.sourceControl.get.queryOptions());
 
-  return <TeamGeneralSettingsClient slug={slug} />;
+  return (
+    <HydrateClient>
+      <TeamGeneralSettingsClient slug={slug} />
+    </HydrateClient>
+  );
 }
 
 // Unused for now but may be needed if we add Suspense boundaries

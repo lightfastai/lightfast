@@ -1,0 +1,55 @@
+diff --git a/dist/api.js b/dist/api.js
+index 6e4cf6e35e478a250ac1286e2fc0e9a0535cb641..e805f95b91b55142bb0436c139b734d01e204e26 100644
+--- a/dist/api.js
++++ b/dist/api.js
+@@ -1,11 +1,10 @@
+ import {
+-  importPKCS8,
+   jwtVerify
+ } from "./chunk-D6EKRYGP.js";
+ 
+ // ../@emulators/core/dist/index.js
+ import { createServer as createNodeServer } from "http";
+-import { createHmac } from "crypto";
++import { createHmac, createPublicKey } from "crypto";
+ import { readFileSync } from "fs";
+ import { fileURLToPath } from "url";
+ import { dirname, join } from "path";
+@@ -780,7 +779,7 @@ function authMiddleware(tokens, appKeyResolver, fallbackUser) {
+           if (typeof appId === "number" && !isNaN(appId)) {
+             const appInfo = appKeyResolver(appId);
+             if (appInfo) {
+-              const key = await importPKCS8(appInfo.privateKey, "RS256");
++              const key = createPublicKey(appInfo.privateKey);
+               await jwtVerify(token, key, { algorithms: ["RS256"] });
+               c.set("authApp", {
+                 appId,
+diff --git a/dist/index.js b/dist/index.js
+index 7cc3732d9b8ceb1fb8e02f48b9b9c8b686784517..d42164afbde7889e957d835e755529bb8821ce47 100755
+--- a/dist/index.js
++++ b/dist/index.js
+@@ -1,6 +1,5 @@
+ #!/usr/bin/env node
+ import {
+-  importPKCS8,
+   jwtVerify
+ } from "./chunk-D6EKRYGP.js";
+ 
+@@ -9,7 +8,7 @@ import { Command } from "commander";
+ 
+ // ../@emulators/core/dist/index.js
+ import { createServer as createNodeServer } from "http";
+-import { createHmac } from "crypto";
++import { createHmac, createPublicKey } from "crypto";
+ import { readFileSync } from "fs";
+ import { fileURLToPath } from "url";
+ import { dirname, join } from "path";
+@@ -784,7 +783,7 @@ function authMiddleware(tokens, appKeyResolver, fallbackUser) {
+           if (typeof appId === "number" && !isNaN(appId)) {
+             const appInfo = appKeyResolver(appId);
+             if (appInfo) {
+-              const key = await importPKCS8(appInfo.privateKey, "RS256");
++              const key = createPublicKey(appInfo.privateKey);
+               await jwtVerify(token, key, { algorithms: ["RS256"] });
+               c.set("authApp", {
+                 appId,

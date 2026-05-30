@@ -303,7 +303,7 @@ mark an org bound without a verified GitHub installation.
 | `apps/app/src/app/(app)/(github)/api/github` or equivalent colocated route group | Thin setup/OAuth/webhook route handlers. | Business logic beyond parsing, delegation, and redirect/response shaping. |
 | `apps/app/src/app/api/dev/github/install` or equivalent route | Local-only redirect shim for emulator installs. | Production GitHub behavior, DB writes, emulator state mutation. |
 | `apps/app/src/proxy.ts` | Admit GitHub setup/OAuth routes and bypass webhook route from Clerk auth enforcement. | Source-control binding decisions. |
-| `internal/github-emulator` | Dev-only emulator seed, startup scripts, and fixture constants. | Production runtime config or production dependencies. |
+| `emulators/github` | Dev-only emulator seed, startup scripts, and fixture constants. | Production runtime config or production dependencies. |
 
 ## Bind Attempt State
 
@@ -434,7 +434,7 @@ final validation of the install UI and lifecycle webhooks.
 Use `vercel-labs/emulate` through a workspace dev package:
 
 ```text
-internal/github-emulator/
+emulators/github/
 ```
 
 The package owns:
@@ -458,9 +458,9 @@ dependencies for the narrow JWT verification fix. It should not be a dependency
 of `apps/app`, `api/app`, `packages/github-app-contract`, or
 `packages/github-app-node`.
 
-The private package name should follow existing internal package convention,
+The private package name should follow existing workspace package convention,
 for example `@repo/github-emulator`, even though the directory lives under
-`internal/github-emulator`.
+`emulators/github`.
 
 Local install behavior:
 
@@ -756,7 +756,7 @@ Create:
 ```text
 packages/github-app-contract/
 packages/github-app-node/
-internal/github-emulator/
+emulators/github/
 ```
 
 `@repo/github-app-contract` exports:
@@ -787,7 +787,7 @@ internal/github-emulator/
 Do not create a package for Redis attempts or DB binding orchestration. Those
 are Lightfast app domain workflows and should stay in `api/app`.
 
-`internal/github-emulator` exports no production API contract. It provides
+`emulators/github` exports no production API contract. It provides
 scripts and fixtures for local development only. It may include a small README
 with the local runbook and the upstream emulator caveats discovered during
 evaluation.
@@ -798,7 +798,7 @@ Dependency rules:
 - `@repo/github-app-node`: `@repo/github-app-contract`, `zod`, and a crypto/JWT
   dependency only if native Node APIs are not enough. If a dependency is added,
   add it through the workspace catalog.
-- `internal/github-emulator`: dev dependencies on `emulate`,
+- `emulators/github`: dev dependencies on `emulate`,
   `@emulators/github`, and `@emulators/core`; not imported by production
   packages.
 - `api/app`: depends on both packages and owns env, Clerk, Redis, and DB.
@@ -922,7 +922,7 @@ Integration/manual checks:
 
 1. Add `@repo/github-app-contract`.
 2. Add `@repo/github-app-node`.
-3. Add `internal/github-emulator` with deterministic seed fixtures.
+3. Add `emulators/github` with deterministic seed fixtures.
 4. Add the narrow `@emulators/core` patch for GitHub App JWT verification and
    track the upstream PR/issue.
 5. Add env schema and GitHub App config helper in `api/app`, including

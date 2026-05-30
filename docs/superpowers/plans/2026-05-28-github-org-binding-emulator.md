@@ -4,7 +4,7 @@
 
 **Goal:** Build an emulator-first vertical slice for GitHub org binding so local development can exercise `GITHUB_INSTALL_URL_OVERRIDE -> /api/dev/github/install -> /api/github/setup -> emulator OAuth -> /api/github/oauth/callback -> DB binding -> Clerk claim sync`.
 
-**Architecture:** This slice keeps production binding disabled unless `GITHUB_INSTALL_URL_OVERRIDE` is present in a non-production runtime. A dev-only `internal/github-emulator` package owns deterministic GitHub fixture data and starts `@emulators/github` programmatically, while `api/app` owns attempts, emulator verification, DB finalization, and Clerk mirroring. `apps/app` remains thin: setup/OAuth/dev-install route handlers delegate to `api/app`, and the bind UI only starts the tRPC flow and navigates externally.
+**Architecture:** This slice keeps production binding disabled unless `GITHUB_INSTALL_URL_OVERRIDE` is present in a non-production runtime. A dev-only `emulators/github` package owns deterministic GitHub fixture data and starts `@emulators/github` programmatically, while `api/app` owns attempts, emulator verification, DB finalization, and Clerk mirroring. `apps/app` remains thin: setup/OAuth/dev-install route handlers delegate to `api/app`, and the bind UI only starts the tRPC flow and navigates externally.
 
 **Tech Stack:** pnpm workspaces, Turborepo, Next.js App Router route handlers, tRPC v11, Clerk, Upstash Redis, Drizzle MySQL helpers, `vercel-labs/emulate@0.6.0`, `@emulators/github@0.6.0`, `@emulators/core@0.6.0`, Zod, Jose, Vitest, Testing Library.
 
@@ -14,7 +14,7 @@
 
 In scope:
 
-- Add dev-only emulator package `internal/github-emulator` with deterministic GitHub user/org/repo/OAuth app/GitHub App/installation fixtures.
+- Add dev-only emulator package `emulators/github` with deterministic GitHub user/org/repo/OAuth app/GitHub App/installation fixtures.
 - Patch `@emulators/core@0.6.0` and `emulate@0.6.0` so valid GitHub App JWTs verify with a derived public key.
 - Add minimal `@repo/github-app-contract` and `@repo/github-app-node` packages needed by the emulator slice.
 - Add GitHub bind attempts in `api/app` using Redis state records with 15-minute TTL.
@@ -63,14 +63,14 @@ Create:
 - `packages/github-app-node/src/__tests__/oauth.test.ts`
 - `packages/github-app-node/src/__tests__/app-jwt.test.ts`
 - `packages/github-app-node/src/__tests__/emulator-verifier.test.ts`
-- `internal/github-emulator/package.json`
-- `internal/github-emulator/tsconfig.json`
-- `internal/github-emulator/vitest.config.ts`
-- `internal/github-emulator/README.md`
-- `internal/github-emulator/src/fixtures.ts`
-- `internal/github-emulator/src/server.ts`
-- `internal/github-emulator/src/start.ts`
-- `internal/github-emulator/src/__tests__/server.test.ts`
+- `emulators/github/package.json`
+- `emulators/github/tsconfig.json`
+- `emulators/github/vitest.config.ts`
+- `emulators/github/README.md`
+- `emulators/github/src/fixtures.ts`
+- `emulators/github/src/server.ts`
+- `emulators/github/src/start.ts`
+- `emulators/github/src/__tests__/server.test.ts`
 - `api/app/src/github/config.ts`
 - `api/app/src/github/bind-attempts.ts`
 - `api/app/src/github/admin-access.ts`
@@ -123,9 +123,9 @@ Do not modify:
 ### Task 1: Add Emulator Package Skeleton And Dependency Patch
 
 **Files:**
-- Create: `internal/github-emulator/package.json`
-- Create: `internal/github-emulator/tsconfig.json`
-- Create: `internal/github-emulator/vitest.config.ts`
+- Create: `emulators/github/package.json`
+- Create: `emulators/github/tsconfig.json`
+- Create: `emulators/github/vitest.config.ts`
 - Modify: `pnpm-workspace.yaml`
 - Generate: `patches/@emulators__core@0.6.0.patch`
 - Generate: `patches/emulate@0.6.0.patch`
@@ -133,7 +133,7 @@ Do not modify:
 
 - [ ] **Step 1: Create the emulator package manifest**
 
-Create `internal/github-emulator/package.json`:
+Create `emulators/github/package.json`:
 
 ```json
 {
@@ -166,7 +166,7 @@ Create `internal/github-emulator/package.json`:
 
 - [ ] **Step 2: Create TypeScript config**
 
-Create `internal/github-emulator/tsconfig.json`:
+Create `emulators/github/tsconfig.json`:
 
 ```json
 {
@@ -182,7 +182,7 @@ Create `internal/github-emulator/tsconfig.json`:
 
 - [ ] **Step 3: Create Vitest config**
 
-Create `internal/github-emulator/vitest.config.ts`:
+Create `emulators/github/vitest.config.ts`:
 
 ```ts
 import sharedConfig from "@repo/vitest-config";
@@ -321,7 +321,7 @@ Expected: typecheck passes, and Vitest exits with "No test files found" only if 
 - [ ] **Step 8: Commit**
 
 ```bash
-git add internal/github-emulator/package.json internal/github-emulator/tsconfig.json internal/github-emulator/vitest.config.ts pnpm-workspace.yaml pnpm-lock.yaml patches
+git add emulators/github/package.json emulators/github/tsconfig.json emulators/github/vitest.config.ts pnpm-workspace.yaml pnpm-lock.yaml patches
 git commit -m "chore: add github emulator workspace package"
 ```
 
@@ -330,15 +330,15 @@ git commit -m "chore: add github emulator workspace package"
 ### Task 2: Build The Dev GitHub Emulator Harness
 
 **Files:**
-- Create: `internal/github-emulator/src/fixtures.ts`
-- Create: `internal/github-emulator/src/server.ts`
-- Create: `internal/github-emulator/src/start.ts`
-- Create: `internal/github-emulator/src/__tests__/server.test.ts`
-- Create: `internal/github-emulator/README.md`
+- Create: `emulators/github/src/fixtures.ts`
+- Create: `emulators/github/src/server.ts`
+- Create: `emulators/github/src/start.ts`
+- Create: `emulators/github/src/__tests__/server.test.ts`
+- Create: `emulators/github/README.md`
 
 - [ ] **Step 1: Write the failing emulator server test**
 
-Create `internal/github-emulator/src/__tests__/server.test.ts`:
+Create `emulators/github/src/__tests__/server.test.ts`:
 
 ```ts
 import { SignJWT, importPKCS8 } from "jose";
@@ -461,7 +461,7 @@ Expected: FAIL because `../fixtures` and `../server` do not exist.
 
 - [ ] **Step 3: Add deterministic fixtures**
 
-Create `internal/github-emulator/src/fixtures.ts`:
+Create `emulators/github/src/fixtures.ts`:
 
 ```ts
 import type { GitHubSeedConfig } from "@emulators/github";
@@ -606,7 +606,7 @@ export function getGitHubEmulatorEnv(appOrigin: string) {
 
 - [ ] **Step 4: Add the programmatic emulator server**
 
-Create `internal/github-emulator/src/server.ts`:
+Create `emulators/github/src/server.ts`:
 
 ```ts
 import type { Server } from "node:http";
@@ -743,7 +743,7 @@ export async function startGitHubEmulator(
 
 - [ ] **Step 5: Add a start script that prints env values**
 
-Create `internal/github-emulator/src/start.ts`:
+Create `emulators/github/src/start.ts`:
 
 ```ts
 import { getGitHubEmulatorEnv } from "./fixtures";
@@ -773,7 +773,7 @@ process.once("SIGTERM", () => void shutdown());
 
 - [ ] **Step 6: Add the local runbook**
 
-Create `internal/github-emulator/README.md`:
+Create `emulators/github/README.md`:
 
 ```md
 # GitHub Emulator
@@ -815,7 +815,7 @@ Expected: PASS. If the JWT test fails with "A JSON web token could not be decode
 - [ ] **Step 8: Commit**
 
 ```bash
-git add internal/github-emulator
+git add emulators/github
 git commit -m "test: add github emulator harness"
 ```
 
@@ -3421,7 +3421,7 @@ Spec coverage:
 - Covers the local emulator harness, deterministic seed, fixed emulator origin, dev install shim, `GITHUB_INSTALL_URL_OVERRIDE`, setup/OAuth callbacks, Redis attempts, DB binding finalization, Clerk claim sync, and completion UI.
 - Explicitly leaves real GitHub install verification, `/user/installations`, webhooks, and production enablement out of this emulator-first slice.
 - Keeps `apps/app` route handlers thin and keeps GitHub API mechanics in `@repo/github-app-node`.
-- Keeps `internal/github-emulator` dev-only and not imported by production packages.
+- Keeps `emulators/github` dev-only and not imported by production packages.
 
 Placeholder scan:
 

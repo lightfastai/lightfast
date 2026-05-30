@@ -10,6 +10,13 @@ const fetchQueryMock = vi.fn();
 const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
   queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
+const bindCardMock = vi.fn(
+  ({ githubError, orgSlug }: { githubError?: string; orgSlug: string }) => (
+    <div data-github-error={githubError} data-testid="bind-card">
+      {orgSlug}
+    </div>
+  )
+);
 vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
   trpc: {
@@ -26,9 +33,7 @@ vi.mock("~/trpc/server", () => ({
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/tasks/bind/_components/bind-github-card",
   () => ({
-    BindGithubCard: ({ orgSlug }: { orgSlug: string }) => (
-      <div data-testid="bind-card">{orgSlug}</div>
-    ),
+    BindGithubCard: bindCardMock,
   })
 );
 
@@ -36,14 +41,21 @@ const { default: BindTaskPage } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/tasks/bind/page"
 );
 
-function invoke(slug = "acme") {
-  return BindTaskPage({ params: Promise.resolve({ slug }) });
+function invoke(
+  slug = "acme",
+  searchParams: { github_error?: string | string[] } = {}
+) {
+  return BindTaskPage({
+    params: Promise.resolve({ slug }),
+    searchParams: Promise.resolve(searchParams),
+  });
 }
 
 beforeEach(() => {
   redirectMock.mockClear();
   fetchQueryMock.mockReset();
   getBySlugQueryOptionsMock.mockClear();
+  bindCardMock.mockClear();
 });
 
 describe("tasks/bind/page — setup page", () => {
@@ -57,11 +69,61 @@ describe("tasks/bind/page — setup page", () => {
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
-  it("redirects a bound org back to the workspace root", async () => {
+  it("passes known GitHub callback errors to the bind card", async () => {
+    fetchQueryMock.mockResolvedValue({ bindingStatus: "unbound" });
+
+    const element = await invoke("acme", {
+      github_error: "github_authorization_denied",
+    });
+    render(element);
+
+    expect(bindCardMock).toHaveBeenCalledWith(
+      {
+        githubError: "github_authorization_denied",
+        orgSlug: "acme",
+      },
+      undefined
+    );
+  });
+
+  it("ignores unknown GitHub callback error codes", async () => {
+    fetchQueryMock.mockResolvedValue({ bindingStatus: "unbound" });
+
+    const element = await invoke("acme", { github_error: "bad_error" });
+    render(element);
+
+    expect(screen.getByTestId("bind-card")).not.toHaveAttribute(
+      "data-github-error"
+    );
+  });
+
+  it("redirects a bound org to the GitHub completion page", async () => {
     fetchQueryMock.mockResolvedValue({ bindingStatus: "bound" });
 
-    await expect(invoke("acme")).rejects.toThrow("NEXT_REDIRECT:/acme");
-    expect(redirectMock).toHaveBeenCalledWith("/acme");
+    await expect(invoke("acme")).rejects.toThrow(
+      "NEXT_REDIRECT:/acme/tasks/bind/github/complete"
+    );
+    expect(redirectMock).toHaveBeenCalledWith(
+      "/acme/tasks/bind/github/complete"
+    );
+  });
+
+  it("renders a bound-org callback error instead of redirecting to completion", async () => {
+    fetchQueryMock.mockResolvedValue({ bindingStatus: "bound" });
+
+    const element = await invoke("acme", {
+      github_error: "org_already_bound",
+    });
+    render(element);
+
+    expect(redirectMock).not.toHaveBeenCalled();
+    expect(bindCardMock).toHaveBeenCalledWith(
+      {
+        githubError: "org_already_bound",
+        orgSlug: "acme",
+      },
+      undefined
+    );
   });
 
   it("loads setup status through the tRPC organization slug access query", async () => {

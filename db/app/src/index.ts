@@ -66,10 +66,16 @@ export {
 export { buildOrgNamespace } from "./utils/org";
 // Org source-control binding repository helpers
 export {
+  type FinalizeActiveOrgProviderBindingInput,
+  finalizeActiveOrgProviderBinding,
+  type GetOrgBindingByProviderInstallationInput,
   getActiveOrgBinding,
+  getOrgBindingByProviderInstallation,
   isOrgBound,
   type MarkOrgBindingRevokedInput,
   markOrgBindingRevoked,
+  type OrgSourceControlBindingConflictCode,
+  OrgSourceControlBindingConflictError,
   type UpsertActiveOrgBindingInput,
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
