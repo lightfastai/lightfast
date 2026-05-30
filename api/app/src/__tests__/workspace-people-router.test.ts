@@ -3,10 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const listPeopleMock = vi.fn();
+const getPersonByPublicIdMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   listPeople: listPeopleMock,
+  getPersonByPublicId: getPersonByPublicIdMock,
 }));
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -86,6 +88,8 @@ beforeEach(() => {
     items: [personRow],
     nextCursor: { createdAt: personRow.createdAt, id: personRow.id },
   });
+  getPersonByPublicIdMock.mockReset();
+  getPersonByPublicIdMock.mockResolvedValue(personRow);
 });
 
 describe("workspacePeopleRouter.list", () => {
@@ -105,7 +109,9 @@ describe("workspacePeopleRouter.list", () => {
       clerkOrgId: "org_test",
       cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
       limit: 25,
+      providers: undefined,
       search: "jeevan",
+      types: undefined,
     });
   });
 
@@ -120,7 +126,9 @@ describe("workspacePeopleRouter.list", () => {
       clerkOrgId: "org_test",
       cursor: undefined,
       limit: undefined,
+      providers: undefined,
       search: undefined,
+      types: undefined,
     });
   });
 
@@ -179,7 +187,64 @@ describe("workspacePeopleRouter.list", () => {
       clerkOrgId: "org_other",
       cursor: undefined,
       limit: undefined,
+      providers: undefined,
       search: undefined,
+      types: undefined,
     });
+  });
+});
+
+describe("workspacePeopleRouter.list filters", () => {
+  it("forwards provider and type filters to the db helper", async () => {
+    await caller().people.list({ providers: ["x"], types: ["handle"] });
+
+    expect(listPeopleMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      cursor: undefined,
+      limit: undefined,
+      providers: ["x"],
+      search: undefined,
+      types: ["handle"],
+    });
+  });
+
+  it("rejects unknown provider values", async () => {
+    await expect(
+      caller().people.list({
+        providers: ["telegram" as unknown as "x"],
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(listPeopleMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("workspacePeopleRouter.get", () => {
+  it("returns the org-scoped person", async () => {
+    await expect(
+      caller().people.get({ publicId: personRow.publicId })
+    ).resolves.toEqual(personRow);
+
+    expect(getPersonByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      publicId: personRow.publicId,
+    });
+  });
+
+  it("throws NOT_FOUND when the person is missing", async () => {
+    getPersonByPublicIdMock.mockResolvedValueOnce(undefined);
+
+    await expect(
+      caller().people.get({ publicId: "person_missing" })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("rejects unbound organizations", async () => {
+    await expect(
+      caller({
+        ...activeIdentity,
+        orgGate: { bindingStatus: "unbound" },
+      }).people.get({ publicId: personRow.publicId })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+    expect(getPersonByPublicIdMock).not.toHaveBeenCalled();
   });
 });
