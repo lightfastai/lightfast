@@ -21,6 +21,7 @@ import {
   workspaceListLimitInput,
   workspaceListSearchInput,
 } from "./workspace-list-input";
+import { workspaceSignalViewsRouter } from "./workspace-signal-views";
 
 const listSignalsInput = z.object({
   cursor: workspaceListCursorInput,
@@ -94,4 +95,5 @@ export const workspaceSignalsRouter = {
         throw error;
       }
     }),
+  views: workspaceSignalViewsRouter,
 } satisfies TRPCRouterRecord;
