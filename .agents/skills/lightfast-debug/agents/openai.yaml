@@ -1,4 +1,0 @@
-interface:
-  display_name: "Lightfast Debug"
-  short_description: "General debugging across Lightfast systems"
-  default_prompt: "Use $lightfast-debug to investigate issues across browser, runtime, Inngest, DB, SDK, and observability."
