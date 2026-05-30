@@ -27,6 +27,7 @@ interface GitHubCompatibleFetchInput {
   appOrigin: string;
   fallbackFetch: (request: Request) => Response | Promise<Response>;
   publicOrigin: string;
+  resetStore: () => void;
   store: Store;
   tokenMap: TokenMap;
 }
@@ -222,6 +223,21 @@ async function readBody(request: Request) {
 export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
   return async function gitHubCompatibleFetch(request: Request) {
     const url = new URL(request.url);
+
+    if (request.method === "POST" && url.pathname === "/__lightfast/reset") {
+      const token = getBearerToken(request);
+      if (token !== GITHUB_EMULATOR_FIXTURES.userToken) {
+        return json({ message: "Bad credentials" }, 401);
+      }
+
+      input.resetStore();
+      return json({
+        ok: true,
+        installationId: GITHUB_EMULATOR_FIXTURES.installationId,
+        org: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+      });
+    }
+
     const gh = getGitHubStore(input.store);
 
     const installMatch = /^\/apps\/([^/]+)\/installations\/new$/.exec(

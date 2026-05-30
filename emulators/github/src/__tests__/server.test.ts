@@ -289,6 +289,58 @@ describe("@repo/github-emulator", () => {
     });
   });
 
+  it("resets emulator state for repeatable local E2E runs", async () => {
+    emulator?.reset();
+    const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
+    const createRes = await fetch(`${emulator?.url}/orgs/${owner}/repos`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        auto_init: true,
+        name: ".lightfast",
+        private: true,
+      }),
+    });
+    expect(createRes.status).toBe(201);
+
+    const resetRes = await fetch(`${emulator?.url}/__lightfast/reset`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+    expect(resetRes.status).toBe(200);
+    await expect(resetRes.json()).resolves.toEqual({
+      ok: true,
+      installationId: GITHUB_EMULATOR_FIXTURES.installationId,
+      org: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+    });
+
+    const jwt = await createAppJwt();
+    const missingRes = await fetch(
+      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+    expect(missingRes.status).toBe(404);
+
+    const installRes = await fetch(
+      `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_after_reset`,
+      { redirect: "manual" }
+    );
+    expect(installRes.status).toBe(302);
+    expect(installRes.headers.get("location")).toContain(
+      "installation_id=1001"
+    );
+  });
+
   it("redirects GitHub App install requests to the Lightfast setup callback", async () => {
     const res = await fetch(
       `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_123`,
@@ -464,6 +516,7 @@ describe("@repo/github-emulator", () => {
       fallbackFetch: () =>
         Response.json({ message: "fallback" }, { status: 418 }),
       publicOrigin: GITHUB_EMULATOR_FIXTURES.origin,
+      resetStore: () => undefined,
       store,
       tokenMap,
     });

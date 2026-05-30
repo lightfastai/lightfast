@@ -1215,6 +1215,9 @@ importers:
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../packages/api-contract
+      drizzle-orm:
+        specifier: 'catalog:'
+        version: 0.45.2(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.6)(@upstash/redis@1.37.0)(better-sqlite3@12.9.0)
       lightfast:
         specifier: workspace:*
         version: link:../core/lightfast
@@ -1231,6 +1234,9 @@ importers:
       dotenv-cli:
         specifier: 'catalog:'
         version: 11.0.0
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

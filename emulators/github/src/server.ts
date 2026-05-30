@@ -187,6 +187,7 @@ export async function startGitHubEmulator(
       appOrigin,
       fallbackFetch: server.app.fetch,
       publicOrigin,
+      resetStore: seed,
       store: server.store,
       tokenMap: server.tokenMap,
     }),
