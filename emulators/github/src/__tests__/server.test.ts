@@ -1,4 +1,5 @@
 import { createHash, createPrivateKey } from "node:crypto";
+import { createServer } from "node:http";
 import { Store } from "@emulators/core";
 import {
   getGitHubStore,
@@ -489,6 +490,96 @@ describe("@repo/github-emulator", () => {
     expect(result.afterSha).toEqual(expect.any(String));
     expect(result.beforeSha).toEqual(expect.any(String));
     expect(result.afterSha).not.toBe(result.beforeSha);
+  });
+
+  it("delivers a signed GitHub App push webhook after simulated push", async () => {
+    const received: Array<{
+      body: string;
+      event: string | null;
+      signature: string | null;
+    }> = [];
+    const receiver = await new Promise<{
+      close: () => Promise<void>;
+      url: string;
+    }>((resolve) => {
+      const server = createServer(async (req, res) => {
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+        req.on("end", () => {
+          received.push({
+            body: Buffer.concat(chunks).toString("utf8"),
+            event: req.headers["x-github-event"]?.toString() ?? null,
+            signature: req.headers["x-hub-signature-256"]?.toString() ?? null,
+          });
+          res.statusCode = 202;
+          res.end("ok");
+        });
+      });
+      server.listen(0, "127.0.0.1", () => {
+        const address = server.address();
+        if (typeof address !== "object" || !address) {
+          throw new Error("expected receiver address");
+        }
+        resolve({
+          close: () =>
+            new Promise<void>((closeResolve, closeReject) => {
+              server.close((error) => {
+                if (error) {
+                  closeReject(error);
+                  return;
+                }
+                closeResolve();
+              });
+            }),
+          url: `http://127.0.0.1:${address.port}/api/github/webhook`,
+        });
+      });
+    });
+
+    async function waitForWebhook(): Promise<void> {
+      for (let attempt = 0; attempt < 20; attempt += 1) {
+        if (received.length > 0) {
+          return;
+        }
+        await new Promise((resolve) => setTimeout(resolve, 50));
+      }
+    }
+
+    const receiverEmulator = await startGitHubEmulatorOnAvailablePort({
+      appOrigin: "https://app.lightfast.localhost",
+    });
+    try {
+      const gh = getGitHubStore(receiverEmulator.store);
+      const app = gh.apps.findOneBy(
+        "app_id",
+        GITHUB_EMULATOR_FIXTURES.githubAppId
+      );
+      if (!app) {
+        throw new Error("expected seeded GitHub App");
+      }
+      gh.apps.update(app.id, { webhook_url: receiver.url });
+
+      const { pushGitHubEmulatorCommit } = await import("../push");
+      await pushGitHubEmulatorCommit({
+        apiBaseUrl: receiverEmulator.url,
+        branch: "main",
+        files: [{ content: "# Demo\n", path: "skills/demo/SKILL.md" }],
+        message: "Add demo skill",
+        owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+        repo: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+        token: GITHUB_EMULATOR_FIXTURES.userToken,
+      });
+
+      await waitForWebhook();
+      expect(received.length).toBeGreaterThan(0);
+      expect(received[0]).toMatchObject({
+        event: "push",
+        signature: expect.stringMatching(/^sha256=/),
+      });
+    } finally {
+      await receiverEmulator.close();
+      await receiver.close();
+    }
   });
 
   it("prints the env values consumed by app and api packages", () => {

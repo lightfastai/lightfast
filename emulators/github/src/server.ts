@@ -1,4 +1,5 @@
 import type { Server } from "node:http";
+import type { Store } from "@emulators/core";
 import { createServer, serve } from "@emulators/core";
 import {
   getGitHubStore,
@@ -21,6 +22,7 @@ export interface StartedGitHubEmulator {
   listenUrl: string;
   publicOrigin: string;
   reset(): void;
+  store: Store;
   url: string;
 }
 
@@ -202,6 +204,7 @@ export async function startGitHubEmulator(
   return {
     listenUrl,
     publicOrigin,
+    store: server.store,
     url: listenUrl,
     reset: seed,
     close: async () => {
