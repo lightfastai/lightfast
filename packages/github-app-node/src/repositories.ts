@@ -1,5 +1,11 @@
 import { z } from "zod";
 import { GitHubAppNodeError } from "./errors";
+import {
+  fetchGitHubJson,
+  githubJsonHeaders,
+  githubPathSegment,
+  normalizeGitHubApiBaseUrl,
+} from "./github-api";
 
 const commitResponseSchema = z.object({
   sha: z.string().min(1),
@@ -39,38 +45,25 @@ const repositoryResponseSchema = z.object({
   }),
 });
 
-function normalizeApiBaseUrl(value: string | undefined) {
-  return (value ?? "https://api.github.com").replace(/\/+$/, "");
-}
-
-function headers(input: { apiVersion?: string; installationToken: string }) {
-  return {
-    accept: "application/vnd.github+json",
-    authorization: `Bearer ${input.installationToken}`,
-    ...(input.apiVersion ? { "x-github-api-version": input.apiVersion } : {}),
-  };
-}
-
-function pathSegment(value: string) {
-  return encodeURIComponent(value);
-}
-
 async function getJson(input: {
-  fetch: typeof fetch;
-  headers: Record<string, string>;
-  url: string;
+  apiVersion?: string;
+  fetch?: typeof fetch;
+  installationToken: string;
+  url: string | URL;
 }) {
-  let res: Response;
-  try {
-    res = await input.fetch(input.url, { headers: input.headers });
-  } catch {
-    throw new GitHubAppNodeError(
-      "GITHUB_API_REQUEST_FAILED",
-      "GitHub repository request failed."
-    );
-  }
-  const json = await res.json().catch(() => null);
-  if (!res.ok) {
+  const { json, response } = await fetchGitHubJson({
+    fetch: input.fetch,
+    init: {
+      headers: githubJsonHeaders({
+        apiVersion: input.apiVersion,
+        token: input.installationToken,
+      }),
+    },
+    requestErrorCode: "GITHUB_API_REQUEST_FAILED",
+    requestErrorMessage: "GitHub repository request failed.",
+    url: input.url,
+  });
+  if (!response.ok) {
     throw new GitHubAppNodeError(
       "GITHUB_API_RESPONSE_INVALID",
       "GitHub repository response was not successful."
@@ -88,13 +81,16 @@ export async function getGitHubCommit(input: {
   ref: string;
   repo: string;
 }): Promise<{ sha: string; treeSha: string }> {
-  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
-  const url = `${apiBaseUrl}/repos/${pathSegment(input.owner)}/${pathSegment(
-    input.repo
-  )}/git/commits/${pathSegment(input.ref)}`;
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const url = `${apiBaseUrl}/repos/${githubPathSegment(
+    input.owner
+  )}/${githubPathSegment(input.repo)}/git/commits/${githubPathSegment(
+    input.ref
+  )}`;
   const json = await getJson({
-    fetch: input.fetch ?? fetch,
-    headers: headers(input),
+    apiVersion: input.apiVersion,
+    fetch: input.fetch,
+    installationToken: input.installationToken,
     url,
   });
   const parsed = commitResponseSchema.safeParse(json);
@@ -127,13 +123,14 @@ export async function getGitHubRepository(input: {
   name: string;
   owner: string;
 }> {
-  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
-  const url = `${apiBaseUrl}/repos/${pathSegment(input.owner)}/${pathSegment(
-    input.repo
-  )}`;
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const url = `${apiBaseUrl}/repos/${githubPathSegment(
+    input.owner
+  )}/${githubPathSegment(input.repo)}`;
   const json = await getJson({
-    fetch: input.fetch ?? fetch,
-    headers: headers(input),
+    apiVersion: input.apiVersion,
+    fetch: input.fetch,
+    installationToken: input.installationToken,
     url,
   });
   const parsed = repositoryResponseSchema.safeParse(json);
@@ -161,18 +158,19 @@ export async function getGitHubTree(input: {
   repo: string;
   treeSha: string;
 }): Promise<z.infer<typeof treeResponseSchema>> {
-  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
   const url = new URL(
-    `${apiBaseUrl}/repos/${pathSegment(input.owner)}/${pathSegment(
+    `${apiBaseUrl}/repos/${githubPathSegment(input.owner)}/${githubPathSegment(
       input.repo
-    )}/git/trees/${pathSegment(input.treeSha)}`
+    )}/git/trees/${githubPathSegment(input.treeSha)}`
   );
   if (input.recursive) {
     url.searchParams.set("recursive", "1");
   }
   const json = await getJson({
-    fetch: input.fetch ?? fetch,
-    headers: headers(input),
+    apiVersion: input.apiVersion,
+    fetch: input.fetch,
+    installationToken: input.installationToken,
     url: url.toString(),
   });
   const parsed = treeResponseSchema.safeParse(json);

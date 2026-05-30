@@ -3,6 +3,7 @@ import { and, desc, eq, inArray, like, lt, or } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
+import { getRowsAffected } from "./drizzle-results";
 
 export interface ListCursor {
   createdAt: Date;
@@ -211,23 +212,4 @@ export async function markSignalFailed(
       )
     );
   return getRowsAffected(result) > 0;
-}
-
-function getRowsAffected(result: unknown): number {
-  if (result === null || typeof result !== "object") {
-    return 0;
-  }
-
-  const { affectedRows, rowsAffected } = result as {
-    affectedRows?: unknown;
-    rowsAffected?: unknown;
-  };
-
-  if (typeof rowsAffected === "number") {
-    return rowsAffected;
-  }
-  if (typeof affectedRows === "number") {
-    return affectedRows;
-  }
-  return 0;
 }

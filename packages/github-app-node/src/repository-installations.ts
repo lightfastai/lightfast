@@ -1,19 +1,17 @@
 import { z } from "zod";
 
 import { GitHubAppNodeError } from "./errors";
+import {
+  fetchGitHubJson,
+  githubJsonHeaders,
+  githubPathSegment,
+  normalizeGitHubApiBaseUrl,
+} from "./github-api";
 
 const repositoryInstallationSchema = z.object({
   id: z.union([z.number(), z.string().min(1)]),
   repository_selection: z.enum(["all", "selected"]).optional(),
 });
-
-function normalizeApiBaseUrl(value: string | undefined) {
-  return (value ?? "https://api.github.com").replace(/\/+$/, "");
-}
-
-function pathSegment(value: string) {
-  return encodeURIComponent(value);
-}
 
 export async function verifyGitHubInstallationRepository(input: {
   apiBaseUrl?: string;
@@ -27,37 +25,31 @@ export async function verifyGitHubInstallationRepository(input: {
   installationId: string;
   repositorySelection: "all" | "selected";
 }> {
-  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
-  const url = `${apiBaseUrl}/repos/${pathSegment(input.owner)}/${pathSegment(
-    input.repo
-  )}/installation`;
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const url = `${apiBaseUrl}/repos/${githubPathSegment(
+    input.owner
+  )}/${githubPathSegment(input.repo)}/installation`;
 
-  let res: Response;
-  try {
-    res = await (input.fetch ?? fetch)(url, {
-      headers: {
-        accept: "application/vnd.github+json",
-        authorization: `Bearer ${input.appJwt}`,
-        ...(input.apiVersion
-          ? { "x-github-api-version": input.apiVersion }
-          : {}),
-      },
-    });
-  } catch {
-    throw new GitHubAppNodeError(
-      "GITHUB_API_REQUEST_FAILED",
-      "GitHub repository installation request failed."
-    );
-  }
+  const { json, response } = await fetchGitHubJson({
+    fetch: input.fetch,
+    init: {
+      headers: githubJsonHeaders({
+        apiVersion: input.apiVersion,
+        token: input.appJwt,
+      }),
+    },
+    requestErrorCode: "GITHUB_API_REQUEST_FAILED",
+    requestErrorMessage: "GitHub repository installation request failed.",
+    url,
+  });
 
-  const json = await res.json().catch(() => null);
-  if (res.status === 404) {
+  if (response.status === 404) {
     throw new GitHubAppNodeError(
       "GITHUB_REPOSITORY_NOT_FOUND",
       "GitHub repository installation was not found."
     );
   }
-  if (!res.ok) {
+  if (!response.ok) {
     throw new GitHubAppNodeError(
       "GITHUB_API_RESPONSE_INVALID",
       "GitHub repository installation response was not successful."

@@ -54,15 +54,22 @@ describe("source-control repository helpers", () => {
     ).resolves.toEqual({ delivery, created: true });
   });
 
-  it("returns existing watched repository after duplicate-key recovery", async () => {
+  it("upserts watched repository and returns the stored row", async () => {
     const repository = createWatchedRepository({
       id: 30,
       providerRepositoryId: "repo-1",
     });
-    const db = createSelectInsertDb({
-      insertError: { body: { code: "ER_DUP_ENTRY" } },
-      selectResults: [[], [repository]],
-    });
+    const limitMock = vi.fn(() => [repository]);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
+    const onDuplicateKeyUpdateMock = vi.fn(() => Promise.resolve());
+    const valuesMock = vi.fn(() => ({
+      onDuplicateKeyUpdate: onDuplicateKeyUpdateMock,
+    }));
+    const db = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn(() => ({ from: fromMock })),
+    } as unknown as Database;
 
     await expect(
       upsertWatchedSourceControlRepository(db, {
@@ -72,6 +79,19 @@ describe("source-control repository helpers", () => {
         watchedPathGlobs: ["src/**"],
       })
     ).resolves.toBe(repository);
+
+    expect(valuesMock).toHaveBeenCalledWith({
+      fullName: "acme/project",
+      orgSourceControlBindingId: 10,
+      providerRepositoryId: "repo-1",
+      watchedPathGlobs: ["src/**"],
+    });
+    expect(onDuplicateKeyUpdateMock).toHaveBeenCalledWith({
+      set: {
+        fullName: "acme/project",
+        watchedPathGlobs: ["src/**"],
+      },
+    });
   });
 
   it("stores repository proof metadata and watch in one transaction", async () => {
@@ -82,13 +102,16 @@ describe("source-control repository helpers", () => {
       providerRepositoryId: "987",
       watchedPathGlobs: ["skills/**"],
     });
-    const selectResults = [[], [repository]];
+    const selectResults = [[repository]];
     const limitMock = vi.fn(() => selectResults.shift() ?? []);
     const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
     const fromMock = vi.fn(() => ({ where: selectWhereMock }));
     const bindingWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
     const bindingSetMock = vi.fn(() => ({ where: bindingWhereMock }));
-    const valuesMock = vi.fn(() => Promise.resolve());
+    const onDuplicateKeyUpdateMock = vi.fn(() => Promise.resolve());
+    const valuesMock = vi.fn(() => ({
+      onDuplicateKeyUpdate: onDuplicateKeyUpdateMock,
+    }));
     const tx = {
       insert: vi.fn(() => ({ values: valuesMock })),
       select: vi.fn(() => ({ from: fromMock })),
@@ -126,6 +149,12 @@ describe("source-control repository helpers", () => {
       orgSourceControlBindingId: 7,
       providerRepositoryId: "987",
       watchedPathGlobs: ["skills/**"],
+    });
+    expect(onDuplicateKeyUpdateMock).toHaveBeenCalledWith({
+      set: {
+        fullName: "acme/.lightfast",
+        watchedPathGlobs: ["skills/**"],
+      },
     });
     const condition = bindingWhereMock.mock.calls[0]?.[0];
     if (!condition) {

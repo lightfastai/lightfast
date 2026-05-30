@@ -14,6 +14,7 @@ import {
   sourceControlRepositories,
   sourceControlWebhookDeliveries,
 } from "../schema";
+import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 const repositorySelection = getTableColumns(sourceControlRepositories);
 const deliverySelection = getTableColumns(sourceControlWebhookDeliveries);
@@ -77,15 +78,6 @@ export async function upsertWatchedSourceControlRepository(
   db: Database,
   input: UpsertWatchedSourceControlRepositoryInput
 ): Promise<SourceControlRepository> {
-  const existing = await getWatchedSourceControlRepository(db, {
-    orgSourceControlBindingId: input.orgSourceControlBindingId,
-    providerRepositoryId: input.providerRepositoryId,
-  });
-  if (existing) {
-    return existing;
-  }
-
-  let duplicateError: unknown;
   await db
     .insert(sourceControlRepositories)
     .values({
@@ -94,26 +86,23 @@ export async function upsertWatchedSourceControlRepository(
       providerRepositoryId: input.providerRepositoryId,
       watchedPathGlobs: input.watchedPathGlobs,
     })
-    .catch((error: unknown) => {
-      if (!isDuplicateKeyError(error)) {
-        throw error;
-      }
-      duplicateError = error;
+    .onDuplicateKeyUpdate({
+      set: {
+        fullName: input.fullName,
+        watchedPathGlobs: input.watchedPathGlobs,
+      },
     });
 
-  const inserted = await getWatchedSourceControlRepository(db, {
+  const repository = await getWatchedSourceControlRepository(db, {
     orgSourceControlBindingId: input.orgSourceControlBindingId,
     providerRepositoryId: input.providerRepositoryId,
   });
-  if (!inserted) {
-    if (duplicateError) {
-      throw duplicateError;
-    }
+  if (!repository) {
     throw new Error(
-      `Failed to create watched repository ${input.providerRepositoryId}`
+      `Failed to upsert watched repository ${input.providerRepositoryId}`
     );
   }
-  return inserted;
+  return repository;
 }
 
 export async function completeWatchedSourceControlRepositorySetup(
@@ -221,44 +210,4 @@ export async function markSourceControlWebhookDeliveryStatus(
     deliveryId: input.deliveryId,
   });
   return delivery?.status === input.status;
-}
-
-function getRowsAffected(result: unknown): number {
-  if (Array.isArray(result)) {
-    return result.reduce((total, item) => total + getRowsAffected(item), 0);
-  }
-  if (result === null || typeof result !== "object") {
-    return 0;
-  }
-
-  const { affectedRows, rowsAffected } = result as {
-    affectedRows?: unknown;
-    rowsAffected?: unknown;
-  };
-
-  if (typeof rowsAffected === "number") {
-    return rowsAffected;
-  }
-  if (typeof affectedRows === "number") {
-    return affectedRows;
-  }
-  return 0;
-}
-
-function isDuplicateKeyError(error: unknown): boolean {
-  if (error === null || typeof error !== "object") {
-    return false;
-  }
-
-  const { body, code, message } = error as {
-    body?: { code?: unknown };
-    code?: unknown;
-    message?: unknown;
-  };
-
-  return (
-    body?.code === "ER_DUP_ENTRY" ||
-    code === "ER_DUP_ENTRY" ||
-    (typeof message === "string" && message.includes("Duplicate entry"))
-  );
 }
