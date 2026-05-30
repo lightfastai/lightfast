@@ -78,6 +78,7 @@ export function PeopleClient() {
             void setTypeState("");
           }
         }}
+        onQueryChange={(value) => void setQuery(value)}
         onToggleProvider={(value) =>
           void setProviderState(
             serializePersonValues(togglePersonValue(filters.providers, value))
@@ -88,7 +89,6 @@ export function PeopleClient() {
             serializePersonValues(togglePersonValue(filters.types, value))
           )
         }
-        onQueryChange={(value) => void setQuery(value)}
         query={query}
       />
 
