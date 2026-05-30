@@ -22,7 +22,8 @@ import {
   getSignalSource,
   getSignalStatusLabel,
   getSignalTitle,
-  type SignalRow,
+  type SignalDetailRow,
+  type SignalListItem,
 } from "./signals-model";
 
 function PropertyRow({
@@ -64,28 +65,38 @@ function BodySection({
   );
 }
 
+/**
+ * The header seeds instantly from the cached projection (`item`); the body
+ * (`input`, `nextAction`, `rationale`, error fields, `updatedAt`) comes from the
+ * full `detail` row. While the detail is loading, a body skeleton is shown.
+ */
 export function SignalDetailContent({
+  bodyLoading,
   closeSlot,
+  detail,
+  item,
   onCopyLink,
-  signal,
 }: {
+  bodyLoading: boolean;
   closeSlot?: ReactNode;
+  detail?: SignalDetailRow;
+  item: SignalListItem;
   onCopyLink: () => void;
-  signal: SignalRow;
 }) {
-  const classification = signal.classification;
-  const title = getSignalTitle(signal);
-  const source = getSignalSource(signal);
-  const createdAt = new Date(signal.createdAt);
-  const updatedAt = new Date(signal.updatedAt);
+  const classification = item.classification;
+  const title = getSignalTitle(item);
+  const source = getSignalSource(item);
+  const createdAt = new Date(item.createdAt);
   const peopleRouting = classification?.routing?.classifyPeople;
   const iconClass = "size-4 shrink-0";
+  const detailClassification = detail?.classification;
+  const summary = classification?.summary ?? detailClassification?.summary;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center gap-2.5 px-5 pt-5">
         <span className="font-mono text-muted-foreground text-xs">
-          {formatSignalIdentifier(signal)}
+          {formatSignalIdentifier(item)}
         </span>
         {classification ? (
           <span className="rounded-full border border-border/70 px-2 py-0.5 text-muted-foreground text-xs">
@@ -143,7 +154,7 @@ export function SignalDetailContent({
             icon={<LoaderCircle className={iconClass} />}
             label="Status"
           >
-            {getSignalStatusLabel(signal.status)}
+            {getSignalStatusLabel(item.status)}
           </PropertyRow>
           {peopleRouting ? (
             <PropertyRow
@@ -160,49 +171,65 @@ export function SignalDetailContent({
 
         <div className="my-6 border-border/60 border-t" />
 
-        <div className="flex flex-col gap-5">
-          <BodySection label="Input">{signal.input}</BodySection>
-          {classification?.summary ? (
-            <BodySection label="Summary">{classification.summary}</BodySection>
-          ) : null}
-          {classification?.nextAction ? (
-            <BodySection label="Next action">
-              {classification.nextAction}
-            </BodySection>
-          ) : null}
-          {classification?.rationale ? (
-            <BodySection label="Rationale">
-              {classification.rationale}
-            </BodySection>
-          ) : null}
-          {signal.status === "failed" ? (
-            <div className="space-y-1.5">
-              <h3 className="font-medium text-destructive text-xs uppercase tracking-wide">
-                Error
-              </h3>
-              {signal.errorCode ? (
-                <p className="font-mono text-destructive text-sm">
-                  {signal.errorCode}
-                </p>
-              ) : null}
-              {signal.errorMessage ? (
-                <p className="text-muted-foreground text-sm">
-                  {signal.errorMessage}
-                </p>
-              ) : null}
-            </div>
-          ) : null}
-        </div>
+        {detail ? (
+          <div className="flex flex-col gap-5">
+            <BodySection label="Input">{detail.input}</BodySection>
+            {summary ? <BodySection label="Summary">{summary}</BodySection> : null}
+            {detailClassification?.nextAction ? (
+              <BodySection label="Next action">
+                {detailClassification.nextAction}
+              </BodySection>
+            ) : null}
+            {detailClassification?.rationale ? (
+              <BodySection label="Rationale">
+                {detailClassification.rationale}
+              </BodySection>
+            ) : null}
+            {detail.status === "failed" ? (
+              <div className="space-y-1.5">
+                <h3 className="font-medium text-destructive text-xs uppercase tracking-wide">
+                  Error
+                </h3>
+                {detail.errorCode ? (
+                  <p className="font-mono text-destructive text-sm">
+                    {detail.errorCode}
+                  </p>
+                ) : null}
+                {detail.errorMessage ? (
+                  <p className="text-muted-foreground text-sm">
+                    {detail.errorMessage}
+                  </p>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+        ) : bodyLoading ? (
+          <div
+            className="flex flex-col gap-3"
+            data-testid="signal-detail-body-skeleton"
+          >
+            <div className="h-4 w-24 animate-pulse rounded bg-muted" />
+            <div className="h-4 w-full animate-pulse rounded bg-muted" />
+            <div className="h-4 w-5/6 animate-pulse rounded bg-muted" />
+          </div>
+        ) : null}
       </div>
 
       <div className="border-border/60 border-t px-5 py-3.5 text-muted-foreground text-xs">
         <span title={createdAt.toISOString()}>
           Created {formatRelativeTimeToNow(createdAt, { addSuffix: true })}
         </span>
-        <span aria-hidden="true"> · </span>
-        <span title={updatedAt.toISOString()}>
-          Updated {formatRelativeTimeToNow(updatedAt, { addSuffix: true })}
-        </span>
+        {detail ? (
+          <>
+            <span aria-hidden="true"> · </span>
+            <span title={new Date(detail.updatedAt).toISOString()}>
+              Updated{" "}
+              {formatRelativeTimeToNow(new Date(detail.updatedAt), {
+                addSuffix: true,
+              })}
+            </span>
+          </>
+        ) : null}
       </div>
     </div>
   );

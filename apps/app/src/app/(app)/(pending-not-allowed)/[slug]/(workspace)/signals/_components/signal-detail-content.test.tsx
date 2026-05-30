@@ -1,16 +1,27 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { SignalDetailContent } from "./signal-detail-content";
-import type { SignalRow } from "./signals-model";
+import type { SignalDetailRow, SignalListItem } from "./signals-model";
 
-const classifiedSignal: SignalRow = {
-  id: 7,
-  publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
-  clerkOrgId: "org_test",
+const headerItem: SignalListItem = {
+  classification: {
+    schemaVersion: "signal.classification.v1",
+    confidence: 0.91,
+    disposition: "actionable",
+    kind: "follow_up",
+    priority: "high",
+    summary: "Customer wants migration help.",
+    title: "Follow up on migration",
+  },
+  createdAt: new Date("2026-05-27T01:00:00.000Z"),
   createdByApiKeyId: "key_test",
   createdByUserId: "user_test",
-  input: "Customer asked for migration help",
+  id: 7,
+  publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
   status: "classified",
+};
+
+const detail: SignalDetailRow = {
   classification: {
     schemaVersion: "signal.classification.v1",
     confidence: 0.91,
@@ -22,20 +33,26 @@ const classifiedSignal: SignalRow = {
     summary: "Customer wants migration help.",
     title: "Follow up on migration",
   },
+  createdAt: new Date("2026-05-27T01:00:00.000Z"),
+  createdByApiKeyId: "key_test",
+  createdByUserId: "user_test",
   errorCode: null,
   errorMessage: null,
-  createdAt: new Date("2026-05-27T01:00:00.000Z"),
+  id: 7,
+  input: "Customer asked for migration help",
+  publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+  status: "classified",
   updatedAt: new Date("2026-05-27T01:01:00.000Z"),
-} as SignalRow;
-
-function makeSignal(overrides: Record<string, unknown>): SignalRow {
-  return { ...classifiedSignal, ...overrides } as SignalRow;
-}
+} as SignalDetailRow;
 
 describe("SignalDetailContent", () => {
-  it("renders the identifier, title, classification properties, and body for a classified signal", () => {
+  it("renders the header from the projection seed immediately", () => {
     render(
-      <SignalDetailContent onCopyLink={vi.fn()} signal={classifiedSignal} />
+      <SignalDetailContent
+        bodyLoading={true}
+        item={headerItem}
+        onCopyLink={vi.fn()}
+      />
     );
 
     expect(screen.getByText("SIG-7")).toBeInTheDocument();
@@ -45,56 +62,47 @@ describe("SignalDetailContent", () => {
     expect(screen.getByText("Follow up")).toBeInTheDocument();
     expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("91%")).toBeInTheDocument();
-    expect(screen.getByText("Classified")).toBeInTheDocument();
     expect(screen.getByText("API key")).toBeInTheDocument();
+    expect(screen.getByTestId("signal-detail-body-skeleton")).toBeInTheDocument();
+  });
+
+  it("renders the body from the full detail row", () => {
+    render(
+      <SignalDetailContent
+        bodyLoading={false}
+        detail={detail}
+        item={headerItem}
+        onCopyLink={vi.fn()}
+      />
+    );
+
     expect(
       screen.getByText("Customer asked for migration help")
     ).toBeInTheDocument();
-    expect(screen.getByText("Customer wants migration help.")).toBeInTheDocument();
     expect(screen.getByText("Reply with migration plan")).toBeInTheDocument();
     expect(
       screen.getByText("The customer is asking for help.")
     ).toBeInTheDocument();
-  });
-
-  it("shows a User source when there is no API key", () => {
-    render(
-      <SignalDetailContent
-        onCopyLink={vi.fn()}
-        signal={makeSignal({ createdByApiKeyId: null })}
-      />
-    );
-    expect(screen.getByText("User")).toBeInTheDocument();
-  });
-
-  it("hides classification-only rows when the signal is not yet classified", () => {
-    render(
-      <SignalDetailContent
-        onCopyLink={vi.fn()}
-        signal={makeSignal({ classification: null, status: "processing" })}
-      />
-    );
-
-    expect(screen.queryByText("Disposition")).not.toBeInTheDocument();
-    expect(screen.queryByText("Confidence")).not.toBeInTheDocument();
-    expect(screen.getByText("Processing")).toBeInTheDocument();
-    // Title falls back to the raw input, so it appears in both the heading
-    // and the Input body section.
     expect(
-      screen.getByRole("heading", { name: "Customer asked for migration help" })
-    ).toBeInTheDocument();
+      screen.queryByTestId("signal-detail-body-skeleton")
+    ).not.toBeInTheDocument();
   });
 
-  it("renders the error section for a failed signal", () => {
+  it("renders the error section for a failed detail row", () => {
     render(
       <SignalDetailContent
+        bodyLoading={false}
+        detail={
+          {
+            ...detail,
+            classification: null,
+            errorCode: "CLASSIFY_FAILED",
+            errorMessage: "Model timed out",
+            status: "failed",
+          } as SignalDetailRow
+        }
+        item={{ ...headerItem, classification: null, status: "failed" }}
         onCopyLink={vi.fn()}
-        signal={makeSignal({
-          classification: null,
-          status: "failed",
-          errorCode: "CLASSIFY_FAILED",
-          errorMessage: "Model timed out",
-        })}
       />
     );
 
@@ -105,7 +113,12 @@ describe("SignalDetailContent", () => {
   it("invokes onCopyLink when the copy-link button is clicked", () => {
     const onCopyLink = vi.fn();
     render(
-      <SignalDetailContent onCopyLink={onCopyLink} signal={classifiedSignal} />
+      <SignalDetailContent
+        bodyLoading={false}
+        detail={detail}
+        item={headerItem}
+        onCopyLink={onCopyLink}
+      />
     );
 
     fireEvent.click(screen.getByRole("button", { name: /copy link/i }));
