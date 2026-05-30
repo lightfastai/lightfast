@@ -3,15 +3,37 @@ import {
   GITHUB_BIND_ERROR_CODES,
   GITHUB_OAUTH_CALLBACK_PATH,
   GITHUB_SETUP_PATH,
+  GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
   githubBindStartOutputSchema,
   githubInstallationMetadataSchema,
   githubNormalizedInstallationSchema,
+  githubUserAccountBindErrorCodeSchema,
 } from "../github-app";
 
 describe("@repo/github-app-contract", () => {
   it("exports stable product callback route constants", () => {
     expect(GITHUB_SETUP_PATH).toBe("/api/github/setup");
     expect(GITHUB_OAUTH_CALLBACK_PATH).toBe("/api/github/oauth/callback");
+  });
+
+  it("exports the GitHub user account OAuth callback path", () => {
+    expect(GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH).toBe(
+      "/api/github/user/oauth/callback"
+    );
+  });
+
+  it("accepts user account bind error codes and rejects org-only errors", () => {
+    expect(
+      githubUserAccountBindErrorCodeSchema.parse("missing_refresh_token")
+    ).toBe("missing_refresh_token");
+    expect(
+      githubUserAccountBindErrorCodeSchema.parse(
+        "github_account_already_bound"
+      )
+    ).toBe("github_account_already_bound");
+    expect(() =>
+      githubUserAccountBindErrorCodeSchema.parse("installation_not_verified")
+    ).toThrow();
   });
 
   it("validates client-safe start output for a GitHub App install URL", () => {
