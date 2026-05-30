@@ -7,34 +7,19 @@ import withVercelToolbar from "@vercel/toolbar/plugins/next";
 import merge from "lodash.merge";
 import type { NextConfig } from "next";
 import { env } from "./src/env";
+import {
+  localAllowedDevOrigins,
+  localServerActionHosts,
+} from "./src/local-dev-origins";
 
-function localHostFromUrl(value: string): string | null {
-  try {
-    const url = new URL(value);
-    const isLocalhost =
-      url.hostname === "localhost" || url.hostname.endsWith(".localhost");
-    return isLocalhost ? url.host : null;
-  } catch {
-    return null;
-  }
-}
-
-function localServerActionHosts(): string[] {
-  return Array.from(
-    new Set(
-      [
-        env.NEXT_PUBLIC_APP_URL,
-        env.NEXT_PUBLIC_WWW_URL,
-        env.NEXT_PUBLIC_PLATFORM_URL,
-      ].flatMap((value) => {
-        const host = localHostFromUrl(value);
-        return host ? [host] : [];
-      })
-    )
-  );
-}
+const localDevUrls = [
+  env.NEXT_PUBLIC_APP_URL,
+  env.NEXT_PUBLIC_WWW_URL,
+  env.NEXT_PUBLIC_PLATFORM_URL,
+];
 
 const appConfig: NextConfig = merge({}, baseConfig, {
+  allowedDevOrigins: localAllowedDevOrigins(localDevUrls),
   typedRoutes: true,
   images: {
     remotePatterns: [
@@ -84,7 +69,7 @@ const appConfig: NextConfig = merge({}, baseConfig, {
         if (vercelEnv === "preview") {
           return ["lightfast.ai", "*.lightfast.ai", "*.vercel.app"];
         }
-        return localServerActionHosts();
+        return localServerActionHosts(localDevUrls);
       })(),
     },
   },
