@@ -164,6 +164,11 @@ function mockOAuthAttempt(record = oauthAttempt()) {
   return record;
 }
 
+const membershipBoundaryErrors = [
+  ["wrong-org", "EXPECTED_USER_MISMATCH"],
+  ["no-org", "MISSING_MEMBERSHIP"],
+] as const;
+
 describe("github setup flow", () => {
   beforeEach(() => {
     consumeGitHubInstallAttemptMock.mockReset();
@@ -319,12 +324,12 @@ describe("github setup flow", () => {
       finalizeActiveOrgProviderBindingMock.mock.calls[0]?.[1].metadata
     ).toEqual({
       events: ["push"],
-        githubAppId: "12345",
-        githubAppSlug: "lightfast-test",
-        githubSetupAction: "install",
-        permissions: { contents: "read" },
-        repositorySelection: "all",
-      });
+      githubAppId: "12345",
+      githubAppSlug: "lightfast-test",
+      githubSetupAction: "install",
+      permissions: { contents: "read" },
+      repositorySelection: "all",
+    });
     expect(mirrorOrgBindingMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",
       provider: "github",
@@ -347,7 +352,9 @@ describe("github setup flow", () => {
 
   it("does not consume install attempts when admin verification fails", async () => {
     mockInstallAttempt();
-    assertOrgAdminMock.mockRejectedValue(new TestClerkOrgMembershipAccessError("NON_ADMIN"));
+    assertOrgAdminMock.mockRejectedValue(
+      new TestClerkOrgMembershipAccessError("NON_ADMIN")
+    );
 
     await expect(
       completeGitHubInstallationSetup({
@@ -361,6 +368,27 @@ describe("github setup flow", () => {
     });
     expect(lookupGitHubInstallAttemptMock).toHaveBeenCalledWith({
       state: "install_state_123",
+    });
+    expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
+  });
+
+  it.each(
+    membershipBoundaryErrors
+  )("maps %s install callbacks to permission_required", async (_label, code) => {
+    mockInstallAttempt();
+    assertOrgAdminMock.mockRejectedValue(
+      new TestClerkOrgMembershipAccessError(code)
+    );
+
+    await expect(
+      completeGitHubInstallationSetup({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/setup?installation_id=1001&state=install_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/tasks/bind?github_error=permission_required",
     });
     expect(consumeGitHubInstallAttemptMock).not.toHaveBeenCalled();
   });
@@ -415,7 +443,9 @@ describe("github setup flow", () => {
 
   it("does not consume denied OAuth attempts when admin verification fails", async () => {
     mockOAuthAttempt();
-    assertOrgAdminMock.mockRejectedValue(new TestClerkOrgMembershipAccessError("NON_ADMIN"));
+    assertOrgAdminMock.mockRejectedValue(
+      new TestClerkOrgMembershipAccessError("NON_ADMIN")
+    );
 
     await expect(
       completeGitHubOAuthVerification({
@@ -429,6 +459,27 @@ describe("github setup flow", () => {
     });
     expect(lookupGitHubOAuthAttemptMock).toHaveBeenCalledWith({
       state: "oauth_state_123",
+    });
+    expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
+  });
+
+  it.each(
+    membershipBoundaryErrors
+  )("maps %s denied OAuth callbacks to permission_required", async (_label, code) => {
+    mockOAuthAttempt();
+    assertOrgAdminMock.mockRejectedValue(
+      new TestClerkOrgMembershipAccessError(code)
+    );
+
+    await expect(
+      completeGitHubOAuthVerification({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/oauth/callback?error=access_denied&state=oauth_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/tasks/bind?github_error=permission_required",
     });
     expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
   });
@@ -454,7 +505,9 @@ describe("github setup flow", () => {
 
   it("does not consume OAuth attempts when admin verification fails", async () => {
     mockOAuthAttempt();
-    assertOrgAdminMock.mockRejectedValue(new TestClerkOrgMembershipAccessError("NON_ADMIN"));
+    assertOrgAdminMock.mockRejectedValue(
+      new TestClerkOrgMembershipAccessError("NON_ADMIN")
+    );
 
     await expect(
       completeGitHubOAuthVerification({
@@ -468,6 +521,27 @@ describe("github setup flow", () => {
     });
     expect(lookupGitHubOAuthAttemptMock).toHaveBeenCalledWith({
       state: "oauth_state_123",
+    });
+    expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
+  });
+
+  it.each(
+    membershipBoundaryErrors
+  )("maps %s OAuth callbacks to permission_required", async (_label, code) => {
+    mockOAuthAttempt();
+    assertOrgAdminMock.mockRejectedValue(
+      new TestClerkOrgMembershipAccessError(code)
+    );
+
+    await expect(
+      completeGitHubOAuthVerification({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/oauth/callback?code=code_123&state=oauth_state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/tasks/bind?github_error=permission_required",
     });
     expect(consumeGitHubOAuthAttemptMock).not.toHaveBeenCalled();
   });

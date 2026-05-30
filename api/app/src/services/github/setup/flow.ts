@@ -20,21 +20,18 @@ import {
   parseGitHubInstallationSetupCallback,
   parseGitHubOAuthCallback,
 } from "./callbacks";
-import {
-  isUnauthenticatedSetupError,
-  mapGitHubSetupError,
-} from "./errors";
+import { isUnauthenticatedSetupError, mapGitHubSetupError } from "./errors";
 import { finalizeGitHubOrgBinding } from "./finalize-binding";
 import {
   completionPageUrl,
   errorRedirect,
+  type GitHubRedirectResult,
   missingAttemptRedirect,
   signInRedirect,
-  type GitHubRedirectResult,
 } from "./redirects";
 
-export type { GitHubRedirectResult } from "./redirects";
 export { syncGitHubBindingClaim } from "./finalize-binding";
+export type { GitHubRedirectResult } from "./redirects";
 
 export async function completeGitHubInstallationSetup(input: {
   appOrigin?: string;

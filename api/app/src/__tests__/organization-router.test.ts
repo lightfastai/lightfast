@@ -111,6 +111,15 @@ beforeEach(() => {
 });
 
 describe("organization.listUserOrganizations", () => {
+  it("throws UNAUTHORIZED when the caller is unauthenticated", async () => {
+    const result = caller(
+      unauthenticatedIdentity
+    ).viewer.organization.listUserOrganizations();
+
+    await expect(result).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(getOrganizationMembershipListMock).not.toHaveBeenCalled();
+  });
+
   it("lists organizations beyond Clerk's first page", async () => {
     getOrganizationMembershipListMock
       .mockResolvedValueOnce({

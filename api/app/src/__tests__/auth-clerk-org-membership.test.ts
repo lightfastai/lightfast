@@ -168,9 +168,7 @@ describe("clerk org membership auth helper", () => {
 
     const result = assertCurrentUserIsOrgAdmin({ clerkOrgId: "org_target" });
 
-    await expect(result).rejects.toBeInstanceOf(
-      ClerkOrgMembershipAccessError
-    );
+    await expect(result).rejects.toBeInstanceOf(ClerkOrgMembershipAccessError);
     await expect(result).rejects.toMatchObject({
       code: "MISSING_MEMBERSHIP",
     });
