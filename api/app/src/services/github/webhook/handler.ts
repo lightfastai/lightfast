@@ -3,7 +3,6 @@ import {
   getWatchedSourceControlRepository,
   markSourceControlWebhookDeliveryStatus,
   recordSourceControlWebhookDeliveryReceived,
-  updateWatchedSourceControlRepositoryLastSeenSha,
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
@@ -13,7 +12,10 @@ import {
   normalizeGitHubPushWebhookPayload,
 } from "@repo/github-app-contract";
 import { verifyGitHubWebhookSignature } from "@repo/github-app-node";
-import { sourceControlRepositoryPushEventSchema } from "@repo/source-control-contract";
+import {
+  matchesAnyWatchedPath,
+  sourceControlRepositoryPushEventSchema,
+} from "@repo/source-control-contract";
 
 import { env } from "../../../env";
 import { inngest } from "../../../inngest/client";
@@ -129,10 +131,13 @@ export async function handleGitHubWebhook(input: {
     return response(202, { ok: true, ignored: true });
   }
 
-  await updateWatchedSourceControlRepositoryLastSeenSha(db, {
-    id: watch.id,
-    lastSeenSha: push.afterSha,
-  });
+  if (!matchesAnyWatchedPath(push.changedPaths, watch.watchedPathGlobs)) {
+    await markSourceControlWebhookDeliveryStatus(db, {
+      deliveryId: headers.deliveryId,
+      status: "ignored",
+    });
+    return response(202, { ok: true, ignored: true });
+  }
 
   const event = sourceControlRepositoryPushEventSchema.parse({
     ...push,
@@ -141,7 +146,7 @@ export async function handleGitHubWebhook(input: {
     repositoryWatchId: watch.id,
   });
   await inngest.send({
-    name: "app/source-control.repository.push.received",
+    name: "app/github.repository.push.received",
     data: event,
   });
   await markSourceControlWebhookDeliveryStatus(db, {

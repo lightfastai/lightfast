@@ -116,9 +116,16 @@ export type GitHubPingWebhookPayload = z.infer<
   typeof githubPingWebhookPayloadSchema
 >;
 
+const githubPushWebhookCommitSchema = z.object({
+  added: z.array(z.string().min(1)).default([]),
+  modified: z.array(z.string().min(1)).default([]),
+  removed: z.array(z.string().min(1)).default([]),
+});
+
 export const githubPushWebhookPayloadSchema = z.object({
   after: githubSha1Schema,
   before: githubSha1Schema,
+  commits: z.array(githubPushWebhookCommitSchema).default([]),
   installation: githubWebhookInstallationSchema,
   ref: z.string().min(1),
   repository: githubWebhookRepositorySchema,
@@ -130,6 +137,7 @@ export type GitHubPushWebhookPayload = z.infer<
 export const normalizedGitHubPushWebhookSchema = z.object({
   afterSha: githubSha1Schema,
   beforeSha: githubSha1Schema,
+  changedPaths: z.array(z.string().min(1)),
   providerInstallationId: z.string().min(1),
   providerRepositoryId: z.string().min(1),
   ref: z.string().min(1),
@@ -142,9 +150,20 @@ export type NormalizedGitHubPushWebhook = z.infer<
 export function normalizeGitHubPushWebhookPayload(
   payload: GitHubPushWebhookPayload
 ): NormalizedGitHubPushWebhook {
+  const changedPaths = Array.from(
+    new Set(
+      payload.commits.flatMap((commit) => [
+        ...commit.added,
+        ...commit.modified,
+        ...commit.removed,
+      ])
+    )
+  );
+
   return normalizedGitHubPushWebhookSchema.parse({
     afterSha: payload.after,
     beforeSha: payload.before,
+    changedPaths,
     providerInstallationId: String(payload.installation.id),
     providerRepositoryId: String(payload.repository.id),
     ref: payload.ref,

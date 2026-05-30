@@ -26,9 +26,12 @@ Build a generic source-control repository watch and webhook ingestion layer:
 6. Resolve `repository.id` to an explicitly watched repository under that
    binding.
 7. Ignore unbound installations and unwatched repositories.
-8. Queue an Inngest repository sync event for watched repository pushes.
-9. Fetch repository state with a GitHub App installation token.
-10. Persist only repository-level cursors and delivery status.
+8. Ignore watched repository pushes whose changed paths do not match the watch
+   globs.
+9. Queue an Inngest repository sync event for watched repository pushes whose
+   changed paths match.
+10. Fetch repository state with a GitHub App installation token.
+11. Persist only the repository watch registry and delivery status.
 
 Do not persist file contents or materialized file snapshots. Repository content
 is fetched on demand by whichever future consumer needs it.
@@ -36,12 +39,11 @@ is fetched on demand by whichever future consumer needs it.
 ## Goals
 
 - Prove the full webhook path: emulator -> app webhook route -> durable
-  delivery record -> Inngest event -> GitHub API fetch -> repository cursor
-  update.
+  delivery record -> Inngest event -> GitHub API fetch -> processed delivery.
 - Keep the implementation generic across repository names.
 - Require explicit repository watches instead of syncing every repository the
   GitHub App can access.
-- Store only the minimum durable data needed for routing, dedupe, and cursors.
+- Store only the minimum durable data needed for routing and delivery dedupe.
 - Keep provider protocol in GitHub packages and generic source-control policy
   in a separate package.
 - Keep local development production-shaped by using the emulator's normal
@@ -146,7 +148,7 @@ avoid the new vendor package.
 
 ### `lightfast_source_control_repositories`
 
-Purpose: explicit watched repository registry and cursor storage.
+Purpose: explicit watched repository registry.
 
 Columns:
 
@@ -155,8 +157,6 @@ Columns:
 - `providerRepositoryId`
 - `fullName`
 - `watchedPathGlobs`
-- `lastSeenSha`
-- `lastProcessedSha`
 - `createdAt`
 - `updatedAt`
 
@@ -172,8 +172,8 @@ Do not add these fields in the first implementation:
 - `ownerLogin` and `name` - derive them from `fullName` when calling GitHub;
 - `defaultBranch` - fetch it when needed;
 - `status` - row existence means watched in v1;
-- `lastWebhookAt`, `lastSyncAt`, and error columns - `updatedAt` plus delivery
-  status are enough for v1;
+- `lastSeenSha`, `lastProcessedSha`, `lastWebhookAt`, `lastSyncAt`, and error
+  columns - webhook delivery status is enough for v1;
 - file content or file snapshots.
 
 ### `lightfast_source_control_webhook_deliveries`
@@ -200,8 +200,8 @@ Indexes:
 Do not add these fields in the first implementation:
 
 - `repositoryFullName` - useful for debugging, but not needed for routing;
-- `ref`, `beforeSha`, `afterSha` - carried in the Inngest event and stored as
-  repository cursors where needed;
+- `ref`, `beforeSha`, `afterSha`, and changed paths - carried in the Inngest
+  event where needed;
 - `action` - push does not need it;
 - `queuedAt`, `processedAt`, `receivedAt` - `createdAt` and `updatedAt` are
   enough;
@@ -238,18 +238,19 @@ Responsibilities:
 10. Resolve the active binding by provider installation id.
 11. Resolve the watched repository by binding id and provider repository id.
 12. Mark the delivery `ignored` if no binding or watch exists.
-13. Mark the delivery `queued`, update the watched repo `lastSeenSha`, and send
-    the Inngest event if the repo is watched.
+13. Mark the delivery `ignored` if the push did not touch any watched path.
+14. Mark the delivery `queued` and send the Inngest event if the repo is
+    watched and the changed path set matches.
 
 The route must not trust Clerk session state. GitHub webhooks are authenticated
 only by their HMAC signature.
 
 ## Inngest Event And Workflow
 
-Add a generic event:
+Add a GitHub-backed repository push event:
 
 ```ts
-"app/source-control.repository.push.received"
+"app/github.repository.push.received"
 ```
 
 Payload:
@@ -265,6 +266,7 @@ Payload:
   ref: string;
   beforeSha: string;
   afterSha: string;
+  changedPaths: string[];
 }
 ```
 
@@ -275,13 +277,13 @@ The workflow should:
 3. Create a GitHub App JWT.
 4. Mint an installation token for `providerInstallationId`.
 5. Fetch the repository or commit/tree for `afterSha`.
-6. Apply watched path matching only in memory.
-7. Update `lastProcessedSha` when the fetch succeeds.
-8. Mark the delivery `processed` or `failed`.
+6. Reject truncated trees for now.
+7. Mark the delivery `processed` or `failed`.
 
 The workflow should not persist file contents. For this foundation, it is enough
-to prove that matching repository state can be fetched and filtered. Future
-consumers can receive the matched paths or fetch content on demand.
+to prove that matching repository state can be fetched after the webhook path
+filter. Future consumers can receive the matched paths or fetch content on
+demand.
 
 Workflow idempotency:
 
@@ -372,6 +374,8 @@ infrastructure. It should not be imported by production packages.
 - Duplicate delivery: `202` with no new Inngest event.
 - No active binding for installation: mark delivery `ignored`.
 - No watched repository for binding/repo: mark delivery `ignored`.
+- Watched repository push with no watched-path changes: mark delivery
+  `ignored`.
 - GitHub fetch failure in workflow: mark delivery `failed` and let Inngest
   retry according to workflow configuration.
 
@@ -389,15 +393,17 @@ Focused tests should cover:
 - Duplicate delivery id does not enqueue twice.
 - Unbound installation is marked `ignored`.
 - Bound installation plus unwatched repo is marked `ignored`.
-- Bound installation plus watched repo marks delivery `queued`, updates
-  `lastSeenSha`, and sends the Inngest event.
-- Workflow mints an installation token, fetches repository state, updates
-  `lastProcessedSha`, and marks the delivery `processed`.
+- Bound installation plus watched repo but unmatched changed paths is marked
+  `ignored`.
+- Bound installation plus watched repo and matching changed paths marks delivery
+  `queued` and sends the Inngest event.
+- Workflow mints an installation token, fetches repository state, and marks the
+  delivery `processed`.
 - Workflow marks delivery `failed` when GitHub fetch fails.
 - Emulator seed sends GitHub App webhooks to `/api/github/webhook`.
 - Emulator push helper causes a real signed `push` webhook after ref update.
 - End-to-end local test path: emulator push -> app webhook service -> delivery
-  row -> Inngest event/workflow -> repository cursor update.
+  row -> Inngest event/workflow -> processed delivery.
 
 Expected focused commands:
 
@@ -438,9 +444,10 @@ pnpm typecheck
 - Duplicate GitHub deliveries do not enqueue duplicate work.
 - Unbound installations and unwatched repositories are ignored without failing
   GitHub delivery.
-- Watched repository pushes enqueue exactly one sync workflow.
+- Watched repository pushes enqueue exactly one sync workflow only when changed
+  paths match the watch globs.
 - The sync workflow fetches repository state using a GitHub installation token.
-- Only repository cursors and delivery status are persisted.
+- Only the repository watch registry and delivery status are persisted.
 - No file content or repository file snapshot table exists.
 - The emulator can simulate a push and send the signed webhook to local
   Lightfast.

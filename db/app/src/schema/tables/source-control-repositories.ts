@@ -16,7 +16,6 @@ import {
 const PROVIDER_REF_LENGTH = 128;
 const REPOSITORY_FULL_NAME_LENGTH = 256;
 const CODE_LENGTH = 64;
-const SHA_LENGTH = 64;
 
 export const sourceControlRepositories = mysqlTable(
   "lightfast_source_control_repositories",
@@ -41,10 +40,6 @@ export const sourceControlRepositories = mysqlTable(
     watchedPathGlobs: json("watched_path_globs")
       .$type<WatchedPathGlobs>()
       .notNull(),
-
-    lastSeenSha: varchar("last_seen_sha", { length: SHA_LENGTH }),
-
-    lastProcessedSha: varchar("last_processed_sha", { length: SHA_LENGTH }),
 
     createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)

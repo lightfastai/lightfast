@@ -750,6 +750,11 @@ describe("@repo/github-emulator", () => {
       const payload = JSON.parse(delivery.body) as {
         after?: string;
         before?: string;
+        commits?: Array<{
+          added?: string[];
+          modified?: string[];
+          removed?: string[];
+        }>;
         installation?: { id?: number };
         ref?: string;
         repository?: { full_name?: string };
@@ -763,6 +768,13 @@ describe("@repo/github-emulator", () => {
           full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}`,
         },
       });
+      expect(payload.commits).toEqual([
+        expect.objectContaining({
+          added: ["skills/demo/SKILL.md"],
+          modified: [],
+          removed: [],
+        }),
+      ]);
     } finally {
       await receiverEmulator?.close();
       await receiver.close();

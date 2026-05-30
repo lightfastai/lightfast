@@ -207,21 +207,6 @@ export interface MarkOrgBindingRevokedInput {
   clerkOrgId: string;
 }
 
-export async function updateOrgSourceControlBindingMetadata(
-  db: Database,
-  input: {
-    id: number;
-    metadata: Record<string, unknown>;
-  }
-): Promise<boolean> {
-  const result = await db
-    .update(orgSourceControlBindings)
-    .set({ metadata: input.metadata })
-    .where(eq(orgSourceControlBindings.id, input.id));
-
-  return getRowsAffected(result) > 0;
-}
-
 /**
  * Revokes every active binding for the org. Returns the rows transitioned to
  * `revoked` — empty when the org had no active binding.
@@ -287,28 +272,6 @@ function isDuplicateKeyError(error: unknown): boolean {
     code === "ER_DUP_ENTRY" ||
     (typeof message === "string" && message.includes("Duplicate entry"))
   );
-}
-
-function getRowsAffected(result: unknown): number {
-  if (Array.isArray(result)) {
-    return result.length;
-  }
-  if (result === null || typeof result !== "object") {
-    return 0;
-  }
-
-  const { affectedRows, rowsAffected } = result as {
-    affectedRows?: unknown;
-    rowsAffected?: unknown;
-  };
-
-  if (typeof rowsAffected === "number") {
-    return rowsAffected;
-  }
-  if (typeof affectedRows === "number") {
-    return affectedRows;
-  }
-  return 0;
 }
 
 async function insertActiveOrgBinding(

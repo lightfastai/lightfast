@@ -147,6 +147,13 @@ describe("GitHub webhook schemas", () => {
     const payload = githubPushWebhookPayloadSchema.parse({
       after: "a".repeat(40),
       before: "b".repeat(40),
+      commits: [
+        {
+          added: ["skills/demo/SKILL.md"],
+          modified: ["README.md"],
+          removed: ["docs/old.md"],
+        },
+      ],
       installation: { id: 1001 },
       ref: "refs/heads/main",
       repository: {
@@ -160,6 +167,7 @@ describe("GitHub webhook schemas", () => {
     expect(normalizeGitHubPushWebhookPayload(payload)).toEqual({
       afterSha: "a".repeat(40),
       beforeSha: "b".repeat(40),
+      changedPaths: ["skills/demo/SKILL.md", "README.md", "docs/old.md"],
       providerInstallationId: "1001",
       providerRepositoryId: "2002",
       ref: "refs/heads/main",

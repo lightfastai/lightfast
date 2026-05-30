@@ -49,6 +49,7 @@ export type WatchedPathGlobs = z.infer<typeof watchedPathGlobsSchema>;
 export const sourceControlRepositoryPushEventSchema = z.object({
   afterSha: sha1Schema,
   beforeSha: sha1Schema,
+  changedPaths: z.array(z.string().min(1)),
   deliveryId: z.string().min(1),
   orgSourceControlBindingId: z.number().int().positive(),
   providerInstallationId: z.string().min(1),
@@ -88,4 +89,11 @@ export function matchesWatchedPath(
   return watchedPathGlobs.some((pattern) =>
     matchesSinglePattern(path, pattern)
   );
+}
+
+export function matchesAnyWatchedPath(
+  paths: readonly string[],
+  watchedPathGlobs: readonly string[]
+): boolean {
+  return paths.some((path) => matchesWatchedPath(path, watchedPathGlobs));
 }

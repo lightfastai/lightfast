@@ -2,7 +2,6 @@ import {
   getOrgBindingByProviderInstallation,
   getWatchedSourceControlRepositoryById,
   markSourceControlWebhookDeliveryStatus,
-  markWatchedSourceControlRepositoryPushProcessed,
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
@@ -11,18 +10,15 @@ import {
   getGitHubCommit,
   getGitHubTree,
 } from "@repo/github-app-node";
-import {
-  matchesWatchedPath,
-  splitRepositoryFullName,
-} from "@repo/source-control-contract";
+import { splitRepositoryFullName } from "@repo/source-control-contract";
 
 import { getGitHubAppConfig } from "../../services/github/config";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 
-export const syncSourceControlRepository = inngest.createFunction(
+export const syncGitHubSourceControlRepository = inngest.createFunction(
   {
-    id: "sync-source-control-repository",
+    id: "sync-github-source-control-repository",
     idempotency: "event.data.deliveryId",
     onFailure: async ({ event, step }) => {
       const { deliveryId } = event.data.event.data;
@@ -39,7 +35,7 @@ export const syncSourceControlRepository = inngest.createFunction(
       finish: "5m",
       start: "5m",
     },
-    triggers: appEvents["app/source-control.repository.push.received"],
+    triggers: appEvents["app/github.repository.push.received"],
   },
   async ({ event, step }) => {
     const watch = await step.run("load watched source control repository", () =>
@@ -135,25 +131,20 @@ export const syncSourceControlRepository = inngest.createFunction(
       );
     }
 
-    const matchedPathCount = tree.tree.filter((entry) =>
-      matchesWatchedPath(entry.path, watch.watchedPathGlobs)
-    ).length;
-
-    await step.run("mark watched repository push processed", () =>
-      markWatchedSourceControlRepositoryPushProcessed(db, {
+    await step.run("mark source control delivery processed", () =>
+      markSourceControlWebhookDeliveryStatusOrThrow({
         deliveryId: event.data.deliveryId,
-        lastProcessedSha: event.data.afterSha,
-        repositoryWatchId: event.data.repositoryWatchId,
+        status: "processed",
       })
     );
 
-    return { matchedPathCount, status: "processed" as const };
+    return { status: "processed" as const };
   }
 );
 
 async function markSourceControlWebhookDeliveryStatusOrThrow(input: {
   deliveryId: string;
-  status: "failed" | "ignored";
+  status: "failed" | "ignored" | "processed";
 }) {
   const updated = await markSourceControlWebhookDeliveryStatus(db, input);
   if (!updated) {

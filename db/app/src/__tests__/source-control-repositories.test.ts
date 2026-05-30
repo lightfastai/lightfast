@@ -10,9 +10,7 @@ import type {
 import {
   completeWatchedSourceControlRepositorySetup,
   markSourceControlWebhookDeliveryStatus,
-  markWatchedSourceControlRepositoryPushProcessed,
   recordSourceControlWebhookDeliveryReceived,
-  updateWatchedSourceControlRepositoryLastSeenSha,
   upsertWatchedSourceControlRepository,
 } from "../utils/source-control-repositories";
 
@@ -254,192 +252,6 @@ describe("source-control repository helpers", () => {
       })
     ).resolves.toBe(true);
   });
-
-  it("updates only the watched repository last seen sha", async () => {
-    const whereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
-    const setMock = vi.fn(() => ({ where: whereMock }));
-    const db = {
-      update: vi.fn(() => ({ set: setMock })),
-    } as unknown as Database;
-
-    await expect(
-      updateWatchedSourceControlRepositoryLastSeenSha(db, {
-        id: 10,
-        lastSeenSha: "a".repeat(40),
-      })
-    ).resolves.toBe(true);
-
-    expect(setMock).toHaveBeenCalledWith({ lastSeenSha: "a".repeat(40) });
-    const condition = whereMock.mock.calls[0]?.[0];
-    if (!condition) {
-      throw new Error("expected update where condition");
-    }
-    const query = new MySqlDialect().sqlToQuery(condition);
-    expect(query.sql).toContain("`id` = ?");
-    expect(query.params).toContain(10);
-  });
-
-  it("returns false when updating watched repository last seen sha affects no rows", async () => {
-    const whereMock = vi.fn((_: SQL) => ({ rowsAffected: 0 }));
-    const setMock = vi.fn(() => ({ where: whereMock }));
-    const db = {
-      update: vi.fn(() => ({ set: setMock })),
-    } as unknown as Database;
-
-    await expect(
-      updateWatchedSourceControlRepositoryLastSeenSha(db, {
-        id: 10,
-        lastSeenSha: "a".repeat(40),
-      })
-    ).resolves.toBe(false);
-  });
-
-  it("marks a watched repository push processed inside one transaction", async () => {
-    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
-    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
-    const deliveryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
-    const deliverySetMock = vi.fn(() => ({ where: deliveryWhereMock }));
-    const tx = {
-      update: vi
-        .fn()
-        .mockReturnValueOnce({ set: repositorySetMock })
-        .mockReturnValueOnce({ set: deliverySetMock }),
-    };
-    const db = {
-      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
-        callback(tx)
-      ),
-    } as unknown as Database;
-
-    await expect(
-      markWatchedSourceControlRepositoryPushProcessed(db, {
-        deliveryId: "delivery-1",
-        lastProcessedSha: "a".repeat(40),
-        repositoryWatchId: 10,
-      })
-    ).resolves.toBeUndefined();
-
-    expect(db.transaction).toHaveBeenCalledOnce();
-    expect(repositorySetMock).toHaveBeenCalledWith({
-      lastProcessedSha: "a".repeat(40),
-    });
-    expect(deliverySetMock).toHaveBeenCalledWith({ status: "processed" });
-
-    const repositoryCondition = repositoryWhereMock.mock.calls[0]?.[0];
-    const deliveryCondition = deliveryWhereMock.mock.calls[0]?.[0];
-    if (!(repositoryCondition && deliveryCondition)) {
-      throw new Error("expected update where conditions");
-    }
-    const dialect = new MySqlDialect();
-    expect(dialect.sqlToQuery(repositoryCondition).sql).toContain("`id` = ?");
-    expect(dialect.sqlToQuery(repositoryCondition).params).toContain(10);
-    expect(dialect.sqlToQuery(deliveryCondition).sql).toContain(
-      "`delivery_id` = ?"
-    );
-    expect(dialect.sqlToQuery(deliveryCondition).params).toContain(
-      "delivery-1"
-    );
-  });
-
-  it("rejects processed push updates when the watched repository row is missing", async () => {
-    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
-    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
-    const deliverySetMock = vi.fn();
-    const limitMock = vi.fn(() => []);
-    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
-    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
-    const tx = {
-      select: vi.fn(() => ({ from: fromMock })),
-      update: vi
-        .fn()
-        .mockReturnValueOnce({ set: repositorySetMock })
-        .mockReturnValueOnce({ set: deliverySetMock }),
-    };
-    const db = {
-      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
-        callback(tx)
-      ),
-    } as unknown as Database;
-
-    await expect(
-      markWatchedSourceControlRepositoryPushProcessed(db, {
-        deliveryId: "delivery-1",
-        lastProcessedSha: "a".repeat(40),
-        repositoryWatchId: 10,
-      })
-    ).rejects.toThrow(/repository watch 10/);
-
-    expect(deliverySetMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects processed push updates when the webhook delivery row is missing", async () => {
-    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
-    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
-    const deliveryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
-    const deliverySetMock = vi.fn(() => ({ where: deliveryWhereMock }));
-    const limitMock = vi.fn(() => []);
-    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
-    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
-    const tx = {
-      select: vi.fn(() => ({ from: fromMock })),
-      update: vi
-        .fn()
-        .mockReturnValueOnce({ set: repositorySetMock })
-        .mockReturnValueOnce({ set: deliverySetMock }),
-    };
-    const db = {
-      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
-        callback(tx)
-      ),
-    } as unknown as Database;
-
-    await expect(
-      markWatchedSourceControlRepositoryPushProcessed(db, {
-        deliveryId: "delivery-1",
-        lastProcessedSha: "a".repeat(40),
-        repositoryWatchId: 10,
-      })
-    ).rejects.toThrow(/delivery-1/);
-  });
-
-  it("marks a watched repository push processed when updates are already applied", async () => {
-    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
-    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
-    const deliveryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
-    const deliverySetMock = vi.fn(() => ({ where: deliveryWhereMock }));
-    const selectResults = [
-      [createWatchedRepository({ id: 10, lastProcessedSha: "a".repeat(40) })],
-      [
-        createWebhookDelivery({
-          deliveryId: "delivery-1",
-          status: "processed",
-        }),
-      ],
-    ];
-    const limitMock = vi.fn(() => selectResults.shift() ?? []);
-    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
-    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
-    const tx = {
-      select: vi.fn(() => ({ from: fromMock })),
-      update: vi
-        .fn()
-        .mockReturnValueOnce({ set: repositorySetMock })
-        .mockReturnValueOnce({ set: deliverySetMock }),
-    };
-    const db = {
-      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
-        callback(tx)
-      ),
-    } as unknown as Database;
-
-    await expect(
-      markWatchedSourceControlRepositoryPushProcessed(db, {
-        deliveryId: "delivery-1",
-        lastProcessedSha: "a".repeat(40),
-        repositoryWatchId: 10,
-      })
-    ).resolves.toBeUndefined();
-  });
 });
 
 function createSelectInsertDb(input: {
@@ -487,8 +299,6 @@ function createWatchedRepository(
     providerRepositoryId: "repo-1",
     fullName: "acme/project",
     watchedPathGlobs: ["src/**"],
-    lastSeenSha: null,
-    lastProcessedSha: null,
     createdAt: now,
     updatedAt: now,
     ...overrides,

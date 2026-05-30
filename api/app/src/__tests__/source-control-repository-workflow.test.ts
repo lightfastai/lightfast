@@ -7,7 +7,6 @@ const getTreeMock = vi.fn();
 const getBindingMock = vi.fn();
 const getWatchByIdMock = vi.fn();
 const markDeliveryMock = vi.fn();
-const markPushProcessedMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -24,7 +23,6 @@ vi.mock("@db/app", () => ({
   getOrgBindingByProviderInstallation: getBindingMock,
   getWatchedSourceControlRepositoryById: getWatchByIdMock,
   markSourceControlWebhookDeliveryStatus: markDeliveryMock,
-  markWatchedSourceControlRepositoryPushProcessed: markPushProcessedMock,
 }));
 
 vi.mock("@repo/github-app-node", () => ({
@@ -53,7 +51,7 @@ describe("source control repository sync workflow", () => {
     vi.resetModules();
   });
 
-  it("fetches repository state and updates cursors", async () => {
+  it("fetches GitHub repository state and marks the delivery processed", async () => {
     createJwtMock.mockResolvedValue("jwt");
     createTokenMock.mockResolvedValue({ token: "ghs_installation" });
     getCommitMock.mockResolvedValue({
@@ -89,13 +87,12 @@ describe("source control repository sync workflow", () => {
       ],
       truncated: false,
     });
-    markPushProcessedMock.mockResolvedValue(undefined);
     markDeliveryMock.mockResolvedValue(true);
 
-    const { syncSourceControlRepository } = await import(
+    const { syncGitHubSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
     );
-    const workflow = syncSourceControlRepository as unknown as {
+    const workflow = syncGitHubSourceControlRepository as unknown as {
       handler: (input: unknown) => Promise<unknown>;
     };
 
@@ -104,6 +101,7 @@ describe("source control repository sync workflow", () => {
         data: {
           afterSha: "a".repeat(40),
           beforeSha: "b".repeat(40),
+          changedPaths: ["skills/demo/SKILL.md"],
           deliveryId: "delivery-1",
           orgSourceControlBindingId: 1,
           providerInstallationId: "1001",
@@ -118,29 +116,24 @@ describe("source control repository sync workflow", () => {
       },
     } as never);
 
-    expect(result).toEqual({
-      matchedPathCount: 1,
-      status: "processed",
-    });
-    expect(markPushProcessedMock).toHaveBeenCalledWith(
+    expect(result).toEqual({ status: "processed" });
+    expect(markDeliveryMock).toHaveBeenCalledWith(
       {},
       {
         deliveryId: "delivery-1",
-        lastProcessedSha: "a".repeat(40),
-        repositoryWatchId: 9,
+        status: "processed",
       }
     );
-    expect(markDeliveryMock).not.toHaveBeenCalled();
   });
 
   it("marks delivery ignored on missing watch before fetching GitHub repository state", async () => {
     getWatchByIdMock.mockResolvedValue(undefined);
     markDeliveryMock.mockResolvedValue(true);
 
-    const { syncSourceControlRepository } = await import(
+    const { syncGitHubSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
     );
-    const workflow = syncSourceControlRepository as unknown as {
+    const workflow = syncGitHubSourceControlRepository as unknown as {
       handler: (input: unknown) => Promise<unknown>;
     };
 
@@ -149,6 +142,7 @@ describe("source control repository sync workflow", () => {
         data: {
           afterSha: "a".repeat(40),
           beforeSha: "b".repeat(40),
+          changedPaths: ["skills/demo/SKILL.md"],
           deliveryId: "delivery-2",
           orgSourceControlBindingId: 1,
           providerInstallationId: "1001",
@@ -169,7 +163,6 @@ describe("source control repository sync workflow", () => {
     expect(getBindingMock).not.toHaveBeenCalled();
     expect(getCommitMock).not.toHaveBeenCalled();
     expect(getTreeMock).not.toHaveBeenCalled();
-    expect(markPushProcessedMock).not.toHaveBeenCalled();
     expect(markDeliveryMock).toHaveBeenCalledWith(
       {},
       {
@@ -193,10 +186,10 @@ describe("source control repository sync workflow", () => {
     });
     markDeliveryMock.mockResolvedValue(true);
 
-    const { syncSourceControlRepository } = await import(
+    const { syncGitHubSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
     );
-    const workflow = syncSourceControlRepository as unknown as {
+    const workflow = syncGitHubSourceControlRepository as unknown as {
       handler: (input: unknown) => Promise<unknown>;
     };
 
@@ -205,6 +198,7 @@ describe("source control repository sync workflow", () => {
         data: {
           afterSha: "a".repeat(40),
           beforeSha: "b".repeat(40),
+          changedPaths: ["skills/demo/SKILL.md"],
           deliveryId: "delivery-binding-revoked",
           orgSourceControlBindingId: 1,
           providerInstallationId: "1001",
@@ -224,7 +218,6 @@ describe("source control repository sync workflow", () => {
     expect(createTokenMock).not.toHaveBeenCalled();
     expect(getCommitMock).not.toHaveBeenCalled();
     expect(getTreeMock).not.toHaveBeenCalled();
-    expect(markPushProcessedMock).not.toHaveBeenCalled();
     expect(markDeliveryMock).toHaveBeenCalledWith(
       {},
       {
@@ -248,10 +241,10 @@ describe("source control repository sync workflow", () => {
     });
     markDeliveryMock.mockResolvedValue(true);
 
-    const { syncSourceControlRepository } = await import(
+    const { syncGitHubSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
     );
-    const workflow = syncSourceControlRepository as unknown as {
+    const workflow = syncGitHubSourceControlRepository as unknown as {
       handler: (input: unknown) => Promise<unknown>;
     };
 
@@ -260,6 +253,7 @@ describe("source control repository sync workflow", () => {
         data: {
           afterSha: "a".repeat(40),
           beforeSha: "b".repeat(40),
+          changedPaths: ["skills/demo/SKILL.md"],
           deliveryId: "delivery-watch-mismatch",
           orgSourceControlBindingId: 1,
           providerInstallationId: "1001",
@@ -279,7 +273,6 @@ describe("source control repository sync workflow", () => {
     expect(createTokenMock).not.toHaveBeenCalled();
     expect(getCommitMock).not.toHaveBeenCalled();
     expect(getTreeMock).not.toHaveBeenCalled();
-    expect(markPushProcessedMock).not.toHaveBeenCalled();
     expect(markDeliveryMock).toHaveBeenCalledWith(
       {},
       {
@@ -320,10 +313,10 @@ describe("source control repository sync workflow", () => {
       truncated: true,
     });
 
-    const { syncSourceControlRepository } = await import(
+    const { syncGitHubSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
     );
-    const workflow = syncSourceControlRepository as unknown as {
+    const workflow = syncGitHubSourceControlRepository as unknown as {
       handler: (input: unknown) => Promise<unknown>;
     };
 
@@ -333,6 +326,7 @@ describe("source control repository sync workflow", () => {
           data: {
             afterSha: "a".repeat(40),
             beforeSha: "b".repeat(40),
+            changedPaths: ["skills/demo/SKILL.md"],
             deliveryId: "delivery-3",
             orgSourceControlBindingId: 1,
             providerInstallationId: "1001",
@@ -348,17 +342,16 @@ describe("source control repository sync workflow", () => {
       } as never)
     ).rejects.toThrow(/truncated/i);
 
-    expect(markPushProcessedMock).not.toHaveBeenCalled();
     expect(markDeliveryMock).not.toHaveBeenCalled();
   });
 
   it("marks source control delivery failed from onFailure", async () => {
     markDeliveryMock.mockResolvedValue(true);
 
-    const { syncSourceControlRepository } = await import(
+    const { syncGitHubSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
     );
-    const workflow = syncSourceControlRepository as unknown as {
+    const workflow = syncGitHubSourceControlRepository as unknown as {
       onFailure: (input: unknown) => Promise<unknown>;
     };
 
@@ -390,10 +383,10 @@ describe("source control repository sync workflow", () => {
   it("rejects onFailure when the failed status cannot be written", async () => {
     markDeliveryMock.mockResolvedValue(false);
 
-    const { syncSourceControlRepository } = await import(
+    const { syncGitHubSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
     );
-    const workflow = syncSourceControlRepository as unknown as {
+    const workflow = syncGitHubSourceControlRepository as unknown as {
       onFailure: (input: unknown) => Promise<unknown>;
     };
 

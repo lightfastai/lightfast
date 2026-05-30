@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
+  matchesAnyWatchedPath,
   matchesWatchedPath,
   SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES,
   sourceControlRepositoryPushEventSchema,
@@ -58,11 +59,25 @@ describe("@repo/source-control-contract", () => {
     expect(matchesWatchedPath("docs/SKILL.md", ["skills/**"])).toBe(false);
   });
 
+  it("matches watched globs against a changed path set", () => {
+    expect(
+      matchesAnyWatchedPath(
+        ["docs/readme.md", "skills/foo/SKILL.md"],
+        ["skills/**"]
+      )
+    ).toBe(true);
+    expect(matchesAnyWatchedPath(["docs/readme.md"], ["skills/**"])).toBe(
+      false
+    );
+    expect(matchesAnyWatchedPath([], ["skills/**"])).toBe(false);
+  });
+
   it("validates repository push event payloads", () => {
     expect(
       sourceControlRepositoryPushEventSchema.parse({
         afterSha: "a".repeat(40),
         beforeSha: "b".repeat(40),
+        changedPaths: ["skills/demo/SKILL.md"],
         deliveryId: "delivery-1",
         orgSourceControlBindingId: 1,
         providerInstallationId: "1001",
@@ -82,6 +97,7 @@ describe("@repo/source-control-contract", () => {
       afterSha: "a".repeat(40),
       beforeSha: "b".repeat(40),
       deliveryId: "delivery-1",
+      changedPaths: ["skills/demo/SKILL.md"],
       orgSourceControlBindingId: 1,
       providerInstallationId: "1001",
       providerRepositoryId: "2002",

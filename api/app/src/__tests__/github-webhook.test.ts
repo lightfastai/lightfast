@@ -5,7 +5,6 @@ const getBindingMock = vi.fn();
 const getWatchMock = vi.fn();
 const markDeliveryMock = vi.fn();
 const recordDeliveryMock = vi.fn();
-const updateLastSeenMock = vi.fn();
 const inngestSendMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
@@ -15,7 +14,6 @@ vi.mock("@db/app", () => ({
   getWatchedSourceControlRepository: getWatchMock,
   markSourceControlWebhookDeliveryStatus: markDeliveryMock,
   recordSourceControlWebhookDeliveryReceived: recordDeliveryMock,
-  updateWatchedSourceControlRepositoryLastSeenSha: updateLastSeenMock,
 }));
 
 vi.mock("../env", () => ({
@@ -54,6 +52,13 @@ function signedRequest(
 const pushPayload = {
   after: "a".repeat(40),
   before: "b".repeat(40),
+  commits: [
+    {
+      added: ["skills/demo/SKILL.md"],
+      modified: [],
+      removed: [],
+    },
+  ],
   installation: { id: 1001 },
   ref: "refs/heads/main",
   repository: {
@@ -70,7 +75,6 @@ describe("handleGitHubWebhook", () => {
     getWatchMock.mockReset();
     markDeliveryMock.mockReset();
     recordDeliveryMock.mockReset();
-    updateLastSeenMock.mockReset();
     inngestSendMock.mockReset();
   });
 
@@ -153,7 +157,6 @@ describe("handleGitHubWebhook", () => {
 
     expect(res.status).toBe(400);
     expect(recordDeliveryMock).not.toHaveBeenCalled();
-    expect(updateLastSeenMock).not.toHaveBeenCalled();
     expect(inngestSendMock).not.toHaveBeenCalled();
   });
 
@@ -202,7 +205,6 @@ describe("handleGitHubWebhook", () => {
 
     expect(res.status).toBe(202);
     expect(getBindingMock).not.toHaveBeenCalled();
-    expect(updateLastSeenMock).not.toHaveBeenCalled();
     expect(markDeliveryMock).not.toHaveBeenCalled();
     expect(inngestSendMock).not.toHaveBeenCalled();
   });
@@ -245,8 +247,9 @@ describe("handleGitHubWebhook", () => {
       }
     );
     expect(inngestSendMock).toHaveBeenCalledWith({
-      name: "app/source-control.repository.push.received",
+      name: "app/github.repository.push.received",
       data: expect.objectContaining({
+        changedPaths: ["skills/demo/SKILL.md"],
         deliveryId: "delivery-1",
         repositoryWatchId: 9,
       }),
@@ -327,13 +330,6 @@ describe("handleGitHubWebhook", () => {
     });
 
     expect(res.status).toBe(202);
-    expect(updateLastSeenMock).toHaveBeenCalledWith(
-      {},
-      {
-        id: 9,
-        lastSeenSha: "a".repeat(40),
-      }
-    );
     expect(markDeliveryMock).toHaveBeenCalledWith(
       {},
       {
@@ -342,12 +338,55 @@ describe("handleGitHubWebhook", () => {
       }
     );
     expect(inngestSendMock).toHaveBeenCalledWith({
-      name: "app/source-control.repository.push.received",
+      name: "app/github.repository.push.received",
       data: expect.objectContaining({
+        changedPaths: ["skills/demo/SKILL.md"],
         deliveryId: "delivery-1",
         repositoryWatchId: 9,
       }),
     });
+  });
+
+  it("ignores watched repository pushes that do not touch watched paths", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    recordDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { status: "received" },
+    });
+    getBindingMock.mockResolvedValue({
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      watchedPathGlobs: ["skills/**"],
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest({
+        ...pushPayload,
+        commits: [
+          {
+            added: [],
+            modified: ["docs/readme.md"],
+            removed: [],
+          },
+        ],
+      }),
+    });
+
+    expect(res.status).toBe(202);
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-1",
+        status: "ignored",
+      }
+    );
+    expect(inngestSendMock).not.toHaveBeenCalled();
   });
 
   it("does not mark queued when enqueue fails", async () => {
@@ -407,7 +446,6 @@ describe("handleGitHubWebhook", () => {
       }
     );
     expect(getBindingMock).not.toHaveBeenCalled();
-    expect(updateLastSeenMock).not.toHaveBeenCalled();
     expect(inngestSendMock).not.toHaveBeenCalled();
   });
 });

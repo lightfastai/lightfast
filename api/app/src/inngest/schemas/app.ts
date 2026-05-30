@@ -31,8 +31,8 @@ export const appEvents = {
       clerkOrgId: z.string().min(1),
     }),
   }),
-  "app/source-control.repository.push.received": eventType(
-    "app/source-control.repository.push.received",
+  "app/github.repository.push.received": eventType(
+    "app/github.repository.push.received",
     {
       schema: sourceControlRepositoryPushEventSchema,
     }
