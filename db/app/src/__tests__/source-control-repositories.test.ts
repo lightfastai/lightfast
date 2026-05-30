@@ -96,7 +96,11 @@ describe("source-control repository helpers", () => {
   it("returns false when marking webhook delivery status affects no rows", async () => {
     const whereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
     const setMock = vi.fn(() => ({ where: whereMock }));
+    const limitMock = vi.fn(() => []);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
     const db = {
+      select: vi.fn(() => ({ from: fromMock })),
       update: vi.fn(() => ({ set: setMock })),
     } as unknown as Database;
 
@@ -106,6 +110,27 @@ describe("source-control repository helpers", () => {
         status: "queued",
       })
     ).resolves.toBe(false);
+  });
+
+  it("returns true when marking webhook delivery status is already applied", async () => {
+    const whereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
+    const setMock = vi.fn(() => ({ where: whereMock }));
+    const limitMock = vi.fn(() => [
+      createWebhookDelivery({ deliveryId: "delivery-1", status: "queued" }),
+    ]);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
+    const db = {
+      select: vi.fn(() => ({ from: fromMock })),
+      update: vi.fn(() => ({ set: setMock })),
+    } as unknown as Database;
+
+    await expect(
+      markSourceControlWebhookDeliveryStatus(db, {
+        deliveryId: "delivery-1",
+        status: "queued",
+      })
+    ).resolves.toBe(true);
   });
 
   it("updates only the watched repository last seen sha", async () => {
@@ -198,7 +223,11 @@ describe("source-control repository helpers", () => {
     const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
     const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
     const deliverySetMock = vi.fn();
+    const limitMock = vi.fn(() => []);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
     const tx = {
+      select: vi.fn(() => ({ from: fromMock })),
       update: vi
         .fn()
         .mockReturnValueOnce({ set: repositorySetMock })
@@ -226,7 +255,11 @@ describe("source-control repository helpers", () => {
     const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
     const deliveryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
     const deliverySetMock = vi.fn(() => ({ where: deliveryWhereMock }));
+    const limitMock = vi.fn(() => []);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
     const tx = {
+      select: vi.fn(() => ({ from: fromMock })),
       update: vi
         .fn()
         .mockReturnValueOnce({ set: repositorySetMock })
@@ -245,6 +278,45 @@ describe("source-control repository helpers", () => {
         repositoryWatchId: 10,
       })
     ).rejects.toThrow(/delivery-1/);
+  });
+
+  it("marks a watched repository push processed when updates are already applied", async () => {
+    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
+    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
+    const deliveryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
+    const deliverySetMock = vi.fn(() => ({ where: deliveryWhereMock }));
+    const selectResults = [
+      [createWatchedRepository({ id: 10, lastProcessedSha: "a".repeat(40) })],
+      [
+        createWebhookDelivery({
+          deliveryId: "delivery-1",
+          status: "processed",
+        }),
+      ],
+    ];
+    const limitMock = vi.fn(() => selectResults.shift() ?? []);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
+    const tx = {
+      select: vi.fn(() => ({ from: fromMock })),
+      update: vi
+        .fn()
+        .mockReturnValueOnce({ set: repositorySetMock })
+        .mockReturnValueOnce({ set: deliverySetMock }),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+
+    await expect(
+      markWatchedSourceControlRepositoryPushProcessed(db, {
+        deliveryId: "delivery-1",
+        lastProcessedSha: "a".repeat(40),
+        repositoryWatchId: 10,
+      })
+    ).resolves.toBeUndefined();
   });
 });
 

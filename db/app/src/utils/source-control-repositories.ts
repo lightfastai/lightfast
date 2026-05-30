@@ -178,7 +178,14 @@ export async function markSourceControlWebhookDeliveryStatus(
     .update(sourceControlWebhookDeliveries)
     .set({ status: input.status })
     .where(eq(sourceControlWebhookDeliveries.deliveryId, input.deliveryId));
-  return getRowsAffected(result) > 0;
+  if (getRowsAffected(result) > 0) {
+    return true;
+  }
+
+  const delivery = await getSourceControlWebhookDeliveryByDeliveryId(db, {
+    deliveryId: input.deliveryId,
+  });
+  return delivery?.status === input.status;
 }
 
 export async function markWatchedSourceControlRepositoryPushProcessed(
@@ -195,9 +202,16 @@ export async function markWatchedSourceControlRepositoryPushProcessed(
       .set({ lastProcessedSha: input.lastProcessedSha })
       .where(eq(sourceControlRepositories.id, input.repositoryWatchId));
     if (getRowsAffected(repositoryResult) === 0) {
-      throw new Error(
-        `Failed to mark source control repository watch ${input.repositoryWatchId} processed.`
-      );
+      const [repository] = await tx
+        .select(repositorySelection)
+        .from(sourceControlRepositories)
+        .where(eq(sourceControlRepositories.id, input.repositoryWatchId))
+        .limit(1);
+      if (repository?.lastProcessedSha !== input.lastProcessedSha) {
+        throw new Error(
+          `Failed to mark source control repository watch ${input.repositoryWatchId} processed.`
+        );
+      }
     }
 
     const deliveryResult = await tx
@@ -205,9 +219,16 @@ export async function markWatchedSourceControlRepositoryPushProcessed(
       .set({ status: "processed" })
       .where(eq(sourceControlWebhookDeliveries.deliveryId, input.deliveryId));
     if (getRowsAffected(deliveryResult) === 0) {
-      throw new Error(
-        `Failed to mark source control webhook delivery ${input.deliveryId} processed.`
-      );
+      const [delivery] = await tx
+        .select(deliverySelection)
+        .from(sourceControlWebhookDeliveries)
+        .where(eq(sourceControlWebhookDeliveries.deliveryId, input.deliveryId))
+        .limit(1);
+      if (delivery?.status !== "processed") {
+        throw new Error(
+          `Failed to mark source control webhook delivery ${input.deliveryId} processed.`
+        );
+      }
     }
   });
 }
