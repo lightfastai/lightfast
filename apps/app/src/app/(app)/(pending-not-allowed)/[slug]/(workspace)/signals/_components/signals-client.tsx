@@ -1,11 +1,13 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 import { useQueryState } from "nuqs";
-import { useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo } from "react";
+import { useWorkspaceCommands } from "~/components/workspace-command-menu";
 import { WorkspaceSurface } from "~/components/workspace-surface";
-import { SignalCreateDialog } from "./signal-create-dialog";
+import { useTRPC } from "~/trpc/react";
 import { SignalDetailSheet } from "./signal-detail-sheet";
 import { SignalsBoardView } from "./signals-board-view";
 import { SignalsListView } from "./signals-list-view";
@@ -24,11 +26,14 @@ import {
   toggleSignalValue,
 } from "./signals-search-params";
 import { SignalsToolbar } from "./signals-toolbar";
+import { SignalsTruncationBanner } from "./signals-truncation-banner";
 import { useSignalsUiStore } from "./signals-ui-store";
 import { useSignalsWorkspaceData } from "./use-signals-workspace-data";
 
 export function SignalsClient() {
-  const [isCreateDialogOpen, setCreateDialogOpen] = useState(false);
+  const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const { openCreateSignal } = useWorkspaceCommands();
   const [dispositionState, setDispositionState] = useQueryState(
     "disposition",
     signalDispositionParser
@@ -68,30 +73,36 @@ export function SignalsClient() {
     filters.peopleRouted ||
     filters.priorities.length > 0;
 
+  // The toolbar reflects `filters` immediately; the (cheap) list work runs on the
+  // deferred value so a rapid toggle never drops a frame. With virtualized views
+  // the in-memory work is trivial — this is the single hedge for the tail case.
+  const deferredFilters = useDeferredValue(filters);
+
   const {
     boardSections,
-    classifiedListQueryKey,
     hasAnyRows,
-    processingListQueryKey,
     signalsByPublicId,
+    truncated,
     visibleListSections,
-  } = useSignalsWorkspaceData({
-    filters,
-    search: "",
-  });
-  const refreshListQueryKeys = useMemo(
-    () => [processingListQueryKey, classifiedListQueryKey],
-    [classifiedListQueryKey, processingListQueryKey]
-  );
+  } = useSignalsWorkspaceData({ filters: deferredFilters });
 
-  function openCreateDialog() {
-    setCreateDialogOpen(true);
-  }
+  const prefetchSignal = useCallback(
+    (publicId: string) => {
+      const cached = signalsByPublicId.get(publicId);
+      if (cached && "input" in cached) {
+        return; // processing/full rows already carry the body
+      }
+      void queryClient.prefetchQuery(
+        trpc.org.workspace.signals.get.queryOptions({ publicId })
+      );
+    },
+    [queryClient, signalsByPublicId, trpc]
+  );
 
   const emptyCreateAction = (
     <Button
       className="h-8 rounded-full px-3"
-      onClick={openCreateDialog}
+      onClick={openCreateSignal}
       size="sm"
       type="button"
       variant="outline"
@@ -109,6 +120,7 @@ export function SignalsClient() {
       <h1 className="sr-only">Signals</h1>
       <SignalsToolbar
         filters={filters}
+        onAddSignal={openCreateSignal}
         onClearFilterGroup={(group) => {
           if (group === "disposition") {
             void setDispositionState("");
@@ -144,12 +156,14 @@ export function SignalsClient() {
         view={view}
       />
 
+      <SignalsTruncationBanner truncated={truncated} />
+
       {view === "board" ? (
         <SignalsBoardView
           emptyAction={emptyCreateAction}
           hasActiveSearch={hasActiveFilters}
           hasAnyRows={hasAnyRows}
-          onCreateSignal={openCreateDialog}
+          onPrefetchSignal={prefetchSignal}
           onSelectSignal={(publicId) => void setSelectedSignalId(publicId)}
           sections={boardSections}
           selectedSignalId={selectedSignalId}
@@ -160,7 +174,7 @@ export function SignalsClient() {
           emptyAction={emptyCreateAction}
           hasActiveSearch={hasActiveFilters}
           hasAnyRows={hasAnyRows}
-          onCreateSignal={openCreateDialog}
+          onPrefetchSignal={prefetchSignal}
           onSelectSignal={(publicId) => void setSelectedSignalId(publicId)}
           onToggleGroup={toggleListGroup}
           sections={visibleListSections}
@@ -168,15 +182,11 @@ export function SignalsClient() {
         />
       )}
 
-      <SignalCreateDialog
-        listQueryKeys={refreshListQueryKeys}
-        onOpenChange={setCreateDialogOpen}
-        open={isCreateDialogOpen}
-      />
-
       <SignalDetailSheet
-        initialSignal={
-          selectedSignalId ? signalsByPublicId.get(selectedSignalId) : undefined
+        initialItem={
+          selectedSignalId
+            ? signalsByPublicId.get(selectedSignalId)
+            : undefined
         }
         onOpenChange={(open) => {
           if (!open) {
