@@ -84,6 +84,7 @@ export {
   getWatchedSourceControlRepository,
   getWatchedSourceControlRepositoryById,
   markSourceControlWebhookDeliveryStatus,
+  type RecordSourceControlWebhookDeliveryReceivedResult,
   recordSourceControlWebhookDeliveryReceived,
   updateWatchedSourceControlRepositoryLastProcessedSha,
   updateWatchedSourceControlRepositoryLastSeenSha,

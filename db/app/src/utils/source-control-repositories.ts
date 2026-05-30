@@ -24,6 +24,11 @@ export interface UpsertWatchedSourceControlRepositoryInput {
   watchedPathGlobs: WatchedPathGlobs;
 }
 
+export interface RecordSourceControlWebhookDeliveryReceivedResult {
+  created: boolean;
+  delivery: SourceControlWebhookDelivery;
+}
+
 export async function getWatchedSourceControlRepository(
   db: Database,
   input: {
@@ -74,18 +79,30 @@ export async function upsertWatchedSourceControlRepository(
     return existing;
   }
 
-  await db.insert(sourceControlRepositories).values({
-    fullName: input.fullName,
-    orgSourceControlBindingId: input.orgSourceControlBindingId,
-    providerRepositoryId: input.providerRepositoryId,
-    watchedPathGlobs: input.watchedPathGlobs,
-  });
+  let duplicateError: unknown;
+  await db
+    .insert(sourceControlRepositories)
+    .values({
+      fullName: input.fullName,
+      orgSourceControlBindingId: input.orgSourceControlBindingId,
+      providerRepositoryId: input.providerRepositoryId,
+      watchedPathGlobs: input.watchedPathGlobs,
+    })
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      duplicateError = error;
+    });
 
   const inserted = await getWatchedSourceControlRepository(db, {
     orgSourceControlBindingId: input.orgSourceControlBindingId,
     providerRepositoryId: input.providerRepositoryId,
   });
   if (!inserted) {
+    if (duplicateError) {
+      throw duplicateError;
+    }
     throw new Error(
       `Failed to create watched repository ${input.providerRepositoryId}`
     );
@@ -113,29 +130,41 @@ export async function recordSourceControlWebhookDeliveryReceived(
     providerInstallationId: string;
     providerRepositoryId: string;
   }
-): Promise<SourceControlWebhookDelivery> {
+): Promise<RecordSourceControlWebhookDeliveryReceivedResult> {
   const existing = await getSourceControlWebhookDeliveryByDeliveryId(db, {
     deliveryId: input.deliveryId,
   });
   if (existing) {
-    return existing;
+    return { delivery: existing, created: false };
   }
 
-  await db.insert(sourceControlWebhookDeliveries).values({
-    deliveryId: input.deliveryId,
-    event: input.event,
-    providerInstallationId: input.providerInstallationId,
-    providerRepositoryId: input.providerRepositoryId,
-    status: "received",
-  });
+  let duplicateError: unknown;
+  await db
+    .insert(sourceControlWebhookDeliveries)
+    .values({
+      deliveryId: input.deliveryId,
+      event: input.event,
+      providerInstallationId: input.providerInstallationId,
+      providerRepositoryId: input.providerRepositoryId,
+      status: "received",
+    })
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      duplicateError = error;
+    });
 
   const inserted = await getSourceControlWebhookDeliveryByDeliveryId(db, {
     deliveryId: input.deliveryId,
   });
   if (!inserted) {
+    if (duplicateError) {
+      throw duplicateError;
+    }
     throw new Error(`Failed to create webhook delivery ${input.deliveryId}`);
   }
-  return inserted;
+  return { delivery: inserted, created: duplicateError === undefined };
 }
 
 export async function markSourceControlWebhookDeliveryStatus(
@@ -191,4 +220,22 @@ function getRowsAffected(result: unknown): number {
     return affectedRows;
   }
   return 0;
+}
+
+function isDuplicateKeyError(error: unknown): boolean {
+  if (error === null || typeof error !== "object") {
+    return false;
+  }
+
+  const { body, code, message } = error as {
+    body?: { code?: unknown };
+    code?: unknown;
+    message?: unknown;
+  };
+
+  return (
+    body?.code === "ER_DUP_ENTRY" ||
+    code === "ER_DUP_ENTRY" ||
+    (typeof message === "string" && message.includes("Duplicate entry"))
+  );
 }
