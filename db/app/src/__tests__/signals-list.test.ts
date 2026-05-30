@@ -255,6 +255,8 @@ describe("listWorkspaceSignals", () => {
 
     const result = await listWorkspaceSignals(db, { clerkOrgId: "org_test" });
 
+    expect(result.limit).toBe(2000);
+    expect(result.windowDays).toBe(30);
     expect(result.truncated).toBe(false);
     expect(result.totalCount).toBe(1);
     const item = result.items[0]!;
@@ -287,6 +289,8 @@ describe("listWorkspaceSignals", () => {
 
     const result = await listWorkspaceSignals(db, { clerkOrgId: "org_test" });
 
+    expect(result.limit).toBe(2000);
+    expect(result.windowDays).toBe(30);
     expect(result.items).toHaveLength(2000);
     expect(result.truncated).toBe(true);
     expect(result.totalCount).toBe(2500);

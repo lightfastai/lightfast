@@ -1,12 +1,11 @@
-import {
-  type SignalClassification,
-  WORKSPACE_SIGNALS_LIMIT,
-  WORKSPACE_SIGNALS_WINDOW_DAYS,
-} from "@repo/api-contract";
+import type { SignalClassification } from "@repo/api-contract";
 import { and, desc, eq, gte, inArray, like, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
+
+const WORKSPACE_SIGNALS_WINDOW_DAYS = 30;
+const WORKSPACE_SIGNALS_LIMIT = 2000;
 
 export interface ListCursor {
   createdAt: Date;
@@ -124,8 +123,10 @@ export interface WorkspaceSignalListItem {
 
 export interface WorkspaceSignalsResult {
   items: WorkspaceSignalListItem[];
+  limit: number;
   totalCount: number;
   truncated: boolean;
+  windowDays: number;
 }
 
 export interface ListWorkspaceSignalsParams {
@@ -208,7 +209,13 @@ export async function listWorkspaceSignals(
     ? await countClassifiedSince(db, input.clerkOrgId, cutoff)
     : items.length;
 
-  return { items, totalCount, truncated };
+  return {
+    items,
+    limit: WORKSPACE_SIGNALS_LIMIT,
+    totalCount,
+    truncated,
+    windowDays: WORKSPACE_SIGNALS_WINDOW_DAYS,
+  };
 }
 
 export interface CreateSignalRecordInput {
