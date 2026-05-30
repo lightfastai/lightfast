@@ -43,6 +43,27 @@
       "when": 1779863972492,
       "tag": "0005_long_screwball",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1780126986850,
+      "tag": "0006_dizzy_wong",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1780144354058,
+      "tag": "0007_opposite_triton",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1780146179723,
+      "tag": "0008_clumsy_hex",
+      "breakpoints": true
     }
   ]
 }

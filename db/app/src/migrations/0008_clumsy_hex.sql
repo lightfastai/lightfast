@@ -1,0 +1,2 @@
+ALTER TABLE `lightfast_signals` ADD `visibility_scope` varchar(32) DEFAULT 'user' NOT NULL;--> statement-breakpoint
+CREATE INDEX `signals_org_visibility_created_idx` ON `lightfast_signals` (`clerk_org_id`,`visibility_scope`,`created_at`,`id`);
