@@ -71,6 +71,9 @@ sets.
   successful OAuth authorization.
 - Keep credential plaintext out of logs, Clerk metadata, browser responses, and
   durable non-secret columns.
+- Keep mutable GitHub profile fields out of durable storage. GitHub login,
+  avatar, profile URL, email, name, and other user-editable fields can be fetched
+  live when a feature truly needs them.
 
 ## Non-Goals
 
@@ -83,6 +86,7 @@ sets.
 - No multiple active GitHub user accounts per Clerk user in v1.
 - No repository picker in the user account task.
 - No device flow in v1; browser OAuth is enough for the web task.
+- No durable GitHub profile cache in v1.
 - No manual SQL files. Schema changes go through Drizzle schema and
   `pnpm db:generate`.
 
@@ -95,8 +99,10 @@ The implementation must follow GitHub App user-token semantics:
   than classic OAuth scopes.
 - The web application flow should use high-entropy `state`, exact
   `redirect_uri`, and PKCE.
-- Expiring user access tokens include `access_token`, `expires_in`,
+- Expiring user access token responses include `access_token`, `expires_in`,
   `refresh_token`, `refresh_token_expires_in`, `scope`, and `token_type`.
+  Lightfast persists only the tokens and expirations; it validates the rest
+  during exchange and then discards it.
 - The documented expiring-token values are 8 hours for access tokens and 6
   months for refresh tokens.
 - Refreshing a user token uses `grant_type=refresh_token` against the same
@@ -179,10 +185,6 @@ Recommended columns:
 - `active_provider_user_key VARCHAR(192) NULL`
 - `provider VARCHAR(32) NOT NULL`
 - `provider_user_id VARCHAR(128) NOT NULL`
-- `provider_login VARCHAR(128) NOT NULL`
-- `provider_avatar_url VARCHAR(512) NULL`
-- `provider_profile_url VARCHAR(512) NULL`
-- `provider_email VARCHAR(320) NULL`
 - `status VARCHAR(32) NOT NULL`
 - `connected_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)`
 - `revoked_at TIMESTAMP(3) NULL`
@@ -190,9 +192,6 @@ Recommended columns:
 - `encrypted_refresh_token TEXT NOT NULL`
 - `access_token_expires_at TIMESTAMP(3) NOT NULL`
 - `refresh_token_expires_at TIMESTAMP(3) NOT NULL`
-- `token_type VARCHAR(32) NOT NULL`
-- `scope TEXT NOT NULL`
-- `metadata JSON NOT NULL`
 - `created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)`
 - `updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`
 
@@ -212,7 +211,8 @@ Indexes:
   `github:<provider_user_id>`; inactive rows set it to `NULL`. This preserves
   history while allowing an explicitly revoked GitHub account to be rebound.
 - Index `(clerk_user_id, status)` for user gate lookups.
-- Index `(provider, provider_login)` for operational lookups.
+- Index `(provider, provider_user_id)` for provider revocation and operational
+  lookups.
 
 Repository helpers:
 
@@ -271,7 +271,8 @@ Callback:
 6. Service exchanges the code for a GitHub App user token.
 7. Service requires `refresh_token`, `expires_in`, and
    `refresh_token_expires_in`.
-8. Service calls `GET /user` with the access token.
+8. Service calls `GET /user` with the access token and keeps only the stable
+   GitHub user id.
 9. Service encrypts access and refresh tokens.
 10. Service finalizes the DB account row and redirects to
     `/account/tasks/github/complete`.
@@ -354,7 +355,7 @@ viewer.githubAccount
 Procedures:
 
 - `status`: returns whether the current user has an active GitHub account
-  binding and non-sensitive provider identity fields.
+  binding, the stable provider user id, and credential lifecycle fields.
 - `start`: returns `{ authorizationUrl }`.
 - `sync`: re-reads DB status for the completion page after callback.
 - `disconnect`: marks the account binding revoked and clears active uniqueness.
@@ -403,7 +404,8 @@ Extend `emulators/github`:
   `refresh_token`, `refresh_token_expires_in`, `scope`, and `token_type`.
 - Refresh-token exchange accepts `grant_type=refresh_token` and rotates or
   preserves a deterministic local refresh token.
-- `GET /user` returns the seeded user for the bearer token.
+- `GET /user` returns the seeded user for the bearer token. Product code should
+  use only the stable user id for durable writes.
 - Tests cover the user-account callback path independently from the org
   installation path.
 
@@ -438,8 +440,8 @@ Webhook behavior:
 - Verify callback user id before consuming the attempt.
 - Keep the GitHub user id immutable for a row; reconnect creates or reactivates
   the appropriate row through repository helpers.
-- Treat GitHub login as mutable display data and update it on reconnect or
-  token verification.
+- Treat GitHub login, avatar, profile URL, email, and name as mutable display
+  data. Do not store them durably in the binding table.
 
 ## Testing
 
@@ -455,7 +457,7 @@ Focused backend tests:
   fields, and writes an active user account row.
 - One active GitHub account per Clerk user.
 - One active Lightfast user per GitHub user.
-- Reconnect updates token fields and provider display fields.
+- Reconnect updates token fields and preserves the stable provider user id.
 - Refresh returns existing token outside the refresh window.
 - Refresh rotates encrypted access and refresh tokens inside the refresh window.
 - Revoked/expired refresh failures transition the row status.
