@@ -32,7 +32,7 @@ apps/app UI
 
 local:
   https://github.lightfast.localhost/apps/lightfast-local/installations/new
-    -> internal/github-emulator handles install redirect
+    -> emulators/github handles install redirect
     -> https://lightfast.localhost/api/github/setup
 
 production:
@@ -41,7 +41,7 @@ production:
     -> https://app.lightfast.ai/api/github/setup
 ```
 
-`internal/github-emulator` becomes local infrastructure that speaks enough
+`emulators/github` becomes local infrastructure that speaks enough
 GitHub-compatible web, OAuth, and API behavior for the app/API to run the same
 flow. Product code must not branch on an emulator mode.
 
@@ -64,7 +64,7 @@ later without changing binding workflow code.
 - Keep `api/app` responsible for Lightfast orchestration only: auth, Redis
   attempts, DB finalization, Clerk claim sync, and redirect decisions.
 - Move GitHub protocol behavior into `@repo/github-app-node`.
-- Make `internal/github-emulator` compatible with the protocol helpers used for
+- Make `emulators/github` compatible with the protocol helpers used for
   real GitHub.
 - Fail closed outside local development and tests if any custom GitHub endpoint
   is configured.
@@ -88,7 +88,7 @@ later without changing binding workflow code.
 | `api/app/src/github` | Lightfast binding workflow, env resolution, Redis attempts, admin checks, DB finalization, Clerk claim mirror, redirect mapping. | Emulator context, emulator-specific verification, GitHub REST payload parsing beyond workflow inputs. |
 | `@repo/github-app-node` | GitHub URL builders, PKCE, OAuth exchange, user-accessible installation listing, installation verification, app JWTs, webhook signature helpers. | Lightfast auth, DB, Clerk, Redis, environment loading. |
 | `@repo/github-app-contract` | Isomorphic constants, client-safe schemas, error codes, normalized GitHub installation schema. | Emulator constants, Node-only code, secrets, Lightfast DB types. |
-| `internal/github-emulator` | Local GitHub-compatible install/OAuth/API routes, deterministic seed, dev env printer, emulator tests. | Production runtime imports, Lightfast DB/Clerk/Redis logic. |
+| `emulators/github` | Local GitHub-compatible install/OAuth/API routes, deterministic seed, dev env printer, emulator tests. | Production runtime imports, Lightfast DB/Clerk/Redis logic. |
 
 ## Product Routes
 
@@ -116,7 +116,7 @@ redesign.
 
 ## Emulator Routes
 
-`internal/github-emulator` should provide the local equivalents of the GitHub
+`emulators/github` should provide the local equivalents of the GitHub
 routes used by the binding flow:
 
 ```text
@@ -144,7 +144,7 @@ Behavior:
 
 The emulator may keep using `@emulators/github` internally where useful, but it
 must cover gaps at the boundary by adding routes or adapters inside
-`internal/github-emulator`, not inside `api/app`.
+`emulators/github`, not inside `api/app`.
 
 ## GitHub Endpoint Config
 
@@ -318,7 +318,7 @@ workflow version or verification method that is not environment-specific.
 
 ## Local Dev Flow
 
-Root `pnpm dev` should continue starting `internal/github-emulator` through
+Root `pnpm dev` should continue starting `emulators/github` through
 Portless at:
 
 ```text
@@ -358,11 +358,11 @@ by the `with-related-projects` wrapper.
   installation verifier finds the same id.
 - The OAuth user token must not be persisted.
 - The local emulator may use deterministic secrets, but those secrets must stay
-  in `internal/github-emulator` and local injected env only.
+  in `emulators/github` and local injected env only.
 
 ## Migration Plan
 
-1. Extend `internal/github-emulator` with GitHub-compatible install, OAuth, and
+1. Extend `emulators/github` with GitHub-compatible install, OAuth, and
    `GET /user/installations` behavior.
 2. Add endpoint-config support and production guardrails in `api/app`.
 3. Replace emulator-specific URL and verifier helpers in
@@ -379,7 +379,7 @@ by the `with-related-projects` wrapper.
 
 Focused tests should cover:
 
-- `internal/github-emulator` installation URL redirects with preserved `state`.
+- `emulators/github` installation URL redirects with preserved `state`.
 - Emulator OAuth authorize/token exchange with PKCE.
 - Emulator `GET /user/installations` returns a GitHub-shaped organization
   installation.
@@ -394,7 +394,7 @@ Focused tests should cover:
 - Metadata contains no `verifiedBy` environment value.
 - `apps/app` has no `/api/dev/github/install` route and proxy no longer admits
   that path.
-- Package-boundary tests keep `internal/github-emulator` out of production
+- Package-boundary tests keep `emulators/github` out of production
   package imports.
 
 ## Rollout

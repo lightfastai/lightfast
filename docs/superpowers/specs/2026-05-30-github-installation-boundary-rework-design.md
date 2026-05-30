@@ -14,8 +14,8 @@ feature harder to maintain:
   verification, DB finalization, Clerk claim mirroring, and error mapping.
 - GitHub setup admin verification lives under `github`, but it is really auth
   and Clerk organization membership logic.
-- `internal/github-emulator` depends on `@repo/github-app-contract`, which
-  conflicts with the existing `internal` boundary rules.
+- The GitHub emulator should live outside `internal` because it depends on
+  product contracts and owns dev infrastructure behavior.
 
 This spec scopes a behavior-preserving rework of that structure before the
 GitHub installation work is merged.
@@ -43,7 +43,7 @@ Move the GitHub emulator out of `internal` into a dedicated root development
 emulator workspace:
 
 ```text
-emulator/github
+emulators/github
 ```
 
 The rework should preserve the production-shaped GitHub App install/OAuth flow.
@@ -78,7 +78,7 @@ so callback verification does not falsely deny users with many memberships.
 | `api/app/src/auth` | Clerk auth/session helpers, org membership lookup, org admin assertions, pagination and access errors. | GitHub-specific redirect or provider workflow logic. |
 | `@repo/github-app-node` | GitHub URL builders, PKCE, OAuth code exchange, app JWTs, user-accessible installation listing and verification. | Lightfast auth, DB, Redis, Clerk, environment loading. |
 | `@repo/github-app-contract` | Isomorphic route constants, error codes, client-safe schemas, normalized GitHub installation shape. | Node-only code, secrets, emulator fixtures, Lightfast DB types. |
-| `emulator/github` | Local GitHub-compatible install, OAuth, API routes, fixtures, env printer, emulator tests. | Production runtime imports, Lightfast DB/Clerk/Redis logic. |
+| `emulators/github` | Local GitHub-compatible install, OAuth, API routes, fixtures, env printer, emulator tests. | Production runtime imports, Lightfast DB/Clerk/Redis logic. |
 | `db/app` | Source-control binding repository helpers and conflict errors. | GitHub OAuth, Clerk mirror writes, emulator behavior. |
 
 ## API Service Layout
@@ -152,28 +152,16 @@ duplication, especially paths that currently call
 
 ## Emulator Workspace
 
-Move:
+Move the old internal GitHub emulator package to:
 
 ```text
-internal/github-emulator
+emulators/github
 ```
 
-to:
-
-```text
-emulator/github
-```
-
-Rename the package from:
+Keep the package filter/name as:
 
 ```json
 "@repo/github-emulator"
-```
-
-to:
-
-```json
-"@emulator/github"
 ```
 
 Update references:
@@ -184,12 +172,12 @@ Update references:
 - `pnpm-workspace.yaml`
 - `turbo.json`
 - `pnpm-lock.yaml`
-- README/docs that mention `@repo/github-emulator` or `internal/github-emulator`
+- README/docs that mention the old internal GitHub emulator path
 
 The root workspace should include:
 
 ```yaml
-- emulator/*
+- emulators/*
 ```
 
 The existing `internal/*` workspace remains for true internal config packages.
@@ -291,7 +279,7 @@ Implementation should happen as a structural move with narrow behavior changes:
 2. Move and split `api/app/src/github` into `api/app/src/services/github`.
 3. Move admin access into `api/app/src/auth` and make it paginated.
 4. Update app route handlers and tRPC routers to import from the service path.
-5. Move `internal/github-emulator` to `emulator/github` and rename the package.
+5. Move the old internal GitHub emulator package to `emulators/github`.
 6. Update workspace, Turbo, package scripts, and docs references.
 7. Run focused tests and typecheck.
 
@@ -306,9 +294,9 @@ or production webhook behavior.
   `@api/app/services/github`.
 - GitHub admin membership checks live under `api/app/src/auth`.
 - Admin membership lookup is paginated.
-- No `internal/github-emulator` directory remains.
-- GitHub emulator package lives at `emulator/github` and is named
-  `@emulator/github`.
+- No old internal GitHub emulator directory remains.
+- GitHub emulator package lives at `emulators/github` and is named
+  `@repo/github-emulator`.
 - Root dev scripts still start the GitHub emulator through Portless.
 - `apps/app` route handlers remain thin.
 - Focused tests and `pnpm typecheck` pass.

@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace emulator-aware GitHub setup code with one production-shaped GitHub App flow whose endpoints can point at local `internal/github-emulator` during development.
+**Goal:** Replace emulator-aware GitHub setup code with one production-shaped GitHub App flow whose endpoints can point at local `emulators/github` during development.
 
-**Architecture:** `apps/app` keeps only product route handlers and proxy admission for GitHub callbacks. `api/app` owns Lightfast orchestration, Redis state, admin checks, DB finalization, and Clerk mirroring while using generic endpoint config. `@repo/github-app-node` owns GitHub protocol helpers, and `internal/github-emulator` implements GitHub-compatible install, OAuth, and `/user/installations` behavior behind the same endpoints.
+**Architecture:** `apps/app` keeps only product route handlers and proxy admission for GitHub callbacks. `api/app` owns Lightfast orchestration, Redis state, admin checks, DB finalization, and Clerk mirroring while using generic endpoint config. `@repo/github-app-node` owns GitHub protocol helpers, and `emulators/github` implements GitHub-compatible install, OAuth, and `/user/installations` behavior behind the same endpoints.
 
 **Tech Stack:** pnpm workspaces, Turborepo, Next.js App Router route handlers, tRPC v11, Clerk, Upstash Redis, Drizzle MySQL helpers, `@emulators/github@0.6.0`, `@emulators/core@0.6.0`, Zod, Vitest.
 
@@ -21,7 +21,7 @@ In scope:
 - Remove emulator fields from Redis attempts.
 - Remove environment-specific `verifiedBy` binding metadata.
 - Replace `verifyGitHubEmulatorInstallation` with production-shaped `/user/installations` verification.
-- Extend `internal/github-emulator` with GitHub-compatible install, OAuth, and installation-list routes.
+- Extend `emulators/github` with GitHub-compatible install, OAuth, and installation-list routes.
 - Update tests and local emulator docs.
 
 Out of scope:
@@ -56,20 +56,20 @@ Modify:
 - `apps/app/src/__tests__/app/api/github/github-routes.test.ts` - remove dev install shim tests.
 - `package.json` - start the emulator with the same direct app origin used by `NEXT_PUBLIC_APP_URL`.
 - `apps/app/package.json` - keep `with-related-projects` using the emulator env printer with the direct app origin; no route-specific env names should remain.
-- `internal/github-emulator/package.json` - add `@repo/github-app-contract` for shared product callback constants.
-- `internal/github-emulator/src/fixtures.ts` - print `GITHUB_APP_ENDPOINT_ORIGIN` instead of `GITHUB_INSTALL_URL_OVERRIDE`.
-- `internal/github-emulator/src/env-sh.ts` - continue emitting shell-safe env assignments from the updated fixture env.
-- `internal/github-emulator/src/start.ts` - continue printing updated env values.
-- `internal/github-emulator/src/server.ts` - wrap the emulator fetch handler with GitHub-compatible route handling.
-- `internal/github-emulator/src/__tests__/server.test.ts` - cover install redirect, OAuth PKCE exchange, `/user`, `/user/installations`, and updated env output.
-- `internal/github-emulator/src/__tests__/env.test.ts` - keep runtime origin tests aligned with endpoint origin naming.
-- `internal/github-emulator/README.md` - document the endpoint-origin based local flow.
+- `emulators/github/package.json` - add `@repo/github-app-contract` for shared product callback constants.
+- `emulators/github/src/fixtures.ts` - print `GITHUB_APP_ENDPOINT_ORIGIN` instead of `GITHUB_INSTALL_URL_OVERRIDE`.
+- `emulators/github/src/env-sh.ts` - continue emitting shell-safe env assignments from the updated fixture env.
+- `emulators/github/src/start.ts` - continue printing updated env values.
+- `emulators/github/src/server.ts` - wrap the emulator fetch handler with GitHub-compatible route handling.
+- `emulators/github/src/__tests__/server.test.ts` - cover install redirect, OAuth PKCE exchange, `/user`, `/user/installations`, and updated env output.
+- `emulators/github/src/__tests__/env.test.ts` - keep runtime origin tests aligned with endpoint origin naming.
+- `emulators/github/README.md` - document the endpoint-origin based local flow.
 
 Create:
 
 - `packages/github-app-node/src/installations.ts` - list and verify user-accessible GitHub App installations through `GET /user/installations`.
 - `packages/github-app-node/src/__tests__/installations.test.ts` - verifier tests for pagination, organization-only binding, malformed payloads, and transport failures.
-- `internal/github-emulator/src/github-compatible-routes.ts` - local GitHub-compatible install, OAuth, `/user`, and `/user/installations` handlers.
+- `emulators/github/src/github-compatible-routes.ts` - local GitHub-compatible install, OAuth, `/user`, and `/user/installations` handlers.
 
 Delete:
 
@@ -1633,17 +1633,17 @@ git commit -m "refactor: verify github setup without emulator state"
 ### Task 7: GitHub-Compatible Emulator Routes And Env
 
 **Files:**
-- Create: `internal/github-emulator/src/github-compatible-routes.ts`
-- Modify: `internal/github-emulator/package.json`
+- Create: `emulators/github/src/github-compatible-routes.ts`
+- Modify: `emulators/github/package.json`
 - Modify: `package.json`
 - Modify: `apps/app/package.json`
-- Modify: `internal/github-emulator/src/fixtures.ts`
-- Modify: `internal/github-emulator/src/server.ts`
-- Modify: `internal/github-emulator/src/__tests__/server.test.ts`
+- Modify: `emulators/github/src/fixtures.ts`
+- Modify: `emulators/github/src/server.ts`
+- Modify: `emulators/github/src/__tests__/server.test.ts`
 
 - [ ] **Step 1: Add emulator route tests**
 
-In `internal/github-emulator/src/__tests__/server.test.ts`, update the crypto import:
+In `emulators/github/src/__tests__/server.test.ts`, update the crypto import:
 
 ```ts
 import { createHash, createPrivateKey } from "node:crypto";
@@ -1791,7 +1791,7 @@ Expected: FAIL because the install route, automatic OAuth authorize redirect, PK
 
 - [ ] **Step 3: Update emitted emulator env**
 
-In `internal/github-emulator/src/fixtures.ts`, change `getGitHubEmulatorEnv` to return the generic endpoint origin and remove `installUrl` construction:
+In `emulators/github/src/fixtures.ts`, change `getGitHubEmulatorEnv` to return the generic endpoint origin and remove `installUrl` construction:
 
 ```ts
 export function getGitHubEmulatorEnv(
@@ -1830,7 +1830,7 @@ In `apps/app/package.json`, update the `with-related-projects` env printer call:
 
 - [ ] **Step 5: Add GitHub-compatible route wrapper**
 
-Create `internal/github-emulator/src/github-compatible-routes.ts`:
+Create `emulators/github/src/github-compatible-routes.ts`:
 
 ```ts
 import { createHash, randomBytes } from "node:crypto";
@@ -2164,7 +2164,7 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
 
 - [ ] **Step 6: Wrap the emulator fetch handler**
 
-In `internal/github-emulator/src/server.ts`, import and use the wrapper:
+In `emulators/github/src/server.ts`, import and use the wrapper:
 
 ```ts
 import { createGitHubCompatibleFetch } from "./github-compatible-routes";
@@ -2188,7 +2188,7 @@ const httpServer: Server = serve({
 
 - [ ] **Step 7: Add shared contract dependency**
 
-Add this dependency to `internal/github-emulator/package.json`:
+Add this dependency to `emulators/github/package.json`:
 
 ```json
 "dependencies": {
@@ -2213,7 +2213,7 @@ Expected: PASS.
 Run:
 
 ```bash
-git add package.json apps/app/package.json internal/github-emulator/package.json internal/github-emulator/src/fixtures.ts internal/github-emulator/src/server.ts internal/github-emulator/src/github-compatible-routes.ts internal/github-emulator/src/__tests__/server.test.ts
+git add package.json apps/app/package.json emulators/github/package.json emulators/github/src/fixtures.ts emulators/github/src/server.ts emulators/github/src/github-compatible-routes.ts emulators/github/src/__tests__/server.test.ts
 git commit -m "feat: make github emulator install flow compatible"
 ```
 
@@ -2340,7 +2340,7 @@ git commit -m "refactor: remove app github dev install shim"
 ### Task 9: Boundary Cleanup, Docs, And Verification
 
 **Files:**
-- Modify: `internal/github-emulator/README.md`
+- Modify: `emulators/github/README.md`
 - Modify: `api/app/src/__tests__/org-binding-helpers.test.ts`
 - Check: `apps/app/package.json`
 - Check: `api/app/src/github/index.ts`
@@ -2366,7 +2366,7 @@ This keeps DB helper tests generic because the DB helper stores opaque provider 
 
 - [ ] **Step 2: Update emulator README**
 
-In `internal/github-emulator/README.md`, replace references to `GITHUB_INSTALL_URL_OVERRIDE` and `/api/dev/github/install` with this local flow description:
+In `emulators/github/README.md`, replace references to `GITHUB_INSTALL_URL_OVERRIDE` and `/api/dev/github/install` with this local flow description:
 
 ````md
 The emulator is routed at:
@@ -2417,7 +2417,7 @@ Expected: all commands PASS.
 Run:
 
 ```bash
-rg -n "GITHUB_INSTALL_URL_OVERRIDE" api/app/src apps/app/src packages/github-app-contract/src packages/github-app-node/src internal/github-emulator/src --glob '!**/__tests__/**'
+rg -n "GITHUB_INSTALL_URL_OVERRIDE" api/app/src apps/app/src packages/github-app-contract/src packages/github-app-node/src emulators/github/src --glob '!**/__tests__/**'
 ```
 
 Expected: the only matches are in `api/app/src/github/config.ts`, where the legacy variable is rejected.
@@ -2425,7 +2425,7 @@ Expected: the only matches are in `api/app/src/github/config.ts`, where the lega
 Run:
 
 ```bash
-rg -n "GITHUB_DEV_INSTALL_PATH|verifyGitHubEmulatorInstallation|verifiedBy" api/app/src apps/app/src packages/github-app-contract/src packages/github-app-node/src internal/github-emulator/src --glob '!**/__tests__/**'
+rg -n "GITHUB_DEV_INSTALL_PATH|verifyGitHubEmulatorInstallation|verifiedBy" api/app/src apps/app/src packages/github-app-contract/src packages/github-app-node/src emulators/github/src --glob '!**/__tests__/**'
 ```
 
 Expected: no matches.
@@ -2471,7 +2471,7 @@ GITHUB_INSTALL_URL_OVERRIDE
 Run:
 
 ```bash
-git add internal/github-emulator/README.md api/app/src/__tests__/org-binding-helpers.test.ts
+git add emulators/github/README.md api/app/src/__tests__/org-binding-helpers.test.ts
 git commit -m "docs: update github emulator boundary"
 ```
 

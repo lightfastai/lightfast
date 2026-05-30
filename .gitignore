@@ -15,7 +15,6 @@ playwright-report/
 playwright/.cache/
 test-results/
 e2e-results/
-dogfood-output/
 
 # next.js
 .next/

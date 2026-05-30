@@ -1,10 +1,10 @@
 import { createHash, createPrivateKey } from "node:crypto";
+import { Store } from "@emulators/core";
 import {
   getGitHubStore,
   githubPlugin,
-  Store,
   seedFromConfig,
-} from "@repo/emulators-github";
+} from "@emulators/github";
 import { SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 

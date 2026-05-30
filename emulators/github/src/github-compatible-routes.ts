@@ -1,9 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
-import {
-  getGitHubStore,
-  type Store,
-  type TokenMap,
-} from "@repo/emulators-github";
+import type { Store, TokenMap } from "@emulators/core";
+import { getGitHubStore } from "@emulators/github";
 import { GITHUB_SETUP_PATH } from "@repo/github-app-contract";
 
 import { GITHUB_EMULATOR_FIXTURES } from "./fixtures";
