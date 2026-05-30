@@ -20,6 +20,7 @@ export {
   type InsertOrgSourceControlBinding,
   type InsertPerson,
   type InsertSignal,
+  type InsertUserSourceControlAccount,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
@@ -33,4 +34,8 @@ export {
   people,
   type Signal,
   signals,
+  type UserSourceControlAccount,
+  type UserSourceControlAccountProvider,
+  type UserSourceControlAccountStatus,
+  userSourceControlAccounts,
 } from "./tables";
