@@ -50,7 +50,7 @@ export function SignalDetailSheet({
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent
-        className="inset-y-3 right-3 left-auto h-auto w-full max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-xl border p-0 sm:max-w-md"
+        className="inset-y-3 right-3 left-auto h-auto w-full max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl border p-0 sm:max-w-md"
         showCloseButton={!signal}
         side="right"
       >

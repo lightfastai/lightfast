@@ -3,7 +3,6 @@
 import { Button } from "@repo/ui/components/ui/button";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
-  Calendar,
   CircleDot,
   Flag,
   Gauge,
@@ -36,12 +35,12 @@ function PropertyRow({
   label: string;
 }) {
   return (
-    <div className="grid grid-cols-[8rem_minmax(0,1fr)] items-start gap-2 py-1.5">
-      <span className="flex items-center gap-2 text-muted-foreground text-sm">
+    <div className="flex items-start gap-3 py-2.5">
+      <span className="flex w-36 shrink-0 items-center gap-2.5 text-muted-foreground text-sm">
         {icon}
         {label}
       </span>
-      <div className="min-w-0 text-foreground text-sm">{children}</div>
+      <div className="min-w-0 flex-1 text-foreground text-sm">{children}</div>
     </div>
   );
 }
@@ -54,11 +53,11 @@ function BodySection({
   label: string;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-1.5">
       <h3 className="font-medium text-muted-foreground text-xs uppercase tracking-wide">
         {label}
       </h3>
-      <p className="whitespace-pre-wrap break-words text-foreground text-sm leading-6">
+      <p className="whitespace-pre-wrap break-words text-foreground text-sm leading-relaxed">
         {children}
       </p>
     </div>
@@ -80,11 +79,11 @@ export function SignalDetailContent({
   const createdAt = new Date(signal.createdAt);
   const updatedAt = new Date(signal.updatedAt);
   const peopleRouting = classification?.routing?.classifyPeople;
-  const iconClass = "size-3.5 shrink-0";
+  const iconClass = "size-4 shrink-0";
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 px-4 pt-4">
+      <div className="flex items-center gap-2.5 px-5 pt-5">
         <span className="font-mono text-muted-foreground text-xs">
           {formatSignalIdentifier(signal)}
         </span>
@@ -108,12 +107,12 @@ export function SignalDetailContent({
         </div>
       </div>
 
-      <div className="overflow-y-auto px-4 pb-4">
-        <h2 className="pt-3 pb-4 font-semibold text-foreground text-xl leading-tight">
+      <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-5">
+        <h2 className="pt-4 pb-5 font-semibold text-2xl text-foreground leading-tight tracking-tight">
           {title}
         </h2>
 
-        <div className="divide-y divide-border/40">
+        <div className="flex flex-col">
           {classification ? (
             <PropertyRow
               icon={<CircleDot className={iconClass} />}
@@ -151,31 +150,17 @@ export function SignalDetailContent({
               icon={<Users className={iconClass} />}
               label="People routing"
             >
-              <span>{peopleRouting.shouldRun ? "Yes" : "No"}</span>
-              {peopleRouting.rationale ? (
-                <p className="mt-0.5 text-muted-foreground text-xs">
-                  {peopleRouting.rationale}
-                </p>
-              ) : null}
+              {peopleRouting.shouldRun ? "Yes" : "No"}
             </PropertyRow>
           ) : null}
           <PropertyRow icon={<KeyRound className={iconClass} />} label="Source">
             {source.label}
           </PropertyRow>
-          <PropertyRow
-            icon={<Calendar className={iconClass} />}
-            label="Created"
-          >
-            <time
-              dateTime={createdAt.toISOString()}
-              title={createdAt.toISOString()}
-            >
-              {formatRelativeTimeToNow(createdAt, { addSuffix: true })}
-            </time>
-          </PropertyRow>
         </div>
 
-        <div className="mt-6 space-y-5 border-border/60 border-t pt-5">
+        <div className="my-6 border-border/60 border-t" />
+
+        <div className="flex flex-col gap-5">
           <BodySection label="Input">{signal.input}</BodySection>
           {classification?.summary ? (
             <BodySection label="Summary">{classification.summary}</BodySection>
@@ -191,7 +176,7 @@ export function SignalDetailContent({
             </BodySection>
           ) : null}
           {signal.status === "failed" ? (
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <h3 className="font-medium text-destructive text-xs uppercase tracking-wide">
                 Error
               </h3>
@@ -208,16 +193,16 @@ export function SignalDetailContent({
             </div>
           ) : null}
         </div>
+      </div>
 
-        <div className="mt-6 border-border/60 border-t pt-4 text-muted-foreground text-xs">
-          <span title={createdAt.toISOString()}>
-            Created {formatRelativeTimeToNow(createdAt, { addSuffix: true })}
-          </span>
-          <span aria-hidden="true"> · </span>
-          <span title={updatedAt.toISOString()}>
-            Updated {formatRelativeTimeToNow(updatedAt, { addSuffix: true })}
-          </span>
-        </div>
+      <div className="border-border/60 border-t px-5 py-3.5 text-muted-foreground text-xs">
+        <span title={createdAt.toISOString()}>
+          Created {formatRelativeTimeToNow(createdAt, { addSuffix: true })}
+        </span>
+        <span aria-hidden="true"> · </span>
+        <span title={updatedAt.toISOString()}>
+          Updated {formatRelativeTimeToNow(updatedAt, { addSuffix: true })}
+        </span>
       </div>
     </div>
   );
