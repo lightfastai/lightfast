@@ -4,6 +4,7 @@ const createJwtMock = vi.fn();
 const createTokenMock = vi.fn();
 const getCommitMock = vi.fn();
 const getTreeMock = vi.fn();
+const getBindingMock = vi.fn();
 const getWatchByIdMock = vi.fn();
 const markDeliveryMock = vi.fn();
 const markPushProcessedMock = vi.fn();
@@ -20,6 +21,7 @@ vi.mock("../inngest/client", () => ({
 }));
 
 vi.mock("@db/app", () => ({
+  getOrgBindingByProviderInstallation: getBindingMock,
   getWatchedSourceControlRepositoryById: getWatchByIdMock,
   markSourceControlWebhookDeliveryStatus: markDeliveryMock,
   markWatchedSourceControlRepositoryPushProcessed: markPushProcessedMock,
@@ -60,7 +62,14 @@ describe("source control repository sync workflow", () => {
     });
     getWatchByIdMock.mockResolvedValue({
       id: 9,
+      orgSourceControlBindingId: 1,
+      providerRepositoryId: "2002",
       watchedPathGlobs: ["skills/**"],
+    });
+    getBindingMock.mockResolvedValue({
+      id: 1,
+      providerInstallationId: "1001",
+      status: "active",
     });
     getTreeMock.mockResolvedValue({
       sha: "tree-sha",
@@ -157,6 +166,7 @@ describe("source control repository sync workflow", () => {
     expect(result).toEqual({ status: "missing-watch" });
     expect(createJwtMock).not.toHaveBeenCalled();
     expect(createTokenMock).not.toHaveBeenCalled();
+    expect(getBindingMock).not.toHaveBeenCalled();
     expect(getCommitMock).not.toHaveBeenCalled();
     expect(getTreeMock).not.toHaveBeenCalled();
     expect(markPushProcessedMock).not.toHaveBeenCalled();
@@ -164,6 +174,116 @@ describe("source control repository sync workflow", () => {
       {},
       {
         deliveryId: "delivery-2",
+        status: "ignored",
+      }
+    );
+  });
+
+  it("marks delivery ignored when the source control binding is no longer active", async () => {
+    getWatchByIdMock.mockResolvedValue({
+      id: 9,
+      orgSourceControlBindingId: 1,
+      providerRepositoryId: "2002",
+      watchedPathGlobs: ["skills/**"],
+    });
+    getBindingMock.mockResolvedValue({
+      id: 1,
+      providerInstallationId: "1001",
+      status: "revoked",
+    });
+    markDeliveryMock.mockResolvedValue(true);
+
+    const { syncSourceControlRepository } = await import(
+      "../inngest/workflow/sync-source-control-repository"
+    );
+    const workflow = syncSourceControlRepository as unknown as {
+      handler: (input: unknown) => Promise<unknown>;
+    };
+
+    const result = await workflow.handler({
+      event: {
+        data: {
+          afterSha: "a".repeat(40),
+          beforeSha: "b".repeat(40),
+          deliveryId: "delivery-binding-revoked",
+          orgSourceControlBindingId: 1,
+          providerInstallationId: "1001",
+          providerRepositoryId: "2002",
+          ref: "refs/heads/main",
+          repositoryFullName: "lightfast-emulated/workspace",
+          repositoryWatchId: 9,
+        },
+      },
+      step: {
+        run: async (_name: string, fn: () => unknown) => await fn(),
+      },
+    } as never);
+
+    expect(result).toEqual({ status: "missing-binding" });
+    expect(createJwtMock).not.toHaveBeenCalled();
+    expect(createTokenMock).not.toHaveBeenCalled();
+    expect(getCommitMock).not.toHaveBeenCalled();
+    expect(getTreeMock).not.toHaveBeenCalled();
+    expect(markPushProcessedMock).not.toHaveBeenCalled();
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-binding-revoked",
+        status: "ignored",
+      }
+    );
+  });
+
+  it("marks delivery ignored when the watched repository no longer matches the event", async () => {
+    getWatchByIdMock.mockResolvedValue({
+      id: 9,
+      orgSourceControlBindingId: 1,
+      providerRepositoryId: "different-repo",
+      watchedPathGlobs: ["skills/**"],
+    });
+    getBindingMock.mockResolvedValue({
+      id: 1,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    markDeliveryMock.mockResolvedValue(true);
+
+    const { syncSourceControlRepository } = await import(
+      "../inngest/workflow/sync-source-control-repository"
+    );
+    const workflow = syncSourceControlRepository as unknown as {
+      handler: (input: unknown) => Promise<unknown>;
+    };
+
+    const result = await workflow.handler({
+      event: {
+        data: {
+          afterSha: "a".repeat(40),
+          beforeSha: "b".repeat(40),
+          deliveryId: "delivery-watch-mismatch",
+          orgSourceControlBindingId: 1,
+          providerInstallationId: "1001",
+          providerRepositoryId: "2002",
+          ref: "refs/heads/main",
+          repositoryFullName: "lightfast-emulated/workspace",
+          repositoryWatchId: 9,
+        },
+      },
+      step: {
+        run: async (_name: string, fn: () => unknown) => await fn(),
+      },
+    } as never);
+
+    expect(result).toEqual({ status: "missing-watch" });
+    expect(createJwtMock).not.toHaveBeenCalled();
+    expect(createTokenMock).not.toHaveBeenCalled();
+    expect(getCommitMock).not.toHaveBeenCalled();
+    expect(getTreeMock).not.toHaveBeenCalled();
+    expect(markPushProcessedMock).not.toHaveBeenCalled();
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-watch-mismatch",
         status: "ignored",
       }
     );
@@ -178,7 +298,14 @@ describe("source control repository sync workflow", () => {
     });
     getWatchByIdMock.mockResolvedValue({
       id: 9,
+      orgSourceControlBindingId: 1,
+      providerRepositoryId: "2002",
       watchedPathGlobs: ["skills/**"],
+    });
+    getBindingMock.mockResolvedValue({
+      id: 1,
+      providerInstallationId: "1001",
+      status: "active",
     });
     getTreeMock.mockResolvedValue({
       sha: "tree-sha",

@@ -1,4 +1,5 @@
 import {
+  getOrgBindingByProviderInstallation,
   getWatchedSourceControlRepositoryById,
   markSourceControlWebhookDeliveryStatus,
   markWatchedSourceControlRepositoryPushProcessed,
@@ -46,7 +47,11 @@ export const syncSourceControlRepository = inngest.createFunction(
         id: event.data.repositoryWatchId,
       })
     );
-    if (!watch) {
+    if (
+      !watch ||
+      watch.orgSourceControlBindingId !== event.data.orgSourceControlBindingId ||
+      watch.providerRepositoryId !== event.data.providerRepositoryId
+    ) {
       await step.run("mark source control delivery ignored", () =>
         markSourceControlWebhookDeliveryStatusOrThrow({
           deliveryId: event.data.deliveryId,
@@ -54,6 +59,27 @@ export const syncSourceControlRepository = inngest.createFunction(
         })
       );
       return { status: "missing-watch" as const };
+    }
+
+    const binding = await step.run("load source control binding", () =>
+      getOrgBindingByProviderInstallation(db, {
+        provider: "github",
+        providerInstallationId: event.data.providerInstallationId,
+      })
+    );
+    if (
+      !binding ||
+      binding.id !== event.data.orgSourceControlBindingId ||
+      binding.providerInstallationId !== event.data.providerInstallationId ||
+      binding.status !== "active"
+    ) {
+      await step.run("mark source control delivery ignored", () =>
+        markSourceControlWebhookDeliveryStatusOrThrow({
+          deliveryId: event.data.deliveryId,
+          status: "ignored",
+        })
+      );
+      return { status: "missing-binding" as const };
     }
 
     const config = getGitHubAppConfig();

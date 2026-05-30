@@ -93,7 +93,7 @@ export async function handleGitHubWebhook(input: {
   });
   const delivery = deliveryRecord.delivery;
 
-  if (delivery.status === "queued" || delivery.status === "processed") {
+  if (delivery.status !== "received") {
     return response(202, { ok: true, duplicate: true });
   }
 
