@@ -10,7 +10,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useSession } from "@vendor/clerk";
 import { ExternalLink, Loader2 } from "lucide-react";
 import type { Route } from "next";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
@@ -104,10 +103,14 @@ export function LightfastRepoSetupClient({
 
             <div className="grid gap-2">
               <Button asChild variant="secondary">
-                <Link href={newRepositoryUrl} target="_blank">
+                <a
+                  href={newRepositoryUrl}
+                  rel="noreferrer noopener"
+                  target="_blank"
+                >
                   <ExternalLink aria-hidden="true" className="h-4 w-4" />
                   Open GitHub
-                </Link>
+                </a>
               </Button>
               <Button
                 disabled={verifyMutation.isPending}
