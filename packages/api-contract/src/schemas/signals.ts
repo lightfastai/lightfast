@@ -45,17 +45,45 @@ export const signalKindSchema = z.enum([
 
 export const signalPrioritySchema = z.enum(["low", "normal", "high", "urgent"]);
 
-export const signalClassificationRoutingSchema = z.object({
-  classifyPeople: z
-    .object({
-      shouldRun: z.boolean(),
-      rationale: z.string().trim().min(1),
-    })
-    .optional(),
+export const signalVisibilityScopeSchema = z.enum([
+  "user",
+  "team",
+  "needs_review",
+]);
+
+export const signalReviewReasonSchema = z.enum([
+  "privacy",
+  "sensitive_person",
+  "authority",
+  "low_confidence",
+  "ambiguous_scope",
+  "other",
+]);
+
+export const signalClassificationRouteDecisionSchema = z.object({
+  shouldRun: z.boolean(),
+  confidence: z.number().min(0).max(1),
+  rationale: z.string().trim().min(1),
 });
 
-export const signalClassificationSchema = z.object({
-  schemaVersion: z.literal("signal.classification.v1"),
+export const signalClassificationRoutingSchema = z.object({
+  visibility: z.object({
+    scope: signalVisibilityScopeSchema,
+    rationale: z.string().trim().min(1),
+  }),
+  review: z.object({
+    required: z.boolean(),
+    reason: signalReviewReasonSchema.nullable(),
+    rationale: z.string().trim().min(1).nullable(),
+  }),
+  routes: z
+    .object({
+      people: signalClassificationRouteDecisionSchema,
+    })
+    .strict(),
+});
+
+const signalClassificationFields = {
   disposition: signalDispositionSchema,
   title: z.string().trim().min(1).max(80),
   summary: z.string().trim().min(1),
@@ -64,8 +92,119 @@ export const signalClassificationSchema = z.object({
   priority: signalPrioritySchema,
   rationale: z.string().trim().min(1),
   confidence: z.number().min(0).max(1),
-  routing: signalClassificationRoutingSchema.optional(),
-});
+  routing: signalClassificationRoutingSchema,
+};
+
+const validateSignalClassificationV2 = (
+  value: {
+    disposition: z.infer<typeof signalDispositionSchema>;
+    routing: z.infer<typeof signalClassificationRoutingSchema>;
+  },
+  ctx: z.RefinementCtx
+) => {
+  const { disposition, routing } = value;
+  const { visibility, review, routes } = routing;
+  const peopleRoute = routes.people;
+
+  if (visibility.scope === "team" && disposition !== "actionable") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["routing", "visibility", "scope"],
+      message: "Team visibility requires an actionable disposition",
+    });
+  }
+
+  if (disposition !== "actionable" && peopleRoute.shouldRun) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["routing", "routes", "people", "shouldRun"],
+      message: "Non-actionable dispositions cannot run people routing",
+    });
+  }
+
+  if (peopleRoute.shouldRun && visibility.scope !== "team") {
+    ctx.addIssue({
+      code: "custom",
+      path: ["routing", "routes", "people", "shouldRun"],
+      message: "People routing requires team visibility",
+    });
+  }
+
+  if (visibility.scope === "needs_review") {
+    if (!review.required) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["routing", "review", "required"],
+        message: "Needs-review visibility requires review",
+      });
+    }
+
+    if (review.reason === null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["routing", "review", "reason"],
+        message: "Needs-review visibility requires a review reason",
+      });
+    }
+
+    if (review.rationale === null) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["routing", "review", "rationale"],
+        message: "Needs-review visibility requires a review rationale",
+      });
+    }
+
+    if (peopleRoute.shouldRun) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["routing", "routes", "people", "shouldRun"],
+        message: "Needs-review visibility stops people routing",
+      });
+    }
+
+    return;
+  }
+
+  if (review.required) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["routing", "review", "required"],
+      message: "Visible user and team signals cannot require review",
+    });
+  }
+
+  if (review.reason !== null) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["routing", "review", "reason"],
+      message: "Visible user and team signals cannot include a review reason",
+    });
+  }
+
+  if (review.rationale !== null) {
+    ctx.addIssue({
+      code: "custom",
+      path: ["routing", "review", "rationale"],
+      message: "Visible user and team signals cannot include a review rationale",
+    });
+  }
+};
+
+const rawSignalClassificationBaseSchema = z.object({
+  schemaVersion: z.literal("signal.classification.v2"),
+  ...signalClassificationFields,
+}).strict();
+
+export const signalClassificationSchema =
+  rawSignalClassificationBaseSchema.superRefine(validateSignalClassificationV2);
+
+export const signalClassificationBaseSchema = signalClassificationSchema;
+
+export const signalClassificationModelOutputSchema =
+  rawSignalClassificationBaseSchema
+    .omit({ schemaVersion: true })
+    .superRefine(validateSignalClassificationV2);
 
 export const createSignalInput = z.object({
   input: z.string().trim().min(1).max(SIGNAL_INPUT_MAX_LENGTH),
@@ -74,6 +213,7 @@ export const createSignalInput = z.object({
 export const createSignalOutput = z.object({
   id: signalIdSchema,
   status: z.literal("queued"),
+  visibilityScope: z.literal("user"),
 });
 
 export const getSignalInput = z.object({
@@ -85,11 +225,17 @@ export const getSignalOutput = z.object({
   input: z.string(),
   status: signalStatusSchema,
   classification: signalClassificationSchema.nullable(),
+  visibilityScope: signalVisibilityScopeSchema,
   createdAt: z.string(),
   updatedAt: z.string(),
 });
 
+export type SignalVisibilityScope = z.infer<typeof signalVisibilityScopeSchema>;
+export type SignalReviewReason = z.infer<typeof signalReviewReasonSchema>;
 export type SignalClassification = z.infer<typeof signalClassificationSchema>;
+export type SignalClassificationModelOutput = z.infer<
+  typeof signalClassificationModelOutputSchema
+>;
 export type SignalClassificationRouting = z.infer<
   typeof signalClassificationRoutingSchema
 >;

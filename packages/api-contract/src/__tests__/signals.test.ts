@@ -1,13 +1,67 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  createSignalOutput,
   createSignalInput,
+  getSignalOutput,
   SIGNAL_ID_PREFIX,
+  signalClassificationBaseSchema,
+  signalClassificationModelOutputSchema,
   signalClassificationSchema,
   signalIdSchema,
   WORKSPACE_SIGNALS_LIMIT,
   WORKSPACE_SIGNALS_WINDOW_DAYS,
 } from "../schemas/signals";
+
+const baseClassification = {
+  schemaVersion: "signal.classification.v2",
+  disposition: "actionable",
+  title: "Review X profile",
+  summary: "The signal mentions an X profile worth engaging.",
+  kind: "engage",
+  nextAction: "Review the profile and decide whether to reply.",
+  priority: "normal",
+  rationale: "The input contains a durable social identity.",
+  confidence: 0.86,
+} as const;
+
+const teamPeopleRouting = {
+  visibility: {
+    scope: "team",
+    rationale: "The profile is relevant to the team's shared workflow.",
+  },
+  review: {
+    required: false,
+    reason: null,
+    rationale: null,
+  },
+  routes: {
+    people: {
+      shouldRun: true,
+      confidence: 0.92,
+      rationale: "The input includes a durable social identity.",
+    },
+  },
+} as const;
+
+const userRouting = {
+  visibility: {
+    scope: "user",
+    rationale: "The signal is only visible to the creator.",
+  },
+  review: {
+    required: false,
+    reason: null,
+    rationale: null,
+  },
+  routes: {
+    people: {
+      shouldRun: false,
+      confidence: 0.2,
+      rationale: "The signal should not enter team people routing.",
+    },
+  },
+} as const;
 
 describe("signal schemas", () => {
   it("trims and accepts non-empty signal input", () => {
@@ -39,54 +93,99 @@ describe("signal schemas", () => {
     ).toThrow("Invalid signal id");
   });
 
-  it("validates signal classification v1", () => {
+  it("validates create signal output with creator visibility", () => {
     expect(
-      signalClassificationSchema.parse({
-        schemaVersion: "signal.classification.v1",
-        disposition: "actionable",
-        title: "Finish Safari testing",
-        summary: "The user has a PR test-plan item left to complete.",
-        kind: "review",
-        nextAction: "Run the mobile Safari test-plan pass.",
-        priority: "high",
-        rationale: "The input describes an unfinished validation step.",
-        confidence: 0.9,
+      createSignalOutput.parse({
+        id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        status: "queued",
+        visibilityScope: "user",
       })
-    ).toMatchObject({
-      schemaVersion: "signal.classification.v1",
-      kind: "review",
+    ).toEqual({
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      status: "queued",
+      visibilityScope: "user",
     });
   });
 
-  it("accepts a signal classification routing hint for people classification", () => {
+  it("validates get signal output with nullable v2 classification and visibility", () => {
+    expect(
+      getSignalOutput.parse({
+        id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        input: "Review this profile",
+        status: "queued",
+        classification: null,
+        visibilityScope: "user",
+        createdAt: "2026-05-30T00:00:00.000Z",
+        updatedAt: "2026-05-30T00:00:00.000Z",
+      })
+    ).toMatchObject({
+      classification: null,
+      visibilityScope: "user",
+    });
+  });
+
+  it("accepts an actionable team signal with people routing", () => {
     expect(
       signalClassificationSchema.parse({
-        schemaVersion: "signal.classification.v1",
-        disposition: "actionable",
-        title: "Talk to Jeevan",
-        summary: "The signal mentions an X profile worth engaging.",
-        kind: "engage",
-        nextAction: "Review the profile and decide whether to reply.",
-        priority: "normal",
-        rationale: "The input contains a durable social identity.",
-        confidence: 0.86,
+        ...baseClassification,
+        routing: teamPeopleRouting,
+      })
+    ).toMatchObject({
+      schemaVersion: "signal.classification.v2",
+      routing: {
+        visibility: { scope: "team" },
+        routes: { people: { shouldRun: true } },
+      },
+    });
+  });
+
+  it("accepts an actionable user signal without people routing", () => {
+    expect(
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        routing: userRouting,
+      })
+    ).toMatchObject({
+      routing: {
+        visibility: { scope: "user" },
+        routes: { people: { shouldRun: false } },
+      },
+    });
+  });
+
+  it("accepts needs_review as a hard route stop", () => {
+    expect(
+      signalClassificationSchema.parse({
+        ...baseClassification,
         routing: {
-          classifyPeople: {
-            shouldRun: true,
-            rationale: "The input includes https://x.com/jeevanp.",
+          visibility: {
+            scope: "needs_review",
+            rationale: "The signal needs a human scope decision.",
+          },
+          review: {
+            required: true,
+            reason: "ambiguous_scope",
+            rationale: "The signal could be personal or shared.",
+          },
+          routes: {
+            people: {
+              shouldRun: false,
+              confidence: 0,
+              rationale: "Human review must happen before routing.",
+            },
           },
         },
       })
     ).toMatchObject({
       routing: {
-        classifyPeople: {
-          shouldRun: true,
-        },
+        visibility: { scope: "needs_review" },
+        review: { required: true },
+        routes: { people: { shouldRun: false } },
       },
     });
   });
 
-  it("rejects an empty people routing rationale", () => {
+  it("rejects legacy v1 classifications", () => {
     expect(() =>
       signalClassificationSchema.parse({
         schemaVersion: "signal.classification.v1",
@@ -98,14 +197,302 @@ describe("signal schemas", () => {
         priority: "normal",
         rationale: "The input contains a durable social identity.",
         confidence: 0.86,
+        routing: teamPeopleRouting,
+      })
+    ).toThrow();
+  });
+
+  it("rejects people routing for needs_review", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
         routing: {
-          classifyPeople: {
-            shouldRun: true,
-            rationale: "   ",
+          visibility: {
+            scope: "needs_review",
+            rationale: "The signal needs a human scope decision.",
+          },
+          review: {
+            required: true,
+            reason: "ambiguous_scope",
+            rationale: "The signal could be personal or shared.",
+          },
+          routes: {
+            people: {
+              shouldRun: true,
+              confidence: 0.8,
+              rationale: "The route must not run before review.",
+            },
           },
         },
       })
     ).toThrow();
+  });
+
+  it("rejects people routing for user visibility", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        routing: {
+          ...userRouting,
+          routes: {
+            people: {
+              shouldRun: true,
+              confidence: 0.8,
+              rationale: "People routing requires team visibility.",
+            },
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects extra route keys under routing routes", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        routing: {
+          ...teamPeopleRouting,
+          routes: {
+            ...teamPeopleRouting.routes,
+            projects: {
+              shouldRun: true,
+              confidence: 0.8,
+              rationale: "Only people routing is part of the v2 contract.",
+            },
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects team visibility for needs_context and not_actionable dispositions", () => {
+    for (const disposition of ["needs_context", "not_actionable"] as const) {
+      expect(() =>
+        signalClassificationSchema.parse({
+          ...baseClassification,
+          disposition,
+          routing: {
+            ...teamPeopleRouting,
+            routes: {
+              people: {
+                shouldRun: false,
+                confidence: 0.1,
+                rationale: "Non-actionable signals cannot route.",
+              },
+            },
+          },
+        })
+      ).toThrow();
+    }
+  });
+
+  it("rejects invalid v2 states through the exported base schema", () => {
+    expect(() =>
+      signalClassificationBaseSchema.parse({
+        ...baseClassification,
+        disposition: "not_actionable",
+        routing: {
+          ...teamPeopleRouting,
+          routes: {
+            people: {
+              shouldRun: false,
+              confidence: 0.1,
+              rationale: "Non-actionable signals cannot use team visibility.",
+            },
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects user and team visibility when review is required", () => {
+    for (const scope of ["user", "team"] as const) {
+      expect(() =>
+        signalClassificationSchema.parse({
+          ...baseClassification,
+          routing: {
+            visibility: {
+              scope,
+              rationale: "This visible scope cannot require review.",
+            },
+            review: {
+              required: true,
+              reason: "privacy",
+              rationale: "Review was requested.",
+            },
+            routes: {
+              people: {
+                shouldRun: false,
+                confidence: 0.1,
+                rationale: "Routing is stopped while review is required.",
+              },
+            },
+          },
+        })
+      ).toThrow();
+    }
+  });
+
+  it("validates model output with v2 invariants and no schema version", () => {
+    const { schemaVersion: _schemaVersion, ...modelOutput } = {
+      ...baseClassification,
+      routing: teamPeopleRouting,
+    };
+
+    expect(signalClassificationModelOutputSchema.parse(modelOutput)).toEqual(
+      modelOutput
+    );
+
+    expect(() =>
+      signalClassificationModelOutputSchema.parse({
+        ...modelOutput,
+        routing: {
+          ...teamPeopleRouting,
+          review: {
+            required: true,
+            reason: "privacy",
+            rationale: "Review was requested.",
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects empty people routing rationale", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        routing: {
+          ...teamPeopleRouting,
+          routes: {
+            people: {
+              shouldRun: true,
+              confidence: 0.8,
+              rationale: "   ",
+            },
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects invalid people routing confidence", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        routing: {
+          ...teamPeopleRouting,
+          routes: {
+            people: {
+              shouldRun: true,
+              confidence: 1.1,
+              rationale: "Confidence must stay in range.",
+            },
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects a needs_review route without review metadata", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        routing: {
+          visibility: {
+            scope: "needs_review",
+            rationale: "The signal needs a human scope decision.",
+          },
+          review: {
+            required: true,
+            reason: null,
+            rationale: null,
+          },
+          routes: {
+            people: {
+              shouldRun: false,
+              confidence: 0,
+              rationale: "Human review must happen before routing.",
+            },
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects visible routes with review metadata", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        routing: {
+          ...userRouting,
+          review: {
+            required: false,
+            reason: "other",
+            rationale: null,
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects non-actionable people routing", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+        disposition: "needs_context",
+        routing: {
+          ...userRouting,
+          routes: {
+            people: {
+              shouldRun: true,
+              confidence: 0.8,
+              rationale: "Non-actionable signals cannot route.",
+            },
+          },
+        },
+      })
+    ).toThrow();
+  });
+
+  it("rejects missing v2 routing", () => {
+    expect(() =>
+      signalClassificationSchema.parse({
+        ...baseClassification,
+      })
+    ).toThrow();
+  });
+
+  it("rejects a model output that includes schema version", () => {
+    expect(() =>
+      signalClassificationModelOutputSchema.parse({
+        ...baseClassification,
+        routing: userRouting,
+      })
+    ).toThrow();
+  });
+
+  it("validates classified get signal output with visibility and v2 classification", () => {
+    expect(
+      getSignalOutput.parse({
+        id: "signal_123e4567-e89b-12d3-a456-426614174000",
+        input: "Review this profile",
+        status: "classified",
+        classification: {
+          ...baseClassification,
+          routing: teamPeopleRouting,
+        },
+        visibilityScope: "team",
+        createdAt: "2026-05-30T00:00:00.000Z",
+        updatedAt: "2026-05-30T00:00:00.000Z",
+      })
+    ).toMatchObject({
+      classification: {
+        disposition: "actionable",
+        routing: { visibility: { scope: "team" } },
+      },
+      visibilityScope: "team",
+    });
   });
 });
 
