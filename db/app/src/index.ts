@@ -80,6 +80,17 @@ export {
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
 export {
+  getSourceControlWebhookDeliveryByDeliveryId,
+  getWatchedSourceControlRepository,
+  getWatchedSourceControlRepositoryById,
+  markSourceControlWebhookDeliveryStatus,
+  recordSourceControlWebhookDeliveryReceived,
+  updateWatchedSourceControlRepositoryLastProcessedSha,
+  updateWatchedSourceControlRepositoryLastSeenSha,
+  type UpsertWatchedSourceControlRepositoryInput,
+  upsertWatchedSourceControlRepository,
+} from "./utils/source-control-repositories";
+export {
   getPersonByIdentityKey,
   type ListPeopleParams,
   listPeople,
