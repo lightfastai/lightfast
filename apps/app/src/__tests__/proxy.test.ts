@@ -403,6 +403,19 @@ describe("proxy pending-session route handling", () => {
     );
   });
 
+  it("requires auth for the old dev GitHub install shim when auth is expired", async () => {
+    authMock.mockRejectedValue(new Error("Token expired"));
+
+    await expect(invoke("/api/dev/github/install")).rejects.toThrow(
+      "Token expired"
+    );
+
+    expect(clerkProxyRequestMock).toHaveBeenCalledWith(
+      "/api/dev/github/install"
+    );
+    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
+  });
+
   it("does not run microfrontend routing for app-owned API routes", async () => {
     const { response } = await invoke("/api/v1/system/health");
 
