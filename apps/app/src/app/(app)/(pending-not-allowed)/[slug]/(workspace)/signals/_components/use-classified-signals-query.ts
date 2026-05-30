@@ -8,7 +8,7 @@ import {
 } from "./signals-model";
 
 const WORKING_SET_REFETCH_MS = 30_000;
-const PROCESSING_REFETCH_MS = 5_000;
+const PROCESSING_REFETCH_MS = 5000;
 
 /**
  * Bounded, projected classified working set — fetched once, unfiltered. Filters

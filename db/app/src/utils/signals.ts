@@ -1,13 +1,11 @@
-import {
-  type SignalClassification,
-  type SignalVisibilityScope,
-  WORKSPACE_SIGNALS_LIMIT,
-  WORKSPACE_SIGNALS_WINDOW_DAYS,
-} from "@repo/api-contract";
-import { and, desc, eq, gte, inArray, like, lt, or, sql } from "drizzle-orm";
+import type { SignalClassification } from "@repo/api-contract";
+import { and, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
+
+const WORKSPACE_SIGNALS_WINDOW_DAYS = 30;
+const WORKSPACE_SIGNALS_LIMIT = 2000;
 
 export interface ListCursor {
   createdAt: Date;
@@ -34,26 +32,8 @@ export interface ListSignalsParams {
   clerkOrgId: string;
   createdByUserId: string;
   cursor?: ListCursor | null;
-  dispositions?: SignalClassification["disposition"][];
-  kinds?: SignalClassification["kind"][];
   limit?: number;
-  peopleRouted?: boolean;
-  priorities?: SignalClassification["priority"][];
-  search?: string;
-  status?: Signal["status"];
   statuses?: Signal["status"][];
-  visibilityScopes?: SignalVisibilityScope[];
-}
-
-function jsonString(path: string) {
-  return sql<string>`json_unquote(json_extract(${signals.classification}, ${path}))`;
-}
-
-function jsonStringIn(path: string, values: string[] | undefined) {
-  if (!values?.length) {
-    return;
-  }
-  return inArray(jsonString(path), values);
 }
 
 export async function listSignals(
@@ -61,33 +41,14 @@ export async function listSignals(
   input: ListSignalsParams
 ): Promise<ListResult<Signal>> {
   const limit = normalizeLimit(input.limit);
-  const search = input.search?.trim();
   const conditions = [
     eq(signals.clerkOrgId, input.clerkOrgId),
     or(
       eq(signals.visibilityScope, "team"),
       eq(signals.createdByUserId, input.createdByUserId)
     ),
-    input.visibilityScopes?.length
-      ? inArray(signals.visibilityScope, input.visibilityScopes)
-      : undefined,
-    input.status ? eq(signals.status, input.status) : undefined,
-    input.statuses?.length ? inArray(signals.status, input.statuses) : undefined,
-    jsonStringIn("$.disposition", input.dispositions),
-    jsonStringIn("$.kind", input.kinds),
-    jsonStringIn("$.priority", input.priorities),
-    input.peopleRouted === true
-      ? eq(jsonString("$.routing.routes.people.shouldRun"), "true")
-      : undefined,
-    search
-      ? or(
-          like(signals.publicId, `%${search}%`),
-          like(signals.input, `%${search}%`),
-          like(jsonString("$.title"), `%${search}%`),
-          like(jsonString("$.summary"), `%${search}%`),
-          like(jsonString("$.nextAction"), `%${search}%`),
-          like(jsonString("$.rationale"), `%${search}%`)
-        )
+    input.statuses?.length
+      ? inArray(signals.status, input.statuses)
       : undefined,
     input.cursor
       ? or(
@@ -132,8 +93,10 @@ export interface WorkspaceSignalListItem {
 
 export interface WorkspaceSignalsResult {
   items: WorkspaceSignalListItem[];
+  limit: number;
   totalCount: number;
   truncated: boolean;
+  windowDays: number;
 }
 
 export interface ListWorkspaceSignalsParams {
@@ -187,7 +150,9 @@ export async function listWorkspaceSignals(
   db: Database,
   input: ListWorkspaceSignalsParams
 ): Promise<WorkspaceSignalsResult> {
-  const cutoff = new Date(Date.now() - WORKSPACE_SIGNALS_WINDOW_DAYS * DAY_IN_MS);
+  const cutoff = new Date(
+    Date.now() - WORKSPACE_SIGNALS_WINDOW_DAYS * DAY_IN_MS
+  );
 
   const rows = await db
     .select({
@@ -229,7 +194,13 @@ export async function listWorkspaceSignals(
       )
     : items.length;
 
-  return { items, totalCount, truncated };
+  return {
+    items,
+    limit: WORKSPACE_SIGNALS_LIMIT,
+    totalCount,
+    truncated,
+    windowDays: WORKSPACE_SIGNALS_WINDOW_DAYS,
+  };
 }
 
 export interface CreateSignalRecordInput {

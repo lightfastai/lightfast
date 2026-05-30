@@ -1,3 +1,4 @@
+import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const createSignalMock = vi.fn();
@@ -14,11 +15,13 @@ vi.mock("../inngest/client", () => ({
 }));
 
 const {
+  SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
+  SignalCreateQueueError,
   createAndQueueSignal,
   isSignalCreateQueueError,
-  SignalCreateQueueError,
-  SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
 } = await import("../signals/create-signal");
+
+const db = { kind: "mock-db" } as unknown as Database;
 
 beforeEach(() => {
   createSignalMock.mockReset();
@@ -36,13 +39,13 @@ beforeEach(() => {
 });
 
 describe("createAndQueueSignal", () => {
-  it("creates a user-visible queued signal and sends an Inngest event", async () => {
+  it("creates a signal and sends the classification event", async () => {
     await expect(
-      createAndQueueSignal({ kind: "mock-db" } as never, {
+      createAndQueueSignal(db, {
         clerkOrgId: "org_test",
-        createdByApiKeyId: "key_test",
+        createdByApiKeyId: null,
         createdByUserId: "user_test",
-        input: "Classify this signal",
+        input: "Create from app UI",
       })
     ).resolves.toEqual({
       id: "signal_123e4567-e89b-12d3-a456-426614174000",
@@ -50,11 +53,11 @@ describe("createAndQueueSignal", () => {
       visibilityScope: "user",
     });
 
-    expect(createSignalMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createSignalMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
-      createdByApiKeyId: "key_test",
+      createdByApiKeyId: null,
       createdByUserId: "user_test",
-      input: "Classify this signal",
+      input: "Create from app UI",
     });
     expect(sendMock).toHaveBeenCalledWith({
       name: "app/signal.created",
@@ -63,59 +66,63 @@ describe("createAndQueueSignal", () => {
         signalId: "signal_123e4567-e89b-12d3-a456-426614174000",
       },
     });
-    expect(markSignalFailedMock).not.toHaveBeenCalled();
   });
 
-  it("marks the signal failed and throws a typed error when enqueue fails", async () => {
-    const cause = new Error("inngest unavailable");
-    sendMock.mockRejectedValueOnce(cause);
-
-    const promise = createAndQueueSignal({ kind: "mock-db" } as never, {
+  it("preserves API key attribution for public API-created signals", async () => {
+    await createAndQueueSignal(db, {
       clerkOrgId: "org_test",
       createdByApiKeyId: "key_test",
       createdByUserId: "user_test",
-      input: "Classify this signal",
+      input: "Create from public API",
     });
 
-    await expect(promise).rejects.toBeInstanceOf(SignalCreateQueueError);
-    await expect(promise).rejects.toMatchObject({
-      message: "Failed to queue signal for classification.",
-      cause,
-    });
-    await expect(promise).rejects.toSatisfy(isSignalCreateQueueError);
-
-    expect(markSignalFailedMock).toHaveBeenCalledWith(expect.anything(), {
-      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+    expect(createSignalMock).toHaveBeenCalledWith(db, {
       clerkOrgId: "org_test",
-      errorCode: SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
-      errorMessage: "inngest unavailable",
+      createdByApiKeyId: "key_test",
+      createdByUserId: "user_test",
+      input: "Create from public API",
     });
   });
 
-  it("preserves the typed queue error when marking the signal failed also fails", async () => {
+  it("marks the created signal failed and throws a typed error when enqueue fails", async () => {
+    sendMock.mockRejectedValueOnce(new Error("inngest unavailable"));
+
+    const error = await createAndQueueSignal(db, {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByUserId: "user_test",
+      input: "Create from app UI",
+    }).catch((caught: unknown) => caught);
+
+    expect(error).toBeInstanceOf(SignalCreateQueueError);
+    expect(isSignalCreateQueueError(error)).toBe(true);
+    expect(markSignalFailedMock).toHaveBeenCalledWith(db, {
+      clerkOrgId: "org_test",
+      errorCode: SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
+      errorMessage: "inngest unavailable",
+      publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
+    });
+  });
+
+  it("preserves the queue error when marking the signal failed also fails", async () => {
     const enqueueError = new Error("inngest unavailable");
     sendMock.mockRejectedValueOnce(enqueueError);
     markSignalFailedMock.mockRejectedValueOnce(
       new Error("database unavailable")
     );
 
-    let thrown: unknown;
-    try {
-      await createAndQueueSignal({ kind: "mock-db" } as never, {
-        clerkOrgId: "org_test",
-        createdByApiKeyId: "key_test",
-        createdByUserId: "user_test",
-        input: "Classify this signal",
-      });
-    } catch (error) {
-      thrown = error;
-    }
+    const error = await createAndQueueSignal(db, {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByUserId: "user_test",
+      input: "Create from app UI",
+    }).catch((caught: unknown) => caught);
 
-    expect(thrown).toBeInstanceOf(SignalCreateQueueError);
-    expect(isSignalCreateQueueError(thrown)).toBe(true);
-    expect(thrown).toMatchObject({
-      message: "Failed to queue signal for classification.",
+    expect(error).toBeInstanceOf(SignalCreateQueueError);
+    expect(isSignalCreateQueueError(error)).toBe(true);
+    expect(error).toMatchObject({
       cause: enqueueError,
+      message: "Failed to queue signal for classification.",
     });
   });
 });

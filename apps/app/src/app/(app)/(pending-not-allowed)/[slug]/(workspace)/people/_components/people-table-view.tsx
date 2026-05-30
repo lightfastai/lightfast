@@ -28,6 +28,7 @@ export function PeopleTableView({
   isError,
   isFetching,
   isFetchingNextPage,
+  isPlaceholderData,
   onSelectPerson,
   refetch,
   rows,
@@ -39,6 +40,7 @@ export function PeopleTableView({
   isError: boolean;
   isFetching: boolean;
   isFetchingNextPage: boolean;
+  isPlaceholderData: boolean;
   onSelectPerson: (publicId: string) => void;
   refetch: () => void;
   rows: PersonRow[];
@@ -84,7 +86,10 @@ export function PeopleTableView({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div
+        aria-busy={isPlaceholderData}
+        className={`min-h-0 flex-1 overflow-y-auto${isPlaceholderData ? "opacity-60 transition-opacity" : ""}`}
+      >
         <div
           className={`${ROW_GRID} h-9 border-border/60 border-b bg-muted/20 px-4 text-muted-foreground text-xs`}
         >
@@ -159,7 +164,7 @@ function PeopleTableRow({
       aria-pressed={isSelected}
       className={
         `${ROW_GRID} min-h-12 w-full border-border/40 border-b px-4 text-left hover:bg-muted/20` +
-        (isSelected ? " bg-muted/30" : " bg-background")
+        (isSelected ? "bg-muted/30" : "bg-background")
       }
       onClick={onSelect}
       type="button"
@@ -173,8 +178,8 @@ function PeopleTableRow({
           className={
             "min-w-0 truncate text-sm" +
             (person.displayName
-              ? " font-medium text-foreground"
-              : " text-muted-foreground")
+              ? "font-medium text-foreground"
+              : "text-muted-foreground")
           }
         >
           {name}

@@ -10,11 +10,11 @@ import {
   type SignalSection,
   signalKindOptions,
 } from "./signals-model";
-import { useSignalsFiltering } from "./use-signals-filtering";
 import {
   useProcessingSignalsQuery,
   useWorkingSetQuery,
 } from "./use-classified-signals-query";
+import { useSignalsFiltering } from "./use-signals-filtering";
 
 export function useSignalsWorkspaceData({
   filters,
@@ -106,11 +106,13 @@ export function useSignalsWorkspaceData({
   return {
     boardSections,
     hasAnyRows: classifiedRows.length + processingRows.length > 0,
+    limit: workingSetQuery.data?.limit ?? 2000,
     processingQueryKey,
     signalsByPublicId,
     totalCount: workingSetQuery.data?.totalCount ?? classifiedRows.length,
     truncated: workingSetQuery.data?.truncated ?? false,
     visibleListSections,
+    windowDays: workingSetQuery.data?.windowDays ?? 30,
     workingSetQueryKey,
   };
 }

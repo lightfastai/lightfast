@@ -1,11 +1,20 @@
-import { createSignal, type Database, markSignalFailed } from "@db/app";
+import type { Database } from "@db/app";
+import { createSignal, markSignalFailed } from "@db/app";
 import type { CreateSignalOutput } from "@repo/api-contract";
 
 export const SIGNAL_ENQUEUE_FAILED_ERROR_CODE = "INNGEST_ENQUEUE_FAILED";
+const QUEUE_ERROR_MESSAGE = "Failed to queue signal for classification.";
+
+export interface CreateAndQueueSignalInput {
+  clerkOrgId: string;
+  createdByApiKeyId: string | null;
+  createdByUserId: string;
+  input: string;
+}
 
 export class SignalCreateQueueError extends Error {
   constructor(cause: unknown) {
-    super("Failed to queue signal for classification.", { cause });
+    super(QUEUE_ERROR_MESSAGE, { cause });
     this.name = "SignalCreateQueueError";
   }
 }
@@ -16,11 +25,20 @@ export function isSignalCreateQueueError(
   return error instanceof SignalCreateQueueError;
 }
 
+function getErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
 export async function createAndQueueSignal(
   db: Database,
-  input: Parameters<typeof createSignal>[1]
+  input: CreateAndQueueSignalInput
 ): Promise<CreateSignalOutput> {
-  const signal = await createSignal(db, input);
+  const signal = await createSignal(db, {
+    clerkOrgId: input.clerkOrgId,
+    createdByApiKeyId: input.createdByApiKeyId,
+    createdByUserId: input.createdByUserId,
+    input: input.input,
+  });
 
   try {
     const { inngest } = await import("../inngest/client");
@@ -37,7 +55,7 @@ export async function createAndQueueSignal(
         publicId: signal.publicId,
         clerkOrgId: signal.clerkOrgId,
         errorCode: SIGNAL_ENQUEUE_FAILED_ERROR_CODE,
-        errorMessage: error instanceof Error ? error.message : String(error),
+        errorMessage: getErrorMessage(error),
       });
     } catch {
       // Preserve the queueing failure as the primary error for API translation.

@@ -47,14 +47,14 @@ export function UserMenu() {
           </p>
         </div>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild className="cursor-pointer rounded-xl">
+        <DropdownMenuItem asChild className="cursor-pointer">
           <Link href={{ pathname: SETTINGS_HREF }} prefetch={true}>
             <Settings className="h-3 w-3" />
             Your Account
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem
-          className="cursor-pointer rounded-xl"
+          className="cursor-pointer"
           onClick={() => void signOut({ redirectUrl: "/sign-in" })}
         >
           Sign out

@@ -3,14 +3,19 @@ import { Suspense } from "react";
 import { UserMenu, UserMenuSkeleton } from "~/components/user-menu";
 
 interface AuthenticatedTopbarProps {
+  actions?: React.ReactNode;
   left?: React.ReactNode;
 }
 
-export function AuthenticatedTopbar({ left }: AuthenticatedTopbarProps) {
+export function AuthenticatedTopbar({
+  actions,
+  left,
+}: AuthenticatedTopbarProps) {
   return (
     <header className="flex h-14 shrink-0 items-center gap-3 px-4">
       {left}
       <div className="ml-auto flex items-center gap-3">
+        {actions}
         <MicrofrontendLink
           className="text-muted-foreground text-sm hover:text-foreground"
           href="/docs/get-started/overview"

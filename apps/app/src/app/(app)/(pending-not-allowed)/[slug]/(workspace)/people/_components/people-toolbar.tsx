@@ -38,8 +38,8 @@ type IconComponent = ComponentType<{ className?: string }>;
 
 interface FilterGroup {
   count: number;
-  id: FilterGroupId;
   icon: IconComponent;
+  id: FilterGroupId;
   label: string;
 }
 
@@ -94,7 +94,7 @@ export function PeopleToolbar({
               {activeFilterCount > 0 ? (
                 <span
                   aria-hidden="true"
-                  className="-top-1 -right-1 absolute flex size-3.5 items-center justify-center rounded-full border border-background bg-muted font-medium text-[0.55rem] text-muted-foreground leading-none"
+                  className="absolute -top-1 -right-1 flex size-3.5 items-center justify-center rounded-full border border-background bg-muted font-medium text-[0.55rem] text-muted-foreground leading-none"
                 >
                   {activeFilterCount}
                 </span>

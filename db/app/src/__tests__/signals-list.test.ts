@@ -162,7 +162,10 @@ const signalColumnToProperty = {
   visibility_scope: "visibilityScope",
 } as const satisfies Record<string, keyof Signal>;
 
-function evaluateVisibleReadPredicate(condition: unknown, row: Signal): boolean {
+function evaluateVisibleReadPredicate(
+  condition: unknown,
+  row: Signal
+): boolean {
   if (!condition || typeof condition !== "object") {
     return false;
   }
@@ -323,7 +326,7 @@ describe("listSignals", () => {
     expect(spies.limit).toHaveBeenCalledWith(101);
   });
 
-  it("accepts creator and visibility scope filters", async () => {
+  it("applies the current user visibility boundary to list queries", async () => {
     const rows = [makeSignal()];
     const { db, spies } = makeListDb(rows);
 
@@ -331,13 +334,20 @@ describe("listSignals", () => {
       listSignals(db, {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
-        visibilityScopes: ["team"],
       })
     ).resolves.toEqual({
       items: rows,
       nextCursor: null,
     });
     expect(spies.where).toHaveBeenCalledOnce();
+    expect(collectPredicateTokens(spies.where.mock.calls[0]![0])).toEqual(
+      expect.arrayContaining([
+        "visibility_scope",
+        "team",
+        "created_by_user_id",
+        "user_test",
+      ])
+    );
   });
 });
 
@@ -468,7 +478,7 @@ describe("markSignalClassified", () => {
   });
 });
 
-type ProjectedRow = {
+interface ProjectedRow {
   classification: Signal["classification"];
   createdAt: Date;
   createdByApiKeyId: string | null;
@@ -476,7 +486,7 @@ type ProjectedRow = {
   id: number;
   publicId: string;
   status: Signal["status"];
-};
+}
 
 function makeProjectedRow(overrides: Partial<ProjectedRow> = {}): ProjectedRow {
   return {
@@ -543,7 +553,10 @@ function collectPredicateTokens(condition: unknown): string[] {
       value?: unknown;
     };
 
-    if (typeof chunk.name === "string" && typeof chunk.columnType === "string") {
+    if (
+      typeof chunk.name === "string" &&
+      typeof chunk.columnType === "string"
+    ) {
       tokens.push(chunk.name);
     }
     if (typeof chunk.value === "string") {
@@ -570,7 +583,9 @@ describe("listWorkspaceSignals", () => {
     });
 
     expect(result.truncated).toBe(false);
+    expect(result.limit).toBe(2000);
     expect(result.totalCount).toBe(1);
+    expect(result.windowDays).toBe(30);
     const item = result.items[0]!;
     expect(item.classification).toMatchObject({
       disposition: "actionable",
@@ -631,14 +646,18 @@ describe("listWorkspaceSignals", () => {
       createdByUserId: "user_test",
     });
 
+    expect(result.limit).toBe(2000);
     expect(result.items).toHaveLength(2000);
     expect(result.truncated).toBe(true);
     expect(result.totalCount).toBe(2500);
+    expect(result.windowDays).toBe(30);
     expect(spies.where).toHaveBeenCalledTimes(2); // list + count
   });
 
   it("keeps a null classification null", async () => {
-    const { db } = makeWorkspaceDb([makeProjectedRow({ classification: null })]);
+    const { db } = makeWorkspaceDb([
+      makeProjectedRow({ classification: null }),
+    ]);
 
     const result = await listWorkspaceSignals(db, {
       clerkOrgId: "org_test",

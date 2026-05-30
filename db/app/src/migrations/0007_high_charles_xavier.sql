@@ -6,7 +6,7 @@ CREATE TABLE `lightfast_signal_views` (
 	`name` varchar(120) NOT NULL,
 	`config` json NOT NULL,
 	`created_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_signal_views_id` PRIMARY KEY(`id`),
 	CONSTRAINT `signal_views_public_id_uq` UNIQUE(`public_id`)
 );

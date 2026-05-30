@@ -21,7 +21,7 @@ export default function SignalsPage() {
         statuses: [...signalProcessingStatuses],
       },
       {
-        staleTime: 5_000,
+        staleTime: 5000,
       }
     )
   );

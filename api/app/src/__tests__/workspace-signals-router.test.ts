@@ -126,9 +126,11 @@ beforeEach(() => {
     nextCursor: { createdAt: signalRow.createdAt, id: signalRow.id },
   });
   listWorkspaceSignalsMock.mockResolvedValue({
-    items: [signalRow],
-    totalCount: 1,
+    items: [],
+    limit: 2000,
+    totalCount: 0,
     truncated: false,
+    windowDays: 30,
   });
   getVisibleSignalByPublicIdMock.mockResolvedValue(signalRow);
   createAndQueueSignalMock.mockResolvedValue({
@@ -138,34 +140,15 @@ beforeEach(() => {
   });
 });
 
-describe("workspaceSignalsRouter.workingSet", () => {
-  it("forwards the active organization and user to the working-set query", async () => {
-    await expect(caller().signals.workingSet()).resolves.toEqual({
-      items: [signalRow],
-      totalCount: 1,
-      truncated: false,
-    });
-
-    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_test",
-      createdByUserId: "user_test",
-    });
-  });
-});
-
 describe("workspaceSignalsRouter.list", () => {
-  it("forwards filters and returns native DB rows unchanged", async () => {
+  it("forwards only cursor, limit, and statuses to the DB list helper", async () => {
+    const cursor = { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 };
+
     await expect(
       caller().signals.list({
-        cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
-        dispositions: ["actionable"],
-        kinds: ["follow_up", "fix"],
+        cursor,
         limit: 25,
-        peopleRouted: true,
-        priorities: ["high", "urgent"],
-        search: "migration",
-        status: "classified",
-        visibilityScopes: ["team"],
+        statuses: ["queued", "processing"],
       })
     ).resolves.toEqual({
       items: [signalRow],
@@ -175,38 +158,21 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
-      cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
-      dispositions: ["actionable"],
-      kinds: ["follow_up", "fix"],
+      cursor,
       limit: 25,
-      peopleRouted: true,
-      priorities: ["high", "urgent"],
-      search: "migration",
-      status: "classified",
-      visibilityScopes: ["team"],
+      statuses: ["queued", "processing"],
     });
   });
 
-  it("normalizes blank search to an unfiltered list request", async () => {
+  it("rejects dormant classified filter inputs", async () => {
     await expect(
-      caller().signals.list({ search: "   " })
-    ).resolves.toMatchObject({
-      items: [signalRow],
-    });
+      caller().signals.list({
+        kinds: ["fix"],
+        search: "migration",
+      } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
 
-    expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_test",
-      createdByUserId: "user_test",
-      cursor: undefined,
-      dispositions: undefined,
-      kinds: undefined,
-      limit: undefined,
-      peopleRouted: undefined,
-      priorities: undefined,
-      search: undefined,
-      status: undefined,
-      visibilityScopes: undefined,
-    });
+    expect(listSignalsMock).not.toHaveBeenCalled();
   });
 
   it("forwards multi-status processing list filters", async () => {
@@ -223,15 +189,8 @@ describe("workspaceSignalsRouter.list", () => {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       cursor: undefined,
-      dispositions: undefined,
-      kinds: undefined,
       limit: 10,
-      peopleRouted: undefined,
-      priorities: undefined,
-      search: undefined,
-      status: undefined,
       statuses: ["queued", "processing"],
-      visibilityScopes: undefined,
     });
   });
 
@@ -290,14 +249,25 @@ describe("workspaceSignalsRouter.list", () => {
       clerkOrgId: "org_other",
       createdByUserId: "user_test",
       cursor: undefined,
-      dispositions: undefined,
-      kinds: undefined,
       limit: undefined,
-      peopleRouted: undefined,
-      priorities: undefined,
-      search: undefined,
-      status: undefined,
-      visibilityScopes: undefined,
+      statuses: undefined,
+    });
+  });
+});
+
+describe("workspaceSignalsRouter.workingSet", () => {
+  it("returns the org-scoped working set with metadata", async () => {
+    await expect(caller().signals.workingSet()).resolves.toEqual({
+      items: [],
+      limit: 2000,
+      totalCount: 0,
+      truncated: false,
+      windowDays: 30,
+    });
+
+    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
     });
   });
 });

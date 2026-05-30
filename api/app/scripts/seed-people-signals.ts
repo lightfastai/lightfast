@@ -32,7 +32,7 @@ async function main() {
   const clerkOrgId = process.env.SEED_CLERK_ORG_ID;
   const createdByUserId = process.env.SEED_CREATED_BY_USER_ID;
 
-  if (!clerkOrgId || !createdByUserId) {
+  if (!(clerkOrgId && createdByUserId)) {
     throw new Error(
       "Set SEED_CLERK_ORG_ID and SEED_CREATED_BY_USER_ID env vars before seeding."
     );

@@ -7,20 +7,28 @@ import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { AppSidebar } from "~/components/app-sidebar";
 import { AuthenticatedTopbar } from "~/components/authenticated-topbar";
+import { WorkspaceCommandMenu } from "~/components/workspace-command-menu";
 
 export default function WorkspaceLayout({
+  actions,
   children,
 }: {
+  actions: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <SidebarProvider className="!h-full !min-h-0 overflow-hidden bg-background">
       <AppSidebar />
       <SidebarInset className="min-h-0 overflow-hidden">
-        <AuthenticatedTopbar left={<SidebarTrigger className="lg:hidden" />} />
-        <div className="min-h-0 flex-1 overflow-y-auto">
-          <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
-        </div>
+        <AuthenticatedTopbar
+          actions={actions}
+          left={<SidebarTrigger className="lg:hidden" />}
+        />
+        <WorkspaceCommandMenu>
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            <Suspense fallback={<PageLoadingSkeleton />}>{children}</Suspense>
+          </div>
+        </WorkspaceCommandMenu>
       </SidebarInset>
     </SidebarProvider>
   );

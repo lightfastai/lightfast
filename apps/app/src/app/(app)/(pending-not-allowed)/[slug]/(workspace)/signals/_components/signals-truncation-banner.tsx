@@ -1,14 +1,17 @@
-import {
-  WORKSPACE_SIGNALS_LIMIT,
-  WORKSPACE_SIGNALS_WINDOW_DAYS,
-} from "@repo/api-contract";
-
 /**
  * Additive banner shown only when the working set is clipped by the cap. Makes
  * the in-memory filtering honest: filters are complete within the window, and
  * any clipping is visible. Silent truncation is forbidden.
  */
-export function SignalsTruncationBanner({ truncated }: { truncated: boolean }) {
+export function SignalsTruncationBanner({
+  limit,
+  truncated,
+  windowDays,
+}: {
+  limit: number;
+  truncated: boolean;
+  windowDays: number;
+}) {
   if (!truncated) {
     return null;
   }
@@ -18,8 +21,8 @@ export function SignalsTruncationBanner({ truncated }: { truncated: boolean }) {
       data-testid="signals-truncation-banner"
       role="status"
     >
-      Showing the {WORKSPACE_SIGNALS_LIMIT.toLocaleString()} most recent of the
-      last {WORKSPACE_SIGNALS_WINDOW_DAYS} days — filters apply to this window.
+      Showing the {limit.toLocaleString()} most recent of the last {windowDays}{" "}
+      days — filters apply to this window.
     </div>
   );
 }

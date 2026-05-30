@@ -58,9 +58,15 @@ export const signalViews = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
+    // NOTE: we intentionally use drizzle's runtime `$onUpdate` hook instead of
+    // the DDL `.onUpdateNow()`. drizzle-kit 0.31.10 emits `ON UPDATE
+    // CURRENT_TIMESTAMP` without the `(3)` precision that a `timestamp(3)`
+    // column requires, which Vitess rejects on CREATE TABLE (errno 1294). The
+    // runtime hook keeps updated-at-on-write semantics without emitting the
+    // invalid DDL clause.
     updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => [

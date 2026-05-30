@@ -3,16 +3,6 @@ import { z } from "zod";
 export const SIGNAL_INPUT_MAX_LENGTH = 4000;
 export const SIGNAL_ID_PREFIX = "signal_";
 
-/**
- * Bounds for the in-memory Signals working set. The list view fetches classified
- * signals from the last WORKSPACE_SIGNALS_WINDOW_DAYS days, capped at
- * WORKSPACE_SIGNALS_LIMIT rows, then filters/sorts entirely client-side. When the
- * window exceeds the cap the server reports `truncated: true` and a banner appears.
- * Promote these to a per-workspace retention setting when the Archived view ships.
- */
-export const WORKSPACE_SIGNALS_WINDOW_DAYS = 30;
-export const WORKSPACE_SIGNALS_LIMIT = 2000;
-
 export const signalIdSchema = z
   .string()
   .regex(
@@ -186,15 +176,18 @@ const validateSignalClassificationV2 = (
     ctx.addIssue({
       code: "custom",
       path: ["routing", "review", "rationale"],
-      message: "Visible user and team signals cannot include a review rationale",
+      message:
+        "Visible user and team signals cannot include a review rationale",
     });
   }
 };
 
-const rawSignalClassificationBaseSchema = z.object({
-  schemaVersion: z.literal("signal.classification.v2"),
-  ...signalClassificationFields,
-}).strict();
+const rawSignalClassificationBaseSchema = z
+  .object({
+    schemaVersion: z.literal("signal.classification.v2"),
+    ...signalClassificationFields,
+  })
+  .strict();
 
 export const signalClassificationSchema =
   rawSignalClassificationBaseSchema.superRefine(validateSignalClassificationV2);

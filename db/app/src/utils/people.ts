@@ -64,9 +64,7 @@ export async function listPeople(
     input.providers?.length
       ? inArray(people.identityProvider, input.providers)
       : undefined,
-    input.types?.length
-      ? inArray(people.identityType, input.types)
-      : undefined,
+    input.types?.length ? inArray(people.identityType, input.types) : undefined,
     input.cursor
       ? or(
           lt(people.createdAt, input.cursor.createdAt),
@@ -161,9 +159,14 @@ export async function upsertPeopleFromCandidates(
       .onDuplicateKeyUpdate({
         set: {
           displayName: sql`COALESCE(${displayName}, ${people.displayName})`,
-          lastSeenSignalId: input.sourceSignalId,
           metadata,
+          // seenCount MUST be assigned before lastSeenSignalId. MySQL evaluates
+          // ON DUPLICATE KEY UPDATE assignments left-to-right, so this CASE has
+          // to read the *previous* lastSeenSignalId before the assignment below
+          // overwrites it — otherwise the condition is always true and the
+          // count never increments past 1.
           seenCount: sql`CASE WHEN ${people.lastSeenSignalId} = ${input.sourceSignalId} THEN ${people.seenCount} ELSE ${people.seenCount} + 1 END`,
+          lastSeenSignalId: input.sourceSignalId,
         },
       });
 

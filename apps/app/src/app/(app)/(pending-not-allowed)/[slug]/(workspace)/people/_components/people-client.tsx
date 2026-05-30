@@ -91,6 +91,7 @@ export function PeopleClient() {
         isError={query.isError}
         isFetching={query.isFetching}
         isFetchingNextPage={query.isFetchingNextPage}
+        isPlaceholderData={query.isPlaceholderData}
         onSelectPerson={(publicId) => void setSelectedPersonId(publicId)}
         refetch={() => void query.refetch()}
         rows={rows}
