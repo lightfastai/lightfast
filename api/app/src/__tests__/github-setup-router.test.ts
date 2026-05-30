@@ -357,4 +357,26 @@ describe("githubSetupRouter", () => {
       },
     });
   });
+
+  it("surfaces transient .lightfast verification failures as server errors", async () => {
+    getActiveOrgBindingMock.mockResolvedValueOnce({
+      id: 7,
+      metadata: {
+        events: ["push"],
+        permissions: { contents: "read" },
+      },
+      provider: "github",
+      providerAccountLogin: "acme",
+      providerInstallationId: "1001",
+    });
+    verifyGitHubInstallationRepositoryMock.mockRejectedValueOnce(
+      new Error("network unavailable")
+    );
+
+    await expect(
+      makeCaller().org.setup.github.verifyLightfastRepo()
+    ).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+    });
+  });
 });

@@ -16,6 +16,14 @@ export type SourceControlWebhookDeliveryStatus = z.infer<
   typeof sourceControlWebhookDeliveryStatusSchema
 >;
 
+const sha1Schema = z
+  .string()
+  .regex(/^[0-9a-f]{40}$/i, "Expected 40-character SHA-1");
+
+const repositoryFullNameSchema = z
+  .string()
+  .regex(/^[^/\s]+\/[^/\s]+$/, "Expected repository full name as owner/repo");
+
 function isSupportedWatchedPathPattern(pattern: string): boolean {
   if (!pattern.includes("*")) {
     return pattern.length > 0;
@@ -39,14 +47,14 @@ export const watchedPathGlobsSchema = z
 export type WatchedPathGlobs = z.infer<typeof watchedPathGlobsSchema>;
 
 export const sourceControlRepositoryPushEventSchema = z.object({
-  afterSha: z.string().min(1),
-  beforeSha: z.string().min(1),
+  afterSha: sha1Schema,
+  beforeSha: sha1Schema,
   deliveryId: z.string().min(1),
   orgSourceControlBindingId: z.number().int().positive(),
   providerInstallationId: z.string().min(1),
   providerRepositoryId: z.string().min(1),
   ref: z.string().min(1),
-  repositoryFullName: z.string().min(1),
+  repositoryFullName: repositoryFullNameSchema,
   repositoryWatchId: z.number().int().positive(),
 });
 

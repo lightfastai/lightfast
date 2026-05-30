@@ -88,7 +88,9 @@ export const githubSetupRouter = {
             code:
               error.code === "github_org_missing"
                 ? "PRECONDITION_FAILED"
-                : "BAD_REQUEST",
+                : error.code === "github_transient_error"
+                  ? "INTERNAL_SERVER_ERROR"
+                  : "BAD_REQUEST",
             message: error.message,
             cause: error,
           });

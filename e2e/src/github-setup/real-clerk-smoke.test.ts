@@ -9,10 +9,10 @@ describe("real Clerk GitHub setup smoke helpers", () => {
         nowMs: Date.parse("2026-05-30T11:45:30.000Z"),
         prefix: "lf-e2e",
       })
-    ).toBe("lf-e2e-1780141530");
+    ).toBe("lf-e2e-1780141530000");
   });
 
-  it("resolves required config without reading secrets into logs", () => {
+  it("resolves required config from explicit smoke inputs", () => {
     const config = buildSmokeConfig({
       env: {
         LIGHTFAST_E2E_CLERK_USER_ID: "user_123",

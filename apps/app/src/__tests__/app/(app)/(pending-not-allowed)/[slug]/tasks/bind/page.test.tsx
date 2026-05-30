@@ -122,22 +122,19 @@ describe("tasks/bind/page — setup page", () => {
     );
   });
 
-  it("renders a bound-org callback error instead of redirecting to completion", async () => {
+  it("redirects a bound org to completion even when a callback error is present", async () => {
     fetchQueryMock.mockResolvedValue({ bindingStatus: "bound" });
 
-    const element = await invoke("acme", {
-      github_error: "org_already_bound",
-    });
-    render(element);
+    await expect(
+      invoke("acme", {
+        github_error: "org_already_bound",
+      })
+    ).rejects.toThrow("NEXT_REDIRECT:/acme/tasks/bind/github/complete");
 
-    expect(redirectMock).not.toHaveBeenCalled();
-    expect(bindCardMock).toHaveBeenCalledWith(
-      {
-        githubError: "org_already_bound",
-        orgSlug: "acme",
-      },
-      undefined
+    expect(redirectMock).toHaveBeenCalledWith(
+      "/acme/tasks/bind/github/complete"
     );
+    expect(bindCardMock).not.toHaveBeenCalled();
   });
 
   it("loads setup status through the tRPC organization slug access query", async () => {

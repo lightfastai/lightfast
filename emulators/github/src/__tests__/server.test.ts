@@ -659,6 +659,10 @@ describe("@repo/github-emulator", () => {
       event: string | null;
       signature: string | null;
     }> = [];
+    let resolveWebhook: (() => void) | undefined;
+    const webhookReceived = new Promise<void>((resolve) => {
+      resolveWebhook = resolve;
+    });
     const receiver = await new Promise<{
       close: () => Promise<void>;
       url: string;
@@ -672,6 +676,7 @@ describe("@repo/github-emulator", () => {
             event: req.headers["x-github-event"]?.toString() ?? null,
             signature: req.headers["x-hub-signature-256"]?.toString() ?? null,
           });
+          resolveWebhook?.();
           res.statusCode = 202;
           res.end("ok");
         });
@@ -699,15 +704,6 @@ describe("@repo/github-emulator", () => {
       });
     });
 
-    async function waitForWebhook(): Promise<void> {
-      for (let attempt = 0; attempt < 20; attempt += 1) {
-        if (received.length > 0) {
-          return;
-        }
-        await new Promise((resolve) => setTimeout(resolve, 50));
-      }
-    }
-
     let receiverEmulator: StartedGitHubEmulator | undefined;
     try {
       receiverEmulator = await startGitHubEmulatorOnAvailablePort({
@@ -734,7 +730,7 @@ describe("@repo/github-emulator", () => {
         token: GITHUB_EMULATOR_FIXTURES.userToken,
       });
 
-      await waitForWebhook();
+      await webhookReceived;
       expect(received.length).toBeGreaterThan(0);
       expect(received[0]).toMatchObject({
         event: "push",

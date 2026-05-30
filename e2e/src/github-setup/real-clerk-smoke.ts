@@ -44,8 +44,8 @@ export function createUniqueOrgSlug(input: {
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/^-+|-+$/g, "")
     .replace(/-+/g, "-");
-  const timestampSeconds = Math.floor((input.nowMs ?? Date.now()) / 1000);
-  return `${prefix || "lf-e2e"}-${timestampSeconds}`;
+  const timestampMs = input.nowMs ?? Date.now();
+  return `${prefix || "lf-e2e"}-${timestampMs}`;
 }
 
 export function buildSmokeConfig(

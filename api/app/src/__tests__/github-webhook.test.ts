@@ -84,7 +84,7 @@ describe("handleGitHubWebhook", () => {
           headers: {
             "x-github-delivery": "delivery-1",
             "x-github-event": "push",
-            "x-hub-signature-256": "sha256=bad",
+            "x-hub-signature-256": `sha256=${"0".repeat(64)}`,
           },
           method: "POST",
         }

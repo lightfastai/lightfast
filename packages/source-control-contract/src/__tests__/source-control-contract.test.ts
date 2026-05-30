@@ -76,4 +76,37 @@ describe("@repo/source-control-contract", () => {
       repositoryFullName: "lightfast-emulated/workspace",
     });
   });
+
+  it("rejects malformed repository push routing fields", () => {
+    const valid = {
+      afterSha: "a".repeat(40),
+      beforeSha: "b".repeat(40),
+      deliveryId: "delivery-1",
+      orgSourceControlBindingId: 1,
+      providerInstallationId: "1001",
+      providerRepositoryId: "2002",
+      ref: "refs/heads/main",
+      repositoryFullName: "lightfast-emulated/workspace",
+      repositoryWatchId: 10,
+    };
+
+    expect(
+      sourceControlRepositoryPushEventSchema.safeParse({
+        ...valid,
+        afterSha: "not-a-sha",
+      }).success
+    ).toBe(false);
+    expect(
+      sourceControlRepositoryPushEventSchema.safeParse({
+        ...valid,
+        beforeSha: "g".repeat(40),
+      }).success
+    ).toBe(false);
+    expect(
+      sourceControlRepositoryPushEventSchema.safeParse({
+        ...valid,
+        repositoryFullName: "group/subgroup/workspace",
+      }).success
+    ).toBe(false);
+  });
 });

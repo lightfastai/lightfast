@@ -74,7 +74,9 @@ export type GitHubInstallationMetadata = z.infer<
 export const githubWebhookHeadersSchema = z.object({
   deliveryId: z.string().min(1),
   event: z.string().min(1),
-  signature256: z.string().min(1),
+  signature256: z
+    .string()
+    .regex(/^sha256=[A-Fa-f0-9]{64}$/, "Expected sha256=<64 hex characters>"),
 });
 export type GitHubWebhookHeaders = z.infer<typeof githubWebhookHeadersSchema>;
 

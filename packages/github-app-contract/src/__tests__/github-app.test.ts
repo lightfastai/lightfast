@@ -104,16 +104,16 @@ describe("GitHub webhook schemas", () => {
       githubWebhookHeadersSchema.parse({
         deliveryId: "delivery-1",
         event: "push",
-        signature256: "sha256=abc",
+        signature256: `sha256=${"a".repeat(64)}`,
       })
     ).toEqual({
       deliveryId: "delivery-1",
       event: "push",
-      signature256: "sha256=abc",
+      signature256: `sha256=${"a".repeat(64)}`,
     });
   });
 
-  it("rejects missing or empty required webhook headers", () => {
+  it("rejects missing, empty, or malformed required webhook headers", () => {
     expect(
       githubWebhookHeadersSchema.safeParse({
         deliveryId: "delivery-1",
@@ -124,7 +124,21 @@ describe("GitHub webhook schemas", () => {
       githubWebhookHeadersSchema.safeParse({
         deliveryId: "",
         event: "push",
+        signature256: `sha256=${"a".repeat(64)}`,
+      }).success
+    ).toBe(false);
+    expect(
+      githubWebhookHeadersSchema.safeParse({
+        deliveryId: "delivery-1",
+        event: "push",
         signature256: "sha256=abc",
+      }).success
+    ).toBe(false);
+    expect(
+      githubWebhookHeadersSchema.safeParse({
+        deliveryId: "delivery-1",
+        event: "push",
+        signature256: `sha1=${"a".repeat(40)}`,
       }).success
     ).toBe(false);
   });

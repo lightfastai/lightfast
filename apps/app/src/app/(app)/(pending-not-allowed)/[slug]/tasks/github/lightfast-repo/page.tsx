@@ -1,3 +1,4 @@
+import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
@@ -20,8 +21,16 @@ export default async function LightfastRepoSetupPage({
   if (gate.bindingStatus === "bound") {
     redirect(`/${slug}/tasks/bind/github/complete` as Route);
   }
-  if (gate.nextSetupRequirement === "github_org") {
-    redirect(`/${slug}/tasks/bind` as Route);
+  if (
+    gate.nextSetupRequirement &&
+    gate.nextSetupRequirement !== "github_lightfast_repo"
+  ) {
+    redirect(
+      pathForSetupRequirement({
+        orgSlug: slug,
+        requirement: gate.nextSetupRequirement,
+      }) as Route
+    );
   }
 
   const sourceControl = await queryClient.fetchQuery(

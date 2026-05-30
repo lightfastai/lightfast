@@ -33,13 +33,14 @@ export default async function BindTaskPage({
     Array.isArray(githubErrorParam) ? githubErrorParam[0] : githubErrorParam
   );
 
+  if (gate.bindingStatus === "bound") {
+    redirect(`/${slug}/tasks/bind/github/complete` as Route);
+  }
+
   if (parsedError.success) {
     return <BindGithubCard githubError={parsedError.data} orgSlug={slug} />;
   }
 
-  if (gate.bindingStatus === "bound") {
-    redirect(`/${slug}/tasks/bind/github/complete` as Route);
-  }
   if (gate.nextSetupRequirement && gate.nextSetupRequirement !== "github_org") {
     redirect(
       pathForSetupRequirement({
