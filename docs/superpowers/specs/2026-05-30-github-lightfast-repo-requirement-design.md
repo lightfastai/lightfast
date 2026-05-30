@@ -48,6 +48,81 @@ Requirement proof:
   verification proof for `<github-org>/.lightfast`, and the proof was produced
   by checking that the same GitHub App installation can access that repository.
 
+## Setup Contract Package
+
+Create a separate isomorphic package for Lightfast setup policy:
+
+```text
+packages/app-setup-contract/
+```
+
+Package name:
+
+```json
+"@repo/app-setup-contract"
+```
+
+This package owns Lightfast setup names and route mapping, not GitHub protocol
+schemas:
+
+```ts
+export const LIGHTFAST_REPOSITORY_NAME = ".lightfast" as const;
+
+export const ORG_SETUP_REQUIREMENTS = [
+  "github_org",
+  "github_lightfast_repo",
+] as const;
+
+export type OrgSetupRequirement = (typeof ORG_SETUP_REQUIREMENTS)[number];
+
+export type OrgSetupGate = {
+  bindingStatus: "bound" | "unbound";
+  nextSetupRequirement: OrgSetupRequirement | null;
+};
+```
+
+It should also export the repair ids and route builders used by proxy,
+diagnostics, API responses, and setup UI:
+
+```ts
+export type OrgSetupRepairId =
+  | "setup-github-org"
+  | "setup-github-lightfast-repo";
+
+export function repairIdForSetupRequirement(
+  requirement: OrgSetupRequirement
+): OrgSetupRepairId;
+
+export function pathForSetupRequirement(input: {
+  orgSlug: string;
+  requirement: OrgSetupRequirement;
+}): string;
+```
+
+It should also own `.lightfast` repository proof and setup error schemas:
+
+```ts
+export const githubLightfastRepositoryProofSchema = z.object({
+  fullName: z.string().min(1),
+  id: z.string().min(1),
+  installationId: z.string().min(1),
+  name: z.literal(LIGHTFAST_REPOSITORY_NAME),
+  verifiedAt: z.string().datetime(),
+});
+
+export const APP_SETUP_ERROR_CODES = [
+  "github_transient_error",
+  "lightfast_repo_missing",
+  "lightfast_repo_inaccessible",
+] as const;
+```
+
+`@repo/github-app-contract` remains the GitHub provider contract package:
+callback paths, GitHub bind error codes, normalized installation schemas, and
+GitHub installation metadata schemas. It should not own Lightfast's setup
+requirement vocabulary, `.lightfast` repository name, or `.lightfast`
+repository proof schema.
+
 ## Goals
 
 - Keep setup requirements explicit and inspectable.
@@ -57,6 +132,7 @@ Requirement proof:
 - Let the proxy and API gates send users to the precise missing requirement.
 - Use one production-shaped GitHub API check in local development and real
   GitHub.
+- Keep Lightfast setup constants out of the GitHub provider contract package.
 - Avoid broad GitHub permissions for automatic repository creation in v1.
 - Avoid a new durable table until repository state grows beyond one proof.
 
@@ -92,7 +168,7 @@ metadata only. The setup mutation writes repository proof after a GitHub check;
 future webhook or reconciliation work can invalidate stale proof if the repo is
 deleted or removed from the installation.
 
-Initial requirement order:
+Initial requirement order lives in `@repo/app-setup-contract`:
 
 ```ts
 const ORG_SETUP_REQUIREMENTS = [
@@ -106,15 +182,16 @@ const ORG_SETUP_REQUIREMENTS = [
 
 ## Metadata
 
-Extend the GitHub installation metadata schema in `@repo/github-app-contract`
-with an optional repository proof:
+Add the `.lightfast` repository proof schema to `@repo/app-setup-contract`.
+This is product setup metadata, not GitHub provider protocol, so
+`@repo/github-app-contract` should not grow another Lightfast-specific field.
 
 ```ts
 type GitHubLightfastRepositoryProof = {
   fullName: string; // "acme/.lightfast"
   id: string;
   installationId: string;
-  name: ".lightfast";
+  name: typeof LIGHTFAST_REPOSITORY_NAME;
   verifiedAt: string; // ISO timestamp
 };
 ```
@@ -135,14 +212,17 @@ Store it under the existing active binding metadata:
 
 The proof is valid only when:
 
-- `lightfastRepository.name === ".lightfast"`;
+- `lightfastRepository.name === LIGHTFAST_REPOSITORY_NAME`;
 - `lightfastRepository.fullName` matches the active binding's
   `providerAccountLogin`;
 - `lightfastRepository.installationId` matches the active binding's
   `providerInstallationId`.
 
 Use a generic DB helper to merge metadata into the active binding row. Do not
-make `db/app` own GitHub-specific policy.
+make `db/app` own GitHub-specific policy. The auth gate should parse the
+repository proof through `@repo/app-setup-contract` while continuing to parse
+base GitHub installation metadata through `@repo/github-app-contract` where
+needed.
 
 ## GitHub Verification
 
@@ -228,6 +308,14 @@ The mutation should:
 7. Mirror the derived gate into Clerk metadata.
 8. Return the new `OrgSetupGate`.
 
+The mutation must be idempotent:
+
+- If no repository proof exists, verify GitHub and write proof.
+- If repository proof exists and matches the active binding's provider account
+  and installation id, return the current gate without error.
+- If repository proof exists but does not match the active binding, ignore the
+  stale proof and re-run verification.
+
 ## Auth And Proxy Changes
 
 Replace `isOrgBound()` usage in auth-facing gates with the derived setup gate:
@@ -247,8 +335,7 @@ Update diagnostics:
 ```ts
 type RepairId =
   | "create-or-join-org"
-  | "setup-github-org"
-  | "setup-github-lightfast-repo";
+  | OrgSetupRepairId;
 ```
 
 When a product route is blocked, the diagnostic should use the repair id derived
@@ -262,10 +349,10 @@ lf_next_setup_requirement?: "github_org" | "github_lightfast_repo";
 ```
 
 When `lf_binding_status !== "bound"`, proxy routing should use
-`lf_next_setup_requirement`:
+`lf_next_setup_requirement` and `pathForSetupRequirement()`:
 
-- `github_org` -> `/:slug/tasks/bind`
-- `github_lightfast_repo` -> `/:slug/tasks/github/lightfast-repo`
+- `github_org` -> `/:slug/tasks/bind`;
+- `github_lightfast_repo` -> `/:slug/tasks/github/lightfast-repo`.
 
 If the next requirement claim is absent or invalid while unbound, fall back to
 `/:slug/tasks/bind`.
@@ -305,11 +392,11 @@ insert it directly into the emulator store for focused unit coverage.
 
 ## Error Handling
 
-Add repository-specific error codes to the GitHub setup contract:
+Add repository-specific setup error codes to `@repo/app-setup-contract`:
 
 ```ts
-type GitHubBindErrorCode =
-  | existing codes
+type AppSetupErrorCode =
+  | "github_transient_error"
   | "lightfast_repo_missing"
   | "lightfast_repo_inaccessible";
 ```
@@ -321,6 +408,12 @@ Use:
 - `lightfast_repo_inaccessible` when the repo exists but the returned
   installation id is different or the app cannot access it;
 - `github_transient_error` for transport errors and 5xx responses.
+
+For `lightfast_repo_inaccessible`, the setup UI should explain the selected-repo
+installation case: the repository may exist, but the GitHub App installation
+does not include it. When the binding metadata has an installation URL or id
+that can be mapped to GitHub settings, the UI should link users to update the
+installation and include `.lightfast`.
 
 Do not expose GitHub access tokens, app JWTs, raw provider responses, or stack
 traces in UI errors.
@@ -336,6 +429,9 @@ Focused tests should cover:
 - gate derivation with both proofs:
   `bindingStatus === "bound"` and `nextSetupRequirement === null`;
 - stale repository proof with mismatched installation id is ignored;
+- repeated `verifyLightfastRepo` calls are idempotent;
+- `pathForSetupRequirement()` maps both requirements to the expected setup
+  routes;
 - GitHub repository verifier succeeds for matching installation id;
 - GitHub repository verifier fails for 404 and mismatched installation id;
 - setup mutation verifies `.lightfast`, updates metadata, mirrors Clerk claims,
@@ -349,6 +445,7 @@ Expected focused commands:
 
 ```bash
 pnpm --filter @repo/github-app-node test
+pnpm --filter @repo/app-setup-contract test
 pnpm --filter @repo/github-app-contract test
 pnpm --filter @api/app test -- src/__tests__/org-setup-gate.test.ts src/__tests__/github-setup-flow.test.ts src/__tests__/github-setup-router.test.ts
 pnpm --filter @lightfast/app test -- src/__tests__/proxy.test.ts src/__tests__/app/\\(app\\)/\\(pending-not-allowed\\)/\\[slug\\]/tasks/bind/page.test.tsx
@@ -358,23 +455,30 @@ pnpm typecheck
 
 ## Migration Plan
 
-1. Add shared requirement names and gate derivation tests.
-2. Implement `api/app/src/auth/org-setup-gate.ts`.
-3. Extend GitHub metadata schemas with `lightfastRepository`.
-4. Add a generic DB metadata merge helper for active bindings.
-5. Add the GitHub repository verifier to `@repo/github-app-node`.
-6. Add the setup mutation that verifies `.lightfast`.
-7. Mirror `lf_next_setup_requirement` into Clerk metadata.
-8. Update tRPC, oRPC, API-key, native auth, and org access surfaces to use the
+1. Create `@repo/app-setup-contract` with requirement names, gate types,
+   `LIGHTFAST_REPOSITORY_NAME`, repair ids, and setup route builders.
+2. Add gate derivation tests.
+3. Implement `api/app/src/auth/org-setup-gate.ts`.
+4. Add `.lightfast` repository proof and setup error schemas to
+   `@repo/app-setup-contract`.
+5. Add a generic DB metadata merge helper for active bindings.
+6. Add the GitHub repository verifier to `@repo/github-app-node`.
+7. Add the idempotent setup mutation that verifies `.lightfast`.
+8. Mirror `lf_next_setup_requirement` into Clerk metadata.
+9. Update tRPC, oRPC, API-key, native auth, and org access surfaces to use the
    derived gate.
-9. Add the `.lightfast` setup page and route-specific error UI.
-10. Update proxy routing for the new requirement.
-11. Extend emulator tests for missing and satisfied repository requirement.
-12. Run focused tests and `pnpm typecheck`.
+10. Add the `.lightfast` setup page and route-specific error UI.
+11. Update proxy routing for the new requirement.
+12. Extend emulator tests for missing and satisfied repository requirement.
+13. Run focused tests and `pnpm typecheck`.
 
 ## Success Criteria
 
 - `github_org` and `github_lightfast_repo` are the only setup requirement names.
+- Setup requirement names and route mapping live in `@repo/app-setup-contract`,
+  not `@repo/github-app-contract`.
+- `.lightfast` repository proof and setup error codes live in
+  `@repo/app-setup-contract`, not `@repo/github-app-contract`.
 - No setup state uses a separate "complete" value.
 - Product access remains controlled by `bindingStatus === "bound"`.
 - `bindingStatus` is derived from requirement satisfaction.
