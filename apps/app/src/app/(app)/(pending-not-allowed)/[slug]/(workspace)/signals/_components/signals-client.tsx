@@ -89,6 +89,8 @@ export function SignalsClient() {
     signalsByPublicId,
     truncated,
     visibleListSections,
+    windowDays,
+    workingSetLimit,
   } = useSignalsWorkspaceData({ filters: deferredFilters });
 
   const prefetchSignal = useCallback(
@@ -169,7 +171,11 @@ export function SignalsClient() {
         view={layout}
       />
 
-      <SignalsTruncationBanner truncated={truncated} />
+      <SignalsTruncationBanner
+        limit={workingSetLimit}
+        truncated={truncated}
+        windowDays={windowDays}
+      />
 
       {layout === "board" ? (
         <SignalsBoardView

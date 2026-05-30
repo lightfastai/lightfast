@@ -185,10 +185,13 @@ const queuedSignal = {
 
 let workingSetData: {
   items: unknown[];
+  limit: number;
   totalCount: number;
   truncated: boolean;
+  windowDays: number;
 };
 let workingSetError = false;
+let processingData: { items: unknown[]; nextCursor: null };
 
 function dispatchQuery(options: { queryKey: unknown[] }) {
   const root = options.queryKey[3];
@@ -202,7 +205,7 @@ function dispatchQuery(options: { queryKey: unknown[] }) {
   }
   if (root === "list") {
     return {
-      data: { items: [queuedSignal], nextCursor: null },
+      data: processingData,
       isError: false,
       isFetching: false,
       refetch: vi.fn(),
@@ -225,9 +228,12 @@ beforeEach(() => {
   signalState = null;
   workingSetData = {
     items: [followUpSignal, fixSignal],
+    limit: 2000,
     totalCount: 2,
     truncated: false,
+    windowDays: 30,
   };
+  processingData = { items: [queuedSignal], nextCursor: null };
   workingSetError = false;
   vi.clearAllMocks();
   useQueryMock.mockImplementation(dispatchQuery);
@@ -299,6 +305,43 @@ describe("SignalsClient", () => {
     expect(screen.getByTestId("signals-truncation-banner")).toBeInTheDocument();
   });
 
+  it("renders truncation copy from working-set metadata", () => {
+    workingSetData = {
+      ...workingSetData,
+      limit: 1234,
+      totalCount: 5000,
+      truncated: true,
+      windowDays: 14,
+    };
+
+    render(<SignalsClient />);
+
+    expect(
+      screen.getByText(
+        "Showing the 1,234 most recent of the last 14 days — filters apply to this window."
+      )
+    ).toBeInTheDocument();
+  });
+
+  it("lets classified rows win over stale processing rows", () => {
+    processingData = {
+      items: [
+        {
+          ...queuedSignal,
+          id: followUpSignal.id,
+          input: "Stale queued copy",
+          publicId: followUpSignal.publicId,
+        },
+      ],
+      nextCursor: null,
+    };
+
+    render(<SignalsClient />);
+
+    expect(screen.getByText("Follow up on migration")).toBeInTheDocument();
+    expect(screen.queryByText("Stale queued copy")).not.toBeInTheDocument();
+  });
+
   it("prefetches a signal body on row hover", () => {
     render(<SignalsClient />);
 
@@ -350,7 +393,13 @@ describe("SignalsClient", () => {
   });
 
   it("shows an empty state when the working set and processing are empty", () => {
-    workingSetData = { items: [], totalCount: 0, truncated: false };
+    workingSetData = {
+      items: [],
+      limit: 2000,
+      totalCount: 0,
+      truncated: false,
+      windowDays: 30,
+    };
     useQueryMock.mockImplementation((options: { queryKey: unknown[] }) => {
       if (options.queryKey[3] === "list") {
         return {
