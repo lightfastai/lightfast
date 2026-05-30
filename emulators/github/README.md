@@ -3,6 +3,11 @@
 Local development harness for the GitHub org binding slice. This package is
 dev-only; production runtime code must not import it.
 
+Production packages may import `@repo/github-app-contract` and
+`@repo/github-app-node`; they must not import `@repo/github-emulator` or files
+under `emulators/github`. The emulator is local infrastructure for the same
+GitHub-compatible endpoints used by the production-shaped setup flow.
+
 ## Run
 
 From the repository root, `pnpm dev` starts the emulator through Portless
