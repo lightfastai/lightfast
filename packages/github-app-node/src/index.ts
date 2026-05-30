@@ -9,7 +9,9 @@ export {
 export {
   exchangeGitHubOAuthCode,
   type GitHubUserTokenSet,
+  type RevokeGitHubOAuthGrantInput,
   refreshGitHubUserAccessToken,
+  revokeGitHubOAuthGrant,
 } from "./oauth";
 export { createGitHubPkcePair, type GitHubPkcePair } from "./pkce";
 export {

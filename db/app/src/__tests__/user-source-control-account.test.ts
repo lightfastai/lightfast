@@ -272,6 +272,7 @@ it("revokes active user account rows by clearing active mirrors", async () => {
       activeProviderUserKey: null,
       status: "revoked",
       revokedAt: expect.any(Date),
+      updatedAt: expect.any(Date),
     })
   );
   const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
@@ -325,6 +326,7 @@ it("updates tokens when finalizing an already active exact user account", async 
       encryptedRefreshToken: "encrypted_refresh_next",
       accessTokenExpiresAt: new Date("2026-05-30T09:00:00.000Z"),
       refreshTokenExpiresAt: new Date("2026-12-01T00:00:00.000Z"),
+      updatedAt: expect.any(Date),
     })
   );
   const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
@@ -420,6 +422,7 @@ it("reactivates historical inactive rows for the same Clerk and provider user", 
       encryptedRefreshToken: "encrypted_refresh_next",
       revokedAt: null,
       status: "active",
+      updatedAt: expect.any(Date),
     })
   );
 });
@@ -459,6 +462,7 @@ it("recovers duplicate historical reactivations for exact active accounts", asyn
     expect.objectContaining({
       encryptedAccessToken: "encrypted_access_next",
       encryptedRefreshToken: "encrypted_refresh_next",
+      updatedAt: expect.any(Date),
     })
   );
 });
@@ -542,6 +546,7 @@ it("recovers zero-row historical reactivations for exact active accounts", async
     expect.objectContaining({
       encryptedAccessToken: "encrypted_access_next",
       encryptedRefreshToken: "encrypted_refresh_next",
+      updatedAt: expect.any(Date),
     })
   );
 });
@@ -612,6 +617,7 @@ it("expires active user account rows by clearing active mirrors", async () => {
       activeProviderUserKey: null,
       status: "expired",
       revokedAt: null,
+      updatedAt: expect.any(Date),
     })
   );
   const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
@@ -687,6 +693,7 @@ it("recovers duplicate inserts for exact active accounts by updating tokens", as
     expect.objectContaining({
       encryptedAccessToken: "encrypted_access_next",
       encryptedRefreshToken: "encrypted_refresh_next",
+      updatedAt: expect.any(Date),
     })
   );
 });

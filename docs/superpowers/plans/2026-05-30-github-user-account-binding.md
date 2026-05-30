@@ -680,7 +680,6 @@ export const userSourceControlAccounts = mysqlTable(
       .notNull(),
     updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
       .notNull(),
   },
   (table) => ({

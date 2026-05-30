@@ -9,6 +9,7 @@ import {
   createGitHubPkcePair,
   exchangeGitHubOAuthCode,
   getGitHubAuthenticatedUser,
+  revokeGitHubOAuthGrant,
 } from "@repo/github-app-node";
 import { auth } from "@vendor/clerk/server";
 
@@ -29,6 +30,7 @@ import {
   userAccountCompleteUrl,
   userAccountSignInRedirect,
 } from "./redirects";
+import { getFreshGitHubUserAccessToken } from "./refresh";
 
 export type { GitHubUserAccountRedirectResult } from "./redirects";
 
@@ -212,6 +214,27 @@ export async function getGitHubUserAccountStatus(input: {
 export async function disconnectGitHubUserAccount(input: {
   clerkUserId: string;
 }): Promise<{ ok: true }> {
+  const account = await getActiveUserSourceControlAccount(
+    db,
+    input.clerkUserId
+  );
+  if (!account) {
+    return { ok: true };
+  }
+
+  const config = getGitHubAppConfig();
+  const { accessToken } = await getFreshGitHubUserAccessToken({
+    clerkUserId: input.clerkUserId,
+    db,
+  });
+  await revokeGitHubOAuthGrant({
+    accessToken,
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+  });
+
   await markUserSourceControlAccountRevoked(db, {
     clerkUserId: input.clerkUserId,
   });

@@ -193,7 +193,11 @@ Recommended columns:
 - `access_token_expires_at TIMESTAMP(3) NOT NULL`
 - `refresh_token_expires_at TIMESTAMP(3) NOT NULL`
 - `created_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)`
-- `updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3)`
+- `updated_at TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3)`
+
+PlanetScale/Vitess rejected the generated MySQL `ON UPDATE CURRENT_TIMESTAMP`
+clause for the fractional timestamp column in local migration testing, so the
+application must set `updated_at` explicitly on every update to this table.
 
 Lifecycle statuses:
 
@@ -358,7 +362,8 @@ Procedures:
   binding, the stable provider user id, and credential lifecycle fields.
 - `start`: returns `{ authorizationUrl }`.
 - `sync`: re-reads DB status for the completion page after callback.
-- `disconnect`: marks the account binding revoked and clears active uniqueness.
+- `disconnect`: revokes the GitHub OAuth grant, then marks the account binding
+  revoked and clears active uniqueness.
 
 All procedures use `viewerProcedure`, not `orgProcedure`, because the binding is
 global to the Lightfast user.
@@ -404,6 +409,8 @@ Extend `emulators/github`:
   `refresh_token`, `refresh_token_expires_in`, `scope`, and `token_type`.
 - Refresh-token exchange accepts `grant_type=refresh_token` and rotates or
   preserves a deterministic local refresh token.
+- Grant revocation deletes the user's emulator access and refresh tokens for
+  the OAuth app.
 - `GET /user` returns the seeded user for the bearer token. Product code should
   use only the stable user id for durable writes.
 - Tests cover the user-account callback path independently from the org
@@ -416,7 +423,8 @@ changes between local and production.
 
 Immediate v1 behavior:
 
-- `disconnect` marks the local row `revoked`.
+- `disconnect` revokes the GitHub OAuth grant before marking the local row
+  `revoked`.
 - Failed refresh or API calls that indicate revoked credentials mark the row
   `revoked`.
 - Expired refresh tokens mark the row `expired`.

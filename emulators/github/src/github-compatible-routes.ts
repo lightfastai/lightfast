@@ -1,3 +1,4 @@
+import { Buffer } from "node:buffer";
 import { createHash, randomBytes } from "node:crypto";
 import type { Store, TokenMap } from "@emulators/core";
 import { getGitHubStore } from "@emulators/github";
@@ -72,6 +73,25 @@ function getBearerToken(request: Request) {
   const header = request.headers.get("authorization") ?? "";
   const match = /^Bearer\s+(.+)$/i.exec(header);
   return match?.[1] ?? null;
+}
+
+function getBasicCredentials(request: Request) {
+  const header = request.headers.get("authorization") ?? "";
+  const match = /^Basic\s+(.+)$/i.exec(header);
+  if (!match?.[1]) {
+    return null;
+  }
+
+  const decoded = Buffer.from(match[1], "base64").toString("utf8");
+  const separatorIndex = decoded.indexOf(":");
+  if (separatorIndex < 0) {
+    return null;
+  }
+
+  return {
+    clientId: decoded.slice(0, separatorIndex),
+    clientSecret: decoded.slice(separatorIndex + 1),
+  };
 }
 
 function authenticateUser(input: { request: Request; store: Store }) {
@@ -467,6 +487,45 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         token_type: "bearer",
         scope: "repo user read:org",
       });
+    }
+
+    const revokeGrantMatch = /^\/applications\/([^/]+)\/grant$/.exec(
+      url.pathname
+    );
+    if (request.method === "DELETE" && revokeGrantMatch) {
+      const clientId = decodeURIComponent(revokeGrantMatch[1] ?? "");
+      const oauthApp = gh.oauthApps.findOneBy("client_id", clientId);
+      const credentials = getBasicCredentials(request);
+      if (
+        !oauthApp ||
+        credentials?.clientId !== clientId ||
+        credentials.clientSecret !== oauthApp.client_secret
+      ) {
+        return json({ message: "Requires authentication" }, 401);
+      }
+
+      const body: Record<string, unknown> = await readBody(request).catch(
+        () => ({})
+      );
+      const accessToken = String(body.access_token ?? "");
+      const tokens = getOAuthUserTokens(input.store);
+      const tokenEntry = tokens.get(accessToken);
+      if (!tokenEntry || tokenEntry.clientId !== clientId) {
+        return json({ message: "Validation Failed" }, 422);
+      }
+
+      for (const [token, entry] of tokens.entries()) {
+        if (
+          entry.appId === tokenEntry.appId &&
+          entry.clientId === tokenEntry.clientId &&
+          entry.login === tokenEntry.login
+        ) {
+          tokens.delete(token);
+          input.tokenMap.delete(token);
+        }
+      }
+
+      return new Response(null, { status: 204 });
     }
 
     if (request.method === "GET" && url.pathname === "/user") {

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   exchangeGitHubOAuthCode,
   refreshGitHubUserAccessToken,
+  revokeGitHubOAuthGrant,
 } from "../oauth";
 
 describe("exchangeGitHubOAuthCode", () => {
@@ -299,6 +300,68 @@ describe("exchangeGitHubOAuthCode", () => {
       client_secret: "secret",
       grant_type: "refresh_token",
       refresh_token: "ghr_old",
+    });
+  });
+
+  it("classifies invalid refresh token responses", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        error: "bad_refresh_token",
+        error_description: "The refresh token passed is incorrect or expired.",
+      })
+    );
+
+    await expect(
+      refreshGitHubUserAccessToken({
+        clientId: "Iv1.lightfastlocal",
+        clientSecret: "secret",
+        fetch: fetchMock,
+        refreshToken: "ghr_old",
+        tokenUrl: "https://github.lightfast.localhost/login/oauth/access_token",
+      })
+    ).rejects.toMatchObject({
+      code: "GITHUB_OAUTH_REFRESH_TOKEN_INVALID",
+    });
+  });
+
+  it("revokes a GitHub App OAuth grant", async () => {
+    const fetchMock = vi.fn(
+      async (
+        _url: Parameters<typeof fetch>[0],
+        _init?: Parameters<typeof fetch>[1]
+      ) => new Response(null, { status: 204 })
+    );
+
+    await expect(
+      revokeGitHubOAuthGrant({
+        accessToken: "ghu_access",
+        apiBaseUrl: "https://github.lightfast.localhost",
+        apiVersion: "2026-03-10",
+        clientId: "Iv1.lightfastlocal",
+        clientSecret: "secret",
+        fetch: fetchMock,
+      })
+    ).resolves.toBeUndefined();
+
+    const call = fetchMock.mock.calls[0];
+    if (!call) {
+      throw new Error("Expected OAuth grant revoke fetch call.");
+    }
+    const [url, init] = call;
+    expect(url).toBe(
+      "https://github.lightfast.localhost/applications/Iv1.lightfastlocal/grant"
+    );
+    expect(init).toMatchObject({
+      method: "DELETE",
+      headers: expect.objectContaining({
+        accept: "application/vnd.github+json",
+        authorization: `Basic ${Buffer.from(
+          "Iv1.lightfastlocal:secret"
+        ).toString("base64")}`,
+        "content-type": "application/json",
+        "x-github-api-version": "2026-03-10",
+      }),
+      body: JSON.stringify({ access_token: "ghu_access" }),
     });
   });
 });

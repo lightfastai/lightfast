@@ -1,7 +1,10 @@
 import { type Database, getActiveUserSourceControlAccount } from "@db/app";
 import { userSourceControlAccounts } from "@db/app/schema";
 import { decrypt, encrypt } from "@repo/app-encryption";
-import { refreshGitHubUserAccessToken } from "@repo/github-app-node";
+import {
+  GitHubAppNodeError,
+  refreshGitHubUserAccessToken,
+} from "@repo/github-app-node";
 import { and, eq } from "drizzle-orm";
 
 import { env } from "../../../env";
@@ -59,6 +62,7 @@ export async function getFreshGitHubUserAccessToken(input: {
       clerkUserId: input.clerkUserId,
       encryptedRefreshToken: account.encryptedRefreshToken,
       id: account.id,
+      now,
     });
     throwRefreshFailed();
   }
@@ -77,7 +81,7 @@ export async function getFreshGitHubUserAccessToken(input: {
       refreshToken,
       tokenUrl: config.endpoints.oauthTokenUrl,
     });
-  } catch {
+  } catch (error) {
     const recovered = await recoverFromConcurrentRefresh({
       clerkUserId: input.clerkUserId,
       db: input.db,
@@ -87,6 +91,14 @@ export async function getFreshGitHubUserAccessToken(input: {
     });
     if (recovered) {
       return recovered;
+    }
+    if (isInvalidRefreshTokenError(error)) {
+      await revokeObservedAccount(input.db, {
+        clerkUserId: input.clerkUserId,
+        encryptedRefreshToken: account.encryptedRefreshToken,
+        id: account.id,
+        now,
+      });
     }
     throwRefreshFailed();
   }
@@ -117,6 +129,7 @@ export async function getFreshGitHubUserAccessToken(input: {
       encryptedAccessToken,
       encryptedRefreshToken,
       refreshTokenExpiresAt,
+      updatedAt: now,
     })
     .where(
       and(
@@ -182,6 +195,7 @@ async function expireObservedAccount(
     clerkUserId: string;
     encryptedRefreshToken: string;
     id: number;
+    now: Date;
   }
 ) {
   await db
@@ -191,6 +205,7 @@ async function expireObservedAccount(
       activeProviderUserKey: null,
       revokedAt: null,
       status: "expired",
+      updatedAt: input.now,
     })
     .where(
       and(
@@ -203,6 +218,44 @@ async function expireObservedAccount(
         eq(userSourceControlAccounts.status, "active")
       )
     );
+}
+
+async function revokeObservedAccount(
+  db: Database,
+  input: {
+    clerkUserId: string;
+    encryptedRefreshToken: string;
+    id: number;
+    now: Date;
+  }
+) {
+  await db
+    .update(userSourceControlAccounts)
+    .set({
+      activeClerkUserId: null,
+      activeProviderUserKey: null,
+      revokedAt: input.now,
+      status: "revoked",
+      updatedAt: input.now,
+    })
+    .where(
+      and(
+        eq(userSourceControlAccounts.id, input.id),
+        eq(userSourceControlAccounts.clerkUserId, input.clerkUserId),
+        eq(
+          userSourceControlAccounts.encryptedRefreshToken,
+          input.encryptedRefreshToken
+        ),
+        eq(userSourceControlAccounts.status, "active")
+      )
+    );
+}
+
+function isInvalidRefreshTokenError(error: unknown): boolean {
+  return (
+    error instanceof GitHubAppNodeError &&
+    error.code === "GITHUB_OAUTH_REFRESH_TOKEN_INVALID"
+  );
 }
 
 function throwRefreshFailed(): never {

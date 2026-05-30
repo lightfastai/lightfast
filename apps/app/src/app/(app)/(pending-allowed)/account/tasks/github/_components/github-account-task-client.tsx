@@ -5,6 +5,7 @@ import { Icons } from "@repo/ui/components/icons";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { CheckCircle2, Loader2 } from "lucide-react";
+import { useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 interface GithubAccountTaskClientProps {
@@ -45,11 +46,17 @@ export function GithubAccountTaskClient({
       meta: { errorTitle: "Failed to connect GitHub" },
     })
   );
+  const [isStarting, setIsStarting] = useState(false);
+  const isStartingRef = useRef(false);
+  const isConnecting = startMutation.isPending || isStarting;
 
   async function handleConnect() {
-    if (startMutation.isPending) {
+    if (isStartingRef.current || startMutation.isPending) {
       return;
     }
+
+    isStartingRef.current = true;
+    setIsStarting(true);
 
     try {
       const result = await startMutation.mutateAsync({
@@ -57,6 +64,8 @@ export function GithubAccountTaskClient({
       });
       window.location.assign(result.authorizationUrl);
     } catch {
+      isStartingRef.current = false;
+      setIsStarting(false);
       // Surfaced to the user by the useMutation meta.errorTitle handler.
     }
   }
@@ -109,10 +118,10 @@ export function GithubAccountTaskClient({
 
             <Button
               className="w-full"
-              disabled={startMutation.isPending}
+              disabled={isConnecting}
               onClick={() => void handleConnect()}
             >
-              {startMutation.isPending ? (
+              {isConnecting ? (
                 <>
                   <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
                   Connecting...

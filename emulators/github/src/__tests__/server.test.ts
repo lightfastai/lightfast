@@ -346,6 +346,66 @@ describe("@repo/github-emulator", () => {
     });
   });
 
+  it("revokes user account OAuth grants", async () => {
+    const codeVerifier = "verifier_123456789012345678901234567890";
+    const code = await authorizeOAuthCode(codeVerifier, {
+      redirectUri: userAccountCallbackUrl(),
+      state: "user_account_state_123",
+    });
+    const tokenRes = await exchangeOAuthCode(code, codeVerifier, {
+      redirectUri: userAccountCallbackUrl(),
+    });
+    expect(tokenRes.status).toBe(200);
+    const tokenBody = (await tokenRes.json()) as {
+      access_token?: string;
+      refresh_token?: string;
+    };
+
+    const revokeRes = await fetch(
+      `${emulator?.url}/applications/${GITHUB_EMULATOR_FIXTURES.oauthClientId}/grant`,
+      {
+        method: "DELETE",
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Basic ${Buffer.from(
+            `${GITHUB_EMULATOR_FIXTURES.oauthClientId}:${GITHUB_EMULATOR_FIXTURES.oauthClientSecret}`
+          ).toString("base64")}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ access_token: tokenBody.access_token }),
+      }
+    );
+    expect(revokeRes.status).toBe(204);
+
+    const userRes = await fetch(`${emulator?.url}/user`, {
+      headers: {
+        authorization: `Bearer ${tokenBody.access_token}`,
+      },
+    });
+    expect(userRes.status).toBe(401);
+
+    const refreshRes = await fetch(
+      `${emulator?.url}/login/oauth/access_token`,
+      {
+        method: "POST",
+        headers: {
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
+          client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
+          grant_type: "refresh_token",
+          refresh_token: tokenBody.refresh_token,
+        }),
+      }
+    );
+    expect(refreshRes.status).toBe(200);
+    await expect(refreshRes.json()).resolves.toMatchObject({
+      error: "bad_refresh_token",
+    });
+  });
+
   it("refreshes user account OAuth tokens after the access token expires", async () => {
     vi.useFakeTimers({ toFake: ["Date"] });
     vi.setSystemTime(new Date("2026-05-30T00:00:00.000Z"));

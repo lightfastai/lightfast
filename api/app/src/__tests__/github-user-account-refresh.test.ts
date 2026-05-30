@@ -39,6 +39,7 @@ vi.mock("@db/app/schema", () => ({
     refreshTokenExpiresAt: "refreshTokenExpiresAt",
     revokedAt: "revokedAt",
     status: "status",
+    updatedAt: "updatedAt",
   },
 }));
 
@@ -195,6 +196,7 @@ describe("github user account token refresh", () => {
         encryptedRefreshToken: "encrypted_next_refresh",
         accessTokenExpiresAt: new Date("2026-05-30T08:00:00.000Z"),
         refreshTokenExpiresAt: new Date("2026-11-28T12:00:00.000Z"),
+        updatedAt: new Date("2026-05-30T00:00:00.000Z"),
       })
     );
   });
@@ -268,6 +270,7 @@ describe("github user account token refresh", () => {
       activeProviderUserKey: null,
       revokedAt: null,
       status: "expired",
+      updatedAt: new Date("2026-05-30T00:00:00.000Z"),
     });
     expect(eqMock).toHaveBeenCalledWith("id", 1);
     expect(eqMock).toHaveBeenCalledWith("clerkUserId", "user_1");
@@ -307,6 +310,52 @@ describe("github user account token refresh", () => {
       code: "GITHUB_USER_ACCOUNT_REFRESH_FAILED",
     });
     expect(markUserSourceControlAccountExpiredMock).not.toHaveBeenCalled();
+  });
+
+  it("revokes only the observed row version when the provider rejects the refresh token", async () => {
+    const updateDb = createUpdateDb();
+    getActiveUserSourceControlAccountMock.mockResolvedValue({
+      id: 1,
+      clerkUserId: "user_1",
+      accessTokenExpiresAt: new Date("2026-05-30T00:30:00.000Z"),
+      encryptedAccessToken: "encrypted_access",
+      encryptedRefreshToken: "encrypted_refresh",
+      refreshTokenExpiresAt: new Date("2026-11-30T00:00:00.000Z"),
+      status: "active",
+    });
+    decryptMock.mockResolvedValueOnce("ghr_refresh");
+    refreshGitHubUserAccessTokenMock.mockRejectedValue(
+      new GitHubAppNodeError(
+        "GITHUB_OAUTH_REFRESH_TOKEN_INVALID",
+        "GitHub OAuth token refresh failed."
+      )
+    );
+
+    await expect(
+      getFreshGitHubUserAccessToken({
+        db: updateDb.db,
+        clerkUserId: "user_1",
+        now: () => new Date("2026-05-30T00:00:00.000Z"),
+        refreshWindowMs: 60 * 60 * 1000,
+      })
+    ).rejects.toMatchObject({
+      code: "GITHUB_USER_ACCOUNT_REFRESH_FAILED",
+    });
+
+    expect(updateDb.setMock).toHaveBeenCalledWith({
+      activeClerkUserId: null,
+      activeProviderUserKey: null,
+      revokedAt: new Date("2026-05-30T00:00:00.000Z"),
+      status: "revoked",
+      updatedAt: new Date("2026-05-30T00:00:00.000Z"),
+    });
+    expect(eqMock).toHaveBeenCalledWith("id", 1);
+    expect(eqMock).toHaveBeenCalledWith("clerkUserId", "user_1");
+    expect(eqMock).toHaveBeenCalledWith(
+      "encryptedRefreshToken",
+      "encrypted_refresh"
+    );
+    expect(eqMock).toHaveBeenCalledWith("status", "active");
   });
 
   it("recovers from stale provider refresh failures when a concurrent refresh already rotated tokens", async () => {

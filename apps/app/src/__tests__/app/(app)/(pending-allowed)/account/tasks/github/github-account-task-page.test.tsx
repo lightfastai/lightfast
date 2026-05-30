@@ -103,4 +103,24 @@ describe("/account/tasks/github", () => {
       );
     });
   });
+
+  it("starts only one account OAuth flow for rapid duplicate clicks", async () => {
+    mutateAsyncMock.mockReturnValue(new Promise(() => undefined));
+
+    render(
+      await GitHubAccountTaskPage({
+        searchParams: Promise.resolve({}),
+      })
+    );
+
+    const connectButton = screen.getByRole("button", {
+      name: /connect github account/i,
+    });
+
+    fireEvent.click(connectButton);
+    fireEvent.click(connectButton);
+
+    expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole("button", { name: /connecting/i })).toBeDisabled();
+  });
 });

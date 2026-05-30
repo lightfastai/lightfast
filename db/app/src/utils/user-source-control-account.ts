@@ -140,6 +140,7 @@ export async function finalizeActiveUserSourceControlAccount(
         refreshTokenExpiresAt: input.refreshTokenExpiresAt,
         revokedAt: null,
         status: "active",
+        updatedAt: new Date(),
       })
       .where(
         and(
@@ -214,6 +215,7 @@ export async function markUserSourceControlAccountRevoked(
       activeProviderUserKey: null,
       status: "revoked",
       revokedAt: new Date(),
+      updatedAt: new Date(),
     })
     .where(
       and(
@@ -252,6 +254,7 @@ export async function markUserSourceControlAccountExpired(
       activeProviderUserKey: null,
       status: "expired",
       revokedAt: null,
+      updatedAt: new Date(),
     })
     .where(
       and(
@@ -329,6 +332,7 @@ async function updateUserSourceControlAccountTokens(
       encryptedRefreshToken: input.encryptedRefreshToken,
       accessTokenExpiresAt: input.accessTokenExpiresAt,
       refreshTokenExpiresAt: input.refreshTokenExpiresAt,
+      updatedAt: new Date(),
     })
     .where(
       and(

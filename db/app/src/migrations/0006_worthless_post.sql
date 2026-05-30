@@ -13,7 +13,7 @@ CREATE TABLE `lightfast_user_source_control_accounts` (
 	`access_token_expires_at` timestamp(3) NOT NULL,
 	`refresh_token_expires_at` timestamp(3) NOT NULL,
 	`created_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_user_source_control_accounts_id` PRIMARY KEY(`id`),
 	CONSTRAINT `user_source_control_accounts_active_user_uq` UNIQUE(`active_clerk_user_id`),
 	CONSTRAINT `user_source_control_accounts_active_provider_user_uq` UNIQUE(`active_provider_user_key`)

@@ -7,10 +7,12 @@ const encryptMock = vi.fn();
 const exchangeGitHubOAuthCodeMock = vi.fn();
 const finalizeActiveUserSourceControlAccountMock = vi.fn();
 const getActiveUserSourceControlAccountMock = vi.fn();
+const getFreshGitHubUserAccessTokenMock = vi.fn();
 const getGitHubAuthenticatedUserMock = vi.fn();
 const issueAttemptMock = vi.fn();
 const lookupAttemptMock = vi.fn();
 const markUserSourceControlAccountRevokedMock = vi.fn();
+const revokeGitHubOAuthGrantMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -31,7 +33,6 @@ vi.mock("@db/app", () => ({
 }));
 
 vi.mock("@repo/app-encryption", () => ({
-  decrypt: vi.fn(),
   encrypt: encryptMock,
 }));
 
@@ -63,6 +64,7 @@ vi.mock("@repo/github-app-node", () => ({
   exchangeGitHubOAuthCode: exchangeGitHubOAuthCodeMock,
   getGitHubAuthenticatedUser: getGitHubAuthenticatedUserMock,
   refreshGitHubUserAccessToken: vi.fn(),
+  revokeGitHubOAuthGrant: revokeGitHubOAuthGrantMock,
   GitHubAppNodeError: class GitHubAppNodeError extends Error {
     constructor(
       readonly code: string,
@@ -89,6 +91,10 @@ vi.mock("../services/github/user-account/attempts", () => ({
   consumeGitHubUserAccountOAuthAttempt: consumeAttemptMock,
   issueGitHubUserAccountOAuthAttempt: issueAttemptMock,
   lookupGitHubUserAccountOAuthAttempt: lookupAttemptMock,
+}));
+
+vi.mock("../services/github/user-account/refresh", () => ({
+  getFreshGitHubUserAccessToken: getFreshGitHubUserAccessTokenMock,
 }));
 
 vi.mock("../services/github/config", () => ({
@@ -145,10 +151,12 @@ describe("github user account flow", () => {
     exchangeGitHubOAuthCodeMock.mockReset();
     finalizeActiveUserSourceControlAccountMock.mockReset();
     getActiveUserSourceControlAccountMock.mockReset();
+    getFreshGitHubUserAccessTokenMock.mockReset();
     getGitHubAuthenticatedUserMock.mockReset();
     issueAttemptMock.mockReset();
     lookupAttemptMock.mockReset();
     markUserSourceControlAccountRevokedMock.mockReset();
+    revokeGitHubOAuthGrantMock.mockReset();
 
     authMock.mockResolvedValue({ userId: "user_1" });
     createGitHubPkcePairMock.mockReturnValue({
@@ -176,6 +184,10 @@ describe("github user account flow", () => {
     encryptMock
       .mockResolvedValueOnce("encrypted_access")
       .mockResolvedValueOnce("encrypted_refresh");
+    getFreshGitHubUserAccessTokenMock.mockResolvedValue({
+      accessToken: "ghu_access",
+    });
+    revokeGitHubOAuthGrantMock.mockResolvedValue(undefined);
   });
 
   it("starts user account OAuth with the user callback redirect uri", async () => {
@@ -452,12 +464,54 @@ describe("github user account flow", () => {
   });
 
   it("disconnects the active user account", async () => {
+    getActiveUserSourceControlAccountMock.mockResolvedValue({
+      encryptedAccessToken: "encrypted_access",
+      status: "active",
+    });
+
     await expect(
       disconnectGitHubUserAccount({ clerkUserId: "user_1" })
     ).resolves.toEqual({ ok: true });
+    expect(getFreshGitHubUserAccessTokenMock).toHaveBeenCalledWith({
+      clerkUserId: "user_1",
+      db: {},
+    });
+    expect(revokeGitHubOAuthGrantMock).toHaveBeenCalledWith({
+      accessToken: "ghu_access",
+      apiBaseUrl: "https://github.lightfast.localhost",
+      apiVersion: "2022-11-28",
+      clientId: "github_client_test",
+      clientSecret: "github_secret_test",
+    });
     expect(markUserSourceControlAccountRevokedMock).toHaveBeenCalledWith(
       {},
       { clerkUserId: "user_1" }
     );
+  });
+
+  it("does not revoke the local row when provider grant revocation fails", async () => {
+    getActiveUserSourceControlAccountMock.mockResolvedValue({
+      encryptedAccessToken: "encrypted_access",
+      status: "active",
+    });
+    revokeGitHubOAuthGrantMock.mockRejectedValue(new Error("github down"));
+
+    await expect(
+      disconnectGitHubUserAccount({ clerkUserId: "user_1" })
+    ).rejects.toThrow("github down");
+
+    expect(markUserSourceControlAccountRevokedMock).not.toHaveBeenCalled();
+  });
+
+  it("returns ok when disconnecting without an active account", async () => {
+    getActiveUserSourceControlAccountMock.mockResolvedValue(undefined);
+
+    await expect(
+      disconnectGitHubUserAccount({ clerkUserId: "user_1" })
+    ).resolves.toEqual({ ok: true });
+
+    expect(revokeGitHubOAuthGrantMock).not.toHaveBeenCalled();
+    expect(getFreshGitHubUserAccessTokenMock).not.toHaveBeenCalled();
+    expect(markUserSourceControlAccountRevokedMock).not.toHaveBeenCalled();
   });
 });

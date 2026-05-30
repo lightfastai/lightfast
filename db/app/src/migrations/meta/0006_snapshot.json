@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "03935a0d-d9e8-4cff-938e-04b98c2e6c2f",
+  "id": "10b0a9ec-ce81-42bd-bc73-cdc2556c722e",
   "prevId": "c8eacdbd-577e-458b-ba61-9e0f2e5528ed",
   "tables": {
     "lightfast_automation_runs": {
@@ -872,7 +872,6 @@
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "onUpdate": true,
           "default": "CURRENT_TIMESTAMP(3)"
         }
       },

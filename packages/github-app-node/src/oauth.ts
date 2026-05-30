@@ -1,8 +1,10 @@
+import { Buffer } from "node:buffer";
 import { z } from "zod";
 
 import { GitHubAppNodeError } from "./errors";
 
 const DEFAULT_GITHUB_OAUTH_EXCHANGE_TIMEOUT_MS = 10_000;
+const DEFAULT_GITHUB_API_VERSION = "2022-11-28";
 
 const githubOAuthTokenResponseSchema = z.object({
   access_token: z.string().min(1),
@@ -11,6 +13,12 @@ const githubOAuthTokenResponseSchema = z.object({
   refresh_token_expires_in: z.number().int().positive().optional(),
   scope: z.string().optional(),
   token_type: z.string().min(1),
+});
+
+const githubOAuthErrorResponseSchema = z.object({
+  error: z.string().min(1),
+  error_description: z.string().optional(),
+  error_uri: z.string().optional(),
 });
 
 export interface GitHubUserTokenSet {
@@ -146,7 +154,7 @@ export async function refreshGitHubUserAccessToken(
     const parsed = githubOAuthTokenResponseSchema.safeParse(json);
     if (!(res.ok && parsed.success)) {
       throw new GitHubAppNodeError(
-        "GITHUB_OAUTH_EXCHANGE_FAILED",
+        refreshTokenFailureCode(json),
         "GitHub OAuth token refresh failed."
       );
     }
@@ -166,6 +174,81 @@ export async function refreshGitHubUserAccessToken(
     throw new GitHubAppNodeError(
       "GITHUB_OAUTH_EXCHANGE_FAILED",
       "GitHub OAuth token refresh failed."
+    );
+  } finally {
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+    }
+  }
+}
+
+function refreshTokenFailureCode(
+  json: unknown
+): "GITHUB_OAUTH_EXCHANGE_FAILED" | "GITHUB_OAUTH_REFRESH_TOKEN_INVALID" {
+  const parsed = githubOAuthErrorResponseSchema.safeParse(json);
+  return parsed.success && parsed.data.error === "bad_refresh_token"
+    ? "GITHUB_OAUTH_REFRESH_TOKEN_INVALID"
+    : "GITHUB_OAUTH_EXCHANGE_FAILED";
+}
+
+export interface RevokeGitHubOAuthGrantInput {
+  accessToken: string;
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  clientId: string;
+  clientSecret: string;
+  fetch?: typeof fetch;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+}
+
+export async function revokeGitHubOAuthGrant(
+  input: RevokeGitHubOAuthGrantInput
+): Promise<void> {
+  const requestFetch = input.fetch ?? fetch;
+  const abortController = input.signal ? undefined : new AbortController();
+  const signal = input.signal ?? abortController?.signal;
+  const timeout =
+    abortController === undefined
+      ? undefined
+      : setTimeout(
+          () => abortController.abort(),
+          input.timeoutMs ?? DEFAULT_GITHUB_OAUTH_EXCHANGE_TIMEOUT_MS
+        );
+
+  try {
+    const baseUrl = input.apiBaseUrl ?? "https://api.github.com";
+    const url = new URL(
+      `/applications/${encodeURIComponent(input.clientId)}/grant`,
+      baseUrl
+    );
+    const res = await requestFetch(url.toString(), {
+      method: "DELETE",
+      signal,
+      headers: {
+        accept: "application/vnd.github+json",
+        authorization: `Basic ${Buffer.from(
+          `${input.clientId}:${input.clientSecret}`
+        ).toString("base64")}`,
+        "content-type": "application/json",
+        "x-github-api-version": input.apiVersion ?? DEFAULT_GITHUB_API_VERSION,
+      },
+      body: JSON.stringify({ access_token: input.accessToken }),
+    });
+
+    if (res.status !== 204) {
+      throw new GitHubAppNodeError(
+        "GITHUB_OAUTH_REVOKE_FAILED",
+        "GitHub OAuth grant revocation failed."
+      );
+    }
+  } catch (error) {
+    if (error instanceof GitHubAppNodeError) {
+      throw error;
+    }
+    throw new GitHubAppNodeError(
+      "GITHUB_OAUTH_REVOKE_FAILED",
+      "GitHub OAuth grant revocation failed."
     );
   } finally {
     if (timeout !== undefined) {
