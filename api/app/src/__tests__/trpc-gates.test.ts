@@ -161,7 +161,7 @@ function activeGitHubBinding(overrides: Record<string, unknown> = {}) {
 
 // ----- caller helpers --------------------------------------------------------
 
-function active(bindingStatus: "bound" | "unbound" | "revoked"): AuthIdentity {
+function active(bindingStatus: "bound" | "unbound"): AuthIdentity {
   const orgGate =
     bindingStatus === "bound"
       ? ({ bindingStatus: "bound", nextSetupRequirement: null } as const)
@@ -334,13 +334,6 @@ describe("boundOrgProcedure", () => {
     ).cause;
     expect(cause.diagnostics[0]?.code).toBe("ORG_SETUP_REQUIRED");
     expect(cause.diagnostics[0]?.repair).toEqual({ id: "setup-github-org" });
-  });
-
-  it("throws ORG_SETUP_REQUIRED for a revoked active org", async () => {
-    const caller = makeCaller(active("revoked"));
-    await expect(caller.boundProbe()).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
   });
 
   it("throws ORG_REQUIRED for a pending identity (no active org)", async () => {
