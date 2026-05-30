@@ -16,16 +16,16 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
+import {
+  normalizeTeamSlugInput,
+  useTeamNameUpdate,
+} from "./team-general-settings-actions";
 
 interface TeamGeneralSettingsClientProps {
   slug: string;
@@ -36,15 +36,16 @@ export function TeamGeneralSettingsClient({
 }: TeamGeneralSettingsClientProps) {
   const router = useRouter();
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
   const { setActive } = useOrganizationList();
-  const [isUpdating, setIsUpdating] = useState(false);
 
   const { data: organizations } = useSuspenseQuery({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
-  const currentOrg = organizations.find((org) => org.slug === slug);
+  const currentOrg = useMemo(
+    () => organizations.find((org) => org.slug === slug),
+    [organizations, slug]
+  );
 
   const form = useFormCompat<TeamSettingsFormValues>({
     resolver: zodResolver(teamSettingsFormSchema),
@@ -57,80 +58,51 @@ export function TeamGeneralSettingsClient({
   const currentFormName = form.watch("teamName");
   const hasChanges = currentFormName !== slug;
 
-  const orgListQueryKey =
-    trpc.viewer.organization.listUserOrganizations.queryOptions().queryKey;
-
-  // Optimistic cache update so sidebar and header reflect the new name instantly
-  const updateNameMutation = useMutation(
-    trpc.org.settings.organization.updateName.mutationOptions({
-      meta: { errorTitle: "Failed to update team name" },
-
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({ queryKey: orgListQueryKey });
-        const previousOrgs = queryClient.getQueryData(orgListQueryKey);
-        queryClient.setQueryData(orgListQueryKey, (old: typeof previousOrgs) =>
-          old?.map((org) =>
-            org.slug === input.slug ? { ...org, slug: input.name } : org
-          )
-        );
-        return { previousOrgs };
-      },
-
-      onError: (_err, _input, context) => {
-        if (context?.previousOrgs) {
-          queryClient.setQueryData(orgListQueryKey, context.previousOrgs);
+  const handleTeamUpdated = useCallback(
+    async (data: { id: string; name: string }) => {
+      try {
+        if (setActive) {
+          await setActive({ organization: data.id });
         }
-      },
 
-      onSuccess: async (data) => {
-        toast.success("Team updated!", {
-          description: `Team name changed to "${data.name}"`,
+        router.refresh();
+        router.push(`/${data.name}/settings`);
+      } catch (error) {
+        console.error("Failed to set active organization:", error);
+        router.push(`/${data.name}/settings`);
+      }
+    },
+    [router, setActive]
+  );
+  const { isUpdating, updateTeamName } = useTeamNameUpdate({
+    onUpdated: handleTeamUpdated,
+  });
+
+  const onSubmit = useCallback(
+    async (values: TeamSettingsFormValues) => {
+      // Trigger validation
+      const isValid = await form.trigger();
+      if (!isValid) {
+        toast.error("Validation failed", {
+          description: "Please fix the errors in the form before submitting.",
         });
+        return;
+      }
 
-        // Update Clerk's active organization before navigation
-        // This ensures cookies are updated before the RSC request
-        try {
-          if (setActive) {
-            await setActive({ organization: data.id });
-          }
-
-          // Refresh router cache to clear any stale RSC data
-          router.refresh();
-
-          // Navigate with updated cookies (client-side navigation)
-          router.push(`/${data.name}/settings`);
-        } catch (error) {
-          console.error("Failed to set active organization:", error);
-          // Still navigate, but may cause temporary mismatch
-          router.push(`/${data.name}/settings`);
-        }
-      },
-
-      onSettled: () => {
-        // Invalidate to ensure consistency with server
-        void queryClient.invalidateQueries({ queryKey: orgListQueryKey });
-        setIsUpdating(false);
-      },
-    })
+      updateTeamName(values.teamName, slug);
+    },
+    [form, slug, updateTeamName]
   );
 
-  const onSubmit = async (values: TeamSettingsFormValues) => {
-    // Trigger validation
-    const isValid = await form.trigger();
-    if (!isValid) {
-      toast.error("Validation failed", {
-        description: "Please fix the errors in the form before submitting.",
-      });
-      return;
-    }
-
-    setIsUpdating(true);
-
-    updateNameMutation.mutate({
-      slug,
-      name: values.teamName,
-    });
-  };
+  const handleTeamNameChange = useCallback(
+    (
+      fieldOnChange: (...event: unknown[]) => void,
+      event: React.ChangeEvent<HTMLInputElement>
+    ) => {
+      fieldOnChange(normalizeTeamSlugInput(event.target.value));
+    },
+    []
+  );
 
   return (
     <div className="space-y-8">
@@ -181,15 +153,9 @@ export function TeamGeneralSettingsClient({
                       <FormControl>
                         <Input
                           {...field}
-                          onChange={(e) => {
-                            // Normalize: lowercase, alphanumeric + hyphens only
-                            const normalized = e.target.value
-                              .toLowerCase()
-                              .replace(/[^a-z0-9-]/g, "")
-                              .replace(/^-+|-+$/g, ""); // Remove leading/trailing hyphens
-
-                            field.onChange(normalized);
-                          }}
+                          onChange={(event) =>
+                            handleTeamNameChange(field.onChange, event)
+                          }
                           placeholder="acme-inc"
                           type="text"
                         />

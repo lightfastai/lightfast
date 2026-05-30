@@ -12,8 +12,11 @@ const checkoutStartMock = vi.fn();
 const getQueryDataMock = vi.fn();
 const invalidateQueriesMock = vi.fn();
 const makeDefaultPaymentMethodMock = vi.fn();
+const overviewQueryKey = ["org", "settings", "orgBilling", "overview"];
+const overviewQueryFilterMock = vi.fn(() => ({ queryKey: overviewQueryKey }));
+const overviewQueryKeyMock = vi.fn(() => overviewQueryKey);
 const overviewQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["org", "settings", "orgBilling", "overview"],
+  queryKey: overviewQueryKey,
 }));
 const paymentSubmitMock = vi.fn();
 const removePaymentMethodMock = vi.fn();
@@ -36,6 +39,8 @@ vi.mock("~/trpc/react", () => ({
       settings: {
         orgBilling: {
           overview: {
+            queryFilter: overviewQueryFilterMock,
+            queryKey: overviewQueryKeyMock,
             queryOptions: overviewQueryOptionsMock,
           },
           cancelSubscriptionItem: {

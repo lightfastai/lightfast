@@ -8,7 +8,7 @@ interface CapturedMutationOptions {
   onError?: (error: unknown, input: unknown, context: unknown) => unknown;
   onMutate?: (input: unknown) => unknown;
   onSettled?: () => unknown;
-  onSuccess?: () => unknown;
+  onSuccess?: (data: { key?: string | null }) => unknown;
 }
 
 const capturedMutationOptions: Partial<
@@ -25,6 +25,9 @@ const toastSuccessMock = vi.fn();
 const useAuthMock = vi.fn();
 const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
+let pendingMutationState: Partial<
+  Record<MutationName, { isPending: boolean; variables?: { keyId: string } }>
+> = {};
 
 const listQueryOptions = {
   queryKey: ["org", "settings", "orgApiKeys", "list"],
@@ -48,6 +51,8 @@ vi.mock("~/trpc/react", () => ({
             }),
           },
           list: {
+            queryFilter: () => ({ queryKey: listQueryOptions.queryKey }),
+            queryKey: () => listQueryOptions.queryKey,
             queryOptions: () => listQueryOptions,
           },
           revoke: {
@@ -202,13 +207,22 @@ const apiKeys = [
 ];
 
 function mutationResult(name: MutationName) {
+  const pendingState = pendingMutationState[name];
   switch (name) {
     case "create":
       return { isPending: false, mutate: createMutateMock, reset: vi.fn() };
     case "delete":
-      return { isPending: false, mutate: deleteMutateMock };
+      return {
+        isPending: pendingState?.isPending ?? false,
+        mutate: deleteMutateMock,
+        variables: pendingState?.variables,
+      };
     case "revoke":
-      return { isPending: false, mutate: revokeMutateMock };
+      return {
+        isPending: pendingState?.isPending ?? false,
+        mutate: revokeMutateMock,
+        variables: pendingState?.variables,
+      };
     default:
       throw new Error(`Unhandled mutation: ${name}`);
   }
@@ -229,6 +243,7 @@ beforeEach(() => {
   useAuthMock.mockReset();
   useMutationMock.mockReset();
   useSuspenseQueryMock.mockReset();
+  pendingMutationState = {};
 
   useAuthMock.mockReturnValue({
     has: ({ role }: { role?: string }) => role === "org:admin",
@@ -281,6 +296,21 @@ describe("api key settings admin controls", () => {
     expect(screen.queryByRole("button", { name: /^delete$/i })).toBeNull();
   });
 
+  it("keeps non-target API key rows interactive while another key is pending", () => {
+    pendingMutationState = {
+      revoke: {
+        isPending: true,
+        variables: { keyId: "key_active" },
+      },
+    };
+
+    render(<OrgApiKeyList />);
+
+    const actionButtons = screen.getAllByRole("button", { name: /actions/i });
+    expect(actionButtons[0]).toBeDisabled();
+    expect(actionButtons[1]).not.toBeDisabled();
+  });
+
   it("uses admin-managed empty-state copy for non-admin members", () => {
     useAuthMock.mockReturnValue({
       has: () => false,
@@ -298,6 +328,17 @@ describe("api key settings admin controls", () => {
         "Create an API key to access your organization's resources programmatically."
       )
     ).toBeNull();
+  });
+
+  it("refreshes API key list when create resolves after the dialog closes", () => {
+    render(<OrgApiKeyCreate />);
+
+    capturedMutationOptions.create?.onSuccess?.({ key: "lf_secret" });
+
+    expect(screen.queryByText("lf_secret")).toBeNull();
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: listQueryOptions.queryKey,
+    });
   });
 });
 

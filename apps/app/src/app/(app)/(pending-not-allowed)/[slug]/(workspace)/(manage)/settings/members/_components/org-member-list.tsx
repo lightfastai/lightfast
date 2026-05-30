@@ -1,6 +1,5 @@
 "use client";
 
-import type { AppRouterOutputs } from "@api/app";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
@@ -17,13 +16,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { toast } from "@repo/ui/components/ui/sonner";
 import { cn } from "@repo/ui/lib/utils";
-import {
-  useMutation,
-  useQueryClient,
-  useSuspenseQuery,
-} from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import {
@@ -34,23 +28,15 @@ import {
   UserRoundX,
   Users,
 } from "lucide-react";
-import { useCallback, useMemo } from "react";
+import { memo, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
 import {
   isOptimisticInvitation,
   type OrgInvitation,
   type OrgMember,
-  type OrgMembersData,
   type OrgRole,
-  removeInvitation,
-  removeMember,
-  restoreInvitation,
-  restoreMember,
-  updateMemberRole,
 } from "./org-member-cache";
-
-type OrgMembersOutput =
-  AppRouterOutputs["org"]["settings"]["orgMembers"]["list"];
+import { useOrgMemberListActions } from "./org-member-list-actions";
 
 function initials(name: string) {
   const letters = name
@@ -70,145 +56,19 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
   const { has, isLoaded } = useAuth();
   const canManageMembers = isLoaded && !!has?.({ role: "org:admin" });
   const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const listQueryOptions = trpc.org.settings.orgMembers.list.queryOptions();
 
   const { data } = useSuspenseQuery({
-    ...listQueryOptions,
+    ...trpc.org.settings.orgMembers.list.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
-
-  const invalidateList = useCallback(
-    () =>
-      queryClient.invalidateQueries({ queryKey: listQueryOptions.queryKey }),
-    [queryClient, listQueryOptions.queryKey]
-  );
-
-  const updateRoleMutation = useMutation(
-    trpc.org.settings.orgMembers.updateRole.mutationOptions({
-      meta: { errorTitle: "Failed to update role" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({
-          queryKey: listQueryOptions.queryKey,
-        });
-
-        const previous = queryClient.getQueryData<OrgMembersOutput>(
-          listQueryOptions.queryKey
-        );
-        const previousRole = previous?.members.find(
-          (member) => member.userId === input.userId
-        )?.role as OrgRole | undefined;
-
-        queryClient.setQueryData(
-          listQueryOptions.queryKey,
-          (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, input.role)
-        );
-
-        return { previousRole };
-      },
-      onError: (_err, input, context) => {
-        const previousRole = context?.previousRole;
-        if (!previousRole) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryOptions.queryKey,
-          (old: OrgMembersData | undefined) =>
-            updateMemberRole(old, input.userId, previousRole)
-        );
-      },
-      onSuccess: () => toast.success("Role updated"),
-      onSettled: () => void invalidateList(),
-    })
-  );
-
-  const removeMutation = useMutation(
-    trpc.org.settings.orgMembers.remove.mutationOptions({
-      meta: { errorTitle: "Failed to remove member" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({
-          queryKey: listQueryOptions.queryKey,
-        });
-
-        const previous = queryClient.getQueryData<OrgMembersOutput>(
-          listQueryOptions.queryKey
-        );
-        const { removedIndex, removedMember } = removeMember(
-          previous,
-          input.userId
-        );
-
-        queryClient.setQueryData(
-          listQueryOptions.queryKey,
-          (old: OrgMembersData | undefined) =>
-            removeMember(old, input.userId).data
-        );
-
-        return { removedIndex, removedMember };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.removedMember) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryOptions.queryKey,
-          (old: OrgMembersData | undefined) =>
-            restoreMember(old, context.removedMember, context.removedIndex)
-        );
-      },
-      onSuccess: () => toast.success("Member removed"),
-      onSettled: () => void invalidateList(),
-    })
-  );
-
-  const revokeInvitationMutation = useMutation(
-    trpc.org.settings.orgMembers.revokeInvitation.mutationOptions({
-      meta: { errorTitle: "Failed to revoke invitation" },
-      onMutate: async (input) => {
-        await queryClient.cancelQueries({
-          queryKey: listQueryOptions.queryKey,
-        });
-
-        const previous = queryClient.getQueryData<OrgMembersOutput>(
-          listQueryOptions.queryKey
-        );
-        const removedIndex =
-          previous?.invitations.findIndex(
-            (invitation) => invitation.id === input.invitationId
-          ) ?? -1;
-        const removedInvitation =
-          removedIndex >= 0 ? previous?.invitations[removedIndex] : undefined;
-
-        queryClient.setQueryData(
-          listQueryOptions.queryKey,
-          (old: OrgMembersData | undefined) =>
-            removeInvitation(old, input.invitationId)
-        );
-
-        return { removedIndex, removedInvitation };
-      },
-      onError: (_err, _input, context) => {
-        if (!context?.removedInvitation) {
-          return;
-        }
-
-        queryClient.setQueryData(
-          listQueryOptions.queryKey,
-          (old: OrgMembersData | undefined) =>
-            restoreInvitation(
-              old,
-              context.removedInvitation,
-              context.removedIndex
-            )
-        );
-      },
-      onSuccess: () => toast.success("Invitation revoked"),
-      onSettled: () => void invalidateList(),
-    })
-  );
+  const {
+    pendingInvitationId,
+    pendingRemoveUserId,
+    pendingRoleUserId,
+    removeOrgMember,
+    revokeInvitation,
+    updateRole,
+  } = useOrgMemberListActions();
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
 
@@ -241,10 +101,6 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
   const hasNoRows = data.members.length === 0 && data.invitations.length === 0;
   const hasNoMatches =
     visibleMembers.length === 0 && visibleInvitations.length === 0;
-  const actionsDisabled =
-    updateRoleMutation.isPending ||
-    removeMutation.isPending ||
-    revokeInvitationMutation.isPending;
 
   if (hasNoRows) {
     return (
@@ -278,40 +134,39 @@ export function OrgMemberList({ searchQuery = "" }: { searchQuery?: string }) {
     <div className="overflow-hidden rounded-lg border border-border/60">
       {visibleMembers.map((member) => (
         <MemberRow
-          actionsDisabled={actionsDisabled}
           canManageMembers={canManageMembers}
+          isPending={
+            pendingRoleUserId === member.userId ||
+            pendingRemoveUserId === member.userId
+          }
           key={member.id}
           member={member}
-          onRemove={(userId) => removeMutation.mutate({ userId })}
-          onUpdateRole={(userId, role) =>
-            updateRoleMutation.mutate({ role, userId })
-          }
+          onRemove={removeOrgMember}
+          onUpdateRole={updateRole}
         />
       ))}
       {visibleInvitations.map((invitation) => (
         <InvitationRow
-          actionsDisabled={actionsDisabled}
           canManageMembers={canManageMembers}
           invitation={invitation}
+          isPending={pendingInvitationId === invitation.id}
           key={invitation.id}
-          onRevoke={(invitationId) =>
-            revokeInvitationMutation.mutate({ invitationId })
-          }
+          onRevoke={revokeInvitation}
         />
       ))}
     </div>
   );
 }
 
-function MemberRow({
-  actionsDisabled,
+const MemberRow = memo(function MemberRow({
   canManageMembers,
+  isPending,
   member,
   onRemove,
   onUpdateRole,
 }: {
-  actionsDisabled: boolean;
   canManageMembers: boolean;
+  isPending: boolean;
   member: OrgMember;
   onRemove: (userId: string) => void;
   onUpdateRole: (userId: string, role: OrgRole) => void;
@@ -340,7 +195,7 @@ function MemberRow({
       <div className="flex shrink-0 items-center gap-2">
         {canManage ? (
           <Select
-            disabled={actionsDisabled}
+            disabled={isPending}
             onValueChange={(role) =>
               onUpdateRole(member.userId, role as OrgRole)
             }
@@ -365,7 +220,7 @@ function MemberRow({
             <DropdownMenuTrigger asChild>
               <Button
                 className="text-muted-foreground hover:text-foreground"
-                disabled={actionsDisabled}
+                disabled={isPending}
                 size="icon-sm"
                 variant="ghost"
               >
@@ -390,17 +245,17 @@ function MemberRow({
       </div>
     </div>
   );
-}
+});
 
-function InvitationRow({
-  actionsDisabled,
+const InvitationRow = memo(function InvitationRow({
   canManageMembers,
   invitation,
+  isPending,
   onRevoke,
 }: {
-  actionsDisabled: boolean;
   canManageMembers: boolean;
   invitation: OrgInvitation;
+  isPending: boolean;
   onRevoke: (invitationId: string) => void;
 }) {
   const isOptimistic = isOptimisticInvitation(invitation);
@@ -439,7 +294,7 @@ function InvitationRow({
             <DropdownMenuTrigger asChild>
               <Button
                 className="text-muted-foreground hover:text-foreground"
-                disabled={actionsDisabled}
+                disabled={isPending}
                 size="icon-sm"
                 variant="ghost"
               >
@@ -464,4 +319,4 @@ function InvitationRow({
       </div>
     </div>
   );
-}
+});

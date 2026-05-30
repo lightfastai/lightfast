@@ -22,7 +22,7 @@ export default async function SettingsLayout({
           </h1>
         </div>
 
-        <div className="flex gap-12">
+        <div className="flex flex-col gap-8 md:flex-row md:gap-12">
           {/* Left Sidebar Navigation */}
           <SettingsSidebar
             basePath={`/${slug}/settings`}

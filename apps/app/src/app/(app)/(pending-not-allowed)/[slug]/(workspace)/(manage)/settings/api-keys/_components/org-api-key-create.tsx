@@ -11,19 +11,14 @@ import {
   DialogTrigger,
 } from "@repo/ui/components/ui/dialog";
 import { Input } from "@repo/ui/components/ui/input";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Check, Copy, Loader2, Plus } from "lucide-react";
-import { useRef, useState } from "react";
-import { useTRPC } from "~/trpc/react";
+import { useCallback, useRef, useState } from "react";
+import { useOrgApiKeyCreateAction } from "./org-api-key-create-action";
 
 export function OrgApiKeyCreate() {
   const { has, isLoaded } = useAuth();
   const canManageApiKeys = isLoaded && !!has?.({ role: "org:admin" });
-  const trpc = useTRPC();
-  const queryClient = useQueryClient();
-  const listQueryKey =
-    trpc.org.settings.orgApiKeys.list.queryOptions().queryKey;
 
   const [isOpen, setIsOpen] = useState(false);
   const [name, setName] = useState("");
@@ -34,54 +29,55 @@ export function OrgApiKeyCreate() {
   // in-flight mutation resolved.
   const isOpenRef = useRef(false);
 
-  const createMutation = useMutation(
-    trpc.org.settings.orgApiKeys.create.mutationOptions({
-      meta: { errorTitle: "Failed to create API key" },
-      onSuccess: (data) => {
-        if (!isOpenRef.current) {
-          return;
-        }
-        if (data.key) {
-          setCreatedKey(data.key);
-        }
-        setName("");
-        void queryClient.invalidateQueries({ queryKey: listQueryKey });
-      },
-    })
-  );
+  const handleCreated = useCallback((key: string | null) => {
+    if (!isOpenRef.current) {
+      return;
+    }
+    if (key) {
+      setCreatedKey(key);
+    }
+    setName("");
+  }, []);
 
-  if (!canManageApiKeys) {
-    return null;
-  }
+  const createMutation = useOrgApiKeyCreateAction({
+    onCreated: handleCreated,
+  });
 
-  function handleCreate() {
+  const handleCreate = useCallback(() => {
     const trimmed = name.trim();
     if (!trimmed || createMutation.isPending) {
       return;
     }
     createMutation.mutate({ name: trimmed });
-  }
+  }, [createMutation.isPending, createMutation.mutate, name]);
 
-  function handleCopy() {
+  const handleCopy = useCallback(() => {
     if (!createdKey) {
       return;
     }
     navigator.clipboard.writeText(createdKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
-  }
+  }, [createdKey]);
 
-  function handleOpenChange(open: boolean) {
-    isOpenRef.current = open;
-    if (open) {
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
-      setCreatedKey(null);
-      setName("");
-      setCopied(false);
-      createMutation.reset();
-    }
+  const handleOpenChange = useCallback(
+    (open: boolean) => {
+      isOpenRef.current = open;
+      if (open) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+        setCreatedKey(null);
+        setName("");
+        setCopied(false);
+        createMutation.reset();
+      }
+    },
+    [createMutation.reset]
+  );
+
+  if (!canManageApiKeys) {
+    return null;
   }
 
   return (

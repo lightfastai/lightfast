@@ -18,8 +18,8 @@ export function SettingsSidebar({ basePath, items }: SettingsSidebarProps) {
   const pathname = usePathname();
 
   return (
-    <aside className="w-48 flex-shrink-0">
-      <nav className="space-y-1">
+    <aside className="w-full flex-shrink-0 md:w-48">
+      <nav className="grid grid-cols-2 gap-1 sm:grid-cols-4 md:block md:space-y-1">
         {items.map((item) => {
           const href = item.path ? `${basePath}/${item.path}` : basePath;
           const isActive = pathname === href;
