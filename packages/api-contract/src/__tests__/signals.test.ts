@@ -5,6 +5,8 @@ import {
   SIGNAL_ID_PREFIX,
   signalClassificationSchema,
   signalIdSchema,
+  WORKSPACE_SIGNALS_LIMIT,
+  WORKSPACE_SIGNALS_WINDOW_DAYS,
 } from "../schemas/signals";
 
 describe("signal schemas", () => {
@@ -104,5 +106,12 @@ describe("signal schemas", () => {
         },
       })
     ).toThrow();
+  });
+});
+
+describe("workspace signals bounds", () => {
+  it("exposes the working-set window and cap as named constants", () => {
+    expect(WORKSPACE_SIGNALS_WINDOW_DAYS).toBe(30);
+    expect(WORKSPACE_SIGNALS_LIMIT).toBe(2000);
   });
 });

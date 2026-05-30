@@ -20,5 +20,7 @@ export {
   signalKindSchema,
   signalPrioritySchema,
   signalStatusSchema,
+  WORKSPACE_SIGNALS_LIMIT,
+  WORKSPACE_SIGNALS_WINDOW_DAYS,
 } from "./schemas/signals";
 export { type SystemHealthOutput, systemHealthOutput } from "./schemas/system";
