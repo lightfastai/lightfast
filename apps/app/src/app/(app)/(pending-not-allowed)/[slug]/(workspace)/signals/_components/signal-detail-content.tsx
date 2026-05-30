@@ -66,9 +66,11 @@ function BodySection({
 }
 
 export function SignalDetailContent({
+  closeSlot,
   onCopyLink,
   signal,
 }: {
+  closeSlot?: ReactNode;
   onCopyLink: () => void;
   signal: SignalRow;
 }) {
@@ -82,7 +84,7 @@ export function SignalDetailContent({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="flex items-center gap-2 px-4 pt-4 pr-12">
+      <div className="flex items-center gap-2 px-4 pt-4">
         <span className="font-mono text-muted-foreground text-xs">
           {formatSignalIdentifier(signal)}
         </span>
@@ -91,16 +93,19 @@ export function SignalDetailContent({
             {getSignalDispositionLabel(classification.disposition)}
           </span>
         ) : null}
-        <Button
-          aria-label="Copy link"
-          className="ml-auto size-7 rounded-md text-muted-foreground hover:text-foreground"
-          onClick={onCopyLink}
-          size="icon-sm"
-          type="button"
-          variant="ghost"
-        >
-          <Link2 aria-hidden="true" className="size-4" />
-        </Button>
+        <div className="ml-auto flex items-center gap-1">
+          <Button
+            aria-label="Copy link"
+            className="size-7 rounded-md text-muted-foreground hover:text-foreground"
+            onClick={onCopyLink}
+            size="icon-sm"
+            type="button"
+            variant="ghost"
+          >
+            <Link2 aria-hidden="true" className="size-4" />
+          </Button>
+          {closeSlot}
+        </div>
       </div>
 
       <div className="overflow-y-auto px-4 pb-4">
@@ -157,7 +162,10 @@ export function SignalDetailContent({
           <PropertyRow icon={<KeyRound className={iconClass} />} label="Source">
             {source.label}
           </PropertyRow>
-          <PropertyRow icon={<Calendar className={iconClass} />} label="Created">
+          <PropertyRow
+            icon={<Calendar className={iconClass} />}
+            label="Created"
+          >
             <time
               dateTime={createdAt.toISOString()}
               title={createdAt.toISOString()}

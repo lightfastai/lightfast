@@ -1,13 +1,16 @@
 "use client";
 
+import { Button } from "@repo/ui/components/ui/button";
 import {
   Sheet,
+  SheetClose,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useQuery } from "@tanstack/react-query";
+import { X } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
 import { SignalDetailContent } from "./signal-detail-content";
 import { getSignalTitle, type SignalRow } from "./signals-model";
@@ -46,7 +49,11 @@ export function SignalDetailSheet({
 
   return (
     <Sheet onOpenChange={onOpenChange} open={open}>
-      <SheetContent className="w-full gap-0 p-0 sm:max-w-md" side="right">
+      <SheetContent
+        className="inset-y-3 right-3 left-auto h-auto w-full max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-xl border p-0 sm:max-w-md"
+        showCloseButton={!signal}
+        side="right"
+      >
         <SheetHeader className="sr-only">
           <SheetTitle>
             {signal ? getSignalTitle(signal) : "Signal details"}
@@ -54,7 +61,23 @@ export function SignalDetailSheet({
         </SheetHeader>
 
         {signal ? (
-          <SignalDetailContent onCopyLink={handleCopyLink} signal={signal} />
+          <SignalDetailContent
+            closeSlot={
+              <SheetClose asChild>
+                <Button
+                  aria-label="Close"
+                  className="size-7 rounded-md text-muted-foreground hover:text-foreground"
+                  size="icon-sm"
+                  type="button"
+                  variant="ghost"
+                >
+                  <X aria-hidden="true" className="size-4" />
+                </Button>
+              </SheetClose>
+            }
+            onCopyLink={handleCopyLink}
+            signal={signal}
+          />
         ) : query.isError ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-1 p-8 text-center">
             <p className="font-medium text-foreground text-sm">
