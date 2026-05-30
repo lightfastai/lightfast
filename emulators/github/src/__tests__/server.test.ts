@@ -469,6 +469,28 @@ describe("@repo/github-emulator", () => {
     });
   });
 
+  it("simulates a push through GitHub-compatible git APIs", async () => {
+    const { pushGitHubEmulatorCommit } = await import("../push");
+    const result = await pushGitHubEmulatorCommit({
+      apiBaseUrl: emulator?.url ?? "",
+      branch: "main",
+      files: [
+        {
+          content: "# Demo\n",
+          path: "skills/demo/SKILL.md",
+        },
+      ],
+      message: "Add demo skill",
+      owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+      repo: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+      token: GITHUB_EMULATOR_FIXTURES.userToken,
+    });
+
+    expect(result.afterSha).toEqual(expect.any(String));
+    expect(result.beforeSha).toEqual(expect.any(String));
+    expect(result.afterSha).not.toBe(result.beforeSha);
+  });
+
   it("prints the env values consumed by app and api packages", () => {
     expect(getGitHubEmulatorEnv("https://lightfast.localhost")).toEqual(
       expect.objectContaining({
