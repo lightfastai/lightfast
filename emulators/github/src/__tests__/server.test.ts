@@ -162,6 +162,28 @@ describe("@repo/github-emulator", () => {
     });
   });
 
+  it("seeds the GitHub App webhook URL from the Lightfast app origin", () => {
+    const store = new Store();
+    githubPlugin.seed?.(store, GITHUB_EMULATOR_FIXTURES.origin);
+    seedFromConfig(
+      store,
+      GITHUB_EMULATOR_FIXTURES.origin,
+      createGitHubEmulatorSeed("https://app.lightfast.localhost")
+    );
+    const gh = getGitHubStore(store);
+    const app = gh.apps.findOneBy(
+      "app_id",
+      GITHUB_EMULATOR_FIXTURES.githubAppId
+    );
+
+    expect(app?.webhook_url).toBe(
+      "https://app.lightfast.localhost/api/github/webhook"
+    );
+    expect(app?.webhook_secret).toBe(
+      GITHUB_EMULATOR_FIXTURES.githubWebhookSecret
+    );
+  });
+
   it("seeds the OAuth user as a member of the GitHub org", async () => {
     const token = "test_token_lightfast";
     const res = await fetch(`${emulator?.url}/user/orgs`, {
