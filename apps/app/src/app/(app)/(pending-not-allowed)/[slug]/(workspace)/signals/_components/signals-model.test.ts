@@ -8,10 +8,10 @@ import {
   getSignalSummary,
   getSignalTitle,
   groupSignalsByKind,
-  signalMatchesFilters,
   type SignalClassificationFilters,
   type SignalListItem,
   type SignalRow,
+  signalMatchesFilters,
 } from "./signals-model";
 
 const NO_FILTERS: SignalClassificationFilters = {
@@ -52,10 +52,12 @@ describe("formatSignalConfidence", () => {
 
 describe("getSignalSource", () => {
   it("labels API-key vs user creators", () => {
-    expect(getSignalSource(classified({ createdByApiKeyId: "key_1" }))).toEqual({
-      isApiKey: true,
-      label: "API key",
-    });
+    expect(getSignalSource(classified({ createdByApiKeyId: "key_1" }))).toEqual(
+      {
+        isApiKey: true,
+        label: "API key",
+      }
+    );
     expect(getSignalSource(classified({ createdByApiKeyId: null }))).toEqual({
       isApiKey: false,
       label: "User",
@@ -73,7 +75,11 @@ describe("getSignalTitle / getSignalSummary", () => {
     });
     expect(getSignalTitle(processing)).toBe("Raw input");
     expect(getSignalSummary(processing)).toBe("Raw input");
-    const bare = classified({ classification: null, id: 5, inputPreview: undefined });
+    const bare = classified({
+      classification: null,
+      id: 5,
+      inputPreview: undefined,
+    });
     expect(getSignalTitle(bare)).toBe("SIG-5");
     expect(getSignalSummary(bare)).toBe("");
   });
@@ -93,7 +99,10 @@ describe("signalMatchesFilters", () => {
       signalMatchesFilters(row, { ...NO_FILTERS, priorities: ["high"] })
     ).toBe(true);
     expect(
-      signalMatchesFilters(row, { ...NO_FILTERS, dispositions: ["not_actionable"] })
+      signalMatchesFilters(row, {
+        ...NO_FILTERS,
+        dispositions: ["not_actionable"],
+      })
     ).toBe(false);
   });
 
@@ -104,9 +113,9 @@ describe("signalMatchesFilters", () => {
         routing: { classifyPeople: { shouldRun: true, rationale: "routed" } },
       },
     });
-    expect(signalMatchesFilters(routed, { ...NO_FILTERS, peopleRouted: true })).toBe(
-      true
-    );
+    expect(
+      signalMatchesFilters(routed, { ...NO_FILTERS, peopleRouted: true })
+    ).toBe(true);
     expect(
       signalMatchesFilters(classified(), { ...NO_FILTERS, peopleRouted: true })
     ).toBe(false);

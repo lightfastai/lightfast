@@ -1,7 +1,11 @@
 import type { Database, Signal } from "@db/app";
 import { describe, expect, it, vi } from "vitest";
 
-import { createSignal, listSignals, listWorkspaceSignals } from "../utils/signals";
+import {
+  createSignal,
+  listSignals,
+  listWorkspaceSignals,
+} from "../utils/signals";
 
 function makeSignal(overrides: Partial<Signal> = {}): Signal {
   return {
@@ -181,7 +185,7 @@ describe("createSignal", () => {
   });
 });
 
-type ProjectedRow = {
+interface ProjectedRow {
   classification: Signal["classification"];
   createdAt: Date;
   createdByApiKeyId: string | null;
@@ -189,7 +193,7 @@ type ProjectedRow = {
   id: number;
   publicId: string;
   status: Signal["status"];
-};
+}
 
 function makeProjectedRow(overrides: Partial<ProjectedRow> = {}): ProjectedRow {
   return {
@@ -290,7 +294,9 @@ describe("listWorkspaceSignals", () => {
   });
 
   it("keeps a null classification null", async () => {
-    const { db } = makeWorkspaceDb([makeProjectedRow({ classification: null })]);
+    const { db } = makeWorkspaceDb([
+      makeProjectedRow({ classification: null }),
+    ]);
 
     const result = await listWorkspaceSignals(db, { clerkOrgId: "org_test" });
 

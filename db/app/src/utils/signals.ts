@@ -62,7 +62,9 @@ export async function listSignals(
   const conditions = [
     eq(signals.clerkOrgId, input.clerkOrgId),
     input.status ? eq(signals.status, input.status) : undefined,
-    input.statuses?.length ? inArray(signals.status, input.statuses) : undefined,
+    input.statuses?.length
+      ? inArray(signals.status, input.statuses)
+      : undefined,
     jsonStringIn("$.disposition", input.dispositions),
     jsonStringIn("$.kind", input.kinds),
     jsonStringIn("$.priority", input.priorities),
@@ -171,7 +173,9 @@ export async function listWorkspaceSignals(
   db: Database,
   input: ListWorkspaceSignalsParams
 ): Promise<WorkspaceSignalsResult> {
-  const cutoff = new Date(Date.now() - WORKSPACE_SIGNALS_WINDOW_DAYS * DAY_IN_MS);
+  const cutoff = new Date(
+    Date.now() - WORKSPACE_SIGNALS_WINDOW_DAYS * DAY_IN_MS
+  );
 
   const rows = await db
     .select({

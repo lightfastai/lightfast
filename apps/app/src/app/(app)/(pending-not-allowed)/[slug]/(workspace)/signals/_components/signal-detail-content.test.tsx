@@ -63,7 +63,9 @@ describe("SignalDetailContent", () => {
     expect(screen.getByText("High")).toBeInTheDocument();
     expect(screen.getByText("91%")).toBeInTheDocument();
     expect(screen.getByText("API key")).toBeInTheDocument();
-    expect(screen.getByTestId("signal-detail-body-skeleton")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("signal-detail-body-skeleton")
+    ).toBeInTheDocument();
   });
 
   it("renders the body from the full detail row", () => {

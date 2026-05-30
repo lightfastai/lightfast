@@ -174,7 +174,9 @@ export function SignalDetailContent({
         {detail ? (
           <div className="flex flex-col gap-5">
             <BodySection label="Input">{detail.input}</BodySection>
-            {summary ? <BodySection label="Summary">{summary}</BodySection> : null}
+            {summary ? (
+              <BodySection label="Summary">{summary}</BodySection>
+            ) : null}
             {detailClassification?.nextAction ? (
               <BodySection label="Next action">
                 {detailClassification.nextAction}

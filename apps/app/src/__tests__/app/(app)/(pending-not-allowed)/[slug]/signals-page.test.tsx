@@ -63,7 +63,7 @@ describe("signals page", () => {
     expect(workingSetQueryOptionsMock).toHaveBeenCalledTimes(1);
     expect(listQueryOptionsMock).toHaveBeenCalledWith(
       { limit: 100, statuses: ["queued", "processing"] },
-      expect.objectContaining({ staleTime: 5_000 })
+      expect.objectContaining({ staleTime: 5000 })
     );
     expect(prefetchMock).toHaveBeenCalledTimes(2);
     expect(screen.getByTestId("hydrated-signals")).toHaveTextContent(

@@ -1,6 +1,9 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { SignalClassificationFilters, SignalListItem } from "./signals-model";
+import type {
+  SignalClassificationFilters,
+  SignalListItem,
+} from "./signals-model";
 import { useSignalsFiltering } from "./use-signals-filtering";
 
 const NO_FILTERS: SignalClassificationFilters = {
@@ -42,7 +45,12 @@ describe("useSignalsFiltering", () => {
       }),
     ];
     const processingRows = [
-      row({ classification: null, id: 9, inputPreview: "raw", publicId: "proc" }),
+      row({
+        classification: null,
+        id: 9,
+        inputPreview: "raw",
+        publicId: "proc",
+      }),
     ];
 
     const { result } = renderHook(() =>
@@ -65,8 +73,11 @@ describe("useSignalsFiltering", () => {
     const filters = NO_FILTERS;
 
     const { result, rerender } = renderHook(
-      (props: { classifiedRows: SignalListItem[]; filters: SignalClassificationFilters; processingRows: SignalListItem[] }) =>
-        useSignalsFiltering(props),
+      (props: {
+        classifiedRows: SignalListItem[];
+        filters: SignalClassificationFilters;
+        processingRows: SignalListItem[];
+      }) => useSignalsFiltering(props),
       { initialProps: { classifiedRows, filters, processingRows } }
     );
     const first = result.current.classified;

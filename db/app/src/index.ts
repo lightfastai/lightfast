@@ -38,12 +38,12 @@ export {
   type PersonIdentityProvider,
   type PersonIdentityType,
   people,
-  type Signal,
   SIGNAL_VIEW_ID_PREFIX,
-  signals,
+  type Signal,
   type SignalView,
   type SignalViewConfig,
   type SignalViewLayout,
+  signals,
   signalViews,
 } from "./schema";
 export {
@@ -96,6 +96,14 @@ export {
   upsertPeopleFromCandidates,
 } from "./utils/people";
 export {
+  type CreateSignalViewParams,
+  createSignalView,
+  type DeleteSignalViewParams,
+  deleteSignalView,
+  type ListSignalViewsParams,
+  listSignalViews,
+} from "./utils/signal-views";
+export {
   type ClaimSignalForClassificationParams,
   type CreateSignalRecordInput,
   claimSignalForClassification,
@@ -103,8 +111,8 @@ export {
   type GetSignalByPublicIdParams,
   getSignalByPublicId,
   type ListSignalsParams,
-  listSignals,
   type ListWorkspaceSignalsParams,
+  listSignals,
   listWorkspaceSignals,
   type MarkSignalClassifiedParams,
   type MarkSignalFailedParams,
@@ -113,11 +121,3 @@ export {
   type WorkspaceSignalListItem,
   type WorkspaceSignalsResult,
 } from "./utils/signals";
-export {
-  type CreateSignalViewParams,
-  createSignalView,
-  type DeleteSignalViewParams,
-  deleteSignalView,
-  type ListSignalViewsParams,
-  listSignalViews,
-} from "./utils/signal-views";

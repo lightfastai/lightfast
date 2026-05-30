@@ -113,7 +113,10 @@ export function signalMatchesFilters(
   if (!classification) {
     return false;
   }
-  if (filters.kinds.length > 0 && !filters.kinds.includes(classification.kind)) {
+  if (
+    filters.kinds.length > 0 &&
+    !filters.kinds.includes(classification.kind)
+  ) {
     return false;
   }
   if (

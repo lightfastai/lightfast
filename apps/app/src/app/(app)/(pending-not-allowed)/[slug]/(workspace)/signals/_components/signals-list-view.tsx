@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronRight, Loader2, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
@@ -24,7 +25,12 @@ type ListEntry =
   | { key: string; section: SignalSection; type: "header" }
   | { key: string; section: SignalSection; type: "error" }
   | { key: string; section: SignalSection; type: "empty" }
-  | { key: string; section: SignalSection; signal: SignalListItem; type: "row" };
+  | {
+      key: string;
+      section: SignalSection;
+      signal: SignalListItem;
+      type: "row";
+    };
 
 const HEADER_SIZE = 44;
 const ROW_SIZE = 44;
@@ -194,11 +200,7 @@ function SignalListSectionHeader({
   section: SignalSection;
 }) {
   return (
-    <div
-      aria-label={`${section.label} signals`}
-      className="flex h-9 items-center overflow-hidden rounded-lg border border-border/60 bg-muted/25"
-      role="group"
-    >
+    <div className="flex h-9 items-center overflow-hidden rounded-lg border border-border/60 bg-muted/25">
       <button
         aria-expanded={!collapsed}
         aria-label={`${collapsed ? "Expand" : "Collapse"} ${section.label} signals`}
@@ -257,10 +259,10 @@ function SignalListRow({
   return (
     <button
       aria-pressed={isSelected}
-      className={
-        "group grid min-h-10 w-full grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-4 text-left hover:bg-muted/30" +
-        (isSelected ? " bg-muted/35" : " bg-background")
-      }
+      className={cn(
+        "group grid min-h-10 w-full grid-cols-[4.5rem_minmax(0,1fr)_auto] items-center gap-3 rounded-lg px-4 text-left hover:bg-muted/30",
+        isSelected ? "bg-muted/35" : "bg-background"
+      )}
       onClick={onSelect}
       onFocus={onPrefetch}
       onMouseEnter={onPrefetch}
@@ -285,7 +287,9 @@ function SignalListRow({
             {getSignalPriorityLabel(priority)}
           </SignalBadge>
         ) : null}
-        <SignalBadge>{kind ? getSignalKindLabel(kind) : statusLabel}</SignalBadge>
+        <SignalBadge>
+          {kind ? getSignalKindLabel(kind) : statusLabel}
+        </SignalBadge>
         <time
           className="w-20 shrink-0 text-right"
           dateTime={createdAtIso}

@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Loader2, RefreshCw } from "lucide-react";
 import type { ReactNode } from "react";
@@ -197,10 +198,10 @@ function SignalBoardCard({
   return (
     <button
       aria-pressed={isSelected}
-      className={
-        "w-full rounded-md border border-border/70 bg-background p-3 text-left hover:bg-muted/30" +
-        (isSelected ? " bg-muted/35" : "")
-      }
+      className={cn(
+        "w-full rounded-md border border-border/70 bg-background p-3 text-left hover:bg-muted/30",
+        isSelected && "bg-muted/35"
+      )}
       onClick={onSelect}
       onFocus={onPrefetch}
       onMouseEnter={onPrefetch}
@@ -221,7 +222,9 @@ function SignalBoardCard({
           <SignalCreatorAvatar signal={signal} />
         </div>
       </div>
-      <p className="line-clamp-2 font-medium text-foreground text-sm">{title}</p>
+      <p className="line-clamp-2 font-medium text-foreground text-sm">
+        {title}
+      </p>
       {summary === title ? null : (
         <p className="mt-1 line-clamp-2 text-muted-foreground text-sm">
           {summary}

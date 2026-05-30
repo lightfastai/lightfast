@@ -184,9 +184,7 @@ export function SignalsClient() {
 
       <SignalDetailSheet
         initialItem={
-          selectedSignalId
-            ? signalsByPublicId.get(selectedSignalId)
-            : undefined
+          selectedSignalId ? signalsByPublicId.get(selectedSignalId) : undefined
         }
         onOpenChange={(open) => {
           if (!open) {

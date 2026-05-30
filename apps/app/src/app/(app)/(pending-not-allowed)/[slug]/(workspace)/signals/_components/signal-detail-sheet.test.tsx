@@ -24,7 +24,9 @@ vi.mock("~/trpc/react", () => ({
   }),
 }));
 
-vi.mock("@repo/ui/components/ui/sonner", () => ({ toast: { success: vi.fn() } }));
+vi.mock("@repo/ui/components/ui/sonner", () => ({
+  toast: { success: vi.fn() },
+}));
 
 const classifiedItem: SignalListItem = {
   classification: {
@@ -60,7 +62,11 @@ const processingRow = {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  useQueryMock.mockReturnValue({ data: undefined, isError: false, isLoading: false });
+  useQueryMock.mockReturnValue({
+    data: undefined,
+    isError: false,
+    isLoading: false,
+  });
 });
 
 describe("SignalDetailSheet", () => {

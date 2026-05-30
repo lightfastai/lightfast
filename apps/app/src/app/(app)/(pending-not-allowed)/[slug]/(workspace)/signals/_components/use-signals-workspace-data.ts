@@ -10,11 +10,11 @@ import {
   type SignalSection,
   signalKindOptions,
 } from "./signals-model";
-import { useSignalsFiltering } from "./use-signals-filtering";
 import {
   useProcessingSignalsQuery,
   useWorkingSetQuery,
 } from "./use-classified-signals-query";
+import { useSignalsFiltering } from "./use-signals-filtering";
 
 export function useSignalsWorkspaceData({
   filters,
