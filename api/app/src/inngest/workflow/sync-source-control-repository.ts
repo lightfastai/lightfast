@@ -49,7 +49,8 @@ export const syncSourceControlRepository = inngest.createFunction(
     );
     if (
       !watch ||
-      watch.orgSourceControlBindingId !== event.data.orgSourceControlBindingId ||
+      watch.orgSourceControlBindingId !==
+        event.data.orgSourceControlBindingId ||
       watch.providerRepositoryId !== event.data.providerRepositoryId
     ) {
       await step.run("mark source control delivery ignored", () =>

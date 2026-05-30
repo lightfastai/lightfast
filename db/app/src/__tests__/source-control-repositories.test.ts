@@ -8,8 +8,8 @@ import type {
   SourceControlWebhookDelivery,
 } from "../schema";
 import {
-  markWatchedSourceControlRepositoryPushProcessed,
   markSourceControlWebhookDeliveryStatus,
+  markWatchedSourceControlRepositoryPushProcessed,
   recordSourceControlWebhookDeliveryReceived,
   updateWatchedSourceControlRepositoryLastSeenSha,
   upsertWatchedSourceControlRepository,
@@ -17,7 +17,10 @@ import {
 
 describe("source-control repository helpers", () => {
   it("returns existing webhook delivery with created false after duplicate-key recovery", async () => {
-    const delivery = createWebhookDelivery({ id: 20, deliveryId: "delivery-1" });
+    const delivery = createWebhookDelivery({
+      id: 20,
+      deliveryId: "delivery-1",
+    });
     const db = createSelectInsertDb({
       insertError: { code: "ER_DUP_ENTRY" },
       selectResults: [[], [delivery]],
@@ -34,7 +37,10 @@ describe("source-control repository helpers", () => {
   });
 
   it("returns inserted webhook delivery with created true", async () => {
-    const delivery = createWebhookDelivery({ id: 21, deliveryId: "delivery-2" });
+    const delivery = createWebhookDelivery({
+      id: 21,
+      deliveryId: "delivery-2",
+    });
     const db = createSelectInsertDb({
       selectResults: [[], [delivery]],
     });
@@ -205,7 +211,7 @@ describe("source-control repository helpers", () => {
 
     const repositoryCondition = repositoryWhereMock.mock.calls[0]?.[0];
     const deliveryCondition = deliveryWhereMock.mock.calls[0]?.[0];
-    if (!repositoryCondition || !deliveryCondition) {
+    if (!(repositoryCondition && deliveryCondition)) {
       throw new Error("expected update where conditions");
     }
     const dialect = new MySqlDialect();

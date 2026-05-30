@@ -30,6 +30,15 @@ const treeResponseSchema = z.object({
   truncated: z.boolean().optional(),
 });
 
+const repositoryResponseSchema = z.object({
+  full_name: z.string().min(1),
+  id: z.union([z.number(), z.string().min(1)]),
+  name: z.string().min(1),
+  owner: z.object({
+    login: z.string().min(1),
+  }),
+});
+
 function normalizeApiBaseUrl(value: string | undefined) {
   return (value ?? "https://api.github.com").replace(/\/+$/, "");
 }
@@ -103,6 +112,43 @@ export async function getGitHubCommit(input: {
     );
   }
   return { sha: parsed.data.sha, treeSha };
+}
+
+export async function getGitHubRepository(input: {
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  fetch?: typeof fetch;
+  installationToken: string;
+  owner: string;
+  repo: string;
+}): Promise<{
+  fullName: string;
+  id: string;
+  name: string;
+  owner: string;
+}> {
+  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
+  const url = `${apiBaseUrl}/repos/${pathSegment(input.owner)}/${pathSegment(
+    input.repo
+  )}`;
+  const json = await getJson({
+    fetch: input.fetch ?? fetch,
+    headers: headers(input),
+    url,
+  });
+  const parsed = repositoryResponseSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub repository response was invalid."
+    );
+  }
+  return {
+    fullName: parsed.data.full_name,
+    id: String(parsed.data.id),
+    name: parsed.data.name,
+    owner: parsed.data.owner.login,
+  };
 }
 
 export async function getGitHubTree(input: {

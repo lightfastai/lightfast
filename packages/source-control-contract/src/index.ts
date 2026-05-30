@@ -77,5 +77,7 @@ export function matchesWatchedPath(
   path: string,
   watchedPathGlobs: readonly string[]
 ): boolean {
-  return watchedPathGlobs.some((pattern) => matchesSinglePattern(path, pattern));
+  return watchedPathGlobs.some((pattern) =>
+    matchesSinglePattern(path, pattern)
+  );
 }

@@ -2,7 +2,7 @@ import { call } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 
 vi.mock("@vendor/unkey/server", () => ({
   getUnkeyClient: () => ({
@@ -13,8 +13,8 @@ vi.mock("@vendor/unkey/server", () => ({
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   createSignal: vi.fn(),
+  getActiveOrgBinding: getActiveOrgBindingMock,
   getSignalByPublicId: vi.fn(),
-  isOrgBound: isOrgBoundMock,
   markSignalFailed: vi.fn(),
 }));
 
@@ -24,8 +24,21 @@ const validKey = `lf_${"a".repeat(40)}`;
 
 beforeEach(() => {
   verifyMock.mockReset();
-  isOrgBoundMock.mockReset();
-  isOrgBoundMock.mockResolvedValue(true);
+  getActiveOrgBindingMock.mockReset();
+  getActiveOrgBindingMock.mockResolvedValue({
+    metadata: {
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "987",
+        installationId: "1001",
+        name: ".lightfast",
+        verifiedAt: "2026-05-30T10:00:00.000Z",
+      },
+    },
+    provider: "github",
+    providerAccountLogin: "acme",
+    providerInstallationId: "1001",
+  });
   verifyMock.mockResolvedValue({
     data: {
       code: "VALID",

@@ -76,9 +76,7 @@ export const githubWebhookHeadersSchema = z.object({
   event: z.string().min(1),
   signature256: z.string().min(1),
 });
-export type GitHubWebhookHeaders = z.infer<
-  typeof githubWebhookHeadersSchema
->;
+export type GitHubWebhookHeaders = z.infer<typeof githubWebhookHeadersSchema>;
 
 const githubWebhookProviderIdSchema = z.union([
   z.number().int().positive().safe(),

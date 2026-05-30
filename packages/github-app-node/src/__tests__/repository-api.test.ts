@@ -1,6 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
 import { createGitHubInstallationToken } from "../installation-tokens";
-import { getGitHubCommit, getGitHubTree } from "../repositories";
+import {
+  getGitHubCommit,
+  getGitHubRepository,
+  getGitHubTree,
+} from "../repositories";
+import { verifyGitHubInstallationRepository } from "../repository-installations";
 
 describe("GitHub repository API helpers", () => {
   it("mints an installation token with app authentication", async () => {
@@ -96,6 +101,41 @@ describe("GitHub repository API helpers", () => {
     });
   });
 
+  it("fetches repository metadata with installation authentication", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        full_name: "lightfast-emulated/.lightfast",
+        id: 987,
+        name: ".lightfast",
+        owner: { login: "lightfast-emulated" },
+      })
+    );
+
+    await expect(
+      getGitHubRepository({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        fetch: fetchMock,
+        installationToken: "ghs_installation",
+        owner: "lightfast-emulated",
+        repo: ".lightfast",
+      })
+    ).resolves.toEqual({
+      fullName: "lightfast-emulated/.lightfast",
+      id: "987",
+      name: ".lightfast",
+      owner: "lightfast-emulated",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://github.lightfast.localhost/repos/lightfast-emulated/.lightfast",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          authorization: "Bearer ghs_installation",
+        }),
+      })
+    );
+  });
+
   it("URL-encodes refs used in commit API paths", async () => {
     const fetchMock = vi.fn(async () =>
       Response.json({
@@ -174,5 +214,75 @@ describe("GitHub repository API helpers", () => {
         },
       ],
     });
+  });
+
+  it("verifies a repository belongs to the expected GitHub App installation", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        id: 1001,
+        repository_selection: "all",
+      })
+    );
+
+    await expect(
+      verifyGitHubInstallationRepository({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        appJwt: "app.jwt",
+        expectedInstallationId: "1001",
+        fetch: fetchMock,
+        owner: "lightfast-emulated",
+        repo: ".lightfast",
+      })
+    ).resolves.toEqual({
+      installationId: "1001",
+      repositorySelection: "all",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://github.lightfast.localhost/repos/lightfast-emulated/.lightfast/installation",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          accept: "application/vnd.github+json",
+          authorization: "Bearer app.jwt",
+        }),
+      })
+    );
+  });
+
+  it("treats a missing repository installation as a typed not-found result", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ message: "Not Found" }, { status: 404 })
+    );
+
+    await expect(
+      verifyGitHubInstallationRepository({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        appJwt: "app.jwt",
+        expectedInstallationId: "1001",
+        fetch: fetchMock,
+        owner: "lightfast-emulated",
+        repo: ".lightfast",
+      })
+    ).rejects.toMatchObject({ code: "GITHUB_REPOSITORY_NOT_FOUND" });
+  });
+
+  it("rejects repositories attached to a different installation", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        id: 9999,
+        repository_selection: "all",
+      })
+    );
+
+    await expect(
+      verifyGitHubInstallationRepository({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        appJwt: "app.jwt",
+        expectedInstallationId: "1001",
+        fetch: fetchMock,
+        owner: "lightfast-emulated",
+        repo: ".lightfast",
+      })
+    ).rejects.toMatchObject({ code: "GITHUB_REPOSITORY_INACCESSIBLE" });
   });
 });

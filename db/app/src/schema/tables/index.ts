@@ -23,14 +23,6 @@ export {
   orgSourceControlBindings,
 } from "./org-source-control-bindings";
 export {
-  type InsertSourceControlRepository,
-  type InsertSourceControlWebhookDelivery,
-  type SourceControlRepository,
-  sourceControlRepositories,
-  type SourceControlWebhookDelivery,
-  sourceControlWebhookDeliveries,
-} from "./source-control-repositories";
-export {
   createPersonId,
   type InsertPerson,
   PERSON_DISPLAY_NAME_LENGTH,
@@ -47,3 +39,11 @@ export {
   type Signal,
   signals,
 } from "./signals";
+export {
+  type InsertSourceControlRepository,
+  type InsertSourceControlWebhookDelivery,
+  type SourceControlRepository,
+  type SourceControlWebhookDelivery,
+  sourceControlRepositories,
+  sourceControlWebhookDeliveries,
+} from "./source-control-repositories";

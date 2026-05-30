@@ -1,3 +1,4 @@
+import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import { githubBindErrorCodeSchema } from "@repo/github-app-contract";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
@@ -32,14 +33,21 @@ export default async function BindTaskPage({
     Array.isArray(githubErrorParam) ? githubErrorParam[0] : githubErrorParam
   );
 
-  if (gate.bindingStatus === "bound" && !parsedError.success) {
-    redirect(`/${slug}/tasks/bind/github/complete` as Route);
+  if (parsedError.success) {
+    return <BindGithubCard githubError={parsedError.data} orgSlug={slug} />;
   }
 
-  return (
-    <BindGithubCard
-      githubError={parsedError.success ? parsedError.data : undefined}
-      orgSlug={slug}
-    />
-  );
+  if (gate.bindingStatus === "bound") {
+    redirect(`/${slug}/tasks/bind/github/complete` as Route);
+  }
+  if (gate.nextSetupRequirement && gate.nextSetupRequirement !== "github_org") {
+    redirect(
+      pathForSetupRequirement({
+        orgSlug: slug,
+        requirement: gate.nextSetupRequirement,
+      }) as Route
+    );
+  }
+
+  return <BindGithubCard orgSlug={slug} />;
 }

@@ -169,26 +169,27 @@ describe("handleGitHubWebhook", () => {
     expect(inngestSendMock).not.toHaveBeenCalled();
   });
 
-  it.each(["ignored", "failed", "processed"] as const)(
-    "does not enqueue a duplicate terminal %s delivery",
-    async (status) => {
-      const { handleGitHubWebhook } = await import("../services/github/webhook");
-      recordDeliveryMock.mockResolvedValue({
-        created: false,
-        delivery: { status },
-      });
+  it.each([
+    "ignored",
+    "failed",
+    "processed",
+  ] as const)("does not enqueue a duplicate terminal %s delivery", async (status) => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    recordDeliveryMock.mockResolvedValue({
+      created: false,
+      delivery: { status },
+    });
 
-      const res = await handleGitHubWebhook({
-        request: signedRequest(pushPayload),
-      });
+    const res = await handleGitHubWebhook({
+      request: signedRequest(pushPayload),
+    });
 
-      expect(res.status).toBe(202);
-      expect(getBindingMock).not.toHaveBeenCalled();
-      expect(updateLastSeenMock).not.toHaveBeenCalled();
-      expect(markDeliveryMock).not.toHaveBeenCalled();
-      expect(inngestSendMock).not.toHaveBeenCalled();
-    }
-  );
+    expect(res.status).toBe(202);
+    expect(getBindingMock).not.toHaveBeenCalled();
+    expect(updateLastSeenMock).not.toHaveBeenCalled();
+    expect(markDeliveryMock).not.toHaveBeenCalled();
+    expect(inngestSendMock).not.toHaveBeenCalled();
+  });
 
   it("continues processing a duplicate received delivery retry", async () => {
     const { handleGitHubWebhook } = await import("../services/github/webhook");

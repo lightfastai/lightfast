@@ -77,21 +77,9 @@ export {
   type OrgSourceControlBindingConflictCode,
   OrgSourceControlBindingConflictError,
   type UpsertActiveOrgBindingInput,
+  updateOrgSourceControlBindingMetadata,
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
-export {
-  getSourceControlWebhookDeliveryByDeliveryId,
-  getWatchedSourceControlRepository,
-  getWatchedSourceControlRepositoryById,
-  markSourceControlWebhookDeliveryStatus,
-  markWatchedSourceControlRepositoryPushProcessed,
-  type RecordSourceControlWebhookDeliveryReceivedResult,
-  recordSourceControlWebhookDeliveryReceived,
-  updateWatchedSourceControlRepositoryLastProcessedSha,
-  updateWatchedSourceControlRepositoryLastSeenSha,
-  type UpsertWatchedSourceControlRepositoryInput,
-  upsertWatchedSourceControlRepository,
-} from "./utils/source-control-repositories";
 export {
   getPersonByIdentityKey,
   type ListPeopleParams,
@@ -114,3 +102,16 @@ export {
   markSignalClassified,
   markSignalFailed,
 } from "./utils/signals";
+export {
+  getSourceControlWebhookDeliveryByDeliveryId,
+  getWatchedSourceControlRepository,
+  getWatchedSourceControlRepositoryById,
+  markSourceControlWebhookDeliveryStatus,
+  markWatchedSourceControlRepositoryPushProcessed,
+  type RecordSourceControlWebhookDeliveryReceivedResult,
+  recordSourceControlWebhookDeliveryReceived,
+  type UpsertWatchedSourceControlRepositoryInput,
+  updateWatchedSourceControlRepositoryLastProcessedSha,
+  updateWatchedSourceControlRepositoryLastSeenSha,
+  upsertWatchedSourceControlRepository,
+} from "./utils/source-control-repositories";

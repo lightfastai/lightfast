@@ -22,11 +22,14 @@
  */
 
 import type { LightfastSessionClaims } from "@repo/app-clerk-claim";
+import type { OrgSetupGate } from "@repo/app-setup-contract";
 import { clerkClient } from "@vendor/clerk/server";
 import { log } from "@vendor/observability/log/next";
 
 const BINDING_STATUS_CLAIM =
   "lf_binding_status" satisfies keyof LightfastSessionClaims;
+const NEXT_SETUP_REQUIREMENT_CLAIM =
+  "lf_next_setup_requirement" satisfies keyof LightfastSessionClaims;
 
 interface LightfastOrgPublicMetadata {
   lightfast?: {
@@ -58,6 +61,12 @@ export interface MirrorOrgBindingInput {
   provider?: NonNullable<OrgBinding["provider"]>;
   /** Mirror status to write — must match the authoritative DB binding state. */
   status: OrgBindingMirrorStatus;
+}
+
+export interface MirrorOrgSetupGateInput {
+  clerkOrgId: string;
+  gate: OrgSetupGate;
+  provider?: NonNullable<OrgBinding["provider"]>;
 }
 
 /**
@@ -104,6 +113,54 @@ export async function mirrorOrgBinding(
     clerkOrgId,
     claim: BINDING_STATUS_CLAIM,
     status,
+    provider,
+  });
+}
+
+export async function mirrorOrgSetupGate(
+  input: MirrorOrgSetupGateInput
+): Promise<void> {
+  const { clerkOrgId, gate, provider = "github" } = input;
+  const clerk = await clerkClient();
+  const org = await clerk.organizations.getOrganization({
+    organizationId: clerkOrgId,
+  });
+
+  const current = org.publicMetadata as Record<string, unknown>;
+  const currentLightfast =
+    (current.lightfast as LightfastOrgPublicMetadata["lightfast"]) ?? {};
+
+  const nextBinding = {
+    status: gate.bindingStatus,
+    provider,
+    updatedAt: new Date().toISOString(),
+  } satisfies OrgBinding;
+
+  const { nextSetupRequirement: _nextSetupRequirement, ...lightfastRest } =
+    currentLightfast as Record<string, unknown>;
+  const nextLightfast = {
+    ...lightfastRest,
+    binding: nextBinding,
+    ...(gate.nextSetupRequirement
+      ? { nextSetupRequirement: gate.nextSetupRequirement }
+      : {}),
+  };
+
+  const nextPublicMetadata = {
+    ...current,
+    lightfast: nextLightfast,
+  };
+
+  await clerk.organizations.updateOrganization(clerkOrgId, {
+    publicMetadata: nextPublicMetadata,
+  });
+
+  log.info("[org-binding-mirror] mirrored setup gate to Clerk", {
+    clerkOrgId,
+    claim: BINDING_STATUS_CLAIM,
+    nextSetupRequirementClaim: NEXT_SETUP_REQUIREMENT_CLAIM,
+    status: gate.bindingStatus,
+    nextSetupRequirement: gate.nextSetupRequirement,
     provider,
   });
 }

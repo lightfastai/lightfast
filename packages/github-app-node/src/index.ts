@@ -9,7 +9,12 @@ export {
 } from "./installations";
 export { exchangeGitHubOAuthCode } from "./oauth";
 export { createGitHubPkcePair, type GitHubPkcePair } from "./pkce";
-export { getGitHubCommit, getGitHubTree } from "./repositories";
+export {
+  getGitHubCommit,
+  getGitHubRepository,
+  getGitHubTree,
+} from "./repositories";
+export { verifyGitHubInstallationRepository } from "./repository-installations";
 export {
   buildGitHubInstallationUrl,
   buildGitHubOAuthAuthorizeUrl,

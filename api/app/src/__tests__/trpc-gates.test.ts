@@ -157,7 +157,10 @@ function active(bindingStatus: "bound" | "unbound" | "revoked"): AuthIdentity {
     type: "active",
     userId: "user_test",
     orgId: "org_test",
-    orgGate: { bindingStatus },
+    orgGate: {
+      bindingStatus: bindingStatus === "bound" ? "bound" : "unbound",
+      nextSetupRequirement: bindingStatus === "bound" ? null : "github_org",
+    },
   };
 }
 
@@ -317,7 +320,7 @@ describe("boundOrgProcedure", () => {
       err as { cause: { diagnostics: { code: string; repair?: unknown }[] } }
     ).cause;
     expect(cause.diagnostics[0]?.code).toBe("ORG_SETUP_REQUIRED");
-    expect(cause.diagnostics[0]?.repair).toEqual({ id: "bind-source-control" });
+    expect(cause.diagnostics[0]?.repair).toEqual({ id: "setup-github-org" });
   });
 
   it("throws ORG_SETUP_REQUIRED for a revoked active org", async () => {

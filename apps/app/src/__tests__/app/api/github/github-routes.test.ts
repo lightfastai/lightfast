@@ -68,7 +68,9 @@ describe("GitHub app route handlers", () => {
     handleWebhookMock.mockResolvedValue(
       Response.json({ ok: true }, { status: 202 })
     );
-    const { POST } = await import("~/app/(app)/(github)/api/github/webhook/route");
+    const { POST } = await import(
+      "~/app/(app)/(github)/api/github/webhook/route"
+    );
     const req = new Request("https://localhost:4293/api/github/webhook", {
       body: JSON.stringify({ zen: "Keep it logically awesome." }),
       method: "POST",

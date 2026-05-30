@@ -245,6 +245,50 @@ describe("@repo/github-emulator", () => {
     expect(refRes.status).toBe(200);
   });
 
+  it("can emulate the missing and satisfied .lightfast repository requirement", async () => {
+    const jwt = await createAppJwt();
+    const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
+    const missingRes = await fetch(
+      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+    expect(missingRes.status).toBe(404);
+
+    const createRes = await fetch(`${emulator?.url}/orgs/${owner}/repos`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        auto_init: true,
+        name: ".lightfast",
+        private: true,
+      }),
+    });
+    expect(createRes.status).toBe(201);
+
+    const installationRes = await fetch(
+      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+    expect(installationRes.status).toBe(200);
+    await expect(installationRes.json()).resolves.toMatchObject({
+      id: GITHUB_EMULATOR_FIXTURES.installationId,
+      repository_selection: "all",
+    });
+  });
+
   it("redirects GitHub App install requests to the Lightfast setup callback", async () => {
     const res = await fetch(
       `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_123`,

@@ -17,7 +17,9 @@ vi.mock("@vendor/observability/log/next", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-const { mirrorOrgBinding } = await import("../auth/org-binding-mirror");
+const { mirrorOrgBinding, mirrorOrgSetupGate } = await import(
+  "../auth/org-binding-mirror"
+);
 
 /** The `publicMetadata` object passed to `updateOrganization` for call `n`. */
 function writtenPublicMetadata(call = 0): Record<string, unknown> {
@@ -151,5 +153,54 @@ describe("mirrorOrgBinding", () => {
     await expect(
       mirrorOrgBinding({ clerkOrgId: "org_7", status: "bound" })
     ).rejects.toThrow("clerk 500");
+  });
+});
+
+describe("mirrorOrgSetupGate", () => {
+  it("stores the next setup requirement while the org is unbound", async () => {
+    getOrganizationMock.mockResolvedValueOnce({ publicMetadata: {} });
+
+    await mirrorOrgSetupGate({
+      clerkOrgId: "org_8",
+      gate: {
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_lightfast_repo",
+      },
+    });
+
+    const written = writtenPublicMetadata();
+    expect(writtenBinding()).toMatchObject({
+      status: "unbound",
+      provider: "github",
+    });
+    expect(written.lightfast as Record<string, unknown>).toMatchObject({
+      nextSetupRequirement: "github_lightfast_repo",
+    });
+  });
+
+  it("clears the next setup requirement when the org is bound", async () => {
+    getOrganizationMock.mockResolvedValueOnce({
+      publicMetadata: {
+        lightfast: {
+          nextSetupRequirement: "github_lightfast_repo",
+        },
+      },
+    });
+
+    await mirrorOrgSetupGate({
+      clerkOrgId: "org_9",
+      gate: {
+        bindingStatus: "bound",
+        nextSetupRequirement: null,
+      },
+    });
+
+    expect(writtenBinding()).toMatchObject({
+      status: "bound",
+      provider: "github",
+    });
+    expect(writtenPublicMetadata().lightfast).not.toHaveProperty(
+      "nextSetupRequirement"
+    );
   });
 });

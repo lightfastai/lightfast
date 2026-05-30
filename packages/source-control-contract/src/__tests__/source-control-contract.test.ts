@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
-  SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES,
   matchesWatchedPath,
+  SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES,
   sourceControlRepositoryPushEventSchema,
   splitRepositoryFullName,
   watchedPathGlobsSchema,
@@ -54,9 +54,7 @@ describe("@repo/source-control-contract", () => {
 
   it("matches exact paths and prefix globs", () => {
     expect(matchesWatchedPath("README.md", ["README.md"])).toBe(true);
-    expect(matchesWatchedPath("skills/foo/SKILL.md", ["skills/**"])).toBe(
-      true
-    );
+    expect(matchesWatchedPath("skills/foo/SKILL.md", ["skills/**"])).toBe(true);
     expect(matchesWatchedPath("docs/SKILL.md", ["skills/**"])).toBe(false);
   });
 

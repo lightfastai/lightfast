@@ -2,11 +2,11 @@ import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.fn();
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 const clerkGetOrganizationMembershipListMock = vi.fn();
 
 vi.mock("@db/app", () => ({
-  isOrgBound: isOrgBoundMock,
+  getActiveOrgBinding: getActiveOrgBindingMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -35,9 +35,22 @@ const { resolveAuthContextFromClerk } = await import("../auth/identity");
 describe("native OAuth identity resolution", () => {
   beforeEach(() => {
     authMock.mockReset();
-    isOrgBoundMock.mockReset();
+    getActiveOrgBindingMock.mockReset();
     clerkGetOrganizationMembershipListMock.mockReset();
-    isOrgBoundMock.mockResolvedValue(true);
+    getActiveOrgBindingMock.mockResolvedValue({
+      metadata: {
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountLogin: "acme",
+      providerInstallationId: "1001",
+    });
     clerkGetOrganizationMembershipListMock.mockResolvedValue({
       data: [{ organization: { id: "org_1", name: "Acme", slug: "acme" } }],
       totalCount: 1,
@@ -94,7 +107,7 @@ describe("native OAuth identity resolution", () => {
     ).resolves.toMatchObject({
       access: { client: "desktop", kind: "clerk-oauth", userId: "user_1" },
       identity: {
-        orgGate: { bindingStatus: "bound" },
+        orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
         orgId: "org_1",
         type: "active",
         userId: "user_1",

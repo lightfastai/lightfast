@@ -98,13 +98,27 @@ describe("tasks/bind/page — setup page", () => {
   });
 
   it("redirects a bound org to the GitHub completion page", async () => {
-    fetchQueryMock.mockResolvedValue({ bindingStatus: "bound" });
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "bound",
+      nextSetupRequirement: null,
+    });
 
     await expect(invoke("acme")).rejects.toThrow(
       "NEXT_REDIRECT:/acme/tasks/bind/github/complete"
     );
     expect(redirectMock).toHaveBeenCalledWith(
       "/acme/tasks/bind/github/complete"
+    );
+  });
+
+  it("redirects orgs that already connected GitHub to the .lightfast task", async () => {
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "github_lightfast_repo",
+    });
+
+    await expect(invoke("acme")).rejects.toThrow(
+      "NEXT_REDIRECT:/acme/tasks/github/lightfast-repo"
     );
   });
 

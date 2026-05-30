@@ -3,16 +3,26 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const clerkGetOrganizationMembershipListMock = vi.fn();
-const isOrgBoundMock = vi.fn();
-const mirrorOrgBindingMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
+const mirrorOrgSetupGateMock = vi.fn();
 const nanoidMock = vi.fn();
 const redisSetMock = vi.fn();
 const redisGetdelMock = vi.fn();
+const updateOrgSourceControlBindingMetadataMock = vi.fn();
+const upsertWatchedSourceControlRepositoryMock = vi.fn();
+const createGitHubAppJwtMock = vi.fn();
+const createGitHubInstallationTokenMock = vi.fn();
+const getGitHubRepositoryMock = vi.fn();
+const verifyGitHubInstallationRepositoryMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
-  isOrgBound: isOrgBoundMock,
+  getActiveOrgBinding: getActiveOrgBindingMock,
+  updateOrgSourceControlBindingMetadata:
+    updateOrgSourceControlBindingMetadataMock,
+  upsertWatchedSourceControlRepository:
+    upsertWatchedSourceControlRepositoryMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -48,8 +58,19 @@ vi.mock("@vendor/upstash", () => ({
   },
 }));
 
+vi.mock("@repo/github-app-node", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/github-app-node")>();
+  return {
+    ...actual,
+    createGitHubAppJwt: createGitHubAppJwtMock,
+    createGitHubInstallationToken: createGitHubInstallationTokenMock,
+    getGitHubRepository: getGitHubRepositoryMock,
+    verifyGitHubInstallationRepository: verifyGitHubInstallationRepositoryMock,
+  };
+});
+
 vi.mock("../auth/org-binding-mirror", () => ({
-  mirrorOrgBinding: mirrorOrgBindingMock,
+  mirrorOrgSetupGate: mirrorOrgSetupGateMock,
 }));
 
 vi.mock("../env", () => ({
@@ -90,7 +111,7 @@ function makeCaller(
   const identity =
     input.identity ??
     ({
-      orgGate: { bindingStatus: "unbound" },
+      orgGate: { bindingStatus: "unbound", nextSetupRequirement: "github_org" },
       orgId: input.identityOrgId ?? "org_1",
       type: "active",
       userId: "user_1",
@@ -121,16 +142,39 @@ function makeCaller(
 describe("githubSetupRouter", () => {
   beforeEach(() => {
     clerkGetOrganizationMembershipListMock.mockReset();
-    isOrgBoundMock.mockReset();
-    mirrorOrgBindingMock.mockReset();
+    getActiveOrgBindingMock.mockReset();
+    mirrorOrgSetupGateMock.mockReset();
     nanoidMock.mockReset();
     redisGetdelMock.mockReset();
     redisSetMock.mockReset();
+    updateOrgSourceControlBindingMetadataMock.mockReset();
+    upsertWatchedSourceControlRepositoryMock.mockReset();
+    createGitHubAppJwtMock.mockReset();
+    createGitHubInstallationTokenMock.mockReset();
+    getGitHubRepositoryMock.mockReset();
+    verifyGitHubInstallationRepositoryMock.mockReset();
 
     nanoidMock
       .mockReturnValueOnce("attempt_123456789012345678901234")
       .mockReturnValueOnce("nonce_1234567890123456789012345");
-    isOrgBoundMock.mockResolvedValue(false);
+    getActiveOrgBindingMock.mockResolvedValue(undefined);
+    updateOrgSourceControlBindingMetadataMock.mockResolvedValue(true);
+    upsertWatchedSourceControlRepositoryMock.mockResolvedValue({});
+    createGitHubAppJwtMock.mockResolvedValue("app.jwt");
+    createGitHubInstallationTokenMock.mockResolvedValue({
+      expiresAt: "2026-05-30T11:00:00.000Z",
+      token: "ghs_installation",
+    });
+    verifyGitHubInstallationRepositoryMock.mockResolvedValue({
+      installationId: "1001",
+      repositorySelection: "all",
+    });
+    getGitHubRepositoryMock.mockResolvedValue({
+      fullName: "acme/.lightfast",
+      id: "987",
+      name: ".lightfast",
+      owner: "acme",
+    });
     clerkGetOrganizationMembershipListMock.mockResolvedValue({
       data: [
         {
@@ -217,16 +261,100 @@ describe("githubSetupRouter", () => {
   });
 
   it("syncs the active org binding claim", async () => {
-    isOrgBoundMock.mockResolvedValueOnce(true);
+    getActiveOrgBindingMock.mockResolvedValueOnce({
+      id: 1,
+      metadata: {
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountLogin: "acme",
+      providerInstallationId: "1001",
+    });
 
     await expect(
       makeCaller().org.setup.github.syncBindingClaim()
-    ).resolves.toEqual({ bindingStatus: "bound" });
+    ).resolves.toEqual({
+      bindingStatus: "bound",
+      nextSetupRequirement: null,
+    });
 
-    expect(mirrorOrgBindingMock).toHaveBeenCalledWith({
+    expect(mirrorOrgSetupGateMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",
       provider: "github",
-      status: "bound",
+      gate: {
+        bindingStatus: "bound",
+        nextSetupRequirement: null,
+      },
+    });
+  });
+
+  it("verifies .lightfast, stores proof, watches skills, and returns a bound gate", async () => {
+    getActiveOrgBindingMock.mockResolvedValueOnce({
+      id: 7,
+      metadata: {
+        events: ["push"],
+        permissions: { contents: "read" },
+      },
+      provider: "github",
+      providerAccountLogin: "acme",
+      providerInstallationId: "1001",
+    });
+
+    await expect(
+      makeCaller().org.setup.github.verifyLightfastRepo()
+    ).resolves.toEqual({
+      bindingStatus: "bound",
+      nextSetupRequirement: null,
+    });
+
+    expect(createGitHubAppJwtMock).toHaveBeenCalledWith({
+      appId: "12345",
+      privateKey: "test-private-key",
+    });
+    expect(verifyGitHubInstallationRepositoryMock).toHaveBeenCalledWith({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      apiVersion: "2022-11-28",
+      appJwt: "app.jwt",
+      expectedInstallationId: "1001",
+      owner: "acme",
+      repo: ".lightfast",
+    });
+    expect(updateOrgSourceControlBindingMetadataMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        id: 7,
+        metadata: expect.objectContaining({
+          lightfastRepository: expect.objectContaining({
+            fullName: "acme/.lightfast",
+            id: "987",
+            installationId: "1001",
+            name: ".lightfast",
+          }),
+        }),
+      }
+    );
+    expect(upsertWatchedSourceControlRepositoryMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        fullName: "acme/.lightfast",
+        orgSourceControlBindingId: 7,
+        providerRepositoryId: "987",
+        watchedPathGlobs: ["skills/**"],
+      }
+    );
+    expect(mirrorOrgSetupGateMock).toHaveBeenCalledWith({
+      clerkOrgId: "org_1",
+      provider: "github",
+      gate: {
+        bindingStatus: "bound",
+        nextSetupRequirement: null,
+      },
     });
   });
 });

@@ -58,7 +58,7 @@ const activeIdentity: AuthIdentity = {
   type: "active",
   userId: "user_current",
   orgId: "org_acme",
-  orgGate: { bindingStatus: "bound" },
+  orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 const pendingIdentity: AuthIdentity = {
   type: "pending",

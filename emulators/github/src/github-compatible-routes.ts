@@ -207,7 +207,7 @@ function findInstallationActor(input: { accountId: number; store: Store }) {
       return user;
     }
   }
-  return undefined;
+  return;
 }
 
 async function readBody(request: Request) {

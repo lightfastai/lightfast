@@ -7,14 +7,17 @@ const { orgGateMiddleware } = await import("../middleware/org-gate");
  * Invoke the gate as it runs in production: after `authMiddleware` has resolved
  * an Unkey API key into the shared `context.auth.identity` contract.
  */
-async function invokeGate(bindingStatus: "bound" | "unbound" | "revoked") {
+async function invokeGate(bindingStatus: "bound" | "unbound") {
   const { os } = await import("@orpc/server");
   const proc = os
     .$context<{
       apiKeyId: string;
       auth: {
         identity: {
-          orgGate: { bindingStatus: "bound" | "unbound" | "revoked" };
+          orgGate: {
+            bindingStatus: "bound" | "unbound";
+            nextSetupRequirement: "github_org" | "github_lightfast_repo" | null;
+          };
           orgId: string;
           type: "active";
           userId: string;
@@ -31,7 +34,11 @@ async function invokeGate(bindingStatus: "bound" | "unbound" | "revoked") {
       apiKeyId: "apk_test",
       auth: {
         identity: {
-          orgGate: { bindingStatus },
+          orgGate: {
+            bindingStatus,
+            nextSetupRequirement:
+              bindingStatus === "bound" ? null : "github_org",
+          },
           orgId: "org_test",
           type: "active",
           userId: "user_test",
@@ -55,12 +62,6 @@ describe("orgGateMiddleware", () => {
         diagnostics: [expect.objectContaining({ code: "ORG_SETUP_REQUIRED" })],
       },
       message: expect.stringContaining("has not completed setup"),
-    });
-  });
-
-  it("rejects a revoked org API key identity with FORBIDDEN", async () => {
-    await expect(invokeGate("revoked")).rejects.toMatchObject({
-      code: "FORBIDDEN",
     });
   });
 });

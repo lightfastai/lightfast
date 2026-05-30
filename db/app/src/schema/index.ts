@@ -34,9 +34,9 @@ export {
   type PersonIdentityType,
   people,
   type Signal,
-  signals,
   type SourceControlRepository,
-  sourceControlRepositories,
   type SourceControlWebhookDelivery,
+  signals,
+  sourceControlRepositories,
   sourceControlWebhookDeliveries,
 } from "./tables";

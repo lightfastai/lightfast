@@ -65,7 +65,9 @@ export async function pushGitHubEmulatorCommit(
   );
   const baseTreeSha = commit.tree?.sha ?? commit.commit?.tree?.sha;
   if (!baseTreeSha) {
-    throw new Error(`GitHub emulator commit ${beforeSha} did not include a tree sha`);
+    throw new Error(
+      `GitHub emulator commit ${beforeSha} did not include a tree sha`
+    );
   }
   const tree = await githubJson<{ sha: string }>(
     `${repoUrl}/git/trees`,

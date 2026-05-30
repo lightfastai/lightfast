@@ -47,7 +47,7 @@ function activeIdentity(overrides: Partial<AuthIdentity> = {}): AuthIdentity {
     type: "active",
     userId: "user_test",
     orgId: "org_acme",
-    orgGate: { bindingStatus: "bound" },
+    orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
     ...overrides,
   } as AuthIdentity;
 }

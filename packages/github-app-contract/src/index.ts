@@ -10,7 +10,6 @@ export {
   type GitHubPingWebhookPayload,
   type GitHubPushWebhookPayload,
   type GitHubWebhookHeaders,
-  type NormalizedGitHubPushWebhook,
   githubBindErrorCodeSchema,
   githubBindStartOutputSchema,
   githubInstallationMetadataSchema,
@@ -20,6 +19,7 @@ export {
   githubWebhookHeadersSchema,
   githubWebhookInstallationSchema,
   githubWebhookRepositorySchema,
+  type NormalizedGitHubPushWebhook,
   normalizedGitHubPushWebhookSchema,
   normalizeGitHubPushWebhookPayload,
 } from "./github-app";

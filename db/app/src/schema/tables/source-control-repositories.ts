@@ -72,8 +72,9 @@ export const sourceControlWebhookDeliveries = mysqlTable(
       .primaryKey()
       .autoincrement(),
 
-    deliveryId: varchar("delivery_id", { length: PROVIDER_REF_LENGTH })
-      .notNull(),
+    deliveryId: varchar("delivery_id", {
+      length: PROVIDER_REF_LENGTH,
+    }).notNull(),
 
     event: varchar("event", { length: CODE_LENGTH }).notNull(),
 

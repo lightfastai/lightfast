@@ -10,8 +10,9 @@ const {
   getActiveOrgBinding,
   getOrgBindingByProviderInstallation,
   isOrgBound,
-  upsertActiveOrgBinding,
   markOrgBindingRevoked,
+  updateOrgSourceControlBindingMetadata,
+  upsertActiveOrgBinding,
   OrgSourceControlBindingConflictError,
 } = await import("@db/app");
 
@@ -185,6 +186,40 @@ describe("getOrgBindingByProviderInstallation", () => {
         providerInstallationId: "1001",
       })
     ).resolves.toEqual(row);
+  });
+});
+
+describe("updateOrgSourceControlBindingMetadata", () => {
+  it("updates only the binding metadata for a binding id", async () => {
+    const { db, spies } = makeFakeDb({ updateResult: [binding()] });
+
+    await expect(
+      updateOrgSourceControlBindingMetadata(db, {
+        id: 7,
+        metadata: {
+          lightfastRepository: {
+            fullName: "acme/.lightfast",
+            id: "987",
+            installationId: "1001",
+            name: ".lightfast",
+            verifiedAt: "2026-05-30T10:00:00.000Z",
+          },
+        },
+      })
+    ).resolves.toBe(true);
+
+    expect(spies.update).toHaveBeenCalledTimes(1);
+    expect(spies.updateSet).toHaveBeenCalledWith({
+      metadata: {
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+    });
   });
 });
 
