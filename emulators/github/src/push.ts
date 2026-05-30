@@ -21,7 +21,11 @@ async function githubJson<T>(
   const res = await fetch(url, init);
   const json = (await res.json().catch(() => null)) as T;
   if (res.status !== expectedStatus) {
-    throw new Error(`GitHub emulator request failed: ${res.status} ${url}`);
+    throw new Error(
+      `GitHub emulator request failed: ${res.status} ${url} ${JSON.stringify(
+        json
+      )}`
+    );
   }
   return json;
 }

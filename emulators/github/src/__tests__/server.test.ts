@@ -472,13 +472,14 @@ describe("@repo/github-emulator", () => {
 
   it("simulates a push through GitHub-compatible git APIs", async () => {
     const { pushGitHubEmulatorCommit } = await import("../push");
+    const demoPath = "skills/demo/SKILL.md";
     const result = await pushGitHubEmulatorCommit({
       apiBaseUrl: emulator?.url ?? "",
       branch: "main",
       files: [
         {
           content: "# Demo\n",
-          path: "skills/demo/SKILL.md",
+          path: demoPath,
         },
       ],
       message: "Add demo skill",
@@ -490,6 +491,58 @@ describe("@repo/github-emulator", () => {
     expect(result.afterSha).toEqual(expect.any(String));
     expect(result.beforeSha).toEqual(expect.any(String));
     expect(result.afterSha).not.toBe(result.beforeSha);
+
+    const commitRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/commits/${result.afterSha}`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(commitRes.status).toBe(200);
+    const commit = (await commitRes.json()) as {
+      commit?: { tree?: { sha?: string } };
+    };
+    const treeSha = commit.commit?.tree?.sha;
+    expect(treeSha).toEqual(expect.any(String));
+
+    const treeRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/trees/${treeSha}?recursive=1`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(treeRes.status).toBe(200);
+    const tree = (await treeRes.json()) as {
+      tree?: Array<{ path?: string; sha?: string; type?: string }>;
+    };
+    const demoEntry = tree.tree?.find((entry) => entry.path === demoPath);
+    expect(demoEntry).toMatchObject({
+      path: demoPath,
+      sha: expect.any(String),
+      type: "blob",
+    });
+
+    const blobRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/blobs/${demoEntry?.sha}`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(blobRes.status).toBe(200);
+    const blob = (await blobRes.json()) as {
+      content?: string;
+      encoding?: string;
+    };
+    expect(blob.encoding).toBe("base64");
+    expect(Buffer.from(blob.content ?? "", "base64").toString("utf8")).toBe(
+      "# Demo\n"
+    );
   });
 
   it("delivers a signed GitHub App push webhook after simulated push", async () => {
