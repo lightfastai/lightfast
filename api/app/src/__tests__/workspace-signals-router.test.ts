@@ -3,12 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const listSignalsMock = vi.fn();
+const listWorkspaceSignalsMock = vi.fn();
 const getSignalByPublicIdMock = vi.fn();
 const createAndQueueSignalMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   listSignals: listSignalsMock,
+  listWorkspaceSignals: listWorkspaceSignalsMock,
   getSignalByPublicId: getSignalByPublicIdMock,
 }));
 vi.mock("../signals/create-signal", () => ({
@@ -97,11 +99,19 @@ function activeIdentityForOrg(orgId: string): ActiveAuthIdentity {
 
 beforeEach(() => {
   listSignalsMock.mockReset();
+  listWorkspaceSignalsMock.mockReset();
   getSignalByPublicIdMock.mockReset();
   createAndQueueSignalMock.mockReset();
   listSignalsMock.mockResolvedValue({
     items: [signalRow],
     nextCursor: { createdAt: signalRow.createdAt, id: signalRow.id },
+  });
+  listWorkspaceSignalsMock.mockResolvedValue({
+    items: [],
+    limit: 2000,
+    totalCount: 0,
+    truncated: false,
+    windowDays: 30,
   });
   getSignalByPublicIdMock.mockResolvedValue(signalRow);
   createAndQueueSignalMock.mockResolvedValue({
@@ -111,17 +121,14 @@ beforeEach(() => {
 });
 
 describe("workspaceSignalsRouter.list", () => {
-  it("forwards filters and returns native DB rows unchanged", async () => {
+  it("forwards only cursor, limit, and statuses to the DB list helper", async () => {
+    const cursor = { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 };
+
     await expect(
       caller().signals.list({
-        cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
-        dispositions: ["actionable"],
-        kinds: ["follow_up", "fix"],
+        cursor,
         limit: 25,
-        peopleRouted: true,
-        priorities: ["high", "urgent"],
-        search: "migration",
-        status: "classified",
+        statuses: ["queued", "processing"],
       })
     ).resolves.toEqual({
       items: [signalRow],
@@ -130,35 +137,21 @@ describe("workspaceSignalsRouter.list", () => {
 
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
-      cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
-      dispositions: ["actionable"],
-      kinds: ["follow_up", "fix"],
+      cursor,
       limit: 25,
-      peopleRouted: true,
-      priorities: ["high", "urgent"],
-      search: "migration",
-      status: "classified",
+      statuses: ["queued", "processing"],
     });
   });
 
-  it("normalizes blank search to an unfiltered list request", async () => {
+  it("rejects dormant classified filter inputs", async () => {
     await expect(
-      caller().signals.list({ search: "   " })
-    ).resolves.toMatchObject({
-      items: [signalRow],
-    });
+      caller().signals.list({
+        kinds: ["fix"],
+        search: "migration",
+      } as never)
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
 
-    expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkOrgId: "org_test",
-      cursor: undefined,
-      dispositions: undefined,
-      kinds: undefined,
-      limit: undefined,
-      peopleRouted: undefined,
-      priorities: undefined,
-      search: undefined,
-      status: undefined,
-    });
+    expect(listSignalsMock).not.toHaveBeenCalled();
   });
 
   it("forwards multi-status processing list filters", async () => {
@@ -174,13 +167,7 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       cursor: undefined,
-      dispositions: undefined,
-      kinds: undefined,
       limit: 10,
-      peopleRouted: undefined,
-      priorities: undefined,
-      search: undefined,
-      status: undefined,
       statuses: ["queued", "processing"],
     });
   });
@@ -239,13 +226,24 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_other",
       cursor: undefined,
-      dispositions: undefined,
-      kinds: undefined,
       limit: undefined,
-      peopleRouted: undefined,
-      priorities: undefined,
-      search: undefined,
-      status: undefined,
+      statuses: undefined,
+    });
+  });
+});
+
+describe("workspaceSignalsRouter.workingSet", () => {
+  it("returns the org-scoped working set with metadata", async () => {
+    await expect(caller().signals.workingSet()).resolves.toEqual({
+      items: [],
+      limit: 2000,
+      totalCount: 0,
+      truncated: false,
+      windowDays: 30,
+    });
+
+    expect(listWorkspaceSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
     });
   });
 });

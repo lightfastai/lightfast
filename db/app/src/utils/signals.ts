@@ -1,5 +1,5 @@
 import type { SignalClassification } from "@repo/api-contract";
-import { and, desc, eq, gte, inArray, like, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
@@ -31,25 +31,8 @@ function isDefined<T>(value: T | undefined): value is T {
 export interface ListSignalsParams {
   clerkOrgId: string;
   cursor?: ListCursor | null;
-  dispositions?: SignalClassification["disposition"][];
-  kinds?: SignalClassification["kind"][];
   limit?: number;
-  peopleRouted?: boolean;
-  priorities?: SignalClassification["priority"][];
-  search?: string;
-  status?: Signal["status"];
   statuses?: Signal["status"][];
-}
-
-function jsonString(path: string) {
-  return sql<string>`json_unquote(json_extract(${signals.classification}, ${path}))`;
-}
-
-function jsonStringIn(path: string, values: string[] | undefined) {
-  if (!values?.length) {
-    return;
-  }
-  return inArray(jsonString(path), values);
 }
 
 export async function listSignals(
@@ -57,28 +40,10 @@ export async function listSignals(
   input: ListSignalsParams
 ): Promise<ListResult<Signal>> {
   const limit = normalizeLimit(input.limit);
-  const search = input.search?.trim();
   const conditions = [
     eq(signals.clerkOrgId, input.clerkOrgId),
-    input.status ? eq(signals.status, input.status) : undefined,
     input.statuses?.length
       ? inArray(signals.status, input.statuses)
-      : undefined,
-    jsonStringIn("$.disposition", input.dispositions),
-    jsonStringIn("$.kind", input.kinds),
-    jsonStringIn("$.priority", input.priorities),
-    input.peopleRouted === true
-      ? eq(jsonString("$.routing.classifyPeople.shouldRun"), "true")
-      : undefined,
-    search
-      ? or(
-          like(signals.publicId, `%${search}%`),
-          like(signals.input, `%${search}%`),
-          like(jsonString("$.title"), `%${search}%`),
-          like(jsonString("$.summary"), `%${search}%`),
-          like(jsonString("$.nextAction"), `%${search}%`),
-          like(jsonString("$.rationale"), `%${search}%`)
-        )
       : undefined,
     input.cursor
       ? or(
