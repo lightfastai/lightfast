@@ -1,4 +1,4 @@
-import { and, desc, eq, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -39,7 +39,9 @@ export interface ListPeopleParams {
   clerkOrgId: string;
   cursor?: ListCursor | null;
   limit?: number;
+  providers?: PersonIdentityProvider[];
   search?: string;
+  types?: PersonIdentityType[];
 }
 
 export async function listPeople(
@@ -58,6 +60,12 @@ export async function listPeople(
           sql`${people.identityValue} like ${searchPattern} escape '\\\\'`,
           sql`${people.normalizedIdentityValue} like ${searchPattern} escape '\\\\'`
         )
+      : undefined,
+    input.providers?.length
+      ? inArray(people.identityProvider, input.providers)
+      : undefined,
+    input.types?.length
+      ? inArray(people.identityType, input.types)
       : undefined,
     input.cursor
       ? or(
@@ -182,6 +190,23 @@ export async function getPersonByIdentityKey(
       and(
         eq(people.clerkOrgId, input.clerkOrgId),
         eq(people.identityKey, input.identityKey)
+      )
+    )
+    .limit(1);
+  return row;
+}
+
+export async function getPersonByPublicId(
+  db: Database,
+  input: { clerkOrgId: string; publicId: string }
+): Promise<Person | undefined> {
+  const [row] = await db
+    .select()
+    .from(people)
+    .where(
+      and(
+        eq(people.clerkOrgId, input.clerkOrgId),
+        eq(people.publicId, input.publicId)
       )
     )
     .limit(1);

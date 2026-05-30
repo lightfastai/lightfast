@@ -81,6 +81,7 @@ export {
 } from "./utils/org-binding";
 export {
   getPersonByIdentityKey,
+  getPersonByPublicId,
   type ListPeopleParams,
   listPeople,
   type UpsertPeopleCandidate,
