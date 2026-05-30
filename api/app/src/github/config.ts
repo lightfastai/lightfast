@@ -24,7 +24,7 @@ export const DEFAULT_GITHUB_APP_ENDPOINTS: GitHubAppEndpoints = {
   webBaseUrl: "https://github.com",
 };
 
-type GitHubConfigEnv = {
+interface GitHubConfigEnv {
   GITHUB_API_VERSION?: string;
   GITHUB_APP_CLIENT_ID?: string;
   GITHUB_APP_CLIENT_SECRET?: string;
@@ -34,7 +34,7 @@ type GitHubConfigEnv = {
   GITHUB_APP_SLUG?: string;
   GITHUB_INSTALL_URL_OVERRIDE?: string;
   VERCEL_ENV?: "development" | "preview" | "production";
-};
+}
 
 export function normalizeGitHubPrivateKey(value: string): string {
   return value.replace(/\\n/g, "\n");
@@ -80,7 +80,7 @@ export function resolveGitHubAppEndpoints(
     vercelEnv?: "development" | "preview" | "production";
   } = {}
 ): GitHubAppEndpoints {
-  const legacyInstallUrlOverride = Object.prototype.hasOwnProperty.call(
+  const legacyInstallUrlOverride = Object.hasOwn(
     input,
     "legacyInstallUrlOverride"
   )
@@ -88,10 +88,7 @@ export function resolveGitHubAppEndpoints(
     : process.env.GITHUB_INSTALL_URL_OVERRIDE;
   assertNoLegacyInstallOverride({ legacyInstallUrlOverride });
 
-  const endpointOrigin = Object.prototype.hasOwnProperty.call(
-    input,
-    "endpointOrigin"
-  )
+  const endpointOrigin = Object.hasOwn(input, "endpointOrigin")
     ? input.endpointOrigin
     : runtimeEnv.GITHUB_APP_ENDPOINT_ORIGIN;
   if (!endpointOrigin) {

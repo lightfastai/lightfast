@@ -16,8 +16,6 @@ feature harder to maintain:
   and Clerk organization membership logic.
 - `internal/github-emulator` depends on `@repo/github-app-contract`, which
   conflicts with the existing `internal` boundary rules.
-- `dogfood-output/` is now ignored, but dogfood screenshots and video are still
-  tracked in the branch.
 
 This spec scopes a behavior-preserving rework of that structure before the
 GitHub installation work is merged.
@@ -48,8 +46,6 @@ emulator workspace:
 emulator/github
 ```
 
-Delete tracked dogfood artifacts and keep `dogfood-output/` ignored.
-
 The rework should preserve the production-shaped GitHub App install/OAuth flow.
 The only intended behavior fix is making org admin membership lookup paginated
 so callback verification does not falsely deny users with many memberships.
@@ -62,7 +58,6 @@ so callback verification does not falsely deny users with many memberships.
 - Keep Lightfast orchestration in `api/app/src/services/github`.
 - Keep Clerk session, membership, and admin checks in `api/app/src/auth`.
 - Keep emulator code out of production package paths.
-- Remove tracked dogfood outputs from the branch.
 - Avoid a large orchestration file by splitting setup flow responsibilities.
 
 ## Non-Goals
@@ -202,23 +197,6 @@ The emulator package may depend on `@repo/github-app-contract` because it is now
 explicitly dev infrastructure, not an `internal` package violating the internal
 boundary.
 
-## Dogfood Artifacts
-
-Remove the tracked files under:
-
-```text
-dogfood-output/github-emulator-binding-2026-05-29/
-```
-
-Keep:
-
-```gitignore
-dogfood-output/
-```
-
-Future dogfood output should stay local unless a specific artifact is promoted
-into durable documentation.
-
 ## Data Flow
 
 Start flow:
@@ -315,8 +293,7 @@ Implementation should happen as a structural move with narrow behavior changes:
 4. Update app route handlers and tRPC routers to import from the service path.
 5. Move `internal/github-emulator` to `emulator/github` and rename the package.
 6. Update workspace, Turbo, package scripts, and docs references.
-7. Delete tracked dogfood artifacts.
-8. Run focused tests and typecheck.
+7. Run focused tests and typecheck.
 
 No implementation step should introduce a new durable table, new SQL migration,
 or production webhook behavior.
@@ -334,5 +311,4 @@ or production webhook behavior.
   `@emulator/github`.
 - Root dev scripts still start the GitHub emulator through Portless.
 - `apps/app` route handlers remain thin.
-- `dogfood-output/` tracked artifacts are removed.
 - Focused tests and `pnpm typecheck` pass.

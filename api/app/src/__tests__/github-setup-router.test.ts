@@ -1,5 +1,6 @@
 import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { AuthIdentity } from "../auth/identity";
 
 const clerkGetOrganizationMembershipListMock = vi.fn();
 const isOrgBoundMock = vi.fn();
@@ -81,26 +82,37 @@ const createCaller = createCallerFactory(testRouter);
 function makeCaller(
   input: {
     accessOrgId?: string | null;
+    identity?: AuthIdentity;
     identityOrgId?: string;
     isAdmin?: boolean;
   } = {}
 ) {
+  const identity =
+    input.identity ??
+    ({
+      orgGate: { bindingStatus: "unbound" },
+      orgId: input.identityOrgId ?? "org_1",
+      type: "active",
+      userId: "user_1",
+    } satisfies AuthIdentity);
+  const access =
+    identity.type === "unauthenticated"
+      ? undefined
+      : {
+          has: ({ role }: { role?: string }) =>
+            (input.isAdmin ?? true) ? role === "org:admin" : false,
+          kind: "clerk-session" as const,
+          orgId:
+            input.accessOrgId === undefined
+              ? identity.type === "active"
+                ? identity.orgId
+                : null
+              : input.accessOrgId,
+          userId: identity.userId,
+        };
+
   return createCaller({
-    auth: {
-      access: {
-        has: ({ role }: { role?: string }) =>
-          (input.isAdmin ?? true) ? role === "org:admin" : false,
-        kind: "clerk-session",
-        orgId: input.accessOrgId === undefined ? "org_1" : input.accessOrgId,
-        userId: "user_1",
-      },
-      identity: {
-        orgGate: { bindingStatus: "unbound" },
-        orgId: input.identityOrgId ?? "org_1",
-        type: "active",
-        userId: "user_1",
-      },
-    },
+    auth: access ? { access, identity } : { identity },
     db: {} as Database,
     headers: new Headers(),
   });
@@ -165,6 +177,31 @@ describe("githubSetupRouter", () => {
         orgSlug: "acme",
       })
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(redisSetMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects setup starts for pending callers without an active org", async () => {
+    await expect(
+      makeCaller({
+        accessOrgId: null,
+        identity: { type: "pending", userId: "user_1" },
+      }).org.setup.github.start({
+        orgSlug: "acme",
+      })
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(redisSetMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects setup starts for unauthenticated callers", async () => {
+    await expect(
+      makeCaller({
+        identity: { type: "unauthenticated" },
+      }).org.setup.github.start({
+        orgSlug: "acme",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 
     expect(redisSetMock).not.toHaveBeenCalled();
   });

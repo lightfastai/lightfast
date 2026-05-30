@@ -23,7 +23,7 @@ describe("GitHub user-accessible installation verification", () => {
               login: "lightfast-emulated",
               type: "Organization",
             },
-            app_id: 424242,
+            app_id: 424_242,
             app_slug: "lightfast-local",
             events: ["issues"],
             permissions: { contents: "read" },
@@ -124,7 +124,7 @@ describe("GitHub user-accessible installation verification", () => {
             {
               id: 9999,
               account: { id: 10, login: "other-org", type: "Organization" },
-              app_id: 424242,
+              app_id: 424_242,
               app_slug: "lightfast-local",
               target_type: "Organization",
             },
@@ -141,7 +141,7 @@ describe("GitHub user-accessible installation verification", () => {
               login: "lightfast-emulated",
               type: "Organization",
             },
-            app_id: 424242,
+            app_id: 424_242,
             app_slug: "lightfast-local",
             events: ["push"],
             permissions: { contents: "read" },
@@ -166,6 +166,105 @@ describe("GitHub user-accessible installation verification", () => {
     });
   });
 
+  it("continues listing to page 2 when a full page omits total_count", async () => {
+    const fetchMock = vi.fn(async (url: Parameters<typeof fetch>[0]) => {
+      if (pageNumberFor(url) === "1") {
+        return Response.json({
+          installations: [
+            {
+              id: 1001,
+              account: { id: 10, login: "first-org", type: "Organization" },
+              app_id: 424_242,
+              app_slug: "lightfast-local",
+              target_type: "Organization",
+            },
+            {
+              id: 1002,
+              account: { id: 20, login: "second-org", type: "Organization" },
+              app_id: 424_242,
+              app_slug: "lightfast-local",
+              target_type: "Organization",
+            },
+          ],
+        });
+      }
+
+      return Response.json({
+        installations: [
+          {
+            id: 1003,
+            account: { id: 30, login: "third-org", type: "Organization" },
+            app_id: 424_242,
+            app_slug: "lightfast-local",
+            target_type: "Organization",
+          },
+        ],
+      });
+    });
+
+    await expect(
+      listGitHubUserAccessibleInstallations({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        fetch: fetchMock,
+        perPage: 2,
+        userAccessToken: "gho_test",
+      })
+    ).resolves.toEqual([
+      expect.objectContaining({ id: "1001" }),
+      expect.objectContaining({ id: "1002" }),
+      expect.objectContaining({ id: "1003" }),
+    ]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("finds an expected installation on page 2 when responses omit total_count", async () => {
+    const fetchMock = vi.fn(async (url: Parameters<typeof fetch>[0]) => {
+      if (pageNumberFor(url) === "1") {
+        return Response.json({
+          installations: [
+            {
+              id: 9999,
+              account: { id: 10, login: "other-org", type: "Organization" },
+              app_id: 424_242,
+              app_slug: "lightfast-local",
+              target_type: "Organization",
+            },
+          ],
+        });
+      }
+
+      return Response.json({
+        installations: [
+          {
+            id: 1001,
+            account: {
+              id: 20,
+              login: "lightfast-emulated",
+              type: "Organization",
+            },
+            app_id: 424_242,
+            app_slug: "lightfast-local",
+            target_type: "Organization",
+          },
+        ],
+      });
+    });
+
+    await expect(
+      verifyGitHubUserInstallation({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        expectedInstallationId: "1001",
+        fetch: fetchMock,
+        perPage: 1,
+        userAccessToken: "gho_test",
+      })
+    ).resolves.toMatchObject({
+      account: { login: "lightfast-emulated", type: "Organization" },
+      id: "1001",
+    });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
   it("returns as soon as the expected installation is found", async () => {
     const fetchMock = vi.fn(async (url: Parameters<typeof fetch>[0]) => {
       if (pageNumberFor(url) === "1") {
@@ -179,7 +278,7 @@ describe("GitHub user-accessible installation verification", () => {
                 login: "lightfast-emulated",
                 type: "Organization",
               },
-              app_id: 424242,
+              app_id: 424_242,
               app_slug: "lightfast-local",
               target_type: "Organization",
             },
@@ -228,7 +327,7 @@ describe("GitHub user-accessible installation verification", () => {
           {
             id: 1001,
             account: { id: 10, login: "lightfast-dev", type: "User" },
-            app_id: 424242,
+            app_id: 424_242,
             app_slug: "lightfast-local",
             target_type: "User",
           },

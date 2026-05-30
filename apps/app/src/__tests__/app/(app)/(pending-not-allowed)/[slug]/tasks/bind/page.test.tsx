@@ -11,13 +11,7 @@ const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
   queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
 const bindCardMock = vi.fn(
-  ({
-    githubError,
-    orgSlug,
-  }: {
-    githubError?: string;
-    orgSlug: string;
-  }) => (
+  ({ githubError, orgSlug }: { githubError?: string; orgSlug: string }) => (
     <div data-github-error={githubError} data-testid="bind-card">
       {orgSlug}
     </div>

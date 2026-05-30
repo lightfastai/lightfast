@@ -372,6 +372,20 @@ describe("proxy pending-session route handling", () => {
     expect(authMock).not.toHaveBeenCalled();
   });
 
+  it.each([
+    "/api/github/setup",
+    "/api/github/oauth/callback",
+  ])("keeps GitHub proxy bypass public for expired tokens on %s", async (pathname) => {
+    authMock.mockRejectedValue(new Error("Token expired"));
+
+    const { response } = await invoke(pathname);
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(clerkProxyRequestMock).toHaveBeenCalledWith(pathname);
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
   it("does not admit the old dev GitHub install shim as a public route", async () => {
     authMock.mockResolvedValue({
       orgId: null,

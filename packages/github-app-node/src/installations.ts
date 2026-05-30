@@ -87,12 +87,14 @@ function hasNextInstallationsPage(input: {
   perPage: number;
   totalCount?: number;
 }) {
-  const totalCount = input.totalCount ?? input.currentCount;
+  if (input.totalCount === undefined) {
+    return input.pageCount > 0 && input.pageCount >= input.perPage;
+  }
 
   return (
     input.pageCount > 0 &&
     input.pageCount >= input.perPage &&
-    input.currentCount < totalCount
+    input.currentCount < input.totalCount
   );
 }
 
@@ -128,7 +130,7 @@ async function fetchInstallationsPage(input: {
 
   const json = await res.json().catch(() => null);
   const parsed = userInstallationsResponseSchema.safeParse(json);
-  if (!res.ok || !parsed.success) {
+  if (!(res.ok && parsed.success)) {
     throw new GitHubAppNodeError(
       "INSTALLATION_NOT_VERIFIED",
       "GitHub installation verification response was invalid."
@@ -195,7 +197,9 @@ export async function verifyGitHubUserInstallation(
       userAccessToken: input.userAccessToken,
     });
 
-    const normalizedInstallations = data.installations.map(normalizeInstallation);
+    const normalizedInstallations = data.installations.map(
+      normalizeInstallation
+    );
     const installation = normalizedInstallations.find(
       (candidate) => candidate.id === input.expectedInstallationId
     );

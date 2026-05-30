@@ -1,4 +1,4 @@
-import type { GitHubSeedConfig } from "@emulators/github";
+import type { GitHubSeedConfig } from "@repo/emulators-github";
 
 const githubAppPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAouLr+xRpS3PjnON4PW2cgwUUmRpZWBKy22PJrBIJ58MFG9T6

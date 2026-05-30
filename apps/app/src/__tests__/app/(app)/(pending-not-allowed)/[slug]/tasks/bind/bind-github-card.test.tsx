@@ -106,7 +106,10 @@ describe("BindGithubCard", () => {
 
   it("surfaces GitHub callback errors", () => {
     render(
-      <BindGithubCard githubError="github_authorization_denied" orgSlug="acme" />
+      <BindGithubCard
+        githubError="github_authorization_denied"
+        orgSlug="acme"
+      />
     );
 
     expect(screen.getByRole("alert")).toHaveTextContent(

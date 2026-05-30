@@ -1,4 +1,4 @@
-import { SignJWT, importPKCS8 } from "jose";
+import { importPKCS8, SignJWT } from "jose";
 
 export async function createGitHubAppJwt(input: {
   appId: string;

@@ -52,6 +52,15 @@ function activeIdentity(overrides: Partial<AuthIdentity> = {}): AuthIdentity {
   } as AuthIdentity;
 }
 
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_test",
+};
+
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
+};
+
 function caller(identity = activeIdentity()) {
   return createCaller({
     auth: { identity },
@@ -66,6 +75,22 @@ beforeEach(() => {
 });
 
 describe("org.settings.sourceControl.get", () => {
+  it("rejects pending identities before loading binding data", async () => {
+    await expect(
+      caller(pendingIdentity).org.settings.sourceControl.get()
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unauthenticated identities before loading binding data", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).org.settings.sourceControl.get()
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
+  });
+
   it("returns an empty read-only connection when the active org is unbound", async () => {
     getActiveOrgBindingMock.mockResolvedValue(undefined);
 

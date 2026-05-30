@@ -2,6 +2,8 @@ import { z } from "zod";
 
 import { GitHubAppNodeError } from "./errors";
 
+const DEFAULT_GITHUB_OAUTH_EXCHANGE_TIMEOUT_MS = 10_000;
+
 const githubOAuthTokenResponseSchema = z.object({
   access_token: z.string().min(1),
   token_type: z.string().min(1),
@@ -14,6 +16,8 @@ export interface ExchangeGitHubOAuthCodeInput {
   codeVerifier: string;
   fetch?: typeof fetch;
   redirectUri: string;
+  signal?: AbortSignal;
+  timeoutMs?: number;
   tokenUrl?: string;
 }
 
@@ -21,12 +25,21 @@ export async function exchangeGitHubOAuthCode(
   input: ExchangeGitHubOAuthCodeInput
 ): Promise<{ accessToken: string; tokenType: string }> {
   const requestFetch = input.fetch ?? fetch;
-  let res: Response;
+  const abortController = input.signal ? undefined : new AbortController();
+  const signal = input.signal ?? abortController?.signal;
+  const timeout =
+    abortController === undefined
+      ? undefined
+      : setTimeout(
+          () => abortController.abort(),
+          input.timeoutMs ?? DEFAULT_GITHUB_OAUTH_EXCHANGE_TIMEOUT_MS
+        );
   try {
-    res = await requestFetch(
+    const res = await requestFetch(
       input.tokenUrl ?? "https://github.com/login/oauth/access_token",
       {
         method: "POST",
+        signal,
         headers: {
           accept: "application/json",
           "content-type": "application/json",
@@ -40,24 +53,31 @@ export async function exchangeGitHubOAuthCode(
         }),
       }
     );
-  } catch {
+
+    const json = await res.json().catch(() => null);
+    const parsed = githubOAuthTokenResponseSchema.safeParse(json);
+    if (!(res.ok && parsed.success)) {
+      throw new GitHubAppNodeError(
+        "GITHUB_OAUTH_EXCHANGE_FAILED",
+        "GitHub OAuth code exchange failed."
+      );
+    }
+
+    return {
+      accessToken: parsed.data.access_token,
+      tokenType: parsed.data.token_type,
+    };
+  } catch (error) {
+    if (error instanceof GitHubAppNodeError) {
+      throw error;
+    }
     throw new GitHubAppNodeError(
       "GITHUB_OAUTH_EXCHANGE_FAILED",
       "GitHub OAuth code exchange failed."
     );
+  } finally {
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+    }
   }
-
-  const json = await res.json().catch(() => null);
-  const parsed = githubOAuthTokenResponseSchema.safeParse(json);
-  if (!res.ok || !parsed.success) {
-    throw new GitHubAppNodeError(
-      "GITHUB_OAUTH_EXCHANGE_FAILED",
-      "GitHub OAuth code exchange failed."
-    );
-  }
-
-  return {
-    accessToken: parsed.data.access_token,
-    tokenType: parsed.data.token_type,
-  };
 }

@@ -29,7 +29,9 @@ function encodeState(input: { attemptId: string; nonce: string }): string {
   return Buffer.from(JSON.stringify(input), "utf8").toString("base64url");
 }
 
-function decodeState(state: string): { attemptId: string; nonce: string } | null {
+function decodeState(
+  state: string
+): { attemptId: string; nonce: string } | null {
   try {
     return stateEnvelopeSchema.parse(
       JSON.parse(Buffer.from(state, "base64url").toString("utf8"))

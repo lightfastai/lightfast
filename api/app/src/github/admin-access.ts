@@ -2,8 +2,9 @@ import { auth, clerkClient } from "@vendor/clerk/server";
 
 export class GitHubSetupAdminAccessError extends Error {
   constructor(
-    readonly code: "PERMISSION_REQUIRED" | "UNAUTHENTICATED" =
-      "PERMISSION_REQUIRED",
+    readonly code:
+      | "PERMISSION_REQUIRED"
+      | "UNAUTHENTICATED" = "PERMISSION_REQUIRED",
     message = "Organization administrator access required."
   ) {
     super(message);

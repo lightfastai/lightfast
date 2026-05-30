@@ -1,10 +1,11 @@
 import type { Server } from "node:http";
-import { createServer, serve } from "@emulators/core";
 import {
+  createServer,
   getGitHubStore,
   githubPlugin,
   seedFromConfig,
-} from "@emulators/github";
+  serve,
+} from "@repo/emulators-github";
 
 import { createGitHubEmulatorSeed, GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 import { createGitHubCompatibleFetch } from "./github-compatible-routes";

@@ -32,7 +32,7 @@ describe("GitHub app route handlers", () => {
     );
     expect(completeSetupMock).toHaveBeenCalledWith({
       requestUrl:
-        "https://localhost:4293/api/github/setup?installation_id=1001&state=abc"
+        "https://localhost:4293/api/github/setup?installation_id=1001&state=abc",
     });
   });
 
@@ -57,7 +57,7 @@ describe("GitHub app route handlers", () => {
     );
     expect(completeOAuthMock).toHaveBeenCalledWith({
       requestUrl:
-        "https://localhost:4293/api/github/oauth/callback?code=abc&state=def"
+        "https://localhost:4293/api/github/oauth/callback?code=abc&state=def",
     });
   });
 });

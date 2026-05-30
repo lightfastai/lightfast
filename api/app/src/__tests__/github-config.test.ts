@@ -50,18 +50,18 @@ describe("GitHub config", () => {
     });
   });
 
-  it.each(["preview", "production"] as const)(
-    "rejects custom endpoint origins in %s",
-    (vercelEnv) => {
-      expect(() =>
-        resolveGitHubAppEndpoints({
-          endpointOrigin: "https://github.lightfast.localhost",
-          legacyInstallUrlOverride: undefined,
-          vercelEnv,
-        })
-      ).toThrow(/custom GitHub endpoints are allowed only in local development/);
-    }
-  );
+  it.each([
+    "preview",
+    "production",
+  ] as const)("rejects custom endpoint origins in %s", (vercelEnv) => {
+    expect(() =>
+      resolveGitHubAppEndpoints({
+        endpointOrigin: "https://github.lightfast.localhost",
+        legacyInstallUrlOverride: undefined,
+        vercelEnv,
+      })
+    ).toThrow(/custom GitHub endpoints are allowed only in local development/);
+  });
 
   it("rejects legacy install overrides even in development", () => {
     vi.stubEnv(
@@ -213,25 +213,25 @@ describe("GitHub config", () => {
     ).toThrow("GitHub App environment is incomplete.");
   });
 
-  it.each(["preview", "production"] as const)(
-    "getGitHubAppConfig rejects custom endpoint origins in %s",
-    (vercelEnv) => {
-      expect(() =>
-        getGitHubAppConfig({
-          env: {
-            GITHUB_API_VERSION: "2022-11-28",
-            GITHUB_APP_CLIENT_ID: "github_client_test",
-            GITHUB_APP_CLIENT_SECRET: "github_secret_test",
-            GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
-            GITHUB_APP_ID: "12345",
-            GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
-            GITHUB_APP_SLUG: "lightfast-test",
-            VERCEL_ENV: vercelEnv,
-          },
-        })
-      ).toThrow(/custom GitHub endpoints are allowed only in local development/);
-    }
-  );
+  it.each([
+    "preview",
+    "production",
+  ] as const)("getGitHubAppConfig rejects custom endpoint origins in %s", (vercelEnv) => {
+    expect(() =>
+      getGitHubAppConfig({
+        env: {
+          GITHUB_API_VERSION: "2022-11-28",
+          GITHUB_APP_CLIENT_ID: "github_client_test",
+          GITHUB_APP_CLIENT_SECRET: "github_secret_test",
+          GITHUB_APP_ENDPOINT_ORIGIN: "https://github.lightfast.localhost",
+          GITHUB_APP_ID: "12345",
+          GITHUB_APP_PRIVATE_KEY: "line1\\nline2",
+          GITHUB_APP_SLUG: "lightfast-test",
+          VERCEL_ENV: vercelEnv,
+        },
+      })
+    ).toThrow(/custom GitHub endpoints are allowed only in local development/);
+  });
 
   it("returns complete GitHub App config when required values are present", () => {
     const config = getGitHubAppConfig({

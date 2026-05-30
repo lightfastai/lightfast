@@ -192,7 +192,8 @@ export async function finalizeActiveOrgProviderBinding(
         providerAccountId:
           input.providerAccountId ?? installationBinding.providerAccountId,
         providerAccountLogin:
-          input.providerAccountLogin ?? installationBinding.providerAccountLogin,
+          input.providerAccountLogin ??
+          installationBinding.providerAccountLogin,
         providerInstallationId: input.providerInstallationId,
         metadata: input.metadata ?? installationBinding.metadata,
         revokedAt: null,

@@ -22,9 +22,7 @@ export type GitHubBindErrorCode = z.infer<typeof githubBindErrorCodeSchema>;
 export const githubBindStartOutputSchema = z.object({
   installationUrl: z.string().url(),
 });
-export type GitHubBindStartOutput = z.infer<
-  typeof githubBindStartOutputSchema
->;
+export type GitHubBindStartOutput = z.infer<typeof githubBindStartOutputSchema>;
 
 export const githubNormalizedInstallationSchema = z.object({
   account: z.object({

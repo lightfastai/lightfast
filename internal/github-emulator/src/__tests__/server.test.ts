@@ -1,10 +1,10 @@
 import { createHash, createPrivateKey } from "node:crypto";
-import { Store } from "@emulators/core";
 import {
   getGitHubStore,
   githubPlugin,
+  Store,
   seedFromConfig,
-} from "@emulators/github";
+} from "@repo/emulators-github";
 import { SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
@@ -287,11 +287,14 @@ describe("@repo/github-emulator", () => {
       login: GITHUB_EMULATOR_FIXTURES.githubUserLogin,
     });
 
-    const installationsRes = await fetch(`${emulator?.url}/user/installations`, {
-      headers: {
-        authorization: `Bearer ${oauthToken}`,
-      },
-    });
+    const installationsRes = await fetch(
+      `${emulator?.url}/user/installations`,
+      {
+        headers: {
+          authorization: `Bearer ${oauthToken}`,
+        },
+      }
+    );
 
     expect(installationsRes.status).toBe(200);
     await expect(installationsRes.json()).resolves.toMatchObject({
@@ -320,11 +323,14 @@ describe("@repo/github-emulator", () => {
       message: "Bad credentials",
     });
 
-    const installationsRes = await fetch(`${emulator?.url}/user/installations`, {
-      headers: {
-        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
-      },
-    });
+    const installationsRes = await fetch(
+      `${emulator?.url}/user/installations`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
     expect(installationsRes.status).toBe(401);
     await expect(installationsRes.json()).resolves.toEqual({
       message: "Bad credentials",
@@ -402,20 +408,23 @@ describe("@repo/github-emulator", () => {
     expect(authorizeRes.status).toBe(302);
     const callback = new URL(authorizeRes.headers.get("location") ?? "");
     const tokenRes = await fetchCompatible(
-      new Request(`${GITHUB_EMULATOR_FIXTURES.origin}/login/oauth/access_token`, {
-        method: "POST",
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
-          client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
-          code: callback.searchParams.get("code"),
-          code_verifier: codeVerifier,
-          redirect_uri: appCallbackUrl(),
-        }),
-      })
+      new Request(
+        `${GITHUB_EMULATOR_FIXTURES.origin}/login/oauth/access_token`,
+        {
+          method: "POST",
+          headers: {
+            accept: "application/json",
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
+            client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
+            code: callback.searchParams.get("code"),
+            code_verifier: codeVerifier,
+            redirect_uri: appCallbackUrl(),
+          }),
+        }
+      )
     );
     expect(tokenRes.status).toBe(200);
     const tokenBody = (await tokenRes.json()) as { access_token?: string };
@@ -446,9 +455,9 @@ describe("@repo/github-emulator", () => {
         GITHUB_APP_SLUG: GITHUB_EMULATOR_FIXTURES.githubAppSlug,
       })
     );
-    expect(getGitHubEmulatorEnv("https://lightfast.localhost")).not.toHaveProperty(
-      "GITHUB_INSTALL_URL_OVERRIDE"
-    );
+    expect(
+      getGitHubEmulatorEnv("https://lightfast.localhost")
+    ).not.toHaveProperty("GITHUB_INSTALL_URL_OVERRIDE");
   });
 
   it("starts with a distinct Portless public origin", async () => {

@@ -13,19 +13,18 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/emulators-github": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
-    "@emulators/core": "0.6.0",
-    "@emulators/github": "0.6.0",
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
-    "emulate": "0.6.0",
+    "emulate": "catalog:",
     "jose": "catalog:",
-    "tsx": "^4.21.0",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

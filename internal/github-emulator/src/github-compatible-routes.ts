@@ -1,6 +1,9 @@
 import { createHash, randomBytes } from "node:crypto";
-import type { Store, TokenMap } from "@emulators/core";
-import { getGitHubStore } from "@emulators/github";
+import {
+  getGitHubStore,
+  type Store,
+  type TokenMap,
+} from "@repo/emulators-github";
 import { GITHUB_SETUP_PATH } from "@repo/github-app-contract";
 
 import { GITHUB_EMULATOR_FIXTURES } from "./fixtures";
@@ -68,10 +71,7 @@ function getBearerToken(request: Request) {
   return match?.[1] ?? null;
 }
 
-function authenticateUser(input: {
-  request: Request;
-  store: Store;
-}) {
+function authenticateUser(input: { request: Request; store: Store }) {
   const token = getBearerToken(input.request);
   if (!token) {
     return null;
@@ -215,10 +215,11 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         url.searchParams.get("code_challenge_method") ?? "";
       const oauthApp = gh.oauthApps.findOneBy("client_id", clientId);
       if (
-        !oauthApp ||
-        !oauthApp.redirect_uris.includes(redirectUri) ||
-        !state ||
-        !codeChallenge ||
+        !(
+          oauthApp?.redirect_uris.includes(redirectUri) &&
+          state &&
+          codeChallenge
+        ) ||
         codeChallengeMethod !== "S256"
       ) {
         return json({ message: "Bad Request" }, 400);
@@ -351,8 +352,9 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
             store: input.store,
           })
         )
-        .filter((installation): installation is NonNullable<typeof installation> =>
-          Boolean(installation)
+        .filter(
+          (installation): installation is NonNullable<typeof installation> =>
+            Boolean(installation)
         );
 
       return json({
