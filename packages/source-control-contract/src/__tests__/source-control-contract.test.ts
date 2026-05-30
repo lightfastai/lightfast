@@ -18,7 +18,7 @@ describe("@repo/source-control-contract", () => {
     ]);
   });
 
-  it("validates watched path globs as non-empty strings", () => {
+  it("validates watched path globs as supported non-empty patterns", () => {
     expect(watchedPathGlobsSchema.parse(["skills/**", "README.md"])).toEqual([
       "skills/**",
       "README.md",
@@ -27,12 +27,27 @@ describe("@repo/source-control-contract", () => {
     expect(watchedPathGlobsSchema.safeParse([""]).success).toBe(false);
   });
 
+  it("rejects unsupported watched path wildcard patterns", () => {
+    for (const pattern of [
+      "*.md",
+      "docs/*.md",
+      "**/*.ts",
+      "skills/**/SKILL.md",
+      "/**",
+    ]) {
+      expect(watchedPathGlobsSchema.safeParse([pattern]).success).toBe(false);
+    }
+  });
+
   it("splits repository full names", () => {
     expect(splitRepositoryFullName("lightfast-emulated/workspace")).toEqual({
       owner: "lightfast-emulated",
       repo: "workspace",
     });
     expect(() => splitRepositoryFullName("workspace")).toThrow(
+      /Invalid repository full name/
+    );
+    expect(() => splitRepositoryFullName("group/subgroup/repo")).toThrow(
       /Invalid repository full name/
     );
   });

@@ -16,7 +16,26 @@ export type SourceControlWebhookDeliveryStatus = z.infer<
   typeof sourceControlWebhookDeliveryStatusSchema
 >;
 
-export const watchedPathGlobsSchema = z.array(z.string().min(1)).min(1);
+function isSupportedWatchedPathPattern(pattern: string): boolean {
+  if (!pattern.includes("*")) {
+    return pattern.length > 0;
+  }
+
+  if (!pattern.endsWith("/**")) {
+    return false;
+  }
+
+  const prefix = pattern.slice(0, -3);
+  return prefix.length > 0 && !prefix.includes("*");
+}
+
+export const watchedPathGlobsSchema = z
+  .array(
+    z.string().min(1).refine(isSupportedWatchedPathPattern, {
+      message: "Unsupported watched path pattern",
+    })
+  )
+  .min(1);
 export type WatchedPathGlobs = z.infer<typeof watchedPathGlobsSchema>;
 
 export const sourceControlRepositoryPushEventSchema = z.object({
