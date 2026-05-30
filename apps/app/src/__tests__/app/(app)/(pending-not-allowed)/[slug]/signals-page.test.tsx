@@ -2,8 +2,15 @@ import { render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const listQueryOptionsMock = vi.fn(() => ({
-  queryKey: ["org", "workspace", "signals", "list", { limit: 50 }],
+const workingSetQueryOptionsMock = vi.fn((input: unknown, opts: unknown) => ({
+  input,
+  opts,
+  queryKey: ["org", "workspace", "signals", "workingSet"],
+}));
+const listQueryOptionsMock = vi.fn((input: unknown, opts: unknown) => ({
+  input,
+  opts,
+  queryKey: ["org", "workspace", "signals", "list", input],
 }));
 const prefetchMock = vi.fn();
 
@@ -16,9 +23,8 @@ vi.mock("~/trpc/server", () => ({
     org: {
       workspace: {
         signals: {
-          list: {
-            queryOptions: listQueryOptionsMock,
-          },
+          list: { queryOptions: listQueryOptionsMock },
+          workingSet: { queryOptions: workingSetQueryOptionsMock },
         },
       },
     },
@@ -44,19 +50,22 @@ const { default: SignalsPage } = await import(
 );
 
 beforeEach(() => {
+  workingSetQueryOptionsMock.mockClear();
   listQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
 });
 
 describe("signals page", () => {
-  it("prefetches the signals list before rendering the client island", async () => {
+  it("prefetches the working set and the processing list", async () => {
     const element = await SignalsPage();
     render(element);
 
-    expect(listQueryOptionsMock).toHaveBeenCalledWith({ limit: 50 });
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: ["org", "workspace", "signals", "list", { limit: 50 }],
-    });
+    expect(workingSetQueryOptionsMock).toHaveBeenCalledTimes(1);
+    expect(listQueryOptionsMock).toHaveBeenCalledWith(
+      { limit: 100, statuses: ["queued", "processing"] },
+      expect.objectContaining({ staleTime: 5_000 })
+    );
+    expect(prefetchMock).toHaveBeenCalledTimes(2);
     expect(screen.getByTestId("hydrated-signals")).toHaveTextContent(
       "Signals client"
     );
