@@ -12,6 +12,7 @@ const classifySignal = { id: "classify-signal" };
 const classifyPeople = { id: "classify-people" };
 const automationScheduler = { id: "automation-scheduler" };
 const runAutomation = { id: "run-automation" };
+const syncSourceControlRepository = { id: "sync-source-control-repository" };
 
 vi.mock("inngest/next", () => ({
   serve: serveMock,
@@ -47,6 +48,10 @@ vi.mock("../inngest/workflow/run-automation", () => ({
   runAutomation,
 }));
 
+vi.mock("../inngest/workflow/sync-source-control-repository", () => ({
+  syncSourceControlRepository,
+}));
+
 const { createInngestRouteContext, inngest } = await import("../inngest");
 
 describe("createInngestRouteContext", () => {
@@ -63,6 +68,7 @@ describe("createInngestRouteContext", () => {
         classifyPeople,
         automationScheduler,
         runAutomation,
+        syncSourceControlRepository,
       ],
       serveOrigin: "https://app.lightfast.localhost",
       servePath: "/api/inngest",
