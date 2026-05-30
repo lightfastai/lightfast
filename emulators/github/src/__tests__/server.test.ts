@@ -598,10 +598,11 @@ describe("@repo/github-emulator", () => {
       }
     }
 
-    const receiverEmulator = await startGitHubEmulatorOnAvailablePort({
-      appOrigin: "https://app.lightfast.localhost",
-    });
+    let receiverEmulator: StartedGitHubEmulator | undefined;
     try {
+      receiverEmulator = await startGitHubEmulatorOnAvailablePort({
+        appOrigin: "https://app.lightfast.localhost",
+      });
       const gh = getGitHubStore(receiverEmulator.store);
       const app = gh.apps.findOneBy(
         "app_id",
@@ -630,7 +631,7 @@ describe("@repo/github-emulator", () => {
         signature: expect.stringMatching(/^sha256=/),
       });
     } finally {
-      await receiverEmulator.close();
+      await receiverEmulator?.close();
       await receiver.close();
     }
   });
