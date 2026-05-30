@@ -6,6 +6,9 @@ import {
   githubBindStartOutputSchema,
   githubInstallationMetadataSchema,
   githubNormalizedInstallationSchema,
+  githubPushWebhookPayloadSchema,
+  githubWebhookHeadersSchema,
+  normalizeGitHubPushWebhookPayload,
 } from "../github-app";
 
 describe("@repo/github-app-contract", () => {
@@ -92,5 +95,45 @@ describe("@repo/github-app-contract", () => {
         source: "future_metadata",
       }).success
     ).toBe(true);
+  });
+});
+
+describe("GitHub webhook schemas", () => {
+  it("validates webhook headers", () => {
+    expect(
+      githubWebhookHeadersSchema.parse({
+        deliveryId: "delivery-1",
+        event: "push",
+        signature256: "sha256=abc",
+      })
+    ).toEqual({
+      deliveryId: "delivery-1",
+      event: "push",
+      signature256: "sha256=abc",
+    });
+  });
+
+  it("normalizes push payload routing fields", () => {
+    const payload = githubPushWebhookPayloadSchema.parse({
+      after: "a".repeat(40),
+      before: "b".repeat(40),
+      installation: { id: 1001 },
+      ref: "refs/heads/main",
+      repository: {
+        full_name: "lightfast-emulated/workspace",
+        id: 2002,
+        name: "workspace",
+        owner: { login: "lightfast-emulated" },
+      },
+    });
+
+    expect(normalizeGitHubPushWebhookPayload(payload)).toEqual({
+      afterSha: "a".repeat(40),
+      beforeSha: "b".repeat(40),
+      providerInstallationId: "1001",
+      providerRepositoryId: "2002",
+      ref: "refs/heads/main",
+      repositoryFullName: "lightfast-emulated/workspace",
+    });
   });
 });

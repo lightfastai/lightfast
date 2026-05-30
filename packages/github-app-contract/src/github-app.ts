@@ -70,3 +70,71 @@ export const githubInstallationMetadataSchema =
 export type GitHubInstallationMetadata = z.infer<
   typeof githubInstallationMetadataSchema
 >;
+
+export const githubWebhookHeadersSchema = z.object({
+  deliveryId: z.string().min(1),
+  event: z.string().min(1),
+  signature256: z.string().min(1),
+});
+export type GitHubWebhookHeaders = z.infer<
+  typeof githubWebhookHeadersSchema
+>;
+
+export const githubWebhookInstallationSchema = z.object({
+  id: z.union([z.number(), z.string().min(1)]),
+});
+
+export const githubWebhookRepositorySchema = z.object({
+  full_name: z.string().min(1),
+  id: z.union([z.number(), z.string().min(1)]),
+  name: z.string().min(1),
+  owner: z.object({
+    login: z.string().min(1),
+  }),
+});
+
+export const githubPingWebhookPayloadSchema = z.object({
+  hook_id: z.union([z.number(), z.string().min(1)]).optional(),
+  installation: githubWebhookInstallationSchema.optional(),
+  repository: githubWebhookRepositorySchema.optional(),
+  zen: z.string().optional(),
+});
+export type GitHubPingWebhookPayload = z.infer<
+  typeof githubPingWebhookPayloadSchema
+>;
+
+export const githubPushWebhookPayloadSchema = z.object({
+  after: z.string().min(1),
+  before: z.string().min(1),
+  installation: githubWebhookInstallationSchema,
+  ref: z.string().min(1),
+  repository: githubWebhookRepositorySchema,
+});
+export type GitHubPushWebhookPayload = z.infer<
+  typeof githubPushWebhookPayloadSchema
+>;
+
+export const normalizedGitHubPushWebhookSchema = z.object({
+  afterSha: z.string().min(1),
+  beforeSha: z.string().min(1),
+  providerInstallationId: z.string().min(1),
+  providerRepositoryId: z.string().min(1),
+  ref: z.string().min(1),
+  repositoryFullName: z.string().min(1),
+});
+export type NormalizedGitHubPushWebhook = z.infer<
+  typeof normalizedGitHubPushWebhookSchema
+>;
+
+export function normalizeGitHubPushWebhookPayload(
+  payload: GitHubPushWebhookPayload
+): NormalizedGitHubPushWebhook {
+  return normalizedGitHubPushWebhookSchema.parse({
+    afterSha: payload.after,
+    beforeSha: payload.before,
+    providerInstallationId: String(payload.installation.id),
+    providerRepositoryId: String(payload.repository.id),
+    ref: payload.ref,
+    repositoryFullName: payload.repository.full_name,
+  });
+}
