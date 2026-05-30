@@ -19,15 +19,13 @@ async function githubJson<T>(
   expectedStatus: number
 ): Promise<T> {
   const res = await fetch(url, init);
-  const json = (await res.json().catch(() => null)) as T;
+  const text = await res.text();
   if (res.status !== expectedStatus) {
     throw new Error(
-      `GitHub emulator request failed: ${res.status} ${url} ${JSON.stringify(
-        json
-      )}`
+      `GitHub emulator request failed: ${res.status} ${url} ${text}`
     );
   }
-  return json;
+  return JSON.parse(text) as T;
 }
 
 function headers(token: string) {

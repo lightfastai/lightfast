@@ -1,4 +1,4 @@
-import { createHash, createPrivateKey } from "node:crypto";
+import { createHash, createHmac, createPrivateKey } from "node:crypto";
 import { createServer } from "node:http";
 import { Store } from "@emulators/core";
 import {
@@ -554,7 +554,7 @@ describe("@repo/github-emulator", () => {
     const receiver = await new Promise<{
       close: () => Promise<void>;
       url: string;
-    }>((resolve) => {
+    }>((resolve, reject) => {
       const server = createServer(async (req, res) => {
         const chunks: Buffer[] = [];
         req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
@@ -568,7 +568,9 @@ describe("@repo/github-emulator", () => {
           res.end("ok");
         });
       });
+      server.once("error", reject);
       server.listen(0, "127.0.0.1", () => {
+        server.off("error", reject);
         const address = server.address();
         if (typeof address !== "object" || !address) {
           throw new Error("expected receiver address");
@@ -614,7 +616,7 @@ describe("@repo/github-emulator", () => {
       gh.apps.update(app.id, { webhook_url: receiver.url });
 
       const { pushGitHubEmulatorCommit } = await import("../push");
-      await pushGitHubEmulatorCommit({
+      const push = await pushGitHubEmulatorCommit({
         apiBaseUrl: receiverEmulator.url,
         branch: "main",
         files: [{ content: "# Demo\n", path: "skills/demo/SKILL.md" }],
@@ -629,6 +631,33 @@ describe("@repo/github-emulator", () => {
       expect(received[0]).toMatchObject({
         event: "push",
         signature: expect.stringMatching(/^sha256=/),
+      });
+      const delivery = received[0];
+      if (!delivery) {
+        throw new Error("expected received webhook delivery");
+      }
+      const expectedSignature = `sha256=${createHmac(
+        "sha256",
+        GITHUB_EMULATOR_FIXTURES.githubWebhookSecret
+      )
+        .update(delivery.body)
+        .digest("hex")}`;
+      expect(delivery.signature).toBe(expectedSignature);
+      const payload = JSON.parse(delivery.body) as {
+        after?: string;
+        before?: string;
+        installation?: { id?: number };
+        ref?: string;
+        repository?: { full_name?: string };
+      };
+      expect(payload).toMatchObject({
+        after: push.afterSha,
+        before: push.beforeSha,
+        installation: { id: GITHUB_EMULATOR_FIXTURES.installationId },
+        ref: "refs/heads/main",
+        repository: {
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}`,
+        },
       });
     } finally {
       await receiverEmulator?.close();
