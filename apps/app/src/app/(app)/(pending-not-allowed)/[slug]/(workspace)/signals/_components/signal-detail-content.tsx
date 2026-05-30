@@ -95,7 +95,7 @@ export function SignalDetailContent({
         <div className="ml-auto flex items-center gap-1">
           <Button
             aria-label="Copy link"
-            className="size-7 rounded-md text-muted-foreground hover:text-foreground"
+            className="size-7 rounded-full text-muted-foreground hover:text-foreground"
             onClick={onCopyLink}
             size="icon-sm"
             type="button"

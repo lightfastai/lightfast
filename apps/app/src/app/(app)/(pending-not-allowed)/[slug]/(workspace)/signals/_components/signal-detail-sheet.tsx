@@ -66,7 +66,7 @@ export function SignalDetailSheet({
               <SheetClose asChild>
                 <Button
                   aria-label="Close"
-                  className="size-7 rounded-md text-muted-foreground hover:text-foreground"
+                  className="size-7 rounded-full text-muted-foreground hover:text-foreground"
                   size="icon-sm"
                   type="button"
                   variant="ghost"
