@@ -1,4 +1,4 @@
-import { getSignalByPublicId, listSignals } from "@db/app";
+import { getSignalByPublicId, listSignals, listWorkspaceSignals } from "@db/app";
 import {
   createSignalInput,
   signalDispositionSchema,
@@ -51,6 +51,11 @@ export const workspaceSignalsRouter = {
       ...(statuses ? { statuses } : {}),
     });
   }),
+  workingSet: boundOrgProcedure.query(({ ctx }) =>
+    listWorkspaceSignals(ctx.db, {
+      clerkOrgId: ctx.auth.identity.orgId,
+    })
+  ),
   get: boundOrgProcedure
     .input(z.object({ publicId: signalIdSchema }))
     .query(async ({ ctx, input }) => {
