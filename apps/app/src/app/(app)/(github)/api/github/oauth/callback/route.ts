@@ -1,4 +1,4 @@
-import { completeGitHubOAuthVerification } from "@api/app/github";
+import { completeGitHubOAuthVerification } from "@api/app/services/github";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";

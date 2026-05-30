@@ -6,10 +6,10 @@ export {
   normalizeGitHubPrivateKey,
   resolveGitHubAppEndpoints,
   resolveGitHubAppOrigin,
-} from "../services/github/config";
+} from "./config";
 export {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,
   type GitHubRedirectResult,
   syncGitHubBindingClaim,
-} from "./setup-flow";
+} from "./setup/flow";

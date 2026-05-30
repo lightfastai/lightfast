@@ -5,6 +5,7 @@ const consumeGitHubOAuthAttemptMock = vi.fn();
 const createGitHubPkcePairMock = vi.fn();
 const exchangeGitHubOAuthCodeMock = vi.fn();
 const finalizeActiveOrgProviderBindingMock = vi.fn();
+const isOrgBoundMock = vi.fn();
 const issueGitHubOAuthAttemptMock = vi.fn();
 const lookupGitHubInstallAttemptMock = vi.fn();
 const lookupGitHubOAuthAttemptMock = vi.fn();
@@ -12,15 +13,17 @@ const mirrorOrgBindingMock = vi.fn();
 const verifyGitHubUserInstallationMock = vi.fn();
 const assertOrgAdminMock = vi.fn();
 
-class TestGitHubSetupAdminAccessError extends Error {
+class TestClerkOrgMembershipAccessError extends Error {
   constructor(
     readonly code:
-      | "PERMISSION_REQUIRED"
-      | "UNAUTHENTICATED" = "PERMISSION_REQUIRED",
-    message = "Organization administrator access required."
+      | "EXPECTED_USER_MISMATCH"
+      | "MISSING_MEMBERSHIP"
+      | "NON_ADMIN"
+      | "UNAUTHENTICATED",
+    message = "Organization membership access required."
   ) {
     super(message);
-    this.name = "GitHubSetupAdminAccessError";
+    this.name = "ClerkOrgMembershipAccessError";
   }
 }
 
@@ -28,6 +31,7 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
   finalizeActiveOrgProviderBinding: finalizeActiveOrgProviderBindingMock,
+  isOrgBound: isOrgBoundMock,
   OrgSourceControlBindingConflictError: class OrgSourceControlBindingConflictError extends Error {
     constructor(
       readonly code: string,
@@ -94,9 +98,9 @@ vi.mock("../auth/org-binding-mirror", () => ({
   mirrorOrgBinding: mirrorOrgBindingMock,
 }));
 
-vi.mock("../github/admin-access", () => ({
+vi.mock("../auth/clerk-org-membership", () => ({
   assertCurrentUserIsOrgAdmin: assertOrgAdminMock,
-  GitHubSetupAdminAccessError: TestGitHubSetupAdminAccessError,
+  ClerkOrgMembershipAccessError: TestClerkOrgMembershipAccessError,
 }));
 
 vi.mock("../services/github/setup/attempts", () => ({
@@ -127,7 +131,7 @@ vi.mock("../services/github/config", () => ({
 const { parseGitHubInstallationSetupCallback, parseGitHubOAuthCallback } =
   await import("../services/github/setup/callbacks");
 const { completeGitHubInstallationSetup, completeGitHubOAuthVerification } =
-  await import("../github/setup-flow");
+  await import("../services/github/setup/flow");
 const { GitHubAppNodeError } = await import("@repo/github-app-node");
 const { OrgSourceControlBindingConflictError } = await import("@db/app");
 
@@ -144,6 +148,7 @@ function oauthAttempt() {
     ...installAttempt(),
     codeVerifier: "verifier_123",
     providerInstallationId: "1001",
+    setupAction: "install",
   };
 }
 
@@ -166,6 +171,7 @@ describe("github setup flow", () => {
     createGitHubPkcePairMock.mockReset();
     exchangeGitHubOAuthCodeMock.mockReset();
     finalizeActiveOrgProviderBindingMock.mockReset();
+    isOrgBoundMock.mockReset();
     issueGitHubOAuthAttemptMock.mockReset();
     lookupGitHubInstallAttemptMock.mockReset();
     lookupGitHubOAuthAttemptMock.mockReset();
@@ -174,6 +180,7 @@ describe("github setup flow", () => {
     assertOrgAdminMock.mockReset();
 
     assertOrgAdminMock.mockResolvedValue({ userId: "user_1" });
+    isOrgBoundMock.mockResolvedValue(false);
     createGitHubPkcePairMock.mockReturnValue({
       codeChallenge: "challenge_123",
       codeChallengeMethod: "S256",
@@ -266,6 +273,7 @@ describe("github setup flow", () => {
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
     });
   });
 
@@ -311,11 +319,12 @@ describe("github setup flow", () => {
       finalizeActiveOrgProviderBindingMock.mock.calls[0]?.[1].metadata
     ).toEqual({
       events: ["push"],
-      githubAppId: "12345",
-      githubAppSlug: "lightfast-test",
-      permissions: { contents: "read" },
-      repositorySelection: "all",
-    });
+        githubAppId: "12345",
+        githubAppSlug: "lightfast-test",
+        githubSetupAction: "install",
+        permissions: { contents: "read" },
+        repositorySelection: "all",
+      });
     expect(mirrorOrgBindingMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",
       provider: "github",
@@ -338,7 +347,7 @@ describe("github setup flow", () => {
 
   it("does not consume install attempts when admin verification fails", async () => {
     mockInstallAttempt();
-    assertOrgAdminMock.mockRejectedValue(new TestGitHubSetupAdminAccessError());
+    assertOrgAdminMock.mockRejectedValue(new TestClerkOrgMembershipAccessError("NON_ADMIN"));
 
     await expect(
       completeGitHubInstallationSetup({
@@ -359,7 +368,7 @@ describe("github setup flow", () => {
   it("redirects unauthenticated install callbacks to sign-in without consuming the attempt", async () => {
     mockInstallAttempt();
     assertOrgAdminMock.mockRejectedValue(
-      new TestGitHubSetupAdminAccessError("UNAUTHENTICATED")
+      new TestClerkOrgMembershipAccessError("UNAUTHENTICATED")
     );
 
     await expect(
@@ -406,7 +415,7 @@ describe("github setup flow", () => {
 
   it("does not consume denied OAuth attempts when admin verification fails", async () => {
     mockOAuthAttempt();
-    assertOrgAdminMock.mockRejectedValue(new TestGitHubSetupAdminAccessError());
+    assertOrgAdminMock.mockRejectedValue(new TestClerkOrgMembershipAccessError("NON_ADMIN"));
 
     await expect(
       completeGitHubOAuthVerification({
@@ -427,7 +436,7 @@ describe("github setup flow", () => {
   it("redirects unauthenticated denied OAuth callbacks to sign-in without consuming the attempt", async () => {
     mockOAuthAttempt();
     assertOrgAdminMock.mockRejectedValue(
-      new TestGitHubSetupAdminAccessError("UNAUTHENTICATED")
+      new TestClerkOrgMembershipAccessError("UNAUTHENTICATED")
     );
 
     await expect(
@@ -445,7 +454,7 @@ describe("github setup flow", () => {
 
   it("does not consume OAuth attempts when admin verification fails", async () => {
     mockOAuthAttempt();
-    assertOrgAdminMock.mockRejectedValue(new TestGitHubSetupAdminAccessError());
+    assertOrgAdminMock.mockRejectedValue(new TestClerkOrgMembershipAccessError("NON_ADMIN"));
 
     await expect(
       completeGitHubOAuthVerification({
@@ -466,7 +475,7 @@ describe("github setup flow", () => {
   it("redirects unauthenticated OAuth callbacks to sign-in without consuming the attempt", async () => {
     mockOAuthAttempt();
     assertOrgAdminMock.mockRejectedValue(
-      new TestGitHubSetupAdminAccessError("UNAUTHENTICATED")
+      new TestClerkOrgMembershipAccessError("UNAUTHENTICATED")
     );
 
     await expect(

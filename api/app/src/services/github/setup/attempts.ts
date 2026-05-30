@@ -23,6 +23,7 @@ export interface GitHubBindOAuthAttemptRecord
   extends GitHubBindInstallAttemptRecord {
   codeVerifier: string;
   providerInstallationId: string;
+  setupAction?: string;
 }
 
 function encodeState(input: { attemptId: string; nonce: string }): string {
@@ -136,6 +137,7 @@ export async function issueGitHubOAuthAttempt(input: {
   lightfastUserId: string;
   orgSlug: string;
   providerInstallationId: string;
+  setupAction?: string;
 }) {
   const attemptId = nanoid(32);
   const state = encodeState({ attemptId, nonce: nanoid(32) });
@@ -145,6 +147,7 @@ export async function issueGitHubOAuthAttempt(input: {
     lightfastUserId: input.lightfastUserId,
     orgSlug: input.orgSlug,
     providerInstallationId: input.providerInstallationId,
+    ...(input.setupAction ? { setupAction: input.setupAction } : {}),
     stateHash: hashState(state),
   };
   await redis.set(`${OAUTH_PREFIX}${attemptId}`, record, { ex: TTL_SECONDS });

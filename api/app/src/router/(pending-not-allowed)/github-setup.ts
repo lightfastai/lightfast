@@ -11,7 +11,7 @@ import {
 } from "../../auth/organization-access";
 import { getGitHubAppConfig } from "../../services/github/config";
 import { issueGitHubInstallAttempt } from "../../services/github/setup/attempts";
-import { syncGitHubBindingClaim } from "../../github/setup-flow";
+import { syncGitHubBindingClaim } from "../../services/github/setup/flow";
 import { orgAdminProcedure, setupProcedure } from "../../trpc";
 
 export const githubSetupRouter = {

@@ -104,6 +104,7 @@ describe("github bind attempts", () => {
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
     expect(record).toEqual({
@@ -112,6 +113,7 @@ describe("github bind attempts", () => {
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
       stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
     expect(record).not.toHaveProperty("emulator");
@@ -142,6 +144,7 @@ describe("github bind attempts", () => {
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
     expect(record).toEqual({
@@ -150,6 +153,7 @@ describe("github bind attempts", () => {
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
       stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
     expect(record).not.toHaveProperty("emulator");
@@ -169,6 +173,7 @@ describe("github bind attempts", () => {
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
     });
     const record = redisSetMock.mock.calls[0]?.[1];
     expect(record).toEqual({
@@ -177,6 +182,7 @@ describe("github bind attempts", () => {
       lightfastUserId: "user_1",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
       stateHash: expect.stringMatching(/^[a-f0-9]{64}$/),
     });
     expect(record).not.toHaveProperty("emulator");
@@ -190,6 +196,7 @@ describe("github bind attempts", () => {
       codeVerifier: "verifier",
       orgSlug: "acme",
       providerInstallationId: "1001",
+      setupAction: "install",
     });
 
     expect(redisGetMock).toHaveBeenCalledWith(

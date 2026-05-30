@@ -3,7 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const completeSetupMock = vi.fn();
 const completeOAuthMock = vi.fn();
 
-vi.mock("@api/app/github", () => ({
+vi.mock("@api/app/services/github", () => ({
   completeGitHubInstallationSetup: completeSetupMock,
   completeGitHubOAuthVerification: completeOAuthMock,
 }));
