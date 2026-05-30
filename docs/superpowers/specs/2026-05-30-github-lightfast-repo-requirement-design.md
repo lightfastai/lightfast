@@ -30,16 +30,14 @@ no separate "complete" status. `bound` is derived from the requirement list:
 ```ts
 type OrgSetupGate = {
   bindingStatus: "bound" | "unbound";
-  missingRequirements: OrgSetupRequirement[];
-  nextRequirement: OrgSetupRequirement | null;
-  satisfiedRequirements: OrgSetupRequirement[];
+  nextSetupRequirement: OrgSetupRequirement | null;
 };
 ```
 
 Derivation:
 
 ```ts
-bindingStatus = missingRequirements.length === 0 ? "bound" : "unbound";
+bindingStatus = nextSetupRequirement === null ? "bound" : "unbound";
 ```
 
 Requirement proof:
@@ -83,9 +81,7 @@ api/app/src/auth/org-setup-gate.ts
 Responsibilities:
 
 - Load the active source-control binding for a Clerk org.
-- Determine whether `github_org` is satisfied.
-- Parse GitHub binding metadata and determine whether
-  `github_lightfast_repo` is satisfied.
+- Determine the first setup requirement that is not satisfied.
 - Return the derived `OrgSetupGate`.
 
 The helper should be the only place that derives `bindingStatus` from setup
@@ -105,7 +101,8 @@ const ORG_SETUP_REQUIREMENTS = [
 ] as const;
 ```
 
-`nextRequirement` is the first missing requirement in this order.
+`nextSetupRequirement` is the first unsatisfied requirement in this order. It is
+`null` only when both requirements are satisfied.
 
 ## Metadata
 
@@ -254,8 +251,8 @@ type RepairId =
   | "setup-github-lightfast-repo";
 ```
 
-When a product route is blocked, the diagnostic should use the missing
-requirement's repair id.
+When a product route is blocked, the diagnostic should use the repair id derived
+from `nextSetupRequirement`.
 
 Mirror compact state into Clerk:
 
@@ -276,7 +273,7 @@ If the next requirement claim is absent or invalid while unbound, fall back to
 ## Native And API Clients
 
 Keep existing native/client `bindingStatus` compatibility, but derive it from
-requirements. Add missing-requirement fields where clients need repair routing:
+requirements. Add `nextSetupRequirement` where clients need repair routing:
 
 ```ts
 {
@@ -332,10 +329,12 @@ traces in UI errors.
 
 Focused tests should cover:
 
-- gate derivation with no active binding: missing `github_org`;
-- gate derivation with active GitHub binding and no repository proof: missing
-  `github_lightfast_repo`;
-- gate derivation with both proofs: `bindingStatus === "bound"`;
+- gate derivation with no active binding:
+  `nextSetupRequirement === "github_org"`;
+- gate derivation with active GitHub binding and no repository proof:
+  `nextSetupRequirement === "github_lightfast_repo"`;
+- gate derivation with both proofs:
+  `bindingStatus === "bound"` and `nextSetupRequirement === null`;
 - stale repository proof with mismatched installation id is ignored;
 - GitHub repository verifier succeeds for matching installation id;
 - GitHub repository verifier fails for 404 and mismatched installation id;
