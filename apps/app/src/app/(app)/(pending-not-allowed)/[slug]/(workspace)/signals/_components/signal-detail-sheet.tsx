@@ -13,29 +13,44 @@ import { useQuery } from "@tanstack/react-query";
 import { X } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
 import { SignalDetailContent } from "./signal-detail-content";
-import { getSignalTitle, type SignalRow } from "./signals-model";
+import {
+  getSignalTitle,
+  type SignalDetailRow,
+  type SignalListItem,
+  type SignalRow,
+} from "./signals-model";
 
 export function SignalDetailSheet({
-  initialSignal,
+  initialItem,
   onOpenChange,
   publicId,
 }: {
-  initialSignal?: SignalRow;
+  initialItem?: SignalListItem | SignalRow;
   onOpenChange: (open: boolean) => void;
   publicId: string | null;
 }) {
   const trpc = useTRPC();
   const open = publicId !== null;
-  const hasInitial = !!initialSignal && initialSignal.publicId === publicId;
+  const seededItem =
+    initialItem && initialItem.publicId === publicId ? initialItem : undefined;
+  // Processing rows (and any already-fetched full rows) carry `input`, so their
+  // body needs no `get`. Classified projection rows do.
+  const hasBody = !!seededItem && "input" in seededItem;
 
   const query = useQuery(
     trpc.org.workspace.signals.get.queryOptions(
       { publicId: publicId ?? "" },
-      { enabled: open && !hasInitial && Boolean(publicId) }
+      { enabled: open && !hasBody && Boolean(publicId) }
     )
   );
 
-  const signal = hasInitial ? initialSignal : query.data;
+  // Header seed: the projection (or, for deep-links not in cache, the fetched row).
+  const headerItem: SignalListItem | undefined = seededItem ?? query.data;
+  // Body: the full row if seeded, else the fetched row.
+  const detail: SignalDetailRow | undefined = hasBody
+    ? (seededItem as SignalRow)
+    : query.data;
+  const bodyLoading = !detail && query.isLoading;
 
   function handleCopyLink() {
     if (typeof window === "undefined") {
@@ -51,17 +66,18 @@ export function SignalDetailSheet({
     <Sheet onOpenChange={onOpenChange} open={open}>
       <SheetContent
         className="inset-y-3 right-3 left-auto h-auto w-full max-w-[calc(100%-1.5rem)] gap-0 overflow-hidden rounded-2xl border p-0 sm:max-w-md"
-        showCloseButton={!signal}
+        showCloseButton={!headerItem}
         side="right"
       >
         <SheetHeader className="sr-only">
           <SheetTitle>
-            {signal ? getSignalTitle(signal) : "Signal details"}
+            {headerItem ? getSignalTitle(headerItem) : "Signal details"}
           </SheetTitle>
         </SheetHeader>
 
-        {signal ? (
+        {headerItem ? (
           <SignalDetailContent
+            bodyLoading={bodyLoading}
             closeSlot={
               <SheetClose asChild>
                 <Button
@@ -75,8 +91,9 @@ export function SignalDetailSheet({
                 </Button>
               </SheetClose>
             }
+            detail={detail}
+            item={headerItem}
             onCopyLink={handleCopyLink}
-            signal={signal}
           />
         ) : query.isError ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-1 p-8 text-center">
