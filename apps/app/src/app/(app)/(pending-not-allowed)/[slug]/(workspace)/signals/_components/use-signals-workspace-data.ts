@@ -34,9 +34,20 @@ export function useSignalsWorkspaceData({
     () => processingQuery.data?.items ?? [],
     [processingQuery.data]
   );
+  const classifiedIds = useMemo(() => {
+    const ids = new Set<string>();
+    for (const row of classifiedRows) {
+      ids.add(row.publicId);
+    }
+    return ids;
+  }, [classifiedRows]);
+  const dedupedProcessingFullRows = useMemo<SignalRow[]>(
+    () => processingFullRows.filter((row) => !classifiedIds.has(row.publicId)),
+    [classifiedIds, processingFullRows]
+  );
   const processingRows = useMemo<SignalListItem[]>(
-    () => processingFullRows.map(adaptProcessingRow),
-    [processingFullRows]
+    () => dedupedProcessingFullRows.map(adaptProcessingRow),
+    [dedupedProcessingFullRows]
   );
 
   const { byKind, classified, processing } = useSignalsFiltering({
@@ -97,11 +108,11 @@ export function useSignalsWorkspaceData({
     for (const row of classifiedRows) {
       map.set(row.publicId, row);
     }
-    for (const row of processingFullRows) {
+    for (const row of dedupedProcessingFullRows) {
       map.set(row.publicId, row);
     }
     return map;
-  }, [classifiedRows, processingFullRows]);
+  }, [classifiedRows, dedupedProcessingFullRows]);
 
   return {
     boardSections,

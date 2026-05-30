@@ -2,7 +2,7 @@
 
 import { useParams } from "next/navigation";
 import { useQueryState } from "nuqs";
-import { useMemo } from "react";
+import { useDeferredValue, useMemo } from "react";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { PeopleDetailSheet } from "./people-detail-sheet";
 import {
@@ -15,6 +15,7 @@ import {
   parsePersonTypes,
   personParser,
   personProviderParser,
+  personQueryParser,
   personTypeParser,
   serializePersonValues,
   togglePersonValue,
@@ -27,6 +28,9 @@ export function PeopleClient() {
   const params = useParams<{ slug: string }>();
   const slug = params.slug;
 
+  const [query, setQuery] = useQueryState("peopleQuery", personQueryParser);
+  const deferredQuery = useDeferredValue(query);
+  const search = deferredQuery.trim();
   const [providerState, setProviderState] = useQueryState(
     "provider",
     personProviderParser
@@ -45,10 +49,12 @@ export function PeopleClient() {
     [providerState, typeState]
   );
   const hasActiveFilters =
-    filters.providers.length > 0 || filters.types.length > 0;
+    search.length > 0 ||
+    filters.providers.length > 0 ||
+    filters.types.length > 0;
 
-  const { query } = usePeopleListQuery({ filters, search: "" });
-  const rows = flattenPeoplePages(query.data);
+  const { query: peopleQuery } = usePeopleListQuery({ filters, search });
+  const rows = flattenPeoplePages(peopleQuery.data);
   const peopleByPublicId = useMemo(() => {
     const map = new Map<string, PersonRow>();
     for (const person of rows) {
@@ -72,6 +78,7 @@ export function PeopleClient() {
             void setTypeState("");
           }
         }}
+        onQueryChange={(value) => void setQuery(value)}
         onToggleProvider={(value) =>
           void setProviderState(
             serializePersonValues(togglePersonValue(filters.providers, value))
@@ -82,18 +89,19 @@ export function PeopleClient() {
             serializePersonValues(togglePersonValue(filters.types, value))
           )
         }
+        query={query}
       />
 
       <PeopleTableView
-        fetchNextPage={() => void query.fetchNextPage()}
+        fetchNextPage={() => void peopleQuery.fetchNextPage()}
         hasActiveFilters={hasActiveFilters}
-        hasNextPage={!!query.hasNextPage}
-        isError={query.isError}
-        isFetching={query.isFetching}
-        isFetchingNextPage={query.isFetchingNextPage}
-        isPlaceholderData={query.isPlaceholderData}
+        hasNextPage={!!peopleQuery.hasNextPage}
+        isError={peopleQuery.isError}
+        isFetching={peopleQuery.isFetching}
+        isFetchingNextPage={peopleQuery.isFetchingNextPage}
+        isPlaceholderData={peopleQuery.isPlaceholderData}
         onSelectPerson={(publicId) => void setSelectedPersonId(publicId)}
-        refetch={() => void query.refetch()}
+        refetch={() => void peopleQuery.refetch()}
         rows={rows}
         selectedPersonId={selectedPersonId}
       />
