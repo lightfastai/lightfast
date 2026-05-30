@@ -3,10 +3,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const listSignalsMock = vi.fn();
+const getSignalByPublicIdMock = vi.fn();
+const createAndQueueSignalMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   listSignals: listSignalsMock,
+  getSignalByPublicId: getSignalByPublicIdMock,
+}));
+vi.mock("../signals/create-signal", () => ({
+  createAndQueueSignal: createAndQueueSignalMock,
+  isSignalCreateQueueError: (error: unknown) =>
+    error instanceof Error && error.name === "SignalCreateQueueError",
 }));
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -89,9 +97,16 @@ function activeIdentityForOrg(orgId: string): ActiveAuthIdentity {
 
 beforeEach(() => {
   listSignalsMock.mockReset();
+  getSignalByPublicIdMock.mockReset();
+  createAndQueueSignalMock.mockReset();
   listSignalsMock.mockResolvedValue({
     items: [signalRow],
     nextCursor: { createdAt: signalRow.createdAt, id: signalRow.id },
+  });
+  getSignalByPublicIdMock.mockResolvedValue(signalRow);
+  createAndQueueSignalMock.mockResolvedValue({
+    id: "signal_123e4567-e89b-12d3-a456-426614174000",
+    status: "queued",
   });
 });
 
@@ -100,7 +115,11 @@ describe("workspaceSignalsRouter.list", () => {
     await expect(
       caller().signals.list({
         cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
+        dispositions: ["actionable"],
+        kinds: ["follow_up", "fix"],
         limit: 25,
+        peopleRouted: true,
+        priorities: ["high", "urgent"],
         search: "migration",
         status: "classified",
       })
@@ -112,7 +131,11 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       cursor: { createdAt: new Date("2026-05-27T01:00:00.000Z"), id: 7 },
+      dispositions: ["actionable"],
+      kinds: ["follow_up", "fix"],
       limit: 25,
+      peopleRouted: true,
+      priorities: ["high", "urgent"],
       search: "migration",
       status: "classified",
     });
@@ -128,9 +151,37 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       cursor: undefined,
+      dispositions: undefined,
+      kinds: undefined,
       limit: undefined,
+      peopleRouted: undefined,
+      priorities: undefined,
       search: undefined,
       status: undefined,
+    });
+  });
+
+  it("forwards multi-status processing list filters", async () => {
+    await expect(
+      caller().signals.list({
+        limit: 10,
+        statuses: ["queued", "processing"],
+      })
+    ).resolves.toMatchObject({
+      items: [signalRow],
+    });
+
+    expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      cursor: undefined,
+      dispositions: undefined,
+      kinds: undefined,
+      limit: 10,
+      peopleRouted: undefined,
+      priorities: undefined,
+      search: undefined,
+      status: undefined,
+      statuses: ["queued", "processing"],
     });
   });
 
@@ -188,9 +239,151 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_other",
       cursor: undefined,
+      dispositions: undefined,
+      kinds: undefined,
       limit: undefined,
+      peopleRouted: undefined,
+      priorities: undefined,
       search: undefined,
       status: undefined,
     });
+  });
+});
+
+describe("workspaceSignalsRouter.create", () => {
+  it("trims input and creates a queued signal for the bound org", async () => {
+    await expect(
+      caller().signals.create({ input: "  Reply to the migration thread  " })
+    ).resolves.toEqual({
+      id: "signal_123e4567-e89b-12d3-a456-426614174000",
+      status: "queued",
+    });
+
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_test",
+      createdByApiKeyId: null,
+      createdByUserId: "user_test",
+      input: "Reply to the migration thread",
+    });
+  });
+
+  it("scopes creation to the authenticated organization", async () => {
+    await caller(activeIdentityForOrg("org_other")).signals.create({
+      input: "Track this from the active org",
+    });
+
+    expect(createAndQueueSignalMock).toHaveBeenCalledWith(expect.anything(), {
+      clerkOrgId: "org_other",
+      createdByApiKeyId: null,
+      createdByUserId: "user_test",
+      input: "Track this from the active org",
+    });
+  });
+
+  it("rejects invalid input before creating a signal", async () => {
+    await expect(
+      caller().signals.create({ input: "   " })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
+  });
+
+  it("translates enqueue failures to an internal tRPC error", async () => {
+    const enqueueError = Object.assign(
+      new Error("Failed to queue signal for classification."),
+      { name: "SignalCreateQueueError" }
+    );
+    createAndQueueSignalMock.mockRejectedValueOnce(enqueueError);
+
+    await expect(
+      caller().signals.create({ input: "Queue this signal" })
+    ).rejects.toMatchObject({
+      code: "INTERNAL_SERVER_ERROR",
+      message: "Failed to queue signal for classification.",
+    });
+  });
+
+  it.each([
+    ["pending identity", pendingIdentity, "FORBIDDEN"],
+    ["unauthenticated identity", unauthenticatedIdentity, "UNAUTHORIZED"],
+    [
+      "unbound org",
+      { ...activeIdentity, orgGate: { bindingStatus: "unbound" as const } },
+      "FORBIDDEN",
+    ],
+    [
+      "revoked org",
+      { ...activeIdentity, orgGate: { bindingStatus: "revoked" as const } },
+      "FORBIDDEN",
+    ],
+  ])("rejects %s", async (_label, identity, code) => {
+    await expect(
+      caller(identity).signals.create({ input: "Create a signal" })
+    ).rejects.toMatchObject({ code });
+
+    expect(createAndQueueSignalMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("workspaceSignalsRouter.get", () => {
+  it("returns the org-scoped signal for a matching publicId", async () => {
+    await expect(
+      caller().signals.get({ publicId: signalRow.publicId })
+    ).resolves.toEqual(signalRow);
+
+    expect(getSignalByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
+      publicId: signalRow.publicId,
+      clerkOrgId: "org_test",
+    });
+  });
+
+  it("scopes the lookup to the authenticated organization", async () => {
+    await caller(activeIdentityForOrg("org_other")).signals.get({
+      publicId: signalRow.publicId,
+    });
+
+    expect(getSignalByPublicIdMock).toHaveBeenCalledWith(expect.anything(), {
+      publicId: signalRow.publicId,
+      clerkOrgId: "org_other",
+    });
+  });
+
+  it("throws NOT_FOUND when the signal does not exist", async () => {
+    getSignalByPublicIdMock.mockResolvedValueOnce(undefined);
+
+    await expect(
+      caller().signals.get({
+        publicId: "signal_00000000-0000-4000-8000-000000000000",
+      })
+    ).rejects.toMatchObject({ code: "NOT_FOUND" });
+  });
+
+  it("rejects invalid signal ids before querying", async () => {
+    await expect(
+      caller().signals.get({ publicId: "not-a-signal-id" })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+
+    expect(getSignalByPublicIdMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ["pending identity", pendingIdentity, "FORBIDDEN"],
+    ["unauthenticated identity", unauthenticatedIdentity, "UNAUTHORIZED"],
+    [
+      "unbound org",
+      { ...activeIdentity, orgGate: { bindingStatus: "unbound" as const } },
+      "FORBIDDEN",
+    ],
+    [
+      "revoked org",
+      { ...activeIdentity, orgGate: { bindingStatus: "revoked" as const } },
+      "FORBIDDEN",
+    ],
+  ])("rejects %s", async (_label, identity, code) => {
+    await expect(
+      caller(identity).signals.get({ publicId: signalRow.publicId })
+    ).rejects.toMatchObject({ code });
+
+    expect(getSignalByPublicIdMock).not.toHaveBeenCalled();
   });
 });
