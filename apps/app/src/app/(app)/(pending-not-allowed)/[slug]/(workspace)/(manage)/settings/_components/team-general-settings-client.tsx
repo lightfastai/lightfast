@@ -22,12 +22,11 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
+import { SourceControlConnectionSection } from "./source-control-connection-section";
 import {
   normalizeTeamSlugInput,
   useTeamNameUpdate,
 } from "./team-general-settings-actions";
-
-import { SourceControlConnectionSection } from "./source-control-connection-section";
 
 interface TeamGeneralSettingsClientProps {
   slug: string;
