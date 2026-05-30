@@ -18,7 +18,10 @@ interface PendingOAuthCode {
 interface OAuthUserToken {
   appId: number;
   clientId: string;
+  expiresAt: number;
   login: string;
+  refreshToken: string | null;
+  refreshTokenExpiresAt: number | null;
   scopes: string[];
 }
 
@@ -33,6 +36,9 @@ interface GitHubCompatibleFetchInput {
 const PENDING_CODES_KEY = "lightfast.github.oauth.pendingCodes";
 const OAUTH_USER_TOKENS_KEY = "lightfast.github.oauth.userTokens";
 const CODE_TTL_MS = 5 * 60 * 1000;
+const USER_ACCOUNT_ACCESS_TOKEN_TTL_MS = 28_800 * 1000;
+const USER_ACCOUNT_REFRESH_TOKEN_TTL_MS = 15_768_000 * 1000;
+const USER_ACCOUNT_OAUTH_CALLBACK_PATH = "/api/github/user/oauth/callback";
 
 function json(data: unknown, status = 200) {
   return Response.json(data, { status });
@@ -73,8 +79,12 @@ function authenticateUser(input: { request: Request; store: Store }) {
   if (!token) {
     return null;
   }
-  const oauthToken = getOAuthUserTokens(input.store).get(token);
+  const oauthTokens = getOAuthUserTokens(input.store);
+  const oauthToken = oauthTokens.get(token);
   if (!oauthToken) {
+    return null;
+  }
+  if (oauthToken.expiresAt <= Date.now()) {
     return null;
   }
   const gh = getGitHubStore(input.store);
@@ -85,11 +95,80 @@ function authenticateUser(input: { request: Request; store: Store }) {
   return { oauthToken, user };
 }
 
+function rejectExpiredOAuthAccessTokenForFallback(input: {
+  request: Request;
+  store: Store;
+  tokenMap: TokenMap;
+}) {
+  const token = getBearerToken(input.request);
+  if (!token) {
+    return null;
+  }
+  const oauthToken = getOAuthUserTokens(input.store).get(token);
+  if (!oauthToken || oauthToken.expiresAt > Date.now()) {
+    return null;
+  }
+  input.tokenMap.delete(token);
+  return json({ message: "Bad credentials" }, 401);
+}
+
 function validatePkce(input: { codeChallenge: string; codeVerifier: string }) {
   const challenge = createHash("sha256")
     .update(input.codeVerifier)
     .digest("base64url");
   return challenge === input.codeChallenge;
+}
+
+function isUserAccountRedirectUri(redirectUri: string) {
+  return new URL(redirectUri).pathname === USER_ACCOUNT_OAUTH_CALLBACK_PATH;
+}
+
+function createOAuthToken(prefix: "gho" | "ghr" | "ghu") {
+  return `${prefix}_${randomBytes(20).toString("base64url")}`;
+}
+
+function setOAuthToken(input: {
+  appId: number;
+  clientId: string;
+  expiresAt: number;
+  login: string;
+  refreshToken: string | null;
+  refreshTokenExpiresAt: number | null;
+  scopes: string[];
+  store: Store;
+  token: string;
+  tokenMap: TokenMap;
+  userId: number;
+}) {
+  getOAuthUserTokens(input.store).set(input.token, {
+    appId: input.appId,
+    clientId: input.clientId,
+    expiresAt: input.expiresAt,
+    login: input.login,
+    refreshToken: input.refreshToken,
+    refreshTokenExpiresAt: input.refreshTokenExpiresAt,
+    scopes: input.scopes,
+  });
+  input.tokenMap.set(input.token, {
+    id: input.userId,
+    login: input.login,
+    scopes: input.scopes,
+  });
+}
+
+function refreshableTokenResponse(input: {
+  accessToken: string;
+  refreshToken: string;
+  scopes: string[];
+}) {
+  return {
+    access_token: input.accessToken,
+    expires_in: 28_800,
+    refresh_token: input.refreshToken,
+    refresh_token_expires_in: 15_768_000,
+    token_type: "bearer",
+    scope: input.scopes.join(" "),
+  };
 }
 
 function formatInstallation(input: {
@@ -247,10 +326,71 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       );
       const clientId = String(body.client_id ?? "");
       const clientSecret = String(body.client_secret ?? "");
+      const grantType = String(body.grant_type ?? "");
       const code = String(body.code ?? "");
       const codeVerifier = String(body.code_verifier ?? "");
+      const refreshToken = String(body.refresh_token ?? "");
       const redirectUri = String(body.redirect_uri ?? "");
       const oauthApp = gh.oauthApps.findOneBy("client_id", clientId);
+
+      if (grantType === "refresh_token") {
+        const tokens = getOAuthUserTokens(input.store);
+        const previousEntry = Array.from(tokens.entries()).find(
+          ([, token]) => token.refreshToken === refreshToken
+        );
+        const previousToken = previousEntry?.[1];
+        if (
+          !oauthApp ||
+          oauthApp.client_secret !== clientSecret ||
+          !previousEntry ||
+          !previousToken ||
+          previousToken.clientId !== clientId ||
+          !previousToken.refreshTokenExpiresAt ||
+          previousToken.refreshTokenExpiresAt <= Date.now()
+        ) {
+          return json({
+            error: "bad_refresh_token",
+            error_description:
+              "The refresh token passed is incorrect or expired.",
+          });
+        }
+
+        const user = gh.users.findOneBy("login", previousToken.login);
+        if (!user) {
+          return json({
+            error: "bad_refresh_token",
+            error_description:
+              "The refresh token passed is incorrect or expired.",
+          });
+        }
+
+        const nextAccessToken = createOAuthToken("ghu");
+        const nextRefreshToken = createOAuthToken("ghr");
+        tokens.delete(previousEntry[0]);
+        input.tokenMap.delete(previousEntry[0]);
+        setOAuthToken({
+          appId: previousToken.appId,
+          clientId: previousToken.clientId,
+          expiresAt: Date.now() + USER_ACCOUNT_ACCESS_TOKEN_TTL_MS,
+          login: user.login,
+          refreshToken: nextRefreshToken,
+          refreshTokenExpiresAt: Date.now() + USER_ACCOUNT_REFRESH_TOKEN_TTL_MS,
+          scopes: previousToken.scopes,
+          store: input.store,
+          token: nextAccessToken,
+          tokenMap: input.tokenMap,
+          userId: user.id,
+        });
+
+        return json(
+          refreshableTokenResponse({
+            accessToken: nextAccessToken,
+            refreshToken: nextRefreshToken,
+            scopes: previousToken.scopes,
+          })
+        );
+      }
+
       const pendingCodes = getPendingCodes(input.store);
       const pending = pendingCodes.get(code);
       if (pending?.expiresAt && pending.expiresAt < Date.now()) {
@@ -282,17 +422,45 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
           error_description: "The code passed is incorrect or expired.",
         });
       }
-      const token = `gho_${randomBytes(20).toString("base64url")}`;
-      getOAuthUserTokens(input.store).set(token, {
+      const scopes = ["repo", "user", "read:org"];
+      if (isUserAccountRedirectUri(pending.redirectUri)) {
+        const token = createOAuthToken("ghu");
+        const tokenRefreshToken = createOAuthToken("ghr");
+        setOAuthToken({
+          appId: pending.appId,
+          clientId: pending.clientId,
+          expiresAt: Date.now() + USER_ACCOUNT_ACCESS_TOKEN_TTL_MS,
+          login: user.login,
+          refreshToken: tokenRefreshToken,
+          refreshTokenExpiresAt: Date.now() + USER_ACCOUNT_REFRESH_TOKEN_TTL_MS,
+          scopes,
+          store: input.store,
+          token,
+          tokenMap: input.tokenMap,
+          userId: user.id,
+        });
+        return json(
+          refreshableTokenResponse({
+            accessToken: token,
+            refreshToken: tokenRefreshToken,
+            scopes,
+          })
+        );
+      }
+
+      const token = createOAuthToken("gho");
+      setOAuthToken({
         appId: pending.appId,
         clientId: pending.clientId,
+        expiresAt: Number.POSITIVE_INFINITY,
         login: user.login,
-        scopes: ["repo", "user", "read:org"],
-      });
-      input.tokenMap.set(token, {
-        id: user.id,
-        login: user.login,
-        scopes: ["repo", "user", "read:org"],
+        refreshToken: null,
+        refreshTokenExpiresAt: null,
+        scopes,
+        store: input.store,
+        token,
+        tokenMap: input.tokenMap,
+        userId: user.id,
       });
       return json({
         access_token: token,
@@ -358,6 +526,16 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         total_count: installations.length,
         installations,
       });
+    }
+
+    const expiredOAuthAccessTokenResponse =
+      rejectExpiredOAuthAccessTokenForFallback({
+        request,
+        store: input.store,
+        tokenMap: input.tokenMap,
+      });
+    if (expiredOAuthAccessTokenResponse) {
+      return expiredOAuthAccessTokenResponse;
     }
 
     return input.fallbackFetch(request);

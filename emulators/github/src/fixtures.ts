@@ -49,6 +49,10 @@ export function createGitHubEmulatorSeed(
   appOrigin = "https://lightfast.localhost"
 ): GitHubSeedConfig {
   const oauthCallbackUrl = new URL("/api/github/oauth/callback", appOrigin);
+  const userAccountCallbackUrl = new URL(
+    "/api/github/user/oauth/callback",
+    appOrigin
+  );
 
   return {
     users: [
@@ -85,7 +89,10 @@ export function createGitHubEmulatorSeed(
         client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
         client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
         name: "Lightfast Local OAuth",
-        redirect_uris: [oauthCallbackUrl.toString()],
+        redirect_uris: [
+          oauthCallbackUrl.toString(),
+          userAccountCallbackUrl.toString(),
+        ],
       },
     ],
     apps: [
