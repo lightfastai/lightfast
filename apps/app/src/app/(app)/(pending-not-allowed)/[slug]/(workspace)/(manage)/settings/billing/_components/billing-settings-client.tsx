@@ -131,17 +131,18 @@ export function BillingSettingsClient() {
   const [selectedStatement, setSelectedStatement] =
     useState<BillingStatementResource | null>(null);
 
-  const cancelMutation = useCancelSubscriptionItemMutation();
+  const { mutate: cancelSubscriptionItem } =
+    useCancelSubscriptionItemMutation();
 
   const confirmDowngrade = useCallback(
     (item: BillingSubscriptionItem) => {
-      cancelMutation.mutate({
+      cancelSubscriptionItem({
         subscriptionItemId: item.id,
       });
       setDowngradeItem(null);
       setPlanDialogOpen(false);
     },
-    [cancelMutation.mutate, setPlanDialogOpen]
+    [cancelSubscriptionItem, setPlanDialogOpen]
   );
 
   const confirmUpgrade = useCallback(

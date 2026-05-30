@@ -8,7 +8,7 @@ interface CapturedMutationOptions {
   onError?: (error: unknown, input: unknown, context: unknown) => unknown;
   onMutate?: (input: unknown) => unknown;
   onSettled?: () => unknown;
-  onSuccess?: () => unknown;
+  onSuccess?: (data: { key?: string | null }) => unknown;
 }
 
 const capturedMutationOptions: Partial<
@@ -328,6 +328,17 @@ describe("api key settings admin controls", () => {
         "Create an API key to access your organization's resources programmatically."
       )
     ).toBeNull();
+  });
+
+  it("refreshes API key list when create resolves after the dialog closes", () => {
+    render(<OrgApiKeyCreate />);
+
+    capturedMutationOptions.create?.onSuccess?.({ key: "lf_secret" });
+
+    expect(screen.queryByText("lf_secret")).toBeNull();
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: listQueryOptions.queryKey,
+    });
   });
 });
 

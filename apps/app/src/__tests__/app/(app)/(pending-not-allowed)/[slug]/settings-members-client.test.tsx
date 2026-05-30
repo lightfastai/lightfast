@@ -365,6 +365,27 @@ describe("members settings client components", () => {
   });
 
   it("keeps non-target member rows interactive while another row is pending", () => {
+    const otherMember = {
+      createdAt: 1_700_000_003_000,
+      emailAddress: "linus@example.com",
+      firstName: "Linus",
+      id: "mem_linus",
+      imageUrl: "",
+      isCurrentUser: false,
+      lastName: "Torvalds",
+      name: "Linus Torvalds",
+      role: "org:member",
+      updatedAt: 1_700_000_003_000,
+      userId: "user_linus",
+    };
+
+    useSuspenseQueryMock.mockReturnValue({
+      data: {
+        ...membersData,
+        members: [...membersData.members, otherMember],
+      },
+    });
+
     pendingMutationState = {
       remove: {
         isPending: true,
@@ -374,12 +395,11 @@ describe("members settings client components", () => {
 
     render(<OrgMemberList />);
 
-    expect(
-      screen.getByRole("button", { name: /member actions/i })
-    ).toBeDisabled();
-    expect(
-      screen.getByRole("button", { name: /invitation actions/i })
-    ).not.toBeDisabled();
+    const memberActionButtons = screen.getAllByRole("button", {
+      name: /member actions/i,
+    });
+    expect(memberActionButtons[0]).toBeDisabled();
+    expect(memberActionButtons[1]).not.toBeDisabled();
   });
 
   it("configures invite with optimistic insert, replacement, rollback, and invalidation", async () => {

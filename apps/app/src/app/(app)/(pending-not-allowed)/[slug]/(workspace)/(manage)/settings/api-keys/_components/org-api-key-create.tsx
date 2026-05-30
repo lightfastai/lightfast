@@ -31,13 +31,12 @@ export function OrgApiKeyCreate() {
 
   const handleCreated = useCallback((key: string | null) => {
     if (!isOpenRef.current) {
-      return false;
+      return;
     }
     if (key) {
       setCreatedKey(key);
     }
     setName("");
-    return true;
   }, []);
 
   const createMutation = useOrgApiKeyCreateAction({
