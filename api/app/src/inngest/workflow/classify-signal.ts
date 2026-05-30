@@ -10,18 +10,50 @@ import {
   classifySignalInput,
   getSignalClassificationFailure,
 } from "@repo/ai/signal-classifier";
+import type {
+  SignalClassification,
+  SignalVisibilityScope,
+} from "@repo/api-contract";
 import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../env";
 import { inngest } from "../client";
 import { appEvents } from "../schemas/app";
 
+function getVisibilityScope(
+  classification: SignalClassification
+): SignalVisibilityScope {
+  return classification.routing.visibility.scope;
+}
+
+function requiresSignalReview(classification: SignalClassification): boolean {
+  return (
+    classification.routing.visibility.scope === "needs_review" &&
+    classification.routing.review.required === true
+  );
+}
+
 function shouldClassifyPeople(
-  classification: {
-    routing?: { classifyPeople?: { shouldRun?: boolean } };
-  } | null
+  classification: SignalClassification | null
 ): boolean {
-  return classification?.routing?.classifyPeople?.shouldRun === true;
+  return (
+    classification?.schemaVersion === "signal.classification.v2" &&
+    classification.disposition === "actionable" &&
+    classification.routing.visibility.scope === "team" &&
+    classification.routing.routes.people.shouldRun === true
+  );
+}
+
+function classifiedResult(
+  classification: SignalClassification,
+  routedPeople: boolean
+) {
+  return {
+    status: "classified",
+    visibilityScope: getVisibilityScope(classification),
+    reviewRequired: requiresSignalReview(classification),
+    routedPeople,
+  };
 }
 
 export const classifySignal = inngest.createFunction(
@@ -75,10 +107,10 @@ export const classifySignal = inngest.createFunction(
             },
           })
         );
-        return { status: "classified", routedPeople: true };
+        return classifiedResult(signal.classification, true);
       }
 
-      return { status: "classified", routedPeople: false };
+      return classifiedResult(signal.classification, false);
     }
 
     const claimed = await step.run("claim signal", () =>
@@ -127,9 +159,9 @@ export const classifySignal = inngest.createFunction(
         })
       );
 
-      return { status: "classified", routedPeople: true };
+      return classifiedResult(classification, true);
     }
 
-    return { status: "classified", routedPeople: false };
+    return classifiedResult(classification, false);
   }
 );
