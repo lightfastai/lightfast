@@ -109,3 +109,11 @@ export {
   markSignalClassified,
   markSignalFailed,
 } from "./utils/signals";
+export {
+  type CreateSignalViewParams,
+  createSignalView,
+  type DeleteSignalViewParams,
+  deleteSignalView,
+  type ListSignalViewsParams,
+  listSignalViews,
+} from "./utils/signal-views";
