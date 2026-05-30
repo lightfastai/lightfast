@@ -15,7 +15,7 @@ const treeResponseSchema = z.object({
       mode: z.string().min(1),
       path: z.string().min(1),
       sha: z.string().min(1),
-      type: z.enum(["blob", "tree"]),
+      type: z.enum(["blob", "tree", "commit"]),
     })
   ),
   truncated: z.boolean().optional(),
@@ -31,6 +31,10 @@ function headers(input: { apiVersion?: string; installationToken: string }) {
     authorization: `Bearer ${input.installationToken}`,
     ...(input.apiVersion ? { "x-github-api-version": input.apiVersion } : {}),
   };
+}
+
+function pathSegment(value: string) {
+  return encodeURIComponent(value);
 }
 
 async function getJson(input: {
@@ -67,7 +71,9 @@ export async function getGitHubCommit(input: {
   repo: string;
 }): Promise<{ sha: string; treeSha: string }> {
   const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
-  const url = `${apiBaseUrl}/repos/${input.owner}/${input.repo}/git/commits/${input.ref}`;
+  const url = `${apiBaseUrl}/repos/${pathSegment(input.owner)}/${pathSegment(
+    input.repo
+  )}/git/commits/${pathSegment(input.ref)}`;
   const json = await getJson({
     fetch: input.fetch ?? fetch,
     headers: headers(input),
@@ -95,7 +101,9 @@ export async function getGitHubTree(input: {
 }): Promise<z.infer<typeof treeResponseSchema>> {
   const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
   const url = new URL(
-    `${apiBaseUrl}/repos/${input.owner}/${input.repo}/git/trees/${input.treeSha}`
+    `${apiBaseUrl}/repos/${pathSegment(input.owner)}/${pathSegment(
+      input.repo
+    )}/git/trees/${pathSegment(input.treeSha)}`
   );
   if (input.recursive) {
     url.searchParams.set("recursive", "1");

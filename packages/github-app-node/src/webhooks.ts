@@ -14,6 +14,9 @@ export function verifyGitHubWebhookSignature(input: {
     .update(input.body)
     .digest("hex");
   const actual = signature.slice("sha256=".length);
+  if (!/^[0-9a-f]{64}$/i.test(actual)) {
+    return false;
+  }
   const expectedBuffer = Buffer.from(expected, "hex");
   const actualBuffer = Buffer.from(actual, "hex");
   if (expectedBuffer.length !== actualBuffer.length) {

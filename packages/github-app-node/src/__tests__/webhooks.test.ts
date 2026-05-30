@@ -20,6 +20,7 @@ describe("GitHub webhook signature verification", () => {
 
   it("rejects missing, malformed, and mismatched signatures", () => {
     const body = JSON.stringify({ ref: "refs/heads/main" });
+    const validSignature = signature("secret", body);
     expect(
       verifyGitHubWebhookSignature({
         body,
@@ -32,6 +33,13 @@ describe("GitHub webhook signature verification", () => {
         body,
         secret: "secret",
         signature256: "sha1=abc",
+      })
+    ).toBe(false);
+    expect(
+      verifyGitHubWebhookSignature({
+        body,
+        secret: "secret",
+        signature256: `${validSignature}zz`,
       })
     ).toBe(false);
     expect(

@@ -95,4 +95,64 @@ describe("GitHub repository API helpers", () => {
       truncated: false,
     });
   });
+
+  it("URL-encodes refs used in commit API paths", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        sha: "commit-sha",
+        tree: { sha: "tree-sha" },
+      })
+    );
+
+    await getGitHubCommit({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      fetch: fetchMock,
+      installationToken: "ghs_installation",
+      owner: "lightfast-emulated",
+      ref: "feature/demo",
+      repo: "workspace",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://github.lightfast.localhost/repos/lightfast-emulated/workspace/git/commits/feature%2Fdemo",
+      expect.any(Object)
+    );
+  });
+
+  it("accepts commit entries in tree responses", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        sha: "tree-sha",
+        tree: [
+          {
+            mode: "160000",
+            path: "vendor/submodule",
+            sha: "submodule-sha",
+            type: "commit",
+          },
+        ],
+      })
+    );
+
+    await expect(
+      getGitHubTree({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        fetch: fetchMock,
+        installationToken: "ghs_installation",
+        owner: "lightfast-emulated",
+        repo: "workspace",
+        treeSha: "tree-sha",
+      })
+    ).resolves.toEqual({
+      sha: "tree-sha",
+      tree: [
+        {
+          mode: "160000",
+          path: "vendor/submodule",
+          sha: "submodule-sha",
+          type: "commit",
+        },
+      ],
+    });
+  });
 });
