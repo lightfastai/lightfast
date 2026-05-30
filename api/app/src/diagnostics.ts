@@ -26,6 +26,7 @@ export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
 
 export type DiagnosticCode =
   | "AUTH_REQUIRED"
+  | "GITHUB_USER_ACCOUNT_REQUIRED"
   | "NATIVE_OAUTH_REQUIRED"
   | "ORG_REQUIRED"
   | "ORG_SETUP_REQUIRED"
@@ -42,8 +43,10 @@ export interface Repair {
    * - `create-or-join-org`   — no active org; the user must create or join one.
    * - `bind-source-control` — the active org has not connected a source-control
    *   organization yet; product features stay locked until it is bound.
+   * - `connect-github-account` — the active user has not connected a GitHub
+   *   account yet; product features stay locked until it is connected.
    */
-  id: "create-or-join-org" | "bind-source-control";
+  id: "create-or-join-org" | "bind-source-control" | "connect-github-account";
 }
 
 export interface Diagnostic {

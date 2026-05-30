@@ -13,3 +13,11 @@ export {
   type GitHubRedirectResult,
   syncGitHubBindingClaim,
 } from "./setup/flow";
+export {
+  completeGitHubUserAccountOAuth,
+  disconnectGitHubUserAccount,
+  getGitHubUserAccountStatus,
+  startGitHubUserAccountBinding,
+} from "./user-account/flow";
+export { requireGitHubUserAccount } from "./user-account/gate";
+export { getFreshGitHubUserAccessToken } from "./user-account/refresh";
