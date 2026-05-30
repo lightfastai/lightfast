@@ -294,6 +294,9 @@ importers:
       '@repo/app-clerk-claim':
         specifier: workspace:*
         version: link:../../packages/app-clerk-claim
+      '@repo/app-encryption':
+        specifier: workspace:*
+        version: link:../../packages/app-encryption
       '@repo/app-validation':
         specifier: workspace:^
         version: link:../../packages/app-validation
