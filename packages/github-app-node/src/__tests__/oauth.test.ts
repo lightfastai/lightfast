@@ -1,5 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { exchangeGitHubOAuthCode } from "../oauth";
+import {
+  exchangeGitHubOAuthCode,
+  refreshGitHubUserAccessToken,
+} from "../oauth";
 
 describe("exchangeGitHubOAuthCode", () => {
   afterEach(() => {
@@ -219,5 +222,83 @@ describe("exchangeGitHubOAuthCode", () => {
 
     expect(fetchSignal).toBeInstanceOf(AbortSignal);
     expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it("parses refreshable GitHub App user token fields", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        access_token: "ghu_access",
+        expires_in: 28_800,
+        refresh_token: "ghr_refresh",
+        refresh_token_expires_in: 15_768_000,
+        scope: "",
+        token_type: "bearer",
+      })
+    );
+
+    await expect(
+      exchangeGitHubOAuthCode({
+        clientId: "Iv1.lightfastlocal",
+        clientSecret: "secret",
+        code: "code_123",
+        codeVerifier: "verifier",
+        fetch: fetchMock,
+        redirectUri:
+          "https://app.lightfast.localhost/api/github/user/oauth/callback",
+      })
+    ).resolves.toEqual({
+      accessToken: "ghu_access",
+      accessTokenExpiresIn: 28_800,
+      refreshToken: "ghr_refresh",
+      refreshTokenExpiresIn: 15_768_000,
+      scope: "",
+      tokenType: "bearer",
+    });
+  });
+
+  it("refreshes GitHub App user access tokens", async () => {
+    const fetchMock = vi.fn(
+      async (
+        _url: Parameters<typeof fetch>[0],
+        _init?: Parameters<typeof fetch>[1]
+      ) =>
+        Response.json({
+          access_token: "ghu_next",
+          expires_in: 28_800,
+          refresh_token: "ghr_next",
+          refresh_token_expires_in: 15_768_000,
+          scope: "",
+          token_type: "bearer",
+        })
+    );
+
+    await expect(
+      refreshGitHubUserAccessToken({
+        clientId: "Iv1.lightfastlocal",
+        clientSecret: "secret",
+        fetch: fetchMock,
+        refreshToken: "ghr_old",
+        tokenUrl: "https://github.lightfast.localhost/login/oauth/access_token",
+      })
+    ).resolves.toEqual({
+      accessToken: "ghu_next",
+      accessTokenExpiresIn: 28_800,
+      refreshToken: "ghr_next",
+      refreshTokenExpiresIn: 15_768_000,
+      scope: "",
+      tokenType: "bearer",
+    });
+
+    const call = fetchMock.mock.calls[0];
+    if (!call) {
+      throw new Error("Expected token refresh fetch call.");
+    }
+    const [, init] = call;
+    expect(JSON.parse(String(init?.body))).toMatchObject({
+      client_id: "Iv1.lightfastlocal",
+      client_secret: "secret",
+      grant_type: "refresh_token",
+      refresh_token: "ghr_old",
+    });
   });
 });
