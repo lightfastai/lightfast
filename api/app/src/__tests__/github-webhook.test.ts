@@ -95,6 +95,26 @@ describe("handleGitHubWebhook", () => {
     expect(recordDeliveryMock).not.toHaveBeenCalled();
   });
 
+  it("rejects missing signatures as unauthorized before durable work", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    const res = await handleGitHubWebhook({
+      request: new Request(
+        "https://app.lightfast.localhost/api/github/webhook",
+        {
+          body: JSON.stringify(pushPayload),
+          headers: {
+            "x-github-delivery": "delivery-1",
+            "x-github-event": "push",
+          },
+          method: "POST",
+        }
+      ),
+    });
+
+    expect(res.status).toBe(401);
+    expect(recordDeliveryMock).not.toHaveBeenCalled();
+  });
+
   it("returns 400 for signed malformed JSON", async () => {
     const body = "{";
     const signature = `sha256=${createHmac("sha256", "secret")
@@ -149,11 +169,22 @@ describe("handleGitHubWebhook", () => {
     expect(inngestSendMock).not.toHaveBeenCalled();
   });
 
-  it("does not enqueue a duplicate received delivery", async () => {
+  it("continues processing a duplicate received delivery retry", async () => {
     const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
       created: false,
       delivery: { status: "received" },
+    });
+    getBindingMock.mockResolvedValue({
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      watchedPathGlobs: ["skills/**"],
     });
 
     const res = await handleGitHubWebhook({
@@ -161,8 +192,27 @@ describe("handleGitHubWebhook", () => {
     });
 
     expect(res.status).toBe(202);
-    expect(getBindingMock).not.toHaveBeenCalled();
-    expect(inngestSendMock).not.toHaveBeenCalled();
+    expect(getBindingMock).toHaveBeenCalledWith(
+      {},
+      {
+        provider: "github",
+        providerInstallationId: "1001",
+      }
+    );
+    expect(getWatchMock).toHaveBeenCalledWith(
+      {},
+      {
+        orgSourceControlBindingId: 7,
+        providerRepositoryId: "2002",
+      }
+    );
+    expect(inngestSendMock).toHaveBeenCalledWith({
+      name: "app/source-control.repository.push.received",
+      data: expect.objectContaining({
+        deliveryId: "delivery-1",
+        repositoryWatchId: 9,
+      }),
+    });
   });
 
   it("marks unbound installation deliveries ignored", async () => {
@@ -260,5 +310,66 @@ describe("handleGitHubWebhook", () => {
         repositoryWatchId: 9,
       }),
     });
+  });
+
+  it("does not mark queued when enqueue fails", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    recordDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { status: "received" },
+    });
+    getBindingMock.mockResolvedValue({
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      watchedPathGlobs: ["skills/**"],
+    });
+    inngestSendMock.mockRejectedValue(new Error("enqueue failed"));
+
+    await expect(
+      handleGitHubWebhook({
+        request: signedRequest(pushPayload),
+      })
+    ).rejects.toThrow("enqueue failed");
+
+    expect(markDeliveryMock).not.toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-1",
+        status: "queued",
+      }
+    );
+  });
+
+  it("ignores deleted branch pushes without enqueueing", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    recordDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { status: "received" },
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest({
+        ...pushPayload,
+        after: "0".repeat(40),
+      }),
+    });
+
+    expect(res.status).toBe(202);
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-1",
+        status: "ignored",
+      }
+    );
+    expect(getBindingMock).not.toHaveBeenCalled();
+    expect(updateLastSeenMock).not.toHaveBeenCalled();
+    expect(inngestSendMock).not.toHaveBeenCalled();
   });
 });

@@ -18,6 +18,8 @@ import { sourceControlRepositoryPushEventSchema } from "@repo/source-control-con
 import { env } from "../../../env";
 import { inngest } from "../../../inngest/client";
 
+const ZERO_SHA = "0".repeat(40);
+
 function response(status: number, body: Record<string, unknown>) {
   return Response.json(body, { status });
 }
@@ -39,6 +41,11 @@ export async function handleGitHubWebhook(input: {
   }
 
   const body = await input.request.text();
+  const signature256 = input.request.headers.get("x-hub-signature-256");
+  if (!signature256) {
+    return response(401, { ok: false });
+  }
+
   const parsedHeaders = readHeaders(input.request);
   if (!parsedHeaders.success) {
     return response(400, { ok: false });
@@ -86,12 +93,16 @@ export async function handleGitHubWebhook(input: {
   });
   const delivery = deliveryRecord.delivery;
 
-  if (
-    !deliveryRecord.created ||
-    delivery.status === "queued" ||
-    delivery.status === "processed"
-  ) {
+  if (delivery.status === "queued" || delivery.status === "processed") {
     return response(202, { ok: true, duplicate: true });
+  }
+
+  if (push.afterSha === ZERO_SHA) {
+    await markSourceControlWebhookDeliveryStatus(db, {
+      deliveryId: headers.deliveryId,
+      status: "ignored",
+    });
+    return response(202, { ok: true, ignored: true });
   }
 
   const binding = await getOrgBindingByProviderInstallation(db, {
@@ -122,10 +133,6 @@ export async function handleGitHubWebhook(input: {
     id: watch.id,
     lastSeenSha: push.afterSha,
   });
-  await markSourceControlWebhookDeliveryStatus(db, {
-    deliveryId: headers.deliveryId,
-    status: "queued",
-  });
 
   const event = sourceControlRepositoryPushEventSchema.parse({
     ...push,
@@ -136,6 +143,10 @@ export async function handleGitHubWebhook(input: {
   await inngest.send({
     name: "app/source-control.repository.push.received",
     data: event,
+  });
+  await markSourceControlWebhookDeliveryStatus(db, {
+    deliveryId: headers.deliveryId,
+    status: "queued",
   });
 
   return response(202, { ok: true });
