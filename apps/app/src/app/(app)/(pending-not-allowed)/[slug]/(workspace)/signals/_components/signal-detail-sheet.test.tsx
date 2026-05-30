@@ -85,6 +85,8 @@ describe("SignalDetailSheet", () => {
       screen.getAllByRole("heading", { name: "Follow up on migration" }).length
     ).toBeGreaterThan(0);
     expect(screen.getByText("SIG-7")).toBeInTheDocument();
+    // The sheet wires aria-describedby to a SheetDescription (no Radix warning).
+    expect(screen.getByRole("dialog")).toHaveAttribute("aria-describedby");
     // get is enabled because the seed has no body.
     expect(getQueryOptionsMock).toHaveBeenCalledWith(
       { publicId: "signal_follow_up" },

@@ -5,6 +5,7 @@ import {
   Sheet,
   SheetClose,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
@@ -14,6 +15,7 @@ import { X } from "lucide-react";
 import { useTRPC } from "~/trpc/react";
 import { SignalDetailContent } from "./signal-detail-content";
 import {
+  getSignalSummary,
   getSignalTitle,
   type SignalDetailRow,
   type SignalListItem,
@@ -73,6 +75,10 @@ export function SignalDetailSheet({
           <SheetTitle>
             {headerItem ? getSignalTitle(headerItem) : "Signal details"}
           </SheetTitle>
+          <SheetDescription>
+            {(headerItem && getSignalSummary(headerItem)) ||
+              "Signal details, classification, and source."}
+          </SheetDescription>
         </SheetHeader>
 
         {headerItem ? (
