@@ -1,6 +1,9 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import type { SignalClassificationFilters, SignalListItem } from "./signals-model";
+import type {
+  SignalClassificationFilters,
+  SignalListItem,
+} from "./signals-model";
 import { useSignalsFiltering } from "./use-signals-filtering";
 
 const NO_FILTERS: SignalClassificationFilters = {
@@ -13,11 +16,25 @@ const NO_FILTERS: SignalClassificationFilters = {
 function row(overrides: Partial<SignalListItem>): SignalListItem {
   return {
     classification: {
-      schemaVersion: "signal.classification.v1",
+      schemaVersion: "signal.classification.v2",
       confidence: 0.9,
       disposition: "actionable",
       kind: "follow_up",
       priority: "high",
+      routing: {
+        review: { required: false, reason: null, rationale: null },
+        routes: {
+          people: {
+            confidence: 0.8,
+            rationale: "No people routing is needed.",
+            shouldRun: false,
+          },
+        },
+        visibility: {
+          rationale: "This is shared customer work.",
+          scope: "team",
+        },
+      },
       summary: "s",
       title: "t",
     },
@@ -42,7 +59,12 @@ describe("useSignalsFiltering", () => {
       }),
     ];
     const processingRows = [
-      row({ classification: null, id: 9, inputPreview: "raw", publicId: "proc" }),
+      row({
+        classification: null,
+        id: 9,
+        inputPreview: "raw",
+        publicId: "proc",
+      }),
     ];
 
     const { result } = renderHook(() =>
@@ -65,8 +87,11 @@ describe("useSignalsFiltering", () => {
     const filters = NO_FILTERS;
 
     const { result, rerender } = renderHook(
-      (props: { classifiedRows: SignalListItem[]; filters: SignalClassificationFilters; processingRows: SignalListItem[] }) =>
-        useSignalsFiltering(props),
+      (props: {
+        classifiedRows: SignalListItem[];
+        filters: SignalClassificationFilters;
+        processingRows: SignalListItem[];
+      }) => useSignalsFiltering(props),
       { initialProps: { classifiedRows, filters, processingRows } }
     );
     const first = result.current.classified;

@@ -113,7 +113,10 @@ export function signalMatchesFilters(
   if (!classification) {
     return false;
   }
-  if (filters.kinds.length > 0 && !filters.kinds.includes(classification.kind)) {
+  if (
+    filters.kinds.length > 0 &&
+    !filters.kinds.includes(classification.kind)
+  ) {
     return false;
   }
   if (
@@ -130,7 +133,7 @@ export function signalMatchesFilters(
   }
   if (
     filters.peopleRouted &&
-    classification.routing?.classifyPeople?.shouldRun !== true
+    classification.routing.routes.people.shouldRun !== true
   ) {
     return false;
   }

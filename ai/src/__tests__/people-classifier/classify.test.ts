@@ -21,6 +21,32 @@ const logger = {
 
 const signalId = "sig_123e4567-e89b-12d3-a456-426614174000";
 
+const signalClassification = {
+  schemaVersion: "signal.classification.v2",
+  disposition: "actionable",
+  title: "Engage profile",
+  summary: "The signal includes an X profile.",
+  kind: "engage",
+  nextAction: "Review the X profile.",
+  priority: "normal",
+  rationale: "The signal has a social identity.",
+  confidence: 0.9,
+  routing: {
+    visibility: {
+      scope: "team",
+      rationale: "The profile was submitted as shared org context.",
+    },
+    review: { required: false, reason: null, rationale: null },
+    routes: {
+      people: {
+        shouldRun: true,
+        confidence: 0.9,
+        rationale: "The input includes https://x.com/jeevanp.",
+      },
+    },
+  },
+} as const;
+
 const modelOwnedClassification = {
   candidates: [
     {
@@ -65,23 +91,7 @@ beforeEach(() => {
 describe("classifyPeopleFromSignal", () => {
   it("builds a people classification request with signal context", () => {
     const request = buildPeopleClassificationRequest({
-      classification: {
-        schemaVersion: "signal.classification.v1",
-        disposition: "actionable",
-        title: "Engage profile",
-        summary: "The signal includes an X profile.",
-        kind: "engage",
-        nextAction: "Review the X profile.",
-        priority: "normal",
-        rationale: "The signal has a social identity.",
-        confidence: 0.9,
-        routing: {
-          classifyPeople: {
-            shouldRun: true,
-            rationale: "The input includes https://x.com/jeevanp.",
-          },
-        },
-      },
+      classification: signalClassification,
       clerkOrgId: "org_test",
       deploymentEnvironment: "development",
       input: "Interesting post by https://x.com/jeevanp",
@@ -113,17 +123,7 @@ describe("classifyPeopleFromSignal", () => {
     );
     const request = {
       ...buildPeopleClassificationRequest({
-        classification: {
-          schemaVersion: "signal.classification.v1",
-          disposition: "actionable",
-          title: "Engage profile",
-          summary: "The signal includes an X profile.",
-          kind: "engage",
-          nextAction: "Review the X profile.",
-          priority: "normal",
-          rationale: "The signal has a social identity.",
-          confidence: 0.9,
-        },
+        classification: signalClassification,
         clerkOrgId: "org_test",
         deploymentEnvironment: "production",
         input: "Interesting post by @jeevanp",
@@ -176,17 +176,7 @@ describe("classifyPeopleFromSignal", () => {
     );
     const request = {
       ...buildPeopleClassificationRequest({
-        classification: {
-          schemaVersion: "signal.classification.v1",
-          disposition: "actionable",
-          title: "Engage profile",
-          summary: "The signal includes an X profile.",
-          kind: "engage",
-          nextAction: "Review the X profile.",
-          priority: "normal",
-          rationale: "The signal has a social identity.",
-          confidence: 0.9,
-        },
+        classification: signalClassification,
         clerkOrgId: "org_test",
         deploymentEnvironment: "production",
         input: "Interesting post by @jeevanp",
@@ -262,17 +252,7 @@ describe("classifyPeopleFromSignal", () => {
     );
     const request = {
       ...buildPeopleClassificationRequest({
-        classification: {
-          schemaVersion: "signal.classification.v1",
-          disposition: "actionable",
-          title: "Engage profile",
-          summary: "The signal includes an X profile.",
-          kind: "engage",
-          nextAction: "Review the X profile.",
-          priority: "normal",
-          rationale: "The signal has a social identity.",
-          confidence: 0.9,
-        },
+        classification: signalClassification,
         clerkOrgId: "org_test",
         deploymentEnvironment: "preview",
         input: "Interesting post by @jeevanp",

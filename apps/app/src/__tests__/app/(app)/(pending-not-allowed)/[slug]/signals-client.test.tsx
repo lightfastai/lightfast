@@ -1,5 +1,4 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getQueryOptionsMock = vi.fn((input: unknown) => ({
@@ -106,20 +105,44 @@ vi.mock("nuqs", () => ({
   parseAsString: { withDefault: () => "mock-string-parser" },
   parseAsStringLiteral: () => ({ withDefault: () => "mock-literal-parser" }),
   useQueryState: (key: string) => {
-    if (key === "disposition") return [dispositionState, setDispositionMock];
-    if (key === "kind") return [kindState, setKindMock];
-    if (key === "people") return [peopleState, setPeopleMock];
-    if (key === "priority") return [priorityState, setPriorityMock];
-    if (key === "view") return [viewState, setViewMock];
+    if (key === "disposition") {
+      return [dispositionState, setDispositionMock];
+    }
+    if (key === "kind") {
+      return [kindState, setKindMock];
+    }
+    if (key === "people") {
+      return [peopleState, setPeopleMock];
+    }
+    if (key === "priority") {
+      return [priorityState, setPriorityMock];
+    }
+    if (key === "view") {
+      return [viewState, setViewMock];
+    }
     return [signalState, setSignalMock];
   },
 }));
 
 const baseClassification = {
-  schemaVersion: "signal.classification.v1",
+  schemaVersion: "signal.classification.v2",
   confidence: 0.91,
   disposition: "actionable",
   rationale: "n/a",
+  routing: {
+    review: { required: false, reason: null, rationale: null },
+    routes: {
+      people: {
+        confidence: 0.8,
+        rationale: "No people routing is needed.",
+        shouldRun: false,
+      },
+    },
+    visibility: {
+      rationale: "This is shared customer work.",
+      scope: "team",
+    },
+  },
   summary: "Summary text",
 };
 
@@ -228,10 +251,14 @@ describe("SignalsClient", () => {
   it("renders classified rows above the processing section", () => {
     render(<SignalsClient />);
 
-    expect(screen.getByRole("heading", { name: "Signals" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Signals" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Follow up on migration")).toBeInTheDocument();
     expect(screen.getByText("Fix stale key fingerprint")).toBeInTheDocument();
-    expect(screen.getByText("Customer asked for rollout timing")).toBeInTheDocument();
+    expect(
+      screen.getByText("Customer asked for rollout timing")
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Collapse Classified signals" })
     ).toBeInTheDocument();
@@ -259,7 +286,9 @@ describe("SignalsClient", () => {
 
     render(<SignalsClient />);
 
-    expect(screen.queryByText("Follow up on migration")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Follow up on migration")
+    ).not.toBeInTheDocument();
     expect(screen.getByText("Fix stale key fingerprint")).toBeInTheDocument();
     // Filters never enter the query key: still exactly one workingSet call.
     expect(workingSetQueryOptionsMock).toHaveBeenCalledTimes(1);
@@ -284,7 +313,9 @@ describe("SignalsClient", () => {
     );
 
     expect(prefetchQueryMock).toHaveBeenCalledTimes(1);
-    expect(getQueryOptionsMock).toHaveBeenCalledWith({ publicId: "signal_follow_up" });
+    expect(getQueryOptionsMock).toHaveBeenCalledWith({
+      publicId: "signal_follow_up",
+    });
   });
 
   it("selects a signal by setting the url param", () => {
@@ -303,7 +334,9 @@ describe("SignalsClient", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Collapse Classified signals" })
     );
-    expect(screen.queryByText("Follow up on migration")).not.toBeInTheDocument();
+    expect(
+      screen.queryByText("Follow up on migration")
+    ).not.toBeInTheDocument();
   });
 
   it("groups classified board cards by kind", () => {

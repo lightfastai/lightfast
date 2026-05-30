@@ -87,7 +87,7 @@ export function SignalDetailContent({
   const title = getSignalTitle(item);
   const source = getSignalSource(item);
   const createdAt = new Date(item.createdAt);
-  const peopleRouting = classification?.routing?.classifyPeople;
+  const peopleRouting = classification?.routing.routes.people;
   const iconClass = "size-4 shrink-0";
   const detailClassification = detail?.classification;
   const summary = classification?.summary ?? detailClassification?.summary;
@@ -174,7 +174,9 @@ export function SignalDetailContent({
         {detail ? (
           <div className="flex flex-col gap-5">
             <BodySection label="Input">{detail.input}</BodySection>
-            {summary ? <BodySection label="Summary">{summary}</BodySection> : null}
+            {summary ? (
+              <BodySection label="Summary">{summary}</BodySection>
+            ) : null}
             {detailClassification?.nextAction ? (
               <BodySection label="Next action">
                 {detailClassification.nextAction}

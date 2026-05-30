@@ -8,10 +8,10 @@ import {
   getSignalSummary,
   getSignalTitle,
   groupSignalsByKind,
-  signalMatchesFilters,
   type SignalClassificationFilters,
   type SignalListItem,
   type SignalRow,
+  signalMatchesFilters,
 } from "./signals-model";
 
 const NO_FILTERS: SignalClassificationFilters = {
@@ -24,11 +24,25 @@ const NO_FILTERS: SignalClassificationFilters = {
 function classified(overrides: Partial<SignalListItem> = {}): SignalListItem {
   return {
     classification: {
-      schemaVersion: "signal.classification.v1",
+      schemaVersion: "signal.classification.v2",
       confidence: 0.9,
       disposition: "actionable",
       kind: "follow_up",
       priority: "high",
+      routing: {
+        review: { required: false, reason: null, rationale: null },
+        routes: {
+          people: {
+            confidence: 0.8,
+            rationale: "No people routing is needed.",
+            shouldRun: false,
+          },
+        },
+        visibility: {
+          rationale: "This is shared customer work.",
+          scope: "team",
+        },
+      },
       summary: "Summary text",
       title: "Title text",
     },
@@ -52,10 +66,12 @@ describe("formatSignalConfidence", () => {
 
 describe("getSignalSource", () => {
   it("labels API-key vs user creators", () => {
-    expect(getSignalSource(classified({ createdByApiKeyId: "key_1" }))).toEqual({
-      isApiKey: true,
-      label: "API key",
-    });
+    expect(getSignalSource(classified({ createdByApiKeyId: "key_1" }))).toEqual(
+      {
+        isApiKey: true,
+        label: "API key",
+      }
+    );
     expect(getSignalSource(classified({ createdByApiKeyId: null }))).toEqual({
       isApiKey: false,
       label: "User",
@@ -73,7 +89,11 @@ describe("getSignalTitle / getSignalSummary", () => {
     });
     expect(getSignalTitle(processing)).toBe("Raw input");
     expect(getSignalSummary(processing)).toBe("Raw input");
-    const bare = classified({ classification: null, id: 5, inputPreview: undefined });
+    const bare = classified({
+      classification: null,
+      id: 5,
+      inputPreview: undefined,
+    });
     expect(getSignalTitle(bare)).toBe("SIG-5");
     expect(getSignalSummary(bare)).toBe("");
   });
@@ -93,20 +113,33 @@ describe("signalMatchesFilters", () => {
       signalMatchesFilters(row, { ...NO_FILTERS, priorities: ["high"] })
     ).toBe(true);
     expect(
-      signalMatchesFilters(row, { ...NO_FILTERS, dispositions: ["not_actionable"] })
+      signalMatchesFilters(row, {
+        ...NO_FILTERS,
+        dispositions: ["not_actionable"],
+      })
     ).toBe(false);
   });
 
-  it("applies peopleRouted via routing.classifyPeople.shouldRun", () => {
+  it("applies peopleRouted via routing.routes.people.shouldRun", () => {
+    const baseClassification = classified().classification!;
     const routed = classified({
       classification: {
-        ...classified().classification!,
-        routing: { classifyPeople: { shouldRun: true } },
+        ...baseClassification,
+        routing: {
+          ...baseClassification.routing,
+          routes: {
+            people: {
+              confidence: 0.91,
+              rationale: "The signal contains a durable identity.",
+              shouldRun: true,
+            },
+          },
+        },
       },
     });
-    expect(signalMatchesFilters(routed, { ...NO_FILTERS, peopleRouted: true })).toBe(
-      true
-    );
+    expect(
+      signalMatchesFilters(routed, { ...NO_FILTERS, peopleRouted: true })
+    ).toBe(true);
     expect(
       signalMatchesFilters(classified(), { ...NO_FILTERS, peopleRouted: true })
     ).toBe(false);
