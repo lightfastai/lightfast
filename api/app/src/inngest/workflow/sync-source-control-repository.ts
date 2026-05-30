@@ -1,7 +1,7 @@
 import {
   getWatchedSourceControlRepositoryById,
   markSourceControlWebhookDeliveryStatus,
-  updateWatchedSourceControlRepositoryLastProcessedSha,
+  markWatchedSourceControlRepositoryPushProcessed,
 } from "@db/app";
 import { db } from "@db/app/client";
 import {
@@ -26,7 +26,7 @@ export const syncSourceControlRepository = inngest.createFunction(
     onFailure: async ({ event, step }) => {
       const { deliveryId } = event.data.event.data;
       await step.run("mark source control delivery failed", () =>
-        markSourceControlWebhookDeliveryStatus(db, {
+        markSourceControlWebhookDeliveryStatusOrThrow({
           deliveryId,
           status: "failed",
         })
@@ -47,6 +47,12 @@ export const syncSourceControlRepository = inngest.createFunction(
       })
     );
     if (!watch) {
+      await step.run("mark source control delivery ignored", () =>
+        markSourceControlWebhookDeliveryStatusOrThrow({
+          deliveryId: event.data.deliveryId,
+          status: "ignored",
+        })
+      );
       return { status: "missing-watch" as const };
     }
 
@@ -96,24 +102,36 @@ export const syncSourceControlRepository = inngest.createFunction(
       })
     );
 
+    if (tree.truncated === true) {
+      throw new Error(
+        `GitHub tree ${commit.treeSha} for ${event.data.repositoryFullName} was truncated.`
+      );
+    }
+
     const matchedPathCount = tree.tree.filter((entry) =>
       matchesWatchedPath(entry.path, watch.watchedPathGlobs)
     ).length;
 
-    await step.run("update watched repository processed sha", () =>
-      updateWatchedSourceControlRepositoryLastProcessedSha(db, {
-        id: event.data.repositoryWatchId,
-        lastProcessedSha: event.data.afterSha,
-      })
-    );
-
-    await step.run("mark source control delivery processed", () =>
-      markSourceControlWebhookDeliveryStatus(db, {
+    await step.run("mark watched repository push processed", () =>
+      markWatchedSourceControlRepositoryPushProcessed(db, {
         deliveryId: event.data.deliveryId,
-        status: "processed",
+        lastProcessedSha: event.data.afterSha,
+        repositoryWatchId: event.data.repositoryWatchId,
       })
     );
 
     return { matchedPathCount, status: "processed" as const };
   }
 );
+
+async function markSourceControlWebhookDeliveryStatusOrThrow(input: {
+  deliveryId: string;
+  status: "failed" | "ignored";
+}) {
+  const updated = await markSourceControlWebhookDeliveryStatus(db, input);
+  if (!updated) {
+    throw new Error(
+      `Failed to mark source control webhook delivery ${input.deliveryId} ${input.status}.`
+    );
+  }
+}

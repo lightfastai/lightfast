@@ -6,7 +6,7 @@ const getCommitMock = vi.fn();
 const getTreeMock = vi.fn();
 const getWatchByIdMock = vi.fn();
 const markDeliveryMock = vi.fn();
-const updateProcessedMock = vi.fn();
+const markPushProcessedMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -22,7 +22,7 @@ vi.mock("../inngest/client", () => ({
 vi.mock("@db/app", () => ({
   getWatchedSourceControlRepositoryById: getWatchByIdMock,
   markSourceControlWebhookDeliveryStatus: markDeliveryMock,
-  updateWatchedSourceControlRepositoryLastProcessedSha: updateProcessedMock,
+  markWatchedSourceControlRepositoryPushProcessed: markPushProcessedMock,
 }));
 
 vi.mock("@repo/github-app-node", () => ({
@@ -80,7 +80,7 @@ describe("source control repository sync workflow", () => {
       ],
       truncated: false,
     });
-    updateProcessedMock.mockResolvedValue(true);
+    markPushProcessedMock.mockResolvedValue(undefined);
     markDeliveryMock.mockResolvedValue(true);
 
     const { syncSourceControlRepository } = await import(
@@ -113,24 +113,20 @@ describe("source control repository sync workflow", () => {
       matchedPathCount: 1,
       status: "processed",
     });
-    expect(updateProcessedMock).toHaveBeenCalledWith(
-      {},
-      {
-        id: 9,
-        lastProcessedSha: "a".repeat(40),
-      }
-    );
-    expect(markDeliveryMock).toHaveBeenCalledWith(
+    expect(markPushProcessedMock).toHaveBeenCalledWith(
       {},
       {
         deliveryId: "delivery-1",
-        status: "processed",
+        lastProcessedSha: "a".repeat(40),
+        repositoryWatchId: 9,
       }
     );
+    expect(markDeliveryMock).not.toHaveBeenCalled();
   });
 
-  it("returns missing-watch before fetching GitHub repository state", async () => {
+  it("marks delivery ignored on missing watch before fetching GitHub repository state", async () => {
     getWatchByIdMock.mockResolvedValue(undefined);
+    markDeliveryMock.mockResolvedValue(true);
 
     const { syncSourceControlRepository } = await import(
       "../inngest/workflow/sync-source-control-repository"
@@ -163,7 +159,69 @@ describe("source control repository sync workflow", () => {
     expect(createTokenMock).not.toHaveBeenCalled();
     expect(getCommitMock).not.toHaveBeenCalled();
     expect(getTreeMock).not.toHaveBeenCalled();
-    expect(updateProcessedMock).not.toHaveBeenCalled();
+    expect(markPushProcessedMock).not.toHaveBeenCalled();
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-2",
+        status: "ignored",
+      }
+    );
+  });
+
+  it("rejects truncated repository trees without marking the push processed", async () => {
+    createJwtMock.mockResolvedValue("jwt");
+    createTokenMock.mockResolvedValue({ token: "ghs_installation" });
+    getCommitMock.mockResolvedValue({
+      sha: "a".repeat(40),
+      treeSha: "tree-sha",
+    });
+    getWatchByIdMock.mockResolvedValue({
+      id: 9,
+      watchedPathGlobs: ["skills/**"],
+    });
+    getTreeMock.mockResolvedValue({
+      sha: "tree-sha",
+      tree: [
+        {
+          mode: "100644",
+          path: "skills/demo/SKILL.md",
+          sha: "blob-sha",
+          type: "blob",
+        },
+      ],
+      truncated: true,
+    });
+
+    const { syncSourceControlRepository } = await import(
+      "../inngest/workflow/sync-source-control-repository"
+    );
+    const workflow = syncSourceControlRepository as unknown as {
+      handler: (input: unknown) => Promise<unknown>;
+    };
+
+    await expect(
+      workflow.handler({
+        event: {
+          data: {
+            afterSha: "a".repeat(40),
+            beforeSha: "b".repeat(40),
+            deliveryId: "delivery-3",
+            orgSourceControlBindingId: 1,
+            providerInstallationId: "1001",
+            providerRepositoryId: "2002",
+            ref: "refs/heads/main",
+            repositoryFullName: "lightfast-emulated/workspace",
+            repositoryWatchId: 9,
+          },
+        },
+        step: {
+          run: async (_name: string, fn: () => unknown) => await fn(),
+        },
+      } as never)
+    ).rejects.toThrow(/truncated/i);
+
+    expect(markPushProcessedMock).not.toHaveBeenCalled();
     expect(markDeliveryMock).not.toHaveBeenCalled();
   });
 
@@ -182,7 +240,7 @@ describe("source control repository sync workflow", () => {
         data: {
           event: {
             data: {
-              deliveryId: "delivery-3",
+              deliveryId: "delivery-4",
             },
           },
         },
@@ -196,9 +254,37 @@ describe("source control repository sync workflow", () => {
     expect(markDeliveryMock).toHaveBeenCalledWith(
       {},
       {
-        deliveryId: "delivery-3",
+        deliveryId: "delivery-4",
         status: "failed",
       }
     );
+  });
+
+  it("rejects onFailure when the failed status cannot be written", async () => {
+    markDeliveryMock.mockResolvedValue(false);
+
+    const { syncSourceControlRepository } = await import(
+      "../inngest/workflow/sync-source-control-repository"
+    );
+    const workflow = syncSourceControlRepository as unknown as {
+      onFailure: (input: unknown) => Promise<unknown>;
+    };
+
+    await expect(
+      workflow.onFailure({
+        event: {
+          data: {
+            event: {
+              data: {
+                deliveryId: "delivery-5",
+              },
+            },
+          },
+        },
+        step: {
+          run: async (_name: string, fn: () => unknown) => await fn(),
+        },
+      } as never)
+    ).rejects.toThrow(/delivery-5/);
   });
 });

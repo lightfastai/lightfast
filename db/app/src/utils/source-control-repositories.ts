@@ -181,6 +181,37 @@ export async function markSourceControlWebhookDeliveryStatus(
   return getRowsAffected(result) > 0;
 }
 
+export async function markWatchedSourceControlRepositoryPushProcessed(
+  db: Database,
+  input: {
+    deliveryId: string;
+    lastProcessedSha: string;
+    repositoryWatchId: number;
+  }
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    const repositoryResult = await tx
+      .update(sourceControlRepositories)
+      .set({ lastProcessedSha: input.lastProcessedSha })
+      .where(eq(sourceControlRepositories.id, input.repositoryWatchId));
+    if (getRowsAffected(repositoryResult) === 0) {
+      throw new Error(
+        `Failed to mark source control repository watch ${input.repositoryWatchId} processed.`
+      );
+    }
+
+    const deliveryResult = await tx
+      .update(sourceControlWebhookDeliveries)
+      .set({ status: "processed" })
+      .where(eq(sourceControlWebhookDeliveries.deliveryId, input.deliveryId));
+    if (getRowsAffected(deliveryResult) === 0) {
+      throw new Error(
+        `Failed to mark source control webhook delivery ${input.deliveryId} processed.`
+      );
+    }
+  });
+}
+
 export async function updateWatchedSourceControlRepositoryLastSeenSha(
   db: Database,
   input: { id: number; lastSeenSha: string }

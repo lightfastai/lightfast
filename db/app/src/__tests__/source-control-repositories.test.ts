@@ -8,6 +8,7 @@ import type {
   SourceControlWebhookDelivery,
 } from "../schema";
 import {
+  markWatchedSourceControlRepositoryPushProcessed,
   markSourceControlWebhookDeliveryStatus,
   recordSourceControlWebhookDeliveryReceived,
   updateWatchedSourceControlRepositoryLastSeenSha,
@@ -144,6 +145,106 @@ describe("source-control repository helpers", () => {
         lastSeenSha: "a".repeat(40),
       })
     ).resolves.toBe(false);
+  });
+
+  it("marks a watched repository push processed inside one transaction", async () => {
+    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
+    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
+    const deliveryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
+    const deliverySetMock = vi.fn(() => ({ where: deliveryWhereMock }));
+    const tx = {
+      update: vi
+        .fn()
+        .mockReturnValueOnce({ set: repositorySetMock })
+        .mockReturnValueOnce({ set: deliverySetMock }),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+
+    await expect(
+      markWatchedSourceControlRepositoryPushProcessed(db, {
+        deliveryId: "delivery-1",
+        lastProcessedSha: "a".repeat(40),
+        repositoryWatchId: 10,
+      })
+    ).resolves.toBeUndefined();
+
+    expect(db.transaction).toHaveBeenCalledOnce();
+    expect(repositorySetMock).toHaveBeenCalledWith({
+      lastProcessedSha: "a".repeat(40),
+    });
+    expect(deliverySetMock).toHaveBeenCalledWith({ status: "processed" });
+
+    const repositoryCondition = repositoryWhereMock.mock.calls[0]?.[0];
+    const deliveryCondition = deliveryWhereMock.mock.calls[0]?.[0];
+    if (!repositoryCondition || !deliveryCondition) {
+      throw new Error("expected update where conditions");
+    }
+    const dialect = new MySqlDialect();
+    expect(dialect.sqlToQuery(repositoryCondition).sql).toContain("`id` = ?");
+    expect(dialect.sqlToQuery(repositoryCondition).params).toContain(10);
+    expect(dialect.sqlToQuery(deliveryCondition).sql).toContain(
+      "`delivery_id` = ?"
+    );
+    expect(dialect.sqlToQuery(deliveryCondition).params).toContain(
+      "delivery-1"
+    );
+  });
+
+  it("rejects processed push updates when the watched repository row is missing", async () => {
+    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
+    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
+    const deliverySetMock = vi.fn();
+    const tx = {
+      update: vi
+        .fn()
+        .mockReturnValueOnce({ set: repositorySetMock })
+        .mockReturnValueOnce({ set: deliverySetMock }),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+
+    await expect(
+      markWatchedSourceControlRepositoryPushProcessed(db, {
+        deliveryId: "delivery-1",
+        lastProcessedSha: "a".repeat(40),
+        repositoryWatchId: 10,
+      })
+    ).rejects.toThrow(/repository watch 10/);
+
+    expect(deliverySetMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects processed push updates when the webhook delivery row is missing", async () => {
+    const repositoryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
+    const repositorySetMock = vi.fn(() => ({ where: repositoryWhereMock }));
+    const deliveryWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
+    const deliverySetMock = vi.fn(() => ({ where: deliveryWhereMock }));
+    const tx = {
+      update: vi
+        .fn()
+        .mockReturnValueOnce({ set: repositorySetMock })
+        .mockReturnValueOnce({ set: deliverySetMock }),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+
+    await expect(
+      markWatchedSourceControlRepositoryPushProcessed(db, {
+        deliveryId: "delivery-1",
+        lastProcessedSha: "a".repeat(40),
+        repositoryWatchId: 10,
+      })
+    ).rejects.toThrow(/delivery-1/);
   });
 });
 
