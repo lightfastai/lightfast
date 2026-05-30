@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SignalRow } from "./signals-model";
 import { formatSignalConfidence, getSignalSource } from "./signals-model";
 
-function rowWith(overrides: Partial<SignalRow>): SignalRow {
+function rowWith(overrides: Record<string, unknown>): SignalRow {
   return overrides as SignalRow;
 }
 

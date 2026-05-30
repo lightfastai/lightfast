@@ -28,7 +28,7 @@ const classifiedSignal: SignalRow = {
   updatedAt: new Date("2026-05-27T01:01:00.000Z"),
 } as SignalRow;
 
-function makeSignal(overrides: Partial<SignalRow>): SignalRow {
+function makeSignal(overrides: Record<string, unknown>): SignalRow {
   return { ...classifiedSignal, ...overrides } as SignalRow;
 }
 
