@@ -119,6 +119,26 @@ describe("GitHub repository API helpers", () => {
     );
   });
 
+  it("accepts nested commit tree responses from local emulators", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        sha: "commit-sha",
+        commit: { tree: { sha: "tree-sha" } },
+      })
+    );
+
+    await expect(
+      getGitHubCommit({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        fetch: fetchMock,
+        installationToken: "ghs_installation",
+        owner: "lightfast-emulated",
+        ref: "commit-sha",
+        repo: "workspace",
+      })
+    ).resolves.toEqual({ sha: "commit-sha", treeSha: "tree-sha" });
+  });
+
   it("accepts commit entries in tree responses", async () => {
     const fetchMock = vi.fn(async () =>
       Response.json({

@@ -228,10 +228,21 @@ describe("@repo/github-emulator", () => {
     );
 
     expect(res.status).toBe(201);
-    await expect(res.json()).resolves.toMatchObject({
+    const tokenBody = (await res.json()) as { token?: string };
+    expect(tokenBody).toMatchObject({
       repository_selection: "all",
       token: expect.stringMatching(/^ghs_/),
     });
+
+    const refRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/ref/heads/main`,
+      {
+        headers: {
+          authorization: `Bearer ${tokenBody.token}`,
+        },
+      }
+    );
+    expect(refRes.status).toBe(200);
   });
 
   it("redirects GitHub App install requests to the Lightfast setup callback", async () => {

@@ -1,7 +1,8 @@
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createPublicKey, randomBytes } from "node:crypto";
 import type { Store, TokenMap } from "@emulators/core";
 import { getGitHubStore } from "@emulators/github";
 import { GITHUB_SETUP_PATH } from "@repo/github-app-contract";
+import { jwtVerify } from "jose";
 
 import { GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 
@@ -66,6 +67,43 @@ function getBearerToken(request: Request) {
   const header = request.headers.get("authorization") ?? "";
   const match = /^Bearer\s+(.+)$/i.exec(header);
   return match?.[1] ?? null;
+}
+
+async function authenticateApp(input: { request: Request; store: Store }) {
+  const token = getBearerToken(input.request);
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const [, payloadB64] = token.split(".");
+    if (!payloadB64) {
+      return null;
+    }
+    const payload = JSON.parse(
+      Buffer.from(payloadB64, "base64url").toString()
+    ) as { iss?: unknown };
+    const appId =
+      typeof payload.iss === "string"
+        ? Number.parseInt(payload.iss, 10)
+        : payload.iss;
+    if (!(typeof appId === "number" && Number.isFinite(appId))) {
+      return null;
+    }
+
+    const gh = getGitHubStore(input.store);
+    const app = gh.apps.findOneBy("app_id", appId);
+    if (!app) {
+      return null;
+    }
+
+    await jwtVerify(token, createPublicKey(app.private_key), {
+      algorithms: ["RS256"],
+    });
+    return app;
+  } catch {
+    return null;
+  }
 }
 
 function authenticateUser(input: { request: Request; store: Store }) {
@@ -154,6 +192,22 @@ function userOrgIds(input: { store: Store; userId: number }) {
       .map((teamId) => gh.teams.get(teamId)?.org_id)
       .filter((orgId): orgId is number => typeof orgId === "number")
   );
+}
+
+function findInstallationActor(input: { accountId: number; store: Store }) {
+  const gh = getGitHubStore(input.store);
+  const teams = gh.teams.findBy("org_id", input.accountId);
+  for (const team of teams) {
+    const member = gh.teamMembers.findBy("team_id", team.id)[0];
+    if (!member) {
+      continue;
+    }
+    const user = gh.users.get(member.user_id);
+    if (user) {
+      return user;
+    }
+  }
+  return undefined;
 }
 
 async function readBody(request: Request) {
@@ -358,6 +412,67 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         total_count: installations.length,
         installations,
       });
+    }
+
+    const installationTokenMatch =
+      /^\/app\/installations\/([^/]+)\/access_tokens$/.exec(url.pathname);
+    if (request.method === "POST" && installationTokenMatch) {
+      const app = await authenticateApp({
+        request,
+        store: input.store,
+      });
+      if (!app) {
+        return json(
+          {
+            message: "A JSON web token could not be decoded",
+            documentation_url: "https://docs.github.com/rest",
+          },
+          401
+        );
+      }
+
+      const installationId = Number.parseInt(
+        installationTokenMatch[1] ?? "",
+        10
+      );
+      const installation = gh.appInstallations
+        .all()
+        .find(
+          (candidate) =>
+            candidate.installation_id === installationId &&
+            candidate.app_id === app.app_id
+        );
+      if (!installation) {
+        return notFound();
+      }
+
+      const actor =
+        installation.account_type === "User"
+          ? gh.users.get(installation.account_id)
+          : findInstallationActor({
+              accountId: installation.account_id,
+              store: input.store,
+            });
+      const requestedPermissions = installation.permissions;
+      const token = `ghs_${randomBytes(20).toString("base64url")}`;
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      input.tokenMap.set(token, {
+        id: actor?.id ?? installation.account_id,
+        login: actor?.login ?? installation.account_login,
+        scopes: Object.entries(requestedPermissions).map(
+          ([key, value]) => `${key}:${value}`
+        ),
+      });
+
+      return json(
+        {
+          token,
+          expires_at: expiresAt,
+          permissions: requestedPermissions,
+          repository_selection: installation.repository_selection,
+        },
+        201
+      );
     }
 
     return input.fallbackFetch(request);

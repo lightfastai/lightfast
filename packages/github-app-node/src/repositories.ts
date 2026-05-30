@@ -3,9 +3,18 @@ import { GitHubAppNodeError } from "./errors";
 
 const commitResponseSchema = z.object({
   sha: z.string().min(1),
-  tree: z.object({
-    sha: z.string().min(1),
-  }),
+  commit: z
+    .object({
+      tree: z.object({
+        sha: z.string().min(1),
+      }),
+    })
+    .optional(),
+  tree: z
+    .object({
+      sha: z.string().min(1),
+    })
+    .optional(),
 });
 
 const treeResponseSchema = z.object({
@@ -86,7 +95,14 @@ export async function getGitHubCommit(input: {
       "GitHub commit response was invalid."
     );
   }
-  return { sha: parsed.data.sha, treeSha: parsed.data.tree.sha };
+  const treeSha = parsed.data.tree?.sha ?? parsed.data.commit?.tree.sha;
+  if (!treeSha) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub commit response was invalid."
+    );
+  }
+  return { sha: parsed.data.sha, treeSha };
 }
 
 export async function getGitHubTree(input: {
