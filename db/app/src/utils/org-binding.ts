@@ -41,26 +41,6 @@ export async function getActiveOrgBinding(
   return row;
 }
 
-/**
- * True when the org has at least one active binding — the v1 "bound" gate.
- */
-export async function isOrgBound(
-  db: Database,
-  clerkOrgId: string
-): Promise<boolean> {
-  const [row] = await db
-    .select({ id: orgSourceControlBindings.id })
-    .from(orgSourceControlBindings)
-    .where(
-      and(
-        eq(orgSourceControlBindings.clerkOrgId, clerkOrgId),
-        eq(orgSourceControlBindings.status, "active")
-      )
-    )
-    .limit(1);
-  return row !== undefined;
-}
-
 export type OrgSourceControlBindingConflictCode =
   | "ORG_ALREADY_BOUND"
   | "INSTALLATION_ALREADY_BOUND";

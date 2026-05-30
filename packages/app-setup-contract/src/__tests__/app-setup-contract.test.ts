@@ -5,6 +5,7 @@ import {
   githubLightfastRepositoryProofSchema,
   LIGHTFAST_REPOSITORY_NAME,
   ORG_SETUP_REQUIREMENTS,
+  orgSetupGateSchema,
   pathForSetupRequirement,
   repairIdForSetupRequirement,
 } from "../index";
@@ -41,6 +42,40 @@ describe("@repo/app-setup-contract", () => {
         requirement: "github_lightfast_repo",
       })
     ).toBe("/acme/tasks/github/lightfast-repo");
+  });
+
+  it("models setup gate states without impossible nullable combinations", () => {
+    expect(
+      orgSetupGateSchema.parse({
+        bindingStatus: "bound",
+        nextSetupRequirement: null,
+      })
+    ).toEqual({
+      bindingStatus: "bound",
+      nextSetupRequirement: null,
+    });
+    expect(
+      orgSetupGateSchema.parse({
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_org",
+      })
+    ).toEqual({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "github_org",
+    });
+
+    expect(
+      orgSetupGateSchema.safeParse({
+        bindingStatus: "bound",
+        nextSetupRequirement: "github_org",
+      }).success
+    ).toBe(false);
+    expect(
+      orgSetupGateSchema.safeParse({
+        bindingStatus: "unbound",
+        nextSetupRequirement: null,
+      }).success
+    ).toBe(false);
   });
 
   it("validates .lightfast repository proofs", () => {

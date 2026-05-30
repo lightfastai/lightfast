@@ -8,6 +8,7 @@ import type {
   SourceControlWebhookDelivery,
 } from "../schema";
 import {
+  completeWatchedSourceControlRepositorySetup,
   markSourceControlWebhookDeliveryStatus,
   markWatchedSourceControlRepositoryPushProcessed,
   recordSourceControlWebhookDeliveryReceived,
@@ -73,6 +74,121 @@ describe("source-control repository helpers", () => {
         watchedPathGlobs: ["src/**"],
       })
     ).resolves.toBe(repository);
+  });
+
+  it("stores repository proof metadata and watch in one transaction", async () => {
+    const repository = createWatchedRepository({
+      id: 30,
+      fullName: "acme/.lightfast",
+      orgSourceControlBindingId: 7,
+      providerRepositoryId: "987",
+      watchedPathGlobs: ["skills/**"],
+    });
+    const selectResults = [[], [repository]];
+    const limitMock = vi.fn(() => selectResults.shift() ?? []);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
+    const bindingWhereMock = vi.fn((_: SQL) => ({ affectedRows: 1 }));
+    const bindingSetMock = vi.fn(() => ({ where: bindingWhereMock }));
+    const valuesMock = vi.fn(() => Promise.resolve());
+    const tx = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn(() => ({ from: fromMock })),
+      update: vi.fn(() => ({ set: bindingSetMock })),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+    const bindingMetadata = {
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "987",
+        installationId: "1001",
+        name: ".lightfast",
+        verifiedAt: "2026-05-30T10:00:00.000Z",
+      },
+    };
+
+    await expect(
+      completeWatchedSourceControlRepositorySetup(db, {
+        bindingMetadata,
+        fullName: "acme/.lightfast",
+        orgSourceControlBindingId: 7,
+        providerRepositoryId: "987",
+        watchedPathGlobs: ["skills/**"],
+      })
+    ).resolves.toBe(repository);
+
+    expect(db.transaction).toHaveBeenCalledOnce();
+    expect(bindingSetMock).toHaveBeenCalledWith({ metadata: bindingMetadata });
+    expect(valuesMock).toHaveBeenCalledWith({
+      fullName: "acme/.lightfast",
+      orgSourceControlBindingId: 7,
+      providerRepositoryId: "987",
+      watchedPathGlobs: ["skills/**"],
+    });
+    const condition = bindingWhereMock.mock.calls[0]?.[0];
+    if (!condition) {
+      throw new Error("expected binding update where condition");
+    }
+    const query = new MySqlDialect().sqlToQuery(condition);
+    expect(query.sql).toContain("`id` = ?");
+    expect(query.sql).toContain("`status` = ?");
+    expect(query.params).toEqual(expect.arrayContaining([7, "active"]));
+  });
+
+  it("does not create a watch when repository proof metadata cannot be stored", async () => {
+    const bindingWhereMock = vi.fn((_: SQL) => ({ affectedRows: 0 }));
+    const bindingSetMock = vi.fn(() => ({ where: bindingWhereMock }));
+    const tx = {
+      insert: vi.fn(),
+      update: vi.fn(() => ({ set: bindingSetMock })),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+
+    await expect(
+      completeWatchedSourceControlRepositorySetup(db, {
+        bindingMetadata: {},
+        fullName: "acme/.lightfast",
+        orgSourceControlBindingId: 7,
+        providerRepositoryId: "987",
+        watchedPathGlobs: ["skills/**"],
+      })
+    ).rejects.toThrow(/binding 7/);
+
+    expect(tx.insert).not.toHaveBeenCalled();
+  });
+
+  it("does not treat array-wrapped zero-row metadata updates as success", async () => {
+    const bindingWhereMock = vi.fn((_: SQL) => [{ affectedRows: 0 }]);
+    const bindingSetMock = vi.fn(() => ({ where: bindingWhereMock }));
+    const tx = {
+      insert: vi.fn(),
+      update: vi.fn(() => ({ set: bindingSetMock })),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+
+    await expect(
+      completeWatchedSourceControlRepositorySetup(db, {
+        bindingMetadata: {},
+        fullName: "acme/.lightfast",
+        orgSourceControlBindingId: 7,
+        providerRepositoryId: "987",
+        watchedPathGlobs: ["skills/**"],
+      })
+    ).rejects.toThrow(/binding 7/);
+
+    expect(tx.insert).not.toHaveBeenCalled();
   });
 
   it("marks webhook delivery status by delivery id", async () => {

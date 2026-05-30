@@ -200,4 +200,41 @@ describe("GitHub webhook schemas", () => {
       }).success
     ).toBe(false);
   });
+
+  it("rejects malformed push SHA and repository full-name fields", () => {
+    const valid = {
+      after: "a".repeat(40),
+      before: "b".repeat(40),
+      installation: { id: 1001 },
+      ref: "refs/heads/main",
+      repository: {
+        full_name: "lightfast-emulated/workspace",
+        id: 2002,
+        name: "workspace",
+        owner: { login: "lightfast-emulated" },
+      },
+    };
+
+    expect(
+      githubPushWebhookPayloadSchema.safeParse({
+        ...valid,
+        after: "not-a-sha",
+      }).success
+    ).toBe(false);
+    expect(
+      githubPushWebhookPayloadSchema.safeParse({
+        ...valid,
+        before: "g".repeat(40),
+      }).success
+    ).toBe(false);
+    expect(
+      githubPushWebhookPayloadSchema.safeParse({
+        ...valid,
+        repository: {
+          ...valid.repository,
+          full_name: "group/subgroup/workspace",
+        },
+      }).success
+    ).toBe(false);
+  });
 });

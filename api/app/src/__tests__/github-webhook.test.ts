@@ -141,6 +141,22 @@ describe("handleGitHubWebhook", () => {
     expect(recordDeliveryMock).not.toHaveBeenCalled();
   });
 
+  it("rejects signed push payloads with malformed routing fields before durable work", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest({
+        ...pushPayload,
+        after: "not-a-sha",
+      }),
+    });
+
+    expect(res.status).toBe(400);
+    expect(recordDeliveryMock).not.toHaveBeenCalled();
+    expect(updateLastSeenMock).not.toHaveBeenCalled();
+    expect(inngestSendMock).not.toHaveBeenCalled();
+  });
+
   it("ignores signed unsupported events without durable work", async () => {
     const { handleGitHubWebhook } = await import("../services/github/webhook");
 

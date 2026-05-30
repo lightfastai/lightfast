@@ -82,12 +82,16 @@ function adminAccess() {
 function activeIdentityWithOrgGate(
   bindingStatus: "bound" | "unbound"
 ): ActiveAuthIdentity {
+  const orgGate =
+    bindingStatus === "bound"
+      ? ({ bindingStatus: "bound", nextSetupRequirement: null } as const)
+      : ({
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        } as const);
   return {
     ...activeIdentity,
-    orgGate: {
-      bindingStatus,
-      nextSetupRequirement: bindingStatus === "bound" ? null : "github_org",
-    },
+    orgGate,
   };
 }
 

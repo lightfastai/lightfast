@@ -9,7 +9,6 @@ const {
   finalizeActiveOrgProviderBinding,
   getActiveOrgBinding,
   getOrgBindingByProviderInstallation,
-  isOrgBound,
   markOrgBindingRevoked,
   updateOrgSourceControlBindingMetadata,
   upsertActiveOrgBinding,
@@ -128,33 +127,6 @@ function duplicateBindingError(key: string) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-});
-
-describe("isOrgBound", () => {
-  it("is false when the org has no active binding", async () => {
-    const { db } = makeFakeDb({ selectResults: [[]] });
-    expect(await isOrgBound(db, "org_none")).toBe(false);
-  });
-
-  it("is true when the org has an active binding", async () => {
-    const { db } = makeFakeDb({ selectResults: [[{ id: 1 }]] });
-    expect(await isOrgBound(db, "org_bound")).toBe(true);
-  });
-
-  it("selects only the binding id for the hot auth gate", async () => {
-    const { db, spies } = makeFakeDb({ selectResults: [[{ id: 1 }]] });
-
-    expect(await isOrgBound(db, "org_bound")).toBe(true);
-
-    expect(selectedKeys(spies)).toEqual(["id"]);
-  });
-
-  it("is false for an org whose only binding is revoked", async () => {
-    // The helper's query filters `status = 'active'`, so a revoked-only org
-    // yields no rows — modelled here by an empty active-binding result.
-    const { db } = makeFakeDb({ selectResults: [[]] });
-    expect(await isOrgBound(db, "org_revoked")).toBe(false);
-  });
 });
 
 describe("getActiveOrgBinding", () => {

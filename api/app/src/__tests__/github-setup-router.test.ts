@@ -3,12 +3,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const clerkGetOrganizationMembershipListMock = vi.fn();
+const completeWatchedSourceControlRepositorySetupMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
 const mirrorOrgSetupGateMock = vi.fn();
 const nanoidMock = vi.fn();
 const redisSetMock = vi.fn();
 const redisGetdelMock = vi.fn();
-const updateOrgSourceControlBindingMetadataMock = vi.fn();
 const upsertWatchedSourceControlRepositoryMock = vi.fn();
 const createGitHubAppJwtMock = vi.fn();
 const createGitHubInstallationTokenMock = vi.fn();
@@ -18,9 +18,9 @@ const verifyGitHubInstallationRepositoryMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
+  completeWatchedSourceControlRepositorySetup:
+    completeWatchedSourceControlRepositorySetupMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
-  updateOrgSourceControlBindingMetadata:
-    updateOrgSourceControlBindingMetadataMock,
   upsertWatchedSourceControlRepository:
     upsertWatchedSourceControlRepositoryMock,
 }));
@@ -142,12 +142,12 @@ function makeCaller(
 describe("githubSetupRouter", () => {
   beforeEach(() => {
     clerkGetOrganizationMembershipListMock.mockReset();
+    completeWatchedSourceControlRepositorySetupMock.mockReset();
     getActiveOrgBindingMock.mockReset();
     mirrorOrgSetupGateMock.mockReset();
     nanoidMock.mockReset();
     redisGetdelMock.mockReset();
     redisSetMock.mockReset();
-    updateOrgSourceControlBindingMetadataMock.mockReset();
     upsertWatchedSourceControlRepositoryMock.mockReset();
     createGitHubAppJwtMock.mockReset();
     createGitHubInstallationTokenMock.mockReset();
@@ -158,7 +158,7 @@ describe("githubSetupRouter", () => {
       .mockReturnValueOnce("attempt_123456789012345678901234")
       .mockReturnValueOnce("nonce_1234567890123456789012345");
     getActiveOrgBindingMock.mockResolvedValue(undefined);
-    updateOrgSourceControlBindingMetadataMock.mockResolvedValue(true);
+    completeWatchedSourceControlRepositorySetupMock.mockResolvedValue({});
     upsertWatchedSourceControlRepositoryMock.mockResolvedValue({});
     createGitHubAppJwtMock.mockResolvedValue("app.jwt");
     createGitHubInstallationTokenMock.mockResolvedValue({
@@ -325,29 +325,22 @@ describe("githubSetupRouter", () => {
       owner: "acme",
       repo: ".lightfast",
     });
-    expect(updateOrgSourceControlBindingMetadataMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        id: 7,
-        metadata: expect.objectContaining({
-          lightfastRepository: expect.objectContaining({
-            fullName: "acme/.lightfast",
-            id: "987",
-            installationId: "1001",
-            name: ".lightfast",
-          }),
+    expect(
+      completeWatchedSourceControlRepositorySetupMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      bindingMetadata: expect.objectContaining({
+        lightfastRepository: expect.objectContaining({
+          fullName: "acme/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
         }),
-      }
-    );
-    expect(upsertWatchedSourceControlRepositoryMock).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        fullName: "acme/.lightfast",
-        orgSourceControlBindingId: 7,
-        providerRepositoryId: "987",
-        watchedPathGlobs: ["skills/**"],
-      }
-    );
+      }),
+      fullName: "acme/.lightfast",
+      orgSourceControlBindingId: 7,
+      providerRepositoryId: "987",
+      watchedPathGlobs: ["skills/**"],
+    });
     expect(mirrorOrgSetupGateMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",
       provider: "github",

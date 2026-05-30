@@ -11,10 +11,16 @@ export type OrgSetupRequirement = (typeof ORG_SETUP_REQUIREMENTS)[number];
 
 export const orgSetupRequirementSchema = z.enum(ORG_SETUP_REQUIREMENTS);
 
-export const orgSetupGateSchema = z.object({
-  bindingStatus: z.enum(["bound", "unbound"]),
-  nextSetupRequirement: orgSetupRequirementSchema.nullable(),
-});
+export const orgSetupGateSchema = z.discriminatedUnion("bindingStatus", [
+  z.object({
+    bindingStatus: z.literal("bound"),
+    nextSetupRequirement: z.null(),
+  }),
+  z.object({
+    bindingStatus: z.literal("unbound"),
+    nextSetupRequirement: orgSetupRequirementSchema,
+  }),
+]);
 
 export type OrgSetupGate = z.infer<typeof orgSetupGateSchema>;
 

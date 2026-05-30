@@ -24,7 +24,7 @@ export type BindingStatus = OrgSetupGate["bindingStatus"];
  * authoritative Lightfast DB binding; enforced server-side by tRPC's
  * `boundOrgProcedure`.
  */
-export interface OrgGate extends OrgSetupGate {}
+export type OrgGate = OrgSetupGate;
 
 /**
  * Authorization identity — the answer to "who is this request from?".

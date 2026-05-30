@@ -10,6 +10,7 @@ import type {
   SourceControlWebhookDelivery,
 } from "../schema";
 import {
+  orgSourceControlBindings,
   sourceControlRepositories,
   sourceControlWebhookDeliveries,
 } from "../schema";
@@ -22,6 +23,11 @@ export interface UpsertWatchedSourceControlRepositoryInput {
   orgSourceControlBindingId: number;
   providerRepositoryId: string;
   watchedPathGlobs: WatchedPathGlobs;
+}
+
+export interface CompleteWatchedSourceControlRepositorySetupInput
+  extends UpsertWatchedSourceControlRepositoryInput {
+  bindingMetadata: Record<string, unknown>;
 }
 
 export interface RecordSourceControlWebhookDeliveryReceivedResult {
@@ -108,6 +114,35 @@ export async function upsertWatchedSourceControlRepository(
     );
   }
   return inserted;
+}
+
+export async function completeWatchedSourceControlRepositorySetup(
+  db: Database,
+  input: CompleteWatchedSourceControlRepositorySetupInput
+): Promise<SourceControlRepository> {
+  return await db.transaction(async (tx) => {
+    const bindingResult = await tx
+      .update(orgSourceControlBindings)
+      .set({ metadata: input.bindingMetadata })
+      .where(
+        and(
+          eq(orgSourceControlBindings.id, input.orgSourceControlBindingId),
+          eq(orgSourceControlBindings.status, "active")
+        )
+      );
+    if (getRowsAffected(bindingResult) === 0) {
+      throw new Error(
+        `Failed to store source control repository proof for binding ${input.orgSourceControlBindingId}.`
+      );
+    }
+
+    return await upsertWatchedSourceControlRepository(tx, {
+      fullName: input.fullName,
+      orgSourceControlBindingId: input.orgSourceControlBindingId,
+      providerRepositoryId: input.providerRepositoryId,
+      watchedPathGlobs: input.watchedPathGlobs,
+    });
+  });
 }
 
 export async function getSourceControlWebhookDeliveryByDeliveryId(
@@ -256,6 +291,9 @@ export async function updateWatchedSourceControlRepositoryLastProcessedSha(
 }
 
 function getRowsAffected(result: unknown): number {
+  if (Array.isArray(result)) {
+    return result.reduce((total, item) => total + getRowsAffected(item), 0);
+  }
   if (result === null || typeof result !== "object") {
     return 0;
   }

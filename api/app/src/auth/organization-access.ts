@@ -24,7 +24,7 @@ export function orgInitials(name: string): string {
     .slice(0, 2);
 }
 
-export interface OrgAccess extends OrgSetupGate {
+export type OrgAccess = OrgSetupGate & {
   org: {
     id: string;
     imageUrl: string;
@@ -33,7 +33,7 @@ export interface OrgAccess extends OrgSetupGate {
     slug: string;
   };
   role: string;
-}
+};
 
 export async function getOrgAccessBySlug(input: {
   db: Database;

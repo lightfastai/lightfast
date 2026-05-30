@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 
-const isOrgBoundMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
 const authMock = vi.fn();
 const getOrganizationMock = vi.fn();
@@ -13,7 +12,6 @@ const updateOrganizationMock = vi.fn();
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   getActiveOrgBinding: getActiveOrgBindingMock,
-  isOrgBound: isOrgBoundMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -104,7 +102,6 @@ beforeEach(() => {
   authMock.mockReset();
   getOrganizationMock.mockReset();
   getOrganizationMembershipListMock.mockReset();
-  isOrgBoundMock.mockReset();
   getActiveOrgBindingMock.mockReset();
   updateOrganizationMock.mockReset();
 
@@ -173,7 +170,6 @@ describe("organization.getBySlug", () => {
       })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     expect(getOrganizationMembershipListMock).not.toHaveBeenCalled();
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 
@@ -247,7 +243,6 @@ describe("organization.getBySlug", () => {
       code: "NOT_FOUND",
       message: "Organization not found",
     });
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
     expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 });

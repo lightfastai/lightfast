@@ -1,7 +1,7 @@
 import type { Database } from "@db/app";
 import {
+  completeWatchedSourceControlRepositorySetup,
   getActiveOrgBinding,
-  updateOrgSourceControlBindingMetadata,
   upsertWatchedSourceControlRepository,
 } from "@db/app";
 import {
@@ -151,22 +151,19 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
     verifiedAt: new Date().toISOString(),
   });
 
-  await ensureWatchedLightfastRepository({
-    bindingId: binding.id,
-    db: input.db,
-    fullName: proof.fullName,
-    providerRepositoryId: proof.id,
-  });
-
   const metadata = {
     ...binding.metadata,
     lightfastRepository: proof,
   };
-  const updated = await updateOrgSourceControlBindingMetadata(input.db, {
-    id: binding.id,
-    metadata,
-  });
-  if (!updated) {
+  try {
+    await completeWatchedSourceControlRepositorySetup(input.db, {
+      bindingMetadata: metadata,
+      fullName: proof.fullName,
+      orgSourceControlBindingId: binding.id,
+      providerRepositoryId: proof.id,
+      watchedPathGlobs: ["skills/**"],
+    });
+  } catch {
     throw new GitHubLightfastRepositorySetupError(
       "github_transient_error",
       "Lightfast could not store the .lightfast repository proof."

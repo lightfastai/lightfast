@@ -1,7 +1,17 @@
 import { call } from "@orpc/server";
 import { describe, expect, it } from "vitest";
+import type { AuthContext, InitialContext } from "../context";
 
 const { orgGateMiddleware } = await import("../middleware/org-gate");
+
+function orgGate(bindingStatus: "bound" | "unbound") {
+  return bindingStatus === "bound"
+    ? ({ bindingStatus: "bound", nextSetupRequirement: null } as const)
+    : ({
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_org",
+      } as const);
+}
 
 /**
  * Invoke the gate as it runs in production: after `authMiddleware` has resolved
@@ -10,22 +20,7 @@ const { orgGateMiddleware } = await import("../middleware/org-gate");
 async function invokeGate(bindingStatus: "bound" | "unbound") {
   const { os } = await import("@orpc/server");
   const proc = os
-    .$context<{
-      apiKeyId: string;
-      auth: {
-        identity: {
-          orgGate: {
-            bindingStatus: "bound" | "unbound";
-            nextSetupRequirement: "github_org" | "github_lightfast_repo" | null;
-          };
-          orgId: string;
-          type: "active";
-          userId: string;
-        };
-      };
-      headers: Headers;
-      requestId: string;
-    }>()
+    .$context<InitialContext & AuthContext>()
     .use(orgGateMiddleware)
     .handler(() => "handler-reached");
 
@@ -34,11 +29,7 @@ async function invokeGate(bindingStatus: "bound" | "unbound") {
       apiKeyId: "apk_test",
       auth: {
         identity: {
-          orgGate: {
-            bindingStatus,
-            nextSetupRequirement:
-              bindingStatus === "bound" ? null : "github_org",
-          },
+          orgGate: orgGate(bindingStatus),
           orgId: "org_test",
           type: "active",
           userId: "user_test",

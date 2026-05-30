@@ -80,6 +80,14 @@ export const githubWebhookHeadersSchema = z.object({
 });
 export type GitHubWebhookHeaders = z.infer<typeof githubWebhookHeadersSchema>;
 
+const githubSha1Schema = z
+  .string()
+  .regex(/^[0-9a-f]{40}$/i, "Expected 40-character SHA-1");
+
+const githubRepositoryFullNameSchema = z
+  .string()
+  .regex(/^[^/\s]+\/[^/\s]+$/, "Expected repository full name as owner/repo");
+
 const githubWebhookProviderIdSchema = z.union([
   z.number().int().positive().safe(),
   z.string().min(1),
@@ -90,7 +98,7 @@ export const githubWebhookInstallationSchema = z.object({
 });
 
 export const githubWebhookRepositorySchema = z.object({
-  full_name: z.string().min(1),
+  full_name: githubRepositoryFullNameSchema,
   id: githubWebhookProviderIdSchema,
   name: z.string().min(1),
   owner: z.object({
@@ -109,8 +117,8 @@ export type GitHubPingWebhookPayload = z.infer<
 >;
 
 export const githubPushWebhookPayloadSchema = z.object({
-  after: z.string().min(1),
-  before: z.string().min(1),
+  after: githubSha1Schema,
+  before: githubSha1Schema,
   installation: githubWebhookInstallationSchema,
   ref: z.string().min(1),
   repository: githubWebhookRepositorySchema,
@@ -120,12 +128,12 @@ export type GitHubPushWebhookPayload = z.infer<
 >;
 
 export const normalizedGitHubPushWebhookSchema = z.object({
-  afterSha: z.string().min(1),
-  beforeSha: z.string().min(1),
+  afterSha: githubSha1Schema,
+  beforeSha: githubSha1Schema,
   providerInstallationId: z.string().min(1),
   providerRepositoryId: z.string().min(1),
   ref: z.string().min(1),
-  repositoryFullName: z.string().min(1),
+  repositoryFullName: githubRepositoryFullNameSchema,
 });
 export type NormalizedGitHubPushWebhook = z.infer<
   typeof normalizedGitHubPushWebhookSchema

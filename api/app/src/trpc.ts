@@ -306,9 +306,7 @@ const requireBoundOrg = t.middleware(({ ctx, next }) => {
         message:
           "Organization setup required. Complete setup before using Lightfast features.",
         repair: {
-          id: requirement
-            ? repairIdForSetupRequirement(requirement)
-            : "setup-github-org",
+          id: repairIdForSetupRequirement(requirement),
         },
       },
     });

@@ -25,9 +25,7 @@ export const orgGateMiddleware = base.middleware(async ({ context, next }) => {
       message:
         "This organization has not completed setup. Complete setup before using Lightfast API features.",
       repair: {
-        id: requirement
-          ? repairIdForSetupRequirement(requirement)
-          : "setup-github-org",
+        id: repairIdForSetupRequirement(requirement),
       },
     };
     throw new ORPCError("FORBIDDEN", {
