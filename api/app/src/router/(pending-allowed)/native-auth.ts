@@ -14,6 +14,10 @@ import { clerkClient } from "@vendor/clerk/server";
 import { z } from "zod";
 
 import {
+  findUserOrganizationMembership,
+  listUserOrganizationMemberships,
+} from "../../auth/clerk-org-membership";
+import {
   consumeNativeAuthAttempt,
   issueNativeAuthAttempt,
 } from "../../auth/native-auth-attempts";
@@ -51,8 +55,7 @@ function requireNativeOAuthConfig(client: NativeClient) {
 }
 
 async function listMembershipsForUser(userId: string) {
-  const clerk = await clerkClient();
-  return clerk.users.getOrganizationMembershipList({ userId });
+  return listUserOrganizationMemberships({ userId });
 }
 
 export async function listNativeOrganizationsForUser(input: {
@@ -61,7 +64,7 @@ export async function listNativeOrganizationsForUser(input: {
 }): Promise<NativeOrganization[]> {
   const memberships = await listMembershipsForUser(input.userId);
   return Promise.all(
-    memberships.data.map(async (membership) => ({
+    memberships.map(async (membership) => ({
       bindingStatus: (await isOrgBound(input.db, membership.organization.id))
         ? "bound"
         : "unbound",
@@ -77,11 +80,11 @@ async function assertNativeOrgMembership(input: {
   organizationId: string;
   userId: string;
 }): Promise<void> {
-  const memberships = await listMembershipsForUser(input.userId);
-  const hasMembership = memberships.data.some(
-    (membership) => membership.organization.id === input.organizationId
-  );
-  if (!hasMembership) {
+  const membership = await findUserOrganizationMembership({
+    organizationId: input.organizationId,
+    userId: input.userId,
+  });
+  if (!membership) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "User is not a member of the selected organization",

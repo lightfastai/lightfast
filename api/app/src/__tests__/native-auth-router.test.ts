@@ -172,6 +172,62 @@ describe("nativeAuthRouter", () => {
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
   });
 
+  it("creates attempts for memberships beyond Clerk's first page", async () => {
+    issueNativeAuthAttemptMock.mockResolvedValue({
+      attemptId: "attempt_123456789",
+      state: "state_1234567890123",
+    });
+    clerkGetOrganizationMembershipListMock
+      .mockResolvedValueOnce({
+        data: Array.from({ length: 100 }, (_, index) => ({
+          organization: {
+            id: `org_other_${index}`,
+            name: `Other ${index}`,
+            slug: `other-${index}`,
+          },
+          role: "org:member",
+        })),
+        totalCount: 101,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            organization: {
+              id: "org_2",
+              name: "Second Org",
+              slug: "second-org",
+            },
+            role: "org:admin",
+          },
+        ],
+        totalCount: 101,
+      });
+
+    await expect(
+      makeCaller({
+        kind: "clerk-session",
+        orgId: null,
+        userId: "user_1",
+      }).native.auth.createAttempt({
+        client: "cli",
+        codeChallenge: "a".repeat(43),
+        codeChallengeMethod: "S256",
+        organizationId: "org_2",
+        redirectUri: "http://127.0.0.1:51010/callback",
+        stateNonce: "nonce_1234567890",
+      })
+    ).resolves.toMatchObject({
+      attemptId: "attempt_123456789",
+      authorizationUrl: expect.stringContaining("code_challenge="),
+    });
+    expect(issueNativeAuthAttemptMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        organizationId: "org_2",
+        userId: "user_1",
+      })
+    );
+  });
+
   it("finalizes a consumed attempt into org-bound native metadata", async () => {
     consumeNativeAuthAttemptMock.mockResolvedValue({
       client: "desktop",

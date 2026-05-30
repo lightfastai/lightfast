@@ -110,6 +110,47 @@ beforeEach(() => {
   });
 });
 
+describe("organization.listUserOrganizations", () => {
+  it("lists organizations beyond Clerk's first page", async () => {
+    getOrganizationMembershipListMock
+      .mockResolvedValueOnce({
+        data: Array.from({ length: 100 }, (_, index) => ({
+          organization: {
+            id: `org_other_${index}`,
+            imageUrl: `https://img.example.com/other-${index}.png`,
+            name: `Other ${index}`,
+            slug: `other-${index}`,
+          },
+          role: "org:member",
+        })),
+        totalCount: 101,
+      })
+      .mockResolvedValueOnce({
+        data: [
+          {
+            organization: {
+              id: "org_2",
+              imageUrl: "https://img.example.com/second.png",
+              name: "Second Org",
+              slug: "second-org",
+            },
+            role: "org:admin",
+          },
+        ],
+        totalCount: 101,
+      });
+
+    const result = await caller().viewer.organization.listUserOrganizations();
+
+    expect(result).toHaveLength(101);
+    expect(result.at(-1)).toMatchObject({
+      id: "org_2",
+      role: "org:admin",
+      slug: "second-org",
+    });
+  });
+});
+
 describe("organization.getBySlug", () => {
   it("throws UNAUTHORIZED when the caller is unauthenticated", async () => {
     await expect(

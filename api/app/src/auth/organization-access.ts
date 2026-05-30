@@ -1,6 +1,6 @@
 import type { Database } from "@db/app";
 import { isOrgBound } from "@db/app";
-import { clerkClient } from "@vendor/clerk/server";
+import { findUserOrganizationMembership } from "./clerk-org-membership";
 
 export class OrgAccessError extends Error {
   constructor(message = "Organization not found") {
@@ -40,13 +40,10 @@ export async function getOrgAccessBySlug(input: {
   slug: string;
   userId: string;
 }): Promise<OrgAccess> {
-  const clerk = await clerkClient();
-  const memberships = await clerk.users.getOrganizationMembershipList({
+  const membership = await findUserOrganizationMembership({
+    organizationSlug: input.slug,
     userId: input.userId,
   });
-  const membership = memberships.data.find(
-    (entry) => entry.organization.slug === input.slug
-  );
 
   if (!membership?.organization.slug) {
     throw new OrgAccessError();

@@ -4,7 +4,8 @@ import {
   type NativeClient,
   nativeClientSchema,
 } from "@repo/native-auth-contract";
-import { auth, clerkClient } from "@vendor/clerk/server";
+import { auth } from "@vendor/clerk/server";
+import { findUserOrganizationMembership } from "./clerk-org-membership";
 import { isExpectedNativeOAuthAccess } from "./native-oauth";
 
 /**
@@ -100,32 +101,11 @@ async function isNativeOrgMember(input: {
   organizationId: string;
   userId: string;
 }): Promise<boolean> {
-  const clerk = await clerkClient();
-  const limit = 100;
-  let offset = 0;
-
-  while (true) {
-    const memberships = await clerk.users.getOrganizationMembershipList({
-      limit,
-      offset,
-      userId: input.userId,
-    });
-    if (
-      memberships.data.some(
-        (membership) => membership.organization.id === input.organizationId
-      )
-    ) {
-      return true;
-    }
-    offset += limit;
-    if (
-      !memberships.data.length ||
-      (typeof memberships.totalCount === "number" &&
-        offset >= memberships.totalCount)
-    ) {
-      return false;
-    }
-  }
+  const membership = await findUserOrganizationMembership({
+    organizationId: input.organizationId,
+    userId: input.userId,
+  });
+  return !!membership;
 }
 
 async function tryNativeOAuthBearer({
