@@ -236,10 +236,16 @@ Behavior:
 11. Exclude `.lightfast` from the normal available/imported repository list.
 12. Merge remaining live GitHub repositories with watched rows by provider
     repository id.
+13. Omit watched rows that are no longer present in the live GitHub response.
 
 Filtering by provider account id prevents stale logins, renamed organizations,
 or unusual installation responses from surfacing repositories outside the
 connected GitHub organization.
+
+If a previously added repository is no longer returned by GitHub, the API should
+not synthesize a placeholder from Lightfast state. The durable watch row remains
+in place for future recovery if access returns, but the normal list only renders
+repositories backed by fresh GitHub metadata.
 
 ### `importRepository`
 
@@ -343,6 +349,10 @@ the imported repository count from Lightfast, and a retry affordance. It should
 not render repository names, org logins, visibility, or other provider metadata
 from stale Lightfast fields.
 
+When GitHub is reachable but an imported repository is no longer included in the
+installation repository response, omit that repository from the normal list
+rather than rendering a stale placeholder row.
+
 ## Local Emulator
 
 Extend the GitHub emulator's compatible API surface with:
@@ -371,6 +381,8 @@ organization so the import UI can exercise imported and available states.
   repository-list error with retry, without rendering stale repository labels.
 - Selected repository no longer accessible: reject the mutation with
   `PRECONDITION_FAILED` and refetch the list.
+- Existing imported repository no longer accessible: omit it from the normal
+  list while preserving its Lightfast watch row.
 - Non-admin import attempt: reject with `FORBIDDEN`.
 
 ## Testing
@@ -384,8 +396,8 @@ Add tests at each boundary:
   upsert behavior.
 - `api/app`: source-control router read/import behavior, admin guard, owner
   id filtering, inaccessible repository rejection, merged imported/available
-  output, `.lightfast` exclusion, and no client-supplied repository metadata in
-  import mutations.
+  output, `.lightfast` exclusion, omission of unavailable watched repositories,
+  and no client-supplied repository metadata in import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
 - `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
