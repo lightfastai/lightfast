@@ -17,10 +17,18 @@
     "./telemetry": {
       "types": "./src/telemetry/index.ts",
       "default": "./src/telemetry/index.ts"
+    },
+    "./triage": {
+      "types": "./src/triage/index.ts",
+      "default": "./src/triage/index.ts"
     }
   },
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "eval:triage": "dotenv -e ../apps/app/.vercel/.env.development.local -- env NODE_OPTIONS=--conditions=react-server bt eval --runner tsx evals/triage-github-issues.eval.ts",
+    "eval:triage:fixture": "TRIAGE_EVAL_MODE=expected BRAINTRUST_NO_SEND_LOGS=1 NODE_OPTIONS=--conditions=react-server bt eval --no-send-logs --runner tsx evals/triage-github-issues.eval.ts",
+    "eval:triage:similarity": "dotenv -e ../apps/app/.vercel/.env.development.local -- env NODE_OPTIONS=--conditions=react-server bt eval --runner tsx evals/triage-similarity.eval.ts",
+    "eval:triage:similarity:fixture": "TRIAGE_EVAL_MODE=expected BRAINTRUST_NO_SEND_LOGS=1 NODE_OPTIONS=--conditions=react-server bt eval --no-send-logs --runner tsx evals/triage-similarity.eval.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit"
   },
@@ -35,6 +43,9 @@
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
+    "braintrust": "catalog:",
+    "dotenv-cli": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }
