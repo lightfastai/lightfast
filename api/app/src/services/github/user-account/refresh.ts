@@ -11,7 +11,7 @@ import {
   refreshGitHubUserAccessToken,
 } from "@repo/github-app-node";
 
-import { getAppEncryptionKey } from "../../../env";
+import { env } from "../../../env";
 import { getGitHubAppConfig } from "../config";
 
 const DEFAULT_REFRESH_WINDOW_MS = 60 * 60 * 1000;
@@ -49,13 +49,15 @@ export async function getFreshGitHubUserAccessToken(input: {
 
   const now = input.now?.() ?? new Date();
   const refreshWindowMs = input.refreshWindowMs ?? DEFAULT_REFRESH_WINDOW_MS;
-  const encryptionKey = getAppEncryptionKey();
   if (
     account.accessTokenExpiresAt.getTime() - now.getTime() >
     refreshWindowMs
   ) {
     return {
-      accessToken: await decrypt(account.encryptedAccessToken, encryptionKey),
+      accessToken: await decrypt(
+        account.encryptedAccessToken,
+        env.ENCRYPTION_KEY
+      ),
     };
   }
 
@@ -71,7 +73,7 @@ export async function getFreshGitHubUserAccessToken(input: {
 
   const refreshToken = await decrypt(
     account.encryptedRefreshToken,
-    encryptionKey
+    env.ENCRYPTION_KEY
   );
 
   let refreshed: Awaited<ReturnType<typeof refreshGitHubUserAccessToken>>;
@@ -90,7 +92,6 @@ export async function getFreshGitHubUserAccessToken(input: {
       now,
       observedEncryptedRefreshToken: account.encryptedRefreshToken,
       refreshWindowMs,
-      encryptionKey,
     });
     if (recovered) {
       return recovered;
@@ -121,8 +122,8 @@ export async function getFreshGitHubUserAccessToken(input: {
     now.getTime() + refreshed.refreshTokenExpiresIn * 1000
   );
   const [encryptedAccessToken, encryptedRefreshToken] = await Promise.all([
-    encrypt(refreshed.accessToken, encryptionKey),
-    encrypt(refreshed.refreshToken, encryptionKey),
+    encrypt(refreshed.accessToken, env.ENCRYPTION_KEY),
+    encrypt(refreshed.refreshToken, env.ENCRYPTION_KEY),
   ]);
 
   const updated = await updateObservedUserSourceControlAccountTokens(input.db, {
@@ -143,7 +144,6 @@ export async function getFreshGitHubUserAccessToken(input: {
       now,
       observedEncryptedRefreshToken: account.encryptedRefreshToken,
       refreshWindowMs,
-      encryptionKey,
     });
     if (recovered) {
       return recovered;
@@ -157,7 +157,6 @@ export async function getFreshGitHubUserAccessToken(input: {
 async function recoverFromConcurrentRefresh(input: {
   clerkUserId: string;
   db: Database;
-  encryptionKey: string;
   now: Date;
   observedEncryptedRefreshToken: string;
   refreshWindowMs: number;
@@ -179,7 +178,7 @@ async function recoverFromConcurrentRefresh(input: {
   return {
     accessToken: await decrypt(
       currentAccount.encryptedAccessToken,
-      input.encryptionKey
+      env.ENCRYPTION_KEY
     ),
   };
 }

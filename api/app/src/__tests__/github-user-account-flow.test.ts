@@ -81,8 +81,10 @@ vi.mock("@vendor/clerk/server", () => ({
 }));
 
 vi.mock("../env", () => ({
-  getAppEncryptionKey: () =>
-    "0000000000000000000000000000000000000000000000000000000000000000",
+  env: {
+    ENCRYPTION_KEY:
+      "0000000000000000000000000000000000000000000000000000000000000000",
+  },
 }));
 
 vi.mock("../services/github/user-account/attempts", () => ({

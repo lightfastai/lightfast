@@ -2,7 +2,7 @@ import { finalizeActiveUserSourceControlAccount } from "@db/app";
 import { db } from "@db/app/client";
 import { encrypt } from "@repo/app-encryption";
 
-import { getAppEncryptionKey } from "../../../env";
+import { env } from "../../../env";
 
 export async function finalizeGitHubUserAccountBinding(input: {
   accessToken: string;
@@ -12,10 +12,9 @@ export async function finalizeGitHubUserAccountBinding(input: {
   refreshToken: string;
   refreshTokenExpiresAt: Date;
 }) {
-  const encryptionKey = getAppEncryptionKey();
   const [encryptedAccessToken, encryptedRefreshToken] = await Promise.all([
-    encrypt(input.accessToken, encryptionKey),
-    encrypt(input.refreshToken, encryptionKey),
+    encrypt(input.accessToken, env.ENCRYPTION_KEY),
+    encrypt(input.refreshToken, env.ENCRYPTION_KEY),
   ]);
 
   return finalizeActiveUserSourceControlAccount(db, {
