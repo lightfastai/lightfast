@@ -1,12 +1,6 @@
 import { LOGO_CURVE, lissajousPoints } from "@repo/ui/lib/brand";
 import type { Box3D, Face, Vec2 } from "@repo/ui/lib/iso";
-import {
-  createBox,
-  facePath,
-  project,
-  silhouette,
-  subtract,
-} from "@repo/ui/lib/iso";
+import { createBox, facePath, project, silhouette } from "@repo/ui/lib/iso";
 import type React from "react";
 
 // ── Design-language tokens ───────────────────────────────────────────
@@ -341,24 +335,51 @@ export const signalsScene: IsoScene = (() => {
 })();
 
 /**
- * People: an upright slab with a recessed pocket carved into the top-left of
- * the front face, and the Lightfast mark etched (bottom half only) centered on
- * that face. Same isometric projection as signals — just re-proportioned to
- * stand up, so the wide front face dominates.
+ * People: a central hub cube carrying the Lightfast mark on its top face, wired
+ * out to four satellite cubes by dashed construction guides — a symmetric
+ * hub-and-spoke of people discovered around the pipeline. Satellites sit on the
+ * ±x / ±y axes at the hub's mid-height, so the spokes read as a balanced cross.
+ * Each guide runs from the centre of the hub face it exits to the matching
+ * satellite face, so the dashes touch both cubes' outer faces rather than
+ * floating from the centre. The hub is the single high-contrast silhouette;
+ * satellites and guides stay on the quiet border token. The two front spokes
+ * (+x, +y) sit on the visible faces; the two rear spokes emerge from behind the
+ * hub, occluded by its opaque body — a natural depth cue.
  */
 export const peopleScene: IsoScene = (() => {
-  const W = 200; // width  (x)
-  const T = 70; // thickness (y) — thin, so it reads as a standing slab
-  const H = 235; // height (z) — upright
-  const slab: Box3D = { x: 0, y: 0, z: 0, w: W, h: T, d: H };
-  // Rectangular pocket inset into the top-left of the front face; the recess
-  // runs more than half the slab thickness so the cavity walls read clearly.
-  const pd = 40; // recess depth into the slab
-  const pocket: Box3D = { x: 28, y: T - pd, z: 152, w: 68, h: pd, d: 56 };
+  const E = 92; // hub cube edge
+  const hub: Box3D = { x: 74, y: 74, z: 0, w: E, h: E, d: E };
+  const cx = hub.x + E / 2;
+  const cy = hub.y + E / 2;
+  const cz = hub.z + E / 2; // spokes meet the faces at mid-height
+  const e = 38; // satellite cube edge
+  const R = 112; // hub-centre → satellite-centre, along each axis
+  const axes: [number, number][] = [
+    [1, 0],
+    [-1, 0],
+    [0, 1],
+    [0, -1],
+  ];
+  const sats: Box3D[] = axes.map(([dx, dy]) => ({
+    x: cx + dx * R - e / 2,
+    y: cy + dy * R - e / 2,
+    z: cz - e / 2,
+    w: e,
+    h: e,
+    d: e,
+  }));
+  const guides: Guide[] = axes.map(([dx, dy]) => ({
+    a: [cx + dx * (E / 2), cy + dy * (E / 2), cz] as [number, number, number],
+    b: [cx + dx * (R - e / 2), cy + dy * (R - e / 2), cz] as [
+      number,
+      number,
+      number,
+    ],
+  }));
   return {
-    boxes: [],
-    shapes: [{ box: slab, faces: subtract(slab, pocket).faces }],
-    logo: { face: "front", cx: W / 2, cz: H / 2, y: T, scale: 64, half: true },
-    outlineBoxes: [slab],
+    boxes: [hub, ...sats],
+    guides,
+    logo: { face: "top", cx, cy, z: hub.z + hub.d, scale: 34 },
+    outlineBoxes: [hub],
   };
 })();
