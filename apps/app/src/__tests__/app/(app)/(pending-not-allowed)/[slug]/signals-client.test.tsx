@@ -101,6 +101,17 @@ vi.mock("@repo/ui/components/ui/sonner", () => ({
   toast: { success: vi.fn() },
 }));
 
+// The empty/no-results states render a @vercel/microfrontends <Link>, which
+// needs a microfrontends config absent under test. Render a plain anchor.
+vi.mock("@vercel/microfrontends/next/client", () => ({
+  Link: ({
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props}>{children}</a>
+  ),
+}));
+
 vi.mock("nuqs", () => ({
   parseAsString: { withDefault: () => "mock-string-parser" },
   parseAsStringLiteral: () => ({ withDefault: () => "mock-literal-parser" }),
