@@ -11,6 +11,17 @@ const encryptionKeySchema = z
     (key) => /^[0-9a-f]{64}$/i.test(key) || /^[A-Za-z0-9+/]{43}=$/.test(key),
     "ENCRYPTION_KEY must be 32 bytes as 64 hex chars or 44 base64 chars"
   );
+const DEFAULT_DEVELOPMENT_ENCRYPTION_KEY =
+  "0000000000000000000000000000000000000000000000000000000000000000";
+
+export function getAppEncryptionKey(): string {
+  const key =
+    process.env.ENCRYPTION_KEY ??
+    ((process.env.VERCEL_ENV ?? "development") === "development"
+      ? DEFAULT_DEVELOPMENT_ENCRYPTION_KEY
+      : undefined);
+  return encryptionKeySchema.parse(key);
+}
 
 export const env = createEnv({
   extends: [clerkEnvBase, sentryEnv, inngestEnv, unkeyEnv],
@@ -18,12 +29,6 @@ export const env = createEnv({
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     CLERK_DESKTOP_OAUTH_CLIENT_ID: z.string().min(1).optional(),
-    ENCRYPTION_KEY:
-      (process.env.VERCEL_ENV ?? "development") === "development"
-        ? encryptionKeySchema.default(
-            "0000000000000000000000000000000000000000000000000000000000000000"
-          )
-        : encryptionKeySchema,
     GITHUB_API_VERSION: z.string().min(1).default("2022-11-28"),
     GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
     GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
@@ -40,7 +45,6 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     CLERK_CLI_OAUTH_CLIENT_ID: process.env.CLERK_CLI_OAUTH_CLIENT_ID,
     CLERK_DESKTOP_OAUTH_CLIENT_ID: process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
-    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     GITHUB_API_VERSION: process.env.GITHUB_API_VERSION,
     GITHUB_APP_CLIENT_ID: process.env.GITHUB_APP_CLIENT_ID,
     GITHUB_APP_CLIENT_SECRET: process.env.GITHUB_APP_CLIENT_SECRET,
