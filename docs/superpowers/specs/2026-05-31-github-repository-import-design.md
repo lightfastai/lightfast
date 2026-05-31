@@ -166,9 +166,11 @@ It calls:
 GET /app/installations/{installation_id}
 ```
 
-The helper returns the current installation id, target type, account id, and
-account login. Use this to render the connected organization card and to avoid
-treating the binding's stored login as current display state.
+The helper returns the current installation id, target type, account id, account
+login, and GitHub installation `html_url`. Use this to render the connected
+organization card, expose a `Manage GitHub access` link, and avoid treating the
+binding's stored login or a locally constructed settings URL as current display
+state.
 
 ## API Design
 
@@ -194,13 +196,17 @@ repository summary counts for the connected binding:
 ### `listRepositories`
 
 Admin and member readable. Requires an active org identity. If no GitHub binding
-exists, return an empty list with `status: "unbound"`. If GitHub cannot be
-reached, return a GitHub-listing error and no repository display metadata.
+exists, return an empty list with `status: "unbound"`. If live GitHub
+installation metadata cannot be fetched, return no organization metadata. If
+installation metadata succeeds but repository listing fails, the API may still
+return the live organization metadata and `installationManageUrl`, but must
+return no repository rows.
 
 ```ts
 {
   organization: {
     id: string;
+    installationManageUrl: string;
     login: string;
   } | null;
   repositories: Array<{
@@ -246,6 +252,10 @@ If a previously added repository is no longer returned by GitHub, the API should
 not synthesize a placeholder from Lightfast state. The durable watch row remains
 in place for future recovery if access returns, but the normal list only renders
 repositories backed by fresh GitHub metadata.
+
+The `organization.installationManageUrl` value must come from the live GitHub
+installation response `html_url`. Do not persist this URL and do not construct
+it from stored binding fields.
 
 ### `importRepository`
 
@@ -333,6 +343,8 @@ The page should contain:
   `.lightfast` omitted.
 - `Refresh GitHub` action that invalidates/refetches the repository list.
 - `Add repository` button that opens a searchable repository picker.
+- `Manage GitHub access` link that opens the live GitHub installation settings
+  URL when GitHub installation metadata is available.
 
 The add-repository modal should include:
 
@@ -342,6 +354,8 @@ The add-repository modal should include:
   watch scopes from the import modal;
 - `.lightfast` omitted because setup infrastructure is not added from this
   modal;
+- `Manage GitHub access` link for cases where the admin expects a repository
+  that is not accessible to the current GitHub App installation;
 - a submit button for the selected repository.
 
 For v1, keep watch-scope editing out of the modal. Imported normal repositories
@@ -350,7 +364,8 @@ use the default `["**"]` all-paths watch.
 When live GitHub data is unavailable, the UI should show the connected status,
 the imported repository count from Lightfast, and a retry affordance. It should
 not render repository names, org logins, visibility, or other provider metadata
-from stale Lightfast fields.
+from stale Lightfast fields. It should also omit `Manage GitHub access` until a
+fresh installation `html_url` is available.
 
 When GitHub is reachable but an imported repository is no longer included in the
 installation repository response, omit that repository from the normal list
@@ -366,7 +381,8 @@ GET /installation/repositories
 ```
 
 The installation route should authenticate a GitHub App JWT and return
-GitHub-shaped installation/account fields. The repository route should
+GitHub-shaped installation/account fields including `html_url`. The repository
+route should
 authenticate an installation token, list repositories accessible to that
 installation, and return GitHub-shaped `total_count` and `repositories` fields.
 This keeps local development and tests production-shaped.
@@ -396,7 +412,7 @@ Add tests at each boundary:
 
 - `@repo/github-app-node`: pagination, normalization, request headers, invalid
   response handling for installation repository listing, and current
-  installation/account metadata fetching.
+  installation/account metadata fetching including `html_url`.
 - `db/app`: listing watched repositories by binding and single-repository
   upsert behavior.
 - `api/app`: source-control router read/import behavior, admin guard, owner
@@ -407,12 +423,13 @@ Add tests at each boundary:
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
 - `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
-  authentication and `GET /installation/repositories` with installation-token
-  authentication.
+  authentication returning `html_url`, and `GET /installation/repositories`
+  with installation-token authentication.
 - `apps/app`: source-control integration UI renders connected orgs, omits
   personal GitHub account state, opens add-repository modal, filters
-  repositories, omits `.lightfast` from normal repo UI, and submits one
-  selected repository.
+  repositories, shows `Manage GitHub access` only from live installation
+  metadata, omits `.lightfast` from normal repo UI, and submits one selected
+  repository.
 
 ## Rollout
 
