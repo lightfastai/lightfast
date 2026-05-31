@@ -169,8 +169,9 @@ describe("SignalsViewSwitcher", () => {
     expect(setSavedViewMock).toHaveBeenCalledWith("sigview_new");
   });
 
-  it("deleting the active view removes it and clears ?view", () => {
+  it("deleting the active view removes it and resets to All signals", () => {
     savedViewState = "sigview_1";
+    kindState = "follow_up";
     viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
     openMenu();
@@ -184,5 +185,10 @@ describe("SignalsViewSwitcher", () => {
       expect.anything()
     );
     expect(setSavedViewMock).toHaveBeenCalledWith(null);
+    expect(setKindMock).toHaveBeenCalledWith("");
+    expect(setDispositionMock).toHaveBeenCalledWith("");
+    expect(setPriorityMock).toHaveBeenCalledWith("");
+    expect(setPeopleMock).toHaveBeenCalledWith("all");
+    expect(setLayoutMock).toHaveBeenCalledWith("list");
   });
 });

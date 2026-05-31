@@ -4,6 +4,7 @@ import {
   createSignalInput,
   createSignalOutput,
   getSignalOutput,
+  normalizeSignalClassification,
   SIGNAL_ID_PREFIX,
   signalClassificationBaseSchema,
   signalClassificationModelOutputSchema,
@@ -198,6 +199,41 @@ describe("signal schemas", () => {
         routing: teamPeopleRouting,
       })
     ).toThrow();
+  });
+
+  it("normalizes persisted v1 classifications to the v2 workspace contract", () => {
+    expect(
+      normalizeSignalClassification({
+        schemaVersion: "signal.classification.v1",
+        disposition: "actionable",
+        title: "Talk to Jeevan",
+        summary: "The signal mentions an X profile worth engaging.",
+        kind: "engage",
+        nextAction: "Review the profile and decide whether to reply.",
+        priority: "normal",
+        rationale: "The input contains a durable social identity.",
+        confidence: 0.86,
+        routing: {
+          classifyPeople: {
+            shouldRun: true,
+            rationale: "The input includes a durable social identity.",
+          },
+        },
+      })
+    ).toMatchObject({
+      schemaVersion: "signal.classification.v2",
+      routing: {
+        visibility: { scope: "team" },
+        review: { required: false, reason: null, rationale: null },
+        routes: {
+          people: {
+            shouldRun: true,
+            confidence: 0.86,
+            rationale: "The input includes a durable social identity.",
+          },
+        },
+      },
+    });
   });
 
   it("rejects people routing for needs_review", () => {

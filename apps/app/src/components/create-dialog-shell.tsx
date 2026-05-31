@@ -35,8 +35,15 @@ export function CreateDialogShell({
   org,
   title,
 }: CreateDialogShellProps) {
+  function handleOpenChange(nextOpen: boolean) {
+    if (busy && !nextOpen) {
+      return;
+    }
+    onOpenChange(nextOpen);
+  }
+
   return (
-    <Dialog onOpenChange={onOpenChange} open={open}>
+    <Dialog onOpenChange={handleOpenChange} open={open}>
       <DialogContent
         className="gap-0 overflow-hidden rounded-[12px] border-border bg-card p-0 shadow-2xl sm:max-w-2xl"
         showCloseButton={false}

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SignalDetailSheet } from "./signal-detail-sheet";
 import type { SignalListItem, SignalRow } from "./signals-model";
@@ -7,6 +7,10 @@ const useQueryMock = vi.fn();
 const getQueryOptionsMock = vi.fn((input: unknown, opts: unknown) => ({
   input,
   opts,
+}));
+const toastMocks = vi.hoisted(() => ({
+  error: vi.fn(),
+  success: vi.fn(),
 }));
 
 vi.mock("@tanstack/react-query", () => ({
@@ -25,7 +29,7 @@ vi.mock("~/trpc/react", () => ({
 }));
 
 vi.mock("@repo/ui/components/ui/sonner", () => ({
-  toast: { success: vi.fn() },
+  toast: { error: toastMocks.error, success: toastMocks.success },
 }));
 
 const classifiedItem: SignalListItem = {
@@ -76,6 +80,12 @@ const processingRow = {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  Object.defineProperty(navigator, "clipboard", {
+    configurable: true,
+    value: {
+      writeText: vi.fn().mockResolvedValue(undefined),
+    },
+  });
   useQueryMock.mockReturnValue({
     data: undefined,
     isError: false,
@@ -122,5 +132,28 @@ describe("SignalDetailSheet", () => {
       { publicId: "signal_proc" },
       expect.objectContaining({ enabled: false })
     );
+  });
+
+  it("shows an error toast when copying the signal link fails", async () => {
+    Object.defineProperty(navigator, "clipboard", {
+      configurable: true,
+      value: {
+        writeText: vi.fn().mockRejectedValue(new Error("denied")),
+      },
+    });
+    render(
+      <SignalDetailSheet
+        initialItem={classifiedItem}
+        onOpenChange={vi.fn()}
+        publicId="signal_follow_up"
+      />
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: /copy link/i }));
+
+    await waitFor(() =>
+      expect(toastMocks.error).toHaveBeenCalledWith("Unable to copy link")
+    );
+    expect(toastMocks.success).not.toHaveBeenCalled();
   });
 });

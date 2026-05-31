@@ -1,4 +1,7 @@
-import type { SignalClassification } from "@repo/api-contract";
+import {
+  normalizePersistedSignalClassification,
+  type SignalClassification,
+} from "@repo/api-contract";
 import { and, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
@@ -28,6 +31,48 @@ function isDefined<T>(value: T | undefined): value is T {
   return value !== undefined;
 }
 
+function isLegacySignalClassification(
+  classification: unknown
+): classification is { schemaVersion: "signal.classification.v1" } {
+  return (
+    !!classification &&
+    typeof classification === "object" &&
+    (classification as { schemaVersion?: unknown }).schemaVersion ===
+      "signal.classification.v1"
+  );
+}
+
+function normalizeSignalRow<T extends Signal>(row: T): T {
+  if (!isLegacySignalClassification(row.classification)) {
+    return row;
+  }
+
+  const classification = normalizePersistedSignalClassification(
+    row.classification
+  );
+  return {
+    ...row,
+    classification,
+    visibilityScope:
+      classification?.routing.visibility.scope ?? row.visibilityScope,
+  };
+}
+
+function legacyPeopleRoutedVisibilityCondition() {
+  return and(
+    sql`json_unquote(json_extract(${signals.classification}, '$.schemaVersion')) = 'signal.classification.v1'`,
+    sql`json_unquote(json_extract(${signals.classification}, '$.routing.classifyPeople.shouldRun')) = 'true'`
+  );
+}
+
+function visibleToCurrentUserCondition(createdByUserId: string) {
+  return or(
+    eq(signals.visibilityScope, "team"),
+    eq(signals.createdByUserId, createdByUserId),
+    legacyPeopleRoutedVisibilityCondition()
+  );
+}
+
 export interface ListSignalsParams {
   clerkOrgId: string;
   createdByUserId: string;
@@ -43,10 +88,7 @@ export async function listSignals(
   const limit = normalizeLimit(input.limit);
   const conditions = [
     eq(signals.clerkOrgId, input.clerkOrgId),
-    or(
-      eq(signals.visibilityScope, "team"),
-      eq(signals.createdByUserId, input.createdByUserId)
-    ),
+    visibleToCurrentUserCondition(input.createdByUserId),
     input.statuses?.length
       ? inArray(signals.status, input.statuses)
       : undefined,
@@ -68,7 +110,7 @@ export async function listSignals(
     .orderBy(desc(signals.createdAt), desc(signals.id))
     .limit(limit + 1);
 
-  const items = rows.slice(0, limit);
+  const items = rows.slice(0, limit).map(normalizeSignalRow);
   const lastItem = items.at(-1);
   return {
     items,
@@ -105,14 +147,15 @@ export interface ListWorkspaceSignalsParams {
 }
 
 function projectSignalClassification(
-  classification: SignalClassification | null
+  classification: unknown
 ): WorkspaceSignalListItem["classification"] {
-  if (!classification) {
+  const normalized = normalizePersistedSignalClassification(classification);
+  if (!normalized) {
     return null;
   }
   // rationale/nextAction live in the JSON blob but are detail-only; strip them
   // so the working-set row stays a strict subset of the full signal.
-  const { nextAction, rationale, ...projected } = classification;
+  const { nextAction, rationale, ...projected } = normalized;
   return projected;
 }
 
@@ -129,10 +172,7 @@ async function countClassifiedSince(
       and(
         eq(signals.clerkOrgId, clerkOrgId),
         eq(signals.status, "classified"),
-        or(
-          eq(signals.visibilityScope, "team"),
-          eq(signals.createdByUserId, createdByUserId)
-        ),
+        visibleToCurrentUserCondition(createdByUserId),
         gte(signals.createdAt, cutoff)
       )
     );
@@ -169,10 +209,7 @@ export async function listWorkspaceSignals(
       and(
         eq(signals.clerkOrgId, input.clerkOrgId),
         eq(signals.status, "classified"),
-        or(
-          eq(signals.visibilityScope, "team"),
-          eq(signals.createdByUserId, input.createdByUserId)
-        ),
+        visibleToCurrentUserCondition(input.createdByUserId),
         gte(signals.createdAt, cutoff)
       )
     )
@@ -255,7 +292,7 @@ export async function getSignalByPublicId(
       )
     )
     .limit(1);
-  return row;
+  return row ? normalizeSignalRow(row) : undefined;
 }
 
 export interface GetVisibleSignalByPublicIdParams
@@ -274,14 +311,11 @@ export async function getVisibleSignalByPublicId(
       and(
         eq(signals.publicId, input.publicId),
         eq(signals.clerkOrgId, input.clerkOrgId),
-        or(
-          eq(signals.visibilityScope, "team"),
-          eq(signals.createdByUserId, input.createdByUserId)
-        )
+        visibleToCurrentUserCondition(input.createdByUserId)
       )
     )
     .limit(1);
-  return row;
+  return row ? normalizeSignalRow(row) : undefined;
 }
 
 export interface ClaimSignalForClassificationParams {

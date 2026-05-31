@@ -1,10 +1,24 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const dialogMock = vi.hoisted(() => ({
+  onOpenChange: undefined as ((open: boolean) => void) | undefined,
+}));
 
 vi.mock("@repo/ui/components/ui/dialog", () => ({
-  Dialog: ({ children, open }: { children?: ReactNode; open?: boolean }) =>
-    open ? <div>{children}</div> : null,
+  Dialog: ({
+    children,
+    onOpenChange,
+    open,
+  }: {
+    children?: ReactNode;
+    onOpenChange?: (open: boolean) => void;
+    open?: boolean;
+  }) => {
+    dialogMock.onOpenChange = onOpenChange;
+    return open ? <div>{children}</div> : null;
+  },
   DialogClose: ({ children }: { children?: ReactNode }) => children,
   DialogContent: ({ children }: { children?: ReactNode }) => (
     <div role="dialog">{children}</div>
@@ -37,6 +51,10 @@ function renderShell(overrides: Record<string, unknown> = {}) {
 }
 
 describe("CreateDialogShell", () => {
+  beforeEach(() => {
+    dialogMock.onOpenChange = undefined;
+  });
+
   it("renders the breadcrumb, body, and footer slots", () => {
     renderShell();
     expect(screen.getByText("Lightfast")).toBeInTheDocument();
@@ -51,7 +69,7 @@ describe("CreateDialogShell", () => {
     expect(screen.getByText("Workspace")).toBeInTheDocument();
   });
 
-  it("closes via the close button and disables it while busy", () => {
+  it("closes via the close button", () => {
     const { onOpenChange } = renderShell();
     fireEvent.click(screen.getByRole("button", { name: "Close" }));
     expect(onOpenChange).toHaveBeenCalledWith(false);
@@ -60,5 +78,13 @@ describe("CreateDialogShell", () => {
   it("disables the close button when busy", () => {
     renderShell({ busy: true });
     expect(screen.getByRole("button", { name: "Close" })).toBeDisabled();
+  });
+
+  it("prevents dialog dismissal while busy", () => {
+    const { onOpenChange } = renderShell({ busy: true });
+
+    dialogMock.onOpenChange?.(false);
+
+    expect(onOpenChange).not.toHaveBeenCalled();
   });
 });

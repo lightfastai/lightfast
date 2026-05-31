@@ -118,6 +118,44 @@ describe("SignalDetailContent", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("prefers the fetched detail classification over the projection seed", () => {
+    render(
+      <SignalDetailContent
+        bodyLoading={false}
+        detail={
+          {
+            ...detail,
+            classification: {
+              ...detail.classification!,
+              confidence: 0.67,
+              routing: {
+                ...detail.classification!.routing,
+                routes: {
+                  people: {
+                    confidence: 0.7,
+                    rationale: "People routing is now needed.",
+                    shouldRun: true,
+                  },
+                },
+              },
+              summary: "Fetched detail summary.",
+              title: "Fetched detail title",
+            },
+          } as SignalDetailRow
+        }
+        item={headerItem}
+        onCopyLink={vi.fn()}
+      />
+    );
+
+    expect(
+      screen.getByRole("heading", { name: "Fetched detail title" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Fetched detail summary.")).toBeInTheDocument();
+    expect(screen.getByText("67%")).toBeInTheDocument();
+    expect(screen.getByText("Yes")).toBeInTheDocument();
+  });
+
   it("renders the error section for a failed detail row", () => {
     render(
       <SignalDetailContent

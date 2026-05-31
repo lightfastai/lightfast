@@ -217,6 +217,9 @@ function dispatchQuery(options: { queryKey: unknown[] }) {
       refetch: vi.fn(),
     };
   }
+  if (options.queryKey[1] === "settings") {
+    return { data: { members: [] }, isError: false, isLoading: false };
+  }
   if (root === "list") {
     return {
       data: processingData,
@@ -224,9 +227,6 @@ function dispatchQuery(options: { queryKey: unknown[] }) {
       isFetching: false,
       refetch: vi.fn(),
     };
-  }
-  if (options.queryKey[1] === "settings") {
-    return { data: { members: [] }, isError: false, isLoading: false };
   }
   // get
   return { data: undefined, isError: false, isLoading: false };

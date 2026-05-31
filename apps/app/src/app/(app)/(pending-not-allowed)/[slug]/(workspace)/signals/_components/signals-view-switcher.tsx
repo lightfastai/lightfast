@@ -147,7 +147,7 @@ export function SignalsViewSwitcher() {
                         {
                           onSuccess: () => {
                             if (savedViewId === view.publicId) {
-                              void setSavedViewId(null);
+                              applyParams(allSignalsParamValues(layout), null);
                             }
                           },
                         }

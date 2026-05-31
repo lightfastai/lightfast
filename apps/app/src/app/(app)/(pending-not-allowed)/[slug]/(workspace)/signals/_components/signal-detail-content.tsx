@@ -83,14 +83,14 @@ export function SignalDetailContent({
   item: SignalListItem;
   onCopyLink: () => void;
 }) {
-  const classification = item.classification;
-  const title = getSignalTitle(item);
+  const classification = detail?.classification ?? item.classification;
+  const title = classification?.title ?? getSignalTitle(item);
   const source = getSignalSource(item);
   const createdAt = new Date(item.createdAt);
   const peopleRouting = classification?.routing.routes.people;
   const iconClass = "size-4 shrink-0";
   const detailClassification = detail?.classification;
-  const summary = classification?.summary ?? detailClassification?.summary;
+  const summary = classification?.summary;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

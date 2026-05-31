@@ -43,10 +43,21 @@ export function PeopleDetailSheet({
     if (typeof window === "undefined") {
       return;
     }
-    void navigator.clipboard?.writeText(window.location.href);
-    toast.success("Link copied", {
-      description: "Anyone with access can open this person.",
-    });
+    const clipboard = navigator.clipboard;
+    if (!clipboard) {
+      toast.error("Unable to copy link");
+      return;
+    }
+    void clipboard
+      .writeText(window.location.href)
+      .then(() => {
+        toast.success("Link copied", {
+          description: "Anyone with access can open this person.",
+        });
+      })
+      .catch(() => {
+        toast.error("Unable to copy link");
+      });
   }
 
   return (

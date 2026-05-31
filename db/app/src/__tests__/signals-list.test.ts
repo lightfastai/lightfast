@@ -41,6 +41,26 @@ function makeClassification(): NonNullable<Signal["classification"]> {
   };
 }
 
+function makeLegacyClassification() {
+  return {
+    schemaVersion: "signal.classification.v1",
+    confidence: 0.86,
+    disposition: "actionable",
+    kind: "engage",
+    nextAction: "Review the profile and decide whether to reply.",
+    priority: "normal",
+    rationale: "The input contains a durable social identity.",
+    routing: {
+      classifyPeople: {
+        shouldRun: true,
+        rationale: "The input includes a durable social identity.",
+      },
+    },
+    summary: "The signal mentions an X profile worth engaging.",
+    title: "Talk to Jeevan",
+  } as unknown as NonNullable<Signal["classification"]>;
+}
+
 function makeSignal(overrides: Partial<Signal> = {}): Signal {
   return {
     id: 1,
@@ -173,6 +193,23 @@ function evaluateVisibleReadPredicate(
   const chunks = (condition as { queryChunks?: unknown }).queryChunks;
   if (!Array.isArray(chunks)) {
     return false;
+  }
+
+  const text = chunks.map(getChunkText).join("");
+  if (text.includes("$.schemaVersion")) {
+    return (
+      (row.classification as { schemaVersion?: unknown } | null)
+        ?.schemaVersion === "signal.classification.v1"
+    );
+  }
+  if (text.includes("$.routing.classifyPeople.shouldRun")) {
+    return (
+      (
+        row.classification as {
+          routing?: { classifyPeople?: { shouldRun?: unknown } };
+        } | null
+      )?.routing?.classifyPeople?.shouldRun === true
+    );
   }
 
   const column = chunks.find(isColumnChunk);
@@ -451,6 +488,55 @@ describe("getVisibleSignalByPublicId", () => {
     expect(spies.where).toHaveBeenCalledOnce();
     expect(spies.limit).toHaveBeenCalledWith(1);
   });
+
+  it("returns a legacy people-routed row with defaulted user visibility", async () => {
+    const row = makeSignal({
+      classification: makeLegacyClassification(),
+      createdByUserId: "user_other",
+      visibilityScope: "user",
+    });
+    const { db } = makeVisibleReadDb([row]);
+
+    const result = await getVisibleSignalByPublicId(db, {
+      clerkOrgId: row.clerkOrgId,
+      createdByUserId: "user_test",
+      publicId: row.publicId,
+    });
+
+    expect(result).toMatchObject({
+      classification: {
+        schemaVersion: "signal.classification.v2",
+        routing: {
+          visibility: { scope: "team" },
+          routes: { people: { shouldRun: true } },
+        },
+      },
+      visibilityScope: "team",
+    });
+  });
+
+  it("normalizes a visible legacy classification before returning a detail row", async () => {
+    const row = makeSignal({
+      classification: makeLegacyClassification(),
+      visibilityScope: "team",
+    });
+    const { db } = makeVisibleReadDb([row]);
+
+    const result = await getVisibleSignalByPublicId(db, {
+      clerkOrgId: row.clerkOrgId,
+      createdByUserId: "user_test",
+      publicId: row.publicId,
+    });
+
+    expect(result?.classification).toMatchObject({
+      schemaVersion: "signal.classification.v2",
+      routing: {
+        visibility: { scope: "team" },
+        routes: { people: { shouldRun: true } },
+      },
+    });
+    expect(result?.visibilityScope).toBe("team");
+  });
 });
 
 describe("markSignalClassified", () => {
@@ -665,5 +751,26 @@ describe("listWorkspaceSignals", () => {
     });
 
     expect(result.items[0]!.classification).toBeNull();
+  });
+
+  it("normalizes legacy classifications in projected workspace rows", async () => {
+    const { db } = makeWorkspaceDb([
+      makeProjectedRow({ classification: makeLegacyClassification() }),
+    ]);
+
+    const result = await listWorkspaceSignals(db, {
+      clerkOrgId: "org_test",
+      createdByUserId: "user_test",
+    });
+
+    expect(result.items[0]!.classification).toMatchObject({
+      schemaVersion: "signal.classification.v2",
+      routing: {
+        visibility: { scope: "team" },
+        routes: { people: { shouldRun: true } },
+      },
+    });
+    expect(result.items[0]!.classification).not.toHaveProperty("rationale");
+    expect(result.items[0]!.classification).not.toHaveProperty("nextAction");
   });
 });
