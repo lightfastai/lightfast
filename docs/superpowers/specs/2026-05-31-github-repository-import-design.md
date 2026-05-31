@@ -275,8 +275,10 @@ Behavior:
    owned by the bound account id.
 6. Reject the repository id if it is the `.lightfast` setup repository id.
 7. Reject the repository id if it is not in that allowlist.
-8. Upsert one watched row for the selected repository id.
-9. Return the same live, merged repository list as `listRepositories`.
+8. If a watched row already exists for the repository id, treat the request as
+   idempotent success and do not change its watched path globs.
+9. Otherwise insert one watched row for the selected repository id.
+10. Return the same live, merged repository list as `listRepositories`.
 
 Adding a repository only registers it for future webhook-driven source-control
 events. It must not enqueue an initial repository sync or fetch repository
@@ -312,7 +314,8 @@ sync state, or any other provider metadata that can go stale. If existing schema
 constraints still require `fullName`, keep it inside the helper as a freshly
 observed compatibility write and do not expose it as durable repository state.
 Use the existing single-repository upsert path for imports; v1 does not need a
-bulk database helper.
+bulk database helper. The API should check for an existing watched row before
+writing so duplicate add requests do not overwrite watched path globs.
 
 ## UI Design
 
@@ -381,6 +384,8 @@ organization so the import UI can exercise imported and available states.
   repository-list error with retry, without rendering stale repository labels.
 - Selected repository no longer accessible: reject the mutation with
   `PRECONDITION_FAILED` and refetch the list.
+- Selected repository already added: return success with the refreshed list and
+  preserve the existing watch policy.
 - Existing imported repository no longer accessible: omit it from the normal
   list while preserving its Lightfast watch row.
 - Non-admin import attempt: reject with `FORBIDDEN`.
@@ -395,9 +400,10 @@ Add tests at each boundary:
 - `db/app`: listing watched repositories by binding and single-repository
   upsert behavior.
 - `api/app`: source-control router read/import behavior, admin guard, owner
-  id filtering, inaccessible repository rejection, merged imported/available
-  output, `.lightfast` exclusion, omission of unavailable watched repositories,
-  and no client-supplied repository metadata in import mutations.
+  id filtering, inaccessible repository rejection, idempotent already-added
+  imports, merged imported/available output, `.lightfast` exclusion, omission
+  of unavailable watched repositories, and no client-supplied repository
+  metadata in import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
 - `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
