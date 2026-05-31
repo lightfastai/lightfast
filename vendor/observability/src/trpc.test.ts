@@ -14,10 +14,8 @@ vi.mock("@sentry/core", () => ({
   }),
   SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN: "sentry.origin",
   SEMANTIC_ATTRIBUTE_SENTRY_SOURCE: "sentry.source",
-  startSpan: async (
-    _options: unknown,
-    callback: () => Promise<unknown>
-  ) => callback(),
+  startSpan: async (_options: unknown, callback: () => Promise<unknown>) =>
+    callback(),
   withIsolationScope: async (
     callback: (scope: {
       setContext: ReturnType<typeof vi.fn>;
@@ -55,9 +53,7 @@ describe("createObservabilityMiddleware", () => {
   });
 
   it("includes the tRPC error and cause message in server error logs", async () => {
-    const cause = new Error(
-      "Your database has been temporarily rate-limited"
-    );
+    const cause = new Error("Your database has been temporarily rate-limited");
     cause.name = "UpstashError";
     const error = new TRPCError({
       code: "INTERNAL_SERVER_ERROR",

@@ -11,9 +11,9 @@ function providerLabel(provider: string) {
   return provider === "github" ? "GitHub" : provider;
 }
 
-function getLightfastRepository(binding: NonNullable<
-  Awaited<ReturnType<typeof getActiveOrgBinding>>
->) {
+function getLightfastRepository(
+  binding: NonNullable<Awaited<ReturnType<typeof getActiveOrgBinding>>>
+) {
   const parsed = githubLightfastRepositoryProofSchema.safeParse(
     binding.metadata.lightfastRepository
   );

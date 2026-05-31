@@ -397,7 +397,10 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       const name = typeof body.name === "string" ? body.name : "";
       const createRes = await input.fallbackFetch(
         new Request(
-          new URL(`/orgs/${encodeURIComponent(owner)}/repos`, input.publicOrigin),
+          new URL(
+            `/orgs/${encodeURIComponent(owner)}/repos`,
+            input.publicOrigin
+          ),
           {
             method: "POST",
             headers: {
