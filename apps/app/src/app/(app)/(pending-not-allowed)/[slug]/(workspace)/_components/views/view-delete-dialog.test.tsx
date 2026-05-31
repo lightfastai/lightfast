@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 vi.mock("@repo/ui/components/ui/dialog", () => ({
   Dialog: ({ children, open }: { children?: ReactNode; open?: boolean }) =>
@@ -9,28 +9,41 @@ vi.mock("@repo/ui/components/ui/dialog", () => ({
     children,
     variant: _variant,
     ...props
-  }: { children?: ReactNode; variant?: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  }: {
+    children?: ReactNode;
+    variant?: string;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type="button" {...props}>
       {children}
     </button>
   ),
-  DialogActions: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogActions: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogClose: ({ children }: { children?: ReactNode }) => <>{children}</>,
-  DialogContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-  DialogDescription: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
-  DialogHeader: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogDescription: ({ children }: { children?: ReactNode }) => (
+    <p>{children}</p>
+  ),
+  DialogHeader: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
 }));
 
 const { ViewDeleteDialog } = await import("./view-delete-dialog");
 
 describe("ViewDeleteDialog", () => {
-  let onConfirm: ReturnType<typeof vi.fn>;
-  let onOpenChange: ReturnType<typeof vi.fn>;
+  let onConfirm: Mock<(publicId: string) => Promise<unknown>>;
+  let onOpenChange: Mock<(open: boolean) => void>;
 
   beforeEach(() => {
-    onConfirm = vi.fn().mockResolvedValue(undefined);
-    onOpenChange = vi.fn();
+    onConfirm = vi
+      .fn<(publicId: string) => Promise<unknown>>()
+      .mockResolvedValue(undefined);
+    onOpenChange = vi.fn<(open: boolean) => void>();
   });
 
   it("renders nothing when no view is targeted", () => {

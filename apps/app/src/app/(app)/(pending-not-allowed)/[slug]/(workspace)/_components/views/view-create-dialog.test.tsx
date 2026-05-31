@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, type Mock, vi } from "vitest";
 
 vi.mock("@repo/ui/components/ui/dialog", () => ({
   Dialog: ({ children, open }: { children?: ReactNode; open?: boolean }) =>
@@ -9,16 +9,27 @@ vi.mock("@repo/ui/components/ui/dialog", () => ({
     children,
     variant: _variant,
     ...props
-  }: { children?: ReactNode; variant?: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  }: {
+    children?: ReactNode;
+    variant?: string;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type="button" {...props}>
       {children}
     </button>
   ),
-  DialogActions: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogActions: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogClose: ({ children }: { children?: ReactNode }) => <>{children}</>,
-  DialogContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-  DialogDescription: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
-  DialogHeader: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogDescription: ({ children }: { children?: ReactNode }) => (
+    <p>{children}</p>
+  ),
+  DialogHeader: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
 }));
 
@@ -31,12 +42,14 @@ vi.mock("@repo/ui/components/ui/input", () => ({
 const { ViewCreateDialog } = await import("./view-create-dialog");
 
 describe("ViewCreateDialog", () => {
-  let onOpenChange: ReturnType<typeof vi.fn>;
-  let onSubmit: ReturnType<typeof vi.fn>;
+  let onOpenChange: Mock<(open: boolean) => void>;
+  let onSubmit: Mock<(name: string) => Promise<unknown>>;
 
   beforeEach(() => {
-    onOpenChange = vi.fn();
-    onSubmit = vi.fn().mockResolvedValue({ publicId: "v_new" });
+    onOpenChange = vi.fn<(open: boolean) => void>();
+    onSubmit = vi
+      .fn<(name: string) => Promise<unknown>>()
+      .mockResolvedValue({ publicId: "v_new" });
   });
 
   it("disables Save until a name is entered", () => {

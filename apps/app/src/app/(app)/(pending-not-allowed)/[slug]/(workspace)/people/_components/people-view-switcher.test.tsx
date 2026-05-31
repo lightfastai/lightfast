@@ -87,7 +87,11 @@ describe("PeopleViewSwitcher", () => {
     render(<PeopleViewSwitcher />);
     fireEvent.click(screen.getByRole("button", { name: "select" }));
     expect(setParamsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ provider: "x", type: "handle", view: "peoview_1" })
+      expect.objectContaining({
+        provider: "x",
+        type: "handle",
+        view: "peoview_1",
+      })
     );
   });
 

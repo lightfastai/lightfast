@@ -5,7 +5,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { ViewSwitcherProps } from "./view-switcher";
 
 vi.mock("@repo/ui/components/ui/dropdown-menu", () => ({
-  DropdownMenu: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DropdownMenu: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   // Collapsed by default — overflow rows only exist when opened, which we don't
   // drive here (partition logic is covered by partition-views.test).
   DropdownMenuContent: () => null,
@@ -24,16 +26,27 @@ vi.mock("@repo/ui/components/ui/dialog", () => ({
     children,
     variant: _variant,
     ...props
-  }: { children?: ReactNode; variant?: string } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  }: {
+    children?: ReactNode;
+    variant?: string;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type="button" {...props}>
       {children}
     </button>
   ),
-  DialogActions: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogActions: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogClose: ({ children }: { children?: ReactNode }) => <>{children}</>,
-  DialogContent: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
-  DialogDescription: ({ children }: { children?: ReactNode }) => <p>{children}</p>,
-  DialogHeader: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  DialogContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DialogDescription: ({ children }: { children?: ReactNode }) => (
+    <p>{children}</p>
+  ),
+  DialogHeader: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   DialogTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
 }));
 

@@ -117,14 +117,18 @@ export function ViewSwitcher({
               <DropdownMenuTrigger asChild>
                 <button
                   aria-label="More views"
-                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-transparent px-2.5 text-sm text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-transparent px-2.5 text-muted-foreground text-sm transition-colors hover:bg-muted/30 hover:text-foreground"
                   type="button"
                 >
                   +{overflow.length}
                   <ChevronDown aria-hidden="true" className="size-3.5" />
                 </button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="start" className="w-60" sideOffset={8}>
+              <DropdownMenuContent
+                align="start"
+                className="w-60"
+                sideOffset={8}
+              >
                 {overflow.map((view) => (
                   <DropdownMenuItem
                     className="gap-2"

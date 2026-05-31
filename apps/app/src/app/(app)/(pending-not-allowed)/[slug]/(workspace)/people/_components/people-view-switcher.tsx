@@ -64,7 +64,11 @@ export function PeopleViewSwitcher() {
       }}
       onSelectAll={() => {
         const next = allPeopleParamValues();
-        void setParams({ provider: next.provider, type: next.type, view: null });
+        void setParams({
+          provider: next.provider,
+          type: next.type,
+          view: null,
+        });
       }}
       onSelectView={(publicId) => {
         const view = views.find((candidate) => candidate.publicId === publicId);
