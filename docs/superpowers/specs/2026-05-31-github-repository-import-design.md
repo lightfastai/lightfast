@@ -143,10 +143,11 @@ type GitHubInstallationRepository = {
 };
 ```
 
-The helper should support pagination and default to `perPage: 100`. For the
-first UI, the API can fetch all pages for the bound installation. If real orgs
-make that too expensive later, add cursor pagination at the Lightfast API
-boundary without changing the durable model.
+The helper should support GitHub pagination and default to `perPage: 100`. For
+v1, the Lightfast API should fetch all pages for the bound installation and
+return one complete live list. Do not add Lightfast API pagination or server-side
+search in v1. If real orgs make full-list reads too expensive later, add cursor
+pagination at the Lightfast API boundary without changing the durable model.
 
 Add a helper for fetching the current installation/account metadata by
 installation id with GitHub App JWT authentication:
@@ -238,7 +239,7 @@ Behavior:
 5. Require the installation account id to match the binding's
    `providerAccountId`.
 6. Mint an installation token for `binding.providerInstallationId`.
-7. List installation repositories from GitHub.
+7. List all installation repository pages from GitHub.
 8. Filter to `repository.ownerId === binding.providerAccountId`.
 9. Load watched repository rows for the binding.
 10. Identify the `.lightfast` setup repository id from binding metadata when
@@ -355,7 +356,7 @@ The page should contain:
 
 The add-repository modal should include:
 
-- repository search/filter by name;
+- client-side repository search/filter by name against the complete live list;
 - single-select rows with repository name and private/public indicator;
 - imported repositories shown as disabled because v1 does not edit existing
   watch scopes from the import modal;
