@@ -32,9 +32,7 @@ describe("triage prompts", () => {
   });
 
   it("teaches duplicate versus related with dev-lifecycle examples", () => {
-    expect(TRIAGE_SIMILARITY_SYSTEM_PROMPT).toContain(
-      "Duplicate examples:"
-    );
+    expect(TRIAGE_SIMILARITY_SYSTEM_PROMPT).toContain("Duplicate examples:");
     expect(TRIAGE_SIMILARITY_SYSTEM_PROMPT).toContain(
       "Settings page shows GitHub disconnected after setup complete"
     );

@@ -1,8 +1,8 @@
-type TriageEvalEnvironment = {
-  [key: string]: string | undefined;
+interface TriageEvalEnvironment {
   TRIAGE_EVAL_MODE?: string;
   VERCEL_OIDC_TOKEN?: string;
-};
+  [key: string]: string | undefined;
+}
 
 export function isTriageEvalFixtureMode(env: TriageEvalEnvironment): boolean {
   return env.TRIAGE_EVAL_MODE === "expected";

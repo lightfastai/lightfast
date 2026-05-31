@@ -9,15 +9,15 @@ import {
   rankTriageSimilarItems,
 } from "../src/triage";
 import {
+  assertLiveTriageEvalEnvironment,
+  isTriageEvalFixtureMode,
+} from "./triage-env";
+import {
   loadTriageGithubIssueSimilarityEvalCases,
   type TriageGithubIssueEvalInput,
   type TriageGithubIssueEvalMetadata,
   type TriageGithubIssueSimilarityEvalExpected,
 } from "./triage-fixtures";
-import {
-  assertLiveTriageEvalEnvironment,
-  isTriageEvalFixtureMode,
-} from "./triage-env";
 
 type TriageSimilarityEvalCase = EvalCase<
   TriageGithubIssueEvalInput,

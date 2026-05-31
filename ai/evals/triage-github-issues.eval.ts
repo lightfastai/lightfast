@@ -13,15 +13,15 @@ import {
   recommendTriageAction,
 } from "../src/triage";
 import {
+  assertLiveTriageEvalEnvironment,
+  isTriageEvalFixtureMode,
+} from "./triage-env";
+import {
   loadTriageGithubIssueEvalCases,
   type TriageGithubIssueEvalExpected,
   type TriageGithubIssueEvalInput,
   type TriageGithubIssueEvalMetadata,
 } from "./triage-fixtures";
-import {
-  assertLiveTriageEvalEnvironment,
-  isTriageEvalFixtureMode,
-} from "./triage-env";
 
 type TriageGithubIssueEvalCase = EvalCase<
   TriageGithubIssueEvalInput,
@@ -115,27 +115,31 @@ await Eval<
   TriageGithubIssueEvalOutput,
   TriageGithubIssueEvalExpected,
   TriageGithubIssueEvalMetadata
->(LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PROJECT, {
-  data: (): TriageGithubIssueEvalCase[] => loadTriageGithubIssueEvalCases(),
-  task: async (input, hooks) => {
-    if (fixtureMode) {
-      return hooks.expected;
-    }
-    return runLiveTriage(input, hooks.metadata);
+>(
+  LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PROJECT,
+  {
+    data: (): TriageGithubIssueEvalCase[] => loadTriageGithubIssueEvalCases(),
+    task: async (input, hooks) => {
+      if (fixtureMode) {
+        return hooks.expected;
+      }
+      return runLiveTriage(input, hooks.metadata);
+    },
+    scores: [
+      scoreExactField("source_useful", "sourceUseful"),
+      scoreExactField("work_intent", "workIntent"),
+      scoreExactField("priority", "priority"),
+      scoreExactField("triage_decision", "triageDecision"),
+    ],
+    metadata: {
+      evalName: "triage-github-issues",
+      mode: fixtureMode ? "expected" : "live",
+    },
+    maxConcurrency: 2,
   },
-  scores: [
-    scoreExactField("source_useful", "sourceUseful"),
-    scoreExactField("work_intent", "workIntent"),
-    scoreExactField("priority", "priority"),
-    scoreExactField("triage_decision", "triageDecision"),
-  ],
-  metadata: {
-    evalName: "triage-github-issues",
-    mode: fixtureMode ? "expected" : "live",
-  },
-  maxConcurrency: 2,
-}, {
-  noSendLogs: process.env.BRAINTRUST_NO_SEND_LOGS === "1",
-  parent: LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PARENT,
-  returnResults: true,
-});
+  {
+    noSendLogs: process.env.BRAINTRUST_NO_SEND_LOGS === "1",
+    parent: LIGHTFAST_AGENT_RUNTIME_BRAINTRUST_PARENT,
+    returnResults: true,
+  }
+);

@@ -21,8 +21,8 @@ import { TRIAGE_SIMILARITY_SYSTEM_PROMPT } from "./prompt";
 import {
   type TriageSimilarityCandidate,
   type TriageSimilarityRank,
-  triageSimilarityRankModelSchema,
   type TriageSourceItem,
+  triageSimilarityRankModelSchema,
 } from "./schema";
 
 const noopLogger: ObjectClassificationLogger = {

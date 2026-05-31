@@ -75,8 +75,7 @@ export function loadTriageGithubIssueEvalCases(): TriageGithubIssueEvalCase[] {
     .filter(Boolean)
     .map((line, index) => {
       const parsedJson = JSON.parse(line) as unknown;
-      const parsedCase =
-        triageGithubIssueEvalCaseSchema.safeParse(parsedJson);
+      const parsedCase = triageGithubIssueEvalCaseSchema.safeParse(parsedJson);
       if (!parsedCase.success) {
         throw new Error(
           `Invalid triage GitHub Issue eval fixture at line ${index + 1}: ${parsedCase.error.message}`

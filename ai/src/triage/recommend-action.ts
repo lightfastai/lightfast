@@ -21,10 +21,10 @@ import { TRIAGE_ACTION_RECOMMENDER_SYSTEM_PROMPT } from "./prompt";
 import {
   type TriageActionPayload,
   type TriageActionRecommendation,
-  triageActionRecommendationModelSchema,
+  type TriageSimilarityRank,
   type TriageSourceItem,
   type TriageSourceItemClassification,
-  type TriageSimilarityRank,
+  triageActionRecommendationModelSchema,
 } from "./schema";
 
 const noopLogger: ObjectClassificationLogger = {
@@ -34,19 +34,19 @@ const noopLogger: ObjectClassificationLogger = {
 
 const actionRecommenderNode = triageAgentGraph.nodes.triageActionRecommender;
 
-type ModelActionPayload = {
+interface ModelActionPayload {
   candidateId: string | null;
+  commentBody: string | null;
   destination: string | null;
   externalId: string | null;
   externalUrl: string | null;
-  commentBody: string | null;
-};
+}
 
 function compactActionPayload(
   payload: ModelActionPayload | null
 ): TriageActionPayload | undefined {
   if (!payload) {
-    return undefined;
+    return;
   }
 
   const compact = Object.fromEntries(

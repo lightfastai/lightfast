@@ -25,12 +25,7 @@ export const triageWorkIntentSchema = z.enum([
   "other",
 ]);
 
-export const triagePrioritySchema = z.enum([
-  "low",
-  "normal",
-  "high",
-  "urgent",
-]);
+export const triagePrioritySchema = z.enum(["low", "normal", "high", "urgent"]);
 
 export const triageDecisionSchema = z.enum([
   "dismiss",
@@ -183,9 +178,7 @@ export const triageActionRecommendationModelSchema =
         .max(5),
     });
 
-export type TriageSourceProvider = z.infer<
-  typeof triageSourceProviderSchema
->;
+export type TriageSourceProvider = z.infer<typeof triageSourceProviderSchema>;
 export type TriageSourceType = z.infer<typeof triageSourceTypeSchema>;
 export type TriageWorkIntent = z.infer<typeof triageWorkIntentSchema>;
 export type TriagePriority = z.infer<typeof triagePrioritySchema>;

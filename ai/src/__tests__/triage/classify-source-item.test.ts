@@ -32,7 +32,9 @@ describe("triage request builders", () => {
 
     expect(request.system).toContain("Lightfast triage classifier");
     expect(request.prompt).toContain("GitHub");
-    expect(request.prompt).toContain("Avoid duplicating deferred CodeRabbit work");
+    expect(request.prompt).toContain(
+      "Avoid duplicating deferred CodeRabbit work"
+    );
     expect(request.inputLength).toBeGreaterThan(githubIssue.title.length);
   });
 
@@ -55,7 +57,9 @@ describe("triage request builders", () => {
 
     expect(request.system).toContain("Lightfast triage similarity ranker");
     expect(request.prompt).toContain("github-issue-17");
-    expect(request.prompt).toContain("Track deferred CodeRabbit auth boundary fix");
+    expect(request.prompt).toContain(
+      "Track deferred CodeRabbit auth boundary fix"
+    );
   });
 
   it("builds an action recommendation request with available destinations", () => {
