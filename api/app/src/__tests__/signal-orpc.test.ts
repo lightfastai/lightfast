@@ -2,7 +2,7 @@ import { call } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 const createSignalMock = vi.fn();
 const getSignalByPublicIdMock = vi.fn();
 const markSignalFailedMock = vi.fn();
@@ -17,8 +17,8 @@ vi.mock("@vendor/unkey/server", () => ({
 vi.mock("@db/app/client", () => ({ db: { kind: "mock-db" } }));
 vi.mock("@db/app", () => ({
   createSignal: createSignalMock,
+  getActiveOrgBinding: getActiveOrgBindingMock,
   getSignalByPublicId: getSignalByPublicIdMock,
-  isOrgBound: isOrgBoundMock,
   markSignalFailed: markSignalFailedMock,
 }));
 
@@ -53,14 +53,27 @@ function context() {
 
 beforeEach(() => {
   verifyMock.mockReset();
-  isOrgBoundMock.mockReset();
+  getActiveOrgBindingMock.mockReset();
   createSignalMock.mockReset();
   getSignalByPublicIdMock.mockReset();
   markSignalFailedMock.mockReset();
   sendMock.mockReset();
 
   verifyMock.mockResolvedValue(verifyResult());
-  isOrgBoundMock.mockResolvedValue(true);
+  getActiveOrgBindingMock.mockResolvedValue({
+    metadata: {
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "987",
+        installationId: "1001",
+        name: ".lightfast",
+        verifiedAt: "2026-05-30T10:00:00.000Z",
+      },
+    },
+    provider: "github",
+    providerAccountLogin: "acme",
+    providerInstallationId: "1001",
+  });
   createSignalMock.mockResolvedValue({
     publicId: "signal_123e4567-e89b-12d3-a456-426614174000",
     clerkOrgId: "org_test",
@@ -119,7 +132,7 @@ describe("orpcRouter.signals", () => {
   });
 
   it("requires a bound org API key to create signals", async () => {
-    isOrgBoundMock.mockResolvedValueOnce(false);
+    getActiveOrgBindingMock.mockResolvedValueOnce(undefined);
 
     await expect(
       call(

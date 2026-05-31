@@ -1,11 +1,12 @@
 import { Buffer } from "node:buffer";
-import { createHash, randomBytes } from "node:crypto";
+import { createHash, createPublicKey, randomBytes } from "node:crypto";
 import type { Store, TokenMap } from "@emulators/core";
 import { getGitHubStore } from "@emulators/github";
 import {
   GITHUB_SETUP_PATH,
   GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
 } from "@repo/github-app-contract";
+import { jwtVerify } from "jose";
 
 import { GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 
@@ -33,6 +34,7 @@ interface GitHubCompatibleFetchInput {
   appOrigin: string;
   fallbackFetch: (request: Request) => Response | Promise<Response>;
   publicOrigin: string;
+  resetStore: () => void;
   store: Store;
   tokenMap: TokenMap;
 }
@@ -94,6 +96,43 @@ function getBasicCredentials(request: Request) {
     clientId: decoded.slice(0, separatorIndex),
     clientSecret: decoded.slice(separatorIndex + 1),
   };
+}
+
+async function authenticateApp(input: { request: Request; store: Store }) {
+  const token = getBearerToken(input.request);
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const [, payloadB64] = token.split(".");
+    if (!payloadB64) {
+      return null;
+    }
+    const payload = JSON.parse(
+      Buffer.from(payloadB64, "base64url").toString()
+    ) as { iss?: unknown };
+    const appId =
+      typeof payload.iss === "string"
+        ? Number.parseInt(payload.iss, 10)
+        : payload.iss;
+    if (!(typeof appId === "number" && Number.isFinite(appId))) {
+      return null;
+    }
+
+    const gh = getGitHubStore(input.store);
+    const app = gh.apps.findOneBy("app_id", appId);
+    if (!app) {
+      return null;
+    }
+
+    await jwtVerify(token, createPublicKey(app.private_key), {
+      algorithms: ["RS256"],
+    });
+    return app;
+  } catch {
+    return null;
+  }
 }
 
 function authenticateUser(input: { request: Request; store: Store }) {
@@ -259,6 +298,22 @@ function userOrgIds(input: { store: Store; userId: number }) {
   );
 }
 
+function findInstallationActor(input: { accountId: number; store: Store }) {
+  const gh = getGitHubStore(input.store);
+  const teams = gh.teams.findBy("org_id", input.accountId);
+  for (const team of teams) {
+    const member = gh.teamMembers.findBy("team_id", team.id)[0];
+    if (!member) {
+      continue;
+    }
+    const user = gh.users.get(member.user_id);
+    if (user) {
+      return user;
+    }
+  }
+  return;
+}
+
 async function readBody(request: Request) {
   const contentType = request.headers.get("content-type") ?? "";
   const text = await request.text();
@@ -271,6 +326,21 @@ async function readBody(request: Request) {
 export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
   return async function gitHubCompatibleFetch(request: Request) {
     const url = new URL(request.url);
+
+    if (request.method === "POST" && url.pathname === "/__lightfast/reset") {
+      const token = getBearerToken(request);
+      if (token !== GITHUB_EMULATOR_FIXTURES.userToken) {
+        return json({ message: "Bad credentials" }, 401);
+      }
+
+      input.resetStore();
+      return json({
+        ok: true,
+        installationId: GITHUB_EMULATOR_FIXTURES.installationId,
+        org: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+      });
+    }
+
     const gh = getGitHubStore(input.store);
 
     const installMatch = /^\/apps\/([^/]+)\/installations\/new$/.exec(
@@ -589,6 +659,67 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         total_count: installations.length,
         installations,
       });
+    }
+
+    const installationTokenMatch =
+      /^\/app\/installations\/([^/]+)\/access_tokens$/.exec(url.pathname);
+    if (request.method === "POST" && installationTokenMatch) {
+      const app = await authenticateApp({
+        request,
+        store: input.store,
+      });
+      if (!app) {
+        return json(
+          {
+            message: "A JSON web token could not be decoded",
+            documentation_url: "https://docs.github.com/rest",
+          },
+          401
+        );
+      }
+
+      const installationId = Number.parseInt(
+        installationTokenMatch[1] ?? "",
+        10
+      );
+      const installation = gh.appInstallations
+        .all()
+        .find(
+          (candidate) =>
+            candidate.installation_id === installationId &&
+            candidate.app_id === app.app_id
+        );
+      if (!installation) {
+        return notFound();
+      }
+
+      const actor =
+        installation.account_type === "User"
+          ? gh.users.get(installation.account_id)
+          : findInstallationActor({
+              accountId: installation.account_id,
+              store: input.store,
+            });
+      const requestedPermissions = installation.permissions;
+      const token = `ghs_${randomBytes(20).toString("base64url")}`;
+      const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      input.tokenMap.set(token, {
+        id: actor?.id ?? installation.account_id,
+        login: actor?.login ?? installation.account_login,
+        scopes: Object.entries(requestedPermissions).map(
+          ([key, value]) => `${key}:${value}`
+        ),
+      });
+
+      return json(
+        {
+          token,
+          expires_at: expiresAt,
+          permissions: requestedPermissions,
+          repository_selection: installation.repository_selection,
+        },
+        201
+      );
     }
 
     const expiredOAuthAccessTokenResponse =

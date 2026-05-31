@@ -5,6 +5,11 @@ import {
 import { z } from "zod";
 
 import { GitHubAppNodeError } from "./errors";
+import {
+  fetchGitHubJson,
+  githubJsonHeaders,
+  normalizeGitHubApiBaseUrl,
+} from "./github-api";
 
 const rawInstallationSchema = z.object({
   account: z.object({
@@ -38,10 +43,6 @@ export interface ListGitHubUserAccessibleInstallationsInput {
 export interface VerifyGitHubUserInstallationInput
   extends ListGitHubUserAccessibleInstallationsInput {
   expectedInstallationId: string;
-}
-
-function normalizeApiBaseUrl(value: string | undefined) {
-  return (value ?? "https://api.github.com").replace(/\/+$/, "");
 }
 
 function normalizePerPage(value: number | undefined) {
@@ -110,27 +111,20 @@ async function fetchInstallationsPage(input: {
   url.searchParams.set("per_page", String(input.perPage));
   url.searchParams.set("page", String(input.page));
 
-  let res: Response;
-  try {
-    res = await input.fetch(url.toString(), {
-      headers: {
-        accept: "application/vnd.github+json",
-        authorization: `Bearer ${input.userAccessToken}`,
-        ...(input.apiVersion
-          ? { "x-github-api-version": input.apiVersion }
-          : {}),
-      },
-    });
-  } catch {
-    throw new GitHubAppNodeError(
-      "INSTALLATION_NOT_VERIFIED",
-      "GitHub installation verification request failed."
-    );
-  }
-
-  const json = await res.json().catch(() => null);
+  const { json, response } = await fetchGitHubJson({
+    fetch: input.fetch,
+    init: {
+      headers: githubJsonHeaders({
+        apiVersion: input.apiVersion,
+        token: input.userAccessToken,
+      }),
+    },
+    requestErrorCode: "INSTALLATION_NOT_VERIFIED",
+    requestErrorMessage: "GitHub installation verification request failed.",
+    url,
+  });
   const parsed = userInstallationsResponseSchema.safeParse(json);
-  if (!(res.ok && parsed.success)) {
+  if (!(response.ok && parsed.success)) {
     throw new GitHubAppNodeError(
       "INSTALLATION_NOT_VERIFIED",
       "GitHub installation verification response was invalid."
@@ -144,7 +138,7 @@ export async function listGitHubUserAccessibleInstallations(
   input: ListGitHubUserAccessibleInstallationsInput
 ): Promise<GitHubNormalizedInstallation[]> {
   const requestFetch = input.fetch ?? fetch;
-  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
   const perPage = normalizePerPage(input.perPage);
   const installations: GitHubNormalizedInstallation[] = [];
   let page = 1;
@@ -182,7 +176,7 @@ export async function verifyGitHubUserInstallation(
   input: VerifyGitHubUserInstallationInput
 ): Promise<GitHubNormalizedInstallation> {
   const requestFetch = input.fetch ?? fetch;
-  const apiBaseUrl = normalizeApiBaseUrl(input.apiBaseUrl);
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
   const perPage = normalizePerPage(input.perPage);
   let page = 1;
   let installationCount = 0;

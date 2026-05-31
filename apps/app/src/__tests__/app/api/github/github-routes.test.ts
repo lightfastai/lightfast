@@ -3,11 +3,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const completeSetupMock = vi.fn();
 const completeOAuthMock = vi.fn();
 const completeUserAccountOAuthMock = vi.fn();
+const handleWebhookMock = vi.fn();
 
 vi.mock("@api/app/services/github", () => ({
   completeGitHubInstallationSetup: completeSetupMock,
   completeGitHubOAuthVerification: completeOAuthMock,
   completeGitHubUserAccountOAuth: completeUserAccountOAuthMock,
+  handleGitHubWebhook: handleWebhookMock,
 }));
 
 describe("GitHub app route handlers", () => {
@@ -15,6 +17,7 @@ describe("GitHub app route handlers", () => {
     completeSetupMock.mockReset();
     completeOAuthMock.mockReset();
     completeUserAccountOAuthMock.mockReset();
+    handleWebhookMock.mockReset();
   });
 
   it("delegates setup callbacks without deriving app origin in the route", async () => {
@@ -87,5 +90,23 @@ describe("GitHub app route handlers", () => {
       requestUrl:
         "https://localhost:4293/api/github/user/oauth/callback?code=abc&state=def",
     });
+  });
+
+  it("delegates GitHub webhooks without reading the body in the route", async () => {
+    handleWebhookMock.mockResolvedValue(
+      Response.json({ ok: true }, { status: 202 })
+    );
+    const { POST } = await import(
+      "~/app/(app)/(github)/api/github/webhook/route"
+    );
+    const req = new Request("https://localhost:4293/api/github/webhook", {
+      body: JSON.stringify({ zen: "Keep it logically awesome." }),
+      method: "POST",
+    });
+
+    const res = await POST(req);
+
+    expect(res.status).toBe(202);
+    expect(handleWebhookMock).toHaveBeenCalledWith({ request: req });
   });
 });

@@ -89,6 +89,24 @@ describe("GitHubBindCompleteClient", () => {
     });
   });
 
+  it("routes to the next setup task when GitHub org setup is not fully bound yet", async () => {
+    mutateAsyncMock.mockResolvedValue({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "github_lightfast_repo",
+    });
+    reloadMock.mockResolvedValue(undefined);
+
+    render(<GitHubBindCompleteClient orgSlug="acme" />);
+
+    await waitFor(() => {
+      expect(mutateAsyncMock).toHaveBeenCalledTimes(1);
+      expect(reloadMock).toHaveBeenCalledTimes(1);
+      expect(replaceMock).toHaveBeenCalledWith(
+        "/acme/tasks/github/lightfast-repo"
+      );
+    });
+  });
+
   it("waits for the Clerk session to load before syncing and redirecting", async () => {
     sessionState = { isLoaded: false, session: null };
     mutateAsyncMock.mockResolvedValue({ bindingStatus: "bound" });

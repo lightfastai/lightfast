@@ -1,5 +1,6 @@
 "use client";
 
+import { pathForSetupRequirement } from "@repo/app-setup-contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { useSession } from "@vendor/clerk";
@@ -39,12 +40,21 @@ export function GitHubBindCompleteClient({
 
     try {
       const result = await mutateAsync();
-      if (result.bindingStatus !== "bound") {
+      if (result.bindingStatus !== "bound" && !result.nextSetupRequirement) {
         setFailed(true);
         return;
       }
 
       await session.reload();
+      if (result.nextSetupRequirement) {
+        router.replace(
+          pathForSetupRequirement({
+            orgSlug,
+            requirement: result.nextSetupRequirement,
+          }) as Route
+        );
+        return;
+      }
       router.replace(`/${orgSlug}` as Route);
     } catch {
       setFailed(true);

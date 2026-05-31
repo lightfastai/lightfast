@@ -35,7 +35,7 @@ const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_test",
   orgId: "org_test",
-  orgGate: { bindingStatus: "bound" },
+  orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 
 const pendingIdentity: AuthIdentity = {
@@ -148,7 +148,10 @@ describe("workspaceSignalsRouter.list", () => {
     await expect(
       caller({
         ...activeIdentity,
-        orgGate: { bindingStatus: "unbound" },
+        orgGate: {
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        },
       }).signals.list({})
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(listSignalsMock).not.toHaveBeenCalled();
@@ -170,11 +173,14 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).not.toHaveBeenCalled();
   });
 
-  it("rejects revoked organizations", async () => {
+  it("rejects unbound organizations", async () => {
     await expect(
       caller({
         ...activeIdentity,
-        orgGate: { bindingStatus: "revoked" },
+        orgGate: {
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        },
       }).signals.list({})
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(listSignalsMock).not.toHaveBeenCalled();

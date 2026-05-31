@@ -6,6 +6,7 @@ export interface LightfastLastActiveOrg {
 export interface LightfastSessionClaims {
   last_active_org?: LightfastLastActiveOrg | null;
   lf_binding_status?: string;
+  lf_next_setup_requirement?: string;
 }
 
 declare global {

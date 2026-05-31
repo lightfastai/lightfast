@@ -11,6 +11,7 @@ interface AuthResult {
   sessionClaims?: {
     last_active_org?: LastActiveOrg | null;
     lf_binding_status?: unknown;
+    lf_next_setup_requirement?: unknown;
   } | null;
   sessionStatus?: "active" | "pending";
   userId?: string | null;
@@ -148,6 +149,9 @@ function matchesPattern(pattern: string, pathname: string) {
   if (pattern === "/:slug/tasks/bind(.*)") {
     return /^\/[^/]+\/tasks\/bind(?:\/.*)?$/.test(pathname);
   }
+  if (pattern === "/:slug/tasks/github/lightfast-repo(.*)") {
+    return /^\/[^/]+\/tasks\/github\/lightfast-repo(?:\/.*)?$/.test(pathname);
+  }
   if (pattern.endsWith("(.*)")) {
     const prefix = pattern.slice(0, -4);
     return pathname === prefix.slice(0, -1) || pathname.startsWith(prefix);
@@ -206,6 +210,7 @@ describe("proxy Nemo composition", () => {
           "/:slug/automations(.*)",
           "/:slug/settings(.*)",
           "/:slug/tasks/bind(.*)",
+          "/:slug/tasks/github/lightfast-repo(.*)",
         ],
       },
     });
@@ -356,6 +361,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/setup",
     "/api/github/oauth/callback",
     "/api/github/user/oauth/callback",
+    "/api/github/webhook",
   ])("runs Clerk middleware but does not enforce signed-in routing for %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: null,
@@ -377,6 +383,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/setup",
     "/api/github/oauth/callback",
     "/api/github/user/oauth/callback",
+    "/api/github/webhook",
   ])("keeps GitHub proxy bypass public for expired tokens on %s", async (pathname) => {
     authMock.mockRejectedValue(new Error("Token expired"));
 
@@ -443,6 +450,26 @@ describe("proxy bound org product route gate", () => {
     expect(response.status).toBe(307);
     expect(response.headers.get("location")).toBe(
       "https://app.lightfast.localhost/acme/tasks/bind"
+    );
+  });
+
+  it("redirects orgs missing .lightfast from the workspace root to the repo task", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: {
+        lf_binding_status: "unbound",
+        lf_next_setup_requirement: "github_lightfast_repo",
+      },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/acme");
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/acme/tasks/github/lightfast-repo"
     );
   });
 
@@ -513,6 +540,24 @@ describe("proxy bound org product route gate", () => {
     });
 
     const { response } = await invoke("/acme/tasks/bind");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+  });
+
+  it("does not gate the .lightfast repository setup route", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "acme",
+      sessionClaims: {
+        lf_binding_status: "unbound",
+        lf_next_setup_requirement: "github_lightfast_repo",
+      },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/acme/tasks/github/lightfast-repo");
 
     expect(response.status).toBe(200);
     expect(response.headers.get("location")).toBeNull();

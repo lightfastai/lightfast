@@ -98,7 +98,10 @@ describe("tasks/bind/page — setup page", () => {
   });
 
   it("redirects a bound org to the GitHub completion page", async () => {
-    fetchQueryMock.mockResolvedValue({ bindingStatus: "bound" });
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "bound",
+      nextSetupRequirement: null,
+    });
 
     await expect(invoke("acme")).rejects.toThrow(
       "NEXT_REDIRECT:/acme/tasks/bind/github/complete"
@@ -108,22 +111,30 @@ describe("tasks/bind/page — setup page", () => {
     );
   });
 
-  it("renders a bound-org callback error instead of redirecting to completion", async () => {
+  it("redirects orgs that already connected GitHub to the .lightfast task", async () => {
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "github_lightfast_repo",
+    });
+
+    await expect(invoke("acme")).rejects.toThrow(
+      "NEXT_REDIRECT:/acme/tasks/github/lightfast-repo"
+    );
+  });
+
+  it("redirects a bound org to completion even when a callback error is present", async () => {
     fetchQueryMock.mockResolvedValue({ bindingStatus: "bound" });
 
-    const element = await invoke("acme", {
-      github_error: "org_already_bound",
-    });
-    render(element);
+    await expect(
+      invoke("acme", {
+        github_error: "org_already_bound",
+      })
+    ).rejects.toThrow("NEXT_REDIRECT:/acme/tasks/bind/github/complete");
 
-    expect(redirectMock).not.toHaveBeenCalled();
-    expect(bindCardMock).toHaveBeenCalledWith(
-      {
-        githubError: "org_already_bound",
-        orgSlug: "acme",
-      },
-      undefined
+    expect(redirectMock).toHaveBeenCalledWith(
+      "/acme/tasks/bind/github/complete"
     );
+    expect(bindCardMock).not.toHaveBeenCalled();
   });
 
   it("loads setup status through the tRPC organization slug access query", async () => {

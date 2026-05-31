@@ -3,14 +3,16 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
 
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 const authMock = vi.fn();
 const getOrganizationMock = vi.fn();
 const getOrganizationMembershipListMock = vi.fn();
 const updateOrganizationMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
-vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
+vi.mock("@db/app", () => ({
+  getActiveOrgBinding: getActiveOrgBindingMock,
+}));
 
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -100,7 +102,7 @@ beforeEach(() => {
   authMock.mockReset();
   getOrganizationMock.mockReset();
   getOrganizationMembershipListMock.mockReset();
-  isOrgBoundMock.mockReset();
+  getActiveOrgBindingMock.mockReset();
   updateOrganizationMock.mockReset();
 
   authMock.mockResolvedValue({
@@ -168,7 +170,7 @@ describe("organization.getBySlug", () => {
       })
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
     expect(getOrganizationMembershipListMock).not.toHaveBeenCalled();
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 
   it("returns the user's matching Clerk org and DB binding gate", async () => {
@@ -185,12 +187,26 @@ describe("organization.getBySlug", () => {
         },
       ],
     });
-    isOrgBoundMock.mockResolvedValue(true);
+    getActiveOrgBindingMock.mockResolvedValue({
+      metadata: {
+        lightfastRepository: {
+          fullName: "lightfast-emulated/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountLogin: "lightfast-emulated",
+      providerInstallationId: "1001",
+    });
 
     await expect(
       caller().viewer.organization.getBySlug({ slug: "acme" })
     ).resolves.toEqual({
       bindingStatus: "bound",
+      nextSetupRequirement: null,
       org: {
         id: "org_acme",
         imageUrl: "https://img.test/acme.png",
@@ -200,7 +216,10 @@ describe("organization.getBySlug", () => {
       },
       role: "org:admin",
     });
-    expect(isOrgBoundMock).toHaveBeenCalledWith(expect.anything(), "org_acme");
+    expect(getActiveOrgBindingMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "org_acme"
+    );
   });
 
   it("throws NOT_FOUND when the slug is not in the user's memberships", async () => {
@@ -224,7 +243,7 @@ describe("organization.getBySlug", () => {
       code: "NOT_FOUND",
       message: "Organization not found",
     });
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 });
 
@@ -263,7 +282,7 @@ describe("organization.updateName", () => {
           type: "active",
           userId: "user_test",
           orgId: "org_acme",
-          orgGate: { bindingStatus: "bound" },
+          orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
         },
         adminAccess()
       ).org.settings.organization.updateName({ slug: "acme", name: "acme-inc" })
@@ -288,7 +307,7 @@ describe("organization.updateName", () => {
           type: "active",
           userId: "user_test",
           orgId: "org_acme",
-          orgGate: { bindingStatus: "bound" },
+          orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
         },
         adminAccess({ orgId: "org_other" })
       ).org.settings.organization.updateName({ slug: "acme", name: "acme-inc" })
@@ -304,7 +323,7 @@ describe("organization.updateName", () => {
           type: "active",
           userId: "user_test",
           orgId: "org_acme",
-          orgGate: { bindingStatus: "bound" },
+          orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
         },
         nonAdminAccess()
       ).org.settings.organization.updateName({ slug: "acme", name: "acme-inc" })

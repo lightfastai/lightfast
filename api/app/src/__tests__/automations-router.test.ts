@@ -58,7 +58,7 @@ const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_current",
   orgId: "org_acme",
-  orgGate: { bindingStatus: "bound" },
+  orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 
 const pendingIdentity: AuthIdentity = {
@@ -80,11 +80,18 @@ function adminAccess() {
 }
 
 function activeIdentityWithOrgGate(
-  bindingStatus: "bound" | "unbound" | "revoked"
+  bindingStatus: "bound" | "unbound"
 ): ActiveAuthIdentity {
+  const orgGate =
+    bindingStatus === "bound"
+      ? ({ bindingStatus: "bound", nextSetupRequirement: null } as const)
+      : ({
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        } as const);
   return {
     ...activeIdentity,
-    orgGate: { bindingStatus },
+    orgGate,
   };
 }
 
@@ -194,15 +201,10 @@ describe("automationsRouter", () => {
     expect(listAutomationsMock).not.toHaveBeenCalled();
   });
 
-  it("rejects list for unbound and revoked organizations", async () => {
+  it("rejects list for unbound organizations", async () => {
     await expect(
       callerWithIdentity(
         activeIdentityWithOrgGate("unbound")
-      ).automations.list()
-    ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    await expect(
-      callerWithIdentity(
-        activeIdentityWithOrgGate("revoked")
       ).automations.list()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
 

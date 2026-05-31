@@ -3,7 +3,7 @@ import { and, desc, eq, inArray, like, lt, or } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
-import { getRowsAffected } from "./mysql";
+import { getRowsAffected } from "./drizzle-results";
 
 export interface ListCursor {
   createdAt: Date;

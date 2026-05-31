@@ -2,10 +2,10 @@ import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const authMock = vi.fn();
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 
 vi.mock("@db/app", () => ({
-  isOrgBound: (...args: unknown[]) => isOrgBoundMock(...args),
+  getActiveOrgBinding: (...args: unknown[]) => getActiveOrgBindingMock(...args),
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -36,7 +36,7 @@ const db = {} as Database;
 
 beforeEach(() => {
   authMock.mockReset();
-  isOrgBoundMock.mockReset();
+  getActiveOrgBindingMock.mockReset();
 });
 
 function resolve(headers = new Headers()) {
@@ -70,7 +70,20 @@ describe("resolveIdentityFromClerk", () => {
   });
 
   it("resolves cookie active org binding from the DB", async () => {
-    isOrgBoundMock.mockResolvedValueOnce(true);
+    getActiveOrgBindingMock.mockResolvedValueOnce({
+      metadata: {
+        lightfastRepository: {
+          fullName: "acme/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountLogin: "acme",
+      providerInstallationId: "1001",
+    });
     authMock.mockResolvedValueOnce({
       userId: "user_cookie_bound",
       orgId: "org_cookie_bound",
@@ -81,9 +94,12 @@ describe("resolveIdentityFromClerk", () => {
       type: "active",
       userId: "user_cookie_bound",
       orgId: "org_cookie_bound",
-      orgGate: { bindingStatus: "bound" },
+      orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
     });
-    expect(isOrgBoundMock).toHaveBeenCalledWith(db, "org_cookie_bound");
+    expect(getActiveOrgBindingMock).toHaveBeenCalledWith(
+      db,
+      "org_cookie_bound"
+    );
   });
 
   it("rejects bearer requests that do not declare a native client", async () => {

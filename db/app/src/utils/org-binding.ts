@@ -16,7 +16,7 @@ import type {
   OrgSourceControlBindingProvider,
 } from "../schema";
 import { orgSourceControlBindings } from "../schema";
-import { isDuplicateKeyError } from "./mysql";
+import { isDuplicateKeyError } from "./drizzle-results";
 
 const { activeClerkOrgId: _activeClerkOrgId, ...bindingSelection } =
   getTableColumns(orgSourceControlBindings);
@@ -40,26 +40,6 @@ export async function getActiveOrgBinding(
     )
     .limit(1);
   return row;
-}
-
-/**
- * True when the org has at least one active binding — the v1 "bound" gate.
- */
-export async function isOrgBound(
-  db: Database,
-  clerkOrgId: string
-): Promise<boolean> {
-  const [row] = await db
-    .select({ id: orgSourceControlBindings.id })
-    .from(orgSourceControlBindings)
-    .where(
-      and(
-        eq(orgSourceControlBindings.clerkOrgId, clerkOrgId),
-        eq(orgSourceControlBindings.status, "active")
-      )
-    )
-    .limit(1);
-  return row !== undefined;
 }
 
 export type OrgSourceControlBindingConflictCode =

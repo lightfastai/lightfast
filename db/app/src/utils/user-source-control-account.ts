@@ -5,7 +5,7 @@ import type {
   UserSourceControlAccountProvider,
 } from "../schema";
 import { userSourceControlAccounts } from "../schema";
-import { getRowsAffected, isDuplicateKeyError } from "./mysql";
+import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 const {
   activeClerkUserId: _activeClerkUserId,

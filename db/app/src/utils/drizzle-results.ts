@@ -1,10 +1,12 @@
 export function getRowsAffected(result: unknown): number {
-  const value = Array.isArray(result) ? result[0] : result;
-  if (value === null || typeof value !== "object") {
+  if (Array.isArray(result)) {
+    return result.reduce((total, item) => total + getRowsAffected(item), 0);
+  }
+  if (result === null || typeof result !== "object") {
     return 0;
   }
 
-  const { affectedRows, rowsAffected } = value as {
+  const { affectedRows, rowsAffected } = result as {
     affectedRows?: unknown;
     rowsAffected?: unknown;
   };

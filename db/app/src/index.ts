@@ -71,7 +71,6 @@ export {
   type GetOrgBindingByProviderInstallationInput,
   getActiveOrgBinding,
   getOrgBindingByProviderInstallation,
-  isOrgBound,
   type MarkOrgBindingRevokedInput,
   markOrgBindingRevoked,
   type OrgSourceControlBindingConflictCode,
@@ -101,6 +100,18 @@ export {
   markSignalClassified,
   markSignalFailed,
 } from "./utils/signals";
+export {
+  type CompleteWatchedSourceControlRepositorySetupInput,
+  completeWatchedSourceControlRepositorySetup,
+  getSourceControlWebhookDeliveryByDeliveryId,
+  getWatchedSourceControlRepository,
+  getWatchedSourceControlRepositoryById,
+  markSourceControlWebhookDeliveryStatus,
+  type RecordSourceControlWebhookDeliveryReceivedResult,
+  recordSourceControlWebhookDeliveryReceived,
+  type UpsertWatchedSourceControlRepositoryInput,
+  upsertWatchedSourceControlRepository,
+} from "./utils/source-control-repositories";
 export {
   activeProviderUserKey,
   type FinalizeActiveUserSourceControlAccountInput,

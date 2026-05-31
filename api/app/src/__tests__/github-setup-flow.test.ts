@@ -5,11 +5,11 @@ const consumeGitHubOAuthAttemptMock = vi.fn();
 const createGitHubPkcePairMock = vi.fn();
 const exchangeGitHubOAuthCodeMock = vi.fn();
 const finalizeActiveOrgProviderBindingMock = vi.fn();
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 const issueGitHubOAuthAttemptMock = vi.fn();
 const lookupGitHubInstallAttemptMock = vi.fn();
 const lookupGitHubOAuthAttemptMock = vi.fn();
-const mirrorOrgBindingMock = vi.fn();
+const mirrorOrgSetupGateMock = vi.fn();
 const verifyGitHubUserInstallationMock = vi.fn();
 const assertOrgAdminMock = vi.fn();
 
@@ -31,7 +31,7 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
   finalizeActiveOrgProviderBinding: finalizeActiveOrgProviderBindingMock,
-  isOrgBound: isOrgBoundMock,
+  getActiveOrgBinding: getActiveOrgBindingMock,
   OrgSourceControlBindingConflictError: class OrgSourceControlBindingConflictError extends Error {
     constructor(
       readonly code: string,
@@ -95,7 +95,7 @@ vi.mock("@vendor/observability/log/next", () => ({
 }));
 
 vi.mock("../auth/org-binding-mirror", () => ({
-  mirrorOrgBinding: mirrorOrgBindingMock,
+  mirrorOrgSetupGate: mirrorOrgSetupGateMock,
 }));
 
 vi.mock("../auth/clerk-org-membership", () => ({
@@ -176,16 +176,28 @@ describe("github setup flow", () => {
     createGitHubPkcePairMock.mockReset();
     exchangeGitHubOAuthCodeMock.mockReset();
     finalizeActiveOrgProviderBindingMock.mockReset();
-    isOrgBoundMock.mockReset();
+    getActiveOrgBindingMock.mockReset();
     issueGitHubOAuthAttemptMock.mockReset();
     lookupGitHubInstallAttemptMock.mockReset();
     lookupGitHubOAuthAttemptMock.mockReset();
-    mirrorOrgBindingMock.mockReset();
+    mirrorOrgSetupGateMock.mockReset();
     verifyGitHubUserInstallationMock.mockReset();
     assertOrgAdminMock.mockReset();
 
     assertOrgAdminMock.mockResolvedValue({ userId: "user_1" });
-    isOrgBoundMock.mockResolvedValue(false);
+    getActiveOrgBindingMock.mockResolvedValue({
+      metadata: {
+        events: ["push"],
+        githubAppId: "12345",
+        githubAppSlug: "lightfast-test",
+        githubSetupAction: "install",
+        permissions: { contents: "read" },
+        repositorySelection: "all",
+      },
+      provider: "github",
+      providerAccountLogin: "acme",
+      providerInstallationId: "1001",
+    });
     createGitHubPkcePairMock.mockReturnValue({
       codeChallenge: "challenge_123",
       codeChallengeMethod: "S256",
@@ -330,10 +342,13 @@ describe("github setup flow", () => {
       permissions: { contents: "read" },
       repositorySelection: "all",
     });
-    expect(mirrorOrgBindingMock).toHaveBeenCalledWith({
+    expect(mirrorOrgSetupGateMock).toHaveBeenCalledWith({
       clerkOrgId: "org_1",
+      gate: {
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_lightfast_repo",
+      },
       provider: "github",
-      status: "bound",
     });
   });
 
@@ -609,7 +624,7 @@ describe("github setup flow", () => {
 
   it("tolerates mirror failure after DB bind and still redirects to completion", async () => {
     mockOAuthAttempt();
-    mirrorOrgBindingMock.mockRejectedValue(new Error("mirror unavailable"));
+    mirrorOrgSetupGateMock.mockRejectedValue(new Error("mirror unavailable"));
 
     await expect(
       completeGitHubOAuthVerification({

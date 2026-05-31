@@ -16,7 +16,7 @@ import {
   createAutomationId,
   createAutomationRunId,
 } from "../schema";
-import { getRowsAffected, isDuplicateKeyError } from "./mysql";
+import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 export {
   type AutomationScheduleInput,

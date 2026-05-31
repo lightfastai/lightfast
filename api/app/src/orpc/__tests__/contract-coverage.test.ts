@@ -3,7 +3,7 @@ import { isProcedure } from "@orpc/server";
 import { apiContract } from "@repo/api-contract";
 import { describe, expect, it, vi } from "vitest";
 
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 
 vi.mock("@vendor/unkey/server", () => ({
   getUnkeyClient: () => ({
@@ -14,8 +14,8 @@ vi.mock("@vendor/unkey/server", () => ({
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   createSignal: vi.fn(),
+  getActiveOrgBinding: getActiveOrgBindingMock,
   getSignalByPublicId: vi.fn(),
-  isOrgBound: isOrgBoundMock,
   markSignalFailed: vi.fn(),
 }));
 
