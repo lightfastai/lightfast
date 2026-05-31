@@ -78,4 +78,16 @@ describe("account settings layout", () => {
       "pt-2 pb-8"
     );
   });
+
+  it("keeps GitHub setup out of the settings sidebar for the setup-only pass", () => {
+    const element = AccountSettingsLayout({
+      children: <div>Account settings page</div>,
+    });
+
+    const serialized = JSON.stringify(element);
+
+    expect(serialized).toContain("General");
+    expect(serialized).not.toContain("Connections");
+    expect(serialized).not.toContain("GitHub");
+  });
 });
