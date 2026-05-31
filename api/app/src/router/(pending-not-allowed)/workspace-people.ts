@@ -12,6 +12,7 @@ import {
   workspaceListLimitInput,
   workspaceListSearchInput,
 } from "./workspace-list-input";
+import { workspacePeopleViewsRouter } from "./workspace-people-views";
 
 const listPeopleInput = z.object({
   cursor: workspaceListCursorInput,
@@ -46,4 +47,5 @@ export const workspacePeopleRouter = {
 
       return person;
     }),
+  views: workspacePeopleViewsRouter,
 } satisfies TRPCRouterRecord;
