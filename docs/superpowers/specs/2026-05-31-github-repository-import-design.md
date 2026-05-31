@@ -62,6 +62,8 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 ## Non-Goals
 
 - No automatic import of every repository after GitHub org binding.
+- No automatic refresh or polling after an admin changes installation access in
+  GitHub.
 - No bulk import or import-all workflow in v1.
 - No personal GitHub account UI on the org source-control integration screen.
 - No per-file indexing, repository mirroring, or file content storage.
@@ -358,6 +360,11 @@ The page should contain:
 - `Manage GitHub access` link that opens the live GitHub installation settings
   URL when GitHub installation metadata is available to an admin.
 
+After an admin uses `Manage GitHub access` and changes repository access in
+GitHub, Lightfast should not poll, subscribe, or automatically refresh on window
+focus in v1. The admin uses `Refresh GitHub` to fetch the updated installation
+repository list.
+
 The add-repository modal should include:
 
 - client-side repository search/filter by name against the complete live list;
@@ -460,7 +467,8 @@ Add tests at each boundary:
   add-repository modal for admins, filters repositories, shows `Manage GitHub
   access` only to admins from live installation metadata, omits `.lightfast`
   from normal repo UI, keeps repository-list failures scoped to the repositories
-  card, and submits one selected repository.
+  card, does not auto-refresh after GitHub access management, and submits one
+  selected repository.
 
 ## Rollout
 
