@@ -2,11 +2,6 @@ import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { AuthIdentity } from "../auth/identity";
-import {
-  expiredSessionIdentity,
-  pendingIdentity,
-  unauthenticatedIdentity,
-} from "./helpers/auth-identities";
 
 const getGitHubUserAccountStatusMock = vi.fn();
 const startGitHubUserAccountBindingMock = vi.fn();
@@ -40,6 +35,20 @@ const { appRouter } = await import("../root");
 const { createCallerFactory } = await import("../trpc");
 
 const createCaller = createCallerFactory(appRouter);
+
+const pendingIdentity: AuthIdentity = {
+  type: "pending",
+  userId: "user_test",
+};
+
+const unauthenticatedIdentity: AuthIdentity = {
+  type: "unauthenticated",
+};
+
+// Expired Clerk sessions normalize to unauthenticated at the identity boundary.
+const expiredSessionIdentity: AuthIdentity = {
+  type: "unauthenticated",
+};
 
 function caller(identity: AuthIdentity = pendingIdentity) {
   return createCaller({

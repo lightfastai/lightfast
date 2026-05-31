@@ -1,10 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import {
-  githubUserAccountAttempt,
-  TEST_ENCRYPTION_KEY,
-} from "./helpers/github-user-account";
-
 const authMock = vi.fn();
 const consumeAttemptMock = vi.fn();
 const createGitHubPkcePairMock = vi.fn();
@@ -20,6 +15,9 @@ const markUserSourceControlAccountRevokedMock = vi.fn();
 const revokeGitHubOAuthGrantMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
+
+const TEST_ENCRYPTION_KEY =
+  "0000000000000000000000000000000000000000000000000000000000000000";
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -133,6 +131,21 @@ const {
   getGitHubUserAccountStatus,
   startGitHubUserAccountBinding,
 } = await import("../services/github/user-account/flow");
+
+function githubUserAccountAttempt(
+  overrides: Partial<{
+    codeVerifier: string;
+    lightfastUserId: string;
+    returnTo: string;
+  }> = {}
+) {
+  return {
+    codeVerifier: "verifier_123",
+    lightfastUserId: "user_1",
+    returnTo: "/account/tasks/github",
+    ...overrides,
+  };
+}
 
 function mockAttempt(record = githubUserAccountAttempt()) {
   lookupAttemptMock.mockResolvedValue(record);

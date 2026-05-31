@@ -1,14 +1,17 @@
 import { z } from "zod";
 
 import { GitHubAppNodeError } from "./errors";
+import {
+  fetchGitHubJson,
+  githubJsonHeaders,
+  normalizeGitHubApiBaseUrl,
+} from "./github-api";
 
 const rawAuthenticatedUserSchema = z.object({
   id: z.union([z.number(), z.string().min(1)]),
   login: z.string().min(1),
   type: z.string().min(1),
 });
-
-const DEFAULT_GITHUB_USER_REQUEST_TIMEOUT_MS = 10_000;
 
 export interface GitHubAuthenticatedUser {
   id: string;
@@ -20,55 +23,27 @@ export interface GetGitHubAuthenticatedUserInput {
   apiBaseUrl?: string;
   apiVersion?: string;
   fetch?: typeof fetch;
-  signal?: AbortSignal;
-  timeoutMs?: number;
   userAccessToken: string;
-}
-
-function normalizeApiBaseUrl(value: string | undefined) {
-  return (value ?? "https://api.github.com").replace(/\/+$/, "");
 }
 
 export async function getGitHubAuthenticatedUser(
   input: GetGitHubAuthenticatedUserInput
 ): Promise<GitHubAuthenticatedUser> {
-  const requestFetch = input.fetch ?? fetch;
-  const url = new URL("/user", normalizeApiBaseUrl(input.apiBaseUrl));
-  const abortController = input.signal ? undefined : new AbortController();
-  const timeout =
-    abortController === undefined
-      ? undefined
-      : setTimeout(
-          () => abortController.abort(),
-          input.timeoutMs ?? DEFAULT_GITHUB_USER_REQUEST_TIMEOUT_MS
-        );
-
-  let res: Response;
-  try {
-    res = await requestFetch(url.toString(), {
-      signal: input.signal ?? abortController?.signal,
-      headers: {
-        accept: "application/vnd.github+json",
-        authorization: `Bearer ${input.userAccessToken}`,
-        ...(input.apiVersion
-          ? { "x-github-api-version": input.apiVersion }
-          : {}),
-      },
-    });
-  } catch {
-    throw new GitHubAppNodeError(
-      "GITHUB_USER_NOT_VERIFIED",
-      "GitHub authenticated user request failed."
-    );
-  } finally {
-    if (timeout !== undefined) {
-      clearTimeout(timeout);
-    }
-  }
-
-  const json = await res.json().catch(() => null);
+  const url = new URL("/user", normalizeGitHubApiBaseUrl(input.apiBaseUrl));
+  const { json, response } = await fetchGitHubJson({
+    fetch: input.fetch,
+    init: {
+      headers: githubJsonHeaders({
+        apiVersion: input.apiVersion,
+        token: input.userAccessToken,
+      }),
+    },
+    requestErrorCode: "GITHUB_USER_NOT_VERIFIED",
+    requestErrorMessage: "GitHub authenticated user request failed.",
+    url,
+  });
   const parsed = rawAuthenticatedUserSchema.safeParse(json);
-  if (!(res.ok && parsed.success && parsed.data.type === "User")) {
+  if (!(response.ok && parsed.success && parsed.data.type === "User")) {
     throw new GitHubAppNodeError(
       "GITHUB_USER_NOT_VERIFIED",
       "GitHub authenticated user could not be verified."

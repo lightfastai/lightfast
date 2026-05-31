@@ -1,8 +1,6 @@
 import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { TEST_ENCRYPTION_KEY } from "./helpers/github-user-account";
-
 const decryptMock = vi.fn();
 const encryptMock = vi.fn();
 const getActiveUserSourceControlAccountMock = vi.fn();
@@ -12,6 +10,9 @@ const refreshGitHubUserAccessTokenMock = vi.fn();
 const updateObservedUserSourceControlAccountTokensMock = vi.fn();
 const logInfoMock = vi.fn();
 const logWarnMock = vi.fn();
+
+const TEST_ENCRYPTION_KEY =
+  "0000000000000000000000000000000000000000000000000000000000000000";
 
 vi.mock("@db/app", () => ({
   getActiveUserSourceControlAccount: getActiveUserSourceControlAccountMock,
