@@ -60,10 +60,10 @@ export function ViewSwitcher({
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
           <button
             className={cn(
-              "inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border/70 px-2.5 text-sm transition-colors",
+              "inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 text-sm transition-colors",
               activeViewId
-                ? "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-                : "bg-muted/60 text-foreground"
+                ? "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                : "border-border/70 bg-muted/60 text-foreground"
             )}
             data-active={!activeViewId}
             onClick={onSelectAll}
@@ -81,10 +81,10 @@ export function ViewSwitcher({
             return (
               <div
                 className={cn(
-                  "group inline-flex h-7 shrink-0 items-center rounded-lg border border-border/70 pr-1 pl-2.5 text-sm transition-colors",
+                  "group inline-flex h-7 shrink-0 items-center rounded-lg border pr-1 pl-2.5 text-sm transition-colors",
                   isActive
-                    ? "bg-muted/60 text-foreground"
-                    : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                    ? "border-border/70 bg-muted/60 text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
                 )}
                 data-active={isActive}
                 key={view.publicId}
