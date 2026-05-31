@@ -71,6 +71,7 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 - No user token or PAT requirement for listing installation repositories.
 - No new durable repository catalog table in v1.
 - No normal repository add/list affordance for `.lightfast`.
+- No UI for connecting an additional GitHub organization in this feature.
 
 ## Source Of Truth
 
@@ -346,6 +347,9 @@ The page should contain:
   using local product copy and links.
 - Connected organizations card showing the currently fetched GitHub org login
   and connected status.
+- No active `+` affordance on the connected organizations card in v1. Keep the
+  current one-active-binding model; organization binding changes stay in the
+  existing setup/repair flow.
 - Repositories card showing imported and available normal repositories, with
   `.lightfast` omitted.
 - `Refresh GitHub` action that invalidates/refetches the repository list.
@@ -452,10 +456,11 @@ Add tests at each boundary:
   with installation-token authentication.
 - `apps/app`: source-control integration UI renders connected orgs for members,
   omits personal GitHub account state, disables add-repository controls for
-  non-admins, opens add-repository modal for admins, filters repositories, shows
-  `Manage GitHub access` only to admins from live installation metadata, omits
-  `.lightfast` from normal repo UI, keeps repository-list failures scoped to the
-  repositories card, and submits one selected repository.
+  non-admins, does not expose connected-organization `+` behavior, opens
+  add-repository modal for admins, filters repositories, shows `Manage GitHub
+  access` only to admins from live installation metadata, omits `.lightfast`
+  from normal repo UI, keeps repository-list failures scoped to the repositories
+  card, and submits one selected repository.
 
 ## Rollout
 
