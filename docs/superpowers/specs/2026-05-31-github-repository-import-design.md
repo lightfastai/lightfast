@@ -58,6 +58,7 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 - No bulk import or import-all workflow in v1.
 - No personal GitHub account UI on the org source-control integration screen.
 - No per-file indexing, repository mirroring, or file content storage.
+- No initial repository scan or sync job when a repository is added.
 - No repository removal workflow in v1.
 - No GitHub Enterprise Server endpoint matrix.
 - No user token or PAT requirement for listing installation repositories.
@@ -254,6 +255,10 @@ Behavior:
 7. Upsert one watched row for the selected repository id.
 8. Return the same live, merged repository list as `listRepositories`.
 
+Adding a repository only registers it for future webhook-driven source-control
+events. It must not enqueue an initial repository sync or fetch repository
+contents.
+
 Default watches:
 
 - `.lightfast` remains `skills/**` when imported through setup.
@@ -370,4 +375,5 @@ Add tests at each boundary:
 The feature can ship without migrating existing rows. Existing `.lightfast`
 watch rows remain valid. After deployment, organizations with a connected
 GitHub org will fetch current repository state from GitHub and can explicitly
-add more repositories from the integration UI.
+add more repositories from the integration UI. Added repositories become active
+for future GitHub webhook deliveries only.
