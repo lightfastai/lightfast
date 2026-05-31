@@ -275,21 +275,21 @@ function FilterChip({
 
   return (
     <button
-      className="flex h-6 shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
+      className="flex h-6 max-w-full shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
       onClick={onClear}
       type="button"
     >
-      <span className="flex h-full items-center gap-2 border-border/70 border-r px-3 text-foreground">
+      <span className="flex h-full shrink-0 items-center gap-2 border-border/70 border-r px-3 text-foreground">
         <Icon aria-hidden="true" className="size-3.5 text-muted-foreground" />
         {label}
       </span>
-      <span className="flex h-full items-center border-border/70 border-r px-3 text-muted-foreground">
+      <span className="hidden h-full shrink-0 items-center border-border/70 border-r px-3 text-muted-foreground sm:flex">
         is any of
       </span>
-      <span className="flex h-full items-center px-3 text-muted-foreground">
+      <span className="min-w-0 truncate px-3 text-muted-foreground">
         {value}
       </span>
-      <span className="flex h-full items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
+      <span className="flex h-full shrink-0 items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
         <X aria-hidden="true" className="size-3.5" />
       </span>
     </button>

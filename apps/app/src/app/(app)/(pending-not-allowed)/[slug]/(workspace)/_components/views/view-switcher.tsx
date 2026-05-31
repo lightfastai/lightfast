@@ -6,10 +6,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import { useIsMobile } from "@repo/ui/hooks/use-mobile";
 import { cn } from "@repo/ui/lib/utils";
 import { type LucideIcon, Plus, X } from "lucide-react";
 import { useState } from "react";
-import { partitionViews, type ViewSwitcherItem } from "./partition-views";
+import {
+  MAX_INLINE_VIEWS,
+  partitionViews,
+  type ViewSwitcherItem,
+} from "./partition-views";
 import { ViewCreateDialog } from "./view-create-dialog";
 import { ViewDeleteDialog } from "./view-delete-dialog";
 
@@ -52,7 +57,13 @@ export function ViewSwitcher({
     null
   );
 
-  const { overflow, visible } = partitionViews(views, activeViewId);
+  // On phones/tablets (< lg) collapse to a single inline pill so the row never
+  // scrolls sideways; the rest fall into the "+N" dropdown. useIsMobile returns
+  // undefined on first paint, so we default to the desktop cap (no flash to a
+  // wider layout — only a one-frame narrowing on small screens).
+  const isMobile = useIsMobile();
+  const cap = isMobile ? 1 : MAX_INLINE_VIEWS;
+  const { overflow, visible } = partitionViews(views, activeViewId, cap);
 
   return (
     <>

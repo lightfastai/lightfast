@@ -56,6 +56,12 @@ vi.mock("@repo/ui/components/ui/input", () => ({
   ),
 }));
 
+// Drive the responsive inline cap deterministically (default desktop).
+let mockIsMobile = false;
+vi.mock("@repo/ui/hooks/use-mobile", () => ({
+  useIsMobile: () => mockIsMobile,
+}));
+
 const { ViewSwitcher } = await import("./view-switcher");
 
 function makeViews(count: number) {
@@ -69,6 +75,7 @@ describe("ViewSwitcher", () => {
   let props: ViewSwitcherProps;
 
   beforeEach(() => {
+    mockIsMobile = false;
     props = {
       activeViewId: null,
       allLabel: "All signals",
@@ -131,5 +138,15 @@ describe("ViewSwitcher", () => {
       screen.getByRole("heading", { name: "Delete view" })
     ).toBeInTheDocument();
     expect(props.onDelete).not.toHaveBeenCalled();
+  });
+
+  it("collapses to a single inline pill on mobile", () => {
+    mockIsMobile = true;
+    render(<ViewSwitcher {...props} views={makeViews(3)} />);
+    expect(screen.getByRole("button", { name: "View 1" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "View 2" })).toBeNull();
+    expect(
+      screen.getByRole("button", { name: "More views" })
+    ).toHaveTextContent("+2");
   });
 });
