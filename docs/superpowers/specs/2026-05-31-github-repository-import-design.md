@@ -74,6 +74,9 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 - No new durable repository catalog table in v1.
 - No normal repository add/list affordance for `.lightfast`.
 - No UI for connecting an additional GitHub organization in this feature.
+- No reconciliation/cleanup workflow for GitHub App repository access changes in
+  v1. Track that follow-up in
+  [lightfastai/lightfast#747](https://github.com/lightfastai/lightfast/issues/747).
 
 ## Source Of Truth
 
@@ -489,3 +492,6 @@ deployment, organizations with a connected GitHub org will fetch current
 repository state from GitHub and can explicitly add more repositories from the
 integration UI. Added repositories become active for future GitHub webhook
 deliveries only.
+
+Repository-access reconciliation is intentionally deferred to
+[lightfastai/lightfast#747](https://github.com/lightfastai/lightfast/issues/747).
