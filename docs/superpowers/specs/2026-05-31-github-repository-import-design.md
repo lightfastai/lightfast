@@ -29,6 +29,12 @@ The UI should follow an integration-page shape:
 
 Do not show personal GitHub account state on this screen in v1.
 
+Treat `.lightfast` as setup infrastructure, not as a normal imported
+repository. It should not appear in the normal repositories list, the
+add-repository picker, or imported repository counts. Its existing watch row
+continues to power setup/webhook behavior, but UI exposure belongs in setup or
+connection status only.
+
 Repository import is explicit. Lightfast lists repositories accessible to the
 bound GitHub App installation, but it only creates one watched repository row
 when the admin explicitly adds one repository.
@@ -46,7 +52,8 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 - Keep Lightfast's durable repository set explicit and auditable.
 - Reuse `lightfast_source_control_repositories` as the imported repository
   registry.
-- Preserve `.lightfast` setup semantics and its `skills/**` watched path.
+- Preserve `.lightfast` setup semantics and its `skills/**` watched path while
+  excluding it from the normal repository add/list surface.
 - Show imported and available repositories in the Source Control settings UI
   using live GitHub repository data.
 - Keep the first implementation production-shaped against real GitHub and the
@@ -63,6 +70,7 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 - No GitHub Enterprise Server endpoint matrix.
 - No user token or PAT requirement for listing installation repositories.
 - No new durable repository catalog table in v1.
+- No normal repository add/list affordance for `.lightfast`.
 
 ## Source Of Truth
 
@@ -77,6 +85,10 @@ Persisted Lightfast state:
   needed for auth and setup gates;
 - imported repository watch: provider repository id, watched path globs,
   internal id, and timestamps.
+
+The `.lightfast` setup repository remains represented by its existing setup
+proof in binding metadata and its watched row. That row is not part of the
+normal imported-repository surface.
 
 Live GitHub state:
 
@@ -173,7 +185,7 @@ repository summary counts for the connected binding:
     connectedAt: Date;
     provider: string;
     providerLabel: string;
-    importedRepositoryCount: number;
+    importedRepositoryCount: number; // excludes .lightfast setup repository
   } | null;
   status: "bound" | "unbound";
 }
@@ -219,7 +231,11 @@ Behavior:
 7. List installation repositories from GitHub.
 8. Filter to `repository.ownerId === binding.providerAccountId`.
 9. Load watched repository rows for the binding.
-10. Merge live GitHub repositories with watched rows by provider repository id.
+10. Identify the `.lightfast` setup repository id from binding metadata when
+    present.
+11. Exclude `.lightfast` from the normal available/imported repository list.
+12. Merge remaining live GitHub repositories with watched rows by provider
+    repository id.
 
 Filtering by provider account id prevents stale logins, renamed organizations,
 or unusual installation responses from surfacing repositories outside the
@@ -251,9 +267,10 @@ Behavior:
 4. Fetch live installation repositories from GitHub.
 5. Build an allowlist of repository ids accessible to the installation and
    owned by the bound account id.
-6. Reject the repository id if it is not in that allowlist.
-7. Upsert one watched row for the selected repository id.
-8. Return the same live, merged repository list as `listRepositories`.
+6. Reject the repository id if it is the `.lightfast` setup repository id.
+7. Reject the repository id if it is not in that allowlist.
+8. Upsert one watched row for the selected repository id.
+9. Return the same live, merged repository list as `listRepositories`.
 
 Adding a repository only registers it for future webhook-driven source-control
 events. It must not enqueue an initial repository sync or fetch repository
@@ -272,6 +289,10 @@ export const SOURCE_CONTROL_ALL_PATHS_GLOB = "**" as const;
 `watchedPathGlobsSchema` must accept `"**"`, and `matchesWatchedPath` must treat
 it as matching any non-empty changed path. This keeps normal repository import
 simple while preserving `.lightfast` as a narrower `skills/**` watch.
+
+If the setup proof is unavailable for an older local row, fall back to excluding
+repositories whose live GitHub `name` is `.lightfast`. Do not rely on the stored
+`fullName` column for this filter.
 
 ## Database Helpers
 
@@ -299,7 +320,8 @@ The page should contain:
   using local product copy and links.
 - Connected organizations card showing the currently fetched GitHub org login
   and connected status.
-- Repositories card showing imported and available repositories.
+- Repositories card showing imported and available normal repositories, with
+  `.lightfast` omitted.
 - `Refresh GitHub` action that invalidates/refetches the repository list.
 - `Add repository` button that opens a searchable repository picker.
 
@@ -309,6 +331,8 @@ The add-repository modal should include:
 - single-select rows with repository name and private/public indicator;
 - imported repositories shown as disabled because v1 does not edit existing
   watch scopes from the import modal;
+- `.lightfast` omitted because setup infrastructure is not added from this
+  modal;
 - a submit button for the selected repository.
 
 For v1, keep watch-scope editing out of the modal. Imported normal repositories
@@ -360,7 +384,8 @@ Add tests at each boundary:
   upsert behavior.
 - `api/app`: source-control router read/import behavior, admin guard, owner
   id filtering, inaccessible repository rejection, merged imported/available
-  output, and no client-supplied repository metadata in import mutations.
+  output, `.lightfast` exclusion, and no client-supplied repository metadata in
+  import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
 - `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
@@ -368,12 +393,14 @@ Add tests at each boundary:
   authentication.
 - `apps/app`: source-control integration UI renders connected orgs, omits
   personal GitHub account state, opens add-repository modal, filters
-  repositories, and submits one selected repository.
+  repositories, omits `.lightfast` from normal repo UI, and submits one
+  selected repository.
 
 ## Rollout
 
 The feature can ship without migrating existing rows. Existing `.lightfast`
-watch rows remain valid. After deployment, organizations with a connected
-GitHub org will fetch current repository state from GitHub and can explicitly
-add more repositories from the integration UI. Added repositories become active
-for future GitHub webhook deliveries only.
+watch rows remain valid but are excluded from the normal repository list. After
+deployment, organizations with a connected GitHub org will fetch current
+repository state from GitHub and can explicitly add more repositories from the
+integration UI. Added repositories become active for future GitHub webhook
+deliveries only.
