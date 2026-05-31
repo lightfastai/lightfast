@@ -1,8 +1,8 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ViewSwitcherProps } from "../../_components/views/view-switcher";
 import type { SignalViewRow } from "./signals-views-model";
 
-// --- URL param state (nuqs, batched via useQueryStates) ---------------------
 interface Params {
   disposition: string;
   kind: string;
@@ -20,37 +20,38 @@ vi.mock("nuqs", () => ({
   useQueryStates: () => [paramsState, setParamsMock] as const,
 }));
 
-// --- views data + mutations -------------------------------------------------
 let viewsData: SignalViewRow[] = [];
-const createMutate = vi.fn();
-const deleteMutate = vi.fn(
-  (_input: { publicId: string }, opts?: { onSuccess?: () => void }) => {
-    opts?.onSuccess?.();
-  }
-);
+const createAsync = vi.fn();
+const deleteAsync = vi.fn();
 
 vi.mock("./use-signal-views-query", () => ({
+  useCreateSignalView: () => ({ mutateAsync: createAsync }),
+  useDeleteSignalView: () => ({ mutateAsync: deleteAsync }),
   useSignalViewsQuery: () => ({ data: viewsData }),
-  useCreateSignalView: () => ({ mutate: createMutate, isPending: false }),
-  useDeleteSignalView: () => ({ mutate: deleteMutate }),
 }));
 
-// Stub the dialog so we can drive its onCreated callback directly.
-let dialogProps: {
-  open: boolean;
-  onCreated: (publicId: string) => void;
-} | null = null;
-vi.mock("./signal-create-view-dialog", () => ({
-  SignalCreateViewDialog: (props: {
-    open: boolean;
-    onCreated: (publicId: string) => void;
-  }) => {
-    dialogProps = props;
-    return props.open ? (
-      <button onClick={() => props.onCreated("sigview_new")} type="button">
-        stub-save
-      </button>
-    ) : null;
+// Capture the props handed to the shared switcher and expose buttons that fire
+// the entity callbacks, so we test the signals wiring in isolation.
+let switcherProps: ViewSwitcherProps;
+vi.mock("../../_components/views/view-switcher", () => ({
+  ViewSwitcher: (props: ViewSwitcherProps) => {
+    switcherProps = props;
+    return (
+      <div>
+        <button onClick={props.onSelectAll} type="button">
+          all
+        </button>
+        <button onClick={() => props.onSelectView("sigview_1")} type="button">
+          select
+        </button>
+        <button onClick={() => void props.onCreate("My view")} type="button">
+          create
+        </button>
+        <button onClick={() => void props.onDelete("sigview_1")} type="button">
+          delete
+        </button>
+      </div>
+    );
   },
 }));
 
@@ -58,21 +59,21 @@ const { SignalsViewSwitcher } = await import("./signals-view-switcher");
 
 function makeView(overrides: Partial<SignalViewRow> = {}): SignalViewRow {
   return {
-    id: 1,
-    publicId: "sigview_1",
     clerkOrgId: "org_test",
-    createdByUserId: "user_test",
-    name: "My follow-ups",
     config: {
       filters: {
-        kinds: ["follow_up"],
-        priorities: [],
-        dispositions: [],
-        peopleRouted: false,
+        dispositions: ["actionable"],
+        kinds: ["bug"],
+        peopleRouted: true,
+        priorities: ["urgent"],
       },
     },
-    createdAt: new Date("2026-05-30T01:00:00.000Z"),
-    updatedAt: new Date("2026-05-30T01:00:00.000Z"),
+    createdAt: new Date("2026-05-31T00:00:00.000Z"),
+    createdByUserId: "user_test",
+    id: 1,
+    name: "High priority",
+    publicId: "sigview_1",
+    updatedAt: new Date("2026-05-31T00:00:00.000Z"),
     ...overrides,
   } as SignalViewRow;
 }
@@ -81,82 +82,75 @@ beforeEach(() => {
   paramsState = {
     disposition: "",
     kind: "",
-    priority: "",
     people: "all",
+    priority: "",
     view: null,
   };
   viewsData = [];
-  dialogProps = null;
-  vi.clearAllMocks();
+  createAsync.mockReset().mockResolvedValue({ publicId: "sigview_new" });
+  deleteAsync.mockReset().mockResolvedValue(undefined);
+  setParamsMock.mockReset();
 });
 
 describe("SignalsViewSwitcher", () => {
-  it('renders the "All signals" pill, active when no saved view is set', () => {
+  it("passes signals identity to the shared switcher", () => {
     render(<SignalsViewSwitcher />);
-    expect(
-      screen.getByRole("button", { name: "All signals" })
-    ).toBeInTheDocument();
+    expect(switcherProps.allLabel).toBe("All signals");
   });
 
-  it("renders one always-visible pill per saved view (no dropdown)", () => {
+  it("stamps a view's filters and ?view atomically on select", () => {
     viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
-    // The select pill is directly present without opening any menu.
-    expect(
-      screen.getByRole("button", { name: "My follow-ups" })
-    ).toBeInTheDocument();
-  });
-
-  it("clicking a view pill stamps its params and sets ?view atomically", () => {
-    viewsData = [makeView()];
-    render(<SignalsViewSwitcher />);
-
-    fireEvent.click(screen.getByRole("button", { name: "My follow-ups" }));
-
-    expect(setParamsMock).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByRole("button", { name: "select" }));
     expect(setParamsMock).toHaveBeenCalledWith(
       expect.objectContaining({
-        kind: "follow_up",
+        disposition: "actionable",
+        kind: "bug",
+        people: "routed",
+        priority: "urgent",
         view: "sigview_1",
       })
     );
   });
 
-  it('clicking "All signals" clears the filters and ?view', () => {
+  it("clears filters and ?view on All", () => {
     paramsState.view = "sigview_1";
-    viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
-
-    fireEvent.click(screen.getByRole("button", { name: "All signals" }));
-
+    fireEvent.click(screen.getByRole("button", { name: "all" }));
     expect(setParamsMock).toHaveBeenCalledWith(
-      expect.objectContaining({ kind: "", view: null })
+      expect.objectContaining({
+        disposition: "",
+        kind: "",
+        people: "all",
+        priority: "",
+        view: null,
+      })
     );
   });
 
-  it('"+" opens the dialog and saving sets ?view to the new id', () => {
+  it("creates a view then selects it", async () => {
     render(<SignalsViewSwitcher />);
-
-    fireEvent.click(screen.getByRole("button", { name: "New view" }));
-    expect(dialogProps?.open).toBe(true);
-
-    fireEvent.click(screen.getByRole("button", { name: "stub-save" }));
-    expect(setParamsMock).toHaveBeenCalledWith({ view: "sigview_new" });
+    fireEvent.click(screen.getByRole("button", { name: "create" }));
+    await waitFor(() =>
+      expect(createAsync).toHaveBeenCalledWith(
+        expect.objectContaining({ name: "My view" })
+      )
+    );
+    await waitFor(() =>
+      expect(setParamsMock).toHaveBeenCalledWith({ view: "sigview_new" })
+    );
   });
 
-  it("deleting the active view removes it and clears ?view", () => {
+  it("deletes the active view and clears ?view", async () => {
     paramsState.view = "sigview_1";
     viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
-
-    fireEvent.click(
-      screen.getByRole("button", { name: "Delete My follow-ups" })
+    fireEvent.click(screen.getByRole("button", { name: "delete" }));
+    await waitFor(() =>
+      expect(deleteAsync).toHaveBeenCalledWith({ publicId: "sigview_1" })
     );
-
-    expect(deleteMutate).toHaveBeenCalledWith(
-      { publicId: "sigview_1" },
-      expect.anything()
+    await waitFor(() =>
+      expect(setParamsMock).toHaveBeenCalledWith({ view: null })
     );
-    expect(setParamsMock).toHaveBeenCalledWith({ view: null });
   });
 });
