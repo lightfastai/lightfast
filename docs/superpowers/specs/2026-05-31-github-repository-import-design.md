@@ -198,9 +198,9 @@ repository summary counts for the connected binding:
 Admin and member readable. Requires an active org identity. If no GitHub binding
 exists, return an empty list with `status: "unbound"`. If live GitHub
 installation metadata cannot be fetched, return no organization metadata. If
-installation metadata succeeds but repository listing fails, the API may still
-return the live organization metadata and `installationManageUrl`, but must
-return no repository rows.
+installation metadata succeeds but repository listing fails, return the live
+organization metadata and `installationManageUrl`, mark the repository list as
+errored, and return no repository rows.
 
 ```ts
 {
@@ -221,6 +221,10 @@ return no repository rows.
     private: boolean;
     watchedPathGlobs: string[] | null;
   }>;
+  repositoriesError: {
+    code: "github_repository_listing_failed";
+    message: string;
+  } | null;
   status: "bound" | "unbound";
 }
 ```
@@ -370,6 +374,13 @@ viewer as non-admin for mutation affordances.
 For v1, keep watch-scope editing out of the modal. Imported normal repositories
 use the default `["**"]` all-paths watch.
 
+Repository-list failures must not block the whole integration settings screen.
+If live installation metadata is available, keep rendering the GitHub heading,
+integration metadata card, connected organization card, and admin-only
+`Manage GitHub access` link. Only the repositories card should switch to an
+inline error/retry state, and `Add repository` should be disabled until the list
+refresh succeeds.
+
 When live GitHub data is unavailable, the UI should show the connected status,
 the imported repository count from Lightfast, and a retry affordance. It should
 not render repository names, org logins, visibility, or other provider metadata
@@ -405,8 +416,11 @@ organization so the import UI can exercise imported and available states.
   to GitHub setup.
 - GitHub installation metadata failure: show the connected status and an inline
   refresh error with retry, without rendering stale provider account labels.
-- GitHub listing failure: show the imported repository count and an inline
-  repository-list error with retry, without rendering stale repository labels.
+- GitHub listing failure after installation metadata succeeds: keep the
+  integration header and connected organization rendered from live installation
+  metadata, show imported repository count plus an inline repository-list error
+  with retry in the repositories card, and avoid rendering stale repository
+  labels.
 - Selected repository no longer accessible: reject the mutation with
   `PRECONDITION_FAILED` and refetch the list.
 - Selected repository already added: return success with the refreshed list and
@@ -427,6 +441,7 @@ Add tests at each boundary:
 - `api/app`: source-control router member-readable list behavior, admin-only
   import behavior, owner id filtering, inaccessible repository rejection,
   idempotent already-added imports, merged imported/available output,
+  nonblocking repository-list errors when installation metadata is available,
   `.lightfast` exclusion, omission of unavailable watched repositories, and no
   client-supplied repository metadata in import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
@@ -438,7 +453,8 @@ Add tests at each boundary:
   omits personal GitHub account state, disables add-repository controls for
   non-admins, opens add-repository modal for admins, filters repositories, shows
   `Manage GitHub access` only to admins from live installation metadata, omits
-  `.lightfast` from normal repo UI, and submits one selected repository.
+  `.lightfast` from normal repo UI, keeps repository-list failures scoped to the
+  repositories card, and submits one selected repository.
 
 ## Rollout
 
