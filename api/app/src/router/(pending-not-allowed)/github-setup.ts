@@ -1,3 +1,4 @@
+import { orgSetupGateSchema } from "@repo/app-setup-contract";
 import { clerkOrgSlugSchema } from "@repo/app-validation";
 import { githubBindStartOutputSchema } from "@repo/github-app-contract";
 import { buildGitHubInstallationUrl } from "@repo/github-app-node";
@@ -12,6 +13,10 @@ import {
 import { getGitHubAppConfig } from "../../services/github/config";
 import { issueGitHubInstallAttempt } from "../../services/github/setup/attempts";
 import { syncGitHubBindingClaim } from "../../services/github/setup/flow";
+import {
+  GitHubLightfastRepositorySetupError,
+  verifyGitHubLightfastRepositorySetup,
+} from "../../services/github/setup/lightfast-repository";
 import { orgAdminProcedure, setupProcedure } from "../../trpc";
 
 export const githubSetupRouter = {
@@ -68,4 +73,29 @@ export const githubSetupRouter = {
   syncBindingClaim: setupProcedure.mutation(async ({ ctx }) =>
     syncGitHubBindingClaim({ clerkOrgId: ctx.auth.identity.orgId })
   ),
+
+  verifyLightfastRepo: orgAdminProcedure
+    .output(orgSetupGateSchema)
+    .mutation(async ({ ctx }) => {
+      try {
+        return await verifyGitHubLightfastRepositorySetup({
+          clerkOrgId: ctx.auth.identity.orgId,
+          db: ctx.db,
+        });
+      } catch (error) {
+        if (error instanceof GitHubLightfastRepositorySetupError) {
+          throw new TRPCError({
+            code:
+              error.code === "github_org_missing"
+                ? "PRECONDITION_FAILED"
+                : error.code === "github_transient_error"
+                  ? "INTERNAL_SERVER_ERROR"
+                  : "BAD_REQUEST",
+            message: error.message,
+            cause: error,
+          });
+        }
+        throw error;
+      }
+    }),
 } satisfies TRPCRouterRecord;

@@ -11,6 +11,7 @@
  */
 
 import { db } from "@db/app/client";
+import { repairIdForSetupRequirement } from "@repo/app-setup-contract";
 import { initTRPC } from "@trpc/server";
 import { createObservabilityMiddleware } from "@vendor/observability/trpc";
 import superjson from "superjson";
@@ -297,13 +298,16 @@ const requireBoundOrg = t.middleware(({ ctx, next }) => {
     });
   }
   if (ctx.auth.identity.orgGate.bindingStatus !== "bound") {
+    const requirement = ctx.auth.identity.orgGate.nextSetupRequirement;
     throwDiagnostic({
       trpcCode: "FORBIDDEN",
       diagnostic: {
         code: "ORG_SETUP_REQUIRED",
         message:
-          "Organization setup required. Connect a source-control organization before using Lightfast features.",
-        repair: { id: "bind-source-control" },
+          "Organization setup required. Complete setup before using Lightfast features.",
+        repair: {
+          id: repairIdForSetupRequirement(requirement),
+        },
       },
     });
   }
@@ -317,7 +321,7 @@ const requireBoundOrg = t.middleware(({ ctx, next }) => {
  *
  * The default gate for org-scoped product features. Admits an `active`
  * identity whose org has completed source-control setup
- * (`bindingStatus === "bound"`). An active but unbound/revoked org throws
+ * (`bindingStatus === "bound"`). An active but unbound org throws
  * `FORBIDDEN` with an `ORG_SETUP_REQUIRED` entry in `data.diagnostics[]`.
  *
  * `ctx.auth.identity.orgId` is guaranteed in handlers.

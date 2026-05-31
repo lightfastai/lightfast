@@ -1,4 +1,5 @@
 import type { GitHubSeedConfig } from "@emulators/github";
+import { GITHUB_WEBHOOK_PATH } from "@repo/github-app-contract";
 
 const githubAppPrivateKey = `-----BEGIN RSA PRIVATE KEY-----
 MIIEowIBAAKCAQEAouLr+xRpS3PjnON4PW2cgwUUmRpZWBKy22PJrBIJ58MFG9T6
@@ -49,6 +50,7 @@ export function createGitHubEmulatorSeed(
   appOrigin = "https://lightfast.localhost"
 ): GitHubSeedConfig {
   const oauthCallbackUrl = new URL("/api/github/oauth/callback", appOrigin);
+  const webhookUrl = new URL(GITHUB_WEBHOOK_PATH, appOrigin);
 
   return {
     users: [
@@ -94,6 +96,7 @@ export function createGitHubEmulatorSeed(
         slug: GITHUB_EMULATOR_FIXTURES.githubAppSlug,
         name: GITHUB_EMULATOR_FIXTURES.githubAppName,
         private_key: GITHUB_EMULATOR_FIXTURES.githubAppPrivateKey,
+        webhook_url: webhookUrl.toString(),
         webhook_secret: GITHUB_EMULATOR_FIXTURES.githubWebhookSecret,
         permissions: {
           contents: "read",

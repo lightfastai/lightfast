@@ -3,6 +3,7 @@ import {
   automationIdSchema,
   automationRunIdSchema,
 } from "@repo/app-validation/schemas";
+import { sourceControlRepositoryPushEventSchema } from "@repo/source-control-contract";
 import { eventType } from "@vendor/inngest";
 import { z } from "zod";
 
@@ -30,4 +31,10 @@ export const appEvents = {
       clerkOrgId: z.string().min(1),
     }),
   }),
+  "app/github.repository.push.received": eventType(
+    "app/github.repository.push.received",
+    {
+      schema: sourceControlRepositoryPushEventSchema,
+    }
+  ),
 } as const;

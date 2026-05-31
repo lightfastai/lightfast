@@ -16,6 +16,7 @@ import type {
   OrgSourceControlBindingProvider,
 } from "../schema";
 import { orgSourceControlBindings } from "../schema";
+import { isDuplicateKeyError } from "./drizzle-results";
 
 const { activeClerkOrgId: _activeClerkOrgId, ...bindingSelection } =
   getTableColumns(orgSourceControlBindings);
@@ -39,26 +40,6 @@ export async function getActiveOrgBinding(
     )
     .limit(1);
   return row;
-}
-
-/**
- * True when the org has at least one active binding — the v1 "bound" gate.
- */
-export async function isOrgBound(
-  db: Database,
-  clerkOrgId: string
-): Promise<boolean> {
-  const [row] = await db
-    .select({ id: orgSourceControlBindings.id })
-    .from(orgSourceControlBindings)
-    .where(
-      and(
-        eq(orgSourceControlBindings.clerkOrgId, clerkOrgId),
-        eq(orgSourceControlBindings.status, "active")
-      )
-    )
-    .limit(1);
-  return row !== undefined;
 }
 
 export type OrgSourceControlBindingConflictCode =
@@ -274,24 +255,6 @@ export async function markOrgBindingRevoked(
         eq(orgSourceControlBindings.status, "revoked")
       )
     );
-}
-
-function isDuplicateKeyError(error: unknown): boolean {
-  if (error === null || typeof error !== "object") {
-    return false;
-  }
-
-  const { body, code, message } = error as {
-    body?: { code?: unknown };
-    code?: unknown;
-    message?: unknown;
-  };
-
-  return (
-    body?.code === "ER_DUP_ENTRY" ||
-    code === "ER_DUP_ENTRY" ||
-    (typeof message === "string" && message.includes("Duplicate entry"))
-  );
 }
 
 async function insertActiveOrgBinding(

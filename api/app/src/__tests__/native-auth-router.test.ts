@@ -3,14 +3,14 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const clerkGetUserMock = vi.fn();
 const clerkGetOrganizationMembershipListMock = vi.fn();
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 const issueNativeAuthAttemptMock = vi.fn();
 const consumeNativeAuthAttemptMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
-  isOrgBound: isOrgBoundMock,
+  getActiveOrgBinding: getActiveOrgBindingMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -91,9 +91,25 @@ describe("nativeAuthRouter", () => {
     clerkGetOrganizationMembershipListMock.mockReset();
     issueNativeAuthAttemptMock.mockReset();
     consumeNativeAuthAttemptMock.mockReset();
-    isOrgBoundMock.mockReset();
-    isOrgBoundMock.mockImplementation(
-      async (_db: Database, orgId: string) => orgId === "org_1"
+    getActiveOrgBindingMock.mockReset();
+    getActiveOrgBindingMock.mockImplementation(
+      async (_db: Database, orgId: string) =>
+        orgId === "org_1"
+          ? {
+              metadata: {
+                lightfastRepository: {
+                  fullName: "acme/.lightfast",
+                  id: "987",
+                  installationId: "1001",
+                  name: ".lightfast",
+                  verifiedAt: "2026-05-30T10:00:00.000Z",
+                },
+              },
+              provider: "github",
+              providerAccountLogin: "acme",
+              providerInstallationId: "1001",
+            }
+          : undefined
     );
     clerkGetUserMock.mockResolvedValue({
       emailAddresses: [

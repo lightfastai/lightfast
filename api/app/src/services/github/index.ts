@@ -13,3 +13,4 @@ export {
   type GitHubRedirectResult,
   syncGitHubBindingClaim,
 } from "./setup/flow";
+export { handleGitHubWebhook } from "./webhook";

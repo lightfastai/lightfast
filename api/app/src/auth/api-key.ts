@@ -1,11 +1,11 @@
 import type { Database } from "@db/app";
-import { isOrgBound } from "@db/app";
 import { db as appDb } from "@db/app/client";
 import { getUnkeyClient } from "@vendor/unkey/server";
 
 import type { Diagnostic } from "../diagnostics";
 import { LIGHTFAST_API_KEY_PREFIX } from "./api-key-prefix";
-import type { AuthIdentity, BindingStatus } from "./identity";
+import type { AuthIdentity } from "./identity";
+import { resolveOrgSetupGate } from "./org-setup-gate";
 
 export type ApiKeyAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
 
@@ -114,13 +114,15 @@ export async function resolveApiKeyAuth(input: {
     );
   }
 
-  const bound = await isOrgBound(input.db ?? appDb, orgId);
-  const bindingStatus = (bound ? "bound" : "unbound") satisfies BindingStatus;
+  const orgGate = await resolveOrgSetupGate({
+    db: input.db ?? appDb,
+    clerkOrgId: orgId,
+  });
   const identity: ApiKeyAuthIdentity = {
     type: "active",
     userId: createdByUserId,
     orgId,
-    orgGate: { bindingStatus },
+    orgGate,
   };
 
   if (!key.keyId) {

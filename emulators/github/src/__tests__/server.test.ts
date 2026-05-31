@@ -1,4 +1,5 @@
-import { createHash, createPrivateKey } from "node:crypto";
+import { createHash, createHmac, createPrivateKey } from "node:crypto";
+import { createServer } from "node:http";
 import { Store } from "@emulators/core";
 import {
   getGitHubStore,
@@ -162,6 +163,28 @@ describe("@repo/github-emulator", () => {
     });
   });
 
+  it("seeds the GitHub App webhook URL from the Lightfast app origin", () => {
+    const store = new Store();
+    githubPlugin.seed?.(store, GITHUB_EMULATOR_FIXTURES.origin);
+    seedFromConfig(
+      store,
+      GITHUB_EMULATOR_FIXTURES.origin,
+      createGitHubEmulatorSeed("https://app.lightfast.localhost")
+    );
+    const gh = getGitHubStore(store);
+    const app = gh.apps.findOneBy(
+      "app_id",
+      GITHUB_EMULATOR_FIXTURES.githubAppId
+    );
+
+    expect(app?.webhook_url).toBe(
+      "https://app.lightfast.localhost/api/github/webhook"
+    );
+    expect(app?.webhook_secret).toBe(
+      GITHUB_EMULATOR_FIXTURES.githubWebhookSecret
+    );
+  });
+
   it("seeds the OAuth user as a member of the GitHub org", async () => {
     const token = "test_token_lightfast";
     const res = await fetch(`${emulator?.url}/user/orgs`, {
@@ -205,10 +228,117 @@ describe("@repo/github-emulator", () => {
     );
 
     expect(res.status).toBe(201);
-    await expect(res.json()).resolves.toMatchObject({
+    const tokenBody = (await res.json()) as { token?: string };
+    expect(tokenBody).toMatchObject({
       repository_selection: "all",
       token: expect.stringMatching(/^ghs_/),
     });
+
+    const refRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/ref/heads/main`,
+      {
+        headers: {
+          authorization: `Bearer ${tokenBody.token}`,
+        },
+      }
+    );
+    expect(refRes.status).toBe(200);
+  });
+
+  it("can emulate the missing and satisfied .lightfast repository requirement", async () => {
+    const jwt = await createAppJwt();
+    const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
+    const missingRes = await fetch(
+      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+    expect(missingRes.status).toBe(404);
+
+    const createRes = await fetch(`${emulator?.url}/orgs/${owner}/repos`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        auto_init: true,
+        name: ".lightfast",
+        private: true,
+      }),
+    });
+    expect(createRes.status).toBe(201);
+
+    const installationRes = await fetch(
+      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+    expect(installationRes.status).toBe(200);
+    await expect(installationRes.json()).resolves.toMatchObject({
+      id: GITHUB_EMULATOR_FIXTURES.installationId,
+      repository_selection: "all",
+    });
+  });
+
+  it("resets emulator state for repeatable local E2E runs", async () => {
+    emulator?.reset();
+    const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
+    const createRes = await fetch(`${emulator?.url}/orgs/${owner}/repos`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        "content-type": "application/json",
+      },
+      body: JSON.stringify({
+        auto_init: true,
+        name: ".lightfast",
+        private: true,
+      }),
+    });
+    expect(createRes.status).toBe(201);
+
+    const resetRes = await fetch(`${emulator?.url}/__lightfast/reset`, {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+    expect(resetRes.status).toBe(200);
+    await expect(resetRes.json()).resolves.toEqual({
+      ok: true,
+      installationId: GITHUB_EMULATOR_FIXTURES.installationId,
+      org: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+    });
+
+    const jwt = await createAppJwt();
+    const missingRes = await fetch(
+      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+    expect(missingRes.status).toBe(404);
+
+    const installRes = await fetch(
+      `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_after_reset`,
+      { redirect: "manual" }
+    );
+    expect(installRes.status).toBe(302);
+    expect(installRes.headers.get("location")).toContain(
+      "installation_id=1001"
+    );
   });
 
   it("redirects GitHub App install requests to the Lightfast setup callback", async () => {
@@ -386,6 +516,7 @@ describe("@repo/github-emulator", () => {
       fallbackFetch: () =>
         Response.json({ message: "fallback" }, { status: 418 }),
       publicOrigin: GITHUB_EMULATOR_FIXTURES.origin,
+      resetStore: () => undefined,
       store,
       tokenMap,
     });
@@ -445,6 +576,209 @@ describe("@repo/github-emulator", () => {
         }),
       ],
     });
+  });
+
+  it("simulates a push through GitHub-compatible git APIs", async () => {
+    const { pushGitHubEmulatorCommit } = await import("../push");
+    const demoPath = "skills/demo/SKILL.md";
+    const result = await pushGitHubEmulatorCommit({
+      apiBaseUrl: emulator?.url ?? "",
+      branch: "main",
+      files: [
+        {
+          content: "# Demo\n",
+          path: demoPath,
+        },
+      ],
+      message: "Add demo skill",
+      owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+      repo: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+      token: GITHUB_EMULATOR_FIXTURES.userToken,
+    });
+
+    expect(result.afterSha).toEqual(expect.any(String));
+    expect(result.beforeSha).toEqual(expect.any(String));
+    expect(result.afterSha).not.toBe(result.beforeSha);
+
+    const commitRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/commits/${result.afterSha}`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(commitRes.status).toBe(200);
+    const commit = (await commitRes.json()) as {
+      commit?: { tree?: { sha?: string } };
+    };
+    const treeSha = commit.commit?.tree?.sha;
+    expect(treeSha).toEqual(expect.any(String));
+
+    const treeRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/trees/${treeSha}?recursive=1`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(treeRes.status).toBe(200);
+    const tree = (await treeRes.json()) as {
+      tree?: Array<{ path?: string; sha?: string; type?: string }>;
+    };
+    const demoEntry = tree.tree?.find((entry) => entry.path === demoPath);
+    expect(demoEntry).toMatchObject({
+      path: demoPath,
+      sha: expect.any(String),
+      type: "blob",
+    });
+
+    const blobRes = await fetch(
+      `${emulator?.url}/repos/${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}/git/blobs/${demoEntry?.sha}`,
+      {
+        headers: {
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(blobRes.status).toBe(200);
+    const blob = (await blobRes.json()) as {
+      content?: string;
+      encoding?: string;
+    };
+    expect(blob.encoding).toBe("base64");
+    expect(Buffer.from(blob.content ?? "", "base64").toString("utf8")).toBe(
+      "# Demo\n"
+    );
+  });
+
+  it("delivers a signed GitHub App push webhook after simulated push", async () => {
+    const received: Array<{
+      body: string;
+      event: string | null;
+      signature: string | null;
+    }> = [];
+    let resolveWebhook: (() => void) | undefined;
+    const webhookReceived = new Promise<void>((resolve) => {
+      resolveWebhook = resolve;
+    });
+    const receiver = await new Promise<{
+      close: () => Promise<void>;
+      url: string;
+    }>((resolve, reject) => {
+      const server = createServer(async (req, res) => {
+        const chunks: Buffer[] = [];
+        req.on("data", (chunk) => chunks.push(Buffer.from(chunk)));
+        req.on("end", () => {
+          received.push({
+            body: Buffer.concat(chunks).toString("utf8"),
+            event: req.headers["x-github-event"]?.toString() ?? null,
+            signature: req.headers["x-hub-signature-256"]?.toString() ?? null,
+          });
+          resolveWebhook?.();
+          res.statusCode = 202;
+          res.end("ok");
+        });
+      });
+      server.once("error", reject);
+      server.listen(0, "127.0.0.1", () => {
+        server.off("error", reject);
+        const address = server.address();
+        if (typeof address !== "object" || !address) {
+          throw new Error("expected receiver address");
+        }
+        resolve({
+          close: () =>
+            new Promise<void>((closeResolve, closeReject) => {
+              server.close((error) => {
+                if (error) {
+                  closeReject(error);
+                  return;
+                }
+                closeResolve();
+              });
+            }),
+          url: `http://127.0.0.1:${address.port}/api/github/webhook`,
+        });
+      });
+    });
+
+    let receiverEmulator: StartedGitHubEmulator | undefined;
+    try {
+      receiverEmulator = await startGitHubEmulatorOnAvailablePort({
+        appOrigin: "https://app.lightfast.localhost",
+      });
+      const gh = getGitHubStore(receiverEmulator.store);
+      const app = gh.apps.findOneBy(
+        "app_id",
+        GITHUB_EMULATOR_FIXTURES.githubAppId
+      );
+      if (!app) {
+        throw new Error("expected seeded GitHub App");
+      }
+      gh.apps.update(app.id, { webhook_url: receiver.url });
+
+      const { pushGitHubEmulatorCommit } = await import("../push");
+      const push = await pushGitHubEmulatorCommit({
+        apiBaseUrl: receiverEmulator.url,
+        branch: "main",
+        files: [{ content: "# Demo\n", path: "skills/demo/SKILL.md" }],
+        message: "Add demo skill",
+        owner: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+        repo: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+        token: GITHUB_EMULATOR_FIXTURES.userToken,
+      });
+
+      await webhookReceived;
+      expect(received.length).toBeGreaterThan(0);
+      expect(received[0]).toMatchObject({
+        event: "push",
+        signature: expect.stringMatching(/^sha256=/),
+      });
+      const delivery = received[0];
+      if (!delivery) {
+        throw new Error("expected received webhook delivery");
+      }
+      const expectedSignature = `sha256=${createHmac(
+        "sha256",
+        GITHUB_EMULATOR_FIXTURES.githubWebhookSecret
+      )
+        .update(delivery.body)
+        .digest("hex")}`;
+      expect(delivery.signature).toBe(expectedSignature);
+      const payload = JSON.parse(delivery.body) as {
+        after?: string;
+        before?: string;
+        commits?: Array<{
+          added?: string[];
+          modified?: string[];
+          removed?: string[];
+        }>;
+        installation?: { id?: number };
+        ref?: string;
+        repository?: { full_name?: string };
+      };
+      expect(payload).toMatchObject({
+        after: push.afterSha,
+        before: push.beforeSha,
+        installation: { id: GITHUB_EMULATOR_FIXTURES.installationId },
+        ref: "refs/heads/main",
+        repository: {
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}`,
+        },
+      });
+      expect(payload.commits).toEqual([
+        expect.objectContaining({
+          added: ["skills/demo/SKILL.md"],
+          modified: [],
+          removed: [],
+        }),
+      ]);
+    } finally {
+      await receiverEmulator?.close();
+      await receiver.close();
+    }
   });
 
   it("prints the env values consumed by app and api packages", () => {

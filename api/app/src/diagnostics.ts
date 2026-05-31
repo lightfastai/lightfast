@@ -20,6 +20,8 @@
  * originate from `throwDiagnostic`. The array shape is forward-compatible
  * with future compound errors (e.g. "session expired AND org missing").
  */
+
+import type { OrgSetupRepairId } from "@repo/app-setup-contract";
 import { type TRPC_ERROR_CODE_KEY, TRPCError } from "@trpc/server";
 
 export const DIAGNOSTIC_CAUSE_KIND = "lightfast.diagnostic" as const;
@@ -40,10 +42,10 @@ export interface Repair {
   href?: string;
   /**
    * - `create-or-join-org`   — no active org; the user must create or join one.
-   * - `bind-source-control` — the active org has not connected a source-control
-   *   organization yet; product features stay locked until it is bound.
+   * - setup GitHub repair ids — the active org has not completed the named
+   *   setup requirement yet; product features stay locked until setup is bound.
    */
-  id: "create-or-join-org" | "bind-source-control";
+  id: "create-or-join-org" | OrgSetupRepairId;
 }
 
 export interface Diagnostic {

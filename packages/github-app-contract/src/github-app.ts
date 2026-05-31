@@ -70,3 +70,103 @@ export const githubInstallationMetadataSchema =
 export type GitHubInstallationMetadata = z.infer<
   typeof githubInstallationMetadataSchema
 >;
+
+export const githubWebhookHeadersSchema = z.object({
+  deliveryId: z.string().min(1),
+  event: z.string().min(1),
+  signature256: z
+    .string()
+    .regex(/^sha256=[A-Fa-f0-9]{64}$/, "Expected sha256=<64 hex characters>"),
+});
+export type GitHubWebhookHeaders = z.infer<typeof githubWebhookHeadersSchema>;
+
+const githubSha1Schema = z
+  .string()
+  .regex(/^[0-9a-f]{40}$/i, "Expected 40-character SHA-1");
+
+const githubRepositoryFullNameSchema = z
+  .string()
+  .regex(/^[^/\s]+\/[^/\s]+$/, "Expected repository full name as owner/repo");
+
+const githubWebhookProviderIdSchema = z.union([
+  z.number().int().positive().safe(),
+  z.string().min(1),
+]);
+
+export const githubWebhookInstallationSchema = z.object({
+  id: githubWebhookProviderIdSchema,
+});
+
+export const githubWebhookRepositorySchema = z.object({
+  full_name: githubRepositoryFullNameSchema,
+  id: githubWebhookProviderIdSchema,
+  name: z.string().min(1),
+  owner: z.object({
+    login: z.string().min(1),
+  }),
+});
+
+export const githubPingWebhookPayloadSchema = z.object({
+  hook_id: githubWebhookProviderIdSchema.optional(),
+  installation: githubWebhookInstallationSchema.optional(),
+  repository: githubWebhookRepositorySchema.optional(),
+  zen: z.string().optional(),
+});
+export type GitHubPingWebhookPayload = z.infer<
+  typeof githubPingWebhookPayloadSchema
+>;
+
+const githubPushWebhookCommitSchema = z.object({
+  added: z.array(z.string().min(1)).default([]),
+  modified: z.array(z.string().min(1)).default([]),
+  removed: z.array(z.string().min(1)).default([]),
+});
+
+export const githubPushWebhookPayloadSchema = z.object({
+  after: githubSha1Schema,
+  before: githubSha1Schema,
+  commits: z.array(githubPushWebhookCommitSchema).default([]),
+  installation: githubWebhookInstallationSchema,
+  ref: z.string().min(1),
+  repository: githubWebhookRepositorySchema,
+});
+export type GitHubPushWebhookPayload = z.infer<
+  typeof githubPushWebhookPayloadSchema
+>;
+
+export const normalizedGitHubPushWebhookSchema = z.object({
+  afterSha: githubSha1Schema,
+  beforeSha: githubSha1Schema,
+  changedPaths: z.array(z.string().min(1)),
+  providerInstallationId: z.string().min(1),
+  providerRepositoryId: z.string().min(1),
+  ref: z.string().min(1),
+  repositoryFullName: githubRepositoryFullNameSchema,
+});
+export type NormalizedGitHubPushWebhook = z.infer<
+  typeof normalizedGitHubPushWebhookSchema
+>;
+
+export function normalizeGitHubPushWebhookPayload(
+  payload: GitHubPushWebhookPayload
+): NormalizedGitHubPushWebhook {
+  const changedPaths = Array.from(
+    new Set(
+      payload.commits.flatMap((commit) => [
+        ...commit.added,
+        ...commit.modified,
+        ...commit.removed,
+      ])
+    )
+  );
+
+  return normalizedGitHubPushWebhookSchema.parse({
+    afterSha: payload.after,
+    beforeSha: payload.before,
+    changedPaths,
+    providerInstallationId: String(payload.installation.id),
+    providerRepositoryId: String(payload.repository.id),
+    ref: payload.ref,
+    repositoryFullName: payload.repository.full_name,
+  });
+}

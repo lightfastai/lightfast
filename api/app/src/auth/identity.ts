@@ -1,4 +1,5 @@
-import { type Database, isOrgBound } from "@db/app";
+import type { Database } from "@db/app";
+import type { OrgSetupGate } from "@repo/app-setup-contract";
 import {
   NATIVE_AUTH_HEADERS,
   type NativeClient,
@@ -7,6 +8,7 @@ import {
 import { auth } from "@vendor/clerk/server";
 import { findUserOrganizationMembership } from "./clerk-org-membership";
 import { isExpectedNativeOAuthAccess } from "./native-oauth";
+import { resolveOrgSetupGate } from "./org-setup-gate";
 
 /**
  * Org binding gate — has the active org completed source-control setup?
@@ -15,16 +17,14 @@ import { isExpectedNativeOAuthAccess } from "./native-oauth";
  *   unbound → no active Binding yet.
  *   revoked → a Binding existed and was revoked; treated as not usable.
  */
-export type BindingStatus = "bound" | "unbound" | "revoked";
+export type BindingStatus = OrgSetupGate["bindingStatus"];
 
 /**
  * Org-level gate signal carried on an `active` identity. Resolved from the
  * authoritative Lightfast DB binding; enforced server-side by tRPC's
  * `boundOrgProcedure`.
  */
-export interface OrgGate {
-  bindingStatus: BindingStatus;
-}
+export type OrgGate = OrgSetupGate;
 
 /**
  * Authorization identity — the answer to "who is this request from?".
@@ -77,12 +77,12 @@ export const UNAUTH_IDENTITY = {
 export function authIdentity(
   userId: string,
   orgId: string | null | undefined,
-  bindingStatus: BindingStatus
+  orgGate: OrgGate
 ): AuthIdentity {
   if (!orgId) {
     return { type: "pending", userId };
   }
-  return { type: "active", userId, orgId, orgGate: { bindingStatus } };
+  return { type: "active", userId, orgId, orgGate };
 }
 
 async function authIdentityFromDb(
@@ -93,8 +93,8 @@ async function authIdentityFromDb(
   if (!orgId) {
     return { type: "pending", userId };
   }
-  const bound = await isOrgBound(db, orgId);
-  return authIdentity(userId, orgId, bound ? "bound" : "unbound");
+  const orgGate = await resolveOrgSetupGate({ db, clerkOrgId: orgId });
+  return authIdentity(userId, orgId, orgGate);
 }
 
 async function isNativeOrgMember(input: {

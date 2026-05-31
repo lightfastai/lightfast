@@ -1,4 +1,8 @@
 import type { LightfastLastActiveOrg } from "@repo/app-clerk-claim";
+import {
+  orgSetupRequirementSchema,
+  pathForSetupRequirement,
+} from "@repo/app-setup-contract";
 import type { NextMiddleware as NemoMiddleware } from "@rescale/nemo";
 import { createNEMO } from "@rescale/nemo";
 import {
@@ -48,6 +52,7 @@ const securityHeaders = securityMiddleware({
 const GITHUB_BINDING_ROUTE_PATTERNS = [
   "/api/github/setup",
   "/api/github/oauth/callback",
+  "/api/github/webhook",
 ] as const;
 
 const PUBLIC_ROUTE_PATTERNS = [
@@ -105,6 +110,11 @@ const ORG_ROUTE_POLICIES = [
   { clerkSync: true, pattern: "/:slug/automations(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/settings(.*)", setupExempt: true },
   { clerkSync: true, pattern: "/:slug/tasks/bind(.*)", setupExempt: true },
+  {
+    clerkSync: true,
+    pattern: "/:slug/tasks/github/lightfast-repo(.*)",
+    setupExempt: true,
+  },
 ] as const;
 
 const ORG_PRODUCT_ROUTE_PATTERNS = ["/:slug", "/:slug/(.*)"] as const;
@@ -153,6 +163,19 @@ function redirectToPostAuth(
   authState: Parameters<typeof getPostAuthPath>[0]
 ) {
   return NextResponse.redirect(new URL(getPostAuthPath(authState), req.url));
+}
+
+function getSetupPathFromClaims(input: {
+  orgSlug: string;
+  sessionClaims?: CustomJwtSessionClaims | null;
+}) {
+  const parsed = orgSetupRequirementSchema.safeParse(
+    input.sessionClaims?.lf_next_setup_requirement
+  );
+  return pathForSetupRequirement({
+    orgSlug: input.orgSlug,
+    requirement: parsed.success ? parsed.data : "github_org",
+  });
 }
 
 function getClerkOAuthContinuationUrl(req: NextRequest) {
@@ -306,7 +329,7 @@ const clerkProxyMiddleware = clerkMiddleware(
         bindingStatus !== "bound"
       ) {
         return NextResponse.redirect(
-          new URL(`/${orgSlug}/tasks/bind`, req.url)
+          new URL(getSetupPathFromClaims({ orgSlug, sessionClaims }), req.url)
         );
       }
     }

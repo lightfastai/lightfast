@@ -2,10 +2,10 @@ import { call, ORPCError } from "@orpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const verifyMock = vi.fn();
-const isOrgBoundMock = vi.fn();
+const getActiveOrgBindingMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
-vi.mock("@db/app", () => ({ isOrgBound: isOrgBoundMock }));
+vi.mock("@db/app", () => ({ getActiveOrgBinding: getActiveOrgBindingMock }));
 
 vi.mock("@vendor/unkey/server", () => ({
   getUnkeyClient: () => ({
@@ -53,8 +53,21 @@ async function invokeAuth(headers: Headers) {
 
 beforeEach(() => {
   verifyMock.mockReset();
-  isOrgBoundMock.mockReset();
-  isOrgBoundMock.mockResolvedValue(true);
+  getActiveOrgBindingMock.mockReset();
+  getActiveOrgBindingMock.mockResolvedValue({
+    metadata: {
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "987",
+        installationId: "1001",
+        name: ".lightfast",
+        verifiedAt: "2026-05-30T10:00:00.000Z",
+      },
+    },
+    provider: "github",
+    providerAccountLogin: "acme",
+    providerInstallationId: "1001",
+  });
 });
 
 describe("authMiddleware", () => {
@@ -64,7 +77,7 @@ describe("authMiddleware", () => {
       message: expect.stringContaining("API key required"),
     });
     expect(verifyMock).not.toHaveBeenCalled();
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when scheme is not Bearer", async () => {
@@ -75,7 +88,7 @@ describe("authMiddleware", () => {
       message: expect.stringContaining("API key required"),
     });
     expect(verifyMock).not.toHaveBeenCalled();
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when token is not lf_ prefixed (no network call)", async () => {
@@ -86,7 +99,7 @@ describe("authMiddleware", () => {
       message: expect.stringContaining("Invalid API key format"),
     });
     expect(verifyMock).not.toHaveBeenCalled();
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when Unkey verification throws", async () => {
@@ -99,7 +112,7 @@ describe("authMiddleware", () => {
       message: "Invalid API key",
     });
     expect(verifyMock).toHaveBeenCalledWith({ key: validKey });
-    expect(isOrgBoundMock).not.toHaveBeenCalled();
+    expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 
   it("throws UNAUTHORIZED when Unkey marks the key disabled", async () => {
@@ -174,7 +187,7 @@ describe("authMiddleware", () => {
       apiKeyId: "key_test",
       auth: {
         identity: {
-          orgGate: { bindingStatus: "bound" },
+          orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
           orgId: "org_test",
           type: "active",
           userId: "user_test",
@@ -194,7 +207,7 @@ describe("authMiddleware", () => {
       apiKeyId: "key_test",
       auth: {
         identity: {
-          orgGate: { bindingStatus: "bound" },
+          orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
           orgId: "org_test",
           type: "active",
           userId: "user_test",
@@ -203,12 +216,15 @@ describe("authMiddleware", () => {
     });
     expect(verifyMock).toHaveBeenCalledTimes(1);
     expect(verifyMock).toHaveBeenCalledWith({ key: validKey });
-    expect(isOrgBoundMock).toHaveBeenCalledWith(expect.anything(), "org_test");
+    expect(getActiveOrgBindingMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "org_test"
+    );
   });
 
   it("keeps the API key authenticated but marks the org gate unbound", async () => {
     verifyMock.mockResolvedValueOnce(verifyResult());
-    isOrgBoundMock.mockResolvedValueOnce(false);
+    getActiveOrgBindingMock.mockResolvedValueOnce(undefined);
 
     const ctx = await invokeAuth(
       new Headers({ authorization: `Bearer ${validKey}` })
@@ -217,7 +233,10 @@ describe("authMiddleware", () => {
     expect(ctx).toMatchObject({
       auth: {
         identity: {
-          orgGate: { bindingStatus: "unbound" },
+          orgGate: {
+            bindingStatus: "unbound",
+            nextSetupRequirement: "github_org",
+          },
           orgId: "org_test",
           type: "active",
         },

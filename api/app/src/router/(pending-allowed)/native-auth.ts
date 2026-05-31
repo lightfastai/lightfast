@@ -1,4 +1,4 @@
-import { type Database, isOrgBound } from "@db/app";
+import type { Database } from "@db/app";
 import {
   type NativeClient,
   type NativeOrganization,
@@ -25,6 +25,7 @@ import {
   buildClerkAuthorizeUrl,
   getNativeOAuthConfig,
 } from "../../auth/native-oauth";
+import { resolveOrgSetupGate } from "../../auth/org-setup-gate";
 import {
   nativeOAuthProcedure,
   publicProcedure,
@@ -64,15 +65,19 @@ export async function listNativeOrganizationsForUser(input: {
 }): Promise<NativeOrganization[]> {
   const memberships = await listMembershipsForUser(input.userId);
   return Promise.all(
-    memberships.map(async (membership) => ({
-      bindingStatus: (await isOrgBound(input.db, membership.organization.id))
-        ? "bound"
-        : "unbound",
-      id: membership.organization.id,
-      name: membership.organization.name,
-      role: membership.role,
-      slug: membership.organization.slug,
-    }))
+    memberships.map(async (membership) => {
+      const gate = await resolveOrgSetupGate({
+        db: input.db,
+        clerkOrgId: membership.organization.id,
+      });
+      return {
+        bindingStatus: gate.bindingStatus,
+        id: membership.organization.id,
+        name: membership.organization.name,
+        role: membership.role,
+        slug: membership.organization.slug,
+      };
+    })
   );
 }
 

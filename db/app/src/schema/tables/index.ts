@@ -39,3 +39,11 @@ export {
   type Signal,
   signals,
 } from "./signals";
+export {
+  type InsertSourceControlRepository,
+  type InsertSourceControlWebhookDelivery,
+  type SourceControlRepository,
+  type SourceControlWebhookDelivery,
+  sourceControlRepositories,
+  sourceControlWebhookDeliveries,
+} from "./source-control-repositories";

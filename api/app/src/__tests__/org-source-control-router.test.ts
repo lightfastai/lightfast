@@ -4,12 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
 const getActiveOrgBindingMock = vi.fn();
-const isOrgBoundMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   getActiveOrgBinding: getActiveOrgBindingMock,
-  isOrgBound: isOrgBoundMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -47,7 +45,7 @@ function activeIdentity(overrides: Partial<AuthIdentity> = {}): AuthIdentity {
     type: "active",
     userId: "user_test",
     orgId: "org_acme",
-    orgGate: { bindingStatus: "bound" },
+    orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
     ...overrides,
   } as AuthIdentity;
 }
@@ -71,7 +69,6 @@ function caller(identity = activeIdentity()) {
 
 beforeEach(() => {
   getActiveOrgBindingMock.mockReset();
-  isOrgBoundMock.mockReset();
 });
 
 describe("org.settings.sourceControl.get", () => {

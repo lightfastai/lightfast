@@ -1,4 +1,5 @@
 import type { Server } from "node:http";
+import type { Store } from "@emulators/core";
 import { createServer, serve } from "@emulators/core";
 import {
   getGitHubStore,
@@ -8,6 +9,7 @@ import {
 
 import { createGitHubEmulatorSeed, GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 import { createGitHubCompatibleFetch } from "./github-compatible-routes";
+import { enrichPushPayloadWithChangedPaths } from "./push-webhook-payload";
 
 export interface StartGitHubEmulatorInput {
   appOrigin?: string;
@@ -21,6 +23,7 @@ export interface StartedGitHubEmulator {
   listenUrl: string;
   publicOrigin: string;
   reset(): void;
+  store: Store;
   url: string;
 }
 
@@ -167,6 +170,21 @@ export async function startGitHubEmulator(
   });
   storeRef = server.store;
 
+  const dispatch = server.webhooks.dispatch.bind(server.webhooks);
+  server.webhooks.dispatch = (async (event, action, payload, owner, repo) =>
+    dispatch(
+      event,
+      action,
+      event === "push"
+        ? enrichPushPayloadWithChangedPaths({
+            payload,
+            store: server.store,
+          })
+        : payload,
+      owner,
+      repo
+    )) as typeof server.webhooks.dispatch;
+
   function seed() {
     server.store.reset();
     githubPlugin.seed?.(server.store, publicOrigin);
@@ -185,6 +203,7 @@ export async function startGitHubEmulator(
       appOrigin,
       fallbackFetch: server.app.fetch,
       publicOrigin,
+      resetStore: seed,
       store: server.store,
       tokenMap: server.tokenMap,
     }),
@@ -202,6 +221,7 @@ export async function startGitHubEmulator(
   return {
     listenUrl,
     publicOrigin,
+    store: server.store,
     url: listenUrl,
     reset: seed,
     close: async () => {

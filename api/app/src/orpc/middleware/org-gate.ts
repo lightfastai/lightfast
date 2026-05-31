@@ -1,4 +1,5 @@
 import { ORPCError, os } from "@orpc/server";
+import { repairIdForSetupRequirement } from "@repo/app-setup-contract";
 
 import type { AuthContext, InitialContext } from "../context";
 
@@ -18,11 +19,14 @@ const base = os.$context<InitialContext & AuthContext>();
 
 export const orgGateMiddleware = base.middleware(async ({ context, next }) => {
   if (context.auth.identity.orgGate.bindingStatus !== "bound") {
+    const requirement = context.auth.identity.orgGate.nextSetupRequirement;
     const diagnostic = {
       code: "ORG_SETUP_REQUIRED" as const,
       message:
-        "This organization has not completed setup. Connect a source-control organization before using Lightfast API features.",
-      repair: { id: "bind-source-control" as const },
+        "This organization has not completed setup. Complete setup before using Lightfast API features.",
+      repair: {
+        id: repairIdForSetupRequirement(requirement),
+      },
     };
     throw new ORPCError("FORBIDDEN", {
       data: { diagnostics: [diagnostic] },

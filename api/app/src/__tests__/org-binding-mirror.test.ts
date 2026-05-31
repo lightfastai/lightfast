@@ -17,7 +17,7 @@ vi.mock("@vendor/observability/log/next", () => ({
   log: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-const { mirrorOrgBinding } = await import("../auth/org-binding-mirror");
+const { mirrorOrgSetupGate } = await import("../auth/org-binding-mirror");
 
 /** The `publicMetadata` object passed to `updateOrganization` for call `n`. */
 function writtenPublicMetadata(call = 0): Record<string, unknown> {
@@ -43,36 +43,52 @@ beforeEach(() => {
   updateOrganizationMock.mockResolvedValue(undefined);
 });
 
-describe("mirrorOrgBinding", () => {
-  it("sets lightfast.binding.status to 'bound'", async () => {
+describe("mirrorOrgSetupGate", () => {
+  it("stores the next setup requirement while the org is unbound", async () => {
     getOrganizationMock.mockResolvedValueOnce({ publicMetadata: {} });
 
-    await mirrorOrgBinding({ clerkOrgId: "org_1", status: "bound" });
-
-    expect(getOrganizationMock).toHaveBeenCalledWith({
-      organizationId: "org_1",
+    await mirrorOrgSetupGate({
+      clerkOrgId: "org_8",
+      gate: {
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_lightfast_repo",
+      },
     });
-    expect(updateOrganizationMock).toHaveBeenCalledWith(
-      "org_1",
-      expect.objectContaining({ publicMetadata: expect.any(Object) })
-    );
+
+    const written = writtenPublicMetadata();
+    expect(writtenBinding()).toMatchObject({
+      status: "unbound",
+      provider: "github",
+    });
+    expect(written.lightfast as Record<string, unknown>).toMatchObject({
+      nextSetupRequirement: "github_lightfast_repo",
+    });
+  });
+
+  it("clears the next setup requirement when the org is bound", async () => {
+    getOrganizationMock.mockResolvedValueOnce({
+      publicMetadata: {
+        lightfast: {
+          nextSetupRequirement: "github_lightfast_repo",
+        },
+      },
+    });
+
+    await mirrorOrgSetupGate({
+      clerkOrgId: "org_9",
+      gate: {
+        bindingStatus: "bound",
+        nextSetupRequirement: null,
+      },
+    });
+
     expect(writtenBinding()).toMatchObject({
       status: "bound",
       provider: "github",
     });
-  });
-
-  it("writes a 'revoked' status for the revoked mirror — away from bound", async () => {
-    getOrganizationMock.mockResolvedValueOnce({
-      publicMetadata: {
-        lightfast: { binding: { status: "bound", provider: "github" } },
-      },
-    });
-
-    await mirrorOrgBinding({ clerkOrgId: "org_2", status: "revoked" });
-
-    expect(writtenBinding().status).toBe("revoked");
-    expect(writtenBinding().status).not.toBe("bound");
+    expect(writtenPublicMetadata().lightfast).not.toHaveProperty(
+      "nextSetupRequirement"
+    );
   });
 
   it("preserves unrelated publicMetadata keys and sibling lightfast.* keys", async () => {
@@ -81,13 +97,18 @@ describe("mirrorOrgBinding", () => {
         billingTier: "free",
         onboarding: { dismissed: true },
         lightfast: {
-          // a sibling lightfast feature key — must survive the round-trip
           someOtherFeature: { enabled: true },
         },
       },
     });
 
-    await mirrorOrgBinding({ clerkOrgId: "org_3", status: "bound" });
+    await mirrorOrgSetupGate({
+      clerkOrgId: "org_10",
+      gate: {
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_org",
+      },
+    });
 
     const written = writtenPublicMetadata();
     expect(written.billingTier).toBe("free");
@@ -95,15 +116,15 @@ describe("mirrorOrgBinding", () => {
     expect(
       (written.lightfast as Record<string, unknown>).someOtherFeature
     ).toEqual({ enabled: true });
-    expect(writtenBinding().status).toBe("bound");
+    expect(writtenBinding().status).toBe("unbound");
   });
 
-  it("overwrites a stale binding subtree without leaking its old keys", async () => {
+  it("overwrites stale binding keys and never writes provider secrets", async () => {
     getOrganizationMock.mockResolvedValueOnce({
       publicMetadata: {
         lightfast: {
           binding: {
-            status: "revoked",
+            status: "bound",
             provider: "github",
             updatedAt: "2020-01-01T00:00:00.000Z",
             staleLeftover: "should-be-gone",
@@ -112,44 +133,35 @@ describe("mirrorOrgBinding", () => {
       },
     });
 
-    await mirrorOrgBinding({ clerkOrgId: "org_4", status: "bound" });
-
-    expect(writtenBinding()).not.toHaveProperty("staleLeftover");
-  });
-
-  it("never writes provider secrets — the binding subtree is exactly status/provider/updatedAt", async () => {
-    getOrganizationMock.mockResolvedValueOnce({ publicMetadata: {} });
-
-    await mirrorOrgBinding({ clerkOrgId: "org_5", status: "bound" });
+    await mirrorOrgSetupGate({
+      clerkOrgId: "org_11",
+      gate: {
+        bindingStatus: "bound",
+        nextSetupRequirement: null,
+      },
+    });
 
     expect(Object.keys(writtenBinding()).sort()).toEqual([
       "provider",
       "status",
       "updatedAt",
     ]);
+    expect(writtenBinding()).not.toHaveProperty("staleLeftover");
     expect(writtenBinding().updatedAt).toEqual(expect.any(String));
   });
 
-  it("defaults the provider to 'github' and forwards an explicit provider", async () => {
-    getOrganizationMock.mockResolvedValue({ publicMetadata: {} });
-
-    await mirrorOrgBinding({ clerkOrgId: "org_6", status: "bound" });
-    expect(writtenBinding(0).provider).toBe("github");
-
-    await mirrorOrgBinding({
-      clerkOrgId: "org_6",
-      status: "bound",
-      provider: "github",
-    });
-    expect(writtenBinding(1).provider).toBe("github");
-  });
-
-  it("throws when the Clerk update fails — failures are never swallowed", async () => {
+  it("throws when the Clerk update fails", async () => {
     getOrganizationMock.mockResolvedValueOnce({ publicMetadata: {} });
     updateOrganizationMock.mockRejectedValueOnce(new Error("clerk 500"));
 
     await expect(
-      mirrorOrgBinding({ clerkOrgId: "org_7", status: "bound" })
+      mirrorOrgSetupGate({
+        clerkOrgId: "org_12",
+        gate: {
+          bindingStatus: "bound",
+          nextSetupRequirement: null,
+        },
+      })
     ).rejects.toThrow("clerk 500");
   });
 });
