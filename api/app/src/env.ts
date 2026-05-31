@@ -5,20 +5,19 @@ import { sentryEnv } from "@vendor/observability/sentry-env";
 import { unkeyEnv } from "@vendor/unkey/env";
 import { z } from "zod";
 
-const encryptionKeySchema = z
-  .string()
-  .refine(
-    (key) => /^[0-9a-f]{64}$/i.test(key) || /^[A-Za-z0-9+/]{43}=$/.test(key),
-    "ENCRYPTION_KEY must be 32 bytes as 64 hex chars or 44 base64 chars"
-  );
-
 export const env = createEnv({
   extends: [clerkEnvBase, sentryEnv, inngestEnv, unkeyEnv],
   shared: {},
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     CLERK_DESKTOP_OAUTH_CLIENT_ID: z.string().min(1).optional(),
-    ENCRYPTION_KEY: encryptionKeySchema,
+    ENCRYPTION_KEY: z
+      .string()
+      .refine(
+        (key) =>
+          /^[0-9a-f]{64}$/i.test(key) || /^[A-Za-z0-9+/]{43}=$/.test(key),
+        "ENCRYPTION_KEY must be 32 bytes as 64 hex chars or 44 base64 chars"
+      ),
     GITHUB_API_VERSION: z.string().min(1).default("2022-11-28"),
     GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
     GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
