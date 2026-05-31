@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 let githubAccountStatus: {
@@ -9,13 +10,26 @@ let githubAccountStatus: {
   };
 } = { account: null };
 
+const clientAccountGetQueryOptionsMock = vi.fn(() => ({
+  queryKey: [["viewer", "account", "get"]],
+}));
 const statusQueryOptionsMock = vi.fn(() => ({
+  queryKey: [["viewer", "githubAccount", "status"]],
+}));
+const prefetchMock = vi.fn();
+const accountGetQueryOptionsMock = vi.fn(() => ({
+  queryKey: [["viewer", "account", "get"]],
+}));
+const serverGithubStatusQueryOptionsMock = vi.fn(() => ({
   queryKey: [["viewer", "githubAccount", "status"]],
 }));
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     viewer: {
+      account: {
+        get: { queryOptions: clientAccountGetQueryOptionsMock },
+      },
       githubAccount: {
         status: { queryOptions: statusQueryOptionsMock },
       },
@@ -23,10 +37,37 @@ vi.mock("~/trpc/react", () => ({
   }),
 }));
 
+vi.mock("~/trpc/server", () => ({
+  HydrateClient: ({ children }: { children?: ReactNode }) => <>{children}</>,
+  prefetch: prefetchMock,
+  trpc: {
+    viewer: {
+      account: {
+        get: { queryOptions: accountGetQueryOptionsMock },
+      },
+      githubAccount: {
+        status: { queryOptions: serverGithubStatusQueryOptionsMock },
+      },
+    },
+  },
+}));
+
 vi.mock("@tanstack/react-query", () => ({
-  useSuspenseQuery: () => ({
-    data: githubAccountStatus,
-  }),
+  useSuspenseQuery: (options: { queryKey: string[][] }) => {
+    if (options.queryKey[0]?.join(".") === "viewer.account.get") {
+      return {
+        data: {
+          fullName: "Test User",
+          initials: "TU",
+          primaryEmailAddress: "test@example.com",
+        },
+      };
+    }
+
+    return {
+      data: githubAccountStatus,
+    };
+  },
 }));
 
 const { GithubAccountConnectionSection } = await import(
@@ -35,7 +76,11 @@ const { GithubAccountConnectionSection } = await import(
 
 beforeEach(() => {
   githubAccountStatus = { account: null };
+  clientAccountGetQueryOptionsMock.mockClear();
   statusQueryOptionsMock.mockClear();
+  prefetchMock.mockClear();
+  accountGetQueryOptionsMock.mockClear();
+  serverGithubStatusQueryOptionsMock.mockClear();
 });
 
 describe("GithubAccountConnectionSection", () => {
@@ -70,5 +115,20 @@ describe("GithubAccountConnectionSection", () => {
     expect(
       screen.getByRole("link", { name: /view github setup/i })
     ).toHaveAttribute("href", "/account/tasks/github");
+  });
+
+  it("prefetches account and GitHub status for the General settings page", async () => {
+    const { default: GeneralSettingsPage } = await import(
+      "~/app/(app)/(pending-allowed)/account/settings/general/page"
+    );
+
+    render(<GeneralSettingsPage />);
+
+    expect(prefetchMock).toHaveBeenCalledWith({
+      queryKey: [["viewer", "account", "get"]],
+    });
+    expect(prefetchMock).toHaveBeenCalledWith({
+      queryKey: [["viewer", "githubAccount", "status"]],
+    });
   });
 });
