@@ -3,18 +3,71 @@ import {
   GITHUB_BIND_ERROR_CODES,
   GITHUB_OAUTH_CALLBACK_PATH,
   GITHUB_SETUP_PATH,
+  GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
+  GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH,
   githubBindStartOutputSchema,
   githubInstallationMetadataSchema,
   githubNormalizedInstallationSchema,
   githubPushWebhookPayloadSchema,
+  githubUserAccountBindErrorCodeSchema,
+  githubUserAccountReturnToSchema,
   githubWebhookHeadersSchema,
+  isGitHubUserAccountReturnTo,
   normalizeGitHubPushWebhookPayload,
+  normalizeGitHubUserAccountReturnTo,
 } from "../github-app";
 
 describe("@repo/github-app-contract", () => {
   it("exports stable product callback route constants", () => {
     expect(GITHUB_SETUP_PATH).toBe("/api/github/setup");
     expect(GITHUB_OAUTH_CALLBACK_PATH).toBe("/api/github/oauth/callback");
+  });
+
+  it("exports the GitHub user account OAuth callback path", () => {
+    expect(GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH).toBe(
+      "/api/github/user/oauth/callback"
+    );
+  });
+
+  it("accepts user account bind error codes and rejects org-only errors", () => {
+    expect(
+      githubUserAccountBindErrorCodeSchema.parse("missing_refresh_token")
+    ).toBe("missing_refresh_token");
+    expect(
+      githubUserAccountBindErrorCodeSchema.parse("github_account_already_bound")
+    ).toBe("github_account_already_bound");
+    expect(() =>
+      githubUserAccountBindErrorCodeSchema.parse("installation_not_verified")
+    ).toThrow();
+  });
+
+  it("validates GitHub user account return paths in the shared contract", () => {
+    expect(githubUserAccountReturnToSchema.parse("/account/settings")).toBe(
+      "/account/settings"
+    );
+    expect(
+      githubUserAccountReturnToSchema.parse(
+        `/${"a".repeat(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH - 1)}`
+      )
+    ).toHaveLength(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH);
+
+    for (const value of [
+      "",
+      "https://evil.example/path",
+      "//evil.example/path",
+      "/\\evil.example/path",
+      "/account\\settings",
+      `/${"a".repeat(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH)}`,
+    ]) {
+      expect(githubUserAccountReturnToSchema.safeParse(value).success).toBe(
+        false
+      );
+      expect(isGitHubUserAccountReturnTo(value)).toBe(false);
+      expect(normalizeGitHubUserAccountReturnTo(value)).toBeUndefined();
+    }
+
+    expect(normalizeGitHubUserAccountReturnTo(null)).toBeUndefined();
+    expect(normalizeGitHubUserAccountReturnTo(undefined)).toBeUndefined();
   });
 
   it("validates client-safe start output for a GitHub App install URL", () => {

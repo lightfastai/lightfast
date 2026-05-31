@@ -10,6 +10,7 @@
  */
 
 import { accountRouter } from "./router/(pending-allowed)/account";
+import { githubAccountRouter } from "./router/(pending-allowed)/github-account";
 import { nativeAuthRouter } from "./router/(pending-allowed)/native-auth";
 import {
   organizationRouter,
@@ -33,6 +34,7 @@ export const appRouter = createTRPCRouter({
   viewer: createTRPCRouter({
     organization: organizationRouter,
     account: accountRouter,
+    githubAccount: githubAccountRouter,
   }),
   org: createTRPCRouter({
     setup: createTRPCRouter({

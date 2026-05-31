@@ -7,7 +7,13 @@ export {
   type VerifyGitHubUserInstallationInput,
   verifyGitHubUserInstallation,
 } from "./installations";
-export { exchangeGitHubOAuthCode } from "./oauth";
+export {
+  exchangeGitHubOAuthCode,
+  type GitHubUserTokenSet,
+  type RevokeGitHubOAuthGrantInput,
+  refreshGitHubUserAccessToken,
+  revokeGitHubOAuthGrant,
+} from "./oauth";
 export { createGitHubPkcePair, type GitHubPkcePair } from "./pkce";
 export {
   getGitHubCommit,
@@ -19,4 +25,8 @@ export {
   buildGitHubInstallationUrl,
   buildGitHubOAuthAuthorizeUrl,
 } from "./urls";
+export {
+  type GitHubAuthenticatedUser,
+  getGitHubAuthenticatedUser,
+} from "./user";
 export { verifyGitHubWebhookSignature } from "./webhooks";

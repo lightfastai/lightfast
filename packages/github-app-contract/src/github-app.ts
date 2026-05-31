@@ -2,6 +2,8 @@ import { z } from "zod";
 
 export const GITHUB_SETUP_PATH = "/api/github/setup";
 export const GITHUB_OAUTH_CALLBACK_PATH = "/api/github/oauth/callback";
+export const GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH =
+  "/api/github/user/oauth/callback";
 export const GITHUB_WEBHOOK_PATH = "/api/github/webhook";
 
 export const GITHUB_BIND_ERROR_CODES = [
@@ -18,6 +20,55 @@ export const GITHUB_BIND_ERROR_CODES = [
 
 export const githubBindErrorCodeSchema = z.enum(GITHUB_BIND_ERROR_CODES);
 export type GitHubBindErrorCode = z.infer<typeof githubBindErrorCodeSchema>;
+
+export const GITHUB_USER_ACCOUNT_BIND_ERROR_CODES = [
+  "expired_state",
+  "github_authorization_denied",
+  "github_transient_error",
+  "github_user_not_verified",
+  "missing_refresh_token",
+  "github_account_already_bound",
+  "lightfast_user_already_bound",
+  "permission_required",
+] as const;
+
+export const githubUserAccountBindErrorCodeSchema = z.enum(
+  GITHUB_USER_ACCOUNT_BIND_ERROR_CODES
+);
+export type GitHubUserAccountBindErrorCode = z.infer<
+  typeof githubUserAccountBindErrorCodeSchema
+>;
+
+export const GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH = 512;
+
+export function isGitHubUserAccountReturnTo(value: string): boolean {
+  return (
+    value.length <= GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH &&
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.includes("\\")
+  );
+}
+
+export function normalizeGitHubUserAccountReturnTo(
+  value: null | string | undefined
+): string | undefined {
+  if (!value) {
+    return;
+  }
+
+  return isGitHubUserAccountReturnTo(value) ? value : undefined;
+}
+
+export const githubUserAccountReturnToSchema = z
+  .string()
+  .max(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH)
+  .refine(isGitHubUserAccountReturnTo, {
+    message: "returnTo must be an internal absolute path",
+  });
+export type GitHubUserAccountReturnTo = z.infer<
+  typeof githubUserAccountReturnToSchema
+>;
 
 export const githubBindStartOutputSchema = z.object({
   installationUrl: z.string().url(),

@@ -1,4 +1,4 @@
-import { createHash, createHmac, createPrivateKey } from "node:crypto";
+import { createHmac } from "node:crypto";
 import { createServer } from "node:http";
 import { Store } from "@emulators/core";
 import {
@@ -6,7 +6,6 @@ import {
   githubPlugin,
   seedFromConfig,
 } from "@emulators/github";
-import { SignJWT } from "jose";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 import {
@@ -19,127 +18,20 @@ import { createGitHubCompatibleFetch } from "../github-compatible-routes";
 import {
   addOrgMembership,
   type StartedGitHubEmulator,
-  type StartGitHubEmulatorInput,
   startGitHubEmulator,
 } from "../server";
+import {
+  appCallbackUrl,
+  authorizeOAuthCode,
+  createAppJwt,
+  createCodeChallenge,
+  exchangeOAuthCode,
+  mintOAuthToken,
+  startGitHubEmulatorOnAvailablePort,
+} from "./test-helpers";
 
 let emulator: StartedGitHubEmulator | undefined;
 let emulatorPort: number;
-
-const TEST_PORT_MIN = 40_000;
-const TEST_PORT_SPAN = 10_000;
-const TEST_PORT_ATTEMPTS = 20;
-
-function getRandomTestPort() {
-  return TEST_PORT_MIN + Math.floor(Math.random() * TEST_PORT_SPAN);
-}
-
-function isAddrInUse(error: unknown): error is NodeJS.ErrnoException {
-  return (
-    typeof error === "object" &&
-    error !== null &&
-    "code" in error &&
-    (error as NodeJS.ErrnoException).code === "EADDRINUSE"
-  );
-}
-
-async function startGitHubEmulatorOnAvailablePort(
-  input: Omit<StartGitHubEmulatorInput, "port"> = {}
-) {
-  let lastAddrInUseError: NodeJS.ErrnoException | undefined;
-
-  for (let attempt = 0; attempt < TEST_PORT_ATTEMPTS; attempt += 1) {
-    try {
-      return await startGitHubEmulator({
-        ...input,
-        port: getRandomTestPort(),
-      });
-    } catch (error) {
-      if (!isAddrInUse(error)) {
-        throw error;
-      }
-      lastAddrInUseError = error;
-    }
-  }
-
-  throw (
-    lastAddrInUseError ??
-    new Error("Failed to start GitHub emulator on an available local port")
-  );
-}
-
-async function createAppJwt() {
-  const key = createPrivateKey(GITHUB_EMULATOR_FIXTURES.githubAppPrivateKey);
-  const now = Math.floor(Date.now() / 1000);
-  return await new SignJWT({})
-    .setProtectedHeader({ alg: "RS256" })
-    .setIssuedAt(now - 30)
-    .setExpirationTime(now + 9 * 60)
-    .setIssuer(String(GITHUB_EMULATOR_FIXTURES.githubAppId))
-    .sign(key);
-}
-
-function createCodeChallenge(verifier: string) {
-  return createHash("sha256").update(verifier).digest("base64url");
-}
-
-function appCallbackUrl(path = "/api/github/oauth/callback") {
-  return new URL(path, "https://lightfast.localhost").toString();
-}
-
-async function authorizeOAuthCode(codeVerifier: string) {
-  const authorizeUrl = new URL(`${emulator?.url}/login/oauth/authorize`);
-  authorizeUrl.searchParams.set(
-    "client_id",
-    GITHUB_EMULATOR_FIXTURES.oauthClientId
-  );
-  authorizeUrl.searchParams.set("redirect_uri", appCallbackUrl());
-  authorizeUrl.searchParams.set("state", "oauth_state_123");
-  authorizeUrl.searchParams.set(
-    "code_challenge",
-    createCodeChallenge(codeVerifier)
-  );
-  authorizeUrl.searchParams.set("code_challenge_method", "S256");
-
-  const authorizeRes = await fetch(authorizeUrl, { redirect: "manual" });
-  expect(authorizeRes.status).toBe(302);
-  const callback = new URL(authorizeRes.headers.get("location") ?? "");
-  expect(callback.origin + callback.pathname).toBe(appCallbackUrl());
-  expect(callback.searchParams.get("state")).toBe("oauth_state_123");
-  const code = callback.searchParams.get("code");
-  expect(code).toEqual(expect.any(String));
-  return code ?? "";
-}
-
-async function exchangeOAuthCode(code: string, codeVerifier: string) {
-  return await fetch(`${emulator?.url}/login/oauth/access_token`, {
-    method: "POST",
-    headers: {
-      accept: "application/json",
-      "content-type": "application/json",
-    },
-    body: JSON.stringify({
-      client_id: GITHUB_EMULATOR_FIXTURES.oauthClientId,
-      client_secret: GITHUB_EMULATOR_FIXTURES.oauthClientSecret,
-      code,
-      code_verifier: codeVerifier,
-      redirect_uri: appCallbackUrl(),
-    }),
-  });
-}
-
-async function mintOAuthToken() {
-  const codeVerifier = "verifier_123456789012345678901234567890";
-  const code = await authorizeOAuthCode(codeVerifier);
-  const tokenRes = await exchangeOAuthCode(code, codeVerifier);
-  expect(tokenRes.status).toBe(200);
-  const body = (await tokenRes.json()) as { access_token?: string };
-  expect(body).toMatchObject({
-    access_token: expect.stringMatching(/^gho_/),
-    token_type: "bearer",
-  });
-  return body.access_token ?? "";
-}
 
 beforeAll(async () => {
   emulator = await startGitHubEmulatorOnAvailablePort();
@@ -365,8 +257,12 @@ describe("@repo/github-emulator", () => {
 
   it("performs OAuth authorize and token exchange with PKCE", async () => {
     const codeVerifier = "verifier_123456789012345678901234567890";
-    const code = await authorizeOAuthCode(codeVerifier);
-    const tokenRes = await exchangeOAuthCode(code, codeVerifier);
+    const code = await authorizeOAuthCode(emulator?.url ?? "", codeVerifier);
+    const tokenRes = await exchangeOAuthCode(
+      emulator?.url ?? "",
+      code,
+      codeVerifier
+    );
 
     expect(tokenRes.status).toBe(200);
     await expect(tokenRes.json()).resolves.toMatchObject({
@@ -377,27 +273,46 @@ describe("@repo/github-emulator", () => {
 
   it("rejects bad PKCE verifiers and one-time OAuth code reuse", async () => {
     const codeVerifier = "verifier_123456789012345678901234567890";
-    const code = await authorizeOAuthCode(codeVerifier);
-    const badPkceRes = await exchangeOAuthCode(code, "wrong_verifier");
+    const code = await authorizeOAuthCode(emulator?.url ?? "", codeVerifier);
+    const badPkceRes = await exchangeOAuthCode(
+      emulator?.url ?? "",
+      code,
+      "wrong_verifier"
+    );
     expect(badPkceRes.status).toBe(200);
     await expect(badPkceRes.json()).resolves.toMatchObject({
       error: "bad_verification_code",
     });
 
-    const firstGoodRes = await exchangeOAuthCode(code, codeVerifier);
+    const firstGoodRes = await exchangeOAuthCode(
+      emulator?.url ?? "",
+      code,
+      codeVerifier
+    );
     expect(firstGoodRes.status).toBe(200);
     await expect(firstGoodRes.json()).resolves.toMatchObject({
       error: "bad_verification_code",
     });
 
-    const reusableCode = await authorizeOAuthCode(codeVerifier);
-    const firstUseRes = await exchangeOAuthCode(reusableCode, codeVerifier);
+    const reusableCode = await authorizeOAuthCode(
+      emulator?.url ?? "",
+      codeVerifier
+    );
+    const firstUseRes = await exchangeOAuthCode(
+      emulator?.url ?? "",
+      reusableCode,
+      codeVerifier
+    );
     expect(firstUseRes.status).toBe(200);
     await expect(firstUseRes.json()).resolves.toMatchObject({
       access_token: expect.stringMatching(/^gho_/),
     });
 
-    const secondUseRes = await exchangeOAuthCode(reusableCode, codeVerifier);
+    const secondUseRes = await exchangeOAuthCode(
+      emulator?.url ?? "",
+      reusableCode,
+      codeVerifier
+    );
     expect(secondUseRes.status).toBe(200);
     await expect(secondUseRes.json()).resolves.toMatchObject({
       error: "bad_verification_code",
@@ -405,7 +320,7 @@ describe("@repo/github-emulator", () => {
   });
 
   it("returns the OAuth user and accessible app installations", async () => {
-    const oauthToken = await mintOAuthToken();
+    const oauthToken = await mintOAuthToken(emulator?.url ?? "");
     const userRes = await fetch(`${emulator?.url}/user`, {
       headers: {
         authorization: `Bearer ${oauthToken}`,

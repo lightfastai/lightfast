@@ -2,11 +2,13 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const completeSetupMock = vi.fn();
 const completeOAuthMock = vi.fn();
+const completeUserAccountOAuthMock = vi.fn();
 const handleWebhookMock = vi.fn();
 
 vi.mock("@api/app/services/github", () => ({
   completeGitHubInstallationSetup: completeSetupMock,
   completeGitHubOAuthVerification: completeOAuthMock,
+  completeGitHubUserAccountOAuth: completeUserAccountOAuthMock,
   handleGitHubWebhook: handleWebhookMock,
 }));
 
@@ -14,6 +16,7 @@ describe("GitHub app route handlers", () => {
   beforeEach(() => {
     completeSetupMock.mockReset();
     completeOAuthMock.mockReset();
+    completeUserAccountOAuthMock.mockReset();
     handleWebhookMock.mockReset();
   });
 
@@ -61,6 +64,31 @@ describe("GitHub app route handlers", () => {
     expect(completeOAuthMock).toHaveBeenCalledWith({
       requestUrl:
         "https://localhost:4293/api/github/oauth/callback?code=abc&state=def",
+    });
+  });
+
+  it("delegates user account OAuth callbacks without deriving app origin in the route", async () => {
+    completeUserAccountOAuthMock.mockResolvedValue({
+      redirectUrl:
+        "https://app.lightfast.localhost/account/tasks/github/complete",
+    });
+    const { GET } = await import(
+      "~/app/(app)/(github)/api/github/user/oauth/callback/route"
+    );
+
+    const res = await GET(
+      new Request(
+        "https://localhost:4293/api/github/user/oauth/callback?code=abc&state=def"
+      )
+    );
+
+    expect(res.status).toBe(307);
+    expect(res.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/account/tasks/github/complete"
+    );
+    expect(completeUserAccountOAuthMock).toHaveBeenCalledWith({
+      requestUrl:
+        "https://localhost:4293/api/github/user/oauth/callback?code=abc&state=def",
     });
   });
 

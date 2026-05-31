@@ -52,6 +52,7 @@ const securityHeaders = securityMiddleware({
 const GITHUB_BINDING_ROUTE_PATTERNS = [
   "/api/github/setup",
   "/api/github/oauth/callback",
+  "/api/github/user/oauth/callback",
   "/api/github/webhook",
 ] as const;
 

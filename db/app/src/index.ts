@@ -112,3 +112,23 @@ export {
   type UpsertWatchedSourceControlRepositoryInput,
   upsertWatchedSourceControlRepository,
 } from "./utils/source-control-repositories";
+export {
+  activeProviderUserKey,
+  type FinalizeActiveUserSourceControlAccountInput,
+  finalizeActiveUserSourceControlAccount,
+  type GetUserSourceControlAccountByProviderUserInput,
+  getActiveUserSourceControlAccount,
+  getUserSourceControlAccountByProviderUser,
+  isUserSourceControlBound,
+  type MarkUserSourceControlAccountExpiredInput,
+  type MarkUserSourceControlAccountRevokedInput,
+  markObservedUserSourceControlAccountExpired,
+  markObservedUserSourceControlAccountRevoked,
+  markUserSourceControlAccountExpired,
+  markUserSourceControlAccountRevoked,
+  type ObservedUserSourceControlAccountInput,
+  type UpdateObservedUserSourceControlAccountTokensInput,
+  type UserSourceControlAccountConflictCode,
+  UserSourceControlAccountConflictError,
+  updateObservedUserSourceControlAccountTokens,
+} from "./utils/user-source-control-account";
