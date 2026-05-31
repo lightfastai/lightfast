@@ -183,7 +183,10 @@ Extend `api/app/src/router/(pending-not-allowed)/org-source-control.ts`.
 ### `get`
 
 Continue returning the current source-control binding summary, but include
-repository summary counts for the connected binding:
+repository summary counts for the connected binding. The count is durable
+Lightfast state: all registered normal repository watches for the binding,
+excluding `.lightfast`, whether or not those repositories are currently returned
+by GitHub:
 
 ```ts
 {
@@ -191,7 +194,7 @@ repository summary counts for the connected binding:
     connectedAt: Date;
     provider: string;
     providerLabel: string;
-    importedRepositoryCount: number; // excludes .lightfast setup repository
+    importedRepositoryCount: number;
   } | null;
   status: "bound" | "unbound";
 }
@@ -259,7 +262,9 @@ connected GitHub organization.
 If a previously added repository is no longer returned by GitHub, the API should
 not synthesize a placeholder from Lightfast state. The durable watch row remains
 in place for future recovery if access returns, but the normal list only renders
-repositories backed by fresh GitHub metadata.
+repositories backed by fresh GitHub metadata. Such rows still contribute to
+`importedRepositoryCount` because that count reflects Lightfast registrations,
+not visible GitHub-backed rows.
 
 The `organization.installationManageUrl` value must come from the live GitHub
 installation response `html_url`. Do not persist this URL and do not construct
@@ -453,9 +458,10 @@ Add tests at each boundary:
 - `api/app`: source-control router member-readable list behavior, admin-only
   import behavior, owner id filtering, inaccessible repository rejection,
   idempotent already-added imports, merged imported/available output,
-  nonblocking repository-list errors when installation metadata is available,
-  `.lightfast` exclusion, omission of unavailable watched repositories, and no
-  client-supplied repository metadata in import mutations.
+  durable imported repository counts, nonblocking repository-list errors when
+  installation metadata is available, `.lightfast` exclusion, omission of
+  unavailable watched repositories, and no client-supplied repository metadata
+  in import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
 - `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
