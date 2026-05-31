@@ -1,0 +1,102 @@
+"use client";
+
+import {
+  Dialog,
+  DialogActionButton,
+  DialogActions,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@repo/ui/components/ui/dialog";
+import { Input } from "@repo/ui/components/ui/input";
+import { Loader2 } from "lucide-react";
+import { useState } from "react";
+
+/**
+ * Save-current-filters-as-a-view dialog. Entity-agnostic: the parent owns the
+ * config snapshot and performs the create inside `onSubmit`, which resolves on
+ * success (we close + reset) and rejects to keep the dialog open for a retry.
+ */
+export function ViewCreateDialog({
+  onOpenChange,
+  onSubmit,
+  open,
+}: {
+  onOpenChange: (open: boolean) => void;
+  onSubmit: (name: string) => Promise<unknown>;
+  open: boolean;
+}) {
+  const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  async function submit() {
+    const trimmed = name.trim();
+    if (!trimmed || submitting) {
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await onSubmit(trimmed);
+      setName("");
+      onOpenChange(false);
+    } catch {
+      // Surfaced upstream (toast); keep the dialog open.
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <Dialog
+      onOpenChange={(next) => {
+        if (!next) {
+          setName("");
+        }
+        onOpenChange(next);
+      }}
+      open={open}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Save view</DialogTitle>
+          <DialogDescription>
+            Save the current filters as a personal view.
+          </DialogDescription>
+        </DialogHeader>
+        <Input
+          autoFocus
+          onChange={(event) => setName(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void submit();
+            }
+          }}
+          placeholder="View name"
+          value={name}
+        />
+        <DialogActions>
+          <DialogClose asChild>
+            <DialogActionButton>Cancel</DialogActionButton>
+          </DialogClose>
+          <DialogActionButton
+            disabled={!name.trim() || submitting}
+            onClick={() => void submit()}
+            variant="primary"
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="animate-spin" />
+                Saving…
+              </>
+            ) : (
+              "Save view"
+            )}
+          </DialogActionButton>
+        </DialogActions>
+      </DialogContent>
+    </Dialog>
+  );
+}
