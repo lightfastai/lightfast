@@ -25,13 +25,13 @@ The UI should follow an integration-page shape:
 1. GitHub integration identity and connection summary.
 2. Connected GitHub organization card.
 3. Repositories section for that organization.
-4. An `Import repositories` action that opens a modal checklist.
+4. An `Add repository` action that opens a searchable single-repository picker.
 
 Do not show personal GitHub account state on this screen in v1.
 
 Repository import is explicit. Lightfast lists repositories accessible to the
-bound GitHub App installation, but it only creates watched repository rows for
-repositories the admin selects in the modal.
+bound GitHub App installation, but it only creates one watched repository row
+when the admin explicitly adds one repository.
 
 Repository identity is ID-first. Durable Lightfast state should record the
 import decision and watch policy, not GitHub display metadata that can drift.
@@ -40,8 +40,8 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 
 ## Goals
 
-- Let an org admin import one, many, or all repositories from the connected
-  GitHub organization.
+- Let an org admin add repositories from the connected GitHub organization one
+  at a time.
 - Keep the outer access boundary as the already-bound GitHub App installation.
 - Keep Lightfast's durable repository set explicit and auditable.
 - Reuse `lightfast_source_control_repositories` as the imported repository
@@ -55,6 +55,7 @@ labels are fetched from GitHub wherever the UI or API needs to render them.
 ## Non-Goals
 
 - No automatic import of every repository after GitHub org binding.
+- No bulk import or import-all workflow in v1.
 - No personal GitHub account UI on the org source-control integration screen.
 - No per-file indexing, repository mirroring, or file content storage.
 - No repository removal workflow in v1.
@@ -84,8 +85,8 @@ Live GitHub state:
 
 The API may return GitHub repository metadata only when it has just fetched that
 metadata from GitHub. The client must not round-trip names, full names, owner
-logins, or visibility back to import mutations. Import mutations accept
-provider repository ids only and re-fetch GitHub data server-side before
+logins, or visibility back to import mutations. Import mutations accept a
+single provider repository id only and re-fetch GitHub data server-side before
 writing.
 
 The existing `lightfast_source_control_repositories.full_name` column is a
@@ -223,22 +224,22 @@ Filtering by provider account id prevents stale logins, renamed organizations,
 or unusual installation responses from surfacing repositories outside the
 connected GitHub organization.
 
-### `importRepositories`
+### `importRepository`
 
-Admin-only mutation. It imports selected repositories by provider repository id.
+Admin-only mutation. It imports one repository by provider repository id.
 
 ```ts
 {
-  repositoryIds: string[];
+  repositoryId: string;
 }
 ```
 
 Validation:
 
-- at least one repository id;
-- every repository id must exist in the live GitHub installation repository
+- the repository id must be non-empty;
+- the repository id must exist in the live GitHub installation repository
   allowlist;
-- every selected repository owner id must match the bound provider account id.
+- the repository owner id must match the bound provider account id.
 
 Behavior:
 
@@ -249,8 +250,8 @@ Behavior:
 4. Fetch live installation repositories from GitHub.
 5. Build an allowlist of repository ids accessible to the installation and
    owned by the bound account id.
-6. Reject any selected repository id that is not in that allowlist.
-7. Upsert watched rows for selected repository ids.
+6. Reject the repository id if it is not in that allowlist.
+7. Upsert one watched row for the selected repository id.
 8. Return the same live, merged repository list as `listRepositories`.
 
 Default watches:
@@ -272,13 +273,14 @@ simple while preserving `.lightfast` as a narrower `skills/**` watch.
 Add focused helpers in `db/app/src/utils/source-control-repositories.ts`:
 
 - `listWatchedSourceControlRepositories(db, { orgSourceControlBindingId })`
-- `upsertManyWatchedSourceControlRepositories(db, input)`
 
 The helper surface should be provider-id and watch-policy oriented. Do not add
 columns or helper contracts for `owner`, `name`, `private`, `defaultBranch`,
 sync state, or any other provider metadata that can go stale. If existing schema
 constraints still require `fullName`, keep it inside the helper as a freshly
 observed compatibility write and do not expose it as durable repository state.
+Use the existing single-repository upsert path for imports; v1 does not need a
+bulk database helper.
 
 ## UI Design
 
@@ -294,16 +296,15 @@ The page should contain:
   and connected status.
 - Repositories card showing imported and available repositories.
 - `Refresh GitHub` action that invalidates/refetches the repository list.
-- `Import repositories` button that opens a modal checklist.
+- `Add repository` button that opens a searchable repository picker.
 
-The import modal should include:
+The add-repository modal should include:
 
 - repository search/filter by name;
-- selectable rows with repository name and private/public indicator;
-- a select-all-visible control;
+- single-select rows with repository name and private/public indicator;
 - imported repositories shown as disabled because v1 does not edit existing
   watch scopes from the import modal;
-- a submit button with selected count.
+- a submit button for the selected repository.
 
 For v1, keep watch-scope editing out of the modal. Imported normal repositories
 use the default `["**"]` all-paths watch.
@@ -350,7 +351,8 @@ Add tests at each boundary:
 - `@repo/github-app-node`: pagination, normalization, request headers, invalid
   response handling for installation repository listing, and current
   installation/account metadata fetching.
-- `db/app`: listing watched repositories by binding and bulk upsert behavior.
+- `db/app`: listing watched repositories by binding and single-repository
+  upsert behavior.
 - `api/app`: source-control router read/import behavior, admin guard, owner
   id filtering, inaccessible repository rejection, merged imported/available
   output, and no client-supplied repository metadata in import mutations.
@@ -360,8 +362,8 @@ Add tests at each boundary:
   authentication and `GET /installation/repositories` with installation-token
   authentication.
 - `apps/app`: source-control integration UI renders connected orgs, omits
-  personal GitHub account state, opens import modal, filters repositories, and
-  submits selected repositories.
+  personal GitHub account state, opens add-repository modal, filters
+  repositories, and submits one selected repository.
 
 ## Rollout
 
