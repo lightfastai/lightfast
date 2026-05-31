@@ -8,6 +8,8 @@ const rawAuthenticatedUserSchema = z.object({
   type: z.string().min(1),
 });
 
+const DEFAULT_GITHUB_USER_REQUEST_TIMEOUT_MS = 10_000;
+
 export interface GitHubAuthenticatedUser {
   id: string;
   login: string;
@@ -19,6 +21,7 @@ export interface GetGitHubAuthenticatedUserInput {
   apiVersion?: string;
   fetch?: typeof fetch;
   signal?: AbortSignal;
+  timeoutMs?: number;
   userAccessToken: string;
 }
 
@@ -31,11 +34,19 @@ export async function getGitHubAuthenticatedUser(
 ): Promise<GitHubAuthenticatedUser> {
   const requestFetch = input.fetch ?? fetch;
   const url = new URL("/user", normalizeApiBaseUrl(input.apiBaseUrl));
+  const abortController = input.signal ? undefined : new AbortController();
+  const timeout =
+    abortController === undefined
+      ? undefined
+      : setTimeout(
+          () => abortController.abort(),
+          input.timeoutMs ?? DEFAULT_GITHUB_USER_REQUEST_TIMEOUT_MS
+        );
 
   let res: Response;
   try {
     res = await requestFetch(url.toString(), {
-      signal: input.signal,
+      signal: input.signal ?? abortController?.signal,
       headers: {
         accept: "application/vnd.github+json",
         authorization: `Bearer ${input.userAccessToken}`,
@@ -49,6 +60,10 @@ export async function getGitHubAuthenticatedUser(
       "GITHUB_USER_NOT_VERIFIED",
       "GitHub authenticated user request failed."
     );
+  } finally {
+    if (timeout !== undefined) {
+      clearTimeout(timeout);
+    }
   }
 
   const json = await res.json().catch(() => null);

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 const prefetchMock = vi.fn();
 const serverStatusQueryOptionsMock = vi.fn(() => ({
@@ -12,11 +12,6 @@ const clientStatusQueryOptionsMock = vi.fn(() => ({
 const startMutationOptionsMock = vi.fn((options: unknown) => options);
 const mutateAsyncMock = vi.fn();
 const assignMock = vi.fn();
-
-Object.defineProperty(window, "location", {
-  value: { assign: assignMock },
-  writable: true,
-});
 
 vi.mock("~/trpc/server", () => ({
   HydrateClient: ({ children }: { children?: ReactNode }) => <>{children}</>,
@@ -55,13 +50,22 @@ const { default: GitHubAccountTaskPage } = await import(
   "~/app/(app)/(pending-allowed)/account/tasks/github/page"
 );
 
+let assignSpy: ReturnType<typeof vi.spyOn>;
+
 beforeEach(() => {
+  assignSpy = vi.spyOn(window.location, "assign").mockImplementation((url) => {
+    assignMock(url);
+  });
   prefetchMock.mockClear();
   serverStatusQueryOptionsMock.mockClear();
   clientStatusQueryOptionsMock.mockClear();
   startMutationOptionsMock.mockClear();
   mutateAsyncMock.mockReset();
   assignMock.mockReset();
+});
+
+afterEach(() => {
+  assignSpy.mockRestore();
 });
 
 describe("/account/tasks/github", () => {

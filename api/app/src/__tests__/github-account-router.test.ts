@@ -45,6 +45,11 @@ const unauthenticatedIdentity: AuthIdentity = {
   type: "unauthenticated",
 };
 
+// Expired Clerk sessions normalize to unauthenticated at the identity boundary.
+const expiredSessionIdentity: AuthIdentity = {
+  type: "unauthenticated",
+};
+
 function caller(identity: AuthIdentity = pendingIdentity) {
   return createCaller({
     auth:
@@ -152,6 +157,16 @@ describe("viewer.githubAccount", () => {
   it("rejects unauthenticated callers before service calls", async () => {
     await expect(
       caller(unauthenticatedIdentity).viewer.githubAccount.status()
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(getGitHubUserAccountStatusMock).not.toHaveBeenCalled();
+    expect(startGitHubUserAccountBindingMock).not.toHaveBeenCalled();
+    expect(disconnectGitHubUserAccountMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects expired-session callers before service calls", async () => {
+    await expect(
+      caller(expiredSessionIdentity).viewer.githubAccount.status()
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
 
     expect(getGitHubUserAccountStatusMock).not.toHaveBeenCalled();

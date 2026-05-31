@@ -313,6 +313,26 @@ describe("github user account flow", () => {
     expect(consumeAttemptMock).not.toHaveBeenCalled();
   });
 
+  it("redirects expired-session callbacks to sign-in without consuming the attempt", async () => {
+    mockAttempt();
+    authMock.mockResolvedValue({
+      sessionId: "sess_expired",
+      sessionStatus: "expired",
+      userId: null,
+    });
+
+    await expect(
+      completeGitHubUserAccountOAuth({
+        requestUrl:
+          "https://app.lightfast.localhost/api/github/user/oauth/callback?code=abc&state=state_123",
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/sign-in?redirect_url=%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback%3Fcode%3Dabc%26state%3Dstate_123",
+    });
+    expect(consumeAttemptMock).not.toHaveBeenCalled();
+  });
+
   it("redirects wrong-user callbacks with permission_required without consuming the attempt", async () => {
     mockAttempt();
     authMock.mockResolvedValue({ userId: "user_2" });
