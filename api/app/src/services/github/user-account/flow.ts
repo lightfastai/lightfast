@@ -26,6 +26,7 @@ import {
 import { parseGitHubUserAccountOAuthCallback } from "./callbacks";
 import { mapGitHubUserAccountError } from "./errors";
 import { finalizeGitHubUserAccountBinding } from "./finalize-account";
+import { logGitHubUserAccountInfo, logGitHubUserAccountWarn } from "./log";
 import {
   accountTaskErrorRedirect,
   type GitHubUserAccountRedirectResult,
@@ -44,10 +45,15 @@ export async function startGitHubUserAccountBinding(input: {
   const appOrigin = resolveGitHubAppOrigin();
   const config = getGitHubAppConfig();
   const pkce = createGitHubPkcePair();
+  const returnTo = optionalReturnTo(input.returnTo);
   const attempt = await issueGitHubUserAccountOAuthAttempt({
     codeVerifier: pkce.codeVerifier,
     lightfastUserId: input.lightfastUserId,
-    ...optionalReturnTo(input.returnTo),
+    ...returnTo,
+  });
+  logGitHubUserAccountInfo("binding started", {
+    hasReturnTo: returnTo.returnTo !== undefined,
+    lightfastUserId: input.lightfastUserId,
   });
 
   return {
@@ -80,6 +86,10 @@ export async function completeGitHubUserAccountOAuth(input: {
   }
 
   if (!(parsed.code && parsed.state)) {
+    logGitHubUserAccountWarn("binding callback rejected", {
+      code: "expired_state",
+      reason: "missing_code_or_state",
+    });
     return missingUserAccountAttemptRedirect({ appOrigin });
   }
 
@@ -87,6 +97,10 @@ export async function completeGitHubUserAccountOAuth(input: {
     state: parsed.state,
   });
   if (!pendingAttempt) {
+    logGitHubUserAccountWarn("binding callback rejected", {
+      code: "expired_state",
+      reason: "missing_attempt",
+    });
     return missingUserAccountAttemptRedirect({ appOrigin });
   }
 
@@ -103,6 +117,10 @@ export async function completeGitHubUserAccountOAuth(input: {
     state: parsed.state,
   });
   if (!attempt) {
+    logGitHubUserAccountWarn("binding callback rejected", {
+      code: "expired_state",
+      reason: "attempt_consumed",
+    });
     return missingUserAccountAttemptRedirect({ appOrigin });
   }
 
@@ -125,6 +143,10 @@ export async function completeGitHubUserAccountOAuth(input: {
       !token.refreshToken ||
       token.refreshTokenExpiresIn === undefined
     ) {
+      logGitHubUserAccountWarn("binding failed", {
+        code: "missing_refresh_token",
+        lightfastUserId: attempt.lightfastUserId,
+      });
       return accountTaskErrorRedirect({
         appOrigin,
         code: "missing_refresh_token",
@@ -147,16 +169,28 @@ export async function completeGitHubUserAccountOAuth(input: {
       refreshTokenExpiresAt: new Date(now + token.refreshTokenExpiresIn * 1000),
     });
 
+    const returnTo = normalizeGitHubUserAccountReturnTo(attempt.returnTo);
+    logGitHubUserAccountInfo("binding finalized", {
+      hasReturnTo: returnTo !== undefined,
+      lightfastUserId: attempt.lightfastUserId,
+      providerUserId: user.id,
+    });
+
     return {
       redirectUrl: userAccountCompleteUrl({
         appOrigin,
-        returnTo: normalizeGitHubUserAccountReturnTo(attempt.returnTo),
+        returnTo,
       }),
     };
   } catch (error) {
+    const code = mapGitHubUserAccountError(error);
+    logGitHubUserAccountWarn("binding failed", {
+      code,
+      lightfastUserId: attempt.lightfastUserId,
+    });
     return accountTaskErrorRedirect({
       appOrigin,
-      code: mapGitHubUserAccountError(error),
+      code,
     });
   }
 }
@@ -206,6 +240,10 @@ export async function disconnectGitHubUserAccount(input: {
     input.clerkUserId
   );
   if (!account) {
+    logGitHubUserAccountInfo("disconnect skipped", {
+      clerkUserId: input.clerkUserId,
+      reason: "not_connected",
+    });
     return { ok: true };
   }
 
@@ -225,6 +263,10 @@ export async function disconnectGitHubUserAccount(input: {
   await markUserSourceControlAccountRevoked(db, {
     clerkUserId: input.clerkUserId,
   });
+  logGitHubUserAccountInfo("disconnected", {
+    clerkUserId: input.clerkUserId,
+    providerUserId: account.providerUserId,
+  });
   return { ok: true };
 }
 
@@ -234,6 +276,10 @@ async function consumeDeniedOAuthCallback(input: {
   state: string | null;
 }): Promise<GitHubUserAccountRedirectResult> {
   if (!input.state) {
+    logGitHubUserAccountWarn("binding callback rejected", {
+      code: "expired_state",
+      reason: "denied_missing_state",
+    });
     return missingUserAccountAttemptRedirect({ appOrigin: input.appOrigin });
   }
 
@@ -241,6 +287,10 @@ async function consumeDeniedOAuthCallback(input: {
     state: input.state,
   });
   if (!pendingAttempt) {
+    logGitHubUserAccountWarn("binding callback rejected", {
+      code: "expired_state",
+      reason: "denied_missing_attempt",
+    });
     return missingUserAccountAttemptRedirect({ appOrigin: input.appOrigin });
   }
 
@@ -256,12 +306,22 @@ async function consumeDeniedOAuthCallback(input: {
   const attempt = await consumeGitHubUserAccountOAuthAttempt({
     state: input.state,
   });
-  return attempt
-    ? accountTaskErrorRedirect({
-        appOrigin: input.appOrigin,
-        code: "github_authorization_denied",
-      })
-    : missingUserAccountAttemptRedirect({ appOrigin: input.appOrigin });
+  if (!attempt) {
+    logGitHubUserAccountWarn("binding callback rejected", {
+      code: "expired_state",
+      reason: "denied_attempt_consumed",
+    });
+    return missingUserAccountAttemptRedirect({ appOrigin: input.appOrigin });
+  }
+
+  logGitHubUserAccountWarn("binding failed", {
+    code: "github_authorization_denied",
+    lightfastUserId: attempt.lightfastUserId,
+  });
+  return accountTaskErrorRedirect({
+    appOrigin: input.appOrigin,
+    code: "github_authorization_denied",
+  });
 }
 
 async function validateAuthenticatedAttemptUser(input: {

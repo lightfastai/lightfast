@@ -13,6 +13,7 @@ import {
 
 import { env } from "../../../env";
 import { getGitHubAppConfig } from "../config";
+import { logGitHubUserAccountInfo, logGitHubUserAccountWarn } from "./log";
 
 const DEFAULT_REFRESH_WINDOW_MS = 60 * 60 * 1000;
 
@@ -41,6 +42,10 @@ export async function getFreshGitHubUserAccessToken(input: {
     input.clerkUserId
   );
   if (!account) {
+    logGitHubUserAccountWarn("access token unavailable", {
+      clerkUserId: input.clerkUserId,
+      reason: "not_connected",
+    });
     throw new GitHubUserAccountTokenError(
       "GITHUB_USER_ACCOUNT_NOT_CONNECTED",
       "GitHub user account is not connected."
@@ -68,6 +73,10 @@ export async function getFreshGitHubUserAccessToken(input: {
       id: account.id,
       now,
     });
+    logGitHubUserAccountWarn("access token refresh failed", {
+      ...accountLogMetadata(input.clerkUserId, account),
+      reason: "refresh_token_expired",
+    });
     throwRefreshFailed();
   }
 
@@ -94,6 +103,10 @@ export async function getFreshGitHubUserAccessToken(input: {
       refreshWindowMs,
     });
     if (recovered) {
+      logGitHubUserAccountInfo("access token refresh recovered", {
+        ...accountLogMetadata(input.clerkUserId, account),
+        reason: "concurrent_refresh",
+      });
       return recovered;
     }
     if (isInvalidRefreshTokenError(error)) {
@@ -102,6 +115,15 @@ export async function getFreshGitHubUserAccessToken(input: {
         encryptedRefreshToken: account.encryptedRefreshToken,
         id: account.id,
         now,
+      });
+      logGitHubUserAccountWarn("access token refresh failed", {
+        ...accountLogMetadata(input.clerkUserId, account),
+        reason: "refresh_token_invalid",
+      });
+    } else {
+      logGitHubUserAccountWarn("access token refresh failed", {
+        ...accountLogMetadata(input.clerkUserId, account),
+        reason: "provider_refresh_failed",
       });
     }
     throwRefreshFailed();
@@ -112,6 +134,10 @@ export async function getFreshGitHubUserAccessToken(input: {
     !refreshed.refreshToken ||
     refreshed.refreshTokenExpiresIn === undefined
   ) {
+    logGitHubUserAccountWarn("access token refresh failed", {
+      ...accountLogMetadata(input.clerkUserId, account),
+      reason: "missing_refreshable_token_fields",
+    });
     throwRefreshFailed();
   }
 
@@ -146,11 +172,24 @@ export async function getFreshGitHubUserAccessToken(input: {
       refreshWindowMs,
     });
     if (recovered) {
+      logGitHubUserAccountInfo("access token refresh recovered", {
+        ...accountLogMetadata(input.clerkUserId, account),
+        reason: "concurrent_refresh",
+      });
       return recovered;
     }
+    logGitHubUserAccountWarn("access token refresh failed", {
+      ...accountLogMetadata(input.clerkUserId, account),
+      reason: "stale_token_persistence",
+    });
     throwRefreshFailed();
   }
 
+  logGitHubUserAccountInfo("access token refreshed", {
+    ...accountLogMetadata(input.clerkUserId, account),
+    accessTokenExpiresAt,
+    refreshTokenExpiresAt,
+  });
   return { accessToken: refreshed.accessToken };
 }
 
@@ -188,6 +227,20 @@ function isInvalidRefreshTokenError(error: unknown): boolean {
     error instanceof GitHubAppNodeError &&
     error.code === "GITHUB_OAUTH_REFRESH_TOKEN_INVALID"
   );
+}
+
+function accountLogMetadata(
+  clerkUserId: string,
+  account: {
+    id: number;
+    providerUserId: string;
+  }
+) {
+  return {
+    accountId: account.id,
+    clerkUserId,
+    providerUserId: account.providerUserId,
+  };
 }
 
 function throwRefreshFailed(): never {

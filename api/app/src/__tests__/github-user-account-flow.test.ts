@@ -1,5 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import {
+  githubUserAccountAttempt,
+  TEST_ENCRYPTION_KEY,
+} from "./helpers/github-user-account";
+
 const authMock = vi.fn();
 const consumeAttemptMock = vi.fn();
 const createGitHubPkcePairMock = vi.fn();
@@ -13,6 +18,8 @@ const issueAttemptMock = vi.fn();
 const lookupAttemptMock = vi.fn();
 const markUserSourceControlAccountRevokedMock = vi.fn();
 const revokeGitHubOAuthGrantMock = vi.fn();
+const logInfoMock = vi.fn();
+const logWarnMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 
@@ -80,10 +87,16 @@ vi.mock("@vendor/clerk/server", () => ({
   auth: authMock,
 }));
 
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    info: logInfoMock,
+    warn: logWarnMock,
+  },
+}));
+
 vi.mock("../env", () => ({
   env: {
-    ENCRYPTION_KEY:
-      "0000000000000000000000000000000000000000000000000000000000000000",
+    ENCRYPTION_KEY: TEST_ENCRYPTION_KEY,
   },
 }));
 
@@ -121,25 +134,21 @@ const {
   startGitHubUserAccountBinding,
 } = await import("../services/github/user-account/flow");
 
-function attempt(
-  overrides: Partial<{
-    codeVerifier: string;
-    lightfastUserId: string;
-    returnTo: string;
-  }> = {}
-) {
-  return {
-    codeVerifier: "verifier_123",
-    lightfastUserId: "user_1",
-    returnTo: "/account/tasks/github",
-    ...overrides,
-  };
-}
-
-function mockAttempt(record = attempt()) {
+function mockAttempt(record = githubUserAccountAttempt()) {
   lookupAttemptMock.mockResolvedValue(record);
   consumeAttemptMock.mockResolvedValue(record);
   return record;
+}
+
+function expectLogsNotToContain(values: readonly string[]) {
+  const serializedLogs = JSON.stringify([
+    ...logInfoMock.mock.calls,
+    ...logWarnMock.mock.calls,
+  ]);
+
+  for (const value of values) {
+    expect(serializedLogs).not.toContain(value);
+  }
 }
 
 describe("github user account flow", () => {
@@ -155,6 +164,8 @@ describe("github user account flow", () => {
     getGitHubAuthenticatedUserMock.mockReset();
     issueAttemptMock.mockReset();
     lookupAttemptMock.mockReset();
+    logInfoMock.mockReset();
+    logWarnMock.mockReset();
     markUserSourceControlAccountRevokedMock.mockReset();
     revokeGitHubOAuthGrantMock.mockReset();
 
@@ -210,6 +221,14 @@ describe("github user account flow", () => {
       authorizationUrl:
         "https://github.lightfast.localhost/login/oauth/authorize?client_id=github_client_test&redirect_uri=https%3A%2F%2Fapp.lightfast.localhost%2Fapi%2Fgithub%2Fuser%2Foauth%2Fcallback&state=state_123&code_challenge=challenge_123&code_challenge_method=S256",
     });
+    expect(logInfoMock).toHaveBeenCalledWith(
+      "[github-user-account] binding started",
+      {
+        hasReturnTo: true,
+        lightfastUserId: "user_1",
+      }
+    );
+    expectLogsNotToContain(["state_123", "verifier_123"]);
   });
 
   it.each([
@@ -259,6 +278,14 @@ describe("github user account flow", () => {
     expect(result.redirectUrl).toBe(
       "https://app.lightfast.localhost/account/tasks/github?github_error=missing_refresh_token"
     );
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[github-user-account] binding failed",
+      {
+        code: "missing_refresh_token",
+        lightfastUserId: "user_1",
+      }
+    );
+    expectLogsNotToContain(["ghu_access", "state_123", "verifier_123"]);
     expect(finalizeActiveUserSourceControlAccountMock).not.toHaveBeenCalled();
   });
 
@@ -297,6 +324,21 @@ describe("github user account flow", () => {
         providerUserId: "12345",
       })
     );
+    expect(logInfoMock).toHaveBeenCalledWith(
+      "[github-user-account] binding finalized",
+      {
+        hasReturnTo: true,
+        lightfastUserId: "user_1",
+        providerUserId: "12345",
+      }
+    );
+    expectLogsNotToContain([
+      "abc",
+      "ghu_access",
+      "ghr_refresh",
+      "state_123",
+      "verifier_123",
+    ]);
   });
 
   it("redirects unauthenticated callbacks to sign-in without consuming the attempt", async () => {
@@ -429,7 +471,9 @@ describe("github user account flow", () => {
   });
 
   it("redirects successful callbacks to the complete URL with attempt returnTo", async () => {
-    mockAttempt(attempt({ returnTo: "/account/tasks/github" }));
+    mockAttempt(
+      githubUserAccountAttempt({ returnTo: "/account/tasks/github" })
+    );
 
     await expect(
       completeGitHubUserAccountOAuth({
@@ -448,7 +492,7 @@ describe("github user account flow", () => {
     ["backslash path", "/account\\settings"],
     ["too-long path", `/${"a".repeat(512)}`],
   ])("omits invalid stored %s returnTo values from completion redirects", async (_label, returnTo) => {
-    mockAttempt(attempt({ returnTo }));
+    mockAttempt(githubUserAccountAttempt({ returnTo }));
 
     await expect(
       completeGitHubUserAccountOAuth({

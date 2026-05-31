@@ -1,6 +1,8 @@
 import type { Database } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { TEST_ENCRYPTION_KEY } from "./helpers/github-user-account";
+
 const decryptMock = vi.fn();
 const encryptMock = vi.fn();
 const getActiveUserSourceControlAccountMock = vi.fn();
@@ -8,6 +10,8 @@ const markObservedUserSourceControlAccountExpiredMock = vi.fn();
 const markObservedUserSourceControlAccountRevokedMock = vi.fn();
 const refreshGitHubUserAccessTokenMock = vi.fn();
 const updateObservedUserSourceControlAccountTokensMock = vi.fn();
+const logInfoMock = vi.fn();
+const logWarnMock = vi.fn();
 
 vi.mock("@db/app", () => ({
   getActiveUserSourceControlAccount: getActiveUserSourceControlAccountMock,
@@ -37,10 +41,16 @@ vi.mock("@repo/github-app-node", () => ({
   },
 }));
 
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    info: logInfoMock,
+    warn: logWarnMock,
+  },
+}));
+
 vi.mock("../env", () => ({
   env: {
-    ENCRYPTION_KEY:
-      "0000000000000000000000000000000000000000000000000000000000000000",
+    ENCRYPTION_KEY: TEST_ENCRYPTION_KEY,
   },
 }));
 
@@ -64,6 +74,17 @@ function mockDb() {
   return {} as Database;
 }
 
+function expectLogsNotToContain(values: readonly string[]) {
+  const serializedLogs = JSON.stringify([
+    ...logInfoMock.mock.calls,
+    ...logWarnMock.mock.calls,
+  ]);
+
+  for (const value of values) {
+    expect(serializedLogs).not.toContain(value);
+  }
+}
+
 describe("github user account token refresh", () => {
   beforeEach(() => {
     decryptMock.mockReset();
@@ -73,6 +94,8 @@ describe("github user account token refresh", () => {
     markObservedUserSourceControlAccountRevokedMock.mockReset();
     refreshGitHubUserAccessTokenMock.mockReset();
     updateObservedUserSourceControlAccountTokensMock.mockReset();
+    logInfoMock.mockReset();
+    logWarnMock.mockReset();
 
     markObservedUserSourceControlAccountExpiredMock.mockResolvedValue(true);
     markObservedUserSourceControlAccountRevokedMock.mockResolvedValue(true);
@@ -109,6 +132,7 @@ describe("github user account token refresh", () => {
   it("refreshes and persists rotated tokens inside the refresh window", async () => {
     getActiveUserSourceControlAccountMock.mockResolvedValue({
       id: 1,
+      providerUserId: "12345",
       accessTokenExpiresAt: new Date("2026-05-30T00:30:00.000Z"),
       encryptedAccessToken: "encrypted_access",
       encryptedRefreshToken: "encrypted_refresh",
@@ -157,6 +181,25 @@ describe("github user account token refresh", () => {
       refreshTokenExpiresAt: new Date("2026-11-28T12:00:00.000Z"),
       updatedAt: new Date("2026-05-30T00:00:00.000Z"),
     });
+    expect(logInfoMock).toHaveBeenCalledWith(
+      "[github-user-account] access token refreshed",
+      {
+        accessTokenExpiresAt: new Date("2026-05-30T08:00:00.000Z"),
+        accountId: 1,
+        clerkUserId: "user_1",
+        providerUserId: "12345",
+        refreshTokenExpiresAt: new Date("2026-11-28T12:00:00.000Z"),
+      }
+    );
+    expectLogsNotToContain([
+      "encrypted_access",
+      "encrypted_refresh",
+      "encrypted_next_access",
+      "encrypted_next_refresh",
+      "ghr_refresh",
+      "ghu_next",
+      "ghr_next",
+    ]);
   });
 
   it("throws a typed missing-account error when no active account exists", async () => {
@@ -171,6 +214,13 @@ describe("github user account token refresh", () => {
     ).rejects.toMatchObject({
       code: "GITHUB_USER_ACCOUNT_NOT_CONNECTED",
     });
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[github-user-account] access token unavailable",
+      {
+        clerkUserId: "user_1",
+        reason: "not_connected",
+      }
+    );
   });
 
   it("throws when the refresh response is missing refreshable token fields", async () => {
@@ -198,6 +248,20 @@ describe("github user account token refresh", () => {
     ).rejects.toMatchObject({
       code: "GITHUB_USER_ACCOUNT_REFRESH_FAILED",
     });
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[github-user-account] access token refresh failed",
+      expect.objectContaining({
+        accountId: 1,
+        clerkUserId: "user_1",
+        reason: "missing_refreshable_token_fields",
+      })
+    );
+    expectLogsNotToContain([
+      "encrypted_access",
+      "encrypted_refresh",
+      "ghr_refresh",
+      "ghu_next",
+    ]);
   });
 
   it("expires only the observed row version when the local refresh token is expired", async () => {
