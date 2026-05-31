@@ -30,6 +30,22 @@ interface CreateObservabilityMiddlewareOptions<TCtx> {
   isDev: boolean;
 }
 
+function errorLogFields(error: TRPCError): Record<string, unknown> {
+  const fields: Record<string, unknown> = {
+    errorMessage: error.message,
+    errorName: error.name,
+  };
+
+  if (error.cause instanceof Error && error.cause.message) {
+    fields.causeMessage = error.cause.message;
+    if (error.cause.name) {
+      fields.causeName = error.cause.name;
+    }
+  }
+
+  return fields;
+}
+
 /**
  * Create a tRPC observability middleware that consolidates:
  * - Sentry isolation scope + span creation (replaces trpcMiddleware)
@@ -106,7 +122,11 @@ export function createObservabilityMiddleware<TCtx>(
             ok: result.ok,
             requestId,
             ...(traceId && { traceId }),
-            ...(!result.ok && result.error && { errorCode: result.error.code }),
+            ...(!result.ok &&
+              result.error && {
+                errorCode: result.error.code,
+                ...errorLogFields(result.error),
+              }),
             ...authFields,
           };
 

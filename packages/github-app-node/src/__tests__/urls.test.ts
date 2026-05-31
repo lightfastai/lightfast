@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   buildGitHubInstallationUrl,
+  buildGitHubNewRepositoryUrl,
   buildGitHubOAuthAuthorizeUrl,
 } from "../urls";
 
@@ -25,6 +26,18 @@ describe("GitHub URL builders", () => {
       })
     ).toBe(
       "https://github.lightfast.localhost/apps/lightfast-local/installations/new?state=state_123"
+    );
+  });
+
+  it("builds a custom-origin new repository URL", () => {
+    expect(
+      buildGitHubNewRepositoryUrl({
+        accountLogin: "lightfast-emulated",
+        name: ".lightfast",
+        webBaseUrl: "https://github.lightfast.localhost",
+      })
+    ).toBe(
+      "https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast"
     );
   });
 
