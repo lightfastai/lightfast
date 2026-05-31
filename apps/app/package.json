@@ -32,6 +32,7 @@
     "@repo/app-setup-contract": "workspace:*",
     "@repo/app-validation": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
+    "@repo/github-app-node": "workspace:*",
     "@repo/native-auth-contract": "workspace:*",
     "@repo/ui": "workspace:*",
     "@rescale/nemo": "catalog:",

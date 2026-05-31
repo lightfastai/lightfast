@@ -14,12 +14,27 @@ const sourceControlGetQueryOptionsMock = vi.fn(() => ({
   queryKey: [["org", "settings", "sourceControl", "get"]],
 }));
 const repoClientMock = vi.fn(
-  ({ accountLogin, orgSlug }: { accountLogin: string; orgSlug: string }) => (
+  ({
+    accountLogin,
+    newRepositoryUrl,
+    orgSlug,
+  }: {
+    accountLogin: string;
+    newRepositoryUrl: string;
+    orgSlug: string;
+  }) => (
     <div data-account-login={accountLogin} data-testid="repo-client">
+      <span data-testid="new-repository-url">{newRepositoryUrl}</span>
       {orgSlug}
     </div>
   )
 );
+
+vi.mock("@api/app/services/github", () => ({
+  getGitHubAppConfig: () => ({
+    endpoints: { webBaseUrl: "https://github.lightfast.localhost" },
+  }),
+}));
 
 vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
@@ -106,8 +121,16 @@ describe("tasks/github/lightfast-repo/page", () => {
       "data-account-login",
       "lightfast-emulated"
     );
+    expect(screen.getByTestId("new-repository-url")).toHaveTextContent(
+      "https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast"
+    );
     expect(repoClientMock).toHaveBeenCalledWith(
-      { accountLogin: "lightfast-emulated", orgSlug: "acme" },
+      {
+        accountLogin: "lightfast-emulated",
+        newRepositoryUrl:
+          "https://github.lightfast.localhost/organizations/lightfast-emulated/repositories/new?name=.lightfast",
+        orgSlug: "acme",
+      },
       undefined
     );
   });

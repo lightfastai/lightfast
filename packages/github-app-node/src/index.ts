@@ -23,6 +23,7 @@ export {
 export { verifyGitHubInstallationRepository } from "./repository-installations";
 export {
   buildGitHubInstallationUrl,
+  buildGitHubNewRepositoryUrl,
   buildGitHubOAuthAuthorizeUrl,
 } from "./urls";
 export {
