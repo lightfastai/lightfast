@@ -1,8 +1,10 @@
 import {
   normalizePersistedSignalClassification,
   type SignalClassification,
+  type SignalVisibilityScope,
 } from "@repo/api-contract";
-import { and, desc, eq, gte, inArray, lt, or, sql } from "drizzle-orm";
+import type { SQL } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, lt, or } from "drizzle-orm";
 
 import type { Database } from "../client";
 import { createSignalId, type Signal, signals } from "../schema";
@@ -10,6 +12,7 @@ import { getRowsAffected } from "./drizzle-results";
 
 const WORKSPACE_SIGNALS_WINDOW_DAYS = 30;
 const WORKSPACE_SIGNALS_LIMIT = 2000;
+const SIGNAL_SCAN_BATCH_SIZE = 500;
 
 export interface ListCursor {
   createdAt: Date;
@@ -59,19 +62,34 @@ function normalizeSignalRow<T extends Signal>(row: T): T {
   };
 }
 
-function legacyPeopleRoutedVisibilityCondition() {
-  return and(
-    sql`json_unquote(json_extract(${signals.classification}, '$.schemaVersion')) = 'signal.classification.v1'`,
-    sql`json_unquote(json_extract(${signals.classification}, '$.routing.classifyPeople.shouldRun')) = 'true'`
+function getEffectiveVisibilityScope(
+  row: Pick<Signal, "classification" | "visibilityScope">
+): SignalVisibilityScope {
+  return (
+    normalizePersistedSignalClassification(row.classification)?.routing
+      .visibility.scope ?? row.visibilityScope
   );
 }
 
-function visibleToCurrentUserCondition(createdByUserId: string) {
-  return or(
-    eq(signals.visibilityScope, "team"),
-    eq(signals.createdByUserId, createdByUserId),
-    legacyPeopleRoutedVisibilityCondition()
+function isVisibleToCurrentUser(
+  row: Pick<Signal, "classification" | "createdByUserId" | "visibilityScope">,
+  createdByUserId: string
+): boolean {
+  return (
+    row.createdByUserId === createdByUserId ||
+    getEffectiveVisibilityScope(row) === "team"
   );
+}
+
+function cursorCondition(
+  cursor: ListCursor | null | undefined
+): SQL | undefined {
+  return cursor
+    ? or(
+        lt(signals.createdAt, cursor.createdAt),
+        and(eq(signals.createdAt, cursor.createdAt), lt(signals.id, cursor.id))
+      )
+    : undefined;
 }
 
 export interface ListSignalsParams {
@@ -87,36 +105,52 @@ export async function listSignals(
   input: ListSignalsParams
 ): Promise<ListResult<Signal>> {
   const limit = normalizeLimit(input.limit);
-  const conditions = [
-    eq(signals.clerkOrgId, input.clerkOrgId),
-    visibleToCurrentUserCondition(input.createdByUserId),
-    input.statuses?.length
-      ? inArray(signals.status, input.statuses)
-      : undefined,
-    input.cursor
-      ? or(
-          lt(signals.createdAt, input.cursor.createdAt),
-          and(
-            eq(signals.createdAt, input.cursor.createdAt),
-            lt(signals.id, input.cursor.id)
-          )
-        )
-      : undefined,
-  ].filter(isDefined);
+  let cursor = input.cursor ?? null;
+  const visibleRows: Signal[] = [];
 
-  const rows = await db
-    .select()
-    .from(signals)
-    .where(and(...conditions))
-    .orderBy(desc(signals.createdAt), desc(signals.id))
-    .limit(limit + 1);
+  while (visibleRows.length < limit + 1) {
+    const conditions = [
+      eq(signals.clerkOrgId, input.clerkOrgId),
+      input.statuses?.length
+        ? inArray(signals.status, input.statuses)
+        : undefined,
+      cursorCondition(cursor),
+    ].filter(isDefined);
 
-  const items = rows.slice(0, limit).map(normalizeSignalRow);
+    const rows = await db
+      .select()
+      .from(signals)
+      .where(and(...conditions))
+      .orderBy(desc(signals.createdAt), desc(signals.id))
+      .limit(SIGNAL_SCAN_BATCH_SIZE);
+
+    if (rows.length === 0) {
+      break;
+    }
+
+    for (const row of rows) {
+      const normalized = normalizeSignalRow(row);
+      if (isVisibleToCurrentUser(normalized, input.createdByUserId)) {
+        visibleRows.push(normalized);
+        if (visibleRows.length >= limit + 1) {
+          break;
+        }
+      }
+    }
+
+    const lastRow = rows.at(-1);
+    if (rows.length < SIGNAL_SCAN_BATCH_SIZE || !lastRow) {
+      break;
+    }
+    cursor = { createdAt: lastRow.createdAt, id: lastRow.id };
+  }
+
+  const items = visibleRows.slice(0, limit);
   const lastItem = items.at(-1);
   return {
     items,
     nextCursor:
-      rows.length > limit && lastItem
+      visibleRows.length > limit && lastItem
         ? { createdAt: lastItem.createdAt, id: lastItem.id }
         : null,
   };
@@ -132,6 +166,17 @@ export interface WorkspaceSignalListItem {
   id: number;
   publicId: string;
   status: Signal["status"];
+}
+
+interface WorkspaceSignalListRow {
+  classification: Signal["classification"];
+  createdAt: Date;
+  createdByApiKeyId: string | null;
+  createdByUserId: string;
+  id: number;
+  publicId: string;
+  status: Signal["status"];
+  visibilityScope: SignalVisibilityScope;
 }
 
 export interface WorkspaceSignalsResult {
@@ -160,24 +205,61 @@ function projectSignalClassification(
   return projected;
 }
 
-async function countClassifiedSince(
+async function scanWorkspaceSignals(
   db: Database,
   clerkOrgId: string,
   createdByUserId: string,
   cutoff: Date
-): Promise<number> {
-  const [row] = await db
-    .select({ value: sql<number>`count(*)` })
-    .from(signals)
-    .where(
-      and(
-        eq(signals.clerkOrgId, clerkOrgId),
-        eq(signals.status, "classified"),
-        visibleToCurrentUserCondition(createdByUserId),
-        gte(signals.createdAt, cutoff)
-      )
-    );
-  return Number(row?.value ?? 0);
+): Promise<{ rows: WorkspaceSignalListRow[]; totalCount: number }> {
+  let cursor: ListCursor | null = null;
+  const visibleRows: WorkspaceSignalListRow[] = [];
+  let totalCount = 0;
+
+  while (true) {
+    const conditions: SQL[] = [
+      eq(signals.clerkOrgId, clerkOrgId),
+      eq(signals.status, "classified"),
+      gte(signals.createdAt, cutoff),
+      cursorCondition(cursor),
+    ].filter(isDefined);
+
+    const rows: WorkspaceSignalListRow[] = await db
+      .select({
+        classification: signals.classification,
+        createdAt: signals.createdAt,
+        createdByApiKeyId: signals.createdByApiKeyId,
+        createdByUserId: signals.createdByUserId,
+        id: signals.id,
+        publicId: signals.publicId,
+        status: signals.status,
+        visibilityScope: signals.visibilityScope,
+      })
+      .from(signals)
+      .where(and(...conditions))
+      .orderBy(desc(signals.createdAt), desc(signals.id))
+      .limit(WORKSPACE_SIGNALS_LIMIT + 1);
+
+    if (rows.length === 0) {
+      break;
+    }
+
+    for (const row of rows) {
+      if (isVisibleToCurrentUser(row, createdByUserId)) {
+        totalCount += 1;
+        if (visibleRows.length < WORKSPACE_SIGNALS_LIMIT) {
+          visibleRows.push(row);
+        }
+      }
+    }
+
+    const lastRow: WorkspaceSignalListRow | undefined = rows.at(-1);
+    if (rows.length <= WORKSPACE_SIGNALS_LIMIT || !lastRow) {
+      break;
+    }
+    cursor = { createdAt: lastRow.createdAt, id: lastRow.id };
+  }
+
+  return { rows: visibleRows, totalCount };
 }
 
 /**
@@ -195,47 +277,27 @@ export async function listWorkspaceSignals(
     Date.now() - WORKSPACE_SIGNALS_WINDOW_DAYS * DAY_IN_MS
   );
 
-  const rows = await db
-    .select({
-      classification: signals.classification,
-      createdAt: signals.createdAt,
-      createdByApiKeyId: signals.createdByApiKeyId,
-      createdByUserId: signals.createdByUserId,
-      id: signals.id,
-      publicId: signals.publicId,
-      status: signals.status,
-    })
-    .from(signals)
-    .where(
-      and(
-        eq(signals.clerkOrgId, input.clerkOrgId),
-        eq(signals.status, "classified"),
-        visibleToCurrentUserCondition(input.createdByUserId),
-        gte(signals.createdAt, cutoff)
-      )
-    )
-    .orderBy(desc(signals.createdAt), desc(signals.id))
-    .limit(WORKSPACE_SIGNALS_LIMIT + 1);
-
-  const truncated = rows.length > WORKSPACE_SIGNALS_LIMIT;
-  const visible = truncated ? rows.slice(0, WORKSPACE_SIGNALS_LIMIT) : rows;
-  const items: WorkspaceSignalListItem[] = visible.map((row) => ({
-    ...row,
+  const result = await scanWorkspaceSignals(
+    db,
+    input.clerkOrgId,
+    input.createdByUserId,
+    cutoff
+  );
+  const truncated = result.totalCount > WORKSPACE_SIGNALS_LIMIT;
+  const items: WorkspaceSignalListItem[] = result.rows.map((row) => ({
     classification: projectSignalClassification(row.classification),
+    createdAt: row.createdAt,
+    createdByApiKeyId: row.createdByApiKeyId,
+    createdByUserId: row.createdByUserId,
+    id: row.id,
+    publicId: row.publicId,
+    status: row.status,
   }));
-  const totalCount = truncated
-    ? await countClassifiedSince(
-        db,
-        input.clerkOrgId,
-        input.createdByUserId,
-        cutoff
-      )
-    : items.length;
 
   return {
     items,
     limit: WORKSPACE_SIGNALS_LIMIT,
-    totalCount,
+    totalCount: result.totalCount,
     truncated,
     windowDays: WORKSPACE_SIGNALS_WINDOW_DAYS,
   };
@@ -305,18 +367,11 @@ export async function getVisibleSignalByPublicId(
   db: Database,
   input: GetVisibleSignalByPublicIdParams
 ): Promise<Signal | undefined> {
-  const [row] = await db
-    .select()
-    .from(signals)
-    .where(
-      and(
-        eq(signals.publicId, input.publicId),
-        eq(signals.clerkOrgId, input.clerkOrgId),
-        visibleToCurrentUserCondition(input.createdByUserId)
-      )
-    )
-    .limit(1);
-  return row ? normalizeSignalRow(row) : undefined;
+  const row = await getSignalByPublicId(db, input);
+  if (!(row && isVisibleToCurrentUser(row, input.createdByUserId))) {
+    return;
+  }
+  return row;
 }
 
 export interface ClaimSignalForClassificationParams {

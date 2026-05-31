@@ -41,6 +41,30 @@ function makeClassification(): NonNullable<Signal["classification"]> {
   };
 }
 
+function makeClassificationWithVisibility(
+  scope: Signal["visibilityScope"]
+): NonNullable<Signal["classification"]> {
+  const classification = makeClassification();
+  return {
+    ...classification,
+    routing: {
+      ...classification.routing,
+      review:
+        scope === "needs_review"
+          ? {
+              required: true,
+              reason: "ambiguous_scope",
+              rationale: "The signal needs manual review.",
+            }
+          : classification.routing.review,
+      visibility: {
+        ...classification.routing.visibility,
+        scope,
+      },
+    },
+  };
+}
+
 function makeLegacyClassification() {
   return {
     schemaVersion: "signal.classification.v1",
@@ -330,7 +354,7 @@ describe("listSignals", () => {
       items: rows.slice(0, 2),
       nextCursor: { createdAt: rows[1]!.createdAt, id: rows[1]!.id },
     });
-    expect(spies.limit).toHaveBeenCalledWith(3);
+    expect(spies.limit).toHaveBeenCalledWith(500);
     expect(spies.where).toHaveBeenCalledOnce();
     expect(spies.orderBy).toHaveBeenCalled();
   });
@@ -351,21 +375,44 @@ describe("listSignals", () => {
     });
   });
 
-  it("bounds the requested limit to 100 rows", async () => {
-    const { db, spies } = makeListDb([]);
+  it("bounds the requested limit to 100 visible rows", async () => {
+    const rows = Array.from({ length: 101 }, (_, index) =>
+      makeSignal({ id: 101 - index })
+    );
+    const { db } = makeListDb(rows);
 
-    await listSignals(db, {
+    const result = await listSignals(db, {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       limit: 500,
     });
 
-    expect(spies.limit).toHaveBeenCalledWith(101);
+    expect(result.items).toHaveLength(100);
+    expect(result.nextCursor).toEqual({
+      createdAt: result.items[99]!.createdAt,
+      id: result.items[99]!.id,
+    });
   });
 
-  it("applies the current user visibility boundary to list queries", async () => {
-    const rows = [makeSignal()];
-    const { db, spies } = makeListDb(rows);
+  it("filters list rows to signals visible to the current user", async () => {
+    const visibleTeam = makeSignal({
+      id: 3,
+      createdByUserId: "user_other",
+      visibilityScope: "team",
+    });
+    const hiddenUserScoped = makeSignal({
+      classification: makeClassificationWithVisibility("user"),
+      id: 2,
+      createdByUserId: "user_other",
+      visibilityScope: "user",
+    });
+    const visibleOwn = makeSignal({
+      classification: makeClassificationWithVisibility("user"),
+      id: 1,
+      createdByUserId: "user_test",
+      visibilityScope: "user",
+    });
+    const { db } = makeListDb([visibleTeam, hiddenUserScoped, visibleOwn]);
 
     await expect(
       listSignals(db, {
@@ -373,18 +420,9 @@ describe("listSignals", () => {
         createdByUserId: "user_test",
       })
     ).resolves.toEqual({
-      items: rows,
+      items: [visibleTeam, visibleOwn],
       nextCursor: null,
     });
-    expect(spies.where).toHaveBeenCalledOnce();
-    expect(collectPredicateTokens(spies.where.mock.calls[0]![0])).toEqual(
-      expect.arrayContaining([
-        "visibility_scope",
-        "team",
-        "created_by_user_id",
-        "user_test",
-      ])
-    );
   });
 });
 
@@ -437,6 +475,7 @@ describe("getVisibleSignalByPublicId", () => {
     {
       name: "returns own user-scoped row",
       row: makeSignal({
+        classification: makeClassificationWithVisibility("user"),
         createdByUserId: "user_test",
         visibilityScope: "user",
       }),
@@ -445,6 +484,7 @@ describe("getVisibleSignalByPublicId", () => {
     {
       name: "hides another user's user-scoped row",
       row: makeSignal({
+        classification: makeClassificationWithVisibility("user"),
         createdByUserId: "user_other",
         visibilityScope: "user",
       }),
@@ -461,6 +501,7 @@ describe("getVisibleSignalByPublicId", () => {
     {
       name: "returns own needs-review row",
       row: makeSignal({
+        classification: makeClassificationWithVisibility("needs_review"),
         createdByUserId: "user_test",
         visibilityScope: "needs_review",
       }),
@@ -469,6 +510,7 @@ describe("getVisibleSignalByPublicId", () => {
     {
       name: "hides another user's needs-review row",
       row: makeSignal({
+        classification: makeClassificationWithVisibility("needs_review"),
         createdByUserId: "user_other",
         visibilityScope: "needs_review",
       }),
@@ -572,6 +614,7 @@ interface ProjectedRow {
   id: number;
   publicId: string;
   status: Signal["status"];
+  visibilityScope: Signal["visibilityScope"];
 }
 
 function makeProjectedRow(overrides: Partial<ProjectedRow> = {}): ProjectedRow {
@@ -589,74 +632,37 @@ function makeProjectedRow(overrides: Partial<ProjectedRow> = {}): ProjectedRow {
     id: 1,
     publicId: "signal_111e4567-e89b-12d3-a456-426614174000",
     status: "classified",
+    visibilityScope: "team",
     ...overrides,
   };
 }
 
-function makeWorkspaceDb(rows: ProjectedRow[], totalCount?: number) {
+function makeWorkspaceDb(rows: ProjectedRow[]) {
+  let offset = 0;
   const spies = { limit: vi.fn(), orderBy: vi.fn(), where: vi.fn() };
   const db = {
-    select: (projection: Record<string, unknown>) => {
-      const isCount = "value" in projection;
-      return {
-        from: () => ({
-          where: (condition: unknown) => {
-            spies.where(condition);
-            if (isCount) {
-              return Promise.resolve([{ value: totalCount ?? rows.length }]);
-            }
-            return {
-              orderBy: (...order: unknown[]) => {
-                spies.orderBy(...order);
-                return {
-                  limit: (value: number) => {
-                    spies.limit(value);
-                    return Promise.resolve(rows.slice(0, value));
-                  },
-                };
-              },
-            };
-          },
-        }),
-      };
-    },
+    select: (_projection: Record<string, unknown>) => ({
+      from: () => ({
+        where: (condition: unknown) => {
+          spies.where(condition);
+          return {
+            orderBy: (...order: unknown[]) => {
+              spies.orderBy(...order);
+              return {
+                limit: (value: number) => {
+                  spies.limit(value);
+                  const batch = rows.slice(offset, offset + value);
+                  offset += value;
+                  return Promise.resolve(batch);
+                },
+              };
+            },
+          };
+        },
+      }),
+    }),
   };
   return { db: db as unknown as Database, spies };
-}
-
-function collectPredicateTokens(condition: unknown): string[] {
-  const tokens: string[] = [];
-
-  const visit = (value: unknown) => {
-    if (!value || typeof value !== "object") {
-      return;
-    }
-
-    const chunk = value as {
-      columnType?: unknown;
-      name?: unknown;
-      queryChunks?: unknown;
-      value?: unknown;
-    };
-
-    if (
-      typeof chunk.name === "string" &&
-      typeof chunk.columnType === "string"
-    ) {
-      tokens.push(chunk.name);
-    }
-    if (typeof chunk.value === "string") {
-      tokens.push(chunk.value);
-    }
-    if (Array.isArray(chunk.queryChunks)) {
-      for (const queryChunk of chunk.queryChunks) {
-        visit(queryChunk);
-      }
-    }
-  };
-
-  visit(condition);
-  return tokens;
 }
 
 describe("listWorkspaceSignals", () => {
@@ -697,35 +703,45 @@ describe("listWorkspaceSignals", () => {
     expect(spies.where).toHaveBeenCalledTimes(1); // list only, no count
   });
 
-  it("applies the current user visibility boundary to list and count queries", async () => {
-    const overflow = Array.from({ length: 2001 }, (_, index) =>
-      makeProjectedRow({ id: index + 1 })
-    );
-    const { db, spies } = makeWorkspaceDb(overflow, 2500);
+  it("filters workspace rows to signals visible to the current user", async () => {
+    const visibleTeam = makeProjectedRow({
+      id: 3,
+      createdByUserId: "user_other",
+      visibilityScope: "team",
+    });
+    const hiddenUserScoped = makeProjectedRow({
+      classification: makeClassificationWithVisibility("user"),
+      id: 2,
+      createdByUserId: "user_other",
+      visibilityScope: "user",
+    });
+    const visibleOwn = makeProjectedRow({
+      classification: makeClassificationWithVisibility("user"),
+      id: 1,
+      createdByUserId: "user_test",
+      visibilityScope: "user",
+    });
+    const { db, spies } = makeWorkspaceDb([
+      visibleTeam,
+      hiddenUserScoped,
+      visibleOwn,
+    ]);
 
-    await listWorkspaceSignals(db, {
+    const result = await listWorkspaceSignals(db, {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
     });
 
-    expect(spies.where).toHaveBeenCalledTimes(2);
-    for (const [condition] of spies.where.mock.calls) {
-      expect(collectPredicateTokens(condition)).toEqual(
-        expect.arrayContaining([
-          "visibility_scope",
-          "team",
-          "created_by_user_id",
-          "user_test",
-        ])
-      );
-    }
+    expect(result.items.map((item) => item.id)).toEqual([3, 1]);
+    expect(result.totalCount).toBe(2);
+    expect(spies.where).toHaveBeenCalledTimes(1);
   });
 
   it("truncates to the cap and reports totalCount when the window overflows", async () => {
-    const overflow = Array.from({ length: 2001 }, (_, index) =>
+    const overflow = Array.from({ length: 2500 }, (_, index) =>
       makeProjectedRow({ id: index + 1 })
     );
-    const { db, spies } = makeWorkspaceDb(overflow, 2500);
+    const { db, spies } = makeWorkspaceDb(overflow);
 
     const result = await listWorkspaceSignals(db, {
       clerkOrgId: "org_test",
@@ -737,7 +753,7 @@ describe("listWorkspaceSignals", () => {
     expect(result.truncated).toBe(true);
     expect(result.totalCount).toBe(2500);
     expect(result.windowDays).toBe(30);
-    expect(spies.where).toHaveBeenCalledTimes(2); // list + count
+    expect(spies.where).toHaveBeenCalledTimes(2);
   });
 
   it("keeps a null classification null", async () => {

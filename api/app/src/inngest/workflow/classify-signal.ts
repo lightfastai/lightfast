@@ -14,6 +14,7 @@ import type {
   SignalClassification,
   SignalVisibilityScope,
 } from "@repo/api-contract";
+import { normalizePersistedSignalClassification } from "@repo/api-contract";
 import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../env";
@@ -27,10 +28,10 @@ function getVisibilityScope(
 }
 
 function requiresSignalReview(classification: SignalClassification): boolean {
-  return (
-    classification.routing.visibility.scope === "needs_review" &&
-    classification.routing.review.required === true
-  );
+  const normalized = normalizePersistedSignalClassification(classification);
+  return normalized?.routing.visibility.scope === "needs_review"
+    ? normalized.routing.review.required === true
+    : false;
 }
 
 function shouldClassifyPeople(

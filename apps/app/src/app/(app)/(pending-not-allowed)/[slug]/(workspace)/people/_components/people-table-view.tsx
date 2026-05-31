@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@repo/ui/components/ui/button";
+import { cn } from "@repo/ui/lib/utils";
 import {
   ChevronDown,
   LoaderCircle,
@@ -88,7 +89,10 @@ export function PeopleTableView({
     <div className="flex min-h-0 flex-1 flex-col">
       <div
         aria-busy={isPlaceholderData}
-        className={`min-h-0 flex-1 overflow-y-auto${isPlaceholderData ? "opacity-60 transition-opacity" : ""}`}
+        className={cn(
+          "min-h-0 flex-1 overflow-y-auto",
+          isPlaceholderData && "opacity-60 transition-opacity"
+        )}
       >
         <div
           className={`${ROW_GRID} h-9 border-border/60 border-b bg-muted/20 px-4 text-muted-foreground text-xs`}
@@ -162,10 +166,11 @@ function PeopleTableRow({
   return (
     <button
       aria-pressed={isSelected}
-      className={
-        `${ROW_GRID} min-h-12 w-full border-border/40 border-b px-4 text-left hover:bg-muted/20` +
-        (isSelected ? "bg-muted/30" : "bg-background")
-      }
+      className={cn(
+        ROW_GRID,
+        "min-h-12 w-full border-border/40 border-b px-4 text-left hover:bg-muted/20",
+        isSelected ? "bg-muted/30" : "bg-background"
+      )}
       onClick={onSelect}
       type="button"
     >
@@ -175,12 +180,12 @@ function PeopleTableRow({
           className="size-3.5 shrink-0 text-muted-foreground/70"
         />
         <span
-          className={
-            "min-w-0 truncate text-sm" +
-            (person.displayName
+          className={cn(
+            "min-w-0 truncate text-sm",
+            person.displayName
               ? "font-medium text-foreground"
-              : "text-muted-foreground")
-          }
+              : "text-muted-foreground"
+          )}
         >
           {name}
         </span>
