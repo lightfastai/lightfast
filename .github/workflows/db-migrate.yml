@@ -92,10 +92,16 @@ jobs:
 
           if [ "$show_exit" -eq 0 ]; then
             deploy_request_number=$(echo "$existing" | jq -r '.number')
-            echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> "$GITHUB_ENV"
-            echo "HAS_SCHEMA_CHANGES=true" >> "$GITHUB_ENV"
-            echo "Using existing deploy request $deploy_request_number."
-            exit 0
+            deploy_request_state=$(echo "$existing" | jq -r '.state // ""')
+
+            if [ "$deploy_request_state" != "closed" ]; then
+              echo "DEPLOY_REQUEST_NUMBER=$deploy_request_number" >> "$GITHUB_ENV"
+              echo "HAS_SCHEMA_CHANGES=true" >> "$GITHUB_ENV"
+              echo "Using existing deploy request $deploy_request_number."
+              exit 0
+            fi
+
+            echo "Ignoring closed deploy request $deploy_request_number."
           fi
 
           set +e
