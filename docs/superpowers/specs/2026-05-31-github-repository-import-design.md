@@ -234,7 +234,9 @@ errored, and return no repository rows.
     watchedPathGlobs: string[] | null;
   }>;
   repositoriesError: {
-    code: "github_repository_listing_failed";
+    code:
+      | "github_installation_account_mismatch"
+      | "github_repository_listing_failed";
     message: string;
   } | null;
   status: "bound" | "unbound";
@@ -248,7 +250,8 @@ Behavior:
 3. Create a GitHub App JWT.
 4. Fetch current installation/account metadata from GitHub.
 5. Require the installation account id to match the binding's
-   `providerAccountId`.
+   `providerAccountId`. If it does not match, return a broken-connection
+   repository error and no organization metadata or repository rows.
 6. Mint an installation token for `binding.providerInstallationId`.
 7. List all installation repository pages from GitHub.
 8. Filter to `repository.ownerId === binding.providerAccountId`.
@@ -275,6 +278,12 @@ The `organization.installationManageUrl` value must come from the live GitHub
 installation response `html_url`. Do not persist this URL and do not construct
 it from stored binding fields.
 
+If the live installation account id no longer matches the stored binding
+`providerAccountId`, treat the source-control connection as broken for this
+surface. Do not mutate `lightfast_org_source_control_bindings` from
+`get`, `listRepositories`, or `importRepository`; repair belongs in a separate
+setup/repair flow.
+
 ### `importRepository`
 
 Admin-only mutation. It imports one repository by provider repository id. Use
@@ -299,7 +308,8 @@ Behavior:
 1. Load the active GitHub binding.
 2. Fetch current installation/account metadata from GitHub.
 3. Require the installation account id to match the binding's
-   `providerAccountId`.
+   `providerAccountId`; if it does not match, reject with `PRECONDITION_FAILED`
+   and do not mutate the binding or watched rows.
 4. Fetch live installation repositories from GitHub.
 5. Build an allowlist of repository ids accessible to the installation and
    owned by the bound account id.
@@ -440,6 +450,9 @@ organization so the import UI can exercise imported and available states.
   to GitHub setup.
 - GitHub installation metadata failure: show the connected status and an inline
   refresh error with retry, without rendering stale provider account labels.
+- GitHub installation account mismatch: show a broken connection state with a
+  setup/repair affordance, avoid rendering stale provider account labels, and do
+  not update the stored binding from this surface.
 - GitHub listing failure after installation metadata succeeds: keep the
   integration header and connected organization rendered from live installation
   metadata, show imported repository count plus an inline repository-list error
@@ -465,10 +478,10 @@ Add tests at each boundary:
 - `api/app`: source-control router member-readable list behavior, admin-only
   import behavior, owner id filtering, inaccessible repository rejection,
   idempotent already-added imports, merged imported/available output,
-  durable imported repository counts, nonblocking repository-list errors when
-  installation metadata is available, `.lightfast` exclusion, omission of
-  unavailable watched repositories, and no client-supplied repository metadata
-  in import mutations.
+  durable imported repository counts, installation account mismatch handling
+  without binding mutation, nonblocking repository-list errors when installation
+  metadata is available, `.lightfast` exclusion, omission of unavailable watched
+  repositories, and no client-supplied repository metadata in import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
 - `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
