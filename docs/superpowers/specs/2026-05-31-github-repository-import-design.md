@@ -259,7 +259,9 @@ it from stored binding fields.
 
 ### `importRepository`
 
-Admin-only mutation. It imports one repository by provider repository id.
+Admin-only mutation. It imports one repository by provider repository id. Use
+the existing org-admin procedure/gate so non-admin callers fail closed with
+`FORBIDDEN`.
 
 ```ts
 {
@@ -342,9 +344,10 @@ The page should contain:
 - Repositories card showing imported and available normal repositories, with
   `.lightfast` omitted.
 - `Refresh GitHub` action that invalidates/refetches the repository list.
-- `Add repository` button that opens a searchable repository picker.
+- `Add repository` button that opens a searchable repository picker for admins;
+  render it disabled for non-admin org members.
 - `Manage GitHub access` link that opens the live GitHub installation settings
-  URL when GitHub installation metadata is available.
+  URL when GitHub installation metadata is available to an admin.
 
 The add-repository modal should include:
 
@@ -357,6 +360,12 @@ The add-repository modal should include:
 - `Manage GitHub access` link for cases where the admin expects a repository
   that is not accessible to the current GitHub App installation;
 - a submit button for the selected repository.
+
+Non-admin org members can view the connected organization and repository list,
+and can refresh the live GitHub-backed list. They cannot open the add-repository
+modal, submit `importRepository`, or open the `Manage GitHub access` affordance
+from Lightfast. If the client cannot determine the active org role, treat the
+viewer as non-admin for mutation affordances.
 
 For v1, keep watch-scope editing out of the modal. Imported normal repositories
 use the default `["**"]` all-paths watch.
@@ -415,21 +424,21 @@ Add tests at each boundary:
   installation/account metadata fetching including `html_url`.
 - `db/app`: listing watched repositories by binding and single-repository
   upsert behavior.
-- `api/app`: source-control router read/import behavior, admin guard, owner
-  id filtering, inaccessible repository rejection, idempotent already-added
-  imports, merged imported/available output, `.lightfast` exclusion, omission
-  of unavailable watched repositories, and no client-supplied repository
-  metadata in import mutations.
+- `api/app`: source-control router member-readable list behavior, admin-only
+  import behavior, owner id filtering, inaccessible repository rejection,
+  idempotent already-added imports, merged imported/available output,
+  `.lightfast` exclusion, omission of unavailable watched repositories, and no
+  client-supplied repository metadata in import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
 - `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
   authentication returning `html_url`, and `GET /installation/repositories`
   with installation-token authentication.
-- `apps/app`: source-control integration UI renders connected orgs, omits
-  personal GitHub account state, opens add-repository modal, filters
-  repositories, shows `Manage GitHub access` only from live installation
-  metadata, omits `.lightfast` from normal repo UI, and submits one selected
-  repository.
+- `apps/app`: source-control integration UI renders connected orgs for members,
+  omits personal GitHub account state, disables add-repository controls for
+  non-admins, opens add-repository modal for admins, filters repositories, shows
+  `Manage GitHub access` only to admins from live installation metadata, omits
+  `.lightfast` from normal repo UI, and submits one selected repository.
 
 ## Rollout
 
