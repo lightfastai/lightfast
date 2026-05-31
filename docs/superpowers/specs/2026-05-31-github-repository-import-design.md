@@ -33,6 +33,11 @@ Repository import is explicit. Lightfast lists repositories accessible to the
 bound GitHub App installation, but it only creates watched repository rows for
 repositories the admin selects in the modal.
 
+Repository identity is ID-first. Durable Lightfast state should record the
+import decision and watch policy, not GitHub display metadata that can drift.
+Repository names, full names, owner logins, visibility, and installation account
+labels are fetched from GitHub wherever the UI or API needs to render them.
+
 ## Goals
 
 - Let an org admin import one, many, or all repositories from the connected
@@ -42,7 +47,8 @@ repositories the admin selects in the modal.
 - Reuse `lightfast_source_control_repositories` as the imported repository
   registry.
 - Preserve `.lightfast` setup semantics and its `skills/**` watched path.
-- Show imported and available repositories in the Source Control settings UI.
+- Show imported and available repositories in the Source Control settings UI
+  using live GitHub repository data.
 - Keep the first implementation production-shaped against real GitHub and the
   local GitHub emulator.
 
@@ -58,22 +64,36 @@ repositories the admin selects in the modal.
 
 ## Source Of Truth
 
-GitHub remains the live source of truth for repositories that are available to
-import. Lightfast stores only the repositories that have been imported.
+GitHub remains the live source of truth for all repository and account metadata
+that can change outside Lightfast. Lightfast stores only the durable facts it
+owns: the binding, the imported repository ids, and the watch policy.
 
-Available repositories:
+Persisted Lightfast state:
 
-- fetched live from the bound GitHub App installation using an installation
-  token;
-- filtered to the active binding's `providerAccountLogin`;
-- merged in the API response with existing watched rows.
+- active binding: provider, provider account id, provider installation id,
+  status, connected user, connected timestamp, and provider setup metadata
+  needed for auth and setup gates;
+- imported repository watch: provider repository id, watched path globs,
+  internal id, and timestamps.
 
-Imported repositories:
+Live GitHub state:
 
-- stored in `lightfast_source_control_repositories`;
-- unique by `(orgSourceControlBindingId, providerRepositoryId)`;
-- resolved by webhook ingestion exactly as the generic source-control substrate
-  already does.
+- organization login and display labels;
+- repository full name, name, owner login, owner id, and visibility;
+- repository availability under the installation.
+
+The API may return GitHub repository metadata only when it has just fetched that
+metadata from GitHub. The client must not round-trip names, full names, owner
+logins, or visibility back to import mutations. Import mutations accept
+provider repository ids only and re-fetch GitHub data server-side before
+writing.
+
+The existing `lightfast_source_control_repositories.full_name` column is a
+compatibility/detail field, not a source of truth for this feature. New API and
+UI behavior must not read it to render current repository state. If the column
+is still required by the current schema, populate it only from the fresh GitHub
+response during import/setup. Prefer removing that dependency during
+implementation if it can be done without widening the feature.
 
 ## GitHub API
 
@@ -103,7 +123,8 @@ type GitHubInstallationRepository = {
   fullName: string;
   id: string;
   name: string;
-  owner: string;
+  ownerId: string;
+  ownerLogin: string;
   private: boolean;
 };
 ```
@@ -112,6 +133,28 @@ The helper should support pagination and default to `perPage: 100`. For the
 first UI, the API can fetch all pages for the bound installation. If real orgs
 make that too expensive later, add cursor pagination at the Lightfast API
 boundary without changing the durable model.
+
+Add a helper for fetching the current installation/account metadata by
+installation id with GitHub App JWT authentication:
+
+```ts
+getGitHubAppInstallation({
+  apiBaseUrl,
+  apiVersion,
+  appJwt,
+  installationId,
+});
+```
+
+It calls:
+
+```text
+GET /app/installations/{installation_id}
+```
+
+The helper returns the current installation id, target type, account id, and
+account login. Use this to render the connected organization card and to avoid
+treating the binding's stored login as current display state.
 
 ## API Design
 
@@ -125,7 +168,6 @@ repository summary counts for the connected binding:
 ```ts
 {
   binding: {
-    accountLogin: string | null;
     connectedAt: Date;
     provider: string;
     providerLabel: string;
@@ -138,16 +180,24 @@ repository summary counts for the connected binding:
 ### `listRepositories`
 
 Admin and member readable. Requires an active org identity. If no GitHub binding
-exists, return an empty list with `status: "unbound"`.
+exists, return an empty list with `status: "unbound"`. If GitHub cannot be
+reached, return a GitHub-listing error and no repository display metadata.
 
 ```ts
 {
+  organization: {
+    id: string;
+    login: string;
+  } | null;
   repositories: Array<{
     fullName: string;
     id: string;
     imported: boolean;
     name: string;
-    owner: string;
+    owner: {
+      id: string;
+      login: string;
+    };
     private: boolean;
     watchedPathGlobs: string[] | null;
   }>;
@@ -160,14 +210,18 @@ Behavior:
 1. Load the active binding for `ctx.auth.identity.orgId`.
 2. Require `binding.provider === "github"` and a provider installation id.
 3. Create a GitHub App JWT.
-4. Mint an installation token for `binding.providerInstallationId`.
-5. List installation repositories from GitHub.
-6. Filter to `repository.owner === binding.providerAccountLogin`.
-7. Load watched repository rows for the binding.
-8. Merge live GitHub repositories with watched rows by provider repository id.
+4. Fetch current installation/account metadata from GitHub.
+5. Require the installation account id to match the binding's
+   `providerAccountId`.
+6. Mint an installation token for `binding.providerInstallationId`.
+7. List installation repositories from GitHub.
+8. Filter to `repository.ownerId === binding.providerAccountId`.
+9. Load watched repository rows for the binding.
+10. Merge live GitHub repositories with watched rows by provider repository id.
 
-Filtering to the bound account prevents a stale or unusual installation response
-from surfacing repositories outside the connected GitHub organization.
+Filtering by provider account id prevents stale logins, renamed organizations,
+or unusual installation responses from surfacing repositories outside the
+connected GitHub organization.
 
 ### `importRepositories`
 
@@ -175,32 +229,29 @@ Admin-only mutation. It imports selected repositories by provider repository id.
 
 ```ts
 {
-  repositories: Array<{
-    fullName: string;
-    id: string;
-    name: string;
-    owner: string;
-    watchedPathGlobs?: string[];
-  }>;
+  repositoryIds: string[];
 }
 ```
 
 Validation:
 
-- at least one repository;
-- every repository owner must match the bound GitHub account login;
-- every repository full name must be `owner/name`;
-- optional watched paths must pass `watchedPathGlobsSchema`.
+- at least one repository id;
+- every repository id must exist in the live GitHub installation repository
+  allowlist;
+- every selected repository owner id must match the bound provider account id.
 
 Behavior:
 
 1. Load the active GitHub binding.
-2. Fetch live installation repositories from GitHub.
-3. Build an allowlist of repository ids accessible to the installation and
-   owned by the bound account.
-4. Reject any selected repository id that is not in that allowlist.
-5. Upsert watched rows for selected repositories.
-6. Return the same merged repository list as `listRepositories`.
+2. Fetch current installation/account metadata from GitHub.
+3. Require the installation account id to match the binding's
+   `providerAccountId`.
+4. Fetch live installation repositories from GitHub.
+5. Build an allowlist of repository ids accessible to the installation and
+   owned by the bound account id.
+6. Reject any selected repository id that is not in that allowlist.
+7. Upsert watched rows for selected repository ids.
+8. Return the same live, merged repository list as `listRepositories`.
 
 Default watches:
 
@@ -223,9 +274,11 @@ Add focused helpers in `db/app/src/utils/source-control-repositories.ts`:
 - `listWatchedSourceControlRepositories(db, { orgSourceControlBindingId })`
 - `upsertManyWatchedSourceControlRepositories(db, input)`
 
-Do not add columns for `owner`, `name`, `private`, `defaultBranch`, or sync
-state. `fullName`, `providerRepositoryId`, and watched paths are enough for the
-first import workflow.
+The helper surface should be provider-id and watch-policy oriented. Do not add
+columns or helper contracts for `owner`, `name`, `private`, `defaultBranch`,
+sync state, or any other provider metadata that can go stale. If existing schema
+constraints still require `fullName`, keep it inside the helper as a freshly
+observed compatibility write and do not expose it as durable repository state.
 
 ## UI Design
 
@@ -237,8 +290,8 @@ The page should contain:
 - GitHub heading and short description.
 - Integration metadata card with enabled-by, support, docs, and about affordance
   using local product copy and links.
-- Connected organizations card showing the bound GitHub org and connected
-  status.
+- Connected organizations card showing the currently fetched GitHub org login
+  and connected status.
 - Repositories card showing imported and available repositories.
 - `Refresh GitHub` action that invalidates/refetches the repository list.
 - `Import repositories` button that opens a modal checklist.
@@ -255,17 +308,25 @@ The import modal should include:
 For v1, keep watch-scope editing out of the modal. Imported normal repositories
 use the default `["**"]` all-paths watch.
 
+When live GitHub data is unavailable, the UI should show the connected status,
+the imported repository count from Lightfast, and a retry affordance. It should
+not render repository names, org logins, visibility, or other provider metadata
+from stale Lightfast fields.
+
 ## Local Emulator
 
 Extend the GitHub emulator's compatible API surface with:
 
 ```text
+GET /app/installations/{installation_id}
 GET /installation/repositories
 ```
 
-The route should authenticate an installation token, list repositories
-accessible to that installation, and return GitHub-shaped `total_count` and
-`repositories` fields. This keeps local development and tests production-shaped.
+The installation route should authenticate a GitHub App JWT and return
+GitHub-shaped installation/account fields. The repository route should
+authenticate an installation token, list repositories accessible to that
+installation, and return GitHub-shaped `total_count` and `repositories` fields.
+This keeps local development and tests production-shaped.
 
 The emulator seed should include at least two repositories under the connected
 organization so the import UI can exercise imported and available states.
@@ -274,28 +335,29 @@ organization so the import UI can exercise imported and available states.
 
 - Missing binding: show the existing unbound source-control state and link back
   to GitHub setup.
-- GitHub listing failure: show the connected organization and an inline
-  repository-list error with retry.
+- GitHub installation metadata failure: show the connected status and an inline
+  refresh error with retry, without rendering stale provider account labels.
+- GitHub listing failure: show the imported repository count and an inline
+  repository-list error with retry, without rendering stale repository labels.
 - Selected repository no longer accessible: reject the mutation with
   `PRECONDITION_FAILED` and refetch the list.
 - Non-admin import attempt: reject with `FORBIDDEN`.
-
-The UI should preserve already imported rows when a live GitHub refresh fails,
-so admins can still see current Lightfast state.
 
 ## Testing
 
 Add tests at each boundary:
 
 - `@repo/github-app-node`: pagination, normalization, request headers, invalid
-  response handling for installation repository listing.
+  response handling for installation repository listing, and current
+  installation/account metadata fetching.
 - `db/app`: listing watched repositories by binding and bulk upsert behavior.
 - `api/app`: source-control router read/import behavior, admin guard, owner
-  filtering, inaccessible repository rejection, and merged imported/available
-  output.
+  id filtering, inaccessible repository rejection, merged imported/available
+  output, and no client-supplied repository metadata in import mutations.
 - `@repo/source-control-contract`: `SOURCE_CONTROL_ALL_PATHS_GLOB`,
   validation, and matching semantics for `["**"]`.
-- `emulators/github`: `GET /installation/repositories` with installation-token
+- `emulators/github`: `GET /app/installations/{installation_id}` with app JWT
+  authentication and `GET /installation/repositories` with installation-token
   authentication.
 - `apps/app`: source-control integration UI renders connected orgs, omits
   personal GitHub account state, opens import modal, filters repositories, and
@@ -305,5 +367,5 @@ Add tests at each boundary:
 
 The feature can ship without migrating existing rows. Existing `.lightfast`
 watch rows remain valid. After deployment, organizations with a connected
-GitHub org will see their current imported repositories and can explicitly add
-more from the integration UI.
+GitHub org will fetch current repository state from GitHub and can explicitly
+add more repositories from the integration UI.
