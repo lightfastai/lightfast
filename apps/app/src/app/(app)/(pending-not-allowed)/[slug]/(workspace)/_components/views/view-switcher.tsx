@@ -7,7 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { cn } from "@repo/ui/lib/utils";
-import { ChevronDown, type LucideIcon, Plus, X } from "lucide-react";
+import { type LucideIcon, Plus, X } from "lucide-react";
 import { useState } from "react";
 import { partitionViews, type ViewSwitcherItem } from "./partition-views";
 import { ViewCreateDialog } from "./view-create-dialog";
@@ -60,10 +60,10 @@ export function ViewSwitcher({
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto">
           <button
             className={cn(
-              "inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 text-sm transition-colors",
+              "inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border border-border/70 px-2.5 text-sm transition-colors",
               activeViewId
-                ? "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
-                : "border-border/70 bg-muted/60 text-foreground"
+                ? "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                : "bg-muted/60 text-foreground"
             )}
             data-active={!activeViewId}
             onClick={onSelectAll}
@@ -81,10 +81,10 @@ export function ViewSwitcher({
             return (
               <div
                 className={cn(
-                  "group inline-flex h-7 shrink-0 items-center rounded-lg border pr-1 pl-2.5 text-sm transition-colors",
+                  "group inline-flex h-7 shrink-0 items-center rounded-lg border border-border/70 pr-1 pl-2.5 text-sm transition-colors",
                   isActive
-                    ? "border-border/70 bg-muted/60 text-foreground"
-                    : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                    ? "bg-muted/60 text-foreground"
+                    : "bg-muted/30 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
                 )}
                 data-active={isActive}
                 key={view.publicId}
@@ -117,11 +117,10 @@ export function ViewSwitcher({
               <DropdownMenuTrigger asChild>
                 <button
                   aria-label="More views"
-                  className="inline-flex h-7 shrink-0 items-center gap-1 rounded-lg border border-transparent px-2.5 text-muted-foreground text-sm transition-colors hover:bg-muted/30 hover:text-foreground"
+                  className="inline-flex h-7 shrink-0 items-center justify-center rounded-full px-2.5 text-muted-foreground text-sm transition-colors hover:bg-muted/60 hover:text-foreground"
                   type="button"
                 >
                   +{overflow.length}
-                  <ChevronDown aria-hidden="true" className="size-3.5" />
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent
@@ -149,7 +148,7 @@ export function ViewSwitcher({
 
         <button
           aria-label="New view"
-          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
           onClick={() => setCreateOpen(true)}
           type="button"
         >
