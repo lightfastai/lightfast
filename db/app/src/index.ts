@@ -100,6 +100,14 @@ export {
   upsertPeopleFromCandidates,
 } from "./utils/people";
 export {
+  type CreatePeopleViewParams,
+  createPeopleView,
+  type DeletePeopleViewParams,
+  deletePeopleView,
+  type ListPeopleViewsParams,
+  listPeopleViews,
+} from "./utils/people-views";
+export {
   type CreateSignalViewParams,
   createSignalView,
   type DeleteSignalViewParams,
