@@ -4,43 +4,19 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const decryptMock = vi.fn();
 const encryptMock = vi.fn();
 const getActiveUserSourceControlAccountMock = vi.fn();
-const markUserSourceControlAccountExpiredMock = vi.fn();
+const markObservedUserSourceControlAccountExpiredMock = vi.fn();
+const markObservedUserSourceControlAccountRevokedMock = vi.fn();
 const refreshGitHubUserAccessTokenMock = vi.fn();
-
-const andMock = vi.fn((...conditions: unknown[]) => ({
-  conditions,
-  type: "and",
-}));
-const eqMock = vi.fn((column: unknown, value: unknown) => ({
-  column,
-  type: "eq",
-  value,
-}));
-
-vi.mock("drizzle-orm", () => ({
-  and: andMock,
-  eq: eqMock,
-}));
+const updateObservedUserSourceControlAccountTokensMock = vi.fn();
 
 vi.mock("@db/app", () => ({
   getActiveUserSourceControlAccount: getActiveUserSourceControlAccountMock,
-  markUserSourceControlAccountExpired: markUserSourceControlAccountExpiredMock,
-}));
-
-vi.mock("@db/app/schema", () => ({
-  userSourceControlAccounts: {
-    accessTokenExpiresAt: "accessTokenExpiresAt",
-    activeClerkUserId: "activeClerkUserId",
-    activeProviderUserKey: "activeProviderUserKey",
-    clerkUserId: "clerkUserId",
-    encryptedAccessToken: "encryptedAccessToken",
-    encryptedRefreshToken: "encryptedRefreshToken",
-    id: "id",
-    refreshTokenExpiresAt: "refreshTokenExpiresAt",
-    revokedAt: "revokedAt",
-    status: "status",
-    updatedAt: "updatedAt",
-  },
+  markObservedUserSourceControlAccountExpired:
+    markObservedUserSourceControlAccountExpiredMock,
+  markObservedUserSourceControlAccountRevoked:
+    markObservedUserSourceControlAccountRevokedMock,
+  updateObservedUserSourceControlAccountTokens:
+    updateObservedUserSourceControlAccountTokensMock,
 }));
 
 vi.mock("@repo/app-encryption", () => ({
@@ -84,35 +60,23 @@ const { getFreshGitHubUserAccessToken } = await import(
 );
 const { GitHubAppNodeError } = await import("@repo/github-app-node");
 
-function createUpdateDb() {
-  return createUpdateDbWithResult([{ affectedRows: 1 }]);
-}
-
-function createUpdateDbWithResult(result: unknown) {
-  const whereMock = vi.fn().mockResolvedValue(result);
-  const setMock = vi.fn(() => ({ where: whereMock }));
-  const updateMock = vi.fn(() => ({ set: setMock }));
-  return {
-    db: { update: updateMock } as unknown as Database,
-    setMock,
-    updateMock,
-    whereMock,
-  };
-}
-
 function mockDb() {
   return {} as Database;
 }
 
 describe("github user account token refresh", () => {
   beforeEach(() => {
-    andMock.mockClear();
     decryptMock.mockReset();
     encryptMock.mockReset();
-    eqMock.mockClear();
     getActiveUserSourceControlAccountMock.mockReset();
-    markUserSourceControlAccountExpiredMock.mockReset();
+    markObservedUserSourceControlAccountExpiredMock.mockReset();
+    markObservedUserSourceControlAccountRevokedMock.mockReset();
     refreshGitHubUserAccessTokenMock.mockReset();
+    updateObservedUserSourceControlAccountTokensMock.mockReset();
+
+    markObservedUserSourceControlAccountExpiredMock.mockResolvedValue(true);
+    markObservedUserSourceControlAccountRevokedMock.mockResolvedValue(true);
+    updateObservedUserSourceControlAccountTokensMock.mockResolvedValue(true);
   });
 
   it("returns the existing decrypted access token outside the refresh window", async () => {
@@ -143,7 +107,6 @@ describe("github user account token refresh", () => {
   });
 
   it("refreshes and persists rotated tokens inside the refresh window", async () => {
-    const updateDb = createUpdateDb();
     getActiveUserSourceControlAccountMock.mockResolvedValue({
       id: 1,
       accessTokenExpiresAt: new Date("2026-05-30T00:30:00.000Z"),
@@ -165,7 +128,7 @@ describe("github user account token refresh", () => {
 
     await expect(
       getFreshGitHubUserAccessToken({
-        db: updateDb.db,
+        db: mockDb(),
         clerkUserId: "user_1",
         now: () => new Date("2026-05-30T00:00:00.000Z"),
         refreshWindowMs: 60 * 60 * 1000,
@@ -182,23 +145,18 @@ describe("github user account token refresh", () => {
       refreshToken: "ghr_refresh",
       tokenUrl: "https://github.lightfast.localhost/login/oauth/access_token",
     });
-    expect(updateDb.updateMock).toHaveBeenCalled();
-    expect(eqMock).toHaveBeenCalledWith("id", 1);
-    expect(eqMock).toHaveBeenCalledWith("clerkUserId", "user_1");
-    expect(eqMock).toHaveBeenCalledWith(
-      "encryptedRefreshToken",
-      "encrypted_refresh"
-    );
-    expect(eqMock).toHaveBeenCalledWith("status", "active");
-    expect(updateDb.setMock).toHaveBeenCalledWith(
-      expect.objectContaining({
-        encryptedAccessToken: "encrypted_next_access",
-        encryptedRefreshToken: "encrypted_next_refresh",
-        accessTokenExpiresAt: new Date("2026-05-30T08:00:00.000Z"),
-        refreshTokenExpiresAt: new Date("2026-11-28T12:00:00.000Z"),
-        updatedAt: new Date("2026-05-30T00:00:00.000Z"),
-      })
-    );
+    expect(
+      updateObservedUserSourceControlAccountTokensMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      accessTokenExpiresAt: new Date("2026-05-30T08:00:00.000Z"),
+      clerkUserId: "user_1",
+      encryptedAccessToken: "encrypted_next_access",
+      encryptedRefreshToken: "encrypted_next_refresh",
+      id: 1,
+      observedEncryptedRefreshToken: "encrypted_refresh",
+      refreshTokenExpiresAt: new Date("2026-11-28T12:00:00.000Z"),
+      updatedAt: new Date("2026-05-30T00:00:00.000Z"),
+    });
   });
 
   it("throws a typed missing-account error when no active account exists", async () => {
@@ -243,7 +201,6 @@ describe("github user account token refresh", () => {
   });
 
   it("expires only the observed row version when the local refresh token is expired", async () => {
-    const updateDb = createUpdateDb();
     getActiveUserSourceControlAccountMock.mockResolvedValue({
       id: 1,
       clerkUserId: "user_1",
@@ -256,7 +213,7 @@ describe("github user account token refresh", () => {
 
     await expect(
       getFreshGitHubUserAccessToken({
-        db: updateDb.db,
+        db: mockDb(),
         clerkUserId: "user_1",
         now: () => new Date("2026-05-30T00:00:00.000Z"),
         refreshWindowMs: 60 * 60 * 1000,
@@ -264,21 +221,20 @@ describe("github user account token refresh", () => {
     ).rejects.toMatchObject({
       code: "GITHUB_USER_ACCOUNT_REFRESH_FAILED",
     });
-    expect(markUserSourceControlAccountExpiredMock).not.toHaveBeenCalled();
-    expect(updateDb.setMock).toHaveBeenCalledWith({
-      activeClerkUserId: null,
-      activeProviderUserKey: null,
-      revokedAt: null,
-      status: "expired",
-      updatedAt: new Date("2026-05-30T00:00:00.000Z"),
+    expect(
+      markObservedUserSourceControlAccountExpiredMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      clerkUserId: "user_1",
+      encryptedRefreshToken: "encrypted_refresh",
+      id: 1,
+      now: new Date("2026-05-30T00:00:00.000Z"),
     });
-    expect(eqMock).toHaveBeenCalledWith("id", 1);
-    expect(eqMock).toHaveBeenCalledWith("clerkUserId", "user_1");
-    expect(eqMock).toHaveBeenCalledWith(
-      "encryptedRefreshToken",
-      "encrypted_refresh"
-    );
-    expect(eqMock).toHaveBeenCalledWith("status", "active");
+    expect(
+      markObservedUserSourceControlAccountRevokedMock
+    ).not.toHaveBeenCalled();
+    expect(
+      updateObservedUserSourceControlAccountTokensMock
+    ).not.toHaveBeenCalled();
     expect(decryptMock).not.toHaveBeenCalled();
   });
 
@@ -309,11 +265,15 @@ describe("github user account token refresh", () => {
     ).rejects.toMatchObject({
       code: "GITHUB_USER_ACCOUNT_REFRESH_FAILED",
     });
-    expect(markUserSourceControlAccountExpiredMock).not.toHaveBeenCalled();
+    expect(
+      markObservedUserSourceControlAccountExpiredMock
+    ).not.toHaveBeenCalled();
+    expect(
+      markObservedUserSourceControlAccountRevokedMock
+    ).not.toHaveBeenCalled();
   });
 
   it("revokes only the observed row version when the provider rejects the refresh token", async () => {
-    const updateDb = createUpdateDb();
     getActiveUserSourceControlAccountMock.mockResolvedValue({
       id: 1,
       clerkUserId: "user_1",
@@ -333,7 +293,7 @@ describe("github user account token refresh", () => {
 
     await expect(
       getFreshGitHubUserAccessToken({
-        db: updateDb.db,
+        db: mockDb(),
         clerkUserId: "user_1",
         now: () => new Date("2026-05-30T00:00:00.000Z"),
         refreshWindowMs: 60 * 60 * 1000,
@@ -342,20 +302,17 @@ describe("github user account token refresh", () => {
       code: "GITHUB_USER_ACCOUNT_REFRESH_FAILED",
     });
 
-    expect(updateDb.setMock).toHaveBeenCalledWith({
-      activeClerkUserId: null,
-      activeProviderUserKey: null,
-      revokedAt: new Date("2026-05-30T00:00:00.000Z"),
-      status: "revoked",
-      updatedAt: new Date("2026-05-30T00:00:00.000Z"),
+    expect(
+      markObservedUserSourceControlAccountRevokedMock
+    ).toHaveBeenCalledWith(expect.anything(), {
+      clerkUserId: "user_1",
+      encryptedRefreshToken: "encrypted_refresh",
+      id: 1,
+      now: new Date("2026-05-30T00:00:00.000Z"),
     });
-    expect(eqMock).toHaveBeenCalledWith("id", 1);
-    expect(eqMock).toHaveBeenCalledWith("clerkUserId", "user_1");
-    expect(eqMock).toHaveBeenCalledWith(
-      "encryptedRefreshToken",
-      "encrypted_refresh"
-    );
-    expect(eqMock).toHaveBeenCalledWith("status", "active");
+    expect(
+      markObservedUserSourceControlAccountExpiredMock
+    ).not.toHaveBeenCalled();
   });
 
   it("recovers from stale provider refresh failures when a concurrent refresh already rotated tokens", async () => {
@@ -407,11 +364,16 @@ describe("github user account token refresh", () => {
       "encrypted_current_access",
       expect.any(String)
     );
-    expect(markUserSourceControlAccountExpiredMock).not.toHaveBeenCalled();
+    expect(
+      markObservedUserSourceControlAccountExpiredMock
+    ).not.toHaveBeenCalled();
+    expect(
+      markObservedUserSourceControlAccountRevokedMock
+    ).not.toHaveBeenCalled();
   });
 
-  it("throws a deterministic refresh error when rotated token persistence affects no rows", async () => {
-    const updateDb = createUpdateDbWithResult([{ affectedRows: 0 }]);
+  it("throws a deterministic refresh error when rotated token persistence loses the observed row", async () => {
+    updateObservedUserSourceControlAccountTokensMock.mockResolvedValue(false);
     getActiveUserSourceControlAccountMock.mockResolvedValue({
       id: 1,
       clerkUserId: "user_1",
@@ -434,41 +396,7 @@ describe("github user account token refresh", () => {
 
     await expect(
       getFreshGitHubUserAccessToken({
-        db: updateDb.db,
-        clerkUserId: "user_1",
-        now: () => new Date("2026-05-30T00:00:00.000Z"),
-        refreshWindowMs: 60 * 60 * 1000,
-      })
-    ).rejects.toMatchObject({
-      code: "GITHUB_USER_ACCOUNT_REFRESH_FAILED",
-    });
-  });
-
-  it("treats unknown rotated token persistence result shapes as failure", async () => {
-    const updateDb = createUpdateDbWithResult({ ok: true });
-    getActiveUserSourceControlAccountMock.mockResolvedValue({
-      id: 1,
-      clerkUserId: "user_1",
-      accessTokenExpiresAt: new Date("2026-05-30T00:30:00.000Z"),
-      encryptedAccessToken: "encrypted_access",
-      encryptedRefreshToken: "encrypted_refresh",
-      refreshTokenExpiresAt: new Date("2026-11-30T00:00:00.000Z"),
-      status: "active",
-    });
-    decryptMock.mockResolvedValueOnce("ghr_refresh");
-    refreshGitHubUserAccessTokenMock.mockResolvedValue({
-      accessToken: "ghu_next",
-      accessTokenExpiresIn: 28_800,
-      refreshToken: "ghr_next",
-      refreshTokenExpiresIn: 15_768_000,
-    });
-    encryptMock
-      .mockResolvedValueOnce("encrypted_next_access")
-      .mockResolvedValueOnce("encrypted_next_refresh");
-
-    await expect(
-      getFreshGitHubUserAccessToken({
-        db: updateDb.db,
+        db: mockDb(),
         clerkUserId: "user_1",
         now: () => new Date("2026-05-30T00:00:00.000Z"),
         refreshWindowMs: 60 * 60 * 1000,

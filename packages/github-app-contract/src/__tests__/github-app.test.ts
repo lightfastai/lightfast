@@ -4,10 +4,14 @@ import {
   GITHUB_OAUTH_CALLBACK_PATH,
   GITHUB_SETUP_PATH,
   GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
+  GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH,
   githubBindStartOutputSchema,
   githubInstallationMetadataSchema,
   githubNormalizedInstallationSchema,
   githubUserAccountBindErrorCodeSchema,
+  githubUserAccountReturnToSchema,
+  isGitHubUserAccountReturnTo,
+  normalizeGitHubUserAccountReturnTo,
 } from "../github-app";
 
 describe("@repo/github-app-contract", () => {
@@ -32,6 +36,35 @@ describe("@repo/github-app-contract", () => {
     expect(() =>
       githubUserAccountBindErrorCodeSchema.parse("installation_not_verified")
     ).toThrow();
+  });
+
+  it("validates GitHub user account return paths in the shared contract", () => {
+    expect(githubUserAccountReturnToSchema.parse("/account/settings")).toBe(
+      "/account/settings"
+    );
+    expect(
+      githubUserAccountReturnToSchema.parse(
+        `/${"a".repeat(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH - 1)}`
+      )
+    ).toHaveLength(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH);
+
+    for (const value of [
+      "",
+      "https://evil.example/path",
+      "//evil.example/path",
+      "/\\evil.example/path",
+      "/account\\settings",
+      `/${"a".repeat(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH)}`,
+    ]) {
+      expect(githubUserAccountReturnToSchema.safeParse(value).success).toBe(
+        false
+      );
+      expect(isGitHubUserAccountReturnTo(value)).toBe(false);
+      expect(normalizeGitHubUserAccountReturnTo(value)).toBeUndefined();
+    }
+
+    expect(normalizeGitHubUserAccountReturnTo(null)).toBeUndefined();
+    expect(normalizeGitHubUserAccountReturnTo(undefined)).toBeUndefined();
   });
 
   it("validates client-safe start output for a GitHub App install URL", () => {

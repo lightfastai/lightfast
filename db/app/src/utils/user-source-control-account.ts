@@ -5,6 +5,7 @@ import type {
   UserSourceControlAccountProvider,
 } from "../schema";
 import { userSourceControlAccounts } from "../schema";
+import { getRowsAffected, isDuplicateKeyError } from "./mysql";
 
 const {
   activeClerkUserId: _activeClerkUserId,
@@ -68,6 +69,8 @@ export async function getUserSourceControlAccountByProviderUser(
 export type UserSourceControlAccountConflictCode =
   | "LIGHTFAST_USER_ALREADY_BOUND"
   | "PROVIDER_USER_ALREADY_BOUND";
+
+type InactiveUserSourceControlAccountStatus = "expired" | "revoked";
 
 export class UserSourceControlAccountConflictError extends Error {
   constructor(
@@ -200,35 +203,12 @@ export async function markUserSourceControlAccountRevoked(
   db: Database,
   input: MarkUserSourceControlAccountRevokedInput
 ): Promise<UserSourceControlAccount | undefined> {
-  const activeAccount = await getActiveUserSourceControlAccount(
-    db,
-    input.clerkUserId
-  );
-  if (!activeAccount) {
-    return;
-  }
-
-  const result = await db
-    .update(userSourceControlAccounts)
-    .set({
-      activeClerkUserId: null,
-      activeProviderUserKey: null,
-      status: "revoked",
-      revokedAt: new Date(),
-      updatedAt: new Date(),
-    })
-    .where(
-      and(
-        eq(userSourceControlAccounts.id, activeAccount.id),
-        eq(userSourceControlAccounts.status, "active")
-      )
-    );
-
-  if (getRowsAffected(result) === 0) {
-    return;
-  }
-
-  return await getUserSourceControlAccountById(db, activeAccount.id);
+  const now = new Date();
+  return await markActiveUserSourceControlAccountInactive(db, input, {
+    revokedAt: now,
+    status: "revoked",
+    updatedAt: now,
+  });
 }
 
 export interface MarkUserSourceControlAccountExpiredInput {
@@ -239,35 +219,77 @@ export async function markUserSourceControlAccountExpired(
   db: Database,
   input: MarkUserSourceControlAccountExpiredInput
 ): Promise<UserSourceControlAccount | undefined> {
-  const activeAccount = await getActiveUserSourceControlAccount(
-    db,
-    input.clerkUserId
-  );
-  if (!activeAccount) {
-    return;
-  }
+  return await markActiveUserSourceControlAccountInactive(db, input, {
+    revokedAt: null,
+    status: "expired",
+    updatedAt: new Date(),
+  });
+}
 
+export interface ObservedUserSourceControlAccountInput {
+  clerkUserId: string;
+  encryptedRefreshToken: string;
+  id: number;
+  now: Date;
+}
+
+export async function markObservedUserSourceControlAccountExpired(
+  db: Database,
+  input: ObservedUserSourceControlAccountInput
+): Promise<boolean> {
+  return await markObservedUserSourceControlAccountInactive(db, input, {
+    revokedAt: null,
+    status: "expired",
+  });
+}
+
+export async function markObservedUserSourceControlAccountRevoked(
+  db: Database,
+  input: ObservedUserSourceControlAccountInput
+): Promise<boolean> {
+  return await markObservedUserSourceControlAccountInactive(db, input, {
+    revokedAt: input.now,
+    status: "revoked",
+  });
+}
+
+export interface UpdateObservedUserSourceControlAccountTokensInput {
+  accessTokenExpiresAt: Date;
+  clerkUserId: string;
+  encryptedAccessToken: string;
+  encryptedRefreshToken: string;
+  id: number;
+  observedEncryptedRefreshToken: string;
+  refreshTokenExpiresAt: Date;
+  updatedAt: Date;
+}
+
+export async function updateObservedUserSourceControlAccountTokens(
+  db: Database,
+  input: UpdateObservedUserSourceControlAccountTokensInput
+): Promise<boolean> {
   const result = await db
     .update(userSourceControlAccounts)
     .set({
-      activeClerkUserId: null,
-      activeProviderUserKey: null,
-      status: "expired",
-      revokedAt: null,
-      updatedAt: new Date(),
+      accessTokenExpiresAt: input.accessTokenExpiresAt,
+      encryptedAccessToken: input.encryptedAccessToken,
+      encryptedRefreshToken: input.encryptedRefreshToken,
+      refreshTokenExpiresAt: input.refreshTokenExpiresAt,
+      updatedAt: input.updatedAt,
     })
     .where(
       and(
-        eq(userSourceControlAccounts.id, activeAccount.id),
+        eq(userSourceControlAccounts.id, input.id),
+        eq(userSourceControlAccounts.clerkUserId, input.clerkUserId),
+        eq(
+          userSourceControlAccounts.encryptedRefreshToken,
+          input.observedEncryptedRefreshToken
+        ),
         eq(userSourceControlAccounts.status, "active")
       )
     );
 
-  if (getRowsAffected(result) === 0) {
-    return;
-  }
-
-  return await getUserSourceControlAccountById(db, activeAccount.id);
+  return getRowsAffected(result) > 0;
 }
 
 async function getUserSourceControlAccountById(
@@ -410,43 +432,6 @@ async function insertActiveUserSourceControlAccount(
   return inserted;
 }
 
-function getRowsAffected(result: unknown): number {
-  if (result === null || typeof result !== "object") {
-    return 0;
-  }
-
-  const { affectedRows, rowsAffected } = result as {
-    affectedRows?: unknown;
-    rowsAffected?: unknown;
-  };
-
-  if (typeof rowsAffected === "number") {
-    return rowsAffected;
-  }
-  if (typeof affectedRows === "number") {
-    return affectedRows;
-  }
-  return 0;
-}
-
-function isDuplicateKeyError(error: unknown): boolean {
-  if (error === null || typeof error !== "object") {
-    return false;
-  }
-
-  const { body, code, message } = error as {
-    body?: { code?: unknown };
-    code?: unknown;
-    message?: unknown;
-  };
-
-  return (
-    body?.code === "ER_DUP_ENTRY" ||
-    code === "ER_DUP_ENTRY" ||
-    (typeof message === "string" && message.includes("Duplicate entry"))
-  );
-}
-
 async function recoverUserSourceControlAccountRace(
   db: Database,
   input: FinalizeActiveUserSourceControlAccountInput,
@@ -491,6 +476,82 @@ async function recoverUserSourceControlAccountRace(
   }
 
   throw fallbackError;
+}
+
+async function markActiveUserSourceControlAccountInactive(
+  db: Database,
+  input: { clerkUserId: string },
+  state: {
+    revokedAt: Date | null;
+    status: InactiveUserSourceControlAccountStatus;
+    updatedAt: Date;
+  }
+): Promise<UserSourceControlAccount | undefined> {
+  const activeAccount = await getActiveUserSourceControlAccount(
+    db,
+    input.clerkUserId
+  );
+  if (!activeAccount) {
+    return;
+  }
+
+  const result = await db
+    .update(userSourceControlAccounts)
+    .set(inactiveUserSourceControlAccountValues(state))
+    .where(
+      and(
+        eq(userSourceControlAccounts.id, activeAccount.id),
+        eq(userSourceControlAccounts.status, "active")
+      )
+    );
+
+  if (getRowsAffected(result) === 0) {
+    return;
+  }
+
+  return await getUserSourceControlAccountById(db, activeAccount.id);
+}
+
+async function markObservedUserSourceControlAccountInactive(
+  db: Database,
+  input: ObservedUserSourceControlAccountInput,
+  state: {
+    revokedAt: Date | null;
+    status: InactiveUserSourceControlAccountStatus;
+  }
+): Promise<boolean> {
+  const result = await db
+    .update(userSourceControlAccounts)
+    .set(
+      inactiveUserSourceControlAccountValues({ ...state, updatedAt: input.now })
+    )
+    .where(
+      and(
+        eq(userSourceControlAccounts.id, input.id),
+        eq(userSourceControlAccounts.clerkUserId, input.clerkUserId),
+        eq(
+          userSourceControlAccounts.encryptedRefreshToken,
+          input.encryptedRefreshToken
+        ),
+        eq(userSourceControlAccounts.status, "active")
+      )
+    );
+
+  return getRowsAffected(result) > 0;
+}
+
+function inactiveUserSourceControlAccountValues(state: {
+  revokedAt: Date | null;
+  status: InactiveUserSourceControlAccountStatus;
+  updatedAt: Date;
+}) {
+  return {
+    activeClerkUserId: null,
+    activeProviderUserKey: null,
+    revokedAt: state.revokedAt,
+    status: state.status,
+    updatedAt: state.updatedAt,
+  };
 }
 
 function isExactProviderUserAccount(

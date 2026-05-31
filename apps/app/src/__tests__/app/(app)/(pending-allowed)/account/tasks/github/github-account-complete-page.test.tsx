@@ -89,6 +89,8 @@ describe("/account/tasks/github/complete", () => {
     ["external URL", "https://evil.example/path"],
     ["protocol-relative URL", "//evil.example/path"],
     ["backslash protocol-relative URL", "/\\evil.example/path"],
+    ["nested backslash path", "/account\\settings"],
+    ["too-long path", `/${"a".repeat(512)}`],
   ])("falls back for %s return_to values", async (_label, returnTo) => {
     mutateAsyncMock.mockResolvedValue(connectedAccount);
 

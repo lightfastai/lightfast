@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { githubUserAccountReturnToSchema } from "@repo/github-app-contract";
 import { nanoid } from "@vendor/lib";
 import { redis } from "@vendor/upstash";
 import { z } from "zod";
@@ -11,10 +12,12 @@ const stateEnvelopeSchema = z.object({
   nonce: z.string().min(16),
 });
 
+const optionalReturnToSchema = githubUserAccountReturnToSchema.optional();
+
 const attemptRecordSchema = z.object({
   codeVerifier: z.string().min(1),
   lightfastUserId: z.string().min(1),
-  returnTo: z.string().optional(),
+  returnTo: optionalReturnToSchema,
   stateHash: z.string().regex(/^[a-f0-9]{64}$/i),
 });
 
@@ -75,10 +78,11 @@ export async function issueGitHubUserAccountOAuthAttempt(input: {
 }): Promise<{ attemptId: string; state: string }> {
   const attemptId = nanoid(32);
   const state = encodeState({ attemptId, nonce: nanoid(32) });
+  const returnTo = optionalReturnToSchema.parse(input.returnTo);
   const record: GitHubUserAccountOAuthAttemptRecord = {
     codeVerifier: input.codeVerifier,
     lightfastUserId: input.lightfastUserId,
-    ...(input.returnTo === undefined ? {} : { returnTo: input.returnTo }),
+    ...(returnTo === undefined ? {} : { returnTo }),
     stateHash: hashState(state),
   };
   await redis.set(`${USER_ACCOUNT_OAUTH_PREFIX}${attemptId}`, record, {

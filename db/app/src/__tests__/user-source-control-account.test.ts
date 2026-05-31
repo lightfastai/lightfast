@@ -7,8 +7,11 @@ import {
   activeProviderUserKey,
   finalizeActiveUserSourceControlAccount,
   getUserSourceControlAccountByProviderUser,
+  markObservedUserSourceControlAccountExpired,
+  markObservedUserSourceControlAccountRevoked,
   markUserSourceControlAccountExpired,
   markUserSourceControlAccountRevoked,
+  updateObservedUserSourceControlAccountTokens,
 } from "../utils/user-source-control-account";
 
 describe("userSourceControlAccounts schema", () => {
@@ -640,6 +643,129 @@ it("returns undefined when expiring a stale active row", async () => {
   await expect(
     markUserSourceControlAccountExpired(db, { clerkUserId: "user_1" })
   ).resolves.toBeUndefined();
+});
+
+it("expires only the observed user account row version", async () => {
+  const now = new Date("2026-05-30T00:00:00.000Z");
+  const updateWhere = vi.fn((_condition: unknown) =>
+    Promise.resolve([{ affectedRows: 1 }])
+  );
+  const set = vi.fn(() => ({ where: updateWhere }));
+  const update = vi.fn(() => ({ set }));
+  const db = { update } as unknown as Database;
+
+  await expect(
+    markObservedUserSourceControlAccountExpired(db, {
+      clerkUserId: "user_1",
+      encryptedRefreshToken: "encrypted_refresh",
+      id: 1,
+      now,
+    })
+  ).resolves.toBe(true);
+
+  expect(set).toHaveBeenCalledWith({
+    activeClerkUserId: null,
+    activeProviderUserKey: null,
+    revokedAt: null,
+    status: "expired",
+    updatedAt: now,
+  });
+  const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+  expect(columnNames).toContain("id");
+  expect(columnNames).toContain("clerk_user_id");
+  expect(columnNames).toContain("encrypted_refresh_token");
+  expect(columnNames).toContain("status");
+});
+
+it("revokes only the observed user account row version", async () => {
+  const now = new Date("2026-05-30T00:00:00.000Z");
+  const updateWhere = vi.fn((_condition: unknown) =>
+    Promise.resolve({ rowsAffected: 1 })
+  );
+  const set = vi.fn(() => ({ where: updateWhere }));
+  const update = vi.fn(() => ({ set }));
+  const db = { update } as unknown as Database;
+
+  await expect(
+    markObservedUserSourceControlAccountRevoked(db, {
+      clerkUserId: "user_1",
+      encryptedRefreshToken: "encrypted_refresh",
+      id: 1,
+      now,
+    })
+  ).resolves.toBe(true);
+
+  expect(set).toHaveBeenCalledWith({
+    activeClerkUserId: null,
+    activeProviderUserKey: null,
+    revokedAt: now,
+    status: "revoked",
+    updatedAt: now,
+  });
+  const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+  expect(columnNames).toContain("id");
+  expect(columnNames).toContain("clerk_user_id");
+  expect(columnNames).toContain("encrypted_refresh_token");
+  expect(columnNames).toContain("status");
+});
+
+it("updates observed user account tokens only for the matching active row version", async () => {
+  const updatedAt = new Date("2026-05-30T00:00:00.000Z");
+  const accessTokenExpiresAt = new Date("2026-05-30T08:00:00.000Z");
+  const refreshTokenExpiresAt = new Date("2026-11-28T12:00:00.000Z");
+  const updateWhere = vi.fn((_condition: unknown) =>
+    Promise.resolve({ affectedRows: 1 })
+  );
+  const set = vi.fn(() => ({ where: updateWhere }));
+  const update = vi.fn(() => ({ set }));
+  const db = { update } as unknown as Database;
+
+  await expect(
+    updateObservedUserSourceControlAccountTokens(db, {
+      accessTokenExpiresAt,
+      clerkUserId: "user_1",
+      encryptedAccessToken: "encrypted_access_next",
+      encryptedRefreshToken: "encrypted_refresh_next",
+      id: 1,
+      observedEncryptedRefreshToken: "encrypted_refresh",
+      refreshTokenExpiresAt,
+      updatedAt,
+    })
+  ).resolves.toBe(true);
+
+  expect(set).toHaveBeenCalledWith({
+    accessTokenExpiresAt,
+    encryptedAccessToken: "encrypted_access_next",
+    encryptedRefreshToken: "encrypted_refresh_next",
+    refreshTokenExpiresAt,
+    updatedAt,
+  });
+  const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+  expect(columnNames).toContain("id");
+  expect(columnNames).toContain("clerk_user_id");
+  expect(columnNames).toContain("encrypted_refresh_token");
+  expect(columnNames).toContain("status");
+});
+
+it("returns false when an observed token update affects no rows", async () => {
+  const set = vi.fn(() => ({
+    where: () => Promise.resolve({ ok: true }),
+  }));
+  const update = vi.fn(() => ({ set }));
+  const db = { update } as unknown as Database;
+
+  await expect(
+    updateObservedUserSourceControlAccountTokens(db, {
+      accessTokenExpiresAt: new Date("2026-05-30T08:00:00.000Z"),
+      clerkUserId: "user_1",
+      encryptedAccessToken: "encrypted_access_next",
+      encryptedRefreshToken: "encrypted_refresh_next",
+      id: 1,
+      observedEncryptedRefreshToken: "encrypted_refresh",
+      refreshTokenExpiresAt: new Date("2026-11-28T12:00:00.000Z"),
+      updatedAt: new Date("2026-05-30T00:00:00.000Z"),
+    })
+  ).resolves.toBe(false);
 });
 
 it("recovers duplicate inserts as provider-user conflicts", async () => {

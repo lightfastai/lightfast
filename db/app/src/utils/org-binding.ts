@@ -16,6 +16,7 @@ import type {
   OrgSourceControlBindingProvider,
 } from "../schema";
 import { orgSourceControlBindings } from "../schema";
+import { isDuplicateKeyError } from "./mysql";
 
 const { activeClerkOrgId: _activeClerkOrgId, ...bindingSelection } =
   getTableColumns(orgSourceControlBindings);
@@ -274,24 +275,6 @@ export async function markOrgBindingRevoked(
         eq(orgSourceControlBindings.status, "revoked")
       )
     );
-}
-
-function isDuplicateKeyError(error: unknown): boolean {
-  if (error === null || typeof error !== "object") {
-    return false;
-  }
-
-  const { body, code, message } = error as {
-    body?: { code?: unknown };
-    code?: unknown;
-    message?: unknown;
-  };
-
-  return (
-    body?.code === "ER_DUP_ENTRY" ||
-    code === "ER_DUP_ENTRY" ||
-    (typeof message === "string" && message.includes("Duplicate entry"))
-  );
 }
 
 async function insertActiveOrgBinding(

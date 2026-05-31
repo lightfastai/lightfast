@@ -39,6 +39,37 @@ export type GitHubUserAccountBindErrorCode = z.infer<
   typeof githubUserAccountBindErrorCodeSchema
 >;
 
+export const GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH = 512;
+
+export function isGitHubUserAccountReturnTo(value: string): boolean {
+  return (
+    value.length <= GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH &&
+    value.startsWith("/") &&
+    !value.startsWith("//") &&
+    !value.includes("\\")
+  );
+}
+
+export function normalizeGitHubUserAccountReturnTo(
+  value: null | string | undefined
+): string | undefined {
+  if (!value) {
+    return;
+  }
+
+  return isGitHubUserAccountReturnTo(value) ? value : undefined;
+}
+
+export const githubUserAccountReturnToSchema = z
+  .string()
+  .max(GITHUB_USER_ACCOUNT_RETURN_TO_MAX_LENGTH)
+  .refine(isGitHubUserAccountReturnTo, {
+    message: "returnTo must be an internal absolute path",
+  });
+export type GitHubUserAccountReturnTo = z.infer<
+  typeof githubUserAccountReturnToSchema
+>;
+
 export const githubBindStartOutputSchema = z.object({
   installationUrl: z.string().url(),
 });

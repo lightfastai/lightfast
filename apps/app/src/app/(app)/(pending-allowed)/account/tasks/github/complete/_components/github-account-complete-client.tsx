@@ -1,5 +1,6 @@
 "use client";
 
+import { normalizeGitHubUserAccountReturnTo } from "@repo/github-app-contract";
 import { Button } from "@repo/ui/components/ui/button";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -15,15 +16,8 @@ interface GithubAccountCompleteClientProps {
 const DEFAULT_RETURN_TO = "/account/tasks/github";
 
 function normalizeReturnTo(returnTo: string | undefined): Route {
-  if (
-    !returnTo?.startsWith("/") ||
-    returnTo.startsWith("//") ||
-    returnTo.startsWith("/\\")
-  ) {
-    return DEFAULT_RETURN_TO as Route;
-  }
-
-  return returnTo as Route;
+  return (normalizeGitHubUserAccountReturnTo(returnTo) ??
+    DEFAULT_RETURN_TO) as Route;
 }
 
 export function GithubAccountCompleteClient({

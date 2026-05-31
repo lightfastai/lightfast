@@ -3,7 +3,10 @@ import {
   markUserSourceControlAccountRevoked,
 } from "@db/app";
 import { db } from "@db/app/client";
-import { GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH } from "@repo/github-app-contract";
+import {
+  GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
+  normalizeGitHubUserAccountReturnTo,
+} from "@repo/github-app-contract";
 import {
   buildGitHubOAuthAuthorizeUrl,
   createGitHubPkcePair,
@@ -147,7 +150,7 @@ export async function completeGitHubUserAccountOAuth(input: {
     return {
       redirectUrl: userAccountCompleteUrl({
         appOrigin,
-        returnTo: normalizeReturnTo(attempt.returnTo),
+        returnTo: normalizeGitHubUserAccountReturnTo(attempt.returnTo),
       }),
     };
   } catch (error) {
@@ -159,24 +162,8 @@ export async function completeGitHubUserAccountOAuth(input: {
 }
 
 function optionalReturnTo(returnTo: string | undefined): { returnTo?: string } {
-  const normalized = normalizeReturnTo(returnTo);
+  const normalized = normalizeGitHubUserAccountReturnTo(returnTo);
   return normalized === undefined ? {} : { returnTo: normalized };
-}
-
-function normalizeReturnTo(returnTo: string | undefined): string | undefined {
-  if (!returnTo) {
-    return;
-  }
-
-  if (
-    !returnTo.startsWith("/") ||
-    returnTo.startsWith("//") ||
-    returnTo.startsWith("/\\")
-  ) {
-    return;
-  }
-
-  return returnTo;
 }
 
 export async function getGitHubUserAccountStatus(input: {

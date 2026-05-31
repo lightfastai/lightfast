@@ -1,3 +1,4 @@
+import { githubUserAccountReturnToSchema } from "@repo/github-app-contract";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { z } from "zod";
 
@@ -9,7 +10,7 @@ import {
 import { viewerProcedure } from "../../trpc";
 
 const startGitHubUserAccountBindingInput = z.object({
-  returnTo: z.string().startsWith("/").max(512).optional(),
+  returnTo: githubUserAccountReturnToSchema.optional(),
 });
 
 export const githubAccountRouter = {

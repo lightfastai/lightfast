@@ -30,6 +30,20 @@ export interface GitHubUserTokenSet {
   tokenType: string;
 }
 
+type GitHubOAuthTokenFailureCode =
+  | "GITHUB_OAUTH_EXCHANGE_FAILED"
+  | "GITHUB_OAUTH_REFRESH_TOKEN_INVALID";
+
+interface RequestGitHubOAuthTokenInput {
+  body: Record<string, string>;
+  failureCode: (json: unknown) => GitHubOAuthTokenFailureCode;
+  failureMessage: string;
+  fetch?: typeof fetch;
+  signal?: AbortSignal;
+  timeoutMs?: number;
+  tokenUrl?: string;
+}
+
 export interface ExchangeGitHubOAuthCodeInput {
   clientId: string;
   clientSecret: string;
@@ -45,66 +59,21 @@ export interface ExchangeGitHubOAuthCodeInput {
 export async function exchangeGitHubOAuthCode(
   input: ExchangeGitHubOAuthCodeInput
 ): Promise<GitHubUserTokenSet> {
-  const requestFetch = input.fetch ?? fetch;
-  const abortController = input.signal ? undefined : new AbortController();
-  const signal = input.signal ?? abortController?.signal;
-  const timeout =
-    abortController === undefined
-      ? undefined
-      : setTimeout(
-          () => abortController.abort(),
-          input.timeoutMs ?? DEFAULT_GITHUB_OAUTH_EXCHANGE_TIMEOUT_MS
-        );
-  try {
-    const res = await requestFetch(
-      input.tokenUrl ?? "https://github.com/login/oauth/access_token",
-      {
-        method: "POST",
-        signal,
-        headers: {
-          accept: "application/json",
-          "content-type": "application/json",
-        },
-        body: JSON.stringify({
-          client_id: input.clientId,
-          client_secret: input.clientSecret,
-          code: input.code,
-          code_verifier: input.codeVerifier,
-          redirect_uri: input.redirectUri,
-        }),
-      }
-    );
-
-    const json = await res.json().catch(() => null);
-    const parsed = githubOAuthTokenResponseSchema.safeParse(json);
-    if (!(res.ok && parsed.success)) {
-      throw new GitHubAppNodeError(
-        "GITHUB_OAUTH_EXCHANGE_FAILED",
-        "GitHub OAuth code exchange failed."
-      );
-    }
-
-    return {
-      accessToken: parsed.data.access_token,
-      accessTokenExpiresIn: parsed.data.expires_in,
-      refreshToken: parsed.data.refresh_token,
-      refreshTokenExpiresIn: parsed.data.refresh_token_expires_in,
-      scope: parsed.data.scope,
-      tokenType: parsed.data.token_type,
-    };
-  } catch (error) {
-    if (error instanceof GitHubAppNodeError) {
-      throw error;
-    }
-    throw new GitHubAppNodeError(
-      "GITHUB_OAUTH_EXCHANGE_FAILED",
-      "GitHub OAuth code exchange failed."
-    );
-  } finally {
-    if (timeout !== undefined) {
-      clearTimeout(timeout);
-    }
-  }
+  return await requestGitHubOAuthToken({
+    body: {
+      client_id: input.clientId,
+      client_secret: input.clientSecret,
+      code: input.code,
+      code_verifier: input.codeVerifier,
+      redirect_uri: input.redirectUri,
+    },
+    failureCode: () => "GITHUB_OAUTH_EXCHANGE_FAILED",
+    failureMessage: "GitHub OAuth code exchange failed.",
+    fetch: input.fetch,
+    signal: input.signal,
+    timeoutMs: input.timeoutMs,
+    tokenUrl: input.tokenUrl,
+  });
 }
 
 export interface RefreshGitHubUserAccessTokenInput {
@@ -119,6 +88,25 @@ export interface RefreshGitHubUserAccessTokenInput {
 
 export async function refreshGitHubUserAccessToken(
   input: RefreshGitHubUserAccessTokenInput
+): Promise<GitHubUserTokenSet> {
+  return await requestGitHubOAuthToken({
+    body: {
+      client_id: input.clientId,
+      client_secret: input.clientSecret,
+      grant_type: "refresh_token",
+      refresh_token: input.refreshToken,
+    },
+    failureCode: refreshTokenFailureCode,
+    failureMessage: "GitHub OAuth token refresh failed.",
+    fetch: input.fetch,
+    signal: input.signal,
+    timeoutMs: input.timeoutMs,
+    tokenUrl: input.tokenUrl,
+  });
+}
+
+async function requestGitHubOAuthToken(
+  input: RequestGitHubOAuthTokenInput
 ): Promise<GitHubUserTokenSet> {
   const requestFetch = input.fetch ?? fetch;
   const abortController = input.signal ? undefined : new AbortController();
@@ -141,12 +129,7 @@ export async function refreshGitHubUserAccessToken(
           accept: "application/json",
           "content-type": "application/json",
         },
-        body: JSON.stringify({
-          client_id: input.clientId,
-          client_secret: input.clientSecret,
-          grant_type: "refresh_token",
-          refresh_token: input.refreshToken,
-        }),
+        body: JSON.stringify(input.body),
       }
     );
 
@@ -154,8 +137,8 @@ export async function refreshGitHubUserAccessToken(
     const parsed = githubOAuthTokenResponseSchema.safeParse(json);
     if (!(res.ok && parsed.success)) {
       throw new GitHubAppNodeError(
-        refreshTokenFailureCode(json),
-        "GitHub OAuth token refresh failed."
+        input.failureCode(json),
+        input.failureMessage
       );
     }
 
@@ -173,7 +156,7 @@ export async function refreshGitHubUserAccessToken(
     }
     throw new GitHubAppNodeError(
       "GITHUB_OAUTH_EXCHANGE_FAILED",
-      "GitHub OAuth token refresh failed."
+      input.failureMessage
     );
   } finally {
     if (timeout !== undefined) {

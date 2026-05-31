@@ -212,10 +212,16 @@ describe("github user account flow", () => {
     });
   });
 
-  it("omits external returnTo values when starting user account OAuth", async () => {
+  it.each([
+    ["external URL", "https://evil.example/path"],
+    ["protocol-relative URL", "//evil.example/path"],
+    ["backslash protocol-relative URL", "/\\evil.example/path"],
+    ["nested backslash path", "/account\\settings"],
+    ["too-long path", `/${"a".repeat(512)}`],
+  ])("omits %s returnTo values when starting user account OAuth", async (_label, returnTo) => {
     await startGitHubUserAccountBinding({
       lightfastUserId: "user_1",
-      returnTo: "https://evil.example/path",
+      returnTo,
     });
 
     expect(issueAttemptMock).toHaveBeenCalledWith({
@@ -224,15 +230,16 @@ describe("github user account flow", () => {
     });
   });
 
-  it("omits protocol-relative returnTo values when starting user account OAuth", async () => {
+  it("persists safe returnTo values when starting user account OAuth", async () => {
     await startGitHubUserAccountBinding({
       lightfastUserId: "user_1",
-      returnTo: "//evil.example/path",
+      returnTo: "/account/tasks/github",
     });
 
     expect(issueAttemptMock).toHaveBeenCalledWith({
       codeVerifier: "verifier_123",
       lightfastUserId: "user_1",
+      returnTo: "/account/tasks/github",
     });
   });
 
@@ -415,8 +422,13 @@ describe("github user account flow", () => {
     });
   });
 
-  it("omits invalid stored returnTo values from completion redirects", async () => {
-    mockAttempt(attempt({ returnTo: "https://evil.example/path" }));
+  it.each([
+    ["external URL", "https://evil.example/path"],
+    ["protocol-relative URL", "//evil.example/path"],
+    ["backslash path", "/account\\settings"],
+    ["too-long path", `/${"a".repeat(512)}`],
+  ])("omits invalid stored %s returnTo values from completion redirects", async (_label, returnTo) => {
+    mockAttempt(attempt({ returnTo }));
 
     await expect(
       completeGitHubUserAccountOAuth({

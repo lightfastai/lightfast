@@ -89,6 +89,22 @@ describe("github user account OAuth attempts", () => {
     ).resolves.toBeNull();
   });
 
+  it("rejects Redis records with unsafe returnTo values", async () => {
+    const issued = await issueGitHubUserAccountOAuthAttempt({
+      codeVerifier: "verifier",
+      lightfastUserId: "user_1",
+    });
+    const record = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock.mockResolvedValueOnce({
+      ...record,
+      returnTo: "/account\\settings",
+    });
+
+    await expect(
+      lookupGitHubUserAccountOAuthAttempt({ state: issued.state })
+    ).resolves.toBeNull();
+  });
+
   it("rejects invalid pending Redis records during consume without deleting", async () => {
     const issued = await issueGitHubUserAccountOAuthAttempt({
       codeVerifier: "verifier",

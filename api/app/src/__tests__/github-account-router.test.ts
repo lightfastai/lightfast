@@ -133,20 +133,16 @@ describe("viewer.githubAccount", () => {
     });
   });
 
-  it("rejects an external returnTo before starting binding", async () => {
+  it.each([
+    ["external URL", "https://evil.example.com/settings"],
+    ["protocol-relative URL", "//evil.example.com/settings"],
+    ["backslash protocol-relative URL", "/\\evil.example.com/settings"],
+    ["nested backslash path", "/settings\\account"],
+    ["too-long path", `/${"a".repeat(512)}`],
+  ])("rejects %s returnTo before starting binding", async (_label, returnTo) => {
     await expect(
       caller().viewer.githubAccount.start({
-        returnTo: "https://evil.example.com/settings",
-      })
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-
-    expect(startGitHubUserAccountBindingMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects a too-long returnTo before starting binding", async () => {
-    await expect(
-      caller().viewer.githubAccount.start({
-        returnTo: `/${"a".repeat(512)}`,
+        returnTo,
       })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
 

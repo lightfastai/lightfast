@@ -2,7 +2,10 @@ import { Buffer } from "node:buffer";
 import { createHash, randomBytes } from "node:crypto";
 import type { Store, TokenMap } from "@emulators/core";
 import { getGitHubStore } from "@emulators/github";
-import { GITHUB_SETUP_PATH } from "@repo/github-app-contract";
+import {
+  GITHUB_SETUP_PATH,
+  GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH,
+} from "@repo/github-app-contract";
 
 import { GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 
@@ -39,7 +42,6 @@ const OAUTH_USER_TOKENS_KEY = "lightfast.github.oauth.userTokens";
 const CODE_TTL_MS = 5 * 60 * 1000;
 const USER_ACCOUNT_ACCESS_TOKEN_TTL_MS = 28_800 * 1000;
 const USER_ACCOUNT_REFRESH_TOKEN_TTL_MS = 15_768_000 * 1000;
-const USER_ACCOUNT_OAUTH_CALLBACK_PATH = "/api/github/user/oauth/callback";
 
 function json(data: unknown, status = 200) {
   return Response.json(data, { status });
@@ -140,7 +142,9 @@ function validatePkce(input: { codeChallenge: string; codeVerifier: string }) {
 }
 
 function isUserAccountRedirectUri(redirectUri: string) {
-  return new URL(redirectUri).pathname === USER_ACCOUNT_OAUTH_CALLBACK_PATH;
+  return (
+    new URL(redirectUri).pathname === GITHUB_USER_ACCOUNT_OAUTH_CALLBACK_PATH
+  );
 }
 
 function createOAuthToken(prefix: "gho" | "ghr" | "ghu") {
