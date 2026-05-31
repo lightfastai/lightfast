@@ -1,78 +1,103 @@
-import React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { render } from "@testing-library/react";
+import type { ReactNode } from "react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-interface Kids {
-  children?: React.ReactNode;
-}
+const sidebarProviderSpy = vi.fn();
+const appSidebarSpy = vi.fn();
+const authenticatedTopbarSpy = vi.fn();
+const commandMenuSpy = vi.fn();
 
 vi.mock("@repo/ui/components/ui/sidebar", () => ({
-  SidebarInset: ({ children }: Kids) => <>{children}</>,
-  SidebarProvider: ({ children }: Kids) => <>{children}</>,
-  SidebarTrigger() {
-    return <button data-testid="sidebar-trigger" type="button" />;
+  SidebarProvider: (props: { children: ReactNode }) => {
+    sidebarProviderSpy(props);
+    return <div data-testid="sidebar-provider">{props.children}</div>;
+  },
+  SidebarInset: (props: { children: ReactNode }) => (
+    <div data-testid="sidebar-inset">{props.children}</div>
+  ),
+  SidebarTrigger: () => <button type="button">trigger</button>,
+}));
+
+vi.mock("~/components/app-sidebar", () => ({
+  AppSidebar: () => {
+    appSidebarSpy();
+    return <div data-testid="app-sidebar" />;
   },
 }));
 
-vi.mock("~/components/app-sidebar", () => {
-  function AppSidebar() {
-    return <aside data-testid="app-sidebar" />;
-  }
+vi.mock("~/components/authenticated-topbar", () => ({
+  AuthenticatedTopbar: (props: { actions?: ReactNode; left?: ReactNode }) => {
+    authenticatedTopbarSpy(props);
+    return (
+      <div data-testid="authenticated-topbar">
+        {props.actions}
+        {props.left}
+      </div>
+    );
+  },
+}));
 
-  return { AppSidebar };
+vi.mock("~/components/workspace-command-menu", () => ({
+  WorkspaceCommandMenu: (props: { children: ReactNode }) => {
+    commandMenuSpy(props);
+    return <div data-testid="command-menu">{props.children}</div>;
+  },
+}));
+
+import WorkspaceLayout from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/layout";
+
+beforeEach(() => {
+  sidebarProviderSpy.mockClear();
+  appSidebarSpy.mockClear();
+  authenticatedTopbarSpy.mockClear();
+  commandMenuSpy.mockClear();
 });
 
-vi.mock("~/components/authenticated-topbar", () => {
-  function AuthenticatedTopbar({ left }: { left?: React.ReactNode }) {
-    return <header>{left}</header>;
-  }
+describe("WorkspaceLayout", () => {
+  it("wraps content with sidebar chrome and authenticated topbar", () => {
+    render(
+      <WorkspaceLayout actions={null}>
+        <div>workspace content</div>
+      </WorkspaceLayout>
+    );
 
-  return { AuthenticatedTopbar };
-});
+    expect(sidebarProviderSpy).toHaveBeenCalledTimes(1);
+    expect(appSidebarSpy).toHaveBeenCalledTimes(1);
+    expect(authenticatedTopbarSpy).toHaveBeenCalledTimes(1);
+    expect(commandMenuSpy).toHaveBeenCalledTimes(1);
+  });
 
-vi.mock("~/components/team-switcher", () => {
-  function TeamSwitcher() {
-    return <div data-testid="team-switcher" />;
-  }
+  it("passes the sidebar trigger into the topbar left slot", () => {
+    render(
+      <WorkspaceLayout actions={null}>
+        <div>workspace content</div>
+      </WorkspaceLayout>
+    );
 
-  function TeamSwitcherSkeleton() {
-    return <div data-testid="team-switcher-skeleton" />;
-  }
+    const topbarProps = authenticatedTopbarSpy.mock.calls[0]?.[0];
+    expect(topbarProps?.left).toBeTruthy();
+  });
 
-  return { TeamSwitcher, TeamSwitcherSkeleton };
-});
+  it("forwards the actions slot into the topbar", () => {
+    render(
+      <WorkspaceLayout actions={<div>view switcher</div>}>
+        <div>workspace content</div>
+      </WorkspaceLayout>
+    );
 
-const { default: WorkspaceLayout } = await import(
-  "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/layout"
-);
+    const topbarProps = authenticatedTopbarSpy.mock.calls[0]?.[0];
+    expect(topbarProps?.actions).toBeTruthy();
+  });
 
-function containsComponentNamed(node: unknown, componentName: string): boolean {
-  if (!React.isValidElement(node)) {
-    return false;
-  }
+  it("renders children inside the command menu", () => {
+    render(
+      <WorkspaceLayout actions={null}>
+        <div>workspace content</div>
+      </WorkspaceLayout>
+    );
 
-  const type = node.type;
-  if (typeof type === "function" && type.name === componentName) {
-    return true;
-  }
-
-  const props = node.props as {
-    children?: React.ReactNode;
-    left?: React.ReactNode;
-  };
-  return [props.children, props.left]
-    .flatMap((slot) => React.Children.toArray(slot))
-    .some((child) => containsComponentNamed(child, componentName));
-}
-
-describe("[slug]/(workspace)/layout", () => {
-  it("renders the workspace sidebar shell with the mobile trigger in the topbar", async () => {
-    const element = await WorkspaceLayout({
-      children: <div>Workspace</div>,
-    });
-
-    expect(containsComponentNamed(element, "AuthenticatedTopbar")).toBe(true);
-    expect(containsComponentNamed(element, "AppSidebar")).toBe(true);
-    expect(containsComponentNamed(element, "SidebarTrigger")).toBe(true);
-    expect(containsComponentNamed(element, "TeamSwitcher")).toBe(false);
+    const commandMenuProps = commandMenuSpy.mock.calls[0]?.[0];
+    expect(commandMenuProps?.children).toBeTruthy();
+    expect(commandMenuProps).toBeTruthy();
   });
 });

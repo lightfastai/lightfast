@@ -11,7 +11,7 @@ export const signalIntakeAgentGraph = defineAgentGraph({
       kind: "llm",
       promptId: "signal-classifier",
       role: "router",
-      schemaVersion: "signal.classification.v1",
+      schemaVersion: "signal.classification.v2",
       workflow: "classify-signal",
     },
     peopleClassifier: {

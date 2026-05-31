@@ -11,6 +11,7 @@ describe("signalIntakeAgentGraph", () => {
         signalClassifier: {
           id: "signal-classifier",
           role: "router",
+          schemaVersion: "signal.classification.v2",
         },
         peopleClassifier: {
           id: "people-classifier",

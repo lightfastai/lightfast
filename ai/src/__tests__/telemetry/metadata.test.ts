@@ -18,7 +18,7 @@ describe("agent graph metadata", () => {
           kind: "llm",
           promptId: "signal-classifier",
           role: "router",
-          schemaVersion: "signal.classification.v1",
+          schemaVersion: "signal.classification.v2",
           workflow: "classify-signal",
         },
         peopleClassifier: {
@@ -32,6 +32,30 @@ describe("agent graph metadata", () => {
           workflow: "classify-people",
         },
       },
+    });
+
+    expect(
+      createAgentNodeMetadata(graph, graph.nodes.signalClassifier, {
+        agentRunId: "sig_123",
+        clerkOrgId: "org_test",
+        deploymentEnvironment: "production",
+        inputLength: 42,
+      })
+    ).toEqual({
+      agentGraphId: "signal-intake",
+      agentGraphVersion: "v1",
+      agentRunId: "sig_123",
+      clerkOrgId: "org_test",
+      deploymentEnvironment: "production",
+      feature: "signals",
+      inputLength: 42,
+      nodeId: "signal-classifier",
+      nodeKind: "llm",
+      nodeRole: "router",
+      promptId: "signal-classifier",
+      routerId: "signals",
+      schemaVersion: "signal.classification.v2",
+      workflow: "classify-signal",
     });
 
     expect(

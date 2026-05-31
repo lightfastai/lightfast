@@ -100,11 +100,11 @@ describe("signal pipeline E2E smoke", () => {
       expect(classification).toEqual(
         expect.objectContaining({
           confidence: expect.any(Number),
-          schemaVersion: "signal.classification.v1",
+          schemaVersion: "signal.classification.v2",
           title: expect.any(String),
         })
       );
-      expect(classification.routing?.classifyPeople?.shouldRun).toBe(true);
+      expect(classification.routing.routes.people.shouldRun).toBe(true);
 
       const person = await waitForPerson({
         clerkOrgId,

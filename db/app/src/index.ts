@@ -20,11 +20,13 @@ export {
   createAutomationRunId,
   createPersonId,
   createSignalId,
+  createSignalViewId,
   type InsertAutomation,
   type InsertAutomationRun,
   type InsertOrgSourceControlBinding,
   type InsertPerson,
   type InsertSignal,
+  type InsertSignalView,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
@@ -36,8 +38,13 @@ export {
   type PersonIdentityProvider,
   type PersonIdentityType,
   people,
+  SIGNAL_VIEW_ID_PREFIX,
   type Signal,
+  type SignalView,
+  type SignalViewConfig,
+  type SignalViewLayout,
   signals,
+  signalViews,
 } from "./schema";
 export {
   type ClaimedAutomationRun,
@@ -80,6 +87,7 @@ export {
 } from "./utils/org-binding";
 export {
   getPersonByIdentityKey,
+  getPersonByPublicId,
   type ListPeopleParams,
   listPeople,
   type UpsertPeopleCandidate,
@@ -87,18 +95,32 @@ export {
   upsertPeopleFromCandidates,
 } from "./utils/people";
 export {
+  type CreateSignalViewParams,
+  createSignalView,
+  type DeleteSignalViewParams,
+  deleteSignalView,
+  type ListSignalViewsParams,
+  listSignalViews,
+} from "./utils/signal-views";
+export {
   type ClaimSignalForClassificationParams,
   type CreateSignalRecordInput,
   claimSignalForClassification,
   createSignal,
   type GetSignalByPublicIdParams,
+  type GetVisibleSignalByPublicIdParams,
   getSignalByPublicId,
+  getVisibleSignalByPublicId,
   type ListSignalsParams,
+  type ListWorkspaceSignalsParams,
   listSignals,
+  listWorkspaceSignals,
   type MarkSignalClassifiedParams,
   type MarkSignalFailedParams,
   markSignalClassified,
   markSignalFailed,
+  type WorkspaceSignalListItem,
+  type WorkspaceSignalsResult,
 } from "./utils/signals";
 export {
   type CompleteWatchedSourceControlRepositorySetupInput,

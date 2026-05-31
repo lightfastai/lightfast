@@ -33,8 +33,10 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "seed:people": "pnpm with-env tsx scripts/seed-people-signals.ts",
     "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "with-env": "dotenv -e ../../apps/app/.vercel/.env.development.local --"
   },
   "dependencies": {
     "@db/app": "workspace:*",
