@@ -13,6 +13,7 @@ import {
 import {
   parsePersonProviders,
   parsePersonTypes,
+  peopleSavedViewParser,
   personParser,
   personProviderParser,
   personQueryParser,
@@ -36,6 +37,10 @@ export function PeopleClient() {
     personProviderParser
   );
   const [typeState, setTypeState] = useQueryState("type", personTypeParser);
+  // Editing any filter in the toolbar drops the active saved view — you are now
+  // on an ad-hoc selection. The switcher writes `view` + filter params together
+  // (see people-view-switcher), so view selection does not pass through here.
+  const [, setSavedViewId] = useQueryState("view", peopleSavedViewParser);
   const [selectedPersonId, setSelectedPersonId] = useQueryState(
     "person",
     personParser
@@ -72,6 +77,7 @@ export function PeopleClient() {
       <PeopleToolbar
         filters={filters}
         onClearFilterGroup={(group) => {
+          void setSavedViewId(null);
           if (group === "provider") {
             void setProviderState("");
           } else {
@@ -79,16 +85,18 @@ export function PeopleClient() {
           }
         }}
         onQueryChange={(value) => void setQuery(value)}
-        onToggleProvider={(value) =>
+        onToggleProvider={(value) => {
+          void setSavedViewId(null);
           void setProviderState(
             serializePersonValues(togglePersonValue(filters.providers, value))
-          )
-        }
-        onToggleType={(value) =>
+          );
+        }}
+        onToggleType={(value) => {
+          void setSavedViewId(null);
           void setTypeState(
             serializePersonValues(togglePersonValue(filters.types, value))
-          )
-        }
+          );
+        }}
         query={query}
       />
 
