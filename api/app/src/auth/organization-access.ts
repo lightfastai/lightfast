@@ -1,6 +1,7 @@
 import type { Database } from "@db/app";
-import { isOrgBound } from "@db/app";
+import type { OrgSetupGate } from "@repo/app-setup-contract";
 import { findUserOrganizationMembership } from "./clerk-org-membership";
+import { resolveOrgSetupGate } from "./org-setup-gate";
 
 export class OrgAccessError extends Error {
   constructor(message = "Organization not found") {
@@ -23,8 +24,7 @@ export function orgInitials(name: string): string {
     .slice(0, 2);
 }
 
-export interface OrgAccess {
-  bindingStatus: "bound" | "unbound";
+export type OrgAccess = OrgSetupGate & {
   org: {
     id: string;
     imageUrl: string;
@@ -33,7 +33,7 @@ export interface OrgAccess {
     slug: string;
   };
   role: string;
-}
+};
 
 export async function getOrgAccessBySlug(input: {
   db: Database;
@@ -49,10 +49,13 @@ export async function getOrgAccessBySlug(input: {
     throw new OrgAccessError();
   }
 
-  const bound = await isOrgBound(input.db, membership.organization.id);
+  const gate = await resolveOrgSetupGate({
+    db: input.db,
+    clerkOrgId: membership.organization.id,
+  });
 
   return {
-    bindingStatus: bound ? "bound" : "unbound",
+    ...gate,
     org: {
       id: membership.organization.id,
       imageUrl: membership.organization.imageUrl,

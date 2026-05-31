@@ -1,11 +1,13 @@
-import { importPKCS8, SignJWT } from "jose";
+import { createPrivateKey } from "node:crypto";
+
+import { SignJWT } from "jose";
 
 export async function createGitHubAppJwt(input: {
   appId: string;
   now?: Date;
   privateKey: string;
 }): Promise<string> {
-  const key = await importPKCS8(input.privateKey, "RS256");
+  const key = createPrivateKey(input.privateKey);
   const now = Math.floor((input.now ?? new Date()).getTime() / 1000);
   return await new SignJWT({})
     .setProtectedHeader({ alg: "RS256" })

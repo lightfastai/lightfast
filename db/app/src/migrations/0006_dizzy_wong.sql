@@ -1,1 +1,0 @@
-ALTER TABLE `lightfast_signals` MODIFY COLUMN `created_by_api_key_id` varchar(128);

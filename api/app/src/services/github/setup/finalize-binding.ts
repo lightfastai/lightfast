@@ -1,9 +1,10 @@
-import { finalizeActiveOrgProviderBinding, isOrgBound } from "@db/app";
+import { finalizeActiveOrgProviderBinding } from "@db/app";
 import { db } from "@db/app/client";
 import { githubInstallationMetadataSchema } from "@repo/github-app-contract";
 import { log } from "@vendor/observability/log/next";
 
-import { mirrorOrgBinding } from "../../../auth/org-binding-mirror";
+import { mirrorOrgSetupGate } from "../../../auth/org-binding-mirror";
+import { resolveOrgSetupGate } from "../../../auth/org-setup-gate";
 
 interface GitHubFinalizedInstallation {
   account: {
@@ -44,10 +45,14 @@ export async function finalizeGitHubOrgBinding(input: {
   });
 
   try {
-    await mirrorOrgBinding({
+    const gate = await resolveOrgSetupGate({
+      db,
       clerkOrgId: input.clerkOrgId,
+    });
+    await mirrorOrgSetupGate({
+      clerkOrgId: input.clerkOrgId,
+      gate,
       provider: "github",
-      status: "bound",
     });
   } catch (error) {
     log.warn("[github-setup] org binding mirror failed", {
@@ -57,16 +62,12 @@ export async function finalizeGitHubOrgBinding(input: {
   }
 }
 
-export async function syncGitHubBindingClaim(input: {
-  clerkOrgId: string;
-}): Promise<{ bindingStatus: "bound" | "unbound" }> {
-  const bound = await isOrgBound(db, input.clerkOrgId);
-  if (bound) {
-    await mirrorOrgBinding({
-      clerkOrgId: input.clerkOrgId,
-      provider: "github",
-      status: "bound",
-    });
-  }
-  return { bindingStatus: bound ? "bound" : "unbound" };
+export async function syncGitHubBindingClaim(input: { clerkOrgId: string }) {
+  const gate = await resolveOrgSetupGate({ db, clerkOrgId: input.clerkOrgId });
+  await mirrorOrgSetupGate({
+    clerkOrgId: input.clerkOrgId,
+    gate,
+    provider: "github",
+  });
+  return gate;
 }

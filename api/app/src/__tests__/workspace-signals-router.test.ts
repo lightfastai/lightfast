@@ -45,7 +45,7 @@ const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_test",
   orgId: "org_test",
-  orgGate: { bindingStatus: "bound" },
+  orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 
 const pendingIdentity: AuthIdentity = {
@@ -208,7 +208,10 @@ describe("workspaceSignalsRouter.list", () => {
     await expect(
       caller({
         ...activeIdentity,
-        orgGate: { bindingStatus: "unbound" },
+        orgGate: {
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        },
       }).signals.list({})
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(listSignalsMock).not.toHaveBeenCalled();
@@ -230,11 +233,14 @@ describe("workspaceSignalsRouter.list", () => {
     expect(listSignalsMock).not.toHaveBeenCalled();
   });
 
-  it("rejects revoked organizations", async () => {
+  it("rejects unbound organizations", async () => {
     await expect(
       caller({
         ...activeIdentity,
-        orgGate: { bindingStatus: "revoked" },
+        orgGate: {
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        },
       }).signals.list({})
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(listSignalsMock).not.toHaveBeenCalled();
@@ -331,12 +337,24 @@ describe("workspaceSignalsRouter.create", () => {
     ["unauthenticated identity", unauthenticatedIdentity, "UNAUTHORIZED"],
     [
       "unbound org",
-      { ...activeIdentity, orgGate: { bindingStatus: "unbound" as const } },
+      {
+        ...activeIdentity,
+        orgGate: {
+          bindingStatus: "unbound" as const,
+          nextSetupRequirement: "github_org" as const,
+        },
+      },
       "FORBIDDEN",
     ],
     [
-      "revoked org",
-      { ...activeIdentity, orgGate: { bindingStatus: "revoked" as const } },
+      "missing lightfast repo",
+      {
+        ...activeIdentity,
+        orgGate: {
+          bindingStatus: "unbound" as const,
+          nextSetupRequirement: "github_lightfast_repo" as const,
+        },
+      },
       "FORBIDDEN",
     ],
   ])("rejects %s", async (_label, identity, code) => {
@@ -402,12 +420,24 @@ describe("workspaceSignalsRouter.get", () => {
     ["unauthenticated identity", unauthenticatedIdentity, "UNAUTHORIZED"],
     [
       "unbound org",
-      { ...activeIdentity, orgGate: { bindingStatus: "unbound" as const } },
+      {
+        ...activeIdentity,
+        orgGate: {
+          bindingStatus: "unbound" as const,
+          nextSetupRequirement: "github_org" as const,
+        },
+      },
       "FORBIDDEN",
     ],
     [
-      "revoked org",
-      { ...activeIdentity, orgGate: { bindingStatus: "revoked" as const } },
+      "missing lightfast repo",
+      {
+        ...activeIdentity,
+        orgGate: {
+          bindingStatus: "unbound" as const,
+          nextSetupRequirement: "github_lightfast_repo" as const,
+        },
+      },
       "FORBIDDEN",
     ],
   ])("rejects %s", async (_label, identity, code) => {

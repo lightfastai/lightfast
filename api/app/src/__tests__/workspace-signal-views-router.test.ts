@@ -47,7 +47,7 @@ const activeIdentity: ActiveAuthIdentity = {
   type: "active",
   userId: "user_test",
   orgId: "org_test",
-  orgGate: { bindingStatus: "bound" },
+  orgGate: { bindingStatus: "bound", nextSetupRequirement: null },
 };
 const pendingIdentity: AuthIdentity = { type: "pending", userId: "user_test" };
 const unauthenticatedIdentity: AuthIdentity = { type: "unauthenticated" };
@@ -112,7 +112,10 @@ describe("workspaceSignalsRouter.views.list", () => {
     await expect(
       caller({
         ...activeIdentity,
-        orgGate: { bindingStatus: "unbound" },
+        orgGate: {
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        },
       }).signals.views.list()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
     expect(listSignalViewsMock).not.toHaveBeenCalled();

@@ -109,14 +109,10 @@ const createCaller = createCallerFactory(testRouter);
 /**
  * A stateful stand-in for the Drizzle client, scoped to a single org per test.
  * `select` returns the current active rows; `insert` appends one. Enough for
- * `isOrgBound` / `getActiveOrgBinding` / `upsertActiveOrgBinding` to run for
- * real against caller-visible state.
+ * `getActiveOrgBinding` to run for real against caller-visible state.
  */
-function makeStatefulDb(seedActive = false) {
-  const rows: Record<string, unknown>[] = [];
-  if (seedActive) {
-    rows.push({ id: 1, status: "active", clerkOrgId: "seed" });
-  }
+function makeStatefulDb(seedRows: Record<string, unknown>[] = []) {
+  const rows: Record<string, unknown>[] = [...seedRows];
   const spies = { insert: vi.fn() };
   const db = {
     select: () => ({
@@ -150,14 +146,34 @@ function makeStatefulDb(seedActive = false) {
   return { db: db as unknown as Database, rows, spies };
 }
 
+function activeGitHubBinding(overrides: Record<string, unknown> = {}) {
+  return {
+    id: 1,
+    status: "active",
+    clerkOrgId: "org_test",
+    provider: "github",
+    providerAccountLogin: "acme",
+    providerInstallationId: "1001",
+    metadata: {},
+    ...overrides,
+  };
+}
+
 // ----- caller helpers --------------------------------------------------------
 
-function active(bindingStatus: "bound" | "unbound" | "revoked"): AuthIdentity {
+function active(bindingStatus: "bound" | "unbound"): AuthIdentity {
+  const orgGate =
+    bindingStatus === "bound"
+      ? ({ bindingStatus: "bound", nextSetupRequirement: null } as const)
+      : ({
+          bindingStatus: "unbound",
+          nextSetupRequirement: "github_org",
+        } as const);
   return {
     type: "active",
     userId: "user_test",
     orgId: "org_test",
-    orgGate: { bindingStatus },
+    orgGate,
   };
 }
 
@@ -317,14 +333,7 @@ describe("boundOrgProcedure", () => {
       err as { cause: { diagnostics: { code: string; repair?: unknown }[] } }
     ).cause;
     expect(cause.diagnostics[0]?.code).toBe("ORG_SETUP_REQUIRED");
-    expect(cause.diagnostics[0]?.repair).toEqual({ id: "bind-source-control" });
-  });
-
-  it("throws ORG_SETUP_REQUIRED for a revoked active org", async () => {
-    const caller = makeCaller(active("revoked"));
-    await expect(caller.boundProbe()).rejects.toMatchObject({
-      code: "FORBIDDEN",
-    });
+    expect(cause.diagnostics[0]?.repair).toEqual({ id: "setup-github-org" });
   });
 
   it("throws ORG_REQUIRED for a pending identity (no active org)", async () => {
@@ -531,82 +540,59 @@ describe("orgApiKeys", () => {
 // ----- task router -----------------------------------------------------------
 
 describe("task.status", () => {
-  it("is callable before the org is bound and reports 'unbound'", async () => {
+  it("is callable before setup and reports the first missing requirement", async () => {
     const { db } = makeStatefulDb();
     const caller = makeCaller(active("unbound"), db);
     await expect(caller.task.status()).resolves.toEqual({
       bindingStatus: "unbound",
+      nextSetupRequirement: "github_org",
     });
   });
 
-  it("reports 'bound' once the org has an active binding", async () => {
-    const { db } = makeStatefulDb(true);
+  it("does not treat a GitHub org binding without .lightfast proof as bound", async () => {
+    const { db } = makeStatefulDb([activeGitHubBinding()]);
+    const caller = makeCaller(active("unbound"), db);
+    await expect(caller.task.status()).resolves.toEqual({
+      bindingStatus: "unbound",
+      nextSetupRequirement: "github_lightfast_repo",
+    });
+  });
+
+  it("reports bound only after both setup requirements are satisfied", async () => {
+    const { db } = makeStatefulDb([
+      activeGitHubBinding({
+        metadata: {
+          lightfastRepository: {
+            fullName: "acme/.lightfast",
+            id: "987",
+            installationId: "1001",
+            name: ".lightfast",
+            verifiedAt: "2026-05-30T10:00:00.000Z",
+          },
+        },
+      }),
+    ]);
     const caller = makeCaller(active("bound"), db);
     await expect(caller.task.status()).resolves.toEqual({
       bindingStatus: "bound",
+      nextSetupRequirement: null,
     });
   });
 });
 
 describe("task.bind", () => {
-  it("binds the org and is idempotent once bound", async () => {
+  it("does not create legacy placeholder bindings", async () => {
     const { db, spies } = makeStatefulDb();
     const caller = makeCaller(active("unbound"), db);
 
-    const first = await caller.task.bind();
-    const second = await caller.task.bind();
-
-    expect(first).toEqual({ ok: true, bindingStatus: "bound" });
-    expect(second).toEqual({ ok: true, bindingStatus: "bound" });
-    // Idempotent: the second bind never inserts a competing active row.
-    expect(spies.insert).toHaveBeenCalledTimes(1);
-
-    // Status flips to bound and stays callable.
-    await expect(caller.task.status()).resolves.toEqual({
-      bindingStatus: "bound",
+    await expect(caller.task.bind()).rejects.toMatchObject({
+      code: "NOT_IMPLEMENTED",
     });
-  });
-
-  it("mirrors 'bound' into Clerk org metadata after the DB write", async () => {
-    const { db } = makeStatefulDb();
-    const caller = makeCaller(active("unbound"), db);
-
-    await caller.task.bind();
-
-    expect(updateOrganizationMock).toHaveBeenCalledTimes(1);
-    const firstCall = updateOrganizationMock.mock.calls[0];
-    if (!firstCall) {
-      throw new Error("updateOrganization was not called");
-    }
-    const [, arg] = firstCall;
-    const binding = (
-      arg as { publicMetadata: { lightfast: { binding: { status: string } } } }
-    ).publicMetadata.lightfast.binding;
-    expect(binding.status).toBe("bound");
-  });
-
-  it("returns success when the Clerk metadata mirror fails after the DB write", async () => {
-    const { db, spies } = makeStatefulDb();
-    const caller = makeCaller(active("unbound"), db);
-    const mirrorError = new Error("clerk unavailable");
-    updateOrganizationMock.mockRejectedValueOnce(mirrorError);
-
-    await expect(caller.task.bind()).resolves.toEqual({
-      ok: true,
-      bindingStatus: "bound",
-    });
-
-    expect(spies.insert).toHaveBeenCalledTimes(1);
-    expect(logWarnMock).toHaveBeenCalledWith(
-      "[task] org binding mirror failed",
-      expect.objectContaining({
-        clerkOrgId: "org_test",
-        error: mirrorError,
-        userId: "user_test",
-      })
-    );
+    expect(spies.insert).not.toHaveBeenCalled();
+    expect(updateOrganizationMock).not.toHaveBeenCalled();
     await expect(caller.task.status()).resolves.toEqual({
-      bindingStatus: "bound",
+      bindingStatus: "unbound",
+      nextSetupRequirement: "github_org",
     });
   });
 });

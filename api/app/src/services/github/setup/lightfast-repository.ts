@@ -1,0 +1,183 @@
+import type { Database } from "@db/app";
+import {
+  completeWatchedSourceControlRepositorySetup,
+  getActiveOrgBinding,
+  upsertWatchedSourceControlRepository,
+} from "@db/app";
+import {
+  githubLightfastRepositoryProofSchema,
+  LIGHTFAST_REPOSITORY_NAME,
+  type OrgSetupGate,
+} from "@repo/app-setup-contract";
+import {
+  createGitHubAppJwt,
+  createGitHubInstallationToken,
+  getGitHubRepository,
+  verifyGitHubInstallationRepository,
+} from "@repo/github-app-node";
+
+import { mirrorOrgSetupGate } from "../../../auth/org-binding-mirror";
+import {
+  deriveOrgSetupGate,
+  hasMatchingGitHubLightfastRepositoryProof,
+} from "../../../auth/org-setup-gate";
+import { getGitHubAppConfig } from "../config";
+
+export class GitHubLightfastRepositorySetupError extends Error {
+  constructor(
+    readonly code:
+      | "github_org_missing"
+      | "lightfast_repo_missing"
+      | "lightfast_repo_inaccessible"
+      | "github_transient_error",
+    message: string
+  ) {
+    super(message);
+    this.name = "GitHubLightfastRepositorySetupError";
+  }
+}
+
+function assertGitHubBinding(
+  binding: Awaited<ReturnType<typeof getActiveOrgBinding>>
+): asserts binding is NonNullable<typeof binding> & {
+  providerAccountLogin: string;
+  providerInstallationId: string;
+} {
+  if (
+    !binding ||
+    binding.provider !== "github" ||
+    !binding.providerAccountLogin ||
+    !binding.providerInstallationId
+  ) {
+    throw new GitHubLightfastRepositorySetupError(
+      "github_org_missing",
+      "Connect a GitHub organization before verifying .lightfast."
+    );
+  }
+}
+
+async function ensureWatchedLightfastRepository(input: {
+  bindingId: number;
+  db: Database;
+  fullName: string;
+  providerRepositoryId: string;
+}) {
+  await upsertWatchedSourceControlRepository(input.db, {
+    fullName: input.fullName,
+    orgSourceControlBindingId: input.bindingId,
+    providerRepositoryId: input.providerRepositoryId,
+    watchedPathGlobs: ["skills/**"],
+  });
+}
+
+export async function verifyGitHubLightfastRepositorySetup(input: {
+  clerkOrgId: string;
+  db: Database;
+}): Promise<OrgSetupGate> {
+  const binding = await getActiveOrgBinding(input.db, input.clerkOrgId);
+  assertGitHubBinding(binding);
+
+  if (hasMatchingGitHubLightfastRepositoryProof(binding)) {
+    const proof = githubLightfastRepositoryProofSchema.parse(
+      binding.metadata.lightfastRepository
+    );
+    await ensureWatchedLightfastRepository({
+      bindingId: binding.id,
+      db: input.db,
+      fullName: proof.fullName,
+      providerRepositoryId: proof.id,
+    });
+    const gate = deriveOrgSetupGate(binding);
+    await mirrorOrgSetupGate({
+      clerkOrgId: input.clerkOrgId,
+      gate,
+      provider: "github",
+    });
+    return gate;
+  }
+
+  const config = getGitHubAppConfig();
+  const appJwt = await createGitHubAppJwt({
+    appId: config.appId,
+    privateKey: config.privateKey,
+  });
+
+  try {
+    await verifyGitHubInstallationRepository({
+      apiBaseUrl: config.endpoints.apiBaseUrl,
+      apiVersion: config.apiVersion,
+      appJwt,
+      expectedInstallationId: binding.providerInstallationId,
+      owner: binding.providerAccountLogin,
+      repo: LIGHTFAST_REPOSITORY_NAME,
+    });
+  } catch (error) {
+    const code =
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === "GITHUB_REPOSITORY_NOT_FOUND"
+        ? "lightfast_repo_missing"
+        : error &&
+            typeof error === "object" &&
+            "code" in error &&
+            error.code === "GITHUB_REPOSITORY_INACCESSIBLE"
+          ? "lightfast_repo_inaccessible"
+          : "github_transient_error";
+    throw new GitHubLightfastRepositorySetupError(
+      code,
+      "Lightfast could not verify the .lightfast repository."
+    );
+  }
+
+  const installationToken = await createGitHubInstallationToken({
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    appJwt,
+    installationId: binding.providerInstallationId,
+  });
+  const repository = await getGitHubRepository({
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    installationToken: installationToken.token,
+    owner: binding.providerAccountLogin,
+    repo: LIGHTFAST_REPOSITORY_NAME,
+  });
+  const proof = githubLightfastRepositoryProofSchema.parse({
+    fullName: repository.fullName,
+    id: repository.id,
+    installationId: binding.providerInstallationId,
+    name: repository.name,
+    verifiedAt: new Date().toISOString(),
+  });
+
+  const metadata = {
+    ...binding.metadata,
+    lightfastRepository: proof,
+  };
+  try {
+    await completeWatchedSourceControlRepositorySetup(input.db, {
+      bindingMetadata: metadata,
+      fullName: proof.fullName,
+      orgSourceControlBindingId: binding.id,
+      providerRepositoryId: proof.id,
+      watchedPathGlobs: ["skills/**"],
+    });
+  } catch {
+    throw new GitHubLightfastRepositorySetupError(
+      "github_transient_error",
+      "Lightfast could not store the .lightfast repository proof."
+    );
+  }
+
+  const gate = deriveOrgSetupGate({
+    ...binding,
+    metadata,
+  });
+  await mirrorOrgSetupGate({
+    clerkOrgId: input.clerkOrgId,
+    gate,
+    provider: "github",
+  });
+  return gate;
+}

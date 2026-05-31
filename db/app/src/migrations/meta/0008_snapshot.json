@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "cdbb0166-b26d-43c7-877b-93d86aacbbf9",
-  "prevId": "503cccbb-e05b-4db0-8b6e-aa2000efd7a4",
+  "id": "c2c24255-6fb1-4de4-b952-f75dc8626d73",
+  "prevId": "a08d8ce4-decf-4401-91e3-d3747bc17415",
   "tables": {
     "lightfast_automation_runs": {
       "name": "lightfast_automation_runs",
@@ -866,6 +866,347 @@
       "compositePrimaryKeys": {
         "lightfast_signals_id": {
           "name": "lightfast_signals_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_source_control_repositories": {
+      "name": "lightfast_source_control_repositories",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "org_source_control_binding_id": {
+          "name": "org_source_control_binding_id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_repository_id": {
+          "name": "provider_repository_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "watched_path_globs": {
+          "name": "watched_path_globs",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "source_control_repositories_binding_repository_uq": {
+          "name": "source_control_repositories_binding_repository_uq",
+          "columns": [
+            "org_source_control_binding_id",
+            "provider_repository_id"
+          ],
+          "isUnique": true
+        },
+        "source_control_repositories_provider_repository_idx": {
+          "name": "source_control_repositories_provider_repository_idx",
+          "columns": [
+            "provider_repository_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_source_control_repositories_id": {
+          "name": "lightfast_source_control_repositories_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_source_control_webhook_deliveries": {
+      "name": "lightfast_source_control_webhook_deliveries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event": {
+          "name": "event",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_installation_id": {
+          "name": "provider_installation_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_repository_id": {
+          "name": "provider_repository_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "source_control_webhook_deliveries_delivery_id_uq": {
+          "name": "source_control_webhook_deliveries_delivery_id_uq",
+          "columns": [
+            "delivery_id"
+          ],
+          "isUnique": true
+        },
+        "source_control_webhook_deliveries_installation_repository_idx": {
+          "name": "source_control_webhook_deliveries_installation_repository_idx",
+          "columns": [
+            "provider_installation_id",
+            "provider_repository_id"
+          ],
+          "isUnique": false
+        },
+        "source_control_webhook_deliveries_status_updated_idx": {
+          "name": "source_control_webhook_deliveries_status_updated_idx",
+          "columns": [
+            "status",
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_source_control_webhook_deliveries_id": {
+          "name": "lightfast_source_control_webhook_deliveries_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_user_source_control_accounts": {
+      "name": "lightfast_user_source_control_accounts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "clerk_user_id": {
+          "name": "clerk_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "active_clerk_user_id": {
+          "name": "active_clerk_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "active_provider_user_key": {
+          "name": "active_provider_user_key",
+          "type": "varchar(192)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "provider": {
+          "name": "provider",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_user_id": {
+          "name": "provider_user_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(32)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "connected_at": {
+          "name": "connected_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "revoked_at": {
+          "name": "revoked_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "encrypted_access_token": {
+          "name": "encrypted_access_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "encrypted_refresh_token": {
+          "name": "encrypted_refresh_token",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "access_token_expires_at": {
+          "name": "access_token_expires_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "refresh_token_expires_at": {
+          "name": "refresh_token_expires_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "user_source_control_accounts_active_user_uq": {
+          "name": "user_source_control_accounts_active_user_uq",
+          "columns": [
+            "active_clerk_user_id"
+          ],
+          "isUnique": true
+        },
+        "user_source_control_accounts_active_provider_user_uq": {
+          "name": "user_source_control_accounts_active_provider_user_uq",
+          "columns": [
+            "active_provider_user_key"
+          ],
+          "isUnique": true
+        },
+        "user_source_control_accounts_user_status_idx": {
+          "name": "user_source_control_accounts_user_status_idx",
+          "columns": [
+            "clerk_user_id",
+            "status"
+          ],
+          "isUnique": false
+        },
+        "user_source_control_accounts_provider_user_idx": {
+          "name": "user_source_control_accounts_provider_user_idx",
+          "columns": [
+            "provider",
+            "provider_user_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_user_source_control_accounts_id": {
+          "name": "lightfast_user_source_control_accounts_id",
           "columns": [
             "id"
           ]

@@ -1,28 +1,26 @@
 import { call } from "@orpc/server";
 import { describe, expect, it } from "vitest";
+import type { AuthContext, InitialContext } from "../context";
 
 const { orgGateMiddleware } = await import("../middleware/org-gate");
+
+function orgGate(bindingStatus: "bound" | "unbound") {
+  return bindingStatus === "bound"
+    ? ({ bindingStatus: "bound", nextSetupRequirement: null } as const)
+    : ({
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_org",
+      } as const);
+}
 
 /**
  * Invoke the gate as it runs in production: after `authMiddleware` has resolved
  * an Unkey API key into the shared `context.auth.identity` contract.
  */
-async function invokeGate(bindingStatus: "bound" | "unbound" | "revoked") {
+async function invokeGate(bindingStatus: "bound" | "unbound") {
   const { os } = await import("@orpc/server");
   const proc = os
-    .$context<{
-      apiKeyId: string;
-      auth: {
-        identity: {
-          orgGate: { bindingStatus: "bound" | "unbound" | "revoked" };
-          orgId: string;
-          type: "active";
-          userId: string;
-        };
-      };
-      headers: Headers;
-      requestId: string;
-    }>()
+    .$context<InitialContext & AuthContext>()
     .use(orgGateMiddleware)
     .handler(() => "handler-reached");
 
@@ -31,7 +29,7 @@ async function invokeGate(bindingStatus: "bound" | "unbound" | "revoked") {
       apiKeyId: "apk_test",
       auth: {
         identity: {
-          orgGate: { bindingStatus },
+          orgGate: orgGate(bindingStatus),
           orgId: "org_test",
           type: "active",
           userId: "user_test",
@@ -55,12 +53,6 @@ describe("orgGateMiddleware", () => {
         diagnostics: [expect.objectContaining({ code: "ORG_SETUP_REQUIRED" })],
       },
       message: expect.stringContaining("has not completed setup"),
-    });
-  });
-
-  it("rejects a revoked org API key identity with FORBIDDEN", async () => {
-    await expect(invokeGate("revoked")).rejects.toMatchObject({
-      code: "FORBIDDEN",
     });
   });
 });

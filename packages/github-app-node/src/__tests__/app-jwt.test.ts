@@ -1,3 +1,5 @@
+import { createPublicKey, generateKeyPairSync } from "node:crypto";
+
 import { exportPKCS8, generateKeyPair, jwtVerify } from "jose";
 import { describe, expect, it } from "vitest";
 import { createGitHubAppJwt } from "../app-jwt";
@@ -21,5 +23,28 @@ describe("createGitHubAppJwt", () => {
     expect(payload.iss).toBe("424242");
     expect(payload.iat).toBe(1_779_926_370);
     expect(payload.exp).toBe(1_779_926_940);
+  });
+
+  it("accepts GitHub-style PKCS#1 RSA private keys", async () => {
+    const { privateKey, publicKey } = generateKeyPairSync("rsa", {
+      modulusLength: 2048,
+      privateKeyEncoding: { format: "pem", type: "pkcs1" },
+      publicKeyEncoding: { format: "pem", type: "spki" },
+    });
+    const now = new Date("2026-05-28T00:00:00.000Z");
+
+    const jwt = await createGitHubAppJwt({
+      appId: "424242",
+      now,
+      privateKey,
+    });
+
+    const { payload, protectedHeader } = await jwtVerify(
+      jwt,
+      createPublicKey(publicKey),
+      { currentDate: now }
+    );
+    expect(protectedHeader.alg).toBe("RS256");
+    expect(payload.iss).toBe("424242");
   });
 });

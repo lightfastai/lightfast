@@ -11,6 +11,13 @@ export const env = createEnv({
   server: {
     CLERK_CLI_OAUTH_CLIENT_ID: z.string().min(1).optional(),
     CLERK_DESKTOP_OAUTH_CLIENT_ID: z.string().min(1).optional(),
+    ENCRYPTION_KEY: z
+      .string()
+      .refine(
+        (key) =>
+          /^[0-9a-f]{64}$/i.test(key) || /^[A-Za-z0-9+/]{43}=$/.test(key),
+        "ENCRYPTION_KEY must be 32 bytes as 64 hex chars or 44 base64 chars"
+      ),
     GITHUB_API_VERSION: z.string().min(1).default("2022-11-28"),
     GITHUB_APP_CLIENT_ID: z.string().min(1).optional(),
     GITHUB_APP_CLIENT_SECRET: z.string().min(1).optional(),
@@ -27,6 +34,7 @@ export const env = createEnv({
   experimental__runtimeEnv: {
     CLERK_CLI_OAUTH_CLIENT_ID: process.env.CLERK_CLI_OAUTH_CLIENT_ID,
     CLERK_DESKTOP_OAUTH_CLIENT_ID: process.env.CLERK_DESKTOP_OAUTH_CLIENT_ID,
+    ENCRYPTION_KEY: process.env.ENCRYPTION_KEY,
     GITHUB_API_VERSION: process.env.GITHUB_API_VERSION,
     GITHUB_APP_CLIENT_ID: process.env.GITHUB_APP_CLIENT_ID,
     GITHUB_APP_CLIENT_SECRET: process.env.GITHUB_APP_CLIENT_SECRET,

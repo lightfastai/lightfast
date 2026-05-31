@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "6413e6ac-dac3-4e82-a58b-f1dc4e9de0d6",
+  "id": "893b8ba7-acad-4823-aee8-71c0da6888cc",
   "prevId": "c8eacdbd-577e-458b-ba61-9e0f2e5528ed",
   "tables": {
     "lightfast_automation_runs": {
@@ -667,7 +667,7 @@
           "name": "created_by_api_key_id",
           "type": "varchar(128)",
           "primaryKey": false,
-          "notNull": false,
+          "notNull": true,
           "autoincrement": false
         },
         "input": {
@@ -755,6 +755,191 @@
       "compositePrimaryKeys": {
         "lightfast_signals_id": {
           "name": "lightfast_signals_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_source_control_repositories": {
+      "name": "lightfast_source_control_repositories",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "org_source_control_binding_id": {
+          "name": "org_source_control_binding_id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_repository_id": {
+          "name": "provider_repository_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "full_name": {
+          "name": "full_name",
+          "type": "varchar(256)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "watched_path_globs": {
+          "name": "watched_path_globs",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "source_control_repositories_binding_repository_uq": {
+          "name": "source_control_repositories_binding_repository_uq",
+          "columns": [
+            "org_source_control_binding_id",
+            "provider_repository_id"
+          ],
+          "isUnique": true
+        },
+        "source_control_repositories_provider_repository_idx": {
+          "name": "source_control_repositories_provider_repository_idx",
+          "columns": [
+            "provider_repository_id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_source_control_repositories_id": {
+          "name": "lightfast_source_control_repositories_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_source_control_webhook_deliveries": {
+      "name": "lightfast_source_control_webhook_deliveries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "delivery_id": {
+          "name": "delivery_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "event": {
+          "name": "event",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_installation_id": {
+          "name": "provider_installation_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "provider_repository_id": {
+          "name": "provider_repository_id",
+          "type": "varchar(128)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "onUpdate": true,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "source_control_webhook_deliveries_delivery_id_uq": {
+          "name": "source_control_webhook_deliveries_delivery_id_uq",
+          "columns": [
+            "delivery_id"
+          ],
+          "isUnique": true
+        },
+        "source_control_webhook_deliveries_installation_repository_idx": {
+          "name": "source_control_webhook_deliveries_installation_repository_idx",
+          "columns": [
+            "provider_installation_id",
+            "provider_repository_id"
+          ],
+          "isUnique": false
+        },
+        "source_control_webhook_deliveries_status_updated_idx": {
+          "name": "source_control_webhook_deliveries_status_updated_idx",
+          "columns": [
+            "status",
+            "updated_at"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_source_control_webhook_deliveries_id": {
+          "name": "lightfast_source_control_webhook_deliveries_id",
           "columns": [
             "id"
           ]
