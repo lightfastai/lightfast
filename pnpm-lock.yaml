@@ -267,6 +267,15 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.9.1
+      braintrust:
+        specifier: 'catalog:'
+        version: 3.11.0(zod@4.3.6)
+      dotenv-cli:
+        specifier: 'catalog:'
+        version: 11.0.0
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -20688,7 +20697,7 @@ snapshots:
 
   eventsource@3.0.7:
     dependencies:
-      eventsource-parser: 3.0.7
+      eventsource-parser: 3.0.8
 
   execa@1.0.0:
     dependencies:
