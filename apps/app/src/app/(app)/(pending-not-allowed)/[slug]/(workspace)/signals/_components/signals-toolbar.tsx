@@ -97,10 +97,10 @@ export function SignalsToolbar({
 
   return (
     <div
-      className="flex shrink-0 flex-wrap items-center gap-1.5 border-border/70 border-t px-3 py-3"
+      className="flex shrink-0 flex-wrap items-start gap-1.5 border-border/70 border-t px-3 py-3"
       data-testid="signals-toolbar"
     >
-      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
