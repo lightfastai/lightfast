@@ -95,7 +95,10 @@ export function PeopleTableView({
         )}
       >
         <div
-          className={`${ROW_GRID} h-9 border-border/60 border-b bg-muted/20 px-4 text-muted-foreground text-xs`}
+          className={cn(
+            ROW_GRID,
+            "h-9 border-border/70 border-b bg-muted/25 px-4 text-muted-foreground text-xs"
+          )}
         >
           <span>Name</span>
           <span>Identity</span>
@@ -136,7 +139,7 @@ export function PeopleTableView({
         ) : null}
       </div>
 
-      <div className="flex items-center gap-3 border-border/60 border-t px-4 py-2.5 text-muted-foreground text-xs">
+      <div className="flex items-center gap-3 border-border/70 border-t px-4 py-2.5 text-muted-foreground text-xs">
         <span>
           {rows.length} {rows.length === 1 ? "person" : "people"}
         </span>
@@ -168,8 +171,8 @@ function PeopleTableRow({
       aria-pressed={isSelected}
       className={cn(
         ROW_GRID,
-        "min-h-12 w-full border-border/40 border-b px-4 text-left hover:bg-muted/20",
-        isSelected ? "bg-muted/30" : "bg-background"
+        "min-h-12 w-full border-border/40 border-b px-4 text-left hover:bg-muted/30",
+        isSelected ? "bg-muted/35" : "bg-background"
       )}
       onClick={onSelect}
       type="button"
