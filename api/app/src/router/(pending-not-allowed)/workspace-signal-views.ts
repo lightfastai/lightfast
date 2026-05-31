@@ -17,7 +17,6 @@ const signalViewConfigSchema = z.object({
     dispositions: z.array(signalDispositionSchema).max(3),
     peopleRouted: z.boolean(),
   }),
-  layout: z.enum(["list", "board"]),
 });
 
 const createSignalViewInput = z.object({

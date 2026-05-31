@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -14,16 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
-import {
-  AtSign,
-  Check,
-  List,
-  ListFilter,
-  Search,
-  SlidersHorizontal,
-  Tag,
-  X,
-} from "lucide-react";
+import { AtSign, ListFilter, Search, Tag, X } from "lucide-react";
 import type { ComponentType } from "react";
 import {
   getPersonProviderLabel,
@@ -78,7 +68,7 @@ export function PeopleToolbar({
 
   return (
     <div
-      className="flex min-h-10 shrink-0 flex-wrap items-center gap-1.5 border-border/70 border-t px-3 py-1"
+      className="flex shrink-0 flex-wrap items-center gap-1.5 border-border/70 border-t px-3 py-3"
       data-testid="people-toolbar"
     >
       <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
@@ -156,34 +146,6 @@ export function PeopleToolbar({
             value={query}
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Display options"
-              className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              size="icon-sm"
-              title="Display options"
-              type="button"
-              variant="ghost"
-            >
-              <SlidersHorizontal
-                aria-hidden="true"
-                className="size-3"
-                data-testid="people-display-icon"
-              />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem className="bg-muted/50" disabled>
-              <List aria-hidden="true" className="size-3.5" />
-              <span>List</span>
-              <Check
-                aria-hidden="true"
-                className="ml-auto size-3.5 text-muted-foreground"
-              />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
   );

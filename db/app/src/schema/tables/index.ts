@@ -39,7 +39,6 @@ export {
   SIGNAL_VIEW_ID_PREFIX,
   type SignalView,
   type SignalViewConfig,
-  type SignalViewLayout,
   signalViews,
 } from "./signal-views";
 export {

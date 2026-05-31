@@ -2,42 +2,22 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { SignalViewRow } from "./signals-views-model";
 
-// --- URL param state (nuqs) -------------------------------------------------
-const setDispositionMock = vi.fn();
-const setKindMock = vi.fn();
-const setPriorityMock = vi.fn();
-const setPeopleMock = vi.fn();
-const setLayoutMock = vi.fn();
-const setSavedViewMock = vi.fn();
+// --- URL param state (nuqs, batched via useQueryStates) ---------------------
+interface Params {
+  disposition: string;
+  kind: string;
+  people: "all" | "routed";
+  priority: string;
+  view: string | null;
+}
 
-let dispositionState = "";
-let kindState = "";
-let priorityState = "";
-let peopleState = "all";
-let layoutState = "list";
-let savedViewState: string | null = null;
+let paramsState: Params;
+const setParamsMock = vi.fn();
 
 vi.mock("nuqs", () => ({
   parseAsString: { withDefault: () => "mock-parser" },
   parseAsStringLiteral: () => ({ withDefault: () => "mock-parser" }),
-  useQueryState: (key: string) => {
-    if (key === "disposition") {
-      return [dispositionState, setDispositionMock];
-    }
-    if (key === "kind") {
-      return [kindState, setKindMock];
-    }
-    if (key === "priority") {
-      return [priorityState, setPriorityMock];
-    }
-    if (key === "people") {
-      return [peopleState, setPeopleMock];
-    }
-    if (key === "layout") {
-      return [layoutState, setLayoutMock];
-    }
-    return [savedViewState, setSavedViewMock];
-  },
+  useQueryStates: () => [paramsState, setParamsMock] as const,
 }));
 
 // --- views data + mutations -------------------------------------------------
@@ -90,7 +70,6 @@ function makeView(overrides: Partial<SignalViewRow> = {}): SignalViewRow {
         dispositions: [],
         peopleRouted: false,
       },
-      layout: "board",
     },
     createdAt: new Date("2026-05-30T01:00:00.000Z"),
     updatedAt: new Date("2026-05-30T01:00:00.000Z"),
@@ -99,82 +78,76 @@ function makeView(overrides: Partial<SignalViewRow> = {}): SignalViewRow {
 }
 
 beforeEach(() => {
-  dispositionState = "";
-  kindState = "";
-  priorityState = "";
-  peopleState = "all";
-  layoutState = "list";
-  savedViewState = null;
+  paramsState = {
+    disposition: "",
+    kind: "",
+    priority: "",
+    people: "all",
+    view: null,
+  };
   viewsData = [];
   dialogProps = null;
   vi.clearAllMocks();
 });
 
-function openMenu() {
-  fireEvent.pointerDown(
-    screen.getByRole("button", { name: /All signals|My follow-ups/ })
-  );
-}
-
 describe("SignalsViewSwitcher", () => {
-  it('labels the trigger "All signals" when no saved view is active', () => {
+  it('renders the "All signals" pill, active when no saved view is set', () => {
     render(<SignalsViewSwitcher />);
     expect(
-      screen.getByRole("button", { name: /All signals/ })
+      screen.getByRole("button", { name: "All signals" })
     ).toBeInTheDocument();
   });
 
-  it("lists the caller's saved views", () => {
+  it("renders one always-visible pill per saved view (no dropdown)", () => {
     viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
-    openMenu();
-
+    // The select pill is directly present without opening any menu.
     expect(
-      screen.getByRole("menuitem", { name: /My follow-ups/ })
+      screen.getByRole("button", { name: "My follow-ups" })
     ).toBeInTheDocument();
   });
 
-  it("selecting a view stamps its params and sets ?view", () => {
+  it("clicking a view pill stamps its params and sets ?view atomically", () => {
     viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
-    openMenu();
 
-    fireEvent.click(screen.getByRole("menuitem", { name: /My follow-ups/ }));
+    fireEvent.click(screen.getByRole("button", { name: "My follow-ups" }));
 
-    expect(setSavedViewMock).toHaveBeenCalledWith("sigview_1");
-    expect(setKindMock).toHaveBeenCalledWith("follow_up");
-    expect(setLayoutMock).toHaveBeenCalledWith("board");
+    expect(setParamsMock).toHaveBeenCalledTimes(1);
+    expect(setParamsMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        kind: "follow_up",
+        view: "sigview_1",
+      })
+    );
   });
 
-  it('selecting "All signals" clears the filters and ?view', () => {
-    savedViewState = "sigview_1";
+  it('clicking "All signals" clears the filters and ?view', () => {
+    paramsState.view = "sigview_1";
     viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
-    openMenu();
 
-    fireEvent.click(screen.getByRole("menuitem", { name: /All signals/ }));
+    fireEvent.click(screen.getByRole("button", { name: "All signals" }));
 
-    expect(setSavedViewMock).toHaveBeenCalledWith(null);
-    expect(setKindMock).toHaveBeenCalledWith("");
+    expect(setParamsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: "", view: null })
+    );
   });
 
-  it('"New view" opens the dialog and saving sets ?view to the new id', () => {
+  it('"+" opens the dialog and saving sets ?view to the new id', () => {
     render(<SignalsViewSwitcher />);
-    openMenu();
 
-    fireEvent.click(screen.getByRole("menuitem", { name: /New view/ }));
+    fireEvent.click(screen.getByRole("button", { name: "New view" }));
     expect(dialogProps?.open).toBe(true);
 
     fireEvent.click(screen.getByRole("button", { name: "stub-save" }));
-    expect(setSavedViewMock).toHaveBeenCalledWith("sigview_new");
+    expect(setParamsMock).toHaveBeenCalledWith({ view: "sigview_new" });
   });
 
-  it("deleting the active view removes it and resets to All signals", () => {
-    savedViewState = "sigview_1";
-    kindState = "follow_up";
+  it("deleting the active view removes it and clears ?view", () => {
+    paramsState.view = "sigview_1";
     viewsData = [makeView()];
     render(<SignalsViewSwitcher />);
-    openMenu();
 
     fireEvent.click(
       screen.getByRole("button", { name: "Delete My follow-ups" })
@@ -184,11 +157,6 @@ describe("SignalsViewSwitcher", () => {
       { publicId: "sigview_1" },
       expect.anything()
     );
-    expect(setSavedViewMock).toHaveBeenCalledWith(null);
-    expect(setKindMock).toHaveBeenCalledWith("");
-    expect(setDispositionMock).toHaveBeenCalledWith("");
-    expect(setPriorityMock).toHaveBeenCalledWith("");
-    expect(setPeopleMock).toHaveBeenCalledWith("all");
-    expect(setLayoutMock).toHaveBeenCalledWith("list");
+    expect(setParamsMock).toHaveBeenCalledWith({ view: null });
   });
 });

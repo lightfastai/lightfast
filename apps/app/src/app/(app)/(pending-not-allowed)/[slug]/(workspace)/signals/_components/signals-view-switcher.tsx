@@ -1,17 +1,9 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
-import { useQueryState } from "nuqs";
-import { useState } from "react";
+import { cn } from "@repo/ui/lib/utils";
+import { LayoutGrid, Plus, X } from "lucide-react";
+import { useQueryStates } from "nuqs";
+import { useEffect, useRef, useState } from "react";
 import { SignalCreateViewDialog } from "./signal-create-view-dialog";
 import {
   parseSignalDispositions,
@@ -19,7 +11,6 @@ import {
   parseSignalPriorities,
   signalDispositionParser,
   signalKindParser,
-  signalLayoutParser,
   signalPeopleParser,
   signalPriorityParser,
   signalSavedViewParser,
@@ -36,143 +27,152 @@ import {
   useSignalViewsQuery,
 } from "./use-signal-views-query";
 
+/**
+ * Views bar — every view is an always-visible pill (no dropdown). "All signals"
+ * is synthetic (active when `?view` is absent); each saved view is a pill that
+ * stamps its filters into the URL when clicked. The trailing `+` saves
+ * the current selection as a new view.
+ *
+ * The bar coordinates with the page entirely through URL params (nuqs): all six
+ * params are written in a single atomic `setParams` call so selecting a view is
+ * one history entry / one re-render rather than six.
+ */
 export function SignalsViewSwitcher() {
-  const [dispositionState, setDispositionState] = useQueryState(
-    "disposition",
-    signalDispositionParser
-  );
-  const [kindState, setKindState] = useQueryState("kind", signalKindParser);
-  const [priorityState, setPriorityState] = useQueryState(
-    "priority",
-    signalPriorityParser
-  );
-  const [peopleState, setPeopleState] = useQueryState(
-    "people",
-    signalPeopleParser
-  );
-  const [layout, setLayout] = useQueryState("layout", signalLayoutParser);
-  const [savedViewId, setSavedViewId] = useQueryState(
-    "view",
-    signalSavedViewParser
-  );
+  const [params, setParams] = useQueryStates({
+    disposition: signalDispositionParser,
+    kind: signalKindParser,
+    priority: signalPriorityParser,
+    people: signalPeopleParser,
+    view: signalSavedViewParser,
+  });
   const [isCreateOpen, setCreateOpen] = useState(false);
 
   const viewsQuery = useSignalViewsQuery();
   const deleteView = useDeleteSignalView();
   const views = viewsQuery.data ?? [];
-  const activeView = views.find((view) => view.publicId === savedViewId);
-  const activeLabel = activeView?.name ?? ALL_SIGNALS_VIEW_NAME;
+  const savedViewId = params.view;
 
-  // Cheap pure transform — recompute each render rather than memoize.
-  const currentConfig = selectionToConfig(
-    {
-      dispositions: parseSignalDispositions(dispositionState),
-      kinds: parseSignalKinds(kindState),
-      peopleRouted: peopleState === "routed",
-      priorities: parseSignalPriorities(priorityState),
-    },
-    layout
-  );
+  // With many views the row scrolls horizontally; keep the active pill visible
+  // (e.g. on load when a far-right view is active, or after selecting one).
+  const scrollRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    scrollRef.current
+      ?.querySelector<HTMLElement>('[data-active="true"]')
+      ?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  }, [savedViewId, views.length]);
+
+  // Cheap pure transform — recompute each render rather than memoize. Snapshots
+  // the current selection so `+` can save it as a view.
+  const currentConfig = selectionToConfig({
+    dispositions: parseSignalDispositions(params.disposition),
+    kinds: parseSignalKinds(params.kind),
+    peopleRouted: params.people === "routed",
+    priorities: parseSignalPriorities(params.priority),
+  });
 
   function applyParams(next: SignalViewParamValues, viewId: string | null) {
-    void setDispositionState(next.disposition);
-    void setKindState(next.kind);
-    void setPriorityState(next.priority);
-    void setPeopleState(next.people);
-    void setLayout(next.layout);
-    void setSavedViewId(viewId);
+    void setParams({
+      disposition: next.disposition,
+      kind: next.kind,
+      priority: next.priority,
+      people: next.people,
+      view: viewId,
+    });
   }
 
   return (
     <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            className="h-7 gap-1.5 rounded-lg border border-border/70 bg-muted/30 px-2.5 font-normal text-foreground text-sm hover:bg-muted/60"
-            size="sm"
+      <div className="flex min-w-0 flex-1 items-center gap-1">
+        {/* Scrollable pill region. The `+` stays pinned outside so it is always
+            reachable even when the views overflow. */}
+        <div
+          className="flex min-w-0 items-center gap-1 overflow-x-auto"
+          ref={scrollRef}
+        >
+          <button
+            className={cn(
+              "inline-flex h-7 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg border px-2.5 text-sm transition-colors",
+              savedViewId
+                ? "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                : "border-border/70 bg-muted/60 text-foreground"
+            )}
+            data-active={!savedViewId}
+            onClick={() => applyParams(allSignalsParamValues(), null)}
             type="button"
-            variant="ghost"
           >
-            {activeLabel}
-            <ChevronDown
+            <LayoutGrid
               aria-hidden="true"
               className="size-3.5 text-muted-foreground"
             />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem
-            onClick={() => applyParams(allSignalsParamValues(layout), null)}
-          >
-            <span className="flex-1">{ALL_SIGNALS_VIEW_NAME}</span>
-            {savedViewId ? null : (
-              <Check
-                aria-hidden="true"
-                className="size-3.5 text-muted-foreground"
-              />
-            )}
-          </DropdownMenuItem>
+            <span>{ALL_SIGNALS_VIEW_NAME}</span>
+          </button>
 
-          {views.length > 0 ? (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                Your views
-              </DropdownMenuLabel>
-              {views.map((view) => (
-                <DropdownMenuItem
-                  className="gap-2"
-                  key={view.publicId}
+          {views.map((view) => {
+            const isActive = savedViewId === view.publicId;
+            return (
+              <div
+                className={cn(
+                  "group inline-flex h-7 shrink-0 items-center rounded-lg border pr-1 pl-2.5 text-sm transition-colors",
+                  isActive
+                    ? "border-border/70 bg-muted/60 text-foreground"
+                    : "border-transparent text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+                )}
+                data-active={isActive}
+                key={view.publicId}
+              >
+                <button
+                  className="inline-flex items-center gap-1.5"
                   onClick={() =>
                     applyParams(
                       viewConfigToParamValues(view.config),
                       view.publicId
                     )
                   }
+                  type="button"
                 >
-                  <span className="min-w-0 flex-1 truncate">{view.name}</span>
-                  {savedViewId === view.publicId ? (
-                    <Check
-                      aria-hidden="true"
-                      className="size-3.5 text-muted-foreground"
-                    />
-                  ) : null}
-                  <button
-                    aria-label={`Delete ${view.name}`}
-                    className="text-muted-foreground hover:text-foreground"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      deleteView.mutate(
-                        { publicId: view.publicId },
-                        {
-                          onSuccess: () => {
-                            if (savedViewId === view.publicId) {
-                              applyParams(allSignalsParamValues(layout), null);
-                            }
-                          },
-                        }
-                      );
-                    }}
-                    type="button"
-                  >
-                    <Trash2 aria-hidden="true" className="size-3.5" />
-                  </button>
-                </DropdownMenuItem>
-              ))}
-            </>
-          ) : null}
+                  <LayoutGrid
+                    aria-hidden="true"
+                    className="size-3.5 text-muted-foreground"
+                  />
+                  <span className="max-w-[12rem] truncate">{view.name}</span>
+                </button>
+                <button
+                  aria-label={`Delete ${view.name}`}
+                  className="ml-0.5 rounded p-0.5 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100"
+                  onClick={() =>
+                    deleteView.mutate(
+                      { publicId: view.publicId },
+                      {
+                        onSuccess: () => {
+                          if (savedViewId === view.publicId) {
+                            void setParams({ view: null });
+                          }
+                        },
+                      }
+                    )
+                  }
+                  type="button"
+                >
+                  <X aria-hidden="true" className="size-3" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
 
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setCreateOpen(true)}>
-            <Plus aria-hidden="true" className="size-3.5" />
-            <span>New view</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+        <button
+          aria-label="New view"
+          className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground"
+          onClick={() => setCreateOpen(true)}
+          type="button"
+        >
+          <Plus aria-hidden="true" className="size-3.5" />
+        </button>
+      </div>
 
       <SignalCreateViewDialog
         config={currentConfig}
-        onCreated={(publicId) => void setSavedViewId(publicId)}
+        onCreated={(publicId) => void setParams({ view: publicId })}
         onOpenChange={setCreateOpen}
         open={isCreateOpen}
       />

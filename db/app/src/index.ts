@@ -42,7 +42,6 @@ export {
   type Signal,
   type SignalView,
   type SignalViewConfig,
-  type SignalViewLayout,
   signals,
   signalViews,
 } from "./schema";
