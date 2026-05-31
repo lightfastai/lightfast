@@ -157,13 +157,14 @@ describe("@repo/github-emulator", () => {
     });
   });
 
-  it("serves a local new repository page that can create .lightfast", async () => {
+  it("serves a local new repository page that creates a new repository", async () => {
     const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
+    const repoName = "lightfast-created-from-ui";
     const pageRes = await fetch(
-      `${emulator?.url}/organizations/${owner}/repositories/new?name=.lightfast`
+      `${emulator?.url}/organizations/${owner}/repositories/new?name=${repoName}`
     );
     expect(pageRes.status).toBe(200);
-    await expect(pageRes.text()).resolves.toContain("Create .lightfast");
+    await expect(pageRes.text()).resolves.toContain(`Create ${repoName}`);
 
     const createRes = await fetch(
       `${emulator?.url}/organizations/${owner}/repositories/new`,
@@ -174,7 +175,7 @@ describe("@repo/github-emulator", () => {
         },
         body: new URLSearchParams({
           auto_init: "true",
-          name: ".lightfast",
+          name: repoName,
           private: "true",
         }),
         redirect: "manual",
@@ -182,20 +183,21 @@ describe("@repo/github-emulator", () => {
     );
     expect(createRes.status).toBe(303);
     expect(createRes.headers.get("location")).toBe(
-      `/repos/${owner}/.lightfast`
+      `/repos/${owner}/${repoName}`
     );
 
-    const jwt = await createAppJwt();
-    const installationRes = await fetch(
-      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
-      {
-        headers: {
-          accept: "application/vnd.github+json",
-          authorization: `Bearer ${jwt}`,
-        },
-      }
-    );
-    expect(installationRes.status).toBe(200);
+    const repoRes = await fetch(`${emulator?.url}/repos/${owner}/${repoName}`, {
+      headers: {
+        accept: "application/vnd.github+json",
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+    expect(repoRes.status).toBe(200);
+    await expect(repoRes.json()).resolves.toMatchObject({
+      full_name: `${owner}/${repoName}`,
+      name: repoName,
+      private: true,
+    });
   });
 
   it("resets emulator state for repeatable local E2E runs", async () => {

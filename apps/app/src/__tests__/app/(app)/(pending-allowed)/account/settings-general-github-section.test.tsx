@@ -124,11 +124,15 @@ describe("GithubAccountConnectionSection", () => {
 
     render(<GeneralSettingsPage />);
 
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: [["viewer", "account", "get"]],
-    });
-    expect(prefetchMock).toHaveBeenCalledWith({
-      queryKey: [["viewer", "githubAccount", "status"]],
-    });
+    expect(prefetchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: [["viewer", "account", "get"]],
+      })
+    );
+    expect(prefetchMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        queryKey: [["viewer", "githubAccount", "status"]],
+      })
+    );
   });
 });

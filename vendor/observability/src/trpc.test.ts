@@ -52,12 +52,12 @@ describe("createObservabilityMiddleware", () => {
     logInfoMock.mockClear();
   });
 
-  it("includes the tRPC error and cause message in server error logs", async () => {
+  it("omits the cause message from server error logs", async () => {
     const cause = new Error("Your database has been temporarily rate-limited");
     cause.name = "UpstashError";
     const error = new TRPCError({
       code: "INTERNAL_SERVER_ERROR",
-      message: "Your database has been temporarily rate-limited",
+      message: "Internal server error",
       cause,
     });
     const middleware = createObservabilityMiddleware({
@@ -73,13 +73,14 @@ describe("createObservabilityMiddleware", () => {
       type: "mutation",
     });
 
+    const [, meta] = logErrorMock.mock.calls[0] ?? [];
+    expect(meta).not.toHaveProperty("causeMessage");
     expect(logErrorMock).toHaveBeenCalledWith(
       "[trpc] server error",
       expect.objectContaining({
-        causeMessage: "Your database has been temporarily rate-limited",
         causeName: "UpstashError",
         errorCode: "INTERNAL_SERVER_ERROR",
-        errorMessage: "Your database has been temporarily rate-limited",
+        errorMessage: "Internal server error",
         path: "org.setup.github.start",
         requestId: "request_1",
         traceId: "trace_1",

@@ -180,4 +180,39 @@ describe("org.settings.sourceControl.get", () => {
       status: "bound",
     });
   });
+
+  it("does not expose stale .lightfast proof for another account", async () => {
+    const connectedAt = new Date("2026-05-29T01:02:03.000Z");
+    getActiveOrgBindingMock.mockResolvedValue({
+      clerkOrgId: "org_acme",
+      connectedAt,
+      connectedByUserId: "user_admin",
+      createdAt: connectedAt,
+      id: 3,
+      metadata: {
+        lightfastRepository: {
+          fullName: "other-owner/.lightfast",
+          id: "987",
+          installationId: "1001",
+          name: ".lightfast",
+          verifiedAt: "2026-05-30T10:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountId: "987654",
+      providerAccountLogin: "lightfast-emulated",
+      providerInstallationId: "1001",
+      revokedAt: null,
+      status: "active",
+      updatedAt: connectedAt,
+    });
+
+    await expect(caller().org.settings.sourceControl.get()).resolves.toEqual({
+      binding: expect.objectContaining({
+        accountLogin: "lightfast-emulated",
+        lightfastRepository: null,
+      }),
+      status: "bound",
+    });
+  });
 });

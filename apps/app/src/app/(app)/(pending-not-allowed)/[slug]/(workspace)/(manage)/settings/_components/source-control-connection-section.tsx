@@ -21,6 +21,22 @@ const connectionDateFormatter = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 });
 
+function isValidDate(value: Date) {
+  return value instanceof Date && !Number.isNaN(value.getTime());
+}
+
+function FormattedConnectionDate({ value }: { value: Date }) {
+  if (!isValidDate(value)) {
+    return "Not available";
+  }
+
+  return (
+    <time dateTime={value.toISOString()}>
+      {connectionDateFormatter.format(value)}
+    </time>
+  );
+}
+
 function displayValue(value: string | null) {
   return value && value.trim().length > 0 ? value : "Not available";
 }
@@ -68,9 +84,7 @@ export function SourceControlConnectionSection({
             <div>
               <dt className="text-muted-foreground text-xs">Connected at</dt>
               <dd className="mt-1 text-foreground text-sm">
-                <time dateTime={connection.connectedAt.toISOString()}>
-                  {connectionDateFormatter.format(connection.connectedAt)}
-                </time>
+                <FormattedConnectionDate value={connection.connectedAt} />
               </dd>
             </div>
           </dl>
@@ -146,9 +160,7 @@ export function LightfastRepositorySection({
             <div>
               <dt className="text-muted-foreground text-xs">Verified at</dt>
               <dd className="mt-1 text-foreground text-sm">
-                <time dateTime={repository.verifiedAt.toISOString()}>
-                  {connectionDateFormatter.format(repository.verifiedAt)}
-                </time>
+                <FormattedConnectionDate value={repository.verifiedAt} />
               </dd>
             </div>
           </dl>

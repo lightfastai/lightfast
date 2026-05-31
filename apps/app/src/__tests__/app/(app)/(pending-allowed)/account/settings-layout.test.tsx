@@ -1,3 +1,4 @@
+import { render, screen } from "@testing-library/react";
 import React from "react";
 import { describe, expect, it } from "vitest";
 import AccountSettingsLayout from "~/app/(app)/(pending-allowed)/account/settings/layout";
@@ -84,10 +85,10 @@ describe("account settings layout", () => {
       children: <div>Account settings page</div>,
     });
 
-    const serialized = JSON.stringify(element);
+    render(element);
 
-    expect(serialized).toContain("General");
-    expect(serialized).not.toContain("Connections");
-    expect(serialized).not.toContain("GitHub");
+    expect(screen.getByText("General")).toBeVisible();
+    expect(screen.queryByText("Connections")).not.toBeInTheDocument();
+    expect(screen.queryByText("GitHub")).not.toBeInTheDocument();
   });
 });

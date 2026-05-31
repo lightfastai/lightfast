@@ -77,6 +77,27 @@ describe("LightfastRepositorySection", () => {
     expect(screen.queryByRole("link", { name: "Open setup" })).toBeNull();
   });
 
+  it("falls back when the repository verification timestamp is invalid", () => {
+    render(
+      <LightfastRepositorySection
+        connection={{
+          accountLogin: "lightfast-emulated",
+          connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+          lightfastRepository: {
+            fullName: "lightfast-emulated/.lightfast",
+            id: "987",
+            verifiedAt: new Date(Number.NaN),
+          },
+          provider: "github",
+          providerLabel: "GitHub",
+        }}
+        orgSlug="acme"
+      />
+    );
+
+    expect(screen.getByText("Not available")).toBeVisible();
+  });
+
   it("links to .lightfast setup when GitHub is connected but the repository is not verified", () => {
     render(
       <LightfastRepositorySection

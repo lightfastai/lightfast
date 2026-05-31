@@ -36,11 +36,8 @@ function errorLogFields(error: TRPCError): Record<string, unknown> {
     errorName: error.name,
   };
 
-  if (error.cause instanceof Error && error.cause.message) {
-    fields.causeMessage = error.cause.message;
-    if (error.cause.name) {
-      fields.causeName = error.cause.name;
-    }
+  if (error.cause instanceof Error && error.cause.name) {
+    fields.causeName = error.cause.name;
   }
 
   return fields;
