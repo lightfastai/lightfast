@@ -10,10 +10,10 @@ import {
   GitHubAppNodeError,
   refreshGitHubUserAccessToken,
 } from "@repo/github-app-node";
+import { log } from "@vendor/observability/log/next";
 
 import { env } from "../../../env";
 import { getGitHubAppConfig } from "../config";
-import { logGitHubUserAccountInfo, logGitHubUserAccountWarn } from "./log";
 
 const DEFAULT_REFRESH_WINDOW_MS = 60 * 60 * 1000;
 
@@ -42,7 +42,7 @@ export async function getFreshGitHubUserAccessToken(input: {
     input.clerkUserId
   );
   if (!account) {
-    logGitHubUserAccountWarn("access token unavailable", {
+    log.warn("[github-user-account] access token unavailable", {
       clerkUserId: input.clerkUserId,
       reason: "not_connected",
     });
@@ -73,7 +73,7 @@ export async function getFreshGitHubUserAccessToken(input: {
       id: account.id,
       now,
     });
-    logGitHubUserAccountWarn("access token refresh failed", {
+    log.warn("[github-user-account] access token refresh failed", {
       ...accountLogMetadata(input.clerkUserId, account),
       reason: "refresh_token_expired",
     });
@@ -103,7 +103,7 @@ export async function getFreshGitHubUserAccessToken(input: {
       refreshWindowMs,
     });
     if (recovered) {
-      logGitHubUserAccountInfo("access token refresh recovered", {
+      log.info("[github-user-account] access token refresh recovered", {
         ...accountLogMetadata(input.clerkUserId, account),
         reason: "concurrent_refresh",
       });
@@ -116,12 +116,12 @@ export async function getFreshGitHubUserAccessToken(input: {
         id: account.id,
         now,
       });
-      logGitHubUserAccountWarn("access token refresh failed", {
+      log.warn("[github-user-account] access token refresh failed", {
         ...accountLogMetadata(input.clerkUserId, account),
         reason: "refresh_token_invalid",
       });
     } else {
-      logGitHubUserAccountWarn("access token refresh failed", {
+      log.warn("[github-user-account] access token refresh failed", {
         ...accountLogMetadata(input.clerkUserId, account),
         reason: "provider_refresh_failed",
       });
@@ -134,7 +134,7 @@ export async function getFreshGitHubUserAccessToken(input: {
     !refreshed.refreshToken ||
     refreshed.refreshTokenExpiresIn === undefined
   ) {
-    logGitHubUserAccountWarn("access token refresh failed", {
+    log.warn("[github-user-account] access token refresh failed", {
       ...accountLogMetadata(input.clerkUserId, account),
       reason: "missing_refreshable_token_fields",
     });
@@ -172,20 +172,20 @@ export async function getFreshGitHubUserAccessToken(input: {
       refreshWindowMs,
     });
     if (recovered) {
-      logGitHubUserAccountInfo("access token refresh recovered", {
+      log.info("[github-user-account] access token refresh recovered", {
         ...accountLogMetadata(input.clerkUserId, account),
         reason: "concurrent_refresh",
       });
       return recovered;
     }
-    logGitHubUserAccountWarn("access token refresh failed", {
+    log.warn("[github-user-account] access token refresh failed", {
       ...accountLogMetadata(input.clerkUserId, account),
       reason: "stale_token_persistence",
     });
     throwRefreshFailed();
   }
 
-  logGitHubUserAccountInfo("access token refreshed", {
+  log.info("[github-user-account] access token refreshed", {
     ...accountLogMetadata(input.clerkUserId, account),
     accessTokenExpiresAt,
     refreshTokenExpiresAt,

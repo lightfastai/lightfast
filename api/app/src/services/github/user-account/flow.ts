@@ -15,6 +15,7 @@ import {
   revokeGitHubOAuthGrant,
 } from "@repo/github-app-node";
 import { auth } from "@vendor/clerk/server";
+import { log } from "@vendor/observability/log/next";
 
 import { getGitHubAppConfig, resolveGitHubAppOrigin } from "../config";
 import {
@@ -26,7 +27,6 @@ import {
 import { parseGitHubUserAccountOAuthCallback } from "./callbacks";
 import { mapGitHubUserAccountError } from "./errors";
 import { finalizeGitHubUserAccountBinding } from "./finalize-account";
-import { logGitHubUserAccountInfo, logGitHubUserAccountWarn } from "./log";
 import {
   accountTaskErrorRedirect,
   type GitHubUserAccountRedirectResult,
@@ -51,7 +51,7 @@ export async function startGitHubUserAccountBinding(input: {
     lightfastUserId: input.lightfastUserId,
     ...returnTo,
   });
-  logGitHubUserAccountInfo("binding started", {
+  log.info("[github-user-account] binding started", {
     hasReturnTo: returnTo.returnTo !== undefined,
     lightfastUserId: input.lightfastUserId,
   });
@@ -86,7 +86,7 @@ export async function completeGitHubUserAccountOAuth(input: {
   }
 
   if (!(parsed.code && parsed.state)) {
-    logGitHubUserAccountWarn("binding callback rejected", {
+    log.warn("[github-user-account] binding callback rejected", {
       code: "expired_state",
       reason: "missing_code_or_state",
     });
@@ -97,7 +97,7 @@ export async function completeGitHubUserAccountOAuth(input: {
     state: parsed.state,
   });
   if (!pendingAttempt) {
-    logGitHubUserAccountWarn("binding callback rejected", {
+    log.warn("[github-user-account] binding callback rejected", {
       code: "expired_state",
       reason: "missing_attempt",
     });
@@ -117,7 +117,7 @@ export async function completeGitHubUserAccountOAuth(input: {
     state: parsed.state,
   });
   if (!attempt) {
-    logGitHubUserAccountWarn("binding callback rejected", {
+    log.warn("[github-user-account] binding callback rejected", {
       code: "expired_state",
       reason: "attempt_consumed",
     });
@@ -143,7 +143,7 @@ export async function completeGitHubUserAccountOAuth(input: {
       !token.refreshToken ||
       token.refreshTokenExpiresIn === undefined
     ) {
-      logGitHubUserAccountWarn("binding failed", {
+      log.warn("[github-user-account] binding failed", {
         code: "missing_refresh_token",
         lightfastUserId: attempt.lightfastUserId,
       });
@@ -170,7 +170,7 @@ export async function completeGitHubUserAccountOAuth(input: {
     });
 
     const returnTo = normalizeGitHubUserAccountReturnTo(attempt.returnTo);
-    logGitHubUserAccountInfo("binding finalized", {
+    log.info("[github-user-account] binding finalized", {
       hasReturnTo: returnTo !== undefined,
       lightfastUserId: attempt.lightfastUserId,
       providerUserId: user.id,
@@ -184,7 +184,7 @@ export async function completeGitHubUserAccountOAuth(input: {
     };
   } catch (error) {
     const code = mapGitHubUserAccountError(error);
-    logGitHubUserAccountWarn("binding failed", {
+    log.warn("[github-user-account] binding failed", {
       code,
       lightfastUserId: attempt.lightfastUserId,
     });
@@ -240,7 +240,7 @@ export async function disconnectGitHubUserAccount(input: {
     input.clerkUserId
   );
   if (!account) {
-    logGitHubUserAccountInfo("disconnect skipped", {
+    log.info("[github-user-account] disconnect skipped", {
       clerkUserId: input.clerkUserId,
       reason: "not_connected",
     });
@@ -263,7 +263,7 @@ export async function disconnectGitHubUserAccount(input: {
   await markUserSourceControlAccountRevoked(db, {
     clerkUserId: input.clerkUserId,
   });
-  logGitHubUserAccountInfo("disconnected", {
+  log.info("[github-user-account] disconnected", {
     clerkUserId: input.clerkUserId,
     providerUserId: account.providerUserId,
   });
@@ -276,7 +276,7 @@ async function consumeDeniedOAuthCallback(input: {
   state: string | null;
 }): Promise<GitHubUserAccountRedirectResult> {
   if (!input.state) {
-    logGitHubUserAccountWarn("binding callback rejected", {
+    log.warn("[github-user-account] binding callback rejected", {
       code: "expired_state",
       reason: "denied_missing_state",
     });
@@ -287,7 +287,7 @@ async function consumeDeniedOAuthCallback(input: {
     state: input.state,
   });
   if (!pendingAttempt) {
-    logGitHubUserAccountWarn("binding callback rejected", {
+    log.warn("[github-user-account] binding callback rejected", {
       code: "expired_state",
       reason: "denied_missing_attempt",
     });
@@ -307,14 +307,14 @@ async function consumeDeniedOAuthCallback(input: {
     state: input.state,
   });
   if (!attempt) {
-    logGitHubUserAccountWarn("binding callback rejected", {
+    log.warn("[github-user-account] binding callback rejected", {
       code: "expired_state",
       reason: "denied_attempt_consumed",
     });
     return missingUserAccountAttemptRedirect({ appOrigin: input.appOrigin });
   }
 
-  logGitHubUserAccountWarn("binding failed", {
+  log.warn("[github-user-account] binding failed", {
     code: "github_authorization_denied",
     lightfastUserId: attempt.lightfastUserId,
   });
