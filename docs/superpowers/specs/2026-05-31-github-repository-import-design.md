@@ -101,7 +101,9 @@ Live GitHub state:
 
 The API may return GitHub repository metadata only when it has just fetched that
 metadata from GitHub. The client must not round-trip names, full names, owner
-logins, or visibility back to import mutations. Import mutations accept a
+logins, or visibility back to import mutations. Repository privacy/visibility is
+display-only live metadata and must not be persisted in Lightfast. Import
+mutations accept a
 single provider repository id only and re-fetch GitHub data server-side before
 writing.
 
@@ -358,7 +360,8 @@ The page should contain:
   current one-active-binding model; organization binding changes stay in the
   existing setup/repair flow.
 - Repositories card showing imported and available normal repositories, with
-  `.lightfast` omitted.
+  `.lightfast` omitted and a small `Private`/`Public` indicator from live GitHub
+  metadata.
 - `Refresh GitHub` action that invalidates/refetches the repository list.
 - `Add repository` button that opens a searchable repository picker for admins;
   render it disabled for non-admin org members.
@@ -373,7 +376,8 @@ repository list.
 The add-repository modal should include:
 
 - client-side repository search/filter by name against the complete live list;
-- single-select rows with repository name and private/public indicator;
+- single-select rows with repository name and `Private`/`Public` indicator from
+  live GitHub metadata;
 - imported repositories shown as disabled because v1 does not edit existing
   watch scopes from the import modal;
 - `.lightfast` omitted because setup infrastructure is not added from this
@@ -471,10 +475,11 @@ Add tests at each boundary:
   omits personal GitHub account state, disables add-repository controls for
   non-admins, does not expose connected-organization `+` behavior, opens
   add-repository modal for admins, filters repositories, shows `Manage GitHub
-  access` only to admins from live installation metadata, omits `.lightfast`
-  from normal repo UI, keeps repository-list failures scoped to the repositories
-  card, does not auto-refresh after GitHub access management, and submits one
-  selected repository.
+  access` only to admins from live installation metadata, renders repository
+  privacy from live GitHub metadata, omits `.lightfast` from normal repo UI,
+  keeps repository-list failures scoped to the repositories card, does not
+  auto-refresh after GitHub access management, and submits one selected
+  repository.
 
 ## Rollout
 
