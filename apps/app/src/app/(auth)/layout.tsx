@@ -1,8 +1,7 @@
 import { Icons } from "@repo/ui/components/icons";
-import { Button } from "@repo/ui/components/ui/button";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
-import Link from "next/link";
 import type React from "react";
+import { AuthHeaderCta } from "./_components/auth-header-cta";
 
 export default function AuthLayout({
   children,
@@ -26,18 +25,9 @@ export default function AuthLayout({
           </div>
           {/* Center placeholder to mirror marketing layout */}
           <div aria-hidden className="hidden md:block" />
-          {/* Right: Waitlist CTA — same app now, use next/link */}
+          {/* Right: contextual auth CTA */}
           <div className="flex items-center gap-2 md:justify-self-end">
-            <Button
-              asChild
-              className="rounded-full"
-              size="lg"
-              variant="secondary"
-            >
-              <Link href="/early-access" prefetch={true}>
-                Join the Early Access
-              </Link>
-            </Button>
+            <AuthHeaderCta />
           </div>
         </div>
       </header>

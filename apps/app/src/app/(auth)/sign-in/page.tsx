@@ -5,6 +5,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useSignIn, useUser } from "@vendor/clerk";
+import NextLink from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { parseSafeAuthRedirectTarget } from "~/auth-redirect";
@@ -318,6 +319,23 @@ function SignInView() {
           />
         )}
       </div>
+
+      {view === "email" && !hasError && (
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">
+            Don&apos;t have an account?{" "}
+          </span>
+          <Button
+            asChild
+            className="inline-flex h-auto rounded-none p-0 text-sm"
+            variant="link-blue"
+          >
+            <NextLink href="/sign-up" prefetch>
+              Sign up
+            </NextLink>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

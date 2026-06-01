@@ -399,7 +399,7 @@ function SignUpView() {
             variant="link-blue"
           >
             <NextLink href="/sign-in" prefetch>
-              Log In
+              Log in
             </NextLink>
           </Button>
         </div>

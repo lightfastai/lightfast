@@ -315,6 +315,16 @@ describe("sign-in — OTP verify", () => {
 });
 
 describe("sign-in — email-only auth", () => {
+  it("renders a form-local sign-up recovery link", () => {
+    render(<SignInPage />);
+
+    expect(screen.getByText(/don't have an account/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^sign up$/i })).toHaveAttribute(
+      "href",
+      "/sign-up"
+    );
+  });
+
   it("does not render social or test-provider sign-in buttons", () => {
     render(<SignInPage />);
 

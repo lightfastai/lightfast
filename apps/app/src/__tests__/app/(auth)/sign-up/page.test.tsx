@@ -128,6 +128,16 @@ function checkLegalAccepted() {
 }
 
 describe("sign-up — legal acceptance gate", () => {
+  it("renders a form-local login recovery link", () => {
+    render(<SignUpPage />);
+
+    expect(screen.getByText(/already have an account/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^log in$/i })).toHaveAttribute(
+      "href",
+      "/sign-in"
+    );
+  });
+
   it("blocks email submit when checkbox is unchecked", async () => {
     render(<SignUpPage />);
 
