@@ -338,3 +338,44 @@ export async function listSkillIndexableSourceControlRepositoryCandidates(
     )
     .limit(input.limit);
 }
+
+export async function getSkillIndexableSourceControlRepositoryCandidateById(
+  db: Database,
+  input: { clerkOrgId?: string; sourceControlRepositoryId: number }
+): Promise<SkillIndexableSourceControlRepositoryCandidate | null> {
+  const [row] = await db
+    .select({
+      binding: bindingSelection,
+      repository: repositorySelection,
+      state: stateSelection,
+    })
+    .from(sourceControlRepositories)
+    .innerJoin(
+      orgSourceControlBindings,
+      eq(
+        sourceControlRepositories.orgSourceControlBindingId,
+        orgSourceControlBindings.id
+      )
+    )
+    .leftJoin(
+      skillIndexStates,
+      eq(
+        skillIndexStates.sourceControlRepositoryId,
+        sourceControlRepositories.id
+      )
+    )
+    .where(
+      input.clerkOrgId
+        ? and(
+            eq(sourceControlRepositories.id, input.sourceControlRepositoryId),
+            eq(orgSourceControlBindings.status, "active"),
+            eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId)
+          )
+        : and(
+            eq(sourceControlRepositories.id, input.sourceControlRepositoryId),
+            eq(orgSourceControlBindings.status, "active")
+          )
+    )
+    .limit(1);
+  return row ?? null;
+}

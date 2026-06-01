@@ -12,38 +12,32 @@ export async function reconcileSkillIndexSources(input: {
   let checked = 0;
   let queued = 0;
 
-  while (checked < input.totalLimit) {
-    const candidates =
-      await deps.listSkillIndexableSourceControlRepositoryCandidates(deps.db, {
-        limit: Math.min(input.limit, input.totalLimit - checked),
-      });
-    if (candidates.length === 0) {
-      break;
-    }
+  const candidates =
+    await deps.listSkillIndexableSourceControlRepositoryCandidates(deps.db, {
+      limit: input.totalLimit,
+    });
+  if (candidates.length === 0) {
+    return { checked, queued };
+  }
 
-    for (const candidate of candidates) {
-      if (checked >= input.totalLimit) {
-        break;
-      }
-      checked += 1;
-      if (!isVerifiedLightfastSkillRepository(candidate)) {
-        continue;
-      }
-      const ref = await checkSkillIndexSourceRef({
-        deps,
+  for (const candidate of candidates.slice(0, input.totalLimit)) {
+    checked += 1;
+    if (!isVerifiedLightfastSkillRepository(candidate)) {
+      continue;
+    }
+    const ref = await checkSkillIndexSourceRef({
+      deps,
+      sourceControlRepositoryId: candidate.repository.id,
+    });
+    if (ref.status === "changed") {
+      await deps.enqueueRefresh?.({
+        reason: "schedule",
         sourceControlRepositoryId: candidate.repository.id,
+        targetCommitSha: ref.currentCommitSha ?? undefined,
       });
-      if (ref.status === "changed") {
-        await deps.enqueueRefresh?.({
-          reason: "schedule",
-          sourceControlRepositoryId: candidate.repository.id,
-          targetCommitSha: ref.currentCommitSha ?? undefined,
-        });
-        queued += 1;
-      }
+      queued += 1;
     }
-
-    if (candidates.length < input.limit) {
+    if (checked >= input.totalLimit) {
       break;
     }
   }

@@ -8,6 +8,7 @@ import { skillIndexEntries, skillIndexStates } from "../schema";
 import {
   acquireSkillIndexRefreshLock,
   createOrLoadSkillIndexState,
+  getSkillIndexableSourceControlRepositoryCandidateById,
   getSkillIndexEntryBySlug,
   getSkillIndexStateBySourceControlRepositoryId,
   listSkillIndexEntries,
@@ -367,6 +368,28 @@ describe("skill index helpers", () => {
       "`last_checked_at` is null desc"
     );
     expect(limit).toHaveBeenCalledWith(25);
+  });
+
+  it("loads a skill-indexable candidate by exact repository id", async () => {
+    const limit = vi.fn(() => Promise.resolve([]));
+    const where = vi.fn((_condition: SQL) => ({ limit }));
+    const leftJoin = vi.fn(() => ({ where }));
+    const innerJoin = vi.fn(() => ({ leftJoin }));
+    const from = vi.fn(() => ({ innerJoin }));
+    const select = vi.fn((_selection: Record<string, unknown>) => ({ from }));
+    const db = { select } as unknown as Database;
+
+    await getSkillIndexableSourceControlRepositoryCandidateById(db, {
+      clerkOrgId: "org_1",
+      sourceControlRepositoryId: 99,
+    });
+
+    const query = renderSql(where.mock.calls[0]?.[0]);
+    expect(query.sql).toContain("`id` = ?");
+    expect(query.sql).toContain("`clerk_org_id` = ?");
+    expect(query.sql).toContain("`status` = ?");
+    expect(query.params).toEqual(expect.arrayContaining([99, "org_1", "active"]));
+    expect(limit).toHaveBeenCalledWith(1);
   });
 });
 

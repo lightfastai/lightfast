@@ -127,6 +127,7 @@ export {
 export {
   acquireSkillIndexRefreshLock,
   createOrLoadSkillIndexState,
+  getSkillIndexableSourceControlRepositoryCandidateById,
   getSkillIndexEntryBySlug,
   getSkillIndexStateBySourceControlRepositoryId,
   listSkillIndexableSourceControlRepositoryCandidates,

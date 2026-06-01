@@ -228,6 +228,10 @@ async function readSkillBlobs(input: {
 
 export function isAbortError(error: unknown): boolean {
   return (
-    error instanceof DOMException && error.name === "AbortError"
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError") ||
+    (error instanceof Error &&
+      error.cause instanceof DOMException &&
+      error.cause.name === "AbortError")
   );
 }

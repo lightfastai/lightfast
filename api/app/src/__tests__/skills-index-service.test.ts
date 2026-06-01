@@ -5,6 +5,7 @@ import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
 import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
 import {
   ensureFreshSkillIndexForRead,
+  reconcileSkillIndexSources,
   refreshSkillIndexSource,
 } from "../services/skills";
 import type { SkillIndexServiceDeps } from "../services/skills/types";
@@ -289,6 +290,84 @@ describe("skills index refresh/read service", () => {
     expect(deps.releaseSkillIndexRefreshLock).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
+
+  it("records refresh_timeout for wrapped abort errors", async () => {
+    const deps = createDeps({
+      readTreeError: Object.assign(new Error("GitHub request aborted"), {
+        cause: new DOMException("This operation was aborted", "AbortError"),
+      }),
+      targetEntries: [],
+      targetState: staleState({ indexedAt: null, indexedCommitSha: null }),
+    });
+
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result.freshness.status).toBe("unavailable");
+    expect(deps.markSkillIndexRefreshFailed).toHaveBeenCalledWith(
+      deps.db,
+      expect.objectContaining({ errorCode: "refresh_timeout" })
+    );
+  });
+
+  it("reconcile scans candidates once and does not duplicate enqueue checks", async () => {
+    const eligible = createCandidate({ id: 1 });
+    const ineligible = createCandidate({
+      id: 2,
+      providerInstallationId: null,
+    });
+    const deps = createDeps({ targetState: staleState({ indexedCommitSha: "old" }) });
+    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValueOnce([
+      eligible,
+      ineligible,
+    ]);
+    deps.getSkillIndexableSourceControlRepositoryCandidateById.mockResolvedValue(
+      eligible
+    );
+    deps.enqueueRefresh = vi.fn(async () => undefined);
+
+    await expect(
+      reconcileSkillIndexSources({ deps, limit: 1, totalLimit: 5 })
+    ).resolves.toEqual({ checked: 2, queued: 1 });
+
+    expect(
+      deps.listSkillIndexableSourceControlRepositoryCandidates
+    ).toHaveBeenCalledOnce();
+    expect(
+      deps.listSkillIndexableSourceControlRepositoryCandidates
+    ).toHaveBeenCalledWith(deps.db, { limit: 5 });
+    expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledOnce();
+    expect(deps.enqueueRefresh).toHaveBeenCalledOnce();
+  });
+
+  it("uses exact repository lookup instead of broad candidate scans for reads", async () => {
+    const deps = createDeps({
+      targetEntries: [entry({ indexedCommitSha: "current-main" })],
+      targetState: staleState({
+        indexedCommitSha: "current-main",
+        lastCheckedCommitSha: "current-main",
+      }),
+    });
+
+    await ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(
+      deps.getSkillIndexableSourceControlRepositoryCandidateById
+    ).toHaveBeenCalledWith(deps.db, {
+      clerkOrgId: "org_123",
+      sourceControlRepositoryId: 1,
+    });
+    expect(
+      deps.listSkillIndexableSourceControlRepositoryCandidates
+    ).not.toHaveBeenCalled();
+  });
 });
 
 function skillFile(path: string, sha: string, size: number) {
@@ -353,6 +432,55 @@ function entry(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function createCandidate(
+  overrides: {
+    id?: number;
+    providerInstallationId?: string | null;
+    state?: FakeState | null;
+  } = {}
+) {
+  const repository = {
+    createdAt: now,
+    fullName: "acme/lightfast-skills",
+    id: overrides.id ?? 1,
+    orgSourceControlBindingId: 1,
+    providerRepositoryId: `repo_${overrides.id ?? 1}`,
+    updatedAt: now,
+    watchedPathGlobs: [],
+  };
+  const providerInstallationId =
+    overrides.providerInstallationId === undefined
+      ? "installation_1"
+      : overrides.providerInstallationId;
+  return {
+    binding: {
+      clerkOrgId: "org_123",
+      connectedAt: now,
+      connectedByUserId: "user_123",
+      createdAt: now,
+      id: 1,
+      metadata: {
+        lightfastRepository: {
+          fullName: repository.fullName,
+          id: repository.providerRepositoryId,
+          installationId: providerInstallationId ?? "installation_1",
+          name: ".lightfast",
+          verifiedAt: "2026-05-31T00:00:00.000Z",
+        },
+      },
+      provider: "github",
+      providerAccountId: "account_1",
+      providerAccountLogin: "acme",
+      providerInstallationId,
+      revokedAt: null,
+      status: "active",
+      updatedAt: now,
+    },
+    repository,
+    state: overrides.state === undefined ? staleState() : overrides.state,
+  };
+}
+
 type FakeState = {
   githubRefEtag: string | null;
   id: number;
@@ -386,34 +514,18 @@ function createDeps(input: {
   const state =
     input.targetState === undefined ? staleState() : input.targetState;
   const createdState = input.createdState ?? state ?? staleState();
-  const repository = {
-    fullName: "acme/lightfast-skills",
-    id: 1,
-    providerRepositoryId: "repo_1",
-  };
-  const binding = {
-    metadata: {
-      lightfastRepository: {
-        fullName: repository.fullName,
-        id: repository.providerRepositoryId,
-        installationId: "installation_1",
-        name: ".lightfast",
-        verifiedAt: "2026-05-31T00:00:00.000Z",
-      },
-    },
-    provider: "github",
-    providerAccountLogin: "acme",
-    providerInstallationId: "installation_1",
-    status: "active",
-  };
+  const candidate = createCandidate({ state });
   const deps = {
     acquireSkillIndexRefreshLock: vi.fn(async () => input.acquireLockResult ?? true),
     createOrLoadSkillIndexState: vi.fn(async () => createdState),
     db: { fake: true },
     getSkillIndexStateBySourceControlRepositoryId: vi.fn(async () => state),
+    getSkillIndexableSourceControlRepositoryCandidateById: vi.fn(
+      async () => candidate
+    ),
     listSkillIndexEntries: vi.fn(async () => input.targetEntries ?? []),
     listSkillIndexableSourceControlRepositoryCandidates: vi.fn(async () => [
-      { binding, repository, state },
+      candidate,
     ]),
     markSkillIndexRefreshFailed: vi.fn(async () => undefined),
     now: vi.fn(() => now),

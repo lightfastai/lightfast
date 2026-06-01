@@ -9,16 +9,13 @@ export async function getVerifiedCandidateByRepositoryId(
   deps: SkillIndexServiceDeps,
   input: { clerkOrgId?: string; sourceControlRepositoryId: number }
 ): Promise<SkillIndexableSourceControlRepositoryCandidate | null> {
-  const candidates =
-    await deps.listSkillIndexableSourceControlRepositoryCandidates(deps.db, {
+  const candidate =
+    await deps.getSkillIndexableSourceControlRepositoryCandidateById(deps.db, {
       clerkOrgId: input.clerkOrgId,
-      limit: 1000,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
     });
-  return (
-    candidates.find(
-      (candidate) =>
-        candidate.repository.id === input.sourceControlRepositoryId &&
-        isVerifiedLightfastSkillRepository(candidate)
-    ) ?? null
-  );
+  if (!candidate || !isVerifiedLightfastSkillRepository(candidate)) {
+    return null;
+  }
+  return candidate;
 }

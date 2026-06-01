@@ -48,6 +48,24 @@ describe("GitHub repository API helpers", () => {
     );
   });
 
+  it("passes abort signals to installation token requests", async () => {
+    const controller = new AbortController();
+    const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
+      expect(init?.signal).toBe(controller.signal);
+      throw new DOMException("This operation was aborted", "AbortError");
+    });
+
+    const result = createGitHubInstallationToken({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      appJwt: "jwt",
+      fetch: fetchMock,
+      installationId: "1001",
+      signal: controller.signal,
+    });
+
+    await expect(result).rejects.toMatchObject({ name: "AbortError" });
+  });
+
   it("fetches commit and tree data with installation authentication", async () => {
     const fetchMock = vi
       .fn()

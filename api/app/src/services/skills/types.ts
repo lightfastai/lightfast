@@ -64,6 +64,10 @@ export interface SkillIndexServiceDeps {
     db: Database,
     input: { sourceControlRepositoryId: number }
   ) => Promise<SkillIndexState | null>;
+  getSkillIndexableSourceControlRepositoryCandidateById: (
+    db: Database,
+    input: { clerkOrgId?: string; sourceControlRepositoryId: number }
+  ) => Promise<SkillIndexableSourceControlRepositoryCandidate | null>;
   listSkillIndexableSourceControlRepositoryCandidates: (
     db: Database,
     input: { clerkOrgId?: string; limit: number }

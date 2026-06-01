@@ -15,7 +15,9 @@ const installationTokenCache = new Map<
 export async function getCachedGitHubInstallationToken(input: {
   installationId: string;
   now?: Date;
+  signal?: AbortSignal;
 }): Promise<string> {
+  input.signal?.throwIfAborted();
   const now = input.now ?? new Date();
   const cached = installationTokenCache.get(input.installationId);
   if (cached && cached.expiresAt - now.getTime() > REFRESH_SKEW_MS) {
@@ -23,15 +25,18 @@ export async function getCachedGitHubInstallationToken(input: {
   }
 
   const config = getGitHubAppConfig();
+  input.signal?.throwIfAborted();
   const appJwt = await createGitHubAppJwt({
     appId: config.appId,
     privateKey: config.privateKey,
   });
+  input.signal?.throwIfAborted();
   const token = await createGitHubInstallationToken({
     apiBaseUrl: config.endpoints.apiBaseUrl,
     apiVersion: config.apiVersion,
     appJwt,
     installationId: input.installationId,
+    signal: input.signal,
   });
   installationTokenCache.set(input.installationId, {
     expiresAt: toMillis(token.expiresAt),

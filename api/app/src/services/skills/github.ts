@@ -20,6 +20,7 @@ export async function readSkillRepositoryMainRef(input: {
   const { owner, repo } = splitRepositoryFullName(input.fullName);
   const installationToken = await getCachedGitHubInstallationToken({
     installationId: input.installationId,
+    signal: input.signal,
   });
   try {
     return await getGitHubReference({
@@ -54,6 +55,7 @@ export async function readSkillRepositoryTree(input: {
   const { owner, repo } = splitRepositoryFullName(input.fullName);
   const installationToken = await getCachedGitHubInstallationToken({
     installationId: input.installationId,
+    signal: input.signal,
   });
   const commit = await getGitHubCommit({
     apiBaseUrl: config.endpoints.apiBaseUrl,
@@ -98,6 +100,7 @@ export async function readSkillRepositoryBlob(input: {
   const { owner, repo } = splitRepositoryFullName(input.fullName);
   const installationToken = await getCachedGitHubInstallationToken({
     installationId: input.installationId,
+    signal: input.signal,
   });
   return await getGitHubBlobText({
     apiBaseUrl: config.endpoints.apiBaseUrl,
