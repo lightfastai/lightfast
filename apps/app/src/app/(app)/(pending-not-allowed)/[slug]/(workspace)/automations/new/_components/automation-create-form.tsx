@@ -21,7 +21,7 @@ import { toast } from "@repo/ui/components/ui/sonner";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
-import { ArrowLeft, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import type { Route } from "next";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -152,14 +152,6 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-xl px-6 py-12">
-        <Link
-          className="mb-8 -ml-0.5 inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
-          href={listHref}
-        >
-          <ArrowLeft className="size-3.5" />
-          automations
-        </Link>
-
         <h1 className="font-semibold text-[20px] tracking-[-0.02em]">
           New automation
         </h1>

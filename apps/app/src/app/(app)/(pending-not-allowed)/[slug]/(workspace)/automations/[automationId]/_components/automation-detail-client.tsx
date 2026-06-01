@@ -1,10 +1,6 @@
 "use client";
 
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ArrowLeft } from "lucide-react";
-import type { Route } from "next";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { useTRPC } from "~/trpc/react";
 import { AutomationActions } from "./automation-actions";
@@ -14,10 +10,6 @@ import { AutomationRunsList } from "./automation-runs-list";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
 import { RailSection } from "./rail-section";
-
-function getSlug(pathname: string) {
-  return pathname.split("/").filter(Boolean)[0] ?? "workspace";
-}
 
 function formatDate(date: Date | null | undefined): string {
   if (!date) {
@@ -34,7 +26,6 @@ export function AutomationDetailClient({
 }: {
   automationId: string;
 }) {
-  const slug = getSlug(usePathname());
   const trpc = useTRPC();
 
   const { data: automation } = useSuspenseQuery({
@@ -44,15 +35,7 @@ export function AutomationDetailClient({
 
   return (
     <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <Link
-        className="inline-flex items-center gap-1.5 text-muted-foreground text-sm hover:text-foreground"
-        href={`/${slug}/automations` as Route}
-      >
-        <ArrowLeft className="size-4" />
-        Back
-      </Link>
-
-      <div className="mt-6 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_20rem]">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_20rem]">
         {/* Left column */}
         <div className="space-y-4">
           <AutomationNameEditor automation={automation} />
