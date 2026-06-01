@@ -10,6 +10,7 @@ const githubAccountStatusQueryOptionsMock = vi.fn(() => ({
 const updateNameMutationOptionsMock = vi.fn((options: unknown) => options);
 const createUsernameMutationOptionsMock = vi.fn((options: unknown) => options);
 const useSuspenseQueryMock = vi.fn();
+const mutationInputs: unknown[] = [];
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
@@ -37,7 +38,9 @@ vi.mock("~/trpc/react", () => ({
 vi.mock("@tanstack/react-query", () => ({
   useMutation: (options: unknown) => ({
     isPending: false,
-    mutate: vi.fn(),
+    mutate: vi.fn((input: unknown) => {
+      mutationInputs.push(input);
+    }),
     mutateAsync: vi.fn(),
     options,
   }),
@@ -79,6 +82,7 @@ beforeEach(() => {
   githubAccountStatusQueryOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
   createUsernameMutationOptionsMock.mockClear();
+  mutationInputs.length = 0;
   useSuspenseQueryMock.mockReset();
 });
 
@@ -120,5 +124,41 @@ describe("ProfileDataDisplay", () => {
     expect(
       screen.getByRole("button", { name: "Create username" })
     ).toBeEnabled();
+  });
+
+  it("does not enable username creation for invalid handles", () => {
+    mockProfileQuery(profile({ username: null }));
+
+    render(<ProfileDataDisplay />);
+
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "settings" },
+    });
+
+    expect(
+      screen.getByRole("button", { name: "Create username" })
+    ).toBeDisabled();
+  });
+
+  it("reuses the username idempotency key across retries", () => {
+    mockProfileQuery(profile({ username: null }));
+
+    render(<ProfileDataDisplay />);
+
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "ada-dev" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Create username" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create username" }));
+
+    expect(mutationInputs).toHaveLength(2);
+    expect(mutationInputs[0]).toMatchObject({ username: "ada-dev" });
+    expect(mutationInputs[1]).toMatchObject({
+      idempotencyKey: expect.any(String),
+      username: "ada-dev",
+    });
+    expect(
+      (mutationInputs[1] as { idempotencyKey: string }).idempotencyKey
+    ).toBe((mutationInputs[0] as { idempotencyKey: string }).idempotencyKey);
   });
 });

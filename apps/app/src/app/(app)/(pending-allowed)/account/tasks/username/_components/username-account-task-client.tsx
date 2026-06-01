@@ -50,8 +50,7 @@ function normalizeReturnTo(returnTo: string | undefined): Route {
 
     const path = `${url.pathname}${url.search}${url.hash}`;
     if (
-      path === USERNAME_TASK_PATH ||
-      path.startsWith(`${USERNAME_TASK_PATH}?`) ||
+      url.pathname === USERNAME_TASK_PATH ||
       path.startsWith("/sign-in") ||
       path.startsWith("/sign-up")
     ) {

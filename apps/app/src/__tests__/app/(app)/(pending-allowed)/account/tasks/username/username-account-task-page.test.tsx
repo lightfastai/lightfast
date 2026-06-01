@@ -147,4 +147,23 @@ describe("/account/tasks/username", () => {
       expect(replaceMock).toHaveBeenCalledWith("/account/teams/new");
     });
   });
+
+  it("falls back to team creation when return_to points back to the username task with a hash", async () => {
+    render(
+      await UsernameAccountTaskPage({
+        searchParams: Promise.resolve({
+          return_to: "/account/tasks/username#done",
+        }),
+      })
+    );
+
+    fireEvent.change(screen.getByLabelText("Username"), {
+      target: { value: "ada-dev" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith("/account/teams/new");
+    });
+  });
 });

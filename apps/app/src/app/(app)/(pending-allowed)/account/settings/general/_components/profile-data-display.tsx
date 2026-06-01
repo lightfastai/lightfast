@@ -1,5 +1,9 @@
 "use client";
 
+import {
+  lightfastHandleSchema,
+  normalizeLightfastHandle,
+} from "@repo/app-validation";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
@@ -11,19 +15,10 @@ import {
 } from "@tanstack/react-query";
 import { Check, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 import { GithubAccountConnectionSection } from "./github-account-connection-section";
-
-function normalizeUsernameInput(value: string) {
-  return value
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "")
-    .replace(/-+/g, "-")
-    .replace(/^-+/, "");
-}
 
 function createIdempotencyKey() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -43,10 +38,12 @@ export function ProfileDataDisplay() {
   });
   const [name, setName] = useState(profile.fullName ?? "");
   const [username, setUsername] = useState(profile.username ?? "");
+  const usernameIdempotencyKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
     setName(profile.fullName ?? "");
     setUsername(profile.username ?? "");
+    usernameIdempotencyKeyRef.current = null;
   }, [profile.fullName, profile.username]);
 
   const updateNameMutation = useMutation(
@@ -62,6 +59,7 @@ export function ProfileDataDisplay() {
     trpc.viewer.account.createUsername.mutationOptions({
       meta: { errorTitle: "Failed to create username" },
       onSuccess: (data) => {
+        usernameIdempotencyKeyRef.current = null;
         queryClient.setQueryData(accountQuery.queryKey, data);
         toast.success("Username created");
       },
@@ -70,7 +68,7 @@ export function ProfileDataDisplay() {
 
   const normalizedName = name.trim();
   const hasUsername = !!profile.username;
-  const normalizedUsername = normalizeUsernameInput(username);
+  const parsedUsername = lightfastHandleSchema.safeParse(username);
   const isSavingName = updateNameMutation.isPending;
   const isCreatingUsername = createUsernameMutation.isPending;
   const canSaveName =
@@ -78,7 +76,7 @@ export function ProfileDataDisplay() {
     normalizedName !== (profile.fullName ?? "") &&
     !isSavingName;
   const canCreateUsername =
-    !hasUsername && normalizedUsername.length > 0 && !isCreatingUsername;
+    !hasUsername && parsedUsername.success && !isCreatingUsername;
 
   function handleNameSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -90,12 +88,13 @@ export function ProfileDataDisplay() {
 
   function handleUsernameSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!canCreateUsername) {
+    if (!(canCreateUsername && parsedUsername.success)) {
       return;
     }
+    usernameIdempotencyKeyRef.current ??= createIdempotencyKey();
     createUsernameMutation.mutate({
-      idempotencyKey: createIdempotencyKey(),
-      username: normalizedUsername,
+      idempotencyKey: usernameIdempotencyKeyRef.current,
+      username: parsedUsername.data,
     });
   }
 
@@ -179,9 +178,10 @@ export function ProfileDataDisplay() {
               className="bg-muted/50 font-mono"
               disabled={hasUsername}
               id="account-username"
-              onChange={(event) =>
-                setUsername(normalizeUsernameInput(event.target.value))
-              }
+              onChange={(event) => {
+                setUsername(normalizeLightfastHandle(event.target.value));
+                usernameIdempotencyKeyRef.current = null;
+              }}
               placeholder="ada-dev"
               type="text"
               value={username}
