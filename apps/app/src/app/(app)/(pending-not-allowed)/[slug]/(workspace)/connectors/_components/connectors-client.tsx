@@ -37,7 +37,7 @@ import {
   Search,
 } from "lucide-react";
 import type { Route } from "next";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { ConnectorIcon } from "./connector-icons";
@@ -59,6 +59,7 @@ interface ConnectorsClientProps {
 
 const CONNECTABLE_PROVIDER: ConnectorProvider = "linear";
 const MAX_VISIBLE_TOOLS = 6;
+const ADMIN_REQUIRED_MESSAGE = "Admin access required to manage connectors";
 
 function isConnectableProvider(
   provider: ConnectorProvider
@@ -134,6 +135,7 @@ export function ConnectorsClient({
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const listQueryOptions = trpc.org.workspace.connectors.list.queryOptions();
   const { data: connectors } = useSuspenseQuery({
     ...listQueryOptions,
@@ -190,9 +192,15 @@ export function ConnectorsClient({
 
   useEffect(() => {
     if (callbackConnector || callbackError) {
-      router.replace(pathname as Route);
+      const nextParams = new URLSearchParams(searchParams.toString());
+      nextParams.delete("connector");
+      nextParams.delete("error");
+      const queryString = nextParams.toString();
+      router.replace(
+        (queryString ? `${pathname}?${queryString}` : pathname) as Route
+      );
     }
-  }, [callbackConnector, callbackError, pathname, router]);
+  }, [callbackConnector, callbackError, pathname, router, searchParams]);
 
   const normalizedQuery = query.trim().toLowerCase();
   const filteredConnectors = useMemo(
@@ -211,7 +219,7 @@ export function ConnectorsClient({
       }),
     [builtByLightfastOnly, connectors, normalizedQuery, statusFilter]
   );
-  const linear = connectors.find((row) => row.provider === "linear");
+  const linear = filteredConnectors.find((row) => row.provider === "linear");
   const catalogRows = filteredConnectors.filter(
     (row) => row.provider !== "linear"
   );
@@ -534,74 +542,90 @@ function ConnectorActions({
 }) {
   const connectDisabled = isConnectDisabled(row, pending);
   const actionDisabled = isMutationDisabled(row, pending);
+  const showAdminRequired =
+    !row.canManage && isConnectableProvider(row.provider);
 
   if (!row.connection) {
     return (
-      <Button
-        className="h-7 rounded-[9px]"
-        disabled={connectDisabled}
-        onClick={() => onConnect(row)}
-        size="sm"
-        type="button"
-        variant="secondary"
-      >
-        Connect
-        <ExternalLink className="size-3.5" />
-      </Button>
+      <div className="flex flex-col items-start gap-1 sm:items-end">
+        <Button
+          className="h-7 rounded-[9px]"
+          disabled={connectDisabled}
+          onClick={() => onConnect(row)}
+          size="sm"
+          type="button"
+          variant="secondary"
+        >
+          Connect
+          <ExternalLink className="size-3.5" />
+        </Button>
+        {showAdminRequired && (
+          <p className="text-[11px] text-muted-foreground">
+            {ADMIN_REQUIRED_MESSAGE}
+          </p>
+        )}
+      </div>
     );
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-      <Button
-        className="h-7 rounded-[9px]"
-        disabled={actionDisabled}
-        onClick={() => onRefreshTools(row)}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        <RefreshCcw className="size-3.5" />
-        Refresh tools
-      </Button>
-      <Button
-        className="h-7 rounded-[9px]"
-        disabled={connectDisabled}
-        onClick={() => onConnect(row)}
-        size="sm"
-        type="button"
-        variant="outline"
-      >
-        Reconnect
-      </Button>
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <Button
-            className="h-7 rounded-[9px]"
-            disabled={actionDisabled}
-            size="sm"
-            type="button"
-            variant="outline"
-          >
-            Disconnect
-          </Button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Disconnect {row.displayName}?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Lightfast will stop referencing this connector in automations
-              until an admin reconnects it.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => onDisconnect(row)}>
-              Confirm
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+    <div className="flex flex-col items-start gap-1 sm:items-end">
+      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+        <Button
+          className="h-7 rounded-[9px]"
+          disabled={actionDisabled}
+          onClick={() => onRefreshTools(row)}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          <RefreshCcw className="size-3.5" />
+          Refresh tools
+        </Button>
+        <Button
+          className="h-7 rounded-[9px]"
+          disabled={connectDisabled}
+          onClick={() => onConnect(row)}
+          size="sm"
+          type="button"
+          variant="outline"
+        >
+          Reconnect
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              className="h-7 rounded-[9px]"
+              disabled={actionDisabled}
+              size="sm"
+              type="button"
+              variant="outline"
+            >
+              Disconnect
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Disconnect {row.displayName}?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Lightfast will stop referencing this connector in automations
+                until an admin reconnects it.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={() => onDisconnect(row)}>
+                Confirm
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+      {showAdminRequired && (
+        <p className="text-[11px] text-muted-foreground">
+          {ADMIN_REQUIRED_MESSAGE}
+        </p>
+      )}
     </div>
   );
 }

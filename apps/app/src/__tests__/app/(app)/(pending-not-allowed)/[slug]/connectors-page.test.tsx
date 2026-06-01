@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -54,6 +54,11 @@ const useMutationMock = vi.fn();
 const useSuspenseQueryMock = vi.fn();
 
 let pathname = "/acme/connectors";
+let searchParams = new URLSearchParams();
+const capturedMutationOptions: Record<
+  string,
+  { onSuccess?: (data?: unknown) => void }
+> = {};
 
 vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
@@ -123,6 +128,7 @@ vi.mock("@tanstack/react-query", () => ({
 vi.mock("next/navigation", () => ({
   usePathname: () => pathname,
   useRouter: () => ({ replace: replaceMock }),
+  useSearchParams: () => searchParams,
 }));
 
 vi.mock("@repo/ui/components/ui/alert-dialog", () => ({
@@ -327,13 +333,20 @@ beforeEach(() => {
   pathname = "/acme/connectors";
   refreshMutateMock.mockReset();
   replaceMock.mockReset();
+  searchParams = new URLSearchParams();
   setAutomationEnabledMutateMock.mockReset();
   startConnectMutateMock.mockReset();
   useMutationMock.mockReset();
   useSuspenseQueryMock.mockReset();
+  for (const key of Object.keys(capturedMutationOptions)) {
+    delete capturedMutationOptions[key];
+  }
 
   useMutationMock.mockImplementation(
     (options: { mutationName?: string; onSuccess?: () => void }) => {
+      if (options.mutationName) {
+        capturedMutationOptions[options.mutationName] = options;
+      }
       switch (options.mutationName) {
         case "disconnect":
           return { isPending: false, mutate: disconnectMutateMock };
@@ -408,6 +421,9 @@ describe("connectors page", () => {
     expect(
       screen.getByRole("switch", { name: /use in automations/i })
     ).toBeDisabled();
+    expect(
+      screen.getByText("Admin access required to manage connectors")
+    ).toBeVisible();
   });
 
   it("disables connect when Linear config is missing", () => {
@@ -462,5 +478,92 @@ describe("connectors page", () => {
     await waitFor(() => {
       expect(replaceMock).toHaveBeenCalledWith("/acme/connectors");
     });
+  });
+
+  it("clears only callback params and preserves unrelated query params", async () => {
+    searchParams = new URLSearchParams(
+      "connector=linear&error=access_denied&tab=catalog"
+    );
+    useSuspenseQueryMock.mockReturnValue({ data: catalogRows });
+
+    render(
+      <ConnectorsClient
+        callbackConnector="linear"
+        callbackError="access_denied"
+      />
+    );
+
+    await waitFor(() => {
+      expect(replaceMock).toHaveBeenCalledWith("/acme/connectors?tab=catalog");
+    });
+  });
+
+  it("applies search and status filters to the featured Linear row", () => {
+    renderClient();
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /search connectors/i }),
+      {
+        target: { value: "slack" },
+      }
+    );
+
+    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Slack" })).toBeVisible();
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /search connectors/i }),
+      {
+        target: { value: "" },
+      }
+    );
+    fireEvent.change(screen.getByRole("combobox", { name: "Status" }), {
+      target: { value: "coming_soon" },
+    });
+
+    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
+    expect(screen.getByRole("heading", { name: "Slack" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Notion" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "Sentry" })).toBeVisible();
+  });
+
+  it("redirects same-tab after startConnect succeeds", () => {
+    useSuspenseQueryMock.mockReturnValue({ data: [row("linear")] });
+
+    render(<ConnectorsClient />);
+    fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
+
+    expect(startConnectMutateMock).toHaveBeenCalledWith({ provider: "linear" });
+
+    capturedMutationOptions.startConnect?.onSuccess?.({
+      authorizationUrl: "https://linear.example/oauth",
+      mode: "connect",
+    });
+
+    expect(window.location.href).toBe("https://linear.example/oauth");
+  });
+
+  it("calls refresh, toggle, and disconnect mutations and invalidates after refresh", () => {
+    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
+
+    render(<ConnectorsClient />);
+
+    fireEvent.click(screen.getByRole("button", { name: /refresh tools/i }));
+    expect(refreshMutateMock).toHaveBeenCalledWith({ provider: "linear" });
+    capturedMutationOptions.refreshTools?.onSuccess?.();
+    expect(invalidateQueriesMock).toHaveBeenCalledWith({
+      queryKey: ["org", "workspace", "connectors", "list"],
+    });
+
+    fireEvent.click(
+      screen.getByRole("switch", { name: /use in automations/i })
+    );
+    expect(setAutomationEnabledMutateMock).toHaveBeenCalledWith({
+      enabled: false,
+      provider: "linear",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
+    expect(disconnectMutateMock).toHaveBeenCalledWith({ provider: "linear" });
   });
 });
