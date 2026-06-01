@@ -6,6 +6,7 @@ const createGitHubInstallationTokenMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
 const getGitHubRepositoryMock = vi.fn();
 const mirrorOrgSetupGateMock = vi.fn();
+const findChangedSkillIndexSourcesMock = vi.fn();
 const refreshSkillIndexSourceMock = vi.fn();
 const reconcileSkillIndexSourcesMock = vi.fn();
 const sendMock = vi.fn();
@@ -107,6 +108,7 @@ vi.mock("../inngest/client", () => ({
 }));
 
 vi.mock("../services/skills", () => ({
+  findChangedSkillIndexSources: findChangedSkillIndexSourcesMock,
   reconcileSkillIndexSources: reconcileSkillIndexSourcesMock,
   refreshSkillIndexSource: refreshSkillIndexSourceMock,
 }));
@@ -182,6 +184,7 @@ beforeEach(() => {
   getActiveOrgBindingMock.mockReset();
   getGitHubRepositoryMock.mockReset();
   mirrorOrgSetupGateMock.mockReset();
+  findChangedSkillIndexSourcesMock.mockReset();
   refreshSkillIndexSourceMock.mockReset();
   reconcileSkillIndexSourcesMock.mockReset();
   sendMock.mockReset();
@@ -212,6 +215,15 @@ beforeEach(() => {
     owner: "acme",
   });
   mirrorOrgSetupGateMock.mockResolvedValue(undefined);
+  findChangedSkillIndexSourcesMock.mockResolvedValue({
+    changed: [
+      {
+        sourceControlRepositoryId: 42,
+        targetCommitSha: "def456",
+      },
+    ],
+    checked: 1,
+  });
   refreshSkillIndexSourceMock.mockResolvedValue({ status: "fresh" });
   reconcileSkillIndexSourcesMock.mockResolvedValue({ checked: 1, queued: 1 });
   sendMock.mockResolvedValue({ ids: ["event_setup"] });
@@ -296,7 +308,7 @@ describe("skills index Inngest workflows", () => {
     });
   });
 
-  it("registers reconcile on an hourly cron and bridges changed sources to refresh events", async () => {
+  it("registers reconcile on an hourly cron and sends refresh events from explicit durable steps", async () => {
     expect(reconcileSkillIndexes).toEqual({ id: "reconcile-skill-indexes" });
     expect(createFunctionMock).toHaveBeenCalledWith(
       {
@@ -309,41 +321,32 @@ describe("skills index Inngest workflows", () => {
     );
 
     const step = createStep();
-    await runReconcile(step);
+    await expect(runReconcile(step)).resolves.toEqual({
+      checked: 1,
+      queued: 1,
+    });
 
-    expect(reconcileSkillIndexSourcesMock).toHaveBeenCalledWith({
-      deps: {
-        enqueueRefresh: expect.any(Function),
-      },
+    expect(step.run).toHaveBeenCalledWith(
+      "reconcile skill index sources",
+      expect.any(Function)
+    );
+    expect(findChangedSkillIndexSourcesMock).toHaveBeenCalledWith({
       limit: 100,
       totalLimit: 1000,
     });
+    expect(reconcileSkillIndexSourcesMock).not.toHaveBeenCalled();
 
-    const [{ deps }] = reconcileSkillIndexSourcesMock.mock.calls[0] as [
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue skill index refresh 42",
       {
-        deps: {
-          enqueueRefresh: (input: {
-            reason: "schedule";
-            sourceControlRepositoryId: number;
-            targetCommitSha?: string;
-          }) => Promise<void>;
-        };
-      },
-    ];
-    await deps.enqueueRefresh({
-      reason: "schedule",
-      sourceControlRepositoryId: 42,
-      targetCommitSha: "def456",
-    });
-
-    expect(step.sendEvent).toHaveBeenCalledWith("queue skill index refresh", {
-      name: "app/skills.index.refresh.requested",
-      data: {
-        reason: "schedule",
-        sourceControlRepositoryId: 42,
-        targetCommitSha: "def456",
-      },
-    });
+        name: "app/skills.index.refresh.requested",
+        data: {
+          reason: "schedule",
+          sourceControlRepositoryId: 42,
+          targetCommitSha: "def456",
+        },
+      }
+    );
   });
 
   it("prewarms the initial skill refresh without blocking setup success", async () => {

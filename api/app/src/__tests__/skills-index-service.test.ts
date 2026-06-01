@@ -6,6 +6,7 @@ import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
 import {
   checkSkillIndexSourceRef,
   ensureFreshSkillIndexForRead,
+  findChangedSkillIndexSources,
   reconcileSkillIndexSources,
   refreshSkillIndexSource,
 } from "../services/skills";
@@ -366,6 +367,39 @@ describe("skills index refresh/read service", () => {
     ).toHaveBeenCalledWith(deps.db, { limit: 5 });
     expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledOnce();
     expect(deps.enqueueRefresh).toHaveBeenCalledOnce();
+  });
+
+  it("finds changed sources without enqueueing refresh events", async () => {
+    const eligible = createCandidate({ id: 1 });
+    const ineligible = createCandidate({
+      id: 2,
+      providerInstallationId: null,
+    });
+    const deps = createDeps({
+      targetState: staleState({ indexedCommitSha: "old" }),
+    });
+    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValueOnce([
+      eligible,
+      ineligible,
+    ]);
+    deps.getSkillIndexableSourceControlRepositoryCandidateById.mockResolvedValue(
+      eligible
+    );
+    deps.enqueueRefresh = vi.fn(async () => undefined);
+
+    await expect(
+      findChangedSkillIndexSources({ deps, limit: 1, totalLimit: 5 })
+    ).resolves.toEqual({
+      changed: [
+        {
+          sourceControlRepositoryId: 1,
+          targetCommitSha: "current-main",
+        },
+      ],
+      checked: 2,
+    });
+
+    expect(deps.enqueueRefresh).not.toHaveBeenCalled();
   });
 
   it("uses exact repository lookup instead of broad candidate scans for reads", async () => {
