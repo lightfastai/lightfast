@@ -93,7 +93,7 @@ export const automations = mysqlTable(
       .$type<AutomationStatus>()
       .notNull(),
 
-    nextRunAt: datetime("next_run_at", { mode: "date", fsp: 3 }).notNull(),
+    nextRunAt: datetime("next_run_at", { mode: "date", fsp: 3 }),
 
     lastRunAt: datetime("last_run_at", { mode: "date", fsp: 3 }),
 
