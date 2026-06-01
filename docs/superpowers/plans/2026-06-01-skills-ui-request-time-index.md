@@ -1,50 +1,247 @@
-# Skills UI Request-Time Index Implementation Plan
+# Skills UI And Indexer Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Build the first working Skills UI backed by request-time GitHub `main` reconciliation for `.lightfast`.
+**Goal:** Build the org `.lightfast` skills indexer and Skills UI with webhook, hourly, and read-time GitHub freshness paths.
 
-**Architecture:** Add an isomorphic skills contract/parser, durable current-index tables, narrow GitHub ref/blob helpers, an `api/app` request-time indexing service, tRPC `org.workspace.skills` procedures, and workspace list/detail pages. Webhooks remain telemetry only; every `list` and `get` request checks GitHub before trusting the DB cache.
+**Architecture:** Add a standard-aligned skills contract/parser, current-state DB index tables, GitHub ref/blob helpers, a shared `api/app` indexing service, Inngest refresh/reconciliation functions, tRPC list/get procedures, a safe server markdown renderer, and workspace list/detail pages. GitHub `refs/heads/main` remains source of truth; DB rows are a materialized cache and stale fallback.
 
-**Tech Stack:** TypeScript, Zod, Drizzle MySQL/Vitess, tRPC v11, TanStack Query, Next.js App Router, pnpm workspaces, Vitest.
+**Tech Stack:** TypeScript, pnpm workspaces, Zod, `yaml`, Drizzle MySQL/Vitess, GitHub App REST helpers, Inngest, tRPC v11, TanStack Query, Next.js App Router, React 19, `react-markdown`, Shiki, Vitest.
 
 ---
 
 ## File Structure
 
-- Create `packages/skills-contract/`: schemas, parser, path/resource inventory helpers, diagnostics, and tests.
-- Modify `packages/github-app-node/src/repositories.ts`: add ref and blob helpers with fetch injection, ETag, tree size support.
-- Modify `db/app/src/schema/tables/`: add skill index state and current skill row tables.
-- Modify `db/app/src/utils/`: add skill index state/row helpers with lock and atomic replace operations.
-- Create `api/app/src/services/skills/`: request-time reconciliation and inline build service.
-- Create `api/app/src/router/(pending-not-allowed)/workspace-skills.ts` and modify `api/app/src/root.ts`.
-- Create `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/`: list and detail routes with rendered markdown previews.
-- Modify `apps/app/src/components/app-sidebar.tsx`: add `Skills` after `People`.
-- Add focused tests alongside each layer.
+Create:
 
-## Task 1: Skills Contract Package
+- `packages/skills-contract/package.json` - new isomorphic contract package.
+- `packages/skills-contract/tsconfig.json` - package TypeScript config.
+- `packages/skills-contract/vitest.config.ts` - package Vitest config.
+- `packages/skills-contract/src/index.ts` - schemas, constants, parser, diagnostics, tree/resource helpers.
+- `packages/skills-contract/src/__tests__/skills-contract.test.ts` - parser and tree fixture tests.
+- `db/app/src/schema/tables/skill-index.ts` - `lightfast_skill_index_states` and `lightfast_skill_index_entries` tables.
+- `db/app/src/utils/skill-index.ts` - index state, lock, candidate, checked-state, replace, failure helpers.
+- `db/app/src/__tests__/skill-index.test.ts` - DB helper tests.
+- `api/app/src/services/github/installation-token-cache.ts` - process-local installation-token cache.
+- `api/app/src/services/skills/types.ts` - service-local input/result types.
+- `api/app/src/services/skills/eligibility.ts` - `.lightfast` proof and watched-repo eligibility.
+- `api/app/src/services/skills/github.ts` - GitHub auth/ref/tree/blob wrapper.
+- `api/app/src/services/skills/build.ts` - tree-to-index candidate builder.
+- `api/app/src/services/skills/refresh.ts` - lock/ref/build/replace refresh service.
+- `api/app/src/services/skills/read.ts` - read-time ensure-fresh orchestration.
+- `api/app/src/services/skills/reconcile.ts` - scheduler candidate scan/ref-check/enqueue service.
+- `api/app/src/services/skills/index.ts` - service exports.
+- `api/app/src/router/(pending-not-allowed)/workspace-skills.ts` - tRPC list/get router.
+- `api/app/src/inngest/workflow/refresh-skill-index.ts` - per-source refresh worker.
+- `api/app/src/inngest/workflow/reconcile-skill-indexes.ts` - hourly scanner.
+- `api/app/src/inngest/workflow/queue-skill-refresh-from-source-control.ts` - downstream webhook consumer.
+- `api/app/src/__tests__/skills-index-service.test.ts` - service tests.
+- `api/app/src/__tests__/workspace-skills-router.test.ts` - tRPC tests.
+- `api/app/src/__tests__/skills-index-workflows.test.ts` - Inngest workflow tests.
+- `packages/ui/src/components/markdown-content.tsx` - server-capable inert markdown renderer.
+- `packages/ui/src/components/markdown-content.test.tsx` - markdown renderer tests.
+- `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/page.tsx` - list route.
+- `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/[skillSlug]/page.tsx` - detail route.
+- `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-client.tsx` - list client interactions.
+- `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-row.tsx` - expandable row.
+- `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-detail.tsx` - focused detail surface.
+- `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-status.tsx` - freshness/diagnostic badges.
+- `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-loading.tsx` - loading state.
+- `apps/app/src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/page.test.tsx` - list/detail route tests.
+
+Modify:
+
+- `pnpm-workspace.yaml` - add `yaml` to the catalog.
+- `packages/github-app-node/src/repositories.ts` - add ref/blob helpers and tree size.
+- `packages/github-app-node/src/errors.ts` - add missing/ref/blob error codes.
+- `packages/github-app-node/src/index.ts` - export helpers.
+- `packages/github-app-node/src/__tests__/repository-api.test.ts` - helper tests.
+- `db/app/src/schema/tables/index.ts` - export skill index tables.
+- `db/app/src/schema/index.ts` - re-export skill index tables.
+- `db/app/src/schema/relations.ts` - add source-control repository to skill-index-state relation and skill-index-state to entries relation.
+- `db/app/src/index.ts` - export skill index helpers/types.
+- `db/app/src/migrations/*` - generated by `pnpm db:generate`.
+- `api/app/package.json` - depend on `@repo/skills-contract`.
+- `api/app/src/inngest/schemas/app.ts` - add skills refresh event schema.
+- `api/app/src/inngest/index.ts` - register skills workflows.
+- `api/app/src/root.ts` - add `org.workspace.skills`.
+- `api/app/src/services/github/index.ts` - export token cache helper.
+- `api/app/src/services/github/setup/lightfast-repository.ts` - best-effort enqueue initial refresh.
+- `packages/ui/package.json` - export `./components/markdown-content`.
+- `apps/app/src/components/app-sidebar.tsx` - add `Skills` after `People`.
+- `apps/app/src/__tests__/components/app-sidebar.test.tsx` - sidebar route assertion.
+- `packages/app-reserved-names/data/organization-names.json` - add `skills`.
+- `packages/app-reserved-names/src/__tests__/route-coverage.test.ts` - existing coverage passes after data update.
+
+Do not create:
+
+- A `skill_index_sources` table.
+- A build-history table.
+- Lightfast-maintained default skill source/indexing.
+- A skill editor or GitHub write flow.
+- Runtime agent skill loading.
+
+---
+
+### Task 1: Skills Contract Package
 
 **Files:**
+
 - Create: `packages/skills-contract/package.json`
 - Create: `packages/skills-contract/tsconfig.json`
 - Create: `packages/skills-contract/vitest.config.ts`
 - Create: `packages/skills-contract/src/index.ts`
-- Test: `packages/skills-contract/src/__tests__/skills-contract.test.ts`
-- Modify: `pnpm-workspace.yaml` if a YAML parser catalog dependency is needed.
+- Create: `packages/skills-contract/src/__tests__/skills-contract.test.ts`
+- Modify: `pnpm-workspace.yaml`
 
-- [ ] **Step 1: Write failing contract tests**
+- [ ] **Step 1: Write failing parser and tree tests**
 
-Cover:
+Create `packages/skills-contract/src/__tests__/skills-contract.test.ts`:
 
-- canonical path detection for `skills/foo/SKILL.md`;
-- invalid slug directories are index diagnostics, not skill rows;
-- frontmatter `name` must match slug;
-- `description` max 1024 is an error;
-- optional fields produce warnings, not invalid skills;
-- lenient fallback handles a simple colon-containing description;
-- body required;
-- resource inventory is recursive, sorted, capped, and separate from
-  non-standard file count.
+```ts
+import { describe, expect, it } from "vitest";
+import {
+  SKILL_COUNT_MAX,
+  SKILL_FILE_MAX_BYTES,
+  collectSkillIndexCandidates,
+  parseSkillFile,
+  skillNameSchema,
+} from "../index";
+
+describe("@repo/skills-contract", () => {
+  it("accepts standard skill names only", () => {
+    expect(skillNameSchema.parse("code-review")).toBe("code-review");
+    expect(skillNameSchema.safeParse("Code Review").success).toBe(false);
+    expect(skillNameSchema.safeParse("code_review").success).toBe(false);
+    expect(skillNameSchema.safeParse("-code-review").success).toBe(false);
+  });
+
+  it("parses a valid standard SKILL.md", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 92,
+      path: "skills/code-review/SKILL.md",
+      sourceMarkdown:
+        "---\nname: code-review\ndescription: Use when reviewing code.\n---\n\nReview the diff carefully.\n",
+    });
+
+    expect(result.entry).toMatchObject({
+      slug: "code-review",
+      name: "code-review",
+      description: "Use when reviewing code.",
+      validationStatus: "valid",
+      bodyMarkdown: "Review the diff carefully.",
+    });
+    expect(result.entry.diagnostics).toEqual([]);
+  });
+
+  it("marks name mismatches invalid but visible", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 86,
+      path: "skills/code-review/SKILL.md",
+      sourceMarkdown:
+        "---\nname: review-code\ndescription: Use when reviewing code.\n---\n\nBody.\n",
+    });
+
+    expect(result.entry.slug).toBe("code-review");
+    expect(result.entry.validationStatus).toBe("invalid");
+    expect(result.entry.diagnostics.map((d) => d.code)).toContain(
+      "name_slug_mismatch"
+    );
+  });
+
+  it("uses a narrow frontmatter compatibility fallback", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 112,
+      path: "skills/github-triage/SKILL.md",
+      sourceMarkdown:
+        "---\nname: github-triage\ndescription: Use when labels include repo:area values.\n---\n\nBody.\n",
+    });
+
+    expect(result.entry.validationStatus).toBe("valid");
+    expect(result.entry.diagnostics.map((d) => d.code)).toContain(
+      "frontmatter_compatibility_fallback"
+    );
+  });
+
+  it("separates resource inventory and non-standard files", () => {
+    const result = collectSkillIndexCandidates([
+      {
+        mode: "100644",
+        path: "skills/code-review/SKILL.md",
+        sha: "skillsha",
+        size: 80,
+        type: "blob",
+      },
+      {
+        mode: "100644",
+        path: "skills/code-review/references/checklist.md",
+        sha: "refsha",
+        size: 12,
+        type: "blob",
+      },
+      {
+        mode: "100644",
+        path: "skills/code-review/assets/flow.png",
+        sha: "assetsha",
+        size: 12,
+        type: "blob",
+      },
+      {
+        mode: "100644",
+        path: "skills/code-review/prompts/extra.md",
+        sha: "promptsha",
+        size: 12,
+        type: "blob",
+      },
+    ]);
+
+    expect(result.canonicalSkillFiles).toHaveLength(1);
+    expect(result.resourcesBySlug.get("code-review")).toEqual({
+      assets: ["skills/code-review/assets/flow.png"],
+      references: ["skills/code-review/references/checklist.md"],
+      scripts: [],
+      truncated: false,
+    });
+    expect(result.nonStandardResourceCountBySlug.get("code-review")).toBe(1);
+  });
+
+  it("aborts when canonical skill count exceeds the cap", () => {
+    const entries = Array.from({ length: SKILL_COUNT_MAX + 1 }, (_, index) => ({
+      mode: "100644",
+      path: `skills/skill-${index}/SKILL.md`,
+      sha: `sha-${index}`,
+      size: 80,
+      type: "blob" as const,
+    }));
+
+    const result = collectSkillIndexCandidates(entries);
+    expect(result.fatalDiagnostics.map((d) => d.code)).toContain(
+      "too_many_skills"
+    );
+  });
+
+  it("marks oversized files invalid without source markdown", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: SKILL_FILE_MAX_BYTES + 1,
+      path: "skills/code-review/SKILL.md",
+      sourceMarkdown: null,
+    });
+
+    expect(result.entry.validationStatus).toBe("invalid");
+    expect(result.entry.sourceMarkdown).toBeNull();
+    expect(result.entry.bodyMarkdown).toBeNull();
+    expect(result.entry.diagnostics.map((d) => d.code)).toContain(
+      "file_too_large"
+    );
+  });
+});
+```
+
+- [ ] **Step 2: Run tests to verify failure**
 
 Run:
 
@@ -52,61 +249,727 @@ Run:
 pnpm --filter @repo/skills-contract test
 ```
 
-Expected: package does not exist or tests fail.
+Expected: FAIL because `@repo/skills-contract` does not exist.
 
-- [ ] **Step 2: Implement the package**
+- [ ] **Step 3: Add package manifest and YAML catalog dependency**
 
-Implement exported constants and functions:
+Add `yaml: ^2.8.3` under the root `catalog:` in `pnpm-workspace.yaml`.
 
-- `SKILL_FILE_MAX_BYTES = 128 * 1024`
-- `SKILL_COUNT_MAX = 200`
-- `SKILL_RESOURCE_PATH_MAX = 100`
-- `skillSlugSchema`
-- `skillValidationStatusSchema`
-- `skillDiagnosticSchema`
-- `parseSkillFile(input)`
-- `collectSkillTreeEntries(entries)`
+Create `packages/skills-contract/package.json`:
 
-Use stable diagnostic codes such as:
+```json
+{
+  "name": "@repo/skills-contract",
+  "version": "0.1.0",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "scripts": {
+    "clean": "git clean -xdf .cache .turbo node_modules",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "yaml": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@repo/vitest-config": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
+```
 
-- `frontmatter_missing`
-- `frontmatter_invalid`
-- `frontmatter_compatibility_fallback`
-- `name_missing`
-- `name_invalid`
-- `name_slug_mismatch`
-- `description_missing`
-- `description_too_long`
-- `body_missing`
-- `file_too_large`
-- `optional_field_invalid`
+Create `packages/skills-contract/tsconfig.json`:
 
-- [ ] **Step 3: Run contract tests and typecheck**
+```json
+{
+  "$schema": "https://json.schemastore.org/tsconfig",
+  "extends": "@repo/typescript-config/base.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "dom", "dom.iterable"]
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"]
+}
+```
+
+Create `packages/skills-contract/vitest.config.ts`:
+
+```ts
+import sharedConfig from "@repo/vitest-config";
+import { defineConfig, mergeConfig } from "vitest/config";
+
+export default mergeConfig(
+  sharedConfig,
+  defineConfig({
+    test: {
+      environment: "node",
+    },
+  })
+);
+```
+
+- [ ] **Step 4: Implement the contract package**
+
+Create `packages/skills-contract/src/index.ts` with these exports:
+
+```ts
+import { parseDocument } from "yaml";
+import { z } from "zod";
+
+export const SKILL_COUNT_MAX = 200;
+export const SKILL_FILE_MAX_BYTES = 128 * 1024;
+export const SKILL_RESOURCE_PATH_MAX = 100;
+
+export const SKILL_INDEX_REFRESH_STATUSES = [
+  "never",
+  "fresh",
+  "stale",
+  "refreshing",
+  "failed",
+] as const;
+export const skillIndexRefreshStatusSchema = z.enum(
+  SKILL_INDEX_REFRESH_STATUSES
+);
+export type SkillIndexRefreshStatus = z.infer<
+  typeof skillIndexRefreshStatusSchema
+>;
+
+export const skillNameSchema = z
+  .string()
+  .regex(/^[a-z0-9][a-z0-9-]{0,62}$/)
+  .refine((value) => !value.endsWith("-"))
+  .refine((value) => !value.includes("--"));
+
+export const skillValidationStatusSchema = z.enum(["valid", "invalid"]);
+export type SkillValidationStatus = z.infer<
+  typeof skillValidationStatusSchema
+>;
+
+export const skillDiagnosticSeveritySchema = z.enum(["error", "warning"]);
+export const skillDiagnosticSchema = z.object({
+  severity: skillDiagnosticSeveritySchema,
+  code: z.string().min(1),
+  message: z.string().min(1),
+  path: z.string().min(1).optional(),
+  details: z.record(z.string(), z.unknown()).optional(),
+});
+export type SkillDiagnostic = z.infer<typeof skillDiagnosticSchema>;
+
+export const skillResourcesSchema = z.object({
+  assets: z.array(z.string()),
+  references: z.array(z.string()),
+  scripts: z.array(z.string()),
+  truncated: z.boolean(),
+});
+export type SkillResources = z.infer<typeof skillResourcesSchema>;
+
+export interface SkillTreeEntry {
+  mode: string;
+  path: string;
+  sha: string;
+  size?: number;
+  type: "blob" | "tree" | "commit";
+}
+
+export interface ParsedSkillEntry {
+  allowedTools: string | null;
+  bodyMarkdown: string | null;
+  compatibility: string | null;
+  contentSha: string;
+  contentSize: number | null;
+  description: string | null;
+  diagnostics: SkillDiagnostic[];
+  license: string | null;
+  metadata: Record<string, string | number | boolean | null>;
+  name: string | null;
+  nonStandardResourceCount: number;
+  path: string;
+  resources: SkillResources;
+  slug: string;
+  sourceMarkdown: string | null;
+  validationStatus: SkillValidationStatus;
+}
+
+export interface ParseSkillFileInput {
+  contentSha: string;
+  contentSize: number | null;
+  nonStandardResourceCount?: number;
+  path: string;
+  resources?: SkillResources;
+  sourceMarkdown: string | null;
+}
+
+export interface ParseSkillFileResult {
+  entry: ParsedSkillEntry;
+}
+
+export interface SkillIndexCandidateCollection {
+  canonicalSkillFiles: SkillTreeEntry[];
+  fatalDiagnostics: SkillDiagnostic[];
+  ignoredInvalidSkillDirectoryCount: number;
+  nonStandardResourceCountBySlug: Map<string, number>;
+  resourcesBySlug: Map<string, SkillResources>;
+}
+
+export function parseSkillFile(input: ParseSkillFileInput): ParseSkillFileResult {
+  const slug = slugFromCanonicalPath(input.path) ?? "invalid";
+  const diagnostics: SkillDiagnostic[] = [];
+  const resources = input.resources ?? emptyResources();
+  const base = {
+    allowedTools: null,
+    bodyMarkdown: null,
+    compatibility: null,
+    contentSha: input.contentSha,
+    contentSize: input.contentSize,
+    description: null,
+    diagnostics,
+    license: null,
+    metadata: {},
+    name: null,
+    nonStandardResourceCount: input.nonStandardResourceCount ?? 0,
+    path: input.path,
+    resources,
+    slug,
+    sourceMarkdown: input.sourceMarkdown,
+  };
+
+  if ((input.contentSize ?? 0) > SKILL_FILE_MAX_BYTES || !input.sourceMarkdown) {
+    diagnostics.push({
+      severity: "error",
+      code: "file_too_large",
+      message: "SKILL.md exceeds the 128 KiB size limit.",
+      path: input.path,
+    });
+    return {
+      entry: {
+        ...base,
+        sourceMarkdown: null,
+        validationStatus: "invalid",
+      },
+    };
+  }
+
+  const frontmatter = splitFrontmatter(input.sourceMarkdown);
+  if (!frontmatter) {
+    diagnostics.push({
+      severity: "error",
+      code: "frontmatter_missing",
+      message: "SKILL.md must start with YAML frontmatter.",
+      path: input.path,
+    });
+    return {
+      entry: { ...base, validationStatus: "invalid" },
+    };
+  }
+
+  const parsed = parseFrontmatter(frontmatter.yaml);
+  diagnostics.push(...parsed.diagnostics.map((diagnostic) => ({
+    ...diagnostic,
+    path: input.path,
+  })));
+
+  const data = parsed.data;
+  const name = typeof data.name === "string" ? data.name.trim() : null;
+  const description =
+    typeof data.description === "string" ? data.description.trim() : null;
+
+  if (!name) {
+    diagnostics.push({
+      severity: "error",
+      code: "name_missing",
+      message: "Skill frontmatter must include name.",
+      path: input.path,
+    });
+  } else if (!skillNameSchema.safeParse(name).success) {
+    diagnostics.push({
+      severity: "error",
+      code: "name_invalid",
+      message: "Skill name must be lowercase letters, numbers, and hyphens.",
+      path: input.path,
+    });
+  } else if (name !== slug) {
+    diagnostics.push({
+      severity: "error",
+      code: "name_slug_mismatch",
+      message: "Skill name must match parent directory.",
+      path: input.path,
+    });
+  }
+
+  if (!description) {
+    diagnostics.push({
+      severity: "error",
+      code: "description_missing",
+      message: "Skill frontmatter must include description.",
+      path: input.path,
+    });
+  } else if (description.length > 1024) {
+    diagnostics.push({
+      severity: "error",
+      code: "description_too_long",
+      message: "Skill description must be 1024 characters or fewer.",
+      path: input.path,
+    });
+  }
+
+  const bodyMarkdown = frontmatter.body.trim();
+  if (!bodyMarkdown) {
+    diagnostics.push({
+      severity: "error",
+      code: "body_missing",
+      message: "Skill body must not be empty.",
+      path: input.path,
+    });
+  }
+
+  const optional = parseOptionalFields(data, input.path);
+  diagnostics.push(...optional.diagnostics);
+
+  return {
+    entry: {
+      ...base,
+      allowedTools: optional.allowedTools,
+      bodyMarkdown: bodyMarkdown || null,
+      compatibility: optional.compatibility,
+      description,
+      diagnostics,
+      license: optional.license,
+      metadata: optional.metadata,
+      name,
+      validationStatus: diagnostics.some((d) => d.severity === "error")
+        ? "invalid"
+        : "valid",
+    },
+  };
+}
+
+export function collectSkillIndexCandidates(
+  entries: SkillTreeEntry[]
+): SkillIndexCandidateCollection {
+  const canonicalSkillFiles: SkillTreeEntry[] = [];
+  const fatalDiagnostics: SkillDiagnostic[] = [];
+  const resourcesBySlug = new Map<string, SkillResources>();
+  const nonStandardResourceCountBySlug = new Map<string, number>();
+  const invalidDirectories = new Set<string>();
+
+  for (const entry of [...entries].sort((a, b) => a.path.localeCompare(b.path))) {
+    const parts = entry.path.split("/");
+    if (parts[0] !== "skills" || parts.length < 2) {
+      continue;
+    }
+    const slug = parts[1]!;
+    if (!skillNameSchema.safeParse(slug).success) {
+      invalidDirectories.add(slug);
+      continue;
+    }
+    if (parts.length === 3 && parts[2] === "SKILL.md") {
+      canonicalSkillFiles.push(entry);
+      continue;
+    }
+    recordResourceOrNonStandard({
+      entry,
+      nonStandardResourceCountBySlug,
+      resourcesBySlug,
+      slug,
+    });
+  }
+
+  if (canonicalSkillFiles.length > SKILL_COUNT_MAX) {
+    fatalDiagnostics.push({
+      severity: "error",
+      code: "too_many_skills",
+      message: `Repository contains more than ${SKILL_COUNT_MAX} canonical skill files.`,
+      details: { count: canonicalSkillFiles.length, max: SKILL_COUNT_MAX },
+    });
+  }
+  if (invalidDirectories.size > 0) {
+    fatalDiagnostics.push({
+      severity: "warning",
+      code: "ignored_invalid_skill_directories",
+      message: "Some skill directories were ignored because their names are invalid.",
+      details: { count: invalidDirectories.size },
+    });
+  }
+
+  return {
+    canonicalSkillFiles,
+    fatalDiagnostics,
+    ignoredInvalidSkillDirectoryCount: invalidDirectories.size,
+    nonStandardResourceCountBySlug,
+    resourcesBySlug,
+  };
+}
+
+function emptyResources(): SkillResources {
+  return { assets: [], references: [], scripts: [], truncated: false };
+}
+
+function slugFromCanonicalPath(path: string): string | null {
+  const match = /^skills\/([^/]+)\/SKILL\.md$/.exec(path);
+  return match?.[1] ?? null;
+}
+
+function splitFrontmatter(source: string): { body: string; yaml: string } | null {
+  const normalized = source.startsWith("\uFEFF") ? source.slice(1) : source;
+  if (!normalized.startsWith("---\n")) {
+    return null;
+  }
+  const end = normalized.indexOf("\n---", 4);
+  if (end === -1) {
+    return null;
+  }
+  const markerEnd = normalized.indexOf("\n", end + 4);
+  return {
+    yaml: normalized.slice(4, end),
+    body: markerEnd === -1 ? "" : normalized.slice(markerEnd + 1),
+  };
+}
+
+function parseFrontmatter(yaml: string): {
+  data: Record<string, unknown>;
+  diagnostics: SkillDiagnostic[];
+} {
+  const doc = parseDocument(yaml, { strict: true });
+  if (doc.errors.length === 0) {
+    const data = doc.toJS();
+    return {
+      data: data && typeof data === "object" && !Array.isArray(data) ? data : {},
+      diagnostics: [],
+    };
+  }
+
+  const fallback = parseScalarFallback(yaml);
+  if (fallback) {
+    return {
+      data: fallback,
+      diagnostics: [
+        {
+          severity: "warning",
+          code: "frontmatter_compatibility_fallback",
+          message: "Frontmatter was parsed with compatibility fallback.",
+        },
+      ],
+    };
+  }
+
+  return {
+    data: {},
+    diagnostics: [
+      {
+        severity: "error",
+        code: "frontmatter_invalid",
+        message: "Frontmatter YAML could not be parsed.",
+      },
+    ],
+  };
+}
+
+function parseScalarFallback(yaml: string): Record<string, unknown> | null {
+  const data: Record<string, unknown> = {};
+  for (const line of yaml.split("\n")) {
+    if (!line.trim()) {
+      continue;
+    }
+    const index = line.indexOf(":");
+    if (index <= 0) {
+      return null;
+    }
+    const key = line.slice(0, index).trim();
+    const value = line.slice(index + 1).trim();
+    if (!["name", "description"].includes(key)) {
+      return null;
+    }
+    data[key] = value;
+  }
+  return data;
+}
+
+function parseOptionalFields(
+  data: Record<string, unknown>,
+  path: string
+): {
+  allowedTools: string | null;
+  compatibility: string | null;
+  diagnostics: SkillDiagnostic[];
+  license: string | null;
+  metadata: Record<string, string | number | boolean | null>;
+} {
+  const diagnostics: SkillDiagnostic[] = [];
+  const textField = (key: string, max: number): string | null => {
+    const value = data[key];
+    if (value === undefined) {
+      return null;
+    }
+    if (typeof value !== "string" || value.length > max) {
+      diagnostics.push({
+        severity: "warning",
+        code: `${key.replace(/-/g, "_")}_invalid`,
+        message: `${key} must be a string no longer than ${max} characters.`,
+        path,
+      });
+      return null;
+    }
+    return value;
+  };
+
+  const metadata: Record<string, string | number | boolean | null> = {};
+  const rawMetadata = data.metadata;
+  if (rawMetadata !== undefined) {
+    if (
+      !rawMetadata ||
+      typeof rawMetadata !== "object" ||
+      Array.isArray(rawMetadata)
+    ) {
+      diagnostics.push({
+        severity: "warning",
+        code: "metadata_invalid",
+        message: "metadata must be a shallow object.",
+        path,
+      });
+    } else {
+      for (const [key, value] of Object.entries(rawMetadata)) {
+        if (
+          value === null ||
+          typeof value === "string" ||
+          typeof value === "number" ||
+          typeof value === "boolean"
+        ) {
+          metadata[key] = value;
+        } else {
+          diagnostics.push({
+            severity: "warning",
+            code: "metadata_value_invalid",
+            message: "metadata values must be JSON scalars.",
+            path,
+            details: { key },
+          });
+        }
+      }
+    }
+  }
+
+  return {
+    allowedTools: textField("allowed-tools", 2048),
+    compatibility: textField("compatibility", 512),
+    diagnostics,
+    license: textField("license", 256),
+    metadata: Object.fromEntries(Object.entries(metadata).sort()),
+  };
+}
+
+function recordResourceOrNonStandard(input: {
+  entry: SkillTreeEntry;
+  nonStandardResourceCountBySlug: Map<string, number>;
+  resourcesBySlug: Map<string, SkillResources>;
+  slug: string;
+}) {
+  const relative = input.entry.path.slice(`skills/${input.slug}/`.length);
+  const [top] = relative.split("/");
+  if (top === "assets" || top === "references" || top === "scripts") {
+    const current = input.resourcesBySlug.get(input.slug) ?? emptyResources();
+    const key = top as "assets" | "references" | "scripts";
+    const combined = [...current[key], input.entry.path].sort();
+    input.resourcesBySlug.set(input.slug, {
+      ...current,
+      [key]: combined.slice(0, SKILL_RESOURCE_PATH_MAX),
+      truncated:
+        current.truncated ||
+        combined.length > SKILL_RESOURCE_PATH_MAX ||
+        totalResourceCount(current) >= SKILL_RESOURCE_PATH_MAX,
+    });
+    return;
+  }
+  input.nonStandardResourceCountBySlug.set(
+    input.slug,
+    (input.nonStandardResourceCountBySlug.get(input.slug) ?? 0) + 1
+  );
+}
+
+function totalResourceCount(resources: SkillResources): number {
+  return (
+    resources.assets.length + resources.references.length + resources.scripts.length
+  );
+}
+```
+
+- [ ] **Step 5: Run package tests and typecheck**
+
+Run:
 
 ```bash
 pnpm --filter @repo/skills-contract test
 pnpm --filter @repo/skills-contract typecheck
 ```
 
-Expected: pass.
+Expected: PASS.
 
-## Task 2: GitHub Repository Helpers
+- [ ] **Step 6: Commit contract package**
+
+Run:
+
+```bash
+git add pnpm-workspace.yaml pnpm-lock.yaml packages/skills-contract
+git commit -m "feat: add skills contract parser"
+```
+
+---
+
+### Task 2: GitHub Ref, Blob, And Tree Helpers
 
 **Files:**
+
+- Modify: `packages/github-app-node/src/errors.ts`
 - Modify: `packages/github-app-node/src/repositories.ts`
 - Modify: `packages/github-app-node/src/index.ts`
-- Test: `packages/github-app-node/src/__tests__/repository-api.test.ts`
+- Modify: `packages/github-app-node/src/__tests__/repository-api.test.ts`
 
 - [ ] **Step 1: Write failing GitHub helper tests**
 
-Cover:
+Add tests to `packages/github-app-node/src/__tests__/repository-api.test.ts`:
 
-- `getGitHubReference` returns commit SHA and ETag on `200`.
-- `getGitHubReference` returns not-modified result on `304`.
-- missing branch maps to a typed GitHub error.
-- tree entries include optional `size`.
-- `getGitHubBlobText` decodes base64 content.
-- invalid blob encoding throws a typed GitHub error.
+```ts
+import { describe, expect, it, vi } from "vitest";
+import {
+  getGitHubBlobText,
+  getGitHubReference,
+  getGitHubTree,
+  GitHubAppNodeError,
+} from "../index";
+
+describe("skill index GitHub repository helpers", () => {
+  it("fetches a branch ref with response etag", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ object: { sha: "a".repeat(40), type: "commit" } }), {
+        headers: { etag: '"ref-etag"' },
+        status: 200,
+      })
+    );
+
+    await expect(
+      getGitHubReference({
+        apiBaseUrl: "https://api.github.test",
+        apiVersion: "2022-11-28",
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        ref: "heads/main",
+        repo: ".lightfast",
+      })
+    ).resolves.toEqual({
+      etag: '"ref-etag"',
+      sha: "a".repeat(40),
+      status: "found",
+    });
+  });
+
+  it("returns not-modified when GitHub returns 304", async () => {
+    const fetchMock = vi.fn(async () => new Response(null, { status: 304 }));
+
+    await expect(
+      getGitHubReference({
+        apiBaseUrl: "https://api.github.test",
+        etag: '"old"',
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        ref: "heads/main",
+        repo: ".lightfast",
+      })
+    ).resolves.toEqual({ status: "not_modified" });
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
+      "if-none-match": '"old"',
+    });
+  });
+
+  it("maps missing refs to GITHUB_REF_NOT_FOUND", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ message: "Not Found" }), { status: 404 })
+    );
+
+    await expect(
+      getGitHubReference({
+        apiBaseUrl: "https://api.github.test",
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        ref: "heads/main",
+        repo: ".lightfast",
+      })
+    ).rejects.toMatchObject({ code: "GITHUB_REF_NOT_FOUND" });
+  });
+
+  it("preserves optional tree entry size", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          sha: "tree",
+          tree: [
+            {
+              mode: "100644",
+              path: "skills/code-review/SKILL.md",
+              sha: "blob",
+              size: 123,
+              type: "blob",
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
+
+    const tree = await getGitHubTree({
+      apiBaseUrl: "https://api.github.test",
+      fetch: fetchMock,
+      installationToken: "token",
+      owner: "acme",
+      recursive: true,
+      repo: ".lightfast",
+      treeSha: "tree",
+    });
+
+    expect(tree.tree[0]).toMatchObject({ size: 123 });
+  });
+
+  it("decodes GitHub blob content", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          content: Buffer.from("hello").toString("base64"),
+          encoding: "base64",
+          sha: "blob",
+          size: 5,
+        }),
+        { status: 200 }
+      )
+    );
+
+    await expect(
+      getGitHubBlobText({
+        apiBaseUrl: "https://api.github.test",
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        repo: ".lightfast",
+        sha: "blob",
+      })
+    ).resolves.toEqual({ sha: "blob", size: 5, text: "hello" });
+  });
+});
+```
+
+- [ ] **Step 2: Run tests to verify failure**
 
 Run:
 
@@ -114,209 +977,2319 @@ Run:
 pnpm --filter @repo/github-app-node test -- src/__tests__/repository-api.test.ts
 ```
 
-Expected: fail because helpers/schema fields do not exist.
+Expected: FAIL because `getGitHubReference`, `getGitHubBlobText`, `GITHUB_REF_NOT_FOUND`, and tree `size` do not exist.
 
-- [ ] **Step 2: Implement helpers**
+- [ ] **Step 3: Implement GitHub helper types and exports**
 
-Add:
+Update `packages/github-app-node/src/errors.ts` to include:
 
-- `getGitHubReference({ owner, repo, ref: "heads/main", etag? })`
-- `getGitHubBlobText({ owner, repo, sha })`
+```ts
+  | "GITHUB_BLOB_DECODE_FAILED"
+  | "GITHUB_BLOB_NOT_FOUND"
+  | "GITHUB_REF_NOT_FOUND"
+```
 
-Keep fetch injection and GitHub API version headers consistent with existing
-helpers.
+Update `packages/github-app-node/src/repositories.ts`:
 
-- [ ] **Step 3: Run GitHub helper tests**
+```ts
+const referenceResponseSchema = z.object({
+  object: z.object({
+    sha: z.string().min(1),
+    type: z.string().min(1),
+  }),
+});
+
+const blobResponseSchema = z.object({
+  content: z.string(),
+  encoding: z.literal("base64"),
+  sha: z.string().min(1),
+  size: z.number().int().nonnegative(),
+});
+```
+
+Add exported helpers:
+
+```ts
+export async function getGitHubReference(input: {
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  etag?: string | null;
+  fetch?: typeof fetch;
+  installationToken: string;
+  owner: string;
+  ref: string;
+  repo: string;
+}): Promise<
+  | { status: "found"; sha: string; etag: string | null }
+  | { status: "not_modified" }
+> {
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const response = await (input.fetch ?? fetch)(
+    `${apiBaseUrl}/repos/${githubPathSegment(input.owner)}/${githubPathSegment(
+      input.repo
+    )}/git/ref/${input.ref
+      .split("/")
+      .map(githubPathSegment)
+      .join("/")}`,
+    {
+      headers: {
+        ...githubJsonHeaders({
+          apiVersion: input.apiVersion,
+          token: input.installationToken,
+        }),
+        ...(input.etag ? { "if-none-match": input.etag } : {}),
+      },
+    }
+  ).catch(() => {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_REQUEST_FAILED",
+      "GitHub reference request failed."
+    );
+  });
+
+  if (response.status === 304) {
+    return { status: "not_modified" };
+  }
+  if (response.status === 404) {
+    throw new GitHubAppNodeError("GITHUB_REF_NOT_FOUND", "GitHub ref was not found.");
+  }
+  const json = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub reference response was not successful."
+    );
+  }
+  const parsed = referenceResponseSchema.safeParse(json);
+  if (!parsed.success || parsed.data.object.type !== "commit") {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub reference response was invalid."
+    );
+  }
+  return {
+    etag: response.headers.get("etag"),
+    sha: parsed.data.object.sha,
+    status: "found",
+  };
+}
+
+export async function getGitHubBlobText(input: {
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  fetch?: typeof fetch;
+  installationToken: string;
+  owner: string;
+  repo: string;
+  sha: string;
+}): Promise<{ sha: string; size: number; text: string }> {
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const json = await getJson({
+    apiVersion: input.apiVersion,
+    fetch: input.fetch,
+    installationToken: input.installationToken,
+    url: `${apiBaseUrl}/repos/${githubPathSegment(
+      input.owner
+    )}/${githubPathSegment(input.repo)}/git/blobs/${githubPathSegment(
+      input.sha
+    )}`,
+  });
+  const parsed = blobResponseSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub blob response was invalid."
+    );
+  }
+  try {
+    return {
+      sha: parsed.data.sha,
+      size: parsed.data.size,
+      text: Buffer.from(parsed.data.content.replace(/\s/g, ""), "base64").toString(
+        "utf8"
+      ),
+    };
+  } catch {
+    throw new GitHubAppNodeError(
+      "GITHUB_BLOB_DECODE_FAILED",
+      "GitHub blob content could not be decoded."
+    );
+  }
+}
+```
+
+Update `treeResponseSchema` entries to include `size: z.number().int().nonnegative().optional()`.
+
+Update `packages/github-app-node/src/index.ts` to export `getGitHubBlobText` and `getGitHubReference`.
+
+- [ ] **Step 4: Run GitHub helper tests and typecheck**
+
+Run:
 
 ```bash
 pnpm --filter @repo/github-app-node test -- src/__tests__/repository-api.test.ts
 pnpm --filter @repo/github-app-node typecheck
 ```
 
-Expected: pass.
+Expected: PASS.
 
-## Task 3: Database Schema And Helpers
-
-**Files:**
-- Create: `db/app/src/schema/tables/skills.ts`
-- Modify: `db/app/src/schema/tables/index.ts`
-- Modify: `db/app/src/schema/index.ts`
-- Create: `db/app/src/utils/skills.ts`
-- Test: `db/app/src/__tests__/skills-index.test.ts`
-- Generate: Drizzle migration via `pnpm db:generate`
-
-- [ ] **Step 1: Write failing DB helper tests**
-
-Cover:
-
-- create/load state by source-control repository id;
-- acquire lock only when absent/expired;
-- release lock only with matching token;
-- atomic replace deletes old skill rows and inserts new rows;
-- nullable markdown is accepted;
-- failure metadata does not delete old rows.
+- [ ] **Step 5: Commit GitHub helpers**
 
 Run:
 
 ```bash
-pnpm --filter @db/app test -- src/__tests__/skills-index.test.ts
+git add packages/github-app-node
+git commit -m "feat: add github ref and blob helpers"
 ```
 
-Expected: fail because helpers do not exist.
+---
 
-- [ ] **Step 2: Add tables and helpers**
+### Task 3: Skill Index DB Schema And Helpers
 
-Tables:
+**Files:**
 
-- `lightfast_skill_index_states`
-- `lightfast_skills`
+- Create: `db/app/src/schema/tables/skill-index.ts`
+- Create: `db/app/src/utils/skill-index.ts`
+- Create: `db/app/src/__tests__/skill-index.test.ts`
+- Modify: `db/app/src/schema/tables/index.ts`
+- Modify: `db/app/src/schema/index.ts`
+- Modify: `db/app/src/index.ts`
+- Modify: `db/app/package.json`
+- Generate: `db/app/src/migrations/*`
 
-Follow repo schema conventions: `mysqlTable`, `lightfast_` prefix, no foreign
-keys, JSON columns for diagnostics/frontmatter/resources.
+- [ ] **Step 1: Write failing DB helper tests**
 
-- [ ] **Step 3: Generate migration**
+Create `db/app/src/__tests__/skill-index.test.ts`:
+
+```ts
+import { describe, expect, it } from "vitest";
+import {
+  acquireSkillIndexRefreshLock,
+  createOrLoadSkillIndexState,
+  markSkillIndexRefreshFailed,
+  releaseSkillIndexRefreshLock,
+  replaceSkillIndexEntries,
+} from "../utils/skill-index";
+
+describe("skill index db helpers", () => {
+  it("creates or loads index state by source-control repository id", async () => {
+    const calls: string[] = [];
+    const db = fakeDb(calls);
+
+    await createOrLoadSkillIndexState(db, { sourceControlRepositoryId: 10 });
+
+    expect(calls).toContain("insert:skill_index_states");
+    expect(calls).toContain("select:skill_index_states");
+  });
+
+  it("uses compare-and-set refresh locks", async () => {
+    const calls: string[] = [];
+    const db = fakeDb(calls, { rowsAffected: 1 });
+
+    await expect(
+      acquireSkillIndexRefreshLock(db, {
+        lockToken: "token",
+        now: new Date("2026-06-01T00:00:00.000Z"),
+        stateId: 1,
+        ttlSeconds: 15,
+      })
+    ).resolves.toBe(true);
+    expect(calls).toContain("update:acquire_lock");
+  });
+
+  it("releases locks only by matching token", async () => {
+    const calls: string[] = [];
+    const db = fakeDb(calls);
+
+    await releaseSkillIndexRefreshLock(db, { lockToken: "token", stateId: 1 });
+
+    expect(calls).toContain("update:release_lock");
+  });
+
+  it("atomically replaces entries", async () => {
+    const calls: string[] = [];
+    const db = fakeDb(calls);
+
+    await replaceSkillIndexEntries(db, {
+      entries: [
+        {
+          allowedTools: null,
+          bodyMarkdown: "Body",
+          compatibility: null,
+          contentSha: "blob",
+          contentSize: 80,
+          description: "Use for tests.",
+          diagnostics: [],
+          indexedCommitSha: "a".repeat(40),
+          license: null,
+          metadata: {},
+          name: "code-review",
+          nonStandardResourceCount: 0,
+          path: "skills/code-review/SKILL.md",
+          resources: { assets: [], references: [], scripts: [], truncated: false },
+          resourcesTruncated: false,
+          skillIndexStateId: 1,
+          slug: "code-review",
+          sourceMarkdown: "---\nname: code-review\n---\nBody",
+          validationStatus: "valid",
+        },
+      ],
+      indexedAt: new Date("2026-06-01T00:00:00.000Z"),
+      indexedCommitSha: "a".repeat(40),
+      indexedTreeSha: "tree",
+      indexDiagnostics: [],
+      stateId: 1,
+    });
+
+    expect(calls).toEqual([
+      "transaction",
+      "delete:skill_index_entries",
+      "insert:skill_index_entries",
+      "update:skill_index_states",
+    ]);
+  });
+
+  it("records failure metadata without deleting entries", async () => {
+    const calls: string[] = [];
+    const db = fakeDb(calls);
+
+    await markSkillIndexRefreshFailed(db, {
+      errorCode: "github_unavailable",
+      errorMessage: "GitHub unavailable",
+      failedAt: new Date("2026-06-01T00:00:00.000Z"),
+      stateId: 1,
+    });
+
+    expect(calls).toEqual(["update:skill_index_failed"]);
+  });
+});
+
+function fakeDb(calls: string[], opts: { rowsAffected?: number } = {}) {
+  return {
+    transaction: async (fn: (tx: unknown) => Promise<unknown>) => {
+      calls.push("transaction");
+      return await fn(fakeDb(calls, opts));
+    },
+    _calls: calls,
+    _rowsAffected: opts.rowsAffected ?? 1,
+  } as unknown as Parameters<typeof createOrLoadSkillIndexState>[0];
+}
+```
+
+- [ ] **Step 2: Run DB tests to verify failure**
+
+Run:
+
+```bash
+pnpm --filter @db/app test -- src/__tests__/skill-index.test.ts
+```
+
+Expected: FAIL because schema/helpers do not exist.
+
+- [ ] **Step 3: Add skill index tables**
+
+Create `db/app/src/schema/tables/skill-index.ts`:
+
+```ts
+import type {
+  SkillDiagnostic,
+  SkillIndexRefreshStatus,
+  SkillResources,
+  SkillValidationStatus,
+} from "@repo/skills-contract";
+import { sql } from "drizzle-orm";
+import {
+  bigint,
+  index,
+  int,
+  json,
+  mysqlTable,
+  text,
+  timestamp,
+  uniqueIndex,
+  varchar,
+} from "drizzle-orm/mysql-core";
+
+const SHA_LENGTH = 64;
+const CODE_LENGTH = 64;
+const PATH_LENGTH = 512;
+const TOKEN_LENGTH = 128;
+
+export const skillIndexStates = mysqlTable(
+  "lightfast_skill_index_states",
+  {
+    id: bigint("id", { mode: "number", unsigned: true })
+      .primaryKey()
+      .autoincrement(),
+    sourceControlRepositoryId: bigint("source_control_repository_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    indexedCommitSha: varchar("indexed_commit_sha", { length: SHA_LENGTH }),
+    indexedTreeSha: varchar("indexed_tree_sha", { length: SHA_LENGTH }),
+    indexedAt: timestamp("indexed_at", { mode: "date", fsp: 3 }),
+    skillCount: int("skill_count", { unsigned: true }).default(0).notNull(),
+    invalidSkillCount: int("invalid_skill_count", { unsigned: true })
+      .default(0)
+      .notNull(),
+    lastCheckedCommitSha: varchar("last_checked_commit_sha", {
+      length: SHA_LENGTH,
+    }),
+    lastCheckedAt: timestamp("last_checked_at", { mode: "date", fsp: 3 }),
+    githubRefEtag: varchar("github_ref_etag", { length: 256 }),
+    lastRefreshStatus: varchar("last_refresh_status", { length: CODE_LENGTH })
+      .$type<SkillIndexRefreshStatus>()
+      .default("never")
+      .notNull(),
+    lastRefreshErrorCode: varchar("last_refresh_error_code", {
+      length: CODE_LENGTH,
+    }),
+    lastRefreshErrorMessage: varchar("last_refresh_error_message", {
+      length: 512,
+    }),
+    lastRefreshFailedAt: timestamp("last_refresh_failed_at", {
+      mode: "date",
+      fsp: 3,
+    }),
+    indexDiagnostics: json("index_diagnostics")
+      .$type<SkillDiagnostic[]>()
+      .default(sql`(JSON_ARRAY())`)
+      .notNull(),
+    refreshLockToken: varchar("refresh_lock_token", { length: TOKEN_LENGTH }),
+    refreshLockedUntil: timestamp("refresh_locked_until", {
+      mode: "date",
+      fsp: 3,
+    }),
+    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .onUpdateNow()
+      .notNull(),
+  },
+  (table) => ({
+    sourceControlRepositoryUq: uniqueIndex(
+      "skill_index_states_source_control_repository_uq"
+    ).on(table.sourceControlRepositoryId),
+    lastCheckedIdx: index("skill_index_states_last_checked_idx").on(
+      table.lastCheckedAt
+    ),
+    refreshLockedUntilIdx: index(
+      "skill_index_states_refresh_locked_until_idx"
+    ).on(table.refreshLockedUntil),
+  })
+);
+
+export const skillIndexEntries = mysqlTable(
+  "lightfast_skill_index_entries",
+  {
+    id: bigint("id", { mode: "number", unsigned: true })
+      .primaryKey()
+      .autoincrement(),
+    skillIndexStateId: bigint("skill_index_state_id", {
+      mode: "number",
+      unsigned: true,
+    }).notNull(),
+    indexedCommitSha: varchar("indexed_commit_sha", {
+      length: SHA_LENGTH,
+    }).notNull(),
+    slug: varchar("slug", { length: 63 }).notNull(),
+    path: varchar("path", { length: PATH_LENGTH }).notNull(),
+    name: varchar("name", { length: 63 }),
+    description: varchar("description", { length: 1024 }),
+    license: varchar("license", { length: 256 }),
+    compatibility: varchar("compatibility", { length: 512 }),
+    allowedTools: varchar("allowed_tools", { length: 2048 }),
+    metadata: json("metadata")
+      .$type<Record<string, string | number | boolean | null>>()
+      .default(sql`(JSON_OBJECT())`)
+      .notNull(),
+    sourceMarkdown: text("source_markdown"),
+    bodyMarkdown: text("body_markdown"),
+    contentSha: varchar("content_sha", { length: SHA_LENGTH }).notNull(),
+    contentSize: int("content_size", { unsigned: true }),
+    validationStatus: varchar("validation_status", { length: CODE_LENGTH })
+      .$type<SkillValidationStatus>()
+      .notNull(),
+    diagnostics: json("diagnostics")
+      .$type<SkillDiagnostic[]>()
+      .default(sql`(JSON_ARRAY())`)
+      .notNull(),
+    resources: json("resources").$type<SkillResources>().notNull(),
+    resourcesTruncated: int("resources_truncated", { unsigned: true })
+      .$type<0 | 1>()
+      .default(0)
+      .notNull(),
+    nonStandardResourceCount: int("non_standard_resource_count", {
+      unsigned: true,
+    })
+      .default(0)
+      .notNull(),
+    createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .notNull(),
+    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
+      .default(sql`CURRENT_TIMESTAMP(3)`)
+      .onUpdateNow()
+      .notNull(),
+  },
+  (table) => ({
+    stateSlugUq: uniqueIndex("skill_index_entries_state_slug_uq").on(
+      table.skillIndexStateId,
+      table.slug
+    ),
+    stateValidationIdx: index("skill_index_entries_state_validation_idx").on(
+      table.skillIndexStateId,
+      table.validationStatus
+    ),
+  })
+);
+
+export type SkillIndexState = typeof skillIndexStates.$inferSelect;
+export type InsertSkillIndexState = typeof skillIndexStates.$inferInsert;
+export type SkillIndexEntry = typeof skillIndexEntries.$inferSelect;
+export type InsertSkillIndexEntry = typeof skillIndexEntries.$inferInsert;
+```
+
+Add package dependency in `db/app/package.json`:
+
+```json
+"@repo/skills-contract": "workspace:*"
+```
+
+Export the tables/types from `db/app/src/schema/tables/index.ts`, `db/app/src/schema/index.ts`, and `db/app/src/index.ts`.
+
+- [ ] **Step 4: Implement DB helpers**
+
+Create `db/app/src/utils/skill-index.ts` with exported helpers:
+
+```ts
+import type { SkillDiagnostic } from "@repo/skills-contract";
+import { and, asc, eq, getTableColumns, isNull, lt, or, sql } from "drizzle-orm";
+import type { Database } from "../client";
+import {
+  orgSourceControlBindings,
+  skillIndexEntries,
+  skillIndexStates,
+  sourceControlRepositories,
+  type InsertSkillIndexEntry,
+  type SkillIndexState,
+} from "../schema";
+import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
+
+export async function createOrLoadSkillIndexState(
+  db: Database,
+  input: { sourceControlRepositoryId: number }
+): Promise<SkillIndexState> {
+  await db
+    .insert(skillIndexStates)
+    .values({ sourceControlRepositoryId: input.sourceControlRepositoryId })
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+    });
+  return await getSkillIndexStateBySourceControlRepositoryId(db, input);
+}
+
+export async function getSkillIndexStateBySourceControlRepositoryId(
+  db: Database,
+  input: { sourceControlRepositoryId: number }
+): Promise<SkillIndexState> {
+  const [row] = await db
+    .select(getTableColumns(skillIndexStates))
+    .from(skillIndexStates)
+    .where(
+      eq(skillIndexStates.sourceControlRepositoryId, input.sourceControlRepositoryId)
+    )
+    .limit(1);
+  if (!row) {
+    throw new Error("Skill index state was not found after create-or-load.");
+  }
+  return row;
+}
+
+export async function acquireSkillIndexRefreshLock(
+  db: Database,
+  input: { lockToken: string; now: Date; stateId: number; ttlSeconds: number }
+): Promise<boolean> {
+  const lockedUntil = new Date(input.now.getTime() + input.ttlSeconds * 1000);
+  const result = await db
+    .update(skillIndexStates)
+    .set({
+      lastRefreshStatus: "refreshing",
+      refreshLockedUntil: lockedUntil,
+      refreshLockToken: input.lockToken,
+    })
+    .where(
+      and(
+        eq(skillIndexStates.id, input.stateId),
+        or(
+          isNull(skillIndexStates.refreshLockedUntil),
+          lt(skillIndexStates.refreshLockedUntil, input.now)
+        )
+      )
+    );
+  return getRowsAffected(result) === 1;
+}
+
+export async function releaseSkillIndexRefreshLock(
+  db: Database,
+  input: { lockToken: string; stateId: number }
+): Promise<boolean> {
+  const result = await db
+    .update(skillIndexStates)
+    .set({ refreshLockedUntil: null, refreshLockToken: null })
+    .where(
+      and(
+        eq(skillIndexStates.id, input.stateId),
+        eq(skillIndexStates.refreshLockToken, input.lockToken)
+      )
+    );
+  return getRowsAffected(result) === 1;
+}
+
+export async function replaceSkillIndexEntries(
+  db: Database,
+  input: {
+    entries: InsertSkillIndexEntry[];
+    indexedAt: Date;
+    indexedCommitSha: string;
+    indexedTreeSha: string;
+    indexDiagnostics: SkillDiagnostic[];
+    stateId: number;
+  }
+): Promise<void> {
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(skillIndexEntries)
+      .where(eq(skillIndexEntries.skillIndexStateId, input.stateId));
+    if (input.entries.length > 0) {
+      await tx.insert(skillIndexEntries).values(input.entries);
+    }
+    await tx
+      .update(skillIndexStates)
+      .set({
+        indexedAt: input.indexedAt,
+        indexedCommitSha: input.indexedCommitSha,
+        indexedTreeSha: input.indexedTreeSha,
+        indexDiagnostics: input.indexDiagnostics,
+        invalidSkillCount: input.entries.filter(
+          (entry) => entry.validationStatus === "invalid"
+        ).length,
+        lastRefreshErrorCode: null,
+        lastRefreshErrorMessage: null,
+        lastRefreshFailedAt: null,
+        lastRefreshStatus: "fresh",
+        skillCount: input.entries.length,
+      })
+      .where(eq(skillIndexStates.id, input.stateId));
+  });
+}
+
+export async function markSkillIndexRefreshFailed(
+  db: Database,
+  input: {
+    errorCode: string;
+    errorMessage: string;
+    failedAt: Date;
+    stateId: number;
+  }
+): Promise<void> {
+  await db
+    .update(skillIndexStates)
+    .set({
+      lastRefreshErrorCode: input.errorCode,
+      lastRefreshErrorMessage: input.errorMessage.slice(0, 512),
+      lastRefreshFailedAt: input.failedAt,
+      lastRefreshStatus: "failed",
+    })
+    .where(eq(skillIndexStates.id, input.stateId));
+}
+```
+
+Add the remaining exported helpers in the same file:
+
+```ts
+export async function updateSkillIndexRefCheck(
+  db: Database,
+  input: {
+    githubRefEtag: string | null;
+    lastCheckedAt: Date;
+    lastCheckedCommitSha: string;
+    sourceControlRepositoryId: number;
+  }
+): Promise<void> {
+  await db
+    .update(skillIndexStates)
+    .set({
+      githubRefEtag: input.githubRefEtag,
+      lastCheckedAt: input.lastCheckedAt,
+      lastCheckedCommitSha: input.lastCheckedCommitSha,
+    })
+    .where(
+      eq(
+        skillIndexStates.sourceControlRepositoryId,
+        input.sourceControlRepositoryId
+      )
+    );
+}
+
+export async function markSkillIndexKnownStale(
+  db: Database,
+  input: { sourceControlRepositoryId: number }
+): Promise<void> {
+  await db
+    .update(skillIndexStates)
+    .set({ lastRefreshStatus: "stale" })
+    .where(
+      eq(
+        skillIndexStates.sourceControlRepositoryId,
+        input.sourceControlRepositoryId
+      )
+    );
+}
+
+export async function listSkillIndexEntries(
+  db: Database,
+  input: { stateId: number }
+) {
+  return await db
+    .select(getTableColumns(skillIndexEntries))
+    .from(skillIndexEntries)
+    .where(eq(skillIndexEntries.skillIndexStateId, input.stateId))
+    .orderBy(
+      asc(skillIndexEntries.validationStatus),
+      asc(skillIndexEntries.slug)
+    );
+}
+
+export async function getSkillIndexEntryBySlug(
+  db: Database,
+  input: { slug: string; stateId: number }
+) {
+  const [row] = await db
+    .select(getTableColumns(skillIndexEntries))
+    .from(skillIndexEntries)
+    .where(
+      and(
+        eq(skillIndexEntries.skillIndexStateId, input.stateId),
+        eq(skillIndexEntries.slug, input.slug)
+      )
+    )
+    .limit(1);
+  return row ?? null;
+}
+
+export async function listSkillIndexableSourceControlRepositoryCandidates(
+  db: Database,
+  input: { clerkOrgId?: string; limit: number }
+) {
+  const predicates = [eq(sourceControlRepositories.status, "active")];
+  if (input.clerkOrgId) {
+    predicates.push(eq(orgSourceControlBindings.clerkOrgId, input.clerkOrgId));
+  }
+
+  return await db
+    .select({
+      binding: getTableColumns(orgSourceControlBindings),
+      repository: getTableColumns(sourceControlRepositories),
+      state: getTableColumns(skillIndexStates),
+    })
+    .from(sourceControlRepositories)
+    .innerJoin(
+      orgSourceControlBindings,
+      eq(
+        sourceControlRepositories.orgSourceControlBindingId,
+        orgSourceControlBindings.id
+      )
+    )
+    .leftJoin(
+      skillIndexStates,
+      eq(
+        skillIndexStates.sourceControlRepositoryId,
+        sourceControlRepositories.id
+      )
+    )
+    .where(and(...predicates))
+    .orderBy(
+      sql`${skillIndexStates.lastCheckedAt} is null desc`,
+      asc(skillIndexStates.lastCheckedAt)
+    )
+    .limit(input.limit);
+}
+```
+
+- [ ] **Step 5: Generate migration**
+
+Run:
 
 ```bash
 pnpm db:generate
 ```
 
-Expected: new Drizzle-generated SQL and snapshot. Do not hand-edit SQL.
+Expected: Drizzle creates a new migration and updates `db/app/src/migrations/meta/*`.
 
-- [ ] **Step 4: Run DB tests/typecheck**
+- [ ] **Step 6: Run DB tests and typecheck**
+
+Run:
 
 ```bash
-pnpm --filter @db/app test -- src/__tests__/skills-index.test.ts
+pnpm --filter @db/app test -- src/__tests__/skill-index.test.ts
 pnpm --filter @db/app typecheck
 ```
 
-Expected: pass.
+Expected: PASS.
 
-## Task 4: API Request-Time Index Service
-
-**Files:**
-- Create: `api/app/src/services/skills/index.ts`
-- Create: `api/app/src/services/skills/github.ts`
-- Create: `api/app/src/router/(pending-not-allowed)/workspace-skills.ts`
-- Modify: `api/app/src/root.ts`
-- Test: `api/app/src/__tests__/skills-index-service.test.ts`
-- Test: `api/app/src/__tests__/workspace-skills-router.test.ts`
-
-- [ ] **Step 1: Write failing service/router tests**
-
-Cover:
-
-- unchanged GitHub ref returns DB rows without tree/blob fetch;
-- changed ref rebuilds inline and persists fresh rows;
-- invalid canonical skill is stored and returned;
-- first empty skills tree is fresh empty index;
-- over skill cap fails rebuild;
-- failed rebuild returns stale previous index;
-- first build failure returns unavailable;
-- concurrent lock returns refreshing/stale previous data;
-- `get` returns stale skill on GitHub failure but not found after successful
-  refresh proves deletion.
+- [ ] **Step 7: Commit DB index schema**
 
 Run:
 
 ```bash
-pnpm --filter @api/app test -- src/__tests__/skills-index-service.test.ts src/__tests__/workspace-skills-router.test.ts
+git add db/app packages/skills-contract pnpm-lock.yaml
+git commit -m "feat: add skill index persistence"
 ```
 
-Expected: fail because service/router do not exist.
+---
 
-- [ ] **Step 2: Implement service**
+### Task 4: Skills Index Service
 
-Implement `ensureFreshLightfastSkillIndex({ clerkOrgId, slug? })` around the
-existing active binding, `.lightfast` proof, source-control repository watch,
-GitHub helpers, skills contract parser, DB lock helpers, and atomic replace.
+**Files:**
 
-- [ ] **Step 3: Implement router**
+- Create: `api/app/src/services/github/installation-token-cache.ts`
+- Create: `api/app/src/services/skills/types.ts`
+- Create: `api/app/src/services/skills/eligibility.ts`
+- Create: `api/app/src/services/skills/github.ts`
+- Create: `api/app/src/services/skills/build.ts`
+- Create: `api/app/src/services/skills/refresh.ts`
+- Create: `api/app/src/services/skills/read.ts`
+- Create: `api/app/src/services/skills/reconcile.ts`
+- Create: `api/app/src/services/skills/index.ts`
+- Create: `api/app/src/__tests__/skills-index-service.test.ts`
+- Modify: `api/app/package.json`
+- Modify: `api/app/src/services/github/index.ts`
 
-Add:
+- [ ] **Step 1: Write failing service tests**
 
-- `org.workspace.skills.list`
-- `org.workspace.skills.get`
+Create `api/app/src/__tests__/skills-index-service.test.ts`:
 
-Both use `boundOrgProcedure`; `get` validates `slug` with the contract schema
-and throws `TRPCError({ code: "NOT_FOUND", message: "Skill not found" })` when
-current data proves absence.
+```ts
+import { describe, expect, it, vi } from "vitest";
+import {
+  buildSkillIndexEntriesFromTree,
+  ensureFreshSkillIndexForRead,
+  refreshSkillIndexSource,
+  type SkillIndexServiceDeps,
+} from "../services/skills";
 
-- [ ] **Step 4: Run API tests/typecheck**
+describe("skills index service", () => {
+  it("builds valid and invalid entries from a GitHub tree", async () => {
+    const result = await buildSkillIndexEntriesFromTree({
+      blobs: new Map([
+        [
+          "validsha",
+          "---\nname: code-review\ndescription: Use when reviewing code.\n---\n\nBody.",
+        ],
+        [
+          "invalidsha",
+          "---\nname: wrong\ndescription: Use when triaging.\n---\n\nBody.",
+        ],
+      ]),
+      commitSha: "a".repeat(40),
+      stateId: 1,
+      tree: [
+        {
+          mode: "100644",
+          path: "skills/code-review/SKILL.md",
+          sha: "validsha",
+          size: 80,
+          type: "blob",
+        },
+        {
+          mode: "100644",
+          path: "skills/triage/SKILL.md",
+          sha: "invalidsha",
+          size: 80,
+          type: "blob",
+        },
+      ],
+    });
+
+    expect(result.entries.map((entry) => entry.slug)).toEqual([
+      "code-review",
+      "triage",
+    ]);
+    expect(result.entries.find((entry) => entry.slug === "triage")).toMatchObject({
+      validationStatus: "invalid",
+    });
+  });
+
+  it("returns stale data when read-time refresh fails with a previous index", async () => {
+    const deps = createServiceDeps({
+      gitHubRef: { status: "found", sha: "b".repeat(40), etag: '"new"' },
+      refreshError: new Error("github down"),
+      previousEntries: [
+        {
+          slug: "code-review",
+          validationStatus: "valid",
+        },
+      ],
+      state: {
+        id: 1,
+        indexedCommitSha: "a".repeat(40),
+      },
+    });
+
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_1",
+      deps,
+      sourceControlRepositoryId: 10,
+    });
+
+    expect(result.freshness.status).toBe("stale");
+    expect(result.skills).toHaveLength(1);
+  });
+
+  it("refreshes current main instead of stale target SHA", async () => {
+    const deps = createServiceDeps({
+      gitHubRef: { status: "found", sha: "c".repeat(40), etag: '"current"' },
+      state: { id: 1, indexedCommitSha: "a".repeat(40) },
+    });
+
+    await refreshSkillIndexSource({
+      deps,
+      reason: "webhook",
+      sourceControlRepositoryId: 10,
+      targetCommitSha: "b".repeat(40),
+    });
+
+    expect(deps.fetchCommitRefs).toContain("c".repeat(40));
+  });
+});
+
+function createServiceDeps(
+  overrides: Record<string, unknown>
+): SkillIndexServiceDeps & { fetchCommitRefs: string[] } {
+  return {
+    ...overrides,
+    fetchCommitRefs: [],
+  } as unknown as SkillIndexServiceDeps & { fetchCommitRefs: string[] };
+}
+```
+
+- [ ] **Step 2: Run service tests to verify failure**
+
+Run:
 
 ```bash
-pnpm --filter @api/app test -- src/__tests__/skills-index-service.test.ts src/__tests__/workspace-skills-router.test.ts
+pnpm --filter @api/app test -- src/__tests__/skills-index-service.test.ts
+```
+
+Expected: FAIL because the service files do not exist.
+
+- [ ] **Step 3: Add API package dependency and token cache helper**
+
+Add to `api/app/package.json`:
+
+```json
+"@repo/skills-contract": "workspace:*"
+```
+
+Create `api/app/src/services/github/installation-token-cache.ts`:
+
+```ts
+import { createGitHubAppJwt, createGitHubInstallationToken } from "@repo/github-app-node";
+import { getGitHubAppConfig } from "./config";
+
+const TOKEN_EXPIRY_HEADROOM_MS = 5 * 60 * 1000;
+
+const installationTokenCache = new Map<
+  string,
+  { expiresAt: number; token: string }
+>();
+
+export async function getCachedGitHubInstallationToken(input: {
+  installationId: string;
+  now?: Date;
+}): Promise<string> {
+  const now = input.now ?? new Date();
+  const cached = installationTokenCache.get(input.installationId);
+  if (cached && cached.expiresAt - now.getTime() > TOKEN_EXPIRY_HEADROOM_MS) {
+    return cached.token;
+  }
+
+  const config = getGitHubAppConfig();
+  const appJwt = await createGitHubAppJwt({
+    appId: config.appId,
+    privateKey: config.privateKey,
+  });
+  const token = await createGitHubInstallationToken({
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    appJwt,
+    installationId: input.installationId,
+  });
+  installationTokenCache.set(input.installationId, {
+    expiresAt: token.expiresAt.getTime(),
+    token: token.token,
+  });
+  return token.token;
+}
+
+export function clearGitHubInstallationTokenCacheForTests() {
+  installationTokenCache.clear();
+}
+```
+
+Export it from `api/app/src/services/github/index.ts`.
+
+Create `api/app/src/services/skills/types.ts`:
+
+```ts
+import type {
+  InsertSkillIndexEntry,
+  SkillIndexEntry,
+  SkillIndexState,
+  SourceControlRepository,
+} from "@db/app";
+
+export interface SkillIndexServiceDeps {
+  acquireLock?: unknown;
+  buildEntries?: unknown;
+  clock?: () => Date;
+  fetchBlob?: unknown;
+  fetchCommitRefs?: string[];
+  fetchRef?: unknown;
+  fetchTree?: unknown;
+  gitHubRef?: unknown;
+  previousEntries?: Partial<SkillIndexEntry>[];
+  refreshError?: Error;
+  replaceEntries?: unknown;
+  repository?: SourceControlRepository;
+  state?: Partial<SkillIndexState>;
+}
+
+export interface BuiltSkillIndex {
+  entries: InsertSkillIndexEntry[];
+  indexDiagnostics: unknown[];
+}
+```
+
+- [ ] **Step 4: Implement eligibility and GitHub wrapper**
+
+Create `api/app/src/services/skills/eligibility.ts`:
+
+```ts
+import {
+  listSkillIndexableSourceControlRepositoryCandidates,
+  type Database,
+  type OrgSourceControlBinding,
+  type SourceControlRepository,
+} from "@db/app";
+import { githubLightfastRepositoryProofSchema } from "@repo/app-setup-contract";
+import { TRPCError } from "@trpc/server";
+
+export function isVerifiedLightfastSkillRepository(input: {
+  binding: OrgSourceControlBinding;
+  repository: SourceControlRepository;
+}): boolean {
+  if (
+    input.binding.provider !== "github" ||
+    input.binding.status !== "active" ||
+    !input.binding.providerInstallationId ||
+    !input.binding.providerAccountLogin
+  ) {
+    return false;
+  }
+  const parsed = githubLightfastRepositoryProofSchema.safeParse(
+    input.binding.metadata.lightfastRepository
+  );
+  if (!parsed.success) {
+    return false;
+  }
+  return (
+    parsed.data.id === input.repository.providerRepositoryId &&
+    parsed.data.installationId === input.binding.providerInstallationId &&
+    parsed.data.fullName === input.repository.fullName
+  );
+}
+
+export async function getVerifiedLightfastSkillSourceRepositoryId(
+  db: Database,
+  input: { clerkOrgId: string }
+): Promise<number> {
+  const watchedRepositories =
+    await listSkillIndexableSourceControlRepositoryCandidates(db, {
+      clerkOrgId: input.clerkOrgId,
+      limit: 100,
+    });
+  const match = watchedRepositories.find((candidate) =>
+    isVerifiedLightfastSkillRepository({
+      binding: candidate.binding,
+      repository: candidate.repository,
+    })
+  );
+  if (!match) {
+    throw new TRPCError({
+      code: "PRECONDITION_FAILED",
+      message: "No verified .lightfast repository is configured.",
+    });
+  }
+  return match.repository.id;
+}
+```
+
+Create `api/app/src/services/skills/github.ts`:
+
+```ts
+import {
+  getGitHubBlobText,
+  getGitHubCommit,
+  getGitHubReference,
+  getGitHubTree,
+  splitRepositoryFullName,
+} from "@repo/github-app-node";
+import { getGitHubAppConfig } from "../github/config";
+import { getCachedGitHubInstallationToken } from "../github/installation-token-cache";
+
+export async function readSkillRepositoryMainRef(input: {
+  etag: string | null;
+  fullName: string;
+  installationId: string;
+}) {
+  const config = getGitHubAppConfig();
+  const { owner, repo } = splitRepositoryFullName(input.fullName);
+  const token = await getCachedGitHubInstallationToken({
+    installationId: input.installationId,
+  });
+  return await getGitHubReference({
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    etag: input.etag,
+    installationToken: token,
+    owner,
+    ref: "heads/main",
+    repo,
+  });
+}
+
+export async function readSkillRepositoryTree(input: {
+  commitSha: string;
+  fullName: string;
+  installationId: string;
+}) {
+  const config = getGitHubAppConfig();
+  const { owner, repo } = splitRepositoryFullName(input.fullName);
+  const token = await getCachedGitHubInstallationToken({
+    installationId: input.installationId,
+  });
+  const commit = await getGitHubCommit({
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    installationToken: token,
+    owner,
+    repo,
+    ref: input.commitSha,
+  });
+  const tree = await getGitHubTree({
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    installationToken: token,
+    owner,
+    recursive: true,
+    repo,
+    treeSha: commit.treeSha,
+  });
+  return { commit, tree };
+}
+
+export async function readSkillRepositoryBlob(input: {
+  fullName: string;
+  installationId: string;
+  sha: string;
+}) {
+  const config = getGitHubAppConfig();
+  const { owner, repo } = splitRepositoryFullName(input.fullName);
+  const token = await getCachedGitHubInstallationToken({
+    installationId: input.installationId,
+  });
+  return await getGitHubBlobText({
+    apiBaseUrl: config.endpoints.apiBaseUrl,
+    apiVersion: config.apiVersion,
+    installationToken: token,
+    owner,
+    repo,
+    sha: input.sha,
+  });
+}
+```
+
+- [ ] **Step 5: Implement build and refresh services**
+
+Create `api/app/src/services/skills/build.ts`:
+
+```ts
+import type { InsertSkillIndexEntry } from "@db/app";
+import {
+  SKILL_FILE_MAX_BYTES,
+  collectSkillIndexCandidates,
+  parseSkillFile,
+  type SkillTreeEntry,
+} from "@repo/skills-contract";
+
+export async function buildSkillIndexEntriesFromTree(input: {
+  blobs: Map<string, string>;
+  commitSha: string;
+  stateId: number;
+  tree: SkillTreeEntry[];
+}): Promise<{ entries: InsertSkillIndexEntry[]; indexDiagnostics: unknown[] }> {
+  const collected = collectSkillIndexCandidates(input.tree);
+  const entries = collected.canonicalSkillFiles.map((file) => {
+    const resources = collected.resourcesBySlug.get(file.path.split("/")[1]!) ?? {
+      assets: [],
+      references: [],
+      scripts: [],
+      truncated: false,
+    };
+    const parsed = parseSkillFile({
+      contentSha: file.sha,
+      contentSize: file.size ?? null,
+      nonStandardResourceCount:
+        collected.nonStandardResourceCountBySlug.get(file.path.split("/")[1]!) ??
+        0,
+      path: file.path,
+      resources,
+      sourceMarkdown:
+        file.size !== undefined && file.size > SKILL_FILE_MAX_BYTES
+          ? null
+          : input.blobs.get(file.sha) ?? null,
+    }).entry;
+    return {
+      allowedTools: parsed.allowedTools,
+      bodyMarkdown: parsed.bodyMarkdown,
+      compatibility: parsed.compatibility,
+      contentSha: parsed.contentSha,
+      contentSize: parsed.contentSize,
+      description: parsed.description,
+      diagnostics: parsed.diagnostics,
+      indexedCommitSha: input.commitSha,
+      license: parsed.license,
+      metadata: parsed.metadata,
+      name: parsed.name,
+      nonStandardResourceCount: parsed.nonStandardResourceCount,
+      path: parsed.path,
+      resources: parsed.resources,
+      resourcesTruncated: parsed.resources.truncated ? 1 : 0,
+      skillIndexStateId: input.stateId,
+      slug: parsed.slug,
+      sourceMarkdown: parsed.sourceMarkdown,
+      validationStatus: parsed.validationStatus,
+    } satisfies InsertSkillIndexEntry;
+  });
+
+  return { entries, indexDiagnostics: collected.fatalDiagnostics };
+}
+```
+
+Create `api/app/src/services/skills/refresh.ts`, `read.ts`, and `reconcile.ts` with these public signatures:
+
+```ts
+export async function checkSkillIndexSourceRef(input: {
+  sourceControlRepositoryId: number;
+}): Promise<{ currentCommitSha: string | null; status: "changed" | "missing" | "unchanged" }>;
+
+export async function refreshSkillIndexSource(input: {
+  deps?: SkillIndexServiceDeps;
+  reason: "read" | "schedule" | "setup" | "webhook";
+  sourceControlRepositoryId: number;
+  targetCommitSha?: string;
+}): Promise<{ status: "failed" | "fresh" | "missing" | "stale" }>;
+
+export async function ensureFreshSkillIndexForRead(input: {
+  clerkOrgId: string;
+  deps?: SkillIndexServiceDeps;
+  sourceControlRepositoryId: number;
+  slug?: string;
+}): Promise<{
+  freshness: {
+    checkedAt: Date | null;
+    errorCode: string | null;
+    errorMessage: string | null;
+    githubCommitSha: string | null;
+    indexedAt: Date | null;
+    indexedCommitSha: string | null;
+    status: "fresh" | "refreshing" | "stale" | "unavailable";
+  };
+  indexDiagnostics: unknown[];
+  repositoryUrl: string;
+  skills: unknown[];
+}>;
+
+export async function reconcileSkillIndexSources(input: {
+  limit: number;
+  totalLimit: number;
+}): Promise<{ checked: number; queued: number }>;
+```
+
+The implementation must:
+
+- use 3 second read budget with previous index;
+- use 10 second read budget with no index;
+- acquire CAS lock before full build;
+- wait 500 ms on lock contention;
+- release lock by token;
+- mark timeout as `refresh_timeout`;
+- never enqueue from read-time path.
+
+- [ ] **Step 6: Run service tests and typecheck**
+
+Run:
+
+```bash
+pnpm --filter @api/app test -- src/__tests__/skills-index-service.test.ts
 pnpm --filter @api/app typecheck
 ```
 
-Expected: pass.
+Expected: PASS.
 
-## Task 5: Workspace Skills UI
-
-**Files:**
-- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/page.tsx`
-- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/[skillSlug]/page.tsx`
-- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-client.tsx`
-- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-markdown.tsx`
-- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-loading.tsx`
-- Modify: `apps/app/src/components/app-sidebar.tsx`
-- Test: `apps/app/src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/page.test.tsx`
-- Test: `apps/app/src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/detail-page.test.tsx`
-- Test: `apps/app/src/__tests__/components/app-sidebar.test.tsx`
-
-- [ ] **Step 1: Write failing UI tests**
-
-Cover:
-
-- sidebar shows `Skills` after `People`;
-- list page prefetches `org.workspace.skills.list`;
-- client renders freshness, diagnostics, validity filter, search, and invalid
-  first ordering;
-- expansion renders inert markdown body;
-- refresh button invalidates the list query;
-- detail page prefetches `get` and renders focused content/back link.
+- [ ] **Step 7: Commit service layer**
 
 Run:
 
 ```bash
-pnpm --filter @lightfast/app test -- src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/page.test.tsx src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/detail-page.test.tsx src/__tests__/components/app-sidebar.test.tsx
+git add api/app db/app packages/skills-contract pnpm-lock.yaml
+git commit -m "feat: add skill index service"
 ```
 
-Expected: fail because routes/components/sidebar item do not exist.
+---
 
-- [ ] **Step 2: Implement UI**
+### Task 5: Inngest Refresh And Reconciliation
 
-Use `WorkspaceSurface variant="flush"`, stacked bordered rows, client-side
-search/filter, expanded rendered markdown, and full detail route. Do not use raw
-HTML or MDX execution for markdown.
+**Files:**
 
-- [ ] **Step 3: Run UI tests/typecheck**
+- Create: `api/app/src/inngest/workflow/refresh-skill-index.ts`
+- Create: `api/app/src/inngest/workflow/reconcile-skill-indexes.ts`
+- Create: `api/app/src/inngest/workflow/queue-skill-refresh-from-source-control.ts`
+- Create: `api/app/src/__tests__/skills-index-workflows.test.ts`
+- Modify: `api/app/src/inngest/schemas/app.ts`
+- Modify: `api/app/src/inngest/index.ts`
+- Modify: `api/app/src/services/github/setup/lightfast-repository.ts`
+
+- [ ] **Step 1: Write failing workflow tests**
+
+Create `api/app/src/__tests__/skills-index-workflows.test.ts`:
+
+```ts
+import { describe, expect, it, vi } from "vitest";
+
+const refreshSkillIndexSourceMock = vi.fn();
+const reconcileSkillIndexSourcesMock = vi.fn();
+
+vi.mock("../services/skills", () => ({
+  reconcileSkillIndexSources: reconcileSkillIndexSourcesMock,
+  refreshSkillIndexSource: refreshSkillIndexSourceMock,
+}));
+
+describe("skills index workflows", () => {
+  it("refresh worker calls the shared refresh service", async () => {
+    refreshSkillIndexSourceMock.mockResolvedValue({ status: "fresh" });
+    const { refreshSkillIndex } = await import(
+      "../inngest/workflow/refresh-skill-index"
+    );
+
+    expect(refreshSkillIndex.id).toBe("refresh-skill-index");
+  });
+
+  it("webhook consumer ignores non-main pushes", async () => {
+    const { shouldQueueSkillRefreshFromPush } = await import(
+      "../inngest/workflow/queue-skill-refresh-from-source-control"
+    );
+
+    expect(
+      shouldQueueSkillRefreshFromPush({
+        changedPaths: ["skills/foo/SKILL.md"],
+        ref: "refs/heads/feature",
+      })
+    ).toBe(false);
+  });
+
+  it("webhook consumer accepts main skills changes", async () => {
+    const { shouldQueueSkillRefreshFromPush } = await import(
+      "../inngest/workflow/queue-skill-refresh-from-source-control"
+    );
+
+    expect(
+      shouldQueueSkillRefreshFromPush({
+        changedPaths: ["skills/foo/SKILL.md"],
+        ref: "refs/heads/main",
+      })
+    ).toBe(true);
+  });
+});
+```
+
+- [ ] **Step 2: Run workflow tests to verify failure**
+
+Run:
 
 ```bash
-pnpm --filter @lightfast/app test -- src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/page.test.tsx src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/detail-page.test.tsx src/__tests__/components/app-sidebar.test.tsx
+pnpm --filter @api/app test -- src/__tests__/skills-index-workflows.test.ts
+```
+
+Expected: FAIL because workflows/events do not exist.
+
+- [ ] **Step 3: Add event schemas**
+
+Modify `api/app/src/inngest/schemas/app.ts`:
+
+```ts
+"app/skills.index.refresh.requested": eventType(
+  "app/skills.index.refresh.requested",
+  {
+    schema: z.object({
+      reason: z.enum(["schedule", "setup", "webhook"]),
+      sourceControlRepositoryId: z.number().int().positive(),
+      targetCommitSha: z.string().min(1).optional(),
+    }),
+  }
+),
+"app/skills.index.reconcile.requested": eventType(
+  "app/skills.index.reconcile.requested",
+  {
+    schema: z.object({
+      requestedAt: z.string().datetime(),
+    }),
+  }
+),
+```
+
+- [ ] **Step 4: Implement workflows**
+
+Create `api/app/src/inngest/workflow/refresh-skill-index.ts`:
+
+```ts
+import { refreshSkillIndexSource } from "../../services/skills";
+import { inngest } from "../client";
+import { appEvents } from "../schemas/app";
+
+export const refreshSkillIndex = inngest.createFunction(
+  {
+    id: "refresh-skill-index",
+    idempotency: "event.data.targetCommitSha ? `source:${event.data.sourceControlRepositoryId}:sha:${event.data.targetCommitSha}` : event.id",
+    retries: 2,
+    timeouts: { finish: "30s", start: "2m" },
+    triggers: appEvents["app/skills.index.refresh.requested"],
+  },
+  async ({ event, step }) => {
+    return await step.run("refresh skill index source", () =>
+      refreshSkillIndexSource({
+        reason: event.data.reason,
+        sourceControlRepositoryId: event.data.sourceControlRepositoryId,
+        targetCommitSha: event.data.targetCommitSha,
+      })
+    );
+  }
+);
+```
+
+Create `api/app/src/inngest/workflow/reconcile-skill-indexes.ts`:
+
+```ts
+import { reconcileSkillIndexSources } from "../../services/skills";
+import { inngest } from "../client";
+
+export const reconcileSkillIndexes = inngest.createFunction(
+  {
+    id: "reconcile-skill-indexes",
+    retries: 1,
+    triggers: { cron: "0 * * * *" },
+    timeouts: { finish: "5m", start: "2m" },
+  },
+  async ({ step }) => {
+    return await step.run("reconcile skill index sources", () =>
+      reconcileSkillIndexSources({ limit: 100, totalLimit: 1000 })
+    );
+  }
+);
+```
+
+Create `api/app/src/inngest/workflow/queue-skill-refresh-from-source-control.ts`:
+
+```ts
+import { matchesAnyWatchedPath } from "@repo/source-control-contract";
+import { inngest } from "../client";
+import { appEvents } from "../schemas/app";
+
+export function shouldQueueSkillRefreshFromPush(input: {
+  changedPaths: string[];
+  ref: string;
+}) {
+  return (
+    input.ref === "refs/heads/main" &&
+    matchesAnyWatchedPath(input.changedPaths, ["skills/**"])
+  );
+}
+
+export const queueSkillRefreshFromSourceControl = inngest.createFunction(
+  {
+    id: "queue-skill-refresh-from-source-control",
+    idempotency: "event.data.deliveryId",
+    retries: 1,
+    triggers: appEvents["app/github.repository.push.received"],
+  },
+  async ({ event, step }) => {
+    if (!shouldQueueSkillRefreshFromPush(event.data)) {
+      return { queued: false };
+    }
+    await step.sendEvent("queue skill index refresh", {
+      name: "app/skills.index.refresh.requested",
+      data: {
+        reason: "webhook",
+        sourceControlRepositoryId: event.data.repositoryWatchId,
+        targetCommitSha: event.data.afterSha,
+      },
+    });
+    return { queued: true };
+  }
+);
+```
+
+Register all three functions in `api/app/src/inngest/index.ts`.
+
+- [ ] **Step 5: Enqueue best-effort setup prewarm**
+
+Modify `api/app/src/services/github/setup/lightfast-repository.ts` after `completeWatchedSourceControlRepositorySetup` succeeds:
+
+```ts
+await inngest
+  .send({
+    name: "app/skills.index.refresh.requested",
+    data: {
+      reason: "setup",
+      sourceControlRepositoryId: watchedRepository.id,
+    },
+  })
+  .catch(() => undefined);
+```
+
+Keep setup success independent from enqueue success.
+
+- [ ] **Step 6: Run workflow tests and typecheck**
+
+Run:
+
+```bash
+pnpm --filter @api/app test -- src/__tests__/skills-index-workflows.test.ts
+pnpm --filter @api/app typecheck
+```
+
+Expected: PASS.
+
+- [ ] **Step 7: Commit workflows**
+
+Run:
+
+```bash
+git add api/app
+git commit -m "feat: schedule and queue skill index refreshes"
+```
+
+---
+
+### Task 6: tRPC Skills Router
+
+**Files:**
+
+- Create: `api/app/src/router/(pending-not-allowed)/workspace-skills.ts`
+- Create: `api/app/src/__tests__/workspace-skills-router.test.ts`
+- Modify: `api/app/src/root.ts`
+
+- [ ] **Step 1: Write failing router tests**
+
+Create `api/app/src/__tests__/workspace-skills-router.test.ts`:
+
+```ts
+import { describe, expect, it, vi } from "vitest";
+
+const ensureFreshSkillIndexForReadMock = vi.fn();
+
+vi.mock("../services/skills", () => ({
+  ensureFreshSkillIndexForRead: ensureFreshSkillIndexForReadMock,
+}));
+
+describe("workspace skills router", () => {
+  it("lists skills through read-time freshness service", async () => {
+    ensureFreshSkillIndexForReadMock.mockResolvedValue({
+      freshness: { status: "fresh" },
+      indexDiagnostics: [],
+      skills: [{ slug: "code-review", validationStatus: "valid" }],
+    });
+
+    const { workspaceSkillsRouter } = await import(
+      "../router/(pending-not-allowed)/workspace-skills"
+    );
+
+    expect(workspaceSkillsRouter).toHaveProperty("list");
+  });
+
+  it("validates skill slugs for get", async () => {
+    const { skillNameSchema } = await import("@repo/skills-contract");
+    expect(skillNameSchema.safeParse("bad_slug").success).toBe(false);
+  });
+});
+```
+
+- [ ] **Step 2: Run router tests to verify failure**
+
+Run:
+
+```bash
+pnpm --filter @api/app test -- src/__tests__/workspace-skills-router.test.ts
+```
+
+Expected: FAIL because router file does not exist.
+
+- [ ] **Step 3: Implement router**
+
+Create `api/app/src/router/(pending-not-allowed)/workspace-skills.ts`:
+
+```ts
+import { skillNameSchema, skillValidationStatusSchema } from "@repo/skills-contract";
+import type { TRPCRouterRecord } from "@trpc/server";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
+import {
+  ensureFreshSkillIndexForRead,
+  getVerifiedLightfastSkillSourceRepositoryId,
+} from "../../services/skills";
+import { boundOrgProcedure } from "../../trpc";
+
+const listInput = z
+  .object({
+    validationStatus: skillValidationStatusSchema.optional(),
+  })
+  .strict()
+  .optional();
+
+export const workspaceSkillsRouter = {
+  list: boundOrgProcedure.input(listInput).query(async ({ ctx, input }) => {
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId: ctx.auth.identity.orgId,
+      sourceControlRepositoryId: await getVerifiedLightfastSkillSourceRepositoryId(
+        ctx.db,
+        { clerkOrgId: ctx.auth.identity.orgId }
+      ),
+    });
+    return {
+      ...result,
+      skills: input?.validationStatus
+        ? result.skills.filter(
+            (skill) => skill.validationStatus === input.validationStatus
+          )
+        : result.skills,
+    };
+  }),
+  get: boundOrgProcedure
+    .input(z.object({ slug: skillNameSchema }))
+    .query(async ({ ctx, input }) => {
+      const result = await ensureFreshSkillIndexForRead({
+        clerkOrgId: ctx.auth.identity.orgId,
+        slug: input.slug,
+        sourceControlRepositoryId: await getVerifiedLightfastSkillSourceRepositoryId(
+          ctx.db,
+          { clerkOrgId: ctx.auth.identity.orgId }
+        ),
+      });
+      const skill = result.skills.find((item) => item.slug === input.slug);
+      if (!skill) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Skill not found",
+        });
+      }
+      return { freshness: result.freshness, indexDiagnostics: result.indexDiagnostics, skill };
+    }),
+} satisfies TRPCRouterRecord;
+```
+
+- [ ] **Step 4: Wire router into root**
+
+Modify `api/app/src/root.ts`:
+
+```ts
+import { workspaceSkillsRouter } from "./router/(pending-not-allowed)/workspace-skills";
+```
+
+Add under `org.workspace`:
+
+```ts
+skills: workspaceSkillsRouter,
+```
+
+- [ ] **Step 5: Run router tests and typecheck**
+
+Run:
+
+```bash
+pnpm --filter @api/app test -- src/__tests__/workspace-skills-router.test.ts
+pnpm --filter @api/app typecheck
+```
+
+Expected: PASS.
+
+- [ ] **Step 6: Commit router**
+
+Run:
+
+```bash
+git add api/app
+git commit -m "feat: expose workspace skills api"
+```
+
+---
+
+### Task 7: Server Markdown Renderer
+
+**Files:**
+
+- Create: `packages/ui/src/components/markdown-content.tsx`
+- Create: `packages/ui/src/components/markdown-content.test.tsx`
+- Create: `packages/ui/vitest.config.ts`
+- Modify: `packages/ui/package.json`
+
+- [ ] **Step 1: Write failing renderer tests**
+
+Create `packages/ui/src/components/markdown-content.test.tsx`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it } from "vitest";
+import { MarkdownContent } from "./markdown-content";
+
+describe("MarkdownContent", () => {
+  it("does not render raw html", async () => {
+    render(
+      await MarkdownContent({
+        children: "<script>alert(1)</script>\n\n# Title",
+        sourcePath: "skills/code-review/SKILL.md",
+        sourceUrlBase: "https://github.com/acme/.lightfast/blob/abc/skills/code-review",
+      })
+    );
+
+    expect(screen.getByText("Title")).toBeVisible();
+    expect(document.querySelector("script")).toBeNull();
+  });
+
+  it("rewrites safe relative links to commit-pinned GitHub urls", async () => {
+    render(
+      await MarkdownContent({
+        children: "[Notes](references/api.md)",
+        sourcePath: "skills/code-review/SKILL.md",
+        sourceUrlBase: "https://github.com/acme/.lightfast/blob/abc/skills/code-review",
+      })
+    );
+
+    expect(screen.getByRole("link", { name: "Notes" })).toHaveAttribute(
+      "href",
+      "https://github.com/acme/.lightfast/blob/abc/skills/code-review/references/api.md"
+    );
+  });
+
+  it("keeps escaping links inert", async () => {
+    render(
+      await MarkdownContent({
+        children: "[Other](../other/SKILL.md)",
+        sourcePath: "skills/code-review/SKILL.md",
+        sourceUrlBase: "https://github.com/acme/.lightfast/blob/abc/skills/code-review",
+      })
+    );
+
+    expect(screen.queryByRole("link", { name: "Other" })).toBeNull();
+    expect(screen.getByText("Other")).toBeVisible();
+  });
+
+  it("renders image syntax as an inert reference", async () => {
+    render(
+      await MarkdownContent({
+        children: "![Diagram](assets/flow.png)",
+        sourcePath: "skills/code-review/SKILL.md",
+        sourceUrlBase: "https://github.com/acme/.lightfast/blob/abc/skills/code-review",
+      })
+    );
+
+    expect(screen.queryByRole("img")).toBeNull();
+    expect(screen.getByText(/Image: Diagram/)).toBeVisible();
+  });
+});
+```
+
+- [ ] **Step 2: Run renderer tests to verify failure**
+
+Run:
+
+```bash
+pnpm --filter @repo/ui test -- src/components/markdown-content.test.tsx
+```
+
+Expected: FAIL because `MarkdownContent` does not exist.
+
+- [ ] **Step 3: Implement renderer**
+
+Add to `packages/ui/package.json` scripts:
+
+```json
+"test": "vitest run"
+```
+
+Add to `packages/ui/package.json` dev dependencies:
+
+```json
+"@vitejs/plugin-react": "catalog:",
+"@repo/vitest-config": "workspace:*",
+"@testing-library/react": "^16.1.0",
+"happy-dom": "catalog:",
+"vitest": "catalog:"
+```
+
+Create `packages/ui/vitest.config.ts`:
+
+```ts
+import sharedConfig from "@repo/vitest-config";
+import react from "@vitejs/plugin-react";
+import { defineConfig, mergeConfig } from "vitest/config";
+
+export default mergeConfig(
+  sharedConfig,
+  defineConfig({
+    plugins: [react()],
+    esbuild: { jsx: "automatic" },
+    test: {
+      environment: "happy-dom",
+      globals: true,
+      include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    },
+  })
+);
+```
+
+Create `packages/ui/src/components/markdown-content.tsx`:
+
+```tsx
+import ReactMarkdown, { type Components } from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { cn } from "../lib/utils";
+import { SSRCodeBlock } from "./ssr-code-block";
+
+export interface MarkdownContentProps {
+  children: string;
+  className?: string;
+  sourcePath: string;
+  sourceUrlBase: string;
+}
+
+export async function MarkdownContent({
+  children,
+  className,
+  sourcePath,
+  sourceUrlBase,
+}: MarkdownContentProps) {
+  const components: Components = {
+    a({ href, children: linkChildren }) {
+      const safeHref = resolveMarkdownHref({ href, sourcePath, sourceUrlBase });
+      if (!safeHref) {
+        return <span>{linkChildren}</span>;
+      }
+      const isExternal = safeHref.startsWith("http");
+      return (
+        <a
+          className="text-primary underline underline-offset-2"
+          href={safeHref}
+          rel={isExternal ? "noopener noreferrer" : undefined}
+          target={isExternal ? "_blank" : undefined}
+        >
+          {linkChildren}
+        </a>
+      );
+    },
+    code({ className: codeClassName, children: codeChildren }) {
+      return (
+        <code className={cn("rounded bg-muted px-1 py-0.5 font-mono text-xs", codeClassName)}>
+          {codeChildren}
+        </code>
+      );
+    },
+    img({ alt, src }) {
+      const href = resolveMarkdownHref({ href: src, sourcePath, sourceUrlBase });
+      const label = `Image: ${alt || src || "untitled"}`;
+      return href ? (
+        <a
+          className="inline-flex text-primary text-sm underline underline-offset-2"
+          href={href}
+          rel="noopener noreferrer"
+          target="_blank"
+        >
+          {label}
+        </a>
+      ) : (
+        <span className="text-muted-foreground text-sm">{label}</span>
+      );
+    },
+    pre({ children: preChildren }) {
+      const code = extractCode(preChildren);
+      return <SSRCodeBlock language={code.language}>{code.value}</SSRCodeBlock>;
+    },
+  };
+
+  return (
+    <div className={cn("prose max-w-[72ch] dark:prose-invert", className)}>
+      <ReactMarkdown components={components} remarkPlugins={[remarkGfm]} skipHtml>
+        {children}
+      </ReactMarkdown>
+    </div>
+  );
+}
+
+function resolveMarkdownHref(input: {
+  href: string | undefined;
+  sourcePath: string;
+  sourceUrlBase: string;
+}): string | null {
+  if (!input.href) {
+    return null;
+  }
+  if (input.href.startsWith("#")) {
+    return input.href;
+  }
+  if (/^https?:\/\//.test(input.href)) {
+    return input.href;
+  }
+  if (input.href.startsWith("/") || input.href.includes("..")) {
+    return null;
+  }
+  return `${input.sourceUrlBase.replace(/\/+$/, "")}/${input.href.replace(/^\.\/+/, "")}`;
+}
+
+function extractCode(children: React.ReactNode): { language: string; value: string } {
+  if (
+    React.isValidElement(children) &&
+    children.props &&
+    typeof children.props === "object" &&
+    "children" in children.props
+  ) {
+    const className =
+      "className" in children.props && typeof children.props.className === "string"
+        ? children.props.className
+        : "";
+    return {
+      language: className.replace("language-", "") || "text",
+      value: String(children.props.children ?? ""),
+    };
+  }
+  return { language: "text", value: String(children ?? "") };
+}
+```
+
+Update `packages/ui/package.json` exports:
+
+```json
+"./components/markdown-content": "./src/components/markdown-content.tsx"
+```
+
+- [ ] **Step 4: Run renderer checks**
+
+Run:
+
+```bash
+pnpm --filter @repo/ui test -- src/components/markdown-content.test.tsx
+pnpm --filter @repo/ui typecheck
+```
+
+Expected: PASS.
+
+- [ ] **Step 5: Commit renderer**
+
+Run:
+
+```bash
+git add packages/ui
+git commit -m "feat: add inert markdown content renderer"
+```
+
+---
+
+### Task 8: Workspace Skills UI
+
+**Files:**
+
+- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/page.tsx`
+- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/[skillSlug]/page.tsx`
+- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-client.tsx`
+- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-row.tsx`
+- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-detail.tsx`
+- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skill-status.tsx`
+- Create: `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-loading.tsx`
+- Create: `apps/app/src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/page.test.tsx`
+- Modify: `apps/app/src/components/app-sidebar.tsx`
+- Modify: `apps/app/src/__tests__/components/app-sidebar.test.tsx`
+- Modify: `packages/app-reserved-names/data/organization-names.json`
+
+- [ ] **Step 1: Write failing app tests**
+
+Create `apps/app/src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/page.test.tsx`:
+
+```tsx
+import { render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
+
+vi.mock("~/trpc/server", () => ({
+  HydrateClient: ({ children }: { children: React.ReactNode }) => children,
+  prefetch: vi.fn(),
+  trpc: {
+    org: {
+      workspace: {
+        skills: {
+          list: { queryOptions: vi.fn(() => ({ queryKey: ["skills", "list"] })) },
+        },
+      },
+    },
+  },
+}));
+
+describe("SkillsPage", () => {
+  it("prefetches skills and renders the skills client", async () => {
+    const { default: SkillsPage } = await import(
+      "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/page"
+    );
+    render(await SkillsPage());
+    expect(screen.getByRole("heading", { name: "Skills" })).toBeVisible();
+  });
+});
+```
+
+Update `apps/app/src/__tests__/components/app-sidebar.test.tsx` to assert a `Skills` link for `/acme/skills`.
+
+- [ ] **Step 2: Run app tests to verify failure**
+
+Run:
+
+```bash
+pnpm --filter @lightfast/app test -- src/__tests__/app/\\(app\\)/\\(pending-not-allowed\\)/\\[slug\\]/skills/page.test.tsx src/__tests__/components/app-sidebar.test.tsx
+```
+
+Expected: FAIL because the route/sidebar item does not exist.
+
+- [ ] **Step 3: Add sidebar route and reserved name**
+
+Modify `apps/app/src/components/app-sidebar.tsx`:
+
+```tsx
+import { BrainCircuit } from "lucide-react";
+```
+
+Add to `getOrgWorkspaceItems` after `People`:
+
+```tsx
+{
+  title: "Skills",
+  href: `/${orgSlug}/skills`,
+  icon: BrainCircuit,
+},
+```
+
+Add `"skills"` to `packages/app-reserved-names/data/organization-names.json`.
+
+- [ ] **Step 4: Add list route and client**
+
+Create `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/page.tsx`:
+
+```tsx
+import { Suspense } from "react";
+import { HydrateClient, prefetch, trpc } from "~/trpc/server";
+import { SkillsClient } from "./_components/skills-client";
+import { SkillsLoading } from "./_components/skills-loading";
+
+export const dynamic = "force-dynamic";
+
+export default function SkillsPage() {
+  prefetch(trpc.org.workspace.skills.list.queryOptions(undefined, { staleTime: 0 }));
+
+  return (
+    <HydrateClient>
+      <Suspense fallback={<SkillsLoading />}>
+        <SkillsClient />
+      </Suspense>
+    </HydrateClient>
+  );
+}
+```
+
+Create `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/_components/skills-client.tsx`:
+
+```tsx
+"use client";
+
+import { useSuspenseQuery } from "@tanstack/react-query";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
+import { ExternalLink } from "lucide-react";
+import { useDeferredValue, useMemo, useState } from "react";
+import { WorkspaceSurface } from "~/components/workspace-surface";
+import { useTRPC } from "~/trpc/react";
+import { SkillRow } from "./skill-row";
+import { SkillStatus } from "./skill-status";
+
+type SkillFilter = "all" | "invalid" | "valid";
+
+export function SkillsClient() {
+  const trpc = useTRPC();
+  const { data } = useSuspenseQuery(
+    trpc.org.workspace.skills.list.queryOptions(undefined, { staleTime: 0 })
+  );
+  const [query, setQuery] = useState("");
+  const [filter, setFilter] = useState<SkillFilter>("all");
+  const deferredQuery = useDeferredValue(query.trim().toLowerCase());
+
+  const skills = useMemo(() => {
+    return data.skills
+      .filter((skill) => {
+        if (filter !== "all" && skill.validationStatus !== filter) {
+          return false;
+        }
+        if (!deferredQuery) {
+          return true;
+        }
+        return [
+          skill.slug,
+          skill.name ?? "",
+          skill.description ?? "",
+          skill.path,
+          ...skill.diagnostics.map((diagnostic) => diagnostic.message),
+          ...skill.resources.assets,
+          ...skill.resources.references,
+          ...skill.resources.scripts,
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(deferredQuery);
+      })
+      .sort((a, b) => {
+        if (a.validationStatus !== b.validationStatus) {
+          return a.validationStatus === "invalid" ? -1 : 1;
+        }
+        return a.slug.localeCompare(b.slug);
+      });
+  }, [data.skills, deferredQuery, filter]);
+
+  return (
+    <WorkspaceSurface
+      className="flex min-h-full flex-col bg-background"
+      variant="flush"
+    >
+      <div className="border-b px-6 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-lg font-semibold">Skills</h1>
+            <SkillStatus freshness={data.freshness} />
+          </div>
+          <Button asChild size="sm" variant="outline">
+            <a href={data.repositoryUrl} rel="noopener noreferrer" target="_blank">
+              <ExternalLink className="size-3.5" />
+              Open in GitHub
+            </a>
+          </Button>
+        </div>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
+          <Input
+            className="max-w-sm"
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="Search skills"
+            value={query}
+          />
+          <Tabs
+            onValueChange={(value) => setFilter(value as SkillFilter)}
+            value={filter}
+          >
+            <TabsList>
+              <TabsTrigger value="all">All</TabsTrigger>
+              <TabsTrigger value="invalid">Invalid</TabsTrigger>
+              <TabsTrigger value="valid">Valid</TabsTrigger>
+            </TabsList>
+          </Tabs>
+        </div>
+      </div>
+      <div className="flex flex-col">
+        {skills.length === 0 ? (
+          <div className="px-6 py-12 text-sm text-muted-foreground">
+            Add a skill at <code>skills/&lt;name&gt;/SKILL.md</code>.
+          </div>
+        ) : (
+          skills.map((skill) => <SkillRow key={skill.slug} skill={skill} />)
+        )}
+      </div>
+    </WorkspaceSurface>
+  );
+}
+```
+
+- [ ] **Step 5: Add detail route**
+
+Create `apps/app/src/app/(app)/(pending-not-allowed)/[slug]/(workspace)/skills/[skillSlug]/page.tsx`:
+
+```tsx
+import { TRPCError } from "@trpc/server";
+import { notFound } from "next/navigation";
+import { getQueryClient, HydrateClient, trpc } from "~/trpc/server";
+import { SkillDetail } from "../_components/skill-detail";
+
+export const dynamic = "force-dynamic";
+
+export default async function SkillDetailPage({
+  params,
+}: {
+  params: Promise<{ skillSlug: string; slug: string }>;
+}) {
+  const { skillSlug } = await params;
+  const queryOptions = trpc.org.workspace.skills.get.queryOptions(
+    { slug: skillSlug },
+    { staleTime: 0 }
+  );
+  try {
+    await getQueryClient().fetchQuery(queryOptions);
+  } catch (error) {
+    if (error instanceof TRPCError && error.code === "NOT_FOUND") {
+      notFound();
+    }
+    throw error;
+  }
+
+  return (
+    <HydrateClient>
+      <SkillDetail skillSlug={skillSlug} />
+    </HydrateClient>
+  );
+}
+```
+
+Create `skill-detail.tsx` as a client component that calls `trpc.org.workspace.skills.get.queryOptions({ slug: skillSlug }, { staleTime: 0 })`, renders a back link to `../skills`, shows `SkillStatus`, metadata, diagnostics, resource links, `View source`, and `MarkdownContent` for `bodyMarkdown`.
+
+- [ ] **Step 6: Add row/status/loading components**
+
+Implement the remaining components with these responsibilities:
+
+- `skills-loading.tsx`: render toolbar skeleton and five fixed-height skeleton rows.
+- `skill-status.tsx`: map `fresh`, `stale`, `refreshing`, and `unavailable` freshness states to small badges and render short `indexedCommitSha` when present.
+- `skill-row.tsx`: render a bordered row with exact skill name, description, status, diagnostics count, resource counts, source path, commit-pinned source link, and an expandable markdown preview.
+- `skill-detail.tsx`: render a focused page with `Back`, `View source`, exact name, description, metadata table, diagnostics, resource links, and rendered markdown.
+
+Use `@repo/ui` buttons, tabs, inputs, badges, collapsible controls, and lucide icons. Keep row radius at `rounded-lg` or smaller.
+
+- [ ] **Step 7: Run app and reserved-name tests**
+
+Run:
+
+```bash
+pnpm --filter @lightfast/app test -- src/__tests__/app/\\(app\\)/\\(pending-not-allowed\\)/\\[slug\\]/skills/page.test.tsx src/__tests__/components/app-sidebar.test.tsx
+pnpm --filter @repo/app-reserved-names test
 pnpm --filter @lightfast/app typecheck
 ```
 
-Expected: pass.
+Expected: PASS.
 
-## Task 6: Final Verification
+- [ ] **Step 8: Commit UI**
+
+Run:
+
+```bash
+git add apps/app packages/app-reserved-names
+git commit -m "feat: add workspace skills ui"
+```
+
+---
+
+### Task 9: Integration Verification
 
 **Files:**
-- All files changed above.
 
-- [ ] **Step 1: Run focused verification**
+- Modify: `emulators/github/src/push.ts` - add skill fixture support to the push helper.
+- Modify: `emulators/github/src/__tests__/server.test.ts`
+- Modify: `api/app/src/__tests__/github-webhook.test.ts`
+- Modify: `api/app/src/__tests__/source-control-repository-workflow.test.ts`
+
+- [ ] **Step 1: Add emulator-backed integration tests**
+
+Add tests that:
+
+- create/update `skills/foo/SKILL.md` in the emulator;
+- deliver a push event on `refs/heads/main`;
+- assert `queue-skill-refresh-from-source-control` queues refresh;
+- call read-time `ensureFreshSkillIndexForRead` without webhook and assert it refreshes from GitHub.
+
+- [ ] **Step 2: Run focused integration tests**
+
+Run:
+
+```bash
+pnpm --filter @repo/github-emulator test -- src/__tests__/server.test.ts
+pnpm --filter @api/app test -- src/__tests__/github-webhook.test.ts src/__tests__/source-control-repository-workflow.test.ts src/__tests__/skills-index-workflows.test.ts
+```
+
+Expected: PASS.
+
+- [ ] **Step 3: Commit integration coverage**
+
+Run:
+
+```bash
+git add emulators/github api/app
+git commit -m "test: cover skills index refresh paths"
+```
+
+---
+
+### Task 10: Final Verification
+
+**Files:**
+
+- No new files.
+
+- [ ] **Step 1: Run focused package tests**
+
+Run:
 
 ```bash
 pnpm --filter @repo/skills-contract test
 pnpm --filter @repo/github-app-node test -- src/__tests__/repository-api.test.ts
-pnpm --filter @db/app test -- src/__tests__/skills-index.test.ts
-pnpm --filter @api/app test -- src/__tests__/skills-index-service.test.ts src/__tests__/workspace-skills-router.test.ts
-pnpm --filter @lightfast/app test -- src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/page.test.tsx src/__tests__/app/(app)/(pending-not-allowed)/[slug]/skills/detail-page.test.tsx src/__tests__/components/app-sidebar.test.tsx
+pnpm --filter @db/app test -- src/__tests__/skill-index.test.ts
+pnpm --filter @api/app test -- src/__tests__/skills-index-service.test.ts src/__tests__/workspace-skills-router.test.ts src/__tests__/skills-index-workflows.test.ts
+pnpm --filter @repo/ui typecheck
+pnpm --filter @lightfast/app test -- src/__tests__/app/\\(app\\)/\\(pending-not-allowed\\)/\\[slug\\]/skills/page.test.tsx src/__tests__/components/app-sidebar.test.tsx
+```
+
+Expected: PASS.
+
+- [ ] **Step 2: Run repository typecheck**
+
+Run:
+
+```bash
 pnpm typecheck
 ```
 
-Expected: pass.
+Expected: PASS.
 
-- [ ] **Step 2: Manual dev check**
+- [ ] **Step 3: Run app build checks**
+
+Run:
+
+```bash
+pnpm build:app
+```
+
+Expected: PASS.
+
+- [ ] **Step 4: Start dev server for browser verification**
 
 Run:
 
@@ -324,15 +3297,61 @@ Run:
 pnpm dev --ui=stream --log-order=stream --log-prefix=task --no-color
 ```
 
-Open the workspace Skills route and verify the page renders without overlap,
-shows stale/fresh states, and expands rendered markdown previews.
+Expected: dev server starts app, www, platform, local Inngest, QStash, GitHub emulator, and Portless proxy.
+
+- [ ] **Step 5: Verify Skills route in browser**
+
+Open:
+
+```text
+https://lightfast.localhost
+```
+
+Navigate to a setup-complete org and visit:
+
+```text
+/<org>/skills
+```
+
+Expected:
+
+- sidebar shows `Skills`;
+- page shows `Skills`;
+- empty/fresh/stale states render without console errors;
+- expanding a row renders markdown safely;
+- `Open in GitHub`, commit, source, and resource links are correct.
+
+- [ ] **Step 6: Review final status**
+
+Run:
+
+```bash
+git status --short
+```
+
+Expected: no output. When final verification produces small fixes, stage the listed files explicitly and commit them with `git commit -m "fix: polish skills index verification"`.
 
 ---
 
-## Self-Review
+## Self-Review Notes
 
-- Spec coverage: covers contract, GitHub helpers, DB, API, UI, tests, and final
-  verification. Build-history is intentionally deferred.
-- Placeholder scan: no placeholder markers.
-- Type consistency: router path is `org.workspace.skills`; DB/current-index
-  terminology matches the design.
+Spec coverage:
+
+- Org-only `.lightfast` source: Tasks 3, 4, 6.
+- Agent Skills parser/diagnostics/resource inventory: Task 1.
+- GitHub ref/blob/tree/ETag helpers: Task 2.
+- Current-state DB index/mutex: Task 3.
+- Webhook, hourly, and read-time freshness paths: Tasks 4, 5, 6.
+- Setup prewarm enqueue: Task 5.
+- Markdown renderer: Task 7.
+- Workspace list/detail UI and sidebar: Task 8.
+- Reserved route coverage: Task 8.
+- Emulator/integration verification: Task 9.
+- Final verification: Task 10.
+
+Implementation constraints:
+
+- Do not implement Lightfast-maintained default skills in this plan.
+- Do not add a build-history table.
+- Do not add manual reindex-all UI.
+- Do not execute skill content or connect it to runtime agent behavior.
