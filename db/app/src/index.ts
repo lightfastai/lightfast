@@ -198,6 +198,7 @@ export {
   recordMcpAuditEvent,
   redactAuditMetadata,
   revokeMcpOauthGrant,
+  revokeMcpRefreshTokenByHash,
   type RotateMcpRefreshTokenInput,
   type RotateMcpRefreshTokenResult,
   rotateMcpRefreshToken,

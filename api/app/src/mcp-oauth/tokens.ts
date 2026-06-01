@@ -7,6 +7,7 @@ import {
   consumeMcpAuthorizationCode,
   createMcpRefreshToken,
   revokeMcpOauthGrant,
+  revokeMcpRefreshTokenByHash,
   rotateMcpRefreshToken as rotateStoredMcpRefreshToken,
 } from "@db/app";
 import type { McpScope } from "@repo/api-contract";
@@ -107,7 +108,7 @@ export async function verifyMcpAccessToken(
 }
 
 export interface ExchangeMcpAuthorizationCodeInput {
-  audience: string;
+  audience?: string;
   clientId: string;
   code: string;
   codeVerifier: string;
@@ -160,7 +161,7 @@ export async function exchangeMcpAuthorizationCode(
   });
 
   const accessToken = await signMcpAccessToken({
-    audience: input.audience,
+    audience: input.audience ?? code.resource,
     grant: accessGrant,
     issuer: input.issuer,
     jwtSecret: input.jwtSecret,
@@ -235,6 +236,15 @@ export async function rotateMcpRefreshTokenSecret(
     refresh_token: nextRefreshToken,
     reuseDetected: false,
   };
+}
+
+export async function revokeMcpRefreshTokenSecret(
+  db: Database,
+  input: { refreshToken: string }
+): Promise<boolean> {
+  return await revokeMcpRefreshTokenByHash(db, {
+    tokenHash: hashOpaqueToken(input.refreshToken),
+  });
 }
 
 export function getMcpOAuthJwks(): { keys: [] } {

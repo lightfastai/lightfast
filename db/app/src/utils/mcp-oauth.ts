@@ -424,6 +424,22 @@ async function getMcpRefreshTokenByHash(
   return token;
 }
 
+export async function revokeMcpRefreshTokenByHash(
+  db: Database,
+  input: { tokenHash: string }
+): Promise<boolean> {
+  const result = await db
+    .update(mcpOauthRefreshTokens)
+    .set({ status: "revoked" })
+    .where(
+      and(
+        eq(mcpOauthRefreshTokens.tokenHash, input.tokenHash),
+        eq(mcpOauthRefreshTokens.status, "active")
+      )
+    );
+  return getRowsAffected(result) > 0;
+}
+
 export interface RecordMcpAuditEventInput {
   clientPublicId?: string | null;
   clerkOrgId?: string | null;
