@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import {
   AUTOMATION_NAME_MAX_LENGTH,
   AUTOMATION_PROMPT_MAX_LENGTH,
+  type AutomationScheduleInput,
 } from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -16,12 +17,20 @@ import {
   useFormCompat,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
-import { toast } from "@repo/ui/components/ui/sonner";
-import { Textarea } from "@repo/ui/components/ui/textarea";
 import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@repo/ui/components/ui/toggle-group";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { toast } from "@repo/ui/components/ui/sonner";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { ArrowLeft, Loader2 } from "lucide-react";
@@ -32,6 +41,13 @@ import { useEffect } from "react";
 import { z } from "zod";
 import { useTRPC } from "~/trpc/react";
 import { upsertInList } from "../../_components/automations-cache";
+import {
+  isTimeBasedKind,
+  SCHEDULE_KINDS,
+  type ScheduleKind,
+  TIMEZONES,
+  WEEKDAY_OPTIONS,
+} from "../../_components/schedule-options";
 
 const formSchema = z.object({
   name: z
@@ -44,12 +60,37 @@ const formSchema = z.object({
     .trim()
     .min(1, "Instructions are required")
     .max(AUTOMATION_PROMPT_MAX_LENGTH),
-  scheduleKind: z.enum(["hourly", "daily"]),
+  scheduleKind: z.enum(["manual", "hourly", "daily", "weekdays", "weekly"]),
   intervalHours: z.number().int().min(1).max(24),
-  dailyTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm"),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm"),
+  dayOfWeek: z.number().int().min(0).max(6),
+  timezone: z.string().min(1),
 });
 
 type FormValues = z.infer<typeof formSchema>;
+
+function buildSchedule(values: FormValues): AutomationScheduleInput {
+  switch (values.scheduleKind) {
+    case "manual":
+      return { kind: "manual" as const, config: {} };
+    case "hourly":
+      return {
+        kind: "hourly" as const,
+        config: { intervalHours: values.intervalHours },
+      };
+    case "daily":
+      return { kind: "daily" as const, config: { time: values.time } };
+    case "weekdays":
+      return { kind: "weekdays" as const, config: { time: values.time } };
+    case "weekly":
+      return {
+        kind: "weekly" as const,
+        config: { dayOfWeek: values.dayOfWeek, time: values.time },
+      };
+    default:
+      return { kind: "manual" as const, config: {} };
+  }
+}
 
 export function AutomationCreateForm({ slug }: { slug: string }) {
   const router = useRouter();
@@ -73,12 +114,17 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
       prompt: "",
       scheduleKind: "daily",
       intervalHours: 1,
-      dailyTime: "09:00",
+      time: "09:00",
+      dayOfWeek: 1,
+      timezone: "UTC",
     },
     mode: "onChange",
   });
 
-  const scheduleKind = form.watch("scheduleKind");
+  const scheduleKind = form.watch("scheduleKind") as ScheduleKind;
+  const dayOfWeek = form.watch("dayOfWeek");
+  const timezone = form.watch("timezone");
+  const promptValue = form.watch("prompt");
 
   const createMutation = useMutation(
     trpc.org.workspace.automations.create.mutationOptions({
@@ -100,21 +146,11 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   );
 
   const onSubmit = (values: FormValues) => {
-    const schedule =
-      values.scheduleKind === "hourly"
-        ? {
-            kind: "hourly" as const,
-            config: { intervalHours: values.intervalHours },
-          }
-        : {
-            kind: "daily" as const,
-            config: { time: values.dailyTime },
-          };
     createMutation.mutate({
       name: values.name,
       prompt: values.prompt,
-      schedule,
-      timezone: "UTC",
+      schedule: buildSchedule(values),
+      timezone: values.timezone,
     });
   };
 
@@ -126,29 +162,40 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
   return (
     <div className="min-h-full bg-background text-foreground">
-      <div className="mx-auto w-full max-w-2xl px-6 py-10">
-        <Button asChild className="mb-8 -ml-2" size="sm" variant="ghost">
-          <Link href={listHref}>
-            <ArrowLeft className="size-4" />
-            Back
-          </Link>
-        </Button>
+      <div className="mx-auto w-full max-w-xl px-6 py-12">
+        <Link
+          className="-ml-0.5 mb-8 inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          href={listHref}
+        >
+          <ArrowLeft className="size-3.5" />
+          automations
+        </Link>
+
+        <h1 className="font-semibold text-[20px] tracking-[-0.02em]">
+          New automation
+        </h1>
+        <p className="mt-1 mb-8 text-[12px] text-muted-foreground">
+          A cloud schedule that runs your agent and records each run.
+        </p>
 
         <Form {...form}>
-          <form className="space-y-8" onSubmit={form.handleSubmit(onSubmit)}>
+          <form className="space-y-6" onSubmit={form.handleSubmit(onSubmit)}>
             <FormField
               control={form.control}
               name="name"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>
-                    Name <span className="text-destructive">*</span>
+                <FormItem className="gap-2">
+                  <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
+                    Name{" "}
+                    <span className="text-muted-foreground">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
                       {...field}
                       autoFocus
-                      placeholder="e.g., Daily code review"
+                      placeholder="Daily code review"
+                      size="lf"
+                      variant="lf"
                     />
                   </FormControl>
                   <FormMessage />
@@ -160,100 +207,220 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               control={form.control}
               name="prompt"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Instructions</FormLabel>
+                <FormItem className="gap-2">
+                  <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
+                    Instructions{" "}
+                    <span className="text-muted-foreground">*</span>
+                  </FormLabel>
                   <FormControl>
-                    <Textarea
-                      {...field}
-                      className="min-h-48"
-                      placeholder="Describe what Claude should do in each session"
-                    />
+                    <div className="relative">
+                      <Textarea
+                        {...field}
+                        maxLength={AUTOMATION_PROMPT_MAX_LENGTH}
+                        placeholder="Describe what the agent should do in each run."
+                        variant="lf"
+                      />
+                      <span className="pointer-events-none absolute right-2.5 bottom-2 font-mono text-[9.5px] text-muted-foreground">
+                        {promptValue.length}/{AUTOMATION_PROMPT_MAX_LENGTH}
+                      </span>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
 
-            <div className="space-y-3">
-              <FormField
-                control={form.control}
-                name="scheduleKind"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Schedule</FormLabel>
-                    <FormControl>
-                      <ToggleGroup
-                        onValueChange={(value) => {
-                          if (value === "hourly" || value === "daily") {
-                            field.onChange(value);
-                          }
-                        }}
-                        type="single"
-                        value={field.value}
-                        variant="outline"
-                      >
-                        <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
-                        <ToggleGroupItem value="hourly">Hourly</ToggleGroupItem>
-                      </ToggleGroup>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+            <div className="space-y-2">
+              <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
+                Schedule
+              </FormLabel>
+              <Tabs
+                onValueChange={(value) =>
+                  form.setValue("scheduleKind", value as ScheduleKind, {
+                    shouldValidate: true,
+                  })
+                }
+                value={scheduleKind}
+              >
+                <TabsList variant="underline">
+                  {SCHEDULE_KINDS.map((kind) => (
+                    <TabsTrigger
+                      key={kind.value}
+                      value={kind.value}
+                      variant="underline"
+                    >
+                      {kind.label}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
 
-              {scheduleKind === "daily" ? (
-                <FormField
-                  control={form.control}
-                  name="dailyTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>At (UTC)</FormLabel>
-                      <FormControl>
-                        <Input {...field} className="w-40" type="time" />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              ) : (
-                <FormField
-                  control={form.control}
-                  name="intervalHours"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Every (hours)</FormLabel>
-                      <FormControl>
-                        <Input
-                          className="w-40"
-                          max={24}
-                          min={1}
-                          name={field.name}
-                          onBlur={field.onBlur}
-                          onChange={(event) =>
-                            field.onChange(
-                              Number.parseInt(event.target.value, 10) || 1
-                            )
-                          }
-                          ref={field.ref}
-                          type="number"
-                          value={field.value}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              )}
+              <div className="pt-3">
+                {scheduleKind === "manual" && (
+                  <p className="font-mono text-[10.5px] text-muted-foreground">
+                    Runs only when triggered — no automatic schedule.
+                  </p>
+                )}
+
+                {scheduleKind === "hourly" && (
+                  <FormField
+                    control={form.control}
+                    name="intervalHours"
+                    render={({ field }) => (
+                      <FormItem className="gap-0">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                            Every
+                          </span>
+                          <Input
+                            className="w-14 text-center font-mono"
+                            max={24}
+                            min={1}
+                            name={field.name}
+                            onBlur={field.onBlur}
+                            onChange={(event) =>
+                              field.onChange(
+                                Number.parseInt(event.target.value, 10) || 1
+                              )
+                            }
+                            ref={field.ref}
+                            size="lf"
+                            type="number"
+                            value={field.value}
+                            variant="lf"
+                          />
+                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                            hours
+                          </span>
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {(scheduleKind === "daily" || scheduleKind === "weekdays") && (
+                  <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                      <FormItem className="gap-0">
+                        <div className="flex items-center gap-2.5">
+                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                            At
+                          </span>
+                          <Input
+                            {...field}
+                            className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                            size="lf"
+                            type="time"
+                            variant="lf"
+                          />
+                          {scheduleKind === "weekdays" && (
+                            <span className="rounded-md border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
+                              Mon–Fri
+                            </span>
+                          )}
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+
+                {scheduleKind === "weekly" && (
+                  <FormField
+                    control={form.control}
+                    name="time"
+                    render={({ field }) => (
+                      <FormItem className="gap-0">
+                        <div className="flex flex-wrap items-center gap-2.5">
+                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                            On
+                          </span>
+                          <Select
+                            onValueChange={(value) =>
+                              form.setValue("dayOfWeek", Number(value), {
+                                shouldValidate: true,
+                              })
+                            }
+                            value={String(dayOfWeek)}
+                          >
+                            <SelectTrigger className="w-36" variant="lf">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {WEEKDAY_OPTIONS.map((day) => (
+                                <SelectItem
+                                  key={day.value}
+                                  value={String(day.value)}
+                                >
+                                  {day.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                            at
+                          </span>
+                          <Input
+                            {...field}
+                            className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                            size="lf"
+                            type="time"
+                            variant="lf"
+                          />
+                        </div>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
+              </div>
             </div>
 
-            <div className="flex justify-end gap-2 pt-4">
-              <Button asChild type="button" variant="ghost">
+            {isTimeBasedKind(scheduleKind) && (
+              <div className="space-y-2">
+                <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
+                  Timezone
+                </FormLabel>
+                <Select
+                  onValueChange={(value) =>
+                    form.setValue("timezone", value, { shouldValidate: true })
+                  }
+                  value={timezone}
+                >
+                  <SelectTrigger className="w-full" variant="lf">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {TIMEZONES.map((tz) => (
+                      <SelectItem key={tz} value={tz}>
+                        {tz}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="flex items-center justify-end gap-2.5 border-border border-t pt-5">
+              <Button
+                asChild
+                className="h-[30px] rounded-[9px]"
+                type="button"
+                variant="ghost"
+              >
                 <Link href={listHref}>Cancel</Link>
               </Button>
-              <Button disabled={isSubmitting} type="submit">
+              <Button
+                className="h-[30px] rounded-[9px]"
+                disabled={isSubmitting || !form.formState.isValid}
+                type="submit"
+              >
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="size-4 animate-spin" />
+                    <Loader2 className="size-3.5 animate-spin" />
                     Creating
                   </>
                 ) : (
