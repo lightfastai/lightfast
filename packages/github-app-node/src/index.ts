@@ -2,6 +2,8 @@ export { createGitHubAppJwt } from "./app-jwt";
 export { GitHubAppNodeError, type GitHubAppNodeErrorCode } from "./errors";
 export { createGitHubInstallationToken } from "./installation-tokens";
 export {
+  getGitHubAppInstallation,
+  type GitHubAppInstallation,
   type ListGitHubUserAccessibleInstallationsInput,
   listGitHubUserAccessibleInstallations,
   type VerifyGitHubUserInstallationInput,
@@ -19,6 +21,8 @@ export {
   getGitHubCommit,
   getGitHubRepository,
   getGitHubTree,
+  listGitHubInstallationRepositories,
+  type GitHubInstallationRepository,
 } from "./repositories";
 export { verifyGitHubInstallationRepository } from "./repository-installations";
 export {

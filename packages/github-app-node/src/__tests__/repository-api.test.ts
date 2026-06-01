@@ -4,6 +4,7 @@ import {
   getGitHubCommit,
   getGitHubRepository,
   getGitHubTree,
+  listGitHubInstallationRepositories,
 } from "../repositories";
 import { verifyGitHubInstallationRepository } from "../repository-installations";
 
@@ -284,5 +285,112 @@ describe("GitHub repository API helpers", () => {
         repo: ".lightfast",
       })
     ).rejects.toMatchObject({ code: "GITHUB_REPOSITORY_INACCESSIBLE" });
+  });
+
+  it("lists installation repositories with installation authentication", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        total_count: 1,
+        repositories: [
+          {
+            full_name: "lightfast-emulated/workspace",
+            id: 2002,
+            name: "workspace",
+            owner: { id: 20, login: "lightfast-emulated" },
+            private: true,
+          },
+        ],
+      })
+    );
+
+    await expect(
+      listGitHubInstallationRepositories({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        fetch: fetchMock,
+        installationToken: "ghs_installation",
+        page: 2,
+        perPage: 50,
+      })
+    ).resolves.toEqual({
+      repositories: [
+        {
+          fullName: "lightfast-emulated/workspace",
+          id: "2002",
+          name: "workspace",
+          ownerId: "20",
+          ownerLogin: "lightfast-emulated",
+          private: true,
+        },
+      ],
+      totalCount: 1,
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://github.lightfast.localhost/installation/repositories?per_page=50&page=2",
+      expect.objectContaining({
+        headers: expect.objectContaining({
+          authorization: "Bearer ghs_installation",
+        }),
+      })
+    );
+  });
+
+  it("defaults invalid installation repository pages to page 1", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({
+        repositories: [],
+      })
+    );
+
+    await listGitHubInstallationRepositories({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      fetch: fetchMock,
+      installationToken: "ghs_installation",
+      page: Number.NaN,
+    });
+
+    await listGitHubInstallationRepositories({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      fetch: fetchMock,
+      installationToken: "ghs_installation",
+      page: Number.POSITIVE_INFINITY,
+    });
+
+    await listGitHubInstallationRepositories({
+      apiBaseUrl: "https://github.lightfast.localhost",
+      fetch: fetchMock,
+      installationToken: "ghs_installation",
+      page: 0,
+    });
+
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      1,
+      "https://github.lightfast.localhost/installation/repositories?per_page=100&page=1",
+      expect.any(Object)
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      2,
+      "https://github.lightfast.localhost/installation/repositories?per_page=100&page=1",
+      expect.any(Object)
+    );
+    expect(fetchMock).toHaveBeenNthCalledWith(
+      3,
+      "https://github.lightfast.localhost/installation/repositories?per_page=100&page=1",
+      expect.any(Object)
+    );
+  });
+
+  it("rejects invalid installation repository responses", async () => {
+    const fetchMock = vi.fn(async () =>
+      Response.json({ repositories: [{ id: 1, owner: null }] })
+    );
+
+    await expect(
+      listGitHubInstallationRepositories({
+        apiBaseUrl: "https://github.lightfast.localhost",
+        fetch: fetchMock,
+        installationToken: "ghs_installation",
+      })
+    ).rejects.toMatchObject({ code: "GITHUB_API_RESPONSE_INVALID" });
   });
 });
