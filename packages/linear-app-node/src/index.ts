@@ -5,7 +5,7 @@ export {
   resolveLinearEndpoints,
 } from "./config";
 export { LinearAppNodeError, type LinearAppNodeErrorCode } from "./errors";
-export { listLinearMcpTools } from "./mcp";
+export { callLinearMcpTool, listLinearMcpTools } from "./mcp";
 export {
   getLinearViewerMetadata,
   type LinearConnectorMetadata,

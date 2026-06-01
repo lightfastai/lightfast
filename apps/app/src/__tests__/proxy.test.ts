@@ -145,6 +145,9 @@ function matchesPattern(pattern: string, pathname: string) {
   if (pattern === "/:slug/(.*)") {
     return /^\/[^/]+(?:\/.*)?$/.test(pathname);
   }
+  if (pattern === "/:slug/connectors(.*)") {
+    return /^\/[^/]+\/connectors(?:\/.*)?$/.test(pathname);
+  }
   if (pattern === "/:slug/settings(.*)") {
     return /^\/[^/]+\/settings(?:\/.*)?$/.test(pathname);
   }
@@ -248,6 +251,7 @@ describe("proxy Nemo composition", () => {
           "/:slug/signals(.*)",
           "/:slug/people(.*)",
           "/:slug/automations(.*)",
+          "/:slug/connectors(.*)",
           "/:slug/settings(.*)",
           "/:slug/tasks/bind(.*)",
           "/:slug/tasks/github/lightfast-repo(.*)",
@@ -440,6 +444,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/oauth/callback",
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
+    "/api/connectors/linear/oauth/callback",
   ])("runs Clerk middleware but does not enforce signed-in routing for %s", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: null,
@@ -462,6 +467,7 @@ describe("proxy pending-session route handling", () => {
     "/api/github/oauth/callback",
     "/api/github/user/oauth/callback",
     "/api/github/webhook",
+    "/api/connectors/linear/oauth/callback",
   ])("keeps GitHub proxy bypass public for expired tokens on %s", async (pathname) => {
     authMock.mockRejectedValue(new Error("Token expired"));
 
@@ -561,6 +567,7 @@ describe("proxy bound org product route gate", () => {
   it.each([
     "/acme/workspace",
     "/acme/runs/123",
+    "/acme/connectors",
   ])("redirects unbound org product routes from %s to the bind task", async (pathname) => {
     authMock.mockResolvedValue({
       orgId: "org_123",

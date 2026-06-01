@@ -59,6 +59,7 @@ const GITHUB_BINDING_ROUTE_PATTERNS = [
 ] as const;
 
 const PUBLIC_ROUTE_PATTERNS = [
+  "/api/connectors/linear/oauth/callback",
   "/api/oauth/(.*)",
   "/api/trpc/(.*)",
   "/api/health(.*)",
@@ -114,6 +115,7 @@ const ORG_ROUTE_POLICIES = [
   { clerkSync: true, pattern: "/:slug/signals(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/people(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/automations(.*)", setupExempt: false },
+  { clerkSync: true, pattern: "/:slug/connectors(.*)", setupExempt: false },
   { clerkSync: true, pattern: "/:slug/settings(.*)", setupExempt: true },
   { clerkSync: true, pattern: "/:slug/tasks/bind(.*)", setupExempt: true },
   {

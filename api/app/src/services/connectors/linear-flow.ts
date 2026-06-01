@@ -265,11 +265,13 @@ async function getConcurrentRefreshWinner(input: {
   };
 }
 
-async function getFreshAccessToken(input: {
-  config: ReturnType<typeof requireLinearConnectorConfig>;
+export async function getFreshLinearConnectorAccessToken(input: {
+  config?: ReturnType<typeof requireLinearConnectorConfig>;
   connection: OrgConnectorConnection;
   db: Database;
 }) {
+  const config = input.config ?? requireLinearConnectorConfig();
+
   if (!input.connection.encryptedAccessToken) {
     throw new LinearAppNodeError(
       "LINEAR_TOKEN_REFRESH_FAILED",
@@ -286,8 +288,8 @@ async function getFreshAccessToken(input: {
 
   const refreshToken = await decryptToken(input.connection.encryptedRefreshToken);
   const refreshed = await refreshLinearOAuthToken({
-    clientId: input.config.clientId,
-    clientSecret: input.config.clientSecret,
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
     refreshToken,
     refreshTokenExpiresIn: input.connection.refreshTokenExpiresAt
       ? Math.max(
@@ -298,7 +300,7 @@ async function getFreshAccessToken(input: {
           )
         )
       : undefined,
-    tokenUrl: input.config.endpoints.oauthTokenUrl,
+    tokenUrl: config.endpoints.oauthTokenUrl,
   });
 
   const encryptedAccessToken = await encryptedToken(refreshed.accessToken);
@@ -322,7 +324,7 @@ async function getFreshAccessToken(input: {
   if (!updated) {
     await revokeDroppedLinearTokens({
       clerkOrgId: input.connection.clerkOrgId,
-      config: input.config,
+      config,
       reason: "refresh_cas_lost",
       tokens: [
         { kind: "access", token: refreshed.accessToken },
@@ -540,7 +542,7 @@ export async function refreshLinearConnectorTools(ctx: ConnectorServiceContext) 
   let accessToken: string;
   let mcpEndpoint = connection.mcpEndpoint || config.endpoints.mcpEndpoint;
   try {
-    accessToken = await getFreshAccessToken({
+    accessToken = await getFreshLinearConnectorAccessToken({
       config,
       connection,
       db: ctx.db,

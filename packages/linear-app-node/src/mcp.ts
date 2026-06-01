@@ -68,6 +68,61 @@ export async function listLinearMcpTools(input: {
   }
 }
 
+export async function callLinearMcpTool(input: {
+  accessToken: string;
+  endpoint: string;
+  input?: Record<string, unknown>;
+  name: string;
+  nodeEnv?: string;
+  timeoutMs?: number;
+}): Promise<unknown> {
+  assertLinearEndpointAllowed({
+    defaultValue: DEFAULT_LINEAR_ENDPOINTS.mcpEndpoint,
+    nodeEnv: input.nodeEnv,
+    value: input.endpoint,
+  });
+
+  const client = new McpClient({
+    name: "lightfast-linear-app-node",
+    version: "0.1.0",
+  });
+  const transport = new StreamableHTTPClientTransport(new URL(input.endpoint), {
+    requestInit: {
+      headers: {
+        authorization: `Bearer ${input.accessToken}`,
+      },
+    },
+  });
+  const abortController = new AbortController();
+  const timeout = setTimeout(
+    () => abortController.abort(),
+    input.timeoutMs ?? DEFAULT_LINEAR_MCP_TIMEOUT_MS
+  );
+
+  try {
+    await withAbort(client.connect(transport), abortController.signal);
+    return await withAbort(
+      client.callTool({
+        arguments: input.input,
+        name: input.name,
+      }),
+      abortController.signal
+    );
+  } catch (error) {
+    if (error instanceof LinearAppNodeError) {
+      throw error;
+    }
+    throw new LinearAppNodeError(
+      "LINEAR_MCP_FAILED",
+      "Linear MCP tool call failed.",
+      error
+    );
+  } finally {
+    clearTimeout(timeout);
+    await closeMcpClient(client).catch(() => undefined);
+  }
+}
+
 async function closeMcpClient(client: { close(): Promise<void> }) {
   await Promise.race([
     client.close(),
