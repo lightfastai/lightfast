@@ -117,6 +117,7 @@ describe("org connector connection helpers", () => {
   it("exports a table with nullable encrypted tokens for revoked rows", async () => {
     const { orgConnectorConnections } = await import("../schema");
     expect(orgConnectorConnections.encryptedAccessToken.notNull).toBe(false);
+    expect(orgConnectorConnections.encryptedRefreshToken.notNull).toBe(false);
     expect(orgConnectorConnections.toolManifest.notNull).toBe(true);
   });
 
