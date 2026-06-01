@@ -99,14 +99,26 @@ function addLocalDays(parts: LocalDate, days: number): LocalDate {
   };
 }
 
+function getLocalWeekday(parts: LocalDate): number {
+  return new Date(
+    Date.UTC(parts.year, parts.month - 1, parts.day)
+  ).getUTCDay();
+}
+
 export function calculateNextRunAt(input: {
   after: Date;
   from?: Date;
   schedule: NormalizedSchedule;
   timezone?: string;
-}): Date {
-  if (input.schedule.kind === "hourly") {
-    const intervalMs = input.schedule.config.intervalHours * 60 * 60 * 1000;
+}): Date | null {
+  const { schedule } = input;
+
+  if (schedule.kind === "manual") {
+    return null;
+  }
+
+  if (schedule.kind === "hourly") {
+    const intervalMs = schedule.config.intervalHours * 60 * 60 * 1000;
     let next = new Date((input.from ?? input.after).getTime() + intervalMs);
     while (next <= input.after) {
       next = new Date(next.getTime() + intervalMs);
@@ -114,21 +126,34 @@ export function calculateNextRunAt(input: {
     return next;
   }
 
-  const [hours = 0, minutes = 0] = input.schedule.config.time
-    .split(":")
-    .map(Number);
+  // daily | weekdays | weekly all resolve a local HH:mm time in the timezone,
+  // then advance day-by-day until the slot is both in the future and lands on
+  // an acceptable weekday.
+  const [hours = 0, minutes = 0] = schedule.config.time.split(":").map(Number);
   const timezone = input.timezone ?? "UTC";
   const afterParts = getZonedParts(input.after, timezone);
-  let dateParts = {
+  let dateParts: LocalDate = {
     day: afterParts.day,
     month: afterParts.month,
     year: afterParts.year,
   };
+
+  const isAcceptableDay = (parts: LocalDate): boolean => {
+    if (schedule.kind === "weekdays") {
+      const weekday = getLocalWeekday(parts);
+      return weekday >= 1 && weekday <= 5;
+    }
+    if (schedule.kind === "weekly") {
+      return getLocalWeekday(parts) === schedule.config.dayOfWeek;
+    }
+    return true;
+  };
+
   let next = zonedTimeToUtc(
     { ...dateParts, hour: hours, minute: minutes },
     timezone
   );
-  if (next <= input.after) {
+  while (next <= input.after || !isAcceptableDay(dateParts)) {
     dateParts = addLocalDays(dateParts, 1);
     next = zonedTimeToUtc(
       { ...dateParts, hour: hours, minute: minutes },

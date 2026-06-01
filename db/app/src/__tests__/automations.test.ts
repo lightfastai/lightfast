@@ -19,7 +19,7 @@ describe("calculateNextRunAt", () => {
       },
     });
 
-    expect(next.toISOString()).toBe("2026-05-27T11:00:00.000Z");
+    expect(next?.toISOString()).toBe("2026-05-27T11:00:00.000Z");
   });
 
   it("returns the next daily UTC time when today's time has passed", () => {
@@ -31,7 +31,7 @@ describe("calculateNextRunAt", () => {
       },
     });
 
-    expect(next.toISOString()).toBe("2026-05-28T09:30:00.000Z");
+    expect(next?.toISOString()).toBe("2026-05-28T09:30:00.000Z");
   });
 
   it("returns today's daily UTC time when it is still in the future", () => {
@@ -43,7 +43,7 @@ describe("calculateNextRunAt", () => {
       },
     });
 
-    expect(next.toISOString()).toBe("2026-05-27T09:30:00.000Z");
+    expect(next?.toISOString()).toBe("2026-05-27T09:30:00.000Z");
   });
 
   it("returns the next daily time in the requested timezone", () => {
@@ -56,7 +56,7 @@ describe("calculateNextRunAt", () => {
       timezone: "Australia/Melbourne",
     });
 
-    expect(next.toISOString()).toBe("2026-05-27T23:30:00.000Z");
+    expect(next?.toISOString()).toBe("2026-05-27T23:30:00.000Z");
   });
 
   it("handles daylight saving transitions for daily schedules", () => {
@@ -69,7 +69,56 @@ describe("calculateNextRunAt", () => {
       timezone: "Australia/Melbourne",
     });
 
-    expect(next.toISOString()).toBe("2026-10-03T22:30:00.000Z");
+    expect(next?.toISOString()).toBe("2026-10-03T22:30:00.000Z");
+  });
+
+  it("returns null for manual schedules", () => {
+    expect(
+      calculateNextRunAt({
+        after: new Date("2026-05-27T10:15:00.000Z"),
+        schedule: { kind: "manual", config: {} },
+      })
+    ).toBeNull();
+  });
+
+  it("skips weekend days for weekdays schedules", () => {
+    // 2026-05-30 is a Saturday (UTC); next weekday run is Monday 2026-06-01.
+    const next = calculateNextRunAt({
+      after: new Date("2026-05-30T10:00:00.000Z"),
+      schedule: { kind: "weekdays", config: { time: "09:00" } },
+    });
+
+    expect(next?.toISOString()).toBe("2026-06-01T09:00:00.000Z");
+  });
+
+  it("returns today for a weekdays schedule when the weekday time is still ahead", () => {
+    // 2026-05-27 is a Wednesday (UTC); 09:00 is still ahead of 08:15.
+    const next = calculateNextRunAt({
+      after: new Date("2026-05-27T08:15:00.000Z"),
+      schedule: { kind: "weekdays", config: { time: "09:00" } },
+    });
+
+    expect(next?.toISOString()).toBe("2026-05-27T09:00:00.000Z");
+  });
+
+  it("returns the next matching weekday for weekly schedules", () => {
+    // 2026-05-27 is a Wednesday (UTC, getUTCDay() === 3); next Monday (1) is 2026-06-01.
+    const next = calculateNextRunAt({
+      after: new Date("2026-05-27T08:15:00.000Z"),
+      schedule: { kind: "weekly", config: { dayOfWeek: 1, time: "09:00" } },
+    });
+
+    expect(next?.toISOString()).toBe("2026-06-01T09:00:00.000Z");
+  });
+
+  it("returns today for a weekly schedule when today matches and the time is ahead", () => {
+    // 2026-05-27 is a Wednesday (getUTCDay() === 3); time 09:00 is ahead of 08:15.
+    const next = calculateNextRunAt({
+      after: new Date("2026-05-27T08:15:00.000Z"),
+      schedule: { kind: "weekly", config: { dayOfWeek: 3, time: "09:00" } },
+    });
+
+    expect(next?.toISOString()).toBe("2026-05-27T09:00:00.000Z");
   });
 });
 
