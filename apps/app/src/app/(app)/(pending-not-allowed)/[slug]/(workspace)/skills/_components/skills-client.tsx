@@ -1,19 +1,24 @@
 "use client";
 
-import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Search } from "lucide-react";
+import { useQueryState } from "nuqs";
 import { useDeferredValue, useMemo, useState } from "react";
-import { WorkspaceSurface } from "~/components/workspace-surface";
 import { useTRPC } from "~/trpc/react";
-import { SkillRow } from "./skill-row";
+import { SkillDialog } from "./skill-dialog";
+import { SkillGrid } from "./skill-grid";
 import { SkillStatus } from "./skill-status";
+import type { Skill } from "./skills-types";
 
-type SkillsListResult = AppRouterOutputs["org"]["workspace"]["skills"]["list"];
-type Skill = SkillsListResult["skills"][number];
 type SkillFilter = "all" | "invalid" | "valid";
 
 export function SkillsClient() {
@@ -23,9 +28,10 @@ export function SkillsClient() {
   );
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<SkillFilter>("all");
+  const [skillParam, setSkillParam] = useQueryState("skill");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
 
-  const skills = useMemo(
+  const visibleSkills = useMemo(
     () =>
       data.skills
         .filter((skill) => matchesFilter(skill, filter))
@@ -39,61 +45,79 @@ export function SkillsClient() {
     [data.skills, deferredQuery, filter]
   );
 
-  return (
-    <WorkspaceSurface
-      className="flex min-h-full flex-col bg-background"
-      variant="flush"
-    >
-      <div className="border-border/70 border-b px-6 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="font-semibold text-foreground text-lg">Skills</h1>
-            <SkillStatus freshness={data.freshness} />
-          </div>
-          {data.repositoryUrl && (
-            <Button asChild size="sm" variant="outline">
-              <a
-                href={data.repositoryUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                <ExternalLink className="size-3.5" />
-                Open in GitHub
-              </a>
-            </Button>
-          )}
-        </div>
+  const selectedSkill = skillParam
+    ? data.skills.find((skill) => skill.slug === skillParam)
+    : undefined;
 
-        <div className="mt-4 flex flex-wrap items-center gap-3">
+  return (
+    <div className="mx-auto w-full max-w-3xl px-6 py-10">
+      <div className="pt-6 text-center">
+        <h1 className="font-semibold text-3xl text-foreground tracking-[-0.02em]">
+          Make Lightfast work your way
+        </h1>
+        <p className="mx-auto mt-3 max-w-[30rem] text-muted-foreground text-sm">
+          Reusable instructions your agents load on demand, indexed from your
+          team&apos;s connected GitHub repository.
+        </p>
+      </div>
+
+      <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="relative min-w-0 flex-1">
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             aria-label="Search skills"
-            className="max-w-sm"
-            onChange={(event) => setQuery(event.target.value)}
+            className="pl-8"
+            onChange={(event) => setQuery(event.currentTarget.value)}
             placeholder="Search skills"
+            size="lf"
             value={query}
+            variant="lf"
           />
-          <Tabs
-            onValueChange={(value) => setFilter(value as SkillFilter)}
-            value={filter}
-          >
-            <TabsList>
-              <TabsTrigger value="all">All</TabsTrigger>
-              <TabsTrigger value="invalid">Invalid</TabsTrigger>
-              <TabsTrigger value="valid">Valid</TabsTrigger>
-            </TabsList>
-          </Tabs>
         </div>
+        <Select
+          onValueChange={(value) => setFilter(value as SkillFilter)}
+          value={filter}
+        >
+          <SelectTrigger
+            aria-label="Filter skills"
+            className="h-7 shrink-0 rounded-[9px] sm:w-32"
+            size="sm"
+          >
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="valid">Valid</SelectItem>
+            <SelectItem value="invalid">Invalid</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <SkillStatus freshness={data.freshness} />
+        {data.repositoryUrl && (
+          <Button asChild size="lf" variant="ghost">
+            <a
+              href={data.repositoryUrl}
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              Open repository
+              <ExternalLink className="size-3.5" />
+            </a>
+          </Button>
+        )}
       </div>
 
       {data.indexDiagnostics.length > 0 && (
-        <div className="border-border/70 border-b bg-muted/20 px-6 py-3">
+        <div className="mt-4 rounded-[9px] border border-border bg-muted/20 px-3 py-2">
           <p className="font-medium text-foreground text-sm">
             Index diagnostics
           </p>
-          <ul className="mt-2 space-y-1">
+          <ul className="mt-1 space-y-1">
             {data.indexDiagnostics.map((diagnostic) => (
               <li
-                className="text-muted-foreground text-sm"
+                className="text-muted-foreground text-xs"
                 key={`${diagnostic.code}:${diagnostic.message}`}
               >
                 {diagnostic.message}
@@ -103,24 +127,28 @@ export function SkillsClient() {
         </div>
       )}
 
-      <div className="flex flex-col">
-        {skills.length === 0 ? (
-          <div className="px-6 py-12 text-muted-foreground text-sm">
-            {data.skills.length === 0
-              ? "No skills indexed."
-              : "No matching skills."}
-          </div>
-        ) : (
-          skills.map((skill) => (
-            <SkillRow
-              key={skill.slug}
-              repositoryUrl={data.repositoryUrl}
-              skill={skill}
-            />
-          ))
-        )}
-      </div>
-    </WorkspaceSurface>
+      <SkillGrid
+        emptyState={
+          data.skills.length === 0
+            ? "No skills indexed."
+            : "No matching skills."
+        }
+        onSelect={(slug) => {
+          void setSkillParam(slug);
+        }}
+        skills={visibleSkills}
+      />
+
+      <SkillDialog
+        onOpenChange={(open) => {
+          if (!open) {
+            void setSkillParam(null);
+          }
+        }}
+        repositoryUrl={data.repositoryUrl}
+        skill={selectedSkill}
+      />
+    </div>
   );
 }
 
@@ -133,16 +161,7 @@ function matchesQuery(skill: Skill, query: string): boolean {
     return true;
   }
 
-  return [
-    skill.slug,
-    skill.name ?? "",
-    skill.description ?? "",
-    skill.path,
-    ...skill.diagnostics.map((diagnostic) => diagnostic.message),
-    ...skill.resources.assets,
-    ...skill.resources.references,
-    ...skill.resources.scripts,
-  ]
+  return [skill.slug, skill.name ?? "", skill.description ?? "", skill.path]
     .join(" ")
     .toLowerCase()
     .includes(query);

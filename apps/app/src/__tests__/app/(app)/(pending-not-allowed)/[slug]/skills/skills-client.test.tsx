@@ -1,24 +1,27 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { createListData, createSkill } from "./fixtures";
 
 const listQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "workspace", "skills", "list"],
 }));
 
-let listData = createListData({
-  skills: [createSkill({ slug: "code-review" })],
+let listData = createListData();
+
+let skillParam: string | null = null;
+const setSkillParamMock = vi.fn((next: string | null) => {
+  skillParam = next;
 });
+
+vi.mock("nuqs", () => ({
+  useQueryState: () => [skillParam, setSkillParamMock] as const,
+}));
 
 vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     org: {
       workspace: {
-        skills: {
-          list: {
-            queryOptions: listQueryOptionsMock,
-          },
-        },
+        skills: { list: { queryOptions: listQueryOptionsMock } },
       },
     },
   }),
@@ -26,16 +29,6 @@ vi.mock("~/trpc/react", () => ({
 
 vi.mock("@tanstack/react-query", () => ({
   useSuspenseQuery: () => ({ data: listData }),
-}));
-
-vi.mock("next/navigation", () => ({
-  useParams: () => ({ slug: "acme" }),
-}));
-
-vi.mock("next/link", () => ({
-  default: ({ children, href }: { children?: ReactNode; href: string }) => (
-    <a href={href}>{children}</a>
-  ),
 }));
 
 vi.mock(
@@ -52,14 +45,24 @@ const { SkillsClient } = await import(
 );
 
 beforeEach(() => {
-  listData = createListData({
-    skills: [createSkill({ slug: "code-review" })],
-  });
+  listData = createListData();
+  skillParam = null;
+  setSkillParamMock.mockClear();
   listQueryOptionsMock.mockClear();
 });
 
 describe("SkillsClient", () => {
-  it("labels search input and shows a filtered empty state", () => {
+  it("renders the hero and a Team grid cell per skill", () => {
+    render(<SkillsClient />);
+
+    expect(
+      screen.getByRole("heading", { name: "Make Lightfast work your way" })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Team")).toBeInTheDocument();
+    expect(screen.getByText("code-review")).toBeInTheDocument();
+  });
+
+  it("filters to a no-match empty state when the search misses", () => {
     render(<SkillsClient />);
 
     fireEvent.change(screen.getByRole("textbox", { name: "Search skills" }), {
@@ -77,56 +80,33 @@ describe("SkillsClient", () => {
 
     expect(screen.getByText("No skills indexed.")).toBeInTheDocument();
   });
+
+  it("marks invalid skills in the grid", () => {
+    listData = createListData({
+      skills: [createSkill({ slug: "broken", validationStatus: "invalid" })],
+    });
+
+    render(<SkillsClient />);
+
+    expect(screen.getByText("Invalid")).toBeInTheDocument();
+  });
+
+  it("opens the dialog by setting the skill query param", () => {
+    render(<SkillsClient />);
+
+    fireEvent.click(screen.getByRole("button", { name: /code-review/i }));
+
+    expect(setSkillParamMock).toHaveBeenCalledWith("code-review");
+  });
+
+  it("renders the dialog for the skill named in the query param", () => {
+    skillParam = "code-review";
+
+    render(<SkillsClient />);
+
+    expect(
+      screen.getByRole("heading", { name: /code-review/i })
+    ).toBeInTheDocument();
+    expect(screen.getByText("Markdown preview")).toBeInTheDocument();
+  });
 });
-
-function createListData(input: { skills: ReturnType<typeof createSkill>[] }) {
-  return {
-    freshness: {
-      checkedAt: new Date("2026-06-01T00:00:00.000Z"),
-      errorCode: null,
-      errorMessage: null,
-      githubCommitSha: "a".repeat(40),
-      indexedAt: new Date("2026-06-01T00:00:00.000Z"),
-      indexedCommitSha: "a".repeat(40),
-      status: "fresh" as const,
-    },
-    indexDiagnostics: [],
-    repositoryUrl: "https://github.com/acme/.lightfast",
-    skills: input.skills,
-  };
-}
-
-function createSkill(overrides: Partial<ReturnType<typeof baseSkill>> = {}) {
-  return {
-    ...baseSkill(),
-    ...overrides,
-  };
-}
-
-function baseSkill() {
-  const now = new Date("2026-06-01T00:00:00.000Z");
-  return {
-    allowedTools: null,
-    bodyMarkdown: "Body",
-    compatibility: null,
-    contentSha: "content-sha",
-    contentSize: 100,
-    createdAt: now,
-    description: "Review code changes",
-    diagnostics: [],
-    id: 1,
-    indexedCommitSha: "a".repeat(40),
-    license: null,
-    metadata: {},
-    name: "code-review",
-    nonStandardResourceCount: 0,
-    path: "skills/code-review/SKILL.md",
-    resources: { assets: [], references: [], scripts: [], truncated: false },
-    resourcesTruncated: 0 as const,
-    skillIndexStateId: 1,
-    slug: "code-review",
-    sourceMarkdown: "---\nname: code-review\n---\nBody",
-    updatedAt: now,
-    validationStatus: "valid" as const,
-  };
-}
