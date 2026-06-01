@@ -33,11 +33,10 @@ export async function POST(req: Request) {
       const result = await rotateMcpRefreshTokenSecret(db, {
         currentRefreshToken: requireField(body, "refresh_token"),
         expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        issuer: oauthIssuer(),
+        jwtSecret: env.SERVICE_JWT_SECRET,
       });
-      return oauthJson({
-        refresh_token: result.refresh_token,
-        token_type: "Bearer",
-      });
+      return oauthJson(result);
     }
     throw new McpOAuthError(
       "unsupported_grant_type",

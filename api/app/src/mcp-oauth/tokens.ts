@@ -6,6 +6,7 @@ import type {
 import {
   consumeMcpAuthorizationCode,
   createMcpRefreshToken,
+  getMcpOauthGrantByPublicId,
   revokeMcpOauthGrant,
   revokeMcpRefreshTokenByHash,
   rotateMcpRefreshToken as rotateStoredMcpRefreshToken,
@@ -198,13 +199,15 @@ function validateAuthorizationCodeForExchange(
 }
 
 export interface RotateMcpRefreshTokenSecretInput {
+  audience?: string;
   currentRefreshToken: string;
   expiresAt: Date;
+  issuer: string;
+  jwtSecret: string;
+  now?: Date;
 }
 
-export interface RotateMcpRefreshTokenSecretResult {
-  grant_id: string;
-  refresh_token: string;
+export interface RotateMcpRefreshTokenSecretResult extends McpTokenResponse {
   reuseDetected: false;
 }
 
@@ -217,6 +220,7 @@ export async function rotateMcpRefreshTokenSecret(
     currentTokenHash: hashOpaqueToken(input.currentRefreshToken),
     expiresAt: input.expiresAt,
     nextTokenHash: hashOpaqueToken(nextRefreshToken),
+    now: input.now,
   });
 
   if (result.reuseDetected) {
@@ -231,10 +235,29 @@ export async function rotateMcpRefreshTokenSecret(
     throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
   }
 
+  const grant = await getMcpOauthGrantByPublicId(db, {
+    publicId: result.refreshToken.grantPublicId,
+  });
+  if (!grant || grant.status !== "active") {
+    throw new McpOAuthError("invalid_grant", "Refresh token is invalid.");
+  }
+
+  const accessGrant = grantFromRefreshToken(result.refreshToken, grant);
+  const accessToken = await signMcpAccessToken({
+    audience: input.audience ?? grant.resource,
+    grant: accessGrant,
+    issuer: input.issuer,
+    jwtSecret: input.jwtSecret,
+  });
+
   return {
-    grant_id: result.refreshToken.grantPublicId,
+    access_token: accessToken,
+    expires_in: MCP_ACCESS_TOKEN_TTL_SECONDS,
+    grant_id: accessGrant.publicId,
     refresh_token: nextRefreshToken,
     reuseDetected: false,
+    scope: accessGrant.scopes.join(" "),
+    token_type: "Bearer",
   };
 }
 
@@ -259,6 +282,19 @@ function grantFromAuthorizationCode(
     clientPublicId: grant.clientPublicId ?? code.clientPublicId,
     clerkOrgId: grant.clerkOrgId ?? code.clerkOrgId,
     clerkUserId: grant.clerkUserId ?? code.clerkUserId,
+    publicId: grant.publicId,
+    scopes: grant.scopes,
+  };
+}
+
+function grantFromRefreshToken(
+  token: { clientPublicId: string; clerkOrgId: string; clerkUserId: string },
+  grant: McpOauthGrant
+): McpAccessTokenGrant {
+  return {
+    clientPublicId: grant.clientPublicId ?? token.clientPublicId,
+    clerkOrgId: grant.clerkOrgId ?? token.clerkOrgId,
+    clerkUserId: grant.clerkUserId ?? token.clerkUserId,
     publicId: grant.publicId,
     scopes: grant.scopes,
   };

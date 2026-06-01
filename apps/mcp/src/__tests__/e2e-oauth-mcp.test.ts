@@ -23,6 +23,7 @@ const getActiveMcpOauthGrantMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
 const getMcpOauthClientByClientIdMock = vi.fn();
 const getMcpOauthClientByRegistrationTokenHashMock = vi.fn();
+const getMcpOauthGrantByPublicIdMock = vi.fn();
 const revokeMcpOauthGrantMock = vi.fn();
 const revokeMcpRefreshTokenByHashMock = vi.fn();
 const rotateMcpRefreshTokenMock = vi.fn();
@@ -38,6 +39,7 @@ vi.mock("@db/app", () => ({
   getMcpOauthClientByClientId: getMcpOauthClientByClientIdMock,
   getMcpOauthClientByRegistrationTokenHash:
     getMcpOauthClientByRegistrationTokenHashMock,
+  getMcpOauthGrantByPublicId: getMcpOauthGrantByPublicIdMock,
   revokeMcpOauthGrant: revokeMcpOauthGrantMock,
   revokeMcpRefreshTokenByHash: revokeMcpRefreshTokenByHashMock,
   rotateMcpRefreshToken: rotateMcpRefreshTokenMock,
@@ -84,6 +86,7 @@ beforeEach(() => {
   getActiveOrgBindingMock.mockReset();
   getMcpOauthClientByClientIdMock.mockReset();
   getMcpOauthClientByRegistrationTokenHashMock.mockReset();
+  getMcpOauthGrantByPublicIdMock.mockReset();
   revokeMcpOauthGrantMock.mockReset();
   revokeMcpRefreshTokenByHashMock.mockReset();
   rotateMcpRefreshTokenMock.mockReset();
@@ -120,6 +123,10 @@ beforeEach(() => {
   );
   getMcpOauthClientByRegistrationTokenHashMock.mockImplementation(
     async () => undefined
+  );
+  getMcpOauthGrantByPublicIdMock.mockImplementation(
+    async (_db: Database, input: { publicId: string }) =>
+      grantsById.get(input.publicId)
   );
 
   createMcpAuthorizationCodeMock.mockImplementation(
@@ -402,6 +409,8 @@ describe("hosted MCP OAuth integration smoke", () => {
     const rotated = await rotateMcpRefreshTokenSecret(db, {
       currentRefreshToken: tokens.refresh_token,
       expiresAt: new Date("2026-07-01T00:00:00.000Z"),
+      issuer,
+      jwtSecret,
     });
     expect(rotated).toMatchObject({
       grant_id: "mcp_grant_test",
@@ -419,6 +428,8 @@ describe("hosted MCP OAuth integration smoke", () => {
       rotateMcpRefreshTokenSecret(db, {
         currentRefreshToken: rotated.refresh_token,
         expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+        issuer,
+        jwtSecret,
       })
     ).rejects.toMatchObject({
       error: "invalid_grant",

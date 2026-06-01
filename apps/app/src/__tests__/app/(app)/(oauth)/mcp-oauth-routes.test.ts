@@ -5,6 +5,7 @@ const getMcpOAuthJwksMock = vi.fn();
 const getRegisteredMcpOAuthClientMock = vi.fn();
 const registerMcpOAuthClientMock = vi.fn();
 const revokeMcpRefreshTokenSecretMock = vi.fn();
+const rotateMcpRefreshTokenSecretMock = vi.fn();
 
 vi.mock("@api/app", () => ({
   MCP_SUPPORTED_SCOPES: [
@@ -17,6 +18,7 @@ vi.mock("@api/app", () => ({
   getRegisteredMcpOAuthClient: getRegisteredMcpOAuthClientMock,
   registerMcpOAuthClient: registerMcpOAuthClientMock,
   revokeMcpRefreshTokenSecret: revokeMcpRefreshTokenSecretMock,
+  rotateMcpRefreshTokenSecret: rotateMcpRefreshTokenSecretMock,
 }));
 
 vi.mock("@db/app/client", () => ({
@@ -36,6 +38,7 @@ beforeEach(() => {
   getRegisteredMcpOAuthClientMock.mockReset();
   registerMcpOAuthClientMock.mockReset();
   revokeMcpRefreshTokenSecretMock.mockReset();
+  rotateMcpRefreshTokenSecretMock.mockReset();
 });
 
 describe("MCP OAuth route handlers", () => {
@@ -156,6 +159,44 @@ describe("MCP OAuth route handlers", () => {
       expect.objectContaining({
         clientId: "mcp_client_test",
         code: "mcp_code_secret",
+        jwtSecret: "test-service-jwt-secret-at-least-32-chars",
+      })
+    );
+  });
+
+  it("rotates a refresh token and returns a new access token", async () => {
+    rotateMcpRefreshTokenSecretMock.mockResolvedValueOnce({
+      access_token: "access.jwt",
+      expires_in: 900,
+      grant_id: "mcp_grant_test",
+      refresh_token: "mcp_refresh_secret_new",
+      scope: "mcp:signals:write",
+      token_type: "Bearer",
+    });
+    const { POST } = await import("~/app/(app)/(oauth)/oauth/token/route");
+
+    const res = await POST(
+      new Request("https://app.lightfast.localhost/oauth/token", {
+        body: JSON.stringify({
+          grant_type: "refresh_token",
+          refresh_token: "mcp_refresh_secret_old",
+        }),
+        method: "POST",
+      })
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      access_token: "access.jwt",
+      expires_in: 900,
+      refresh_token: "mcp_refresh_secret_new",
+      token_type: "Bearer",
+    });
+    expect(rotateMcpRefreshTokenSecretMock).toHaveBeenCalledWith(
+      expect.anything(),
+      expect.objectContaining({
+        currentRefreshToken: "mcp_refresh_secret_old",
+        issuer: "https://app.lightfast.localhost",
         jwtSecret: "test-service-jwt-secret-at-least-32-chars",
       })
     );

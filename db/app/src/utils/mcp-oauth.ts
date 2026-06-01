@@ -1,5 +1,5 @@
 import type { McpScope } from "@repo/api-contract";
-import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -497,39 +497,47 @@ export async function rotateMcpRefreshToken(
   input: RotateMcpRefreshTokenInput
 ): Promise<RotateMcpRefreshTokenResult> {
   return await db.transaction(async (tx) => {
+    const now = input.now ?? new Date();
     const current = await getMcpRefreshTokenByHash(tx, {
       tokenHash: input.currentTokenHash,
     });
     if (!current) {
-      return { refreshToken: undefined, reuseDetected: true };
+      return { refreshToken: undefined, reuseDetected: false };
+    }
+
+    if (current.status === "active" && current.expiresAt <= now) {
+      return { refreshToken: undefined, reuseDetected: false };
     }
 
     if (current.status !== "active") {
-      const reuseDetectedAt = input.now ?? new Date();
-      await tx
-        .update(mcpOauthRefreshTokens)
-        .set({
-          reuseDetectedAt,
-          status: "reuse_detected",
-        })
-        .where(eq(mcpOauthRefreshTokens.tokenHash, input.currentTokenHash));
-      return {
-        refreshToken: {
-          ...current,
-          reuseDetectedAt,
-          status: "reuse_detected",
-        },
-        reuseDetected: true,
-      };
+      return await markMcpRefreshTokenReuseDetected(tx, current, now);
     }
 
-    await tx
+    const rotateResult = await tx
       .update(mcpOauthRefreshTokens)
       .set({
         rotatedToTokenHash: input.nextTokenHash,
         status: "rotated",
       })
-      .where(eq(mcpOauthRefreshTokens.tokenHash, input.currentTokenHash));
+      .where(
+        and(
+          eq(mcpOauthRefreshTokens.tokenHash, input.currentTokenHash),
+          eq(mcpOauthRefreshTokens.status, "active"),
+          gt(mcpOauthRefreshTokens.expiresAt, now)
+        )
+      );
+    if (getRowsAffected(rotateResult) === 0) {
+      const latest = await getMcpRefreshTokenByHash(tx, {
+        tokenHash: input.currentTokenHash,
+      });
+      if (!latest || (latest.status === "active" && latest.expiresAt <= now)) {
+        return { refreshToken: undefined, reuseDetected: false };
+      }
+      if (latest.status !== "active") {
+        return await markMcpRefreshTokenReuseDetected(tx, latest, now);
+      }
+      return { refreshToken: undefined, reuseDetected: false };
+    }
 
     await tx.insert(mcpOauthRefreshTokens).values({
       clientPublicId: current.clientPublicId,
@@ -550,6 +558,28 @@ export async function rotateMcpRefreshToken(
     }
     return { refreshToken: next, reuseDetected: false };
   });
+}
+
+async function markMcpRefreshTokenReuseDetected(
+  db: Database,
+  token: McpOauthRefreshToken,
+  reuseDetectedAt: Date
+): Promise<RotateMcpRefreshTokenResult> {
+  await db
+    .update(mcpOauthRefreshTokens)
+    .set({
+      reuseDetectedAt,
+      status: "reuse_detected",
+    })
+    .where(eq(mcpOauthRefreshTokens.tokenHash, token.tokenHash));
+  return {
+    refreshToken: {
+      ...token,
+      reuseDetectedAt,
+      status: "reuse_detected",
+    },
+    reuseDetected: true,
+  };
 }
 
 async function getMcpRefreshTokenByHash(

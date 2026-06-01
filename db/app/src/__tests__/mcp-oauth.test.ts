@@ -122,7 +122,10 @@ function makeAuditEvent(overrides: Partial<McpAuditEvent> = {}): McpAuditEvent {
   };
 }
 
-function makeQueuedDb(results: unknown[][] = []) {
+function makeQueuedDb(
+  results: unknown[][] = [],
+  updateResults: Array<{ rowsAffected: number }> = []
+) {
   const insertedValues: unknown[] = [];
   const updateValues: unknown[] = [];
   const orderBy = vi.fn(() => Promise.resolve(results.shift() ?? []));
@@ -134,7 +137,7 @@ function makeQueuedDb(results: unknown[][] = []) {
   });
   const set = vi.fn((value: unknown) => {
     updateValues.push(value);
-    return { where: vi.fn(() => ({ rowsAffected: 1 })) };
+    return { where: vi.fn(() => updateResults.shift() ?? { rowsAffected: 1 }) };
   });
   const tx = {
     insert: vi.fn(() => ({ values })),
@@ -318,6 +321,62 @@ describe("mcp oauth repositories", () => {
         }),
         expect.objectContaining({
           reuseDetectedAt: expect.any(Date),
+          status: "reuse_detected",
+        }),
+      ])
+    );
+  });
+
+  it("does not rotate expired active refresh tokens", async () => {
+    const { db, insertedValues, updateValues } = makeQueuedDb([
+      [
+        makeRefreshToken({
+          expiresAt: new Date("2026-05-31T23:59:59.000Z"),
+          status: "active",
+        }),
+      ],
+    ]);
+
+    await expect(
+      rotateMcpRefreshToken(db, {
+        currentTokenHash: "refresh_hash_old",
+        expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+        nextTokenHash: "refresh_hash_new",
+        now: new Date("2026-06-01T00:00:00.000Z"),
+      })
+    ).resolves.toEqual({ refreshToken: undefined, reuseDetected: false });
+
+    expect(insertedValues).toHaveLength(0);
+    expect(updateValues).toHaveLength(0);
+  });
+
+  it("marks reuse when a guarded rotation loses a race", async () => {
+    const { db, insertedValues, updateValues } = makeQueuedDb(
+      [
+        [makeRefreshToken({ status: "active" })],
+        [makeRefreshToken({ status: "rotated" })],
+      ],
+      [{ rowsAffected: 0 }, { rowsAffected: 1 }]
+    );
+
+    await expect(
+      rotateMcpRefreshToken(db, {
+        currentTokenHash: "refresh_hash_old",
+        expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+        nextTokenHash: "refresh_hash_new",
+        now: new Date("2026-06-01T00:00:00.000Z"),
+      })
+    ).resolves.toMatchObject({ reuseDetected: true });
+
+    expect(insertedValues).toHaveLength(0);
+    expect(updateValues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          rotatedToTokenHash: "refresh_hash_new",
+          status: "rotated",
+        }),
+        expect.objectContaining({
+          reuseDetectedAt: new Date("2026-06-01T00:00:00.000Z"),
           status: "reuse_detected",
         }),
       ])

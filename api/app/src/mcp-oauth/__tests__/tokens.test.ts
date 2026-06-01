@@ -4,8 +4,10 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const rotateMcpRefreshTokenMock = vi.fn();
 const revokeMcpOauthGrantMock = vi.fn();
+const getMcpOauthGrantByPublicIdMock = vi.fn();
 
 vi.mock("@db/app", () => ({
+  getMcpOauthGrantByPublicId: getMcpOauthGrantByPublicIdMock,
   revokeMcpOauthGrant: revokeMcpOauthGrantMock,
   rotateMcpRefreshToken: rotateMcpRefreshTokenMock,
 }));
@@ -44,8 +46,18 @@ function refreshToken(
 }
 
 beforeEach(() => {
+  getMcpOauthGrantByPublicIdMock.mockReset();
   rotateMcpRefreshTokenMock.mockReset();
   revokeMcpOauthGrantMock.mockReset();
+  getMcpOauthGrantByPublicIdMock.mockResolvedValue({
+    clientPublicId: "mcp_client_test",
+    clerkOrgId: "org_test",
+    clerkUserId: "user_test",
+    publicId: "mcp_grant_test",
+    resource,
+    scopes: ["mcp:signals:read"],
+    status: "active",
+  });
   rotateMcpRefreshTokenMock.mockResolvedValue({
     refreshToken: refreshToken({ tokenHash: "refresh_hash_new" }),
     reuseDetected: false,
@@ -112,10 +124,17 @@ describe("mcp refresh tokens", () => {
       rotateMcpRefreshTokenSecret(db, {
         currentRefreshToken: "refresh_old",
         expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
       })
     ).resolves.toMatchObject({
+      access_token: expect.any(String),
+      expires_in: 900,
+      grant_id: "mcp_grant_test",
       refresh_token: expect.stringMatching(/^mcp_refresh_/),
       reuseDetected: false,
+      scope: "mcp:signals:read",
+      token_type: "Bearer",
     });
 
     expect(rotateMcpRefreshTokenMock).toHaveBeenCalledWith(
@@ -140,6 +159,8 @@ describe("mcp refresh tokens", () => {
       rotateMcpRefreshTokenSecret(db, {
         currentRefreshToken: "refresh_old",
         expiresAt: new Date("2026-08-01T00:00:00.000Z"),
+        issuer: "https://app.lightfast.localhost",
+        jwtSecret: "test-secret",
       })
     ).rejects.toEqual(
       new McpOAuthError("invalid_grant", "Refresh token reuse detected.")
