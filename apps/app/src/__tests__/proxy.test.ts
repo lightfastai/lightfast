@@ -190,6 +190,28 @@ beforeEach(() => {
   });
 });
 
+describe("proxy retired early-access redirects", () => {
+  it("permanently redirects /early-access to sign-up without query params", async () => {
+    const { response } = await invoke("/early-access?email=u%40example.com");
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/sign-up"
+    );
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("permanently redirects nested early-access paths to sign-up", async () => {
+    const { response } = await invoke("/early-access/thanks?success=true");
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/sign-up"
+    );
+    expect(authMock).not.toHaveBeenCalled();
+  });
+});
+
 describe("proxy Nemo composition", () => {
   it("runs microfrontends before the Clerk proxy through Nemo", () => {
     expect(createNEMOMock).toHaveBeenCalledTimes(1);

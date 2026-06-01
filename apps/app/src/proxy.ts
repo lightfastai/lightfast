@@ -57,7 +57,6 @@ const GITHUB_BINDING_ROUTE_PATTERNS = [
 ] as const;
 
 const PUBLIC_ROUTE_PATTERNS = [
-  "/early-access(.*)",
   "/api/oauth/(.*)",
   "/api/trpc/(.*)",
   "/api/health(.*)",
@@ -69,6 +68,7 @@ const PUBLIC_ROUTE_PATTERNS = [
 ] as const;
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
+const isRetiredEarlyAccessRoute = createRouteMatcher(["/early-access(.*)"]);
 
 // API routes that handle their own auth at the route handler level.
 // Each route is responsible for its own auth + CORS (the Clerk middleware
@@ -360,6 +360,12 @@ const nemoProxy = createNEMO(
 );
 
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (isRetiredEarlyAccessRoute(req)) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/sign-up", req.url), 308)
+    );
+  }
+
   if (isApiRoute(req)) {
     return applySecurityHeaders(NextResponse.next());
   }
