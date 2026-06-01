@@ -17,15 +17,7 @@ import {
   useFormCompat,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@repo/ui/components/ui/select";
 import { toast } from "@repo/ui/components/ui/sonner";
-import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
@@ -37,6 +29,7 @@ import { useEffect } from "react";
 import { z } from "zod";
 import { useTRPC } from "~/trpc/react";
 import { upsertInList } from "../../_components/automations-cache";
+import { LfSelect } from "../../_components/lf-select";
 import {
   isTimeBasedKind,
   SCHEDULE_KINDS,
@@ -229,28 +222,17 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
                 Schedule
               </FormLabel>
-              <Tabs
-                onValueChange={(value) =>
-                  form.setValue("scheduleKind", value as ScheduleKind, {
-                    shouldValidate: true,
-                  })
-                }
-                value={scheduleKind}
-              >
-                <TabsList variant="underline">
-                  {SCHEDULE_KINDS.map((kind) => (
-                    <TabsTrigger
-                      key={kind.value}
-                      value={kind.value}
-                      variant="underline"
-                    >
-                      {kind.label}
-                    </TabsTrigger>
-                  ))}
-                </TabsList>
-              </Tabs>
-
-              <div className="pt-3">
+              <div className="flex flex-wrap items-center gap-2.5">
+                <LfSelect
+                  className="w-36"
+                  onValueChange={(value) =>
+                    form.setValue("scheduleKind", value as ScheduleKind, {
+                      shouldValidate: true,
+                    })
+                  }
+                  options={SCHEDULE_KINDS}
+                  value={scheduleKind}
+                />
                 {scheduleKind === "manual" && (
                   <p className="font-mono text-[10.5px] text-muted-foreground">
                     Runs only when triggered — no automatic schedule.
@@ -333,28 +315,19 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                           <span className="font-mono text-[10.5px] text-muted-foreground">
                             On
                           </span>
-                          <Select
+                          <LfSelect
+                            className="w-36"
                             onValueChange={(value) =>
                               form.setValue("dayOfWeek", Number(value), {
                                 shouldValidate: true,
                               })
                             }
+                            options={WEEKDAY_OPTIONS.map((day) => ({
+                              label: day.label,
+                              value: String(day.value),
+                            }))}
                             value={String(dayOfWeek)}
-                          >
-                            <SelectTrigger className="w-36" variant="lf">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {WEEKDAY_OPTIONS.map((day) => (
-                                <SelectItem
-                                  key={day.value}
-                                  value={String(day.value)}
-                                >
-                                  {day.label}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
+                          />
                           <span className="font-mono text-[10.5px] text-muted-foreground">
                             at
                           </span>
@@ -379,23 +352,14 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                 <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
                   Timezone
                 </FormLabel>
-                <Select
+                <LfSelect
+                  className="w-full"
                   onValueChange={(value) =>
                     form.setValue("timezone", value, { shouldValidate: true })
                   }
+                  options={TIMEZONES.map((tz) => ({ label: tz, value: tz }))}
                   value={timezone}
-                >
-                  <SelectTrigger className="w-full" variant="lf">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {TIMEZONES.map((tz) => (
-                      <SelectItem key={tz} value={tz}>
-                        {tz}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                />
               </div>
             )}
 
