@@ -180,6 +180,7 @@ export const githubPushWebhookPayloadSchema = z.object({
   installation: githubWebhookInstallationSchema,
   ref: z.string().min(1),
   repository: githubWebhookRepositorySchema,
+  size: z.number().int().nonnegative().optional(),
 });
 export type GitHubPushWebhookPayload = z.infer<
   typeof githubPushWebhookPayloadSchema
@@ -189,6 +190,7 @@ export const normalizedGitHubPushWebhookSchema = z.object({
   afterSha: githubSha1Schema,
   beforeSha: githubSha1Schema,
   changedPaths: z.array(z.string().min(1)),
+  changedPathsComplete: z.boolean(),
   providerInstallationId: z.string().min(1),
   providerRepositoryId: z.string().min(1),
   ref: z.string().min(1),
@@ -215,6 +217,8 @@ export function normalizeGitHubPushWebhookPayload(
     afterSha: payload.after,
     beforeSha: payload.before,
     changedPaths,
+    changedPathsComplete:
+      payload.size === undefined || payload.commits.length >= payload.size,
     providerInstallationId: String(payload.installation.id),
     providerRepositoryId: String(payload.repository.id),
     ref: payload.ref,

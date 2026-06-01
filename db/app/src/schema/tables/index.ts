@@ -56,6 +56,16 @@ export {
   signals,
 } from "./signals";
 export {
+  type InsertSkillIndexEntry,
+  type InsertSkillIndexState,
+  type ResourcesTruncatedFlag,
+  type SkillIndexEntry,
+  type SkillIndexEntryMetadata,
+  type SkillIndexState,
+  skillIndexEntries,
+  skillIndexStates,
+} from "./skill-index";
+export {
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
   type SourceControlRepository,

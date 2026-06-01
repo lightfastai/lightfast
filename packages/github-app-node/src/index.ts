@@ -19,7 +19,9 @@ export {
 export { createGitHubPkcePair, type GitHubPkcePair } from "./pkce";
 export {
   type GitHubInstallationRepository,
+  getGitHubBlobText,
   getGitHubCommit,
+  getGitHubReference,
   getGitHubRepository,
   getGitHubTree,
   listGitHubInstallationRepositories,

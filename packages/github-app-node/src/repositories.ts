@@ -23,6 +23,20 @@ const commitResponseSchema = z.object({
     .optional(),
 });
 
+const referenceResponseSchema = z.object({
+  object: z.object({
+    sha: z.string().min(1),
+    type: z.string().min(1),
+  }),
+});
+
+const blobResponseSchema = z.object({
+  content: z.string(),
+  encoding: z.literal("base64"),
+  sha: z.string().min(1),
+  size: z.number().int().nonnegative(),
+});
+
 const treeResponseSchema = z.object({
   sha: z.string().min(1),
   tree: z.array(
@@ -30,6 +44,7 @@ const treeResponseSchema = z.object({
       mode: z.string().min(1),
       path: z.string().min(1),
       sha: z.string().min(1),
+      size: z.number().int().nonnegative().optional(),
       type: z.enum(["blob", "tree", "commit"]),
     })
   ),
@@ -44,6 +59,47 @@ const repositoryResponseSchema = z.object({
     login: z.string().min(1),
   }),
 });
+
+function throwBlobDecodeFailed(): never {
+  throw new GitHubAppNodeError(
+    "GITHUB_BLOB_DECODE_FAILED",
+    "GitHub blob content could not be decoded."
+  );
+}
+
+function decodeBlobText(content: string): string {
+  const normalized = content.replace(/\s/g, "");
+  if (
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(normalized) ||
+    normalized.length % 4 === 1
+  ) {
+    throwBlobDecodeFailed();
+  }
+
+  if (normalized.includes("=") && normalized.length % 4 !== 0) {
+    throwBlobDecodeFailed();
+  }
+
+  const unpadded = normalized.replace(/=+$/, "");
+  const paddingLength = (4 - (unpadded.length % 4)) % 4;
+  if (paddingLength === 3) {
+    throwBlobDecodeFailed();
+  }
+
+  const canonical = `${unpadded}${"=".repeat(paddingLength)}`;
+  try {
+    const bytes = Buffer.from(canonical, "base64");
+    if (bytes.toString("base64") !== canonical) {
+      throwBlobDecodeFailed();
+    }
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (error) {
+    if (error instanceof GitHubAppNodeError) {
+      throw error;
+    }
+    throwBlobDecodeFailed();
+  }
+}
 
 const installationRepositoriesResponseSchema = z.object({
   repositories: z.array(
@@ -90,6 +146,7 @@ async function getJson(input: {
   apiVersion?: string;
   fetch?: typeof fetch;
   installationToken: string;
+  signal?: AbortSignal;
   url: string | URL;
 }) {
   const { json, response } = await fetchGitHubJson({
@@ -99,6 +156,7 @@ async function getJson(input: {
         apiVersion: input.apiVersion,
         token: input.installationToken,
       }),
+      signal: input.signal,
     },
     requestErrorCode: "GITHUB_API_REQUEST_FAILED",
     requestErrorMessage: "GitHub repository request failed.",
@@ -166,6 +224,7 @@ export async function getGitHubCommit(input: {
   owner: string;
   ref: string;
   repo: string;
+  signal?: AbortSignal;
 }): Promise<{ sha: string; treeSha: string }> {
   const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
   const url = `${apiBaseUrl}/repos/${githubPathSegment(
@@ -177,6 +236,7 @@ export async function getGitHubCommit(input: {
     apiVersion: input.apiVersion,
     fetch: input.fetch,
     installationToken: input.installationToken,
+    signal: input.signal,
     url,
   });
   const parsed = commitResponseSchema.safeParse(json);
@@ -196,6 +256,73 @@ export async function getGitHubCommit(input: {
   return { sha: parsed.data.sha, treeSha };
 }
 
+export async function getGitHubReference(input: {
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  etag?: string | null;
+  fetch?: typeof fetch;
+  installationToken: string;
+  owner: string;
+  ref: string;
+  repo: string;
+  signal?: AbortSignal;
+}): Promise<
+  | { status: "found"; sha: string; etag: string | null }
+  | { status: "not_modified" }
+> {
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const encodedRef = input.ref.split("/").map(githubPathSegment).join("/");
+  const url = `${apiBaseUrl}/repos/${githubPathSegment(
+    input.owner
+  )}/${githubPathSegment(input.repo)}/git/ref/${encodedRef}`;
+  const { json, response } = await fetchGitHubJson({
+    fetch: input.fetch,
+    init: {
+      headers: {
+        ...githubJsonHeaders({
+          apiVersion: input.apiVersion,
+          token: input.installationToken,
+        }),
+        ...(input.etag ? { "if-none-match": input.etag } : {}),
+      },
+      signal: input.signal,
+    },
+    requestErrorCode: "GITHUB_API_REQUEST_FAILED",
+    requestErrorMessage: "GitHub repository request failed.",
+    url,
+  });
+
+  if (response.status === 304) {
+    return { status: "not_modified" };
+  }
+  if (response.status === 404) {
+    throw new GitHubAppNodeError(
+      "GITHUB_REF_NOT_FOUND",
+      "GitHub reference was not found."
+    );
+  }
+  if (!response.ok) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub reference response was not successful."
+    );
+  }
+
+  const parsed = referenceResponseSchema.safeParse(json);
+  if (!parsed.success || parsed.data.object.type !== "commit") {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub reference response was invalid."
+    );
+  }
+
+  return {
+    etag: response.headers.get("etag"),
+    sha: parsed.data.object.sha,
+    status: "found",
+  };
+}
+
 export async function getGitHubRepository(input: {
   apiBaseUrl?: string;
   apiVersion?: string;
@@ -203,6 +330,7 @@ export async function getGitHubRepository(input: {
   installationToken: string;
   owner: string;
   repo: string;
+  signal?: AbortSignal;
 }): Promise<{
   fullName: string;
   id: string;
@@ -217,6 +345,7 @@ export async function getGitHubRepository(input: {
     apiVersion: input.apiVersion,
     fetch: input.fetch,
     installationToken: input.installationToken,
+    signal: input.signal,
     url,
   });
   const parsed = repositoryResponseSchema.safeParse(json);
@@ -242,6 +371,7 @@ export async function getGitHubTree(input: {
   owner: string;
   recursive?: boolean;
   repo: string;
+  signal?: AbortSignal;
   treeSha: string;
 }): Promise<z.infer<typeof treeResponseSchema>> {
   const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
@@ -257,6 +387,7 @@ export async function getGitHubTree(input: {
     apiVersion: input.apiVersion,
     fetch: input.fetch,
     installationToken: input.installationToken,
+    signal: input.signal,
     url: url.toString(),
   });
   const parsed = treeResponseSchema.safeParse(json);
@@ -267,4 +398,62 @@ export async function getGitHubTree(input: {
     );
   }
   return parsed.data;
+}
+
+export async function getGitHubBlobText(input: {
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  fetch?: typeof fetch;
+  installationToken: string;
+  owner: string;
+  repo: string;
+  signal?: AbortSignal;
+  sha: string;
+}): Promise<{ sha: string; size: number; text: string }> {
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const url = `${apiBaseUrl}/repos/${githubPathSegment(
+    input.owner
+  )}/${githubPathSegment(input.repo)}/git/blobs/${githubPathSegment(
+    input.sha
+  )}`;
+  const { json, response } = await fetchGitHubJson({
+    fetch: input.fetch,
+    init: {
+      headers: githubJsonHeaders({
+        apiVersion: input.apiVersion,
+        token: input.installationToken,
+      }),
+      signal: input.signal,
+    },
+    requestErrorCode: "GITHUB_API_REQUEST_FAILED",
+    requestErrorMessage: "GitHub repository request failed.",
+    url,
+  });
+
+  if (response.status === 404) {
+    throw new GitHubAppNodeError(
+      "GITHUB_BLOB_NOT_FOUND",
+      "GitHub blob was not found."
+    );
+  }
+  if (!response.ok) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub blob response was not successful."
+    );
+  }
+
+  const parsed = blobResponseSchema.safeParse(json);
+  if (!parsed.success) {
+    throw new GitHubAppNodeError(
+      "GITHUB_API_RESPONSE_INVALID",
+      "GitHub blob response was invalid."
+    );
+  }
+
+  return {
+    sha: parsed.data.sha,
+    size: parsed.data.size,
+    text: decodeBlobText(parsed.data.content),
+  };
 }

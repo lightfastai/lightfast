@@ -69,6 +69,7 @@ export const sourceControlRepositoryPushEventSchema = z.object({
   afterSha: sha1Schema,
   beforeSha: sha1Schema,
   changedPaths: z.array(z.string().min(1)),
+  changedPathsComplete: z.boolean().optional(),
   deliveryId: z.string().min(1),
   orgSourceControlBindingId: z.number().int().positive(),
   providerInstallationId: z.string().min(1),

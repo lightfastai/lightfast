@@ -118,6 +118,12 @@ describe("source control repository sync workflow", () => {
     } as never);
 
     expect(result).toEqual({ status: "processed" });
+    expect(getTreeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        recursive: true,
+        treeSha: "tree-sha",
+      })
+    );
     expect(markDeliveryMock).toHaveBeenCalledWith(
       {},
       {

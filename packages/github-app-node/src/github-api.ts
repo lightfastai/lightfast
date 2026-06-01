@@ -29,7 +29,10 @@ export async function fetchGitHubJson(input: {
   let response: Response;
   try {
     response = await (input.fetch ?? fetch)(input.url.toString(), input.init);
-  } catch {
+  } catch (error) {
+    if (isAbortError(error)) {
+      throw error;
+    }
     throw new GitHubAppNodeError(
       input.requestErrorCode,
       input.requestErrorMessage
@@ -38,4 +41,11 @@ export async function fetchGitHubJson(input: {
 
   const json = await response.json().catch(() => null);
   return { json, response };
+}
+
+function isAbortError(error: unknown): boolean {
+  return (
+    (error instanceof DOMException && error.name === "AbortError") ||
+    (error instanceof Error && error.name === "AbortError")
+  );
 }
