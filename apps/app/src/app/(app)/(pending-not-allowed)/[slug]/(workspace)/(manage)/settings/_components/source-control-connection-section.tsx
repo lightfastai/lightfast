@@ -44,6 +44,19 @@ function importedCountLabel(count: number) {
   return `${count} imported`;
 }
 
+function formatLightfastVerifiedAt(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Unknown";
+  }
+
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(date);
+}
+
 export function SourceControlConnectionSection({
   connection,
   orgSlug,
@@ -216,6 +229,54 @@ export function SourceControlConnectionSection({
           </div>
         </div>
       </div>
+
+      {repositories.lightfastRepository ? (
+        <div className="space-y-3">
+          <div>
+            <h3 className="font-medium text-foreground text-sm">
+              Lightfast repository
+            </h3>
+            <p className="text-muted-foreground text-sm">
+              The repository Lightfast uses to verify and coordinate workspace
+              automation.
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-muted/30 p-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="flex size-9 shrink-0 items-center justify-center rounded-md border border-border bg-background">
+                  <Icons.logoShort
+                    aria-hidden="true"
+                    className="size-5 text-foreground"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground text-sm">
+                    {repositories.lightfastRepository.fullName}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    .lightfast repository
+                  </p>
+                </div>
+              </div>
+              <Badge
+                className="w-fit border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                variant="outline"
+              >
+                Verified
+              </Badge>
+            </div>
+            <div className="mt-4 border-border border-t pt-4">
+              <p className="text-muted-foreground text-xs">Verified at</p>
+              <p className="mt-1 text-foreground text-sm">
+                {formatLightfastVerifiedAt(
+                  repositories.lightfastRepository.verifiedAt
+                )}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="space-y-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

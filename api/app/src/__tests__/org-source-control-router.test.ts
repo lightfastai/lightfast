@@ -321,6 +321,12 @@ describe("org.settings.sourceControl.listRepositories", () => {
           "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
         login: "acme-live",
       },
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "repo_lightfast",
+        name: ".lightfast",
+        verifiedAt: "2026-05-29T01:02:03.000Z",
+      },
       repositories: [
         {
           fullName: "acme-live/app",
@@ -387,6 +393,12 @@ describe("org.settings.sourceControl.listRepositories", () => {
           "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
         login: "acme-live",
       },
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "repo_lightfast",
+        name: ".lightfast",
+        verifiedAt: "2026-05-29T01:02:03.000Z",
+      },
       repositories: [],
       repositoriesError: {
         code: "github_repository_listing_failed",
@@ -427,6 +439,12 @@ describe("org.settings.sourceControl.listRepositories", () => {
           "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
         login: "acme-live",
       },
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "repo_lightfast",
+        name: ".lightfast",
+        verifiedAt: "2026-05-29T01:02:03.000Z",
+      },
       repositories: [],
       repositoriesError: {
         code: "github_repository_listing_failed",
@@ -457,6 +475,12 @@ describe("org.settings.sourceControl.listRepositories", () => {
         providerLabel: "GitHub",
       },
       organization: null,
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "repo_lightfast",
+        name: ".lightfast",
+        verifiedAt: "2026-05-29T01:02:03.000Z",
+      },
       repositories: [],
       repositoriesError: {
         code: "github_repository_listing_failed",
@@ -490,6 +514,12 @@ describe("org.settings.sourceControl.listRepositories", () => {
         providerLabel: "GitHub",
       },
       organization: null,
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "repo_lightfast",
+        name: ".lightfast",
+        verifiedAt: "2026-05-29T01:02:03.000Z",
+      },
       repositories: [],
       repositoriesError: {
         code: "github_installation_account_mismatch",
@@ -564,6 +594,12 @@ describe("org.settings.sourceControl.importRepository", () => {
         installationManageUrl:
           "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
         login: "acme-live",
+      },
+      lightfastRepository: {
+        fullName: "acme/.lightfast",
+        id: "repo_lightfast",
+        name: ".lightfast",
+        verifiedAt: "2026-05-29T01:02:03.000Z",
       },
       repositories: [
         {

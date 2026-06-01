@@ -133,6 +133,12 @@ const repositories = {
       "https://github.com/apps/lightfast/installations/1001",
     login: "acme-live",
   },
+  lightfastRepository: {
+    fullName: "acme-live/.lightfast",
+    id: "301",
+    name: ".lightfast" as const,
+    verifiedAt: "2026-05-29T01:02:03.000Z",
+  },
   repositories: [
     {
       fullName: "acme-live/app",
@@ -217,7 +223,7 @@ describe("SourceControlConnectionSection", () => {
     expect(screen.queryByText("1 imported")).toBeNull();
   });
 
-  it("does not show the .lightfast repository", () => {
+  it("shows the verified .lightfast setup repository outside the import list", () => {
     renderSection({
       repositories: {
         ...repositories,
@@ -236,7 +242,17 @@ describe("SourceControlConnectionSection", () => {
       },
     });
 
-    expect(screen.queryByText("acme-live/.lightfast")).toBeNull();
+    expect(
+      screen.getByRole("heading", { name: "Lightfast repository" })
+    ).toBeVisible();
+    expect(screen.getByText("acme-live/.lightfast")).toBeVisible();
+    expect(screen.getByText(".lightfast repository")).toBeVisible();
+    expect(screen.getByText("Verified")).toBeVisible();
+
+    fireEvent.click(screen.getByRole("button", { name: "Add repository" }));
+    expect(
+      screen.queryByRole("button", { name: /acme-live\/\.lightfast/i })
+    ).toBeNull();
   });
 
   it("opens the add repository modal and disables already imported rows", () => {
@@ -399,6 +415,7 @@ describe("SourceControlConnectionSection", () => {
       connection: null,
       repositories: {
         binding: null,
+        lightfastRepository: null,
         organization: null,
         repositories: [],
         repositoriesError: null,

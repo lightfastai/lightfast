@@ -122,6 +122,7 @@ beforeEach(() => {
                 "https://github.com/apps/lightfast/installations/1001",
               login: "acme-live",
             },
+            lightfastRepository: null,
             repositories: [],
             repositoriesError: null,
             status: "bound",

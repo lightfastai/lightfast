@@ -18,7 +18,7 @@ import { getGitHubAppConfig } from "../../services/github/config";
 import {
   buildSourceControlRepositoryResponse,
   countNormalImportedRepositories,
-  lightfastRepositoryIdFromBinding,
+  lightfastRepositoryFromBinding,
   listAllGitHubInstallationRepositories,
 } from "../../services/github/source-control/repositories";
 import { orgAdminProcedure, orgProcedure } from "../../trpc";
@@ -134,6 +134,7 @@ export const orgSourceControlRouter = {
     if (!binding) {
       return {
         binding: null,
+        lightfastRepository: null,
         organization: null,
         repositories: [],
         repositoriesError: null,
@@ -155,6 +156,7 @@ export const orgSourceControlRouter = {
         watchedRepositories,
       }),
     });
+    const lightfastRepository = lightfastRepositoryFromBinding(binding);
     const appJwt = await createGitHubAppJwt({
       appId: config.appId,
       privateKey: config.privateKey,
@@ -171,6 +173,7 @@ export const orgSourceControlRouter = {
     } catch {
       return {
         binding: bindingSummary,
+        lightfastRepository,
         organization: null,
         repositories: [],
         repositoriesError: repositoryListingFailed(
@@ -183,6 +186,7 @@ export const orgSourceControlRouter = {
     if (installation.account.id !== binding.providerAccountId) {
       return {
         binding: bindingSummary,
+        lightfastRepository,
         organization: null,
         repositories: [],
         repositoriesError: installationAccountMismatch(),
@@ -205,6 +209,7 @@ export const orgSourceControlRouter = {
 
       return {
         binding: bindingSummary,
+        lightfastRepository,
         organization: organizationResponse(installation),
         repositories: buildSourceControlRepositoryResponse({
           binding,
@@ -217,6 +222,7 @@ export const orgSourceControlRouter = {
     } catch {
       return {
         binding: bindingSummary,
+        lightfastRepository,
         organization: organizationResponse(installation),
         repositories: [],
         repositoriesError: repositoryListingFailed(
@@ -241,7 +247,8 @@ export const orgSourceControlRouter = {
         });
       }
 
-      const lightfastRepositoryId = lightfastRepositoryIdFromBinding(binding);
+      const lightfastRepository = lightfastRepositoryFromBinding(binding);
+      const lightfastRepositoryId = lightfastRepository?.id ?? null;
       if (input.repositoryId === lightfastRepositoryId) {
         throw new TRPCError({
           code: "PRECONDITION_FAILED",
@@ -334,6 +341,7 @@ export const orgSourceControlRouter = {
             watchedRepositories,
           }),
         }),
+        lightfastRepository,
         organization: organizationResponse(installation),
         repositories: buildSourceControlRepositoryResponse({
           binding,

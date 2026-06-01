@@ -95,6 +95,7 @@ describe("tasks/github/lightfast-repo/page", () => {
       })
       .mockResolvedValueOnce({
         binding: null,
+        lightfastRepository: null,
         organization: {
           id: "987654",
           installationManageUrl:
@@ -128,6 +129,7 @@ describe("tasks/github/lightfast-repo/page", () => {
       })
       .mockResolvedValueOnce({
         binding: null,
+        lightfastRepository: null,
         organization: null,
         repositories: [],
         repositoriesError: null,

@@ -1,5 +1,8 @@
 import type { SourceControlRepository } from "@db/app/schema";
-import { githubLightfastRepositoryProofSchema } from "@repo/app-setup-contract";
+import {
+  githubLightfastRepositoryProofSchema,
+  LIGHTFAST_REPOSITORY_NAME,
+} from "@repo/app-setup-contract";
 import {
   type GitHubInstallationRepository,
   listGitHubInstallationRepositories,
@@ -18,13 +21,45 @@ export interface SourceControlRepositoryRow {
   watchedPathGlobs: string[] | null;
 }
 
-export function lightfastRepositoryIdFromBinding(input: {
+export interface LightfastSourceControlRepositoryRow {
+  fullName: string;
+  id: string;
+  name: typeof LIGHTFAST_REPOSITORY_NAME;
+  verifiedAt: string;
+}
+
+export function lightfastRepositoryFromBinding(input: {
   metadata: Record<string, unknown>;
-}): string | null {
+  providerInstallationId?: string | null;
+}): LightfastSourceControlRepositoryRow | null {
   const parsed = githubLightfastRepositoryProofSchema.safeParse(
     input.metadata.lightfastRepository
   );
-  return parsed.success ? parsed.data.id : null;
+
+  if (!parsed.success) {
+    return null;
+  }
+
+  if (
+    input.providerInstallationId &&
+    parsed.data.installationId !== input.providerInstallationId
+  ) {
+    return null;
+  }
+
+  return {
+    fullName: parsed.data.fullName,
+    id: parsed.data.id,
+    name: parsed.data.name,
+    verifiedAt: parsed.data.verifiedAt,
+  };
+}
+
+export function lightfastRepositoryIdFromBinding(input: {
+  metadata: Record<string, unknown>;
+  providerInstallationId?: string | null;
+}): string | null {
+  return lightfastRepositoryFromBinding(input)?.id ?? null;
 }
 
 export function buildSourceControlRepositoryResponse(input: {
@@ -49,7 +84,7 @@ export function buildSourceControlRepositoryResponse(input: {
       (repository) => repository.ownerId === input.binding.providerAccountId
     )
     .filter((repository) => repository.id !== lightfastRepositoryId)
-    .filter((repository) => repository.name !== ".lightfast")
+    .filter((repository) => repository.name !== LIGHTFAST_REPOSITORY_NAME)
     .map((repository) => {
       const watched = watchedByProviderId.get(repository.id);
       return {
