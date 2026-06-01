@@ -357,7 +357,7 @@ describe("skills index refresh/read service", () => {
 
     await expect(
       reconcileSkillIndexSources({ deps, limit: 1, totalLimit: 5 })
-    ).resolves.toEqual({ checked: 2, queued: 1 });
+    ).resolves.toEqual({ checked: 1, queued: 1 });
 
     expect(
       deps.listSkillIndexableSourceControlRepositoryCandidates
@@ -396,10 +396,53 @@ describe("skills index refresh/read service", () => {
           targetCommitSha: "current-main",
         },
       ],
-      checked: 2,
+      checked: 1,
     });
 
     expect(deps.enqueueRefresh).not.toHaveBeenCalled();
+  });
+
+  it("caps changed sources and queued refreshes to the reconcile limit", async () => {
+    const first = createCandidate({ id: 1 });
+    const second = createCandidate({ id: 2 });
+    const deps = createDeps({
+      targetState: staleState({ indexedCommitSha: "old" }),
+    });
+    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValue([
+      first,
+      second,
+    ]);
+    deps.getSkillIndexableSourceControlRepositoryCandidateById.mockResolvedValue(
+      first
+    );
+    deps.enqueueRefresh = vi.fn(async () => undefined);
+
+    await expect(
+      findChangedSkillIndexSources({ deps, limit: 1, totalLimit: 5 })
+    ).resolves.toEqual({
+      changed: [
+        {
+          sourceControlRepositoryId: 1,
+          targetCommitSha: "current-main",
+        },
+      ],
+      checked: 1,
+    });
+
+    expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledOnce();
+
+    deps.readSkillRepositoryMainRef.mockClear();
+    await expect(
+      reconcileSkillIndexSources({ deps, limit: 1, totalLimit: 5 })
+    ).resolves.toEqual({ checked: 1, queued: 1 });
+
+    expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledOnce();
+    expect(deps.enqueueRefresh).toHaveBeenCalledOnce();
+    expect(deps.enqueueRefresh).toHaveBeenCalledWith({
+      reason: "schedule",
+      sourceControlRepositoryId: 1,
+      targetCommitSha: "current-main",
+    });
   });
 
   it("uses exact repository lookup instead of broad candidate scans for reads", async () => {

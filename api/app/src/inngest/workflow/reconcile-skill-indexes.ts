@@ -1,6 +1,9 @@
 import { findChangedSkillIndexSources } from "../../services/skills";
 import { inngest } from "../client";
 
+const RECONCILE_REFRESH_LIMIT = 100;
+const RECONCILE_TOTAL_LIMIT = 1000;
+
 export const reconcileSkillIndexes = inngest.createFunction(
   {
     id: "reconcile-skill-indexes",
@@ -14,12 +17,13 @@ export const reconcileSkillIndexes = inngest.createFunction(
   async ({ step }) => {
     const result = await step.run("reconcile skill index sources", () =>
       findChangedSkillIndexSources({
-        limit: 100,
-        totalLimit: 1000,
+        limit: RECONCILE_REFRESH_LIMIT,
+        totalLimit: RECONCILE_TOTAL_LIMIT,
       })
     );
+    const changed = result.changed.slice(0, RECONCILE_REFRESH_LIMIT);
 
-    for (const source of result.changed) {
+    for (const source of changed) {
       await step.sendEvent(
         `queue skill index refresh ${source.sourceControlRepositoryId}`,
         {
@@ -35,7 +39,7 @@ export const reconcileSkillIndexes = inngest.createFunction(
 
     return {
       checked: result.checked,
-      queued: result.changed.length,
+      queued: changed.length,
     };
   }
 );

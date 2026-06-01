@@ -349,6 +349,39 @@ describe("skills index Inngest workflows", () => {
     );
   });
 
+  it("caps reconcile refresh event sends to the workflow limit", async () => {
+    findChangedSkillIndexSourcesMock.mockResolvedValueOnce({
+      changed: Array.from({ length: 101 }, (_, index) => ({
+        sourceControlRepositoryId: index + 1,
+        targetCommitSha: `sha-${index + 1}`,
+      })),
+      checked: 101,
+    });
+    const step = createStep();
+
+    await expect(runReconcile(step)).resolves.toEqual({
+      checked: 101,
+      queued: 100,
+    });
+
+    expect(step.sendEvent).toHaveBeenCalledTimes(100);
+    expect(step.sendEvent).toHaveBeenCalledWith(
+      "queue skill index refresh 100",
+      {
+        name: "app/skills.index.refresh.requested",
+        data: {
+          reason: "schedule",
+          sourceControlRepositoryId: 100,
+          targetCommitSha: "sha-100",
+        },
+      }
+    );
+    expect(step.sendEvent).not.toHaveBeenCalledWith(
+      "queue skill index refresh 101",
+      expect.anything()
+    );
+  });
+
   it("prewarms the initial skill refresh without blocking setup success", async () => {
     sendMock.mockRejectedValueOnce(new Error("inngest unavailable"));
 

@@ -26,6 +26,9 @@ export async function findChangedSkillIndexSources(input: {
   }
 
   for (const candidate of candidates.slice(0, input.totalLimit)) {
+    if (changed.length >= input.limit) {
+      break;
+    }
     checked += 1;
     if (!isVerifiedLightfastSkillRepository(candidate)) {
       continue;
@@ -40,7 +43,7 @@ export async function findChangedSkillIndexSources(input: {
         targetCommitSha: ref.currentCommitSha ?? undefined,
       });
     }
-    if (checked >= input.totalLimit) {
+    if (checked >= input.totalLimit || changed.length >= input.limit) {
       break;
     }
   }
