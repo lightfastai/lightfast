@@ -71,6 +71,19 @@ missed.
 - No support for arbitrary skill support files beyond indexing `SKILL.md`.
 - No migration of local agent skills into Lightfast.
 
+## Agent Skills Compatibility
+
+Lightfast should align with the public Agent Skills format while keeping v1
+read-only. The relevant standard references are:
+
+- <https://agentskills.io/specification>
+- <https://agentskills.io/client-implementation/adding-skills-support>
+
+Lightfast owns its parser and contract in v1 instead of depending on the
+external `skills-ref` implementation. The local contract can model
+Lightfast-specific behavior: invalid-but-visible rows, warnings, DB-safe
+diagnostics, request-time indexing, and UI output types.
+
 ## Skill Repository Shape
 
 V1 recognizes one canonical file shape:
@@ -79,40 +92,105 @@ V1 recognizes one canonical file shape:
 skills/<skill-slug>/SKILL.md
 ```
 
-The skill slug is derived from the directory name, not from frontmatter. It must
-match:
+The skill slug is derived from the directory name. It must match the Agent
+Skills name rules:
 
 ```text
 ^[a-z0-9][a-z0-9-]{0,62}$
 ```
 
-Each `SKILL.md` must contain YAML frontmatter with:
+The slug must not start or end with a hyphen and must not contain consecutive
+hyphens. The frontmatter `name` must match the parent directory slug. URLs and
+API lookups use slug, never display text.
+
+Each `SKILL.md` must contain YAML frontmatter at the top of the file, allowing
+only an optional UTF-8 BOM before the opening marker:
 
 ```yaml
 ---
 name: skill-name
 description: One sentence describing when to use the skill.
+license: MIT
+compatibility: Requires git and network access.
+allowed-tools: Bash Read
+metadata:
+  owner: platform
 ---
 ```
 
 Validation rules:
 
 - `name` is required and non-empty.
+- `name` must match the parent directory slug.
 - `description` is required and non-empty.
+- `description` must be at most 1024 characters.
 - The markdown body after frontmatter must be non-empty.
 - Skill files above the configured size limit are marked invalid.
 - Files outside `skills/<skill-slug>/SKILL.md` are ignored by the skill index.
-- Invalid skill files are stored and displayed with validation errors; they do
+- Invalid skill files are stored and displayed with validation diagnostics; they do
   not fail the whole index.
+
+Optional standard fields:
+
+- `license`: optional string, max 256 characters; malformed values produce
+  warnings, not invalid skills.
+- `compatibility`: optional string, max 512 characters; malformed values
+  produce warnings, not invalid skills.
+- `allowed-tools`: optional string, max 2048 characters; display as declared
+  metadata only. It has no permission effect in v1.
+- `metadata`: optional shallow object whose values are JSON scalars
+  (`string | number | boolean | null`). Nested values produce warnings, not
+  invalid skills.
+
+Malformed or unparseable frontmatter is invalid. The parser should first use
+normal YAML parsing. If that fails, it may use one narrow compatibility fallback
+for common unquoted scalar lines such as `description: Uses foo:bar`; fallback
+success adds a warning diagnostic.
+
+Diagnostics must be structured with stable machine codes and human messages:
+
+```ts
+type SkillDiagnostic = {
+  code: string;
+  message: string;
+  severity: "error" | "warning";
+};
+```
 
 Recommended first limits:
 
 - Maximum 200 skill files per repository.
 - Maximum 128 KiB per `SKILL.md`.
 - Fetch skill blobs with bounded concurrency, for example 4 at a time.
+- Maximum 100 resource inventory paths per skill across `scripts/`,
+  `references/`, and `assets`.
 
 These limits are product safeguards, not GitHub constraints. They can be raised
 after the UI and parser behavior are proven.
+
+Zero canonical skill files is a successful fresh empty index. More than 200
+canonical skill files fails the rebuild so Lightfast never presents a partial
+current index.
+
+## Skill Resources
+
+V1 indexes resource inventory metadata, not resource contents.
+
+For each valid slug directory, recursively inventory files under:
+
+- `scripts/`
+- `references/`
+- `assets/`
+
+Store sorted relative paths capped at 100 per skill and a truncation flag. Files
+outside those standard directories are counted recursively as
+`nonStandardResourceCount` but are not listed in v1. Invalid slug directories do
+not produce skill rows; summarize them as index-level diagnostics.
+
+Submodules and other non-blob Git tree entries are ignored. A canonical
+`SKILL.md` must be a regular blob. Symlinks and submodules at canonical paths
+produce invalid visible rows or index diagnostics, but Lightfast does not follow
+them.
 
 ## Package Boundaries
 
@@ -261,10 +339,14 @@ Columns:
 - `name`
 - `description`
 - `markdown`
+- `bodyMarkdown`
+- `frontmatter`
+- `resources`
+- `nonStandardResourceCount`
 - `contentSha`
 - `contentSize`
 - `validationStatus`
-- `validationErrors`
+- `validationDiagnostics`
 - `createdAt`
 - `updatedAt`
 
@@ -273,10 +355,20 @@ Indexes:
 - unique `(skillIndexStateId, slug)`;
 - index `(skillIndexStateId, validationStatus)`.
 
-`markdown` stores the current `SKILL.md` content for UI display and fallback.
-This is acceptable because the table is a cache of GitHub `main`, not a
-runtime execution source. If storage pressure becomes real, a later version can
-store metadata only and fetch markdown on detail reads.
+`markdown` is nullable. It stores the full `SKILL.md` content for normal valid
+and invalid rows so the UI can render the last successful index while GitHub is
+unavailable. Oversized or otherwise intentionally unfetched files store
+`markdown: null` and do not render truncated content.
+
+`bodyMarkdown` stores the parsed body when it can be safely separated from
+frontmatter. Invalid skills may still render their body preview when available.
+This is acceptable because the table is a cache of GitHub `main`, not a runtime
+execution source. If storage pressure becomes real, a later version can store
+metadata only and fetch markdown on detail reads.
+
+Index-level diagnostics are separate from skill-level diagnostics. Repository
+issues such as ignored invalid slug directories, resource inventory truncation,
+and non-standard file counts should not require fake skill rows.
 
 ## Request-Time Refresh Flow
 
@@ -336,12 +428,25 @@ Detailed flow:
 10. Release the lock.
 11. Return the fresh materialized skills.
 
+Request-time builds are bounded so the page never hangs indefinitely:
+
+- when a previous successful index exists, spend up to 3 seconds attempting the
+  inline rebuild before aborting and returning the last index as stale;
+- when no successful index exists, spend up to 10 seconds before aborting and
+  returning unavailable;
+- timeout aborts the request-time build and releases the lock. It must not
+  continue as an implicit background refresh.
+
 If inline build fails:
 
 1. Record failure metadata on the index state.
 2. Release the lock.
 3. Return the last successful index as `stale` when one exists.
 4. Return `unavailable` when no successful index exists.
+
+Stored refresh status and UI freshness are separate. A timeout with previous
+data stores `lastRefreshStatus: "failed"` and returns
+`freshness.status: "stale"`.
 
 The service must not enqueue an Inngest skill refresh in v1. The next page
 open, query invalidation, or manual refresh button should retry the same
@@ -359,16 +464,24 @@ Use this hierarchy:
 3. Blob fetch only for matching `SKILL.md` files during a rebuild.
 
 Use conditional requests for the ref when possible. A `304` response from
-GitHub is enough to prove the cached observed ref has not changed. Store the
-latest ref ETag on the index state row.
+GitHub is enough to prove the cached observed ref has not changed only when the
+state also stores the previously observed `lastCheckedCommitSha`. If the ETag
+exists but the observed SHA is missing, do not send a conditional request.
+Store the latest ref ETag on the index state row.
 
 Installation tokens should not be stored durably. A small process-local cache
 keyed by installation id is acceptable because it only reduces token creation
 requests; correctness still comes from GitHub ref checks.
 
+Rebuilds are all-or-nothing per GitHub `main` commit. Build the candidate index
+in memory, then replace the current skill rows and state in one transaction.
+One canonical blob fetch failure aborts the rebuild and preserves the previous
+successful index. Oversized canonical files are invalid rows, not build
+failures, when their path and blob SHA are known.
+
 ## UI Design
 
-Add `Skills` to the workspace navigation, near `Signals` and `People`.
+Add `Skills` to the Workspace sidebar group after `People`.
 
 The page should be operational and compact:
 
@@ -376,8 +489,10 @@ The page should be operational and compact:
 - freshness badge: `Fresh`, `Refreshing`, `Stale`, or `Unavailable`;
 - last indexed time and short indexed commit SHA;
 - refresh button that invalidates the tRPC query;
-- table or dense list of skills;
-- detail sheet or right-side detail panel for a selected skill.
+- client-side search over slug, name, description, diagnostics, and resource
+  paths;
+- segmented validity filter: `All`, `Invalid`, `Valid`;
+- stacked full-width bordered rows, not nested cards.
 
 List rows should show:
 
@@ -386,14 +501,42 @@ List rows should show:
 - slug;
 - path;
 - validation status;
-- short blob SHA or commit SHA.
+- short blob SHA or commit SHA;
+- resource indicators;
+- expandable rendered markdown preview.
 
-The detail view should show:
+Sort invalid skills first, then valid skills, then slug ascending within each
+group. Expanded row state is client-local and not encoded in the URL.
+
+Rendered markdown previews:
+
+- are available inline through row expansion, not open for every row by
+  default;
+- render the parsed body markdown, not raw frontmatter;
+- use inert markdown only: headings, paragraphs, lists, code fences,
+  blockquotes, and safe external links;
+- do not render raw HTML, MDX, scripts, or embedded components;
+- should use a readable max width around 72 characters inside each row.
+
+The detail route should be a focused full workspace page:
+
+```text
+/:slug/skills/<skill-slug>
+```
+
+It means "the current indexed view of `skills/<skill-slug>/SKILL.md` on
+`.lightfast` `main`." It should show:
 
 - metadata;
 - path and content SHA;
-- validation errors, if any;
-- read-only markdown content.
+- validation diagnostics, if any;
+- resource inventory and non-standard file count;
+- rendered read-only markdown content;
+- link back to the skills list.
+
+Do not include commit SHA in v1 URLs. If a successful refresh proves the
+requested skill no longer exists, return not found. If GitHub cannot be checked
+and the last good index contains the skill, show stale detail content.
 
 Empty states:
 
@@ -403,6 +546,10 @@ Empty states:
   error banner.
 - GitHub unavailable with no successful index: show an unavailable state with a
   retry action.
+
+The page should use `WorkspaceSurface` with `variant="flush"`. Do not virtualize
+the list in v1; the skill count cap and collapsed-by-default markdown previews
+keep the first implementation simple.
 
 ## API Shape
 
@@ -439,6 +586,11 @@ list page.
 Do not add a refresh mutation in v1. The refresh button should invalidate the
 `list` or `get` query so the same request-time reconciliation path runs again.
 
+`get` returns `NOT_FOUND` with a stable app-level code such as
+`skill_not_found` only after a successful refresh or confirmed current index
+does not contain the slug. It may return stale skill content if GitHub cannot
+be checked and the previous successful index contains the slug.
+
 ## Webhooks
 
 The existing GitHub webhook foundation remains useful, but it is not part of
@@ -462,6 +614,8 @@ Branch missing:
 - `main` is required for v1.
 - If a previous index exists, return it as stale with `main_branch_missing`.
 - If no previous index exists, return unavailable.
+- Setup should not require `main`; setup verifies repository existence and
+  installation access only.
 
 Repository inaccessible:
 
@@ -474,6 +628,7 @@ GitHub rate limited or unavailable:
 - Return the previous index as stale when possible.
 - Record failure metadata.
 - Allow the next read or manual refresh to retry.
+- Do not clear the `.lightfast` setup proof from the read path.
 
 Tree truncated:
 
@@ -484,16 +639,33 @@ Tree truncated:
 Invalid skill file:
 
 - Store the skill row with `validationStatus: "invalid"`.
-- Include structured validation errors.
+- Include structured validation diagnostics.
 - Do not fail the whole index.
+- Render body preview when the body can be safely separated from frontmatter.
 
 Duplicate or invalid slugs:
 
 - The path-derived slug is authoritative.
 - Paths that do not match `skills/<skill-slug>/SKILL.md` are ignored and not
   displayed.
+- Invalid slug directories are summarized in index-level diagnostics.
 - The implementation must avoid unstable ordering for duplicate or invalid
   inputs.
+
+Oversized skill file:
+
+- If GitHub tree reports blob size over 128 KiB, do not fetch the blob.
+- Store an invalid visible row with `markdown: null`, `contentSha`,
+  `contentSize`, and an oversize diagnostic.
+- If size is missing, fetch and enforce the limit after decode.
+- Do not store or render truncated content.
+
+Resource inventory limits:
+
+- Resource path cap truncates inventory and sets a truncation flag; it does not
+  fail the rebuild.
+- Non-standard files are counted separately and do not consume the standard
+  resource path cap.
 
 ## Security
 
@@ -511,13 +683,15 @@ Duplicate or invalid slugs:
 Focused tests should cover:
 
 - `@repo/skills-contract` path matching, slug validation, frontmatter parsing,
-  and validation errors.
+  required field validation, optional field warnings, lenient YAML fallback,
+  resource inventory modeling, and structured diagnostics.
 - `@repo/github-app-node` ref helper with `200`, `304`, missing branch, and
   invalid response cases.
 - `@repo/github-app-node` blob text helper with base64 decoding and invalid
   response cases.
 - `@db/app` index state creation, lock acquisition, lock expiry, successful
-  row replacement, and failure metadata.
+  row replacement, nullable markdown, resource metadata, index diagnostics, and
+  failure metadata.
 - API service returns DB immediately when GitHub ref is unchanged.
 - API service rebuilds inline when GitHub `main` changes.
 - API service returns stale rows when a rebuild fails and a previous index
@@ -525,8 +699,12 @@ Focused tests should cover:
 - API service returns unavailable when the first build fails.
 - API service handles concurrent refresh attempts with one lock owner.
 - API service stores invalid skills without failing valid siblings.
+- API service aborts timed-out request-time rebuilds and releases the lock.
+- API service fails rebuilds over the skill count cap.
+- API service truncates resource inventory without failing rebuilds.
 - tRPC `list` and `get` both run freshness reconciliation.
-- App route renders fresh, stale, invalid, empty, and unavailable states.
+- App route renders fresh, stale, invalid, empty, unavailable, detail, not
+  found, resource, diagnostic, and expanded markdown preview states.
 - Emulator-backed integration: create or update `skills/foo/SKILL.md`, open
   the Skills page/API, and observe request-time refresh without depending on a
   skill webhook.
@@ -550,7 +728,8 @@ pnpm typecheck
 4. Add GitHub ref and blob text helpers to `@repo/github-app-node`.
 5. Add the `api/app` skill index service with request-time reconciliation.
 6. Add `org.workspace.skills` tRPC procedures.
-7. Add the `/:slug/skills` workspace page and sidebar item.
+7. Add the `/:slug/skills` and `/:slug/skills/<skill-slug>` workspace pages and
+   sidebar item.
 8. Add focused tests across contract, GitHub helpers, DB helpers, API service,
    router, and UI.
 9. Run focused tests and `pnpm typecheck`.
@@ -564,7 +743,13 @@ pnpm typecheck
   request.
 - Missed GitHub webhooks cannot make the Skills page permanently stale.
 - GitHub failures preserve and visibly mark the last successful index.
-- Invalid skill files are visible with validation errors.
+- Invalid skill files are visible with validation diagnostics.
+- Agent Skills standard fields are parsed, stored, and displayed according to
+  the v1 validation rules.
+- Resource inventory metadata is displayed without loading resource contents.
+- Skill rows can expand to show rendered inert markdown previews.
+- Skill detail URLs show current-state slug details and become not found after
+  a successful refresh proves deletion.
 - No skill content is used for agent runtime behavior.
 - No skill-indexing background refresh workflow is required for v1.
 
