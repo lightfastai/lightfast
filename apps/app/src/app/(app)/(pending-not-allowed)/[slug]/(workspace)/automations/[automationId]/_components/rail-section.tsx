@@ -9,7 +9,7 @@ export function RailSection({
 }) {
   return (
     <div className="border-border border-t pt-4">
-      <p className="mb-2 font-mono text-[11px] font-normal text-muted-foreground">
+      <p className="mb-2 font-mono font-normal text-[11px] text-muted-foreground">
         {label}
       </p>
       {children}

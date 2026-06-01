@@ -100,9 +100,7 @@ function addLocalDays(parts: LocalDate, days: number): LocalDate {
 }
 
 function getLocalWeekday(parts: LocalDate): number {
-  return new Date(
-    Date.UTC(parts.year, parts.month - 1, parts.day)
-  ).getUTCDay();
+  return new Date(Date.UTC(parts.year, parts.month - 1, parts.day)).getUTCDay();
 }
 
 export function calculateNextRunAt(input: {

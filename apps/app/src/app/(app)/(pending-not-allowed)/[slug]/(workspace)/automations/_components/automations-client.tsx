@@ -108,7 +108,9 @@ function AutomationSection({
 
   return (
     <section>
-      <h2 className="font-mono text-[11px] font-normal text-muted-foreground">{title}</h2>
+      <h2 className="font-mono font-normal text-[11px] text-muted-foreground">
+        {title}
+      </h2>
       <div className="mt-3 border-border border-t">
         {automations.map((automation) => (
           <AutomationRow

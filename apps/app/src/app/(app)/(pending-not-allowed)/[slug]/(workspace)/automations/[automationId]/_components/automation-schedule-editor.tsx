@@ -86,8 +86,8 @@ function buildSchedule(state: {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-muted-foreground text-[12.5px]">{label}</span>
-      <span className="text-foreground text-[12.5px]">{value}</span>
+      <span className="text-[12.5px] text-muted-foreground">{label}</span>
+      <span className="text-[12.5px] text-foreground">{value}</span>
     </div>
   );
 }
@@ -140,11 +140,7 @@ export function AutomationScheduleEditor({
     Number.isInteger(parsedHours) && parsedHours >= 1 && parsedHours <= 24;
   const timeValid = TIME_RE.test(time);
   const fieldValid =
-    kind === "manual"
-      ? true
-      : kind === "hourly"
-        ? hoursValid
-        : timeValid;
+    kind === "manual" ? true : kind === "hourly" ? hoursValid : timeValid;
 
   const isSaveDisabled = update.isPending || !fieldValid;
 

@@ -25,11 +25,7 @@ import {
   SelectValue,
 } from "@repo/ui/components/ui/select";
 import { toast } from "@repo/ui/components/ui/sonner";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-} from "@repo/ui/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
@@ -164,7 +160,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-xl px-6 py-12">
         <Link
-          className="-ml-0.5 mb-8 inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
+          className="mb-8 -ml-0.5 inline-flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:text-foreground"
           href={listHref}
         >
           <ArrowLeft className="size-3.5" />
@@ -185,9 +181,8 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               name="name"
               render={({ field }) => (
                 <FormItem className="gap-2">
-                  <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
-                    Name{" "}
-                    <span className="text-muted-foreground">*</span>
+                  <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
+                    Name <span className="text-muted-foreground">*</span>
                   </FormLabel>
                   <FormControl>
                     <Input
@@ -208,7 +203,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               name="prompt"
               render={({ field }) => (
                 <FormItem className="gap-2">
-                  <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
+                  <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
                     Instructions{" "}
                     <span className="text-muted-foreground">*</span>
                   </FormLabel>
@@ -231,7 +226,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
             />
 
             <div className="space-y-2">
-              <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
+              <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
                 Schedule
               </FormLabel>
               <Tabs
@@ -381,7 +376,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
             {isTimeBasedKind(scheduleKind) && (
               <div className="space-y-2">
-                <FormLabel className="font-mono text-[11px] font-normal tracking-normal text-muted-foreground">
+                <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
                   Timezone
                 </FormLabel>
                 <Select
