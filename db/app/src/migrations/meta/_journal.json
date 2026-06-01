@@ -85,6 +85,13 @@
       "when": 1780302908336,
       "tag": "0011_ordinary_magik",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1780312348437,
+      "tag": "0012_safe_warhawk",
+      "breakpoints": true
     }
   ]
 }

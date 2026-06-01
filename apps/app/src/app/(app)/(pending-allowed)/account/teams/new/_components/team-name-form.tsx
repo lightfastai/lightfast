@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { SlugPreview } from "./slug-preview";
 
@@ -17,9 +17,17 @@ function normalize(value: string) {
     .replace(/^-+/, "");
 }
 
+function createIdempotencyKey() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `org-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function TeamNameForm() {
   const [slug, setSlug] = useState("");
   const [error, setError] = useState<string>();
+  const idempotencyKeyRef = useRef<string | null>(null);
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const { setActive } = useOrganizationList();
@@ -29,6 +37,7 @@ export function TeamNameForm() {
     trpc.viewer.organization.create.mutationOptions({
       meta: { suppressErrorToast: true },
       onSuccess: async (data) => {
+        idempotencyKeyRef.current = null;
         if (setActive) {
           await setActive({ organization: data.organizationId });
         }
@@ -50,8 +59,9 @@ export function TeamNameForm() {
     if (!slug) {
       return;
     }
+    idempotencyKeyRef.current ??= createIdempotencyKey();
     setError(undefined);
-    mutation.mutate({ slug });
+    mutation.mutate({ idempotencyKey: idempotencyKeyRef.current, slug });
   };
 
   return (
@@ -71,6 +81,7 @@ export function TeamNameForm() {
           name="teamSlug"
           onChange={(e) => {
             setSlug(normalize(e.target.value));
+            idempotencyKeyRef.current = null;
             setError(undefined);
           }}
           placeholder="acme-inc"

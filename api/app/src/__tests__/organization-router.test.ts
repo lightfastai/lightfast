@@ -5,13 +5,36 @@ import type { AuthIdentity } from "../auth/identity";
 
 const getActiveOrgBindingMock = vi.fn();
 const authMock = vi.fn();
+const createOrganizationMock = vi.fn();
 const getOrganizationMock = vi.fn();
 const getOrganizationMembershipListMock = vi.fn();
 const updateOrganizationMock = vi.fn();
+const startNamespaceOperationMock = vi.fn();
+const reserveNamespaceForOperationMock = vi.fn();
+const markNamespaceOperationClerkAppliedMock = vi.fn();
+const finalizeNamespaceOperationMock = vi.fn();
+const deletePreClerkNamespaceReservationMock = vi.fn();
+const isClerkConflictErrorMock = vi.fn();
+
+class MockNamespaceConflictError extends Error {
+  constructor(
+    public readonly code: string,
+    message: string
+  ) {
+    super(message);
+    this.name = "NamespaceConflictError";
+  }
+}
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
+  NamespaceConflictError: MockNamespaceConflictError,
+  deletePreClerkNamespaceReservation: deletePreClerkNamespaceReservationMock,
+  finalizeNamespaceOperation: finalizeNamespaceOperationMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
+  markNamespaceOperationClerkApplied: markNamespaceOperationClerkAppliedMock,
+  reserveNamespaceForOperation: reserveNamespaceForOperationMock,
+  startNamespaceOperation: startNamespaceOperationMock,
 }));
 
 vi.mock("@vendor/clerk/env", () => ({
@@ -23,7 +46,7 @@ vi.mock("@vendor/clerk/server", () => ({
   clerkClient: () =>
     Promise.resolve({
       organizations: {
-        createOrganization: vi.fn(),
+        createOrganization: createOrganizationMock,
         getOrganization: getOrganizationMock,
         updateOrganization: updateOrganizationMock,
       },
@@ -31,6 +54,10 @@ vi.mock("@vendor/clerk/server", () => ({
         getOrganizationMembershipList: getOrganizationMembershipListMock,
       },
     }),
+}));
+
+vi.mock("../auth/clerk-errors", () => ({
+  isClerkConflictError: isClerkConflictErrorMock,
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
@@ -87,6 +114,19 @@ function nonAdminAccess() {
   };
 }
 
+function operation(overrides: Record<string, unknown> = {}) {
+  return {
+    clerkOrgId: null,
+    clerkUserId: "user_test",
+    id: 1,
+    operationType: "create_org_slug",
+    ownerKind: "org",
+    status: "started",
+    toHandle: "acme",
+    ...overrides,
+  };
+}
+
 function caller(
   identity = pendingIdentity,
   access?: ReturnType<typeof adminAccess> | ReturnType<typeof nonAdminAccess>
@@ -100,16 +140,35 @@ function caller(
 
 beforeEach(() => {
   authMock.mockReset();
+  createOrganizationMock.mockReset();
   getOrganizationMock.mockReset();
   getOrganizationMembershipListMock.mockReset();
   getActiveOrgBindingMock.mockReset();
   updateOrganizationMock.mockReset();
+  startNamespaceOperationMock.mockReset();
+  reserveNamespaceForOperationMock.mockReset();
+  markNamespaceOperationClerkAppliedMock.mockReset();
+  finalizeNamespaceOperationMock.mockReset();
+  deletePreClerkNamespaceReservationMock.mockReset();
+  isClerkConflictErrorMock.mockReset();
 
   authMock.mockResolvedValue({
     has: () => true,
     orgId: "org_acme",
     userId: "user_test",
   });
+  createOrganizationMock.mockResolvedValue({ id: "org_acme", slug: "acme" });
+  startNamespaceOperationMock.mockResolvedValue(operation());
+  reserveNamespaceForOperationMock.mockResolvedValue(
+    operation({ status: "namespace_reserved" })
+  );
+  markNamespaceOperationClerkAppliedMock.mockResolvedValue(
+    operation({ clerkOrgId: "org_acme", status: "clerk_applied" })
+  );
+  finalizeNamespaceOperationMock.mockResolvedValue(
+    operation({ clerkOrgId: "org_acme", status: "finalized" })
+  );
+  isClerkConflictErrorMock.mockReturnValue(false);
 });
 
 describe("organization.listUserOrganizations", () => {
@@ -244,6 +303,112 @@ describe("organization.getBySlug", () => {
       message: "Organization not found",
     });
     expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
+  });
+});
+
+describe("organization.create", () => {
+  it("throws UNAUTHORIZED when the caller is unauthenticated", async () => {
+    await expect(
+      caller(unauthenticatedIdentity).viewer.organization.create({
+        idempotencyKey: "idem_org_1",
+        slug: "acme",
+      })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(startNamespaceOperationMock).not.toHaveBeenCalled();
+    expect(createOrganizationMock).not.toHaveBeenCalled();
+  });
+
+  it("creates an organization through a reserved Lightfast namespace", async () => {
+    await expect(
+      caller().viewer.organization.create({
+        idempotencyKey: "idem_org_1",
+        slug: "Acme",
+      })
+    ).resolves.toEqual({
+      organizationId: "org_acme",
+      slug: "acme",
+    });
+
+    expect(startNamespaceOperationMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkUserId: "user_test",
+        idempotencyKey: "idem_org_1",
+        operationType: "create_org_slug",
+        ownerKind: "org",
+        toHandle: "acme",
+      }
+    );
+    expect(reserveNamespaceForOperationMock).toHaveBeenCalledWith(
+      expect.anything(),
+      operation()
+    );
+    expect(createOrganizationMock).toHaveBeenCalledWith({
+      createdBy: "user_test",
+      name: "acme",
+      slug: "acme",
+    });
+    expect(markNamespaceOperationClerkAppliedMock).toHaveBeenCalledWith(
+      expect.anything(),
+      operation({ status: "namespace_reserved" }),
+      { clerkOrgId: "org_acme" }
+    );
+    expect(finalizeNamespaceOperationMock).toHaveBeenCalledWith(
+      expect.anything(),
+      operation({ clerkOrgId: "org_acme", status: "clerk_applied" })
+    );
+  });
+
+  it("rejects namespace conflicts before creating the Clerk organization", async () => {
+    startNamespaceOperationMock.mockRejectedValue(
+      new MockNamespaceConflictError(
+        "HANDLE_ALREADY_CLAIMED",
+        "Handle acme is already claimed"
+      )
+    );
+
+    await expect(
+      caller().viewer.organization.create({
+        idempotencyKey: "idem_org_1",
+        slug: "acme",
+      })
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: 'An organization with the name "acme" already exists',
+    });
+
+    expect(createOrganizationMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes the pre-Clerk reservation when Clerk rejects the organization slug", async () => {
+    const clerkError = new Error("organization slug already exists");
+    createOrganizationMock.mockRejectedValue(clerkError);
+    isClerkConflictErrorMock.mockReturnValue(true);
+    deletePreClerkNamespaceReservationMock.mockResolvedValue(
+      operation({ status: "failed" })
+    );
+
+    await expect(
+      caller().viewer.organization.create({
+        idempotencyKey: "idem_org_1",
+        slug: "acme",
+      })
+    ).rejects.toMatchObject({
+      code: "CONFLICT",
+      message: 'An organization with the name "acme" already exists',
+    });
+
+    expect(deletePreClerkNamespaceReservationMock).toHaveBeenCalledWith(
+      expect.anything(),
+      operation({ status: "namespace_reserved" }),
+      {
+        errorCode: "CLERK_ORG_SLUG_CONFLICT",
+        errorMessage: "Clerk rejected org slug acme as already claimed",
+      }
+    );
+    expect(markNamespaceOperationClerkAppliedMock).not.toHaveBeenCalled();
+    expect(finalizeNamespaceOperationMock).not.toHaveBeenCalled();
   });
 });
 

@@ -1,20 +1,102 @@
 "use client";
 
+import {
+  lightfastHandleSchema,
+  normalizeLightfastHandle,
+} from "@repo/app-validation";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { toast } from "@repo/ui/components/ui/sonner";
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from "@tanstack/react-query";
+import { Check, Loader2 } from "lucide-react";
+import type { FormEvent } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
 import { GithubAccountConnectionSection } from "./github-account-connection-section";
 
+function createIdempotencyKey() {
+  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
+    return crypto.randomUUID();
+  }
+  return `username-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+}
+
 export function ProfileDataDisplay() {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const accountQuery = trpc.viewer.account.get.queryOptions();
 
   const { data: profile } = useSuspenseQuery({
-    ...trpc.viewer.account.get.queryOptions(),
+    ...accountQuery,
     staleTime: 10 * 60 * 1000,
   });
+  const [name, setName] = useState(profile.fullName ?? "");
+  const [username, setUsername] = useState(profile.username ?? "");
+  const usernameIdempotencyKeyRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    setName(profile.fullName ?? "");
+    setUsername(profile.username ?? "");
+    usernameIdempotencyKeyRef.current = null;
+  }, [profile.fullName, profile.username]);
+
+  const updateNameMutation = useMutation(
+    trpc.viewer.account.updateName.mutationOptions({
+      meta: { errorTitle: "Failed to update name" },
+      onSuccess: (data) => {
+        queryClient.setQueryData(accountQuery.queryKey, data);
+        toast.success("Name updated");
+      },
+    })
+  );
+  const createUsernameMutation = useMutation(
+    trpc.viewer.account.createUsername.mutationOptions({
+      meta: { errorTitle: "Failed to create username" },
+      onSuccess: (data) => {
+        usernameIdempotencyKeyRef.current = null;
+        queryClient.setQueryData(accountQuery.queryKey, data);
+        toast.success("Username created");
+      },
+    })
+  );
+
+  const normalizedName = name.trim();
+  const hasUsername = !!profile.username;
+  const parsedUsername = lightfastHandleSchema.safeParse(username);
+  const isSavingName = updateNameMutation.isPending;
+  const isCreatingUsername = createUsernameMutation.isPending;
+  const canSaveName =
+    normalizedName.length > 0 &&
+    normalizedName !== (profile.fullName ?? "") &&
+    !isSavingName;
+  const canCreateUsername =
+    !hasUsername && parsedUsername.success && !isCreatingUsername;
+
+  function handleNameSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!canSaveName) {
+      return;
+    }
+    updateNameMutation.mutate({ name: normalizedName });
+  }
+
+  function handleUsernameSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!(canCreateUsername && parsedUsername.success)) {
+      return;
+    }
+    usernameIdempotencyKeyRef.current ??= createIdempotencyKey();
+    createUsernameMutation.mutate({
+      idempotencyKey: usernameIdempotencyKeyRef.current,
+      username: parsedUsername.data,
+    });
+  }
 
   return (
     <div className="space-y-8">
@@ -43,28 +125,95 @@ export function ProfileDataDisplay() {
       </div>
 
       {/* Display Name Section */}
-      <div className="space-y-4">
+      <form className="space-y-4" onSubmit={handleNameSubmit}>
         <div>
-          <h2 className="font-semibold text-foreground text-xl">
-            Display Name
-          </h2>
+          <h2 className="font-semibold text-foreground text-xl">Name</h2>
           <p className="mt-1 text-muted-foreground text-sm">
             Please enter your full name, or a display name you are comfortable
             with.
           </p>
         </div>
         <div className="flex items-start gap-3">
-          <Input
-            className="flex-1 bg-muted/50"
-            disabled
-            type="text"
-            value={profile.fullName ?? ""}
-          />
-          <Button disabled variant="secondary">
-            Save
+          <div className="flex-1">
+            <label className="sr-only" htmlFor="account-name">
+              Name
+            </label>
+            <Input
+              autoComplete="name"
+              className="bg-muted/50"
+              id="account-name"
+              onChange={(event) => setName(event.target.value)}
+              type="text"
+              value={name}
+            />
+          </div>
+          <Button disabled={!canSaveName} type="submit" variant="secondary">
+            {isSavingName ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Saving
+              </>
+            ) : (
+              "Save"
+            )}
           </Button>
         </div>
-      </div>
+      </form>
+
+      {/* Username Section */}
+      <form className="space-y-4" onSubmit={handleUsernameSubmit}>
+        <div>
+          <h2 className="font-semibold text-foreground text-xl">Username</h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            This is your stable Lightfast handle.
+          </p>
+        </div>
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <label className="sr-only" htmlFor="account-username">
+              Username
+            </label>
+            <Input
+              autoComplete="username"
+              className="bg-muted/50 font-mono"
+              disabled={hasUsername}
+              id="account-username"
+              onChange={(event) => {
+                setUsername(normalizeLightfastHandle(event.target.value));
+                usernameIdempotencyKeyRef.current = null;
+              }}
+              placeholder="ada-dev"
+              type="text"
+              value={username}
+            />
+            <p className="mt-2 font-mono text-muted-foreground text-sm">
+              lightfast.ai/
+              <span className="text-foreground">
+                {username || "your-username"}
+              </span>
+            </p>
+          </div>
+          <Button
+            disabled={!canCreateUsername}
+            type="submit"
+            variant={hasUsername ? "secondary" : "default"}
+          >
+            {hasUsername ? (
+              <>
+                <Check className="h-4 w-4" />
+                Username created
+              </>
+            ) : isCreatingUsername ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Creating
+              </>
+            ) : (
+              "Create username"
+            )}
+          </Button>
+        </div>
+      </form>
 
       {/* Email Section (Read-only) */}
       <div className="space-y-4">

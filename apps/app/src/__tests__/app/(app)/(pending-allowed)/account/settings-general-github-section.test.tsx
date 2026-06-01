@@ -13,6 +13,8 @@ let githubAccountStatus: {
 const clientAccountGetQueryOptionsMock = vi.fn(() => ({
   queryKey: [["viewer", "account", "get"]],
 }));
+const updateNameMutationOptionsMock = vi.fn((options: unknown) => options);
+const createUsernameMutationOptionsMock = vi.fn((options: unknown) => options);
 const statusQueryOptionsMock = vi.fn(() => ({
   queryKey: [["viewer", "githubAccount", "status"]],
 }));
@@ -28,7 +30,13 @@ vi.mock("~/trpc/react", () => ({
   useTRPC: () => ({
     viewer: {
       account: {
+        createUsername: {
+          mutationOptions: createUsernameMutationOptionsMock,
+        },
         get: { queryOptions: clientAccountGetQueryOptionsMock },
+        updateName: {
+          mutationOptions: updateNameMutationOptionsMock,
+        },
       },
       githubAccount: {
         status: { queryOptions: statusQueryOptionsMock },
@@ -53,6 +61,16 @@ vi.mock("~/trpc/server", () => ({
 }));
 
 vi.mock("@tanstack/react-query", () => ({
+  useMutation: (options: unknown) => ({
+    isPending: false,
+    mutate: vi.fn(),
+    mutateAsync: vi.fn(),
+    options,
+  }),
+  useQueryClient: () => ({
+    invalidateQueries: vi.fn(),
+    setQueryData: vi.fn(),
+  }),
   useSuspenseQuery: (options: { queryKey: string[][] }) => {
     if (options.queryKey[0]?.join(".") === "viewer.account.get") {
       return {
@@ -60,6 +78,7 @@ vi.mock("@tanstack/react-query", () => ({
           fullName: "Test User",
           initials: "TU",
           primaryEmailAddress: "test@example.com",
+          username: "test-user",
         },
       };
     }
@@ -77,6 +96,8 @@ const { GithubAccountConnectionSection } = await import(
 beforeEach(() => {
   githubAccountStatus = { account: null };
   clientAccountGetQueryOptionsMock.mockClear();
+  updateNameMutationOptionsMock.mockClear();
+  createUsernameMutationOptionsMock.mockClear();
   statusQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
   accountGetQueryOptionsMock.mockClear();

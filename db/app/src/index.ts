@@ -96,6 +96,28 @@ export {
   type UpdateAutomationInput,
   updateAutomation,
 } from "./utils/automations";
+export {
+  type BackfillExistingNamespaceInput,
+  type BackfillExistingNamespaceResult,
+  backfillExistingNamespace,
+  deletePreClerkNamespaceReservation,
+  failUnreservedNamespaceOperation,
+  finalizeNamespaceOperation,
+  getActiveNamespaceByHandle,
+  getClaimedNamespaceForOwner,
+  getNamespaceByHandle,
+  getNamespaceOperationById,
+  getNamespaceOperationByIdempotencyKey,
+  markNamespaceOperationClerkApplied,
+  type NamespaceConflictCode,
+  NamespaceConflictError,
+  NamespaceOperationConcurrencyError,
+  NamespaceOperationTransitionError,
+  reserveNamespaceForOperation,
+  type StartNamespaceOperationInput,
+  startNamespaceOperation,
+  transitionNamespaceOperation,
+} from "./utils/namespaces";
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
 // Org source-control binding repository helpers

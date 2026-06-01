@@ -25,6 +25,8 @@ import { NextResponse } from "next/server";
 import { parseSafeAuthRedirectTarget } from "~/auth-redirect";
 
 const POST_AUTH_FALLBACK_PATH = "/account/teams/new";
+const USERNAME_TASK_PATH = "/account/tasks/username";
+const LIGHTFAST_PATHNAME_HEADER = "x-lightfast-pathname";
 
 const securityHeaders = securityMiddleware({
   ...composeCspOptions(
@@ -169,6 +171,43 @@ function redirectToPostAuth(
   return NextResponse.redirect(new URL(getPostAuthPath(authState), req.url));
 }
 
+function isUsernameTaskRoute(req: NextRequest) {
+  return req.nextUrl.pathname === USERNAME_TASK_PATH;
+}
+
+async function redirectToUsernameTaskIfNeeded(
+  req: NextRequest,
+  userId: string,
+  options: { returnTo?: string } = {}
+) {
+  if (isUsernameTaskRoute(req)) {
+    return null;
+  }
+
+  try {
+    const clerk = await clerkClient();
+    const user = await clerk.users.getUser(userId);
+    if (user.username) {
+      return null;
+    }
+  } catch (err) {
+    console.warn("[proxy] Failed to resolve username setup gate", {
+      message: err instanceof Error ? err.message : String(err),
+      name: err instanceof Error ? err.name : "unknown",
+      userId,
+    });
+    return null;
+  }
+
+  const url = new URL(USERNAME_TASK_PATH, req.url);
+  const returnTo =
+    options.returnTo ?? `${req.nextUrl.pathname}${req.nextUrl.search}`;
+  if (returnTo) {
+    url.searchParams.set("return_to", returnTo);
+  }
+  return NextResponse.redirect(url);
+}
+
 function getSetupPathFromClaims(input: {
   orgSlug: string;
   sessionClaims?: CustomJwtSessionClaims | null;
@@ -249,6 +288,16 @@ async function applySecurityHeaders(response: Response) {
   }
 }
 
+function nextWithRequestContext(req: NextRequest) {
+  const requestHeaders = new Headers(req.headers);
+  requestHeaders.set(LIGHTFAST_PATHNAME_HEADER, req.nextUrl.pathname);
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
+}
+
 const microfrontendsMiddleware: NemoMiddleware = async (req) => {
   const mfeResponse = await runMicrofrontendsMiddleware({
     request: req,
@@ -272,6 +321,20 @@ const clerkProxyMiddleware = clerkMiddleware(
         if (clerkOAuthContinuationUrl) {
           return NextResponse.redirect(clerkOAuthContinuationUrl);
         }
+        const usernameSetupRedirect = await redirectToUsernameTaskIfNeeded(
+          req,
+          userId,
+          {
+            returnTo: getPostAuthPath({
+              orgSlug,
+              sessionClaims,
+              sessionStatus,
+            }),
+          }
+        );
+        if (usernameSetupRedirect) {
+          return usernameSetupRedirect;
+        }
         return redirectToPostAuth(req, {
           orgSlug,
           sessionClaims,
@@ -290,6 +353,13 @@ const clerkProxyMiddleware = clerkMiddleware(
           `${req.nextUrl.pathname}${req.nextUrl.search}`
         );
         return NextResponse.redirect(url);
+      }
+      const usernameSetupRedirect = await redirectToUsernameTaskIfNeeded(
+        req,
+        userId
+      );
+      if (usernameSetupRedirect) {
+        return usernameSetupRedirect;
       }
       if (req.nextUrl.pathname === "/") {
         return redirectToPostAuth(req, {
@@ -338,7 +408,7 @@ const clerkProxyMiddleware = clerkMiddleware(
       }
     }
 
-    const response = NextResponse.next();
+    const response = nextWithRequestContext(req);
     return applySecurityHeaders(response);
   },
   {
@@ -370,7 +440,7 @@ export default function proxy(req: NextRequest, event: NextFetchEvent) {
   }
 
   if (isApiRoute(req)) {
-    return applySecurityHeaders(NextResponse.next());
+    return applySecurityHeaders(nextWithRequestContext(req));
   }
 
   return nemoProxy(req, event);

@@ -13,6 +13,10 @@
       "types": "./src/env.ts",
       "default": "./src/env.ts"
     },
+    "./backend": {
+      "types": "./src/backend.ts",
+      "default": "./src/backend.ts"
+    },
     "./server": {
       "types": "./src/server.ts",
       "default": "./src/server.ts"

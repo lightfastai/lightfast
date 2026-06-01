@@ -67,6 +67,7 @@ const createNEMOMock = vi.fn(
 );
 const runMicrofrontendsMiddlewareMock = vi.fn();
 const updateUserMetadataMock = vi.fn();
+const getUserMock = vi.fn();
 
 vi.mock("@rescale/nemo", () => ({
   createNEMO: createNEMOMock,
@@ -100,6 +101,7 @@ vi.mock("@vendor/clerk/server", () => ({
   clerkClient: vi.fn(() =>
     Promise.resolve({
       users: {
+        getUser: getUserMock,
         updateUserMetadata: updateUserMetadataMock,
       },
     })
@@ -181,12 +183,50 @@ beforeEach(() => {
   runMicrofrontendsMiddlewareMock.mockResolvedValue(null);
   updateUserMetadataMock.mockReset();
   updateUserMetadataMock.mockResolvedValue({});
+  getUserMock.mockReset();
+  getUserMock.mockResolvedValue({ username: "ada-dev" });
   authMock.mockResolvedValue({
     orgId: "org_123",
     orgSlug: "acme",
     sessionClaims: { lf_binding_status: "bound" },
     sessionStatus: "active",
     userId: "user_123",
+  });
+});
+
+describe("proxy username setup gate", () => {
+  it("redirects signed-in users without a username to the username task", async () => {
+    getUserMock.mockResolvedValue({ username: null });
+    authMock.mockResolvedValue({
+      orgId: null,
+      orgSlug: null,
+      sessionClaims: null,
+      sessionStatus: "pending",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/account/teams/new?from=signup");
+
+    expect(response.status).toBe(307);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/account/tasks/username?return_to=%2Faccount%2Fteams%2Fnew%3Ffrom%3Dsignup"
+    );
+  });
+
+  it("allows the username task route for signed-in users without a username", async () => {
+    getUserMock.mockResolvedValue({ username: null });
+    authMock.mockResolvedValue({
+      orgId: null,
+      orgSlug: null,
+      sessionClaims: null,
+      sessionStatus: "pending",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/account/tasks/username");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
   });
 });
 

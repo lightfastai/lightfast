@@ -27,9 +27,7 @@ export function ProfileDataLoading() {
       {/* Display Name Section */}
       <div className="space-y-4">
         <div>
-          <h2 className="font-semibold text-foreground text-xl">
-            Display Name
-          </h2>
+          <h2 className="font-semibold text-foreground text-xl">Name</h2>
           <p className="mt-1 text-muted-foreground text-sm">
             Please enter your full name, or a display name you are comfortable
             with.
@@ -39,6 +37,25 @@ export function ProfileDataLoading() {
           <Skeleton className="h-9 flex-1" />
           <Button disabled variant="secondary">
             Save
+          </Button>
+        </div>
+      </div>
+
+      {/* Username Section */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-semibold text-foreground text-xl">Username</h2>
+          <p className="mt-1 text-muted-foreground text-sm">
+            This is your stable Lightfast handle.
+          </p>
+        </div>
+        <div className="flex items-start gap-3">
+          <div className="flex-1">
+            <Skeleton className="h-9 w-full" />
+            <Skeleton className="mt-2 h-5 w-44" />
+          </div>
+          <Button disabled variant="secondary">
+            Create username
           </Button>
         </div>
       </div>
