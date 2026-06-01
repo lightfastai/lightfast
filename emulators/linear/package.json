@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/linear-app-node": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "zod": "catalog:"
   },

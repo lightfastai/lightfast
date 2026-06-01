@@ -1,5 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 
+import { listLinearMcpTools } from "@repo/linear-app-node";
+
 import {
   LINEAR_EMULATOR_FIXTURES,
   LINEAR_EMULATOR_TOOLS,
@@ -230,6 +232,18 @@ describe("@repo/linear-emulator", () => {
     });
   });
 
+  it("lists deterministic MCP tools through the real Linear provider client", async () => {
+    const active = await start();
+
+    await expect(
+      listLinearMcpTools({
+        accessToken: LINEAR_EMULATOR_FIXTURES.accessToken,
+        endpoint: `${active.url}/mcp`,
+        nodeEnv: "test",
+      })
+    ).resolves.toEqual(LINEAR_EMULATOR_TOOLS);
+  });
+
   it("supports a deterministic MCP list-tools failure switch", async () => {
     const active = await start();
     await exchangeCode("linear_oauth_code_lightfast_local");
@@ -250,6 +264,22 @@ describe("@repo/linear-emulator", () => {
       error: { code: -32_003, message: "Linear MCP list-tools failure" },
       id: 1,
       jsonrpc: "2.0",
+    });
+  });
+
+  it("rejects non-boolean failure switch values", async () => {
+    const active = await start();
+
+    const res = await fetch(`${active.url}/failures`, {
+      body: JSON.stringify({ refresh: "false" }),
+      headers: { "content-type": "application/json" },
+      method: "POST",
+    });
+
+    expect(res.status).toBe(400);
+    await expect(res.json()).resolves.toMatchObject({
+      error: "invalid_failure_switch",
+      field: "refresh",
     });
   });
 

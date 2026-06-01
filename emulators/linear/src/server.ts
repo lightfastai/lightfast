@@ -13,6 +13,12 @@ interface FailureSwitches {
   refresh: boolean;
 }
 
+const failureSwitchNames = [
+  "accessTokenExpired",
+  "mcpListTools",
+  "refresh",
+] as const satisfies ReadonlyArray<keyof FailureSwitches>;
+
 export interface StartLinearEmulatorInput {
   appOrigin?: string;
   host?: string;
@@ -261,10 +267,28 @@ async function handleFailures(
   res: ServerResponse,
   failures: FailureSwitches
 ) {
-  const body = (await readJson(req)) as Partial<FailureSwitches> | null;
-  failures.accessTokenExpired = body?.accessTokenExpired ?? failures.accessTokenExpired;
-  failures.mcpListTools = body?.mcpListTools ?? failures.mcpListTools;
-  failures.refresh = body?.refresh ?? failures.refresh;
+  const body = await readJson(req);
+  if (body !== null && (typeof body !== "object" || Array.isArray(body))) {
+    jsonResponse(res, 400, { error: "invalid_failure_switches" });
+    return;
+  }
+
+  const switches = body as Partial<Record<keyof FailureSwitches, unknown>> | null;
+  for (const name of failureSwitchNames) {
+    const value = switches?.[name];
+    if (value === undefined) {
+      continue;
+    }
+    if (typeof value !== "boolean") {
+      jsonResponse(res, 400, {
+        error: "invalid_failure_switch",
+        field: name,
+      });
+      return;
+    }
+    failures[name] = value;
+  }
+
   jsonResponse(res, 200, { failures });
 }
 
