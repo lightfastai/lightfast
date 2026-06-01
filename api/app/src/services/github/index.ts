@@ -8,6 +8,10 @@ export {
   resolveGitHubAppOrigin,
 } from "./config";
 export {
+  clearGitHubInstallationTokenCacheForTests,
+  getCachedGitHubInstallationToken,
+} from "./installation-token-cache";
+export {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,
   type GitHubRedirectResult,

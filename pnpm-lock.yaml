@@ -327,6 +327,9 @@ importers:
       '@repo/native-auth-contract':
         specifier: workspace:*
         version: link:../../packages/native-auth-contract
+      '@repo/skills-contract':
+        specifier: workspace:*
+        version: link:../../packages/skills-contract
       '@repo/source-control-contract':
         specifier: workspace:*
         version: link:../../packages/source-control-contract
