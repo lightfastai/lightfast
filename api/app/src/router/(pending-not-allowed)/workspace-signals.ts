@@ -12,10 +12,8 @@ import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
-import {
-  createAndQueueSignal,
-  isSignalCreateQueueError,
-} from "../../signals/create-signal";
+import { isSignalCreateQueueError } from "../../signals/create-signal";
+import { createSignalForActor } from "../../signals/service";
 import { boundOrgProcedure } from "../../trpc";
 import {
   workspaceListCursorInput,
@@ -69,10 +67,12 @@ export const workspaceSignalsRouter = {
     .input(createSignalInput)
     .mutation(async ({ ctx, input }) => {
       try {
-        return await createAndQueueSignal(ctx.db, {
-          clerkOrgId: ctx.auth.identity.orgId,
-          createdByApiKeyId: null,
-          createdByUserId: ctx.auth.identity.userId,
+        return await createSignalForActor(ctx.db, {
+          actor: {
+            kind: "web",
+            orgId: ctx.auth.identity.orgId,
+            userId: ctx.auth.identity.userId,
+          },
           input: input.input,
         });
       } catch (error) {
