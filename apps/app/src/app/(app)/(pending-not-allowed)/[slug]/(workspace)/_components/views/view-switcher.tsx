@@ -92,7 +92,7 @@ export function ViewSwitcher({
               <Fragment key={view.publicId}>
                 <div
                   aria-hidden="true"
-                  className="h-3.5 w-px shrink-0 bg-border"
+                  className="mx-1.5 h-3.5 w-px shrink-0 bg-border"
                 />
                 <div
                   className={cn(
@@ -131,7 +131,7 @@ export function ViewSwitcher({
             <>
               <div
                 aria-hidden="true"
-                className="h-3.5 w-px shrink-0 bg-border"
+                className="mx-1.5 h-3.5 w-px shrink-0 bg-border"
               />
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
