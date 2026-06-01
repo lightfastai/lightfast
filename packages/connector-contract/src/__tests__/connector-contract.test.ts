@@ -9,15 +9,14 @@ import {
 } from "../index";
 
 describe("connector catalog", () => {
-  it("keeps Linear connectable and coming-soon providers cataloged", () => {
+  it("catalogs only the connectable Linear connector", () => {
     expect(CONNECTABLE_CONNECTOR_PROVIDERS).toEqual(["linear"]);
-    expect(CONNECTOR_CATALOG.map((entry) => entry.provider)).toContain(
-      "linear"
-    );
+    expect(CONNECTOR_CATALOG.map((entry) => entry.provider)).toEqual([
+      "linear",
+    ]);
     expect(
-      CONNECTOR_CATALOG.filter((entry) => entry.catalogStatus === "coming_soon")
-        .length
-    ).toBeGreaterThanOrEqual(3);
+      CONNECTOR_CATALOG.every((entry) => entry.catalogStatus === "available")
+    ).toBe(true);
   });
 
   it("uses Lightfast as the v1 builder", () => {

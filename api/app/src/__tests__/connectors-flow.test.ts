@@ -1,7 +1,5 @@
-import { TRPCError } from "@trpc/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
-
 import type { Database, OrgConnectorConnection } from "@db/app";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const clerkGetOrganizationMembershipListMock = vi.fn();
 const authMock = vi.fn();
@@ -42,10 +40,12 @@ const envMock = {
 vi.mock("@db/app/client", () => ({ db: {} }));
 
 vi.mock("@db/app", () => ({
-  finalizeCurrentOrgConnectorConnection: finalizeCurrentOrgConnectorConnectionMock,
+  finalizeCurrentOrgConnectorConnection:
+    finalizeCurrentOrgConnectorConnectionMock,
   getCurrentOrgConnectorConnection: getCurrentOrgConnectorConnectionMock,
   listCurrentOrgConnectorConnections: listCurrentOrgConnectorConnectionsMock,
-  markCurrentOrgConnectorConnectionError: markCurrentOrgConnectorConnectionErrorMock,
+  markCurrentOrgConnectorConnectionError:
+    markCurrentOrgConnectorConnectionErrorMock,
   markCurrentOrgConnectorConnectionRevoked:
     markCurrentOrgConnectorConnectionRevokedMock,
   recordConnectorToolRefreshError: recordConnectorToolRefreshErrorMock,
@@ -101,14 +101,11 @@ vi.mock("@vendor/upstash", () => ({
 vi.mock("../env", () => ({ env: envMock }));
 
 const { LinearAppNodeError } = await import("@repo/linear-app-node");
-const {
-  assertCurrentSessionCanFinalizeConnectorOAuth,
-  ConnectorOAuthFinalizeAccessError,
-} = await import("../services/connectors/auth");
-const {
-  consumeLinearConnectOAuthAttempt,
-  issueLinearConnectOAuthAttempt,
-} = await import("../services/connectors/attempts");
+const { assertCurrentSessionCanFinalizeConnectorOAuth } = await import(
+  "../services/connectors/auth"
+);
+const { consumeLinearConnectOAuthAttempt, issueLinearConnectOAuthAttempt } =
+  await import("../services/connectors/attempts");
 const {
   completeLinearConnectorOAuth,
   disconnectLinearConnector,
@@ -226,16 +223,6 @@ describe("connector catalog services", () => {
           }),
           provider: "linear",
         }),
-        expect.objectContaining({
-          availableForAutomations: false,
-          catalogStatus: "coming_soon",
-          connectAvailability: {
-            reason: "coming_soon",
-            status: "unavailable",
-          },
-          connection: null,
-          provider: "slack",
-        }),
       ])
     );
 
@@ -323,8 +310,16 @@ describe("connector callback auth helper", () => {
 
   it.each([
     ["unauthenticated", { userId: null }, "UNAUTHENTICATED"],
-    ["wrong user", { orgId: "org_acme", userId: "user_other" }, "EXPECTED_USER_MISMATCH"],
-    ["wrong active org", { orgId: "org_other", userId: "user_current" }, "ACTIVE_ORG_MISMATCH"],
+    [
+      "wrong user",
+      { orgId: "org_acme", userId: "user_other" },
+      "EXPECTED_USER_MISMATCH",
+    ],
+    [
+      "wrong active org",
+      { orgId: "org_other", userId: "user_current" },
+      "ACTIVE_ORG_MISMATCH",
+    ],
   ] as const)("rejects %s callbacks", async (_name, session, code) => {
     authMock.mockResolvedValueOnce(session);
 
@@ -413,7 +408,9 @@ describe("Linear connector flow", () => {
     markCurrentOrgConnectorConnectionRevokedMock.mockResolvedValue(
       connection({ status: "revoked" })
     );
-    encryptMock.mockImplementation(async (value: string) => `encrypted:${value}`);
+    encryptMock.mockImplementation(
+      async (value: string) => `encrypted:${value}`
+    );
     decryptMock.mockImplementation(async (value: string) =>
       value === "encrypted_access"
         ? "access_token"
@@ -574,9 +571,7 @@ describe("Linear connector flow", () => {
       })
     );
     const lastRevokeOrder =
-      revokeLinearOAuthTokenMock.mock.invocationCallOrder[
-        revokeLinearOAuthTokenMock.mock.invocationCallOrder.length - 1
-      ];
+      revokeLinearOAuthTokenMock.mock.invocationCallOrder.at(-1);
     const finalizeOrder =
       finalizeCurrentOrgConnectorConnectionMock.mock.invocationCallOrder[0];
     if (lastRevokeOrder === undefined || finalizeOrder === undefined) {

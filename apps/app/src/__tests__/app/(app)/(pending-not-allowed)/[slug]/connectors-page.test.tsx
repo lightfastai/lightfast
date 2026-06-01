@@ -2,18 +2,17 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-type Provider = "linear" | "slack" | "notion" | "sentry";
-type ConnectorRow = {
+interface ConnectorRow {
   availableForAutomations: boolean;
   builder: "Lightfast";
   canManage: boolean;
-  catalogStatus: "available" | "coming_soon";
+  catalogStatus: "available";
   category: string;
   connectAvailability:
     | { status: "available" }
     | {
         status: "unavailable";
-        reason: "coming_soon" | "missing_config" | "permission_required";
+        reason: "missing_config" | "permission_required";
         missing?: string[];
       };
   connection: {
@@ -33,8 +32,8 @@ type ConnectorRow = {
   } | null;
   description: string;
   displayName: string;
-  provider: Provider;
-};
+  provider: "linear";
+}
 
 const disconnectMutateMock = vi.fn();
 const fetchQueryMock = vi.fn();
@@ -163,13 +162,6 @@ vi.mock("@repo/ui/components/ui/alert-dialog", () => ({
   AlertDialogTitle: ({ children }: { children?: ReactNode }) => (
     <h2>{children}</h2>
   ),
-  AlertDialogTrigger: ({ children }: { children?: ReactNode }) => (
-    <>{children}</>
-  ),
-}));
-
-vi.mock("@repo/ui/components/ui/badge", () => ({
-  Badge: ({ children }: { children?: ReactNode }) => <span>{children}</span>,
 }));
 
 vi.mock("@repo/ui/components/ui/button", () => ({
@@ -186,6 +178,40 @@ vi.mock("@repo/ui/components/ui/button", () => ({
     <button type="button" {...props}>
       {children}
     </button>
+  ),
+}));
+
+vi.mock("@repo/ui/components/ui/dropdown-menu", () => ({
+  DropdownMenu: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuContent: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
+  DropdownMenuItem: ({
+    children,
+    disabled,
+    onSelect,
+    variant: _variant,
+    ...props
+  }: {
+    children?: ReactNode;
+    disabled?: boolean;
+    onSelect?: (event: { preventDefault: () => void }) => void;
+    variant?: string;
+  }) => (
+    <button
+      disabled={disabled}
+      onClick={(event) => onSelect?.(event)}
+      type="button"
+      {...props}
+    >
+      {children}
+    </button>
+  ),
+  DropdownMenuSeparator: () => <hr />,
+  DropdownMenuTrigger: ({ children }: { children?: ReactNode }) => (
+    <>{children}</>
   ),
 }));
 
@@ -253,30 +279,18 @@ const { default: ConnectorsPage } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/connectors/page"
 );
 
-function row(
-  provider: Provider,
-  overrides: Partial<ConnectorRow> = {}
-): ConnectorRow {
-  const names: Record<Provider, string> = {
-    linear: "Linear",
-    notion: "Notion",
-    sentry: "Sentry",
-    slack: "Slack",
-  };
+function row(overrides: Partial<ConnectorRow> = {}): ConnectorRow {
   return {
     availableForAutomations: false,
     builder: "Lightfast",
     canManage: true,
-    catalogStatus: provider === "linear" ? "available" : "coming_soon",
+    catalogStatus: "available",
     category: "Project management",
-    connectAvailability:
-      provider === "linear"
-        ? { status: "available" }
-        : { status: "unavailable", reason: "coming_soon" },
+    connectAvailability: { status: "available" },
     connection: null,
-    description: `${names[provider]} connector`,
-    displayName: names[provider],
-    provider,
+    description: "Find, create, and manage issues, projects in Linear.",
+    displayName: "Linear",
+    provider: "linear",
     ...overrides,
   };
 }
@@ -284,7 +298,7 @@ function row(
 function connectedLinear(
   overrides: Partial<NonNullable<ConnectorRow["connection"]>> = {}
 ): ConnectorRow {
-  return row("linear", {
+  return row({
     availableForAutomations: true,
     connection: {
       connectedAt: new Date("2026-06-01T00:00:00.000Z"),
@@ -312,14 +326,7 @@ function connectedLinear(
   });
 }
 
-const catalogRows = [
-  connectedLinear(),
-  row("slack", { category: "Communication" }),
-  row("notion", { category: "Knowledge" }),
-  row("sentry", { category: "Observability" }),
-];
-
-function renderClient(rows: ConnectorRow[] = catalogRows) {
+function renderClient(rows: ConnectorRow[] = [connectedLinear()]) {
   useSuspenseQueryMock.mockReturnValue({ data: rows });
   return render(<ConnectorsClient />);
 }
@@ -368,8 +375,8 @@ beforeEach(() => {
 
 describe("connectors page", () => {
   it("fetches the connector list before rendering hydrated client UI", async () => {
-    fetchQueryMock.mockResolvedValue(catalogRows);
-    useSuspenseQueryMock.mockReturnValue({ data: catalogRows });
+    fetchQueryMock.mockResolvedValue([connectedLinear()]);
+    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     const element = await ConnectorsPage({
       searchParams: Promise.resolve({ connector: "linear" }),
@@ -383,54 +390,91 @@ describe("connectors page", () => {
     );
   });
 
-  it("renders catalog rows and expands connected Linear by default", () => {
+  it("renders the connected Linear card with tools and automation toggle", () => {
     renderClient();
 
     expect(screen.getByRole("heading", { name: "Connectors" })).toBeVisible();
     expect(
       screen.getByText(
-        /allow lightfast to reference other apps through mcp connectors/i
+        /allow lightfast to reference other apps for more context and actions through mcp connectors/i
       )
     ).toBeVisible();
     expect(screen.getByRole("heading", { name: "Linear" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Slack" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Notion" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Sentry" })).toBeVisible();
+    expect(screen.getByText("Connected", { selector: "span" })).toBeVisible();
+    expect(screen.getByText("Tools")).toBeVisible();
     expect(screen.getByText("create_issue")).toBeVisible();
     expect(screen.getByText("search_issues")).toBeVisible();
     expect(screen.getByText("Use in automations")).toBeVisible();
   });
 
-  it("links the Tools disclosure button to its expanded details region", () => {
-    renderClient([connectedLinear()]);
+  it("renders the connect card for an available Linear connector", () => {
+    renderClient([row()]);
 
-    const toolsButton = screen.getByRole("button", { name: /^tools$/i });
-    expect(toolsButton).toHaveAttribute("aria-expanded", "true");
-    expect(toolsButton).toHaveAttribute(
-      "aria-controls",
-      "connector-linear-tools"
-    );
-    expect(
-      document.getElementById("connector-linear-tools")
-    ).toHaveTextContent("2 tools available");
-
-    fireEvent.click(toolsButton);
-
-    expect(toolsButton).toHaveAttribute("aria-expanded", "false");
-    expect(document.getElementById("connector-linear-tools")).toBeNull();
+    expect(screen.getByRole("heading", { name: "Linear" })).toBeVisible();
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeVisible();
+    expect(screen.queryByText("Use in automations")).toBeNull();
   });
 
-  it("disables mutation actions for non-admin rows", () => {
-    renderClient(
-      [connectedLinear({}), row("slack")].map((item) => ({
-        ...item,
+  it("filters connectors by search query", () => {
+    renderClient();
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /search connectors/i }),
+      { target: { value: "linear" } }
+    );
+    expect(screen.getByRole("heading", { name: "Linear" })).toBeVisible();
+
+    fireEvent.change(
+      screen.getByRole("textbox", { name: /search connectors/i }),
+      { target: { value: "asana" } }
+    );
+    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
+    expect(
+      screen.getByText(/no connectors match these filters/i)
+    ).toBeVisible();
+  });
+
+  it("filters connectors by status", () => {
+    renderClient();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Status" }), {
+      target: { value: "connected" },
+    });
+    expect(screen.getByRole("heading", { name: "Linear" })).toBeVisible();
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Status" }), {
+      target: { value: "available" },
+    });
+    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
+  });
+
+  it("disables connect when Linear config is missing", () => {
+    renderClient([
+      row({
+        connectAvailability: {
+          status: "unavailable",
+          reason: "missing_config",
+          missing: ["LINEAR_CLIENT_ID"],
+        },
+      }),
+    ]);
+
+    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
+    expect(screen.getByText(/missing config/i)).toBeVisible();
+    expect(screen.getByText(/LINEAR_CLIENT_ID/)).toBeVisible();
+  });
+
+  it("disables overflow actions and toggle for non-admin members", () => {
+    renderClient([
+      {
+        ...connectedLinear(),
         canManage: false,
         connectAvailability: {
           status: "unavailable",
           reason: "permission_required",
         },
-      }))
-    );
+      },
+    ]);
 
     expect(
       screen.getByRole("button", { name: /refresh tools/i })
@@ -445,23 +489,7 @@ describe("connectors page", () => {
     ).toBeVisible();
   });
 
-  it("disables connect when Linear config is missing", () => {
-    renderClient([
-      row("linear", {
-        connectAvailability: {
-          status: "unavailable",
-          reason: "missing_config",
-          missing: ["LINEAR_CLIENT_ID"],
-        },
-      }),
-    ]);
-
-    expect(screen.getByRole("button", { name: /^connect$/i })).toBeDisabled();
-    expect(screen.getAllByText(/missing config/i)[0]).toBeVisible();
-    expect(screen.getByText(/LINEAR_CLIENT_ID/)).toBeVisible();
-  });
-
-  it("renders tools stale and needs reconnect labels", () => {
+  it("renders tools stale and needs reconnect status labels", () => {
     const { rerender } = renderClient([
       connectedLinear({
         lastToolRefreshErrorAt: new Date("2026-06-01T00:05:00.000Z"),
@@ -471,19 +499,17 @@ describe("connectors page", () => {
     expect(screen.getByText("Tools stale")).toBeVisible();
 
     useSuspenseQueryMock.mockReturnValue({
-      data: [
-        connectedLinear({
-          status: "error",
-        }),
-      ],
+      data: [connectedLinear({ status: "error" })],
     });
     rerender(<ConnectorsClient />);
 
-    expect(screen.getAllByText("Needs reconnect")[1]).toBeVisible();
+    expect(
+      screen.getByText("Needs reconnect", { selector: "span" })
+    ).toBeVisible();
   });
 
   it("renders callback errors inline and clears the callback URL", async () => {
-    useSuspenseQueryMock.mockReturnValue({ data: catalogRows });
+    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     render(
       <ConnectorsClient
@@ -501,9 +527,9 @@ describe("connectors page", () => {
 
   it("clears only callback params and preserves unrelated query params", async () => {
     searchParams = new URLSearchParams(
-      "connector=linear&error=access_denied&tab=catalog"
+      "connector=linear&error=access_denied&view=all"
     );
-    useSuspenseQueryMock.mockReturnValue({ data: catalogRows });
+    useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     render(
       <ConnectorsClient
@@ -513,41 +539,12 @@ describe("connectors page", () => {
     );
 
     await waitFor(() => {
-      expect(replaceMock).toHaveBeenCalledWith("/acme/connectors?tab=catalog");
+      expect(replaceMock).toHaveBeenCalledWith("/acme/connectors?view=all");
     });
-  });
-
-  it("applies search and status filters to the featured Linear row", () => {
-    renderClient();
-
-    fireEvent.change(
-      screen.getByRole("textbox", { name: /search connectors/i }),
-      {
-        target: { value: "slack" },
-      }
-    );
-
-    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
-    expect(screen.getByRole("heading", { name: "Slack" })).toBeVisible();
-
-    fireEvent.change(
-      screen.getByRole("textbox", { name: /search connectors/i }),
-      {
-        target: { value: "" },
-      }
-    );
-    fireEvent.change(screen.getByRole("combobox", { name: "Status" }), {
-      target: { value: "coming_soon" },
-    });
-
-    expect(screen.queryByRole("heading", { name: "Linear" })).toBeNull();
-    expect(screen.getByRole("heading", { name: "Slack" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Notion" })).toBeVisible();
-    expect(screen.getByRole("heading", { name: "Sentry" })).toBeVisible();
   });
 
   it("redirects same-tab after startConnect succeeds", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: [row("linear")] });
+    useSuspenseQueryMock.mockReturnValue({ data: [row()] });
 
     render(<ConnectorsClient />);
     fireEvent.click(screen.getByRole("button", { name: /^connect$/i }));
@@ -562,7 +559,7 @@ describe("connectors page", () => {
     expect(window.location.href).toBe("https://linear.example/oauth");
   });
 
-  it("calls refresh, toggle, and disconnect mutations and invalidates after refresh", () => {
+  it("calls refresh, toggle, and disconnect mutations from the connected card", () => {
     useSuspenseQueryMock.mockReturnValue({ data: [connectedLinear()] });
 
     render(<ConnectorsClient />);
@@ -582,6 +579,7 @@ describe("connectors page", () => {
       provider: "linear",
     });
 
+    fireEvent.click(screen.getByRole("button", { name: /disconnect/i }));
     fireEvent.click(screen.getByRole("button", { name: "Confirm" }));
     expect(disconnectMutateMock).toHaveBeenCalledWith({ provider: "linear" });
   });

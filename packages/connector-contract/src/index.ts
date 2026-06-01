@@ -1,11 +1,6 @@
 import { z } from "zod";
 
-export const CONNECTOR_PROVIDERS = [
-  "linear",
-  "slack",
-  "notion",
-  "sentry",
-] as const;
+export const CONNECTOR_PROVIDERS = ["linear"] as const;
 export const connectorProviderSchema = z.enum(CONNECTOR_PROVIDERS);
 export type ConnectorProvider = z.infer<typeof connectorProviderSchema>;
 
@@ -126,30 +121,6 @@ export const CONNECTOR_CATALOG = [
     builder: "Lightfast",
     category: "Project management",
     catalogStatus: "available",
-  },
-  {
-    provider: "slack",
-    displayName: "Slack",
-    description: "Read and manage Slack conversations.",
-    builder: "Lightfast",
-    category: "Communication",
-    catalogStatus: "coming_soon",
-  },
-  {
-    provider: "notion",
-    displayName: "Notion",
-    description: "Reference Notion pages, specs, and research.",
-    builder: "Lightfast",
-    category: "Knowledge",
-    catalogStatus: "coming_soon",
-  },
-  {
-    provider: "sentry",
-    displayName: "Sentry",
-    description: "Investigate issues, releases, and events.",
-    builder: "Lightfast",
-    category: "Observability",
-    catalogStatus: "coming_soon",
   },
 ] as const satisfies ReadonlyArray<{
   provider: ConnectorProvider;

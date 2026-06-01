@@ -10,10 +10,16 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@repo/ui/components/ui/alert-dialog";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
 import {
   Select,
@@ -30,9 +36,9 @@ import {
   useSuspenseQuery,
 } from "@tanstack/react-query";
 import {
-  ChevronDown,
-  ChevronRight,
-  ExternalLink,
+  ArrowUpRight,
+  Loader2,
+  MoreHorizontal,
   RefreshCcw,
   Search,
 } from "lucide-react";
@@ -45,12 +51,7 @@ import { ConnectorIcon } from "./connector-icons";
 type ConnectorCatalogRow =
   AppRouterOutputs["org"]["workspace"]["connectors"]["list"][number];
 type ConnectorProvider = ConnectorCatalogRow["provider"];
-type StatusFilter =
-  | "all"
-  | "connected"
-  | "available"
-  | "needs_reconnect"
-  | "coming_soon";
+type StatusFilter = "all" | "connected" | "available" | "needs_reconnect";
 
 interface ConnectorsClientProps {
   callbackConnector?: string;
@@ -58,7 +59,6 @@ interface ConnectorsClientProps {
 }
 
 const CONNECTABLE_PROVIDER: ConnectorProvider = "linear";
-const MAX_VISIBLE_TOOLS = 6;
 const ADMIN_REQUIRED_MESSAGE = "Admin access required to manage connectors";
 
 function isConnectableProvider(
@@ -74,44 +74,27 @@ function displayProviderName(provider: string | undefined) {
   return provider.charAt(0).toUpperCase() + provider.slice(1);
 }
 
-function connectionLabel(row: ConnectorCatalogRow) {
-  if (row.connection?.status === "error") {
-    return "Needs reconnect";
+function connectionStatus(
+  connection: NonNullable<ConnectorCatalogRow["connection"]>
+): { dotClass: string; label: string } {
+  if (connection.status === "error") {
+    return { dotClass: "bg-destructive", label: "Needs reconnect" };
   }
-  if (
-    row.connection?.status === "active" &&
-    row.connection.lastToolRefreshErrorAt
-  ) {
-    return "Tools stale";
+  if (connection.lastToolRefreshErrorAt) {
+    return { dotClass: "bg-amber-500", label: "Tools stale" };
   }
-  if (row.connection?.status === "active") {
-    return "Connected";
-  }
-  if (row.catalogStatus === "coming_soon") {
-    return "Coming soon";
-  }
-  if (row.connectAvailability.status === "unavailable") {
-    if (row.connectAvailability.reason === "missing_config") {
-      return "Missing config";
-    }
-    if (row.connectAvailability.reason === "permission_required") {
-      return "Admin required";
-    }
-  }
-  return "Available";
+  return { dotClass: "bg-emerald-500", label: "Connected" };
 }
 
 function filterMatches(row: ConnectorCatalogRow, filter: StatusFilter) {
   switch (filter) {
     case "available":
-      return !row.connection && row.catalogStatus === "available";
-    case "coming_soon":
-      return row.catalogStatus === "coming_soon";
+      return !row.connection;
     case "connected":
       return !!row.connection;
     case "needs_reconnect":
       return row.connection?.status === "error";
-    case "all":
+    default:
       return true;
   }
 }
@@ -142,21 +125,7 @@ export function ConnectorsClient({
     staleTime: 30_000,
   });
   const [query, setQuery] = useState("");
-  const [builtByLightfastOnly, setBuiltByLightfastOnly] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [expandedProviders, setExpandedProviders] = useState<
-    Set<ConnectorProvider>
-  >(
-    () =>
-      new Set(
-        connectors
-          .filter((row) => row.provider === "linear" && !!row.connection)
-          .map((row) => row.provider)
-      )
-  );
-  const [expandedTools, setExpandedTools] = useState<Set<ConnectorProvider>>(
-    () => new Set()
-  );
   const [callbackState] = useState(() => ({
     connector: callbackConnector,
     error: callbackError,
@@ -211,42 +180,10 @@ export function ConnectorsClient({
           [row.displayName, row.description, row.category, row.provider].some(
             (value) => value.toLowerCase().includes(normalizedQuery)
           );
-        const matchesBuilder =
-          !builtByLightfastOnly || row.builder === "Lightfast";
-        return (
-          matchesQuery && matchesBuilder && filterMatches(row, statusFilter)
-        );
+        return matchesQuery && filterMatches(row, statusFilter);
       }),
-    [builtByLightfastOnly, connectors, normalizedQuery, statusFilter]
+    [connectors, normalizedQuery, statusFilter]
   );
-  const linear = filteredConnectors.find((row) => row.provider === "linear");
-  const catalogRows = filteredConnectors.filter(
-    (row) => row.provider !== "linear"
-  );
-
-  function toggleExpanded(provider: ConnectorProvider) {
-    setExpandedProviders((current) => {
-      const next = new Set(current);
-      if (next.has(provider)) {
-        next.delete(provider);
-      } else {
-        next.add(provider);
-      }
-      return next;
-    });
-  }
-
-  function toggleTools(provider: ConnectorProvider) {
-    setExpandedTools((current) => {
-      const next = new Set(current);
-      if (next.has(provider)) {
-        next.delete(provider);
-      } else {
-        next.add(provider);
-      }
-      return next;
-    });
-  }
 
   function connect(row: ConnectorCatalogRow) {
     if (isConnectableProvider(row.provider)) {
@@ -262,10 +199,7 @@ export function ConnectorsClient({
 
   function setAutomationEnabled(row: ConnectorCatalogRow, enabled: boolean) {
     if (isConnectableProvider(row.provider)) {
-      setAutomationEnabledMutation.mutate({
-        enabled,
-        provider: row.provider,
-      });
+      setAutomationEnabledMutation.mutate({ enabled, provider: row.provider });
     }
   }
 
@@ -282,35 +216,34 @@ export function ConnectorsClient({
     disconnectMutation.isPending;
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <header className="mx-auto max-w-2xl text-center">
-        <h1 className="font-semibold text-[22px] text-foreground">
+    <div className="mx-auto w-full max-w-3xl px-6 py-10">
+      <header>
+        <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
           Connectors
         </h1>
-        <p className="mt-2 text-[13px] text-muted-foreground">
-          Allow Lightfast to reference other apps through MCP connectors.
+        <p className="mt-2 max-w-xl text-muted-foreground text-sm">
+          Allow Lightfast to reference other apps for more context and actions
+          through MCP connectors.
         </p>
       </header>
 
       {callbackState.error && (
-        <div className="mt-6 rounded-[8px] border border-destructive/25 bg-destructive/5 px-3 py-2 text-[12px]">
+        <div className="mt-6 rounded-[9px] border border-destructive/25 bg-destructive/5 px-3 py-2 text-sm">
           <p className="font-medium text-destructive">
             {displayProviderName(callbackState.connector)} connection failed
           </p>
-          <p className="mt-1 font-mono text-destructive/85">
-            {callbackState.error}
-          </p>
+          <p className="mt-1 text-destructive/85">{callbackState.error}</p>
         </div>
       )}
       {callbackState.connector && !callbackState.error && (
-        <div className="mt-6 rounded-[8px] border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[12px] text-emerald-700">
+        <div className="mt-6 rounded-[9px] border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-emerald-600 text-sm">
           {displayProviderName(callbackState.connector)} connected.
         </div>
       )}
 
-      <div className="mt-8 flex flex-col gap-3 border-border border-b pb-5 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative min-w-0 flex-1">
-          <Search className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-2.5 size-3.5 text-muted-foreground" />
+          <Search className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-muted-foreground" />
           <Input
             aria-label="Search connectors"
             className="pl-8"
@@ -321,395 +254,284 @@ export function ConnectorsClient({
             variant="lf"
           />
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <Button
-            aria-pressed={builtByLightfastOnly}
-            className={cn(
-              "h-7 rounded-[9px] text-[12px]",
-              builtByLightfastOnly && "bg-muted"
-            )}
-            onClick={() => setBuiltByLightfastOnly((value) => !value)}
+        <Select
+          onValueChange={(value) => setStatusFilter(value as StatusFilter)}
+          value={statusFilter}
+        >
+          <SelectTrigger
+            aria-label="Status"
+            className="h-7 shrink-0 rounded-[9px] sm:w-44"
             size="sm"
-            type="button"
-            variant="outline"
           >
-            Built by Lightfast
-          </Button>
-          <Select
-            onValueChange={(value) => setStatusFilter(value as StatusFilter)}
-            value={statusFilter}
-          >
-            <SelectTrigger
-              aria-label="Status"
-              className="h-7 rounded-[9px]"
-              size="sm"
-            >
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All statuses</SelectItem>
-              <SelectItem value="connected">Connected</SelectItem>
-              <SelectItem value="available">Available</SelectItem>
-              <SelectItem value="needs_reconnect">Needs reconnect</SelectItem>
-              <SelectItem value="coming_soon">Coming soon</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+            <SelectValue placeholder="Status" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="connected">Connected</SelectItem>
+            <SelectItem value="available">Available</SelectItem>
+            <SelectItem value="needs_reconnect">Needs reconnect</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
-      {linear && (
-        <section className="mt-6 rounded-[8px] border border-border bg-card p-4">
-          <ConnectorRow
-            expanded={expandedProviders.has(linear.provider)}
-            expandedTools={expandedTools.has(linear.provider)}
-            featured
-            mutationPending={mutationPending}
-            onConnect={connect}
-            onDisconnect={disconnect}
-            onRefreshTools={refreshTools}
-            onSetAutomationEnabled={setAutomationEnabled}
-            onToggleExpanded={toggleExpanded}
-            onToggleTools={toggleTools}
-            row={linear}
-          />
-        </section>
-      )}
-
-      <section className="mt-8">
-        <h2 className="font-mono font-normal text-[11px] text-muted-foreground">
-          Catalog
-        </h2>
-        <div className="mt-3 divide-y divide-border border-border border-y">
-          {catalogRows.map((row) => (
-            <ConnectorRow
-              expanded={expandedProviders.has(row.provider)}
-              expandedTools={expandedTools.has(row.provider)}
-              key={row.provider}
-              mutationPending={mutationPending}
-              onConnect={connect}
-              onDisconnect={disconnect}
-              onRefreshTools={refreshTools}
-              onSetAutomationEnabled={setAutomationEnabled}
-              onToggleExpanded={toggleExpanded}
-              onToggleTools={toggleTools}
-              row={row}
-            />
-          ))}
-          {catalogRows.length === 0 && (
-            <p className="py-6 text-[12px] text-muted-foreground">
-              No connectors match these filters.
-            </p>
+      {filteredConnectors.length === 0 ? (
+        <p className="mt-6 text-muted-foreground text-sm">
+          No connectors match these filters.
+        </p>
+      ) : (
+        <div className="mt-6 flex flex-col gap-4">
+          {filteredConnectors.map((row) =>
+            row.connection ? (
+              <ConnectedConnectorCard
+                key={row.provider}
+                onConnect={connect}
+                onDisconnect={disconnect}
+                onRefreshTools={refreshTools}
+                onSetAutomationEnabled={setAutomationEnabled}
+                pending={mutationPending}
+                refreshing={
+                  refreshToolsMutation.isPending &&
+                  refreshToolsMutation.variables?.provider === row.provider
+                }
+                row={row}
+              />
+            ) : (
+              <AvailableConnectorCard
+                key={row.provider}
+                onConnect={connect}
+                pending={mutationPending}
+                row={row}
+              />
+            )
           )}
         </div>
-      </section>
+      )}
     </div>
   );
 }
 
-function ConnectorRow({
-  expanded,
-  expandedTools,
-  featured = false,
-  mutationPending,
+function ConnectedConnectorCard({
   onConnect,
   onDisconnect,
   onRefreshTools,
   onSetAutomationEnabled,
-  onToggleExpanded,
-  onToggleTools,
+  pending,
+  refreshing,
   row,
 }: {
-  expanded: boolean;
-  expandedTools: boolean;
-  featured?: boolean;
-  mutationPending: boolean;
   onConnect: (row: ConnectorCatalogRow) => void;
   onDisconnect: (row: ConnectorCatalogRow) => void;
   onRefreshTools: (row: ConnectorCatalogRow) => void;
   onSetAutomationEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
-  onToggleExpanded: (provider: ConnectorProvider) => void;
-  onToggleTools: (provider: ConnectorProvider) => void;
+  pending: boolean;
+  refreshing: boolean;
   row: ConnectorCatalogRow;
 }) {
-  const label = connectionLabel(row);
-  const hasDetails = !!row.connection;
-  const toolsRegionId = `connector-${row.provider}-tools`;
+  const connection = row.connection;
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  if (!connection) {
+    return null;
+  }
+
+  const status = connectionStatus(connection);
+  const actionDisabled = isMutationDisabled(row, pending);
+  const connectDisabled = isConnectDisabled(row, pending);
+  const showAdminRequired =
+    !row.canManage && isConnectableProvider(row.provider);
 
   return (
-    <div className={cn("py-4", featured ? "py-0" : "")}>
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex min-w-0 gap-3">
-          <ConnectorIcon provider={row.provider} />
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2
-                className={cn(
-                  "font-medium text-foreground",
-                  featured ? "text-[16px]" : "text-[14px]"
-                )}
-              >
-                {row.displayName}
-              </h2>
-              <Badge
-                className="rounded-[7px] px-1.5 py-0 font-mono text-[10px]"
-                variant={
-                  label === "Needs reconnect" ? "destructive" : "outline"
-                }
-              >
-                {label}
-              </Badge>
-              <Badge
-                className="rounded-[7px] px-1.5 py-0 font-mono text-[10px]"
-                variant="secondary"
-              >
-                {row.builder}
-              </Badge>
-            </div>
-            <p className="mt-1 text-[12px] text-muted-foreground">
-              {row.description}
-            </p>
-            <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] text-muted-foreground">
-              <span>{row.category}</span>
-              {row.connection?.providerWorkspaceName && (
-                <span>{row.connection.providerWorkspaceName}</span>
-              )}
-              {row.connection?.providerActorName && (
-                <span>{row.connection.providerActorName}</span>
-              )}
-            </div>
-            {row.connectAvailability.status === "unavailable" &&
-              row.connectAvailability.reason === "missing_config" && (
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  Missing config:{" "}
-                  <span className="font-mono">
-                    {row.connectAvailability.missing?.join(", ") ??
-                      "Linear OAuth"}
-                  </span>
-                </p>
-              )}
-          </div>
+    <section className="rounded-[12px] border border-border bg-background">
+      <div className="flex items-center gap-3 p-3">
+        <ConnectorIcon provider={row.provider} />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-medium text-base text-foreground">
+            {row.displayName}
+          </h2>
+          <p className="mt-0.5 text-muted-foreground text-sm">
+            {row.description}
+          </p>
         </div>
+        <div className="flex shrink-0 items-center gap-1.5">
+          <span className="inline-flex items-center gap-1.5 text-foreground text-sm">
+            <span className={cn("size-1.5 rounded-full", status.dotClass)} />
+            {status.label}
+          </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                aria-label="Connector actions"
+                className="h-6 w-6 rounded-full"
+                size="sm"
+                type="button"
+                variant="ghost"
+              >
+                <MoreHorizontal className="size-3.5 opacity-50" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                disabled={actionDisabled || refreshing}
+                onSelect={() => onRefreshTools(row)}
+              >
+                {refreshing ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <RefreshCcw className="size-3.5" />
+                )}
+                Refresh tools
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                disabled={connectDisabled}
+                onSelect={() => onConnect(row)}
+              >
+                <ArrowUpRight className="size-3.5" />
+                Reconnect
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                disabled={actionDisabled}
+                onSelect={(event) => {
+                  event.preventDefault();
+                  setConfirmOpen(true);
+                }}
+                variant="destructive"
+              >
+                Disconnect
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
 
-        <ConnectorActions
-          onConnect={onConnect}
-          onDisconnect={onDisconnect}
-          onRefreshTools={onRefreshTools}
-          pending={mutationPending}
-          row={row}
+      <div className="h-px bg-border" />
+
+      <div className="p-3">
+        <div className="flex items-center gap-2">
+          <span className="font-medium text-foreground text-sm">Tools</span>
+          <Badge className="px-1.5 text-muted-foreground" variant="secondary">
+            {connection.tools.length}
+          </Badge>
+          {refreshing && (
+            <Loader2 className="size-3.5 animate-spin text-muted-foreground" />
+          )}
+        </div>
+        <div className="mt-3 flex flex-wrap gap-1.5">
+          {connection.tools.map((tool) => (
+            <Badge
+              className="font-normal"
+              key={tool.name}
+              title={tool.description}
+              variant="secondary"
+            >
+              {tool.name}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
+      <div className="h-px bg-border" />
+
+      <div className="flex items-center justify-between gap-6 p-3">
+        <div className="min-w-0">
+          <p className="text-foreground text-sm">Use in automations</p>
+          <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
+            Allow your data from {row.displayName} to be used inside automations
+            created in Lightfast.
+          </p>
+        </div>
+        <Switch
+          aria-label="Use in automations"
+          checked={connection.enabledForAutomations}
+          disabled={actionDisabled}
+          onCheckedChange={(enabled) => onSetAutomationEnabled(row, enabled)}
         />
       </div>
 
-      {hasDetails && (
-        <div className="mt-4">
-          <button
-            aria-controls={toolsRegionId}
-            aria-expanded={expanded}
-            className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground hover:text-foreground"
-            onClick={() => onToggleExpanded(row.provider)}
-            type="button"
-          >
-            {expanded ? (
-              <ChevronDown className="size-3" />
-            ) : (
-              <ChevronRight className="size-3" />
-            )}
-            Tools
-          </button>
-          {expanded && (
-            <ConnectorDetails
-              expandedTools={expandedTools}
-              id={toolsRegionId}
-              onSetAutomationEnabled={onSetAutomationEnabled}
-              onToggleTools={onToggleTools}
-              pending={mutationPending}
-              row={row}
-            />
-          )}
-        </div>
+      {showAdminRequired && (
+        <p className="px-3 pb-3 text-muted-foreground text-xs">
+          {ADMIN_REQUIRED_MESSAGE}
+        </p>
       )}
-    </div>
+
+      <AlertDialog onOpenChange={setConfirmOpen} open={confirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disconnect {row.displayName}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Lightfast will stop referencing this connector in automations
+              until an admin reconnects it.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => onDisconnect(row)}>
+              Confirm
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </section>
   );
 }
 
-function ConnectorActions({
+function AvailableConnectorCard({
   onConnect,
-  onDisconnect,
-  onRefreshTools,
   pending,
   row,
 }: {
   onConnect: (row: ConnectorCatalogRow) => void;
-  onDisconnect: (row: ConnectorCatalogRow) => void;
-  onRefreshTools: (row: ConnectorCatalogRow) => void;
   pending: boolean;
   row: ConnectorCatalogRow;
 }) {
   const connectDisabled = isConnectDisabled(row, pending);
-  const actionDisabled = isMutationDisabled(row, pending);
   const showAdminRequired =
     !row.canManage && isConnectableProvider(row.provider);
-
-  if (!row.connection) {
-    return (
-      <div className="flex flex-col items-start gap-1 sm:items-end">
-        <Button
-          className="h-7 rounded-[9px]"
-          disabled={connectDisabled}
-          onClick={() => onConnect(row)}
-          size="sm"
-          type="button"
-          variant="secondary"
-        >
-          Connect
-          <ExternalLink className="size-3.5" />
-        </Button>
-        {showAdminRequired && (
-          <p className="text-[11px] text-muted-foreground">
-            {ADMIN_REQUIRED_MESSAGE}
-          </p>
-        )}
-      </div>
-    );
-  }
+  const missingConfig =
+    row.connectAvailability.status === "unavailable" &&
+    row.connectAvailability.reason === "missing_config";
 
   return (
-    <div className="flex flex-col items-start gap-1 sm:items-end">
-      <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-        <Button
-          className="h-7 rounded-[9px]"
-          disabled={actionDisabled}
-          onClick={() => onRefreshTools(row)}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          <RefreshCcw className="size-3.5" />
-          Refresh tools
-        </Button>
-        <Button
-          className="h-7 rounded-[9px]"
-          disabled={connectDisabled}
-          onClick={() => onConnect(row)}
-          size="sm"
-          type="button"
-          variant="outline"
-        >
-          Reconnect
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              className="h-7 rounded-[9px]"
-              disabled={actionDisabled}
-              size="sm"
-              type="button"
-              variant="outline"
-            >
-              Disconnect
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Disconnect {row.displayName}?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Lightfast will stop referencing this connector in automations
-                until an admin reconnects it.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => onDisconnect(row)}>
-                Confirm
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-      {showAdminRequired && (
-        <p className="text-[11px] text-muted-foreground">
-          {ADMIN_REQUIRED_MESSAGE}
-        </p>
-      )}
-    </div>
-  );
-}
-
-function ConnectorDetails({
-  expandedTools,
-  id,
-  onSetAutomationEnabled,
-  onToggleTools,
-  pending,
-  row,
-}: {
-  expandedTools: boolean;
-  id: string;
-  onSetAutomationEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
-  onToggleTools: (provider: ConnectorProvider) => void;
-  pending: boolean;
-  row: ConnectorCatalogRow;
-}) {
-  if (!row.connection) {
-    return null;
-  }
-
-  const tools = expandedTools
-    ? row.connection.tools
-    : row.connection.tools.slice(0, MAX_VISIBLE_TOOLS);
-  const actionDisabled = isMutationDisabled(row, pending);
-
-  return (
-    <div
-      className="mt-3 rounded-[8px] border border-border bg-background/50 p-3"
-      id={id}
-    >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="font-mono text-[11px] text-foreground">
-            {row.connection.tools.length} tools available
+    <section className="rounded-[12px] border border-border bg-background">
+      <div className="flex items-center gap-3 p-3">
+        <ConnectorIcon provider={row.provider} />
+        <div className="min-w-0 flex-1">
+          <h2 className="font-medium text-base text-foreground">
+            {row.displayName}
+          </h2>
+          <p className="mt-0.5 text-muted-foreground text-sm">
+            {row.description}
           </p>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            All connector tools are allowed for automations initially.
-          </p>
+          {missingConfig && (
+            <p className="mt-1 text-muted-foreground text-xs">
+              Missing config:{" "}
+              <span className="text-foreground">
+                {row.connectAvailability.status === "unavailable"
+                  ? (row.connectAvailability.missing?.join(", ") ??
+                    "Linear OAuth")
+                  : "Linear OAuth"}
+              </span>
+            </p>
+          )}
         </div>
-        <label className="flex items-center gap-2 text-[12px] text-foreground">
-          <Switch
-            aria-label="Use in automations"
-            checked={row.connection.enabledForAutomations}
-            disabled={actionDisabled}
-            onCheckedChange={(enabled) => onSetAutomationEnabled(row, enabled)}
-          />
-          Use in automations
-        </label>
-      </div>
-
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {tools.map((tool) => (
-          <span
-            className={cn(
-              "inline-flex items-center rounded-[7px] border px-2 py-1 font-mono text-[10px]",
-              tool.availableForAutomations
-                ? "border-emerald-500/20 bg-emerald-500/5 text-emerald-700"
-                : "border-border text-muted-foreground"
-            )}
-            key={tool.name}
-            title={tool.description}
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Button
+            disabled={connectDisabled}
+            onClick={() => onConnect(row)}
+            size="lf"
+            type="button"
+            variant="outline"
           >
-            {tool.name}
-          </span>
-        ))}
+            Connect
+            <ArrowUpRight className="size-3.5" />
+          </Button>
+          {showAdminRequired && (
+            <p className="text-muted-foreground text-xs">
+              {ADMIN_REQUIRED_MESSAGE}
+            </p>
+          )}
+        </div>
       </div>
-      {row.connection.tools.length > MAX_VISIBLE_TOOLS && (
-        <Button
-          className="mt-3 h-6 rounded-[8px] px-2 text-[11px]"
-          onClick={() => onToggleTools(row.provider)}
-          size="sm"
-          type="button"
-          variant="ghost"
-        >
-          {expandedTools ? "See less" : "See more"}
-        </Button>
-      )}
-    </div>
+    </section>
   );
 }
