@@ -7,6 +7,7 @@ import {
   markCurrentOrgConnectorConnectionError,
   markCurrentOrgConnectorConnectionRevoked,
   recordConnectorToolRefreshError,
+  setConnectorAutomationEnabled,
   updateConnectorToolManifest,
 } from "../utils/org-connector-connections";
 
@@ -84,6 +85,12 @@ function selectRows<T>(rows: T[]) {
       }),
     }),
   };
+}
+
+function duplicateKeyError() {
+  return Object.assign(new Error("Duplicate entry for key"), {
+    code: "ER_DUP_ENTRY",
+  });
 }
 
 function collectColumnNames(value: unknown, seen = new WeakSet<object>()) {
@@ -178,6 +185,44 @@ describe("org connector connection helpers", () => {
     );
   });
 
+  it("recovers duplicate finalize races only when the winning row matches the finalize identity", async () => {
+    const duplicate = duplicateKeyError();
+    const winner = connection({
+      connectedByUserId: "user_123",
+      providerActorId: "actor_123",
+      providerWorkspaceId: "workspace_123",
+    });
+    const db = {
+      transaction: vi.fn(async () => {
+        throw duplicate;
+      }),
+      select: vi.fn(() => selectRows([winner])),
+    } as unknown as Database;
+
+    await expect(
+      finalizeCurrentOrgConnectorConnection(db, finalizeInput())
+    ).resolves.toBe(winner);
+  });
+
+  it("rejects duplicate finalize races when another connector identity won", async () => {
+    const duplicate = duplicateKeyError();
+    const winner = connection({
+      connectedByUserId: "user_456",
+      providerActorId: "actor_other",
+      providerWorkspaceId: "workspace_other",
+    });
+    const db = {
+      transaction: vi.fn(async () => {
+        throw duplicate;
+      }),
+      select: vi.fn(() => selectRows([winner])),
+    } as unknown as Database;
+
+    await expect(
+      finalizeCurrentOrgConnectorConnection(db, finalizeInput())
+    ).rejects.toBe(duplicate);
+  });
+
   it("revokes current org connector connections by clearing current key, tokens, automation, and manifest", async () => {
     const active = connection();
     const revoked = connection({
@@ -266,8 +311,11 @@ describe("org connector connection helpers", () => {
   it("updates connector tool manifests and clears refresh error fields on success", async () => {
     const refreshedAt = new Date("2026-06-01T01:00:00.000Z");
     const nextManifest = [{ name: "search_issues" }];
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
     const set = vi.fn(() => ({
-      where: () => Promise.resolve({ affectedRows: 1 }),
+      where: updateWhere,
     }));
     const update = vi.fn(() => ({ set }));
     const db = { update } as unknown as Database;
@@ -288,12 +336,18 @@ describe("org connector connection helpers", () => {
       toolManifest: nextManifest,
       updatedAt: refreshedAt,
     });
+    const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+    expect(columnNames).toContain("current_org_provider_key");
+    expect(columnNames).toContain("status");
   });
 
   it("records connector tool refresh errors without replacing the existing manifest", async () => {
     const erroredAt = new Date("2026-06-01T01:00:00.000Z");
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
     const set = vi.fn(() => ({
-      where: () => Promise.resolve({ affectedRows: 1 }),
+      where: updateWhere,
     }));
     const update = vi.fn(() => ({ set }));
     const db = { update } as unknown as Database;
@@ -312,5 +366,35 @@ describe("org connector connection helpers", () => {
       lastToolRefreshErrorCode: "MCP_UNAVAILABLE",
       updatedAt: erroredAt,
     });
+    const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+    expect(columnNames).toContain("current_org_provider_key");
+    expect(columnNames).toContain("status");
+  });
+
+  it("sets automation enablement only for active current connector rows", async () => {
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
+    const set = vi.fn(() => ({ where: updateWhere }));
+    const update = vi.fn(() => ({ set }));
+    const db = { update } as unknown as Database;
+
+    await expect(
+      setConnectorAutomationEnabled(db, {
+        clerkOrgId: "org_123",
+        enabled: true,
+        provider: "linear",
+      })
+    ).resolves.toBe(true);
+
+    expect(set).toHaveBeenCalledWith(
+      expect.objectContaining({
+        enabledForAutomations: true,
+        updatedAt: expect.any(Date),
+      })
+    );
+    const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
+    expect(columnNames).toContain("current_org_provider_key");
+    expect(columnNames).toContain("status");
   });
 });

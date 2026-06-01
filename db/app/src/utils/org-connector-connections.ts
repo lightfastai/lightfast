@@ -242,7 +242,7 @@ export async function updateConnectorToolManifest(
       toolManifest: input.toolManifest,
       updatedAt: input.lastToolRefreshAt,
     })
-    .where(currentConnectorWhere(input));
+    .where(activeCurrentConnectorWhere(input));
 
   return getRowsAffected(result) > 0;
 }
@@ -264,7 +264,7 @@ export async function recordConnectorToolRefreshError(
       lastToolRefreshErrorCode: input.lastToolRefreshErrorCode,
       updatedAt: input.lastToolRefreshErrorAt,
     })
-    .where(currentConnectorWhere(input));
+    .where(activeCurrentConnectorWhere(input));
 
   return getRowsAffected(result) > 0;
 }
@@ -279,7 +279,7 @@ export async function setConnectorAutomationEnabled(
       enabledForAutomations: input.enabled,
       updatedAt: new Date(),
     })
-    .where(currentConnectorWhere(input));
+    .where(activeCurrentConnectorWhere(input));
 
   return getRowsAffected(result) > 0;
 }
@@ -337,11 +337,11 @@ async function getOrgConnectorConnectionById(
 
 async function recoverOrgConnectorConnectionRace(
   db: Database,
-  input: GetCurrentOrgConnectorConnectionInput,
+  input: FinalizeCurrentOrgConnectorConnectionInput,
   fallbackError: unknown
 ): Promise<OrgConnectorConnection> {
   const current = await getCurrentOrgConnectorConnection(db, input);
-  if (current) {
+  if (current && isExpectedRaceWinner(current, input)) {
     return current;
   }
   throw fallbackError;
@@ -351,6 +351,30 @@ function currentConnectorWhere(input: GetCurrentOrgConnectorConnectionInput) {
   return eq(
     orgConnectorConnections.currentOrgProviderKey,
     currentOrgProviderKey(input.clerkOrgId, input.provider)
+  );
+}
+
+function activeCurrentConnectorWhere(
+  input: GetCurrentOrgConnectorConnectionInput
+) {
+  return and(
+    currentConnectorWhere(input),
+    eq(orgConnectorConnections.status, "active")
+  );
+}
+
+function isExpectedRaceWinner(
+  connection: OrgConnectorConnection,
+  input: FinalizeCurrentOrgConnectorConnectionInput
+): boolean {
+  return (
+    connection.status === "active" &&
+    connection.clerkOrgId === input.clerkOrgId &&
+    connection.provider === input.provider &&
+    connection.connectedByUserId === input.connectedByUserId &&
+    connection.providerWorkspaceId === input.providerWorkspaceId &&
+    connection.providerActorId === input.providerActorId &&
+    connection.mcpEndpoint === input.mcpEndpoint
   );
 }
 
