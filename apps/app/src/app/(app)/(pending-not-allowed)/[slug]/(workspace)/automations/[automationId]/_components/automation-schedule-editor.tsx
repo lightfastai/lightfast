@@ -1,7 +1,10 @@
 "use client";
 
 import type { AppRouterOutputs } from "@api/app";
-import { formatAutomationSchedule } from "@repo/app-validation/schemas";
+import {
+  type AutomationScheduleInput,
+  formatAutomationSchedule,
+} from "@repo/app-validation/schemas";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
@@ -16,69 +19,75 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import {
-  ToggleGroup,
-  ToggleGroupItem,
-} from "@repo/ui/components/ui/toggle-group";
+import { Tabs, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { setOne, upsertInList } from "../../_components/automations-cache";
+import {
+  isTimeBasedKind,
+  SCHEDULE_KINDS,
+  type ScheduleKind,
+  TIMEZONES,
+  WEEKDAY_OPTIONS,
+} from "../../_components/schedule-options";
+import { RailSection } from "./rail-section";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
-const TIMEZONES = [
-  "UTC",
-  "America/New_York",
-  "America/Chicago",
-  "America/Denver",
-  "America/Los_Angeles",
-  "Europe/London",
-  "Europe/Paris",
-  "Europe/Berlin",
-  "Asia/Tokyo",
-  "Asia/Shanghai",
-  "Asia/Kolkata",
-  "Australia/Sydney",
-];
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function extractFormState(automation: Automation) {
-  const kind = automation.scheduleKind as "hourly" | "daily";
-  const config = automation.scheduleConfig as
-    | { intervalHours: number }
-    | { time: string };
+  const kind = automation.scheduleKind as ScheduleKind;
+  const config = automation.scheduleConfig as {
+    intervalHours?: number;
+    time?: string;
+    dayOfWeek?: number;
+  };
   return {
     kind,
     intervalHours:
-      "intervalHours" in config ? String(config.intervalHours) : "1",
-    time: "time" in config ? config.time : "09:00",
+      config.intervalHours === undefined ? "1" : String(config.intervalHours),
+    time: config.time ?? "09:00",
+    dayOfWeek: config.dayOfWeek ?? 1,
   };
 }
 
-function RailSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-border border-t pt-4">
-      <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
+function buildSchedule(state: {
+  kind: ScheduleKind;
+  parsedHours: number;
+  time: string;
+  dayOfWeek: number;
+}): AutomationScheduleInput {
+  switch (state.kind) {
+    case "manual":
+      return { kind: "manual" as const, config: {} };
+    case "hourly":
+      return {
+        kind: "hourly" as const,
+        config: { intervalHours: state.parsedHours },
+      };
+    case "daily":
+      return { kind: "daily" as const, config: { time: state.time } };
+    case "weekdays":
+      return { kind: "weekdays" as const, config: { time: state.time } };
+    case "weekly":
+      return {
+        kind: "weekly" as const,
+        config: { dayOfWeek: state.dayOfWeek, time: state.time },
+      };
+    default:
+      return { kind: "manual" as const, config: {} };
+  }
 }
 
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-foreground text-sm">{value}</span>
+      <span className="text-muted-foreground text-[12.5px]">{label}</span>
+      <span className="text-foreground text-[12.5px]">{value}</span>
     </div>
   );
 }
@@ -93,9 +102,10 @@ export function AutomationScheduleEditor({
   const [open, setOpen] = useState(false);
 
   const initial = extractFormState(automation);
-  const [kind, setKind] = useState<"hourly" | "daily">(initial.kind);
+  const [kind, setKind] = useState<ScheduleKind>(initial.kind);
   const [intervalHours, setIntervalHours] = useState(initial.intervalHours);
   const [time, setTime] = useState(initial.time);
+  const [dayOfWeek, setDayOfWeek] = useState(initial.dayOfWeek);
   const [timezone, setTimezone] = useState(automation.timezone);
 
   const qc = useQueryClient();
@@ -120,6 +130,7 @@ export function AutomationScheduleEditor({
       setKind(fresh.kind);
       setIntervalHours(fresh.intervalHours);
       setTime(fresh.time);
+      setDayOfWeek(fresh.dayOfWeek);
       setTimezone(automation.timezone);
     }
   }
@@ -127,31 +138,25 @@ export function AutomationScheduleEditor({
   const parsedHours = Number.parseInt(intervalHours, 10);
   const hoursValid =
     Number.isInteger(parsedHours) && parsedHours >= 1 && parsedHours <= 24;
-  const timeValid = /^([01]\d|2[0-3]):[0-5]\d$/.test(time);
-  const fieldValid = kind === "hourly" ? hoursValid : timeValid;
+  const timeValid = TIME_RE.test(time);
+  const fieldValid =
+    kind === "manual"
+      ? true
+      : kind === "hourly"
+        ? hoursValid
+        : timeValid;
 
-  const currentConfig = automation.scheduleConfig as
-    | { intervalHours: number }
-    | { time: string };
-  const isUnchanged =
-    kind === automation.scheduleKind &&
-    timezone === automation.timezone &&
-    (kind === "hourly"
-      ? "intervalHours" in currentConfig &&
-        parsedHours === currentConfig.intervalHours
-      : "time" in currentConfig && time === currentConfig.time);
-
-  const isSaveDisabled = update.isPending || isUnchanged || !fieldValid;
+  const isSaveDisabled = update.isPending || !fieldValid;
 
   function handleSave() {
     if (isSaveDisabled) {
       return;
     }
-    const schedule =
-      kind === "hourly"
-        ? { kind: "hourly" as const, config: { intervalHours: parsedHours } }
-        : { kind: "daily" as const, config: { time } };
-    update.mutate({ id, schedule, timezone });
+    update.mutate({
+      id,
+      schedule: buildSchedule({ kind, parsedHours, time, dayOfWeek }),
+      timezone,
+    });
   }
 
   const display = (
@@ -162,80 +167,142 @@ export function AutomationScheduleEditor({
   );
 
   if (!canManage) {
-    return <RailSection label="Details">{display}</RailSection>;
+    return <RailSection label="Schedule">{display}</RailSection>;
   }
 
   return (
-    <RailSection label="Details">
+    <RailSection label="Schedule">
       <Popover onOpenChange={handleOpenChange} open={open}>
         <PopoverTrigger asChild>
           <button
-            className="-mx-1 w-full rounded px-1 text-left transition-colors hover:bg-accent/50"
+            className="-mx-1 w-full rounded-[9px] px-1 py-0.5 text-left transition-colors hover:bg-accent/50"
             type="button"
           >
             {display}
           </button>
         </PopoverTrigger>
-        <PopoverContent align="start" className="w-72 space-y-4 p-4">
-          <div className="space-y-2">
-            <p className="font-medium text-sm">Schedule</p>
-            <ToggleGroup
-              onValueChange={(v) => {
-                if (v === "hourly" || v === "daily") {
-                  setKind(v);
-                }
-              }}
-              type="single"
-              value={kind}
-              variant="outline"
-            >
-              <ToggleGroupItem value="daily">Daily</ToggleGroupItem>
-              <ToggleGroupItem value="hourly">Hourly</ToggleGroupItem>
-            </ToggleGroup>
+        <PopoverContent align="start" className="w-80 space-y-4 p-4">
+          <Tabs onValueChange={(v) => setKind(v as ScheduleKind)} value={kind}>
+            <TabsList variant="underline">
+              {SCHEDULE_KINDS.map((option) => (
+                <TabsTrigger
+                  key={option.value}
+                  value={option.value}
+                  variant="underline"
+                >
+                  {option.label}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </Tabs>
 
-            {kind === "daily" ? (
-              <div className="space-y-1">
-                <p className="text-muted-foreground text-xs">At (UTC)</p>
+          <div className="min-h-[30px]">
+            {kind === "manual" && (
+              <p className="font-mono text-[10.5px] text-muted-foreground">
+                Runs only when triggered — no automatic schedule.
+              </p>
+            )}
+
+            {kind === "hourly" && (
+              <div className="flex items-center gap-2.5">
+                <span className="font-mono text-[10.5px] text-muted-foreground">
+                  Every
+                </span>
                 <Input
-                  className="w-36"
-                  onChange={(e) => setTime(e.target.value)}
-                  type="time"
-                  value={time}
-                />
-              </div>
-            ) : (
-              <div className="space-y-1">
-                <p className="text-muted-foreground text-xs">Every (hours)</p>
-                <Input
-                  className="w-24"
+                  className="w-14 text-center font-mono"
                   max={24}
                   min={1}
                   onChange={(e) => setIntervalHours(e.target.value)}
+                  size="lf"
                   type="number"
                   value={intervalHours}
+                  variant="lf"
+                />
+                <span className="font-mono text-[10.5px] text-muted-foreground">
+                  hours
+                </span>
+              </div>
+            )}
+
+            {(kind === "daily" || kind === "weekdays") && (
+              <div className="flex items-center gap-2.5">
+                <span className="font-mono text-[10.5px] text-muted-foreground">
+                  At
+                </span>
+                <Input
+                  className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                  onChange={(e) => setTime(e.target.value)}
+                  size="lf"
+                  type="time"
+                  value={time}
+                  variant="lf"
+                />
+                {kind === "weekdays" && (
+                  <span className="rounded-md border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
+                    Mon–Fri
+                  </span>
+                )}
+              </div>
+            )}
+
+            {kind === "weekly" && (
+              <div className="flex flex-wrap items-center gap-2.5">
+                <span className="font-mono text-[10.5px] text-muted-foreground">
+                  On
+                </span>
+                <Select
+                  onValueChange={(v) => setDayOfWeek(Number(v))}
+                  value={String(dayOfWeek)}
+                >
+                  <SelectTrigger className="w-32" variant="lf">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {WEEKDAY_OPTIONS.map((day) => (
+                      <SelectItem key={day.value} value={String(day.value)}>
+                        {day.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <span className="font-mono text-[10.5px] text-muted-foreground">
+                  at
+                </span>
+                <Input
+                  className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                  onChange={(e) => setTime(e.target.value)}
+                  size="lf"
+                  type="time"
+                  value={time}
+                  variant="lf"
                 />
               </div>
             )}
           </div>
 
-          <div className="space-y-2">
-            <p className="font-medium text-sm">Timezone</p>
-            <Select onValueChange={setTimezone} value={timezone}>
-              <SelectTrigger className="w-full">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {TIMEZONES.map((tz) => (
-                  <SelectItem key={tz} value={tz}>
-                    {tz}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {isTimeBasedKind(kind) && (
+            <div className="space-y-1.5">
+              <p className="font-mono text-[11px] text-muted-foreground">
+                Timezone
+              </p>
+              <Select onValueChange={setTimezone} value={timezone}>
+                <SelectTrigger className="w-full" variant="lf">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TIMEZONES.map((tz) => (
+                    <SelectItem key={tz} value={tz}>
+                      {tz}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
-          <div className="flex justify-end gap-2">
+          <div className="flex justify-end gap-2.5">
             <Button
+              className="h-[30px] rounded-[9px]"
               onClick={() => setOpen(false)}
               size="sm"
               type="button"
@@ -244,13 +311,14 @@ export function AutomationScheduleEditor({
               Cancel
             </Button>
             <Button
+              className="h-[30px] rounded-[9px]"
               disabled={isSaveDisabled}
               onClick={handleSave}
               size="sm"
               type="button"
             >
               {update.isPending ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="size-3.5 animate-spin" />
               ) : (
                 "Save"
               )}
