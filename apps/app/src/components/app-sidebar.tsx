@@ -25,6 +25,7 @@ import {
   CalendarClock,
   HelpCircle,
   Mail,
+  PlugZap,
   Settings,
   Signal,
   UsersRound,
@@ -68,6 +69,11 @@ function getOrgManageItems(orgSlug: string): NavItem[] {
       title: "Automations",
       href: `/${orgSlug}/automations`,
       icon: CalendarClock,
+    },
+    {
+      title: "Connectors",
+      href: `/${orgSlug}/connectors`,
+      icon: PlugZap,
     },
     {
       title: "Settings",
