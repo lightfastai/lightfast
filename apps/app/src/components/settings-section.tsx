@@ -29,7 +29,7 @@ export function SettingRow({
       <div className="min-w-0">
         <p className="text-foreground text-sm">{label}</p>
         {description ? (
-          <p className="mt-1 text-muted-foreground text-xs leading-relaxed">
+          <p className="mt-1 text-muted-foreground text-sm leading-relaxed">
             {description}
           </p>
         ) : null}
