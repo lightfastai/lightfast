@@ -12,6 +12,7 @@
     "./components/chat/*": "./src/components/chat/*",
     "./components/markdown-content": "./src/components/markdown-content.tsx",
     "./components/ssr-code-block": "./src/components/ssr-code-block/index.tsx",
+    "./components/iso-figure": "./src/components/iso-figure.tsx",
     "./components/*": "./src/components/*",
     "./integration-icons": "./src/components/integration-icons.tsx",
     "./framework-icons": "./src/components/framework-icons.tsx",

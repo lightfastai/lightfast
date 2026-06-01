@@ -5,6 +5,7 @@ import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { toast } from "@repo/ui/components/ui/sonner";
 import { useSignIn, useUser } from "@vendor/clerk";
+import NextLink from "next/link";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { parseSafeAuthRedirectTarget } from "~/auth-redirect";
@@ -69,10 +70,6 @@ function SignInView() {
     window.location.replace(successRedirect);
   }, [isRedirecting, isSignedIn, isUserLoaded, successRedirect]);
 
-  const handleWaitlist = React.useCallback(() => {
-    window.location.replace("/sign-in?errorCode=waitlist");
-  }, []);
-
   const errorPathFor = React.useCallback(
     (params: { errorCode?: string; error?: string }) => {
       const search = new URLSearchParams();
@@ -100,17 +97,13 @@ function SignInView() {
         return { success: false };
       }
       if (mapped.kind === "code") {
-        if (mapped.errorCode === "waitlist") {
-          handleWaitlist();
-          return { success: false };
-        }
         setOtpError(authErrorMessage(mapped.errorCode));
         return { success: false };
       }
       setOtpError(mapped.message);
       return { success: false };
     },
-    [handleWaitlist]
+    []
   );
 
   const handleSubmitEmailError = React.useCallback(
@@ -326,6 +319,23 @@ function SignInView() {
           />
         )}
       </div>
+
+      {view === "email" && !hasError && (
+        <div className="text-center text-sm">
+          <span className="text-muted-foreground">
+            Don&apos;t have an account?{" "}
+          </span>
+          <Button
+            asChild
+            className="inline-flex h-auto rounded-none p-0 text-sm"
+            variant="link-blue"
+          >
+            <NextLink href="/sign-up" prefetch>
+              Sign up
+            </NextLink>
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

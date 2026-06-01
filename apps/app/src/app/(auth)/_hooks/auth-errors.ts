@@ -33,7 +33,7 @@ export function mapOtpClerkError(err: unknown): MappedAuthError {
 
   switch (e.code) {
     case "sign_up_restricted_waitlist":
-      return { kind: "code", errorCode: "waitlist" };
+      return { kind: "inline", message: "Authentication failed" };
     case "form_identifier_not_found":
     case "identifier_not_found":
     case "user_not_found":

@@ -92,9 +92,12 @@ export const skillIndexStates = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
+    // NOTE: runtime `$onUpdate` hook, NOT the DDL `.onUpdateNow()`. drizzle-kit
+    // emits `ON UPDATE CURRENT_TIMESTAMP` without the required `(3)` precision
+    // for timestamp(3), which Vitess rejects on CREATE TABLE.
     updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
@@ -179,9 +182,12 @@ export const skillIndexEntries = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
+    // NOTE: runtime `$onUpdate` hook, NOT the DDL `.onUpdateNow()`. drizzle-kit
+    // emits `ON UPDATE CURRENT_TIMESTAMP` without the required `(3)` precision
+    // for timestamp(3), which Vitess rejects on CREATE TABLE.
     updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({

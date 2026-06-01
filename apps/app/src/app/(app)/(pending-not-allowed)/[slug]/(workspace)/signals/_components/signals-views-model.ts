@@ -1,8 +1,5 @@
 import type { AppRouterOutputs } from "@api/app";
-import type {
-  SignalClassificationFilters,
-  SignalView as SignalLayout,
-} from "./signals-model";
+import type { SignalClassificationFilters } from "./signals-model";
 import { serializeSignalValues } from "./signals-search-params";
 
 export type SignalViewList =
@@ -15,7 +12,6 @@ export const ALL_SIGNALS_VIEW_NAME = "All signals";
 export interface SignalViewParamValues {
   disposition: string;
   kind: string;
-  layout: SignalLayout;
   people: "all" | "routed";
   priority: string;
 }
@@ -27,23 +23,19 @@ export function viewConfigToParamValues(
   return {
     disposition: serializeSignalValues(config.filters.dispositions),
     kind: serializeSignalValues(config.filters.kinds),
-    layout: config.layout,
     people: config.filters.peopleRouted ? "routed" : "all",
     priority: serializeSignalValues(config.filters.priorities),
   };
 }
 
-/** Empty param values — selecting "All signals" keeps the current layout. */
-export function allSignalsParamValues(
-  layout: SignalLayout
-): SignalViewParamValues {
-  return { disposition: "", kind: "", layout, people: "all", priority: "" };
+/** Empty param values — selecting "All signals" clears all filters. */
+export function allSignalsParamValues(): SignalViewParamValues {
+  return { disposition: "", kind: "", people: "all", priority: "" };
 }
 
 /** Snapshot the current toolbar selection into a view config for create. */
 export function selectionToConfig(
-  filters: SignalClassificationFilters,
-  layout: SignalLayout
+  filters: SignalClassificationFilters
 ): SignalViewConfig {
   return {
     filters: {
@@ -52,6 +44,5 @@ export function selectionToConfig(
       dispositions: filters.dispositions,
       peopleRouted: filters.peopleRouted,
     },
-    layout,
   };
 }

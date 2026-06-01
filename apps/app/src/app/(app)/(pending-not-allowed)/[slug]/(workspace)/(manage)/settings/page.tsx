@@ -11,6 +11,7 @@ export default async function SettingsPage({
   const { slug } = await params;
 
   prefetch(trpc.org.settings.sourceControl.get.queryOptions());
+  prefetch(trpc.org.settings.sourceControl.listRepositories.queryOptions());
 
   return (
     <HydrateClient>

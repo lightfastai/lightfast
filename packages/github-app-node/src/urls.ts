@@ -13,6 +13,20 @@ export function buildGitHubInstallationUrl(input: {
   return url.toString();
 }
 
+export function buildGitHubNewRepositoryUrl(input: {
+  accountLogin: string;
+  name: string;
+  webBaseUrl?: string;
+}): string {
+  const baseUrl = trimTrailingSlash(input.webBaseUrl ?? "https://github.com");
+  const url = new URL(
+    `/organizations/${input.accountLogin}/repositories/new`,
+    baseUrl
+  );
+  url.searchParams.set("name", input.name);
+  return url.toString();
+}
+
 export function buildGitHubOAuthAuthorizeUrl(input: {
   clientId: string;
   codeChallenge: string;

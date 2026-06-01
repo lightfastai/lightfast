@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "9e0ba39e-c3b4-469c-a477-bd25c09a2c71",
+  "id": "931b7077-e0dc-435e-b989-c59a44591444",
   "prevId": "c2c24255-6fb1-4de4-b952-f75dc8626d73",
   "tables": {
     "lightfast_automation_runs": {
@@ -632,6 +632,99 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
+    "lightfast_people_views": {
+      "name": "lightfast_people_views",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "config": {
+          "name": "config",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "people_views_public_id_uq": {
+          "name": "people_views_public_id_uq",
+          "columns": [
+            "public_id"
+          ],
+          "isUnique": true
+        },
+        "people_views_org_user_created_idx": {
+          "name": "people_views_org_user_created_idx",
+          "columns": [
+            "clerk_org_id",
+            "created_by_user_id",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_people_views_id": {
+          "name": "lightfast_people_views_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
     "lightfast_signal_views": {
       "name": "lightfast_signal_views",
       "columns": {
@@ -866,380 +959,6 @@
       "compositePrimaryKeys": {
         "lightfast_signals_id": {
           "name": "lightfast_signals_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_skill_index_entries": {
-      "name": "lightfast_skill_index_entries",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "skill_index_state_id": {
-          "name": "skill_index_state_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "indexed_commit_sha": {
-          "name": "indexed_commit_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "slug": {
-          "name": "slug",
-          "type": "varchar(63)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "path": {
-          "name": "path",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "name": {
-          "name": "name",
-          "type": "varchar(63)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "description": {
-          "name": "description",
-          "type": "varchar(1024)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "license": {
-          "name": "license",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "compatibility": {
-          "name": "compatibility",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "allowed_tools": {
-          "name": "allowed_tools",
-          "type": "varchar(2048)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "metadata": {
-          "name": "metadata",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_OBJECT())"
-        },
-        "source_markdown": {
-          "name": "source_markdown",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "body_markdown": {
-          "name": "body_markdown",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "content_sha": {
-          "name": "content_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "content_size": {
-          "name": "content_size",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "validation_status": {
-          "name": "validation_status",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "diagnostics": {
-          "name": "diagnostics",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_ARRAY())"
-        },
-        "resources": {
-          "name": "resources",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "resources_truncated": {
-          "name": "resources_truncated",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "non_standard_resource_count": {
-          "name": "non_standard_resource_count",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "onUpdate": true,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "skill_index_entries_state_slug_uq": {
-          "name": "skill_index_entries_state_slug_uq",
-          "columns": [
-            "skill_index_state_id",
-            "slug"
-          ],
-          "isUnique": true
-        },
-        "skill_index_entries_state_validation_idx": {
-          "name": "skill_index_entries_state_validation_idx",
-          "columns": [
-            "skill_index_state_id",
-            "validation_status"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_skill_index_entries_id": {
-          "name": "lightfast_skill_index_entries_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_skill_index_states": {
-      "name": "lightfast_skill_index_states",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "source_control_repository_id": {
-          "name": "source_control_repository_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "indexed_commit_sha": {
-          "name": "indexed_commit_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "indexed_tree_sha": {
-          "name": "indexed_tree_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "indexed_at": {
-          "name": "indexed_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "skill_count": {
-          "name": "skill_count",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "invalid_skill_count": {
-          "name": "invalid_skill_count",
-          "type": "int unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": 0
-        },
-        "last_checked_commit_sha": {
-          "name": "last_checked_commit_sha",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_checked_at": {
-          "name": "last_checked_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "github_ref_etag": {
-          "name": "github_ref_etag",
-          "type": "varchar(256)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_refresh_status": {
-          "name": "last_refresh_status",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "'never'"
-        },
-        "last_refresh_error_code": {
-          "name": "last_refresh_error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_refresh_error_message": {
-          "name": "last_refresh_error_message",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "last_refresh_failed_at": {
-          "name": "last_refresh_failed_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "index_diagnostics": {
-          "name": "index_diagnostics",
-          "type": "json",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "(JSON_ARRAY())"
-        },
-        "refresh_lock_token": {
-          "name": "refresh_lock_token",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "refresh_locked_until": {
-          "name": "refresh_locked_until",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "onUpdate": true,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "skill_index_states_source_control_repository_uq": {
-          "name": "skill_index_states_source_control_repository_uq",
-          "columns": [
-            "source_control_repository_id"
-          ],
-          "isUnique": true
-        },
-        "skill_index_states_last_checked_idx": {
-          "name": "skill_index_states_last_checked_idx",
-          "columns": [
-            "last_checked_at"
-          ],
-          "isUnique": false
-        },
-        "skill_index_states_refresh_locked_until_idx": {
-          "name": "skill_index_states_refresh_locked_until_idx",
-          "columns": [
-            "refresh_locked_until"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_skill_index_states_id": {
-          "name": "lightfast_skill_index_states_id",
           "columns": [
             "id"
           ]

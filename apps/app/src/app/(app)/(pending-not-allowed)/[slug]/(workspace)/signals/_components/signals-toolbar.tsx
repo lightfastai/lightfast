@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -13,18 +12,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
-import { cn } from "@repo/ui/lib/utils";
-import {
-  Check,
-  Flag,
-  Kanban,
-  List,
-  ListFilter,
-  SlidersHorizontal,
-  Tag,
-  UserRoundCheck,
-  X,
-} from "lucide-react";
+import { Flag, ListFilter, Tag, UserRoundCheck, X } from "lucide-react";
 import type { ComponentType } from "react";
 import {
   getSignalDispositionLabel,
@@ -34,7 +22,6 @@ import {
   type SignalDisposition,
   type SignalKind,
   type SignalPriority,
-  type SignalView,
   signalDispositionOptions,
   signalKindOptions,
   signalPriorityOptions,
@@ -65,8 +52,6 @@ export function SignalsToolbar({
   onToggleDisposition,
   onToggleKind,
   onTogglePriority,
-  onViewChange,
-  view,
 }: {
   filters: SignalClassificationFilters;
   onAddSignal: () => void;
@@ -77,8 +62,6 @@ export function SignalsToolbar({
   onToggleDisposition: (value: SignalDisposition) => void;
   onToggleKind: (value: SignalKind) => void;
   onTogglePriority: (value: SignalPriority) => void;
-  onViewChange: (value: SignalView) => void;
-  view: SignalView;
 }) {
   const filterGroups: FilterGroup[] = [
     {
@@ -114,10 +97,10 @@ export function SignalsToolbar({
 
   return (
     <div
-      className="flex shrink-0 flex-wrap items-center gap-1.5 border-border/70 border-t px-3 py-3"
+      className="flex shrink-0 flex-wrap items-start gap-1.5 border-border/70 border-t px-3 py-3"
       data-testid="signals-toolbar"
     >
-      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -210,52 +193,6 @@ export function SignalsToolbar({
         >
           Add Signal
         </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Display options"
-              className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              size="icon-sm"
-              title="Display options"
-              type="button"
-              variant="ghost"
-            >
-              <SlidersHorizontal
-                aria-hidden="true"
-                className="size-3"
-                data-testid="signals-display-icon"
-              />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem
-              className={cn(view === "list" && "bg-muted/50")}
-              onClick={() => onViewChange("list")}
-            >
-              <List aria-hidden="true" className="size-3.5" />
-              <span>List</span>
-              {view === "list" ? (
-                <Check
-                  aria-hidden="true"
-                  className="ml-auto size-3.5 text-muted-foreground"
-                />
-              ) : null}
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              className={cn(view === "board" && "bg-muted/50")}
-              onClick={() => onViewChange("board")}
-            >
-              <Kanban aria-hidden="true" className="size-3.5" />
-              <span>Board</span>
-              {view === "board" ? (
-                <Check
-                  aria-hidden="true"
-                  className="ml-auto size-3.5 text-muted-foreground"
-                />
-              ) : null}
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
   );
@@ -338,21 +275,21 @@ function FilterChip({
 
   return (
     <button
-      className="flex h-6 shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
+      className="flex h-6 max-w-full shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
       onClick={onClear}
       type="button"
     >
-      <span className="flex h-full items-center gap-2 border-border/70 border-r px-3 text-foreground">
+      <span className="flex h-full shrink-0 items-center gap-2 border-border/70 border-r px-3 text-foreground">
         <Icon aria-hidden="true" className="size-3.5 text-muted-foreground" />
         {label}
       </span>
-      <span className="flex h-full items-center border-border/70 border-r px-3 text-muted-foreground">
+      <span className="hidden h-full shrink-0 items-center border-border/70 border-r px-3 text-muted-foreground sm:flex">
         is any of
       </span>
-      <span className="flex h-full items-center px-3 text-muted-foreground">
+      <span className="min-w-0 truncate px-3 text-muted-foreground">
         {value}
       </span>
-      <span className="flex h-full items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
+      <span className="flex h-full shrink-0 items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
         <X aria-hidden="true" className="size-3.5" />
       </span>
     </button>

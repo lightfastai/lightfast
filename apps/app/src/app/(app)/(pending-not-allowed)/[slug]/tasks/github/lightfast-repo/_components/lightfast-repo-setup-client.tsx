@@ -16,11 +16,13 @@ import { useTRPC } from "~/trpc/react";
 
 interface LightfastRepoSetupClientProps {
   accountLogin: string;
+  newRepositoryUrl: string;
   orgSlug: string;
 }
 
 export function LightfastRepoSetupClient({
   accountLogin,
+  newRepositoryUrl,
   orgSlug,
 }: LightfastRepoSetupClientProps) {
   const trpc = useTRPC();
@@ -57,10 +59,6 @@ export function LightfastRepoSetupClient({
       setFailed(true);
     }
   }
-
-  const newRepositoryUrl = `https://github.com/organizations/${accountLogin}/repositories/new?name=${encodeURIComponent(
-    LIGHTFAST_REPOSITORY_NAME
-  )}`;
 
   return (
     <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">

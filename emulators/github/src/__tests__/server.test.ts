@@ -33,6 +33,22 @@ import {
 let emulator: StartedGitHubEmulator | undefined;
 let emulatorPort: number;
 
+async function createInstallationToken() {
+  const jwt = await createAppJwt();
+  const tokenRes = await fetch(
+    `${emulator?.url}/app/installations/${GITHUB_EMULATOR_FIXTURES.installationId}/access_tokens`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${jwt}`,
+      },
+    }
+  );
+  const tokenBody = (await tokenRes.json()) as { token?: string };
+  expect(tokenBody.token).toEqual(expect.stringMatching(/^ghs_/));
+  return tokenBody.token;
+}
+
 beforeAll(async () => {
   emulator = await startGitHubEmulatorOnAvailablePort();
   emulatorPort = Number(new URL(emulator.url).port);
@@ -137,11 +153,10 @@ describe("@repo/github-emulator", () => {
     expect(refRes.status).toBe(200);
   });
 
-  it("can emulate the missing and satisfied .lightfast repository requirement", async () => {
+  it("returns current app installation metadata with html_url", async () => {
     const jwt = await createAppJwt();
-    const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
-    const missingRes = await fetch(
-      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+    const res = await fetch(
+      `${emulator?.url}/app/installations/${GITHUB_EMULATOR_FIXTURES.installationId}`,
       {
         headers: {
           accept: "application/vnd.github+json",
@@ -149,24 +164,181 @@ describe("@repo/github-emulator", () => {
         },
       }
     );
-    expect(missingRes.status).toBe(404);
 
-    const createRes = await fetch(`${emulator?.url}/orgs/${owner}/repos`, {
-      method: "POST",
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      id: GITHUB_EMULATOR_FIXTURES.installationId,
+      account: expect.objectContaining({
+        login: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+        type: "Organization",
+      }),
+      html_url: `${emulator?.url}/settings/installations/${GITHUB_EMULATOR_FIXTURES.installationId}`,
+      target_type: "Organization",
+    });
+  });
+
+  it("lists repositories accessible to an installation token", async () => {
+    const token = await createInstallationToken();
+
+    const res = await fetch(`${emulator?.url}/installation/repositories`, {
+      headers: {
+        accept: "application/vnd.github+json",
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      total_count: 3,
+      repositories: expect.arrayContaining([
+        expect.objectContaining({
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName}`,
+          name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+          private: true,
+        }),
+        expect.objectContaining({
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}`,
+          name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+          private: true,
+        }),
+        expect.objectContaining({
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/api-service`,
+          name: "api-service",
+          private: false,
+        }),
+      ]),
+    });
+  });
+
+  it("defaults invalid installation repository pagination parameters", async () => {
+    const token = await createInstallationToken();
+
+    const res = await fetch(
+      `${emulator?.url}/installation/repositories?per_page=abc&page=abc`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      total_count: 3,
+      repositories: [
+        expect.objectContaining({
+          name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+        }),
+        expect.objectContaining({
+          name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+        }),
+        expect.objectContaining({
+          name: "api-service",
+        }),
+      ],
+    });
+  });
+
+  it("clamps and slices installation repository pagination", async () => {
+    const token = await createInstallationToken();
+
+    const clampedRes = await fetch(
+      `${emulator?.url}/installation/repositories?per_page=0&page=0`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    expect(clampedRes.status).toBe(200);
+    await expect(clampedRes.json()).resolves.toMatchObject({
+      total_count: 3,
+      repositories: [
+        expect.objectContaining({
+          name: GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName,
+        }),
+      ],
+    });
+
+    const res = await fetch(
+      `${emulator?.url}/installation/repositories?per_page=1&page=2`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      total_count: 3,
+      repositories: [
+        expect.objectContaining({
+          name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+        }),
+      ],
+    });
+  });
+
+  it("filters selected installation repositories", async () => {
+    if (!emulator) {
+      throw new Error("GitHub emulator was not started");
+    }
+    const gh = getGitHubStore(emulator.store);
+    const installation = gh.appInstallations
+      .all()
+      .find(
+        (candidate) =>
+          candidate.installation_id === GITHUB_EMULATOR_FIXTURES.installationId
+      );
+    const repo = gh.repos.findOneBy("name", "api-service");
+    expect(installation).toBeDefined();
+    expect(repo).toBeDefined();
+    gh.appInstallations.update(installation?.id ?? 0, {
+      repository_selection: "selected",
+      repository_ids: [repo?.id ?? 0],
+    });
+
+    try {
+      const token = await createInstallationToken();
+
+      const res = await fetch(`${emulator?.url}/installation/repositories`, {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(res.status).toBe(200);
+      await expect(res.json()).resolves.toMatchObject({
+        total_count: 1,
+        repositories: [expect.objectContaining({ name: "api-service" })],
+      });
+    } finally {
+      emulator?.reset();
+    }
+  });
+
+  it("rejects installation repository listing without an installation token", async () => {
+    const res = await fetch(`${emulator?.url}/installation/repositories`, {
       headers: {
         authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
-        "content-type": "application/json",
       },
-      body: JSON.stringify({
-        auto_init: true,
-        name: ".lightfast",
-        private: true,
-      }),
     });
-    expect(createRes.status).toBe(201);
+
+    expect(res.status).toBe(401);
+  });
+
+  it("seeds .lightfast so the local installation requirement is already satisfied", async () => {
+    const jwt = await createAppJwt();
+    const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
 
     const installationRes = await fetch(
-      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+      `${emulator?.url}/repos/${owner}/${GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName}/installation`,
       {
         headers: {
           accept: "application/vnd.github+json",
@@ -181,9 +353,53 @@ describe("@repo/github-emulator", () => {
     });
   });
 
+  it("serves a local new repository page that creates a new repository", async () => {
+    const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
+    const repoName = "lightfast-created-from-ui";
+    const pageRes = await fetch(
+      `${emulator?.url}/organizations/${owner}/repositories/new?name=${repoName}`
+    );
+    expect(pageRes.status).toBe(200);
+    await expect(pageRes.text()).resolves.toContain(`Create ${repoName}`);
+
+    const createRes = await fetch(
+      `${emulator?.url}/organizations/${owner}/repositories/new`,
+      {
+        method: "POST",
+        headers: {
+          "content-type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          auto_init: "true",
+          name: repoName,
+          private: "true",
+        }),
+        redirect: "manual",
+      }
+    );
+    expect(createRes.status).toBe(303);
+    expect(createRes.headers.get("location")).toBe(
+      `/repos/${owner}/${repoName}`
+    );
+
+    const repoRes = await fetch(`${emulator?.url}/repos/${owner}/${repoName}`, {
+      headers: {
+        accept: "application/vnd.github+json",
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
+    });
+    expect(repoRes.status).toBe(200);
+    await expect(repoRes.json()).resolves.toMatchObject({
+      full_name: `${owner}/${repoName}`,
+      name: repoName,
+      private: true,
+    });
+  });
+
   it("resets emulator state for repeatable local E2E runs", async () => {
     emulator?.reset();
     const owner = GITHUB_EMULATOR_FIXTURES.githubOrgLogin;
+    const transientRepo = "transient-reset-check";
     const createRes = await fetch(`${emulator?.url}/orgs/${owner}/repos`, {
       method: "POST",
       headers: {
@@ -192,7 +408,7 @@ describe("@repo/github-emulator", () => {
       },
       body: JSON.stringify({
         auto_init: true,
-        name: ".lightfast",
+        name: transientRepo,
         private: true,
       }),
     });
@@ -212,8 +428,19 @@ describe("@repo/github-emulator", () => {
     });
 
     const jwt = await createAppJwt();
-    const missingRes = await fetch(
-      `${emulator?.url}/repos/${owner}/.lightfast/installation`,
+    const transientRes = await fetch(
+      `${emulator?.url}/repos/${owner}/${transientRepo}`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+        },
+      }
+    );
+    expect(transientRes.status).toBe(404);
+
+    const lightfastRes = await fetch(
+      `${emulator?.url}/repos/${owner}/${GITHUB_EMULATOR_FIXTURES.githubLightfastRepoName}/installation`,
       {
         headers: {
           accept: "application/vnd.github+json",
@@ -221,7 +448,7 @@ describe("@repo/github-emulator", () => {
         },
       }
     );
-    expect(missingRes.status).toBe(404);
+    expect(lightfastRes.status).toBe(200);
 
     const installRes = await fetch(
       `${emulator?.url}/apps/${GITHUB_EMULATOR_FIXTURES.githubAppSlug}/installations/new?state=install_state_after_reset`,

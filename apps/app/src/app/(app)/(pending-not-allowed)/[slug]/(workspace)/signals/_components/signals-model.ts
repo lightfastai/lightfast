@@ -15,7 +15,7 @@ export type SignalDetailRow =
   AppRouterOutputs["org"]["workspace"]["signals"]["get"];
 
 /**
- * Canonical view-row type for list/board/grouping. It is the projected
+ * Canonical view-row type for list/grouping. It is the projected
  * working-set row plus an optional client-computed `inputPreview` (populated only
  * when adapting a processing row). Classified rows always have
  * `classification.title`, so they leave `inputPreview` undefined.
@@ -30,9 +30,6 @@ export type SignalPriority = SignalClassification["priority"];
 
 export const SIGNALS_PAGE_SIZE = 50;
 export const PROCESSING_SIGNALS_LIMIT = 100;
-
-export const signalViewValues = ["list", "board"] as const;
-export type SignalView = (typeof signalViewValues)[number];
 
 export const signalProcessingStatuses = [
   "queued",
@@ -86,14 +83,13 @@ export interface SignalClassificationFilters {
 }
 
 /**
- * A grouped, already-filtered set of view rows for one list section or board
- * column. No pagination fields — the working set is fetched in one shot.
+ * A grouped, already-filtered set of view rows for one list section. No
+ * pagination fields — the working set is fetched in one shot.
  */
 export interface SignalSection {
   id: string;
   isError: boolean;
   isFetching: boolean;
-  kind?: SignalKind;
   label: string;
   refetch: () => void;
   rows: SignalListItem[];

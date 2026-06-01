@@ -62,6 +62,7 @@ describe("source control repository sync workflow", () => {
       id: 9,
       orgSourceControlBindingId: 1,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
     getBindingMock.mockResolvedValue({
@@ -183,6 +184,7 @@ describe("source control repository sync workflow", () => {
       id: 9,
       orgSourceControlBindingId: 1,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
     getBindingMock.mockResolvedValue({
@@ -233,11 +235,64 @@ describe("source control repository sync workflow", () => {
     );
   });
 
+  it("marks delivery ignored when the watched repository sync is disabled", async () => {
+    getWatchByIdMock.mockResolvedValue({
+      id: 9,
+      orgSourceControlBindingId: 1,
+      providerRepositoryId: "2002",
+      syncStatus: "disabled",
+      watchedPathGlobs: null,
+    });
+    markDeliveryMock.mockResolvedValue(true);
+
+    const { syncGitHubSourceControlRepository } = await import(
+      "../inngest/workflow/sync-source-control-repository"
+    );
+    const workflow = syncGitHubSourceControlRepository as unknown as {
+      handler: (input: unknown) => Promise<unknown>;
+    };
+
+    const result = await workflow.handler({
+      event: {
+        data: {
+          afterSha: "a".repeat(40),
+          beforeSha: "b".repeat(40),
+          changedPaths: ["skills/demo/SKILL.md"],
+          deliveryId: "delivery-disabled-watch",
+          orgSourceControlBindingId: 1,
+          providerInstallationId: "1001",
+          providerRepositoryId: "2002",
+          ref: "refs/heads/main",
+          repositoryFullName: "lightfast-emulated/workspace",
+          repositoryWatchId: 9,
+        },
+      },
+      step: {
+        run: async (_name: string, fn: () => unknown) => await fn(),
+      },
+    } as never);
+
+    expect(result).toEqual({ status: "disabled-watch" });
+    expect(createJwtMock).not.toHaveBeenCalled();
+    expect(createTokenMock).not.toHaveBeenCalled();
+    expect(getBindingMock).not.toHaveBeenCalled();
+    expect(getCommitMock).not.toHaveBeenCalled();
+    expect(getTreeMock).not.toHaveBeenCalled();
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-disabled-watch",
+        status: "ignored",
+      }
+    );
+  });
+
   it("marks delivery ignored when the watched repository no longer matches the event", async () => {
     getWatchByIdMock.mockResolvedValue({
       id: 9,
       orgSourceControlBindingId: 1,
       providerRepositoryId: "different-repo",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
     getBindingMock.mockResolvedValue({
@@ -299,6 +354,7 @@ describe("source control repository sync workflow", () => {
       id: 9,
       orgSourceControlBindingId: 1,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
     getBindingMock.mockResolvedValue({

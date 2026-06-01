@@ -224,6 +224,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
 
@@ -323,6 +324,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
 
@@ -364,6 +366,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
 
@@ -406,6 +409,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
 
@@ -435,6 +439,40 @@ describe("handleGitHubWebhook", () => {
     });
   });
 
+  it("ignores disabled registered repository pushes without enqueueing", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    recordDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { status: "received" },
+    });
+    getBindingMock.mockResolvedValue({
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      syncStatus: "disabled",
+      watchedPathGlobs: null,
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest(pushPayload),
+    });
+
+    expect(res.status).toBe(202);
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-1",
+        status: "ignored",
+      }
+    );
+    expect(inngestSendMock).not.toHaveBeenCalled();
+  });
+
   it("does not mark queued when enqueue fails", async () => {
     const { handleGitHubWebhook } = await import("../services/github/webhook");
     recordDeliveryMock.mockResolvedValue({
@@ -450,6 +488,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
     inngestSendMock.mockRejectedValue(new Error("enqueue failed"));

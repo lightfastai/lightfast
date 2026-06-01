@@ -28,10 +28,10 @@ export function AppNavbar() {
           {/* Nav items */}
           <AppNavbarMenu />
 
-          {/* Join Early Access Button */}
+          {/* Get started button */}
           <Button asChild className="ml-1" size="sm">
-            <NavLink href="/early-access" microfrontend prefetch>
-              Join Early Access
+            <NavLink href="/sign-up" microfrontend prefetch>
+              Get started
             </NavLink>
           </Button>
         </nav>

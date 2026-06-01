@@ -1,10 +1,17 @@
 import type { Database } from "@db/app";
 import { getActiveOrgBinding, type OrgSourceControlBinding } from "@db/app";
 import {
+  type GitHubLightfastRepositoryProof,
   githubLightfastRepositoryProofSchema,
   LIGHTFAST_REPOSITORY_NAME,
   type OrgSetupGate,
 } from "@repo/app-setup-contract";
+
+export interface MatchingGitHubLightfastRepository {
+  fullName: GitHubLightfastRepositoryProof["fullName"];
+  id: GitHubLightfastRepositoryProof["id"];
+  verifiedAt: Date;
+}
 
 function hasGitHubOrgRequirement(binding: OrgSourceControlBinding): boolean {
   return (
@@ -16,25 +23,44 @@ function hasGitHubOrgRequirement(binding: OrgSourceControlBinding): boolean {
   );
 }
 
-export function hasMatchingGitHubLightfastRepositoryProof(
+export function getMatchingGitHubLightfastRepository(
   binding: OrgSourceControlBinding
-): boolean {
+): MatchingGitHubLightfastRepository | null {
   if (!hasGitHubOrgRequirement(binding)) {
-    return false;
+    return null;
   }
 
   const parsed = githubLightfastRepositoryProofSchema.safeParse(
     binding.metadata.lightfastRepository
   );
   if (!parsed.success) {
-    return false;
+    return null;
   }
 
-  return (
-    parsed.data.fullName ===
-      `${binding.providerAccountLogin}/${LIGHTFAST_REPOSITORY_NAME}` &&
-    parsed.data.installationId === binding.providerInstallationId
-  );
+  if (
+    parsed.data.fullName !==
+      `${binding.providerAccountLogin}/${LIGHTFAST_REPOSITORY_NAME}` ||
+    parsed.data.installationId !== binding.providerInstallationId
+  ) {
+    return null;
+  }
+
+  const verifiedAt = new Date(parsed.data.verifiedAt);
+  if (Number.isNaN(verifiedAt.getTime())) {
+    return null;
+  }
+
+  return {
+    fullName: parsed.data.fullName,
+    id: parsed.data.id,
+    verifiedAt,
+  };
+}
+
+export function hasMatchingGitHubLightfastRepositoryProof(
+  binding: OrgSourceControlBinding
+): boolean {
+  return getMatchingGitHubLightfastRepository(binding) !== null;
 }
 
 export function deriveOrgSetupGate(

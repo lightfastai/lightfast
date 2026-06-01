@@ -1,4 +1,4 @@
-import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
+import { GetStartedCTA } from "~/app/(app)/_components/get-started-cta";
 
 export default function ContentLayout({
   children,
@@ -12,9 +12,9 @@ export default function ContentLayout({
         {children}
       </div>
 
-      {/* Waitlist CTA */}
+      {/* Get started CTA */}
       <div className="flex flex-col gap-48">
-        <WaitlistCTA />
+        <GetStartedCTA />
       </div>
     </div>
   );

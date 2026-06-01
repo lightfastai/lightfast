@@ -15,6 +15,7 @@ import { ChangelogV010Events } from "./compositions/changelog-v010-events";
 import { ChangelogV010Featured } from "./compositions/changelog-v010-featured";
 import { ChangelogV010SdkMcp } from "./compositions/changelog-v010-sdk-mcp";
 import { ChangelogV010Sources } from "./compositions/changelog-v010-sources";
+import { PeopleEmpty, SignalsEmpty } from "./compositions/empty-states";
 import { GitHubBanner } from "./compositions/github-banner";
 import { LandingHero } from "./compositions/landing-hero/landing-hero";
 import { Logo } from "./compositions/logo";
@@ -40,6 +41,8 @@ const COMPONENTS: Record<string, React.FC<Record<string, unknown>>> = {
   Logo,
   TwitterBanner,
   GitHubBanner,
+  SignalsEmpty,
+  PeopleEmpty,
 };
 
 export const RemotionRoot = () => (

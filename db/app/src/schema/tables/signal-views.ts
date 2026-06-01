@@ -21,8 +21,6 @@ export function createSignalViewId() {
   return `${SIGNAL_VIEW_ID_PREFIX}${randomUUID()}`;
 }
 
-export type SignalViewLayout = "list" | "board";
-
 export interface SignalViewConfig {
   filters: {
     kinds: SignalClassification["kind"][];
@@ -30,7 +28,6 @@ export interface SignalViewConfig {
     dispositions: SignalClassification["disposition"][];
     peopleRouted: boolean;
   };
-  layout: SignalViewLayout;
 }
 
 export const signalViews = mysqlTable(

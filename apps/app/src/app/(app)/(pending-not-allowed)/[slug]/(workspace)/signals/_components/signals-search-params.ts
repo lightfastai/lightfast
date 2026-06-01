@@ -6,7 +6,6 @@ import {
   signalDispositionOptions,
   signalKindOptions,
   signalPriorityOptions,
-  signalViewValues,
 } from "./signals-model";
 
 export const signalDispositionParser = parseAsString.withDefault("");
@@ -16,11 +15,6 @@ export const signalPeopleParser = parseAsStringLiteral([
   "routed",
 ] as const).withDefault("all");
 export const signalPriorityParser = parseAsString.withDefault("");
-
-// Layout (list | board). Was keyed "view"; now lives under "layout" so the
-// "view" param can carry the active saved-view publicId.
-export const signalLayoutParser =
-  parseAsStringLiteral(signalViewValues).withDefault("list");
 
 // "view" now holds the active saved-view publicId (null when on All signals).
 export const signalSavedViewParser = parseAsString;

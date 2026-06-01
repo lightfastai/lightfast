@@ -2,14 +2,12 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo } from "react";
 import { useWorkspaceCommands } from "~/components/workspace-command-menu";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { useTRPC } from "~/trpc/react";
 import { SignalDetailSheet } from "./signal-detail-sheet";
-import { SignalsBoardView } from "./signals-board-view";
 import { SignalsListView } from "./signals-list-view";
 import type { SignalClassificationFilters } from "./signals-model";
 import {
@@ -19,7 +17,6 @@ import {
   serializeSignalValues,
   signalDispositionParser,
   signalKindParser,
-  signalLayoutParser,
   signalParser,
   signalPeopleParser,
   signalPriorityParser,
@@ -48,10 +45,9 @@ export function SignalsClient() {
     "priority",
     signalPriorityParser
   );
-  const [layout, setLayout] = useQueryState("layout", signalLayoutParser);
-  // Editing any filter/layout in the toolbar drops the active saved view: you
-  // are now on an ad-hoc selection. Selecting a view (in the topbar switcher)
-  // writes these same params directly, so it does not pass through here.
+  // Editing any filter in the toolbar drops the active saved view: you are now
+  // on an ad-hoc selection. Selecting a view (in the topbar switcher) writes
+  // these same params directly, so it does not pass through here.
   const [, setSavedViewId] = useQueryState("view", signalSavedViewParser);
   const [selectedSignalId, setSelectedSignalId] = useQueryState(
     "signal",
@@ -84,7 +80,6 @@ export function SignalsClient() {
   const deferredFilters = useDeferredValue(filters);
 
   const {
-    boardSections,
     hasAnyRows,
     limit,
     signalsByPublicId,
@@ -108,14 +103,13 @@ export function SignalsClient() {
 
   const emptyCreateAction = (
     <Button
-      className="h-8 rounded-full px-3"
+      className="h-6 rounded-lg border border-border/70 bg-muted/30 px-2.5 font-normal text-muted-foreground text-sm hover:bg-muted/60 hover:text-foreground"
       onClick={openCreateSignal}
       size="sm"
       type="button"
-      variant="outline"
+      variant="ghost"
     >
-      <Plus aria-hidden="true" className="size-3.5" />
-      Add
+      Add Signal
     </Button>
   );
 
@@ -164,11 +158,6 @@ export function SignalsClient() {
             serializeSignalValues(toggleSignalValue(filters.priorities, value))
           );
         }}
-        onViewChange={(value) => {
-          void setSavedViewId(null);
-          void setLayout(value);
-        }}
-        view={layout}
       />
 
       <SignalsTruncationBanner
@@ -177,29 +166,17 @@ export function SignalsClient() {
         windowDays={windowDays}
       />
 
-      {layout === "board" ? (
-        <SignalsBoardView
-          emptyAction={emptyCreateAction}
-          hasActiveSearch={hasActiveFilters}
-          hasAnyRows={hasAnyRows}
-          onPrefetchSignal={prefetchSignal}
-          onSelectSignal={(publicId) => void setSelectedSignalId(publicId)}
-          sections={boardSections}
-          selectedSignalId={selectedSignalId}
-        />
-      ) : (
-        <SignalsListView
-          collapsedGroups={collapsedGroups}
-          emptyAction={emptyCreateAction}
-          hasActiveSearch={hasActiveFilters}
-          hasAnyRows={hasAnyRows}
-          onPrefetchSignal={prefetchSignal}
-          onSelectSignal={(publicId) => void setSelectedSignalId(publicId)}
-          onToggleGroup={toggleListGroup}
-          sections={visibleListSections}
-          selectedSignalId={selectedSignalId}
-        />
-      )}
+      <SignalsListView
+        collapsedGroups={collapsedGroups}
+        emptyAction={emptyCreateAction}
+        hasActiveSearch={hasActiveFilters}
+        hasAnyRows={hasAnyRows}
+        onPrefetchSignal={prefetchSignal}
+        onSelectSignal={(publicId) => void setSelectedSignalId(publicId)}
+        onToggleGroup={toggleListGroup}
+        sections={visibleListSections}
+        selectedSignalId={selectedSignalId}
+      />
 
       <SignalDetailSheet
         initialItem={
