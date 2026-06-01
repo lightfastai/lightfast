@@ -27,11 +27,11 @@ export function SettingsSidebar({ basePath, items }: SettingsSidebarProps) {
           return (
             <Button
               asChild
-              className="w-full justify-start rounded-xl font-normal text-muted-foreground hover:bg-accent/50 hover:text-accent-foreground data-[active=true]:bg-accent data-[active=true]:font-medium data-[active=true]:text-accent-foreground"
+              className="w-full justify-start rounded-xl font-normal text-muted-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground"
               data-active={isActive}
               key={item.name}
               size="sm"
-              variant="ghost"
+              variant="none"
             >
               <Link href={{ pathname: href }} prefetch={true}>
                 {item.name}
