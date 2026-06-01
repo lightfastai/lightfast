@@ -14,9 +14,7 @@
   },
   "dependencies": {
     "@emulators/core": "catalog:",
-    "@repo/emulator-kit": "workspace:*",
-    "@t3-oss/env-core": "catalog:",
-    "zod": "catalog:"
+    "@repo/emulator-kit": "workspace:*"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

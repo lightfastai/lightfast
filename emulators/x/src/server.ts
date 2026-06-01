@@ -1,6 +1,6 @@
 import { type StartedEmulator, startEmulator } from "@repo/emulator-kit";
 
-import { xPlugin } from "./x-plugin";
+import { xPlugin } from "./plugin";
 
 export interface StartXEmulatorInput {
   appOrigin?: string;
