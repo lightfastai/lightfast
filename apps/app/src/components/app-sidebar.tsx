@@ -20,15 +20,15 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 import {
+  Aperture,
+  Blocks,
   BookOpen,
   BrainCircuit,
-  CalendarClock,
   HelpCircle,
   Mail,
-  PlugZap,
+  Network,
   Settings,
-  Signal,
-  UsersRound,
+  Workflow,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -42,17 +42,32 @@ interface NavItem {
   title: string;
 }
 
+function getOrgStandaloneItems(orgSlug: string): NavItem[] {
+  return [
+    {
+      title: "Automations",
+      href: `/${orgSlug}/automations`,
+      icon: Workflow,
+    },
+    {
+      title: "Connectors",
+      href: `/${orgSlug}/connectors`,
+      icon: Blocks,
+    },
+  ];
+}
+
 function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
   return [
     {
       title: "Signals",
       href: `/${orgSlug}/signals`,
-      icon: Signal,
+      icon: Aperture,
     },
     {
       title: "People",
       href: `/${orgSlug}/people`,
-      icon: UsersRound,
+      icon: Network,
     },
     {
       title: "Skills",
@@ -65,16 +80,6 @@ function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
 
 function getOrgManageItems(orgSlug: string): NavItem[] {
   return [
-    {
-      title: "Automations",
-      href: `/${orgSlug}/automations`,
-      icon: CalendarClock,
-    },
-    {
-      title: "Connectors",
-      href: `/${orgSlug}/connectors`,
-      icon: PlugZap,
-    },
     {
       title: "Settings",
       href: `/${orgSlug}/settings`,
@@ -133,6 +138,16 @@ export function AppSidebar() {
       <SidebarContent>
         {orgSlug && (
           <>
+            <SidebarGroup>
+              <SidebarGroupContent>
+                <SidebarMenu>
+                  <NavItems
+                    items={getOrgStandaloneItems(orgSlug)}
+                    pathname={pathname}
+                  />
+                </SidebarMenu>
+              </SidebarGroupContent>
+            </SidebarGroup>
             <SidebarGroup collapsible defaultOpen label="Workspace">
               <SidebarGroupContent>
                 <SidebarMenu>
