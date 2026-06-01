@@ -33,6 +33,22 @@ import {
 let emulator: StartedGitHubEmulator | undefined;
 let emulatorPort: number;
 
+async function createInstallationToken() {
+  const jwt = await createAppJwt();
+  const tokenRes = await fetch(
+    `${emulator?.url}/app/installations/${GITHUB_EMULATOR_FIXTURES.installationId}/access_tokens`,
+    {
+      method: "POST",
+      headers: {
+        authorization: `Bearer ${jwt}`,
+      },
+    }
+  );
+  const tokenBody = (await tokenRes.json()) as { token?: string };
+  expect(tokenBody.token).toEqual(expect.stringMatching(/^ghs_/));
+  return tokenBody.token;
+}
+
 beforeAll(async () => {
   emulator = await startGitHubEmulatorOnAvailablePort();
   emulatorPort = Number(new URL(emulator.url).port);
@@ -135,6 +151,171 @@ describe("@repo/github-emulator", () => {
       }
     );
     expect(refRes.status).toBe(200);
+  });
+
+  it("returns current app installation metadata with html_url", async () => {
+    const jwt = await createAppJwt();
+    const res = await fetch(
+      `${emulator?.url}/app/installations/${GITHUB_EMULATOR_FIXTURES.installationId}`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${jwt}`,
+        },
+      }
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      id: GITHUB_EMULATOR_FIXTURES.installationId,
+      account: expect.objectContaining({
+        login: GITHUB_EMULATOR_FIXTURES.githubOrgLogin,
+        type: "Organization",
+      }),
+      html_url: `${emulator?.url}/settings/installations/${GITHUB_EMULATOR_FIXTURES.installationId}`,
+      target_type: "Organization",
+    });
+  });
+
+  it("lists repositories accessible to an installation token", async () => {
+    const token = await createInstallationToken();
+
+    const res = await fetch(`${emulator?.url}/installation/repositories`, {
+      headers: {
+        accept: "application/vnd.github+json",
+        authorization: `Bearer ${token}`,
+      },
+    });
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      total_count: 2,
+      repositories: expect.arrayContaining([
+        expect.objectContaining({
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/${GITHUB_EMULATOR_FIXTURES.githubRepoName}`,
+          name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+          private: true,
+        }),
+        expect.objectContaining({
+          full_name: `${GITHUB_EMULATOR_FIXTURES.githubOrgLogin}/api-service`,
+          name: "api-service",
+          private: false,
+        }),
+      ]),
+    });
+  });
+
+  it("defaults invalid installation repository pagination parameters", async () => {
+    const token = await createInstallationToken();
+
+    const res = await fetch(
+      `${emulator?.url}/installation/repositories?per_page=abc&page=abc`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      total_count: 2,
+      repositories: [
+        expect.objectContaining({
+          name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+        }),
+        expect.objectContaining({ name: "api-service" }),
+      ],
+    });
+  });
+
+  it("clamps and slices installation repository pagination", async () => {
+    const token = await createInstallationToken();
+
+    const clampedRes = await fetch(
+      `${emulator?.url}/installation/repositories?per_page=0&page=0`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    expect(clampedRes.status).toBe(200);
+    await expect(clampedRes.json()).resolves.toMatchObject({
+      total_count: 2,
+      repositories: [
+        expect.objectContaining({
+          name: GITHUB_EMULATOR_FIXTURES.githubRepoName,
+        }),
+      ],
+    });
+
+    const res = await fetch(
+      `${emulator?.url}/installation/repositories?per_page=1&page=2`,
+      {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    expect(res.status).toBe(200);
+    await expect(res.json()).resolves.toMatchObject({
+      total_count: 2,
+      repositories: [expect.objectContaining({ name: "api-service" })],
+    });
+  });
+
+  it("filters selected installation repositories", async () => {
+    if (!emulator) {
+      throw new Error("GitHub emulator was not started");
+    }
+    const gh = getGitHubStore(emulator.store);
+    const installation = gh.appInstallations
+      .all()
+      .find(
+        (candidate) =>
+          candidate.installation_id ===
+          GITHUB_EMULATOR_FIXTURES.installationId
+      );
+    const repo = gh.repos.findOneBy("name", "api-service");
+    expect(installation).toBeDefined();
+    expect(repo).toBeDefined();
+    gh.appInstallations.update(installation?.id ?? 0, {
+      repository_selection: "selected",
+      repository_ids: [repo?.id ?? 0],
+    });
+
+    try {
+      const token = await createInstallationToken();
+
+      const res = await fetch(`${emulator?.url}/installation/repositories`, {
+        headers: {
+          accept: "application/vnd.github+json",
+          authorization: `Bearer ${token}`,
+        },
+      });
+
+      expect(res.status).toBe(200);
+      await expect(res.json()).resolves.toMatchObject({
+        total_count: 1,
+        repositories: [expect.objectContaining({ name: "api-service" })],
+      });
+    } finally {
+      emulator?.reset();
+    }
+  });
+
+  it("rejects installation repository listing without an installation token", async () => {
+    const res = await fetch(`${emulator?.url}/installation/repositories`, {
+      headers: { authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}` },
+    });
+
+    expect(res.status).toBe(401);
   });
 
   it("can emulate the missing and satisfied .lightfast repository requirement", async () => {

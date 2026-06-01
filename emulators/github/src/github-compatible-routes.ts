@@ -79,6 +79,28 @@ function getBearerToken(request: Request) {
   return match?.[1] ?? null;
 }
 
+function parseBoundedPositiveInteger(input: {
+  defaultValue: number;
+  max: number;
+  min: number;
+  value: string | null;
+}) {
+  const parsed = Number.parseInt(input.value ?? "", 10);
+  const value = Number.isFinite(parsed) ? parsed : input.defaultValue;
+  return Math.min(input.max, Math.max(input.min, value));
+}
+
+function parseInstallationScopeId(scopes: string[] | undefined) {
+  const installationScope = scopes?.find((scope) =>
+    scope.startsWith("installation:")
+  );
+  const installationId = Number.parseInt(
+    installationScope?.slice("installation:".length) ?? "",
+    10
+  );
+  return Number.isFinite(installationId) ? installationId : null;
+}
+
 function getBasicCredentials(request: Request) {
   const header = request.headers.get("authorization") ?? "";
   const match = /^Basic\s+(.+)$/i.exec(header);
@@ -661,6 +683,47 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       });
     }
 
+    const appInstallationMatch = /^\/app\/installations\/([^/]+)$/.exec(
+      url.pathname
+    );
+    if (request.method === "GET" && appInstallationMatch) {
+      const app = await authenticateApp({
+        request,
+        store: input.store,
+      });
+      if (!app) {
+        return json(
+          {
+            message: "A JSON web token could not be decoded",
+            documentation_url: "https://docs.github.com/rest",
+          },
+          401
+        );
+      }
+
+      const installationId = Number.parseInt(
+        appInstallationMatch[1] ?? "",
+        10
+      );
+      const installation = gh.appInstallations
+        .all()
+        .find(
+          (candidate) =>
+            candidate.installation_id === installationId &&
+            candidate.app_id === app.app_id
+        );
+      if (!installation) {
+        return notFound();
+      }
+
+      const formatted = formatInstallation({
+        installationId: installation.installation_id,
+        publicOrigin: input.publicOrigin,
+        store: input.store,
+      });
+      return formatted ? json(formatted) : notFound();
+    }
+
     const installationTokenMatch =
       /^\/app\/installations\/([^/]+)\/access_tokens$/.exec(url.pathname);
     if (request.method === "POST" && installationTokenMatch) {
@@ -706,9 +769,12 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
       input.tokenMap.set(token, {
         id: actor?.id ?? installation.account_id,
         login: actor?.login ?? installation.account_login,
-        scopes: Object.entries(requestedPermissions).map(
-          ([key, value]) => `${key}:${value}`
-        ),
+        scopes: [
+          `installation:${installation.installation_id}`,
+          ...Object.entries(requestedPermissions).map(
+            ([key, value]) => `${key}:${value}`
+          ),
+        ],
       });
 
       return json(
@@ -720,6 +786,72 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         },
         201
       );
+    }
+
+    if (
+      request.method === "GET" &&
+      url.pathname === "/installation/repositories"
+    ) {
+      const token = getBearerToken(request);
+      const tokenEntry = token ? input.tokenMap.get(token) : undefined;
+      const installationId = parseInstallationScopeId(tokenEntry?.scopes);
+      if (installationId === null) {
+        return json({ message: "Bad credentials" }, 401);
+      }
+
+      const installation = gh.appInstallations
+        .all()
+        .find((candidate) => candidate.installation_id === installationId);
+      if (!installation) {
+        return notFound();
+      }
+
+      const account =
+        installation.account_type === "Organization"
+          ? gh.orgs.get(installation.account_id)
+          : gh.users.get(installation.account_id);
+      if (!account) {
+        return notFound();
+      }
+
+      const allRepos = gh.repos
+        .all()
+        .filter((repo) => repo.owner_id === account.id);
+      const accessibleRepos =
+        installation.repository_selection === "selected"
+          ? allRepos.filter((repo) =>
+              installation.repository_ids.includes(repo.id)
+            )
+          : allRepos;
+
+      const perPage = parseBoundedPositiveInteger({
+        defaultValue: 100,
+        max: 100,
+        min: 1,
+        value: url.searchParams.get("per_page"),
+      });
+      const page = parseBoundedPositiveInteger({
+        defaultValue: 1,
+        max: Number.MAX_SAFE_INTEGER,
+        min: 1,
+        value: url.searchParams.get("page"),
+      });
+      const start = (page - 1) * perPage;
+      const pageRepos = accessibleRepos.slice(start, start + perPage);
+
+      return json({
+        total_count: accessibleRepos.length,
+        repositories: pageRepos.map((repo) => ({
+          full_name: `${account.login}/${repo.name}`,
+          id: repo.id,
+          name: repo.name,
+          owner: {
+            id: account.id,
+            login: account.login,
+          },
+          private: repo.private,
+        })),
+      });
     }
 
     const expiredOAuthAccessTokenResponse =
