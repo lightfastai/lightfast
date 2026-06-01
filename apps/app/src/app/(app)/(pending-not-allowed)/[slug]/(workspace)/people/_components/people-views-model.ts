@@ -7,8 +7,6 @@ export type PeopleViewList =
 export type PeopleViewRow = PeopleViewList[number];
 export type PeopleViewConfig = PeopleViewRow["config"];
 
-export const ALL_PEOPLE_VIEW_NAME = "All people";
-
 export interface PeopleViewParamValues {
   provider: string;
   type: string;
