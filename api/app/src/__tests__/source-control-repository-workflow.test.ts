@@ -235,7 +235,7 @@ describe("source control repository sync workflow", () => {
       orgSourceControlBindingId: 1,
       providerRepositoryId: "2002",
       syncStatus: "disabled",
-      watchedPathGlobs: ["**"],
+      watchedPathGlobs: null,
     });
     markDeliveryMock.mockResolvedValue(true);
 

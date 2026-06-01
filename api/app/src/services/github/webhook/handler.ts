@@ -139,6 +139,14 @@ export async function handleGitHubWebhook(input: {
     return response(202, { ok: true, ignored: true });
   }
 
+  if (watch.watchedPathGlobs === null) {
+    await markSourceControlWebhookDeliveryStatus(db, {
+      deliveryId: headers.deliveryId,
+      status: "ignored",
+    });
+    return response(202, { ok: true, ignored: true });
+  }
+
   if (!matchesAnyWatchedPath(push.changedPaths, watch.watchedPathGlobs)) {
     await markSourceControlWebhookDeliveryStatus(db, {
       deliveryId: headers.deliveryId,

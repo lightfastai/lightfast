@@ -10,7 +10,6 @@ import {
   createGitHubInstallationToken,
   getGitHubAppInstallation,
 } from "@repo/github-app-node";
-import { SOURCE_CONTROL_ALL_PATHS_GLOB } from "@repo/source-control-contract";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
@@ -316,7 +315,7 @@ export const orgSourceControlRouter = {
           orgSourceControlBindingId: binding.id,
           providerRepositoryId: selectedRepository.id,
           syncStatus: "disabled",
-          watchedPathGlobs: [SOURCE_CONTROL_ALL_PATHS_GLOB],
+          watchedPathGlobs: null,
         });
       }
 

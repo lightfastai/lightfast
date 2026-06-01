@@ -408,7 +408,7 @@ describe("handleGitHubWebhook", () => {
       id: 9,
       providerRepositoryId: "2002",
       syncStatus: "disabled",
-      watchedPathGlobs: ["**"],
+      watchedPathGlobs: null,
     });
 
     const res = await handleGitHubWebhook({

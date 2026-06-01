@@ -25,7 +25,7 @@ export interface UpsertWatchedSourceControlRepositoryInput {
   orgSourceControlBindingId: number;
   providerRepositoryId: string;
   syncStatus?: SourceControlRepositorySyncStatus;
-  watchedPathGlobs: WatchedPathGlobs;
+  watchedPathGlobs: WatchedPathGlobs | null;
 }
 
 export interface CompleteWatchedSourceControlRepositorySetupInput

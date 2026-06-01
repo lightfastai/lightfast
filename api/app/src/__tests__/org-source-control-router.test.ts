@@ -516,14 +516,14 @@ describe("org.settings.sourceControl.importRepository", () => {
     expect(getActiveOrgBindingMock).not.toHaveBeenCalled();
   });
 
-  it("registers one repository with all paths and fresh GitHub fullName", async () => {
+  it("registers one repository without watch globs and with fresh GitHub fullName", async () => {
     const binding = activeBinding();
     getActiveOrgBindingMock.mockResolvedValue(binding);
     listWatchedSourceControlRepositoriesMock.mockResolvedValueOnce([
       watchedRepository({
         fullName: "acme-live/app",
         providerRepositoryId: "repo_live",
-        watchedPathGlobs: ["**"],
+        watchedPathGlobs: null,
       }),
     ]);
     getWatchedSourceControlRepositoryMock.mockResolvedValue(undefined);
@@ -531,7 +531,7 @@ describe("org.settings.sourceControl.importRepository", () => {
       watchedRepository({
         fullName: "acme-live/app",
         providerRepositoryId: "repo_live",
-        watchedPathGlobs: ["**"],
+        watchedPathGlobs: null,
       })
     );
     getGitHubAppInstallationMock.mockResolvedValue({
@@ -573,7 +573,7 @@ describe("org.settings.sourceControl.importRepository", () => {
           name: "app",
           owner: { id: "987654", login: "acme-live" },
           private: true,
-          watchedPathGlobs: ["**"],
+          watchedPathGlobs: null,
         },
       ],
       repositoriesError: null,
@@ -587,7 +587,7 @@ describe("org.settings.sourceControl.importRepository", () => {
         orgSourceControlBindingId: 3,
         providerRepositoryId: "repo_live",
         syncStatus: "disabled",
-        watchedPathGlobs: ["**"],
+        watchedPathGlobs: null,
       }
     );
   });

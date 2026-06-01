@@ -120,12 +120,12 @@ describe("source-control repository helpers", () => {
     ).resolves.toEqual(repositories);
   });
 
-  it("inserts watched repository without duplicate-key scope overwrite", async () => {
+  it("inserts registered repository without watch globs", async () => {
     const repository = createWatchedRepository({
       fullName: "acme/workspace",
       id: 31,
       providerRepositoryId: "repo-2",
-      watchedPathGlobs: ["**"],
+      watchedPathGlobs: null,
     });
     const limitMock = vi.fn(() => [repository]);
     const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
@@ -143,7 +143,7 @@ describe("source-control repository helpers", () => {
         orgSourceControlBindingId: 7,
         providerRepositoryId: "repo-2",
         syncStatus: "disabled",
-        watchedPathGlobs: ["**"],
+        watchedPathGlobs: null,
       })
     ).resolves.toBe(repository);
 
@@ -152,7 +152,7 @@ describe("source-control repository helpers", () => {
       orgSourceControlBindingId: 7,
       providerRepositoryId: "repo-2",
       syncStatus: "disabled",
-      watchedPathGlobs: ["**"],
+      watchedPathGlobs: null,
     });
   });
 

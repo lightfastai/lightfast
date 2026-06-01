@@ -38,9 +38,9 @@ export const sourceControlRepositories = mysqlTable(
       length: REPOSITORY_FULL_NAME_LENGTH,
     }).notNull(),
 
-    watchedPathGlobs: json("watched_path_globs")
-      .$type<WatchedPathGlobs>()
-      .notNull(),
+    watchedPathGlobs: json(
+      "watched_path_globs"
+    ).$type<WatchedPathGlobs | null>(),
 
     syncStatus: varchar("sync_status", { length: CODE_LENGTH })
       .$type<SourceControlRepositorySyncStatus>()
