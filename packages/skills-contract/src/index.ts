@@ -5,13 +5,17 @@ export const SKILL_COUNT_MAX = 200;
 export const SKILL_FILE_MAX_BYTES = 128 * 1024;
 export const SKILL_RESOURCE_PATH_MAX = 100;
 
-export const skillIndexRefreshStatusSchema = z.enum([
+export const SKILL_INDEX_REFRESH_STATUSES = [
   "never",
   "fresh",
   "stale",
   "refreshing",
   "failed",
-]);
+] as const;
+
+export const skillIndexRefreshStatusSchema = z.enum(
+  SKILL_INDEX_REFRESH_STATUSES
+);
 export type SkillIndexRefreshStatus = z.infer<
   typeof skillIndexRefreshStatusSchema
 >;
@@ -27,8 +31,13 @@ export type SkillValidationStatus = z.infer<
   typeof skillValidationStatusSchema
 >;
 
+export const skillDiagnosticSeveritySchema = z.enum(["error", "warning"]);
+export type SkillDiagnosticSeverity = z.infer<
+  typeof skillDiagnosticSeveritySchema
+>;
+
 export const skillDiagnosticSchema = z.object({
-  severity: z.enum(["error", "warning"]),
+  severity: skillDiagnosticSeveritySchema,
   code: z.string(),
   message: z.string(),
   path: z.string().optional(),
@@ -56,7 +65,7 @@ export interface ParsedSkillEntry {
   slug: string;
   path: string;
   contentSha: string;
-  contentSize: number;
+  contentSize: number | null;
   sourceMarkdown: string | null;
   bodyMarkdown: string | null;
   name: string | null;
@@ -66,15 +75,18 @@ export interface ParsedSkillEntry {
   allowedTools: string | null;
   metadata: Record<string, string | number | boolean | null>;
   resources: SkillResources;
+  nonStandardResourceCount: number;
   validationStatus: SkillValidationStatus;
   diagnostics: SkillDiagnostic[];
 }
 
 export interface ParseSkillFileInput {
   contentSha: string;
-  contentSize: number;
+  contentSize: number | null;
   path: string;
   sourceMarkdown: string | null;
+  resources?: SkillResources;
+  nonStandardResourceCount?: number;
 }
 
 export interface ParseSkillFileResult {
@@ -85,6 +97,7 @@ export interface SkillIndexCandidateCollection {
   canonicalSkillFiles: SkillTreeEntry[];
   resourcesBySlug: Map<string, SkillResources>;
   nonStandardResourceCountBySlug: Map<string, number>;
+  ignoredInvalidSkillDirectoryCount: number;
   diagnostics: SkillDiagnostic[];
   fatalDiagnostics: SkillDiagnostic[];
 }
@@ -100,6 +113,13 @@ const emptyResources = (): SkillResources => ({
   truncated: false,
 });
 
+const cloneResources = (resources: SkillResources): SkillResources => ({
+  assets: [...resources.assets],
+  references: [...resources.references],
+  scripts: [...resources.scripts],
+  truncated: resources.truncated,
+});
+
 const createBaseEntry = (input: ParseSkillFileInput): ParsedSkillEntry => ({
   slug: getSlugFromSkillPath(input.path),
   path: input.path,
@@ -113,7 +133,10 @@ const createBaseEntry = (input: ParseSkillFileInput): ParsedSkillEntry => ({
   compatibility: null,
   allowedTools: null,
   metadata: {},
-  resources: emptyResources(),
+  resources: input.resources
+    ? cloneResources(input.resources)
+    : emptyResources(),
+  nonStandardResourceCount: input.nonStandardResourceCount ?? 0,
   validationStatus: "valid",
   diagnostics: [],
 });
@@ -123,7 +146,7 @@ export function parseSkillFile(input: ParseSkillFileInput): ParseSkillFileResult
   const diagnostics = entry.diagnostics;
 
   if (
-    input.contentSize > SKILL_FILE_MAX_BYTES ||
+    (input.contentSize !== null && input.contentSize > SKILL_FILE_MAX_BYTES) ||
     input.sourceMarkdown === null
   ) {
     diagnostics.push({
@@ -259,6 +282,7 @@ export function collectSkillIndexCandidates(
     canonicalSkillFiles,
     resourcesBySlug,
     nonStandardResourceCountBySlug,
+    ignoredInvalidSkillDirectoryCount: invalidDirectories.size,
     diagnostics,
     fatalDiagnostics,
   };
@@ -538,19 +562,28 @@ function addResourcePath(
   path: string
 ): void {
   const resources = ensureResources(resourcesBySlug, slug);
-  const total =
-    resources.assets.length + resources.references.length + resources.scripts.length;
-  if (total >= SKILL_RESOURCE_PATH_MAX) {
-    resources.truncated = true;
-    return;
-  }
   resources[kind].push(path);
 }
 
 function sortResources(resourcesBySlug: Map<string, SkillResources>): void {
   for (const resources of resourcesBySlug.values()) {
-    resources.assets.sort();
-    resources.references.sort();
-    resources.scripts.sort();
+    const paths = [
+      ...resources.assets.map((path) => ({ kind: "assets" as const, path })),
+      ...resources.references.map((path) => ({
+        kind: "references" as const,
+        path,
+      })),
+      ...resources.scripts.map((path) => ({ kind: "scripts" as const, path })),
+    ].sort((a, b) => a.path.localeCompare(b.path));
+
+    resources.assets = [];
+    resources.references = [];
+    resources.scripts = [];
+    resources.truncated =
+      resources.truncated || paths.length > SKILL_RESOURCE_PATH_MAX;
+
+    for (const resource of paths.slice(0, SKILL_RESOURCE_PATH_MAX)) {
+      resources[resource.kind].push(resource.path);
+    }
   }
 }

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   SKILL_COUNT_MAX,
   SKILL_FILE_MAX_BYTES,
+  SKILL_RESOURCE_PATH_MAX,
   collectSkillIndexCandidates,
   parseSkillFile,
   skillNameSchema,
@@ -35,6 +36,28 @@ describe("@repo/skills-contract", () => {
       bodyMarkdown: "Review the diff carefully.",
     });
     expect(result.entry.diagnostics).toEqual([]);
+  });
+
+  it("carries provided resources and non-standard resource count", () => {
+    const resources = {
+      assets: ["skills/code-review/assets/flow.png"],
+      references: ["skills/code-review/references/checklist.md"],
+      scripts: ["skills/code-review/scripts/check.sh"],
+      truncated: false,
+    };
+
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 92,
+      path: "skills/code-review/SKILL.md",
+      resources,
+      nonStandardResourceCount: 2,
+      sourceMarkdown:
+        "---\nname: code-review\ndescription: Use when reviewing code.\n---\n\nReview the diff carefully.\n",
+    });
+
+    expect(result.entry.resources).toEqual(resources);
+    expect(result.entry.nonStandardResourceCount).toBe(2);
   });
 
   it("marks name mismatches invalid but visible", () => {
@@ -138,6 +161,43 @@ describe("@repo/skills-contract", () => {
       truncated: false,
     });
     expect(result.nonStandardResourceCountBySlug.get("code-review")).toBe(1);
+  });
+
+  it("keeps the lexicographically first resources when inventory exceeds the cap", () => {
+    const resourceEntries = Array.from(
+      { length: SKILL_RESOURCE_PATH_MAX + 5 },
+      (_, index) => ({
+        mode: "100644",
+        path: `skills/code-review/references/item-${String(
+          SKILL_RESOURCE_PATH_MAX + 4 - index
+        ).padStart(3, "0")}.md`,
+        sha: `refsha-${index}`,
+        size: 12,
+        type: "blob" as const,
+      })
+    );
+
+    const result = collectSkillIndexCandidates([
+      {
+        mode: "100644",
+        path: "skills/code-review/SKILL.md",
+        sha: "skillsha",
+        size: 80,
+        type: "blob",
+      },
+      ...resourceEntries,
+    ]);
+
+    const references =
+      result.resourcesBySlug.get("code-review")?.references ?? [];
+    const expected = Array.from(
+      { length: SKILL_RESOURCE_PATH_MAX },
+      (_, index) =>
+        `skills/code-review/references/item-${String(index).padStart(3, "0")}.md`
+    );
+
+    expect(references).toEqual(expected);
+    expect(result.resourcesBySlug.get("code-review")?.truncated).toBe(true);
   });
 
   it("aborts when canonical skill count exceeds the cap", () => {
