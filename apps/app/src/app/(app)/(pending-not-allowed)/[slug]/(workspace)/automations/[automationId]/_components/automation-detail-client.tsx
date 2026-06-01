@@ -13,6 +13,7 @@ import { AutomationPromptEditor } from "./automation-prompt-editor";
 import { AutomationRunsList } from "./automation-runs-list";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
+import { RailSection } from "./rail-section";
 
 function getSlug(pathname: string) {
   return pathname.split("/").filter(Boolean)[0] ?? "workspace";
@@ -89,23 +90,6 @@ export function AutomationDetailClient({
           </Suspense>
         </div>
       </div>
-    </div>
-  );
-}
-
-function RailSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-border border-t pt-4">
-      <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {label}
-      </p>
-      {children}
     </div>
   );
 }
