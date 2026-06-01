@@ -44,6 +44,7 @@ Sources:
 - Default **Use in automations** to on only when OAuth succeeds and MCP discovery returns at least one tool.
 - Keep GitHub source-control setup separate from Connectors.
 - Provide a Linear emulator for repeatable local development and e2e.
+- Allow the same Linear workspace to be connected to multiple Lightfast orgs in v1.
 
 ## Non-Goals
 
@@ -75,30 +76,52 @@ The page uses the Codex marketplace header treatment and the connected-connector
   - Non-admin members see disabled mutation actions with a permission hint.
   - Connected providers show status, overflow menu, MCP tool chips, `See more`, and **Use in automations**.
 
-The connector catalog should be data-driven from `@repo/connector-contract`. Catalog provider ids may include coming-soon providers, while the connectable provider id union is `linear` in v1. Backend mutations must only accept connectable provider ids.
+The connector catalog should be data-driven from `@repo/connector-contract`. Catalog provider ids may include coming-soon providers, while the connectable provider id union is `linear` in v1. Backend mutations must only accept connectable provider ids. The contract owns stable catalog metadata such as provider id, display name, description, builder, category, and catalog status. The UI owns icon rendering and maps provider ids to local icon assets/components. Do not use remote icon URLs in v1.
+
+Catalog builder metadata:
+
+- Linear and coming-soon providers use `builder: "Lightfast"` in v1.
+- The builder filter label should be `Built by Lightfast`, matching the curated marketplace model.
+
+Catalog status filters:
+
+- Include `All`, `Connected`, `Available`, and `Coming soon`.
 
 Search should match provider name, provider description, and cached tool names.
 
 Featured Linear behavior:
 
 - Linear remains the featured hero even after connection because it is the only active v1 connector.
-- When connected, the hero CTA changes to a management action rather than disappearing.
+- The hero uses live connection and availability state.
+- If unconnected and available, the hero CTA is `Connect`.
+- If connected, the hero CTA is `Manage` and scrolls/focuses the inline Linear row.
+- If the connector needs reconnect, the hero CTA is `Reconnect`.
+- If Linear config is missing or the viewer cannot manage connectors, the hero CTA is disabled with the same availability or permission state as the row.
 
 Connected Linear row behavior:
 
 - Shows `Connected` status with a green indicator when usable.
 - Shows `Needs reconnect` for auth-related `error` state. The database status remains `error`; the UI derives the label from structured error metadata such as `errorCode: "auth_required"`.
+- Shows `Tools stale` when the connector is still `active` but has `lastToolRefreshErrorCode` set. This is distinct from `Needs reconnect`.
+- Shows subtle workspace/actor metadata such as `Connected to Linear Workspace as Lightfast Local`. All org members can see provider workspace and actor display names.
 - Shows tool count and the first several MCP tool names as chips.
 - `See more` expands the full display manifest inline.
+- `See more` state is local-only UI state and is not persisted.
 - Overflow menu includes refresh tools, reconnect, and disconnect. Admin-only actions are disabled or hidden for non-admin members.
 - **Use in automations** is a switch. It controls whether automation runs can access Linear MCP tools while keeping the Linear installation intact.
 - In `Needs reconnect`, cached tools may remain visible, **Use in automations** is disabled, and `Reconnect` is the primary admin action.
+- Connected Linear rows are expanded by default on page load.
+- Unconnected Linear rows stay compact because the hero owns the main CTA.
+- The page should not auto-refresh tools on load. It uses the cached manifest and exposes an explicit admin `Refresh tools` action.
+- Show `Last refreshed <relative time>` when `lastToolRefreshAt` exists.
+- If refresh failed but a prior manifest exists, show `Tools stale`, the last successful refresh timestamp, and the admin refresh action.
 
 Tool display:
 
 - The database may store the full discovered MCP tool manifest, including input schemas.
-- `org.workspace.connectors.list` returns only display-safe fields to the UI: tool name, description, and total count. It does not return input schemas.
+- `org.workspace.connectors.list` returns only display-safe fields to the UI: tool name, description, derived `availableForAutomations`, and total count. It does not return input schemas.
 - All org members can see tool names and descriptions, including write-capable tools such as `create_issue` and `update_issue`.
+- Unsupported provider tool names still appear in the UI manifest, but are marked unavailable for automations when the API can derive that state.
 
 Access control:
 
@@ -112,12 +135,33 @@ Post-connect behavior:
 - Linear appears connected and expanded inline.
 - **Use in automations** is enabled by default only if OAuth succeeds and initial MCP tool discovery succeeds with at least one tool.
 - If OAuth succeeds but MCP discovery fails, Linear is still installed as `active`, but automation use stays off and the UI prompts an admin to refresh tools.
+- Successful connect does not show a separate success banner. The connected expanded Linear row is the success state.
+- Callback errors render as inline row errors derived from the query params and refreshed list state. Do not use transient toasts for callback errors.
+- After rendering callback query-param state, the client replaces the URL without `connector` and `error` params.
 
 Disconnect behavior:
 
 - Disconnect revokes upstream when possible and marks the local current row `revoked`.
 - Historical revoked rows remain in the database for audit/debug purposes.
 - The marketplace UI collapses Linear back to the unconnected row and hides historical cached tools.
+- Disconnect requires a concise confirmation dialog because it removes automation access and wipes local token material.
+- Revoked rows wipe encrypted token material and clear the full `toolManifest` to an empty array while retaining non-sensitive workspace, actor, scope, timestamp, and status metadata.
+- Disconnect always performs local revoke even if upstream revoke fails.
+
+Toggle behavior:
+
+- Toggling **Use in automations** does not require confirmation in v1.
+- The row copy must make the broad read/write automation access explicit.
+- Do not add a global MCP/broad-access banner; keep copy contextual.
+
+OAuth launch behavior:
+
+- `Connect` and `Reconnect` use same-tab redirects, matching existing setup-style OAuth flows.
+
+Icons:
+
+- Linear should use a local asset or local component that closely represents the Linear mark.
+- Coming-soon providers can use simple local icons/components.
 
 ## Backend Architecture
 
@@ -182,6 +226,8 @@ Add a generic `org_connector_connections` table in `db/app`.
 
 The table enforces at most one current connection per `clerkOrgId` and `provider`. Use a nullable current-row mirror because MySQL does not support partial unique indexes. The mirror value should be `${clerkOrgId}:${provider}` for current `active` and `error` rows, and `NULL` for `revoked` rows. This keeps an errored installed connector from allowing a second current row until reconnect supersedes it.
 
+Do not add a global uniqueness constraint on `providerWorkspaceId`. A Linear workspace may be connected to multiple Lightfast orgs in v1. Warning admins about this case is a future GitHub issue.
+
 Fields:
 
 - `id`: internal bigint primary key.
@@ -196,13 +242,16 @@ Fields:
 - `providerWorkspaceName`: nullable string.
 - `providerActorId`: nullable string.
 - `providerActorName`: nullable string.
-- `encryptedAccessToken`: text.
+- `encryptedAccessToken`: nullable text. Required for current `active` and `error` rows, wiped on `revoked`.
 - `encryptedRefreshToken`: nullable text.
 - `accessTokenExpiresAt`: nullable timestamp.
 - `refreshTokenExpiresAt`: nullable timestamp.
-- `scopes`: JSON string array.
+- `scopes`: JSON string array of exact provider-returned scope strings.
 - `mcpEndpoint`: URL string.
-- `toolManifest`: JSON array containing the full server-side MCP tool manifest.
+- `toolManifest`: non-null JSON array containing the full server-side MCP tool manifest. Default to `[]`.
+- `lastToolRefreshAt`: nullable timestamp updated only on successful MCP discovery, including successful zero-tool discovery.
+- `lastToolRefreshErrorAt`: nullable timestamp for the latest MCP discovery failure.
+- `lastToolRefreshErrorCode`: nullable controlled error code for the latest MCP discovery failure.
 - `enabledForAutomations`: boolean.
 - `metadata`: provider-specific JSON object, including provider-safe error diagnostics.
 - `createdAt`: timestamp.
@@ -218,18 +267,27 @@ Repository helper responsibilities:
 - Mark revoked.
 - Mark error with provider-safe metadata and automatically set `enabledForAutomations=false`.
 - Update refreshed encrypted tokens with compare-and-set semantics where practical.
+- Clear encrypted token fields, `currentOrgProviderKey`, `enabledForAutomations`, and `toolManifest` when marking a row revoked.
+- Keep encrypted token fields on `error` rows until reconnect or disconnect; runtime must still treat `error` rows as unusable.
+- Overwrite the cached manifest on successful discovery and clear `lastToolRefreshErrorAt` / `lastToolRefreshErrorCode`.
+- Leave the previous manifest intact on discovery failure when a previous manifest exists, and set refresh-error fields.
 
 Reconnect behavior:
 
 - Starting OAuth for reconnect leaves the current row untouched.
 - Successful OAuth callback supersedes the old current row in one database transaction.
 - Failed or abandoned reconnect leaves the existing row intact.
+- If reconnect OAuth succeeds and MCP discovery fails, create the new current row with the old manifest copied forward, set refresh-error fields, and preserve the previous `enabledForAutomations` value only when at least one supported tool remains.
+- If reconnect OAuth succeeds and MCP discovery returns zero tools, treat the zero-tool result as authoritative, replace the manifest with `[]`, update `lastToolRefreshAt`, clear refresh-error fields, and force `enabledForAutomations=false`.
+- Reconnect preserves the prior stored `enabledForAutomations` value for both `active` and `error` prior rows. Since marking `error` forces automation use off, reconnect from error keeps it off unless the admin explicitly re-enables later.
+- Initial connect defaults `enabledForAutomations=true` only when discovery succeeds with at least one runtime-supported tool.
 
 Sensitive fields:
 
 - Access and refresh tokens must be encrypted with `@repo/app-encryption` and `env.ENCRYPTION_KEY` before persistence.
 - Decrypted tokens should exist only inside server-side OAuth, refresh, and connector runtime code.
 - Tokens must never be returned through tRPC.
+- Full tool manifests and input schemas are not returned to React components.
 
 ## API Design
 
@@ -240,25 +298,40 @@ Procedures:
 - `list`
   - Bound-org member-readable.
   - Returns catalog entries plus connection state for the active org.
-  - Includes display-safe cached tool names/descriptions/count and `enabledForAutomations`.
+  - Includes `canManage`, `connectAvailability`, display-safe cached tool names/descriptions/derived availability/count, `enabledForAutomations`, refresh timestamps, and refresh error code.
   - Does not return tokens, input schemas, or sensitive metadata.
 - `startConnect({ provider })`
   - Bound-org admin-only.
   - Accepts only connectable provider ids.
   - Creates a Redis-backed OAuth attempt for the active org and user.
   - Returns provider authorization URL.
+  - Handles both connect and reconnect. The server chooses attempt `mode` by checking whether a current org/provider row already exists.
+  - Fails fast with a typed configuration error when Linear OAuth config is incomplete.
 - `refreshTools({ provider })`
   - Bound-org admin-only in v1.
   - Calls provider MCP `listTools` with stored credentials and updates cached manifest.
   - If refresh succeeds after an initial discovery failure, admin can enable automation use.
+  - Overwrites the entire cached manifest on successful discovery.
+  - Leaves the prior manifest intact on discovery failure and records refresh-error fields.
+  - Treats successful zero-tool discovery as success, but forces automation use off.
+  - Does not auto-enable automation use after later refreshes. It only forces the toggle off when the current state is invalid.
 - `setAutomationEnabled({ provider, enabled })`
   - Bound-org admin-only.
   - Updates `enabledForAutomations`.
-  - Rejects enabling when the connector is not `active` or has no discovered tools.
+  - Rejects enabling when the connector is not `active` or has no runtime-supported discovered tools.
 - `disconnect({ provider })`
   - Bound-org admin-only.
   - Attempts upstream revoke when supported.
-  - Marks the local connection revoked even if upstream revoke is already invalid.
+  - Marks the local connection revoked even if upstream revoke is already invalid or fails.
+  - Wipes encrypted token fields and full tool manifest locally.
+
+List response shape:
+
+- Top-level `canManage` boolean is computed from the current Clerk session org-admin role.
+- Each catalog entry includes `connectAvailability`, such as `{ available: boolean, reason?: "missing_config" | "permission_required" | "coming_soon" }`.
+- Coming-soon providers are returned in `list` with `connectAvailability.available=false` and `reason="coming_soon"`, even though mutations reject them.
+- Linear with incomplete env is visible with `available=false` and `reason="missing_config"`. Admins see actionable configuration copy; non-admins see unavailable state without operational details.
+- Tool `availableForAutomations` is derived from connection state, `enabledForAutomations`, and runtime tool-name validity. It is not stored per tool.
 
 OAuth attempts:
 
@@ -268,12 +341,15 @@ OAuth attempts:
 - State contains only an opaque attempt id and nonce, encoded base64url.
 - Redis record stores the state hash, `codeVerifier`, `clerkOrgId`, `lightfastUserId`, `orgSlug`, provider, return path, and any reconnect context.
 - Callback first looks up the attempt, verifies the current user is still the expected org admin, then consumes with `getdel` before token exchange.
+- The attempt record includes `mode: "connect" | "reconnect"` chosen server-side by `startConnect`.
+- The return path is generated server-side as `/${orgSlug}/connectors`; do not accept arbitrary client return paths in v1.
 
 OAuth callback:
 
 - Add the app route `/api/connectors/linear/oauth/callback`.
 - Add this route to the public proxy allowlist so provider callbacks are not corrupted by normal signed-in route redirects.
-- The route remains self-authenticating through the Redis attempt and `assertCurrentUserIsOrgAdmin`.
+- The route remains self-authenticating through the Redis attempt and a connector-specific callback auth helper.
+- Add `assertCurrentSessionCanFinalizeConnectorOAuth({ clerkOrgId, expectedUserId })` rather than changing existing GitHub setup helpers. It verifies user match, active Clerk session org match when available, membership, and admin role.
 - It validates state, exchanges the authorization code, fetches provider metadata, discovers tools, stores the connection, and redirects to `/{slug}/connectors`.
 - It should call an internal service rather than exposing finalization as a public client mutation.
 
@@ -281,9 +357,12 @@ Error handling:
 
 - Invalid or expired OAuth state redirects to `/{slug}/connectors?connector=linear&error=oauth_state`.
 - Denied authorization redirects with `error=access_denied`.
+- Authenticated callback permission failures, including active-org mismatch or non-admin membership, redirect to `/${orgSlug}/connectors?connector=linear&error=permission_required`.
+- Unauthenticated callback access redirects to sign-in with the callback URL as the safe redirect target.
 - Token exchange failure redirects with `error=connect_failed` and logs the provider-safe diagnostic.
 - OAuth success with MCP discovery failure stores the connection as `active`, stores an empty or stale manifest with provider-safe error metadata, keeps `enabledForAutomations=false`, and redirects with a refresh-needed diagnostic.
 - Refresh-token failure or provider auth failure marks the current row `error`, sets `enabledForAutomations=false`, and surfaces a reconnect-needed diagnostic.
+- Non-auth MCP discovery errors leave the row `active`, set refresh-error fields, and keep automation enablement unchanged if a usable cached manifest already exists.
 
 ## Routing and App Integration
 
@@ -308,6 +387,12 @@ Linear v1 configuration:
 - `LINEAR_API_ORIGIN`
 - `LINEAR_MCP_ENDPOINT`
 
+Env validation:
+
+- Linear env values are optional during app env validation so the app can boot without Linear credentials.
+- `startConnect`, token refresh, and MCP calls require provider config at operation time and fail fast with typed connector configuration errors when required values are missing.
+- Custom `LINEAR_API_ORIGIN` and `LINEAR_MCP_ENDPOINT` are allowed only in local development and tests. Production and preview use real Linear endpoints.
+
 Production configuration uses:
 
 - API: `https://api.linear.app`
@@ -330,6 +415,7 @@ MCP:
 - Use the same MCP Streamable HTTP client path against emulator and production.
 - Fetch actual tool list through MCP discovery.
 - Cache the returned tool names/descriptions/input schemas as the full server-side tool manifest.
+- Validate provider tool names before runtime exposure. Unsupported names remain in the stored/display manifest but are excluded from automation tool registration.
 
 ## Emulator and Local Dev
 
@@ -375,6 +461,7 @@ Routes:
 - `/mcp` route that validates emulator-issued Bearer tokens and exposes deterministic MCP tools using the real MCP Streamable HTTP shape closely enough that the production provider client is used unchanged.
 - Reset route for e2e repeatability.
 - Deterministic failure switches for expired access tokens and refresh failure.
+- Deterministic failure switch for MCP list-tools failure after successful token exchange, used to test reconnect manifest carry-forward.
 
 MCP tools:
 
@@ -412,9 +499,14 @@ Automations are currently scaffolded. The first implementation should add a serv
 Runtime loader responsibilities:
 
 - Load current `active` connections for the org where `enabledForAutomations=true`.
+- Never load `error` connections, even when they have cached tools.
 - Decrypt tokens server-side inside the runtime boundary.
 - Use cached manifests to register available tools at run start.
 - Expose all connector MCP tools. No Lightfast-side tool allowlist or denylist in v1.
+- Expose provider tools through namespaced runtime ids such as `linear__create_issue`, while preserving the provider tool name internally.
+- Define runtime tool name formatting and parsing helpers in `@repo/connector-contract`, for example `connectorRuntimeToolName(provider, providerToolName)`.
+- Accept only provider MCP tool names that can safely be represented in Lightfast runtime ids. V1 allowed characters are lowercase letters, numbers, underscores, dots, and hyphens.
+- If an `active` connector has at least one runtime-supported tool, admins can enable **Use in automations** even when some tools are unsupported.
 - On every connector tool call, re-check that the connection is still current, `active`, and `enabledForAutomations=true` before sending the MCP request.
 - Call tools through the connector MCP server using the stored Bearer token.
 - If a token is expired and refresh is available, refresh and persist new encrypted tokens.
@@ -428,11 +520,18 @@ Tool manifest strategy:
 - If cached tools include a tool that the live MCP server no longer supports, fail that tool call, mark the cached manifest stale/error metadata, and surface a refresh or reconnect prompt.
 - Automatic refresh-and-retry for stale manifests is out of v1 and should be filed as a follow-up GitHub issue after v1 lands.
 
+Runtime logging:
+
+- Log connector tool calls at the runtime boundary with org id, provider, runtime tool id, provider tool name, automation id/run id when available, success/failure, duration, and redacted error code.
+- Do not log tool arguments, tool results, tokens, or raw provider errors.
+- Persist connector tool-call details to `automation_runs.errorCode/errorMessage` only when the entire automation run fails. Use a high-level code such as `CONNECTOR_TOOL_CALL_FAILED`; detailed diagnostics stay in redacted logs.
+
 Boundary:
 
 - Connectors are only reachable after the existing org setup gate is complete.
 - Connectors do not affect the setup gate and do not replace GitHub source-control binding.
 - Linear Connector is optional and only affects available automation tools.
+- `status="error"` means connection-level unusable state. In v1 this is mostly auth/reconnect-required. Non-auth discovery errors stay `active` with refresh-error fields.
 
 ## Security and Permissions
 
@@ -442,12 +541,13 @@ Boundary:
 - Linear write tools can execute automatically inside automations in v1; there is no per-call confirmation flow.
 - Disabling **Use in automations** or disconnecting should take effect on the next connector tool call, not merely the next automation run.
 - OAuth state uses a short-lived Redis attempt, hashed state, PKCE, one-time consumption, org id, user id, provider, return path, nonce, and expiry.
-- OAuth callback must validate the attempt and ensure the user still has admin access to the org.
+- OAuth callback must validate the attempt, expected user, active org match, and admin access to the org.
 - Store tokens encrypted with `@repo/app-encryption`.
 - Never expose raw tokens to React components, tRPC responses, logs, or telemetry.
 - Log provider errors with redacted metadata.
 - Disconnect should revoke upstream when possible and always mark the local current row revoked.
 - Tool calls are broad in v1 by product decision; policy controls are a future enhancement.
+- Admin connector mutations should emit structured app logs for connect started, connect completed, refresh tools, automation toggle, reconnect, disconnect, and error transitions with org id, provider, actor user id, and redacted provider metadata.
 
 ## Testing and Verification
 
@@ -461,16 +561,20 @@ Backend:
 - DB schema tests for indexes, current-row uniqueness mirror, and table exports.
 - Repository helper tests for finalize, revoke, toggle, manifest refresh, mark-error behavior, and current-row replacement.
 - Connector contract tests for catalog ids, connectable ids, status values, and display/full tool manifest parsing.
+- Connector contract tests for runtime tool name formatting/parsing and provider tool-name validation.
 - Linear provider tests for OAuth URL construction, PKCE token exchange parsing, metadata parsing, refresh/revoke behavior, and MCP tool parsing.
-- tRPC router tests for member vs admin permissions, bound-org gating, connectable-provider validation, and response redaction.
+- tRPC router tests for member vs admin permissions, bound-org gating, canManage, connectAvailability, connectable-provider validation, missing config, and response redaction.
 - OAuth attempt tests for TTL shape, hashed state, one-time consumption, and missing/expired state behavior.
+- OAuth callback auth-helper tests for expected user, active org mismatch, non-admin member, and unauthenticated behavior.
 - Runtime loader tests for loading enabled connections, decrypting only server-side, validating enabled state on call, and marking auth failures as `error`.
+- Runtime loader tests for namespaced tool ids, unsupported provider tool exclusion, and redacted tool-call logs.
 
 Emulator:
 
 - OAuth authorize/token/revoke happy path.
 - Invalid state/client/token behavior.
 - Expired access-token and refresh-failure switches.
+- MCP list-tools failure switch for reconnect manifest carry-forward.
 - MCP `/mcp` rejects missing or invalid Bearer tokens.
 - MCP `/mcp` lists deterministic tools for valid tokens.
 - Reset route restores seed data.
@@ -482,8 +586,14 @@ Frontend:
 - Non-admin members cannot mutate connection state.
 - Connected Linear expands with tools and enabled automation switch.
 - Error Linear shows `Needs reconnect`, disabled automation switch, and cached tools when available.
+- Active Linear with refresh-error fields shows `Tools stale`.
 - Coming-soon rows do not start provider flows.
 - Search matches provider name, description, and cached tool names.
+- Filters cover `All`, `Connected`, `Available`, and `Coming soon`.
+- Hero CTA reflects live Linear state and scrolls/focuses the inline row for `Manage`.
+- Callback errors render inline and URL query params are removed after handling.
+- Disconnect requires confirmation.
+- The page shows local provider icons, last refreshed metadata, and workspace/actor metadata.
 
 Proxy/routing:
 
@@ -499,6 +609,7 @@ Integration/e2e:
 - Verify cached tool manifest is shown.
 - Toggle **Use in automations**.
 - Disconnect marks connection revoked and collapses the UI.
+- Reconnect with emulator MCP discovery failure preserves the prior manifest and shows stale tools.
 
 Quality gates:
 
@@ -528,6 +639,7 @@ Quality gates:
 
 ## Future Enhancements
 
+- Warn admins when a Linear workspace is already connected to another Lightfast org.
 - Per-tool allowlists and denylists.
 - Tool risk labeling.
 - Audit log for connector tool calls.
