@@ -45,12 +45,12 @@ function AutomationActionsInner({ automation }: { automation: Automation }) {
   );
 
   return (
-    <div className="space-y-2 border-border border-t pt-4">
+    <div className="mt-4 space-y-2">
       <Button
         className="w-full justify-start gap-2"
         disabled={runNowMutation.isPending || automation.status === "paused"}
         onClick={() => runNowMutation.mutate({ id })}
-        size="sm"
+        size="lf"
         variant="secondary"
       >
         {runNowMutation.isPending ? (
@@ -65,7 +65,7 @@ function AutomationActionsInner({ automation }: { automation: Automation }) {
           <Button
             aria-disabled
             className="w-full cursor-not-allowed justify-start gap-2 opacity-50"
-            size="sm"
+            size="lf"
             type="button"
             variant="secondary"
           >

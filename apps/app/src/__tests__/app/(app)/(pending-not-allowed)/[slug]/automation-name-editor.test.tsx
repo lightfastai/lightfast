@@ -42,17 +42,23 @@ describe("AutomationNameEditor", () => {
     useAuthMock.mockReturnValue({ isLoaded: true, has: () => true });
   });
 
-  it("renders the name and no editor for a non-admin", async () => {
+  it("renders the name as plain text with no editor for a non-admin", async () => {
     useAuthMock.mockReturnValue({ isLoaded: true, has: () => false });
     await renderEditor();
     expect(screen.getByText("Daily review")).toBeTruthy();
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.queryByRole("textbox")).toBeNull();
+  });
+
+  it("renders an always-editable field seeded with the name for an admin", async () => {
+    await renderEditor();
+    const input = screen.getByRole("textbox") as HTMLTextAreaElement;
+    expect(input.value).toBe("Daily review");
   });
 
   it("commits a renamed value on blur", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
     const input = screen.getByRole("textbox");
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Weekly review" } });
     fireEvent.blur(input);
     expect(mutateMock).toHaveBeenCalledWith({
@@ -63,8 +69,8 @@ describe("AutomationNameEditor", () => {
 
   it("commits on Enter", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
     const input = screen.getByRole("textbox");
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Renamed" } });
     fireEvent.keyDown(input, { key: "Enter" });
     expect(mutateMock).toHaveBeenCalledWith({
@@ -75,18 +81,18 @@ describe("AutomationNameEditor", () => {
 
   it("reverts on Escape without committing", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
-    const input = screen.getByRole("textbox");
+    const input = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.focus(input);
     fireEvent.change(input, { target: { value: "Discarded" } });
     fireEvent.keyDown(input, { key: "Escape" });
     expect(mutateMock).not.toHaveBeenCalled();
-    expect(screen.getByText("Daily review")).toBeTruthy();
+    expect(input.value).toBe("Daily review");
   });
 
   it("does not commit an unchanged value", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
     const input = screen.getByRole("textbox");
+    fireEvent.focus(input);
     fireEvent.blur(input);
     expect(mutateMock).not.toHaveBeenCalled();
   });

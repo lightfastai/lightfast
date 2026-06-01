@@ -51,22 +51,24 @@ describe("AutomationPromptEditor", () => {
     useAuthMock.mockReturnValue({ isLoaded: true, has: () => true });
   });
 
-  it("renders the prompt as markdown", async () => {
+  it("renders an always-editable field seeded with the raw markdown for an admin", async () => {
     await renderEditor();
-    expect(screen.getByTestId("markdown").textContent).toContain("Review");
+    const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
+    expect(textarea.value).toBe("## Review\n- summarize diffs");
+    expect(screen.queryByTestId("markdown")).toBeNull();
   });
 
   it("renders read-only markdown for a non-admin (no editor)", async () => {
     useAuthMock.mockReturnValue({ isLoaded: true, has: () => false });
     await renderEditor();
-    expect(screen.getByTestId("markdown")).toBeTruthy();
-    expect(screen.queryByRole("button")).toBeNull();
+    expect(screen.getByTestId("markdown").textContent).toContain("Review");
+    expect(screen.queryByRole("textbox")).toBeNull();
   });
 
   it("commits on Cmd+Enter", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
     const textarea = screen.getByRole("textbox");
+    fireEvent.focus(textarea);
     fireEvent.change(textarea, { target: { value: "New instructions" } });
     fireEvent.keyDown(textarea, { key: "Enter", metaKey: true });
     expect(mutateMock).toHaveBeenCalledWith({
@@ -77,8 +79,8 @@ describe("AutomationPromptEditor", () => {
 
   it("commits on blur", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
     const textarea = screen.getByRole("textbox");
+    fireEvent.focus(textarea);
     fireEvent.change(textarea, { target: { value: "Blurred body" } });
     fireEvent.blur(textarea);
     expect(mutateMock).toHaveBeenCalledWith({
@@ -87,10 +89,10 @@ describe("AutomationPromptEditor", () => {
     });
   });
 
-  it("does not commit on plain Enter (newline) ", async () => {
+  it("does not commit on plain Enter (newline)", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
     const textarea = screen.getByRole("textbox");
+    fireEvent.focus(textarea);
     fireEvent.change(textarea, { target: { value: "Line one" } });
     fireEvent.keyDown(textarea, { key: "Enter" });
     expect(mutateMock).not.toHaveBeenCalled();
@@ -98,11 +100,11 @@ describe("AutomationPromptEditor", () => {
 
   it("reverts on Escape", async () => {
     await renderEditor();
-    fireEvent.click(screen.getByRole("button"));
-    const textarea = screen.getByRole("textbox");
+    const textarea = screen.getByRole("textbox") as HTMLTextAreaElement;
+    fireEvent.focus(textarea);
     fireEvent.change(textarea, { target: { value: "Discarded" } });
     fireEvent.keyDown(textarea, { key: "Escape" });
     expect(mutateMock).not.toHaveBeenCalled();
-    expect(screen.getByTestId("markdown")).toBeTruthy();
+    expect(textarea.value).toBe("## Review\n- summarize diffs");
   });
 });

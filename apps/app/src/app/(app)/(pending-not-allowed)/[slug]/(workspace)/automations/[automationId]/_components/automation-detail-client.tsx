@@ -9,7 +9,7 @@ import { AutomationPromptEditor } from "./automation-prompt-editor";
 import { AutomationRunsList } from "./automation-runs-list";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
-import { RailSection } from "./rail-section";
+import { RailRow, RailSection, RailValuePill } from "./detail-sections";
 
 function formatDate(date: Date | null | undefined): string {
   if (!date) {
@@ -19,6 +19,20 @@ function formatDate(date: Date | null | undefined): string {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(date);
+}
+
+function TimestampValue({ date }: { date: Date | null | undefined }) {
+  if (!date) {
+    return <span className="text-muted-foreground text-sm">—</span>;
+  }
+  // The timestamp formats in the viewer's locale/timezone, which legitimately
+  // differs from the server's during SSR. Suppress the unavoidable text-only
+  // hydration diff so React keeps the client-formatted value without warning.
+  return (
+    <RailValuePill>
+      <span suppressHydrationWarning>{formatDate(date)}</span>
+    </RailValuePill>
+  );
 }
 
 export function AutomationDetailClient({
@@ -34,44 +48,46 @@ export function AutomationDetailClient({
   });
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-6 py-10">
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_20rem]">
-        {/* Left column */}
-        <div className="space-y-4">
-          <AutomationNameEditor automation={automation} />
+    // On lg the grid is pinned to the viewport height (lg:h-full) so each column
+    // owns its own scroll instead of growing the page. On smaller screens it
+    // falls back to normal stacked page flow.
+    <div className="grid grid-cols-1 lg:h-full lg:grid-cols-[minmax(0,1fr)_22rem]">
+      {/* Left — the document: title + always-editable markdown instructions.
+          Scrolls internally once the content outgrows the viewport. */}
+      <div className="min-w-0 px-8 py-10 lg:min-h-0 lg:overflow-y-auto lg:px-12 lg:py-12">
+        <AutomationNameEditor automation={automation} />
+        <div className="mt-6">
           <AutomationPromptEditor automation={automation} />
         </div>
+      </div>
 
-        {/* Right rail */}
-        <div className="space-y-6 lg:w-80">
+      {/* Right — status / details / previous runs. The left border is the
+          full-height divider: the grid pins both columns to the viewport, so it
+          always spans from the top down. Scrolls on its own when it overflows. */}
+      <div className="space-y-8 px-6 py-10 lg:min-h-0 lg:overflow-y-auto lg:border-border lg:border-l lg:px-8 lg:py-12">
+        <RailSection title="Status">
           <AutomationStatusChip automation={automation} />
+          <RailRow label="Next run">
+            <TimestampValue date={automation.nextRunAt} />
+          </RailRow>
+          <RailRow label="Last ran">
+            <TimestampValue date={automation.lastRunAt} />
+          </RailRow>
+        </RailSection>
 
-          <RailSection label="Next run">
-            <p className="text-foreground text-sm">
-              {formatDate(automation.nextRunAt)}
-            </p>
-          </RailSection>
-
-          <RailSection label="Last ran">
-            <p className="text-foreground text-sm">
-              {formatDate(automation.lastRunAt)}
-            </p>
-          </RailSection>
-
+        <RailSection title="Details">
           <AutomationScheduleEditor automation={automation} />
+        </RailSection>
 
-          <AutomationActions automation={automation} />
-
+        <RailSection title="Previous runs">
           <Suspense
-            fallback={
-              <RailSection label="Previous runs">
-                <p className="text-muted-foreground text-sm">Loading…</p>
-              </RailSection>
-            }
+            fallback={<p className="text-muted-foreground text-sm">Loading…</p>}
           >
             <AutomationRunsList automationId={automationId} />
           </Suspense>
-        </div>
+        </RailSection>
+
+        <AutomationActions automation={automation} />
       </div>
     </div>
   );

@@ -1,34 +1,35 @@
 "use client";
 
 import type { AppRouterOutputs } from "@api/app";
-import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
+import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
-import { Check, Circle, CirclePause } from "lucide-react";
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { setOne, upsertInList } from "../../_components/automations-cache";
-import { RailSection } from "./rail-section";
+import { RailRow } from "./detail-sections";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
-function StatusChipContent({ status }: { status: string }) {
-  const Icon = status === "paused" ? CirclePause : Circle;
+function StatusPill({ status }: { status: string }) {
+  const isActive = status === "active";
   return (
-    <div className="flex items-center gap-2">
-      <Icon
-        aria-hidden="true"
-        className="size-4 shrink-0 text-muted-foreground"
-        strokeWidth={2}
+    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1 text-foreground text-sm">
+      <span
+        className={cn(
+          "size-1.5 rounded-full",
+          isActive ? "bg-emerald-500" : "bg-muted-foreground"
+        )}
       />
-      <span className="text-foreground text-sm capitalize">{status}</span>
-    </div>
+      <span className="capitalize">{status}</span>
+    </span>
   );
 }
 
@@ -128,22 +129,22 @@ export function AutomationStatusChip({
 
   if (!canManage) {
     return (
-      <RailSection label="Status">
-        <StatusChipContent status={automation.status} />
-      </RailSection>
+      <RailRow label="Status">
+        <StatusPill status={automation.status} />
+      </RailRow>
     );
   }
 
   return (
-    <RailSection label="Status">
+    <RailRow label="Status">
       <DropdownMenu onOpenChange={setOpen} open={open}>
         <DropdownMenuTrigger asChild>
-          <Button
-            className="h-auto gap-2 px-0 py-0 font-normal hover:bg-transparent"
-            variant="ghost"
+          <button
+            className="rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-1 focus-visible:ring-ring"
+            type="button"
           >
-            <StatusChipContent status={automation.status} />
-          </Button>
+            <StatusPill status={automation.status} />
+          </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-36">
           <DropdownMenuItem
@@ -184,6 +185,6 @@ export function AutomationStatusChip({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-    </RailSection>
+    </RailRow>
   );
 }

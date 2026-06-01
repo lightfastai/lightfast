@@ -14,7 +14,7 @@ import {
 } from "@repo/ui/components/ui/popover";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { setOne, upsertInList } from "../../_components/automations-cache";
@@ -26,7 +26,7 @@ import {
   TIMEZONES,
   WEEKDAY_OPTIONS,
 } from "../../_components/schedule-options";
-import { RailSection } from "./rail-section";
+import { RailRow } from "./detail-sections";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
@@ -74,15 +74,6 @@ function buildSchedule(state: {
     default:
       return { kind: "manual" as const, config: {} };
   }
-}
-
-function DetailRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-muted-foreground text-sm">{label}</span>
-      <span className="text-foreground text-sm">{value}</span>
-    </div>
-  );
 }
 
 export function AutomationScheduleEditor({
@@ -148,29 +139,36 @@ export function AutomationScheduleEditor({
     });
   }
 
-  const display = (
-    <div className="space-y-1">
-      <DetailRow label="Repeats" value={formatAutomationSchedule(automation)} />
-      <DetailRow label="Timezone" value={automation.timezone} />
-    </div>
-  );
+  const repeatsValue = formatAutomationSchedule(automation);
 
   if (!canManage) {
-    return <RailSection label="Schedule">{display}</RailSection>;
+    return (
+      <>
+        <RailRow label="Repeats">
+          <span className="text-foreground text-sm">{repeatsValue}</span>
+        </RailRow>
+        <RailRow label="Timezone">
+          <span className="text-foreground text-sm">{automation.timezone}</span>
+        </RailRow>
+      </>
+    );
   }
 
   return (
-    <RailSection label="Schedule">
+    <>
       <Popover onOpenChange={handleOpenChange} open={open}>
-        <PopoverTrigger asChild>
-          <button
-            className="-mx-1 w-full rounded-[9px] px-1 py-0.5 text-left transition-colors hover:bg-accent/50"
-            type="button"
-          >
-            {display}
-          </button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-80 space-y-4 p-4">
+        <RailRow label="Repeats">
+          <PopoverTrigger asChild>
+            <button
+              className="-mr-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-foreground text-sm transition-colors hover:bg-accent/50"
+              type="button"
+            >
+              {repeatsValue}
+              <ChevronDown className="size-3.5 text-muted-foreground" />
+            </button>
+          </PopoverTrigger>
+        </RailRow>
+        <PopoverContent align="end" className="w-80 space-y-4 p-4">
           <LfSelect
             className="w-full"
             onValueChange={(v) => setKind(v as ScheduleKind)}
@@ -180,18 +178,16 @@ export function AutomationScheduleEditor({
 
           <div className="min-h-7">
             {kind === "manual" && (
-              <p className="font-mono text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-xs">
                 Runs only when triggered — no automatic schedule.
               </p>
             )}
 
             {kind === "hourly" && (
               <div className="flex items-center gap-2.5">
-                <span className="font-mono text-muted-foreground text-xs">
-                  Every
-                </span>
+                <span className="text-muted-foreground text-xs">Every</span>
                 <Input
-                  className="w-14 text-center font-mono"
+                  className="w-14 text-center"
                   max={24}
                   min={1}
                   onChange={(e) => setIntervalHours(e.target.value)}
@@ -200,19 +196,15 @@ export function AutomationScheduleEditor({
                   value={intervalHours}
                   variant="lf"
                 />
-                <span className="font-mono text-muted-foreground text-xs">
-                  hours
-                </span>
+                <span className="text-muted-foreground text-xs">hours</span>
               </div>
             )}
 
             {(kind === "daily" || kind === "weekdays") && (
               <div className="flex items-center gap-2.5">
-                <span className="font-mono text-muted-foreground text-xs">
-                  At
-                </span>
+                <span className="text-muted-foreground text-xs">At</span>
                 <Input
-                  className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                  className="w-[7rem] [&::-webkit-calendar-picker-indicator]:hidden"
                   onChange={(e) => setTime(e.target.value)}
                   size="lf"
                   type="time"
@@ -220,7 +212,7 @@ export function AutomationScheduleEditor({
                   variant="lf"
                 />
                 {kind === "weekdays" && (
-                  <span className="rounded-md border border-border px-1.5 py-0.5 font-mono text-muted-foreground text-xs">
+                  <span className="rounded-md border border-border px-1.5 py-0.5 text-muted-foreground text-xs">
                     Mon–Fri
                   </span>
                 )}
@@ -229,9 +221,7 @@ export function AutomationScheduleEditor({
 
             {kind === "weekly" && (
               <div className="flex flex-wrap items-center gap-2.5">
-                <span className="font-mono text-muted-foreground text-xs">
-                  On
-                </span>
+                <span className="text-muted-foreground text-xs">On</span>
                 <LfSelect
                   className="w-32"
                   onValueChange={(v) => setDayOfWeek(Number(v))}
@@ -241,11 +231,9 @@ export function AutomationScheduleEditor({
                   }))}
                   value={String(dayOfWeek)}
                 />
-                <span className="font-mono text-muted-foreground text-xs">
-                  at
-                </span>
+                <span className="text-muted-foreground text-xs">at</span>
                 <Input
-                  className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                  className="w-[7rem] [&::-webkit-calendar-picker-indicator]:hidden"
                   onChange={(e) => setTime(e.target.value)}
                   size="lf"
                   type="time"
@@ -258,9 +246,7 @@ export function AutomationScheduleEditor({
 
           {isTimeBasedKind(kind) && (
             <div className="space-y-1.5">
-              <p className="font-mono text-muted-foreground text-sm">
-                Timezone
-              </p>
+              <p className="text-muted-foreground text-sm">Timezone</p>
               <LfSelect
                 className="w-full"
                 onValueChange={setTimezone}
@@ -294,6 +280,9 @@ export function AutomationScheduleEditor({
           </div>
         </PopoverContent>
       </Popover>
-    </RailSection>
+      <RailRow label="Timezone">
+        <span className="text-foreground text-sm">{automation.timezone}</span>
+      </RailRow>
+    </>
   );
 }

@@ -1,9 +1,9 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type EditableElement = HTMLInputElement | HTMLTextAreaElement;
 
-interface UseInlineEditOptions {
+interface UseAutosaveFieldOptions {
   /** When true, the commit chord is Cmd/Ctrl+Enter and plain Enter inserts a newline. */
   multiline?: boolean;
   /** Called with the trimmed draft when a real change is committed. */
@@ -12,41 +12,44 @@ interface UseInlineEditOptions {
   value: string;
 }
 
-export interface InlineEditFieldProps {
-  autoFocus: boolean;
+export interface AutosaveFieldProps {
   onBlur: () => void;
   onChange: (event: ChangeEvent<EditableElement>) => void;
+  onFocus: () => void;
   onKeyDown: (event: KeyboardEvent<EditableElement>) => void;
   value: string;
 }
 
-export interface UseInlineEditResult {
-  begin: () => void;
+export interface UseAutosaveFieldResult {
   draft: string;
-  editing: boolean;
-  fieldProps: InlineEditFieldProps;
+  fieldProps: AutosaveFieldProps;
 }
 
-export function useInlineEdit({
+/**
+ * Always-editable field with autosave. The control is never swapped in or out —
+ * it commits the trimmed draft on blur and on the commit chord (Enter, or
+ * Cmd/Ctrl+Enter when multiline), and reverts on Escape. While the field is not
+ * focused it stays in sync with the persisted value, so an external update (or
+ * an optimistic write) reflows the draft without clobbering an in-progress edit.
+ */
+export function useAutosaveField({
   value,
   multiline = false,
   onCommit,
-}: UseInlineEditOptions): UseInlineEditResult {
-  const [editing, setEditing] = useState(false);
+}: UseAutosaveFieldOptions): UseAutosaveFieldResult {
   const [draft, setDraft] = useState(value);
-  // Set before any programmatic exit so the trailing blur (e.g. on unmount or
-  // after Escape) does not commit a second time.
+  const focused = useRef(false);
+  // Set before any programmatic blur (Escape / commit chord) so the trailing
+  // blur event does not commit a second time.
   const suppressBlur = useRef(false);
 
-  function begin() {
-    setDraft(value);
-    suppressBlur.current = false;
-    setEditing(true);
-  }
+  useEffect(() => {
+    if (!focused.current) {
+      setDraft(value);
+    }
+  }, [value]);
 
   function commit() {
-    suppressBlur.current = true;
-    setEditing(false);
     const trimmed = draft.trim();
     if (trimmed.length === 0 || trimmed === value) {
       setDraft(value);
@@ -55,13 +58,8 @@ export function useInlineEdit({
     onCommit(trimmed);
   }
 
-  function cancel() {
-    suppressBlur.current = true;
-    setDraft(value);
-    setEditing(false);
-  }
-
   function handleBlur() {
+    focused.current = false;
     if (suppressBlur.current) {
       suppressBlur.current = false;
       return;
@@ -72,7 +70,9 @@ export function useInlineEdit({
   function handleKeyDown(event: KeyboardEvent<EditableElement>) {
     if (event.key === "Escape") {
       event.preventDefault();
-      cancel();
+      suppressBlur.current = true;
+      setDraft(value);
+      event.currentTarget.blur();
       return;
     }
     const isCommitChord = multiline
@@ -80,20 +80,22 @@ export function useInlineEdit({
       : event.key === "Enter" && !event.shiftKey;
     if (isCommitChord) {
       event.preventDefault();
+      suppressBlur.current = true;
       commit();
+      event.currentTarget.blur();
     }
   }
 
   return {
-    editing,
     draft,
-    begin,
     fieldProps: {
       value: draft,
       onChange: (event) => setDraft(event.target.value),
+      onFocus: () => {
+        focused.current = true;
+      },
       onBlur: handleBlur,
       onKeyDown: handleKeyDown,
-      autoFocus: true,
     },
   };
 }

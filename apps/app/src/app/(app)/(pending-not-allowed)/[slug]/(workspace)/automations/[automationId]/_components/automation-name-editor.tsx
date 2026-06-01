@@ -6,7 +6,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { useTRPC } from "~/trpc/react";
 import { automationUpdateMutationOptions } from "../../_components/automations-cache";
-import { useInlineEdit } from "./use-inline-edit";
+import { useAutosaveField } from "./use-autosave-field";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
@@ -28,46 +28,30 @@ export function AutomationNameEditor({
     })
   );
 
-  const { editing, begin, fieldProps } = useInlineEdit({
+  const { fieldProps } = useAutosaveField({
     value: automation.name,
     onCommit: (next) => update.mutate({ id, name: next }),
   });
 
   if (!canManage) {
     return (
-      <h1 className="font-medium font-pp text-2xl text-foreground">
+      <h1 className="font-medium font-pp text-3xl text-foreground">
         {automation.name}
       </h1>
     );
   }
 
-  if (editing) {
-    return (
-      <input
-        {...fieldProps}
-        className="block w-full bg-transparent p-0 font-medium font-pp text-2xl text-foreground outline-none"
-        maxLength={AUTOMATION_NAME_MAX_LENGTH}
-      />
-    );
-  }
-
+  // Always-editable, borderless, and typed to match the heading so the field
+  // reads as the title itself rather than an input. Wraps and grows for long
+  // names; Enter commits (never inserts a newline).
   return (
-    // biome-ignore lint/a11y/useSemanticElements: a heading is block content and cannot be nested inside a native <button>
-    <div
-      className="cursor-text"
-      onClick={begin}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          begin();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      <h1 className="font-medium font-pp text-2xl text-foreground">
-        {automation.name}
-      </h1>
-    </div>
+    <textarea
+      {...fieldProps}
+      aria-label="Automation name"
+      className="field-sizing-content block w-full resize-none break-words bg-transparent p-0 font-medium font-pp text-3xl text-foreground leading-tight outline-none placeholder:text-muted-foreground"
+      maxLength={AUTOMATION_NAME_MAX_LENGTH}
+      placeholder="Untitled automation"
+      rows={1}
+    />
   );
 }

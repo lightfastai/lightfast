@@ -7,7 +7,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { useTRPC } from "~/trpc/react";
 import { automationUpdateMutationOptions } from "../../_components/automations-cache";
-import { useInlineEdit } from "./use-inline-edit";
+import { useAutosaveField } from "./use-autosave-field";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
@@ -29,53 +29,28 @@ export function AutomationPromptEditor({
     })
   );
 
-  const { editing, begin, fieldProps } = useInlineEdit({
+  const { fieldProps } = useAutosaveField({
     value: automation.prompt,
     multiline: true,
     onCommit: (next) => update.mutate({ id, prompt: next }),
   });
 
-  const rendered = (
-    <Markdown className="text-muted-foreground">{automation.prompt}</Markdown>
-  );
-
+  // Viewers without write access get the rendered markdown instead of an
+  // editable surface.
   if (!canManage) {
-    return rendered;
+    return <Markdown className="text-foreground">{automation.prompt}</Markdown>;
   }
 
-  if (editing) {
-    // Borderless, transparent, and typed to match the rendered markdown body so
-    // entering edit mode never looks like a textarea popping in.
-    return (
-      <textarea
-        {...fieldProps}
-        className="field-sizing-content block w-full resize-none break-words bg-transparent p-0 text-muted-foreground text-sm leading-7 outline-none"
-        maxLength={AUTOMATION_PROMPT_MAX_LENGTH}
-      />
-    );
-  }
-
+  // Always-editable raw markdown. Borderless, transparent, and auto-growing so
+  // the document simply extends as it fills — never a textarea popping in.
+  // Cmd/Ctrl+Enter commits; plain Enter inserts a newline.
   return (
-    // biome-ignore lint/a11y/useSemanticElements: rendered markdown is block content and cannot be nested inside a native <button>
-    <div
-      className="cursor-text"
-      onClick={(event) => {
-        // Let links inside the rendered markdown navigate instead of editing.
-        if ((event.target as HTMLElement).closest("a")) {
-          return;
-        }
-        begin();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          begin();
-        }
-      }}
-      role="button"
-      tabIndex={0}
-    >
-      {rendered}
-    </div>
+    <textarea
+      {...fieldProps}
+      aria-label="Instructions"
+      className="field-sizing-content block w-full resize-none break-words bg-transparent p-0 text-foreground text-sm leading-7 outline-none placeholder:text-muted-foreground"
+      maxLength={AUTOMATION_PROMPT_MAX_LENGTH}
+      placeholder="Describe what this automation should do…"
+    />
   );
 }

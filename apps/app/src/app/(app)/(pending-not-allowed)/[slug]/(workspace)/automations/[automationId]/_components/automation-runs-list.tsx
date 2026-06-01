@@ -6,7 +6,6 @@ import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { CheckCircle, Clock, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
-import { RailSection } from "./rail-section";
 
 type AutomationRun =
   AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
@@ -83,17 +82,15 @@ export function AutomationRunsList({ automationId }: { automationId: string }) {
     refetchOnWindowFocus: true,
   });
 
+  if (runs.length === 0) {
+    return <p className="text-muted-foreground text-sm">No runs yet.</p>;
+  }
+
   return (
-    <RailSection label="Previous runs">
-      {runs.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No runs yet.</p>
-      ) : (
-        <div className="space-y-1">
-          {runs.map((run) => (
-            <RunRow key={run.publicId} run={run} />
-          ))}
-        </div>
-      )}
-    </RailSection>
+    <div className="space-y-1">
+      {runs.map((run) => (
+        <RunRow key={run.publicId} run={run} />
+      ))}
+    </div>
   );
 }
