@@ -38,7 +38,7 @@ function createIdempotencyKey() {
 }
 
 function normalizeReturnTo(returnTo: string | undefined): Route {
-  if (!returnTo || !returnTo.startsWith("/") || returnTo.startsWith("//")) {
+  if (returnTo?.startsWith("/") !== true || returnTo.startsWith("//")) {
     return DEFAULT_RETURN_TO;
   }
 

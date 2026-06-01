@@ -1,5 +1,5 @@
-import { lightfastHandleSchema } from "@repo/app-validation";
 import { createHash } from "node:crypto";
+import { lightfastHandleSchema } from "@repo/app-validation";
 import { and, eq } from "drizzle-orm";
 import { createMachine, transition } from "xstate";
 
@@ -44,7 +44,9 @@ export class NamespaceOperationTransitionError extends Error {
     public readonly from: NamespaceOperationStatus,
     public readonly event: NamespaceOperationEvent
   ) {
-    super(`Cannot transition namespace operation from ${from} via ${event.type}`);
+    super(
+      `Cannot transition namespace operation from ${from} via ${event.type}`
+    );
     this.name = "NamespaceOperationTransitionError";
   }
 }
@@ -165,7 +167,11 @@ export type BackfillExistingNamespaceResult =
 
 type NamespaceOperationIdempotencyInput = Pick<
   StartNamespaceOperationInput,
-  "clerkOrgId" | "clerkUserId" | "idempotencyKey" | "operationType" | "ownerKind"
+  | "clerkOrgId"
+  | "clerkUserId"
+  | "idempotencyKey"
+  | "operationType"
+  | "ownerKind"
 >;
 
 type NamespaceOperationPatch = Partial<
@@ -181,7 +187,10 @@ export async function getNamespaceOperationByIdempotencyKey(
 ): Promise<NamespaceOperation | undefined> {
   const idempotencyOwner = getIdempotencyOwner(input);
   const ownerCondition = idempotencyOwner.clerkUserId
-    ? eq(namespaceOperations.idempotencyClerkUserId, idempotencyOwner.clerkUserId)
+    ? eq(
+        namespaceOperations.idempotencyClerkUserId,
+        idempotencyOwner.clerkUserId
+      )
     : eq(
         namespaceOperations.idempotencyClerkOrgId,
         getRequiredIdempotencyClerkOrgId(idempotencyOwner)
@@ -243,7 +252,10 @@ export async function getActiveNamespaceByHandle(
 
 export async function getClaimedNamespaceForOwner(
   db: Database,
-  operation: Pick<NamespaceOperation, "ownerKind" | "clerkOrgId" | "clerkUserId">
+  operation: Pick<
+    NamespaceOperation,
+    "ownerKind" | "clerkOrgId" | "clerkUserId"
+  >
 ): Promise<Namespace | undefined> {
   if (operation.ownerKind === "user" && operation.clerkUserId) {
     const [row] = await db
@@ -263,7 +275,7 @@ export async function getClaimedNamespaceForOwner(
     return row;
   }
 
-  return undefined;
+  return;
 }
 
 export async function startNamespaceOperation(
@@ -393,7 +405,7 @@ export async function backfillExistingNamespace(
   }
 
   const namespace = await getActiveNamespaceByHandle(db, handle);
-  if (!namespace || !isNamespaceOwnedByBackfillInput(namespace, input)) {
+  if (!(namespace && isNamespaceOwnedByBackfillInput(namespace, input))) {
     throw new Error(`Failed to load backfilled namespace ${handle}`);
   }
 
@@ -709,7 +721,9 @@ function isSameNamespaceOwner(
     );
   }
 
-  return !!operation.clerkOrgId && namespace.clerkOrgId === operation.clerkOrgId;
+  return (
+    !!operation.clerkOrgId && namespace.clerkOrgId === operation.clerkOrgId
+  );
 }
 
 function isNamespaceOwnedByBackfillInput(

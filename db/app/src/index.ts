@@ -96,9 +96,9 @@ export {
   type UpdateAutomationInput,
   updateAutomation,
 } from "./utils/automations";
-// Utilities
-export { buildOrgNamespace } from "./utils/org";
 export {
+  type BackfillExistingNamespaceInput,
+  type BackfillExistingNamespaceResult,
   backfillExistingNamespace,
   deletePreClerkNamespaceReservation,
   failUnreservedNamespaceOperation,
@@ -109,17 +109,17 @@ export {
   getNamespaceOperationById,
   getNamespaceOperationByIdempotencyKey,
   markNamespaceOperationClerkApplied,
+  type NamespaceConflictCode,
   NamespaceConflictError,
   NamespaceOperationConcurrencyError,
   NamespaceOperationTransitionError,
   reserveNamespaceForOperation,
+  type StartNamespaceOperationInput,
   startNamespaceOperation,
   transitionNamespaceOperation,
-  type NamespaceConflictCode,
-  type BackfillExistingNamespaceInput,
-  type BackfillExistingNamespaceResult,
-  type StartNamespaceOperationInput,
 } from "./utils/namespaces";
+// Utilities
+export { buildOrgNamespace } from "./utils/org";
 // Org source-control binding repository helpers
 export {
   type FinalizeActiveOrgProviderBindingInput,

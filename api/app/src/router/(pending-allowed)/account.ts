@@ -93,7 +93,9 @@ function splitDisplayName(name: string) {
   };
 }
 
-function namespaceConflictToTRPCError(error: NamespaceConflictError): TRPCError {
+function namespaceConflictToTRPCError(
+  error: NamespaceConflictError
+): TRPCError {
   switch (error.code) {
     case "HANDLE_ALREADY_CLAIMED":
       return new TRPCError({
@@ -123,6 +125,12 @@ function namespaceConflictToTRPCError(error: NamespaceConflictError): TRPCError 
       return new TRPCError({
         code: "FORBIDDEN",
         message: "Username operation owner mismatch",
+        cause: error,
+      });
+    default:
+      return new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Unknown username namespace conflict",
         cause: error,
       });
   }

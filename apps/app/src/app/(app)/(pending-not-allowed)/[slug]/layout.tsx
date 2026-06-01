@@ -40,9 +40,12 @@ export default async function OrgLayout({ children, params }: OrgLayoutProps) {
 
   const orgSlug = namespace?.kind === "org" ? namespace.handle : slug;
   if (!namespace) {
-    log.debug("[org-layout] namespace missing; falling back to Clerk org slug", {
-      slug,
-    });
+    log.debug(
+      "[org-layout] namespace missing; falling back to Clerk org slug",
+      {
+        slug,
+      }
+    );
   }
 
   try {
@@ -74,7 +77,7 @@ async function resolveActiveNamespace(slug: string) {
       error: parseError(error),
       slug,
     });
-    return undefined;
+    return;
   }
 }
 

@@ -117,6 +117,8 @@ describe("ProfileDataDisplay", () => {
     expect(usernameInput).toBeEnabled();
     fireEvent.change(usernameInput, { target: { value: "Ada-Dev" } });
     expect(usernameInput).toHaveValue("ada-dev");
-    expect(screen.getByRole("button", { name: "Create username" })).toBeEnabled();
+    expect(
+      screen.getByRole("button", { name: "Create username" })
+    ).toBeEnabled();
   });
 });

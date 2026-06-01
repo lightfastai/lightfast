@@ -74,10 +74,7 @@ export const namespaces = mysqlTable(
     ),
     handleUq: uniqueIndex("namespaces_handle_uq").on(table.handle),
     orgIdx: index("namespaces_org_idx").on(table.clerkOrgId, table.status),
-    userIdx: index("namespaces_user_idx").on(
-      table.clerkUserId,
-      table.status
-    ),
+    userIdx: index("namespaces_user_idx").on(table.clerkUserId, table.status),
   })
 );
 
@@ -121,9 +118,7 @@ export const namespaceOperations = mysqlTable(
     expiresAt: timestamp("expires_at", { mode: "date", fsp: 3 }),
   },
   (table) => ({
-    orgIdempotencyUq: uniqueIndex(
-      "namespace_operations_org_idempotency_uq"
-    ).on(
+    orgIdempotencyUq: uniqueIndex("namespace_operations_org_idempotency_uq").on(
       table.idempotencyClerkOrgId,
       table.operationType,
       table.idempotencyKey
@@ -153,5 +148,4 @@ export const namespaceOperations = mysqlTable(
 export type Namespace = typeof namespaces.$inferSelect;
 export type InsertNamespace = typeof namespaces.$inferInsert;
 export type NamespaceOperation = typeof namespaceOperations.$inferSelect;
-export type InsertNamespaceOperation =
-  typeof namespaceOperations.$inferInsert;
+export type InsertNamespaceOperation = typeof namespaceOperations.$inferInsert;

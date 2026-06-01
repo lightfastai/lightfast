@@ -43,6 +43,12 @@ function namespaceConflictToTRPCError(
         message: "Organization namespace operation owner mismatch",
         cause: error,
       });
+    default:
+      return new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Unknown organization namespace conflict",
+        cause: error,
+      });
   }
 }
 

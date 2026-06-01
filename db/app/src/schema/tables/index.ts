@@ -16,24 +16,24 @@ export {
   type InsertAutomationRun,
 } from "./automations";
 export {
+  type InsertNamespace,
+  type InsertNamespaceOperation,
+  type Namespace,
+  type NamespaceKind,
+  type NamespaceOperation,
+  type NamespaceOperationStatus,
+  type NamespaceOperationType,
+  type NamespaceStatus,
+  namespaceOperations,
+  namespaces,
+} from "./namespaces";
+export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
   orgSourceControlBindings,
 } from "./org-source-control-bindings";
-export {
-  type InsertNamespace,
-  type InsertNamespaceOperation,
-  type Namespace,
-  type NamespaceKind,
-  type NamespaceOperation,
-  namespaceOperations,
-  type NamespaceOperationStatus,
-  type NamespaceOperationType,
-  namespaces,
-  type NamespaceStatus,
-} from "./namespaces";
 export {
   createPersonId,
   type InsertPerson,

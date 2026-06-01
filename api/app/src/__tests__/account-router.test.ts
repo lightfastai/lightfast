@@ -196,13 +196,16 @@ describe("account.createUsername", () => {
       username: "ada-dev",
     });
 
-    expect(startNamespaceOperationMock).toHaveBeenCalledWith(expect.anything(), {
-      clerkUserId: "user_test",
-      idempotencyKey: "idem_1",
-      operationType: "create_user_username",
-      ownerKind: "user",
-      toHandle: "ada-dev",
-    });
+    expect(startNamespaceOperationMock).toHaveBeenCalledWith(
+      expect.anything(),
+      {
+        clerkUserId: "user_test",
+        idempotencyKey: "idem_1",
+        operationType: "create_user_username",
+        ownerKind: "user",
+        toHandle: "ada-dev",
+      }
+    );
     expect(reserveNamespaceForOperationMock).toHaveBeenCalledWith(
       expect.anything(),
       operation()

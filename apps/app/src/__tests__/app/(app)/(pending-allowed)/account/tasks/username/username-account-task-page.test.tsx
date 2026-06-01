@@ -123,7 +123,9 @@ describe("/account/tasks/username", () => {
         idempotencyKey: expect.any(String),
         username: "ada-dev",
       });
-      expect(replaceMock).toHaveBeenCalledWith("/account/teams/new?from=signup");
+      expect(replaceMock).toHaveBeenCalledWith(
+        "/account/teams/new?from=signup"
+      );
     });
   });
 

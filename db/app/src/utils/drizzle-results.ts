@@ -24,10 +24,7 @@ export function isDuplicateKeyError(error: unknown): boolean {
   return isDuplicateKeyErrorValue(error, new Set<unknown>());
 }
 
-function isDuplicateKeyErrorValue(
-  error: unknown,
-  seen: Set<unknown>
-): boolean {
+function isDuplicateKeyErrorValue(error: unknown, seen: Set<unknown>): boolean {
   if (error === null || typeof error !== "object") {
     return false;
   }

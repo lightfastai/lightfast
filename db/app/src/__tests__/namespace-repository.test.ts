@@ -9,7 +9,7 @@ import {
   finalizeNamespaceOperation,
   getActiveNamespaceByHandle,
   markNamespaceOperationClerkApplied,
-  NamespaceConflictError,
+  type NamespaceConflictError,
   NamespaceOperationConcurrencyError,
   reserveNamespaceForOperation,
   startNamespaceOperation,
@@ -294,8 +294,9 @@ describe("namespace repository", () => {
       transaction: vi.fn(),
     } as unknown as Database;
 
-    await expect(reserveNamespaceForOperation(db, existingOperation)).resolves
-      .toBe(existingOperation);
+    await expect(
+      reserveNamespaceForOperation(db, existingOperation)
+    ).resolves.toBe(existingOperation);
 
     expect(db.transaction).not.toHaveBeenCalled();
   });
@@ -354,11 +355,12 @@ describe("namespace repository", () => {
       ),
     } as unknown as Database;
 
-    await expect(reserveNamespaceForOperation(db, operation())).rejects
-      .toMatchObject({
-        code: "HANDLE_ALREADY_CLAIMED",
-        name: "NamespaceConflictError",
-      });
+    await expect(
+      reserveNamespaceForOperation(db, operation())
+    ).rejects.toMatchObject({
+      code: "HANDLE_ALREADY_CLAIMED",
+      name: "NamespaceConflictError",
+    });
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({
         errorCode: "HANDLE_ALREADY_CLAIMED",
@@ -408,11 +410,12 @@ describe("namespace repository", () => {
       ),
     } as unknown as Database;
 
-    await expect(reserveNamespaceForOperation(db, operation({ id: 7 }))).rejects
-      .toMatchObject({
-        code: "OWNER_NAMESPACE_IN_PROGRESS",
-        name: "NamespaceConflictError",
-      });
+    await expect(
+      reserveNamespaceForOperation(db, operation({ id: 7 }))
+    ).rejects.toMatchObject({
+      code: "OWNER_NAMESPACE_IN_PROGRESS",
+      name: "NamespaceConflictError",
+    });
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({
         errorCode: "OWNER_NAMESPACE_IN_PROGRESS",
@@ -467,11 +470,12 @@ describe("namespace repository", () => {
       ),
     } as unknown as Database;
 
-    await expect(reserveNamespaceForOperation(db, operation())).rejects
-      .toMatchObject({
-        code: "OWNER_ALREADY_CLAIMED",
-        name: "NamespaceConflictError",
-      });
+    await expect(
+      reserveNamespaceForOperation(db, operation())
+    ).rejects.toMatchObject({
+      code: "OWNER_ALREADY_CLAIMED",
+      name: "NamespaceConflictError",
+    });
     expect(set).toHaveBeenCalledWith(
       expect.objectContaining({
         errorCode: "OWNER_ALREADY_CLAIMED",
