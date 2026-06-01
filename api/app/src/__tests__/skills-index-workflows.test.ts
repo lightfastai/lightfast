@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const logWarnMock = vi.fn();
 const completeWatchedSourceControlRepositorySetupMock = vi.fn();
 const createGitHubAppJwtMock = vi.fn();
 const createGitHubInstallationTokenMock = vi.fn();
@@ -40,14 +41,24 @@ type QueueCallback = (input: {
   };
   step: Step;
 }) => Promise<unknown>;
+type QueueFailureCallback = (input: {
+  event: { data: { event: { data: { deliveryId: string } } } };
+  step: Step;
+}) => Promise<unknown>;
+interface FunctionConfig {
+  id: string;
+  onFailure?: QueueFailureCallback;
+  [key: string]: unknown;
+}
 
 let refreshCallback: RefreshCallback | undefined;
 let reconcileCallback: ReconcileCallback | undefined;
 let queueCallback: QueueCallback | undefined;
+let queueConfig: FunctionConfig | undefined;
 
 const createFunctionMock = vi.fn(
   (
-    config: { id: string },
+    config: FunctionConfig,
     handler: RefreshCallback | ReconcileCallback | QueueCallback
   ): { id: string } => {
     if (config.id === "refresh-skill-index") {
@@ -57,6 +68,7 @@ const createFunctionMock = vi.fn(
       reconcileCallback = handler as ReconcileCallback;
     }
     if (config.id === "queue-skill-refresh-from-source-control") {
+      queueConfig = config;
       queueCallback = handler as QueueCallback;
     }
     return { id: config.id };
@@ -102,6 +114,15 @@ vi.mock("../env", () => ({
 
 vi.mock("@vendor/observability/inngest", () => ({
   createInngestObservabilityMiddleware: () => ({}),
+}));
+
+vi.mock("@vendor/observability/log/next", () => ({
+  log: {
+    debug: vi.fn(),
+    error: vi.fn(),
+    info: vi.fn(),
+    warn: logWarnMock,
+  },
 }));
 
 vi.mock("../inngest/client", () => ({
@@ -182,6 +203,7 @@ function runQueue(step: Step, input: { changedPaths: string[]; ref: string }) {
 }
 
 beforeEach(() => {
+  logWarnMock.mockReset();
   completeWatchedSourceControlRepositorySetupMock.mockReset();
   createGitHubAppJwtMock.mockReset();
   createGitHubInstallationTokenMock.mockReset();
@@ -320,6 +342,15 @@ describe("skills index Inngest workflows", () => {
     expect(queueSkillRefreshFromSourceControl).toEqual({
       id: "queue-skill-refresh-from-source-control",
     });
+    expect(createFunctionMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "queue-skill-refresh-from-source-control",
+        idempotency: "event.data.deliveryId",
+        retries: 1,
+        timeouts: { finish: "30s", start: "2m" },
+      }),
+      expect.any(Function)
+    );
     expect(step.sendEvent).toHaveBeenCalledWith("queue skill index refresh", {
       name: "app/skills.index.refresh.requested",
       data: {
@@ -332,6 +363,33 @@ describe("skills index Inngest workflows", () => {
     expect(markDeliveryMock).toHaveBeenCalledWith(expect.anything(), {
       deliveryId: "delivery_1",
       status: "processed",
+    });
+  });
+
+  it("marks source control deliveries failed when queueing exhausts retries", async () => {
+    if (!queueConfig?.onFailure) {
+      throw new Error("queue onFailure callback was not registered");
+    }
+    const step = createStep();
+
+    await expect(
+      queueConfig.onFailure({
+        event: {
+          data: {
+            event: {
+              data: {
+                deliveryId: "delivery_1",
+              },
+            },
+          },
+        },
+        step,
+      })
+    ).resolves.toEqual({ status: "failed" });
+
+    expect(markDeliveryMock).toHaveBeenCalledWith(expect.anything(), {
+      deliveryId: "delivery_1",
+      status: "failed",
     });
   });
 
@@ -432,5 +490,12 @@ describe("skills index Inngest workflows", () => {
         sourceControlRepositoryId: 42,
       },
     });
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[github-setup] initial skill refresh enqueue failed",
+      expect.objectContaining({
+        error: expect.any(Error),
+        sourceControlRepositoryId: 42,
+      })
+    );
   });
 });

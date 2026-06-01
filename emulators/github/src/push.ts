@@ -131,22 +131,38 @@ export function createGitHubEmulatorSkillFile(input: {
   description?: string;
   skillName: string;
 }): PushFile {
-  const description =
-    input.description ?? `Use when testing ${input.skillName}.`;
-  const body = input.body ?? `Run ${input.skillName} carefully.`;
+  const skillName = normalizeSkillName(input.skillName);
+  const description = input.description ?? `Use when testing ${skillName}.`;
+  const body = input.body ?? `Run ${skillName} carefully.`;
 
   return {
     content: [
       "---",
-      `name: ${input.skillName}`,
-      `description: ${description}`,
+      `name: ${skillName}`,
+      `description: ${yamlString(description)}`,
       "---",
       "",
       body,
       "",
     ].join("\n"),
-    path: `skills/${input.skillName}/SKILL.md`,
+    path: `skills/${skillName}/SKILL.md`,
   };
+}
+
+function normalizeSkillName(skillName: string): string {
+  const normalized = skillName.trim().toLowerCase();
+  if (
+    !/^[a-z0-9][a-z0-9-]{0,62}$/.test(normalized) ||
+    normalized.endsWith("-") ||
+    normalized.includes("--")
+  ) {
+    throw new Error(`Invalid skill name for GitHub emulator: ${skillName}`);
+  }
+  return normalized;
+}
+
+function yamlString(value: string): string {
+  return JSON.stringify(value);
 }
 
 export async function pushGitHubEmulatorSkill(

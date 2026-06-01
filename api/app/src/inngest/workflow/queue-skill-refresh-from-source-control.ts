@@ -8,7 +8,7 @@ import { createSkillRefreshDedupeKey } from "./skill-refresh-event";
 
 export function shouldQueueSkillRefreshFromPush(input: {
   changedPaths: string[];
-  changedPathsComplete: boolean;
+  changedPathsComplete?: boolean;
   ref: string;
 }) {
   return (
@@ -33,6 +33,10 @@ export const queueSkillRefreshFromSourceControl = inngest.createFunction(
       return { status: "failed" as const };
     },
     retries: 1,
+    timeouts: {
+      finish: "30s",
+      start: "2m",
+    },
     triggers: appEvents["app/github.repository.push.received"],
   },
   async ({ event, step }) => {

@@ -36,7 +36,7 @@
     "@repo/vitest-config": "workspace:*",
     "@tailwindcss/postcss": "catalog:tailwind4",
     "@tailwindcss/typography": "catalog:tailwind4",
-    "@testing-library/react": "^16.1.0",
+    "@testing-library/react": "catalog:",
     "@turbo/gen": "^2.9.6",
     "@types/node": "catalog:",
     "@types/react": "catalog:react19",

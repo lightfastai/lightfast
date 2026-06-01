@@ -26,22 +26,21 @@ export async function ensureFreshSkillIndexForRead(input: {
     clerkOrgId: input.clerkOrgId,
     sourceControlRepositoryId: input.sourceControlRepositoryId,
   });
-  const repositoryUrl = candidate
-    ? getRepositoryUrl(candidate.repository.fullName)
-    : "";
-  let state =
-    candidate?.state ??
-    (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
-      sourceControlRepositoryId: input.sourceControlRepositoryId,
-    }));
   if (!candidate) {
     return {
-      freshness: toFreshness(state, "unavailable"),
+      freshness: toFreshness(null, "unavailable"),
       indexDiagnostics: [],
-      repositoryUrl,
+      repositoryUrl: "",
       skills: [],
     };
   }
+
+  const repositoryUrl = getRepositoryUrl(candidate.repository.fullName);
+  let state =
+    candidate.state ??
+    (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    }));
 
   if (state) {
     const ref = await checkSkillIndexCandidateRef({

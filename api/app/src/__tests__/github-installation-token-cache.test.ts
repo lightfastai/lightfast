@@ -102,4 +102,31 @@ describe("GitHub installation token cache", () => {
 
     expect(createGitHubInstallationTokenMock).toHaveBeenCalledTimes(2);
   });
+
+  it("prunes expired tokens before reusing the cache", async () => {
+    createGitHubInstallationTokenMock
+      .mockResolvedValueOnce({
+        expiresAt: "2026-06-01T00:01:00.000Z",
+        token: "ghs_expiring",
+      })
+      .mockResolvedValueOnce({
+        expiresAt: "2026-06-01T02:00:00.000Z",
+        token: "ghs_refreshed",
+      });
+
+    await expect(
+      getCachedGitHubInstallationToken({
+        installationId: "1001",
+        now: new Date("2026-06-01T00:00:00.000Z"),
+      })
+    ).resolves.toBe("ghs_expiring");
+    await expect(
+      getCachedGitHubInstallationToken({
+        installationId: "1001",
+        now: new Date("2026-06-01T00:01:00.000Z"),
+      })
+    ).resolves.toBe("ghs_refreshed");
+
+    expect(createGitHubInstallationTokenMock).toHaveBeenCalledTimes(2);
+  });
 });

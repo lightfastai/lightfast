@@ -6,6 +6,7 @@ import {
 import { getGitHubAppConfig } from "./config";
 
 const REFRESH_SKEW_MS = 5 * 60 * 1000;
+const MAX_CACHE_ENTRIES = 2000;
 
 const installationTokenCache = new Map<
   string,
@@ -30,6 +31,7 @@ export async function getCachedGitHubInstallationToken(input: {
     appId: config.appId,
     installationId: input.installationId,
   });
+  pruneExpiredInstallationTokens(now.getTime());
   const cached = installationTokenCache.get(cacheKey);
   if (cached && cached.expiresAt - now.getTime() > REFRESH_SKEW_MS) {
     return cached.token;
@@ -51,10 +53,10 @@ export async function getCachedGitHubInstallationToken(input: {
     installationId: input.installationId,
     signal: input.signal,
   });
-  pendingInstallationTokens.set(cacheKey, pendingToken);
+  setBoundedMapValue(pendingInstallationTokens, cacheKey, pendingToken);
   try {
     const token = await pendingToken;
-    installationTokenCache.set(cacheKey, token);
+    setBoundedMapValue(installationTokenCache, cacheKey, token);
     return token.token;
   } finally {
     pendingInstallationTokens.delete(cacheKey);
@@ -102,6 +104,28 @@ function createInstallationTokenCacheKey(input: {
     input.appId,
     input.installationId,
   ].join(":");
+}
+
+function pruneExpiredInstallationTokens(nowMs: number): void {
+  for (const [key, cached] of installationTokenCache) {
+    if (cached.expiresAt - nowMs <= REFRESH_SKEW_MS) {
+      installationTokenCache.delete(key);
+    }
+  }
+}
+
+function setBoundedMapValue<K, V>(map: Map<K, V>, key: K, value: V): void {
+  if (map.has(key)) {
+    map.delete(key);
+  }
+  map.set(key, value);
+  while (map.size > MAX_CACHE_ENTRIES) {
+    const oldestKey = map.keys().next().value;
+    if (oldestKey === undefined) {
+      return;
+    }
+    map.delete(oldestKey);
+  }
 }
 
 function toMillis(value: string | Date | number): number {

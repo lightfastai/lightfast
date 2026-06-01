@@ -1,5 +1,5 @@
 import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   checkSkillIndexSourceRef,
   ensureFreshSkillIndexForRead,
@@ -96,6 +96,10 @@ describe("buildSkillIndexEntriesFromTree", () => {
 });
 
 describe("skills index refresh/read service", () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("treats a 304 ref as changed when the observed commit is not indexed", async () => {
     const deps = createDeps({
       targetState: staleState({
@@ -120,7 +124,7 @@ describe("skills index refresh/read service", () => {
     );
   });
 
-  it("refreshes current main instead of the stale target commit", async () => {
+  it("skips a refresh job when its target commit is no longer current", async () => {
     const deps = createDeps({
       refSha: "current-main",
       targetState: staleState({ indexedCommitSha: "old-index" }),
@@ -133,13 +137,27 @@ describe("skills index refresh/read service", () => {
       targetCommitSha: "stale-webhook-sha",
     });
 
+    expect(result.status).toBe("stale");
+    expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
+    expect(deps.replaceSkillIndexEntries).not.toHaveBeenCalled();
+  });
+
+  it("refreshes when the target commit still matches current main", async () => {
+    const deps = createDeps({
+      refSha: "current-main",
+      targetState: staleState({ indexedCommitSha: "old-index" }),
+    });
+
+    const result = await refreshSkillIndexSource({
+      deps,
+      reason: "webhook",
+      sourceControlRepositoryId: 1,
+      targetCommitSha: "current-main",
+    });
+
     expect(result.status).toBe("fresh");
     expect(deps.readSkillRepositoryTree).toHaveBeenCalledWith(
       expect.objectContaining({ commitSha: "current-main" })
-    );
-    expect(deps.replaceSkillIndexEntries).toHaveBeenCalledWith(
-      deps.db,
-      expect.objectContaining({ indexedCommitSha: "current-main" })
     );
   });
 
@@ -240,7 +258,6 @@ describe("skills index refresh/read service", () => {
     expect(deps.replaceSkillIndexEntries).toHaveBeenCalled();
     expect(result.freshness.status).toBe("fresh");
     expect(result.skills).toHaveLength(1);
-    vi.useRealTimers();
   });
 
   it("records refresh_timeout and releases the lock before returning", async () => {
@@ -280,7 +297,6 @@ describe("skills index refresh/read service", () => {
     ).toBeLessThan(
       deps.releaseSkillIndexRefreshLock.mock.invocationCallOrder[0] ?? 0
     );
-    vi.useRealTimers();
   });
 
   it("does not continue in the background or replace entries after read timeout", async () => {
@@ -313,7 +329,6 @@ describe("skills index refresh/read service", () => {
 
     expect(deps.replaceSkillIndexEntries).not.toHaveBeenCalled();
     expect(deps.releaseSkillIndexRefreshLock).toHaveBeenCalledTimes(1);
-    vi.useRealTimers();
   });
 
   it("records refresh_timeout for wrapped abort errors", async () => {
@@ -576,6 +591,31 @@ describe("skills index refresh/read service", () => {
     );
   });
 
+  it("does not read index state before repository access is verified", async () => {
+    const deps = createDeps({
+      candidate: null,
+      targetState: staleState({ indexedCommitSha: "private-index" }),
+    });
+
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result).toMatchObject({
+      repositoryUrl: "",
+      skills: [],
+      freshness: {
+        indexedCommitSha: null,
+        status: "unavailable",
+      },
+    });
+    expect(
+      deps.getSkillIndexStateBySourceControlRepositoryId
+    ).not.toHaveBeenCalled();
+  });
+
   it("uses exact slug lookup instead of loading every entry for detail reads", async () => {
     const skill = entry({ indexedCommitSha: "current-main", slug: "selected" });
     const deps = createDeps({
@@ -604,6 +644,21 @@ describe("skills index refresh/read service", () => {
       stateId: 100,
     });
     expect(deps.listSkillIndexEntries).not.toHaveBeenCalled();
+  });
+
+  it("reports zero queued refreshes when no enqueue function is configured", async () => {
+    const eligible = createCandidate({ id: 1 });
+    const deps = createDeps({
+      targetState: staleState({ indexedCommitSha: "old" }),
+    });
+    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValueOnce(
+      [eligible]
+    );
+    deps.enqueueRefresh = undefined;
+
+    await expect(
+      reconcileSkillIndexSources({ deps, limit: 1, totalLimit: 5 })
+    ).resolves.toEqual({ checked: 1, queued: 0 });
   });
 });
 
@@ -745,6 +800,7 @@ function createDeps(
     acquireLockResult?: boolean;
     createdState?: FakeState;
     readTreeError?: Error;
+    candidate?: ReturnType<typeof createCandidate> | null;
     refSha?: string;
     targetEntries?: unknown[];
     targetState?: FakeState | null;
@@ -754,7 +810,10 @@ function createDeps(
   const state =
     input.targetState === undefined ? staleState() : input.targetState;
   const createdState = input.createdState ?? state ?? staleState();
-  const candidate = createCandidate({ state });
+  const candidate =
+    input.candidate === undefined
+      ? createCandidate({ state })
+      : input.candidate;
   const deps = {
     acquireSkillIndexRefreshLock: vi.fn(
       async () => input.acquireLockResult ?? true

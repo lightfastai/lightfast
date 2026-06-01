@@ -64,9 +64,12 @@ export async function reconcileSkillIndexSources(input: {
     limit: input.limit,
     totalLimit: input.totalLimit,
   });
+  if (!deps.enqueueRefresh) {
+    return { checked: result.checked, queued };
+  }
 
   for (const source of result.changed) {
-    await deps.enqueueRefresh?.({
+    await deps.enqueueRefresh({
       reason: "schedule",
       sourceControlRepositoryId: source.sourceControlRepositoryId,
       targetCommitSha: source.targetCommitSha,

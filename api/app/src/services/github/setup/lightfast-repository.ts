@@ -15,6 +15,7 @@ import {
   getGitHubRepository,
   verifyGitHubInstallationRepository,
 } from "@repo/github-app-node";
+import { log } from "@vendor/observability/log/next";
 
 import { mirrorOrgSetupGate } from "../../../auth/org-binding-mirror";
 import {
@@ -87,7 +88,11 @@ async function enqueueInitialSkillRefresh(input: {
         sourceControlRepositoryId: input.sourceControlRepositoryId,
       },
     });
-  } catch {
+  } catch (error) {
+    log.warn("[github-setup] initial skill refresh enqueue failed", {
+      error,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
     return;
   }
 }

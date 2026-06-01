@@ -10,7 +10,11 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { useTRPC } from "~/trpc/react";
-import { getSkillSourceUrl, SkillMarkdown } from "./skill-markdown";
+import {
+  getRepositoryBlobUrl,
+  getSkillSourceUrl,
+  SkillMarkdown,
+} from "./skill-markdown";
 import { SkillStatus } from "./skill-status";
 
 type SkillGetResult = AppRouterOutputs["org"]["workspace"]["skills"]["get"];
@@ -203,5 +207,9 @@ function getResourceUrl({
   repositoryUrl: string;
   skill: Pick<Skill, "indexedCommitSha">;
 }) {
-  return `${repositoryUrl.replace(/\/+$/, "")}/blob/${skill.indexedCommitSha}/${path}`;
+  return getRepositoryBlobUrl({
+    commitSha: skill.indexedCommitSha,
+    path,
+    repositoryUrl,
+  });
 }

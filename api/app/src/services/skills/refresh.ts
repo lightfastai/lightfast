@@ -154,6 +154,12 @@ export async function refreshSkillIndexSource(input: {
         lastCheckedCommitSha: state.lastCheckedCommitSha,
         sourceControlRepositoryId: input.sourceControlRepositoryId,
       });
+      if (
+        input.targetCommitSha &&
+        state.lastCheckedCommitSha !== input.targetCommitSha
+      ) {
+        return { status: "stale" };
+      }
       return { status: "fresh" };
     }
     if (ref.status === "missing") {
@@ -179,6 +185,9 @@ export async function refreshSkillIndexSource(input: {
       lastCheckedCommitSha: ref.sha,
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     });
+    if (input.targetCommitSha && ref.sha !== input.targetCommitSha) {
+      return { status: "stale" };
+    }
 
     const { commit, tree } = await deps.readSkillRepositoryTree({
       commitSha: ref.sha,

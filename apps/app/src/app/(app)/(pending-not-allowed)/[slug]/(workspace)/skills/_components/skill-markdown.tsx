@@ -36,11 +36,23 @@ export function getSkillSourceUrl(input: {
   repositoryUrl: string;
   skill: Pick<Skill, "indexedCommitSha" | "path">;
 }) {
+  return getRepositoryBlobUrl({
+    commitSha: input.skill.indexedCommitSha,
+    path: input.skill.path,
+    repositoryUrl: input.repositoryUrl,
+  });
+}
+
+export function getRepositoryBlobUrl(input: {
+  commitSha: string;
+  path: string;
+  repositoryUrl: string;
+}) {
   if (!input.repositoryUrl) {
     return "";
   }
 
-  return `${input.repositoryUrl.replace(/\/+$/, "")}/blob/${input.skill.indexedCommitSha}/${input.skill.path}`;
+  return `${input.repositoryUrl.replace(/\/+$/, "")}/blob/${input.commitSha}/${encodeRepositoryPath(input.path)}`;
 }
 
 function getSkillSourceUrlBase(input: {
@@ -53,4 +65,8 @@ function getSkillSourceUrlBase(input: {
   }
 
   return sourceUrl.split("/").slice(0, -1).join("/");
+}
+
+function encodeRepositoryPath(path: string): string {
+  return path.split("/").map(encodeURIComponent).join("/");
 }

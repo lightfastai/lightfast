@@ -1,4 +1,5 @@
 import type { Database } from "@db/app";
+import { TRPCError } from "@trpc/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
@@ -153,6 +154,27 @@ describe("workspaceSkillsRouter.list", () => {
     expect(ensureFreshSkillIndexForReadMock).not.toHaveBeenCalled();
   });
 
+  it("rejects wrong-org repository access before reading the skill index", async () => {
+    getVerifiedLightfastSkillSourceRepositoryIdMock.mockRejectedValueOnce(
+      new TRPCError({
+        code: "FORBIDDEN",
+        message: "Repository is not available to this organization.",
+      })
+    );
+
+    await expect(
+      caller({
+        ...activeIdentity,
+        orgId: "org_other",
+      }).skills.list(undefined)
+    ).rejects.toMatchObject({ code: "FORBIDDEN" });
+
+    expect(
+      getVerifiedLightfastSkillSourceRepositoryIdMock
+    ).toHaveBeenCalledWith(expect.anything(), { clerkOrgId: "org_other" });
+    expect(ensureFreshSkillIndexForReadMock).not.toHaveBeenCalled();
+  });
+
   it("rejects when no active org is selected", async () => {
     await expect(
       caller(pendingIdentity).skills.list(undefined)
@@ -164,6 +186,17 @@ describe("workspaceSkillsRouter.list", () => {
     await expect(
       caller(unauthenticatedIdentity).skills.list(undefined)
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+    expect(ensureFreshSkillIndexForReadMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects expired-token callers as unauthenticated before querying", async () => {
+    await expect(
+      caller({ type: "unauthenticated" }).skills.get({ slug: "code-review" })
+    ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
+
+    expect(
+      getVerifiedLightfastSkillSourceRepositoryIdMock
+    ).not.toHaveBeenCalled();
     expect(ensureFreshSkillIndexForReadMock).not.toHaveBeenCalled();
   });
 });

@@ -6,11 +6,12 @@ const listQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "workspace", "skills", "list"],
 }));
 const prefetchMock = vi.fn();
+const hydrateClientMock = vi.fn(({ children }: { children?: ReactNode }) => (
+  <div data-testid="hydrated-skills">{children}</div>
+));
 
 vi.mock("~/trpc/server", () => ({
-  HydrateClient: ({ children }: { children?: ReactNode }) => (
-    <div data-testid="hydrated-skills">{children}</div>
-  ),
+  HydrateClient: hydrateClientMock,
   prefetch: prefetchMock,
   trpc: {
     org: {
@@ -46,6 +47,7 @@ const { default: SkillsPage } = await import(
 beforeEach(() => {
   listQueryOptionsMock.mockClear();
   prefetchMock.mockClear();
+  hydrateClientMock.mockClear();
 });
 
 describe("skills page", () => {
@@ -58,6 +60,11 @@ describe("skills page", () => {
     expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "workspace", "skills", "list"],
     });
+    expect(
+      prefetchMock.mock.invocationCallOrder[0] ?? Number.POSITIVE_INFINITY
+    ).toBeLessThan(
+      hydrateClientMock.mock.invocationCallOrder[0] ?? Number.NEGATIVE_INFINITY
+    );
     expect(screen.getByRole("heading", { name: "Skills" })).toBeVisible();
   });
 });

@@ -34,7 +34,6 @@ const defaultSkillIndexServiceDeps: SkillIndexServiceDeps = {
   acquireSkillIndexRefreshLock,
   createOrLoadSkillIndexState,
   db,
-  enqueueRefresh: async () => undefined,
   getSkillIndexStateBySourceControlRepositoryId,
   getSkillIndexableSourceControlRepositoryCandidateById,
   getSkillIndexEntryBySlug,

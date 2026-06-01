@@ -232,6 +232,25 @@ describe("@repo/skills-contract", () => {
     );
   });
 
+  it("marks unavailable markdown separately from oversized files", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 100,
+      path: "skills/code-review/SKILL.md",
+      sourceMarkdown: null,
+    });
+
+    expect(result.entry.validationStatus).toBe("invalid");
+    expect(result.entry.sourceMarkdown).toBeNull();
+    expect(result.entry.bodyMarkdown).toBeNull();
+    expect(result.entry.diagnostics.map((d) => d.code)).toContain(
+      "file_unavailable"
+    );
+    expect(result.entry.diagnostics.map((d) => d.code)).not.toContain(
+      "file_too_large"
+    );
+  });
+
   it("keeps overlong frontmatter from overflowing persisted index columns", () => {
     const result = parseSkillFile({
       contentSha: "abc123",

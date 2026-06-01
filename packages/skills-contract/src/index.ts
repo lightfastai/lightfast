@@ -156,14 +156,23 @@ export function parseSkillFile(
   const entry = createBaseEntry(input);
   const diagnostics = entry.diagnostics;
 
-  if (
-    (input.contentSize !== null && input.contentSize > SKILL_FILE_MAX_BYTES) ||
-    input.sourceMarkdown === null
-  ) {
+  if (input.contentSize !== null && input.contentSize > SKILL_FILE_MAX_BYTES) {
     diagnostics.push({
       severity: "error",
       code: "file_too_large",
       message: "Skill file exceeds the maximum allowed size.",
+      path: input.path,
+    });
+    entry.sourceMarkdown = null;
+    entry.bodyMarkdown = null;
+    entry.validationStatus = "invalid";
+    return { entry };
+  }
+  if (input.sourceMarkdown === null) {
+    diagnostics.push({
+      severity: "error",
+      code: "file_unavailable",
+      message: "Skill file markdown could not be loaded.",
       path: input.path,
     });
     entry.sourceMarkdown = null;

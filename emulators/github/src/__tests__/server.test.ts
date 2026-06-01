@@ -620,6 +620,25 @@ describe("@repo/github-emulator", () => {
     });
   });
 
+  it("creates safe skill fixture paths and frontmatter", async () => {
+    const { createGitHubEmulatorSkillFile } = await import("../push");
+
+    expect(
+      createGitHubEmulatorSkillFile({
+        description: "Use when text contains: colon\nand newline.",
+        skillName: "Code-Review",
+      })
+    ).toMatchObject({
+      content: expect.stringContaining(
+        'description: "Use when text contains: colon\\nand newline."'
+      ),
+      path: "skills/code-review/SKILL.md",
+    });
+    expect(() =>
+      createGitHubEmulatorSkillFile({ skillName: "../bad" })
+    ).toThrow(/Invalid skill name/);
+  });
+
   it("delivers a signed GitHub App push webhook after simulated push", async () => {
     const received: Array<{
       body: string;

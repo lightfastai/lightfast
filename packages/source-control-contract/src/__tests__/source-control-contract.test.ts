@@ -94,6 +94,24 @@ describe("@repo/source-control-contract", () => {
     });
   });
 
+  it("accepts legacy repository push payloads without changed path completeness", () => {
+    const parsed = sourceControlRepositoryPushEventSchema.parse({
+      afterSha: "a".repeat(40),
+      beforeSha: "b".repeat(40),
+      changedPaths: ["skills/demo/SKILL.md"],
+      deliveryId: "delivery-1",
+      orgSourceControlBindingId: 1,
+      providerInstallationId: "1001",
+      providerRepositoryId: "2002",
+      ref: "refs/heads/main",
+      repositoryFullName: "lightfast-emulated/workspace",
+      repositoryWatchId: 10,
+    });
+
+    expect(parsed.changedPathsComplete).toBeUndefined();
+    expect(parsed.deliveryId).toBe("delivery-1");
+  });
+
   it("rejects malformed repository push routing fields", () => {
     const valid = {
       afterSha: "a".repeat(40),
