@@ -279,8 +279,7 @@ describe("@repo/github-emulator", () => {
       .all()
       .find(
         (candidate) =>
-          candidate.installation_id ===
-          GITHUB_EMULATOR_FIXTURES.installationId
+          candidate.installation_id === GITHUB_EMULATOR_FIXTURES.installationId
       );
     const repo = gh.repos.findOneBy("name", "api-service");
     expect(installation).toBeDefined();
@@ -312,7 +311,9 @@ describe("@repo/github-emulator", () => {
 
   it("rejects installation repository listing without an installation token", async () => {
     const res = await fetch(`${emulator?.url}/installation/repositories`, {
-      headers: { authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}` },
+      headers: {
+        authorization: `Bearer ${GITHUB_EMULATOR_FIXTURES.userToken}`,
+      },
     });
 
     expect(res.status).toBe(401);

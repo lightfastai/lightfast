@@ -4,7 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const useAuthMock = vi.fn();
 const importRepositoryMutateMock = vi.fn();
-const importRepositoryMutationOptionsMock = vi.fn((options: unknown) => options);
+const importRepositoryMutationOptionsMock = vi.fn(
+  (options: unknown) => options
+);
 const invalidateQueriesMock = vi.fn();
 const setQueryDataMock = vi.fn();
 const listRepositoriesQueryOptionsMock = vi.fn(() => ({
@@ -74,10 +76,7 @@ vi.mock("@repo/ui/components/ui/dialog", async () => {
       return (
         <div role="dialog">
           {children}
-          <button
-            onClick={() => context.onOpenChange?.(false)}
-            type="button"
-          >
+          <button onClick={() => context.onOpenChange?.(false)} type="button">
             Close
           </button>
         </div>

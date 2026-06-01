@@ -1,14 +1,14 @@
 import type { SourceControlRepository } from "@db/app/schema";
 import {
-  listGitHubInstallationRepositories,
   type GitHubInstallationRepository,
+  listGitHubInstallationRepositories,
 } from "@repo/github-app-node";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   buildSourceControlRepositoryResponse,
   countNormalImportedRepositories,
-  listAllGitHubInstallationRepositories,
   lightfastRepositoryIdFromBinding,
+  listAllGitHubInstallationRepositories,
 } from "./repositories";
 
 vi.mock("@repo/github-app-node", () => ({

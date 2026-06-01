@@ -241,7 +241,7 @@ export function SourceControlConnectionSection({
             >
               <RefreshCw aria-hidden="true" className="size-4" />
             </Button>
-            <Dialog open={isAddOpen} onOpenChange={handleAddDialogOpenChange}>
+            <Dialog onOpenChange={handleAddDialogOpenChange} open={isAddOpen}>
               <DialogTrigger asChild>
                 <Button disabled={addDisabled} size="sm" type="button">
                   <Plus aria-hidden="true" className="size-4" />
@@ -259,7 +259,7 @@ export function SourceControlConnectionSection({
                   <div className="relative">
                     <Search
                       aria-hidden="true"
-                      className="-translate-y-1/2 pointer-events-none absolute top-1/2 left-3 size-4 text-muted-foreground"
+                      className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground"
                     />
                     <Input
                       aria-label="Search repositories"

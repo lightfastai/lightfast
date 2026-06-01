@@ -1,8 +1,8 @@
 import type { SourceControlRepository } from "@db/app/schema";
 import { githubLightfastRepositoryProofSchema } from "@repo/app-setup-contract";
 import {
-  listGitHubInstallationRepositories,
   type GitHubInstallationRepository,
+  listGitHubInstallationRepositories,
 } from "@repo/github-app-node";
 
 export interface SourceControlRepositoryRow {
@@ -45,7 +45,9 @@ export function buildSourceControlRepositoryResponse(input: {
   );
 
   return input.liveRepositories
-    .filter((repository) => repository.ownerId === input.binding.providerAccountId)
+    .filter(
+      (repository) => repository.ownerId === input.binding.providerAccountId
+    )
     .filter((repository) => repository.id !== lightfastRepositoryId)
     .filter((repository) => repository.name !== ".lightfast")
     .map((repository) => {
@@ -98,7 +100,8 @@ export async function listAllGitHubInstallationRepositories(input: {
 
     if (
       result.repositories.length < perPage ||
-      (result.totalCount !== undefined && repositories.length >= result.totalCount)
+      (result.totalCount !== undefined &&
+        repositories.length >= result.totalCount)
     ) {
       break;
     }

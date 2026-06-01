@@ -58,7 +58,9 @@ describe("general settings page", () => {
     render(element);
 
     expect(sourceControlGetQueryOptionsMock).toHaveBeenCalledOnce();
-    expect(sourceControlListRepositoriesQueryOptionsMock).toHaveBeenCalledOnce();
+    expect(
+      sourceControlListRepositoriesQueryOptionsMock
+    ).toHaveBeenCalledOnce();
     expect(prefetchMock).toHaveBeenCalledWith({
       queryKey: ["org", "settings", "sourceControl", "get"],
     });

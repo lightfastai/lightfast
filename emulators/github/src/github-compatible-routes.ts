@@ -701,10 +701,7 @@ export function createGitHubCompatibleFetch(input: GitHubCompatibleFetchInput) {
         );
       }
 
-      const installationId = Number.parseInt(
-        appInstallationMatch[1] ?? "",
-        10
-      );
+      const installationId = Number.parseInt(appInstallationMatch[1] ?? "", 10);
       const installation = gh.appInstallations
         .all()
         .find(

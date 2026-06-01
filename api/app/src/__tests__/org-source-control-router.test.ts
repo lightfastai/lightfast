@@ -17,8 +17,10 @@ vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
   getActiveOrgBinding: getActiveOrgBindingMock,
   getWatchedSourceControlRepository: getWatchedSourceControlRepositoryMock,
-  insertWatchedSourceControlRepository: insertWatchedSourceControlRepositoryMock,
-  listWatchedSourceControlRepositories: listWatchedSourceControlRepositoriesMock,
+  insertWatchedSourceControlRepository:
+    insertWatchedSourceControlRepositoryMock,
+  listWatchedSourceControlRepositories:
+    listWatchedSourceControlRepositoriesMock,
 }));
 
 vi.mock("@repo/github-app-node", async (importOriginal) => {
@@ -185,8 +187,10 @@ beforeEach(() => {
     clientSecret: "github_secret_test",
     endpoints: {
       apiBaseUrl: "https://github.lightfast.localhost",
-      oauthAuthorizeUrl: "https://github.lightfast.localhost/login/oauth/authorize",
-      oauthTokenUrl: "https://github.lightfast.localhost/login/oauth/access_token",
+      oauthAuthorizeUrl:
+        "https://github.lightfast.localhost/login/oauth/authorize",
+      oauthTokenUrl:
+        "https://github.lightfast.localhost/login/oauth/access_token",
       webBaseUrl: "https://github.lightfast.localhost",
     },
     privateKey: "test-private-key",
@@ -277,7 +281,8 @@ describe("org.settings.sourceControl.listRepositories", () => {
     ]);
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -357,7 +362,8 @@ describe("org.settings.sourceControl.listRepositories", () => {
     ]);
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -396,7 +402,8 @@ describe("org.settings.sourceControl.listRepositories", () => {
     ]);
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -466,7 +473,8 @@ describe("org.settings.sourceControl.listRepositories", () => {
     listWatchedSourceControlRepositoriesMock.mockResolvedValue([]);
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "moved-account", login: "renamed", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -527,7 +535,8 @@ describe("org.settings.sourceControl.importRepository", () => {
     );
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -621,7 +630,8 @@ describe("org.settings.sourceControl.importRepository", () => {
     getActiveOrgBindingMock.mockResolvedValue(activeBinding());
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "moved-account", login: "renamed", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -644,7 +654,8 @@ describe("org.settings.sourceControl.importRepository", () => {
     getActiveOrgBindingMock.mockResolvedValue(activeBinding());
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -686,7 +697,8 @@ describe("org.settings.sourceControl.importRepository", () => {
     );
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -719,7 +731,8 @@ describe("org.settings.sourceControl.importRepository", () => {
     getActiveOrgBindingMock.mockResolvedValue(activeBinding());
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
@@ -756,7 +769,8 @@ describe("org.settings.sourceControl.importRepository", () => {
     getWatchedSourceControlRepositoryMock.mockResolvedValue(existingWatch);
     getGitHubAppInstallationMock.mockResolvedValue({
       account: { id: "987654", login: "acme-live", type: "Organization" },
-      htmlUrl: "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
+      htmlUrl:
+        "https://github.lightfast.localhost/apps/lightfast-test/installations/1001",
       id: "1001",
       targetType: "Organization",
     });
