@@ -21,8 +21,7 @@ import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
 import { useTRPC } from "~/trpc/react";
-import { SettingRow, SettingsGroup } from "./settings-section";
-import { SourceControlSection } from "./source-control-connection-section";
+import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import {
   normalizeTeamSlugInput,
   useTeamNameUpdate,
@@ -43,9 +42,6 @@ export function TeamGeneralSettingsClient({
     ...trpc.viewer.organization.listUserOrganizations.queryOptions(),
     staleTime: 5 * 60 * 1000,
   });
-  const { data: sourceControlConnection } = useSuspenseQuery(
-    trpc.org.settings.sourceControl.get.queryOptions()
-  );
   const currentOrg = useMemo(
     () => organizations.find((org) => org.slug === slug),
     [organizations, slug]
@@ -174,11 +170,6 @@ export function TeamGeneralSettingsClient({
           </SettingsGroup>
         </form>
       </Form>
-
-      <SourceControlSection
-        connection={sourceControlConnection.binding}
-        orgSlug={slug}
-      />
     </div>
   );
 }
