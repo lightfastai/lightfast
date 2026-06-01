@@ -1,15 +1,8 @@
+import { listLinearMcpTools } from "@repo/linear-app-node";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { listLinearMcpTools } from "@repo/linear-app-node";
-
-import {
-  LINEAR_EMULATOR_FIXTURES,
-  LINEAR_EMULATOR_TOOLS,
-} from "../fixtures";
-import {
-  type StartedLinearEmulator,
-  startLinearEmulator,
-} from "../server";
+import { LINEAR_EMULATOR_FIXTURES, LINEAR_EMULATOR_TOOLS } from "../fixtures";
+import { type StartedLinearEmulator, startLinearEmulator } from "../server";
 
 let emulator: StartedLinearEmulator | undefined;
 
@@ -54,7 +47,8 @@ async function exchangeCode(code: string) {
     code,
     code_verifier: "verifier",
     grant_type: "authorization_code",
-    redirect_uri: "https://app.lightfast.localhost/api/connectors/linear/callback",
+    redirect_uri:
+      "https://app.lightfast.localhost/api/connectors/linear/callback",
   });
 }
 
@@ -109,7 +103,8 @@ describe("@repo/linear-emulator", () => {
       client_secret: "wrong-secret",
       code: "linear_oauth_code_lightfast_local",
       grant_type: "authorization_code",
-      redirect_uri: "https://app.lightfast.localhost/api/connectors/linear/callback",
+      redirect_uri:
+        "https://app.lightfast.localhost/api/connectors/linear/callback",
     });
 
     expect(res.status).toBe(401);

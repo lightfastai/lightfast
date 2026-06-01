@@ -1389,12 +1389,6 @@ importers:
       '@repo/linear-app-node':
         specifier: workspace:*
         version: link:../../packages/linear-app-node
-      '@t3-oss/env-core':
-        specifier: 'catalog:'
-        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
-      zod:
-        specifier: 'catalog:'
-        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*

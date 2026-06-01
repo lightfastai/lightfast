@@ -1,6 +1,6 @@
 import { type StartedEmulator, startEmulator } from "@repo/emulator-kit";
 
-import { linearPlugin } from "./linear-plugin";
+import { linearPlugin } from "./plugin";
 
 export interface StartLinearEmulatorInput {
   appOrigin?: string;
