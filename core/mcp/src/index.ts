@@ -1,9 +1,6 @@
 import { apiContract } from "@repo/api-contract";
-import {
-  McpServer,
-  registerContractTools,
-  StdioServerTransport,
-} from "@vendor/mcp";
+import { McpServer, StdioServerTransport } from "@vendor/mcp";
+import { registerContractTools } from "@vendor/orpc-mcp-adapter";
 import { createLightfast } from "lightfast";
 
 declare const __SDK_VERSION__: string;
