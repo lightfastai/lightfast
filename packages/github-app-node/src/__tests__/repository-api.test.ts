@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
 import { createGitHubInstallationToken } from "../installation-tokens";
 import {
+  getGitHubBlobText,
+  getGitHubReference,
+  getGitHubTree as getGitHubTreeFromIndex,
+  GitHubAppNodeError,
+} from "../index";
+import {
   getGitHubCommit,
   getGitHubRepository,
   getGitHubTree,
@@ -284,5 +290,134 @@ describe("GitHub repository API helpers", () => {
         repo: ".lightfast",
       })
     ).rejects.toMatchObject({ code: "GITHUB_REPOSITORY_INACCESSIBLE" });
+  });
+});
+
+describe("skill index GitHub repository helpers", () => {
+  it("fetches a branch ref with response etag", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          object: { sha: "a".repeat(40), type: "commit" },
+        }),
+        {
+          headers: { etag: '"ref-etag"' },
+          status: 200,
+        }
+      )
+    );
+
+    await expect(
+      getGitHubReference({
+        apiBaseUrl: "https://api.github.test",
+        apiVersion: "2022-11-28",
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        ref: "heads/main",
+        repo: ".lightfast",
+      })
+    ).resolves.toEqual({
+      etag: '"ref-etag"',
+      sha: "a".repeat(40),
+      status: "found",
+    });
+  });
+
+  it("returns not-modified when GitHub returns 304", async () => {
+    const fetchMock = vi.fn(
+      async (_url: RequestInfo | URL, _init?: RequestInit) =>
+        new Response(null, { status: 304 })
+    );
+
+    await expect(
+      getGitHubReference({
+        apiBaseUrl: "https://api.github.test",
+        etag: '"old"',
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        ref: "heads/main",
+        repo: ".lightfast",
+      })
+    ).resolves.toEqual({ status: "not_modified" });
+    expect(fetchMock.mock.calls[0]?.[1]?.headers).toMatchObject({
+      "if-none-match": '"old"',
+    });
+  });
+
+  it("maps missing refs to GITHUB_REF_NOT_FOUND", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(JSON.stringify({ message: "Not Found" }), { status: 404 })
+    );
+
+    const result = getGitHubReference({
+      apiBaseUrl: "https://api.github.test",
+      fetch: fetchMock,
+      installationToken: "token",
+      owner: "acme",
+      ref: "heads/main",
+      repo: ".lightfast",
+    });
+
+    await expect(result).rejects.toBeInstanceOf(GitHubAppNodeError);
+    await expect(result).rejects.toMatchObject({ code: "GITHUB_REF_NOT_FOUND" });
+  });
+
+  it("preserves optional tree entry size", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          sha: "tree",
+          tree: [
+            {
+              mode: "100644",
+              path: "skills/code-review/SKILL.md",
+              sha: "blob",
+              size: 123,
+              type: "blob",
+            },
+          ],
+        }),
+        { status: 200 }
+      )
+    );
+
+    const tree = await getGitHubTreeFromIndex({
+      apiBaseUrl: "https://api.github.test",
+      fetch: fetchMock,
+      installationToken: "token",
+      owner: "acme",
+      recursive: true,
+      repo: ".lightfast",
+      treeSha: "tree",
+    });
+
+    expect(tree.tree[0]).toMatchObject({ size: 123 });
+  });
+
+  it("decodes GitHub blob content", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          content: Buffer.from("hello").toString("base64"),
+          encoding: "base64",
+          sha: "blob",
+          size: 5,
+        }),
+        { status: 200 }
+      )
+    );
+
+    await expect(
+      getGitHubBlobText({
+        apiBaseUrl: "https://api.github.test",
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        repo: ".lightfast",
+        sha: "blob",
+      })
+    ).resolves.toEqual({ sha: "blob", size: 5, text: "hello" });
   });
 });

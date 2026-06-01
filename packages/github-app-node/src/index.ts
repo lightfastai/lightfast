@@ -16,7 +16,9 @@ export {
 } from "./oauth";
 export { createGitHubPkcePair, type GitHubPkcePair } from "./pkce";
 export {
+  getGitHubBlobText,
   getGitHubCommit,
+  getGitHubReference,
   getGitHubRepository,
   getGitHubTree,
 } from "./repositories";
