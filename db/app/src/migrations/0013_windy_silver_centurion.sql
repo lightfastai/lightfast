@@ -24,7 +24,7 @@ CREATE TABLE `lightfast_org_connector_connections` (
 	`enabled_for_automations` boolean NOT NULL DEFAULT false,
 	`metadata` json NOT NULL,
 	`created_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_org_connector_connections_id` PRIMARY KEY(`id`),
 	CONSTRAINT `org_connector_connections_current_org_provider_uq` UNIQUE(`current_org_provider_key`)
 );

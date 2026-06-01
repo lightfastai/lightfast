@@ -90,9 +90,11 @@ export const orgConnectorConnections = mysqlTable(
     createdAt: timestamp("created_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
+    // Match the views tables: keep update semantics in Drizzle runtime because
+    // drizzle-kit emits an invalid Vitess DDL clause for timestamp(3).
     updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
       .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
+      .$onUpdate(() => new Date())
       .notNull(),
   },
   (table) => ({
