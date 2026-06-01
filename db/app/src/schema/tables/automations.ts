@@ -28,10 +28,17 @@ const IDEMPOTENCY_KEY_LENGTH = 255;
 const ERROR_CODE_LENGTH = 64;
 
 export type AutomationStatus = "active" | "paused" | "deleted";
-export type AutomationScheduleKind = "hourly" | "daily";
+export type AutomationScheduleKind =
+  | "manual"
+  | "hourly"
+  | "daily"
+  | "weekdays"
+  | "weekly";
 export type AutomationScheduleConfig =
+  | Record<string, never>
   | { intervalHours: number }
-  | { time: string };
+  | { time: string }
+  | { dayOfWeek: number; time: string };
 export type AutomationRunTrigger = "scheduled" | "manual";
 export type AutomationRunStatus =
   | "pending"
