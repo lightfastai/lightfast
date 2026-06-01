@@ -16,9 +16,8 @@ import {
 import { Check, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import { useTRPC } from "~/trpc/react";
-
-import { GithubAccountConnectionSection } from "./github-account-connection-section";
 
 function createIdempotencyKey() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -99,139 +98,123 @@ export function ProfileDataDisplay() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       <div>
-        <h2 className="font-medium font-pp text-2xl text-foreground">
-          General
-        </h2>
+        <h2 className="font-medium font-pp text-foreground text-xl">General</h2>
         <p className="mt-1 text-muted-foreground text-sm">
           Manage your personal account settings.
         </p>
       </div>
 
-      {/* Avatar Section */}
-      <div className="flex items-start justify-between gap-6">
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Avatar</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            This is your avatar.
-          </p>
-        </div>
-        <Avatar className="size-10">
-          <AvatarFallback className="bg-foreground text-background text-xs">
-            {profile.initials}
-          </AvatarFallback>
-        </Avatar>
-      </div>
+      <SettingsGroup title="Profile">
+        <SettingRow label="Avatar">
+          <Avatar className="size-7">
+            <AvatarFallback className="bg-foreground text-background text-xs">
+              {profile.initials}
+            </AvatarFallback>
+          </Avatar>
+        </SettingRow>
 
-      {/* Display Name Section */}
-      <form className="space-y-4" onSubmit={handleNameSubmit}>
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Name</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Please enter your full name, or a display name you are comfortable
-            with.
-          </p>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
+        <SettingRow
+          description="Please enter your full name, or a display name you are comfortable with."
+          label="Display name"
+        >
+          <form className="flex items-center gap-2" onSubmit={handleNameSubmit}>
             <label className="sr-only" htmlFor="account-name">
               Name
             </label>
             <Input
               autoComplete="name"
-              className="bg-muted/50"
+              className="w-64 bg-muted/50"
               id="account-name"
               onChange={(event) => setName(event.target.value)}
+              size="lf"
               type="text"
               value={name}
+              variant="lf"
             />
-          </div>
-          <Button disabled={!canSaveName} type="submit" variant="secondary">
-            {isSavingName ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Saving
-              </>
-            ) : (
-              "Save"
-            )}
-          </Button>
-        </div>
-      </form>
+            <Button disabled={!canSaveName} size="lf" type="submit">
+              {isSavingName ? (
+                <>
+                  <Loader2 className="size-3.5 animate-spin" />
+                  Saving
+                </>
+              ) : (
+                "Save"
+              )}
+            </Button>
+          </form>
+        </SettingRow>
 
-      {/* Username Section */}
-      <form className="space-y-4" onSubmit={handleUsernameSubmit}>
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Username</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            This is your stable Lightfast handle.
-          </p>
-        </div>
-        <div className="flex items-start gap-3">
-          <div className="flex-1">
-            <label className="sr-only" htmlFor="account-username">
-              Username
-            </label>
-            <Input
-              autoComplete="username"
-              className="bg-muted/50 font-mono"
-              disabled={hasUsername}
-              id="account-username"
-              onChange={(event) => {
-                setUsername(normalizeLightfastHandle(event.target.value));
-                usernameIdempotencyKeyRef.current = null;
-              }}
-              placeholder="ada-dev"
-              type="text"
-              value={username}
-            />
-            <p className="mt-2 font-mono text-muted-foreground text-sm">
+        <SettingRow
+          description="This is your stable Lightfast handle."
+          label="Username"
+        >
+          <form
+            className="flex flex-col items-end gap-2"
+            onSubmit={handleUsernameSubmit}
+          >
+            <div className="flex items-center gap-2">
+              <label className="sr-only" htmlFor="account-username">
+                Username
+              </label>
+              <Input
+                autoComplete="username"
+                className="w-64 bg-muted/50 font-mono"
+                disabled={hasUsername}
+                id="account-username"
+                onChange={(event) => {
+                  setUsername(normalizeLightfastHandle(event.target.value));
+                  usernameIdempotencyKeyRef.current = null;
+                }}
+                placeholder="ada-dev"
+                size="lf"
+                type="text"
+                value={username}
+                variant="lf"
+              />
+              <Button
+                disabled={!canCreateUsername}
+                size="lf"
+                type="submit"
+                variant={hasUsername ? "secondary" : "default"}
+              >
+                {hasUsername ? (
+                  <>
+                    <Check className="size-3.5" />
+                    Username created
+                  </>
+                ) : isCreatingUsername ? (
+                  <>
+                    <Loader2 className="size-3.5 animate-spin" />
+                    Creating
+                  </>
+                ) : (
+                  "Create username"
+                )}
+              </Button>
+            </div>
+            <p className="font-mono text-muted-foreground text-sm">
               lightfast.ai/
               <span className="text-foreground">
                 {username || "your-username"}
               </span>
             </p>
-          </div>
-          <Button
-            disabled={!canCreateUsername}
-            type="submit"
-            variant={hasUsername ? "secondary" : "default"}
-          >
-            {hasUsername ? (
-              <>
-                <Check className="h-4 w-4" />
-                Username created
-              </>
-            ) : isCreatingUsername ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Creating
-              </>
-            ) : (
-              "Create username"
-            )}
-          </Button>
-        </div>
-      </form>
+          </form>
+        </SettingRow>
 
-      {/* Email Section (Read-only) */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="font-semibold text-foreground text-xl">Email</h2>
-          <p className="mt-1 text-muted-foreground text-sm">
-            Your primary email address.
-          </p>
-        </div>
-        <Input
-          className="bg-muted/50"
-          disabled
-          type="email"
-          value={profile.primaryEmailAddress ?? ""}
-        />
-      </div>
-
-      <GithubAccountConnectionSection />
+        <SettingRow description="Your primary email address." label="Email">
+          <Input
+            className="w-64 bg-muted/50"
+            disabled
+            readOnly
+            size="lf"
+            type="email"
+            value={profile.primaryEmailAddress ?? ""}
+            variant="lf"
+          />
+        </SettingRow>
+      </SettingsGroup>
     </div>
   );
 }
