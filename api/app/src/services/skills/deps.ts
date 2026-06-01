@@ -21,9 +21,12 @@ import {
 import type { SkillIndexServiceDeps } from "./types";
 
 export function resolveSkillIndexServiceDeps(
-  deps?: SkillIndexServiceDeps
+  deps?: Partial<SkillIndexServiceDeps>
 ): SkillIndexServiceDeps {
-  return deps ?? defaultSkillIndexServiceDeps;
+  return {
+    ...defaultSkillIndexServiceDeps,
+    ...deps,
+  };
 }
 
 const defaultSkillIndexServiceDeps: SkillIndexServiceDeps = {

@@ -15,6 +15,11 @@ const runAutomation = { id: "run-automation" };
 const syncGitHubSourceControlRepository = {
   id: "sync-github-source-control-repository",
 };
+const refreshSkillIndex = { id: "refresh-skill-index" };
+const reconcileSkillIndexes = { id: "reconcile-skill-indexes" };
+const queueSkillRefreshFromSourceControl = {
+  id: "queue-skill-refresh-from-source-control",
+};
 
 vi.mock("inngest/next", () => ({
   serve: serveMock,
@@ -54,6 +59,18 @@ vi.mock("../inngest/workflow/sync-source-control-repository", () => ({
   syncGitHubSourceControlRepository,
 }));
 
+vi.mock("../inngest/workflow/refresh-skill-index", () => ({
+  refreshSkillIndex,
+}));
+
+vi.mock("../inngest/workflow/reconcile-skill-indexes", () => ({
+  reconcileSkillIndexes,
+}));
+
+vi.mock("../inngest/workflow/queue-skill-refresh-from-source-control", () => ({
+  queueSkillRefreshFromSourceControl,
+}));
+
 const { createInngestRouteContext, inngest } = await import("../inngest");
 
 describe("createInngestRouteContext", () => {
@@ -71,6 +88,9 @@ describe("createInngestRouteContext", () => {
         automationScheduler,
         runAutomation,
         syncGitHubSourceControlRepository,
+        refreshSkillIndex,
+        reconcileSkillIndexes,
+        queueSkillRefreshFromSourceControl,
       ],
       serveOrigin: "https://app.lightfast.localhost",
       servePath: "/api/inngest",

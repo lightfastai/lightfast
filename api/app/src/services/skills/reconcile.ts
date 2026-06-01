@@ -4,7 +4,7 @@ import { checkSkillIndexSourceRef } from "./refresh";
 import type { SkillIndexServiceDeps } from "./types";
 
 export async function reconcileSkillIndexSources(input: {
-  deps?: SkillIndexServiceDeps;
+  deps?: Partial<SkillIndexServiceDeps>;
   limit: number;
   totalLimit: number;
 }): Promise<{ checked: number; queued: number }> {
