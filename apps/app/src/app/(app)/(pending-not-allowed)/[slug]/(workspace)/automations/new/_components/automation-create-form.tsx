@@ -205,6 +205,9 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                       </span>
                     </div>
                   </FormControl>
+                  <p className="text-muted-foreground text-xs">
+                    Markdown supported.
+                  </p>
                   <FormMessage />
                 </FormItem>
               )}
