@@ -143,6 +143,20 @@ export function normalizeAutomationSchedule(
   return automationScheduleSchema.parse(input);
 }
 
+const WEEKDAY_LABELS = [
+  "Sunday",
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+] as const;
+
+export function formatWeekday(dayOfWeek: number): string {
+  return WEEKDAY_LABELS[dayOfWeek] ?? "Sunday";
+}
+
 export function formatClockTime(value: string): string {
   const [hourText = "0", minuteText = "0"] = value.split(":");
   const hour = Number.parseInt(hourText, 10);
@@ -153,8 +167,12 @@ export function formatClockTime(value: string): string {
 }
 
 export interface AutomationScheduleSummary {
-  scheduleConfig: { intervalHours: number } | { time: string };
-  scheduleKind: "hourly" | "daily";
+  scheduleConfig:
+    | Record<string, never>
+    | { intervalHours: number }
+    | { time: string }
+    | { dayOfWeek: number; time: string };
+  scheduleKind: "manual" | "hourly" | "daily" | "weekdays" | "weekly";
   status: "active" | "paused" | "deleted";
 }
 
@@ -169,17 +187,29 @@ export function formatAutomationSchedule(
     return "Paused";
   }
 
-  if (automation.scheduleKind === "hourly") {
-    const interval =
-      "intervalHours" in automation.scheduleConfig
-        ? automation.scheduleConfig.intervalHours
-        : 1;
-    return interval === 1 ? "Hourly" : `Every ${interval} hours`;
-  }
+  const config = automation.scheduleConfig;
 
-  const time =
-    "time" in automation.scheduleConfig
-      ? automation.scheduleConfig.time
-      : "09:00";
-  return `Daily at ${formatClockTime(time)}`;
+  switch (automation.scheduleKind) {
+    case "manual":
+      return "Manual";
+    case "hourly": {
+      const interval = "intervalHours" in config ? config.intervalHours : 1;
+      return interval === 1 ? "Hourly" : `Every ${interval} hours`;
+    }
+    case "daily": {
+      const time = "time" in config ? config.time : "09:00";
+      return `Daily at ${formatClockTime(time)}`;
+    }
+    case "weekdays": {
+      const time = "time" in config ? config.time : "09:00";
+      return `Weekdays at ${formatClockTime(time)}`;
+    }
+    case "weekly": {
+      const time = "time" in config ? config.time : "09:00";
+      const dayOfWeek = "dayOfWeek" in config ? config.dayOfWeek : 1;
+      return `Weekly on ${formatWeekday(dayOfWeek)} at ${formatClockTime(time)}`;
+    }
+    default:
+      return "Manual";
+  }
 }

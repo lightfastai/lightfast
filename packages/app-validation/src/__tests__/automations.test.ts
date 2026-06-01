@@ -256,4 +256,34 @@ describe("formatAutomationSchedule", () => {
       })
     ).toBe("Daily at 9:00 AM");
   });
+
+  it("labels manual schedules as 'Manual'", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "manual",
+        scheduleConfig: {},
+      })
+    ).toBe("Manual");
+  });
+
+  it("formats weekdays schedules with the 12h clock time", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "weekdays",
+        scheduleConfig: { time: "08:15" },
+      })
+    ).toBe("Weekdays at 8:15 AM");
+  });
+
+  it("formats weekly schedules with the weekday name and time", () => {
+    expect(
+      formatAutomationSchedule({
+        status: "active",
+        scheduleKind: "weekly",
+        scheduleConfig: { dayOfWeek: 1, time: "09:00" },
+      })
+    ).toBe("Weekly on Monday at 9:00 AM");
+  });
 });
