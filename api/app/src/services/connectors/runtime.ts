@@ -6,7 +6,7 @@ import {
 } from "@db/app";
 import { db as appDb } from "@db/app/client";
 import { connectorRuntimeToolName } from "@repo/connector-contract";
-import { callLinearMcpTool } from "@repo/linear-app-node";
+import { callLinearMcpTool, LinearAppNodeError } from "@repo/linear-app-node";
 import { log } from "@vendor/observability/log/next";
 
 import { getFreshLinearConnectorAccessToken } from "./linear-flow";
@@ -170,7 +170,10 @@ function normalizeMcpToolInput(input: unknown) {
 }
 
 function isTerminalLinearTokenRefreshError(error: unknown) {
-  return getErrorCode(error) === "LINEAR_TOKEN_REFRESH_FAILED";
+  return (
+    error instanceof LinearAppNodeError &&
+    error.code === "LINEAR_TOKEN_REFRESH_FAILED"
+  );
 }
 
 function getErrorCode(error: unknown) {
@@ -180,12 +183,7 @@ function getErrorCode(error: unknown) {
 }
 
 function isKnownLinearError(error: unknown) {
-  const code = getErrorCode(error);
-  return (
-    typeof code === "string" &&
-    code.startsWith("LINEAR_") &&
-    error instanceof Error
-  );
+  return error instanceof LinearAppNodeError;
 }
 
 function safeLinearErrorMessage(error: unknown) {
@@ -193,9 +191,9 @@ function safeLinearErrorMessage(error: unknown) {
     case "LINEAR_TOKEN_REFRESH_FAILED":
       return "Linear OAuth token refresh failed.";
     case "LINEAR_MCP_FAILED":
-      return error instanceof Error ? error.message : "Linear MCP failed.";
+      return "Linear MCP tool call failed.";
     default:
-      return error instanceof Error ? error.message : undefined;
+      return undefined;
   }
 }
 

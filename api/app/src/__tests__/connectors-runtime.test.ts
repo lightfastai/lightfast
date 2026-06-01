@@ -18,9 +18,13 @@ vi.mock("@db/app", () => ({
     markCurrentOrgConnectorConnectionErrorMock,
 }));
 
-vi.mock("@repo/linear-app-node", () => ({
-  callLinearMcpTool: callLinearMcpToolMock,
-}));
+vi.mock("@repo/linear-app-node", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/linear-app-node")>();
+  return {
+    ...actual,
+    callLinearMcpTool: callLinearMcpToolMock,
+  };
+});
 
 vi.mock("../services/connectors/linear-flow", () => ({
   getFreshLinearConnectorAccessToken: getFreshLinearConnectorAccessTokenMock,
@@ -36,6 +40,7 @@ vi.mock("@vendor/observability/log/next", () => ({
 const { loadConnectorRuntimeTools } = await import(
   "../services/connectors/runtime"
 );
+const { LinearAppNodeError } = await import("@repo/linear-app-node");
 
 function connection(
   overrides: Partial<OrgConnectorConnection> = {}
@@ -177,10 +182,12 @@ describe("loadConnectorRuntimeTools", () => {
   it("logs redacted failure data", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
-    const error = Object.assign(new Error("Linear MCP tool call failed."), {
-      code: "LINEAR_MCP_FAILED",
-    });
-    callLinearMcpToolMock.mockRejectedValue(error);
+    callLinearMcpToolMock.mockRejectedValue(
+      new LinearAppNodeError(
+        "LINEAR_MCP_FAILED",
+        "Linear MCP tool call failed."
+      )
+    );
 
     const [tool] = await loadConnectorRuntimeTools({
       automationPublicId: "aut_123",
@@ -197,7 +204,7 @@ describe("loadConnectorRuntimeTools", () => {
         failure: {
           code: "LINEAR_MCP_FAILED",
           message: "Linear MCP tool call failed.",
-          name: "Error",
+          name: "LinearAppNodeError",
         },
         provider: "linear",
         providerToolName: "create_issue",
@@ -244,14 +251,49 @@ describe("loadConnectorRuntimeTools", () => {
     expect(logged).not.toContain("raw downstream secret");
   });
 
+  it("omits raw messages for non-Linear errors with Linear-looking codes", async () => {
+    listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
+    getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+    const error = Object.assign(new Error("raw forged code secret"), {
+      code: "LINEAR_MCP_FAILED",
+    });
+    callLinearMcpToolMock.mockRejectedValue(error);
+
+    const [tool] = await loadConnectorRuntimeTools({
+      automationPublicId: "aut_123",
+      clerkOrgId: "org_acme",
+      runPublicId: "run_123",
+    });
+
+    await expect(tool?.call({ title: "secret-title" })).rejects.toThrow(
+      "raw forged code secret"
+    );
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[connectors] runtime tool call failed",
+      expect.objectContaining({
+        failure: {
+          code: "LINEAR_MCP_FAILED",
+          message: undefined,
+          name: "Error",
+        },
+        provider: "linear",
+        success: false,
+      })
+    );
+    const logged = JSON.stringify(logWarnMock.mock.calls);
+    expect(logged).not.toContain("secret-title");
+    expect(logged).not.toContain("raw forged code secret");
+  });
+
   it("marks the Linear connector error when token refresh terminally fails during a runtime call", async () => {
     listCurrentOrgConnectorConnectionsMock.mockResolvedValue([connection()]);
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
-    const error = Object.assign(new Error("refresh token leaked raw details"), {
-      code: "LINEAR_TOKEN_REFRESH_FAILED",
-      name: "LinearAppNodeError",
-    });
-    getFreshLinearConnectorAccessTokenMock.mockRejectedValue(error);
+    getFreshLinearConnectorAccessTokenMock.mockRejectedValue(
+      new LinearAppNodeError(
+        "LINEAR_TOKEN_REFRESH_FAILED",
+        "refresh token leaked raw details"
+      )
+    );
 
     const [tool] = await loadConnectorRuntimeTools({
       automationPublicId: "aut_123",
