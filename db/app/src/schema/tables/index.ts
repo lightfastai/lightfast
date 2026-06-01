@@ -35,6 +35,11 @@ export {
   orgSourceControlBindings,
 } from "./org-source-control-bindings";
 export {
+  type InsertOrgConnectorConnection,
+  type OrgConnectorConnection,
+  orgConnectorConnections,
+} from "./org-connector-connections";
+export {
   createPersonId,
   type InsertPerson,
   PERSON_DISPLAY_NAME_LENGTH,

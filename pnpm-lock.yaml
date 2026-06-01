@@ -1205,6 +1205,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
+      '@repo/connector-contract':
+        specifier: workspace:*
+        version: link:../../packages/connector-contract
       '@repo/skills-contract':
         specifier: workspace:*
         version: link:../../packages/skills-contract

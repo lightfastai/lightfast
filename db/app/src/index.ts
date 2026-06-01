@@ -24,6 +24,7 @@ export {
   createSignalViewId,
   type InsertAutomation,
   type InsertAutomationRun,
+  type InsertOrgConnectorConnection,
   type InsertOrgSourceControlBinding,
   type InsertPeopleView,
   type InsertPerson,
@@ -34,6 +35,8 @@ export {
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
   type InsertUserSourceControlAccount,
+  type OrgConnectorConnection,
+  orgConnectorConnections,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
@@ -117,6 +120,23 @@ export {
 } from "./utils/namespaces";
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
+export {
+  currentOrgProviderKey,
+  type FinalizeCurrentOrgConnectorConnectionInput,
+  finalizeCurrentOrgConnectorConnection,
+  type GetCurrentOrgConnectorConnectionInput,
+  getCurrentOrgConnectorConnection,
+  listCurrentOrgConnectorConnections,
+  markCurrentOrgConnectorConnectionError,
+  markCurrentOrgConnectorConnectionRevoked,
+  type RecordConnectorToolRefreshErrorInput,
+  recordConnectorToolRefreshError,
+  setConnectorAutomationEnabled,
+  type UpdateConnectorToolManifestInput,
+  updateConnectorToolManifest,
+  type UpdateObservedConnectorTokensInput,
+  updateObservedConnectorTokens,
+} from "./utils/org-connector-connections";
 // Org source-control binding repository helpers
 export {
   type FinalizeActiveOrgProviderBindingInput,
