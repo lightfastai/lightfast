@@ -11,9 +11,9 @@ import { JsonLd } from "@vendor/seo/json-ld";
 import { Link as MicrofrontendLink } from "@vercel/microfrontends/next/client";
 import type { Metadata } from "next";
 import { FAQSection, faqs } from "~/app/(app)/_components/faq-section";
+import { GetStartedCTA } from "~/app/(app)/_components/get-started-cta";
 import { HeroChangelogBadge } from "~/app/(app)/_components/hero-changelog-badge";
 import { LatestContentPreview } from "~/app/(app)/_components/latest-content-preview";
-import { WaitlistCTA } from "~/app/(app)/_components/waitlist-cta";
 import {
   HAIRLINE_BOTTOM_X_PCT,
   HAIRLINE_X_PCT,
@@ -124,7 +124,7 @@ export default async function HomePage() {
       "@type": "Offer",
       price: "0",
       priceCurrency: "USD",
-      url: "https://lightfast.ai/early-access",
+      url: "https://lightfast.ai/sign-up",
     },
     description:
       "The superintelligence layer for founders. Built on a unified operating layer — observe events, build memory, and orchestrate action across your entire tool stack through a single system.",
@@ -212,8 +212,8 @@ export default async function HomePage() {
               </h1>
               <div>
                 <Button asChild size="sm">
-                  <MicrofrontendLink href="/early-access" prefetch={true}>
-                    Join Early Access
+                  <MicrofrontendLink href="/sign-up" prefetch={true}>
+                    Get started
                     <span className="ml-2">→</span>
                   </MicrofrontendLink>
                 </Button>
@@ -390,7 +390,7 @@ export default async function HomePage() {
       </div>
 
       {/* CTA Section */}
-      <WaitlistCTA />
+      <GetStartedCTA />
     </>
   );
 }

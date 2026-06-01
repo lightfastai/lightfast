@@ -47,10 +47,10 @@ export default function EngineeringLeadersPage() {
               <Button asChild className="rounded-full" size="lg">
                 <MicrofrontendLink
                   className="group"
-                  href="/early-access"
+                  href="/sign-up"
                   prefetch={true}
                 >
-                  <span>Join Early Access</span>
+                  <span>Get started</span>
                 </MicrofrontendLink>
               </Button>
               <MicrofrontendLink
