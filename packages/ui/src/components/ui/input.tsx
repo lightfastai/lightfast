@@ -18,10 +18,16 @@ const inputVariants = cva(
           "text-foreground placeholder:text-foreground/50 border-0 border-b border-foreground/20 px-0 rounded-none dark:bg-transparent",
           "focus-visible:ring-0 focus-visible:ring-offset-0 focus-visible:border-foreground",
         ],
+        lf: [
+          "placeholder:text-muted-foreground bg-card border-input rounded-[9px] border text-[12.5px] shadow-none transition-[color,box-shadow,background-color]",
+          "focus-visible:bg-background focus-visible:border-input focus-visible:shadow-[inset_0_0_0_1px_var(--ring)] focus-visible:ring-0",
+          "aria-invalid:border-destructive aria-invalid:shadow-[inset_0_0_0_1px_var(--destructive)]",
+        ],
       },
       size: {
         default: "h-8 px-3 py-1",
         lg: "h-10 px-4 py-2",
+        lf: "h-[30px] px-3",
       },
     },
     defaultVariants: {
