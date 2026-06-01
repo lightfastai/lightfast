@@ -241,7 +241,11 @@ export async function listAutomations(
         ne(automations.status, "deleted")
       )
     )
-    .orderBy(asc(automations.nextRunAt), asc(automations.id));
+    .orderBy(
+      sql`${automations.nextRunAt} is null`,
+      asc(automations.nextRunAt),
+      asc(automations.id)
+    );
 }
 
 export interface UpdateAutomationInput {
@@ -438,6 +442,9 @@ export async function claimDueAutomationRuns(
 
   const claimed: ClaimedAutomationRun[] = [];
   for (const automation of due) {
+    if (automation.nextRunAt === null) {
+      continue;
+    }
     const dueAt = automation.nextRunAt;
     const schedule = normalizeAutomationSchedule({
       kind: automation.scheduleKind,
