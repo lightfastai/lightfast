@@ -62,7 +62,9 @@ describe("account General settings", () => {
   it("renders profile rows without the GitHub section", () => {
     render(<ProfileDataDisplay />);
 
-    expect(screen.getByRole("heading", { name: "General" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "General" })
+    ).toBeInTheDocument();
     expect(screen.getByText("Display name")).toBeVisible();
     expect(screen.getByText("Username")).toBeVisible();
     expect(screen.getByText("Email")).toBeVisible();

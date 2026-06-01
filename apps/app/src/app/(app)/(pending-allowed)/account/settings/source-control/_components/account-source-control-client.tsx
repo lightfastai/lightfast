@@ -49,7 +49,10 @@ export function AccountSourceControlClient() {
               size="sm"
               variant="secondary"
             >
-              <Link href={{ pathname: GITHUB_ACCOUNT_TASK_HREF }} prefetch={true}>
+              <Link
+                href={{ pathname: GITHUB_ACCOUNT_TASK_HREF }}
+                prefetch={true}
+              >
                 <ExternalLink aria-hidden="true" className="size-4" />
                 Connect GitHub account
               </Link>

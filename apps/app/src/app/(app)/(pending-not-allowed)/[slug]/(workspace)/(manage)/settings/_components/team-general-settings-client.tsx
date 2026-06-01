@@ -20,8 +20,8 @@ import { useOrganizationList } from "@vendor/clerk";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCallback, useMemo } from "react";
-import { useTRPC } from "~/trpc/react";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
+import { useTRPC } from "~/trpc/react";
 import {
   normalizeTeamSlugInput,
   useTeamNameUpdate,

@@ -37,11 +37,7 @@ function formatConnectedAt(value: Date): string | null {
   return `Connected on ${shortDateFormatter.format(value)}`;
 }
 
-export function GithubAccountCard({
-  account,
-}: {
-  account: GithubUserAccount;
-}) {
+export function GithubAccountCard({ account }: { account: GithubUserAccount }) {
   const subtitle = formatConnectedAt(account.connectedAt);
 
   return (
