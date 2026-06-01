@@ -3,7 +3,7 @@ import { SignJWT } from "jose";
 import { expect } from "vitest";
 
 import { GITHUB_EMULATOR_FIXTURES } from "../fixtures";
-import { type StartGitHubEmulatorInput, startGitHubEmulator } from "../server";
+import { type StartGitHubEmulatorInput, startGitHubEmulator } from "../plugin";
 
 const TEST_PORT_MIN = 40_000;
 const TEST_PORT_SPAN = 10_000;

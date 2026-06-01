@@ -12,9 +12,12 @@ import {
   waitForListening,
 } from "@repo/emulator-kit";
 
-import { createGitHubEmulatorSeed, GITHUB_EMULATOR_FIXTURES } from "./fixtures";
-import { createGitHubCompatibleFetch } from "./github-compatible-routes";
-import { enrichPushPayloadWithChangedPaths } from "./push-webhook-payload";
+import {
+  createGitHubEmulatorSeed,
+  GITHUB_EMULATOR_FIXTURES,
+} from "../fixtures";
+import { createGitHubCompatibleFetch } from "./compatible-routes";
+import { enrichPushPayloadWithChangedPaths } from "./webhook/push-payload";
 
 export interface StartGitHubEmulatorInput {
   appOrigin?: string;

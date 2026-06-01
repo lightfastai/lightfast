@@ -8,7 +8,7 @@ import {
 } from "@repo/github-app-contract";
 import { jwtVerify } from "jose";
 
-import { GITHUB_EMULATOR_FIXTURES } from "./fixtures";
+import { GITHUB_EMULATOR_FIXTURES } from "../fixtures";
 
 interface PendingOAuthCode {
   appId: number;
