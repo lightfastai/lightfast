@@ -142,7 +142,7 @@ describe("sign-in — email submit", () => {
     });
   });
 
-  it("redirects to /sign-in?errorCode=waitlist when sendCode returns waitlist error", async () => {
+  it("redirects to /sign-in?error=Authentication+failed when sendCode returns waitlist restriction", async () => {
     signInStub.emailCode.sendCode.mockResolvedValue({
       error: { code: "sign_up_restricted_waitlist", message: "waitlist" },
     });
@@ -158,7 +158,7 @@ describe("sign-in — email submit", () => {
     });
 
     await waitFor(() => {
-      expect(hrefValue).toBe("/sign-in?errorCode=waitlist");
+      expect(hrefValue).toBe("/sign-in?error=Authentication+failed");
     });
   });
 
@@ -328,25 +328,26 @@ describe("sign-in — email-only auth", () => {
 });
 
 describe("sign-in — error banner", () => {
-  it("renders ErrorBanner when ?errorCode=waitlist is present", () => {
+  it("ignores ?errorCode=waitlist and renders the normal sign-in heading", () => {
     searchParamsValue = new URLSearchParams("errorCode=waitlist");
     render(<SignInPage />);
     expect(
-      screen.getByText(/sign-ups are currently unavailable/i)
+      screen.getByRole("heading", { name: /log in to lightfast/i })
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("link", { name: /join the waitlist/i })
-    ).toBeInTheDocument();
+      screen.queryByText(/sign-ups are currently unavailable/i)
+    ).not.toBeInTheDocument();
   });
 
-  it("renders the waitlist CTA when ?errorCode=account_not_found is present", () => {
+  it("renders a Sign up CTA when ?errorCode=account_not_found is present", () => {
     searchParamsValue = new URLSearchParams("errorCode=account_not_found");
     render(<SignInPage />);
     expect(
       screen.getByText(/couldn't find a lightfast account/i)
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /join the waitlist/i })
-    ).toHaveAttribute("href", "/early-access");
+    expect(screen.getByRole("link", { name: /sign up/i })).toHaveAttribute(
+      "href",
+      "/sign-up"
+    );
   });
 });

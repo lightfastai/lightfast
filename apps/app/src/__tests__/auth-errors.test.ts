@@ -27,10 +27,10 @@ function makeApiResponseError(opts: {
 }
 
 describe("mapOtpClerkError — unwrapped runtime shape (current clerk-js Future API)", () => {
-  it("maps sign_up_restricted_waitlist to waitlist code", () => {
+  it("maps sign_up_restricted_waitlist to generic inline auth failure", () => {
     expect(mapOtpClerkError({ code: "sign_up_restricted_waitlist" })).toEqual({
-      kind: "code",
-      errorCode: "waitlist",
+      kind: "inline",
+      message: "Authentication failed",
     });
   });
 
@@ -104,11 +104,11 @@ describe("mapOtpClerkError — unwrapped runtime shape (current clerk-js Future 
 });
 
 describe("mapOtpClerkError — ClerkAPIResponseError instance (documented contract)", () => {
-  it("extracts errors[0].code for waitlist", () => {
+  it("maps sign_up_restricted_waitlist to generic inline auth failure", () => {
     const err = makeApiResponseError({ code: "sign_up_restricted_waitlist" });
     expect(mapOtpClerkError(err)).toEqual({
-      kind: "code",
-      errorCode: "waitlist",
+      kind: "inline",
+      message: "Authentication failed",
     });
   });
 

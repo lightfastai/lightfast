@@ -8,7 +8,7 @@ import {
 
 describe("authErrorCodes", () => {
   it("exports the expected canonical error codes", () => {
-    expect(authErrorCodes).toEqual(["waitlist", "account_not_found"]);
+    expect(authErrorCodes).toEqual(["account_not_found"]);
   });
 
   it("has a canonical message for each error code", () => {
@@ -21,13 +21,13 @@ describe("authErrorCodes", () => {
 
 describe("authErrorSearchParams", () => {
   it("parses valid errorCode values", () => {
-    expect(authErrorSearchParams.errorCode.parse("waitlist")).toBe("waitlist");
     expect(authErrorSearchParams.errorCode.parse("account_not_found")).toBe(
       "account_not_found"
     );
   });
 
   it("rejects invalid errorCode values", () => {
+    expect(authErrorSearchParams.errorCode.parse("waitlist")).toBe(null);
     expect(authErrorSearchParams.errorCode.parse("invalid")).toBe(null);
     expect(authErrorSearchParams.errorCode.parse("")).toBe(null);
   });
@@ -46,9 +46,15 @@ describe("acceptInvitationSearchParams", () => {
     );
   });
 
-  it("shares the same errorCode parser as authErrorSearchParams", () => {
+  it("parses account_not_found errorCode values", () => {
+    expect(
+      acceptInvitationSearchParams.errorCode.parse("account_not_found")
+    ).toBe("account_not_found");
+  });
+
+  it("rejects invalid errorCode values", () => {
     expect(acceptInvitationSearchParams.errorCode.parse("waitlist")).toBe(
-      "waitlist"
+      null
     );
     expect(acceptInvitationSearchParams.errorCode.parse("invalid")).toBe(null);
   });

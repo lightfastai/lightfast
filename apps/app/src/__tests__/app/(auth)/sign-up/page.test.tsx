@@ -215,11 +215,14 @@ describe("sign-up — captcha mount", () => {
 });
 
 describe("sign-up — error banner", () => {
-  it("renders ErrorBanner when ?errorCode=waitlist is present", () => {
+  it("ignores ?errorCode=waitlist and renders the normal sign-up heading", () => {
     searchParamsValue = new URLSearchParams("errorCode=waitlist");
     render(<SignUpPage />);
     expect(
-      screen.getByText(/sign-ups are currently unavailable/i)
+      screen.getByRole("heading", { name: /sign up for lightfast/i })
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/sign-ups are currently unavailable/i)
+    ).not.toBeInTheDocument();
   });
 });

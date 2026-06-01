@@ -69,10 +69,6 @@ function SignInView() {
     window.location.replace(successRedirect);
   }, [isRedirecting, isSignedIn, isUserLoaded, successRedirect]);
 
-  const handleWaitlist = React.useCallback(() => {
-    window.location.replace("/sign-in?errorCode=waitlist");
-  }, []);
-
   const errorPathFor = React.useCallback(
     (params: { errorCode?: string; error?: string }) => {
       const search = new URLSearchParams();
@@ -100,17 +96,13 @@ function SignInView() {
         return { success: false };
       }
       if (mapped.kind === "code") {
-        if (mapped.errorCode === "waitlist") {
-          handleWaitlist();
-          return { success: false };
-        }
         setOtpError(authErrorMessage(mapped.errorCode));
         return { success: false };
       }
       setOtpError(mapped.message);
       return { success: false };
     },
-    [handleWaitlist]
+    []
   );
 
   const handleSubmitEmailError = React.useCallback(
