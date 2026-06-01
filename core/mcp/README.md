@@ -1,6 +1,6 @@
 # @lightfastai/mcp
 
-Model Context Protocol (MCP) server for Lightfast.
+Model Context Protocol (MCP) stdio server for Lightfast.
 
 [![npm version](https://img.shields.io/npm/v/@lightfastai/mcp.svg)](https://www.npmjs.com/package/@lightfastai/mcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -13,6 +13,20 @@ npm install -g @lightfastai/mcp
 # or
 pnpm add -g @lightfastai/mcp
 ```
+
+## Hosted OAuth MCP
+
+For interactive user connections, prefer the hosted Lightfast MCP resource. It uses the MCP OAuth flow, dynamic client registration, and user/org-scoped grants instead of copying API keys into a local process.
+
+Local development URL:
+
+```text
+https://[<wt>.]mcp.lightfast.localhost/mcp
+```
+
+The hosted server lives in `apps/mcp`. This package remains the API-key stdio server for local, CI, and clients that do not support remote OAuth MCP yet.
+
+Both hosted and stdio tools are derived from the same MCP exposure policy in `@repo/api-contract` through `@repo/mcp-tools`; keep tool names, schemas, and behavior in parity.
 
 ## Development
 

@@ -14,7 +14,7 @@
     "build:platform": "turbo run build -F @lightfast/platform",
     "clean": "git clean -xdf node_modules",
     "clean:workspaces": "turbo run clean",
-    "dev": "portless proxy start && turbo run dev:next @lightfast/app#mfe:proxy @lightfast/mcp#dev:next //#_inngest //#_qstash //#_github_emulator --concurrency=16 -F @lightfast/www -F @lightfast/app -F @lightfast/platform --continue",
+    "dev": "portless proxy start && turbo run dev:next @lightfast/app#mfe:proxy //#_inngest //#_qstash //#_github_emulator --concurrency=16 -F @lightfast/www -F @lightfast/app -F @lightfast/platform -F @lightfast/mcp --continue",
     "_inngest": "portless run --name inngest.lightfast sh -c 'npx inngest-cli@latest dev --no-discovery --host \"$HOST\" --port \"$PORT\" -u \"$(portless get app.lightfast)/api/inngest\" -u \"$(portless get platform.lightfast)/api/inngest\"'",
     "_github_emulator": "portless run --name github.lightfast sh -c 'LIGHTFAST_APP_ORIGIN=\"$(portless get app.lightfast)\" GITHUB_EMULATOR_ORIGIN=\"$(portless get github.lightfast)\" pnpm --filter @repo/github-emulator dev'",
     "_qstash": "portless run --name qstash.lightfast sh -c 'npx --yes @upstash/qstash-cli dev -port=$PORT'",

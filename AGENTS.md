@@ -30,6 +30,8 @@ See `SPEC.md` for business goals and product vision.
 │      app       https://[<wt>.]app.lightfast.localhost                            │
 │                @api/app · tRPC + Inngest · auth + Server Actions · default MFE   │
 │                tRPC CORS dev: exact env origins + desktop localhost via Bearer   │
+│      mcp       https://[<wt>.]mcp.lightfast.localhost/mcp                        │
+│                @lightfast/mcp · hosted OAuth MCP resource server                 │
 │      www       https://[<wt>.]www.lightfast.localhost                            │
 │                marketing + docs (fumadocs MDX) · marketing-group MFE             │
 │      platform  https://[<wt>.]platform.lightfast.localhost                       │
@@ -72,7 +74,7 @@ Packages: @repo/* (ui, lib, ai)  |  @repo/app-* (23)  |  @vendor/* (18)
 ```bash
 # Dev servers (NEVER use global pnpm build).
 # Worktree-prefixed URLs: see Architecture diagram above.
-pnpm dev              # app + www + platform + local Inngest + local QStash + MFE aggregate
+pnpm dev              # app + mcp + www + platform + local Inngest + local QStash + MFE aggregate
 
 # Local infrastructure setup
 # Load the lightfast-local-infra skill for PlanetScale DB / Upstash Redis setup.
@@ -100,7 +102,7 @@ pnpm db:migrate
 pnpm db:studio        # starts Drizzle Studio through Portless
 ```
 
-`pnpm dev` is the only root local-dev entrypoint. It starts app, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, and `QSTASH_URL` values use the concrete service URLs. It does not start ngrok automatically.
+`pnpm dev` is the only root local-dev entrypoint. It starts app, mcp, www, platform, local Inngest, local QStash, and the Portless-backed Vercel Microfrontends aggregate for `https://lightfast.localhost`. The hosted MCP resource is available at `https://[<wt>.]mcp.lightfast.localhost/mcp` and is intentionally not part of `apps/app/microfrontends.json`. Direct Portless routes are still used for service registration and project URL injection: Inngest serve URLs use `portless get app.lightfast` and `portless get platform.lightfast`, and `NEXT_PUBLIC_*`, `INNGEST_DEV`, `QSTASH_URL`, `MCP_RESOURCE_URL`, and `MCP_AUTH_ISSUER` values use the concrete service URLs. It does not start ngrok automatically.
 
 ## Next.js Agent Diagnostics
 

@@ -1,6 +1,6 @@
 ---
 title: MCP Server
-description: Connect AI assistants to your workspace memory via Model Context Protocol for semantic search.
+description: Connect AI assistants to Lightfast through hosted OAuth MCP or the local stdio server.
 keywords:
   - MCP
   - Model Context Protocol
@@ -10,24 +10,45 @@ keywords:
   - AI assistants
   - workspace memory
 canonicalUrl: https://lightfast.ai/docs/integrate/mcp
-ogTitle: Lightfast MCP Server – Connect AI Assistants to Your Knowledge
-ogDescription: Enable Claude, Cursor, and Codex to search your workspace memory via the Model Context Protocol.
+ogTitle: Lightfast MCP Server – Hosted OAuth and Local stdio
+ogDescription: Enable Claude, Cursor, and Codex to use Lightfast through hosted OAuth MCP or the local stdio server.
 authors:
   - name: Lightfast Team
     url: https://lightfast.ai
     twitterHandle: "@lightfastai"
 publishedAt: "2024-12-01T00:00:00Z"
-updatedAt: "2024-12-24T00:00:00Z"
+updatedAt: "2026-06-01T00:00:00Z"
 proficiencyLevel: Intermediate
 ---
 
 # MCP Server
 
-The `@lightfastai/mcp` package connects AI assistants like Claude, Cursor, and Codex directly to your workspace memory via the [Model Context Protocol](https://modelcontextprotocol.io/).
+Lightfast supports two MCP connection modes:
 
-## Installation
+- Hosted OAuth MCP for user-connected clients. This is recommended when your client supports remote MCP and OAuth.
+- `@lightfastai/mcp` stdio for local, CI, and API-key based clients.
 
-No installation required — run directly with npx:
+Both modes expose the same policy-derived Lightfast tools.
+
+## Hosted OAuth MCP
+
+Use the hosted MCP resource when a client can connect to a remote MCP server:
+
+```text
+https://mcp.lightfast.ai/mcp
+```
+
+In local development, the resource URL is:
+
+```text
+https://[<wt>.]mcp.lightfast.localhost/mcp
+```
+
+The OAuth flow creates a user-connected grant bound to the selected organization. You can review or revoke grants from MCP settings.
+
+## Local stdio MCP
+
+Use the stdio package when your MCP client expects a local command or when you need API-key automation. Run directly with npx:
 
 ```bash
 npx @lightfastai/mcp --api-key lf_...
@@ -127,34 +148,35 @@ LIGHTFAST_API_KEY = "lf_..."
 
 ## Available Tools
 
-Once configured, your AI assistant has access to the `lightfast_search` tool.
+Once configured, your AI assistant has access to the Lightfast MCP tools selected by the public API contract policy.
 
-### lightfast_search
+### lightfast_system_health
 
-Search workspace memory for relevant decisions and observations.
+Check whether the Lightfast MCP connection is authenticated and reachable.
+
+### lightfast_signals_create
+
+Create a signal in the connected organization.
 
 **Parameters:**
-- `query` (required): Natural language search query
-- `limit`: Max results, 1–100 (default: 10)
-- `offset`: Pagination offset (default: 0)
-- `mode`: `"fast"` (vector scores only) or `"balanced"` (Cohere rerank, default)
-- `types`: Filter by entity type (e.g. `["decision", "incident"]`)
-- `after`: ISO 8601 datetime lower bound
-- `before`: ISO 8601 datetime upper bound
+- `input` (required): signal text
 
-**Example prompt:**
-> "Search lightfast for how authentication works in our API"
+### lightfast_signals_get
+
+Get a visible signal by id from the connected organization.
+
+**Parameters:**
+- `id` (required): signal id
 
 ## Usage Examples
 
 Once configured, you can ask your AI assistant questions like:
 
-- "Search our codebase for how rate limiting is implemented"
-- "What decisions have we made about database choices?"
-- "Find documentation about our deployment process"
-- "Who has worked on the payment service?"
+- "Create a Lightfast signal for this follow-up"
+- "Check the status of this signal"
+- "Confirm my Lightfast MCP connection is healthy"
 
-The AI assistant will automatically use the Lightfast search tool to find answers with sources.
+The AI assistant will automatically call the relevant Lightfast MCP tool when needed.
 
 ## CLI Options
 
@@ -216,4 +238,4 @@ This is especially useful in MCP configurations where you don't want to hardcode
 ## Next Steps
 
 - <NextLink href="/docs/integrate/sdk">Use the SDK in your application</NextLink>
-- [View MCP source on GitHub](https://github.com/lightfastai/lightfast/tree/main/core/mcp)
+- [View local MCP source on GitHub](https://github.com/lightfastai/lightfast/tree/main/core/mcp)

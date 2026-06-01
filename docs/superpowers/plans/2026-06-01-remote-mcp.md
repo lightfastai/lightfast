@@ -1720,7 +1720,7 @@ git commit -m "feat: add mcp connection settings"
 - Modify: `core/mcp/README.md`
 - Create or modify docs under `apps/www/src/content` only if public docs already have an MCP page.
 
-- [ ] **Step 1: Update root dev command**
+- [x] **Step 1: Update root dev command**
 
 Modify root `package.json` dev script to include `@lightfast/mcp`:
 
@@ -1728,7 +1728,7 @@ Modify root `package.json` dev script to include `@lightfast/mcp`:
 "dev": "portless proxy start && turbo run dev:next @lightfast/app#mfe:proxy //#_inngest //#_qstash //#_github_emulator --concurrency=15 -F @lightfast/www -F @lightfast/app -F @lightfast/platform -F @lightfast/mcp --continue"
 ```
 
-- [ ] **Step 2: Document local hosted MCP URL**
+- [x] **Step 2: Document local hosted MCP URL**
 
 Update docs to mention:
 
@@ -1738,7 +1738,7 @@ https://[<wt>.]mcp.lightfast.localhost/mcp
 
 Do not add `apps/mcp` to `apps/app/microfrontends.json`.
 
-- [ ] **Step 3: Update local MCP README**
+- [x] **Step 3: Update local MCP README**
 
 Clarify:
 
@@ -1746,7 +1746,7 @@ Clarify:
 - `@lightfastai/mcp` remains API-key stdio for local/CI/stdin clients
 - local and hosted tools are policy-derived and should stay in parity
 
-- [ ] **Step 4: Run workspace checks**
+- [x] **Step 4: Run workspace checks**
 
 Run:
 
@@ -1761,7 +1761,7 @@ pnpm --filter @lightfastai/mcp typecheck
 
 Expected: all PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add package.json apps/mcp apps/app core/mcp docs AGENTS.md pnpm-lock.yaml
