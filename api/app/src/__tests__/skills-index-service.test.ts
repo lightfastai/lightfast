@@ -4,6 +4,7 @@ import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
 
 import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
 import {
+  checkSkillIndexSourceRef,
   ensureFreshSkillIndexForRead,
   reconcileSkillIndexSources,
   refreshSkillIndexSource,
@@ -96,6 +97,30 @@ describe("buildSkillIndexEntriesFromTree", () => {
 });
 
 describe("skills index refresh/read service", () => {
+  it("treats a 304 ref as changed when the observed commit is not indexed", async () => {
+    const deps = createDeps({
+      targetState: staleState({
+        githubRefEtag: "etag-current",
+        indexedCommitSha: "old-index",
+        lastCheckedCommitSha: "current-main",
+      }),
+    });
+    deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
+      status: "not_modified",
+    });
+
+    await expect(
+      checkSkillIndexSourceRef({ deps, sourceControlRepositoryId: 1 })
+    ).resolves.toEqual({
+      currentCommitSha: "current-main",
+      status: "changed",
+    });
+
+    expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledWith(
+      expect.objectContaining({ etag: "etag-current" })
+    );
+  });
+
   it("refreshes current main instead of the stale target commit", async () => {
     const deps = createDeps({
       refSha: "current-main",
@@ -539,7 +564,8 @@ function createDeps(input: {
       etag: "etag-new",
       sha: input.refSha ?? "current-main",
       status: "found" as const,
-    })),
+    })) as SkillIndexServiceDeps["readSkillRepositoryMainRef"] &
+      ReturnType<typeof vi.fn>,
     readSkillRepositoryTree: vi.fn(async (_input: { signal?: AbortSignal }) => {
       if (input.readTreeError) {
         throw input.readTreeError;

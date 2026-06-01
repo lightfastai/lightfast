@@ -47,7 +47,11 @@ export async function checkSkillIndexSourceRef(input: {
     });
     return {
       currentCommitSha: state?.lastCheckedCommitSha ?? null,
-      status: "unchanged",
+      status:
+        state?.lastCheckedCommitSha &&
+        state.indexedCommitSha !== state.lastCheckedCommitSha
+          ? "changed"
+          : "unchanged",
     };
   }
 
