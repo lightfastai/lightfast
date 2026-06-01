@@ -1,11 +1,11 @@
+import type { SkillIndexEntry } from "@db/app";
+import type { SkillDiagnostic } from "@repo/skills-contract";
+
 import { getGitHubAppConfig } from "../github/config";
 import { resolveSkillIndexServiceDeps } from "./deps";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
 import { refreshSkillIndexSource } from "./refresh";
-import type {
-  SkillIndexFreshness,
-  SkillIndexServiceDeps,
-} from "./types";
+import type { SkillIndexFreshness, SkillIndexServiceDeps } from "./types";
 
 export async function ensureFreshSkillIndexForRead(input: {
   clerkOrgId: string;
@@ -14,9 +14,9 @@ export async function ensureFreshSkillIndexForRead(input: {
   slug?: string;
 }): Promise<{
   freshness: SkillIndexFreshness;
-  indexDiagnostics: unknown[];
+  indexDiagnostics: SkillDiagnostic[];
   repositoryUrl: string;
-  skills: unknown[];
+  skills: SkillIndexEntry[];
 }> {
   const deps = resolveSkillIndexServiceDeps(input.deps);
   const candidate = await getVerifiedCandidateByRepositoryId(deps, {
@@ -107,9 +107,13 @@ async function refreshWithBudget(input: {
 }
 
 function deriveReadStatus(input: {
-  entries: unknown[];
+  entries: SkillIndexEntry[];
   refreshStatus: "failed" | "fresh" | "missing" | "stale";
-  state: { indexedCommitSha: string | null; lastCheckedCommitSha: string | null; lastRefreshStatus: string } | null;
+  state: {
+    indexedCommitSha: string | null;
+    lastCheckedCommitSha: string | null;
+    lastRefreshStatus: string;
+  } | null;
 }): SkillIndexFreshness["status"] {
   if (
     input.state?.indexedCommitSha &&
@@ -118,7 +122,10 @@ function deriveReadStatus(input: {
   ) {
     return "fresh";
   }
-  if (input.refreshStatus === "stale" && input.state?.lastRefreshStatus === "refreshing") {
+  if (
+    input.refreshStatus === "stale" &&
+    input.state?.lastRefreshStatus === "refreshing"
+  ) {
     return "refreshing";
   }
   return input.entries.length > 0 ? "stale" : "unavailable";
@@ -146,7 +153,10 @@ function toFreshness(
   };
 }
 
-function filterEntries(entries: unknown[], slug?: string): unknown[] {
+function filterEntries(
+  entries: SkillIndexEntry[],
+  slug?: string
+): SkillIndexEntry[] {
   if (!slug) {
     return entries;
   }

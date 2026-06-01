@@ -24,6 +24,7 @@ import { orgMembersRouter } from "./router/(pending-not-allowed)/org-members";
 import { orgSourceControlRouter } from "./router/(pending-not-allowed)/org-source-control";
 import { taskRouter } from "./router/(pending-not-allowed)/task";
 import { workspacePeopleRouter } from "./router/(pending-not-allowed)/workspace-people";
+import { workspaceSkillsRouter } from "./router/(pending-not-allowed)/workspace-skills";
 import { workspaceSignalsRouter } from "./router/(pending-not-allowed)/workspace-signals";
 import { createTRPCRouter } from "./trpc";
 
@@ -51,6 +52,7 @@ export const appRouter = createTRPCRouter({
     workspace: createTRPCRouter({
       automations: automationsRouter,
       people: workspacePeopleRouter,
+      skills: workspaceSkillsRouter,
       signals: workspaceSignalsRouter,
     }),
   }),
