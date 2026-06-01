@@ -322,6 +322,35 @@ describe("skill index GitHub repository helpers", () => {
       sha: "a".repeat(40),
       status: "found",
     });
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.github.test/repos/acme/.lightfast/git/ref/heads/main",
+      expect.any(Object)
+    );
+  });
+
+  it("encodes nested ref segments separately", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          object: { sha: "a".repeat(40), type: "commit" },
+        }),
+        { status: 200 }
+      )
+    );
+
+    await getGitHubReference({
+      apiBaseUrl: "https://api.github.test",
+      fetch: fetchMock,
+      installationToken: "token",
+      owner: "acme",
+      ref: "heads/feature/demo branch",
+      repo: ".lightfast",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.github.test/repos/acme/.lightfast/git/ref/heads/feature/demo%20branch",
+      expect.any(Object)
+    );
   });
 
   it("returns not-modified when GitHub returns 304", async () => {
@@ -419,5 +448,83 @@ describe("skill index GitHub repository helpers", () => {
         sha: "blob",
       })
     ).resolves.toEqual({ sha: "blob", size: 5, text: "hello" });
+  });
+
+  it("rejects malformed GitHub blob base64", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          content: "YR==",
+          encoding: "base64",
+          sha: "blob",
+          size: 1,
+        }),
+        { status: 200 }
+      )
+    );
+
+    await expect(
+      getGitHubBlobText({
+        apiBaseUrl: "https://api.github.test",
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        repo: ".lightfast",
+        sha: "blob",
+      })
+    ).rejects.toMatchObject({ code: "GITHUB_BLOB_DECODE_FAILED" });
+  });
+
+  it("rejects GitHub blob content with invalid UTF-8", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          content: Buffer.from([0xff]).toString("base64"),
+          encoding: "base64",
+          sha: "blob",
+          size: 1,
+        }),
+        { status: 200 }
+      )
+    );
+
+    await expect(
+      getGitHubBlobText({
+        apiBaseUrl: "https://api.github.test",
+        fetch: fetchMock,
+        installationToken: "token",
+        owner: "acme",
+        repo: ".lightfast",
+        sha: "blob",
+      })
+    ).rejects.toMatchObject({ code: "GITHUB_BLOB_DECODE_FAILED" });
+  });
+
+  it("URL-encodes blob SHAs used in GitHub blob API paths", async () => {
+    const fetchMock = vi.fn(async () =>
+      new Response(
+        JSON.stringify({
+          content: Buffer.from("hello").toString("base64"),
+          encoding: "base64",
+          sha: "blob/sha value",
+          size: 5,
+        }),
+        { status: 200 }
+      )
+    );
+
+    await getGitHubBlobText({
+      apiBaseUrl: "https://api.github.test",
+      fetch: fetchMock,
+      installationToken: "token",
+      owner: "acme",
+      repo: ".lightfast",
+      sha: "blob/sha value",
+    });
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      "https://api.github.test/repos/acme/.lightfast/git/blobs/blob%2Fsha%20value",
+      expect.any(Object)
+    );
   });
 });

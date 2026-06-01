@@ -60,6 +60,47 @@ const repositoryResponseSchema = z.object({
   }),
 });
 
+function throwBlobDecodeFailed(): never {
+  throw new GitHubAppNodeError(
+    "GITHUB_BLOB_DECODE_FAILED",
+    "GitHub blob content could not be decoded."
+  );
+}
+
+function decodeBlobText(content: string): string {
+  const normalized = content.replace(/\s/g, "");
+  if (
+    !/^[A-Za-z0-9+/]*={0,2}$/.test(normalized) ||
+    normalized.length % 4 === 1
+  ) {
+    throwBlobDecodeFailed();
+  }
+
+  if (normalized.includes("=") && normalized.length % 4 !== 0) {
+    throwBlobDecodeFailed();
+  }
+
+  const unpadded = normalized.replace(/=+$/, "");
+  const paddingLength = (4 - (unpadded.length % 4)) % 4;
+  if (paddingLength === 3) {
+    throwBlobDecodeFailed();
+  }
+
+  const canonical = `${unpadded}${"=".repeat(paddingLength)}`;
+  try {
+    const bytes = Buffer.from(canonical, "base64");
+    if (bytes.toString("base64") !== canonical) {
+      throwBlobDecodeFailed();
+    }
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch (error) {
+    if (error instanceof GitHubAppNodeError) {
+      throw error;
+    }
+    throwBlobDecodeFailed();
+  }
+}
+
 async function getJson(input: {
   apiVersion?: string;
   fetch?: typeof fetch;
@@ -312,24 +353,9 @@ export async function getGitHubBlobText(input: {
     );
   }
 
-  const content = parsed.data.content.replace(/\s/g, "");
-  if (!/^[A-Za-z0-9+/]*={0,2}$/.test(content) || content.length % 4 === 1) {
-    throw new GitHubAppNodeError(
-      "GITHUB_BLOB_DECODE_FAILED",
-      "GitHub blob content could not be decoded."
-    );
-  }
-
-  try {
-    return {
-      sha: parsed.data.sha,
-      size: parsed.data.size,
-      text: Buffer.from(content, "base64").toString("utf8"),
-    };
-  } catch {
-    throw new GitHubAppNodeError(
-      "GITHUB_BLOB_DECODE_FAILED",
-      "GitHub blob content could not be decoded."
-    );
-  }
+  return {
+    sha: parsed.data.sha,
+    size: parsed.data.size,
+    text: decodeBlobText(parsed.data.content),
+  };
 }
