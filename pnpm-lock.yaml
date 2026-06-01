@@ -1355,6 +1355,12 @@ importers:
       '@emulators/core':
         specifier: 'catalog:'
         version: 0.6.0(patch_hash=58dc489c3bc2516b1c59ec2aa00ff2a11c32f0a14aabd89ad79e9af6197c9a40)
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
     devDependencies:
       '@repo/typescript-config':
         specifier: workspace:*
