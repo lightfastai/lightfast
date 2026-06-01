@@ -6,6 +6,7 @@ import { formatRelativeTimeToNow } from "@vendor/lib/time";
 import { CheckCircle, Clock, Loader2, XCircle } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
+import { RailSection } from "./rail-section";
 
 type AutomationRun =
   AppRouterOutputs["org"]["workspace"]["automations"]["listRuns"][number];
@@ -21,23 +22,6 @@ const RUN_STATUS_ICONS: Record<
   pending: { icon: Clock, className: "text-muted-foreground" },
   skipped: { icon: Clock, className: "text-muted-foreground" },
 };
-
-function RailSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-border border-t pt-4">
-      <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
 
 function RunRow({ run }: { run: AutomationRun }) {
   const [expanded, setExpanded] = useState(false);

@@ -13,25 +13,9 @@ import { Check, Circle, CirclePause } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { setOne, upsertInList } from "../../_components/automations-cache";
+import { RailSection } from "./rail-section";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
-
-function RailSection({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="border-border border-t pt-4">
-      <p className="mb-2 font-medium text-muted-foreground text-xs uppercase tracking-wide">
-        {label}
-      </p>
-      {children}
-    </div>
-  );
-}
 
 function StatusChipContent({ status }: { status: string }) {
   const Icon = status === "paused" ? CirclePause : Circle;
