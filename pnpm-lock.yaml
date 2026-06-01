@@ -1403,6 +1403,40 @@ importers:
         specifier: 'catalog:'
         version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
 
+  emulators/x:
+    dependencies:
+      '@emulators/core':
+        specifier: 'catalog:'
+        version: 0.6.0(patch_hash=58dc489c3bc2516b1c59ec2aa00ff2a11c32f0a14aabd89ad79e9af6197c9a40)
+      '@repo/emulator-kit':
+        specifier: workspace:*
+        version: link:../kit
+      '@t3-oss/env-core':
+        specifier: 'catalog:'
+        version: 0.13.11(typescript@5.9.3)(zod@4.3.6)
+      zod:
+        specifier: 'catalog:'
+        version: 4.3.6
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../internal/typescript
+      '@repo/vitest-config':
+        specifier: workspace:*
+        version: link:../../internal/vitest-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 24.9.1
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 4.1.4(@opentelemetry/api@1.9.1)(@types/node@24.9.1)(@vitest/coverage-v8@4.1.4)(happy-dom@20.9.0)(vite@8.0.10(@types/node@24.9.1)(esbuild@0.28.0)(jiti@2.6.1)(terser@5.46.1)(tsx@4.21.0)(yaml@2.8.3))
+
   internal/typescript: {}
 
   internal/vitest-config:
