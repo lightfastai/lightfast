@@ -67,6 +67,60 @@ describe("normalizeAutomationSchedule", () => {
     });
   });
 
+  it("normalizes manual schedules with an empty config", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "manual",
+        config: {},
+      })
+    ).toEqual({
+      kind: "manual",
+      config: {},
+    });
+  });
+
+  it("rejects manual schedules carrying extra config keys", () => {
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "manual",
+        config: { time: "09:00" },
+      })
+    ).toThrow();
+  });
+
+  it("normalizes weekdays schedules into a UTC HH:mm time", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "weekdays",
+        config: { time: "08:15" },
+      })
+    ).toEqual({
+      kind: "weekdays",
+      config: { time: "08:15" },
+    });
+  });
+
+  it("normalizes weekly schedules with a dayOfWeek and time", () => {
+    expect(
+      normalizeAutomationSchedule({
+        kind: "weekly",
+        config: { dayOfWeek: 1, time: "09:00" },
+      })
+    ).toEqual({
+      kind: "weekly",
+      config: { dayOfWeek: 1, time: "09:00" },
+    });
+  });
+
+  it("rejects weekly schedules with a dayOfWeek outside 0..6", () => {
+    expect(() =>
+      normalizeAutomationSchedule({
+        kind: "weekly",
+        config: { dayOfWeek: 7, time: "09:00" },
+      })
+    ).toThrow();
+  });
+
   it("rejects hourly intervals outside 1..24", () => {
     expect(() =>
       normalizeAutomationSchedule({

@@ -38,6 +38,15 @@ export const automationRunIdSchema = z
     "Invalid automation run id"
   );
 
+const timeSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm format");
+
+const manualScheduleSchema = z.object({
+  kind: z.literal("manual"),
+  config: z.object({}).strict(),
+});
+
 const hourlyScheduleSchema = z.object({
   kind: z.literal("hourly"),
   config: z.object({
@@ -48,13 +57,31 @@ const hourlyScheduleSchema = z.object({
 const dailyScheduleSchema = z.object({
   kind: z.literal("daily"),
   config: z.object({
-    time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Use HH:mm format"),
+    time: timeSchema,
+  }),
+});
+
+const weekdaysScheduleSchema = z.object({
+  kind: z.literal("weekdays"),
+  config: z.object({
+    time: timeSchema,
+  }),
+});
+
+const weeklyScheduleSchema = z.object({
+  kind: z.literal("weekly"),
+  config: z.object({
+    dayOfWeek: z.number().int().min(0).max(6),
+    time: timeSchema,
   }),
 });
 
 export const automationScheduleSchema = z.discriminatedUnion("kind", [
+  manualScheduleSchema,
   hourlyScheduleSchema,
   dailyScheduleSchema,
+  weekdaysScheduleSchema,
+  weeklyScheduleSchema,
 ]);
 
 export const createAutomationSchema = z.object({
