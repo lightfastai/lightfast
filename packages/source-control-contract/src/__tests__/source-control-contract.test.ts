@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   matchesAnyWatchedPath,
   matchesWatchedPath,
+  SOURCE_CONTROL_ALL_PATHS_GLOB,
   SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES,
   sourceControlRepositoryPushEventSchema,
   splitRepositoryFullName,
@@ -26,6 +27,13 @@ describe("@repo/source-control-contract", () => {
     ]);
     expect(watchedPathGlobsSchema.safeParse([]).success).toBe(false);
     expect(watchedPathGlobsSchema.safeParse([""]).success).toBe(false);
+  });
+
+  it("exports and validates the all-paths watch glob", () => {
+    expect(SOURCE_CONTROL_ALL_PATHS_GLOB).toBe("**");
+    expect(
+      watchedPathGlobsSchema.parse([SOURCE_CONTROL_ALL_PATHS_GLOB])
+    ).toEqual(["**"]);
   });
 
   it("rejects unsupported watched path wildcard patterns", () => {
@@ -57,6 +65,14 @@ describe("@repo/source-control-contract", () => {
     expect(matchesWatchedPath("README.md", ["README.md"])).toBe(true);
     expect(matchesWatchedPath("skills/foo/SKILL.md", ["skills/**"])).toBe(true);
     expect(matchesWatchedPath("docs/SKILL.md", ["skills/**"])).toBe(false);
+  });
+
+  it("matches all non-empty changed paths with the all-paths watch glob", () => {
+    expect(matchesWatchedPath("README.md", ["**"])).toBe(true);
+    expect(matchesWatchedPath("src/app.ts", ["**"])).toBe(true);
+    expect(matchesWatchedPath("", ["**"])).toBe(false);
+    expect(matchesAnyWatchedPath(["docs/readme.md"], ["**"])).toBe(true);
+    expect(matchesAnyWatchedPath([], ["**"])).toBe(false);
   });
 
   it("matches watched globs against a changed path set", () => {
