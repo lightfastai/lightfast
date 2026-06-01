@@ -23,6 +23,18 @@ export {
   orgSourceControlBindings,
 } from "./org-source-control-bindings";
 export {
+  type InsertNamespace,
+  type InsertNamespaceOperation,
+  type Namespace,
+  type NamespaceKind,
+  type NamespaceOperation,
+  namespaceOperations,
+  type NamespaceOperationStatus,
+  type NamespaceOperationType,
+  namespaces,
+  type NamespaceStatus,
+} from "./namespaces";
+export {
   createPersonId,
   type InsertPerson,
   PERSON_DISPLAY_NAME_LENGTH,

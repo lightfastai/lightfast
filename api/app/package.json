@@ -33,6 +33,7 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean": "git clean -xdf .cache .turbo node_modules",
+    "namespace:backfill": "pnpm with-env tsx scripts/backfill-namespaces.ts",
     "seed:people": "pnpm with-env tsx scripts/seed-people-signals.ts",
     "test": "vitest run --passWithNoTests",
     "typecheck": "tsc --noEmit",
@@ -70,6 +71,8 @@
     "@repo/typescript-config": "workspace:*",
     "@repo/vitest-config": "workspace:*",
     "@types/node": "catalog:",
+    "dotenv-cli": "catalog:",
+    "tsx": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
   }

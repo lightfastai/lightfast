@@ -7,12 +7,20 @@ interface Kids {
 }
 
 const fetchQueryMock = vi.fn();
+const getActiveNamespaceByHandleMock = vi.fn();
 const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
   queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
+let headerPathname = "/acme";
 const notFoundMock = vi.fn(() => {
   throw new Error("NEXT_NOT_FOUND");
 });
+
+vi.mock("@db/app/client", () => ({ db: {} }));
+
+vi.mock("@db/app", () => ({
+  getActiveNamespaceByHandle: getActiveNamespaceByHandleMock,
+}));
 
 vi.mock("~/trpc/server", () => ({
   getQueryClient: () => ({ fetchQuery: fetchQueryMock }),
@@ -71,6 +79,14 @@ vi.mock("next/navigation", () => ({
   notFound: notFoundMock,
 }));
 
+vi.mock("next/headers", () => ({
+  headers: () =>
+    Promise.resolve({
+      get: (name: string) =>
+        name.toLowerCase() === "x-lightfast-pathname" ? headerPathname : null,
+    }),
+}));
+
 const { default: OrgLayout } = await import(
   "~/app/(app)/(pending-not-allowed)/[slug]/layout"
 );
@@ -86,7 +102,22 @@ describe("[slug]/layout — membership/slug access gate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     fetchQueryMock.mockReset();
+    getActiveNamespaceByHandleMock.mockReset();
     getBySlugQueryOptionsMock.mockClear();
+    headerPathname = "/acme";
+    getActiveNamespaceByHandleMock.mockResolvedValue({
+      activeOperationId: null,
+      claimedClerkOrgId: "org_123",
+      claimedClerkUserId: null,
+      clerkOrgId: "org_123",
+      clerkUserId: null,
+      createdAt: new Date(),
+      handle: "acme",
+      id: 10,
+      kind: "org",
+      status: "active",
+      updatedAt: new Date(),
+    });
   });
 
   it("sends denied org access to the route not-found boundary", async () => {
@@ -102,6 +133,45 @@ describe("[slug]/layout — membership/slug access gate", () => {
 
     await expect(invoke("acme")).rejects.toThrow("NEXT_NOT_FOUND");
 
+    expect(notFoundMock).toHaveBeenCalledOnce();
+  });
+
+  it("falls back to Clerk org access while namespace backfill is pending", async () => {
+    getActiveNamespaceByHandleMock.mockResolvedValue(undefined);
+    fetchQueryMock.mockResolvedValue({
+      bindingStatus: "bound",
+      org: {
+        id: "org_legacy",
+        imageUrl: "",
+        name: "Legacy Team",
+        slug: "legacy-team",
+      },
+      role: "org:admin",
+    });
+
+    const element = await invoke("legacy-team");
+
+    render(element);
+
+    expect(getActiveNamespaceByHandleMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "legacy-team"
+    );
+    expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({
+      slug: "legacy-team",
+    });
+    expect(screen.getByTestId("shell-data-boundary")).toHaveTextContent(
+      "Workspace"
+    );
+  });
+
+  it("sends missing namespaces denied by Clerk org access to not-found", async () => {
+    getActiveNamespaceByHandleMock.mockResolvedValue(undefined);
+    fetchQueryMock.mockRejectedValue(new Error("Organization not found"));
+
+    await expect(invoke("missing")).rejects.toThrow("NEXT_NOT_FOUND");
+
+    expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "missing" });
     expect(notFoundMock).toHaveBeenCalledOnce();
   });
 
@@ -128,6 +198,56 @@ describe("[slug]/layout — membership/slug access gate", () => {
       screen.queryByTestId("authenticated-topbar")
     ).not.toBeInTheDocument();
     expect(screen.queryByTestId("app-sidebar")).not.toBeInTheDocument();
+    expect(getActiveNamespaceByHandleMock).toHaveBeenCalledWith(
+      expect.anything(),
+      "acme"
+    );
     expect(getBySlugQueryOptionsMock).toHaveBeenCalledWith({ slug: "acme" });
+  });
+
+  it("renders a user namespace root without trying org membership access", async () => {
+    getActiveNamespaceByHandleMock.mockResolvedValue({
+      activeOperationId: null,
+      claimedClerkOrgId: null,
+      claimedClerkUserId: "user_123",
+      clerkOrgId: null,
+      clerkUserId: "user_123",
+      createdAt: new Date(),
+      handle: "ada-dev",
+      id: 20,
+      kind: "user",
+      status: "active",
+      updatedAt: new Date(),
+    });
+    headerPathname = "/ada-dev";
+
+    const element = await invoke("ada-dev");
+
+    render(element);
+
+    expect(screen.getByRole("heading", { name: "@ada-dev" })).toBeVisible();
+    expect(fetchQueryMock).not.toHaveBeenCalled();
+  });
+
+  it("sends nested user namespace paths to not-found", async () => {
+    getActiveNamespaceByHandleMock.mockResolvedValue({
+      activeOperationId: null,
+      claimedClerkOrgId: null,
+      claimedClerkUserId: "user_123",
+      clerkOrgId: null,
+      clerkUserId: "user_123",
+      createdAt: new Date(),
+      handle: "ada-dev",
+      id: 20,
+      kind: "user",
+      status: "active",
+      updatedAt: new Date(),
+    });
+    headerPathname = "/ada-dev/settings";
+
+    await expect(invoke("ada-dev")).rejects.toThrow("NEXT_NOT_FOUND");
+
+    expect(fetchQueryMock).not.toHaveBeenCalled();
+    expect(notFoundMock).toHaveBeenCalledOnce();
   });
 });

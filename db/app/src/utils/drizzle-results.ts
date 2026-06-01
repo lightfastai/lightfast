@@ -21,19 +21,42 @@ export function getRowsAffected(result: unknown): number {
 }
 
 export function isDuplicateKeyError(error: unknown): boolean {
+  return isDuplicateKeyErrorValue(error, new Set<unknown>());
+}
+
+function isDuplicateKeyErrorValue(
+  error: unknown,
+  seen: Set<unknown>
+): boolean {
   if (error === null || typeof error !== "object") {
     return false;
   }
+  if (seen.has(error)) {
+    return false;
+  }
+  seen.add(error);
 
-  const { body, code, message } = error as {
-    body?: { code?: unknown };
+  const { body, cause, code, errno, message } = error as {
+    body?: { code?: unknown; message?: unknown };
+    cause?: unknown;
     code?: unknown;
+    errno?: unknown;
     message?: unknown;
   };
 
   return (
-    body?.code === "ER_DUP_ENTRY" ||
     code === "ER_DUP_ENTRY" ||
-    (typeof message === "string" && message.includes("Duplicate entry"))
+    body?.code === "ER_DUP_ENTRY" ||
+    errno === 1062 ||
+    includesDuplicateEntry(message) ||
+    includesDuplicateEntry(body?.message) ||
+    isDuplicateKeyErrorValue(cause, seen)
+  );
+}
+
+function includesDuplicateEntry(value: unknown) {
+  return (
+    typeof value === "string" &&
+    (value.includes("Duplicate entry") || value.includes("errno 1062"))
   );
 }

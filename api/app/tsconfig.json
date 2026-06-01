@@ -1,5 +1,5 @@
 {
   "extends": "@repo/typescript-config/base.json",
-  "include": ["src/**/*"],
+  "include": ["scripts/**/*", "src/**/*"],
   "exclude": ["node_modules", "src/inngest/workflow/_deprecated"]
 }

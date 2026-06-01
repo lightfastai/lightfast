@@ -168,6 +168,9 @@ catalogs:
     vitest:
       specifier: ^4.1.4
       version: 4.1.4
+    xstate:
+      specifier: ^5.32.0
+      version: 5.32.0
     zod:
       specifier: ^4.3.6
       version: 4.3.6
@@ -376,6 +379,12 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 24.9.1
+      dotenv-cli:
+        specifier: 'catalog:'
+        version: 11.0.0
+      tsx:
+        specifier: 'catalog:'
+        version: 4.21.0
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
@@ -1196,6 +1205,9 @@ importers:
       drizzle-orm:
         specifier: 'catalog:'
         version: 0.45.2(@opentelemetry/api@1.9.1)(@planetscale/database@1.20.1)(@types/better-sqlite3@7.6.13)(@types/pg@8.15.6)(@upstash/redis@1.37.0)(better-sqlite3@12.9.0)
+      xstate:
+        specifier: 'catalog:'
+        version: 5.32.0
       zod:
         specifier: 'catalog:'
         version: 4.3.6
@@ -13220,6 +13232,9 @@ packages:
   xmlbuilder@15.1.1:
     resolution: {integrity: sha512-yMqGBqtXyeN1e3TGYvgNgDVZ3j84W4cwkOXQswghol6APgZWaff9lnbvN7MHYJOiXsvGPXtjTYJEiC9J2wv9Eg==}
     engines: {node: '>=8.0'}
+
+  xstate@5.32.0:
+    resolution: {integrity: sha512-zsk73aWGmxn9z34P0kbiod5JwTvdYRW3+IDxITq8sd9+VWwMyW7BUzpplnYy9mIEXa6V8IMDv7Hy4m0mhT5+2Q==}
 
   xtend@4.0.2:
     resolution: {integrity: sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==}
@@ -25406,6 +25421,8 @@ snapshots:
   xml-naming@0.1.0: {}
 
   xmlbuilder@15.1.1: {}
+
+  xstate@5.32.0: {}
 
   xtend@4.0.2: {}
 

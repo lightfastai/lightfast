@@ -47,6 +47,7 @@
     "@vendor/db": "workspace:*",
     "@vendor/lib": "workspace:*",
     "drizzle-orm": "catalog:",
+    "xstate": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
