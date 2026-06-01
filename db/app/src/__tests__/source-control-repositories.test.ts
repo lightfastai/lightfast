@@ -9,6 +9,8 @@ import type {
 } from "../schema";
 import {
   completeWatchedSourceControlRepositorySetup,
+  insertWatchedSourceControlRepository,
+  listWatchedSourceControlRepositories,
   markSourceControlWebhookDeliveryStatus,
   recordSourceControlWebhookDeliveryReceived,
   upsertWatchedSourceControlRepository,
@@ -91,6 +93,62 @@ describe("source-control repository helpers", () => {
         fullName: "acme/project",
         watchedPathGlobs: ["src/**"],
       },
+    });
+  });
+
+  it("lists watched repositories for a binding", async () => {
+    const repositories = [
+      createWatchedRepository({
+        id: 30,
+        orgSourceControlBindingId: 7,
+        providerRepositoryId: "repo-1",
+      }),
+    ];
+    const whereMock = vi.fn(() => repositories);
+    const orderByMock = vi.fn(() => ({ where: whereMock }));
+    const fromMock = vi.fn(() => ({ orderBy: orderByMock }));
+    const db = {
+      select: vi.fn(() => ({ from: fromMock })),
+    } as unknown as Database;
+
+    await expect(
+      listWatchedSourceControlRepositories(db, {
+        orgSourceControlBindingId: 7,
+      })
+    ).resolves.toEqual(repositories);
+  });
+
+  it("inserts watched repository without duplicate-key scope overwrite", async () => {
+    const repository = createWatchedRepository({
+      fullName: "acme/workspace",
+      id: 31,
+      providerRepositoryId: "repo-2",
+      watchedPathGlobs: ["**"],
+    });
+    const limitMock = vi.fn(() => [repository]);
+    const selectWhereMock = vi.fn(() => ({ limit: limitMock }));
+    const fromMock = vi.fn(() => ({ where: selectWhereMock }));
+    const catchMock = vi.fn(async () => undefined);
+    const valuesMock = vi.fn(() => ({ catch: catchMock }));
+    const db = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn(() => ({ from: fromMock })),
+    } as unknown as Database;
+
+    await expect(
+      insertWatchedSourceControlRepository(db, {
+        fullName: "acme/workspace",
+        orgSourceControlBindingId: 7,
+        providerRepositoryId: "repo-2",
+        watchedPathGlobs: ["**"],
+      })
+    ).resolves.toBe(repository);
+
+    expect(valuesMock).toHaveBeenCalledWith({
+      fullName: "acme/workspace",
+      orgSourceControlBindingId: 7,
+      providerRepositoryId: "repo-2",
+      watchedPathGlobs: ["**"],
     });
   });
 

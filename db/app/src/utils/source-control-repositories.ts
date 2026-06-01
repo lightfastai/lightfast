@@ -2,7 +2,7 @@ import type {
   SourceControlWebhookDeliveryStatus,
   WatchedPathGlobs,
 } from "@repo/source-control-contract";
-import { and, eq, getTableColumns } from "drizzle-orm";
+import { and, asc, eq, getTableColumns } from "drizzle-orm";
 
 import type { Database } from "../client";
 import type {
@@ -72,6 +72,57 @@ export async function getWatchedSourceControlRepositoryById(
     .where(eq(sourceControlRepositories.id, input.id))
     .limit(1);
   return row;
+}
+
+export async function listWatchedSourceControlRepositories(
+  db: Database,
+  input: { orgSourceControlBindingId: number }
+): Promise<SourceControlRepository[]> {
+  return await db
+    .select(repositorySelection)
+    .from(sourceControlRepositories)
+    .orderBy(asc(sourceControlRepositories.id))
+    .where(
+      eq(
+        sourceControlRepositories.orgSourceControlBindingId,
+        input.orgSourceControlBindingId
+      )
+    );
+}
+
+export async function insertWatchedSourceControlRepository(
+  db: Database,
+  input: UpsertWatchedSourceControlRepositoryInput
+): Promise<SourceControlRepository> {
+  let duplicateError: unknown;
+  await db
+    .insert(sourceControlRepositories)
+    .values({
+      fullName: input.fullName,
+      orgSourceControlBindingId: input.orgSourceControlBindingId,
+      providerRepositoryId: input.providerRepositoryId,
+      watchedPathGlobs: input.watchedPathGlobs,
+    })
+    .catch((error: unknown) => {
+      if (!isDuplicateKeyError(error)) {
+        throw error;
+      }
+      duplicateError = error;
+    });
+
+  const repository = await getWatchedSourceControlRepository(db, {
+    orgSourceControlBindingId: input.orgSourceControlBindingId,
+    providerRepositoryId: input.providerRepositoryId,
+  });
+  if (!repository) {
+    if (duplicateError) {
+      throw duplicateError;
+    }
+    throw new Error(
+      `Failed to insert watched repository ${input.providerRepositoryId}`
+    );
+  }
+  return repository;
 }
 
 export async function upsertWatchedSourceControlRepository(
