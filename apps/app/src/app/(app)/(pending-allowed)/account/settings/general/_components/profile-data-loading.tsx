@@ -70,6 +70,20 @@ export function ProfileDataLoading() {
         </div>
         <Skeleton className="h-9 w-full" />
       </div>
+
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-semibold text-foreground text-xl">
+            GitHub account
+          </h2>
+          <p className="mt-1 max-w-xl text-muted-foreground text-sm">
+            Connect your personal GitHub identity so Lightfast can set up
+            user-level source-control access for future workflows that act on
+            your behalf.
+          </p>
+        </div>
+        <Skeleton className="h-20 w-full rounded-lg" />
+      </div>
     </div>
   );
 }

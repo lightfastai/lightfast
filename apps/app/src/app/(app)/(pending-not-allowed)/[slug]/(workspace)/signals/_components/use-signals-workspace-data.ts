@@ -3,12 +3,10 @@
 import { useMemo } from "react";
 import {
   adaptProcessingRow,
-  getSignalKindLabel,
   type SignalClassificationFilters,
   type SignalListItem,
   type SignalRow,
   type SignalSection,
-  signalKindOptions,
 } from "./signals-model";
 import {
   useProcessingSignalsQuery,
@@ -50,7 +48,7 @@ export function useSignalsWorkspaceData({
     [dedupedProcessingFullRows]
   );
 
-  const { byKind, classified, processing } = useSignalsFiltering({
+  const { classified, processing } = useSignalsFiltering({
     classifiedRows,
     filters,
     processingRows,
@@ -78,29 +76,6 @@ export function useSignalsWorkspaceData({
     [classified, processing, workingSetQuery, processingQuery]
   );
 
-  const boardSections = useMemo<SignalSection[]>(
-    () => [
-      {
-        id: "processing",
-        isError: processingQuery.isError,
-        isFetching: processingQuery.isFetching,
-        label: "Processing",
-        refetch: () => void processingQuery.refetch(),
-        rows: processing,
-      },
-      ...signalKindOptions.map((option) => ({
-        id: option.value,
-        isError: workingSetQuery.isError,
-        isFetching: workingSetQuery.isFetching,
-        kind: option.value,
-        label: getSignalKindLabel(option.value),
-        refetch: () => void workingSetQuery.refetch(),
-        rows: byKind.get(option.value) ?? [],
-      })),
-    ],
-    [byKind, processing, processingQuery, workingSetQuery]
-  );
-
   // Classified rows (projection, no body) seed the detail header; processing
   // rows are retained full (they carry `input`) so their detail needs no `get`.
   const signalsByPublicId = useMemo(() => {
@@ -115,7 +90,6 @@ export function useSignalsWorkspaceData({
   }, [classifiedRows, dedupedProcessingFullRows]);
 
   return {
-    boardSections,
     hasAnyRows: classifiedRows.length + processingRows.length > 0,
     limit: workingSetQuery.data?.limit ?? 2000,
     processingQueryKey,

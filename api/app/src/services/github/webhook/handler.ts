@@ -131,7 +131,30 @@ export async function handleGitHubWebhook(input: {
     return response(202, { ok: true, ignored: true });
   }
 
-  if (!matchesAnyWatchedPath(push.changedPaths, watch.watchedPathGlobs)) {
+  if (watch.syncStatus !== "enabled") {
+    await markSourceControlWebhookDeliveryStatus(db, {
+      deliveryId: headers.deliveryId,
+      status: "ignored",
+    });
+    return response(202, { ok: true, ignored: true });
+  }
+
+  if (watch.watchedPathGlobs === null) {
+    await markSourceControlWebhookDeliveryStatus(db, {
+      deliveryId: headers.deliveryId,
+      status: "ignored",
+    });
+    return response(202, { ok: true, ignored: true });
+  }
+
+  const changedPathsMatch = matchesAnyWatchedPath(
+    push.changedPaths,
+    watch.watchedPathGlobs
+  );
+  const shouldConservativelyQueue =
+    push.ref === "refs/heads/main" && !push.changedPathsComplete;
+
+  if (!(changedPathsMatch || shouldConservativelyQueue)) {
     await markSourceControlWebhookDeliveryStatus(db, {
       deliveryId: headers.deliveryId,
       status: "ignored",

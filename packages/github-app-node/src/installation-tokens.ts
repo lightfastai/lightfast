@@ -17,6 +17,7 @@ export async function createGitHubInstallationToken(input: {
   appJwt: string;
   fetch?: typeof fetch;
   installationId: string;
+  signal?: AbortSignal;
 }): Promise<{ expiresAt: string; token: string }> {
   const requestFetch = input.fetch ?? fetch;
   const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
@@ -30,6 +31,7 @@ export async function createGitHubInstallationToken(input: {
         apiVersion: input.apiVersion,
         token: input.appJwt,
       }),
+      signal: input.signal,
     },
     requestErrorCode: "GITHUB_API_REQUEST_FAILED",
     requestErrorMessage: "GitHub installation token request failed.",

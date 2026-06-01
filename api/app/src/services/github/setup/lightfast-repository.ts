@@ -15,12 +15,14 @@ import {
   getGitHubRepository,
   verifyGitHubInstallationRepository,
 } from "@repo/github-app-node";
+import { log } from "@vendor/observability/log/next";
 
 import { mirrorOrgSetupGate } from "../../../auth/org-binding-mirror";
 import {
   deriveOrgSetupGate,
   hasMatchingGitHubLightfastRepositoryProof,
 } from "../../../auth/org-setup-gate";
+import { createSkillRefreshDedupeKey } from "../../../inngest/workflow/skill-refresh-event";
 import { getGitHubAppConfig } from "../config";
 
 export class GitHubLightfastRepositorySetupError extends Error {
@@ -62,12 +64,37 @@ async function ensureWatchedLightfastRepository(input: {
   fullName: string;
   providerRepositoryId: string;
 }) {
-  await upsertWatchedSourceControlRepository(input.db, {
+  return await upsertWatchedSourceControlRepository(input.db, {
     fullName: input.fullName,
     orgSourceControlBindingId: input.bindingId,
     providerRepositoryId: input.providerRepositoryId,
     watchedPathGlobs: ["skills/**"],
   });
+}
+
+async function enqueueInitialSkillRefresh(input: {
+  sourceControlRepositoryId: number;
+}) {
+  try {
+    const { inngest } = await import("../../../inngest/client");
+    await inngest.send({
+      name: "app/skills.index.refresh.requested",
+      data: {
+        dedupeKey: createSkillRefreshDedupeKey({
+          reason: "setup",
+          sourceControlRepositoryId: input.sourceControlRepositoryId,
+        }),
+        reason: "setup",
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      },
+    });
+  } catch (error) {
+    log.warn("[github-setup] initial skill refresh enqueue failed", {
+      error,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
+    return;
+  }
 }
 
 export async function verifyGitHubLightfastRepositorySetup(input: {
@@ -81,11 +108,14 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
     const proof = githubLightfastRepositoryProofSchema.parse(
       binding.metadata.lightfastRepository
     );
-    await ensureWatchedLightfastRepository({
+    const watchedRepository = await ensureWatchedLightfastRepository({
       bindingId: binding.id,
       db: input.db,
       fullName: proof.fullName,
       providerRepositoryId: proof.id,
+    });
+    await enqueueInitialSkillRefresh({
+      sourceControlRepositoryId: watchedRepository.id,
     });
     const gate = deriveOrgSetupGate(binding);
     await mirrorOrgSetupGate({
@@ -155,20 +185,29 @@ export async function verifyGitHubLightfastRepositorySetup(input: {
     ...binding.metadata,
     lightfastRepository: proof,
   };
+  let watchedRepository: Awaited<
+    ReturnType<typeof completeWatchedSourceControlRepositorySetup>
+  >;
   try {
-    await completeWatchedSourceControlRepositorySetup(input.db, {
-      bindingMetadata: metadata,
-      fullName: proof.fullName,
-      orgSourceControlBindingId: binding.id,
-      providerRepositoryId: proof.id,
-      watchedPathGlobs: ["skills/**"],
-    });
+    watchedRepository = await completeWatchedSourceControlRepositorySetup(
+      input.db,
+      {
+        bindingMetadata: metadata,
+        fullName: proof.fullName,
+        orgSourceControlBindingId: binding.id,
+        providerRepositoryId: proof.id,
+        watchedPathGlobs: ["skills/**"],
+      }
+    );
   } catch {
     throw new GitHubLightfastRepositorySetupError(
       "github_transient_error",
       "Lightfast could not store the .lightfast repository proof."
     );
   }
+  await enqueueInitialSkillRefresh({
+    sourceControlRepositoryId: watchedRepository.id,
+  });
 
   const gate = deriveOrgSetupGate({
     ...binding,

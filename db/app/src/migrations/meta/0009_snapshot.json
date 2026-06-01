@@ -1,7 +1,7 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "6d415659-4744-46e8-9cd9-6d2faff628ca",
+  "id": "931b7077-e0dc-435e-b989-c59a44591444",
   "prevId": "c2c24255-6fb1-4de4-b952-f75dc8626d73",
   "tables": {
     "lightfast_automation_runs": {
@@ -331,321 +331,6 @@
       "uniqueConstraints": {},
       "checkConstraint": {}
     },
-    "lightfast_namespace_operations": {
-      "name": "lightfast_namespace_operations",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "operation_type": {
-          "name": "operation_type",
-          "type": "varchar(48)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "owner_kind": {
-          "name": "owner_kind",
-          "type": "varchar(48)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_user_id": {
-          "name": "clerk_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "idempotency_clerk_user_id": {
-          "name": "idempotency_clerk_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "idempotency_clerk_org_id": {
-          "name": "idempotency_clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "from_handle": {
-          "name": "from_handle",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "to_handle": {
-          "name": "to_handle",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(48)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "idempotency_key": {
-          "name": "idempotency_key",
-          "type": "varchar(128)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "error_code": {
-          "name": "error_code",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "error_message": {
-          "name": "error_message",
-          "type": "varchar(512)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "expires_at": {
-          "name": "expires_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "namespace_operations_org_idempotency_uq": {
-          "name": "namespace_operations_org_idempotency_uq",
-          "columns": [
-            "idempotency_clerk_org_id",
-            "operation_type",
-            "idempotency_key"
-          ],
-          "isUnique": true
-        },
-        "namespace_operations_org_idx": {
-          "name": "namespace_operations_org_idx",
-          "columns": [
-            "clerk_org_id",
-            "status"
-          ],
-          "isUnique": false
-        },
-        "namespace_operations_status_idx": {
-          "name": "namespace_operations_status_idx",
-          "columns": [
-            "status",
-            "updated_at"
-          ],
-          "isUnique": false
-        },
-        "namespace_operations_user_idempotency_uq": {
-          "name": "namespace_operations_user_idempotency_uq",
-          "columns": [
-            "idempotency_clerk_user_id",
-            "operation_type",
-            "idempotency_key"
-          ],
-          "isUnique": true
-        },
-        "namespace_operations_user_idx": {
-          "name": "namespace_operations_user_idx",
-          "columns": [
-            "clerk_user_id",
-            "status"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_namespace_operations_id": {
-          "name": "lightfast_namespace_operations_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
-    "lightfast_namespaces": {
-      "name": "lightfast_namespaces",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "handle": {
-          "name": "handle",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "kind": {
-          "name": "kind",
-          "type": "varchar(48)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "clerk_user_id": {
-          "name": "clerk_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "clerk_org_id": {
-          "name": "clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "claimed_clerk_user_id": {
-          "name": "claimed_clerk_user_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "claimed_clerk_org_id": {
-          "name": "claimed_clerk_org_id",
-          "type": "varchar(64)",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "status": {
-          "name": "status",
-          "type": "varchar(48)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "active_operation_id": {
-          "name": "active_operation_id",
-          "type": "bigint unsigned",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp(3)",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false,
-          "default": "CURRENT_TIMESTAMP(3)"
-        }
-      },
-      "indexes": {
-        "namespaces_active_operation_uq": {
-          "name": "namespaces_active_operation_uq",
-          "columns": [
-            "active_operation_id"
-          ],
-          "isUnique": true
-        },
-        "namespaces_claimed_org_uq": {
-          "name": "namespaces_claimed_org_uq",
-          "columns": [
-            "claimed_clerk_org_id"
-          ],
-          "isUnique": true
-        },
-        "namespaces_claimed_user_uq": {
-          "name": "namespaces_claimed_user_uq",
-          "columns": [
-            "claimed_clerk_user_id"
-          ],
-          "isUnique": true
-        },
-        "namespaces_handle_uq": {
-          "name": "namespaces_handle_uq",
-          "columns": [
-            "handle"
-          ],
-          "isUnique": true
-        },
-        "namespaces_org_idx": {
-          "name": "namespaces_org_idx",
-          "columns": [
-            "clerk_org_id",
-            "status"
-          ],
-          "isUnique": false
-        },
-        "namespaces_user_idx": {
-          "name": "namespaces_user_idx",
-          "columns": [
-            "clerk_user_id",
-            "status"
-          ],
-          "isUnique": false
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {
-        "lightfast_namespaces_id": {
-          "name": "lightfast_namespaces_id",
-          "columns": [
-            "id"
-          ]
-        }
-      },
-      "uniqueConstraints": {},
-      "checkConstraint": {}
-    },
     "lightfast_org_source_control_bindings": {
       "name": "lightfast_org_source_control_bindings",
       "columns": {
@@ -939,6 +624,99 @@
       "compositePrimaryKeys": {
         "lightfast_people_id": {
           "name": "lightfast_people_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "lightfast_people_views": {
+      "name": "lightfast_people_views",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint unsigned",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "public_id": {
+          "name": "public_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "clerk_org_id": {
+          "name": "clerk_org_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_by_user_id": {
+          "name": "created_by_user_id",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "varchar(120)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "config": {
+          "name": "config",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp(3)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "CURRENT_TIMESTAMP(3)"
+        }
+      },
+      "indexes": {
+        "people_views_public_id_uq": {
+          "name": "people_views_public_id_uq",
+          "columns": [
+            "public_id"
+          ],
+          "isUnique": true
+        },
+        "people_views_org_user_created_idx": {
+          "name": "people_views_org_user_created_idx",
+          "columns": [
+            "clerk_org_id",
+            "created_by_user_id",
+            "created_at",
+            "id"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "lightfast_people_views_id": {
+          "name": "lightfast_people_views_id",
           "columns": [
             "id"
           ]

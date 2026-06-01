@@ -65,7 +65,6 @@ const viewRow: SignalView = {
       dispositions: [],
       peopleRouted: false,
     },
-    layout: "list",
   },
   createdAt: new Date("2026-05-30T01:00:00.000Z"),
   updatedAt: new Date("2026-05-30T01:00:00.000Z"),
@@ -142,16 +141,6 @@ describe("workspaceSignalsRouter.views.create", () => {
   it("rejects an empty name", async () => {
     await expect(
       caller().signals.views.create({ name: "   ", config: viewRow.config })
-    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(createSignalViewMock).not.toHaveBeenCalled();
-  });
-
-  it("rejects an invalid layout", async () => {
-    await expect(
-      caller().signals.views.create({
-        name: "Bad",
-        config: { ...viewRow.config, layout: "timeline" as never },
-      })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
     expect(createSignalViewMock).not.toHaveBeenCalled();
   });

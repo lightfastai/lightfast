@@ -61,10 +61,6 @@ function SignUpView() {
 
   const verifyingCodeRef = React.useRef<string | null>(null);
 
-  const handleWaitlist = React.useCallback(() => {
-    window.location.replace("/sign-up?errorCode=waitlist");
-  }, []);
-
   const errorPathFor = React.useCallback(
     (params: { errorCode?: string; error?: string }) => {
       const search = new URLSearchParams();
@@ -92,17 +88,13 @@ function SignUpView() {
         return { success: false };
       }
       if (mapped.kind === "code") {
-        if (mapped.errorCode === "waitlist") {
-          handleWaitlist();
-          return { success: false };
-        }
         setOtpError(authErrorMessage(mapped.errorCode));
         return { success: false };
       }
       setOtpError(mapped.message);
       return { success: false };
     },
-    [handleWaitlist]
+    []
   );
 
   const handleSubmitEmailError = React.useCallback(
@@ -407,7 +399,7 @@ function SignUpView() {
             variant="link-blue"
           >
             <NextLink href="/sign-in" prefetch>
-              Log In
+              Log in
             </NextLink>
           </Button>
         </div>

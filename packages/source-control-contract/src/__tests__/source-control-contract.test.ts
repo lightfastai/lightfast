@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 import {
   matchesAnyWatchedPath,
   matchesWatchedPath,
+  SOURCE_CONTROL_ALL_PATHS_GLOB,
+  SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES,
   SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES,
   sourceControlRepositoryPushEventSchema,
+  sourceControlRepositorySyncStatusSchema,
   splitRepositoryFullName,
   watchedPathGlobsSchema,
 } from "../index";
@@ -19,6 +22,19 @@ describe("@repo/source-control-contract", () => {
     ]);
   });
 
+  it("defines repository sync statuses", () => {
+    expect(SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES).toEqual([
+      "enabled",
+      "disabled",
+    ]);
+    expect(sourceControlRepositorySyncStatusSchema.parse("enabled")).toBe(
+      "enabled"
+    );
+    expect(sourceControlRepositorySyncStatusSchema.parse("disabled")).toBe(
+      "disabled"
+    );
+  });
+
   it("validates watched path globs as supported non-empty patterns", () => {
     expect(watchedPathGlobsSchema.parse(["skills/**", "README.md"])).toEqual([
       "skills/**",
@@ -26,6 +42,13 @@ describe("@repo/source-control-contract", () => {
     ]);
     expect(watchedPathGlobsSchema.safeParse([]).success).toBe(false);
     expect(watchedPathGlobsSchema.safeParse([""]).success).toBe(false);
+  });
+
+  it("exports and validates the all-paths watch glob", () => {
+    expect(SOURCE_CONTROL_ALL_PATHS_GLOB).toBe("**");
+    expect(
+      watchedPathGlobsSchema.parse([SOURCE_CONTROL_ALL_PATHS_GLOB])
+    ).toEqual(["**"]);
   });
 
   it("rejects unsupported watched path wildcard patterns", () => {
@@ -59,6 +82,14 @@ describe("@repo/source-control-contract", () => {
     expect(matchesWatchedPath("docs/SKILL.md", ["skills/**"])).toBe(false);
   });
 
+  it("matches all non-empty changed paths with the all-paths watch glob", () => {
+    expect(matchesWatchedPath("README.md", ["**"])).toBe(true);
+    expect(matchesWatchedPath("src/app.ts", ["**"])).toBe(true);
+    expect(matchesWatchedPath("", ["**"])).toBe(false);
+    expect(matchesAnyWatchedPath(["docs/readme.md"], ["**"])).toBe(true);
+    expect(matchesAnyWatchedPath([], ["**"])).toBe(false);
+  });
+
   it("matches watched globs against a changed path set", () => {
     expect(
       matchesAnyWatchedPath(
@@ -78,6 +109,7 @@ describe("@repo/source-control-contract", () => {
         afterSha: "a".repeat(40),
         beforeSha: "b".repeat(40),
         changedPaths: ["skills/demo/SKILL.md"],
+        changedPathsComplete: true,
         deliveryId: "delivery-1",
         orgSourceControlBindingId: 1,
         providerInstallationId: "1001",
@@ -87,9 +119,28 @@ describe("@repo/source-control-contract", () => {
         repositoryWatchId: 10,
       })
     ).toMatchObject({
+      changedPathsComplete: true,
       deliveryId: "delivery-1",
       repositoryFullName: "lightfast-emulated/workspace",
     });
+  });
+
+  it("accepts legacy repository push payloads without changed path completeness", () => {
+    const parsed = sourceControlRepositoryPushEventSchema.parse({
+      afterSha: "a".repeat(40),
+      beforeSha: "b".repeat(40),
+      changedPaths: ["skills/demo/SKILL.md"],
+      deliveryId: "delivery-1",
+      orgSourceControlBindingId: 1,
+      providerInstallationId: "1001",
+      providerRepositoryId: "2002",
+      ref: "refs/heads/main",
+      repositoryFullName: "lightfast-emulated/workspace",
+      repositoryWatchId: 10,
+    });
+
+    expect(parsed.changedPathsComplete).toBeUndefined();
+    expect(parsed.deliveryId).toBe("delivery-1");
   });
 
   it("rejects malformed repository push routing fields", () => {
@@ -98,6 +149,7 @@ describe("@repo/source-control-contract", () => {
       beforeSha: "b".repeat(40),
       deliveryId: "delivery-1",
       changedPaths: ["skills/demo/SKILL.md"],
+      changedPathsComplete: true,
       orgSourceControlBindingId: 1,
       providerInstallationId: "1001",
       providerRepositoryId: "2002",

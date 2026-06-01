@@ -13,6 +13,14 @@ interface PushGitHubEmulatorCommitInput {
   token: string;
 }
 
+interface PushGitHubEmulatorSkillInput
+  extends Omit<PushGitHubEmulatorCommitInput, "files" | "message"> {
+  body?: string;
+  description?: string;
+  message?: string;
+  skillName: string;
+}
+
 async function githubJson<T>(
   url: string,
   init: RequestInit,
@@ -115,5 +123,66 @@ export async function pushGitHubEmulatorCommit(
   return {
     afterSha: nextCommit.sha,
     beforeSha,
+  };
+}
+
+export function createGitHubEmulatorSkillFile(input: {
+  body?: string;
+  description?: string;
+  skillName: string;
+}): PushFile {
+  const skillName = normalizeSkillName(input.skillName);
+  const description = input.description ?? `Use when testing ${skillName}.`;
+  const body = input.body ?? `Run ${skillName} carefully.`;
+
+  return {
+    content: [
+      "---",
+      `name: ${skillName}`,
+      `description: ${yamlString(description)}`,
+      "---",
+      "",
+      body,
+      "",
+    ].join("\n"),
+    path: `skills/${skillName}/SKILL.md`,
+  };
+}
+
+function normalizeSkillName(skillName: string): string {
+  const normalized = skillName.trim().toLowerCase();
+  if (
+    !/^[a-z0-9][a-z0-9-]{0,62}$/.test(normalized) ||
+    normalized.endsWith("-") ||
+    normalized.includes("--")
+  ) {
+    throw new Error(`Invalid skill name for GitHub emulator: ${skillName}`);
+  }
+  return normalized;
+}
+
+function yamlString(value: string): string {
+  return JSON.stringify(value);
+}
+
+export async function pushGitHubEmulatorSkill(
+  input: PushGitHubEmulatorSkillInput
+): Promise<{
+  afterSha: string;
+  beforeSha: string;
+  content: string;
+  path: string;
+}> {
+  const skillFile = createGitHubEmulatorSkillFile(input);
+  const push = await pushGitHubEmulatorCommit({
+    ...input,
+    files: [skillFile],
+    message: input.message ?? `Update ${input.skillName} skill`,
+  });
+
+  return {
+    ...push,
+    content: skillFile.content,
+    path: skillFile.path,
   };
 }

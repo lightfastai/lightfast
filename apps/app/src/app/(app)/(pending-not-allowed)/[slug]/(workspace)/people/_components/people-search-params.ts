@@ -11,6 +11,9 @@ export const personTypeParser = parseAsString.withDefault("");
 export const personParser = parseAsString;
 export const personQueryParser = parseAsString.withDefault("");
 
+// "view" holds the active saved-view publicId (null when on All people).
+export const peopleSavedViewParser = parseAsString;
+
 function parseValues<T extends string>(
   value: string,
   allowedValues: readonly T[]

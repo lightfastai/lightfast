@@ -67,11 +67,11 @@ export function AppFooter() {
                 </NavLink>
                 <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"
-                  href="/early-access"
+                  href="/sign-up"
                   microfrontend
                   prefetch
                 >
-                  Early Access
+                  Get started
                 </NavLink>
                 <NavLink
                   className="text-foreground text-sm transition-colors hover:text-muted-foreground"

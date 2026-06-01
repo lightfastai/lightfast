@@ -56,11 +56,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "weekly",
       priority: 0.9,
     },
-    {
-      url: `${base}/early-access`,
-      changeFrequency: "monthly",
-      priority: 0.8,
-    },
     // Use case pages
     {
       url: `${base}/use-cases/technical-founders`,

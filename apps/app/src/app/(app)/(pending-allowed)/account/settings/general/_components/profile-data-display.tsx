@@ -14,6 +14,8 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 
+import { GithubAccountConnectionSection } from "./github-account-connection-section";
+
 function normalizeUsernameInput(value: string) {
   return value
     .trim()
@@ -228,6 +230,8 @@ export function ProfileDataDisplay() {
           value={profile.primaryEmailAddress ?? ""}
         />
       </div>
+
+      <GithubAccountConnectionSection />
     </div>
   );
 }

@@ -32,6 +32,10 @@ const userInstallationsResponseSchema = z.object({
   total_count: z.number().int().min(0).optional(),
 });
 
+const appInstallationResponseSchema = rawInstallationSchema.extend({
+  html_url: z.string().url(),
+});
+
 export interface ListGitHubUserAccessibleInstallationsInput {
   apiBaseUrl?: string;
   apiVersion?: string;
@@ -43,6 +47,17 @@ export interface ListGitHubUserAccessibleInstallationsInput {
 export interface VerifyGitHubUserInstallationInput
   extends ListGitHubUserAccessibleInstallationsInput {
   expectedInstallationId: string;
+}
+
+export interface GitHubAppInstallation {
+  account: {
+    id: string;
+    login: string;
+    type: "Organization" | "User";
+  };
+  htmlUrl: string;
+  id: string;
+  targetType: "Organization" | "User";
 }
 
 function normalizePerPage(value: number | undefined) {
@@ -80,6 +95,49 @@ function normalizeInstallation(
   }
 
   return parsed.data;
+}
+
+export async function getGitHubAppInstallation(input: {
+  apiBaseUrl?: string;
+  apiVersion?: string;
+  appJwt: string;
+  fetch?: typeof fetch;
+  installationId: string;
+}): Promise<GitHubAppInstallation> {
+  const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
+  const url = `${apiBaseUrl}/app/installations/${input.installationId}`;
+
+  const { json, response } = await fetchGitHubJson({
+    fetch: input.fetch,
+    init: {
+      headers: githubJsonHeaders({
+        apiVersion: input.apiVersion,
+        token: input.appJwt,
+      }),
+    },
+    requestErrorCode: "INSTALLATION_NOT_VERIFIED",
+    requestErrorMessage: "GitHub installation request failed.",
+    url,
+  });
+
+  const parsed = appInstallationResponseSchema.safeParse(json);
+  if (!(response.ok && parsed.success)) {
+    throw new GitHubAppNodeError(
+      "INSTALLATION_NOT_VERIFIED",
+      "GitHub installation response was invalid."
+    );
+  }
+
+  return {
+    account: {
+      id: String(parsed.data.account.id),
+      login: parsed.data.account.login,
+      type: parsed.data.account.type,
+    },
+    htmlUrl: parsed.data.html_url,
+    id: String(parsed.data.id),
+    targetType: parsed.data.target_type,
+  };
 }
 
 function hasNextInstallationsPage(input: {

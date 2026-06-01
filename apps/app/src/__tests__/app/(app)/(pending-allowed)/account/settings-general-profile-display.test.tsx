@@ -4,6 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 const accountGetQueryOptionsMock = vi.fn(() => ({
   queryKey: ["viewer", "account", "get"],
 }));
+const githubAccountStatusQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["viewer", "githubAccount", "status"],
+}));
 const updateNameMutationOptionsMock = vi.fn((options: unknown) => options);
 const createUsernameMutationOptionsMock = vi.fn((options: unknown) => options);
 const useSuspenseQueryMock = vi.fn();
@@ -20,6 +23,11 @@ vi.mock("~/trpc/react", () => ({
         },
         updateName: {
           mutationOptions: updateNameMutationOptionsMock,
+        },
+      },
+      githubAccount: {
+        status: {
+          queryOptions: githubAccountStatusQueryOptionsMock,
         },
       },
     },
@@ -68,14 +76,27 @@ function profile(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   accountGetQueryOptionsMock.mockClear();
+  githubAccountStatusQueryOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
   createUsernameMutationOptionsMock.mockClear();
   useSuspenseQueryMock.mockReset();
 });
 
+function mockProfileQuery(data: ReturnType<typeof profile>) {
+  useSuspenseQueryMock.mockImplementation((options: { queryKey: unknown }) => {
+    const serializedQueryKey = JSON.stringify(options.queryKey);
+
+    if (serializedQueryKey.includes("githubAccount")) {
+      return { data: { account: null } };
+    }
+
+    return { data };
+  });
+}
+
 describe("ProfileDataDisplay", () => {
   it("locks the username field after a username exists", () => {
-    useSuspenseQueryMock.mockReturnValue({ data: profile() });
+    mockProfileQuery(profile());
 
     render(<ProfileDataDisplay />);
 
@@ -88,9 +109,7 @@ describe("ProfileDataDisplay", () => {
   });
 
   it("allows users without a username to create one", () => {
-    useSuspenseQueryMock.mockReturnValue({
-      data: profile({ username: null }),
-    });
+    mockProfileQuery(profile({ username: null }));
 
     render(<ProfileDataDisplay />);
 

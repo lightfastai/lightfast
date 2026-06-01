@@ -59,7 +59,6 @@ const GITHUB_BINDING_ROUTE_PATTERNS = [
 ] as const;
 
 const PUBLIC_ROUTE_PATTERNS = [
-  "/early-access(.*)",
   "/api/oauth/(.*)",
   "/api/trpc/(.*)",
   "/api/health(.*)",
@@ -93,6 +92,10 @@ function isApiRoute(req: NextRequest) {
         req.nextUrl.pathname.startsWith(`${prefix}/`)
     ) || isApiRouteMatcher(req)
   );
+}
+
+function isRetiredEarlyAccessPath(pathname: string) {
+  return pathname === "/early-access" || pathname.startsWith("/early-access/");
 }
 
 // Auth routes — authenticated users should not see sign-in/sign-up forms.
@@ -430,6 +433,12 @@ const nemoProxy = createNEMO(
 );
 
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
+  if (isRetiredEarlyAccessPath(req.nextUrl.pathname)) {
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL("/sign-up", req.url), 308)
+    );
+  }
+
   if (isApiRoute(req)) {
     return applySecurityHeaders(nextWithRequestContext(req));
   }

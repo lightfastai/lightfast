@@ -46,12 +46,19 @@ export {
   people,
 } from "./people";
 export {
+  createPeopleViewId,
+  type InsertPeopleView,
+  PEOPLE_VIEW_ID_PREFIX,
+  type PeopleView,
+  type PeopleViewConfig,
+  peopleViews,
+} from "./people-views";
+export {
   createSignalViewId,
   type InsertSignalView,
   SIGNAL_VIEW_ID_PREFIX,
   type SignalView,
   type SignalViewConfig,
-  type SignalViewLayout,
   signalViews,
 } from "./signal-views";
 export {
@@ -60,6 +67,16 @@ export {
   type Signal,
   signals,
 } from "./signals";
+export {
+  type InsertSkillIndexEntry,
+  type InsertSkillIndexState,
+  type ResourcesTruncatedFlag,
+  type SkillIndexEntry,
+  type SkillIndexEntryMetadata,
+  type SkillIndexState,
+  skillIndexEntries,
+  skillIndexStates,
+} from "./skill-index";
 export {
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,

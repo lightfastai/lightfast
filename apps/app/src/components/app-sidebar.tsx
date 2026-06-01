@@ -20,6 +20,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import {
   BookOpen,
+  BrainCircuit,
   CalendarClock,
   HelpCircle,
   Mail,
@@ -35,6 +36,7 @@ import { TeamSwitcher, TeamSwitcherSkeleton } from "~/components/team-switcher";
 interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  prefetch?: boolean;
   title: string;
 }
 
@@ -49,6 +51,12 @@ function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
       title: "People",
       href: `/${orgSlug}/people`,
       icon: UsersRound,
+    },
+    {
+      title: "Skills",
+      href: `/${orgSlug}/skills`,
+      icon: BrainCircuit,
+      prefetch: false,
     },
   ];
 }
@@ -92,7 +100,7 @@ function NavItems({ items, pathname }: { items: NavItem[]; pathname: string }) {
           isActive={isActive}
           size="sm"
         >
-          <Link href={{ pathname: item.href }} prefetch={true}>
+          <Link href={{ pathname: item.href }} prefetch={item.prefetch ?? true}>
             <item.icon className="size-3.5" />
             <span>{item.title}</span>
           </Link>

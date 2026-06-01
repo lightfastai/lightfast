@@ -224,6 +224,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
 
@@ -249,6 +250,7 @@ describe("handleGitHubWebhook", () => {
     expect(inngestSendMock).toHaveBeenCalledWith({
       name: "app/github.repository.push.received",
       data: expect.objectContaining({
+        afterSha: "a".repeat(40),
         changedPaths: ["skills/demo/SKILL.md"],
         deliveryId: "delivery-1",
         repositoryWatchId: 9,
@@ -322,6 +324,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
 
@@ -340,6 +343,7 @@ describe("handleGitHubWebhook", () => {
     expect(inngestSendMock).toHaveBeenCalledWith({
       name: "app/github.repository.push.received",
       data: expect.objectContaining({
+        afterSha: "a".repeat(40),
         changedPaths: ["skills/demo/SKILL.md"],
         deliveryId: "delivery-1",
         repositoryWatchId: 9,
@@ -362,6 +366,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
 
@@ -376,6 +381,85 @@ describe("handleGitHubWebhook", () => {
           },
         ],
       }),
+    });
+
+    expect(res.status).toBe(202);
+    expect(markDeliveryMock).toHaveBeenCalledWith(
+      {},
+      {
+        deliveryId: "delivery-1",
+        status: "ignored",
+      }
+    );
+    expect(inngestSendMock).not.toHaveBeenCalled();
+  });
+
+  it("queues watched main pushes when GitHub omits part of the commit list", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    recordDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { status: "received" },
+    });
+    getBindingMock.mockResolvedValue({
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      syncStatus: "enabled",
+      watchedPathGlobs: ["skills/**"],
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest({
+        ...pushPayload,
+        commits: [
+          {
+            added: [],
+            modified: ["docs/readme.md"],
+            removed: [],
+          },
+        ],
+        size: 2,
+      }),
+    });
+
+    expect(res.status).toBe(202);
+    expect(inngestSendMock).toHaveBeenCalledWith({
+      name: "app/github.repository.push.received",
+      data: expect.objectContaining({
+        changedPaths: ["docs/readme.md"],
+        changedPathsComplete: false,
+        deliveryId: "delivery-1",
+        repositoryWatchId: 9,
+      }),
+    });
+  });
+
+  it("ignores disabled registered repository pushes without enqueueing", async () => {
+    const { handleGitHubWebhook } = await import("../services/github/webhook");
+    recordDeliveryMock.mockResolvedValue({
+      created: true,
+      delivery: { status: "received" },
+    });
+    getBindingMock.mockResolvedValue({
+      id: 7,
+      providerInstallationId: "1001",
+      status: "active",
+    });
+    getWatchMock.mockResolvedValue({
+      fullName: "lightfast-emulated/workspace",
+      id: 9,
+      providerRepositoryId: "2002",
+      syncStatus: "disabled",
+      watchedPathGlobs: null,
+    });
+
+    const res = await handleGitHubWebhook({
+      request: signedRequest(pushPayload),
     });
 
     expect(res.status).toBe(202);
@@ -404,6 +488,7 @@ describe("handleGitHubWebhook", () => {
       fullName: "lightfast-emulated/workspace",
       id: 9,
       providerRepositoryId: "2002",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
     inngestSendMock.mockRejectedValue(new Error("enqueue failed"));

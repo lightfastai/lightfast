@@ -207,6 +207,7 @@ describe("GitHub webhook schemas", () => {
           removed: ["docs/old.md"],
         },
       ],
+      size: 1,
       installation: { id: 1001 },
       ref: "refs/heads/main",
       repository: {
@@ -220,11 +221,40 @@ describe("GitHub webhook schemas", () => {
     expect(normalizeGitHubPushWebhookPayload(payload)).toEqual({
       afterSha: "a".repeat(40),
       beforeSha: "b".repeat(40),
+      changedPathsComplete: true,
       changedPaths: ["skills/demo/SKILL.md", "README.md", "docs/old.md"],
       providerInstallationId: "1001",
       providerRepositoryId: "2002",
       ref: "refs/heads/main",
       repositoryFullName: "lightfast-emulated/workspace",
+    });
+  });
+
+  it("marks changed paths incomplete when the push payload omits commits", () => {
+    const payload = githubPushWebhookPayloadSchema.parse({
+      after: "a".repeat(40),
+      before: "b".repeat(40),
+      commits: [
+        {
+          added: [],
+          modified: ["docs/readme.md"],
+          removed: [],
+        },
+      ],
+      size: 2,
+      installation: { id: 1001 },
+      ref: "refs/heads/main",
+      repository: {
+        full_name: "lightfast-emulated/workspace",
+        id: 2002,
+        name: "workspace",
+        owner: { login: "lightfast-emulated" },
+      },
+    });
+
+    expect(normalizeGitHubPushWebhookPayload(payload)).toMatchObject({
+      changedPaths: ["docs/readme.md"],
+      changedPathsComplete: false,
     });
   });
 

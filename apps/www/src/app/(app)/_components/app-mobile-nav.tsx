@@ -94,11 +94,11 @@ export function AppMobileNav() {
             <div className="space-y-3 border-t p-6">
               <Button asChild className="w-full" size="lg">
                 <MicrofrontendLink
-                  href="/early-access"
+                  href="/sign-up"
                   onClick={() => setOpen(false)}
                   prefetch={true}
                 >
-                  Join Early Access
+                  Get started
                 </MicrofrontendLink>
               </Button>
               <Button asChild className="w-full" size="lg" variant="outline">

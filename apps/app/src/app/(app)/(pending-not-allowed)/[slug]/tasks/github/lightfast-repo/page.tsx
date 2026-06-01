@@ -1,4 +1,9 @@
-import { pathForSetupRequirement } from "@repo/app-setup-contract";
+import { getGitHubAppConfig } from "@api/app/services/github";
+import {
+  LIGHTFAST_REPOSITORY_NAME,
+  pathForSetupRequirement,
+} from "@repo/app-setup-contract";
+import { buildGitHubNewRepositoryUrl } from "@repo/github-app-node";
 import type { Route } from "next";
 import { redirect } from "next/navigation";
 
@@ -40,8 +45,18 @@ export default async function LightfastRepoSetupPage({
   if (!accountLogin) {
     redirect(`/${slug}/tasks/bind` as Route);
   }
+  const config = getGitHubAppConfig();
+  const newRepositoryUrl = buildGitHubNewRepositoryUrl({
+    accountLogin,
+    name: LIGHTFAST_REPOSITORY_NAME,
+    webBaseUrl: config.endpoints.webBaseUrl,
+  });
 
   return (
-    <LightfastRepoSetupClient accountLogin={accountLogin} orgSlug={slug} />
+    <LightfastRepoSetupClient
+      accountLogin={accountLogin}
+      newRepositoryUrl={newRepositoryUrl}
+      orgSlug={slug}
+    />
   );
 }

@@ -22,7 +22,6 @@ let dispositionState = "";
 let kindState = "";
 let peopleState = "all";
 let priorityState = "";
-let layoutState = "list";
 let savedViewState: string | null = null;
 let signalState: string | null = null;
 
@@ -37,9 +36,6 @@ const setPeopleMock = vi.fn((value: string) => {
 });
 const setPriorityMock = vi.fn((value: string) => {
   priorityState = value;
-});
-const setLayoutMock = vi.fn((value: string) => {
-  layoutState = value;
 });
 const setSavedViewMock = vi.fn((value: string | null) => {
   savedViewState = value;
@@ -105,6 +101,17 @@ vi.mock("@repo/ui/components/ui/sonner", () => ({
   toast: { success: vi.fn() },
 }));
 
+// The empty/no-results states render a @vercel/microfrontends <Link>, which
+// needs a microfrontends config absent under test. Render a plain anchor.
+vi.mock("@vercel/microfrontends/next/client", () => ({
+  Link: ({
+    children,
+    ...props
+  }: React.AnchorHTMLAttributes<HTMLAnchorElement>) => (
+    <a {...props}>{children}</a>
+  ),
+}));
+
 vi.mock("nuqs", () => ({
   parseAsString: { withDefault: () => "mock-string-parser" },
   parseAsStringLiteral: () => ({ withDefault: () => "mock-literal-parser" }),
@@ -120,9 +127,6 @@ vi.mock("nuqs", () => ({
     }
     if (key === "priority") {
       return [priorityState, setPriorityMock];
-    }
-    if (key === "layout") {
-      return [layoutState, setLayoutMock];
     }
     if (key === "view") {
       return [savedViewState, setSavedViewMock];
@@ -237,7 +241,6 @@ beforeEach(() => {
   kindState = "";
   peopleState = "all";
   priorityState = "";
-  layoutState = "list";
   savedViewState = null;
   signalState = null;
   workingSetData = {
@@ -390,22 +393,6 @@ describe("SignalsClient", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("groups classified board cards by kind", () => {
-    layoutState = "board";
-
-    render(<SignalsClient />);
-
-    expect(
-      screen.getByRole("region", { name: "Follow up board column" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("region", { name: "Fix board column" })
-    ).toBeInTheDocument();
-    expect(
-      screen.getByRole("region", { name: "Processing board column" })
-    ).toBeInTheDocument();
-  });
-
   it("shows an empty state when the working set and processing are empty", () => {
     workingSetData = {
       items: [],
@@ -439,16 +426,5 @@ describe("SignalsClient", () => {
     expect(
       screen.getByRole("button", { name: "Retry classified signals" })
     ).toBeInTheDocument();
-  });
-
-  it("keeps layout state in the url", () => {
-    render(<SignalsClient />);
-
-    fireEvent.pointerDown(
-      screen.getByRole("button", { name: "Display options" })
-    );
-    fireEvent.click(screen.getByRole("menuitem", { name: /Board/ }));
-
-    expect(setLayoutMock).toHaveBeenCalledWith("board");
   });
 });

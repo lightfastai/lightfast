@@ -21,7 +21,6 @@ function makeView(overrides: Partial<SignalView> = {}): SignalView {
         dispositions: [],
         peopleRouted: false,
       },
-      layout: "list",
     },
     createdAt: new Date("2026-05-30T01:00:00.000Z"),
     updatedAt: new Date("2026-05-30T01:00:00.000Z"),

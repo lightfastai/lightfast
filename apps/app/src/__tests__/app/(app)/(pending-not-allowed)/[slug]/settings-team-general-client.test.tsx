@@ -7,6 +7,9 @@ const listUserOrganizationsQueryOptionsMock = vi.fn(() => ({
 const sourceControlGetQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "sourceControl", "get"],
 }));
+const sourceControlListRepositoriesQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["org", "settings", "sourceControl", "listRepositories"],
+}));
 const updateNameMutationOptionsMock = vi.fn((options: unknown) => options);
 const useSuspenseQueryMock = vi.fn();
 
@@ -22,6 +25,9 @@ vi.mock("~/trpc/react", () => ({
         sourceControl: {
           get: {
             queryOptions: sourceControlGetQueryOptionsMock,
+          },
+          listRepositories: {
+            queryOptions: sourceControlListRepositoriesQueryOptionsMock,
           },
         },
       },
@@ -66,15 +72,29 @@ vi.mock("next/navigation", () => ({
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/_components/source-control-connection-section",
   () => ({
-    SourceControlConnectionSection: ({
+    LightfastRepositorySection: ({
       connection,
       orgSlug,
     }: {
       connection: { accountLogin: string | null } | null;
       orgSlug: string;
     }) => (
-      <div data-testid="source-control-section">
+      <div data-testid="lightfast-repository-section">
         {orgSlug}:{connection?.accountLogin ?? "unbound"}
+      </div>
+    ),
+    SourceControlConnectionSection: ({
+      connection,
+      repositories,
+      orgSlug,
+    }: {
+      connection: { importedRepositoryCount: number } | null;
+      repositories: { organization: { login: string } | null };
+      orgSlug: string;
+    }) => (
+      <div data-testid="source-control-section">
+        {orgSlug}:{connection?.importedRepositoryCount ?? "unbound"}:
+        {repositories.organization?.login ?? "no-org"}
       </div>
     ),
   })
@@ -87,6 +107,7 @@ const { TeamGeneralSettingsClient } = await import(
 beforeEach(() => {
   listUserOrganizationsQueryOptionsMock.mockClear();
   sourceControlGetQueryOptionsMock.mockClear();
+  sourceControlListRepositoriesQueryOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
   useSuspenseQueryMock.mockReset();
   useSuspenseQueryMock.mockImplementation(
@@ -97,11 +118,46 @@ beforeEach(() => {
         };
       }
 
+      if (options.queryKey.includes("listRepositories")) {
+        return {
+          data: {
+            binding: {
+              accountLogin: "lightfast-emulated",
+              connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+              importedRepositoryCount: 2,
+              lightfastRepository: {
+                fullName: "lightfast-emulated/.lightfast",
+                id: "repo_lightfast",
+                verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+              },
+              provider: "github",
+              providerLabel: "GitHub",
+            },
+            organization: {
+              id: "987654",
+              installationManageUrl:
+                "https://github.com/apps/lightfast/installations/1001",
+              login: "acme-live",
+            },
+            lightfastRepository: null,
+            repositories: [],
+            repositoriesError: null,
+            status: "bound",
+          },
+        };
+      }
+
       return {
         data: {
           binding: {
             accountLogin: "lightfast-emulated",
             connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+            importedRepositoryCount: 2,
+            lightfastRepository: {
+              fullName: "lightfast-emulated/.lightfast",
+              id: "repo_lightfast",
+              verifiedAt: new Date("2026-05-29T01:02:03.000Z"),
+            },
             provider: "github",
             providerLabel: "GitHub",
           },
@@ -113,12 +169,16 @@ beforeEach(() => {
 });
 
 describe("TeamGeneralSettingsClient", () => {
-  it("loads and renders the read-only GitHub connection section on General settings", () => {
+  it("loads and renders read-only source-control sections on General settings", () => {
     render(<TeamGeneralSettingsClient slug="acme" />);
 
     expect(sourceControlGetQueryOptionsMock).toHaveBeenCalled();
+    expect(sourceControlListRepositoriesQueryOptionsMock).toHaveBeenCalled();
     expect(screen.getByTestId("source-control-section")).toHaveTextContent(
-      "acme:lightfast-emulated"
+      "acme:2:acme-live"
     );
+    expect(
+      screen.getByTestId("lightfast-repository-section")
+    ).toHaveTextContent("acme:lightfast-emulated");
   });
 });

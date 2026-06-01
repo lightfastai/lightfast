@@ -7,6 +7,7 @@ export {
   resolveGitHubAppEndpoints,
   resolveGitHubAppOrigin,
 } from "./config";
+export { getCachedGitHubInstallationToken } from "./installation-token-cache";
 export {
   completeGitHubInstallationSetup,
   completeGitHubOAuthVerification,

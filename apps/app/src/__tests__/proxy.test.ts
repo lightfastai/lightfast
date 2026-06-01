@@ -261,6 +261,44 @@ describe("proxy Nemo composition", () => {
   });
 });
 
+describe("proxy retired early-access redirects", () => {
+  it("permanently redirects /early-access to sign-up without query params", async () => {
+    const { response } = await invoke("/early-access?email=u%40example.com");
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/sign-up"
+    );
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("permanently redirects nested early-access paths to sign-up", async () => {
+    const { response } = await invoke("/early-access/thanks?success=true");
+
+    expect(response.status).toBe(308);
+    expect(response.headers.get("location")).toBe(
+      "https://app.lightfast.localhost/sign-up"
+    );
+    expect(authMock).not.toHaveBeenCalled();
+  });
+
+  it("does not redirect workspace slugs that merely start with early-access", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "early-access-team",
+      sessionClaims: { lf_binding_status: "bound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/early-access-team");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
+  });
+});
+
 describe("proxy post-auth routing", () => {
   it("redirects signed-in users from the root to the active org slug", async () => {
     const { response } = await invoke("/");

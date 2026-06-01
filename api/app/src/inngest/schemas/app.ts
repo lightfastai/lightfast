@@ -37,4 +37,23 @@ export const appEvents = {
       schema: sourceControlRepositoryPushEventSchema,
     }
   ),
+  "app/skills.index.refresh.requested": eventType(
+    "app/skills.index.refresh.requested",
+    {
+      schema: z.object({
+        dedupeKey: z.string().min(1),
+        reason: z.enum(["schedule", "setup", "webhook"]),
+        sourceControlRepositoryId: z.number().int().positive(),
+        targetCommitSha: z.string().min(1).optional(),
+      }),
+    }
+  ),
+  "app/skills.index.reconcile.requested": eventType(
+    "app/skills.index.reconcile.requested",
+    {
+      schema: z.object({
+        requestedAt: z.string().datetime(),
+      }),
+    }
+  ),
 } as const;
