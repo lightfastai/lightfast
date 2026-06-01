@@ -2,6 +2,7 @@
  * @repo/app-validation
  */
 
+export * from "./forms/account-form";
 export * from "./forms/team-form";
 export * from "./primitives/handles";
 export * from "./primitives/slugs";

@@ -1,13 +1,23 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   lightfastHandleSchema,
   normalizeLightfastHandle,
 } from "@repo/app-validation";
+import type { AccountSettingsFormValues } from "@repo/app-validation/forms";
+import { accountSettingsFormSchema } from "@repo/app-validation/forms";
 import { Avatar, AvatarFallback } from "@repo/ui/components/ui/avatar";
 import { Button } from "@repo/ui/components/ui/button";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+  useFormCompat,
+} from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
-import { toast } from "@repo/ui/components/ui/sonner";
 import {
   useMutation,
   useQueryClient,
@@ -15,9 +25,10 @@ import {
 } from "@tanstack/react-query";
 import { Check, Loader2 } from "lucide-react";
 import type { FormEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { SettingRow, SettingsGroup } from "~/components/settings-section";
 import { useTRPC } from "~/trpc/react";
+import { useAccountNameUpdate } from "./account-settings-actions";
 
 function createIdempotencyKey() {
   if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
@@ -35,55 +46,51 @@ export function ProfileDataDisplay() {
     ...accountQuery,
     staleTime: 10 * 60 * 1000,
   });
-  const [name, setName] = useState(profile.fullName ?? "");
+
+  const currentDisplayName = profile.fullName ?? "";
+  const form = useFormCompat<AccountSettingsFormValues>({
+    resolver: zodResolver(accountSettingsFormSchema),
+    defaultValues: {
+      displayName: currentDisplayName,
+    },
+    mode: "onChange",
+  });
+
+  const { isUpdating, updateDisplayName } = useAccountNameUpdate();
+  const watchedName = form.watch("displayName");
+  const hasNameChanges = (watchedName ?? "").trim() !== currentDisplayName;
+
   const [username, setUsername] = useState(profile.username ?? "");
   const usernameIdempotencyKeyRef = useRef<string | null>(null);
 
   useEffect(() => {
-    setName(profile.fullName ?? "");
+    form.reset({ displayName: currentDisplayName });
     setUsername(profile.username ?? "");
     usernameIdempotencyKeyRef.current = null;
-  }, [profile.fullName, profile.username]);
+  }, [currentDisplayName, form, profile.username]);
 
-  const updateNameMutation = useMutation(
-    trpc.viewer.account.updateName.mutationOptions({
-      meta: { errorTitle: "Failed to update name" },
-      onSuccess: (data) => {
-        queryClient.setQueryData(accountQuery.queryKey, data);
-        toast.success("Name updated");
-      },
-    })
-  );
   const createUsernameMutation = useMutation(
     trpc.viewer.account.createUsername.mutationOptions({
       meta: { errorTitle: "Failed to create username" },
       onSuccess: (data) => {
         usernameIdempotencyKeyRef.current = null;
         queryClient.setQueryData(accountQuery.queryKey, data);
-        toast.success("Username created");
       },
     })
   );
 
-  const normalizedName = name.trim();
   const hasUsername = !!profile.username;
   const parsedUsername = lightfastHandleSchema.safeParse(username);
-  const isSavingName = updateNameMutation.isPending;
   const isCreatingUsername = createUsernameMutation.isPending;
-  const canSaveName =
-    normalizedName.length > 0 &&
-    normalizedName !== (profile.fullName ?? "") &&
-    !isSavingName;
   const canCreateUsername =
     !hasUsername && parsedUsername.success && !isCreatingUsername;
 
-  function handleNameSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!canSaveName) {
-      return;
-    }
-    updateNameMutation.mutate({ name: normalizedName });
-  }
+  const onNameSubmit = useCallback(
+    (values: AccountSettingsFormValues) => {
+      updateDisplayName(values.displayName);
+    },
+    [updateDisplayName]
+  );
 
   function handleUsernameSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -115,36 +122,55 @@ export function ProfileDataDisplay() {
           </Avatar>
         </SettingRow>
 
-        <SettingRow
-          description="Please enter your full name, or a display name you are comfortable with."
-          label="Display name"
-        >
-          <form className="flex items-center gap-2" onSubmit={handleNameSubmit}>
-            <label className="sr-only" htmlFor="account-name">
-              Name
-            </label>
-            <Input
-              autoComplete="name"
-              className="w-64 bg-muted/50"
-              id="account-name"
-              onChange={(event) => setName(event.target.value)}
-              size="lf"
-              type="text"
-              value={name}
-              variant="lf"
-            />
-            <Button disabled={!canSaveName} size="lf" type="submit">
-              {isSavingName ? (
-                <>
-                  <Loader2 className="size-3.5 animate-spin" />
-                  Saving
-                </>
-              ) : (
-                "Save"
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onNameSubmit)}>
+            <FormField
+              control={form.control}
+              name="displayName"
+              render={({ field }) => (
+                <SettingRow
+                  description="Please enter your full name, or a display name you are comfortable with."
+                  label="Display name"
+                >
+                  <FormItem className="space-y-0">
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
+                        <FormControl>
+                          <Input
+                            {...field}
+                            className="w-64"
+                            placeholder="Your name"
+                            size="lf"
+                            type="text"
+                            variant="lf"
+                          />
+                        </FormControl>
+                        <Button
+                          disabled={
+                            !(hasNameChanges && form.formState.isValid) ||
+                            isUpdating
+                          }
+                          size="lf"
+                          type="submit"
+                        >
+                          {isUpdating ? (
+                            <>
+                              <Loader2 className="size-3.5 animate-spin" />
+                              Saving
+                            </>
+                          ) : (
+                            "Save"
+                          )}
+                        </Button>
+                      </div>
+                      <FormMessage className="text-xs" />
+                    </div>
+                  </FormItem>
+                </SettingRow>
               )}
-            </Button>
+            />
           </form>
-        </SettingRow>
+        </Form>
 
         <SettingRow
           description="This is your stable Lightfast handle."

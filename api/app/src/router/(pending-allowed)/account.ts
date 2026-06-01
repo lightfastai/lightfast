@@ -6,7 +6,10 @@ import {
   reserveNamespaceForOperation,
   startNamespaceOperation,
 } from "@db/app";
-import { lightfastHandleSchema } from "@repo/app-validation";
+import {
+  accountSettingsFormSchema,
+  lightfastHandleSchema,
+} from "@repo/app-validation";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import type { User } from "@vendor/clerk/server";
@@ -84,15 +87,6 @@ function toAccountProfile(user: AccountProfileUser) {
   };
 }
 
-function splitDisplayName(name: string) {
-  const parts = name.trim().split(/\s+/).filter(Boolean);
-  const [firstName, ...rest] = parts;
-  return {
-    firstName: firstName ?? "",
-    lastName: rest.length > 0 ? rest.join(" ") : null,
-  };
-}
-
 function namespaceConflictToTRPCError(
   error: NamespaceConflictError
 ): TRPCError {
@@ -135,10 +129,6 @@ function namespaceConflictToTRPCError(
       });
   }
 }
-
-const updateNameInput = z.object({
-  name: z.string().trim().min(1, "Name is required").max(128),
-});
 
 const createUsernameInput = z.object({
   idempotencyKey: z.string().min(1).max(128),
@@ -187,27 +177,26 @@ export const accountRouter = {
   }),
 
   updateName: viewerProcedure
-    .input(updateNameInput)
+    .input(accountSettingsFormSchema)
     .mutation(async ({ ctx, input }) => {
       const clerk = await clerkClient();
-      const { firstName, lastName } = splitDisplayName(input.name);
 
       try {
         const user = await clerk.users.updateUser(ctx.auth.identity.userId, {
-          firstName,
-          lastName: lastName ?? "",
+          firstName: input.displayName,
+          lastName: "",
         });
 
         return toAccountProfile(user);
       } catch (error: unknown) {
-        log.error("[account] update name failed", {
+        log.error("[account] update display name failed", {
           userId: ctx.auth.identity.userId,
           error: parseError(error),
         });
 
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to update user name",
+          message: "Failed to update display name",
           cause: error,
         });
       }
