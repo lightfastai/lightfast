@@ -7,12 +7,14 @@ function changeEvent(value: string) {
   return { target: { value } } as unknown as ChangeEvent<HTMLInputElement>;
 }
 
-function keyEvent(over: Partial<{
-  key: string;
-  metaKey: boolean;
-  ctrlKey: boolean;
-  shiftKey: boolean;
-}>) {
+function keyEvent(
+  over: Partial<{
+    key: string;
+    metaKey: boolean;
+    ctrlKey: boolean;
+    shiftKey: boolean;
+  }>
+) {
   return {
     key: "",
     metaKey: false,
@@ -101,7 +103,9 @@ describe("useInlineEdit", () => {
     expect(onCommit).not.toHaveBeenCalled();
 
     act(() =>
-      result.current.fieldProps.onKeyDown(keyEvent({ key: "Enter", metaKey: true }))
+      result.current.fieldProps.onKeyDown(
+        keyEvent({ key: "Enter", metaKey: true })
+      )
     );
     expect(onCommit).toHaveBeenCalledWith("New body");
   });

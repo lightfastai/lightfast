@@ -67,7 +67,10 @@ describe("AutomationNameEditor", () => {
     const input = screen.getByRole("textbox");
     fireEvent.change(input, { target: { value: "Renamed" } });
     fireEvent.keyDown(input, { key: "Enter" });
-    expect(mutateMock).toHaveBeenCalledWith({ id: "automation_1", name: "Renamed" });
+    expect(mutateMock).toHaveBeenCalledWith({
+      id: "automation_1",
+      name: "Renamed",
+    });
   });
 
   it("reverts on Escape without committing", async () => {

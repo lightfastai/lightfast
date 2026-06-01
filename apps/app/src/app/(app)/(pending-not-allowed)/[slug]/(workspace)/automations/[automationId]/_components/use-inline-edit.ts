@@ -4,26 +4,26 @@ import { useRef, useState } from "react";
 type EditableElement = HTMLInputElement | HTMLTextAreaElement;
 
 interface UseInlineEditOptions {
-  /** Current persisted value — source of truth for revert and change detection. */
-  value: string;
   /** When true, the commit chord is Cmd/Ctrl+Enter and plain Enter inserts a newline. */
   multiline?: boolean;
   /** Called with the trimmed draft when a real change is committed. */
   onCommit: (next: string) => void;
+  /** Current persisted value — source of truth for revert and change detection. */
+  value: string;
 }
 
 export interface InlineEditFieldProps {
-  value: string;
-  onChange: (event: ChangeEvent<EditableElement>) => void;
-  onBlur: () => void;
-  onKeyDown: (event: KeyboardEvent<EditableElement>) => void;
   autoFocus: boolean;
+  onBlur: () => void;
+  onChange: (event: ChangeEvent<EditableElement>) => void;
+  onKeyDown: (event: KeyboardEvent<EditableElement>) => void;
+  value: string;
 }
 
 export interface UseInlineEditResult {
-  editing: boolean;
-  draft: string;
   begin: () => void;
+  draft: string;
+  editing: boolean;
   fieldProps: InlineEditFieldProps;
 }
 

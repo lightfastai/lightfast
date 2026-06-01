@@ -3,7 +3,6 @@
 import type { AppRouterOutputs } from "@api/app";
 import { AUTOMATION_PROMPT_MAX_LENGTH } from "@repo/app-validation/schemas";
 import { Markdown } from "@repo/ui/components/markdown";
-import { Textarea } from "@repo/ui/components/ui/textarea";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { useTRPC } from "~/trpc/react";
@@ -30,7 +29,7 @@ export function AutomationPromptEditor({
     })
   );
 
-  const { editing, draft, begin, fieldProps } = useInlineEdit({
+  const { editing, begin, fieldProps } = useInlineEdit({
     value: automation.prompt,
     multiline: true,
     onCommit: (next) => update.mutate({ id, prompt: next }),
@@ -45,34 +44,21 @@ export function AutomationPromptEditor({
   }
 
   if (editing) {
-    const length = draft.trim().length;
-    const isTooLong = length > AUTOMATION_PROMPT_MAX_LENGTH;
+    // Borderless, transparent, and typed to match the rendered markdown body so
+    // entering edit mode never looks like a textarea popping in.
     return (
-      <div className="space-y-1.5">
-        <Textarea
-          {...fieldProps}
-          maxLength={AUTOMATION_PROMPT_MAX_LENGTH}
-          variant="lf"
-        />
-        <div className="flex items-center justify-between">
-          <p className="text-muted-foreground text-xs">
-            Markdown supported · ⌘↵ to save · Esc to cancel
-          </p>
-          <p
-            className={`font-mono text-xs ${
-              isTooLong ? "text-destructive" : "text-muted-foreground"
-            }`}
-          >
-            {length} / {AUTOMATION_PROMPT_MAX_LENGTH}
-          </p>
-        </div>
-      </div>
+      <textarea
+        {...fieldProps}
+        className="field-sizing-content block w-full resize-none break-words bg-transparent p-0 text-muted-foreground text-sm leading-7 outline-none"
+        maxLength={AUTOMATION_PROMPT_MAX_LENGTH}
+      />
     );
   }
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: rendered markdown is block content and cannot be nested inside a native <button>
     <div
-      className="-mx-2 cursor-text rounded-[9px] px-2 py-1 transition-colors hover:bg-accent/50"
+      className="cursor-text"
       onClick={(event) => {
         // Let links inside the rendered markdown navigate instead of editing.
         if ((event.target as HTMLElement).closest("a")) {

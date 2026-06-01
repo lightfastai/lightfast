@@ -45,15 +45,16 @@ export function AutomationNameEditor({
     return (
       <input
         {...fieldProps}
-        className="-mx-1 w-full bg-transparent px-1 font-medium font-pp text-2xl text-foreground outline-none"
+        className="block w-full bg-transparent p-0 font-medium font-pp text-2xl text-foreground outline-none"
         maxLength={AUTOMATION_NAME_MAX_LENGTH}
       />
     );
   }
 
   return (
+    // biome-ignore lint/a11y/useSemanticElements: a heading is block content and cannot be nested inside a native <button>
     <div
-      className="-mx-1 cursor-text rounded px-1 transition-colors hover:bg-accent/50"
+      className="cursor-text"
       onClick={begin}
       onKeyDown={(event) => {
         if (event.key === "Enter" || event.key === " ") {

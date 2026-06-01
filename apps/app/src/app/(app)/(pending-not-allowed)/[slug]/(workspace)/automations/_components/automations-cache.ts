@@ -52,8 +52,8 @@ export function applyAutomationPatch(
 ): Automation {
   return {
     ...prev,
-    ...(patch.name !== undefined ? { name: patch.name } : {}),
-    ...(patch.prompt !== undefined ? { prompt: patch.prompt } : {}),
+    ...(patch.name === undefined ? {} : { name: patch.name }),
+    ...(patch.prompt === undefined ? {} : { prompt: patch.prompt }),
   };
 }
 
@@ -68,7 +68,9 @@ export function automationUpdateMutationOptions(
   id: string,
   opts: { errorTitle: string }
 ) {
-  const getKey = trpc.org.workspace.automations.get.queryOptions({ id }).queryKey;
+  const getKey = trpc.org.workspace.automations.get.queryOptions({
+    id,
+  }).queryKey;
   const listKey = trpc.org.workspace.automations.list.queryOptions().queryKey;
 
   return trpc.org.workspace.automations.update.mutationOptions({
@@ -81,7 +83,9 @@ export function automationUpdateMutationOptions(
       const prevGet = qc.getQueryData(getKey);
       const prevList = qc.getQueryData(listKey);
       setOne(qc, trpc, id, (a) => applyAutomationPatch(a as Automation, patch));
-      upsertInList(qc, trpc, id, (a) => applyAutomationPatch(a as Automation, patch));
+      upsertInList(qc, trpc, id, (a) =>
+        applyAutomationPatch(a as Automation, patch)
+      );
       return { prevGet, prevList };
     },
     onError: (_error, _patch, ctx) => {

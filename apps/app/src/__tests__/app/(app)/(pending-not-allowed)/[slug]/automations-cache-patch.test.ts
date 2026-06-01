@@ -3,7 +3,11 @@ import { describe, expect, it } from "vitest";
 import { applyAutomationPatch } from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/automations/_components/automations-cache";
 
 function make(over: Partial<Automation>): Automation {
-  return { name: "Old name", prompt: "Old prompt", ...over } as unknown as Automation;
+  return {
+    name: "Old name",
+    prompt: "Old prompt",
+    ...over,
+  } as unknown as Automation;
 }
 
 describe("applyAutomationPatch", () => {
