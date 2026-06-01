@@ -193,6 +193,38 @@ async function encryptedToken(plaintext: string) {
   return await encrypt(plaintext, env.ENCRYPTION_KEY);
 }
 
+async function revokeDroppedLinearTokens(input: {
+  clerkOrgId: string;
+  config: ReturnType<typeof requireLinearConnectorConfig>;
+  reason: "post_exchange_failure" | "refresh_cas_lost";
+  tokens: Array<{ kind: "access" | "refresh"; token?: string }>;
+}) {
+  const seen = new Set<string>();
+  for (const issuedToken of input.tokens) {
+    if (!issuedToken.token || seen.has(issuedToken.token)) {
+      continue;
+    }
+    seen.add(issuedToken.token);
+
+    try {
+      await revokeLinearOAuthToken({
+        clientId: input.config.clientId,
+        clientSecret: input.config.clientSecret,
+        revokeUrl: input.config.endpoints.oauthRevokeUrl,
+        token: issuedToken.token,
+      });
+    } catch (error) {
+      log.warn("[connectors] linear dropped token revoke failed", {
+        clerkOrgId: input.clerkOrgId,
+        failure: safeErrorDetails(error),
+        provider: "linear",
+        reason: input.reason,
+        tokenKind: issuedToken.kind,
+      });
+    }
+  }
+}
+
 function hasDifferentObservedTokens(input: {
   current: OrgConnectorConnection;
   previous: OrgConnectorConnection;
@@ -288,6 +320,16 @@ async function getFreshAccessToken(input: {
   });
 
   if (!updated) {
+    await revokeDroppedLinearTokens({
+      clerkOrgId: input.connection.clerkOrgId,
+      config: input.config,
+      reason: "refresh_cas_lost",
+      tokens: [
+        { kind: "access", token: refreshed.accessToken },
+        { kind: "refresh", token: refreshed.refreshToken },
+      ],
+    });
+
     const winner = await getConcurrentRefreshWinner({
       connection: input.connection,
       db: input.db,
@@ -398,21 +440,20 @@ async function finalizeLinearConnection(input: {
       toolManifest,
     });
   } catch (error) {
-    try {
-      await revokeLinearOAuthToken({
-        clientId: config.clientId,
-        clientSecret: config.clientSecret,
-        revokeUrl: config.endpoints.oauthRevokeUrl,
-        token: token.accessToken,
-      });
-    } catch (revokeError) {
-      log.warn("[connectors] linear post-exchange cleanup revoke failed", {
-        clerkOrgId: input.attempt.clerkOrgId,
-        failure: safeErrorDetails(error),
-        provider: "linear",
-        revokeFailure: safeErrorDetails(revokeError),
-      });
-    }
+    await revokeDroppedLinearTokens({
+      clerkOrgId: input.attempt.clerkOrgId,
+      config,
+      reason: "post_exchange_failure",
+      tokens: [
+        { kind: "access", token: token.accessToken },
+        { kind: "refresh", token: token.refreshToken },
+      ],
+    });
+    log.warn("[connectors] linear post-exchange finalize failed", {
+      clerkOrgId: input.attempt.clerkOrgId,
+      failure: safeErrorDetails(error),
+      provider: "linear",
+    });
     throw error;
   }
 }

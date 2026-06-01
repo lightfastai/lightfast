@@ -552,6 +552,7 @@ describe("Linear connector flow", () => {
         "https://app.lightfast.localhost/acme/connectors?connector=linear&error=linear_transient_error",
     });
 
+    expect(revokeLinearOAuthTokenMock).toHaveBeenCalledTimes(2);
     expect(revokeLinearOAuthTokenMock).toHaveBeenCalledWith(
       expect.objectContaining({
         clientId: "linear_client_test",
@@ -559,11 +560,27 @@ describe("Linear connector flow", () => {
         token: "linear_access_token",
       })
     );
+    expect(revokeLinearOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "linear_client_test",
+        clientSecret: "linear_secret_test",
+        token: "linear_refresh_token",
+      })
+    );
     expect(finalizeCurrentOrgConnectorConnectionMock).not.toHaveBeenCalled();
     expect(logWarnMock).toHaveBeenCalledWith(
-      "[connectors] linear post-exchange cleanup revoke failed",
-      expect.not.objectContaining({ error: expect.anything() })
+      "[connectors] linear dropped token revoke failed",
+      expect.objectContaining({
+        failure: expect.objectContaining({
+          code: "LINEAR_REVOKE_FAILED",
+          name: "LinearAppNodeError",
+        }),
+        reason: "post_exchange_failure",
+      })
     );
+    for (const call of logWarnMock.mock.calls) {
+      expect(call[1]).not.toHaveProperty("error");
+    }
   });
 
   it("preserves the previous tool manifest on non-auth discovery failure", async () => {
@@ -664,6 +681,13 @@ describe("Linear connector flow", () => {
 
     expect(listLinearMcpToolsMock).toHaveBeenCalledWith(
       expect.objectContaining({ accessToken: "access_token_new" })
+    );
+    expect(revokeLinearOAuthTokenMock).toHaveBeenCalledTimes(2);
+    expect(revokeLinearOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "linear_access_loser" })
+    );
+    expect(revokeLinearOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({ token: "linear_refresh_loser" })
     );
     expect(markCurrentOrgConnectorConnectionErrorMock).not.toHaveBeenCalled();
   });
