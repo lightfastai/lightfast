@@ -16,6 +16,7 @@ import {
   markSkillIndexRefreshFailed,
   releaseSkillIndexRefreshLock,
   replaceSkillIndexEntries,
+  SkillIndexRefreshLockLostError,
   updateSkillIndexRefCheck,
 } from "../utils/skill-index";
 
@@ -146,7 +147,9 @@ describe("skill index helpers", () => {
   it("replaces entries and updates indexed state metadata in a transaction", async () => {
     const deleteWhere = vi.fn(() => Promise.resolve({ affectedRows: 2 }));
     const insertValues = vi.fn(() => Promise.resolve());
-    const updateWhere = vi.fn(() => Promise.resolve({ affectedRows: 1 }));
+    const updateWhere = vi.fn((_condition: SQL) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
     const updateSet = vi.fn(() => ({ where: updateWhere }));
     const tx = {
       delete: vi.fn(() => ({ where: deleteWhere })),
@@ -172,10 +175,15 @@ describe("skill index helpers", () => {
       indexedAt,
       indexedCommitSha: "commit-1",
       indexedTreeSha: "tree-1",
+      lockToken: "token-1",
       stateId: 12,
     });
 
     expect(db.transaction).toHaveBeenCalledOnce();
+    const query = renderSql(updateWhere.mock.calls[0]?.[0]);
+    expect(query.sql).toContain("`id` = ?");
+    expect(query.sql).toContain("`refresh_lock_token` = ?");
+    expect(query.params).toEqual(expect.arrayContaining([12, "token-1"]));
     expect(tx.delete).toHaveBeenCalledWith(skillIndexEntries);
     expect(insertValues).toHaveBeenCalledWith([
       expect.objectContaining({ skillIndexStateId: 12, slug: "valid-skill" }),
@@ -197,8 +205,40 @@ describe("skill index helpers", () => {
     });
   });
 
+  it("does not delete or insert entries after losing the refresh lock", async () => {
+    const deleteWhere = vi.fn(() => Promise.resolve({ affectedRows: 2 }));
+    const insertValues = vi.fn(() => Promise.resolve());
+    const updateWhere = vi.fn(() => Promise.resolve({ affectedRows: 0 }));
+    const updateSet = vi.fn(() => ({ where: updateWhere }));
+    const tx = {
+      delete: vi.fn(() => ({ where: deleteWhere })),
+      insert: vi.fn(() => ({ values: insertValues })),
+      update: vi.fn(() => ({ set: updateSet })),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+
+    await expect(
+      replaceSkillIndexEntries(db, {
+        entries: [createEntryInput()],
+        indexDiagnostics: [],
+        indexedAt: new Date("2026-06-01T00:01:00.000Z"),
+        indexedCommitSha: "commit-1",
+        indexedTreeSha: "tree-1",
+        lockToken: "stale-token",
+        stateId: 12,
+      })
+    ).rejects.toBeInstanceOf(SkillIndexRefreshLockLostError);
+
+    expect(tx.delete).not.toHaveBeenCalled();
+    expect(tx.insert).not.toHaveBeenCalled();
+  });
+
   it("marks refresh failure metadata without deleting entries", async () => {
-    const where = vi.fn(() => ({ affectedRows: 1 }));
+    const where = vi.fn((_: SQL) => ({ affectedRows: 1 }));
     const set = vi.fn(() => ({ where }));
     const db = {
       delete: vi.fn(),
@@ -210,6 +250,7 @@ describe("skill index helpers", () => {
       errorCode: "github-error",
       errorMessage: "x".repeat(600),
       failedAt,
+      lockToken: "token-1",
       stateId: 12,
     });
 
@@ -220,6 +261,28 @@ describe("skill index helpers", () => {
       lastRefreshFailedAt: failedAt,
       lastRefreshStatus: "failed",
     });
+    const query = renderSql(where.mock.calls[0]?.[0]);
+    expect(query.sql).toContain("`id` = ?");
+    expect(query.sql).toContain("`refresh_lock_token` = ?");
+    expect(query.params).toEqual(expect.arrayContaining([12, "token-1"]));
+  });
+
+  it("throws when marking refresh failure after losing the refresh lock", async () => {
+    const where = vi.fn((_condition: SQL) => ({ affectedRows: 0 }));
+    const set = vi.fn(() => ({ where }));
+    const db = {
+      update: vi.fn(() => ({ set })),
+    } as unknown as Database;
+
+    await expect(
+      markSkillIndexRefreshFailed(db, {
+        errorCode: "github-error",
+        errorMessage: "lost",
+        failedAt: new Date("2026-06-01T00:02:00.000Z"),
+        lockToken: "stale-token",
+        stateId: 12,
+      })
+    ).rejects.toBeInstanceOf(SkillIndexRefreshLockLostError);
   });
 
   it("updates ref check metadata by source-control repository id", async () => {
@@ -272,13 +335,14 @@ describe("skill index helpers", () => {
 
   it("builds the candidate query from active bindings and oldest checks first", async () => {
     const limit = vi.fn(() => Promise.resolve([]));
-    const orderBy = vi.fn(() => ({ limit }));
+    const orderBy = vi.fn((..._expressions: SQL[]) => ({ limit }));
     const where = vi.fn((_condition: SQL) => ({ orderBy }));
     const leftJoin = vi.fn(() => ({ where }));
     const innerJoin = vi.fn(() => ({ leftJoin }));
     const from = vi.fn(() => ({ innerJoin }));
+    const select = vi.fn((_selection: Record<string, unknown>) => ({ from }));
     const db = {
-      select: vi.fn(() => ({ from })),
+      select,
     } as unknown as Database;
 
     await listSkillIndexableSourceControlRepositoryCandidates(db, {
@@ -286,11 +350,22 @@ describe("skill index helpers", () => {
       limit: 25,
     });
 
+    const selection = select.mock.calls[0]?.[0] as
+      | Record<string, unknown>
+      | undefined;
+    expect(selection).toBeDefined();
+    expect(Object.keys(selection ?? {})).toEqual([
+      "binding",
+      "repository",
+      "state",
+    ]);
     const query = renderSql(where.mock.calls[0]?.[0]);
     expect(query.sql).toContain("`status` = ?");
     expect(query.sql).toContain("`clerk_org_id` = ?");
     expect(query.params).toEqual(expect.arrayContaining(["active", "org_1"]));
-    expect(orderBy).toHaveBeenCalled();
+    expect(renderSql(orderBy.mock.calls[0]?.[0]).sql).toContain(
+      "`last_checked_at` is null desc"
+    );
     expect(limit).toHaveBeenCalledWith(25);
   });
 });

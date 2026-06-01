@@ -138,6 +138,7 @@ export {
   type ReplaceSkillIndexEntriesInput,
   type ReplaceSkillIndexEntryInput,
   replaceSkillIndexEntries,
+  SkillIndexRefreshLockLostError,
   updateSkillIndexRefCheck,
 } from "./utils/skill-index";
 export {

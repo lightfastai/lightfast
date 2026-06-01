@@ -1,11 +1,13 @@
 import type { SkillDiagnostic } from "@repo/skills-contract";
-import { and, asc, eq, getTableColumns, isNull, lt, or } from "drizzle-orm";
+import { and, asc, eq, getTableColumns, isNull, lt, or, sql } from "drizzle-orm";
 
 import type { Database } from "../client";
 import type {
   InsertSkillIndexEntry,
+  OrgSourceControlBinding,
   SkillIndexEntry,
   SkillIndexState,
+  SourceControlRepository,
 } from "../schema";
 import {
   orgSourceControlBindings,
@@ -17,6 +19,15 @@ import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
 
 const stateSelection = getTableColumns(skillIndexStates);
 const entrySelection = getTableColumns(skillIndexEntries);
+const bindingSelection = getTableColumns(orgSourceControlBindings);
+const repositorySelection = getTableColumns(sourceControlRepositories);
+
+export class SkillIndexRefreshLockLostError extends Error {
+  constructor(stateId: number) {
+    super(`Skill index refresh lock was lost for state ${stateId}.`);
+    this.name = "SkillIndexRefreshLockLostError";
+  }
+}
 
 export type ReplaceSkillIndexEntryInput = Omit<
   InsertSkillIndexEntry,
@@ -29,14 +40,14 @@ export interface ReplaceSkillIndexEntriesInput {
   indexedAt: Date;
   indexedCommitSha: string;
   indexedTreeSha: string | null;
+  lockToken: string;
   stateId: number;
 }
 
 export interface SkillIndexableSourceControlRepositoryCandidate {
-  clerkOrgId: string;
-  lastCheckedAt: Date | null;
-  orgSourceControlBindingId: number;
-  sourceControlRepositoryId: number;
+  binding: OrgSourceControlBinding;
+  repository: SourceControlRepository;
+  state: SkillIndexState | null;
 }
 
 export async function createOrLoadSkillIndexState(
@@ -145,20 +156,7 @@ export async function replaceSkillIndexEntries(
   input: ReplaceSkillIndexEntriesInput
 ): Promise<void> {
   await db.transaction(async (tx) => {
-    await tx
-      .delete(skillIndexEntries)
-      .where(eq(skillIndexEntries.skillIndexStateId, input.stateId));
-
-    if (input.entries.length > 0) {
-      await tx.insert(skillIndexEntries).values(
-        input.entries.map((entry) => ({
-          ...entry,
-          skillIndexStateId: input.stateId,
-        }))
-      );
-    }
-
-    await tx
+    const updateResult = await tx
       .update(skillIndexStates)
       .set({
         indexDiagnostics: input.indexDiagnostics,
@@ -174,7 +172,29 @@ export async function replaceSkillIndexEntries(
         lastRefreshStatus: "fresh",
         skillCount: input.entries.length,
       })
-      .where(eq(skillIndexStates.id, input.stateId));
+      .where(
+        and(
+          eq(skillIndexStates.id, input.stateId),
+          eq(skillIndexStates.refreshLockToken, input.lockToken)
+        )
+      );
+
+    if (getRowsAffected(updateResult) !== 1) {
+      throw new SkillIndexRefreshLockLostError(input.stateId);
+    }
+
+    await tx
+      .delete(skillIndexEntries)
+      .where(eq(skillIndexEntries.skillIndexStateId, input.stateId));
+
+    if (input.entries.length > 0) {
+      await tx.insert(skillIndexEntries).values(
+        input.entries.map((entry) => ({
+          ...entry,
+          skillIndexStateId: input.stateId,
+        }))
+      );
+    }
   });
 }
 
@@ -184,9 +204,10 @@ export async function markSkillIndexRefreshFailed(
     errorCode: string;
     errorMessage: string;
     failedAt: Date;
+    lockToken: string;
     stateId: number;
   }
-): Promise<number> {
+): Promise<void> {
   const result = await db
     .update(skillIndexStates)
     .set({
@@ -195,8 +216,15 @@ export async function markSkillIndexRefreshFailed(
       lastRefreshFailedAt: input.failedAt,
       lastRefreshStatus: "failed",
     })
-    .where(eq(skillIndexStates.id, input.stateId));
-  return getRowsAffected(result);
+    .where(
+      and(
+        eq(skillIndexStates.id, input.stateId),
+        eq(skillIndexStates.refreshLockToken, input.lockToken)
+      )
+    );
+  if (getRowsAffected(result) !== 1) {
+    throw new SkillIndexRefreshLockLostError(input.stateId);
+  }
 }
 
 export async function updateSkillIndexRefCheck(
@@ -277,10 +305,9 @@ export async function listSkillIndexableSourceControlRepositoryCandidates(
 ): Promise<SkillIndexableSourceControlRepositoryCandidate[]> {
   return await db
     .select({
-      clerkOrgId: orgSourceControlBindings.clerkOrgId,
-      lastCheckedAt: skillIndexStates.lastCheckedAt,
-      orgSourceControlBindingId: orgSourceControlBindings.id,
-      sourceControlRepositoryId: sourceControlRepositories.id,
+      binding: bindingSelection,
+      repository: repositorySelection,
+      state: stateSelection,
     })
     .from(sourceControlRepositories)
     .innerJoin(
@@ -305,6 +332,9 @@ export async function listSkillIndexableSourceControlRepositoryCandidates(
           )
         : eq(orgSourceControlBindings.status, "active")
     )
-    .orderBy(asc(skillIndexStates.lastCheckedAt))
+    .orderBy(
+      sql`${skillIndexStates.lastCheckedAt} is null desc`,
+      asc(skillIndexStates.lastCheckedAt)
+    )
     .limit(input.limit);
 }

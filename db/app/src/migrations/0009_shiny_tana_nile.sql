@@ -20,7 +20,7 @@ CREATE TABLE `lightfast_skill_index_entries` (
 	`resources_truncated` int unsigned NOT NULL DEFAULT 0,
 	`non_standard_resource_count` int unsigned NOT NULL DEFAULT 0,
 	`created_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_skill_index_entries_id` PRIMARY KEY(`id`),
 	CONSTRAINT `skill_index_entries_state_slug_uq` UNIQUE(`skill_index_state_id`,`slug`)
 );
@@ -44,7 +44,7 @@ CREATE TABLE `lightfast_skill_index_states` (
 	`refresh_lock_token` varchar(128),
 	`refresh_locked_until` timestamp(3),
 	`created_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
-	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
+	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP(3),
 	CONSTRAINT `lightfast_skill_index_states_id` PRIMARY KEY(`id`),
 	CONSTRAINT `skill_index_states_source_control_repository_uq` UNIQUE(`source_control_repository_id`)
 );
