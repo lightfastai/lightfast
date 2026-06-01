@@ -2,7 +2,6 @@
 
 import { Button } from "@repo/ui/components/ui/button";
 import { useQueryClient } from "@tanstack/react-query";
-import { Plus } from "lucide-react";
 import { useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo } from "react";
 import { useWorkspaceCommands } from "~/components/workspace-command-menu";
@@ -110,7 +109,6 @@ export function SignalsClient() {
       type="button"
       variant="ghost"
     >
-      <Plus aria-hidden="true" className="size-3.5" />
       Add Signal
     </Button>
   );

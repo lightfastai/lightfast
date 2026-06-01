@@ -81,6 +81,38 @@ export interface CompositionManifest {
 
 export const MANIFEST: CompositionManifest = {
   compositions: {
+    // ── App Empty States (isometric) ───────────────────────────────
+    "signals-empty": {
+      type: "still",
+      component: "SignalsEmpty",
+      width: 1280,
+      height: 760,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/empty-states",
+          filename: "signals-empty.png",
+          scale: 2,
+        },
+      ],
+    },
+    "people-empty": {
+      type: "still",
+      component: "PeopleEmpty",
+      width: 1280,
+      height: 760,
+      props: {},
+      outputs: [
+        {
+          format: "png",
+          dest: "packages/app-remotion/out/empty-states",
+          filename: "people-empty.png",
+          scale: 2,
+        },
+      ],
+    },
+
     // ── Blog Featured Images ───────────────────────────────────────
     "blog-featured-concentric": {
       type: "still",
