@@ -165,6 +165,19 @@ function expiresAtFromSeconds(seconds: number | undefined) {
   return seconds ? new Date(Date.now() + seconds * 1000) : null;
 }
 
+function safeErrorDetails(error: unknown) {
+  return {
+    code:
+      error instanceof LinearAppNodeError
+        ? error.code
+        : error && typeof error === "object" && "code" in error
+          ? String(error.code)
+          : undefined,
+    message: error instanceof Error ? error.message : undefined,
+    name: error instanceof Error ? error.name : typeof error,
+  };
+}
+
 function shouldRefreshAccessToken(connection: OrgConnectorConnection) {
   if (!connection.accessTokenExpiresAt) {
     return false;
@@ -178,6 +191,46 @@ async function decryptToken(ciphertext: string) {
 
 async function encryptedToken(plaintext: string) {
   return await encrypt(plaintext, env.ENCRYPTION_KEY);
+}
+
+function hasDifferentObservedTokens(input: {
+  current: OrgConnectorConnection;
+  previous: OrgConnectorConnection;
+}) {
+  return (
+    input.current.status === "active" &&
+    (input.current.encryptedAccessToken !==
+      input.previous.encryptedAccessToken ||
+      input.current.encryptedRefreshToken !==
+        input.previous.encryptedRefreshToken)
+  );
+}
+
+async function getConcurrentRefreshWinner(input: {
+  connection: OrgConnectorConnection;
+  db: Database;
+}) {
+  const current = await getCurrentOrgConnectorConnection(input.db, {
+    clerkOrgId: input.connection.clerkOrgId,
+    provider: input.connection.provider,
+  });
+
+  if (
+    !(
+      current?.encryptedAccessToken &&
+      hasDifferentObservedTokens({
+        current,
+        previous: input.connection,
+      })
+    )
+  ) {
+    return null;
+  }
+
+  return {
+    accessToken: await decryptToken(current.encryptedAccessToken),
+    connection: current,
+  };
 }
 
 async function getFreshAccessToken(input: {
@@ -221,7 +274,7 @@ async function getFreshAccessToken(input: {
     ? await encryptedToken(refreshed.refreshToken)
     : null;
 
-  await updateObservedConnectorTokens(input.db, {
+  const updated = await updateObservedConnectorTokens(input.db, {
     accessTokenExpiresAt: expiresAtFromSeconds(refreshed.accessTokenExpiresIn),
     clerkOrgId: input.connection.clerkOrgId,
     encryptedAccessToken,
@@ -233,6 +286,21 @@ async function getFreshAccessToken(input: {
     ),
     updatedAt: new Date(),
   });
+
+  if (!updated) {
+    const winner = await getConcurrentRefreshWinner({
+      connection: input.connection,
+      db: input.db,
+    });
+    if (winner) {
+      return winner.accessToken;
+    }
+
+    throw new LinearAppNodeError(
+      "LINEAR_TOKEN_REFRESH_FAILED",
+      "Linear OAuth token refresh failed."
+    );
+  }
 
   return refreshed.accessToken;
 }
@@ -297,36 +365,56 @@ async function finalizeLinearConnection(input: {
     codeVerifier: input.attempt.codeVerifier,
     tokenUrl: config.endpoints.oauthTokenUrl,
   });
-  const [metadata, toolManifest] = await Promise.all([
-    getLinearViewerMetadata({
-      accessToken: token.accessToken,
-      viewerUrl: config.endpoints.viewerUrl,
-    }),
-    listLinearMcpTools({
-      accessToken: token.accessToken,
-      endpoint: config.endpoints.mcpEndpoint,
-    }),
-  ]);
 
-  await finalizeCurrentOrgConnectorConnection(appDb, {
-    accessTokenExpiresAt: expiresAtFromSeconds(token.accessTokenExpiresIn),
-    clerkOrgId: input.attempt.clerkOrgId,
-    connectedByUserId: input.attempt.lightfastUserId,
-    encryptedAccessToken: await encryptedToken(token.accessToken),
-    encryptedRefreshToken: token.refreshToken
-      ? await encryptedToken(token.refreshToken)
-      : null,
-    mcpEndpoint: config.endpoints.mcpEndpoint,
-    metadata: { mode: input.attempt.mode },
-    provider: "linear",
-    providerActorId: metadata.actorId ?? null,
-    providerActorName: metadata.actorName ?? null,
-    providerWorkspaceId: metadata.workspaceId,
-    providerWorkspaceName: metadata.workspaceName,
-    refreshTokenExpiresAt: expiresAtFromSeconds(token.refreshTokenExpiresIn),
-    scopes: token.scopes,
-    toolManifest,
-  });
+  try {
+    const [metadata, toolManifest] = await Promise.all([
+      getLinearViewerMetadata({
+        accessToken: token.accessToken,
+        viewerUrl: config.endpoints.viewerUrl,
+      }),
+      listLinearMcpTools({
+        accessToken: token.accessToken,
+        endpoint: config.endpoints.mcpEndpoint,
+      }),
+    ]);
+
+    await finalizeCurrentOrgConnectorConnection(appDb, {
+      accessTokenExpiresAt: expiresAtFromSeconds(token.accessTokenExpiresIn),
+      clerkOrgId: input.attempt.clerkOrgId,
+      connectedByUserId: input.attempt.lightfastUserId,
+      encryptedAccessToken: await encryptedToken(token.accessToken),
+      encryptedRefreshToken: token.refreshToken
+        ? await encryptedToken(token.refreshToken)
+        : null,
+      mcpEndpoint: config.endpoints.mcpEndpoint,
+      metadata: { mode: input.attempt.mode },
+      provider: "linear",
+      providerActorId: metadata.actorId ?? null,
+      providerActorName: metadata.actorName ?? null,
+      providerWorkspaceId: metadata.workspaceId,
+      providerWorkspaceName: metadata.workspaceName,
+      refreshTokenExpiresAt: expiresAtFromSeconds(token.refreshTokenExpiresIn),
+      scopes: token.scopes,
+      toolManifest,
+    });
+  } catch (error) {
+    try {
+      await revokeLinearOAuthToken({
+        clientId: config.clientId,
+        clientSecret: config.clientSecret,
+        revokeUrl: config.endpoints.oauthRevokeUrl,
+        token: token.accessToken,
+      });
+    } catch (revokeError) {
+      log.warn("[connectors] linear post-exchange cleanup revoke failed", {
+        clerkOrgId: input.attempt.clerkOrgId,
+        failure: safeErrorDetails(error),
+        provider: "linear",
+        revokeFailure: safeErrorDetails(revokeError),
+      });
+    }
+    throw error;
+  }
 }
 
 export async function completeLinearConnectorOAuth(input: {
@@ -408,15 +496,57 @@ export async function refreshLinearConnectorTools(ctx: ConnectorServiceContext) 
     });
   }
 
+  let accessToken: string;
+  let mcpEndpoint = connection.mcpEndpoint || config.endpoints.mcpEndpoint;
   try {
-    const accessToken = await getFreshAccessToken({
+    accessToken = await getFreshAccessToken({
       config,
       connection,
       db: ctx.db,
     });
+  } catch (error) {
+    if (
+      error instanceof LinearAppNodeError &&
+      error.code === "LINEAR_TOKEN_REFRESH_FAILED"
+    ) {
+      const winner = await getConcurrentRefreshWinner({
+        connection,
+        db: ctx.db,
+      });
+      if (winner) {
+        accessToken = winner.accessToken;
+        mcpEndpoint =
+          winner.connection.mcpEndpoint || config.endpoints.mcpEndpoint;
+      } else {
+        await markCurrentOrgConnectorConnectionError(ctx.db, {
+          clerkOrgId: identity.orgId,
+          provider: "linear",
+        });
+        log.warn("[connectors] linear auth refresh failed", {
+          clerkOrgId: identity.orgId,
+          failure: safeErrorDetails(error),
+          provider: "linear",
+        });
+        return { refreshed: false, status: "auth_error" as const };
+      }
+    } else {
+      await markCurrentOrgConnectorConnectionError(ctx.db, {
+        clerkOrgId: identity.orgId,
+        provider: "linear",
+      });
+      log.warn("[connectors] linear auth refresh failed", {
+        clerkOrgId: identity.orgId,
+        failure: safeErrorDetails(error),
+        provider: "linear",
+      });
+      return { refreshed: false, status: "auth_error" as const };
+    }
+  }
+
+  try {
     const toolManifest = await listLinearMcpTools({
       accessToken,
-      endpoint: connection.mcpEndpoint || config.endpoints.mcpEndpoint,
+      endpoint: mcpEndpoint,
     });
     await updateConnectorToolManifest(ctx.db, {
       clerkOrgId: identity.orgId,
@@ -439,6 +569,7 @@ export async function refreshLinearConnectorTools(ctx: ConnectorServiceContext) 
       log.warn("[connectors] linear tool refresh failed", {
         clerkOrgId: identity.orgId,
         code: error.code,
+        failure: safeErrorDetails(error),
         provider: "linear",
       });
       return { refreshed: false, status: "refresh_error" as const };
@@ -450,6 +581,7 @@ export async function refreshLinearConnectorTools(ctx: ConnectorServiceContext) 
     });
     log.warn("[connectors] linear auth refresh failed", {
       clerkOrgId: identity.orgId,
+      failure: safeErrorDetails(error),
       provider: "linear",
     });
     return { refreshed: false, status: "auth_error" as const };
@@ -502,7 +634,7 @@ export async function disconnectLinearConnector(ctx: ConnectorServiceContext) {
       } catch (error) {
         log.warn("[connectors] linear revoke failed during disconnect", {
           clerkOrgId: identity.orgId,
-          error,
+          failure: safeErrorDetails(error),
           provider: "linear",
         });
       }

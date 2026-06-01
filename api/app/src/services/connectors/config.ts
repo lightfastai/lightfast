@@ -3,7 +3,8 @@ import { TRPCError } from "@trpc/server";
 
 import { env as runtimeEnv } from "../../env";
 
-export const LINEAR_OAUTH_CALLBACK_PATH = "/api/connectors/linear/callback";
+export const LINEAR_OAUTH_CALLBACK_PATH =
+  "/api/connectors/linear/oauth/callback";
 
 export interface LinearConnectorConfig {
   appOrigin: string;

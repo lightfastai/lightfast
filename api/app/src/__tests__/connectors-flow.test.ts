@@ -26,6 +26,7 @@ const refreshLinearOAuthTokenMock = vi.fn();
 const revokeLinearOAuthTokenMock = vi.fn();
 const encryptMock = vi.fn();
 const decryptMock = vi.fn();
+const logWarnMock = vi.fn();
 
 const envMock = {
   ENCRYPTION_KEY:
@@ -86,7 +87,7 @@ vi.mock("@vendor/lib", () => ({
 }));
 
 vi.mock("@vendor/observability/log/next", () => ({
-  log: { error: vi.fn(), info: vi.fn(), warn: vi.fn() },
+  log: { error: vi.fn(), info: vi.fn(), warn: logWarnMock },
 }));
 
 vi.mock("@vendor/upstash", () => ({
@@ -109,6 +110,7 @@ const {
   issueLinearConnectOAuthAttempt,
 } = await import("../services/connectors/attempts");
 const {
+  completeLinearConnectorOAuth,
   disconnectLinearConnector,
   refreshLinearConnectorTools,
   startLinearConnectorOAuth,
@@ -386,6 +388,7 @@ describe("Linear connector flow", () => {
     getCurrentOrgConnectorConnectionMock.mockReset();
     getLinearViewerMetadataMock.mockReset();
     listLinearMcpToolsMock.mockReset();
+    logWarnMock.mockReset();
     markCurrentOrgConnectorConnectionErrorMock.mockReset();
     markCurrentOrgConnectorConnectionRevokedMock.mockReset();
     recordConnectorToolRefreshErrorMock.mockReset();
@@ -409,19 +412,30 @@ describe("Linear connector flow", () => {
     nanoidMock.mockReturnValue("attempt_123456789012345678901234");
     encryptMock.mockImplementation(async (value: string) => `encrypted:${value}`);
     decryptMock.mockImplementation(async (value: string) =>
-      value === "encrypted_access" ? "access_token" : "refresh_token"
+      value === "encrypted_access"
+        ? "access_token"
+        : value === "encrypted_access_new"
+          ? "access_token_new"
+          : value === "encrypted_refresh_new"
+            ? "refresh_token_new"
+            : "refresh_token"
     );
   });
 
   it("starts connect or reconnect based on the current Linear connection", async () => {
     getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(undefined);
 
-    await expect(startLinearConnectorOAuth(ctx())).resolves.toMatchObject({
+    const connectResult = await startLinearConnectorOAuth(ctx());
+    expect(connectResult).toMatchObject({
       authorizationUrl: expect.stringContaining(
         "https://linear.test/oauth/authorize"
       ),
       mode: "connect",
     });
+    const connectUrl = new URL(connectResult.authorizationUrl);
+    expect(connectUrl.searchParams.get("redirect_uri")).toBe(
+      "https://app.lightfast.localhost/api/connectors/linear/oauth/callback"
+    );
 
     getCurrentOrgConnectorConnectionMock.mockResolvedValueOnce(connection());
 
@@ -444,6 +458,112 @@ describe("Linear connector flow", () => {
       code: "PRECONDITION_FAILED",
       message: "Linear connector is not configured.",
     });
+  });
+
+  it("completes OAuth with the public oauth callback path", async () => {
+    const issued = await issueLinearConnectOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+    });
+    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock
+      .mockResolvedValueOnce(attemptRecord)
+      .mockResolvedValueOnce(attemptRecord);
+    redisGetdelMock.mockResolvedValueOnce(attemptRecord);
+    authMock.mockResolvedValue({ orgId: "org_acme", userId: "user_current" });
+    exchangeLinearOAuthCodeMock.mockResolvedValue({
+      accessToken: "linear_access_token",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "linear_refresh_token",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["read", "write"],
+      tokenType: "Bearer",
+    });
+    getLinearViewerMetadataMock.mockResolvedValue({
+      actorId: "actor_1",
+      actorName: "Jeevan",
+      workspaceId: "workspace_1",
+      workspaceName: "Acme",
+    });
+    listLinearMcpToolsMock.mockResolvedValue([{ name: "create_issue" }]);
+    finalizeCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
+
+    await expect(
+      completeLinearConnectorOAuth({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl: `https://app.lightfast.localhost/api/connectors/linear/oauth/callback?code=code_123&state=${issued.state}`,
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/connectors?connector=linear",
+    });
+
+    expect(exchangeLinearOAuthCodeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        callbackUrl:
+          "https://app.lightfast.localhost/api/connectors/linear/oauth/callback",
+      })
+    );
+  });
+
+  it("revokes issued tokens when post-exchange Linear discovery fails", async () => {
+    const issued = await issueLinearConnectOAuthAttempt({
+      clerkOrgId: "org_acme",
+      codeVerifier: "verifier_123",
+      lightfastUserId: "user_current",
+      mode: "connect",
+      orgSlug: "acme",
+    });
+    const attemptRecord = redisSetMock.mock.calls[0]?.[1];
+    redisGetMock
+      .mockResolvedValueOnce(attemptRecord)
+      .mockResolvedValueOnce(attemptRecord);
+    redisGetdelMock.mockResolvedValueOnce(attemptRecord);
+    authMock.mockResolvedValue({ orgId: "org_acme", userId: "user_current" });
+    exchangeLinearOAuthCodeMock.mockResolvedValue({
+      accessToken: "linear_access_token",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "linear_refresh_token",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["read", "write"],
+      tokenType: "Bearer",
+    });
+    getLinearViewerMetadataMock.mockRejectedValue(
+      new LinearAppNodeError(
+        "LINEAR_METADATA_FAILED",
+        "Linear metadata request failed."
+      )
+    );
+    listLinearMcpToolsMock.mockResolvedValue([{ name: "create_issue" }]);
+    revokeLinearOAuthTokenMock.mockRejectedValue(
+      new LinearAppNodeError("LINEAR_REVOKE_FAILED", "revoke failed")
+    );
+
+    await expect(
+      completeLinearConnectorOAuth({
+        appOrigin: "https://app.lightfast.localhost",
+        requestUrl: `https://app.lightfast.localhost/api/connectors/linear/oauth/callback?code=code_123&state=${issued.state}`,
+      })
+    ).resolves.toEqual({
+      redirectUrl:
+        "https://app.lightfast.localhost/acme/connectors?connector=linear&error=linear_transient_error",
+    });
+
+    expect(revokeLinearOAuthTokenMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        clientId: "linear_client_test",
+        clientSecret: "linear_secret_test",
+        token: "linear_access_token",
+      })
+    );
+    expect(finalizeCurrentOrgConnectorConnectionMock).not.toHaveBeenCalled();
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[connectors] linear post-exchange cleanup revoke failed",
+      expect.not.objectContaining({ error: expect.anything() })
+    );
   });
 
   it("preserves the previous tool manifest on non-auth discovery failure", async () => {
@@ -472,6 +592,82 @@ describe("Linear connector flow", () => {
     expect(markCurrentOrgConnectorConnectionErrorMock).not.toHaveBeenCalled();
   });
 
+  it("does not disable automations when a concurrent token refresh wins first", async () => {
+    getCurrentOrgConnectorConnectionMock
+      .mockResolvedValueOnce(
+        connection({
+          accessTokenExpiresAt: new Date("2026-06-01T00:00:00.000Z"),
+          encryptedAccessToken: "encrypted_access",
+          encryptedRefreshToken: "encrypted_refresh",
+        })
+      )
+      .mockResolvedValueOnce(
+        connection({
+          accessTokenExpiresAt: new Date("2026-06-01T08:00:00.000Z"),
+          encryptedAccessToken: "encrypted_access_new",
+          encryptedRefreshToken: "encrypted_refresh_new",
+        })
+      );
+    refreshLinearOAuthTokenMock.mockRejectedValue(
+      new LinearAppNodeError(
+        "LINEAR_TOKEN_REFRESH_FAILED",
+        "Linear OAuth token refresh failed."
+      )
+    );
+    listLinearMcpToolsMock.mockResolvedValue([{ name: "create_issue" }]);
+
+    await expect(refreshLinearConnectorTools(ctx())).resolves.toEqual({
+      refreshed: true,
+      status: "ok",
+      toolManifest: [{ name: "create_issue" }],
+    });
+
+    expect(listLinearMcpToolsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: "access_token_new" })
+    );
+    expect(updateConnectorToolManifestMock).toHaveBeenCalled();
+    expect(markCurrentOrgConnectorConnectionErrorMock).not.toHaveBeenCalled();
+  });
+
+  it("uses the persisted winner token when observed token update loses a race", async () => {
+    getCurrentOrgConnectorConnectionMock
+      .mockResolvedValueOnce(
+        connection({
+          accessTokenExpiresAt: new Date("2026-06-01T00:00:00.000Z"),
+          encryptedAccessToken: "encrypted_access",
+          encryptedRefreshToken: "encrypted_refresh",
+        })
+      )
+      .mockResolvedValueOnce(
+        connection({
+          accessTokenExpiresAt: new Date("2026-06-01T08:00:00.000Z"),
+          encryptedAccessToken: "encrypted_access_new",
+          encryptedRefreshToken: "encrypted_refresh_new",
+        })
+      );
+    refreshLinearOAuthTokenMock.mockResolvedValue({
+      accessToken: "linear_access_loser",
+      accessTokenExpiresIn: 3600,
+      refreshToken: "linear_refresh_loser",
+      refreshTokenExpiresIn: 86_400,
+      scopes: ["read", "write"],
+      tokenType: "Bearer",
+    });
+    updateObservedConnectorTokensMock.mockResolvedValue(false);
+    listLinearMcpToolsMock.mockResolvedValue([{ name: "create_issue" }]);
+
+    await expect(refreshLinearConnectorTools(ctx())).resolves.toEqual({
+      refreshed: true,
+      status: "ok",
+      toolManifest: [{ name: "create_issue" }],
+    });
+
+    expect(listLinearMcpToolsMock).toHaveBeenCalledWith(
+      expect.objectContaining({ accessToken: "access_token_new" })
+    );
+    expect(markCurrentOrgConnectorConnectionErrorMock).not.toHaveBeenCalled();
+  });
+
   it("wipes local tokens and manifest even when provider revoke fails", async () => {
     getCurrentOrgConnectorConnectionMock.mockResolvedValue(connection());
     revokeLinearOAuthTokenMock.mockRejectedValue(
@@ -494,5 +690,16 @@ describe("Linear connector flow", () => {
         provider: "linear",
       }
     );
+    expect(logWarnMock).toHaveBeenCalledWith(
+      "[connectors] linear revoke failed during disconnect",
+      expect.objectContaining({
+        failure: expect.objectContaining({
+          code: "LINEAR_REVOKE_FAILED",
+          name: "LinearAppNodeError",
+        }),
+        provider: "linear",
+      })
+    );
+    expect(logWarnMock.mock.calls[0]?.[1]).not.toHaveProperty("error");
   });
 });
