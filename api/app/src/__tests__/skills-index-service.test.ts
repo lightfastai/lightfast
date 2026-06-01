@@ -161,7 +161,63 @@ describe("skills index refresh/read service", () => {
     expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
   });
 
-  it("records refresh_timeout when a read refresh exceeds the budget", async () => {
+  it("attempts a 10s read refresh when no index state exists", async () => {
+    vi.useFakeTimers();
+    const createdState = staleState({
+      githubRefEtag: null,
+      indexedAt: null,
+      indexedCommitSha: null,
+      indexedTreeSha: null,
+      lastCheckedAt: null,
+      lastCheckedCommitSha: null,
+    });
+    const freshState = staleState({
+      indexedAt: now,
+      indexedCommitSha: "current-main",
+      indexedTreeSha: "tree-sha",
+      lastCheckedAt: now,
+      lastCheckedCommitSha: "current-main",
+      lastRefreshStatus: "fresh",
+    });
+    const deps = createDeps({
+      createdState,
+      targetEntries: [
+        entry({ indexedCommitSha: "current-main", slug: "test-skill" }),
+      ],
+      targetState: null,
+    });
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(null)
+      .mockResolvedValueOnce(freshState);
+    deps.readSkillRepositoryTree.mockImplementation(
+      async (_input: { signal?: AbortSignal }) => {
+        await new Promise((resolve) => setTimeout(resolve, 5_000));
+        return {
+          commit: { sha: "current-main", treeSha: "tree-sha" },
+          tree: {
+            sha: "tree-sha",
+            tree: [skillFile("skills/test-skill/SKILL.md", "skill-sha", 60)],
+          },
+        };
+      }
+    );
+
+    const pending = ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+    await vi.advanceTimersByTimeAsync(5_000);
+    const result = await pending;
+
+    expect(deps.createOrLoadSkillIndexState).toHaveBeenCalled();
+    expect(deps.replaceSkillIndexEntries).toHaveBeenCalled();
+    expect(result.freshness.status).toBe("fresh");
+    expect(result.skills).toHaveLength(1);
+    vi.useRealTimers();
+  });
+
+  it("records refresh_timeout and releases the lock before returning", async () => {
     vi.useFakeTimers();
     const deps = createDeps({
       targetEntries: [],
@@ -189,6 +245,48 @@ describe("skills index refresh/read service", () => {
       deps.db,
       expect.objectContaining({ errorCode: "refresh_timeout" })
     );
+    expect(deps.releaseSkillIndexRefreshLock).toHaveBeenCalledWith(
+      deps.db,
+      expect.objectContaining({ lockToken: "lock-token", stateId: 100 })
+    );
+    expect(
+      deps.markSkillIndexRefreshFailed.mock.invocationCallOrder[0]
+    ).toBeLessThan(
+      deps.releaseSkillIndexRefreshLock.mock.invocationCallOrder[0] ?? 0
+    );
+    vi.useRealTimers();
+  });
+
+  it("does not continue in the background or replace entries after read timeout", async () => {
+    vi.useFakeTimers();
+    const deps = createDeps({
+      targetEntries: [],
+      targetState: staleState({ indexedAt: null, indexedCommitSha: null }),
+    });
+    deps.readSkillRepositoryBlob.mockImplementation(
+      async ({ signal }: { signal?: AbortSignal }) => {
+        await new Promise((_, reject) => {
+          signal?.addEventListener("abort", () => {
+            reject(
+              new DOMException("This operation was aborted", "AbortError")
+            );
+          });
+        });
+        throw new Error("unreachable");
+      }
+    );
+
+    const pending = ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+    await vi.advanceTimersByTimeAsync(10_000);
+    await pending;
+    await vi.runAllTimersAsync();
+
+    expect(deps.replaceSkillIndexEntries).not.toHaveBeenCalled();
+    expect(deps.releaseSkillIndexRefreshLock).toHaveBeenCalledTimes(1);
     vi.useRealTimers();
   });
 });
@@ -279,12 +377,15 @@ type FakeState = {
 
 function createDeps(input: {
   acquireLockResult?: boolean;
+  createdState?: FakeState;
   readTreeError?: Error;
   refSha?: string;
   targetEntries?: unknown[];
-  targetState?: FakeState;
+  targetState?: FakeState | null;
 } = {}) {
-  const state = input.targetState ?? staleState();
+  const state =
+    input.targetState === undefined ? staleState() : input.targetState;
+  const createdState = input.createdState ?? state ?? staleState();
   const repository = {
     fullName: "acme/lightfast-skills",
     id: 1,
@@ -307,7 +408,7 @@ function createDeps(input: {
   };
   const deps = {
     acquireSkillIndexRefreshLock: vi.fn(async () => input.acquireLockResult ?? true),
-    createOrLoadSkillIndexState: vi.fn(async () => state),
+    createOrLoadSkillIndexState: vi.fn(async () => createdState),
     db: { fake: true },
     getSkillIndexStateBySourceControlRepositoryId: vi.fn(async () => state),
     listSkillIndexEntries: vi.fn(async () => input.targetEntries ?? []),
@@ -317,7 +418,7 @@ function createDeps(input: {
     markSkillIndexRefreshFailed: vi.fn(async () => undefined),
     now: vi.fn(() => now),
     randomToken: vi.fn(() => "lock-token"),
-    readSkillRepositoryBlob: vi.fn(async () => ({
+    readSkillRepositoryBlob: vi.fn(async (_input: { signal?: AbortSignal }) => ({
       sha: "skill-sha",
       size: 60,
       text: "---\nname: test-skill\ndescription: Test skill\n---\nBody",

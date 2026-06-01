@@ -105,6 +105,7 @@ async function getJson(input: {
   apiVersion?: string;
   fetch?: typeof fetch;
   installationToken: string;
+  signal?: AbortSignal;
   url: string | URL;
 }) {
   const { json, response } = await fetchGitHubJson({
@@ -114,6 +115,7 @@ async function getJson(input: {
         apiVersion: input.apiVersion,
         token: input.installationToken,
       }),
+      signal: input.signal,
     },
     requestErrorCode: "GITHUB_API_REQUEST_FAILED",
     requestErrorMessage: "GitHub repository request failed.",
@@ -136,6 +138,7 @@ export async function getGitHubCommit(input: {
   owner: string;
   ref: string;
   repo: string;
+  signal?: AbortSignal;
 }): Promise<{ sha: string; treeSha: string }> {
   const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
   const url = `${apiBaseUrl}/repos/${githubPathSegment(
@@ -147,6 +150,7 @@ export async function getGitHubCommit(input: {
     apiVersion: input.apiVersion,
     fetch: input.fetch,
     installationToken: input.installationToken,
+    signal: input.signal,
     url,
   });
   const parsed = commitResponseSchema.safeParse(json);
@@ -175,6 +179,7 @@ export async function getGitHubReference(input: {
   owner: string;
   ref: string;
   repo: string;
+  signal?: AbortSignal;
 }): Promise<
   | { status: "found"; sha: string; etag: string | null }
   | { status: "not_modified" }
@@ -194,6 +199,7 @@ export async function getGitHubReference(input: {
         }),
         ...(input.etag ? { "if-none-match": input.etag } : {}),
       },
+      signal: input.signal,
     },
     requestErrorCode: "GITHUB_API_REQUEST_FAILED",
     requestErrorMessage: "GitHub repository request failed.",
@@ -238,6 +244,7 @@ export async function getGitHubRepository(input: {
   installationToken: string;
   owner: string;
   repo: string;
+  signal?: AbortSignal;
 }): Promise<{
   fullName: string;
   id: string;
@@ -252,6 +259,7 @@ export async function getGitHubRepository(input: {
     apiVersion: input.apiVersion,
     fetch: input.fetch,
     installationToken: input.installationToken,
+    signal: input.signal,
     url,
   });
   const parsed = repositoryResponseSchema.safeParse(json);
@@ -277,6 +285,7 @@ export async function getGitHubTree(input: {
   owner: string;
   recursive?: boolean;
   repo: string;
+  signal?: AbortSignal;
   treeSha: string;
 }): Promise<z.infer<typeof treeResponseSchema>> {
   const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
@@ -292,6 +301,7 @@ export async function getGitHubTree(input: {
     apiVersion: input.apiVersion,
     fetch: input.fetch,
     installationToken: input.installationToken,
+    signal: input.signal,
     url: url.toString(),
   });
   const parsed = treeResponseSchema.safeParse(json);
@@ -311,6 +321,7 @@ export async function getGitHubBlobText(input: {
   installationToken: string;
   owner: string;
   repo: string;
+  signal?: AbortSignal;
   sha: string;
 }): Promise<{ sha: string; size: number; text: string }> {
   const apiBaseUrl = normalizeGitHubApiBaseUrl(input.apiBaseUrl);
@@ -326,6 +337,7 @@ export async function getGitHubBlobText(input: {
         apiVersion: input.apiVersion,
         token: input.installationToken,
       }),
+      signal: input.signal,
     },
     requestErrorCode: "GITHUB_API_REQUEST_FAILED",
     requestErrorMessage: "GitHub repository request failed.",

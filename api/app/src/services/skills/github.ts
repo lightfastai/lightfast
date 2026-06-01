@@ -13,7 +13,9 @@ export async function readSkillRepositoryMainRef(input: {
   etag?: string | null;
   fullName: string;
   installationId: string;
+  signal?: AbortSignal;
 }) {
+  input.signal?.throwIfAborted();
   const config = getGitHubAppConfig();
   const { owner, repo } = splitRepositoryFullName(input.fullName);
   const installationToken = await getCachedGitHubInstallationToken({
@@ -28,6 +30,7 @@ export async function readSkillRepositoryMainRef(input: {
       owner,
       ref: "heads/main",
       repo,
+      signal: input.signal,
     });
   } catch (error) {
     if (
@@ -44,7 +47,9 @@ export async function readSkillRepositoryTree(input: {
   commitSha: string;
   fullName: string;
   installationId: string;
+  signal?: AbortSignal;
 }) {
+  input.signal?.throwIfAborted();
   const config = getGitHubAppConfig();
   const { owner, repo } = splitRepositoryFullName(input.fullName);
   const installationToken = await getCachedGitHubInstallationToken({
@@ -57,7 +62,9 @@ export async function readSkillRepositoryTree(input: {
     owner,
     ref: input.commitSha,
     repo,
+    signal: input.signal,
   });
+  input.signal?.throwIfAborted();
   const tree = await getGitHubTree({
     apiBaseUrl: config.endpoints.apiBaseUrl,
     apiVersion: config.apiVersion,
@@ -65,6 +72,7 @@ export async function readSkillRepositoryTree(input: {
     owner,
     recursive: true,
     repo,
+    signal: input.signal,
     treeSha: commit.treeSha,
   });
   return {
@@ -82,8 +90,10 @@ export async function readSkillRepositoryTree(input: {
 export async function readSkillRepositoryBlob(input: {
   fullName: string;
   installationId: string;
+  signal?: AbortSignal;
   sha: string;
 }) {
+  input.signal?.throwIfAborted();
   const config = getGitHubAppConfig();
   const { owner, repo } = splitRepositoryFullName(input.fullName);
   const installationToken = await getCachedGitHubInstallationToken({
@@ -95,6 +105,7 @@ export async function readSkillRepositoryBlob(input: {
     installationToken,
     owner,
     repo,
+    signal: input.signal,
     sha: input.sha,
   });
 }

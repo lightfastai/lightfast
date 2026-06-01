@@ -31,7 +31,7 @@ export async function ensureFreshSkillIndexForRead(input: {
     (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     }));
-  if (!candidate || !state) {
+  if (!candidate) {
     return {
       freshness: toFreshness(state, "unavailable"),
       indexDiagnostics: [],
@@ -40,9 +40,11 @@ export async function ensureFreshSkillIndexForRead(input: {
     };
   }
 
-  let entries = await deps.listSkillIndexEntries(deps.db, { stateId: state.id });
+  let entries = state
+    ? await deps.listSkillIndexEntries(deps.db, { stateId: state.id })
+    : [];
   if (
-    state.indexedCommitSha &&
+    state?.indexedCommitSha &&
     state.lastCheckedCommitSha &&
     state.indexedCommitSha === state.lastCheckedCommitSha
   ) {
@@ -86,21 +88,17 @@ async function refreshWithBudget(input: {
   sourceControlRepositoryId: number;
 }): Promise<{ status: "failed" | "fresh" | "missing" | "stale" }> {
   const controller = new AbortController();
-  const operation = refreshSkillIndexSource({
-    deps: input.deps,
-    reason: "read",
-    signal: controller.signal,
-    sourceControlRepositoryId: input.sourceControlRepositoryId,
-  });
   let timeoutId: ReturnType<typeof setTimeout> | undefined;
-  const timeout = new Promise<{ status: "failed" }>((resolve) => {
-    timeoutId = setTimeout(() => {
-      controller.abort();
-      resolve({ status: "failed" });
-    }, input.budgetMs);
-  });
+  timeoutId = setTimeout(() => {
+    controller.abort();
+  }, input.budgetMs);
   try {
-    return await Promise.race([operation, timeout]);
+    return await refreshSkillIndexSource({
+      deps: input.deps,
+      reason: "read",
+      signal: controller.signal,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
   } finally {
     if (timeoutId) {
       clearTimeout(timeoutId);
