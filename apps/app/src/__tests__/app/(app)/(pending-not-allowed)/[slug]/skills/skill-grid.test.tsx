@@ -41,7 +41,11 @@ describe("SkillGrid", () => {
 
   it("renders the empty state when there are no skills", () => {
     render(
-      <SkillGrid emptyState="No skills indexed." onSelect={vi.fn()} skills={[]} />
+      <SkillGrid
+        emptyState="No skills indexed."
+        onSelect={vi.fn()}
+        skills={[]}
+      />
     );
 
     expect(screen.getByText("No skills indexed.")).toBeInTheDocument();

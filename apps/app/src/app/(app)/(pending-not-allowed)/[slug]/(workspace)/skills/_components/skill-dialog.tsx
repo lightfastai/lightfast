@@ -50,7 +50,9 @@ export function SkillDialog({
               <div className="mt-4 rounded-[9px] border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-amber-500/90 text-xs">
                 <span className="font-medium text-amber-500">
                   {skill.diagnostics.length}{" "}
-                  {skill.diagnostics.length === 1 ? "diagnostic" : "diagnostics"}
+                  {skill.diagnostics.length === 1
+                    ? "diagnostic"
+                    : "diagnostics"}
                 </span>
                 <ul className="mt-1 space-y-1">
                   {skill.diagnostics.map((diagnostic) => (
