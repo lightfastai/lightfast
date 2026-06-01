@@ -1,6 +1,5 @@
 "use client";
 
-import type { AppRouterOutputs } from "@api/app";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,10 +46,13 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { ConnectorIcon } from "./connector-icons";
+import {
+  type ConnectorCatalogRow,
+  type ConnectorProvider,
+  connectionStatus,
+  displayProviderName,
+} from "./connectors-model";
 
-type ConnectorCatalogRow =
-  AppRouterOutputs["org"]["workspace"]["connectors"]["list"][number];
-type ConnectorProvider = ConnectorCatalogRow["provider"];
 type StatusFilter = "all" | "connected" | "available" | "needs_reconnect";
 
 interface ConnectorsClientProps {
@@ -65,25 +67,6 @@ function isConnectableProvider(
   provider: ConnectorProvider
 ): provider is "linear" {
   return provider === CONNECTABLE_PROVIDER;
-}
-
-function displayProviderName(provider: string | undefined) {
-  if (!provider) {
-    return "Connector";
-  }
-  return provider.charAt(0).toUpperCase() + provider.slice(1);
-}
-
-function connectionStatus(
-  connection: NonNullable<ConnectorCatalogRow["connection"]>
-): { dotClass: string; label: string } {
-  if (connection.status === "error") {
-    return { dotClass: "bg-destructive", label: "Needs reconnect" };
-  }
-  if (connection.lastToolRefreshErrorAt) {
-    return { dotClass: "bg-amber-500", label: "Tools stale" };
-  }
-  return { dotClass: "bg-emerald-500", label: "Connected" };
 }
 
 function filterMatches(row: ConnectorCatalogRow, filter: StatusFilter) {
