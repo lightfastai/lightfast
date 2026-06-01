@@ -1,7 +1,8 @@
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
-import { apiContract } from "@repo/api-contract";
-import { McpServer, registerContractTools } from "@vendor/mcp";
+import { apiContract, lightfastMcpToolPolicy } from "@repo/api-contract";
+import { registerLightfastMcpTools } from "@repo/mcp-tools";
+import { McpServer } from "@vendor/mcp";
 import { describe, expect, it, vi } from "vitest";
 
 const signalId = "signal_123e4567-e89b-12d3-a456-426614174000";
@@ -39,8 +40,27 @@ async function connectRegisteredServer(
   lightfastClient = createLightfastClientStub()
 ) {
   const server = new McpServer({ name: "test", version: "0.0.0" });
-  registerContractTools(server, contract, lightfastClient, {
-    prefix: "lightfast",
+  registerLightfastMcpTools(server, {
+    contract,
+    policy: lightfastMcpToolPolicy,
+    execute: async ({ contractPath, input }) => {
+      const procedure = contractPath
+        .split(".")
+        .reduce<unknown>((node, segment) => {
+          if (!node || typeof node !== "object") {
+            return undefined;
+          }
+          return (node as Record<string, unknown>)[segment];
+        }, lightfastClient);
+
+      if (typeof procedure !== "function") {
+        throw new Error(`Missing Lightfast SDK procedure for ${contractPath}`);
+      }
+
+      return input === undefined
+        ? (procedure as () => Promise<unknown>)()
+        : (procedure as (input: unknown) => Promise<unknown>)(input);
+    },
   });
 
   const mcpClient = new Client({ name: "test-client", version: "0.0.0" });
@@ -63,7 +83,7 @@ async function closeRegisteredServer(
 }
 
 describe("MCP tool registration", () => {
-  it("exposes every public contract procedure as an MCP tool", async () => {
+  it("exposes every policy-enabled public contract procedure as an MCP tool", async () => {
     const context = await connectRegisteredServer();
 
     try {
@@ -78,7 +98,7 @@ describe("MCP tool registration", () => {
         tools.find((tool) => tool.name === "lightfast_signals_create")
       ).toMatchObject({
         description:
-          "Creates a creator-visible signal from raw text and queues asynchronous classification.",
+          "Create a new Lightfast signal from user-provided text in the selected organization. Use this when the user wants Lightfast to remember, classify, or route a new signal.",
         inputSchema: {
           properties: {
             input: expect.objectContaining({ type: "string" }),
@@ -166,7 +186,11 @@ describe("MCP tool registration", () => {
   it("does not throw on an empty contract", () => {
     const server = new McpServer({ name: "test", version: "0.0.0" });
     expect(() =>
-      registerContractTools(server, {}, {}, { prefix: "lightfast" })
+      registerLightfastMcpTools(server, {
+        contract: {},
+        execute: async () => ({}),
+        policy: {},
+      })
     ).not.toThrow();
   });
 });

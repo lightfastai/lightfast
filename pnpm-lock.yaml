@@ -1169,6 +1169,9 @@ importers:
       '@repo/api-contract':
         specifier: workspace:*
         version: link:../../packages/api-contract
+      '@repo/mcp-tools':
+        specifier: workspace:*
+        version: link:../../packages/mcp-tools
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../internal/typescript
