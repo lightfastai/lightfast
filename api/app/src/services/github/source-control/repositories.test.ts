@@ -133,6 +133,7 @@ describe("GitHub source-control repository service", () => {
         name: "workspace",
         owner: { id: "20", login: "acme" },
         private: true,
+        syncStatus: "disabled",
         watchedPathGlobs: ["**"],
       },
     ]);

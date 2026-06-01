@@ -18,6 +18,7 @@ export interface SourceControlRepositoryRow {
     login: string;
   };
   private: boolean;
+  syncStatus: SourceControlRepository["syncStatus"];
   watchedPathGlobs: string[] | null;
 }
 
@@ -97,6 +98,7 @@ export function buildSourceControlRepositoryResponse(input: {
           login: repository.ownerLogin,
         },
         private: repository.private,
+        syncStatus: watched?.syncStatus ?? "disabled",
         watchedPathGlobs: watched?.watchedPathGlobs ?? null,
       };
     });
