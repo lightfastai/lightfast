@@ -126,13 +126,13 @@ export function AutomationNameEditor({
           <div className="flex justify-end gap-2">
             <Button
               onClick={() => setOpen(false)}
-              size="sm"
+              size="lf"
               type="button"
               variant="ghost"
             >
               Cancel
             </Button>
-            <Button disabled={isSaveDisabled} size="sm" type="submit">
+            <Button disabled={isSaveDisabled} size="lf" type="submit">
               Save
             </Button>
           </div>

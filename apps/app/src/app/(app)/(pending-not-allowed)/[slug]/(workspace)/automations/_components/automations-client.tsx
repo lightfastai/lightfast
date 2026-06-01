@@ -42,20 +42,15 @@ export function AutomationsClient() {
     <div className="mx-auto w-full max-w-4xl px-6 py-10">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="font-semibold text-[20px] text-foreground tracking-[-0.02em]">
+          <h1 className="font-semibold text-2xl text-foreground tracking-[-0.02em]">
             Automations
           </h1>
-          <p className="mt-1 text-[12px] text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-sm">
             Cloud schedules that record scaffold runs.
           </p>
         </div>
         {canManageAutomations && (
-          <Button
-            asChild
-            className="h-7 rounded-[9px]"
-            size="sm"
-            variant="secondary"
-          >
+          <Button asChild size="lf" variant="secondary">
             <Link href={`/${workspaceSlug}/automations/new` as Route}>
               <Plus className="size-4" />
               New automation
@@ -66,10 +61,10 @@ export function AutomationsClient() {
 
       {automations.length === 0 ? (
         <div className="mt-10 border-border border-t pt-6">
-          <p className="font-mono text-[11px] text-foreground">
+          <p className="font-mono text-foreground text-sm">
             No automations yet
           </p>
-          <p className="mt-1 text-[12px] text-muted-foreground">
+          <p className="mt-1 text-muted-foreground text-sm">
             Create a cloud schedule to start recording scaffold runs.
           </p>
         </div>
@@ -108,7 +103,7 @@ function AutomationSection({
 
   return (
     <section>
-      <h2 className="font-mono font-normal text-[11px] text-muted-foreground">
+      <h2 className="font-mono font-normal text-muted-foreground text-sm">
         {title}
       </h2>
       <div className="mt-3 border-border border-t">
@@ -146,15 +141,15 @@ function AutomationRow({
           strokeWidth={2}
         />
         <div className="flex min-w-0 flex-wrap items-baseline gap-x-2 gap-y-0.5">
-          <p className="truncate font-medium text-[13px] text-foreground">
+          <p className="truncate font-medium text-base text-foreground">
             {automation.name}
           </p>
-          <p className="shrink-0 font-mono text-[10px] text-muted-foreground">
+          <p className="shrink-0 font-mono text-muted-foreground text-xs">
             {workspaceSlug}
           </p>
         </div>
       </div>
-      <p className="shrink-0 font-mono text-[11px] text-muted-foreground">
+      <p className="shrink-0 font-mono text-muted-foreground text-sm">
         {formatAutomationSchedule(automation)}
       </p>
     </Link>

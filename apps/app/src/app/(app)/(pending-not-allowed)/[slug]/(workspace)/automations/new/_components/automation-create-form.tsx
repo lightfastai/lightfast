@@ -152,10 +152,10 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
   return (
     <div className="min-h-full bg-background text-foreground">
       <div className="mx-auto w-full max-w-xl px-6 py-12">
-        <h1 className="font-semibold text-[20px] tracking-[-0.02em]">
+        <h1 className="font-semibold text-2xl tracking-[-0.02em]">
           New automation
         </h1>
-        <p className="mt-1 mb-8 text-[12px] text-muted-foreground">
+        <p className="mt-1 mb-8 text-muted-foreground text-sm">
           A cloud schedule that runs your agent and records each run.
         </p>
 
@@ -166,7 +166,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               name="name"
               render={({ field }) => (
                 <FormItem className="gap-2">
-                  <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
+                  <FormLabel className="font-normal text-muted-foreground text-sm">
                     Name <span className="text-muted-foreground">*</span>
                   </FormLabel>
                   <FormControl>
@@ -188,7 +188,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
               name="prompt"
               render={({ field }) => (
                 <FormItem className="gap-2">
-                  <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
+                  <FormLabel className="font-normal text-muted-foreground text-sm">
                     Instructions{" "}
                     <span className="text-muted-foreground">*</span>
                   </FormLabel>
@@ -200,7 +200,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                         placeholder="Describe what the agent should do in each run."
                         variant="lf"
                       />
-                      <span className="pointer-events-none absolute right-2.5 bottom-2 font-mono text-[9.5px] text-muted-foreground">
+                      <span className="pointer-events-none absolute right-2.5 bottom-2 text-muted-foreground text-xs">
                         {promptValue.length}/{AUTOMATION_PROMPT_MAX_LENGTH}
                       </span>
                     </div>
@@ -211,7 +211,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
             />
 
             <div className="space-y-2">
-              <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
+              <FormLabel className="font-normal text-muted-foreground text-sm">
                 Schedule
               </FormLabel>
               <div className="flex flex-wrap items-center gap-2.5">
@@ -226,7 +226,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                   value={scheduleKind}
                 />
                 {scheduleKind === "manual" && (
-                  <p className="font-mono text-[10.5px] text-muted-foreground">
+                  <p className="text-muted-foreground text-xs">
                     Runs only when triggered — no automatic schedule.
                   </p>
                 )}
@@ -238,11 +238,11 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                     render={({ field }) => (
                       <FormItem className="gap-0">
                         <div className="flex items-center gap-2.5">
-                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             Every
                           </span>
                           <Input
-                            className="w-14 text-center font-mono"
+                            className="w-14 text-center"
                             max={24}
                             min={1}
                             name={field.name}
@@ -258,7 +258,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                             value={field.value}
                             variant="lf"
                           />
-                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             hours
                           </span>
                         </div>
@@ -275,18 +275,18 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                     render={({ field }) => (
                       <FormItem className="gap-0">
                         <div className="flex items-center gap-2.5">
-                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             At
                           </span>
                           <Input
                             {...field}
-                            className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                            className="w-[7rem] [&::-webkit-calendar-picker-indicator]:hidden"
                             size="lf"
                             type="time"
                             variant="lf"
                           />
                           {scheduleKind === "weekdays" && (
-                            <span className="rounded-md border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
+                            <span className="rounded-md border border-border px-1.5 py-0.5 text-muted-foreground text-xs">
                               Mon–Fri
                             </span>
                           )}
@@ -304,7 +304,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                     render={({ field }) => (
                       <FormItem className="gap-0">
                         <div className="flex flex-wrap items-center gap-2.5">
-                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             On
                           </span>
                           <LfSelect
@@ -320,12 +320,12 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
                             }))}
                             value={String(dayOfWeek)}
                           />
-                          <span className="font-mono text-[10.5px] text-muted-foreground">
+                          <span className="text-muted-foreground text-xs">
                             at
                           </span>
                           <Input
                             {...field}
-                            className="w-[7rem] font-mono [&::-webkit-calendar-picker-indicator]:hidden"
+                            className="w-[7rem] [&::-webkit-calendar-picker-indicator]:hidden"
                             size="lf"
                             type="time"
                             variant="lf"
@@ -341,7 +341,7 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
 
             {isTimeBasedKind(scheduleKind) && (
               <div className="space-y-2">
-                <FormLabel className="font-mono font-normal text-[11px] text-muted-foreground tracking-normal">
+                <FormLabel className="font-normal text-muted-foreground text-sm">
                   Timezone
                 </FormLabel>
                 <LfSelect
@@ -356,17 +356,12 @@ export function AutomationCreateForm({ slug }: { slug: string }) {
             )}
 
             <div className="flex items-center justify-end gap-2.5 border-border border-t pt-5">
-              <Button
-                asChild
-                className="h-7 rounded-[9px]"
-                type="button"
-                variant="ghost"
-              >
+              <Button asChild size="lf" type="button" variant="ghost">
                 <Link href={listHref}>Cancel</Link>
               </Button>
               <Button
-                className="h-7 rounded-[9px]"
                 disabled={isSubmitting || !form.formState.isValid}
+                size="lf"
                 type="submit"
               >
                 {isSubmitting ? (

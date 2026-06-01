@@ -79,8 +79,8 @@ function buildSchedule(state: {
 function DetailRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <span className="text-[12.5px] text-muted-foreground">{label}</span>
-      <span className="text-[12.5px] text-foreground">{value}</span>
+      <span className="text-muted-foreground text-sm">{label}</span>
+      <span className="text-foreground text-sm">{value}</span>
     </div>
   );
 }
@@ -180,14 +180,14 @@ export function AutomationScheduleEditor({
 
           <div className="min-h-7">
             {kind === "manual" && (
-              <p className="font-mono text-[10.5px] text-muted-foreground">
+              <p className="font-mono text-muted-foreground text-xs">
                 Runs only when triggered — no automatic schedule.
               </p>
             )}
 
             {kind === "hourly" && (
               <div className="flex items-center gap-2.5">
-                <span className="font-mono text-[10.5px] text-muted-foreground">
+                <span className="font-mono text-muted-foreground text-xs">
                   Every
                 </span>
                 <Input
@@ -200,7 +200,7 @@ export function AutomationScheduleEditor({
                   value={intervalHours}
                   variant="lf"
                 />
-                <span className="font-mono text-[10.5px] text-muted-foreground">
+                <span className="font-mono text-muted-foreground text-xs">
                   hours
                 </span>
               </div>
@@ -208,7 +208,7 @@ export function AutomationScheduleEditor({
 
             {(kind === "daily" || kind === "weekdays") && (
               <div className="flex items-center gap-2.5">
-                <span className="font-mono text-[10.5px] text-muted-foreground">
+                <span className="font-mono text-muted-foreground text-xs">
                   At
                 </span>
                 <Input
@@ -220,7 +220,7 @@ export function AutomationScheduleEditor({
                   variant="lf"
                 />
                 {kind === "weekdays" && (
-                  <span className="rounded-md border border-border px-1.5 py-0.5 font-mono text-[9px] text-muted-foreground">
+                  <span className="rounded-md border border-border px-1.5 py-0.5 font-mono text-muted-foreground text-xs">
                     Mon–Fri
                   </span>
                 )}
@@ -229,7 +229,7 @@ export function AutomationScheduleEditor({
 
             {kind === "weekly" && (
               <div className="flex flex-wrap items-center gap-2.5">
-                <span className="font-mono text-[10.5px] text-muted-foreground">
+                <span className="font-mono text-muted-foreground text-xs">
                   On
                 </span>
                 <LfSelect
@@ -241,7 +241,7 @@ export function AutomationScheduleEditor({
                   }))}
                   value={String(dayOfWeek)}
                 />
-                <span className="font-mono text-[10.5px] text-muted-foreground">
+                <span className="font-mono text-muted-foreground text-xs">
                   at
                 </span>
                 <Input
@@ -258,7 +258,7 @@ export function AutomationScheduleEditor({
 
           {isTimeBasedKind(kind) && (
             <div className="space-y-1.5">
-              <p className="font-mono text-[11px] text-muted-foreground">
+              <p className="font-mono text-muted-foreground text-sm">
                 Timezone
               </p>
               <LfSelect
@@ -272,19 +272,17 @@ export function AutomationScheduleEditor({
 
           <div className="flex justify-end gap-2.5">
             <Button
-              className="h-7 rounded-[9px]"
               onClick={() => setOpen(false)}
-              size="sm"
+              size="lf"
               type="button"
               variant="ghost"
             >
               Cancel
             </Button>
             <Button
-              className="h-7 rounded-[9px]"
               disabled={isSaveDisabled}
               onClick={handleSave}
-              size="sm"
+              size="lf"
               type="button"
             >
               {update.isPending ? (

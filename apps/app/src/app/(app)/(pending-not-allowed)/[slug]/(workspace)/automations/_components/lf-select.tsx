@@ -47,7 +47,7 @@ export function LfSelect({
       <DropdownMenuTrigger asChild>
         <Button
           className={cn(
-            "h-7 justify-between gap-1.5 rounded-[9px] border border-input bg-card px-2.5 font-normal text-[12.5px] text-foreground hover:bg-accent",
+            "h-7 justify-between gap-1.5 rounded-[9px] border border-input bg-card px-2.5 font-normal text-foreground text-sm hover:bg-accent",
             className
           )}
           size="sm"

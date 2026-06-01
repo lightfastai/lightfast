@@ -102,18 +102,18 @@ export function AutomationPromptEditor({
         variant="lf"
       />
       <p
-        className={`font-mono text-[9.5px] ${isTooLong ? "text-destructive" : "text-muted-foreground"}`}
+        className={`font-mono text-xs ${isTooLong ? "text-destructive" : "text-muted-foreground"}`}
       >
         {trimmed.length} / {AUTOMATION_PROMPT_MAX_LENGTH}
       </p>
       <div className="flex gap-2">
-        <Button onClick={handleCancel} size="sm" type="button" variant="ghost">
+        <Button onClick={handleCancel} size="lf" type="button" variant="ghost">
           Cancel
         </Button>
         <Button
           disabled={isSaveDisabled}
           onClick={handleSave}
-          size="sm"
+          size="lf"
           type="button"
         >
           {update.isPending ? (
