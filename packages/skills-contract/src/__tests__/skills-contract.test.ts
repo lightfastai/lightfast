@@ -6,10 +6,13 @@ import {
   parseSkillFile,
   skillNameSchema,
 } from "../index";
+import type { SkillName } from "../index";
 
 describe("@repo/skills-contract", () => {
   it("accepts standard skill names only", () => {
-    expect(skillNameSchema.parse("code-review")).toBe("code-review");
+    const name: SkillName = skillNameSchema.parse("code-review");
+
+    expect(name).toBe("code-review");
     expect(skillNameSchema.safeParse("Code Review").success).toBe(false);
     expect(skillNameSchema.safeParse("code_review").success).toBe(false);
     expect(skillNameSchema.safeParse("-code-review").success).toBe(false);
@@ -50,7 +53,7 @@ describe("@repo/skills-contract", () => {
     );
   });
 
-  it("uses a narrow frontmatter compatibility fallback", () => {
+  it("does not use compatibility fallback when YAML parsing succeeds", () => {
     const result = parseSkillFile({
       contentSha: "abc123",
       contentSize: 112,
@@ -60,8 +63,38 @@ describe("@repo/skills-contract", () => {
     });
 
     expect(result.entry.validationStatus).toBe("valid");
+    expect(result.entry.diagnostics.map((d) => d.code)).not.toContain(
+      "frontmatter_compatibility_fallback"
+    );
+  });
+
+  it("uses compatibility fallback only for parse errors with name and description scalars", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 113,
+      path: "skills/github-triage/SKILL.md",
+      sourceMarkdown:
+        "---\nname: github-triage\ndescription: Use when labels include repo: area values.\n---\n\nBody.\n",
+    });
+
+    expect(result.entry.validationStatus).toBe("valid");
     expect(result.entry.diagnostics.map((d) => d.code)).toContain(
       "frontmatter_compatibility_fallback"
+    );
+  });
+
+  it("rejects compatibility fallback when simple scalar frontmatter has extra keys", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 132,
+      path: "skills/github-triage/SKILL.md",
+      sourceMarkdown:
+        "---\nname: github-triage\ndescription: Use when labels include repo: area values.\nlicense: Apache-2.0\n---\n\nBody.\n",
+    });
+
+    expect(result.entry.validationStatus).toBe("invalid");
+    expect(result.entry.diagnostics.map((d) => d.code)).toContain(
+      "frontmatter_invalid"
     );
   });
 
@@ -117,6 +150,7 @@ describe("@repo/skills-contract", () => {
     }));
 
     const result = collectSkillIndexCandidates(entries);
+    expect(result.canonicalSkillFiles).toHaveLength(SKILL_COUNT_MAX);
     expect(result.fatalDiagnostics.map((d) => d.code)).toContain(
       "too_many_skills"
     );

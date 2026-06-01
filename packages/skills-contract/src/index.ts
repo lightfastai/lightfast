@@ -20,6 +20,7 @@ export const skillNameSchema = z
   .string()
   .regex(/^[a-z0-9][a-z0-9-]{0,62}$/)
   .refine((name) => !name.endsWith("-") && !name.includes("--"));
+export type SkillName = z.infer<typeof skillNameSchema>;
 
 export const skillValidationStatusSchema = z.enum(["valid", "invalid"]);
 export type SkillValidationStatus = z.infer<
@@ -185,7 +186,7 @@ export function parseSkillFile(input: ParseSkillFileInput): ParseSkillFileResult
 export function collectSkillIndexCandidates(
   entries: SkillTreeEntry[]
 ): SkillIndexCandidateCollection {
-  const canonicalSkillFiles: SkillTreeEntry[] = [];
+  let canonicalSkillFiles: SkillTreeEntry[] = [];
   const resourcesBySlug = new Map<string, SkillResources>();
   const nonStandardResourceCountBySlug = new Map<string, number>();
   const diagnostics: SkillDiagnostic[] = [];
@@ -240,16 +241,18 @@ export function collectSkillIndexCandidates(
     });
   }
 
-  if (canonicalSkillFiles.length > SKILL_COUNT_MAX) {
+  const canonicalSkillFileCount = canonicalSkillFiles.length;
+  if (canonicalSkillFileCount > SKILL_COUNT_MAX) {
     fatalDiagnostics.push({
       severity: "error",
       code: "too_many_skills",
       message: "Canonical skill count exceeds the maximum allowed size.",
       details: {
-        count: canonicalSkillFiles.length,
+        count: canonicalSkillFileCount,
         max: SKILL_COUNT_MAX,
       },
     });
+    canonicalSkillFiles = canonicalSkillFiles.slice(0, SKILL_COUNT_MAX);
   }
 
   return {
@@ -311,31 +314,21 @@ function parseFrontmatter(
   if (document.errors.length === 0 && document.contents instanceof YAMLMap) {
     const data = document.toJSON() as unknown;
     if (isRecord(data)) {
-      if (needsCompatibilityFallback(markdown)) {
-        const fallback = parseSimpleScalarFrontmatter(markdown);
-        if (fallback !== null) {
-          diagnostics.push({
-            severity: "warning",
-            code: "frontmatter_compatibility_fallback",
-            message: "Used compatibility parsing for simple scalar frontmatter.",
-            path,
-          });
-          return { data: fallback, diagnostics };
-        }
-      }
       return { data: data as Record<string, FrontmatterValue>, diagnostics };
     }
   }
 
-  const fallback = parseSimpleScalarFrontmatter(markdown);
-  if (fallback !== null) {
-    diagnostics.push({
-      severity: "warning",
-      code: "frontmatter_compatibility_fallback",
-      message: "Used compatibility parsing for simple scalar frontmatter.",
-      path,
-    });
-    return { data: fallback, diagnostics };
+  if (document.errors.length > 0) {
+    const fallback = parseSimpleScalarFrontmatter(markdown);
+    if (fallback !== null) {
+      diagnostics.push({
+        severity: "warning",
+        code: "frontmatter_compatibility_fallback",
+        message: "Used compatibility parsing for simple scalar frontmatter.",
+        path,
+      });
+      return { data: fallback, diagnostics };
+    }
   }
 
   diagnostics.push({
@@ -345,12 +338,6 @@ function parseFrontmatter(
     path,
   });
   return { data: null, diagnostics };
-}
-
-function needsCompatibilityFallback(markdown: string): boolean {
-  return markdown
-    .split(/\r?\n/)
-    .some((line) => /^(name|description):\s+.*\S:\S/.test(line));
 }
 
 function parseSimpleScalarFrontmatter(
@@ -365,11 +352,15 @@ function parseSimpleScalarFrontmatter(
     if (match === null) {
       return null;
     }
+    const key = match[1]!;
+    if (key !== "name" && key !== "description") {
+      return null;
+    }
     const value = match[2]!;
     if (/^\s*[\[{\]&*!|>]/.test(value)) {
       return null;
     }
-    data[match[1]!] = value;
+    data[key] = value;
   }
   return data;
 }
