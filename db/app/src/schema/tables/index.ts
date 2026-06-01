@@ -28,17 +28,17 @@ export {
   namespaces,
 } from "./namespaces";
 export {
+  type InsertOrgConnectorConnection,
+  type OrgConnectorConnection,
+  orgConnectorConnections,
+} from "./org-connector-connections";
+export {
   type InsertOrgSourceControlBinding,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
   orgSourceControlBindings,
 } from "./org-source-control-bindings";
-export {
-  type InsertOrgConnectorConnection,
-  type OrgConnectorConnection,
-  orgConnectorConnections,
-} from "./org-connector-connections";
 export {
   createPersonId,
   type InsertPerson,

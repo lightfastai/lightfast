@@ -80,9 +80,7 @@ export function connectorRuntimeToolName(
   );
 }
 
-export function parseConnectorRuntimeToolName(
-  runtimeToolName: string
-): {
+export function parseConnectorRuntimeToolName(runtimeToolName: string): {
   provider: ConnectableConnectorProvider;
   providerToolName: ConnectorToolName;
 } {

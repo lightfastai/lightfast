@@ -136,7 +136,10 @@ export async function finalizeCurrentOrgConnectorConnection(
         );
       }
 
-      const insertedConnection = await getOrgConnectorConnectionById(tx, row.id);
+      const insertedConnection = await getOrgConnectorConnectionById(
+        tx,
+        row.id
+      );
       if (!insertedConnection) {
         throw new Error(
           `Failed to insert connector connection for org ${input.clerkOrgId}`
@@ -149,7 +152,7 @@ export async function finalizeCurrentOrgConnectorConnection(
         throw error;
       }
       duplicateError = error;
-      return undefined;
+      return;
     });
 
   if (duplicateError) {

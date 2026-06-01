@@ -150,7 +150,10 @@ describe("org connector connection helpers", () => {
 
     await expect(
       finalizeCurrentOrgConnectorConnection(db, finalizeInput())
-    ).resolves.toMatchObject({ id: 2, encryptedAccessToken: "encrypted_access_next" });
+    ).resolves.toMatchObject({
+      id: 2,
+      encryptedAccessToken: "encrypted_access_next",
+    });
 
     expect(db.transaction).toHaveBeenCalledOnce();
     expect(revokeSetMock).toHaveBeenCalledWith(

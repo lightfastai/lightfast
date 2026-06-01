@@ -1,5 +1,5 @@
-import type { McpServer } from "@vendor/mcp";
 import { isContractProcedure } from "@orpc/contract";
+import type { McpServer } from "@vendor/mcp";
 import { parseError } from "@vendor/observability/error/next";
 
 export type { McpServer } from "@vendor/mcp";

@@ -36,10 +36,10 @@ export {
   type InsertSourceControlWebhookDelivery,
   type InsertUserSourceControlAccount,
   type OrgConnectorConnection,
-  orgConnectorConnections,
   type OrgSourceControlBinding,
   type OrgSourceControlBindingProvider,
   type OrgSourceControlBindingStatus,
+  orgConnectorConnections,
   orgSourceControlBindings,
   PEOPLE_VIEW_ID_PREFIX,
   PERSON_DISPLAY_NAME_LENGTH,
@@ -120,23 +120,6 @@ export {
 } from "./utils/namespaces";
 // Utilities
 export { buildOrgNamespace } from "./utils/org";
-export {
-  currentOrgProviderKey,
-  type FinalizeCurrentOrgConnectorConnectionInput,
-  finalizeCurrentOrgConnectorConnection,
-  type GetCurrentOrgConnectorConnectionInput,
-  getCurrentOrgConnectorConnection,
-  listCurrentOrgConnectorConnections,
-  markCurrentOrgConnectorConnectionError,
-  markCurrentOrgConnectorConnectionRevoked,
-  type RecordConnectorToolRefreshErrorInput,
-  recordConnectorToolRefreshError,
-  setConnectorAutomationEnabled,
-  type UpdateConnectorToolManifestInput,
-  updateConnectorToolManifest,
-  type UpdateObservedConnectorTokensInput,
-  updateObservedConnectorTokens,
-} from "./utils/org-connector-connections";
 // Org source-control binding repository helpers
 export {
   type FinalizeActiveOrgProviderBindingInput,
@@ -151,6 +134,23 @@ export {
   type UpsertActiveOrgBindingInput,
   upsertActiveOrgBinding,
 } from "./utils/org-binding";
+export {
+  currentOrgProviderKey,
+  type FinalizeCurrentOrgConnectorConnectionInput,
+  finalizeCurrentOrgConnectorConnection,
+  type GetCurrentOrgConnectorConnectionInput,
+  getCurrentOrgConnectorConnection,
+  listCurrentOrgConnectorConnections,
+  markCurrentOrgConnectorConnectionError,
+  markCurrentOrgConnectorConnectionRevoked,
+  type RecordConnectorToolRefreshErrorInput,
+  recordConnectorToolRefreshError,
+  setConnectorAutomationEnabled,
+  type UpdateConnectorToolManifestInput,
+  type UpdateObservedConnectorTokensInput,
+  updateConnectorToolManifest,
+  updateObservedConnectorTokens,
+} from "./utils/org-connector-connections";
 export {
   getPersonByIdentityKey,
   getPersonByPublicId,

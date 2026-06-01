@@ -1,5 +1,5 @@
 import { apiContract } from "@repo/api-contract";
-import { InMemoryTransport, McpClient as Client, McpServer } from "@vendor/mcp";
+import { McpClient as Client, InMemoryTransport, McpServer } from "@vendor/mcp";
 import { registerContractTools } from "@vendor/orpc-mcp-adapter";
 import { describe, expect, it, vi } from "vitest";
 
