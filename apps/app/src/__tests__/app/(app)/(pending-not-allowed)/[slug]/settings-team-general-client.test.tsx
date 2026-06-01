@@ -72,18 +72,7 @@ vi.mock("next/navigation", () => ({
 vi.mock(
   "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/_components/source-control-connection-section",
   () => ({
-    LightfastRepositorySection: ({
-      connection,
-      orgSlug,
-    }: {
-      connection: { accountLogin: string | null } | null;
-      orgSlug: string;
-    }) => (
-      <div data-testid="lightfast-repository-section">
-        {orgSlug}:{connection?.accountLogin ?? "unbound"}
-      </div>
-    ),
-    SourceControlConnectionSection: ({
+    SourceControlSection: ({
       connection,
       repositories,
       orgSlug,
@@ -177,8 +166,5 @@ describe("TeamGeneralSettingsClient", () => {
     expect(screen.getByTestId("source-control-section")).toHaveTextContent(
       "acme:2:acme-live"
     );
-    expect(
-      screen.getByTestId("lightfast-repository-section")
-    ).toHaveTextContent("acme:lightfast-emulated");
   });
 });
