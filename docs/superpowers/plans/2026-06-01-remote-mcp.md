@@ -1633,7 +1633,7 @@ git commit -m "feat: execute hosted mcp tools"
 - Test: `api/app/src/__tests__/mcp-connections-router.test.ts`
 - Test: `apps/app/src/__tests__/app/(app)/(pending-not-allowed)/[slug]/settings-mcp-page.test.tsx`
 
-- [ ] **Step 1: Add failing router tests**
+- [x] **Step 1: Add failing router tests**
 
 Tests assert:
 
@@ -1645,7 +1645,7 @@ it("revokes a user's own grant", async () => {});
 it("allows org admins to revoke an org grant", async () => {});
 ```
 
-- [ ] **Step 2: Add failing UI tests**
+- [x] **Step 2: Add failing UI tests**
 
 Tests assert:
 
@@ -1655,7 +1655,7 @@ it("opens technical details in a sheet", async () => {});
 it("revokes a grant after confirmation", async () => {});
 ```
 
-- [ ] **Step 3: Implement tRPC router**
+- [x] **Step 3: Implement tRPC router**
 
 Add procedures under a clear namespace such as:
 
@@ -1668,7 +1668,7 @@ org.settings.mcpConnections.revoke
 
 Use existing user/org/admin procedure patterns. Return display-safe fields only.
 
-- [ ] **Step 4: Implement settings pages**
+- [x] **Step 4: Implement settings pages**
 
 Main rows show:
 
@@ -1690,7 +1690,7 @@ Details sheet shows:
 - client URI/policy URI
 - token status summary
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run:
 
@@ -1703,7 +1703,7 @@ pnpm --filter @lightfast/app typecheck
 
 Expected: all PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add api/app apps/app

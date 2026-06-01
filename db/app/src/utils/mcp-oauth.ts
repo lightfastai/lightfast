@@ -1,5 +1,5 @@
 import type { McpScope } from "@repo/api-contract";
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNull } from "drizzle-orm";
 
 import type { Database } from "../client";
 import {
@@ -27,6 +27,28 @@ const REDACTED_VALUE = "[redacted]";
 
 export interface McpOauthClientWithRedirectUris extends McpOauthClient {
   redirectUris: string[];
+}
+
+export interface McpRefreshTokenStatusSummary {
+  active: number;
+  reuseDetected: number;
+  revoked: number;
+  rotated: number;
+}
+
+export interface McpOauthGrantConnection {
+  client: Pick<
+    McpOauthClient,
+    | "clientName"
+    | "clientUri"
+    | "logoUri"
+    | "metadata"
+    | "publicClientId"
+    | "status"
+  > | null;
+  grant: McpOauthGrant;
+  redirectUris: string[];
+  refreshTokenStatusSummary: McpRefreshTokenStatusSummary;
 }
 
 export interface CreateMcpOauthClientInput {
@@ -182,6 +204,128 @@ export async function getMcpOauthGrantByPublicId(
     .where(eq(mcpOauthGrants.publicId, input.publicId))
     .limit(1);
   return grant;
+}
+
+export async function listMcpOauthGrantConnectionsForUser(
+  db: Database,
+  input: { clerkUserId: string }
+): Promise<McpOauthGrantConnection[]> {
+  const grants = await db
+    .select()
+    .from(mcpOauthGrants)
+    .where(eq(mcpOauthGrants.clerkUserId, input.clerkUserId))
+    .orderBy(desc(mcpOauthGrants.createdAt), desc(mcpOauthGrants.id));
+
+  return hydrateMcpOauthGrantConnections(db, grants);
+}
+
+export async function listMcpOauthGrantConnectionsForOrg(
+  db: Database,
+  input: { clerkOrgId: string }
+): Promise<McpOauthGrantConnection[]> {
+  const grants = await db
+    .select()
+    .from(mcpOauthGrants)
+    .where(eq(mcpOauthGrants.clerkOrgId, input.clerkOrgId))
+    .orderBy(desc(mcpOauthGrants.createdAt), desc(mcpOauthGrants.id));
+
+  return hydrateMcpOauthGrantConnections(db, grants);
+}
+
+async function hydrateMcpOauthGrantConnections(
+  db: Database,
+  grants: McpOauthGrant[]
+): Promise<McpOauthGrantConnection[]> {
+  if (grants.length === 0) {
+    return [];
+  }
+
+  const clientIds = [...new Set(grants.map((grant) => grant.clientPublicId))];
+  const grantIds = grants.map((grant) => grant.publicId);
+
+  const [clients, redirectRows, refreshTokens] = await Promise.all([
+    db
+      .select({
+        clientName: mcpOauthClients.clientName,
+        clientUri: mcpOauthClients.clientUri,
+        logoUri: mcpOauthClients.logoUri,
+        metadata: mcpOauthClients.metadata,
+        publicClientId: mcpOauthClients.publicClientId,
+        status: mcpOauthClients.status,
+      })
+      .from(mcpOauthClients)
+      .where(inArray(mcpOauthClients.publicClientId, clientIds)),
+    db
+      .select({
+        clientPublicId: mcpOauthClientRedirectUris.clientPublicId,
+        redirectUri: mcpOauthClientRedirectUris.redirectUri,
+      })
+      .from(mcpOauthClientRedirectUris)
+      .where(inArray(mcpOauthClientRedirectUris.clientPublicId, clientIds))
+      .orderBy(asc(mcpOauthClientRedirectUris.id)),
+    db
+      .select({
+        grantPublicId: mcpOauthRefreshTokens.grantPublicId,
+        status: mcpOauthRefreshTokens.status,
+      })
+      .from(mcpOauthRefreshTokens)
+      .where(inArray(mcpOauthRefreshTokens.grantPublicId, grantIds)),
+  ]);
+
+  const clientsById = new Map(
+    clients.map((client) => [client.publicClientId, client])
+  );
+  const redirectUrisByClientId = new Map<string, string[]>();
+  for (const row of redirectRows) {
+    const uris = redirectUrisByClientId.get(row.clientPublicId) ?? [];
+    uris.push(row.redirectUri);
+    redirectUrisByClientId.set(row.clientPublicId, uris);
+  }
+
+  const tokenSummaryByGrantId = new Map<
+    string,
+    McpRefreshTokenStatusSummary
+  >();
+  for (const row of refreshTokens) {
+    const summary =
+      tokenSummaryByGrantId.get(row.grantPublicId) ??
+      emptyRefreshTokenStatusSummary();
+    switch (row.status) {
+      case "active":
+        summary.active += 1;
+        break;
+      case "reuse_detected":
+        summary.reuseDetected += 1;
+        break;
+      case "revoked":
+        summary.revoked += 1;
+        break;
+      case "rotated":
+        summary.rotated += 1;
+        break;
+      default:
+        break;
+    }
+    tokenSummaryByGrantId.set(row.grantPublicId, summary);
+  }
+
+  return grants.map((grant) => ({
+    client: clientsById.get(grant.clientPublicId) ?? null,
+    grant,
+    redirectUris: redirectUrisByClientId.get(grant.clientPublicId) ?? [],
+    refreshTokenStatusSummary:
+      tokenSummaryByGrantId.get(grant.publicId) ??
+      emptyRefreshTokenStatusSummary(),
+  }));
+}
+
+function emptyRefreshTokenStatusSummary(): McpRefreshTokenStatusSummary {
+  return {
+    active: 0,
+    reuseDetected: 0,
+    revoked: 0,
+    rotated: 0,
+  };
 }
 
 export async function getActiveMcpOauthGrant(

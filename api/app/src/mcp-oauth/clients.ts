@@ -64,6 +64,7 @@ export async function registerMcpOAuthClient(
     logoUri: parsed.logo_uri ?? null,
     metadata: {
       grantTypes: ["authorization_code", "refresh_token"],
+      policyUri: parsed.policy_uri ?? null,
       responseTypes: ["code"],
       tokenEndpointAuthMethod: "none",
     },
