@@ -25,9 +25,9 @@ import {
 export { hashOpaqueToken } from "./hash";
 
 export interface McpAccessTokenGrant {
-  clientPublicId: string;
   clerkOrgId: string;
   clerkUserId: string;
+  clientPublicId: string;
   publicId: string;
   scopes: McpScope[];
 }

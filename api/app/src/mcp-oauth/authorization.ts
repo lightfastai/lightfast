@@ -14,9 +14,9 @@ import {
 } from "./types";
 
 export interface IssueMcpAuthorizationCodeInput {
-  clientId: string;
   clerkOrgId: string;
   clerkUserId: string;
+  clientId: string;
   codeChallenge: string;
   codeChallengeMethod: "S256";
   now?: Date;

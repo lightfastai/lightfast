@@ -47,8 +47,7 @@ describe("MCP OAuth route handlers", () => {
     const res = await GET();
 
     await expect(res.json()).resolves.toMatchObject({
-      authorization_endpoint:
-        "https://app.lightfast.localhost/oauth/authorize",
+      authorization_endpoint: "https://app.lightfast.localhost/oauth/authorize",
       code_challenge_methods_supported: ["S256"],
       grant_types_supported: ["authorization_code", "refresh_token"],
       issuer: "https://app.lightfast.localhost",
@@ -68,9 +67,7 @@ describe("MCP OAuth route handlers", () => {
       registration_access_token: "mcp_reg_secret",
       token_endpoint_auth_method: "none",
     });
-    const { POST } = await import(
-      "~/app/(app)/(oauth)/oauth/register/route"
-    );
+    const { POST } = await import("~/app/(app)/(oauth)/oauth/register/route");
 
     const res = await POST(
       new Request("https://app.lightfast.localhost/oauth/register", {
@@ -106,9 +103,12 @@ describe("MCP OAuth route handlers", () => {
     );
 
     const res = await GET(
-      new Request("https://app.lightfast.localhost/oauth/register/mcp_client_test", {
-        headers: { authorization: "Bearer mcp_reg_secret" },
-      }),
+      new Request(
+        "https://app.lightfast.localhost/oauth/register/mcp_client_test",
+        {
+          headers: { authorization: "Bearer mcp_reg_secret" },
+        }
+      ),
       { params: Promise.resolve({ clientId: "mcp_client_test" }) }
     );
 

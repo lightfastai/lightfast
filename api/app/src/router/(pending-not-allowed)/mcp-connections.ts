@@ -98,9 +98,12 @@ function toMcpConnectionDto(
   return {
     clientId: connection.grant.clientPublicId,
     clientName: client?.clientName ?? "Unknown MCP client",
-    clientPolicyUri: client ? stringMetadata(client.metadata, "policyUri") : null,
+    clientPolicyUri: client
+      ? stringMetadata(client.metadata, "policyUri")
+      : null,
     clientUri: client?.clientUri ?? null,
-    clientVerificationStatus: client?.status === "active" ? "verified" : "unverified",
+    clientVerificationStatus:
+      client?.status === "active" ? "verified" : "unverified",
     connectedUserId: connection.grant.clerkUserId,
     createdAt: connection.grant.createdAt.toISOString(),
     grantId: connection.grant.publicId,

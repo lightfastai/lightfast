@@ -6,20 +6,19 @@ import {
   createMcpOauthClientId,
   createMcpOauthGrantId,
   hashMcpOauthResource,
-  type McpAuditEvent,
   type McpAuditOutcome,
-  mcpAuditEvents,
   type McpCodeChallengeMethod,
   type McpOauthAuthorizationCode,
-  mcpOauthAuthorizationCodes,
   type McpOauthClient,
+  type McpOauthGrant,
+  type McpOauthRefreshToken,
+  mcpAuditEvents,
+  mcpOauthAuthorizationCodes,
   mcpOauthClientRedirectUris,
   mcpOauthClients,
-  type McpOauthGrant,
   mcpOauthGrants,
   mcpOauthRefreshTokens,
   mcpOauthRegistrationTokens,
-  type McpOauthRefreshToken,
 } from "../schema";
 import { getRowsAffected } from "./drizzle-results";
 
@@ -161,9 +160,9 @@ export async function getMcpOauthClientByRegistrationTokenHash(
 }
 
 export interface CreateMcpOauthGrantInput {
-  clientPublicId: string;
   clerkOrgId: string;
   clerkUserId: string;
+  clientPublicId: string;
   metadata?: Record<string, unknown> | null;
   publicId?: string;
   resource: string;
@@ -282,10 +281,7 @@ async function hydrateMcpOauthGrantConnections(
     redirectUrisByClientId.set(row.clientPublicId, uris);
   }
 
-  const tokenSummaryByGrantId = new Map<
-    string,
-    McpRefreshTokenStatusSummary
-  >();
+  const tokenSummaryByGrantId = new Map<string, McpRefreshTokenStatusSummary>();
   for (const row of refreshTokens) {
     const summary =
       tokenSummaryByGrantId.get(row.grantPublicId) ??
@@ -374,9 +370,9 @@ export async function revokeMcpOauthGrant(
 }
 
 export interface CreateMcpAuthorizationCodeInput {
-  clientPublicId: string;
   clerkOrgId: string;
   clerkUserId: string;
+  clientPublicId: string;
   codeChallenge: string;
   codeChallengeMethod: McpCodeChallengeMethod;
   codeHash: string;
@@ -451,9 +447,9 @@ async function getMcpAuthorizationCodeByHash(
 }
 
 export interface CreateMcpRefreshTokenInput {
-  clientPublicId: string;
   clerkOrgId: string;
   clerkUserId: string;
+  clientPublicId: string;
   expiresAt: Date;
   grantPublicId: string;
   parentTokenHash?: string | null;
@@ -585,9 +581,9 @@ export async function revokeMcpRefreshTokenByHash(
 }
 
 export interface RecordMcpAuditEventInput {
-  clientPublicId?: string | null;
   clerkOrgId?: string | null;
   clerkUserId?: string | null;
+  clientPublicId?: string | null;
   eventName: string;
   grantPublicId?: string | null;
   metadata?: Record<string, unknown> | null;

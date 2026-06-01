@@ -1,11 +1,7 @@
 import { revokeMcpRefreshTokenSecret } from "@api/app";
 import { db } from "@db/app/client";
 
-import {
-  oauthError,
-  oauthJson,
-  readOAuthBody,
-} from "../_server/mcp-response";
+import { oauthError, oauthJson, readOAuthBody } from "../_server/mcp-response";
 
 export const runtime = "nodejs";
 

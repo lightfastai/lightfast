@@ -1,5 +1,5 @@
 import type { McpScope } from "@repo/api-contract";
-import { jwtVerify, type JWTPayload } from "jose";
+import { type JWTPayload, jwtVerify } from "jose";
 import { z } from "zod";
 
 import { env } from "../env";
@@ -36,9 +36,7 @@ export interface McpAccessTokenPayload extends JWTPayload {
   user_id: string;
 }
 
-export type McpTokenVerificationErrorCode =
-  | "invalid_token"
-  | "missing_token";
+export type McpTokenVerificationErrorCode = "invalid_token" | "missing_token";
 
 export class McpTokenVerificationError extends Error {
   readonly status = 401;

@@ -2,10 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { McpScope } from "@repo/api-contract";
 import type { McpAccessTokenPayload } from "./auth/verify-token";
 
-export type McpClientVerificationStatus =
-  | "blocked"
-  | "unverified"
-  | "verified";
+export type McpClientVerificationStatus = "blocked" | "unverified" | "verified";
 
 export interface HostedMcpContext {
   clientId: string;

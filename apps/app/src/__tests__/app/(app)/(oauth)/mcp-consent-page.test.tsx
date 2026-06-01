@@ -41,8 +41,7 @@ vi.mock("~/env", () => ({
   },
 }));
 
-const Page = (await import("~/app/(app)/(oauth)/oauth/authorize/page"))
-  .default;
+const Page = (await import("~/app/(app)/(oauth)/oauth/authorize/page")).default;
 const { approveMcpAuthorizationAction } = await import(
   "~/app/(app)/(oauth)/oauth/authorize/actions"
 );
@@ -100,7 +99,8 @@ describe("/oauth/authorize MCP consent", () => {
           client_id: "mcp_client_test",
           code_challenge: "challenge_test",
           code_challenge_method: "S256",
-          redirect_uri: "https://backend.lightfield.app/connections/callback/MCP",
+          redirect_uri:
+            "https://backend.lightfield.app/connections/callback/MCP",
           resource: "https://mcp.lightfast.localhost/mcp",
           scope: "mcp:signals:write",
           state: "state_test",
@@ -114,7 +114,9 @@ describe("/oauth/authorize MCP consent", () => {
     expect(screen.getAllByText("dev@example.com").length).toBeGreaterThan(0);
     expect(screen.getByText("Acme")).toBeInTheDocument();
     expect(
-      screen.getByText("https://backend.lightfield.app/connections/callback/MCP")
+      screen.getByText(
+        "https://backend.lightfield.app/connections/callback/MCP"
+      )
     ).toBeInTheDocument();
     expect(screen.getByText("Create signals")).toBeInTheDocument();
   });

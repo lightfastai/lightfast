@@ -1,11 +1,7 @@
 import { getRegisteredMcpOAuthClient, McpOAuthError } from "@api/app";
 import { db } from "@db/app/client";
 
-import {
-  bearerToken,
-  oauthError,
-  oauthJson,
-} from "../../_server/mcp-response";
+import { bearerToken, oauthError, oauthJson } from "../../_server/mcp-response";
 
 export const runtime = "nodejs";
 

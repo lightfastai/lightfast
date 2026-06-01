@@ -1774,7 +1774,7 @@ git commit -m "chore: wire hosted mcp dev workflow"
 - Create: `apps/mcp/src/__tests__/e2e-oauth-mcp.test.ts`
 - Modify: no shared test setup files during the first pass; add imports and mocks locally inside `apps/mcp/src/__tests__/e2e-oauth-mcp.test.ts`.
 
-- [ ] **Step 1: Add integration smoke tests**
+- [x] **Step 1: Add integration smoke tests**
 
 Add a test that exercises:
 
@@ -1787,7 +1787,7 @@ Add a test that exercises:
 
 Use service-level helpers rather than a browser-driven Clerk login. Browser consent was tested in Task 7.
 
-- [ ] **Step 2: Run integration tests**
+- [x] **Step 2: Run integration tests**
 
 Run:
 
@@ -1797,7 +1797,7 @@ pnpm --filter @lightfast/mcp test -- src/__tests__/e2e-oauth-mcp.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 3: Run focused package verification**
+- [x] **Step 3: Run focused package verification**
 
 Run:
 
@@ -1813,7 +1813,7 @@ pnpm --filter @lightfastai/mcp test
 
 Expected: all PASS.
 
-- [ ] **Step 4: Run repo verification subset**
+- [x] **Step 4: Run repo verification subset**
 
 Run:
 
@@ -1825,7 +1825,7 @@ pnpm typecheck
 
 Expected: all PASS.
 
-- [ ] **Step 5: Start dev server and smoke metadata**
+- [x] **Step 5: Start dev server and smoke metadata**
 
 Run:
 
@@ -1842,7 +1842,7 @@ curl -s "$(portless get mcp.lightfast)/api/health"
 
 Expected: protected-resource JSON contains the local MCP resource URL and authorization server; health returns minimal OK JSON.
 
-- [ ] **Step 6: Commit final verification test work**
+- [x] **Step 6: Commit final verification test work**
 
 ```bash
 git add apps/mcp

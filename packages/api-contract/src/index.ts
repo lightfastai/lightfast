@@ -1,7 +1,7 @@
 export { apiContract, type Contract } from "./contract";
 export {
-  getContractProcedurePaths,
   type ExposedMcpToolPolicyEntry,
+  getContractProcedurePaths,
   type HiddenMcpToolPolicyEntry,
   type LightfastMcpToolPolicy,
   lightfastMcpToolPolicy,

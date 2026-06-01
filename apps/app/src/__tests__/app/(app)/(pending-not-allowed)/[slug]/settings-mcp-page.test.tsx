@@ -77,7 +77,9 @@ vi.mock("@repo/ui/components/ui/sheet", () => ({
   SheetDescription: ({ children }: { children?: ReactNode }) => (
     <p>{children}</p>
   ),
-  SheetHeader: ({ children }: { children?: ReactNode }) => <div>{children}</div>,
+  SheetHeader: ({ children }: { children?: ReactNode }) => (
+    <div>{children}</div>
+  ),
   SheetTitle: ({ children }: { children?: ReactNode }) => <h2>{children}</h2>,
 }));
 
@@ -88,7 +90,9 @@ vi.mock("@repo/ui/components/ui/alert-dialog", () => ({
   AlertDialogAction: ({
     children,
     ...props
-  }: { children?: ReactNode } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
+  }: {
+    children?: ReactNode;
+  } & React.ButtonHTMLAttributes<HTMLButtonElement>) => (
     <button type="button" {...props}>
       {children}
     </button>
@@ -190,12 +194,8 @@ describe("MCP settings page", () => {
   it("revokes a grant after confirmation", async () => {
     render(<McpConnectionsClient />);
 
-    fireEvent.click(
-      screen.getByRole("button", { name: /revoke lightfield/i })
-    );
-    fireEvent.click(
-      screen.getByRole("button", { name: /revoke connection/i })
-    );
+    fireEvent.click(screen.getByRole("button", { name: /revoke lightfield/i }));
+    fireEvent.click(screen.getByRole("button", { name: /revoke connection/i }));
 
     expect(revokeMutateMock).toHaveBeenCalledWith({
       grantId: "mcp_grant_test",

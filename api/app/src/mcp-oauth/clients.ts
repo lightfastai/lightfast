@@ -7,10 +7,7 @@ import {
 import { z } from "zod";
 
 import { hashOpaqueToken } from "./hash";
-import {
-  createMcpClientId,
-  createRegistrationAccessTokenSecret,
-} from "./ids";
+import { createMcpClientId, createRegistrationAccessTokenSecret } from "./ids";
 import { McpOAuthError } from "./types";
 
 const registrationRequestSchema = z
@@ -102,7 +99,7 @@ function formatRegisteredClientMetadata(
   const issuedAt =
     client.createdAt instanceof Date
       ? client.createdAt
-      : options.now ?? new Date();
+      : (options.now ?? new Date());
   return {
     client_id: client.publicClientId,
     client_id_issued_at: Math.floor(issuedAt.getTime() / 1000),

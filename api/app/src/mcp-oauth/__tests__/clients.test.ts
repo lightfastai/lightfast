@@ -80,7 +80,10 @@ describe("registerMcpOAuthClient", () => {
         token_endpoint_auth_method: "none",
       })
     ).rejects.toEqual(
-      new McpOAuthError("invalid_request", "Wildcard redirect URIs are not allowed.")
+      new McpOAuthError(
+        "invalid_request",
+        "Wildcard redirect URIs are not allowed."
+      )
     );
 
     expect(createMcpOauthClientMock).not.toHaveBeenCalled();

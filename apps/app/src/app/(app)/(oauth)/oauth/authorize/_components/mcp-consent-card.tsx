@@ -135,12 +135,12 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
           </div>
 
           <div className="space-y-2">
-            {!model.client.verified ? (
+            {model.client.verified ? null : (
               <WarningRow
                 icon={<AlertTriangle className="size-4" />}
                 label="Unverified client"
               />
-            ) : null}
+            )}
             {hasWriteScope ? (
               <WarningRow
                 icon={<AlertTriangle className="size-4" />}
@@ -172,7 +172,9 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
               <Button formAction={denyMcpAuthorizationAction} variant="outline">
                 Cancel
               </Button>
-              <Button formAction={approveMcpAuthorizationAction}>Approve</Button>
+              <Button formAction={approveMcpAuthorizationAction}>
+                Approve
+              </Button>
             </div>
           </div>
         </form>
@@ -181,13 +183,7 @@ export function McpConsentCard({ model }: { model: McpConsentViewModel }) {
   );
 }
 
-function WarningRow({
-  icon,
-  label,
-}: {
-  icon: React.ReactNode;
-  label: string;
-}) {
+function WarningRow({ icon, label }: { icon: React.ReactNode; label: string }) {
   return (
     <div className="flex items-center gap-2 rounded-md border border-amber-300/40 bg-amber-500/10 px-3 py-2 text-amber-200 text-sm">
       {icon}

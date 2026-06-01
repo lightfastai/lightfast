@@ -3,9 +3,9 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { HostedMcpContext } from "../context";
 import {
+  type ExecuteHostedMcpToolDependencies,
   executeHostedMcpTool,
   listHostedMcpTools,
-  type ExecuteHostedMcpToolDependencies,
 } from "../tools/execute";
 
 const db = { kind: "mock-db" } as unknown as Database;
@@ -18,11 +18,7 @@ function context(overrides: Partial<HostedMcpContext> = {}): HostedMcpContext {
     grantId: "mcp_grant_test",
     orgId: "org_test",
     requestId: "req_test",
-    scopes: [
-      "mcp:system:read",
-      "mcp:signals:read",
-      "mcp:signals:write",
-    ],
+    scopes: ["mcp:system:read", "mcp:signals:read", "mcp:signals:write"],
     userId: "user_test",
     ...overrides,
   };

@@ -1,11 +1,10 @@
+import { parseMcpScopes } from "@api/app";
 import { getMcpOauthClientByClientId } from "@db/app";
 import { db } from "@db/app/client";
 import type { McpScope } from "@repo/api-contract";
 import { auth, clerkClient, currentUser } from "@vendor/clerk/server";
 import { notFound } from "next/navigation";
 import { z } from "zod";
-
-import { parseMcpScopes } from "@api/app";
 
 const authorizeSearchParamsSchema = z.object({
   client_id: z.string().min(1),
@@ -67,7 +66,7 @@ export async function getMcpConsentViewModel(
   const client = await getMcpOauthClientByClientId(db, {
     publicClientId: parsed.data.client_id,
   });
-  if (!client || !client.redirectUris.includes(parsed.data.redirect_uri)) {
+  if (!client?.redirectUris.includes(parsed.data.redirect_uri)) {
     notFound();
   }
 
@@ -145,5 +144,9 @@ function permissionForScope(
         label: "Check connection status",
         scope,
       };
+    default: {
+      const unsupportedScope: never = scope;
+      throw new Error(`Unsupported MCP OAuth scope: ${unsupportedScope}`);
+    }
   }
 }

@@ -3,8 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { HostedMcpContext } from "../context";
 import {
-  executeHostedMcpTool,
   type ExecuteHostedMcpToolDependencies,
+  executeHostedMcpTool,
 } from "../tools/execute";
 
 const db = { kind: "mock-db" } as unknown as Database;

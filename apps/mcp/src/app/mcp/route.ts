@@ -1,8 +1,7 @@
 import { createMcpHandler, withMcpAuth } from "mcp-handler";
-
+import { verifyMcpAuthInfo } from "../../auth/verify-token";
 import { env } from "../../env";
 import { registerHostedMcpTools } from "../../tools/execute";
-import { verifyMcpAuthInfo } from "../../auth/verify-token";
 
 export const runtime = "nodejs";
 

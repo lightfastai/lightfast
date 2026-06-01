@@ -20,13 +20,18 @@ const server = new McpServer({
 
 const client = createLightfast(apiKey, baseUrl ? { baseUrl } : {});
 
-function getClientProcedure(path: string): (input?: unknown) => Promise<unknown> {
-  const procedure = path.split(".").reduce<unknown>((node, segment) => {
+function getClientProcedure(
+  path: string
+): (input?: unknown) => Promise<unknown> {
+  let procedure: unknown = client;
+  for (const segment of path.split(".")) {
+    const node = procedure;
     if (!node || typeof node !== "object") {
-      return undefined;
+      procedure = undefined;
+      break;
     }
-    return (node as Record<string, unknown>)[segment];
-  }, client);
+    procedure = (node as Record<string, unknown>)[segment];
+  }
 
   if (typeof procedure !== "function") {
     throw new Error(`Missing Lightfast SDK procedure for ${path}`);

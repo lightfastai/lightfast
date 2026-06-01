@@ -18,9 +18,9 @@ import {
 } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import {
+  type McpConnection,
   McpConnectionDetailsSheet,
   McpConnectionsList,
-  type McpConnection,
 } from "~/app/(app)/(pending-not-allowed)/[slug]/(workspace)/(manage)/settings/mcp/_components/mcp-connections-client";
 import { useTRPC } from "~/trpc/react";
 

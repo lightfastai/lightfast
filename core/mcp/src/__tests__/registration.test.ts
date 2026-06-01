@@ -44,14 +44,15 @@ async function connectRegisteredServer(
     contract,
     policy: lightfastMcpToolPolicy,
     execute: async ({ contractPath, input }) => {
-      const procedure = contractPath
-        .split(".")
-        .reduce<unknown>((node, segment) => {
-          if (!node || typeof node !== "object") {
-            return undefined;
-          }
-          return (node as Record<string, unknown>)[segment];
-        }, lightfastClient);
+      let procedure: unknown = lightfastClient;
+      for (const segment of contractPath.split(".")) {
+        const node = procedure;
+        if (!node || typeof node !== "object") {
+          procedure = undefined;
+          break;
+        }
+        procedure = (node as Record<string, unknown>)[segment];
+      }
 
       if (typeof procedure !== "function") {
         throw new Error(`Missing Lightfast SDK procedure for ${contractPath}`);

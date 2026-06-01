@@ -115,29 +115,25 @@ export function registerHostedMcpTools(server: unknown): void {
       config.outputSchema = tool.outputSchema;
     }
 
-    target.registerTool(
-      tool.name,
-      config,
-      async (...args: unknown[]) => {
-        const rawInput = tool.inputSchema ? args[0] : undefined;
-        const extra = (tool.inputSchema ? args[1] : args[0]) as
-          | { authInfo?: HostedMcpAuthInfo }
-          | undefined;
-        const context = createMcpContextFromAuthInfo(extra?.authInfo);
+    target.registerTool(tool.name, config, async (...args: unknown[]) => {
+      const rawInput = tool.inputSchema ? args[0] : undefined;
+      const extra = (tool.inputSchema ? args[1] : args[0]) as
+        | { authInfo?: HostedMcpAuthInfo }
+        | undefined;
+      const context = createMcpContextFromAuthInfo(extra?.authInfo);
 
-        try {
-          const result = await executeHostedMcpTool({
-            context,
-            contractPath: tool.contractPath,
-            rawInput,
-            tool,
-          });
-          return formatMcpSuccess(result);
-        } catch (error) {
-          return formatMcpError(error);
-        }
+      try {
+        const result = await executeHostedMcpTool({
+          context,
+          contractPath: tool.contractPath,
+          rawInput,
+          tool,
+        });
+        return formatMcpSuccess(result);
+      } catch (error) {
+        return formatMcpError(error);
       }
-    );
+    });
   }
 }
 
@@ -230,11 +226,7 @@ async function executeParsedTool(input: {
         }
       );
       if (!signal) {
-        throw new HostedMcpToolError(
-          "not_found",
-          "Signal not found.",
-          404
-        );
+        throw new HostedMcpToolError("not_found", "Signal not found.", 404);
       }
       return {
         id: signal.publicId,
@@ -273,7 +265,7 @@ function parseToolInput(
   rawInput: unknown
 ): unknown {
   if (!tool.inputSchema) {
-    return undefined;
+    return;
   }
 
   const schema = tool.inputSchema as { parse?: (input: unknown) => unknown };
@@ -362,7 +354,9 @@ function normalizeToolError(error: unknown): HostedMcpToolError {
   ) {
     return new HostedMcpToolError(
       "org_access_denied",
-      error instanceof Error ? error.message : "MCP organization access denied.",
+      error instanceof Error
+        ? error.message
+        : "MCP organization access denied.",
       (error as { status: number }).status,
       "denied",
       { cause: error }

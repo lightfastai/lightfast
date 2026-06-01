@@ -203,7 +203,7 @@ function McpConnectionRow({
         <div className="flex flex-wrap items-center gap-2">
           <p className="font-medium text-sm">{connection.clientName}</p>
           <VerificationBadge status={connection.clientVerificationStatus} />
-          {!isActive ? <Badge variant="secondary">Revoked</Badge> : null}
+          {isActive ? null : <Badge variant="secondary">Revoked</Badge>}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground text-xs">
           {showConnectedUser ? <span>{connection.connectedUserId}</span> : null}
@@ -306,7 +306,7 @@ function DetailsBlock({ rows }: { rows: [string, string][] }) {
       {rows.map(([label, value]) => (
         <div className="grid gap-1" key={label}>
           <dt className="text-muted-foreground">{label}</dt>
-          <dd className="break-words font-mono text-xs text-foreground whitespace-pre-wrap">
+          <dd className="whitespace-pre-wrap break-words font-mono text-foreground text-xs">
             {value}
           </dd>
         </div>

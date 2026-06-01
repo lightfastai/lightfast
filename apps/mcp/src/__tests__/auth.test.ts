@@ -23,10 +23,9 @@ function jwtSecretKey(): Uint8Array {
   return new TextEncoder().encode(jwtSecret);
 }
 
-async function validAccessToken(input: {
-  audience?: string;
-  includeTokenUse?: boolean;
-} = {}): Promise<string> {
+async function validAccessToken(
+  input: { audience?: string; includeTokenUse?: boolean } = {}
+): Promise<string> {
   return await new SignJWT({
     client_id: "mcp_client_test",
     grant_id: "mcp_grant_test",

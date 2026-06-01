@@ -11,7 +11,7 @@
     "dev:next": "portless run pnpm with-related-projects pnpm with-env next dev",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "with-env": "dotenv -e ./.vercel/.env.development.local --",
+    "with-env": "dotenv -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --",
     "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get app.lightfast)"
   },
   "dependencies": {

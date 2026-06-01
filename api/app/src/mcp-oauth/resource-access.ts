@@ -3,10 +3,7 @@ import type { Database } from "@db/app";
 import { findUserOrganizationMembership } from "../auth/clerk-org-membership";
 import { resolveOrgSetupGate } from "../auth/org-setup-gate";
 
-export type McpClientVerificationStatus =
-  | "blocked"
-  | "unverified"
-  | "verified";
+export type McpClientVerificationStatus = "blocked" | "unverified" | "verified";
 
 export type HostedMcpOrgAccessErrorCode =
   | "MISSING_MEMBERSHIP"

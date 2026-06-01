@@ -4,8 +4,7 @@ import {
   type McpToolPolicy,
 } from "@repo/api-contract";
 
-export interface LightfastMcpToolDefinition
-  extends ExposedMcpToolPolicyEntry {
+export interface LightfastMcpToolDefinition extends ExposedMcpToolPolicyEntry {
   contractPath: string;
   inputSchema?: unknown;
   name: string;
@@ -14,12 +13,14 @@ export interface LightfastMcpToolDefinition
 }
 
 function getNodeAtPath(root: Record<string, unknown>, path: string): unknown {
-  return path.split(".").reduce<unknown>((node, segment) => {
+  let node: unknown = root;
+  for (const segment of path.split(".")) {
     if (!node || typeof node !== "object") {
-      return undefined;
+      return;
     }
-    return (node as Record<string, unknown>)[segment];
-  }, root);
+    node = (node as Record<string, unknown>)[segment];
+  }
+  return node;
 }
 
 function getOrpcSchemas(node: unknown): {

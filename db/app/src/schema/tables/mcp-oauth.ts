@@ -27,10 +27,7 @@ const EVENT_NAME_LENGTH = 128;
 const CODE_CHALLENGE_LENGTH = 256;
 
 export type McpOauthClientStatus = "active" | "deleted";
-export type McpOauthRegistrationTokenStatus =
-  | "active"
-  | "revoked"
-  | "rotated";
+export type McpOauthRegistrationTokenStatus = "active" | "revoked" | "rotated";
 export type McpOauthGrantStatus = "active" | "revoked";
 export type McpOauthRefreshTokenStatus =
   | "active"
@@ -157,9 +154,7 @@ export const mcpOauthRegistrationTokens = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    publicIdUq: uniqueIndex("mcp_registration_public_id_uq").on(
-      table.publicId
-    ),
+    publicIdUq: uniqueIndex("mcp_registration_public_id_uq").on(table.publicId),
     tokenHashUq: uniqueIndex("mcp_registration_token_hash_uq").on(
       table.tokenHash
     ),
@@ -183,7 +178,9 @@ export const mcpOauthAuthorizationCodes = mysqlTable(
       length: PUBLIC_ID_LENGTH,
     }).notNull(),
 
-    clerkUserId: varchar("clerk_user_id", { length: CLERK_ID_LENGTH }).notNull(),
+    clerkUserId: varchar("clerk_user_id", {
+      length: CLERK_ID_LENGTH,
+    }).notNull(),
 
     clerkOrgId: varchar("clerk_org_id", { length: CLERK_ID_LENGTH }).notNull(),
 
@@ -247,7 +244,9 @@ export const mcpOauthGrants = mysqlTable(
       length: PUBLIC_ID_LENGTH,
     }).notNull(),
 
-    clerkUserId: varchar("clerk_user_id", { length: CLERK_ID_LENGTH }).notNull(),
+    clerkUserId: varchar("clerk_user_id", {
+      length: CLERK_ID_LENGTH,
+    }).notNull(),
 
     clerkOrgId: varchar("clerk_org_id", { length: CLERK_ID_LENGTH }).notNull(),
 
@@ -314,7 +313,9 @@ export const mcpOauthRefreshTokens = mysqlTable(
       length: PUBLIC_ID_LENGTH,
     }).notNull(),
 
-    clerkUserId: varchar("clerk_user_id", { length: CLERK_ID_LENGTH }).notNull(),
+    clerkUserId: varchar("clerk_user_id", {
+      length: CLERK_ID_LENGTH,
+    }).notNull(),
 
     clerkOrgId: varchar("clerk_org_id", { length: CLERK_ID_LENGTH }).notNull(),
 

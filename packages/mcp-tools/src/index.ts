@@ -4,9 +4,9 @@ export {
   validateMcpPolicyCoverage,
 } from "./policy";
 export {
-  registerLightfastMcpTools,
   type LightfastMcpToolExecute,
   type LightfastMcpToolExecuteInput,
+  registerLightfastMcpTools,
 } from "./register";
 export {
   formatMcpError,

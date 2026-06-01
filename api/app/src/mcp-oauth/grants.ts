@@ -7,9 +7,9 @@ import {
 import type { McpScope } from "@repo/api-contract";
 
 export interface FindOrCreateMcpOauthGrantInput {
-  clientPublicId: string;
   clerkOrgId: string;
   clerkUserId: string;
+  clientPublicId: string;
   resource: string;
   scopes: McpScope[];
 }

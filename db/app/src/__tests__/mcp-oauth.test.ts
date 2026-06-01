@@ -107,9 +107,7 @@ function makeRefreshToken(
   };
 }
 
-function makeAuditEvent(
-  overrides: Partial<McpAuditEvent> = {}
-): McpAuditEvent {
+function makeAuditEvent(overrides: Partial<McpAuditEvent> = {}): McpAuditEvent {
   return {
     id: 5,
     clientPublicId: clientId,
@@ -159,7 +157,8 @@ function makeQueuedDb(results: unknown[][] = []) {
 
 describe("mcp oauth repositories", () => {
   it("creates and reads an oauth client by public client id", async () => {
-    const redirectUri = "https://backend.lightfield.app/connections/callback/MCP";
+    const redirectUri =
+      "https://backend.lightfield.app/connections/callback/MCP";
     const { db, insertedValues } = makeQueuedDb([
       [makeClient()],
       [{ redirectUri }],
