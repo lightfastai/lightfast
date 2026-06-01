@@ -38,7 +38,7 @@ describe("skill index schema", () => {
     );
     expect(stateConfig.indexes.map((index) => index.config.name)).toEqual(
       expect.arrayContaining([
-        "skill_index_states_repository_uq",
+        "skill_index_states_source_control_repository_uq",
         "skill_index_states_last_checked_idx",
         "skill_index_states_refresh_locked_until_idx",
       ])

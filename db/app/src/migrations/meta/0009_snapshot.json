@@ -1214,8 +1214,8 @@
         }
       },
       "indexes": {
-        "skill_index_states_repository_uq": {
-          "name": "skill_index_states_repository_uq",
+        "skill_index_states_source_control_repository_uq": {
+          "name": "skill_index_states_source_control_repository_uq",
           "columns": [
             "source_control_repository_id"
           ],

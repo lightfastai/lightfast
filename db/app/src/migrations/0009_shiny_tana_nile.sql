@@ -46,7 +46,7 @@ CREATE TABLE `lightfast_skill_index_states` (
 	`created_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 	`updated_at` timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3) ON UPDATE CURRENT_TIMESTAMP,
 	CONSTRAINT `lightfast_skill_index_states_id` PRIMARY KEY(`id`),
-	CONSTRAINT `skill_index_states_repository_uq` UNIQUE(`source_control_repository_id`)
+	CONSTRAINT `skill_index_states_source_control_repository_uq` UNIQUE(`source_control_repository_id`)
 );
 --> statement-breakpoint
 CREATE INDEX `skill_index_entries_state_validation_idx` ON `lightfast_skill_index_entries` (`skill_index_state_id`,`validation_status`);--> statement-breakpoint

@@ -98,9 +98,9 @@ export const skillIndexStates = mysqlTable(
       .notNull(),
   },
   (table) => ({
-    repositoryUq: uniqueIndex("skill_index_states_repository_uq").on(
-      table.sourceControlRepositoryId
-    ),
+    sourceControlRepositoryUq: uniqueIndex(
+      "skill_index_states_source_control_repository_uq"
+    ).on(table.sourceControlRepositoryId),
     lastCheckedIdx: index("skill_index_states_last_checked_idx").on(
       table.lastCheckedAt
     ),
