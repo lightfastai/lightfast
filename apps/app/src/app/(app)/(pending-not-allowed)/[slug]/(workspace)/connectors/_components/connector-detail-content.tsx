@@ -174,6 +174,7 @@ export function ConnectorDetailContent({
                 <span
                   aria-label="Available for automations"
                   className="mt-1.5 size-1.5 shrink-0 rounded-full bg-emerald-500"
+                  role="img"
                   title="Available for automations"
                 />
               ) : null}

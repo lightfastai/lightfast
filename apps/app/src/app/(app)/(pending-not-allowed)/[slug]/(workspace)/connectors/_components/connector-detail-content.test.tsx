@@ -44,7 +44,9 @@ function connectedRow(
 
 describe("ConnectorDetailContent", () => {
   it("renders identity, automations, and the tools list for a connected row", () => {
-    render(<ConnectorDetailContent onCopyLink={vi.fn()} row={connectedRow()} />);
+    render(
+      <ConnectorDetailContent onCopyLink={vi.fn()} row={connectedRow()} />
+    );
 
     expect(screen.getByRole("heading", { name: "Linear" })).toBeInTheDocument();
     expect(screen.getByText("Acme Linear")).toBeInTheDocument();

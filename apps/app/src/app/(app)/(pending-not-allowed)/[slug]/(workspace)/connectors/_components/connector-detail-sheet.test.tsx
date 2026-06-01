@@ -53,7 +53,9 @@ beforeEach(() => {
 
 describe("ConnectorDetailSheet", () => {
   it("renders the connector detail when a connected row is provided", () => {
-    render(<ConnectorDetailSheet onOpenChange={vi.fn()} row={connectedRow()} />);
+    render(
+      <ConnectorDetailSheet onOpenChange={vi.fn()} row={connectedRow()} />
+    );
 
     expect(screen.getByRole("dialog")).toHaveAttribute("aria-describedby");
     expect(
@@ -73,7 +75,9 @@ describe("ConnectorDetailSheet", () => {
       configurable: true,
       value: { writeText: vi.fn().mockRejectedValue(new Error("denied")) },
     });
-    render(<ConnectorDetailSheet onOpenChange={vi.fn()} row={connectedRow()} />);
+    render(
+      <ConnectorDetailSheet onOpenChange={vi.fn()} row={connectedRow()} />
+    );
 
     fireEvent.click(screen.getByRole("button", { name: /copy link/i }));
 

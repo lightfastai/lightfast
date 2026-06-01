@@ -3,7 +3,9 @@ import type { AppRouterOutputs } from "@api/app";
 export type ConnectorCatalogRow =
   AppRouterOutputs["org"]["workspace"]["connectors"]["list"][number];
 export type ConnectorProvider = ConnectorCatalogRow["provider"];
-export type ConnectorConnection = NonNullable<ConnectorCatalogRow["connection"]>;
+export type ConnectorConnection = NonNullable<
+  ConnectorCatalogRow["connection"]
+>;
 export type ConnectorTool = ConnectorConnection["tools"][number];
 
 export function displayProviderName(provider: string | undefined) {
