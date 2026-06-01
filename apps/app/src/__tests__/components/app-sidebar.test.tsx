@@ -12,11 +12,18 @@ vi.mock("next/link", () => ({
   default: ({
     children,
     href,
+    prefetch,
   }: {
     children?: ReactNode;
     href: string | { pathname: string };
+    prefetch?: boolean;
   }) => (
-    <a href={typeof href === "string" ? href : href.pathname}>{children}</a>
+    <a
+      data-prefetch={String(prefetch)}
+      href={typeof href === "string" ? href : href.pathname}
+    >
+      {children}
+    </a>
   ),
 }));
 
@@ -101,6 +108,10 @@ describe("AppSidebar", () => {
     expect(screen.getByRole("link", { name: /skills/i })).toHaveAttribute(
       "href",
       "/acme/skills"
+    );
+    expect(screen.getByRole("link", { name: /skills/i })).toHaveAttribute(
+      "data-prefetch",
+      "false"
     );
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute(
       "href",

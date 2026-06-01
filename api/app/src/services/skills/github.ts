@@ -113,9 +113,12 @@ export async function readSkillRepositoryBlob(input: {
   });
 }
 
-function splitRepositoryFullName(fullName: string): { owner: string; repo: string } {
+function splitRepositoryFullName(fullName: string): {
+  owner: string;
+  repo: string;
+} {
   const [owner, repo, ...rest] = fullName.split("/");
-  if (!owner || !repo || rest.length > 0) {
+  if (!(owner && repo) || rest.length > 0) {
     throw new Error(`Invalid GitHub repository full name: ${fullName}`);
   }
   return { owner, repo };

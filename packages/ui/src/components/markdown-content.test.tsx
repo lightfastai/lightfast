@@ -29,9 +29,40 @@ describe("MarkdownContent", () => {
       })
     );
 
-    expect(screen.getByRole("link", { name: "Notes" }).getAttribute("href")).toBe(
+    expect(
+      screen.getByRole("link", { name: "Notes" }).getAttribute("href")
+    ).toBe(
       "https://github.com/acme/.lightfast/blob/abc/skills/code-review/references/api.md"
     );
+  });
+
+  it("preserves query strings and hash fragments on safe relative links", async () => {
+    render(
+      await MarkdownContent({
+        children: "[Notes](references/api.md?plain=1#setup)",
+        sourcePath,
+        sourceUrlBase,
+      })
+    );
+
+    expect(
+      screen.getByRole("link", { name: "Notes" }).getAttribute("href")
+    ).toBe(
+      "https://github.com/acme/.lightfast/blob/abc/skills/code-review/references/api.md?plain=1#setup"
+    );
+  });
+
+  it("keeps malformed percent-encoded relative links inert", async () => {
+    render(
+      await MarkdownContent({
+        children: "[Bad](references/%zz.md)",
+        sourcePath,
+        sourceUrlBase,
+      })
+    );
+
+    expect(screen.queryByRole("link", { name: "Bad" })).toBeNull();
+    expect(screen.getByText("Bad")).not.toBeNull();
   });
 
   it("keeps escaping relative links inert", async () => {

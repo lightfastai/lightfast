@@ -12,9 +12,6 @@ const classifySignal = { id: "classify-signal" };
 const classifyPeople = { id: "classify-people" };
 const automationScheduler = { id: "automation-scheduler" };
 const runAutomation = { id: "run-automation" };
-const syncGitHubSourceControlRepository = {
-  id: "sync-github-source-control-repository",
-};
 const refreshSkillIndex = { id: "refresh-skill-index" };
 const reconcileSkillIndexes = { id: "reconcile-skill-indexes" };
 const queueSkillRefreshFromSourceControl = {
@@ -55,10 +52,6 @@ vi.mock("../inngest/workflow/run-automation", () => ({
   runAutomation,
 }));
 
-vi.mock("../inngest/workflow/sync-source-control-repository", () => ({
-  syncGitHubSourceControlRepository,
-}));
-
 vi.mock("../inngest/workflow/refresh-skill-index", () => ({
   refreshSkillIndex,
 }));
@@ -87,7 +80,6 @@ describe("createInngestRouteContext", () => {
         classifyPeople,
         automationScheduler,
         runAutomation,
-        syncGitHubSourceControlRepository,
         refreshSkillIndex,
         reconcileSkillIndexes,
         queueSkillRefreshFromSourceControl,

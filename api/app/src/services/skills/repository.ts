@@ -1,6 +1,4 @@
-import type {
-  SkillIndexableSourceControlRepositoryCandidate,
-} from "@db/app";
+import type { SkillIndexableSourceControlRepositoryCandidate } from "@db/app";
 
 import { isVerifiedLightfastSkillRepository } from "./eligibility";
 import type { SkillIndexServiceDeps } from "./types";
@@ -14,7 +12,7 @@ export async function getVerifiedCandidateByRepositoryId(
       clerkOrgId: input.clerkOrgId,
       sourceControlRepositoryId: input.sourceControlRepositoryId,
     });
-  if (!candidate || !isVerifiedLightfastSkillRepository(candidate)) {
+  if (!(candidate && isVerifiedLightfastSkillRepository(candidate))) {
     return null;
   }
   return candidate;

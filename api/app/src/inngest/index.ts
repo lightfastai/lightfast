@@ -8,7 +8,6 @@ import { queueSkillRefreshFromSourceControl } from "./workflow/queue-skill-refre
 import { reconcileSkillIndexes } from "./workflow/reconcile-skill-indexes";
 import { refreshSkillIndex } from "./workflow/refresh-skill-index";
 import { runAutomation } from "./workflow/run-automation";
-import { syncGitHubSourceControlRepository } from "./workflow/sync-source-control-repository";
 import { systemHealth } from "./workflow/system-health";
 
 export { inngest };
@@ -22,7 +21,6 @@ export function createInngestRouteContext() {
       classifyPeople,
       automationScheduler,
       runAutomation,
-      syncGitHubSourceControlRepository,
       refreshSkillIndex,
       reconcileSkillIndexes,
       queueSkillRefreshFromSourceControl,

@@ -78,6 +78,7 @@ describe("@repo/source-control-contract", () => {
         afterSha: "a".repeat(40),
         beforeSha: "b".repeat(40),
         changedPaths: ["skills/demo/SKILL.md"],
+        changedPathsComplete: true,
         deliveryId: "delivery-1",
         orgSourceControlBindingId: 1,
         providerInstallationId: "1001",
@@ -87,6 +88,7 @@ describe("@repo/source-control-contract", () => {
         repositoryWatchId: 10,
       })
     ).toMatchObject({
+      changedPathsComplete: true,
       deliveryId: "delivery-1",
       repositoryFullName: "lightfast-emulated/workspace",
     });
@@ -98,6 +100,7 @@ describe("@repo/source-control-contract", () => {
       beforeSha: "b".repeat(40),
       deliveryId: "delivery-1",
       changedPaths: ["skills/demo/SKILL.md"],
+      changedPathsComplete: true,
       orgSourceControlBindingId: 1,
       providerInstallationId: "1001",
       providerRepositoryId: "2002",

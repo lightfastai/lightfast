@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { WorkspaceSurface } from "~/components/workspace-surface";
 import { useTRPC } from "~/trpc/react";
-import { SkillMarkdown, getSkillSourceUrl } from "./skill-markdown";
+import { getSkillSourceUrl, SkillMarkdown } from "./skill-markdown";
 import { SkillStatus } from "./skill-status";
 
 type SkillGetResult = AppRouterOutputs["org"]["workspace"]["skills"]["get"];
@@ -76,7 +76,10 @@ export function SkillDetail({ skillSlug }: { skillSlug: string }) {
 
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0 rounded-lg border border-border/70 bg-muted/10 p-5">
-          <SkillMarkdown repositoryUrl={data.repositoryUrl} skill={data.skill} />
+          <SkillMarkdown
+            repositoryUrl={data.repositoryUrl}
+            skill={data.skill}
+          />
         </section>
 
         <aside className="space-y-6">

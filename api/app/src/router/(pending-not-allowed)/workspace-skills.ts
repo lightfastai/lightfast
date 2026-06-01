@@ -19,25 +19,27 @@ const listSkillsInput = z
   .optional();
 
 export const workspaceSkillsRouter = {
-  list: boundOrgProcedure.input(listSkillsInput).query(async ({ ctx, input }) => {
-    const sourceControlRepositoryId =
-      await getVerifiedLightfastSkillSourceRepositoryId(ctx.db, {
+  list: boundOrgProcedure
+    .input(listSkillsInput)
+    .query(async ({ ctx, input }) => {
+      const sourceControlRepositoryId =
+        await getVerifiedLightfastSkillSourceRepositoryId(ctx.db, {
+          clerkOrgId: ctx.auth.identity.orgId,
+        });
+      const result = await ensureFreshSkillIndexForRead({
         clerkOrgId: ctx.auth.identity.orgId,
+        sourceControlRepositoryId,
       });
-    const result = await ensureFreshSkillIndexForRead({
-      clerkOrgId: ctx.auth.identity.orgId,
-      sourceControlRepositoryId,
-    });
 
-    return {
-      ...result,
-      skills: input?.validationStatus
-        ? result.skills.filter(
-            (skill) => skill.validationStatus === input.validationStatus
-          )
-        : result.skills,
-    };
-  }),
+      return {
+        ...result,
+        skills: input?.validationStatus
+          ? result.skills.filter(
+              (skill) => skill.validationStatus === input.validationStatus
+            )
+          : result.skills,
+      };
+    }),
   get: boundOrgProcedure
     .input(z.object({ slug: skillNameSchema }).strict())
     .query(async ({ ctx, input }) => {

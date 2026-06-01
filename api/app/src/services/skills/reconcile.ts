@@ -1,12 +1,12 @@
 import { resolveSkillIndexServiceDeps } from "./deps";
 import { isVerifiedLightfastSkillRepository } from "./eligibility";
-import { checkSkillIndexSourceRef } from "./refresh";
+import { checkSkillIndexCandidateRef } from "./refresh";
 import type { SkillIndexServiceDeps } from "./types";
 
-export type ChangedSkillIndexSource = {
+export interface ChangedSkillIndexSource {
   sourceControlRepositoryId: number;
   targetCommitSha?: string;
-};
+}
 
 export async function findChangedSkillIndexSources(input: {
   deps?: Partial<SkillIndexServiceDeps>;
@@ -33,7 +33,8 @@ export async function findChangedSkillIndexSources(input: {
     if (!isVerifiedLightfastSkillRepository(candidate)) {
       continue;
     }
-    const ref = await checkSkillIndexSourceRef({
+    const ref = await checkSkillIndexCandidateRef({
+      candidate,
       deps,
       sourceControlRepositoryId: candidate.repository.id,
     });

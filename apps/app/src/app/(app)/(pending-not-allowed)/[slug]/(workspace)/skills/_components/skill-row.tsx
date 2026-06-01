@@ -13,7 +13,7 @@ import type { Route } from "next";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { SkillMarkdown, getSkillSourceUrl } from "./skill-markdown";
+import { getSkillSourceUrl, SkillMarkdown } from "./skill-markdown";
 
 type SkillsListResult = AppRouterOutputs["org"]["workspace"]["skills"]["list"];
 type Skill = SkillsListResult["skills"][number];

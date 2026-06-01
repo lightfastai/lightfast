@@ -88,7 +88,7 @@ async function enqueueInitialSkillRefresh(input: {
       },
     });
   } catch {
-    return undefined;
+    return;
   }
 }
 

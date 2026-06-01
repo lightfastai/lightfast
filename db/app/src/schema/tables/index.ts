@@ -54,8 +54,8 @@ export {
   type ResourcesTruncatedFlag,
   type SkillIndexEntry,
   type SkillIndexEntryMetadata,
-  skillIndexEntries,
   type SkillIndexState,
+  skillIndexEntries,
   skillIndexStates,
 } from "./skill-index";
 export {

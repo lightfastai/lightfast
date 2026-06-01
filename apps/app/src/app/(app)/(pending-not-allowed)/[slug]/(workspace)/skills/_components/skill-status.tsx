@@ -26,14 +26,12 @@ export function SkillStatus({ freshness }: { freshness: Freshness }) {
 }
 
 function getStatusLabel(status: Freshness["status"]) {
-  switch (status) {
-    case "fresh":
-      return "Fresh";
-    case "refreshing":
-      return "Refreshing";
-    case "stale":
-      return "Stale";
-    case "unavailable":
-      return "Unavailable";
-  }
+  return STATUS_LABELS[status];
 }
+
+const STATUS_LABELS: Record<Freshness["status"], string> = {
+  fresh: "Fresh",
+  refreshing: "Refreshing",
+  stale: "Stale",
+  unavailable: "Unavailable",
+};

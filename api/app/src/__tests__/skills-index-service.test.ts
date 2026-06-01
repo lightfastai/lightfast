@@ -1,8 +1,5 @@
-import { describe, expect, it, vi } from "vitest";
-
 import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
-
-import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
+import { describe, expect, it, vi } from "vitest";
 import {
   checkSkillIndexSourceRef,
   ensureFreshSkillIndexForRead,
@@ -10,6 +7,7 @@ import {
   reconcileSkillIndexSources,
   refreshSkillIndexSource,
 } from "../services/skills";
+import { buildSkillIndexEntriesFromTree } from "../services/skills/build";
 import type { SkillIndexServiceDeps } from "../services/skills/types";
 
 const now = new Date("2026-06-01T00:00:00.000Z");
@@ -218,12 +216,13 @@ describe("skills index refresh/read service", () => {
       .mockResolvedValueOnce(freshState);
     deps.readSkillRepositoryTree.mockImplementation(
       async (_input: { signal?: AbortSignal }) => {
-        await new Promise((resolve) => setTimeout(resolve, 5_000));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
         return {
           commit: { sha: "current-main", treeSha: "tree-sha" },
           tree: {
             sha: "tree-sha",
             tree: [skillFile("skills/test-skill/SKILL.md", "skill-sha", 60)],
+            truncated: false,
           },
         };
       }
@@ -234,7 +233,7 @@ describe("skills index refresh/read service", () => {
       deps,
       sourceControlRepositoryId: 1,
     });
-    await vi.advanceTimersByTimeAsync(5_000);
+    await vi.advanceTimersByTimeAsync(5000);
     const result = await pending;
 
     expect(deps.createOrLoadSkillIndexState).toHaveBeenCalled();
@@ -339,17 +338,113 @@ describe("skills index refresh/read service", () => {
     );
   });
 
-  it("reconcile scans candidates once and does not duplicate enqueue checks", async () => {
+  it("fails refreshes without replacing entries when GitHub returns a truncated tree", async () => {
+    const deps = createDeps({
+      targetEntries: [entry({ slug: "previous" })],
+      targetState: staleState({ indexedCommitSha: "old-index" }),
+      treeTruncated: true,
+    });
+
+    const result = await refreshSkillIndexSource({
+      deps,
+      reason: "webhook",
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result.status).toBe("failed");
+    expect(deps.replaceSkillIndexEntries).not.toHaveBeenCalled();
+    expect(deps.markSkillIndexRefreshFailed).toHaveBeenCalledWith(
+      deps.db,
+      expect.objectContaining({ errorCode: "github_tree_truncated" })
+    );
+  });
+
+  it("checks GitHub on every read before returning a previously fresh index", async () => {
+    const deps = createDeps({
+      targetEntries: [entry({ indexedCommitSha: "current-main" })],
+      targetState: staleState({
+        githubRefEtag: "etag-current",
+        indexedCommitSha: "current-main",
+        lastCheckedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
+      }),
+    });
+    deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
+      status: "not_modified",
+    });
+
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result.freshness.status).toBe("fresh");
+    expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledWith(
+      expect.objectContaining({ etag: "etag-current" })
+    );
+    expect(deps.readSkillRepositoryTree).not.toHaveBeenCalled();
+  });
+
+  it("refreshes during read when GitHub moved past a previously fresh index", async () => {
+    const checkedState = staleState({
+      githubRefEtag: "etag-new",
+      indexedCommitSha: "current-main",
+      lastCheckedCommitSha: "new-main",
+      lastRefreshStatus: "fresh",
+    });
+    const refreshedState = staleState({
+      githubRefEtag: "etag-new",
+      indexedAt: now,
+      indexedCommitSha: "new-main",
+      indexedTreeSha: "tree-sha",
+      lastCheckedAt: now,
+      lastCheckedCommitSha: "new-main",
+      lastRefreshStatus: "fresh",
+    });
+    const deps = createDeps({
+      refSha: "new-main",
+      targetEntries: [entry({ indexedCommitSha: "new-main" })],
+      targetState: staleState({
+        githubRefEtag: "etag-current",
+        indexedCommitSha: "current-main",
+        lastCheckedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
+      }),
+    });
+    deps.getSkillIndexStateBySourceControlRepositoryId
+      .mockResolvedValueOnce(checkedState)
+      .mockResolvedValueOnce(refreshedState);
+
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result.freshness.status).toBe("fresh");
+    expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledTimes(2);
+    expect(deps.readSkillRepositoryTree).toHaveBeenCalledWith(
+      expect.objectContaining({ commitSha: "new-main" })
+    );
+    expect(deps.replaceSkillIndexEntries).toHaveBeenCalledWith(
+      deps.db,
+      expect.objectContaining({ indexedCommitSha: "new-main" })
+    );
+  });
+
+  it("reconcile scans candidates once and does not duplicate candidate lookups", async () => {
     const eligible = createCandidate({ id: 1 });
     const ineligible = createCandidate({
       id: 2,
       providerInstallationId: null,
     });
-    const deps = createDeps({ targetState: staleState({ indexedCommitSha: "old" }) });
-    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValueOnce([
-      eligible,
-      ineligible,
-    ]);
+    const deps = createDeps({
+      targetState: staleState({ indexedCommitSha: "old" }),
+    });
+    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValueOnce(
+      [eligible, ineligible]
+    );
     deps.getSkillIndexableSourceControlRepositoryCandidateById.mockResolvedValue(
       eligible
     );
@@ -367,6 +462,9 @@ describe("skills index refresh/read service", () => {
     ).toHaveBeenCalledWith(deps.db, { limit: 5 });
     expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledOnce();
     expect(deps.enqueueRefresh).toHaveBeenCalledOnce();
+    expect(
+      deps.getSkillIndexableSourceControlRepositoryCandidateById
+    ).not.toHaveBeenCalled();
   });
 
   it("finds changed sources without enqueueing refresh events", async () => {
@@ -378,10 +476,9 @@ describe("skills index refresh/read service", () => {
     const deps = createDeps({
       targetState: staleState({ indexedCommitSha: "old" }),
     });
-    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValueOnce([
-      eligible,
-      ineligible,
-    ]);
+    deps.listSkillIndexableSourceControlRepositoryCandidates.mockResolvedValueOnce(
+      [eligible, ineligible]
+    );
     deps.getSkillIndexableSourceControlRepositoryCandidateById.mockResolvedValue(
       eligible
     );
@@ -449,9 +546,14 @@ describe("skills index refresh/read service", () => {
     const deps = createDeps({
       targetEntries: [entry({ indexedCommitSha: "current-main" })],
       targetState: staleState({
+        githubRefEtag: "etag-current",
         indexedCommitSha: "current-main",
         lastCheckedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
       }),
+    });
+    deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
+      status: "not_modified",
     });
 
     await ensureFreshSkillIndexForRead({
@@ -469,6 +571,39 @@ describe("skills index refresh/read service", () => {
     expect(
       deps.listSkillIndexableSourceControlRepositoryCandidates
     ).not.toHaveBeenCalled();
+    expect(deps.readSkillRepositoryMainRef).toHaveBeenCalledWith(
+      expect.objectContaining({ etag: "etag-current" })
+    );
+  });
+
+  it("uses exact slug lookup instead of loading every entry for detail reads", async () => {
+    const skill = entry({ indexedCommitSha: "current-main", slug: "selected" });
+    const deps = createDeps({
+      targetEntries: [skill],
+      targetState: staleState({
+        githubRefEtag: "etag-current",
+        indexedCommitSha: "current-main",
+        lastCheckedCommitSha: "current-main",
+        lastRefreshStatus: "fresh",
+      }),
+    });
+    deps.readSkillRepositoryMainRef.mockResolvedValueOnce({
+      status: "not_modified",
+    });
+
+    const result = await ensureFreshSkillIndexForRead({
+      clerkOrgId: "org_123",
+      deps,
+      slug: "selected",
+      sourceControlRepositoryId: 1,
+    });
+
+    expect(result.skills).toEqual([skill]);
+    expect(deps.getSkillIndexEntryBySlug).toHaveBeenCalledWith(deps.db, {
+      slug: "selected",
+      stateId: 100,
+    });
+    expect(deps.listSkillIndexEntries).not.toHaveBeenCalled();
   });
 });
 
@@ -583,13 +718,15 @@ function createCandidate(
   };
 }
 
-type FakeState = {
+interface FakeState {
+  createdAt: Date;
   githubRefEtag: string | null;
   id: number;
   indexDiagnostics: unknown[];
   indexedAt: Date | null;
   indexedCommitSha: string | null;
   indexedTreeSha: string | null;
+  invalidSkillCount: number;
   lastCheckedAt: Date | null;
   lastCheckedCommitSha: string | null;
   lastRefreshErrorCode: string | null;
@@ -598,33 +735,40 @@ type FakeState = {
   lastRefreshStatus: string;
   refreshLockedUntil: Date | null;
   refreshLockToken: string | null;
-  sourceControlRepositoryId: number;
-  createdAt: Date;
-  invalidSkillCount: number;
   skillCount: number;
+  sourceControlRepositoryId: number;
   updatedAt: Date;
-};
+}
 
-function createDeps(input: {
-  acquireLockResult?: boolean;
-  createdState?: FakeState;
-  readTreeError?: Error;
-  refSha?: string;
-  targetEntries?: unknown[];
-  targetState?: FakeState | null;
-} = {}) {
+function createDeps(
+  input: {
+    acquireLockResult?: boolean;
+    createdState?: FakeState;
+    readTreeError?: Error;
+    refSha?: string;
+    targetEntries?: unknown[];
+    targetState?: FakeState | null;
+    treeTruncated?: boolean;
+  } = {}
+) {
   const state =
     input.targetState === undefined ? staleState() : input.targetState;
   const createdState = input.createdState ?? state ?? staleState();
   const candidate = createCandidate({ state });
   const deps = {
-    acquireSkillIndexRefreshLock: vi.fn(async () => input.acquireLockResult ?? true),
+    acquireSkillIndexRefreshLock: vi.fn(
+      async () => input.acquireLockResult ?? true
+    ),
     createOrLoadSkillIndexState: vi.fn(async () => createdState),
     db: { fake: true },
     getSkillIndexStateBySourceControlRepositoryId: vi.fn(async () => state),
     getSkillIndexableSourceControlRepositoryCandidateById: vi.fn(
       async () => candidate
     ),
+    getSkillIndexEntryBySlug: vi.fn(async () => {
+      const targetEntry = input.targetEntries?.[0] ?? null;
+      return targetEntry;
+    }),
     listSkillIndexEntries: vi.fn(async () => input.targetEntries ?? []),
     listSkillIndexableSourceControlRepositoryCandidates: vi.fn(async () => [
       candidate,
@@ -632,11 +776,13 @@ function createDeps(input: {
     markSkillIndexRefreshFailed: vi.fn(async () => undefined),
     now: vi.fn(() => now),
     randomToken: vi.fn(() => "lock-token"),
-    readSkillRepositoryBlob: vi.fn(async (_input: { signal?: AbortSignal }) => ({
-      sha: "skill-sha",
-      size: 60,
-      text: "---\nname: test-skill\ndescription: Test skill\n---\nBody",
-    })),
+    readSkillRepositoryBlob: vi.fn(
+      async (_input: { signal?: AbortSignal }) => ({
+        sha: "skill-sha",
+        size: 60,
+        text: "---\nname: test-skill\ndescription: Test skill\n---\nBody",
+      })
+    ),
     readSkillRepositoryMainRef: vi.fn(async () => ({
       etag: "etag-new",
       sha: input.refSha ?? "current-main",
@@ -652,6 +798,7 @@ function createDeps(input: {
         tree: {
           sha: "tree-sha",
           tree: [skillFile("skills/test-skill/SKILL.md", "skill-sha", 60)],
+          truncated: input.treeTruncated,
         },
       };
     }),

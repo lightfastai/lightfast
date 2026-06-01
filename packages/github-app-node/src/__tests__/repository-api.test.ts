@@ -1,11 +1,11 @@
 import { describe, expect, it, vi } from "vitest";
-import { createGitHubInstallationToken } from "../installation-tokens";
 import {
+  GitHubAppNodeError,
   getGitHubBlobText,
   getGitHubReference,
   getGitHubTree as getGitHubTreeFromIndex,
-  GitHubAppNodeError,
 } from "../index";
+import { createGitHubInstallationToken } from "../installation-tokens";
 import {
   getGitHubCommit,
   getGitHubRepository,
@@ -50,10 +50,12 @@ describe("GitHub repository API helpers", () => {
 
   it("passes abort signals to installation token requests", async () => {
     const controller = new AbortController();
-    const fetchMock = vi.fn(async (_url: RequestInfo | URL, init?: RequestInit) => {
-      expect(init?.signal).toBe(controller.signal);
-      throw new DOMException("This operation was aborted", "AbortError");
-    });
+    const fetchMock = vi.fn(
+      async (_url: RequestInfo | URL, init?: RequestInit) => {
+        expect(init?.signal).toBe(controller.signal);
+        throw new DOMException("This operation was aborted", "AbortError");
+      }
+    );
 
     const result = createGitHubInstallationToken({
       apiBaseUrl: "https://github.lightfast.localhost",
@@ -313,16 +315,17 @@ describe("GitHub repository API helpers", () => {
 
 describe("skill index GitHub repository helpers", () => {
   it("fetches a branch ref with response etag", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          object: { sha: "a".repeat(40), type: "commit" },
-        }),
-        {
-          headers: { etag: '"ref-etag"' },
-          status: 200,
-        }
-      )
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            object: { sha: "a".repeat(40), type: "commit" },
+          }),
+          {
+            headers: { etag: '"ref-etag"' },
+            status: 200,
+          }
+        )
     );
 
     await expect(
@@ -347,13 +350,14 @@ describe("skill index GitHub repository helpers", () => {
   });
 
   it("encodes nested ref segments separately", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          object: { sha: "a".repeat(40), type: "commit" },
-        }),
-        { status: 200 }
-      )
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            object: { sha: "a".repeat(40), type: "commit" },
+          }),
+          { status: 200 }
+        )
     );
 
     await getGitHubReference({
@@ -394,8 +398,9 @@ describe("skill index GitHub repository helpers", () => {
   });
 
   it("maps missing refs to GITHUB_REF_NOT_FOUND", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(JSON.stringify({ message: "Not Found" }), { status: 404 })
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ message: "Not Found" }), { status: 404 })
     );
 
     const result = getGitHubReference({
@@ -408,26 +413,29 @@ describe("skill index GitHub repository helpers", () => {
     });
 
     await expect(result).rejects.toBeInstanceOf(GitHubAppNodeError);
-    await expect(result).rejects.toMatchObject({ code: "GITHUB_REF_NOT_FOUND" });
+    await expect(result).rejects.toMatchObject({
+      code: "GITHUB_REF_NOT_FOUND",
+    });
   });
 
   it("preserves optional tree entry size", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          sha: "tree",
-          tree: [
-            {
-              mode: "100644",
-              path: "skills/code-review/SKILL.md",
-              sha: "blob",
-              size: 123,
-              type: "blob",
-            },
-          ],
-        }),
-        { status: 200 }
-      )
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            sha: "tree",
+            tree: [
+              {
+                mode: "100644",
+                path: "skills/code-review/SKILL.md",
+                sha: "blob",
+                size: 123,
+                type: "blob",
+              },
+            ],
+          }),
+          { status: 200 }
+        )
     );
 
     const tree = await getGitHubTreeFromIndex({
@@ -444,16 +452,17 @@ describe("skill index GitHub repository helpers", () => {
   });
 
   it("decodes GitHub blob content", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          content: Buffer.from("hello").toString("base64"),
-          encoding: "base64",
-          sha: "blob",
-          size: 5,
-        }),
-        { status: 200 }
-      )
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            content: Buffer.from("hello").toString("base64"),
+            encoding: "base64",
+            sha: "blob",
+            size: 5,
+          }),
+          { status: 200 }
+        )
     );
 
     await expect(
@@ -469,16 +478,17 @@ describe("skill index GitHub repository helpers", () => {
   });
 
   it("rejects malformed GitHub blob base64", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          content: "YR==",
-          encoding: "base64",
-          sha: "blob",
-          size: 1,
-        }),
-        { status: 200 }
-      )
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            content: "YR==",
+            encoding: "base64",
+            sha: "blob",
+            size: 1,
+          }),
+          { status: 200 }
+        )
     );
 
     await expect(
@@ -494,16 +504,17 @@ describe("skill index GitHub repository helpers", () => {
   });
 
   it("rejects GitHub blob content with invalid UTF-8", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          content: Buffer.from([0xff]).toString("base64"),
-          encoding: "base64",
-          sha: "blob",
-          size: 1,
-        }),
-        { status: 200 }
-      )
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            content: Buffer.from([0xff]).toString("base64"),
+            encoding: "base64",
+            sha: "blob",
+            size: 1,
+          }),
+          { status: 200 }
+        )
     );
 
     await expect(
@@ -519,16 +530,17 @@ describe("skill index GitHub repository helpers", () => {
   });
 
   it("URL-encodes blob SHAs used in GitHub blob API paths", async () => {
-    const fetchMock = vi.fn(async () =>
-      new Response(
-        JSON.stringify({
-          content: Buffer.from("hello").toString("base64"),
-          encoding: "base64",
-          sha: "blob/sha value",
-          size: 5,
-        }),
-        { status: 200 }
-      )
+    const fetchMock = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            content: Buffer.from("hello").toString("base64"),
+            encoding: "base64",
+            sha: "blob/sha value",
+            size: 5,
+          }),
+          { status: 200 }
+        )
     );
 
     await getGitHubBlobText({

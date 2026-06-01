@@ -3,8 +3,11 @@ import type { SkillDiagnostic } from "@repo/skills-contract";
 
 import { getGitHubAppConfig } from "../github/config";
 import { resolveSkillIndexServiceDeps } from "./deps";
+import {
+  checkSkillIndexCandidateRef,
+  refreshSkillIndexSource,
+} from "./refresh";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
-import { refreshSkillIndexSource } from "./refresh";
 import type { SkillIndexFreshness, SkillIndexServiceDeps } from "./types";
 
 export async function ensureFreshSkillIndexForRead(input: {
@@ -40,23 +43,38 @@ export async function ensureFreshSkillIndexForRead(input: {
     };
   }
 
-  let entries = state
-    ? await deps.listSkillIndexEntries(deps.db, { stateId: state.id })
-    : [];
-  if (
-    state?.indexedCommitSha &&
-    state.lastCheckedCommitSha &&
-    state.indexedCommitSha === state.lastCheckedCommitSha
-  ) {
-    return {
-      freshness: toFreshness(state, "fresh"),
-      indexDiagnostics: state.indexDiagnostics,
-      repositoryUrl,
-      skills: filterEntries(entries, input.slug),
-    };
+  if (state) {
+    const ref = await checkSkillIndexCandidateRef({
+      candidate,
+      deps,
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
+    state = await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
+      sourceControlRepositoryId: input.sourceControlRepositoryId,
+    });
+    if (
+      ref.status === "unchanged" &&
+      state?.indexedCommitSha &&
+      state.lastCheckedCommitSha &&
+      state.indexedCommitSha === state.lastCheckedCommitSha
+    ) {
+      const entries = await readEntries(deps, {
+        slug: input.slug,
+        stateId: state.id,
+      });
+      return {
+        freshness: toFreshness(state, "fresh"),
+        indexDiagnostics: state.indexDiagnostics,
+        repositoryUrl,
+        skills: entries,
+      };
+    }
   }
 
-  const budgetMs = entries.length > 0 ? 3_000 : 10_000;
+  let entries = state
+    ? await readEntries(deps, { slug: input.slug, stateId: state.id })
+    : [];
+  const budgetMs = entries.length > 0 ? 3000 : 10_000;
   const refresh = await refreshWithBudget({
     budgetMs,
     deps,
@@ -70,15 +88,22 @@ export async function ensureFreshSkillIndexForRead(input: {
     sourceControlRepositoryId: input.sourceControlRepositoryId,
   });
   if (state) {
-    entries = await deps.listSkillIndexEntries(deps.db, { stateId: state.id });
+    entries = await readEntries(deps, {
+      slug: input.slug,
+      stateId: state.id,
+    });
   }
 
-  const status = deriveReadStatus({ entries, refreshStatus: refresh.status, state });
+  const status = deriveReadStatus({
+    entries,
+    refreshStatus: refresh.status,
+    state,
+  });
   return {
     freshness: toFreshness(state, status),
     indexDiagnostics: state?.indexDiagnostics ?? [],
     repositoryUrl,
-    skills: filterEntries(entries, input.slug),
+    skills: entries,
   };
 }
 
@@ -153,20 +178,21 @@ function toFreshness(
   };
 }
 
-function filterEntries(
-  entries: SkillIndexEntry[],
-  slug?: string
-): SkillIndexEntry[] {
-  if (!slug) {
-    return entries;
+async function readEntries(
+  deps: SkillIndexServiceDeps,
+  input: { slug?: string; stateId: number }
+): Promise<SkillIndexEntry[]> {
+  if (!input.slug) {
+    return await deps.listSkillIndexEntries(deps.db, {
+      stateId: input.stateId,
+    });
   }
-  return entries.filter(
-    (entry) =>
-      typeof entry === "object" &&
-      entry !== null &&
-      "slug" in entry &&
-      entry.slug === slug
-  );
+
+  const entry = await deps.getSkillIndexEntryBySlug(deps.db, {
+    slug: input.slug,
+    stateId: input.stateId,
+  });
+  return entry ? [entry] : [];
 }
 
 function getRepositoryUrl(fullName: string): string {

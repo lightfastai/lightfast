@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
+import type { SkillName } from "../index";
 import {
+  collectSkillIndexCandidates,
+  parseSkillFile,
   SKILL_COUNT_MAX,
   SKILL_FILE_MAX_BYTES,
   SKILL_RESOURCE_PATH_MAX,
-  collectSkillIndexCandidates,
-  parseSkillFile,
   skillNameSchema,
 } from "../index";
-import type { SkillName } from "../index";
 
 describe("@repo/skills-contract", () => {
   it("accepts standard skill names only", () => {
@@ -229,6 +229,41 @@ describe("@repo/skills-contract", () => {
     expect(result.entry.bodyMarkdown).toBeNull();
     expect(result.entry.diagnostics.map((d) => d.code)).toContain(
       "file_too_large"
+    );
+  });
+
+  it("keeps overlong frontmatter from overflowing persisted index columns", () => {
+    const result = parseSkillFile({
+      contentSha: "abc123",
+      contentSize: 130_000,
+      path: "skills/code-review/SKILL.md",
+      sourceMarkdown: [
+        "---",
+        `name: ${"x".repeat(80)}`,
+        `description: ${"d".repeat(1100)}`,
+        `license: ${"l".repeat(300)}`,
+        `compatibility: ${"c".repeat(600)}`,
+        `allowed-tools: ${"t".repeat(2100)}`,
+        "---",
+        "Body.",
+      ].join("\n"),
+    });
+
+    expect(result.entry.validationStatus).toBe("invalid");
+    expect(result.entry.name).toBeNull();
+    expect(result.entry.description).toBeNull();
+    expect(result.entry.license).toBeNull();
+    expect(result.entry.compatibility).toBeNull();
+    expect(result.entry.allowedTools).toBeNull();
+    expect(result.entry.sourceMarkdown).not.toBeNull();
+    expect(result.entry.diagnostics.map((d) => d.code)).toEqual(
+      expect.arrayContaining([
+        "name_invalid",
+        "description_too_long",
+        "license_invalid",
+        "compatibility_invalid",
+        "allowed-tools_invalid",
+      ])
     );
   });
 });

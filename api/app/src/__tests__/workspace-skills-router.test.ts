@@ -110,10 +110,9 @@ describe("workspaceSkillsRouter.list", () => {
       skills: [brokenSkill, codeReviewSkill],
     });
 
-    expect(getVerifiedLightfastSkillSourceRepositoryIdMock).toHaveBeenCalledWith(
-      expect.anything(),
-      { clerkOrgId: "org_test" }
-    );
+    expect(
+      getVerifiedLightfastSkillSourceRepositoryIdMock
+    ).toHaveBeenCalledWith(expect.anything(), { clerkOrgId: "org_test" });
     expect(ensureFreshSkillIndexForReadMock).toHaveBeenCalledWith({
       clerkOrgId: "org_test",
       sourceControlRepositoryId: 42,

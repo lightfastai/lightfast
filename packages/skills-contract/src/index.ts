@@ -4,6 +4,11 @@ import { z } from "zod";
 export const SKILL_COUNT_MAX = 200;
 export const SKILL_FILE_MAX_BYTES = 128 * 1024;
 export const SKILL_RESOURCE_PATH_MAX = 100;
+const SKILL_ALLOWED_TOOLS_MAX_LENGTH = 2048;
+const SKILL_COMPATIBILITY_MAX_LENGTH = 512;
+const SKILL_DESCRIPTION_MAX_LENGTH = 1024;
+const SKILL_LICENSE_MAX_LENGTH = 256;
+const SKILL_NAME_MAX_LENGTH = 63;
 
 export const SKILL_INDEX_REFRESH_STATUSES = [
   "never",
@@ -23,13 +28,11 @@ export type SkillIndexRefreshStatus = z.infer<
 export const skillNameSchema = z
   .string()
   .regex(/^[a-z0-9][a-z0-9-]{0,62}$/)
-  .refine((name) => !name.endsWith("-") && !name.includes("--"));
+  .refine((name) => !(name.endsWith("-") || name.includes("--")));
 export type SkillName = z.infer<typeof skillNameSchema>;
 
 export const skillValidationStatusSchema = z.enum(["valid", "invalid"]);
-export type SkillValidationStatus = z.infer<
-  typeof skillValidationStatusSchema
->;
+export type SkillValidationStatus = z.infer<typeof skillValidationStatusSchema>;
 
 export const skillDiagnosticSeveritySchema = z.enum(["error", "warning"]);
 export type SkillDiagnosticSeverity = z.infer<
@@ -62,31 +65,31 @@ export interface SkillTreeEntry {
 }
 
 export interface ParsedSkillEntry {
-  slug: string;
-  path: string;
+  allowedTools: string | null;
+  bodyMarkdown: string | null;
+  compatibility: string | null;
   contentSha: string;
   contentSize: number | null;
-  sourceMarkdown: string | null;
-  bodyMarkdown: string | null;
-  name: string | null;
   description: string | null;
-  license: string | null;
-  compatibility: string | null;
-  allowedTools: string | null;
-  metadata: Record<string, string | number | boolean | null>;
-  resources: SkillResources;
-  nonStandardResourceCount: number;
-  validationStatus: SkillValidationStatus;
   diagnostics: SkillDiagnostic[];
+  license: string | null;
+  metadata: Record<string, string | number | boolean | null>;
+  name: string | null;
+  nonStandardResourceCount: number;
+  path: string;
+  resources: SkillResources;
+  slug: string;
+  sourceMarkdown: string | null;
+  validationStatus: SkillValidationStatus;
 }
 
 export interface ParseSkillFileInput {
   contentSha: string;
   contentSize: number | null;
-  path: string;
-  sourceMarkdown: string | null;
-  resources?: SkillResources;
   nonStandardResourceCount?: number;
+  path: string;
+  resources?: SkillResources;
+  sourceMarkdown: string | null;
 }
 
 export interface ParseSkillFileResult {
@@ -95,16 +98,22 @@ export interface ParseSkillFileResult {
 
 export interface SkillIndexCandidateCollection {
   canonicalSkillFiles: SkillTreeEntry[];
-  resourcesBySlug: Map<string, SkillResources>;
-  nonStandardResourceCountBySlug: Map<string, number>;
-  ignoredInvalidSkillDirectoryCount: number;
   diagnostics: SkillDiagnostic[];
   fatalDiagnostics: SkillDiagnostic[];
+  ignoredInvalidSkillDirectoryCount: number;
+  nonStandardResourceCountBySlug: Map<string, number>;
+  resourcesBySlug: Map<string, SkillResources>;
 }
 
-type FrontmatterValue = string | number | boolean | null | FrontmatterValue[] | {
-  [key: string]: FrontmatterValue;
-};
+type FrontmatterValue =
+  | string
+  | number
+  | boolean
+  | null
+  | FrontmatterValue[]
+  | {
+      [key: string]: FrontmatterValue;
+    };
 
 const emptyResources = (): SkillResources => ({
   assets: [],
@@ -141,7 +150,9 @@ const createBaseEntry = (input: ParseSkillFileInput): ParsedSkillEntry => ({
   diagnostics: [],
 });
 
-export function parseSkillFile(input: ParseSkillFileInput): ParseSkillFileResult {
+export function parseSkillFile(
+  input: ParseSkillFileInput
+): ParseSkillFileResult {
   const entry = createBaseEntry(input);
   const diagnostics = entry.diagnostics;
 
@@ -165,7 +176,7 @@ export function parseSkillFile(input: ParseSkillFileInput): ParseSkillFileResult
     ? input.sourceMarkdown.slice(1)
     : input.sourceMarkdown;
 
-  if (!withoutBom.startsWith("---\n") && !withoutBom.startsWith("---\r\n")) {
+  if (!(withoutBom.startsWith("---\n") || withoutBom.startsWith("---\r\n"))) {
     diagnostics.push({
       severity: "error",
       code: "frontmatter_missing",
@@ -198,6 +209,7 @@ export function parseSkillFile(input: ParseSkillFileInput): ParseSkillFileResult
 
   validateRequiredFields(entry);
   validateOptionalFields(entry, parsed.data);
+  sanitizePersistedStrings(entry);
 
   if (entry.diagnostics.some((diagnostic) => diagnostic.severity === "error")) {
     entry.validationStatus = "invalid";
@@ -227,7 +239,7 @@ export function collectSkillIndexCandidates(
     }
 
     const slug = parts[1];
-    if (!slug || !isValidSkillName(slug)) {
+    if (!(slug && isValidSkillName(slug))) {
       if (slug) {
         invalidDirectories.add(slug);
       }
@@ -331,7 +343,10 @@ function splitFrontmatter(
 function parseFrontmatter(
   markdown: string,
   path: string
-): { data: Record<string, FrontmatterValue> | null; diagnostics: SkillDiagnostic[] } {
+): {
+  data: Record<string, FrontmatterValue> | null;
+  diagnostics: SkillDiagnostic[];
+} {
   const diagnostics: SkillDiagnostic[] = [];
   const document = parseDocument(markdown);
 
@@ -381,7 +396,7 @@ function parseSimpleScalarFrontmatter(
       return null;
     }
     const value = match[2]!;
-    if (/^\s*[\[{\]&*!|>]/.test(value)) {
+    if (/^\s*[[{\]&*!|>]/.test(value)) {
       return null;
     }
     data[key] = value;
@@ -434,11 +449,11 @@ function validateRequiredFields(entry: ParsedSkillEntry): void {
       message: "Skill frontmatter must include a non-empty description.",
       path: entry.path,
     });
-  } else if (entry.description.length > 1024) {
+  } else if (entry.description.length > SKILL_DESCRIPTION_MAX_LENGTH) {
     entry.diagnostics.push({
       severity: "error",
       code: "description_too_long",
-      message: "Skill description exceeds 1024 characters.",
+      message: `Skill description exceeds ${SKILL_DESCRIPTION_MAX_LENGTH} characters.`,
       path: entry.path,
     });
   }
@@ -457,19 +472,25 @@ function validateOptionalFields(
   entry: ParsedSkillEntry,
   data: Record<string, FrontmatterValue>
 ): void {
-  warnMalformedString(entry, data, "license", 256, "license_invalid");
+  warnMalformedString(
+    entry,
+    data,
+    "license",
+    SKILL_LICENSE_MAX_LENGTH,
+    "license_invalid"
+  );
   warnMalformedString(
     entry,
     data,
     "compatibility",
-    512,
+    SKILL_COMPATIBILITY_MAX_LENGTH,
     "compatibility_invalid"
   );
   warnMalformedString(
     entry,
     data,
     "allowed-tools",
-    2048,
+    SKILL_ALLOWED_TOOLS_MAX_LENGTH,
     "allowed-tools_invalid"
   );
 
@@ -504,6 +525,36 @@ function validateOptionalFields(
       path: entry.path,
       details: { key },
     });
+  }
+}
+
+function sanitizePersistedStrings(entry: ParsedSkillEntry): void {
+  if (entry.name !== null && entry.name.length > SKILL_NAME_MAX_LENGTH) {
+    entry.name = null;
+  }
+  if (
+    entry.description !== null &&
+    entry.description.length > SKILL_DESCRIPTION_MAX_LENGTH
+  ) {
+    entry.description = null;
+  }
+  if (
+    entry.license !== null &&
+    entry.license.length > SKILL_LICENSE_MAX_LENGTH
+  ) {
+    entry.license = null;
+  }
+  if (
+    entry.compatibility !== null &&
+    entry.compatibility.length > SKILL_COMPATIBILITY_MAX_LENGTH
+  ) {
+    entry.compatibility = null;
+  }
+  if (
+    entry.allowedTools !== null &&
+    entry.allowedTools.length > SKILL_ALLOWED_TOOLS_MAX_LENGTH
+  ) {
+    entry.allowedTools = null;
   }
 }
 

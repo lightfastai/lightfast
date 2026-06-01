@@ -1,5 +1,5 @@
 import type { SQL } from "drizzle-orm";
-import { MySqlDialect, getTableConfig } from "drizzle-orm/mysql-core";
+import { getTableConfig, MySqlDialect } from "drizzle-orm/mysql-core";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Database } from "../client";
@@ -11,8 +11,8 @@ import {
   getSkillIndexableSourceControlRepositoryCandidateById,
   getSkillIndexEntryBySlug,
   getSkillIndexStateBySourceControlRepositoryId,
-  listSkillIndexEntries,
   listSkillIndexableSourceControlRepositoryCandidates,
+  listSkillIndexEntries,
   markSkillIndexKnownStale,
   markSkillIndexRefreshFailed,
   releaseSkillIndexRefreshLock,
@@ -59,6 +59,13 @@ describe("skill index schema", () => {
         "validation_status",
       ])
     );
+    expect(
+      entryConfig.columns
+        .filter((column) =>
+          ["source_markdown", "body_markdown"].includes(column.name)
+        )
+        .map((column) => column.getSQLType())
+    ).toEqual(["mediumtext", "mediumtext"]);
     expect(entryConfig.indexes.map((index) => index.config.name)).toEqual(
       expect.arrayContaining([
         "skill_index_entries_state_slug_uq",
@@ -172,7 +179,9 @@ describe("skill index helpers", () => {
           validationStatus: "invalid",
         }),
       ],
-      indexDiagnostics: [{ code: "warn", message: "Warn", severity: "warning" }],
+      indexDiagnostics: [
+        { code: "warn", message: "Warn", severity: "warning" },
+      ],
       indexedAt,
       indexedCommitSha: "commit-1",
       indexedTreeSha: "tree-1",
@@ -321,14 +330,17 @@ describe("skill index helpers", () => {
   });
 
   it("lists invalid entries first and gets entries by slug", async () => {
-    const invalid = createEntry({ slug: "broken", validationStatus: "invalid" });
+    const invalid = createEntry({
+      slug: "broken",
+      validationStatus: "invalid",
+    });
     const valid = createEntry({ slug: "working", validationStatus: "valid" });
     const listDb = createSelectDb([[invalid, valid]]);
     const getDb = createSelectDb([[valid]]);
 
-    await expect(listSkillIndexEntries(listDb, { stateId: 12 })).resolves.toEqual(
-      [invalid, valid]
-    );
+    await expect(
+      listSkillIndexEntries(listDb, { stateId: 12 })
+    ).resolves.toEqual([invalid, valid]);
     await expect(
       getSkillIndexEntryBySlug(getDb, { slug: "working", stateId: 12 })
     ).resolves.toBe(valid);
@@ -388,7 +400,9 @@ describe("skill index helpers", () => {
     expect(query.sql).toContain("`id` = ?");
     expect(query.sql).toContain("`clerk_org_id` = ?");
     expect(query.sql).toContain("`status` = ?");
-    expect(query.params).toEqual(expect.arrayContaining([99, "org_1", "active"]));
+    expect(query.params).toEqual(
+      expect.arrayContaining([99, "org_1", "active"])
+    );
     expect(limit).toHaveBeenCalledWith(1);
   });
 });
@@ -424,7 +438,9 @@ function createSelectInsertDb(input: { selectResults: unknown[][] }): Database {
   } as unknown as Database;
 }
 
-function createState(overrides: Partial<SkillIndexState> = {}): SkillIndexState {
+function createState(
+  overrides: Partial<SkillIndexState> = {}
+): SkillIndexState {
   const now = new Date("2026-06-01T00:00:00.000Z");
   return {
     createdAt: now,
@@ -450,7 +466,9 @@ function createState(overrides: Partial<SkillIndexState> = {}): SkillIndexState 
   };
 }
 
-function createEntry(overrides: Partial<SkillIndexEntry> = {}): SkillIndexEntry {
+function createEntry(
+  overrides: Partial<SkillIndexEntry> = {}
+): SkillIndexEntry {
   const now = new Date("2026-06-01T00:00:00.000Z");
   return {
     allowedTools: null,
@@ -480,7 +498,9 @@ function createEntry(overrides: Partial<SkillIndexEntry> = {}): SkillIndexEntry 
 }
 
 function createEntryInput(
-  overrides: Partial<Parameters<typeof replaceSkillIndexEntries>[1]["entries"][number]> = {}
+  overrides: Partial<
+    Parameters<typeof replaceSkillIndexEntries>[1]["entries"][number]
+  > = {}
 ): Parameters<typeof replaceSkillIndexEntries>[1]["entries"][number] {
   return {
     allowedTools: null,

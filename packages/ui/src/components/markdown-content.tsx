@@ -1,4 +1,5 @@
-import React, { isValidElement } from "react";
+import type React from "react";
+import { isValidElement } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "../lib/utils";
@@ -77,8 +78,12 @@ export function MarkdownContent({
   };
 
   return (
-    <div className={cn("prose max-w-[72ch] dark:prose-invert", className)}>
-      <ReactMarkdown components={components} remarkPlugins={[remarkGfm]} skipHtml>
+    <div className={cn("prose dark:prose-invert max-w-[72ch]", className)}>
+      <ReactMarkdown
+        components={components}
+        remarkPlugins={[remarkGfm]}
+        skipHtml
+      >
         {children}
       </ReactMarkdown>
     </div>
@@ -113,7 +118,13 @@ function resolveMarkdownHref(input: {
   }
 
   const sourceDir = input.sourcePath.split("/").slice(0, -1).join("/");
-  const normalizedPath = normalizeRelativePath(sourceDir, href);
+  const parsed = parseRelativeHref(href);
+
+  if (!parsed) {
+    return null;
+  }
+
+  const normalizedPath = normalizeRelativePath(sourceDir, parsed.pathname);
 
   if (!normalizedPath?.startsWith(`${sourceDir}/`)) {
     return null;
@@ -121,15 +132,37 @@ function resolveMarkdownHref(input: {
 
   const relativeTarget = normalizedPath.slice(sourceDir.length + 1);
 
-  return `${input.sourceUrlBase.replace(/\/+$/, "")}/${encodeURI(relativeTarget)}`;
+  return `${input.sourceUrlBase.replace(/\/+$/, "")}/${encodeURI(
+    relativeTarget
+  )}${parsed.suffix}`;
+}
+
+function parseRelativeHref(href: string): {
+  pathname: string;
+  suffix: string;
+} | null {
+  const match = /^([^?#]*)([?#].*)?$/.exec(href);
+  if (!match) {
+    return null;
+  }
+  const suffix = match[2] ?? "";
+  if (suffix && !/^[?#][^\s]*$/.test(suffix)) {
+    return null;
+  }
+  return { pathname: match[1] ?? "", suffix };
 }
 
 function normalizeRelativePath(
   sourceDir: string,
-  href: string
+  pathname: string
 ): string | null {
-  const [pathname = ""] = href.split(/[?#]/, 1);
-  const segments = `${sourceDir}/${decodeURI(pathname)}`.split("/");
+  let decodedPathname: string;
+  try {
+    decodedPathname = decodeURI(pathname);
+  } catch {
+    return null;
+  }
+  const segments = `${sourceDir}/${decodedPathname}`.split("/");
   const normalizedSegments: string[] = [];
 
   for (const segment of segments) {

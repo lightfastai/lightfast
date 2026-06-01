@@ -10,8 +10,8 @@ import {
   index,
   int,
   json,
+  mediumtext,
   mysqlTable,
-  text,
   timestamp,
   uniqueIndex,
   varchar,
@@ -145,9 +145,9 @@ export const skillIndexEntries = mysqlTable(
       .default(sql`(JSON_OBJECT())`)
       .notNull(),
 
-    sourceMarkdown: text("source_markdown"),
+    sourceMarkdown: mediumtext("source_markdown"),
 
-    bodyMarkdown: text("body_markdown"),
+    bodyMarkdown: mediumtext("body_markdown"),
 
     contentSha: varchar("content_sha", { length: SHA_LENGTH }).notNull(),
 

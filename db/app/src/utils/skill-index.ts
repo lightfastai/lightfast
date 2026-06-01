@@ -1,5 +1,14 @@
 import type { SkillDiagnostic } from "@repo/skills-contract";
-import { and, asc, eq, getTableColumns, isNull, lt, or, sql } from "drizzle-orm";
+import {
+  and,
+  asc,
+  eq,
+  getTableColumns,
+  isNull,
+  lt,
+  or,
+  sql,
+} from "drizzle-orm";
 
 import type { Database } from "../client";
 import type {
@@ -54,7 +63,10 @@ export async function createOrLoadSkillIndexState(
   db: Database,
   input: { sourceControlRepositoryId: number }
 ): Promise<SkillIndexState> {
-  const existing = await getSkillIndexStateBySourceControlRepositoryId(db, input);
+  const existing = await getSkillIndexStateBySourceControlRepositoryId(
+    db,
+    input
+  );
   if (existing) {
     return existing;
   }

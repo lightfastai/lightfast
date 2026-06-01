@@ -25,17 +25,19 @@ export function SkillsClient() {
   const [filter, setFilter] = useState<SkillFilter>("all");
   const deferredQuery = useDeferredValue(query.trim().toLowerCase());
 
-  const skills = useMemo(() => {
-    return data.skills
-      .filter((skill) => matchesFilter(skill, filter))
-      .filter((skill) => matchesQuery(skill, deferredQuery))
-      .sort((a, b) => {
-        if (a.validationStatus !== b.validationStatus) {
-          return a.validationStatus === "invalid" ? -1 : 1;
-        }
-        return a.slug.localeCompare(b.slug);
-      });
-  }, [data.skills, deferredQuery, filter]);
+  const skills = useMemo(
+    () =>
+      data.skills
+        .filter((skill) => matchesFilter(skill, filter))
+        .filter((skill) => matchesQuery(skill, deferredQuery))
+        .sort((a, b) => {
+          if (a.validationStatus !== b.validationStatus) {
+            return a.validationStatus === "invalid" ? -1 : 1;
+          }
+          return a.slug.localeCompare(b.slug);
+        }),
+    [data.skills, deferredQuery, filter]
+  );
 
   return (
     <WorkspaceSurface
@@ -64,6 +66,7 @@ export function SkillsClient() {
 
         <div className="mt-4 flex flex-wrap items-center gap-3">
           <Input
+            aria-label="Search skills"
             className="max-w-sm"
             onChange={(event) => setQuery(event.target.value)}
             placeholder="Search skills"
@@ -103,7 +106,9 @@ export function SkillsClient() {
       <div className="flex flex-col">
         {skills.length === 0 ? (
           <div className="px-6 py-12 text-muted-foreground text-sm">
-            No skills indexed.
+            {data.skills.length === 0
+              ? "No skills indexed."
+              : "No matching skills."}
           </div>
         ) : (
           skills.map((skill) => (

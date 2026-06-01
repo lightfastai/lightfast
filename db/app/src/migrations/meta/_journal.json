@@ -71,6 +71,13 @@
       "when": 1780288593047,
       "tag": "0009_shiny_tana_nile",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1780297322566,
+      "tag": "0010_hard_franklin_richards",
+      "breakpoints": true
     }
   ]
 }

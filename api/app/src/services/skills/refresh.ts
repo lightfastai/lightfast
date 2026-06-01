@@ -1,3 +1,4 @@
+import type { SkillIndexableSourceControlRepositoryCandidate } from "@db/app";
 import { SKILL_FILE_MAX_BYTES } from "@repo/skills-contract";
 
 import { buildSkillIndexEntriesFromTree } from "./build";
@@ -5,7 +6,16 @@ import { resolveSkillIndexServiceDeps } from "./deps";
 import { getVerifiedCandidateByRepositoryId } from "./repository";
 import type { SkillIndexServiceDeps } from "./types";
 
-const LOCK_TTL_SECONDS = 15;
+const LOCK_TTL_SECONDS = 60;
+
+class SkillIndexTreeTruncatedError extends Error {
+  constructor() {
+    super(
+      "GitHub tree response was truncated, so the skill index was not replaced."
+    );
+    this.name = "SkillIndexTreeTruncatedError";
+  }
+}
 
 export async function checkSkillIndexSourceRef(input: {
   deps?: SkillIndexServiceDeps;
@@ -22,24 +32,46 @@ export async function checkSkillIndexSourceRef(input: {
     return { currentCommitSha: null, status: "missing" };
   }
 
+  return await checkSkillIndexCandidateRef({
+    candidate,
+    deps,
+    sourceControlRepositoryId: input.sourceControlRepositoryId,
+  });
+}
+
+export async function checkSkillIndexCandidateRef(input: {
+  candidate: SkillIndexableSourceControlRepositoryCandidate;
+  deps: SkillIndexServiceDeps;
+  sourceControlRepositoryId: number;
+}): Promise<{
+  currentCommitSha: string | null;
+  status: "changed" | "missing" | "unchanged";
+}> {
+  if (!input.candidate.binding.providerInstallationId) {
+    return { currentCommitSha: null, status: "missing" };
+  }
+
   const state =
-    candidate.state ??
-    (await deps.getSkillIndexStateBySourceControlRepositoryId(deps.db, {
-      sourceControlRepositoryId: input.sourceControlRepositoryId,
-    }));
+    input.candidate.state ??
+    (await input.deps.getSkillIndexStateBySourceControlRepositoryId(
+      input.deps.db,
+      {
+        sourceControlRepositoryId: input.sourceControlRepositoryId,
+      }
+    ));
   const etag =
     state?.githubRefEtag && state.lastCheckedCommitSha
       ? state.githubRefEtag
       : null;
-  const ref = await deps.readSkillRepositoryMainRef({
+  const ref = await input.deps.readSkillRepositoryMainRef({
     etag,
-    fullName: candidate.repository.fullName,
-    installationId: candidate.binding.providerInstallationId,
+    fullName: input.candidate.repository.fullName,
+    installationId: input.candidate.binding.providerInstallationId,
   });
-  const checkedAt = deps.now();
+  const checkedAt = input.deps.now();
 
   if (ref.status === "not_modified") {
-    await deps.updateSkillIndexRefCheck(deps.db, {
+    await input.deps.updateSkillIndexRefCheck(input.deps.db, {
       githubRefEtag: state?.githubRefEtag ?? null,
       lastCheckedAt: checkedAt,
       lastCheckedCommitSha: state?.lastCheckedCommitSha ?? null,
@@ -56,7 +88,7 @@ export async function checkSkillIndexSourceRef(input: {
   }
 
   if (ref.status === "missing") {
-    await deps.updateSkillIndexRefCheck(deps.db, {
+    await input.deps.updateSkillIndexRefCheck(input.deps.db, {
       githubRefEtag: null,
       lastCheckedAt: checkedAt,
       lastCheckedCommitSha: null,
@@ -65,7 +97,7 @@ export async function checkSkillIndexSourceRef(input: {
     return { currentCommitSha: null, status: "missing" };
   }
 
-  await deps.updateSkillIndexRefCheck(deps.db, {
+  await input.deps.updateSkillIndexRefCheck(input.deps.db, {
     githubRefEtag: ref.etag,
     lastCheckedAt: checkedAt,
     lastCheckedCommitSha: ref.sha,
@@ -155,6 +187,9 @@ export async function refreshSkillIndexSource(input: {
       signal: input.signal,
     });
     input.signal?.throwIfAborted();
+    if (tree.truncated) {
+      throw new SkillIndexTreeTruncatedError();
+    }
     const blobs = await readSkillBlobs({
       commitTree: tree.tree,
       deps,
@@ -180,7 +215,7 @@ export async function refreshSkillIndexSource(input: {
     });
     return { status: "fresh" };
   } catch (error) {
-    const code = isAbortError(error) ? "refresh_timeout" : "refresh_failed";
+    const code = getRefreshFailureCode(error);
     await deps.markSkillIndexRefreshFailed(deps.db, {
       errorCode: code,
       errorMessage: error instanceof Error ? error.message : "Refresh failed.",
@@ -228,6 +263,16 @@ async function readSkillBlobs(input: {
     }
   }
   return blobs;
+}
+
+function getRefreshFailureCode(error: unknown): string {
+  if (isAbortError(error)) {
+    return "refresh_timeout";
+  }
+  if (error instanceof SkillIndexTreeTruncatedError) {
+    return "github_tree_truncated";
+  }
+  return "refresh_failed";
 }
 
 export function isAbortError(error: unknown): boolean {

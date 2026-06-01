@@ -6,6 +6,7 @@ const createGitHubInstallationTokenMock = vi.fn();
 const getActiveOrgBindingMock = vi.fn();
 const getGitHubRepositoryMock = vi.fn();
 const mirrorOrgSetupGateMock = vi.fn();
+const markDeliveryMock = vi.fn();
 const findChangedSkillIndexSourcesMock = vi.fn();
 const refreshSkillIndexSourceMock = vi.fn();
 const reconcileSkillIndexSourcesMock = vi.fn();
@@ -31,6 +32,7 @@ type QueueCallback = (input: {
     data: {
       afterSha: string;
       changedPaths: string[];
+      changedPathsComplete: boolean;
       deliveryId: string;
       ref: string;
       repositoryWatchId: number;
@@ -67,6 +69,7 @@ vi.mock("@db/app", () => ({
   completeWatchedSourceControlRepositorySetup:
     completeWatchedSourceControlRepositorySetupMock,
   getActiveOrgBinding: getActiveOrgBindingMock,
+  markSourceControlWebhookDeliveryStatus: markDeliveryMock,
   upsertWatchedSourceControlRepository:
     upsertWatchedSourceControlRepositoryMock,
 }));
@@ -171,6 +174,7 @@ function runQueue(step: Step, input: { changedPaths: string[]; ref: string }) {
         deliveryId: "delivery_1",
         ref: input.ref,
         repositoryWatchId: 9,
+        changedPathsComplete: true,
       },
     },
     step,
@@ -184,6 +188,7 @@ beforeEach(() => {
   getActiveOrgBindingMock.mockReset();
   getGitHubRepositoryMock.mockReset();
   mirrorOrgSetupGateMock.mockReset();
+  markDeliveryMock.mockReset();
   findChangedSkillIndexSourcesMock.mockReset();
   refreshSkillIndexSourceMock.mockReset();
   reconcileSkillIndexSourcesMock.mockReset();
@@ -215,6 +220,7 @@ beforeEach(() => {
     owner: "acme",
   });
   mirrorOrgSetupGateMock.mockResolvedValue(undefined);
+  markDeliveryMock.mockResolvedValue(true);
   findChangedSkillIndexSourcesMock.mockResolvedValue({
     changed: [
       {
@@ -267,19 +273,36 @@ describe("skills index Inngest workflows", () => {
     expect(
       shouldQueueSkillRefreshFromPush({
         changedPaths: ["skills/demo/SKILL.md"],
+        changedPathsComplete: true,
         ref: "refs/heads/main",
       })
     ).toBe(true);
     expect(
       shouldQueueSkillRefreshFromPush({
         changedPaths: ["skills/demo/SKILL.md"],
+        changedPathsComplete: true,
         ref: "refs/heads/feature",
       })
     ).toBe(false);
     expect(
       shouldQueueSkillRefreshFromPush({
         changedPaths: ["docs/demo.md"],
+        changedPathsComplete: true,
         ref: "refs/heads/main",
+      })
+    ).toBe(false);
+    expect(
+      shouldQueueSkillRefreshFromPush({
+        changedPaths: ["docs/demo.md"],
+        changedPathsComplete: false,
+        ref: "refs/heads/main",
+      })
+    ).toBe(true);
+    expect(
+      shouldQueueSkillRefreshFromPush({
+        changedPaths: ["docs/demo.md"],
+        changedPathsComplete: false,
+        ref: "refs/heads/feature",
       })
     ).toBe(false);
   });
@@ -305,6 +328,10 @@ describe("skills index Inngest workflows", () => {
         sourceControlRepositoryId: 9,
         targetCommitSha: "abc123",
       },
+    });
+    expect(markDeliveryMock).toHaveBeenCalledWith(expect.anything(), {
+      deliveryId: "delivery_1",
+      status: "processed",
     });
   });
 

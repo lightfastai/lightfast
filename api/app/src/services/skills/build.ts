@@ -22,7 +22,7 @@ export function buildSkillIndexEntriesFromTree(input: {
       const sourceMarkdown =
         file.size > SKILL_FILE_MAX_BYTES
           ? null
-          : input.blobs.get(file.sha) ?? null;
+          : (input.blobs.get(file.sha) ?? null);
       const parsed = parseSkillFile({
         contentSha: file.sha,
         contentSize: file.size,

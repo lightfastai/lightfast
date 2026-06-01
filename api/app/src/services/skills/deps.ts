@@ -1,9 +1,11 @@
+import { randomUUID } from "node:crypto";
 import {
   acquireSkillIndexRefreshLock,
   createOrLoadSkillIndexState,
   db,
-  getSkillIndexStateBySourceControlRepositoryId,
   getSkillIndexableSourceControlRepositoryCandidateById,
+  getSkillIndexEntryBySlug,
+  getSkillIndexStateBySourceControlRepositoryId,
   listSkillIndexableSourceControlRepositoryCandidates,
   listSkillIndexEntries,
   markSkillIndexRefreshFailed,
@@ -11,7 +13,6 @@ import {
   replaceSkillIndexEntries,
   updateSkillIndexRefCheck,
 } from "@db/app";
-import { randomUUID } from "node:crypto";
 
 import {
   readSkillRepositoryBlob,
@@ -36,6 +37,7 @@ const defaultSkillIndexServiceDeps: SkillIndexServiceDeps = {
   enqueueRefresh: async () => undefined,
   getSkillIndexStateBySourceControlRepositoryId,
   getSkillIndexableSourceControlRepositoryCandidateById,
+  getSkillIndexEntryBySlug,
   listSkillIndexableSourceControlRepositoryCandidates,
   listSkillIndexEntries,
   markSkillIndexRefreshFailed,
