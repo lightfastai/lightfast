@@ -69,6 +69,7 @@ catalog:
   inngest: ^4.4.0
   jose: ^6.2.2
   lucide-react: ^1.8.0
+  mcp-handler: ^1.1.0
   nanoid: ^5.1.9
   portless: ^0.12.0
   react-hook-form: ^7.72.1

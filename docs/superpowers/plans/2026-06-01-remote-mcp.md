@@ -1387,7 +1387,7 @@ git commit -m "feat: add mcp oauth consent flow"
 - Test: `apps/mcp/src/__tests__/metadata.test.ts`
 - Test: `apps/mcp/src/__tests__/auth.test.ts`
 
-- [ ] **Step 1: Add failing metadata and auth tests**
+- [x] **Step 1: Add failing metadata and auth tests**
 
 Create tests asserting:
 
@@ -1399,7 +1399,7 @@ it("rejects JWTs without token_use=mcp_access", async () => {});
 it("accepts a valid MCP access JWT", async () => {});
 ```
 
-- [ ] **Step 2: Run failing tests**
+- [x] **Step 2: Run failing tests**
 
 Run:
 
@@ -1409,7 +1409,7 @@ pnpm --filter @lightfast/mcp test
 
 Expected: FAIL because app package does not exist.
 
-- [ ] **Step 3: Add app package and dependency catalog**
+- [x] **Step 3: Add app package and dependency catalog**
 
 Add `mcp-handler` to `pnpm-workspace.yaml` catalog:
 
@@ -1474,7 +1474,7 @@ Create `apps/mcp/portless.json`:
 { "name": "mcp.lightfast" }
 ```
 
-- [ ] **Step 4: Implement metadata and token verification**
+- [x] **Step 4: Implement metadata and token verification**
 
 Create `apps/mcp/src/app/.well-known/oauth-protected-resource/route.ts` returning:
 
@@ -1487,7 +1487,7 @@ Create `apps/mcp/src/app/.well-known/oauth-protected-resource/route.ts` returnin
 
 Create `apps/mcp/src/auth/verify-token.ts` with `jose` remote JWKS verification and required claim checks.
 
-- [ ] **Step 5: Run tests**
+- [x] **Step 5: Run tests**
 
 Run:
 
@@ -1499,7 +1499,7 @@ pnpm --filter @lightfast/mcp typecheck
 
 Expected: all PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add apps/mcp package.json pnpm-workspace.yaml pnpm-lock.yaml
