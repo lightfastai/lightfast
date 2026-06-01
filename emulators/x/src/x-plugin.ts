@@ -23,9 +23,9 @@ const failureSwitchNames = [
 ] as const satisfies ReadonlyArray<keyof FailureSwitches>;
 
 interface XUserRow extends Entity {
-  x_id: string;
   name: string;
   username: string;
+  x_id: string;
 }
 
 function defaultFailures(): FailureSwitches {
@@ -64,7 +64,7 @@ function userResponse(store: Store) {
 function bearerToken(c: Context): string | undefined {
   const authorization = c.req.header("authorization");
   if (!authorization?.startsWith("Bearer ")) {
-    return undefined;
+    return;
   }
   return authorization.slice("Bearer ".length);
 }
@@ -171,9 +171,9 @@ export const xPlugin: ServicePlugin = {
     });
 
     app.post("/failures", async (c) => {
-      const body = (await c.req.json().catch(() => null)) as
-        | Partial<Record<keyof FailureSwitches, unknown>>
-        | null;
+      const body = (await c.req.json().catch(() => null)) as Partial<
+        Record<keyof FailureSwitches, unknown>
+      > | null;
       if (body !== null && (typeof body !== "object" || Array.isArray(body))) {
         return c.json({ error: "invalid_failure_switches" }, 400);
       }

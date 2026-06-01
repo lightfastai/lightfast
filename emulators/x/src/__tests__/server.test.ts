@@ -7,7 +7,8 @@ import { type StartedXEmulator, startXEmulator } from "../server";
 
 const VERIFIER = "x_pkce_verifier_lightfast_local_0123456789";
 const CHALLENGE = createHash("sha256").update(VERIFIER).digest("base64url");
-const REDIRECT_URI = "https://app.lightfast.localhost/api/connectors/x/callback";
+const REDIRECT_URI =
+  "https://app.lightfast.localhost/api/connectors/x/callback";
 
 let emulator: StartedXEmulator | undefined;
 

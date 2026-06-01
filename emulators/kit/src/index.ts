@@ -2,15 +2,15 @@ import type { Server } from "node:http";
 
 import {
   type AppEnv,
+  createServer,
   type FetchHandler,
   type Hono,
   type ServerOptions,
   type ServicePlugin,
   type Store,
+  serve,
   type TokenMap,
   type WebhookDispatcher,
-  createServer,
-  serve,
 } from "@emulators/core";
 
 export type EmulatorServer = ReturnType<typeof createServer>;
@@ -21,28 +21,28 @@ export interface StartEmulatorContext {
 }
 
 export interface StartEmulatorOptions extends ServerOptions {
-  host?: string;
-  port?: number;
   appOrigin?: string;
-  publicOrigin?: string;
   /** Wrap the fetch handler (e.g. host-routing shims). Default: server.app.fetch. */
   createFetch?(server: EmulatorServer, ctx: StartEmulatorContext): FetchHandler;
-  /** Override seeding. Default: store.reset() then plugin.seed(store, publicOrigin). */
-  seed?(server: EmulatorServer, ctx: StartEmulatorContext): void;
+  host?: string;
   /** Mutate the server before it starts listening (e.g. override webhooks.dispatch). */
   onReady?(server: EmulatorServer): void;
+  port?: number;
+  publicOrigin?: string;
+  /** Override seeding. Default: store.reset() then plugin.seed(store, publicOrigin). */
+  seed?(server: EmulatorServer, ctx: StartEmulatorContext): void;
 }
 
 export interface StartedEmulator {
   app: Hono<AppEnv>;
-  store: Store;
-  webhooks: WebhookDispatcher;
-  tokenMap: TokenMap;
+  close(): Promise<void>;
   listenUrl: string;
   publicOrigin: string;
-  url: string;
   reset(): void;
-  close(): Promise<void>;
+  store: Store;
+  tokenMap: TokenMap;
+  url: string;
+  webhooks: WebhookDispatcher;
 }
 
 export function formatListenUrl(host: string, port: number): string {
