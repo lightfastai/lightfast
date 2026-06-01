@@ -38,6 +38,23 @@ describe("runtime tool names", () => {
     expect(connectorRuntimeToolNameSchema.parse(runtimeName)).toBe(runtimeName);
   });
 
+  it("rejects runtime tool names with unsupported provider prefixes", () => {
+    expect(() =>
+      connectorRuntimeToolNameSchema.parse("foo__create_issue")
+    ).toThrow();
+    expect(() =>
+      connectorRuntimeToolName("foo" as "linear", "create_issue")
+    ).toThrow();
+    expect(() => parseConnectorRuntimeToolName("foo__create_issue")).toThrow();
+  });
+
+  it("preserves provider tool names containing double underscores", () => {
+    expect(parseConnectorRuntimeToolName("linear__foo__bar")).toEqual({
+      provider: "linear",
+      providerToolName: "foo__bar",
+    });
+  });
+
   it("rejects unsupported provider tool names", () => {
     expect(connectorToolNameSchema.parse("list_issues")).toBe("list_issues");
     expect(connectorToolNameSchema.parse("issue.search")).toBe("issue.search");

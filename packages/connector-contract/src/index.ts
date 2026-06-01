@@ -51,7 +51,20 @@ export type ConnectorToolName = z.infer<typeof connectorToolNameSchema>;
 
 export const connectorRuntimeToolNameSchema = z
   .string()
-  .regex(/^[a-z]+__[a-z0-9_.-]+$/, "Unsupported connector runtime tool name");
+  .refine((runtimeToolName) => {
+    const separatorIndex = runtimeToolName.indexOf("__");
+    if (separatorIndex <= 0) {
+      return false;
+    }
+
+    const provider = runtimeToolName.slice(0, separatorIndex);
+    const providerToolName = runtimeToolName.slice(separatorIndex + 2);
+
+    return (
+      connectableConnectorProviderSchema.safeParse(provider).success &&
+      connectorToolNameSchema.safeParse(providerToolName).success
+    );
+  }, "Unsupported connector runtime tool name");
 export type ConnectorRuntimeToolName = z.infer<
   typeof connectorRuntimeToolNameSchema
 >;
@@ -60,8 +73,11 @@ export function connectorRuntimeToolName(
   provider: ConnectableConnectorProvider,
   providerToolName: string
 ): ConnectorRuntimeToolName {
+  const parsedProvider = connectableConnectorProviderSchema.parse(provider);
   const parsedToolName = connectorToolNameSchema.parse(providerToolName);
-  return connectorRuntimeToolNameSchema.parse(`${provider}__${parsedToolName}`);
+  return connectorRuntimeToolNameSchema.parse(
+    `${parsedProvider}__${parsedToolName}`
+  );
 }
 
 export function parseConnectorRuntimeToolName(
@@ -71,7 +87,9 @@ export function parseConnectorRuntimeToolName(
   providerToolName: ConnectorToolName;
 } {
   const parsed = connectorRuntimeToolNameSchema.parse(runtimeToolName);
-  const [provider, providerToolName] = parsed.split("__");
+  const separatorIndex = parsed.indexOf("__");
+  const provider = parsed.slice(0, separatorIndex);
+  const providerToolName = parsed.slice(separatorIndex + 2);
   return {
     provider: connectableConnectorProviderSchema.parse(provider),
     providerToolName: connectorToolNameSchema.parse(providerToolName),
