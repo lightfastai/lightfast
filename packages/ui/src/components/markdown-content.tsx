@@ -2,7 +2,6 @@ import React, { isValidElement } from "react";
 import ReactMarkdown, { type Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { cn } from "../lib/utils";
-import { SSRCodeBlock } from "./ssr-code-block";
 
 export interface MarkdownContentProps {
   children: string;
@@ -11,7 +10,7 @@ export interface MarkdownContentProps {
   sourceUrlBase: string;
 }
 
-export async function MarkdownContent({
+export function MarkdownContent({
   children,
   className,
   sourcePath,
@@ -61,13 +60,19 @@ export async function MarkdownContent({
         </span>
       );
     },
-    async pre({ children: preChildren }) {
+    pre({ children: preChildren }) {
       const code = extractCode(preChildren);
 
-      return SSRCodeBlock({
-        children: code.value,
-        language: code.language,
-      });
+      return (
+        <pre className="my-4 overflow-x-auto rounded-md border bg-muted/40 p-4">
+          <code
+            className="block font-mono text-foreground text-xs leading-6"
+            data-language={code.language}
+          >
+            {code.value}
+          </code>
+        </pre>
+      );
     },
   };
 
