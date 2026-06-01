@@ -13,6 +13,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@repo/emulator-kit": "workspace:*",
     "@repo/github-app-contract": "workspace:*",
     "@t3-oss/env-core": "catalog:",
     "zod": "catalog:"

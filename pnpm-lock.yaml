@@ -1306,6 +1306,9 @@ importers:
 
   emulators/github:
     dependencies:
+      '@repo/emulator-kit':
+        specifier: workspace:*
+        version: link:../kit
       '@repo/github-app-contract':
         specifier: workspace:*
         version: link:../../packages/github-app-contract

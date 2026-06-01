@@ -6,6 +6,11 @@ import {
   githubPlugin,
   seedFromConfig,
 } from "@emulators/github";
+import {
+  closeServer,
+  formatListenUrl,
+  waitForListening,
+} from "@repo/emulator-kit";
 
 import { createGitHubEmulatorSeed, GITHUB_EMULATOR_FIXTURES } from "./fixtures";
 import { createGitHubCompatibleFetch } from "./github-compatible-routes";
@@ -75,56 +80,6 @@ export function addOrgMembership(store: Parameters<typeof getGitHubStore>[0]) {
       members_count: gh.teamMembers.findBy("team_id", membersTeam.id).length,
     });
   }
-}
-
-function waitForListening(httpServer: Server) {
-  if (httpServer.listening) {
-    return Promise.resolve();
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    const cleanup = () => {
-      httpServer.off("error", onError);
-      httpServer.off("listening", onListening);
-    };
-    const onError = (error: Error) => {
-      cleanup();
-      reject(error);
-    };
-    const onListening = () => {
-      cleanup();
-      resolve();
-    };
-
-    httpServer.once("error", onError);
-    httpServer.once("listening", onListening);
-
-    if (httpServer.listening) {
-      onListening();
-    }
-  });
-}
-
-function closeServer(httpServer: Server) {
-  if (!httpServer.listening) {
-    return Promise.resolve();
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    httpServer.close((error) => {
-      if (error) {
-        reject(error);
-        return;
-      }
-      resolve();
-    });
-  });
-}
-
-function formatListenUrl(host: string, port: number) {
-  const urlHost = host === "0.0.0.0" || host === "::" ? "127.0.0.1" : host;
-  const formattedHost = urlHost.includes(":") ? `[${urlHost}]` : urlHost;
-  return `http://${formattedHost}:${port}`;
 }
 
 export async function startGitHubEmulator(
