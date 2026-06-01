@@ -1,25 +1,20 @@
-import type { Database, SignalView } from "@db/app";
+import type { Database, PeopleView } from "@db/app";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AuthIdentity } from "../auth/identity";
 
-const listSignalViewsMock = vi.fn();
-const createSignalViewMock = vi.fn();
-const deleteSignalViewMock = vi.fn();
+const listPeopleViewsMock = vi.fn();
+const createPeopleViewMock = vi.fn();
+const deletePeopleViewMock = vi.fn();
 
 vi.mock("@db/app/client", () => ({ db: {} }));
 vi.mock("@db/app", () => ({
-  // signals deps imported by workspace-signals.ts
-  listSignals: vi.fn(),
-  listWorkspaceSignals: vi.fn(),
-  getSignalByPublicId: vi.fn(),
-  // signal views deps
-  listSignalViews: listSignalViewsMock,
-  createSignalView: createSignalViewMock,
-  deleteSignalView: deleteSignalViewMock,
-}));
-vi.mock("../signals/create-signal", () => ({
-  createAndQueueSignal: vi.fn(),
-  isSignalCreateQueueError: () => false,
+  // people router deps imported by workspace-people.ts
+  listPeople: vi.fn(),
+  getPersonByPublicId: vi.fn(),
+  // people views deps
+  listPeopleViews: listPeopleViewsMock,
+  createPeopleView: createPeopleViewMock,
+  deletePeopleView: deletePeopleViewMock,
 }));
 vi.mock("@vendor/clerk/env", () => ({
   clerkEnvBase: { CLERK_SECRET_KEY: "sk_test_fake-secret-key-for-tests" },
@@ -35,11 +30,11 @@ vi.mock("@vendor/observability/trpc", () => ({
 }));
 
 const { createCallerFactory, createTRPCRouter } = await import("../trpc");
-const { workspaceSignalsRouter } = await import(
-  "../router/(pending-not-allowed)/workspace-signals"
+const { workspacePeopleRouter } = await import(
+  "../router/(pending-not-allowed)/workspace-people"
 );
 
-const testRouter = createTRPCRouter({ signals: workspaceSignalsRouter });
+const testRouter = createTRPCRouter({ people: workspacePeopleRouter });
 const createCaller = createCallerFactory(testRouter);
 
 type ActiveAuthIdentity = Extract<AuthIdentity, { type: "active" }>;
@@ -52,22 +47,20 @@ const activeIdentity: ActiveAuthIdentity = {
 const pendingIdentity: AuthIdentity = { type: "pending", userId: "user_test" };
 const unauthenticatedIdentity: AuthIdentity = { type: "unauthenticated" };
 
-const viewRow: SignalView = {
+const viewRow: PeopleView = {
   id: 3,
-  publicId: "sigview_123e4567-e89b-12d3-a456-426614174000",
+  publicId: "peoview_123e4567-e89b-12d3-a456-426614174000",
   clerkOrgId: "org_test",
   createdByUserId: "user_test",
-  name: "My follow-ups",
+  name: "X handles",
   config: {
     filters: {
-      kinds: ["follow_up"],
-      priorities: [],
-      dispositions: [],
-      peopleRouted: false,
+      providers: ["x"],
+      types: ["handle"],
     },
   },
-  createdAt: new Date("2026-05-30T01:00:00.000Z"),
-  updatedAt: new Date("2026-05-30T01:00:00.000Z"),
+  createdAt: new Date("2026-05-31T01:00:00.000Z"),
+  updatedAt: new Date("2026-05-31T01:00:00.000Z"),
 };
 
 function caller(identity: AuthIdentity = activeIdentity) {
@@ -79,15 +72,15 @@ function caller(identity: AuthIdentity = activeIdentity) {
 }
 
 beforeEach(() => {
-  listSignalViewsMock.mockReset().mockResolvedValue([viewRow]);
-  createSignalViewMock.mockReset().mockResolvedValue(viewRow);
-  deleteSignalViewMock.mockReset().mockResolvedValue(true);
+  listPeopleViewsMock.mockReset().mockResolvedValue([viewRow]);
+  createPeopleViewMock.mockReset().mockResolvedValue(viewRow);
+  deletePeopleViewMock.mockReset().mockResolvedValue(true);
 });
 
-describe("workspaceSignalsRouter.views.list", () => {
+describe("workspacePeopleRouter.views.list", () => {
   it("scopes to the authenticated org + user", async () => {
-    await expect(caller().signals.views.list()).resolves.toEqual([viewRow]);
-    expect(listSignalViewsMock).toHaveBeenCalledWith(expect.anything(), {
+    await expect(caller().people.views.list()).resolves.toEqual([viewRow]);
+    expect(listPeopleViewsMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
     });
@@ -95,16 +88,16 @@ describe("workspaceSignalsRouter.views.list", () => {
 
   it("rejects unauthenticated callers", async () => {
     await expect(
-      caller(unauthenticatedIdentity).signals.views.list()
+      caller(unauthenticatedIdentity).people.views.list()
     ).rejects.toMatchObject({ code: "UNAUTHORIZED" });
-    expect(listSignalViewsMock).not.toHaveBeenCalled();
+    expect(listPeopleViewsMock).not.toHaveBeenCalled();
   });
 
   it("rejects pending (no active org) callers", async () => {
     await expect(
-      caller(pendingIdentity).signals.views.list()
+      caller(pendingIdentity).people.views.list()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect(listSignalViewsMock).not.toHaveBeenCalled();
+    expect(listPeopleViewsMock).not.toHaveBeenCalled();
   });
 
   it("rejects unbound organizations", async () => {
@@ -115,43 +108,58 @@ describe("workspaceSignalsRouter.views.list", () => {
           bindingStatus: "unbound",
           nextSetupRequirement: "github_org",
         },
-      }).signals.views.list()
+      }).people.views.list()
     ).rejects.toMatchObject({ code: "FORBIDDEN" });
-    expect(listSignalViewsMock).not.toHaveBeenCalled();
+    expect(listPeopleViewsMock).not.toHaveBeenCalled();
   });
 });
 
-describe("workspaceSignalsRouter.views.create", () => {
+describe("workspacePeopleRouter.views.create", () => {
   it("creates a view scoped to the org + user and trims the name", async () => {
     await expect(
-      caller().signals.views.create({
-        name: "  My follow-ups  ",
+      caller().people.views.create({
+        name: "  X handles  ",
         config: viewRow.config,
       })
     ).resolves.toEqual(viewRow);
 
-    expect(createSignalViewMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(createPeopleViewMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
-      name: "My follow-ups",
+      name: "X handles",
       config: viewRow.config,
     });
   });
 
   it("rejects an empty name", async () => {
     await expect(
-      caller().signals.views.create({ name: "   ", config: viewRow.config })
+      caller().people.views.create({ name: "   ", config: viewRow.config })
     ).rejects.toMatchObject({ code: "BAD_REQUEST" });
-    expect(createSignalViewMock).not.toHaveBeenCalled();
+    expect(createPeopleViewMock).not.toHaveBeenCalled();
+  });
+
+  it("rejects unknown provider values in config", async () => {
+    await expect(
+      caller().people.views.create({
+        name: "Bad",
+        config: {
+          filters: {
+            providers: ["telegram" as unknown as "x"],
+            types: [],
+          },
+        },
+      })
+    ).rejects.toMatchObject({ code: "BAD_REQUEST" });
+    expect(createPeopleViewMock).not.toHaveBeenCalled();
   });
 });
 
-describe("workspaceSignalsRouter.views.delete", () => {
+describe("workspacePeopleRouter.views.delete", () => {
   it("deletes a view scoped to the org + user", async () => {
     await expect(
-      caller().signals.views.delete({ publicId: viewRow.publicId })
+      caller().people.views.delete({ publicId: viewRow.publicId })
     ).resolves.toEqual({ success: true });
-    expect(deleteSignalViewMock).toHaveBeenCalledWith(expect.anything(), {
+    expect(deletePeopleViewMock).toHaveBeenCalledWith(expect.anything(), {
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
       publicId: viewRow.publicId,
@@ -159,9 +167,9 @@ describe("workspaceSignalsRouter.views.delete", () => {
   });
 
   it("throws NOT_FOUND when nothing was deleted", async () => {
-    deleteSignalViewMock.mockResolvedValueOnce(false);
+    deletePeopleViewMock.mockResolvedValueOnce(false);
     await expect(
-      caller().signals.views.delete({ publicId: "sigview_missing" })
+      caller().people.views.delete({ publicId: "peoview_missing" })
     ).rejects.toMatchObject({ code: "NOT_FOUND" });
   });
 });

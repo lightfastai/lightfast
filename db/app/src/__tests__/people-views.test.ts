@@ -1,34 +1,32 @@
-import type { Database, SignalView } from "@db/app";
+import type { Database, PeopleView } from "@db/app";
 import { describe, expect, it, vi } from "vitest";
 
 import {
-  createSignalView,
-  deleteSignalView,
-  listSignalViews,
-} from "../utils/signal-views";
+  createPeopleView,
+  deletePeopleView,
+  listPeopleViews,
+} from "../utils/people-views";
 
-function makeView(overrides: Partial<SignalView> = {}): SignalView {
+function makeView(overrides: Partial<PeopleView> = {}): PeopleView {
   return {
     id: 1,
-    publicId: "sigview_123e4567-e89b-12d3-a456-426614174000",
+    publicId: "peoview_123e4567-e89b-12d3-a456-426614174000",
     clerkOrgId: "org_test",
     createdByUserId: "user_test",
-    name: "My follow-ups",
+    name: "X handles",
     config: {
       filters: {
-        kinds: ["follow_up"],
-        priorities: [],
-        dispositions: [],
-        peopleRouted: false,
+        providers: ["x"],
+        types: ["handle"],
       },
     },
-    createdAt: new Date("2026-05-30T01:00:00.000Z"),
-    updatedAt: new Date("2026-05-30T01:00:00.000Z"),
+    createdAt: new Date("2026-05-31T01:00:00.000Z"),
+    updatedAt: new Date("2026-05-31T01:00:00.000Z"),
     ...overrides,
   };
 }
 
-function makeListDb(rows: SignalView[]) {
+function makeListDb(rows: PeopleView[]) {
   const spies = {
     where: vi.fn(),
     orderBy: vi.fn(() => Promise.resolve(rows)),
@@ -47,9 +45,9 @@ function makeListDb(rows: SignalView[]) {
 }
 
 function makeCreateDb() {
-  let inserted: Partial<SignalView> | null = null;
+  let inserted: Partial<PeopleView> | null = null;
   const spies = {
-    values: vi.fn(async (value: Partial<SignalView>) => {
+    values: vi.fn(async (value: Partial<PeopleView>) => {
       inserted = value;
     }),
     limit: vi.fn(() =>
@@ -73,13 +71,13 @@ function makeDeleteDb(rowsAffected: number) {
   return { db: db as unknown as Database, spies };
 }
 
-describe("listSignalViews", () => {
+describe("listPeopleViews", () => {
   it("returns the caller's views newest-first", async () => {
     const rows = [makeView({ id: 2 }), makeView({ id: 1 })];
     const { db, spies } = makeListDb(rows);
 
     await expect(
-      listSignalViews(db, {
+      listPeopleViews(db, {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
       })
@@ -89,41 +87,41 @@ describe("listSignalViews", () => {
   });
 });
 
-describe("createSignalView", () => {
+describe("createPeopleView", () => {
   it("inserts a view scoped to the org + user and returns it", async () => {
     const { db, spies } = makeCreateDb();
 
     await expect(
-      createSignalView(db, {
+      createPeopleView(db, {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
-        name: "My follow-ups",
+        name: "X handles",
         config: makeView().config,
       })
     ).resolves.toMatchObject({
       clerkOrgId: "org_test",
       createdByUserId: "user_test",
-      name: "My follow-ups",
+      name: "X handles",
     });
 
     expect(spies.values).toHaveBeenCalledWith(
       expect.objectContaining({
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
-        name: "My follow-ups",
+        name: "X handles",
       })
     );
   });
 });
 
-describe("deleteSignalView", () => {
+describe("deletePeopleView", () => {
   it("returns true when a row was deleted", async () => {
     const { db } = makeDeleteDb(1);
     await expect(
-      deleteSignalView(db, {
+      deletePeopleView(db, {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
-        publicId: "sigview_123e4567-e89b-12d3-a456-426614174000",
+        publicId: "peoview_123e4567-e89b-12d3-a456-426614174000",
       })
     ).resolves.toBe(true);
   });
@@ -131,10 +129,10 @@ describe("deleteSignalView", () => {
   it("returns false when nothing matched", async () => {
     const { db } = makeDeleteDb(0);
     await expect(
-      deleteSignalView(db, {
+      deletePeopleView(db, {
         clerkOrgId: "org_test",
         createdByUserId: "user_test",
-        publicId: "sigview_missing",
+        publicId: "peoview_missing",
       })
     ).resolves.toBe(false);
   });

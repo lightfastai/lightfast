@@ -1,3 +1,4 @@
+import { cn } from "@repo/ui/lib/utils";
 import { UsersRound } from "lucide-react";
 import type { ReactNode } from "react";
 
@@ -12,15 +13,33 @@ export function PeopleEmptyState({
   size?: "page" | "section";
   title: string;
 }) {
-  const minHeight = size === "page" ? "min-h-96" : "min-h-32";
+  // Uniform outer rhythm across every variant: a 4px top gap (`pt-1`), matching
+  // the row spacing — no special vertical padding. The only context-dependent
+  // bit is horizontal: `page` is rendered standalone so it adds `px-3` to align
+  // with the toolbar; `section` sits inside an already-padded scroller, so it
+  // inherits that inset and the box aligns edge-to-edge with the rows.
+  const isPage = size === "page";
 
   return (
-    <div className="px-3 py-3">
+    <div className={cn("pt-1", isPage && "px-3")}>
       <div
-        className={`flex ${minHeight} flex-col items-center justify-center rounded-lg border border-border/70 bg-background px-6 text-center`}
+        className={cn(
+          "flex flex-col items-center justify-center rounded-lg border border-border/70 bg-background px-6 text-center",
+          isPage ? "min-h-96" : "min-h-24"
+        )}
       >
-        <div className="mb-4 flex size-10 items-center justify-center rounded-full border border-border/70 bg-muted/20">
-          <UsersRound className="size-4 text-muted-foreground" />
+        <div
+          className={cn(
+            "flex items-center justify-center rounded-full border border-border/70 bg-muted/20",
+            isPage ? "mb-4 size-10" : "mb-2 size-8"
+          )}
+        >
+          <UsersRound
+            className={cn(
+              "text-muted-foreground",
+              isPage ? "size-4" : "size-3.5"
+            )}
+          />
         </div>
         <p className="font-medium text-sm">{title}</p>
         <p className="mt-1 max-w-sm text-muted-foreground text-sm">

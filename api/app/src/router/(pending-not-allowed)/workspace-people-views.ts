@@ -1,44 +1,41 @@
-import { createSignalView, deleteSignalView, listSignalViews } from "@db/app";
+import { createPeopleView, deletePeopleView, listPeopleViews } from "@db/app";
 import {
-  signalDispositionSchema,
-  signalKindSchema,
-  signalPrioritySchema,
-} from "@repo/api-contract";
+  peopleIdentityProviderSchema,
+  peopleIdentityTypeSchema,
+} from "@repo/app-validation/schemas";
 import type { TRPCRouterRecord } from "@trpc/server";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 
 import { boundOrgProcedure } from "../../trpc";
 
-const signalViewConfigSchema = z.object({
+const peopleViewConfigSchema = z.object({
   filters: z.object({
-    kinds: z.array(signalKindSchema).max(7),
-    priorities: z.array(signalPrioritySchema).max(4),
-    dispositions: z.array(signalDispositionSchema).max(3),
-    peopleRouted: z.boolean(),
+    providers: z.array(peopleIdentityProviderSchema).max(5),
+    types: z.array(peopleIdentityTypeSchema).max(3),
   }),
 });
 
-const createSignalViewInput = z.object({
+const createPeopleViewInput = z.object({
   name: z.string().trim().min(1).max(120),
-  config: signalViewConfigSchema,
+  config: peopleViewConfigSchema,
 });
 
-const deleteSignalViewInput = z.object({
+const deletePeopleViewInput = z.object({
   publicId: z.string().min(1).max(64),
 });
 
-export const workspaceSignalViewsRouter = {
+export const workspacePeopleViewsRouter = {
   list: boundOrgProcedure.query(({ ctx }) =>
-    listSignalViews(ctx.db, {
+    listPeopleViews(ctx.db, {
       clerkOrgId: ctx.auth.identity.orgId,
       createdByUserId: ctx.auth.identity.userId,
     })
   ),
   create: boundOrgProcedure
-    .input(createSignalViewInput)
+    .input(createPeopleViewInput)
     .mutation(({ ctx, input }) =>
-      createSignalView(ctx.db, {
+      createPeopleView(ctx.db, {
         clerkOrgId: ctx.auth.identity.orgId,
         createdByUserId: ctx.auth.identity.userId,
         name: input.name,
@@ -46,9 +43,9 @@ export const workspaceSignalViewsRouter = {
       })
     ),
   delete: boundOrgProcedure
-    .input(deleteSignalViewInput)
+    .input(deletePeopleViewInput)
     .mutation(async ({ ctx, input }) => {
-      const deleted = await deleteSignalView(ctx.db, {
+      const deleted = await deletePeopleView(ctx.db, {
         clerkOrgId: ctx.auth.identity.orgId,
         createdByUserId: ctx.auth.identity.userId,
         publicId: input.publicId,

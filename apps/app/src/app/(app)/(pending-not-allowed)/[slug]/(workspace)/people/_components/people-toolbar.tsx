@@ -5,7 +5,6 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
-  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
@@ -14,16 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Input } from "@repo/ui/components/ui/input";
-import {
-  AtSign,
-  Check,
-  List,
-  ListFilter,
-  Search,
-  SlidersHorizontal,
-  Tag,
-  X,
-} from "lucide-react";
+import { AtSign, ListFilter, Search, Tag, X } from "lucide-react";
 import type { ComponentType } from "react";
 import {
   getPersonProviderLabel,
@@ -78,10 +68,10 @@ export function PeopleToolbar({
 
   return (
     <div
-      className="flex min-h-10 shrink-0 flex-wrap items-center gap-1.5 border-border/70 border-t px-3 py-1"
+      className="flex shrink-0 flex-wrap items-start gap-1.5 border-border/70 border-t px-3 py-3"
       data-testid="people-toolbar"
     >
-      <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-x-auto">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
@@ -144,8 +134,8 @@ export function PeopleToolbar({
         />
       </div>
 
-      <div className="ml-auto flex min-w-0 items-center justify-end gap-1.5">
-        <div className="flex h-6 w-56 items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-2 text-muted-foreground">
+      <div className="ml-auto flex w-full min-w-0 items-center justify-end gap-1.5 sm:w-auto">
+        <div className="flex h-6 w-full items-center gap-2 rounded-lg border border-border/70 bg-muted/30 px-2 text-muted-foreground sm:w-56">
           <Search aria-hidden="true" className="size-3" />
           <Input
             aria-label="Search people"
@@ -156,34 +146,6 @@ export function PeopleToolbar({
             value={query}
           />
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              aria-label="Display options"
-              className="size-6 rounded-lg border border-border/70 bg-muted/30 p-0 text-muted-foreground hover:bg-muted/60 hover:text-foreground"
-              size="icon-sm"
-              title="Display options"
-              type="button"
-              variant="ghost"
-            >
-              <SlidersHorizontal
-                aria-hidden="true"
-                className="size-3"
-                data-testid="people-display-icon"
-              />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem className="bg-muted/50" disabled>
-              <List aria-hidden="true" className="size-3.5" />
-              <span>List</span>
-              <Check
-                aria-hidden="true"
-                className="ml-auto size-3.5 text-muted-foreground"
-              />
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
   );
@@ -268,21 +230,21 @@ function PeopleFilterChip({
 
   return (
     <button
-      className="flex h-6 shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
+      className="flex h-6 max-w-full shrink-0 items-center overflow-hidden rounded-lg border border-border/70 bg-muted/25 text-sm"
       onClick={onClear}
       type="button"
     >
-      <span className="flex h-full items-center gap-2 border-border/70 border-r px-3 text-foreground">
+      <span className="flex h-full shrink-0 items-center gap-2 border-border/70 border-r px-3 text-foreground">
         <Icon aria-hidden="true" className="size-3.5 text-muted-foreground" />
         {label}
       </span>
-      <span className="flex h-full items-center border-border/70 border-r px-3 text-muted-foreground">
+      <span className="hidden h-full shrink-0 items-center border-border/70 border-r px-3 text-muted-foreground sm:flex">
         is any of
       </span>
-      <span className="flex h-full items-center px-3 text-muted-foreground">
+      <span className="min-w-0 truncate px-3 text-muted-foreground">
         {value}
       </span>
-      <span className="flex h-full items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
+      <span className="flex h-full shrink-0 items-center border-border/70 border-l px-2 text-muted-foreground hover:text-foreground">
         <X aria-hidden="true" className="size-3.5" />
       </span>
     </button>

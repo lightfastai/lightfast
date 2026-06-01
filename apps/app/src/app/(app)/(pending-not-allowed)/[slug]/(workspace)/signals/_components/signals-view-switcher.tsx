@@ -1,25 +1,14 @@
 "use client";
 
-import { Button } from "@repo/ui/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@repo/ui/components/ui/dropdown-menu";
-import { Check, ChevronDown, Plus, Trash2 } from "lucide-react";
-import { useQueryState } from "nuqs";
-import { useState } from "react";
-import { SignalCreateViewDialog } from "./signal-create-view-dialog";
+import { LayoutGrid } from "lucide-react";
+import { useQueryStates } from "nuqs";
+import { ViewSwitcher } from "../../_components/views/view-switcher";
 import {
   parseSignalDispositions,
   parseSignalKinds,
   parseSignalPriorities,
   signalDispositionParser,
   signalKindParser,
-  signalLayoutParser,
   signalPeopleParser,
   signalPriorityParser,
   signalSavedViewParser,
@@ -27,155 +16,84 @@ import {
 import {
   ALL_SIGNALS_VIEW_NAME,
   allSignalsParamValues,
-  type SignalViewParamValues,
   selectionToConfig,
   viewConfigToParamValues,
 } from "./signals-views-model";
 import {
+  useCreateSignalView,
   useDeleteSignalView,
   useSignalViewsQuery,
 } from "./use-signal-views-query";
 
+/**
+ * Signals views bar — wires the shared <ViewSwitcher> to the signals URL params
+ * (5 params, written atomically via nuqs) and the signals views tRPC router.
+ */
 export function SignalsViewSwitcher() {
-  const [dispositionState, setDispositionState] = useQueryState(
-    "disposition",
-    signalDispositionParser
-  );
-  const [kindState, setKindState] = useQueryState("kind", signalKindParser);
-  const [priorityState, setPriorityState] = useQueryState(
-    "priority",
-    signalPriorityParser
-  );
-  const [peopleState, setPeopleState] = useQueryState(
-    "people",
-    signalPeopleParser
-  );
-  const [layout, setLayout] = useQueryState("layout", signalLayoutParser);
-  const [savedViewId, setSavedViewId] = useQueryState(
-    "view",
-    signalSavedViewParser
-  );
-  const [isCreateOpen, setCreateOpen] = useState(false);
+  const [params, setParams] = useQueryStates({
+    disposition: signalDispositionParser,
+    kind: signalKindParser,
+    people: signalPeopleParser,
+    priority: signalPriorityParser,
+    view: signalSavedViewParser,
+  });
 
   const viewsQuery = useSignalViewsQuery();
+  const createView = useCreateSignalView();
   const deleteView = useDeleteSignalView();
   const views = viewsQuery.data ?? [];
-  const activeView = views.find((view) => view.publicId === savedViewId);
-  const activeLabel = activeView?.name ?? ALL_SIGNALS_VIEW_NAME;
+  const activeViewId = params.view;
 
-  // Cheap pure transform — recompute each render rather than memoize.
-  const currentConfig = selectionToConfig(
-    {
-      dispositions: parseSignalDispositions(dispositionState),
-      kinds: parseSignalKinds(kindState),
-      peopleRouted: peopleState === "routed",
-      priorities: parseSignalPriorities(priorityState),
-    },
-    layout
-  );
-
-  function applyParams(next: SignalViewParamValues, viewId: string | null) {
-    void setDispositionState(next.disposition);
-    void setKindState(next.kind);
-    void setPriorityState(next.priority);
-    void setPeopleState(next.people);
-    void setLayout(next.layout);
-    void setSavedViewId(viewId);
-  }
+  const currentConfig = selectionToConfig({
+    dispositions: parseSignalDispositions(params.disposition),
+    kinds: parseSignalKinds(params.kind),
+    peopleRouted: params.people === "routed",
+    priorities: parseSignalPriorities(params.priority),
+  });
 
   return (
-    <>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            className="h-7 gap-1.5 rounded-lg border border-border/70 bg-muted/30 px-2.5 font-normal text-foreground text-sm hover:bg-muted/60"
-            size="sm"
-            type="button"
-            variant="ghost"
-          >
-            {activeLabel}
-            <ChevronDown
-              aria-hidden="true"
-              className="size-3.5 text-muted-foreground"
-            />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <DropdownMenuItem
-            onClick={() => applyParams(allSignalsParamValues(layout), null)}
-          >
-            <span className="flex-1">{ALL_SIGNALS_VIEW_NAME}</span>
-            {savedViewId ? null : (
-              <Check
-                aria-hidden="true"
-                className="size-3.5 text-muted-foreground"
-              />
-            )}
-          </DropdownMenuItem>
-
-          {views.length > 0 ? (
-            <>
-              <DropdownMenuSeparator />
-              <DropdownMenuLabel className="text-muted-foreground text-xs">
-                Your views
-              </DropdownMenuLabel>
-              {views.map((view) => (
-                <DropdownMenuItem
-                  className="gap-2"
-                  key={view.publicId}
-                  onClick={() =>
-                    applyParams(
-                      viewConfigToParamValues(view.config),
-                      view.publicId
-                    )
-                  }
-                >
-                  <span className="min-w-0 flex-1 truncate">{view.name}</span>
-                  {savedViewId === view.publicId ? (
-                    <Check
-                      aria-hidden="true"
-                      className="size-3.5 text-muted-foreground"
-                    />
-                  ) : null}
-                  <button
-                    aria-label={`Delete ${view.name}`}
-                    className="text-muted-foreground hover:text-foreground"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      deleteView.mutate(
-                        { publicId: view.publicId },
-                        {
-                          onSuccess: () => {
-                            if (savedViewId === view.publicId) {
-                              applyParams(allSignalsParamValues(layout), null);
-                            }
-                          },
-                        }
-                      );
-                    }}
-                    type="button"
-                  >
-                    <Trash2 aria-hidden="true" className="size-3.5" />
-                  </button>
-                </DropdownMenuItem>
-              ))}
-            </>
-          ) : null}
-
-          <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => setCreateOpen(true)}>
-            <Plus aria-hidden="true" className="size-3.5" />
-            <span>New view</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-
-      <SignalCreateViewDialog
-        config={currentConfig}
-        onCreated={(publicId) => void setSavedViewId(publicId)}
-        onOpenChange={setCreateOpen}
-        open={isCreateOpen}
-      />
-    </>
+    <ViewSwitcher
+      activeViewId={activeViewId}
+      allLabel={ALL_SIGNALS_VIEW_NAME}
+      icon={LayoutGrid}
+      onCreate={async (name) => {
+        const view = await createView.mutateAsync({
+          config: currentConfig,
+          name,
+        });
+        void setParams({ view: view.publicId });
+      }}
+      onDelete={async (publicId) => {
+        await deleteView.mutateAsync({ publicId });
+        if (activeViewId === publicId) {
+          void setParams({ view: null });
+        }
+      }}
+      onSelectAll={() => {
+        const next = allSignalsParamValues();
+        void setParams({
+          disposition: next.disposition,
+          kind: next.kind,
+          people: next.people,
+          priority: next.priority,
+          view: null,
+        });
+      }}
+      onSelectView={(publicId) => {
+        const view = views.find((candidate) => candidate.publicId === publicId);
+        if (!view) {
+          return;
+        }
+        const next = viewConfigToParamValues(view.config);
+        void setParams({
+          disposition: next.disposition,
+          kind: next.kind,
+          people: next.people,
+          priority: next.priority,
+          view: publicId,
+        });
+      }}
+      views={views}
+    />
   );
 }
