@@ -34,9 +34,7 @@ export interface LinearTokenSet {
 
 interface RequestLinearOAuthTokenInput {
   body: URLSearchParams;
-  failureCode:
-    | "LINEAR_OAUTH_EXCHANGE_FAILED"
-    | "LINEAR_TOKEN_REFRESH_FAILED";
+  failureCode: "LINEAR_OAUTH_EXCHANGE_FAILED" | "LINEAR_TOKEN_REFRESH_FAILED";
   failureMessage: string;
   fetch?: typeof fetch;
   previousRefreshToken?: string;

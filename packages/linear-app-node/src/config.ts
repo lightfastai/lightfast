@@ -34,11 +34,7 @@ export function resolveLinearEndpoints(input: {
   );
   const nodeEnv = input.nodeEnv ?? process.env.NODE_ENV;
 
-  if (
-    hasCustomEndpoint &&
-    nodeEnv !== "development" &&
-    nodeEnv !== "test"
-  ) {
+  if (hasCustomEndpoint && nodeEnv !== "development" && nodeEnv !== "test") {
     throw new LinearAppNodeError(
       "LINEAR_CUSTOM_ENDPOINT_FORBIDDEN",
       "Linear custom endpoints are only allowed in development and test."
@@ -60,7 +56,8 @@ export function resolveLinearEndpoints(input: {
       overrides.oauthAuthorizeUrl ??
       new URL("/oauth/authorize", appOrigin).toString(),
     oauthRevokeUrl:
-      overrides.oauthRevokeUrl ?? new URL("/oauth/revoke", apiOrigin).toString(),
+      overrides.oauthRevokeUrl ??
+      new URL("/oauth/revoke", apiOrigin).toString(),
     oauthTokenUrl:
       overrides.oauthTokenUrl ?? new URL("/oauth/token", apiOrigin).toString(),
     viewerUrl: overrides.viewerUrl ?? new URL("/graphql", apiOrigin).toString(),

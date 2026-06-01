@@ -1,15 +1,15 @@
 export {
   DEFAULT_LINEAR_ENDPOINTS,
-  resolveLinearEndpoints,
   type LinearEndpointOverrides,
   type LinearEndpoints,
+  resolveLinearEndpoints,
 } from "./config";
 export { LinearAppNodeError } from "./errors";
+export { listLinearMcpTools } from "./mcp";
 export {
   getLinearViewerMetadata,
   type LinearConnectorMetadata,
 } from "./metadata";
-export { listLinearMcpTools } from "./mcp";
 export {
   buildLinearOAuthAuthorizeUrl,
   createLinearPkcePair,

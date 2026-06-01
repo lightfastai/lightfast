@@ -3,10 +3,11 @@
 import type { AppRouterOutputs } from "@api/app";
 import { Button } from "@repo/ui/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@repo/ui/components/ui/popover";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@repo/ui/components/ui/dropdown-menu";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
 import { Check, Circle, CirclePause } from "lucide-react";
@@ -135,46 +136,54 @@ export function AutomationStatusChip({
 
   return (
     <RailSection label="Status">
-      <Popover onOpenChange={setOpen} open={open}>
-        <PopoverTrigger asChild>
+      <DropdownMenu onOpenChange={setOpen} open={open}>
+        <DropdownMenuTrigger asChild>
           <Button
             className="h-auto gap-2 px-0 py-0 font-normal hover:bg-transparent"
             variant="ghost"
           >
             <StatusChipContent status={automation.status} />
           </Button>
-        </PopoverTrigger>
-        <PopoverContent align="start" className="w-36 p-1">
-          <button
-            className="flex w-full items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-accent disabled:opacity-50"
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="w-36">
+          <DropdownMenuItem
             disabled={isMutating}
-            onClick={() => {
+            onSelect={() => {
               if (isPaused) {
                 resumeMutation.mutate({ id });
               }
-              setOpen(false);
             }}
-            type="button"
           >
-            <span className={isPaused ? "" : "font-semibold"}>Active</span>
-            {!isPaused && <Check className="size-3.5" />}
-          </button>
-          <button
-            className="flex w-full items-center justify-between rounded px-2 py-1.5 text-sm hover:bg-accent disabled:opacity-50"
+            <span className={`flex-1 ${isPaused ? "" : "font-semibold"}`}>
+              Active
+            </span>
+            {!isPaused && (
+              <Check
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+              />
+            )}
+          </DropdownMenuItem>
+          <DropdownMenuItem
             disabled={isMutating}
-            onClick={() => {
+            onSelect={() => {
               if (!isPaused) {
                 pauseMutation.mutate({ id });
               }
-              setOpen(false);
             }}
-            type="button"
           >
-            <span className={isPaused ? "font-semibold" : ""}>Paused</span>
-            {isPaused && <Check className="size-3.5" />}
-          </button>
-        </PopoverContent>
-      </Popover>
+            <span className={`flex-1 ${isPaused ? "font-semibold" : ""}`}>
+              Paused
+            </span>
+            {isPaused && (
+              <Check
+                aria-hidden="true"
+                className="size-3.5 text-muted-foreground"
+              />
+            )}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </RailSection>
   );
 }

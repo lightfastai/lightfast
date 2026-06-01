@@ -1,6 +1,6 @@
 import {
-  fullConnectorToolManifestSchema,
   type FullConnectorToolManifest,
+  fullConnectorToolManifestSchema,
 } from "@repo/connector-contract";
 import {
   McpClient,

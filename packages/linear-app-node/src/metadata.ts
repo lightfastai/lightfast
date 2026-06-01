@@ -17,10 +17,10 @@ const linearViewerResponseSchema = z.object({
 });
 
 export interface LinearConnectorMetadata {
-  workspaceId: string;
-  workspaceName: string;
   actorId?: string;
   actorName?: string;
+  workspaceId: string;
+  workspaceName: string;
 }
 
 export async function getLinearViewerMetadata(input: {

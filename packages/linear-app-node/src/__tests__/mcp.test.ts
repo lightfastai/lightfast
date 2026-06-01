@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 const mcpState = vi.hoisted(() => ({
-  close: vi.fn(async () => {}),
-  connect: vi.fn(async () => {}),
+  close: vi.fn(async () => undefined),
+  connect: vi.fn(async () => undefined),
   listTools: vi.fn(async () => ({
     tools: [
       {

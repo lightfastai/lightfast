@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  DEFAULT_LINEAR_ENDPOINTS,
-  resolveLinearEndpoints,
-} from "../config";
+import { DEFAULT_LINEAR_ENDPOINTS, resolveLinearEndpoints } from "../config";
 
 describe("resolveLinearEndpoints", () => {
   it("rejects custom endpoints outside development and test", () => {

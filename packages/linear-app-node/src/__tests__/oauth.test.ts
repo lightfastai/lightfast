@@ -10,7 +10,8 @@ describe("buildLinearOAuthAuthorizeUrl", () => {
   it("builds an app-actor OAuth authorize URL with comma-delimited scopes and PKCE", () => {
     const url = new URL(
       buildLinearOAuthAuthorizeUrl({
-        callbackUrl: "https://app.lightfast.localhost/api/connectors/linear/callback",
+        callbackUrl:
+          "https://app.lightfast.localhost/api/connectors/linear/callback",
         clientId: "lin_client_123",
         codeChallenge: "challenge_123",
         oauthAuthorizeUrl: "https://linear.test/oauth/authorize",
@@ -18,7 +19,9 @@ describe("buildLinearOAuthAuthorizeUrl", () => {
       })
     );
 
-    expect(url.origin + url.pathname).toBe("https://linear.test/oauth/authorize");
+    expect(url.origin + url.pathname).toBe(
+      "https://linear.test/oauth/authorize"
+    );
     expect(url.searchParams.get("actor")).toBe("app");
     expect(url.searchParams.get("scope")).toBe("read,write");
     expect(url.searchParams.get("state")).toBe("state_123");
@@ -74,7 +77,9 @@ describe("exchangeLinearOAuthCode", () => {
         }),
       })
     );
-    const body = new URLSearchParams(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const body = new URLSearchParams(
+      String(fetchMock.mock.calls[0]?.[1]?.body)
+    );
     expect(body.get("grant_type")).toBe("authorization_code");
     expect(body.get("client_id")).toBe("lin_client_123");
     expect(body.get("client_secret")).toBe("secret");
@@ -114,7 +119,9 @@ describe("refreshLinearOAuthToken", () => {
       tokenType: "Bearer",
     });
 
-    const body = new URLSearchParams(String(fetchMock.mock.calls[0]?.[1]?.body));
+    const body = new URLSearchParams(
+      String(fetchMock.mock.calls[0]?.[1]?.body)
+    );
     expect(body.get("grant_type")).toBe("refresh_token");
     expect(body.get("refresh_token")).toBe("existing_refresh");
   });
