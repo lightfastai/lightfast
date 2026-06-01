@@ -128,6 +128,16 @@ function checkLegalAccepted() {
 }
 
 describe("sign-up — legal acceptance gate", () => {
+  it("renders a form-local login recovery link", () => {
+    render(<SignUpPage />);
+
+    expect(screen.getByText(/already have an account/i)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /^log in$/i })).toHaveAttribute(
+      "href",
+      "/sign-in"
+    );
+  });
+
   it("blocks email submit when checkbox is unchecked", async () => {
     render(<SignUpPage />);
 
@@ -215,11 +225,14 @@ describe("sign-up — captcha mount", () => {
 });
 
 describe("sign-up — error banner", () => {
-  it("renders ErrorBanner when ?errorCode=waitlist is present", () => {
-    searchParamsValue = new URLSearchParams("errorCode=waitlist");
+  it("ignores unknown errorCode values and renders the normal sign-up heading", () => {
+    searchParamsValue = new URLSearchParams("errorCode=retired_code");
     render(<SignUpPage />);
     expect(
-      screen.getByText(/sign-ups are currently unavailable/i)
+      screen.getByRole("heading", { name: /sign up for lightfast/i })
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/sign-ups are currently unavailable/i)
+    ).not.toBeInTheDocument();
   });
 });

@@ -72,7 +72,6 @@ export default function RootLayout({
           signInUrl="/sign-in"
           signUpFallbackRedirectUrl="/"
           signUpUrl="/sign-up"
-          waitlistUrl="/early-access"
         >
           <PrefetchCrossZoneLinksProvider>
             {children}

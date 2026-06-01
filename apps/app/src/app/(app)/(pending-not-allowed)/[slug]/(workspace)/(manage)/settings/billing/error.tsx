@@ -12,8 +12,7 @@ interface BillingErrorProps {
 export default function BillingError({ error, reset }: BillingErrorProps) {
   useEffect(() => {
     // Scoped to the billing segment so the settings shell + sidebar survive a
-    // Clerk billing API failure. Mirrors the (auth)/(early-access) error.tsx
-    // observability pattern.
+    // Clerk billing API failure while preserving segment-level observability.
     captureException(error, {
       tags: {
         location: "org-billing-settings",

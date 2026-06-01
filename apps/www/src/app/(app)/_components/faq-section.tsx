@@ -84,10 +84,10 @@ export function FAQSection() {
               </p>
               <MicrofrontendLink
                 className="group inline-flex items-center gap-2 font-medium text-foreground text-sm transition-colors hover:text-muted-foreground"
-                href="/early-access"
+                href="/sign-up"
                 prefetch={true}
               >
-                Join early access
+                Get started
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </MicrofrontendLink>
             </div>

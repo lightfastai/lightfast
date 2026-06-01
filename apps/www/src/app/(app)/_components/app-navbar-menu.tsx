@@ -47,7 +47,7 @@ export function AppNavbarMenu() {
       </NavigationMenu>
 
       {/* Flat nav items (Pricing, Docs) */}
-      {INTERNAL_NAV.filter((i) => i.href !== "/early-access").map((item) => (
+      {INTERNAL_NAV.map((item) => (
         <Button
           asChild
           className={navLinkClass}

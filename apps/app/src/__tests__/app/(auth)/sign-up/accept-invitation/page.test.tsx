@@ -218,11 +218,8 @@ describe("accept-invitation — Accept Invitation button", () => {
     ).toBeEnabled();
   });
 
-  it("redirects to accept-invitation?errorCode=waitlist on waitlist rejection", async () => {
-    clerkStub.client.signUp.create.mockRejectedValue({
-      code: "sign_up_restricted_waitlist",
-      message: "waitlist",
-    });
+  it("renders inline pageError on unmapped rejection", async () => {
+    clerkStub.client.signUp.create.mockRejectedValue({});
 
     render(<AcceptInvitationPage />);
 
@@ -233,10 +230,9 @@ describe("accept-invitation — Accept Invitation button", () => {
     });
 
     await waitFor(() => {
-      expect(hrefValue).toBe(
-        "/sign-up/accept-invitation?__clerk_ticket=tok_abc123&errorCode=waitlist"
-      );
+      expect(screen.getByText(/authentication failed/i)).toBeInTheDocument();
     });
+    expect(hrefValue).toBe("");
   });
 
   it("renders inline pageError on ticket_expired", async () => {
@@ -314,13 +310,16 @@ describe("accept-invitation — captcha + expiry", () => {
 });
 
 describe("accept-invitation — error banner from URL", () => {
-  it("renders ErrorBanner when ?errorCode=waitlist is present alongside ticket", () => {
+  it("ignores unknown errorCode values and renders the accept invitation button", () => {
     searchParamsValue = new URLSearchParams(
-      "__clerk_ticket=tok_abc123&errorCode=waitlist"
+      "__clerk_ticket=tok_abc123&errorCode=retired_code"
     );
     render(<AcceptInvitationPage />);
     expect(
-      screen.getByText(/sign-ups are currently unavailable/i)
+      screen.getByRole("button", { name: /accept invitation/i })
     ).toBeInTheDocument();
+    expect(
+      screen.queryByText(/sign-ups are currently unavailable/i)
+    ).not.toBeInTheDocument();
   });
 });

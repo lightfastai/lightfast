@@ -9,7 +9,6 @@ import { defineNavItems } from "~/types/nav";
 
 export const INTERNAL_NAV = defineNavItems([
   { title: "Pricing", href: "/pricing" },
-  { title: "Early Access", href: "/early-access", microfrontend: true },
   { title: "Docs", href: "/docs/get-started/overview" },
 ]);
 
