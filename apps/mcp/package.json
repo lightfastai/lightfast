@@ -12,7 +12,7 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "with-env": "dotenv -e ../app/.vercel/.env.development.local -e ./.vercel/.env.development.local --",
-    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get app.lightfast)"
+    "with-related-projects": "NEXT_PUBLIC_APP_URL=$(portless get app.lightfast) MCP_RESOURCE_URL=$(portless get mcp.lightfast)/mcp MCP_AUTH_ISSUER=$(portless get app.lightfast) INNGEST_DEV=$(portless get inngest.lightfast) QSTASH_URL=$(portless get qstash.lightfast)"
   },
   "dependencies": {
     "@api/app": "workspace:*",

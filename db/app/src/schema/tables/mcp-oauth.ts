@@ -26,6 +26,15 @@ const RESOURCE_LENGTH = 512;
 const EVENT_NAME_LENGTH = 128;
 const CODE_CHALLENGE_LENGTH = 256;
 
+function updatedAtColumn() {
+  // Keep updated-at-on-write semantics without emitting Vitess-invalid
+  // `ON UPDATE CURRENT_TIMESTAMP` for timestamp(3) columns.
+  return timestamp("updated_at", { mode: "date", fsp: 3 })
+    .default(sql`CURRENT_TIMESTAMP(3)`)
+    .$onUpdate(() => new Date())
+    .notNull();
+}
+
 export type McpOauthClientStatus = "active" | "deleted";
 export type McpOauthRegistrationTokenStatus = "active" | "revoked" | "rotated";
 export type McpOauthGrantStatus = "active" | "revoked";
@@ -86,10 +95,7 @@ export const mcpOauthClients = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
-      .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
-      .notNull(),
+    updatedAt: updatedAtColumn(),
   },
   (table) => ({
     publicClientIdUq: uniqueIndex("mcp_oauth_clients_public_id_uq").on(
@@ -148,10 +154,7 @@ export const mcpOauthRegistrationTokens = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
-      .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
-      .notNull(),
+    updatedAt: updatedAtColumn(),
   },
   (table) => ({
     publicIdUq: uniqueIndex("mcp_registration_public_id_uq").on(table.publicId),
@@ -212,10 +215,7 @@ export const mcpOauthAuthorizationCodes = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
-      .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
-      .notNull(),
+    updatedAt: updatedAtColumn(),
   },
   (table) => ({
     codeHashUq: uniqueIndex("mcp_authorization_codes_hash_uq").on(
@@ -273,10 +273,7 @@ export const mcpOauthGrants = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
-      .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
-      .notNull(),
+    updatedAt: updatedAtColumn(),
   },
   (table) => ({
     publicIdUq: uniqueIndex("mcp_grants_public_id_uq").on(table.publicId),
@@ -341,10 +338,7 @@ export const mcpOauthRefreshTokens = mysqlTable(
       .default(sql`CURRENT_TIMESTAMP(3)`)
       .notNull(),
 
-    updatedAt: timestamp("updated_at", { mode: "date", fsp: 3 })
-      .default(sql`CURRENT_TIMESTAMP(3)`)
-      .onUpdateNow()
-      .notNull(),
+    updatedAt: updatedAtColumn(),
   },
   (table) => ({
     tokenHashUq: uniqueIndex("mcp_refresh_token_hash_uq").on(table.tokenHash),

@@ -3,6 +3,7 @@
 import { issueMcpAuthorizationCode, McpOAuthError } from "@api/app";
 import { db } from "@db/app/client";
 import { auth } from "@vendor/clerk/server";
+import type { Route } from "next";
 import { redirect } from "next/navigation";
 
 export async function approveMcpAuthorizationAction(formData: FormData) {
@@ -29,7 +30,7 @@ export async function approveMcpAuthorizationAction(formData: FormData) {
   if (state) {
     url.searchParams.set("state", state);
   }
-  redirect(url.toString());
+  redirect(url.toString() as Route);
 }
 
 export async function denyMcpAuthorizationAction(formData: FormData) {
@@ -40,7 +41,7 @@ export async function denyMcpAuthorizationAction(formData: FormData) {
   if (state) {
     url.searchParams.set("state", state);
   }
-  redirect(url.toString());
+  redirect(url.toString() as Route);
 }
 
 function requireString(formData: FormData, key: string): string {
