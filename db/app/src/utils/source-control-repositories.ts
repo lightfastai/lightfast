@@ -1,4 +1,5 @@
 import type {
+  SourceControlRepositorySyncStatus,
   SourceControlWebhookDeliveryStatus,
   WatchedPathGlobs,
 } from "@repo/source-control-contract";
@@ -23,6 +24,7 @@ export interface UpsertWatchedSourceControlRepositoryInput {
   fullName: string;
   orgSourceControlBindingId: number;
   providerRepositoryId: string;
+  syncStatus?: SourceControlRepositorySyncStatus;
   watchedPathGlobs: WatchedPathGlobs;
 }
 
@@ -101,6 +103,7 @@ export async function insertWatchedSourceControlRepository(
       fullName: input.fullName,
       orgSourceControlBindingId: input.orgSourceControlBindingId,
       providerRepositoryId: input.providerRepositoryId,
+      syncStatus: input.syncStatus ?? "enabled",
       watchedPathGlobs: input.watchedPathGlobs,
     })
     .catch((error: unknown) => {
@@ -135,11 +138,13 @@ export async function upsertWatchedSourceControlRepository(
       fullName: input.fullName,
       orgSourceControlBindingId: input.orgSourceControlBindingId,
       providerRepositoryId: input.providerRepositoryId,
+      syncStatus: input.syncStatus ?? "enabled",
       watchedPathGlobs: input.watchedPathGlobs,
     })
     .onDuplicateKeyUpdate({
       set: {
         fullName: input.fullName,
+        syncStatus: input.syncStatus ?? "enabled",
         watchedPathGlobs: input.watchedPathGlobs,
       },
     });

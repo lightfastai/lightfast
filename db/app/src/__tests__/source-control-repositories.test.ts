@@ -86,11 +86,13 @@ describe("source-control repository helpers", () => {
       fullName: "acme/project",
       orgSourceControlBindingId: 10,
       providerRepositoryId: "repo-1",
+      syncStatus: "enabled",
       watchedPathGlobs: ["src/**"],
     });
     expect(onDuplicateKeyUpdateMock).toHaveBeenCalledWith({
       set: {
         fullName: "acme/project",
+        syncStatus: "enabled",
         watchedPathGlobs: ["src/**"],
       },
     });
@@ -140,6 +142,7 @@ describe("source-control repository helpers", () => {
         fullName: "acme/workspace",
         orgSourceControlBindingId: 7,
         providerRepositoryId: "repo-2",
+        syncStatus: "disabled",
         watchedPathGlobs: ["**"],
       })
     ).resolves.toBe(repository);
@@ -148,6 +151,7 @@ describe("source-control repository helpers", () => {
       fullName: "acme/workspace",
       orgSourceControlBindingId: 7,
       providerRepositoryId: "repo-2",
+      syncStatus: "disabled",
       watchedPathGlobs: ["**"],
     });
   });
@@ -206,11 +210,13 @@ describe("source-control repository helpers", () => {
       fullName: "acme/.lightfast",
       orgSourceControlBindingId: 7,
       providerRepositoryId: "987",
+      syncStatus: "enabled",
       watchedPathGlobs: ["skills/**"],
     });
     expect(onDuplicateKeyUpdateMock).toHaveBeenCalledWith({
       set: {
         fullName: "acme/.lightfast",
+        syncStatus: "enabled",
         watchedPathGlobs: ["skills/**"],
       },
     });
@@ -385,6 +391,7 @@ function createWatchedRepository(
     orgSourceControlBindingId: 10,
     providerRepositoryId: "repo-1",
     fullName: "acme/project",
+    syncStatus: "enabled",
     watchedPathGlobs: ["src/**"],
     createdAt: now,
     updatedAt: now,

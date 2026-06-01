@@ -1,4 +1,5 @@
 import type {
+  SourceControlRepositorySyncStatus,
   SourceControlWebhookDeliveryStatus,
   WatchedPathGlobs,
 } from "@repo/source-control-contract";
@@ -39,6 +40,11 @@ export const sourceControlRepositories = mysqlTable(
 
     watchedPathGlobs: json("watched_path_globs")
       .$type<WatchedPathGlobs>()
+      .notNull(),
+
+    syncStatus: varchar("sync_status", { length: CODE_LENGTH })
+      .$type<SourceControlRepositorySyncStatus>()
+      .default("enabled")
       .notNull(),
 
     createdAt: timestamp("created_at", { mode: "date", fsp: 3 })

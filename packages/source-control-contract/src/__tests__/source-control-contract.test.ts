@@ -3,8 +3,10 @@ import {
   matchesAnyWatchedPath,
   matchesWatchedPath,
   SOURCE_CONTROL_ALL_PATHS_GLOB,
+  SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES,
   SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES,
   sourceControlRepositoryPushEventSchema,
+  sourceControlRepositorySyncStatusSchema,
   splitRepositoryFullName,
   watchedPathGlobsSchema,
 } from "../index";
@@ -18,6 +20,19 @@ describe("@repo/source-control-contract", () => {
       "processed",
       "failed",
     ]);
+  });
+
+  it("defines repository sync statuses", () => {
+    expect(SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES).toEqual([
+      "enabled",
+      "disabled",
+    ]);
+    expect(sourceControlRepositorySyncStatusSchema.parse("enabled")).toBe(
+      "enabled"
+    );
+    expect(sourceControlRepositorySyncStatusSchema.parse("disabled")).toBe(
+      "disabled"
+    );
   });
 
   it("validates watched path globs as supported non-empty patterns", () => {

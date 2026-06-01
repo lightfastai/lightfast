@@ -8,14 +8,27 @@ export const SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES = [
   "failed",
 ] as const;
 
+export const SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES = [
+  "enabled",
+  "disabled",
+] as const;
+
 export const SOURCE_CONTROL_ALL_PATHS_GLOB = "**" as const;
 
 export const sourceControlWebhookDeliveryStatusSchema = z.enum(
   SOURCE_CONTROL_WEBHOOK_DELIVERY_STATUSES
 );
 
+export const sourceControlRepositorySyncStatusSchema = z.enum(
+  SOURCE_CONTROL_REPOSITORY_SYNC_STATUSES
+);
+
 export type SourceControlWebhookDeliveryStatus = z.infer<
   typeof sourceControlWebhookDeliveryStatusSchema
+>;
+
+export type SourceControlRepositorySyncStatus = z.infer<
+  typeof sourceControlRepositorySyncStatusSchema
 >;
 
 const sha1Schema = z

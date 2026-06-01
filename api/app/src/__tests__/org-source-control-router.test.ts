@@ -114,6 +114,7 @@ function watchedRepository(overrides: Record<string, unknown> = {}) {
     id: 10,
     orgSourceControlBindingId: 3,
     providerRepositoryId: "repo_live",
+    syncStatus: "disabled",
     updatedAt: createdAt,
     watchedPathGlobs: ["src/**"],
     ...overrides,
@@ -585,6 +586,7 @@ describe("org.settings.sourceControl.importRepository", () => {
         fullName: "acme-live/app",
         orgSourceControlBindingId: 3,
         providerRepositoryId: "repo_live",
+        syncStatus: "disabled",
         watchedPathGlobs: ["**"],
       }
     );

@@ -315,6 +315,7 @@ export const orgSourceControlRouter = {
           fullName: selectedRepository.fullName,
           orgSourceControlBindingId: binding.id,
           providerRepositoryId: selectedRepository.id,
+          syncStatus: "disabled",
           watchedPathGlobs: [SOURCE_CONTROL_ALL_PATHS_GLOB],
         });
       }
