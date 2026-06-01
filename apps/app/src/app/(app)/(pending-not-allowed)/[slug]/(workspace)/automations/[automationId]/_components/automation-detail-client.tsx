@@ -9,7 +9,7 @@ import { AutomationPromptEditor } from "./automation-prompt-editor";
 import { AutomationRunsList } from "./automation-runs-list";
 import { AutomationScheduleEditor } from "./automation-schedule-editor";
 import { AutomationStatusChip } from "./automation-status-chip";
-import { RailRow, RailSection, RailValuePill } from "./detail-sections";
+import { RailRow, RailSection } from "./detail-sections";
 
 function formatDate(date: Date | null | undefined): string {
   if (!date) {
@@ -25,13 +25,14 @@ function TimestampValue({ date }: { date: Date | null | undefined }) {
   if (!date) {
     return <span className="text-muted-foreground text-sm">—</span>;
   }
-  // The timestamp formats in the viewer's locale/timezone, which legitimately
-  // differs from the server's during SSR. Suppress the unavoidable text-only
-  // hydration diff so React keeps the client-formatted value without warning.
+  // Plain read-only value (not a pill) — these timestamps aren't editable, so
+  // they shouldn't read as clickable. The timestamp formats in the viewer's
+  // locale/timezone, which legitimately differs from the server's during SSR,
+  // so suppress the unavoidable text-only hydration diff.
   return (
-    <RailValuePill>
-      <span suppressHydrationWarning>{formatDate(date)}</span>
-    </RailValuePill>
+    <span className="text-foreground text-sm" suppressHydrationWarning>
+      {formatDate(date)}
+    </span>
   );
 }
 

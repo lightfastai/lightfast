@@ -1,6 +1,7 @@
 "use client";
 
 import type { AppRouterOutputs } from "@api/app";
+import { Button } from "@repo/ui/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -10,7 +11,7 @@ import {
 import { cn } from "@repo/ui/lib/utils";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
-import { Check } from "lucide-react";
+import { Check, ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { setOne, upsertInList } from "../../_components/automations-cache";
@@ -18,18 +19,15 @@ import { RailRow } from "./detail-sections";
 
 type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
-function StatusPill({ status }: { status: string }) {
-  const isActive = status === "active";
+function StatusDot({ active }: { active: boolean }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1 text-foreground text-sm">
-      <span
-        className={cn(
-          "size-1.5 rounded-full",
-          isActive ? "bg-emerald-500" : "bg-muted-foreground"
-        )}
-      />
-      <span className="capitalize">{status}</span>
-    </span>
+    <span
+      aria-hidden="true"
+      className={cn(
+        "size-1.5 rounded-full",
+        active ? "bg-emerald-500" : "bg-muted-foreground"
+      )}
+    />
   );
 }
 
@@ -130,7 +128,10 @@ export function AutomationStatusChip({
   if (!canManage) {
     return (
       <RailRow label="Status">
-        <StatusPill status={automation.status} />
+        <span className="flex items-center gap-1.5 text-foreground text-sm capitalize">
+          <StatusDot active={automation.status === "active"} />
+          {automation.status}
+        </span>
       </RailRow>
     );
   }
@@ -139,12 +140,11 @@ export function AutomationStatusChip({
     <RailRow label="Status">
       <DropdownMenu onOpenChange={setOpen} open={open}>
         <DropdownMenuTrigger asChild>
-          <button
-            className="rounded-md outline-none transition-opacity hover:opacity-80 focus-visible:ring-1 focus-visible:ring-ring"
-            type="button"
-          >
-            <StatusPill status={automation.status} />
-          </button>
+          <Button size="lf" type="button" variant="secondary">
+            <StatusDot active={automation.status === "active"} />
+            <span className="capitalize">{automation.status}</span>
+            <ChevronDown className="size-3.5 text-muted-foreground" />
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-36">
           <DropdownMenuItem

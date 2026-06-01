@@ -14,7 +14,7 @@ import {
 } from "@repo/ui/components/ui/popover";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@vendor/clerk";
-import { ChevronDown, Loader2 } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTRPC } from "~/trpc/react";
 import { setOne, upsertInList } from "../../_components/automations-cache";
@@ -23,7 +23,6 @@ import {
   isTimeBasedKind,
   SCHEDULE_KINDS,
   type ScheduleKind,
-  TIMEZONES,
   WEEKDAY_OPTIONS,
 } from "../../_components/schedule-options";
 import { RailRow } from "./detail-sections";
@@ -32,19 +31,27 @@ type Automation = AppRouterOutputs["org"]["workspace"]["automations"]["get"];
 
 const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
-function extractFormState(automation: Automation) {
-  const kind = automation.scheduleKind as ScheduleKind;
+interface FormState {
+  dayOfWeek: number;
+  intervalHours: string;
+  kind: ScheduleKind;
+  time: string;
+  timezone: string;
+}
+
+function extractFormState(automation: Automation): FormState {
   const config = automation.scheduleConfig as {
     intervalHours?: number;
     time?: string;
     dayOfWeek?: number;
   };
   return {
-    kind,
+    kind: automation.scheduleKind as ScheduleKind,
     intervalHours:
       config.intervalHours === undefined ? "1" : String(config.intervalHours),
     time: config.time ?? "09:00",
     dayOfWeek: config.dayOfWeek ?? 1,
+    timezone: automation.timezone,
   };
 }
 
@@ -90,7 +97,7 @@ export function AutomationScheduleEditor({
   const [intervalHours, setIntervalHours] = useState(initial.intervalHours);
   const [time, setTime] = useState(initial.time);
   const [dayOfWeek, setDayOfWeek] = useState(initial.dayOfWeek);
-  const [timezone, setTimezone] = useState(automation.timezone);
+  const [timezone, setTimezone] = useState(initial.timezone);
 
   const qc = useQueryClient();
   const trpc = useTRPC();
@@ -102,7 +109,6 @@ export function AutomationScheduleEditor({
       onSuccess: (updated) => {
         setOne(qc, trpc, id, () => updated);
         upsertInList(qc, trpc, id, () => updated);
-        setOpen(false);
       },
     })
   );
@@ -110,36 +116,75 @@ export function AutomationScheduleEditor({
   function handleOpenChange(next: boolean) {
     setOpen(next);
     if (next) {
+      // Re-sync the working state from the server value each time the popover
+      // opens, so it never drifts from what landed after the last auto-save.
       const fresh = extractFormState(automation);
       setKind(fresh.kind);
       setIntervalHours(fresh.intervalHours);
       setTime(fresh.time);
       setDayOfWeek(fresh.dayOfWeek);
-      setTimezone(automation.timezone);
+      setTimezone(fresh.timezone);
     }
   }
 
-  const parsedHours = Number.parseInt(intervalHours, 10);
-  const hoursValid =
-    Number.isInteger(parsedHours) && parsedHours >= 1 && parsedHours <= 24;
-  const timeValid = TIME_RE.test(time);
-  const fieldValid =
-    kind === "manual" ? true : kind === "hourly" ? hoursValid : timeValid;
-
-  const isSaveDisabled = update.isPending || !fieldValid;
-
-  function handleSave() {
-    if (isSaveDisabled) {
+  // Auto-save: every control commits immediately. `next` carries the value that
+  // just changed; the rest is read from current state. A still-invalid draft
+  // (a half-typed interval) is skipped until it parses.
+  function commit(next: Partial<FormState>) {
+    const merged: FormState = {
+      kind,
+      intervalHours,
+      time,
+      dayOfWeek,
+      timezone,
+      ...next,
+    };
+    const parsedHours = Number.parseInt(merged.intervalHours, 10);
+    const hoursValid =
+      Number.isInteger(parsedHours) && parsedHours >= 1 && parsedHours <= 24;
+    const timeValid = TIME_RE.test(merged.time);
+    const valid =
+      merged.kind === "manual"
+        ? true
+        : merged.kind === "hourly"
+          ? hoursValid
+          : timeValid;
+    if (!valid) {
       return;
     }
     update.mutate({
       id,
-      schedule: buildSchedule({ kind, parsedHours, time, dayOfWeek }),
-      timezone,
+      schedule: buildSchedule({
+        kind: merged.kind,
+        parsedHours,
+        time: merged.time,
+        dayOfWeek: merged.dayOfWeek,
+      }),
+      timezone: merged.timezone,
     });
   }
 
+  function handleKindChange(value: string) {
+    const nextKind = value as ScheduleKind;
+    setKind(nextKind);
+    commit({ kind: nextKind });
+  }
+
+  function handleDayChange(value: string) {
+    const nextDay = Number(value);
+    setDayOfWeek(nextDay);
+    commit({ dayOfWeek: nextDay });
+  }
+
+  function handleTimeChange(value: string) {
+    setTime(value);
+    commit({ time: value });
+  }
+
   const repeatsValue = formatAutomationSchedule(automation);
+  const serverTimeBased = isTimeBasedKind(
+    automation.scheduleKind as ScheduleKind
+  );
 
   if (!canManage) {
     return (
@@ -147,9 +192,13 @@ export function AutomationScheduleEditor({
         <RailRow label="Repeats">
           <span className="text-foreground text-sm">{repeatsValue}</span>
         </RailRow>
-        <RailRow label="Timezone">
-          <span className="text-foreground text-sm">{automation.timezone}</span>
-        </RailRow>
+        {serverTimeBased && (
+          <RailRow label="Timezone">
+            <span className="text-foreground text-sm">
+              {automation.timezone}
+            </span>
+          </RailRow>
+        )}
       </>
     );
   }
@@ -159,130 +208,70 @@ export function AutomationScheduleEditor({
       <Popover onOpenChange={handleOpenChange} open={open}>
         <RailRow label="Repeats">
           <PopoverTrigger asChild>
-            <button
-              className="-mr-1.5 inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-foreground text-sm transition-colors hover:bg-accent/50"
-              type="button"
-            >
+            <Button size="lf" type="button" variant="secondary">
               {repeatsValue}
               <ChevronDown className="size-3.5 text-muted-foreground" />
-            </button>
+            </Button>
           </PopoverTrigger>
         </RailRow>
-        <PopoverContent align="end" className="w-80 space-y-4 p-4">
+        <PopoverContent
+          align="end"
+          className="w-56 space-y-1 rounded-[13px] p-[5px]"
+        >
           <LfSelect
             className="w-full"
-            onValueChange={(v) => setKind(v as ScheduleKind)}
+            onValueChange={handleKindChange}
             options={SCHEDULE_KINDS}
             value={kind}
           />
 
-          <div className="min-h-7">
-            {kind === "manual" && (
-              <p className="text-muted-foreground text-xs">
-                Runs only when triggered — no automatic schedule.
-              </p>
-            )}
-
-            {kind === "hourly" && (
-              <div className="flex items-center gap-2.5">
-                <span className="text-muted-foreground text-xs">Every</span>
-                <Input
-                  className="w-14 text-center"
-                  max={24}
-                  min={1}
-                  onChange={(e) => setIntervalHours(e.target.value)}
-                  size="lf"
-                  type="number"
-                  value={intervalHours}
-                  variant="lf"
-                />
-                <span className="text-muted-foreground text-xs">hours</span>
-              </div>
-            )}
-
-            {(kind === "daily" || kind === "weekdays") && (
-              <div className="flex items-center gap-2.5">
-                <span className="text-muted-foreground text-xs">At</span>
-                <Input
-                  className="w-[7rem] [&::-webkit-calendar-picker-indicator]:hidden"
-                  onChange={(e) => setTime(e.target.value)}
-                  size="lf"
-                  type="time"
-                  value={time}
-                  variant="lf"
-                />
-                {kind === "weekdays" && (
-                  <span className="rounded-md border border-border px-1.5 py-0.5 text-muted-foreground text-xs">
-                    Mon–Fri
-                  </span>
-                )}
-              </div>
-            )}
-
-            {kind === "weekly" && (
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="text-muted-foreground text-xs">On</span>
-                <LfSelect
-                  className="w-32"
-                  onValueChange={(v) => setDayOfWeek(Number(v))}
-                  options={WEEKDAY_OPTIONS.map((day) => ({
-                    label: day.label,
-                    value: String(day.value),
-                  }))}
-                  value={String(dayOfWeek)}
-                />
-                <span className="text-muted-foreground text-xs">at</span>
-                <Input
-                  className="w-[7rem] [&::-webkit-calendar-picker-indicator]:hidden"
-                  onChange={(e) => setTime(e.target.value)}
-                  size="lf"
-                  type="time"
-                  value={time}
-                  variant="lf"
-                />
-              </div>
-            )}
-          </div>
-
-          {isTimeBasedKind(kind) && (
-            <div className="space-y-1.5">
-              <p className="text-muted-foreground text-sm">Timezone</p>
-              <LfSelect
-                className="w-full"
-                onValueChange={setTimezone}
-                options={TIMEZONES.map((tz) => ({ label: tz, value: tz }))}
-                value={timezone}
+          {kind === "hourly" && (
+            <div className="flex items-center gap-2.5">
+              <span className="text-muted-foreground text-xs">Every</span>
+              <Input
+                className="w-16 text-center"
+                max={24}
+                min={1}
+                onBlur={() => commit({})}
+                onChange={(e) => setIntervalHours(e.target.value)}
+                size="lf"
+                type="number"
+                value={intervalHours}
+                variant="lf"
               />
+              <span className="text-muted-foreground text-xs">hours</span>
             </div>
           )}
 
-          <div className="flex justify-end gap-2.5">
-            <Button
-              onClick={() => setOpen(false)}
+          {kind === "weekly" && (
+            <LfSelect
+              className="w-full"
+              onValueChange={handleDayChange}
+              options={WEEKDAY_OPTIONS.map((day) => ({
+                label: day.label,
+                value: String(day.value),
+              }))}
+              value={String(dayOfWeek)}
+            />
+          )}
+
+          {(kind === "daily" || kind === "weekdays" || kind === "weekly") && (
+            <Input
+              className="w-full [&::-webkit-calendar-picker-indicator]:opacity-70 dark:[&::-webkit-calendar-picker-indicator]:invert"
+              onChange={(e) => handleTimeChange(e.target.value)}
               size="lf"
-              type="button"
-              variant="ghost"
-            >
-              Cancel
-            </Button>
-            <Button
-              disabled={isSaveDisabled}
-              onClick={handleSave}
-              size="lf"
-              type="button"
-            >
-              {update.isPending ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                "Save"
-              )}
-            </Button>
-          </div>
+              type="time"
+              value={time}
+              variant="lf"
+            />
+          )}
         </PopoverContent>
       </Popover>
-      <RailRow label="Timezone">
-        <span className="text-foreground text-sm">{automation.timezone}</span>
-      </RailRow>
+      {serverTimeBased && (
+        <RailRow label="Timezone">
+          <span className="text-foreground text-sm">{automation.timezone}</span>
+        </RailRow>
+      )}
     </>
   );
 }

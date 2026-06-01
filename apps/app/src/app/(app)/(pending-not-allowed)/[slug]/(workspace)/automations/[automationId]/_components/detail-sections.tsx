@@ -53,15 +53,3 @@ export function RailRow({
     </div>
   );
 }
-
-/**
- * Read-only value rendered as a subtle pill — used for derived timestamps that
- * can't be edited directly (Next run, Last ran).
- */
-export function RailValuePill({ children }: { children: ReactNode }) {
-  return (
-    <span className="rounded-md bg-muted/50 px-2 py-1 text-foreground text-sm">
-      {children}
-    </span>
-  );
-}
