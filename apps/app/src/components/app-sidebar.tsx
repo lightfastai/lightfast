@@ -19,6 +19,7 @@ import {
 } from "@repo/ui/components/ui/sidebar";
 import { cn } from "@repo/ui/lib/utils";
 import {
+  BrainCircuit,
   BookOpen,
   CalendarClock,
   HelpCircle,
@@ -49,6 +50,11 @@ function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
       title: "People",
       href: `/${orgSlug}/people`,
       icon: UsersRound,
+    },
+    {
+      title: "Skills",
+      href: `/${orgSlug}/skills`,
+      icon: BrainCircuit,
     },
   ];
 }

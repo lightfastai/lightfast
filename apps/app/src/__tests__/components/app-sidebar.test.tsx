@@ -98,6 +98,10 @@ describe("AppSidebar", () => {
       "href",
       "/acme/people"
     );
+    expect(screen.getByRole("link", { name: /skills/i })).toHaveAttribute(
+      "href",
+      "/acme/skills"
+    );
     expect(screen.getByRole("link", { name: /settings/i })).toHaveAttribute(
       "href",
       "/acme/settings"
