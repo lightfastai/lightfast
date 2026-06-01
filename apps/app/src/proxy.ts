@@ -68,7 +68,6 @@ const PUBLIC_ROUTE_PATTERNS = [
 ] as const;
 
 const isPublicRoute = createRouteMatcher([...PUBLIC_ROUTE_PATTERNS]);
-const isRetiredEarlyAccessRoute = createRouteMatcher(["/early-access(.*)"]);
 
 // API routes that handle their own auth at the route handler level.
 // Each route is responsible for its own auth + CORS (the Clerk middleware
@@ -91,6 +90,10 @@ function isApiRoute(req: NextRequest) {
         req.nextUrl.pathname.startsWith(`${prefix}/`)
     ) || isApiRouteMatcher(req)
   );
+}
+
+function isRetiredEarlyAccessPath(pathname: string) {
+  return pathname === "/early-access" || pathname.startsWith("/early-access/");
 }
 
 // Auth routes — authenticated users should not see sign-in/sign-up forms.
@@ -360,7 +363,7 @@ const nemoProxy = createNEMO(
 );
 
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
-  if (isRetiredEarlyAccessRoute(req)) {
+  if (isRetiredEarlyAccessPath(req.nextUrl.pathname)) {
     return applySecurityHeaders(
       NextResponse.redirect(new URL("/sign-up", req.url), 308)
     );

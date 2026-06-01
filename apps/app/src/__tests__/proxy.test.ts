@@ -210,6 +210,22 @@ describe("proxy retired early-access redirects", () => {
     );
     expect(authMock).not.toHaveBeenCalled();
   });
+
+  it("does not redirect workspace slugs that merely start with early-access", async () => {
+    authMock.mockResolvedValue({
+      orgId: "org_123",
+      orgSlug: "early-access-team",
+      sessionClaims: { lf_binding_status: "bound" },
+      sessionStatus: "active",
+      userId: "user_123",
+    });
+
+    const { response } = await invoke("/early-access-team");
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("location")).toBeNull();
+    expect(authMock).toHaveBeenCalledWith({ treatPendingAsSignedOut: false });
+  });
 });
 
 describe("proxy Nemo composition", () => {
