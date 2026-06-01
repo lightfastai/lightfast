@@ -1,6 +1,7 @@
 "use server";
 
 import { issueMcpAuthorizationCode, McpOAuthError } from "@api/app";
+import { getMcpOauthClientByClientId } from "@db/app";
 import { db } from "@db/app/client";
 import { auth } from "@vendor/clerk/server";
 import type { Route } from "next";
@@ -34,7 +35,7 @@ export async function approveMcpAuthorizationAction(formData: FormData) {
 }
 
 export async function denyMcpAuthorizationAction(formData: FormData) {
-  const redirectUri = requireString(formData, "redirectUri");
+  const redirectUri = await requireRegisteredRedirectUri(formData);
   const url = new URL(redirectUri);
   url.searchParams.set("error", "access_denied");
   const state = optionalString(formData, "state");
@@ -42,6 +43,23 @@ export async function denyMcpAuthorizationAction(formData: FormData) {
     url.searchParams.set("state", state);
   }
   redirect(url.toString() as Route);
+}
+
+async function requireRegisteredRedirectUri(
+  formData: FormData
+): Promise<string> {
+  const clientId = requireString(formData, "clientId");
+  const redirectUri = requireString(formData, "redirectUri");
+  const client = await getMcpOauthClientByClientId(db, {
+    publicClientId: clientId,
+  });
+  if (!client?.redirectUris.includes(redirectUri)) {
+    throw new McpOAuthError(
+      "invalid_request",
+      "Redirect URI is not registered."
+    );
+  }
+  return redirectUri;
 }
 
 function requireString(formData: FormData, key: string): string {

@@ -2,10 +2,21 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const getMcpConsentViewModelMock = vi.fn();
+const getMcpOauthClientByClientIdMock = vi.fn();
 const issueMcpAuthorizationCodeMock = vi.fn();
 const redirectMock = vi.fn((url: string) => {
   throw new Error(`redirect:${url}`);
 });
+
+class TestMcpOAuthError extends Error {
+  constructor(
+    public readonly error: string,
+    message: string
+  ) {
+    super(message);
+    this.name = "McpOAuthError";
+  }
+}
 
 vi.mock("~/app/(app)/(oauth)/oauth/authorize/model", () => ({
   getMcpConsentViewModel: getMcpConsentViewModelMock,
@@ -13,6 +24,11 @@ vi.mock("~/app/(app)/(oauth)/oauth/authorize/model", () => ({
 
 vi.mock("@api/app", () => ({
   issueMcpAuthorizationCode: issueMcpAuthorizationCodeMock,
+  McpOAuthError: TestMcpOAuthError,
+}));
+
+vi.mock("@db/app", () => ({
+  getMcpOauthClientByClientId: getMcpOauthClientByClientIdMock,
 }));
 
 vi.mock("@db/app/client", () => ({
@@ -42,9 +58,8 @@ vi.mock("~/env", () => ({
 }));
 
 const Page = (await import("~/app/(app)/(oauth)/oauth/authorize/page")).default;
-const { approveMcpAuthorizationAction } = await import(
-  "~/app/(app)/(oauth)/oauth/authorize/actions"
-);
+const { approveMcpAuthorizationAction, denyMcpAuthorizationAction } =
+  await import("~/app/(app)/(oauth)/oauth/authorize/actions");
 
 function consentModel(overrides: Record<string, unknown> = {}) {
   return {
@@ -83,9 +98,14 @@ function consentModel(overrides: Record<string, unknown> = {}) {
 
 beforeEach(() => {
   getMcpConsentViewModelMock.mockReset();
+  getMcpOauthClientByClientIdMock.mockReset();
   issueMcpAuthorizationCodeMock.mockReset();
   redirectMock.mockClear();
   getMcpConsentViewModelMock.mockResolvedValue(consentModel());
+  getMcpOauthClientByClientIdMock.mockResolvedValue({
+    publicClientId: "mcp_client_test",
+    redirectUris: ["https://backend.lightfield.app/connections/callback/MCP"],
+  });
   issueMcpAuthorizationCodeMock.mockResolvedValue({
     code: "mcp_code_secret",
   });
@@ -181,5 +201,23 @@ describe("/oauth/authorize MCP consent", () => {
         clerkUserId: "user_test",
       })
     );
+  });
+
+  it("does not redirect deny responses to unregistered redirect uris", async () => {
+    const formData = new FormData();
+    formData.set("clientId", "mcp_client_test");
+    formData.set("redirectUri", "https://attacker.example/callback");
+    formData.set("state", "state_test");
+
+    await expect(denyMcpAuthorizationAction(formData)).rejects.toMatchObject({
+      error: "invalid_request",
+      message: "Redirect URI is not registered.",
+    });
+
+    expect(getMcpOauthClientByClientIdMock).toHaveBeenCalledWith(
+      expect.anything(),
+      { publicClientId: "mcp_client_test" }
+    );
+    expect(redirectMock).not.toHaveBeenCalled();
   });
 });
