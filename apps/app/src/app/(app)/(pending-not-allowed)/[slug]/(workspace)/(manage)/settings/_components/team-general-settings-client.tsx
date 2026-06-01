@@ -46,6 +46,9 @@ export function TeamGeneralSettingsClient({
   const { data: sourceControlConnection } = useSuspenseQuery(
     trpc.org.settings.sourceControl.get.queryOptions()
   );
+  const { data: sourceControlRepositories } = useSuspenseQuery(
+    trpc.org.settings.sourceControl.listRepositories.queryOptions()
+  );
   const currentOrg = useMemo(
     () => organizations.find((org) => org.slug === slug),
     [organizations, slug]
@@ -197,6 +200,7 @@ export function TeamGeneralSettingsClient({
       <SourceControlConnectionSection
         connection={sourceControlConnection.binding}
         orgSlug={slug}
+        repositories={sourceControlRepositories}
       />
     </div>
   );

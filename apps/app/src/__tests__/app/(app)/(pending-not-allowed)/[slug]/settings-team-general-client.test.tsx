@@ -7,6 +7,9 @@ const listUserOrganizationsQueryOptionsMock = vi.fn(() => ({
 const sourceControlGetQueryOptionsMock = vi.fn(() => ({
   queryKey: ["org", "settings", "sourceControl", "get"],
 }));
+const sourceControlListRepositoriesQueryOptionsMock = vi.fn(() => ({
+  queryKey: ["org", "settings", "sourceControl", "listRepositories"],
+}));
 const updateNameMutationOptionsMock = vi.fn((options: unknown) => options);
 const useSuspenseQueryMock = vi.fn();
 
@@ -22,6 +25,9 @@ vi.mock("~/trpc/react", () => ({
         sourceControl: {
           get: {
             queryOptions: sourceControlGetQueryOptionsMock,
+          },
+          listRepositories: {
+            queryOptions: sourceControlListRepositoriesQueryOptionsMock,
           },
         },
       },
@@ -68,13 +74,16 @@ vi.mock(
   () => ({
     SourceControlConnectionSection: ({
       connection,
+      repositories,
       orgSlug,
     }: {
-      connection: { accountLogin: string | null } | null;
+      connection: { importedRepositoryCount: number } | null;
+      repositories: { organization: { login: string } | null };
       orgSlug: string;
     }) => (
       <div data-testid="source-control-section">
-        {orgSlug}:{connection?.accountLogin ?? "unbound"}
+        {orgSlug}:{connection?.importedRepositoryCount ?? "unbound"}:
+        {repositories.organization?.login ?? "no-org"}
       </div>
     ),
   })
@@ -87,6 +96,7 @@ const { TeamGeneralSettingsClient } = await import(
 beforeEach(() => {
   listUserOrganizationsQueryOptionsMock.mockClear();
   sourceControlGetQueryOptionsMock.mockClear();
+  sourceControlListRepositoriesQueryOptionsMock.mockClear();
   updateNameMutationOptionsMock.mockClear();
   useSuspenseQueryMock.mockReset();
   useSuspenseQueryMock.mockImplementation(
@@ -97,11 +107,33 @@ beforeEach(() => {
         };
       }
 
+      if (options.queryKey.includes("listRepositories")) {
+        return {
+          data: {
+            binding: {
+              connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+              importedRepositoryCount: 2,
+              provider: "github",
+              providerLabel: "GitHub",
+            },
+            organization: {
+              id: "987654",
+              installationManageUrl:
+                "https://github.com/apps/lightfast/installations/1001",
+              login: "acme-live",
+            },
+            repositories: [],
+            repositoriesError: null,
+            status: "bound",
+          },
+        };
+      }
+
       return {
         data: {
           binding: {
-            accountLogin: "lightfast-emulated",
             connectedAt: new Date("2026-05-29T01:02:03.000Z"),
+            importedRepositoryCount: 2,
             provider: "github",
             providerLabel: "GitHub",
           },
@@ -117,8 +149,9 @@ describe("TeamGeneralSettingsClient", () => {
     render(<TeamGeneralSettingsClient slug="acme" />);
 
     expect(sourceControlGetQueryOptionsMock).toHaveBeenCalled();
+    expect(sourceControlListRepositoriesQueryOptionsMock).toHaveBeenCalled();
     expect(screen.getByTestId("source-control-section")).toHaveTextContent(
-      "acme:lightfast-emulated"
+      "acme:2:acme-live"
     );
   });
 });

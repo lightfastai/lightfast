@@ -1,5 +1,8 @@
 import { pathForSetupRequirement } from "@repo/app-setup-contract";
+import { Icons } from "@repo/ui/components/icons";
+import { Button } from "@repo/ui/components/ui/button";
 import type { Route } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { getQueryClient, trpc } from "~/trpc/server";
@@ -33,15 +36,49 @@ export default async function LightfastRepoSetupPage({
     );
   }
 
-  const sourceControl = await queryClient.fetchQuery(
-    trpc.org.settings.sourceControl.get.queryOptions()
+  const sourceControlRepositories = await queryClient.fetchQuery(
+    trpc.org.settings.sourceControl.listRepositories.queryOptions()
   );
-  const accountLogin = sourceControl.binding?.accountLogin;
+  const accountLogin = sourceControlRepositories.organization?.login;
   if (!accountLogin) {
-    redirect(`/${slug}/tasks/bind` as Route);
+    return <GitHubOrgMetadataUnavailable orgSlug={slug} />;
   }
 
   return (
     <LightfastRepoSetupClient accountLogin={accountLogin} orgSlug={slug} />
+  );
+}
+
+function GitHubOrgMetadataUnavailable({ orgSlug }: { orgSlug: string }) {
+  return (
+    <div className="flex min-h-full flex-1 items-center justify-center px-4 pb-32">
+      <div className="w-full max-w-md space-y-4">
+        <div className="w-fit rounded-sm bg-card p-3">
+          <Icons.logoShort className="h-5 w-5 text-foreground" />
+        </div>
+
+        <div className="space-y-4">
+          <h1 className="pb-4 font-medium font-pp text-2xl text-foreground">
+            GitHub organization details could not be refreshed
+          </h1>
+
+          <p className="text-muted-foreground text-sm">
+            Refresh this page to try again, or return to settings while GitHub
+            details are unavailable.
+          </p>
+
+          <div className="grid gap-2">
+            <Button asChild variant="secondary">
+              <Link href={`/${orgSlug}/tasks/github/lightfast-repo` as Route}>
+                Retry
+              </Link>
+            </Button>
+            <Button asChild>
+              <Link href={`/${orgSlug}/settings` as Route}>Open settings</Link>
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -10,8 +10,8 @@ const fetchQueryMock = vi.fn();
 const getBySlugQueryOptionsMock = vi.fn((input: { slug: string }) => ({
   queryKey: [["viewer", "organization", "getBySlug"], input],
 }));
-const sourceControlGetQueryOptionsMock = vi.fn(() => ({
-  queryKey: [["org", "settings", "sourceControl", "get"]],
+const sourceControlListRepositoriesQueryOptionsMock = vi.fn(() => ({
+  queryKey: [["org", "settings", "sourceControl", "listRepositories"]],
 }));
 const repoClientMock = vi.fn(
   ({ accountLogin, orgSlug }: { accountLogin: string; orgSlug: string }) => (
@@ -27,7 +27,9 @@ vi.mock("~/trpc/server", () => ({
     org: {
       settings: {
         sourceControl: {
-          get: { queryOptions: sourceControlGetQueryOptionsMock },
+          listRepositories: {
+            queryOptions: sourceControlListRepositoriesQueryOptionsMock,
+          },
         },
       },
     },
@@ -58,7 +60,7 @@ beforeEach(() => {
   redirectMock.mockClear();
   fetchQueryMock.mockReset();
   getBySlugQueryOptionsMock.mockClear();
-  sourceControlGetQueryOptionsMock.mockClear();
+  sourceControlListRepositoriesQueryOptionsMock.mockClear();
   repoClientMock.mockClear();
 });
 
@@ -92,9 +94,15 @@ describe("tasks/github/lightfast-repo/page", () => {
         nextSetupRequirement: "github_lightfast_repo",
       })
       .mockResolvedValueOnce({
-        binding: {
-          accountLogin: "lightfast-emulated",
+        binding: null,
+        organization: {
+          id: "987654",
+          installationManageUrl:
+            "https://github.com/apps/lightfast/installations/1001",
+          login: "acme-live",
         },
+        repositories: [],
+        repositoriesError: null,
         status: "bound",
       });
 
@@ -104,11 +112,50 @@ describe("tasks/github/lightfast-repo/page", () => {
     expect(screen.getByTestId("repo-client")).toHaveTextContent("acme");
     expect(screen.getByTestId("repo-client")).toHaveAttribute(
       "data-account-login",
-      "lightfast-emulated"
+      "acme-live"
     );
     expect(repoClientMock).toHaveBeenCalledWith(
-      { accountLogin: "lightfast-emulated", orgSlug: "acme" },
+      { accountLogin: "acme-live", orgSlug: "acme" },
       undefined
     );
+  });
+
+  it("renders a non-bouncing fallback when live GitHub organization data is unavailable", async () => {
+    fetchQueryMock
+      .mockResolvedValueOnce({
+        bindingStatus: "unbound",
+        nextSetupRequirement: "github_lightfast_repo",
+      })
+      .mockResolvedValueOnce({
+        binding: null,
+        organization: null,
+        repositories: [],
+        repositoriesError: null,
+        status: "bound",
+      });
+
+    const element = await invoke("acme");
+    render(element);
+
+    expect(
+      screen.getByRole("heading", {
+        name: "GitHub organization details could not be refreshed",
+      })
+    ).toBeVisible();
+    expect(
+      screen.getByText(
+        "Refresh this page to try again, or return to settings while GitHub details are unavailable."
+      )
+    ).toBeVisible();
+    expect(screen.getByRole("link", { name: "Retry" })).toHaveAttribute(
+      "href",
+      "/acme/tasks/github/lightfast-repo"
+    );
+    expect(screen.getByRole("link", { name: "Open settings" })).toHaveAttribute(
+      "href",
+      "/acme/settings"
+    );
+    expect(redirectMock).not.toHaveBeenCalledWith("/acme/tasks/bind");
+    expect(repoClientMock).not.toHaveBeenCalled();
   });
 });
