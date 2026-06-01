@@ -14,10 +14,14 @@ import {
 } from "./config";
 import { LinearAppNodeError } from "./errors";
 
+const DEFAULT_LINEAR_MCP_TIMEOUT_MS = 10_000;
+const DEFAULT_LINEAR_MCP_CLOSE_TIMEOUT_MS = 1_000;
+
 export async function listLinearMcpTools(input: {
   accessToken: string;
   endpoint: string;
   nodeEnv?: string;
+  timeoutMs?: number;
 }): Promise<FullConnectorToolManifest> {
   assertLinearEndpointAllowed({
     defaultValue: DEFAULT_LINEAR_ENDPOINTS.mcpEndpoint,
@@ -36,10 +40,18 @@ export async function listLinearMcpTools(input: {
       },
     },
   });
+  const abortController = new AbortController();
+  const timeout = setTimeout(
+    () => abortController.abort(),
+    input.timeoutMs ?? DEFAULT_LINEAR_MCP_TIMEOUT_MS
+  );
 
   try {
-    await client.connect(transport);
-    const { tools } = await client.listTools();
+    await withAbort(client.connect(transport), abortController.signal);
+    const { tools } = await withAbort(
+      client.listTools(),
+      abortController.signal
+    );
     return fullConnectorToolManifestSchema.parse(tools.map(toManifestItem));
   } catch (error) {
     if (error instanceof LinearAppNodeError) {
@@ -51,8 +63,42 @@ export async function listLinearMcpTools(input: {
       error
     );
   } finally {
-    await client.close().catch(() => undefined);
+    clearTimeout(timeout);
+    await closeMcpClient(client).catch(() => undefined);
   }
+}
+
+async function closeMcpClient(client: { close(): Promise<void> }) {
+  await Promise.race([
+    client.close(),
+    delay(DEFAULT_LINEAR_MCP_CLOSE_TIMEOUT_MS),
+  ]);
+}
+
+async function withAbort<T>(
+  promise: Promise<T>,
+  signal: AbortSignal
+): Promise<T> {
+  if (signal.aborted) {
+    throw abortError();
+  }
+
+  return await Promise.race([
+    promise,
+    new Promise<T>((_resolve, reject) => {
+      signal.addEventListener("abort", () => reject(abortError()), {
+        once: true,
+      });
+    }),
+  ]);
+}
+
+function delay(timeoutMs: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, timeoutMs));
+}
+
+function abortError() {
+  return new DOMException("The operation was aborted.", "AbortError");
 }
 
 function toManifestItem(tool: Tool) {
