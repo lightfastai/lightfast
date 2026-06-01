@@ -1,0 +1,517 @@
+import {
+  finalizeCurrentOrgConnectorConnection,
+  getCurrentOrgConnectorConnection,
+  markCurrentOrgConnectorConnectionError,
+  markCurrentOrgConnectorConnectionRevoked,
+  recordConnectorToolRefreshError,
+  setConnectorAutomationEnabled as setConnectorAutomationEnabledInDb,
+  updateConnectorToolManifest,
+  updateObservedConnectorTokens,
+  type OrgConnectorConnection,
+} from "@db/app";
+import { db as appDb } from "@db/app/client";
+import { decrypt, encrypt } from "@repo/app-encryption";
+import type { FullConnectorToolManifest } from "@repo/connector-contract";
+import {
+  buildLinearOAuthAuthorizeUrl,
+  createLinearPkcePair,
+  exchangeLinearOAuthCode,
+  getLinearViewerMetadata,
+  LinearAppNodeError,
+  listLinearMcpTools,
+  refreshLinearOAuthToken,
+  revokeLinearOAuthToken,
+} from "@repo/linear-app-node";
+import { TRPCError } from "@trpc/server";
+import { log } from "@vendor/observability/log/next";
+
+import { findUserOrganizationMembership } from "../../auth/clerk-org-membership";
+import type { AuthContext } from "../../trpc";
+import type { Database } from "@db/app";
+import { env } from "../../env";
+import {
+  consumeLinearConnectOAuthAttempt,
+  issueLinearConnectOAuthAttempt,
+  lookupLinearConnectOAuthAttempt,
+  type LinearConnectOAuthAttemptRecord,
+} from "./attempts";
+import { assertCurrentSessionCanFinalizeConnectorOAuth } from "./auth";
+import {
+  LINEAR_OAUTH_CALLBACK_PATH,
+  requireLinearConnectorConfig,
+  resolveConnectorAppOrigin,
+} from "./config";
+
+interface ConnectorServiceContext {
+  auth: AuthContext;
+  db: Database;
+}
+
+export interface LinearRedirectResult {
+  redirectUrl: string;
+}
+
+function activeIdentity(ctx: ConnectorServiceContext) {
+  if (ctx.auth.identity.type !== "active") {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "An active organization is required.",
+    });
+  }
+  return ctx.auth.identity;
+}
+
+async function getOrgSlug(input: {
+  clerkOrgId: string;
+  userId: string;
+}): Promise<string> {
+  const membership = await findUserOrganizationMembership({
+    organizationId: input.clerkOrgId,
+    userId: input.userId,
+  });
+  const slug = membership?.organization.slug;
+  if (!slug) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Organization access is required.",
+    });
+  }
+  return slug;
+}
+
+function connectorPageUrl(input: {
+  appOrigin: string;
+  error?: string;
+  orgSlug: string;
+}) {
+  const url = new URL(`/${input.orgSlug}/connectors`, input.appOrigin);
+  url.searchParams.set("connector", "linear");
+  if (input.error) {
+    url.searchParams.set("error", input.error);
+  }
+  return url.toString();
+}
+
+function missingAttemptRedirect(input: {
+  appOrigin: string;
+}): LinearRedirectResult {
+  const url = new URL("/account/teams", input.appOrigin);
+  url.searchParams.set("connector", "linear");
+  url.searchParams.set("error", "expired_state");
+  return { redirectUrl: url.toString() };
+}
+
+function errorRedirect(input: {
+  appOrigin: string;
+  code: string;
+  orgSlug: string;
+}): LinearRedirectResult {
+  return {
+    redirectUrl: connectorPageUrl({
+      appOrigin: input.appOrigin,
+      error: input.code,
+      orgSlug: input.orgSlug,
+    }),
+  };
+}
+
+function signInRedirect(input: {
+  appOrigin: string;
+  requestUrl: string;
+}): LinearRedirectResult {
+  const callbackUrl = new URL(input.requestUrl);
+  const signInUrl = new URL("/sign-in", input.appOrigin);
+  signInUrl.searchParams.set(
+    "redirect_url",
+    `${callbackUrl.pathname}${callbackUrl.search}`
+  );
+  return { redirectUrl: signInUrl.toString() };
+}
+
+function parseLinearCallback(requestUrl: string) {
+  const url = new URL(requestUrl);
+  return {
+    code: url.searchParams.get("code"),
+    denied: url.searchParams.get("error"),
+    state: url.searchParams.get("state"),
+  };
+}
+
+function mapLinearOAuthError(error: unknown) {
+  if (
+    error instanceof Error &&
+    error.name === "ConnectorOAuthFinalizeAccessError"
+  ) {
+    return "permission_required";
+  }
+  if (error instanceof LinearAppNodeError) {
+    return error.code === "LINEAR_OAUTH_EXCHANGE_FAILED"
+      ? "linear_authorization_failed"
+      : "linear_transient_error";
+  }
+  return "linear_transient_error";
+}
+
+function isUnauthenticatedFinalizeError(error: unknown) {
+  return (
+    error instanceof Error &&
+    error.name === "ConnectorOAuthFinalizeAccessError" &&
+    "code" in error &&
+    error.code === "UNAUTHENTICATED"
+  );
+}
+
+function expiresAtFromSeconds(seconds: number | undefined) {
+  return seconds ? new Date(Date.now() + seconds * 1000) : null;
+}
+
+function shouldRefreshAccessToken(connection: OrgConnectorConnection) {
+  if (!connection.accessTokenExpiresAt) {
+    return false;
+  }
+  return connection.accessTokenExpiresAt.getTime() <= Date.now() + 60_000;
+}
+
+async function decryptToken(ciphertext: string) {
+  return await decrypt(ciphertext, env.ENCRYPTION_KEY);
+}
+
+async function encryptedToken(plaintext: string) {
+  return await encrypt(plaintext, env.ENCRYPTION_KEY);
+}
+
+async function getFreshAccessToken(input: {
+  config: ReturnType<typeof requireLinearConnectorConfig>;
+  connection: OrgConnectorConnection;
+  db: Database;
+}) {
+  if (!input.connection.encryptedAccessToken) {
+    throw new LinearAppNodeError(
+      "LINEAR_TOKEN_REFRESH_FAILED",
+      "Linear connector access token is missing."
+    );
+  }
+
+  if (
+    !shouldRefreshAccessToken(input.connection) ||
+    !input.connection.encryptedRefreshToken
+  ) {
+    return await decryptToken(input.connection.encryptedAccessToken);
+  }
+
+  const refreshToken = await decryptToken(input.connection.encryptedRefreshToken);
+  const refreshed = await refreshLinearOAuthToken({
+    clientId: input.config.clientId,
+    clientSecret: input.config.clientSecret,
+    refreshToken,
+    refreshTokenExpiresIn: input.connection.refreshTokenExpiresAt
+      ? Math.max(
+          1,
+          Math.floor(
+            (input.connection.refreshTokenExpiresAt.getTime() - Date.now()) /
+              1000
+          )
+        )
+      : undefined,
+    tokenUrl: input.config.endpoints.oauthTokenUrl,
+  });
+
+  const encryptedAccessToken = await encryptedToken(refreshed.accessToken);
+  const encryptedRefreshToken = refreshed.refreshToken
+    ? await encryptedToken(refreshed.refreshToken)
+    : null;
+
+  await updateObservedConnectorTokens(input.db, {
+    accessTokenExpiresAt: expiresAtFromSeconds(refreshed.accessTokenExpiresIn),
+    clerkOrgId: input.connection.clerkOrgId,
+    encryptedAccessToken,
+    encryptedRefreshToken,
+    id: input.connection.id,
+    observedEncryptedRefreshToken: input.connection.encryptedRefreshToken,
+    refreshTokenExpiresAt: expiresAtFromSeconds(
+      refreshed.refreshTokenExpiresIn
+    ),
+    updatedAt: new Date(),
+  });
+
+  return refreshed.accessToken;
+}
+
+export async function startLinearConnectorOAuth(
+  ctx: ConnectorServiceContext,
+  input: { appOrigin?: string } = {}
+) {
+  const identity = activeIdentity(ctx);
+  const config = requireLinearConnectorConfig({ appOrigin: input.appOrigin });
+  const current = await getCurrentOrgConnectorConnection(ctx.db, {
+    clerkOrgId: identity.orgId,
+    provider: "linear",
+  });
+  const mode = current ? "reconnect" : "connect";
+  const orgSlug = await getOrgSlug({
+    clerkOrgId: identity.orgId,
+    userId: identity.userId,
+  });
+  const pkce = createLinearPkcePair();
+  const attempt = await issueLinearConnectOAuthAttempt({
+    clerkOrgId: identity.orgId,
+    codeVerifier: pkce.codeVerifier,
+    lightfastUserId: identity.userId,
+    mode,
+    orgSlug,
+  });
+  const authorizationUrl = buildLinearOAuthAuthorizeUrl({
+    callbackUrl: new URL(
+      LINEAR_OAUTH_CALLBACK_PATH,
+      config.appOrigin
+    ).toString(),
+    clientId: config.clientId,
+    codeChallenge: pkce.codeChallenge,
+    oauthAuthorizeUrl: config.endpoints.oauthAuthorizeUrl,
+    state: attempt.state,
+  });
+
+  log.info("[connectors] linear oauth started", {
+    clerkOrgId: identity.orgId,
+    mode,
+    provider: "linear",
+  });
+
+  return { authorizationUrl, mode };
+}
+
+async function finalizeLinearConnection(input: {
+  appOrigin: string;
+  attempt: LinearConnectOAuthAttemptRecord;
+  code: string;
+}) {
+  const config = requireLinearConnectorConfig({ appOrigin: input.appOrigin });
+  const token = await exchangeLinearOAuthCode({
+    callbackUrl: new URL(
+      LINEAR_OAUTH_CALLBACK_PATH,
+      input.appOrigin
+    ).toString(),
+    clientId: config.clientId,
+    clientSecret: config.clientSecret,
+    code: input.code,
+    codeVerifier: input.attempt.codeVerifier,
+    tokenUrl: config.endpoints.oauthTokenUrl,
+  });
+  const [metadata, toolManifest] = await Promise.all([
+    getLinearViewerMetadata({
+      accessToken: token.accessToken,
+      viewerUrl: config.endpoints.viewerUrl,
+    }),
+    listLinearMcpTools({
+      accessToken: token.accessToken,
+      endpoint: config.endpoints.mcpEndpoint,
+    }),
+  ]);
+
+  await finalizeCurrentOrgConnectorConnection(appDb, {
+    accessTokenExpiresAt: expiresAtFromSeconds(token.accessTokenExpiresIn),
+    clerkOrgId: input.attempt.clerkOrgId,
+    connectedByUserId: input.attempt.lightfastUserId,
+    encryptedAccessToken: await encryptedToken(token.accessToken),
+    encryptedRefreshToken: token.refreshToken
+      ? await encryptedToken(token.refreshToken)
+      : null,
+    mcpEndpoint: config.endpoints.mcpEndpoint,
+    metadata: { mode: input.attempt.mode },
+    provider: "linear",
+    providerActorId: metadata.actorId ?? null,
+    providerActorName: metadata.actorName ?? null,
+    providerWorkspaceId: metadata.workspaceId,
+    providerWorkspaceName: metadata.workspaceName,
+    refreshTokenExpiresAt: expiresAtFromSeconds(token.refreshTokenExpiresIn),
+    scopes: token.scopes,
+    toolManifest,
+  });
+}
+
+export async function completeLinearConnectorOAuth(input: {
+  appOrigin?: string;
+  requestUrl: string;
+}): Promise<LinearRedirectResult> {
+  const appOrigin = input.appOrigin ?? resolveConnectorAppOrigin();
+  const parsed = parseLinearCallback(input.requestUrl);
+
+  if (!(parsed.state && (parsed.code || parsed.denied))) {
+    return missingAttemptRedirect({ appOrigin });
+  }
+
+  const pendingAttempt = await lookupLinearConnectOAuthAttempt({
+    state: parsed.state,
+  });
+  if (!pendingAttempt) {
+    return missingAttemptRedirect({ appOrigin });
+  }
+
+  try {
+    await assertCurrentSessionCanFinalizeConnectorOAuth({
+      clerkOrgId: pendingAttempt.clerkOrgId,
+      expectedUserId: pendingAttempt.lightfastUserId,
+    });
+  } catch (error) {
+    if (isUnauthenticatedFinalizeError(error)) {
+      return signInRedirect({ appOrigin, requestUrl: input.requestUrl });
+    }
+    return errorRedirect({
+      appOrigin,
+      code: mapLinearOAuthError(error),
+      orgSlug: pendingAttempt.orgSlug,
+    });
+  }
+
+  const attempt = await consumeLinearConnectOAuthAttempt({ state: parsed.state });
+  if (!attempt) {
+    return missingAttemptRedirect({ appOrigin });
+  }
+
+  if (parsed.denied || !parsed.code) {
+    return errorRedirect({
+      appOrigin,
+      code: "linear_authorization_denied",
+      orgSlug: attempt.orgSlug,
+    });
+  }
+
+  try {
+    await finalizeLinearConnection({
+      appOrigin,
+      attempt,
+      code: parsed.code,
+    });
+    return {
+      redirectUrl: connectorPageUrl({ appOrigin, orgSlug: attempt.orgSlug }),
+    };
+  } catch (error) {
+    return errorRedirect({
+      appOrigin,
+      code: mapLinearOAuthError(error),
+      orgSlug: attempt.orgSlug,
+    });
+  }
+}
+
+export async function refreshLinearConnectorTools(ctx: ConnectorServiceContext) {
+  const identity = activeIdentity(ctx);
+  const config = requireLinearConnectorConfig();
+  const connection = await getCurrentOrgConnectorConnection(ctx.db, {
+    clerkOrgId: identity.orgId,
+    provider: "linear",
+  });
+  if (!connection) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Linear connector is not connected.",
+    });
+  }
+
+  try {
+    const accessToken = await getFreshAccessToken({
+      config,
+      connection,
+      db: ctx.db,
+    });
+    const toolManifest = await listLinearMcpTools({
+      accessToken,
+      endpoint: connection.mcpEndpoint || config.endpoints.mcpEndpoint,
+    });
+    await updateConnectorToolManifest(ctx.db, {
+      clerkOrgId: identity.orgId,
+      lastToolRefreshAt: new Date(),
+      provider: "linear",
+      toolManifest,
+    });
+    return { refreshed: true, status: "ok" as const, toolManifest };
+  } catch (error) {
+    if (
+      error instanceof LinearAppNodeError &&
+      error.code !== "LINEAR_TOKEN_REFRESH_FAILED"
+    ) {
+      await recordConnectorToolRefreshError(ctx.db, {
+        clerkOrgId: identity.orgId,
+        lastToolRefreshErrorAt: new Date(),
+        lastToolRefreshErrorCode: error.code,
+        provider: "linear",
+      });
+      log.warn("[connectors] linear tool refresh failed", {
+        clerkOrgId: identity.orgId,
+        code: error.code,
+        provider: "linear",
+      });
+      return { refreshed: false, status: "refresh_error" as const };
+    }
+
+    await markCurrentOrgConnectorConnectionError(ctx.db, {
+      clerkOrgId: identity.orgId,
+      provider: "linear",
+    });
+    log.warn("[connectors] linear auth refresh failed", {
+      clerkOrgId: identity.orgId,
+      provider: "linear",
+    });
+    return { refreshed: false, status: "auth_error" as const };
+  }
+}
+
+export async function setLinearConnectorAutomationEnabled(
+  ctx: ConnectorServiceContext,
+  input: { enabled: boolean }
+) {
+  const identity = activeIdentity(ctx);
+  const updated = await setConnectorAutomationEnabledInDb(ctx.db, {
+    clerkOrgId: identity.orgId,
+    enabled: input.enabled,
+    provider: "linear",
+  });
+  if (!updated) {
+    throw new TRPCError({
+      code: "NOT_FOUND",
+      message: "Linear connector is not connected.",
+    });
+  }
+  return { enabled: input.enabled };
+}
+
+export async function disconnectLinearConnector(ctx: ConnectorServiceContext) {
+  const identity = activeIdentity(ctx);
+  const connection = await getCurrentOrgConnectorConnection(ctx.db, {
+    clerkOrgId: identity.orgId,
+    provider: "linear",
+  });
+
+  if (connection?.encryptedAccessToken) {
+    const configResult = (() => {
+      try {
+        return requireLinearConnectorConfig();
+      } catch {
+        return null;
+      }
+    })();
+
+    if (configResult) {
+      try {
+        await revokeLinearOAuthToken({
+          clientId: configResult.clientId,
+          clientSecret: configResult.clientSecret,
+          revokeUrl: configResult.endpoints.oauthRevokeUrl,
+          token: await decryptToken(connection.encryptedAccessToken),
+        });
+      } catch (error) {
+        log.warn("[connectors] linear revoke failed during disconnect", {
+          clerkOrgId: identity.orgId,
+          error,
+          provider: "linear",
+        });
+      }
+    }
+  }
+
+  await markCurrentOrgConnectorConnectionRevoked(ctx.db, {
+    clerkOrgId: identity.orgId,
+    provider: "linear",
+  });
+  return { disconnected: true };
+}
