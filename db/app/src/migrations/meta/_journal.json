@@ -64,6 +64,13 @@
       "when": 1780215609286,
       "tag": "0008_great_meteorite",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1780288593047,
+      "tag": "0009_shiny_tana_nile",
+      "breakpoints": true
     }
   ]
 }

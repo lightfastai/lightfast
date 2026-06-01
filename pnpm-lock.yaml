@@ -1184,6 +1184,9 @@ importers:
       '@repo/app-validation':
         specifier: workspace:*
         version: link:../../packages/app-validation
+      '@repo/skills-contract':
+        specifier: workspace:*
+        version: link:../../packages/skills-contract
       '@repo/source-control-contract':
         specifier: workspace:*
         version: link:../../packages/source-control-contract

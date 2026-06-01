@@ -1,5 +1,10 @@
 // Table schemas
 export {
+  skillIndexEntriesRelations,
+  skillIndexStatesRelations,
+  sourceControlRepositoriesRelations,
+} from "./relations";
+export {
   AUTOMATION_ID_PREFIX,
   AUTOMATION_RUN_ID_PREFIX,
   type Automation,
@@ -22,6 +27,8 @@ export {
   type InsertPerson,
   type InsertSignal,
   type InsertSignalView,
+  type InsertSkillIndexEntry,
+  type InsertSkillIndexState,
   type InsertSourceControlRepository,
   type InsertSourceControlWebhookDelivery,
   type InsertUserSourceControlAccount,
@@ -36,11 +43,17 @@ export {
   type PersonIdentityProvider,
   type PersonIdentityType,
   people,
+  type ResourcesTruncatedFlag,
   SIGNAL_VIEW_ID_PREFIX,
   type Signal,
   type SignalView,
   type SignalViewConfig,
   type SignalViewLayout,
+  type SkillIndexEntry,
+  type SkillIndexEntryMetadata,
+  skillIndexEntries,
+  type SkillIndexState,
+  skillIndexStates,
   type SourceControlRepository,
   type SourceControlWebhookDelivery,
   signals,
