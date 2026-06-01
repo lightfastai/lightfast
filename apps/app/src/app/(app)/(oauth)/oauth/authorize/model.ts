@@ -1,4 +1,8 @@
-import { parseMcpScopes } from "@api/app";
+import {
+  isValidMcpS256CodeChallenge,
+  McpOAuthError,
+  parseMcpScopes,
+} from "@api/app";
 import { getMcpOauthClientByClientId } from "@db/app";
 import { db } from "@db/app/client";
 import type { McpScope } from "@repo/api-contract";
@@ -8,7 +12,7 @@ import { z } from "zod";
 
 const authorizeSearchParamsSchema = z.object({
   client_id: z.string().min(1),
-  code_challenge: z.string().min(1),
+  code_challenge: z.string().refine(isValidMcpS256CodeChallenge),
   code_challenge_method: z.literal("S256"),
   redirect_uri: z.string().url(),
   resource: z.string().url(),
@@ -70,6 +74,7 @@ export async function getMcpConsentViewModel(
     notFound();
   }
 
+  const scopes = parseConsentScopes(parsed.data.scope);
   const clerk = await clerkClient();
   const [user, memberships] = await Promise.all([
     currentUser(),
@@ -79,7 +84,6 @@ export async function getMcpConsentViewModel(
     }),
   ]);
 
-  const scopes = parseMcpScopes(parsed.data.scope);
   return {
     client: {
       id: client.publicClientId,
@@ -108,6 +112,17 @@ export async function getMcpConsentViewModel(
       name: user?.fullName ?? user?.username ?? "Lightfast user",
     },
   };
+}
+
+function parseConsentScopes(scope: string | undefined): McpScope[] {
+  try {
+    return parseMcpScopes(scope);
+  } catch (error) {
+    if (error instanceof McpOAuthError) {
+      notFound();
+    }
+    throw error;
+  }
 }
 
 function flatten(input: Record<string, string | string[] | undefined>) {

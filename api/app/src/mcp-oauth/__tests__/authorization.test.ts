@@ -127,6 +127,26 @@ describe("issueMcpAuthorizationCode", () => {
 
     expect(createMcpAuthorizationCodeMock).not.toHaveBeenCalled();
   });
+
+  it("rejects malformed S256 code challenges before persisting", async () => {
+    await expect(
+      issueMcpAuthorizationCode(db, {
+        clientId: "mcp_client_test",
+        clerkOrgId: "org_test",
+        clerkUserId: "user_test",
+        codeChallenge: "not-valid+pkce-challenge",
+        codeChallengeMethod: "S256",
+        redirectUri,
+        resource,
+        scope: "mcp:signals:write",
+        now,
+      })
+    ).rejects.toEqual(
+      new McpOAuthError("invalid_request", "Invalid PKCE code challenge.")
+    );
+
+    expect(createMcpAuthorizationCodeMock).not.toHaveBeenCalled();
+  });
 });
 
 describe("exchangeMcpAuthorizationCode", () => {

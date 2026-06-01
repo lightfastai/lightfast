@@ -13,6 +13,8 @@ import {
   parseMcpScopes,
 } from "./types";
 
+const S256_CODE_CHALLENGE_PATTERN = /^[A-Za-z0-9_-]{43}$/;
+
 export interface IssueMcpAuthorizationCodeInput {
   clerkOrgId: string;
   clerkUserId: string;
@@ -48,6 +50,9 @@ export async function issueMcpAuthorizationCode(
       "Redirect URI is not registered."
     );
   }
+  if (!isValidMcpS256CodeChallenge(input.codeChallenge)) {
+    throw new McpOAuthError("invalid_request", "Invalid PKCE code challenge.");
+  }
 
   const scopes = parseMcpScopes(input.scope);
   const code = createAuthorizationCodeSecret();
@@ -75,6 +80,10 @@ export async function issueMcpAuthorizationCode(
     redirectUri: input.redirectUri,
     scopes,
   };
+}
+
+export function isValidMcpS256CodeChallenge(value: string): boolean {
+  return S256_CODE_CHALLENGE_PATTERN.test(value);
 }
 
 export function buildDeniedAuthorizationRedirect(input: {
