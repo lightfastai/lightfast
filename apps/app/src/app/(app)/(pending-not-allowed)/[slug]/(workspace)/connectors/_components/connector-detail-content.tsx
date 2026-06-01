@@ -66,13 +66,6 @@ export function ConnectorDetailContent({
           className="size-7 rounded-[7px]"
           provider={row.provider}
         />
-        <span className="font-mono text-muted-foreground text-xs">
-          {row.provider}
-        </span>
-        <span className="inline-flex items-center gap-1.5 text-foreground text-sm">
-          <span className={cn("size-1.5 rounded-full", status.dotClass)} />
-          {status.label}
-        </span>
         <div className="ml-auto flex items-center gap-1">
           <Button
             aria-label="Copy link"

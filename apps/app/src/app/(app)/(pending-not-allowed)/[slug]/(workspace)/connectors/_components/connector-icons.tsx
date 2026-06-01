@@ -32,7 +32,7 @@ export function ConnectorIcon({ className, provider }: ConnectorIconProps) {
   return (
     <span
       className={cn(
-        "inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] bg-white text-black",
+        "inline-flex size-9 shrink-0 items-center justify-center rounded-[9px] border border-border bg-transparent text-foreground",
         className
       )}
     >
