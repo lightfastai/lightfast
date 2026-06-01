@@ -27,7 +27,7 @@ describe("authErrorSearchParams", () => {
   });
 
   it("rejects invalid errorCode values", () => {
-    expect(authErrorSearchParams.errorCode.parse("waitlist")).toBe(null);
+    expect(authErrorSearchParams.errorCode.parse("retired_code")).toBe(null);
     expect(authErrorSearchParams.errorCode.parse("invalid")).toBe(null);
     expect(authErrorSearchParams.errorCode.parse("")).toBe(null);
   });
@@ -53,7 +53,7 @@ describe("acceptInvitationSearchParams", () => {
   });
 
   it("rejects invalid errorCode values", () => {
-    expect(acceptInvitationSearchParams.errorCode.parse("waitlist")).toBe(
+    expect(acceptInvitationSearchParams.errorCode.parse("retired_code")).toBe(
       null
     );
     expect(acceptInvitationSearchParams.errorCode.parse("invalid")).toBe(null);

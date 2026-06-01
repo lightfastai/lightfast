@@ -54,7 +54,7 @@ describe("root layout ClerkProvider", () => {
     clerkProviderProps = undefined;
   });
 
-  it("configures Clerk auth URLs without a waitlist URL", () => {
+  it("configures Clerk auth URLs", () => {
     render(
       <RootLayout>
         <main>App</main>
@@ -66,6 +66,5 @@ describe("root layout ClerkProvider", () => {
       signInUrl: "/sign-in",
       signUpUrl: "/sign-up",
     });
-    expect(clerkProviderProps).not.toHaveProperty("waitlistUrl");
   });
 });

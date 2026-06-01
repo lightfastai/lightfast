@@ -225,8 +225,8 @@ describe("sign-up — captcha mount", () => {
 });
 
 describe("sign-up — error banner", () => {
-  it("ignores ?errorCode=waitlist and renders the normal sign-up heading", () => {
-    searchParamsValue = new URLSearchParams("errorCode=waitlist");
+  it("ignores unknown errorCode values and renders the normal sign-up heading", () => {
+    searchParamsValue = new URLSearchParams("errorCode=retired_code");
     render(<SignUpPage />);
     expect(
       screen.getByRole("heading", { name: /sign up for lightfast/i })

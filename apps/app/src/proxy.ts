@@ -92,10 +92,6 @@ function isApiRoute(req: NextRequest) {
   );
 }
 
-function isRetiredEarlyAccessPath(pathname: string) {
-  return pathname === "/early-access" || pathname.startsWith("/early-access/");
-}
-
 // Auth routes — authenticated users should not see sign-in/sign-up forms.
 const isAuthRoute = createRouteMatcher(["/sign-in(.*)", "/sign-up(.*)"]);
 
@@ -363,12 +359,6 @@ const nemoProxy = createNEMO(
 );
 
 export default function proxy(req: NextRequest, event: NextFetchEvent) {
-  if (isRetiredEarlyAccessPath(req.nextUrl.pathname)) {
-    return applySecurityHeaders(
-      NextResponse.redirect(new URL("/sign-up", req.url), 308)
-    );
-  }
-
   if (isApiRoute(req)) {
     return applySecurityHeaders(NextResponse.next());
   }

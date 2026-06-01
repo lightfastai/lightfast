@@ -218,11 +218,8 @@ describe("accept-invitation — Accept Invitation button", () => {
     ).toBeEnabled();
   });
 
-  it("renders inline pageError on waitlist rejection", async () => {
-    clerkStub.client.signUp.create.mockRejectedValue({
-      code: "sign_up_restricted_waitlist",
-      message: "waitlist",
-    });
+  it("renders inline pageError on unmapped rejection", async () => {
+    clerkStub.client.signUp.create.mockRejectedValue({});
 
     render(<AcceptInvitationPage />);
 
@@ -313,9 +310,9 @@ describe("accept-invitation — captcha + expiry", () => {
 });
 
 describe("accept-invitation — error banner from URL", () => {
-  it("ignores ?errorCode=waitlist and renders the accept invitation button", () => {
+  it("ignores unknown errorCode values and renders the accept invitation button", () => {
     searchParamsValue = new URLSearchParams(
-      "__clerk_ticket=tok_abc123&errorCode=waitlist"
+      "__clerk_ticket=tok_abc123&errorCode=retired_code"
     );
     render(<AcceptInvitationPage />);
     expect(

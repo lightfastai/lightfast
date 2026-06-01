@@ -142,9 +142,9 @@ describe("sign-in — email submit", () => {
     });
   });
 
-  it("redirects to /sign-in?error=Authentication+failed when sendCode returns waitlist restriction", async () => {
+  it("redirects to /sign-in?error=Authentication+failed when sendCode returns an unmapped error", async () => {
     signInStub.emailCode.sendCode.mockResolvedValue({
-      error: { code: "sign_up_restricted_waitlist", message: "waitlist" },
+      error: {},
     });
     render(<SignInPage />);
 
@@ -338,8 +338,8 @@ describe("sign-in — email-only auth", () => {
 });
 
 describe("sign-in — error banner", () => {
-  it("ignores ?errorCode=waitlist and renders the normal sign-in heading", () => {
-    searchParamsValue = new URLSearchParams("errorCode=waitlist");
+  it("ignores unknown errorCode values and renders the normal sign-in heading", () => {
+    searchParamsValue = new URLSearchParams("errorCode=retired_code");
     render(<SignInPage />);
     expect(
       screen.getByRole("heading", { name: /log in to lightfast/i })
