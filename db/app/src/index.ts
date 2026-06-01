@@ -143,6 +143,7 @@ export {
   listCurrentOrgConnectorConnections,
   markCurrentOrgConnectorConnectionError,
   markCurrentOrgConnectorConnectionRevoked,
+  type ObservedCurrentOrgConnectorConnectionInput,
   type RecordConnectorToolRefreshErrorInput,
   recordConnectorToolRefreshError,
   setConnectorAutomationEnabled,

@@ -225,6 +225,62 @@ async function revokeDroppedLinearTokens(input: {
   }
 }
 
+async function revokeLinearConnectionTokens(input: {
+  clerkOrgId: string;
+  config: ReturnType<typeof requireLinearConnectorConfig>;
+  connection: OrgConnectorConnection;
+  logMessage: string;
+}) {
+  const encryptedTokens: Array<{
+    ciphertext: string | null;
+    kind: "access" | "refresh";
+  }> = [
+    { ciphertext: input.connection.encryptedAccessToken, kind: "access" },
+    { ciphertext: input.connection.encryptedRefreshToken, kind: "refresh" },
+  ];
+  const seen = new Set<string>();
+
+  for (const encryptedToken of encryptedTokens) {
+    if (!encryptedToken.ciphertext) {
+      continue;
+    }
+
+    let token: string;
+    try {
+      token = await decryptToken(encryptedToken.ciphertext);
+    } catch (error) {
+      log.warn(input.logMessage, {
+        clerkOrgId: input.clerkOrgId,
+        failure: safeErrorDetails(error),
+        provider: "linear",
+        tokenKind: encryptedToken.kind,
+      });
+      continue;
+    }
+
+    if (seen.has(token)) {
+      continue;
+    }
+    seen.add(token);
+
+    try {
+      await revokeLinearOAuthToken({
+        clientId: input.config.clientId,
+        clientSecret: input.config.clientSecret,
+        revokeUrl: input.config.endpoints.oauthRevokeUrl,
+        token,
+      });
+    } catch (error) {
+      log.warn(input.logMessage, {
+        clerkOrgId: input.clerkOrgId,
+        failure: safeErrorDetails(error),
+        provider: "linear",
+        tokenKind: encryptedToken.kind,
+      });
+    }
+  }
+}
+
 function hasDifferentObservedTokens(input: {
   current: OrgConnectorConnection;
   previous: OrgConnectorConnection;
@@ -279,11 +335,15 @@ export async function getFreshLinearConnectorAccessToken(input: {
     );
   }
 
-  if (
-    !shouldRefreshAccessToken(input.connection) ||
-    !input.connection.encryptedRefreshToken
-  ) {
+  if (!shouldRefreshAccessToken(input.connection)) {
     return await decryptToken(input.connection.encryptedAccessToken);
+  }
+
+  if (!input.connection.encryptedRefreshToken) {
+    throw new LinearAppNodeError(
+      "LINEAR_TOKEN_REFRESH_FAILED",
+      "Linear connector refresh token is missing."
+    );
   }
 
   const refreshToken = await decryptToken(input.connection.encryptedRefreshToken);
@@ -314,6 +374,7 @@ export async function getFreshLinearConnectorAccessToken(input: {
     encryptedAccessToken,
     encryptedRefreshToken,
     id: input.connection.id,
+    observedEncryptedAccessToken: input.connection.encryptedAccessToken,
     observedEncryptedRefreshToken: input.connection.encryptedRefreshToken,
     refreshTokenExpiresAt: expiresAtFromSeconds(
       refreshed.refreshTokenExpiresIn
@@ -328,7 +389,13 @@ export async function getFreshLinearConnectorAccessToken(input: {
       reason: "refresh_cas_lost",
       tokens: [
         { kind: "access", token: refreshed.accessToken },
-        { kind: "refresh", token: refreshed.refreshToken },
+        {
+          kind: "refresh",
+          token:
+            refreshed.refreshToken && refreshed.refreshToken !== refreshToken
+              ? refreshed.refreshToken
+              : undefined,
+        },
       ],
     });
 
@@ -421,6 +488,18 @@ async function finalizeLinearConnection(input: {
         endpoint: config.endpoints.mcpEndpoint,
       }),
     ]);
+    const previousCurrent = await getCurrentOrgConnectorConnection(appDb, {
+      clerkOrgId: input.attempt.clerkOrgId,
+      provider: "linear",
+    });
+    if (previousCurrent) {
+      await revokeLinearConnectionTokens({
+        clerkOrgId: input.attempt.clerkOrgId,
+        config,
+        connection: previousCurrent,
+        logMessage: "[connectors] linear revoke failed during reconnect",
+      });
+    }
 
     await finalizeCurrentOrgConnectorConnection(appDb, {
       accessTokenExpiresAt: expiresAtFromSeconds(token.accessTokenExpiresIn),
@@ -432,6 +511,11 @@ async function finalizeLinearConnection(input: {
         : null,
       mcpEndpoint: config.endpoints.mcpEndpoint,
       metadata: { mode: input.attempt.mode },
+      observedCurrentConnectionId: previousCurrent?.id ?? null,
+      observedEncryptedAccessToken:
+        previousCurrent?.encryptedAccessToken ?? null,
+      observedEncryptedRefreshToken:
+        previousCurrent?.encryptedRefreshToken ?? null,
       provider: "linear",
       providerActorId: metadata.actorId ?? null,
       providerActorName: metadata.actorName ?? null,
@@ -652,41 +736,46 @@ export async function setLinearConnectorAutomationEnabled(
 
 export async function disconnectLinearConnector(ctx: ConnectorServiceContext) {
   const identity = activeIdentity(ctx);
-  const connection = await getCurrentOrgConnectorConnection(ctx.db, {
-    clerkOrgId: identity.orgId,
-    provider: "linear",
-  });
+  const configResult = (() => {
+    try {
+      return requireLinearConnectorConfig();
+    } catch {
+      return null;
+    }
+  })();
 
-  if (connection?.encryptedAccessToken) {
-    const configResult = (() => {
-      try {
-        return requireLinearConnectorConfig();
-      } catch {
-        return null;
-      }
-    })();
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const connection = await getCurrentOrgConnectorConnection(ctx.db, {
+      clerkOrgId: identity.orgId,
+      provider: "linear",
+    });
+    if (!connection) {
+      break;
+    }
 
-    if (configResult) {
-      try {
-        await revokeLinearOAuthToken({
-          clientId: configResult.clientId,
-          clientSecret: configResult.clientSecret,
-          revokeUrl: configResult.endpoints.oauthRevokeUrl,
-          token: await decryptToken(connection.encryptedAccessToken),
-        });
-      } catch (error) {
-        log.warn("[connectors] linear revoke failed during disconnect", {
-          clerkOrgId: identity.orgId,
-          failure: safeErrorDetails(error),
-          provider: "linear",
-        });
-      }
+    if (
+      configResult &&
+      (connection.encryptedAccessToken || connection.encryptedRefreshToken)
+    ) {
+      await revokeLinearConnectionTokens({
+        clerkOrgId: identity.orgId,
+        config: configResult,
+        connection,
+        logMessage: "[connectors] linear revoke failed during disconnect",
+      });
+    }
+
+    const revoked = await markCurrentOrgConnectorConnectionRevoked(ctx.db, {
+      clerkOrgId: identity.orgId,
+      observedCurrentConnectionId: connection.id,
+      observedEncryptedAccessToken: connection.encryptedAccessToken,
+      observedEncryptedRefreshToken: connection.encryptedRefreshToken,
+      provider: "linear",
+    });
+    if (revoked) {
+      break;
     }
   }
 
-  await markCurrentOrgConnectorConnectionRevoked(ctx.db, {
-    clerkOrgId: identity.orgId,
-    provider: "linear",
-  });
   return { disconnected: true };
 }

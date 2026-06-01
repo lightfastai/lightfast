@@ -401,6 +401,25 @@ describe("connectors page", () => {
     expect(screen.getByText("Use in automations")).toBeVisible();
   });
 
+  it("links the Tools disclosure button to its expanded details region", () => {
+    renderClient([connectedLinear()]);
+
+    const toolsButton = screen.getByRole("button", { name: /^tools$/i });
+    expect(toolsButton).toHaveAttribute("aria-expanded", "true");
+    expect(toolsButton).toHaveAttribute(
+      "aria-controls",
+      "connector-linear-tools"
+    );
+    expect(
+      document.getElementById("connector-linear-tools")
+    ).toHaveTextContent("2 tools available");
+
+    fireEvent.click(toolsButton);
+
+    expect(toolsButton).toHaveAttribute("aria-expanded", "false");
+    expect(document.getElementById("connector-linear-tools")).toBeNull();
+  });
+
   it("disables mutation actions for non-admin rows", () => {
     renderClient(
       [connectedLinear({}), row("slack")].map((item) => ({

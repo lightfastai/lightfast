@@ -2,11 +2,11 @@ import type {
   ConnectableConnectorProvider,
   FullConnectorToolManifest,
 } from "@repo/connector-contract";
-import { and, eq, getTableColumns, isNotNull } from "drizzle-orm";
+import { and, eq, getTableColumns, isNotNull, isNull } from "drizzle-orm";
 import type { Database } from "../client";
 import type { OrgConnectorConnection } from "../schema";
 import { orgConnectorConnections } from "../schema";
-import { getRowsAffected, isDuplicateKeyError } from "./drizzle-results";
+import { getRowsAffected } from "./drizzle-results";
 
 const {
   currentOrgProviderKey: _currentOrgProviderKey,
@@ -23,6 +23,13 @@ export function currentOrgProviderKey(
 export interface GetCurrentOrgConnectorConnectionInput {
   clerkOrgId: string;
   provider: ConnectableConnectorProvider;
+}
+
+export interface ObservedCurrentOrgConnectorConnectionInput
+  extends GetCurrentOrgConnectorConnectionInput {
+  observedCurrentConnectionId?: number | null;
+  observedEncryptedAccessToken?: string | null;
+  observedEncryptedRefreshToken?: string | null;
 }
 
 export async function getCurrentOrgConnectorConnection(
@@ -71,6 +78,9 @@ export interface FinalizeCurrentOrgConnectorConnectionInput {
   providerWorkspaceId: string | null;
   providerWorkspaceName: string | null;
   refreshTokenExpiresAt: Date | null;
+  observedCurrentConnectionId?: number | null;
+  observedEncryptedAccessToken?: string | null;
+  observedEncryptedRefreshToken?: string | null;
   scopes: string[];
   toolManifest: FullConnectorToolManifest;
 }
@@ -79,22 +89,20 @@ export async function finalizeCurrentOrgConnectorConnection(
   db: Database,
   input: FinalizeCurrentOrgConnectorConnectionInput
 ): Promise<OrgConnectorConnection> {
-  let duplicateError: unknown;
   const inserted = await db
     .transaction(async (tx) => {
       const current = await getCurrentOrgConnectorConnection(tx, input);
       const now = new Date();
 
+      if (!matchesObservedCurrentConnection(input, current)) {
+        throw currentConnectorConnectionChangedError(input);
+      }
+
       if (current) {
         const result = await tx
           .update(orgConnectorConnections)
           .set(revokedConnectorConnectionValues(now))
-          .where(
-            and(
-              eq(orgConnectorConnections.id, current.id),
-              eq(orgConnectorConnections.status, current.status)
-            )
-          );
+          .where(observedCurrentConnectorMutationWhere(input, current));
 
         if (getRowsAffected(result) === 0) {
           throw new Error(
@@ -146,18 +154,7 @@ export async function finalizeCurrentOrgConnectorConnection(
         );
       }
       return insertedConnection;
-    })
-    .catch((error: unknown) => {
-      if (!isDuplicateKeyError(error)) {
-        throw error;
-      }
-      duplicateError = error;
-      return;
     });
-
-  if (duplicateError) {
-    return await recoverOrgConnectorConnectionRace(db, input, duplicateError);
-  }
 
   if (!inserted) {
     throw new Error(
@@ -169,22 +166,21 @@ export async function finalizeCurrentOrgConnectorConnection(
 
 export async function markCurrentOrgConnectorConnectionRevoked(
   db: Database,
-  input: GetCurrentOrgConnectorConnectionInput
+  input: ObservedCurrentOrgConnectorConnectionInput
 ): Promise<OrgConnectorConnection | undefined> {
   const current = await getCurrentOrgConnectorConnection(db, input);
   if (!current) {
     return;
   }
 
+  if (!matchesObservedCurrentConnection(input, current)) {
+    return;
+  }
+
   const result = await db
     .update(orgConnectorConnections)
     .set(revokedConnectorConnectionValues(new Date()))
-    .where(
-      and(
-        eq(orgConnectorConnections.id, current.id),
-        eq(orgConnectorConnections.status, current.status)
-      )
-    );
+    .where(observedCurrentConnectorMutationWhere(input, current));
 
   if (getRowsAffected(result) === 0) {
     return;
@@ -290,6 +286,7 @@ export interface UpdateObservedConnectorTokensInput {
   encryptedAccessToken: string;
   encryptedRefreshToken: string | null;
   id: number;
+  observedEncryptedAccessToken: string;
   observedEncryptedRefreshToken: string;
   refreshTokenExpiresAt: Date | null;
   updatedAt: Date;
@@ -313,6 +310,10 @@ export async function updateObservedConnectorTokens(
         eq(orgConnectorConnections.id, input.id),
         eq(orgConnectorConnections.clerkOrgId, input.clerkOrgId),
         eq(
+          orgConnectorConnections.encryptedAccessToken,
+          input.observedEncryptedAccessToken
+        ),
+        eq(
           orgConnectorConnections.encryptedRefreshToken,
           input.observedEncryptedRefreshToken
         ),
@@ -335,18 +336,6 @@ async function getOrgConnectorConnectionById(
   return row;
 }
 
-async function recoverOrgConnectorConnectionRace(
-  db: Database,
-  input: FinalizeCurrentOrgConnectorConnectionInput,
-  fallbackError: unknown
-): Promise<OrgConnectorConnection> {
-  const current = await getCurrentOrgConnectorConnection(db, input);
-  if (current && isExpectedRaceWinner(current, input)) {
-    return current;
-  }
-  throw fallbackError;
-}
-
 function currentConnectorWhere(input: GetCurrentOrgConnectorConnectionInput) {
   return eq(
     orgConnectorConnections.currentOrgProviderKey,
@@ -363,18 +352,75 @@ function activeCurrentConnectorWhere(
   );
 }
 
-function isExpectedRaceWinner(
-  connection: OrgConnectorConnection,
-  input: FinalizeCurrentOrgConnectorConnectionInput
-): boolean {
-  return (
-    connection.status === "active" &&
-    connection.clerkOrgId === input.clerkOrgId &&
-    connection.provider === input.provider &&
-    connection.connectedByUserId === input.connectedByUserId &&
-    connection.providerWorkspaceId === input.providerWorkspaceId &&
-    connection.providerActorId === input.providerActorId &&
-    connection.mcpEndpoint === input.mcpEndpoint
+function matchesObservedCurrentConnection(
+  input: ObservedCurrentOrgConnectorConnectionInput,
+  current: OrgConnectorConnection | undefined
+) {
+  if (
+    input.observedCurrentConnectionId !== undefined &&
+    (current?.id ?? null) !== input.observedCurrentConnectionId
+  ) {
+    return false;
+  }
+
+  if (
+    input.observedEncryptedAccessToken !== undefined &&
+    (current?.encryptedAccessToken ?? null) !==
+      input.observedEncryptedAccessToken
+  ) {
+    return false;
+  }
+
+  if (
+    input.observedEncryptedRefreshToken !== undefined &&
+    (current?.encryptedRefreshToken ?? null) !==
+      input.observedEncryptedRefreshToken
+  ) {
+    return false;
+  }
+
+  return true;
+}
+
+function observedCurrentConnectorMutationWhere(
+  input: ObservedCurrentOrgConnectorConnectionInput,
+  current: OrgConnectorConnection
+) {
+  const conditions = [
+    eq(orgConnectorConnections.id, current.id),
+    eq(orgConnectorConnections.status, current.status),
+  ];
+
+  if (input.observedEncryptedAccessToken !== undefined) {
+    conditions.push(
+      input.observedEncryptedAccessToken === null
+        ? isNull(orgConnectorConnections.encryptedAccessToken)
+        : eq(
+            orgConnectorConnections.encryptedAccessToken,
+            input.observedEncryptedAccessToken
+          )
+    );
+  }
+
+  if (input.observedEncryptedRefreshToken !== undefined) {
+    conditions.push(
+      input.observedEncryptedRefreshToken === null
+        ? isNull(orgConnectorConnections.encryptedRefreshToken)
+        : eq(
+            orgConnectorConnections.encryptedRefreshToken,
+            input.observedEncryptedRefreshToken
+          )
+    );
+  }
+
+  return and(...conditions);
+}
+
+function currentConnectorConnectionChangedError(
+  input: GetCurrentOrgConnectorConnectionInput
+) {
+  return new Error(
+    `Current connector connection changed for org ${input.clerkOrgId} provider ${input.provider}`
   );
 }
 

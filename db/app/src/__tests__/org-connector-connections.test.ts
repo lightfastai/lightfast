@@ -9,6 +9,7 @@ import {
   recordConnectorToolRefreshError,
   setConnectorAutomationEnabled,
   updateConnectorToolManifest,
+  updateObservedConnectorTokens,
 } from "../utils/org-connector-connections";
 
 const toolManifest = [
@@ -135,8 +136,11 @@ describe("org connector connection helpers", () => {
       encryptedAccessToken: "encrypted_access_next",
       encryptedRefreshToken: "encrypted_refresh_next",
     });
+    const revokeWhereMock = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
     const revokeSetMock = vi.fn(() => ({
-      where: () => Promise.resolve({ affectedRows: 1 }),
+      where: revokeWhereMock,
     }));
     const valuesMock = vi.fn(() => ({
       $returningId: () => Promise.resolve([{ id: 2 }]),
@@ -156,7 +160,14 @@ describe("org connector connection helpers", () => {
     } as unknown as Database;
 
     await expect(
-      finalizeCurrentOrgConnectorConnection(db, finalizeInput())
+      finalizeCurrentOrgConnectorConnection(
+        db,
+        finalizeInput({
+          observedCurrentConnectionId: 1,
+          observedEncryptedAccessToken: "encrypted_access",
+          observedEncryptedRefreshToken: "encrypted_refresh",
+        })
+      )
     ).resolves.toMatchObject({
       id: 2,
       encryptedAccessToken: "encrypted_access_next",
@@ -183,9 +194,61 @@ describe("org connector connection helpers", () => {
         status: "active",
       })
     );
+    const revokeWhereCondition = revokeWhereMock.mock.calls[0]?.[0];
+    if (revokeWhereCondition === undefined) {
+      throw new Error("Expected previous connection revoke condition.");
+    }
+    const columnNames = collectColumnNames(revokeWhereCondition);
+    expect(columnNames).toContain("id");
+    expect(columnNames).toContain("status");
+    expect(columnNames).toContain("encrypted_access_token");
+    expect(columnNames).toContain("encrypted_refresh_token");
   });
 
-  it("recovers duplicate finalize races only when the winning row matches the finalize identity", async () => {
+  it("rejects finalize when the observed current connection changed", async () => {
+    const previous = connection({ id: 1 });
+    const valuesMock = vi.fn(() => ({
+      $returningId: () => Promise.resolve([{ id: 2 }]),
+    }));
+    const tx = {
+      insert: vi.fn(() => ({ values: valuesMock })),
+      select: vi.fn().mockReturnValueOnce(selectRows([previous])),
+      update: vi.fn(() => ({
+        set: () => ({ where: () => Promise.resolve({ affectedRows: 1 }) }),
+      })),
+    };
+    const db = {
+      transaction: vi.fn(async (callback: (value: typeof tx) => unknown) =>
+        callback(tx)
+      ),
+    } as unknown as Database;
+    const input = {
+      ...finalizeInput(),
+      observedCurrentConnectionId: 99,
+    };
+
+    await expect(
+      finalizeCurrentOrgConnectorConnection(db, input)
+    ).rejects.toThrow("Current connector connection changed");
+
+    expect(tx.update).not.toHaveBeenCalled();
+    expect(tx.insert).not.toHaveBeenCalled();
+  });
+
+  it("rejects duplicate finalize races so callers can dispose issued tokens", async () => {
+    const duplicate = duplicateKeyError();
+    const db = {
+      transaction: vi.fn(async () => {
+        throw duplicate;
+      }),
+    } as unknown as Database;
+
+    await expect(
+      finalizeCurrentOrgConnectorConnection(db, finalizeInput())
+    ).rejects.toBe(duplicate);
+  });
+
+  it("rejects duplicate finalize races when an observed empty current changed", async () => {
     const duplicate = duplicateKeyError();
     const winner = connection({
       connectedByUserId: "user_123",
@@ -200,8 +263,11 @@ describe("org connector connection helpers", () => {
     } as unknown as Database;
 
     await expect(
-      finalizeCurrentOrgConnectorConnection(db, finalizeInput())
-    ).resolves.toBe(winner);
+      finalizeCurrentOrgConnectorConnection(
+        db,
+        finalizeInput({ observedCurrentConnectionId: null })
+      )
+    ).rejects.toBe(duplicate);
   });
 
   it("rejects duplicate finalize races when another connector identity won", async () => {
@@ -247,6 +313,9 @@ describe("org connector connection helpers", () => {
     await expect(
       markCurrentOrgConnectorConnectionRevoked(db, {
         clerkOrgId: "org_123",
+        observedCurrentConnectionId: 1,
+        observedEncryptedAccessToken: "encrypted_access",
+        observedEncryptedRefreshToken: "encrypted_refresh",
         provider: "linear",
       })
     ).resolves.toMatchObject({ status: "revoked" });
@@ -268,6 +337,54 @@ describe("org connector connection helpers", () => {
     const columnNames = collectColumnNames(updateWhere.mock.calls[0]?.[0]);
     expect(columnNames).toContain("id");
     expect(columnNames).toContain("status");
+    expect(columnNames).toContain("encrypted_access_token");
+    expect(columnNames).toContain("encrypted_refresh_token");
+  });
+
+  it("does not revoke current org connector connections when the observed row changed", async () => {
+    const active = connection({ id: 1 });
+    const update = vi.fn(() => ({
+      set: () => ({ where: () => Promise.resolve({ affectedRows: 1 }) }),
+    }));
+    const select = vi.fn().mockReturnValueOnce(selectRows([active]));
+    const db = { select, update } as unknown as Database;
+    const input = {
+      clerkOrgId: "org_123",
+      observedCurrentConnectionId: 99,
+      provider: "linear" as const,
+    };
+
+    await expect(
+      markCurrentOrgConnectorConnectionRevoked(db, input)
+    ).resolves.toBeUndefined();
+
+    expect(update).not.toHaveBeenCalled();
+  });
+
+  it("does not revoke current org connector connections when observed tokens changed", async () => {
+    const active = connection({
+      encryptedAccessToken: "encrypted_access_rotated",
+      encryptedRefreshToken: "encrypted_refresh_rotated",
+      id: 1,
+    });
+    const update = vi.fn(() => ({
+      set: () => ({ where: () => Promise.resolve({ affectedRows: 1 }) }),
+    }));
+    const select = vi.fn().mockReturnValueOnce(selectRows([active]));
+    const db = { select, update } as unknown as Database;
+    const input = {
+      clerkOrgId: "org_123",
+      observedCurrentConnectionId: 1,
+      observedEncryptedAccessToken: "encrypted_access",
+      observedEncryptedRefreshToken: "encrypted_refresh",
+      provider: "linear" as const,
+    };
+
+    await expect(
+      markCurrentOrgConnectorConnectionRevoked(db, input)
+    ).resolves.toBeUndefined();
+
+    expect(update).not.toHaveBeenCalled();
   });
 
   it("marks current org connector connection errors without clearing tokens", async () => {
@@ -306,6 +423,39 @@ describe("org connector connection helpers", () => {
         updatedAt: expect.any(Date),
       })
     );
+  });
+
+  it("updates observed connector tokens only when access and refresh tokens still match", async () => {
+    const updateWhere = vi.fn((_condition: unknown) =>
+      Promise.resolve({ affectedRows: 1 })
+    );
+    const set = vi.fn(() => ({
+      where: updateWhere,
+    }));
+    const update = vi.fn(() => ({ set }));
+    const db = { update } as unknown as Database;
+
+    await expect(
+      updateObservedConnectorTokens(db, {
+        accessTokenExpiresAt: new Date("2026-06-01T08:00:00.000Z"),
+        clerkOrgId: "org_123",
+        encryptedAccessToken: "encrypted_access_next",
+        encryptedRefreshToken: "encrypted_refresh",
+        id: 1,
+        observedEncryptedAccessToken: "encrypted_access",
+        observedEncryptedRefreshToken: "encrypted_refresh",
+        refreshTokenExpiresAt: new Date("2026-12-01T00:00:00.000Z"),
+        updatedAt: new Date("2026-06-01T01:00:00.000Z"),
+      })
+    ).resolves.toBe(true);
+
+    const updateWhereCondition = updateWhere.mock.calls[0]?.[0];
+    if (updateWhereCondition === undefined) {
+      throw new Error("Expected token update condition.");
+    }
+    const columnNames = collectColumnNames(updateWhereCondition);
+    expect(columnNames).toContain("encrypted_access_token");
+    expect(columnNames).toContain("encrypted_refresh_token");
   });
 
   it("updates connector tool manifests and clears refresh error fields on success", async () => {

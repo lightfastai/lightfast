@@ -433,6 +433,7 @@ function ConnectorRow({
 }) {
   const label = connectionLabel(row);
   const hasDetails = !!row.connection;
+  const toolsRegionId = `connector-${row.provider}-tools`;
 
   return (
     <div className={cn("py-4", featured ? "py-0" : "")}>
@@ -501,6 +502,8 @@ function ConnectorRow({
       {hasDetails && (
         <div className="mt-4">
           <button
+            aria-controls={toolsRegionId}
+            aria-expanded={expanded}
             className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground hover:text-foreground"
             onClick={() => onToggleExpanded(row.provider)}
             type="button"
@@ -515,6 +518,7 @@ function ConnectorRow({
           {expanded && (
             <ConnectorDetails
               expandedTools={expandedTools}
+              id={toolsRegionId}
               onSetAutomationEnabled={onSetAutomationEnabled}
               onToggleTools={onToggleTools}
               pending={mutationPending}
@@ -632,12 +636,14 @@ function ConnectorActions({
 
 function ConnectorDetails({
   expandedTools,
+  id,
   onSetAutomationEnabled,
   onToggleTools,
   pending,
   row,
 }: {
   expandedTools: boolean;
+  id: string;
   onSetAutomationEnabled: (row: ConnectorCatalogRow, enabled: boolean) => void;
   onToggleTools: (provider: ConnectorProvider) => void;
   pending: boolean;
@@ -653,7 +659,10 @@ function ConnectorDetails({
   const actionDisabled = isMutationDisabled(row, pending);
 
   return (
-    <div className="mt-3 rounded-[8px] border border-border bg-background/50 p-3">
+    <div
+      className="mt-3 rounded-[8px] border border-border bg-background/50 p-3"
+      id={id}
+    >
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="font-mono text-[11px] text-foreground">
