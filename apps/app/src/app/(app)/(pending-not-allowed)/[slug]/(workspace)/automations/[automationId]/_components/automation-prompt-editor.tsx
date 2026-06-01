@@ -95,14 +95,14 @@ export function AutomationPromptEditor({
   return (
     <div className="space-y-2">
       <Textarea
-        className="min-h-32"
         onChange={(e) => setValue(e.target.value)}
         ref={textareaRef}
         rows={6}
         value={value}
+        variant="lf"
       />
       <p
-        className={`text-xs ${isTooLong ? "text-destructive" : "text-muted-foreground"}`}
+        className={`font-mono text-[9.5px] ${isTooLong ? "text-destructive" : "text-muted-foreground"}`}
       >
         {trimmed.length} / {AUTOMATION_PROMPT_MAX_LENGTH}
       </p>

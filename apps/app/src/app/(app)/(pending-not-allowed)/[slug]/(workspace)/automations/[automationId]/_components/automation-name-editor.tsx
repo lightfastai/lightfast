@@ -114,7 +114,9 @@ export function AutomationNameEditor({
             autoFocus
             maxLength={AUTOMATION_NAME_MAX_LENGTH + 1}
             onChange={(e) => setValue(e.target.value)}
+            size="lf"
             value={value}
+            variant="lf"
           />
           {isTooLong && (
             <p className="text-destructive text-xs">
