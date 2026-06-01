@@ -15,6 +15,7 @@ describe("SourceControlSection", () => {
         connection={{
           accountLogin: "lightfast-emulated",
           connectedAt,
+          importedRepositoryCount: 1,
           lightfastRepository: {
             fullName: "lightfast-emulated/.lightfast",
             id: "987",
@@ -47,6 +48,7 @@ describe("SourceControlSection", () => {
         connection={{
           accountLogin: "lightfast-emulated",
           connectedAt,
+          importedRepositoryCount: 1,
           lightfastRepository: null,
           provider: "github",
           providerLabel: "GitHub",
@@ -88,6 +90,7 @@ describe("SourceControlSection", () => {
         connection={{
           accountLogin: "lightfast-emulated",
           connectedAt: new Date(Number.NaN),
+          importedRepositoryCount: 1,
           lightfastRepository: {
             fullName: "lightfast-emulated/.lightfast",
             id: "987",
