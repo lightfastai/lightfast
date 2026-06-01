@@ -113,6 +113,31 @@ export async function getMcpOauthClientByClientId(
   };
 }
 
+export async function getMcpOauthClientByRegistrationTokenHash(
+  db: Database,
+  input: { now?: Date; tokenHash: string }
+): Promise<McpOauthClientWithRedirectUris | undefined> {
+  const [token] = await db
+    .select()
+    .from(mcpOauthRegistrationTokens)
+    .where(
+      and(
+        eq(mcpOauthRegistrationTokens.tokenHash, input.tokenHash),
+        eq(mcpOauthRegistrationTokens.status, "active")
+      )
+    )
+    .limit(1);
+  if (!token) {
+    return;
+  }
+  if (token.expiresAt && token.expiresAt <= (input.now ?? new Date())) {
+    return;
+  }
+  return await getMcpOauthClientByClientId(db, {
+    publicClientId: token.clientPublicId,
+  });
+}
+
 export interface CreateMcpOauthGrantInput {
   clientPublicId: string;
   clerkOrgId: string;

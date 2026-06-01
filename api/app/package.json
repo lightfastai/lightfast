@@ -64,6 +64,7 @@
     "@vercel/related-projects": "catalog:",
     "drizzle-orm": "catalog:",
     "inngest": "catalog:",
+    "jose": "catalog:",
     "superjson": "catalog:",
     "zod": "catalog:"
   },

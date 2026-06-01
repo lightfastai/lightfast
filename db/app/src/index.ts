@@ -191,6 +191,7 @@ export {
   createMcpRefreshToken,
   getActiveMcpOauthGrant,
   getMcpOauthClientByClientId,
+  getMcpOauthClientByRegistrationTokenHash,
   getMcpOauthGrantByPublicId,
   type McpOauthClientWithRedirectUris,
   type RecordMcpAuditEventInput,
