@@ -23,10 +23,10 @@ import {
   Aperture,
   Blocks,
   BookOpen,
-  BrainCircuit,
   HelpCircle,
   Mail,
   Network,
+  Scroll,
   Settings,
   Workflow,
 } from "lucide-react";
@@ -54,6 +54,12 @@ function getOrgStandaloneItems(orgSlug: string): NavItem[] {
       href: `/${orgSlug}/connectors`,
       icon: Blocks,
     },
+    {
+      title: "Skills",
+      href: `/${orgSlug}/skills`,
+      icon: Scroll,
+      prefetch: false,
+    },
   ];
 }
 
@@ -68,12 +74,6 @@ function getOrgWorkspaceItems(orgSlug: string): NavItem[] {
       title: "People",
       href: `/${orgSlug}/people`,
       icon: Network,
-    },
-    {
-      title: "Skills",
-      href: `/${orgSlug}/skills`,
-      icon: BrainCircuit,
-      prefetch: false,
     },
   ];
 }
